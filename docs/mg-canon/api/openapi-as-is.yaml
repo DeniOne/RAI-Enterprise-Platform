@@ -1,0 +1,281 @@
+openapi: 3.0.0
+info:
+  title: MatrixGin API (AS-IS)
+  version: 2.0.0
+  description: Canonical API specification for MatrixGin v2.0 based on existing codebase analysis.
+servers:
+  - url: http://localhost:3000/api
+    description: Local Development Server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+
+tags:
+  - name: Auth
+  - name: Employee
+  - name: Registration
+  - name: University
+  - name: Tasks
+  - name: OFS
+  - name: MES
+  - name: Registry
+
+paths:
+  # ==========================================
+  # AUTH
+  # ==========================================
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register new user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, firstName, lastName]
+              properties:
+                email: { type: string }
+                password: { type: string }
+                firstName: { type: string }
+                lastName: { type: string }
+      responses:
+        '201':
+          description: Created
+  
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: OK
+  
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh Access Token
+      responses:
+        '200': 
+          description: New tokens
+
+  # ==========================================
+  # EMPLOYEE
+  # ==========================================
+  /employees:
+    get:
+      tags: [Employee]
+      summary: Get all employees (filtered by role)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: List of employees
+  
+  /employees/{id}:
+    get:
+      tags: [Employee]
+      summary: Get employee by ID
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Employee details
+
+  /employees/{id}/status:
+    patch:
+      tags: [Employee]
+      summary: Update employee status (Promote/Demote logic replacement)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string }
+      responses:
+        '200':
+          description: Updated
+
+  # ==========================================
+  # REGISTRATION
+  # ==========================================
+  /registration/init:
+    post:
+      tags: [Registration]
+      summary: Initialize registration from Telegram
+      responses:
+        '201':
+          description: Request created
+
+  # ==========================================
+  # UNIVERSITY (Expanded from grep)
+  # ==========================================
+  /university/academies:
+    get:
+      tags: [University]
+      summary: Get list of academies
+      responses:
+        '200':
+          description: OK
+
+  /university/courses:
+    get:
+      tags: [University]
+      summary: Get all courses
+      responses:
+        '200':
+          description: OK
+
+  /university/courses/{id}/enroll:
+    post:
+      tags: [University]
+      summary: Enroll in course provided by university controller
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          schema: { type: string }
+      responses:
+        '200':
+          description: Enrolled
+
+  /university/my-courses:
+    get:
+      tags: [University]
+      summary: Get current user enrollments
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: List of enrollments
+
+  /university/quizzes/{materialId}:
+    get:
+      tags: [University]
+      summary: Get quiz by material ID
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Quiz content
+
+  /university/quizzes/{id}/submit:
+    post:
+      tags: [University]
+      summary: Submit quiz attempt
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Result
+
+  # ==========================================
+  # TASKS
+  # ==========================================
+  /tasks:
+    get:
+      tags: [Tasks]
+      summary: Get tasks
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: List
+    post:
+      tags: [Tasks]
+      summary: Create task
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201':
+          description: Created
+
+  /tasks/{id}/assign:
+    post:
+      tags: [Tasks]
+      summary: Assign task to user
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Assigned
+
+  # ==========================================
+  # OFS (Organizational Functional Structure)
+  # ==========================================
+  /ofs/departments:
+    get:
+      tags: [OFS]
+      summary: Get department tree
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Tree
+
+  /ofs/role-matrix:
+    get:
+      tags: [OFS]
+      summary: Get competency matrix
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Matrix
+
+  # ==========================================
+  # MES (Production)
+  # ==========================================
+  /mes/production-orders:
+    get:
+      tags: [MES]
+      summary: Get production orders
+      responses:
+        '200':
+          description: List
+    post:
+      tags: [MES]
+      summary: Create production order
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201':
+          description: Created
+
+  /mes/my-shift:
+    get:
+      tags: [MES]
+      summary: Get current employee shift status
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Shift status
+
+  # ==========================================
+  # REGISTRY
+  # ==========================================
+  /registry:
+    get:
+      tags: [Registry]
+      summary: Search registry entities
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Results
