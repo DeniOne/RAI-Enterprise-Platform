@@ -1,0 +1,38 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:position",
+        "name": "Position",
+        "domain": "structure",
+        "class": "core",
+        "description": "Штатная единица в OrgUnit.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "headcount",
+                    "type": "INTEGER",
+                    "required": false,
+                    "unique": false,
+                    "description": "Штатные единицы (default: 1)",
+                    "label": "Численность"
+                }
+            ],
+            "relationships": [
+                {
+                    "name": "org_unit",
+                    "target_entity_type_urn": "urn:mg:type:org_unit",
+                    "cardinality": "MANY_TO_ONE",
+                    "required": true,
+                    "label": "Подразделение"
+                },
+                {
+                    "name": "structural_role",
+                    "target_entity_type_urn": "urn:mg:type:structural_role",
+                    "cardinality": "MANY_TO_ONE",
+                    "required": false,
+                    "label": "Структурная роль"
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,41 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:task_type",
+        "name": "TaskType",
+        "domain": "process",
+        "class": "reference",
+        "description": "Классификатор типов задач.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "default_priority",
+                    "type": "ENUM",
+                    "required": false,
+                    "unique": false,
+                    "description": "Приоритет по умолчанию",
+                    "enum_options": [
+                        {
+                            "value": "low",
+                            "label": "Низкий"
+                        },
+                        {
+                            "value": "medium",
+                            "label": "Средний"
+                        },
+                        {
+                            "value": "high",
+                            "label": "Высокий"
+                        },
+                        {
+                            "value": "urgent",
+                            "label": "Срочный"
+                        }
+                    ],
+                    "label": "Приоритет по умолчанию"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

@@ -1,0 +1,46 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:appointment",
+        "name": "Appointment",
+        "domain": "hierarchy",
+        "class": "relation",
+        "description": "Назначение Employee на Position. Temporal relation.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "start_date",
+                    "type": "DATE",
+                    "required": true,
+                    "unique": false,
+                    "description": "Дата начала",
+                    "label": "Дата начала"
+                },
+                {
+                    "name": "end_date",
+                    "type": "DATE",
+                    "required": false,
+                    "unique": false,
+                    "description": "Дата окончания",
+                    "label": "Дата окончания"
+                }
+            ],
+            "relationships": [
+                {
+                    "name": "position",
+                    "target_entity_type_urn": "urn:mg:type:position",
+                    "cardinality": "MANY_TO_ONE",
+                    "required": true,
+                    "label": "Должность"
+                },
+                {
+                    "name": "employee",
+                    "target_entity_type_urn": "urn:mg:type:employee",
+                    "cardinality": "MANY_TO_ONE",
+                    "required": true,
+                    "label": "Сотрудник"
+                }
+            ]
+        }
+    }
+}

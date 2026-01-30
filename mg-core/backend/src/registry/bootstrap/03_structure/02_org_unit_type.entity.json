@@ -1,0 +1,23 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:org_unit_type",
+        "name": "OrgUnitType",
+        "domain": "structure",
+        "class": "reference",
+        "description": "Тип подразделения (Department, Squad, Tribe).",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "level",
+                    "type": "INTEGER",
+                    "required": false,
+                    "unique": false,
+                    "description": "Уровень в иерархии",
+                    "label": "Уровень"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

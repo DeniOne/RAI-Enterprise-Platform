@@ -1,0 +1,36 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:org_unit",
+        "name": "OrgUnit",
+        "domain": "structure",
+        "class": "core",
+        "description": "Организационная единица в графе.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [],
+            "relationships": [
+                {
+                    "name": "org_unit_type",
+                    "target_entity_type_urn": "urn:mg:type:org_unit_type",
+                    "cardinality": "MANY_TO_ONE",
+                    "required": true,
+                    "label": "Тип подразделения"
+                },
+                {
+                    "name": "parent",
+                    "target_entity_type_urn": "urn:mg:type:org_unit",
+                    "cardinality": "MANY_TO_ONE",
+                    "required": false,
+                    "label": "Родитель"
+                },
+                {
+                    "name": "organization",
+                    "target_entity_type_urn": "urn:mg:type:organization",
+                    "cardinality": "MANY_TO_ONE",
+                    "required": false,
+                    "label": "Организация"
+                }
+            ]
+        }
+    }
+}

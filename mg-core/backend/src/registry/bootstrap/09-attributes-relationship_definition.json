@@ -1,0 +1,73 @@
+[
+    {
+        "entity_type_urn": "urn:mg:entity-type:relationship_definition:v1",
+        "name": "from_entity_type_urn",
+        "data_type": "urn",
+        "is_required": true,
+        "ui_visibility": "system",
+        "constraints": {
+            "pattern": "^urn:mg:entity-type:"
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:relationship_definition:v1",
+        "name": "to_entity_type_urn",
+        "data_type": "urn",
+        "is_required": true,
+        "ui_visibility": "system",
+        "constraints": {
+            "pattern": "^urn:mg:entity-type:"
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:relationship_definition:v1",
+        "name": "relation_type",
+        "data_type": "string",
+        "is_required": true,
+        "ui_visibility": "visible",
+        "constraints": {
+            "pattern": "^[A-Z_]+$"
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:relationship_definition:v1",
+        "name": "cardinality",
+        "data_type": "string",
+        "is_required": true,
+        "ui_visibility": "visible",
+        "constraints": {
+            "enum": [
+                "1-1",
+                "1-n",
+                "n-n"
+            ]
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:relationship_definition:v1",
+        "name": "is_hierarchical",
+        "data_type": "boolean",
+        "is_required": true,
+        "ui_visibility": "visible",
+        "constraints": {
+            "default": false
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:relationship_definition:v1",
+        "name": "is_cyclic_allowed",
+        "data_type": "boolean",
+        "is_required": true,
+        "ui_visibility": "visible",
+        "constraints": {
+            "default": false
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:relationship_definition:v1",
+        "name": "constraints",
+        "data_type": "json",
+        "is_required": false,
+        "ui_visibility": "system"
+    }
+]

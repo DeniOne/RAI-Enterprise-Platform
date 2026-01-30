@@ -1,0 +1,170 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:user_account",
+        "name": "UserAccount",
+        "domain": "security",
+        "class": "core",
+        "description": "Системный аккаунт для аутентификации. Связь с Person опциональна.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "username",
+                    "label": "Имя пользователя",
+                    "type": "STRING",
+                    "required": true,
+                    "readonly": true,
+                    "ui": {
+                        "widget": "text",
+                        "order": 1,
+                        "label": "Имя пользователя"
+                    }
+                },
+                {
+                    "name": "status",
+                    "label": "Статус",
+                    "type": "ENUM",
+                    "required": true,
+                    "ui": {
+                        "widget": "select",
+                        "order": 2,
+                        "label": "Статус"
+                    },
+                    "enum_options": [
+                        {
+                            "value": "ACTIVE",
+                            "label": "Активен"
+                        },
+                        {
+                            "value": "INACTIVE",
+                            "label": "Неактивен"
+                        }
+                    ]
+                },
+                {
+                    "urn": "urn:mg:attr:user_account:created_at",
+                    "name": "created_at",
+                    "label": "Дата создания",
+                    "type": "DATETIME",
+                    "ui": {
+                        "widget": "datetime",
+                        "order": 3,
+                        "label": "Дата создания"
+                    }
+                }
+            ],
+            "relationships": [
+                {
+                    "name": "roles",
+                    "target_entity_type_urn": "urn:mg:type:role",
+                    "cardinality": "MANY_TO_MANY",
+                    "required": false,
+                    "description": "Assigned roles",
+                    "impact": {
+                        "type": "blocking",
+                        "severity": "high",
+                        "description": "User access depends on role assignment"
+                    },
+                    "label": "Роли"
+                }
+            ]
+        },
+        "views": {
+            "table.default": {
+                "columns": [
+                    {
+                        "field": "username",
+                        "label": "Имя пользователя",
+                        "dataType": "string",
+                        "renderer": "text",
+                        "sortable": true
+                    },
+                    {
+                        "field": "status",
+                        "label": "Статус",
+                        "dataType": "enum",
+                        "renderer": "badge",
+                        "rendererOptions": {
+                            "ACTIVE": "green",
+                            "INACTIVE": "red"
+                        }
+                    },
+                    {
+                        "field": "created_at",
+                        "label": "Зарегистрирован",
+                        "dataType": "datetime",
+                        "renderer": "datetime"
+                    }
+                ],
+                "defaultSort": {
+                    "field": "created_at",
+                    "order": "desc"
+                },
+                "pageSize": 20
+            },
+            "form.create": {
+                "type": "form",
+                "mode": "create",
+                "fields": [
+                    {
+                        "field": "username",
+                        "dataType": "string",
+                        "required": true,
+                        "ui": {
+                            "widget": "text",
+                            "label": "Имя пользователя",
+                            "placeholder": "Enter system username"
+                        }
+                    },
+                    {
+                        "field": "status",
+                        "dataType": "enum",
+                        "required": true,
+                        "ui": {
+                            "widget": "select",
+                            "label": "Начальный статус",
+                            "description": "Select active status"
+                        }
+                    },
+                    {
+                        "field": "created_at",
+                        "dataType": "datetime",
+                        "readonly": true,
+                        "ui": {
+                            "widget": "datetime",
+                            "hidden": true
+                        }
+                    }
+                ],
+                "submit": {
+                    "action": "create"
+                }
+            },
+            "graph.default": {
+                "type": "graph",
+                "root": "user_account",
+                "nodes": [
+                    "user_account",
+                    "role"
+                ],
+                "edges": [
+                    "roles"
+                ],
+                "depth": 2
+            },
+            "impact.default": {
+                "type": "impact",
+                "root": "user_account",
+                "edges": [
+                    "roles"
+                ],
+                "maxDepth": 3,
+                "include": [
+                    "blocking",
+                    "dependent"
+                ],
+                "groupBy": "severity"
+            }
+        }
+    }
+}

@@ -1,0 +1,120 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:person",
+        "name": "Person",
+        "domain": "human",
+        "class": "core",
+        "description": "Физическое лицо (человек). Идентити-слой.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "first_name",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "Имя",
+                    "label": "Имя"
+                },
+                {
+                    "name": "last_name",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "Фамилия",
+                    "label": "Фамилия"
+                },
+                {
+                    "name": "middle_name",
+                    "type": "STRING",
+                    "required": false,
+                    "unique": false,
+                    "description": "Отчество",
+                    "label": "Отчество"
+                },
+                {
+                    "name": "birth_date",
+                    "type": "DATE",
+                    "required": false,
+                    "unique": false,
+                    "description": "Дата рождения",
+                    "label": "Дата рождения"
+                }
+            ],
+            "relationships": []
+        },
+        "views": {
+            "table.default": {
+                "type": "table",
+                "columns": [
+                    {
+                        "field": "first_name",
+                        "label": "Имя",
+                        "dataType": "string",
+                        "sortable": true
+                    },
+                    {
+                        "field": "last_name",
+                        "label": "Фамилия",
+                        "dataType": "string",
+                        "sortable": true
+                    },
+                    {
+                        "field": "birth_date",
+                        "label": "Дата рождения",
+                        "dataType": "date",
+                        "sortable": true
+                    }
+                ]
+            },
+            "form.create": {
+                "type": "form",
+                "mode": "create",
+                "fields": [
+                    {
+                        "field": "first_name",
+                        "dataType": "string",
+                        "required": true,
+                        "ui": {
+                            "widget": "text",
+                            "label": "Имя",
+                            "placeholder": "Введите имя"
+                        }
+                    },
+                    {
+                        "field": "last_name",
+                        "dataType": "string",
+                        "required": true,
+                        "ui": {
+                            "widget": "text",
+                            "label": "Фамилия",
+                            "placeholder": "Введите фамилию"
+                        }
+                    },
+                    {
+                        "field": "middle_name",
+                        "dataType": "string",
+                        "required": false,
+                        "ui": {
+                            "widget": "text",
+                            "label": "Отчество",
+                            "placeholder": "Введите отчество (опционально)"
+                        }
+                    },
+                    {
+                        "field": "birth_date",
+                        "dataType": "date",
+                        "required": false,
+                        "ui": {
+                            "widget": "date",
+                            "label": "Дата рождения"
+                        }
+                    }
+                ],
+                "submit": {
+                    "action": "create"
+                }
+            }
+        }
+    }
+}

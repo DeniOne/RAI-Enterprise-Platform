@@ -1,0 +1,71 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:entity-type:entity_type:v1",
+        "name": "EntityType",
+        "domain": "meta",
+        "class": "meta",
+        "description": "Мета-сущность: определение типа сущности в Registry.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "urn",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": true,
+                    "description": "Уникальный URN типа сущности",
+                    "label": "URN"
+                },
+                {
+                    "name": "name",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "Отображаемое название",
+                    "label": "Название"
+                },
+                {
+                    "name": "version",
+                    "type": "INTEGER",
+                    "required": true,
+                    "unique": false,
+                    "description": "Версия типа",
+                    "label": "Версия"
+                },
+                {
+                    "name": "description",
+                    "type": "STRING",
+                    "required": false,
+                    "unique": false,
+                    "description": "Описание",
+                    "label": "Описание"
+                },
+                {
+                    "name": "is_abstract",
+                    "type": "BOOLEAN",
+                    "required": false,
+                    "unique": false,
+                    "description": "Абстрактный тип?",
+                    "label": "Абстрактный"
+                },
+                {
+                    "name": "is_system",
+                    "type": "BOOLEAN",
+                    "required": false,
+                    "unique": false,
+                    "description": "Системный тип?",
+                    "label": "Системный"
+                },
+                {
+                    "name": "lifecycle_fsm_urn",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "URN FSM жизненного цикла",
+                    "label": "URN жизненного цикла FSM"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

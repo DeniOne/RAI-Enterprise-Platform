@@ -1,0 +1,97 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:policy_rule",
+        "name": "PolicyRule",
+        "domain": "security",
+        "class": "reference",
+        "description": "Системное ограничение. Enforcement конфигурация.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "rule_type",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "Тип правила",
+                    "label": "Тип правила"
+                },
+                {
+                    "name": "enforcement",
+                    "type": "ENUM",
+                    "required": true,
+                    "unique": false,
+                    "description": "Уровень применения",
+                    "enum_options": [
+                        {
+                            "value": "block",
+                            "label": "Блокировать"
+                        },
+                        {
+                            "value": "warn",
+                            "label": "Предупреждение"
+                        },
+                        {
+                            "value": "log",
+                            "label": "Логирование"
+                        }
+                    ],
+                    "label": "Уровень применения"
+                }
+            ],
+            "relationships": []
+        },
+        "views": {
+            "table.default": {
+                "type": "table",
+                "columns": [
+                    {
+                        "field": "rule_type",
+                        "label": "Тип",
+                        "dataType": "string",
+                        "sortable": true
+                    },
+                    {
+                        "field": "enforcement",
+                        "label": "Применение",
+                        "dataType": "enum",
+                        "renderer": "badge",
+                        "rendererOptions": {
+                            "block": "red",
+                            "warn": "yellow",
+                            "log": "blue"
+                        }
+                    }
+                ]
+            },
+            "form.create": {
+                "type": "form",
+                "mode": "create",
+                "fields": [
+                    {
+                        "field": "rule_type",
+                        "dataType": "string",
+                        "required": true,
+                        "ui": {
+                            "widget": "text",
+                            "label": "Тип правила",
+                            "placeholder": "e.g. DATA_RETENTION"
+                        }
+                    },
+                    {
+                        "field": "enforcement",
+                        "dataType": "enum",
+                        "required": true,
+                        "ui": {
+                            "widget": "select",
+                            "label": "Уровень применения"
+                        }
+                    }
+                ],
+                "submit": {
+                    "action": "create"
+                }
+            }
+        }
+    }
+}

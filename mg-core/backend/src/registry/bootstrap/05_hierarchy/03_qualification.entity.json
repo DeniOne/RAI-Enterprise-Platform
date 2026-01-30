@@ -1,0 +1,23 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:qualification",
+        "name": "Qualification",
+        "domain": "hierarchy",
+        "class": "reference",
+        "description": "Область компетенции / навык.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "category",
+                    "type": "STRING",
+                    "required": false,
+                    "unique": false,
+                    "description": "Категория навыка",
+                    "label": "Категория"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

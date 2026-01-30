@@ -1,0 +1,79 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:structural_role",
+        "name": "StructuralRole",
+        "domain": "structure",
+        "class": "reference",
+        "description": "Роль в структуре (Head, Lead, Member).",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "code",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": true,
+                    "description": "Код роли",
+                    "label": "Код"
+                },
+                {
+                    "name": "name",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "Название роли",
+                    "label": "Название"
+                }
+            ],
+            "relationships": []
+        },
+        "views": {
+            "table.default": {
+                "type": "table",
+                "columns": [
+                    {
+                        "field": "code",
+                        "label": "Код",
+                        "dataType": "string",
+                        "sortable": true
+                    },
+                    {
+                        "field": "name",
+                        "label": "Название",
+                        "dataType": "string",
+                        "sortable": true
+                    }
+                ]
+            },
+            "form.create": {
+                "type": "form",
+                "mode": "create",
+                "fields": [
+                    {
+                        "field": "code",
+                        "dataType": "string",
+                        "required": true,
+                        "ui": {
+                            "widget": "text",
+                            "label": "Код",
+                            "placeholder": "HEAD, LEAD, MEMBER"
+                        }
+                    },
+                    {
+                        "field": "name",
+                        "dataType": "string",
+                        "required": true,
+                        "ui": {
+                            "widget": "text",
+                            "label": "Название",
+                            "placeholder": "Руководитель, Лидер, Участник"
+                        }
+                    }
+                ],
+                "submit": {
+                    "action": "create"
+                }
+            }
+        }
+    }
+}

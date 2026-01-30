@@ -1,0 +1,9 @@
+{
+    "urn": "urn:mg:entity-type:relationship_definition:v1",
+    "name": "relationship_definition",
+    "version": 1,
+    "description": "Metamodel definition for semantic relationships between entities",
+    "is_abstract": false,
+    "is_system": true,
+    "lifecycle_fsm_urn": "urn:mg:fsm:default-registry-lifecycle:v1"
+}

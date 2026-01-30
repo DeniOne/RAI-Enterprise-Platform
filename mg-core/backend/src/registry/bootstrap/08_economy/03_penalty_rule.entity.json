@@ -1,0 +1,39 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:penalty_rule",
+        "name": "PenaltyRule",
+        "domain": "economy",
+        "class": "reference",
+        "description": "Правило списания токенов.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "trigger_event",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "Событие-триггер",
+                    "label": "Событие-триггер"
+                },
+                {
+                    "name": "amount",
+                    "type": "DECIMAL",
+                    "required": true,
+                    "unique": false,
+                    "description": "Сумма списания",
+                    "label": "Сумма"
+                }
+            ],
+            "relationships": [
+                {
+                    "name": "token",
+                    "target_entity_type_urn": "urn:mg:type:value_token",
+                    "cardinality": "MANY_TO_ONE",
+                    "required": true,
+                    "label": "Токен"
+                }
+            ]
+        }
+    }
+}

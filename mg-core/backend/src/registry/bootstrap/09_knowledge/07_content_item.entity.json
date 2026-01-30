@@ -1,0 +1,14 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:content_item",
+        "name": "ContentItem",
+        "domain": "knowledge",
+        "class": "reference",
+        "description": "Общий контент (статья, медиа).",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [],
+            "relationships": []
+        }
+    }
+}

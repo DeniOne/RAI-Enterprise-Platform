@@ -1,0 +1,39 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:permission",
+        "name": "Permission",
+        "domain": "security",
+        "class": "reference",
+        "description": "Атомарное право на действие (module:action:scope).",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "action",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "Действие (view, create, update, delete, execute, admin)",
+                    "label": "Действие"
+                },
+                {
+                    "name": "resource",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "Ресурс (employee, task, registry)",
+                    "label": "Ресурс"
+                },
+                {
+                    "name": "scope",
+                    "type": "STRING",
+                    "required": false,
+                    "unique": false,
+                    "description": "Область (own, team, all)",
+                    "label": "Область"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

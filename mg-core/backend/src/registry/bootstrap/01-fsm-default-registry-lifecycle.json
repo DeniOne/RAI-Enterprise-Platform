@@ -1,0 +1,38 @@
+{
+    "urn": "urn:mg:fsm:default-registry-lifecycle:v1",
+    "entity_type_urn": "urn:mg:entity-type:fsm_definition:v1",
+    "initial_state": "draft",
+    "states": [
+        "draft",
+        "active",
+        "deprecated",
+        "archived"
+    ],
+    "transitions": [
+        {
+            "from": "draft",
+            "to": "active",
+            "roles_allowed": [
+                "REGISTRY_ADMIN"
+            ],
+            "conditions": []
+        },
+        {
+            "from": "active",
+            "to": "deprecated",
+            "roles_allowed": [
+                "REGISTRY_ADMIN"
+            ],
+            "conditions": []
+        },
+        {
+            "from": "deprecated",
+            "to": "archived",
+            "roles_allowed": [
+                "REGISTRY_ADMIN"
+            ],
+            "conditions": []
+        }
+    ],
+    "is_system": true
+}

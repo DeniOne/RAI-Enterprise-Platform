@@ -1,0 +1,52 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:org_relation",
+        "name": "OrgRelation",
+        "domain": "structure",
+        "class": "relation",
+        "description": "Связь между OrgUnit (reports_to, collaborates).",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "relation_type",
+                    "type": "ENUM",
+                    "required": true,
+                    "unique": false,
+                    "description": "Тип связи между подразделениями",
+                    "enum_options": [
+                        {
+                            "value": "reports_to",
+                            "label": "Подчинение"
+                        },
+                        {
+                            "value": "collaborates",
+                            "label": "Сотрудничество"
+                        },
+                        {
+                            "value": "matrix",
+                            "label": "Матричная связь"
+                        }
+                    ],
+                    "label": "Тип связи"
+                }
+            ],
+            "relationships": [
+                {
+                    "name": "from_unit",
+                    "target_entity_type_urn": "urn:mg:type:org_unit",
+                    "cardinality": "MANY_TO_ONE",
+                    "required": true,
+                    "label": "Из подразделения"
+                },
+                {
+                    "name": "to_unit",
+                    "target_entity_type_urn": "urn:mg:type:org_unit",
+                    "cardinality": "MANY_TO_ONE",
+                    "required": true,
+                    "label": "В подразделение"
+                }
+            ]
+        }
+    }
+}

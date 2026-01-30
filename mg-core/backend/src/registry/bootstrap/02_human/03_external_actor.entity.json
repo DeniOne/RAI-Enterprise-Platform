@@ -1,0 +1,53 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:external_actor",
+        "name": "ExternalActor",
+        "domain": "human",
+        "class": "core",
+        "description": "Клиент, партнёр, подрядчик.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "actor_type",
+                    "type": "ENUM",
+                    "required": true,
+                    "unique": false,
+                    "description": "Тип внешнего актора",
+                    "enum_options": [
+                        {
+                            "value": "client",
+                            "label": "Клиент"
+                        },
+                        {
+                            "value": "partner",
+                            "label": "Партнёр"
+                        },
+                        {
+                            "value": "vendor",
+                            "label": "Подрядчик"
+                        }
+                    ],
+                    "label": "Тип актора"
+                },
+                {
+                    "name": "contact_email",
+                    "type": "STRING",
+                    "required": false,
+                    "unique": false,
+                    "description": "Email",
+                    "label": "Контактный Email"
+                },
+                {
+                    "name": "contact_phone",
+                    "type": "STRING",
+                    "required": false,
+                    "unique": false,
+                    "description": "Телефон",
+                    "label": "Контактный телефон"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

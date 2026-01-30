@@ -1,0 +1,22 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:function",
+        "name": "Function",
+        "domain": "functional",
+        "class": "reference",
+        "description": "Атомарная бизнес-функция.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [],
+            "relationships": [
+                {
+                    "name": "function_group",
+                    "target_entity_type_urn": "urn:mg:type:function_group",
+                    "cardinality": "MANY_TO_ONE",
+                    "required": false,
+                    "label": "Группа функций"
+                }
+            ]
+        }
+    }
+}

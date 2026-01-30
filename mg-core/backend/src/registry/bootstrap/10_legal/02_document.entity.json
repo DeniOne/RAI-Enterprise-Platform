@@ -1,0 +1,31 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:document",
+        "name": "Document",
+        "domain": "legal",
+        "class": "reference",
+        "description": "Юридический документ / шаблон.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "document_type",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "Тип документа",
+                    "label": "Тип документа"
+                },
+                {
+                    "name": "template_urn",
+                    "type": "STRING",
+                    "required": false,
+                    "unique": false,
+                    "description": "URN шаблона",
+                    "label": "URN шаблона"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

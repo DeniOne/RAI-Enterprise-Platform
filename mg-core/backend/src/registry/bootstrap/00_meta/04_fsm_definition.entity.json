@@ -1,0 +1,39 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:entity-type:fsm_definition:v1",
+        "name": "FsmDefinition",
+        "domain": "meta",
+        "class": "meta",
+        "description": "Мета-сущность: определение FSM жизненного цикла.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "initial_state_code",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "Код начального состояния",
+                    "label": "Код начального состояния"
+                },
+                {
+                    "name": "states",
+                    "type": "JSON",
+                    "required": true,
+                    "unique": false,
+                    "description": "Массив состояний [{code, label, color, is_final}]",
+                    "label": "Состояния"
+                },
+                {
+                    "name": "transitions",
+                    "type": "JSON",
+                    "required": true,
+                    "unique": false,
+                    "description": "Массив переходов [{code, from, to, label}]",
+                    "label": "Переходы"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

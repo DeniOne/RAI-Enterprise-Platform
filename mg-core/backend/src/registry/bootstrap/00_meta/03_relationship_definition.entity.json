@@ -1,0 +1,73 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:entity-type:relationship_definition:v1",
+        "name": "RelationshipDefinition",
+        "domain": "meta",
+        "class": "meta",
+        "description": "Мета-сущность: определение связи.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "name",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "Имя связи",
+                    "label": "Название"
+                },
+                {
+                    "name": "from_entity_type_urn",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "URN исходного типа",
+                    "label": "URN типа сущности (от)"
+                },
+                {
+                    "name": "to_entity_type_urn",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "URN целевого типа",
+                    "label": "URN типа сущности (к)"
+                },
+                {
+                    "name": "cardinality",
+                    "type": "ENUM",
+                    "required": true,
+                    "unique": false,
+                    "description": "Кардинальность",
+                    "enum_options": [
+                        {
+                            "value": "ONE_TO_ONE",
+                            "label": "Один к одному"
+                        },
+                        {
+                            "value": "ONE_TO_MANY",
+                            "label": "Один ко многим"
+                        },
+                        {
+                            "value": "MANY_TO_ONE",
+                            "label": "Многие к одному"
+                        },
+                        {
+                            "value": "MANY_TO_MANY",
+                            "label": "Многие ко многим"
+                        }
+                    ],
+                    "label": "Множественность"
+                },
+                {
+                    "name": "is_required",
+                    "type": "BOOLEAN",
+                    "required": true,
+                    "unique": false,
+                    "description": "Обязательная?",
+                    "label": "Обязательно"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

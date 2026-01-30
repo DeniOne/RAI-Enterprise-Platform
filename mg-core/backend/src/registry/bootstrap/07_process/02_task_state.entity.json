@@ -1,0 +1,31 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:task_state",
+        "name": "TaskState",
+        "domain": "process",
+        "class": "reference",
+        "description": "Возможные состояния задачи.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "state_order",
+                    "type": "INTEGER",
+                    "required": true,
+                    "unique": false,
+                    "description": "Порядок состояния",
+                    "label": "Порядок состояния"
+                },
+                {
+                    "name": "is_final",
+                    "type": "BOOLEAN",
+                    "required": true,
+                    "unique": false,
+                    "description": "Финальное состояние?",
+                    "label": "Конечное"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

@@ -1,0 +1,14 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:function_group",
+        "name": "FunctionGroup",
+        "domain": "functional",
+        "class": "reference",
+        "description": "Группировка бизнес-функций (домен).",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [],
+            "relationships": []
+        }
+    }
+}

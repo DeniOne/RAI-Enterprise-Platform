@@ -1,0 +1,14 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:tag",
+        "name": "Tag",
+        "domain": "knowledge",
+        "class": "reference",
+        "description": "Тег для категоризации.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [],
+            "relationships": []
+        }
+    }
+}

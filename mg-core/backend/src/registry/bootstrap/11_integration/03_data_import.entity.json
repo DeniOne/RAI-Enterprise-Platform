@@ -1,0 +1,43 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:data_import",
+        "name": "DataImport",
+        "domain": "integration",
+        "class": "reference",
+        "description": "Профиль импорта данных.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "source_type",
+                    "type": "ENUM",
+                    "required": true,
+                    "unique": false,
+                    "description": "Тип источника",
+                    "enum_options": [
+                        {
+                            "value": "csv",
+                            "label": "CSV"
+                        },
+                        {
+                            "value": "json",
+                            "label": "JSON"
+                        },
+                        {
+                            "value": "api",
+                            "label": "API"
+                        }
+                    ]
+                },
+                {
+                    "name": "mapping_config",
+                    "type": "STRING",
+                    "required": false,
+                    "unique": false,
+                    "description": "Конфигурация маппинга"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

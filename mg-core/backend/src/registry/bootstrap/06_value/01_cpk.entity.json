@@ -1,0 +1,23 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:cpk",
+        "name": "CPK",
+        "domain": "value",
+        "class": "core",
+        "description": "Ценный Конечный Продукт.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "value_metrics",
+                    "type": "STRING",
+                    "required": false,
+                    "unique": false,
+                    "description": "Метрики ценности",
+                    "label": "Метрики ценности"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

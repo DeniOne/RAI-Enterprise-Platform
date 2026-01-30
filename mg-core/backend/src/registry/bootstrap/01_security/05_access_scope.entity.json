@@ -1,0 +1,41 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:access_scope",
+        "name": "AccessScope",
+        "domain": "security",
+        "class": "reference",
+        "description": "Область применения прав (org_unit, project, global).",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "scope_type",
+                    "type": "ENUM",
+                    "required": true,
+                    "unique": false,
+                    "description": "Тип области доступа",
+                    "enum_options": [
+                        {
+                            "value": "global",
+                            "label": "Глобальная"
+                        },
+                        {
+                            "value": "org_unit",
+                            "label": "Организационная единица"
+                        },
+                        {
+                            "value": "project",
+                            "label": "Проект"
+                        },
+                        {
+                            "value": "personal",
+                            "label": "Персональная"
+                        }
+                    ],
+                    "label": "Тип области"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

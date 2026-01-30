@@ -1,0 +1,29 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:role_permission",
+        "name": "RolePermission",
+        "domain": "security",
+        "class": "relation",
+        "description": "Связь Role ↔ Permission. Только relationships, без собственных attributes.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [],
+            "relationships": [
+                {
+                    "name": "role",
+                    "target_entity_type_urn": "urn:mg:type:role",
+                    "cardinality": "MANY_TO_ONE",
+                    "required": true,
+                    "label": "Роль"
+                },
+                {
+                    "name": "permission",
+                    "target_entity_type_urn": "urn:mg:type:permission",
+                    "cardinality": "MANY_TO_ONE",
+                    "required": true,
+                    "label": "Разрешение"
+                }
+            ]
+        }
+    }
+}

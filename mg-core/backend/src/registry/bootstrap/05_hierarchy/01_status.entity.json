@@ -1,0 +1,31 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:status",
+        "name": "Status",
+        "domain": "hierarchy",
+        "class": "reference",
+        "description": "Стратегический статус актора (STAR, TOPCHIK).",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "priority",
+                    "type": "INTEGER",
+                    "required": false,
+                    "unique": false,
+                    "description": "Порядок отображения",
+                    "label": "Приоритет"
+                },
+                {
+                    "name": "color",
+                    "type": "STRING",
+                    "required": false,
+                    "unique": false,
+                    "description": "HEX цвет для UI",
+                    "label": "Цвет"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

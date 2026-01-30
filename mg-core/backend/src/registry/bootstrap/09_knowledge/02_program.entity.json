@@ -1,0 +1,31 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:program",
+        "name": "Program",
+        "domain": "knowledge",
+        "class": "reference",
+        "description": "Образовательная программа.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "duration_weeks",
+                    "type": "INTEGER",
+                    "required": false,
+                    "unique": false,
+                    "description": "Длительность в неделях",
+                    "label": "Продолжительность (недели)"
+                }
+            ],
+            "relationships": [
+                {
+                    "name": "faculty",
+                    "target_entity_type_urn": "urn:mg:type:faculty",
+                    "cardinality": "MANY_TO_ONE",
+                    "required": false,
+                    "label": "Факультет"
+                }
+            ]
+        }
+    }
+}

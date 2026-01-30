@@ -1,0 +1,29 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:cpk_owner",
+        "name": "CpkOwner",
+        "domain": "value",
+        "class": "relation",
+        "description": "Владение CPK (связь CPK ↔ Position).",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [],
+            "relationships": [
+                {
+                    "name": "cpk",
+                    "target_entity_type_urn": "urn:mg:type:cpk",
+                    "cardinality": "MANY_TO_ONE",
+                    "required": true,
+                    "label": "ЦПК"
+                },
+                {
+                    "name": "owner_position",
+                    "target_entity_type_urn": "urn:mg:type:position",
+                    "cardinality": "MANY_TO_ONE",
+                    "required": true,
+                    "label": "Должность владельца"
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,14 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:status_rule",
+        "name": "StatusRule",
+        "domain": "hierarchy",
+        "class": "reference",
+        "description": "Правила перехода между статусами.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [],
+            "relationships": []
+        }
+    }
+}

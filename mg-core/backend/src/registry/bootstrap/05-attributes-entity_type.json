@@ -1,0 +1,80 @@
+[
+    {
+        "entity_type_urn": "urn:mg:entity-type:entity_type:v1",
+        "name": "urn",
+        "data_type": "string",
+        "is_required": true,
+        "ui_visibility": "system",
+        "constraints": {
+            "pattern": "^urn:mg:entity-type:[a-z0-9-]+(:v[0-9]+)?$"
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:entity_type:v1",
+        "name": "name",
+        "data_type": "string",
+        "is_required": true,
+        "ui_visibility": "visible"
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:entity_type:v1",
+        "name": "version",
+        "data_type": "integer",
+        "is_required": true,
+        "ui_visibility": "visible",
+        "constraints": {
+            "minimum": 1
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:entity_type:v1",
+        "name": "description",
+        "data_type": "string",
+        "is_required": false,
+        "ui_visibility": "visible"
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:entity_type:v1",
+        "name": "is_abstract",
+        "data_type": "boolean",
+        "is_required": false,
+        "ui_visibility": "visible",
+        "constraints": {
+            "default": false
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:entity_type:v1",
+        "name": "is_system",
+        "data_type": "boolean",
+        "is_required": false,
+        "ui_visibility": "system",
+        "constraints": {
+            "default": false
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:entity_type:v1",
+        "name": "lifecycle_fsm_urn",
+        "data_type": "urn",
+        "is_required": true,
+        "ui_visibility": "visible",
+        "constraints": {
+            "pattern": "^urn:mg:fsm:[a-z0-9-]+(:v[0-9]+)?$"
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:entity_type:v1",
+        "name": "created_at",
+        "data_type": "datetime",
+        "is_required": false,
+        "ui_visibility": "system"
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:entity_type:v1",
+        "name": "archived_at",
+        "data_type": "datetime",
+        "is_required": false,
+        "ui_visibility": "system"
+    }
+]

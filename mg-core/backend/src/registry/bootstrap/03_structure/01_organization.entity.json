@@ -1,0 +1,31 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:organization",
+        "name": "Organization",
+        "domain": "structure",
+        "class": "core",
+        "description": "Головная организация / холдинг.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "short_name",
+                    "type": "STRING",
+                    "required": false,
+                    "unique": false,
+                    "description": "Сокращённое название",
+                    "label": "Краткое название"
+                }
+            ],
+            "relationships": [
+                {
+                    "name": "legal_entity",
+                    "target_entity_type_urn": "urn:mg:type:legal_entity",
+                    "cardinality": "MANY_TO_ONE",
+                    "required": false,
+                    "label": "Юридическое лицо"
+                }
+            ]
+        }
+    }
+}

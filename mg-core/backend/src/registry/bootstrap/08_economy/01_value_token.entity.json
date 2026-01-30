@@ -1,0 +1,31 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:value_token",
+        "name": "ValueToken",
+        "domain": "economy",
+        "class": "reference",
+        "description": "Тип токена / валюты (XP, Gold, Stars).",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "symbol",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "Символ (XP, ★, 💰)",
+                    "label": "Символ"
+                },
+                {
+                    "name": "is_transferable",
+                    "type": "BOOLEAN",
+                    "required": true,
+                    "unique": false,
+                    "description": "Можно передавать?",
+                    "label": "Передаваемый"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

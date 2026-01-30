@@ -1,0 +1,103 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:entity-type:attribute_definition:v1",
+        "name": "AttributeDefinition",
+        "domain": "meta",
+        "class": "meta",
+        "description": "Мета-сущность: определение атрибута.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "name",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "Имя атрибута",
+                    "label": "Название"
+                },
+                {
+                    "name": "data_type",
+                    "type": "ENUM",
+                    "required": true,
+                    "unique": false,
+                    "description": "Тип данных",
+                    "enum_options": [
+                        {
+                            "value": "STRING",
+                            "label": "Строка"
+                        },
+                        {
+                            "value": "INTEGER",
+                            "label": "Целое число"
+                        },
+                        {
+                            "value": "DECIMAL",
+                            "label": "Десятичное"
+                        },
+                        {
+                            "value": "BOOLEAN",
+                            "label": "Логическое"
+                        },
+                        {
+                            "value": "DATE",
+                            "label": "Дата"
+                        },
+                        {
+                            "value": "DATETIME",
+                            "label": "Дата и время"
+                        },
+                        {
+                            "value": "ENUM",
+                            "label": "Перечисление"
+                        },
+                        {
+                            "value": "JSON",
+                            "label": "JSON"
+                        }
+                    ],
+                    "label": "Тип данных"
+                },
+                {
+                    "name": "is_required",
+                    "type": "BOOLEAN",
+                    "required": true,
+                    "unique": false,
+                    "description": "Обязательный?",
+                    "label": "Обязательно"
+                },
+                {
+                    "name": "is_unique",
+                    "type": "BOOLEAN",
+                    "required": false,
+                    "unique": false,
+                    "description": "Уникальный?",
+                    "label": "Уникальное"
+                },
+                {
+                    "name": "ui_visibility",
+                    "type": "ENUM",
+                    "required": false,
+                    "unique": false,
+                    "description": "Видимость в UI",
+                    "enum_options": [
+                        {
+                            "value": "visible",
+                            "label": "Видимый"
+                        },
+                        {
+                            "value": "hidden",
+                            "label": "Скрытый"
+                        },
+                        {
+                            "value": "system",
+                            "label": "Системный"
+                        }
+                    ],
+                    "label": "Видимость в UI"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

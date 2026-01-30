@@ -1,0 +1,47 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:legal_entity",
+        "name": "LegalEntity",
+        "domain": "legal",
+        "class": "core",
+        "description": "Юридическое лицо (ИНН, реквизиты).",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "inn",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "ИНН",
+                    "label": "ИНН"
+                },
+                {
+                    "name": "kpp",
+                    "type": "STRING",
+                    "required": false,
+                    "unique": false,
+                    "description": "КПП",
+                    "label": "КПП"
+                },
+                {
+                    "name": "ogrn",
+                    "type": "STRING",
+                    "required": false,
+                    "unique": false,
+                    "description": "ОГРН",
+                    "label": "ОГРН"
+                },
+                {
+                    "name": "legal_address",
+                    "type": "STRING",
+                    "required": false,
+                    "unique": false,
+                    "description": "Юридический адрес",
+                    "label": "Юридический адрес"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

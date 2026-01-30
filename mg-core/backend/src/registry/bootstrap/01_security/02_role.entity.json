@@ -1,0 +1,14 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:role",
+        "name": "Role",
+        "domain": "security",
+        "class": "reference",
+        "description": "Роль RBAC. Группирует permissions.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [],
+            "relationships": []
+        }
+    }
+}

@@ -1,0 +1,14 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:methodology",
+        "name": "Methodology",
+        "domain": "knowledge",
+        "class": "reference",
+        "description": "Стандарт или руководство.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [],
+            "relationships": []
+        }
+    }
+}

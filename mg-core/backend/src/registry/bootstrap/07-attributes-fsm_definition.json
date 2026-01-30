@@ -1,0 +1,56 @@
+[
+    {
+        "entity_type_urn": "urn:mg:entity-type:fsm_definition:v1",
+        "name": "urn",
+        "data_type": "string",
+        "is_required": true,
+        "ui_visibility": "system",
+        "constraints": {
+            "pattern": "^urn:mg:fsm:[a-z0-9-]+(:v[0-9]+)?$"
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:fsm_definition:v1",
+        "name": "entity_type_urn",
+        "data_type": "urn",
+        "is_required": true,
+        "ui_visibility": "system",
+        "constraints": {
+            "pattern": "^urn:mg:entity-type:"
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:fsm_definition:v1",
+        "name": "initial_state",
+        "data_type": "string",
+        "is_required": true,
+        "ui_visibility": "visible"
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:fsm_definition:v1",
+        "name": "states",
+        "data_type": "json",
+        "is_required": true,
+        "ui_visibility": "visible",
+        "constraints": {
+            "minItems": 1
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:fsm_definition:v1",
+        "name": "transitions",
+        "data_type": "json",
+        "is_required": true,
+        "ui_visibility": "visible"
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:fsm_definition:v1",
+        "name": "is_system",
+        "data_type": "boolean",
+        "is_required": false,
+        "ui_visibility": "system",
+        "constraints": {
+            "default": false
+        }
+    }
+]

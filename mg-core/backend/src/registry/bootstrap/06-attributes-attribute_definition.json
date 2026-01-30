@@ -1,0 +1,108 @@
+[
+    {
+        "entity_type_urn": "urn:mg:entity-type:attribute_definition:v1",
+        "name": "entity_type_urn",
+        "data_type": "urn",
+        "is_required": true,
+        "ui_visibility": "system",
+        "constraints": {
+            "pattern": "^urn:mg:entity-type:"
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:attribute_definition:v1",
+        "name": "name",
+        "data_type": "string",
+        "is_required": true,
+        "ui_visibility": "visible",
+        "constraints": {
+            "pattern": "^[a-z][a-z0-9_]*$"
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:attribute_definition:v1",
+        "name": "data_type",
+        "data_type": "string",
+        "is_required": true,
+        "ui_visibility": "visible",
+        "constraints": {
+            "enum": [
+                "string",
+                "integer",
+                "boolean",
+                "decimal",
+                "date",
+                "datetime",
+                "json",
+                "urn",
+                "reference"
+            ]
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:attribute_definition:v1",
+        "name": "is_required",
+        "data_type": "boolean",
+        "is_required": false,
+        "ui_visibility": "visible",
+        "constraints": {
+            "default": false
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:attribute_definition:v1",
+        "name": "is_multivalue",
+        "data_type": "boolean",
+        "is_required": false,
+        "ui_visibility": "visible",
+        "constraints": {
+            "default": false
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:attribute_definition:v1",
+        "name": "is_indexed",
+        "data_type": "boolean",
+        "is_required": false,
+        "ui_visibility": "system",
+        "constraints": {
+            "default": false
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:attribute_definition:v1",
+        "name": "constraints",
+        "data_type": "json",
+        "is_required": false,
+        "ui_visibility": "visible"
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:attribute_definition:v1",
+        "name": "ui_visibility",
+        "data_type": "string",
+        "is_required": false,
+        "ui_visibility": "visible",
+        "constraints": {
+            "enum": [
+                "visible",
+                "hidden",
+                "system"
+            ],
+            "default": "visible"
+        }
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:attribute_definition:v1",
+        "name": "valid_from",
+        "data_type": "datetime",
+        "is_required": false,
+        "ui_visibility": "system"
+    },
+    {
+        "entity_type_urn": "urn:mg:entity-type:attribute_definition:v1",
+        "name": "valid_to",
+        "data_type": "datetime",
+        "is_required": false,
+        "ui_visibility": "system"
+    }
+]

@@ -1,0 +1,88 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:retention_policy",
+        "name": "RetentionPolicy",
+        "domain": "security",
+        "class": "reference",
+        "description": "Правила удержания и архивации данных.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "retention_days",
+                    "type": "INTEGER",
+                    "required": true,
+                    "unique": false,
+                    "description": "Срок хранения в днях",
+                    "label": "Дни хранения"
+                },
+                {
+                    "name": "action",
+                    "type": "ENUM",
+                    "required": true,
+                    "unique": false,
+                    "description": "Действие по истечении срока",
+                    "enum_options": [
+                        {
+                            "value": "archive",
+                            "label": "Архивировать"
+                        },
+                        {
+                            "value": "delete",
+                            "label": "Удалить"
+                        }
+                    ],
+                    "label": "Действие"
+                }
+            ],
+            "relationships": []
+        },
+        "views": {
+            "table.default": {
+                "type": "table",
+                "columns": [
+                    {
+                        "field": "retention_days",
+                        "label": "Дни",
+                        "dataType": "number",
+                        "sortable": true
+                    },
+                    {
+                        "field": "action",
+                        "label": "Действие",
+                        "dataType": "enum",
+                        "renderer": "badge"
+                    }
+                ]
+            },
+            "form.create": {
+                "type": "form",
+                "mode": "create",
+                "fields": [
+                    {
+                        "field": "retention_days",
+                        "dataType": "number",
+                        "required": true,
+                        "ui": {
+                            "widget": "number",
+                            "label": "Период хранения (дни)",
+                            "placeholder": "365"
+                        }
+                    },
+                    {
+                        "field": "action",
+                        "dataType": "enum",
+                        "required": true,
+                        "ui": {
+                            "widget": "select",
+                            "label": "Действие по истечении"
+                        }
+                    }
+                ],
+                "submit": {
+                    "action": "create"
+                }
+            }
+        }
+    }
+}

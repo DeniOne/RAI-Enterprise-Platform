@@ -1,0 +1,23 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:workflow",
+        "name": "Workflow",
+        "domain": "process",
+        "class": "reference",
+        "description": "Определение последовательности операций.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "trigger_event",
+                    "type": "STRING",
+                    "required": false,
+                    "unique": false,
+                    "description": "Событие-триггер",
+                    "label": "Событие-триггер"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

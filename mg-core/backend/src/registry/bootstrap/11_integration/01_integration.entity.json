@@ -1,0 +1,53 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:integration",
+        "name": "Integration",
+        "domain": "integration",
+        "class": "reference",
+        "description": "Конфигурация внешней системы.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "system_type",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "Тип системы",
+                    "label": "Тип системы"
+                },
+                {
+                    "name": "endpoint_url",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "URL эндпоинта",
+                    "label": "URL конечной точки"
+                },
+                {
+                    "name": "auth_type",
+                    "type": "ENUM",
+                    "required": true,
+                    "unique": false,
+                    "description": "Тип аутентификации",
+                    "enum_options": [
+                        {
+                            "value": "none",
+                            "label": "Без аутентификации"
+                        },
+                        {
+                            "value": "api_key",
+                            "label": "API Key"
+                        },
+                        {
+                            "value": "oauth",
+                            "label": "OAuth"
+                        }
+                    ],
+                    "label": "Тип аутентификации"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

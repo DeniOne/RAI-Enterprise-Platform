@@ -1,0 +1,39 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:ai_agent",
+        "name": "AIAgent",
+        "domain": "human",
+        "class": "core",
+        "description": "AI-агент как системный актор.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "agent_type",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "Тип агента (advisor, analyzer)",
+                    "label": "Тип агента"
+                },
+                {
+                    "name": "model_id",
+                    "type": "STRING",
+                    "required": false,
+                    "unique": false,
+                    "description": "ID модели",
+                    "label": "ID модели"
+                },
+                {
+                    "name": "capabilities",
+                    "type": "STRING",
+                    "required": false,
+                    "unique": false,
+                    "description": "Возможности (read-only, suggest)",
+                    "label": "Возможности"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

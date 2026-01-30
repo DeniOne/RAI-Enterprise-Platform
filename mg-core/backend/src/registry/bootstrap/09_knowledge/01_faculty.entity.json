@@ -1,0 +1,14 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:faculty",
+        "name": "Faculty",
+        "domain": "knowledge",
+        "class": "reference",
+        "description": "Факультет / направление обучения.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [],
+            "relationships": []
+        }
+    }
+}

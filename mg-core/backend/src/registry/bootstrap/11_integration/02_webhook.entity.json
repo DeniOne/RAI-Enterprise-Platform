@@ -1,0 +1,39 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:webhook",
+        "name": "Webhook",
+        "domain": "integration",
+        "class": "reference",
+        "description": "Webhook endpoint.",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "target_url",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "URL для вызова",
+                    "label": "URL назначения"
+                },
+                {
+                    "name": "events",
+                    "type": "STRING",
+                    "required": true,
+                    "unique": false,
+                    "description": "Список событий (comma-separated)",
+                    "label": "События"
+                },
+                {
+                    "name": "secret",
+                    "type": "STRING",
+                    "required": false,
+                    "unique": false,
+                    "description": "Секрет для подписи",
+                    "label": "Секрет"
+                }
+            ],
+            "relationships": []
+        }
+    }
+}

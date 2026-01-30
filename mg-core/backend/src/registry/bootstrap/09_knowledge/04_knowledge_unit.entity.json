@@ -1,0 +1,45 @@
+{
+    "entity_type": {
+        "urn": "urn:mg:type:knowledge_unit",
+        "name": "KnowledgeUnit",
+        "domain": "knowledge",
+        "class": "reference",
+        "description": "Атомарная единица знаний (урок, статья).",
+        "lifecycle_fsm_urn": "urn:mg:fsm:default:v1",
+        "schema": {
+            "attributes": [
+                {
+                    "name": "content_type",
+                    "type": "ENUM",
+                    "required": true,
+                    "unique": false,
+                    "description": "Тип контента",
+                    "enum_options": [
+                        {
+                            "value": "article",
+                            "label": "Статья"
+                        },
+                        {
+                            "value": "video",
+                            "label": "Видео"
+                        },
+                        {
+                            "value": "quiz",
+                            "label": "Тест"
+                        }
+                    ],
+                    "label": "Тип контента"
+                }
+            ],
+            "relationships": [
+                {
+                    "name": "course",
+                    "target_entity_type_urn": "urn:mg:type:course",
+                    "cardinality": "MANY_TO_ONE",
+                    "required": false,
+                    "label": "Курс"
+                }
+            ]
+        }
+    }
+}
