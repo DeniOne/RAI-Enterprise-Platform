@@ -1,6 +1,6 @@
-# MatrixGin AI Configuration
+# RAI_EP AI Configuration
 
-Эта папка содержит **неизменяемые конфигурационные файлы** для AI Core системы MatrixGin.
+Эта папка содержит **неизменяемые конфигурационные файлы** для AI Core системы RAI_EP.
 
 ## 📁 Структура
 
@@ -28,7 +28,7 @@ ai/
 **Формат**: Plain text (markdown)
 
 ### `agent_card.json`
-**Назначение**: Machine-readable конфигурация MatrixGin  
+**Назначение**: Machine-readable конфигурация RAI_EP  
 **Использование**: Программная проверка permissions, behavior, failure modes  
 **Формат**: JSON
 
@@ -83,9 +83,9 @@ if (!isAllowed) {
 
 ## 📚 Связанные документы
 
-- `documentation/MatrixGin/MATRIXGIN — ОСНОВОПОЛАГАЮЩИЙ ДОКУМЕНТ (L0).md`
-- `documentation/MatrixGin/🤖 MATRIXGIN — AGENT CARD v1.0.md`
-- `documentation/AI/Matrix Gin Rules Dsl V1 Specification.md`
+- `documentation/RAI_EP/RAI_EP — ОСНОВОПОЛАГАЮЩИЙ ДОКУМЕНТ (L0).md`
+- `documentation/RAI_EP/🤖 RAI_EP — AGENT CARD v1.0.md`
+- `documentation/AI/RAI_EP Rules Dsl V1 Specification.md`
 
 ---
 
@@ -97,3 +97,4 @@ if (!isAllowed) {
 1. Одобрено Учредителем
 2. Задокументировано
 3. Залогировано в `ai_audit` таблице
+

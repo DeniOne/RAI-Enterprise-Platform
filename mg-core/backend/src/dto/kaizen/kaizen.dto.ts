@@ -1,5 +1,5 @@
 /**
- * Kaizen DTOs for MatrixGin v2.0 API
+ * Kaizen DTOs for BusinessCore v2.0 API
  */
 
 import {
@@ -61,3 +61,5 @@ export class ImprovementResponseDto {
     @IsDateString()
     createdAt: ISODateTime;
 }
+
+

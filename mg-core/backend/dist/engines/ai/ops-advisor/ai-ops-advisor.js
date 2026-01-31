@@ -44,7 +44,7 @@ const DISCLAIMER = 'Это рекомендации, не указания к д
 // PROMPT TEMPLATES
 // =============================================================================
 const OPTIMIZATION_CONTEXT = `
-Ты — AI Ops Advisor в системе MatrixGin.
+Ты — AI Ops Advisor в системе RAI_EP.
 
 РОЛЬ: Консультант по оптимизации. Ты предлагаешь идеи, НЕ действуешь.
 
@@ -85,7 +85,7 @@ const OPTIMIZATION_CONTEXT = `
 Canon: AI рекомендует. Человек решает.
 `;
 const WASTE_CONTEXT = `
-Ты — AI Ops Advisor в системе MatrixGin.
+Ты — AI Ops Advisor в системе RAI_EP.
 
 РОЛЬ: Консультант по выявлению потерь (Kaizen). Ты показываешь проблемы, НЕ решаешь их.
 

@@ -9,7 +9,7 @@ async function main() {
     const levels = [
         { number: 1, name: 'Founders Council', nameRu: 'Совет учредителей' },
         { number: 2, name: 'Board of Directors', nameRu: 'Совет директоров' },
-        { number: 3, name: 'Management AI', nameRu: 'Цифровые сотрудники уровня управления (MatrixGin)' },
+        { number: 3, name: 'Management AI', nameRu: 'Цифровые сотрудники уровня управления (RAI_EP)' },
         { number: 4, name: 'Departments', nameRu: 'Департаменты' },
         { number: 5, name: 'Divisions', nameRu: 'Отделы' },
         { number: 6, name: 'Functions and Roles', nameRu: 'Функции и Должности' },
@@ -108,3 +108,4 @@ main()
     .finally(async () => {
         await prisma.$disconnect();
     });
+

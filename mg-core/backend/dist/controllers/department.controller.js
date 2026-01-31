@@ -4,8 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DepartmentController = void 0;
-const department_service_1 = __importDefault(require("../services/department.service"));
-const common_enums_1 = require("../dto/common/common.enums");
+const department_service_1 = __importDefault(require("@/core/org/department.service"));
+const common_enums_1 = require("@/dto/common/common.enums");
 class DepartmentController {
     async getAll(req, res) {
         try {

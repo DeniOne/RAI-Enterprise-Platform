@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Common enums for MatrixGin v2.0 API
+ * Common enums for BusinessCore v2.0 API
  * Based on OpenAPI specification
  */
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -11,19 +11,19 @@ exports.KPIPeriod = exports.AuctionStatus = exports.ErrorCode = exports.Interact
 var UserRole;
 (function (UserRole) {
     /** Администратор системы */
-    UserRole["ADMIN"] = "admin";
+    UserRole["ADMIN"] = "ADMIN";
     /** HR менеджер */
-    UserRole["HR_MANAGER"] = "hr_manager";
+    UserRole["HR_MANAGER"] = "HR_MANAGER";
     /** Руководитель департамента */
-    UserRole["DEPARTMENT_HEAD"] = "department_head";
+    UserRole["DEPARTMENT_HEAD"] = "DEPARTMENT_HEAD";
     /** Управляющий филиалом */
-    UserRole["BRANCH_MANAGER"] = "branch_manager";
+    UserRole["BRANCH_MANAGER"] = "BRANCH_MANAGER";
     /** Менеджер (общий) */
-    UserRole["MANAGER"] = "manager";
+    UserRole["MANAGER"] = "MANAGER";
     /** Менеджер производства */
-    UserRole["PRODUCTION_MANAGER"] = "production_manager";
+    UserRole["PRODUCTION_MANAGER"] = "PRODUCTION_MANAGER";
     /** Сотрудник */
-    UserRole["EMPLOYEE"] = "employee";
+    UserRole["EMPLOYEE"] = "EMPLOYEE";
 })(UserRole || (exports.UserRole = UserRole = {}));
 /**
  * User account status
@@ -31,11 +31,11 @@ var UserRole;
 var UserStatus;
 (function (UserStatus) {
     /** Активный */
-    UserStatus["ACTIVE"] = "active";
+    UserStatus["ACTIVE"] = "ACTIVE";
     /** Неактивный */
-    UserStatus["INACTIVE"] = "inactive";
+    UserStatus["INACTIVE"] = "INACTIVE";
     /** Приостановлен */
-    UserStatus["SUSPENDED"] = "suspended";
+    UserStatus["SUSPENDED"] = "SUSPENDED";
 })(UserStatus || (exports.UserStatus = UserStatus = {}));
 /**
  * Employee status (primary hierarchy)
@@ -100,9 +100,9 @@ var TaskPriority;
  */
 var Currency;
 (function (Currency) {
-    /** MatrixCoin (сгораемые) */
+    /** BusinessCoin (сгораемые) */
     Currency["MC"] = "MC";
-    /** Golden MatrixCoin (вечные) */
+    /** Golden BusinessCoin (вечные) */
     Currency["GMC"] = "GMC";
     /** Российский рубль */
     Currency["RUB"] = "RUB";
@@ -132,7 +132,7 @@ var TransactionType;
     TransactionType["SAFE_ACTIVATION"] = "safe_activation";
 })(TransactionType || (exports.TransactionType = TransactionType = {}));
 /**
- * MatrixGin interaction levels with employee
+ * BusinessCore interaction levels with employee
  */
 var InteractionLevel;
 (function (InteractionLevel) {

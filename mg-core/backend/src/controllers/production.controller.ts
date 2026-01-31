@@ -6,10 +6,10 @@
  */
 
 import { Request, Response } from 'express';
-import { getPseeReadModel } from '../psee/psee.service';
-import { ProductionSessionDto, ProductionSessionsResponse, SlaLevel } from '../dto/production/production-session.dto';
-import { SessionMetrics } from '../psee/read-model';
-import { logger } from '../config/logger';
+import { getPseeReadModel } from '@/core/flow/psee/psee.service';
+import { ProductionSessionDto, ProductionSessionsResponse, SlaLevel } from '@/dto/production/production-session.dto';
+import { SessionMetrics } from '@/core/flow/psee/read-model';
+import { logger } from '@/config/logger';
 
 class ProductionController {
     /**
@@ -92,3 +92,4 @@ class ProductionController {
 }
 
 export default new ProductionController();
+

@@ -14,9 +14,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.notificationHandler = exports.NotificationHandler = void 0;
-const prisma_1 = require("../../config/prisma");
-const logger_1 = require("../../config/logger");
-const notification_service_1 = __importDefault(require("../../services/notification.service"));
+const prisma_1 = require("@/config/prisma");
+const logger_1 = require("@/config/logger");
+const notification_service_1 = __importDefault(require("@/core/flow/notification.service"));
 class NotificationHandler {
     /**
      * Handle university events and send notifications

@@ -1,5 +1,5 @@
 /**
- * Ethics Manager DTOs for MatrixGin v2.0 API
+ * Ethics Manager DTOs for BusinessCore v2.0 API
  */
 
 import {
@@ -48,3 +48,5 @@ export class MediationRequestDto {
     @IsString()
     conflictDescription: string;
 }
+
+

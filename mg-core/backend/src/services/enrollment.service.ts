@@ -5,7 +5,7 @@
 
 
 import { prisma } from '../config/prisma';
-import { foundationService } from './foundation.service';
+import { foundationService } from '../core/flow/foundation.service';
 
 export class EnrollmentService {
     /**
@@ -451,3 +451,4 @@ export class EnrollmentService {
 }
 
 export const enrollmentService = new EnrollmentService();
+

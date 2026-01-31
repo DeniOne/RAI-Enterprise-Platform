@@ -10,7 +10,7 @@
  */
 
 import { prisma } from '../config/prisma';
-import { foundationService } from './foundation.service';
+import { foundationService } from '../core/flow/foundation.service';
 import { FOUNDATION_VERSION } from '../config/foundation.constants';
 import { CourseGrade, TargetMetric, CourseScope } from '@prisma/client';
 
@@ -768,4 +768,5 @@ export class UniversityService {
 }
 
 export const universityService = new UniversityService();
+
 

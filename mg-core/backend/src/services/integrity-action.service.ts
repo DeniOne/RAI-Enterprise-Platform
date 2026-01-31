@@ -45,7 +45,7 @@ export class IntegrityActionService {
 
             // 2. Create Audit Log entry (using AntiFraudSignal model as a container for now, or AuditLog if exits)
             // It's better to use a dedicated AuditLog or Event if possible.
-            // MatrixGin schema has Event model which is canonical for history.
+            // RAI_EP schema has Event model which is canonical for history.
             await tx.event.create({
                 data: {
                     type: 'CERTIFICATION_INVALIDATED' as any,
@@ -108,3 +108,4 @@ export class IntegrityActionService {
 }
 
 export const integrityActionService = new IntegrityActionService();
+

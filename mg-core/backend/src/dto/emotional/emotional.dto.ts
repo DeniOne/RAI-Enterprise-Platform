@@ -1,5 +1,5 @@
 /**
- * Emotional Analytics DTOs for MatrixGin v2.0 API
+ * Emotional Analytics DTOs for BusinessCore v2.0 API
  */
 
 import {
@@ -54,3 +54,5 @@ export class BurnoutRiskResponseDto {
     @IsString()
     recommendation: string;
 }
+
+

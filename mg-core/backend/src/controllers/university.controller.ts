@@ -4,7 +4,7 @@
  */
 
 import { Request, Response } from 'express';
-import { universityService } from '../services/university.service';
+import { universityService } from '@/services/university.service';
 import { enrollmentService } from '../services/enrollment.service';
 import { enrollmentController } from './enrollment.controller';
 import { trainerService } from '../services/trainer.service';

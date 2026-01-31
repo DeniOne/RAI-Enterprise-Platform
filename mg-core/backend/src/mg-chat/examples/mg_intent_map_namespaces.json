@@ -149,7 +149,7 @@
                 "матрикс коины"
             ],
             "response": {
-                "text": "Твои MatrixCoin:",
+                "text": "Твои BusinessCoin:",
                 "actions": [
                     "employee.show_achievements"
                 ]

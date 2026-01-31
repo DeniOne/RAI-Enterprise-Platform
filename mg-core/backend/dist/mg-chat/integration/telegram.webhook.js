@@ -29,7 +29,7 @@ exports.handleTelegramWebhook = handleTelegramWebhook;
 const telegram_normalizer_1 = require("./telegram.normalizer");
 const telegram_adapter_1 = require("./telegram.adapter");
 const telegram_sender_1 = require("./telegram.sender");
-const audit_log_service_1 = __importDefault(require("../../services/audit-log.service"));
+const audit_log_service_1 = __importDefault(require("@/core/flow/audit-log.service"));
 /**
  * TEMP: Demo user mapping for ACL integration.
  *

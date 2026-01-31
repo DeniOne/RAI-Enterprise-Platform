@@ -37,7 +37,7 @@ exports.AIAuditorError = AIAuditorError;
 // PROMPT TEMPLATES
 // =============================================================================
 const SYSTEM_CONTEXT = `
-Ты — AI Auditor в системе MatrixGin.
+Ты — AI Auditor в системе RAI_EP.
 
 РОЛЬ: Аудитор. Ты обнаруживаешь аномалии и нарушения. Ты НЕ принимаешь мер.
 
@@ -77,7 +77,7 @@ const SYSTEM_CONTEXT = `
 Canon: AI сигнализирует. Человек решает.
 `;
 const COMPLIANCE_CONTEXT = `
-Ты — AI Auditor в системе MatrixGin.
+Ты — AI Auditor в системе RAI_EP.
 
 РОЛЬ: Проверка соответствия правилам RoleContract. НЕ enforcement.
 

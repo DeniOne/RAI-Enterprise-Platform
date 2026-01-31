@@ -5,7 +5,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.universityController = exports.UniversityController = void 0;
-const university_service_1 = require("../services/university.service");
+const university_service_1 = require("@/services/university.service");
 const enrollment_service_1 = require("../services/enrollment.service");
 const trainer_service_1 = require("../services/trainer.service");
 const logger_1 = require("../config/logger");

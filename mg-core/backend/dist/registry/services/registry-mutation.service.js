@@ -27,6 +27,8 @@ class RegistryMutationService {
             data: {
                 urn,
                 entity_type_urn: resolvedInfoUrn,
+                name: attributes.name || null,
+                description: attributes.description || null,
                 attributes: attributes, // Store JSON
                 fsm_state: 'active' // required field, defaulting to active
             }
@@ -62,6 +64,8 @@ class RegistryMutationService {
         const entity = await prisma_1.prisma.registryEntity.update({
             where: { urn },
             data: {
+                name: attributes.name !== undefined ? attributes.name : existing.name,
+                description: attributes.description !== undefined ? attributes.description : existing.description,
                 attributes: newAttributes
             }
         });

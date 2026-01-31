@@ -19,7 +19,7 @@ exports.MVP_LEARNING_CONTOUR_CONFIG = {
      * These features are DISABLED and return 403 Forbidden
      */
     forbiddenFeatures: {
-        gmc: true, // GoldMatrixCoin (GMC) operations
+        gmc: true, // GoldBusinessCoin (GMC) operations
         store: true, // Store/Marketplace
         auctions: true, // Auction system
         analytics: true, // Analytics & KPI dashboards
@@ -34,16 +34,16 @@ exports.MVP_LEARNING_CONTOUR_CONFIG = {
     allowedFeatures: {
         corporateUniversity: true, // Corporate University module
         telegramBot: true, // Telegram Bot interface
-        matrixCoinRecognition: true, // MC recognition (symbolic only)
+        BusinessCoinRecognition: true, // MC recognition (symbolic only)
         courseRecommendations: true, // PhotoCompany-based recommendations
     },
     /**
-     * MatrixCoin rules in MVP
+     * BusinessCoin rules in MVP
      *
      * CRITICAL: MC is UNIVERSAL recognition unit
      * MVP restricts USAGE SCOPE, not SEMANTIC DEFINITION
      */
-    matrixCoin: {
+    BusinessCoin: {
         symbolic: true, // Recognition only, not currency
         noMoneyConversion: true, // No conversion to real money
         noComparison: true, // No employee comparison

@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Common TypeScript types and interfaces for MatrixGin v2.0 API
+ * Common TypeScript types and interfaces for BusinessCore v2.0 API
  * Based on OpenAPI specification
  */
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {

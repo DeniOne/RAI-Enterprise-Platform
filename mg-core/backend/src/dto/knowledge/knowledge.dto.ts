@@ -1,5 +1,5 @@
 /**
- * Knowledge Base DTOs for MatrixGin v2.0 API
+ * Knowledge Base DTOs for BusinessCore v2.0 API
  */
 
 import {
@@ -55,3 +55,5 @@ export class KnowledgeItemResponseDto {
     @IsDateString()
     updatedAt: ISODateTime;
 }
+
+

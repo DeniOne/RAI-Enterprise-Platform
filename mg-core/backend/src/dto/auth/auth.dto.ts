@@ -1,5 +1,5 @@
 /**
- * Authentication DTOs for MatrixGin v2.0 API
+ * Authentication DTOs for BusinessCore v2.0 API
  */
 
 import {
@@ -202,3 +202,5 @@ export class PermissionsResponseDto {
     @IsString({ each: true })
     permissions: string[];
 }
+
+

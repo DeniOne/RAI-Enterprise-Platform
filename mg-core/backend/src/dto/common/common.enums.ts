@@ -1,5 +1,5 @@
 /**
- * Common enums for MatrixGin v2.0 API
+ * Common enums for BusinessCore v2.0 API
  * Based on OpenAPI specification
  */
 
@@ -97,9 +97,9 @@ export enum TaskPriority {
  * Currency types
  */
 export enum Currency {
-    /** MatrixCoin (сгораемые) */
+    /** BusinessCoin (сгораемые) */
     MC = 'MC',
-    /** Golden MatrixCoin (вечные) */
+    /** Golden BusinessCoin (вечные) */
     GMC = 'GMC',
     /** Российский рубль */
     RUB = 'RUB',
@@ -130,7 +130,7 @@ export enum TransactionType {
 }
 
 /**
- * MatrixGin interaction levels with employee
+ * BusinessCore interaction levels with employee
  */
 export enum InteractionLevel {
     /** Минимальный (опытные) */
@@ -194,3 +194,5 @@ export enum KPIPeriod {
     /** Ежегодно */
     YEARLY = 'yearly',
 }
+
+

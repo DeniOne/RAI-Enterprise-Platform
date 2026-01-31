@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import departmentService from '../services/department.service';
-import { KPIPeriod } from '../dto/common/common.enums';
+import departmentService from '@/core/org/department.service';
+import { KPIPeriod } from '@/dto/common/common.enums';
 
 export class DepartmentController {
     async getAll(req: Request, res: Response) {
@@ -43,3 +43,4 @@ export class DepartmentController {
         }
     }
 }
+

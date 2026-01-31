@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.rewardService = exports.RewardService = exports.RewardStatus = void 0;
 const prisma_1 = require("../config/prisma");
-const canon_1 = require("../core/canon");
+const canon_1 = require("../core/flow/canon");
 var RewardStatus;
 (function (RewardStatus) {
     RewardStatus["PENDING"] = "PENDING";

@@ -65,7 +65,7 @@ export class GraphService {
         // 4. Trace Root (Mock Data for now, as we don't have DB connected to Registry Logic yet fully)
         // Ideally we fetch from DB via EntityService (which is TBD).
         // For Step 10, we will simulate data fetching or use a mock resolver if no DB.
-        // WAIT: MatrixGin has DB (Prisma). But accessing generic entities dynamically requires mapping.
+        // WAIT: RAI_EP has DB (Prisma). But accessing generic entities dynamically requires mapping.
         // For this step, to prove the GRAPH LOGIC, I will use a simple "Stub" or "Mock" data fetcher 
         // that respects the traversal rules. Or better: use the 'registry' itself if we are traversing metadata?
         // NO, request is `getGraph(..., id, ...)`, implying runtime instances.
@@ -173,3 +173,4 @@ export class GraphService {
 }
 
 export const graphService = new GraphService();
+

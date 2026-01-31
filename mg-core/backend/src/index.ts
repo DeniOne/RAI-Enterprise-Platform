@@ -105,7 +105,7 @@ passport.use(jwtStrategy);
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
     explorer: true,
     customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: 'MatrixGin API Docs',
+    customSiteTitle: 'RAI_EP API Docs',
 }));
 
 // API Routes
@@ -124,8 +124,8 @@ app.use('/economy/analytics', mvpLearningContourMiddleware);
 app.use('/economy/auction', mvpLearningContourMiddleware);
 app.use('/api/telegram', telegramRoutes);
 
-app.use('/api/gamification', gamificationRoutes);
-app.use('/api/university', universityRoutes);
+// app.use('/api/gamification', gamificationRoutes); // Class C
+// app.use('/api/university', universityRoutes); // Class C
 app.use('/api/production', productionRoutes);
 app.use('/api/mes', mesRoutes);
 app.use('/api/registry', registryRoutes);
@@ -133,13 +133,13 @@ app.use('/api/entity-cards', entityCardRoutes);
 app.use('/api/graph', graphRoutes);
 app.use('/api/impact', impactRoutes);
 app.use('/api/ai-ops', aiOpsRoutes);
-app.use('/api/adaptation', adaptationRoutes);
-app.use('/api/manager', managerToolsRoutes);
+// app.use('/api/adaptation', adaptationRoutes); // Class C
+// app.use('/api/manager', managerToolsRoutes); // Class C
 app.use('/api/status', statusRoutes);
 app.use('/api/foundation', foundationRoutes);
 
 app.get('/', (req, res) => {
-    res.send('MatrixGin v2.0 API');
+    res.send('RAI_EP API');
 });
 
 // Error Handling (must be after all routes)
@@ -153,7 +153,7 @@ app.use(errorHandler);
 async function startServer() {
     try {
         // 1. Bootstrap Registry (CRITICAL - fail-fast)
-        logger.info('=== STARTING MATRIXGIN SERVER ===');
+        logger.info('=== STARTING RAI_EP SERVER ===');
         await bootstrapRegistry();
 
         // 2. Initialize Entity Cards (CRITICAL - depends on Registry)
@@ -169,8 +169,8 @@ async function startServer() {
             logger.warn('Redis not available, caching disabled', { error: error.message });
         });
 
-        // 4.1 Start University Event Worker (Module 13)
-        universityEventDispatcher.startWorker();
+        // 4.1 Start PSEE Worker (Universal)
+        // universityEventDispatcher.startWorker(); // Moved to Knowledge/University (Class C)
 
         // 5. Start HTTP server
         app.listen(port, () => {

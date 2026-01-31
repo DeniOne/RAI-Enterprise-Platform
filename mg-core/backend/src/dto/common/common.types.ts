@@ -1,5 +1,5 @@
 /**
- * Common TypeScript types and interfaces for MatrixGin v2.0 API
+ * Common TypeScript types and interfaces for BusinessCore v2.0 API
  * Based on OpenAPI specification
  */
 
@@ -176,3 +176,5 @@ export class PaginatedResponse<T = any> {
     @Type(() => PaginationMetaDto)
     pagination: PaginationMetaDto;
 }
+
+

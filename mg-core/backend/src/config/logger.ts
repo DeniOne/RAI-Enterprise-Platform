@@ -88,7 +88,7 @@ export const logger = winston.createLogger({
     levels,
     transports,
     defaultMeta: {
-        service: 'matrixgin-api',
+        service: 'RAI_EP-api',
         environment: process.env.NODE_ENV || 'development'
     },
 });
@@ -125,3 +125,4 @@ export const logWarn = (message: string, meta?: Record<string, any>) => {
 };
 
 export default logger;
+

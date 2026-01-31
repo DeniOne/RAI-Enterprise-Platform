@@ -46,7 +46,11 @@ class EmployeeRegistrationController {
             const offset = (Number(page) - 1) * Number(limit);
             let whereClause = '';
             if (status) {
-                whereClause = `WHERE status = '${status}'::registration_status`;
+                whereClause = `WHERE r.status = '${status}'::registration_status`;
+            }
+            else {
+                // By default, hide incomplete registrations (PENDING)
+                whereClause = `WHERE r.status != 'PENDING'::registration_status`;
             }
             const requests = await prisma.$queryRawUnsafe(`
                 SELECT 
@@ -65,7 +69,7 @@ class EmployeeRegistrationController {
             `);
             const totalResult = await prisma.$queryRawUnsafe(`
                 SELECT COUNT(*) as total 
-                FROM "employee_registration_requests" 
+                FROM "employee_registration_requests" r
                 ${whereClause}
             `);
             const total = Number(totalResult[0]?.total || 0);
@@ -146,8 +150,8 @@ class EmployeeRegistrationController {
         try {
             const { id } = req.params;
             const userId = req.user?.id;
-            const { departmentId, locationId } = req.body;
-            await employee_registration_service_1.default.approveRegistration(id, userId, { departmentId, locationId });
+            console.log(`[Approve] Approving registration ${id} by user ${userId}. Payload:`, req.body);
+            await employee_registration_service_1.default.approveRegistration(id, userId, req.body);
             res.status(200).json({
                 success: true,
                 data: { message: 'Registration approved successfully' }
@@ -155,9 +159,10 @@ class EmployeeRegistrationController {
         }
         catch (error) {
             console.error('Approve registration error:', error);
-            res.status(500).json({
+            const status = error.status || (error.message.includes('incomplete') ? 400 : 500);
+            res.status(status).json({
                 success: false,
-                error: { message: error instanceof Error ? error.message : 'Internal server error' }
+                error: { message: error.message || 'Internal server error' }
             });
         }
     }

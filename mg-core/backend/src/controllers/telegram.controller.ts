@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import telegramService from '../services/telegram.service';
+import telegramService from '@/services/telegram.service';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();

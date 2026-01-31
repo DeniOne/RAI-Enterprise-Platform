@@ -27,7 +27,7 @@ import { normalizeUpdate } from './telegram.normalizer';
 import { processTextMessage, processCallback } from './telegram.adapter';
 import { sendMessage, editMessage, answerCallbackQuery } from './telegram.sender';
 import { AccessContext } from '../../access/mg-chat-acl';
-import auditLogService from '../../services/audit-log.service';
+import auditLogService from '@/core/flow/audit-log.service';
 
 /**
  * TEMP: Demo user mapping for ACL integration.
@@ -117,3 +117,4 @@ export async function handleTelegramWebhook(req: Request, res: Response): Promis
         res.status(200).send('OK');
     }
 }
+

@@ -1,5 +1,5 @@
 /**
- * Content Factory DTOs for MatrixGin v2.0 API
+ * Content Factory DTOs for BusinessCore v2.0 API
  */
 
 import {
@@ -52,3 +52,5 @@ export class ContentEngagementStatsDto {
     @IsNumber()
     engagementRate: number;
 }
+
+

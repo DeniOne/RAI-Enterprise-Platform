@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Foundation Immersion Blocks
+ * Base Foundation Blocks
  * CANON v2.2: Mandatory Admission Scope
  *
  * These are NOT courses. They are fundamental distinct implementation units.
@@ -20,11 +20,14 @@ var FoundationBlockType;
 var FoundationStatus;
 (function (FoundationStatus) {
     FoundationStatus["NOT_STARTED"] = "NOT_STARTED";
-    FoundationStatus["IN_PROGRESS"] = "IN_PROGRESS";
+    FoundationStatus["READING"] = "READING";
+    FoundationStatus["READY_TO_ACCEPT"] = "READY_TO_ACCEPT";
     FoundationStatus["ACCEPTED"] = "ACCEPTED";
-    FoundationStatus["NOT_ACCEPTED"] = "NOT_ACCEPTED";
-    FoundationStatus["VERSION_MISMATCH"] = "VERSION_MISMATCH";
 })(FoundationStatus || (exports.FoundationStatus = FoundationStatus = {}));
+/**
+ * @deprecated Use prisma.foundationBlock in FoundationService instead.
+ * This is kept for reference but NO LONGER DRIVES THE LOGIC.
+ */
 exports.FOUNDATION_BLOCKS = [
     {
         id: FoundationBlockType.CONSTITUTION,

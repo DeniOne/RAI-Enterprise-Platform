@@ -1,5 +1,5 @@
 /**
- * Custom Exception Classes for MatrixGin API
+ * Custom Exception Classes for RAI_EP API
  * Provides standardized error handling across the application
  */
 
@@ -56,3 +56,4 @@ export class InternalError extends AppError {
         super(message, 500, 'INTERNAL_ERROR');
     }
 }
+

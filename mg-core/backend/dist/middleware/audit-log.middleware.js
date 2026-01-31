@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.auditLogMiddleware = void 0;
-const audit_log_service_1 = __importDefault(require("../services/audit-log.service"));
+const audit_log_service_1 = __importDefault(require("@/core/flow/audit-log.service"));
 const auditLogMiddleware = (req, res, next) => {
     // Log only state-changing methods
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {

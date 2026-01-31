@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { AuthService } from '../services/auth.service';
-import { RegisterRequestDto, LoginRequestDto } from '../dto/auth/auth.dto';
+import { AuthService } from '@/core/identity/auth.service';
+import { RegisterRequestDto, LoginRequestDto } from '@/dto/auth/auth.dto';
 
 const authService = new AuthService();
 
@@ -103,3 +103,4 @@ export class AuthController {
         }
     }
 }
+

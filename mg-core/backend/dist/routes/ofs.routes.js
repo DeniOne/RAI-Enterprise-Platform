@@ -87,4 +87,9 @@ router.get('/ideas', authenticate, (req, res) => ofs_controller_1.default.getIde
 // =============================================================================
 router.post('/hybrid/interaction', authenticate, (req, res) => ofs_controller_1.default.logHybridInteraction(req, res)); // Any user can log
 router.get('/hybrid/stats', authenticate, (req, res) => ofs_controller_1.default.getHybridTeamStats(req, res));
+// =============================================================================
+// Locations & Positions dictionaries
+// =============================================================================
+router.get('/locations', authenticate, (req, res) => ofs_controller_1.default.getLocations(req, res));
+router.get('/positions', authenticate, (req, res) => ofs_controller_1.default.getPositions(req, res));
 exports.default = router;

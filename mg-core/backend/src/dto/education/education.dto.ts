@@ -1,5 +1,5 @@
 /**
- * Education DTOs for MatrixGin v2.0 API
+ * Education DTOs for BusinessCore v2.0 API
  */
 
 import {
@@ -106,3 +106,5 @@ export class QuizResultResponseDto {
     @IsNumber()
     mcReward?: number;
 }
+
+

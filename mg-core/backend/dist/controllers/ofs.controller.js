@@ -3,9 +3,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const ofs_service_1 = __importDefault(require("../services/ofs.service"));
-const ofs_acl_service_1 = require("../services/ofs-acl.service");
-const common_enums_1 = require("../dto/common/common.enums");
+const ofs_service_1 = __importDefault(require("@/core/org/ofs.service"));
+const ofs_acl_service_1 = require("@/core/org/ofs-acl.service");
+const common_enums_1 = require("@/dto/common/common.enums");
 class OFSController {
     /**
      * GET /api/ofs/departments
@@ -713,6 +713,46 @@ class OFSController {
         }
         catch (error) {
             console.error('Get hybrid team stats error:', error);
+            res.status(500).json({
+                success: false,
+                error: { message: 'Internal server error' }
+            });
+        }
+    }
+    /**
+     * GET /api/ofs/locations
+     * Get all active locations
+     */
+    async getLocations(req, res) {
+        try {
+            const locations = await ofs_service_1.default.getLocations();
+            res.status(200).json({
+                success: true,
+                data: locations
+            });
+        }
+        catch (error) {
+            console.error('Get locations error:', error);
+            res.status(500).json({
+                success: false,
+                error: { message: 'Internal server error' }
+            });
+        }
+    }
+    /**
+     * GET /api/ofs/positions
+     * Get all active positions
+     */
+    async getPositions(req, res) {
+        try {
+            const positions = await ofs_service_1.default.getPositions();
+            res.status(200).json({
+                success: true,
+                data: positions
+            });
+        }
+        catch (error) {
+            console.error('Get positions error:', error);
             res.status(500).json({
                 success: false,
                 error: { message: 'Internal server error' }

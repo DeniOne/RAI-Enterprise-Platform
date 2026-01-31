@@ -37,10 +37,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EmployeeRegistrationService = exports.RegistrationStep = exports.RegistrationStatus = void 0;
+const telegraf_1 = require("telegraf");
 const telegram_service_1 = __importDefault(require("./telegram.service"));
 const event_emitter_1 = require("@nestjs/event-emitter");
 const prisma_1 = require("../config/prisma");
-const email_service_1 = __importDefault(require("./email.service"));
+const client_1 = require("@prisma/client");
 const bcrypt = __importStar(require("bcrypt"));
 const crypto_1 = require("crypto");
 const photo_optimization_service_1 = __importDefault(require("./photo-optimization.service"));
@@ -48,8 +49,6 @@ const photo_optimization_service_1 = __importDefault(require("./photo-optimizati
 var RegistrationStatus;
 (function (RegistrationStatus) {
     RegistrationStatus["PENDING"] = "PENDING";
-    RegistrationStatus["IN_PROGRESS"] = "IN_PROGRESS";
-    RegistrationStatus["DOCUMENTS_PENDING"] = "DOCUMENTS_PENDING";
     RegistrationStatus["REVIEW"] = "REVIEW";
     RegistrationStatus["APPROVED"] = "APPROVED";
     RegistrationStatus["REJECTED"] = "REJECTED";
@@ -57,17 +56,18 @@ var RegistrationStatus;
 // Registration step types
 var RegistrationStep;
 (function (RegistrationStep) {
-    RegistrationStep["PHOTO"] = "PHOTO";
-    RegistrationStep["FULL_NAME"] = "FULL_NAME";
-    RegistrationStep["BIRTH_DATE"] = "BIRTH_DATE";
-    RegistrationStep["REG_ADDRESS"] = "REG_ADDRESS";
-    RegistrationStep["RES_ADDRESS"] = "RES_ADDRESS";
-    RegistrationStep["PHONE"] = "PHONE";
-    RegistrationStep["EMAIL"] = "EMAIL";
-    RegistrationStep["POSITION"] = "POSITION";
-    RegistrationStep["LOCATION"] = "LOCATION";
-    RegistrationStep["PASSPORT_SCAN"] = "PASSPORT_SCAN";
-    RegistrationStep["DOCUMENTS"] = "DOCUMENTS";
+    RegistrationStep["APPLICATION_NAME"] = "APPLICATION_NAME";
+    RegistrationStep["APPLICATION_BRANCH"] = "APPLICATION_BRANCH";
+    RegistrationStep["APPLICATION_POSITION"] = "APPLICATION_POSITION";
+    RegistrationStep["APPLICATION_CONTACTS"] = "APPLICATION_CONTACTS";
+    RegistrationStep["APPLICATION_SUBMITTED"] = "APPLICATION_SUBMITTED";
+    RegistrationStep["BASE_GATE"] = "BASE_GATE";
+    RegistrationStep["PROFILE_PHOTO"] = "PROFILE_PHOTO";
+    RegistrationStep["PROFILE_BIRTH_DATE"] = "PROFILE_BIRTH_DATE";
+    RegistrationStep["PROFILE_REG_ADDRESS"] = "PROFILE_REG_ADDRESS";
+    RegistrationStep["PROFILE_RES_ADDRESS"] = "PROFILE_RES_ADDRESS";
+    RegistrationStep["PROFILE_CONTACTS"] = "PROFILE_CONTACTS";
+    RegistrationStep["PROFILE_PASSPORT"] = "PROFILE_PASSPORT";
     RegistrationStep["COMPLETED"] = "COMPLETED";
 })(RegistrationStep || (exports.RegistrationStep = RegistrationStep = {}));
 class EmployeeRegistrationService {
@@ -110,7 +110,7 @@ class EmployeeRegistrationService {
                     ${(0, crypto_1.randomUUID)()},
                     ${telegramId}, 
                     'PENDING'::registration_status, 
-                    'PHOTO'::registration_step,
+                    'APPLICATION_NAME'::registration_step,
                     ${invitedByUserId},
                     ${departmentId || null},
                     ${locationId || null},
@@ -124,14 +124,14 @@ class EmployeeRegistrationService {
             }
         }
         // Send welcome message with registration button
-        const welcomeMessage = `🎉 Приветствуем Тебя в системе MatrixGin!\n\n` +
-            `Добро пожаловать в нашу команду! Для завершения регистрации в системе, ` +
-            `пожалуйста, нажми на кнопку ниже и пройди простой процесс регистрации.\n\n` +
-            `Это займет всего несколько минут!`;
+        const welcomeMessage = `🎉 *Приветствуем в системе RAI_EP!*\n\n` +
+            `Для начала работы тебе необходимо пройти регистрацию и подать заявку в HR-отдел.\n\n` +
+            `Нажми на кнопку ниже, чтобы начать.`;
         await bot.telegram.sendMessage(telegramId, welcomeMessage, {
+            parse_mode: 'Markdown',
             reply_markup: {
                 inline_keyboard: [
-                    [{ text: '📝 Начать регистрацию', callback_data: 'start_registration' }]
+                    [{ text: '▶️ Начать регистрацию', callback_data: 'start_registration' }]
                 ]
             }
         });
@@ -147,6 +147,15 @@ class EmployeeRegistrationService {
             return;
         // Check/Create registration request
         const existing = await this.getRegistrationByTelegramId(telegramId);
+        // CANON UPDATE: Strict Phase 1 - Minimal Data for HR Approval
+        // Sequence: Full Name -> Location -> Position -> Submit to HR
+        // Send "Full Name" prompt directly
+        await ctx.reply(`📝 *Начинаем регистрацию*\n\n` +
+            `👤 *Шаг 1/3: ФИО*\n\n` +
+            `Введите ваши Фамилию, Имя и Отчество (если есть):\n` +
+            `_Пример: Иванов Иван Иванович_`, {
+            parse_mode: 'Markdown'
+        });
         if (!existing) {
             await prisma_1.prisma.$executeRaw `
                 INSERT INTO employee_registration_requests (
@@ -161,30 +170,21 @@ class EmployeeRegistrationService {
                     ${(0, crypto_1.randomUUID)()},
                     ${telegramId}, 
                     ${username || null},
-                    'IN_PROGRESS'::registration_status, 
-                    'PHOTO'::registration_step,
+                    'PENDING'::registration_status, 
+                    'APPLICATION_NAME'::registration_step,
                     NOW(),
                     NOW()
                 )
             `;
         }
         else {
-            // Resume logic
             await prisma_1.prisma.$executeRaw `
                 UPDATE employee_registration_requests
-                SET status = 'IN_PROGRESS'::registration_status,
-                    current_step = 'PHOTO'::registration_step,
+                SET current_step = 'APPLICATION_NAME'::registration_step,
                     updated_at = NOW()
-                WHERE telegram_id = ${telegramId}
+                WHERE id = ${existing.id}
             `;
         }
-        // Send first step instructions
-        await ctx.reply(`📸 *Шаг 1/11: Фото профиля*\n\n` +
-            `Пожалуйста, отправь своё селфи.\n\n` +
-            `Ты можешь:\n` +
-            `• Сделать фото прямо сейчас 📷\n` +
-            `• Загрузить из галереи 🖼️\n\n` +
-            `_Фото должно быть четким и на нейтральном фоне_`, { parse_mode: 'Markdown' });
     }
     /**
      * Handle registration step based on current step
@@ -192,41 +192,38 @@ class EmployeeRegistrationService {
     async handleRegistrationStep(ctx, registration) {
         const currentStep = registration.current_step;
         switch (currentStep) {
-            case 'PHOTO':
-                await this.handlePhotoStep(ctx, registration);
-                break;
-            case 'FULL_NAME':
+            case 'APPLICATION_NAME':
                 await this.handleFullNameStep(ctx, registration);
                 break;
-            case 'BIRTH_DATE':
-                await this.handleBirthDateStep(ctx, registration);
-                break;
-            case 'REG_ADDRESS':
-                await this.handleRegAddressStep(ctx, registration);
-                break;
-            case 'RES_ADDRESS':
-                await this.handleResAddressStep(ctx, registration);
-                break;
-            case 'PHONE':
-                await this.handlePhoneStep(ctx, registration);
-                break;
-            case 'EMAIL':
-                await this.handleEmailStep(ctx, registration);
-                break;
-            case 'POSITION':
-                await this.handlePositionStep(ctx, registration);
-                break;
-            case 'LOCATION':
+            case 'APPLICATION_BRANCH':
                 await this.handleLocationStep(ctx, registration);
                 break;
-            case 'PASSPORT_SCAN':
+            case 'APPLICATION_POSITION':
+                await this.handlePositionStep(ctx, registration);
+                break;
+            case 'BASE_GATE':
+                await ctx.reply('🧭 Пожалуйста, ознакомься с Базой и прими её в главном меню для продолжения.');
+                break;
+            case 'PROFILE_PHOTO':
+                await this.handlePhotoStep(ctx, registration);
+                break;
+            case 'PROFILE_BIRTH_DATE':
+                await this.handleBirthDateStep(ctx, registration);
+                break;
+            case 'PROFILE_REG_ADDRESS':
+                await this.handleAddressStep(ctx, registration, RegistrationStep.PROFILE_REG_ADDRESS);
+                break;
+            case 'PROFILE_RES_ADDRESS':
+                await this.handleAddressStep(ctx, registration, RegistrationStep.PROFILE_RES_ADDRESS);
+                break;
+            case 'PROFILE_CONTACTS':
+                await this.handlePhoneStep(ctx, registration);
+                break;
+            case 'PROFILE_PASSPORT':
                 await this.handlePassportScanStep(ctx, registration);
                 break;
-            case 'DOCUMENTS':
-                await this.handleDocumentsStep(ctx, registration);
-                break;
             default:
-                await ctx.reply('Неизвестный шаг регистрации');
+                await ctx.reply('⚠️ Неизвестный шаг регистрации. Обратитесь в поддержку.');
         }
     }
     async handlePhotoStep(ctx, registration) {
@@ -244,15 +241,15 @@ class EmployeeRegistrationService {
             await prisma_1.prisma.$executeRaw `
                 UPDATE employee_registration_requests
                 SET photo_url = ${photoUrl},
-                    current_step = 'FULL_NAME'::registration_step,
+                    current_step = 'PROFILE_CONTACTS'::registration_step,
                     updated_at = NOW()
                 WHERE id = ${registration.id}
             `;
-            await this.saveStepHistory(registration.id, 'PHOTO', { photo_url: photoUrl });
+            await this.saveStepHistory(registration.id, 'PROFILE_PHOTO', { photo_url: photoUrl });
             await ctx.reply(`✅ Фото сохранено!\n\n` +
-                `👤 *Шаг 2/11: ФИО*\n\n` +
-                `Введи свои Фамилию, Имя и Отчество в формате:\n` +
-                `_Иванов Иван Иванович_`, { parse_mode: 'Markdown' });
+                `📧 *Шаг: Контакты*\n\n` +
+                `Введите ваш email:\n` +
+                `_Например: ivanov@example.com_`, { parse_mode: 'Markdown' });
         }
         catch (error) {
             console.error('[EmployeeRegistrationService] Error in handlePhotoStep:', error);
@@ -278,180 +275,16 @@ class EmployeeRegistrationService {
             SET first_name = ${firstName},
                 last_name = ${lastName},
                 middle_name = ${middleName},
-                current_step = 'BIRTH_DATE'::registration_step,
+                current_step = 'APPLICATION_BRANCH'::registration_step,
                 updated_at = NOW()
             WHERE id = ${registration.id}
         `;
-        await this.saveStepHistory(registration.id, 'FULL_NAME', {
+        await this.saveStepHistory(registration.id, 'APPLICATION_NAME', {
             first_name: firstName,
             last_name: lastName,
             middle_name: middleName
         });
-        await ctx.reply(`✅ ФИО сохранено!\n\n` +
-            `📅 *Шаг 3/11: Дата рождения*\n\n` +
-            `Введи дату рождения в формате:\n` +
-            `_ДД.ММ.ГГГГ (например: 15.03.1990)_`, { parse_mode: 'Markdown' });
-    }
-    async handleBirthDateStep(ctx, registration) {
-        if (!ctx.message?.text) {
-            await ctx.reply('Пожалуйста, введи текст');
-            return;
-        }
-        const dateText = ctx.message.text.trim();
-        const dateRegex = /^(\d{2})\.(\d{2})\.(\d{4})$/;
-        const match = dateText.match(dateRegex);
-        if (!match) {
-            await ctx.reply('Неверный формат даты. Используй формат: ДД.ММ.ГГГГ (например: 15.03.1990)');
-            return;
-        }
-        const [, day, month, year] = match;
-        const birthDate = new Date(`${year}-${month}-${day}`);
-        if (isNaN(birthDate.getTime())) {
-            await ctx.reply('Некорректная дата. Пожалуйста, проверь и введи снова.');
-            return;
-        }
-        // Check if person is at least 18 years old
-        const age = this.calculateAge(birthDate);
-        if (age < 18) {
-            await ctx.reply('Вам должно быть не менее 18 лет для регистрации.');
-            return;
-        }
-        await prisma_1.prisma.$executeRaw `
-            UPDATE employee_registration_requests
-            SET birth_date = ${birthDate}::date,
-                current_step = 'REG_ADDRESS'::registration_step,
-                updated_at = NOW()
-            WHERE id = ${registration.id}
-        `;
-        await this.saveStepHistory(registration.id, 'BIRTH_DATE', { birth_date: birthDate.toISOString() });
-        await ctx.reply(`✅ Дата рождения сохранена!\n\n` +
-            `🏠 *Шаг 4/11: Адрес регистрации*\n\n` +
-            `Введи адрес регистрации (по паспорту):\n` +
-            `_Например: г. Минск, ул. Ленина, д. 10, кв. 5_`, { parse_mode: 'Markdown' });
-    }
-    async handleRegAddressStep(ctx, registration) {
-        if (!ctx.message?.text) {
-            await ctx.reply('Пожалуйста, введи текст');
-            return;
-        }
-        const address = ctx.message.text.trim();
-        if (address.length < 10) {
-            await ctx.reply('Адрес слишком короткий. Пожалуйста, введи полный адрес.');
-            return;
-        }
-        await prisma_1.prisma.$executeRaw `
-            UPDATE employee_registration_requests
-            SET registration_address = ${address},
-                current_step = 'RES_ADDRESS'::registration_step,
-                updated_at = NOW()
-            WHERE id = ${registration.id}
-        `;
-        await this.saveStepHistory(registration.id, 'REG_ADDRESS', { registration_address: address });
-        await ctx.reply(`✅ Адрес регистрации сохранен!\n\n` +
-            `🏡 *Шаг 5/11: Адрес проживания*\n\n` +
-            `Совпадает ли адрес проживания с адресом регистрации?`, {
-            parse_mode: 'Markdown',
-            reply_markup: {
-                inline_keyboard: [
-                    [{ text: '✅ Да, совпадает', callback_data: 'address_same' }],
-                    [{ text: '❌ Нет, ввести другой', callback_data: 'address_different' }]
-                ]
-            }
-        });
-    }
-    async handleResAddressStep(ctx, registration) {
-        if (!ctx.message?.text) {
-            await ctx.reply('Пожалуйста, введи текст');
-            return;
-        }
-        const address = ctx.message.text.trim();
-        if (address.length < 10) {
-            await ctx.reply('Адрес слишком короткий. Пожалуйста, введи полный адрес.');
-            return;
-        }
-        await prisma_1.prisma.$executeRaw `
-            UPDATE employee_registration_requests
-            SET residential_address = ${address},
-                addresses_match = false,
-                current_step = 'PHONE'::registration_step,
-                updated_at = NOW()
-            WHERE id = ${registration.id}
-        `;
-        await this.saveStepHistory(registration.id, 'RES_ADDRESS', {
-            residential_address: address,
-            addresses_match: false
-        });
-        await this.promptPhoneStep(ctx);
-    }
-    async handleAddressMatchCallback(ctx, registration, match) {
-        if (match) {
-            // Use registration address as residential address
-            await prisma_1.prisma.$executeRaw `
-                UPDATE employee_registration_requests
-                SET residential_address = registration_address,
-                    addresses_match = true,
-                    current_step = 'PHONE'::registration_step,
-                    updated_at = NOW()
-                WHERE id = ${registration.id}
-            `;
-            await this.saveStepHistory(registration.id, 'RES_ADDRESS', { addresses_match: true });
-            await this.promptPhoneStep(ctx);
-        }
-        else {
-            await ctx.reply(`Введи адрес проживания:\n` +
-                `_Например: г. Минск, ул. Победы, д. 25, кв. 12_`, { parse_mode: 'Markdown' });
-        }
-    }
-    async promptPhoneStep(ctx) {
-        await ctx.reply(`✅ Адрес проживания сохранен!\n\n` +
-            `📱 *Шаг 6/11: Номер телефона*\n\n` +
-            `Введи номер телефона в международном формате:\n` +
-            `_Например: +375291234567_`, { parse_mode: 'Markdown' });
-    }
-    async handlePhoneStep(ctx, registration) {
-        if (!ctx.message?.text) {
-            await ctx.reply('Пожалуйста, введи текст');
-            return;
-        }
-        const phone = ctx.message.text.trim().replace(/[\s\-\(\)]/g, '');
-        const phoneRegex = /^\+?[0-9]{10,15}$/;
-        if (!phoneRegex.test(phone)) {
-            await ctx.reply('Неверный формат номера. Используй формат: +375291234567');
-            return;
-        }
-        await prisma_1.prisma.$executeRaw `
-            UPDATE employee_registration_requests
-            SET phone = ${phone},
-                current_step = 'EMAIL'::registration_step,
-                updated_at = NOW()
-            WHERE id = ${registration.id}
-        `;
-        await this.saveStepHistory(registration.id, 'PHONE', { phone });
-        await ctx.reply(`✅ Телефон сохранен!\n\n` +
-            `📧 *Шаг 7/11: Email*\n\n` +
-            `Введи адрес электронной почты:\n` +
-            `_Например: ivanov@example.com_`, { parse_mode: 'Markdown' });
-    }
-    async handleEmailStep(ctx, registration) {
-        if (!ctx.message?.text) {
-            await ctx.reply('Пожалуйста, введи текст');
-            return;
-        }
-        const email = ctx.message.text.trim().toLowerCase();
-        const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
-        if (!emailRegex.test(email)) {
-            await ctx.reply('Неверный формат email. Проверь правильность ввода.');
-            return;
-        }
-        await prisma_1.prisma.$executeRaw `
-            UPDATE employee_registration_requests
-            SET email = ${email},
-                current_step = 'POSITION'::registration_step,
-                updated_at = NOW()
-            WHERE id = ${registration.id}
-        `;
-        await this.saveStepHistory(registration.id, 'EMAIL', { email });
-        await this.promptPositionStep(ctx);
+        await this.promptLocationStep(ctx, registration);
     }
     async promptPositionStep(ctx) {
         // Fetch active positions
@@ -460,7 +293,7 @@ class EmployeeRegistrationService {
         `;
         if (positions.length === 0) {
             // Fallback to text if no positions defined
-            await ctx.reply(`💼 *Шаг 8/11: Должность*\n\n` +
+            await ctx.reply(`💼 *Шаг: Должность*\n\n` +
                 `Введи должность, на которую устраиваешься:\n` +
                 `_Например: Менеджер по продажам_`, { parse_mode: 'Markdown' });
             return;
@@ -469,7 +302,7 @@ class EmployeeRegistrationService {
                 text: p.name,
                 callback_data: `position_${p.id}`
             }]);
-        await ctx.reply(`💼 *Шаг 8/11: Должность*\n\n` +
+        await ctx.reply(`💼 *Шаг: Должность*\n\n` +
             `Выбери должность из списка:`, {
             parse_mode: 'Markdown',
             reply_markup: {
@@ -478,25 +311,49 @@ class EmployeeRegistrationService {
         });
     }
     async handlePositionStep(ctx, registration) {
-        await ctx.reply('⚠️ Пожалуйста, выбери должность из списка выше, нажав на кнопку.');
+        const positions = await prisma_1.prisma.position.findMany({
+            where: { is_active: true },
+            orderBy: { name: 'asc' }
+        });
+        if (positions.length === 0) {
+            await ctx.reply('⚠️ Список должностей пуст. Обратись к администратору.');
+            return;
+        }
+        const buttons = positions.map(pos => telegraf_1.Markup.button.callback(pos.name, `position_${pos.id}`));
+        // Group buttons by 2 in a row
+        const keyboard = [];
+        for (let i = 0; i < buttons.length; i += 2) {
+            keyboard.push(buttons.slice(i, i + 2));
+        }
+        await ctx.reply(`💼 *Шаг 3/3: Должность*\n\n` +
+            `Выбери свою должность из списка:`, {
+            parse_mode: 'Markdown',
+            ...telegraf_1.Markup.inlineKeyboard(keyboard)
+        });
     }
     async handlePositionCallback(ctx, registration, positionId) {
-        const position = await prisma_1.prisma.$queryRaw `
-            SELECT name FROM positions WHERE id = ${positionId}
-        `;
-        if (position.length === 0) {
+        const position = await prisma_1.prisma.position.findUnique({ where: { id: positionId } });
+        if (!position) {
             await ctx.reply('❌ Ошибка: Должность не найдена.');
             return;
         }
         await prisma_1.prisma.$executeRaw `
             UPDATE employee_registration_requests
-            SET position = ${position[0].name},
-                current_step = 'LOCATION'::registration_step,
+            SET position = ${position.name},
+                current_step = 'APPLICATION_SUBMITTED'::registration_step,
+                status = 'REVIEW'::registration_status,
                 updated_at = NOW()
             WHERE id = ${registration.id}
         `;
-        await this.saveStepHistory(registration.id, 'POSITION', { positionId, positionName: position[0].name });
-        await this.promptLocationStep(ctx, registration);
+        await this.saveStepHistory(registration.id, 'APPLICATION_POSITION', { position: position.name });
+        // Notify Admins
+        await this.notifyAdminsAboutNewRegistration({
+            ...registration,
+            position: position.name,
+            status: 'REVIEW'
+        });
+        await ctx.reply(`✅ *Заявка принята!*\n\n` +
+            `Твои данные отправлены на проверку HR-менеджеру. Пожалуйста, ожидай уведомления о решении.`, { parse_mode: 'Markdown' });
     }
     async promptLocationStep(ctx, registration) {
         // Fetch available locations
@@ -504,14 +361,8 @@ class EmployeeRegistrationService {
             SELECT id, name, city FROM locations WHERE is_active = true ORDER BY name
         `;
         if (locations.length === 0) {
-            // If no locations, skip to passport scan
-            await prisma_1.prisma.$executeRaw `
-                UPDATE employee_registration_requests
-                SET current_step = 'PASSPORT_SCAN'::registration_step,
-                    updated_at = NOW()
-                WHERE id = ${registration.id}
-            `;
-            await this.promptPassportScanStep(ctx);
+            // If no locations, skip
+            await ctx.reply('⚠️ Локации не найдены. Обратитесь к администратору.');
             return;
         }
         // Create inline keyboard with locations
@@ -519,8 +370,8 @@ class EmployeeRegistrationService {
                 text: `${loc.name}${loc.city ? ` (${loc.city})` : ''}`,
                 callback_data: `location_${loc.id}`
             }]);
-        await ctx.reply(`✅ Должность сохранена!\n\n` +
-            `📍 *Шаг 9/11: Локация*\n\n` +
+        await ctx.reply(`✅ ФИО сохранено!\n\n` +
+            `🏢 *Шаг 2/3: Филиал (Локация)*\n\n` +
             `Выбери локацию, где будешь работать:`, {
             parse_mode: 'Markdown',
             reply_markup: {
@@ -531,22 +382,64 @@ class EmployeeRegistrationService {
     async handleLocationStep(ctx, registration) {
         await ctx.reply('⚠️ Пожалуйста, выбери локацию из списка выше, нажав на кнопку.');
     }
+    async handleBirthDateStep(ctx, registration) {
+        if (!ctx.message?.text) {
+            await ctx.reply('⚠️ Пожалуйста, введи дату рождения в формате ДД.ММ.ГГГГ');
+            return;
+        }
+        const dateStr = ctx.message.text.trim();
+        const dateParts = dateStr.split('.');
+        if (dateParts.length !== 3) {
+            await ctx.reply('⚠️ Неверный формат. Используй ДД.ММ.ГГГГ (например, 01.01.1990)');
+            return;
+        }
+        const birthDate = new Date(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`);
+        if (isNaN(birthDate.getTime())) {
+            await ctx.reply('⚠️ Неверная дата. Пожалуйста, проверь правильность ввода.');
+            return;
+        }
+        await prisma_1.prisma.$executeRaw `
+            UPDATE employee_registration_requests
+            SET birth_date = ${birthDate},
+                current_step = 'PROFILE_REG_ADDRESS'::registration_step,
+                updated_at = NOW()
+            WHERE id = ${registration.id}
+        `;
+        await this.saveStepHistory(registration.id, 'PROFILE_BIRTH_DATE', { birthDate });
+        await ctx.reply(`✅ Дата рождения сохранена!\n\n` +
+            `🏠 *Шаг: Адрес прописки*\n\n` +
+            `Введите адрес вашей регистрации по паспорту:`, { parse_mode: 'Markdown' });
+    }
+    async handleAddressStep(ctx, registration, step) {
+        if (!ctx.message?.text) {
+            await ctx.reply('⚠️ Пожалуйста, введите адрес текстом.');
+            return;
+        }
+        const address = ctx.message.text.trim();
+        const isRegAddress = step === RegistrationStep.PROFILE_REG_ADDRESS;
+        const nextStep = isRegAddress ? RegistrationStep.PROFILE_RES_ADDRESS : RegistrationStep.PROFILE_CONTACTS;
+        const nextPrompt = isRegAddress
+            ? `🏠 *Шаг: Адрес проживания*\n\nВведите ваш фактический адрес проживания:`
+            : `📧 *Шаг: Контакты*\n\nВведите ваш номер телефона:\n_Пример: +79991234567_`;
+        if (isRegAddress) {
+            await prisma_1.prisma.$executeRaw `UPDATE employee_registration_requests SET registration_address = ${address}, current_step = ${nextStep}::registration_step, updated_at = NOW() WHERE id = ${registration.id}`;
+        }
+        else {
+            await prisma_1.prisma.$executeRaw `UPDATE employee_registration_requests SET residential_address = ${address}, current_step = ${nextStep}::registration_step, updated_at = NOW() WHERE id = ${registration.id}`;
+        }
+        await this.saveStepHistory(registration.id, step, { address });
+        await ctx.reply(`✅ Адрес сохранен!\n\n` + nextPrompt, { parse_mode: 'Markdown' });
+    }
     async handleLocationCallback(ctx, registration, locationId) {
         await prisma_1.prisma.$executeRaw `
             UPDATE employee_registration_requests
             SET location_id = ${locationId},
-                current_step = 'PASSPORT_SCAN'::registration_step,
+                current_step = 'APPLICATION_POSITION'::registration_step,
                 updated_at = NOW()
             WHERE id = ${registration.id}
         `;
-        await this.saveStepHistory(registration.id, 'LOCATION', { location_id: locationId });
-        await this.promptPassportScanStep(ctx);
-    }
-    async promptPassportScanStep(ctx) {
-        await ctx.reply(`✅ Локация выбрана!\n\n` +
-            `🎫 *Шаг 10/11: Скан паспорта*\n\n` +
-            `Загрузи скан или фото разворота паспорта с фотографией.\n\n` +
-            `_Убедись, что все данные читаемы_`, { parse_mode: 'Markdown' });
+        await this.saveStepHistory(registration.id, 'APPLICATION_BRANCH', { location_id: locationId });
+        await this.handlePositionStep(ctx, registration);
     }
     async handlePassportScanStep(ctx, registration) {
         if (!ctx.message?.photo && !ctx.message?.document) {
@@ -575,27 +468,23 @@ class EmployeeRegistrationService {
                 passportUrl = await photo_optimization_service_1.default.processTelegramPhoto(fileId, 'passports');
             }
             else {
-                // For PDF or other documents, just record the TG file reference for now (or we could download it too)
                 passportUrl = `telegram://file/${fileId}`;
             }
             await prisma_1.prisma.$executeRaw `
                 UPDATE employee_registration_requests
                 SET passport_scan_url = ${passportUrl},
-                    current_step = 'DOCUMENTS'::registration_step,
+                    current_step = 'COMPLETED'::registration_step,
                     updated_at = NOW()
                 WHERE id = ${registration.id}
             `;
-            await this.saveStepHistory(registration.id, 'PASSPORT_SCAN', { passport_scan_url: passportUrl });
+            await this.saveStepHistory(registration.id, 'PROFILE_PASSPORT', { passport_scan_url: passportUrl });
             await ctx.reply(`✅ Скан паспорта сохранен!\n\n` +
-                `📎 *Шаг 11/11: Дополнительные документы (опционально)*\n\n` +
-                `Если есть дополнительные документы (дипломы, сертификаты и т.д.), ` +
-                `можешь загрузить их сейчас.\n\n` +
-                `Если нет, нажми "Завершить регистрацию"`, {
+                `🎉 *Все данные собраны!*\n\n` +
+                `Нажми кнопку ниже, чтобы завершить регистрацию.`, {
                 parse_mode: 'Markdown',
                 reply_markup: {
                     inline_keyboard: [
-                        [{ text: '✅ Завершить регистрацию', callback_data: 'complete_registration' }],
-                        [{ text: '📎 Загрузить документы', callback_data: 'upload_more_docs' }]
+                        [{ text: '✅ Завершить регистрацию', callback_data: 'complete_registration' }]
                     ]
                 }
             });
@@ -605,75 +494,85 @@ class EmployeeRegistrationService {
             await ctx.reply('❌ Ошибка при сохранении паспорта. Попробуй еще раз.');
         }
     }
-    async handleDocumentsStep(ctx, registration) {
-        if (!ctx.message?.photo && !ctx.message?.document) {
-            await ctx.reply('Пожалуйста, отправь фото или документ');
+    async handlePhoneStep(ctx, registration) {
+        if (!ctx.message?.text) {
+            await ctx.reply('⚠️ Пожалуйста, введи данные текстом.');
             return;
         }
-        let fileId;
-        let fileName = 'document';
-        let fileType = 'photo';
-        if (ctx.message.photo) {
-            const photo = ctx.message.photo[ctx.message.photo.length - 1];
-            fileId = photo.file_id;
-        }
-        else {
-            fileId = ctx.message.document.file_id;
-            fileName = ctx.message.document.file_name || 'document';
-            fileType = ctx.message.document.mime_type || 'application/octet-stream';
-        }
-        const fileUrl = `telegram://file/${fileId}`;
-        // Get current documents
-        const current = await prisma_1.prisma.$queryRaw `
-            SELECT additional_documents FROM employee_registration_requests
-            WHERE id = ${registration.id}
-        `;
-        const documents = current[0]?.additional_documents || [];
-        documents.push({
-            name: fileName,
-            url: fileUrl,
-            type: fileType,
-            uploaded_at: new Date().toISOString()
-        });
-        await prisma_1.prisma.$executeRaw `
-            UPDATE employee_registration_requests
-            SET additional_documents = ${JSON.stringify(documents)}::jsonb,
-                updated_at = NOW()
-            WHERE id = ${registration.id}
-        `;
-        await ctx.reply(`✅ Документ сохранен!\n\n` +
-            `Загружено документов: ${documents.length}\n\n` +
-            `Можешь загрузить еще или завершить регистрацию.`, {
-            reply_markup: {
-                inline_keyboard: [
-                    [{ text: '✅ Завершить регистрацию', callback_data: 'complete_registration' }]
-                ]
+        const input = ctx.message.text.trim();
+        if (registration.phone === null) {
+            const phone = input.replace(/[\s\-\(\)]/g, '');
+            const phoneRegex = /^\+?[0-9]{10,15}$/;
+            if (!phoneRegex.test(phone)) {
+                await ctx.reply('⚠️ Неверный формат номера. Используй формат: +79991234567');
+                return;
             }
-        });
+            await prisma_1.prisma.$executeRaw `UPDATE employee_registration_requests SET phone = ${phone}, updated_at = NOW() WHERE id = ${registration.id}`;
+            await ctx.reply('✅ Телефон сохранен!\n\n📧 Теперь введи свой email:', { parse_mode: 'Markdown' });
+            return;
+        }
+        if (registration.email === null) {
+            const email = input.toLowerCase();
+            const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
+            if (!emailRegex.test(email)) {
+                await ctx.reply('⚠️ Неверный формат email. Проверь правильность ввода.');
+                return;
+            }
+            await prisma_1.prisma.$executeRaw `
+                UPDATE employee_registration_requests
+                SET email = ${email},
+                    current_step = 'PROFILE_PASSPORT'::registration_step,
+                    updated_at = NOW()
+                WHERE id = ${registration.id}
+            `;
+            // Update user email as well
+            await prisma_1.prisma.user.update({
+                where: { telegram_id: registration.telegram_id },
+                data: { email: email }
+            });
+            await this.saveStepHistory(registration.id, 'PROFILE_CONTACTS', { phone: registration.phone, email });
+            await ctx.reply(`✅ Email сохранен!\n\n` +
+                `🎫 *Шаг: Скан паспорта*\n\n` +
+                `Загрузи фото разворота паспорта с фотографией (как картинку или файл):`, { parse_mode: 'Markdown' });
+        }
     }
-    /**
-     * Complete registration and submit for review
-     */
     async completeRegistration(ctx, registration) {
         await prisma_1.prisma.$executeRaw `
             UPDATE employee_registration_requests
-            SET status = 'REVIEW'::registration_status,
-                current_step = 'COMPLETED'::registration_step,
+            SET current_step = 'COMPLETED'::registration_step,
                 completed_at = NOW()
             WHERE id = ${registration.id}
         `;
         await this.saveStepHistory(registration.id, 'COMPLETED', { completed: true });
-        await ctx.reply(`🎉 *Поздравляем!*\n\n` +
-            `Регистрация успешно завершена!\n\n` +
-            `Твои данные отправлены на проверку HR-отделу. ` +
-            `Мы свяжемся с тобой в ближайшее время.\n\n` +
-            `Спасибо за терпение! 😊`, { parse_mode: 'Markdown' });
-        // Notify admin/HR about new registration
+        const user = await prisma_1.prisma.user.findUnique({ where: { telegram_id: registration.telegram_id } });
+        if (user && user.foundation_status === 'ACCEPTED') {
+            await prisma_1.prisma.$transaction([
+                prisma_1.prisma.employee.create({
+                    data: {
+                        user_id: user.id,
+                        department_id: registration.department_id,
+                        position: registration.position,
+                        hire_date: new Date()
+                    }
+                }),
+                prisma_1.prisma.user.update({
+                    where: { id: user.id },
+                    data: {
+                        admission_status: client_1.AdmissionStatus.ADMITTED,
+                        profile_completion_status: client_1.ProfileCompletionStatus.COMPLETED
+                    }
+                })
+            ]);
+            await ctx.reply(`🎉 *Поздравляем!*\n\n` +
+                `Ваш профиль полностью заполнен, и вы зачислены в штат!\n\n` +
+                `Добро пожаловать в проект RAI_EP! 😊`, { parse_mode: 'Markdown' });
+        }
+        else {
+            await ctx.reply(`✅ *Профиль заполнен!*\n\n` +
+                `Ваши данные приняты. После того как вы примете Базу, процесс зачисления будет завершен.`, { parse_mode: 'Markdown' });
+        }
         await this.notifyAdminsAboutNewRegistration(registration);
     }
-    /**
-     * Get registration by Telegram ID
-     */
     async getRegistrationByTelegramId(telegramId) {
         const result = await prisma_1.prisma.$queryRaw `
             SELECT * FROM employee_registration_requests
@@ -684,8 +583,24 @@ class EmployeeRegistrationService {
         return result.length > 0 ? result[0] : null;
     }
     /**
-     * Save step completion to history
+     * Start Phase 3: Post-Base profile completion
      */
+    async startPhase3(ctx, registration) {
+        await prisma_1.prisma.$executeRaw `
+            UPDATE employee_registration_requests
+            SET current_step = 'PROFILE_PHOTO'::registration_step,
+                updated_at = NOW()
+            WHERE id = ${registration.id}
+        `;
+        await prisma_1.prisma.user.update({
+            where: { telegram_id: registration.telegram_id },
+            data: { profile_completion_status: client_1.ProfileCompletionStatus.IN_PROGRESS }
+        });
+        await ctx.reply(`🎉 *База принята!*\n\n` +
+            `Остался последний шаг — заполнить профиль.\n\n` +
+            `🎨 *Шаг: Фото профиля*\n\n` +
+            `Пожалуйста, загрузи свое фото для корпоративного профиля.`, { parse_mode: 'Markdown' });
+    }
     async saveStepHistory(registrationId, step, data) {
         await prisma_1.prisma.$executeRaw `
             INSERT INTO registration_step_history (
@@ -699,21 +614,6 @@ class EmployeeRegistrationService {
             );
         `;
     }
-    /**
-     * Calculate age from birth date
-     */
-    calculateAge(birthDate) {
-        const today = new Date();
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-        }
-        return age;
-    }
-    /**
-     * Notify admins about new registration
-     */
     async notifyAdminsAboutNewRegistration(registration) {
         const admins = await prisma_1.prisma.user.findMany({
             where: {
@@ -724,12 +624,12 @@ class EmployeeRegistrationService {
         const bot = telegram_service_1.default.getBot();
         if (!bot)
             return;
-        const message = `📋 *Новая заявка на регистрацию сотрудника*\n\n` +
-            `👤 ${registration.last_name} ${registration.first_name} ${registration.middle_name || ''}\n` +
-            `📧 ${registration.email}\n` +
-            `📱 ${registration.phone}\n` +
-            `💼 ${registration.position}\n\n` +
-            `Дата подачи: ${new Date(registration.completed_at).toLocaleString('ru-RU')}`;
+        const message = `📋 *Новая заявка на регистрацию сотрудника*` + (registration.status === 'REVIEW' ? ` (Предв. заявка)` : ` (Завершение профиля)`) + `\n\n` +
+            `👤 ${registration.last_name || ''} ${registration.first_name || ''} ${registration.middle_name || ''}\n` +
+            (registration.email ? `📧 ${registration.email}\n` : '') +
+            (registration.phone ? `📱 ${registration.phone}\n` : '') +
+            `💼 ${registration.position || 'Не указана'}\n\n` +
+            `Дата: ${new Date().toLocaleString('ru-RU')}`;
         for (const admin of admins) {
             if (admin.telegram_id) {
                 try {
@@ -743,98 +643,73 @@ class EmployeeRegistrationService {
             }
         }
     }
-    /**
-     * Approve registration and create user account
-     * CRITICAL: Emits employee.onboarded event for Module 33 integration
-     */
     async approveRegistration(registrationId, reviewedByUserId, overrides) {
-        const registration = await prisma_1.prisma.$queryRaw `
-            SELECT * FROM employee_registration_requests WHERE id = ${registrationId}
-        `;
-        if (registration.length === 0) {
+        const registration = await prisma_1.prisma.employeeRegistrationRequest.findUnique({
+            where: { id: registrationId }
+        });
+        if (!registration) {
             throw new Error('Registration not found');
         }
-        const reg = registration[0];
-        // Idempotency check: prevent duplicate approval
+        const reg = registration;
+        const finalDepartmentId = overrides?.departmentId || reg.department_id;
+        const finalLocationId = overrides?.locationId || reg.location_id;
+        if (!finalDepartmentId || !finalLocationId) {
+            throw new Error('departmentId and locationId are required for approval');
+        }
         if (reg.status === 'APPROVED') {
-            console.warn(`[EmployeeRegistrationService] Registration ${registrationId} already approved`);
             throw new Error('Registration already approved');
         }
-        // SECURITY: Generate secure token for password setup instead of temp password
-        // @ts-ignore
-        const resetToken = (0, crypto_1.randomUUID)();
-        const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-        // Random unguessable password hash
-        // @ts-ignore
-        const dummyPassword = (0, crypto_1.randomUUID)();
-        const hashedPassword = await bcrypt.hash(dummyPassword, 12);
-        const departmentId = overrides?.departmentId || reg.department_id;
-        // Create user account
-        const user = await prisma_1.prisma.user.create({
-            data: {
-                email: reg.email,
-                password_hash: hashedPassword,
+        // Phase 2 CANON: Create restricted User account
+        const tempEmail = `${reg.telegram_id}@RAI_EP.local`;
+        await prisma_1.prisma.user.upsert({
+            where: { telegram_id: reg.telegram_id },
+            update: {
                 first_name: reg.first_name,
                 last_name: reg.last_name,
                 middle_name: reg.middle_name,
-                phone_number: reg.phone,
+                status: client_1.UserStatus.ACTIVE,
+                foundation_status: client_1.FoundationStatus.NOT_STARTED,
+                department_id: finalDepartmentId,
+            },
+            create: {
+                email: tempEmail,
+                password_hash: await bcrypt.hash((0, crypto_1.randomUUID)(), 12),
+                first_name: reg.first_name,
+                last_name: reg.last_name,
+                middle_name: reg.middle_name,
                 telegram_id: reg.telegram_id,
                 role: 'EMPLOYEE',
-                status: 'ACTIVE',
-                department_id: departmentId,
-                // @ts-ignore
-                must_reset_password: true,
-                // @ts-ignore
-                reset_password_token: resetToken,
-                // @ts-ignore
-                reset_token_expires_at: tokenExpiresAt,
-                // @ts-ignore
-                foundation_status: 'NOT_STARTED'
+                status: client_1.UserStatus.ACTIVE,
+                foundation_status: client_1.FoundationStatus.NOT_STARTED,
+                profile_completion_status: client_1.ProfileCompletionStatus.LOCKED,
+                department_id: finalDepartmentId,
             }
         });
-        // Send Set Password Link via Email
-        await email_service_1.default.sendPasswordSetupLink(reg.email, resetToken);
-        // Create employee record
-        const employee = await prisma_1.prisma.employee.create({
-            data: {
-                user_id: user.id,
-                department_id: departmentId,
-                position: reg.position,
-                hire_date: new Date()
-            }
-        });
-        // Update registration status (transactional guard)
         await prisma_1.prisma.$executeRaw `
             UPDATE employee_registration_requests
             SET status = 'APPROVED'::registration_status,
                 reviewed_by = ${reviewedByUserId},
                 reviewed_at = NOW(),
                 updated_at = NOW(),
-                department_id = ${departmentId},
-                location_id = ${overrides?.locationId ? overrides.locationId : reg.location_id}
+                department_id = ${finalDepartmentId},
+                location_id = ${finalLocationId},
+                current_step = 'BASE_GATE'::registration_step
             WHERE id = ${registrationId}
         `;
-        // CRITICAL: Emit employee.onboarded event
-        this.eventEmitter.emit('employee.onboarded', {
-            employeeId: employee.id,
-            userId: user.id,
-            onboardedAt: new Date(),
-            onboardedBy: reviewedByUserId,
-            onboardedByRole: 'HR_MANAGER'
-        });
-        console.log(`[EmployeeRegistrationService] employee.onboarded event emitted for employee ${employee.id}`);
-        // Notify employee about approval
         const bot = telegram_service_1.default.getBot();
         if (bot) {
-            await bot.telegram.sendMessage(reg.telegram_id, `🎉 *Поздравляем!*\n\n` +
-                `Твоя регистрация одобрена!\n\n` +
-                `Добро пожаловать в команду MatrixGin! 🚀\n\n` +
-                `На твой Email (${reg.email}) отправлена ссылка для установки пароля.`, { parse_mode: 'Markdown' });
+            await bot.telegram.sendMessage(reg.telegram_id, `✅ *Ваша заявка одобрена!*\n\n` +
+                `Перед началом работы необходимо изучить и принять Базу RAI_EP.\n\n` +
+                `Нажми кнопку ниже, чтобы начать. 🧭`, {
+                parse_mode: 'Markdown',
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '🧭 Узнать Базу', callback_data: 'start_foundation' }]
+                    ]
+                }
+            });
         }
     }
-    /**
-     * Reject registration
-     */
     async rejectRegistration(registrationId, reviewedByUserId, reason) {
         const registration = await prisma_1.prisma.$queryRaw `
             SELECT telegram_id FROM employee_registration_requests WHERE id = ${registrationId}
@@ -851,7 +726,6 @@ class EmployeeRegistrationService {
                 updated_at = NOW()
             WHERE id = ${registrationId}
         `;
-        // Notify employee about rejection
         const bot = telegram_service_1.default.getBot();
         if (bot) {
             await bot.telegram.sendMessage(registration[0].telegram_id, `❌ К сожалению, твоя заявка на регистрацию была отклонена.\n\n` +

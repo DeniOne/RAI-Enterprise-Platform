@@ -1,5 +1,5 @@
 /**
- * Economy DTOs for MatrixGin v2.0 API (MatrixCoin, Auctions, Store)
+ * Economy DTOs for BusinessCore v2.0 API (BusinessCoin, Auctions, Store)
  */
 
 import {
@@ -240,3 +240,5 @@ export class PurchaseItemRequestDto {
     @Min(1)
     quantity: number = 1;
 }
+
+

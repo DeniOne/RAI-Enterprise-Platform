@@ -36,7 +36,7 @@ export interface MGIntent {
 
 export interface MGIntentMap {
     version: string;
-    agent: 'MatrixGinChat';
+    agent: 'RAI_EPChat';
     language: 'ru' | 'en';
     principles: MGIntentPrinciples;
     intents: MGIntent[];
@@ -98,7 +98,7 @@ export interface MGErrorIntent {
 
 export interface MGErrorUxMap {
     version: string;
-    agent: 'MatrixGinChat';
+    agent: 'RAI_EPChat';
     platform: 'telegram';
     principles: MGErrorPrinciples;
     error_intents: MGErrorIntent[];
@@ -113,3 +113,4 @@ export interface MGChatContracts {
     readonly ux: MGUxComponentMap;
     readonly errors: MGErrorUxMap;
 }
+

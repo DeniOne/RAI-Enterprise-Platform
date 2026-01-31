@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.jwtStrategy = void 0;
 const passport_jwt_1 = require("passport-jwt");
-const auth_service_1 = require("../services/auth.service");
+const auth_service_1 = require("@/core/identity/auth.service");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const authService = new auth_service_1.AuthService();

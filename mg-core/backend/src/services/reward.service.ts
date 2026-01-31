@@ -1,5 +1,5 @@
 import { prisma } from '../config/prisma';
-import { checkCanon } from '../core/canon';
+import { checkCanon } from '../core/flow/canon';
 
 export enum RewardStatus {
     PENDING = 'PENDING',
@@ -145,3 +145,4 @@ export class RewardService {
 }
 
 export const rewardService = new RewardService();
+

@@ -1,5 +1,5 @@
 /**
- * Gamification DTOs for MatrixGin v2.0 API
+ * Gamification DTOs for BusinessCore v2.0 API
  */
 
 import {
@@ -103,3 +103,5 @@ export class ClaimRewardRequestDto {
     @IsUUID()
     achievementId: UUID;
 }
+
+

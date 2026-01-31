@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { foundationService } from '../services/foundation.service';
+import { foundationService } from '@/core/flow/foundation.service';
 import { prisma } from '../config/prisma';
 import { FOUNDATION_VERSION } from '../config/foundation.constants';
 import { logger } from '../config/logger';
@@ -73,3 +73,4 @@ export class FoundationController {
 }
 
 export const foundationController = new FoundationController();
+

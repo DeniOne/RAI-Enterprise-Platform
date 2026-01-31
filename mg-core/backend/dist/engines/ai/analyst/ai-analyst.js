@@ -39,7 +39,7 @@ exports.AIAnalystError = AIAnalystError;
 // PROMPT TEMPLATES
 // =============================================================================
 const SYSTEM_CONTEXT = `
-Ты — AI Analyst в системе MatrixGin.
+Ты — AI Analyst в системе RAI_EP.
 
 РОЛЬ: Explainability Layer. Ты ТОЛЬКО объясняешь факты.
 

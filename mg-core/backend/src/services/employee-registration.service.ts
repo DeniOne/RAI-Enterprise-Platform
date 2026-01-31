@@ -128,7 +128,7 @@ export class EmployeeRegistrationService {
         }
 
         // Send welcome message with registration button
-        const welcomeMessage = `🎉 *Приветствуем в системе MatrixGin!*\n\n` +
+        const welcomeMessage = `🎉 *Приветствуем в системе RAI_EP!*\n\n` +
             `Для начала работы тебе необходимо пройти регистрацию и подать заявку в HR-отдел.\n\n` +
             `Нажми на кнопку ниже, чтобы начать.`;
 
@@ -672,7 +672,7 @@ export class EmployeeRegistrationService {
             await ctx.reply(
                 `🎉 *Поздравляем!*\n\n` +
                 `Ваш профиль полностью заполнен, и вы зачислены в штат!\n\n` +
-                `Добро пожаловать в проект MatrixGin! 😊`,
+                `Добро пожаловать в проект RAI_EP! 😊`,
                 { parse_mode: 'Markdown' }
             );
         } else {
@@ -795,7 +795,7 @@ export class EmployeeRegistrationService {
         }
 
         // Phase 2 CANON: Create restricted User account
-        const tempEmail = `${reg.telegram_id}@matrixgin.local`;
+        const tempEmail = `${reg.telegram_id}@RAI_EP.local`;
 
         await prisma.user.upsert({
             where: { telegram_id: reg.telegram_id },
@@ -840,7 +840,7 @@ export class EmployeeRegistrationService {
             await bot.telegram.sendMessage(
                 reg.telegram_id,
                 `✅ *Ваша заявка одобрена!*\n\n` +
-                `Перед началом работы необходимо изучить и принять Базу MatrixGin.\n\n` +
+                `Перед началом работы необходимо изучить и принять Базу RAI_EP.\n\n` +
                 `Нажми кнопку ниже, чтобы начать. 🧭`,
                 {
                     parse_mode: 'Markdown',
@@ -892,3 +892,4 @@ export class EmployeeRegistrationService {
 }
 
 export default EmployeeRegistrationService.getInstance();
+

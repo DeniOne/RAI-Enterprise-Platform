@@ -74,7 +74,7 @@ exports.logger = winston_1.default.createLogger({
     levels,
     transports,
     defaultMeta: {
-        service: 'matrixgin-api',
+        service: 'RAI_EP-api',
         environment: process.env.NODE_ENV || 'development'
     },
 });

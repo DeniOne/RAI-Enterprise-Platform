@@ -1,5 +1,5 @@
 /**
- * Task Controller for MatrixGin
+ * Task Controller for RAI_EP
  * 
  * POST-AUDIT FIX:
  * - Passes userId for history logging
@@ -8,8 +8,8 @@
  */
 
 import { Request, Response } from 'express';
-import { TaskService } from '../services/task.service';
-import { TaskStatus, UserRole } from '../dto/common/common.enums';
+import { TaskService } from '@/core/tasks/task.service';
+import { TaskStatus, UserRole } from '@/dto/common/common.enums';
 
 const taskService = new TaskService();
 
@@ -153,3 +153,5 @@ export class TaskController {
         }
     }
 }
+
+

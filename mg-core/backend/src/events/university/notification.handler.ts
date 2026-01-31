@@ -9,10 +9,10 @@
  * - Implements idempotency
  */
 
-import { prisma } from '../../config/prisma';
-import { logger } from '../../config/logger';
-import notificationService from '../../services/notification.service';
-import { ICourseCompletedPayload } from '../../types/core/event.types';
+import { prisma } from '@/config/prisma';
+import { logger } from '@/config/logger';
+import notificationService from '@/core/flow/notification.service';
+import { ICourseCompletedPayload } from '@/types/core/event.types';
 
 export class NotificationHandler {
     /**
@@ -102,3 +102,4 @@ export class NotificationHandler {
 }
 
 export const notificationHandler = new NotificationHandler();
+

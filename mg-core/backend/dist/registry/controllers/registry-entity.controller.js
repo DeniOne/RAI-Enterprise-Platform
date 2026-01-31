@@ -34,9 +34,10 @@ class RegistryEntityController {
             }
             // Build where clause
             const where = {
-                entity_type_urn: resolvedUrn,
-                is_active: true
+                entity_type_urn: resolvedUrn
             };
+            // By default, showing all for Registry Management. 
+            // In public modules, we would filter by is_active.
             // Optional search filter
             if (search && typeof search === 'string') {
                 where.OR = [

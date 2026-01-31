@@ -14,16 +14,16 @@ const options = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'MatrixGin API',
+            title: 'RAI_EP API',
             version: '2.0.0',
             description: `
-## MatrixGin — корпоративная ERP-платформа
+## RAI_EP — корпоративная ERP-платформа
 
 Полнофункциональный API для управления:
 - 👥 Организационной структурой (OFS)
 - ✅ Задачами и KPI
 - 🎓 Корпоративным университетом
-- 🎮 Геймификацией и экономикой MatrixCoin
+- 🎮 Геймификацией и экономикой BusinessCoin
 - 🤖 Telegram-ботом
 
 ### Аутентификация
@@ -31,8 +31,8 @@ const options = {
 \`Authorization: Bearer <token>\`
             `,
             contact: {
-                name: 'MatrixGin Support',
-                email: 'support@matrixgin.com',
+                name: 'RAI_EP Support',
+                email: 'support@RAI_EP.com',
             },
             license: {
                 name: 'Proprietary',
@@ -44,7 +44,7 @@ const options = {
                 description: 'Development server',
             },
             {
-                url: 'https://api.matrixgin.com',
+                url: 'https://api.RAI_EP.com',
                 description: 'Production server',
             },
         ],
@@ -96,9 +96,9 @@ const options = {
             { name: 'Departments', description: 'Department management' },
             { name: 'OFS', description: 'Organizational structure' },
             { name: 'Tasks', description: 'Task management' },
-            { name: 'Economy', description: 'MatrixCoin economy' },
+            { name: 'Economy', description: 'BusinessCoin economy' },
             { name: 'Gamification', description: 'Gamification system' },
-            { name: 'Store', description: 'MatrixCoin store' },
+            { name: 'Store', description: 'BusinessCoin store' },
             { name: 'University', description: 'Corporate university' },
             { name: 'Analytics', description: 'HR analytics' },
             { name: 'Telegram', description: 'Telegram bot integration' },

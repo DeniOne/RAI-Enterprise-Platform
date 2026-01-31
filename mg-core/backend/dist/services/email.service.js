@@ -17,7 +17,7 @@ class EmailService {
      * CANON: In MVP mode, we log the password to console/audit log for testing
      */
     async sendTemporaryPassword(email, password) {
-        this.logger.log(`[EMAIL SENT] To: ${email} | Subject: Welcome to MatrixGin | Body: Your temporary password is ${password}`);
+        this.logger.log(`[EMAIL SENT] To: ${email} | Subject: Welcome to RAI_EP | Body: Your temporary password is ${password}`);
         // TODO: Integrate with real SMTP/Mailgun/SendGrid in production phase
         // For now, it's a secure placeholder that respects the flow
     }
@@ -26,8 +26,8 @@ class EmailService {
      * SECURITY: Replaces raw password transmission
      */
     async sendPasswordSetupLink(email, token) {
-        const link = `https://matrixgin.com/auth/set-password?token=${token}`;
-        this.logger.log(`[EMAIL SENT] To: ${email} | Subject: Set your MatrixGin Password | Link: ${link}`);
+        const link = `https://RAI_EP.com/auth/set-password?token=${token}`;
+        this.logger.log(`[EMAIL SENT] To: ${email} | Subject: Set your RAI_EP Password | Link: ${link}`);
     }
     async sendEmail(to, subject, body) {
         this.logger.log(`[EMAIL SENT] To: ${to} | Subject: ${subject} | Body: ${body}`);

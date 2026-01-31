@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const telegraf_1 = require("telegraf");
 const employee_registration_service_1 = __importDefault(require("./employee-registration.service"));
 const prisma_1 = require("../config/prisma");
+const foundation_service_1 = require("../core/flow/foundation.service");
+const foundation_constants_1 = require("../config/foundation.constants");
 // Wizard Scene Definition
 const taskWizard = new telegraf_1.Scenes.WizardScene('task-wizard', async (ctx) => {
     await ctx.reply('📝 Создание новой задачи\n\nВведите название задачи:');
@@ -75,6 +77,9 @@ class TelegramService {
         }
         return TelegramService.instance;
     }
+    getBot() {
+        return this.bot;
+    }
     async initializeBot() {
         const token = process.env.TELEGRAM_BOT_TOKEN;
         if (!token) {
@@ -110,30 +115,39 @@ class TelegramService {
             const user = await prisma_1.prisma.user.findFirst({ where: { telegram_id: telegramId } });
             if (user) {
                 const fullName = `${user.first_name} ${user.last_name}`;
-                await ctx.reply(`👋 Добро пожаловать обратно, ${fullName}!\n\n` +
-                    `🎓 *MVP Learning Contour*\n\n` +
-                    `Этот бот — ваш проводник в обучении.\n\n` +
-                    `💡 *О MatrixCoin:*\n` +
-                    `MatrixCoin — единица признания. В MVP Learning Contour используется только в обучающем контексте и не влияет на доход, статус или власть.\n\n` +
-                    `📚 *Обучение:*\n` +
-                    `• Добровольное участие\n` +
-                    `• Рекомендации на основе реальных метрик PhotoCompany\n` +
-                    `• Без давления и санкций\n\n` +
-                    `Используйте меню ниже для навигации:`, { parse_mode: 'Markdown', ...this.getMainMenuKeyboard() });
+                const status = user.foundation_status;
+                let message = `👋 Добро пожаловать обратно, ${fullName}!\n\n`;
+                if (status !== foundation_constants_1.FoundationStatus.ACCEPTED) {
+                    message += `🧭 *Вам необходимо ознакомиться с Базой!*\n\n` +
+                        `Это обязательный этап допуска к системе RAI_EP.\n` +
+                        `Нажмите кнопку ниже, чтобы начать.`;
+                }
+                else {
+                    message += `🎓 *MVP Learning Contour*\n\n` +
+                        `Этот бот — ваш проводник в обучении.\n\n` +
+                        `💡 *О BusinessCoin:*\n` +
+                        `BusinessCoin — единица признания. В MVP Learning Contour используется только в обучающем контексте и не влияет на доход, статус или власть.\n\n` +
+                        `📚 *Обучение:*\n` +
+                        `• Добровольное участие\n` +
+                        `• Рекомендации на основе реальных метрик PhotoCompany\n` +
+                        `• Без давления и санкций\n\n` +
+                        `Используйте меню ниже для навигации:`;
+                }
+                await ctx.reply(message, { parse_mode: 'Markdown', ...this.getMainMenuKeyboard(status) });
             }
             else {
                 // SECURITY: Self-Registration with Anti-Fraud check
                 const existingRequest = await prisma_1.prisma.$queryRaw `
                     SELECT id FROM employee_registration_requests 
                     WHERE telegram_id = ${telegramId} 
-                    AND status IN ('PENDING'::registration_status, 'IN_PROGRESS'::registration_status)
+                    AND status IN ('PENDING'::registration_status, 'REVIEW'::registration_status, 'APPROVED'::registration_status)
                 `;
                 if (existingRequest.length > 0) {
                     await ctx.reply(`⚠️ *У вас уже есть активная заявка на регистрацию.*\n\n` +
                         `Пожалуйста, завершите её или дождитесь решения администратора.`, { parse_mode: 'Markdown' });
                 }
                 else {
-                    await ctx.reply(`👋 Добро пожаловать в MatrixGin!\n\n` +
+                    await ctx.reply(`👋 Добро пожаловать в RAI_EP!\n\n` +
                         `Вы не найдены в системе.\n` +
                         `Если вы сотрудник, нажмите кнопку ниже для начала регистрации.\n\n` +
                         `Ваш Telegram ID: \`${telegramId}\``, {
@@ -148,57 +162,69 @@ class TelegramService {
             }
         });
         // /newtask command
-        this.bot.command('newtask', (ctx) => ctx.scene.enter('task-wizard'));
+        this.bot.command('newtask', async (ctx) => {
+            if (await this.ensureAdmissionGuard(ctx)) {
+                await ctx.scene.enter('task-wizard');
+            }
+        });
         // /mytasks command
         this.bot.command('mytasks', async (ctx) => {
-            await this.handleMyTasks(ctx);
+            if (await this.ensureAdmissionGuard(ctx)) {
+                await this.handleMyTasks(ctx);
+            }
         });
         // /balance command
         this.bot.command('balance', async (ctx) => {
-            await this.handleBalance(ctx);
+            if (await this.ensureAdmissionGuard(ctx)) {
+                await this.handleBalance(ctx);
+            }
         });
         // /profile command
         this.bot.command('profile', async (ctx) => {
-            await this.handleProfile(ctx);
+            if (await this.ensureAdmissionGuard(ctx)) {
+                await this.handleProfile(ctx);
+            }
         });
         // MVP Learning Contour Commands
-        // /learning command - Show active courses and recommendations
         this.bot.command('learning', async (ctx) => {
-            await this.handleLearning(ctx);
+            if (await this.ensureAdmissionGuard(ctx)) {
+                await this.handleLearning(ctx);
+            }
         });
-        // /courses command - Browse available courses
         this.bot.command('courses', async (ctx) => {
-            await this.handleCourses(ctx);
+            if (await this.ensureAdmissionGuard(ctx)) {
+                await this.handleCourses(ctx);
+            }
         });
-        // /mycourses command - Show enrolled courses
         this.bot.command('mycourses', async (ctx) => {
-            await this.handleMyCourses(ctx);
+            if (await this.ensureAdmissionGuard(ctx)) {
+                await this.handleMyCourses(ctx);
+            }
         });
-        // /enroll command - Enroll in a course
         this.bot.command('enroll', async (ctx) => {
-            await this.handleEnroll(ctx);
+            if (await this.ensureAdmissionGuard(ctx)) {
+                await this.handleEnroll(ctx);
+            }
         });
         // Handle callback queries
         this.bot.on('callback_query', async (ctx) => {
             await this.handleCallbackQuery(ctx);
         });
-        // Handle photo uploads (for registration)
+        // Handle photo uploads
         this.bot.on('photo', async (ctx) => {
             await this.handlePhotoUpload(ctx);
         });
-        // Handle document uploads (for registration)
+        // Handle document uploads
         this.bot.on('document', async (ctx) => {
             await this.handleDocumentUpload(ctx);
         });
         // Handle text messages
         this.bot.on('text', async (ctx) => {
-            // Ignore if in scene
             if (ctx.scene && ctx.scene.current)
                 return;
-            const telegramId = ctx.from.id.toString();
-            // Check if user is in registration process
+            const telegramId = ctx.from?.id.toString();
             const registration = await employee_registration_service_1.default.getRegistrationByTelegramId(telegramId);
-            if (registration && registration.status === 'IN_PROGRESS') {
+            if (registration && (registration.status === 'PENDING' || registration.status === 'APPROVED')) {
                 await employee_registration_service_1.default.handleRegistrationStep(ctx, registration);
                 return;
             }
@@ -208,25 +234,46 @@ class TelegramService {
                 return;
             }
             if (ctx.message.text === '➕ Новая задача') {
-                await ctx.scene.enter('task-wizard');
+                if (await this.ensureAdmissionGuard(ctx)) {
+                    await ctx.scene.enter('task-wizard');
+                }
                 return;
             }
             await ctx.reply('Используйте команды для навигации:\n\n' +
                 '/mytasks - Мои задачи\n' +
                 '/newtask - Создать задачу\n' +
                 '/balance - Мой баланс\n' +
-                '/profile - Мой профиль', this.getMainMenuKeyboard());
+                '/profile - Мой профиль', this.getMainMenuKeyboard(user.foundation_status));
         });
+    }
+    async ensureAdmissionGuard(ctx) {
+        const telegramId = ctx.from?.id.toString();
+        if (!telegramId)
+            return false;
+        const user = await this.getUserByTelegramId(telegramId);
+        if (!user) {
+            await ctx.reply('Аккаунт не привязан. Используйте /start');
+            return false;
+        }
+        // @ts-ignore
+        if (user.foundation_status !== foundation_constants_1.FoundationStatus.ACCEPTED) {
+            await ctx.reply(`⚠️ *Доступ ограничен*\n\n` +
+                `Для использования этой функции необходимо сначала ознакомиться с Базой и принять её.\n\n` +
+                `Используйте /start для перехода к Базе.`, {
+                parse_mode: 'Markdown',
+                ...telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('🧭 Узнать Базу', 'start_foundation')]])
+            });
+            return false;
+        }
+        return true;
     }
     async handleMyTasks(ctx) {
         const telegramId = ctx.from?.id.toString();
         if (!telegramId)
             return;
         const user = await this.getUserByTelegramId(telegramId);
-        if (!user) {
-            await ctx.reply('Аккаунт не привязан. Используйте /start');
+        if (!user)
             return;
-        }
         const tasks = await prisma_1.prisma.task.findMany({
             where: {
                 assignee_id: user.id,
@@ -260,19 +307,13 @@ class TelegramService {
         if (!telegramId)
             return;
         const user = await this.getUserByTelegramId(telegramId);
-        if (!user) {
-            await ctx.reply('Аккаунт не привязан.');
+        if (!user)
             return;
-        }
         const wallet = await prisma_1.prisma.wallet.findUnique({ where: { user_id: user.id } });
-        if (!wallet) {
-            await ctx.reply('❌ Кошелек не найден');
+        if (!wallet)
             return;
-        }
         const message = `💰 *Ваш баланс:*\n\n` +
-            `🪙 MatrixCoin: *${wallet.mc_balance}* MC\n` +
-            // GMC DISABLED in MVP Learning Contour
-            // `💎 GoldMatrixCoin: *${wallet.gmc_balance}* GMC\n` +
+            `🪙 BusinessCoin: *${wallet.mc_balance}* MC\n` +
             `🔒 Заморожено: ${wallet.mc_frozen} MC`;
         await ctx.reply(message, { parse_mode: 'Markdown' });
     }
@@ -281,10 +322,8 @@ class TelegramService {
         if (!telegramId)
             return;
         const user = await this.getUserByTelegramId(telegramId);
-        if (!user) {
-            await ctx.reply('Аккаунт не привязан.');
+        if (!user)
             return;
-        }
         const employee = await prisma_1.prisma.employee.findUnique({
             where: { user_id: user.id },
             include: { department: true }
@@ -299,20 +338,10 @@ class TelegramService {
     }
     async handleCallbackQuery(ctx) {
         const data = ctx.callbackQuery.data;
-        // Registration flow callbacks
+        if (ctx.scene && ctx.scene.current)
+            return;
         if (data === 'start_registration') {
             await employee_registration_service_1.default.startRegistration(ctx);
-            await ctx.answerCbQuery();
-            return;
-        }
-        else if (data === 'address_same' || data === 'address_different') {
-            const telegramId = ctx.from?.id.toString();
-            const registration = await employee_registration_service_1.default.getRegistrationByTelegramId(telegramId);
-            if (registration) {
-                await employee_registration_service_1.default.handleAddressMatchCallback(ctx, registration, data === 'address_same');
-            }
-            await ctx.answerCbQuery();
-            return;
         }
         else if (data.startsWith('position_')) {
             const positionId = data.replace('position_', '');
@@ -321,8 +350,6 @@ class TelegramService {
             if (registration) {
                 await employee_registration_service_1.default.handlePositionCallback(ctx, registration, positionId);
             }
-            await ctx.answerCbQuery();
-            return;
         }
         else if (data.startsWith('location_')) {
             const locationId = data.replace('location_', '');
@@ -331,8 +358,6 @@ class TelegramService {
             if (registration) {
                 await employee_registration_service_1.default.handleLocationCallback(ctx, registration, locationId);
             }
-            await ctx.answerCbQuery();
-            return;
         }
         else if (data === 'complete_registration') {
             const telegramId = ctx.from?.id.toString();
@@ -340,44 +365,89 @@ class TelegramService {
             if (registration) {
                 await employee_registration_service_1.default.completeRegistration(ctx, registration);
             }
-            await ctx.answerCbQuery();
-            return;
         }
         else if (data.startsWith('approve_login_')) {
             const sessionId = data.replace('approve_login_', '');
             await this.handleLoginDecision(ctx, sessionId, 'APPROVED');
-            return;
         }
         else if (data.startsWith('reject_login_')) {
             const sessionId = data.replace('reject_login_', '');
             await this.handleLoginDecision(ctx, sessionId, 'REJECTED');
-            return;
         }
         else if (data === 'upload_more_docs') {
             await ctx.reply('Отправь документ или фото документа.');
-            await ctx.answerCbQuery();
-            return;
         }
-        // Regular callbacks
-        if (data === 'my_tasks') {
-            await this.handleMyTasks(ctx);
+        else if (data === 'start_foundation') {
+            await this.handleFoundation(ctx);
         }
-        else if (data === 'my_balance') {
-            await this.handleBalance(ctx);
+        else if (data.startsWith('view_foundation_block_')) {
+            const blockId = data.replace('view_foundation_block_', '');
+            const telegramId = ctx.from?.id.toString();
+            const user = await this.getUserByTelegramId(telegramId);
+            if (user) {
+                try {
+                    await foundation_service_1.foundationService.registerBlockView(user.id, blockId, 'TELEGRAM_BOT');
+                    await this.handleFoundation(ctx);
+                }
+                catch (error) {
+                    await ctx.reply(`❌ ${error.message}`);
+                }
+            }
         }
-        else if (data === 'my_profile') {
-            await this.handleProfile(ctx);
+        else if (data === 'accept_foundation') {
+            const telegramId = ctx.from?.id.toString();
+            const user = await this.getUserByTelegramId(telegramId);
+            if (user) {
+                try {
+                    const result = await foundation_service_1.foundationService.submitDecision(user.id, 'ACCEPT', 'TELEGRAM_BOT');
+                    if (result.status === foundation_constants_1.FoundationStatus.ACCEPTED) {
+                        await ctx.reply(`🎉 *База принята!*\n\n` +
+                            `Добро пожаловать в систему RAI_EP в качестве полноправного участника.\n` +
+                            `Теперь вам доступны все функции системы.`, { parse_mode: 'Markdown', ...this.getMainMenuKeyboard(foundation_constants_1.FoundationStatus.ACCEPTED) });
+                        // CANON: If there is an approved registration, move to Phase 3 (Profile Completion)
+                        const registration = await employee_registration_service_1.default.getRegistrationByTelegramId(telegramId);
+                        if (registration && registration.status === 'APPROVED' && registration.current_step !== 'COMPLETED') {
+                            await employee_registration_service_1.default.startPhase3(ctx, registration);
+                        }
+                    }
+                }
+                catch (error) {
+                    await ctx.reply(`❌ ${error.message}`);
+                }
+            }
         }
-        else if (data === 'new_task') {
-            await ctx.scene.enter('task-wizard');
+        else if (data === 'decline_foundation') {
+            await ctx.reply('⚠️ Без принятия Базы доступ к системе останется ограниченным.');
         }
-        else if (data.startsWith('start_task_')) {
-            const taskId = data.replace('start_task_', '');
-            await this.updateTaskStatus(ctx, taskId, 'IN_PROGRESS');
-        }
-        else if (data.startsWith('complete_task_')) {
-            const taskId = data.replace('complete_task_', '');
-            await this.updateTaskStatus(ctx, taskId, 'DONE');
+        // Feature routing with Admission Guard (Strict for base-protected features)
+        const protectedKeys = [
+            'my_tasks', 'my_balance', 'my_profile', 'new_task'
+        ];
+        if (protectedKeys.includes(data) || data.startsWith('start_task_') || data.startsWith('complete_task_')) {
+            if (!(await this.ensureAdmissionGuard(ctx))) {
+                await ctx.answerCbQuery();
+                return;
+            }
+            if (data === 'my_tasks') {
+                await this.handleMyTasks(ctx);
+            }
+            else if (data === 'my_balance') {
+                await this.handleBalance(ctx);
+            }
+            else if (data === 'my_profile') {
+                await this.handleProfile(ctx);
+            }
+            else if (data === 'new_task') {
+                await ctx.scene.enter('task-wizard');
+            }
+            else if (data.startsWith('start_task_')) {
+                const taskId = data.replace('start_task_', '');
+                await this.updateTaskStatus(ctx, taskId, 'IN_PROGRESS');
+            }
+            else if (data.startsWith('complete_task_')) {
+                const taskId = data.replace('complete_task_', '');
+                await this.updateTaskStatus(ctx, taskId, 'DONE');
+            }
         }
         await ctx.answerCbQuery();
     }
@@ -394,26 +464,17 @@ class TelegramService {
             await ctx.reply('❌ Ошибка при обновлении статуса.');
         }
     }
-    /**
-     * MVP Learning Contour: Handle /learning command
-     * Shows active courses and PhotoCompany-based recommendations
-     *
-     * Bot Role: viewer (reads, shows, explains)
-     */
     async handleLearning(ctx) {
         const telegramId = ctx.from?.id.toString();
         if (!telegramId)
             return;
         const user = await this.getUserByTelegramId(telegramId);
-        if (!user) {
-            await ctx.reply('Аккаунт не привязан. Используйте /start');
+        if (!user)
             return;
-        }
         try {
             const { universityService } = require('./university.service');
             const dashboard = await universityService.getStudentDashboard(user.id);
             let message = `🎓 *Моё обучение*\n\n`;
-            // Active courses
             if (dashboard.activeCourses.length > 0) {
                 message += `📚 *Активные курсы:*\n`;
                 for (const course of dashboard.activeCourses) {
@@ -421,40 +482,25 @@ class TelegramService {
                 }
                 message += `\n`;
             }
-            // Recommendations (PhotoCompany-based)
             if (dashboard.recommendedCourses.length > 0) {
-                message += `💡 *Рекомендации (на основе PhotoCompany):*\n`;
+                message += `💡 *Рекомендации:*\n`;
                 for (const rec of dashboard.recommendedCourses) {
-                    message += `• ${rec.title}\n`;
-                    message += `  Причина: ${rec.reason}\n`;
-                    message += `  MC: ${rec.recognitionMC}\n`;
+                    message += `• ${rec.title}\n  Причина: ${rec.reason}\n`;
                 }
-            }
-            else {
-                message += `✅ Все метрики в норме! Рекомендаций нет.`;
             }
             await ctx.reply(message, { parse_mode: 'Markdown' });
         }
         catch (error) {
-            console.error('[Telegram] Error in handleLearning:', error);
             await ctx.reply('❌ Ошибка при загрузке данных обучения');
         }
     }
-    /**
-     * MVP Learning Contour: Handle /courses command
-     * Browse available courses
-     *
-     * Bot Role: viewer (reads, shows, explains)
-     */
     async handleCourses(ctx) {
         const telegramId = ctx.from?.id.toString();
         if (!telegramId)
             return;
         const user = await this.getUserByTelegramId(telegramId);
-        if (!user) {
-            await ctx.reply('Аккаунт не привязан.');
+        if (!user)
             return;
-        }
         try {
             const { universityService } = require('./university.service');
             const courses = await universityService.getCourses();
@@ -463,38 +509,22 @@ class TelegramService {
                 return;
             }
             let message = `📚 *Доступные курсы:*\n\n`;
-            for (const course of courses.slice(0, 10)) {
-                message += `*${course.title}*\n`;
-                if (course.description) {
-                    message += `${course.description.substring(0, 100)}...\n`;
-                }
-                message += `MC: ${course.recognitionMC}\n`;
-                message += `ID: \`${course.id}\`\n\n`;
+            for (const course of courses.slice(0, 5)) {
+                message += `*${course.title}*\nID: \`${course.id}\`\n\n`;
             }
-            message += `Для записи на курс используйте:\n`;
-            message += `/enroll <course_id>`;
             await ctx.reply(message, { parse_mode: 'Markdown' });
         }
         catch (error) {
-            console.error('[Telegram] Error in handleCourses:', error);
             await ctx.reply('❌ Ошибка при загрузке курсов');
         }
     }
-    /**
-     * MVP Learning Contour: Handle /mycourses command
-     * Show enrolled courses with progress
-     *
-     * Bot Role: viewer (reads, shows, explains)
-     */
     async handleMyCourses(ctx) {
         const telegramId = ctx.from?.id.toString();
         if (!telegramId)
             return;
         const user = await this.getUserByTelegramId(telegramId);
-        if (!user) {
-            await ctx.reply('Аккаунт не привязан.');
+        if (!user)
             return;
-        }
         try {
             const { enrollmentService } = require('./enrollment.service');
             const myCourses = await enrollmentService.getMyCourses(user.id);
@@ -502,121 +532,73 @@ class TelegramService {
             if (myCourses.active.length > 0) {
                 message += `🔄 *Активные:*\n`;
                 for (const course of myCourses.active) {
-                    message += `• ${course.courseTitle} (${course.progress}%)\n`;
-                }
-                message += `\n`;
-            }
-            if (myCourses.completed.length > 0) {
-                message += `✅ *Завершённые:*\n`;
-                for (const course of myCourses.completed) {
                     message += `• ${course.courseTitle}\n`;
                 }
             }
-            if (myCourses.active.length === 0 && myCourses.completed.length === 0) {
-                message += `Вы ещё не записаны ни на один курс.\n\n`;
-                message += `Используйте /courses для просмотра доступных курсов.`;
+            else {
+                message += `Вы ещё не записаны ни на один курс.`;
             }
             await ctx.reply(message, { parse_mode: 'Markdown' });
         }
         catch (error) {
-            console.error('[Telegram] Error in handleMyCourses:', error);
             await ctx.reply('❌ Ошибка при загрузке ваших курсов');
         }
     }
-    /**
-     * MVP Learning Contour: Handle /enroll command
-     * Enroll user in a course
-     *
-     * Bot Role: viewer (facilitates action, no evaluation)
-     */
     async handleEnroll(ctx) {
         const telegramId = ctx.from?.id.toString();
         if (!telegramId)
             return;
         const user = await this.getUserByTelegramId(telegramId);
-        if (!user) {
-            await ctx.reply('Аккаунт не привязан.');
+        if (!user)
             return;
-        }
-        // Extract course ID from command
-        const text = ctx.message?.text || '';
-        const parts = text.split(' ');
+        const parts = (ctx.message?.text || '').split(' ');
         if (parts.length < 2) {
-            await ctx.reply('❌ Укажите ID курса:\n' +
-                '/enroll <course_id>\n\n' +
-                'Используйте /courses для просмотра доступных курсов.');
+            await ctx.reply('❌ Укажите ID курса: /enroll <course_id>');
             return;
         }
-        const courseId = parts[1];
         try {
             const { enrollmentService } = require('./enrollment.service');
-            await enrollmentService.enrollInCourse(user.id, courseId);
-            await ctx.reply('✅ *Вы успешно записаны на курс!*\n\n' +
-                '📚 Используйте /mycourses для просмотра ваших курсов.\n\n' +
-                '💡 *Напоминание:*\n' +
-                'Обучение добровольное. Проходите курс в удобном темпе.', { parse_mode: 'Markdown' });
+            await enrollmentService.enrollInCourse(user.id, parts[1]);
+            await ctx.reply('✅ Вы успешно записаны на курс!', { parse_mode: 'Markdown' });
         }
         catch (error) {
-            console.error('[Telegram] Error in handleEnroll:', error);
-            if (error.message.includes('Already enrolled')) {
-                await ctx.reply('ℹ️ Вы уже записаны на этот курс.');
-            }
-            else {
-                await ctx.reply('❌ Ошибка при записи на курс. Проверьте ID курса.');
-            }
+            await ctx.reply('❌ Ошибка при записи на курс.');
         }
     }
-    /**
-     * MVP Learning Contour: Send course completion notification
-     *
-     * Bot Role: notifier (informs about event)
-     *
-     * Called by enrollment.service when course is completed
-     */
     async sendCourseCompletedNotification(userId, courseName, recognitionMC) {
         try {
             const user = await prisma_1.prisma.user.findUnique({ where: { id: userId } });
             if (!user?.telegram_id || !this.bot)
                 return false;
-            const message = `🎉 *Поздравляем!*\n\n` +
-                `Вы завершили курс:\n` +
-                `📚 *${courseName}*\n\n` +
-                `💰 *Признание:*\n` +
-                `Вам начислено ${recognitionMC} MC\n\n` +
-                `💡 *О MatrixCoin:*\n` +
-                `MC — единица признания вашего участия в обучении. Это не влияет на доход или статус.\n\n` +
-                `📖 *Следующие шаги:*\n` +
-                `Используйте /learning для просмотра рекомендаций на основе ваших метрик PhotoCompany.`;
+            const message = `🎉 *Поздравляем!*\n\nВы завершили курс: *${courseName}*\nПризнание: ${recognitionMC} MC`;
             await this.bot.telegram.sendMessage(user.telegram_id, message, { parse_mode: 'Markdown' });
             return true;
         }
         catch (error) {
-            console.error('[Telegram] Error sending course completion notification:', error);
             return false;
         }
     }
-    getMainMenuKeyboard() {
-        return telegraf_1.Markup.inlineKeyboard([
-            [
-                telegraf_1.Markup.button.callback('📋 Мои задачи', 'my_tasks'),
-                telegraf_1.Markup.button.callback('➕ Новая задача', 'new_task')
-            ],
-            [
-                telegraf_1.Markup.button.callback('💰 Баланс', 'my_balance'),
-                telegraf_1.Markup.button.callback('👤 Профиль', 'my_profile')
-            ]
+    getMainMenuKeyboard(foundationStatus = 'ACCEPTED') {
+        const buttons = [];
+        if (foundationStatus !== foundation_constants_1.FoundationStatus.ACCEPTED) {
+            buttons.push([telegraf_1.Markup.button.callback('🧭 Узнать Базу', 'start_foundation')]);
+            return telegraf_1.Markup.inlineKeyboard(buttons);
+        }
+        buttons.push([
+            telegraf_1.Markup.button.callback('📋 Мои задачи', 'my_tasks'),
+            telegraf_1.Markup.button.callback('➕ Новая задача', 'new_task')
         ]);
+        buttons.push([
+            telegraf_1.Markup.button.callback('💰 Баланс', 'my_balance'),
+            telegraf_1.Markup.button.callback('👤 Профиль', 'my_profile')
+        ]);
+        return telegraf_1.Markup.inlineKeyboard(buttons);
     }
     async getUserByTelegramId(telegramId) {
-        return await prisma_1.prisma.user.findFirst({
-            where: { telegram_id: telegramId }
-        });
+        return await prisma_1.prisma.user.findFirst({ where: { telegram_id: telegramId } });
     }
     async linkUserAccount(userId, telegramId) {
-        await prisma_1.prisma.user.update({
-            where: { id: userId },
-            data: { telegram_id: telegramId }
-        });
+        await prisma_1.prisma.user.update({ where: { id: userId }, data: { telegram_id: telegramId } });
     }
     async sendNotification(userId, message) {
         try {
@@ -627,32 +609,22 @@ class TelegramService {
             return true;
         }
         catch (error) {
-            console.error('Error sending Telegram notification:', error);
             return false;
         }
     }
-    /**
-     * Send Login Approval Push to user.
-     */
     async sendLoginPush(sessionId, telegramId, ip) {
         if (!this.bot)
             return false;
-        const message = `🔐 *Запрос на вход в MatrixGin*\n\n` +
-            `Кто-то пытается войти в систему под вашим именем.\n` +
-            (ip ? `📍 IP: \`${ip}\`\n` : '') +
-            `Это вы?`;
-        const keyboard = telegraf_1.Markup.inlineKeyboard([
-            [
-                telegraf_1.Markup.button.callback('✅ Да, это я', `approve_login_${sessionId}`),
-                telegraf_1.Markup.button.callback('❌ Нет, это не я', `reject_login_${sessionId}`)
-            ]
-        ]);
+        const message = `🔐 *Запрос на вход*\n\nЭто вы?` + (ip ? `\n📍 IP: \`${ip}\`` : '');
+        const keyboard = telegraf_1.Markup.inlineKeyboard([[
+                telegraf_1.Markup.button.callback('✅ Да', `approve_login_${sessionId}`),
+                telegraf_1.Markup.button.callback('❌ Нет', `reject_login_${sessionId}`)
+            ]]);
         try {
             await this.bot.telegram.sendMessage(telegramId, message, { parse_mode: 'Markdown', ...keyboard });
             return true;
         }
         catch (error) {
-            console.error('Error sending Login Push:', error);
             return false;
         }
     }
@@ -660,56 +632,113 @@ class TelegramService {
         try {
             const session = await prisma_1.prisma.authSession.findUnique({ where: { id: sessionId } });
             if (!session || session.status !== 'PENDING') {
-                await ctx.editMessageText('⚠️ Срок действия этого запроса истек.');
+                await ctx.editMessageText('⚠️ Срок действия истек.');
                 return;
             }
-            await prisma_1.prisma.authSession.update({
-                where: { id: sessionId },
-                data: { status: status }
-            });
-            if (status === 'APPROVED') {
-                await ctx.editMessageText('✅ Вход разрешен. Вы можете вернуться в браузер.');
-            }
-            else {
-                await ctx.editMessageText('❌ Вход отклонен.');
-            }
+            await prisma_1.prisma.authSession.update({ where: { id: sessionId }, data: { status: status } });
+            await ctx.editMessageText(status === 'APPROVED' ? '✅ Вход разрешен.' : '❌ Вход отклонен.');
         }
         catch (error) {
-            console.error('Error handling login decision:', error);
-            await ctx.reply('❌ Ошибка при обработке решения.');
+            await ctx.reply('❌ Ошибка решения.');
         }
     }
-    getBot() {
-        return this.bot;
-    }
-    /**
-     * Handle photo uploads for registration
-     */
     async handlePhotoUpload(ctx) {
-        // Ignore if in scene
         if (ctx.scene && ctx.scene.current)
             return;
         const telegramId = ctx.from?.id.toString();
         if (!telegramId)
             return;
         const registration = await employee_registration_service_1.default.getRegistrationByTelegramId(telegramId);
-        if (registration && registration.status === 'IN_PROGRESS') {
+        if (registration && (registration.status === 'PENDING' || registration.status === 'APPROVED')) {
             await employee_registration_service_1.default.handleRegistrationStep(ctx, registration);
         }
     }
-    /**
-     * Handle document uploads for registration
-     */
     async handleDocumentUpload(ctx) {
-        // Ignore if in scene
         if (ctx.scene && ctx.scene.current)
             return;
         const telegramId = ctx.from?.id.toString();
         if (!telegramId)
             return;
         const registration = await employee_registration_service_1.default.getRegistrationByTelegramId(telegramId);
-        if (registration && registration.status === 'IN_PROGRESS') {
+        if (registration && (registration.status === 'PENDING' || registration.status === 'APPROVED')) {
             await employee_registration_service_1.default.handleRegistrationStep(ctx, registration);
+        }
+    }
+    async handleFoundation(ctx) {
+        const telegramId = ctx.from?.id.toString();
+        if (!telegramId)
+            return;
+        const user = await this.getUserByTelegramId(telegramId);
+        if (!user) {
+            await ctx.reply('❌ Пользователь не найден. Пожалуйста, используйте /start');
+            return;
+        }
+        const state = await foundation_service_1.foundationService.getImmersionState(user.id);
+        if (state.status === foundation_constants_1.FoundationStatus.ACCEPTED) {
+            await ctx.reply('✅ Вы уже приняли Базу. Добро пожаловать!');
+            return;
+        }
+        if (state.status === foundation_constants_1.FoundationStatus.READY_TO_ACCEPT) {
+            const keyboard = telegraf_1.Markup.inlineKeyboard([[
+                    telegraf_1.Markup.button.callback('📜 ПРИНЯТЬ БАЗУ', 'accept_foundation'),
+                    telegraf_1.Markup.button.callback('❌ Отказаться', 'decline_foundation')
+                ]]);
+            await ctx.reply('📜 *Принятие Базы*\n\n' +
+                'Вы ознакомились со всеми блоками. Измените свою роль в системе, приняв Базу.\n\n' +
+                'Готовы продолжить?', { parse_mode: 'Markdown', ...keyboard });
+            return;
+        }
+        // READING or NOT_STARTED
+        const currentBlockIndex = state.progress;
+        const block = state.blocks[currentBlockIndex];
+        if (!block) {
+            await ctx.reply('⚠️ Данные Базы временно недоступны.');
+            return;
+        }
+        const message = `🧭 *Блок ${block.order}: ${block.title}*\n\n${block.description}`;
+        // Robust URL construction
+        const baseUrl = process.env.WEB_APP_URL || 'http://localhost:5173';
+        // Encode only the dynamic part to ensure valid URL
+        const safeBlockId = encodeURIComponent(block.id);
+        const webUrl = `${baseUrl}/foundation/block/${safeBlockId}`;
+        const nextLabel = (block.order === state.blocks.length) ? '🏁 Завершить ознакомление' : '➡️ Далее';
+        // Validate URL - Telegram doesn't allow localhost. If invalid, fallback to homepage
+        const isLocalhost = webUrl.includes('localhost') || webUrl.includes('127.0.0.1');
+        const finalUrl = (webUrl.startsWith('http') && !isLocalhost) ? webUrl : 'https://RAI_EP.com';
+        const buttons = [
+            [telegraf_1.Markup.button.url('📖 Читать полностью (Web)', finalUrl)],
+            [telegraf_1.Markup.button.callback(nextLabel, `view_foundation_block_${block.id}`)]
+        ];
+        const keyboard = telegraf_1.Markup.inlineKeyboard(buttons);
+        if (block.videoUrl) {
+            try {
+                let videoSource = block.videoUrl;
+                // If path is relative (starts with /), try to resolve it as a local file
+                if (block.videoUrl.startsWith('/')) {
+                    // Check if we are in dev/local environment or if the path is intended to be local
+                    const projectRoot = process.cwd(); // Should be backend root
+                    // Map /content/* to ../content/* (Canon: F:\Matrix_Gin\content)
+                    // Remove leading slash to ensure path.join works correctly relative to parent
+                    const relativePath = block.videoUrl.startsWith('/') ? block.videoUrl.substring(1) : block.videoUrl;
+                    const localPath = require('path').join(projectRoot, '..', relativePath);
+                    videoSource = { source: localPath };
+                }
+                await ctx.replyWithVideo(videoSource, {
+                    caption: message,
+                    parse_mode: 'Markdown',
+                    ...keyboard
+                });
+            }
+            catch (error) {
+                console.error('Failed to send video:', error);
+                // Fallback: If video fails, try to provide a link (but only if it looks like a URL)
+                const isUrl = block.videoUrl.startsWith('http');
+                const videoLink = isUrl ? `\n\n🎬 [Видео к блоку](${block.videoUrl})` : '';
+                await ctx.reply(`${message}${videoLink} \n\n⚠️ _(Видео недоступно)_`, { parse_mode: 'Markdown', ...keyboard });
+            }
+        }
+        else {
+            await ctx.reply(message, { parse_mode: 'Markdown', ...keyboard });
         }
     }
 }

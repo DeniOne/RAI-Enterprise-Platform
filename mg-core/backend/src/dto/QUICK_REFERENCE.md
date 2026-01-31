@@ -1,4 +1,4 @@
-# MatrixGin v2.0 DTOs - Quick Reference
+# BusinessCore v2.0 DTOs - Quick Reference
 
 ## 🚀 Быстрый старт
 
@@ -14,7 +14,7 @@ npm run build
 
 ```typescript
 // Все DTOs
-import * from '@matrixgin/dto';
+import * from '@BusinessCore/dto';
 
 // Выборочно
 import {
@@ -23,7 +23,7 @@ import {
   TaskStatus,
   EmployeeRank,
   Currency
-} from '@matrixgin/dto';
+} from '@BusinessCore/dto';
 ```
 
 ---
@@ -177,8 +177,8 @@ TaskPriority.URGENT   // urgent
 
 ### Currency
 ```typescript
-Currency.MC   // MatrixCoin (сгораемые)
-Currency.GMC  // Golden MatrixCoin (вечные)
+Currency.MC   // BusinessCoin (сгораемые)
+Currency.GMC  // Golden BusinessCoin (вечные)
 Currency.RUB  // Российский рубль
 ```
 
@@ -312,7 +312,7 @@ import {
   PaginationParamsDto,
   TaskFiltersDto,
   PaginatedResponse
-} from '@matrixgin/dto';
+} from '@BusinessCore/dto';
 
 @Controller('auth')
 export class AuthController {
@@ -348,7 +348,7 @@ export class TasksController {
 
 ```typescript
 import { useState } from 'react';
-import { LoginRequestDto, TaskStatus } from '@matrixgin/dto';
+import { LoginRequestDto, TaskStatus } from '@BusinessCore/dto';
 import { validate } from 'class-validator';
 
 function LoginForm() {
@@ -395,7 +395,7 @@ function LoginForm() {
 
 ```typescript
 import { ref } from 'vue';
-import { LoginRequestDto } from '@matrixgin/dto';
+import { LoginRequestDto } from '@BusinessCore/dto';
 import { validate } from 'class-validator';
 
 export default {
@@ -437,3 +437,5 @@ export default {
 
 **Версия:** 2.0.0  
 **Обновлено:** 2025-11-21
+
+

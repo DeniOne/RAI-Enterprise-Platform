@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Economy DTOs for MatrixGin v2.0 API (MatrixCoin, Auctions, Store)
+ * Economy DTOs for BusinessCore v2.0 API (BusinessCoin, Auctions, Store)
  */
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;

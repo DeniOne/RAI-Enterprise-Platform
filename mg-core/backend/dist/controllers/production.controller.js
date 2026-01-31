@@ -6,8 +6,8 @@
  * NO business logic, NO SLA calculations here.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-const psee_service_1 = require("../psee/psee.service");
-const logger_1 = require("../config/logger");
+const psee_service_1 = require("@/core/flow/psee/psee.service");
+const logger_1 = require("@/config/logger");
 class ProductionController {
     /**
      * GET /api/production/sessions

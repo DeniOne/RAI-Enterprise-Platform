@@ -1,5 +1,5 @@
 /**
- * Department DTOs for MatrixGin v2.0 API
+ * Department DTOs for BusinessCore v2.0 API
  */
 
 import {
@@ -147,3 +147,5 @@ export class MudaAnalysisResponseDto {
     @Min(0)
     totalLoss: number;
 }
+
+

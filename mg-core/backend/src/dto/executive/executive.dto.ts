@@ -1,5 +1,5 @@
 /**
- * Executive Dashboard DTOs for MatrixGin v2.0 API
+ * Executive Dashboard DTOs for BusinessCore v2.0 API
  */
 
 import {
@@ -57,3 +57,5 @@ export class ExecutiveDashboardDto {
     @IsString({ each: true })
     anomalies: string[];
 }
+
+

@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TelegramController = void 0;
-const telegram_service_1 = __importDefault(require("../services/telegram.service"));
+const telegram_service_1 = __importDefault(require("@/services/telegram.service"));
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 class TelegramController {

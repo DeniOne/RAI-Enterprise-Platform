@@ -1,6 +1,6 @@
-# MatrixGin v2.0 API DTOs
+# BusinessCore v2.0 API DTOs
 
-TypeScript интерфейсы и Data Transfer Objects для MatrixGin v2.0 API с полной поддержкой валидации через class-validator.
+TypeScript интерфейсы и Data Transfer Objects для BusinessCore v2.0 API с полной поддержкой валидации через class-validator.
 
 ## 📦 Установка
 
@@ -29,7 +29,7 @@ dto/
 ├── tasks/               # Задачи
 │   ├── task.dto.ts      # CRUD, NLP, Comments, Filters
 │   └── index.ts
-├── economy/             # Экономика (MatrixCoin)
+├── economy/             # Экономика (BusinessCoin)
 │   ├── economy.dto.ts   # Wallet, Transactions, Auctions, Store
 │   └── index.ts
 ├── index.ts             # Главный экспорт
@@ -44,7 +44,7 @@ dto/
 
 ```typescript
 // Импорт всех DTOs
-import * from '@matrixgin/dto';
+import * from '@BusinessCore/dto';
 
 // Или выборочный импорт
 import {
@@ -53,7 +53,7 @@ import {
   TaskStatus,
   EmployeeRank,
   CreateTaskRequestDto
-} from '@matrixgin/dto';
+} from '@BusinessCore/dto';
 ```
 
 ### Примеры использования
@@ -61,7 +61,7 @@ import {
 #### 1. Аутентификация
 
 ```typescript
-import { LoginRequestDto, RegisterRequestDto } from '@matrixgin/dto';
+import { LoginRequestDto, RegisterRequestDto } from '@BusinessCore/dto';
 
 // Login
 const loginDto = new LoginRequestDto();
@@ -81,7 +81,7 @@ registerDto.acceptedNDA = true;
 #### 2. Создание задачи
 
 ```typescript
-import { CreateTaskRequestDto, TaskPriority } from '@matrixgin/dto';
+import { CreateTaskRequestDto, TaskPriority } from '@BusinessCore/dto';
 
 const taskDto = new CreateTaskRequestDto();
 taskDto.title = 'Проверить принтеры';
@@ -93,7 +93,7 @@ taskDto.tags = ['техника', 'филиал-мира'];
 #### 3. NLP создание задачи
 
 ```typescript
-import { NLPTaskRequestDto } from '@matrixgin/dto';
+import { NLPTaskRequestDto } from '@BusinessCore/dto';
 
 const nlpDto = new NLPTaskRequestDto();
 nlpDto.text = 'Проверить принтеры на Мира завтра в 10:00';
@@ -102,7 +102,7 @@ nlpDto.text = 'Проверить принтеры на Мира завтра в
 #### 4. Работа с сотрудниками
 
 ```typescript
-import { CreateEmployeeRequestDto, EmployeeStatus, EmployeeRank } from '@matrixgin/dto';
+import { CreateEmployeeRequestDto, EmployeeStatus, EmployeeRank } from '@BusinessCore/dto';
 
 const employeeDto = new CreateEmployeeRequestDto();
 employeeDto.userId = '550e8400-e29b-41d4-a716-446655440000';
@@ -114,10 +114,10 @@ employeeDto.status = EmployeeStatus.PHOTON;
 employeeDto.rank = EmployeeRank.COLLECTOR;
 ```
 
-#### 5. Экономика (MatrixCoin)
+#### 5. Экономика (BusinessCoin)
 
 ```typescript
-import { CreateTransactionRequestDto, Currency, TransactionType } from '@matrixgin/dto';
+import { CreateTransactionRequestDto, Currency, TransactionType } from '@BusinessCore/dto';
 
 // Перевод MC
 const transactionDto = new CreateTransactionRequestDto();
@@ -128,7 +128,7 @@ transactionDto.recipientId = '770e8400-e29b-41d4-a716-446655440000';
 transactionDto.description = 'Перевод за помощь с задачей';
 
 // Активация сейфа
-import { ActivateSafeRequestDto } from '@matrixgin/dto';
+import { ActivateSafeRequestDto } from '@BusinessCore/dto';
 
 const safeDto = new ActivateSafeRequestDto();
 safeDto.amount = 500; // Минимум 100 MC
@@ -137,7 +137,7 @@ safeDto.amount = 500; // Минимум 100 MC
 #### 6. Фильтрация и пагинация
 
 ```typescript
-import { PaginationParamsDto, TaskFiltersDto, TaskStatus } from '@matrixgin/dto';
+import { PaginationParamsDto, TaskFiltersDto, TaskStatus } from '@BusinessCore/dto';
 
 // Пагинация
 const pagination = new PaginationParamsDto();
@@ -159,7 +159,7 @@ filters.assigneeId = '880e8400-e29b-41d4-a716-446655440000';
 
 ```typescript
 import { validate } from 'class-validator';
-import { LoginRequestDto } from '@matrixgin/dto';
+import { LoginRequestDto } from '@BusinessCore/dto';
 
 const loginDto = new LoginRequestDto();
 loginDto.email = 'invalid-email'; // Невалидный email
@@ -223,8 +223,8 @@ if (errors.length > 0) {
 - `urgent` - Срочный
 
 ### Currency
-- `MC` - MatrixCoin (сгораемые)
-- `GMC` - Golden MatrixCoin (вечные)
+- `MC` - BusinessCoin (сгораемые)
+- `GMC` - Golden BusinessCoin (вечные)
 - `RUB` - Российский рубль
 
 ### TransactionType
@@ -296,7 +296,7 @@ npm run clean
 
 ## 📚 Дополнительная информация
 
-- Все DTOs основаны на OpenAPI спецификации MatrixGin v2.0
+- Все DTOs основаны на OpenAPI спецификации BusinessCore v2.0
 - Используется строгая типизация TypeScript
 - Поддержка декораторов для валидации
 - Готовы для использования как на фронтенде, так и на бэкенде
@@ -305,10 +305,12 @@ npm run clean
 
 - [API Specification OpenAPI FULL](../../documentation/02-technical-specs/API-Specification-OpenAPI-FULL.yaml)
 - [API Endpoints Catalog](../../documentation/02-technical-specs/API-Endpoints-Catalog.md)
-- [MatrixGin Architecture v2](../../documentation/01-strategic/MatrixGin-Architecture-v2.md)
+- [BusinessCore Architecture v2](../../documentation/01-strategic/BusinessCore-Architecture-v2.md)
 
 ---
 
 **Версия:** 2.0.0  
 **Автор:** Photomatrix Development Team  
 **Лицензия:** Proprietary
+
+

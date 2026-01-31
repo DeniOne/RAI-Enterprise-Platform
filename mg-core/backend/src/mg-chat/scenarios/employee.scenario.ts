@@ -220,7 +220,7 @@ export async function handleEmployeeScenario(action: string, intent: ResolvedInt
             try {
                 await managerToolsService.submitKaizen(intent.userId, suggestionText);
                 return {
-                    text: '✅ Идея принята! Ваше предложение будет рассмотрено руководством. Спасибо за вклад в развитие MatrixGin! 🚀',
+                    text: '✅ Идея принята! Ваше предложение будет рассмотрено руководством. Спасибо за вклад в развитие RAI_EP! 🚀',
                     actions: ['employee.show_my_shift']
                 };
             } catch (error: any) {
@@ -237,3 +237,4 @@ export async function handleEmployeeScenario(action: string, intent: ResolvedInt
             };
     }
 }
+

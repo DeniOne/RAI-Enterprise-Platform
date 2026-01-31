@@ -1,5 +1,5 @@
 /**
- * Employee DTOs for MatrixGin v2.0 API
+ * Employee DTOs for BusinessCore v2.0 API
  * 
  * REMEDIATION: MODULE 02
  * Removed: KPI, emotional analytics, ratings, engagement metrics
@@ -185,3 +185,5 @@ export class EmployeeFiltersDto {
     @IsString()
     search?: string;
 }
+
+

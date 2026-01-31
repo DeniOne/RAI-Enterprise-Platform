@@ -41,7 +41,7 @@ async function resend() {
             const message =
                 `<b>🎉 Поздравляем!</b>\n\n` +
                 `Твоя регистрация одобрена!\n\n` +
-                `Добро пожаловать в команду MatrixGin! 🚀\n\n` +
+                `Добро пожаловать в команду RAI_EP! 🚀\n\n` +
                 `На твой Email (${reg.email}) отправлена ссылка для установки пароля.`;
 
             await telegram.sendMessage(reg.telegram_id, message, { parse_mode: 'HTML' });
@@ -59,3 +59,4 @@ resend()
     .finally(async () => {
         await prisma.$disconnect();
     });
+

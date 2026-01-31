@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Authentication DTOs for MatrixGin v2.0 API
+ * Authentication DTOs for BusinessCore v2.0 API
  */
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -126,6 +126,7 @@ class UserResponseDto {
     personalDataConsent;
     mustResetPassword;
     foundationStatus;
+    admissionStatus;
 }
 exports.UserResponseDto = UserResponseDto;
 __decorate([
@@ -198,8 +199,15 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsEnum)(['NOT_STARTED', 'READING', 'READY_TO_ACCEPT', 'ACCEPTED']),
     __metadata("design:type", String)
 ], UserResponseDto.prototype, "foundationStatus", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsEnum)(['PENDING_BASE', 'ADMITTED']),
+    __metadata("design:type", String)
+], UserResponseDto.prototype, "admissionStatus", void 0);
 /**
  * Authentication response with tokens
  */

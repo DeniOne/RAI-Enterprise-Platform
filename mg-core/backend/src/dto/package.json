@@ -1,7 +1,7 @@
 {
-    "name": "@matrixgin/dto",
+    "name": "@BusinessCore/dto",
     "version": "2.0.0",
-    "description": "TypeScript DTOs for MatrixGin v2.0 API",
+    "description": "TypeScript DTOs for BusinessCore v2.0 API",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
@@ -10,7 +10,7 @@
         "clean": "rimraf dist"
     },
     "keywords": [
-        "matrixgin",
+        "BusinessCore",
         "dto",
         "typescript",
         "validation"
@@ -27,3 +27,4 @@
         "rimraf": "^5.0.0"
     }
 }
+

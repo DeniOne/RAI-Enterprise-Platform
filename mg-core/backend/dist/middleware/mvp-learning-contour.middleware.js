@@ -9,6 +9,10 @@ const mvp_learning_contour_config_1 = require("../config/mvp-learning-contour.co
  * Returns 403 Forbidden if feature is disabled.
  */
 const mvpLearningContourMiddleware = (req, res, next) => {
+    // ARCHITECT OVERRIDE: Superuser Bypass
+    if (req.headers['x-matrix-dev-role'] === 'SUPERUSER' && process.env.NODE_ENV !== 'production') {
+        return next();
+    }
     if (mvp_learning_contour_config_1.MVP_LEARNING_CONTOUR_CONFIG.enabled) {
         console.warn(`[MVP Guard] Blocked access to forbidden endpoint: ${req.method} ${req.originalUrl} from ${req.ip}`);
         return res.status(403).json({

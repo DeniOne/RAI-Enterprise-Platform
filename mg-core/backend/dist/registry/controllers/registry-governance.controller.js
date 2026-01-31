@@ -18,7 +18,7 @@ class RegistryGovernanceController {
                 version: '1.0.0', // Dynamic if rules are versioned
                 rules: registry_visibility_rules_1.VISIBILITY_RULES,
                 // We could also include summary of schemas count, etc.
-                summary: 'Active MatrixGin Registry Governance Snapshot'
+                summary: 'Active BusinessCore Registry Governance Snapshot'
             });
         }
         catch (error) {

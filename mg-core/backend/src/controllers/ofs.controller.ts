@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import ofsService from '../services/ofs.service';
-import { filterRoleMatrixByRole, filterHistoryByRole, filterOFSArrayByRole } from '../services/ofs-acl.service';
-import { UserRole } from '../dto/common/common.enums';
+import ofsService from '@/core/org/ofs.service';
+import { filterRoleMatrixByRole, filterHistoryByRole, filterOFSArrayByRole } from '@/core/org/ofs-acl.service';
+import { UserRole } from '@/dto/common/common.enums';
 
 class OFSController {
     /**
@@ -833,3 +833,4 @@ class OFSController {
 }
 
 export default new OFSController();
+

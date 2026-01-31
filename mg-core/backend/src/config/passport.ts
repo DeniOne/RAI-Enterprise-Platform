@@ -1,5 +1,5 @@
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '@/core/identity/auth.service';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -23,3 +23,4 @@ export const jwtStrategy = new JwtStrategy(options, async (payload, done) => {
         return done(error, false);
     }
 });
+

@@ -33,6 +33,10 @@ let MVPLearningContourGuard = class MVPLearningContourGuard {
             return true;
         }
         const request = context.switchToHttp().getRequest();
+        // ARCHITECT OVERRIDE: Superuser Bypass
+        if (request.headers['x-matrix-dev-role'] === 'SUPERUSER' && process.env.NODE_ENV !== 'production') {
+            return true;
+        }
         const path = request.url;
         // Check if path is forbidden
         const isForbidden = mvp_learning_contour_config_1.MVP_LEARNING_CONTOUR_CONFIG.forbiddenEndpoints.some((forbiddenPath) => path.startsWith(forbiddenPath));

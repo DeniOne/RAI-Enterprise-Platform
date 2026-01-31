@@ -5,14 +5,24 @@
 - [x] Реструктуризация дерева `docs/`.
 - [x] Создание `BUSINESS_CORE_EXTRACTION_GUIDE.md`.
 - [x] Настройка Memory Bank (projectbrief, productContext, activeContext, systemPatterns, techContext).
-- [ ] Окончательная верификация структуры юзером.
+- [x] Окончательная верификация структуры юзером.
 
-## Milestone 2: Business Core Analysis
-- [ ] Анализ существующих модулей в `mg-core`.
-- [ ] Выделение кандидатов для экстракции (Class A).
-- [ ] Создание планов экстракции по компонентам.
+## Milestone 2: Business Core Extraction (Class A/B) - DONE
+- [x] Анализ существующих модулей в `mg-core`.
+- [x] Выделение кандидатов для экстракции (Class A/B).
+- [x] Создание планов экстракции по компонентам.
+- [x] Физическая изоляция (src/core-new).
+- [x] Восстановление компиляции (npm run build PASS).
 
-## Milestone 3: Extraction & Domain Construction
-- [ ] Реализация первого контура (напр. Идентификация).
-- [ ] Создание адаптера для Telegram.
-- [ ] Тестирование связки Core + Domain RAI.
+## Milestone 3: Neutralization & Migration - DONE
+- [x] Глобальная замена MatrixCoin -> BusinessCoin.
+- [x] Глобальная замена MatrixGin -> BusinessCore (внутри ядра).
+- [x] Глобальная замена MatrixGin -> RAI_EP (на уровне инфраструктуры).
+- [x] Перенос `src/core-new` -> `src/core`.
+- [x] Чистка `src/index.ts` и `package.json`.
+- [x] **Step 5.1 FIX**: Полное удаление доменного имени RAI_EP из ядра.
+
+## Milestone 4: RAI Domain Construction
+- [ ] Создание RAI_CANON.md.
+- [ ] Регистрация первых агро-сущностей в Registry.
+- [ ] Реализация доменного слоя RAI.

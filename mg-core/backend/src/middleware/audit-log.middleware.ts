@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import auditLogService from '../services/audit-log.service';
+import auditLogService from '@/core/flow/audit-log.service';
 
 export const auditLogMiddleware = (req: Request, res: Response, next: NextFunction) => {
     // Log only state-changing methods
@@ -26,3 +26,4 @@ export const auditLogMiddleware = (req: Request, res: Response, next: NextFuncti
 
     next();
 };
+

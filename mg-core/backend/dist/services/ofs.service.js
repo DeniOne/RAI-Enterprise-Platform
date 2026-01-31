@@ -5,9 +5,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OFSService = void 0;
 const prisma_1 = require("../config/prisma");
-const department_service_1 = __importDefault(require("./department.service"));
-const role_matrix_service_1 = __importDefault(require("./role-matrix.service"));
-const org_chart_service_1 = __importDefault(require("./org-chart.service"));
+const department_service_1 = __importDefault(require("../core-new/org/department.service"));
+const role_matrix_service_1 = __importDefault(require("../core-new/org/role-matrix.service"));
+const org_chart_service_1 = __importDefault(require("../core-new/org/org-chart.service"));
 const registry_bridge_service_1 = require("./registry-bridge.service");
 /**
  * OFS Service - Facade
@@ -302,6 +302,17 @@ class OFSService {
             FROM hybrid_interactions
             GROUP BY ai_agent_name, interaction_type
             ORDER BY count DESC
+        `;
+    }
+    // ==================== Locations & Positions ====================
+    async getLocations() {
+        return await prisma_1.prisma.$queryRaw `
+            SELECT * FROM locations WHERE is_active = true ORDER BY name
+        `;
+    }
+    async getPositions() {
+        return await prisma_1.prisma.$queryRaw `
+            SELECT * FROM positions WHERE is_active = true ORDER BY name
         `;
     }
 }

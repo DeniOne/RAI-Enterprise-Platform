@@ -1,5 +1,5 @@
 /**
- * Personal Cabinet DTOs for MatrixGin v2.0 API
+ * Personal Cabinet DTOs for BusinessCore v2.0 API
  */
 
 import {
@@ -58,3 +58,5 @@ export class CabinetDashboardDto {
     @Type(() => NotificationResponseDto)
     recentNotifications: NotificationResponseDto[];
 }
+
+

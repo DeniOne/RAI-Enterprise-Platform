@@ -1,5 +1,5 @@
 /**
- * Task DTOs for MatrixGin v2.0 API
+ * Task DTOs for BusinessCore v2.0 API
  */
 
 import {
@@ -222,3 +222,5 @@ export class TaskFiltersDto {
     @IsString()
     search?: string;
 }
+
+

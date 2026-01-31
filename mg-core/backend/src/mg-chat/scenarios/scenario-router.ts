@@ -6,7 +6,7 @@
  * WHY THIS EXISTS:
  * - Intent Resolver gives us WHAT user wants
  * - Scenario Router decides HOW to fulfill it
- * - Connects MG Chat Core to MatrixGin backend
+ * - Connects MG Chat Core to RAI_EP backend
  * 
  * ARCHITECTURE:
  * - Intent Namespace = Management Contour
@@ -81,7 +81,7 @@ function handleExecutiveScenario(action: string, intent: ResolvedIntent): MGChat
         case 'navigate_dashboard':
             // TODO: Return dashboard link
             return {
-                text: '📊 Дашборд:\n\nhttps://matrixgin.local/dashboard',
+                text: '📊 Дашборд:\n\nhttps://RAI_EP.local/dashboard',
                 actions: ['exec.show_system_health', 'exec.show_kpi_summary']
             };
 
@@ -92,3 +92,4 @@ function handleExecutiveScenario(action: string, intent: ResolvedIntent): MGChat
             };
     }
 }
+

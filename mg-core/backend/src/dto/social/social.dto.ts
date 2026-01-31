@@ -1,5 +1,5 @@
 /**
- * Social Monitoring DTOs for MatrixGin v2.0 API
+ * Social Monitoring DTOs for BusinessCore v2.0 API
  */
 
 import {
@@ -43,3 +43,5 @@ export class SocialMoodResponseDto {
     @IsDateString()
     analyzedAt: ISODateTime;
 }
+
+

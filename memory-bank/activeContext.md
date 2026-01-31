@@ -1,17 +1,14 @@
 # Active Context: RAI_EP (2026-01-31)
 
 ## Current Project State
-Проект находится на этапе **Начала экстракции Business Core** и **Формирования стратегической документации**.
+Проект находится на этапе **Перехода к RAI Domain (Milestone 8)**. Бизнес-ядро успешно нейтрализовано (BusinessCore Clean).
 
-## Current Focus
-1.  **Documentation Restructuring**: Приведение `docs/` к каноническому виду (завершено).
-2.  **Memory Bank Setup**: Создание системы контекста для стабильной работы агента (в процессе).
-3.  **Business Core Extraction**: Подготовка к извлечению логики из MatrixGin согласно гайду.
+1.  **RAI Domain Construction**: Создание `RAI_CANON.md` и первой логики агро-домена.
+2.  **Agro-Registry**: Регистрация специфических сущностей для RAI в Registry.
+3.  **Core Integration**: Интеграция RAI с существующим Business Core (Tasks, Economy).
 
-## Recent Changes
-- **[2026-01-31] Memory Bank Creation**: Создана структура а-ля MatrixGin в папке `memory-bank/`. Описаны `projectbrief.md` и `productContext.md`.
-- **[2026-01-30] Documentation Refactoring**: Создана иерархия папок `00-канон`, `10-ядро`, `20-домены` и т.д. Перенесены и систематизированы ключевые документы.
-- **[2026-01-30] Extraction Guide**: Сформулированы правила экстракции бизнес-ядра в `BUSINESS_CORE_EXTRACTION_GUIDE.md`.
+- **[2026-01-31] BusinessCore Neutralization (5.1)**: Удалено упоминание RAI_EP из ядра, введено нейтральное имя `BusinessCore`.
+- **[2026-01-31] Neutralization & Migration Complete**: Брендинг Matrix удален, ядро в `src/core`, билд проходит.
 
 ## Active Decisions
 - **Standardization**: Используем структуру документов с префиксами (00, 10, 20...) для строгого порядка.

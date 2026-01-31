@@ -18,7 +18,7 @@ export class RegistryGovernanceController {
                 version: '1.0.0', // Dynamic if rules are versioned
                 rules: VISIBILITY_RULES,
                 // We could also include summary of schemas count, etc.
-                summary: 'Active MatrixGin Registry Governance Snapshot'
+                summary: 'Active BusinessCore Registry Governance Snapshot'
             });
         } catch (error: any) {
             res.status(500).json({ message: error.message });
@@ -84,3 +84,5 @@ export class RegistryGovernanceController {
 }
 
 export const registryGovernanceController = new RegistryGovernanceController();
+
+

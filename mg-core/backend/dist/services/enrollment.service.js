@@ -39,7 +39,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.enrollmentService = exports.EnrollmentService = void 0;
 const prisma_1 = require("../config/prisma");
-const foundation_service_1 = require("./foundation.service");
+const foundation_service_1 = require("../core/flow/foundation.service");
 class EnrollmentService {
     /**
      * Enroll user in a course

@@ -29,8 +29,6 @@ const error_middleware_1 = require("./middleware/error.middleware");
 const logger_1 = require("./config/logger");
 const swagger_1 = require("./config/swagger");
 const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
-const gamification_routes_1 = __importDefault(require("./routes/gamification.routes"));
-const university_routes_1 = __importDefault(require("./routes/university.routes"));
 const production_routes_1 = __importDefault(require("./routes/production.routes"));
 const mes_routes_1 = __importDefault(require("./mes/mes.routes"));
 const registry_routes_1 = __importDefault(require("./registry/registry.routes"));
@@ -40,11 +38,8 @@ const entity_cards_1 = require("./entity-cards");
 const graph_routes_1 = __importDefault(require("./graph/graph.routes"));
 const impact_routes_1 = __importDefault(require("./impact/impact.routes"));
 const ai_ops_routes_1 = __importDefault(require("./ai-ops/ai-ops.routes"));
-const adaptation_routes_1 = __importDefault(require("./routes/adaptation.routes"));
-const manager_tools_routes_1 = __importDefault(require("./routes/manager-tools.routes"));
 const status_routes_1 = __importDefault(require("./routes/status.routes"));
 const foundation_routes_1 = __importDefault(require("./routes/foundation.routes"));
-const university_event_dispatcher_1 = require("./events/university-event.dispatcher");
 // Handle BigInt serialization
 BigInt.prototype.toJSON = function () {
     return this.toString();
@@ -61,7 +56,7 @@ app.use((0, cors_1.default)({
 // Rate Limiting
 const limiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 10000, // INCREASED FOR DEV
     handler: (req, res, next, options) => {
         res.status(options.statusCode).json({ message: options.message });
     },
@@ -69,7 +64,7 @@ const limiter = (0, express_rate_limit_1.default)({
 });
 const authLimiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 10000, // INCREASED FOR DEV
     handler: (req, res, next, options) => {
         res.status(options.statusCode).json({ message: options.message });
     },
@@ -97,7 +92,7 @@ passport_1.default.use(passport_2.jwtStrategy);
 app.use('/api/docs', swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swagger_1.swaggerSpec, {
     explorer: true,
     customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: 'MatrixGin API Docs',
+    customSiteTitle: 'RAI_EP API Docs',
 }));
 // API Routes
 app.use('/api/auth', authLimiter, auth_routes_1.default);
@@ -114,8 +109,8 @@ app.use('/api/economy/auction', mvp_learning_contour_middleware_1.mvpLearningCon
 app.use('/economy/analytics', mvp_learning_contour_middleware_1.mvpLearningContourMiddleware);
 app.use('/economy/auction', mvp_learning_contour_middleware_1.mvpLearningContourMiddleware);
 app.use('/api/telegram', telegram_routes_1.default);
-app.use('/api/gamification', gamification_routes_1.default);
-app.use('/api/university', university_routes_1.default);
+// app.use('/api/gamification', gamificationRoutes); // Class C
+// app.use('/api/university', universityRoutes); // Class C
 app.use('/api/production', production_routes_1.default);
 app.use('/api/mes', mes_routes_1.default);
 app.use('/api/registry', registry_routes_1.default);
@@ -123,12 +118,12 @@ app.use('/api/entity-cards', entity_cards_1.entityCardRoutes);
 app.use('/api/graph', graph_routes_1.default);
 app.use('/api/impact', impact_routes_1.default);
 app.use('/api/ai-ops', ai_ops_routes_1.default);
-app.use('/api/adaptation', adaptation_routes_1.default);
-app.use('/api/manager', manager_tools_routes_1.default);
+// app.use('/api/adaptation', adaptationRoutes); // Class C
+// app.use('/api/manager', managerToolsRoutes); // Class C
 app.use('/api/status', status_routes_1.default);
 app.use('/api/foundation', foundation_routes_1.default);
 app.get('/', (req, res) => {
-    res.send('MatrixGin v2.0 API');
+    res.send('RAI_EP API');
 });
 // Error Handling (must be after all routes)
 app.use(error_middleware_1.notFoundHandler);
@@ -139,7 +134,7 @@ app.use(error_middleware_1.errorHandler);
 async function startServer() {
     try {
         // 1. Bootstrap Registry (CRITICAL - fail-fast)
-        logger_1.logger.info('=== STARTING MATRIXGIN SERVER ===');
+        logger_1.logger.info('=== STARTING RAI_EP SERVER ===');
         await (0, core_1.bootstrapRegistry)();
         // 2. Initialize Entity Cards (CRITICAL - depends on Registry)
         entity_cards_1.entityCardService.initialize();
@@ -151,8 +146,8 @@ async function startServer() {
         cache_1.cache.connect().catch(error => {
             logger_1.logger.warn('Redis not available, caching disabled', { error: error.message });
         });
-        // 4.1 Start University Event Worker (Module 13)
-        university_event_dispatcher_1.universityEventDispatcher.startWorker();
+        // 4.1 Start PSEE Worker (Universal)
+        // universityEventDispatcher.startWorker(); // Moved to Knowledge/University (Class C)
         // 5. Start HTTP server
         app.listen(port, () => {
             logger_1.logger.info(`Server is running at http://localhost:${port}`);

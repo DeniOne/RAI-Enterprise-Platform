@@ -1,5 +1,5 @@
 /**
- * Feedback DTOs for MatrixGin v2.0 API
+ * Feedback DTOs for BusinessCore v2.0 API
  */
 
 import {
@@ -91,3 +91,5 @@ export class SMARTReportRequestDto {
     @IsString()
     timeBound: string;
 }
+
+

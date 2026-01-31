@@ -1,7 +1,7 @@
 {
     "name": "mg-chat",
     "version": "1.0.0",
-    "description": "MatrixGin Chat - Contract-driven Telegram agent",
+    "description": "RAI_EP Chat - Contract-driven Telegram agent",
     "main": "server.ts",
     "scripts": {
         "dev": "ts-node server.ts",

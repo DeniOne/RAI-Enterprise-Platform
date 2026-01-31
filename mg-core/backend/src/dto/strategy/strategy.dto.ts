@@ -1,5 +1,5 @@
 /**
- * Strategy & Management DTOs for MatrixGin v2.0 API
+ * Strategy & Management DTOs for BusinessCore v2.0 API
  */
 
 import {
@@ -130,3 +130,5 @@ export class CTMDashboardDto {
     @IsString({ each: true })
     activeInitiatives: string[];
 }
+
+

@@ -1,5 +1,5 @@
 /**
- * HR Analytics DTOs for MatrixGin v2.0 API
+ * HR Analytics DTOs for BusinessCore v2.0 API
  */
 
 import {
@@ -76,3 +76,5 @@ export class MicroSurveyRequestDto {
     @IsNumber()
     targetPercentage: number; // e.g., 10%
 }
+
+

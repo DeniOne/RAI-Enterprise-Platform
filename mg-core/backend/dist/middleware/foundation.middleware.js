@@ -14,7 +14,16 @@ const ACTIVE_FOUNDATION_VERSION = foundation_constants_1.FOUNDATION_VERSION;
  */
 const foundationMiddleware = async (req, res, next) => {
     try {
-        const userId = req.user?.id;
+        const user = req.user;
+        const userId = user?.id;
+        // ARCHITECT OVERRIDE: Superuser Bypass
+        // Allowed based on header if user is ADMIN. 
+        // Note: in some development cases, we allow bypass if header is present 
+        // to troubleshoot admission flow itself.
+        const isSuperuser = req.headers['x-matrix-dev-role'] === 'SUPERUSER' && (user?.role === 'ADMIN' || !userId);
+        if (isSuperuser && process.env.NODE_ENV !== 'production') {
+            return next();
+        }
         if (!userId) {
             // Auth middleware should have handled this, but just in case
             return res.status(401).json({ error: 'Unauthorized' });

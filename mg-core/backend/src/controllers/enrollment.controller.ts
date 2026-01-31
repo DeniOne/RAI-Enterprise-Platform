@@ -4,7 +4,7 @@
  */
 
 import { Request, Response } from 'express';
-import { enrollmentService } from '../services/enrollment.service';
+import { enrollmentService } from '@/services/enrollment.service';
 import { universityService } from '../services/university.service';
 import { logger } from '../config/logger';
 

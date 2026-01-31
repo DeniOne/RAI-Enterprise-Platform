@@ -1,5 +1,5 @@
 /**
- * Legal & Compliance DTOs for MatrixGin v2.0 API
+ * Legal & Compliance DTOs for BusinessCore v2.0 API
  */
 
 import {
@@ -101,3 +101,5 @@ export class ConsentRequestDto {
     @IsBoolean()
     thirdParty: boolean;
 }
+
+

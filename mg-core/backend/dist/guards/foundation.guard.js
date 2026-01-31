@@ -10,8 +10,15 @@ const prisma_1 = require("../config/prisma");
 class FoundationGuard {
     logger = new common_1.Logger(FoundationGuard.name);
     ACTIVE_FOUNDATION_VERSION = 'v1.0';
-    async canActivate(userId, path) {
+    async canActivate(context) {
+        const request = context.switchToHttp().getRequest();
+        const userId = request.user?.id; // Assuming user ID is available on request.user
+        const path = request.url;
         if (!userId) {
+            return true;
+        }
+        // ARCHITECT OVERRIDE: Superuser Bypass
+        if (request.headers['x-matrix-dev-role'] === 'SUPERUSER' && process.env.NODE_ENV !== 'production') {
             return true;
         }
         // 1. Fetch Acceptance

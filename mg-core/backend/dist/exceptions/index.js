@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Custom Exception Classes for MatrixGin API
+ * Custom Exception Classes for RAI_EP API
  * Provides standardized error handling across the application
  */
 Object.defineProperty(exports, "__esModule", { value: true });

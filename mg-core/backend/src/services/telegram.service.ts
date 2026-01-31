@@ -1,7 +1,7 @@
 import { Telegraf, Context, Markup, Scenes, session } from 'telegraf';
 import employeeRegistrationService, { EmployeeRegistrationService } from './employee-registration.service';
 import { prisma } from '../config/prisma';
-import { foundationService } from './foundation.service';
+import { foundationService } from '../core/flow/foundation.service';
 import { FoundationStatus } from '../config/foundation.constants';
 
 // Wizard Scene Definition
@@ -143,13 +143,13 @@ class TelegramService {
 
                 if (status !== FoundationStatus.ACCEPTED) {
                     message += `🧭 *Вам необходимо ознакомиться с Базой!*\n\n` +
-                        `Это обязательный этап допуска к системе MatrixGin.\n` +
+                        `Это обязательный этап допуска к системе RAI_EP.\n` +
                         `Нажмите кнопку ниже, чтобы начать.`;
                 } else {
                     message += `🎓 *MVP Learning Contour*\n\n` +
                         `Этот бот — ваш проводник в обучении.\n\n` +
-                        `💡 *О MatrixCoin:*\n` +
-                        `MatrixCoin — единица признания. В MVP Learning Contour используется только в обучающем контексте и не влияет на доход, статус или власть.\n\n` +
+                        `💡 *О BusinessCoin:*\n` +
+                        `BusinessCoin — единица признания. В MVP Learning Contour используется только в обучающем контексте и не влияет на доход, статус или власть.\n\n` +
                         `📚 *Обучение:*\n` +
                         `• Добровольное участие\n` +
                         `• Рекомендации на основе реальных метрик PhotoCompany\n` +
@@ -177,7 +177,7 @@ class TelegramService {
                     );
                 } else {
                     await ctx.reply(
-                        `👋 Добро пожаловать в MatrixGin!\n\n` +
+                        `👋 Добро пожаловать в RAI_EP!\n\n` +
                         `Вы не найдены в системе.\n` +
                         `Если вы сотрудник, нажмите кнопку ниже для начала регистрации.\n\n` +
                         `Ваш Telegram ID: \`${telegramId}\``,
@@ -377,7 +377,7 @@ class TelegramService {
 
         const message =
             `💰 *Ваш баланс:*\n\n` +
-            `🪙 MatrixCoin: *${wallet.mc_balance}* MC\n` +
+            `🪙 BusinessCoin: *${wallet.mc_balance}* MC\n` +
             `🔒 Заморожено: ${wallet.mc_frozen} MC`;
 
         await ctx.reply(message, { parse_mode: 'Markdown' });
@@ -464,7 +464,7 @@ class TelegramService {
                     if (result.status === FoundationStatus.ACCEPTED) {
                         await ctx.reply(
                             `🎉 *База принята!*\n\n` +
-                            `Добро пожаловать в систему MatrixGin в качестве полноправного участника.\n` +
+                            `Добро пожаловать в систему RAI_EP в качестве полноправного участника.\n` +
                             `Теперь вам доступны все функции системы.`,
                             { parse_mode: 'Markdown', ...this.getMainMenuKeyboard(FoundationStatus.ACCEPTED) }
                         );
@@ -774,7 +774,7 @@ class TelegramService {
 
         // Validate URL - Telegram doesn't allow localhost. If invalid, fallback to homepage
         const isLocalhost = webUrl.includes('localhost') || webUrl.includes('127.0.0.1');
-        const finalUrl = (webUrl.startsWith('http') && !isLocalhost) ? webUrl : 'https://matrixgin.com';
+        const finalUrl = (webUrl.startsWith('http') && !isLocalhost) ? webUrl : 'https://RAI_EP.com';
 
         const buttons = [
             [Markup.button.url('📖 Читать полностью (Web)', finalUrl)],
@@ -824,3 +824,5 @@ class TelegramService {
 }
 
 export default TelegramService.getInstance();
+
+

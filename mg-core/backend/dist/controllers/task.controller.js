@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Task Controller for MatrixGin
+ * Task Controller for RAI_EP
  *
  * POST-AUDIT FIX:
  * - Passes userId for history logging
@@ -9,8 +9,8 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TaskController = void 0;
-const task_service_1 = require("../services/task.service");
-const common_enums_1 = require("../dto/common/common.enums");
+const task_service_1 = require("@/core/tasks/task.service");
+const common_enums_1 = require("@/dto/common/common.enums");
 const taskService = new task_service_1.TaskService();
 class TaskController {
     /**

@@ -5,7 +5,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.enrollmentController = exports.EnrollmentController = void 0;
-const enrollment_service_1 = require("../services/enrollment.service");
+const enrollment_service_1 = require("@/services/enrollment.service");
 class EnrollmentController {
     /**
      * POST /api/university/enrollments

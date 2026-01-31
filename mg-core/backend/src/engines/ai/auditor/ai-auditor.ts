@@ -51,7 +51,7 @@ export class AIAuditorError extends Error {
 // =============================================================================
 
 const SYSTEM_CONTEXT = `
-Ты — AI Auditor в системе MatrixGin.
+Ты — AI Auditor в системе RAI_EP.
 
 РОЛЬ: Аудитор. Ты обнаруживаешь аномалии и нарушения. Ты НЕ принимаешь мер.
 
@@ -92,7 +92,7 @@ Canon: AI сигнализирует. Человек решает.
 `;
 
 const COMPLIANCE_CONTEXT = `
-Ты — AI Auditor в системе MatrixGin.
+Ты — AI Auditor в системе RAI_EP.
 
 РОЛЬ: Проверка соответствия правилам RoleContract. НЕ enforcement.
 
@@ -365,3 +365,4 @@ ${eventsList || 'Нет событий'}
         return valid.includes(severity as AnomalySeverity) ? severity as AnomalySeverity : null;
     }
 }
+
