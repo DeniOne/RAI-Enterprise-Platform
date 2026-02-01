@@ -1,0 +1,311 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Multi-tenancy Models ---
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  clients   Client[]
+  users     User[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  invitations Invitation[]
+
+  @@map("companies")
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  fields    Field[]
+  users     User[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  invitations Invitation[]
+
+  @@map("clients")
+}
+
+// --- User Management ---
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  role         UserRole  @default(USER)
+  phone        String?
+  telegramId   String?   @unique
+  
+  emailVerified        Boolean  @default(false)
+  emailVerificationToken String?  @unique
+  emailVerificationExpiresAt DateTime?
+  
+  companyId    String?
+  company      Company?  @relation(fields: [companyId], references: [id])
+  clientId     String?
+  client       Client?   @relation(fields: [clientId], references: [id])
+
+  accessLevel     UserAccessLevel  @default(DEMO)
+  invitedBy       String?          // ID того, кто пригласил
+  invitedAt       DateTime?
+  activatedAt     DateTime?        // Когда активирован FULL доступ
+  demoExpiresAt   DateTime?        // Срок демо-доступа (7 дней)
+
+  // Связи
+  invitations     Invitation[]     @relation("Invitee")
+  sentInvitations Invitation[]     @relation("Inviter")
+
+  // Business Core интеграция
+  coreUserId   String?   @unique
+  coreWalletId String?   @unique
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  @@map("users")
+}
+
+model Invitation {
+  id              String        @id @default(cuid())
+  
+  // Идентификаторы инвайта
+  token           String        @unique  // UUID для email ссылок
+  shortCode       String        @unique  // 6 цифр для Telegram
+  
+  // Получатель (один из двух обязателен)
+  email           String?       // Если инвайт по email
+  telegramId      String?       // Если инвайт через TG PUSH
+  
+  // Отправитель и назначение
+  inviterId       String        // Кто пригласил
+  inviter         User          @relation("Inviter", fields: [inviterId], references: [id])
+  
+  inviteeId       String?       // Кого пригласили (если user уже есть)
+  invitee         User?         @relation("Invitee", fields: [inviteeId], references: [id])
+  
+  // Параметры доступа
+  role            UserRole      // Роль в системе
+  accessLevel     UserAccessLevel @default(INVITED)
+  
+  // Привязка к структуре
+  companyId       String        // В какую компанию
+  company         Company       @relation(fields: [companyId], references: [id])
+  clientId        String?       // В какое хозяйство (опционально)
+  client          Client?       @relation(fields: [clientId], references: [id])
+  
+  // Статус и сроки
+  status          InvitationStatus @default(PENDING)
+  expiresAt       DateTime      // Действует 72 часа
+  createdAt       DateTime      @default(now())
+  acceptedAt      DateTime?     // Когда приняли
+  activationIp    String?       // IP адрес активации
+  activationUserAgent String?   // User-Agent при активации
+  
+  // Индексы
+  @@index([token])
+  @@index([shortCode])
+  @@index([email])
+  @@index([telegramId])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([inviterId])
+  
+  @@map("invitations")
+}
+
+// --- Agri Entities ---
+
+model Field {
+  id             String        @id @default(cuid())
+  cadastreNumber String        @unique
+  name           String?
+  area           Float         // в гектарах
+  coordinates    Json          // GeoJSON Polygon
+  centroid       Json?         // GeoJSON Point
+  soilType       SoilType
+  status         FieldStatus   @default(ACTIVE)
+  
+  clientId       String
+  client         Client        @relation(fields: [clientId], references: [id])
+
+  // Business Core интеграция
+  coreObjectId   String?       @unique
+  
+  seasons        Season[]
+  
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  
+  @@index([coordinates])
+  @@index([clientId])
+  @@map("fields")
+}
+
+model Crop {
+  id                String   @id @default(cuid())
+  name              String   // Пшеница, кукуруза, рапс
+  variety           String?  // Сорт
+  reproduction      String?  // Репродукция
+  type              CropType // Озимая, яровая, многолетняя
+  vegetationPeriod  Int      // Дней от посева до уборки
+  sowingNormMin     Float?   // кг/га мин
+  sowingNormMax     Float?   // кг/га макс
+  sowingDepthMin    Float?   // см мин
+  sowingDepthMax    Float?   // см макс
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  seasons           Season[]
+  
+  @@map("crops")
+}
+
+// --- Production Cycle & Planning ---
+
+model Season {
+  id               String       @id @default(cuid())
+  year             Int
+  status           SeasonStatus @default(PLANNING)
+  
+  fieldId          String
+  field            Field        @relation(fields: [fieldId], references: [id])
+  cropId           String
+  crop             Crop         @relation(fields: [cropId], references: [id])
+  
+  technologyCardId String?
+  technologyCard   TechnologyCard? @relation(fields: [technologyCardId], references: [id])
+
+  // Business Core интеграция
+  coreProcessId    String?      @unique
+  
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([fieldId])
+  @@index([cropId])
+  @@map("seasons")
+}
+
+model TechnologyCard {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  operations  TechnologyCardOperation[]
+  seasons     Season[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("technology_cards")
+}
+
+model TechnologyCardOperation {
+  id               String   @id @default(cuid())
+  name             String
+  sequence         Int
+  technologyCardId String
+  technologyCard   TechnologyCard @relation(fields: [technologyCardId], references: [id])
+  
+  // Параметры операции (заглушка для будущего)
+  description      String?
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([technologyCardId])
+  @@map("technology_card_operations")
+}
+
+// --- Enums ---
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  AGRONOMIST
+  FIELD_WORKER
+  CLIENT_ADMIN
+  USER
+}
+
+enum SoilType {
+  CHERNOZEM     // Чернозём
+  LOAM          // Суглинок
+  SANDY         // Песчаная
+  CLAY          // Глинистая
+  PODZOLIC      // Подзолистая
+  SODDY         // Дерновая
+  GRAY_FOREST   // Серая лесная
+  CHESTNUT      // Каштановая
+}
+
+enum FieldStatus {
+  ACTIVE
+  ARCHIVED
+  IN_PROCESSING
+}
+
+enum CropType {
+  WINTER
+  SPRING
+  PERENNIAL
+  ANNUAL
+}
+
+enum SeasonStatus {
+  PLANNING
+  ACTIVE
+  COMPLETED
+}
+
+enum UserAccessLevel {
+  DEMO        // Демо-доступ через бота (7 дней)
+  INVITED     // Приглашён, но не активирован
+  ACTIVE      // Полный доступ (после активации)
+  SUSPENDED   // Приостановлен
+  TERMINATED  // Удалён
+}
+
+enum InvitationStatus {
+  PENDING     // Ожидает принятия
+  ACCEPTED    // Принята
+  EXPIRED     // Просрочена (72 часа)
+  REVOKED     // Отозвана админом
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String   // INVITATION_ACTIVATED, FIELD_CREATED, etc.
+  userId      String?
+  ip          String?
+  userAgent   String?
+  metadata    Json?    // Дополнительные детали
+  createdAt   DateTime @default(now())
+
+  @@index([action])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model ApiUsage {
+  id        String   @id @default(cuid())
+  userId    String?
+  ip        String?
+  action    String   // e.g., 'API_CALL'
+  count     Int      @default(0)
+  date      DateTime @default(now())
+
+  @@unique([userId, action, date])
+  @@unique([ip, action, date])
+  @@map("api_usage")
+}
