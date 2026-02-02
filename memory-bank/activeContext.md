@@ -2,9 +2,11 @@
 
 ## Current Project State
 Проект находится на этапе **Развертывания APL (Milestone 9)**.
+- [2026-02-03] Enterprise Identity Layer Complete: Реализованы реестры холдингов и профилей сотрудников (Блок 3). Установлены архитектурные границы между орг-структурой и авторизацией.
 - [2026-02-03] Memory Infrastructure Complete: Реализована гибридная память (Redis + pgvector). Создан пакет `@rai/vector-store`. Инфраструктура развернута через кастомный Dockerfile (PostgreSQL 16).
 - [2026-02-03] APL Foundation Complete: Реализован пакет `@rai/agro-orchestrator`.
-- **[2026-02-01] Rapeseed Refactoring Complete**: Модуль Crop заменен на Rapeseed.
+- **[2026-02-02] Field Service API Scaffolding**: Начата реализация API для работы с полями.
+
 - **[2026-01-31] BusinessCore Neutralization**: Ядро очищено от брендинга RAI_EP.
 
 ## Active Decisions

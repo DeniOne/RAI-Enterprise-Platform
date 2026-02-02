@@ -13,27 +13,56 @@ model Company {
   id        String   @id @default(cuid())
   name      String
   clients   Client[]
+  holdings  Holding[]
   users     User[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   invitations Invitation[]
+  
+  roleDefinitions RoleDefinition[]
+  employeeProfiles EmployeeProfile[]
 
   @@map("companies")
 }
 
+
 model Client {
   id        String   @id @default(cuid())
   name      String
+  
+  // Ownership & Structure
   companyId String
   company   Company  @relation(fields: [companyId], references: [id])
+  holdingId String?
+  holding   Holding? @relation(fields: [holdingId], references: [id])
+  
   fields    Field[]
   users     User[]
+  
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   invitations Invitation[]
 
   @@map("clients")
 }
+
+model Holding {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  
+  // Tenant Isolation
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  
+  clients     Client[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("holdings")
+}
+
 
 // --- User Management ---
 
@@ -426,6 +455,60 @@ enum InvitationStatus {
   EXPIRED
   REVOKED
 }
+
+// --- Identity Registry Models ---
+
+model EmployeeProfile {
+  id           String   @id @default(cuid())
+  firstName    String
+  lastName     String
+  
+  // Org Position
+  roleId       String
+  role         RoleDefinition @relation(fields: [roleId], references: [id])
+  
+  // Multi-tenant Boundaries
+  companyId    String
+  company      Company  @relation(fields: [companyId], references: [id])
+  
+  holdingId    String?
+  clientId     String?
+  
+  // Identity lifecycle
+  status       LifecycleStatus @default(ACTIVE)
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([roleId])
+  @@map("employee_profiles")
+}
+
+model RoleDefinition {
+  id          String   @id @default(cuid())
+  name        String   // e.g. "Chief Agronomist"
+  description String?
+  
+  // Tenant Ownership
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  
+  profiles    EmployeeProfile[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([name, companyId])
+  @@map("role_definitions")
+}
+
+enum LifecycleStatus {
+  ACTIVE
+  ARCHIVED
+  TERMINATED
+}
+
 
 model AuditLog {
   id          String   @id @default(cuid())

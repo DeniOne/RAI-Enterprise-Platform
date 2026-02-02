@@ -29,12 +29,15 @@
     - [x] Lib: `json-logic-js` integration
     - [x] Rule: Hard Constraint Check Template
 
-### 🏢 BLOCK 3: ENTERPRISE MODULES (CONTOUR 1 START)
-- [ ] **Section 3.1: Basic CRM**
-    - [ ] Entity: `ClientProfile`, `HoldingStructure`
-    - [ ] Service: `ClientRegistry`
-- [ ] **Section 3.2: Basic HR**
-    - [ ] Entity: `EmployeeProfile`, `RoleDefinition`
+### 🏢 BLOCK 3: ENTERPRISE IDENTITY & STRUCTURE LAYER (CONTOUR 1 START)
+- [x] **Section 3.1: Client Registry & Holdings**
+    - [x] Entity: `Holding`, `Client` (Hierarchy & Ownership)
+    - [x] Service: `ClientRegistry` (Passive Registry)
+- [x] **Section 3.2: Identity Registry (Profiles)**
+    - [x] Entity: `EmployeeProfile`, `RoleDefinition` (Org Positions)
+    - [x] Logic: Lifecycle & Multi-tenant Isolation
+
+
 
 ### 🧠 BLOCK 4: UNIFIED MEMORY (INFRA)
 - [x] **Section 4.1: Storage Setup**

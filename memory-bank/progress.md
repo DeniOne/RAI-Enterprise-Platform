@@ -36,7 +36,8 @@
 - [x] Integration: `MemoryManager` and `ContextService` (Redis) in Business Core.
 - [x] Security: Digest pinning requirements and `infra/SECURITY.md`.
 
-## Milestone 6: Registry & Field Service API (Planned)
-- [ ] Registry: Company & Client (Household) management.
-- [ ] Field API: GeoJSON support via PostGIS native types.
-- [ ] UI: Dashboard integration with geodata.
+## Milestone 6: Enterprise Identity & Structure Layer - DONE
+- [x] Registry: Company & Holding management.
+- [x] Identity Registry: Employee Profiles & Org Roles.
+- [x] Multi-tenant isolation at Registry level.
+

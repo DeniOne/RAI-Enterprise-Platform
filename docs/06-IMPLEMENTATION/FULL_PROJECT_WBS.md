@@ -19,13 +19,16 @@
 - [x] **[Backend]** **Rule Engine**: Hard Constraints (Влага, Глубина).
 - [ ] **[Backend]** **Digital Agronomist (Bot v1)**: Валидация задач в поле.
 
-### 🏢 3. Enterprise Modules (Contour 1 Start)
-- [ ] **[Backend]** **CRM (Basic)**: Реестр клиентов, Структура холдинга.
-- [ ] **[Backend]** **HR (Basic)**: Профили сотрудников, Роли.
+### 🏢 3. Enterprise Identity & Structure Layer (Contour 1 Start)
+- [x] **[Backend]** **Holdings Registry**: Реестр холдингов, иерархия клиентов.
+- [x] **[Backend]** **Identity Registry**: Профили сотрудников, организационные роли.
+
+
 
 ### 🧠 4. Unified Memory (Infrastructure)
-- [ ] **[DB]** Redis (Working Memory).
-- [ ] **[DB]** pgvector Setup (Episodic Memory).
+- [x] **[DB]** Redis (Working Memory).
+- [x] **[DB]** pgvector Setup (Episodic Memory).
+
 
 ---
 

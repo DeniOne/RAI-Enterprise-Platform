@@ -7,6 +7,8 @@ import { MemoryModule } from './shared/memory/memory.module';
 import { RapeseedModule } from './modules/rapeseed/rapeseed.module';
 import { AgroAuditModule } from './modules/agro-audit/agro-audit.module';
 import { SeasonModule } from './modules/season/season.module';
+import { ClientRegistryModule } from './modules/client-registry/client-registry.module';
+import { IdentityRegistryModule } from './modules/identity-registry/identity-registry.module';
 import { join } from 'path';
 
 @Module({
@@ -17,6 +19,9 @@ import { join } from 'path';
         RapeseedModule,
         AgroAuditModule,
         SeasonModule,
+        ClientRegistryModule,
+        IdentityRegistryModule,
+
         GraphQLModule.forRoot<ApolloDriverConfig>({
             driver: ApolloDriver,
             autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
