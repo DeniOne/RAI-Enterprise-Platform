@@ -14,12 +14,12 @@
         "db:seed": "node seed.js"
     },
     "dependencies": {
-        "@prisma/client": "latest",
+        "@prisma/client": "^6.19.2",
         "dotenv": "17.2.3"
     },
     "devDependencies": {
         "@types/node": "25.1.0",
-        "prisma": "latest",
+        "prisma": "^6.19.2",
         "tsup": "8.5.1",
         "tsx": "4.21.0",
         "typescript": "5.9.3"

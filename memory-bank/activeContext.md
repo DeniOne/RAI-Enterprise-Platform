@@ -1,14 +1,10 @@
 # Active Context: RAI_EP (2026-01-31)
 
 ## Current Project State
-Проект находится на этапе **Перехода к RAI Domain (Milestone 8)**. Бизнес-ядро успешно нейтрализовано (BusinessCore Clean).
-
-1.  **RAI Domain Construction**: Создание `RAI_CANON.md` и первой логики агро-домена.
-2.  **Agro-Registry**: Регистрация специфических сущностей для RAI в Registry.
-3.  **Core Integration**: Интеграция RAI с существующим Business Core (Tasks, Economy).
-
-- **[2026-01-31] BusinessCore Neutralization (5.1)**: Удалено упоминание RAI_EP из ядра, введено нейтральное имя `BusinessCore`.
-- **[2026-01-31] Neutralization & Migration Complete**: Брендинг Matrix удален, ядро в `src/core`, билд проходит.
+Проект находится на этапе **Развертывания APL (Milestone 9)**.
+- **[2026-02-03] APL Foundation Complete**: Реализован пакет `@rai/agro-orchestrator`. Оркестратор поддерживает Dry-Run, Rule Engine на базе `json-logic-js` верифицирует ограничения. Стадии зафиксированы через CanonicalStage interface.
+- **[2026-02-01] Rapeseed Refactoring Complete**: Модуль Crop заменен на Rapeseed.
+- **[2026-01-31] BusinessCore Neutralization**: Ядро очищено от брендинга RAI_EP.
 
 ## Active Decisions
 - **Standardization**: Используем структуру документов с префиксами (00, 10, 20...) для строгого порядка.

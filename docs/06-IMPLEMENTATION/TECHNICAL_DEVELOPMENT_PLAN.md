@@ -1,0 +1,84 @@
+# 🏗️ DETAILED TECHNICAL DEVELOPMENT PLAN (WBS)
+
+> **Статус:** Живой документ | **Обновлено:** 2026-02-03 | **Владелец:** TechLead
+> **Охват:** Соответствует `FULL_PROJECT_WBS.md` (Enterprise Edition)
+
+Этот документ декомпозирует стратегический Roadmap на конкретные инженерные задачи.
+Структура: **Фаза** → **Контур** → **Блок** → **Задача**.
+
+---
+
+## 🏗️ PHASE ALPHA: FOUNDATION (MVP)
+*Цель: Валидация Архитектуры, APL (Рапс) и запуск ядра.*
+
+### 📦 BLOCK 1: CORE INFRASTRUCTURE
+- [ ] **Section 1.1: Project Setup & Monorepo**
+    - [x] Инициализация Turborepo
+    - [x] Настройка ESLint/Prettier
+    - [x] Настройка Docker Compose (Postgres, Redis)
+- [ ] **Section 1.2: Identity & Access (IAM)**
+    - [x] Entity: `User`, `Account`, `Company` (Prisma)
+    - [x] Service: `AuthService` (JWT, RBAC)
+    - [x] Feature: Multi-tenancy (Company Isolation)
+
+### 🎼 BLOCK 2: AGRO PROCESS LAYER (CONTOUR 2 START)
+- [x] **Section 2.1: Orchestrator Scaffolding**
+    - [x] Module: `agro-orchestrator` (State Machine base)
+    - [x] Graph: Porting Rapeseed 16 Stages to Enum/Const
+- [x] **Section 2.2: Rule Engine Foundation**
+    - [x] Lib: `json-logic-js` integration
+    - [x] Rule: Hard Constraint Check Template
+
+### 🏢 BLOCK 3: ENTERPRISE MODULES (CONTOUR 1 START)
+- [ ] **Section 3.1: Basic CRM**
+    - [ ] Entity: `ClientProfile`, `HoldingStructure`
+    - [ ] Service: `ClientRegistry`
+- [ ] **Section 3.2: Basic HR**
+    - [ ] Entity: `EmployeeProfile`, `RoleDefinition`
+
+### 🧠 BLOCK 4: UNIFIED MEMORY (INFRA)
+- [ ] **Section 4.1: Storage Setup**
+    - [ ] Redis: Session & Context storage
+    - [ ] pgvector: Extension enable & Migration
+    - [ ] Service: `VectorStore` (Abstraction layer)
+
+---
+
+## 💎 PHASE BETA: OPERATIONS & ENTERPRISE (Scale)
+*Цель: Полная оцифровка бизнеса и производства.*
+
+### 🏢 BLOCK 5: CONTOUR 1 - BACK-OFFICE
+- [ ] **Section 5.1: Smart CRM**
+    - [ ] Feature: Client Scoring (LTV Calculation Logic)
+    - [ ] Feature: Smart Contract Monitor (KPI Tracking)
+- [ ] **Section 5.2: HR Ecosystem**
+    - [ ] Feature: Pulse Surveys (Form Builder + Analytics)
+    - [ ] Feature: OKR Evaluation Engine
+- [ ] **Section 5.3: Finance & Economy**
+    - [ ] Engine: `WhatIfSimulator` (ROI Calculation)
+    - [ ] Feature: Treasury & Budgeting
+
+### 🚜 BLOCK 6: CONTOUR 2 - FRONT-OFFICE
+- [ ] **Section 6.1: Operations**
+    - [ ] Module: Warehouse & Supply Chain (Just-in-Time logic)
+    - [ ] Module: Machinery Registry & Fleet Management
+- [ ] **Section 6.2: Advanced Agro**
+    - [ ] AI: Vision Service Integration (Pest Detection)
+    - [ ] Tool: Real-time Field Economics Calculator
+
+---
+
+## 🛰️ PHASE GAMMA: INTELLIGENCE (Future)
+*Цель: Когнитивная Автономность.*
+
+### 🧠 BLOCK 7: COGNITIVE BRAIN
+- [ ] **Section 7.1: Semantic Memory**
+    - [ ] Graph DB Integration (Memgraph/Neo4j)
+    - [ ] Ontology Construction (Agro + Business domains)
+- [ ] **Section 7.2: AI Agents**
+    - [ ] Agent: `BusinessPlanner` (Strategy generation)
+    - [ ] Agent: `LegalAdvisor` (Contract analysis)
+
+### 🌐 BLOCK 8: ECOSYSTEM
+- [ ] Marketplace API
+- [ ] Financial Scoring Public API

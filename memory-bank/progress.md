@@ -23,6 +23,9 @@
 - [x] **Step 5.1 FIX**: Полное удаление доменного имени RAI_EP из ядра.
 
 ## Milestone 4: RAI Domain Construction
-- [ ] Создание RAI_CANON.md.
+- [x] Создание RAI_CANON.md.
+- [x] Рефакторинг модуля `Crop` -> `Rapeseed` (технический домен).
+- [x] Обновление Prisma Schema (OilContent, ErucicAcid, Glucosinolates).
+- [x] Техническая верификация: Docker (rai-postgres), TSC, Prisma Generate.
 - [ ] Регистрация первых агро-сущностей в Registry.
-- [ ] Реализация доменного слоя RAI.
+- [/] Реализация доменного слоя RAI (Season Module).

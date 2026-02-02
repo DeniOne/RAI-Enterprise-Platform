@@ -1,7 +1,7 @@
 # Tech Context: RAI_EP
 
 ## Stack
-- **Backend Core**: TypeScript, Node.js (на базе MatrixGin Core).
+- **Backend Core**: TypeScript, Node.js (на базе BusinessCore).
 - **Database**: PostgreSQL (через Prisma ORM).
 - **Architecture**: Domain-Driven Design (DDD) + Clean Architecture principles.
 - **Interfaces**: 

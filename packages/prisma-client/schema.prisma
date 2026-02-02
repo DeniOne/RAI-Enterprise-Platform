@@ -124,6 +124,8 @@ model Invitation {
 
 // --- Agri Entities ---
 
+// --- Agri Entities ---
+
 model Field {
   id             String        @id @default(cuid())
   cadastreNumber String        @unique
@@ -150,24 +152,53 @@ model Field {
   @@map("fields")
 }
 
-model Crop {
+model Rapeseed {
   id                String   @id @default(cuid())
   name              String   // Пшеница, кукуруза, рапс
-  variety           String?  // Сорт
-  reproduction      String?  // Репродукция
-  type              CropType // Озимая, яровая, многолетняя
+  variety           String?  // Сорт рапса
+  reproduction      String?  // Репродукция (Элита, РС1, РС2)
+  type              RapeseedType // Озимый, яровой
+  
+  oilContent        Float?   // Масличность, %
+  erucicAcid        Float?   // Эруковая кислота, %
+  glucosinolates    Float?   // Глюкозинолаты, мкмоль/г
+
   vegetationPeriod  Int      // Дней от посева до уборки
   sowingNormMin     Float?   // кг/га мин
   sowingNormMax     Float?   // кг/га макс
   sowingDepthMin    Float?   // см мин
   sowingDepthMax    Float?   // см макс
   
+  // Версионирование параметров
+  version           Int      @default(1)
+  isLatest          Boolean  @default(true)
+  
+  companyId         String?  // Multi-tenancy (если NULL - системная культура)
+
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   
   seasons           Season[]
+  history           RapeseedHistory[]
   
-  @@map("crops")
+  @@unique([name, companyId, version]) // Уникальность имени в рамках компании и версии
+  @@index([companyId])
+  @@map("rapeseeds")
+}
+
+model RapeseedHistory {
+  id           String   @id @default(cuid())
+  rapeseedId   String
+  rapeseed     Rapeseed     @relation(fields: [rapeseedId], references: [id])
+  version      Int
+  changeReason String?  // Почему изменили параметры
+  changedBy    String?  // User ID
+  snapshot     Json     // Полный слепок параметров
+  
+  createdAt    DateTime @default(now())
+
+  @@index([rapeseedId, version])
+  @@map("rapeseed_history")
 }
 
 // --- Production Cycle & Planning ---
@@ -179,22 +210,129 @@ model Season {
   
   fieldId          String
   field            Field        @relation(fields: [fieldId], references: [id])
-  cropId           String
-  crop             Crop         @relation(fields: [cropId], references: [id])
+  
+  cropId           String?      // BACKWARD COMPATIBILITY (Temporary)
+  rapeseedId       String
+  rapeseed         Rapeseed     @relation(fields: [rapeseedId], references: [id])
   
   technologyCardId String?
   technologyCard   TechnologyCard? @relation(fields: [technologyCardId], references: [id])
 
+  // Yield Tracking
+  expectedYield    Float?       // Ожидаемая урожайность (т/га)
+  actualYield      Float?       // Фактическая урожайность (т/га)
+  
+  // Immutable Pattern
+  isLocked         Boolean      @default(false)
+  lockedAt         DateTime?
+  lockedBy         String?      // User ID
+
+  startDate        DateTime?
+  endDate          DateTime?
+
   // Business Core интеграция
   coreProcessId    String?      @unique
+  companyId        String       // Denormalized for performance
   
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
+  
+  history          SeasonHistory[]
+  snapshots        SeasonSnapshot[]
 
-  @@index([fieldId])
-  @@index([cropId])
+  @@index([id, companyId])          // Для быстрой валидации доступа
+  @@index([fieldId, year])          // Для севооборота
+  @@index([companyId, year])         // Для отчетов по годам
+  @@index([companyId, status])      // Для дашбордов
+  @@index([status, companyId])      // Для быстрых фильтров
+  @@index([rapeseedId, companyId])  // Для фильтрации по тенанту
   @@map("seasons")
 }
+
+model SeasonSnapshot {
+  id               String   @id @default(cuid())
+  seasonId         String
+  season           Season   @relation(fields: [seasonId], references: [id])
+  
+  // Данные на момент фиксации
+  year             Int
+  status           SeasonStatus
+  fieldId          String
+  rapeseedId       String
+  
+  expectedYield    Float?
+  actualYield      Float?
+  
+  startDate        DateTime?
+  endDate          DateTime?
+  
+  // Дополнительные метаданные
+  snapshotData     Json     // Полный дамп всех связанных данных (удобрения, операции и т.д.)
+  
+  companyId        String
+  createdBy        String   // User ID
+  createdAt        DateTime @default(now())
+
+  @@index([seasonId])
+  @@index([companyId])
+  @@index([createdAt])
+  @@index([seasonId, createdAt])
+  @@index([companyId, year])
+  @@index([rapeseedId, year])
+  @@map("season_snapshots")
+}
+
+model AuditFailure {
+  id               String   @id @default(cuid())
+  event            String
+  userId           String?
+  metadata         String   @db.Text
+  error            String   @db.Text
+  attempt          Int
+  createdAt        DateTime @default(now())
+
+  @@map("audit_failures")
+}
+
+model SeasonHistory {
+  id           String   @id @default(cuid())
+  seasonId     String
+  season       Season   @relation(fields: [seasonId], references: [id])
+  
+  action       String   // CREATE, UPDATE, COMPLETE, LOCK, YIELD_UPDATE
+  changes      Json     // Diff изменений
+  
+  userId       String?
+  createdAt    DateTime @default(now())
+
+  @@index([seasonId])
+  @@map("season_history")
+}
+
+// --- Business Rules ---
+
+model BusinessRule {
+  id             String   @id @default(cuid())
+  code           String   // UNIQUE_CODE (e.g. MIN_SEASON_LENGTH)
+  name           String
+  description    String?
+  
+  params         Json     // Параметры правила (числа, диапазоны)
+  isActive       Boolean  @default(true)
+  severity       RuleSeverity @default(ERROR) // ERROR, WARNING
+  
+  companyId      String?  // Если NULL - системное правило
+  
+  version        Int      @default(1)
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([code, companyId, version])
+  @@map("business_rules")
+}
+
+// --- Existing Models ---
 
 model TechnologyCard {
   id          String   @id @default(cuid())
@@ -238,14 +376,14 @@ enum UserRole {
 }
 
 enum SoilType {
-  CHERNOZEM     // Чернозём
-  LOAM          // Суглинок
-  SANDY         // Песчаная
-  CLAY          // Глинистая
-  PODZOLIC      // Подзолистая
-  SODDY         // Дерновая
-  GRAY_FOREST   // Серая лесная
-  CHESTNUT      // Каштановая
+  CHERNOZEM
+  LOAM
+  SANDY
+  CLAY
+  PODZOLIC
+  SODDY
+  GRAY_FOREST
+  CHESTNUT
 }
 
 enum FieldStatus {
@@ -254,37 +392,44 @@ enum FieldStatus {
   IN_PROCESSING
 }
 
-enum CropType {
-  WINTER
-  SPRING
-  PERENNIAL
-  ANNUAL
+enum RapeseedType {
+  WINTER      // Озимый
+  SPRING      // Яровой
 }
+
+
 
 enum SeasonStatus {
   PLANNING
   ACTIVE
   COMPLETED
+  CANCELLED
+}
+
+enum RuleSeverity {
+  ERROR
+  WARNING
+  INFO
 }
 
 enum UserAccessLevel {
-  DEMO        // Демо-доступ через бота (7 дней)
-  INVITED     // Приглашён, но не активирован
-  ACTIVE      // Полный доступ (после активации)
-  SUSPENDED   // Приостановлен
-  TERMINATED  // Удалён
+  DEMO
+  INVITED
+  ACTIVE
+  SUSPENDED
+  TERMINATED
 }
 
 enum InvitationStatus {
-  PENDING     // Ожидает принятия
-  ACCEPTED    // Принята
-  EXPIRED     // Просрочена (72 часа)
-  REVOKED     // Отозвана админом
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
 }
 
 model AuditLog {
   id          String   @id @default(cuid())
-  action      String   // INVITATION_ACTIVATED, FIELD_CREATED, etc.
+  action      String   // INVITATION_ACTIVATED, FIELD_CREATED, RAPESEED_ROTATION_VIOLATION
   userId      String?
   ip          String?
   userAgent   String?
@@ -301,7 +446,7 @@ model ApiUsage {
   id        String   @id @default(cuid())
   userId    String?
   ip        String?
-  action    String   // e.g., 'API_CALL'
+  action    String
   count     Int      @default(0)
   date      DateTime @default(now())
 
