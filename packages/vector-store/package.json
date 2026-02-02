@@ -1,0 +1,20 @@
+{
+    "name": "@rai/vector-store",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "test": "jest"
+    },
+    "dependencies": {
+        "@prisma/client": "^6.19.2"
+    },
+    "devDependencies": {
+        "typescript": "^5.7.3",
+        "jest": "^29.7.0",
+        "ts-jest": "^29.2.5"
+    }
+}

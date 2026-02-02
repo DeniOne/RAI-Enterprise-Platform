@@ -2,7 +2,8 @@
 
 ## Current Project State
 Проект находится на этапе **Развертывания APL (Milestone 9)**.
-- **[2026-02-03] APL Foundation Complete**: Реализован пакет `@rai/agro-orchestrator`. Оркестратор поддерживает Dry-Run, Rule Engine на базе `json-logic-js` верифицирует ограничения. Стадии зафиксированы через CanonicalStage interface.
+- [2026-02-03] Memory Infrastructure Complete: Реализована гибридная память (Redis + pgvector). Создан пакет `@rai/vector-store`. Инфраструктура развернута через кастомный Dockerfile (PostgreSQL 16).
+- [2026-02-03] APL Foundation Complete: Реализован пакет `@rai/agro-orchestrator`.
 - **[2026-02-01] Rapeseed Refactoring Complete**: Модуль Crop заменен на Rapeseed.
 - **[2026-01-31] BusinessCore Neutralization**: Ядро очищено от брендинга RAI_EP.
 

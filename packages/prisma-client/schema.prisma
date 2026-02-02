@@ -454,3 +454,18 @@ model ApiUsage {
   @@unique([ip, action, date])
   @@map("api_usage")
 }
+
+model MemoryEntry {
+  id          String   @id @default(cuid())
+  content     String
+  embedding   Unsupported("vector(1536)")?
+  metadata    Json?
+  companyId   String
+  memoryType  String   // CONTEXT | KNOWLEDGE | STRATEGY | PROCESS
+  source      String   // system | user | import | llm
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([companyId, memoryType])
+  @@map("memory_entries")
+}

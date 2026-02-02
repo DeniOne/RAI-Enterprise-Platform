@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgis/postgis:16-3.4
+    build:
+      context: ./infra/postgres
+      dockerfile: Dockerfile
     container_name: rai-postgres
     restart: always
     environment:

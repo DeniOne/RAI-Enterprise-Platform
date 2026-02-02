@@ -159,4 +159,12 @@ text
 
 ---
 
+│ └── memory-bank/             # Memory Bank проекта
+├── packages/                  # Shared packages (Lerna/Turborepo)
+│ ├── agro-orchestrator/       # Движок бизнес-процессов
+│ ├── prisma-client/           # Shared Prisma client
+│ └── vector-store/            # Работа с векторной памятью
+├── apps/
+│ └── api/                     # Backend API (NestJS)
+└── infra/                     # Infrastructure configuration (Docker, etc)
 *Последнее обновление: 2026.02.02*

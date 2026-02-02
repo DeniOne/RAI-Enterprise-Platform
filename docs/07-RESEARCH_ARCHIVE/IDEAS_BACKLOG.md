@@ -40,11 +40,11 @@
 ├─────────────────────────────────────────────────────────────┤
 │  MODULE 1: Consulting Engine   (консалтинг по рапсу)         │
 │  MODULE 2: Commerce Engine      (умная торговля СЗР/семена)  │
-│  MODULE 3: Production Engine    (производство, фасовка)      │
+│  MODULE 3: Production Engine    (производство, фасовка, склады)      │
 │  MODULE 4: Logistics Engine     (логистика, доставка)        │
-│  MODULE 5: Finance Engine       (бухгалтерия, экономика)     │
-│  MODULE 6: Legal Engine         (договоры, лицензии)         │
-│  MODULE 7: R&D Engine           (научные исследования)       │
+│  MODULE 5: Finance Engine       (бухгалтерия, экономика, финансы)     │
+│  MODULE 6: Legal Engine         (договоры, лицензии,                       юридическое сопровождение)         │
+│  MODULE 7: R&D Engine           (научные исследования, испытания)       │
 │  MODULE 8: HR & Knowledge Engine (кадры, обучение)           │
 └──────────────────────────────┬──────────────────────────────┘
                                │

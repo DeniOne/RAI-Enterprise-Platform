@@ -29,3 +29,14 @@
 - [x] Техническая верификация: Docker (rai-postgres), TSC, Prisma Generate.
 - [ ] Регистрация первых агро-сущностей в Registry.
 - [/] Реализация доменного слоя RAI (Season Module).
+## Milestone 5: Unified Memory Infrastructure - DONE
+- [x] Dockerization: Custom PostgreSQL with PostGIS + pgvector.
+- [x] Schema: `MemoryEntry` model with vector dimension check (1536).
+- [x] Package: `@rai/vector-store` for associative retrieval.
+- [x] Integration: `MemoryManager` and `ContextService` (Redis) in Business Core.
+- [x] Security: Digest pinning requirements and `infra/SECURITY.md`.
+
+## Milestone 6: Registry & Field Service API (Planned)
+- [ ] Registry: Company & Client (Household) management.
+- [ ] Field API: GeoJSON support via PostGIS native types.
+- [ ] UI: Dashboard integration with geodata.

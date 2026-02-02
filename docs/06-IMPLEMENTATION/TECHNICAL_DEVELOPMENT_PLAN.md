@@ -37,10 +37,11 @@
     - [ ] Entity: `EmployeeProfile`, `RoleDefinition`
 
 ### 🧠 BLOCK 4: UNIFIED MEMORY (INFRA)
-- [ ] **Section 4.1: Storage Setup**
-    - [ ] Redis: Session & Context storage
-    - [ ] pgvector: Extension enable & Migration
-    - [ ] Service: `VectorStore` (Abstraction layer)
+- [x] **Section 4.1: Storage Setup**
+    - [x] Redis: Session & Context storage (`ContextService`)
+    - [x] pgvector: Custom Dockerfile & Migration
+    - [x] Service: `@rai/vector-store` (Abstraction layer)
+    - [x] Logic: Policy-driven `MemoryManager`
 
 ---
 
