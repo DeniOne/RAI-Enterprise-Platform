@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { RapeseedService } from './Rapeseed.service';
-import { RapeseedResolver } from './Rapeseed.resolver';
+import { RapeseedService } from './rapeseed.service';
+import { RapeseedResolver } from './rapeseed.resolver';
 
 @Module({
     providers: [RapeseedService, RapeseedResolver],

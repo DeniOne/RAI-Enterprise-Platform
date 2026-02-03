@@ -73,11 +73,11 @@ export class TaskService {
             }
 
             if (tasks.length > 0) {
-                await this.auditService.log(
-                    'TASKS_GENERATED_FROM_TECHCARD',
-                    { id: 'SYSTEM' }, // Simplified for system action
-                    { seasonId, count: tasks.length }
-                );
+                await this.auditService.log({
+                    action: 'SYSTEM_TASK_GENERATION',
+                    userId: 'SYSTEM',
+                    metadata: { seasonId, count: tasks.length }
+                });
             }
 
             return tasks;
@@ -93,7 +93,11 @@ export class TaskService {
             data: { assigneeId },
         });
 
-        await this.auditService.log('TASK_ASSIGNED', user, { taskId, assigneeId });
+        await this.auditService.log({
+            action: 'TASK_ASSIGNED',
+            userId: user.id,
+            metadata: { taskId, assigneeId }
+        });
         return updated;
     }
 
@@ -106,7 +110,11 @@ export class TaskService {
             data: { status: TaskStatus.IN_PROGRESS },
         });
 
-        await this.auditService.log('TASK_STARTED', user, { taskId });
+        await this.auditService.log({
+            action: 'TASK_STARTED',
+            userId: user.id,
+            metadata: { taskId }
+        });
         return updated;
     }
 
@@ -140,7 +148,11 @@ export class TaskService {
             return completed;
         });
 
-        await this.auditService.log('TASK_COMPLETED', user, { taskId, resourcesCount: actualResources?.length });
+        await this.auditService.log({
+            action: 'TASK_COMPLETED',
+            userId: user.id,
+            metadata: { taskId, resourcesCount: actualResources?.length }
+        });
         return updated;
     }
 
@@ -153,7 +165,11 @@ export class TaskService {
             data: { status: TaskStatus.CANCELLED },
         });
 
-        await this.auditService.log('TASK_CANCELLED', user, { taskId, reason });
+        await this.auditService.log({
+            action: 'TASK_CANCELLED',
+            userId: user.id,
+            metadata: { taskId, reason }
+        });
         return updated;
     }
 

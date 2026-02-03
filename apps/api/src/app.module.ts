@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './shared/prisma/prisma.module';
 import { AuditModule } from './shared/audit/audit.module';
 import { MemoryModule } from './shared/memory/memory.module';
@@ -12,10 +13,13 @@ import { IdentityRegistryModule } from './modules/identity-registry/identity-reg
 import { FieldRegistryModule } from './modules/field-registry/field-registry.module';
 import { TechnologyCardModule } from './modules/technology-card/technology-card.module';
 import { TaskModule } from './modules/task/task.module';
+import { TelegramModule } from './modules/telegram/telegram.module';
+import { TelegrafModule } from 'nestjs-telegraf';
 import { join } from 'path';
 
 @Module({
     imports: [
+        ConfigModule.forRoot({ isGlobal: true }),
         PrismaModule,
         MemoryModule,
         AuditModule,
@@ -27,6 +31,13 @@ import { join } from 'path';
         FieldRegistryModule,
         TechnologyCardModule,
         TaskModule,
+        TelegramModule,
+
+        TelegrafModule.forRootAsync({
+            useFactory: () => ({
+                token: process.env.TELEGRAM_BOT_TOKEN,
+            }),
+        }),
 
         GraphQLModule.forRoot<ApolloDriverConfig>({
             driver: ApolloDriver,

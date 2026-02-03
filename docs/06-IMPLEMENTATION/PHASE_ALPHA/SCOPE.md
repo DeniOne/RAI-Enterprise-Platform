@@ -31,10 +31,17 @@
 - [x] API: Orchestrator Integration (Service=IO, Orchestrator=Brain)
 - [x] Logic: Dry-Run, Constraints & Semantic History (SeasonStageProgress)
 
-### Telegram Bot:
-- [x] Команды: /start, /help, /mytasks
-- [x] Webhook обработка сообщений
-- [x] Интеграция с Task Engine
+### [x] Telegram Bot Integration
+- [x] Initial handler implementation (`nestjs-telegraf`)
+- [x] Auth flow via Telegram ID linking
+- [x] Corrected handler return types (fixed TypeErrors)
+- [x] `/start` and `/mytasks` commands verification
+
+### [x] System Infrastructure Hardening
+- [x] Database Unification (Docker Postgres on port 5432)
+- [x] Single source of truth for DB across all apps
+- [x] Activation of `postgis` & `pgvector` extensions
+- [x] Creation of `run_bot.bat` for easy orchestration
 
 ## Sprint 4 (05.08 - 19.08): Веб-интерфейс
 ### Веб Frontend:
