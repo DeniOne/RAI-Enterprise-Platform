@@ -9,6 +9,9 @@ import { AgroAuditModule } from './modules/agro-audit/agro-audit.module';
 import { SeasonModule } from './modules/season/season.module';
 import { ClientRegistryModule } from './modules/client-registry/client-registry.module';
 import { IdentityRegistryModule } from './modules/identity-registry/identity-registry.module';
+import { FieldRegistryModule } from './modules/field-registry/field-registry.module';
+import { TechnologyCardModule } from './modules/technology-card/technology-card.module';
+import { TaskModule } from './modules/task/task.module';
 import { join } from 'path';
 
 @Module({
@@ -21,6 +24,9 @@ import { join } from 'path';
         SeasonModule,
         ClientRegistryModule,
         IdentityRegistryModule,
+        FieldRegistryModule,
+        TechnologyCardModule,
+        TaskModule,
 
         GraphQLModule.forRoot<ApolloDriverConfig>({
             driver: ApolloDriver,

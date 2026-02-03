@@ -1,4 +1,4 @@
-import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
 import { SeasonService } from './season.service';
 import { Season } from './dto/season.type';
 import { CreateSeasonInput } from './dto/create-season.input';
@@ -49,5 +49,21 @@ export class SeasonResolver {
         @CurrentUser() user: User,
     ): Promise<Season> {
         return this.seasonService.findOne(id, user.companyId!);
+    }
+
+    @Mutation(() => Season)
+    async transitionSeasonStage(
+        @Args('seasonId') seasonId: string,
+        @Args('targetStageId') targetStageId: string,
+        @Args('metadata', { nullable: true }) metadata?: string,
+        @CurrentUser() user?: User,
+    ): Promise<Season> {
+        return this.seasonService.transitionStage(
+            seasonId,
+            targetStageId,
+            metadata ? JSON.parse(metadata) : {},
+            user!,
+            user!.companyId!
+        );
     }
 }

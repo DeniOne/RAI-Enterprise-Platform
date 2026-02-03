@@ -22,14 +22,14 @@
 
 ### RAI Domain: Field Service
 - [x] Модель Field с PostGIS геоданными
-- [ ] API: GET /fields (список полей с геоданными)
-- [ ] Веб: Карта полей (Mapbox)
+- [x] API: GET /fields (реестр полей с GeoJSON)
+- [ ] Веб: Карта полей (Mapbox) — [Deferred: Out-of-Scope Phase Alpha]
 
 ## Sprint 3 (22.07 - 05.08): Tasks + Telegram
 ### Business Core: Task Engine
 - [x] Состояния задачи: Orchestrator State Machine (16 Stages)
-- [x] API: Orchestrator Scaffolding & Rule Engine
-- [x] Logic: Dry-Run & Constraints
+- [x] API: Orchestrator Integration (Service=IO, Orchestrator=Brain)
+- [x] Logic: Dry-Run, Constraints & Semantic History (SeasonStageProgress)
 
 ### Telegram Bot:
 - [x] Команды: /start, /help, /mytasks

@@ -41,3 +41,16 @@
 - [x] Identity Registry: Employee Profiles & Org Roles.
 - [x] Multi-tenant isolation at Registry level.
 
+
+## Milestone 7: Field Service API - DONE
+- [x] Prisma: Explicit `companyId` in `Field` model for isolation.
+- [x] API: `FieldRegistryModule` (POST/GET) with GeoJSON validation (Polygon/MultiPolygon).
+- [x] Verification: Unit tests (4/4 passed).
+- [x] Infrastructure: Container with `pgvector` fixed & verified.
+
+## Milestone 8: APL Lifecycle Integration (16 Stages) — DONE
+- [x] Schema: `SeasonStageProgress` and `currentStageId` in `Season`.
+- [x] Logic: Service = IO / Orchestrator = Brain implementation.
+- [x] Integration: GraphQL `transitionSeasonStage` mutation.
+- [x] Verification: 3/3 unit tests for stage transitions passed.
+- [x] Audit: Semantic history tracking enabled.

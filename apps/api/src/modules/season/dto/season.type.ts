@@ -52,4 +52,25 @@ export class Season {
 
     @Field(() => Date)
     updatedAt: Date;
+
+    @Field(() => String, { nullable: true })
+    currentStageId?: string;
+
+    @Field(() => [SeasonStageProgress], { nullable: true })
+    stageProgress?: SeasonStageProgress[];
+}
+
+@ObjectType()
+export class SeasonStageProgress {
+    @Field(() => String)
+    id: string;
+
+    @Field(() => String)
+    stageId: string;
+
+    @Field(() => Date)
+    completedAt: Date;
+
+    @Field(() => String, { nullable: true })
+    metadata?: string;
 }

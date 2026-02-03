@@ -21,6 +21,9 @@ model Company {
   
   roleDefinitions RoleDefinition[]
   employeeProfiles EmployeeProfile[]
+  fields      Field[]
+  technologyCards TechnologyCard[]
+  tasks       Task[]
 
   @@map("companies")
 }
@@ -100,6 +103,8 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   
+  tasks        Task[]
+  
   @@map("users")
 }
 
@@ -168,16 +173,21 @@ model Field {
   clientId       String
   client         Client        @relation(fields: [clientId], references: [id])
 
+  companyId      String
+  company        Company       @relation(fields: [companyId], references: [id])
+
   // Business Core интеграция
   coreObjectId   String?       @unique
   
   seasons        Season[]
+  tasks          Task[]
   
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   
   @@index([coordinates])
   @@index([clientId])
+  @@index([companyId])
   @@map("fields")
 }
 
@@ -266,8 +276,12 @@ model Season {
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
   
+  currentStageId   String?      // ID текущего этапа (micro-state)
+  stageProgress    SeasonStageProgress[]
+  
   history          SeasonHistory[]
   snapshots        SeasonSnapshot[]
+  tasks            Task[]
 
   @@index([id, companyId])          // Для быстрой валидации доступа
   @@index([fieldId, year])          // Для севооборота
@@ -322,6 +336,20 @@ model AuditFailure {
 
   @@map("audit_failures")
 }
+model SeasonStageProgress {
+  id           String   @id @default(cuid())
+  seasonId     String
+  season       Season   @relation(fields: [seasonId], references: [id])
+  
+  stageId      String   // ID этапа (например, '04_SOWING')
+  completedAt  DateTime @default(now())
+  
+  metadata     Json?    // Факты и контекст этапа (влажность, дата посева и т.д.)
+  
+  @@index([seasonId])
+  @@index([stageId])
+  @@map("season_stage_progress")
+}
 
 model SeasonHistory {
   id           String   @id @default(cuid())
@@ -370,9 +398,13 @@ model TechnologyCard {
   operations  TechnologyCardOperation[]
   seasons     Season[]
   
+  companyId   String   // Изоляция карт на уровне тенанта
+  company     Company  @relation(fields: [companyId], references: [id])
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  @@index([companyId])
   @@map("technology_cards")
 }
 
@@ -383,17 +415,104 @@ model TechnologyCardOperation {
   technologyCardId String
   technologyCard   TechnologyCard @relation(fields: [technologyCardId], references: [id])
   
-  // Параметры операции (заглушка для будущего)
+  stageId          String?  // Ссылка на этап APL (например, '04_SOWING')
+  resources        TechnologyCardResource[]
+  
   description      String?
   
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
   @@index([technologyCardId])
+  @@index([stageId])
   @@map("technology_card_operations")
+  tasks            Task[]
+}
+
+model TechnologyCardResource {
+  id               String   @id @default(cuid())
+  operationId      String
+  operation        TechnologyCardOperation @relation(fields: [operationId], references: [id])
+  
+  type             String   // FERTILIZER, SEED, FUEL, CHEMICAL
+  name             String   // "Карбамид", "Рапс Озёрный"
+  dosage           Float    // Количество
+  unit             String   // кг/га, л/га
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([operationId])
+  @@map("technology_card_resources")
+}
+
+// --- Task Engine Models ---
+
+model Task {
+  id               String   @id @default(cuid())
+  name             String
+  status           TaskStatus @default(PENDING)
+  
+  // Context
+  seasonId         String
+  season           Season   @relation(fields: [seasonId], references: [id])
+  
+  operationId      String?
+  operation        TechnologyCardOperation? @relation(fields: [operationId], references: [id])
+  
+  fieldId          String
+  field            Field    @relation(fields: [fieldId], references: [id])
+  
+  // Assignment
+  assigneeId       String?
+  assignee         User?    @relation(fields: [assigneeId], references: [id])
+  
+  // Dates
+  plannedDate      DateTime?
+  completedAt      DateTime?
+  
+  // Tenant Isolation
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id])
+  
+  // Actual Resources
+  actualResources  TaskResourceActual[]
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([seasonId])
+  @@index([companyId])
+  @@index([assigneeId])
+  @@index([fieldId])
+  @@map("tasks")
+}
+
+model TaskResourceActual {
+  id               String   @id @default(cuid())
+  taskId           String
+  task             Task     @relation(fields: [taskId], references: [id])
+  
+  type             String   // FERTILIZER, SEED, FUEL, CHEMICAL
+  name             String
+  amount           Float
+  unit             String
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([taskId])
+  @@map("task_resource_actuals")
 }
 
 // --- Enums ---
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
 
 enum UserRole {
   ADMIN

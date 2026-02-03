@@ -7,9 +7,13 @@ import { SeasonBusinessRulesService } from './services/season-business-rules.ser
 import { SeasonSnapshotService } from './services/season-snapshot.service';
 import { User, Season, SeasonStatus } from '@prisma/client';
 import { AgriculturalAuditEvent } from '../agro-audit/enums/audit-events.enum';
+import { AgroOrchestrator, getRapeseedStageById, RapeseedPreset } from '@rai/agro-orchestrator';
+import { AgroContext } from '@rai/agro-orchestrator';
 
 @Injectable()
 export class SeasonService {
+    private readonly orchestrator: AgroOrchestrator = new AgroOrchestrator();
+
     constructor(
         private readonly prisma: PrismaService,
         private readonly auditService: AgroAuditService,
@@ -163,6 +167,73 @@ export class SeasonService {
         }, {
             maxWait: 5000, // 5 секунд
             timeout: 10000, // 10 секунд
+        });
+    }
+
+    /**
+     * Transitions a season to a new stage using AgroOrchestrator.
+     * Formula: Service = IO, Orchestrator = Brain.
+     */
+    async transitionStage(id: string, targetStageId: string, metadata: any, user: User, companyId: string): Promise<Season> {
+        // 1. IO: Load state
+        const season = await this.prisma.season.findFirst({
+            where: { id, companyId },
+            include: { stageProgress: true }
+        });
+
+        if (!season) {
+            throw new NotFoundException(`Season ${id} not found or access denied`);
+        }
+
+        this._checkLock(season);
+
+        // 2. IO: Prepare context for Brain
+        const targetStage = getRapeseedStageById(targetStageId);
+        if (!targetStage) {
+            throw new BadRequestException(`Stage ${targetStageId} not found in Rapeseed preset`);
+        }
+
+        const context: AgroContext = {
+            fieldId: season.fieldId,
+            cropCycleId: season.id,
+            currentStageId: season.currentStageId,
+            inputData: metadata || {}
+        };
+
+        // 3. BRAIN: Resolve transition
+        // For phase Alpha we use preset rules or empty for now
+        const result = await this.orchestrator.transition(targetStage, context, []);
+
+        if (!result.success) {
+            throw new BadRequestException(`Transition to ${targetStageId} blocked: ${result.validation.reason}`);
+        }
+
+        // 4. IO: Persist new state
+        return this.prisma.$transaction(async (tx) => {
+            const updated = await tx.season.update({
+                where: { id },
+                data: {
+                    currentStageId: targetStageId,
+                    status: targetStageId === '16_SEASON_CLOSE' ? SeasonStatus.COMPLETED : SeasonStatus.ACTIVE,
+                }
+            });
+
+            await tx.seasonStageProgress.create({
+                data: {
+                    seasonId: id,
+                    stageId: targetStageId,
+                    metadata: metadata || {}
+                }
+            });
+
+            // 5. IO: Audit
+            await this.auditService.log(
+                AgriculturalAuditEvent.RAPESEED_SEASON_UPDATED as any,
+                user,
+                { seasonId: id, transition: { from: season.currentStageId, to: targetStageId }, metadata }
+            );
+
+            return updated;
         });
     }
 
