@@ -178,3 +178,110 @@ Sprint 4 считается завершённым, если:
 - Создан DECISIONS.log
 - Добавлен SPRINT4-WEB-001 (PENDING)
 - Добавлен UI-CANON-001 (ACCEPTED)
+- Добавлены ARCH-DEBT-001, 002, 003 (Architecture Audit Sprint 4)
+
+---
+
+# ============================================================
+# ARCHITECTURE DEBT (Sprint 4 Audit)
+# ============================================================
+
+## ARCH-DEBT-001
+
+**Дата:** 2026-02-03  
+**Автор:** Chief System Architect (AI)  
+**Статус:** PENDING  
+**Приоритет:** CRITICAL  
+**Target:** Sprint 5
+
+### Решение
+Multi-tenancy отсутствует в Auth Module
+
+### Контекст
+Architectural Audit Sprint 4 выявил критическое отсутствие multi-tenancy:
+- `companyId` в JWT всегда `null`
+- Нет фильтрации данных по `companyId` в Dashboard
+- Все пользователи видят данные всех компаний
+
+### Действия
+Реализовать multi-tenancy в Sprint 5:
+1. Добавить relation `User -> Company` в Prisma schema
+2. Заполнять `companyId` в JWT payload из `user.company`
+3. Добавить фильтрацию по `companyId` во всех API endpoints
+4. Обновить Dashboard для фильтрации данных по `companyId`
+
+### Обоснование
+Без multi-tenancy система непригодна для production.  
+Это блокер для пилотного внедрения.
+
+### Связанные документы
+- `ARCH_AUDIT_SPRINT_4.md` (Section 2, 3)
+
+---
+
+## ARCH-DEBT-002
+
+**Дата:** 2026-02-03  
+**Автор:** Chief System Architect (AI)  
+**Статус:** PENDING  
+**Приоритет:** HIGH  
+**Target:** Sprint 5
+
+### Решение
+Auth Repository отсутствует (Infrastructure Leak)
+
+### Контекст
+Auth Service напрямую использует `PrismaService` (infrastructure leak).  
+Нет абстракции между Auth Service и БД.  
+Это технический долг, усложняющий миграцию и тестирование.
+
+### Действия
+Создать UserRepository (Repository pattern):
+1. Создать interface `IUserRepository`
+2. Создать `UserRepository` с методами: `findByEmail`, `findById`
+3. Инжектировать `UserRepository` в Auth Service
+4. Убрать прямую зависимость от `PrismaService`
+
+### Обоснование
+Repository pattern обеспечивает:
+- Абстракцию от конкретной БД
+- Упрощение тестирования (mock repository)
+- Возможность добавления кэша без изменения Auth Service
+
+### Связанные документы
+- `ARCH_AUDIT_SPRINT_4.md` (Section 2, 3)
+
+---
+
+## ARCH-DEBT-003
+
+**Дата:** 2026-02-03  
+**Автор:** Chief System Architect (AI)  
+**Статус:** PENDING  
+**Приоритет:** MEDIUM  
+**Target:** Sprint 6
+
+### Решение
+Web Orchestrator не реализован
+
+### Контекст
+Веб-интерфейс работает напрямую с API (fetch → render).  
+Нет централизованной логики для сложных flow.  
+Риск размазывания логики по компонентам при росте системы.
+
+### Действия
+Создать WebOrchestrator для управления веб-flow:
+1. Создать `WebOrchestrator` service в NestJS API
+2. Переместить сложные сценарии из компонентов в Orchestrator
+3. Использовать для multi-step forms, wizards, complex validations
+
+Альтернатива: использовать существующий `AgroOrchestrator`
+
+### Обоснование
+Orchestrator = Brain (канон RAI_EP).  
+Централизация логики предотвращает деградацию архитектуры.  
+Упрощает тестирование и поддержку.
+
+### Связанные документы
+- `ARCH_AUDIT_SPRINT_4.md` (Section 2, 3, 5)
+
