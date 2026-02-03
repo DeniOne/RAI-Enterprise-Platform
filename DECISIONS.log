@@ -189,10 +189,11 @@ Sprint 4 считается завершённым, если:
 ## ARCH-DEBT-001
 
 **Дата:** 2026-02-03  
+**Обновлено:** 2026-02-03 18:50  
 **Автор:** Chief System Architect (AI)  
-**Статус:** PENDING  
+**Статус:** RESOLVED (Sprint 5a COMPLETE)
 **Приоритет:** CRITICAL  
-**Target:** Sprint 5
+**Target:** Sprint 5a
 
 ### Решение
 Multi-tenancy отсутствует в Auth Module
@@ -204,11 +205,17 @@ Architectural Audit Sprint 4 выявил критическое отсутст�
 - Все пользователи видят данные всех компаний
 
 ### Действия
-Реализовать multi-tenancy в Sprint 5:
+Реализовать multi-tenancy в Sprint 5a:
 1. Добавить relation `User -> Company` в Prisma schema
 2. Заполнять `companyId` в JWT payload из `user.company`
 3. Добавить фильтрацию по `companyId` во всех API endpoints
 4. Обновить Dashboard для фильтрации данных по `companyId`
+
+### Multi-tenancy Canon (КРИТИЧНО)
+**Правило безопасности:**
+- `companyId` ВСЕГДА извлекается из security context (JWT payload)
+- `companyId` НИКОГДА не принимается из `body`, `query`, `params`
+- Веб-интерфейс НЕ ИМЕЕТ ПРАВА формировать `companyId`
 
 ### Обоснование
 Без multi-tenancy система непригодна для production.  
@@ -216,16 +223,18 @@ Architectural Audit Sprint 4 выявил критическое отсутст�
 
 ### Связанные документы
 - `ARCH_AUDIT_SPRINT_4.md` (Section 2, 3)
+- `implementation_plan.md` (Sprint 5a)
 
 ---
 
 ## ARCH-DEBT-002
 
 **Дата:** 2026-02-03  
+**Обновлено:** 2026-02-03 18:50  
 **Автор:** Chief System Architect (AI)  
-**Статус:** PENDING  
+**Статус:** RESOLVED (Sprint 5a COMPLETE)
 **Приоритет:** HIGH  
-**Target:** Sprint 5
+**Target:** Sprint 5a
 
 ### Решение
 Auth Repository отсутствует (Infrastructure Leak)
@@ -250,14 +259,16 @@ Repository pattern обеспечивает:
 
 ### Связанные документы
 - `ARCH_AUDIT_SPRINT_4.md` (Section 2, 3)
+- `implementation_plan.md` (Sprint 5a)
 
 ---
 
 ## ARCH-DEBT-003
 
 **Дата:** 2026-02-03  
+**Обновлено:** 2026-02-03 18:50  
 **Автор:** Chief System Architect (AI)  
-**Статус:** PENDING  
+**Статус:** DEFERRED (Sprint 6)  
 **Приоритет:** MEDIUM  
 **Target:** Sprint 6
 
@@ -270,10 +281,13 @@ Web Orchestrator не реализован
 Риск размазывания логики по компонентам при росте системы.
 
 ### Действия
-Создать WebOrchestrator для управления веб-flow:
+Создать WebOrchestrator для управления веб-flow (API-layer, НЕ frontend):
 1. Создать `WebOrchestrator` service в NestJS API
 2. Переместить сложные сценарии из компонентов в Orchestrator
 3. Использовать для multi-step forms, wizards, complex validations
+
+**Важно:** WebOrchestrator — это API-layer (NestJS service), НЕ frontend.
+Веб-интерфейс (Next.js) не имеет права содержать бизнес-логику или orchestration.
 
 Альтернатива: использовать существующий `AgroOrchestrator`
 
@@ -284,4 +298,5 @@ Orchestrator = Brain (канон RAI_EP).
 
 ### Связанные документы
 - `ARCH_AUDIT_SPRINT_4.md` (Section 2, 3, 5)
+- `implementation_plan.md` (Sprint 5a, DEFERRED)
 

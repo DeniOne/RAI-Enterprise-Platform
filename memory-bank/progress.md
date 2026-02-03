@@ -8,6 +8,7 @@
 - [x] Telegram: Auth by `telegramId` (fixed admin ID typo).
 - [x] Telegram: Commands `/start` and `/mytasks` with interactive buttons.
 - [x] Bot Fixes: Corrected async return types and `ctx.reply` handling.
+- [x] Sprint 5a: Architecture Debt (Multi-tenancy + Auth Repository)
 - [x] Infrastructure: Port 5432 DB unification (Docker).
 - [x] Orchestration: Created `run_bot.bat` for project root.
 

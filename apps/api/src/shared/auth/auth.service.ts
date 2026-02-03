@@ -1,68 +1,64 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../prisma/prisma.service';
-import * as bcrypt from 'bcrypt';
+import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { UserRepository } from "./repositories/user.repository";
 
 @Injectable()
 export class AuthService {
-    constructor(
-        private prisma: PrismaService,
-        private jwtService: JwtService,
-    ) { }
+  constructor(
+    private userRepository: UserRepository,
+    private jwtService: JwtService,
+  ) {}
 
-    async validateUser(email: string, password: string): Promise<any> {
-        // Find user by email
-        const user = await this.prisma.user.findUnique({
-            where: { email },
-        });
+  async validateUser(email: string, password: string): Promise<any> {
+    // Find user by email (ARCH-DEBT-001: include company for multi-tenancy)
+    const user = await this.userRepository.findByEmail(email);
 
-        if (!user) {
-            throw new UnauthorizedException('Invalid credentials');
-        }
-
-        // For demo purposes, we'll skip password hashing
-        // In production, use: await bcrypt.compare(password, user.passwordHash)
-        // For now, just check if password matches (assuming plain text for demo)
-        if (password !== 'password123') {
-            throw new UnauthorizedException('Invalid credentials');
-        }
-
-        return user;
+    if (!user) {
+      throw new UnauthorizedException("Invalid credentials");
     }
 
-    async login(email: string, password: string) {
-        const user = await this.validateUser(email, password);
-
-        const payload = {
-            email: user.email,
-            sub: user.id,
-            companyId: null, // TODO: get from user relation when available
-        };
-
-        return {
-            access_token: this.jwtService.sign(payload),
-            user: {
-                id: user.id,
-                email: user.email,
-                name: user.name || user.email.split('@')[0], // Use name field or extract from email
-            },
-        };
+    // For demo purposes, we'll skip password hashing
+    // In production, use: await bcrypt.compare(password, user.passwordHash)
+    // For now, just check if password matches (assuming plain text for demo)
+    if (password !== "password123") {
+      throw new UnauthorizedException("Invalid credentials");
     }
 
-    async getProfile(userId: string) {
-        const user = await this.prisma.user.findUnique({
-            where: { id: userId },
-        });
+    return user;
+  }
 
-        if (!user) {
-            throw new UnauthorizedException('User not found');
-        }
+  async login(email: string, password: string) {
+    const user = await this.validateUser(email, password);
 
-        return {
-            id: user.id,
-            email: user.email,
-            name: user.name || user.email.split('@')[0],
-            companyId: null, // TODO: get from user relation when available
-        };
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      companyId: user.companyId, // ARCH-DEBT-001: from user.companyId (NOT NULL)
+    };
+
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name || user.email.split("@")[0], // Use name field or extract from email
+      },
+    };
+  }
+
+  async getProfile(userId: string) {
+    const user = await this.userRepository.findById(userId);
+
+    if (!user) {
+      throw new UnauthorizedException("User not found");
     }
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name || user.email.split("@")[0],
+      companyId: user.companyId, // ARCH-DEBT-001: from user.companyId
+      company: user.company, // ARCH-DEBT-001: include company data
+    };
+  }
 }

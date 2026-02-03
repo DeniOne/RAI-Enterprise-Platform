@@ -1,20 +1,29 @@
-import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
-import { FieldRegistryService } from './field-registry.service';
-import { CreateFieldDto } from './dto/create-field.dto';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+} from "@nestjs/common";
+import { FieldRegistryService } from "./field-registry.service";
+import { CreateFieldDto } from "./dto/create-field.dto";
+import { AuthGuard } from "@nestjs/passport";
 
-@Controller('registry/fields')
+@Controller("registry/fields")
+@UseGuards(AuthGuard("jwt"))
 export class FieldRegistryController {
-    constructor(private readonly fieldRegistryService: FieldRegistryService) { }
+  constructor(private readonly fieldRegistryService: FieldRegistryService) {}
 
-    @Post()
-    async create(@Body() createFieldDto: CreateFieldDto) {
-        // TODO: BLOCK-AUTH (companyId should be extracted from Request/JWT)
-        return this.fieldRegistryService.create(createFieldDto, createFieldDto.companyId);
-    }
+  @Post()
+  async create(@Body() createFieldDto: CreateFieldDto, @Request() req) {
+    const companyId = req.user.companyId;
+    return this.fieldRegistryService.create(createFieldDto, companyId);
+  }
 
-    @Get()
-    async findAll(@Query('companyId') companyId: string) {
-        // TODO: BLOCK-AUTH (companyId should be extracted from Request/JWT)
-        return this.fieldRegistryService.findAll(companyId);
-    }
+  @Get()
+  async findAll(@Request() req) {
+    const companyId = req.user.companyId;
+    return this.fieldRegistryService.findAll(companyId);
+  }
 }

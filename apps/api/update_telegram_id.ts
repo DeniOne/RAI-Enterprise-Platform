@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // Manual .env loading
-const envPath = path.resolve(__dirname, '.env');
+const envPath = path.resolve(process.cwd(), '.env');
 console.log(`Checking .env at: ${envPath}`);
 if (fs.existsSync(envPath)) {
     const envConfig = fs.readFileSync(envPath, 'utf8');
@@ -43,6 +43,16 @@ async function main() {
     console.log(`Attempting to update user with email ${email} to ID ${correctId}`);
 
     try {
+        // 1. Ensure Default Company exists
+        const company = await prisma.company.upsert({
+            where: { id: 'default-rai-company' },
+            update: {},
+            create: {
+                id: 'default-rai-company',
+                name: 'RAI Enterprise',
+            },
+        });
+
         const user = await prisma.user.findUnique({
             where: { email }
         });
@@ -51,7 +61,10 @@ async function main() {
             console.log(`Found user: ${user.email} (Current ID: ${user.telegramId})`);
             const updated = await prisma.user.update({
                 where: { id: user.id },
-                data: { telegramId: correctId }
+                data: {
+                    telegramId: correctId,
+                    company: { connect: { id: company.id } }
+                }
             });
             console.log(`✅ Successfully updated to ID: ${updated.telegramId}`);
         } else {
@@ -61,7 +74,8 @@ async function main() {
                     email,
                     name: 'Admin',
                     role: 'ADMIN',
-                    telegramId: correctId
+                    telegramId: correctId,
+                    company: { connect: { id: company.id } }
                 }
             });
             console.log(`✅ Created new user with ID: ${newUser.telegramId}`);

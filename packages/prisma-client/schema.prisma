@@ -81,8 +81,8 @@ model User {
   emailVerificationToken String?  @unique
   emailVerificationExpiresAt DateTime?
   
-  companyId    String?
-  company      Company?  @relation(fields: [companyId], references: [id])
+  companyId    String   // ARCH-DEBT-001: Multi-tenancy (NOT NULL)
+  company      Company  @relation(fields: [companyId], references: [id])
   clientId     String?
   client       Client?   @relation(fields: [clientId], references: [id])
 

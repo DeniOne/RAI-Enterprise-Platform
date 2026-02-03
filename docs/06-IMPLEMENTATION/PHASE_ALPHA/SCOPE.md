@@ -52,6 +52,11 @@
 - [x] UI Kit: Button, Card, Input (по UI Design Canon)
 - [x] Build & Lint успешны (0 errors, 0 warnings)
 
+## Sprint 5a (Architecture Debt): Мультитенентность и Репозиторий ✅ COMPLETED
+- [x] **ARCH-DEBT-001:** Multi-tenancy (Изоляция по `companyId`)
+- [x] **ARCH-DEBT-002:** Auth Repository Pattern (Абстракция БД)
+- [x] **Build & Lint:** 32 ошибки линтинга устранены, полная сборка API
+
 ## Sprint 5-6 (19.08 - 30.09): Интеграция и тестирование
 - [x] End-to-end тесты (Unit-tests for core packages complete)
 - [ ] Документация API (Swagger)

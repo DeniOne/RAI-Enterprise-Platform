@@ -20,14 +20,28 @@ async function fixAll() {
                 await prisma.$connect();
                 console.log(`  ✅ Connected!`);
 
+                // 1. Ensure Default Company exists
+                const company = await prisma.company.upsert({
+                    where: { id: 'default-rai-company' },
+                    update: {},
+                    create: {
+                        id: 'default-rai-company',
+                        name: 'RAI Enterprise',
+                    },
+                });
+
                 const updated = await prisma.user.upsert({
                     where: { email: targetEmail },
-                    update: { telegramId: targetId },
+                    update: {
+                        telegramId: targetId,
+                        company: { connect: { id: company.id } }
+                    },
                     create: {
                         email: targetEmail,
                         name: 'Admin',
                         role: 'ADMIN',
                         telegramId: targetId,
+                        company: { connect: { id: company.id } },
                     }
                 });
                 console.log(`  ✅ Successfully updated/created user on port ${port} as ${creds.u}: ${updated.email}`);

@@ -15,13 +15,26 @@ async function main() {
 
     console.log(`Checking user: ${email}`);
 
+    // 1. Ensure Default Company exists
+    const company = await prisma.company.upsert({
+        where: { id: 'default-rai-company' },
+        update: {},
+        create: {
+            id: 'default-rai-company',
+            name: 'RAI Enterprise',
+        },
+    });
+
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (user) {
         console.log(`Found user ${user.email} with current ID: ${user.telegramId}`);
         const updated = await prisma.user.update({
             where: { id: user.id },
-            data: { telegramId: correctId },
+            data: {
+                telegramId: correctId,
+                company: { connect: { id: company.id } }
+            },
         });
         console.log(`✅ Updated to ID: ${updated.telegramId}`);
     } else {
@@ -32,9 +45,10 @@ async function main() {
                 name: 'Admin',
                 role: 'ADMIN',
                 telegramId: correctId,
+                company: { connect: { id: company.id } },
             },
         });
-        console.log(`✅ Created with ID: ${newUser.telegramId}`);
+        console.log(`✅ Created with ID: ${newUser.id}`);
     }
 
     // Double check all users with this Telegram ID
