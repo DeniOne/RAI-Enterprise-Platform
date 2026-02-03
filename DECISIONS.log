@@ -1,0 +1,180 @@
+# DECISIONS LOG
+
+> **Назначение:** Регистр архитектурных и процессных решений проекта.  
+> **Формат:** Decision-ID | Дата | Решение | Статус | Автор
+
+---
+
+## SPRINT4-WEB-001
+
+**Дата:** 2026-02-03  
+**Обновлено:** 2026-02-03 16:58  
+**Автор:** TECHLEAD (AI)  
+**Статус:** ACCEPTED  
+
+### Решение
+Создание веб-интерфейса для RAI Enterprise Platform на базе Next.js 14 с JWT-аутентификацией.
+
+### Scope
+- **Phase:** Alpha
+- **Sprint:** 4 (05.08 - 19.08)
+- **Компоненты:**
+  - Next.js 14 App Router
+  - JWT-аутентификация через HttpOnly cookies
+  - **Dashboard с метриками (НОВЫЙ)** — создаём в `apps/web/src/app/dashboard/page.tsx`
+  - Форма создания задачи
+  - UI Kit (Button, Card, Input)
+
+### Dashboard Scope Resolution
+**Решение USER (2026-02-03 16:58):**  
+Создаём **новый Dashboard** в `apps/web`. Галочка в SCOPE.md была ошибочной или относилась к другому компоненту.
+
+### Технические ограничения
+1. **Auth:**
+   - JWT хранится в HttpOnly cookies
+   - Auth работает через Next.js Server Actions / Route Handlers
+   - Axios используется ТОЛЬКО для client-side API calls
+   - Middleware работает на Edge Runtime (ограничения Node.js API)
+
+2. **UI:**
+   - Соответствие UI_DESIGN_CANON.md v0.1
+   - Шрифт: Geist
+   - Заголовки: font-medium (НЕ bold)
+   - Светлая тема
+
+3. **Language:**
+   - Все тексты интерфейса: СТРОГО НА РУССКОМ
+   - Английский только для: файлов, переменных, API endpoints
+
+4. **Multi-tenancy:**
+   - Все API запросы включают companyId через JWT payload
+
+### Definition of Done
+Sprint 4 считается завершённым, если:
+- [ ] Login → Dashboard → Create Task работает end-to-end
+- [ ] UI Canon соблюдён (проверка font-weight в DevTools)
+- [ ] Нет нарушений Language Policy (все тексты на русском)
+- [ ] JWT корректно сохраняется в HttpOnly cookies
+- [ ] Сессия сохраняется после перезагрузки страницы
+- [ ] Build проходит без ошибок (`pnpm build`)
+- [ ] Lint проходит без warnings (`pnpm lint`)
+
+### Rollback Conditions
+Спринт останавливается, если:
+- API endpoints не готовы (отсутствуют `/auth/login`, `/users/me`, `/tasks`, `/fields`)
+- JWT токены не стабильны (ошибки 401/403)
+- Next.js 14 несовместим с текущей инфраструктурой
+
+**Действия при rollback:**
+1. Остановка работы
+2. Фиксация проблемы в DECISIONS.log
+3. Запрос уточнения у USER
+4. Возврат к PLANNING mode
+
+### Связанные документы
+- `docs/06-IMPLEMENTATION/PHASE_ALPHA/SCOPE.md`
+- `docs/01-ARCHITECTURE/PRINCIPLES/UI_DESIGN_CANON.md`
+- `implementation_plan.md`
+- `task.md`
+
+### Зависимости
+- Существующий API (`apps/api`)
+- Identity Service (JWT выдача)
+- PostgreSQL (для данных)
+
+### Риски
+1. **Dashboard scope неясен** — требуется уточнение: новый или обновление существующего
+2. **SSR + JWT** — возможны проблемы с Edge Runtime
+3. **Browser testing** — не определено: делать или нет
+
+---
+
+## UI-CANON-001
+
+**Дата:** 2026-02-03  
+**Автор:** TECHLEAD (AI)  
+**Статус:** ACCEPTED  
+
+### Решение
+Создание UI_DESIGN_CANON.md v0.1 как обязательного нормативного документа для всех UI-задач.
+
+### Ключевые требования
+1. Шрифт: Geist
+2. Заголовки: font-medium (weight: 500)
+3. Основной текст: font-normal (weight: 400)
+4. **ЗАПРЕЩЕНО:** font-bold, font-semibold
+5. Светлая тема
+6. Карточки: bg-white, border-black/10, rounded-2xl
+7. Кнопки: rounded-2xl, font-medium
+8. Inputs: rounded-lg, border-black/10
+
+### Обоснование
+- Отсутствие UI_DESIGN_CANON.md создавало архитектурную дыру
+- ORCHESTRATOR PROMPT не является документом архитектуры
+- Необходим единый источник истины для UI-решений
+
+### Связанные документы
+- `CANON.md`
+- `ARCHITECTURAL_AXIOMS.md`
+- `ANTIGRAVITY SOFTWARE FACTORY — ORCHESTRATOR PROMPT.md`
+
+---
+
+## Формат записи
+
+Каждое новое решение должно содержать:
+
+```
+## DECISION-ID
+
+**Дата:** YYYY-MM-DD
+**Автор:** ROLE (USER/TECHLEAD/CODER)
+**Статус:** PENDING / ACCEPTED / REJECTED / DEPRECATED
+
+### Решение
+[Краткое описание решения]
+
+### Scope
+[Охват: Phase, Sprint, Компоненты]
+
+### Технические ограничения
+[Ключевые constraints]
+
+### Definition of Done
+[Критерии завершения]
+
+### Rollback Conditions
+[Условия отката]
+
+### Связанные документы
+[Ссылки на документы]
+
+### Зависимости
+[Внешние зависимости]
+
+### Риски
+[Известные риски]
+```
+
+---
+
+## Правила работы с DECISIONS.log
+
+1. **Обязательность:** Ни одна задача не принимается в работу без Decision-ID
+2. **Фиксация:** Решение фиксируется ДО начала реализации
+3. **Статусы:**
+   - `PENDING` — ожидает утверждения USER
+   - `ACCEPTED` — утверждено, можно реализовывать
+   - `REJECTED` — отклонено
+   - `DEPRECATED` — устарело, заменено новым решением
+4. **Изменение:** Решение можно изменить только через новый Decision-ID
+5. **Трассируемость:** Все изменения должны ссылаться на Decision-ID
+
+---
+
+## История изменений
+
+### 2026-02-03
+- Создан DECISIONS.log
+- Добавлен SPRINT4-WEB-001 (PENDING)
+- Добавлен UI-CANON-001 (ACCEPTED)

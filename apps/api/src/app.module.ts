@@ -3,6 +3,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './shared/prisma/prisma.module';
+import { AuthModule } from './shared/auth/auth.module';
 import { AuditModule } from './shared/audit/audit.module';
 import { MemoryModule } from './shared/memory/memory.module';
 import { RapeseedModule } from './modules/rapeseed/rapeseed.module';
@@ -21,6 +22,7 @@ import { join } from 'path';
     imports: [
         ConfigModule.forRoot({ isGlobal: true }),
         PrismaModule,
+        AuthModule,
         MemoryModule,
         AuditModule,
         RapeseedModule,

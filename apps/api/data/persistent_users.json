@@ -1,0 +1,8 @@
+[
+    {
+        "telegramId": "441610858",
+        "email": "admin@example.com",
+        "role": "ADMIN",
+        "accessLevel": "ACTIVE"
+    }
+]

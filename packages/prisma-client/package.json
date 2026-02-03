@@ -11,7 +11,10 @@
         "build": "npm run db:generate",
         "db:generate": "prisma generate",
         "db:migrate": "prisma migrate dev",
-        "db:seed": "node seed.js"
+        "db:seed": "tsx seed.ts"
+    },
+    "prisma": {
+        "seed": "tsx seed.ts"
     },
     "dependencies": {
         "@prisma/client": "^6.19.2",

@@ -4,6 +4,7 @@
 Проект находится на этапе **Развертывания APL (Milestone 9)**.
 - **[2026-02-03] Database Unification Complete**: Вся инфраструктура переведена на единый Docker Postgres (порт 5432). Исправлены конфликты с локальными сервисами Windows.
 - **[2026-02-03] Telegram Bot Integration Complete**: Реализована авторизация по ID и команды `/start`, `/mytasks`. Бот успешно работает с унифицированной базой данных.
+- **[2026-02-03] Sprint 4 Web Interface Complete**: Реализован Next.js 14 веб-интерфейс с JWT аутентификацией, Dashboard, формой создания задач. E2E flow проверен и работает. Создан Auth Module в NestJS API.
 - [2026-02-03] Enterprise Identity Layer Complete: Реализованы реестры холдингов и профилей сотрудников (Блок 3).
 
 - **[2026-01-31] BusinessCore Neutralization**: Ядро очищено от брендинга RAI_EP.

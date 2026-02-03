@@ -43,12 +43,14 @@
 - [x] Activation of `postgis` & `pgvector` extensions
 - [x] Creation of `run_bot.bat` for easy orchestration
 
-## Sprint 4 (05.08 - 19.08): Веб-интерфейс
+## Sprint 4 (05.08 - 19.08): Веб-интерфейс ✅ COMPLETED
 ### Веб Frontend:
-- [ ] Next.js 14 App Router
-- [ ] Аутентификация (JWT)
-- [x] Dashboard: Обновление UI по Canon
-- [ ] Форма создания задачи
+- [x] Next.js 14 App Router
+- [x] Аутентификация (JWT через HttpOnly cookies)
+- [x] Dashboard: Новый Dashboard с метриками (задачи, поля, сезоны)
+- [x] Форма создания задачи (react-hook-form + zod)
+- [x] UI Kit: Button, Card, Input (по UI Design Canon)
+- [x] Build & Lint успешны (0 errors, 0 warnings)
 
 ## Sprint 5-6 (19.08 - 30.09): Интеграция и тестирование
 - [x] End-to-end тесты (Unit-tests for core packages complete)

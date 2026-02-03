@@ -2,34 +2,172 @@ import { Update, Start, Hears, Ctx, Action } from 'nestjs-telegraf';
 import { Context, Markup } from 'telegraf';
 import { TaskService } from '../task/task.service';
 import { PrismaService } from '../../shared/prisma/prisma.service';
+import { ProgressService } from './progress.service';
 import { TaskStatus } from '@prisma/client';
+import * as fs from 'fs';
+import * as path from 'path';
+
+const ADMIN_TG_ID = '441610858';
+const PERSISTENT_USERS_PATH = path.resolve(process.cwd(), 'data/persistent_users.json');
 
 @Update()
 export class TelegramUpdate {
     constructor(
         private readonly taskService: TaskService,
         private readonly prisma: PrismaService,
+        private readonly progressService: ProgressService,
     ) { }
 
     private async getUser(ctx: Context) {
         if (!ctx.from) return null;
         const telegramId = ctx.from.id.toString();
-        console.log(`🔍 Telegram Auth Attempt: ID=${telegramId}, Username=${ctx.from.username}`);
+        // console.log(`🔍 Telegram Auth Attempt: ID=${telegramId}, Username=${ctx.from.username}`);
         return this.prisma.user.findFirst({
             where: { telegramId },
         });
     }
 
+    private async savePersistentUser(user: { telegramId: string, email: string, role: string, accessLevel: string }) {
+        try {
+            const dataDir = path.dirname(PERSISTENT_USERS_PATH);
+            if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+
+            let users = [];
+            if (fs.existsSync(PERSISTENT_USERS_PATH)) {
+                users = JSON.parse(fs.readFileSync(PERSISTENT_USERS_PATH, 'utf8'));
+            }
+
+            const exists = users.find(u => u.telegramId === user.telegramId);
+            if (!exists) {
+                users.push(user);
+                fs.writeFileSync(PERSISTENT_USERS_PATH, JSON.stringify(users, null, 2));
+            }
+        } catch (e) {
+            console.error('❌ Failed to save persistent user:', e);
+        }
+    }
+
+
     @Start()
     async onStart(@Ctx() ctx: Context): Promise<void> {
         const user = await this.getUser(ctx);
         if (!user) {
-            await ctx.reply('⛔ Access Denied. Your Telegram ID is not linked to any account.');
+            const username = ctx.from?.username ? `@${ctx.from.username}` : 'Mystery Guest';
+            await ctx.reply(
+                `⛔ *Доступ ограничен*\n\nПривет, ${username}! Твой Telegram ID (${ctx.from?.id}) не зарегистрирован в системе RAI_EP.\n\nЕсли ты коллега — нажми кнопку ниже, чтобы запросить доступ.`,
+                {
+                    parse_mode: 'Markdown',
+                    ...Markup.inlineKeyboard([
+                        [Markup.button.callback('📝 Запросить доступ', 'request_access')]
+                    ])
+                }
+            );
             return;
         }
-        await ctx.reply(`👋 Welcome! You are logged in as ${user.email ?? 'Field Worker'}.\nCommand: /mytasks`);
+
+        const keyboard = Markup.keyboard([
+            ['📋 My Tasks', '📊 Прогресс'],
+        ]).resize();
+
+        await ctx.reply(
+            `👋 Welcome! You are logged in as ${user.email ?? 'Field Worker'}.\nUse the menu below to navigate.`,
+            keyboard
+        );
     }
 
+    @Action('request_access')
+    async onRequestAccess(@Ctx() ctx: Context): Promise<void> {
+        if (!ctx.from) return;
+        const tgId = ctx.from.id.toString();
+        const username = ctx.from.username ? `@${ctx.from.username}` : 'No Username';
+        const name = `${ctx.from.first_name || ''} ${ctx.from.last_name || ''}`.trim();
+
+        await ctx.answerCbQuery('Запрос отправлен админу 🚀');
+        await ctx.editMessageText('✅ *Запрос отправлен!*\nЯ сообщу тебе, когда админ выдаст доступ.', { parse_mode: 'Markdown' });
+
+        // Notify Admin
+        await ctx.telegram.sendMessage(ADMIN_TG_ID,
+            `🔔 *НОВЫЙ ЗАПРОС ДОСТУПА*\n\n👤 Имя: ${name}\n🌐 Юзер: ${username}\n🆔 TG ID: \`${tgId}\``,
+            {
+                parse_mode: 'Markdown',
+                ...Markup.inlineKeyboard([
+                    [
+                        Markup.button.callback('✅ Одобрить', `approve_user:${tgId}`),
+                        Markup.button.callback('❌ Отклонить', `decline_user:${tgId}`)
+                    ]
+                ])
+            }
+        );
+    }
+
+    @Action(/approve_user:(.+)/)
+    async onApproveUser(@Ctx() ctx: Context): Promise<void> {
+        if (!('match' in ctx && ctx.match)) return;
+        const tgId = ctx.match[1];
+
+        // 1. Get default company
+        const company = await this.prisma.company.findFirst();
+        if (!company) {
+            await ctx.reply('❌ Ошибка: Компания не найдена. Сначала запустите setup_company.ts');
+            return;
+        }
+
+        try {
+            const email = `tg_${tgId}@rai.local`;
+
+            // 2. Create User in DB
+            const user = await this.prisma.user.upsert({
+                where: { telegramId: tgId },
+                update: { accessLevel: 'ACTIVE', companyId: company.id },
+                create: {
+                    telegramId: tgId,
+                    email,
+                    role: 'USER',
+                    accessLevel: 'ACTIVE',
+                    companyId: company.id,
+                    emailVerified: true
+                }
+            });
+
+            // 3. Save to Persistence JSON
+            await this.savePersistentUser({
+                telegramId: tgId,
+                email,
+                role: 'USER',
+                accessLevel: 'ACTIVE'
+            });
+
+            await ctx.answerCbQuery('Пользователь одобрен! ✅');
+            await ctx.editMessageText(`✅ Юзер с ID \`${tgId}\` теперь в системе!`, { parse_mode: 'Markdown' });
+
+            // 4. Notify User
+            await ctx.telegram.sendMessage(tgId, '🎉 *Твой доступ одобрен!*\nВведи /start, чтобы открыть меню.', { parse_mode: 'Markdown' });
+        } catch (e) {
+            console.error(e);
+            await ctx.reply(`❌ Ошибка апрува: ${e.message}`);
+        }
+    }
+
+    @Action(/decline_user:(.+)/)
+    async onDeclineUser(@Ctx() ctx: Context): Promise<void> {
+        if (!('match' in ctx && ctx.match)) return;
+        const tgId = ctx.match[1];
+
+        await ctx.answerCbQuery('Запрос отклонен ❌');
+        await ctx.editMessageText(`❌ Запрос от \`${tgId}\` отклонен.`, { parse_mode: 'Markdown' });
+
+        // Notify User
+        await ctx.telegram.sendMessage(tgId, '😔 Извини, твой запрос на доступ был отклонен админом.');
+    }
+
+    @Hears('📊 Прогресс')
+    async onProgress(@Ctx() ctx: Context): Promise<void> {
+        const stats = this.progressService.getProgressStats();
+        const report = this.progressService.formatReport(stats);
+        await ctx.reply(report, { parse_mode: 'Markdown' });
+    }
+
+    @Hears('📋 My Tasks')
     @Hears('/mytasks')
     async onMyTasks(@Ctx() ctx: Context): Promise<void> {
         const user = await this.getUser(ctx);
