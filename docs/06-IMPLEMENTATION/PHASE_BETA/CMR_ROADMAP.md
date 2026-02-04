@@ -6,44 +6,41 @@
 ---
 
 ## Этап 1: Доменная трансформация (Schema & Logic)
-- **Prisma Schema Update**:
-  - Добавление полей в `Client` (ИНН, тип, риск-статус).
-  - Создание модели `CmrDecision` (вместо общей CMR).
-  - Создание модели `CmrRisk`.
-- **Logic Level**:
-  - Трансформация `Seasons` в источник событий для `CmrDecision`.
-  - Реализация первой итерации `Inference Engine` (простые правила для алертов).
-  - Реализация первой итерации `Inference Engine` (простые правила для алертов).
-- **Deviation Review & Liability Flow**: Механизм трипартитной синхронизации (Менеджер-Агроном-Клиент).
-- **Strategy Core**: Внедрение `Confidence Score` и `Client Maturity` моделей.
+- [x] **Prisma Schema Update**:
+  - [x] Добавление полей в `Client` (ИНН, тип, риск-статус).
+  - [x] Создание модели `CmrDecision` (вместо общей CMR).
+  - [x] Создание модели `CmrRisk`.
+- [x] **Logic Level**:
+  - [x] Трансформация `Seasons` в источник событий для `CmrDecision`.
+  - [x] Реализация первой итерации `Inference Engine` (простые правила для алертов).
+- [x] **Deviation Review & Liability Flow**: Механизм трипартитной синхронизации (Менеджер-Агроном-Клиент).
+- [x] **Strategy Core**: Внедрение `Confidence Score` и `Client Maturity` моделей.
 
 ## Этап 2: Detailed Tech Map Module (Builder)
-
-## Этап 2: Detailed Tech Map Module (Builder)
-- **ATK Generator**: Система создания почасовых техкарт на основе анализа почвы и истории.
-- **Rule Engine Expansion**: Поддержка условной логики ("Если... То...").
-- **Integration**: Связка АТК с контрактом в CMR.
+- [x] **ATK Generator**: Система создания почасовых техкарт на основе анализа почвы и истории.
+- [x] **Rule Engine Expansion**: Поддержка условной логики ("Если... То...").
+- [x] **Integration**: Связка АТК с контрактом в CMR.
 
 ## Этап 3: CMR UI Infrastructure
-- **Web App**:
-  - Создание `layout` для CMR в `apps/web`.
-  - Реализация `Dashboard (Overview)` по новому канону.
-  - Реализация `Decision Timeline` (лента решений).
+- [ ] **Web App**:
+  - [ ] Создание `layout` для CMR в `apps/web`.
+  - [ ] Реализация `Dashboard (Overview)` по новому канону.
+  - [ ] Реализация `Decision Timeline` (лента решений).
 
-## Этап 3: ИИ-Оркестрация (Brain Integration)
-- **NestJS CmrModule**:
-  - Подключение `AgroOrchestrator` к `CmrDecisionService`.
-  - Автоматическая фиксация "Этапа 0" (Анализ предшественника) на основе исторических данных.
+## Этап 3.1: ИИ-Оркестрация (Brain Integration)
+- [x] **NestJS CmrModule**:
+  - [x] Подключение `AgroOrchestrator` к `CmrDecisionService`.
+  - [x] Автоматическая фиксация "Этапа 0" (Анализ предшественника) на основе исторических данных.
 
 ## Этап 4: Коммуникационный мост
-- **Bot Sync**:
-  - Передача ИИ-рекомендаций из CMR в Telegram.
-  - Обратная связь: фиксация ответа пользователя в ленте решений CMR.
+- [ ] **Bot Sync**:
+  - [ ] Передача ИИ-рекомендаций из CMR в Telegram.
+  - [ ] Обратная связь: фиксация ответа пользователя в ленте решений CMR.
 
 ## Этап 5: Strategic Layers (Post-Beta)
-- **Knowledge Engine**: Агрегация кейсов из Decision Log.
-- **Counterfactual Analyzer**: Анализ "что было бы, если".
-- **Legal Export**: Генерация юридических отчетов по истории решений.
+- [ ] **Knowledge Engine**: Агрегация кейсов из Decision Log.
+- [ ] **Counterfactual Analyzer**: Анализ "что было бы, если".
+- [ ] **Legal Export**: Генерация юридических отчетов по истории решений.
 
 ---
 
@@ -58,5 +55,5 @@
 ---
 
 ## Приоритет следующего шага:
-1. Согласование моделей `CmrDecision` и `CmrRisk`.
-2. Проектирование UI-контроллера для Dashboard.
+1. Реализация CMR UI (Dashboard & Risk Registry).
+2. Интеграция Telegram Bot для подтверждения Deviations.
