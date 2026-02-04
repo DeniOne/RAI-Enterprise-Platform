@@ -41,7 +41,10 @@
 - [x] **[Backend]** **Bot API Isolation**: Remove Prisma, add retry/circuit breaker.
 
 ### 🏢 5. Contour 1: Enterprise Management (Back-Office)
-#### 5.1 CRM & Sales
+#### 5.1 Consulting Control Plane (CMR) & Sales ✅
+- [x] **[Backend]** **Tech Map Orchestrator**: Canvas Logic & Model.
+- [x] **[Backend]** **CMR Engine**: Deviation Reviews & SLA Logic.
+- [x] **[Backend]** **Risk Architecture**: Liability Matrix & Insurance.
 - [ ] **[Backend]** **Scoring System**: Оценка LTV и потенциала клиента.
 - [ ] **[Backend]** **Smart Contracts**: Авто-мониторинг KPI договора.
 

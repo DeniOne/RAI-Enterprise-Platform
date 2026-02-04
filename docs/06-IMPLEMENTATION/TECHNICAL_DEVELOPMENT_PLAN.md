@@ -83,15 +83,16 @@
     - [x] Idempotency keys
 
 ### 🏢 BLOCK 5: CONTOUR 1 - BACK-OFFICE
-- [ ] **Section 5.1: Consulting Control Plane (CMR)**
-    - [ ] **Module:** `tech-map-builder` (Detailed ATK Editor)
-        - [ ] Entity: `TechMap`, `MapOperation` (Hourly slots)
-        - [ ] UI: Canvas Editor for Agronomists
-    - [ ] **Module:** `crm-control-plane` (Decision & Risk)
-        - [ ] Entity: `DeviationReview` (Tripartite Consensus)
-        - [ ] Logic: Silence = Event (Liability Shift Logic)
-        - [ ] Feature: Decision Log with Confidence Score
-    - [ ] **Strategic Amplifiers**:
+- [x] **Section 5.1: Consulting Control Plane (CMR)**
+    - [x] **Module:** `tech-map-builder` (Detailed ATK Editor)
+        - [x] Entity: `TechMap`, `MapOperation` (Hourly slots)
+        - [x] UI: Canvas Editor for Agronomists (API Ready)
+    - [x] **Module:** `crm-control-plane` (Decision & Risk)
+        - [x] Entity: `DeviationReview` (Tripartite Consensus)
+        - [x] Logic: Silence = Event (Liability Shift Logic)
+        - [x] Feature: Decision Log with Confidence Score
+    - [x] **Strategic Amplifiers**:
+        - [x] Logic: Risk Architecture (`CmrRisk`, `InsuranceCoverage`)
         - [ ] Logic: Client Maturity Calculation
         - [ ] Logic: Knowledge Object aggregation
 - [ ] **Section 5.2: HR Ecosystem**
