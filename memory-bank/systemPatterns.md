@@ -24,3 +24,8 @@ RAI_EP следует философии **Canon-Driven Development**. Сист�
 ### 5. Multi-Interface Adapters
 - Четкое разделение бизнес-логики и интерфейсов (Telegram, Web, API).
 - Адаптерный слой обеспечивает трансляцию интентов в команды ядра.
+### 6. Telegram 2FA Login Strategy
+- Separation of concerns between Bot (notification/confirmation) and Backend (JWT generation).
+- Asynchronous JWT registration (`registerAsync`) to ensure consistent secret loading.
+- JWT payload standardization: `sub` (userId), `email`, `companyId`.
+- Polling mechanism with session idempotency for mobile/web cross-device sync.

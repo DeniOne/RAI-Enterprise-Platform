@@ -33,9 +33,11 @@
 
 ### [x] Telegram Bot Integration
 - [x] Initial handler implementation (`nestjs-telegraf`)
-- [x] Auth flow via Telegram ID linking
+- [x] Auth flow via Telegram ID linking (2FA Login)
+- [x] **Microservice Separation**: Standalone `apps/telegram-bot`
 - [x] Corrected handler return types (fixed TypeErrors)
 - [x] `/start` and `/mytasks` commands verification
+- [x] Modern UI: Aligned with MatrixGin Design Canon
 
 ### [x] System Infrastructure Hardening
 - [x] Database Unification (Docker Postgres on port 5432)

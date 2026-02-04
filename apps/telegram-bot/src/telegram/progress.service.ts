@@ -3,7 +3,7 @@ import { InjectBot } from "nestjs-telegraf";
 import { Context, Telegraf } from "telegraf";
 import * as fs from "fs";
 import * as path from "path";
-import { PrismaService } from "../../shared/prisma/prisma.service";
+import { PrismaService } from "../shared/prisma/prisma.service";
 
 @Injectable()
 export class ProgressService implements OnModuleInit {

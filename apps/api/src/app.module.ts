@@ -2,6 +2,9 @@ import { Module } from "@nestjs/common";
 import { GraphQLModule } from "@nestjs/graphql";
 import { ApolloDriver, ApolloDriverConfig } from "@nestjs/apollo";
 import { ConfigModule } from "@nestjs/config";
+import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { APP_GUARD } from "@nestjs/core";
+import { RedisModule } from "./shared/redis/redis.module";
 import { PrismaModule } from "./shared/prisma/prisma.module";
 import { AuthModule } from "./shared/auth/auth.module";
 import { AuditModule } from "./shared/audit/audit.module";
@@ -14,13 +17,19 @@ import { IdentityRegistryModule } from "./modules/identity-registry/identity-reg
 import { FieldRegistryModule } from "./modules/field-registry/field-registry.module";
 import { TechnologyCardModule } from "./modules/technology-card/technology-card.module";
 import { TaskModule } from "./modules/task/task.module";
-import { TelegramModule } from "./modules/telegram/telegram.module";
-import { TelegrafModule } from "nestjs-telegraf";
 import { join } from "path";
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      envFilePath: [".env", "../../.env"],
+      isGlobal: true,
+    }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000, // 1 minute
+      limit: 10,  // 10 requests per minute (default, soft limit)
+    }]),
+    RedisModule,
     PrismaModule,
     AuthModule,
     MemoryModule,
@@ -33,13 +42,6 @@ import { join } from "path";
     FieldRegistryModule,
     TechnologyCardModule,
     TaskModule,
-    TelegramModule,
-
-    TelegrafModule.forRootAsync({
-      useFactory: () => ({
-        token: process.env.TELEGRAM_BOT_TOKEN,
-      }),
-    }),
 
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
@@ -49,4 +51,4 @@ import { join } from "path";
     }),
   ],
 })
-export class AppModule {}
+export class AppModule { }

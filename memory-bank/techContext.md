@@ -5,8 +5,12 @@
 - **Database**: PostgreSQL (через Prisma ORM).
 - **Architecture**: Domain-Driven Design (DDD) + Clean Architecture principles.
 - **Interfaces**: 
-  - Telegram Bot API (через кастомные сервисы).
-  - NestJS (предположительно, для API).
+  - Telegram Bot API (Standalone Microservice: `apps/telegram-bot`).
+  - NestJS (Backend API: `apps/api`).
+  - Next.js (Web Dashboard: `apps/web`).
+- **Auth Flow**: 
+  - JWT-based 2FA via Telegram (Polling Session Model).
+  - Cross-domain auth via `auth_token` cookies.
 
 ## Infrastructure
 - **Deployment**: Docker-compose (локально/стейджинг).

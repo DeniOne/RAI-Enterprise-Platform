@@ -1,8 +1,20 @@
 [
-    {
-        "telegramId": "441610858",
-        "email": "admin@example.com",
-        "role": "ADMIN",
-        "accessLevel": "ACTIVE"
-    }
+  {
+    "telegramId": "441610858",
+    "email": "admin@example.com",
+    "role": "ADMIN",
+    "accessLevel": "ACTIVE"
+  },
+  {
+    "telegramId": "6918459113",
+    "email": "tg_6918459113@rai.local",
+    "role": "USER",
+    "accessLevel": "ACTIVE"
+  },
+  {
+    "telegramId": "494278355",
+    "email": "tg_494278355@rai.local",
+    "role": "USER",
+    "accessLevel": "ACTIVE"
+  }
 ]

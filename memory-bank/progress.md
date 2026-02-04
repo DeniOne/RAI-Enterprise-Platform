@@ -30,7 +30,13 @@
 
 
 
-## Phase Beta: Operations (Planned)
+## Milestone 11: Telegram Microservice & Auth Stability - DONE ✅
+**Дата:** 2026-02-04  
+- [x] **Microservice Separation**: Бот выделен в отдельное приложение `apps/telegram-bot`.
+- [x] **JWT Stability**: Исправлен Payload (поле `sub`), внедрен `registerAsync` для секретов.
+- [x] **2FA Auth Flow**: Исправлены ошибки 404/401 при поллинге сессий.
+- [x] **Design Canon Adherence**: UI страницы входа в Телеграм переписан под лайт-минимализм (Geist, #FAFAFA).
+- [x] **Walkthrough & Memory**: Все технические уроки записаны в Memory Bank.
 - [ ] CRM Integration
 - [ ] HR Ecosystem
 - [ ] Supply Chain

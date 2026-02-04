@@ -16,5 +16,11 @@
     - [x] Create `infra/SECURITY.md`
     - [x] Audit `SCOPE.md`
 
+- [x] **Milestone 11: Telegram Microservice & Auth Stability**
+    - [x] Выделение бота в микросервис `apps/telegram-bot`
+    - [x] Исправление JWT инвалидности (sub payload, registerAsync)
+    - [x] Рефакторинг UI страницы входа по канону дизайна
+    - [x] Обновление документации и Memory Bank
+
 > [!NOTE]
 > **Status**: Completed. Infrastructure is ready for hybrid memory operations.

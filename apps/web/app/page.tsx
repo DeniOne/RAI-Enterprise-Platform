@@ -1,6 +1,9 @@
-import { redirect } from 'next/navigation'
+import { LoginForm } from '@/components/auth/LoginForm'
 
 export default function Home() {
-    // Редирект на страницу логина
-    redirect('/login')
+    return (
+        <div className="min-h-screen flex items-center justify-center p-4">
+            <LoginForm />
+        </div>
+    )
 }

@@ -26,7 +26,8 @@
         "@nestjs/passport": "^10.0.3",
         "@nestjs/platform-express": "^10.0.0",
         "@nestjs/schedule": "^4.0.0",
-        "@nestjs/throttler": "^5.1.1",
+        "@nestjs/swagger": "^11.2.5",
+        "@nestjs/throttler": "^5.2.0",
         "@prisma/client": "^6.19.2",
         "@rai/agro-orchestrator": "workspace:*",
         "@rai/vector-store": "workspace:*",
@@ -40,7 +41,9 @@
         "nestjs-telegraf": "^2.9.1",
         "passport": "^0.7.0",
         "passport-jwt": "^4.0.1",
-        "telegraf": "^4.16.3"
+        "swagger-ui-express": "^5.0.1",
+        "telegraf": "^4.16.3",
+        "uuid": "^13.0.0"
     },
     "devDependencies": {
         "@nestjs/cli": "^10.0.0",
@@ -54,6 +57,7 @@
         "@types/node": "^20.3.1",
         "@types/passport-jwt": "^3.0.13",
         "@types/supertest": "^2.0.12",
+        "@types/uuid": "^11.0.0",
         "@typescript-eslint/eslint-plugin": "^6.0.0",
         "@typescript-eslint/parser": "^6.0.0",
         "eslint": "^8.42.0",
