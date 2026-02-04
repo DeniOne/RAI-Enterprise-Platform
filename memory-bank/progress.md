@@ -37,12 +37,37 @@
 - [x] **2FA Auth Flow**: Исправлены ошибки 404/401 при поллинге сессий.
 - [x] **Design Canon Adherence**: UI страницы входа в Телеграм переписан под лайт-минимализм (Geist, #FAFAFA).
 - [x] **Walkthrough & Memory**: Все технические уроки записаны в Memory Bank.
-- [ ] CRM Integration
+- [x] CRM Integration → Phase Beta
+- [x] HR Ecosystem → Phase Beta
+- [x] Supply Chain → Phase Beta
+
+## Milestone 12: Phase Alpha Closure — DONE ✅
+**Дата:** 2026-02-04  
+**Статус:** PHASE ALPHA COMPLETE
+
+- [x] **Task Engine REST API**: 5 endpoints (`/tasks/my`, `/tasks/:id`, start/complete/cancel)
+- [x] **Audit API**: `findAll`, `findById`, pagination, filtering
+- [x] **Telegram Bot v1**: Task handlers активированы (без фото-фиксации)
+- [x] **APL Orchestrator**: 16-stage FSM для сезонов рапса
+- [x] **Documentation**: SCOPE, WBS, Technical Plan обновлены
+
+### Архитектурный аудит:
+- ✅ Service = IO (соблюдается)
+- ✅ Orchestrator = Brain (AgroOrchestratorService)
+- ⚠️ Tech Debt: Prisma в боте, in-memory tokens → Sprint B0
+
+---
+
+## Phase Beta: Operations & Enterprise (Planned)
+- [ ] Sprint B0: Tech Debt Fixes (BLOCKER)
+- [ ] CRM & Sales
 - [ ] HR Ecosystem
+- [ ] Finance & Economy
 - [ ] Supply Chain
+- [ ] Machinery & Fleet
+- [ ] Agro AI
 
 ## Phase Gamma: Intelligence (Planned)
 - [ ] Cognitive Brain
 - [ ] AI Strategic Planner
-
 

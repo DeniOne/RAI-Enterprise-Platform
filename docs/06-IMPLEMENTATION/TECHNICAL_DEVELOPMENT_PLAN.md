@@ -69,6 +69,19 @@
 ## 💎 PHASE BETA: OPERATIONS & ENTERPRISE (Scale)
 *Цель: Полная оцифровка бизнеса и производства.*
 
+### 🔥 BLOCK B0: TECH DEBT FIXES (BLOCKER)
+- [ ] **Section B0.1: Unified FSM**
+    - [ ] Interface: `StateMachine<TState, TEvent>`
+    - [ ] Migration: Task FSM → Unified
+    - [ ] Migration: APL FSM → Unified
+- [ ] **Section B0.2: Redis Sessions**
+    - [ ] Telegram auth → Redis storage
+    - [ ] TTL + rotation policy
+- [ ] **Section B0.3: Bot API Isolation**
+    - [ ] Remove Prisma from Telegram Bot
+    - [ ] ApiClient: retry + circuit breaker
+    - [ ] Idempotency keys
+
 ### 🏢 BLOCK 5: CONTOUR 1 - BACK-OFFICE
 - [ ] **Section 5.1: Smart CRM**
     - [ ] Feature: Client Scoring (LTV Calculation Logic)

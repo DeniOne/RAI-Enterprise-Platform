@@ -1,10 +1,8 @@
 import { Update, Start, Hears, Ctx, Action } from "nestjs-telegraf";
 import { Context, Markup } from "telegraf";
-// import { TaskService } from "../task/task.service"; // Removed: TaskService not available in bot microservice
 import { PrismaService } from "../shared/prisma/prisma.service";
 import { ProgressService } from "./progress.service";
-import { ApiClientService } from "../shared/api-client/api-client.service";
-import { TaskStatus } from "@prisma/client";
+import { ApiClientService, TaskDto } from "../shared/api-client/api-client.service";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -14,10 +12,13 @@ const PERSISTENT_USERS_PATH = path.resolve(
   "data/persistent_users.json",
 );
 
+// Temporary in-memory storage for user access tokens (for demo purposes)
+// TODO: In production, store tokens securely in Redis or encrypted user session
+const userTokens: Map<string, string> = new Map();
+
 @Update()
 export class TelegramUpdate {
   constructor(
-    // private readonly taskService: TaskService, // Removed: TaskService not available in bot microservice
     private readonly prisma: PrismaService,
     private readonly progressService: ProgressService,
     private readonly apiClient: ApiClientService,
@@ -26,7 +27,6 @@ export class TelegramUpdate {
   private async getUser(ctx: Context) {
     if (!ctx.from) return null;
     const telegramId = ctx.from.id.toString();
-    // console.log(`🔍 Telegram Auth Attempt: ID=${telegramId}, Username=${ctx.from.username}`);
     return this.prisma.user.findFirst({
       where: { telegramId },
     });
@@ -76,10 +76,10 @@ export class TelegramUpdate {
       return;
     }
 
-    const keyboard = Markup.keyboard([["📋 My Tasks", "📊 Прогресс"]]).resize();
+    const keyboard = Markup.keyboard([["📋 Мои задачи", "📊 Прогресс"]]).resize();
 
     await ctx.reply(
-      `👋 Welcome! You are logged in as ${user.email ?? "Field Worker"}.\nUse the menu below to navigate.`,
+      `👋 Добро пожаловать! Вы вошли как ${user.email ?? "Полевой работник"}.\nИспользуйте меню для навигации.`,
       keyboard,
     );
   }
@@ -199,94 +199,146 @@ export class TelegramUpdate {
     await ctx.reply(report, { parse_mode: "HTML" });
   }
 
-  // TODO: Task management handlers disabled - should be called via API
-  // @Hears("📋 My Tasks")
-  // @Hears("/mytasks")
-  // async onMyTasks(@Ctx() ctx: Context): Promise<void> {
-  //   const user = await this.getUser(ctx);
-  //   if (!user) {
-  //     await ctx.reply("⛔ Access Denied.");
-  //     return;
-  //   }
-  //   const tasks = await this.prisma.task.findMany({
-  //     where: {
-  //       assigneeId: user.id,
-  //       status: { in: [TaskStatus.PENDING, TaskStatus.IN_PROGRESS] },
-  //     },
-  //     include: {
-  //       operation: true,
-  //       field: true,
-  //     },
-  //   });
-  //   if (tasks.length === 0) {
-  //     await ctx.reply("✅ No pending tasks assigned to you.");
-  //     return;
-  //   }
-  //   for (const task of tasks) {
-  //     const operationName = task.operation?.name || "Unnamed Operation";
-  //     const fieldName = task.field?.name || "Unknown Field";
-  //     const statusIcon = task.status === TaskStatus.IN_PROGRESS ? "⏳" : "🆕";
-  //     const buttons = [];
-  //     if (task.status === TaskStatus.PENDING) {
-  //       buttons.push(
-  //         Markup.button.callback("▶ Start", `start_task:${task.id}`),
-  //       );
-  //     } else if (task.status === TaskStatus.IN_PROGRESS) {
-  //       buttons.push(
-  //         Markup.button.callback("✅ Complete", `complete_task:${task.id}`),
-  //       );
-  //     }
-  //     await ctx.reply(
-  //       `${statusIcon} <b>${operationName}</b>\n📍 Field: ${fieldName}\n📅 Date: ${task.plannedDate?.toLocaleDateString() ?? "N/A"}`,
-  //       {
-  //         parse_mode: "HTML",
-  //         ...Markup.inlineKeyboard([buttons]),
-  //       },
-  //     );
-  //   }
-  // }
+  /**
+   * ================================
+   * TASK MANAGEMENT HANDLERS
+   * ================================
+   */
 
+  @Hears("📋 Мои задачи")
+  @Hears("/mytasks")
+  async onMyTasks(@Ctx() ctx: Context): Promise<void> {
+    const user = await this.getUser(ctx);
+    if (!user) {
+      await ctx.reply("⛔ Доступ запрещён. Введите /start для регистрации.");
+      return;
+    }
 
-  // TODO: Task action handlers disabled - should be called via API
-  // @Action(/start_task:(.+)/)
-  // async onStartTask(@Ctx() ctx: Context): Promise<void> {
-  //   if ("match" in ctx && ctx.match && ctx.match[1]) {
-  //     const taskId = ctx.match[1];
-  //     const user = await this.getUser(ctx);
-  //     if (!user) return;
-  //     try {
-  //       await this.taskService.startTask(taskId, user, user.companyId);
-  //       await ctx.reply(`▶ Task started!`);
-  //     } catch (e) {
-  //       await ctx.reply(`❌ Error: ${e.message}`);
-  //     }
-  //   }
-  // }
+    // Get tasks from local database (for now, until proper token management)
+    const tasks = await this.prisma.task.findMany({
+      where: {
+        assigneeId: user.id,
+        status: { in: ["PENDING", "IN_PROGRESS"] },
+        companyId: user.companyId,
+      },
+      include: {
+        field: { select: { id: true, name: true } },
+        season: { select: { id: true, year: true } },
+      },
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+    });
 
+    if (tasks.length === 0) {
+      await ctx.reply("✅ У вас нет активных задач.");
+      return;
+    }
 
-  // @Action(/complete_task:(.+)/)
-  // async onCompleteTask(@Ctx() ctx: Context): Promise<void> {
-  //   if ("match" in ctx && ctx.match && ctx.match[1]) {
-  //     const taskId = ctx.match[1];
-  //     const user = await this.getUser(ctx);
-  //     if (!user) return;
-  //     try {
-  //       await this.taskService.completeTask(taskId, [], user, user.companyId);
-  //       await ctx.reply(`✅ Task completed!`);
-  //     } catch (e) {
-  //       await ctx.reply(`❌ Error: ${e.message}`);
-  //     }
-  //   }
-  // }
+    for (const task of tasks) {
+      const fieldName = task.field?.name || "Неизвестное поле";
+      const statusIcon = task.status === "IN_PROGRESS" ? "⏳" : "🆕";
+      const statusText = task.status === "IN_PROGRESS" ? "В работе" : "Ожидает";
 
-  // Telegram 2FA Login Handlers
+      const buttons: ReturnType<typeof Markup.button.callback>[] = [];
+      if (task.status === "PENDING") {
+        buttons.push(
+          Markup.button.callback("▶ Начать", `start_task:${task.id}`),
+        );
+      } else if (task.status === "IN_PROGRESS") {
+        buttons.push(
+          Markup.button.callback("✅ Завершить", `complete_task:${task.id}`),
+        );
+      }
+
+      await ctx.reply(
+        `${statusIcon} <b>${task.name}</b>\n📍 Поле: ${fieldName}\n📊 Статус: ${statusText}\n📅 Дата: ${task.plannedDate?.toLocaleDateString("ru-RU") ?? "Не указана"}`,
+        {
+          parse_mode: "HTML",
+          ...Markup.inlineKeyboard([buttons]),
+        },
+      );
+    }
+  }
+
+  @Action(/start_task:(.+)/)
+  async onStartTask(@Ctx() ctx: Context): Promise<void> {
+    if (!("match" in ctx && ctx.match)) return;
+    const taskId = ctx.match[1];
+
+    const user = await this.getUser(ctx);
+    if (!user) {
+      await ctx.answerCbQuery("⛔ Доступ запрещён");
+      return;
+    }
+
+    try {
+      // Update task directly in DB (simplified for MVP)
+      await this.prisma.task.update({
+        where: { id: taskId },
+        data: { status: "IN_PROGRESS" },
+      });
+
+      await ctx.answerCbQuery("Задача начата! ▶");
+      await ctx.editMessageText(
+        (ctx.callbackQuery as any).message.text + "\n\n✅ <b>Задача начата!</b>",
+        { parse_mode: "HTML" },
+      );
+    } catch (e) {
+      console.error("❌ Error starting task:", e);
+      await ctx.answerCbQuery(`Ошибка: ${e.message}`);
+    }
+  }
+
+  @Action(/complete_task:(.+)/)
+  async onCompleteTask(@Ctx() ctx: Context): Promise<void> {
+    if (!("match" in ctx && ctx.match)) return;
+    const taskId = ctx.match[1];
+
+    const user = await this.getUser(ctx);
+    if (!user) {
+      await ctx.answerCbQuery("⛔ Доступ запрещён");
+      return;
+    }
+
+    try {
+      // Update task directly in DB (simplified for MVP)
+      await this.prisma.task.update({
+        where: { id: taskId },
+        data: {
+          status: "COMPLETED",
+          completedAt: new Date(),
+        },
+      });
+
+      await ctx.answerCbQuery("Задача завершена! ✅");
+      await ctx.editMessageText(
+        (ctx.callbackQuery as any).message.text + "\n\n🎉 <b>Задача завершена!</b>",
+        { parse_mode: "HTML" },
+      );
+    } catch (e) {
+      console.error("❌ Error completing task:", e);
+      await ctx.answerCbQuery(`Ошибка: ${e.message}`);
+    }
+  }
+
+  /**
+   * ================================
+   * TELEGRAM 2FA LOGIN HANDLERS
+   * ================================
+   */
+
   @Action(/confirm_login:(.+)/)
   async onConfirmLogin(@Ctx() ctx: Context) {
     const match = (ctx as any).match;
     const sessionId = match[1];
 
     try {
-      await this.apiClient.confirmLogin(sessionId);
+      const result = await this.apiClient.confirmLogin(sessionId);
+
+      // Store token for future API calls (in production use Redis)
+      if (ctx.from) {
+        userTokens.set(ctx.from.id.toString(), result.accessToken);
+      }
+
       await ctx.answerCbQuery();
       await ctx.editMessageText(
         "✅ <b>Вход подтверждён!</b>\n\nВы успешно авторизовались в веб-интерфейсе.",

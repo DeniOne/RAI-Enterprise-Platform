@@ -8,16 +8,16 @@
 ## 🏗️ Phase Alpha: Foundation (MVP)
 *Цель: Валидация Архитектуры, APL (Рапс) и запуск ядра.*
 
-### 📦 1. Core Architecture
+### 📦 1. Core Architecture ✅
 - [x] **[Backend]** **Business Core**: Identity, Auth (JWT), RBAC.
-- [ ] **[Backend]** **Task Engine**: Процессинг задач (Jira-like for Agro).
-- [ ] **[Backend]** **Audit Service**: Логгирование всех решений.
+- [x] **[Backend]** **Task Engine**: REST API + FSM.
+- [x] **[Backend]** **Audit Service**: Логгирование + REST API.
 - [x] **[Infra]** Turborepo Setup, Docker, CI/CD.
 
-### 🎼 2. Agro Process Layer (Contour 2 Start)
+### 🎼 2. Agro Process Layer (Contour 2 Start) ✅
 - [x] **[Backend]** **Orchestrator**: State Machine (16 Stages).
 - [x] **[Backend]** **Rule Engine**: Hard Constraints (Влага, Глубина).
-- [ ] **[Backend]** **Digital Agronomist (Bot v1)**: Валидация задач в поле.
+- [x] **[Backend]** **Digital Agronomist (Bot v1)**: Task handlers (без фото).
 
 ### 🏢 3. Enterprise Identity & Structure Layer (Contour 1 Start)
 - [x] **[Backend]** **Holdings Registry**: Реестр холдингов, иерархия клиентов.
@@ -34,6 +34,11 @@
 
 ## 💎 Phase Beta: Operations & Enterprise (Q3-Q4 2026)
 *Цель: Полная оцифровка бизнеса и производства.*
+
+### 🔥 B0. Tech Debt Fixes (BLOCKER)
+- [ ] **[Backend]** **Unified FSM**: `shared/state-machine/` interface.
+- [ ] **[Infra]** **Redis Sessions**: Telegram auth migration.
+- [ ] **[Backend]** **Bot API Isolation**: Remove Prisma, add retry/circuit breaker.
 
 ### 🏢 5. Contour 1: Enterprise Management (Back-Office)
 #### 5.1 CRM & Sales

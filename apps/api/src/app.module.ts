@@ -17,6 +17,7 @@ import { IdentityRegistryModule } from "./modules/identity-registry/identity-reg
 import { FieldRegistryModule } from "./modules/field-registry/field-registry.module";
 import { TechnologyCardModule } from "./modules/technology-card/technology-card.module";
 import { TaskModule } from "./modules/task/task.module";
+import { AgroOrchestratorModule } from "./modules/agro-orchestrator/agro-orchestrator.module";
 import { join } from "path";
 
 @Module({
@@ -42,6 +43,7 @@ import { join } from "path";
     FieldRegistryModule,
     TechnologyCardModule,
     TaskModule,
+    AgroOrchestratorModule,
 
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
