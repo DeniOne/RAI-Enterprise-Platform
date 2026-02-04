@@ -12,7 +12,7 @@ import {
 
 @Injectable()
 export class IdentityRegistryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   // --- Role Definitions (Organizational Positions) ---
 
@@ -38,9 +38,10 @@ export class IdentityRegistryService {
 
   async createProfile(
     data: {
-      firstName: string;
-      lastName: string;
+      externalId?: string;
+      userId?: string;
       roleId: string;
+      orgUnitId?: string;
       clientId?: string;
       holdingId?: string;
     },
@@ -70,8 +71,13 @@ export class IdentityRegistryService {
 
     return this.prisma.employeeProfile.create({
       data: {
-        ...data,
-        companyId,
+        externalId: data.externalId,
+        user: data.userId ? { connect: { id: data.userId } } : undefined,
+        role: { connect: { id: data.roleId } },
+        orgUnitId: data.orgUnitId,
+        company: { connect: { id: companyId } },
+        client: data.clientId ? { connect: { id: data.clientId } } : undefined,
+        holding: data.holdingId ? { connect: { id: data.holdingId } } : undefined,
         status: LifecycleStatus.ACTIVE,
       },
     });

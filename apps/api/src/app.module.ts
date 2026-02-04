@@ -21,6 +21,7 @@ import { TaskModule } from "./modules/task/task.module";
 import { AgroOrchestratorModule } from "./modules/agro-orchestrator/agro-orchestrator.module";
 import { TechMapModule } from "./modules/tech-map/tech-map.module";
 import { CmrModule } from "./modules/cmr/cmr.module";
+import { HrModule } from "./modules/hr/hr.module";
 import { join } from "path";
 
 @Module({
@@ -50,6 +51,7 @@ import { join } from "path";
     AgroOrchestratorModule,
     TechMapModule,
     CmrModule,
+    HrModule,
 
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,

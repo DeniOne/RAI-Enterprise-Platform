@@ -95,9 +95,10 @@
         - [x] Logic: Risk Architecture (`CmrRisk`, `InsuranceCoverage`)
         - [ ] Logic: Client Maturity Calculation
         - [ ] Logic: Knowledge Object aggregation
-- [ ] **Section 5.2: HR Ecosystem**
-    - [ ] Feature: Pulse Surveys (Form Builder + Analytics)
-    - [ ] Feature: OKR Evaluation Engine
+- [ ] **Section 5.2: HR Ecosystem (Canon Architecture) 🧬**
+    - [ ] **5.2.1 Foundation Layer**: Event-driven Profile Projection, Onboarding Flow, Support.
+    - [ ] **5.2.2 Incentive Layer**: OKR Alignment, KPI Signals, Recognition, Rewards.
+    - [ ] **5.2.3 Development Layer**: Pulse Signals, Assessment Snapshots (Burnout), Growth Actions (Strategic).
 - [ ] **Section 5.3: Finance & Economy**
     - [ ] Engine: `WhatIfSimulator` (ROI Calculation)
     - [ ] Feature: Treasury & Budgeting

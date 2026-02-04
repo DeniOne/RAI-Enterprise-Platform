@@ -36,6 +36,12 @@ model Company {
   cmrDecisions     CmrDecision[]
   cmrRisks         CmrRisk[]
   insuranceCoverages InsuranceCoverage[]
+  
+  // HR Control Plane
+  pulseSurveys      PulseSurvey[]
+  humanAssessmentSnapshots HumanAssessmentSnapshot[]
+  okrCycles         OkrCycle[]
+  hrKpiIndicators   HrKPIIndicator[]
 
   @@map("companies")
 }
@@ -126,10 +132,14 @@ model User {
   updatedAt    DateTime  @updatedAt
   
   tasks        Task[]
-  cmrDecisions CmrDecision[]
-  
+  // HR & CMR Relations
+  employeeProfile EmployeeProfile?
+  cmrDecisions    CmrDecision[]
+
   @@map("users")
 }
+
+
 
 model Invitation {
   id              String        @id @default(cuid())
@@ -609,12 +619,22 @@ enum InvitationStatus {
 
 model EmployeeProfile {
   id           String   @id @default(cuid())
-  firstName    String
-  lastName     String
+  
+  // Link to external HRIS (1C:ZUP / etc)
+  externalId   String?  @unique
+  
+  userId       String?  @unique
+  user         User?    @relation(fields: [userId], references: [id])
+  
+  // Management Context: Reference to structural unit (Department / Brigade / etc)
+  orgUnitId    String?  
   
   // Org Position
   roleId       String
   role         RoleDefinition @relation(fields: [roleId], references: [id])
+  
+  // Link to Development
+  requiredRoleCompetencyRef String? 
   
   // Multi-tenant Boundaries
   companyId    String
@@ -622,6 +642,21 @@ model EmployeeProfile {
   
   holdingId    String?
   clientId     String?
+  
+  // --- Contour 1: Foundation (Lifecycle Projects) ---
+  onboardingPlan HrOnboardingPlan?
+  supportCases    HrSupportCase[]
+  
+  // --- Contour 2: Incentive (Alignment) ---
+  objectives      Objective[]        // Owner of objective
+  recognitionEvents HrRecognitionEvent[]
+  rewardEvents    HrRewardEvent[]
+  
+  // --- Contour 3: Development (Strategic Signals) ---
+  surveyResponses SurveyResponse[]
+  assessmentSnapshots HumanAssessmentSnapshot[] 
+  competencyStates    PersonalCompetencyState[]
+  developmentPlan     HrDevelopmentPlan?
   
   // Identity lifecycle
   status       LifecycleStatus @default(ACTIVE)
@@ -632,6 +667,38 @@ model EmployeeProfile {
   @@index([companyId])
   @@index([roleId])
   @@map("employee_profiles")
+}
+
+model HrOnboardingPlan {
+  id          String   @id @default(cuid())
+  employeeId  String   @unique
+  employee    EmployeeProfile @relation(fields: [employeeId], references: [id])
+  
+  stages      Json     // Array of { title: string, completed: boolean, dueDate: DateTime? }
+  progress    Float    @default(0.0)
+  
+  startDate   DateTime @default(now())
+  completedAt DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("hr_onboarding_plans")
+}
+
+model HrSupportCase {
+  id          String   @id @default(cuid())
+  employeeId  String
+  employee    EmployeeProfile @relation(fields: [employeeId], references: [id])
+  
+  type        String   // "ADMIN", "TECH", "WELLBEING"
+  subject     String
+  status      String   @default("OPEN")
+  
+  createdAt   DateTime @default(now())
+  closedAt    DateTime?
+  
+  @@map("hr_support_cases")
 }
 
 model RoleDefinition {
@@ -1085,4 +1152,167 @@ enum ConfidenceLevel {
   HIGH
   MEDIUM
   LOW
+}
+
+// ==========================================
+// BLOCK 5.2: HR CONTROL PLANE (Canon)
+// ==========================================
+
+// ==========================================
+// BLOCK 5.2: HR CONTROL PLANE (Canon 3-Contour)
+// ==========================================
+
+// ------------------------------------------
+// CONTOUR 2: INCENTIVE LAYER (Alignment)
+// ------------------------------------------
+
+model OkrCycle {
+  id          String   @id @default(cuid())
+  title       String   
+  startDate   DateTime
+  endDate     DateTime
+  status      String   @default("ACTIVE")
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  objectives  Objective[]
+  @@map("hr_okr_cycles")
+}
+
+model Objective {
+  id          String   @id @default(cuid())
+  title       String
+  cycleId     String
+  cycle       OkrCycle @relation(fields: [cycleId], references: [id])
+  ownerId     String?  
+  owner       EmployeeProfile? @relation(fields: [ownerId], references: [id])
+  progress    Float    @default(0.0)
+  keyResults  KeyResult[]
+  createdAt   DateTime @default(now())
+  @@map("hr_objectives")
+}
+
+model KeyResult {
+  id          String   @id @default(cuid())
+  title       String
+  objectiveId String
+  objective   Objective @relation(fields: [objectiveId], references: [id])
+  targetValue Float
+  currentValue Float   @default(0.0)
+  metricSource String? 
+  lastUpdated DateTime @updatedAt
+  @@map("hr_key_results")
+}
+
+model HrKPIIndicator {
+  id          String   @id @default(cuid())
+  externalKey String   // e.g. "YIELD_PER_HA"
+  title       String
+  value       Float
+  capturedAt  DateTime @default(now())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  @@map("hr_kpi_indicators")
+}
+
+model HrRecognitionEvent {
+  id          String   @id @default(cuid())
+  employeeId  String
+  employee    EmployeeProfile @relation(fields: [employeeId], references: [id])
+  type        String   // "PEER", "MANAGER", "SYSTEM"
+  message     String
+  createdAt   DateTime @default(now())
+  @@map("hr_recognition_events")
+}
+
+model HrRewardEvent {
+  id          String   @id @default(cuid())
+  employeeId  String
+  employee    EmployeeProfile @relation(fields: [employeeId], references: [id])
+  type        String   // "BONUS", "EQUITY", "PERK"
+  amount      Float?
+  reason      String
+  createdAt   DateTime @default(now())
+  @@map("hr_reward_events")
+}
+
+// ------------------------------------------
+// CONTOUR 3: DEVELOPMENT LAYER (Strategic)
+// ------------------------------------------
+
+model PulseSurvey {
+  id          String   @id @default(cuid())
+  title       String
+  questions   Json     
+  status      String   @default("DRAFT")
+  startDate   DateTime?
+  endDate     DateTime?
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  responses   SurveyResponse[]
+  createdAt   DateTime @default(now())
+  @@map("hr_pulse_surveys")
+}
+
+model SurveyResponse {
+  id          String   @id @default(cuid())
+  pulseSurveyId String
+  pulseSurvey   PulseSurvey @relation(fields: [pulseSurveyId], references: [id])
+  respondentId  String    
+  respondent    EmployeeProfile @relation(fields: [respondentId], references: [id])
+  answers       Json      // Immutable
+  submittedAt   DateTime  @default(now())
+  @@index([pulseSurveyId])
+  @@map("hr_survey_responses")
+}
+
+model HumanAssessmentSnapshot {
+  id          String   @id @default(cuid())
+  employeeId  String
+  employee    EmployeeProfile @relation(fields: [employeeId], references: [id])
+  
+  burnoutRisk       RiskLevel 
+  engagementLevel   Float     // 0.0 - 1.0
+  ethicalAlignment  Float     // 0.0 - 1.0
+  controllability   Float     // 0.0 - 1.0 (Consumed by CMR)
+  confidenceLevel   Float     @default(1.0) // 0.0 - 1.0 (Probabilistic accuracy)
+  
+  validFrom   DateTime @default(now())
+  validTo     DateTime? 
+  
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  @@index([employeeId])
+  @@map("hr_human_assessment_snapshots")
+}
+
+model PersonalCompetencyState {
+  id          String   @id @default(cuid())
+  employeeId  String
+  employee    EmployeeProfile @relation(fields: [employeeId], references: [id])
+  competencyId String  // Ref to definition
+  level       Float    // current mastery
+  updatedAt   DateTime @updatedAt
+  @@map("hr_competency_states")
+}
+
+model HrDevelopmentPlan {
+  id          String   @id @default(cuid())
+  employeeId  String   @unique
+  employee    EmployeeProfile @relation(fields: [employeeId], references: [id])
+  actions     HrDevelopmentAction[]
+  createdAt   DateTime @default(now())
+  @@map("hr_development_plans")
+}
+
+model HrDevelopmentAction {
+  id          String   @id @default(cuid())
+  planId      String
+  plan        HrDevelopmentPlan @relation(fields: [planId], references: [id])
+  type        String   // "MENTORSHIP", "TRAINING", "ENV_CHANGE"
+  description String
+  status      String   @default("PLANNED")
+  createdAt   DateTime @default(now())
+  @@map("hr_development_actions")
 }

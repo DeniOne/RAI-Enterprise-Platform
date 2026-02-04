@@ -39,3 +39,23 @@
     - [x] Implement Liability Matrix logic
     - [x] Implement SLA logic (Silence as Event)
     - [x] Verify Tripartite Flow
+
+# Блок 5.2: Sprint B2 - HR Ecosystem (3-Contour Model) — DONE ✅
+
+- [x] **Section 5.2.1: Domain Schema & Tech Debt**
+    - [x] Implement HR Schema v2 (Foundation, Incentive, Development)
+    - [x] Refactor `EmployeeProfile` to Event-driven Projection model (No PII)
+    - [x] Restore Management Context via `orgUnitId`
+- [x] **Section 5.2.2: Incentive & Development Modules**
+    - [x] Implement `OkrService` & `KpiService`
+    - [x] Implement `RecognitionService` & `RewardService`
+    - [x] Implement `PulseService` & `AssessmentService`
+- [x] **Section 5.2.3: Strategic Integration**
+    - [x] Integrate `RiskService` (CMR) with Human Assessment Snapshots
+    - [x] Implement confidence-based probabilistic state projections
+
+# Phase Beta: Future Sprints
+- [ ] **Sprint B3: Smart CRM & Agro AI**
+- [ ] **Блок 6: Finance & Economy**
+- [ ] **Блок 7: Supply Chain & Logistics**
+- [ ] **Блок 8: Machinery, Fleet & IoT**

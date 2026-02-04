@@ -16,7 +16,7 @@ import { AuthGuard } from "@nestjs/passport";
 @Controller("registry/identities")
 @UseGuards(AuthGuard("jwt"))
 export class IdentityRegistryController {
-  constructor(private readonly registryService: IdentityRegistryService) {}
+  constructor(private readonly registryService: IdentityRegistryService) { }
 
   @Post("roles")
   async createRole(
@@ -31,22 +31,6 @@ export class IdentityRegistryController {
   async getRoles(@Request() req) {
     const companyId = req.user.companyId;
     return this.registryService.findRoles(companyId);
-  }
-
-  @Post("profiles")
-  async createProfile(
-    @Body()
-    body: {
-      firstName: string;
-      lastName: string;
-      roleId: string;
-      clientId?: string;
-      holdingId?: string;
-    },
-    @Request() req,
-  ) {
-    const companyId = req.user.companyId;
-    return this.registryService.createProfile(body, companyId);
   }
 
   @Get("profiles")

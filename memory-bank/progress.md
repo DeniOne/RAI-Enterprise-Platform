@@ -75,9 +75,16 @@
 - [x] **SLA Automation**: Реализован паттерн "Silence as Event" (автоматический сдвиг ответственности на клиента через 48ч).
 - [x] **Architecture**: Модули `CmrModule` и `TechMapModule` интегрированы в API.
 
+### Sprint B2: HR Ecosystem & Strategic Alignment — DONE ✅
+**Дата:** 2026-02-05
+- [x] **3-Contour HR Model**: Реализованы Foundation (Lifecycle), Incentive (OKR, KPI, Recognition, Reward) и Development (Pulse, Assessment).
+- [x] **Event-driven Projection**: `EmployeeProfile` переведен на модель проекции внешних фактов. Исключены PII (имена), внедрен `orgUnitId` для управленческого контекста.
+- [x] **Probabilistic Assessments**: Внедрен `HumanAssessmentSnapshot` с уровнем уверенности (confidence level) как онтологическая база.
+- [x] **Strategic CMR Integration**: `RiskService` (CMR) напрямую потребляет HR-сигналы через репозиторий снепшотов (декаплинг).
+- [x] **Schema**: Prisma schema обновлена, почищены сиротские связи, клиент сгенерирован.
+
 ## Phase Beta: Future Sprints (Planned)
-- [ ] Sprint B2: Smart CRM & Agro AI
-- [ ] HR Ecosystem
+- [ ] Sprint B3: Smart CRM & Agro AI
 - [ ] Finance & Economy
 - [ ] Supply Chain
 - [ ] Machinery & Fleet

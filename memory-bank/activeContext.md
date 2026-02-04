@@ -1,6 +1,7 @@
 # Active Context: RAI_EP (2026-02-04)
 
 ## Current Project State
+- **[2026-02-05] Sprint B2 (HR Ecosystem & Strategic Alignment) Complete**: Реализована 3-контурная HR-модель (Foundation, Incentive, Development). Внедрена стратегическая интеграция с CMR через деаккумулированные снепшоты человеческого капитала.
 - **[2026-02-04] Sprint B1 (Consulting Control Plane) Complete**: Реализованы Tech Map, CMR, Risk & Insurance, SLA Logic.
 - **[2026-02-04] Sprint B0 (Tech Debt & Resilience) Complete**: Внедрен единый FSM, Redis сессии для бота и полная изоляция бота от БД. Усилена надежность API-клиента.
 - **[2026-02-04] Telegram Auth Stability & UI Fix**: Исправлена инвалидность JWT токена. Бот выделен в микросервис.
@@ -11,9 +12,8 @@
 - [2026-02-03] Enterprise Identity Layer Complete: Реализованы реестры холдингов и профилей сотрудников (Блок 3).
 
 ## Tech Debt & Future Roadmap
-- **Sprint B2/B3**:
+- **Sprint B3**:
   - [ ] **Refactor TechMap**: Вынести валидацию (`TechMapValidator`) в чистый доменный сервис. `TechMapService` оставить как оркестратор.
-  - [ ] **Risk Immutability**: Внедрить `RiskAssessmentSnapshot` для фиксации оценки рисков во времени.
   - [ ] **SLA Scaling**: Оптимизировать CRON для больших объемов (batch processing или `nextActionAt`).
 
 ## Active Decisions

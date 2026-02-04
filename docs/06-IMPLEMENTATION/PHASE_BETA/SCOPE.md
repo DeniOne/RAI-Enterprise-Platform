@@ -57,20 +57,25 @@
 
 ---
 
-### Sprint B2 (15.10 - 28.10): HR Ecosystem
-#### Block 5.2: Pulse & Engagement
-- [ ] **Entity:** `Survey`, `SurveyQuestion`, `SurveyResponse`
-- [ ] **API:** POST `/hr/surveys` — создание опроса
-- [ ] **API:** POST `/hr/surveys/{id}/responses` — ответ на опрос
-- [ ] **Frontend:** Pulse Survey Widget (Dashboard integration)
-- [ ] **Logic:** Sentiment Analysis (базовый NLP или правила)
+### Sprint B2 (15.10 - 28.10): HR Ecosystem 🧬
+#### Block 5.2.1: Foundation Layer (Corporate)
+- [ ] **Entity:** `EmployeeProfile` (Projection), `HrSupportCase`
+- [ ] **Feature:** Event-driven Profile Sync & Onboarding Flow
+- [ ] **API:** `POST /hr/foundation/events/employee-hired`
 
-#### Block 5.2: OKR Engine
-- [ ] **Entity:** `Objective`, `KeyResult`, `OKRCycle`
-- [ ] **API:** POST `/hr/okr/objectives` — создание цели
-- [ ] **API:** PUT `/hr/okr/key-results/{id}/progress` — обновление прогресса
-- [ ] **API:** GET `/hr/okr/cycles/{id}/summary` — сводка по циклу
-- [ ] **Logic:** Авто-расчёт бонусов (% выполнения × коэффициент роли)
+#### Block 5.2.2: Incentive Layer (Alignment)
+- [ ] **Entity:** `OkrCycle`, `KPIIndicator`, `RecognitionEvent` (Append-only)
+- [ ] **Logic:** OKR Progress & Social Reinforcement
+- [ ] **API:** `/hr/incentive`
+
+#### Block 5.2.3: Development Layer (Strategic)
+- **Signal Layer (Listen)**
+    - [ ] **Entity:** `PulseSurvey`, `SurveyResponse` (Immutable)
+- **Assessment Layer (Understand)**
+    - [ ] **Entity:** `HumanAssessmentSnapshot`, `CompetencyState`
+- **Development & Effect (Act)**
+    - [ ] **Entity:** `DevelopmentPlan`, `DevelopmentAction`
+    - [ ] **Logic:** Impact Analysis (Target: `HumanAssessmentSnapshot` delta)
 
 ---
 

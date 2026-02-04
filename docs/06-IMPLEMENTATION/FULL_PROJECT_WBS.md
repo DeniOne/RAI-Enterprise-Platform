@@ -48,10 +48,10 @@
 - [ ] **[Backend]** **Scoring System**: Оценка LTV и потенциала клиента.
 - [ ] **[Backend]** **Smart Contracts**: Авто-мониторинг KPI договора.
 
-#### 5.2 HR Ecosystem
-- [ ] **[Backend]** **Talent Acquisition**: База кандидатов (узкие спецы).
-- [ ] **[Frontend]** **Pulse Surveys**: Модуль эмоционального состояния.
-- [ ] **[Backend]** **OKR Engine**: Расчет бонусов за результат.
+#### 5.2 HR Ecosystem (3-Contour Canon) 🧬
+- [ ] **[Backend]** **Foundation**: Event-driven Profiles, Onboarding Registry, Support.
+- [ ] **[Backend]** **Incentive**: OKR Engine, KPI Signals, Recognition, Rewards.
+- [ ] **[Backend]** **Development**: Pulse Signals, Assessment Snapshots, Growth Actions.
 
 #### 5.3 Finance & Economy
 - [ ] **[Backend]** **Simulation Engine**: What-if анализ (Расчет ROI).

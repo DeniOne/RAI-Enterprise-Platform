@@ -27,4 +27,40 @@ export class RiskService {
         }
         return [];
     }
+
+    /**
+     * Strategic integration: Directly consume human capital tactical signals.
+     * Decoupled architecture: CMR reads snapshots from the shared repository, 
+     * but does NOT depend on HR services.
+     */
+    async calculateHumanCapitalRisk(employeeId: string) {
+        // NOTE: This is a baseline rule.
+        // Final risk calculation will consider:
+        // - trend deltas (is burnout increasing?)
+        // - confidence level (how accurate is this signal?)
+        // - multiple snapshots over time (averaging/weighting)
+        const snapshot = await this.prisma.humanAssessmentSnapshot.findFirst({
+            where: { employeeId },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        if (!snapshot) return RiskLevel.LOW;
+
+        /**
+         * Strategic risk evaluation: 
+         * Currently binary for Phase 1, but acknowledges probabilistic nature.
+         */
+        const isHighBurnout = snapshot.burnoutRisk === RiskLevel.HIGH;
+        const isEthicallyMisaligned = snapshot.ethicalAlignment < 0.4;
+        const hasLowConfidence = snapshot.confidenceLevel < 0.3;
+
+        // If confidence is extremely low, we treat it as a Medium risk signal for further investigation
+        if (hasLowConfidence) return RiskLevel.MEDIUM;
+
+        if (isHighBurnout || isEthicallyMisaligned) {
+            return RiskLevel.HIGH;
+        }
+
+        return snapshot.burnoutRisk;
+    }
 }
