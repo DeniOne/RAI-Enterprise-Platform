@@ -58,9 +58,16 @@
 
 ---
 
-## Phase Beta: Operations & Enterprise (Planned)
-- [ ] Sprint B0: Tech Debt Fixes (BLOCKER)
-- [ ] CRM & Sales
+## Phase Beta: Implementation & Scale
+### Sprint B0: Tech Debt & Resilience — DONE ✅
+**Дата:** 2026-02-04  
+- [x] **Unified FSM**: Реализован чистый event-driven паттерн для Task и Season. Переведено 29 тестов.
+- [x] **Redis Sessions**: Хранение сессий бота перенесено из памяти в Redis.
+- [x] **Bot Isolation**: Бот полностью отрезан от Prisma. Все данные через ApiClient.
+- [x] **Resilience**: Умные ретраи, Circuit Breaker и идемпотентность в ApiClient.
+
+## Phase Beta: Future Sprints (Planned)
+- [ ] Sprint B1: Smart CRM
 - [ ] HR Ecosystem
 - [ ] Finance & Economy
 - [ ] Supply Chain

@@ -2,8 +2,9 @@ import { Module, Global } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TelegrafModule } from 'nestjs-telegraf';
 import { TelegramModule } from './telegram/telegram.module';
-import { PrismaModule } from './shared/prisma/prisma.module';
 import { ApiClientModule } from './shared/api-client/api-client.module';
+import { RedisModule } from './shared/redis/redis.module';
+import { SessionModule } from './shared/session/session.module';
 import { BotInternalController } from './shared/bot-internal.controller';
 
 @Module({
@@ -17,8 +18,9 @@ import { BotInternalController } from './shared/bot-internal.controller';
         token: process.env.TELEGRAM_BOT_TOKEN || '',
       }),
     }),
+    RedisModule,
+    SessionModule,
     ApiClientModule,
-    PrismaModule,
     TelegramModule,
   ],
   controllers: [BotInternalController],

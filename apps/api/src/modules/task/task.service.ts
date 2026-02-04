@@ -6,13 +6,17 @@ import {
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { AuditService } from "../../shared/audit/audit.service";
 import { Task, TaskStatus, SeasonStatus, User } from "@prisma/client";
+import {
+  TaskStateMachine,
+  TaskEvent,
+} from "../../shared/state-machine";
 
 @Injectable()
 export class TaskService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
-  ) {}
+  ) { }
 
   /**
    * Idempotent task generation from a Season's Technology Card.
@@ -104,7 +108,11 @@ export class TaskService {
     companyId: string,
   ): Promise<Task> {
     const task = await this._validateTaskAccess(taskId, companyId);
-    this._ensureNotTerminal(task);
+
+    // FSM validation
+    if (!TaskStateMachine.canTransition(task.status, TaskEvent.ASSIGN)) {
+      throw new BadRequestException(`Cannot assign task in state ${task.status}`);
+    }
 
     const updated = await this.prisma.task.update({
       where: { id: taskId },
@@ -125,11 +133,13 @@ export class TaskService {
     companyId: string,
   ): Promise<Task> {
     const task = await this._validateTaskAccess(taskId, companyId);
-    this._ensureStatus(task, TaskStatus.PENDING);
+
+    // FSM Transition (Pure)
+    const result = TaskStateMachine.transition(task, TaskEvent.START);
 
     const updated = await this.prisma.task.update({
       where: { id: taskId },
-      data: { status: TaskStatus.IN_PROGRESS },
+      data: { status: result.status },
     });
 
     await this.auditService.log({
@@ -147,13 +157,15 @@ export class TaskService {
     companyId: string,
   ): Promise<Task> {
     const task = await this._validateTaskAccess(taskId, companyId);
-    this._ensureStatus(task, TaskStatus.IN_PROGRESS);
+
+    // FSM Transition (Pure)
+    const result = TaskStateMachine.transition(task, TaskEvent.COMPLETE);
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const completed = await tx.task.update({
         where: { id: taskId },
         data: {
-          status: TaskStatus.COMPLETED,
+          status: result.status,
           completedAt: new Date(),
         },
       });
@@ -190,11 +202,13 @@ export class TaskService {
     companyId: string,
   ): Promise<Task> {
     const task = await this._validateTaskAccess(taskId, companyId);
-    this._ensureNotTerminal(task);
+
+    // FSM Transition (Pure)
+    const result = TaskStateMachine.transition(task, TaskEvent.CANCEL);
 
     const updated = await this.prisma.task.update({
       where: { id: taskId },
-      data: { status: TaskStatus.CANCELLED },
+      data: { status: result.status },
     });
 
     await this.auditService.log({
@@ -227,24 +241,5 @@ export class TaskService {
     }
 
     return task as any;
-  }
-
-  private _ensureNotTerminal(task: Task): void {
-    if (
-      task.status === TaskStatus.COMPLETED ||
-      task.status === TaskStatus.CANCELLED
-    ) {
-      throw new BadRequestException(
-        `Task ${task.id} is in a terminal state (${task.status})`,
-      );
-    }
-  }
-
-  private _ensureStatus(task: Task, required: TaskStatus): void {
-    if (task.status !== required) {
-      throw new BadRequestException(
-        `Task ${task.id} status must be ${required} (current: ${task.status})`,
-      );
-    }
   }
 }

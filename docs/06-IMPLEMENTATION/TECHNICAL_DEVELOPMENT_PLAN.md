@@ -70,17 +70,17 @@
 *Цель: Полная оцифровка бизнеса и производства.*
 
 ### 🔥 BLOCK B0: TECH DEBT FIXES (BLOCKER)
-- [ ] **Section B0.1: Unified FSM**
-    - [ ] Interface: `StateMachine<TState, TEvent>`
-    - [ ] Migration: Task FSM → Unified
-    - [ ] Migration: APL FSM → Unified
-- [ ] **Section B0.2: Redis Sessions**
-    - [ ] Telegram auth → Redis storage
-    - [ ] TTL + rotation policy
-- [ ] **Section B0.3: Bot API Isolation**
-    - [ ] Remove Prisma from Telegram Bot
-    - [ ] ApiClient: retry + circuit breaker
-    - [ ] Idempotency keys
+- [x] **Section B0.1: Unified FSM**
+    - [x] Interface: `StateMachine<TState, TEvent>`
+    - [x] Migration: Task FSM → Unified
+    - [x] Migration: APL FSM → Unified
+- [x] **Section B0.2: Redis Sessions**
+    - [x] Telegram auth → Redis storage
+    - [x] TTL + rotation policy
+- [x] **Section B0.3: Bot API Isolation**
+    - [x] Remove Prisma from Telegram Bot
+    - [x] ApiClient: retry + circuit breaker
+    - [x] Idempotency keys
 
 ### 🏢 BLOCK 5: CONTOUR 1 - BACK-OFFICE
 - [ ] **Section 5.1: Smart CRM**

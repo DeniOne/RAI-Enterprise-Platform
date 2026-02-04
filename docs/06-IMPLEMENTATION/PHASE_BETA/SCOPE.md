@@ -17,21 +17,21 @@
 > **Обязательно до начала Enterprise/Field контуров!**
 
 ### Block 0.1: Unified FSM Module
-- [ ] **Module:** `shared/state-machine/`
-- [ ] **Interface:** `StateMachine<TState, TEvent>`
-- [ ] **Migration:** Task FSM → Unified
-- [ ] **Migration:** APL FSM → Unified
-- [ ] **Doc:** FSM Registry
+- [x] **Module:** `shared/state-machine/`
+- [x] **Interface:** `StateMachine<TState, TEvent>`
+- [x] **Migration:** Task FSM → Unified
+- [x] **Migration:** APL FSM → Unified
+- [x] **Doc:** FSM Registry
 
 ### Block 0.2: Redis Sessions
-- [ ] **Module:** Redis session storage для Telegram
-- [ ] **Migration:** `userTokens` Map → Redis
-- [ ] **Config:** TTL + rotation policy
+- [x] **Module:** Redis session storage для Telegram
+- [x] **Migration:** `userTokens` Map → Redis
+- [x] **Config:** TTL + rotation policy
 
 ### Block 0.3: Bot API Isolation
-- [ ] **HARD RULE:** Telegram Bot ≠ Prisma
-- [ ] **Feature:** ApiClient + retry + circuit breaker
-- [ ] **Feature:** Idempotency keys
+- [x] **HARD RULE:** Telegram Bot ≠ Prisma
+- [x] **Feature:** ApiClient + retry + circuit breaker
+- [x] **Feature:** Idempotency keys
 
 ---
 

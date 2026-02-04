@@ -1,61 +1,36 @@
 import { Update, Start, Hears, Ctx, Action } from "nestjs-telegraf";
 import { Context, Markup } from "telegraf";
-import { PrismaService } from "../shared/prisma/prisma.service";
 import { ProgressService } from "./progress.service";
-import { ApiClientService, TaskDto } from "../shared/api-client/api-client.service";
-import * as fs from "fs";
-import * as path from "path";
+import { ApiClientService } from "../shared/api-client/api-client.service";
+import { SessionService } from "../shared/session/session.service";
 
 const ADMIN_TG_ID = "441610858";
-const PERSISTENT_USERS_PATH = path.resolve(
-  process.cwd(),
-  "data/persistent_users.json",
-);
-
-// Temporary in-memory storage for user access tokens (for demo purposes)
-// TODO: In production, store tokens securely in Redis or encrypted user session
-const userTokens: Map<string, string> = new Map();
 
 @Update()
 export class TelegramUpdate {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly progressService: ProgressService,
     private readonly apiClient: ApiClientService,
+    private readonly session: SessionService,
   ) { }
 
   private async getUser(ctx: Context) {
     if (!ctx.from) return null;
     const telegramId = ctx.from.id.toString();
-    return this.prisma.user.findFirst({
-      where: { telegramId },
-    });
-  }
-
-  private async savePersistentUser(user: {
-    telegramId: string;
-    email: string;
-    role: string;
-    accessLevel: string;
-  }) {
     try {
-      const dataDir = path.dirname(PERSISTENT_USERS_PATH);
-      if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
-
-      let users: Array<{ telegramId: string; email: string; role: string; accessLevel: string }> = [];
-      if (fs.existsSync(PERSISTENT_USERS_PATH)) {
-        users = JSON.parse(fs.readFileSync(PERSISTENT_USERS_PATH, "utf8"));
-      }
-
-      const exists = users.find((u) => u.telegramId === user.telegramId);
-      if (!exists) {
-        users.push(user);
-        fs.writeFileSync(PERSISTENT_USERS_PATH, JSON.stringify(users, null, 2));
-      }
+      return await this.apiClient.getUser(telegramId);
     } catch (e) {
-      console.error("❌ Failed to save persistent user:", e);
+      console.error(`[TelegramUpdate] Failed to get user ${telegramId}:`, e.message);
+      return null;
     }
   }
+
+  private async getAccessToken(ctx: Context): Promise<string | null> {
+    if (!ctx.from) return null;
+    const session = await this.session.getSession(ctx.from.id);
+    return session?.token || null;
+  }
+
 
   @Start()
   async onStart(@Ctx() ctx: Context): Promise<void> {
@@ -121,42 +96,25 @@ export class TelegramUpdate {
     if (!("match" in ctx && ctx.match)) return;
     const tgId = ctx.match[1];
 
-    // 1. Get default company
-    const company = await this.prisma.company.findFirst();
-    if (!company) {
-      await ctx.reply(
-        "❌ Ошибка: Компания не найдена. Сначала запустите setup_company.ts",
-      );
-      return;
-    }
-
+    // 1. Get default company via API
     try {
+      const company = await this.apiClient.getFirstCompany();
+      if (!company) {
+        await ctx.reply("❌ Ошибка: Компания не найдена на бэкенде.");
+        return;
+      }
+
       const email = `tg_${tgId}@rai.local`;
 
-      // 2. Create User in DB
-      await this.prisma.user.upsert({
-        where: { telegramId: tgId },
-        update: {
-          accessLevel: "ACTIVE",
-          company: { connect: { id: company.id } },
-        },
-        create: {
-          telegramId: tgId,
-          email,
-          role: "USER",
-          accessLevel: "ACTIVE",
-          company: { connect: { id: company.id } },
-          emailVerified: true,
-        },
-      });
-
-      // 3. Save to Persistence JSON
-      await this.savePersistentUser({
+      // 2. Upsert User via API
+      await this.apiClient.upsertUser({
         telegramId: tgId,
         email,
         role: "USER",
         accessLevel: "ACTIVE",
+        companyId: company.id,
       });
+
 
       await ctx.answerCbQuery("Пользователь одобрен! ✅");
       await ctx.editMessageText(`✅ Юзер с ID <code>${tgId}</code> теперь в системе!`, {
@@ -214,48 +172,47 @@ export class TelegramUpdate {
       return;
     }
 
-    // Get tasks from local database (for now, until proper token management)
-    const tasks = await this.prisma.task.findMany({
-      where: {
-        assigneeId: user.id,
-        status: { in: ["PENDING", "IN_PROGRESS"] },
-        companyId: user.companyId,
-      },
-      include: {
-        field: { select: { id: true, name: true } },
-        season: { select: { id: true, year: true } },
-      },
-      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
-    });
-
-    if (tasks.length === 0) {
-      await ctx.reply("✅ У вас нет активных задач.");
+    const accessToken = await this.getAccessToken(ctx);
+    if (!accessToken) {
+      await ctx.reply("🔑 Пожалуйста, выполните вход через веб-интерфейс или запросите временный токен.");
       return;
     }
 
-    for (const task of tasks) {
-      const fieldName = task.field?.name || "Неизвестное поле";
-      const statusIcon = task.status === "IN_PROGRESS" ? "⏳" : "🆕";
-      const statusText = task.status === "IN_PROGRESS" ? "В работе" : "Ожидает";
+    try {
+      const tasks = await this.apiClient.getMyTasks(accessToken);
 
-      const buttons: ReturnType<typeof Markup.button.callback>[] = [];
-      if (task.status === "PENDING") {
-        buttons.push(
-          Markup.button.callback("▶ Начать", `start_task:${task.id}`),
-        );
-      } else if (task.status === "IN_PROGRESS") {
-        buttons.push(
-          Markup.button.callback("✅ Завершить", `complete_task:${task.id}`),
-        );
+      if (tasks.length === 0) {
+        await ctx.reply("✅ У вас нет активных задач.");
+        return;
       }
 
-      await ctx.reply(
-        `${statusIcon} <b>${task.name}</b>\n📍 Поле: ${fieldName}\n📊 Статус: ${statusText}\n📅 Дата: ${task.plannedDate?.toLocaleDateString("ru-RU") ?? "Не указана"}`,
-        {
-          parse_mode: "HTML",
-          ...Markup.inlineKeyboard([buttons]),
-        },
-      );
+      for (const task of tasks) {
+        const fieldName = task.field?.name || "Неизвестное поле";
+        const statusIcon = task.status === "IN_PROGRESS" ? "⏳" : "🆕";
+        const statusText = task.status === "IN_PROGRESS" ? "В работе" : "Ожидает";
+
+        const buttons: ReturnType<typeof Markup.button.callback>[] = [];
+        if (task.status === "PENDING") {
+          buttons.push(
+            Markup.button.callback("▶ Начать", `start_task:${task.id}`),
+          );
+        } else if (task.status === "IN_PROGRESS") {
+          buttons.push(
+            Markup.button.callback("✅ Завершить", `complete_task:${task.id}`),
+          );
+        }
+
+        await ctx.reply(
+          `${statusIcon} <b>${task.name}</b>\n📍 Поле: ${fieldName}\n📊 Статус: ${statusText}\n📅 Дата: ${task.plannedDate ? new Date(task.plannedDate).toLocaleDateString("ru-RU") : "Не указана"}`,
+          {
+            parse_mode: "HTML",
+            ...Markup.inlineKeyboard([buttons]),
+          },
+        );
+      }
+    } catch (e) {
+      console.error("❌ Error fetching tasks:", e);
+      await ctx.reply("❌ Произошла ошибка при загрузке задач. Попробуйте позже.");
     }
   }
 
@@ -271,11 +228,10 @@ export class TelegramUpdate {
     }
 
     try {
-      // Update task directly in DB (simplified for MVP)
-      await this.prisma.task.update({
-        where: { id: taskId },
-        data: { status: "IN_PROGRESS" },
-      });
+      const accessToken = await this.getAccessToken(ctx);
+      if (!accessToken) throw new Error("Unauthorized");
+
+      await this.apiClient.startTask(taskId, accessToken);
 
       await ctx.answerCbQuery("Задача начата! ▶");
       await ctx.editMessageText(
@@ -300,14 +256,10 @@ export class TelegramUpdate {
     }
 
     try {
-      // Update task directly in DB (simplified for MVP)
-      await this.prisma.task.update({
-        where: { id: taskId },
-        data: {
-          status: "COMPLETED",
-          completedAt: new Date(),
-        },
-      });
+      const accessToken = await this.getAccessToken(ctx);
+      if (!accessToken) throw new Error("Unauthorized");
+
+      await this.apiClient.completeTask(taskId, accessToken);
 
       await ctx.answerCbQuery("Задача завершена! ✅");
       await ctx.editMessageText(
@@ -334,9 +286,11 @@ export class TelegramUpdate {
     try {
       const result = await this.apiClient.confirmLogin(sessionId);
 
-      // Store token for future API calls (in production use Redis)
       if (ctx.from) {
-        userTokens.set(ctx.from.id.toString(), result.accessToken);
+        await this.session.saveSession(ctx.from.id, {
+          token: result.accessToken,
+          lastActive: Date.now(),
+        });
       }
 
       await ctx.answerCbQuery();

@@ -5,6 +5,7 @@ import {
     Param,
     Body,
     UseGuards,
+    BadRequestException,
 } from "@nestjs/common";
 import {
     ApiTags,
@@ -16,10 +17,16 @@ import { AgroOrchestratorService } from "./agro-orchestrator.service";
 import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
 import { User } from "@prisma/client";
-import { AplStage, STAGE_DEFINITIONS } from "./state-machine/apl-stages";
+import {
+    AplStateMachine,
+    AplStage,
+    AplEvent,
+    APL_STATE_METADATA,
+} from "../../shared/state-machine";
 
 class TransitionDto {
-    targetStage: string;
+    targetStage?: string; // @deprecated
+    event?: AplEvent;
     metadata?: Record<string, any>;
 }
 
@@ -41,12 +48,12 @@ export class AgroOrchestratorController {
     @ApiOperation({ summary: "Получить все этапы APL" })
     @ApiResponse({ status: 200, description: "Список всех этапов" })
     getAllStages() {
-        return Object.values(STAGE_DEFINITIONS).map(s => ({
+        return Object.values(APL_STATE_METADATA).map(s => ({
             id: s.id,
             name: s.name,
             nameRu: s.nameRu,
             order: s.order,
-            allowedTransitions: s.allowedTransitions,
+            isTerminal: s.isTerminal,
         }));
     }
 
@@ -77,20 +84,49 @@ export class AgroOrchestratorController {
     }
 
     /**
-     * POST /orchestrator/seasons/:id/transition — Transition to next stage
+     * POST /orchestrator/seasons/:id/transition — Transition to next stage (Compatibility)
      */
     @Post("seasons/:id/transition")
-    @ApiOperation({ summary: "Перейти к следующему этапу" })
-    @ApiResponse({ status: 200, description: "Переход выполнен" })
-    @ApiResponse({ status: 400, description: "Недопустимый переход" })
+    @ApiOperation({ summary: "Перейти к следующему этапу (Совместимость)" })
     async transitionToStage(
         @Param("id") seasonId: string,
         @Body() dto: TransitionDto,
         @CurrentUser() user: User,
     ) {
+        if (dto.event) {
+            return this.orchestratorService.applyEvent(
+                seasonId,
+                dto.event,
+                user.companyId!,
+                user,
+                dto.metadata
+            );
+        }
         return this.orchestratorService.transitionToStage(
             seasonId,
             dto.targetStage as AplStage,
+            user.companyId!,
+            user,
+            dto.metadata,
+        );
+    }
+
+    /**
+     * POST /orchestrator/seasons/:id/event — Apply event to lifecycle
+     */
+    @Post("seasons/:id/event")
+    @ApiOperation({ summary: "Применить событие к жизненному циклу" })
+    async applyEvent(
+        @Param("id") seasonId: string,
+        @Body() dto: TransitionDto,
+        @CurrentUser() user: User,
+    ) {
+        if (!dto.event) {
+            throw new BadRequestException("Event is required");
+        }
+        return this.orchestratorService.applyEvent(
+            seasonId,
+            dto.event,
             user.companyId!,
             user,
             dto.metadata,
@@ -102,7 +138,7 @@ export class AgroOrchestratorController {
      */
     @Get("seasons/:id/transitions")
     @ApiOperation({ summary: "Получить доступные переходы" })
-    @ApiResponse({ status: 200, description: "Список доступных следующих этапов" })
+    @ApiResponse({ status: 200, description: "Список доступных следующих этапов и событий" })
     async getAvailableTransitions(
         @Param("id") seasonId: string,
         @CurrentUser() user: User,

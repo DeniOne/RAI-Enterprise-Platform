@@ -3,6 +3,7 @@ import { RedisService } from '../redis/redis.service';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
+import { UserRole, UserAccessLevel } from '@prisma/client';
 // Removed: InjectBot, Telegraf - bot is now a separate microservice
 import { randomUUID } from 'crypto';
 
@@ -147,5 +148,39 @@ export class TelegramAuthService {
         }
 
         return JSON.parse(sessionData);
+    }
+
+    async getUserByTelegramId(telegramId: string) {
+        return this.prisma.user.findFirst({
+            where: { telegramId: telegramId.trim() },
+        });
+    }
+
+    async upsertUserFromTelegram(data: {
+        telegramId: string;
+        email: string;
+        role: string;
+        accessLevel: string;
+        companyId: string;
+    }) {
+        return this.prisma.user.upsert({
+            where: { telegramId: data.telegramId },
+            update: {
+                accessLevel: data.accessLevel as UserAccessLevel,
+                company: { connect: { id: data.companyId } },
+            },
+            create: {
+                telegramId: data.telegramId,
+                email: data.email,
+                role: data.role as UserRole,
+                accessLevel: data.accessLevel as UserAccessLevel,
+                company: { connect: { id: data.companyId } },
+                emailVerified: true,
+            },
+        });
+    }
+
+    async getFirstCompany() {
+        return this.prisma.company.findFirst();
     }
 }

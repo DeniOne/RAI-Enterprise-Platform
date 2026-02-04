@@ -1,7 +1,8 @@
-# Active Context: RAI_EP (2026-01-31)
+# Active Context: RAI_EP (2026-02-04)
 
 ## Current Project State
-- **[2026-02-04] Telegram Auth Stability & UI Fix**: Исправлена инвалидность JWT токена (payload mismatch). Бот выделен в микросервис. UI страницы входа приведен к канону (светлая тема, стандартные компоненты).
+- **[2026-02-04] Sprint B0 (Tech Debt & Resilience) Complete**: Внедрен единый FSM, Redis сессии для бота и полная изоляция бота от БД. Усилена надежность API-клиента.
+- **[2026-02-04] Telegram Auth Stability & UI Fix**: Исправлена инвалидность JWT токена. Бот выделен в микросервис.
 - [2026-02-03] Database Unification Complete: Вся инфраструктура переведена на единый Docker Postgres (порт 5432).
 - **[2026-02-03] Telegram Bot Integration Complete**: Реализована авторизация по ID и команды `/start`, `/mytasks`. Бот успешно работает с унифицированной базой данных.
 - [2026-02-03] Sprint 4 Web Interface Complete: Реализован Next.js 14 веб-интерфейс с JWT аутентификацией, Dashboard, формой создания задач. E2E flow проверен и работает. Создан Auth Module в NestJS API.
