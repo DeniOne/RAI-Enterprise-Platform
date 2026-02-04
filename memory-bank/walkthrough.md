@@ -1,38 +1,40 @@
-# Agro Process Layer Implementation
+# Sprint B1 Walkthrough: Consulting Control Plane & Risk Architecture
 
-Successfully implemented the foundational **Agro Process Layer (APL)** in `@rai/agro-orchestrator`.
+## 1. Database Schema (Prisma)
+Updated `schema.prisma` with new domains:
+- **Tech Map Domain**: `TechMap`, `MapStage`, `MapOperation`, `MapResource`.
+- **CMR Domain**: `DeviationReview`, `CmrDecision`.
+- **Risk & Insurance**: `CmrRisk`, `InsuranceCoverage`.
+- **Enums**: `ResponsibilityMode`, `RiskType`, `Controllability`, `LiabilityMode`, `ConfidenceLevel`.
 
-## 📦 Package Overview
-`packages/agro-orchestrator` exposes a pure-logic library for managing crop lifecycles.
+> [!NOTE]
+> Fixed validation errors (P1012) by adding missing back-relations to `Company`, `Season`, `User`, and `DeviationReview` models.
 
-### Key Components
-1.  **AgroOrchestrator**: State machine with `transition()` capabilities.
-    - Supports **Dry-Run** (Simulation).
-    - Integrates **RuleEngine** for validation.
-2.  **RuleEngine**: Pure validator based on `json-logic-js`.
-    - Returns `OK | BLOCK | WARN`.
-    - Provides **Explainability** (human-readable reasons).
-3.  **RapeseedPreset**: Canonical definition of the 16-stage Rapeseed cycle.
-    - Defining stages as data, not hardcoded enums.
+## 2. Backend Modules (NestJS)
+### Tech Map Module (`apps/api/src/modules/tech-map`)
+- **Controller**: `TechMapController` for Canvas UI interactions (`generate`, `validate`).
+- **Service**: `TechMapService` for map construction and validation logic.
 
-## 🧪 Verification Results
+### CMR Module (`apps/api/src/modules/cmr`)
+- **Services**:
+  - `DeviationService`: Handles reviews and SLA logic (`handleSilence`).
+  - `RiskService`: Assessments and insurance proposals.
+  - `DecisionService`: Immutable logging of decisions.
+- **Automation**: Added `@Cron(CronExpression.EVERY_HOUR)` to `DeviationService` to automatically shift liability if client is silent (>48h).
 
-### Automated Tests
-Ran `npm test` successfully (3/3 passed).
+### App Module
+- Registered `TechMapModule` and `CmrModule`.
+- Added `ScheduleModule` for background jobs.
 
-1.  **Initialization**: Verified component wiring.
-2.  **Dry-Run Transition (OK)**:
-    - Input: `soilMoisture: 15` (Requirement: >12).
-    - Result: `Success`, Status: `OK`.
-3.  **Blocked Transition**:
-    - Input: `soilMoisture: 10`.
-    - Result: `Failure`, Status: `BLOCK`.
-    - Reason: "Soil moisture 10% is too low".
+## 3. Verification & Logic
+- **SLA Logic**: Verified via code review. The system checks `slaExpiration` and updates `responsibilityMode` to `CLIENT_ONLY` if expired.
+- **Tripartite Logic**: Implemented in `DeviationService.createReview` (defaults to SHARED liability).
+- **Schema Validation**: `db:generate` passed successfully.
 
-### Infrastructure Fixes
-- Resolved `npm install` internal errors by cleaning workspace artifacts.
-- Fixed `json-logic-js` CommonJS/ESM interop issues in TypeScript.
+## 4. Manual Actions Checklist
+All automated steps completed. To apply changes to the database:
 
-## Next Steps
-- Connect `apps/api` to use `agro-orchestrator`.
-- Implement actual API endpoints for Stage transitions.
+```bash
+# Create Migration (Applies schema to DB)
+npx prisma migrate dev --name sprint_b1_cmr
+```

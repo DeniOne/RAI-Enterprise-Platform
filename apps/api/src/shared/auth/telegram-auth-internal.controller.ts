@@ -63,4 +63,12 @@ export class TelegramAuthInternalController {
         this.validateApiKey(apiKey);
         return this.telegramAuthService.getFirstCompany();
     }
+
+    @Post('users/active')
+    async getActiveUsers(
+        @Headers('x-internal-api-key') apiKey: string,
+    ) {
+        this.validateApiKey(apiKey);
+        return this.telegramAuthService.getActiveUsers();
+    }
 }

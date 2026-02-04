@@ -158,6 +158,13 @@ export class ApiClientService {
         });
     }
 
+    async getActiveUsers(): Promise<any[]> {
+        return this.request('/internal/telegram/users/active', {
+            method: 'POST',
+            headers: this.getHeaders(),
+        });
+    }
+
     /**
      * Task Management
      */

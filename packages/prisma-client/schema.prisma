@@ -24,6 +24,18 @@ model Company {
   fields      Field[]
   technologyCards TechnologyCard[]
   tasks       Task[]
+  
+  // CRM Relations
+  deals            Deal[]
+  scoreCards       ScoreCard[]
+  contracts        Contract[]
+  
+  // Tech Map & CMR Relations
+  techMaps         TechMap[]
+  deviationReviews DeviationReview[]
+  cmrDecisions     CmrDecision[]
+  cmrRisks         CmrRisk[]
+  insuranceCoverages InsuranceCoverage[]
 
   @@map("companies")
 }
@@ -33,6 +45,11 @@ model Client {
   id        String   @id @default(cuid())
   name      String
   
+  // CRM Fields
+  inn       String?  @unique
+  type      ClientType @default(FARMER)
+  riskLevel RiskLevel  @default(LOW)
+
   // Ownership & Structure
   companyId String
   company   Company  @relation(fields: [companyId], references: [id])
@@ -42,6 +59,11 @@ model Client {
   fields    Field[]
   users     User[]
   
+  // CRM Relations
+  deals      Deal[]
+  scoreCards ScoreCard[]
+  contracts  Contract[]
+
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   invitations Invitation[]
@@ -104,6 +126,7 @@ model User {
   updatedAt    DateTime  @updatedAt
   
   tasks        Task[]
+  cmrDecisions CmrDecision[]
   
   @@map("users")
 }
@@ -282,6 +305,13 @@ model Season {
   history          SeasonHistory[]
   snapshots        SeasonSnapshot[]
   tasks            Task[]
+  
+  // Tech Map Integration
+  techMap          TechMap?
+  deviationReviews DeviationReview[]
+  cmrDecisions     CmrDecision[]
+  cmrRisks         CmrRisk[]
+
 
   @@index([id, companyId])          // Для быстрой валидации доступа
   @@index([fieldId, year])          // Для севооборота
@@ -670,4 +700,389 @@ model MemoryEntry {
 
   @@index([companyId, memoryType])
   @@map("memory_entries")
+}
+
+// --- CRM Models ---
+
+model Deal {
+  id            String    @id @default(cuid())
+  name          String
+  stage         DealStage @default(LEAD)
+  amount        Float     @default(0)
+  probability   Float     @default(0)
+  expectedDate  DateTime?
+
+  clientId      String
+  client        Client    @relation(fields: [clientId], references: [id])
+  
+  companyId     String
+  company       Company   @relation(fields: [companyId], references: [id])
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([clientId])
+  @@map("crm_deals")
+}
+
+model ScoreCard {
+  id              String   @id @default(cuid())
+  clientId        String   @unique
+  client          Client   @relation(fields: [clientId], references: [id])
+
+  financialHealth Float?   // 0-100 score
+  agroPotential   Float?   // Land bank * Productivity proxy
+  reliability     Float?   // History/Risk score
+  ltvPrediction   Float?   // 3-year projected revenue
+
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+
+  @@index([companyId])
+  @@map("crm_scorecards")
+}
+
+model Contract {
+  id          String   @id @default(cuid())
+  number      String
+  type        String   // SUPPLY, PURCHASE, SERVICE
+  status      String   // ACTIVE, COMPLETED, CANCELLED
+  startDate   DateTime
+  endDate     DateTime?
+  amount      Float?
+
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id])
+  
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([clientId])
+  @@map("crm_contracts")
+}
+
+// --- CRM Enums ---
+
+enum ClientType {
+  FARMER
+  DEALER
+  HOLDING
+  PARTNER
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum DealStage {
+  LEAD
+  QUALIFICATION
+  OFFER
+  CONTRACT
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+// --- Tech Map Domain (Detailed Operational Planning) ---
+
+model TechMap {
+  id          String   @id @default(cuid())
+  
+  seasonId    String   @unique // 1-to-1 with Season
+  season      Season   @relation(fields: [seasonId], references: [id])
+  
+  stages      MapStage[]
+  
+  // Metadata for AI Generation
+  soilType    SoilType?
+  moisture    Float?   // Initial moisture %
+  precursor   String?  // Предшественник
+  
+  status      TechMapStatus @default(DRAFT)
+  
+  // Versioning
+  version     Int      @default(1)
+  isLatest    Boolean  @default(true)
+  
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+  @@map("tech_maps")
+}
+
+model MapStage {
+  id          String   @id @default(cuid())
+  name        String
+  sequence    Int
+  
+  techMapId   String
+  techMap     TechMap  @relation(fields: [techMapId], references: [id])
+  
+  operations  MapOperation[]
+  
+  // Integration with APL
+  aplStageId  String?  // '04_SOWING' etc.
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([techMapId])
+  @@map("tech_map_stages")
+}
+
+model MapOperation {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  
+  mapStageId  String
+  mapStage    MapStage @relation(fields: [mapStageId], references: [id])
+  
+  // Detailed Planning
+  plannedStartTime DateTime?
+  plannedEndTime   DateTime?
+  durationHours    Int?
+  
+  resources   MapResource[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([mapStageId])
+  @@map("tech_map_operations")
+}
+
+model MapResource {
+  id             String   @id @default(cuid())
+  mapOperationId String
+  mapOperation   MapOperation @relation(fields: [mapOperationId], references: [id])
+  
+  type           String   // FERTILIZER, etc.
+  name           String
+  amount         Float
+  unit           String
+  
+  costPerUnit    Float?   // Planned cost
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([mapOperationId])
+  @@map("tech_map_resources")
+}
+
+enum TechMapStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+// --- Consulting Control Plane (CMR) ---
+
+model DeviationReview {
+  id              String   @id @default(cuid())
+  
+  // Context
+  seasonId        String
+  season          Season   @relation(fields: [seasonId], references: [id])
+  
+  stageId         String?  // Optional link to APL stage
+  
+  // Content
+  deviationSummary    String   // Fact vs Plan
+  aiImpactAssessment  String   // Risk analysis
+  techConclusion      String?  // Agronomist's input
+  proposedActions     String?  // Correction plan
+  
+  // Client Interaction
+  clientResponseStatus ClientResponseStatus @default(PENDING)
+  clientComment        String?
+  clientRespondedAt    DateTime?
+  
+  // Responsibility
+  responsibilityMode   ResponsibilityMode @default(SHARED)
+  
+  // SLA
+  slaExpiration        DateTime?
+  liabilityShiftStatus String?    // "SHIFTED_TO_CLIENT", "SUSPENDED"
+  
+  status          ReviewStatus @default(OPEN)
+  
+  risks           CmrRisk[]
+  
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([seasonId])
+  @@index([companyId])
+  @@index([status])
+  @@map("cmr_deviation_reviews")
+}
+
+model CmrDecision {
+  id              String   @id @default(cuid())
+  
+  seasonId        String
+  season          Season   @relation(fields: [seasonId], references: [id])
+  
+  action          String   // e.g., "ADJUST_SOWING_DATE"
+  reason          String
+  actor           String   // AI, MANAGER, CLIEN
+  
+  // Strategic Amplifiers
+  confidenceLevel ConfidenceLevel @default(HIGH)
+  alternatives    Json?    // Counterfactuals
+  
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  
+  createdAt       DateTime @default(now())
+  
+  // Strict Ownership
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  
+  @@index([seasonId])
+  @@index([userId])
+  @@map("cmr_decisions")
+}
+
+model CmrRisk {
+  id              String   @id @default(cuid())
+  
+  seasonId        String
+  season          Season   @relation(fields: [seasonId], references: [id])
+  
+  type            RiskType
+  description     String
+  
+  probability     RiskLevel // LOW, MEDIUM, HIGH
+  impact          RiskLevel // LOW, MEDIUM, HIGH
+  
+  controllability Controllability // WHO controls this risk?
+  liabilityMode   LiabilityMode   // WHO pays for it?
+  
+  mitigationPlan  String?
+  
+  // Link to Deviation Review (if this risk triggered a review)
+  deviationReviewId String?
+  deviationReview   DeviationReview? @relation(fields: [deviationReviewId], references: [id])
+  
+  status          String    // OPEN, MITIGATED, REALIZED
+  
+  // Insurance
+  insuranceId     String?
+  insurance       InsuranceCoverage? @relation(fields: [insuranceId], references: [id])
+  
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([seasonId])
+  @@index([type])
+  @@map("cmr_risks")
+}
+
+model InsuranceCoverage {
+  id              String   @id @default(cuid())
+  
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  
+  insurer         String   // Name of insurance company
+  type            InsuranceType
+  
+  status          String   // ACTIVE, CLAIMED, EXPIRED
+  
+  insuredAmount   Float
+  deductible      Float?
+  
+  startDate       DateTime
+  endDate         DateTime
+  
+  // Risks covered by this policy
+  coveredRisks    CmrRisk[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([companyId])
+  @@map("cmr_insurance_coverages")
+}
+
+// --- CMR Enums ---
+
+enum RiskType {
+  AGRONOMIC
+  CLIMATE
+  OPERATIONAL
+  REGULATORY
+  MARKET
+}
+
+enum Controllability {
+  CONSULTANT
+  CLIENT
+  SHARED
+  FORCE_MAJEURE
+}
+
+enum LiabilityMode {
+  CONSULTANT_ONLY
+  CLIENT_ONLY
+  SHARED
+  INSURABLE
+  LIABILITY_SUSPENDED
+}
+
+enum InsuranceType {
+  YIELD_LOSS
+  WEATHER_INDEX
+  REGULATORY
+}
+
+enum ResponsibilityMode {
+  SHARED
+  CLIENT_ONLY
+  CONSULTANT_ONLY
+  LIABILITY_SUSPENDED
+}
+
+enum ClientResponseStatus {
+  PENDING
+  AGREED
+  DISAGREED
+  IGNORED
+}
+
+enum ReviewStatus {
+  OPEN
+  RESOLVED
+  ESCALATED
+}
+
+enum ConfidenceLevel {
+  HIGH
+  MEDIUM
+  LOW
 }

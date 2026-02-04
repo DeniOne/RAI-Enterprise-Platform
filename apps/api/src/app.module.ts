@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { GraphQLModule } from "@nestjs/graphql";
 import { ApolloDriver, ApolloDriverConfig } from "@nestjs/apollo";
 import { ConfigModule } from "@nestjs/config";
+import { ScheduleModule } from "@nestjs/schedule";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { APP_GUARD } from "@nestjs/core";
 import { RedisModule } from "./shared/redis/redis.module";
@@ -18,6 +19,8 @@ import { FieldRegistryModule } from "./modules/field-registry/field-registry.mod
 import { TechnologyCardModule } from "./modules/technology-card/technology-card.module";
 import { TaskModule } from "./modules/task/task.module";
 import { AgroOrchestratorModule } from "./modules/agro-orchestrator/agro-orchestrator.module";
+import { TechMapModule } from "./modules/tech-map/tech-map.module";
+import { CmrModule } from "./modules/cmr/cmr.module";
 import { join } from "path";
 
 @Module({
@@ -26,6 +29,7 @@ import { join } from "path";
       envFilePath: [".env", "../../.env"],
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([{
       ttl: 60000, // 1 minute
       limit: 10,  // 10 requests per minute (default, soft limit)
@@ -44,6 +48,8 @@ import { join } from "path";
     TechnologyCardModule,
     TaskModule,
     AgroOrchestratorModule,
+    TechMapModule,
+    CmrModule,
 
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,

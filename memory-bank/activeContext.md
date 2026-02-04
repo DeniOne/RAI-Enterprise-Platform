@@ -1,6 +1,7 @@
 # Active Context: RAI_EP (2026-02-04)
 
 ## Current Project State
+- **[2026-02-04] Sprint B1 (Consulting Control Plane) Complete**: Реализованы Tech Map, CMR, Risk & Insurance, SLA Logic.
 - **[2026-02-04] Sprint B0 (Tech Debt & Resilience) Complete**: Внедрен единый FSM, Redis сессии для бота и полная изоляция бота от БД. Усилена надежность API-клиента.
 - **[2026-02-04] Telegram Auth Stability & UI Fix**: Исправлена инвалидность JWT токена. Бот выделен в микросервис.
 - [2026-02-03] Database Unification Complete: Вся инфраструктура переведена на единый Docker Postgres (порт 5432).
@@ -9,7 +10,11 @@
 - **[2026-02-03] Sprint 5a Architecture Debt Complete**: Внедрена мультитенентность (изоляция по `companyId`), реализован паттерн Repository для Auth, вычищено 33 ошибки линтинга в API.
 - [2026-02-03] Enterprise Identity Layer Complete: Реализованы реестры холдингов и профилей сотрудников (Блок 3).
 
-- **[2026-01-31] BusinessCore Neutralization**: Ядро очищено от брендинга RAI_EP.
+## Tech Debt & Future Roadmap
+- **Sprint B2/B3**:
+  - [ ] **Refactor TechMap**: Вынести валидацию (`TechMapValidator`) в чистый доменный сервис. `TechMapService` оставить как оркестратор.
+  - [ ] **Risk Immutability**: Внедрить `RiskAssessmentSnapshot` для фиксации оценки рисков во времени.
+  - [ ] **SLA Scaling**: Оптимизировать CRON для больших объемов (batch processing или `nextActionAt`).
 
 ## Active Decisions
 - **Standardization**: Используем структуру документов с префиксами (00, 10, 20...) для строгого порядка.

@@ -37,18 +37,23 @@
 
 ## 🏢 CONTOUR 1: ENTERPRISE (Back-Office)
 
-### Sprint B1 (01.10 - 14.10): Smart CRM Foundation
-#### Block 5.1: Client Intelligence
-- [ ] **Entity:** `ClientScore` (LTV, потенциал, риск)
-- [ ] **API:** POST `/crm/clients/{id}/score` — расчёт скоринга
-- [ ] **API:** GET `/crm/clients/{id}/analytics` — аналитика по клиенту
-- [ ] **Logic:** Алгоритм LTV Calculation (история заказов × частота × маржа)
+### Sprint B1 (01.10 - 14.10): Consulting Control Plane (CMR) & Tech Maps
+#### Block 5.1: Detailed Agro-Tech Map (АТК)
+- [ ] **Entity:** `TechMap`, `MapOperation`, `MapStage`, `MapResource`
+- [ ] **Feature:** "Extreme" Tech Map Builder (почасовая детализация)
+- [ ] **Logic:** Генерация карты на основе: Soil Analysis + History + Weather
+- [ ] **UI:** Visual TechMap Constructor (Gannt-like Canvas)
 
-#### Block 5.1: Smart Contracts
-- [ ] **Entity:** `Contract`, `ContractKPI`, `ContractMilestone`
-- [ ] **API:** POST `/contracts` — создание договора с KPI
-- [ ] **API:** GET `/contracts/{id}/kpi-status` — мониторинг KPI
-- [ ] **Logic:** Авто-уведомления при нарушении пороговых значений
+#### Block 5.1: Consulting CRM (CMR) - Control Plane
+- [ ] **Entity:** `CmrDecision`, `DeviationReview`, `CmrRisk`
+- [ ] **Logic:** **Deviation Review Workflow**:
+    - Trigger: Отклонение факта (APL) от АТК
+    - Process: Manager -> Agronomist -> Client (Tripartite Consensus)
+    - Rule: "Silence as Event" (SLA based liability shift)
+- [ ] **Strategic Layers:**
+    - Knowledge Accretion (Learning from deviations)
+    - Confidence Index (High/Med/Low)
+    - Client Maturity Model (Impacts SLA)
 
 ---
 

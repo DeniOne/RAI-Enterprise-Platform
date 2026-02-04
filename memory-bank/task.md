@@ -24,3 +24,18 @@
 
 > [!NOTE]
 > **Status**: Completed. Infrastructure is ready for hybrid memory operations.
+
+# Блок 5: Sprint B1 - Consulting Control Plane & Risk
+
+- [x] **Section 5.1: Database Schema (Prisma)**
+    - [x] Update `schema.prisma` with Tech Map Domain (`TechMap`, `MapStage`, `MapOperation`)
+    - [x] Update `schema.prisma` with CMR Domain (`DeviationReview`, `CmrDecision`)
+    - [x] Update `schema.prisma` with Risk & Insurance Domain (`CmrRisk`, `InsuranceCoverage`)
+    - [x] Add Enums: `ResponsibilityMode`, `RiskType`, `Controllability`, `LiabilityMode`, `ConfidenceLevel`
+- [x] **Section 5.2: Backend Modules (NestJS)**
+    - [x] Create `tech-map` module (Service, Controller)
+    - [x] Create `cmr` module (DeviationService, RiskService, DecisionService)
+- [x] **Section 5.3: Strategic Logic & Verification**
+    - [x] Implement Liability Matrix logic
+    - [x] Implement SLA logic (Silence as Event)
+    - [x] Verify Tripartite Flow

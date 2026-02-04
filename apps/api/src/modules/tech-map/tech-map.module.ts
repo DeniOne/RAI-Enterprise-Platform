@@ -1,0 +1,12 @@
+import { Module } from '@nestjs/common';
+import { TechMapService } from './tech-map.service';
+import { TechMapController } from './tech-map.controller';
+import { PrismaModule } from '../../shared/prisma/prisma.module';
+
+@Module({
+  imports: [PrismaModule],
+  controllers: [TechMapController],
+  providers: [TechMapService],
+  exports: [TechMapService],
+})
+export class TechMapModule {}

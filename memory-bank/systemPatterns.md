@@ -29,3 +29,12 @@ RAI_EP следует философии **Canon-Driven Development**. Сист�
 - Asynchronous JWT registration (`registerAsync`) to ensure consistent secret loading.
 - JWT payload standardization: `sub` (userId), `email`, `companyId`.
 - Polling mechanism with session idempotency for mobile/web cross-device sync.
+
+### 7. Consulting Control Plane (CMR)
+- **Tripartite Liability**: Shared responsibility by default, shifting to `CLIENT_ONLY` upon SLA expiration (Silence as Event).
+- **Immutable Decisions**: Strategic decisions are logged immutably with confidence scores.
+- **Risk Segregation**: Risk events (`CmrRisk`) are distinct from deviations, allowing independent insurance logic.
+
+### 8. Tech Map Orchestration
+- **Service as Orchestrator**: `TechMapService` coordinates construction and validation (simulated "Controller" for business logic).
+- **Domain Model over UI**: Tech Maps exist as structured domain entities (`MapStage`, `MapOperation`) rather than JSON blobs.

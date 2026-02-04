@@ -83,9 +83,17 @@
     - [x] Idempotency keys
 
 ### 🏢 BLOCK 5: CONTOUR 1 - BACK-OFFICE
-- [ ] **Section 5.1: Smart CRM**
-    - [ ] Feature: Client Scoring (LTV Calculation Logic)
-    - [ ] Feature: Smart Contract Monitor (KPI Tracking)
+- [ ] **Section 5.1: Consulting Control Plane (CMR)**
+    - [ ] **Module:** `tech-map-builder` (Detailed ATK Editor)
+        - [ ] Entity: `TechMap`, `MapOperation` (Hourly slots)
+        - [ ] UI: Canvas Editor for Agronomists
+    - [ ] **Module:** `crm-control-plane` (Decision & Risk)
+        - [ ] Entity: `DeviationReview` (Tripartite Consensus)
+        - [ ] Logic: Silence = Event (Liability Shift Logic)
+        - [ ] Feature: Decision Log with Confidence Score
+    - [ ] **Strategic Amplifiers**:
+        - [ ] Logic: Client Maturity Calculation
+        - [ ] Logic: Knowledge Object aggregation
 - [ ] **Section 5.2: HR Ecosystem**
     - [ ] Feature: Pulse Surveys (Form Builder + Analytics)
     - [ ] Feature: OKR Evaluation Engine

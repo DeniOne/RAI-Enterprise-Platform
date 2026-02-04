@@ -35,10 +35,10 @@
 ## 💎 Phase Beta: Operations & Enterprise (Q3-Q4 2026)
 *Цель: Полная оцифровка бизнеса и производства.*
 
-### 🔥 B0. Tech Debt Fixes (BLOCKER)
-- [ ] **[Backend]** **Unified FSM**: `shared/state-machine/` interface.
-- [ ] **[Infra]** **Redis Sessions**: Telegram auth migration.
-- [ ] **[Backend]** **Bot API Isolation**: Remove Prisma, add retry/circuit breaker.
+### 🔥 B0. Tech Debt Fixes (BLOCKER) ✅
+- [x] **[Backend]** **Unified FSM**: `shared/state-machine/` interface.
+- [x] **[Infra]** **Redis Sessions**: Telegram auth migration.
+- [x] **[Backend]** **Bot API Isolation**: Remove Prisma, add retry/circuit breaker.
 
 ### 🏢 5. Contour 1: Enterprise Management (Back-Office)
 #### 5.1 CRM & Sales

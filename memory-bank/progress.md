@@ -59,6 +59,7 @@
 ---
 
 ## Phase Beta: Implementation & Scale
+
 ### Sprint B0: Tech Debt & Resilience — DONE ✅
 **Дата:** 2026-02-04  
 - [x] **Unified FSM**: Реализован чистый event-driven паттерн для Task и Season. Переведено 29 тестов.
@@ -66,15 +67,21 @@
 - [x] **Bot Isolation**: Бот полностью отрезан от Prisma. Все данные через ApiClient.
 - [x] **Resilience**: Умные ретраи, Circuit Breaker и идемпотентность в ApiClient.
 
+### Sprint B1: Consulting Control Plane & Risk — DONE ✅
+**Дата:** 2026-02-04
+- [x] **Tech Map Orchestration**: Реализован `TechMapService` (canvas logic) и доменная модель (не JSON).
+- [x] **CMR Domain**: Внедрен трехсторонний механизм согласования (`DeviationReview`) с FSM.
+- [x] **Strategic Risk**: Реализована модель Лидерства Рисков (`CmrRisk`) и связка с `InsuranceCoverage`.
+- [x] **SLA Automation**: Реализован паттерн "Silence as Event" (автоматический сдвиг ответственности на клиента через 48ч).
+- [x] **Architecture**: Модули `CmrModule` и `TechMapModule` интегрированы в API.
+
 ## Phase Beta: Future Sprints (Planned)
-- [ ] Sprint B1: Smart CRM
+- [ ] Sprint B2: Smart CRM & Agro AI
 - [ ] HR Ecosystem
 - [ ] Finance & Economy
 - [ ] Supply Chain
 - [ ] Machinery & Fleet
-- [ ] Agro AI
 
 ## Phase Gamma: Intelligence (Planned)
 - [ ] Cognitive Brain
 - [ ] AI Strategic Planner
-
