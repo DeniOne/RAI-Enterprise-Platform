@@ -51,31 +51,31 @@
     - [x] Process: Manager -> Agronomist -> Client (Tripartite Consensus)
     - [x] Rule: "Silence as Event" (SLA based liability shift)
 - [x] **Strategic Layers:**
-    - [ ] Knowledge Accretion (Learning from deviations)
+    - [x] Knowledge Accretion (Snapshot-based learning foundation implemented)
     - [x] Confidence Index (High/Med/Low)
-    - [ ] Client Maturity Model (Impacts SLA)
+    - [x] Client Maturity Model (Impacts SLA - Basic integration)
 
 ---
 
-### Sprint B2 (15.10 - 28.10): HR Ecosystem 🧬
+### Sprint B2 (15.10 - 28.10): HR Ecosystem 🧬 ✅
 #### Block 5.2.1: Foundation Layer (Corporate)
-- [ ] **Entity:** `EmployeeProfile` (Projection), `HrSupportCase`
-- [ ] **Feature:** Event-driven Profile Sync & Onboarding Flow
-- [ ] **API:** `POST /hr/foundation/events/employee-hired`
+- [x] **Entity:** `EmployeeProfile` (Projection), `HrSupportCase`
+- [x] **Feature:** Event-driven Profile Sync & Onboarding Flow
+- [x] **API:** `POST /hr/foundation/events/employee-hired`
 
 #### Block 5.2.2: Incentive Layer (Alignment)
-- [ ] **Entity:** `OkrCycle`, `KPIIndicator`, `RecognitionEvent` (Append-only)
-- [ ] **Logic:** OKR Progress & Social Reinforcement
-- [ ] **API:** `/hr/incentive`
+- [x] **Entity:** `OkrCycle`, `KPIIndicator`, `RecognitionEvent` (Append-only)
+- [x] **Logic:** OKR Progress & Social Reinforcement
+- [x] **API:** `/hr/incentive`
 
 #### Block 5.2.3: Development Layer (Strategic)
 - **Signal Layer (Listen)**
-    - [ ] **Entity:** `PulseSurvey`, `SurveyResponse` (Immutable)
+    - [x] **Entity:** `PulseSurvey`, `SurveyResponse` (Immutable)
 - **Assessment Layer (Understand)**
-    - [ ] **Entity:** `HumanAssessmentSnapshot`, `CompetencyState`
+    - [x] **Entity:** `HumanAssessmentSnapshot`, `CompetencyState`
 - **Development & Effect (Act)**
-    - [ ] **Entity:** `DevelopmentPlan`, `DevelopmentAction`
-    - [ ] **Logic:** Impact Analysis (Target: `HumanAssessmentSnapshot` delta)
+    - [x] **Entity:** `DevelopmentPlan`, `DevelopmentAction`
+    - [x] **Logic:** Impact Analysis (Target: `HumanAssessmentSnapshot` delta)
 
 ---
 
