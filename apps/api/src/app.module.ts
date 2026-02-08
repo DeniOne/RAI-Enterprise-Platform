@@ -34,6 +34,7 @@ import { RiskModule } from "./modules/risk/risk.module.js";
 import { FieldObservationModule } from "./modules/field-observation/field-observation.module";
 import { IntegrityModule } from "./modules/integrity/integrity.module";
 import { ConsultingModule } from "./modules/consulting/consulting.module";
+import { AdvisoryModule } from "./modules/advisory/advisory.module";
 import { join } from "path";
 
 @Module({
@@ -76,6 +77,7 @@ import { join } from "path";
     FieldObservationModule,
     IntegrityModule,
     ConsultingModule,
+    AdvisoryModule,
 
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,

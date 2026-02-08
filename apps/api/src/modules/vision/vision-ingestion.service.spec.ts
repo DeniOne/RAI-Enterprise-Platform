@@ -9,10 +9,12 @@ import { ConsultingService } from "../consulting/consulting.service";
 import { RegistryAgentService } from "../integrity/registry-agent.service";
 import { BadRequestException } from "@nestjs/common";
 import { VisionObservationInputDto } from "./dto/vision.dto";
+import { ShadowAdvisoryService } from "../../shared/memory/shadow-advisory.service";
 
 describe("VisionIngestionService", () => {
   let service: VisionIngestionService;
   const eventBus = { publish: jest.fn() };
+  const shadowAdvisory = { evaluate: jest.fn() };
   const prismaMock = {} as PrismaService;
   const deviationMock = {} as DeviationService;
   const consultingMock = {} as ConsultingService;
@@ -30,6 +32,7 @@ describe("VisionIngestionService", () => {
         VisionIngestionService,
         { provide: VisionEventBus, useValue: eventBus },
         { provide: IntegrityGateService, useValue: integrityGate },
+        { provide: ShadowAdvisoryService, useValue: shadowAdvisory },
       ],
     }).compile();
 
@@ -52,6 +55,7 @@ describe("VisionIngestionService", () => {
     const result = await service.ingest(dto, "company-1", "trace-1");
 
     expect(eventBus.publish).toHaveBeenCalled();
+    expect(shadowAdvisory.evaluate).toHaveBeenCalled();
     expect(result).toEqual({ status: "accepted", traceId: "trace-1" });
   });
 

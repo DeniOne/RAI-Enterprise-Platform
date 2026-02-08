@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card } from '@/components/ui'
+import { RecommendationPanel, AdvisoryRecommendation } from '@/components/advisory/RecommendationPanel'
 
 interface User {
     id: string
@@ -79,6 +80,114 @@ async function getStats(token: string) {
     }
 }
 
+interface AdvisoryOpsMetrics {
+    windowHours: number
+    shadowEvaluated: number
+    accepted: number
+    rejected: number
+    feedbackRecorded: number
+    acceptRate: number
+    rejectRate: number
+    feedbackRate: number
+    decisionLagAvgMinutes: number
+}
+
+interface AdvisoryRolloutStatus {
+    stage: 'S0' | 'S1' | 'S2' | 'S3' | 'S4'
+    percentage: number
+    autoStopEnabled: boolean
+}
+
+async function getAdvisoryRecommendations(token: string): Promise<AdvisoryRecommendation[]> {
+    try {
+        const response = await fetch('http://localhost:4000/api/advisory/recommendations/my?limit=10', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            cache: 'no-store',
+        })
+
+        if (!response.ok) {
+            return []
+        }
+
+        const data = await response.json()
+        return Array.isArray(data) ? data : []
+    } catch (error) {
+        console.error('Error fetching advisory recommendations:', error)
+        return []
+    }
+}
+
+async function getAdvisoryPilotStatus(token: string): Promise<{ enabled: boolean; scope: 'COMPANY' | 'USER' }> {
+    try {
+        const response = await fetch('http://localhost:4000/api/advisory/pilot/status', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            cache: 'no-store',
+        })
+
+        if (!response.ok) {
+            return { enabled: false, scope: 'USER' }
+        }
+
+        const data = await response.json()
+        return {
+            enabled: Boolean(data?.enabled),
+            scope: data?.scope === 'COMPANY' ? 'COMPANY' : 'USER',
+        }
+    } catch (error) {
+        console.error('Error fetching advisory pilot status:', error)
+        return { enabled: false, scope: 'USER' }
+    }
+}
+
+async function getAdvisoryOpsMetrics(token: string): Promise<AdvisoryOpsMetrics | null> {
+    try {
+        const response = await fetch('http://localhost:4000/api/advisory/ops/metrics?windowHours=24', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            cache: 'no-store',
+        })
+
+        if (!response.ok) {
+            return null
+        }
+
+        return response.json()
+    } catch (error) {
+        console.error('Error fetching advisory ops metrics:', error)
+        return null
+    }
+}
+
+async function getAdvisoryRolloutStatus(token: string): Promise<AdvisoryRolloutStatus | null> {
+    try {
+        const response = await fetch('http://localhost:4000/api/advisory/rollout/status', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            cache: 'no-store',
+        })
+
+        if (!response.ok) {
+            return null
+        }
+
+        const data = await response.json()
+        return {
+            stage: ['S0', 'S1', 'S2', 'S3', 'S4'].includes(data?.stage) ? data.stage : 'S0',
+            percentage: Number.isFinite(Number(data?.percentage)) ? Number(data.percentage) : 0,
+            autoStopEnabled: Boolean(data?.autoStopEnabled),
+        }
+    } catch (error) {
+        console.error('Error fetching advisory rollout status:', error)
+        return null
+    }
+}
+
 export default async function DashboardPage() {
     const user = await getUserData()
 
@@ -88,6 +197,12 @@ export default async function DashboardPage() {
 
     const token = cookies().get('auth_token')?.value || ''
     const stats = await getStats(token)
+    const advisoryPilotStatus = await getAdvisoryPilotStatus(token)
+    const advisoryOpsMetrics = await getAdvisoryOpsMetrics(token)
+    const advisoryRolloutStatus = await getAdvisoryRolloutStatus(token)
+    const advisoryRecommendations = advisoryPilotStatus.enabled
+        ? await getAdvisoryRecommendations(token)
+        : []
 
     return (
         <div className="min-h-screen p-8">
@@ -160,6 +275,17 @@ export default async function DashboardPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {advisoryPilotStatus.enabled ? (
+                        <RecommendationPanel initialRecommendations={advisoryRecommendations} />
+                    ) : (
+                        <Card className="rounded-2xl">
+                            <h2 className="text-xl font-medium mb-3">Рекомендации Advisory</h2>
+                            <p className="text-sm text-gray-600">
+                                Advisory-пилот пока не включен для вашего аккаунта.
+                            </p>
+                        </Card>
+                    )}
+
                     {/* Активные Техкарты */}
                     <Card className="rounded-2xl">
                         <h2 className="text-xl font-medium mb-4">Активные Техкарты</h2>
@@ -204,6 +330,55 @@ export default async function DashboardPage() {
                         </div>
                     </Card>
                 </div>
+
+                {advisoryOpsMetrics && (
+                    <Card className="rounded-2xl">
+                        <h2 className="text-xl font-medium mb-4">Advisory Ops (24h)</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div className="border border-black/10 rounded-xl p-3">
+                                <p className="text-xs text-gray-500 mb-1">Shadow Evaluated</p>
+                                <p className="text-2xl font-medium">{advisoryOpsMetrics.shadowEvaluated}</p>
+                            </div>
+                            <div className="border border-black/10 rounded-xl p-3">
+                                <p className="text-xs text-gray-500 mb-1">Accept Rate</p>
+                                <p className="text-2xl font-medium">{(advisoryOpsMetrics.acceptRate * 100).toFixed(1)}%</p>
+                            </div>
+                            <div className="border border-black/10 rounded-xl p-3">
+                                <p className="text-xs text-gray-500 mb-1">Reject Rate</p>
+                                <p className="text-2xl font-medium">{(advisoryOpsMetrics.rejectRate * 100).toFixed(1)}%</p>
+                            </div>
+                            <div className="border border-black/10 rounded-xl p-3">
+                                <p className="text-xs text-gray-500 mb-1">Decision Lag</p>
+                                <p className="text-2xl font-medium">{advisoryOpsMetrics.decisionLagAvgMinutes.toFixed(1)}m</p>
+                            </div>
+                        </div>
+                    </Card>
+                )}
+
+                {advisoryRolloutStatus && (
+                    <Card className="rounded-2xl">
+                        <h2 className="text-xl font-medium mb-4">Advisory Rollout</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="border border-black/10 rounded-xl p-3">
+                                <p className="text-xs text-gray-500 mb-1">Stage</p>
+                                <p className="text-2xl font-medium">{advisoryRolloutStatus.stage}</p>
+                            </div>
+                            <div className="border border-black/10 rounded-xl p-3">
+                                <p className="text-xs text-gray-500 mb-1">Exposure</p>
+                                <p className="text-2xl font-medium">{advisoryRolloutStatus.percentage}%</p>
+                            </div>
+                            <div className="border border-black/10 rounded-xl p-3">
+                                <p className="text-xs text-gray-500 mb-1">Auto-stop</p>
+                                <p className="text-2xl font-medium">{advisoryRolloutStatus.autoStopEnabled ? 'ON' : 'OFF'}</p>
+                            </div>
+                        </div>
+                        {advisoryRolloutStatus.stage === 'S0' && (
+                            <p className="text-sm text-amber-700 mt-3">
+                                Rollout stage S0: advisory delivery is intentionally blocked until canary promotion.
+                            </p>
+                        )}
+                    </Card>
+                )}
 
                 {/* Logout */}
                 <form action="/api/auth/logout" method="POST">

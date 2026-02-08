@@ -12,6 +12,40 @@ export interface TaskDto {
     season?: { id: string; year: number };
 }
 
+export interface AdvisoryRecommendationDto {
+    traceId: string;
+    signalType: 'VISION' | 'SATELLITE' | 'OPERATION';
+    recommendation: 'ALLOW' | 'REVIEW' | 'BLOCK';
+    confidence: number;
+    explainability: {
+        traceId: string;
+        confidence: number;
+        why: string;
+        factors: Array<{
+            name: string;
+            value: number;
+            direction: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL';
+        }>;
+    };
+    createdAt: string;
+    status: 'PENDING';
+}
+
+export interface AdvisoryPilotStatusDto {
+    enabled: boolean;
+    scope: 'COMPANY' | 'USER';
+    companyId: string;
+    userId?: string;
+    updatedAt?: string;
+}
+
+export interface AdvisoryRolloutStatusDto {
+    stage: 'S0' | 'S1' | 'S2' | 'S3' | 'S4';
+    percentage: number;
+    autoStopEnabled: boolean;
+    updatedAt?: string;
+}
+
 @Injectable()
 export class ApiClientService {
     private readonly backendUrl: string;
@@ -222,6 +256,64 @@ export class ApiClientService {
             method: 'POST',
             headers: this.getHeaders(accessToken),
             body: JSON.stringify(data),
+        });
+    }
+
+    /**
+     * Advisory recommendations (Sprint 4)
+     */
+    async getMyAdvisoryRecommendations(accessToken: string): Promise<AdvisoryRecommendationDto[]> {
+        return this.request('/api/advisory/recommendations/my?limit=10', {
+            method: 'GET',
+            headers: this.getHeaders(accessToken),
+        });
+    }
+
+    async getAdvisoryPilotStatus(accessToken: string): Promise<AdvisoryPilotStatusDto> {
+        return this.request('/api/advisory/pilot/status', {
+            method: 'GET',
+            headers: this.getHeaders(accessToken),
+        });
+    }
+
+    async getAdvisoryRolloutStatus(accessToken: string): Promise<AdvisoryRolloutStatusDto> {
+        return this.request('/api/advisory/rollout/status', {
+            method: 'GET',
+            headers: this.getHeaders(accessToken),
+        });
+    }
+
+    async acceptAdvisory(traceId: string, accessToken: string): Promise<{ traceId: string; status: 'ACCEPTED' }> {
+        const idempotencyKey = `accept_advisory:${traceId}`;
+        return this.request(`/api/advisory/recommendations/${traceId}/accept`, {
+            method: 'POST',
+            headers: this.getHeaders(accessToken, idempotencyKey),
+        });
+    }
+
+    async rejectAdvisory(
+        traceId: string,
+        accessToken: string,
+        reason?: string,
+    ): Promise<{ traceId: string; status: 'REJECTED' }> {
+        const idempotencyKey = `reject_advisory:${traceId}`;
+        return this.request(`/api/advisory/recommendations/${traceId}/reject`, {
+            method: 'POST',
+            headers: this.getHeaders(accessToken, idempotencyKey),
+            body: JSON.stringify(reason ? { reason } : {}),
+        });
+    }
+
+    async recordAdvisoryFeedback(
+        traceId: string,
+        payload: { reason: string; outcome?: string },
+        accessToken: string,
+    ): Promise<{ traceId: string; status: 'RECORDED' }> {
+        const idempotencyKey = `feedback_advisory:${traceId}:${payload.reason}`;
+        return this.request(`/api/advisory/recommendations/${traceId}/feedback`, {
+            method: 'POST',
+            headers: this.getHeaders(accessToken, idempotencyKey),
+            body: JSON.stringify(payload),
         });
     }
 }

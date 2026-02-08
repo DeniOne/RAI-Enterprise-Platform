@@ -120,6 +120,92 @@ Sprint 4 считается завершённым, если:
 
 ---
 
+## GAMMA-SPRINT3-001
+
+**Дата:** 2026-02-08  
+**Автор:** TECHLEAD (AI)  
+**Статус:** ACCEPTED  
+
+### Решение
+Запустить Sprint 3 (Phase Gamma) с первым инкрементом: `Episodic Retrieval` и теневой контур advisory без пользовательского воздействия.
+
+### Scope
+- **Phase:** Gamma
+- **Sprint:** 3
+- **Компоненты:**
+  - `apps/api/src/shared/memory/*`
+  - `@rai/vector-store`
+  - проектные чек-листы Gamma
+
+### Технические ограничения
+1. **Human-in-the-loop:** никаких автоматических действий на пользователя.
+2. **Shadow-only:** retrieval и ранжирование работают в фоне, без UI/контроллеров.
+3. **Multi-tenancy:** все обращения только через `companyId`.
+4. **Architecture:** `Service = IO`, оркестрация и бизнес-решения не переносить в infra слой.
+5. **Traceability:** каждый retrieval поддерживает `traceId`.
+
+### Definition of Done
+- [x] Реализован `EpisodicRetrievalService` с retrieval из `MemoryManager`.
+- [x] Есть unit-тесты retrieval-сервиса (минимум 2 сценария).
+- [x] Обновлены чек-листы Sprint 3 и документы планирования.
+- [x] Нет изменений, которые публикуют рекомендации в продуктовый интерфейс.
+
+### Rollback Conditions
+Спринт останавливается, если:
+- нарушена изоляция по `companyId`;
+- retrieval приводит к пользовательским side effects;
+- появляется обход Admission/Integrity принципов.
+
+### Связанные документы
+- `docs/06-IMPLEMENTATION/PHASE_GAMMA/SPRINT_3_CHECKLIST.md`
+- `docs/06-IMPLEMENTATION/PHASE_GAMMA/EXECUTION_PLAN.md`
+- `docs/01-ARCHITECTURE/PRINCIPLES/CANON.md`
+- `docs/01-ARCHITECTURE/PRINCIPLES/ARCHITECTURAL_AXIOMS.md`
+- `docs/01-ARCHITECTURE/PRINCIPLES/FORBIDDEN.md`
+
+### Зависимости
+- `MemoryManager`
+- `@rai/vector-store`
+- `memory_entries` (pgvector)
+
+### Риски
+1. Низкое качество metadata для `POSITIVE/NEGATIVE` разметки.
+2. Потенциальная деградация latency при большом объёме retrieval.
+3. Drift в эмбеддингах без централизованной валидации.
+
+---
+
+## SECURITY-CANON-001
+
+**Дата:** 2026-02-08  
+**Автор:** TECHLEAD (AI)  
+**Статус:** ACCEPTED  
+
+### Решение
+Зафиксировать обязательный документ `SECURITY_CANON.md` как нормативный слой для security-check перед реализацией.
+
+### Scope
+- `docs/01-ARCHITECTURE/PRINCIPLES/SECURITY_CANON.md`
+- процессы проверки TECHLEAD перед стартом задач
+
+### Технические ограничения
+1. Обязательная проверка tenant-изоляции (`companyId`).
+2. Обязательная проверка audit trail для high-impact потоков.
+3. Запрет обхода Admission/Integrity gate.
+4. Запрет хранения секретов в коде/документах.
+
+### Definition of Done
+- [x] Создан `SECURITY_CANON.md` в слое `PRINCIPLES`.
+- [x] Документ согласован с `CANON.md` и `ARCHITECTURAL_AXIOMS.md`.
+- [x] Обновлены проектные чек-листы Sprint 3 и memory-bank.
+
+### Связанные документы
+- `docs/01-ARCHITECTURE/PRINCIPLES/CANON.md`
+- `docs/01-ARCHITECTURE/PRINCIPLES/ARCHITECTURAL_AXIOMS.md`
+- `docs/ANTIGRAVITY SOFTWARE FACTORY — ORCHESTRATOR PROMPT.md`
+
+---
+
 ## Формат записи
 
 Каждое новое решение должно содержать:

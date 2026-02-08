@@ -28,6 +28,7 @@ generated/
 # Logs
 *.log
 _*.log
+docs/04-ENGINEERING/*.jsonl
 
 # OS
 .DS_Store

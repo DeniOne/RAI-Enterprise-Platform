@@ -107,9 +107,11 @@
 **Выход этапа:** подтвержденная польза в пилоте, список улучшений до GA.
 
 ### Sprint 6 (Недели 11–12): Hardening & Go-Live
-- Canary rollout → staged production rollout.
-- Финальные runbooks, on-call readiness, rollback rehearsal.
-- Финальная приемка по DoD и бизнес-метрикам.
+- Canary rollout → staged production rollout (`10% -> 25% -> 50% -> 100%`) с gate-критериями и авто-стопом.
+- Нагрузочные/stress тесты advisory read/write-path + capacity report (p95/p99/error rate).
+- Reliability hardening по результатам тестов + проверка graceful degradation.
+- Финальные runbooks, on-call readiness, alert routing, rollback rehearsal.
+- Финальная приемка по DoD и бизнес-метрикам + формальный go/no-go decision record.
 
 **Выход этапа:** production-ready Gamma v1.
 

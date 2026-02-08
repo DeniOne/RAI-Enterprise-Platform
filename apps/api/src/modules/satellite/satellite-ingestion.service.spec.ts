@@ -9,10 +9,12 @@ import { DeviationService } from "../cmr/deviation.service";
 import { ConsultingService } from "../consulting/consulting.service";
 import { RegistryAgentService } from "../integrity/registry-agent.service";
 import { SatelliteObservationInputDto } from "./dto/satellite.dto";
+import { ShadowAdvisoryService } from "../../shared/memory/shadow-advisory.service";
 
 describe("SatelliteIngestionService", () => {
   let service: SatelliteIngestionService;
   const eventBus = { publish: jest.fn() };
+  const shadowAdvisory = { evaluate: jest.fn() };
   const prismaMock = {} as PrismaService;
   const deviationMock = {} as DeviationService;
   const consultingMock = {} as ConsultingService;
@@ -30,6 +32,7 @@ describe("SatelliteIngestionService", () => {
         SatelliteIngestionService,
         { provide: SatelliteEventBus, useValue: eventBus },
         { provide: IntegrityGateService, useValue: integrityGate },
+        { provide: ShadowAdvisoryService, useValue: shadowAdvisory },
       ],
     }).compile();
 
@@ -54,6 +57,7 @@ describe("SatelliteIngestionService", () => {
     const result = await service.ingest(dto, "trace-1");
 
     expect(eventBus.publish).toHaveBeenCalled();
+    expect(shadowAdvisory.evaluate).toHaveBeenCalled();
     expect(result).toEqual({ status: "accepted", traceId: "trace-1" });
   });
 

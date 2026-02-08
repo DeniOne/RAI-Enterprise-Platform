@@ -139,6 +139,52 @@ aligned_with: [principle-axioms]
 
 ### 🧠 BLOCK 7: COGNITIVE BRAIN
 - [ ] **Section 7.1: Semantic Memory**
+    - [x] Service: `EpisodicRetrievalService` (Shadow v1, retrieval + confidence ranking)
+    - [x] Unit Tests: `episodic-retrieval.service.spec.ts`
+    - [x] Rules: `engram-rules` (`POSITIVE/NEGATIVE/UNKNOWN`) + unit tests
+    - [x] Service: `ShadowAdvisoryService` (shadow verdict + traceId + audit trail)
+    - [x] Unit Tests: `shadow-advisory.service.spec.ts`, `engram-rules.spec.ts`
+    - [x] Integration: shadow advisory calls in `VisionIngestionService` and `SatelliteIngestionService`
+    - [x] Integration: shadow advisory calls in `FieldObservationService` (operation signals)
+    - [x] Reporting: `ShadowAdvisoryMetricsService` (coverage/allow-review-block/avg confidence)
+    - [x] Unit Tests: `shadow-advisory-metrics.service.spec.ts`
+    - [x] Contract Doc: `docs/04-ENGINEERING/SHADOW_ADVISORY_CONTRACT.md`
+    - [x] Explainability v2: `why/factors/confidence/traceId` в `ShadowAdvisoryService`
+    - [x] API Module: `AdvisoryModule` (`/api/advisory/recommendations/*`)
+    - [x] Human Confirmation Flow: `accept/reject` + audit events `ADVISORY_ACCEPTED`, `ADVISORY_REJECTED`
+    - [x] Feedback Loop: endpoint `feedback` + audit event `ADVISORY_FEEDBACK_RECORDED`
+    - [x] Telegram UX: карточка рекомендации + действия `Принять/Отклонить` + ввод причины
+    - [x] Web UX: Recommendation Panel на dashboard + proxy routes `/api/advisory/*`
+    - [x] Unit Tests: `advisory.service.spec.ts` (confirmation/feedback/pending flow)
+    - [x] Pilot Activation (Sprint 5): tenant/user feature flags + controlled rollout policy
+    - [x] Ranking Tuning (Sprint 5): threshold config for `ALLOW/REVIEW/BLOCK` based on feedback metrics
+    - [x] Prompt Fatigue Control (Sprint 5): anti-spam throttling and dedup for repeated recommendations
+    - [x] SLO Metrics Pipeline (Sprint 5): `ops/metrics` endpoint (coverage/conversion/decision lag)
+    - [x] SLO Dashboard (Sprint 5): latency/error/coverage/conversion operational panel
+    - [x] Pilot Eligibility API (Sprint 5): `pilot/status`, `pilot/enable`, `pilot/disable`, `pilot/cohort`, `pilot/cohort/add`, `pilot/cohort/remove`
+    - [x] Pilot Enforcement (Sprint 5): Telegram/Web advisory access gated by `pilot/status`
+    - [x] Pilot Telemetry (Sprint 5): audit and metrics for flag changes and pilot cohort behavior
+    - [x] Incident Runbook Hooks (Sprint 5): kill-switch + rollback endpoints and operational procedures
+    - [x] Tests (Sprint 5): >=8 unit/integration tests for pilot flags, tuning loop, anti-spam, incident hooks
+    - [x] Canary Rollout Protocol (Sprint 6): staged rollout `10% -> 25% -> 50% -> 100%` with gate criteria and auto-stop
+    - [x] Load & Stress Validation (Sprint 6): advisory load baseline executed, capacity metrics documented
+    - [x] Reliability Hardening (Sprint 6): state-cache optimizations + stress validation for advisory paths
+    - [x] Operational Readiness (Sprint 6): on-call drill executed, escalation path and incident controls verified
+    - [x] DR & Rollback Drill (Sprint 6): rehearsal executed, rollback and recovery metrics documented
+    - [x] Go/No-Go Package (Sprint 6): decision record completed (`GO WITH CONSTRAINTS`) with evidence links
+    - [ ] Tests (Sprint 6): >=10 unit/integration/e2e tests for rollout hooks, resilience and incident paths
+    - [x] Policy Doc: `docs/04-ENGINEERING/ADVISORY_PILOT_ROLLOUT_POLICY.md`
+    - [x] Policy Doc: `docs/04-ENGINEERING/ADVISORY_TUNING_POLICY.md`
+    - [x] Runbook Doc: `docs/04-ENGINEERING/ADVISORY_INCIDENT_RUNBOOK.md`
+    - [x] Tabletop Protocol: `docs/04-ENGINEERING/ADVISORY_INCIDENT_TABLETOP_PROTOCOL.md`
+    - [x] Canary Protocol Doc (Sprint 6): `docs/04-ENGINEERING/ADVISORY_CANARY_ROLLOUT_PROTOCOL.md`
+    - [x] Go/No-Go Decision Record (Sprint 6): `docs/04-ENGINEERING/ADVISORY_GO_NO_GO_DECISION_RECORD.md`
+    - [x] Security Gate Report (Sprint 6): `docs/04-ENGINEERING/ADVISORY_SECURITY_GATE_REPORT_SPRINT6.md`
+    - [x] Post-Launch Monitoring Window: `docs/04-ENGINEERING/ADVISORY_S3_MONITORING_WINDOW.md`
+    - [x] S4 Gate Packet Template: `docs/04-ENGINEERING/ADVISORY_S4_GATE_PACKET_TEMPLATE.md`
+    - [x] S4 Gate Evaluation (DEV_PREPROD): `docs/04-ENGINEERING/ADVISORY_S4_GATE_DECISION_INPUT.md` (`GO`, `>=20 PASS snapshots`)
+    - [x] S4 Promotion Smoke Report: `docs/04-ENGINEERING/ADVISORY_S4_PROMOTION_SMOKE_REPORT_2026-02-08.md` (`S4=100%`)
+    - [x] Contract Doc: `docs/04-ENGINEERING/ADVISORY_EXPLAINABILITY_CONTRACT.md`
     - [ ] Graph DB Integration (Memgraph/Neo4j)
     - [ ] Ontology Construction (Agro + Business domains)
 - [ ] **Section 7.2: AI Agents**
@@ -148,3 +194,4 @@ aligned_with: [principle-axioms]
 ### 🌐 BLOCK 8: ECOSYSTEM
 - [ ] Marketplace API
 - [ ] Financial Scoring Public API
+

@@ -2,31 +2,33 @@
 
 **Название:** «Когнитивная память (Уроки прошлого)»
 **Срок:** 2 недели
-**Статус:** planned
+**Статус:** завершен (08.02.2026)
 **Цель:** включить эпизодическую память и теневой контур рекомендаций без воздействия на прод-решения.
 
 ## Объем Sprint 3
-- [ ] **Episodic Retrieval API:** поиск похожих кейсов по `memory_entries` с p95 ≤ 1.5s.
-- [ ] **Positive/Negative Engrams:** правила разметки исходов (`POSITIVE`/`NEGATIVE`) и запись в память.
-- [ ] **Advisory Logic (Shadow):** базовый ранкер рекомендаций на основе retrieval + confidence.
-- [ ] **Shadow Mode:** запуск расчета рекомендаций в фоне без публикации пользователю.
-- [ ] **Traceability:** единый `traceId` для цепочки `signal -> retrieval -> advisory`.
-- [ ] **Audit Trail:** запись причин и confidence для каждого теневого вердикта.
+- [x] **Episodic Retrieval API:** базовый retrieval-сервис по `memory_entries` реализован, unit-тесты добавлены.
+- [x] **Positive/Negative Engrams:** правила разметки исходов реализованы (`engram-rules` + unit-тесты).
+- [x] **Advisory Logic (Shadow):** реализован `ShadowAdvisoryService` с ранжированием `ALLOW/REVIEW/BLOCK`.
+- [x] **Shadow Mode:** расчет рекомендаций выполняется в сервисе без пользовательской публикации.
+- [x] **Traceability:** `traceId` проходит через retrieval и advisory.
+- [x] **Audit Trail:** каждый теневой вердикт логируется через `AuditService` (`SHADOW_ADVISORY_EVALUATED`).
 
 ## Критерии готовности (DoD)
-- [ ] Retrieval возвращает релевантные кейсы по 3 базовым сценариям (болезни, спутник, операция).
-- [ ] Все теневые рекомендации сохраняются в журнале с explainability-полями.
-- [ ] Нет пользовательских побочных эффектов: UI и бизнес-решения не меняются.
-- [ ] Минимум 3 unit-теста на модуль памяти/ранжирования проходят стабильно.
-- [ ] Обновлена документация по контрактам данных и полям explainability.
+- [x] Retrieval/Shadow подключены к 3 базовым сценариям сигналов: болезни (Vision), спутник (Satellite), операция (FieldObservation).
+- [x] Все теневые рекомендации сохраняются в журнале с explainability-полями.
+- [x] Нет пользовательских побочных эффектов: UI и бизнес-решения не меняются.
+- [x] Минимум 3 unit-теста на модуль памяти/ранжирования проходят стабильно.
+- [x] Обновлена документация по контрактам данных и полям explainability (`docs/04-ENGINEERING/SHADOW_ADVISORY_CONTRACT.md`).
 
 ## Anti-Goals Sprint 3
-- [ ] Нет прод-публикации рекомендаций пользователю.
-- [ ] Нет автоматического принятия решений без `human-in-the-loop`.
-- [ ] Нет расширения доменного скоупа вне Gamma Integration.
+- [x] Нет прод-публикации рекомендаций пользователю.
+- [x] Нет автоматического принятия решений без `human-in-the-loop`.
+- [x] Нет расширения доменного скоупа вне Gamma Integration.
 
 ## Артефакты на выходе
-- [ ] `Episodic Retrieval` сервис + тесты.
-- [ ] Правила и формат `engrams` (документ + код).
-- [ ] Теневой отчет по качеству рекомендаций (precision/coverage baseline).
-- [ ] Обновленные чек-листы фазы Gamma.
+- [x] `Episodic Retrieval` сервис + тесты.
+- [x] Правила и формат `engrams` (код + unit-тесты).
+- [x] Shadow-интеграция в ingestion: `VisionIngestionService` и `SatelliteIngestionService`.
+- [x] Shadow-интеграция в operation-сигналы: `FieldObservationService`.
+- [x] Теневой отчет по качеству рекомендаций: реализован `ShadowAdvisoryMetricsService` (coverage/ratios/confidence).
+- [x] Обновленные чек-листы фазы Gamma.

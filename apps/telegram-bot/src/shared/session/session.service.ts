@@ -13,6 +13,7 @@ export interface UserSession {
         currentQuestionIndex: number;
         answers: Record<string, any>;
     };
+    pendingAdvisoryFeedbackTraceId?: string;
 }
 
 @Injectable()

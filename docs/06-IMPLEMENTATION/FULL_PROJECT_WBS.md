@@ -1,4 +1,4 @@
----
+﻿---
 id: component-implementation-wbs
 type: component
 status: review
@@ -88,9 +88,26 @@ aligned_with: [principle-vision]
 *Цель: Когнитивная Автономность.*
 
 ### 🧠 7. Cognitive Brain (Unified Memory Full)
+- [x] **[AI]** **Episodic Retrieval (Shadow v1):** базовый retrieval-сервис + unit tests.
+- [x] **[AI]** **Shadow Advisory (v1):** теневой ранкер `ALLOW/REVIEW/BLOCK` + audit trail.
+- [x] **[AI]** **Shadow Baseline Metrics:** coverage/precision proxy и confidence baseline.
+- [x] **[AI]** **Explainability & Confirmation (Sprint 4):** explainability-контракт `why/factors/confidence/traceId`, Telegram/Web recommendation cards, human confirmation + feedback audit flow.
+- [ ] **[AI]** **Pilot & Tuning (Sprint 5):** feature-flag rollout для фокус-группы, anti-spam control, SLO dashboard, incident runbook.
+  - [x] Feature-flag rollout (`pilot/status|enable|disable|cohort`) + Telegram/Web enforcement
+  - [x] Tuning thresholds + anti-spam noise control + ops metrics dashboard block
+  - [x] Incident runbook tabletop validation
+- [x] **[AI]** **Hardening & Controlled Go-Live (Sprint 6):** canary rollout, resilience hardening, load readiness, final go/no-go.
+  - [ ] Canary rollout protocol (`10% -> 25% -> 50% -> 100%`) with stop/rollback gates
+  - [x] Load/stress baseline report for advisory paths (`docs/04-ENGINEERING/ADVISORY_LOAD_STRESS_REPORT.md`)
+  - [x] Reliability hardening and graceful degradation verification (state-cache + stress profiles)
+  - [x] On-call readiness + alerting + escalation matrix validation (`docs/04-ENGINEERING/ADVISORY_ONCALL_DRILL_REPORT_2026-02-08.md`)
+  - [x] DR/rollback drill with RTO/RPO evidence (`docs/04-ENGINEERING/ADVISORY_DR_REHEARSAL_REPORT_2026-02-08.md`)
+  - [x] Formal go/no-go record prepared (`docs/04-ENGINEERING/ADVISORY_GO_NO_GO_DECISION_RECORD.md`)
+  - [x] Security/governance gate completed (`docs/04-ENGINEERING/ADVISORY_SECURITY_GATE_REPORT_SPRINT6.md`)
 - [ ] **[AI]** **Knowledge Graph**: Построение причинно-следственных связей.
 - [ ] **[AI]** **Planner Agent**: Авто-стратегия на сезон.
 
 ### 🌐 8. Ecosystem
 - [ ] **[Platform]** Marketplace API (Поставщики).
 - [ ] **[Platform]** Financial Scoring for Banks.
+
