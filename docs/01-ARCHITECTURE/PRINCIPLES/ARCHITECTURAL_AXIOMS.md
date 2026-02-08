@@ -1,3 +1,11 @@
+---
+id: principle-axioms
+type: principle
+status: approved
+owners: [architects]
+measured_by: [metric-time-to-value]
+---
+
 # ARCHITECTURAL AXIOMS
 
 ## Статус документа

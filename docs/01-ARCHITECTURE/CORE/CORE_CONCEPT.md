@@ -1,3 +1,11 @@
+---
+id: component-core-concept
+type: component
+status: review
+owners: [architects, backend-leads]
+aligned_with: [principle-axioms]
+---
+
 # Business Core Concept: Философия и Назначение 🏗️
 
 > **Статус:** Канон | **Версия:** 1.0 | **Область:** Фундамент

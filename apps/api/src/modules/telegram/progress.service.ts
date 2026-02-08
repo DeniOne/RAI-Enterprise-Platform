@@ -3,7 +3,7 @@ import { InjectBot } from "nestjs-telegraf";
 import { Context, Telegraf } from "telegraf";
 import * as fs from "fs";
 import * as path from "path";
-import { PrismaService } from "../../shared/prisma/prisma.service";
+
 
 @Injectable()
 export class ProgressService implements OnModuleInit {
@@ -11,10 +11,7 @@ export class ProgressService implements OnModuleInit {
   private lastStatsHash: string = "";
   private isWatching = false;
 
-  constructor(
-    @InjectBot() private readonly bot: Telegraf<Context>,
-    private readonly prisma: PrismaService,
-  ) { }
+  constructor() { }
 
   onModuleInit() {
     this.watchProgress();
@@ -109,23 +106,20 @@ export class ProgressService implements OnModuleInit {
 
   private async broadcastProgress(stats: any) {
     const report = this.formatReport(stats);
-    const users = await this.prisma.user.findMany({
-      where: {
-        accessLevel: "ACTIVE",
-        telegramId: { not: null },
-      },
-    });
-
-    for (const user of users) {
-      try {
-        await this.bot.telegram.sendMessage(user.telegramId!, report, {
-          parse_mode: "HTML",
-        });
-      } catch (e) {
-        this.logger.error(
-          `❌ Failed to send push to ${user.telegramId}: ${e.message}`,
-        );
-      }
+    try {
+      await fetch(`${process.env.BOT_URL || 'http://localhost:4002'}/internal/push-progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Internal-API-Key': process.env.INTERNAL_API_KEY || '',
+        },
+        body: JSON.stringify({
+          report,
+        }),
+      });
+      this.logger.log(`✅ Progress broadcasted via Bot Microservice`);
+    } catch (error) {
+      this.logger.error(`Failed to broadcast progress: ${error.message}`);
     }
   }
 }

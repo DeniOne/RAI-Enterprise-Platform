@@ -2,14 +2,14 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
 import { AgroAuditService } from "../../agro-audit/agro-audit.service";
 import { AgriculturalAuditEvent } from "../../agro-audit/enums/audit-events.enum";
-import { User, Prisma } from "@prisma/client";
+import { User, Prisma } from "@rai/prisma-client";
 
 @Injectable()
 export class SeasonSnapshotService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AgroAuditService,
-  ) {}
+  ) { }
 
   /**
    * Creates a physical snapshot of the season data inside a transaction.

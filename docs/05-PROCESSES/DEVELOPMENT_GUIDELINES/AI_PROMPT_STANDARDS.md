@@ -1,3 +1,11 @@
+---
+id: guideline-engineering-ai-prompts
+type: guideline
+status: approved
+owners: [techleads]
+aligned_with: [principle-axioms]
+---
+
 # AI Prompt Standards (Стандарты промптов) 📝
 
 > **Статус:** Инженерный стандарт | **Версия:** 1.0 | **Слой:** Engineering / Guidelines

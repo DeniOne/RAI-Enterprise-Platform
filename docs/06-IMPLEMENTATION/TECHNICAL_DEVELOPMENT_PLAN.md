@@ -1,6 +1,14 @@
+﻿---
+id: component-implementation-tech-plan
+type: component
+status: review
+owners: [techleads]
+aligned_with: [principle-axioms]
+---
+
 # 🏗️ DETAILED TECHNICAL DEVELOPMENT PLAN (WBS)
 
-> **Статус:** Живой документ | **Обновлено:** 2026-02-03 | **Владелец:** TechLead
+> **Статус:** **COMPLETED** | **Завершен:** 08.02.2026 | **Владелец:** TechLead
 > **Охват:** Соответствует `FULL_PROJECT_WBS.md` (Enterprise Edition)
 
 Этот документ декомпозирует стратегический Roadmap на конкретные инженерные задачи.
@@ -93,23 +101,36 @@
         - [x] Feature: Decision Log with Confidence Score
     - [x] **Strategic Amplifiers**:
         - [x] Logic: Risk Architecture (`CmrRisk`, `InsuranceCoverage`)
-        - [ ] Logic: Client Maturity Calculation
-        - [ ] Logic: Knowledge Object aggregation
-- [ ] **Section 5.2: HR Ecosystem (Canon Architecture) 🧬**
-    - [ ] **5.2.1 Foundation Layer**: Event-driven Profile Projection, Onboarding Flow, Support.
-    - [ ] **5.2.2 Incentive Layer**: OKR Alignment, KPI Signals, Recognition, Rewards.
-    - [ ] **5.2.3 Development Layer**: Pulse Signals, Assessment Snapshots (Burnout), Growth Actions (Strategic).
-- [ ] **Section 5.3: Finance & Economy**
-    - [ ] Engine: `WhatIfSimulator` (ROI Calculation)
-    - [ ] Feature: Treasury & Budgeting
+        - [x] Logic: Client Maturity Calculation
+        - [x] Logic: Knowledge Object aggregation
+- [x] **Section 5.2: HR Ecosystem (Canon Architecture) 🧬 ✅**
+    - [x] **5.2.1 Foundation Layer**: Event-driven Profile Projection, Onboarding Registry, Support.
+    - [x] **5.2.2 Incentive Layer**: OKR Alignment, KPI Signals, Recognition, Rewards.
+    - [x] **5.2.3 Development Layer**: Pulse Signals, Assessment Snapshots (Burnout), Growth Actions (Strategic).
+- [x] **Section 5.3: Finance & Economy ✅**
+    - [x] Engine: `EconomicEvent` & `LedgerEntry` (Immutable)
+    - [x] Feature: Budgeting FSM & Liquidity Radar
+    - [x] Engine: `WhatIfSimulator` (ROI Calculation - B3.5 verification complete)
+- [x] **Section 5.4: GR & Legal (Sprint B4) ⚖️**
+    - [x] **Module:** `legal-engine` (Compliance Signaling)
+        - [x] Entity: `LegalDocument`, `LegalNorm`, `LegalRequirement`, `Obligation`, `Sanction`
+        - [x] Logic: Automatic Compliance Status calculation
+    - [x] **Module:** `legal-api` (Registry & Monitoring)
+        - [x] Feature: Regulatory Body Registry
+        - [x] Feature: GR Interaction tracking
+        - [x] Feature: External Feeds (GigaLegal client)
 
-### 🚜 BLOCK 6: CONTOUR 2 - FRONT-OFFICE
-- [ ] **Section 6.1: Operations**
-    - [ ] Module: Warehouse & Supply Chain (Just-in-Time logic)
-    - [ ] Module: Machinery Registry & Fleet Management
+### 🚜 BLOCK 6: CONTOUR 2 - FRONT-OFFICE ✅
+- [x] **Section 6.1: Operations**
+    - [x] Module: Warehouse & Supply Chain (StockItem Registry)
+    - [x] Module: Machinery Registry & Fleet Management
 - [ ] **Section 6.2: Advanced Agro**
     - [ ] AI: Vision Service Integration (Pest Detection)
     - [ ] Tool: Real-time Field Economics Calculator
+- [x] **Section 6.3: Unified Risk Engine (Sprint B6) 🛡️ ✅**
+    - [x] Engine: `@rai/risk-engine` with Deterministic FSM
+    - [x] Feature: Physical Risk Gates in Orchestrators
+    - [x] Audit: Decision Traceability & Risk Timeline
 
 ---
 

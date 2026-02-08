@@ -1,3 +1,11 @@
+---
+id: service-structure-registry
+type: service
+status: review
+owners: [architects]
+aligned_with: [principle-axioms]
+---
+
 # Subsystem: Structure & Registry 🏢
 
 > **Статус:** Канон | **Версия:** 1.0 | **Расположение:** Business Core

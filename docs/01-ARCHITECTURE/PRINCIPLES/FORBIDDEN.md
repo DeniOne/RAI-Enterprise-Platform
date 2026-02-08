@@ -1,3 +1,12 @@
+---
+id: control-forbidden-rules
+type: control
+status: approved
+owners: [architects, techleads]
+implements: [principle-canon, principle-axioms]
+tags: [multi-principle-control]
+---
+
 # FORBIDDEN RULES
 
 ## Статус документа

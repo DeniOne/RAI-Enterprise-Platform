@@ -1,3 +1,11 @@
+---
+id: process-hr-ops
+type: process
+status: approved
+owners: [hr-department]
+depends_on: [principle-vision]
+---
+
 # HR_Functions_Operating_Model
 
 > Canonical operating model for HR functions in RAI_EP.

@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/01-pest-disease-image-ingestion.schema.json",
+  "title": "Pest/Disease Image Ingestion Contract",
+  "type": "object",
+  "required": ["version", "event_id", "occurred_at", "source", "image"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Версия контракта (semver)."
+    },
+    "event_id": {
+      "type": "string",
+      "description": "Уникальный идентификатор события."
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Время фиксации события в UTC."
+    },
+    "source": {
+      "type": "object",
+      "description": "Источник данных.",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Тип источника (например: mobile, drone, field-camera)."
+        },
+        "device_id": { "type": "string" },
+        "operator_id": { "type": "string" },
+        "capture_context": { "type": "string" },
+        "metadata": {
+          "type": "object",
+          "description": "Произвольные метаданные источника.",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "location": {
+      "type": "object",
+      "description": "Геолокация (если доступна).",
+      "properties": {
+        "lat": { "type": "number" },
+        "lon": { "type": "number" },
+        "accuracy_m": { "type": "number" },
+        "field_id": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "image": {
+      "type": "object",
+      "description": "Описание изображения без предположений о модели.",
+      "required": ["uri"],
+      "properties": {
+        "uri": { "type": "string", "format": "uri" },
+        "content_type": { "type": "string" },
+        "size_bytes": { "type": "integer", "minimum": 0 },
+        "width_px": { "type": "integer", "minimum": 1 },
+        "height_px": { "type": "integer", "minimum": 1 },
+        "checksum": {
+          "type": "object",
+          "properties": {
+            "algorithm": { "type": "string" },
+            "value": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "captured_at": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "context": {
+      "type": "object",
+      "description": "Контекст съемки.",
+      "properties": {
+        "crop": { "type": "string" },
+        "season_id": { "type": "string" },
+        "plot_id": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "extensions": {
+      "type": "object",
+      "description": "Расширения для будущих полей без ломающих изменений.",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

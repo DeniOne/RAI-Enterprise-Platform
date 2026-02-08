@@ -1,3 +1,11 @@
+﻿---
+id: index-knowledge-base
+type: concept
+status: approved
+owners: [architects]
+aligned_with: [principle-vision]
+---
+
 # RAI Enterprise Platform — Knowledge Base 📗
 
 Добро пожаловать в центральный репозиторий знаний платформы RAI. Документация организована по стратегическим слоям для обеспечения прозрачности архитектуры и бизнес-процессов.
@@ -22,6 +30,7 @@
 Визуальный код и интерфейсы: UI/UX Canon и спецификации Telegram-бота.
 - [Design System](file:///f:/RAI_EP/docs/03-DESIGN/UI_UX/DESIGN_SYSTEM.md)
 - [Bot UX Canon](file:///f:/RAI_EP/docs/03-DESIGN/TELEGRAM_BOT/UX_CANON.md)
+- [Knowledge Fabric UI](file:///f:/RAI_EP/docs/03-DESIGN/KNOWLEDGE_FABRIC_UI.md)
 
 ### [⚙️ 04-ENGINEERING](file:///f:/RAI_EP/docs/04-ENGINEERING)
 Детали реализации: API, схемы БД, микросервисы и адаптеры.

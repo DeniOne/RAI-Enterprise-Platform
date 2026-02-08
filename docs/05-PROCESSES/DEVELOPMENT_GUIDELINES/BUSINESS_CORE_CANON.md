@@ -1,4 +1,12 @@
-Каноническое описание универсального ядра управления бизнесом
+---
+id: principle-business-core-canon
+type: principle
+status: approved
+owners: [architects]
+aligned_with: [principle-vision]
+---
+
+# CANON: BUSINESS CORE DEVELOPMENT
 
 Статус: CANON
 Назначение: фундамент всей системы и всех доменов

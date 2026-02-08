@@ -1,0 +1,17 @@
+﻿{
+  "schema_version": "1.0.0",
+  "trace_id": "7e6b7a1a-8e4f-4f55-9f4a-5a9c4f8d2a11",
+  "event_id": "evt-20260208-0001",
+  "occurred_at": "2026-02-08T10:15:30Z",
+  "source": {
+    "type": "mobile",
+    "device_id": "dev-android-01"
+  },
+  "image": {
+    "uri": "s3://rai-ingestion/images/2026/02/08/evt-20260208-0001.jpg",
+    "content_type": "image/jpeg",
+    "size_bytes": 245678,
+    "width_px": 3024,
+    "height_px": 4032
+  }
+}

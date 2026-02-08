@@ -21,11 +21,18 @@ export interface StageTransitionResult {
     message: string;
 }
 
+import { RiskService } from "../risk/risk.service";
+import { ActionDecisionService } from "../risk/decision.service";
+import { RiskTargetType } from "@rai/prisma-client";
+import { RiskBlockedError } from "../risk/risk.errors";
+
 @Injectable()
 export class AgroOrchestratorService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly auditService: AuditService,
+        private readonly riskService: RiskService,
+        private readonly decisionService: ActionDecisionService,
     ) { }
 
     /**
@@ -64,6 +71,24 @@ export class AgroOrchestratorService {
         if (!season) {
             throw new NotFoundException("Сезон не найден");
         }
+
+        // --- RISK GATE (B6.2) ---
+        const riskAssessment = await this.riskService.assess(
+            companyId,
+            RiskTargetType.SEASON,
+            seasonId
+        );
+
+        if (riskAssessment.verdict === 'BLOCKED') {
+            await this.decisionService.record(
+                companyId,
+                'INIT_SEASON',
+                seasonId,
+                riskAssessment
+            );
+            throw new RiskBlockedError(riskAssessment);
+        }
+        // ------------------------
 
         if (season.currentStageId) {
             throw new BadRequestException("Сезон уже инициализирован");
@@ -141,6 +166,24 @@ export class AgroOrchestratorService {
         if (!season) {
             throw new NotFoundException("Сезон не найден");
         }
+
+        // --- RISK GATE (B6.2) ---
+        const riskAssessment = await this.riskService.assess(
+            companyId,
+            RiskTargetType.SEASON,
+            seasonId
+        );
+
+        if (riskAssessment.verdict === 'BLOCKED') {
+            await this.decisionService.record(
+                companyId,
+                `APL_EVENT_${event}`,
+                seasonId,
+                riskAssessment
+            );
+            throw new RiskBlockedError(riskAssessment);
+        }
+        // ------------------------
 
         if (season.isLocked) {
             throw new BadRequestException("Сезон заблокирован и не может быть изменён");

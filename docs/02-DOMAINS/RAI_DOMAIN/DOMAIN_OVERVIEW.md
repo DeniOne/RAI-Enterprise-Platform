@@ -1,3 +1,12 @@
+---
+id: component-rai-domain
+type: component
+status: review
+owners: [domain-experts, architects]
+aligned_with: [principle-vision]
+tags: [conceptual, domain-definition]
+---
+
 # RAI Domain Overview: Агрономическая логика 🌾
 
 > **Статус:** Канон | **Версия:** 1.0 | **Слой:** Прикладной Домен (RAI)

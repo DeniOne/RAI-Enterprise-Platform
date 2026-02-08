@@ -1,3 +1,11 @@
+---
+id: service-iam
+type: service
+status: review
+owners: [architects, security-officers]
+aligned_with: [principle-axioms]
+---
+
 # Subsystem: Identity & Access Management (IAM) 🔐
 
 > **Статус:** Канон | **Версия:** 1.0 | **Расположение:** Business Core

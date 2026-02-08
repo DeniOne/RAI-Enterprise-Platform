@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/02-satellite-vegetation-indices.schema.json",
+  "title": "Satellite Vegetation Indices Contract",
+  "type": "object",
+  "required": ["version", "event_id", "observed_at", "source", "indices"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Версия контракта (semver)."
+    },
+    "event_id": {
+      "type": "string",
+      "description": "Уникальный идентификатор события."
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Время наблюдения в UTC."
+    },
+    "source": {
+      "type": "object",
+      "description": "Источник данных спутника.",
+      "required": ["provider"],
+      "properties": {
+        "provider": { "type": "string" },
+        "platform": { "type": "string" },
+        "scene_id": { "type": "string" },
+        "metadata": {
+          "type": "object",
+          "description": "Произвольные метаданные источника.",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "area": {
+      "type": "object",
+      "description": "Геометрия области (если доступна).",
+      "properties": {
+        "field_id": { "type": "string" },
+        "bbox": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": { "type": "number" },
+          "description": "[minLon, minLat, maxLon, maxLat]"
+        },
+        "geometry": {
+          "type": "object",
+          "description": "GeoJSON-совместимая геометрия.",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "indices": {
+      "type": "array",
+      "description": "Список индексов без предположений о моделях.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "value"],
+        "properties": {
+          "name": { "type": "string" },
+          "value": { "type": "number" },
+          "unit": { "type": "string" },
+          "scale": { "type": "number" },
+          "quality": {
+            "type": "object",
+            "properties": {
+              "cloud_coverage_pct": { "type": "number", "minimum": 0, "maximum": 100 },
+              "data_gap_pct": { "type": "number", "minimum": 0, "maximum": 100 }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "extensions": {
+      "type": "object",
+      "description": "Расширения для будущих полей без ломающих изменений.",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,3 +1,11 @@
+---
+id: component-rai-entity-map
+type: component
+status: review
+owners: [domain-experts]
+aligned_with: [principle-vision]
+---
+
 # RAI: СУЩНОСТИ
 
 ## 1. Field (Поле)

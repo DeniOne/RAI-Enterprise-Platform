@@ -1,3 +1,11 @@
+---
+id: decision-adr-002
+type: decision
+status: approved
+owners: [architects]
+aligned_with: [principle-axioms]
+---
+
 # ADR 002: Стратегия хранения событий — Hybrid CRUD + Audit Log
 
 ## Статус

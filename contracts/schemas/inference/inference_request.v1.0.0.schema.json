@@ -1,0 +1,24 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/schemas/inference/inference_request.v1.0.0.schema.json",
+  "title": "Inference Request",
+  "description": "Канонический контракт запроса inference (Sprint 1).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "trace_id", "input"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "trace_id": {
+      "type": "string",
+      "description": "Trace ID (UUID)."
+    },
+    "input": {
+      "type": "object",
+      "description": "Входные данные без предположений о модели.",
+      "additionalProperties": true
+    }
+  }
+}

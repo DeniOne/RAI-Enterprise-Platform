@@ -1,7 +1,15 @@
+---
+id: component-implementation-cmr-roadmap
+type: component
+status: review
+owners: [techleads, consultants]
+aligned_with: [principle-vision]
+---
+
 # CMR Implementation Roadmap (Phase Beta)
 
-> **Статус:** ТЕХНИЧЕСКИЙ ПЛАН REFINED  
-> **Цель:** Поэтапное внедрение Consulting Control Plane без нарушения текущих процессов.
+> **Статус:** **COMPLETED** | **Завершен:** 08.02.2026
+> **Цель:** Поэтапное внедрение Consulting Control Plane. Все контуры (B1-B6) физически замкнуты.
 
 ---
 
@@ -21,21 +29,21 @@
 - [x] **Rule Engine Expansion**: Поддержка условной логики ("Если... То...").
 - [x] **Integration**: Связка АТК с контрактом в CMR.
 
-## Этап 3: CMR UI Infrastructure
-- [ ] **Web App**:
-  - [ ] Создание `layout` для CMR в `apps/web`.
-  - [ ] Реализация `Dashboard (Overview)` по новому канону.
-  - [ ] Реализация `Decision Timeline` (лента решений).
+## Этап 3: CMR UI Infrastructure ✅
+- [x] **Web App**:
+  - [x] Создание `layout` для CMR в `apps/web` (Strategic Layout).
+  - [x] Реализация `Dashboard (Overview)` по новому канону (GSV-01).
+  - [x] Реализация `Decision Timeline` (лента решений через Strategic Analytics).
 
-## Этап 3.1: ИИ-Оркестрация (Brain Integration)
+## Этап 3.1: ИИ-Оркестрация (Brain Integration) ✅
 - [x] **NestJS CmrModule**:
   - [x] Подключение `AgroOrchestrator` к `CmrDecisionService`.
   - [x] Автоматическая фиксация "Этапа 0" (Анализ предшественника) на основе исторических данных.
 
-## Этап 4: Коммуникационный мост
-- [ ] **Bot Sync**:
-  - [ ] Передача ИИ-рекомендаций из CMR в Telegram.
-  - [ ] Обратная связь: фиксация ответа пользователя в ленте решений CMR.
+## Этап 4: Коммуникационный мост ✅
+- [x] **Bot Sync**:
+  - [x] Передача ИИ-рекомендаций из CMR в Telegram (`Internal API`).
+  - [x] Обратная связь: фиксация ответа пользователя (Confirmation Logic) в Integrity Gate.
 
 ## Этап 5: Strategic Layers (Post-Beta)
 - [ ] **Knowledge Engine**: Агрегация кейсов из Decision Log.

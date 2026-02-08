@@ -1,3 +1,11 @@
+---
+id: component-rai-agro-techmap
+type: component
+status: review
+owners: [domain-experts, architects]
+aligned_with: [principle-vision]
+---
+
 # Domain: Detailed Agro-Tech Map (АТК — Арго-Технологическая Карта)
 
 > **Contour:** 2 (Operations) & 1 (Enterprise) | **Module:** TechMap Builder  

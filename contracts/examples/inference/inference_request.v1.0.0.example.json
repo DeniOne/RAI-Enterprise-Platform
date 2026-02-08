@@ -1,0 +1,8 @@
+﻿{
+  "schema_version": "1.0.0",
+  "trace_id": "3c5a2b40-2c65-4b1a-9b1f-0f4d5a7e2b90",
+  "input": {
+    "payload_type": "image",
+    "payload_uri": "s3://rai-ingestion/images/2026/02/08/evt-20260208-0001.jpg"
+  }
+}

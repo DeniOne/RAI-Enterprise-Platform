@@ -1,3 +1,11 @@
+---
+id: component-enterprise-crm
+type: component
+status: review
+owners: [sales, architects]
+aligned_with: [principle-vision]
+---
+
 # Domain: CRM (Customer Relationship Management)
 
 > **Contour:** 1 (Enterprise Back-Office) | **Module:** CRM

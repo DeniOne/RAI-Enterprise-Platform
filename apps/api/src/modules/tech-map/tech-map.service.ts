@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
-import { TechMapStatus } from '@prisma/client';
+import { TechMapStatus } from '@rai/prisma-client';
+import { IntegrityGateService } from '../integrity/integrity-gate.service';
 
 @Injectable()
 export class TechMapService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly integrityGate: IntegrityGateService,
+    ) { }
 
     async generateMap(seasonId: string, soilId: string, historyId: string) {
         // Placeholder logic for "Construction"
@@ -48,5 +52,77 @@ export class TechMapService {
 
         // Dummy validation logic
         return { valid: true, issues: [] };
+    }
+
+    async findOne(id: string, companyId: string) {
+        const map = await this.prisma.techMap.findFirst({
+            where: {
+                id,
+                companyId,
+            },
+            include: {
+                stages: {
+                    orderBy: { sequence: 'asc' },
+                    include: {
+                        operations: {
+                            include: {
+                                resources: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!map) {
+            throw new NotFoundException('TechMap not found');
+        }
+
+        return map;
+    }
+
+    async findBySeason(seasonId: string, companyId: string) {
+        const map = await this.prisma.techMap.findFirst({
+            where: {
+                seasonId,
+                companyId,
+            },
+            include: {
+                stages: {
+                    orderBy: { sequence: 'asc' },
+                    include: {
+                        operations: {
+                            include: {
+                                resources: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!map) {
+            throw new NotFoundException('TechMap for this season not found');
+        }
+
+        return map;
+    }
+
+    async activate(id: string, companyId: string) {
+        const map = await this.prisma.techMap.findFirst({
+            where: { id, companyId },
+        });
+
+        if (!map) {
+            throw new NotFoundException('TechMap not found');
+        }
+
+        // Integrity Gate Check
+        await this.integrityGate.validateTechMapAdmission(map.id);
+
+        return this.prisma.techMap.update({
+            where: { id },
+            data: { status: TechMapStatus.ACTIVE },
+        });
     }
 }

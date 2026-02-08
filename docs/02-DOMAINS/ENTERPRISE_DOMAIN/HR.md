@@ -1,3 +1,11 @@
+---
+id: component-enterprise-hr
+type: component
+status: review
+owners: [hr, architects]
+aligned_with: [principle-vision]
+---
+
 # Domain: HR (Human Capital)
 
 > **Contour:** 1 (Enterprise Back-Office) | **Module:** HR

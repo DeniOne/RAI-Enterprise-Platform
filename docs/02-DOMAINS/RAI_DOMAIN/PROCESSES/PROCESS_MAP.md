@@ -1,3 +1,11 @@
+---
+id: component-rai-process-map
+type: component
+status: review
+owners: [domain-experts]
+aligned_with: [principle-vision]
+---
+
 # RAI: ПРОЦЕССЫ
 
 ## 1. Планирование сезона

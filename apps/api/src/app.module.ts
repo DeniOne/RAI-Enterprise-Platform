@@ -22,6 +22,18 @@ import { AgroOrchestratorModule } from "./modules/agro-orchestrator/agro-orchest
 import { TechMapModule } from "./modules/tech-map/tech-map.module";
 import { CmrModule } from "./modules/cmr/cmr.module";
 import { HrModule } from "./modules/hr/hr.module";
+import { FinanceEconomyModule } from "./modules/finance-economy/finance-economy.module";
+import { KnowledgeModule } from "./modules/knowledge/knowledge.module";
+import { KnowledgeGraphModule } from "./modules/knowledge-graph/knowledge-graph.module";
+import { VisionModule } from "./modules/vision/vision.module";
+import { SatelliteModule } from "./modules/satellite/satellite.module";
+import { LegalModule } from "./modules/legal/legal.module.js";
+import { RdModule } from "./modules/rd/rd.module.js";
+import { StrategicModule } from "./modules/strategic/strategic.module.js";
+import { RiskModule } from "./modules/risk/risk.module.js";
+import { FieldObservationModule } from "./modules/field-observation/field-observation.module";
+import { IntegrityModule } from "./modules/integrity/integrity.module";
+import { ConsultingModule } from "./modules/consulting/consulting.module";
 import { join } from "path";
 
 @Module({
@@ -52,6 +64,18 @@ import { join } from "path";
     TechMapModule,
     CmrModule,
     HrModule,
+    FinanceEconomyModule,
+    KnowledgeModule,
+    KnowledgeGraphModule,
+    VisionModule,
+    SatelliteModule,
+    LegalModule,
+    RdModule,
+    StrategicModule,
+    RiskModule,
+    FieldObservationModule,
+    IntegrityModule,
+    ConsultingModule,
 
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
@@ -61,4 +85,8 @@ import { join } from "path";
     }),
   ],
 })
-export class AppModule { }
+export class AppModule {
+  constructor() {
+    console.log('✅ AppModule initialized');
+  }
+}

@@ -1,3 +1,11 @@
+---
+id: decision-index
+type: decision
+status: approved
+owners: [architects]
+aligned_with: [principle-axioms]
+---
+
 # Архитектурные решения (ADR)
 
 Хронологический список всех принятых архитектурных решений.

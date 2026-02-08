@@ -1,3 +1,11 @@
+---
+id: component-implementation-alpha-scope
+type: component
+status: review
+owners: [techleads]
+aligned_with: [principle-vision]
+---
+
 # Phase Alpha Scope: Конкретные задачи и сроки
 
 ## Timeline: 25.06 - 30.09 2024 (Revised/Active)

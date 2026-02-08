@@ -1,0 +1,28 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/schemas/risk/risk_evaluation_request.v1.0.0.schema.json",
+  "title": "Risk Evaluation Request",
+  "description": "Канонический контракт запроса Risk Engine (dry-run).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "trace_id", "target"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "trace_id": {
+      "type": "string",
+      "description": "Trace ID (UUID)."
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id"],
+      "properties": {
+        "type": { "type": "string" },
+        "id": { "type": "string" }
+      }
+    }
+  }
+}

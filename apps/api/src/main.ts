@@ -6,6 +6,7 @@ import { AllExceptionsFilter } from "./shared/filters/all-exceptions.filter";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.setGlobalPrefix('api');
 
   // Enable CORS for frontend
   app.enableCors({

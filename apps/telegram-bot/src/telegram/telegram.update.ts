@@ -1,5 +1,6 @@
-import { Update, Start, Hears, Ctx, Action } from "nestjs-telegraf";
+import { Update, Start, Hears, Ctx, Action, On } from "nestjs-telegraf";
 import { Context, Markup } from "telegraf";
+import { Logger } from "@nestjs/common";
 import { ProgressService } from "./progress.service";
 import { ApiClientService } from "../shared/api-client/api-client.service";
 import { SessionService } from "../shared/session/session.service";
@@ -51,7 +52,10 @@ export class TelegramUpdate {
       return;
     }
 
-    const keyboard = Markup.keyboard([["📋 Мои задачи", "📊 Прогресс"]]).resize();
+    const keyboard = Markup.keyboard([
+      ["📋 Мои задачи", "📊 Прогресс"],
+      ["📊 Опросы"]
+    ]).resize();
 
     await ctx.reply(
       `👋 Добро пожаловать! Вы вошли как ${user.email ?? "Полевой работник"}.\nИспользуйте меню для навигации.`,
@@ -206,7 +210,10 @@ export class TelegramUpdate {
           `${statusIcon} <b>${task.name}</b>\n📍 Поле: ${fieldName}\n📊 Статус: ${statusText}\n📅 Дата: ${task.plannedDate ? new Date(task.plannedDate).toLocaleDateString("ru-RU") : "Не указана"}`,
           {
             parse_mode: "HTML",
-            ...Markup.inlineKeyboard([buttons]),
+            ...Markup.inlineKeyboard([
+              buttons,
+              [Markup.button.callback("📜 Техкарта", `view_techmap:${task.seasonId}`)]
+            ]),
           },
         );
       }
@@ -219,6 +226,7 @@ export class TelegramUpdate {
   @Action(/start_task:(.+)/)
   async onStartTask(@Ctx() ctx: Context): Promise<void> {
     if (!("match" in ctx && ctx.match)) return;
+    if (!ctx.from) return;
     const taskId = ctx.match[1];
 
     const user = await this.getUser(ctx);
@@ -233,9 +241,18 @@ export class TelegramUpdate {
 
       await this.apiClient.startTask(taskId, accessToken);
 
+      // [LAW] Track active task for sensory context (dumb tracing)
+      const session = await this.session.getSession(ctx.from.id);
+      if (session) {
+        await this.session.saveSession(ctx.from.id, {
+          ...session,
+          activeTaskId: taskId,
+        });
+      }
+
       await ctx.answerCbQuery("Задача начата! ▶");
       await ctx.editMessageText(
-        (ctx.callbackQuery as any).message.text + "\n\n✅ <b>Задача начата!</b>",
+        (ctx.callbackQuery as any).message.text + "\n\n✅ <b>Задача начата!</b>\n<i>Отправляйте фото или геопозицию для отчета.</i>",
         { parse_mode: "HTML" },
       );
     } catch (e) {
@@ -319,6 +336,298 @@ export class TelegramUpdate {
     } catch (error) {
       console.error("❌ Error denying login:", error);
       await ctx.answerCbQuery("Ошибка отклонения");
+    }
+  }
+
+  @Action(/view_techmap:(.+)/)
+  async onViewTechMap(@Ctx() ctx: Context) {
+    if (!("match" in ctx && ctx.match)) return;
+    const seasonId = ctx.match[1];
+
+    const accessToken = await this.getAccessToken(ctx);
+    if (!accessToken) {
+      await ctx.answerCbQuery("🔑 Требуется авторизация");
+      return;
+    }
+
+    try {
+      const techMap = await this.apiClient.getTechMapBySeason(seasonId, accessToken);
+
+      // Find current stage (dummy logic: first unfinished)
+      let report = `📜 <b>Технологическая карта</b>\n`;
+      report += `Сезон ID: <code>${seasonId.slice(-6)}</code>\n\n`;
+
+      for (const stage of techMap.stages) {
+        report += `<b>[ ${stage.name} ]</b>\n`;
+        for (const op of stage.operations) {
+          report += `• ${op.name}\n`;
+          if (op.resources && op.resources.length > 0) {
+            const resList = op.resources.map((r: any) => `${r.name} (${r.amount}${r.unit})`).join(', ');
+            report += `  └ 📦 ${resList}\n`;
+          }
+        }
+        report += `\n`;
+      }
+
+      await ctx.reply(report, { parse_mode: "HTML" });
+      await ctx.answerCbQuery();
+    } catch (e) {
+      console.error("❌ Error fetching tech map for bot:", e);
+      await ctx.answerCbQuery("❌ Ошибка при загрузке техкарты");
+    }
+  }
+
+  /**
+   * ================================
+   * HR PULSE SURVEY HANDLERS
+   * ================================
+   */
+
+  @Hears("📊 Опросы")
+  @Hears("/pulse")
+  async onPulseList(@Ctx() ctx: Context): Promise<void> {
+    const accessToken = await this.getAccessToken(ctx);
+    if (!accessToken) {
+      await ctx.reply("🔑 Требуется авторизация через веб.");
+      return;
+    }
+
+    try {
+      const surveys = await this.apiClient.getPulseSurveys(accessToken);
+
+      if (surveys.length === 0) {
+        await ctx.reply("📥 На данный момент нет активных опросов.");
+        return;
+      }
+
+      await ctx.reply("📋 <b>Доступные опросы:</b>", {
+        parse_mode: "HTML",
+        ...Markup.inlineKeyboard(
+          surveys.map((s: any) => [
+            Markup.button.callback(s.title, `start_pulse:${s.id}`),
+          ]),
+        ),
+      });
+    } catch (e) {
+      console.error("❌ Error fetching surveys:", e);
+      await ctx.reply("❌ Ошибка при получении списка опросов.");
+    }
+  }
+
+  @Action(/start_pulse:(.+)/)
+  async onStartPulse(@Ctx() ctx: Context): Promise<void> {
+    if (!("match" in ctx && ctx.match) || !ctx.from) return;
+    const surveyId = ctx.match[1];
+    const accessToken = await this.getAccessToken(ctx);
+
+    try {
+      const surveys = await this.apiClient.getPulseSurveys(accessToken!);
+      const survey = surveys.find((s: any) => s.id === surveyId);
+
+      if (!survey) {
+        await ctx.answerCbQuery("❌ Опрос не найден");
+        return;
+      }
+
+      const session = await this.session.getSession(ctx.from.id);
+      await this.session.saveSession(ctx.from.id, {
+        ...session!,
+        surveyState: {
+          surveyId,
+          currentQuestionIndex: 0,
+          answers: {},
+        },
+      });
+
+      await this.renderQuestion(ctx, survey, 0);
+      await ctx.answerCbQuery();
+    } catch (e) {
+      console.error(e);
+      await ctx.answerCbQuery("Ошибка запуска");
+    }
+  }
+
+  @Action(/answer_pulse:(.+)/)
+  async onAnswerPulse(@Ctx() ctx: Context): Promise<void> {
+    if (!("match" in ctx && ctx.match) || !ctx.from) return;
+    const answerValue = ctx.match[1];
+    const accessToken = await this.getAccessToken(ctx);
+    const session = await this.session.getSession(ctx.from.id);
+
+    if (!session?.surveyState) {
+      await ctx.answerCbQuery("❌ Сессия опроса истекла");
+      return;
+    }
+
+    const { surveyId, currentQuestionIndex, answers } = session.surveyState;
+    const surveys = await this.apiClient.getPulseSurveys(accessToken!);
+    const survey = surveys.find((s: any) => s.id === surveyId);
+
+    if (!survey) return;
+
+    const question = survey.questions[currentQuestionIndex];
+    answers[question.id] = isNaN(Number(answerValue)) ? answerValue : Number(answerValue);
+
+    const nextIndex = currentQuestionIndex + 1;
+
+    if (nextIndex < survey.questions.length) {
+      await this.session.saveSession(ctx.from.id, {
+        ...session,
+        surveyState: { ...session.surveyState, currentQuestionIndex: nextIndex, answers },
+      });
+      await this.renderQuestion(ctx, survey, nextIndex);
+    } else {
+      // Finish survey
+      await ctx.editMessageText("⏳ <b>Обработка ответов...</b>", { parse_mode: "HTML" });
+
+      try {
+        const user = await this.getUser(ctx);
+        await this.apiClient.submitPulseResponse({
+          pulseSurveyId: surveyId,
+          respondentId: user.id, // В идеале EmployeeProfile.id, но для B2 берем User.id если они мапятся
+          employeeId: user.id,
+          answers
+        }, accessToken!);
+
+        await ctx.editMessageText("🎉 <b>Спасибо за участие!</b>\nВаши ответы помогут нам стать лучше.", { parse_mode: "HTML" });
+
+        // Clear survey state
+        const updatedSession = await this.session.getSession(ctx.from.id);
+        if (updatedSession) {
+          delete updatedSession.surveyState;
+          await this.session.saveSession(ctx.from.id, updatedSession);
+        }
+      } catch (e) {
+        console.error("❌ Error submitting pulse:", e);
+        await ctx.editMessageText("❌ Произошла ошибка при сохранении ответов.");
+      }
+    }
+    await ctx.answerCbQuery();
+  }
+
+
+  @On("text")
+  async onText(@Ctx() ctx: Context): Promise<void> {
+    if (!ctx.message || !("text" in ctx.message) || !ctx.from) return;
+    const message = (ctx.message as any).text;
+
+    // Ignore commands
+    if (message.startsWith("/")) return;
+
+    const user = await this.getUser(ctx);
+    if (!user) return;
+
+    const accessToken = await this.getAccessToken(ctx);
+    if (!accessToken) return;
+
+    try {
+      const session = await this.session.getSession(ctx.from.id);
+      const taskId = session?.activeTaskId;
+
+      await this.apiClient.createObservation({
+        type: "CALL_LOG", // Representing Text/Speech
+        intent: "MONITORING", // Default, Gate will upgrade to CONFIRMATION if needed
+        content: message,
+        taskId: taskId,
+        // fieldId used to be required, now optional in schema
+        timestamp: new Date().toISOString(),
+      }, accessToken);
+
+      // Acknowledge receipt (Dumb Transport Feedback)
+      await ctx.reply("✍ Принято", { disable_notification: true });
+    } catch (e) {
+      console.error("❌ Error forwarding text observation:", e);
+    }
+  }
+
+  /**
+   * ================================
+   * SENSORY PLANE (DUMB TRANSPORT)
+   * ================================
+   */
+
+  @On("photo")
+  async onPhoto(@Ctx() ctx: any) {
+    if (!ctx.from || !ctx.message.photo) return;
+    const session = await this.session.getSession(ctx.from.id);
+    if (!session?.token) return;
+
+    const photo = ctx.message.photo[ctx.message.photo.length - 1]; // Highest resolution
+    const fileLink = await ctx.telegram.getFileLink(photo.file_id);
+
+    try {
+      await this.apiClient.createObservation({
+        type: "PHOTO",
+        photoUrl: fileLink.toString(),
+        taskId: session.activeTaskId,
+        coordinates: session.currentCoordinates,
+      }, session.token);
+
+      await ctx.reply("📸 Фото принято как доказательство (Strong Evidence). Проверяю целостность...");
+    } catch (e) {
+      this.logger.error(`[TRANSPORT] Failed to forward photo: ${e.message}`);
+      await ctx.reply("❌ Ошибка при передаче фото на сервер.");
+    }
+  }
+
+  @On("voice")
+  async onVoice(@Ctx() ctx: any) {
+    if (!ctx.from || !ctx.message.voice) return;
+    const session = await this.session.getSession(ctx.from.id);
+    if (!session?.token) return;
+
+    const fileLink = await ctx.telegram.getFileLink(ctx.message.voice.file_id);
+
+    try {
+      await this.apiClient.createObservation({
+        type: "VOICE_NOTE",
+        voiceUrl: fileLink.toString(),
+        taskId: session.activeTaskId,
+        coordinates: session.currentCoordinates,
+      }, session.token);
+
+      await ctx.reply("🎙 Голосовой отчет принят. Данные переданы в Back-Office.");
+    } catch (e) {
+      this.logger.error(`[TRANSPORT] Failed to forward voice: ${e.message}`);
+      await ctx.reply("❌ Ошибка при передаче аудио.");
+    }
+  }
+
+  @On("location")
+  async onLocation(@Ctx() ctx: any) {
+    if (!ctx.from || !ctx.message.location) return;
+    const { latitude, longitude } = ctx.message.location;
+
+    const session = await this.session.getSession(ctx.from.id);
+    if (session) {
+      await this.session.saveSession(ctx.from.id, {
+        ...session,
+        currentCoordinates: { lat: latitude, lng: longitude },
+      });
+      await ctx.reply(`📍 Координаты зафиксированы: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}. Все последующие медиа будут иметь GPS-подпись.`);
+    }
+  }
+
+  private readonly logger = new Logger(TelegramUpdate.name);
+
+  private async renderQuestion(ctx: Context, survey: any, index: number) {
+    const question = survey.questions[index];
+    const text = `<b>Опрос: ${survey.title}</b>\n\nВопрос ${index + 1}/${survey.questions.length}:\n${question.text}`;
+
+    // Default options if not provided
+    const options = question.options || [1, 2, 3, 4, 5];
+
+    const keyboard = Markup.inlineKeyboard(
+      options.map((opt: any) =>
+        Markup.button.callback(opt.toString(), `answer_pulse:${opt}`)
+      ),
+      { columns: 5 }
+    );
+
+    if (ctx.callbackQuery) {
+      await ctx.editMessageText(text, { parse_mode: "HTML", ...keyboard });
+    } else {
+      await ctx.reply(text, { parse_mode: "HTML", ...keyboard });
     }
   }
 }

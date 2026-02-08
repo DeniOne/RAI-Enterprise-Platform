@@ -1,61 +1,49 @@
-# Блок 4: Unified Memory Infrastructure (Implementation)
+# Sprint B6: Unified Risk Engine 🛡️
 
-- [x] **Section 4.1: Infrastructure & Schema**
-    - [x] Create custom PostgreSQL Dockerfile (PostGIS/pgvector)
-    - [x] Update `docker-compose.yml` with build context
-    - [x] Add `MemoryEntry` to Prisma Schema
-    - [x] Create manual SQL migration for vector constraints
-- [x] **Section 4.2: Core Packages**
-    - [x] Initialize `@rai/vector-store` package
-    - [x] Implement `PgVectorStore` with raw SQL
-- [x] **Section 4.3: Business Core Integration**
-    - [x] Implement `ContextService` (Redis integration)
-    - [x] Define `MemoryPolicy` strategy
-    - [x] Implement `MemoryManager` orchestrator
-- [x] **Section 4.4: Documentation & Security**
-    - [x] Create `infra/SECURITY.md`
-    - [x] Audit `SCOPE.md`
+## Database Schema
+- [x] Update `schema.prisma` with `RiskSignal` and `RiskAssessment` models <!-- id: 0 -->
+- [x] Add Enums: `RiskSource`, `RiskSeverity`, `RiskVerdict`, `RiskTargetType` <!-- id: 1 -->
+- [x] Generate Prisma Client and Run Migrations <!-- id: 2 -->
 
-- [x] **Milestone 11: Telegram Microservice & Auth Stability**
-    - [x] Выделение бота в микросервис `apps/telegram-bot`
-    - [x] Исправление JWT инвалидности (sub payload, registerAsync)
-    - [x] Рефакторинг UI страницы входа по канону дизайна
-    - [x] Обновление документации и Memory Bank
+## Core Package: `@rai/risk-engine`
+- [x] Initialize package structure (`package.json`, `tsconfig.json`) <!-- id: 3 -->
+- [x] Implement `RiskSignalCollector` interface <!-- id: 4 -->
+- [x] Implement Domain Collectors (Stubs/Logic):
+    - [x] `LegalRiskCollector` <!-- id: 5 -->
+    - [x] `RndRiskCollector` <!-- id: 6 -->
+    - [x] `OpsRiskCollector` <!-- id: 7 -->
+    - [x] `FinanceRiskCollector` <!-- id: 8 -->
+- [x] Implement `RiskNormalizer` <!-- id: 9 -->
+- [x] Implement `RiskFsm` (Deterministic State Transitions) <!-- id: 20 -->
+- [x] Implement `RiskAggregator` (The Brain + FSM context) <!-- id: 10 -->
+- [x] Implement `VerdictRules` (Deterministic Logic) <!-- id: 11 -->
+- [x] Unit Tests for Core Logic <!-- id: 12 -->
 
-> [!NOTE]
-> **Status**: Completed. Infrastructure is ready for hybrid memory operations.
+## API Module (`apps/api`)
+- [x] Create `RiskModule` and `RiskController` <!-- id: 13 -->
+- [x] Implement `GET /risk/assess/:targetType/:targetId` <!-- id: 14 -->
+- [x] Integrate `RiskAggregator` into `RiskService` <!-- id: 15 -->
 
-# Блок 5: Sprint B1 - Consulting Control Plane & Risk
+## Integration & Verification
+- [x] Verify R&D Integration (Experiment without conclusion -> RiskSignal) <!-- id: 16 -->
+- [x] Verify Legal Integration (Compliance Violated -> Critical Risk) <!-- id: 17 -->
+- [x] Regression Guard Tests (New signals don't break old verdicts) <!-- id: 18 -->
 
-- [x] **Section 5.1: Database Schema (Prisma)**
-    - [x] Update `schema.prisma` with Tech Map Domain (`TechMap`, `MapStage`, `MapOperation`)
-    - [x] Update `schema.prisma` with CMR Domain (`DeviationReview`, `CmrDecision`)
-    - [x] Update `schema.prisma` with Risk & Insurance Domain (`CmrRisk`, `InsuranceCoverage`)
-    - [x] Add Enums: `ResponsibilityMode`, `RiskType`, `Controllability`, `LiabilityMode`, `ConfidenceLevel`
-- [x] **Section 5.2: Backend Modules (NestJS)**
-    - [x] Create `tech-map` module (Service, Controller)
-    - [x] Create `cmr` module (DeviationService, RiskService, DecisionService)
-- [x] **Section 5.3: Strategic Logic & Verification**
-    - [x] Implement Liability Matrix logic
-    - [x] Implement SLA logic (Silence as Event)
-    - [x] Verify Tripartite Flow
+## Documentation
+- [x] Update `activeContext.md` with B6 status <!-- id: 19 -->
 
-# Блок 5.2: Sprint B2 - HR Ecosystem (3-Contour Model) — DONE ✅
-
-- [x] **Section 5.2.1: Domain Schema & Tech Debt**
-    - [x] Implement HR Schema v2 (Foundation, Incentive, Development)
-    - [x] Refactor `EmployeeProfile` to Event-driven Projection model (No PII)
-    - [x] Restore Management Context via `orgUnitId`
-- [x] **Section 5.2.2: Incentive & Development Modules**
-    - [x] Implement `OkrService` & `KpiService`
-    - [x] Implement `RecognitionService` & `RewardService`
-    - [x] Implement `PulseService` & `AssessmentService`
-- [x] **Section 5.2.3: Strategic Integration**
-    - [x] Integrate `RiskService` (CMR) with Human Assessment Snapshots
-    - [x] Implement confidence-based probabilistic state projections
-
-# Phase Beta: Future Sprints
-- [ ] **Sprint B3: Smart CRM & Agro AI**
-- [ ] **Блок 6: Finance & Economy**
-- [ ] **Блок 7: Supply Chain & Logistics**
-- [ ] **Блок 8: Machinery, Fleet & IoT**
+### Phase Beta Exit & Beta+ Implementation 🏁
+- [x] **B+.1 AI-Driven Asset Ingestion**
+    - [x] Registry: Machinery & StockItem models
+    - [x] Agent: `RegistryAgentService` implementation
+    - [x] UI: Telegram Photo/Voice sensory planes
+- [x] **B+.2 Integrity Gate hardening**
+    - [x] Logic: Admission rules for TechMap activation
+    - [x] logic: Resource sufficiency checks (Tractors, Chemicals)
+- [x] **B+.3 Internal Communication Protocol**
+    - [x] Infra: Internal HTTP API in `telegram-bot`
+    - [x] Secure: `X-Internal-API-Key` enforcement
+    - [x] Decoupling: API -> Bot microservice (`BOT_URL`)
+- [x] **B+.4 Progress Automation**
+    - [x] Service: File watcher for `progress.md`
+    - [x] Logic: Automatic broadcast to all active users via Internal API

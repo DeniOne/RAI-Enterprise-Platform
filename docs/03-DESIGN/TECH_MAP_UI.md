@@ -1,3 +1,11 @@
+---
+id: guideline-design-techmap-ui
+type: guideline
+status: review
+owners: [designers, architects]
+aligned_with: [principle-vision]
+---
+
 # UI Design: Agro-Tech Map Builder (АТК)
 
 > **Модуль:** Технологическая карта (АТК)  

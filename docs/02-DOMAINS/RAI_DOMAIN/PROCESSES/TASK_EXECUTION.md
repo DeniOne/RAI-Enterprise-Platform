@@ -1,3 +1,11 @@
+---
+id: component-rai-process-execution
+type: component
+status: review
+owners: [domain-experts]
+aligned_with: [principle-vision]
+---
+
 # Process: Task Execution (Исполнение полевых работ) 🚜
 
 > **Статус:** Канон | **Версия:** 1.0 | **Слой:** RAI/Processes

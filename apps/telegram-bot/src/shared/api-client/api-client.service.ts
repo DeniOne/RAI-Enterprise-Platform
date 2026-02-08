@@ -116,7 +116,7 @@ export class ApiClientService {
     }
 
     async confirmLogin(sessionId: string): Promise<{ accessToken: string }> {
-        return this.request('/internal/telegram/confirm-login', {
+        return this.request('/api/internal/telegram/confirm-login', {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({ sessionId }),
@@ -124,7 +124,7 @@ export class ApiClientService {
     }
 
     async denyLogin(sessionId: string): Promise<void> {
-        return this.request('/internal/telegram/deny-login', {
+        return this.request('/api/internal/telegram/deny-login', {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({ sessionId }),
@@ -135,7 +135,7 @@ export class ApiClientService {
      * User Management
      */
     async getUser(telegramId: string): Promise<any> {
-        return this.request('/internal/telegram/user/get', {
+        return this.request('/api/internal/telegram/user/get', {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({ telegramId }),
@@ -144,7 +144,7 @@ export class ApiClientService {
 
     async upsertUser(data: any): Promise<any> {
         const idempotencyKey = this._generateIdempotencyKey('upsertUser', data);
-        return this.request('/internal/telegram/user/upsert', {
+        return this.request('/api/internal/telegram/user/upsert', {
             method: 'POST',
             headers: this.getHeaders(undefined, idempotencyKey),
             body: JSON.stringify(data),
@@ -152,14 +152,14 @@ export class ApiClientService {
     }
 
     async getFirstCompany(): Promise<any> {
-        return this.request('/internal/telegram/company/first', {
+        return this.request('/api/internal/telegram/company/first', {
             method: 'POST',
             headers: this.getHeaders(),
         });
     }
 
     async getActiveUsers(): Promise<any[]> {
-        return this.request('/internal/telegram/users/active', {
+        return this.request('/api/internal/telegram/users/active', {
             method: 'POST',
             headers: this.getHeaders(),
         });
@@ -169,7 +169,7 @@ export class ApiClientService {
      * Task Management
      */
     async getMyTasks(accessToken: string): Promise<TaskDto[]> {
-        return this.request('/tasks/my', {
+        return this.request('/api/tasks/my', {
             method: 'GET',
             headers: this.getHeaders(accessToken),
         });
@@ -177,7 +177,7 @@ export class ApiClientService {
 
     async startTask(taskId: string, accessToken: string): Promise<TaskDto> {
         const idempotencyKey = `start_task:${taskId}`;
-        return this.request(`/tasks/${taskId}/start`, {
+        return this.request(`/api/tasks/${taskId}/start`, {
             method: 'POST',
             headers: this.getHeaders(accessToken, idempotencyKey),
         });
@@ -185,10 +185,43 @@ export class ApiClientService {
 
     async completeTask(taskId: string, accessToken: string, actuals?: any[]): Promise<TaskDto> {
         const idempotencyKey = `complete_task:${taskId}`;
-        return this.request(`/tasks/${taskId}/complete`, {
+        return this.request(`/api/tasks/${taskId}/complete`, {
             method: 'POST',
             headers: this.getHeaders(accessToken, idempotencyKey),
             body: JSON.stringify({ actuals: actuals || [] }),
+        });
+    }
+
+    async getTechMapBySeason(seasonId: string, accessToken: string): Promise<any> {
+        return this.request(`/api/tech-map/season/${seasonId}`, {
+            method: 'GET',
+            headers: this.getHeaders(accessToken),
+        });
+    }
+
+    /**
+     * HR Pulse Surveys
+     */
+    async getPulseSurveys(accessToken: string): Promise<any[]> {
+        return this.request('/api/hr/pulse/surveys', {
+            method: 'GET',
+            headers: this.getHeaders(accessToken),
+        });
+    }
+
+    async submitPulseResponse(data: { pulseSurveyId: string; respondentId: string; answers: any; employeeId: string }, accessToken: string): Promise<any> {
+        return this.request('/api/hr/pulse/submit', {
+            method: 'POST',
+            headers: this.getHeaders(accessToken),
+            body: JSON.stringify(data),
+        });
+    }
+
+    async createObservation(data: any, accessToken: string): Promise<any> {
+        return this.request('/api/field-observation', {
+            method: 'POST',
+            headers: this.getHeaders(accessToken),
+            body: JSON.stringify(data),
         });
     }
 }

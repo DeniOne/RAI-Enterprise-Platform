@@ -23,6 +23,11 @@ export class AuthController {
     private telegramAuthService: TelegramAuthService,
   ) { }
 
+  @Get("ping")
+  ping() {
+    return { status: "ok", timestamp: new Date().toISOString() };
+  }
+
   @Post("login")
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute for login
   @ApiOperation({ summary: "User login" })

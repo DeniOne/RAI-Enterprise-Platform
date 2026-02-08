@@ -1,3 +1,12 @@
+﻿---
+id: principle-vision
+type: principle
+status: approved
+owners: [architects, business-owners]
+measured_by: [metric-total-roi, metric-techmap-completion]
+tags: [vision-aligned]
+---
+
 # Vision & Scope: RAI Enterprise Platform
 
 > **Статус:** Живой документ | **Версия:** 2.0 (Enterprise Definition) | **Обновлено:** 2026.02.03
@@ -99,3 +108,4 @@
 | Версия | Дата | Автор | Изменения |
 |--------|------|-------|-----------|
 | 2.0 | 2026.02.03 | AI Assistant | Внедрение концепции "2 Контура" (Back/Front Office) |
+| 2.1 | 2026.02.07 | Antigravity | Phase Beta IN PROGRESS (Audit correction: missing Contour 2 Field Execution). |

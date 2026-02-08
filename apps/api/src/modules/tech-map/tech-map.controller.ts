@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, Get } from '@nestjs/common';
+import { Controller, Post, Body, Param, Get, Req } from '@nestjs/common';
 import { TechMapService } from './tech-map.service';
 
 @Controller('tech-map')
@@ -13,5 +13,23 @@ export class TechMapController {
     @Get(':id/validate')
     async validate(@Param('id') id: string) {
         return this.techMapService.validateMap(id);
+    }
+
+    @Get(':id')
+    async findOne(@Param('id') id: string, @Req() req: any) {
+        const companyId = req.user.companyId;
+        return this.techMapService.findOne(id, companyId);
+    }
+
+    @Get('season/:seasonId')
+    async findBySeason(@Param('seasonId') seasonId: string, @Req() req: any) {
+        const companyId = req.user.companyId;
+        return this.techMapService.findBySeason(seasonId, companyId);
+    }
+
+    @Post(':id/activate')
+    async activate(@Param('id') id: string, @Req() req: any) {
+        const companyId = req.user.companyId;
+        return this.techMapService.activate(id, companyId);
     }
 }

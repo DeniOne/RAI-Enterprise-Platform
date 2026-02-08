@@ -1,3 +1,11 @@
+---
+id: component-core-final-report
+type: component
+status: review
+owners: [architects]
+aligned_with: [principle-axioms]
+---
+
 # BUSINESS_CORE_FINAL
 
 ## Статус документа

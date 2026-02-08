@@ -1,3 +1,11 @@
+﻿---
+id: index-project-map
+type: concept
+status: approved
+owners: [architects]
+aligned_with: [principle-vision]
+---
+
 # Project Map — RAI Enterprise Platform 🗺️
 
 # 🗺️ Карта проекта RAI Enterprise Platform
@@ -109,9 +117,14 @@ text
 
 ### 🛠️ 05-PROCESSES (ПРОЦЕССЫ)
 05-PROCESSES/
+??? WORKFLOWS/
+? ??? GAMMA_INCIDENT_RUNBOOK.md # Runbook ?????????? Gamma
+??? DEVELOPMENT_GUIDELINES/
+  ??? AI_MODEL_GOVERNANCE.md # Governance ???????
 └── DEVELOPMENT_GUIDELINES/
     ├── BUSINESS_CORE_CANON.md # Как расширять ядро
-    └── RAI_CANON.md # Как писать агро-логику
+    ├── RAI_CANON.md # Как писать агро-логику
+    └── KNOWLEDGE_FABRIC_UI.md # Спецификация UI знаний
 
 *[Продолжение для 03-07 опускаю для краткости, но в реальном файле будет полная структура]*
 
@@ -130,10 +143,8 @@ text
 2. **RAI Domain документы** - агро-логика
 3. **Телеграм бот спецификации** - интерфейсы
 
-### Фаза 3: ДЕТАЛИЗАЦИЯ (неделя 3-4)
-1. **Тест-планы и процессы**
-2. **Инфраструктурные документы**
 3. **UI/UX спецификации**
+4. **[Knowledge Fabric UI](03-DESIGN/KNOWLEDGE_FABRIC_UI.md)** - Graph & Logic UI
 
 ---
 

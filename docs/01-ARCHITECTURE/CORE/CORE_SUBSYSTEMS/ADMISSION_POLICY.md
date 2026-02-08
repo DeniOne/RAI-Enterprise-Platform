@@ -1,3 +1,12 @@
+---
+id: control-admission-policy
+type: control
+status: approved
+owners: [architects, security-officers]
+implements: [principle-canon]
+measured_by: [metric-time-to-value]
+---
+
 # ADMISSION × DECISIONS POLICY
 
 ## Статус документа

@@ -1,3 +1,11 @@
+---
+id: component-enterprise-cmr
+type: component
+status: review
+owners: [consultants, architects]
+aligned_with: [principle-vision]
+---
+
 # Domain: CRM (Consulting CRM) — Consulting Control Plane
 
 > **Contour:** 1 (Enterprise Back-Office) | **Module:** CRM/CMR  

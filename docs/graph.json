@@ -1,0 +1,1581 @@
+{
+  "nodes": [
+    {
+      "id": "component-finance-economy",
+      "type": "component",
+      "status": "draft",
+      "owners": [
+        "executives"
+      ],
+      "implements": [
+        "principle-vision"
+      ],
+      "tags": [
+        "vision-aligned"
+      ],
+      "source_file": "00-STRATEGY/Finance & Economy.md"
+    },
+    {
+      "id": "process-hr-ops",
+      "type": "process",
+      "status": "approved",
+      "owners": [
+        "hr-department"
+      ],
+      "depends_on": [
+        "principle-vision"
+      ],
+      "source_file": "00-STRATEGY/HR_Functions_Operating_Model.md"
+    },
+    {
+      "id": "process-roadmap",
+      "type": "process",
+      "status": "approved",
+      "owners": [
+        "product-owner"
+      ],
+      "depends_on": [
+        "principle-vision",
+        "principle-axioms"
+      ],
+      "source_file": "00-STRATEGY/ROADMAP_PHASES.md"
+    },
+    {
+      "id": "guideline-success-metrics",
+      "type": "guideline",
+      "status": "draft",
+      "owners": [
+        "stakeholders"
+      ],
+      "relations": [],
+      "source_file": "00-STRATEGY/SUCCESS_METRICS.md"
+    },
+    {
+      "id": "principle-vision",
+      "type": "principle",
+      "status": "approved",
+      "owners": [
+        "architects",
+        "business-owners"
+      ],
+      "measured_by": [
+        "metric-total-roi",
+        "metric-techmap-completion"
+      ],
+      "tags": [
+        "vision-aligned"
+      ],
+      "source_file": "00-STRATEGY/VISION_SCOPE.md"
+    },
+    {
+      "id": "component-core-composition",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/CORE/CORE_COMPOSITION.md"
+    },
+    {
+      "id": "component-core-concept",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "architects",
+        "backend-leads"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/CORE/CORE_CONCEPT.md"
+    },
+    {
+      "id": "component-core-final-report",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/CORE/CORE_FINAL_REPORT.md"
+    },
+    {
+      "id": "guideline-admission-rules",
+      "type": "guideline",
+      "status": "review",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/CORE/CORE_INTEGRATION_RULES_2.md"
+    },
+    {
+      "id": "control-admission-policy",
+      "type": "control",
+      "status": "approved",
+      "owners": [
+        "architects",
+        "security-officers"
+      ],
+      "implements": [
+        "principle-canon"
+      ],
+      "measured_by": [
+        "metric-time-to-value"
+      ],
+      "source_file": "01-ARCHITECTURE/CORE/CORE_SUBSYSTEMS/ADMISSION_POLICY.md"
+    },
+    {
+      "id": "control-audit-system",
+      "type": "control",
+      "status": "approved",
+      "owners": [
+        "backend-leads",
+        "security-officers"
+      ],
+      "implements": [
+        "principle-axioms"
+      ],
+      "measured_by": [
+        "metric-techmap-completion"
+      ],
+      "source_file": "01-ARCHITECTURE/CORE/CORE_SUBSYSTEMS/AUDIT_EVENTS.md"
+    },
+    {
+      "id": "service-economy",
+      "type": "service",
+      "status": "review",
+      "owners": [
+        "architects",
+        "finance-leads"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/CORE/CORE_SUBSYSTEMS/ECONOMY_TRANSACTION.md"
+    },
+    {
+      "id": "service-fsm-engine",
+      "type": "service",
+      "status": "review",
+      "owners": [
+        "architects",
+        "techleads"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/CORE/CORE_SUBSYSTEMS/FSM_ENGINE.md"
+    },
+    {
+      "id": "service-iam",
+      "type": "service",
+      "status": "review",
+      "owners": [
+        "architects",
+        "security-officers"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/CORE/CORE_SUBSYSTEMS/IDENTITY_ACCESS.md"
+    },
+    {
+      "id": "component-registry-model",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/CORE/CORE_SUBSYSTEMS/REGISTRY_MODEL.md"
+    },
+    {
+      "id": "control-role-model",
+      "type": "control",
+      "status": "approved",
+      "owners": [
+        "architects",
+        "product-owner"
+      ],
+      "depends_on": [
+        "control-admission-policy"
+      ],
+      "source_file": "01-ARCHITECTURE/CORE/CORE_SUBSYSTEMS/ROLE_MODEL.md"
+    },
+    {
+      "id": "service-structure-registry",
+      "type": "service",
+      "status": "review",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/CORE/CORE_SUBSYSTEMS/STRUCTURE_REGISTRY.md"
+    },
+    {
+      "id": "service-task-workflow",
+      "type": "service",
+      "status": "review",
+      "owners": [
+        "architects",
+        "techleads"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/CORE/CORE_SUBSYSTEMS/TASK_WORKFLOW.md"
+    },
+    {
+      "id": "component-core-readme",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/CORE/README.md"
+    },
+    {
+      "id": "decision-adr-001",
+      "type": "decision",
+      "status": "approved",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/DECISIONS/ADR_001_MICROSERVICES_VS_MONOLITH.md"
+    },
+    {
+      "id": "decision-adr-002",
+      "type": "decision",
+      "status": "approved",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/DECISIONS/ADR_002_EVENT_STORING_STRATEGY.md"
+    },
+    {
+      "id": "decision-adr-003",
+      "type": "decision",
+      "status": "approved",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/DECISIONS/ADR_003_DATABASE_STRATEGY.md"
+    },
+    {
+      "id": "decision-adr-004",
+      "type": "decision",
+      "status": "approved",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/DECISIONS/ADR_004_API_GATEWAY_PATTERN.md"
+    },
+    {
+      "id": "decision-adr-005",
+      "type": "decision",
+      "status": "approved",
+      "owners": [
+        "architects",
+        "security-officers"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/DECISIONS/ADR_005_Аутентификация и авторизация.md"
+    },
+    {
+      "id": "decision-index",
+      "type": "decision",
+      "status": "approved",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/DECISIONS/index.md"
+    },
+    {
+      "id": "decision-log-main",
+      "type": "decision",
+      "status": "approved",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/DECISIONS/RAI_DECISION_LOG.md"
+    },
+    {
+      "id": "component-apl",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "architects",
+        "product-owner"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "01-ARCHITECTURE/HLD/AGRO_PROCESS_LAYER.md"
+    },
+    {
+      "id": "component-ai-hub",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "architects",
+        "techleads"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/HLD/AI_ORCHESTRATION_HUB.md"
+    },
+    {
+      "id": "component-containers-c4",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/HLD/CONTAINERS_C4_L2.md"
+    },
+    {
+      "id": "component-engram-memory",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/HLD/ENGRAM_MEMORY_SYSTEM.md"
+    },
+    {
+      "id": "component-event-driven-arch",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/HLD/EVENT_DRIVEN_ARCH.md"
+    },
+    {
+      "id": "component-system-context-c4",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/HLD/SYSTEM_CONTEXT_C4_L1.md"
+    },
+    {
+      "id": "component-uma",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "01-ARCHITECTURE/HLD/UNIFIED_MEMORY_ARCHITECTURE.md"
+    },
+    {
+      "id": "principle-axioms",
+      "type": "principle",
+      "status": "approved",
+      "owners": [
+        "architects"
+      ],
+      "measured_by": [
+        "metric-time-to-value"
+      ],
+      "source_file": "01-ARCHITECTURE/PRINCIPLES/ARCHITECTURAL_AXIOMS.md"
+    },
+    {
+      "id": "principle-canon",
+      "type": "principle",
+      "status": "review",
+      "owners": [
+        "architects"
+      ],
+      "implements": [
+        "principle-axioms"
+      ],
+      "tags": [
+        "highest-normative-act",
+        "needs-metrics",
+        "governance-gap"
+      ],
+      "source_file": "01-ARCHITECTURE/PRINCIPLES/CANON.md"
+    },
+    {
+      "id": "control-forbidden-rules",
+      "type": "control",
+      "status": "approved",
+      "owners": [
+        "architects",
+        "techleads"
+      ],
+      "implements": [
+        "principle-canon",
+        "principle-axioms"
+      ],
+      "tags": [
+        "multi-principle-control"
+      ],
+      "source_file": "01-ARCHITECTURE/PRINCIPLES/FORBIDDEN.md"
+    },
+    {
+      "id": "component-rai-agro-techmap",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "domain-experts",
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "02-DOMAINS/AGRO_DOMAIN/TECH_MAP_DETAILED.md"
+    },
+    {
+      "id": "component-enterprise-cmr",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "consultants",
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "02-DOMAINS/ENTERPRISE_DOMAIN/CMR_CONCEPT.md"
+    },
+    {
+      "id": "component-enterprise-crm",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "sales",
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "02-DOMAINS/ENTERPRISE_DOMAIN/CRM.md"
+    },
+    {
+      "id": "component-enterprise-finance",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "finance",
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "02-DOMAINS/ENTERPRISE_DOMAIN/FINANCE.md"
+    },
+    {
+      "id": "component-enterprise-hr",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "hr",
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "02-DOMAINS/ENTERPRISE_DOMAIN/HR.md"
+    },
+    {
+      "id": "component-enterprise-legal",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "legal",
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "02-DOMAINS/ENTERPRISE_DOMAIN/LEGAL.md"
+    },
+    {
+      "id": "component-rai-domain",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "domain-experts",
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "tags": [
+        "conceptual",
+        "domain-definition"
+      ],
+      "source_file": "02-DOMAINS/RAI_DOMAIN/DOMAIN_OVERVIEW.md"
+    },
+    {
+      "id": "component-rai-entity-crop",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "domain-experts"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "02-DOMAINS/RAI_DOMAIN/ENTITIES/CROP.md"
+    },
+    {
+      "id": "component-rai-entity-map",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "domain-experts"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "02-DOMAINS/RAI_DOMAIN/ENTITIES/ENTITY_MAP.md"
+    },
+    {
+      "id": "component-rai-entity-field",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "domain-experts"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "02-DOMAINS/RAI_DOMAIN/ENTITIES/FIELD.md"
+    },
+    {
+      "id": "component-rai-entity-season",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "domain-experts"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "02-DOMAINS/RAI_DOMAIN/ENTITIES/SEASON.md"
+    },
+    {
+      "id": "guideline-rai-ai-policy",
+      "type": "guideline",
+      "status": "review",
+      "owners": [
+        "domain-experts"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "02-DOMAINS/RAI_DOMAIN/POLICIES/AI_ADVISORY_POLICY.md"
+    },
+    {
+      "id": "guideline-rai-ai-rules",
+      "type": "guideline",
+      "status": "review",
+      "owners": [
+        "domain-experts"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "02-DOMAINS/RAI_DOMAIN/POLICIES/AI_ADVISORY_RULES.md"
+    },
+    {
+      "id": "component-rai-kpi-model",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "domain-experts"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "02-DOMAINS/RAI_DOMAIN/POLICIES/KPI_MODEL.md"
+    },
+    {
+      "id": "component-rai-process-map",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "domain-experts"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "02-DOMAINS/RAI_DOMAIN/PROCESSES/PROCESS_MAP.md"
+    },
+    {
+      "id": "component-rai-process-planning",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "domain-experts"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "02-DOMAINS/RAI_DOMAIN/PROCESSES/SEASON_PLANNING.md"
+    },
+    {
+      "id": "component-rai-process-execution",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "domain-experts"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "02-DOMAINS/RAI_DOMAIN/PROCESSES/TASK_EXECUTION.md"
+    },
+    {
+      "id": "guideline-design-cmr-ui",
+      "type": "guideline",
+      "status": "review",
+      "owners": [
+        "designers",
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "03-DESIGN/CMR_UI_UX.md"
+    },
+    {
+      "id": "guideline-design-knowledge-fabric",
+      "type": "guideline",
+      "status": "review",
+      "owners": [
+        "architects",
+        "designers"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "03-DESIGN/KNOWLEDGE_FABRIC_UI.md"
+    },
+    {
+      "id": "guideline-design-techmap-ui",
+      "type": "guideline",
+      "status": "review",
+      "owners": [
+        "designers",
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "03-DESIGN/TECH_MAP_UI.md"
+    },
+    {
+      "id": "guideline-design-bot-intents",
+      "type": "guideline",
+      "status": "review",
+      "owners": [
+        "designers",
+        "techleads"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "03-DESIGN/TELEGRAM_BOT/INTENT_MAP.md"
+    },
+    {
+      "id": "guideline-design-bot-policy",
+      "type": "guideline",
+      "status": "review",
+      "owners": [
+        "designers",
+        "techleads"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "03-DESIGN/TELEGRAM_BOT/INTENT_POLICY.md"
+    },
+    {
+      "id": "guideline-design-bot-limits",
+      "type": "guideline",
+      "status": "approved",
+      "owners": [
+        "designers",
+        "techleads"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "03-DESIGN/TELEGRAM_BOT/LIMITATIONS.md"
+    },
+    {
+      "id": "guideline-design-bot-scenarios",
+      "type": "guideline",
+      "status": "approved",
+      "owners": [
+        "designers"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "03-DESIGN/TELEGRAM_BOT/SCENARIOS.md"
+    },
+    {
+      "id": "guideline-design-bot-ux",
+      "type": "guideline",
+      "status": "approved",
+      "owners": [
+        "designers"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "03-DESIGN/TELEGRAM_BOT/UX_CANON.md"
+    },
+    {
+      "id": "guideline-design-brand-book",
+      "type": "guideline",
+      "status": "approved",
+      "owners": [
+        "brand-manager"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "03-DESIGN/UI_UX/BRAND_BOOK.md"
+    },
+    {
+      "id": "guideline-design-system-canon",
+      "type": "guideline",
+      "status": "approved",
+      "owners": [
+        "designers"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "03-DESIGN/UI_UX/DESIGN_SYSTEM.md"
+    },
+    {
+      "id": "metric-techmap-completion",
+      "type": "metric",
+      "status": "approved",
+      "owners": [
+        "agronomy-leads"
+      ],
+      "relations": "",
+      "measures": [
+        "principle-vision",
+        "control-audit-system"
+      ],
+      "tags": [
+        "operational",
+        "execution-quality"
+      ],
+      "source_file": "05-METRICS/METRIC_COMPLETION.md"
+    },
+    {
+      "id": "metric-total-roi",
+      "type": "metric",
+      "status": "review",
+      "owners": [
+        "finance-leads"
+      ],
+      "relations": "",
+      "measures": [
+        "principle-vision"
+      ],
+      "depends_on": [
+        "control-audit-system"
+      ],
+      "tags": [
+        "business-kpi",
+        "aggregate",
+        "lagging-indicator",
+        "derived"
+      ],
+      "source_file": "05-METRICS/METRIC_ROI.md"
+    },
+    {
+      "id": "metric-time-to-value",
+      "type": "metric",
+      "status": "approved",
+      "owners": [
+        "techleads"
+      ],
+      "relations": "",
+      "measures": [
+        "principle-axioms",
+        "control-admission-policy"
+      ],
+      "tags": [
+        "performance",
+        "agility",
+        "operational"
+      ],
+      "source_file": "05-METRICS/METRIC_TTV.md"
+    },
+    {
+      "id": "guideline-engineering-ai-prompts",
+      "type": "guideline",
+      "status": "approved",
+      "owners": [
+        "techleads"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "05-PROCESSES/DEVELOPMENT_GUIDELINES/AI_PROMPT_STANDARDS.md"
+    },
+    {
+      "id": "principle-business-core-canon",
+      "type": "principle",
+      "status": "approved",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "05-PROCESSES/DEVELOPMENT_GUIDELINES/BUSINESS_CORE_CANON.md"
+    },
+    {
+      "id": "principle-rai-domain-canon",
+      "type": "principle",
+      "status": "approved",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "05-PROCESSES/DEVELOPMENT_GUIDELINES/RAI_CANON.md"
+    },
+    {
+      "id": "component-implementation-wbs",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "techleads",
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "06-IMPLEMENTATION/FULL_PROJECT_WBS.md"
+    },
+    {
+      "id": "component-implementation-alpha-scope",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "techleads"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "06-IMPLEMENTATION/PHASE_ALPHA/SCOPE.md"
+    },
+    {
+      "id": "component-implementation-cmr-roadmap",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "techleads",
+        "consultants"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "06-IMPLEMENTATION/PHASE_BETA/CMR_ROADMAP.md"
+    },
+    {
+      "id": "component-implementation-beta-scope",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "techleads"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "06-IMPLEMENTATION/PHASE_BETA/SCOPE.md"
+    },
+    {
+      "id": "component-implementation-tech-plan",
+      "type": "component",
+      "status": "review",
+      "owners": [
+        "techleads"
+      ],
+      "aligned_with": [
+        "principle-axioms"
+      ],
+      "source_file": "06-IMPLEMENTATION/TECHNICAL_DEVELOPMENT_PLAN.md"
+    },
+    {
+      "id": "index-project-map",
+      "type": "concept",
+      "status": "approved",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "PROJECT_MAP.md"
+    },
+    {
+      "id": "index-knowledge-base",
+      "type": "concept",
+      "status": "approved",
+      "owners": [
+        "architects"
+      ],
+      "aligned_with": [
+        "principle-vision"
+      ],
+      "source_file": "README.md"
+    }
+  ],
+  "links": [
+    {
+      "source": "component-finance-economy",
+      "target": "principle-vision",
+      "type": "implements",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "process-hr-ops",
+      "target": "principle-vision",
+      "type": "depends_on",
+      "source_kind": "process",
+      "exists_in_docs": true
+    },
+    {
+      "source": "process-roadmap",
+      "target": "principle-vision",
+      "type": "depends_on",
+      "source_kind": "process",
+      "exists_in_docs": true
+    },
+    {
+      "source": "process-roadmap",
+      "target": "principle-axioms",
+      "type": "depends_on",
+      "source_kind": "process",
+      "exists_in_docs": true
+    },
+    {
+      "source": "principle-vision",
+      "target": "metric-total-roi",
+      "type": "measured_by",
+      "source_kind": "principle",
+      "exists_in_docs": true
+    },
+    {
+      "source": "principle-vision",
+      "target": "metric-techmap-completion",
+      "type": "measured_by",
+      "source_kind": "principle",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-core-composition",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-core-concept",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-core-final-report",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "guideline-admission-rules",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "guideline",
+      "exists_in_docs": true
+    },
+    {
+      "source": "control-admission-policy",
+      "target": "principle-canon",
+      "type": "implements",
+      "source_kind": "control",
+      "exists_in_docs": true
+    },
+    {
+      "source": "control-admission-policy",
+      "target": "metric-time-to-value",
+      "type": "measured_by",
+      "source_kind": "control",
+      "exists_in_docs": true
+    },
+    {
+      "source": "control-audit-system",
+      "target": "principle-axioms",
+      "type": "implements",
+      "source_kind": "control",
+      "exists_in_docs": true
+    },
+    {
+      "source": "control-audit-system",
+      "target": "metric-techmap-completion",
+      "type": "measured_by",
+      "source_kind": "control",
+      "exists_in_docs": true
+    },
+    {
+      "source": "service-economy",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "service",
+      "exists_in_docs": true
+    },
+    {
+      "source": "service-fsm-engine",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "service",
+      "exists_in_docs": true
+    },
+    {
+      "source": "service-iam",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "service",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-registry-model",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "control-role-model",
+      "target": "control-admission-policy",
+      "type": "depends_on",
+      "source_kind": "control",
+      "exists_in_docs": true
+    },
+    {
+      "source": "service-structure-registry",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "service",
+      "exists_in_docs": true
+    },
+    {
+      "source": "service-task-workflow",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "service",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-core-readme",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "decision-adr-001",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "decision",
+      "exists_in_docs": true
+    },
+    {
+      "source": "decision-adr-002",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "decision",
+      "exists_in_docs": true
+    },
+    {
+      "source": "decision-adr-003",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "decision",
+      "exists_in_docs": true
+    },
+    {
+      "source": "decision-adr-004",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "decision",
+      "exists_in_docs": true
+    },
+    {
+      "source": "decision-adr-005",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "decision",
+      "exists_in_docs": true
+    },
+    {
+      "source": "decision-index",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "decision",
+      "exists_in_docs": true
+    },
+    {
+      "source": "decision-log-main",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "decision",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-apl",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-ai-hub",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-containers-c4",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-engram-memory",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-event-driven-arch",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-system-context-c4",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-uma",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "principle-axioms",
+      "target": "metric-time-to-value",
+      "type": "measured_by",
+      "source_kind": "principle",
+      "exists_in_docs": true
+    },
+    {
+      "source": "principle-canon",
+      "target": "principle-axioms",
+      "type": "implements",
+      "source_kind": "principle",
+      "exists_in_docs": true
+    },
+    {
+      "source": "control-forbidden-rules",
+      "target": "principle-canon",
+      "type": "implements",
+      "source_kind": "control",
+      "exists_in_docs": true
+    },
+    {
+      "source": "control-forbidden-rules",
+      "target": "principle-axioms",
+      "type": "implements",
+      "source_kind": "control",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-rai-agro-techmap",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-enterprise-cmr",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-enterprise-crm",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-enterprise-finance",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-enterprise-hr",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-enterprise-legal",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-rai-domain",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-rai-entity-crop",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-rai-entity-map",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-rai-entity-field",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-rai-entity-season",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "guideline-rai-ai-policy",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "guideline",
+      "exists_in_docs": true
+    },
+    {
+      "source": "guideline-rai-ai-rules",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "guideline",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-rai-kpi-model",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-rai-process-map",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-rai-process-planning",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-rai-process-execution",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "guideline-design-cmr-ui",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "guideline",
+      "exists_in_docs": true
+    },
+    {
+      "source": "guideline-design-knowledge-fabric",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "guideline",
+      "exists_in_docs": true
+    },
+    {
+      "source": "guideline-design-techmap-ui",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "guideline",
+      "exists_in_docs": true
+    },
+    {
+      "source": "guideline-design-bot-intents",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "guideline",
+      "exists_in_docs": true
+    },
+    {
+      "source": "guideline-design-bot-policy",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "guideline",
+      "exists_in_docs": true
+    },
+    {
+      "source": "guideline-design-bot-limits",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "guideline",
+      "exists_in_docs": true
+    },
+    {
+      "source": "guideline-design-bot-scenarios",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "guideline",
+      "exists_in_docs": true
+    },
+    {
+      "source": "guideline-design-bot-ux",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "guideline",
+      "exists_in_docs": true
+    },
+    {
+      "source": "guideline-design-brand-book",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "guideline",
+      "exists_in_docs": true
+    },
+    {
+      "source": "guideline-design-system-canon",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "guideline",
+      "exists_in_docs": true
+    },
+    {
+      "source": "metric-techmap-completion",
+      "target": "principle-vision",
+      "type": "measures",
+      "source_kind": "metric",
+      "exists_in_docs": true
+    },
+    {
+      "source": "metric-techmap-completion",
+      "target": "control-audit-system",
+      "type": "measures",
+      "source_kind": "metric",
+      "exists_in_docs": true
+    },
+    {
+      "source": "metric-total-roi",
+      "target": "principle-vision",
+      "type": "measures",
+      "source_kind": "metric",
+      "exists_in_docs": true
+    },
+    {
+      "source": "metric-total-roi",
+      "target": "control-audit-system",
+      "type": "depends_on",
+      "source_kind": "metric",
+      "exists_in_docs": true
+    },
+    {
+      "source": "metric-time-to-value",
+      "target": "principle-axioms",
+      "type": "measures",
+      "source_kind": "metric",
+      "exists_in_docs": true
+    },
+    {
+      "source": "metric-time-to-value",
+      "target": "control-admission-policy",
+      "type": "measures",
+      "source_kind": "metric",
+      "exists_in_docs": true
+    },
+    {
+      "source": "guideline-engineering-ai-prompts",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "guideline",
+      "exists_in_docs": true
+    },
+    {
+      "source": "principle-business-core-canon",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "principle",
+      "exists_in_docs": true
+    },
+    {
+      "source": "principle-rai-domain-canon",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "principle",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-implementation-wbs",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-implementation-alpha-scope",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-implementation-cmr-roadmap",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-implementation-beta-scope",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "component-implementation-tech-plan",
+      "target": "principle-axioms",
+      "type": "aligned_with",
+      "source_kind": "component",
+      "exists_in_docs": true
+    },
+    {
+      "source": "index-project-map",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "concept",
+      "exists_in_docs": true
+    },
+    {
+      "source": "index-knowledge-base",
+      "target": "principle-vision",
+      "type": "aligned_with",
+      "source_kind": "concept",
+      "exists_in_docs": true
+    }
+  ],
+  "metadata": {
+    "total_nodes": 76,
+    "total_links": 83,
+    "version": "1.0",
+    "generated_at": "2026-02-05T20:57:51.823Z"
+  }
+}

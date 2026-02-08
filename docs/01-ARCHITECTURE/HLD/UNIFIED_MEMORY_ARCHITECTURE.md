@@ -1,3 +1,11 @@
+---
+id: component-uma
+type: component
+status: review
+owners: [architects]
+aligned_with: [principle-axioms]
+---
+
 # HLD: Unified Memory Architecture (The RAI Brain) 🧠
 
 > **Статус:** Концепт | **Фаза:** Gamma/Delta | **Слой:** Архитектура / HLD

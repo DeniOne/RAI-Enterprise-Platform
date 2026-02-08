@@ -6,6 +6,13 @@ export interface UserSession {
     userId?: string;
     companyId?: string;
     lastActive: number;
+    activeTaskId?: string;
+    currentCoordinates?: { lat: number; lng: number };
+    surveyState?: {
+        surveyId: string;
+        currentQuestionIndex: number;
+        answers: Record<string, any>;
+    };
 }
 
 @Injectable()

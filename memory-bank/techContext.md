@@ -4,6 +4,8 @@
 - **Backend Core**: TypeScript, Node.js (на базе BusinessCore).
 - **Database**: PostgreSQL (через Prisma ORM).
 - **Architecture**: Domain-Driven Design (DDD) + Clean Architecture principles.
+- **Modules**: `TaskModule`, `AgroOrchestratorModule`, `TechMapModule`, `CmrModule`, `HrModule`, `FinanceEconomyModule`
+ - **Key Services**: `TaskService`, `AgroOrchestratorService`, `EconomyService`, `FinanceService`, `BudgetService`
 - **Interfaces**: 
   - Telegram Bot API (Standalone Microservice: `apps/telegram-bot`).
   - NestJS (Backend API: `apps/api`).

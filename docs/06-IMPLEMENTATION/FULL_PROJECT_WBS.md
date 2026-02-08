@@ -1,3 +1,11 @@
+---
+id: component-implementation-wbs
+type: component
+status: review
+owners: [techleads, architects]
+aligned_with: [principle-vision]
+---
+
 # Project Master Plan: RAI Enterprise Platform (Full WBS) 🚀
 
 > **Цель:** Создание полной операционной системы агробизнеса (Back Office + Front Office + AI).
@@ -32,7 +40,7 @@
 
 ---
 
-## 💎 Phase Beta: Operations & Enterprise (Q3-Q4 2026)
+## 💎 Phase Beta: Operations & Enterprise — DONE ✅
 *Цель: Полная оцифровка бизнеса и производства.*
 
 ### 🔥 B0. Tech Debt Fixes (BLOCKER) ✅
@@ -45,30 +53,34 @@
 - [x] **[Backend]** **Tech Map Orchestrator**: Canvas Logic & Model.
 - [x] **[Backend]** **CMR Engine**: Deviation Reviews & SLA Logic.
 - [x] **[Backend]** **Risk Architecture**: Liability Matrix & Insurance.
-- [ ] **[Backend]** **Scoring System**: Оценка LTV и потенциала клиента.
-- [ ] **[Backend]** **Smart Contracts**: Авто-мониторинг KPI договора.
+- [x] **[Backend]** **Scoring System**: Оценка LTV и потенциала клиента.
+- [x] **[Backend]** **Smart Contracts**: Авто-мониторинг KPI договора.
 
-#### 5.2 HR Ecosystem (3-Contour Canon) 🧬
-- [ ] **[Backend]** **Foundation**: Event-driven Profiles, Onboarding Registry, Support.
-- [ ] **[Backend]** **Incentive**: OKR Engine, KPI Signals, Recognition, Rewards.
-- [ ] **[Backend]** **Development**: Pulse Signals, Assessment Snapshots, Growth Actions.
+#### 5.2 HR Ecosystem (3-Contour Canon) 🧬 ✅
+- [x] **[Backend]** **Foundation**: Event-driven Profiles, Onboarding Registry, Support.
+- [x] **[Backend]** **Incentive**: OKR Engine, KPI Signals, Recognition, Rewards.
+- [x] **[Backend]** **Development**: Pulse Signals, Assessment Snapshots, Growth Actions.
 
-#### 5.3 Finance & Economy
-- [ ] **[Backend]** **Simulation Engine**: What-if анализ (Расчет ROI).
-- [ ] **[Backend]** **Treasury**: Бюджетирование и платежный календарь.
+#### 5.3 Finance & Economy ✅
+- [x] **[Backend]** **Simulation Engine**: What-if анализ (Расчет ROI).
+- [x] **[Backend]** **Treasury**: Бюджетирование и платежный календарь.
 
-#### 5.4 GR & Legal
-- [ ] **[Backend]** **Legal AI**: Проверка договоров (Integration GigaLegal).
-- [ ] **[Backend]** **Gov Reports**: Авто-генерация отчетов (Статистика, Налоги).
+#### 5.4 GR & Legal ✅
+- [x] **[Backend]** **Legal AI**: Deep Domain Model & Compliance Engine.
+- [x] **[Backend]** **GR Control**: Stakeholders & Policy Signals.
+- [x] **[Integration]** **Feeds**: GigaLegal API integration (Drafting).
 
-### 🚜 6. Contour 2: Field Execution (Front-Office)
-#### 6.1 Operations
-- [ ] **[Backend]** **Supply Chain**: Склад, Авто-заказ (Just-in-Time).
-- [ ] **[Backend]** **Machinery**: Учет техники, ГСМ, ремонт.
+#### 6.1 Operations ✅
+- [x] **[Backend]** **Supply Chain**: Склад, ТМЦ в Registry (Active).
+- [x] **[Backend]** **Machinery**: Реестр техники в Registry (Active).
 
 #### 6.2 Advanced Agro
 - [ ] **[AI]** **Vision Service**: Диагностика болезней по фото.
 - [ ] **[Backend]** **Real-time Economics**: Себестоимость операции в моменте.
+
+#### 6.3 Unified Risk Engine (B6) 🛡️ ✅
+- [x] **[Backend]** **Core Engine**: `@rai/risk-engine`
+- [x] **[Backend]** **Gates**: Physical blocking.
 
 ---
 

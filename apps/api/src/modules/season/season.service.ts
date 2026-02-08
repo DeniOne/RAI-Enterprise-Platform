@@ -9,10 +9,15 @@ import { CreateSeasonInput } from "./dto/create-season.input";
 import { UpdateSeasonInput } from "./dto/update-season.input";
 import { SeasonBusinessRulesService } from "./services/season-business-rules.service";
 import { SeasonSnapshotService } from "./services/season-snapshot.service";
-import { User, Season, SeasonStatus } from "@prisma/client";
+import { User, Season, SeasonStatus } from "@rai/prisma-client";
 import { AgriculturalAuditEvent } from "../agro-audit/enums/audit-events.enum";
 import { AgroOrchestrator, getRapeseedStageById } from "@rai/agro-orchestrator";
 import { AgroContext } from "@rai/agro-orchestrator";
+
+import { ActionDecisionService } from "../risk/decision.service";
+import { RiskService } from "../risk/risk.service";
+import { RiskTargetType } from "@rai/prisma-client";
+import { RiskBlockedError } from "../risk/risk.errors";
 
 @Injectable()
 export class SeasonService {
@@ -23,7 +28,9 @@ export class SeasonService {
     private readonly auditService: AgroAuditService,
     private readonly businessRules: SeasonBusinessRulesService,
     private readonly snapshotService: SeasonSnapshotService,
-  ) {}
+    private readonly riskService: RiskService,
+    private readonly decisionService: ActionDecisionService,
+  ) { }
 
   /**
    * Creates a new season with multi-tenancy and audit.
@@ -223,6 +230,24 @@ export class SeasonService {
     if (!season) {
       throw new NotFoundException(`Season ${id} not found or access denied`);
     }
+
+    // --- RISK GATE (B6.2) ---
+    const riskAssessment = await this.riskService.assess(
+      companyId,
+      RiskTargetType.SEASON,
+      id
+    );
+
+    if (riskAssessment.verdict === 'BLOCKED') {
+      await this.decisionService.record(
+        companyId,
+        `TRANSITION_${targetStageId}`,
+        id,
+        riskAssessment
+      );
+      throw new RiskBlockedError(riskAssessment);
+    }
+    // ------------------------
 
     this._checkLock(season);
 

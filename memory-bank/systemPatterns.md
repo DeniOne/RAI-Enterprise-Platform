@@ -38,3 +38,32 @@ RAI_EP следует философии **Canon-Driven Development**. Сист�
 ### 8. Tech Map Orchestration
 - **Service as Orchestrator**: `TechMapService` coordinates construction and validation (simulated "Controller" for business logic).
 - **Domain Model over UI**: Tech Maps exist as structured domain entities (`MapStage`, `MapOperation`) rather than JSON blobs.
+ 
++### 9. Economy vs Finance Separation
++- **Economy (Truth)**: Immutable register of economic facts (`EconomicEvent`). Deterministic attribution via pure functions.
++- **Finance (Management)**: Tactical management of liquidity, budgets, and obligations. Uses Economy facts as a source of truth.
++- **Immutable Ledger Projection**: Ledger entries are derived, append-only facts. No direct mutation of financial history is allowed.
+      
+### 10. Global API Routing
+- **Global Prefix**: All backend routes use `/api` prefix (configured in `main.ts`).
+- **Frontend/Bot Alignment**: All clients (Web, Telegram Bot) must explicitly append `/api` to base URL.
+- **Middleware**: Next.js middleware must respect the prefix when vetting protected routes.
+### 11. Compliance Signaling (Legal AI)
+- **Signal vs Block**: Правовой движок выдает сигналы (`COMPLIANT`, `AT_RISK`, `VIOLATED`), но не блокирует операционную деятельность напрямую. Блокировка — прерогатива Risk Engine.
+- **Deep Legal Ontology**: Структурирование права через цепочку `Document -> Norm -> Requirement -> Obligation`. Это позволяет точечно связывать изменения в законах с конкретными бизнес-процессами.
+- **Evidence-based Compliance**: Каждый статус комплаенса должен подкрепляться ссылкой на конкретное обязательство (`Obligation`) и его состояние.
++### 12. Front Canon (Beta)
++- **Front as Projection**: Фронт в фазе Beta — это только панель мониторинга "истины" (Read Model).
++- **Zero Command Power**: UI физически не имеет кнопок управления состояниями и не может обходить оркестраторы.
++- **Restricted Audience**: Фронт предназначен только для C-level и специалистов контроля (Risk/Legal/R&D).
++### 13. Contextual Navigation (No Sidebar)
++- **State-driven Navigation**: Навигация строится от состояния системы ("Где проблема?"), а не от структуры модулей.
++- **Strategic Projection only**: UI — это панель наблюдения (Projection), а не панель управления (Control Surface). Слой Explanation Layer объясняет причины (WHY) каждого состояния.
++### 14. UX-Map Beta (Russian Interface)
++- **Signal-driven UX**: Навигация следует за аномалией (Constraint), а не за структурой данных.
++- **Russian Only**: Все названия интерфейса фронтенда Beta — строго на русском языке для исключения двусмысленности у ЛПР.
++- **Hierarchy of Awareness**: GSV (Обзор) -> Context (Погружение) -> Overlay (Детали). Максимальная глубина — 3 уровня.
+### 15. Internal Secure Bridging (Bot Microservice)
+- **Problem**: API Orchestrator needs to trigger notifications but shouldn't be coupled to a specific Telegraf instance or its process.
+- **Solution**: Secure HTTP Bridge with `X-Internal-API-Key`.
+- **Logic**: API calls a "Generic Internal Notify" endpoint on the bot microservice, keeping the API logic transport-agnostic.

@@ -1,0 +1,54 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-ingestion
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Release.Name }}
+    component: ingestion
+    version: {{ .Values.serviceVersion | quote }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+      component: ingestion
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+        component: ingestion
+        version: {{ .Values.serviceVersion | quote }}
+    spec:
+      containers:
+        - name: ingestion
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          env:
+            - name: SERVICE_VERSION
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-ingestion-config
+                  key: SERVICE_VERSION
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu | quote }}
+              memory: {{ .Values.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu | quote }}
+              memory: {{ .Values.resources.limits.memory | quote }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          # Sprint 1 scaffolding only. Без брокеров и без логики.

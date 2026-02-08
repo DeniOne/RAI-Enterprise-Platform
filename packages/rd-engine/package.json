@@ -1,0 +1,26 @@
+{
+    "name": "@rai/rd-engine",
+    "version": "0.1.0",
+    "private": true,
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": "./dist/index.js",
+        "./orchestrator/ExperimentOrchestrator.js": "./dist/orchestrator/ExperimentOrchestrator.js",
+        "./services/ProtocolValidator.js": "./dist/services/ProtocolValidator.js",
+        "./services/StatisticalService.js": "./dist/services/StatisticalService.js"
+    },
+    "scripts": {
+        "build": "tsc",
+        "test": "jest"
+    },
+    "dependencies": {
+        "@rai/prisma-client": "workspace:*"
+    },
+    "devDependencies": {
+        "typescript": "^5.7.3",
+        "@types/node": "^20.11.0",
+        "jest": "^29.7.0",
+        "ts-jest": "^29.2.5"
+    }
+}

@@ -11,9 +11,12 @@ import { TelegramAuthInternalController } from "./telegram-auth-internal.control
 
 import { ConfigModule, ConfigService } from "@nestjs/config";
 
+import { RedisModule } from "../redis/redis.module";
+
 @Module({
   imports: [
     PrismaModule,
+    RedisModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

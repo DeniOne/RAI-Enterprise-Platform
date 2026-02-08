@@ -1,3 +1,11 @@
+﻿---
+id: process-roadmap
+type: process
+status: approved
+owners: [product-owner]
+depends_on: [principle-vision, principle-axioms]
+---
+
 # Roadmap: Фазы развития RAI Enterprise Platform 🚀
 
 > **Версия:** 1.1 (Architecture Update)

@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
-    transpilePackages: [],
+    transpilePackages: ['react-force-graph-2d', 'three', 'd3-force'],
 }
 
 module.exports = nextConfig

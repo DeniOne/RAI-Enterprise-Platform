@@ -9,7 +9,33 @@
         "target": "es2017",
         "sourceMap": true,
         "outDir": "./dist",
-        "baseUrl": "./",
+        "rootDir": "../..",
+        "paths": {
+            "@rai/prisma-client": [
+                "../../packages/prisma-client/src"
+            ],
+            "@rai/prisma-client/*": [
+                "../../packages/prisma-client/src/*"
+            ],
+            "@rai/legal-engine": [
+                "../../packages/legal-engine/src"
+            ],
+            "@rai/legal-engine/*": [
+                "../../packages/legal-engine/src/*"
+            ],
+            "@rai/rd-engine": [
+                "../../packages/rd-engine/src"
+            ],
+            "@rai/rd-engine/*": [
+                "../../packages/rd-engine/src/*"
+            ],
+            "@rai/agro-orchestrator": [
+                "../../packages/agro-orchestrator/src"
+            ],
+            "@rai/agro-orchestrator/*": [
+                "../../packages/agro-orchestrator/src/*"
+            ]
+        },
         "incremental": true,
         "skipLibCheck": true,
         "strictNullChecks": false,
@@ -17,5 +43,14 @@
         "strictBindCallApply": false,
         "forceConsistentCasingInFileNames": false,
         "noFallthroughCasesInSwitch": false
-    }
+    },
+    "include": [
+        "src/**/*",
+        "verify-beta.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "**/*.spec.ts"
+    ]
 }

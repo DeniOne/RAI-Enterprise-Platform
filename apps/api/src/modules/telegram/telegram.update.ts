@@ -4,7 +4,7 @@ import { TaskService } from "../task/task.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { ProgressService } from "./progress.service";
 import { TelegramAuthService } from "../../shared/auth/telegram-auth.service";
-import { TaskStatus } from "@prisma/client";
+import { TaskStatus, AssetStatus } from "@rai/prisma-client";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -330,6 +330,78 @@ export class TelegramUpdate {
     } catch (error) {
       console.error("❌ Error denying login:", error);
       await ctx.answerCbQuery("Ошибка отклонения");
+    }
+  }
+
+  @Action(/confirm_asset:(.+):(.+)/)
+  async onConfirmAsset(@Ctx() ctx: Context) {
+    const match = (ctx as any).match;
+    const category = match[1];
+    const assetId = match[2];
+
+    const user = await this.getUser(ctx);
+
+    try {
+      if (category === "MACHINERY") {
+        await this.prisma.machinery.update({
+          where: { id: assetId },
+          data: {
+            status: AssetStatus.ACTIVE,
+            confirmedByUserId: user?.id,
+            confirmedAt: new Date()
+          }
+        });
+      } else {
+        await this.prisma.stockItem.update({
+          where: { id: assetId },
+          data: {
+            status: AssetStatus.ACTIVE,
+            confirmedByUserId: user?.id,
+            confirmedAt: new Date()
+          }
+        });
+      }
+      await ctx.answerCbQuery("Актив подтвержден! ✅");
+      await ctx.editMessageText(`✅ <b>Актив добавлен в реестр.</b>\nПодтвердил: ${user?.name || user?.email || "System"}`, { parse_mode: "HTML" });
+    } catch (e) {
+      console.error("❌ Error confirming asset:", e);
+      await ctx.answerCbQuery("Ошибка подтверждения ❌");
+    }
+  }
+
+  @Action(/reject_asset:(.+):(.+)/)
+  async onRejectAsset(@Ctx() ctx: Context) {
+    const match = (ctx as any).match;
+    const category = match[1];
+    const assetId = match[2];
+
+    const user = await this.getUser(ctx);
+
+    try {
+      if (category === "MACHINERY") {
+        await this.prisma.machinery.update({
+          where: { id: assetId },
+          data: {
+            status: AssetStatus.REJECTED,
+            rejectionReason: "USER_REJECTED",
+            confirmedByUserId: user?.id // Сохраняем кто отклонил тоже
+          }
+        });
+      } else {
+        await this.prisma.stockItem.update({
+          where: { id: assetId },
+          data: {
+            status: AssetStatus.REJECTED,
+            rejectionReason: "USER_REJECTED",
+            confirmedByUserId: user?.id
+          }
+        });
+      }
+      await ctx.answerCbQuery("Актив отклонен ❌");
+      await ctx.editMessageText("❌ <b>Предложение отклонено и архивировано.</b>", { parse_mode: "HTML" });
+    } catch (e) {
+      console.error("❌ Error rejecting asset:", e);
+      await ctx.answerCbQuery("Ошибка при отклонении");
     }
   }
 }

@@ -1,0 +1,18 @@
+﻿apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-ingestion
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Release.Name }}
+    component: ingestion
+    version: {{ .Values.serviceVersion | quote }}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ .Release.Name }}
+    component: ingestion
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}

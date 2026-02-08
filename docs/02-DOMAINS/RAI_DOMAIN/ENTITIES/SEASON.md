@@ -1,3 +1,11 @@
+---
+id: component-rai-entity-season
+type: component
+status: review
+owners: [domain-experts]
+aligned_with: [principle-vision]
+---
+
 # Entity: Season (Сезон) 📅
 
 > **Статус:** Канон | **Версия:** 1.1 | **Слой:** RAI/Entities

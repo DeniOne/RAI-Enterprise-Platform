@@ -3,8 +3,7 @@ import { DeviationService } from './deviation.service';
 import { RiskService } from './risk.service';
 import { DecisionService } from './decision.service';
 import { CreateDeviationDto } from './dto/create-deviation.dto'; // Validated in service, but good to have DTO
-import { JwtAuthGuard } from '../../shared/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../shared/auth/guards/roles.guard';
+import { JwtAuthGuard } from '../../shared/auth/jwt-auth.guard';
 
 @Controller('cmr')
 @UseGuards(JwtAuthGuard)
@@ -32,7 +31,7 @@ export class CmrController {
 
     @Get('risks/assess')
     async assessRisk(@Body() data: any) {
-        return this.riskService.assessRisk(data.stage, data.conditions);
+        return this.riskService.assessRisk({ stage: data.stage, conditions: data.conditions });
     }
 
     @Get('decisions')

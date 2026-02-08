@@ -1,3 +1,11 @@
+---
+id: component-ai-hub
+type: component
+status: review
+owners: [architects, techleads]
+aligned_with: [principle-axioms]
+---
+
 # HLD: AI Orchestration Hub (ИИ-Оркестратор) 🤖
 
 > **Статус:** Проектирование | **Фаза реализации:** Beta/Gamma | **Слой:** Архитектура / HLD

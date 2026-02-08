@@ -1,3 +1,11 @@
+---
+id: decision-adr-001
+type: decision
+status: approved
+owners: [architects]
+aligned_with: [principle-axioms]
+---
+
 # ADR 001: Архитектурный стиль — Модульный Монолит в Monorepo
 
 ## Статус

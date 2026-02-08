@@ -1,3 +1,11 @@
+---
+id: guideline-rai-ai-policy
+type: guideline
+status: review
+owners: [domain-experts]
+aligned_with: [principle-vision]
+---
+
 # AI Advisory Policy (Политика ИИ-советника) ⚖️
 
 > **Статус:** Канон | **Версия:** 1.0 | **Слой:** RAI / Policies

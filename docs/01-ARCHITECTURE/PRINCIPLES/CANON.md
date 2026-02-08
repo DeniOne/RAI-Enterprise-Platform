@@ -1,3 +1,12 @@
+---
+id: principle-canon
+type: principle
+status: review
+owners: [architects]
+implements: [principle-axioms]
+tags: [highest-normative-act, needs-metrics, governance-gap]
+---
+
 # PROJECT CANON
 
 ## 0. Статус документа

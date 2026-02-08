@@ -1,3 +1,11 @@
+---
+id: component-enterprise-finance
+type: component
+status: review
+owners: [finance, architects]
+aligned_with: [principle-vision]
+---
+
 # Domain: Finance & Economy
 
 > **Contour:** 1 (Enterprise Back-Office) | **Module:** Finance

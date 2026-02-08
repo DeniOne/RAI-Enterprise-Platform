@@ -76,8 +76,8 @@ export class IdentityRegistryService {
         role: { connect: { id: data.roleId } },
         orgUnitId: data.orgUnitId,
         company: { connect: { id: companyId } },
-        client: data.clientId ? { connect: { id: data.clientId } } : undefined,
-        holding: data.holdingId ? { connect: { id: data.holdingId } } : undefined,
+        clientId: data.clientId,
+        holdingId: data.holdingId,
         status: LifecycleStatus.ACTIVE,
       },
     });

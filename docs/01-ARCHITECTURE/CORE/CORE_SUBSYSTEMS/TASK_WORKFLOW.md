@@ -1,3 +1,11 @@
+---
+id: service-task-workflow
+type: service
+status: review
+owners: [architects, techleads]
+aligned_with: [principle-axioms]
+---
+
 # Subsystem: Task & Workflow Engine ⚙️
 
 > **Статус:** Канон | **Версия:** 1.0 | **Расположение:** Business Core

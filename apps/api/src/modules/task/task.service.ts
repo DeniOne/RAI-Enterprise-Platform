@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { AuditService } from "../../shared/audit/audit.service";
+import { IntegrationService } from "../finance-economy/integrations/application/integration.service";
 import { Task, TaskStatus, SeasonStatus, User } from "@prisma/client";
 import {
   TaskStateMachine,
@@ -16,6 +17,7 @@ export class TaskService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
+    private readonly integrationService: IntegrationService,
   ) { }
 
   /**
@@ -182,6 +184,19 @@ export class TaskService {
             unit: res.unit,
           })),
         });
+
+        // INTEGRATION: Notify Finance & Economy module
+        // Assuming IntegrationService is injected as this.integrationService
+        if (this.integrationService) {
+          const totalAmount = actualResources.reduce((sum, res) => sum + (res.cost || 0), 0);
+          await this.integrationService.handleTaskCompletion({
+            taskId,
+            companyId: task.companyId,
+            seasonId: task.seasonId,
+            fieldId: task.fieldId,
+            amount: totalAmount,
+          });
+        }
       }
 
       return completed;

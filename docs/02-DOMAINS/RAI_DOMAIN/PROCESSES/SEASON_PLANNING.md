@@ -1,3 +1,11 @@
+---
+id: component-rai-process-planning
+type: component
+status: review
+owners: [domain-experts]
+aligned_with: [principle-vision]
+---
+
 # Process: Season Planning (Планирование сезона) 📝
 
 > **Статус:** Канон | **Версия:** 1.0 | **Слой:** RAI/Processes

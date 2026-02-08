@@ -1,0 +1,19 @@
+﻿namespace: rai-gamma
+
+image:
+  repository: "example/inference"
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+service:
+  port: 8000
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "250m"
+    memory: "256Mi"
+
+serviceVersion: "0.1.0"

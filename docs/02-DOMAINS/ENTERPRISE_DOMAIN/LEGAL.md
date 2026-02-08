@@ -1,3 +1,11 @@
+---
+id: component-enterprise-legal
+type: component
+status: review
+owners: [legal, architects]
+aligned_with: [principle-vision]
+---
+
 # Domain: Legal & GR
 
 > **Contour:** 1 (Enterprise Back-Office) | **Module:** Legal

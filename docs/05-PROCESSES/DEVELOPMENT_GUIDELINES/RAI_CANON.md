@@ -1,3 +1,12 @@
+---
+id: principle-rai-domain-canon
+type: principle
+status: approved
+owners: [architects]
+aligned_with: [principle-vision]
+---
+
+# CANON: RAI DOMAIN DEVELOPMENT
 
 ### Ключевое правило
 - **RAI зависит от Core**

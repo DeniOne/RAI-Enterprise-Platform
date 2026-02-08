@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "./generated-client"
 }
 
 datasource db {
@@ -21,9 +22,10 @@ model Company {
   
   roleDefinitions RoleDefinition[]
   employeeProfiles EmployeeProfile[]
-  fields      Field[]
   technologyCards TechnologyCard[]
+  fields      Field[]
   tasks       Task[]
+  fieldObservations FieldObservation[]
   
   // CRM Relations
   deals            Deal[]
@@ -42,6 +44,40 @@ model Company {
   humanAssessmentSnapshots HumanAssessmentSnapshot[]
   okrCycles         OkrCycle[]
   hrKpiIndicators   HrKPIIndicator[]
+  
+  // Finance & Economy
+  economicEvents    EconomicEvent[]
+  ledgerEntries     LedgerEntry[]
+  cashAccounts      CashAccount[]
+  budgets           Budget[]
+  // Legal & GR relations
+  legalDocuments    LegalDocument[]
+  legalRequirements LegalRequirement[]
+  regulatoryBodies  RegulatoryBody[]
+  complianceChecks  ComplianceCheck[]
+  grInteractions    GrInteraction[]
+  policySignals     PolicySignal[]
+  researchPrograms  ResearchProgram[]
+  
+  // High-Level Risk Models
+  riskSignals       RiskSignal[]
+  riskAssessments   RiskAssessment[]
+  riskStateHistory  RiskStateHistory[]
+  decisionRecords   DecisionRecord[]
+  
+  // Knowledge Graph (Sprint 2)
+  knowledgeNodes    KnowledgeNode[]
+  knowledgeEdges    KnowledgeEdge[]
+
+  // Vision AI Baseline (Sprint 2)
+  visionObservations VisionObservation[]
+
+  // Satellite Ingestion (Sprint 2)
+  satelliteObservations SatelliteObservation[]
+  
+  // Asset Registries
+  machinery        Machinery[]
+  stockItems       StockItem[]
 
   @@map("companies")
 }
@@ -73,6 +109,10 @@ model Client {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   invitations Invitation[]
+  
+  // Asset Registries
+  machinery   Machinery[]
+  stockItems  StockItem[]
 
   @@map("clients")
 }
@@ -92,6 +132,120 @@ model Holding {
   updatedAt   DateTime @updatedAt
 
   @@map("holdings")
+}
+
+// --- Asset Registry Domain (Equipments, Chemicals, etc) ---
+
+model Machinery {
+  id              String   @id @default(cuid())
+  name            String
+  brand           String?
+  serialNumber    String?  // [IDEMPOTENCY] Physical serial
+  type            MachineryType
+  status          AssetStatus @default(PENDING_CONFIRMATION)
+  
+  idempotencyKey  String?  // [REFINEMENT] Removed @unique for AI flexibility
+  
+  // Multi-tenancy
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Accountability & Reject Path
+  confirmedByUserId String?
+  confirmedByUser   User?    @relation("MachineryConfirmedBy", fields: [confirmedByUserId], references: [id])
+  confirmedAt       DateTime?
+  
+  archivedAt        DateTime?
+  rejectionReason   String?
+
+  @@index([companyId])
+  @@index([clientId, idempotencyKey]) // [REFINEMENT] Logical index
+  @@map("machinery")
+}
+
+model StockItem {
+  id              String   @id @default(cuid())
+  name            String
+  type            StockItemType
+  status          AssetStatus @default(PENDING_CONFIRMATION)
+  
+  quantity        Float    @default(0)
+  unit            String
+  
+  idempotencyKey  String?  // [REFINEMENT] Removed @unique for AI flexibility
+  
+  // Multi-tenancy
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id])
+  
+  transactions StockTransaction[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Accountability & Reject Path
+  confirmedByUserId String?
+  confirmedByUser   User?    @relation("StockItemConfirmedBy", fields: [confirmedByUserId], references: [id])
+  confirmedAt       DateTime?
+  
+  archivedAt        DateTime?
+  rejectionReason   String?
+
+  @@index([companyId])
+  @@index([clientId, idempotencyKey]) // [REFINEMENT] Logical index
+  @@map("stock_items")
+}
+
+model StockTransaction {
+  id          String   @id @default(cuid())
+  itemId      String
+  item        StockItem @relation(fields: [itemId], references: [id])
+  
+  type        StockTransactionType
+  amount      Float
+  date        DateTime @default(now())
+  
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@map("stock_transactions")
+}
+
+enum MachineryType {
+  TRACTOR
+  SPRAYER
+  HARVESTER
+  ATTACHMENT
+  TRUCK
+}
+
+enum AssetStatus {
+  ACTIVE
+  REPAIR
+  OFFLINE
+  PENDING_CONFIRMATION
+  REJECTED
+  ARCHIVED
+}
+
+enum StockItemType {
+  CHEMICAL
+  FERTILIZER
+  SEED
+  FUEL
+}
+
+enum StockTransactionType {
+  PROCUREMENT
+  CONSUMPTION
+  ADJUSTMENT
 }
 
 
@@ -131,10 +285,19 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   
-  tasks        Task[]
+  assignedTasks    Task[] @relation("TaskAssignee")
+  responsibleTasks Task[] @relation("TaskResponsible")
+  fieldObservations FieldObservation[]
+  
   // HR & CMR Relations
   employeeProfile EmployeeProfile?
   cmrDecisions    CmrDecision[]
+  responsibleRisks CmrRisk[] @relation("RiskResponsible")
+
+  // Asset Accountability
+  confirmedMachinery  Machinery[] @relation("MachineryConfirmedBy")
+  confirmedStockItems StockItem[] @relation("StockItemConfirmedBy")
+  stockTransactions   StockTransaction[]
 
   @@map("users")
 }
@@ -214,6 +377,7 @@ model Field {
   
   seasons        Season[]
   tasks          Task[]
+  fieldObservations FieldObservation[]
   
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -315,6 +479,7 @@ model Season {
   history          SeasonHistory[]
   snapshots        SeasonSnapshot[]
   tasks            Task[]
+  fieldObservations FieldObservation[]
   
   // Tech Map Integration
   techMap          TechMap?
@@ -505,10 +670,14 @@ model Task {
   
   // Assignment
   assigneeId       String?
-  assignee         User?    @relation(fields: [assigneeId], references: [id])
+  assignee         User?    @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  
+  responsibleId    String?
+  responsible      User?    @relation("TaskResponsible", fields: [responsibleId], references: [id])
   
   // Dates
   plannedDate      DateTime?
+  slaExpiration    DateTime?
   completedAt      DateTime?
   
   // Tenant Isolation
@@ -517,9 +686,11 @@ model Task {
   
   // Actual Resources
   actualResources  TaskResourceActual[]
+  fieldObservations FieldObservation[]
   
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+  cmrRisks         CmrRisk[]
 
   @@index([seasonId])
   @@index([companyId])
@@ -927,6 +1098,8 @@ model MapOperation {
   
   resources   MapResource[]
   
+  requiredMachineryType MachineryType?
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -975,6 +1148,10 @@ model DeviationReview {
   aiImpactAssessment  String   // Risk analysis
   techConclusion      String?  // Agronomist's input
   proposedActions     String?  // Correction plan
+  
+  // Traceability
+  telegramThreadId    String?  // Link to specific discussion thread
+  observations        FieldObservation[]
   
   // Client Interaction
   clientResponseStatus ClientResponseStatus @default(PENDING)
@@ -1054,6 +1231,14 @@ model CmrRisk {
   deviationReview   DeviationReview? @relation(fields: [deviationReviewId], references: [id])
   
   status          String    // OPEN, MITIGATED, REALIZED
+  
+  // Traceability (Law Requirement)
+  taskId          String?
+  task            Task?            @relation(fields: [taskId], references: [id])
+  observationId   String?
+  observation     FieldObservation? @relation(fields: [observationId], references: [id])
+  responsibleId   String?
+  responsible     User?            @relation("RiskResponsible", fields: [responsibleId], references: [id])
   
   // Insurance
   insuranceId     String?
@@ -1152,6 +1337,70 @@ enum ConfidenceLevel {
   HIGH
   MEDIUM
   LOW
+}
+
+// --- Field Observation (Integrity Sensory Plane) ---
+
+model FieldObservation {
+  id                String   @id @default(cuid())
+  type              ObservationType
+  intent            ObservationIntent @default(MONITORING)
+  integrityStatus   IntegrityStatus   @default(NO_EVIDENCE)
+  
+  // Evidence Content
+  content           String?  @db.Text // Quantitative/Manual entry
+  photoUrl          String?
+  voiceUrl          String?
+  telemetryJson     Json?    // GPS path, etc.
+  coordinates       Json?    // GeoJSON Point
+  
+  // Integrity Traceability (Ariadne's Thread)
+  taskId            String?
+  task              Task?    @relation(fields: [taskId], references: [id])
+  fieldId           String?
+  field             Field?   @relation(fields: [fieldId], references: [id])
+  seasonId          String
+  season            Season   @relation(fields: [seasonId], references: [id])
+  
+  deviationReviewId String?
+  deviationReview   DeviationReview? @relation(fields: [deviationReviewId], references: [id])
+  
+  // Ownership
+  authorId          String
+  author            User     @relation(fields: [authorId], references: [id])
+  
+  companyId         String
+  company           Company  @relation(fields: [companyId], references: [id])
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  cmrRisks          CmrRisk[]
+
+  @@map("field_observations")
+}
+
+enum ObservationType {
+  PHOTO
+  GEO_WALK
+  VOICE_NOTE
+  CALL_LOG
+  MEASUREMENT
+  SOS_SIGNAL
+}
+
+enum ObservationIntent {
+  MONITORING
+  INCIDENT
+  CONSULTATION
+  CALL
+  CONFIRMATION
+  DELAY
+}
+
+enum IntegrityStatus {
+  STRONG_EVIDENCE
+  WEAK_EVIDENCE
+  NO_EVIDENCE
 }
 
 // ==========================================
@@ -1315,4 +1564,825 @@ model HrDevelopmentAction {
   status      String   @default("PLANNED")
   createdAt   DateTime @default(now())
   @@map("hr_development_actions")
+}
+// ==========================================
+// BLOCK B3: FINANCE & ECONOMY (CFO Control Plane)
+// ==========================================
+
+enum EconomicEventType {
+  COST_INCURRED
+  REVENUE_RECOGNIZED
+  OBLIGATION_CREATED
+  OBLIGATION_SETTLED
+  RESERVE_ALLOCATED
+  ADJUSTMENT
+}
+
+enum BudgetStatus {
+  DRAFT
+  APPROVED
+  ACTIVE
+  EXHAUSTED
+  BLOCKED
+  CLOSED
+}
+
+model EconomicEvent {
+  id          String            @id @default(cuid())
+  type        EconomicEventType
+  amount      Float
+  currency    String            @default("RUB")
+  metadata    Json?             // Source data (taskId, employeeId, techMapId, etc.)
+  
+  // Attribution Context
+  fieldId     String?
+  seasonId    String?
+  employeeId  String?
+  
+  companyId   String
+  company     Company           @relation(fields: [companyId], references: [id])
+  
+  ledgerEntries LedgerEntry[]
+  
+  createdAt   DateTime          @default(now())
+
+  @@index([companyId])
+  @@index([type])
+  @@index([seasonId])
+  @@map("economic_events")
+}
+
+model LedgerEntry {
+  id              String   @id @default(cuid())
+  economicEventId String
+  economicEvent   EconomicEvent @relation(fields: [economicEventId], references: [id])
+  
+  amount          Float
+  type            String   // DEBIT / CREDIT
+  accountCode     String   // Chart of Accounts (CoA) mapping
+  
+  // Tenant & Context
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  
+  isImmutable     Boolean  @default(true) // Derived fact projection
+  
+  createdAt       DateTime @default(now())
+
+  @@index([companyId])
+  @@index([accountCode])
+  @@map("ledger_entries")
+}
+
+model CashAccount {
+  id          String   @id @default(cuid())
+  name        String   // e.g. "Main Sberbank", "Petty Cash"
+  balance     Float    @default(0)
+  currency    String   @default("RUB")
+  
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+  @@map("cash_accounts")
+}
+
+model Budget {
+  id          String   @id @default(cuid())
+  name        String
+  limit       Float
+  consumed    Float    @default(0)
+  remaining   Float    @default(0)
+  
+  status      BudgetStatus @default(DRAFT)
+  
+  periodStart DateTime
+  periodEnd   DateTime
+  
+  companyId   String
+  company     Company      @relation(fields: [companyId], references: [id])
+  
+  lines       BudgetLine[]
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([companyId])
+  @@map("budgets")
+}
+
+model BudgetLine {
+  id          String   @id @default(cuid())
+  budgetId    String
+  budget      Budget   @relation(fields: [budgetId], references: [id])
+  
+  category    String   // e.g. "FUEL", "FERTILIZER"
+  limit       Float
+  consumed    Float    @default(0)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("budget_lines")
+}
+
+// --- Legal & GR Models ---
+
+model RegulatoryBody {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  type        RegulatorType
+  
+  // Power & Scope
+  scope       String?  @db.Text
+  powers      String?  @db.Text
+  sanctions   String?  @db.Text
+  
+  // Multi-tenancy (Monitoring context)
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  
+  documents   LegalDocument[]
+  interactions GrInteraction[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+  @@map("regulatory_bodies")
+}
+
+model LegalDocument {
+  id               String   @id @default(cuid())
+  title            String
+  externalId       String?  // Номер акта, например "ФЗ-123"
+  type             DocumentType
+  sourceUrl        String?
+  effectiveDate    DateTime?
+  expirationDate   DateTime?
+  version          String   @default("1.0")
+  
+  // Relationships
+  regulatorId      String?
+  regulator        RegulatoryBody? @relation(fields: [regulatorId], references: [id])
+  
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id])
+  
+  norms            LegalNorm[]
+  externalFeeds    ExternalLegalFeed[]
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([externalId])
+  @@map("legal_documents")
+}
+
+model LegalNorm {
+  id               String   @id @default(cuid())
+  documentId       String
+  document         LegalDocument @relation(fields: [documentId], references: [id])
+  
+  paragraph        String   // Номер статьи/пункта
+  content          String   @db.Text
+  
+  requirements     LegalRequirement[]
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([documentId])
+  @@map("legal_norms")
+}
+
+model LegalRequirement {
+  id               String   @id @default(cuid())
+  normId           String
+  norm             LegalNorm @relation(fields: [normId], references: [id])
+  
+  summary          String   @db.Text // Интерпретация нормы
+  type             RequirementType
+  status           ComplianceStatus @default(UNKNOWN)
+  
+  // Impact Mapping (Dynamic Context)
+  targetType       ImpactTargetType // CONTRACT, HR_POLICY, TRANSACTION, etc.
+  
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id])
+  
+  obligations      Obligation[]
+  complianceChecks ComplianceCheck[]
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([status])
+  @@map("legal_requirements")
+}
+
+model Obligation {
+  id               String   @id @default(cuid())
+  requirementId    String
+  requirement      LegalRequirement @relation(fields: [requirementId], references: [id])
+  
+  description      String   @db.Text
+  dueDate          DateTime?
+  ownerId          String?  // User ID или Role ID
+  status           ObligationStatus @default(PENDING)
+  
+  sanctions        Sanction[]
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([requirementId])
+  @@map("legal_obligations")
+}
+
+model Sanction {
+  id               String   @id @default(cuid())
+  obligationId     String
+  obligation       Obligation @relation(fields: [obligationId], references: [id])
+  
+  type             SanctionType
+  amount           Decimal? @db.Decimal(18,2) // Повышенная точность для штрафов
+  description      String?  @db.Text
+  
+  createdAt        DateTime @default(now())
+  
+  @@map("legal_sanctions")
+}
+
+model ComplianceCheck {
+  id               String   @id @default(cuid())
+  requirementId    String
+  requirement      LegalRequirement @relation(fields: [requirementId], references: [id])
+  
+  status           ComplianceStatus
+  observation      String?  @db.Text
+  confidenceLevel  Float    @default(1.0)
+  checkedAgainstVersion String? // Версионирование проверки (ссылка на LegalDocument.version)
+  
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id])
+  
+  checkedAt        DateTime @default(now())
+  
+  @@index([companyId])
+  @@index([requirementId])
+  @@map("compliance_checks")
+}
+
+model GrInteraction {
+  id               String   @id @default(cuid())
+  regulatorId      String
+  regulator        RegulatoryBody @relation(fields: [regulatorId], references: [id])
+  
+  type             InteractionType
+  subject          String
+  content          String?  @db.Text
+  date             DateTime
+  
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id])
+  
+  createdAt        DateTime @default(now())
+  
+  @@index([companyId])
+  @@map("gr_interactions")
+}
+
+model PolicySignal {
+  id               String   @id @default(cuid())
+  subject          String
+  description      String?  @db.Text
+  probability      Float    @default(0.5)
+  impactLevel      ImpactLevel
+  expectedDate     DateTime?
+  
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id])
+  
+  createdAt        DateTime @default(now())
+  
+  @@index([companyId])
+  @@map("policy_signals")
+}
+
+model ExternalLegalFeed {
+  id               String   @id @default(cuid())
+  documentId       String
+  document         LegalDocument @relation(fields: [documentId], references: [id])
+  
+  source           String   // GIGALEGAL, GARANT, PRAVO_GOV
+  externalRef      String?
+  rawContent       Json
+  lastSync         DateTime @default(now())
+  
+  @@map("external_legal_feeds")
+}
+
+// --- Legal & GR Enums ---
+
+enum RegulatorType {
+  FISCAL       // Налоговая, Таможня
+  SUPERVISORY  // Россельхознадзор, Санэпидем
+  EXECUTIVE    // Минсельхоз, Исполкомы
+  LEGISLATIVE  // Парламент
+  ASSOCIATION  // Отраслевые союзы
+}
+
+enum DocumentType {
+  STATUTORY_LAW    // Законы
+  REGULATION       // Постановления, Приказы
+  TECHNICAL_NORM   // ГОСТ, Техрегламенты
+  CONTRACT         // Договоры
+  JUDICIAL_ACT     // Судебная практика
+}
+
+enum RequirementType {
+  MANDATORY
+  RESTRICTIVE
+  PERMISSIVE
+  PROHIBITIVE
+}
+
+enum ComplianceStatus {
+  COMPLIANT
+  AT_RISK
+  VIOLATED
+  UNKNOWN
+}
+
+enum ImpactTargetType {
+  CONTRACT
+  SEASON
+  TRANSACTION
+  EMPLOYEE
+  LAND_PARCEL
+  RND_EXPERIMENT
+  RND_PROTOCOL
+}
+
+enum ObligationStatus {
+  PENDING
+  COMPLETED
+  OVERDUE
+  WAIVED
+}
+
+enum SanctionType {
+  PENALTY
+  FINE
+  LICENSE_REVOCATION
+  SUSPENSION
+  REPUTATIONAL
+}
+
+enum InteractionType {
+  MEETING
+  INSPECTION
+  LETTER
+  WORKING_GROUP
+}
+
+enum ImpactLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// --- R&D Engine Enums ---
+
+enum ProgramStatus {
+  ACTIVE
+  COMPLETED
+  SUSPENDED
+  ARCHIVED
+}
+
+enum ExperimentState {
+  IDEA
+  HYPOTHESIS_DEFINED
+  PROTOCOL_DRAFT
+  SCIENTIFIC_REVIEW
+  LEGAL_APPROVAL
+  EXPERIMENT_APPROVED
+  RUNNING
+  DATA_COLLECTION
+  ANALYSIS
+  PEER_REVIEW
+  CONCLUSION_ISSUED
+  ARCHIVED
+}
+
+enum ProtocolStatus {
+  DRAFT
+  REVIEW
+  APPROVED
+  SUPERSEDED
+}
+
+enum ExperimentType {
+  DRUG
+  TECH
+  METHOD
+  COMPARATIVE
+  FIELD
+  METRIC
+}
+
+enum MeasurementSource {
+  SENSOR
+  MANUAL
+  LAB
+}
+
+// --- R&D Engine Models ---
+
+model ResearchProgram {
+  id            String          @id @default(cuid())
+  companyId     String
+  company       Company         @relation(fields: [companyId], references: [id])
+  name          String
+  objective     String          @db.Text
+  hypothesis    String?         @db.Text
+  status        ProgramStatus
+  createdAt     DateTime        @default(now())
+  archivedAt    DateTime?
+  experiments   Experiment[]
+
+  @@map("research_programs")
+}
+
+model Experiment {
+  id              String           @id @default(cuid())
+  programId       String
+  program         ResearchProgram  @relation(fields: [programId], references: [id])
+  name            String
+  type            ExperimentType
+  state           ExperimentState
+  activeProtocolId String?         @unique
+  protocol        Protocol?        @relation("ActiveProtocol", fields: [activeProtocolId], references: [id])
+  
+  protocols       Protocol[]       @relation("ExperimentProtocols")
+  trials          Trial[]
+  result          ResearchResult?
+  conclusion      ResearchConclusion?
+  
+  createdAt       DateTime         @default(now())
+
+  @@map("experiments")
+}
+
+model Protocol {
+  id              String      @id @default(cuid())
+  experimentId    String
+  experiment      Experiment  @relation("ExperimentProtocols", fields: [experimentId], references: [id])
+  version         Int
+  methodology     Json
+  variables       Json
+  successCriteria Json
+  status          ProtocolStatus @default(DRAFT)
+  approvedAt      DateTime?
+  approvedBy      String?      // JSON или строка подписей
+  
+  activeInExperiment Experiment? @relation("ActiveProtocol")
+
+  createdAt       DateTime    @default(now())
+
+  @@unique([experimentId, version])
+  @@map("research_protocols")
+}
+
+model Trial {
+  id             String      @id @default(cuid())
+  experimentId   String
+  experiment     Experiment  @relation(fields: [experimentId], references: [id])
+  location       String?
+  conditions     String?     @db.Text
+  startDate      DateTime
+  endDate        DateTime?
+  deviations     String?     @db.Text // Отклонения от протокола
+  measurements   Measurement[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@map("research_trials")
+}
+
+model Measurement {
+  id          String   @id @default(cuid())
+  trialId     String
+  trial       Trial    @relation(fields: [trialId], references: [id])
+  variable    String
+  value       Float
+  unit        String
+  measuredAt  DateTime @default(now())
+  locked      Boolean  @default(false)
+
+  @@map("research_measurements")
+}
+
+model ResearchResult {
+  id            String   @id @default(cuid())
+  experimentId  String   @unique
+  experiment    Experiment @relation(fields: [experimentId], references: [id])
+  analysis      Json
+  significance  Float?
+  createdAt     DateTime @default(now())
+
+  @@map("research_results")
+}
+
+model ResearchConclusion {
+  id            String   @id @default(cuid())
+  experimentId  String   @unique
+  experiment    Experiment @relation(fields: [experimentId], references: [id])
+  conclusion    String   @db.Text
+  applicability Json
+  limitations   String?  @db.Text
+  createdAt     DateTime @default(now())
+
+  @@map("research_conclusions")
+}
+
+// --- Knowledge Graph (Sprint 2 / MVP) ---
+
+model KnowledgeNode {
+  id        String              @id @default(cuid())
+  type      KnowledgeNodeType
+  label     String
+  source    KnowledgeNodeSource
+
+  companyId String
+  company   Company             @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime            @default(now())
+
+  outgoingEdges KnowledgeEdge[] @relation("KnowledgeEdgeFrom")
+  incomingEdges KnowledgeEdge[] @relation("KnowledgeEdgeTo")
+
+  @@index([companyId])
+  @@index([type])
+  @@map("knowledge_nodes")
+}
+
+model KnowledgeEdge {
+  id          String                 @id @default(cuid())
+  fromNodeId  String
+  toNodeId    String
+  relation    KnowledgeEdgeRelation
+  confidence  Float
+  source      KnowledgeEdgeSource
+
+  companyId   String
+  company     Company                @relation(fields: [companyId], references: [id])
+
+  fromNode    KnowledgeNode           @relation("KnowledgeEdgeFrom", fields: [fromNodeId], references: [id])
+  toNode      KnowledgeNode           @relation("KnowledgeEdgeTo", fields: [toNodeId], references: [id])
+
+  createdAt   DateTime               @default(now())
+
+  @@index([companyId])
+  @@index([fromNodeId])
+  @@index([toNodeId])
+  @@map("knowledge_edges")
+}
+
+enum KnowledgeNodeType {
+  CONCEPT
+  ENTITY
+  METRIC
+  DOCUMENT
+}
+
+enum KnowledgeNodeSource {
+  MANUAL
+  INGESTION
+  AI
+}
+
+enum KnowledgeEdgeRelation {
+  IMPLEMENTS
+  DEPENDS_ON
+  MEASURED_BY
+  MEASURES
+  REFERENCES
+}
+
+enum KnowledgeEdgeSource {
+  MANUAL
+  INGESTION
+  AI
+}
+
+// --- Vision AI Baseline (Sprint 2) ---
+
+model VisionObservation {
+  id         String                   @id @default(cuid())
+  source     VisionObservationSource
+  assetId    String
+  timestamp  DateTime
+  modality   VisionObservationModality
+  rawFeatures Json?
+  metadata   Json?
+  confidence Float
+
+  companyId  String
+  company    Company                  @relation(fields: [companyId], references: [id])
+
+  createdAt  DateTime                 @default(now())
+
+  @@index([companyId])
+  @@index([assetId])
+  @@index([timestamp])
+  @@index([source])
+  @@index([modality])
+  @@map("vision_observations")
+}
+
+enum VisionObservationSource {
+  SATELLITE
+  DRONE
+  PHOTO
+}
+
+enum VisionObservationModality {
+  RGB
+  MULTISPECTRAL
+}
+
+// --- Satellite Ingestion (Sprint 2) ---
+
+model SatelliteObservation {
+  id            String                 @id @default(cuid())
+  assetId       String
+  timestamp     DateTime
+  indexType     SatelliteIndexType
+  value         Float
+  source        SatelliteSource
+  resolution    Float
+  cloudCoverage Float
+  tileId        String?
+  confidence    Float
+
+  companyId     String
+  company       Company                @relation(fields: [companyId], references: [id])
+
+  createdAt     DateTime               @default(now())
+
+  @@index([companyId])
+  @@index([assetId])
+  @@index([timestamp])
+  @@index([indexType])
+  @@index([source])
+  @@map("satellite_observations")
+}
+
+enum SatelliteIndexType {
+  NDVI
+  NDRE
+}
+
+enum SatelliteSource {
+  SENTINEL2
+  LANDSAT8
+  LANDSAT9
+}
+
+
+
+// --- Risk Engine Models (B6) ---
+
+model RiskSignal {
+  id            String   @id @default(cuid())
+  source        RiskSource
+  severity      RiskSeverity
+  reasonCode    String
+  description   String?  @db.Text
+
+  referenceType RiskReferenceType
+  referenceId   String
+
+  companyId     String
+  company       Company @relation(fields: [companyId], references: [id])
+
+  createdAt     DateTime @default(now())
+
+  @@index([companyId])
+  @@index([source])
+  @@map("risk_signals")
+}
+
+model RiskAssessment {
+  id            String   @id @default(cuid())
+  targetType    RiskTargetType
+  targetId      String
+
+  verdict       RiskVerdict
+  score         Int?
+  explanation   Json
+
+  companyId     String
+  company       Company @relation(fields: [companyId], references: [id])
+
+  assessedAt    DateTime @default(now())
+
+  @@index([companyId])
+  @@index([verdict])
+  @@map("risk_assessments")
+}
+
+model RiskStateHistory {
+  id            String   @id @default(cuid())
+  targetType    RiskTargetType
+  targetId      String
+
+  fromState     RiskFsmState
+  toState       RiskFsmState
+  reason        String?      @db.Text
+
+  companyId     String
+  company       Company @relation(fields: [companyId], references: [id])
+
+  createdAt     DateTime @default(now())
+
+  @@index([companyId])
+  @@index([targetId])
+  @@map("risk_state_history")
+}
+
+model DecisionRecord {
+  id            String   @id @default(cuid())
+  actionType    String   // e.g., START_SEASON, SCALE_TECH
+  targetId      String
+  
+  riskVerdict   RiskVerdict
+  riskState     RiskFsmState
+  explanation   Json     // Snapshot of RiskAssessment.explanation
+  
+  traceId       String?  // Correlation ID
+
+  companyId     String
+  company       Company @relation(fields: [companyId], references: [id])
+
+  decidedAt     DateTime @default(now())
+
+  @@index([companyId])
+  @@index([actionType])
+  @@index([targetId])
+  @@map("decision_records")
+}
+
+enum RiskSource {
+  LEGAL
+  RND
+  OPS
+  FINANCE
+}
+
+enum RiskSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum RiskVerdict {
+  ALLOWED
+  CONDITIONAL
+  RESTRICTED
+  BLOCKED
+}
+
+enum RiskFsmState {
+  CLEAR
+  OBSERVED
+  ELEVATED
+  CRITICAL
+  BLOCKED
+  RESOLVED
+}
+
+enum RiskTargetType {
+  ACTION
+  TECHNOLOGY
+  CLIENT
+  SEASON
+}
+
+enum RiskReferenceType {
+  EXPERIMENT
+  REQUIREMENT
+  TASK
+  TRANSACTION
 }

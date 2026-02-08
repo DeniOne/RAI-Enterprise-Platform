@@ -1,3 +1,11 @@
+---
+id: guideline-design-brand-book
+type: guideline
+status: approved
+owners: [brand-manager]
+aligned_with: [principle-vision]
+---
+
 # Brand Canon RAI
 
 ## 1. Название бренда

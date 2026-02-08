@@ -1,0 +1,44 @@
+{
+  "version": "1.0.0",
+  "event_id": "evt-20260208-0001",
+  "occurred_at": "2026-02-08T10:15:30Z",
+  "source": {
+    "type": "mobile",
+    "device_id": "dev-android-01",
+    "operator_id": "user-123",
+    "capture_context": "field-visit",
+    "metadata": {
+      "app_version": "1.2.3"
+    }
+  },
+  "location": {
+    "lat": 49.123456,
+    "lon": 32.123456,
+    "accuracy_m": 5.5,
+    "field_id": "field-789"
+  },
+  "image": {
+    "uri": "s3://rai-ingestion/images/2026/02/08/evt-20260208-0001.jpg",
+    "content_type": "image/jpeg",
+    "size_bytes": 245678,
+    "width_px": 3024,
+    "height_px": 4032,
+    "checksum": {
+      "algorithm": "sha256",
+      "value": "6f1ed002ab5595859014ebf0951522d9f4f88a1a0c4c00a0b8c7b5a1a7b6c123"
+    },
+    "captured_at": "2026-02-08T10:12:05Z"
+  },
+  "context": {
+    "crop": "rapeseed",
+    "season_id": "season-2026",
+    "plot_id": "plot-456",
+    "notes": "Лист с видимыми пятнами"
+  },
+  "extensions": {
+    "camera": {
+      "iso": 100,
+      "exposure_time_ms": 8
+    }
+  }
+}

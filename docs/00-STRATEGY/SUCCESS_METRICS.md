@@ -1,3 +1,11 @@
+---
+id: guideline-success-metrics
+type: guideline
+status: draft
+owners: [stakeholders]
+relations: []
+---
+
 # Метрики успеха и KPI 📊
 
 Как мы измеряем эффективность внедрения RAI Enterprise Platform.

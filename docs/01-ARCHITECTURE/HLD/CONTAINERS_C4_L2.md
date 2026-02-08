@@ -1,4 +1,11 @@
-markdown
+---
+id: component-containers-c4
+type: component
+status: review
+owners: [architects]
+aligned_with: [principle-axioms]
+---
+
 # Архитектура: Контейнеры (C4 Model Level 2)
 
 > **Статус:** Черновик | **Версия:** 0.1 | **Обновлено:** 2026.02.02  

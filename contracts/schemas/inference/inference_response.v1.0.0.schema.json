@@ -1,0 +1,26 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/schemas/inference/inference_response.v1.0.0.schema.json",
+  "title": "Inference Response",
+  "description": "Канонический контракт ответа inference (Sprint 1, заглушка).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "trace_id", "status"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "trace_id": {
+      "type": "string",
+      "description": "Trace ID (UUID)."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["accepted", "error"]
+    },
+    "note": {
+      "type": "string"
+    }
+  }
+}

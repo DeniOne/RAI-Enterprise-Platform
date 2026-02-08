@@ -1,3 +1,11 @@
+---
+id: decision-adr-003
+type: decision
+status: approved
+owners: [architects]
+aligned_with: [principle-axioms]
+---
+
 # ADR 003: Стратегия баз данных - Единая PostgreSQL с разделением схем
 
 ## Статус

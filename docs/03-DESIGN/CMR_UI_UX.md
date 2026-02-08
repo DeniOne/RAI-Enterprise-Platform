@@ -1,3 +1,11 @@
+---
+id: guideline-design-cmr-ui
+type: guideline
+status: review
+owners: [designers, architects]
+aligned_with: [principle-vision]
+---
+
 # CMR UI/UX DESIGN (Consulting Control Plane)
 
 > **Версия:** v0.1  

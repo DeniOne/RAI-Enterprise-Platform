@@ -1,5 +1,7 @@
-﻿# Node.js
+# Node.js
 node_modules/
+node
+pnpm
 dist/
 build/
 .npm/
@@ -22,6 +24,10 @@ generated/
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Logs
+*.log
+_*.log
 
 # OS
 .DS_Store

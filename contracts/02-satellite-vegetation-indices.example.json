@@ -1,0 +1,58 @@
+{
+  "version": "1.0.0",
+  "event_id": "evt-20260208-0100",
+  "observed_at": "2026-02-08T09:40:00Z",
+  "source": {
+    "provider": "sentinel",
+    "platform": "S2A",
+    "scene_id": "S2A_20260208T094000",
+    "metadata": {
+      "product_level": "L2A"
+    }
+  },
+  "area": {
+    "field_id": "field-789",
+    "bbox": [32.120000, 49.120000, 32.130000, 49.130000],
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [32.120000, 49.120000],
+          [32.130000, 49.120000],
+          [32.130000, 49.130000],
+          [32.120000, 49.130000],
+          [32.120000, 49.120000]
+        ]
+      ]
+    }
+  },
+  "indices": [
+    {
+      "name": "NDVI",
+      "value": 0.64,
+      "unit": "index",
+      "scale": 1.0,
+      "quality": {
+        "cloud_coverage_pct": 5.0,
+        "data_gap_pct": 0.0
+      }
+    },
+    {
+      "name": "NDRE",
+      "value": 0.41,
+      "unit": "index",
+      "scale": 1.0,
+      "quality": {
+        "cloud_coverage_pct": 5.0,
+        "data_gap_pct": 0.0
+      }
+    }
+  ],
+  "extensions": {
+    "tile": {
+      "x": 3456,
+      "y": 1234,
+      "z": 12
+    }
+  }
+}

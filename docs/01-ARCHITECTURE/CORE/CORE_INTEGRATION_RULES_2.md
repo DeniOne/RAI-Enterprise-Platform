@@ -1,3 +1,11 @@
+---
+id: guideline-admission-rules
+type: guideline
+status: review
+owners: [architects]
+aligned_with: [principle-axioms]
+---
+
 # ADMISSION RULES (FOUNDATION GATE)
 
 ## Статус документа

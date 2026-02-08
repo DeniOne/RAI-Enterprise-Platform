@@ -1,3 +1,12 @@
+---
+id: control-audit-system
+type: control
+status: approved
+owners: [backend-leads, security-officers]
+implements: [principle-axioms]
+measured_by: [metric-techmap-completion]
+---
+
 # Subsystem: Audit & Events 🛡️
 
 > **Статус:** Канон | **Версия:** 1.0 | **Расположение:** Business Core

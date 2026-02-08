@@ -2,10 +2,10 @@
     "name": "@rai/prisma-client",
     "version": "0.1.0",
     "private": true,
-    "type": "module",
-    "main": "./src/index.ts",
+    "main": "./generated-client/index.js",
+    "types": "./generated-client/index.d.ts",
     "exports": {
-        ".": "./src/index.ts"
+        ".": "./generated-client/index.js"
     },
     "scripts": {
         "build": "npm run db:generate",

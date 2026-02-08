@@ -1,3 +1,11 @@
+---
+id: decision-log-main
+type: decision
+status: approved
+owners: [architects]
+aligned_with: [principle-axioms]
+---
+
 # RAI Decision Log
 
 ## [2026-02-03] ADR-006: Enterprise Identity & Structure Layer (Block 3)

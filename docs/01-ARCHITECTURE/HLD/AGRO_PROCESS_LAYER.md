@@ -1,3 +1,11 @@
+---
+id: component-apl
+type: component
+status: review
+owners: [architects, product-owner]
+aligned_with: [principle-vision]
+---
+
 # HLD: Agro Process Layer (APL)
 
 > **Статус:** Draft | **Слой:** Architecture | **Тип:** Technical Spec

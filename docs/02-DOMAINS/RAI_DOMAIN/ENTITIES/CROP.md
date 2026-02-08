@@ -1,3 +1,11 @@
+---
+id: component-rai-entity-crop
+type: component
+status: review
+owners: [domain-experts]
+aligned_with: [principle-vision]
+---
+
 # Entity: Crop (Культура) 🌱
 
 > **Статус:** Канон | **Версия:** 1.0 | **Слой:** RAI/Entities

@@ -4,9 +4,10 @@ import { SeasonResolver } from "./season.resolver";
 import { SeasonBusinessRulesService } from "./services/season-business-rules.service";
 import { SeasonSnapshotService } from "./services/season-snapshot.service";
 import { AgroAuditModule } from "../agro-audit/agro-audit.module";
+import { RiskModule } from "../risk/risk.module";
 
 @Module({
-  imports: [AgroAuditModule],
+  imports: [AgroAuditModule, RiskModule],
   providers: [
     SeasonService,
     SeasonResolver,
@@ -15,4 +16,4 @@ import { AgroAuditModule } from "../agro-audit/agro-audit.module";
   ],
   exports: [SeasonService, SeasonBusinessRulesService, SeasonSnapshotService],
 })
-export class SeasonModule {}
+export class SeasonModule { }

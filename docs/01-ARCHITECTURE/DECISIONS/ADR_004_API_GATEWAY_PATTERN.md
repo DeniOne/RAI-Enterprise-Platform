@@ -1,3 +1,11 @@
+---
+id: decision-adr-004
+type: decision
+status: approved
+owners: [architects]
+aligned_with: [principle-axioms]
+---
+
 # ADR 004: API Gateway Pattern — Unified NestJS Entry Point
 
 ## Статус

@@ -15,8 +15,17 @@ export class PulseService {
         });
     }
 
+    async getActiveSurveys(companyId: string) {
+        return this.prisma.pulseSurvey.findMany({
+            where: {
+                companyId,
+                status: 'ACTIVE',
+            },
+        });
+    }
+
     /**
-     * Survey responses are immutable.
+     * Survey responses are immutable. Pure IO.
      */
     async submitResponse(data: { pulseSurveyId: string; respondentId: string; answers: any }) {
         return this.prisma.surveyResponse.create({

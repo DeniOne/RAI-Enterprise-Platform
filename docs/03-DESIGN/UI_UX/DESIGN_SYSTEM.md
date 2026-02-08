@@ -1,3 +1,11 @@
+---
+id: guideline-design-system-canon
+type: guideline
+status: approved
+owners: [designers]
+aligned_with: [principle-axioms]
+---
+
 # UI Design Canon: RAI Enterprise Platform
 
 > **Scope:** Enterprise (Contour 1) & Field (Contour 2)

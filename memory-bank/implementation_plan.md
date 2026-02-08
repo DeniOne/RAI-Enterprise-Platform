@@ -1,93 +1,153 @@
-# Implementation Plan - Sprint B2: HR Ecosystem & Tech Debt
+# Implementation Plan - Sprint B6: Unified Risk Engine 🛡️
 
-# Goal: Implement the HR Ecosystem based on the 3-Contour Canon Architecture
+## Goal Description
+Ввести единый исполняемый контур допуска действий на основе Legal, R&D, Ops и Finance.
+**Risk Engine не принимает решений. Он определяет допустимость.**
 
-> [!IMPORTANT]
-> **HR Architecture Contours**:
-> 1.  **Foundation Layer (Corporate)**: Stability & Hygiene (Registry, Onboarding).
-> 2.  **Incentive Layer (Motivational)**: Direction & Alignment (OKR, KPI).
-> 3.  **Development Layer (Strategic)**: The Core. Signal
-
-## User Review Required
-
-> [!IMPORTANT]
-> **Canonical Rules for Implementation:**
-> 1. **No Direct CRUD for Profiles:** `EmployeeProfile` is a projection of an external fact. Direct creation is FORBIDDEN.
-> 2. **Fact Projection:** Foundation only synchronizes status and triggers processes.
-> 3. **Decoupled CMR:** CMR consumes `HumanAssessmentSnapshot` data directly. No direct HR service calls allowed.
-> 4. **Immutable Signals:** All signals (Pulse, Recognition) are append-only.
+## Invariants (Non-negotiable)
+- ❌ No UI / No mutations / No domain logic duplication
+- ✅ Deterministic output / Explainable verdict / Read-only everywhere
 
 ## Proposed Changes
 
-### [Component] HR Foundation Layer (Corporate)
-**Focus:** External-fact projection & status synchronization.
+### Database Schema (`packages/prisma-client/schema.prisma`)
+#### [MODIFY] schema.prisma
+- Add `RiskSignal` model (Source, Severity, Reason, Reference)
+- Add `RiskAssessment` model (Target, Verdict, Explanation)
+- Add Enums: `RiskSource`, `RiskSeverity`, `RiskVerdict`, `RiskTargetType`
 
-#### [MODIFY] [schema.prisma](file:///f:/RAI_EP/packages/prisma-client/schema.prisma)
-- [NEW] `HrOnboardingPlan`: Integration registry.
-- [NEW] `HrSupportCase`: Helpdesk and operational hygiene.
-- [MODIFY] `EmployeeProfile`: Add `externalId`, `requiredRoleCompetencyRef` (Link to Development).
+### Core Package (`packages/risk-engine`)
+#### [NEW] `packages/risk-engine/package.json` & `tsconfig.json`
+- Define package dependencies and workspace structure.
 
-#### [NEW] `EmployeeService`
-- **Logic:** Event-based lifecycle management.
-- **API:** `POST /hr/foundation/events/employee-hired` (Trigger for profile projection).
-- **API:** `POST /hr/foundation/events/employee-status-changed` (Sync logic).
+#### [NEW] `packages/risk-engine/src/collector/RiskSignalCollector.ts`
+- Interface definition: `collect(companyId: string): Promise<RiskSignal[]>`
 
----
+#### [NEW] `packages/risk-engine/src/collector/implementations/*.ts`
+- `LegalRiskCollector`: Maps `ComplianceStatus` to signals.
+- `RndRiskCollector`: Maps `Experiment` state/protocol deviations to signals.
+- `OpsRiskCollector`: Maps TechMap deviations.
+- `FinanceRiskCollector`: Maps Budget status.
 
-### [Component] HR Incentive Layer (Alignment)
-**Focus:** Direction and financial/social reinforcement.
+#### [NEW] `packages/risk-engine/src/core/RiskNormalizer.ts`
+- Normalizes disparate signals to a common severity scale.
 
-#### [NEW] `IncentiveService`
-- [NEW] `OkrCycle`, `Objective`, `KeyResult` (Direction).
-- [NEW] `KPIIndicator`: Operational performance signals (Imported).
-- [NEW] `RecognitionEvent`: Social reinforcement (Append-only).
-- [NEW] `RewardEvent`: Financial amplifier tracking.
+#### [NEW] `packages/risk-engine/src/core/RiskAggregator.ts`
+- The Brain: Collects -> Normalizes -> Applies Rules -> Returns Verdict.
+- **FSM Integration:** Must consider *previous* Risk FSM state to prevent verdict jumping. Applies escalation/de-escalation rules (e.g., cannot jump from BLOCKED to CLEAR).
 
----
+#### [NEW] `packages/risk-engine/src/core/RiskFsm.ts`
+- Implements the purely deterministic FSM logic (CLEAR -> OBSERVED -> ELEVATED -> CRITICAL -> BLOCKED).
 
-### [Component] HR Development Layer (Strategic)
-**Focus:** Long-term human capital investment.
+#### [NEW] `packages/risk-engine/src/core/VerdictRules.ts`
+- **Hard Rules**:
+    - CRITICAL exists -> BLOCKED
+    - HIGH + LEGAL exists -> BLOCKED
+    - HIGH exists -> RESTRICTED
+    - MEDIUM only -> CONDITIONAL
+    - LOW/None -> ALLOWED
 
-#### [NEW] `DevelopmentService`
-- **Signal Layer:** `PulseSurvey`, `SurveyResponse` (Immutable observations).
-- **Assessment Layer:** `HumanAssessmentSnapshot` (Understanding state: Burnout, Ethics).
-- **Competency Layer:** `CompetencyDefinition`, `PersonalCompetencyState`.
-- **Action Layer:** `DevelopmentPlan`, `DevelopmentAction` (Renamed from SupportAction).
+### API Module (`apps/api`)
+#### [NEW] `apps/api/src/modules/risk/risk.module.ts`
+- Registers `RiskController` and `RiskService`.
 
----
+#### [NEW] `apps/api/src/modules/risk/risk.controller.ts`
+- Endpoint: `GET /risk/assess/:targetType/:targetId`
+- **Constraint:** Read-only on-demand calculation. No side effects.
+- **Prohibition:** No `POST /recompute` or `POST /override`.
+
+#### [NEW] `apps/api/src/modules/risk/risk.service.ts`
+- Wraps `@rai/risk-engine` functionality.
+
+## Data Structures
+
+### Risk Explanation Schema (JSON)
+```json
+{
+  "fsmState": "CRITICAL",
+  "signals": ["..."],
+  "since": "2023-10-10T10:00:00Z",
+  "previous": "ELEVATED"
+}
+```
+
+### Finance Risk Constraint
+- `FinanceRiskCollector` must NOT perform calculations or forecasting. It only reads existing flags/statuses (e.g., BudgetStatus).
 
 ## Verification Plan
 
 ### Automated Tests
-- Test event-driven `EmployeeProfile` creation: `employee-hired` event -> `Profile` exists.
-- Verify CMR isolation: `CmrService` reads `HumanAssessmentSnapshot` without calling `HrService`.
-- Verify immutability of `RecognitionEvent` and `SurveyResponse`.
+- **Unit Tests (`packages/risk-engine`):**
+    - `should return BLOCKED if CRITICAL signal exists`
+    - `should return RESTRICTED if HIGH signal exists (non-legal)`
+    - `should return CONDITIONAL if only MEDIUM signals exist`
+- **Integration Tests:**
+    - Simulate R&D Experiment without conclusion -> Verify `RiskAssessment` creation with expected Verdict.
 
 ### Manual Verification
-- Trace a hired employee through Onboarding -> OKR assignment -> Pulse Signal -> Risk Snapshot. management.
+- **API Check:**
+    - Call `GET /risk/assess/...` for a known high-risk entity and verify JSON response structure and verdict.
 
-#### [NEW] `apps/api/src/modules/hr/incentive`
-- `OkrService`: Alignment Engine.
+# Phase Beta Closure Implementation Plan (B6.x)
 
-#### [NEW] `apps/api/src/modules/hr/development`
-- `SignalService`: Pulse & Feedback collection.
-- `AssessmentService`: Logic for `HumanAssessmentSnapshot`.
-- `DevelopmentService`: Plans & Actions.
+## B6.1 Decision Traceability
+**Goal**: Create an immutable audit log of *automated* decisions. "If the system said NO, we must know WHY forever."
 
-#### [MODIFY] `apps/api/src/modules/cmr`
-- **Integration**: `RiskService` consumes `AssessmentService.getControllability()`.
+### Schema Changes
+- **Model**: `DecisionRecord`
+    - `id`: CUID
+    - `actionType`: `START_SEASON` | `SCALE_TECH` | ...
+    - `targetId`: string (poly)
+    - `riskVerdict`: `RiskVerdict`
+    - `riskState`: `RiskFsmState`
+    - `explanation`: JSON (Snapshot of `RiskAssessment.explanation`)
+    - `decidedAt`: DateTime (default now)
+    - `traceId`: string (correlation ID)
 
-## Verification Plan
+### Implementation
+- **Service**: `DecisionService` (in `@rai/risk-engine` or `api/shared`)
+    - `record(action, target, assessment)`: void (fire and forget persistence)
 
-### Automated Tests
-- **Unit Tests**:
-    - Verify `HumanAssessmentSnapshot` immutability.
-    - Verify `Controllability` calculation logic from signals.
-- **Integration**:
-    - Ensure `EmployeeProfile` creation triggers Onboarding flow.
+## B6.2 Risk Gates (The "No")
+**Goal**: Physical code-level blocking of actions if Risk is BLOCKED.
 
-### Manual Verification
-- **API Testing**:
-    - `POST /hr/foundation/employees` -> Create Profile.
-    - `POST /hr/development/signals` -> Check immutable fact.
-    - `GET /cmr/risks` -> Verify HR impact.
+### Core Logic
+- **Error**: `class RiskBlockedError extends Error`
+- **Guard Pattern**:
+  ```typescript
+  async function executeCriticalAction() {
+     const assessment = await riskEngine.assess(...);
+     if (assessment.verdict === 'BLOCKED') {
+        await decisionService.record('ACTION', id, assessment);
+        throw new RiskBlockedError(assessment);
+     }
+  }
+  ```
+- **Target Points**: 
+  - `SeasonOrchestrator.startSeason`
+  - (Future) `TechMapService.applyTemplate`
+
+## B6.3 Risk Timeline
+**Goal**: Visualize the evolution of risk to prove it's not random.
+
+### Schema Changes
+- **Model**: `RiskStateHistory`
+    - `id`: CUID
+    - `targetType`, `targetId`
+    - `fromState`: `RiskFsmState`
+    - `toState`: `RiskFsmState`
+    - `reason`: string
+    - `checkId`: Link to a specific assessment/check?
+    - `createdAt`: DateTime
+
+### Implementation
+- **FSM Hook**: Inside `RiskFsm.transition` or `RiskAggregator`, if state changes != current, persist transition.
+
+## B6.4 Beta Exit Canon
+**Goal**: Documentation as a Contract.
+- Create `docs/01-ARCHITECTURE/BETA_EXIT_CRITERIA.md`.
+- Sections:
+    1. System Decides (Guards, Invariants)
+    2. System Ignores (Business Context, Override)
+    3. Responsibility Matrix (Engine vs Orchestrator vs Human)
+

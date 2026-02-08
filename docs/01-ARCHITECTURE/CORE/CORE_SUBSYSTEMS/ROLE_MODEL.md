@@ -1,3 +1,11 @@
+---
+id: control-role-model
+type: control
+status: approved
+owners: [architects, product-owner]
+depends_on: [control-admission-policy]
+---
+
 # Subsystem: Role Model (RBAC) 🎭
 
 > **Статус:** Канон | **Версия:** 1.0 | **Расположение:** Business Core

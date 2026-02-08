@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
     console.log(`[Middleware] Path: ${path}, Token: ${token ? 'exists' : 'none'}`)
 
     // Защита приватных роутов
-    if (path.startsWith('/dashboard')) {
+    if (path.startsWith('/dashboard') || path.startsWith('/strategic')) {
         if (!token) {
             console.log('[Middleware] No token, redirecting to /login')
             return NextResponse.redirect(new URL('/login', request.url))
@@ -22,5 +22,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/dashboard/:path*', '/login', '/debug'],
+    matcher: ['/dashboard/:path*', '/strategic/:path*', '/login', '/debug'],
 }
