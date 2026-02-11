@@ -7,7 +7,7 @@ import {
   IsObject,
   Min,
 } from "class-validator";
-import { SoilType } from "@prisma/client";
+import { SoilType } from "@rai/prisma-client";
 
 export class CreateFieldDto {
   @IsString()
@@ -31,7 +31,7 @@ export class CreateFieldDto {
 
   @IsString()
   @IsNotEmpty()
-  clientId: string;
+  accountId: string;
 
   @IsString()
   @IsNotEmpty()

@@ -202,11 +202,7 @@ export class SeasonService {
         );
 
         return completedSeason;
-      },
-      {
-        maxWait: 5000, // 5 секунд
-        timeout: 10000, // 10 секунд
-      },
+      }
     );
   }
 

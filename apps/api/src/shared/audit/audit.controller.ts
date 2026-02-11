@@ -16,7 +16,7 @@ import {
 import { AuditService, AuditLogFilter, PaginationOptions } from "./audit.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { CurrentUser } from "../auth/current-user.decorator";
-import { User } from "@prisma/client";
+import { AuditLog } from "@rai/prisma-client";
 
 /**
  * REST API для просмотра аудит-логов.

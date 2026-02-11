@@ -6,12 +6,12 @@ import { TaskResourceActualInput } from "./dto/task-resource.input";
 import { UseGuards } from "@nestjs/common";
 import { GqlAuthGuard } from "../../shared/auth/auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
-import { User } from "@prisma/client";
+import { User } from "@rai/prisma-client";
 
 @Resolver(() => Task)
 @UseGuards(GqlAuthGuard)
 export class TaskResolver {
-  constructor(private readonly taskService: TaskService) {}
+  constructor(private readonly taskService: TaskService) { }
 
   @Mutation(() => [Task])
   async createTasksFromSeason(

@@ -7,7 +7,7 @@ export class AuthService {
   constructor(
     private userRepository: UserRepository,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async validateUser(email: string, password: string): Promise<any> {
     // Find user by email (ARCH-DEBT-001: include company for multi-tenancy)
@@ -41,7 +41,8 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name || user.email.split("@")[0], // Use name field or extract from email
+        name: user.name || user.email.split("@")[0],
+        role: user.role,
       },
     };
   }
@@ -57,8 +58,9 @@ export class AuthService {
       id: user.id,
       email: user.email,
       name: user.name || user.email.split("@")[0],
-      companyId: user.companyId, // ARCH-DEBT-001: from user.companyId
-      company: user.company, // ARCH-DEBT-001: include company data
+      role: user.role,
+      companyId: user.companyId,
+      company: user.company,
     };
   }
 }

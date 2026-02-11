@@ -8,7 +8,8 @@ import {
   EmployeeProfile,
   RoleDefinition,
   LifecycleStatus,
-} from "@prisma/client";
+  Prisma,
+} from "@rai/prisma-client";
 
 @Injectable()
 export class IdentityRegistryService {
@@ -57,14 +58,14 @@ export class IdentityRegistryService {
       );
     }
 
-    // 2. Verify Client/Holding boundary if provided
+    // 2. Verify Account/Holding boundary if provided
     if (data.clientId) {
-      const client = await this.prisma.client.findFirst({
+      const account = await this.prisma.account.findFirst({
         where: { id: data.clientId, companyId },
       });
-      if (!client) {
+      if (!account) {
         throw new ForbiddenException(
-          `Client ${data.clientId} not found or access denied`,
+          `Account ${data.clientId} not found or access denied`,
         );
       }
     }

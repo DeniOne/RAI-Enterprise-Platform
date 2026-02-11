@@ -14,7 +14,7 @@ import {
 } from "./state-machine.interface";
 
 // Re-using Prisma enum directly for compatibility
-import { TaskStatus } from "@prisma/client";
+import { Task, TaskStatus } from "@rai/prisma-client";
 
 /**
  * Task events that trigger state transitions.

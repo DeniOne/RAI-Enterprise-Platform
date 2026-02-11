@@ -36,8 +36,6 @@ export class RegistryAgentService {
         const idempotencyKey = this.generateIdempotencyKey(observation);
 
         try {
-            const clientId = await this.resolveClientId(observation);
-
             // 2. Идентификация сущности (Contract Based)
             const recognitionResult = await this.recognizeAsset(observation);
 
@@ -49,9 +47,9 @@ export class RegistryAgentService {
             const { entityType, extractedFields } = recognitionResult;
 
             if (entityType === "MACHINERY") {
-                await this.handleMachinery(extractedFields, observation, idempotencyKey, clientId);
+                await this.handleMachinery(extractedFields, observation, idempotencyKey);
             } else if (entityType === "STOCK") {
-                await this.handleStock(extractedFields, observation, idempotencyKey, clientId);
+                await this.handleStock(extractedFields, observation, idempotencyKey);
             }
         } catch (error) {
             this.logger.error(`[REGISTRY-AGENT] Error processing observation ${observation.id}: ${error.message}`, error.stack);
@@ -96,11 +94,11 @@ export class RegistryAgentService {
         return null; // Не распознано
     }
 
-    private async handleMachinery(metadata: any, observation: FieldObservation, idempotencyKey: string, clientId: string) {
+    private async handleMachinery(metadata: any, observation: FieldObservation, idempotencyKey: string) {
         // 1. Проверка идемпотентности (Logical Index Check)
         const existingByHash = await this.prisma.machinery.findFirst({
             where: {
-                clientId,
+                companyId: observation.companyId,
                 idempotencyKey
             }
         });
@@ -119,7 +117,7 @@ export class RegistryAgentService {
         const existingActive = await this.prisma.machinery.findFirst({
             where: {
                 serialNumber: metadata.serialNumber, // Physical Identity
-                clientId,
+                companyId: observation.companyId,
                 status: { not: AssetStatus.REJECTED } // Игнорим отклоненные, даем шанс пересоздать
             }
         });
@@ -128,6 +126,8 @@ export class RegistryAgentService {
             this.logger.log(`[REGISTRY-AGENT] Asset already exists: ${existingActive.id}`);
             return;
         }
+
+        const accountId = await this.resolveAccountId(observation);
 
         // 2. Создание черновика
         const draft = await this.prisma.machinery.create({
@@ -138,14 +138,14 @@ export class RegistryAgentService {
                 serialNumber: metadata.serialNumber,
                 status: AssetStatus.PENDING_CONFIRMATION,
                 idempotencyKey,
-                clientId: clientId,
                 companyId: observation.companyId,
+                accountId,
             }
         });
 
         this.logger.log(`[REGISTRY-AGENT] Created DRAFT Machinery: ${draft.id}`);
 
-        // 3. Уведомление в Telegram
+        // 3. Уведомление в Telegram (Updated to send account context if needed, but payload structure is generic)
         await this.telegram.sendAssetProposal(observation.authorId, {
             id: draft.id,
             type: 'MACHINERY',
@@ -153,11 +153,11 @@ export class RegistryAgentService {
         });
     }
 
-    private async handleStock(metadata: any, observation: FieldObservation, idempotencyKey: string, clientId: string) {
+    private async handleStock(metadata: any, observation: FieldObservation, idempotencyKey: string) {
         // 1. Проверка идемпотентности (Logical Index Check)
         const existingByHash = await this.prisma.stockItem.findFirst({
             where: {
-                clientId,
+                companyId: observation.companyId,
                 idempotencyKey
             }
         });
@@ -171,6 +171,8 @@ export class RegistryAgentService {
             return;
         }
 
+        const accountId = await this.resolveAccountId(observation);
+
         // 2. Создание черновика
         const draft = await this.prisma.stockItem.create({
             data: {
@@ -180,8 +182,8 @@ export class RegistryAgentService {
                 unit: metadata.unit,
                 status: AssetStatus.PENDING_CONFIRMATION,
                 idempotencyKey,
-                clientId: clientId,
                 companyId: observation.companyId,
+                accountId,
             }
         });
 
@@ -195,7 +197,7 @@ export class RegistryAgentService {
         });
     }
 
-    private async resolveClientId(observation: FieldObservation): Promise<string> {
+    private async resolveAccountId(observation: FieldObservation): Promise<string> {
         if (observation.fieldId) {
             const field = await this.prisma.field.findUnique({
                 where: { id: observation.fieldId }
@@ -204,9 +206,10 @@ export class RegistryAgentService {
         }
 
         // Fallback: try to find client via User
+        // Note: User type might still have clientId until regeneration, but we rely on prisma service to map it or user to be updated
         const user = await this.prisma.user.findUnique({ where: { id: observation.authorId } });
-        if (user?.clientId) return user.clientId;
+        if (user?.accountId) return user.accountId;
 
-        throw new Error(`Could not resolve ClientID for Observation ${observation.id}`);
+        throw new Error(`Could not resolve AccountID for Observation ${observation.id}`);
     }
 }

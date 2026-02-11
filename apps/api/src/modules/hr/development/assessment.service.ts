@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
-import { RiskLevel } from '@prisma/client';
+import { RiskLevel } from '@rai/prisma-client';
 
 @Injectable()
 export class AssessmentService {

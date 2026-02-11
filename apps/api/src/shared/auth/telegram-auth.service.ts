@@ -3,7 +3,7 @@ import { RedisService } from '../redis/redis.service';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
-import { UserRole, UserAccessLevel } from '@prisma/client';
+import { UserRole, UserAccessLevel } from '@rai/prisma-client';
 // Removed: InjectBot, Telegraf - bot is now a separate microservice
 import { randomUUID } from 'crypto';
 

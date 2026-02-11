@@ -5,11 +5,11 @@ import {
   ConflictException,
 } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
-import { Holding, Client } from "@prisma/client";
+import { Account, Holding, Prisma } from "@rai/prisma-client";
 
 @Injectable()
 export class ClientRegistryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   // --- Holdings ---
 
@@ -28,14 +28,14 @@ export class ClientRegistryService {
   async findAllHoldings(companyId: string): Promise<Holding[]> {
     return this.prisma.holding.findMany({
       where: { companyId },
-      include: { clients: true },
+      include: { accounts: true },
     });
   }
 
   async findOneHolding(id: string, companyId: string): Promise<Holding> {
     const holding = await this.prisma.holding.findFirst({
       where: { id, companyId },
-      include: { clients: true },
+      include: { accounts: true },
     });
 
     if (!holding) {
@@ -48,14 +48,14 @@ export class ClientRegistryService {
   async deleteHolding(id: string, companyId: string): Promise<void> {
     await this.findOneHolding(id, companyId);
 
-    // Architectural Constraint: Cannot delete holding with active clients
-    const clientsCount = await this.prisma.client.count({
+    // Architectural Constraint: Cannot delete holding with active accounts
+    const accountsCount = await this.prisma.account.count({
       where: { holdingId: id },
     });
 
-    if (clientsCount > 0) {
+    if (accountsCount > 0) {
       throw new ConflictException(
-        `Cannot delete holding ${id} because it has active clients linked to it`,
+        `Cannot delete holding ${id} because it has active accounts linked to it`,
       );
     }
 
@@ -64,21 +64,21 @@ export class ClientRegistryService {
     });
   }
 
-  // --- Clients ---
+  // --- Accounts ---
 
-  async updateClientHolding(
-    clientId: string,
+  async updateAccountHolding(
+    accountId: string,
     holdingId: string | null,
     companyId: string,
-  ): Promise<Client> {
-    // 1. Verify Client belongs to Company
-    const client = await this.prisma.client.findFirst({
-      where: { id: clientId, companyId },
+  ): Promise<Account> {
+    // 1. Verify Account belongs to Company
+    const account = await this.prisma.account.findFirst({
+      where: { id: accountId, companyId },
     });
 
-    if (!client) {
+    if (!account) {
       throw new NotFoundException(
-        `Client ${clientId} not found or access denied`,
+        `Account ${accountId} not found or access denied`,
       );
     }
 
@@ -95,19 +95,19 @@ export class ClientRegistryService {
       }
     }
 
-    return this.prisma.client.update({
-      where: { id: clientId },
+    return this.prisma.account.update({
+      where: { id: accountId },
       data: { holdingId },
     });
   }
 
-  async findClientsByHolding(
+  async findAccountsByHolding(
     holdingId: string,
     companyId: string,
-  ): Promise<Client[]> {
+  ): Promise<Account[]> {
     await this.findOneHolding(holdingId, companyId); // Validate existence and access
 
-    return this.prisma.client.findMany({
+    return this.prisma.account.findMany({
       where: { holdingId, companyId },
     });
   }

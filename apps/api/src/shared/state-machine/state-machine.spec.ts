@@ -9,7 +9,7 @@
 import { TaskStateMachine, TaskEvent, TaskEntity } from "./task-state-machine";
 import { AplStateMachine, AplEvent, AplStage, SeasonEntity } from "./apl-state-machine";
 import { InvalidTransitionError } from "./state-machine.interface";
-import { TaskStatus } from "@prisma/client";
+import { TaskStatus } from "@rai/prisma-client";
 
 describe("TaskStateMachine", () => {
     describe("canTransition", () => {

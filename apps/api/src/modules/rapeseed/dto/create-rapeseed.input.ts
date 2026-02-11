@@ -1,5 +1,5 @@
 import { InputType, Field, Int, Float } from "@nestjs/graphql";
-import { RapeseedType } from "@prisma/client";
+import { RapeseedType } from "@rai/prisma-client";
 import {
   IsString,
   IsOptional,

@@ -1,4 +1,4 @@
-import { User, Prisma } from "@prisma/client";
+import { User, Prisma } from "@rai/prisma-client";
 
 export type UserWithCompany = Prisma.UserGetPayload<{
   include: { company: true };

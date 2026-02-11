@@ -2,7 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { RapeseedService } from "./rapeseed.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { AgroAuditService } from "../agro-audit/agro-audit.service";
-import { RapeseedType, User } from "@prisma/client";
+import { RapeseedType, User } from "@rai/prisma-client";
 import { ConflictException } from "@nestjs/common";
 
 describe("RapeseedService", () => {

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EconomyService } from '../../economy/application/economy.service';
-import { EconomicEventType } from '@prisma/client';
+import { EconomicEventType } from '@rai/prisma-client';
 
 @Injectable()
 export class IntegrationService {

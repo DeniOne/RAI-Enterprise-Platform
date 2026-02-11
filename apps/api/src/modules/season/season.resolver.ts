@@ -6,12 +6,12 @@ import { UpdateSeasonInput } from "./dto/update-season.input";
 import { UseGuards } from "@nestjs/common";
 import { GqlAuthGuard } from "../../shared/auth/auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
-import { User } from "@prisma/client";
+import { User } from "@rai/prisma-client";
 
 @Resolver(() => Season)
 @UseGuards(GqlAuthGuard)
 export class SeasonResolver {
-  constructor(private readonly seasonService: SeasonService) {}
+  constructor(private readonly seasonService: SeasonService) { }
 
   @Mutation(() => Season)
   async createSeason(

@@ -10,7 +10,7 @@ import {
   Request,
 } from "@nestjs/common";
 import { IdentityRegistryService } from "./identity-registry.service";
-import { LifecycleStatus } from "@prisma/client";
+import { LifecycleStatus } from "@rai/prisma-client";
 import { AuthGuard } from "@nestjs/passport";
 
 @Controller("registry/identities")

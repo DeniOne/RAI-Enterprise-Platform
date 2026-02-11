@@ -1,4 +1,4 @@
-import { EconomicEventType } from '@prisma/client';
+import { EconomicEventType } from '@rai/prisma-client';
 
 export interface Attribution {
     amount: number;

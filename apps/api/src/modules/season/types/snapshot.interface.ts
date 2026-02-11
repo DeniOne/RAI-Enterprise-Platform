@@ -1,4 +1,4 @@
-import { Season, Field, Rapeseed } from "@prisma/client";
+import { Season, Field, Rapeseed } from "@rai/prisma-client";
 
 export interface SeasonSnapshotData {
   season: Season;

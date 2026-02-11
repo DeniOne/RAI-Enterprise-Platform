@@ -1,4 +1,4 @@
-import { PrismaClient, TaskStatus, ObservationIntent, IntegrityStatus, RiskType } from '@prisma/client';
+import { PrismaClient, TaskStatus, ObservationIntent, IntegrityStatus, RiskType } from '@rai/prisma-client';
 
 const prisma = new PrismaClient();
 

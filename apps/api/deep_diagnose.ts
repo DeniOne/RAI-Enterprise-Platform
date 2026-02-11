@@ -1,5 +1,5 @@
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@rai/prisma-client';
 import * as fs from 'fs';
 import * as path from 'path';
 

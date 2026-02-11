@@ -1,5 +1,5 @@
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@rai/prisma-client';
 
 async function fixAll() {
     const ports = [5432, 5433];

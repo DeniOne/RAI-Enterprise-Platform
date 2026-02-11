@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../../shared/prisma/prisma.service';
-import { EconomicEventType, EconomicEvent } from '@prisma/client';
+import { EconomicEventType, EconomicEvent } from '@rai/prisma-client';
 import { CostAttributionRules } from '../domain/rules/cost-attribution.rules';
 
 export interface IngestEconomicEventDto {

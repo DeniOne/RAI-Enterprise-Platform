@@ -5,7 +5,7 @@ import {
   Float,
   registerEnumType,
 } from "@nestjs/graphql";
-import { RapeseedType } from "@prisma/client";
+import { RapeseedType } from "@rai/prisma-client";
 
 registerEnumType(RapeseedType, { name: "RapeseedType" });
 

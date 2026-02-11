@@ -16,7 +16,7 @@ import {
 import { AgroOrchestratorService } from "./agro-orchestrator.service";
 import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
-import { User } from "@prisma/client";
+import { User } from "@rai/prisma-client";
 import {
     AplStateMachine,
     AplStage,

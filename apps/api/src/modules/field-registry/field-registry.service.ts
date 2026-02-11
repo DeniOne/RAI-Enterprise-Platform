@@ -4,22 +4,22 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
-import { Field } from "@prisma/client";
+import { Field } from "@rai/prisma-client";
 import { CreateFieldDto } from "./dto/create-field.dto";
 
 @Injectable()
 export class FieldRegistryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(data: CreateFieldDto, companyId: string): Promise<Field> {
-    // 1. Verify Client belongs to Company
-    const client = await this.prisma.client.findFirst({
-      where: { id: data.clientId, companyId },
+    // 1. Verify Account belongs to Company
+    const account = await this.prisma.account.findFirst({
+      where: { id: data.accountId, companyId },
     });
 
-    if (!client) {
+    if (!account) {
       throw new ForbiddenException(
-        `Client ${data.clientId} not found or access denied`,
+        `Account ${data.accountId} not found or access denied`,
       );
     }
 
@@ -34,7 +34,7 @@ export class FieldRegistryService {
         area: data.area,
         coordinates: data.coordinates,
         soilType: data.soilType,
-        clientId: data.clientId,
+        clientId: data.accountId,
         companyId, // Explicitly linking to company
         status: "ACTIVE",
       },

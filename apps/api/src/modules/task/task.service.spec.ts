@@ -2,7 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { TaskService } from "./task.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { AuditService } from "../../shared/audit/audit.service";
-import { TaskStatus, SeasonStatus, User } from "@prisma/client";
+import { TaskStatus, SeasonStatus, User } from "@rai/prisma-client";
 import { NotFoundException, BadRequestException } from "@nestjs/common";
 
 describe("TaskService", () => {

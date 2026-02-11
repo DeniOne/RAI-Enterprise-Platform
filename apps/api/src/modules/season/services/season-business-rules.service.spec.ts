@@ -2,7 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { SeasonBusinessRulesService } from "./season-business-rules.service";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
 import { AgroAuditService } from "../../agro-audit/agro-audit.service";
-import { RapeseedType } from "@prisma/client";
+import { RapeseedType } from "@rai/prisma-client";
 import { BadRequestException } from "@nestjs/common";
 
 describe("SeasonBusinessRulesService", () => {

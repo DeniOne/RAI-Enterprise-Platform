@@ -6,7 +6,7 @@ import {
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { AuditService } from "../../shared/audit/audit.service";
 import { IntegrationService } from "../finance-economy/integrations/application/integration.service";
-import { Task, TaskStatus, SeasonStatus, User } from "@prisma/client";
+import { Task, TaskStatus, Prisma, User, SeasonStatus } from "@rai/prisma-client";
 import {
   TaskStateMachine,
   TaskEvent,

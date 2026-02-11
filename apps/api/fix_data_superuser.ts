@@ -1,5 +1,5 @@
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@rai/prisma-client';
 
 const prisma = new PrismaClient({
     datasources: {

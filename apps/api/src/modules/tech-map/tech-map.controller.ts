@@ -1,35 +1,36 @@
-import { Controller, Post, Body, Param, Get, Req } from '@nestjs/common';
+import { Controller, Post, Body, Param, Get, Patch, UseGuards } from '@nestjs/common';
 import { TechMapService } from './tech-map.service';
+import { TechMapStatus } from '@rai/prisma-client';
+import { JwtAuthGuard } from '../../shared/auth/jwt-auth.guard';
+import { CurrentUser } from '../../shared/auth/current-user.decorator';
 
 @Controller('tech-map')
+@UseGuards(JwtAuthGuard)
 export class TechMapController {
     constructor(private readonly techMapService: TechMapService) { }
 
     @Post('generate')
-    async generate(@Body() body: { seasonId: string; soilId: string; historyId: string }) {
-        return this.techMapService.generateMap(body.seasonId, body.soilId, body.historyId);
+    async generate(@Body() body: { harvestPlanId: string; seasonId: string }) {
+        return this.techMapService.generateMap(body.harvestPlanId, body.seasonId);
     }
 
-    @Get(':id/validate')
-    async validate(@Param('id') id: string) {
-        return this.techMapService.validateMap(id);
+    @Patch(':id/draft')
+    async updateDraft(@Param('id') id: string, @Body() data: any, @CurrentUser() user: any) {
+        return this.techMapService.updateDraft(id, data, user.companyId);
+    }
+
+    @Post(':id/transitions')
+    async transition(@Param('id') id: string, @Body() body: { status: TechMapStatus }, @CurrentUser() user: any) {
+        return this.techMapService.transitionStatus(id, body.status, user.companyId);
     }
 
     @Get(':id')
-    async findOne(@Param('id') id: string, @Req() req: any) {
-        const companyId = req.user.companyId;
-        return this.techMapService.findOne(id, companyId);
+    async findOne(@Param('id') id: string, @CurrentUser() user: any) {
+        return this.techMapService.findOne(id, user.companyId);
     }
 
     @Get('season/:seasonId')
-    async findBySeason(@Param('seasonId') seasonId: string, @Req() req: any) {
-        const companyId = req.user.companyId;
-        return this.techMapService.findBySeason(seasonId, companyId);
-    }
-
-    @Post(':id/activate')
-    async activate(@Param('id') id: string, @Req() req: any) {
-        const companyId = req.user.companyId;
-        return this.techMapService.activate(id, companyId);
+    async findBySeason(@Param('seasonId') seasonId: string, @CurrentUser() user: any) {
+        return this.techMapService.findBySeason(seasonId, user.companyId);
     }
 }

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { AuditService } from "../../shared/audit/audit.service";
 import { AgriculturalAuditEvent } from "./enums/audit-events.enum";
-import { User } from "@prisma/client";
+import { User } from "@rai/prisma-client";
 
 import { PrismaService } from "../../shared/prisma/prisma.service";
 
@@ -12,7 +12,7 @@ export class AgroAuditService {
   constructor(
     private readonly auditService: AuditService,
     private readonly prisma: PrismaService,
-  ) {}
+  ) { }
 
   /**
    * Logs a specific agricultural event.

@@ -17,7 +17,7 @@ import {
 import { TaskService } from "./task.service";
 import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
-import { User, Task, TaskStatus } from "@prisma/client";
+import { User, Task, TaskStatus } from "@rai/prisma-client";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 
 /**

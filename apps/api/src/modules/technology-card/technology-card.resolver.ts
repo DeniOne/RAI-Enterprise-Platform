@@ -5,13 +5,13 @@ import { CreateTechnologyCardInput } from "./dto/create-technology-card.input";
 import { UseGuards } from "@nestjs/common";
 import { GqlAuthGuard } from "../../shared/auth/auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
-import { User } from "@prisma/client";
+import { User } from "@rai/prisma-client";
 import { Season } from "../season/dto/season.type";
 
 @Resolver(() => TechnologyCard)
 @UseGuards(GqlAuthGuard)
 export class TechnologyCardResolver {
-  constructor(private readonly techCardService: TechnologyCardService) {}
+  constructor(private readonly techCardService: TechnologyCardService) { }
 
   @Mutation(() => TechnologyCard)
   async createTechnologyCard(

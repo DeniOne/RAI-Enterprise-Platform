@@ -1,9 +1,9 @@
-import { Controller, Post, Body, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Patch, UseGuards, Query } from '@nestjs/common';
 import { DeviationService } from './deviation.service';
 import { RiskService } from './risk.service';
 import { DecisionService } from './decision.service';
-import { CreateDeviationDto } from './dto/create-deviation.dto'; // Validated in service, but good to have DTO
 import { JwtAuthGuard } from '../../shared/auth/jwt-auth.guard';
+import { CurrentUser } from '../../shared/auth/current-user.decorator';
 
 @Controller('cmr')
 @UseGuards(JwtAuthGuard)
@@ -15,28 +15,43 @@ export class CmrController {
     ) { }
 
     @Post('reviews')
-    async createReview(@Body() data: any) {
-        return this.deviationService.createReview(data);
+    async createReview(@Body() data: any, @CurrentUser() user: any) {
+        return this.deviationService.createReview({
+            ...data,
+            companyId: user.companyId,
+            userId: user.userId,
+        });
     }
 
-    @Post('reviews/:id/response')
-    async handleClientResponse(
+    @Get('reviews')
+    async listReviews(@CurrentUser() user: any) {
+        return this.deviationService.findAll(user.companyId);
+    }
+
+    @Get('reviews/:id')
+    async getReview(@Param('id') id: string, @CurrentUser() user: any) {
+        return this.deviationService.findOne(id, user.companyId);
+    }
+
+    @Patch('reviews/:id/transition')
+    async transitionReview(
         @Param('id') id: string,
-        @Body() body: { status: 'AGREED' | 'DISAGREED'; comment?: string }
+        @Body('status') status: any,
+        @CurrentUser() user: any,
     ) {
-        // This method would need to be added to DeviationService or handle logic here
-        // For now, mapping to update logic check
-        return { message: "Response received", responsibility: "SHARED" }; // Placeholder for actual logic
-    }
-
-    @Get('risks/assess')
-    async assessRisk(@Body() data: any) {
-        return this.riskService.assessRisk({ stage: data.stage, conditions: data.conditions });
+        return this.deviationService.transitionStatus(id, status, user.companyId, user.userId);
     }
 
     @Get('decisions')
-    async getDecisions() {
-        // Needs implementation in DecisionService to fetch
-        return [];
+    async getDecisions(@CurrentUser() user: any) {
+        return this.decisionService.findAll(user.companyId);
+    }
+
+    @Get('decisions/season/:seasonId')
+    async getDecisionsBySeason(
+        @Param('seasonId') seasonId: string,
+        @CurrentUser() user: any,
+    ) {
+        return this.decisionService.findBySeason(seasonId, user.companyId);
     }
 }

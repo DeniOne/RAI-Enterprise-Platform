@@ -1,5 +1,5 @@
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@rai/prisma-client';
 
 async function test5433() {
     const url = 'postgresql://rai_admin:secret@127.0.0.1:5433/rai_platform?schema=public';

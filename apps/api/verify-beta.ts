@@ -50,12 +50,13 @@ async function main() {
     }
 
     // Ensure Client exists
-    let client = await prisma.client.findFirst({ where: { companyId: company.id } });
+    let client = await prisma.account.findFirst({ where: { companyId: company.id, type: 'CLIENT' } });
     if (!client) {
         console.log("Creating temporary client...");
-        client = await prisma.client.create({
+        client = await prisma.account.create({
             data: {
                 name: "Test Client",
+                type: 'CLIENT',
                 companyId: company.id,
                 // INN is optional
             }
@@ -69,7 +70,7 @@ async function main() {
             type: "TRACTOR",
             status: "PENDING_CONFIRMATION",
             companyId: company.id,
-            clientId: client.id,
+            accountId: client.id,
             idempotencyKey: "HASH_" + Date.now(),
         }
     });

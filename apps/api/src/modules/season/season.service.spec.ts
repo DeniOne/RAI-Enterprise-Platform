@@ -4,7 +4,7 @@ import { PrismaService } from "../../shared/prisma/prisma.service";
 import { AgroAuditService } from "../agro-audit/agro-audit.service";
 import { SeasonBusinessRulesService } from "./services/season-business-rules.service";
 import { SeasonSnapshotService } from "./services/season-snapshot.service";
-import { SeasonStatus, User } from "@prisma/client";
+import { SeasonStatus, User } from "@rai/prisma-client";
 import { NotFoundException, BadRequestException } from "@nestjs/common";
 
 describe("SeasonService", () => {

@@ -8,7 +8,7 @@ import { PrismaService } from "../../shared/prisma/prisma.service";
 import { AgroAuditService } from "../agro-audit/agro-audit.service";
 import { CreateRapeseedInput } from "./dto/create-rapeseed.input";
 import { UpdateRapeseedInput } from "./dto/update-rapeseed.input";
-import { User, Rapeseed } from "@prisma/client";
+import { Rapeseed, RapeseedHistory, User } from '@rai/prisma-client';
 import { AgriculturalAuditEvent } from "../agro-audit/enums/audit-events.enum";
 
 @Injectable()
@@ -16,7 +16,7 @@ export class RapeseedService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AgroAuditService,
-  ) {}
+  ) { }
 
   async create(
     input: CreateRapeseedInput,

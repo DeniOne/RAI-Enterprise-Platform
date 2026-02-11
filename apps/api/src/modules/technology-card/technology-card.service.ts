@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { CreateTechnologyCardInput } from "./dto/create-technology-card.input";
-import { User } from "@prisma/client";
+import { TechnologyCard, Prisma, User } from "@rai/prisma-client";
 
 @Injectable()
 export class TechnologyCardService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(
     input: CreateTechnologyCardInput,

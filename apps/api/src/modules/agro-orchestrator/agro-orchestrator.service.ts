@@ -5,7 +5,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { AuditService } from "../../shared/audit/audit.service";
-import { Season, SeasonStatus, User } from "@prisma/client";
+import { Season, SeasonStatus, User } from "@rai/prisma-client";
 import {
     AplStateMachine,
     AplStage,

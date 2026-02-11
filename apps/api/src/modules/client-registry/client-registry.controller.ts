@@ -13,7 +13,7 @@ import { ClientRegistryService } from "./client-registry.service";
 
 @Controller("registry/clients")
 export class ClientRegistryController {
-  constructor(private readonly registryService: ClientRegistryService) {}
+  constructor(private readonly registryService: ClientRegistryService) { }
 
   @Post("holdings")
   async createHolding(
@@ -49,7 +49,7 @@ export class ClientRegistryController {
     @Param("id") id: string,
     @Body() body: { holdingId: string | null; companyId: string },
   ) {
-    return this.registryService.updateClientHolding(
+    return this.registryService.updateAccountHolding(
       id,
       body.holdingId,
       body.companyId,

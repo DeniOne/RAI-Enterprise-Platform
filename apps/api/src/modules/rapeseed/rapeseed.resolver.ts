@@ -2,7 +2,7 @@ import { Resolver, Query, Mutation, Args, Float } from "@nestjs/graphql";
 import { UseGuards } from "@nestjs/common";
 import { GqlAuthGuard } from "../../shared/auth/auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
-import { User } from "@prisma/client";
+import { User } from "@rai/prisma-client";
 import { RapeseedService } from "./rapeseed.service";
 import { Rapeseed } from "./dto/rapeseed.type";
 import { CreateRapeseedInput } from "./dto/create-rapeseed.input";
@@ -11,7 +11,7 @@ import { UpdateRapeseedInput } from "./dto/update-rapeseed.input";
 @Resolver(() => Rapeseed)
 @UseGuards(GqlAuthGuard)
 export class RapeseedResolver {
-  constructor(private readonly rapeseedService: RapeseedService) {}
+  constructor(private readonly rapeseedService: RapeseedService) { }
 
   @Mutation(() => Rapeseed)
   async createRapeseed(

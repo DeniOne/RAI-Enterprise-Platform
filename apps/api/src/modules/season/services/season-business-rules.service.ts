@@ -2,14 +2,14 @@ import { Injectable, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
 import { AgroAuditService } from "../../agro-audit/agro-audit.service";
 import { AgriculturalAuditEvent } from "../../agro-audit/enums/audit-events.enum";
-import { RapeseedType } from "@prisma/client";
+import { Season, RapeseedType } from "@rai/prisma-client";
 
 @Injectable()
 export class SeasonBusinessRulesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AgroAuditService,
-  ) {}
+  ) { }
 
   /**
    * entry point for all rapeseed specific validations
@@ -99,7 +99,7 @@ export class SeasonBusinessRulesService {
         { id: "SYSTEM" },
         { message, ...context },
       )
-      .catch(() => {});
+      .catch(() => { });
   }
 
   /**

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PulseService } from './development/pulse.service';
 import { AssessmentService } from './development/assessment.service';
-import { RiskLevel } from '@prisma/client';
+import { RiskLevel } from '@rai/prisma-client';
 
 @Injectable()
 export class HrOrchestratorService {

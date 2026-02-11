@@ -1,5 +1,5 @@
 import { InputType, Field, Int, Float } from "@nestjs/graphql";
-import { SeasonStatus } from "@prisma/client";
+import { SeasonStatus } from "@rai/prisma-client";
 import {
   IsString,
   IsInt,

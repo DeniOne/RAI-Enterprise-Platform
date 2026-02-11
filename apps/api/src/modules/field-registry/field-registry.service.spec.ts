@@ -2,7 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { FieldRegistryService } from "./field-registry.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { BadRequestException, ForbiddenException } from "@nestjs/common";
-import { SoilType } from "@prisma/client";
+import { SoilType } from "@rai/prisma-client";
 
 describe("FieldRegistryService", () => {
   let service: FieldRegistryService;
