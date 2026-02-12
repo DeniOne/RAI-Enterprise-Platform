@@ -1,0 +1,7 @@
+Starting seed script...
+Connecting to DB...
+Company ensured: RAI Enterprise
+User synced: admin@example.com
+User synced: tg_6918459113@rai.local
+User synced: tg_494278355@rai.local
+Seeding finished.

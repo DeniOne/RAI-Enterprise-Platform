@@ -1,11 +1,13 @@
 generator client {
   provider = "prisma-client-js"
   output   = "./generated-client"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
 }
 
 // --- Multi-tenancy Models ---
@@ -13,7 +15,7 @@ datasource db {
 model Company {
   id        String   @id @default(cuid())
   name      String
-  clients   Client[]
+  accounts  Account[]
   holdings  Holding[]
   users     User[]
   createdAt   DateTime     @default(now())
@@ -31,13 +33,17 @@ model Company {
   deals            Deal[]
   scoreCards       ScoreCard[]
   contracts        Contract[]
+  harvestPlans     HarvestPlan[]
+  performanceContracts PerformanceContract[]
   
   // Tech Map & CMR Relations
   techMaps         TechMap[]
   deviationReviews DeviationReview[]
+  budgetPlans      BudgetPlan[]
   cmrDecisions     CmrDecision[]
   cmrRisks         CmrRisk[]
   insuranceCoverages InsuranceCoverage[]
+  harvestResults   HarvestResult[]
   
   // HR Control Plane
   pulseSurveys      PulseSurvey[]
@@ -72,6 +78,8 @@ model Company {
   // Vision AI Baseline (Sprint 2)
   visionObservations VisionObservation[]
 
+  executionRecords ExecutionRecord[]
+
   // Satellite Ingestion (Sprint 2)
   satelliteObservations SatelliteObservation[]
   
@@ -83,14 +91,18 @@ model Company {
 }
 
 
-model Client {
+model Account {
   id        String   @id @default(cuid())
   name      String
   
   // CRM Fields
   inn       String?  @unique
-  type      ClientType @default(FARMER)
-  riskLevel RiskLevel  @default(LOW)
+  type      AccountType @default(CLIENT)
+  status    AccountStatus @default(ACTIVE)
+  
+  jurisdiction   String?
+  riskCategory   RiskCategory @default(LOW)
+  strategicValue StrategicValue @default(C)
 
   // Ownership & Structure
   companyId String
@@ -102,9 +114,14 @@ model Client {
   users     User[]
   
   // CRM Relations
+  contacts       Contact[]
+  interactions   Interaction[]
+  obligations    Obligation[]
+  
   deals      Deal[]
   scoreCards ScoreCard[]
   contracts  Contract[]
+  harvestPlans HarvestPlan[]
 
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -114,7 +131,122 @@ model Client {
   machinery   Machinery[]
   stockItems  StockItem[]
 
-  @@map("clients")
+  @@map("accounts")
+}
+
+model Contact {
+  id              String   @id @default(cuid())
+  accountId       String
+  account         Account  @relation(fields: [accountId], references: [id])
+  
+  firstName       String
+  lastName        String?
+  role            ContactRole @default(OPERATIONAL)
+  influenceLevel  Int?    // 1-10
+  
+  email           String?
+  phone           String?
+  source          String?
+  
+  interactions    Interaction[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([accountId])
+  @@map("crm_contacts")
+}
+
+model Interaction {
+  id              String   @id @default(cuid())
+  accountId       String
+  account         Account  @relation(fields: [accountId], references: [id])
+  contactId       String?
+  contact         Contact? @relation(fields: [contactId], references: [id])
+  
+  type            InteractionType
+  summary         String   @db.Text
+  date            DateTime @default(now())
+  
+  // Links
+  relatedEventId  String?  // Polymorphic ID (RiskEvent, LegalRequirement)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([accountId])
+  @@index([contactId])
+  @@map("crm_interactions")
+}
+
+model Obligation {
+  id              String   @id @default(cuid())
+  accountId       String
+  account         Account  @relation(fields: [accountId], references: [id])
+  
+  description     String
+  dueDate         DateTime
+  
+  responsibleUserId String?
+  responsibleUser   User?   @relation("ObligationResponsible", fields: [responsibleUserId], references: [id])
+  
+  status          ObligationStatus @default(PENDING)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([accountId])
+  @@index([status])
+  @@map("crm_obligations")
+}
+
+enum AccountType {
+  CLIENT
+  PARTNER
+  REGULATOR
+  SUPPLIER
+  INVESTOR
+  OTHER
+}
+
+enum AccountStatus {
+  ACTIVE
+  FROZEN
+  RISK
+}
+
+enum RiskCategory {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  NONE
+}
+
+enum StrategicValue {
+  A
+  B
+  C
+}
+
+enum ContactRole {
+  DECISION_MAKER
+  LEGAL
+  OPERATIONAL
+}
+
+enum InteractionType {
+  MEETING
+  CORRESPONDENCE
+  CALL
+  DOC_SUBMISSION
+  REQUEST_RESPONSE
+}
+
+enum ObligationStatus {
+  PENDING
+  FULFILLED
+  BREACHED
 }
 
 model Holding {
@@ -126,7 +258,7 @@ model Holding {
   companyId   String
   company     Company  @relation(fields: [companyId], references: [id])
   
-  clients     Client[]
+  accounts    Account[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -149,8 +281,8 @@ model Machinery {
   // Multi-tenancy
   companyId   String
   company     Company  @relation(fields: [companyId], references: [id])
-  clientId    String
-  client      Client   @relation(fields: [clientId], references: [id])
+  accountId    String
+  account      Account   @relation(fields: [accountId], references: [id])
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -164,7 +296,7 @@ model Machinery {
   rejectionReason   String?
 
   @@index([companyId])
-  @@index([clientId, idempotencyKey]) // [REFINEMENT] Logical index
+  @@index([accountId, idempotencyKey]) // [REFINEMENT] Logical index
   @@map("machinery")
 }
 
@@ -182,8 +314,8 @@ model StockItem {
   // Multi-tenancy
   companyId   String
   company     Company  @relation(fields: [companyId], references: [id])
-  clientId    String
-  client      Client   @relation(fields: [clientId], references: [id])
+  accountId    String
+  account      Account   @relation(fields: [accountId], references: [id])
   
   transactions StockTransaction[]
   
@@ -199,22 +331,42 @@ model StockItem {
   rejectionReason   String?
 
   @@index([companyId])
-  @@index([clientId, idempotencyKey]) // [REFINEMENT] Logical index
+  @@index([accountId, idempotencyKey]) // [REFINEMENT] Logical index
   @@map("stock_items")
 }
 
 model StockTransaction {
-  id          String   @id @default(cuid())
-  itemId      String
-  item        StockItem @relation(fields: [itemId], references: [id])
+  id              String   @id @default(cuid())
+  itemId          String
+  item            StockItem @relation(fields: [itemId], references: [id])
   
-  type        StockTransactionType
-  amount      Float
-  date        DateTime @default(now())
+  type            StockTransactionType
+  amount          Float
+  date            DateTime @default(now())
   
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id])
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id])
 
+  // Track 4: Execution Engine Link
+  executionId     String?
+  execution       ExecutionRecord? @relation(fields: [executionId], references: [id])
+  
+  // Resource Details (Snapshot for audit)
+  resourceType    String?   
+  resourceName    String?
+  unit            String?
+  costPerUnit     Float?
+  totalCost       Float?
+
+  orchLogId       String?
+  orchLog         ExecutionOrchestrationLog? @relation(fields: [orchLogId], references: [id])
+  
+  budgetItemId    String?
+  budgetItem      BudgetItem?      @relation(fields: [budgetItemId], references: [id])
+
+  @@index([executionId])
+  @@index([budgetItemId])
+  @@index([orchLogId])
   @@map("stock_transactions")
 }
 
@@ -265,8 +417,8 @@ model User {
   
   companyId    String   // ARCH-DEBT-001: Multi-tenancy (NOT NULL)
   company      Company  @relation(fields: [companyId], references: [id])
-  clientId     String?
-  client       Client?   @relation(fields: [clientId], references: [id])
+  accountId     String?
+  account       Account?   @relation(fields: [accountId], references: [id])
 
   accessLevel     UserAccessLevel  @default(DEMO)
   invitedBy       String?          // ID того, кто пригласил
@@ -298,6 +450,10 @@ model User {
   confirmedMachinery  Machinery[] @relation("MachineryConfirmedBy")
   confirmedStockItems StockItem[] @relation("StockItemConfirmedBy")
   stockTransactions   StockTransaction[]
+  executionRecords    ExecutionRecord[] 
+  
+  // CRM Relations
+  obligations         Obligation[] @relation("ObligationResponsible")
 
   @@map("users")
 }
@@ -330,7 +486,7 @@ model Invitation {
   companyId       String        // В какую компанию
   company         Company       @relation(fields: [companyId], references: [id])
   clientId        String?       // В какое хозяйство (опционально)
-  client          Client?       @relation(fields: [clientId], references: [id])
+  client          Account?      @relation(fields: [clientId], references: [id])
   
   // Статус и сроки
   status          InvitationStatus @default(PENDING)
@@ -367,7 +523,7 @@ model Field {
   status         FieldStatus   @default(ACTIVE)
   
   clientId       String
-  client         Client        @relation(fields: [clientId], references: [id])
+  client         Account        @relation(fields: [clientId], references: [id])
 
   companyId      String
   company        Company       @relation(fields: [companyId], references: [id])
@@ -378,6 +534,7 @@ model Field {
   seasons        Season[]
   tasks          Task[]
   fieldObservations FieldObservation[]
+  harvestResults   HarvestResult[]
   
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -482,10 +639,12 @@ model Season {
   fieldObservations FieldObservation[]
   
   // Tech Map Integration
-  techMap          TechMap?
+  techMaps         TechMap[]
   deviationReviews DeviationReview[]
+  budgetPlans      BudgetPlan[]
   cmrDecisions     CmrDecision[]
   cmrRisks         CmrRisk[]
+  harvestResults   HarvestResult[]
 
 
   @@index([id, companyId])          // Для быстрой валидации доступа
@@ -727,6 +886,7 @@ enum TaskStatus {
 
 enum UserRole {
   ADMIN
+  CEO
   MANAGER
   AGRONOMIST
   FIELD_WORKER
@@ -951,7 +1111,7 @@ model Deal {
   expectedDate  DateTime?
 
   clientId      String
-  client        Client    @relation(fields: [clientId], references: [id])
+  client        Account    @relation(fields: [clientId], references: [id])
   
   companyId     String
   company       Company   @relation(fields: [companyId], references: [id])
@@ -967,7 +1127,7 @@ model Deal {
 model ScoreCard {
   id              String   @id @default(cuid())
   clientId        String   @unique
-  client          Client   @relation(fields: [clientId], references: [id])
+  client          Account  @relation(fields: [clientId], references: [id])
 
   financialHealth Float?   // 0-100 score
   agroPotential   Float?   // Land bank * Productivity proxy
@@ -994,7 +1154,7 @@ model Contract {
   amount      Float?
 
   clientId    String
-  client      Client   @relation(fields: [clientId], references: [id])
+  client      Account   @relation(fields: [clientId], references: [id])
   
   companyId   String
   company     Company  @relation(fields: [companyId], references: [id])
@@ -1032,13 +1192,94 @@ enum DealStage {
   CLOSED_LOST
 }
 
+// --- Harvest Management Domain (Strategic Consulting) ---
+
+enum HarvestPlanStatus {
+  DRAFT
+  REVIEW
+  APPROVED
+  ACTIVE
+  DONE
+  ARCHIVE
+}
+
+model HarvestPlan {
+  id              String   @id @default(cuid())
+  
+  accountId       String
+  account         Account  @relation(fields: [accountId], references: [id])
+  
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  
+  contextSnapshot Json?    // Snapshot of conditions at planning
+  targetMetric    String?  // e.g. "YIELD_QPH"
+  period          String?  // e.g. "SEASON_2026"
+  
+  minValue        Float?
+  optValue        Float?
+  maxValue        Float?
+  baselineValue   Float?
+  
+  status          HarvestPlanStatus @default(DRAFT)
+  
+  techMaps            TechMap[]
+  performanceContract PerformanceContract?
+  
+  activeTechMapId String? @unique
+  activeTechMap   TechMap? @relation("ActiveTechMap", fields: [activeTechMapId], references: [id])
+  
+  activeBudgetPlanId String? @unique
+  activeBudgetPlan   BudgetPlan? @relation("ActiveBudgetPlan", fields: [activeBudgetPlanId], references: [id])
+  
+  budgetPlans         BudgetPlan[]
+  deviationReviews    DeviationReview[]
+  harvestResults      HarvestResult[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([accountId])
+  @@map("harvest_plans")
+}
+
+model PerformanceContract {
+  id              String   @id @default(cuid())
+  
+  harvestPlanId   String   @unique
+  harvestPlan     HarvestPlan @relation(fields: [harvestPlanId], references: [id])
+  
+  modelType       String   // e.g. "FIXED", "SUCCESS_FEE"
+  feeRules        Json?
+  safetyNetRules  Json?
+  settlementStatus String   @default("PENDING")
+  
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([companyId])
+  @@map("harvest_performance_contracts")
+}
+
 // --- Tech Map Domain (Detailed Operational Planning) ---
 
 model TechMap {
   id          String   @id @default(cuid())
   
-  seasonId    String   @unique // 1-to-1 with Season
+  harvestPlanId String   // Mandatory link per canon
+  harvestPlan   HarvestPlan @relation(fields: [harvestPlanId], references: [id])
+  
+  seasonId    String   // Allowed multiple maps per season (versions)
   season      Season   @relation(fields: [seasonId], references: [id])
+  
+  harvestPlanActive HarvestPlan? @relation("ActiveTechMap")
+  
+  fieldId     String   // Denormalization for uniqueness index
+  crop        String   // Denormalization for uniqueness index
   
   stages      MapStage[]
   
@@ -1046,6 +1287,12 @@ model TechMap {
   soilType    SoilType?
   moisture    Float?   // Initial moisture %
   precursor   String?  // Предшественник
+  
+  approvedAt      DateTime?
+  
+  // Snapshots for Production Gate (Immutable)
+  operationsSnapshot Json?
+  resourceNormsSnapshot Json?
   
   status      TechMapStatus @default(DRAFT)
   
@@ -1056,10 +1303,14 @@ model TechMap {
   companyId   String
   company     Company  @relation(fields: [companyId], references: [id])
   
+  budgetPlanSnapshots BudgetPlan[] @relation("BudgetPlanTechMapSnapshot")
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  @@unique([fieldId, crop, seasonId, companyId, version]) 
   @@index([companyId])
+  @@index([harvestPlanId])
   @@map("tech_maps")
 }
 
@@ -1100,6 +1351,8 @@ model MapOperation {
   
   requiredMachineryType MachineryType?
   
+  executionRecord ExecutionRecord?
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -1128,16 +1381,96 @@ model MapResource {
 
 enum TechMapStatus {
   DRAFT
+  REVIEW
+  APPROVED
   ACTIVE
   ARCHIVED
 }
 
+enum ExecutionStatus {
+  PLANNED
+  IN_PROGRESS
+  DONE
+  MISSED
+}
+
+model ExecutionRecord {
+  id              String   @id @default(cuid())
+  
+  operationId     String   @unique
+  operation       MapOperation @relation(fields: [operationId], references: [id])
+  
+  status          ExecutionStatus @default(PLANNED)
+  plannedDate     DateTime?
+  actualDate      DateTime?
+  
+  performedById   String?
+  performedBy     User?    @relation(fields: [performedById], references: [id])
+  
+  notes           String?  @db.Text
+  version         Int      @default(1) // Optimistic Locking
+  
+  stockTransactions StockTransaction[]
+  
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  orchestrationLogs ExecutionOrchestrationLog[]
+
+  @@index([companyId])
+  @@map("consulting_execution_records")
+}
+
+model ExecutionOrchestrationLog {
+  id              String   @id @default(cuid())
+  executionId     String
+  execution       ExecutionRecord @relation(fields: [executionId], references: [id])
+  
+  event           String   // e.g. "OperationCompleted"
+  status          String   // "SUCCESS", "WARNING", "FAILURE"
+  
+  budgetApplied   Boolean  @default(false)
+  deviationCreated Boolean @default(false)
+  
+  warnings        String[]
+  error           String?  @db.Text
+  
+  metadata        Json?    // Context dump
+  
+  transactions    StockTransaction[] // Audit Trail: what was created during this orchestration
+  
+  createdAt       DateTime @default(now())
+
+  @@index([executionId])
+  @@map("consulting_execution_logs")
+}
+
 // --- Consulting Control Plane (CMR) ---
+
+enum DeviationStatus {
+  DETECTED
+  ANALYZING
+  DECIDED
+  CLOSED
+}
+
+enum DeviationType {
+  AGRONOMIC
+  FINANCIAL
+  OPERATIONAL
+}
 
 model DeviationReview {
   id              String   @id @default(cuid())
+  type            DeviationType @default(AGRONOMIC)
   
   // Context
+  harvestPlanId   String   // Mandatory link to Plan per Phase 1 Refinement
+  harvestPlan     HarvestPlan @relation(fields: [harvestPlanId], references: [id])
+  
   seasonId        String
   season          Season   @relation(fields: [seasonId], references: [id])
   
@@ -1165,9 +1498,12 @@ model DeviationReview {
   slaExpiration        DateTime?
   liabilityShiftStatus String?    // "SHIFTED_TO_CLIENT", "SUSPENDED"
   
-  status          ReviewStatus @default(OPEN)
+  status          DeviationStatus @default(DETECTED)
   
   risks           CmrRisk[]
+  
+  budgetPlanId    String?
+  budgetPlan      BudgetPlan? @relation(fields: [budgetPlanId], references: [id])
   
   companyId       String
   company         Company  @relation(fields: [companyId], references: [id])
@@ -1176,6 +1512,8 @@ model DeviationReview {
   updatedAt       DateTime @updatedAt
 
   @@index([seasonId])
+  @@index([harvestPlanId])
+  @@index([budgetPlanId])
   @@index([companyId])
   @@index([status])
   @@map("cmr_deviation_reviews")
@@ -1229,6 +1567,9 @@ model CmrRisk {
   // Link to Deviation Review (if this risk triggered a review)
   deviationReviewId String?
   deviationReview   DeviationReview? @relation(fields: [deviationReviewId], references: [id])
+  
+  budgetPlanId    String?
+  budgetPlan      BudgetPlan? @relation(fields: [budgetPlanId], references: [id])
   
   status          String    // OPEN, MITIGATED, REALIZED
   
@@ -1327,11 +1668,7 @@ enum ClientResponseStatus {
   IGNORED
 }
 
-enum ReviewStatus {
-  OPEN
-  RESOLVED
-  ESCALATED
-}
+// ReviewStatus decommissioned in favor of DeviationStatus
 
 enum ConfidenceLevel {
   HIGH
@@ -1364,6 +1701,9 @@ model FieldObservation {
   
   deviationReviewId String?
   deviationReview   DeviationReview? @relation(fields: [deviationReviewId], references: [id])
+
+  budgetPlanId      String?
+  budgetPlan        BudgetPlan? @relation(fields: [budgetPlanId], references: [id])
   
   // Ownership
   authorId          String
@@ -1581,6 +1921,7 @@ enum EconomicEventType {
 enum BudgetStatus {
   DRAFT
   APPROVED
+  LOCKED
   ACTIVE
   EXHAUSTED
   BLOCKED
@@ -1776,7 +2117,7 @@ model LegalRequirement {
   companyId        String
   company          Company  @relation(fields: [companyId], references: [id])
   
-  obligations      Obligation[]
+  obligations      LegalObligation[]
   complianceChecks ComplianceCheck[]
   
   createdAt        DateTime @default(now())
@@ -1787,7 +2128,7 @@ model LegalRequirement {
   @@map("legal_requirements")
 }
 
-model Obligation {
+model LegalObligation {
   id               String   @id @default(cuid())
   requirementId    String
   requirement      LegalRequirement @relation(fields: [requirementId], references: [id])
@@ -1795,7 +2136,7 @@ model Obligation {
   description      String   @db.Text
   dueDate          DateTime?
   ownerId          String?  // User ID или Role ID
-  status           ObligationStatus @default(PENDING)
+  status           LegalObligationStatus @default(PENDING)
   
   sanctions        Sanction[]
   
@@ -1809,7 +2150,7 @@ model Obligation {
 model Sanction {
   id               String   @id @default(cuid())
   obligationId     String
-  obligation       Obligation @relation(fields: [obligationId], references: [id])
+  obligation       LegalObligation @relation(fields: [obligationId], references: [id])
   
   type             SanctionType
   amount           Decimal? @db.Decimal(18,2) // Повышенная точность для штрафов
@@ -1845,7 +2186,7 @@ model GrInteraction {
   regulatorId      String
   regulator        RegulatoryBody @relation(fields: [regulatorId], references: [id])
   
-  type             InteractionType
+  type             GrInteractionType
   subject          String
   content          String?  @db.Text
   date             DateTime
@@ -1931,7 +2272,7 @@ enum ImpactTargetType {
   RND_PROTOCOL
 }
 
-enum ObligationStatus {
+enum LegalObligationStatus {
   PENDING
   COMPLETED
   OVERDUE
@@ -1946,7 +2287,7 @@ enum SanctionType {
   REPUTATIONAL
 }
 
-enum InteractionType {
+enum GrInteractionType {
   MEETING
   INSPECTION
   LETTER
@@ -2385,4 +2726,110 @@ enum RiskReferenceType {
   REQUIREMENT
   TASK
   TRANSACTION
+}
+
+// ==========================================
+// TRACK 2: BUDGET VERTICAL SLICE
+// ==========================================
+
+model BudgetPlan {
+  id                  String   @id @default(cuid())
+  
+  harvestPlanId       String
+  harvestPlan         HarvestPlan @relation(fields: [harvestPlanId], references: [id])
+  
+  harvestPlanActive   HarvestPlan? @relation("ActiveBudgetPlan")
+  
+  version             Int      @default(1)
+  status              BudgetStatus @default(DRAFT)
+  
+  totalPlannedAmount  Float    @default(0)
+  totalActualAmount   Float    @default(0)
+  
+  techMapSnapshotId   String?  
+  techMapSnapshot     TechMap? @relation("BudgetPlanTechMapSnapshot", fields: [techMapSnapshotId], references: [id])
+  
+  items               BudgetItem[]
+  
+  // Traceability
+  deviationReviews    DeviationReview[]
+  risks               CmrRisk[]
+  observations        FieldObservation[]
+  
+  companyId           String
+  company             Company  @relation(fields: [companyId], references: [id])
+  
+  seasonId            String
+  season              Season   @relation(fields: [seasonId], references: [id])
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([harvestPlanId, version])
+  @@index([companyId])
+  @@index([harvestPlanId])
+  @@map("consulting_budget_plans")
+}
+
+model BudgetItem {
+  id              String   @id @default(cuid())
+  budgetPlanId    String
+  budgetPlan      BudgetPlan @relation(fields: [budgetPlanId], references: [id])
+  
+  category        BudgetCategory
+  plannedAmount   Float
+  actualAmount    Float    @default(0)
+  
+  stockTransactions StockTransaction[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([budgetPlanId])
+  @@map("consulting_budget_items")
+}
+
+enum BudgetCategory {
+  SEEDS
+  FERTILIZER
+  FUEL
+  LABOR
+  MACHINERY
+  OTHER
+}
+
+model HarvestResult {
+  id              String   @id @default(cuid())
+  planId          String
+  plan            HarvestPlan @relation(fields: [planId], references: [id])
+  seasonId        String
+  season          Season   @relation(fields: [seasonId], references: [id])
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+
+  fieldId         String
+  field           Field    @relation(fields: [fieldId], references: [id])
+  crop            String
+
+  plannedYield    Float?   // ц/га
+  actualYield     Float?   // ц/га
+
+  harvestedArea   Float?   // га
+  totalOutput     Float?   // тонн
+  marketPrice     Float?   // цена реализации за тонну
+  
+  // Budget Snapshot at Harvest (Fix: Deterministic KPI)
+  costSnapshot    Float?   // фактические затраты на момент фиксации урожая
+  budgetPlanId    String?  // ссылка на план, с которого снят снепшот
+  budgetVersion   Int?     // версия бюджета
+  
+  qualityClass    String?
+  harvestDate     DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([planId, seasonId, companyId])
+  @@index([fieldId])
+  @@map("harvest_results")
 }

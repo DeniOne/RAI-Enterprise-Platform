@@ -1,0 +1,12 @@
+Starting seed script...
+Connecting to DB...
+Company ensured: RAI Enterprise
+ERROR: PrismaClientKnownRequestError: 
+Invalid `prisma.user.upsert()` invocation in
+f:\RAI_EP\packages\prisma-client\seed.ts:37:35
+
+  34 if (fs.existsSync(usersPath)) {
+  35     const users = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
+  36     for (const u of users) {
+→ 37         await prisma.user.upsert(
+The column `users.clientId` does not exist in the current database.
