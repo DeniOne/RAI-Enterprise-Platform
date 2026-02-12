@@ -86,6 +86,7 @@ model Company {
   // Asset Registries
   machinery        Machinery[]
   stockItems       StockItem[]
+  stockTransactions StockTransaction[]
 
   @@map("companies")
 }
@@ -364,9 +365,13 @@ model StockTransaction {
   budgetItemId    String?
   budgetItem      BudgetItem?      @relation(fields: [budgetItemId], references: [id])
 
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+
   @@index([executionId])
   @@index([budgetItemId])
   @@index([orchLogId])
+  @@index([companyId])
   @@map("stock_transactions")
 }
 

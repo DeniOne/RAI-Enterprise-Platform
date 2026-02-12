@@ -41,11 +41,11 @@ export class TelegramUpdate {
         ? `@${ctx.from.username}`
         : "Mystery Guest";
       await ctx.reply(
-        `в›” <b>Р”РѕСЃС‚СѓРї РѕРіСЂР°РЅРёС‡РµРЅ</b>\n\nРџСЂРёРІРµС‚, ${username}! РўРІРѕР№ Telegram ID (${ctx.from?.id}) РЅРµ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅ РІ СЃРёСЃС‚РµРјРµ RAI_EP.\n\nР•СЃР»Рё С‚С‹ РєРѕР»Р»РµРіР° вЂ” РЅР°Р¶РјРё РєРЅРѕРїРєСѓ РЅРёР¶Рµ, С‡С‚РѕР±С‹ Р·Р°РїСЂРѕСЃРёС‚СЊ РґРѕСЃС‚СѓРї.`,
+        `⛔ <b>Доступ ограничен</b>\n\nПривет, ${username}! Твой Telegram ID (${ctx.from?.id}) не зарегистрирован в системе RAI_EP.\n\nЕсли ты коллега — нажми кнопку ниже, чтобы запросить доступ.`,
         {
           parse_mode: "HTML",
           ...Markup.inlineKeyboard([
-            [Markup.button.callback("рџ“ќ Р—Р°РїСЂРѕСЃРёС‚СЊ РґРѕСЃС‚СѓРї", "request_access")],
+            [Markup.button.callback("📝 Запросить доступ", "request_access")],
           ]),
         },
       );
@@ -53,12 +53,12 @@ export class TelegramUpdate {
     }
 
     const keyboard = Markup.keyboard([
-      ["рџ“‹ РњРѕРё Р·Р°РґР°С‡Рё", "рџ“Љ РџСЂРѕРіСЂРµСЃСЃ"],
-      ["рџ“Љ РћРїСЂРѕСЃС‹", "рџ§  Р РµРєРѕРјРµРЅРґР°С†РёРё"]
+      ["📋 Мои задачи", "📊 Прогресс"],
+      ["📊 Опросы", "🧠 Рекомендации"]
     ]).resize();
 
     await ctx.reply(
-      `рџ‘‹ Р”РѕР±СЂРѕ РїРѕР¶Р°Р»РѕРІР°С‚СЊ! Р’С‹ РІРѕС€Р»Рё РєР°Рє ${user.email ?? "РџРѕР»РµРІРѕР№ СЂР°Р±РѕС‚РЅРёРє"}.\nРСЃРїРѕР»СЊР·СѓР№С‚Рµ РјРµРЅСЋ РґР»СЏ РЅР°РІРёРіР°С†РёРё.`,
+      `👋 Добро пожаловать! Вы вошли как ${user.email ?? "Полевой работник"}.\nИспользуйте меню для навигации.`,
       keyboard,
     );
   }
@@ -73,22 +73,22 @@ export class TelegramUpdate {
     const name =
       `${ctx.from.first_name || ""} ${ctx.from.last_name || ""}`.trim();
 
-    await ctx.answerCbQuery("Р—Р°РїСЂРѕСЃ РѕС‚РїСЂР°РІР»РµРЅ Р°РґРјРёРЅСѓ рџљЂ");
+    await ctx.answerCbQuery("Запрос отправлен админу 🚀");
     await ctx.editMessageText(
-      "вњ… <b>Р—Р°РїСЂРѕСЃ РѕС‚РїСЂР°РІР»РµРЅ!</b>\nРЇ СЃРѕРѕР±С‰Сѓ С‚РµР±Рµ, РєРѕРіРґР° Р°РґРјРёРЅ РІС‹РґР°СЃС‚ РґРѕСЃС‚СѓРї.",
+      "✅ <b>Запрос отправлен!</b>\nЯ сообщу тебе, когда админ выдаст доступ.",
       { parse_mode: "HTML" },
     );
 
     // Notify Admin
     await ctx.telegram.sendMessage(
       ADMIN_TG_ID,
-      `рџ”” <b>РќРћР’Р«Р™ Р—РђРџР РћРЎ Р”РћРЎРўРЈРџРђ</b>\n\nрџ‘¤ РРјСЏ: ${name}\nрџЊђ Р®Р·РµСЂ: ${username}\nрџ†” TG ID: <code>${tgId}</code>`,
+      `🔔 <b>НОВЫЙ ЗАПРОС ДОСТУПА</b>\n\n👤 Имя: ${name}\n🌐 Юзер: ${username}\n🆔 TG ID: <code>${tgId}</code>`,
       {
         parse_mode: "HTML",
         ...Markup.inlineKeyboard([
           [
-            Markup.button.callback("вњ… РћРґРѕР±СЂРёС‚СЊ", `approve_user:${tgId}`),
-            Markup.button.callback("вќЊ РћС‚РєР»РѕРЅРёС‚СЊ", `decline_user:${tgId}`),
+            Markup.button.callback("✅ Одобрить", `approve_user:${tgId}`),
+            Markup.button.callback("❌ Отклонить", `decline_user:${tgId}`),
           ],
         ]),
       },
@@ -120,15 +120,15 @@ export class TelegramUpdate {
       });
 
 
-      await ctx.answerCbQuery("РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РѕРґРѕР±СЂРµРЅ! вњ…");
-      await ctx.editMessageText(`вњ… Р®Р·РµСЂ СЃ ID <code>${tgId}</code> С‚РµРїРµСЂСЊ РІ СЃРёСЃС‚РµРјРµ!`, {
+      await ctx.answerCbQuery("Пользователь одобрен! ✅");
+      await ctx.editMessageText(`✅ Юзер с ID <code>${tgId}</code> теперь в системе!`, {
         parse_mode: "HTML",
       });
 
       // 4. Notify User
       await ctx.telegram.sendMessage(
         tgId,
-        "рџЋ‰ <b>РўРІРѕР№ РґРѕСЃС‚СѓРї РѕРґРѕР±СЂРµРЅ!</b>\nР’РІРµРґРё /start, С‡С‚РѕР±С‹ РѕС‚РєСЂС‹С‚СЊ РјРµРЅСЋ.",
+        "🎉 <b>Твой доступ одобрен!</b>\nВведи /start, чтобы открыть меню.",
         { parse_mode: "HTML" },
       );
     } catch (e) {
@@ -142,38 +142,38 @@ export class TelegramUpdate {
     if (!("match" in ctx && ctx.match)) return;
     const tgId = ctx.match[1];
 
-    await ctx.answerCbQuery("Р—Р°РїСЂРѕСЃ РѕС‚РєР»РѕРЅРµРЅ вќЊ");
-    await ctx.editMessageText(`вќЊ Р—Р°РїСЂРѕСЃ РѕС‚ <code>${tgId}</code> РѕС‚РєР»РѕРЅРµРЅ.`, {
+    await ctx.answerCbQuery("Запрос отклонен ❌");
+    await ctx.editMessageText(`❌ Запрос от <code>${tgId}</code> отклонен.`, {
       parse_mode: "HTML",
     });
 
     // Notify User
     await ctx.telegram.sendMessage(
       tgId,
-      "рџ” РР·РІРёРЅРё, С‚РІРѕР№ Р·Р°РїСЂРѕСЃ РЅР° РґРѕСЃС‚СѓРї Р±С‹Р» РѕС‚РєР»РѕРЅРµРЅ Р°РґРјРёРЅРѕРј.",
+      "😔 Извини, твой запрос на доступ был отклонен админом.",
     );
   }
 
-  @Hears("рџ“Љ РџСЂРѕРіСЂРµСЃСЃ")
+  @Hears("📊 Прогресс")
   async onProgress(@Ctx() ctx: Context): Promise<void> {
     const stats = this.progressService.getProgressStats();
     const report = this.progressService.formatReport(stats);
     await ctx.reply(report, { parse_mode: "HTML" });
   }
 
-  @Hears("рџ§  Р РµРєРѕРјРµРЅРґР°С†РёРё")
+  @Hears("🧠 Рекомендации")
   @Hears("/advisory")
   async onAdvisoryRecommendations(@Ctx() ctx: Context): Promise<void> {
     const accessToken = await this.getAccessToken(ctx);
     if (!accessToken) {
-      await ctx.reply("рџ”‘ РўСЂРµР±СѓРµС‚СЃСЏ Р°РІС‚РѕСЂРёР·Р°С†РёСЏ С‡РµСЂРµР· РІРµР±.");
+      await ctx.reply("🔑 Требуется авторизация через веб.");
       return;
     }
 
     try {
       const pilotStatus = await this.apiClient.getAdvisoryPilotStatus(accessToken);
       if (!pilotStatus.enabled) {
-        await ctx.reply("в›” Advisory-РїРёР»РѕС‚ РґР»СЏ РІР°С€РµРіРѕ Р°РєРєР°СѓРЅС‚Р° РїРѕРєР° РЅРµ РІРєР»СЋС‡РµРЅ.");
+        await ctx.reply("⛔ Advisory-пилот для вашего аккаунта пока не включен.");
         return;
       }
 
@@ -185,7 +185,7 @@ export class TelegramUpdate {
 
       const recommendations = await this.apiClient.getMyAdvisoryRecommendations(accessToken);
       if (recommendations.length === 0) {
-        await ctx.reply("вњ… РќР° РґР°РЅРЅС‹Р№ РјРѕРјРµРЅС‚ РЅРµС‚ Р°РєС‚РёРІРЅС‹С… СЂРµРєРѕРјРµРЅРґР°С†РёР№.");
+        await ctx.reply("✅ На данный момент нет активных рекомендаций.");
         return;
       }
 
@@ -196,7 +196,7 @@ export class TelegramUpdate {
           .join(" | ");
 
         await ctx.reply(
-          `рџ§  <b>Р РµРєРѕРјРµРЅРґР°С†РёСЏ ${item.recommendation}</b>\n` +
+          `🧠 <b>Рекомендация ${item.recommendation}</b>\n` +
           `traceId: <code>${item.traceId}</code>\n` +
           `confidence: ${(item.confidence * 100).toFixed(1)}%\n` +
           `why: ${item.explainability.why}\n` +
@@ -205,8 +205,8 @@ export class TelegramUpdate {
             parse_mode: "HTML",
             ...Markup.inlineKeyboard([
               [
-                Markup.button.callback("вњ… РџСЂРёРЅСЏС‚СЊ", `accept_advisory:${item.traceId}`),
-                Markup.button.callback("вќЊ РћС‚РєР»РѕРЅРёС‚СЊ", `reject_advisory:${item.traceId}`),
+                Markup.button.callback("✅ Принять", `accept_advisory:${item.traceId}`),
+                Markup.button.callback("❌ Отклонить", `reject_advisory:${item.traceId}`),
               ],
             ]),
           },
@@ -245,14 +245,14 @@ export class TelegramUpdate {
         });
       }
 
-      await ctx.answerCbQuery("Р РµРєРѕРјРµРЅРґР°С†РёСЏ РїСЂРёРЅСЏС‚Р°");
+      await ctx.answerCbQuery("Рекомендация принята");
       await ctx.editMessageText(
-        `${(ctx.callbackQuery as any).message.text}\n\nвњ… <b>РЎС‚Р°С‚СѓСЃ: РџСЂРёРЅСЏС‚Рѕ</b>`,
+        `${(ctx.callbackQuery as any).message.text}\n\n✅ <b>Статус: Принято</b>`,
         { parse_mode: "HTML" },
       );
     } catch (e) {
       this.logger.error(`[ADVISORY] Accept failed for ${traceId}: ${e.message}`);
-      await ctx.answerCbQuery("вќЊ РћС€РёР±РєР° РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ");
+      await ctx.answerCbQuery("❌ Ошибка подтверждения");
     }
   }
 
@@ -277,15 +277,10 @@ export class TelegramUpdate {
         });
       }
 
-      await ctx.answerCbQuery("Р РµРєРѕРјРµРЅРґР°С†РёСЏ РѕС‚РєР»РѕРЅРµРЅР°");
-      await ctx.editMessageText(
-        `${(ctx.callbackQuery as any).message.text}\n\nвќЊ <b>РЎС‚Р°С‚СѓСЃ: РћС‚РєР»РѕРЅРµРЅРѕ</b>\n` +
-        `РћС‚РїСЂР°РІСЊС‚Рµ СЃР»РµРґСѓСЋС‰РёРј СЃРѕРѕР±С‰РµРЅРёРµРј РїСЂРёС‡РёРЅСѓ РѕС‚РєР»РѕРЅРµРЅРёСЏ.`,
-        { parse_mode: "HTML" },
-      );
+      await ctx.reply("✅ Причина отклонения сохранена.");
     } catch (e) {
       this.logger.error(`[ADVISORY] Reject failed for ${traceId}: ${e.message}`);
-      await ctx.answerCbQuery("вќЊ РћС€РёР±РєР° РѕС‚РєР»РѕРЅРµРЅРёСЏ");
+      await ctx.answerCbQuery("❌ Ошибка отклонения");
     }
   }
 
@@ -295,18 +290,18 @@ export class TelegramUpdate {
    * ================================
    */
 
-  @Hears("рџ“‹ РњРѕРё Р·Р°РґР°С‡Рё")
+  @Hears("📋 Мои задачи")
   @Hears("/mytasks")
   async onMyTasks(@Ctx() ctx: Context): Promise<void> {
     const user = await this.getUser(ctx);
     if (!user) {
-      await ctx.reply("в›” Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰С‘РЅ. Р’РІРµРґРёС‚Рµ /start РґР»СЏ СЂРµРіРёСЃС‚СЂР°С†РёРё.");
+      await ctx.reply("⛔ Доступ запрещен. Введите /start для регистрации.");
       return;
     }
 
     const accessToken = await this.getAccessToken(ctx);
     if (!accessToken) {
-      await ctx.reply("рџ”‘ РџРѕР¶Р°Р»СѓР№СЃС‚Р°, РІС‹РїРѕР»РЅРёС‚Рµ РІС…РѕРґ С‡РµСЂРµР· РІРµР±-РёРЅС‚РµСЂС„РµР№СЃ РёР»Рё Р·Р°РїСЂРѕСЃРёС‚Рµ РІСЂРµРјРµРЅРЅС‹Р№ С‚РѕРєРµРЅ.");
+      await ctx.reply("🔑 Пожалуйста, выполните вход через веб-интерфейс или запросите временный токен.");
       return;
     }
 
@@ -314,33 +309,33 @@ export class TelegramUpdate {
       const tasks = await this.apiClient.getMyTasks(accessToken);
 
       if (tasks.length === 0) {
-        await ctx.reply("вњ… РЈ РІР°СЃ РЅРµС‚ Р°РєС‚РёРІРЅС‹С… Р·Р°РґР°С‡.");
+        await ctx.reply("✅ У вас нет активных задач.");
         return;
       }
 
       for (const task of tasks) {
-        const fieldName = task.field?.name || "РќРµРёР·РІРµСЃС‚РЅРѕРµ РїРѕР»Рµ";
-        const statusIcon = task.status === "IN_PROGRESS" ? "вЏі" : "рџ†•";
-        const statusText = task.status === "IN_PROGRESS" ? "Р’ СЂР°Р±РѕС‚Рµ" : "РћР¶РёРґР°РµС‚";
+        const fieldName = task.field?.name || "Неизвестное поле";
+        const statusIcon = task.status === "IN_PROGRESS" ? "⏳" : "🆕";
+        const statusText = task.status === "IN_PROGRESS" ? "В работе" : "Ожидает";
 
         const buttons: ReturnType<typeof Markup.button.callback>[] = [];
         if (task.status === "PENDING") {
           buttons.push(
-            Markup.button.callback("в–¶ РќР°С‡Р°С‚СЊ", `start_task:${task.id}`),
+            Markup.button.callback("▶ Начать", `start_task:${task.id}`),
           );
         } else if (task.status === "IN_PROGRESS") {
           buttons.push(
-            Markup.button.callback("вњ… Р—Р°РІРµСЂС€РёС‚СЊ", `complete_task:${task.id}`),
+            Markup.button.callback("✅ Завершить", `complete_task:${task.id}`),
           );
         }
 
         await ctx.reply(
-          `${statusIcon} <b>${task.name}</b>\nрџ“Ќ РџРѕР»Рµ: ${fieldName}\nрџ“Љ РЎС‚Р°С‚СѓСЃ: ${statusText}\nрџ“… Р”Р°С‚Р°: ${task.plannedDate ? new Date(task.plannedDate).toLocaleDateString("ru-RU") : "РќРµ СѓРєР°Р·Р°РЅР°"}`,
+          `${statusIcon} <b>${task.name}</b>\n📍 Поле: ${fieldName}\n📊 Статус: ${statusText}\n📅 Дата: ${task.plannedDate ? new Date(task.plannedDate).toLocaleDateString("ru-RU") : "Не указана"}`,
           {
             parse_mode: "HTML",
             ...Markup.inlineKeyboard([
               buttons,
-              [Markup.button.callback("рџ“њ РўРµС…РєР°СЂС‚Р°", `view_techmap:${task.seasonId}`)]
+              [Markup.button.callback("📜 Техкарта", `view_techmap:${task.seasonId}`)]
             ]),
           },
         );
@@ -378,14 +373,14 @@ export class TelegramUpdate {
         });
       }
 
-      await ctx.answerCbQuery("Р—Р°РґР°С‡Р° РЅР°С‡Р°С‚Р°! в–¶");
+      await ctx.answerCbQuery("Задача начата! ▶");
       await ctx.editMessageText(
-        (ctx.callbackQuery as any).message.text + "\n\nвњ… <b>Р—Р°РґР°С‡Р° РЅР°С‡Р°С‚Р°!</b>\n<i>РћС‚РїСЂР°РІР»СЏР№С‚Рµ С„РѕС‚Рѕ РёР»Рё РіРµРѕРїРѕР·РёС†РёСЋ РґР»СЏ РѕС‚С‡РµС‚Р°.</i>",
+        (ctx.callbackQuery as any).message.text + "\n\n✅ <b>Задача начата!</b>\n<i>Отправляйте фото или геопозицию для отчета.</i>",
         { parse_mode: "HTML" },
       );
     } catch (e) {
-      console.error("вќЊ Error starting task:", e);
-      await ctx.answerCbQuery(`РћС€РёР±РєР°: ${e.message}`);
+      console.error("❌ Error starting task:", e);
+      await ctx.answerCbQuery(`Ошибка: ${e.message}`);
     }
   }
 
@@ -406,14 +401,14 @@ export class TelegramUpdate {
 
       await this.apiClient.completeTask(taskId, accessToken);
 
-      await ctx.answerCbQuery("Р—Р°РґР°С‡Р° Р·Р°РІРµСЂС€РµРЅР°! вњ…");
+      await ctx.answerCbQuery("Задача завершена! ✅");
       await ctx.editMessageText(
-        (ctx.callbackQuery as any).message.text + "\n\nрџЋ‰ <b>Р—Р°РґР°С‡Р° Р·Р°РІРµСЂС€РµРЅР°!</b>",
+        (ctx.callbackQuery as any).message.text + "\n\n🎉 <b>Задача завершена!</b>",
         { parse_mode: "HTML" },
       );
     } catch (e) {
-      console.error("вќЊ Error completing task:", e);
-      await ctx.answerCbQuery(`РћС€РёР±РєР°: ${e.message}`);
+      console.error("❌ Error completing task:", e);
+      await ctx.answerCbQuery(`Ошибка: ${e.message}`);
     }
   }
 
@@ -440,12 +435,12 @@ export class TelegramUpdate {
 
       await ctx.answerCbQuery();
       await ctx.editMessageText(
-        "вњ… <b>Р’С…РѕРґ РїРѕРґС‚РІРµСЂР¶РґС‘РЅ!</b>\n\nР’С‹ СѓСЃРїРµС€РЅРѕ Р°РІС‚РѕСЂРёР·РѕРІР°Р»РёСЃСЊ РІ РІРµР±-РёРЅС‚РµСЂС„РµР№СЃРµ.",
+        "✅ <b>Вход подтверждён!</b>\n\nВы успешно авторизовались в веб-интерфейсе.",
         { parse_mode: "HTML" },
       );
     } catch (error) {
-      console.error("вќЊ Error confirming login:", error);
-      await ctx.answerCbQuery("РћС€РёР±РєР° РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ");
+      console.error("❌ Error confirming login:", error);
+      await ctx.answerCbQuery("Ошибка подтверждения");
     }
   }
 
@@ -458,12 +453,12 @@ export class TelegramUpdate {
       await this.apiClient.denyLogin(sessionId);
       await ctx.answerCbQuery();
       await ctx.editMessageText(
-        "вќЊ <b>Р’С…РѕРґ РѕС‚РєР»РѕРЅС‘РЅ</b>\n\nРџРѕРїС‹С‚РєР° РІС…РѕРґР° РІ РІРµР±-РёРЅС‚РµСЂС„РµР№СЃ Р±С‹Р»Р° РѕС‚РєР»РѕРЅРµРЅР°.",
+        "❌ <b>Вход отклонён</b>\n\nПопытка входа в веб-интерфейс была отклонена.",
         { parse_mode: "HTML" },
       );
     } catch (error) {
-      console.error("вќЊ Error denying login:", error);
-      await ctx.answerCbQuery("РћС€РёР±РєР° РѕС‚РєР»РѕРЅРµРЅРёСЏ");
+      console.error("❌ Error denying login:", error);
+      await ctx.answerCbQuery("Ошибка отклонения");
     }
   }
 
@@ -511,12 +506,12 @@ export class TelegramUpdate {
    * ================================
    */
 
-  @Hears("рџ“Љ РћРїСЂРѕСЃС‹")
+  @Hears("📊 Опросы")
   @Hears("/pulse")
   async onPulseList(@Ctx() ctx: Context): Promise<void> {
     const accessToken = await this.getAccessToken(ctx);
     if (!accessToken) {
-      await ctx.reply("рџ”‘ РўСЂРµР±СѓРµС‚СЃСЏ Р°РІС‚РѕСЂРёР·Р°С†РёСЏ С‡РµСЂРµР· РІРµР±.");
+      await ctx.reply("🔑 Требуется авторизация через веб.");
       return;
     }
 
@@ -524,11 +519,11 @@ export class TelegramUpdate {
       const surveys = await this.apiClient.getPulseSurveys(accessToken);
 
       if (surveys.length === 0) {
-        await ctx.reply("рџ“Ґ РќР° РґР°РЅРЅС‹Р№ РјРѕРјРµРЅС‚ РЅРµС‚ Р°РєС‚РёРІРЅС‹С… РѕРїСЂРѕСЃРѕРІ.");
+        await ctx.reply("📥 На данный момент нет активных опросов.");
         return;
       }
 
-      await ctx.reply("рџ“‹ <b>Р”РѕСЃС‚СѓРїРЅС‹Рµ РѕРїСЂРѕСЃС‹:</b>", {
+      await ctx.reply("📋 <b>Доступные опросы:</b>", {
         parse_mode: "HTML",
         ...Markup.inlineKeyboard(
           surveys.map((s: any) => [
@@ -537,8 +532,8 @@ export class TelegramUpdate {
         ),
       });
     } catch (e) {
-      console.error("вќЊ Error fetching surveys:", e);
-      await ctx.reply("вќЊ РћС€РёР±РєР° РїСЂРё РїРѕР»СѓС‡РµРЅРёРё СЃРїРёСЃРєР° РѕРїСЂРѕСЃРѕРІ.");
+      console.error("❌ Error fetching surveys:", e);
+      await ctx.reply("❌ Ошибка при получении списка опросов.");
     }
   }
 
@@ -553,7 +548,7 @@ export class TelegramUpdate {
       const survey = surveys.find((s: any) => s.id === surveyId);
 
       if (!survey) {
-        await ctx.answerCbQuery("вќЊ РћРїСЂРѕСЃ РЅРµ РЅР°Р№РґРµРЅ");
+        await ctx.answerCbQuery("❌ Опрос не найден");
         return;
       }
 
@@ -583,7 +578,7 @@ export class TelegramUpdate {
     const session = await this.session.getSession(ctx.from.id);
 
     if (!session?.surveyState) {
-      await ctx.answerCbQuery("вќЊ РЎРµСЃСЃРёСЏ РѕРїСЂРѕСЃР° РёСЃС‚РµРєР»Р°");
+      await ctx.answerCbQuery("❌ Сессия опроса истекла");
       return;
     }
 
@@ -606,7 +601,7 @@ export class TelegramUpdate {
       await this.renderQuestion(ctx, survey, nextIndex);
     } else {
       // Finish survey
-      await ctx.editMessageText("вЏі <b>РћР±СЂР°Р±РѕС‚РєР° РѕС‚РІРµС‚РѕРІ...</b>", { parse_mode: "HTML" });
+      await ctx.editMessageText("⏳ <b>Обработка ответов...</b>", { parse_mode: "HTML" });
 
       try {
         const user = await this.getUser(ctx);
@@ -617,7 +612,7 @@ export class TelegramUpdate {
           answers
         }, accessToken!);
 
-        await ctx.editMessageText("рџЋ‰ <b>РЎРїР°СЃРёР±Рѕ Р·Р° СѓС‡Р°СЃС‚РёРµ!</b>\nР’Р°С€Рё РѕС‚РІРµС‚С‹ РїРѕРјРѕРіСѓС‚ РЅР°Рј СЃС‚Р°С‚СЊ Р»СѓС‡С€Рµ.", { parse_mode: "HTML" });
+        await ctx.editMessageText("🎉 <b>Спасибо за участие!</b>\nВаши ответы помогут нам стать лучше.", { parse_mode: "HTML" });
 
         // Clear survey state
         const updatedSession = await this.session.getSession(ctx.from.id);
@@ -626,8 +621,8 @@ export class TelegramUpdate {
           await this.session.saveSession(ctx.from.id, updatedSession);
         }
       } catch (e) {
-        console.error("вќЊ Error submitting pulse:", e);
-        await ctx.editMessageText("вќЊ РџСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР° РїСЂРё СЃРѕС…СЂР°РЅРµРЅРёРё РѕС‚РІРµС‚РѕРІ.");
+        console.error("❌ Error submitting pulse:", e);
+        await ctx.editMessageText("❌ Произошла ошибка при сохранении ответов.");
       }
     }
     await ctx.answerCbQuery();
@@ -663,7 +658,7 @@ export class TelegramUpdate {
           pendingAdvisoryFeedbackTraceId: undefined,
         });
 
-        await ctx.reply("вњ… РџСЂРёС‡РёРЅР° РѕС‚РєР»РѕРЅРµРЅРёСЏ СЃРѕС…СЂР°РЅРµРЅР°.");
+        await ctx.reply("✅ Причина отклонения сохранена.");
         return;
       }
 
@@ -679,9 +674,9 @@ export class TelegramUpdate {
       }, accessToken);
 
       // Acknowledge receipt (Dumb Transport Feedback)
-      await ctx.reply("вњЌ РџСЂРёРЅСЏС‚Рѕ", { disable_notification: true });
+      await ctx.reply("✍ Принято", { disable_notification: true });
     } catch (e) {
-      console.error("вќЊ Error forwarding text observation:", e);
+      console.error("❌ Error forwarding text observation:", e);
     }
   }
 
@@ -708,10 +703,10 @@ export class TelegramUpdate {
         coordinates: session.currentCoordinates,
       }, session.token);
 
-      await ctx.reply("рџ“ё Р¤РѕС‚Рѕ РїСЂРёРЅСЏС‚Рѕ РєР°Рє РґРѕРєР°Р·Р°С‚РµР»СЊСЃС‚РІРѕ (Strong Evidence). РџСЂРѕРІРµСЂСЏСЋ С†РµР»РѕСЃС‚РЅРѕСЃС‚СЊ...");
+      await ctx.reply("📸 Фото принято как доказательство (Strong Evidence). Проверяю целостность...");
     } catch (e) {
       this.logger.error(`[TRANSPORT] Failed to forward photo: ${e.message}`);
-      await ctx.reply("вќЊ РћС€РёР±РєР° РїСЂРё РїРµСЂРµРґР°С‡Рµ С„РѕС‚Рѕ РЅР° СЃРµСЂРІРµСЂ.");
+      await ctx.reply("❌ Ошибка при передаче фото на сервер.");
     }
   }
 
@@ -731,10 +726,10 @@ export class TelegramUpdate {
         coordinates: session.currentCoordinates,
       }, session.token);
 
-      await ctx.reply("рџЋ™ Р“РѕР»РѕСЃРѕРІРѕР№ РѕС‚С‡РµС‚ РїСЂРёРЅСЏС‚. Р”Р°РЅРЅС‹Рµ РїРµСЂРµРґР°РЅС‹ РІ Back-Office.");
+      await ctx.reply("🎤 Голосовой отчет принят. Данные переданы в Back-Office.");
     } catch (e) {
       this.logger.error(`[TRANSPORT] Failed to forward voice: ${e.message}`);
-      await ctx.reply("вќЊ РћС€РёР±РєР° РїСЂРё РїРµСЂРµРґР°С‡Рµ Р°СѓРґРёРѕ.");
+      await ctx.reply("❌ Ошибка при передаче аудио.");
     }
   }
 
@@ -749,7 +744,7 @@ export class TelegramUpdate {
         ...session,
         currentCoordinates: { lat: latitude, lng: longitude },
       });
-      await ctx.reply(`рџ“Ќ РљРѕРѕСЂРґРёРЅР°С‚С‹ Р·Р°С„РёРєСЃРёСЂРѕРІР°РЅС‹: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}. Р’СЃРµ РїРѕСЃР»РµРґСѓСЋС‰РёРµ РјРµРґРёР° Р±СѓРґСѓС‚ РёРјРµС‚СЊ GPS-РїРѕРґРїРёСЃСЊ.`);
+      await ctx.reply(`📍 Координаты зафиксированы: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}. Все последующие медиа будут иметь GPS-подпись.`);
     }
   }
 
@@ -757,7 +752,7 @@ export class TelegramUpdate {
 
   private async renderQuestion(ctx: Context, survey: any, index: number) {
     const question = survey.questions[index];
-    const text = `<b>РћРїСЂРѕСЃ: ${survey.title}</b>\n\nР’РѕРїСЂРѕСЃ ${index + 1}/${survey.questions.length}:\n${question.text}`;
+    const text = `<b>Опрос: ${survey.title}</b>\n\nВопрос ${index + 1}/${survey.questions.length}:\n${question.text}`;
 
     // Default options if not provided
     const options = question.options || [1, 2, 3, 4, 5];

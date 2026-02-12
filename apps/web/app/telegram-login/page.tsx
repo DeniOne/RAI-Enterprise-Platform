@@ -16,7 +16,7 @@ export default function TelegramLoginPage() {
         setError("");
 
         try {
-            const response = await fetch("http://localhost:4000/api/auth/telegram-login", {
+            const response = await fetch("http://127.0.0.1:4000/api/auth/telegram-login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ telegramId }),
@@ -40,16 +40,35 @@ export default function TelegramLoginPage() {
 
         const interval = setInterval(async () => {
             try {
-                const response = await fetch(`http://localhost:4000/api/auth/telegram-login/${sessionId}`);
+                const response = await fetch(`http://127.0.0.1:4000/api/auth/telegram-login/${sessionId}`);
                 const data = await response.json();
 
                 if (data.status === "approved") {
                     setStatus("approved");
-                    // Save token to cookie for middleware and server-side access
-                    document.cookie = `auth_token=${data.accessToken}; path=/; max-age=86400; SameSite=Lax`;
-                    localStorage.setItem("access_token", data.accessToken);
-                    clearInterval(interval);
-                    router.push("/dashboard");
+
+                    // RULE: Don't set cookies manually on client (avoids redirect loops)
+                    // Instead, call our server-side callback to set secure HttpOnly cookie
+                    try {
+                        const callbackResponse = await fetch("/api/auth/telegram-callback", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ token: data.accessToken }),
+                        });
+
+                        if (!callbackResponse.ok) {
+                            throw new Error("Failed to set session via server callback");
+                        }
+
+                        // Success - clear polling and move to dashboard
+                        clearInterval(interval);
+                        router.push("/dashboard");
+                    } catch (callbackErr) {
+                        console.error("Callback error:", callbackErr);
+                        setError("Ошибка при создании сессии. Попробуйте еще раз.");
+                        setStatus("idle");
+                        setSessionId(null);
+                        clearInterval(interval);
+                    }
                 } else if (data.status === "denied") {
                     setStatus("denied");
                     setError("Вход был отклонён");

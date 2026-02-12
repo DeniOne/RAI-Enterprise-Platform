@@ -41,6 +41,15 @@
 - [x] HR Ecosystem → Phase Beta
 - [x] Supply Chain → Phase Beta
 
+## Milestone 15: Unified Frontend & Auth Fix — DONE ✅
+**Дата:** 2026-02-09
+- [x] **Unified Architecture**: Реализован `AuthenticatedLayout` как единый контейнер для всех модулей.
+- [x] **Sidebar Logic**: Сайдбар перенесен в `navigation`, интегрирован с `role-config.ts` и корректно отображает модули для всех ролей (добавлена роль в профиль бэкенда).
+- [x] **Module Skeletons**: Созданы лейауты и страницы-заглушки для всех 7 бизнес-модулей (HR, ОФС, Экономика, Финансы, GR, Производство, Front-office).
+- [x] **Auth Stability**: Устранена проблема Redirect Loop. Исправлены эндпоинты (`/users/me`), порты (4000) и логика формирования URL в `auth-server.ts`.
+- [x] **Light Theme**: Завершён редизайн Dashboard и Strategic в соответствии с UI Design Canon (Geist 400/500, #FAFAFA).
+- [x] **Consulting Navigation**: Полный рефакторинг `Sidebar.tsx` и `navigation-policy.ts` под каноническую модель.
+
 ## Milestone 12: Phase Alpha Closure — DONE ✅
 **Дата:** 2026-02-04  
 **Статус:** PHASE ALPHA COMPLETE
@@ -159,3 +168,44 @@
 - [x] **Explanation Layer**: Слой "ПОЧЕМУ" интегрирован во все вью для интерпретации состояний.
 - [x] **Architectural Guards**: Клиентский `ReadOnlyGuard` и строгий "Read Models Only" паттерн.
 - [x] **UX Canon**: 100% русификация интерфейса, навигация через Drill-down, глубина < 3.
+
+## Milestone 16: Consulting Vertical Slice — DONE ✅
+**Дата:** 2026-02-11
+- [x] **Vertical Integrity**: Реализован полный цикл "Draft Plan -> Active Plan -> Deviation -> Decision -> Archive".
+- [x] **Hardening (Optimistic Locking)**: Внедрена защита от race conditions через `status: current` в `ConsultingService` и `DeviationService`.
+- [x] **FSM Guards**: Строгие правила переходов статусов с проверкой ролей (RBAC) и бизнес-правил (`ConsultingDomainRules`).
+- [x] **Audit Trail**: Каждое изменение статуса и решения фиксируется в `cmr_decisions` (Immutable).
+- [x] **Isolation**: Доказанная изоляция данных по `companyId` и `seasonId` (season-isolation.spec.ts).
+- [x] **Test Coverage**: 31 Unit и Integration тест passed.
+- [x] **Fixes**: Устранена критическая проблема с кодировкой `package.json` (BOM/Invisible chars).
+
+## Milestone 17: Track 1 - TechMap Integration & Production Gate — DONE ✅
+**Дата:** 2026-02-12
+- [x] **Production Gate**: Внедрен частичный уникальный индекс PostgreSQL в таблицу `tech_maps` для контроля единственности `ACTIVE` техкарты.
+- [x] **Migration Stability**: Разрешен конфликт `2BP01` (типы ReviewStatus/InteractionType) через CASCADE-удаление и аудит зависимостей.
+- [x] **Drift Resolution**: База данных сброшена и переведена в чистое состояние.
+- [x] **Prisma Client**: Регенерация клиента с учетом изменений схем для Контура 1.
+## Milestone 18: Track 2 - Budget Vertical Slice (Financial Control) — DONE ✅
+**Дата:** 2026-02-12
+- [x] **Budget Data Model**: Реализованы `BudgetPlan` и `BudgetItem` с поддержкой версионности и категорий.
+- [x] **Financial Gate**: Внедрена блокировка активации `HarvestPlan` без заблокированного (`LOCKED`) бюджета в `ConsultingDomainRules`.
+- [x] **Budget FSM**: Переходы `DRAFT` -> `APPROVED` -> `LOCKED` -> `CLOSED` с сайд-эффектами связки с планом.
+- [x] **Auto-Deviations**: Реализован `syncActuals` с автоматическим созданием `FINANCIAL` девиаций при превышении лимитов.
+- [x] **Threshold Protection**: Защита от спама девиациями (одно открытое финансовое отклонение на версию бюджета).
+- [x] **API**: Эндпоинты управления бюджетом интегрированы в `ConsultingController`.
+## Milestone 19: Track 3 - Advisory Engine (Executive Intelligence) — DONE ✅
+**Дата:** 2026-02-12
+- [x] **Strategic Positioning**: Модуль вынесен в `strategic/` как чистый Read-Model.
+- [x] **Analytical Engine**: Реализован `AdvisoryService` с формулами Health Index (0-100) и Volatility Index.
+- [x] **Normalisation & DTO**: Внедрена нормализация метрик и богатый `AdvisorySignalDto` с трассировкой источников (`sources`).
+- [x] **Trend Analysis**: Реализовано 30-дневное скользящее окно для обнаружения динамики изменений.
+- [x] **Confidence Scoring**: Внедрен механизм фильтрации "малых данных" для защиты от байасов.
+- [x] **Integration**: Эндпоинты агрегации доступны в `StrategicController`.
+### Milestone 20: Execution Engine Hardening & Track 5 (Yield & KPI) — DONE ✅
+**Дата:** 2026-02-12
+- [x] **Hardening**: Внедрен `ExecutionOrchestrationLog` для Audit Trail оркестрации.
+- [x] **Transactional Integrity**: Гарантирован `emitAfterCommit` для системных событий.
+- [x] **Yield Domain**: Реализована модель `HarvestResult` и `YieldService` для фиксации урожая.
+- [x] **KPI Read-Model**: `KpiService` с расчетом ROI, Delta и себестоимости.
+- [x] **UI Integration**: Форма ввода урожая и визуализация KPI в Cockpit.
+- [x] **Type Stability**: Исправлены 23 ошибки компиляции, обновлен Prisma Client.

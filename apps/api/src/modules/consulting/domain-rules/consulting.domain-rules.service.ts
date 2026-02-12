@@ -18,28 +18,20 @@ export class ConsultingDomainRules {
      * 2. Нет критических (незакрытых) Deviation'ов
      */
     async canActivate(planId: string): Promise<void> {
-        // Проверка 1: TechMap
-        const techMaps = await this.prisma.techMap.findMany({
-            where: { harvestPlanId: planId },
+        const plan = await this.prisma.harvestPlan.findUnique({
+            where: { id: planId },
         });
 
-        if (techMaps.length === 0) {
-            throw new BadRequestException(
-                'Невозможно активировать план без привязанной Технологической Карты',
-            );
+        if (!plan) {
+            throw new BadRequestException('План уборки не найден');
         }
 
-        const hasVerifiedMap = techMaps.some(
-            (m) => m.status === TechMapStatus.ACTIVE || m.status === TechMapStatus.CHECKING,
-        );
-
-        if (!hasVerifiedMap) {
+        if (!plan.activeTechMapId) {
             throw new BadRequestException(
-                'Невозможно активировать план: все TechMaps в статусе PROJECT. Требуется минимум одна в статусе CHECKING или ACTIVE.',
+                'Production Gate: Невозможно активировать план. Требуется привязанная и активная Технологическая Карта (activeTechMapId is empty).',
             );
         }
-
-        // Проверка 2: Нет открытых Deviation'ов
+        // Проверка 2: Нет открытых Deviation'ов (Track 1)
         const openDeviations = await this.prisma.deviationReview.count({
             where: {
                 harvestPlanId: planId,
@@ -50,6 +42,18 @@ export class ConsultingDomainRules {
         if (openDeviations > 0) {
             throw new BadRequestException(
                 `Невозможно активировать план: ${openDeviations} незакрытых отклонений. Необходимо закрыть все Deviation перед активацией.`,
+            );
+        }
+
+        // Проверка 3: Финансовый Гейт (Track 2)
+        const planWithBudget = await this.prisma.harvestPlan.findUnique({
+            where: { id: planId },
+            include: { activeBudgetPlan: true },
+        });
+
+        if (!planWithBudget?.activeBudgetPlanId || planWithBudget.activeBudgetPlan?.status !== 'LOCKED') {
+            throw new BadRequestException(
+                'Financial Gate: Невозможно активировать план. Требуется привязанный и заблокированный бюджет (status: LOCKED).',
             );
         }
     }
@@ -90,6 +94,24 @@ export class ConsultingDomainRules {
             throw new BadRequestException(
                 `Невозможно архивировать план: ${unclosedDeviations} незакрытых отклонений.`,
             );
+        }
+    }
+
+    /**
+     * Можно ли редактировать данные об урожае?
+     * План не должен быть в статусе ARCHIVE.
+     */
+    async canEditHarvestResult(planId: string): Promise<void> {
+        const plan = await this.prisma.harvestPlan.findUnique({
+            where: { id: planId },
+        });
+
+        if (!plan) {
+            throw new BadRequestException('План уборки не найден');
+        }
+
+        if (plan.status === 'ARCHIVE') {
+            throw new BadRequestException('Невозможно редактировать урожай для архивного плана');
         }
     }
 }

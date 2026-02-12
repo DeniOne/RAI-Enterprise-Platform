@@ -2,6 +2,28 @@ import axios from 'axios';
 
 const API_BASE = 'http://localhost:4000/api';
 
+export enum AdvisoryLevel {
+    LOW = 'LOW',
+    MEDIUM = 'MEDIUM',
+    HIGH = 'HIGH',
+}
+
+export enum AdvisoryTrend {
+    IMPROVING = 'IMPROVING',
+    WORSENING = 'WORSENING',
+    STABLE = 'STABLE',
+}
+
+export interface AdvisorySignal {
+    type: 'RISK' | 'HEALTH' | 'EFFICIENCY' | 'STABILITY';
+    level: AdvisoryLevel;
+    score: number;
+    message: string;
+    confidence: number;
+    trend: AdvisoryTrend;
+    sources: string[];
+}
+
 /**
  * 🔒 Strategic API Client (Read-only)
  * Только агрегированные проекции состояния.
@@ -50,5 +72,21 @@ export const strategicApi = {
             obligations: [],
             sanctions: []
         };
+    },
+
+    // Advisory: Company Health
+    getCompanyHealth: async (id: string, token: string) => {
+        const response = await axios.get(`${API_BASE}/strategic/advisory/company/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+    },
+
+    // Advisory: Plan Volatility
+    getPlanVolatility: async (id: string, token: string) => {
+        const response = await axios.get(`${API_BASE}/strategic/advisory/plan/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
     }
 };

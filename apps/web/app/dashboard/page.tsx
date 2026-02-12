@@ -3,55 +3,31 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card } from '@/components/ui'
 import { RecommendationPanel, AdvisoryRecommendation } from '@/components/advisory/RecommendationPanel'
+import { getUserData } from '@/lib/api/auth-server';
 
 interface User {
     id: string
     name: string
     email: string
-}
-
-async function getUserData(): Promise<User | null> {
-    try {
-        const token = cookies().get('auth_token')?.value
-
-        if (!token) {
-            return null
-        }
-
-        const response = await fetch('http://localhost:4000/api/users/me', {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-            cache: 'no-store',
-        })
-
-        if (!response.ok) {
-            return null
-        }
-
-        return response.json()
-    } catch (error) {
-        console.error('Error fetching user data:', error)
-        return null
-    }
+    role: string
 }
 
 async function getStats(token: string) {
     try {
         const [tasksRes, fieldsRes, seasonsRes, techMapsRes, financeRes] = await Promise.all([
-            fetch('http://localhost:4000/api/tasks', {
+            fetch('http://localhost:4000/api/tasks/my', {
                 headers: { Authorization: `Bearer ${token}` },
                 cache: 'no-store',
             }),
-            fetch('http://localhost:4000/api/fields', {
+            fetch('http://localhost:4000/api/registry/fields', {
                 headers: { Authorization: `Bearer ${token}` },
                 cache: 'no-store',
             }),
-            fetch('http://localhost:4000/api/seasons', {
+            fetch('http://localhost:4000/api/orchestrator/stages', {
                 headers: { Authorization: `Bearer ${token}` },
                 cache: 'no-store',
             }),
-            fetch('http://localhost:4000/api/tech-map', {
+            fetch('http://localhost:4000/api/tech-map/generate', {
                 headers: { Authorization: `Bearer ${token}` },
                 cache: 'no-store',
             }),
@@ -204,41 +180,44 @@ export default async function DashboardPage() {
         ? await getAdvisoryRecommendations(token)
         : []
 
+    // По канону Бета: агроном не должен видеть блок финансов.
+    const isFinancialViewVisible = ['ADMIN', 'MANAGER', 'OWNER', 'CEO'].includes(user.role)
+
     return (
-        <div className="min-h-screen p-8">
-            <div className="max-w-7xl mx-auto space-y-8">
+        <div className="py-12">
+            <div className="max-w-7xl mx-auto space-y-12">
                 {/* Приветствие */}
                 <div>
                     <h1 className="text-3xl font-medium mb-2">
-                        Привет, {user.name || user.email}!
+                        Привет, {user.name || user.email}! ({user.role})
                     </h1>
                     <p className="text-gray-600">
                         Добро пожаловать в RAI Enterprise Platform
                     </p>
                 </div>
 
-                {/* Финансовые метрики (CFO View) */}
-                {stats.finance && (
+                {/* Финансовые метрики (CFO View) - Скрываем от агрономов и т.д. */}
+                {isFinancialViewVisible && stats.finance && (
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <Card className="bg-black text-white border-none shadow-2xl">
-                            <h3 className="text-xs text-gray-400 uppercase tracking-wider mb-2">На счетах</h3>
+                        <Card className="shadow-sm">
+                            <h3 className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium mb-3">На счетах</h3>
                             <p className="text-3xl font-medium">
                                 {new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(stats.finance.totalBalance)}
                             </p>
                         </Card>
 
                         <Card>
-                            <h3 className="text-sm text-gray-600 mb-2">Лимит бюджета</h3>
+                            <h3 className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium mb-3">Лимит бюджета</h3>
                             <p className="text-2xl font-medium">
                                 {new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(stats.finance.budgetLimit)}
                             </p>
                         </Card>
 
                         <Card>
-                            <h3 className="text-sm text-gray-600 mb-2">Burn Rate</h3>
+                            <h3 className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium mb-3">Burn Rate</h3>
                             <div className="flex items-end gap-2">
                                 <p className="text-2xl font-medium">{(stats.finance.budgetBurnRate * 100).toFixed(1)}%</p>
-                                <div className="flex-1 h-2 bg-gray-100 rounded-full mb-2 overflow-hidden">
+                                <div className="flex-1 h-1.5 bg-gray-100 rounded-full mb-2 overflow-hidden">
                                     <div
                                         className="h-full bg-black transition-all duration-500"
                                         style={{ width: `${Math.min(stats.finance.budgetBurnRate * 100, 100)}%` }}
@@ -248,8 +227,8 @@ export default async function DashboardPage() {
                         </Card>
 
                         <Card>
-                            <h3 className="text-sm text-gray-600 mb-2">Запас прочности</h3>
-                            <p className="text-2xl font-medium text-green-600">
+                            <h3 className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium mb-3">Запас прочности</h3>
+                            <p className="text-2xl font-medium text-green-500">
                                 {(stats.finance.metrics.safetyMargin * 100).toFixed(0)}%
                             </p>
                         </Card>
@@ -259,17 +238,17 @@ export default async function DashboardPage() {
                 {/* Основная статистика */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <Card>
-                        <h3 className="text-sm text-gray-600 mb-2">Задачи</h3>
+                        <h3 className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium mb-3">Задачи</h3>
                         <p className="text-4xl font-medium">{stats.tasksCount}</p>
                     </Card>
 
                     <Card>
-                        <h3 className="text-sm text-gray-600 mb-2">Поля</h3>
+                        <h3 className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium mb-3">Поля</h3>
                         <p className="text-4xl font-medium">{stats.fieldsCount}</p>
                     </Card>
 
                     <Card>
-                        <h3 className="text-sm text-gray-600 mb-2">Сезоны</h3>
+                        <h3 className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium mb-3">Сезоны</h3>
                         <p className="text-4xl font-medium">{stats.seasonsCount}</p>
                     </Card>
                 </div>

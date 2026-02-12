@@ -239,7 +239,8 @@ exports.Prisma.StockTransactionScalarFieldEnum = {
   costPerUnit: 'costPerUnit',
   totalCost: 'totalCost',
   orchLogId: 'orchLogId',
-  budgetItemId: 'budgetItemId'
+  budgetItemId: 'budgetItemId',
+  companyId: 'companyId'
 };
 
 exports.Prisma.UserScalarFieldEnum = {

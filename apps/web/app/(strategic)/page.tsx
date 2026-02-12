@@ -1,25 +1,30 @@
-import React from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { strategicApi } from '@/lib/api/strategic';
 import { StateBadge } from '@/components/strategic/StateBadge';
 import { ExplanationLayer } from '@/components/strategic/ExplanationLayer';
+import { AdvisoryRadar } from '@/components/strategic/AdvisoryRadar';
 import { Scale, Beaker, Zap, ArrowRight, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 
-async function getStrategicData() {
-    const token = cookies().get('auth_token')?.value;
-    if (!token) return null;
-
+async function getStrategicData(token: string) {
     return await strategicApi.getGlobalState(token);
 }
 
-export default async function GlobalStatePage() {
-    const data = await getStrategicData();
+async function getAdvisoryData(token: string) {
+    // For MVP we use 'current' or get first company ID if multi-tenant
+    // Assuming hardcoded '1' for now per backend pattern or just use a generic ID
+    return await strategicApi.getCompanyHealth('1', token);
+}
 
-    if (!data) {
-        redirect('/login');
-    }
+export default async function GlobalStatePage() {
+    const token = cookies().get('auth_token')?.value;
+    if (!token) redirect('/login');
+
+    const [data, advisory] = await Promise.all([
+        getStrategicData(token),
+        getAdvisoryData(token)
+    ]);
 
     return (
         <div className="space-y-16">
@@ -109,6 +114,24 @@ export default async function GlobalStatePage() {
                     </div>
                 </div>
 
+            </section>
+
+            {/* Advisory Engine (Strategic Insights) */}
+            <section className="space-y-6">
+                <div className="flex items-center gap-4 mb-2">
+                    <div className="w-1 h-6 bg-white/20" />
+                    <h2 className="text-[10px] uppercase tracking-[0.4em] opacity-40 font-medium">
+                        Advisory Engine (Read-Model)
+                    </h2>
+                </div>
+                <AdvisoryRadar
+                    score={advisory.score}
+                    level={advisory.level}
+                    trend={advisory.trend}
+                    sources={advisory.sources}
+                    message={advisory.message}
+                    confidence={advisory.confidence}
+                />
             </section>
 
             {/* 3. Global Escalations / Why Section */}

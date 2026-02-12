@@ -1,3 +1,3 @@
-export { Button } from './Button'
-export { Card } from './Card'
-export { Input } from './Input'
+export * from './Button'
+export * from './Card'
+export * from './Input'

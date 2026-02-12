@@ -386,3 +386,44 @@ Orchestrator = Brain (канон RAI_EP).
 - `ARCH_AUDIT_SPRINT_4.md` (Section 2, 3, 5)
 - `implementation_plan.md` (Sprint 5a, DEFERRED)
 
+## TRACK5-001
+
+**Дата:** 2026-02-12
+**Автор:** TECHLEAD (AI)
+**Статус:** ACCEPTED
+
+### Решение
+Реализация Track 5 — Yield & KPI Engine. Слой измерения производственной и финансовой эффективности на основе данных о сборе урожая. Добавление модели `HarvestResult` и сервисов расчета финансового результата (ROI, себестоимость).
+
+### Scope
+- **Phase:** Gamma
+- **Sprint:** 7 (extension)
+- **Компоненты:**
+  - Prisma Schema (`HarvestResult`)
+  - NestJS Services (`YieldService`, `KPIService`)
+  - Next.js UI (`yield/page.tsx`, `plans/page.tsx` update)
+
+### Технические ограничения
+1. **Multi-tenancy:** Все данные `HarvestResult` и расчеты KPI строго изолированы по `companyId` из JWT.
+2. **Audit:** Любые мутации `HarvestResult` логируются событием `HARVEST_RESULT_RECORDED`.
+3. **UI Canon:** Шрифт Geist, веса 400/500, белый фон, `border-black/10`, `rounded-2xl`.
+4. **Language:** Полная локализация интерфейса на русский язык.
+5. **Decoupling:** `KPIService` использует `BudgetPlan` и `HarvestResult`, не обращаясь к `ExecutionService` напрямую.
+
+### Definition of Done
+- [x] Модель `HarvestResult` создана в БД.
+- [x] `YieldService` обеспечивает CRUD сбор урожая (базовая логика).
+- [ ] `YieldService` интегрирован с `AuditService` (событие `HARVEST_RESULT_RECORDED`).
+- [ ] `KPIService` выполняет детерминированный расчет ROI и других KPI.
+- [ ] В Plan Cockpit добавлен блок Yield & KPI (интеграция в `plans/page.tsx`).
+- [ ] Проведены тесты расчетов и изоляции данных.
+
+### Rollback Conditions
+- Обнаружение возможности кросс-тенантного доступа к данным.
+- Критические ошибки в формулах расчета финансовой эффективности.
+- Нарушение отзывчивости интерфейса при расчете KPI.
+
+### Связанные документы
+- `docs/01-ARCHITECTURE/PRINCIPLES/CANON.md`
+- `docs/01-ARCHITECTURE/PRINCIPLES/UI_DESIGN_CANON.md`
+- `f:\RAI_EP\Рабочая\implementation_plan.md`

@@ -15,6 +15,8 @@ export class DeviationService {
         harvestPlanId?: string;
         companyId: string;
         seasonId: string;
+        type?: 'AGRONOMIC' | 'FINANCIAL' | 'OPERATIONAL';
+        budgetPlanId?: string;
         deviationSummary: string;
         aiImpactAssessment: string;
         userId?: string;
@@ -56,8 +58,24 @@ export class DeviationService {
             throw new NotFoundException('План уборки не найден');
         }
 
-        if (plan.status !== HarvestPlanStatus.ACTIVE) {
+        if (plan.status !== HarvestPlanStatus.ACTIVE && data.type !== 'FINANCIAL') {
             throw new BadRequestException('Отклонения можно регистрировать только для ACTIVE планов');
+        }
+
+        // Threshold Protection: Проверяем, нет ли уже открытого финансового отклонения для этого бюджета
+        if (data.type === 'FINANCIAL' && data.budgetPlanId) {
+            const existingOpen = await this.prisma.deviationReview.findFirst({
+                where: {
+                    budgetPlanId: data.budgetPlanId,
+                    type: 'FINANCIAL',
+                    status: { in: [DeviationStatus.DETECTED, DeviationStatus.ANALYZING] }
+                }
+            });
+
+            if (existingOpen) {
+                // Если уже есть открытое — не плодим новые, просто возвращаем текущее конструктивно
+                return existingOpen;
+            }
         }
 
         const review = await this.prisma.deviationReview.create({

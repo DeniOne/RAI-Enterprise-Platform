@@ -41,51 +41,54 @@ export function DetailOverlay({ isOpen, onClose, title, subtitle, children }: De
             {/* Side Panel */}
             <div
                 className={clsx(
-                    "fixed top-0 right-0 bottom-0 z-[70] w-full max-w-2xl bg-[#0A0A0A] border-l border-white/10 shadow-2xl transition-transform duration-300 ease-out pointer-events-auto",
+                    "fixed top-0 right-0 bottom-0 z-[70] w-full max-w-2xl bg-white border-l border-black/5 shadow-2xl transition-transform duration-300 ease-out pointer-events-auto",
                     isOpen ? "translate-x-0" : "translate-x-full"
                 )}
             >
                 <div className="flex flex-col h-full">
                     {/* Header */}
-                    <div className="p-8 border-bottom border-white/5 flex justify-between items-start">
+                    <div className="p-10 border-b border-black/5 flex justify-between items-start">
                         <div>
-                            <div className="text-[10px] uppercase tracking-widest opacity-40 mb-1">
+                            <div className="text-[10px] uppercase tracking-widest text-gray-400 mb-2 font-medium">
                                 Детальный просмотр
                             </div>
-                            <h2 className="text-2xl font-light tracking-tight">{title}</h2>
-                            {subtitle && <p className="text-sm opacity-60 mt-1">{subtitle}</p>}
+                            <h2 className="text-3xl font-light tracking-tight text-gray-900">{title}</h2>
+                            {subtitle && <p className="text-sm text-gray-500 mt-2 font-medium">{subtitle}</p>}
                         </div>
                         <button
                             onClick={onClose}
-                            className="p-2 rounded-full hover:bg-white/5 transition-colors opacity-40 hover:opacity-100"
+                            className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-300 hover:text-black"
                         >
-                            <X size={20} />
+                            <X size={24} />
                         </button>
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 overflow-y-auto p-8 pt-0 custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-10 pt-6 custom-scrollbar text-gray-600">
                         {children}
                     </div>
 
-                    {/* Footer Footer */}
-                    <div className="p-8 border-t border-white/5 text-[10px] uppercase tracking-widest opacity-20 flex justify-between">
-                        <span>Projection of Truth</span>
-                        <span>Beta v2.4</span>
+                    {/* Footer */}
+                    <div className="p-10 border-t border-black/5 text-[10px] uppercase tracking-widest text-gray-300 font-medium flex justify-between">
+                        <span>Проекция Истины // RAI Enterprise</span>
+                        <span>Версия Beta v2.4</span>
                     </div>
                 </div>
             </div>
 
             <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
+          width: 5px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
           background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 2px;
+          background: rgba(0, 0, 0, 0.05);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 0, 0, 0.1);
         }
       `}</style>
         </>

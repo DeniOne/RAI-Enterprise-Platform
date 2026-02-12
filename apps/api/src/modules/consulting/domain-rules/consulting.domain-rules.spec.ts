@@ -41,13 +41,17 @@ describe('ConsultingDomainRules', () => {
             await expect(service.canActivate('plan-1')).resolves.toBeUndefined();
         });
 
-        it('РАЗРЕШАЕТ активацию при TechMap в статусе CHECKING', async () => {
+        it('ЗАПРЕЩАЕТ активацию при TechMap в статусе REVIEW или APPROVED (Production Gate)', async () => {
             prisma.techMap.findMany.mockResolvedValue([
-                { id: 'tm-1', status: TechMapStatus.CHECKING },
+                { id: 'tm-1', status: TechMapStatus.REVIEW },
+                { id: 'tm-2', status: TechMapStatus.APPROVED },
             ]);
             prisma.deviationReview.count.mockResolvedValue(0);
 
-            await expect(service.canActivate('plan-1')).resolves.toBeUndefined();
+            await expect(service.canActivate('plan-1')).rejects.toThrow(BadRequestException);
+            await expect(service.canActivate('plan-1')).rejects.toThrow(
+                'Production Gate',
+            );
         });
 
         it('ЗАПРЕЩАЕТ активацию без TechMap', async () => {
@@ -59,13 +63,13 @@ describe('ConsultingDomainRules', () => {
             );
         });
 
-        it('ЗАПРЕЩАЕТ активацию если все TechMaps в PROJECT', async () => {
+        it('ЗАПРЕЩАЕТ активацию если все TechMaps в DRAFT', async () => {
             prisma.techMap.findMany.mockResolvedValue([
-                { id: 'tm-1', status: TechMapStatus.PROJECT },
+                { id: 'tm-1', status: TechMapStatus.DRAFT },
             ]);
 
             await expect(service.canActivate('plan-1')).rejects.toThrow(BadRequestException);
-            await expect(service.canActivate('plan-1')).rejects.toThrow('CHECKING или ACTIVE');
+            await expect(service.canActivate('plan-1')).rejects.toThrow('Production Gate');
         });
 
         it('ЗАПРЕЩАЕТ активацию при открытых Deviation (DETECTED)', async () => {

@@ -5,7 +5,10 @@ export function middleware(request: NextRequest) {
     const token = request.cookies.get('auth_token')
     const path = request.nextUrl.pathname
 
-    console.log(`[Middleware] Path: ${path}, Token: ${token ? 'exists' : 'none'}`)
+    console.log(`[AUTH-DEBUG] Middleware | Path: ${path} | Token: ${token ? '✅ FOUND' : '❌ MISSING'}`)
+    if (token) {
+        console.log(`[AUTH-DEBUG] Middleware | Token details: name=${token.name}, size=${token.value.length}`);
+    }
 
     // Защита приватных роутов
     if (path.startsWith('/dashboard') || path.startsWith('/strategic')) {

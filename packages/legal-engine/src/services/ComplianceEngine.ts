@@ -1,4 +1,4 @@
-import { PrismaClient, ComplianceStatus, Obligation } from '@rai/prisma-client';
+import { PrismaClient, ComplianceStatus, LegalObligation, LegalObligationStatus } from '@rai/prisma-client';
 import { IComplianceSignal } from '../interfaces/index';
 
 export class ComplianceEngine {
@@ -22,12 +22,12 @@ export class ComplianceEngine {
         let status: ComplianceStatus = ComplianceStatus.COMPLIANT;
         let observation = "All obligations are met.";
 
-        const overdueObligations = requirement.obligations.filter((o: Obligation) => o.status === 'OVERDUE');
+        const overdueObligations = requirement.obligations.filter((o: LegalObligation) => o.status === LegalObligationStatus.OVERDUE);
 
         if (overdueObligations.length > 0) {
             status = ComplianceStatus.VIOLATED;
             observation = `Found ${overdueObligations.length} overdue obligations.`;
-        } else if (requirement.obligations.some((o: Obligation) => o.status === 'PENDING')) {
+        } else if (requirement.obligations.some((o: LegalObligation) => o.status === LegalObligationStatus.PENDING)) {
             status = ComplianceStatus.AT_RISK;
             observation = "Some obligations are pending.";
         }

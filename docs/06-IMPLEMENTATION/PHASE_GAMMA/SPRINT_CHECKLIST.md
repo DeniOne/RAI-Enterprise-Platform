@@ -66,6 +66,14 @@
 - [x] **Final DoD Check:** критерии Sprint 6 закрыты, зафиксирован formal go/no-go record.
 - [x] **Go-Live:** Controlled launch выполнен до `S3` (50%) по результатам stage progression и formal `GO` decision.
 
+### Спринт №7: «S4 Stabilization и Gamma Exit Prep»
+**Цель:** Зафиксировать стабильность после `S4 (100%)`, подтвердить adoption/бизнес-эффект и собрать пакет на закрытие фазы Gamma.
+**Детальный план:** `docs/06-IMPLEMENTATION/PHASE_GAMMA/SPRINT_7_CHECKLIST.md`
+- [ ] **S4 Stabilization:** sustained эксплуатация на `S4` без критичных инцидентов и rollback.
+- [ ] **Adoption & Quality:** подтверждение динамики accept/reject/feedback и tuning-итерация по фактическим данным.
+- [ ] **Business Impact:** фиксация подтвержденных кейсов эффекта и метрик полезности.
+- [ ] **Gamma Exit Draft:** формирование итогового exit packet и рекомендации `GO/HOLD` на post-Gamma этап.
+
 
 
 

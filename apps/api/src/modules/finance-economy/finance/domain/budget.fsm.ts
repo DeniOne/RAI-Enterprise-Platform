@@ -67,6 +67,13 @@ export const BUDGET_STATE_METADATA: Record<BudgetStatus, StateMetadata<BudgetSta
         order: 6,
         isTerminal: true,
     },
+    [BudgetStatus.LOCKED]: {
+        id: BudgetStatus.LOCKED,
+        name: "Locked",
+        nameRu: "Заблокирован (LOCKED)",
+        order: 7,
+        isTerminal: true,
+    },
 };
 
 const BUDGET_TRANSITIONS: TransitionDef<BudgetStatus, BudgetEvent>[] = [

@@ -9,12 +9,12 @@ interface StateBadgeProps {
     className?: string;
 }
 
-const stateConfig: Record<StateType, { color: string; bg: string; border: string }> = {
-    OK: { color: '#00F0FF', bg: 'rgba(0, 240, 255, 0.05)', border: 'rgba(0, 240, 255, 0.2)' },
-    ATTENTION: { color: '#FFD600', bg: 'rgba(255, 214, 0, 0.05)', border: 'rgba(255, 214, 0, 0.2)' },
-    BLOCKED: { color: '#FF005C', bg: 'rgba(255, 0, 92, 0.05)', border: 'rgba(255, 0, 92, 0.2)' },
-    DRAFT: { color: '#888', bg: 'rgba(136, 136, 136, 0.05)', border: 'rgba(136, 136, 136, 0.2)' },
-    APPROVED: { color: '#00FF94', bg: 'rgba(0, 255, 148, 0.05)', border: 'rgba(0, 255, 148, 0.2)' },
+const stateConfig: Record<StateType, { color: string; bg: string; border: string; label: string }> = {
+    OK: { color: '#00A3A3', bg: '#F0FFFF', border: 'rgba(0, 163, 163, 0.1)', label: 'В НОРМЕ' },
+    ATTENTION: { color: '#B29700', bg: '#FFFBE6', border: 'rgba(178, 151, 0, 0.1)', label: 'ВНИМАНИЕ' },
+    BLOCKED: { color: '#D4004F', bg: '#FFF0F6', border: 'rgba(212, 0, 79, 0.1)', label: 'ЗАБЛОКИРОВАНО' },
+    DRAFT: { color: '#666666', bg: '#F5F5F5', border: 'rgba(0, 0, 0, 0.05)', label: 'ЧЕРНОВИК' },
+    APPROVED: { color: '#00854A', bg: '#F6FFED', border: 'rgba(0, 133, 74, 0.1)', label: 'ОДОБРЕНО' },
 };
 
 export function StateBadge({ state, label, className }: StateBadgeProps) {
@@ -23,18 +23,18 @@ export function StateBadge({ state, label, className }: StateBadgeProps) {
     return (
         <div
             className={clsx(
-                "inline-flex items-center gap-2 px-3 py-1 rounded-full border text-[10px] uppercase tracking-[0.1em] font-medium transition-all duration-300",
+                "inline-flex items-center gap-2 px-3 py-1 rounded-full border text-[9px] uppercase tracking-[0.1em] font-medium transition-all duration-300",
                 className
             )}
             style={{
                 backgroundColor: config.bg,
                 borderColor: config.border,
                 color: config.color,
-                boxShadow: `0 0 10px ${config.bg}`
+                boxShadow: `0 1px 2px rgba(0,0,0,0.02)`
             }}
         >
             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: config.color }} />
-            {label || state}
+            {label || config.label}
         </div>
     );
 }

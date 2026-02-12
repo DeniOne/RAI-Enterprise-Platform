@@ -1,5 +1,5 @@
 
-import { PrismaClient, AssetStatus, MachineryType, StockItemType, ObservationIntent, IntegrityStatus } from '@prisma/client';
+import { PrismaClient, AssetStatus, MachineryType, StockItemType, ObservationIntent, IntegrityStatus } from '@rai/prisma-client';
 import { IntegrityGateService } from './apps/api/src/modules/integrity/integrity-gate.service';
 import { DeviationService } from './apps/api/src/modules/cmr/deviation.service';
 import { RegistryAgentService } from './apps/api/src/modules/integrity/registry-agent.service';
@@ -38,7 +38,16 @@ async function main() {
     // 1.1 Find Test Context
     const company = await prisma.company.findFirst();
     const user = await prisma.user.findFirst();
-    const client = await prisma.client.findFirst({ where: { companyId: company?.id } }); // Ensure client belongs to company
+    let client = await prisma.account.findFirst({ where: { companyId: company?.id } }); // Ensure client belongs to company
+
+    if (!client && company) {
+        client = await prisma.account.create({
+            data: {
+                companyId: company.id,
+                name: "Test Client Account",
+            }
+        });
+    }
 
     if (!company || !user || !client) {
         console.error("❌ Pre-requisites missing (Company/Client/User). Run seed.");

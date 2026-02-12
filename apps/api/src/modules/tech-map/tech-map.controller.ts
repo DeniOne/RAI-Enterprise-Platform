@@ -19,9 +19,9 @@ export class TechMapController {
         return this.techMapService.updateDraft(id, data, user.companyId);
     }
 
-    @Post(':id/transitions')
+    @Patch(':id/transition')
     async transition(@Param('id') id: string, @Body() body: { status: TechMapStatus }, @CurrentUser() user: any) {
-        return this.techMapService.transitionStatus(id, body.status, user.companyId);
+        return this.techMapService.transitionStatus(id, body.status, user.companyId, user.role, user.id);
     }
 
     @Get(':id')
