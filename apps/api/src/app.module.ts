@@ -38,6 +38,8 @@ import { ConsultingModule } from "./modules/consulting/consulting.module";
 import { AdvisoryModule } from "./modules/advisory/advisory.module";
 import { join } from "path";
 
+import { OutboxModule } from './shared/outbox/outbox.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -52,6 +54,7 @@ import { join } from "path";
     }]),
     RedisModule,
     PrismaModule,
+    OutboxModule,
     AuthModule,
     MemoryModule,
     AuditModule,
@@ -89,8 +92,4 @@ import { join } from "path";
     }),
   ],
 })
-export class AppModule {
-  constructor() {
-    console.log('✅ AppModule initialized');
-  }
-}
+export class AppModule { }

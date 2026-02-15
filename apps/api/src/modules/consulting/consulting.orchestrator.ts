@@ -3,7 +3,8 @@ import { OnEvent } from "@nestjs/event-emitter";
 import { ConsultingOperationCompletedEvent } from "./events/consulting-operation-completed.event";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { BudgetPlanService } from "./budget-plan.service";
-import { BudgetStatus, BudgetCategory } from "@rai/prisma-client";
+import { BudgetStatus, BudgetCategory, EconomicEventType } from "@rai/prisma-client";
+import { EconomyService } from "../finance-economy/economy/application/economy.service";
 
 @Injectable()
 export class ConsultingOrchestrator {
@@ -12,6 +13,7 @@ export class ConsultingOrchestrator {
     constructor(
         private readonly prisma: PrismaService,
         private readonly budgetService: BudgetPlanService,
+        private readonly economyService: EconomyService,
     ) { }
 
     @OnEvent('consulting.operation.completed')
@@ -78,6 +80,25 @@ export class ConsultingOrchestrator {
                             });
                         } else {
                             outcome.warnings.push(`Категория ${category} не найдена в бюджете ${budgetPlan.id}`);
+                        }
+
+                        // Phase 2.3: Ingest distinct Economic Event for Ledger Traceability
+                        // Note: We are triggering a separate transaction inside the orchestrator loop. 
+                        // Ideally checking atomicity, but EconomyService uses its own transaction.
+                        // We use Promise.all or await sequentially.
+                        try {
+                            await this.economyService.ingestEvent({
+                                type: EconomicEventType.COST_INCURRED,
+                                amount: (transaction as any).totalCost || 0,
+                                companyId: event.companyId,
+                                metadata: {
+                                    executionId: event.executionId,
+                                    resourceId: (transaction as any).resourceName
+                                }
+                            });
+                        } catch (e) {
+                            this.logger.error(`Failed to ingest economic event for tx ${transaction.id}: ${e.message}`);
+                            outcome.warnings.push(`Failed to create Ledger Entry for ${transaction.id}`);
                         }
                     }
                 });
