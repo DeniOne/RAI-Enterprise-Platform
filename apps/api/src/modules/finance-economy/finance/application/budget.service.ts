@@ -81,9 +81,9 @@ export class BudgetService {
             },
         });
 
-        const totalLimit = stats._sum.limit || 0;
-        const totalConsumed = stats._sum.consumed || 0;
-        const totalRemaining = stats._sum.remaining || 0;
+        const totalLimit = Number(stats._sum.limit) || 0;
+        const totalConsumed = Number(stats._sum.consumed) || 0;
+        const totalRemaining = Number(stats._sum.remaining) || 0;
 
         return {
             totalLimit,

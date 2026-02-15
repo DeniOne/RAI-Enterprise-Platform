@@ -1,3 +1,13 @@
+---
+id: DOC-ARH-GEN-008
+type: Navigation
+layer: Meta
+status: Draft
+version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-02-15
+---
+
 ﻿---
 id: index-knowledge-base
 type: concept

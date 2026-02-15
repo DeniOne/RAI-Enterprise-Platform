@@ -593,6 +593,7 @@ exports.Prisma.HarvestPlanScalarFieldEnum = {
   contextSnapshot: 'contextSnapshot',
   targetMetric: 'targetMetric',
   period: 'period',
+  seasonId: 'seasonId',
   minValue: 'minValue',
   optValue: 'optValue',
   maxValue: 'maxValue',
@@ -620,7 +621,6 @@ exports.Prisma.TechMapScalarFieldEnum = {
   id: 'id',
   harvestPlanId: 'harvestPlanId',
   seasonId: 'seasonId',
-  fieldId: 'fieldId',
   crop: 'crop',
   soilType: 'soilType',
   moisture: 'moisture',
@@ -631,6 +631,7 @@ exports.Prisma.TechMapScalarFieldEnum = {
   status: 'status',
   version: 'version',
   isLatest: 'isLatest',
+  fieldId: 'fieldId',
   companyId: 'companyId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -680,6 +681,10 @@ exports.Prisma.ExecutionRecordScalarFieldEnum = {
   performedById: 'performedById',
   notes: 'notes',
   version: 'version',
+  budgetPlanId: 'budgetPlanId',
+  budgetVersion: 'budgetVersion',
+  techMapId: 'techMapId',
+  techMapVersion: 'techMapVersion',
   companyId: 'companyId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -716,6 +721,9 @@ exports.Prisma.DeviationReviewScalarFieldEnum = {
   slaExpiration: 'slaExpiration',
   liabilityShiftStatus: 'liabilityShiftStatus',
   status: 'status',
+  budgetItemId: 'budgetItemId',
+  reasonCategory: 'reasonCategory',
+  severity: 'severity',
   budgetPlanId: 'budgetPlanId',
   companyId: 'companyId',
   createdAt: 'createdAt',
@@ -922,6 +930,12 @@ exports.Prisma.LedgerEntryScalarFieldEnum = {
   type: 'type',
   accountCode: 'accountCode',
   companyId: 'companyId',
+  executionId: 'executionId',
+  cashFlowType: 'cashFlowType',
+  cashImpact: 'cashImpact',
+  cashDirection: 'cashDirection',
+  dueDate: 'dueDate',
+  cashAccountId: 'cashAccountId',
   isImmutable: 'isImmutable',
   createdAt: 'createdAt'
 };
@@ -931,6 +945,7 @@ exports.Prisma.CashAccountScalarFieldEnum = {
   name: 'name',
   balance: 'balance',
   currency: 'currency',
+  isActive: 'isActive',
   companyId: 'companyId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1242,12 +1257,26 @@ exports.Prisma.BudgetPlanScalarFieldEnum = {
   id: 'id',
   harvestPlanId: 'harvestPlanId',
   version: 'version',
+  type: 'type',
   status: 'status',
   totalPlannedAmount: 'totalPlannedAmount',
   totalActualAmount: 'totalActualAmount',
   techMapSnapshotId: 'techMapSnapshotId',
+  derivationHash: 'derivationHash',
   companyId: 'companyId',
   seasonId: 'seasonId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.OutboxMessageScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  aggregateId: 'aggregateId',
+  aggregateType: 'aggregateType',
+  payload: 'payload',
+  status: 'status',
+  error: 'error',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -1256,8 +1285,27 @@ exports.Prisma.BudgetItemScalarFieldEnum = {
   id: 'id',
   budgetPlanId: 'budgetPlanId',
   category: 'category',
+  plannedNorm: 'plannedNorm',
+  plannedPrice: 'plannedPrice',
   plannedAmount: 'plannedAmount',
   actualAmount: 'actualAmount',
+  companyId: 'companyId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ManagementDecisionScalarFieldEnum = {
+  id: 'id',
+  version: 'version',
+  supersedesId: 'supersedesId',
+  status: 'status',
+  confirmedAt: 'confirmedAt',
+  deviationId: 'deviationId',
+  description: 'description',
+  expectedEffect: 'expectedEffect',
+  isActive: 'isActive',
+  decisionHash: 'decisionHash',
+  authorId: 'authorId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -1279,6 +1327,23 @@ exports.Prisma.HarvestResultScalarFieldEnum = {
   budgetVersion: 'budgetVersion',
   qualityClass: 'qualityClass',
   harvestDate: 'harvestDate',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.StrategicGoalScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  seasonId: 'seasonId',
+  goalType: 'goalType',
+  targetValue: 'targetValue',
+  version: 'version',
+  supersedesId: 'supersedesId',
+  status: 'status',
+  description: 'description',
+  isActive: 'isActive',
+  activatedAt: 'activatedAt',
+  archivedAt: 'archivedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -1397,6 +1462,7 @@ exports.UserRole = exports.$Enums.UserRole = {
   MANAGER: 'MANAGER',
   AGRONOMIST: 'AGRONOMIST',
   FIELD_WORKER: 'FIELD_WORKER',
+  CFO: 'CFO',
   CLIENT_ADMIN: 'CLIENT_ADMIN',
   USER: 'USER'
 };
@@ -1596,7 +1662,20 @@ exports.EconomicEventType = exports.$Enums.EconomicEventType = {
   OBLIGATION_CREATED: 'OBLIGATION_CREATED',
   OBLIGATION_SETTLED: 'OBLIGATION_SETTLED',
   RESERVE_ALLOCATED: 'RESERVE_ALLOCATED',
-  ADJUSTMENT: 'ADJUSTMENT'
+  ADJUSTMENT: 'ADJUSTMENT',
+  BOOTSTRAP: 'BOOTSTRAP',
+  OTHER: 'OTHER'
+};
+
+exports.CashFlowType = exports.$Enums.CashFlowType = {
+  OPERATING: 'OPERATING',
+  INVESTING: 'INVESTING',
+  FINANCING: 'FINANCING'
+};
+
+exports.CashDirection = exports.$Enums.CashDirection = {
+  INFLOW: 'INFLOW',
+  OUTFLOW: 'OUTFLOW'
 };
 
 exports.BudgetStatus = exports.$Enums.BudgetStatus = {
@@ -1809,6 +1888,18 @@ exports.RiskFsmState = exports.$Enums.RiskFsmState = {
   RESOLVED: 'RESOLVED'
 };
 
+exports.BudgetType = exports.$Enums.BudgetType = {
+  OPERATIONAL: 'OPERATIONAL',
+  ADMINISTRATIVE: 'ADMINISTRATIVE'
+};
+
+exports.OutboxStatus = exports.$Enums.OutboxStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  PROCESSED: 'PROCESSED',
+  FAILED: 'FAILED'
+};
+
 exports.BudgetCategory = exports.$Enums.BudgetCategory = {
   SEEDS: 'SEEDS',
   FERTILIZER: 'FERTILIZER',
@@ -1816,6 +1907,25 @@ exports.BudgetCategory = exports.$Enums.BudgetCategory = {
   LABOR: 'LABOR',
   MACHINERY: 'MACHINERY',
   OTHER: 'OTHER'
+};
+
+exports.DecisionStatus = exports.$Enums.DecisionStatus = {
+  DRAFT: 'DRAFT',
+  CONFIRMED: 'CONFIRMED',
+  SUPERSEDED: 'SUPERSEDED'
+};
+
+exports.GoalType = exports.$Enums.GoalType = {
+  EBITDA_TARGET: 'EBITDA_TARGET',
+  ROI_TARGET: 'ROI_TARGET',
+  COST_LIMIT: 'COST_LIMIT',
+  YIELD_TARGET: 'YIELD_TARGET'
+};
+
+exports.GoalStatus = exports.$Enums.GoalStatus = {
+  DRAFT: 'DRAFT',
+  ACTIVE: 'ACTIVE',
+  ARCHIVED: 'ARCHIVED'
 };
 
 exports.Prisma.ModelName = {
@@ -1910,8 +2020,11 @@ exports.Prisma.ModelName = {
   RiskStateHistory: 'RiskStateHistory',
   DecisionRecord: 'DecisionRecord',
   BudgetPlan: 'BudgetPlan',
+  OutboxMessage: 'OutboxMessage',
   BudgetItem: 'BudgetItem',
-  HarvestResult: 'HarvestResult'
+  ManagementDecision: 'ManagementDecision',
+  HarvestResult: 'HarvestResult',
+  StrategicGoal: 'StrategicGoal'
 };
 
 /**

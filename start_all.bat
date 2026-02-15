@@ -10,7 +10,7 @@ if %errorlevel% neq 0 (
 
 echo [2/5] GENERATING PRISMA CLIENT...
 cd packages/prisma-client
-call npx prisma generate
+call pnpm exec prisma generate
 cd ../..
 
 echo [3/5] STARTING BACKEND API...

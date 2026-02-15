@@ -1,0 +1,3 @@
+src/modules/consulting/scenario-simulation.service.ts(34,17): error TS2353: Object literal may only specify known properties, and 'status' does not exist in type 'LedgerEntryWhereInput'.
+src/modules/consulting/strategic-goal.service.ts(139,24): error TS2353: Object literal may only specify known properties, and 'harvestPlans' does not exist in type 'SeasonInclude<DefaultArgs>'.
+src/modules/consulting/strategic-goal.service.ts(145,43): error TS2339: Property 'harvestPlans' does not exist on type '{ id: string; status: SeasonStatus; createdAt: Date; updatedAt: Date; companyId: string; coreProcessId: string; year: number; fieldId: string; cropId: string; rapeseedId: string; ... 8 more ...; currentStageId: string; }'.

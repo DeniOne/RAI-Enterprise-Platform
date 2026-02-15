@@ -1,241 +1,83 @@
-# 🧭 Track 5 — Yield & KPI Engine
-## RAI Enterprise Platform — Consulting Core v3
+План реструктуризации документации RAI_EP (v2 - Enterprise Ready)
+Цель
+Трансформация документации из "хаотичного хранилища" в "Enterprise Documentation Framework" с жёсткой типологией и правилами зависимостей.
 
+🏗 Новая архитектурная структура (PHASE 3)
+text
+docs/
+├── 00_STRATEGY/          # (Why?)
+│   ├── VISION/           # Миссия и долгосрочные цели
+│   ├── ROADMAP/          # Фазы развития
+│   └── ECONOMICS/        # Юнит-экономика и бизнес-модели
+├── 01_ARCHITECTURE/      # (How? High-Level)
+│   ├── PRINCIPLES/       # Аксиомы и Каноны
+│   ├── HLD/              # Контейнеры, C4
+│   ├── ADR/              # Решения (Architectural Decision Records)
+│   └── TOPOLOGY/         # [NEW] Типология и правила документации
+├── 02_DOMAINS/           # (What? Business Context)
+│   ├── RAI_DOMAIN/       # Агро-логика
+│   ├── CONSULTING_DOMAIN/# Логика консалтинга
+│   ├── ENTERPRISE_DOMAIN/# Оргструктура, Холдинги
+│   └── SHARED_KERNEL/    # Общие доменные сущности
+├── 03_PRODUCT/           # (User Experience)
+│   ├── UI/               # Паспорта экранов
+│   ├── UX/               # Сценарии и флоу
+│   └── BOT/              # Телеграм-специфичные доки
+├── 04_ENGINEERING/       # (How? Implementation)
+│   ├── CONTRACTS/        # API, OpenAPI, Events
+│   ├── SERVICES/         # Описание микросервисов
+│   ├── DATABASE/         # Schema, Migrations
+│   ├── OBSERVABILITY/    # Метрики и логирование
+│   └── INFRA/            # K8s, CI/CD, Docker
+├── 05_OPERATIONS/        # (Runtime & Maintenance)
+│   ├── RUNBOOKS/         # Инструкции по восстановлению
+│   ├── INCIDENTS/        # Постмортемы
+│   ├── REPORTS/          # Фактические отчеты (ADVISORY_*)
+│   └── MONITORING/       # Dashboards & Alerts
+├── 06_METRICS/           # (Analytics)
+│   ├── BUSINESS/         # KPI продукта
+│   └── TECHNICAL/        # Perf, Error rates
+├── 07_EXECUTION/         # (Process Control)
+│   ├── PHASES/           # Детальный Scope фаз
+│   ├── WBS/              # Декомпозиция работ
+│   └── SPRINTS/          # Спринт-логи
+└── 08_ARCHIVE/           # Идеи и Legacy
+📜 Documentation Governance (PHASE 2)
+1. Doc Typology
+Type	Layer	Allowed References (Depends On)
+Vision	Strategy	Nothing below
+Roadmap	Strategy	Architecture
+ADR	Architecture	Architecture
+HLD	Architecture	Domain
+Domain Spec	Domain	Architecture
+API Contract	Engineering	Domain
+Runbook	Operations	Engineering
+Report	Operations	Nothing (isolated)
+Phase Plan	Execution	Architecture
+Research	Archive	Nothing
+2. Creation Policy (Mandatory Headers)
+Каждый файл 
+.md
+ обязан начинаться с YAML фронтматера:
+
+yaml
 ---
-
-# 🎯 Цель
-
-Добавить слой измерения результата производства.
-
-Execution отвечает: "Сделали ли?"
-Budget отвечает: "Не перерасходовали ли?"
-Yield & KPI отвечает: "Было ли это эффективно?"
-
-UI и Backend должны реализовать Yield Engine + KPI Read Model без нарушения архитектурных принципов:
-
-Service = IO  
-Orchestrator = Brain  
-UI = Read Model  
-Domain Logic не утекает в UI  
-
+type: [Typology Type]
+layer: [Strategy|Architecture|Domain|Engineering|Operations|Execution|Archive]
+status: [Draft|Review|Approved|Legacy]
+depends_on: [Path to parent doc]
+allowed_refs: [Sub-layers or sibling layers]
 ---
-
-# 🏗 1️⃣ Database Layer (Prisma)
-
-[MODIFY] schema.prisma
-
-## Новая модель: HarvestResult
-
-model HarvestResult {
-  id              String   @id @default(uuid())
-  planId          String
-  seasonId        String
-  companyId       String
-
-  fieldId         String
-  crop            String
-
-  plannedYield    Float?   // ц/га
-  actualYield     Float?   // ц/га
-
-  harvestedArea   Float?   // га
-  totalOutput     Float?   // тонн
-
-  qualityClass    String?
-  harvestDate     DateTime?
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-}
-
-Индексы:
-- planId + seasonId + companyId
-- fieldId
-
----
-
-# 🧠 2️⃣ Backend — YieldService
-
-[NEW] apps/api/src/modules/consulting/yield.service.ts
-
-Методы:
-
-createOrUpdateHarvestResult(dto)
-getHarvestResultByPlan(planId)
-getCompanyYieldSummary(companyId, seasonId)
-
-Валидация:
-- Проверка companyId isolation
-- Нельзя сохранять данные для неактивного плана (через DomainRules)
-
----
-
-# 📊 3️⃣ KPI Engine (Read Model)
-
-[NEW] apps/api/src/modules/consulting/kpi.service.ts
-
-KPI — только вычисления. Никаких мутаций.
-
-Методы:
-
-calculatePlanKPI(planId)
-calculateCompanyKPI(companyId, seasonId)
-
----
-
-## KPI для плана:
-
-- plannedYield
-- actualYield
-- yieldDelta (%)
-- totalBudget
-- totalActualCost
-- costPerTon
-- profitPerHectare
-- ROI
-
----
-
-## Формулы (MVP):
-
-yieldDelta = (actualYield - plannedYield) / plannedYield * 100
-
-costPerTon = totalActualCost / totalOutput
-
-profitPerHectare =
-  (totalOutput * marketPrice - totalActualCost) / harvestedArea
-
-ROI =
-  (Revenue - Cost) / Cost * 100
-
----
-
-# 🔗 4️⃣ Интеграция с Execution
-
-KPI не должен напрямую зависеть от ExecutionService.
-
-Источник данных:
-
-- BudgetPlan (actualAmount)
-- StockTransaction
-- HarvestResult
-
-Никаких прямых вызовов ExecutionService.
-
----
-
-# 🌐 5️⃣ API
-
-[NEW] routes:
-
-GET /consulting/yield/plan/:id
-GET /consulting/kpi/plan/:id
-GET /consulting/kpi/company/:id
-
-Все endpoints read-only.
-
----
-
-# 🖥 6️⃣ Frontend
-
-## [NEW] yield/page.tsx
-
-Форма ввода:
-
-- Плановая урожайность
-- Фактическая урожайность
-- Площадь
-- Валовый сбор
-- Класс качества
-
-Сохранение через POST/PUT.
-
----
-
-## [MODIFY] plans/page.tsx
-
-Добавить новый блок в Cockpit:
-
-### 📊 Yield & KPI
-
-Показывать:
-
-- Урожайность (план/факт)
-- Отклонение %
-- Себестоимость 1 тонны
-- ROI
-- Прибыль на гектар
-
-Цветовая семантика:
-
-🟢 Если ROI > 0  
-🟡 Если ROI ~ 0  
-🔴 Если ROI < 0  
-
----
-
-# 🎨 UI Правила
-
-- Использовать существующий Status Block Pattern
-- Никакого font-bold
-- Все тексты на русском
-- Tooltip при отсутствии HarvestResult
-- Если HarvestResult нет → отображать "Нет данных по урожаю"
-
----
-
-# 🔐 7️⃣ Domain Protection
-
-HarvestResult нельзя редактировать если:
-
-- План в статусе ARCHIVED
-- Сезон закрыт
-
-Проверка через DomainRules.
-
----
-
-# 🧪 8️⃣ Verification Plan
-
-Automated:
-
-- Создание HarvestResult
-- Расчёт KPI при корректных данных
-- ROI корректно считается
-- Деление на 0 обрабатывается
-
-Manual:
-
-- Ввести урожай
-- Проверить изменение KPI
-- Проверить цветовую индикацию
-- Проверить company isolation
-
----
-
-# 📈 Definition of Done
-
-- HarvestResult сохраняется корректно
-- KPI рассчитывается детерминированно
-- UI отображает Yield & KPI в Plan Cockpit
-- Нет бизнес-логики в UI
-- Нет прямой зависимости KPI от ExecutionService
-- Нет нарушения архитектурных аксиом
-
----
-
-# 🧠 Стратегический результат
-
-После внедрения:
-
-Платформа замыкает полный цикл:
-
-Plan → Production → Budget → Execution → Yield → KPI → Advisory
-
-Система становится:
-
-Операционно + Финансово + Производственно измеримой.
-
----
-
-END OF TRACK 5 PROMPT
+3. Dependency Matrix (Layer Rules)
+Запрещено нарушать поток зависимостей: Strategy → Architecture → Domains → Engineering → Operations
+
+Execution: может ссылаться на любые слои выше (Strategy/Arch).
+Archive: изолирован.
+🚨 Проблемы к решению перед MOVE
+Semantic Lint: Скрипт-валидатор, проверяющий allowed_refs и layer соответствие.
+GOVERNANCE.md: Создание мастер-документа с правилами (в 01_ARCHITECTURE/TOPOLOGY/).
+INDEX.md: Единая точка навигации, заменяющая хаос README.
+План верификации (Усиленный)
+Structure Validation: Проверка на отсутствие файлов вне канонических папок.
+Layer Constraint Check: Парсинг всех ссылок и сопоставление их с layer в заголовке файла.
+Typology Check: Каждый файл должен иметь корректный type из списка.

@@ -413,10 +413,10 @@ Orchestrator = Brain (канон RAI_EP).
 ### Definition of Done
 - [x] Модель `HarvestResult` создана в БД.
 - [x] `YieldService` обеспечивает CRUD сбор урожая (базовая логика).
-- [ ] `YieldService` интегрирован с `AuditService` (событие `HARVEST_RESULT_RECORDED`).
-- [ ] `KPIService` выполняет детерминированный расчет ROI и других KPI.
-- [ ] В Plan Cockpit добавлен блок Yield & KPI (интеграция в `plans/page.tsx`).
-- [ ] Проведены тесты расчетов и изоляции данных.
+- [x] `YieldService` интегрирован с `AuditService` (событие `HARVEST_RESULT_RECORDED`).
+- [x] `KPIService` выполняет детерминированный расчет ROI и других KPI.
+- [x] В Plan Cockpit добавлен блок Yield & KPI (интеграция в `plans/page.tsx`).
+- [x] Проведены тесты расчетов и изоляции данных.
 
 ### Rollback Conditions
 - Обнаружение возможности кросс-тенантного доступа к данным.
@@ -427,3 +427,38 @@ Orchestrator = Brain (канон RAI_EP).
 - `docs/01-ARCHITECTURE/PRINCIPLES/CANON.md`
 - `docs/01-ARCHITECTURE/PRINCIPLES/UI_DESIGN_CANON.md`
 - `f:\RAI_EP\Рабочая\implementation_plan.md`
+
+---
+
+## PHASE0-CORE-001
+
+**Дата:** 2026-02-15
+**Автор:** TECHLEAD (AI)
+**Статус:** APPROVED
+**Scope:** Global
+**Binding:** HARD
+**Enforcement:** Code + Audit
+
+### Решение
+Фиксация архитектурных инвариантов ("Laws of Physics") для ядра системы.
+
+### Scope
+- **Budget Integrity**: `techMapId` (NOT NULL), `version`, `hash`. Запрет ручного создания.
+- **Execution Integrity**: Ссылка на `planId`, `plannedOperationId`. Запрет ad-hoc операций.
+- **Ledger Immutability**: Append-only. Запрет UPDATE/DELETE. Corrections via reversal.
+- **KPI Calculation**: Derived only. Запрет хранения в транзакционных таблицах.
+- **Tenant Isolation**: `companyId` обязателен. Cross-tenant joins запрещены.
+- **Versioning**: Запрет мутаций активных версий TechMap/Plan.
+
+### Definition of Done
+- Правила отражены в `PHASE 0 — ФИКСАЦИЯ ЯДРА СИСТЕМЫ.md`.
+- Проведен аудит кода на соответствие (Gap Analysis).
+- Все новые разработки следуют этим правилам (блокировка на уровне Code Review).
+
+### Rollback Conditions
+- Невозможность реализации технически (например, ограничения БД).
+- Блокировка бизнес-процессов (выявляется на этапе аудита).
+
+### Связанные документы
+- `docs/01-ARCHITECTURE/PHASE 0 — ФИКСАЦИЯ ЯДРА СИСТЕМЫ.md`
+- `docs/01-ARCHITECTURE/Финальный стратегический план.md`

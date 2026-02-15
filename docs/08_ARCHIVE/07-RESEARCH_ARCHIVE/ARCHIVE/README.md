@@ -1,0 +1,11 @@
+---
+id: DOC-ARH-GEN-006
+type: Legacy
+layer: Archive
+status: Draft
+version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-02-15
+---
+
+# АРХИВ

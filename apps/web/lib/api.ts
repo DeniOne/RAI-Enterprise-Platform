@@ -36,6 +36,14 @@ export const api = {
             list: () => apiClient.get('/consulting/execution/operations'),
             start: (operationId: string) => apiClient.post(`/consulting/execution/${operationId}/start`),
             complete: (data: any) => apiClient.post('/consulting/execution/complete', data),
+        },
+        yield: {
+            save: (data: any) => apiClient.post('/consulting/yield', data),
+            getByPlan: (planId: string) => apiClient.get(`/consulting/yield/plan/${planId}`),
+        },
+        kpi: {
+            plan: (planId: string) => apiClient.get(`/consulting/kpi/plan/${planId}`),
+            company: (seasonId: string) => apiClient.get(`/consulting/kpi/company/${seasonId}`),
         }
     }
 }

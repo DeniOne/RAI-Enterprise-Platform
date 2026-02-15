@@ -1,0 +1,16 @@
+src/modules/consulting/consulting.controller.ts(53,31): error TS2345: Argument of type 'UserRole' is not assignable to parameter of type '"ADMIN" | "CEO" | "CFO"'.
+  Type '"MANAGER"' is not assignable to type '"ADMIN" | "CEO" | "CFO"'.
+src/modules/consulting/consulting.controller.ts(54,23): error TS2304: Cannot find name 'ForbiddenException'.
+src/modules/consulting/consulting.controller.ts(60,31): error TS2345: Argument of type 'UserRole' is not assignable to parameter of type '"ADMIN" | "CEO" | "CFO"'.
+  Type '"MANAGER"' is not assignable to type '"ADMIN" | "CEO" | "CFO"'.
+src/modules/consulting/consulting.controller.ts(61,23): error TS2304: Cannot find name 'ForbiddenException'.
+src/modules/consulting/scenario-simulation.service.ts(2,31): error TS2307: Cannot find module '../../../prisma/prisma.service' or its corresponding type declarations.
+src/modules/consulting/scenario-simulation.service.ts(4,29): error TS2307: Cannot find module '../types/common' or its corresponding type declarations.
+src/modules/consulting/scenario-simulation.service.ts(5,24): error TS2307: Cannot find module '@prisma/client' or its corresponding type declarations.
+src/modules/consulting/strategic-advisory.service.ts(6,38): error TS2307: Cannot find module '@prisma/client' or its corresponding type declarations.
+src/modules/consulting/strategic-decomposition.service.ts(2,31): error TS2307: Cannot find module '../../../prisma/prisma.service' or its corresponding type declarations.
+src/modules/consulting/strategic-decomposition.service.ts(5,29): error TS2307: Cannot find module '../types/common' or its corresponding type declarations.
+src/modules/consulting/strategic-decomposition.service.ts(6,34): error TS2307: Cannot find module '@prisma/client' or its corresponding type declarations.
+src/modules/consulting/strategic-goal.service.ts(139,24): error TS2353: Object literal may only specify known properties, and 'harvestPlans' does not exist in type 'SeasonInclude<DefaultArgs>'.
+src/modules/consulting/strategic-goal.service.ts(139,96): error TS2339: Property 'CONFIRMED' does not exist on type '{ DRAFT: "DRAFT"; APPROVED: "APPROVED"; LOCKED: "LOCKED"; ACTIVE: "ACTIVE"; EXHAUSTED: "EXHAUSTED"; BLOCKED: "BLOCKED"; CLOSED: "CLOSED"; }'.
+src/modules/consulting/strategic-goal.service.ts(145,43): error TS2339: Property 'harvestPlans' does not exist on type '{ id: string; status: SeasonStatus; createdAt: Date; updatedAt: Date; companyId: string; fieldId: string; actualYield: number; year: number; cropId: string; rapeseedId: string; ... 8 more ...; currentStageId: string; }'.

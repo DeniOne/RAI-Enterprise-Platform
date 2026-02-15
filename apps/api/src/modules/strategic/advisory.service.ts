@@ -61,8 +61,8 @@ export class AdvisoryService {
             }
         });
 
-        const totalPlanned = overspendingBudgets._sum.plannedAmount || 0;
-        const totalActual = overspendingBudgets._sum.actualAmount || 0;
+        const totalPlanned = Number(overspendingBudgets._sum.plannedAmount) || 0;
+        const totalActual = Number(overspendingBudgets._sum.actualAmount) || 0;
         const overrunRate = totalPlanned > 0 ? Math.max(0, (totalActual - totalPlanned) / totalPlanned) : 0;
 
         // --- FORMULAS ---

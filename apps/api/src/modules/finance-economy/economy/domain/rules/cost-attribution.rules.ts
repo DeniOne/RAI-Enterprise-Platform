@@ -51,6 +51,13 @@ export class CostAttributionRules {
                     { amount: Math.abs(event.amount), type: event.amount > 0 ? 'DEBIT' : 'CREDIT', accountCode: 'ADJUSTMENT_ACCOUNT' }
                 ];
 
+            case 'BOOTSTRAP':
+                // Phase 5: Initial balance support
+                return [
+                    { amount: event.amount, type: 'DEBIT', accountCode: 'CASH' },
+                    { amount: event.amount, type: 'CREDIT', accountCode: 'EQUITY_RESERVE' },
+                ];
+
             default:
                 return [];
         }

@@ -11,6 +11,8 @@
         "dev": "turbo dev",
         "build": "turbo build",
         "lint": "turbo lint",
+        "lint:docs:matrix": "node scripts/doc-lint-matrix.cjs --fail-on-mismatch",
+        "lint:docs:matrix:strict": "node scripts/doc-lint-matrix.cjs --fail-on-mismatch --strict-version",
         "test": "turbo test",
         "generate:graph": "node scripts/generate-graph.js",
         "db:generate": "turbo db:generate",

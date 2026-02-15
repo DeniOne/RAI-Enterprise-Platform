@@ -193,7 +193,18 @@
 - [x] **Auto-Deviations**: Реализован `syncActuals` с автоматическим созданием `FINANCIAL` девиаций при превышении лимитов.
 - [x] **Threshold Protection**: Защита от спама девиациями (одно открытое финансовое отклонение на версию бюджета).
 - [x] **API**: Эндпоинты управления бюджетом интегрированы в `ConsultingController`.
-## Milestone 19: Track 3 - Advisory Engine (Executive Intelligence) — DONE ✅
+## Milestone 21: Phase 5 - Cash Flow Engine & Financial Stability — DONE ✅
+**Дата:** 2026-02-15
+- [x] **Data Strategy**: Реализована проекционная модель кассы без хранения остатков. Внедрен `BOOTSTRAP` для Ledger.
+- [x] **DB Guarding**: Жесткая валидация `cashImpact` и `cashAccountId` на уровне `EconomyService`.
+- [x] **Burn Rate Logic**: Формализация расчета операционного расхода (Operating avg).
+- [x] **Risk Integration**: Внедрена категория `FINANCIAL_STABILITY` в стратегический Advisory.
+- [x] **API & RBAC**: Эндпоинты `/cashflow/*` доступны CEO/CFO в `ConsultingController`.
+- [x] **Verification**: Пройдены тесты на историческую консистентность проекций.
+
+---
+**ИТОГ:** Фаза 5 завершена. Все 5 фаз архитектурной закалки (Hardening) интегрированы. Система готова к когнитивному расширению.
+### Milestone 19: Track 3 - Advisory Engine (Executive Intelligence) — DONE ✅
 **Дата:** 2026-02-12
 - [x] **Strategic Positioning**: Модуль вынесен в `strategic/` как чистый Read-Model.
 - [x] **Analytical Engine**: Реализован `AdvisoryService` с формулами Health Index (0-100) и Volatility Index.
@@ -208,4 +219,5 @@
 - [x] **Yield Domain**: Реализована модель `HarvestResult` и `YieldService` для фиксации урожая.
 - [x] **KPI Read-Model**: `KpiService` с расчетом ROI, Delta и себестоимости.
 - [x] **UI Integration**: Форма ввода урожая и визуализация KPI в Cockpit.
+- [x] **Hardening (Deterministic KPI)**: Внедрены снапшоты стоимости и цены, атомарные транзакции и изоляция тенантов.
 - [x] **Type Stability**: Исправлены 23 ошибки компиляции, обновлен Prisma Client.

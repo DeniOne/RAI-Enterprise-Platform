@@ -56,6 +56,7 @@ model Company {
   ledgerEntries     LedgerEntry[]
   cashAccounts      CashAccount[]
   budgets           Budget[]
+  budgetItems       BudgetItem[]
   // Legal & GR relations
   legalDocuments    LegalDocument[]
   legalRequirements LegalRequirement[]
@@ -87,6 +88,9 @@ model Company {
   machinery         Machinery[]
   stockItems        StockItem[]
   stockTransactions StockTransaction[]
+
+  // Phase 4: Strategic OS
+  strategicGoals StrategicGoal[]
 
   @@map("companies")
 }
@@ -440,9 +444,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  assignedTasks     Task[]             @relation("TaskAssignee")
-  responsibleTasks  Task[]             @relation("TaskResponsible")
-  fieldObservations FieldObservation[]
+  assignedTasks       Task[]               @relation("TaskAssignee")
+  responsibleTasks    Task[]               @relation("TaskResponsible")
+  fieldObservations   FieldObservation[]
+  managementDecisions ManagementDecision[]
 
   // HR & CMR Relations
   employeeProfile  EmployeeProfile?
@@ -535,6 +540,7 @@ model Field {
   tasks             Task[]
   fieldObservations FieldObservation[]
   harvestResults    HarvestResult[]
+  techMaps          TechMap[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -638,6 +644,8 @@ model Season {
   tasks             Task[]
   fieldObservations FieldObservation[]
 
+  harvestPlans HarvestPlan[]
+
   // Tech Map Integration
   techMaps         TechMap[]
   deviationReviews DeviationReview[]
@@ -645,6 +653,7 @@ model Season {
   cmrDecisions     CmrDecision[]
   cmrRisks         CmrRisk[]
   harvestResults   HarvestResult[]
+  strategicGoals   StrategicGoal[]
 
   @@index([id, companyId]) // Для быстрой валидации доступа
   @@index([fieldId, year]) // Для севооборота
@@ -890,6 +899,7 @@ enum UserRole {
   MANAGER
   AGRONOMIST
   FIELD_WORKER
+  CFO
   CLIENT_ADMIN
   USER
 }
@@ -1213,6 +1223,9 @@ model HarvestPlan {
   targetMetric    String? // e.g. "YIELD_QPH"
   period          String? // e.g. "SEASON_2026"
 
+  seasonId String?
+  season   Season? @relation(fields: [seasonId], references: [id])
+
   minValue      Float?
   optValue      Float?
   maxValue      Float?
@@ -1275,8 +1288,7 @@ model TechMap {
 
   harvestPlanActive HarvestPlan? @relation("ActiveTechMap")
 
-  fieldId String // Denormalization for uniqueness index
-  crop    String // Denormalization for uniqueness index
+  crop String // Denormalization for uniqueness index
 
   stages MapStage[]
 
@@ -1296,6 +1308,9 @@ model TechMap {
   // Versioning
   version  Int     @default(1)
   isLatest Boolean @default(true)
+
+  fieldId String // Denormalization for uniqueness index
+  field   Field  @relation(fields: [fieldId], references: [id])
 
   companyId String
   company   Company @relation(fields: [companyId], references: [id])
@@ -1407,10 +1422,18 @@ model ExecutionRecord {
   notes   String? @db.Text
   version Int     @default(1) // Optimistic Locking
 
+  // Phase 0: Execution Integrity Snapshots (Immutable Context)
+  budgetPlanId   String? // Link to the budget plan active at the time of execution
+  budgetVersion  Int? // Version of the budget plan active at the time of execution
+  techMapId      String? // Link to the TechMap active at the time of execution
+  techMapVersion Int? // Version of the TechMap active at the time of execution
+
   stockTransactions StockTransaction[]
 
   companyId String
   company   Company @relation(fields: [companyId], references: [id])
+
+  ledgerEntries LedgerEntry[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1496,6 +1519,15 @@ model DeviationReview {
   liabilityShiftStatus String? // "SHIFTED_TO_CLIENT", "SUSPENDED"
 
   status DeviationStatus @default(DETECTED)
+
+  // Management Layer Integration
+  budgetItemId String?
+  budgetItem   BudgetItem? @relation(fields: [budgetItemId], references: [id])
+
+  reasonCategory String? // e.g. "MARKET_PRICE_CHANGE", "WEATHER", "TECHNOLOGY_BREACH"
+  severity       String  @default("MEDIUM") // LOW, MEDIUM, HIGH
+
+  decisions ManagementDecision[]
 
   risks CmrRisk[]
 
@@ -1926,6 +1958,8 @@ enum EconomicEventType {
   OBLIGATION_SETTLED
   RESERVE_ALLOCATED
   ADJUSTMENT
+  BOOTSTRAP // Phase 5: Initial balance support
+  OTHER
 }
 
 enum BudgetStatus {
@@ -1968,7 +2002,7 @@ model LedgerEntry {
   economicEventId String
   economicEvent   EconomicEvent @relation(fields: [economicEventId], references: [id])
 
-  amount      Float
+  amount      Decimal @db.Decimal(18, 4)
   type        String // DEBIT / CREDIT
   accountCode String // Chart of Accounts (CoA) mapping
 
@@ -1976,37 +2010,63 @@ model LedgerEntry {
   companyId String
   company   Company @relation(fields: [companyId], references: [id])
 
+  // Phase 2.3: Traceability
+  executionId String?
+  execution   ExecutionRecord? @relation(fields: [executionId], references: [id])
+
+  // Phase 5: Cash Flow Projection
+  cashFlowType  CashFlowType?
+  cashImpact    Boolean        @default(false)
+  cashDirection CashDirection?
+  dueDate       DateTime? // Projection timeline
+  cashAccountId String?
+  cashAccount   CashAccount?   @relation(fields: [cashAccountId], references: [id])
+
   isImmutable Boolean @default(true) // Derived fact projection
 
   createdAt DateTime @default(now())
 
   @@index([companyId])
   @@index([accountCode])
+  @@index([cashAccountId])
   @@map("ledger_entries")
 }
 
 model CashAccount {
-  id       String @id @default(cuid())
+  id       String  @id @default(uuid())
   name     String // e.g. "Main Sberbank", "Petty Cash"
-  balance  Float  @default(0)
-  currency String @default("RUB")
+  balance  Decimal @default(0) @db.Decimal(18, 4)
+  currency String  @default("RUB")
+  isActive Boolean @default(true)
 
   companyId String
   company   Company @relation(fields: [companyId], references: [id])
 
+  ledgerEntries LedgerEntry[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([companyId])
-  @@map("cash_accounts")
+  @@map("consulting_cash_accounts")
+}
+
+enum CashFlowType {
+  OPERATING
+  INVESTING
+  FINANCING
+}
+
+enum CashDirection {
+  INFLOW
+  OUTFLOW
 }
 
 model Budget {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   name      String
-  limit     Float
-  consumed  Float  @default(0)
-  remaining Float  @default(0)
+  limit     Decimal @db.Decimal(18, 4)
+  consumed  Decimal @default(0) @db.Decimal(18, 4)
+  remaining Decimal @default(0) @db.Decimal(18, 4)
 
   status BudgetStatus @default(DRAFT)
 
@@ -2740,6 +2800,11 @@ enum RiskReferenceType {
 // TRACK 2: BUDGET VERTICAL SLICE
 // ==========================================
 
+enum BudgetType {
+  OPERATIONAL
+  ADMINISTRATIVE
+}
+
 model BudgetPlan {
   id String @id @default(cuid())
 
@@ -2749,10 +2814,11 @@ model BudgetPlan {
   harvestPlanActive HarvestPlan? @relation("ActiveBudgetPlan")
 
   version Int          @default(1)
+  type    BudgetType   @default(OPERATIONAL)
   status  BudgetStatus @default(DRAFT)
 
-  totalPlannedAmount Float @default(0)
-  totalActualAmount  Float @default(0)
+  totalPlannedAmount Decimal @db.Decimal(18, 4)
+  totalActualAmount  Decimal @default(0) @db.Decimal(18, 4)
 
   techMapSnapshotId String?
   techMapSnapshot   TechMap? @relation("BudgetPlanTechMapSnapshot", fields: [techMapSnapshotId], references: [id])
@@ -2763,6 +2829,9 @@ model BudgetPlan {
   deviationReviews DeviationReview[]
   risks            CmrRisk[]
   observations     FieldObservation[]
+
+  // Phase 0: Integrity Invariants
+  derivationHash String? // SHA-256 hash of (ActiveTechMap + Prices + Rules)
 
   companyId String
   company   Company @relation(fields: [companyId], references: [id])
@@ -2779,22 +2848,87 @@ model BudgetPlan {
   @@map("consulting_budget_plans")
 }
 
+model OutboxMessage {
+  id            String       @id @default(uuid())
+  type          String // finance.economic_event.created
+  aggregateId   String? // For event ordering/traceability
+  aggregateType String? // For context (e.g. ExecutionRecord)
+  payload       Json
+  status        OutboxStatus @default(PENDING)
+  error         String?      @db.Text
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@map("outbox_messages")
+}
+
+enum OutboxStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
 model BudgetItem {
   id           String     @id @default(cuid())
   budgetPlanId String
   budgetPlan   BudgetPlan @relation(fields: [budgetPlanId], references: [id])
 
   category      BudgetCategory
-  plannedAmount Float
-  actualAmount  Float          @default(0)
+  plannedNorm   Decimal        @default(0) @db.Decimal(18, 4) // Snapshot from TechMap at generation
+  plannedPrice  Decimal        @default(0) @db.Decimal(18, 4) // Snapshot from Registry at generation
+  plannedAmount Decimal        @db.Decimal(18, 4)
+  actualAmount  Decimal        @default(0) @db.Decimal(18, 4)
 
   stockTransactions StockTransaction[]
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  deviationReviews DeviationReview[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([budgetPlanId])
   @@map("consulting_budget_items")
+}
+
+model ManagementDecision {
+  id           String               @id @default(uuid())
+  version      Int                  @default(1)
+  supersedesId String?
+  supersedes   ManagementDecision?  @relation("DecisionHistory", fields: [supersedesId], references: [id])
+  history      ManagementDecision[] @relation("DecisionHistory")
+
+  status      DecisionStatus @default(DRAFT)
+  confirmedAt DateTime?
+
+  deviationId String
+  deviation   DeviationReview @relation(fields: [deviationId], references: [id])
+
+  description    String  @db.Text
+  expectedEffect String? @db.Text
+
+  // Security & Versioning Hardening
+  isActive     Boolean? // null for history, true for active version
+  decisionHash String? // payload digest for tamper detection
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([deviationId, version])
+  @@unique([deviationId, isActive]) // Multi-bypass protection: only one active decision per deviation
+  @@map("consulting_management_decisions")
+}
+
+enum DecisionStatus {
+  DRAFT
+  CONFIRMED
+  SUPERSEDED
 }
 
 enum BudgetCategory {
@@ -2819,15 +2953,15 @@ model HarvestResult {
   field   Field  @relation(fields: [fieldId], references: [id])
   crop    String
 
-  plannedYield Float? // ц/га
-  actualYield  Float? // ц/га
+  plannedYield Decimal? @db.Decimal(18, 4) // ц/га
+  actualYield  Decimal? @db.Decimal(18, 4) // ц/га
 
-  harvestedArea Float? // га
-  totalOutput   Float? // тонн
-  marketPrice   Float? // цена реализации за тонну
+  harvestedArea Decimal? @db.Decimal(18, 4) // га
+  totalOutput   Decimal? @db.Decimal(18, 4) // тонн
+  marketPrice   Decimal? @db.Decimal(18, 4) // цена реализации за тонну
 
   // Budget Snapshot at Harvest (Fix: Deterministic KPI)
-  costSnapshot  Float? // фактические затраты на момент фиксации урожая
+  costSnapshot  Decimal? @db.Decimal(18, 4) // фактические затраты на момент фиксации урожая
   budgetPlanId  String? // ссылка на план, с которого снят снепшот
   budgetVersion Int? // версия бюджета
 
@@ -2840,4 +2974,48 @@ model HarvestResult {
   @@index([planId, seasonId, companyId])
   @@index([fieldId])
   @@map("harvest_results")
+}
+
+// --- Phase 4: Strategic Feedback Loop ---
+
+model StrategicGoal {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  seasonId  String
+  season    Season  @relation(fields: [seasonId], references: [id])
+
+  goalType    GoalType
+  targetValue Decimal  @db.Decimal(18, 4)
+
+  // Versioning & Lifecycle
+  version      Int        @default(1)
+  supersedesId String? // Link to previous version
+  status       GoalStatus @default(DRAFT)
+
+  description String? @db.Text
+
+  // Security & Conflict Protection
+  isActive    Boolean? // null for history, true for the active guidance
+  activatedAt DateTime?
+  archivedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, seasonId, goalType, isActive]) // Protection: Only one active goal of a type per season
+  @@map("consulting_strategic_goals")
+}
+
+enum GoalType {
+  EBITDA_TARGET
+  ROI_TARGET
+  COST_LIMIT
+  YIELD_TARGET
+}
+
+enum GoalStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
 }
