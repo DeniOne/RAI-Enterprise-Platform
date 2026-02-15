@@ -100,115 +100,96 @@
 | `apps/api/src/shared/auth/telegram-auth-internal.controller.ts` | 'internal/telegram' | No |
 
 ## III. Multi-Tenancy Audit
-| Model | Has companyId | Required | Indexed | Part of unique composite | Soft-delete | Risk Level |
-| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| Company | No | N/A | No | No | No | High |
-| Account | Yes | Yes | No | No | No | Medium |
-| Contact | No | N/A | No | No | No | High |
-| Interaction | No | N/A | No | No | No | High |
-| Obligation | No | N/A | No | No | No | High |
-| Holding | Yes | Yes | No | No | No | Medium |
-| Machinery | Yes | Yes | Yes | No | Yes | Low |
-| StockItem | Yes | Yes | Yes | No | Yes | Low |
-| StockTransaction | Yes | Yes | Yes | No | No | Low |
-| User | Yes | Yes | No | No | No | Medium |
-| Invitation | Yes | Yes | No | No | No | Medium |
-| Field | Yes | Yes | Yes | No | No | Low |
-| Rapeseed | Yes | No | Yes | Yes | No | Medium |
-| RapeseedHistory | No | N/A | No | No | No | High |
-| Season | Yes | Yes | Yes | No | No | Low |
-| SeasonSnapshot | Yes | Yes | Yes | No | No | Low |
-| AuditFailure | No | N/A | No | No | No | High |
-| SeasonStageProgress | No | N/A | No | No | No | High |
-| SeasonHistory | No | N/A | No | No | No | High |
-| BusinessRule | Yes | No | No | Yes | No | Medium |
-| TechnologyCard | Yes | Yes | Yes | No | No | Low |
-| TechnologyCardOperation | No | N/A | No | No | No | High |
-| TechnologyCardResource | No | N/A | No | No | No | High |
-| Task | Yes | Yes | Yes | No | No | Low |
-| TaskResourceActual | No | N/A | No | No | No | High |
-| EmployeeProfile | Yes | Yes | Yes | No | No | Low |
-| HrOnboardingPlan | No | N/A | No | No | No | High |
-| HrSupportCase | No | N/A | No | No | No | High |
-| RoleDefinition | Yes | Yes | No | Yes | No | Medium |
-| AuditLog | No | N/A | No | No | No | High |
-| ApiUsage | No | N/A | No | No | No | High |
-| MemoryEntry | Yes | Yes | Yes | No | No | Low |
-| Deal | Yes | Yes | Yes | No | No | Low |
-| ScoreCard | Yes | Yes | Yes | No | No | Low |
-| Contract | Yes | Yes | Yes | No | No | Low |
-| HarvestPlan | Yes | Yes | Yes | No | No | Low |
-| PerformanceContract | Yes | Yes | Yes | No | No | Low |
-| TechMap | Yes | Yes | Yes | Yes | No | Low |
-| MapStage | No | N/A | No | No | No | High |
-| MapOperation | No | N/A | No | No | No | High |
-| MapResource | No | N/A | No | No | No | High |
-| ExecutionRecord | Yes | Yes | Yes | No | No | Low |
-| ExecutionOrchestrationLog | No | N/A | No | No | No | High |
-| DeviationReview | Yes | Yes | Yes | No | No | Low |
-| CmrDecision | Yes | Yes | No | No | No | Medium |
-| CmrRisk | Yes | Yes | No | No | No | Medium |
-| InsuranceCoverage | Yes | Yes | Yes | No | No | Low |
-| FieldObservation | Yes | Yes | No | No | No | Medium |
-| OkrCycle | Yes | Yes | No | No | No | Medium |
-| Objective | No | N/A | No | No | No | High |
-| KeyResult | No | N/A | No | No | No | High |
-| HrKPIIndicator | Yes | Yes | No | No | No | Medium |
-| HrRecognitionEvent | No | N/A | No | No | No | High |
-| HrRewardEvent | No | N/A | No | No | No | High |
-| PulseSurvey | Yes | Yes | No | No | No | Medium |
-| SurveyResponse | No | N/A | No | No | No | High |
-| HumanAssessmentSnapshot | Yes | Yes | No | No | No | Medium |
-| PersonalCompetencyState | No | N/A | No | No | No | High |
-| HrDevelopmentPlan | No | N/A | No | No | No | High |
-| HrDevelopmentAction | No | N/A | No | No | No | High |
-| EconomicEvent | Yes | Yes | Yes | No | No | Low |
-| LedgerEntry | Yes | Yes | Yes | No | No | Low |
-| CashAccount | Yes | Yes | No | No | No | Medium |
-| Budget | Yes | Yes | Yes | No | No | Low |
-| BudgetLine | No | N/A | No | No | No | High |
-| RegulatoryBody | Yes | Yes | Yes | No | No | Low |
-| LegalDocument | Yes | Yes | Yes | No | No | Low |
-| LegalNorm | No | N/A | No | No | No | High |
-| LegalRequirement | Yes | Yes | Yes | No | No | Low |
-| LegalObligation | No | N/A | No | No | No | High |
-| Sanction | No | N/A | No | No | No | High |
-| ComplianceCheck | Yes | Yes | Yes | No | No | Low |
-| GrInteraction | Yes | Yes | Yes | No | No | Low |
-| PolicySignal | Yes | Yes | Yes | No | No | Low |
-| ExternalLegalFeed | No | N/A | No | No | No | High |
-| ResearchProgram | Yes | Yes | No | No | Yes | Medium |
-| Experiment | No | N/A | No | No | No | High |
-| Protocol | No | N/A | No | No | No | High |
-| Trial | No | N/A | No | No | No | High |
-| Measurement | No | N/A | No | No | No | High |
-| ResearchResult | No | N/A | No | No | No | High |
-| ResearchConclusion | No | N/A | No | No | No | High |
-| KnowledgeNode | Yes | Yes | Yes | No | No | Low |
-| KnowledgeEdge | Yes | Yes | Yes | No | No | Low |
-| VisionObservation | Yes | Yes | Yes | No | No | Low |
-| SatelliteObservation | Yes | Yes | Yes | No | No | Low |
-| RiskSignal | Yes | Yes | Yes | No | No | Low |
-| RiskAssessment | Yes | Yes | Yes | No | No | Low |
-| RiskStateHistory | Yes | Yes | Yes | No | No | Low |
-| DecisionRecord | Yes | Yes | Yes | No | No | Low |
-| BudgetPlan | Yes | Yes | Yes | No | No | Low |
-| OutboxMessage | No | N/A | No | No | No | High |
-| BudgetItem | Yes | Yes | No | No | No | Medium |
-| ManagementDecision | No | N/A | No | No | No | High |
-| HarvestResult | Yes | Yes | Yes | No | No | Low |
-| StrategicGoal | Yes | Yes | No | Yes | Yes | Medium |
+Статус: Multi-tenancy сейчас реализована как локальная дисциплина в сервисах (manual `companyId`), а не как системный инвариант на уровне Prisma middleware/политики запроса.
 
-### TENANT LEAKAGE MATRIX
-| Module | Guard-level | Service-level | Query-level | Bypass risk | Severity |
+### TENANT LEAKAGE MATRIX (per module)
+| Module | Guard-level enforced | Service-level enforced | Query-level enforced | Bypass risk | Severity |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| task | Yes | Yes | Mostly yes | Low | Low |
-| season | Partially | Yes | Mostly yes | Medium | Medium |
-| consulting | Partially | Partially | Mixed | High | High |
-| knowledge-graph | N/A | Partially | Mixed | High | High |
-| telegram/auth-internal | Partially | Partially | Mixed | High | High |
-| outbox relay | N/A | N/A | Raw SQL path | Medium | High |
-- Prisma tenant middleware: Not implemented.
+| AdvisoryModule | Enforced | Partially enforced | Partially enforced | Medium (manual companyId filters, no global middleware) | Medium |
+| AgroAuditModule | N/A | Not enforced | Not enforced | High (no companyId evidence in module code) | High |
+| AgroOrchestratorModule | Enforced | Partially enforced | Partially enforced | Medium (manual companyId filters, no global middleware) | Medium |
+| ClientRegistryModule | Not enforced | Partially enforced | Partially enforced | High (unguarded/partial guard + manual filters) | High |
+| CmrModule | Enforced | Partially enforced | Partially enforced | Medium (manual companyId filters, no global middleware) | Medium |
+| ConsultingModule | Enforced | Partially enforced | Partially enforced | Medium (manual companyId filters, no global middleware) | Medium |
+| CrmModule | Not enforced | Partially enforced | Partially enforced | High (unguarded/partial guard + manual filters) | High |
+| DevelopmentModule | Enforced | Partially enforced | Partially enforced | Medium (manual companyId filters, no global middleware) | Medium |
+| EconomyModule | N/A | Partially enforced | Partially enforced | Medium (non-controller module, manual filters only) | Medium |
+| FieldObservationModule | Not enforced | Partially enforced | Partially enforced | High (unguarded/partial guard + manual filters) | High |
+| FieldRegistryModule | Enforced | Partially enforced | Partially enforced | Medium (manual companyId filters, no global middleware) | Medium |
+| FinanceEconomyModule | N/A | Partially enforced | Partially enforced | Medium (non-controller module, manual filters only) | Medium |
+| FinanceModule | N/A | Partially enforced | Partially enforced | Medium (non-controller module, manual filters only) | Medium |
+| FoundationModule | N/A | Partially enforced | Partially enforced | Medium (non-controller module, manual filters only) | Medium |
+| HrModule | N/A | Partially enforced | Partially enforced | Medium (non-controller module, manual filters only) | Medium |
+| IdentityRegistryModule | Enforced | Partially enforced | Partially enforced | Medium (manual companyId filters, no global middleware) | Medium |
+| IncentiveModule | N/A | Partially enforced | Partially enforced | Medium (non-controller module, manual filters only) | Medium |
+| IntegrationsModule | N/A | N/A | N/A | Medium (indirect flow) | Medium |
+| IntegrityModule | N/A | Partially enforced | Partially enforced | Medium (non-controller module, manual filters only) | Medium |
+| KnowledgeGraphModule | N/A | Partially enforced | Partially enforced | Medium (non-controller module, manual filters only) | Medium |
+| KnowledgeModule | Not enforced | N/A | N/A | Medium (indirect flow) | Medium |
+| LegalModule | Not enforced | Partially enforced | Partially enforced | High (unguarded/partial guard + manual filters) | High |
+| OfsModule | N/A | N/A | N/A | Medium (indirect flow) | Medium |
+| RapeseedModule | N/A | Partially enforced | Partially enforced | Medium (non-controller module, manual filters only) | Medium |
+| RdModule | N/A | Partially enforced | Partially enforced | Medium (non-controller module, manual filters only) | Medium |
+| RiskModule | Enforced | Partially enforced | Partially enforced | Medium (manual companyId filters, no global middleware) | Medium |
+| SatelliteModule | N/A | Partially enforced | Partially enforced | Medium (non-controller module, manual filters only) | Medium |
+| SeasonModule | N/A | Partially enforced | Partially enforced | Medium (non-controller module, manual filters only) | Medium |
+| StrategicModule | Enforced | Partially enforced | Partially enforced | Medium (manual companyId filters, no global middleware) | Medium |
+| TaskModule | Enforced | Partially enforced | Partially enforced | Medium (manual companyId filters, no global middleware) | Medium |
+| TechMapModule | Enforced | Partially enforced | Partially enforced | Medium (manual companyId filters, no global middleware) | Medium |
+| TechnologyCardModule | N/A | Partially enforced | Partially enforced | Medium (non-controller module, manual filters only) | Medium |
+| TelegramModule | N/A | Partially enforced | Partially enforced | Medium (non-controller module, manual filters only) | Medium |
+| VisionModule | N/A | Partially enforced | Partially enforced | Medium (non-controller module, manual filters only) | Medium |
+
+### Critical leak paths
+- `apps/api/src/shared/outbox/outbox.relay.ts:28`: `prisma.$queryRaw` выполняет выборку/lock outbox без tenant-фильтра (`companyId` в `OutboxMessage` отсутствует) -> cross-tenant processing path.
+- `apps/api/src/modules/client-registry/client-registry.controller.ts:14`: контроллер без `@UseGuards`, вход не защищён на controller-level.
+- `apps/api/src/modules/crm/crm.controller.ts:15`: контроллер без `@UseGuards`, вход не защищён на controller-level.
+- `apps/api/src/modules/field-observation/field-observation.controller.ts:4`: контроллер без `@UseGuards`, вход не защищён на controller-level.
+- `apps/api/src/modules/knowledge/knowledge.controller.ts:4`: контроллер без `@UseGuards`, вход не защищён на controller-level.
+- `apps/api/src/modules/legal/controllers/legal.controller.ts:5`: контроллер без `@UseGuards`, вход не защищён на controller-level.
+- `apps/api/src/modules/legal/controllers/gr.controller.ts:4`: контроллер без `@UseGuards`, вход не защищён на controller-level.
+- `apps/api/src/shared/auth/telegram-auth-internal.controller.ts:5`: internal endpoint без `@UseGuards`.
+
+### Raw SQL bypass paths
+- `apps/api/src/shared/outbox/outbox.relay.ts:28` -> `this.prisma.$queryRaw`.
+- Prisma tenant middleware: `Not implemented`.
+
+### Controllers without guards
+- `apps/api/src/modules/client-registry/client-registry.controller.ts`
+- `apps/api/src/modules/crm/crm.controller.ts`
+- `apps/api/src/modules/field-observation/field-observation.controller.ts`
+- `apps/api/src/modules/knowledge/knowledge.controller.ts`
+- `apps/api/src/modules/legal/controllers/legal.controller.ts`
+- `apps/api/src/modules/legal/controllers/gr.controller.ts`
+- `apps/api/src/shared/auth/telegram-auth-internal.controller.ts`
+
+### Models without `companyId`, but logically tenant-scoped
+Ниже только модели, у которых нет `companyId`, но есть связь на tenant-scoped модель (по фактическим relation в `schema.prisma`):
+- `BudgetLine` -> `Budget`
+- `TaskResourceActual` -> `Task`
+- `MapStage` -> `TechMap`
+- `MapOperation` -> `ExecutionRecord`/`MapStage` контур
+- `TechnologyCardOperation` -> `TechnologyCard`/`Task`
+- `ManagementDecision` -> `DeviationReview`/`User`
+- `Objective` -> `OkrCycle`/`EmployeeProfile`
+- `KeyResult` -> `Objective`
+- `SeasonStageProgress` -> `Season`
+- `SeasonHistory` -> `Season`
+- `RapeseedHistory` -> `Rapeseed`
+- `ExecutionOrchestrationLog` -> `ExecutionRecord`
+- `Experiment` -> `ResearchProgram`
+- `Protocol` -> `Experiment`
+- `Trial` -> `Protocol`
+- `Measurement` -> `Trial`
+- `ResearchResult` -> `Trial`
+- `ResearchConclusion` -> `ResearchResult`
+- `OutboxMessage` -> cross-aggregate transport model (tenant marker отсутствует)
+
+Вывод по разделу III:
+- Полный per-module leakage matrix: выполнен.
+- Основные критические векторы: unguarded controllers + raw SQL outbox path + отсутствие системного Prisma tenant middleware.
+- Рекомендация уровня инварианта: внедрить Prisma tenant middleware (fail-closed) и deny-list для raw SQL без явного tenant contract.
+
 
 ## IV. FSM Enforcement Audit
 | Entity | Enum only | Centralized FSM | Guarded transitions | Transactional | DB constraint | Illegal transition possible |
