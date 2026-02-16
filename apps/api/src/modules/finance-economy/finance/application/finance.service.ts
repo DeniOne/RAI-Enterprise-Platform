@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../../../shared/prisma/prisma.service';
 
 @Injectable()
@@ -36,11 +36,18 @@ export class FinanceService {
             throw new NotFoundException(`Cash account ${accountId} not found`);
         }
 
-        return this.prisma.cashAccount.update({
-            where: { id: accountId },
+        const updated = await this.prisma.cashAccount.updateMany({
+            where: { id: accountId, companyId, version: account.version },
             data: {
                 balance: { increment: amount },
+                version: { increment: 1 },
             },
+        });
+        if (updated.count !== 1) {
+            throw new ConflictException(`Cash account ${accountId} version conflict`);
+        }
+        return this.prisma.cashAccount.findFirstOrThrow({
+            where: { id: accountId, companyId },
         });
     }
 }

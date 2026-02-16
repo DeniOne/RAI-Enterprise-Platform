@@ -99,9 +99,9 @@ export class AdvisoryService {
         };
     }
 
-    async getPlanVolatility(planId: string): Promise<AdvisorySignalDto> {
-        const plan = await this.prisma.harvestPlan.findUnique({
-            where: { id: planId },
+    async getPlanVolatility(planId: string, companyId: string): Promise<AdvisorySignalDto> {
+        const plan = await this.prisma.harvestPlan.findFirst({
+            where: { id: planId, companyId },
             include: {
                 _count: {
                     select: {
@@ -115,7 +115,12 @@ export class AdvisoryService {
         if (!plan) throw new Error('Plan not found');
 
         const decisionsCount = await this.prisma.cmrDecision.count({
-            where: { season: { techMaps: { some: { harvestPlanId: planId } } } }
+            where: {
+                season: {
+                    companyId: plan.companyId,
+                    techMaps: { some: { harvestPlanId: planId } },
+                },
+            }
         });
 
         // Scale-Invariant Index (simplified for single plan)

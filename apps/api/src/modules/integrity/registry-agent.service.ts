@@ -199,15 +199,23 @@ export class RegistryAgentService {
 
     private async resolveAccountId(observation: FieldObservation): Promise<string> {
         if (observation.fieldId) {
-            const field = await this.prisma.field.findUnique({
-                where: { id: observation.fieldId }
+            const field = await this.prisma.field.findFirst({
+                where: {
+                    id: observation.fieldId,
+                    companyId: observation.companyId,
+                }
             });
             if (field) return field.clientId;
         }
 
         // Fallback: try to find client via User
         // Note: User type might still have clientId until regeneration, but we rely on prisma service to map it or user to be updated
-        const user = await this.prisma.user.findUnique({ where: { id: observation.authorId } });
+        const user = await this.prisma.user.findFirst({
+            where: {
+                id: observation.authorId,
+                companyId: observation.companyId,
+            }
+        });
         if (user?.accountId) return user.accountId;
 
         throw new Error(`Could not resolve AccountID for Observation ${observation.id}`);

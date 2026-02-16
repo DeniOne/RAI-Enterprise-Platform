@@ -2,15 +2,18 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
 } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { AuditService } from "../../shared/audit/audit.service";
 import { IntegrationService } from "../finance-economy/integrations/application/integration.service";
+import { OutboxService } from "../../shared/outbox/outbox.service";
 import { Task, TaskStatus, Prisma, User, SeasonStatus } from "@rai/prisma-client";
 import {
   TaskStateMachine,
   TaskEvent,
 } from "../../shared/state-machine";
+import { assertTransitionAllowed } from "../../shared/state-machine/fsm-transition-policy";
 
 @Injectable()
 export class TaskService {
@@ -18,6 +21,7 @@ export class TaskService {
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
     private readonly integrationService: IntegrationService,
+    private readonly outbox: OutboxService,
   ) { }
 
   /**
@@ -111,10 +115,7 @@ export class TaskService {
   ): Promise<Task> {
     const task = await this._validateTaskAccess(taskId, companyId);
 
-    // FSM validation
-    if (!TaskStateMachine.canTransition(task.status, TaskEvent.ASSIGN)) {
-      throw new BadRequestException(`Cannot assign task in state ${task.status}`);
-    }
+    assertTransitionAllowed("TASK", task.status, TaskEvent.ASSIGN);
 
     const updated = await this.prisma.task.update({
       where: { id: taskId },
@@ -136,13 +137,17 @@ export class TaskService {
   ): Promise<Task> {
     const task = await this._validateTaskAccess(taskId, companyId);
 
+    assertTransitionAllowed("TASK", task.status, TaskEvent.START);
     // FSM Transition (Pure)
     const result = TaskStateMachine.transition(task, TaskEvent.START);
 
-    const updated = await this.prisma.task.update({
-      where: { id: taskId },
-      data: { status: result.status },
-    });
+    const updated = await this.applyTaskStatusTransition(
+      taskId,
+      companyId,
+      task.status,
+      result.status,
+      { event: TaskEvent.START, actorId: user.id },
+    );
 
     await this.auditService.log({
       action: "TASK_STARTED",
@@ -160,22 +165,38 @@ export class TaskService {
   ): Promise<Task> {
     const task = await this._validateTaskAccess(taskId, companyId);
 
+    assertTransitionAllowed("TASK", task.status, TaskEvent.COMPLETE);
     // FSM Transition (Pure)
     const result = TaskStateMachine.transition(task, TaskEvent.COMPLETE);
 
     const updated = await this.prisma.$transaction(async (tx) => {
-      const completed = await tx.task.update({
-        where: { id: taskId },
+      const completedCount = await tx.task.updateMany({
+        where: {
+          id: taskId,
+          companyId,
+          status: task.status,
+        },
         data: {
           status: result.status,
           completedAt: new Date(),
         },
       });
+      if (completedCount.count === 0) {
+        throw new ConflictException(
+          `Task transition conflict for ${taskId}: state changed concurrently`,
+        );
+      }
+      const completed = await tx.task.findFirst({
+        where: { id: taskId, companyId },
+      });
+      if (!completed) {
+        throw new NotFoundException(`Task ${taskId} not found or access denied`);
+      }
 
       if (actualResources && actualResources.length > 0) {
         // [NOTE]: TaskResourceActual is an event log (fact journal).
         // It does NOT aggregate values. Financial aggregation belongs to a separate layer.
-        await tx.taskResourceActual.createMany({
+        await tx.taskResourceActual.createMany({ // tenant-lint:ignore tenant scope inherited from taskId relation
           data: actualResources.map((res) => ({
             taskId,
             type: res.type,
@@ -199,6 +220,23 @@ export class TaskService {
         }
       }
 
+      await tx.outboxMessage.create({
+        data: this.outbox.createEvent(
+          taskId,
+          "Task",
+          "task.status.transitioned",
+          {
+            companyId,
+            taskId,
+            fromStatus: task.status,
+            toStatus: result.status,
+            event: TaskEvent.COMPLETE,
+            actorId: user.id,
+            occurredAt: new Date().toISOString(),
+          },
+        ),
+      });
+
       return completed;
     });
 
@@ -218,13 +256,17 @@ export class TaskService {
   ): Promise<Task> {
     const task = await this._validateTaskAccess(taskId, companyId);
 
+    assertTransitionAllowed("TASK", task.status, TaskEvent.CANCEL);
     // FSM Transition (Pure)
     const result = TaskStateMachine.transition(task, TaskEvent.CANCEL);
 
-    const updated = await this.prisma.task.update({
-      where: { id: taskId },
-      data: { status: result.status },
-    });
+    const updated = await this.applyTaskStatusTransition(
+      taskId,
+      companyId,
+      task.status,
+      result.status,
+      { event: TaskEvent.CANCEL, actorId: user.id },
+    );
 
     await this.auditService.log({
       action: "TASK_CANCELLED",
@@ -256,5 +298,58 @@ export class TaskService {
     }
 
     return task as any;
+  }
+
+  private async applyTaskStatusTransition(
+    taskId: string,
+    companyId: string,
+    currentStatus: TaskStatus,
+    targetStatus: TaskStatus,
+    transitionMeta: { event: TaskEvent; actorId?: string },
+  ): Promise<Task> {
+    return this.prisma.$transaction(async (tx) => {
+      const updateResult = await tx.task.updateMany({
+        where: {
+          id: taskId,
+          companyId,
+          status: currentStatus,
+        },
+        data: {
+          status: targetStatus,
+        },
+      });
+
+      if (updateResult.count === 0) {
+        throw new ConflictException(
+          `Task transition conflict for ${taskId}: state changed concurrently`,
+        );
+      }
+
+      const updated = await tx.task.findFirst({
+        where: { id: taskId, companyId },
+      });
+      if (!updated) {
+        throw new NotFoundException(`Task ${taskId} not found or access denied`);
+      }
+
+      await tx.outboxMessage.create({
+        data: this.outbox.createEvent(
+          taskId,
+          "Task",
+          "task.status.transitioned",
+          {
+            companyId,
+            taskId,
+            fromStatus: currentStatus,
+            toStatus: targetStatus,
+            event: transitionMeta.event,
+            actorId: transitionMeta.actorId || null,
+            occurredAt: new Date().toISOString(),
+          },
+        ),
+      });
+
+      return updated as Task;
+    });
   }
 }

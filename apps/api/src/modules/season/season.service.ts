@@ -112,12 +112,21 @@ export class SeasonService {
       });
     }
 
-    const updatedSeason = await this.prisma.season.update({
-      where: { id: input.id },
+    const updatedCount = await this.prisma.season.updateMany({
+      where: { id: input.id, companyId },
       data: {
         ...input,
       },
     });
+    if (updatedCount.count === 0) {
+      throw new NotFoundException(`Season ${input.id} not found or access denied`);
+    }
+    const updatedSeason = await this.prisma.season.findFirst({
+      where: { id: input.id, companyId },
+    });
+    if (!updatedSeason) {
+      throw new NotFoundException(`Season ${input.id} not found or access denied`);
+    }
 
     // Audit simplified for now
     await this.auditService.log(
@@ -176,8 +185,8 @@ export class SeasonService {
         }
 
         // 2. Обновляем сезон
-        const completedSeason = await tx.season.update({
-          where: { id },
+        const completedCount = await tx.season.updateMany({
+          where: { id, companyId },
           data: {
             status: SeasonStatus.COMPLETED,
             actualYield,
@@ -186,11 +195,21 @@ export class SeasonService {
             lockedBy: user.id,
           },
         });
+        if (completedCount.count === 0) {
+          throw new NotFoundException(`Season ${id} not found or access denied`);
+        }
+        const completedSeason = await tx.season.findFirst({
+          where: { id, companyId },
+        });
+        if (!completedSeason) {
+          throw new NotFoundException(`Season ${id} not found or access denied`);
+        }
 
         // 3. Создаем снапшот внутри той же транзакции
         await this.snapshotService.createSnapshotTransaction(
           tx,
           completedSeason.id,
+          companyId,
           user,
         );
 
@@ -274,8 +293,8 @@ export class SeasonService {
 
     // 4. IO: Persist new state
     return this.prisma.$transaction(async (tx) => {
-      const updated = await tx.season.update({
-        where: { id },
+      const updatedCount = await tx.season.updateMany({
+        where: { id, companyId },
         data: {
           currentStageId: targetStageId,
           status:
@@ -284,8 +303,17 @@ export class SeasonService {
               : SeasonStatus.ACTIVE,
         },
       });
+      if (updatedCount.count === 0) {
+        throw new NotFoundException(`Season ${id} not found or access denied`);
+      }
+      const updated = await tx.season.findFirst({
+        where: { id, companyId },
+      });
+      if (!updated) {
+        throw new NotFoundException(`Season ${id} not found or access denied`);
+      }
 
-      await tx.seasonStageProgress.create({
+      await tx.seasonStageProgress.create({ // tenant-lint:ignore tenant scope inherited from seasonId relation
         data: {
           seasonId: id,
           stageId: targetStageId,

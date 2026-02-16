@@ -8,6 +8,7 @@ import { PrismaModule } from "../prisma/prisma.module";
 import { UserRepository } from "./repositories/user.repository";
 import { TelegramAuthService } from "./telegram-auth.service";
 import { TelegramAuthInternalController } from "./telegram-auth-internal.controller";
+import { InternalApiKeyGuard } from "./internal-api-key.guard";
 
 import { ConfigModule, ConfigService } from "@nestjs/config";
 
@@ -28,7 +29,7 @@ import { RedisModule } from "../redis/redis.module";
     }),
   ],
   controllers: [AuthController, UsersController, TelegramAuthInternalController],
-  providers: [AuthService, JwtStrategy, UserRepository, TelegramAuthService],
+  providers: [AuthService, JwtStrategy, UserRepository, TelegramAuthService, InternalApiKeyGuard],
   exports: [AuthService, UserRepository, TelegramAuthService],
 })
 export class AuthModule { }

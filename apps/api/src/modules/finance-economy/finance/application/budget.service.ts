@@ -2,6 +2,7 @@ import { Injectable, Logger, BadRequestException, NotFoundException } from '@nes
 import { PrismaService } from '../../../../shared/prisma/prisma.service';
 import { BudgetStateMachine, BudgetEvent, BudgetStatus } from '../domain/budget.fsm';
 import { BudgetPolicy } from '../domain/policies/budget.policy';
+import { assertTransitionAllowed } from '../../../../shared/state-machine/fsm-transition-policy';
 
 @Injectable()
 export class BudgetService {
@@ -32,6 +33,7 @@ export class BudgetService {
             throw new NotFoundException(`Budget ${budgetId} not found`);
         }
 
+        assertTransitionAllowed('BUDGET', budget.status, event);
         // FSM Transition (Pure)
         const result = BudgetStateMachine.transition(budget as any, event);
 

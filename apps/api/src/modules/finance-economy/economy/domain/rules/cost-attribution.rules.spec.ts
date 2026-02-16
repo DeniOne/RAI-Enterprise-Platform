@@ -54,8 +54,9 @@ describe('CostAttributionRules', () => {
             type: EconomicEventType.ADJUSTMENT,
             amount: 100
         });
-        expect(result).toHaveLength(1);
-        expect(result[0]).toEqual({ amount: 100, type: 'DEBIT', accountCode: 'ADJUSTMENT_ACCOUNT' });
+        expect(result).toHaveLength(2);
+        expect(result).toContainEqual({ amount: 100, type: 'DEBIT', accountCode: 'ADJUSTMENT_ACCOUNT' });
+        expect(result).toContainEqual({ amount: 100, type: 'CREDIT', accountCode: 'EQUITY_RESERVE' });
     });
 
     it('should handle ADJUSTMENT correctly for negative amount', () => {
@@ -63,8 +64,9 @@ describe('CostAttributionRules', () => {
             type: EconomicEventType.ADJUSTMENT,
             amount: -100
         });
-        expect(result).toHaveLength(1);
-        expect(result[0]).toEqual({ amount: 100, type: 'CREDIT', accountCode: 'ADJUSTMENT_ACCOUNT' });
+        expect(result).toHaveLength(2);
+        expect(result).toContainEqual({ amount: 100, type: 'DEBIT', accountCode: 'EQUITY_RESERVE' });
+        expect(result).toContainEqual({ amount: 100, type: 'CREDIT', accountCode: 'ADJUSTMENT_ACCOUNT' });
     });
 
     it('should handle zero amounts correctly', () => {

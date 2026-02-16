@@ -915,6 +915,7 @@ exports.Prisma.EconomicEventScalarFieldEnum = {
   type: 'type',
   amount: 'amount',
   currency: 'currency',
+  replayKey: 'replayKey',
   metadata: 'metadata',
   fieldId: 'fieldId',
   seasonId: 'seasonId',
@@ -944,6 +945,7 @@ exports.Prisma.CashAccountScalarFieldEnum = {
   id: 'id',
   name: 'name',
   balance: 'balance',
+  version: 'version',
   currency: 'currency',
   isActive: 'isActive',
   companyId: 'companyId',
@@ -1276,9 +1278,24 @@ exports.Prisma.OutboxMessageScalarFieldEnum = {
   aggregateType: 'aggregateType',
   payload: 'payload',
   status: 'status',
+  attempts: 'attempts',
+  nextRetryAt: 'nextRetryAt',
+  lastAttemptAt: 'lastAttemptAt',
+  deadLetterAt: 'deadLetterAt',
   error: 'error',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.EventConsumptionScalarFieldEnum = {
+  id: 'id',
+  consumer: 'consumer',
+  eventId: 'eventId',
+  eventType: 'eventType',
+  aggregateId: 'aggregateId',
+  companyId: 'companyId',
+  processedAt: 'processedAt',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.BudgetItemScalarFieldEnum = {
@@ -2021,6 +2038,7 @@ exports.Prisma.ModelName = {
   DecisionRecord: 'DecisionRecord',
   BudgetPlan: 'BudgetPlan',
   OutboxMessage: 'OutboxMessage',
+  EventConsumption: 'EventConsumption',
   BudgetItem: 'BudgetItem',
   ManagementDecision: 'ManagementDecision',
   HarvestResult: 'HarvestResult',

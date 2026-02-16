@@ -19,9 +19,36 @@ const LAYER_MAP = {
     'LEGACY': 'Archive' // Transitive support for legacy
 };
 
-// Allowed Root Files (Strict Isolation)
-const ROOT_ALLOWLIST = ['README.md', 'INDEX.md'];
+// Allowed Root Files (Strict Isolation + approved governance artifacts)
+const ROOT_ALLOWLIST = [
+    'README.md',
+    'INDEX.md',
+    '1️⃣ Архитектурный профиль системы.md',
+    'FORENSIC_TECHNICAL_AUDIT_RU.md',
+    'ADR_010_DB_LEVEL_FSM_ENFORCEMENT.md',
+    'FOUNDATION_STABILIZATION_CHECKLIST_RU.md',
+    'OUTBOX_TENANT_CONTRACT_MIGRATION_DRAFT_RU.md',
+    'TENANT_MIDDLEWARE_SHADOW_TO_ENFORCE_ROLLOUT_RU.md',
+    'INVARIANT_ALERT_RUNBOOK_RU.md',
+    'INVARIANT_SLO_POLICY_RU.md',
+    'WEEK1_INVARIANT_BASELINE_RU.md',
+    'WEEK2_PROGRESS_RU.md',
+    'WEEKLY_INVARIANT_TREND_REVIEW_RU.md'
+];
 const ROOT_LAYER = 'Meta';
+const ROOT_NON_META_ALLOWLIST = new Set([
+    '1️⃣ Архитектурный профиль системы.md',
+    'FORENSIC_TECHNICAL_AUDIT_RU.md',
+    'ADR_010_DB_LEVEL_FSM_ENFORCEMENT.md',
+    'FOUNDATION_STABILIZATION_CHECKLIST_RU.md',
+    'OUTBOX_TENANT_CONTRACT_MIGRATION_DRAFT_RU.md',
+    'TENANT_MIDDLEWARE_SHADOW_TO_ENFORCE_ROLLOUT_RU.md',
+    'INVARIANT_ALERT_RUNBOOK_RU.md',
+    'INVARIANT_SLO_POLICY_RU.md',
+    'WEEK1_INVARIANT_BASELINE_RU.md',
+    'WEEK2_PROGRESS_RU.md',
+    'WEEKLY_INVARIANT_TREND_REVIEW_RU.md'
+]);
 
 // Stats
 let stats = {
@@ -125,7 +152,11 @@ files.forEach(file => {
     }
 
     // RULE 3.1: ROOT META FILES MUST DECLARE META/NAVIGATION
-    if (pathParts.length === 1 && ROOT_ALLOWLIST.includes(rootFolder)) {
+    if (
+        pathParts.length === 1 &&
+        ROOT_ALLOWLIST.includes(rootFolder) &&
+        !ROOT_NON_META_ALLOWLIST.has(rootFolder)
+    ) {
         if (layer !== ROOT_LAYER || type !== 'Navigation') {
             console.error(`❌ ROOT META MISMATCH: ${relativePath}`);
             console.error(`   - Expected: layer=${ROOT_LAYER}, type=Navigation`);

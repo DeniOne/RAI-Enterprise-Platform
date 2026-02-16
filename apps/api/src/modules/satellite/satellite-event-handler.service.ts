@@ -14,6 +14,7 @@ export class SatelliteEventHandlerService {
 
     await this.prisma.satelliteObservation.create({
       data: {
+        companyId: event.companyId,
         id: event.observation.id,
         assetId: event.observation.assetId,
         timestamp: new Date(event.observation.timestamp),
@@ -24,7 +25,6 @@ export class SatelliteEventHandlerService {
         cloudCoverage: event.observation.cloudCoverage,
         tileId: event.observation.tileId ?? undefined,
         confidence: event.observation.confidence,
-        companyId: event.companyId,
       },
     });
   }

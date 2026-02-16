@@ -1,0 +1,112 @@
+groups:
+  - name: rai_invariant_alerts
+    rules:
+      - alert: RAIInvariantTenantViolationSpike
+        expr: increase(invariant_tenant_violation_rate[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+          domain: tenant
+        annotations:
+          summary: "Tenant invariant violations detected"
+          description: "Tenant violations increased in the last 5 minutes. Investigate possible cross-tenant leak path."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#tenant-violation"
+
+      - alert: RAIInvariantCrossTenantAttempt
+        expr: increase(invariant_cross_tenant_access_attempts_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          domain: tenant
+        annotations:
+          summary: "Cross-tenant access attempts detected"
+          description: "Cross-tenant access attempts were recorded. Immediate triage required."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#cross-tenant-attempt"
+
+      - alert: RAIInvariantIllegalTransition
+        expr: increase(invariant_illegal_transition_attempts_total[10m]) > 0
+        for: 2m
+        labels:
+          severity: high
+          domain: fsm
+        annotations:
+          summary: "Illegal FSM transitions detected"
+          description: "Illegal FSM transitions detected in runtime. Validate state transition paths and DB constraints."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#illegal-fsm-transition"
+
+      - alert: RAIInvariantFinancialFailure
+        expr: increase(invariant_financial_failures_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          domain: finance
+        annotations:
+          summary: "Financial invariant failures detected"
+          description: "Financial invariant failures detected. Validate ledger integrity and panic mode state."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#financial-invariant-failure"
+
+      - alert: RAIFinancialPanicModeActive
+        expr: invariant_financial_failures_total >= 5
+        for: 1m
+        labels:
+          severity: critical
+          domain: finance
+        annotations:
+          summary: "Financial panic mode threshold reached"
+          description: "Financial invariant failures crossed panic threshold. New financial ingest should be blocked."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#financial-panic-mode"
+
+      - alert: RAIEventDuplicatesPrevented
+        expr: increase(invariant_event_duplicates_prevented_total[10m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+          domain: events
+        annotations:
+          summary: "Duplicate events were prevented by relay"
+          description: "Relay dedupe intercepted duplicate events. Investigate producer retries and idempotency contracts."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#event-duplicates-prevented"
+
+      - alert: RAIFinanceReconciliationAnomaly
+        expr: increase(invariant_reconciliation_alerts_total[10m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          domain: finance
+        annotations:
+          summary: "Finance reconciliation anomalies detected"
+          description: "Reconciliation job detected missing ledger entries or debit/credit mismatch."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#finance-reconciliation-anomaly"
+
+      - alert: RAIOutboxBacklogHigh
+        expr: outbox_pending_messages > 100
+        for: 5m
+        labels:
+          severity: high
+          domain: events
+        annotations:
+          summary: "Outbox backlog is high"
+          description: "Pending outbox queue exceeded threshold for 5 minutes."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#outbox-backlog-high"
+
+      - alert: RAIOutboxDlqNonZero
+        expr: outbox_failed_messages > 0
+        for: 2m
+        labels:
+          severity: high
+          domain: events
+        annotations:
+          summary: "Outbox DLQ contains failed messages"
+          description: "Outbox has FAILED messages requiring triage/replay or fix."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#outbox-dlq-non-zero"
+
+      - alert: RAIOutboxOldestPendingAgeHigh
+        expr: outbox_oldest_pending_age_seconds > 300
+        for: 5m
+        labels:
+          severity: warning
+          domain: events
+        annotations:
+          summary: "Outbox oldest pending age is high"
+          description: "Oldest pending outbox message age exceeds 5 minutes."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#outbox-oldest-pending-age-high"

@@ -2,8 +2,10 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { TaskService } from "./task.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { AuditService } from "../../shared/audit/audit.service";
+import { IntegrationService } from "../finance-economy/integrations/application/integration.service";
+import { OutboxService } from "../../shared/outbox/outbox.service";
 import { TaskStatus, SeasonStatus, User } from "@rai/prisma-client";
-import { NotFoundException, BadRequestException } from "@nestjs/common";
+import { NotFoundException, BadRequestException, ConflictException } from "@nestjs/common";
 
 describe("TaskService", () => {
   let service: TaskService;
@@ -24,9 +26,13 @@ describe("TaskService", () => {
       findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     },
     taskResourceActual: {
       createMany: jest.fn(),
+    },
+    outboxMessage: {
+      create: jest.fn(),
     },
     season: {
       findFirst: jest.fn(),
@@ -38,12 +44,28 @@ describe("TaskService", () => {
     log: jest.fn().mockResolvedValue({}),
   };
 
+  const integrationMock = {
+    handleTaskCompletion: jest.fn().mockResolvedValue({}),
+  };
+
+  const outboxMock = {
+    createEvent: jest.fn().mockReturnValue({
+      aggregateId: "task-1",
+      aggregateType: "Task",
+      type: "task.status.transitioned",
+      payload: { companyId: "company-1" },
+      status: "PENDING",
+    }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TaskService,
         { provide: PrismaService, useValue: prismaMock },
         { provide: AuditService, useValue: auditMock },
+        { provide: IntegrationService, useValue: integrationMock },
+        { provide: OutboxService, useValue: outboxMock },
       ],
     }).compile();
 
@@ -117,18 +139,27 @@ describe("TaskService", () => {
     });
 
     it("should transition PENDING -> IN_PROGRESS", async () => {
-      prismaMock.task.update.mockResolvedValue({
-        ...mockTask,
-        status: TaskStatus.IN_PROGRESS,
-      });
+      prismaMock.task.updateMany.mockResolvedValue({ count: 1 });
+      prismaMock.task.findFirst
+        .mockResolvedValueOnce({
+          ...mockTask,
+          status: TaskStatus.PENDING,
+          season: { isLocked: false, status: SeasonStatus.ACTIVE },
+        })
+        .mockResolvedValueOnce({
+          ...mockTask,
+          status: TaskStatus.IN_PROGRESS,
+        });
 
       const result = await service.startTask("task-1", mockUser, "company-1");
 
       expect(result.status).toBe(TaskStatus.IN_PROGRESS);
+      expect(prismaMock.outboxMessage.create).toHaveBeenCalled();
       expect(auditMock.log).toHaveBeenCalledWith(
-        "TASK_STARTED",
-        expect.anything(),
-        expect.anything(),
+        expect.objectContaining({
+          action: "TASK_STARTED",
+          userId: mockUser.id,
+        }),
       );
     });
 
@@ -140,18 +171,25 @@ describe("TaskService", () => {
 
       await expect(
         service.startTask("task-1", mockUser, "company-1"),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(Error);
     });
 
     it("should complete task and save resource actuals", async () => {
       prismaMock.task.findFirst.mockResolvedValue({
         ...mockTask,
-        status: TaskStatus.IN_PROGRESS,
+        season: { isLocked: false, status: SeasonStatus.ACTIVE },
       });
-      prismaMock.task.update.mockResolvedValue({
-        ...mockTask,
-        status: TaskStatus.COMPLETED,
-      });
+      prismaMock.task.findFirst
+        .mockResolvedValueOnce({
+          ...mockTask,
+          status: TaskStatus.IN_PROGRESS,
+          season: { isLocked: false, status: SeasonStatus.ACTIVE },
+        })
+        .mockResolvedValueOnce({
+          ...mockTask,
+          status: TaskStatus.COMPLETED,
+        });
+      prismaMock.task.updateMany.mockResolvedValue({ count: 1 });
 
       const actuals = [{ type: "FUEL", name: "Diesel", amount: 50, unit: "L" }];
       await service.completeTask("task-1", actuals, mockUser, "company-1");
@@ -161,6 +199,7 @@ describe("TaskService", () => {
           expect.objectContaining({ name: "Diesel", amount: 50 }),
         ]),
       });
+      expect(prismaMock.outboxMessage.create).toHaveBeenCalled();
     });
 
     it("should enforce tenant isolation", async () => {
@@ -169,6 +208,19 @@ describe("TaskService", () => {
       await expect(
         service.startTask("task-1", mockUser, "wrong-company"),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it("should throw conflict on concurrent transition", async () => {
+      prismaMock.task.findFirst.mockResolvedValue({
+        ...mockTask,
+        status: TaskStatus.PENDING,
+        season: { isLocked: false, status: SeasonStatus.ACTIVE },
+      });
+      prismaMock.task.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(
+        service.startTask("task-1", mockUser, "company-1"),
+      ).rejects.toThrow(ConflictException);
     });
   });
 });

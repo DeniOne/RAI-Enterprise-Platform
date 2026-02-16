@@ -57,13 +57,19 @@ export class StrategicGoalService {
             });
 
             // 2. Активируем текущую
-            return tx.strategicGoal.update({
-                where: { id: goalId },
+            const activateResult = await tx.strategicGoal.updateMany({
+                where: { id: goalId, companyId: context.companyId },
                 data: {
                     status: GoalStatus.ACTIVE,
                     isActive: true,
                     activatedAt: new Date(),
                 },
+            });
+            if (activateResult.count !== 1) {
+                throw new ForbiddenException('Цель не найдена или доступ запрещен');
+            }
+            return tx.strategicGoal.findFirstOrThrow({
+                where: { id: goalId, companyId: context.companyId },
             });
         });
     }
@@ -80,14 +86,17 @@ export class StrategicGoalService {
 
         return this.prisma.$transaction(async (tx) => {
             // 1. Деактивируем старую
-            await tx.strategicGoal.update({
-                where: { id: oldGoalId },
+            const archived = await tx.strategicGoal.updateMany({
+                where: { id: oldGoalId, companyId: context.companyId },
                 data: {
                     isActive: null,
                     status: GoalStatus.ARCHIVED,
                     archivedAt: new Date(),
                 },
             });
+            if (archived.count !== 1) {
+                throw new ForbiddenException('Цель не найдена или доступ запрещен');
+            }
 
             // 2. Создаем новую версию
             return tx.strategicGoal.create({
@@ -122,11 +131,11 @@ export class StrategicGoalService {
     }
 
     private async ensureGoalAccess(goalId: string, context: UserContext) {
-        const goal = await this.prisma.strategicGoal.findUnique({
-            where: { id: goalId },
+        const goal = await this.prisma.strategicGoal.findFirst({
+            where: { id: goalId, companyId: context.companyId },
         });
 
-        if (!goal || goal.companyId !== context.companyId) {
+        if (!goal) {
             throw new ForbiddenException('Цель не найдена или доступ запрещен');
         }
 
@@ -134,8 +143,8 @@ export class StrategicGoalService {
     }
 
     private async validateBaseline(seasonId: string, context: UserContext) {
-        const season = await this.prisma.season.findUnique({
-            where: { id: seasonId },
+        const season = await this.prisma.season.findFirst({
+            where: { id: seasonId, companyId: context.companyId },
             include: { harvestPlans: { include: { budgetPlans: { where: { status: BudgetStatus.LOCKED } } } } },
         });
 
@@ -148,3 +157,4 @@ export class StrategicGoalService {
         }
     }
 }
+

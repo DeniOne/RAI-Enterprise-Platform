@@ -17,9 +17,9 @@ export class ConsultingDomainRules {
      * 1. Привязана хотя бы одна TechMap со статусом ACTIVE или CHECKING
      * 2. Нет критических (незакрытых) Deviation'ов
      */
-    async canActivate(planId: string): Promise<void> {
+    async canActivate(planId: string, companyId?: string): Promise<void> {
         const plan = await this.prisma.harvestPlan.findUnique({
-            where: { id: planId },
+            where: { id: planId, ...(companyId ? { companyId } : {}) },
         });
 
         if (!plan) {
@@ -35,6 +35,7 @@ export class ConsultingDomainRules {
         const openDeviations = await this.prisma.deviationReview.count({
             where: {
                 harvestPlanId: planId,
+                ...(companyId ? { companyId } : {}),
                 status: { in: [DeviationStatus.DETECTED, DeviationStatus.ANALYZING] },
             },
         });
@@ -47,7 +48,7 @@ export class ConsultingDomainRules {
 
         // Проверка 3: Финансовый Гейт (Track 2)
         const planWithBudget = await this.prisma.harvestPlan.findUnique({
-            where: { id: planId },
+            where: { id: planId, ...(companyId ? { companyId } : {}) },
             include: { activeBudgetPlan: true },
         });
 
@@ -82,10 +83,11 @@ export class ConsultingDomainRules {
      * Можно ли архивировать план?
      * Все Deviations должны быть в статусе CLOSED.
      */
-    async canArchive(planId: string): Promise<void> {
+    async canArchive(planId: string, companyId?: string): Promise<void> {
         const unclosedDeviations = await this.prisma.deviationReview.count({
             where: {
                 harvestPlanId: planId,
+                ...(companyId ? { companyId } : {}),
                 status: { not: DeviationStatus.CLOSED },
             },
         });
@@ -101,9 +103,9 @@ export class ConsultingDomainRules {
      * Можно ли редактировать данные об урожае?
      * План не должен быть в статусе ARCHIVE.
      */
-    async canEditHarvestResult(planId: string): Promise<void> {
+    async canEditHarvestResult(planId: string, companyId?: string): Promise<void> {
         const plan = await this.prisma.harvestPlan.findUnique({
-            where: { id: planId },
+            where: { id: planId, ...(companyId ? { companyId } : {}) },
         });
 
         if (!plan) {

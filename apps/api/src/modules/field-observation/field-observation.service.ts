@@ -102,10 +102,54 @@ export class FieldObservationService {
         return observation;
     }
 
-    async getByTask(taskId: string) {
-        return this.prisma.fieldObservation.findMany({
-            where: { taskId },
-            orderBy: { createdAt: "desc" },
-        });
+    async getByTask(taskId: string, companyId: string, pagination?: { skip: number; limit: number; page: number }) {
+        const take = pagination?.limit || 50;
+        const skip = pagination?.skip || 0;
+        const where = { taskId, companyId };
+
+        const [data, total] = await Promise.all([
+            this.prisma.fieldObservation.findMany({
+                where,
+                orderBy: { createdAt: "desc" },
+                take,
+                skip,
+            }),
+            this.prisma.fieldObservation.count({ where })
+        ]);
+
+        return {
+            data,
+            meta: {
+                total,
+                page: pagination?.page || 1,
+                limit: take,
+                totalPages: Math.ceil(total / take),
+            }
+        };
+    }
+    async findAll(companyId: string, pagination?: { skip: number; limit: number; page: number }) {
+        const take = pagination?.limit || 50;
+        const skip = pagination?.skip || 0;
+        const where = { companyId };
+
+        const [data, total] = await Promise.all([
+            this.prisma.fieldObservation.findMany({
+                where,
+                orderBy: { createdAt: "desc" },
+                take,
+                skip,
+            }),
+            this.prisma.fieldObservation.count({ where })
+        ]);
+
+        return {
+            data,
+            meta: {
+                total,
+                page: pagination?.page || 1,
+                limit: take,
+                totalPages: Math.ceil(total / take),
+            }
+        };
     }
 }

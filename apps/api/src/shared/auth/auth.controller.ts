@@ -42,9 +42,9 @@ export class AuthController {
   @ApiOperation({ summary: "Initiate Telegram 2FA login" })
   @ApiResponse({ status: 200, description: "Login session created, push sent to Telegram" })
   @ApiResponse({ status: 404, description: "User not found" })
-  async initiateTelegramLogin(@Body() body: { telegramId: string }) {
+  async initiateTelegramLogin(@Body() body: { telegramId: string; companyId?: string }) {
     try {
-      const result = await this.telegramAuthService.initiateLogin(body.telegramId);
+      const result = await this.telegramAuthService.initiateLogin(body.telegramId, body.companyId);
       return result;
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.NOT_FOUND);

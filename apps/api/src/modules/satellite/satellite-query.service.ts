@@ -12,26 +12,31 @@ export interface SatelliteTimeRange {
 export class SatelliteQueryService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getObservation(id: string) {
-    return this.prisma.satelliteObservation.findUnique({ where: { id } });
+  async getObservation(id: string, companyId: string) {
+    return this.prisma.satelliteObservation.findFirst({ where: { id, companyId } });
   }
 
   async getObservationsByAsset(
     assetId: string,
+    companyId: string,
     indexType?: SatelliteIndexType,
     timeRange?: SatelliteTimeRange,
   ) {
-    const where: any = { assetId };
-    if (indexType) where.indexType = indexType;
-
-    if (timeRange?.from || timeRange?.to) {
-      where.timestamp = {};
-      if (timeRange.from) where.timestamp.gte = new Date(timeRange.from);
-      if (timeRange.to) where.timestamp.lte = new Date(timeRange.to);
-    }
+    const timestampFilter =
+      timeRange?.from || timeRange?.to
+        ? {
+            gte: timeRange?.from ? new Date(timeRange.from) : undefined,
+            lte: timeRange?.to ? new Date(timeRange.to) : undefined,
+          }
+        : undefined;
 
     return this.prisma.satelliteObservation.findMany({
-      where,
+      where: {
+        assetId,
+        companyId,
+        indexType: indexType ?? undefined,
+        timestamp: timestampFilter,
+      },
       orderBy: { timestamp: "desc" },
     });
   }

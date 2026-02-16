@@ -9,10 +9,12 @@ import {
     UseGuards
 } from "@nestjs/common";
 import { CrmService } from "./crm.service";
+import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 // Assuming internal tenant/user extraction from req. user decorator is standard in this project
 // For now using simple placeholders for companyId or waiting for JwtAuthGuard if standard
 
 @Controller("crm")
+@UseGuards(JwtAuthGuard)
 export class CrmController {
     constructor(private readonly crmService: CrmService) { }
 

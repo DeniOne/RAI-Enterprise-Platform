@@ -1,3 +1,5 @@
+import { InvariantMetrics } from "../invariants/invariant-metrics";
+
 /**
  * Unified State Machine Interface (Event-Driven).
  *
@@ -66,6 +68,7 @@ export class InvalidTransitionError extends Error {
         public readonly state: string,
         public readonly event: string,
     ) {
+        InvariantMetrics.increment("illegal_transition_attempts_total");
         super(`Invalid transition: cannot apply event '${event}' in state '${state}'`);
         this.name = "InvalidTransitionError";
     }

@@ -27,7 +27,7 @@ export class DeviationService {
 
         if (!harvestPlanId) {
             const season = await this.prisma.season.findUnique({
-                where: { id: data.seasonId },
+                where: { id: data.seasonId, companyId: data.companyId },
                 include: { field: true },
             });
 
@@ -51,7 +51,7 @@ export class DeviationService {
         }
 
         const plan = await this.prisma.harvestPlan.findUnique({
-            where: { id: harvestPlanId },
+            where: { id: harvestPlanId, companyId: data.companyId },
         });
 
         if (!plan || plan.companyId !== data.companyId) {
@@ -66,6 +66,7 @@ export class DeviationService {
         if (data.type === 'FINANCIAL' && data.budgetPlanId) {
             const existingOpen = await this.prisma.deviationReview.findFirst({
                 where: {
+                    companyId: data.companyId,
                     budgetPlanId: data.budgetPlanId,
                     type: 'FINANCIAL',
                     status: { in: [DeviationStatus.DETECTED, DeviationStatus.ANALYZING] }
@@ -81,6 +82,7 @@ export class DeviationService {
         const review = await this.prisma.deviationReview.create({
             data: {
                 ...data,
+                companyId: data.companyId,
                 harvestPlanId,
                 status: DeviationStatus.DETECTED,
                 responsibilityMode: ResponsibilityMode.SHARED,
@@ -129,6 +131,7 @@ export class DeviationService {
             updated = await this.prisma.deviationReview.update({
                 where: {
                     id,
+                    companyId,
                     status: current // Optimistic Lock
                 },
                 data: { status: targetStatus },
@@ -167,12 +170,31 @@ export class DeviationService {
         }
     }
 
-    async findAll(companyId: string) {
-        return this.prisma.deviationReview.findMany({
-            where: { companyId },
-            orderBy: { createdAt: 'desc' },
-            include: { harvestPlan: true },
-        });
+    async findAll(companyId: string, pagination?: { skip: number; limit: number; page: number }) {
+        const where = { companyId };
+        const take = pagination?.limit || 50;
+        const skip = pagination?.skip || 0;
+
+        const [data, total] = await Promise.all([
+            this.prisma.deviationReview.findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                include: { harvestPlan: true },
+                take,
+                skip,
+            }),
+            this.prisma.deviationReview.count({ where })
+        ]);
+
+        return {
+            data,
+            meta: {
+                total,
+                page: pagination?.page || 1,
+                limit: take,
+                totalPages: Math.ceil(total / take),
+            }
+        };
     }
 
     async findOne(id: string, companyId: string) {
@@ -189,13 +211,13 @@ export class DeviationService {
     }
 
     async handleSilence(reviewId: string) {
-        const review = await this.prisma.deviationReview.findUnique({ where: { id: reviewId } });
+        const review = await this.prisma.deviationReview.findUnique({ where: { id: reviewId } }); // tenant-lint:ignore system SLA handler resolves tenant from row
         if (!review) throw new NotFoundException('Отклонение не найдено');
 
         const now = new Date();
         if (review.slaExpiration && review.slaExpiration < now && review.clientResponseStatus === ClientResponseStatus.PENDING) {
             const updated = await this.prisma.deviationReview.update({
-                where: { id: reviewId },
+                where: { id: reviewId, companyId: review.companyId },
                 data: {
                     liabilityShiftStatus: 'SHIFTED_TO_CLIENT',
                     responsibilityMode: ResponsibilityMode.CLIENT_ONLY,
@@ -218,7 +240,7 @@ export class DeviationService {
 
     @Cron(CronExpression.EVERY_HOUR)
     async checkSla() {
-        const expiredReviews = await this.prisma.deviationReview.findMany({
+        const expiredReviews = await this.prisma.deviationReview.findMany({ // tenant-lint:ignore system cron scans all tenants by design
             where: {
                 status: DeviationStatus.DETECTED,
                 clientResponseStatus: ClientResponseStatus.PENDING,

@@ -31,7 +31,7 @@ export class HrOrchestratorService {
             pulseSurveyId: data.pulseSurveyId,
             respondentId: data.respondentId,
             answers: data.answers,
-        });
+        }, companyId);
 
         // 2. Скоринг (Brain Logic)
         // В реальности здесь может быть сложный алгоритм или вызов AI

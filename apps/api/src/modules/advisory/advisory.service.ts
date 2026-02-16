@@ -1,4 +1,4 @@
-﻿import {
+import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
@@ -250,7 +250,7 @@ export class AdvisoryService {
     traceId: string;
     targetUserId?: string;
   }): Promise<{ status: "ENABLED" }> {
-    await this.assertPilotManagerRole(input.actorRole, input.actorId);
+    await this.assertPilotManagerRole(input.actorRole, input.actorId, input.companyId);
 
     await this.audit.log({
       action: "ADVISORY_PILOT_ENABLED",
@@ -274,7 +274,7 @@ export class AdvisoryService {
     traceId: string;
     targetUserId?: string;
   }): Promise<{ status: "DISABLED" }> {
-    await this.assertPilotManagerRole(input.actorRole, input.actorId);
+    await this.assertPilotManagerRole(input.actorRole, input.actorId, input.companyId);
 
     await this.audit.log({
       action: "ADVISORY_PILOT_DISABLED",
@@ -363,7 +363,7 @@ export class AdvisoryService {
     traceId: string;
     thresholds: AdvisoryThresholds;
   }): Promise<AdvisoryThresholds> {
-    await this.assertPilotManagerRole(input.actorRole, input.actorId);
+    await this.assertPilotManagerRole(input.actorRole, input.actorId, input.companyId);
     this.validateThresholds(input.thresholds);
 
     await this.audit.log({
@@ -392,6 +392,10 @@ export class AdvisoryService {
             "ADVISORY_REJECTED",
             "ADVISORY_FEEDBACK_RECORDED",
           ],
+        },
+        metadata: {
+          path: ["companyId"],
+          equals: companyId,
         },
         createdAt: { gte: dateFrom },
       },
@@ -478,7 +482,7 @@ export class AdvisoryService {
     stage: RolloutStage;
     autoStopEnabled?: boolean;
   }): Promise<AdvisoryRolloutStatusDto> {
-    await this.assertPilotManagerRole(input.actorRole, input.actorId);
+    await this.assertPilotManagerRole(input.actorRole, input.actorId, input.companyId);
 
     await this.audit.log({
       action: "ADVISORY_ROLLOUT_CONFIG_UPDATED",
@@ -507,7 +511,7 @@ export class AdvisoryService {
     stage: RolloutStage;
     metrics?: { errorRate?: number; p95LatencyMs?: number; conversionRate?: number };
   }): Promise<AdvisoryRolloutGateResultDto> {
-    await this.assertPilotManagerRole(input.actorRole, input.actorId);
+    await this.assertPilotManagerRole(input.actorRole, input.actorId, input.companyId);
 
     const ops = await this.getOpsMetrics(input.companyId, 24);
     const computedMetrics = {
@@ -565,7 +569,7 @@ export class AdvisoryService {
     traceId: string;
     targetStage: RolloutStage;
   }): Promise<AdvisoryRolloutStatusDto> {
-    await this.assertPilotManagerRole(input.actorRole, input.actorId);
+    await this.assertPilotManagerRole(input.actorRole, input.actorId, input.companyId);
     const current = await this.getRolloutStatus(input.companyId);
     if (ROLLOUT_STAGE_PERCENT[input.targetStage] < ROLLOUT_STAGE_PERCENT[current.stage]) {
       throw new BadRequestException("targetStage must be greater than or equal to current stage");
@@ -598,7 +602,7 @@ export class AdvisoryService {
     targetStage: RolloutStage;
     reason?: string;
   }): Promise<AdvisoryRolloutStatusDto> {
-    await this.assertPilotManagerRole(input.actorRole, input.actorId);
+    await this.assertPilotManagerRole(input.actorRole, input.actorId, input.companyId);
     const current = await this.getRolloutStatus(input.companyId);
     if (ROLLOUT_STAGE_PERCENT[input.targetStage] > ROLLOUT_STAGE_PERCENT[current.stage]) {
       throw new BadRequestException("rollback targetStage must be less than or equal to current stage");
@@ -631,7 +635,7 @@ export class AdvisoryService {
     traceId: string;
     reason?: string;
   }): Promise<{ status: "ENABLED" }> {
-    await this.assertPilotManagerRole(input.actorRole, input.actorId);
+    await this.assertPilotManagerRole(input.actorRole, input.actorId, input.companyId);
 
     await this.audit.log({
       action: "ADVISORY_KILL_SWITCH_ENABLED",
@@ -653,7 +657,7 @@ export class AdvisoryService {
     companyId: string;
     traceId: string;
   }): Promise<{ status: "DISABLED" }> {
-    await this.assertPilotManagerRole(input.actorRole, input.actorId);
+    await this.assertPilotManagerRole(input.actorRole, input.actorId, input.companyId);
 
     await this.audit.log({
       action: "ADVISORY_KILL_SWITCH_DISABLED",
@@ -1017,12 +1021,12 @@ export class AdvisoryService {
     return metadata as Record<string, unknown>;
   }
 
-  private async assertPilotManagerRole(role?: string, actorId?: string): Promise<void> {
+  private async assertPilotManagerRole(role?: string, actorId?: string, companyId?: string): Promise<void> {
     let normalized = String(role ?? "").toUpperCase();
 
     if (!normalized && actorId) {
-      const actor = await this.prisma.user.findUnique({
-        where: { id: actorId },
+      const actor = await this.prisma.user.findFirst({
+        where: { id: actorId, ...(companyId ? { companyId } : {}) },
         select: { role: true },
       });
       normalized = String(actor?.role ?? "").toUpperCase();
@@ -1103,6 +1107,10 @@ export class AdvisoryService {
             "ADVISORY_ROLLOUT_STAGE_PROMOTED",
             "ADVISORY_ROLLOUT_STAGE_ROLLED_BACK",
           ],
+        },
+        metadata: {
+          path: ["companyId"],
+          equals: companyId,
         },
       },
       orderBy: { createdAt: "desc" },
@@ -1193,3 +1201,4 @@ export class AdvisoryService {
     this.rolloutStateCache.delete(companyId);
   }
 }
+

@@ -18,10 +18,10 @@ export class BudgetGeneratorService {
      * Generates an OPERATIONAL budget from an Active TechMap.
      * Enforces deterministic calculation and complete traceability.
      */
-    async generateOperationalBudget(techMapId: string, userId: string) {
+    async generateOperationalBudget(techMapId: string, userId: string, companyId: string) {
         // 1. Fetch TechMap with full hierarchy
-        const techMap = await this.prisma.techMap.findUnique({
-            where: { id: techMapId },
+        const techMap = await this.prisma.techMap.findFirst({
+            where: { id: techMapId, companyId },
             include: {
                 stages: {
                     include: {
@@ -58,7 +58,8 @@ export class BudgetGeneratorService {
                 where: {
                     harvestPlanId: techMap.harvestPlanId,
                     version: techMap.version, // Link version to version? Or just strict link?
-                    type: BudgetType.OPERATIONAL
+                    type: BudgetType.OPERATIONAL,
+                    companyId: techMap.companyId,
                 }
             });
 

@@ -6,8 +6,10 @@ import { PrismaModule } from "../../shared/prisma/prisma.module";
 import { AuditModule } from "../../shared/audit/audit.module";
 import { IntegrationsModule } from "../finance-economy/integrations/integrations.module";
 
+import { OutboxModule } from "../../shared/outbox/outbox.module";
+
 @Module({
-  imports: [PrismaModule, AuditModule, IntegrationsModule],
+  imports: [PrismaModule, AuditModule, IntegrationsModule, OutboxModule],
   controllers: [TaskController],
   providers: [TaskService, TaskResolver],
   exports: [TaskService],

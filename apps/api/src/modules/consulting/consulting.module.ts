@@ -25,9 +25,10 @@ import { ScenarioSimulationService } from "./scenario-simulation.service";
 import { StrategicAdvisoryService } from "./strategic-advisory.service";
 import { CashFlowService } from "./cash-flow.service";
 import { LiquidityRiskService } from "./liquidity-risk.service";
+import { OutboxModule } from "../../shared/outbox/outbox.module";
 
 @Module({
-    imports: [PrismaModule, CmrModule, EconomyModule],
+    imports: [PrismaModule, CmrModule, EconomyModule, OutboxModule],
     controllers: [ConsultingController],
     providers: [
         ConsultingService,

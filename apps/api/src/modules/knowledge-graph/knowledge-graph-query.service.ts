@@ -6,22 +6,25 @@ import { PrismaService } from "../../shared/prisma/prisma.service";
 export class KnowledgeGraphQueryService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getNode(id: string) {
-    return this.prisma.knowledgeNode.findUnique({ where: { id } });
+  async getNode(id: string, companyId: string) {
+    return this.prisma.knowledgeNode.findFirst({ where: { id, companyId } });
   }
 
-  async getEdgesByNode(id: string) {
+  async getEdgesByNode(id: string, companyId: string) {
     return this.prisma.knowledgeEdge.findMany({
       where: {
+        companyId,
         OR: [{ fromNodeId: id }, { toNodeId: id }],
       },
       orderBy: { createdAt: "asc" },
     });
   }
 
-  async getSubgraph(nodeId: string, depth = 1) {
+  async getSubgraph(nodeId: string, companyId: string, depth = 1) {
     if (depth < 1) {
-      const node = await this.prisma.knowledgeNode.findUnique({ where: { id: nodeId } });
+      const node = await this.prisma.knowledgeNode.findFirst({
+        where: { id: nodeId, companyId },
+      });
       return { nodes: node ? [node] : [], edges: [] };
     }
 
@@ -35,6 +38,7 @@ export class KnowledgeGraphQueryService {
 
       const edges = await this.prisma.knowledgeEdge.findMany({
         where: {
+          companyId,
           OR: [
             { fromNodeId: { in: ids } },
             { toNodeId: { in: ids } },
@@ -56,7 +60,7 @@ export class KnowledgeGraphQueryService {
 
     const nodeIds = Array.from(new Set([nodeId, ...Array.from(visited)])).sort();
     const nodes = await this.prisma.knowledgeNode.findMany({
-      where: { id: { in: nodeIds } },
+      where: { id: { in: nodeIds }, companyId },
       orderBy: { createdAt: "asc" },
     });
 

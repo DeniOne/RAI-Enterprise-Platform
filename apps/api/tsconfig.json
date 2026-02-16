@@ -34,6 +34,12 @@
             ],
             "@rai/agro-orchestrator/*": [
                 "../../packages/agro-orchestrator/src/*"
+            ],
+            "@rai/vector-store": [
+                "../../packages/vector-store/src"
+            ],
+            "@rai/vector-store/*": [
+                "../../packages/vector-store/src/*"
             ]
         },
         "incremental": true,

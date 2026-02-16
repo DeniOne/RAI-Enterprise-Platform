@@ -30,9 +30,9 @@ export class AssessmentService {
         });
     }
 
-    async getLatestSnapshot(employeeId: string) {
+    async getLatestSnapshot(employeeId: string, companyId: string) {
         return this.prisma.humanAssessmentSnapshot.findFirst({
-            where: { employeeId },
+            where: { employeeId, companyId },
             orderBy: { createdAt: 'desc' },
         });
     }

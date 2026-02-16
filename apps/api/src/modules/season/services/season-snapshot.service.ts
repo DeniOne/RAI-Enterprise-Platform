@@ -17,10 +17,11 @@ export class SeasonSnapshotService {
   async createSnapshotTransaction(
     tx: Prisma.TransactionClient,
     seasonId: string,
+    companyId: string,
     user: User,
   ): Promise<void> {
-    const season = await tx.season.findUnique({
-      where: { id: seasonId },
+    const season = await tx.season.findFirst({
+      where: { id: seasonId, companyId },
       include: {
         field: true,
         rapeseed: true,
@@ -63,11 +64,11 @@ export class SeasonSnapshotService {
     tx?: Prisma.TransactionClient,
   ): Promise<void> {
     if (tx) {
-      return this.createSnapshotTransaction(tx, seasonId, user);
+      return this.createSnapshotTransaction(tx, seasonId, companyId, user);
     }
 
     return this.prisma.$transaction(async (innerTx) => {
-      await this.createSnapshotTransaction(innerTx, seasonId, user);
+      await this.createSnapshotTransaction(innerTx, seasonId, companyId, user);
 
       await this.auditService.logWithRetry(
         AgriculturalAuditEvent.SEASON_SNAPSHOT_CREATED,

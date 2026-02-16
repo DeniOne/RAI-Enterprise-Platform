@@ -27,22 +27,20 @@ export class ShadowAdvisoryMetricsService {
   async buildBaseline(
     request: ShadowAdvisoryBaselineRequest,
   ): Promise<ShadowAdvisoryBaselineReport> {
-    const where: any = {
-      action: "SHADOW_ADVISORY_EVALUATED",
-      metadata: {
-        path: ["companyId"],
-        equals: request.companyId,
-      },
-    };
-
-    if (request.from || request.to) {
-      where.createdAt = {};
-      if (request.from) where.createdAt.gte = request.from;
-      if (request.to) where.createdAt.lte = request.to;
-    }
-
     const logs = await this.prisma.auditLog.findMany({
-      where,
+      where: {
+        action: "SHADOW_ADVISORY_EVALUATED",
+        metadata: {
+          path: ["companyId"],
+          equals: request.companyId,
+        },
+        createdAt: request.from || request.to
+          ? {
+              gte: request.from,
+              lte: request.to,
+            }
+          : undefined,
+      },
       select: { metadata: true },
     });
 

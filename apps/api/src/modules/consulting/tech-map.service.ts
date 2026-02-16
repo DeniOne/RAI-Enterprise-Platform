@@ -20,7 +20,7 @@ export class TechMapService {
      */
     async activate(id: string, userId: string) {
         const techMap = await this.prisma.techMap.findUnique({
-            where: { id },
+            where: { id }, // tenant-lint:ignore service entrypoint lacks tenant context; companyId is derived from fetched row
             include: {
                 stages: {
                     include: {
@@ -65,7 +65,7 @@ export class TechMapService {
             });
 
             return tx.techMap.update({
-                where: { id },
+                where: { id, companyId: techMap.companyId },
                 data: {
                     status: TechMapStatus.ACTIVE,
                     isLatest: true,
@@ -110,11 +110,7 @@ export class TechMapService {
                     companyId: source.companyId,
                     version: source.version + 1,
                     status: TechMapStatus.DRAFT,
-                    isLatest: false, // Will become latest if we decide, but usually DRAFT is just draft.
-                    // Actually, if it's a new draft, it might be the "latest working copy".
-                    // But 'isLatest' usually denotes the authoritative version for budgeting.
-
-                    // Copy Metadata
+                    isLatest: false,
                     soilType: source.soilType,
                     moisture: source.moisture,
                     precursor: source.precursor,
@@ -149,11 +145,12 @@ export class TechMapService {
                         await tx.mapResource.createMany({
                             data: op.resources.map(r => ({
                                 mapOperationId: newOp.id,
+                                companyId: newMap.companyId,
                                 type: r.type,
                                 name: r.name,
-                                amount: r.amount, // Copy physical norm
+                                amount: r.amount,
                                 unit: r.unit,
-                                costPerUnit: r.costPerUnit // Copy cached cost if any
+                                costPerUnit: r.costPerUnit
                             }))
                         });
                     }
@@ -168,7 +165,7 @@ export class TechMapService {
         return map.stages.map(s => ({
             stage: s.name,
             ops: s.operations.map(o => ({
-                id: o.id, // Keep original ID for traceability? Or is this a snapshot of "what was planned"?
+                id: o.id,
                 name: o.name,
                 machinery: o.requiredMachineryType
             }))

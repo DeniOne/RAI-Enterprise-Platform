@@ -27,7 +27,7 @@ export class TelegramUpdate {
     if (!ctx.from) return null;
     const telegramId = ctx.from.id.toString();
     // console.log(`🔍 Telegram Auth Attempt: ID=${telegramId}, Username=${ctx.from.username}`);
-    return this.prisma.user.findFirst({
+    return this.prisma.user.findFirst({ // tenant-lint:ignore telegramId is a global identity binding for bot session
       where: { telegramId },
     });
   }
@@ -219,6 +219,7 @@ export class TelegramUpdate {
 
     const tasks = await this.prisma.task.findMany({
       where: {
+        companyId: user.companyId,
         assigneeId: user.id,
         status: { in: [TaskStatus.PENDING, TaskStatus.IN_PROGRESS] },
       },
@@ -340,26 +341,36 @@ export class TelegramUpdate {
     const assetId = match[2];
 
     const user = await this.getUser(ctx);
+    if (!user) {
+      await ctx.answerCbQuery("Access denied");
+      return;
+    }
 
     try {
       if (category === "MACHINERY") {
-        await this.prisma.machinery.update({
-          where: { id: assetId },
+        const updated = await this.prisma.machinery.updateMany({
+          where: { id: assetId, companyId: user.companyId },
           data: {
             status: AssetStatus.ACTIVE,
-            confirmedByUserId: user?.id,
+            confirmedByUserId: user.id,
             confirmedAt: new Date()
           }
         });
+        if (updated.count !== 1) {
+          throw new Error("Asset not found in tenant scope");
+        }
       } else {
-        await this.prisma.stockItem.update({
-          where: { id: assetId },
+        const updated = await this.prisma.stockItem.updateMany({
+          where: { id: assetId, companyId: user.companyId },
           data: {
             status: AssetStatus.ACTIVE,
-            confirmedByUserId: user?.id,
+            confirmedByUserId: user.id,
             confirmedAt: new Date()
           }
         });
+        if (updated.count !== 1) {
+          throw new Error("Asset not found in tenant scope");
+        }
       }
       await ctx.answerCbQuery("Актив подтвержден! ✅");
       await ctx.editMessageText(`✅ <b>Актив добавлен в реестр.</b>\nПодтвердил: ${user?.name || user?.email || "System"}`, { parse_mode: "HTML" });
@@ -368,7 +379,6 @@ export class TelegramUpdate {
       await ctx.answerCbQuery("Ошибка подтверждения ❌");
     }
   }
-
   @Action(/reject_asset:(.+):(.+)/)
   async onRejectAsset(@Ctx() ctx: Context) {
     const match = (ctx as any).match;
@@ -376,32 +386,42 @@ export class TelegramUpdate {
     const assetId = match[2];
 
     const user = await this.getUser(ctx);
+    if (!user) {
+      await ctx.answerCbQuery("Access denied");
+      return;
+    }
 
     try {
       if (category === "MACHINERY") {
-        await this.prisma.machinery.update({
-          where: { id: assetId },
+        const updated = await this.prisma.machinery.updateMany({
+          where: { id: assetId, companyId: user.companyId },
           data: {
             status: AssetStatus.REJECTED,
             rejectionReason: "USER_REJECTED",
-            confirmedByUserId: user?.id // Сохраняем кто отклонил тоже
-          }
+            confirmedByUserId: user.id,
+          },
         });
+        if (updated.count !== 1) {
+          throw new Error("Asset not found in tenant scope");
+        }
       } else {
-        await this.prisma.stockItem.update({
-          where: { id: assetId },
+        const updated = await this.prisma.stockItem.updateMany({
+          where: { id: assetId, companyId: user.companyId },
           data: {
             status: AssetStatus.REJECTED,
             rejectionReason: "USER_REJECTED",
-            confirmedByUserId: user?.id
-          }
+            confirmedByUserId: user.id,
+          },
         });
+        if (updated.count !== 1) {
+          throw new Error("Asset not found in tenant scope");
+        }
       }
-      await ctx.answerCbQuery("Актив отклонен ❌");
-      await ctx.editMessageText("❌ <b>Предложение отклонено и архивировано.</b>", { parse_mode: "HTML" });
+      await ctx.answerCbQuery("РђРєС‚РёРІ РѕС‚РєР»РѕРЅРµРЅ вќЊ");
+      await ctx.editMessageText("вќЊ <b>РџСЂРµРґР»РѕР¶РµРЅРёРµ РѕС‚РєР»РѕРЅРµРЅРѕ Рё Р°СЂС…РёРІРёСЂРѕРІР°РЅРѕ.</b>", { parse_mode: "HTML" });
     } catch (e) {
-      console.error("❌ Error rejecting asset:", e);
-      await ctx.answerCbQuery("Ошибка при отклонении");
+      console.error("вќЊ Error rejecting asset:", e);
+      await ctx.answerCbQuery("РћС€РёР±РєР° РїСЂРё РѕС‚РєР»РѕРЅРµРЅРёРё");
     }
   }
 }

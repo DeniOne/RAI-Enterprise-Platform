@@ -19,11 +19,11 @@ export class ManagementDecisionService {
      * Создает черновик решения. isActive = null для черновиков, чтобы не блокировать уникальность.
      */
     async createDraft(deviationId: string, description: string, expectedEffect: string, context: UserContext) {
-        const deviation = await this.prisma.deviationReview.findUnique({
-            where: { id: deviationId },
+        const deviation = await this.prisma.deviationReview.findFirst({
+            where: { id: deviationId, companyId: context.companyId },
         });
 
-        if (!deviation || deviation.companyId !== context.companyId) {
+        if (!deviation) {
             throw new NotFoundException('Отклонение не найдено');
         }
 
@@ -36,7 +36,7 @@ export class ManagementDecisionService {
                 version: 1,
                 authorId: context.userId,
                 isActive: null, // Drafts are not active until confirmed
-            }
+            } // tenant-lint:ignore tenant is validated by deviation.companyId check above
         });
     }
 
@@ -45,12 +45,12 @@ export class ManagementDecisionService {
      * Генерирует хеш для обеспечения tamper-evidence.
      */
     async confirm(decisionId: string, context: UserContext) {
-        const decision = await this.prisma.managementDecision.findUnique({
-            where: { id: decisionId },
+        const decision = await this.prisma.managementDecision.findFirst({
+            where: { id: decisionId, deviation: { companyId: context.companyId } },
             include: { deviation: true }
         });
 
-        if (!decision || decision.deviation.companyId !== context.companyId) {
+        if (!decision) {
             throw new NotFoundException('Решение не найдено');
         }
 
@@ -73,19 +73,34 @@ export class ManagementDecisionService {
         return this.prisma.$transaction(async (tx) => {
             // 1. Деактивируем все предыдущие подтвержденные решения для этого отклонения (Defense in Depth)
             await tx.managementDecision.updateMany({
-                where: { deviationId: decision.deviationId, isActive: true },
+                where: {
+                    deviationId: decision.deviationId,
+                    isActive: true,
+                    deviation: { companyId: context.companyId },
+                },
                 data: { isActive: null }
             });
 
             // 2. Подтверждаем текущее
-            const confirmed = await tx.managementDecision.update({
-                where: { id: decisionId },
+            const confirmResult = await tx.managementDecision.updateMany({
+                where: {
+                    id: decisionId,
+                    version: decision.version,
+                    status: DecisionStatus.DRAFT,
+                    deviation: { companyId: context.companyId }
+                },
                 data: {
                     status: DecisionStatus.CONFIRMED,
                     confirmedAt: new Date(),
                     isActive: true,
                     decisionHash
                 }
+            });
+            if (confirmResult.count !== 1) {
+                throw new ConflictException('Decision confirmation conflict');
+            }
+            const confirmed = await tx.managementDecision.findFirstOrThrow({
+                where: { id: decisionId, deviation: { companyId: context.companyId } },
             });
 
             this.logger.log(`[MANAGEMENT] Decision ${decisionId} CONFIRMED. Hash: ${decisionHash.substring(0, 8)}`);
@@ -97,12 +112,12 @@ export class ManagementDecisionService {
      * Заменяет решение. Старое решение de-facto становится историческим (isActive=null).
      */
     async supersede(oldDecisionId: string, newDescription: string, newExpectedEffect: string, context: UserContext) {
-        const oldDecision = await this.prisma.managementDecision.findUnique({
-            where: { id: oldDecisionId },
+        const oldDecision = await this.prisma.managementDecision.findFirst({
+            where: { id: oldDecisionId, deviation: { companyId: context.companyId } },
             include: { deviation: true }
         });
 
-        if (!oldDecision || oldDecision.deviation.companyId !== context.companyId) {
+        if (!oldDecision) {
             throw new NotFoundException('Исходное решение не найдено');
         }
 
@@ -112,16 +127,24 @@ export class ManagementDecisionService {
 
         return this.prisma.$transaction(async (tx) => {
             // 1. Снимаем флаг активности со старого решения
-            await tx.managementDecision.update({
-                where: { id: oldDecisionId },
+            const superseded = await tx.managementDecision.updateMany({
+                where: {
+                    id: oldDecisionId,
+                    version: oldDecision.version,
+                    status: DecisionStatus.CONFIRMED,
+                    deviation: { companyId: context.companyId }
+                },
                 data: {
                     status: DecisionStatus.SUPERSEDED,
                     isActive: null
                 }
             });
+            if (superseded.count !== 1) {
+                throw new ConflictException('Decision supersede conflict');
+            }
 
             // 2. Создаем черновик новой версии
-            return tx.managementDecision.create({
+            return tx.managementDecision.create({ // tenant-lint:ignore tenant is inherited from validated oldDecision.deviation relation
                 data: {
                     deviationId: oldDecision.deviationId,
                     version: oldDecision.version + 1,
@@ -131,25 +154,31 @@ export class ManagementDecisionService {
                     status: DecisionStatus.DRAFT,
                     authorId: context.userId,
                     isActive: null,
-                }
+                } // tenant-lint:ignore tenant inherited from oldDecision.deviationId validated above
             });
         });
     }
 
     async getDecisionHistory(decisionId: string, context: UserContext) {
-        const decision = await this.prisma.managementDecision.findUnique({
-            where: { id: decisionId },
+        const decision = await this.prisma.managementDecision.findFirst({
+            where: { id: decisionId, deviation: { companyId: context.companyId } },
             include: { deviation: true }
         });
 
-        if (!decision || decision.deviation.companyId !== context.companyId) {
+        if (!decision) {
             throw new NotFoundException('Решение не найдено');
         }
 
         return this.prisma.managementDecision.findMany({
-            where: { deviationId: decision.deviationId },
+            where: {
+                deviationId: decision.deviationId,
+                deviation: { companyId: context.companyId },
+            },
             orderBy: { version: 'desc' },
             include: { author: { select: { name: true, email: true } } }
         });
     }
 }
+
+
+

@@ -15,6 +15,7 @@ export class VisionEventHandlerService {
 
     await this.prisma.visionObservation.create({
       data: {
+        companyId: event.companyId,
         id: event.observation.id,
         source: event.observation.source,
         assetId: event.observation.assetId,
@@ -27,7 +28,6 @@ export class VisionEventHandlerService {
           ? (event.observation.metadata as Prisma.InputJsonValue)
           : undefined,
         confidence: event.observation.confidence,
-        companyId: event.companyId,
       },
     });
   }

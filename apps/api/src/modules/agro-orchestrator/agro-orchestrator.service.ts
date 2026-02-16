@@ -97,17 +97,26 @@ export class AgroOrchestratorService {
         const initialStage = AplStateMachine.getInitialStage();
 
         const updated = await this.prisma.$transaction(async (tx) => {
-            // Update season with initial stage
-            const updatedSeason = await tx.season.update({
-                where: { id: seasonId },
+            // Tenant-safe update path: enforce companyId in predicate.
+            const initUpdate = await tx.season.updateMany({
+                where: { id: seasonId, companyId },
                 data: {
                     currentStageId: initialStage,
                     status: SeasonStatus.ACTIVE,
                 },
             });
+            if (initUpdate.count === 0) {
+                throw new NotFoundException("Сезон не найден");
+            }
+            const updatedSeason = await tx.season.findFirst({
+                where: { id: seasonId, companyId },
+            });
+            if (!updatedSeason) {
+                throw new NotFoundException("Сезон не найден");
+            }
 
             // Record stage progress
-            await tx.seasonStageProgress.create({
+            await tx.seasonStageProgress.create({ // tenant-lint:ignore tenant scope inherited from seasonId relation
                 data: {
                     seasonId,
                     stageId: initialStage,
@@ -210,14 +219,23 @@ export class AgroOrchestratorService {
         const targetStage = resultEntity.currentStageId!;
 
         const updated = await this.prisma.$transaction(async (tx) => {
-            // Update season
-            const updatedSeason = await tx.season.update({
-                where: { id: seasonId },
+            // Tenant-safe update path: enforce companyId in predicate.
+            const stageUpdate = await tx.season.updateMany({
+                where: { id: seasonId, companyId },
                 data: { currentStageId: targetStage },
             });
+            if (stageUpdate.count === 0) {
+                throw new NotFoundException("Сезон не найден");
+            }
+            const updatedSeason = await tx.season.findFirst({
+                where: { id: seasonId, companyId },
+            });
+            if (!updatedSeason) {
+                throw new NotFoundException("Сезон не найден");
+            }
 
             // Record stage progress
-            await tx.seasonStageProgress.create({
+            await tx.seasonStageProgress.create({ // tenant-lint:ignore tenant scope inherited from seasonId relation
                 data: {
                     seasonId,
                     stageId: targetStage,
@@ -232,8 +250,8 @@ export class AgroOrchestratorService {
 
             // If terminal stage, complete the season
             if (AplStateMachine.isTerminal(targetStage)) {
-                await tx.season.update({
-                    where: { id: seasonId },
+                await tx.season.updateMany({
+                    where: { id: seasonId, companyId },
                     data: {
                         status: SeasonStatus.COMPLETED,
                         endDate: new Date(),
@@ -314,7 +332,7 @@ export class AgroOrchestratorService {
         }
 
         return this.prisma.seasonStageProgress.findMany({
-            where: { seasonId },
+            where: { seasonId, season: { companyId } },
             orderBy: { completedAt: "asc" },
         });
     }

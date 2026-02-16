@@ -1,39 +1,25 @@
-import { Controller, Post, Body, Headers, HttpException, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { TelegramAuthService } from './telegram-auth.service';
-import { ConfigService } from '@nestjs/config';
+import { InternalApiKeyGuard } from './internal-api-key.guard';
 
 @Controller('internal/telegram')
+@UseGuards(InternalApiKeyGuard)
 export class TelegramAuthInternalController {
-    private readonly apiKey: string;
-
     constructor(
         private telegramAuthService: TelegramAuthService,
-        private configService: ConfigService,
-    ) {
-        this.apiKey = this.configService.get<string>('INTERNAL_API_KEY') || '';
-    }
-
-    private validateApiKey(apiKey: string) {
-        if (!this.apiKey || apiKey !== this.apiKey) {
-            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-        }
-    }
+    ) { }
 
     @Post('confirm-login')
     async confirmLogin(
         @Body() body: { sessionId: string },
-        @Headers('x-internal-api-key') apiKey: string,
     ) {
-        this.validateApiKey(apiKey);
         return this.telegramAuthService.confirmLogin(body.sessionId);
     }
 
     @Post('deny-login')
     async denyLogin(
         @Body() body: { sessionId: string },
-        @Headers('x-internal-api-key') apiKey: string,
     ) {
-        this.validateApiKey(apiKey);
         await this.telegramAuthService.denyLogin(body.sessionId);
         return { success: true };
     }
@@ -41,34 +27,26 @@ export class TelegramAuthInternalController {
     @Post('user/upsert')
     async upsertUser(
         @Body() body: any,
-        @Headers('x-internal-api-key') apiKey: string,
     ) {
-        this.validateApiKey(apiKey);
         return this.telegramAuthService.upsertUserFromTelegram(body);
     }
 
     @Post('user/get') // Using POST for convenience with body or just query
     async getUser(
-        @Body() body: { telegramId: string },
-        @Headers('x-internal-api-key') apiKey: string,
+        @Body() body: { telegramId: string; companyId?: string },
     ) {
-        this.validateApiKey(apiKey);
-        return this.telegramAuthService.getUserByTelegramId(body.telegramId);
+        return this.telegramAuthService.getUserByTelegramId(body.telegramId, body.companyId);
     }
 
     @Post('company/first')
-    async getFirstCompany(
-        @Headers('x-internal-api-key') apiKey: string,
-    ) {
-        this.validateApiKey(apiKey);
+    async getFirstCompany() {
         return this.telegramAuthService.getFirstCompany();
     }
 
     @Post('users/active')
     async getActiveUsers(
-        @Headers('x-internal-api-key') apiKey: string,
+        @Body() body: { companyId: string },
     ) {
-        this.validateApiKey(apiKey);
-        return this.telegramAuthService.getActiveUsers();
+        return this.telegramAuthService.getActiveUsers(body.companyId);
     }
 }

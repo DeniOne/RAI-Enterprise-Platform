@@ -4,6 +4,7 @@ import { ExecutionStatus, TechMapStatus } from "@rai/prisma-client";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { CompleteOperationDto } from "./dto/complete-operation.dto";
 import { ConsultingOperationCompletedEvent } from "./events/consulting-operation-completed.event";
+import { OutboxService } from "../../shared/outbox/outbox.service";
 
 export interface ExecutionContext {
     userId: string;
@@ -17,6 +18,7 @@ export class ExecutionService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly eventEmitter: EventEmitter2,
+        private readonly outbox: OutboxService,
     ) { }
 
     /**
@@ -38,7 +40,7 @@ export class ExecutionService {
         }
 
         let execution = await this.prisma.executionRecord.findUnique({
-            where: { operationId }
+            where: { operationId, companyId: context.companyId }
         });
 
         if (!execution) {
@@ -79,7 +81,7 @@ export class ExecutionService {
         }
 
         return this.prisma.executionRecord.update({
-            where: { id: execution.id },
+            where: { id: execution.id, companyId: context.companyId },
             data: {
                 status: ExecutionStatus.IN_PROGRESS,
                 actualDate: new Date(),
@@ -102,7 +104,7 @@ export class ExecutionService {
         const result = await this.prisma.$transaction(async (tx) => {
             // 1. Обновляем статус исполнения (Optimistic Locking)
             const updatedExecution = await tx.executionRecord.update({
-                where: { id: execution.id, version: execution.version },
+                where: { id: execution.id, companyId: context.companyId, version: execution.version },
                 data: {
                     status: ExecutionStatus.DONE,
                     actualDate: new Date(),
@@ -117,7 +119,7 @@ export class ExecutionService {
             const stockTransactions = [];
             for (const resEntry of dto.actualResources) {
                 const mapResource = await tx.mapResource.findUnique({
-                    where: { id: resEntry.resourceId }
+                    where: { id: resEntry.resourceId } // tenant-lint:ignore mapResource has no companyId; ownership validated by mapOperationId check below
                 });
 
                 if (!mapResource || mapResource.mapOperationId !== dto.operationId) {
@@ -143,6 +145,7 @@ export class ExecutionService {
 
                 const transaction = await tx.stockTransaction.create({
                     data: {
+                        companyId: context.companyId,
                         executionId: updatedExecution.id,
                         itemId: stockItem.id,
                         type: 'CONSUMPTION', // Assuming 'CONSUMPTION' is a valid string literal for type
@@ -152,7 +155,6 @@ export class ExecutionService {
                         unit: mapResource.unit,
                         costPerUnit: mapResource.costPerUnit,
                         totalCost: (mapResource.costPerUnit || 0) * resEntry.amount,
-                        companyId: context.companyId,
                         userId: context.userId,
                     }
                 });
@@ -171,13 +173,12 @@ export class ExecutionService {
             };
 
             await tx.outboxMessage.create({
-                data: {
-                    aggregateId: updatedExecution.id,
-                    aggregateType: 'ExecutionRecord',
-                    type: 'consulting.operation.completed',
-                    payload: payload as any, // Cast to any/InputJsonValue
-                    status: 'PENDING' // Default
-                }
+                data: this.outbox.createEvent(
+                    updatedExecution.id,
+                    'ExecutionRecord',
+                    'consulting.operation.completed',
+                    payload,
+                )
             });
 
             return { updatedExecution, stockTransactions };

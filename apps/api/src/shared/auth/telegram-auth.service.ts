@@ -26,12 +26,12 @@ export class TelegramAuthService {
         private configService: ConfigService,
     ) { }
 
-    async initiateLogin(telegramId: string): Promise<{ sessionId: string }> {
+    async initiateLogin(telegramId: string, companyId?: string): Promise<{ sessionId: string }> {
         console.log(`[TelegramAuthService] Initiating login for telegramId: "${telegramId}" (type: ${typeof telegramId})`);
 
         // Check if user exists
         const user = await this.prisma.user.findFirst({
-            where: { telegramId: telegramId.trim() },
+            where: { telegramId: telegramId.trim(), ...(companyId ? { companyId } : {}) },
         });
 
         if (!user) {
@@ -150,9 +150,9 @@ export class TelegramAuthService {
         return JSON.parse(sessionData);
     }
 
-    async getUserByTelegramId(telegramId: string) {
+    async getUserByTelegramId(telegramId: string, companyId?: string) {
         return this.prisma.user.findFirst({
-            where: { telegramId: telegramId.trim() },
+            where: { telegramId: telegramId.trim(), ...(companyId ? { companyId } : {}) },
         });
     }
 
@@ -174,6 +174,7 @@ export class TelegramAuthService {
                 email: data.email,
                 role: data.role as UserRole,
                 accessLevel: data.accessLevel as UserAccessLevel,
+                // companyId: data.companyId, // Redundant with connect for standard CreateInput
                 company: { connect: { id: data.companyId } },
                 emailVerified: true,
             },
@@ -184,9 +185,10 @@ export class TelegramAuthService {
         return this.prisma.company.findFirst();
     }
 
-    async getActiveUsers() {
+    async getActiveUsers(companyId: string) {
         return this.prisma.user.findMany({
             where: {
+                companyId,
                 accessLevel: 'ACTIVE',
                 telegramId: { not: null },
             },

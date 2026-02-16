@@ -1,4 +1,4 @@
-import { EconomicEventType } from '@rai/prisma-client';
+﻿import { EconomicEventType } from '@rai/prisma-client';
 
 export interface Attribution {
     amount: number;
@@ -8,9 +8,8 @@ export interface Attribution {
 
 /**
  * Pure Attribution Rules.
- * Вход: Экономическое событие + Контекст.
- * Выход: Набор проводок (Attributions).
- * ГАРАНТИЯ: Нет доступа к БД, только чистая логика.
+ * Input: economic event + context.
+ * Output: ledger attributions.
  */
 export class CostAttributionRules {
     static getAttributions(event: { type: EconomicEventType; amount: number; metadata?: any }): Attribution[] {
@@ -46,13 +45,19 @@ export class CostAttributionRules {
                 ];
 
             case 'ADJUSTMENT':
-                // Логика корректировки зависит от знака суммы или метаданных
+                // Double-entry adjustment (symmetric postings)
+                if (event.amount >= 0) {
+                    return [
+                        { amount: Math.abs(event.amount), type: 'DEBIT', accountCode: 'ADJUSTMENT_ACCOUNT' },
+                        { amount: Math.abs(event.amount), type: 'CREDIT', accountCode: 'EQUITY_RESERVE' },
+                    ];
+                }
                 return [
-                    { amount: Math.abs(event.amount), type: event.amount > 0 ? 'DEBIT' : 'CREDIT', accountCode: 'ADJUSTMENT_ACCOUNT' }
+                    { amount: Math.abs(event.amount), type: 'DEBIT', accountCode: 'EQUITY_RESERVE' },
+                    { amount: Math.abs(event.amount), type: 'CREDIT', accountCode: 'ADJUSTMENT_ACCOUNT' },
                 ];
 
             case 'BOOTSTRAP':
-                // Phase 5: Initial balance support
                 return [
                     { amount: event.amount, type: 'DEBIT', accountCode: 'CASH' },
                     { amount: event.amount, type: 'CREDIT', accountCode: 'EQUITY_RESERVE' },

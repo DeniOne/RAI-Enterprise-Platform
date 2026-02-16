@@ -11,21 +11,25 @@ export interface VisionTimeRange {
 export class VisionQueryService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getObservation(id: string) {
-    return this.prisma.visionObservation.findUnique({ where: { id } });
+  async getObservation(id: string, companyId: string) {
+    return this.prisma.visionObservation.findFirst({ where: { id, companyId } });
   }
 
-  async getObservationsByAsset(assetId: string, timeRange?: VisionTimeRange) {
-    const where: any = { assetId };
-
-    if (timeRange?.from || timeRange?.to) {
-      where.timestamp = {};
-      if (timeRange.from) where.timestamp.gte = new Date(timeRange.from);
-      if (timeRange.to) where.timestamp.lte = new Date(timeRange.to);
-    }
+  async getObservationsByAsset(assetId: string, companyId: string, timeRange?: VisionTimeRange) {
+    const timestampFilter =
+      timeRange?.from || timeRange?.to
+        ? {
+            gte: timeRange?.from ? new Date(timeRange.from) : undefined,
+            lte: timeRange?.to ? new Date(timeRange.to) : undefined,
+          }
+        : undefined;
 
     return this.prisma.visionObservation.findMany({
-      where,
+      where: {
+        assetId,
+        companyId,
+        timestamp: timestampFilter,
+      },
       orderBy: { timestamp: "desc" },
     });
   }

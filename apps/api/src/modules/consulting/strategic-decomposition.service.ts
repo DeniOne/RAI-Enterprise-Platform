@@ -26,8 +26,8 @@ export class StrategicDecompositionService {
      * MinRequiredYield = (TargetEBITDA + Cost_projected) / (Area * Price_market)
      */
     async decomposeGoal(goalId: string, context: UserContext) {
-        const goal = await this.prisma.strategicGoal.findUnique({
-            where: { id: goalId },
+        const goal = await this.prisma.strategicGoal.findFirst({
+            where: { id: goalId, companyId: context.companyId },
             include: { season: true },
         });
 

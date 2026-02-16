@@ -1622,6 +1622,10 @@ model CmrRisk {
 
   @@index([seasonId])
   @@index([type])
+  @@index([taskId])
+  @@index([observationId])
+  @@index([responsibleId])
+  @@index([insuranceId])
   @@map("cmr_risks")
 }
 
@@ -1745,6 +1749,15 @@ model FieldObservation {
   updatedAt DateTime  @updatedAt
   cmrRisks  CmrRisk[]
 
+  @@index([companyId])
+  @@index([seasonId])
+  @@index([fieldId])
+  @@index([taskId])
+  @@index([deviationReviewId])
+  @@index([budgetPlanId])
+  @@index([authorId])
+  @@index([type])
+  @@index([intent])
   @@map("field_observations")
 }
 
@@ -1973,11 +1986,12 @@ enum BudgetStatus {
 }
 
 model EconomicEvent {
-  id       String            @id @default(cuid())
-  type     EconomicEventType
-  amount   Float
-  currency String            @default("RUB")
-  metadata Json? // Source data (taskId, employeeId, techMapId, etc.)
+  id        String            @id @default(cuid())
+  type      EconomicEventType
+  amount    Float
+  currency  String            @default("RUB")
+  replayKey String?
+  metadata  Json? // Source data (taskId, employeeId, techMapId, etc.)
 
   // Attribution Context
   fieldId    String?
@@ -1991,9 +2005,12 @@ model EconomicEvent {
 
   createdAt DateTime @default(now())
 
+  @@unique([companyId, replayKey])
   @@index([companyId])
   @@index([type])
   @@index([seasonId])
+  @@index([fieldId])
+  @@index([employeeId])
   @@map("economic_events")
 }
 
@@ -2029,6 +2046,7 @@ model LedgerEntry {
   @@index([companyId])
   @@index([accountCode])
   @@index([cashAccountId])
+  @@index([executionId])
   @@map("ledger_entries")
 }
 
@@ -2036,6 +2054,7 @@ model CashAccount {
   id       String  @id @default(uuid())
   name     String // e.g. "Main Sberbank", "Petty Cash"
   balance  Decimal @default(0) @db.Decimal(18, 4)
+  version  Int     @default(1)
   currency String  @default("RUB")
   isActive Boolean @default(true)
 
@@ -2152,6 +2171,7 @@ model LegalDocument {
 
   @@index([companyId])
   @@index([externalId])
+  @@index([regulatorId])
   @@map("legal_documents")
 }
 
@@ -2214,6 +2234,7 @@ model LegalObligation {
   updatedAt DateTime @updatedAt
 
   @@index([requirementId])
+  @@index([ownerId])
   @@map("legal_obligations")
 }
 
@@ -2267,6 +2288,7 @@ model GrInteraction {
   createdAt DateTime @default(now())
 
   @@index([companyId])
+  @@index([regulatorId])
   @@map("gr_interactions")
 }
 
@@ -2431,6 +2453,7 @@ model ResearchProgram {
   archivedAt  DateTime?
   experiments Experiment[]
 
+  @@index([companyId])
   @@map("research_programs")
 }
 
@@ -2451,6 +2474,7 @@ model Experiment {
 
   createdAt DateTime @default(now())
 
+  @@index([programId])
   @@map("experiments")
 }
 
@@ -2487,6 +2511,7 @@ model Trial {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
+  @@index([experimentId])
   @@map("research_trials")
 }
 
@@ -2500,6 +2525,7 @@ model Measurement {
   measuredAt DateTime @default(now())
   locked     Boolean  @default(false)
 
+  @@index([trialId])
   @@map("research_measurements")
 }
 
@@ -2855,11 +2881,32 @@ model OutboxMessage {
   aggregateType String? // For context (e.g. ExecutionRecord)
   payload       Json
   status        OutboxStatus @default(PENDING)
+  attempts      Int          @default(0)
+  nextRetryAt   DateTime?
+  lastAttemptAt DateTime?
+  deadLetterAt  DateTime?
   error         String?      @db.Text
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
+  @@index([status, nextRetryAt, createdAt])
   @@map("outbox_messages")
+}
+
+model EventConsumption {
+  id          String   @id @default(cuid())
+  consumer    String
+  eventId     String
+  eventType   String
+  aggregateId String?
+  companyId   String?
+  processedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@unique([consumer, eventId])
+  @@index([consumer, eventType, processedAt])
+  @@index([companyId, processedAt])
+  @@map("event_consumptions")
 }
 
 enum OutboxStatus {

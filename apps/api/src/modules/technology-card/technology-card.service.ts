@@ -99,11 +99,18 @@ export class TechnologyCardService {
       throw new NotFoundException(`TechnologyCard ${cardId} not found`);
     }
 
-    return this.prisma.season.update({
-      where: { id: seasonId },
+    const updated = await this.prisma.season.updateMany({
+      where: { id: seasonId, companyId },
       data: {
         technologyCardId: cardId,
       },
+    });
+    if (updated.count !== 1) {
+      throw new NotFoundException(`Season ${seasonId} not found`);
+    }
+
+    return this.prisma.season.findFirstOrThrow({
+      where: { id: seasonId, companyId },
       include: {
         technologyCard: {
           include: {

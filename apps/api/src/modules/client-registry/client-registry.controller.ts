@@ -6,12 +6,15 @@ import {
   Param,
   Delete,
   Put,
+  UseGuards,
 } from "@nestjs/common";
 import { ClientRegistryService } from "./client-registry.service";
+import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 // Assuming internal tenant/user extraction from req. user decorator is standard in this project
 // For now using simple placeholders for companyId
 
 @Controller("registry/clients")
+@UseGuards(JwtAuthGuard)
 export class ClientRegistryController {
   constructor(private readonly registryService: ClientRegistryService) { }
 

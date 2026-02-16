@@ -50,10 +50,13 @@ export class IntegrityService {
         });
 
         // Link observation to the review
-        await this.prisma.fieldObservation.update({
-            where: { id: observation.id },
+        const linked = await this.prisma.fieldObservation.updateMany({
+            where: { id: observation.id, companyId: observation.companyId },
             data: { deviationReviewId: review.id },
         });
+        if (linked.count !== 1) {
+            this.logger.warn(`[INTEGRITY] Observation link skipped due to tenant mismatch: ${observation.id}`);
+        }
 
         this.logger.log(`[INTEGRITY] DeviationReview created: ${review.id}`);
     }

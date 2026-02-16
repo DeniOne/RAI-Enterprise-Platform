@@ -84,7 +84,7 @@ export class AgroAuditService {
         // Log to separate failures table
         if (attempt < maxRetries - 1) {
           try {
-            await this.prisma.auditFailure.create({
+            await this.prisma.auditFailure.create({ // tenant-lint:ignore AuditFailure model has no companyId column
               data: {
                 event,
                 userId: user?.id,

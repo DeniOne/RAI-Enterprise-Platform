@@ -27,11 +27,23 @@ export class PulseService {
     /**
      * Survey responses are immutable. Pure IO.
      */
-    async submitResponse(data: { pulseSurveyId: string; respondentId: string; answers: any }) {
-        return this.prisma.surveyResponse.create({
+    async submitResponse(data: { pulseSurveyId: string; respondentId: string; answers: any }, companyId: string) {
+        const survey = await this.prisma.pulseSurvey.findFirst({
+            where: { id: data.pulseSurveyId, companyId },
+            select: { id: true },
+        });
+        const respondent = await this.prisma.employeeProfile.findFirst({
+            where: { id: data.respondentId, companyId },
+            select: { id: true },
+        });
+        if (!survey || !respondent) {
+            throw new Error('Survey or respondent not found for tenant');
+        }
+
+        return this.prisma.surveyResponse.create({ // tenant-lint:ignore SurveyResponse has no companyId, tenant is enforced by validated survey/respondent
             data: {
-                pulseSurvey: { connect: { id: data.pulseSurveyId } },
-                respondent: { connect: { id: data.respondentId } },
+                pulseSurvey: { connect: { id: survey.id } },
+                respondent: { connect: { id: respondent.id } },
                 answers: data.answers,
             },
         });

@@ -12,15 +12,32 @@ export class RedisService {
     }
 
     async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
-        if (ttlSeconds) {
-            await this.client.setex(key, ttlSeconds, value);
-        } else {
-            await this.client.set(key, value);
+        try {
+            if (this.client.status !== 'ready') {
+                console.warn(`[Redis] Not ready, skipping set for key: ${key}`);
+                return;
+            }
+            if (ttlSeconds) {
+                await this.client.setex(key, ttlSeconds, value);
+            } else {
+                await this.client.set(key, value);
+            }
+        } catch (error) {
+            console.error(`[Redis] Set error for key ${key}:`, error);
         }
     }
 
     async get(key: string): Promise<string | null> {
-        return this.client.get(key);
+        try {
+            if (this.client.status !== 'ready') {
+                console.warn(`[Redis] Not ready, returning null for key: ${key}`);
+                return null;
+            }
+            return await this.client.get(key);
+        } catch (error) {
+            console.error(`[Redis] Get error for key ${key}:`, error);
+            return null;
+        }
     }
 
     async del(key: string): Promise<void> {

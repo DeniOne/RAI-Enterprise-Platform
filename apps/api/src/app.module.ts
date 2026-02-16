@@ -1,4 +1,6 @@
-import { Module } from "@nestjs/common";
+import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
+// Force restart
+import * as Joi from 'joi';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { GraphQLModule } from "@nestjs/graphql";
 import { ApolloDriver, ApolloDriverConfig } from "@nestjs/apollo";
@@ -36,25 +38,41 @@ import { FieldObservationModule } from "./modules/field-observation/field-observ
 import { IntegrityModule } from "./modules/integrity/integrity.module";
 import { ConsultingModule } from "./modules/consulting/consulting.module";
 import { AdvisoryModule } from "./modules/advisory/advisory.module";
+import { HealthModule } from "./modules/health/health.module";
+import { HttpResilienceModule } from "./shared/http/http-resilience.module";
 import { join } from "path";
 
 import { OutboxModule } from './shared/outbox/outbox.module';
+import { InvariantMetricsModule } from "./shared/invariants/invariant-metrics.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       envFilePath: [".env", "../../.env"],
       isGlobal: true,
+      validationSchema: Joi.object({
+        NODE_ENV: Joi.string().valid('development', 'production', 'test', 'provision').default('development'),
+        PORT: Joi.number().default(3000),
+        DATABASE_URL: Joi.string().required(),
+        REDIS_HOST: Joi.string().default('localhost'),
+        REDIS_PORT: Joi.number().default(6379),
+        JWT_SECRET: Joi.string().required(),
+      }),
+      validationOptions: {
+        allowUnknown: true,
+        abortEarly: true,
+      },
     }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([{
       ttl: 60000, // 1 minute
-      limit: 10,  // 10 requests per minute (default, soft limit)
+      limit: 1000,  // Increased for load testing
     }]),
     RedisModule,
     PrismaModule,
     OutboxModule,
+    InvariantMetricsModule,
     AuthModule,
     MemoryModule,
     AuditModule,
@@ -82,7 +100,10 @@ import { OutboxModule } from './shared/outbox/outbox.module';
     FieldObservationModule,
     IntegrityModule,
     ConsultingModule,
+    ConsultingModule,
     AdvisoryModule,
+    HealthModule,
+    HttpResilienceModule,
 
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
@@ -90,6 +111,12 @@ import { OutboxModule } from './shared/outbox/outbox.module';
       sortSchema: true,
       playground: true,
     }),
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule { }

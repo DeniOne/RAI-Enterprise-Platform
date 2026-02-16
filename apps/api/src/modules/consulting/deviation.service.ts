@@ -29,9 +29,9 @@ export class DeviationService {
      * Logic: Deviation = Planned - Actual.
      * Follows Phase 2.4 "Calculated, not Stored" principle.
      */
-    async calculateBudgetDeviations(budgetPlanId: string): Promise<BudgetDeviationReport> {
-        const budget = await this.prisma.budgetPlan.findUnique({
-            where: { id: budgetPlanId },
+    async calculateBudgetDeviations(budgetPlanId: string, companyId: string): Promise<BudgetDeviationReport> {
+        const budget = await this.prisma.budgetPlan.findFirst({
+            where: { id: budgetPlanId, companyId },
             include: { items: true }
         });
 

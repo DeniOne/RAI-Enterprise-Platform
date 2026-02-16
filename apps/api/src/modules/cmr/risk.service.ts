@@ -33,14 +33,14 @@ export class RiskService {
      * Decoupled architecture: CMR reads snapshots from the shared repository, 
      * but does NOT depend on HR services.
      */
-    async calculateHumanCapitalRisk(employeeId: string) {
+    async calculateHumanCapitalRisk(employeeId: string, companyId?: string) {
         // NOTE: This is a baseline rule.
         // Final risk calculation will consider:
         // - trend deltas (is burnout increasing?)
         // - confidence level (how accurate is this signal?)
         // - multiple snapshots over time (averaging/weighting)
         const snapshot = await this.prisma.humanAssessmentSnapshot.findFirst({
-            where: { employeeId },
+            where: { employeeId, ...(companyId ? { companyId } : {}) },
             orderBy: { createdAt: 'desc' }
         });
 

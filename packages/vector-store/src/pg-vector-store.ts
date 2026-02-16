@@ -19,7 +19,7 @@ export class PgVectorStore implements IVectorStore {
         // Once MemoryEntry is created, we can attempt to use Prisma for standard fields, 
         // but for safety with pgvector, we use raw SQL for the whole insert when embedding is present.
 
-        const result = await this.prisma.$queryRawUnsafe<{ id: string }[]>(
+        const result = await this.prisma.$queryRawUnsafe(
             `INSERT INTO memory_entries (id, content, embedding, metadata, "companyId", "memoryType", source, "expiresAt", "createdAt")
              VALUES ($1, $2, $3::vector, $4::jsonb, $5, $6, $7, $8, NOW())
              RETURNING id`,
@@ -31,7 +31,7 @@ export class PgVectorStore implements IVectorStore {
             options.memoryType,
             options.source,
             options.expiresAt || null
-        );
+        ) as { id: string }[];
 
         return result[0].id;
     }
@@ -44,7 +44,7 @@ export class PgVectorStore implements IVectorStore {
         const minSimilarity = options.minSimilarity || 0.7;
 
         // Cosine similarity in pgvector: 1 - (embedding <=> $1)
-        const entries = await this.prisma.$queryRawUnsafe<any[]>(
+        const entries = await this.prisma.$queryRawUnsafe(
             `SELECT id, content, metadata, 1 - (embedding <=> $1::vector) as similarity
              FROM memory_entries
              WHERE "companyId" = $2
@@ -57,7 +57,7 @@ export class PgVectorStore implements IVectorStore {
             options.memoryType,
             minSimilarity,
             limit
-        );
+        ) as any[];
 
         return entries.map(e => ({
             id: e.id,

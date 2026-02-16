@@ -1,4 +1,5 @@
 import { Controller, Post, Body, Get, Param, Patch, UseGuards, Query } from '@nestjs/common';
+import { PaginationDto } from '../../shared/dto/pagination.dto';
 import { DeviationService } from './deviation.service';
 import { RiskService } from './risk.service';
 import { DecisionService } from './decision.service';
@@ -24,8 +25,12 @@ export class CmrController {
     }
 
     @Get('reviews')
-    async listReviews(@CurrentUser() user: any) {
-        return this.deviationService.findAll(user.companyId);
+    async listReviews(@CurrentUser() user: any, @Query() pagination: PaginationDto) {
+        return this.deviationService.findAll(user.companyId, {
+            skip: ((pagination.page || 1) - 1) * (pagination.limit || 20),
+            limit: pagination.limit || 20,
+            page: pagination.page || 1
+        });
     }
 
     @Get('reviews/:id')
@@ -43,15 +48,24 @@ export class CmrController {
     }
 
     @Get('decisions')
-    async getDecisions(@CurrentUser() user: any) {
-        return this.decisionService.findAll(user.companyId);
+    async getDecisions(@CurrentUser() user: any, @Query() pagination: PaginationDto) {
+        return this.decisionService.findAll(user.companyId, {
+            skip: ((pagination.page || 1) - 1) * (pagination.limit || 20),
+            limit: pagination.limit || 20,
+            page: pagination.page || 1
+        });
     }
 
     @Get('decisions/season/:seasonId')
     async getDecisionsBySeason(
         @Param('seasonId') seasonId: string,
         @CurrentUser() user: any,
+        @Query() pagination: PaginationDto,
     ) {
-        return this.decisionService.findBySeason(seasonId, user.companyId);
+        return this.decisionService.findBySeason(seasonId, user.companyId, {
+            skip: ((pagination.page || 1) - 1) * (pagination.limit || 20),
+            limit: pagination.limit || 20,
+            page: pagination.page || 1
+        });
     }
 }

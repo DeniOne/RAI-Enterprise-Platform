@@ -5,6 +5,7 @@ import { PrismaService } from "../../shared/prisma/prisma.service";
 import { BudgetPlanService } from "./budget-plan.service";
 import { BudgetStatus, BudgetCategory, EconomicEventType } from "@rai/prisma-client";
 import { EconomyService } from "../finance-economy/economy/application/economy.service";
+import { buildFinanceIngestEvent } from "../finance-economy/contracts/finance-ingest.contract";
 
 @Injectable()
 export class ConsultingOrchestrator {
@@ -21,7 +22,7 @@ export class ConsultingOrchestrator {
         this.logger.log(`[ORCHESTRATOR] Handling completion of operation ${event.operationId} in execution ${event.executionId}`);
 
         // 1. Создаем запись в логе (START)
-        const orchestratorLog = await this.prisma.executionOrchestrationLog.create({
+        const orchestratorLog = await this.prisma.executionOrchestrationLog.create({ // tenant-lint:ignore tenant scope is inherited via executionId relation
             data: {
                 executionId: event.executionId,
                 event: 'OperationCompleted',
@@ -42,6 +43,7 @@ export class ConsultingOrchestrator {
             // 2. Находим активный бюджетный план
             const budgetPlan = await this.prisma.budgetPlan.findFirst({
                 where: {
+                    companyId: event.companyId,
                     techMapSnapshotId: event.techMapId,
                     status: BudgetStatus.LOCKED
                 },
@@ -58,12 +60,18 @@ export class ConsultingOrchestrator {
                 await this.prisma.$transaction(async (tx) => {
                     // Линкуем транзакции к логу для Audit Trail
                     await tx.stockTransaction.updateMany({
-                        where: { id: { in: event.stockTransactionIds } },
+                        where: {
+                            id: { in: event.stockTransactionIds },
+                            companyId: event.companyId,
+                        },
                         data: { orchLogId: orchestratorLog.id }
                     });
 
                     const transactions = await tx.stockTransaction.findMany({
-                        where: { id: { in: event.stockTransactionIds } }
+                        where: {
+                            id: { in: event.stockTransactionIds },
+                            companyId: event.companyId,
+                        }
                     });
 
                     for (const transaction of transactions) {
@@ -72,7 +80,7 @@ export class ConsultingOrchestrator {
 
                         if (budgetItem) {
                             await tx.budgetItem.update({
-                                where: { id: budgetItem.id },
+                                where: { id: budgetItem.id, companyId: event.companyId },
                                 data: {
                                     actualAmount: { increment: (transaction as any).totalCost || 0 },
                                     stockTransactions: { connect: { id: transaction.id } }
@@ -87,7 +95,10 @@ export class ConsultingOrchestrator {
                         // Ideally checking atomicity, but EconomyService uses its own transaction.
                         // We use Promise.all or await sequentially.
                         try {
-                            await this.economyService.ingestEvent({
+                            await this.economyService.ingestEvent(buildFinanceIngestEvent({
+                                source: 'CONSULTING_ORCHESTRATOR',
+                                sourceEventId: transaction.id,
+                                traceId: `execution:${event.executionId}:tx:${transaction.id}`,
                                 type: EconomicEventType.COST_INCURRED,
                                 amount: (transaction as any).totalCost || 0,
                                 companyId: event.companyId,
@@ -95,7 +106,7 @@ export class ConsultingOrchestrator {
                                     executionId: event.executionId,
                                     resourceId: (transaction as any).resourceName
                                 }
-                            });
+                            }));
                         } catch (e) {
                             this.logger.error(`Failed to ingest economic event for tx ${transaction.id}: ${e.message}`);
                             outcome.warnings.push(`Failed to create Ledger Entry for ${transaction.id}`);
@@ -123,7 +134,7 @@ export class ConsultingOrchestrator {
         } finally {
             // 5. Финализируем лог
             try {
-                await this.prisma.executionOrchestrationLog.update({
+                await this.prisma.executionOrchestrationLog.update({ // tenant-lint:ignore tenant scope is inherited via orchestration log -> execution relation
                     where: { id: orchestratorLog.id },
                     data: {
                         status: outcome.status,

@@ -50,7 +50,7 @@ export class CrmService {
 
         // Architectural Constraint: Cannot delete holding with active accounts
         const accountsCount = await this.prisma.account.count({
-            where: { holdingId: id },
+            where: { holdingId: id, companyId },
         });
 
         if (accountsCount > 0) {

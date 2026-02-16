@@ -42,21 +42,59 @@ export class DecisionService {
     /**
      * Получить все решения для компании (read-only аудит).
      */
-    async findAll(companyId: string) {
-        return this.prisma.cmrDecision.findMany({
-            where: { companyId },
-            orderBy: { createdAt: 'desc' },
-        });
+    async findAll(companyId: string, pagination?: { skip: number; limit: number; page: number }) {
+        const take = pagination?.limit || 50;
+        const skip = pagination?.skip || 0;
+        const where = { companyId };
+
+        const [data, total] = await Promise.all([
+            this.prisma.cmrDecision.findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                take,
+                skip,
+            }),
+            this.prisma.cmrDecision.count({ where })
+        ]);
+
+        return {
+            data,
+            meta: {
+                total,
+                page: pagination?.page || 1,
+                limit: take,
+                totalPages: Math.ceil(total / take),
+            }
+        };
     }
 
     /**
      * Получить решения по сезону (read-only аудит).
      */
-    async findBySeason(seasonId: string, companyId: string) {
-        return this.prisma.cmrDecision.findMany({
-            where: { seasonId, companyId },
-            orderBy: { createdAt: 'desc' },
-        });
+    async findBySeason(seasonId: string, companyId: string, pagination?: { skip: number; limit: number; page: number }) {
+        const take = pagination?.limit || 50;
+        const skip = pagination?.skip || 0;
+        const where = { seasonId, companyId };
+
+        const [data, total] = await Promise.all([
+            this.prisma.cmrDecision.findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                take,
+                skip,
+            }),
+            this.prisma.cmrDecision.count({ where })
+        ]);
+
+        return {
+            data,
+            meta: {
+                total,
+                page: pagination?.page || 1,
+                limit: take,
+                totalPages: Math.ceil(total / take),
+            }
+        };
     }
 
     // Иммутабельность: обновление и удаление запрещены (Legal Canon)

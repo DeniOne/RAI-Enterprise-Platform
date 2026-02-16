@@ -30,8 +30,8 @@ export class BudgetPlanService {
      * Создает новый BudgetPlan на основе активной техкарты.
      */
     async createBudget(harvestPlanId: string, context: UserContext) {
-        const plan = await this.prisma.harvestPlan.findUnique({
-            where: { id: harvestPlanId },
+        const plan = await this.prisma.harvestPlan.findFirst({
+            where: { id: harvestPlanId, companyId: context.companyId },
             include: {
                 activeTechMap: {
                     include: {
@@ -52,7 +52,7 @@ export class BudgetPlanService {
 
         // Версионирование
         const lastVersion = await this.prisma.budgetPlan.findFirst({
-            where: { harvestPlanId },
+            where: { harvestPlanId, companyId: context.companyId },
             orderBy: { version: 'desc' },
         });
         const newVersion = (lastVersion?.version || 0) + 1;
@@ -113,8 +113,8 @@ export class BudgetPlanService {
      * Управляет переходами состояний бюджета (FSM).
      */
     async transitionStatus(budgetId: string, event: BudgetTransitionEvent, context: UserContext) {
-        const budget = await this.prisma.budgetPlan.findUnique({
-            where: { id: budgetId },
+        const budget = await this.prisma.budgetPlan.findFirst({
+            where: { id: budgetId, companyId: context.companyId },
         });
 
         if (!budget || budget.companyId !== context.companyId) {
@@ -143,28 +143,42 @@ export class BudgetPlanService {
         }
 
         return this.prisma.$transaction(async (tx) => {
-            const updated = await tx.budgetPlan.update({
-                where: { id: budgetId, status: currentStatus },
+            const updateResult = await tx.budgetPlan.updateMany({
+                where: { id: budgetId, companyId: context.companyId, status: currentStatus },
                 data: { status: targetStatus },
+            });
+            if (updateResult.count !== 1) {
+                throw new ConflictException('Budget transition conflict');
+            }
+            const updated = await tx.budgetPlan.findFirstOrThrow({
+                where: { id: budgetId, companyId: context.companyId },
             });
 
             // Side-effects
             if (targetStatus === BudgetStatus.LOCKED) {
                 // Устанавливаем текущий LOCKED бюджет как активный для плана
-                await tx.harvestPlan.update({
-                    where: { id: budget.harvestPlanId },
+                const lockLink = await tx.harvestPlan.updateMany({
+                    where: { id: budget.harvestPlanId, companyId: context.companyId },
                     data: { activeBudgetPlanId: updated.id },
                 });
+                if (lockLink.count !== 1) {
+                    throw new NotFoundException('Harvest plan not found');
+                }
             }
 
             if (targetStatus === BudgetStatus.CLOSED) {
                 // Если закрываем ACTIVE бюджет — отвязываем его от плана
-                const plan = await tx.harvestPlan.findUnique({ where: { id: budget.harvestPlanId } });
+                const plan = await tx.harvestPlan.findFirst({
+                    where: { id: budget.harvestPlanId, companyId: context.companyId },
+                });
                 if (plan?.activeBudgetPlanId === budgetId) {
-                    await tx.harvestPlan.update({
-                        where: { id: budget.harvestPlanId },
+                    const clearLink = await tx.harvestPlan.updateMany({
+                        where: { id: budget.harvestPlanId, companyId: context.companyId },
                         data: { activeBudgetPlanId: null },
                     });
+                    if (clearLink.count !== 1) {
+                        throw new NotFoundException('Harvest plan not found');
+                    }
                 }
             }
 
@@ -176,8 +190,10 @@ export class BudgetPlanService {
      * Immutability Guard (PHASE0-CORE-001)
      * Prohibits updates to BudgetPlan unless it is in DRAFT state.
      */
-    async updateBudget(budgetId: string, data: any) {
-        const budget = await this.prisma.budgetPlan.findUnique({ where: { id: budgetId } });
+    async updateBudget(budgetId: string, data: any, context: UserContext) {
+        const budget = await this.prisma.budgetPlan.findFirst({
+            where: { id: budgetId, companyId: context.companyId },
+        });
         if (!budget) throw new NotFoundException('Budget not found');
 
         if (budget.status !== BudgetStatus.DRAFT) {
@@ -193,8 +209,8 @@ export class BudgetPlanService {
      */
     async syncActuals(budgetId: string, context: UserContext) {
         return withOptimisticLock(async () => {
-            const budget = await this.prisma.budgetPlan.findUnique({
-                where: { id: budgetId },
+            const budget = await this.prisma.budgetPlan.findFirst({
+                where: { id: budgetId, companyId: context.companyId },
                 include: { items: true },
             });
 
@@ -223,13 +239,16 @@ export class BudgetPlanService {
             }
 
             // Обновляем общий факт с Optimistic Locking (проверка версии)
-            await this.prisma.budgetPlan.update({
-                where: { id: budgetId, version: budget.version }, // Check version!
+            const syncUpdate = await this.prisma.budgetPlan.updateMany({
+                where: { id: budgetId, companyId: context.companyId, version: budget.version }, // Check version!
                 data: {
                     totalActualAmount: totalActual,
                     version: { increment: 1 } // Increment version
                 },
             });
+            if (syncUpdate.count !== 1) {
+                throw new ConflictException('Budget version conflict');
+            }
 
             if (hasOverflow) {
                 // Note: Deviation creation is idempotent-ish, or should be checked.
@@ -261,14 +280,14 @@ export class BudgetPlanService {
      */
     async validateIntegrity(budgetId: string) {
         const budget = await this.prisma.budgetPlan.findUnique({
-            where: { id: budgetId },
+            where: { id: budgetId }, // tenant-lint:ignore integrity check API currently has no user context
             include: { items: true }
         });
         if (!budget) throw new NotFoundException('Budget not found');
         if (!budget.techMapSnapshotId) return; // Legacy budget without snapshot
 
-        const techMap = await this.prisma.techMap.findUnique({
-            where: { id: budget.techMapSnapshotId }
+        const techMap = await this.prisma.techMap.findFirst({
+            where: { id: budget.techMapSnapshotId, companyId: budget.companyId },
         });
 
         // Re-construct the hash input exactly as it was created

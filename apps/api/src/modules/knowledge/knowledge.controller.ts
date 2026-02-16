@@ -1,7 +1,9 @@
-import { Controller, Get, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
 import { KnowledgeService } from './knowledge.service';
+import { JwtAuthGuard } from '../../shared/auth/jwt-auth.guard';
 
 @Controller('knowledge')
+@UseGuards(JwtAuthGuard)
 export class KnowledgeController {
     constructor(private readonly knowledgeService: KnowledgeService) { }
 

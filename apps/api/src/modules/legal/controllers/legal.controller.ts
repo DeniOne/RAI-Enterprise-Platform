@@ -1,8 +1,10 @@
 import { Controller, Get, Post, Param, Body, UseGuards, Query } from '@nestjs/common';
 import { ComplianceService } from '../services/compliance.service';
 import { ImpactTargetType } from '@rai/prisma-client';
+import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
 
 @Controller('legal')
+@UseGuards(JwtAuthGuard)
 export class LegalController {
     constructor(private complianceService: ComplianceService) { }
 

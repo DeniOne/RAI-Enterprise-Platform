@@ -94,19 +94,27 @@ export class IntegrityGateService {
                 : "ТРЕБУЕТСЯ ПРОВЕРКА (Weak/No Evidence)",
         });
 
-        await this.prisma.fieldObservation.update({
-            where: { id: observation.id },
+        const linkedObservation = await this.prisma.fieldObservation.updateMany({
+            where: { id: observation.id, companyId: observation.companyId },
             data: { deviationReviewId: review.id },
         });
+        if (linkedObservation.count !== 1) {
+            this.logger.warn(`[INTEGRITY-GATE] Observation not linked due to tenant scope mismatch: ${observation.id}`);
+        }
 
-        await this.consultingService.openConsultationThread(review.id);
+        await this.consultingService.openConsultationThread(review.id, observation.companyId);
     }
 
     private async handleWeakEvidence(observation: FieldObservation) {
         this.logger.warn(`[LAW] Negative Contour: WEAK_EVIDENCE detected for observation ${observation.id}`);
 
         // Получаем задачу для трассировки
-        const task = observation.taskId ? await this.prisma.task.findUnique({ where: { id: observation.taskId } }) : null;
+        const task = observation.taskId ? await this.prisma.task.findFirst({
+            where: {
+                id: observation.taskId,
+                companyId: observation.companyId,
+            }
+        }) : null;
 
         // Создаем запись о риске с полной трассировкой (Requirement 2.2)
         await this.prisma.cmrRisk.create({
@@ -136,7 +144,7 @@ export class IntegrityGateService {
     async checkTaskSilence() {
         this.logger.log(`[INTEGRITY-GATE] Running Silence Path Audit...`);
 
-        const overdueTasks = await this.prisma.task.findMany({
+        const overdueTasks = await this.prisma.task.findMany({ // tenant-lint:ignore system-wide scheduled compliance scan across tenants
             where: {
                 status: { notIn: [TaskStatus.COMPLETED, TaskStatus.CANCELLED] },
                 slaExpiration: { lt: new Date() },
@@ -170,7 +178,7 @@ export class IntegrityGateService {
             });
 
             // Опционально: переводим задачу в состояние ошибки или эскалации
-            // await this.prisma.task.update({ where: { id: task.id }, data: { status: 'ESCALATED' } });
+            // optional escalation is implemented via dedicated tenant-safe helper
         }
     }
 
@@ -221,23 +229,37 @@ export class IntegrityGateService {
 
         // Активация
         if (targetAsset.type === 'MACHINERY') {
-            await this.prisma.machinery.update({
-                where: { id: targetAsset.id },
+            const updated = await this.prisma.machinery.updateMany({
+                where: {
+                    id: targetAsset.id,
+                    companyId: observation.companyId,
+                },
                 data: {
                     status: AssetStatus.ACTIVE,
                     confirmedByUserId: observation.authorId,
                     confirmedAt: new Date()
                 }
             });
+            if (updated.count !== 1) {
+                this.logger.warn(`[INTEGRITY-GATE] Machinery not updated due to tenant scope mismatch: ${targetAsset.id}`);
+                return;
+            }
         } else {
-            await this.prisma.stockItem.update({
-                where: { id: targetAsset.id },
+            const updated = await this.prisma.stockItem.updateMany({
+                where: {
+                    id: targetAsset.id,
+                    companyId: observation.companyId,
+                },
                 data: {
                     status: AssetStatus.ACTIVE,
                     confirmedByUserId: observation.authorId,
                     confirmedAt: new Date()
                 }
             });
+            if (updated.count !== 1) {
+                this.logger.warn(`[INTEGRITY-GATE] StockItem not updated due to tenant scope mismatch: ${targetAsset.id}`);
+                return;
+            }
         }
 
         this.logger.log(`[INTEGRITY-GATE] Asset CONFIRMED: ${targetAsset.type} ${targetAsset.name} (${targetAsset.id})`);
@@ -253,11 +275,11 @@ export class IntegrityGateService {
      * Валидация допуска техкарты (Admission Gate).
      * Проверяет готовность техники и наличие ТМЦ.
      */
-    async validateTechMapAdmission(techMapId: string) {
+    async validateTechMapAdmission(techMapId: string, companyId: string) {
         this.logger.log(`[INTEGRITY-GATE] Validating Admission for TechMap ${techMapId}`);
 
-        const map = await this.prisma.techMap.findUnique({
-            where: { id: techMapId },
+        const map = await this.prisma.techMap.findFirst({
+            where: { id: techMapId, companyId },
             include: {
                 stages: {
                     include: {
@@ -575,3 +597,4 @@ export class IntegrityGateService {
         return { ok: errors.length === 0, errors };
     }
 }
+

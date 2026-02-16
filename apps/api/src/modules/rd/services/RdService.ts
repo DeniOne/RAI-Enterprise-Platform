@@ -23,7 +23,7 @@ export class RdService {
      * Does not mutate state. Returns deterministic projection.
      */
     async getStrategicSnapshot(): Promise<RdStrategicState> {
-        const activeExperiments = await this.prisma.experiment.count({
+        const activeExperiments = await this.prisma.experiment.count({ // tenant-lint:ignore global strategic snapshot aggregate
             where: { state: 'RUNNING' }
         });
 

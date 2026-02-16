@@ -19,6 +19,7 @@ import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
 import { User, Task, TaskStatus } from "@rai/prisma-client";
 import { PrismaService } from "../../shared/prisma/prisma.service";
+import { PaginationDto, PaginatedResult } from "../../shared/dto/pagination.dto";
 
 /**
  * REST API для задач — Integration API для Telegram Bot и внешних систем.
@@ -48,28 +49,45 @@ export class TaskController {
     @ApiResponse({ status: 200, description: "Список задач пользователя" })
     async getMyTasks(
         @CurrentUser() user: User,
+        @Query() pagination: PaginationDto,
         @Query("status") status?: TaskStatus,
-    ): Promise<Task[]> {
-        const where: any = {
+    ): Promise<PaginatedResult<Task>> {
+        const where = {
             assigneeId: user.id,
             companyId: user.companyId,
+            ...(status
+                ? { status }
+                : { status: { in: [TaskStatus.PENDING, TaskStatus.IN_PROGRESS] } }),
         };
 
-        if (status) {
-            where.status = status;
-        } else {
-            // По умолчанию показываем активные задачи
-            where.status = { in: [TaskStatus.PENDING, TaskStatus.IN_PROGRESS] };
-        }
+        // Enforce pagination
+        const take = pagination.limit || 20;
+        const skip = pagination.skip || 0;
+        const page = pagination.page || 1;
 
-        return this.prisma.task.findMany({
-            where,
-            include: {
-                field: { select: { id: true, name: true } },
-                season: { select: { id: true, year: true } },
+        const [data, total] = await Promise.all([
+            this.prisma.task.findMany({
+                where,
+                include: {
+                    field: { select: { id: true, name: true } },
+                    season: { select: { id: true, year: true } },
+                },
+                orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+                take,
+                skip,
+            }),
+            this.prisma.task.count({ where }),
+        ]);
+
+        return {
+            data,
+            meta: {
+                total,
+                page,
+                limit: take,
+                totalPages: Math.ceil(total / take),
             },
-            orderBy: [{ status: "asc" }, { createdAt: "desc" }],
-        });
+        };
     }
 
     /**

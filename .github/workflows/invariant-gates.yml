@@ -1,0 +1,54 @@
+name: invariant-gates
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  invariant-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prepare artifacts dir
+        run: mkdir -p artifacts
+
+      - name: Invariant gate (hard fail)
+        run: pnpm gate:invariants:enforce | tee artifacts/invariant-gate.log
+
+      - name: Tenant context lint (warn-mode report)
+        run: pnpm lint:tenant-context | tee artifacts/tenant-context-lint.log
+
+      - name: Build rollout guard input
+        run: node scripts/rollout-guard-input-from-env.cjs --out artifacts/rollout-guard-input.json
+
+      - name: Rollout guard (hard fail)
+        run: pnpm gate:rollout -- --input artifacts/rollout-guard-input.json | tee artifacts/rollout-gate.log
+
+      - name: Upload gate artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: invariant-gates-artifacts
+          path: artifacts/
+          if-no-files-found: warn

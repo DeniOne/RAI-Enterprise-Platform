@@ -14,20 +14,23 @@ export class TechMapService {
     ) { }
 
     async generateMap(harvestPlanId: string, seasonId: string) {
-        const plan = await this.prisma.harvestPlan.findUnique({
+        const plan = await this.prisma.harvestPlan.findFirst({
             where: { id: harvestPlanId },
             include: {
                 company: true
             }
         });
 
-        const season = await this.prisma.season.findUnique({
+        const season = await this.prisma.season.findFirst({
             where: { id: seasonId },
             include: { rapeseed: true }
         });
 
         if (!plan || !season) {
             throw new NotFoundException('Harvest Plan or Season not found');
+        }
+        if (season.companyId !== plan.companyId) {
+            throw new BadRequestException('Harvest Plan and Season tenant mismatch');
         }
 
         // Get max version for this context
@@ -97,31 +100,43 @@ export class TechMapService {
             let data: any = { status: targetStatus };
 
             if (targetStatus === TechMapStatus.ACTIVE) {
-                await this.integrityGate.validateTechMapAdmission(map.id);
+                await this.integrityGate.validateTechMapAdmission(map.id, companyId);
 
                 data.approvedAt = new Date();
                 data.operationsSnapshot = map.stages; // Simplified snapshotting
                 data.resourceNormsSnapshot = map.stages.flatMap(s => s.operations.flatMap(o => o.resources));
 
                 // Atomic link to HarvestPlan
-                await tx.harvestPlan.update({
-                    where: { id: map.harvestPlanId },
-                    data: { activeTechMapId: map.id }
+                const activateLink = await tx.harvestPlan.updateMany({
+                    where: { id: map.harvestPlanId, companyId },
+                    data: { activeTechMapId: map.id },
                 });
+                if (activateLink.count !== 1) {
+                    throw new NotFoundException('Harvest Plan not found');
+                }
             }
 
             // Cleanup link on ARCHIVED if it was ACTIVE
             if (targetStatus === TechMapStatus.ARCHIVED && current === TechMapStatus.ACTIVE) {
-                await tx.harvestPlan.update({
-                    where: { id: map.harvestPlanId },
-                    data: { activeTechMapId: null }
+                const clearLink = await tx.harvestPlan.updateMany({
+                    where: { id: map.harvestPlanId, companyId },
+                    data: { activeTechMapId: null },
                 });
+                if (clearLink.count !== 1) {
+                    throw new NotFoundException('Harvest Plan not found');
+                }
             }
 
             try {
-                return await tx.techMap.update({
-                    where: { id },
+                const updateResult = await tx.techMap.updateMany({
+                    where: { id, companyId },
                     data,
+                });
+                if (updateResult.count !== 1) {
+                    throw new NotFoundException('TechMap not found');
+                }
+                return await tx.techMap.findFirstOrThrow({
+                    where: { id, companyId },
                 });
             } catch (error: any) {
                 // Catch P2002 for the Partial Index "unique_active_techmap"

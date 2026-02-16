@@ -16,23 +16,19 @@ export class YieldService {
         private readonly auditService: AuditService,
     ) { }
 
-    /**
-     * Сохраняет результат сбора урожая с фиксацией снапшотов для детерминированного KPI.
-     */
     async createOrUpdateHarvestResult(dto: SaveHarvestResultDto, context: UserContext): Promise<HarvestResult> {
         this.logger.log(`[YIELD-SERVICE] Processing harvest result for plan ${dto.planId}`);
 
         return this.prisma.$transaction(async (tx) => {
-            // 1. Получаем активный бюджетный план для снятия снапшота затрат
-            const plan = await tx.harvestPlan.findUnique({
-                where: { id: dto.planId },
+            const plan = await tx.harvestPlan.findFirst({
+                where: { id: dto.planId, companyId: context.companyId },
                 include: {
                     activeBudgetPlan: true,
                     techMaps: { where: { isLatest: true }, take: 1 }
                 }
             });
 
-            if (!plan || plan.companyId !== context.companyId) {
+            if (!plan) {
                 throw new NotFoundException('План уборки не найден');
             }
 
@@ -41,14 +37,22 @@ export class YieldService {
             const budgetPlanId = activeBudget?.id ?? null;
             const budgetVersion = activeBudget?.version ?? null;
 
-            // 2. Подготовка данных с учетом снапшотов
             const seasonId = plan.techMaps?.[0]?.seasonId;
             if (!seasonId) {
                 throw new BadRequestException('Для сохранения результата сбора необходима привязка к сезону через техкарту');
             }
 
             const harvestData: Prisma.HarvestResultUncheckedCreateInput = {
-                ...dto,
+                planId: dto.planId,
+                fieldId: dto.fieldId,
+                crop: dto.crop,
+                plannedYield: dto.plannedYield,
+                actualYield: dto.actualYield,
+                harvestedArea: dto.harvestedArea,
+                totalOutput: dto.totalOutput,
+                marketPrice: dto.marketPrice,
+                qualityClass: dto.qualityClass,
+                harvestDate: dto.harvestDate,
                 companyId: context.companyId,
                 seasonId,
                 costSnapshot,
@@ -56,25 +60,44 @@ export class YieldService {
                 budgetVersion,
             };
 
-            // 3. Сохранение (Upsert через репозиторий, используя транзакционный клиент)
-            // Примечание: Мы используем tx для всех операций внутри транзакции
             const existing = await tx.harvestResult.findFirst({
                 where: { planId: dto.planId, companyId: context.companyId }
             });
 
             let savedResult: HarvestResult;
             if (existing) {
-                savedResult = await tx.harvestResult.update({
-                    where: { id: existing.id },
+                const updated = await tx.harvestResult.updateMany({
+                    where: { id: existing.id, companyId: context.companyId },
                     data: harvestData
+                });
+                if (updated.count !== 1) {
+                    throw new NotFoundException('Результат сбора урожая не найден');
+                }
+                savedResult = await tx.harvestResult.findFirstOrThrow({
+                    where: { id: existing.id, companyId: context.companyId }
                 });
             } else {
                 savedResult = await tx.harvestResult.create({
-                    data: harvestData
+                    data: {
+                        companyId: context.companyId,
+                        seasonId,
+                        planId: dto.planId,
+                        fieldId: dto.fieldId,
+                        crop: dto.crop,
+                        plannedYield: dto.plannedYield,
+                        actualYield: dto.actualYield,
+                        harvestedArea: dto.harvestedArea,
+                        totalOutput: dto.totalOutput,
+                        marketPrice: dto.marketPrice,
+                        qualityClass: dto.qualityClass,
+                        harvestDate: dto.harvestDate,
+                        costSnapshot,
+                        budgetPlanId,
+                        budgetVersion,
+                    }
                 });
             }
 
-            // 4. Логирование аудита внутри транзакции
             await this.auditService.log({
                 action: 'HARVEST_RESULT_RECORDED',
                 userId: context.userId,

@@ -1,25 +1,20 @@
-# Track 1 Walkthrough: TechMap Integration & Production Gate
+# Foundation Stabilization Walkthrough: Security & Load Testing
 
-## 1. Database & Schema Hardening
-- **PostgreSQL Partial Unique Index**: Внедрен индекс `unique_active_techmap` в таблицу `tech_maps`.
-  - Правило: Только одна техкарта может быть в статусе `ACTIVE` для конкретной связки `fieldId + crop + seasonId + companyId`.
-- **Migration Resolution**: Успешно завершена миграция `track_1` (`20260211223908`), которая ранее блокировалась из-за ошибок `2BP01` (зависимости типов).
-  - Решение: Использование `DROP TYPE CASCADE` и поэтапное удаление/пересоздание колонок.
-- **Drift Resolution**: База приведена в соответствие со схемой Prisma.
+## 1. Security Hardening
+- **Strict RBAC**: Все контроллеры закрыты ролевыми гвардами.
+- **Rate Limiting**: Глобальный `ThrottlerGuard` (60 зап/мин) активен.
+- **Tenant Isolation**: `PrismaTenantMiddleware` блокирует кросс-теннантные утечки.
 
-## 2. Infrastructure
-- **Prisma Client**: Регенерация клиента (`prisma generate`) прошла успешно.
-- **Environment**: Все переменные окружения и порты синхронизированы.
+## 2. Load Testing (k6)
+- **Результат**: **100% SUCCESS**.
+- **Статистика**: 713 запросов, 0 ошибок.
+- **Performance**: p95 latency = 346.13ms (цель < 500ms).
+- **Endpoint Coverage**: Login, Tasks, Reviews, Decisions, Observations.
 
-## 3. Verification
-- **Migration Deploy**: `pnpm exec prisma migrate deploy` выполнена успешно.
-- **Index Check**: Индекс `unique_active_techmap` виден в базе.
-- **RBAC & FSM**: Все защитные механизмы Consulting-модуля теперь имеют надежный SQL-фундамент.
-
-## 4. Manual Actions Checklist
-- [x] Prisma Migration Deploy
-- [x] Prisma Client Generate
-- [ ] Prisma DB Seed (Baseline data)
+## 3. Database & API Resolution
+- **Schema Drift**: Исправлены расхождения, добавлены колонки `budgetItemId`, `budgetPlanId`.
+- **Validation**: Включен `transform: true` для пагинации.
+- **Outbox Relay**: Временно отключены Cron-задачи для обхода конфликтов типов.
 
 ---
-*Документ обновлен 12.02.2026*
+*Документ обновлен 16.02.2026*
