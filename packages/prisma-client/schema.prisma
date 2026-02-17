@@ -55,6 +55,8 @@ model Company {
   economicEvents    EconomicEvent[]
   ledgerEntries     LedgerEntry[]
   cashAccounts      CashAccount[]
+  accountBalances   AccountBalance[]
+  tenantStates      TenantState[]
   budgets           Budget[]
   budgetItems       BudgetItem[]
   // Legal & GR relations
@@ -1980,10 +1982,25 @@ enum BudgetStatus {
   CLOSED
 }
 
+enum TenantMode {
+  ACTIVE
+  READ_ONLY
+  HALTED
+}
+
+model TenantState {
+  companyId String     @id
+  company   Company    @relation(fields: [companyId], references: [id])
+  mode      TenantMode @default(ACTIVE)
+  
+  updatedAt DateTime   @updatedAt
+
+  @@map("tenant_states")
+}
+
 model EconomicEvent {
   id          String            @id @default(cuid())
   type        EconomicEventType
-  amount      Float
   currency    String            @default("RUB")
   replayKey   String?
   metadata    Json?             // Source data (taskId, employeeId, techMapId, etc.)
@@ -2005,12 +2022,15 @@ model EconomicEvent {
   @@index([seasonId])
   @@index([fieldId])
   @@index([employeeId])
+  @@unique([companyId, id])
   @@unique([companyId, replayKey])
   @@map("economic_events")
 }
 
 model LedgerEntry {
   id              String   @id @default(cuid())
+  sequenceNumber  Int      @default(1)
+  
   economicEventId String
   economicEvent   EconomicEvent @relation(fields: [economicEventId], references: [id])
   
@@ -2042,7 +2062,20 @@ model LedgerEntry {
   @@index([accountCode])
   @@index([cashAccountId])
   @@index([executionId])
+  @@unique([economicEventId, sequenceNumber])
   @@map("ledger_entries")
+}
+
+model AccountBalance {
+  companyId   String
+  accountCode String
+  balance     Decimal  @default(0) @db.Decimal(18, 4)
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  company     Company  @relation(fields: [companyId], references: [id])
+
+  @@id([companyId, accountCode])
+  @@map("account_balances")
 }
 
 model CashAccount {

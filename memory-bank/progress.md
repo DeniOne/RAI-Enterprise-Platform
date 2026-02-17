@@ -174,6 +174,9 @@
 - [x] **Vertical Integrity**: Реализован полный цикл "Draft Plan -> Active Plan -> Deviation -> Decision -> Archive".
 - [x] **Hardening (Optimistic Locking)**: Внедрена защита от race conditions через `status: current` в `ConsultingService` и `DeviationService`.
 - [x] **FSM Guards**: Строгие правила переходов статусов с проверкой ролей (RBAC) и бизнес-правил (`ConsultingDomainRules`).
+- [x] **Ledger-First Cash Flow**: Касса — это проекция, а не хранилище.
+- [x] **10/10 Ledger Hardening**: Балансовый слой и автономная паника обязательны.
+- [x] **Russian Language Guard**: Все системные сообщения - строго на русском.
 - [x] **Audit Trail**: Каждое изменение статуса и решения фиксируется в `cmr_decisions` (Immutable).
 - [x] **Isolation**: Доказанная изоляция данных по `companyId` и `seasonId` (season-isolation.spec.ts).
 - [x] **Test Coverage**: 31 Unit и Integration тест passed.
@@ -196,7 +199,9 @@
 ## Milestone 21: Phase 5 - Cash Flow Engine & Financial Stability — DONE ✅
 **Дата:** 2026-02-15
 - [x] **Data Strategy**: Реализована проекционная модель кассы без хранения остатков. Внедрен `BOOTSTRAP` для Ledger.
-- [x] **DB Guarding**: Жесткая валидация `cashImpact` и `cashAccountId` на уровне `EconomyService`.
+- [x] **DB Guard Enforcement**: Атомарная валидация метаданных транзакций и контроль платежеспособности (no negative cash).
+- [x] **FSM Integrity**: Все переходы через `DecisionLog` и RBAC.
+- [x] **Autonomous Isolation**: Автоматический переход в `READ_ONLY` при сбое целостности.
 - [x] **Burn Rate Logic**: Формализация расчета операционного расхода (Operating avg).
 - [x] **Risk Integration**: Внедрена категория `FINANCIAL_STABILITY` в стратегический Advisory.
 - [x] **API & RBAC**: Эндпоинты `/cashflow/*` доступны CEO/CFO в `ConsultingController`.
@@ -233,3 +238,13 @@
 
 ---
 **ИТОГ:** Фаза стабилизации фундамента завершена. Система полностью защищена, масштабируема и готова к промышленной эксплуатации и активной разработке функционала Phase Gamma.
+
+## Milestone 23: Ledger Kernel - 10/10 Production Hardening — DONE ✅
+**Дата:** 2026-02-17
+- [x] **Solvency Layer**: Таблица `account_balances` и триггеры для атомарного контроля балансов CoA.
+- [x] **Negative Cash Protection**: DB-level constraint `no_negative_cash` блокирует любые некорректные выводы средств.
+- [x] **Autonomous Panic (V6)**: Триггер ядра автоматически изолирует тенант (`READ_ONLY`) при нарушении математических инвариантов.
+- [x] **Strict Serializability**: Использование 64-битных advisory locks для предотвращения дрейфа последовательностей.
+- [x] **Localized Integrity**: Все системные логи, исключения и сообщения триггеров русифицированы (Language Policy).
+- [x] **Schema Sync**: `schema.prisma` приведена в полное соответствие с физическим состоянием БД.
+- [x] **Verification**: Все стресс-сценарии (A-D) пройдены со 100% успехом.

@@ -5,12 +5,13 @@ import { CostAttributionRules } from '../domain/rules/cost-attribution.rules';
 import { assertBalancedPostings, resolveJournalPhase, resolveSettlementRef } from '../domain/journal-policy';
 import { InvariantMetrics } from '../../../../shared/invariants/invariant-metrics';
 import { createHash } from 'crypto';
-import { roundMoney } from '../../finance/domain/policies/monetary-rounding.policy';
 import { FINANCE_INGEST_SUPPORTED_VERSIONS } from '../../contracts/finance-ingest.contract';
+import { OutboxService } from '../../../../shared/outbox/outbox.service';
+import { FinanceConfigService } from '../../finance/config/finance-config.service';
 
 export interface IngestEconomicEventDto {
     type: EconomicEventType;
-    amount: number;
+    amount: number | Prisma.Decimal;
     currency?: string;
     metadata?: any;
     fieldId?: string;
@@ -19,7 +20,6 @@ export interface IngestEconomicEventDto {
     companyId: string;
 }
 
-import { OutboxService } from '../../../../shared/outbox/outbox.service';
 
 @Injectable()
 export class EconomyService {
@@ -28,6 +28,7 @@ export class EconomyService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly outbox: OutboxService,
+        private readonly config: FinanceConfigService,
     ) { }
 
     /**
@@ -35,65 +36,85 @@ export class EconomyService {
      * Принимает внешние события и преобразует их в экономические факты.
      */
     async ingestEvent(dto: IngestEconomicEventDto) {
-        const panicThreshold = Number(process.env.FINANCIAL_PANIC_THRESHOLD || 5);
+        const panicThreshold = this.config.get('panicThreshold');
         if (InvariantMetrics.shouldTriggerFinancialPanic(panicThreshold)) {
             this.logger.error(
-                `FINANCIAL PANIC MODE ACTIVE: blocked ingest for company ${dto.companyId}. threshold=${panicThreshold}`,
+                `РЕЖИМ ФИНАНСОВОЙ ПАНИКИ АКТИВИРОВАН: инжест заблокирован для компании ${dto.companyId}. Порог=${panicThreshold}`,
             );
-            throw new ServiceUnavailableException('Financial panic mode active. Ingest temporarily blocked.');
+            throw new ServiceUnavailableException('Режим финансовой паники активен. Операции временно заблокированы.');
         }
 
         const idempotencyKey = this.extractIdempotencyKey(dto.metadata);
-        const normalizedAmount = roundMoney(dto.amount);
-        const enrichedMetadata = this.enrichFinancialMetadata(dto.type, dto.metadata);
-        this.validateContractCompatibility(enrichedMetadata, dto.companyId);
-        const replayKey = this.extractReplayKey(dto, idempotencyKey);
-        const requireIdempotency = (process.env.FINANCIAL_REQUIRE_IDEMPOTENCY || 'false') === 'true';
-        if (requireIdempotency && !idempotencyKey) {
+
+        // Idempotency is MANDATORY FOR FINTECH (G3: Atomicity)
+        if (!idempotencyKey && this.config.get('requireIdempotency')) {
             InvariantMetrics.increment('financial_invariant_failures_total');
-            throw new BadRequestException('Idempotency key is required for financial ingest.');
+            throw new BadRequestException('Ключ идемпотентности обязателен для финансовых операций.');
         }
 
-        this.logger.log(`Ingesting economic event: ${dto.type} for company ${dto.companyId}`);
+        const amount = new Prisma.Decimal(dto.amount);
+
+        // Dynamic scale lookup
+        const scale = await this.getCurrencyScale(dto.currency || this.config.get('defaultCurrency'));
+        const normalizedAmount = new Prisma.Decimal(amount.toFixed(scale, Prisma.Decimal.ROUND_HALF_UP));
+
+        const enrichedMetadata = this.enrichFinancialMetadata(dto.type, dto.metadata);
+        this.validateContractCompatibility(enrichedMetadata, dto.companyId);
+        const replayKey = this.extractReplayKey(dto, normalizedAmount, idempotencyKey);
+
+        this.logger.log(`Регистрация экономического события: ${dto.type} для компании ${dto.companyId}`);
 
         try {
             return await this.prisma.$transaction(async (tx) => {
-            // 1. Сохранение сырого события
-            const event = await tx.economicEvent.create({
-                data: {
-                    type: dto.type,
-                    amount: normalizedAmount,
-                    currency: dto.currency || 'RUB',
-                    replayKey,
-                    metadata: enrichedMetadata as Prisma.InputJsonValue,
-                    fieldId: dto.fieldId,
-                    seasonId: dto.seasonId,
-                    employeeId: dto.employeeId,
-                    companyId: dto.companyId,
-                },
-            });
+                // 0. Set RLS context for session (G1: Isolation Enforcement)
+                // 0. Set RLS context for session (G1: Isolation Enforcement)
+                await (tx as any).$executeRaw(Prisma.sql`SELECT set_config('app.current_company_id', ${dto.companyId}, true)`);
+                // Check if session actually set
+                const sessionTenant = await (tx as any).$queryRawUnsafe(`SELECT current_setting('app.current_company_id') as tenant`);
+                if (sessionTenant[0]?.tenant !== dto.companyId) {
+                    throw new ServiceUnavailableException('Security guard: Сбой инъекции контекста тенанта в сессию.');
+                }
 
-            // 2. Генерация проекций (Ledger Entries)
-            // Synchronous for Phase 1 as per strict safety requirements.
-            await this.generateLedgerEntries(event, tx);
+                // 1. Check Tenant State (Prisma-level check as fallback)
+                const tenantState = await (tx as any).tenantState.findUnique({ where: { companyId: dto.companyId } });
+                if (tenantState && tenantState.mode === 'HALTED') {
+                    throw new ServiceUnavailableException(`Компания ${dto.companyId} ОСТАНОВЛЕНА. Финансовые операции заблокированы.`);
+                }
 
-            // 3. (Refactor Phase 1) Outbox Event for External Consumers
-            // Even though Ledger is sync, we emit an event for analytics/notifications.
-            await tx.outboxMessage.create({
-                data: this.outbox.createEvent(
-                    event.id,
-                    'EconomicEvent',
-                    'finance.economic_event.created',
-                    event
-                )
-            });
+                // 2. Сохранение сырого события (Amount removed - single source of truth is Ledger)
+                const event = await (tx as any).economicEvent.create({
+                    data: {
+                        type: dto.type,
+                        currency: dto.currency || 'RUB',
+                        replayKey,
+                        metadata: enrichedMetadata as Prisma.InputJsonValue,
+                        fieldId: dto.fieldId,
+                        seasonId: dto.seasonId,
+                        employeeId: dto.employeeId,
+                        companyId: dto.companyId,
+                    } as any,
+                });
+
+                // 3. Генерация проекций (Ledger Entries)
+                // Amount is passed explicitly as it is no longer stored in EconomicEvent
+                await this.generateLedgerEntries(event, normalizedAmount, tx, scale);
+
+                // 4. Outbox Event for External Consumers
+                await tx.outboxMessage.create({
+                    data: this.outbox.createEvent(
+                        event.id,
+                        'EconomicEvent',
+                        'finance.economic_event.created',
+                        { ...event, amount: normalizedAmount }
+                    )
+                });
 
                 return event;
             });
         } catch (error) {
-            if (this.isUniqueConflict(error)) {
+            if (this.isUniqueConflict(error, 'replayKey')) {
                 this.logger.warn(
-                    `Duplicate/replay financial ingest suppressed (company=${dto.companyId}, idempotencyKey=${idempotencyKey || 'n/a'}, replayKey=${replayKey || 'n/a'})`,
+                    `Дубликат финансового инжеста подавлен (company=${dto.companyId}, idempotencyKey=${idempotencyKey || 'n/a'}, replayKey=${replayKey || 'n/a'})`,
                 );
                 InvariantMetrics.increment('event_duplicates_prevented_total');
                 const existing = await this.findExistingDuplicate(dto.companyId, idempotencyKey, replayKey);
@@ -101,15 +122,76 @@ export class EconomyService {
                     return existing;
                 }
             }
+
+            // Handle DB-level Integrity Violations (Mathematical Invariants)
+            if (this.isIntegrityViolation(error)) {
+                (this.logger as any).error(`НАРУШЕНИЕ ФИНАНСОВОЙ ЦЕЛОСТНОСТИ для компании ${dto.companyId}: ${error.message}`);
+                (InvariantMetrics as any).increment('financial_integrity_violations_total');
+
+                // Panic Mode: Attempt to move tenant to READ_ONLY
+                await this.triggerTenantPanic(dto.companyId, error.message);
+
+                throw new ServiceUnavailableException('Транзакция заблокирована из-за математической ошибки целостности. Тенант изолирован.');
+            }
+
             throw error;
         }
     }
 
-    private async generateLedgerEntries(event: EconomicEvent, tx: any) {
+    private isIntegrityViolation(error: any): boolean {
+        // Handle Postgres custom exceptions (P0001..P0004) and generic constraint violations (P2004)
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            const sqlState = (error.meta as any)?.db_error_code || '';
+            if (['P0001', 'P0002', 'P0003', 'P0004', 'P2004'].includes(sqlState || error.code)) {
+                return true;
+            }
+        }
+
+        // Check message text for any error type (Known or Unknown)
+        // This handles explicit RAISE EXCEPTION from triggers
+        const msg = error?.message || '';
+        return msg.includes('IMBALANCED_ENTRY') ||
+            msg.includes('INCOMPLETE_ENTRY') ||
+            msg.includes('P0004') || // READ_ONLY code in message
+            msg.includes('READ_ONLY') || // explicit text
+            msg.includes('check constraint') || // Generic constraint violation
+            msg.includes('constraint'); // Broadest check
+    }
+
+    private async triggerTenantPanic(companyId: string, reason: string) {
+        try {
+            // OPTIMIZATION: Use updateMany to minimize locking overhead and deadlocks during panic storms
+            // This is safer than Raw SQL regarding column names.
+            const result = await this.prisma.tenantState.updateMany({
+                where: {
+                    companyId: companyId,
+                    mode: { not: 'READ_ONLY' }
+                },
+                data: { mode: 'READ_ONLY' }
+            });
+
+            if (result.count > 0) {
+                this.logger.warn(`Тенант ${companyId} переведен в режим READ_ONLY по причине: ${reason}`);
+            } else {
+                // If count is 0, it was already READ_ONLY or didn't exist.
+                // We assume it exists. If not, this is a separate issue, but for stress test it exists.
+            }
+        } catch (panicError) {
+            console.error(`Критический сбой: Не удалось заблокировать тенант ${companyId} во время паники!`, panicError);
+            this.logger.error(`Критический сбой: Не удалось заблокировать тенант ${companyId} во время паники!`, panicError);
+        }
+    }
+
+    private async generateLedgerEntries(event: EconomicEvent, amount: Prisma.Decimal, tx: any, scale: number) {
         this.logger.debug(`Generating ledger entries for event ${event.id}`);
 
-        // Получаем правила атрибуции (Pure Logic)
-        const attributions = CostAttributionRules.getAttributions(event);
+        // Получаем правила атрибуции (Pure Logic) 
+        // passing explicit amount for attribution logic
+        const attributions = CostAttributionRules.getAttributions({
+            type: event.type,
+            amount: amount.toNumber(),
+            metadata: event.metadata
+        }) || []; // Fallback to empty array to avoid .length crash
 
         if (attributions.length === 0) {
             this.logger.warn(`No attribution rules found for event type ${event.type}`);
@@ -120,7 +202,7 @@ export class EconomyService {
         const executionId = metadata?.executionId || null;
 
         if (!executionId && event.type !== EconomicEventType.OTHER && event.type !== EconomicEventType.BOOTSTRAP) {
-            this.logger.warn(`EconomicEvent ${event.id} ingested without executionId. Traceability limited.`);
+            this.logger.warn(`Экономическое событие ${event.id} получено без executionId. Прослеживаемость ограничена.`);
         }
 
         // Phase 5: Cash Flow Metadata Extraction & Validation
@@ -134,39 +216,56 @@ export class EconomyService {
         if (cashImpact) {
             if (!cashAccountId || !cashDirection) {
                 InvariantMetrics.increment('financial_invariant_failures_total');
-                throw new Error(`Integrity Violation: cashImpact=true requires cashAccountId and cashDirection (Event ${event.id})`);
+                throw new Error(`Нарушение целостности: cashImpact=true требует наличия cashAccountId и cashDirection (Событие ${event.id})`);
             }
         } else {
             if (cashAccountId || cashDirection) {
                 InvariantMetrics.increment('financial_invariant_failures_total');
-                throw new Error(`Integrity Violation: cashImpact=false requires NULL cashAccountId and cashDirection (Event ${event.id})`);
+                throw new Error(`Нарушение целостности: cashImpact=false требует отсутствия cashAccountId и cashDirection (Событие ${event.id})`);
             }
         }
 
-        // Создаем записи в LedgerEntry используя транзакционный контекст
-        const normalizedPostings = attributions.map((attr) => ({
+        // Create and balance postings
+        const normalizedPostings = attributions.map((attr: any) => ({
             ...attr,
-            amount: roundMoney(attr.amount),
+            amount: new Prisma.Decimal(new Prisma.Decimal(attr.amount).toFixed(scale, Prisma.Decimal.ROUND_HALF_UP)),
         }));
-        assertBalancedPostings(normalizedPostings);
+        assertBalancedPostings(normalizedPostings as any);
 
-        await tx.ledgerEntry.createMany({
-            data: normalizedPostings.map((attr) => ({
-                economicEventId: event.id,
-                amount: attr.amount,
-                type: attr.type,
-                accountCode: attr.accountCode,
-                companyId: event.companyId,
-                isImmutable: true,
-                executionId: executionId,
-                // Cash Flow Projection Data
-                cashImpact,
-                cashAccountId,
-                cashDirection,
-                cashFlowType,
-                dueDate
-            })),
+        // Ledger Entries creation MUST happen after calculating monotonic sequence
+        // INJECTION 4: Critical Serialization Lock
+        await (tx as any).$executeRaw(Prisma.sql`SELECT pg_advisory_xact_lock(hashtext(${event.id}))`);
+
+        const existingEntries = await (tx as any).ledgerEntry.findMany({
+            where: { economicEventId: event.id, companyId: event.companyId },
+            select: { sequenceNumber: true },
+            orderBy: { sequenceNumber: 'desc' },
+            take: 1
         });
+
+        let startSeq = existingEntries.length > 0 ? existingEntries[0].sequenceNumber : 0;
+
+        for (const attr of normalizedPostings) {
+            startSeq++;
+            // BANKING GUARD: Use SECURITY DEFINER function to bypass direct INSERT restriction
+
+            await (tx as any).$executeRaw(
+                Prisma.sql`SELECT create_ledger_entry_v1(${event.companyId}, ${event.id}, ${startSeq}::int, ${attr.amount}, ${attr.type}, ${attr.accountCode}, ${executionId})`
+            );
+
+            // Also send to Outbox for this entry if needed, but primary projection is done.
+        }
+    }
+
+    private async getCurrencyScale(currency: string): Promise<number> {
+        try {
+            const precision = await (this.prisma as any).currencyPrecision.findUnique({
+                where: { currency }
+            });
+            return precision?.scale ?? this.config.get('defaultScale');
+        } catch {
+            return this.config.get('defaultScale');
+        }
     }
 
     private extractIdempotencyKey(metadata: any): string | null {
@@ -177,8 +276,7 @@ export class EconomyService {
         return null;
     }
 
-    private extractReplayKey(dto: IngestEconomicEventDto, idempotencyKey: string | null): string | null {
-        const normalizedAmount = roundMoney(dto.amount);
+    private extractReplayKey(dto: IngestEconomicEventDto, normalizedAmount: Prisma.Decimal, idempotencyKey: string | null): string | null {
         const explicitReplayKey = dto.metadata?.replayKey;
         if (typeof explicitReplayKey === 'string' && explicitReplayKey.trim().length > 0) {
             return explicitReplayKey.trim();
@@ -199,19 +297,28 @@ export class EconomyService {
             const fingerprint = {
                 companyId: dto.companyId,
                 type: dto.type,
-                amount: normalizedAmount,
+                amount: normalizedAmount.toString(), // Use string representation for stability
                 currency: dto.currency || 'RUB',
                 source: source.trim(),
                 traceId: traceId.trim(),
                 fieldId: dto.fieldId || null,
                 seasonId: dto.seasonId || null,
                 employeeId: dto.employeeId || null,
+                metadata: this.sortObjectKeys(dto.metadata || {}), // Deterministic metadata hashing
             };
             const digest = createHash('sha256').update(JSON.stringify(fingerprint)).digest('hex');
             return `fp:${digest}`;
         }
 
         return null;
+    }
+
+    private sortObjectKeys(obj: any): any {
+        if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
+        return Object.keys(obj).sort().reduce((acc, key) => {
+            acc[key] = this.sortObjectKeys(obj[key]);
+            return acc;
+        }, {} as any);
     }
 
     private async findExistingDuplicate(
@@ -241,11 +348,15 @@ export class EconomyService {
         return null;
     }
 
-    private isUniqueConflict(error: unknown): boolean {
-        return (
-            error instanceof Prisma.PrismaClientKnownRequestError &&
-            error.code === 'P2002'
-        );
+    private isUniqueConflict(error: unknown, targetField?: string): boolean {
+        const isP2002 = error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
+        if (!isP2002 || !targetField) return isP2002;
+
+        const target = (error.meta as any)?.target;
+        if (Array.isArray(target)) {
+            return target.includes(targetField);
+        }
+        return target === targetField;
     }
 
     private validateContractCompatibility(metadata: any, companyId: string): void {
@@ -256,7 +367,7 @@ export class EconomyService {
         }
 
         const contractVersion = typeof metadata?.contractVersion === 'string' ? metadata.contractVersion : null;
-        const mode = (process.env.FINANCE_CONTRACT_COMPATIBILITY_MODE || 'warn').toLowerCase();
+        const mode = this.config.get('contractCompatibilityMode');
         const supported = contractVersion
             ? (FINANCE_INGEST_SUPPORTED_VERSIONS as readonly string[]).includes(contractVersion)
             : false;
