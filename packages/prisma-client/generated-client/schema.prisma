@@ -101,6 +101,11 @@ model Company {
   // Level C: Contradiction-Resilient Intelligence
   governanceConfigs GovernanceConfig[]
   divergenceRecords DivergenceRecord[]
+  // Level D: Adaptive Self-Learning
+  modelVersions     ModelVersion[]
+  trainingRuns      TrainingRun[]
+  driftReports      DriftReport[]
+  learningEvents    LearningEvent[]
 
   @@map("companies")
 }
@@ -3220,4 +3225,119 @@ enum GoalStatus {
   DRAFT
   ACTIVE
   ARCHIVED
+}
+
+// --- Level D: Adaptive Self-Learning Domain ---
+
+model ModelVersion {
+  id         String      @id @default(cuid())
+  name       String
+  version    Int
+  hash       String      @unique // SHA256
+  parentHash String? // Lineage chain
+  signature  String // Ed25519
+  status     ModelStatus @default(SHADOW)
+
+  artifactPath String // S3 URI
+
+  companyId     String
+  company       Company      @relation(fields: [companyId], references: [id])
+  trainingRunId String?
+  trainingRun   TrainingRun? @relation(fields: [trainingRunId], references: [id])
+
+  driftReports DriftReport[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, name, version])
+  @@index([companyId])
+  @@index([hash])
+  @@map("rai_model_versions")
+}
+
+model TrainingRun {
+  id        String         @id @default(cuid())
+  featureId String // e.g. "rapeseed_yield_prediction"
+  status    TrainingStatus @default(PENDING)
+
+  config  Json?
+  metrics Json?
+
+  models ModelVersion[]
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([status])
+  @@map("rai_training_runs")
+}
+
+model DriftReport {
+  id             String       @id @default(cuid())
+  modelVersionId String
+  modelVersion   ModelVersion @relation(fields: [modelVersionId], references: [id])
+
+  psiScore     Float?
+  klDivergence Float?
+  ksTestStat   Float?
+
+  status  DriftStatus @default(NORMAL)
+  payload Json
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([companyId])
+  @@index([modelVersionId])
+  @@map("rai_drift_reports")
+}
+
+model LearningEvent {
+  id        String @id @default(cuid())
+  featureId String
+  payload   Json
+  signature String
+
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+  @@index([featureId])
+  @@map("rai_learning_events")
+}
+
+enum ModelStatus {
+  DRAFT
+  SHADOW
+  CANARY
+  ACTIVE
+  ARCHIVED
+  FAILED
+  ROLLED_BACK
+}
+
+enum TrainingStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum DriftStatus {
+  NORMAL
+  WARNING
+  CRITICAL
 }

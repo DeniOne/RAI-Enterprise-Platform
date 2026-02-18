@@ -85,13 +85,7 @@ aligned_with: [principle-vision]
 - [x] **[Backend]** **Machinery**: Реестр техники в Registry (Active).
 
 #### 6.2 Advanced Agro
-- [ ] **[AI]** **Vision Service**: Диагностика болезней по фото.
-- [ ] **[Backend]** **Real-time Economics**: Себестоимость операции в моменте.
-
-#### 6.3 Unified Risk Engine (B6) 🛡️ ✅
-- [x] **[Backend]** **Core Engine**: `@rai/risk-engine`
-- [x] **[Backend]** **Gates**: Physical blocking.
----
+﻿---
 id: component-implementation-wbs
 type: component
 status: review
@@ -185,7 +179,7 @@ aligned_with: [principle-vision]
 - [x] **[AI]** **Shadow Advisory (v1):** теневой ранкер `ALLOW/REVIEW/BLOCK` + audit trail.
 - [x] **[AI]** **Shadow Baseline Metrics:** coverage/precision proxy и confidence baseline.
 - [x] **[AI]** **Explainability & Confirmation (Sprint 4):** explainability-контракт `why/factors/confidence/traceId`, Telegram/Web recommendation cards, human confirmation + feedback audit flow.
-- [ ] **[AI]** **Pilot & Tuning (Sprint 5):** feature-flag rollout для фокус-группы, anti-spam control, SLO dashboard, incident runbook.
+- [x] **[AI]** **Pilot & Tuning (Sprint 5):** feature-flag rollout для фокус-группы, anti-spam control, SLO dashboard, incident runbook.
   - [x] Feature-flag rollout (`pilot/status|enable|disable|cohort`) + Telegram/Web enforcement
   - [x] Tuning thresholds + anti-spam noise control + ops metrics dashboard block
   - [x] Incident runbook tabletop validation
@@ -197,6 +191,13 @@ aligned_with: [principle-vision]
   - [x] DR/rollback drill with RTO/RPO evidence (`docs/04-ENGINEERING/ADVISORY_DR_REHEARSAL_REPORT_2026-02-08.md`)
   - [x] Formal go/no-go record prepared (`docs/04-ENGINEERING/ADVISORY_GO_NO_GO_DECISION_RECORD.md`)
   - [x] Security/governance gate completed (`docs/04-ENGINEERING/ADVISORY_SECURITY_GATE_REPORT_SPRINT6.md`)
+
+### 🏢 10. Adaptive Self-Learning Domain (Level D) ✅
+- [x] **[Backend]** **Hardening & Pilot Readiness (Phase C):** 
+  - [x] Атомарные Redis-счетчики (Global Concurrency Cap).
+  - [x] Статистическая защита Canary (Sample Size Gate >= 100).
+  - [x] Расширение Model Registry (статус QUARANTINED).
+  - [x] Genesis Guard (Anchor Trust Mechanism).
 - [ ] **[AI]** **Knowledge Graph**: Построение причинно-следственных связей.
 - [ ] **[AI]** **Planner Agent**: Авто-стратегия на сезон.
 

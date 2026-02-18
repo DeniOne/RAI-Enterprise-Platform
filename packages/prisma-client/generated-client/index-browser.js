@@ -1444,6 +1444,56 @@ exports.Prisma.StrategicGoalScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.ModelVersionScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  version: 'version',
+  hash: 'hash',
+  parentHash: 'parentHash',
+  signature: 'signature',
+  status: 'status',
+  artifactPath: 'artifactPath',
+  companyId: 'companyId',
+  trainingRunId: 'trainingRunId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TrainingRunScalarFieldEnum = {
+  id: 'id',
+  featureId: 'featureId',
+  status: 'status',
+  config: 'config',
+  metrics: 'metrics',
+  companyId: 'companyId',
+  startedAt: 'startedAt',
+  completedAt: 'completedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.DriftReportScalarFieldEnum = {
+  id: 'id',
+  modelVersionId: 'modelVersionId',
+  psiScore: 'psiScore',
+  klDivergence: 'klDivergence',
+  ksTestStat: 'ksTestStat',
+  status: 'status',
+  payload: 'payload',
+  companyId: 'companyId',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.LearningEventScalarFieldEnum = {
+  id: 'id',
+  featureId: 'featureId',
+  payload: 'payload',
+  signature: 'signature',
+  processedAt: 'processedAt',
+  createdAt: 'createdAt',
+  companyId: 'companyId'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -2038,6 +2088,30 @@ exports.GoalStatus = exports.$Enums.GoalStatus = {
   ARCHIVED: 'ARCHIVED'
 };
 
+exports.ModelStatus = exports.$Enums.ModelStatus = {
+  DRAFT: 'DRAFT',
+  SHADOW: 'SHADOW',
+  CANARY: 'CANARY',
+  ACTIVE: 'ACTIVE',
+  ARCHIVED: 'ARCHIVED',
+  FAILED: 'FAILED',
+  ROLLED_BACK: 'ROLLED_BACK'
+};
+
+exports.TrainingStatus = exports.$Enums.TrainingStatus = {
+  PENDING: 'PENDING',
+  RUNNING: 'RUNNING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+  CANCELLED: 'CANCELLED'
+};
+
+exports.DriftStatus = exports.$Enums.DriftStatus = {
+  NORMAL: 'NORMAL',
+  WARNING: 'WARNING',
+  CRITICAL: 'CRITICAL'
+};
+
 exports.Prisma.ModelName = {
   Company: 'Company',
   Account: 'Account',
@@ -2141,7 +2215,11 @@ exports.Prisma.ModelName = {
   BudgetItem: 'BudgetItem',
   ManagementDecision: 'ManagementDecision',
   HarvestResult: 'HarvestResult',
-  StrategicGoal: 'StrategicGoal'
+  StrategicGoal: 'StrategicGoal',
+  ModelVersion: 'ModelVersion',
+  TrainingRun: 'TrainingRun',
+  DriftReport: 'DriftReport',
+  LearningEvent: 'LearningEvent'
 };
 
 /**

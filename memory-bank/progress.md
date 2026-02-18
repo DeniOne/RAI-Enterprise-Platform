@@ -271,3 +271,13 @@
 - [x] **Industrial Guardrails**: 1000-run determinism × 2, governance drift, policy chaos (1000 random), extreme clamp.
 - [x] **E2E Override Pipeline**: Full pipeline, hash determinism/sensitivity, governance block, idempotency, high risk flow.
 - [x] **Тесты**: FSM (25), ConflictExplainability (10), Industrial Guardrails (8), E2E Pipeline (7) = **50 PASS**.
+
+## Milestone 26: Level D — Industrial-Grade Hardening (Phase C) ✅
+**Дата:** 2026-02-19
+**Статус:** PILOT READY (10/10)
+- [x] **Atomic Concurrency (Redis)**: Внедрены `incr`/`decr` для `rai:total_active_jobs`. Устранены race conditions при запуске джоб.
+- [x] **Statistical Gating (Canary)**: Внедрен порог выборки `sampleSize >= 100` для предотвращения ложных откатов.
+- [x] **Schema Expansion (Prisma)**: Статус `QUARANTINED` добавлен в `ModelStatus`. Проекции и FSM синхронизированы.
+- [x] **Genesis Guard (Anchor Trust)**: Реализована защита "якорного хеша" базовой модели. Lineage защищен от подмены корня.
+- [x] **K8s Reconciliation**: Исправлены ошибки синхронизации и восстановление лимитов при потере джоб.
+- [x] **Chaos Verification**: Тесты Double Callback и MAE Degradation пройдены со 100% успехом.

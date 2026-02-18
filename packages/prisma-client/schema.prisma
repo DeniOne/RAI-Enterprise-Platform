@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "./generated-client"
+  provider        = "prisma-client-js"
+  output          = "./generated-client"
   previewFeatures = ["postgresqlExtensions"]
 }
 
@@ -13,44 +13,44 @@ datasource db {
 // --- Multi-tenancy Models ---
 
 model Company {
-  id        String   @id @default(cuid())
-  name      String
-  accounts  Account[]
-  holdings  Holding[]
-  users     User[]
+  id          String       @id @default(cuid())
+  name        String
+  accounts    Account[]
+  holdings    Holding[]
+  users       User[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   invitations Invitation[]
-  
-  roleDefinitions RoleDefinition[]
-  employeeProfiles EmployeeProfile[]
-  technologyCards TechnologyCard[]
-  fields      Field[]
-  tasks       Task[]
+
+  roleDefinitions   RoleDefinition[]
+  employeeProfiles  EmployeeProfile[]
+  technologyCards   TechnologyCard[]
+  fields            Field[]
+  tasks             Task[]
   fieldObservations FieldObservation[]
-  
+
   // CRM Relations
-  deals            Deal[]
-  scoreCards       ScoreCard[]
-  contracts        Contract[]
-  harvestPlans     HarvestPlan[]
+  deals                Deal[]
+  scoreCards           ScoreCard[]
+  contracts            Contract[]
+  harvestPlans         HarvestPlan[]
   performanceContracts PerformanceContract[]
-  
+
   // Tech Map & CMR Relations
-  techMaps         TechMap[]
-  deviationReviews DeviationReview[]
-  budgetPlans      BudgetPlan[]
-  cmrDecisions     CmrDecision[]
-  cmrRisks         CmrRisk[]
+  techMaps           TechMap[]
+  deviationReviews   DeviationReview[]
+  budgetPlans        BudgetPlan[]
+  cmrDecisions       CmrDecision[]
+  cmrRisks           CmrRisk[]
   insuranceCoverages InsuranceCoverage[]
-  harvestResults   HarvestResult[]
-  
+  harvestResults     HarvestResult[]
+
   // HR Control Plane
-  pulseSurveys      PulseSurvey[]
+  pulseSurveys             PulseSurvey[]
   humanAssessmentSnapshots HumanAssessmentSnapshot[]
-  okrCycles         OkrCycle[]
-  hrKpiIndicators   HrKPIIndicator[]
-  
+  okrCycles                OkrCycle[]
+  hrKpiIndicators          HrKPIIndicator[]
+
   // Finance & Economy
   economicEvents    EconomicEvent[]
   ledgerEntries     LedgerEntry[]
@@ -67,16 +67,16 @@ model Company {
   grInteractions    GrInteraction[]
   policySignals     PolicySignal[]
   researchPrograms  ResearchProgram[]
-  
+
   // High-Level Risk Models
-  riskSignals       RiskSignal[]
-  riskAssessments   RiskAssessment[]
-  riskStateHistory  RiskStateHistory[]
-  decisionRecords   DecisionRecord[]
-  
+  riskSignals      RiskSignal[]
+  riskAssessments  RiskAssessment[]
+  riskStateHistory RiskStateHistory[]
+  decisionRecords  DecisionRecord[]
+
   // Knowledge Graph (Sprint 2)
-  knowledgeNodes    KnowledgeNode[]
-  knowledgeEdges    KnowledgeEdge[]
+  knowledgeNodes KnowledgeNode[]
+  knowledgeEdges KnowledgeEdge[]
 
   // Vision AI Baseline (Sprint 2)
   visionObservations VisionObservation[]
@@ -85,38 +85,42 @@ model Company {
 
   // Satellite Ingestion (Sprint 2)
   satelliteObservations SatelliteObservation[]
-  
+
   // Asset Registries
-  machinery        Machinery[]
-  stockItems       StockItem[]
+  machinery         Machinery[]
+  stockItems        StockItem[]
   stockTransactions StockTransaction[]
-  
+
   // Phase 4: Strategic OS
-  strategicGoals   StrategicGoal[]
+  strategicGoals StrategicGoal[]
 
   // Level B: Generative Engine
   agronomicStrategies AgronomicStrategy[]
   generationRecords   GenerationRecord[]
 
   // Level C: Contradiction-Resilient Intelligence
-  governanceConfigs   GovernanceConfig[]
-  divergenceRecords   DivergenceRecord[]
+  governanceConfigs GovernanceConfig[]
+  divergenceRecords DivergenceRecord[]
+  // Level D: Adaptive Self-Learning
+  modelVersions     ModelVersion[]
+  trainingRuns      TrainingRun[]
+  driftReports      DriftReport[]
+  learningEvents    LearningEvent[]
 
   @@map("companies")
 }
 
-
 model Account {
-  id        String   @id @default(cuid())
-  name      String
-  
+  id   String @id @default(cuid())
+  name String
+
   // CRM Fields
-  inn       String?  @unique
-  type      AccountType @default(CLIENT)
-  status    AccountStatus @default(ACTIVE)
-  
+  inn    String?       @unique
+  type   AccountType   @default(CLIENT)
+  status AccountStatus @default(ACTIVE)
+
   jurisdiction   String?
-  riskCategory   RiskCategory @default(LOW)
+  riskCategory   RiskCategory   @default(LOW)
   strategicValue StrategicValue @default(C)
 
   // Ownership & Structure
@@ -124,92 +128,92 @@ model Account {
   company   Company  @relation(fields: [companyId], references: [id])
   holdingId String?
   holding   Holding? @relation(fields: [holdingId], references: [id])
-  
-  fields    Field[]
-  users     User[]
-  
+
+  fields Field[]
+  users  User[]
+
   // CRM Relations
-  contacts       Contact[]
-  interactions   Interaction[]
-  obligations    Obligation[]
-  
-  deals      Deal[]
-  scoreCards ScoreCard[]
-  contracts  Contract[]
+  contacts     Contact[]
+  interactions Interaction[]
+  obligations  Obligation[]
+
+  deals        Deal[]
+  scoreCards   ScoreCard[]
+  contracts    Contract[]
   harvestPlans HarvestPlan[]
 
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   invitations Invitation[]
-  
+
   // Asset Registries
-  machinery   Machinery[]
-  stockItems  StockItem[]
+  machinery  Machinery[]
+  stockItems StockItem[]
 
   @@map("accounts")
 }
 
 model Contact {
-  id              String   @id @default(cuid())
-  accountId       String
-  account         Account  @relation(fields: [accountId], references: [id])
-  
-  firstName       String
-  lastName        String?
-  role            ContactRole @default(OPERATIONAL)
-  influenceLevel  Int?    // 1-10
-  
-  email           String?
-  phone           String?
-  source          String?
-  
-  interactions    Interaction[]
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id        String  @id @default(cuid())
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id])
+
+  firstName      String
+  lastName       String?
+  role           ContactRole @default(OPERATIONAL)
+  influenceLevel Int? // 1-10
+
+  email  String?
+  phone  String?
+  source String?
+
+  interactions Interaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([accountId])
   @@map("crm_contacts")
 }
 
 model Interaction {
-  id              String   @id @default(cuid())
-  accountId       String
-  account         Account  @relation(fields: [accountId], references: [id])
-  contactId       String?
-  contact         Contact? @relation(fields: [contactId], references: [id])
-  
-  type            InteractionType
-  summary         String   @db.Text
-  date            DateTime @default(now())
-  
+  id        String   @id @default(cuid())
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id])
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id])
+
+  type    InteractionType
+  summary String          @db.Text
+  date    DateTime        @default(now())
+
   // Links
-  relatedEventId  String?  // Polymorphic ID (RiskEvent, LegalRequirement)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  relatedEventId String? // Polymorphic ID (RiskEvent, LegalRequirement)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([accountId])
   @@index([contactId])
   @@map("crm_interactions")
 }
 
 model Obligation {
-  id              String   @id @default(cuid())
-  accountId       String
-  account         Account  @relation(fields: [accountId], references: [id])
-  
-  description     String
-  dueDate         DateTime
-  
+  id        String  @id @default(cuid())
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id])
+
+  description String
+  dueDate     DateTime
+
   responsibleUserId String?
   responsibleUser   User?   @relation("ObligationResponsible", fields: [responsibleUserId], references: [id])
-  
-  status          ObligationStatus @default(PENDING)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+
+  status ObligationStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([accountId])
   @@index([status])
   @@map("crm_obligations")
@@ -265,18 +269,18 @@ enum ObligationStatus {
 }
 
 model Holding {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
   description String?
-  
+
   // Tenant Isolation
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
-  
-  accounts    Account[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  accounts Account[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("holdings")
 }
@@ -284,31 +288,31 @@ model Holding {
 // --- Asset Registry Domain (Equipments, Chemicals, etc) ---
 
 model Machinery {
-  id              String   @id @default(cuid())
-  name            String
-  brand           String?
-  serialNumber    String?  // [IDEMPOTENCY] Physical serial
-  type            MachineryType
-  status          AssetStatus @default(PENDING_CONFIRMATION)
-  
-  idempotencyKey  String?  // [REFINEMENT] Removed @unique for AI flexibility
-  
+  id           String        @id @default(cuid())
+  name         String
+  brand        String?
+  serialNumber String? // [IDEMPOTENCY] Physical serial
+  type         MachineryType
+  status       AssetStatus   @default(PENDING_CONFIRMATION)
+
+  idempotencyKey String? // [REFINEMENT] Removed @unique for AI flexibility
+
   // Multi-tenancy
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
-  accountId    String
-  account      Account   @relation(fields: [accountId], references: [id])
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Accountability & Reject Path
   confirmedByUserId String?
-  confirmedByUser   User?    @relation("MachineryConfirmedBy", fields: [confirmedByUserId], references: [id])
+  confirmedByUser   User?     @relation("MachineryConfirmedBy", fields: [confirmedByUserId], references: [id])
   confirmedAt       DateTime?
-  
-  archivedAt        DateTime?
-  rejectionReason   String?
+
+  archivedAt      DateTime?
+  rejectionReason String?
 
   @@index([companyId])
   @@index([accountId, idempotencyKey]) // [REFINEMENT] Logical index
@@ -316,34 +320,34 @@ model Machinery {
 }
 
 model StockItem {
-  id              String   @id @default(cuid())
-  name            String
-  type            StockItemType
-  status          AssetStatus @default(PENDING_CONFIRMATION)
-  
-  quantity        Float    @default(0)
-  unit            String
-  
-  idempotencyKey  String?  // [REFINEMENT] Removed @unique for AI flexibility
-  
+  id     String        @id @default(cuid())
+  name   String
+  type   StockItemType
+  status AssetStatus   @default(PENDING_CONFIRMATION)
+
+  quantity Float  @default(0)
+  unit     String
+
+  idempotencyKey String? // [REFINEMENT] Removed @unique for AI flexibility
+
   // Multi-tenancy
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
-  accountId    String
-  account      Account   @relation(fields: [accountId], references: [id])
-  
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id])
+
   transactions StockTransaction[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Accountability & Reject Path
   confirmedByUserId String?
-  confirmedByUser   User?    @relation("StockItemConfirmedBy", fields: [confirmedByUserId], references: [id])
+  confirmedByUser   User?     @relation("StockItemConfirmedBy", fields: [confirmedByUserId], references: [id])
   confirmedAt       DateTime?
-  
-  archivedAt        DateTime?
-  rejectionReason   String?
+
+  archivedAt      DateTime?
+  rejectionReason String?
 
   @@index([companyId])
   @@index([accountId, idempotencyKey]) // [REFINEMENT] Logical index
@@ -351,36 +355,36 @@ model StockItem {
 }
 
 model StockTransaction {
-  id              String   @id @default(cuid())
-  itemId          String
-  item            StockItem @relation(fields: [itemId], references: [id])
-  
-  type            StockTransactionType
-  amount          Float
-  date            DateTime @default(now())
-  
-  userId          String?
-  user            User?    @relation(fields: [userId], references: [id])
+  id     String    @id @default(cuid())
+  itemId String
+  item   StockItem @relation(fields: [itemId], references: [id])
+
+  type   StockTransactionType
+  amount Float
+  date   DateTime             @default(now())
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
 
   // Track 4: Execution Engine Link
-  executionId     String?
-  execution       ExecutionRecord? @relation(fields: [executionId], references: [id])
-  
+  executionId String?
+  execution   ExecutionRecord? @relation(fields: [executionId], references: [id])
+
   // Resource Details (Snapshot for audit)
-  resourceType    String?   
-  resourceName    String?
-  unit            String?
-  costPerUnit     Float?
-  totalCost       Float?
+  resourceType String?
+  resourceName String?
+  unit         String?
+  costPerUnit  Float?
+  totalCost    Float?
 
-  orchLogId       String?
-  orchLog         ExecutionOrchestrationLog? @relation(fields: [orchLogId], references: [id])
-  
-  budgetItemId    String?
-  budgetItem      BudgetItem?      @relation(fields: [budgetItemId], references: [id])
+  orchLogId String?
+  orchLog   ExecutionOrchestrationLog? @relation(fields: [orchLogId], references: [id])
 
-  companyId       String
-  company         Company  @relation(fields: [companyId], references: [id])
+  budgetItemId String?
+  budgetItem   BudgetItem? @relation(fields: [budgetItemId], references: [id])
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
 
   @@index([executionId])
   @@index([budgetItemId])
@@ -419,103 +423,100 @@ enum StockTransactionType {
   ADJUSTMENT
 }
 
-
 // --- User Management ---
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  name         String?
-  role         UserRole  @default(USER)
-  phone        String?
-  telegramId   String?   @unique
-  
-  emailVerified        Boolean  @default(false)
-  emailVerificationToken String?  @unique
-  emailVerificationExpiresAt DateTime?
-  
-  companyId    String   // ARCH-DEBT-001: Multi-tenancy (NOT NULL)
-  company      Company  @relation(fields: [companyId], references: [id])
-  accountId     String?
-  account       Account?   @relation(fields: [accountId], references: [id])
+  id         String   @id @default(cuid())
+  email      String   @unique
+  name       String?
+  role       UserRole @default(USER)
+  phone      String?
+  telegramId String?  @unique
 
-  accessLevel     UserAccessLevel  @default(DEMO)
-  invitedBy       String?          // ID того, кто пригласил
-  invitedAt       DateTime?
-  activatedAt     DateTime?        // Когда активирован FULL доступ
-  demoExpiresAt   DateTime?        // Срок демо-доступа (7 дней)
+  emailVerified              Boolean   @default(false)
+  emailVerificationToken     String?   @unique
+  emailVerificationExpiresAt DateTime?
+
+  companyId String // ARCH-DEBT-001: Multi-tenancy (NOT NULL)
+  company   Company  @relation(fields: [companyId], references: [id])
+  accountId String?
+  account   Account? @relation(fields: [accountId], references: [id])
+
+  accessLevel   UserAccessLevel @default(DEMO)
+  invitedBy     String? // ID того, кто пригласил
+  invitedAt     DateTime?
+  activatedAt   DateTime? // Когда активирован FULL доступ
+  demoExpiresAt DateTime? // Срок демо-доступа (7 дней)
 
   // Связи
-  invitations     Invitation[]     @relation("Invitee")
-  sentInvitations Invitation[]     @relation("Inviter")
+  invitations     Invitation[] @relation("Invitee")
+  sentInvitations Invitation[] @relation("Inviter")
 
   // Business Core интеграция
-  coreUserId   String?   @unique
-  coreWalletId String?   @unique
-  
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  
-  assignedTasks    Task[] @relation("TaskAssignee")
-  responsibleTasks Task[] @relation("TaskResponsible")
-  fieldObservations FieldObservation[]
+  coreUserId   String? @unique
+  coreWalletId String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignedTasks       Task[]               @relation("TaskAssignee")
+  responsibleTasks    Task[]               @relation("TaskResponsible")
+  fieldObservations   FieldObservation[]
   managementDecisions ManagementDecision[]
-  
+
   // HR & CMR Relations
-  employeeProfile EmployeeProfile?
-  cmrDecisions    CmrDecision[]
-  responsibleRisks CmrRisk[] @relation("RiskResponsible")
+  employeeProfile  EmployeeProfile?
+  cmrDecisions     CmrDecision[]
+  responsibleRisks CmrRisk[]        @relation("RiskResponsible")
 
   // Asset Accountability
-  confirmedMachinery  Machinery[] @relation("MachineryConfirmedBy")
-  confirmedStockItems StockItem[] @relation("StockItemConfirmedBy")
+  confirmedMachinery  Machinery[]        @relation("MachineryConfirmedBy")
+  confirmedStockItems StockItem[]        @relation("StockItemConfirmedBy")
   stockTransactions   StockTransaction[]
-  executionRecords    ExecutionRecord[] 
-  
+  executionRecords    ExecutionRecord[]
+
   // CRM Relations
-  obligations         Obligation[] @relation("ObligationResponsible")
+  obligations Obligation[] @relation("ObligationResponsible")
 
   @@map("users")
 }
 
-
-
 model Invitation {
-  id              String        @id @default(cuid())
-  
+  id String @id @default(cuid())
+
   // Идентификаторы инвайта
-  token           String        @unique  // UUID для email ссылок
-  shortCode       String        @unique  // 6 цифр для Telegram
-  
+  token     String @unique // UUID для email ссылок
+  shortCode String @unique // 6 цифр для Telegram
+
   // Получатель (один из двух обязателен)
-  email           String?       // Если инвайт по email
-  telegramId      String?       // Если инвайт через TG PUSH
-  
+  email      String? // Если инвайт по email
+  telegramId String? // Если инвайт через TG PUSH
+
   // Отправитель и назначение
-  inviterId       String        // Кто пригласил
-  inviter         User          @relation("Inviter", fields: [inviterId], references: [id])
-  
-  inviteeId       String?       // Кого пригласили (если user уже есть)
-  invitee         User?         @relation("Invitee", fields: [inviteeId], references: [id])
-  
+  inviterId String // Кто пригласил
+  inviter   User   @relation("Inviter", fields: [inviterId], references: [id])
+
+  inviteeId String? // Кого пригласили (если user уже есть)
+  invitee   User?   @relation("Invitee", fields: [inviteeId], references: [id])
+
   // Параметры доступа
-  role            UserRole      // Роль в системе
-  accessLevel     UserAccessLevel @default(INVITED)
-  
+  role        UserRole // Роль в системе
+  accessLevel UserAccessLevel @default(INVITED)
+
   // Привязка к структуре
-  companyId       String        // В какую компанию
-  company         Company       @relation(fields: [companyId], references: [id])
-  clientId        String?       // В какое хозяйство (опционально)
-  client          Account?      @relation(fields: [clientId], references: [id])
-  
+  companyId String // В какую компанию
+  company   Company  @relation(fields: [companyId], references: [id])
+  clientId  String? // В какое хозяйство (опционально)
+  client    Account? @relation(fields: [clientId], references: [id])
+
   // Статус и сроки
-  status          InvitationStatus @default(PENDING)
-  expiresAt       DateTime      // Действует 72 часа
-  createdAt       DateTime      @default(now())
-  acceptedAt      DateTime?     // Когда приняли
-  activationIp    String?       // IP адрес активации
-  activationUserAgent String?   // User-Agent при активации
-  
+  status              InvitationStatus @default(PENDING)
+  expiresAt           DateTime // Действует 72 часа
+  createdAt           DateTime         @default(now())
+  acceptedAt          DateTime? // Когда приняли
+  activationIp        String? // IP адрес активации
+  activationUserAgent String? // User-Agent при активации
+
   // Индексы
   @@index([token])
   @@index([shortCode])
@@ -524,7 +525,6 @@ model Invitation {
   @@index([status])
   @@index([expiresAt])
   @@index([inviterId])
-  
   @@map("invitations")
 }
 
@@ -533,33 +533,33 @@ model Invitation {
 // --- Agri Entities ---
 
 model Field {
-  id             String        @id @default(cuid())
-  cadastreNumber String        @unique
+  id             String      @id @default(cuid())
+  cadastreNumber String      @unique
   name           String?
-  area           Float         // в гектарах
-  coordinates    Json          // GeoJSON Polygon
-  centroid       Json?         // GeoJSON Point
+  area           Float // в гектарах
+  coordinates    Json // GeoJSON Polygon
+  centroid       Json? // GeoJSON Point
   soilType       SoilType
-  status         FieldStatus   @default(ACTIVE)
-  
-  clientId       String
-  client         Account        @relation(fields: [clientId], references: [id])
+  status         FieldStatus @default(ACTIVE)
 
-  companyId      String
-  company        Company       @relation(fields: [companyId], references: [id])
+  clientId String
+  client   Account @relation(fields: [clientId], references: [id])
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
 
   // Business Core интеграция
-  coreObjectId   String?       @unique
-  
-  seasons        Season[]
-  tasks          Task[]
+  coreObjectId String? @unique
+
+  seasons           Season[]
+  tasks             Task[]
   fieldObservations FieldObservation[]
-  harvestResults   HarvestResult[]
-  techMaps         TechMap[]
-  
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  
+  harvestResults    HarvestResult[]
+  techMaps          TechMap[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([coordinates])
   @@index([clientId])
   @@index([companyId])
@@ -567,34 +567,34 @@ model Field {
 }
 
 model Rapeseed {
-  id                String   @id @default(cuid())
-  name              String   // Пшеница, кукуруза, рапс
-  variety           String?  // Сорт рапса
-  reproduction      String?  // Репродукция (Элита, РС1, РС2)
-  type              RapeseedType // Озимый, яровой
-  
-  oilContent        Float?   // Масличность, %
-  erucicAcid        Float?   // Эруковая кислота, %
-  glucosinolates    Float?   // Глюкозинолаты, мкмоль/г
+  id           String       @id @default(cuid())
+  name         String // Пшеница, кукуруза, рапс
+  variety      String? // Сорт рапса
+  reproduction String? // Репродукция (Элита, РС1, РС2)
+  type         RapeseedType // Озимый, яровой
 
-  vegetationPeriod  Int      // Дней от посева до уборки
-  sowingNormMin     Float?   // кг/га мин
-  sowingNormMax     Float?   // кг/га макс
-  sowingDepthMin    Float?   // см мин
-  sowingDepthMax    Float?   // см макс
-  
+  oilContent     Float? // Масличность, %
+  erucicAcid     Float? // Эруковая кислота, %
+  glucosinolates Float? // Глюкозинолаты, мкмоль/г
+
+  vegetationPeriod Int // Дней от посева до уборки
+  sowingNormMin    Float? // кг/га мин
+  sowingNormMax    Float? // кг/га макс
+  sowingDepthMin   Float? // см мин
+  sowingDepthMax   Float? // см макс
+
   // Версионирование параметров
-  version           Int      @default(1)
-  isLatest          Boolean  @default(true)
-  
-  companyId         String?  // Multi-tenancy (если NULL - системная культура)
+  version  Int     @default(1)
+  isLatest Boolean @default(true)
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
-  seasons           Season[]
-  history           RapeseedHistory[]
-  
+  companyId String? // Multi-tenancy (если NULL - системная культура)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  seasons Season[]
+  history RapeseedHistory[]
+
   @@unique([name, companyId, version]) // Уникальность имени в рамках компании и версии
   @@index([companyId])
   @@map("rapeseeds")
@@ -603,13 +603,13 @@ model Rapeseed {
 model RapeseedHistory {
   id           String   @id @default(cuid())
   rapeseedId   String
-  rapeseed     Rapeseed     @relation(fields: [rapeseedId], references: [id])
+  rapeseed     Rapeseed @relation(fields: [rapeseedId], references: [id])
   version      Int
-  changeReason String?  // Почему изменили параметры
-  changedBy    String?  // User ID
-  snapshot     Json     // Полный слепок параметров
-  
-  createdAt    DateTime @default(now())
+  changeReason String? // Почему изменили параметры
+  changedBy    String? // User ID
+  snapshot     Json // Полный слепок параметров
+
+  createdAt DateTime @default(now())
 
   @@index([rapeseedId, version])
   @@map("rapeseed_history")
@@ -618,49 +618,49 @@ model RapeseedHistory {
 // --- Production Cycle & Planning ---
 
 model Season {
-  id               String       @id @default(cuid())
-  year             Int
-  status           SeasonStatus @default(PLANNING)
-  
-  fieldId          String
-  field            Field        @relation(fields: [fieldId], references: [id])
-  
-  cropId           String?      // BACKWARD COMPATIBILITY (Temporary)
-  rapeseedId       String
-  rapeseed         Rapeseed     @relation(fields: [rapeseedId], references: [id])
-  
+  id     String       @id @default(cuid())
+  year   Int
+  status SeasonStatus @default(PLANNING)
+
+  fieldId String
+  field   Field  @relation(fields: [fieldId], references: [id])
+
+  cropId     String? // BACKWARD COMPATIBILITY (Temporary)
+  rapeseedId String
+  rapeseed   Rapeseed @relation(fields: [rapeseedId], references: [id])
+
   technologyCardId String?
   technologyCard   TechnologyCard? @relation(fields: [technologyCardId], references: [id])
 
   // Yield Tracking
-  expectedYield    Float?       // Ожидаемая урожайность (т/га)
-  actualYield      Float?       // Фактическая урожайность (т/га)
-  
-  // Immutable Pattern
-  isLocked         Boolean      @default(false)
-  lockedAt         DateTime?
-  lockedBy         String?      // User ID
+  expectedYield Float? // Ожидаемая урожайность (т/га)
+  actualYield   Float? // Фактическая урожайность (т/га)
 
-  startDate        DateTime?
-  endDate          DateTime?
+  // Immutable Pattern
+  isLocked Boolean   @default(false)
+  lockedAt DateTime?
+  lockedBy String? // User ID
+
+  startDate DateTime?
+  endDate   DateTime?
 
   // Business Core интеграция
-  coreProcessId    String?      @unique
-  companyId        String       // Denormalized for performance
-  
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-  
-  currentStageId   String?      // ID текущего этапа (micro-state)
-  stageProgress    SeasonStageProgress[]
-  
-  history          SeasonHistory[]
-  snapshots        SeasonSnapshot[]
-  tasks            Task[]
+  coreProcessId String? @unique
+  companyId     String // Denormalized for performance
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  currentStageId String? // ID текущего этапа (micro-state)
+  stageProgress  SeasonStageProgress[]
+
+  history           SeasonHistory[]
+  snapshots         SeasonSnapshot[]
+  tasks             Task[]
   fieldObservations FieldObservation[]
-  
-  harvestPlans     HarvestPlan[]
-  
+
+  harvestPlans HarvestPlan[]
+
   // Tech Map Integration
   techMaps         TechMap[]
   deviationReviews DeviationReview[]
@@ -670,39 +670,38 @@ model Season {
   harvestResults   HarvestResult[]
   strategicGoals   StrategicGoal[]
 
-
-  @@index([id, companyId])          // Для быстрой валидации доступа
-  @@index([fieldId, year])          // Для севооборота
-  @@index([companyId, year])         // Для отчетов по годам
-  @@index([companyId, status])      // Для дашбордов
-  @@index([status, companyId])      // Для быстрых фильтров
-  @@index([rapeseedId, companyId])  // Для фильтрации по тенанту
+  @@index([id, companyId]) // Для быстрой валидации доступа
+  @@index([fieldId, year]) // Для севооборота
+  @@index([companyId, year]) // Для отчетов по годам
+  @@index([companyId, status]) // Для дашбордов
+  @@index([status, companyId]) // Для быстрых фильтров
+  @@index([rapeseedId, companyId]) // Для фильтрации по тенанту
   @@map("seasons")
 }
 
 model SeasonSnapshot {
-  id               String   @id @default(cuid())
-  seasonId         String
-  season           Season   @relation(fields: [seasonId], references: [id])
-  
+  id       String @id @default(cuid())
+  seasonId String
+  season   Season @relation(fields: [seasonId], references: [id])
+
   // Данные на момент фиксации
-  year             Int
-  status           SeasonStatus
-  fieldId          String
-  rapeseedId       String
-  
-  expectedYield    Float?
-  actualYield      Float?
-  
-  startDate        DateTime?
-  endDate          DateTime?
-  
+  year       Int
+  status     SeasonStatus
+  fieldId    String
+  rapeseedId String
+
+  expectedYield Float?
+  actualYield   Float?
+
+  startDate DateTime?
+  endDate   DateTime?
+
   // Дополнительные метаданные
-  snapshotData     Json     // Полный дамп всех связанных данных (удобрения, операции и т.д.)
-  
-  companyId        String
-  createdBy        String   // User ID
-  createdAt        DateTime @default(now())
+  snapshotData Json // Полный дамп всех связанных данных (удобрения, операции и т.д.)
+
+  companyId String
+  createdBy String // User ID
+  createdAt DateTime @default(now())
 
   @@index([seasonId])
   @@index([companyId])
@@ -714,41 +713,42 @@ model SeasonSnapshot {
 }
 
 model AuditFailure {
-  id               String   @id @default(cuid())
-  event            String
-  userId           String?
-  metadata         String   @db.Text
-  error            String   @db.Text
-  attempt          Int
-  createdAt        DateTime @default(now())
+  id        String   @id @default(cuid())
+  event     String
+  userId    String?
+  metadata  String   @db.Text
+  error     String   @db.Text
+  attempt   Int
+  createdAt DateTime @default(now())
 
   @@map("audit_failures")
 }
+
 model SeasonStageProgress {
-  id           String   @id @default(cuid())
-  seasonId     String
-  season       Season   @relation(fields: [seasonId], references: [id])
-  
-  stageId      String   // ID этапа (например, '04_SOWING')
-  completedAt  DateTime @default(now())
-  
-  metadata     Json?    // Факты и контекст этапа (влажность, дата посева и т.д.)
-  
+  id       String @id @default(cuid())
+  seasonId String
+  season   Season @relation(fields: [seasonId], references: [id])
+
+  stageId     String // ID этапа (например, '04_SOWING')
+  completedAt DateTime @default(now())
+
+  metadata Json? // Факты и контекст этапа (влажность, дата посева и т.д.)
+
   @@index([seasonId])
   @@index([stageId])
   @@map("season_stage_progress")
 }
 
 model SeasonHistory {
-  id           String   @id @default(cuid())
-  seasonId     String
-  season       Season   @relation(fields: [seasonId], references: [id])
-  
-  action       String   // CREATE, UPDATE, COMPLETE, LOCK, YIELD_UPDATE
-  changes      Json     // Diff изменений
-  
-  userId       String?
-  createdAt    DateTime @default(now())
+  id       String @id @default(cuid())
+  seasonId String
+  season   Season @relation(fields: [seasonId], references: [id])
+
+  action  String // CREATE, UPDATE, COMPLETE, LOCK, YIELD_UPDATE
+  changes Json // Diff изменений
+
+  userId    String?
+  createdAt DateTime @default(now())
 
   @@index([seasonId])
   @@map("season_history")
@@ -757,21 +757,21 @@ model SeasonHistory {
 // --- Business Rules ---
 
 model BusinessRule {
-  id             String   @id @default(cuid())
-  code           String   // UNIQUE_CODE (e.g. MIN_SEASON_LENGTH)
-  name           String
-  description    String?
-  
-  params         Json     // Параметры правила (числа, диапазоны)
-  isActive       Boolean  @default(true)
-  severity       RuleSeverity @default(ERROR) // ERROR, WARNING
-  
-  companyId      String?  // Если NULL - системное правило
-  
-  version        Int      @default(1)
-  
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id          String  @id @default(cuid())
+  code        String // UNIQUE_CODE (e.g. MIN_SEASON_LENGTH)
+  name        String
+  description String?
+
+  params   Json // Параметры правила (числа, диапазоны)
+  isActive Boolean      @default(true)
+  severity RuleSeverity @default(ERROR) // ERROR, WARNING
+
+  companyId String? // Если NULL - системное правило
+
+  version Int @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([code, companyId, version])
   @@map("business_rules")
@@ -780,55 +780,55 @@ model BusinessRule {
 // --- Existing Models ---
 
 model TechnologyCard {
-  id          String   @id @default(cuid())
+  id          String                    @id @default(cuid())
   name        String
   description String?
   operations  TechnologyCardOperation[]
   seasons     Season[]
-  
-  companyId   String   // Изоляция карт на уровне тенанта
-  company     Company  @relation(fields: [companyId], references: [id])
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  companyId String // Изоляция карт на уровне тенанта
+  company   Company @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([companyId])
   @@map("technology_cards")
 }
 
 model TechnologyCardOperation {
-  id               String   @id @default(cuid())
+  id               String         @id @default(cuid())
   name             String
   sequence         Int
   technologyCardId String
   technologyCard   TechnologyCard @relation(fields: [technologyCardId], references: [id])
-  
-  stageId          String?  // Ссылка на этап APL (например, '04_SOWING')
-  resources        TechnologyCardResource[]
-  
-  description      String?
-  
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+
+  stageId   String? // Ссылка на этап APL (например, '04_SOWING')
+  resources TechnologyCardResource[]
+
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tasks     Task[]
 
   @@index([technologyCardId])
   @@index([stageId])
   @@map("technology_card_operations")
-  tasks            Task[]
 }
 
 model TechnologyCardResource {
-  id               String   @id @default(cuid())
-  operationId      String
-  operation        TechnologyCardOperation @relation(fields: [operationId], references: [id])
-  
-  type             String   // FERTILIZER, SEED, FUEL, CHEMICAL
-  name             String   // "Карбамид", "Рапс Озёрный"
-  dosage           Float    // Количество
-  unit             String   // кг/га, л/га
-  
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id          String                  @id @default(cuid())
+  operationId String
+  operation   TechnologyCardOperation @relation(fields: [operationId], references: [id])
+
+  type   String // FERTILIZER, SEED, FUEL, CHEMICAL
+  name   String // "Карбамид", "Рапс Озёрный"
+  dosage Float // Количество
+  unit   String // кг/га, л/га
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([operationId])
   @@map("technology_card_resources")
@@ -837,43 +837,43 @@ model TechnologyCardResource {
 // --- Task Engine Models ---
 
 model Task {
-  id               String   @id @default(cuid())
-  name             String
-  status           TaskStatus @default(PENDING)
-  
+  id     String     @id @default(cuid())
+  name   String
+  status TaskStatus @default(PENDING)
+
   // Context
-  seasonId         String
-  season           Season   @relation(fields: [seasonId], references: [id])
-  
-  operationId      String?
-  operation        TechnologyCardOperation? @relation(fields: [operationId], references: [id])
-  
-  fieldId          String
-  field            Field    @relation(fields: [fieldId], references: [id])
-  
+  seasonId String
+  season   Season @relation(fields: [seasonId], references: [id])
+
+  operationId String?
+  operation   TechnologyCardOperation? @relation(fields: [operationId], references: [id])
+
+  fieldId String
+  field   Field  @relation(fields: [fieldId], references: [id])
+
   // Assignment
-  assigneeId       String?
-  assignee         User?    @relation("TaskAssignee", fields: [assigneeId], references: [id])
-  
-  responsibleId    String?
-  responsible      User?    @relation("TaskResponsible", fields: [responsibleId], references: [id])
-  
+  assigneeId String?
+  assignee   User?   @relation("TaskAssignee", fields: [assigneeId], references: [id])
+
+  responsibleId String?
+  responsible   User?   @relation("TaskResponsible", fields: [responsibleId], references: [id])
+
   // Dates
-  plannedDate      DateTime?
-  slaExpiration    DateTime?
-  completedAt      DateTime?
-  
+  plannedDate   DateTime?
+  slaExpiration DateTime?
+  completedAt   DateTime?
+
   // Tenant Isolation
-  companyId        String
-  company          Company  @relation(fields: [companyId], references: [id])
-  
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
   // Actual Resources
-  actualResources  TaskResourceActual[]
+  actualResources   TaskResourceActual[]
   fieldObservations FieldObservation[]
-  
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  cmrRisks         CmrRisk[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  cmrRisks  CmrRisk[]
 
   @@index([seasonId])
   @@index([companyId])
@@ -883,17 +883,17 @@ model Task {
 }
 
 model TaskResourceActual {
-  id               String   @id @default(cuid())
-  taskId           String
-  task             Task     @relation(fields: [taskId], references: [id])
-  
-  type             String   // FERTILIZER, SEED, FUEL, CHEMICAL
-  name             String
-  amount           Float
-  unit             String
-  
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id     String @id @default(cuid())
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id])
+
+  type   String // FERTILIZER, SEED, FUEL, CHEMICAL
+  name   String
+  amount Float
+  unit   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([taskId])
   @@map("task_resource_actuals")
@@ -937,11 +937,9 @@ enum FieldStatus {
 }
 
 enum RapeseedType {
-  WINTER      // Озимый
-  SPRING      // Яровой
+  WINTER // Озимый
+  SPRING // Яровой
 }
-
-
 
 enum SeasonStatus {
   PLANNING
@@ -974,51 +972,51 @@ enum InvitationStatus {
 // --- Identity Registry Models ---
 
 model EmployeeProfile {
-  id           String   @id @default(cuid())
-  
+  id String @id @default(cuid())
+
   // Link to external HRIS (1C:ZUP / etc)
-  externalId   String?  @unique
-  
-  userId       String?  @unique
-  user         User?    @relation(fields: [userId], references: [id])
-  
+  externalId String? @unique
+
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id])
+
   // Management Context: Reference to structural unit (Department / Brigade / etc)
-  orgUnitId    String?  
-  
+  orgUnitId String?
+
   // Org Position
-  roleId       String
-  role         RoleDefinition @relation(fields: [roleId], references: [id])
-  
+  roleId String
+  role   RoleDefinition @relation(fields: [roleId], references: [id])
+
   // Link to Development
-  requiredRoleCompetencyRef String? 
-  
+  requiredRoleCompetencyRef String?
+
   // Multi-tenant Boundaries
-  companyId    String
-  company      Company  @relation(fields: [companyId], references: [id])
-  
-  holdingId    String?
-  clientId     String?
-  
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  holdingId String?
+  clientId  String?
+
   // --- Contour 1: Foundation (Lifecycle Projects) ---
   onboardingPlan HrOnboardingPlan?
-  supportCases    HrSupportCase[]
-  
+  supportCases   HrSupportCase[]
+
   // --- Contour 2: Incentive (Alignment) ---
-  objectives      Objective[]        // Owner of objective
+  objectives        Objective[] // Owner of objective
   recognitionEvents HrRecognitionEvent[]
-  rewardEvents    HrRewardEvent[]
-  
+  rewardEvents      HrRewardEvent[]
+
   // --- Contour 3: Development (Strategic Signals) ---
-  surveyResponses SurveyResponse[]
-  assessmentSnapshots HumanAssessmentSnapshot[] 
+  surveyResponses     SurveyResponse[]
+  assessmentSnapshots HumanAssessmentSnapshot[]
   competencyStates    PersonalCompetencyState[]
   developmentPlan     HrDevelopmentPlan?
-  
+
   // Identity lifecycle
-  status       LifecycleStatus @default(ACTIVE)
-  
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  status LifecycleStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([companyId])
   @@index([roleId])
@@ -1026,50 +1024,50 @@ model EmployeeProfile {
 }
 
 model HrOnboardingPlan {
-  id          String   @id @default(cuid())
-  employeeId  String   @unique
-  employee    EmployeeProfile @relation(fields: [employeeId], references: [id])
-  
-  stages      Json     // Array of { title: string, completed: boolean, dueDate: DateTime? }
-  progress    Float    @default(0.0)
-  
-  startDate   DateTime @default(now())
+  id         String          @id @default(cuid())
+  employeeId String          @unique
+  employee   EmployeeProfile @relation(fields: [employeeId], references: [id])
+
+  stages   Json // Array of { title: string, completed: boolean, dueDate: DateTime? }
+  progress Float @default(0.0)
+
+  startDate   DateTime  @default(now())
   completedAt DateTime?
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("hr_onboarding_plans")
 }
 
 model HrSupportCase {
-  id          String   @id @default(cuid())
-  employeeId  String
-  employee    EmployeeProfile @relation(fields: [employeeId], references: [id])
-  
-  type        String   // "ADMIN", "TECH", "WELLBEING"
-  subject     String
-  status      String   @default("OPEN")
-  
-  createdAt   DateTime @default(now())
-  closedAt    DateTime?
-  
+  id         String          @id @default(cuid())
+  employeeId String
+  employee   EmployeeProfile @relation(fields: [employeeId], references: [id])
+
+  type    String // "ADMIN", "TECH", "WELLBEING"
+  subject String
+  status  String @default("OPEN")
+
+  createdAt DateTime  @default(now())
+  closedAt  DateTime?
+
   @@map("hr_support_cases")
 }
 
 model RoleDefinition {
-  id          String   @id @default(cuid())
-  name        String   // e.g. "Chief Agronomist"
+  id          String  @id @default(cuid())
+  name        String // e.g. "Chief Agronomist"
   description String?
-  
+
   // Tenant Ownership
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
-  
-  profiles    EmployeeProfile[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  profiles EmployeeProfile[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([name, companyId])
   @@map("role_definitions")
@@ -1081,15 +1079,14 @@ enum LifecycleStatus {
   TERMINATED
 }
 
-
 model AuditLog {
-  id          String   @id @default(cuid())
-  action      String   // INVITATION_ACTIVATED, FIELD_CREATED, RAPESEED_ROTATION_VIOLATION
-  userId      String?
-  ip          String?
-  userAgent   String?
-  metadata    Json?    // Дополнительные детали
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  action    String // INVITATION_ACTIVATED, FIELD_CREATED, RAPESEED_ROTATION_VIOLATION
+  userId    String?
+  ip        String?
+  userAgent String?
+  metadata  Json? // Дополнительные детали
+  createdAt DateTime @default(now())
 
   @@index([action])
   @@index([userId])
@@ -1098,12 +1095,12 @@ model AuditLog {
 }
 
 model ApiUsage {
-  id        String   @id @default(cuid())
-  userId    String?
-  ip        String?
-  action    String
-  count     Int      @default(0)
-  date      DateTime @default(now())
+  id     String   @id @default(cuid())
+  userId String?
+  ip     String?
+  action String
+  count  Int      @default(0)
+  date   DateTime @default(now())
 
   @@unique([userId, action, date])
   @@unique([ip, action, date])
@@ -1111,15 +1108,15 @@ model ApiUsage {
 }
 
 model MemoryEntry {
-  id          String   @id @default(cuid())
-  content     String
-  embedding   Unsupported("vector(1536)")?
-  metadata    Json?
-  companyId   String
-  memoryType  String   // CONTEXT | KNOWLEDGE | STRATEGY | PROCESS
-  source      String   // system | user | import | llm
-  expiresAt   DateTime?
-  createdAt   DateTime @default(now())
+  id         String                       @id @default(cuid())
+  content    String
+  embedding  Unsupported("vector(1536)")?
+  metadata   Json?
+  companyId  String
+  memoryType String // CONTEXT | KNOWLEDGE | STRATEGY | PROCESS
+  source     String // system | user | import | llm
+  expiresAt  DateTime?
+  createdAt  DateTime                     @default(now())
 
   @@index([companyId, memoryType])
   @@map("memory_entries")
@@ -1128,21 +1125,21 @@ model MemoryEntry {
 // --- CRM Models ---
 
 model Deal {
-  id            String    @id @default(cuid())
-  name          String
-  stage         DealStage @default(LEAD)
-  amount        Float     @default(0)
-  probability   Float     @default(0)
-  expectedDate  DateTime?
+  id           String    @id @default(cuid())
+  name         String
+  stage        DealStage @default(LEAD)
+  amount       Float     @default(0)
+  probability  Float     @default(0)
+  expectedDate DateTime?
 
-  clientId      String
-  client        Account    @relation(fields: [clientId], references: [id])
-  
-  companyId     String
-  company       Company   @relation(fields: [companyId], references: [id])
+  clientId String
+  client   Account @relation(fields: [clientId], references: [id])
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([companyId])
   @@index([clientId])
@@ -1150,42 +1147,42 @@ model Deal {
 }
 
 model ScoreCard {
-  id              String   @id @default(cuid())
-  clientId        String   @unique
-  client          Account  @relation(fields: [clientId], references: [id])
+  id       String  @id @default(cuid())
+  clientId String  @unique
+  client   Account @relation(fields: [clientId], references: [id])
 
-  financialHealth Float?   // 0-100 score
-  agroPotential   Float?   // Land bank * Productivity proxy
-  reliability     Float?   // History/Risk score
-  ltvPrediction   Float?   // 3-year projected revenue
+  financialHealth Float? // 0-100 score
+  agroPotential   Float? // Land bank * Productivity proxy
+  reliability     Float? // History/Risk score
+  ltvPrediction   Float? // 3-year projected revenue
 
-  companyId       String
-  company         Company  @relation(fields: [companyId], references: [id])
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
 
-  updatedAt       DateTime @updatedAt
-  createdAt       DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 
   @@index([companyId])
   @@map("crm_scorecards")
 }
 
 model Contract {
-  id          String   @id @default(cuid())
-  number      String
-  type        String   // SUPPLY, PURCHASE, SERVICE
-  status      String   // ACTIVE, COMPLETED, CANCELLED
-  startDate   DateTime
-  endDate     DateTime?
-  amount      Float?
+  id        String    @id @default(cuid())
+  number    String
+  type      String // SUPPLY, PURCHASE, SERVICE
+  status    String // ACTIVE, COMPLETED, CANCELLED
+  startDate DateTime
+  endDate   DateTime?
+  amount    Float?
 
-  clientId    String
-  client      Account   @relation(fields: [clientId], references: [id])
-  
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
+  clientId String
+  client   Account @relation(fields: [clientId], references: [id])
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([companyId])
   @@index([clientId])
@@ -1229,43 +1226,43 @@ enum HarvestPlanStatus {
 }
 
 model HarvestPlan {
-  id              String   @id @default(cuid())
-  
-  accountId       String
-  account         Account  @relation(fields: [accountId], references: [id])
-  
-  companyId       String
-  company         Company  @relation(fields: [companyId], references: [id])
-  
-  contextSnapshot Json?    // Snapshot of conditions at planning
-  targetMetric    String?  // e.g. "YIELD_QPH"
-  period          String?  // e.g. "SEASON_2026"
-  
-  seasonId        String?
-  season          Season?   @relation(fields: [seasonId], references: [id])
-  
-  minValue        Float?
-  optValue        Float?
-  maxValue        Float?
-  baselineValue   Float?
-  
-  status          HarvestPlanStatus @default(DRAFT)
-  
+  id String @id @default(cuid())
+
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id])
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  contextSnapshot Json? // Snapshot of conditions at planning
+  targetMetric    String? // e.g. "YIELD_QPH"
+  period          String? // e.g. "SEASON_2026"
+
+  seasonId String?
+  season   Season? @relation(fields: [seasonId], references: [id])
+
+  minValue      Float?
+  optValue      Float?
+  maxValue      Float?
+  baselineValue Float?
+
+  status HarvestPlanStatus @default(DRAFT)
+
   techMaps            TechMap[]
   performanceContract PerformanceContract?
-  
-  activeTechMapId String? @unique
+
+  activeTechMapId String?  @unique
   activeTechMap   TechMap? @relation("ActiveTechMap", fields: [activeTechMapId], references: [id])
-  
-  activeBudgetPlanId String? @unique
+
+  activeBudgetPlanId String?     @unique
   activeBudgetPlan   BudgetPlan? @relation("ActiveBudgetPlan", fields: [activeBudgetPlanId], references: [id])
-  
-  budgetPlans         BudgetPlan[]
-  deviationReviews    DeviationReview[]
-  harvestResults      HarvestResult[]
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+
+  budgetPlans      BudgetPlan[]
+  deviationReviews DeviationReview[]
+  harvestResults   HarvestResult[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([companyId])
   @@index([accountId])
@@ -1273,21 +1270,21 @@ model HarvestPlan {
 }
 
 model PerformanceContract {
-  id              String   @id @default(cuid())
-  
-  harvestPlanId   String   @unique
-  harvestPlan     HarvestPlan @relation(fields: [harvestPlanId], references: [id])
-  
-  modelType       String   // e.g. "FIXED", "SUCCESS_FEE"
-  feeRules        Json?
-  safetyNetRules  Json?
-  settlementStatus String   @default("PENDING")
-  
-  companyId       String
-  company         Company  @relation(fields: [companyId], references: [id])
+  id String @id @default(cuid())
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  harvestPlanId String      @unique
+  harvestPlan   HarvestPlan @relation(fields: [harvestPlanId], references: [id])
+
+  modelType        String // e.g. "FIXED", "SUCCESS_FEE"
+  feeRules         Json?
+  safetyNetRules   Json?
+  settlementStatus String @default("PENDING")
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([companyId])
   @@map("harvest_performance_contracts")
@@ -1296,119 +1293,119 @@ model PerformanceContract {
 // --- Tech Map Domain (Detailed Operational Planning) ---
 
 model TechMap {
-  id          String   @id @default(cuid())
-  
-  harvestPlanId String   // Mandatory link per canon
-  harvestPlan   HarvestPlan @relation(fields: [harvestPlanId], references: [id])
-  
-  seasonId    String   // Allowed multiple maps per season (versions)
-  season      Season   @relation(fields: [seasonId], references: [id])
-  
-  harvestPlanActive HarvestPlan? @relation("ActiveTechMap")
-  
-  crop        String   // Denormalization for uniqueness index
-  
-  stages      MapStage[]
-  
-  // Metadata for AI Generation
-  soilType    SoilType?
-  moisture    Float?   // Initial moisture %
-  precursor   String?  // Предшественник
-  
-  approvedAt      DateTime?
-  
-  // Snapshots for Production Gate (Immutable)
-  operationsSnapshot Json?
-  resourceNormsSnapshot Json?
-  
-  // Level B: Generative Engine
-  generationMetadata   Json?    // { modelId, modelVersion, generatedAt, seed, hash }
-  generationRecordId   String?  @unique
-  generationRecord     GenerationRecord? @relation(fields: [generationRecordId], references: [id])
-  
-  status      TechMapStatus @default(DRAFT)
-  
-  // Versioning
-  version     Int      @default(1)
-  isLatest    Boolean  @default(true)
-  
-  fieldId     String   // Denormalization for uniqueness index
-  field       Field    @relation(fields: [fieldId], references: [id])
-  
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
-  
-  budgetPlanSnapshots BudgetPlan[] @relation("BudgetPlanTechMapSnapshot")
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id String @id @default(cuid())
 
-  @@unique([fieldId, crop, seasonId, companyId, version]) 
+  harvestPlanId String // Mandatory link per canon
+  harvestPlan   HarvestPlan @relation(fields: [harvestPlanId], references: [id])
+
+  seasonId String // Allowed multiple maps per season (versions)
+  season   Season @relation(fields: [seasonId], references: [id])
+
+  harvestPlanActive HarvestPlan? @relation("ActiveTechMap")
+
+  crop String // Denormalization for uniqueness index
+
+  stages MapStage[]
+
+  // Metadata for AI Generation
+  soilType  SoilType?
+  moisture  Float? // Initial moisture %
+  precursor String? // Предшественник
+
+  approvedAt DateTime?
+
+  // Snapshots for Production Gate (Immutable)
+  operationsSnapshot    Json?
+  resourceNormsSnapshot Json?
+
+  // Level B: Generative Engine
+  generationMetadata Json? // { modelId, modelVersion, generatedAt, seed, hash }
+  generationRecordId String?           @unique
+  generationRecord   GenerationRecord? @relation(fields: [generationRecordId], references: [id])
+
+  status TechMapStatus @default(DRAFT)
+
+  // Versioning
+  version  Int     @default(1)
+  isLatest Boolean @default(true)
+
+  fieldId String // Denormalization for uniqueness index
+  field   Field  @relation(fields: [fieldId], references: [id])
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  budgetPlanSnapshots BudgetPlan[] @relation("BudgetPlanTechMapSnapshot")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([fieldId, crop, seasonId, companyId, version])
   @@index([companyId])
   @@index([harvestPlanId])
   @@map("tech_maps")
 }
 
 model MapStage {
-  id          String   @id @default(cuid())
-  name        String
-  sequence    Int
-  
-  techMapId   String
-  techMap     TechMap  @relation(fields: [techMapId], references: [id])
-  
-  operations  MapOperation[]
-  
+  id       String @id @default(cuid())
+  name     String
+  sequence Int
+
+  techMapId String
+  techMap   TechMap @relation(fields: [techMapId], references: [id])
+
+  operations MapOperation[]
+
   // Integration with APL
-  aplStageId  String?  // '04_SOWING' etc.
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  aplStageId String? // '04_SOWING' etc.
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([techMapId])
   @@map("tech_map_stages")
 }
 
 model MapOperation {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
   description String?
-  
-  mapStageId  String
-  mapStage    MapStage @relation(fields: [mapStageId], references: [id])
-  
+
+  mapStageId String
+  mapStage   MapStage @relation(fields: [mapStageId], references: [id])
+
   // Detailed Planning
   plannedStartTime DateTime?
   plannedEndTime   DateTime?
   durationHours    Int?
-  
-  resources   MapResource[]
-  
+
+  resources MapResource[]
+
   requiredMachineryType MachineryType?
-  
+
   executionRecord ExecutionRecord?
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([mapStageId])
   @@map("tech_map_operations")
 }
 
 model MapResource {
-  id             String   @id @default(cuid())
+  id             String       @id @default(cuid())
   mapOperationId String
   mapOperation   MapOperation @relation(fields: [mapOperationId], references: [id])
-  
-  type           String   // FERTILIZER, etc.
-  name           String
-  amount         Float
-  unit           String
-  
-  costPerUnit    Float?   // Planned cost
-  
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+
+  type   String // FERTILIZER, etc.
+  name   String
+  amount Float
+  unit   String
+
+  costPerUnit Float? // Planned cost
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([mapOperationId])
   @@map("tech_map_resources")
@@ -1421,7 +1418,7 @@ enum TechMapStatus {
   APPROVED
   ACTIVE
   ARCHIVED
-  OVERRIDE_ANALYSIS  // Level C: Анализ человеческого оверрайда (I29–I33)
+  OVERRIDE_ANALYSIS // Level C: Анализ человеческого оверрайда (I29–I33)
 }
 
 // --- Level B: Agronomic Strategy Library ---
@@ -1438,13 +1435,13 @@ model AgronomicStrategy {
   description    String?
   cropId         String
   regionId       String?
-  operations     Json           // OperationTemplate[]
-  constraints    Json           // Constraint[]
+  operations     Json // OperationTemplate[]
+  constraints    Json // Constraint[]
   status         StrategyStatus @default(DRAFT)
   version        Int            @default(1)
-  hash           String?        // SHA-256(canonical(operations + constraints))
+  hash           String? // SHA-256(canonical(operations + constraints))
   publishedAt    DateTime?
-  archivedAt     DateTime?      // Soft-archive timestamp
+  archivedAt     DateTime? // Soft-archive timestamp
   explainability Json?
   companyId      String
   company        Company        @relation(fields: [companyId], references: [id])
@@ -1462,14 +1459,14 @@ model AgronomicStrategy {
 model GenerationRecord {
   id                   String   @id @default(cuid())
   techMap              TechMap?
-  inputParams          Json     // GenerationParams snapshot
-  canonicalizedPayload Json     // canonical(inputParams) — frozen
+  inputParams          Json // GenerationParams snapshot
+  canonicalizedPayload Json // canonical(inputParams) — frozen
   modelId              String   @default("generative-engine-v1")
   modelVersion         String   @default("1.0.0")
-  engineVersion        String   @default("1.0.0")  // Frozen engine version
-  seed                 String   // SHA-256-derived seed string for determinism proof
-  canonicalHash        String   @unique  // SHA-256(canonical + modelVersion + seed) — UNIQUE
-  result               String   // 'SUCCESS' | 'FAILED'
+  engineVersion        String   @default("1.0.0") // Frozen engine version
+  seed                 String // SHA-256-derived seed string for determinism proof
+  canonicalHash        String   @unique // SHA-256(canonical + modelVersion + seed) — UNIQUE
+  result               String // 'SUCCESS' | 'FAILED'
   errorDetails         Json?
   explainability       Json?
   limitationsDisclosed Boolean  @default(true)
@@ -1491,8 +1488,8 @@ model GovernanceConfig {
   id          String   @id @default(cuid())
   companyId   String
   company     Company  @relation(fields: [companyId], references: [id])
-  versionId   String   @unique  // Уникальный ID версии конфига
-  weights     Json     // {w1, w2, w3, w4} — веса DIS
+  versionId   String   @unique // Уникальный ID версии конфига
+  weights     Json // {w1, w2, w3, w4} — веса DIS
   description String?
   createdAt   DateTime @default(now())
 
@@ -1506,24 +1503,24 @@ model GovernanceConfig {
 /// ИНВАРИАНТ I31: Append-Only. UPDATE/DELETE запрещены DB-триггером.
 /// ИНВАРИАНТ I32: explanation NOT NULL.
 model DivergenceRecord {
-  id               String   @id @default(cuid())
+  id               String           @id @default(cuid())
   companyId        String
-  company          Company  @relation(fields: [companyId], references: [id])
+  company          Company          @relation(fields: [companyId], references: [id])
   draftId          String
   draftVersion     Int
-  disVersion       String   // FK → GovernanceConfig.versionId
+  disVersion       String // FK → GovernanceConfig.versionId
   governanceConfig GovernanceConfig @relation(fields: [disVersion], references: [versionId])
-  weightsSnapshot  Json     // Снимок весов на момент записи
-  disScore         Float    // Divergence Impact Score ∈ [0, 1]
-  simulationHash   String   // SHA256, 64 chars (I30)
-  deltaRisk        Float    // ΔRisk ∈ [-1, 1] (I29)
-  conflictVector   Json     // ConflictVector
-  humanAction      Json     // Что сделал человек
-  explanation      String   // I32: обязательно NOT NULL
-  simulationMode   String   // 'DETERMINISTIC' | 'MONTE_CARLO'
-  idempotencyKey   String   @unique // SHA256(RFC8785(canonical))
-  policyVersion    String?  // Версия RiskEscalationPolicy
-  createdAt        DateTime @default(now())
+  weightsSnapshot  Json // Снимок весов на момент записи
+  disScore         Float // Divergence Impact Score ∈ [0, 1]
+  simulationHash   String // SHA256, 64 chars (I30)
+  deltaRisk        Float // ΔRisk ∈ [-1, 1] (I29)
+  conflictVector   Json // ConflictVector
+  humanAction      Json // Что сделал человек
+  explanation      String // I32: обязательно NOT NULL
+  simulationMode   String // 'DETERMINISTIC' | 'MONTE_CARLO'
+  idempotencyKey   String           @unique // SHA256(RFC8785(canonical))
+  policyVersion    String? // Версия RiskEscalationPolicy
+  createdAt        DateTime         @default(now())
 
   @@unique([draftId, draftVersion])
   @@index([companyId])
@@ -1539,36 +1536,36 @@ enum ExecutionStatus {
 }
 
 model ExecutionRecord {
-  id              String   @id @default(cuid())
-  
-  operationId     String   @unique
-  operation       MapOperation @relation(fields: [operationId], references: [id])
-  
-  status          ExecutionStatus @default(PLANNED)
-  plannedDate     DateTime?
-  actualDate      DateTime?
-  
-  performedById   String?
-  performedBy     User?    @relation(fields: [performedById], references: [id])
-  
-  notes           String?  @db.Text
-  version         Int      @default(1) // Optimistic Locking
-  
+  id String @id @default(cuid())
+
+  operationId String       @unique
+  operation   MapOperation @relation(fields: [operationId], references: [id])
+
+  status      ExecutionStatus @default(PLANNED)
+  plannedDate DateTime?
+  actualDate  DateTime?
+
+  performedById String?
+  performedBy   User?   @relation(fields: [performedById], references: [id])
+
+  notes   String? @db.Text
+  version Int     @default(1) // Optimistic Locking
+
   // Phase 0: Execution Integrity Snapshots (Immutable Context)
-  budgetPlanId    String?  // Link to the budget plan active at the time of execution
-  budgetVersion   Int?     // Version of the budget plan active at the time of execution
-  techMapId       String?  // Link to the TechMap active at the time of execution
-  techMapVersion  Int?     // Version of the TechMap active at the time of execution
-  
+  budgetPlanId   String? // Link to the budget plan active at the time of execution
+  budgetVersion  Int? // Version of the budget plan active at the time of execution
+  techMapId      String? // Link to the TechMap active at the time of execution
+  techMapVersion Int? // Version of the TechMap active at the time of execution
+
   stockTransactions StockTransaction[]
-  
-  companyId       String
-  company         Company  @relation(fields: [companyId], references: [id])
-  
-  ledgerEntries   LedgerEntry[]
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  ledgerEntries LedgerEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   orchestrationLogs ExecutionOrchestrationLog[]
 
@@ -1577,24 +1574,24 @@ model ExecutionRecord {
 }
 
 model ExecutionOrchestrationLog {
-  id              String   @id @default(cuid())
-  executionId     String
-  execution       ExecutionRecord @relation(fields: [executionId], references: [id])
-  
-  event           String   // e.g. "OperationCompleted"
-  status          String   // "SUCCESS", "WARNING", "FAILURE"
-  
-  budgetApplied   Boolean  @default(false)
+  id          String          @id @default(cuid())
+  executionId String
+  execution   ExecutionRecord @relation(fields: [executionId], references: [id])
+
+  event  String // e.g. "OperationCompleted"
+  status String // "SUCCESS", "WARNING", "FAILURE"
+
+  budgetApplied    Boolean @default(false)
   deviationCreated Boolean @default(false)
-  
-  warnings        String[]
-  error           String?  @db.Text
-  
-  metadata        Json?    // Context dump
-  
-  transactions    StockTransaction[] // Audit Trail: what was created during this orchestration
-  
-  createdAt       DateTime @default(now())
+
+  warnings String[]
+  error    String?  @db.Text
+
+  metadata Json? // Context dump
+
+  transactions StockTransaction[] // Audit Trail: what was created during this orchestration
+
+  createdAt DateTime @default(now())
 
   @@index([executionId])
   @@map("consulting_execution_logs")
@@ -1616,61 +1613,61 @@ enum DeviationType {
 }
 
 model DeviationReview {
-  id              String   @id @default(cuid())
-  type            DeviationType @default(AGRONOMIC)
-  
+  id   String        @id @default(cuid())
+  type DeviationType @default(AGRONOMIC)
+
   // Context
-  harvestPlanId   String   // Mandatory link to Plan per Phase 1 Refinement
-  harvestPlan     HarvestPlan @relation(fields: [harvestPlanId], references: [id])
-  
-  seasonId        String
-  season          Season   @relation(fields: [seasonId], references: [id])
-  
-  stageId         String?  // Optional link to APL stage
-  
+  harvestPlanId String // Mandatory link to Plan per Phase 1 Refinement
+  harvestPlan   HarvestPlan @relation(fields: [harvestPlanId], references: [id])
+
+  seasonId String
+  season   Season @relation(fields: [seasonId], references: [id])
+
+  stageId String? // Optional link to APL stage
+
   // Content
-  deviationSummary    String   // Fact vs Plan
-  aiImpactAssessment  String   // Risk analysis
-  techConclusion      String?  // Agronomist's input
-  proposedActions     String?  // Correction plan
-  
+  deviationSummary   String // Fact vs Plan
+  aiImpactAssessment String // Risk analysis
+  techConclusion     String? // Agronomist's input
+  proposedActions    String? // Correction plan
+
   // Traceability
-  telegramThreadId    String?  // Link to specific discussion thread
-  observations        FieldObservation[]
-  
+  telegramThreadId String? // Link to specific discussion thread
+  observations     FieldObservation[]
+
   // Client Interaction
   clientResponseStatus ClientResponseStatus @default(PENDING)
   clientComment        String?
   clientRespondedAt    DateTime?
-  
+
   // Responsibility
-  responsibilityMode   ResponsibilityMode @default(SHARED)
-  
+  responsibilityMode ResponsibilityMode @default(SHARED)
+
   // SLA
   slaExpiration        DateTime?
-  liabilityShiftStatus String?    // "SHIFTED_TO_CLIENT", "SUSPENDED"
-  
-  status          DeviationStatus @default(DETECTED)
-  
-  // Management Layer Integration
-  budgetItemId    String?
-  budgetItem      BudgetItem? @relation(fields: [budgetItemId], references: [id])
-  
-  reasonCategory  String?   // e.g. "MARKET_PRICE_CHANGE", "WEATHER", "TECHNOLOGY_BREACH"
-  severity        String    @default("MEDIUM") // LOW, MEDIUM, HIGH
-  
-  decisions       ManagementDecision[]
-  
-  risks           CmrRisk[]
-  
-  budgetPlanId    String?
-  budgetPlan      BudgetPlan? @relation(fields: [budgetPlanId], references: [id])
-  
-  companyId       String
-  company         Company  @relation(fields: [companyId], references: [id])
+  liabilityShiftStatus String? // "SHIFTED_TO_CLIENT", "SUSPENDED"
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  status DeviationStatus @default(DETECTED)
+
+  // Management Layer Integration
+  budgetItemId String?
+  budgetItem   BudgetItem? @relation(fields: [budgetItemId], references: [id])
+
+  reasonCategory String? // e.g. "MARKET_PRICE_CHANGE", "WEATHER", "TECHNOLOGY_BREACH"
+  severity       String  @default("MEDIUM") // LOW, MEDIUM, HIGH
+
+  decisions ManagementDecision[]
+
+  risks CmrRisk[]
+
+  budgetPlanId String?
+  budgetPlan   BudgetPlan? @relation(fields: [budgetPlanId], references: [id])
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([seasonId])
   @@index([harvestPlanId])
@@ -1681,76 +1678,76 @@ model DeviationReview {
 }
 
 model CmrDecision {
-  id              String   @id @default(cuid())
-  
-  seasonId        String
-  season          Season   @relation(fields: [seasonId], references: [id])
-  
-  action          String   // e.g., "ADJUST_SOWING_DATE"
-  reason          String
-  actor           String   // AI, MANAGER, CLIEN
-  
+  id String @id @default(cuid())
+
+  seasonId String
+  season   Season @relation(fields: [seasonId], references: [id])
+
+  action String // e.g., "ADJUST_SOWING_DATE"
+  reason String
+  actor  String // AI, MANAGER, CLIEN
+
   // Strategic Amplifiers
   confidenceLevel ConfidenceLevel @default(HIGH)
-  alternatives    Json?    // Counterfactuals
-  
-  companyId       String
-  company         Company  @relation(fields: [companyId], references: [id])
-  
-  createdAt       DateTime @default(now())
-  
+  alternatives    Json? // Counterfactuals
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+
   // Strict Ownership
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id])
-  
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
   @@index([seasonId])
   @@index([userId])
   @@map("cmr_decisions")
 }
 
 model CmrRisk {
-  id              String   @id @default(cuid())
-  
-  seasonId        String
-  season          Season   @relation(fields: [seasonId], references: [id])
-  
-  type            RiskType
-  description     String
-  
-  probability     RiskLevel // LOW, MEDIUM, HIGH
-  impact          RiskLevel // LOW, MEDIUM, HIGH
-  
+  id String @id @default(cuid())
+
+  seasonId String
+  season   Season @relation(fields: [seasonId], references: [id])
+
+  type        RiskType
+  description String
+
+  probability RiskLevel // LOW, MEDIUM, HIGH
+  impact      RiskLevel // LOW, MEDIUM, HIGH
+
   controllability Controllability // WHO controls this risk?
-  liabilityMode   LiabilityMode   // WHO pays for it?
-  
-  mitigationPlan  String?
-  
+  liabilityMode   LiabilityMode // WHO pays for it?
+
+  mitigationPlan String?
+
   // Link to Deviation Review (if this risk triggered a review)
   deviationReviewId String?
   deviationReview   DeviationReview? @relation(fields: [deviationReviewId], references: [id])
-  
-  budgetPlanId    String?
-  budgetPlan      BudgetPlan? @relation(fields: [budgetPlanId], references: [id])
-  
-  status          String    // OPEN, MITIGATED, REALIZED
-  
+
+  budgetPlanId String?
+  budgetPlan   BudgetPlan? @relation(fields: [budgetPlanId], references: [id])
+
+  status String // OPEN, MITIGATED, REALIZED
+
   // Traceability (Law Requirement)
-  taskId          String?
-  task            Task?            @relation(fields: [taskId], references: [id])
-  observationId   String?
-  observation     FieldObservation? @relation(fields: [observationId], references: [id])
-  responsibleId   String?
-  responsible     User?            @relation("RiskResponsible", fields: [responsibleId], references: [id])
-  
+  taskId        String?
+  task          Task?             @relation(fields: [taskId], references: [id])
+  observationId String?
+  observation   FieldObservation? @relation(fields: [observationId], references: [id])
+  responsibleId String?
+  responsible   User?             @relation("RiskResponsible", fields: [responsibleId], references: [id])
+
   // Insurance
-  insuranceId     String?
-  insurance       InsuranceCoverage? @relation(fields: [insuranceId], references: [id])
-  
-  companyId       String
-  company         Company  @relation(fields: [companyId], references: [id])
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  insuranceId String?
+  insurance   InsuranceCoverage? @relation(fields: [insuranceId], references: [id])
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([seasonId])
   @@index([type])
@@ -1762,27 +1759,27 @@ model CmrRisk {
 }
 
 model InsuranceCoverage {
-  id              String   @id @default(cuid())
-  
-  companyId       String
-  company         Company  @relation(fields: [companyId], references: [id])
-  
-  insurer         String   // Name of insurance company
-  type            InsuranceType
-  
-  status          String   // ACTIVE, CLAIMED, EXPIRED
-  
-  insuredAmount   Float
-  deductible      Float?
-  
-  startDate       DateTime
-  endDate         DateTime
-  
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  insurer String // Name of insurance company
+  type    InsuranceType
+
+  status String // ACTIVE, CLAIMED, EXPIRED
+
+  insuredAmount Float
+  deductible    Float?
+
+  startDate DateTime
+  endDate   DateTime
+
   // Risks covered by this policy
-  coveredRisks    CmrRisk[]
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  coveredRisks CmrRisk[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([companyId])
   @@map("cmr_insurance_coverages")
@@ -1844,42 +1841,42 @@ enum ConfidenceLevel {
 // --- Field Observation (Integrity Sensory Plane) ---
 
 model FieldObservation {
-  id                String   @id @default(cuid())
-  type              ObservationType
-  intent            ObservationIntent @default(MONITORING)
-  integrityStatus   IntegrityStatus   @default(NO_EVIDENCE)
-  
+  id              String            @id @default(cuid())
+  type            ObservationType
+  intent          ObservationIntent @default(MONITORING)
+  integrityStatus IntegrityStatus   @default(NO_EVIDENCE)
+
   // Evidence Content
-  content           String?  @db.Text // Quantitative/Manual entry
-  photoUrl          String?
-  voiceUrl          String?
-  telemetryJson     Json?    // GPS path, etc.
-  coordinates       Json?    // GeoJSON Point
-  
+  content       String? @db.Text // Quantitative/Manual entry
+  photoUrl      String?
+  voiceUrl      String?
+  telemetryJson Json? // GPS path, etc.
+  coordinates   Json? // GeoJSON Point
+
   // Integrity Traceability (Ariadne's Thread)
-  taskId            String?
-  task              Task?    @relation(fields: [taskId], references: [id])
-  fieldId           String?
-  field             Field?   @relation(fields: [fieldId], references: [id])
-  seasonId          String
-  season            Season   @relation(fields: [seasonId], references: [id])
-  
+  taskId   String?
+  task     Task?   @relation(fields: [taskId], references: [id])
+  fieldId  String?
+  field    Field?  @relation(fields: [fieldId], references: [id])
+  seasonId String
+  season   Season  @relation(fields: [seasonId], references: [id])
+
   deviationReviewId String?
   deviationReview   DeviationReview? @relation(fields: [deviationReviewId], references: [id])
 
-  budgetPlanId      String?
-  budgetPlan        BudgetPlan? @relation(fields: [budgetPlanId], references: [id])
-  
-  // Ownership
-  authorId          String
-  author            User     @relation(fields: [authorId], references: [id])
-  
-  companyId         String
-  company           Company  @relation(fields: [companyId], references: [id])
+  budgetPlanId String?
+  budgetPlan   BudgetPlan? @relation(fields: [budgetPlanId], references: [id])
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  cmrRisks          CmrRisk[]
+  // Ownership
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  cmrRisks  CmrRisk[]
 
   @@index([companyId])
   @@index([seasonId])
@@ -1930,71 +1927,77 @@ enum IntegrityStatus {
 // ------------------------------------------
 
 model OkrCycle {
-  id          String   @id @default(cuid())
-  title       String   
-  startDate   DateTime
-  endDate     DateTime
-  status      String   @default("ACTIVE")
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
-  objectives  Objective[]
+  id         String      @id @default(cuid())
+  title      String
+  startDate  DateTime
+  endDate    DateTime
+  status     String      @default("ACTIVE")
+  companyId  String
+  company    Company     @relation(fields: [companyId], references: [id])
+  objectives Objective[]
+
   @@map("hr_okr_cycles")
 }
 
 model Objective {
-  id          String   @id @default(cuid())
-  title       String
-  cycleId     String
-  cycle       OkrCycle @relation(fields: [cycleId], references: [id])
-  ownerId     String?  
-  owner       EmployeeProfile? @relation(fields: [ownerId], references: [id])
-  progress    Float    @default(0.0)
-  keyResults  KeyResult[]
-  createdAt   DateTime @default(now())
+  id         String           @id @default(cuid())
+  title      String
+  cycleId    String
+  cycle      OkrCycle         @relation(fields: [cycleId], references: [id])
+  ownerId    String?
+  owner      EmployeeProfile? @relation(fields: [ownerId], references: [id])
+  progress   Float            @default(0.0)
+  keyResults KeyResult[]
+  createdAt  DateTime         @default(now())
+
   @@map("hr_objectives")
 }
 
 model KeyResult {
-  id          String   @id @default(cuid())
-  title       String
-  objectiveId String
-  objective   Objective @relation(fields: [objectiveId], references: [id])
-  targetValue Float
-  currentValue Float   @default(0.0)
-  metricSource String? 
-  lastUpdated DateTime @updatedAt
+  id           String    @id @default(cuid())
+  title        String
+  objectiveId  String
+  objective    Objective @relation(fields: [objectiveId], references: [id])
+  targetValue  Float
+  currentValue Float     @default(0.0)
+  metricSource String?
+  lastUpdated  DateTime  @updatedAt
+
   @@map("hr_key_results")
 }
 
 model HrKPIIndicator {
   id          String   @id @default(cuid())
-  externalKey String   // e.g. "YIELD_PER_HA"
+  externalKey String // e.g. "YIELD_PER_HA"
   title       String
   value       Float
   capturedAt  DateTime @default(now())
   companyId   String
   company     Company  @relation(fields: [companyId], references: [id])
+
   @@map("hr_kpi_indicators")
 }
 
 model HrRecognitionEvent {
-  id          String   @id @default(cuid())
-  employeeId  String
-  employee    EmployeeProfile @relation(fields: [employeeId], references: [id])
-  type        String   // "PEER", "MANAGER", "SYSTEM"
-  message     String
-  createdAt   DateTime @default(now())
+  id         String          @id @default(cuid())
+  employeeId String
+  employee   EmployeeProfile @relation(fields: [employeeId], references: [id])
+  type       String // "PEER", "MANAGER", "SYSTEM"
+  message    String
+  createdAt  DateTime        @default(now())
+
   @@map("hr_recognition_events")
 }
 
 model HrRewardEvent {
-  id          String   @id @default(cuid())
-  employeeId  String
-  employee    EmployeeProfile @relation(fields: [employeeId], references: [id])
-  type        String   // "BONUS", "EQUITY", "PERK"
-  amount      Float?
-  reason      String
-  createdAt   DateTime @default(now())
+  id         String          @id @default(cuid())
+  employeeId String
+  employee   EmployeeProfile @relation(fields: [employeeId], references: [id])
+  type       String // "BONUS", "EQUITY", "PERK"
+  amount     Float?
+  reason     String
+  createdAt  DateTime        @default(now())
+
   @@map("hr_reward_events")
 }
 
@@ -2003,82 +2006,89 @@ model HrRewardEvent {
 // ------------------------------------------
 
 model PulseSurvey {
-  id          String   @id @default(cuid())
-  title       String
-  questions   Json     
-  status      String   @default("DRAFT")
-  startDate   DateTime?
-  endDate     DateTime?
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
-  responses   SurveyResponse[]
-  createdAt   DateTime @default(now())
+  id        String           @id @default(cuid())
+  title     String
+  questions Json
+  status    String           @default("DRAFT")
+  startDate DateTime?
+  endDate   DateTime?
+  companyId String
+  company   Company          @relation(fields: [companyId], references: [id])
+  responses SurveyResponse[]
+  createdAt DateTime         @default(now())
+
   @@map("hr_pulse_surveys")
 }
 
 model SurveyResponse {
-  id          String   @id @default(cuid())
+  id            String          @id @default(cuid())
   pulseSurveyId String
-  pulseSurvey   PulseSurvey @relation(fields: [pulseSurveyId], references: [id])
-  respondentId  String    
+  pulseSurvey   PulseSurvey     @relation(fields: [pulseSurveyId], references: [id])
+  respondentId  String
   respondent    EmployeeProfile @relation(fields: [respondentId], references: [id])
-  answers       Json      // Immutable
-  submittedAt   DateTime  @default(now())
+  answers       Json // Immutable
+  submittedAt   DateTime        @default(now())
+
   @@index([pulseSurveyId])
   @@map("hr_survey_responses")
 }
 
 model HumanAssessmentSnapshot {
-  id          String   @id @default(cuid())
-  employeeId  String
-  employee    EmployeeProfile @relation(fields: [employeeId], references: [id])
-  
-  burnoutRisk       RiskLevel 
-  engagementLevel   Float     // 0.0 - 1.0
-  ethicalAlignment  Float     // 0.0 - 1.0
-  controllability   Float     // 0.0 - 1.0 (Consumed by CMR)
-  confidenceLevel   Float     @default(1.0) // 0.0 - 1.0 (Probabilistic accuracy)
-  
-  validFrom   DateTime @default(now())
-  validTo     DateTime? 
-  
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
-  
-  createdAt   DateTime @default(now())
+  id         String          @id @default(cuid())
+  employeeId String
+  employee   EmployeeProfile @relation(fields: [employeeId], references: [id])
+
+  burnoutRisk      RiskLevel
+  engagementLevel  Float // 0.0 - 1.0
+  ethicalAlignment Float // 0.0 - 1.0
+  controllability  Float // 0.0 - 1.0 (Consumed by CMR)
+  confidenceLevel  Float     @default(1.0) // 0.0 - 1.0 (Probabilistic accuracy)
+
+  validFrom DateTime  @default(now())
+  validTo   DateTime?
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+
   @@index([employeeId])
   @@map("hr_human_assessment_snapshots")
 }
 
 model PersonalCompetencyState {
-  id          String   @id @default(cuid())
-  employeeId  String
-  employee    EmployeeProfile @relation(fields: [employeeId], references: [id])
-  competencyId String  // Ref to definition
-  level       Float    // current mastery
-  updatedAt   DateTime @updatedAt
+  id           String          @id @default(cuid())
+  employeeId   String
+  employee     EmployeeProfile @relation(fields: [employeeId], references: [id])
+  competencyId String // Ref to definition
+  level        Float // current mastery
+  updatedAt    DateTime        @updatedAt
+
   @@map("hr_competency_states")
 }
 
 model HrDevelopmentPlan {
-  id          String   @id @default(cuid())
-  employeeId  String   @unique
-  employee    EmployeeProfile @relation(fields: [employeeId], references: [id])
-  actions     HrDevelopmentAction[]
-  createdAt   DateTime @default(now())
+  id         String                @id @default(cuid())
+  employeeId String                @unique
+  employee   EmployeeProfile       @relation(fields: [employeeId], references: [id])
+  actions    HrDevelopmentAction[]
+  createdAt  DateTime              @default(now())
+
   @@map("hr_development_plans")
 }
 
 model HrDevelopmentAction {
-  id          String   @id @default(cuid())
+  id          String            @id @default(cuid())
   planId      String
   plan        HrDevelopmentPlan @relation(fields: [planId], references: [id])
-  type        String   // "MENTORSHIP", "TRAINING", "ENV_CHANGE"
+  type        String // "MENTORSHIP", "TRAINING", "ENV_CHANGE"
   description String
-  status      String   @default("PLANNED")
-  createdAt   DateTime @default(now())
+  status      String            @default("PLANNED")
+  createdAt   DateTime          @default(now())
+
   @@map("hr_development_actions")
 }
+
 // ==========================================
 // BLOCK B3: FINANCE & ECONOMY (CFO Control Plane)
 // ==========================================
@@ -2114,77 +2124,77 @@ model TenantState {
   companyId String     @id
   company   Company    @relation(fields: [companyId], references: [id])
   mode      TenantMode @default(ACTIVE)
-  
-  updatedAt DateTime   @updatedAt
+
+  updatedAt DateTime @updatedAt
 
   @@map("tenant_states")
 }
 
 model EconomicEvent {
-  id          String            @id @default(cuid())
-  type        EconomicEventType
-  currency    String            @default("RUB")
-  replayKey   String?
-  metadata    Json?             // Source data (taskId, employeeId, techMapId, etc.)
-  
-  // Attribution Context
-  fieldId     String?
-  seasonId    String?
-  employeeId  String?
-  
-  companyId   String
-  company     Company           @relation(fields: [companyId], references: [id])
-  
-  ledgerEntries LedgerEntry[]
-  
-  createdAt   DateTime          @default(now())
+  id        String            @id @default(cuid())
+  type      EconomicEventType
+  currency  String            @default("RUB")
+  replayKey String?
+  metadata  Json? // Source data (taskId, employeeId, techMapId, etc.)
 
+  // Attribution Context
+  fieldId    String?
+  seasonId   String?
+  employeeId String?
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  ledgerEntries LedgerEntry[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([companyId, id])
+  @@unique([companyId, replayKey])
   @@index([companyId])
   @@index([type])
   @@index([seasonId])
   @@index([fieldId])
   @@index([employeeId])
-  @@unique([companyId, id])
-  @@unique([companyId, replayKey])
   @@map("economic_events")
 }
 
 model LedgerEntry {
-  id              String   @id @default(cuid())
-  sequenceNumber  Int      @default(1)
-  
+  id             String @id @default(cuid())
+  sequenceNumber Int    @default(1)
+
   economicEventId String
   economicEvent   EconomicEvent @relation(fields: [economicEventId], references: [id])
-  
-  amount          Decimal  @db.Decimal(18, 4)
-  type            String   // DEBIT / CREDIT
-  accountCode     String   // Chart of Accounts (CoA) mapping
-  
+
+  amount      Decimal @db.Decimal(18, 4)
+  type        String // DEBIT / CREDIT
+  accountCode String // Chart of Accounts (CoA) mapping
+
   // Tenant & Context
-  companyId       String
-  company         Company  @relation(fields: [companyId], references: [id])
-  
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
   // Phase 2.3: Traceability
-  executionId     String?
-  execution       ExecutionRecord? @relation(fields: [executionId], references: [id])
+  executionId String?
+  execution   ExecutionRecord? @relation(fields: [executionId], references: [id])
 
   // Phase 5: Cash Flow Projection
-  cashFlowType    CashFlowType?
-  cashImpact      Boolean        @default(false)
-  cashDirection   CashDirection?
-  dueDate         DateTime?      // Projection timeline
-  cashAccountId   String?
-  cashAccount     CashAccount?   @relation(fields: [cashAccountId], references: [id])
+  cashFlowType  CashFlowType?
+  cashImpact    Boolean        @default(false)
+  cashDirection CashDirection?
+  dueDate       DateTime? // Projection timeline
+  cashAccountId String?
+  cashAccount   CashAccount?   @relation(fields: [cashAccountId], references: [id])
 
-  isImmutable     Boolean  @default(true) // Derived fact projection
-  
-  createdAt       DateTime @default(now())
+  isImmutable Boolean @default(true) // Derived fact projection
 
+  createdAt DateTime @default(now())
+
+  @@unique([economicEventId, sequenceNumber])
   @@index([companyId])
   @@index([accountCode])
   @@index([cashAccountId])
   @@index([executionId])
-  @@unique([economicEventId, sequenceNumber])
   @@map("ledger_entries")
 }
 
@@ -2194,27 +2204,27 @@ model AccountBalance {
   balance     Decimal  @default(0) @db.Decimal(18, 4)
   updatedAt   DateTime @default(now()) @updatedAt
 
-  company     Company  @relation(fields: [companyId], references: [id])
+  company Company @relation(fields: [companyId], references: [id])
 
   @@id([companyId, accountCode])
   @@map("account_balances")
 }
 
 model CashAccount {
-  id          String   @id @default(uuid())
-  name        String   // e.g. "Main Sberbank", "Petty Cash"
-  balance     Decimal  @default(0) @db.Decimal(18, 4)
-  version     Int      @default(1)
-  currency    String   @default("RUB")
-  isActive    Boolean  @default(true)
-  
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
-  
+  id       String  @id @default(uuid())
+  name     String // e.g. "Main Sberbank", "Petty Cash"
+  balance  Decimal @default(0) @db.Decimal(18, 4)
+  version  Int     @default(1)
+  currency String  @default("RUB")
+  isActive Boolean @default(true)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
   ledgerEntries LedgerEntry[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("consulting_cash_accounts")
 }
@@ -2231,40 +2241,40 @@ enum CashDirection {
 }
 
 model Budget {
-  id          String   @id @default(cuid())
-  name        String
-  limit       Decimal  @db.Decimal(18, 4)
-  consumed    Decimal  @default(0) @db.Decimal(18, 4)
-  remaining   Decimal  @default(0) @db.Decimal(18, 4)
-  
-  status      BudgetStatus @default(DRAFT)
-  
+  id        String  @id @default(cuid())
+  name      String
+  limit     Decimal @db.Decimal(18, 4)
+  consumed  Decimal @default(0) @db.Decimal(18, 4)
+  remaining Decimal @default(0) @db.Decimal(18, 4)
+
+  status BudgetStatus @default(DRAFT)
+
   periodStart DateTime
   periodEnd   DateTime
-  
-  companyId   String
-  company     Company      @relation(fields: [companyId], references: [id])
-  
-  lines       BudgetLine[]
-  
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  lines BudgetLine[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([companyId])
   @@map("budgets")
 }
 
 model BudgetLine {
-  id          String   @id @default(cuid())
-  budgetId    String
-  budget      Budget   @relation(fields: [budgetId], references: [id])
-  
-  category    String   // e.g. "FUEL", "FERTILIZER"
-  limit       Float
-  consumed    Float    @default(0)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id       String @id @default(cuid())
+  budgetId String
+  budget   Budget @relation(fields: [budgetId], references: [id])
+
+  category String // e.g. "FUEL", "FERTILIZER"
+  limit    Float
+  consumed Float  @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("budget_lines")
 }
@@ -2272,52 +2282,52 @@ model BudgetLine {
 // --- Legal & GR Models ---
 
 model RegulatoryBody {
-  id          String   @id @default(cuid())
+  id          String        @id @default(cuid())
   name        String
   description String?
   type        RegulatorType
-  
+
   // Power & Scope
-  scope       String?  @db.Text
-  powers      String?  @db.Text
-  sanctions   String?  @db.Text
-  
+  scope     String? @db.Text
+  powers    String? @db.Text
+  sanctions String? @db.Text
+
   // Multi-tenancy (Monitoring context)
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
-  
-  documents   LegalDocument[]
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  documents    LegalDocument[]
   interactions GrInteraction[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([companyId])
   @@map("regulatory_bodies")
 }
 
 model LegalDocument {
-  id               String   @id @default(cuid())
-  title            String
-  externalId       String?  // Номер акта, например "ФЗ-123"
-  type             DocumentType
-  sourceUrl        String?
-  effectiveDate    DateTime?
-  expirationDate   DateTime?
-  version          String   @default("1.0")
-  
+  id             String       @id @default(cuid())
+  title          String
+  externalId     String? // Номер акта, например "ФЗ-123"
+  type           DocumentType
+  sourceUrl      String?
+  effectiveDate  DateTime?
+  expirationDate DateTime?
+  version        String       @default("1.0")
+
   // Relationships
-  regulatorId      String?
-  regulator        RegulatoryBody? @relation(fields: [regulatorId], references: [id])
-  
-  companyId        String
-  company          Company  @relation(fields: [companyId], references: [id])
-  
-  norms            LegalNorm[]
-  externalFeeds    ExternalLegalFeed[]
-  
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  regulatorId String?
+  regulator   RegulatoryBody? @relation(fields: [regulatorId], references: [id])
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  norms         LegalNorm[]
+  externalFeeds ExternalLegalFeed[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([companyId])
   @@index([externalId])
@@ -2326,42 +2336,42 @@ model LegalDocument {
 }
 
 model LegalNorm {
-  id               String   @id @default(cuid())
-  documentId       String
-  document         LegalDocument @relation(fields: [documentId], references: [id])
-  
-  paragraph        String   // Номер статьи/пункта
-  content          String   @db.Text
-  
-  requirements     LegalRequirement[]
-  
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id         String        @id @default(cuid())
+  documentId String
+  document   LegalDocument @relation(fields: [documentId], references: [id])
+
+  paragraph String // Номер статьи/пункта
+  content   String @db.Text
+
+  requirements LegalRequirement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([documentId])
   @@map("legal_norms")
 }
 
 model LegalRequirement {
-  id               String   @id @default(cuid())
-  normId           String
-  norm             LegalNorm @relation(fields: [normId], references: [id])
-  
-  summary          String   @db.Text // Интерпретация нормы
-  type             RequirementType
-  status           ComplianceStatus @default(UNKNOWN)
-  
+  id     String    @id @default(cuid())
+  normId String
+  norm   LegalNorm @relation(fields: [normId], references: [id])
+
+  summary String           @db.Text // Интерпретация нормы
+  type    RequirementType
+  status  ComplianceStatus @default(UNKNOWN)
+
   // Impact Mapping (Dynamic Context)
-  targetType       ImpactTargetType // CONTRACT, HR_POLICY, TRANSACTION, etc.
-  
-  companyId        String
-  company          Company  @relation(fields: [companyId], references: [id])
-  
+  targetType ImpactTargetType // CONTRACT, HR_POLICY, TRANSACTION, etc.
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
   obligations      LegalObligation[]
   complianceChecks ComplianceCheck[]
-  
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([companyId])
   @@index([status])
@@ -2369,19 +2379,19 @@ model LegalRequirement {
 }
 
 model LegalObligation {
-  id               String   @id @default(cuid())
-  requirementId    String
-  requirement      LegalRequirement @relation(fields: [requirementId], references: [id])
-  
-  description      String   @db.Text
-  dueDate          DateTime?
-  ownerId          String?  // User ID или Role ID
-  status           LegalObligationStatus @default(PENDING)
-  
-  sanctions        Sanction[]
-  
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id            String           @id @default(cuid())
+  requirementId String
+  requirement   LegalRequirement @relation(fields: [requirementId], references: [id])
+
+  description String                @db.Text
+  dueDate     DateTime?
+  ownerId     String? // User ID или Role ID
+  status      LegalObligationStatus @default(PENDING)
+
+  sanctions Sanction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([requirementId])
   @@index([ownerId])
@@ -2389,105 +2399,105 @@ model LegalObligation {
 }
 
 model Sanction {
-  id               String   @id @default(cuid())
-  obligationId     String
-  obligation       LegalObligation @relation(fields: [obligationId], references: [id])
-  
-  type             SanctionType
-  amount           Decimal? @db.Decimal(18,2) // Повышенная точность для штрафов
-  description      String?  @db.Text
-  
-  createdAt        DateTime @default(now())
-  
+  id           String          @id @default(cuid())
+  obligationId String
+  obligation   LegalObligation @relation(fields: [obligationId], references: [id])
+
+  type        SanctionType
+  amount      Decimal?     @db.Decimal(18, 2) // Повышенная точность для штрафов
+  description String?      @db.Text
+
+  createdAt DateTime @default(now())
+
   @@map("legal_sanctions")
 }
 
 model ComplianceCheck {
-  id               String   @id @default(cuid())
-  requirementId    String
-  requirement      LegalRequirement @relation(fields: [requirementId], references: [id])
-  
-  status           ComplianceStatus
-  observation      String?  @db.Text
-  confidenceLevel  Float    @default(1.0)
+  id            String           @id @default(cuid())
+  requirementId String
+  requirement   LegalRequirement @relation(fields: [requirementId], references: [id])
+
+  status                ComplianceStatus
+  observation           String?          @db.Text
+  confidenceLevel       Float            @default(1.0)
   checkedAgainstVersion String? // Версионирование проверки (ссылка на LegalDocument.version)
-  
-  companyId        String
-  company          Company  @relation(fields: [companyId], references: [id])
-  
-  checkedAt        DateTime @default(now())
-  
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  checkedAt DateTime @default(now())
+
   @@index([companyId])
   @@index([requirementId])
   @@map("compliance_checks")
 }
 
 model GrInteraction {
-  id               String   @id @default(cuid())
-  regulatorId      String
-  regulator        RegulatoryBody @relation(fields: [regulatorId], references: [id])
-  
-  type             GrInteractionType
-  subject          String
-  content          String?  @db.Text
-  date             DateTime
-  
-  companyId        String
-  company          Company  @relation(fields: [companyId], references: [id])
-  
-  createdAt        DateTime @default(now())
-  
+  id          String         @id @default(cuid())
+  regulatorId String
+  regulator   RegulatoryBody @relation(fields: [regulatorId], references: [id])
+
+  type    GrInteractionType
+  subject String
+  content String?           @db.Text
+  date    DateTime
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+
   @@index([companyId])
   @@index([regulatorId])
   @@map("gr_interactions")
 }
 
 model PolicySignal {
-  id               String   @id @default(cuid())
-  subject          String
-  description      String?  @db.Text
-  probability      Float    @default(0.5)
-  impactLevel      ImpactLevel
-  expectedDate     DateTime?
-  
-  companyId        String
-  company          Company  @relation(fields: [companyId], references: [id])
-  
-  createdAt        DateTime @default(now())
-  
+  id           String      @id @default(cuid())
+  subject      String
+  description  String?     @db.Text
+  probability  Float       @default(0.5)
+  impactLevel  ImpactLevel
+  expectedDate DateTime?
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+
   @@index([companyId])
   @@map("policy_signals")
 }
 
 model ExternalLegalFeed {
-  id               String   @id @default(cuid())
-  documentId       String
-  document         LegalDocument @relation(fields: [documentId], references: [id])
-  
-  source           String   // GIGALEGAL, GARANT, PRAVO_GOV
-  externalRef      String?
-  rawContent       Json
-  lastSync         DateTime @default(now())
-  
+  id         String        @id @default(cuid())
+  documentId String
+  document   LegalDocument @relation(fields: [documentId], references: [id])
+
+  source      String // GIGALEGAL, GARANT, PRAVO_GOV
+  externalRef String?
+  rawContent  Json
+  lastSync    DateTime @default(now())
+
   @@map("external_legal_feeds")
 }
 
 // --- Legal & GR Enums ---
 
 enum RegulatorType {
-  FISCAL       // Налоговая, Таможня
-  SUPERVISORY  // Россельхознадзор, Санэпидем
-  EXECUTIVE    // Минсельхоз, Исполкомы
-  LEGISLATIVE  // Парламент
-  ASSOCIATION  // Отраслевые союзы
+  FISCAL // Налоговая, Таможня
+  SUPERVISORY // Россельхознадзор, Санэпидем
+  EXECUTIVE // Минсельхоз, Исполкомы
+  LEGISLATIVE // Парламент
+  ASSOCIATION // Отраслевые союзы
 }
 
 enum DocumentType {
-  STATUTORY_LAW    // Законы
-  REGULATION       // Постановления, Приказы
-  TECHNICAL_NORM   // ГОСТ, Техрегламенты
-  CONTRACT         // Договоры
-  JUDICIAL_ACT     // Судебная практика
+  STATUTORY_LAW // Законы
+  REGULATION // Постановления, Приказы
+  TECHNICAL_NORM // ГОСТ, Техрегламенты
+  CONTRACT // Договоры
+  JUDICIAL_ACT // Судебная практика
 }
 
 enum RequirementType {
@@ -2592,112 +2602,112 @@ enum MeasurementSource {
 // --- R&D Engine Models ---
 
 model ResearchProgram {
-  id            String          @id @default(cuid())
-  companyId     String
-  company       Company         @relation(fields: [companyId], references: [id])
-  name          String
-  objective     String          @db.Text
-  hypothesis    String?         @db.Text
-  status        ProgramStatus
-  createdAt     DateTime        @default(now())
-  archivedAt    DateTime?
-  experiments   Experiment[]
+  id          String        @id @default(cuid())
+  companyId   String
+  company     Company       @relation(fields: [companyId], references: [id])
+  name        String
+  objective   String        @db.Text
+  hypothesis  String?       @db.Text
+  status      ProgramStatus
+  createdAt   DateTime      @default(now())
+  archivedAt  DateTime?
+  experiments Experiment[]
 
   @@index([companyId])
   @@map("research_programs")
 }
 
 model Experiment {
-  id              String           @id @default(cuid())
-  programId       String
-  program         ResearchProgram  @relation(fields: [programId], references: [id])
-  name            String
-  type            ExperimentType
-  state           ExperimentState
+  id               String          @id @default(cuid())
+  programId        String
+  program          ResearchProgram @relation(fields: [programId], references: [id])
+  name             String
+  type             ExperimentType
+  state            ExperimentState
   activeProtocolId String?         @unique
-  protocol        Protocol?        @relation("ActiveProtocol", fields: [activeProtocolId], references: [id])
-  
-  protocols       Protocol[]       @relation("ExperimentProtocols")
-  trials          Trial[]
-  result          ResearchResult?
-  conclusion      ResearchConclusion?
-  
-  createdAt       DateTime         @default(now())
+  protocol         Protocol?       @relation("ActiveProtocol", fields: [activeProtocolId], references: [id])
+
+  protocols  Protocol[]          @relation("ExperimentProtocols")
+  trials     Trial[]
+  result     ResearchResult?
+  conclusion ResearchConclusion?
+
+  createdAt DateTime @default(now())
 
   @@index([programId])
   @@map("experiments")
 }
 
 model Protocol {
-  id              String      @id @default(cuid())
+  id              String         @id @default(cuid())
   experimentId    String
-  experiment      Experiment  @relation("ExperimentProtocols", fields: [experimentId], references: [id])
+  experiment      Experiment     @relation("ExperimentProtocols", fields: [experimentId], references: [id])
   version         Int
   methodology     Json
   variables       Json
   successCriteria Json
   status          ProtocolStatus @default(DRAFT)
   approvedAt      DateTime?
-  approvedBy      String?      // JSON или строка подписей
-  
+  approvedBy      String? // JSON или строка подписей
+
   activeInExperiment Experiment? @relation("ActiveProtocol")
 
-  createdAt       DateTime    @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([experimentId, version])
   @@map("research_protocols")
 }
 
 model Trial {
-  id             String      @id @default(cuid())
-  experimentId   String
-  experiment     Experiment  @relation(fields: [experimentId], references: [id])
-  location       String?
-  conditions     String?     @db.Text
-  startDate      DateTime
-  endDate        DateTime?
-  deviations     String?     @db.Text // Отклонения от протокола
-  measurements   Measurement[]
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  id           String        @id @default(cuid())
+  experimentId String
+  experiment   Experiment    @relation(fields: [experimentId], references: [id])
+  location     String?
+  conditions   String?       @db.Text
+  startDate    DateTime
+  endDate      DateTime?
+  deviations   String?       @db.Text // Отклонения от протокола
+  measurements Measurement[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   @@index([experimentId])
   @@map("research_trials")
 }
 
 model Measurement {
-  id          String   @id @default(cuid())
-  trialId     String
-  trial       Trial    @relation(fields: [trialId], references: [id])
-  variable    String
-  value       Float
-  unit        String
-  measuredAt  DateTime @default(now())
-  locked      Boolean  @default(false)
+  id         String   @id @default(cuid())
+  trialId    String
+  trial      Trial    @relation(fields: [trialId], references: [id])
+  variable   String
+  value      Float
+  unit       String
+  measuredAt DateTime @default(now())
+  locked     Boolean  @default(false)
 
   @@index([trialId])
   @@map("research_measurements")
 }
 
 model ResearchResult {
-  id            String   @id @default(cuid())
-  experimentId  String   @unique
-  experiment    Experiment @relation(fields: [experimentId], references: [id])
-  analysis      Json
-  significance  Float?
-  createdAt     DateTime @default(now())
+  id           String     @id @default(cuid())
+  experimentId String     @unique
+  experiment   Experiment @relation(fields: [experimentId], references: [id])
+  analysis     Json
+  significance Float?
+  createdAt    DateTime   @default(now())
 
   @@map("research_results")
 }
 
 model ResearchConclusion {
-  id            String   @id @default(cuid())
-  experimentId  String   @unique
+  id            String     @id @default(cuid())
+  experimentId  String     @unique
   experiment    Experiment @relation(fields: [experimentId], references: [id])
-  conclusion    String   @db.Text
+  conclusion    String     @db.Text
   applicability Json
-  limitations   String?  @db.Text
-  createdAt     DateTime @default(now())
+  limitations   String?    @db.Text
+  createdAt     DateTime   @default(now())
 
   @@map("research_conclusions")
 }
@@ -2705,15 +2715,15 @@ model ResearchConclusion {
 // --- Knowledge Graph (Sprint 2 / MVP) ---
 
 model KnowledgeNode {
-  id        String              @id @default(cuid())
-  type      KnowledgeNodeType
-  label     String
-  source    KnowledgeNodeSource
+  id     String              @id @default(cuid())
+  type   KnowledgeNodeType
+  label  String
+  source KnowledgeNodeSource
 
   companyId String
-  company   Company             @relation(fields: [companyId], references: [id])
+  company   Company @relation(fields: [companyId], references: [id])
 
-  createdAt DateTime            @default(now())
+  createdAt DateTime @default(now())
 
   outgoingEdges KnowledgeEdge[] @relation("KnowledgeEdgeFrom")
   incomingEdges KnowledgeEdge[] @relation("KnowledgeEdgeTo")
@@ -2724,20 +2734,20 @@ model KnowledgeNode {
 }
 
 model KnowledgeEdge {
-  id          String                 @id @default(cuid())
-  fromNodeId  String
-  toNodeId    String
-  relation    KnowledgeEdgeRelation
-  confidence  Float
-  source      KnowledgeEdgeSource
+  id         String                @id @default(cuid())
+  fromNodeId String
+  toNodeId   String
+  relation   KnowledgeEdgeRelation
+  confidence Float
+  source     KnowledgeEdgeSource
 
-  companyId   String
-  company     Company                @relation(fields: [companyId], references: [id])
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
 
-  fromNode    KnowledgeNode           @relation("KnowledgeEdgeFrom", fields: [fromNodeId], references: [id])
-  toNode      KnowledgeNode           @relation("KnowledgeEdgeTo", fields: [toNodeId], references: [id])
+  fromNode KnowledgeNode @relation("KnowledgeEdgeFrom", fields: [fromNodeId], references: [id])
+  toNode   KnowledgeNode @relation("KnowledgeEdgeTo", fields: [toNodeId], references: [id])
 
-  createdAt   DateTime               @default(now())
+  createdAt DateTime @default(now())
 
   @@index([companyId])
   @@index([fromNodeId])
@@ -2775,19 +2785,19 @@ enum KnowledgeEdgeSource {
 // --- Vision AI Baseline (Sprint 2) ---
 
 model VisionObservation {
-  id         String                   @id @default(cuid())
-  source     VisionObservationSource
-  assetId    String
-  timestamp  DateTime
-  modality   VisionObservationModality
+  id          String                    @id @default(cuid())
+  source      VisionObservationSource
+  assetId     String
+  timestamp   DateTime
+  modality    VisionObservationModality
   rawFeatures Json?
-  metadata   Json?
-  confidence Float
+  metadata    Json?
+  confidence  Float
 
-  companyId  String
-  company    Company                  @relation(fields: [companyId], references: [id])
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
 
-  createdAt  DateTime                 @default(now())
+  createdAt DateTime @default(now())
 
   @@index([companyId])
   @@index([assetId])
@@ -2811,7 +2821,7 @@ enum VisionObservationModality {
 // --- Satellite Ingestion (Sprint 2) ---
 
 model SatelliteObservation {
-  id            String                 @id @default(cuid())
+  id            String             @id @default(cuid())
   assetId       String
   timestamp     DateTime
   indexType     SatelliteIndexType
@@ -2822,10 +2832,10 @@ model SatelliteObservation {
   tileId        String?
   confidence    Float
 
-  companyId     String
-  company       Company                @relation(fields: [companyId], references: [id])
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
 
-  createdAt     DateTime               @default(now())
+  createdAt DateTime @default(now())
 
   @@index([companyId])
   @@index([assetId])
@@ -2846,24 +2856,22 @@ enum SatelliteSource {
   LANDSAT9
 }
 
-
-
 // --- Risk Engine Models (B6) ---
 
 model RiskSignal {
-  id            String   @id @default(cuid())
-  source        RiskSource
-  severity      RiskSeverity
-  reasonCode    String
-  description   String?  @db.Text
+  id          String       @id @default(cuid())
+  source      RiskSource
+  severity    RiskSeverity
+  reasonCode  String
+  description String?      @db.Text
 
   referenceType RiskReferenceType
   referenceId   String
 
-  companyId     String
-  company       Company @relation(fields: [companyId], references: [id])
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
 
-  createdAt     DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([companyId])
   @@index([source])
@@ -2871,18 +2879,18 @@ model RiskSignal {
 }
 
 model RiskAssessment {
-  id            String   @id @default(cuid())
-  targetType    RiskTargetType
-  targetId      String
+  id         String         @id @default(cuid())
+  targetType RiskTargetType
+  targetId   String
 
-  verdict       RiskVerdict
-  score         Int?
-  explanation   Json
+  verdict     RiskVerdict
+  score       Int?
+  explanation Json
 
-  companyId     String
-  company       Company @relation(fields: [companyId], references: [id])
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
 
-  assessedAt    DateTime @default(now())
+  assessedAt DateTime @default(now())
 
   @@index([companyId])
   @@index([verdict])
@@ -2890,18 +2898,18 @@ model RiskAssessment {
 }
 
 model RiskStateHistory {
-  id            String   @id @default(cuid())
-  targetType    RiskTargetType
-  targetId      String
+  id         String         @id @default(cuid())
+  targetType RiskTargetType
+  targetId   String
 
-  fromState     RiskFsmState
-  toState       RiskFsmState
-  reason        String?      @db.Text
+  fromState RiskFsmState
+  toState   RiskFsmState
+  reason    String?      @db.Text
 
-  companyId     String
-  company       Company @relation(fields: [companyId], references: [id])
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
 
-  createdAt     DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([companyId])
   @@index([targetId])
@@ -2909,20 +2917,20 @@ model RiskStateHistory {
 }
 
 model DecisionRecord {
-  id            String   @id @default(cuid())
-  actionType    String   // e.g., START_SEASON, SCALE_TECH
-  targetId      String
-  
-  riskVerdict   RiskVerdict
-  riskState     RiskFsmState
-  explanation   Json     // Snapshot of RiskAssessment.explanation
-  
-  traceId       String?  // Correlation ID
+  id         String @id @default(cuid())
+  actionType String // e.g., START_SEASON, SCALE_TECH
+  targetId   String
 
-  companyId     String
-  company       Company @relation(fields: [companyId], references: [id])
+  riskVerdict RiskVerdict
+  riskState   RiskFsmState
+  explanation Json // Snapshot of RiskAssessment.explanation
 
-  decidedAt     DateTime @default(now())
+  traceId String? // Correlation ID
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  decidedAt DateTime @default(now())
 
   @@index([companyId])
   @@index([actionType])
@@ -2984,41 +2992,41 @@ enum BudgetType {
 }
 
 model BudgetPlan {
-  id                  String   @id @default(cuid())
-  
-  harvestPlanId       String
-  harvestPlan         HarvestPlan @relation(fields: [harvestPlanId], references: [id])
-  
-  harvestPlanActive   HarvestPlan? @relation("ActiveBudgetPlan")
-  
-  version             Int      @default(1)
-  type                BudgetType @default(OPERATIONAL)
-  status              BudgetStatus @default(DRAFT)
-  
-  totalPlannedAmount  Decimal @db.Decimal(18, 4)
-  totalActualAmount   Decimal @default(0) @db.Decimal(18, 4)
-  
-  techMapSnapshotId   String?  
-  techMapSnapshot     TechMap? @relation("BudgetPlanTechMapSnapshot", fields: [techMapSnapshotId], references: [id])
-  
-  items               BudgetItem[]
-  
-  // Traceability
-  deviationReviews    DeviationReview[]
-  risks               CmrRisk[]
-  observations        FieldObservation[]
-  
-  // Phase 0: Integrity Invariants
-  derivationHash      String?  // SHA-256 hash of (ActiveTechMap + Prices + Rules)
-  
-  companyId           String
-  company             Company  @relation(fields: [companyId], references: [id])
-  
-  seasonId            String
-  season              Season   @relation(fields: [seasonId], references: [id])
+  id String @id @default(cuid())
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  harvestPlanId String
+  harvestPlan   HarvestPlan @relation(fields: [harvestPlanId], references: [id])
+
+  harvestPlanActive HarvestPlan? @relation("ActiveBudgetPlan")
+
+  version Int          @default(1)
+  type    BudgetType   @default(OPERATIONAL)
+  status  BudgetStatus @default(DRAFT)
+
+  totalPlannedAmount Decimal @db.Decimal(18, 4)
+  totalActualAmount  Decimal @default(0) @db.Decimal(18, 4)
+
+  techMapSnapshotId String?
+  techMapSnapshot   TechMap? @relation("BudgetPlanTechMapSnapshot", fields: [techMapSnapshotId], references: [id])
+
+  items BudgetItem[]
+
+  // Traceability
+  deviationReviews DeviationReview[]
+  risks            CmrRisk[]
+  observations     FieldObservation[]
+
+  // Phase 0: Integrity Invariants
+  derivationHash String? // SHA-256 hash of (ActiveTechMap + Prices + Rules)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  seasonId String
+  season   Season @relation(fields: [seasonId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([harvestPlanId, version])
   @@index([companyId])
@@ -3027,19 +3035,19 @@ model BudgetPlan {
 }
 
 model OutboxMessage {
-  id          String       @id @default(uuid())
-  type        String       // finance.economic_event.created
-  aggregateId String?      // For event ordering/traceability
-  aggregateType String?    // For context (e.g. ExecutionRecord)
-  payload     Json
-  status      OutboxStatus @default(PENDING)
-  attempts    Int          @default(0)
-  nextRetryAt DateTime?
+  id            String       @id @default(uuid())
+  type          String // finance.economic_event.created
+  aggregateId   String? // For event ordering/traceability
+  aggregateType String? // For context (e.g. ExecutionRecord)
+  payload       Json
+  status        OutboxStatus @default(PENDING)
+  attempts      Int          @default(0)
+  nextRetryAt   DateTime?
   lastAttemptAt DateTime?
-  deadLetterAt DateTime?
-  error       String?      @db.Text
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  deadLetterAt  DateTime?
+  error         String?      @db.Text
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   @@index([status, nextRetryAt, createdAt])
   @@map("outbox_messages")
@@ -3069,56 +3077,55 @@ enum OutboxStatus {
 }
 
 model BudgetItem {
-  id              String   @id @default(cuid())
-  budgetPlanId    String
-  budgetPlan      BudgetPlan @relation(fields: [budgetPlanId], references: [id])
-  
-  category        BudgetCategory
-  plannedNorm     Decimal  @default(0) @db.Decimal(18, 4) // Snapshot from TechMap at generation
-  plannedPrice    Decimal  @default(0) @db.Decimal(18, 4) // Snapshot from Registry at generation
-  plannedAmount   Decimal  @db.Decimal(18, 4)
-  actualAmount    Decimal  @default(0) @db.Decimal(18, 4)
-  
+  id           String     @id @default(cuid())
+  budgetPlanId String
+  budgetPlan   BudgetPlan @relation(fields: [budgetPlanId], references: [id])
+
+  category      BudgetCategory
+  plannedNorm   Decimal        @default(0) @db.Decimal(18, 4) // Snapshot from TechMap at generation
+  plannedPrice  Decimal        @default(0) @db.Decimal(18, 4) // Snapshot from Registry at generation
+  plannedAmount Decimal        @db.Decimal(18, 4)
+  actualAmount  Decimal        @default(0) @db.Decimal(18, 4)
+
   stockTransactions StockTransaction[]
-  
-  companyId       String
-  company         Company  @relation(fields: [companyId], references: [id])
-  
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
   deviationReviews DeviationReview[]
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([budgetPlanId])
   @@map("consulting_budget_items")
 }
 
-
 model ManagementDecision {
-  id                 String         @id @default(uuid())
-  version            Int            @default(1)
-  supersedesId       String?        
-  supersedes         ManagementDecision? @relation("DecisionHistory", fields: [supersedesId], references: [id])
-  history            ManagementDecision[] @relation("DecisionHistory")
-  
-  status             DecisionStatus @default(DRAFT)
-  confirmedAt        DateTime?
-  
-  deviationId        String
-  deviation          DeviationReview @relation(fields: [deviationId], references: [id])
-  
-  description        String         @db.Text
-  expectedEffect     String?        @db.Text
-  
-  // Security & Versioning Hardening
-  isActive           Boolean?       // null for history, true for active version
-  decisionHash       String?        // payload digest for tamper detection
-  
-  authorId           String
-  author             User           @relation(fields: [authorId], references: [id])
+  id           String               @id @default(uuid())
+  version      Int                  @default(1)
+  supersedesId String?
+  supersedes   ManagementDecision?  @relation("DecisionHistory", fields: [supersedesId], references: [id])
+  history      ManagementDecision[] @relation("DecisionHistory")
 
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  status      DecisionStatus @default(DRAFT)
+  confirmedAt DateTime?
+
+  deviationId String
+  deviation   DeviationReview @relation(fields: [deviationId], references: [id])
+
+  description    String  @db.Text
+  expectedEffect String? @db.Text
+
+  // Security & Versioning Hardening
+  isActive     Boolean? // null for history, true for active version
+  decisionHash String? // payload digest for tamper detection
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([deviationId, version])
   @@unique([deviationId, isActive]) // Multi-bypass protection: only one active decision per deviation
@@ -3141,35 +3148,35 @@ enum BudgetCategory {
 }
 
 model HarvestResult {
-  id              String   @id @default(cuid())
-  planId          String
-  plan            HarvestPlan @relation(fields: [planId], references: [id])
-  seasonId        String
-  season          Season   @relation(fields: [seasonId], references: [id])
-  companyId       String
-  company         Company  @relation(fields: [companyId], references: [id])
+  id        String      @id @default(cuid())
+  planId    String
+  plan      HarvestPlan @relation(fields: [planId], references: [id])
+  seasonId  String
+  season    Season      @relation(fields: [seasonId], references: [id])
+  companyId String
+  company   Company     @relation(fields: [companyId], references: [id])
 
-  fieldId         String
-  field           Field    @relation(fields: [fieldId], references: [id])
-  crop            String
+  fieldId String
+  field   Field  @relation(fields: [fieldId], references: [id])
+  crop    String
 
-  plannedYield    Decimal? @db.Decimal(18, 4) // ц/га
-  actualYield     Decimal? @db.Decimal(18, 4) // ц/га
+  plannedYield Decimal? @db.Decimal(18, 4) // ц/га
+  actualYield  Decimal? @db.Decimal(18, 4) // ц/га
 
-  harvestedArea   Decimal? @db.Decimal(18, 4) // га
-  totalOutput     Decimal? @db.Decimal(18, 4) // тонн
-  marketPrice     Decimal? @db.Decimal(18, 4) // цена реализации за тонну
-  
+  harvestedArea Decimal? @db.Decimal(18, 4) // га
+  totalOutput   Decimal? @db.Decimal(18, 4) // тонн
+  marketPrice   Decimal? @db.Decimal(18, 4) // цена реализации за тонну
+
   // Budget Snapshot at Harvest (Fix: Deterministic KPI)
-  costSnapshot    Decimal? @db.Decimal(18, 4) // фактические затраты на момент фиксации урожая
-  budgetPlanId    String?  // ссылка на план, с которого снят снепшот
-  budgetVersion   Int?     // версия бюджета
-  
-  qualityClass    String?
-  harvestDate     DateTime?
+  costSnapshot  Decimal? @db.Decimal(18, 4) // фактические затраты на момент фиксации урожая
+  budgetPlanId  String? // ссылка на план, с которого снят снепшот
+  budgetVersion Int? // версия бюджета
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  qualityClass String?
+  harvestDate  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([planId, seasonId, companyId])
   @@index([fieldId])
@@ -3179,29 +3186,29 @@ model HarvestResult {
 // --- Phase 4: Strategic Feedback Loop ---
 
 model StrategicGoal {
-  id              String         @id @default(cuid())
-  companyId       String
-  company         Company        @relation(fields: [companyId], references: [id])
-  seasonId        String
-  season          Season         @relation(fields: [seasonId], references: [id])
-  
-  goalType        GoalType
-  targetValue     Decimal        @db.Decimal(18, 4)
-  
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  seasonId  String
+  season    Season  @relation(fields: [seasonId], references: [id])
+
+  goalType    GoalType
+  targetValue Decimal  @db.Decimal(18, 4)
+
   // Versioning & Lifecycle
-  version         Int            @default(1)
-  supersedesId    String?        // Link to previous version
-  status          GoalStatus     @default(DRAFT)
-  
-  description     String?        @db.Text
-  
+  version      Int        @default(1)
+  supersedesId String? // Link to previous version
+  status       GoalStatus @default(DRAFT)
+
+  description String? @db.Text
+
   // Security & Conflict Protection
-  isActive        Boolean?       // null for history, true for the active guidance
-  activatedAt     DateTime?
-  archivedAt      DateTime?
-  
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  isActive    Boolean? // null for history, true for the active guidance
+  activatedAt DateTime?
+  archivedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([companyId, seasonId, goalType, isActive]) // Protection: Only one active goal of a type per season
   @@map("consulting_strategic_goals")
@@ -3218,4 +3225,120 @@ enum GoalStatus {
   DRAFT
   ACTIVE
   ARCHIVED
+}
+
+// --- Level D: Adaptive Self-Learning Domain ---
+
+model ModelVersion {
+  id         String      @id @default(cuid())
+  name       String
+  version    Int
+  hash       String      @unique // SHA256
+  parentHash String? // Lineage chain
+  signature  String // Ed25519
+  status     ModelStatus @default(SHADOW)
+
+  artifactPath String // S3 URI
+
+  companyId     String
+  company       Company      @relation(fields: [companyId], references: [id])
+  trainingRunId String?
+  trainingRun   TrainingRun? @relation(fields: [trainingRunId], references: [id])
+
+  driftReports DriftReport[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, name, version])
+  @@index([companyId])
+  @@index([hash])
+  @@map("rai_model_versions")
+}
+
+model TrainingRun {
+  id        String         @id @default(cuid())
+  featureId String // e.g. "rapeseed_yield_prediction"
+  status    TrainingStatus @default(PENDING)
+
+  config  Json?
+  metrics Json?
+
+  models ModelVersion[]
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([status])
+  @@map("rai_training_runs")
+}
+
+model DriftReport {
+  id             String       @id @default(cuid())
+  modelVersionId String
+  modelVersion   ModelVersion @relation(fields: [modelVersionId], references: [id])
+
+  psiScore     Float?
+  klDivergence Float?
+  ksTestStat   Float?
+
+  status  DriftStatus @default(NORMAL)
+  payload Json
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([companyId])
+  @@index([modelVersionId])
+  @@map("rai_drift_reports")
+}
+
+model LearningEvent {
+  id        String @id @default(cuid())
+  featureId String
+  payload   Json
+  signature String
+
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+  @@index([featureId])
+  @@map("rai_learning_events")
+}
+
+enum ModelStatus {
+  DRAFT
+  SHADOW
+  CANARY
+  ACTIVE
+  ARCHIVED
+  FAILED
+  QUARANTINED
+  ROLLED_BACK
+}
+
+enum TrainingStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum DriftStatus {
+  NORMAL
+  WARNING
+  CRITICAL
 }

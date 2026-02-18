@@ -4,7 +4,11 @@ type CounterKey =
   | "illegal_transition_attempts_total"
   | "financial_invariant_failures_total"
   | "event_duplicates_prevented_total"
-  | "reconciliation_alerts_total";
+  | "reconciliation_alerts_total"
+  | "retraining_sessions_triggered_total"
+  | "model_deployments_total"
+  | "critical_drift_alerts_total"
+  | "k8s_job_failures_total";
 
 class InvariantMetricsRegistry {
   private readonly counters: Record<CounterKey, number> = {
@@ -14,6 +18,10 @@ class InvariantMetricsRegistry {
     financial_invariant_failures_total: 0,
     event_duplicates_prevented_total: 0,
     reconciliation_alerts_total: 0,
+    retraining_sessions_triggered_total: 0,
+    model_deployments_total: 0,
+    critical_drift_alerts_total: 0,
+    k8s_job_failures_total: 0,
   };
   private readonly tenantViolationByTenant = new Map<string, number>();
   private readonly tenantViolationByModule = new Map<string, number>();

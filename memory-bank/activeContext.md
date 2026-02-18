@@ -8,12 +8,14 @@
   - [x] ConflictExplainabilityBuilder (I32) — human-readable explanations
   - [x] Industrial Guardrails — 1000-run determinism, policy chaos, drift detection
   - [x] E2E Override Pipeline — full cycle verified
-  - [ ] Spearman Correlation Monitoring — pending production data
+- **Level D: Adaptive Self-Learning Domain**: **VERIFIED ✅** (Pilot Hardening COMPLETE)
+  - [x] Phase C: Industrial Hardening (Atomics, Statistical Gating, Genesis Guard)
+  - [x] Chaos Testing & Load Readiness verified
 - **Phase Gamma: Intelligence & Ecosystem**:
   - [x] **Track 1-6**: Complete.
   - [x] **Track 5 Hardening**: 10/10 standard achieved (Ledger Kernel).
   - [x] **Reconciliation Fix**: Исправлена ошибка `MISSING_LEDGER_ENTRIES`.
-  - [ ] **Next Stage**: UI Dashboard для Contradiction Engine (Radar Chart, Scenario Comparison).
+  - [ ] **Next Stage**: Knowledge Graph construction & Autonomous Planner.
 
 ## Active Decisions
 - **Standardization**: Используем структуру документов с префиксами (00, 10, 20...).

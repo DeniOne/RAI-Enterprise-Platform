@@ -10,6 +10,7 @@ import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { APP_GUARD } from "@nestjs/core";
 import { RedisModule } from "./shared/redis/redis.module";
 import { PrismaModule } from "./shared/prisma/prisma.module";
+import { S3Module } from "./shared/s3/s3.module";
 import { AuthModule } from "./shared/auth/auth.module";
 import { AuditModule } from "./shared/audit/audit.module";
 import { MemoryModule } from "./shared/memory/memory.module";
@@ -39,6 +40,7 @@ import { IntegrityModule } from "./modules/integrity/integrity.module";
 import { ConsultingModule } from "./modules/consulting/consulting.module";
 import { AdvisoryModule } from "./modules/advisory/advisory.module";
 import { HealthModule } from "./modules/health/health.module";
+import { AdaptiveLearningModule } from "./modules/adaptive-learning/adaptive-learning.module";
 import { HttpResilienceModule } from "./shared/http/http-resilience.module";
 import { join } from "path";
 
@@ -57,6 +59,10 @@ import { InvariantMetricsModule } from "./shared/invariants/invariant-metrics.mo
         REDIS_HOST: Joi.string().default('localhost'),
         REDIS_PORT: Joi.number().default(6379),
         JWT_SECRET: Joi.string().required(),
+        MINIO_ENDPOINT: Joi.string().default('localhost'),
+        MINIO_PORT: Joi.number().default(9000),
+        MINIO_ROOT_USER: Joi.string().required(),
+        MINIO_ROOT_PASSWORD: Joi.string().required(),
       }),
       validationOptions: {
         allowUnknown: true,
@@ -71,6 +77,7 @@ import { InvariantMetricsModule } from "./shared/invariants/invariant-metrics.mo
     }]),
     RedisModule,
     PrismaModule,
+    S3Module,
     OutboxModule,
     InvariantMetricsModule,
     AuthModule,
@@ -100,9 +107,9 @@ import { InvariantMetricsModule } from "./shared/invariants/invariant-metrics.mo
     FieldObservationModule,
     IntegrityModule,
     ConsultingModule,
-    ConsultingModule,
     AdvisoryModule,
     HealthModule,
+    AdaptiveLearningModule,
     HttpResilienceModule,
 
     GraphQLModule.forRoot<ApolloDriverConfig>({

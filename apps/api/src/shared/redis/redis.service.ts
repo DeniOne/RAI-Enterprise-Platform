@@ -27,6 +27,17 @@ export class RedisService {
         }
     }
 
+    async setNX(key: string, value: string, ttlSeconds: number): Promise<boolean> {
+        try {
+            if (this.client.status !== 'ready') return false;
+            const result = await this.client.set(key, value, 'EX', ttlSeconds, 'NX');
+            return result === 'OK';
+        } catch (error) {
+            console.error(`[Redis] setNX error for key ${key}:`, error);
+            return false;
+        }
+    }
+
     async get(key: string): Promise<string | null> {
         try {
             if (this.client.status !== 'ready') {
@@ -47,5 +58,9 @@ export class RedisService {
     async exists(key: string): Promise<boolean> {
         const result = await this.client.exists(key);
         return result === 1;
+    }
+
+    getClient(): Redis {
+        return this.client;
     }
 }

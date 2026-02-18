@@ -36,8 +36,13 @@
         "docker:down": "docker-compose down"
     },
     "devDependencies": {
+        "@types/node": "^22.10.7",
+        "tsx": "4.21.0",
         "turbo": "^2.4.2",
-        "typescript": "^5.7.3",
-        "@types/node": "^22.10.7"
+        "typescript": "^5.7.3"
+    },
+    "dependencies": {
+        "dotenv": "17.2.3",
+        "minio": "^8.0.6"
     }
 }

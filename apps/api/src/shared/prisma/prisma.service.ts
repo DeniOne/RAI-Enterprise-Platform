@@ -43,9 +43,11 @@ export class PrismaService
     "KnowledgeEdge",
     "KnowledgeNode",
     "LedgerEntry",
+    "LearningEvent",
     "LegalDocument",
     "LegalRequirement",
     "Machinery",
+    "ModelVersion",
     "OkrCycle",
     "PerformanceContract",
     "PolicySignal",
@@ -64,8 +66,10 @@ export class PrismaService
     "Task",
     "TechMap",
     "TechnologyCard",
+    "TrainingRun",
     "User",
     "VisionObservation",
+    "DriftReport",
   ]);
 
   // Explicit non-tenant/system models. Any model outside both sets is treated as unknown.
