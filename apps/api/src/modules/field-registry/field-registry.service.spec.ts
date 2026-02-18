@@ -51,7 +51,7 @@ describe("FieldRegistryService", () => {
               ],
             },
             soilType: SoilType.CHERNOZEM,
-            clientId: "client-1",
+            accountId: "client-1",
             companyId: "company-1",
           },
           "company-1",
@@ -72,7 +72,7 @@ describe("FieldRegistryService", () => {
             area: 10,
             coordinates: { type: "Point", coordinates: [0, 0] }, // Invalid type (must be Polygon/MultiPolygon)
             soilType: SoilType.CHERNOZEM,
-            clientId: "client-1",
+            accountId: "client-1",
             companyId: "company-1",
           },
           "company-1",
@@ -103,7 +103,7 @@ describe("FieldRegistryService", () => {
           ],
         },
         soilType: SoilType.CHERNOZEM,
-        clientId: "client-1",
+        accountId: "client-1",
         companyId: "company-1",
       };
 

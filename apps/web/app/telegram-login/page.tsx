@@ -16,7 +16,7 @@ export default function TelegramLoginPage() {
         setError("");
 
         try {
-            const response = await fetch("http://127.0.0.1:4000/api/auth/telegram-login", {
+            const response = await fetch("http://localhost:4000/api/auth/telegram-login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ telegramId }),
@@ -40,7 +40,7 @@ export default function TelegramLoginPage() {
 
         const interval = setInterval(async () => {
             try {
-                const response = await fetch(`http://127.0.0.1:4000/api/auth/telegram-login/${sessionId}`);
+                const response = await fetch(`http://localhost:4000/api/auth/telegram-login/${sessionId}`);
                 const data = await response.json();
 
                 if (data.status === "approved") {

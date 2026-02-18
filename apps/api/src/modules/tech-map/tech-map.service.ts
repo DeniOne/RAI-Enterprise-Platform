@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { TechMapStatus, HarvestPlanStatus, UserRole, TechMap } from '@rai/prisma-client';
 import { IntegrityGateService } from '../integrity/integrity-gate.service';
@@ -7,6 +7,8 @@ import { TechMapActiveConflictError } from './tech-map.errors';
 
 @Injectable()
 export class TechMapService {
+    private readonly logger = new Logger(TechMapService.name);
+
     constructor(
         private readonly prisma: PrismaService,
         private readonly integrityGate: IntegrityGateService,
@@ -167,7 +169,27 @@ export class TechMapService {
         });
     }
 
+    async findAll(companyId: string) {
+        return this.prisma.techMap.findMany({
+            where: { companyId },
+            include: {
+                stages: {
+                    orderBy: { sequence: 'asc' },
+                    include: {
+                        operations: {
+                            include: {
+                                resources: true,
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: { version: 'desc' },
+        });
+    }
+
     async findOne(id: string, companyId: string) {
+        this.logger.log(`findOne called with id=${id}, companyId=${companyId}`);
         const map = await this.prisma.techMap.findFirst({
             where: {
                 id,

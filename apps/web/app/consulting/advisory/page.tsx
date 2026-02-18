@@ -142,7 +142,7 @@ export default function AdvisoryPage() {
                     <div className="p-8 bg-stone-50 border border-black/5 rounded-3xl">
                         <h4 className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-4">Методология расчёта</h4>
                         <p className="text-xs text-gray-500 leading-relaxed font-normal">
-                            Risk Score агрегирует 4 замера: агротехнологическую дисциплину, финансовое соответствие бюджету, внешние угрозы (погода, вредители) и юридическую чистоту (compliance). Индекс > 70 считается "критическим" и требует сценарного моделирования в блоке Стратегии.
+                            Risk Score агрегирует 4 замера: агротехнологическую дисциплину, финансовое соответствие бюджету, внешние угрозы (погода, вредители) и юридическую чистоту (compliance). Индекс более 70 считается "критическим" и требует сценарного моделирования в блоке Стратегии.
                         </p>
                     </div>
                 </div>

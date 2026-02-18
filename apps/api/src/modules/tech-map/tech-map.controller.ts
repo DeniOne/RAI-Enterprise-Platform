@@ -9,6 +9,11 @@ import { CurrentUser } from '../../shared/auth/current-user.decorator';
 export class TechMapController {
     constructor(private readonly techMapService: TechMapService) { }
 
+    @Get()
+    async findAll(@CurrentUser() user: any) {
+        return this.techMapService.findAll(user.companyId);
+    }
+
     @Post('generate')
     async generate(@Body() body: { harvestPlanId: string; seasonId: string }) {
         return this.techMapService.generateMap(body.harvestPlanId, body.seasonId);

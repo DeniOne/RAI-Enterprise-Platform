@@ -34,6 +34,7 @@ Business Domain Logic: Agro-Entities, Consulting, and Enterprise logic.
 
 ### 03 — [PRODUCT](03_PRODUCT/)
 User Experience: UI/UX Specs, Telegram Bot, and Design System.
+- [PRODUCT_ROADMAP.md](03_PRODUCT/PRODUCT_ROADMAP.md)
 - [DESIGN_SYSTEM.md](03_PRODUCT/UI/DESIGN_SYSTEM.md)
 - [BOT_UX_CANON.md](03_PRODUCT/BOT/UX_CANON.md)
 

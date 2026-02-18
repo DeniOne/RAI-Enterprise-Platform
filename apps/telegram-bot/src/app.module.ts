@@ -6,7 +6,6 @@ import { ApiClientModule } from './shared/api-client/api-client.module';
 import { RedisModule } from './shared/redis/redis.module';
 import { SessionModule } from './shared/session/session.module';
 import { BotInternalController } from './shared/bot-internal.controller';
-import { PrismaModule } from './shared/prisma/prisma.module';
 
 @Module({
   imports: [
@@ -23,7 +22,6 @@ import { PrismaModule } from './shared/prisma/prisma.module';
     SessionModule,
     ApiClientModule,
     TelegramModule,
-    PrismaModule,
   ],
   controllers: [BotInternalController],
 })

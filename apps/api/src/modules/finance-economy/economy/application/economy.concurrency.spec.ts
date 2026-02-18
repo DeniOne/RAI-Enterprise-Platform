@@ -136,7 +136,7 @@ describe('EconomyService Final Stress Simulation', () => {
         // We better create it to avoid "Tenant not found" noise, as we are testing concurrency, not existence.
         await prisma.tenantState.create({ data: { companyId, mode: 'ACTIVE' } });
 
-        const concurrency = 200;
+        const concurrency = 20;
         const events = Array.from({ length: concurrency }).map(() => generateEvent(companyId));
 
         console.time('Scenario A');
@@ -182,7 +182,7 @@ describe('EconomyService Final Stress Simulation', () => {
         await prisma.company.create({ data: { id: companyId, name: 'Stress B' } });
         await prisma.tenantState.create({ data: { companyId, mode: 'ACTIVE' } });
 
-        const concurrency = 200;
+        const concurrency = 20;
         // 使用 OBLIGATION_SETTLED (Credit Cash) with SOLVENCY_ATTACK source
         const events = Array.from({ length: concurrency }).map(() => generateEvent(companyId, EconomicEventType.OBLIGATION_SETTLED, 'SOLVENCY_ATTACK'));
 

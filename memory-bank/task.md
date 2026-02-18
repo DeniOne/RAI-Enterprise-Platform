@@ -49,3 +49,28 @@
 
 ---
 **ИТОГ:** Основные функциональные треки Фаз 1-5 успешно завершены и архитектурно закреплены.
+
+## Экстренное исправление: Ошибка запуска Telegram Bot (P0) ✅ <!-- id: 9 -->
+- [x] **Изоляция бота от Prisma**: Полное удаление прямой зависимости бота от БД <!-- id: 9.1 -->
+  - [x] Исправление backend API (опциональный companyId для рассылок) <!-- id: 9.1.1 -->
+  - [x] Рефакторинг `BotInternalController` на использование `ApiClient` <!-- id: 9.1.2 -->
+  - [x] Удаление `PrismaModule` и `PrismaService` из кода бота <!-- id: 9.1.3 -->
+  - [x] Верификация успешного запуска бота в watch mode <!-- id: 9.1.4 -->
+
+## Экстренное исправление: Ошибка сверки леджера (MISSING_LEDGER_ENTRIES) ✅ <!-- id: 10 -->
+- [x] **Settlement Guard**: Запрет создания расчетных событий без проводок <!-- id: 10.1 -->
+- [x] **Idempotency Recovery**: Автоматическое восстановление проводок при повторе события-фантома <!-- id: 10.2 -->
+- [x] **Reconciliation Telemetry**: Добавление метаданных (`replayKey`) в алерты сверки <!-- id: 10.3 -->
+- [x] **Verification**: Проверка правил аттрибуции и стресс-тест под нагрузкой <!-- id: 10.4 -->
+
+## Level C: Industrial-Grade Contradiction Engine ✅ <!-- id: 11 -->
+- [x] **Persistence (I31)**: GovernanceConfig, DivergenceRecord, OVERRIDE_ANALYSIS enum <!-- id: 11.1 -->
+- [x] **DivergenceTracker (I31)**: SHA256 idempotencyKey, RFC 8785, Prisma.$transaction <!-- id: 11.2 -->
+- [x] **OverrideRiskAnalyzer (I29)**: ΔRisk, defensive fallback, Hash Pipeline <!-- id: 11.3 -->
+- [x] **CounterfactualEngine (I30)**: Deterministic simulation, roundHalfToEven(8) <!-- id: 11.4 -->
+- [x] **ConflictMatrix (I29)**: DIS formula, Zero-Denominator Safeguard <!-- id: 11.5 -->
+- [x] **Explainability (I32)**: ACCEPT/REVIEW/REJECT recommendations <!-- id: 11.6 -->
+- [x] **FSM Governance Guard (I33)**: DivergenceRecord gate + DIS > 0.7 justification <!-- id: 11.7 -->
+- [x] **Industrial Guardrails**: 1000-run determinism, policy chaos, drift detection <!-- id: 11.8 -->
+- [x] **E2E Override Pipeline**: Full cycle verified (7 тестов) <!-- id: 11.9 -->
+- [x] **Total: 50 тестов PASS** <!-- id: 11.10 -->

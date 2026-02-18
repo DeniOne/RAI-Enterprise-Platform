@@ -55,6 +55,8 @@ model Company {
   economicEvents    EconomicEvent[]
   ledgerEntries     LedgerEntry[]
   cashAccounts      CashAccount[]
+  accountBalances   AccountBalance[]
+  tenantStates      TenantState[]
   budgets           Budget[]
   budgetItems       BudgetItem[]
   // Legal & GR relations
@@ -91,6 +93,14 @@ model Company {
 
   // Phase 4: Strategic OS
   strategicGoals StrategicGoal[]
+
+  // Level B: Generative Engine
+  agronomicStrategies AgronomicStrategy[]
+  generationRecords   GenerationRecord[]
+
+  // Level C: Contradiction-Resilient Intelligence
+  governanceConfigs GovernanceConfig[]
+  divergenceRecords DivergenceRecord[]
 
   @@map("companies")
 }
@@ -1303,6 +1313,11 @@ model TechMap {
   operationsSnapshot    Json?
   resourceNormsSnapshot Json?
 
+  // Level B: Generative Engine
+  generationMetadata Json? // { modelId, modelVersion, generatedAt, seed, hash }
+  generationRecordId String?           @unique
+  generationRecord   GenerationRecord? @relation(fields: [generationRecordId], references: [id])
+
   status TechMapStatus @default(DRAFT)
 
   // Versioning
@@ -1392,11 +1407,120 @@ model MapResource {
 }
 
 enum TechMapStatus {
+  GENERATED_DRAFT
   DRAFT
   REVIEW
   APPROVED
   ACTIVE
   ARCHIVED
+  OVERRIDE_ANALYSIS // Level C: Анализ человеческого оверрайда (I29–I33)
+}
+
+// --- Level B: Agronomic Strategy Library ---
+
+enum StrategyStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model AgronomicStrategy {
+  id             String         @id @default(cuid())
+  name           String
+  description    String?
+  cropId         String
+  regionId       String?
+  operations     Json // OperationTemplate[]
+  constraints    Json // Constraint[]
+  status         StrategyStatus @default(DRAFT)
+  version        Int            @default(1)
+  hash           String? // SHA-256(canonical(operations + constraints))
+  publishedAt    DateTime?
+  archivedAt     DateTime? // Soft-archive timestamp
+  explainability Json?
+  companyId      String
+  company        Company        @relation(fields: [companyId], references: [id])
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([name, companyId, version])
+  @@index([companyId])
+  @@index([cropId])
+  @@map("agronomic_strategies")
+}
+
+// --- Level B: Generation Records (Immutable I28) ---
+
+model GenerationRecord {
+  id                   String   @id @default(cuid())
+  techMap              TechMap?
+  inputParams          Json // GenerationParams snapshot
+  canonicalizedPayload Json // canonical(inputParams) — frozen
+  modelId              String   @default("generative-engine-v1")
+  modelVersion         String   @default("1.0.0")
+  engineVersion        String   @default("1.0.0") // Frozen engine version
+  seed                 String // SHA-256-derived seed string for determinism proof
+  canonicalHash        String   @unique // SHA-256(canonical + modelVersion + seed) — UNIQUE
+  result               String // 'SUCCESS' | 'FAILED'
+  errorDetails         Json?
+  explainability       Json?
+  limitationsDisclosed Boolean  @default(true)
+  companyId            String
+  company              Company  @relation(fields: [companyId], references: [id])
+  createdAt            DateTime @default(now())
+
+  @@index([companyId])
+  @@index([canonicalHash])
+  @@index([createdAt])
+  @@map("generation_records")
+}
+
+// --- Level C: Contradiction-Resilient Intelligence (I29–I33) ---
+
+/// GovernanceConfig — Append-Only конфигурация весов DIS.
+/// ИНВАРИАНТ I31: UPDATE/DELETE запрещены DB-триггером.
+model GovernanceConfig {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  versionId   String   @unique // Уникальный ID версии конфига
+  weights     Json // {w1, w2, w3, w4} — веса DIS
+  description String?
+  createdAt   DateTime @default(now())
+
+  divergenceRecords DivergenceRecord[]
+
+  @@index([companyId])
+  @@map("governance_configs")
+}
+
+/// DivergenceRecord — Иммутабельный лог расхождений AI/Human.
+/// ИНВАРИАНТ I31: Append-Only. UPDATE/DELETE запрещены DB-триггером.
+/// ИНВАРИАНТ I32: explanation NOT NULL.
+model DivergenceRecord {
+  id               String           @id @default(cuid())
+  companyId        String
+  company          Company          @relation(fields: [companyId], references: [id])
+  draftId          String
+  draftVersion     Int
+  disVersion       String // FK → GovernanceConfig.versionId
+  governanceConfig GovernanceConfig @relation(fields: [disVersion], references: [versionId])
+  weightsSnapshot  Json // Снимок весов на момент записи
+  disScore         Float // Divergence Impact Score ∈ [0, 1]
+  simulationHash   String // SHA256, 64 chars (I30)
+  deltaRisk        Float // ΔRisk ∈ [-1, 1] (I29)
+  conflictVector   Json // ConflictVector
+  humanAction      Json // Что сделал человек
+  explanation      String // I32: обязательно NOT NULL
+  simulationMode   String // 'DETERMINISTIC' | 'MONTE_CARLO'
+  idempotencyKey   String           @unique // SHA256(RFC8785(canonical))
+  policyVersion    String? // Версия RiskEscalationPolicy
+  createdAt        DateTime         @default(now())
+
+  @@unique([draftId, draftVersion])
+  @@index([companyId])
+  @@index([createdAt])
+  @@map("divergence_records")
 }
 
 enum ExecutionStatus {
@@ -1985,10 +2109,25 @@ enum BudgetStatus {
   CLOSED
 }
 
+enum TenantMode {
+  ACTIVE
+  READ_ONLY
+  HALTED
+}
+
+model TenantState {
+  companyId String     @id
+  company   Company    @relation(fields: [companyId], references: [id])
+  mode      TenantMode @default(ACTIVE)
+
+  updatedAt DateTime @updatedAt
+
+  @@map("tenant_states")
+}
+
 model EconomicEvent {
   id        String            @id @default(cuid())
   type      EconomicEventType
-  amount    Float
   currency  String            @default("RUB")
   replayKey String?
   metadata  Json? // Source data (taskId, employeeId, techMapId, etc.)
@@ -2005,6 +2144,7 @@ model EconomicEvent {
 
   createdAt DateTime @default(now())
 
+  @@unique([companyId, id])
   @@unique([companyId, replayKey])
   @@index([companyId])
   @@index([type])
@@ -2015,7 +2155,9 @@ model EconomicEvent {
 }
 
 model LedgerEntry {
-  id              String        @id @default(cuid())
+  id             String @id @default(cuid())
+  sequenceNumber Int    @default(1)
+
   economicEventId String
   economicEvent   EconomicEvent @relation(fields: [economicEventId], references: [id])
 
@@ -2043,11 +2185,24 @@ model LedgerEntry {
 
   createdAt DateTime @default(now())
 
+  @@unique([economicEventId, sequenceNumber])
   @@index([companyId])
   @@index([accountCode])
   @@index([cashAccountId])
   @@index([executionId])
   @@map("ledger_entries")
+}
+
+model AccountBalance {
+  companyId   String
+  accountCode String
+  balance     Decimal  @default(0) @db.Decimal(18, 4)
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@id([companyId, accountCode])
+  @@map("account_balances")
 }
 
 model CashAccount {

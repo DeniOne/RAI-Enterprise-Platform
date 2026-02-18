@@ -185,10 +185,10 @@ export class TelegramAuthService {
         return this.prisma.company.findFirst();
     }
 
-    async getActiveUsers(companyId: string) {
+    async getActiveUsers(companyId?: string) {
         return this.prisma.user.findMany({
             where: {
-                companyId,
+                ...(companyId ? { companyId } : {}),
                 accessLevel: 'ACTIVE',
                 telegramId: { not: null },
             },

@@ -1,7 +1,7 @@
 import { Controller, Post, Body, Headers, UnauthorizedException, Logger } from '@nestjs/common';
 import { InjectBot } from 'nestjs-telegraf';
 import { Telegraf, Markup } from 'telegraf';
-import { PrismaService } from './prisma/prisma.service';
+import { ApiClientService } from './api-client/api-client.service';
 
 interface NotifyLoginDto {
     telegramId: string;
@@ -28,7 +28,7 @@ export class BotInternalController {
 
     constructor(
         @InjectBot() private bot: Telegraf,
-        private prisma: PrismaService,
+        private apiClient: ApiClientService,
     ) { }
 
     @Post('notify-login')
@@ -90,12 +90,7 @@ export class BotInternalController {
     ) {
         this.validateApiKey(apiKey);
 
-        const users = await this.prisma.user.findMany({
-            where: {
-                accessLevel: "ACTIVE",
-                telegramId: { not: null },
-            },
-        });
+        const users = await this.apiClient.getActiveUsers();
 
         this.logger.log(`Broadcasting progress to ${users.length} users...`);
 

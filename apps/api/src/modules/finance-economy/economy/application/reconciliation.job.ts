@@ -30,9 +30,11 @@ export class ReconciliationJob {
         const alertPayloads: any[] = [];
 
         for (const event of eventsWithoutLedger) {
+            this.logger.error(`[RECON] MISSING_LEDGER_ENTRIES: eventId=${event.id} type=${event.type} company=${event.companyId}`);
             alertPayloads.push(this.prepareAlert(event.companyId, 'MISSING_LEDGER_ENTRIES', {
                 economicEventId: event.id,
                 eventType: event.type,
+                replayKey: (event as any).replayKey || null,
                 createdAt: event.createdAt.toISOString(),
             }));
         }

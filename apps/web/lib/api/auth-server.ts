@@ -5,10 +5,8 @@ export async function getUserData() {
     if (!token) return null;
 
     try {
-        const baseUrl = 'http://127.0.0.1:4000/api';
+        const baseUrl = 'http://localhost:4000/api';
         const url = `${baseUrl}/users/me`;
-
-        console.log(`[AuthServer] Validating token at: ${url}`);
 
         const response = await fetch(url, {
             headers: { 'Authorization': `Bearer ${token}` },
@@ -16,11 +14,7 @@ export async function getUserData() {
             cache: 'no-store'
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`[AuthServer] Auth check failed: ${response.status} at ${url}. Body: ${errorText}`);
-            return null;
-        }
+        if (!response.ok) return null;
 
         return response.json();
     } catch (error) {

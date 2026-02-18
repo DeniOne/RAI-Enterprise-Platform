@@ -48,7 +48,11 @@
         "noImplicitAny": false,
         "strictBindCallApply": false,
         "forceConsistentCasingInFileNames": false,
-        "noFallthroughCasesInSwitch": false
+        "noFallthroughCasesInSwitch": false,
+        "types": [
+            "node",
+            "jest"
+        ]
     },
     "include": [
         "src/**/*",
@@ -56,7 +60,6 @@
     ],
     "exclude": [
         "node_modules",
-        "dist",
-        "**/*.spec.ts"
+        "dist"
     ]
 }

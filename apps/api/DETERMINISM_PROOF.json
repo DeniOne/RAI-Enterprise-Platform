@@ -1,0 +1,188 @@
+{
+  "generatedAt": "2026-02-17T23:27:19.719Z",
+  "proofType": "DETERMINISTIC_REPLAY",
+  "engineVersion": "1.0.0",
+  "runs": [
+    {
+      "run": 1,
+      "input": {
+        "strategyId": "s1",
+        "strategyVersion": 1,
+        "cropId": "c1",
+        "seasonId": "season_2025",
+        "fieldId": "f1",
+        "companyId": "company_A",
+        "soilType": "Chernozem",
+        "harvestPlanId": "hp1",
+        "explicitSeed": 1000
+      },
+      "output": {
+        "seed": "1000",
+        "hash": "7b70601ef16aaa167e2a020da2a36ed90d7ea086255e5bfd46595e963cff6c53"
+      }
+    },
+    {
+      "run": 2,
+      "input": {
+        "strategyId": "s1",
+        "strategyVersion": 1,
+        "cropId": "c1",
+        "seasonId": "season_2025",
+        "fieldId": "f1",
+        "companyId": "company_A",
+        "soilType": "Chernozem",
+        "harvestPlanId": "hp1",
+        "explicitSeed": 1001
+      },
+      "output": {
+        "seed": "1001",
+        "hash": "ce015e5839545da70f7081873c0775527c605b44051a0b4657c84672f1d026c4"
+      }
+    },
+    {
+      "run": 3,
+      "input": {
+        "strategyId": "s1",
+        "strategyVersion": 1,
+        "cropId": "c1",
+        "seasonId": "season_2025",
+        "fieldId": "f1",
+        "companyId": "company_A",
+        "soilType": "Chernozem",
+        "harvestPlanId": "hp1",
+        "explicitSeed": 1002
+      },
+      "output": {
+        "seed": "1002",
+        "hash": "fc134541bf57822f0c8df22e266207aca25aeb53cfc4d7b39d9b7665b30561c3"
+      }
+    },
+    {
+      "run": 4,
+      "input": {
+        "strategyId": "s1",
+        "strategyVersion": 1,
+        "cropId": "c1",
+        "seasonId": "season_2025",
+        "fieldId": "f1",
+        "companyId": "company_A",
+        "soilType": "Chernozem",
+        "harvestPlanId": "hp1",
+        "explicitSeed": 1003
+      },
+      "output": {
+        "seed": "1003",
+        "hash": "80cf82f08d335d4334f67d01e9241cdc82b61dc940983af34d1b1c3478b158c8"
+      }
+    },
+    {
+      "run": 5,
+      "input": {
+        "strategyId": "s1",
+        "strategyVersion": 1,
+        "cropId": "c1",
+        "seasonId": "season_2025",
+        "fieldId": "f1",
+        "companyId": "company_A",
+        "soilType": "Chernozem",
+        "harvestPlanId": "hp1",
+        "explicitSeed": 1004
+      },
+      "output": {
+        "seed": "1004",
+        "hash": "15ef9a0d1192ef3a45c8b9339aa2cb9bb5227a6a6fb61a51e1c4c317d90da5d6"
+      }
+    },
+    {
+      "run": 6,
+      "input": {
+        "strategyId": "s1",
+        "strategyVersion": 1,
+        "cropId": "c1",
+        "seasonId": "season_2025",
+        "fieldId": "f1",
+        "companyId": "company_A",
+        "soilType": "Chernozem",
+        "harvestPlanId": "hp1",
+        "explicitSeed": 1005
+      },
+      "output": {
+        "seed": "1005",
+        "hash": "35375e0de633bb6d520b0e062062b0534f57071ac103f0f28f2a5983b8a7c2eb"
+      }
+    },
+    {
+      "run": 7,
+      "input": {
+        "strategyId": "s1",
+        "strategyVersion": 1,
+        "cropId": "c1",
+        "seasonId": "season_2025",
+        "fieldId": "f1",
+        "companyId": "company_A",
+        "soilType": "Chernozem",
+        "harvestPlanId": "hp1",
+        "explicitSeed": 1006
+      },
+      "output": {
+        "seed": "1006",
+        "hash": "456e92b2aee310475da3ce6b4bb99b14e69a88a3d7f3a72ba7879f5741c36031"
+      }
+    },
+    {
+      "run": 8,
+      "input": {
+        "strategyId": "s1",
+        "strategyVersion": 1,
+        "cropId": "c1",
+        "seasonId": "season_2025",
+        "fieldId": "f1",
+        "companyId": "company_A",
+        "soilType": "Chernozem",
+        "harvestPlanId": "hp1",
+        "explicitSeed": 1007
+      },
+      "output": {
+        "seed": "1007",
+        "hash": "6270f5d92db97c13c6d4646374749c0fa935df4b05ca46ee9bfe8d9ec33fa3a9"
+      }
+    },
+    {
+      "run": 9,
+      "input": {
+        "strategyId": "s1",
+        "strategyVersion": 1,
+        "cropId": "c1",
+        "seasonId": "season_2025",
+        "fieldId": "f1",
+        "companyId": "company_A",
+        "soilType": "Chernozem",
+        "harvestPlanId": "hp1",
+        "explicitSeed": 1008
+      },
+      "output": {
+        "seed": "1008",
+        "hash": "a7c853f1209f023208fce242b25e881d9fdfd978f38165d7c6f334b30482f88d"
+      }
+    },
+    {
+      "run": 10,
+      "input": {
+        "strategyId": "s1",
+        "strategyVersion": 1,
+        "cropId": "c1",
+        "seasonId": "season_2025",
+        "fieldId": "f1",
+        "companyId": "company_A",
+        "soilType": "Chernozem",
+        "harvestPlanId": "hp1",
+        "explicitSeed": 1009
+      },
+      "output": {
+        "seed": "1009",
+        "hash": "f1f08580c175bc1b3120e3ee690fd87902106517f3bdef33bf6614fa22611bf3"
+      }
+    }
+  ],
+  "validation": "PASSED"
+}

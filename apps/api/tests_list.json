@@ -1,0 +1,227 @@
+[
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\simulation\\isolation-guard.spec.ts",
+    "tests": [
+      "IsolationGuard должен разрешать SIMULATION контекст",
+      "IsolationGuard должен блокировать запись в production таблицы"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\probability\\confidence-interval-validator.spec.ts",
+    "tests": [
+      "ConfidenceIntervalValidator должен пропускать корректные интервалы",
+      "ConfidenceIntervalValidator должен кидать ошибку на некорректный уровень доверия",
+      "ConfidenceIntervalValidator должен кидать ошибку если lower >= upper"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\validation\\integrity-gate-generative.spec.ts",
+    "tests": [
+      "IntegrityGateGenerative validateGeneratedDraft должен проходить, если хеш совпадает и каноникализация idempotent",
+      "IntegrityGateGenerative validateGeneratedDraft должен кидать ошибку, если хеш НЕ совпадает",
+      "IntegrityGateGenerative validateGeneratedDraft должен кидать ошибку, если каноникализация не idempotent",
+      "IntegrityGateGenerative validateRecordIntegrity должен подтверждать целостность записи в БД",
+      "IntegrityGateGenerative validateRecordIntegrity должен возвращать false при нарушении целостности записи"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\probability\\normalization-enforcer.spec.ts",
+    "tests": [
+      "NormalizationEnforcer должен проходить валидацию для суммы ~1.0",
+      "NormalizationEnforcer должен кидать ошибку если сумма отклоняется > 0.001",
+      "NormalizationEnforcer должен нормализовать распределение"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\probability\\probability-distribution-builder.spec.ts",
+    "tests": [
+      "ProbabilityDistributionBuilder должен строить гауссово распределение"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\simulation\\simulation-run.service.spec.ts",
+    "tests": [
+      "SimulationRunService должен запускать симуляцию для списка сценариев"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\record\\generation-record.service.spec.ts",
+    "tests": [
+      "GenerationRecordService createRecord должен создавать запись в БД",
+      "GenerationRecordService createRecord должен обрабатывать ошибки дубликатов (P2002)"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\domain\\draft-factory.spec.ts",
+    "tests": [
+      "DraftFactory createDraft должен создавать черновик со статусом GENERATED_DRAFT (I15)",
+      "DraftFactory createDraft должен детерминированно сортировать стадии по sequence",
+      "DraftFactory createDraft должен сохранять метаданные генерации (I16)",
+      "DraftFactory assertHumanApproval (I17) должен позволять AGRONOMIST утверждать",
+      "DraftFactory assertHumanApproval (I17) должен запрещать SYSTEM утверждать"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\domain\\immutability-guard.spec.ts",
+    "tests": [
+      "ImmutabilityGuard assertMutable (I18) должен разрешать изменение DRAFT стратегий",
+      "ImmutabilityGuard assertMutable (I18) должен ЗАПРЕЩАТЬ изменение PUBLISHED стратегий",
+      "ImmutabilityGuard assertMutable (I18) должен ЗАПРЕЩАТЬ изменение ARCHIVED стратегий",
+      "ImmutabilityGuard softArchive должен позволять перевод PUBLISHED -> ARCHIVED"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\test\\generative-engine.adversarial.spec.ts",
+    "tests": [
+      "GenerativeEngine Adversarial Tests (G-IMPL-5) ADV-01: Should reject generation if seed derivation is bypassed (Direct Seed Injection attempt)",
+      "GenerativeEngine Adversarial Tests (G-IMPL-5) ADV-02: Should throw if Date.now() is called inside generative context",
+      "GenerativeEngine Adversarial Tests (G-IMPL-5) ADV-03: Should throw exactly if Math.random() is called inside generative context",
+      "GenerativeEngine Adversarial Tests (G-IMPL-5) ADV-04: Should produce identical hash for different key order (Canonicalization)",
+      "GenerativeEngine Adversarial Tests (G-IMPL-5) ADV-05: Should normalize whitespace in string values if implemented (or raw strings preserved)",
+      "GenerativeEngine Adversarial Tests (G-IMPL-5) ADV-06: Should throw on Circular JSON input",
+      "GenerativeEngine Adversarial Tests (G-IMPL-5) ADV-07: Should throw on undefined values in strict mode (or handle per contract)",
+      "GenerativeEngine Adversarial Tests (G-IMPL-5) ADV-08: Should omit null values (Contract §1)",
+      "GenerativeEngine Adversarial Tests (G-IMPL-5) ADV-09: Should normalize float precision (Contract §1)",
+      "GenerativeEngine Adversarial Tests (G-IMPL-5) ADV-10: Should handle large payload reasonably (or fail gracefully)",
+      "GenerativeEngine Adversarial Tests (G-IMPL-5) ADV-11: Should not serialize prototype properties",
+      "GenerativeEngine Adversarial Tests (G-IMPL-5) ADV-12: Should handle Unicode Normalization (NFC)",
+      "GenerativeEngine Adversarial Tests (G-IMPL-5) ADV-13: Should produce different result if input strategy changes even slightly",
+      "GenerativeEngine Adversarial Tests (G-IMPL-5) ADV-14: Should produce different result if strategy version changes"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\deterministic\\canonical-sorter.spec.ts",
+    "tests": [
+      "CanonicalSorter CANON-01: Idempotency должен быть idempotent для простого объекта",
+      "CanonicalSorter CANON-01: Idempotency должен быть idempotent для вложенного объекта",
+      "CanonicalSorter CANON-01: Idempotency assertIdempotent должен пройти для валидного canonical",
+      "CanonicalSorter CANON-01: Idempotency assertIdempotent должен throw для невалидного JSON",
+      "CanonicalSorter CANON-02: Order Independence ключи в разном порядке → одинаковый canonical",
+      "CanonicalSorter CANON-02: Order Independence вложенные объекты с разным порядком ключей → одинаковый canonical",
+      "CanonicalSorter CANON-03: Deep Recursion массивы НЕ пересортировываются (domain order)",
+      "CanonicalSorter CANON-03: Deep Recursion вложенные массивы объектов — объекты сортируются, массивы нет",
+      "CanonicalSorter CANON-03: Deep Recursion глубоко вложенные структуры",
+      "CanonicalSorter CANON-04: Edge Cases null в объекте → пропускается",
+      "CanonicalSorter CANON-04: Edge Cases null в массиве → пропускается",
+      "CanonicalSorter CANON-04: Edge Cases undefined → throw",
+      "CanonicalSorter CANON-04: Edge Cases Date → ISO 8601 string",
+      "CanonicalSorter CANON-04: Edge Cases Infinity → throw",
+      "CanonicalSorter CANON-04: Edge Cases NaN → throw",
+      "CanonicalSorter CANON-05: String Normalization NFC normalization для строк",
+      "CanonicalSorter CANON-06: Float Precision float → toFixed(6)",
+      "CanonicalSorter CANON-06: Float Precision integer остаётся integer",
+      "CanonicalSorter CANON-06: Float Precision float с trailing zeros → toFixed(6)",
+      "CanonicalSorter CANON-07: Unsupported Types function → throw",
+      "CanonicalSorter CANON-07: Unsupported Types symbol → throw",
+      "CanonicalSorter CANON-08: Real-world GenerationParams GenerationParams каноникализируется детерминированно"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\deterministic\\seed-manager.spec.ts",
+    "tests": [
+      "SeedManager SEED-01: Deterministic Derivation одинаковый input → одинаковый seed string",
+      "SeedManager SEED-01: Deterministic Derivation результат должен быть валидным uint32 в строковом виде",
+      "SeedManager SEED-01: Deterministic Derivation разный input → чаще всего разный seed (SHA-256)",
+      "SeedManager SEED-02: No Random Fallback пустая строка → throw SeedDerivationError",
+      "SeedManager SEED-02: No Random Fallback null/undefined в resolveSeed без explicitSeed → throw",
+      "SeedManager SEED-03: Explicit Seed Validation валидный uint32 string → возвращает как есть",
+      "SeedManager SEED-03: Explicit Seed Validation не-числовая строка → throw SeedDerivationError",
+      "SeedManager SEED-03: Explicit Seed Validation отрицательное число → throw SeedDerivationError",
+      "SeedManager SEED-03: Explicit Seed Validation число > 2^32-1 → throw SeedDerivationError",
+      "SeedManager SEED-03: Explicit Seed Validation пустая строка → throw SeedDerivationError",
+      "SeedManager SEED-04: Resolve Policy если есть explicitSeed → использует его",
+      "SeedManager SEED-04: Resolve Policy если нет explicitSeed → вычисляет из каноникализации",
+      "SeedManager SEED-05: PRNG Sequence Determinism одинаковый seed → одинаковая последовательность [0, 1)",
+      "SeedManager SEED-05: PRNG Sequence Determinism разный seed → разная последовательность"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\fsm\\draft-state-manager.spec.ts",
+    "tests": [
+      "DraftStateManager handlesStatus должен возвращать true для GENERATED_DRAFT",
+      "DraftStateManager handlesStatus должен возвращать false для других статусов",
+      "DraftStateManager должен возвращать DRAFT и ARCHIVED для GENERATED_DRAFT",
+      "DraftStateManager canTransition должен разрешать переход в DRAFT при участии человека (I17)",
+      "DraftStateManager canTransition должен разрешать переход в ARCHIVED (reject)",
+      "DraftStateManager canTransition должен ЗАПРЕЩАТЬ переход в REVIEW напрямую",
+      "DraftStateManager canTransition должен ЗАПРЕЩАТЬ переход в ACTIVE напрямую",
+      "DraftStateManager canTransition должен ЗАПРЕЩАТЬ переходы если роль SYSTEM/AI (I17)"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\domain\\metadata-builder.spec.ts",
+    "tests": [
+      "MetadataBuilder должен строить метаданные корректно"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\simulation\\scenario-executor.spec.ts",
+    "tests": [
+      "ScenarioExecutor должен применять изменения к черновику (in-memory)",
+      "ScenarioExecutor должен возвращать копию черновика даже без изменений"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\explainability\\factor-extractor.spec.ts",
+    "tests": [
+      "FactorExtractor должен извлекать факторы из ограничений",
+      "FactorExtractor должен извлекать фактор модели"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\domain\\constraint-propagator.spec.ts",
+    "tests": [
+      "ConstraintPropagator должен прокидывать ограничения в черновик (I21)",
+      "ConstraintPropagator должен возвращать новый объект (или модифицированный по ссылке, но мы проверяем результат)"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\probability\\expectation-calculator.spec.ts",
+    "tests": [
+      "ExpectationCalculator должен рассчитывать мат. ожидание",
+      "ExpectationCalculator должен кидать ошибку при несовпадении длин"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\deterministic\\stable-hasher.spec.ts",
+    "tests": [
+      "StableHasher HASH-01: Baseline SHA-256 должен возвращать 64-символьную hex строку",
+      "StableHasher HASH-01: Baseline SHA-256 одинаковый input → одинаковый hash",
+      "StableHasher HASH-02: Generation Hash Contract hashGeneration должен следовать контракту payload|version|seed",
+      "StableHasher HASH-02: Generation Hash Contract изменение любого компонента → изменение хеша",
+      "StableHasher HASH-03: Verification verify/verifyGeneration должны возвращать true при совпадении"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\yield\\deterministic-forecast-engine.spec.ts",
+    "tests": [
+      "DeterministicForecastEngine должен рассчитывать прогноз детерминированно",
+      "DeterministicForecastEngine должен учитывать высокий уровень осадков"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\explainability\\rationale-generator.spec.ts",
+    "tests": [
+      "RationaleGenerator должен генерировать текст для критических факторов",
+      "RationaleGenerator должен возвращать дефолтное сообщение если факторов нет"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\yield\\yield-forecast.service.spec.ts",
+    "tests": [
+      "YieldForecastService должен вызывать engine с собранным snapshot"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\deterministic\\deterministic-generator.spec.ts",
+    "tests": [
+      "DeterministicGenerator должен оркестровать детерминированный пайплайн корректно"
+    ]
+  },
+  {
+    "name": "F:\\RAI_EP\\apps\\api\\src\\modules\\generative-engine\\explainability\\explainability-builder.spec.ts",
+    "tests": [
+      "ExplainabilityBuilder должен строить отчет используя зависимости"
+    ]
+  }
+]

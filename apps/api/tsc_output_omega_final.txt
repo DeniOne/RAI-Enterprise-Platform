@@ -1,1 +1,0 @@
-src/modules/consulting/scenario-simulation.service.ts(34,17): error TS2353: Object literal may only specify known properties, and 'status' does not exist in type 'LedgerEntryWhereInput'.

@@ -65,7 +65,7 @@ describe("SeasonBusinessRulesService", () => {
       prismaMock.season.findMany.mockResolvedValue([{ year: 2024 }]);
 
       await expect(
-        service.validateCropRotation("field-1", 2026, "rapeseed-1"),
+        service.validateCropRotation("field-1", 2026, "rapeseed-1", "company-1"),
       ).rejects.toThrow(BadRequestException);
 
       expect(auditMock.log).toHaveBeenCalled();
@@ -75,7 +75,7 @@ describe("SeasonBusinessRulesService", () => {
       prismaMock.season.findMany.mockResolvedValue([]);
 
       await expect(
-        service.validateCropRotation("field-1", 2026, "rapeseed-1"),
+        service.validateCropRotation("field-1", 2026, "rapeseed-1", "company-1"),
       ).resolves.not.toThrow();
     });
   });

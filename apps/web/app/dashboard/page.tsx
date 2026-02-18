@@ -27,7 +27,7 @@ async function getStats(token: string) {
                 headers: { Authorization: `Bearer ${token}` },
                 cache: 'no-store',
             }),
-            fetch('http://localhost:4000/api/tech-map/generate', {
+            fetch('http://localhost:4000/api/tech-map', {
                 headers: { Authorization: `Bearer ${token}` },
                 cache: 'no-store',
             }),

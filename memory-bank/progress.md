@@ -175,6 +175,7 @@
 - [x] **Hardening (Optimistic Locking)**: Внедрена защита от race conditions через `status: current` в `ConsultingService` и `DeviationService`.
 - [x] **FSM Guards**: Строгие правила переходов статусов с проверкой ролей (RBAC) и бизнес-правил (`ConsultingDomainRules`).
 - [x] **Ledger-First Cash Flow**: Касса — это проекция, а не хранилище.
+- [x] **Settlement Guard**: Любое расчетное событие обязано иметь леджер-проекцию (атомарно).
 - [x] **10/10 Ledger Hardening**: Балансовый слой и автономная паника обязательны.
 - [x] **Russian Language Guard**: Все системные сообщения - строго на русском.
 - [x] **Audit Trail**: Каждое изменение статуса и решения фиксируется в `cmr_decisions` (Immutable).
@@ -248,3 +249,25 @@
 - [x] **Localized Integrity**: Все системные логи, исключения и сообщения триггеров русифицированы (Language Policy).
 - [x] **Schema Sync**: `schema.prisma` приведена в полное соответствие с физическим состоянием БД.
 - [x] **Verification**: Все стресс-сценарии (A-D) пройдены со 100% успехом.
+
+## Milestone 24: Financial Reconciliation & Ledger Hardening — DONE ✅
+**Дата:** 2026-02-17
+- [x] **Bug Fix**: Устранена ошибка `MISSING_LEDGER_ENTRIES` для событий `OBLIGATION_SETTLED`.
+- [x] **Settlement Guard**: Внедрен блокирующий инвариант: расчетные события (`SETTLEMENT`) обязаны порождать проводки.
+- [x] **Idempotency Recovery**: Реализовано самовосстановление "событий-фантомов" (реплей события без проекций теперь триггерит их генерацию).
+- [x] **Observability**: Улучшена телеметрия `ReconciliationJob` (добавлены `companyId` и `replayKey` в алерты).
+- [x] **Defense**: Добавлены проверки типов в `CostAttributionRules` для защиты от некорректных инжектов.
+
+## Milestone 25: Level C — Industrial-Grade Contradiction Engine ✅
+**Дата:** 2026-02-18
+**Статус:** VERIFIED (50 тестов PASS)
+- [x] **Persistence & Schema (I31)**: GovernanceConfig, DivergenceRecord, Append-Only triggers, OVERRIDE_ANALYSIS enum.
+- [x] **DivergenceTracker (I31)**: Транзакционная атомарность, SHA256 idempotencyKey, RFC 8785 канонизация.
+- [x] **OverrideRiskAnalyzer (I29)**: ΔRisk ∈ [-1, 1], defensive fallback (>200ms), policyVersion в hash.
+- [x] **CounterfactualEngine (I30)**: roundHalfToEven(8), deterministic PRNG, Hash Pipeline — SHA256(UTF8(RFC8785)).
+- [x] **ConflictMatrix & DIS (I29)**: `DIS = clamp(Σ w_i * f_i, 0, 1)`, Zero-Denominator Safeguard.
+- [x] **ConflictExplainabilityBuilder (I32)**: Human-readable explanation, ACCEPT/REVIEW/REJECT recommendations.
+- [x] **FSM Governance Guard (I33)**: GovernanceContext, DivergenceRecord gate, High Risk justification (DIS > 0.7).
+- [x] **Industrial Guardrails**: 1000-run determinism × 2, governance drift, policy chaos (1000 random), extreme clamp.
+- [x] **E2E Override Pipeline**: Full pipeline, hash determinism/sensitivity, governance block, idempotency, high risk flow.
+- [x] **Тесты**: FSM (25), ConflictExplainability (10), Industrial Guardrails (8), E2E Pipeline (7) = **50 PASS**.

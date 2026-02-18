@@ -13,6 +13,10 @@ export interface Attribution {
  */
 export class CostAttributionRules {
     static getAttributions(event: { type: EconomicEventType; amount: number; metadata?: any }): Attribution[] {
+        if (!event || !event.type) {
+            return [];
+        }
+
         switch (event.type) {
             case 'COST_INCURRED':
                 return [

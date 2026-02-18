@@ -462,3 +462,163 @@ Orchestrator = Brain (канон RAI_EP).
 ### Связанные документы
 - `docs/01-ARCHITECTURE/PHASE 0 — ФИКСАЦИЯ ЯДРА СИСТЕМЫ.md`
 - `docs/01-ARCHITECTURE/Финальный стратегический план.md`
+
+---
+
+## LEVEL-B-GEN-001
+
+**Дата:** 2026-02-18
+**Автор:** TECHLEAD (AI)
+**Статус:** ACCEPTED
+**Приоритет:** CRITICAL
+**Target:** Level B Implementation
+
+### Решение
+Реализация Generative Engine для Level B с полным покрытием инвариантов I15-I28, детерминированной генерацией (B1), immutability constraints и property-based testing.
+
+### Scope
+- **Phase:** Level B (Formal Verification)
+- **Компоненты:**
+  - `/generative-engine/domain/*` (DraftFactory, DeterministicGenerator, ExplainabilityBuilder, MetadataBuilder, ConstraintPropagator, EntropyController)
+  - `/generative-engine/validation/*` (IntegrityGate, DeterminismValidator, ImmutabilityGuard)
+  - `/generative-engine/fsm/*` (DraftStateManager)
+  - `/generative-engine/simulation/*` (ScenarioExecutor)
+  - `/generative-engine/record/*` (GenerationRecordService)
+  - `/generative-engine/yield/*` (YieldForecastService, DeterministicForecastEngine)
+  - `/generative-engine/probability/*` (ProbabilityDistributionBuilder, NormalizationEnforcer)
+  - `/generative-engine/tests/*` (L3-L6 tests, PBT tests, Adversarial tests)
+
+### Технические ограничения
+1. **Invariant-First Development:** Каждый инвариант реализуется как Domain Rule → Validation Layer → Test Coverage → PBT Coverage
+2. **Determinism by Construction (B1):**
+   - Побайтово детерминированная генерация: `generate(P)₀ = generate(P)ₙ`
+   - Запрет `Date.now()`, `Math.random()`, non-deterministic UUID
+   - Централизованный контроль энтропии через `EntropyController`
+3. **Immutability as Core Constraint:**
+   - `GenerationRecord` — immutable после создания
+   - Published `Strategy` — immutable (триггеры БД)
+   - Hash — immutable
+4. **Test-Driven Flow:**
+   - Написать L4 тест → Написать PBT тест → Убедиться, что тест падает → Реализовать минимальный код → Добиться зелёного → Проверить adversarial
+5. **Multi-tenancy:** Все данные изолированы через `companyId`
+6. **Infrastructure Isolation:** Домен не зависит от БД/Redis напрямую (Repository pattern)
+
+### Инварианты (I15-I28)
+- **I15:** Изоляция генеративных черновиков (`status = 'GENERATED_DRAFT'`, только HUMAN может утвердить)
+- **I16:** Провенанс генерации (`generationMetadata.modelId`, `modelVersion`, `generatedAt`, `seed`, `hash`)
+- **I17:** Верховенство человеческого переопределения (`canReject`, `canEdit`)
+- **I18:** Неизменяемость библиотеки стратегий (PUBLISHED стратегии immutable)
+- **I19:** Детерминированная генерация B1 (`generate(P)₀ = generate(P)ₙ`)
+- **I20:** Прослеживаемость модели урожайности (`modelVersion`, `inputData`, `forecastedAt`, `hash`)
+- **I21:** Распространение ограничений (`∀ c ∈ strategy.constraints: c ∈ draft.constraints`)
+- **I22:** Изоляция симуляций (`isProduction = false`, нет влияния на FSM)
+- **I24:** Обязательная объяснимость (`limitationsDisclosed = true`, `explainability ≠ null`)
+- **I25:** Нормализация вероятности (`|∫ p(y) dy - 1.0| < 0.001`)
+- **I26:** Границы вероятности (`0 ≤ p(y) ≤ 1`)
+- **I27:** Доверительный интервал (`0.8 ≤ confidence ≤ 0.99`, `lower < upper`)
+- **I28:** Неизменяемость записи генерации (immutable после создания)
+
+### Definition of Done
+- [ ] **100% Test Matrix проходит** (67 тестов: 53 базовых + 14 adversarial)
+  - [ ] 7 L3 тестов (схема БД)
+  - [ ] 26 L4 тестов (unit)
+  - [ ] 11 L5 тестов (integration, 10,000 образцов)
+  - [ ] 9 L6 тестов (E2E)
+  - [ ] 14 adversarial тестов (все атаки заблокированы)
+- [ ] **100% Property-Based проходит** (20 базовых свойств, 10,000 образцов)
+- [ ] **Cross-invariant свойства замкнуты** (5 свойств: CP-1 до CP-5)
+- [ ] **Нет failing counterexamples** (все 10,000 образцов проходят)
+- [ ] **Нет bypass adversarial сценариев**
+- [ ] **Hash стабилен** (детерминизм подтверждён)
+- [ ] **Повторяемость генерации подтверждена** (`generate(P)₀ = generate(P)ₙ`)
+- [ ] **Все спецификации обновлены до D4**
+- [ ] **Walkthrough создан с доказательствами работы**
+- [ ] **CI/CD настроен для автоматического запуска всех тестов**
+
+### Этапы реализации (7 этапов)
+1. **ЭТАП 1:** Domain Core (I15, I16, I17, I21) — 18 тестов
+2. **ЭТАП 2:** Deterministic Engine (I19) — 7 тестов + 2 CP
+3. **ЭТАП 3:** Immutability Layer (I18, I28) — 9 тестов + 1 CP
+4. **ЭТАП 4:** Explainability Engine (I24) — 7 тестов
+5. **ЭТАП 5:** Yield Model B1 (I20) — 4 тестов + 1 CP
+6. **ЭТАП 6:** Simulation Module (I22) — 5 тестов + 1 CP
+7. **ЭТАП 7:** Probability Layer (B2+) (I25-I27) — 9 тестов + 1 CP
+
+### Rollback Conditions
+- Невозможность достижения побайтового детерминизма для B1
+- Failing counterexamples в PBT после 10,000 образцов
+- Bypass adversarial тестов (security vulnerabilities)
+- Нарушение multi-tenancy (кросс-тенантный доступ)
+- Нарушение immutability constraints (изменение опубликованных сущностей)
+
+### Связанные документы
+- `docs/04_ENGINEERING/GENERATIVE_ENGINE_IMPLEMENTATION_PLAN.md`
+- `docs/04_ENGINEERING/GENERATIVE_ENGINE_IMPLEMENTATION_CHECKLIST.md`
+- `docs/05_TESTING/LEVEL_B_FORMAL_TEST_MATRIX.md` v2.0
+- `docs/05_TESTING/PROPERTY_BASED_TEST_SPEC.md` v1.1
+- `docs/01_ARCHITECTURE/PRINCIPLES/CANON.md`
+- `docs/01_ARCHITECTURE/PRINCIPLES/ARCHITECTURAL_AXIOMS.md`
+- `docs/01_ARCHITECTURE/PRINCIPLES/SECURITY_CANON.md`
+
+### Зависимости
+- Prisma Schema (для `GenerationRecord`, `Strategy`, `YieldForecast`, `SimulationRun`)
+- FSM (для `DraftStateManager`)
+- Integrity Gate Service (для валидации)
+- Audit Service (для трассировки)
+
+### Риски
+1. **Недетерминизм:** Скрытые источники энтропии (timestamp, random) — митигация через `EntropyController`
+2. **Drift FSM:** Неправильные переходы — митигация через FSM unit tests
+3. **Нарушение immutable:** Прямой доступ к БД — митигация через Guard layer + триггеры БД
+4. **Probability drift:** Floating point errors — митигация через tolerance enforcement (0.001)
+5. **Metadata loss:** Partial object serialization — митигация через strict schema validation
+
+---
+
+## LEVEL-C-GEN-001
+
+**Дата:** 2026-02-18
+**Автор:** TECHLEAD (AI)
+**Статус:** PENDING
+**Приоритет:** CRITICAL
+**Target:** Level C Implementation
+
+### Решение
+Переход на Level C (Contradiction-Resilient Intelligence). Реализация механизмов устойчивости к конфликтам между ИИ и человеком, включая расчет риска переопределения (ΔRisk), контрфактуальное моделирование и отслеживание дивергенции решений.
+
+### Scope
+- **Phase:** Level C (Contradiction Resilience)
+- **Компоненты:**
+  - `/generative-engine/contradiction/*` (CounterfactualEngine, ConflictMatrix, DivergenceTracker)
+  - `/generative-engine/risk/*` (OverrideRiskAnalyzer, RiskMetricCalculator)
+  - `/generative-engine/invariants/*` (LevelCInvariants: I29-I32)
+  - `/fsm/*` (Integration of Level C guards)
+
+### Технические ограничения
+1. **ΔRisk Calculation:** Любое переопределение (Human Override) ОБЯЗАНО сопровождаться расчетом разницы рисков между рекомендацией ИИ и выбором человека.
+2. **Reproducibility:** Результаты контрфактуального моделирования должны быть воспроизводимы и детерминированы (в соответствии с B1).
+3. **Explainability:** Любое расхождение (disagreement) должно иметь объяснение факторов (ExplainabilityBuilder).
+4. **Non-Blocking:** ИИ не может блокировать решение человека, но делает его последствия прозрачными.
+
+### Инварианты (I29-I32)
+- **I29 (Risk Awareness):** `humanOverride → ΔRisk calculation mandatory`
+- **I30 (Model Reproducibility):** `counterfactual(S, A)₀ = counterfactual(S, A)ₙ`
+- **I31 (Conflict Tracking):** `∀ divergence: record(divergenceMetadata)`
+- **I32 (Explainable Disagreement):** `divergence.explanation ≠ null`
+
+### Definition of Done
+- [ ] Реализован `CounterfactualEngine` для моделирования альтернатив.
+- [ ] Реализован `OverrideRiskAnalyzer` для расчета ΔRisk.
+- [ ] Реализован `ConflictMatrix` для визуализации расхождений.
+- [ ] Все инварианты I29-I32 покрыты тестами (L4, PBT).
+- [ ] Интеграция в основной FSM (DraftStateManager).
+
+### Rollback Conditions
+- Нарушение детерминизма в контрфактуальном моделировании.
+- Неточность или недостоверность расчета ΔRisk.
+- Произвольное блокирование пользовательских действий со стороны ИИ.
+
+### Связанные документы
+- `docs/00_STRATEGY/EVOLUTION_ARCHITECTURE_MASTER_A_TO_F.md`
+- `docs/01_ARCHITECTURE/PRINCIPLES/CANON.md`
+- `docs/04_ENGINEERING/IMPLEMENTATION_PLAN_LEVEL_C.md`

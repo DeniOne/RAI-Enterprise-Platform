@@ -114,11 +114,26 @@ export class EconomyService {
         } catch (error) {
             if (this.isUniqueConflict(error, 'replayKey')) {
                 this.logger.warn(
-                    `Дубликат финансового инжеста подавлен (company=${dto.companyId}, idempotencyKey=${idempotencyKey || 'n/a'}, replayKey=${replayKey || 'n/a'})`,
+                    `Дубликат финансового инжеста (company=${dto.companyId}, idempotencyKey=${idempotencyKey || 'n/a'}, replayKey=${replayKey || 'n/a'}). Проверка целостности проекций...`,
                 );
                 InvariantMetrics.increment('event_duplicates_prevented_total');
                 const existing = await this.findExistingDuplicate(dto.companyId, idempotencyKey, replayKey);
+
                 if (existing) {
+                    // HARDENING: Check if entries exist. If not, this is a "half-baked" event from a failed previous run.
+                    const entryCount = await this.prisma.ledgerEntry.count({
+                        where: { economicEventId: existing.id, companyId: dto.companyId }
+                    });
+
+                    if (entryCount === 0) {
+                        this.logger.error(`КРИТИЧЕСКАЯ ОШИБКА: Обнаружено событие-фантом ${existing.id} без проводок в леджере. Попытка аварийного восстановления...`);
+                        // Use a transaction for recovery to ensure atomicity
+                        return await this.prisma.$transaction(async (tx) => {
+                            await (tx as any).$executeRaw(Prisma.sql`SELECT set_config('app.current_company_id', ${dto.companyId}, true)`);
+                            await this.generateLedgerEntries(existing, normalizedAmount, tx, scale);
+                            return existing;
+                        });
+                    }
                     return existing;
                 }
             }
@@ -191,10 +206,20 @@ export class EconomyService {
             type: event.type,
             amount: amount.toNumber(),
             metadata: event.metadata
-        }) || []; // Fallback to empty array to avoid .length crash
+        }) || [];
 
+        // BANKING GUARD: Settlement events MUST NOT result in zero attributions
         if (attributions.length === 0) {
-            this.logger.warn(`No attribution rules found for event type ${event.type}`);
+            const isSettlement = resolveJournalPhase(event.type) === 'SETTLEMENT';
+            const logMsg = `No attribution rules found for event type ${event.type} (ID: ${event.id})`;
+
+            if (isSettlement) {
+                this.logger.error(`КРИТИЧЕСКОЕ НАРУШЕНИЕ: Расчетное событие ${event.type} не породило проводок! Транзакция прервана.`);
+                InvariantMetrics.increment('financial_invariant_failures_total');
+                throw new Error(`Integrity Violation: Settlement event ${event.type} must have attributions.`);
+            }
+
+            this.logger.warn(logMsg);
             return;
         }
 

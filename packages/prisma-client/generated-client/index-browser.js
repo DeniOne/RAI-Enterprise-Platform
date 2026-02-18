@@ -628,6 +628,8 @@ exports.Prisma.TechMapScalarFieldEnum = {
   approvedAt: 'approvedAt',
   operationsSnapshot: 'operationsSnapshot',
   resourceNormsSnapshot: 'resourceNormsSnapshot',
+  generationMetadata: 'generationMetadata',
+  generationRecordId: 'generationRecordId',
   status: 'status',
   version: 'version',
   isLatest: 'isLatest',
@@ -670,6 +672,70 @@ exports.Prisma.MapResourceScalarFieldEnum = {
   costPerUnit: 'costPerUnit',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AgronomicStrategyScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  cropId: 'cropId',
+  regionId: 'regionId',
+  operations: 'operations',
+  constraints: 'constraints',
+  status: 'status',
+  version: 'version',
+  hash: 'hash',
+  publishedAt: 'publishedAt',
+  archivedAt: 'archivedAt',
+  explainability: 'explainability',
+  companyId: 'companyId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.GenerationRecordScalarFieldEnum = {
+  id: 'id',
+  inputParams: 'inputParams',
+  canonicalizedPayload: 'canonicalizedPayload',
+  modelId: 'modelId',
+  modelVersion: 'modelVersion',
+  engineVersion: 'engineVersion',
+  seed: 'seed',
+  canonicalHash: 'canonicalHash',
+  result: 'result',
+  errorDetails: 'errorDetails',
+  explainability: 'explainability',
+  limitationsDisclosed: 'limitationsDisclosed',
+  companyId: 'companyId',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.GovernanceConfigScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  versionId: 'versionId',
+  weights: 'weights',
+  description: 'description',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.DivergenceRecordScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  draftId: 'draftId',
+  draftVersion: 'draftVersion',
+  disVersion: 'disVersion',
+  weightsSnapshot: 'weightsSnapshot',
+  disScore: 'disScore',
+  simulationHash: 'simulationHash',
+  deltaRisk: 'deltaRisk',
+  conflictVector: 'conflictVector',
+  humanAction: 'humanAction',
+  explanation: 'explanation',
+  simulationMode: 'simulationMode',
+  idempotencyKey: 'idempotencyKey',
+  policyVersion: 'policyVersion',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.ExecutionRecordScalarFieldEnum = {
@@ -910,10 +976,15 @@ exports.Prisma.HrDevelopmentActionScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.TenantStateScalarFieldEnum = {
+  companyId: 'companyId',
+  mode: 'mode',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.EconomicEventScalarFieldEnum = {
   id: 'id',
   type: 'type',
-  amount: 'amount',
   currency: 'currency',
   replayKey: 'replayKey',
   metadata: 'metadata',
@@ -926,6 +997,7 @@ exports.Prisma.EconomicEventScalarFieldEnum = {
 
 exports.Prisma.LedgerEntryScalarFieldEnum = {
   id: 'id',
+  sequenceNumber: 'sequenceNumber',
   economicEventId: 'economicEventId',
   amount: 'amount',
   type: 'type',
@@ -939,6 +1011,13 @@ exports.Prisma.LedgerEntryScalarFieldEnum = {
   cashAccountId: 'cashAccountId',
   isImmutable: 'isImmutable',
   createdAt: 'createdAt'
+};
+
+exports.Prisma.AccountBalanceScalarFieldEnum = {
+  companyId: 'companyId',
+  accountCode: 'accountCode',
+  balance: 'balance',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.CashAccountScalarFieldEnum = {
@@ -1566,10 +1645,18 @@ exports.HarvestPlanStatus = exports.$Enums.HarvestPlanStatus = {
 };
 
 exports.TechMapStatus = exports.$Enums.TechMapStatus = {
+  GENERATED_DRAFT: 'GENERATED_DRAFT',
   DRAFT: 'DRAFT',
   REVIEW: 'REVIEW',
   APPROVED: 'APPROVED',
   ACTIVE: 'ACTIVE',
+  ARCHIVED: 'ARCHIVED',
+  OVERRIDE_ANALYSIS: 'OVERRIDE_ANALYSIS'
+};
+
+exports.StrategyStatus = exports.$Enums.StrategyStatus = {
+  DRAFT: 'DRAFT',
+  PUBLISHED: 'PUBLISHED',
   ARCHIVED: 'ARCHIVED'
 };
 
@@ -1671,6 +1758,12 @@ exports.IntegrityStatus = exports.$Enums.IntegrityStatus = {
   STRONG_EVIDENCE: 'STRONG_EVIDENCE',
   WEAK_EVIDENCE: 'WEAK_EVIDENCE',
   NO_EVIDENCE: 'NO_EVIDENCE'
+};
+
+exports.TenantMode = exports.$Enums.TenantMode = {
+  ACTIVE: 'ACTIVE',
+  READ_ONLY: 'READ_ONLY',
+  HALTED: 'HALTED'
 };
 
 exports.EconomicEventType = exports.$Enums.EconomicEventType = {
@@ -1987,6 +2080,10 @@ exports.Prisma.ModelName = {
   MapStage: 'MapStage',
   MapOperation: 'MapOperation',
   MapResource: 'MapResource',
+  AgronomicStrategy: 'AgronomicStrategy',
+  GenerationRecord: 'GenerationRecord',
+  GovernanceConfig: 'GovernanceConfig',
+  DivergenceRecord: 'DivergenceRecord',
   ExecutionRecord: 'ExecutionRecord',
   ExecutionOrchestrationLog: 'ExecutionOrchestrationLog',
   DeviationReview: 'DeviationReview',
@@ -2006,8 +2103,10 @@ exports.Prisma.ModelName = {
   PersonalCompetencyState: 'PersonalCompetencyState',
   HrDevelopmentPlan: 'HrDevelopmentPlan',
   HrDevelopmentAction: 'HrDevelopmentAction',
+  TenantState: 'TenantState',
   EconomicEvent: 'EconomicEvent',
   LedgerEntry: 'LedgerEntry',
+  AccountBalance: 'AccountBalance',
   CashAccount: 'CashAccount',
   Budget: 'Budget',
   BudgetLine: 'BudgetLine',

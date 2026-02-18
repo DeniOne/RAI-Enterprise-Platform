@@ -1,5 +1,5 @@
 // Knowledge Graph (Sprint 2)
-﻿import { Test, TestingModule } from "@nestjs/testing";
+import { Test, TestingModule } from "@nestjs/testing";
 import { KnowledgeGraphQueryService } from "./knowledge-graph-query.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 
@@ -30,7 +30,7 @@ describe("KnowledgeGraphQueryService", () => {
   it("getNode should query by id", async () => {
     prismaMock.knowledgeNode.findUnique.mockResolvedValue({ id: "n1" });
 
-    const result = await service.getNode("n1");
+    const result = await service.getNode("n1", "company-1");
 
     expect(prismaMock.knowledgeNode.findUnique).toHaveBeenCalledWith({ where: { id: "n1" } });
     expect(result).toEqual({ id: "n1" });
@@ -39,7 +39,7 @@ describe("KnowledgeGraphQueryService", () => {
   it("getEdgesByNode should query edges by node id", async () => {
     prismaMock.knowledgeEdge.findMany.mockResolvedValue([{ id: "e1" }]);
 
-    const result = await service.getEdgesByNode("n1");
+    const result = await service.getEdgesByNode("n1", "company-1");
 
     expect(prismaMock.knowledgeEdge.findMany).toHaveBeenCalled();
     expect(result).toEqual([{ id: "e1" }]);
@@ -54,7 +54,7 @@ describe("KnowledgeGraphQueryService", () => {
       { id: "n2" },
     ]);
 
-    const result = await service.getSubgraph("n1", 1);
+    const result = await service.getSubgraph("n1", "company-1", 1);
 
     expect(result.nodes.length).toBe(2);
     expect(result.edges.length).toBe(1);

@@ -45,8 +45,8 @@ export class TelegramAuthInternalController {
 
     @Post('users/active')
     async getActiveUsers(
-        @Body() body: { companyId: string },
+        @Body() body: { companyId?: string },
     ) {
-        return this.telegramAuthService.getActiveUsers(body.companyId);
+        return this.telegramAuthService.getActiveUsers(body?.companyId);
     }
 }
