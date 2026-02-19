@@ -113,6 +113,7 @@ model Company {
   biodiversityMetrics    BiodiversityMetric[]
   governanceLocks        GovernanceLock[]
   overrideRequests       OverrideRequest[]
+  auditLogs              AuditLog[]
 
   @@map("companies")
 }
@@ -1104,6 +1105,8 @@ model AuditLog {
   id        String   @id @default(cuid())
   action    String // INVITATION_ACTIVATED, FIELD_CREATED, RAPESEED_ROTATION_VIOLATION
   userId    String?
+  companyId String // Multi-tenancy requirement
+  company   Company  @relation(fields: [companyId], references: [id])
   ip        String?
   userAgent String?
   metadata  Json? // Дополнительные детали
@@ -1111,6 +1114,7 @@ model AuditLog {
 
   @@index([action])
   @@index([userId])
+  @@index([companyId])
   @@index([createdAt])
   @@map("audit_logs")
 }
@@ -3268,6 +3272,7 @@ model ModelVersion {
   trainingRun   TrainingRun? @relation(fields: [trainingRunId], references: [id])
 
   driftReports DriftReport[]
+  approvalRequests ApprovalRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3326,6 +3331,7 @@ model DriftReport {
 model LearningEvent {
   id        String @id @default(cuid())
   featureId String
+  event     String // Required by AuditService
   payload   Json
   signature String
 
@@ -3474,6 +3480,24 @@ model OverrideRequest {
 
   @@index([companyId, fieldId, createdAt])
   @@map("rai_override_requests")
+}
+
+
+model ApprovalRequest {
+  id          String   @id @default(cuid())
+  modelId     String
+  model       ModelVersion @relation(fields: [modelId], references: [id])
+  requesterId String
+  reviewerId  String?
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  notes       String?  @db.Text
+  reviewComment String? @db.Text
+  reviewedAt  DateTime?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("rai_approval_requests")
 }
 
 enum DataSourceType {

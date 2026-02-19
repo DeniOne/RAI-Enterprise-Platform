@@ -186,64 +186,236 @@ Maximize Long-Term Predictive Accuracy
 
 Self-learning ограничено governance-порогами.
 
-LEVEL E — Regenerative Optimization
+LEVEL E — Regenerative Optimization (Contract-Driven v2.0)
 Архитектурный сдвиг
 
-Оптимизация меняет цель:
+Level E переводит систему от:
 
-Max Yield → Max Sustainable Yield (Contract-Governed)
+Max Yield
+к
+Max Sustainable Economic Output
+под явным контрактным governance.
 
-Новые метрики
+Оптимизация становится мультиобъектной и контрактно-зависимой.
 
-Soil Regeneration Index
+Добавляется Contract Governance Layer.
 
-Organic Matter Forecast
+Contract Governance Layer
 
-Biodiversity Pressure Score
+Поведение AI определяется типом контракта:
 
-Long-term productivity curve (P05 Risk)
+ContractType:
 
-Новая целевая функция
+SEASONAL_OPTIMIZATION
 
-Multi-objective optimization:
+MULTI_YEAR_ADVISORY
 
-f = Yield + Sustainability + Soil Recovery
+MANAGED_REGENERATIVE
+
+Контракт определяет:
+
+целевую функцию
+
+режим Regeneration Guard
+
+допустимость override
+
+режим блокировок
+
+распределение ответственности (Liability Mode)
+
+Целевая функция
+SEASONAL_OPTIMIZATION
+
+Max Profit_t
+subject to RegenerativePenalty(SRI, Biodiversity, TailRisk)
+
+Нет hard enforcement
+
+Полная прозрачность деградации
+
+Суверенитет клиента сохраняется
+
+MULTI_YEAR_ADVISORY
+
+Max Σ Profit_t…t+n
+subject to Expected SRI(t+n) ≥ SRI(t) – ε
+
+Escalation при R3
+
+R4 → Restricted (не Blocked)
+
+Override требует ΔRisk disclosure
+
+MANAGED_REGENERATIVE
+
+Max Sustainable Yield
+subject to:
+SRI(t+n) ≥ SRI(t)
+Biodiversity ≥ threshold
+P05 ≤ collapse_limit
+
+Delegated Authority
+
+R4 → Emergency Lock
+
+ΔSRI > 0 обязательен при деградации
+
+Liability фиксируется в Audit
+
+Обновлённый Regeneration Guard (I41)
+
+Regeneration Guard является contract-aware.
+
+Функции:
+
+ΔSRI мониторинг
+
+Monte Carlo Tail Risk (P05)
+
+Severity Classification R1–R4
+
+Mode-Gated Enforcement
+
+Immutable Audit Logging
+
+Liability Tagging
+
+Severity Matrix (Formalized)
+
+R1 — Minor Drift
+R2 — Persistent Degradation (>2% SRI/season)
+R3 — Tail Risk Breach (P05 collapse proxy)
+R4 — Structural Collapse Probability > threshold
+
+Enforcement зависит от ContractType.
+
+Граница ответственности
+
+Level E:
+
+Не изменяет юридическую ответственность вне MANAGED режима.
+
+Не отменяет решение человека в SEASONAL режиме.
+
+Наследует все инварианты Level D (drift detection, lineage immutability).
+
+Применяет Hard Lock только при делегированной authority.
+
+Система запрещает непрозрачную деградацию,
+но не является универсальным регулятором.
 
 Роль AI
 
-AI — Регенеративный стратег (Contract-Aware). Балансирует краткосрочную прибыль и долгосрочную устойчивость согласно уровню делегированных полномочий.
+AI = Regenerative Strategist (Contract-Aware)
 
-Граница
+AI:
 
-Система исполняет регенеративные ограничения в соответствии с охватом контрактного управления (Governance Scope).
+Балансирует прибыль и устойчивость
 
-LEVEL F — Industry Cognitive Standard
-Архитектурный сдвиг
+Моделирует долгосрочные последствия
 
-Система становится отраслевой инфраструктурой.
+Применяет delegated authority только при контрактном мандате
 
-Новые компоненты
+🔷 UPDATE TABLE: Evolution of AI Role
+Level	Роль AI
+A	Советник
+B	Генеративный архитектор
+C	Аналитик конфликтов
+D	Самообучающийся оптимизатор
+E	Регенеративный стратег (Contract-Aware)
+F	Отраслевой когнитивный стандарт
+🔷 UPDATE TABLE: Evolution of Target Function
+Level	Цель
+A	Контроль
+B	Урожай
+C	Снижение regret
+D	Предиктивная точность
+E	Устойчивый экономический выход
+F	Отраслевая стандартизация
+🔷 Связь с Level F
+
+Level E v2.0 создаёт основу для:
 
 Certification Engine
 
 Insurance API
 
-Farm Rating System
+ESG Scoring
 
-Regional Yield Index
+Carbon & Regeneration Credits
 
-Regulatory Compliance Layer
+Только хозяйства в MULTI_YEAR или MANAGED режимах
+могут участвовать в отраслевой сертификации Level F.
 
-Роль AI
+🔷 Главный принцип эволюции (обновление)
 
-AI становится отраслевым эталоном.
+Каждый уровень:
 
-Целевая функция
-Industry-wide optimization & standardization
+добавляет инварианты
 
-Граница
+расширяет authority AI
 
-Система влияет на страхование, кредитование и ESG-рейтинг.
+усиливает governance
+
+не отменяет ответственность человека без явного делегирования
+
+Level E — первый уровень, где authority может быть делегирована контрактом.
+
+LEVEL F — Industry Cognitive Standard
+
+(корректировка с учётом новых режимов)
+
+Level F теперь строится на Managed Mode как базе.
+
+1️⃣ Новый архитектурный слой
+Certification Engine
+Insurance Integration Layer
+Carbon & Regeneration Credits
+Farm Sustainability Rating
+Regulatory Compliance API
+
+2️⃣ Связь с Contract Mode
+
+Только хозяйства в:
+
+Multi-Year Advisory
+
+Managed Regenerative
+
+могут получать:
+
+ESG Certification
+
+Insurance premium reduction
+
+Access to green financing
+
+Carbon credit monetization
+
+3️⃣ Новые инварианты Level F
+F1:
+Certification requires immutable regenerative history.
+
+F2:
+Insurance API must consume Monte Carlo tail risk metrics.
+
+F3:
+Farm Rating must be derived from longitudinal SRI.
+
+F4:
+Certification cannot be granted under Seasonal-only contract.
+
+4️⃣ Новый стратегический сдвиг
+
+Level E = Optimization Engine
+Level F = Trust Infrastructure
+
+5️⃣ Экономическая логика
+Mode	Revenue	Risk	Data Depth	Upgrade Path
+Seasonal	SaaS	Low	Medium	→ Advisory
+Advisory	Hybrid	Medium	High	→ Managed
+Managed	Revenue Share	High	Very High	→ Level F
 
 Эволюция роли AI
 Level	Роль AI

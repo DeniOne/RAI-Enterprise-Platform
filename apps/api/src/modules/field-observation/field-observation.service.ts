@@ -64,8 +64,7 @@ export class FieldObservationService {
         // Аудит согласно Admission Rules
         await this.audit.log({
             action: "FIELD_OBSERVATION_CREATED",
-            // entityType: "FieldObservation", // Removed as per TS error
-            // entityId: observation.id, // Removed as per TS error
+            companyId: data.companyId,
             userId: data.authorId,
             metadata: {
                 type: data.type,

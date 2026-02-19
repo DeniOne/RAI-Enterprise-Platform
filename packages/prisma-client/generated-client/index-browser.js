@@ -521,6 +521,7 @@ exports.Prisma.AuditLogScalarFieldEnum = {
   id: 'id',
   action: 'action',
   userId: 'userId',
+  companyId: 'companyId',
   ip: 'ip',
   userAgent: 'userAgent',
   metadata: 'metadata',
@@ -1487,6 +1488,7 @@ exports.Prisma.DriftReportScalarFieldEnum = {
 exports.Prisma.LearningEventScalarFieldEnum = {
   id: 'id',
   featureId: 'featureId',
+  event: 'event',
   payload: 'payload',
   signature: 'signature',
   processedAt: 'processedAt',
@@ -1518,7 +1520,7 @@ exports.Prisma.SustainabilityBaselineScalarFieldEnum = {
   version: 'version',
   locked: 'locked',
   createdAt: 'createdAt',
-  baselineSRI: 'baselineSRI',
+  initialSri: 'initialSri',
   targetSRI: 'targetSRI',
   genesisHash: 'genesisHash',
   trustSnapshot: 'trustSnapshot'
@@ -1556,6 +1558,20 @@ exports.Prisma.OverrideRequestScalarFieldEnum = {
   deltaSRI: 'deltaSRI',
   confidence: 'confidence',
   transactionId: 'transactionId'
+};
+
+exports.Prisma.ApprovalRequestScalarFieldEnum = {
+  id: 'id',
+  modelId: 'modelId',
+  requesterId: 'requesterId',
+  reviewerId: 'reviewerId',
+  status: 'status',
+  notes: 'notes',
+  reviewComment: 'reviewComment',
+  reviewedAt: 'reviewedAt',
+  metadata: 'metadata',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -2072,7 +2088,8 @@ exports.RiskSource = exports.$Enums.RiskSource = {
   LEGAL: 'LEGAL',
   RND: 'RND',
   OPS: 'OPS',
-  FINANCE: 'FINANCE'
+  FINANCE: 'FINANCE',
+  REGENERATIVE: 'REGENERATIVE'
 };
 
 exports.RiskSeverity = exports.$Enums.RiskSeverity = {
@@ -2321,7 +2338,8 @@ exports.Prisma.ModelName = {
   SustainabilityBaseline: 'SustainabilityBaseline',
   BiodiversityMetric: 'BiodiversityMetric',
   GovernanceLock: 'GovernanceLock',
-  OverrideRequest: 'OverrideRequest'
+  OverrideRequest: 'OverrideRequest',
+  ApprovalRequest: 'ApprovalRequest'
 };
 
 /**

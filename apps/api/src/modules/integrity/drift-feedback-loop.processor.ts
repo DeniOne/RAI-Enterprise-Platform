@@ -49,16 +49,16 @@ export class DriftFeedbackLoopProcessor extends WorkerHost {
         if (drift > 0.15) {
             this.logger.error(`[DRIFT-CRITICAL] I34 VIOLATION DETECTED: Significant SRI drift for field ${fieldId}`);
 
-            await this.prisma.raiDriftReport.create({
+            await this.prisma.driftReport.create({
                 data: {
                     companyId,
                     modelVersionId: 'regenerative-engine-v1', // Placeholder
-                    metricName: 'SRI_DRIFT',
-                    expectedValue: baseline.initialSri,
-                    actualValue: avgSRI,
-                    driftScore: drift,
                     status: 'CRITICAL',
-                    metadata: {
+                    payload: {
+                        metricName: 'SRI_DRIFT',
+                        expectedValue: baseline.initialSri,
+                        actualValue: avgSRI,
+                        driftScore: drift,
                         sampleSize: recentMetrics.length,
                         enforcedLaw: 'I34_SOIL_DEGRADATION'
                     }

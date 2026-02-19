@@ -147,6 +147,7 @@ export class RapeseedService {
         newRapeseed.id,
         newVersion,
         user.id,
+        user.companyId,
         diff,
       );
 

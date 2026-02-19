@@ -123,7 +123,7 @@ export class AdvisoryService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
-  ) {}
+  ) { }
 
   async getPendingRecommendations(
     companyId: string,
@@ -254,6 +254,7 @@ export class AdvisoryService {
 
     await this.audit.log({
       action: "ADVISORY_PILOT_ENABLED",
+      companyId: input.companyId,
       userId: input.actorId,
       metadata: {
         traceId: input.traceId,
@@ -278,6 +279,7 @@ export class AdvisoryService {
 
     await this.audit.log({
       action: "ADVISORY_PILOT_DISABLED",
+      companyId: input.companyId,
       userId: input.actorId,
       metadata: {
         traceId: input.traceId,
@@ -368,6 +370,7 @@ export class AdvisoryService {
 
     await this.audit.log({
       action: "ADVISORY_TUNING_UPDATED",
+      companyId: input.companyId,
       userId: input.actorId,
       metadata: {
         traceId: input.traceId,
@@ -486,6 +489,7 @@ export class AdvisoryService {
 
     await this.audit.log({
       action: "ADVISORY_ROLLOUT_CONFIG_UPDATED",
+      companyId: input.companyId,
       userId: input.actorId,
       metadata: {
         traceId: input.traceId,
@@ -529,6 +533,7 @@ export class AdvisoryService {
 
     await this.audit.log({
       action: "ADVISORY_ROLLOUT_GATE_EVALUATED",
+      companyId: input.companyId,
       userId: input.actorId,
       metadata: {
         traceId: input.traceId,
@@ -544,6 +549,7 @@ export class AdvisoryService {
     if (!pass && (rollout?.autoStopEnabled ?? true)) {
       await this.audit.log({
         action: "ADVISORY_ROLLOUT_AUTO_STOPPED",
+        companyId: input.companyId,
         userId: input.actorId,
         metadata: {
           traceId: `${input.traceId}:autostop`,
@@ -577,6 +583,7 @@ export class AdvisoryService {
 
     await this.audit.log({
       action: "ADVISORY_ROLLOUT_STAGE_PROMOTED",
+      companyId: input.companyId,
       userId: input.actorId,
       metadata: {
         traceId: input.traceId,
@@ -610,6 +617,7 @@ export class AdvisoryService {
 
     await this.audit.log({
       action: "ADVISORY_ROLLOUT_STAGE_ROLLED_BACK",
+      companyId: input.companyId,
       userId: input.actorId,
       metadata: {
         traceId: input.traceId,
@@ -639,6 +647,7 @@ export class AdvisoryService {
 
     await this.audit.log({
       action: "ADVISORY_KILL_SWITCH_ENABLED",
+      companyId: input.companyId,
       userId: input.actorId,
       metadata: {
         traceId: input.traceId,
@@ -661,6 +670,7 @@ export class AdvisoryService {
 
     await this.audit.log({
       action: "ADVISORY_KILL_SWITCH_DISABLED",
+      companyId: input.companyId,
       userId: input.actorId,
       metadata: {
         traceId: input.traceId,
@@ -681,6 +691,7 @@ export class AdvisoryService {
 
     await this.audit.log({
       action: "ADVISORY_ACCEPTED",
+      companyId: input.companyId,
       userId: input.userId,
       metadata: {
         traceId: input.traceId,
@@ -701,6 +712,7 @@ export class AdvisoryService {
 
     await this.audit.log({
       action: "ADVISORY_REJECTED",
+      companyId: input.companyId,
       userId: input.userId,
       metadata: {
         traceId: input.traceId,
@@ -730,6 +742,7 @@ export class AdvisoryService {
 
     await this.audit.log({
       action: "ADVISORY_FEEDBACK_RECORDED",
+      companyId: input.companyId,
       userId: input.userId,
       metadata: {
         traceId: input.traceId,

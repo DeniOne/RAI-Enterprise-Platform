@@ -19,14 +19,20 @@ export class AgroAuditService {
    */
   async log(
     event: AgriculturalAuditEvent,
-    user: User | { id: string; email?: string } | null,
+    user: User | { id: string; companyId: string; email?: string } | null,
     metadata: Record<string, any> = {},
     ip?: string,
     userAgent?: string,
   ): Promise<void> {
+    if (!user?.companyId && !metadata.companyId) {
+      this.logger.error(`Missing companyId for audit event: ${event}`);
+      return;
+    }
+
     try {
       await this.auditService.log({
         action: event,
+        companyId: user?.companyId || metadata.companyId,
         userId: user?.id,
         metadata: {
           ...metadata,
@@ -37,8 +43,6 @@ export class AgroAuditService {
       });
     } catch (error) {
       this.logger.error(`Failed to log agro audit event: ${event}`, error);
-      // Fail-safe: don't throw error to avoid blocking main business logic,
-      // but strictly log this failure
     }
   }
 
@@ -49,11 +53,12 @@ export class AgroAuditService {
     rapeseedId: string,
     version: number,
     userId: string,
+    companyId: string,
     diff: any,
   ): Promise<void> {
     await this.log(
       AgriculturalAuditEvent.RAPESEED_PARAMETERS_CHANGED,
-      { id: userId },
+      { id: userId, companyId },
       { rapeseedId, version, diff },
     );
   }
@@ -63,7 +68,7 @@ export class AgroAuditService {
    */
   async logWithRetry(
     event: AgriculturalAuditEvent,
-    user: User | { id: string; email?: string } | null,
+    user: User | { id: string; companyId: string; email?: string } | null,
     metadata: any,
     maxRetries = 3,
   ): Promise<void> {
@@ -86,7 +91,7 @@ export class AgroAuditService {
           try {
             await this.prisma.auditFailure.create({ // tenant-lint:ignore AuditFailure model has no companyId column
               data: {
-                event,
+                event: event.toString(),
                 userId: user?.id,
                 metadata: JSON.stringify(metadata),
                 error: lastError.message,
@@ -113,13 +118,14 @@ export class AgroAuditService {
    */
   async logRotationViolation(
     fieldId: string,
+    companyId: string,
     violationRule: string,
     severity: string,
     userId?: string,
   ): Promise<void> {
     await this.log(
       AgriculturalAuditEvent.RAPESEED_ROTATION_VIOLATION,
-      userId ? { id: userId } : null,
+      userId ? { id: userId, companyId } : { id: 'SYSTEM', companyId },
       { fieldId, violationRule, severity },
     );
   }

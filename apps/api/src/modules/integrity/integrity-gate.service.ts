@@ -305,6 +305,8 @@ export class IntegrityGateService {
 
         if (!map) throw new Error("TechMap not found");
 
+        const issues: Array<{ type: string; message: string; severity: 'ERROR' | 'WARNING' }> = [];
+
         // 0. Инвариант I41: Regeneration Guard
         const regenStatus = await this.checkRegenerationInvariant(map.fieldId!, companyId);
         if (regenStatus.status === 'DEGRADING') {
@@ -328,8 +330,6 @@ export class IntegrityGateService {
                 }
             });
         }
-
-        const issues: Array<{ type: string; message: string; severity: 'ERROR' | 'WARNING' }> = [];
 
         // 1. Проверка Техники (Machinery Readiness)
         const allOperations = map.stages.flatMap(s => s.operations);

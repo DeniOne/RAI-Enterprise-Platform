@@ -130,7 +130,7 @@ export class SeasonService {
 
     // Audit simplified for now
     await this.auditService.log(
-      AgriculturalAuditEvent.RAPESEED_SEASON_UPDATED as any, // Add to enum later
+      AgriculturalAuditEvent.RAPESEED_SEASON_UPDATED as any,
       user,
       { seasonId: updatedSeason.id, changes: input },
     );
@@ -365,7 +365,7 @@ export class SeasonService {
       this.auditService
         .log(
           AgriculturalAuditEvent.RAPESEED_SEASON_UPDATE_ATTEMPT_ON_LOCKED,
-          { id: "SYSTEM" },
+          { id: "SYSTEM", companyId: season.companyId } as any,
           { seasonId: season.id },
         )
         .catch((err) => console.error("Failed to log lock violation:", err));

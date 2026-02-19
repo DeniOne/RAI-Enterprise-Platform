@@ -41,21 +41,21 @@ describe("SeasonBusinessRulesService", () => {
     it("should throw if WINTER rapeseed is sown in Spring", () => {
       const springDate = new Date("2026-04-15");
       expect(() =>
-        service.validateRapeseedSeasonDates(springDate, RapeseedType.WINTER),
+        service.validateRapeseedSeasonDates(springDate, RapeseedType.WINTER, "company-1"),
       ).toThrow(BadRequestException);
     });
 
     it("should pass if WINTER rapeseed is sown in August", () => {
       const autumnDate = new Date("2026-08-20");
       expect(() =>
-        service.validateRapeseedSeasonDates(autumnDate, RapeseedType.WINTER),
+        service.validateRapeseedSeasonDates(autumnDate, RapeseedType.WINTER, "company-1"),
       ).not.toThrow();
     });
 
     it("should throw if SPRING rapeseed is sown in Autumn", () => {
       const autumnDate = new Date("2026-09-10");
       expect(() =>
-        service.validateRapeseedSeasonDates(autumnDate, RapeseedType.SPRING),
+        service.validateRapeseedSeasonDates(autumnDate, RapeseedType.SPRING, "company-1"),
       ).toThrow(BadRequestException);
     });
   });

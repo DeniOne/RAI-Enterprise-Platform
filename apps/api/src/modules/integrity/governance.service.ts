@@ -28,6 +28,18 @@ export class GovernanceService {
     ) {
         this.logger.error(`[GOVERNANCE] EMERGENCY LOCK TRIGGERED for Field ${fieldId}. Reason: ${reason}`);
 
+        // Get current active season for the field via TechMap
+        const activeTechMap = await this.prisma.techMap.findFirst({
+            where: { fieldId, companyId, status: 'ACTIVE' },
+            select: { seasonId: true }
+        });
+
+        if (!activeTechMap) {
+            this.logger.warn(`[GOVERNANCE] No active TechMap found for field ${fieldId}. Using fallback logic.`);
+        }
+
+        const seasonId = activeTechMap?.seasonId || 'SYSTEM_FALLBACK_SEASON';
+
         // Liability Tagging based on Contract Type (Level E Canon)
         const liabilityMode = contractType === ContractType.MANAGED_REGENERATIVE
             ? LiabilityMode.CONSULTANT_ONLY
@@ -64,6 +76,7 @@ export class GovernanceService {
         await this.prisma.cmrRisk.create({
             data: {
                 companyId,
+                seasonId,
                 type: RiskType.REGULATORY,
                 description: `[GOVERNANCE-ESCALATION] Emergency lock on field ${fieldId}. ${details}`,
                 probability: RiskLevel.CRITICAL,
@@ -96,15 +109,22 @@ export class GovernanceService {
                 if (isManagedMode) {
                     await this.triggerEmergencyLock(fieldId, companyId, GovernanceLockReason.DEGRADATION_I34, `R4 Severe Degradation: ${details}`, contractType);
                 } else {
-                    await this.audit.recordGovernanceEvent({ fieldId, companyId, eventType: 'ADVISORY_R4', details: { details, contractType, liabilityMode } });
+                    await this.audit.recordGovernanceEvent({ fieldId, companyId, eventType: 'ADVISORY_R4', actorId: 'SYSTEM', details: { details, contractType, liabilityMode } });
                     await this.telegram.sendToGroup(`⚠️ *R4 ADVISORY* ⚠️\nSevere degradation on ${fieldId}. Managed mode lock bypassed. Liability: ${liabilityMode}`, 'ADVISORY_GROUP_ID');
                 }
                 break;
             case 'R3':
                 // Formal Escalation to Board with Liability Tag
+                const activeTechMapR3 = await this.prisma.techMap.findFirst({
+                    where: { fieldId, companyId, status: 'ACTIVE' },
+                    select: { seasonId: true }
+                });
+                const seasonIdR3 = activeTechMapR3?.seasonId || 'SYSTEM_FALLBACK_SEASON';
+
                 await this.prisma.cmrRisk.create({
                     data: {
                         companyId,
+                        seasonId: seasonIdR3,
                         type: RiskType.REGULATORY,
                         description: `[R3-ESCALATION] Probability of structural collapse: ${details}. Contract: ${contractType}`,
                         probability: RiskLevel.HIGH,
@@ -114,12 +134,12 @@ export class GovernanceService {
                         status: "OPEN"
                     }
                 });
-                await this.audit.recordGovernanceEvent({ fieldId, companyId, eventType: 'R3_ESCALATION', details: { details, contractType, liabilityMode } });
+                await this.audit.recordGovernanceEvent({ fieldId, companyId, eventType: 'R3_ESCALATION', actorId: 'SYSTEM', details: { details, contractType, liabilityMode } });
                 await this.telegram.sendToGroup(`📈 *R3 ESCALATION* 📈\nRisk Committee review required for field ${fieldId}. Contract: ${contractType}`, 'COMMITTEE_GROUP_ID');
                 break;
             case 'R2':
                 this.logger.warn(`[R2] Persistent degradation on ${fieldId}: ${details}`);
-                await this.audit.recordGovernanceEvent({ fieldId, companyId, eventType: 'R2_WARNING', details: { details, contractType, liabilityMode } });
+                await this.audit.recordGovernanceEvent({ fieldId, companyId, eventType: 'R2_WARNING', actorId: 'SYSTEM', details: { details, contractType, liabilityMode } });
                 break;
             case 'R1':
                 this.logger.log(`[R1] Minor regression on ${fieldId}: ${details}`);

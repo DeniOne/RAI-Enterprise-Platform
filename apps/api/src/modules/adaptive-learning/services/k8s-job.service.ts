@@ -1,14 +1,14 @@
 import { Injectable, Logger, OnModuleInit, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import * as k8s from '@kubernetes/client-node';
+import * as k8sTypes from '@kubernetes/client-node';
 import { RedisService } from '../../../shared/redis/redis.service';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 
 export enum MLJobStatus {
     PENDING = 'PENDING',
     RUNNING = 'RUNNING',
-    SUCCEEDED = 'SUCCEEDED',
+    COMPLETED = 'COMPLETED',
     FAILED = 'FAILED',
     OOM = 'OOM',
     QUARANTINED = 'QUARANTINED',
@@ -17,8 +17,8 @@ export enum MLJobStatus {
 @Injectable()
 export class K8sJobService implements OnModuleInit {
     private readonly logger = new Logger(K8sJobService.name);
-    private readonly k8sApi: k8s.BatchV1Api;
-    private readonly namespace: string;
+    private k8sApi: k8sTypes.BatchV1Api;
+    private namespace: string;
     private readonly MAX_CONCURRENT_JOBS = 3;
 
     constructor(
@@ -26,15 +26,25 @@ export class K8sJobService implements OnModuleInit {
         private readonly redis: RedisService,
         private readonly prisma: PrismaService,
     ) {
-        const kc = new k8s.KubeConfig();
-        kc.loadFromDefault();
-        this.k8sApi = kc.makeApiClient(k8s.BatchV1Api);
-        this.namespace = this.config.get<string>('K8S_NAMESPACE', 'rai-training-jobs');
     }
 
     async onModuleInit() {
-        this.logger.log('🛠️ K8sJobService initialized. Running initial reconciliation...');
-        await this.reconcileJobs();
+        this.logger.log('🛠️ K8sJobService: Loading ESM @kubernetes/client-node SDK...');
+
+        try {
+            // Dynamic import workaround for ESM-only packages in CJS NestJS
+            const k8s = await (eval(`import('@kubernetes/client-node')`) as Promise<typeof k8sTypes>);
+
+            const kc = new k8s.KubeConfig();
+            kc.loadFromDefault();
+            this.k8sApi = kc.makeApiClient(k8s.BatchV1Api);
+            this.namespace = this.config.get<string>('K8S_NAMESPACE', 'rai-training-jobs');
+
+            this.logger.log('✅ K8sJobService initialized. Running initial reconciliation...');
+            await this.reconcileJobs();
+        } catch (error) {
+            this.logger.error(`❌ Failed to initialize K8sJobService: ${error.message}`);
+        }
     }
 
     /**
@@ -61,7 +71,7 @@ export class K8sJobService implements OnModuleInit {
                         data: { status: status as any },
                     });
 
-                    if (status === MLJobStatus.SUCCEEDED || status === MLJobStatus.FAILED || status === MLJobStatus.QUARANTINED || status === MLJobStatus.OOM) {
+                    if (status === MLJobStatus.COMPLETED || status === MLJobStatus.FAILED || status === MLJobStatus.QUARANTINED || status === MLJobStatus.OOM) {
                         const activeJobs = parseInt(await this.redis.getClient().get('rai:total_active_jobs') || '0');
                         if (activeJobs > 0) {
                             await this.redis.getClient().set('rai:total_active_jobs', (activeJobs - 1).toString(), 'EX', 3600);
@@ -94,7 +104,7 @@ export class K8sJobService implements OnModuleInit {
             where: {
                 companyId,
                 createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
-                status: 'SUCCEEDED',
+                status: 'COMPLETED',
             }
         });
 
@@ -114,7 +124,7 @@ export class K8sJobService implements OnModuleInit {
 
         const jobName = `rai-train-${trainingRunId.toLowerCase().substring(0, 8)}`;
 
-        const jobSpec: k8s.V1Job = {
+        const jobSpec: k8sTypes.V1Job = {
             apiVersion: 'batch/v1',
             kind: 'Job',
             metadata: {
@@ -154,7 +164,7 @@ export class K8sJobService implements OnModuleInit {
             await this.redis.getClient().incr('rai:total_active_jobs');
             await this.redis.getClient().expire('rai:total_active_jobs', 3600); // Продлеваем TTL
 
-            await this.k8sApi.createNamespacedJob(this.namespace, jobSpec);
+            await this.k8sApi.createNamespacedJob({ namespace: this.namespace, body: jobSpec });
             this.logger.log(`✅ K8s Job ${jobName} created successfully.`);
         } catch (error) {
             this.logger.error(`❌ Failed to create K8s Job: ${error.message}`);
@@ -165,15 +175,14 @@ export class K8sJobService implements OnModuleInit {
     }
 
     async syncJobStatus(jobName: string): Promise<MLJobStatus> {
-        const response = await this.k8sApi.readNamespacedJobStatus(jobName, this.namespace);
-        const job = response.body;
+        const job = await this.k8sApi.readNamespacedJobStatus({ name: jobName, namespace: this.namespace });
 
         if (!job.status) return MLJobStatus.PENDING;
         return this.mapK8sStatusToMLStatus(job.status);
     }
 
-    private mapK8sStatusToMLStatus(status: k8s.V1JobStatus): MLJobStatus {
-        if (status.succeeded) return MLJobStatus.SUCCEEDED;
+    private mapK8sStatusToMLStatus(status: k8sTypes.V1JobStatus): MLJobStatus {
+        if (status.succeeded) return MLJobStatus.COMPLETED;
 
         if (status.failed) {
             const condition = status.conditions?.find(c => c.type === 'Failed');

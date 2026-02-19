@@ -129,6 +129,7 @@ export class AgroOrchestratorService {
 
         await this.auditService.log({
             action: "SEASON_INITIALIZED",
+            companyId: user.companyId,
             userId: user.id,
             metadata: { seasonId, stage: initialStage },
         });
@@ -258,12 +259,12 @@ export class AgroOrchestratorService {
                     },
                 });
             }
-
             return updatedSeason;
         });
 
         await this.auditService.log({
             action: "STAGE_TRANSITION",
+            companyId: user.companyId,
             userId: user.id,
             metadata: {
                 seasonId,

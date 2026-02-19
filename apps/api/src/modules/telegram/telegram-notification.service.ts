@@ -33,4 +33,22 @@ export class TelegramNotificationService {
             this.logger.error(`Failed to notify bot about asset proposal: ${error.message}`);
         }
     }
+
+    async sendToGroup(message: string, groupId: string) {
+        try {
+            await fetch(`${process.env.BOT_URL || 'http://localhost:4002'}/internal/notify-group`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Internal-API-Key': process.env.INTERNAL_API_KEY || '',
+                },
+                body: JSON.stringify({
+                    groupId,
+                    message,
+                }),
+            });
+        } catch (error) {
+            this.logger.error(`Failed to send telegram group notification: ${error.message}`);
+        }
+    }
 }

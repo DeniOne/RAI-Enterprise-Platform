@@ -291,3 +291,12 @@
 - [x] **Tail Risk (P05)**: Реализован формальный расчет P05 (Probability of Collapse) для R3 рисков.
 - [x] **Audit & Liability**: Внедрено тегирование ответственности (`LiabilityTag`) и неизменяемый аудит всех блокировок.
 - [x] **Safety Hardening**: Строгое разделение режимов регулирования, исключающее "тихий" зават контроля системой.
+
+## Milestone 28: Backend Stability & Runtime Hardening ✅
+**Дата:** 2026-02-19
+**Статус:** STABLE RUNTIME (10/10)
+- [x] **CJS/ESM Compatibility**: Устранены ошибки `ERR_REQUIRE_ESM` для `@kubernetes/client-node` через динамический импорт. Пакет `@rai/regenerative-engine` переведен на CommonJS.
+- [x] **Type Corrections**: Исправлены все ошибки типизации (`DISWeights`, `ConflictVector`) в контроллерах.
+- [x] **Import Fixes**: Устранены `MODULE_NOT_FOUND` ошибки в модуле `rapeseed`, вызванные регистрозависимыми импортами.
+- [x] **Audit Service Compliance**: Все вызовы `auditService.log` обновлены с обязательным `companyId` для изоляции тенантов.
+- [x] **Server Status**: Бэкенд успешно запускается на порту 4000.

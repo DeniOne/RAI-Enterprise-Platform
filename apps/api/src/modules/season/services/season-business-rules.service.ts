@@ -22,7 +22,7 @@ export class SeasonBusinessRulesService {
     if (!rapeseed) return;
 
     // 1. Validate Dates based on Rapeseed Type
-    this.validateRapeseedSeasonDates(season.startDate, rapeseed.type);
+    this.validateRapeseedSeasonDates(season.startDate, rapeseed.type, season.companyId);
 
     // 2. Validate Yield Target
     this.validateYieldTarget(season.expectedYield);
@@ -42,6 +42,7 @@ export class SeasonBusinessRulesService {
   validateRapeseedSeasonDates(
     startDate: Date | null,
     type: RapeseedType,
+    companyId: string,
   ): void {
     if (!startDate) return;
 
@@ -51,13 +52,13 @@ export class SeasonBusinessRulesService {
     if (type === RapeseedType.WINTER) {
       if (month < 8 || month > 9) {
         const message = "Озимый рапс должен высеваться в августе-сентябре";
-        this._logViolation(message, { type, month });
+        this._logViolation(message, { type, month }, companyId);
         throw new BadRequestException(message);
       }
     } else if (type === RapeseedType.SPRING) {
       if (month < 4 || month > 5) {
         const message = "Яровой рапс должен высеваться в апреле-мае";
-        this._logViolation(message, { type, month });
+        this._logViolation(message, { type, month }, companyId);
         throw new BadRequestException(message);
       }
     }
@@ -90,16 +91,16 @@ export class SeasonBusinessRulesService {
         fieldId,
         currentYear,
         previousYears: previousSeasons.map((s) => s.year),
-      });
+      }, companyId);
       throw new BadRequestException(message);
     }
   }
 
-  private _logViolation(message: string, context: any): void {
+  private _logViolation(message: string, context: any, companyId: string): void {
     this.auditService
       .log(
         AgriculturalAuditEvent.RAPESEED_ROTATION_VIOLATION,
-        { id: "SYSTEM" },
+        { id: "SYSTEM", companyId } as any,
         { message, ...context },
       )
       .catch(() => { });

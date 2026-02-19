@@ -4,6 +4,7 @@ import { AuditLog, Prisma } from "@rai/prisma-client";
 
 export interface AuditLogInput {
   action: string;
+  companyId: string;
   userId?: string;
   ip?: string;
   userAgent?: string;
@@ -45,9 +46,10 @@ export class AuditService {
 
     console.log(`[AUDIT] ${data.action} | User: ${data.userId || "GUEST"} | Sig: ${signature.substring(0, 8)}...`);
 
-    return this.prisma.auditLog.create({ // tenant-lint:ignore AuditLog model has no companyId column
+    return this.prisma.auditLog.create({
       data: {
         action: data.action,
+        companyId: data.companyId,
         userId: data.userId,
         ip: data.ip,
         userAgent: data.userAgent,
@@ -104,13 +106,13 @@ export class AuditService {
     }
 
     const [data, total] = await Promise.all([
-      this.prisma.auditLog.findMany({ // tenant-lint:ignore AuditLog model has no companyId column
+      this.prisma.auditLog.findMany({
         where,
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
       }),
-      this.prisma.auditLog.count({ where }), // tenant-lint:ignore AuditLog model has no companyId column
+      this.prisma.auditLog.count({ where }),
     ]);
 
     return { data, total, page, limit };
@@ -120,7 +122,7 @@ export class AuditService {
    * Find a single audit log by ID.
    */
   async findById(id: string): Promise<AuditLog | null> {
-    return this.prisma.auditLog.findUnique({ // tenant-lint:ignore AuditLog model has no companyId column
+    return this.prisma.auditLog.findUnique({
       where: { id },
     });
   }

@@ -21,7 +21,7 @@ export class GovernanceService {
      * Запрос на продвижение модели (например, из SHADOW в CANARY).
      */
     async submitForApproval(modelId: string, requesterId: string, notes?: string) {
-        const model = await this.prisma.modelRegistry.findUnique({ where: { id: modelId } });
+        const model = await this.prisma.modelVersion.findUnique({ where: { id: modelId } });
         if (!model) throw new BadRequestException('Model not found');
 
         return this.prisma.approvalRequest.create({
@@ -52,8 +52,6 @@ export class GovernanceService {
             throw new BadRequestException('Invalid or already processed request');
         }
 
-        // В реальности здесь проверка ролей (Role-Based Access Control)
-
         const newStatus = action === ApprovalAction.APPROVE ? 'APPROVED' : 'REJECTED';
 
         const updatedRequest = await this.prisma.approvalRequest.update({
@@ -70,7 +68,7 @@ export class GovernanceService {
             this.logger.log(`⚖️ Model ${request.modelId} APPROVED by ${reviewerId}. Advancing FSM.`);
 
             // Продвигаем модель в CANARY
-            await this.prisma.modelRegistry.update({
+            await this.prisma.modelVersion.update({
                 where: { id: request.modelId },
                 data: { status: 'CANARY' }
             });
@@ -81,7 +79,7 @@ export class GovernanceService {
                     action: 'COMMITTEE_APPROVAL',
                     companyId: request.model.companyId,
                     userId: reviewerId,
-                    details: {
+                    metadata: {
                         modelId: request.modelId,
                         requestId: updatedRequest.id,
                         comment

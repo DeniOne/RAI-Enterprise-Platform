@@ -34,6 +34,7 @@ export class LearningEventService {
         return await this.prisma.learningEvent.create({
             data: {
                 featureId: dto.featureId,
+                event: 'ML_SIGNAL_INGESTED',
                 payload: dto.payload,
                 signature: dto.signature,
                 companyId: companyId,

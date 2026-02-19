@@ -1,6 +1,1 @@
-enum BudgetStatus {
-  DRAFT
-  APPROVED
-  ACTIVE
-  CLOSED
-}
+// Redundant BudgetStatus enum removed as it is now in main schema.prisma

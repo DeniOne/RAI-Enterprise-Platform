@@ -35,7 +35,8 @@ export class AuditService {
                     eventHash,
                     actorId: data.actorId,
                     timestamp: new Date().toISOString()
-                } as any
+                } as any,
+                signature: eventHash // Using hash as a temporary signature for now
             }
         });
     }

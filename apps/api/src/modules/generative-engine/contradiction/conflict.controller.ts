@@ -15,7 +15,7 @@ import { CounterfactualEngine } from './counterfactual-engine';
 import { ConflictMatrixService, DISWeights } from './conflict-matrix.service';
 import { OverrideRiskAnalyzer } from '../risk/override-risk-analyzer';
 import { ConfirmOverrideDto, OverrideResultDto } from './conflict.dto';
-import { PrismaService } from '@rai/prisma-client';
+import { PrismaService } from '../../../shared/prisma/prisma.service';
 
 /**
  * ConflictController — API Level C: Contradiction-Resilient Intelligence.
@@ -83,7 +83,7 @@ export class ConflictController {
         const cfResult = this.counterfactualEngine.simulate({
             draftSnapshot,
             humanAction: dto.humanAction,
-            weights,
+            weights: weights as unknown as Record<string, number>,
             policyVersion: dto.policyVersion || 'v1.0.0',
             simulationMode: dto.simulationMode,
         });
@@ -117,7 +117,7 @@ export class ConflictController {
             deltaRisk: riskResult.deltaRisk,
             aiOperationCount: (draftSnapshot['operations'] as any[] || []).length,
             humanOperationCount: (dto.humanAction['operations'] as any[] || (draftSnapshot['operations'] as any[] || [])).length,
-            weights,
+            weights: weights as any,
         });
 
         // 6. Record Divergence
@@ -126,11 +126,11 @@ export class ConflictController {
             draftId: dto.draftId,
             draftVersion: dto.draftVersion,
             disVersion: dto.disVersion,
-            weightsSnapshot: weights,
+            weightsSnapshot: weights as unknown as Record<string, number>,
             disScore: disResult.disScore,
             simulationHash: cfResult.simulationHash,
             deltaRisk: riskResult.deltaRisk,
-            conflictVector: disResult.conflictVector,
+            conflictVector: disResult.conflictVector as unknown as Record<string, unknown>,
             humanAction: dto.humanAction,
             explanation: dto.explanation,
             simulationMode: dto.simulationMode,
@@ -143,7 +143,7 @@ export class ConflictController {
             deltaRisk: riskResult.deltaRisk,
             simulationHash: cfResult.simulationHash,
             regret: cfResult.regret,
-            conflictVector: disResult.conflictVector,
+            conflictVector: disResult.conflictVector as unknown as Record<string, number>,
             isSystemFallback: riskResult.isSystemFallback,
         };
     }

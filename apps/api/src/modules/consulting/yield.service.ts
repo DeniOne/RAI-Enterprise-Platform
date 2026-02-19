@@ -100,6 +100,7 @@ export class YieldService {
 
             await this.auditService.log({
                 action: 'HARVEST_RESULT_RECORDED',
+                companyId: context.companyId,
                 userId: context.userId,
                 metadata: {
                     planId: dto.planId,

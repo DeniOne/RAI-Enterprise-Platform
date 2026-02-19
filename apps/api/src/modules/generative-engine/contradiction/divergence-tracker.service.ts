@@ -1,5 +1,5 @@
 import { Injectable, Logger, ConflictException } from '@nestjs/common';
-import { PrismaService } from '@rai/prisma-client';
+import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { CanonicalSorter } from '../deterministic/canonical-sorter';
 import { StableHasher } from '../deterministic/stable-hasher';
 
@@ -97,8 +97,8 @@ export class DivergenceTrackerService {
                         disScore: input.disScore,
                         simulationHash: input.simulationHash,
                         deltaRisk: input.deltaRisk,
-                        conflictVector: input.conflictVector,
-                        humanAction: input.humanAction,
+                        conflictVector: input.conflictVector as any,
+                        humanAction: input.humanAction as any,
                         explanation: input.explanation,
                         simulationMode: input.simulationMode,
                         idempotencyKey,

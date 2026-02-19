@@ -55,7 +55,7 @@ export class ShadowAdvisoryService {
     private readonly retrieval: Pick<EpisodicRetrievalService, "retrieve">,
     @Inject("AUDIT_SERVICE")
     private readonly auditService: Pick<AuditService, "log" | "findAll">,
-  ) {}
+  ) { }
 
   async evaluate(request: ShadowAdvisoryRequest): Promise<ShadowAdvisoryResponse> {
     const retrievalResult = await this.retrieval.retrieve({
@@ -90,6 +90,7 @@ export class ShadowAdvisoryService {
 
     await this.auditService.log({
       action: "SHADOW_ADVISORY_EVALUATED",
+      companyId: request.companyId,
       metadata: {
         traceId: request.traceId,
         companyId: request.companyId,

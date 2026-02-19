@@ -83,3 +83,10 @@
 - [x] **Industrial Guardrails**: 1000-run determinism, policy chaos, drift detection <!-- id: 11.8 -->
 - [x] **E2E Override Pipeline**: Full cycle verified (7 тестов) <!-- id: 11.9 -->
 - [x] **Total: 50 тестов PASS** <!-- id: 11.10 -->
+
+## Level F: Industry Cognitive Standard (Trust Infrastructure) 🚀 <!-- id: 13 -->
+- [ ] **Certification Engine**: Eligibility gate for Managed Mode <!-- id: 13.1 -->
+- [ ] **Farm Rating System (FRS)**: Reproducible longitudinal scoring <!-- id: 13.2 -->
+- [ ] **Insurance API**: P05 exposure profile for underwriters <!-- id: 13.3 -->
+- [ ] **Financial Integration**: Carbon credits & Green financing flags <!-- id: 13.4 -->
+- [ ] **Cross-Level Invariants (F1-F8)**: Immutable history & Read-Only constraints <!-- id: 13.5 -->

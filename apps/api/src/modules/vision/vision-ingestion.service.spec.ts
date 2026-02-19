@@ -19,11 +19,13 @@ describe("VisionIngestionService", () => {
   const deviationMock = {} as DeviationService;
   const consultingMock = {} as ConsultingService;
   const registryMock = {} as RegistryAgentService;
+  const driftQueueMock = { add: jest.fn() } as any;
   const integrityGate = new IntegrityGateService(
     prismaMock,
     deviationMock,
     consultingMock,
     registryMock,
+    driftQueueMock,
   );
 
   beforeEach(async () => {

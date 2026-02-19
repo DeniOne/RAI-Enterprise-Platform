@@ -98,6 +98,7 @@ export class TaskService {
       if (tasks.length > 0) {
         await this.auditService.log({
           action: "SYSTEM_TASK_GENERATION",
+          companyId: season.companyId,
           userId: "SYSTEM",
           metadata: { seasonId, count: tasks.length },
         });
@@ -124,6 +125,7 @@ export class TaskService {
 
     await this.auditService.log({
       action: "TASK_ASSIGNED",
+      companyId: user.companyId,
       userId: user.id,
       metadata: { taskId, assigneeId },
     });
@@ -151,6 +153,7 @@ export class TaskService {
 
     await this.auditService.log({
       action: "TASK_STARTED",
+      companyId: user.companyId,
       userId: user.id,
       metadata: { taskId },
     });
@@ -242,6 +245,7 @@ export class TaskService {
 
     await this.auditService.log({
       action: "TASK_COMPLETED",
+      companyId: user.companyId,
       userId: user.id,
       metadata: { taskId, resourcesCount: actualResources?.length },
     });
@@ -270,6 +274,7 @@ export class TaskService {
 
     await this.auditService.log({
       action: "TASK_CANCELLED",
+      companyId: user.companyId,
       userId: user.id,
       metadata: { taskId, reason },
     });

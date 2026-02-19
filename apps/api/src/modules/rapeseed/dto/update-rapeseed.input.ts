@@ -1,5 +1,5 @@
 import { InputType, Field, PartialType } from "@nestjs/graphql";
-import { CreateRapeseedInput } from "./create-Rapeseed.input";
+import { CreateRapeseedInput } from "./create-rapeseed.input";
 import { IsString, IsNotEmpty } from "class-validator";
 
 @InputType()
