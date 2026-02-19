@@ -1,6 +1,6 @@
 import { RiskSignal, RiskTargetType, RiskAssessment, PrismaClient } from '@rai/prisma-client';
 import { RiskFsm, RiskFsmState } from './RiskFsm';
-import { VerdictRules } from './VerdictRules';
+import { VerdictRules, ContractType } from './VerdictRules';
 import { RiskNormalizer } from './RiskNormalizer';
 import { RiskSignalCollector } from '../collector/RiskSignalCollector';
 
@@ -10,19 +10,16 @@ export class RiskAggregator {
         private collectors: RiskSignalCollector[]
     ) { }
 
-    async assess(companyId: string, targetType: RiskTargetType, targetId: string): Promise<RiskAssessment> {
+    async assess(
+        companyId: string,
+        targetType: RiskTargetType,
+        targetId: string,
+        contractType: ContractType = ContractType.SEASONAL_OPTIMIZATION
+    ): Promise<RiskAssessment> {
         // 1. Collect Signals
         const allSignals: RiskSignal[] = [];
         for (const collector of this.collectors) {
             const signals = await collector.collect(companyId);
-            // Filter signals relevant to this target (if collectors return all signals)
-            // Implementation detail: For B6 we assume collectors might return general company risks + specific target risks.
-            // But let's assume we filter by referenceId matching targetId or global company risks.
-            // For simplicity in B6, let's process ALL collected signals for the company context 
-            // OR refine logic to pass targetId to collect(). 
-            // The Plan says: "collect(companyId: string): Promise<RiskSignal[]>"
-            // So we collect all, then maybe filter? 
-            // Let's assume collectors return RELEVANT signals.
             allSignals.push(...signals);
         }
 
@@ -30,7 +27,7 @@ export class RiskAggregator {
         const normalizedSignals = RiskNormalizer.normalize(allSignals);
 
         // 3. Determine Proposed State (Stateless)
-        const proposedState = VerdictRules.evaluate(normalizedSignals);
+        const proposedState = VerdictRules.evaluate(normalizedSignals, contractType);
 
         // 4. Retrieve Current FSM State
         const currentState = await this.getCurrentFsmState(companyId, targetType, targetId);

@@ -1494,6 +1494,70 @@ exports.Prisma.LearningEventScalarFieldEnum = {
   companyId: 'companyId'
 };
 
+exports.Prisma.SoilMetricScalarFieldEnum = {
+  id: 'id',
+  fieldId: 'fieldId',
+  companyId: 'companyId',
+  authorId: 'authorId',
+  timestamp: 'timestamp',
+  sri: 'sri',
+  om: 'om',
+  ph: 'ph',
+  source: 'source',
+  signature: 'signature',
+  publicKeyId: 'publicKeyId',
+  trustScoreSnapshot: 'trustScoreSnapshot',
+  verificationStatus: 'verificationStatus',
+  verifiedAt: 'verifiedAt'
+};
+
+exports.Prisma.SustainabilityBaselineScalarFieldEnum = {
+  id: 'id',
+  fieldId: 'fieldId',
+  companyId: 'companyId',
+  version: 'version',
+  locked: 'locked',
+  createdAt: 'createdAt',
+  baselineSRI: 'baselineSRI',
+  targetSRI: 'targetSRI',
+  genesisHash: 'genesisHash',
+  trustSnapshot: 'trustSnapshot'
+};
+
+exports.Prisma.BiodiversityMetricScalarFieldEnum = {
+  id: 'id',
+  seasonId: 'seasonId',
+  companyId: 'companyId',
+  bps: 'bps',
+  shannonIndex: 'shannonIndex',
+  monoPenalty: 'monoPenalty'
+};
+
+exports.Prisma.GovernanceLockScalarFieldEnum = {
+  id: 'id',
+  fieldId: 'fieldId',
+  companyId: 'companyId',
+  isActive: 'isActive',
+  lockedAt: 'lockedAt',
+  reason: 'reason',
+  recoverySeasons: 'recoverySeasons'
+};
+
+exports.Prisma.OverrideRequestScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  fieldId: 'fieldId',
+  strategyId: 'strategyId',
+  authorId: 'authorId',
+  approverId: 'approverId',
+  status: 'status',
+  category: 'category',
+  createdAt: 'createdAt',
+  deltaSRI: 'deltaSRI',
+  confidence: 'confidence',
+  transactionId: 'transactionId'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -2095,6 +2159,7 @@ exports.ModelStatus = exports.$Enums.ModelStatus = {
   ACTIVE: 'ACTIVE',
   ARCHIVED: 'ARCHIVED',
   FAILED: 'FAILED',
+  QUARANTINED: 'QUARANTINED',
   ROLLED_BACK: 'ROLLED_BACK'
 };
 
@@ -2110,6 +2175,38 @@ exports.DriftStatus = exports.$Enums.DriftStatus = {
   NORMAL: 'NORMAL',
   WARNING: 'WARNING',
   CRITICAL: 'CRITICAL'
+};
+
+exports.DataSourceType = exports.$Enums.DataSourceType = {
+  SATELLITE: 'SATELLITE',
+  LAB: 'LAB',
+  SENSOR: 'SENSOR',
+  USER_INPUT: 'USER_INPUT'
+};
+
+exports.VerificationStatus = exports.$Enums.VerificationStatus = {
+  PENDING: 'PENDING',
+  VERIFIED: 'VERIFIED',
+  FAILED: 'FAILED'
+};
+
+exports.GovernanceLockReason = exports.$Enums.GovernanceLockReason = {
+  DEGRADATION_I34: 'DEGRADATION_I34',
+  BIO_PRESSURE_I36: 'BIO_PRESSURE_I36',
+  FORCE_MAJEURE: 'FORCE_MAJEURE'
+};
+
+exports.OverrideStatus = exports.$Enums.OverrideStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  ESCALATED: 'ESCALATED'
+};
+
+exports.OverrideCategory = exports.$Enums.OverrideCategory = {
+  FINANCIAL_PRESSURE: 'FINANCIAL_PRESSURE',
+  MODEL_DISTRUST: 'MODEL_DISTRUST',
+  EXTREME_WEATHER: 'EXTREME_WEATHER'
 };
 
 exports.Prisma.ModelName = {
@@ -2219,7 +2316,12 @@ exports.Prisma.ModelName = {
   ModelVersion: 'ModelVersion',
   TrainingRun: 'TrainingRun',
   DriftReport: 'DriftReport',
-  LearningEvent: 'LearningEvent'
+  LearningEvent: 'LearningEvent',
+  SoilMetric: 'SoilMetric',
+  SustainabilityBaseline: 'SustainabilityBaseline',
+  BiodiversityMetric: 'BiodiversityMetric',
+  GovernanceLock: 'GovernanceLock',
+  OverrideRequest: 'OverrideRequest'
 };
 
 /**

@@ -42,6 +42,7 @@ import { AdvisoryModule } from "./modules/advisory/advisory.module";
 import { HealthModule } from "./modules/health/health.module";
 import { AdaptiveLearningModule } from "./modules/adaptive-learning/adaptive-learning.module";
 import { HttpResilienceModule } from "./shared/http/http-resilience.module";
+import { BullModule } from "@nestjs/bullmq";
 import { join } from "path";
 
 import { OutboxModule } from './shared/outbox/outbox.module';
@@ -111,6 +112,12 @@ import { InvariantMetricsModule } from "./shared/invariants/invariant-metrics.mo
     HealthModule,
     AdaptiveLearningModule,
     HttpResilienceModule,
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: Number(process.env.REDIS_PORT) || 6379,
+      },
+    }),
 
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,

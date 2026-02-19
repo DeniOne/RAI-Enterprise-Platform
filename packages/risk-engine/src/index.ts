@@ -3,6 +3,7 @@ export * from './collector/implementations/LegalRiskCollector';
 export * from './collector/implementations/RndRiskCollector';
 export * from './collector/implementations/OpsRiskCollector';
 export * from './collector/implementations/FinanceRiskCollector';
+export * from './collector/implementations/RegenerativeRiskCollector';
 
 export * from './core/RiskFsm';
 export * from './core/VerdictRules';

@@ -191,7 +191,7 @@ LEVEL E — Regenerative Optimization
 
 Оптимизация меняет цель:
 
-Max Yield → Max Sustainable Yield
+Max Yield → Max Sustainable Yield (Contract-Governed)
 
 Новые метрики
 
@@ -201,7 +201,7 @@ Organic Matter Forecast
 
 Biodiversity Pressure Score
 
-Long-term productivity curve
+Long-term productivity curve (P05 Risk)
 
 Новая целевая функция
 
@@ -211,11 +211,11 @@ f = Yield + Sustainability + Soil Recovery
 
 Роль AI
 
-AI балансирует краткосрочную прибыль и долгосрочную устойчивость.
+AI — Регенеративный стратег (Contract-Aware). Балансирует краткосрочную прибыль и долгосрочную устойчивость согласно уровню делегированных полномочий.
 
 Граница
 
-Система не может деградировать почву ради ROI.
+Система исполняет регенеративные ограничения в соответствии с охватом контрактного управления (Governance Scope).
 
 LEVEL F — Industry Cognitive Standard
 Архитектурный сдвиг
@@ -251,7 +251,7 @@ A	Советник
 B	Генеративный архитектор
 C	Аналитик конфликтов
 D	Самообучающийся оптимизатор
-E	Регеративный стратег
+E	Регенеративный стратег (Contract-Aware)
 F	Отраслевой когнитивный стандарт
 Эволюция целевой функции
 Level	Цель
@@ -259,7 +259,7 @@ A	Контроль
 B	Урожай
 C	Снижение regret
 D	Точность
-E	Устойчивость
+E	Устойчивость (Contract-Driven)
 F	Отраслевая оптимизация
 Главный принцип эволюции
 

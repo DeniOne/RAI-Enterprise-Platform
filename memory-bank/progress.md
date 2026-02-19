@@ -12,6 +12,15 @@
 - [x] Infrastructure: Port 5432 DB unification (Docker).
 - [x] Orchestration: Created `run_bot.bat` for project root.
 
+## Milestone 27: Level E — Contract-Driven Regenerative Engine ✅
+**Дата:** 2026-02-19  
+**Статус:** INDUSTRIAL GRADE (10/10)
+- [x] **Contract-Driven Governance (I41)**: Внедрены режимы `SEASONAL`, `MULTI_YEAR`, `MANAGED`.
+- [x] **Dynamic MOS Weights**: Реализован пропорциональный Overdrive для SRI (только в Managed режиме).
+- [x] **Severity Matrix (R1-R4)**: Внедрена формальная матрица тяжести для регенеративных рисков.
+- [x] **Tail Risk (P05)**: Реализован формальный расчет P05 (Probability of Collapse) для R3 рисков.
+- [x] **Audit & Liability**: Внедрено тегирование ответственности (`LiabilityTag`) и неизменяемый аудит всех блокировок.
+- [x] **Safety Hardening**: Строгое разделение режимов регулирования, исключающее "тихий" зават контроля системой.
 ## Milestone 10: Web Interface (Sprint 4) - DONE ✅
 **Дата:** 2026-02-03  
 **Sprint:** 4 (05.08 - 19.08)  

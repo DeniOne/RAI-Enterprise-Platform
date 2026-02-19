@@ -102,10 +102,17 @@ model Company {
   governanceConfigs GovernanceConfig[]
   divergenceRecords DivergenceRecord[]
   // Level D: Adaptive Self-Learning
-  modelVersions     ModelVersion[]
-  trainingRuns      TrainingRun[]
-  driftReports      DriftReport[]
-  learningEvents    LearningEvent[]
+  modelVersions   ModelVersion[]
+  trainingRuns    TrainingRun[]
+  driftReports    DriftReport[]
+  learningEvents  LearningEvent[]
+
+  // Level E: Regenerative Optimization
+  soilMetrics            SoilMetric[]
+  sustainabilityBaselines SustainabilityBaseline[]
+  biodiversityMetrics    BiodiversityMetric[]
+  governanceLocks        GovernanceLock[]
+  overrideRequests       OverrideRequest[]
 
   @@map("companies")
 }
@@ -478,6 +485,11 @@ model User {
   // CRM Relations
   obligations Obligation[] @relation("ObligationResponsible")
 
+  // Level E: Regenerative Optimization
+  soilMetrics          SoilMetric[]
+  authoredOverrides    OverrideRequest[]
+  approvedOverrides    OverrideRequest[] @relation("OverrideApprover")
+
   @@map("users")
 }
 
@@ -556,6 +568,12 @@ model Field {
   fieldObservations FieldObservation[]
   harvestResults    HarvestResult[]
   techMaps          TechMap[]
+
+  // Level E: Regenerative Optimization
+  soilMetrics            SoilMetric[]
+  sustainabilityBaseline SustainabilityBaseline?
+  governanceLock         GovernanceLock?
+  overrideRequests       OverrideRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -660,6 +678,9 @@ model Season {
   fieldObservations FieldObservation[]
 
   harvestPlans HarvestPlan[]
+
+  // Level E: Regenerative Optimization
+  biodiversityMetric BiodiversityMetric?
 
   // Tech Map Integration
   techMaps         TechMap[]
@@ -2943,6 +2964,7 @@ enum RiskSource {
   RND
   OPS
   FINANCE
+  REGENERATIVE
 }
 
 enum RiskSeverity {
@@ -3341,4 +3363,147 @@ enum DriftStatus {
   NORMAL
   WARNING
   CRITICAL
+}
+
+// --- Level E: Regenerative Optimization Domain ---
+
+model SoilMetric {
+  id        String   @id @default(cuid())
+  fieldId   String
+  companyId String
+  authorId  String // createdBy
+  timestamp DateTime @default(now())
+
+  // Physical-Chemical
+  sri Float // Soil Regeneration Index [0.0 - 1.0]
+  om  Float // Organic Matter %
+  ph  Float // pH Level
+
+  // Provenance & Trust (Hardened)
+  source             DataSourceType
+  signature          Bytes? // RSA/Ed25519 signature
+  publicKeyId        String?
+  trustScoreSnapshot Float          @default(1.0)
+  verificationStatus VerificationStatus @default(PENDING)
+  verifiedAt         DateTime?
+
+  field   Field   @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorId], references: [id])
+
+  @@index([companyId, fieldId, timestamp])
+  @@map("rai_soil_metrics")
+}
+
+model SustainabilityBaseline {
+  id        String   @id @default(cuid())
+  fieldId   String   @unique
+  companyId String
+  version   Int      @default(1)
+  locked    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  initialSri Float
+  targetSRI   Float
+
+  // Trust Context (Audit)
+  genesisHash   String // Link to Genesis Ledger
+  trustSnapshot Json // Snapshot of trust context at creation
+
+  field   Field   @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, fieldId, version])
+  @@map("rai_sustainability_baselines")
+}
+
+model BiodiversityMetric {
+  id        String @id @default(cuid())
+  seasonId  String @unique
+  companyId String
+
+  bps          Float // Biodiversity Pressure Score [0.0 - 1.0]
+  shannonIndex Float
+  monoPenalty  Float
+
+  season  Season  @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, seasonId])
+  @@map("rai_biodiversity_metrics")
+}
+
+model GovernanceLock {
+  id        String   @id @default(cuid())
+  fieldId   String   @unique
+  companyId String
+  isActive  Boolean  @default(false)
+  lockedAt  DateTime @default(now())
+  reason    GovernanceLockReason
+
+  recoverySeasons Int @default(0)
+
+  field   Field   @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, fieldId])
+  @@map("rai_governance_locks")
+}
+
+model OverrideRequest {
+  id         String   @id @default(cuid())
+  companyId  String
+  fieldId    String
+  strategyId String
+  authorId   String // createdBy
+  approverId String?
+  status     OverrideStatus @default(PENDING)
+  category   OverrideCategory
+  createdAt  DateTime       @default(now())
+
+  deltaSRI   Float
+  confidence Float // Model confidence at time of request
+
+  // Financial Link
+  transactionId String? // ID of the economic event / ledger entry
+
+  field    Field   @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  company  Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  author   User    @relation(fields: [authorId], references: [id])
+  approver User?   @relation("OverrideApprover", fields: [approverId], references: [id])
+
+  @@index([companyId, fieldId, createdAt])
+  @@map("rai_override_requests")
+}
+
+enum DataSourceType {
+  SATELLITE
+  LAB
+  SENSOR
+  USER_INPUT
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  FAILED
+}
+
+enum GovernanceLockReason {
+  DEGRADATION_I34
+  BIO_PRESSURE_I36
+  FORCE_MAJEURE
+}
+
+enum OverrideStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ESCALATED
+}
+
+enum OverrideCategory {
+  FINANCIAL_PRESSURE
+  MODEL_DISTRUST
+  EXTREME_WEATHER
 }

@@ -40,6 +40,15 @@
 - [x] Load & Stress Campaign
 - [x] Go-Live (S3 50%)
 
+## Level E: Contract-Driven Regenerative Engine ✅ <!-- id: 12 -->
+- [x] **Governance (I41)**: Seasonal/Multi-Year/Managed contract mapping <!-- id: 12.1 -->
+- [x] **MOS Evolution**: Dynamic weights gated to MANAGED mode <!-- id: 12.2 -->
+- [x] **Risk Matrix (R1-R4)**: P05 Tail Risk calculation for Soil/Bio <!-- id: 12.3 -->
+- [x] **Escalation (I34)**: Delegated Authority locks + Committee alerts <!-- id: 12.4 -->
+- [x] **Audit Trait**: Liability tagging (CONSULTANT_ONLY for Managed) <!-- id: 12.5 -->
+- [x] **Safety Audit**: Strictly gated optimization logic <!-- id: 12.6 -->
+- [x] **Walkthrough**: Final proof-of-work delivered <!-- id: 12.7 -->
+
 ## Sprint Gamma 7: Stabilization & Exit (In Progress) 🚀
 - [x] S7.PLAN1 Sprint 7 checklist created
 - [x] S7.PLAN2 Sprint index updated

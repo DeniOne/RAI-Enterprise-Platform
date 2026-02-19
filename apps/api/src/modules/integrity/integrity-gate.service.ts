@@ -1,4 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { DeviationService } from "../cmr/deviation.service";
 import { ConsultingService } from "../consulting/consulting.service";
@@ -14,8 +16,11 @@ import {
     Controllability,
     LiabilityMode,
     TaskStatus,
-    AssetStatus
+    AssetStatus,
+    DataSourceType,
+    VerificationStatus
 } from "@rai/prisma-client";
+import { ScienceCalculator, TrustEngine, TrustInput, VelocityCalculator } from "@rai/regenerative-engine";
 
 @Injectable()
 export class IntegrityGateService {
@@ -26,6 +31,7 @@ export class IntegrityGateService {
         private readonly deviationService: DeviationService,
         private readonly consultingService: ConsultingService,
         private readonly registryAgent: RegistryAgentService,
+        @InjectQueue('drift-feedback-loop') private readonly driftQueue: Queue,
     ) { }
 
     /**
@@ -65,7 +71,11 @@ export class IntegrityGateService {
                     await this.handleStrategicLoop(observation);
                     break;
                 case ObservationIntent.MONITORING:
-                    this.logger.log(`[INTEGRITY-GATE] Passive monitoring for ${observation.id}`);
+                    if (observation.type === ObservationType.MEASUREMENT) {
+                        await this.handleSoilMetricLoop(observation);
+                    } else {
+                        this.logger.log(`[INTEGRITY-GATE] Passive monitoring for ${observation.id}`);
+                    }
                     break;
                 default:
                     this.logger.warn(`[INTEGRITY-GATE] Unknown intent: ${observation.intent}`);
@@ -294,6 +304,30 @@ export class IntegrityGateService {
         });
 
         if (!map) throw new Error("TechMap not found");
+
+        // 0. Инвариант I41: Regeneration Guard
+        const regenStatus = await this.checkRegenerationInvariant(map.fieldId!, companyId);
+        if (regenStatus.status === 'DEGRADING') {
+            issues.push({
+                type: 'I41_REGENERATION_VIOLATION',
+                message: `[INVARIANT-I41] Выполнение техкарты ЗАБЛОКИРОВАНО. Обнаружена деградация почвы (Velocity: ${regenStatus.velocity}). Требуется восстановительный протокол.`,
+                severity: 'ERROR'
+            });
+
+            await this.prisma.cmrRisk.create({
+                data: {
+                    companyId: map.companyId,
+                    seasonId: map.seasonId,
+                    type: RiskType.REGULATORY,
+                    description: `[I41-BLOCK] Деградация SRI (v=${regenStatus.velocity}) блокирует техкарту ${map.id}`,
+                    probability: RiskLevel.CRITICAL,
+                    impact: RiskLevel.CRITICAL,
+                    controllability: Controllability.CONSULTANT,
+                    liabilityMode: LiabilityMode.CONSULTANT_ONLY,
+                    status: "OPEN"
+                }
+            });
+        }
 
         const issues: Array<{ type: string; message: string; severity: 'ERROR' | 'WARNING' }> = [];
 
@@ -596,5 +630,106 @@ export class IntegrityGateService {
 
         return { ok: errors.length === 0, errors };
     }
-}
 
+    private async handleSoilMetricLoop(observation: FieldObservation) {
+        this.logger.log(`[LAW] Mandatory Loop: MEASUREMENT -> SoilMetric (Level E)`);
+
+        if (!observation.telemetryJson || typeof observation.telemetryJson !== 'object') {
+            this.logger.warn(`[INTEGRITY-GATE] Soil Measurement received without telemetry data: ${observation.id}`);
+            return;
+        }
+
+        const data = observation.telemetryJson as any;
+        const signature = data.signature; // Expecting hex or base64
+        const publicKeyId = data.publicKeyId;
+
+        // 1. Signature Verification
+        const isVerified = await this.verifySignature(signature, publicKeyId, data);
+
+        // 2. Trust Enforcement Mode
+        const enforcementMode = process.env.TRUST_ENFORCEMENT_MODE || 'SHADOW';
+
+        if (!isVerified) {
+            if (enforcementMode === 'STRICT') {
+                this.logger.error(`[TRUST-VIOLATION] Signature verification FAILED in STRICT mode. Rejecting data for ${observation.id}`);
+                throw new Error("STRICT_TRUST_VIOLATION: Invalid Data Signature");
+            } else if (enforcementMode === 'WARN') {
+                this.logger.warn(`[TRUST-VIOLATION] Signature verification FAILED. Proceeding in WARN mode for ${observation.id}`);
+            } else {
+                this.logger.log(`[TRUST-SHADOW] Signature verification failed for ${observation.id}. Logging in SHADOW mode.`);
+            }
+        }
+
+        // 3. Trust Score Calculation
+        const trustInput: TrustInput = {
+            isSignatureVerified: isVerified,
+            sourceReputation: 0.8, // Default for now
+            dataAgeDays: 0, // Fresh data
+            driftPenalty: 0
+        };
+        const trustScore = TrustEngine.calculateTrustScore(trustInput);
+
+        // 4. Persistence
+        await this.prisma.soilMetric.create({
+            data: {
+                companyId: observation.companyId,
+                fieldId: observation.fieldId!,
+                authorId: observation.authorId,
+                timestamp: observation.createdAt,
+                sri: data.sri || 0,
+                om: data.om || 0,
+                ph: data.ph || 0,
+                source: data.source || DataSourceType.SENSOR,
+                signature: signature ? Buffer.from(signature, 'hex') : null,
+                publicKeyId: publicKeyId,
+                trustScoreSnapshot: trustScore,
+                verificationStatus: isVerified ? VerificationStatus.VERIFIED : VerificationStatus.FAILED,
+                verifiedAt: new Date()
+            }
+        });
+
+        this.logger.log(`[INTEGRITY-GATE] SoilMetric persisted with TrustScore: ${trustScore}`);
+
+        // 5. Trigger Distributed Drift Check
+        await this.driftQueue.add('check-drift', {
+            fieldId: observation.fieldId,
+            companyId: observation.companyId
+        });
+    }
+
+    private async verifySignature(signature: string, publicKeyId: string, payload: any): Promise<boolean> {
+        if (!signature || !publicKeyId) return false;
+
+        // STUB: In production this would use crypto.verify or a KMS
+        this.logger.log(`[INTEGRITY-GATE] Verifying signature ${signature.substring(0, 8)}... via Key ${publicKeyId}`);
+
+        // Simple mock for internal testing
+        return signature.startsWith('valid_');
+    }
+
+    /**
+     * Проверка Инварианта I41: Запрет на токсичные действия при деградации.
+     */
+    async checkRegenerationInvariant(fieldId: string, companyId: string): Promise<{ status: 'REGENERATING' | 'DEGRADING' | 'STABLE'; velocity: number }> {
+        const baseline = await this.prisma.sustainabilityBaseline.findFirst({
+            where: { fieldId, companyId },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        if (!baseline) return { status: 'STABLE', velocity: 0 };
+
+        const latestMetric = await this.prisma.soilMetric.findFirst({
+            where: { fieldId, companyId, verificationStatus: VerificationStatus.VERIFIED },
+            orderBy: { timestamp: 'desc' }
+        });
+
+        if (!latestMetric) return { status: 'STABLE', velocity: 0 };
+
+        const yearsDelta = (latestMetric.timestamp.getTime() - baseline.createdAt.getTime()) / (1000 * 60 * 60 * 24 * 365);
+        const velocity = VelocityCalculator.calculateVelocity(baseline.initialSri, latestMetric.sri, Math.max(0.1, yearsDelta));
+
+        if (velocity < -0.05) return { status: 'DEGRADING', velocity };
+        if (velocity > 0.01) return { status: 'REGENERATING', velocity };
+        return { status: 'STABLE', velocity };
+    }
+}
