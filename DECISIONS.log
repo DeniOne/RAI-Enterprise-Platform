@@ -622,3 +622,48 @@ Orchestrator = Brain (канон RAI_EP).
 - `docs/00_STRATEGY/EVOLUTION_ARCHITECTURE_MASTER_A_TO_F.md`
 - `docs/01_ARCHITECTURE/PRINCIPLES/CANON.md`
 - `docs/04_ENGINEERING/IMPLEMENTATION_PLAN_LEVEL_C.md`
+
+---
+
+## LEVEL-F-HARDENING-001
+
+**Дата:** 2026-02-20
+**Автор:** TECHLEAD (AI)
+**Статус:** ACCEPTED
+**Приоритет:** CRITICAL
+**Target:** Level F (Institutional Oracle Architecture)
+
+### Решение
+Полное формальное отвердение (Hardening) 12 документов архитектуры Level F до стандарта `10/10 Enterprise Institutional Grade`. Замена маркетинговых описаний на математические инварианты, криптографические протоколы (Ed25519, HSM, Merkle DAG) и жесткие банковские стандарты (Basel III, SEC 17a-4).
+
+### Scope
+- **Phase:** Level F (Trust Layer & Oracle Standardization)
+- **Компоненты:**
+  - `01_ARCHITECTURE/LEVEL_F/*` (Invariants, Security, Dispute, Privacy, Governance)
+  - `04_ENGINEERING/LEVEL_F/*` (Snapshotter, Rating Engine, Cert Engine, Insurance API)
+  - `05_TESTING/LEVEL_F_FORMAL_TEST_SPEC.md`
+  - `06_METRICS/LEVEL_F/*` (Success Metrics, Risk Monitoring)
+  - `07_EXECUTION/PHASE_DELTA/*` (Roadmap, Rollout, Approval, Implementation Checklist)
+
+### Технические ограничения
+1. **Canonical State:** Все снимки сериализуются через RFC 8785 (Canonical JSON) перед хешированием.
+2. **Deterministic Output:** `F_RATING_ENGINE` действует как песочница без состояния. Работа с `Math.random` отключена, строгий IEEE-754.
+3. **Off-Memory Signing:** `Ed25519` подписи для выдачи сертификатов выполняются строго внутри HSM анклавов. Root keys никогда не попадают в RAM.
+4. **WORM Storage:** Хранение истории снимков в Object Lock S3 бакетах на 10 лет. Разрушительные мутации запрещены на уровне доступа.
+5. **Zero-Trust Network Gate:** `F_INSURANCE_API` работает только по mTLS, идемпотентно фильтрует Replays через JWT Nonce и отвечает по формату RFC 7807 (Problem Details for HTTP APIs).
+
+### Definition of Done
+- [x] Все 12 документов переписаны на `10/10 Formal Specification`.
+- [x] Создан полный `LEVEL_F_IMPLEMENTATION_CHECKLIST.md` в папке EXECUTION.
+- [x] Утверждены формальные метрики (Brier Score <= 0.12, Z-Score >= 3.0).
+- [x] Зафиксированы регламенты M-of-N Governance для обновления протокола.
+- [x] Описан Hardcore Formal Test Spec для Level F (BFT-сценарии, атаки на L1, Zip bombs).
+
+### Rollback Conditions
+- Выявление недетерминированного поведения в алгоритме Score Calculation -> Переход в `SAFE_HALT`.
+- Провал консенсуса M-of-N на церемонии запуска Genesis.
+
+### Связанные документы
+- `LEVEL_F_SECURITY_MODEL.md`
+- `F_RATING_ENGINE_ARCH.md`
+- `LEVEL_F_IMPLEMENTATION_CHECKLIST.md`
