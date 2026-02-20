@@ -7,8 +7,8 @@ import { RedisService } from '../../shared/redis/redis.service';
  * Ошибка возвращается в формате RFC 7807 (Фаза 5).
  */
 @Injectable()
-export class TokenBucketRateLimitingGuard implements CanActivate {
-  private readonly logger = new Logger(TokenBucketRateLimitingGuard.name);
+export class TokenBucketGuard implements CanActivate {
+  private readonly logger = new Logger(TokenBucketGuard.name);
 
   // Лимиты из LEVEL_F_IMPLEMENTATION_CHECKLIST
   private readonly TENANT_LIMIT = 1000;

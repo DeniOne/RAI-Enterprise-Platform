@@ -53,54 +53,101 @@ export const CONSULTING_NAVIGATION: NavItem[] = [
                 roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'],
             },
             {
-                id: 'farms',
-                label: 'Хозяйства',
-                path: '/consulting/crm/farms',
+                id: 'crm',
+                label: 'Хозяйства и Контрагенты',
+                path: '/consulting/crm',
                 domain: 'crop',
                 roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'],
+                subItems: [
+                    { id: 'farms', label: 'Реестр хозяйств', path: '/consulting/crm/farms', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                    { id: 'counterparties', label: 'Контрагенты', path: '/consulting/crm/counterparties', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                    { id: 'fields', label: 'Поля / Объекты', path: '/consulting/crm/fields', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                    { id: 'seasons', label: 'История сезонов', path: '/consulting/crm/history', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                ]
             },
             {
                 id: 'plans',
-                label: 'Планы',
+                label: 'Планы Урожая',
                 path: '/consulting/plans',
                 domain: 'crop',
                 roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'],
+                subItems: [
+                    { id: 'plans_drafts', label: 'Черновики', path: '/consulting/plans/drafts', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                    { id: 'plans_active', label: 'Активные', path: '/consulting/plans/active', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                    { id: 'plans_archive', label: 'Архив', path: '/consulting/plans/archive', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                ]
             },
             {
                 id: 'techmaps',
-                label: 'Техкарты',
+                label: 'Техкарты Урожая',
                 path: '/consulting/techmaps',
                 domain: 'crop',
                 roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'],
+                subItems: [
+                    { id: 'tm_design', label: 'Проектирование', path: '/consulting/techmaps/design', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                    { id: 'tm_active', label: 'Активные', path: '/consulting/techmaps/active', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                    { id: 'tm_frozen', label: 'Замороженные', path: '/consulting/techmaps/frozen', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                    { id: 'tm_archive', label: 'Архив', path: '/consulting/techmaps/archive', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                ]
             },
             {
-                id: 'budgets',
-                label: 'Бюджеты',
-                path: '/consulting/budgets',
+                id: 'execution',
+                label: 'Исполнение Техкарт',
+                path: '/consulting/execution',
                 domain: 'crop',
-                roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'],
+                roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'FIELD_WORKER', 'SYSTEM_ADMIN', 'FOUNDER'],
+                subItems: [
+                    {
+                        id: 'exec_agro',
+                        label: 'Контур Агронома',
+                        path: '/consulting/execution/agronomist',
+                        domain: 'crop',
+                        roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'],
+                        subItems: [
+                            { id: 'exec_agro_consult', label: 'Консультирование', path: '/consulting/execution/agronomist/consulting', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                            { id: 'exec_agro_control', label: 'Контроль допущений', path: '/consulting/execution/agronomist/control', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                            { id: 'exec_agro_dev', label: 'Фиксация отклонений', path: '/consulting/execution/agronomist/deviations', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                        ]
+                    },
+                    {
+                        id: 'exec_manager',
+                        label: 'Контур Менеджера Хозяйства',
+                        path: '/consulting/execution/manager',
+                        domain: 'crop',
+                        roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'],
+                        subItems: [
+                            { id: 'exec_mgr_tasks', label: 'Задачи', path: '/consulting/execution/manager/tasks', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                            { id: 'exec_mgr_events', label: 'События', path: '/consulting/execution/manager/events', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                            { id: 'exec_mgr_alerts', label: 'Алерты', path: '/consulting/execution/manager/alerts', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                            { id: 'exec_mgr_status', label: 'Статус выполнения', path: '/consulting/execution/manager/status', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                        ]
+                    },
+                ]
             },
             {
                 id: 'deviations',
-                label: 'Отклонения',
+                label: 'Отклонения и Решения',
                 path: '/consulting/deviations',
                 domain: 'crop',
                 roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'],
+                subItems: [
+                    { id: 'dev_detected', label: 'Выявленные отклонения', path: '/consulting/deviations/detected', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                    { id: 'dev_analysis', label: 'Разбор', path: '/consulting/deviations/analysis', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                    { id: 'dev_decisions', label: 'Принятые решения', path: '/consulting/deviations/decisions', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                ]
             },
             {
-                id: 'decisions',
-                label: 'Решения',
-                path: '/consulting/decisions',
+                id: 'results',
+                label: 'Результат и Эффект',
+                path: '/consulting/results',
                 domain: 'crop',
                 roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'],
-            },
-            {
-                id: 'advisory',
-                label: 'Advisory',
-                path: '/consulting/advisory',
-                domain: 'crop',
-                roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'],
-            },
+                subItems: [
+                    { id: 'res_actual', label: 'Фактический урожай', path: '/consulting/results/actual', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                    { id: 'res_plan_fact', label: 'Сравнение с планом', path: '/consulting/results/plan-fact', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                    { id: 'res_perf', label: 'Performance-оплата', path: '/consulting/results/performance', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                ]
+            }
         ]
     },
 

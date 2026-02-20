@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Play, CheckCircle, Clock, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button } from "@/components/ui/button";
 
 interface ExecutionCardProps {
     operation: any;

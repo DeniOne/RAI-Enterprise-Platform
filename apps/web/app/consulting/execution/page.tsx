@@ -5,7 +5,7 @@ import { api } from '@/lib/api';
 import { ExecutionCard } from './components/ExecutionCard';
 import { CompletionModal } from './components/CompletionModal';
 import { Loader2, Activity, Filter, RefreshCcw } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button } from "@/components/ui/button";
 
 export default function ExecutionDashboard() {
     const [operations, setOperations] = useState<any[]>([]);

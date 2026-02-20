@@ -27,11 +27,12 @@ export class ReproducibilityCheckerService {
         this.logger.log(`Rebuilding Certificate ${existingJwtPayload.jti} for company ${companyId}`);
 
         // Шаг 1: Намерение аудита (Regulatory Logging)
-        const auditRecord = await this.auditService.logSignatureIntent(
-            'ReproducibilityChecker',
-            existingJwtPayload.snapshotHash,
-            'Ed25519-Verification-Key',
-        );
+        const auditRecord = await this.auditService.logSignatureIntent({
+            companyId,
+            initiatorProcess: 'ReproducibilityChecker',
+            snapshotHash: existingJwtPayload.snapshotHash,
+            kidUsed: 'Ed25519-Verification-Key',
+        });
 
         try {
             // Шаг 2: Извлечение Snapshot из системы (в реальности из DB/IPFS по хешу)
@@ -52,20 +53,34 @@ export class ReproducibilityCheckerService {
 
             if (!isGradeMatch || !isScoreMatch) {
                 this.logger.error(`Reproducibility Failed: Diff found in grades/scores`);
-                await this.auditService.logSignatureError(auditRecord.id, 'Deterministic Rebuild Mismatch');
+                await this.auditService.logSignatureError({
+                    companyId,
+                    initiatorProcess: 'ReproducibilityChecker',
+                    snapshotHash: existingJwtPayload.snapshotHash,
+                    kidUsed: 'Ed25519-Verification-Key',
+                    errorReason: 'Deterministic Rebuild Mismatch'
+                });
                 return false;
             }
 
             this.logger.log(`Deterministic Rebuild Successful. Exact match confirmed.`);
-            await this.auditService.logSignatureCompleted(
-                auditRecord.id,
-                'M-of-N-Quorum-Mocked-Receipt'
-            );
+            await this.auditService.logSignatureCompleted({
+                companyId,
+                initiatorProcess: 'ReproducibilityChecker',
+                snapshotHash: existingJwtPayload.snapshotHash,
+                kidUsed: 'Ed25519-Verification-Key'
+            });
 
             return true;
 
         } catch (err: any) {
-            await this.auditService.logSignatureError(auditRecord.id, err.message);
+            await this.auditService.logSignatureError({
+                companyId,
+                initiatorProcess: 'ReproducibilityChecker',
+                snapshotHash: existingJwtPayload.snapshotHash,
+                kidUsed: 'Ed25519-Verification-Key',
+                errorReason: err.message
+            });
             this.logger.error(`Reproducibility Error: ${err.message}`);
             return false;
         }

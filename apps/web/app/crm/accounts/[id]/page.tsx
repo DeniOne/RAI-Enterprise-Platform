@@ -17,7 +17,7 @@ export default function AccountDetailPage({ params }: { params: { id: string } }
                     </Link>
                 </Button>
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Account Detail: {accountId}</h1>
+                    <h1 className="text-2xl font-medium tracking-tight">Account Detail: {accountId}</h1>
                     <p className="text-muted-foreground">Status: ACTIVE | Type: FARMER</p>
                 </div>
             </div>
@@ -48,11 +48,11 @@ export default function AccountDetailPage({ params }: { params: { id: string } }
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-gray-500">Risk Category</p>
-                                    <p className="text-green-600 font-bold">LOW</p>
+                                    <p className="text-green-600 font-medium">LOW</p>
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-gray-500">Strategic Value</p>
-                                    <p className="text-blue-600 font-bold">A</p>
+                                    <p className="text-blue-600 font-medium">A</p>
                                 </div>
                             </div>
                         </CardContent>

@@ -6,7 +6,7 @@ import { UserRole } from '@/lib/config/role-config'; // Assuming this is where U
 import { getVisibleNavigation, NavItem } from '@/lib/consulting/navigation-policy';
 import clsx from 'clsx';
 import { useState, useEffect } from 'react';
-import { ChevronDown, ChevronRight, Circle } from 'lucide-react';
+import { ChevronDown, ChevronRight, Circle, LayoutDashboard, Users, ClipboardList, Map, Calculator, AlertTriangle, CheckCircle2, TrendingUp, ShieldCheck, Database, Settings2, BookOpen, Package, Landmark } from 'lucide-react';
 
 // Domain Layer Mapping (Immutable definition for View Layer)
 const DOMAIN_LAYERS: Record<string, number> = {
@@ -18,6 +18,23 @@ const DOMAIN_LAYERS: Record<string, number> = {
     'production': 3, // PHYSICAL
     'knowledge': 4,  // CROSS-LAYER
     'settings': 5    // SYSTEM
+};
+
+const ICON_MAP: Record<string, any> = {
+    'crop_dashboard': LayoutDashboard,
+    'crm': Users,
+    'plans': ClipboardList,
+    'techmaps': Map,
+    'execution': TrendingUp,
+    'deviations': AlertTriangle,
+    'results': CheckCircle2,
+    'strategy': ShieldCheck,
+    'economy': Calculator,
+    'finance': Landmark,
+    'gr': ShieldCheck,
+    'production': Package,
+    'knowledge': BookOpen,
+    'settings': Settings2
 };
 
 interface SidebarProps {
@@ -136,43 +153,38 @@ export function Sidebar({ role }: SidebarProps) {
 
                 <div
                     className={clsx(
-                        "flex items-center px-3 rounded-lg transition-colors duration-200 select-none group",
+                        "flex items-center px-3 rounded-xl transition-all duration-300 select-none group relative overflow-hidden",
                         item.disabled && "opacity-40 pointer-events-none grayscale",
 
                         // --- Primary Domain Zone (Crop Root) ---
                         isCoreRoot && "py-3 bg-slate-50/80 border-l-[3px] border-slate-400 mb-3",
 
-                        // --- Crop Inner Items (Rhythm Fix) ---
-                        // Reduced from py-2.5 to py-2 for better density
-                        isCropInner && "py-2",
+                        // --- Normal items ---
+                        !isCoreRoot && "py-2 mb-1",
 
-                        // --- Micro-Grouping ---
-                        // Reduced from mt-3 to mt-2 (30% less)
-                        isMicroGroupStart && "mt-2",
-
-                        // --- Standard Items ---
-                        // Reduced from py-2 to py-1.5
-                        !isCoreRoot && !isCropInner && "py-1.5 mb-0.5",
-
-                        // --- Active Domain Indicator ---
-                        !isCoreRoot && domainActive && "bg-stone-50/80",
-
-                        // --- System Layer De-emphasis ---
-                        isSystem && "mt-1",
-
-                        // --- Active Item State ---
+                        // --- Active Item State (Premium Glassmorphism) ---
                         active && !item.subItems
-                            ? "bg-black text-white shadow-sm"
+                            ? "bg-black text-white shadow-[0_4px_12px_rgba(0,0,0,0.12)] scale-[1.02]"
                             : isSystem
-                                ? "text-gray-400 hover:text-gray-700 hover:bg-gray-50/50" // Dimmed system items
-                                : isOverview
-                                    ? "text-gray-500 hover:text-gray-900 hover:bg-gray-50" // Overview weakened
-                                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50",
+                                ? "text-gray-400 hover:text-gray-700 hover:bg-gray-50/50"
+                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50/80 hover:translate-x-1",
 
-                        // Depth Indentation
                         depth > 0 && "ml-4"
                     )}
                 >
+                    {/* Icon Rendering */}
+                    {depth === 0 && (
+                        <div className={clsx(
+                            "mr-3 transition-transform duration-300 group-hover:scale-110",
+                            active ? "text-white" : "text-gray-400 group-hover:text-black"
+                        )}>
+                            {(() => {
+                                const Icon = ICON_MAP[item.id] || Circle;
+                                return <Icon size={18} strokeWidth={1.5} />;
+                            })()}
+                        </div>
+                    )}
+
                     {/* Link or Button depending on if it has children */}
                     {item.subItems ? (
                         <div
@@ -181,16 +193,11 @@ export function Sidebar({ role }: SidebarProps) {
                         >
                             <span className={clsx(
                                 "font-medium transition-colors leading-snug",
-                                // Headers styling
-                                depth === 0
-                                    ? (isCoreRoot ? "text-xs uppercase tracking-wider font-medium" : "text-xs uppercase tracking-wide font-medium")
-                                    : "text-sm",
-                                isCoreRoot ? "text-slate-900" : (domainActive ? "text-gray-900" : "text-gray-500 group-hover:text-gray-900"),
-                                titleSize(depth),
+                                depth === 0 ? "text-[13px] uppercase tracking-wider" : "text-sm",
+                                isCoreRoot ? "text-slate-900" : (active || domainActive ? "text-gray-900" : "text-gray-500 group-hover:text-gray-900")
                             )}>
                                 {item.label}
                             </span>
-                            {/* Chevron matches text color */}
                             {isExpanded
                                 ? <ChevronDown size={14} className="opacity-30 group-hover:opacity-100 transition-opacity" />
                                 : <ChevronRight size={14} className="opacity-30 group-hover:opacity-100 transition-opacity" />
@@ -198,9 +205,12 @@ export function Sidebar({ role }: SidebarProps) {
                         </div>
                     ) : (
                         <Link href={item.path} className="flex-1 flex items-center">
+                            {depth > 0 && (
+                                <Circle size={4} className={clsx("mr-2.5", active ? "fill-white" : "fill-gray-300")} />
+                            )}
                             <span className={clsx(
-                                "font-medium text-sm transition-colors leading-snug", // Changed to leading-snug
-                                active ? "text-white" : (isSystem ? "text-gray-400 group-hover:text-gray-700" : "")
+                                "font-medium text-sm transition-colors leading-snug",
+                                active ? "text-white" : (isSystem ? "text-gray-400 group-hover:text-gray-700" : "text-gray-600 group-hover:text-gray-900")
                             )}>
                                 {item.label}
                             </span>
