@@ -17,13 +17,13 @@
   - [x] Delegated Authority & Emergency Locks (I34/I41)
   - [x] Enhanced Audit Trail (LiabilityTag, ContractType)
 - **Backend Stability**: **VERIFIED ✅** (Server running on port 4000). Resolved ESM/CJS, types, and import issues.
-- **Level F: Institutional Oracle Standard & Architectures**: **VERIFIED ✅** (10/10 Formal Documentation Complete)
+- **Level F: Institutional Oracle Standard & Architectures**: **VERIFIED ✅** (10/10 Formal Documentation & Architecture Complete)
   - [x] All 12 Architectural, Engineering, Metric, and Execution specs formalized.
-  - [x] Cryptographic Integrity (Ed25519, HSM, Merkle DAG) & M-of-N Governance solidified.
+  - [x] **Phase 1 (Crypto Core)**: Cryptographic Integrity (Ed25519, HSM, Merkle DAG) & M-of-N Multisig (5-of-7).
   - [x] **Phase 4 (API Gateway)**: mTLS Firewall, Token Bucket Rate Limits, SLA/SLO Interceptor.
   - [x] **Phase 5 (Dispute Infra)**: Deterministic Replay API, CRL Bloom Filter, Smart Contract Anchoring, Node-Watcher.
   - [x] **Phase 6 (Simulations)**: E2E Hardcore attacks scenarios (BFT, Zip Bomb, Replay, Panic).
-- **Current Objective**: Подготовка к развертыванию пилота (Tier-1 Enterprise / Insurance), доработка HSM/M-of-N Governance.
+- **Current Objective**: Подготовка к развертыванию пилота (Tier-1 Enterprise / Insurance), настройка Production-инфраструктуры.
 
 ## Active Decisions
 - **Standardization**: Используем структуру документов с префиксами (00, 10, 20...).

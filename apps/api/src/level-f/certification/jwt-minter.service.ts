@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { RatingResult } from './rating-engine.service';
 import { SnapshotPayload } from '../snapshot/snapshot.service';
 import { randomUUID } from 'crypto';
+import { HsmService } from '../crypto/hsm.service';
 
 export interface LevelFCertificatePayload {
     jti: string;              // Уникальный ID Сертификата (защита от replay/idempotency)
@@ -20,18 +20,18 @@ export interface LevelFCertificatePayload {
 export class JwtMinterService {
     private readonly logger = new Logger(JwtMinterService.name);
 
-    // В реальности Inject JwtService, настроенный на Ed25519 ключи
-    constructor(private readonly jwtService: JwtService) { }
+    constructor(private readonly hsmService: HsmService) { }
 
     /**
      * Выпуск финального Institutional-Grade JWT
+     * 100% анклавное подписание с использованием HSM
      */
     public async mintCertificate(
         rating: RatingResult,
         snapshot: SnapshotPayload,
         snapshotHash: string,
     ): Promise<string> {
-        this.logger.log(`Minting Ed25519 JWT Certificate for Company ${snapshot.companyId}`);
+        this.logger.log(`Minting Ed25519 JWT Certificate for Company ${snapshot.companyId} via Vault Enclave`);
 
         const payload: LevelFCertificatePayload = {
             jti: randomUUID(),
@@ -46,15 +46,19 @@ export class JwtMinterService {
             schemaVersion: snapshot.schemaVersion,
         };
 
-        // Подписание - В реальной системе используется асимметричная криптография (Ed25519)
-        // и, возможно, взаимодействие с HSM.
-        // Пока возвращаем заглушку signed token, предполагая что JwtService настроен:
-        // const signedToken = await this.jwtService.signAsync(payload);
+        // Header для JWT EdDSA
+        const header = { alg: 'EdDSA', typ: 'JWT' };
 
-        // Stub implementation for test environments where JwtModule might not be provided with keys
-        const stubToken = `eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.${Buffer.from(JSON.stringify(payload)).toString('base64')}.stub_signature_ed25519`;
+        const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
+        const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+        const dataToSign = `${encodedHeader}.${encodedPayload}`;
 
-        this.logger.log(`Certificate Minted successfully: ${payload.jti}`);
-        return stubToken; // В реальности return signedToken;
+        // Отправка в HSM (Анклавное подписание, RAM не видит Private Key)
+        const signature = await this.hsmService.signEd25519(dataToSign);
+
+        const signedToken = `${dataToSign}.${signature}`;
+
+        this.logger.log(`Certificate Minted via HSM: ${payload.jti}`);
+        return signedToken;
     }
 }

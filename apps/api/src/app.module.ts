@@ -48,6 +48,7 @@ import { join } from "path";
 import { OutboxModule } from './shared/outbox/outbox.module';
 import { InvariantMetricsModule } from "./shared/invariants/invariant-metrics.module";
 import { GatewayModule } from "./level-f/gateway/gateway.module";
+import { CryptoModule } from "./level-f/crypto/crypto.module";
 
 @Module({
   imports: [
@@ -77,6 +78,7 @@ import { GatewayModule } from "./level-f/gateway/gateway.module";
       ttl: 60000, // 1 minute
       limit: 1000,  // Increased for load testing
     }]),
+    CryptoModule,
     GatewayModule,
     RedisModule,
     PrismaModule,

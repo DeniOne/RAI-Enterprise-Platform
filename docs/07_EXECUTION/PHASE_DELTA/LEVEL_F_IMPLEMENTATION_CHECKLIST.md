@@ -14,8 +14,8 @@ last_updated: 2026-02-20
 ---
 
 ## Фаза 1: Криптографическое Ядро (Cryptographic Core)
-- [ ] **HSM Integration:** Интегрировать HashiCorp Vault / AWS KMS для генерации `Ed25519` Intermediate-ключей без извлечения в RAM (Анклавное подписание).
-- [ ] **M-of-N Governance:** Разработать сервис мультиподписи (Multisig). Требование `5-of-7` для обновления корневых ключей / версий формул.
+- [x] **HSM Integration:** Интегрировать HashiCorp Vault / AWS KMS для генерации `Ed25519` Intermediate-ключей без извлечения в RAM (Анклавное подписание).
+- [x] **M-of-N Governance:** Разработать сервис мультиподписи (Multisig). Требование `5-of-7` для обновления корневых ключей / версий формул.
 - [x] **Idempotency & Replay Cache:** Поднять Redis-кластер. Написать middleware для отлова дубликатов `jti` (JWT ID) и заголовков `Idempotency-Key` с отбивкой (latency $<10$ms).
 - [x] **Canonical JSON Builder:** Написать библиотеку сериализации RFC 8785 (пред-хэширование). Написать unit-тесты на падение при смене порядка ключей.
 
