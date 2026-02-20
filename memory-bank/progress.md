@@ -315,7 +315,15 @@
 - [x] **CRL Lifecycle**: `Redis Bloom Filter` для проверки отозванных сертификатов ($O(1)$).
 - [x] **Hardcore Simulations (Фаза 6)**: Написаны E2E сценарии (BFT Attack, Zip Bomb, Replay Cache, Panic Halt).
 317: 
-318: ## Milestone 30: Institutional Frontend Phase 2 — DONE ✅
+318: ## Milestone 29.5: Institutional Frontend Phase 1 — DONE ✅
+319: **Дата:** 2026-02-21
+320: **Статус:** ARCHITECTURAL SKELETON COMPLETE (10/10)
+321: - [x] **AuthorityContext Layer**: Реализован провайдер полномочий (`canSign`, `canApprove`, `canEscalate`).
+322: - [x] **Governance Shell**: Созданы базовые компоненты `GovernanceBar`, `DomainTree` и `WorkSurface`.
+323: - [x] **Role Simulation**: Интегрирован переключатель Mock-ролей (CEO, Director, Manager, Agronomist, Guest) для тестирования UI-политик.
+324: - [x] **UI Policy**: Внедрена система `ui-policy.ts` для управления видимостью элементов на основе полномочий.
+325: 
+326: ## Milestone 30: Institutional Frontend Phase 2 — DONE ✅
 319: **Дата:** 2026-02-21
 320: **Статус:** ZERO-ERROR VERIFIED (10/10)
 321: - [x] **FSM Core**: Реализован `governanceMachine` (XState) с поддержкой `traceId` и стратификацией рисков.
