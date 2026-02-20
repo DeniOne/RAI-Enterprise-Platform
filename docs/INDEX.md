@@ -22,6 +22,7 @@ last_updated: 2026-02-19
 - [VISION_SCOPE.md](file:///f:/RAI_EP/docs/00_STRATEGY/VISION_SCOPE.md)
 - [ROADMAP_PHASES.md](file:///f:/RAI_EP/docs/00_STRATEGY/ROADMAP_PHASES.md)
 - [LEVEL_F_STRATEGY.md](file:///f:/RAI_EP/docs/00_STRATEGY/LEVEL%20F%20—%20INDUSTRY%20COGNITIVE%20STANDARD.md)
+- [EVOLUTION_STATE_REPORT.md](file:///f:/RAI_EP/docs/00_STRATEGY/EVOLUTION_STATE_REPORT.md)
 
 ### 01 — [АРХИТЕКТУРА (01_ARCHITECTURE/)](file:///f:/RAI_EP/docs/01_ARCHITECTURE/)
 Технический фундамент: Принципы, HLD, ADR и Основные концепции.
@@ -57,7 +58,16 @@ Runtime: Runbooks, Инциденты и Мониторинг.
 
 ### 07 — [ИСПОЛНЕНИЕ (07_EXECUTION/)](file:///f:/RAI_EP/docs/07_EXECUTION/)
 Управление проектом: Фазы, Спринты и WBS.
+- [FULL_PROJECT_WBS.md](file:///f:/RAI_EP/docs/07_EXECUTION/FULL_PROJECT_WBS.md)
+- [TECHNICAL_DEVELOPMENT_PLAN.md](file:///f:/RAI_EP/docs/07_EXECUTION/TECHNICAL_DEVELOPMENT_PLAN.md)
 - [DELTA_ROADMAP.md](file:///f:/RAI_EP/docs/07_EXECUTION/PHASE_DELTA/DELTA_ROADMAP.md)
+
+### 08 — [ТЕСТИРОВАНИЕ (08_TESTING/)](file:///f:/RAI_EP/docs/08_TESTING/)
+QA Инфраструктура: Спецификации тестов, матрицы покрытия, Property-Based тесты.
+- [PROPERTY_BASED_TEST_SPEC.md](file:///f:/RAI_EP/docs/08_TESTING/PROPERTY_BASED_TEST_SPEC.md)
+
+### 09 — [АРХИВ (09_ARCHIVE/)](file:///f:/RAI_EP/docs/09_ARCHIVE/)
+Исторические документы, устаревшие концепции, старые ADR.
 
 ---
 

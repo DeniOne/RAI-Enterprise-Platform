@@ -40,7 +40,6 @@ export function getEntityTransitions(
     context: DomainUiContext
 ): UiPermissionResult {
     const isAdmin = role === 'ADMIN' || role === 'SYSTEM_ADMIN' || role === 'FOUNDER';
-    const isCEO = role === 'CEO' || isAdmin;
 
     const result: UiPermissionResult = {
         canEdit: false,
@@ -64,7 +63,7 @@ export function getEntityTransitions(
     }
 }
 
-function getHarvestPlanPermissions(
+export function getHarvestPlanPermissions(
     status: HarvestPlanStatus,
     role: UserRole,
     context: DomainUiContext
@@ -127,10 +126,10 @@ function getHarvestPlanPermissions(
     return result;
 }
 
-function getTechMapPermissions(
+export function getTechMapPermissions(
     status: TechMapStatus,
-    role: UserRole,
-    context: DomainUiContext
+    _role: UserRole,
+    _context: DomainUiContext
 ): UiPermissionResult {
     const result: UiPermissionResult = {
         canEdit: false,
@@ -162,10 +161,10 @@ function getTechMapPermissions(
     return result;
 }
 
-function getBudgetPlanPermissions(
+export function getBudgetPlanPermissions(
     status: BudgetPlanStatus,
     role: UserRole,
-    context: DomainUiContext
+    _context: DomainUiContext
 ): UiPermissionResult {
     const isAdmin = role === 'ADMIN' || role === 'SYSTEM_ADMIN' || role === 'FOUNDER';
     const isFin = role === 'DIRECTOR_FINANCE' || isAdmin;

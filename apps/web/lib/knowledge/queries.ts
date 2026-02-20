@@ -7,7 +7,7 @@ export interface KnowledgeNode {
     status: NodeStatus;
     owners?: string[];
     source_file: string;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 export interface KnowledgeLink {
@@ -21,7 +21,7 @@ export interface KnowledgeLink {
 export interface KnowledgeGraph {
     nodes: KnowledgeNode[];
     links: KnowledgeLink[];
-    metadata: any;
+    metadata: Record<string, unknown>;
 }
 
 export const semanticQueries = {

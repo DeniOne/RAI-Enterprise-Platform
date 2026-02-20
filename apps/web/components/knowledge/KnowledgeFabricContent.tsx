@@ -2,9 +2,9 @@
 import React, { useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { Search, AlertTriangle, ShieldCheck, Zap, Link, FileText, X, LayoutGrid, Share2 } from 'lucide-react';
-import { KnowledgeGraph, KnowledgeNode, semanticQueries } from '../../lib/knowledge/queries.ts';
+import { KnowledgeGraph, KnowledgeNode, semanticQueries } from '../../lib/knowledge/queries';
 
-const GraphView = dynamic(() => import('./GraphView.tsx'), { ssr: false });
+const GraphView = dynamic(() => import('./GraphView'), { ssr: false });
 
 interface KnowledgePageProps {
     graph: KnowledgeGraph;
@@ -177,7 +177,7 @@ export default function KnowledgeFabricContent({ graph }: KnowledgePageProps) {
                                                 <div className={`h-1 w-1 rounded-full ${node.status === 'approved' ? 'bg-emerald-500' : 'bg-amber-400'}`} />
                                                 <span className="text-[10px] font-medium text-[#717182] capitalize">
                                                     {node.status === 'approved' ? 'Утверждено' :
-                                                        node.status === 'pending' ? 'В ожидании' :
+                                                        node.status === 'review' ? 'В ожидании' :
                                                             node.status}
                                                 </span>
                                             </div>
@@ -293,7 +293,7 @@ export default function KnowledgeFabricContent({ graph }: KnowledgePageProps) {
                                     <div className={`h-2 w-2 rounded-full ${selectedNode.status === 'approved' ? 'bg-emerald-500' : 'bg-amber-400'}`} />
                                     <span className="capitalize">
                                         {selectedNode.status === 'approved' ? 'Утверждено' :
-                                            selectedNode.status === 'pending' ? 'В ожидании' :
+                                            selectedNode.status === 'review' ? 'В ожидании' :
                                                 selectedNode.status}
                                     </span>
                                 </div>

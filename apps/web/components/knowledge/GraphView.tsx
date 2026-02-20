@@ -3,7 +3,7 @@
 import React, { useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false });
-import { KnowledgeGraph, KnowledgeNode } from '../../lib/knowledge/queries.ts';
+import { KnowledgeGraph, KnowledgeNode } from '../../lib/knowledge/queries';
 
 interface GraphViewProps {
     graph: KnowledgeGraph;

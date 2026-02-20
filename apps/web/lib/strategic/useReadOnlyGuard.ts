@@ -14,6 +14,7 @@ export function useReadOnlyGuard() {
 
         if (!isStrategic) return;
 
+        /*
         const blockEvent = (e: Event) => {
             // Разрешаем только навигационные клики и логаут
             const target = e.target as HTMLElement;
@@ -25,6 +26,7 @@ export function useReadOnlyGuard() {
                 // console.warn('[RAI_EP] Architectural Violation: Mutation attempt blocked in Strategic Projection.');
             }
         };
+        */
 
         // Слушаем формы на всякий случай
         const blockSubmit = (e: SubmitEvent) => {

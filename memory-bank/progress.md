@@ -314,3 +314,12 @@
 - [x] **Fallback Node-Watcher**: Автоматическое переключение RPC (L1 -> Consortium) при даунтайме.
 - [x] **CRL Lifecycle**: `Redis Bloom Filter` для проверки отозванных сертификатов ($O(1)$).
 - [x] **Hardcore Simulations (Фаза 6)**: Написаны E2E сценарии (BFT Attack, Zip Bomb, Replay Cache, Panic Halt).
+317: 
+318: ## Milestone 30: Institutional Frontend Phase 2 — DONE ✅
+319: **Дата:** 2026-02-21
+320: **Статус:** ZERO-ERROR VERIFIED (10/10)
+321: - [x] **FSM Core**: Реализован `governanceMachine` (XState) с поддержкой `traceId` и стратификацией рисков.
+322: - [x] **Authority Binding**: Хук `useGovernanceAction` потребляет `AuthorityContext` для блокировки несанкционированных действий.
+323: - [x] **UI Persistence**: Восстановлен Premium UI (Geist Fonts), исправлены 404 на статике через зачистку кэша `.next`.
+324: - [x] **Database Sync**: Исправлено отсутствие `companyId` в `AuditLog` через нативную миграцию.
+325: - [x] **Zero-Error Build**: Устранены все ошибки типов (`tsc`) в компонентах Knowledge и UI-Policy.

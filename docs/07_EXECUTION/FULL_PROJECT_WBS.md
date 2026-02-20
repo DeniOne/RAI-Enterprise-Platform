@@ -174,7 +174,8 @@ aligned_with: [principle-vision]
 ## 🛰️ Phase Gamma: Intelligence & Ecosystem (2026)
 *Цель: Когнитивная Автономность.*
 
-### 🧠 7. Cognitive Brain (Unified Memory Full)
+### 🧠 7. Level B: Generative Architect ✅
+- [x] **[AI]** **Generative Optimization**: Формальная верификация, Agronomic Strategy Library, FSM Alignment, Traceability Matrix.
 - [x] **[AI]** **Episodic Retrieval (Shadow v1):** базовый retrieval-сервис + unit tests.
 - [x] **[AI]** **Shadow Advisory (v1):** теневой ранкер `ALLOW/REVIEW/BLOCK` + audit trail.
 - [x] **[AI]** **Shadow Baseline Metrics:** coverage/precision proxy и confidence baseline.
@@ -192,7 +193,13 @@ aligned_with: [principle-vision]
   - [x] Formal go/no-go record prepared (`docs/04-ENGINEERING/ADVISORY_GO_NO_GO_DECISION_RECORD.md`)
   - [x] Security/governance gate completed (`docs/04-ENGINEERING/ADVISORY_SECURITY_GATE_REPORT_SPRINT6.md`)
 
-### 🏢 10. Adaptive Self-Learning Domain (Level D) ✅
+### 🛡️ 8. Level C: Contradiction-Resilient Intelligence ✅
+- [x] **[Backend]** **FSM Governance Guard**: Инвариантное блокирование противоречий, детерминизм, hash-after-rounding.
+- [x] **[Backend]** **Conflict Logic**: ConflictExplainabilityBuilder, E2E Override Pipeline.
+- [x] **[Backend]** **Regret Metrics**: Формализация Bounded Regret, Risk Calibration Score (RCS).
+- [x] **[Backend]** **Industrial Guardrails**: Хардкорные замки для защиты бизнес-логики.
+
+### 🤖 9. Level D: Adaptive Self-Learning Domain ✅
 - [x] **[Backend]** **Hardening & Pilot Readiness (Phase C):** 
   - [x] Атомарные Redis-счетчики (Global Concurrency Cap).
   - [x] Статистическая защита Canary (Sample Size Gate >= 100).
@@ -201,7 +208,7 @@ aligned_with: [principle-vision]
 - [ ] **[AI]** **Knowledge Graph**: Построение причинно-следственных связей.
 - [ ] **[AI]** **Planner Agent**: Авто-стратегия на сезон.
 
-### 🏢 9. Consulting Expansion (2026)
+### 🏢 10. Consulting Expansion (2026)
 - [x] **Track 1: TechMap Integration (Production Gate)** ✅
   - [x] [DB] Enforced PostgreSQL Partial Unique Index for ACTIVE TechMaps.
   - [x] [DB] Resolved complex migration dependencies (2BP01 errors).
@@ -209,6 +216,17 @@ aligned_with: [principle-vision]
 - [ ] **Track 2: Budget Vertical Slice (Financial Control)**
 - [ ] **Track 3: Advisory Engine (Analytics)**
 
-### 🌐 8. Ecosystem
+### 🌱 11. Level E: Regenerative Optimization ✅
+- [x] **[Backend]** **Contract Governance**: Типы контрактов (`SEASONAL`, `MANAGED_REGENERATIVE`).
+- [x] **[Backend]** **Regeneration Guard**: Запрет структурных просадок (P05 Tail Risk).
+- [x] **[Backend]** **Liability Matrix Tracking**: Отражение ответственности (AI vs Human) в Audit.
+
+### 🏛️ 12. Level F: Institutional Cognitive Standard ✅
+- [x] **[Backend]** **Cryptographic Core**: Пул HSM, 5-of-7 Governance, Replay Caching, Snapshot Hashing (RFC 8785).
+- [x] **[Backend]** **Certification Data-Pipeline**: Merkle DAG сшивание, Temporal Consistency.
+- [x] **[Backend]** **Certification Engine**: Soft-float Rated grading, Assertion Fences, Ed25519 JWT Minter.
+- [x] **[Infra]** **Gateway & Dispute**: mTLS Firewall, L1 Anchoring, Node-Watchers, Replay API, Bloom Filter CRL.
+
+### 🌐 13. Ecosystem
 - [ ] **[Platform]** Marketplace API (Поставщики).
 - [ ] **[Platform]** Financial Scoring for Banks.

@@ -719,3 +719,33 @@ Orchestrator = Brain (канон RAI_EP).
 ### Связанные документы
 - `docs/07_EXECUTION/PHASE_DELTA/LEVEL_F_HANDOFF.md`
 - `docs/07_EXECUTION/PHASE_DELTA/LEVEL_F_IMPLEMENTATION_CHECKLIST.md`
+## INSTITUTIONAL-ROADMAP-REF-001
+
+**Дата:** 2026-02-21
+**Автор:** TECHLEAD (AI)
+**Статус:** ACCEPTED
+**Приоритет:** HIGH
+**Target:** Global Architecture Documentation
+
+### Решение
+Глубокая модернизация и профессионализация `ARCHITECTURAL ROADMAP (Institutional Build Plan).md` до стандарта Level F Institutional Grade.
+
+### Scope
+- Документация дорожной карты исполнения.
+- Формализация Definition of Done для всех 7 фаз.
+- Интеграция Governance Core инвариантов в визуальные и текстовые модели.
+
+### Технические ограничения
+1. **Language Policy:** Весь текст на русском языке.
+2. **Standard Alignment:** Соответствие Level F Formal Documentation.
+3. **Roles:** Разделение уровней Build Plan (Execution) и Architecture (Design).
+
+### Definition of Done
+- Документ обновлен до версии 1.1.0.
+- Добавлены DoD чек-листы для каждой фазы с учетом security и integrity.
+- Визуализация Mermaid отражает "Governance Core First".
+- Все ссылки на инварианты I29-I34 корректны.
+
+### Связанные документы
+- `docs/01_ARCHITECTURE/PRINCIPLES/CANON.md`
+- `docs/07_EXECUTION/ARCHITECTURAL ROADMAP (Institutional Build Plan).md`

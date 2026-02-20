@@ -25,7 +25,7 @@ apiClient.interceptors.response.use(
 export const api = {
     tasks: {
         list: () => apiClient.get('/tasks'),
-        create: (data: any) => apiClient.post('/tasks', data),
+        create: (data: unknown) => apiClient.post('/tasks', data),
     },
     fields: {
         list: () => apiClient.get('/fields'),
@@ -35,10 +35,10 @@ export const api = {
         execution: {
             list: () => apiClient.get('/consulting/execution/operations'),
             start: (operationId: string) => apiClient.post(`/consulting/execution/${operationId}/start`),
-            complete: (data: any) => apiClient.post('/consulting/execution/complete', data),
+            complete: (data: unknown) => apiClient.post('/consulting/execution/complete', data),
         },
         yield: {
-            save: (data: any) => apiClient.post('/consulting/yield', data),
+            save: (data: unknown) => apiClient.post('/consulting/yield', data),
             getByPlan: (planId: string) => apiClient.get(`/consulting/yield/plan/${planId}`),
         },
         kpi: {

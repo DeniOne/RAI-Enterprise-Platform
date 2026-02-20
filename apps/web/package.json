@@ -20,7 +20,13 @@
         "react-force-graph-2d": "^1.25.0",
         "lucide-react": "^0.454.0",
         "clsx": "^2.1.1",
-        "tailwind-merge": "^2.5.4"
+        "tailwind-merge": "^2.5.4",
+        "zustand": "^4.5.0",
+        "xstate": "^5.19.0",
+        "@xstate/react": "^4.1.0",
+        "@tanstack/react-query": "^5.50.0",
+        "mitt": "^3.0.1",
+        "next-themes": "^0.3.0"
     },
     "devDependencies": {
         "@types/node": "^20.14.0",
