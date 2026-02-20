@@ -19,8 +19,11 @@
 - **Backend Stability**: **VERIFIED ✅** (Server running on port 4000). Resolved ESM/CJS, types, and import issues.
 - **Level F: Institutional Oracle Standard & Architectures**: **VERIFIED ✅** (10/10 Formal Documentation Complete)
   - [x] All 12 Architectural, Engineering, Metric, and Execution specs formalized.
-  - [x] Cryptographic Integrity (Ed25519, HSM, Merkle DAG) & M-of-N Governance solidified. 
-- **Current Objective**: Level F Implementation Checklist Execution & Testing.
+  - [x] Cryptographic Integrity (Ed25519, HSM, Merkle DAG) & M-of-N Governance solidified.
+  - [x] **Phase 4 (API Gateway)**: mTLS Firewall, Token Bucket Rate Limits, SLA/SLO Interceptor.
+  - [x] **Phase 5 (Dispute Infra)**: Deterministic Replay API, CRL Bloom Filter, Smart Contract Anchoring, Node-Watcher.
+  - [x] **Phase 6 (Simulations)**: E2E Hardcore attacks scenarios (BFT, Zip Bomb, Replay, Panic).
+- **Current Objective**: Подготовка к развертыванию пилота (Tier-1 Enterprise / Insurance), доработка HSM/M-of-N Governance.
 
 ## Active Decisions
 - **Standardization**: Используем структуру документов с префиксами (00, 10, 20...).

@@ -1574,6 +1574,17 @@ exports.Prisma.ApprovalRequestScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.LevelFCertAuditScalarFieldEnum = {
+  id: 'id',
+  timestamp: 'timestamp',
+  initiatorProcess: 'initiatorProcess',
+  snapshotHash: 'snapshotHash',
+  kidUsed: 'kidUsed',
+  quorumReceipt: 'quorumReceipt',
+  status: 'status',
+  companyId: 'companyId'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -2226,6 +2237,12 @@ exports.OverrideCategory = exports.$Enums.OverrideCategory = {
   EXTREME_WEATHER: 'EXTREME_WEATHER'
 };
 
+exports.CertAuditStatus = exports.$Enums.CertAuditStatus = {
+  SIGNATURE_INTENT: 'SIGNATURE_INTENT',
+  SIGNATURE_COMPLETED: 'SIGNATURE_COMPLETED',
+  ERROR: 'ERROR'
+};
+
 exports.Prisma.ModelName = {
   Company: 'Company',
   Account: 'Account',
@@ -2339,7 +2356,8 @@ exports.Prisma.ModelName = {
   BiodiversityMetric: 'BiodiversityMetric',
   GovernanceLock: 'GovernanceLock',
   OverrideRequest: 'OverrideRequest',
-  ApprovalRequest: 'ApprovalRequest'
+  ApprovalRequest: 'ApprovalRequest',
+  LevelFCertAudit: 'LevelFCertAudit'
 };
 
 /**

@@ -85,8 +85,31 @@
 - [x] **Total: 50 тестов PASS** <!-- id: 11.10 -->
 
 ## Level F: Industry Cognitive Standard (Trust Infrastructure) 🚀 <!-- id: 13 -->
-- [ ] **Certification Engine**: Eligibility gate for Managed Mode <!-- id: 13.1 -->
-- [ ] **Farm Rating System (FRS)**: Reproducible longitudinal scoring <!-- id: 13.2 -->
-- [ ] **Insurance API**: P05 exposure profile for underwriters <!-- id: 13.3 -->
-- [ ] **Financial Integration**: Carbon credits & Green financing flags <!-- id: 13.4 -->
-- [ ] **Cross-Level Invariants (F1-F8)**: Immutable history & Read-Only constraints <!-- id: 13.5 -->
+- [x] **01_ARCHITECTURE** <!-- id: 13.1 -->
+  - [x] `LEVEL_F_CONCEPT.md` (Hardened v2)
+  - [x] `LEVEL_F_COMPOSITION.md`
+  - [x] `LEVEL_F_INVARIANTS.md` (Hardened v2)
+  - [x] `LEVEL_F_DATA_MODEL.md` (Hardened v2)
+  - [x] `LEVEL_F_TRUST_MODEL.md`
+- [x] **02_DOMAINS** <!-- id: 13.2 -->
+  - [x] `F_CERTIFICATION_MODEL.md` (Hardened v2)
+  - [x] `F_FARM_RATING_MODEL.md` (Hardened v2)
+  - [x] `F_INSURANCE_INTERFACE.md`
+  - [x] `F_FINANCIAL_SIGNAL_MODEL.md`
+- [x] **03_PRODUCT** <!-- id: 13.3 -->
+  - [x] `LEVEL_F_PRODUCT_OVERVIEW.md`
+  - [x] `LEVEL_F_API_SPEC.md`
+  - [x] `LEVEL_F_EXPLAINABILITY.md`
+- [x] **04_ENGINEERING** <!-- id: 13.4 -->
+  - [x] `F_SNAPSHOTTER_ARCH.md`
+  - [x] `F_RATING_ENGINE_ARCH.md`
+  - [x] `F_CERT_ENGINE_ARCH.md`
+  - [x] `F_INSURANCE_API_ARCH.md`
+  - [x] `F_SECURITY_MODEL.md` (Hardened v2)
+- [x] **06_METRICS** <!-- id: 13.5 -->
+  - [x] `F_SUCCESS_METRICS.md`
+  - [x] `F_RISK_MONITORING.md`
+- [x] **07_EXECUTION** <!-- id: 13.6 -->
+  - [x] `DELTA_ROADMAP.md`
+  - [x] `DELTA_ROLLOUT_PLAN.md`
+  - [x] `DELTA_GOVERNANCE_APPROVAL.md`

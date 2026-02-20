@@ -667,3 +667,55 @@ Orchestrator = Brain (канон RAI_EP).
 - `LEVEL_F_SECURITY_MODEL.md`
 - `F_RATING_ENGINE_ARCH.md`
 - `LEVEL_F_IMPLEMENTATION_CHECKLIST.md`
+
+---
+
+## LEVEL-F-EXEC-001
+
+**Дата:** 2026-02-20
+**Автор:** TECHLEAD (AI)
+**Статус:** ACCEPTED
+**Приоритет:** CRITICAL
+**Target:** Level F (Phase 4 & 5)
+
+### Решение
+Реализация Внешнего Шлюза (Institutional API Gateway) и Инфраструктуры Споров (Dispute & Immutable Audit) для стандарта Level F.
+
+### Scope
+- **Phase:** Level F (Execution - Phase 4, Phase 5, Phase 6)
+- **Компоненты (API Gateway):**
+  - `mTLS Firewall` (Tier-2/Tier-3 client certificate validation)
+  - `TokenBucketRateLimitingGuard` (1000 req/min/Tenant, 10000 req/min/Subnet)
+  - `SLA/SLO contract layer`
+- **Компоненты (Dispute / Anchoring):**
+  - `Deterministic Replay API`
+  - `Smart Contract Anchoring` (Solidity/Testnet)
+  - `Fallback Anchor Logic` (Node-Watcher)
+  - `CRL Lifecycle (Revocations)`
+- **Симуляции (Hardcore Test Specs):**
+  - BFT Attack Test
+  - Zip Bomb Test
+  - Replay Cache Test
+  - Panic Halt Test
+
+### Технические ограничения
+1. **Zero-Trust Network:** mTLS Firewall должен хард-реджектить любые пакеты без x.509.
+2. **Infrastructure Isolation:** Домен не зависит от БД/Redis напрямую (Repository pattern).
+3. **Multi-tenancy:** Все данные строго изолированы по `companyId` из JWT. 
+4. **CRM-Bloat block:** Не добавлять в шлюз логику управления пользователями (только чистый auth/rate-limiting/security).
+5. **Security Canon:** Никаких секретов в коде, логика работы с HSM анклавами.
+
+### Definition of Done
+- [ ] Все пункты из Фазы 4 (Внешний Шлюз) реализованы и покрыты Security-тестами.
+- [ ] Все пункты из Фазы 5 (Инфраструктура Споров) реализованы.
+- [ ] Проведены Хардкорные Симуляции из Фазы 6 (Zip bomb, Replay, BFT).
+- [ ] Успешное выполнение локальных тестов.
+
+### Rollback Conditions
+- Выявление дыр в mTLS Firewall (доступ возможен без сертификата).
+- Падение производительности из-за Bottleneck в Token Bucket Guard.
+- Пробитие Security Canon.
+
+### Связанные документы
+- `docs/07_EXECUTION/PHASE_DELTA/LEVEL_F_HANDOFF.md`
+- `docs/07_EXECUTION/PHASE_DELTA/LEVEL_F_IMPLEMENTATION_CHECKLIST.md`

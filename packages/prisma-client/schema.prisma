@@ -115,6 +115,9 @@ model Company {
   overrideRequests       OverrideRequest[]
   auditLogs              AuditLog[]
 
+  // Level F: Institutional Oracle Standard
+  levelFCertAudits       LevelFCertAudit[]
+
   @@map("companies")
 }
 
@@ -3530,4 +3533,29 @@ enum OverrideCategory {
   FINANCIAL_PRESSURE
   MODEL_DISTRUST
   EXTREME_WEATHER
+}
+
+// --- Level F: Institutional Oracle Standard ---
+
+model LevelFCertAudit {
+  id               String   @id @default(cuid())
+  timestamp        DateTime @default(now())
+  initiatorProcess String
+  snapshotHash     String   // Хэш снимка данных Level E
+  kidUsed          String   // ID ключа HSM
+  quorumReceipt    String?  // Ссылка на Multisig-tx (если Governance)
+  status           CertAuditStatus @default(SIGNATURE_INTENT)
+  
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, snapshotHash])
+  @@index([timestamp])
+  @@map("level_f_cert_audit")
+}
+
+enum CertAuditStatus {
+  SIGNATURE_INTENT
+  SIGNATURE_COMPLETED
+  ERROR
 }

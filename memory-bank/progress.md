@@ -300,3 +300,15 @@
 - [x] **Import Fixes**: Устранены `MODULE_NOT_FOUND` ошибки в модуле `rapeseed`, вызванные регистрозависимыми импортами.
 - [x] **Audit Service Compliance**: Все вызовы `auditService.log` обновлены с обязательным `companyId` для изоляции тенантов.
 - [x] **Server Status**: Бэкенд успешно запускается на порту 4000.
+
+## Milestone 29: Level F — Institutional API Gateway & Dispute (Фаза 4, 5, 6) ✅
+**Дата:** 2026-02-20
+**Статус:** INSTITUTIONAL READY (10/10)
+- [x] **mTLS Firewall**: NGINX + NestJS `MtlsGuard` для Tier-2/Tier-3 путей.
+- [x] **Rate-Limiting (Token Bucket)**: $1000$ req/min (Tenant), $10000$ req/min (Subnet /24) через Redis.
+- [x] **SLA/SLO Layer**: `SloInterceptor` для отслеживания задержек (< 250ms).
+- [x] **Dispute Resolution**: `Deterministic Replay API` для аудита.
+- [x] **Smart Contract Anchoring**: `SnapshotAnchor.sol` для привязки Merkle Roots в L1, `AnchorService`.
+- [x] **Fallback Node-Watcher**: Автоматическое переключение RPC (L1 -> Consortium) при даунтайме.
+- [x] **CRL Lifecycle**: `Redis Bloom Filter` для проверки отозванных сертификатов ($O(1)$).
+- [x] **Hardcore Simulations (Фаза 6)**: Написаны E2E сценарии (BFT Attack, Zip Bomb, Replay Cache, Panic Halt).
