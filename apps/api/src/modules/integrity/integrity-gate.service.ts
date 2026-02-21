@@ -22,6 +22,9 @@ import {
 } from "@rai/prisma-client";
 import { ScienceCalculator, TrustEngine, TrustInput, VelocityCalculator } from "@rai/regenerative-engine";
 
+import { QuorumService } from "./quorum.service";
+import { QuorumStatus } from "@rai/prisma-client";
+
 @Injectable()
 export class IntegrityGateService {
     private readonly logger = new Logger(IntegrityGateService.name);
@@ -31,6 +34,7 @@ export class IntegrityGateService {
         private readonly deviationService: DeviationService,
         private readonly consultingService: ConsultingService,
         private readonly registryAgent: RegistryAgentService,
+        private readonly quorum: QuorumService,
         @InjectQueue('drift-feedback-loop') private readonly driftQueue: Queue,
     ) { }
 
@@ -309,6 +313,28 @@ export class IntegrityGateService {
 
         // 0. Инвариант I41: Regeneration Guard
         const regenStatus = await this.checkRegenerationInvariant(map.fieldId!, companyId);
+
+        // 0.1 PHASE 2.5: Escalation/Quorum Guard
+        // Проверяем наличие заблокированных рисков R3/R4
+        const activeRisks = await this.prisma.cmrRisk.findMany({
+            where: {
+                companyId,
+                seasonId: map.seasonId,
+                status: 'OPEN',
+                probability: { in: [RiskLevel.HIGH, RiskLevel.CRITICAL] }
+            }
+        });
+
+        for (const risk of activeRisks) {
+            const isBlocked = await this.quorum.isBlockedByQuorum(risk.id);
+            if (isBlocked) {
+                issues.push({
+                    type: 'QUORUM_REQUIRED',
+                    message: `[GOVERNANCE-BLOCK] Операция заблокирована до получения кворума по риску: ${risk.description}`,
+                    severity: 'ERROR'
+                });
+            }
+        }
         if (regenStatus.status === 'DEGRADING') {
             issues.push({
                 type: 'I41_REGENERATION_VIOLATION',

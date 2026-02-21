@@ -12,6 +12,8 @@ import { DriftFeedbackLoopProcessor } from "./drift-feedback-loop.processor";
 import { BaselineService } from "./baseline.service";
 import { GovernanceService } from "./governance.service";
 import { AuditService } from "./audit.service";
+import { GenerativeEngineModule } from "../generative-engine/generative-engine.module";
+import { QuorumService } from "./quorum.service";
 
 @Module({
     imports: [
@@ -19,12 +21,13 @@ import { AuditService } from "./audit.service";
         CmrModule,
         TelegramModule,
         ConsultingModule,
+        GenerativeEngineModule,
         ScheduleModule.forRoot(),
         BullModule.registerQueue({
             name: 'drift-feedback-loop',
         })
     ],
-    providers: [IntegrityGateService, RegistryAgentService, DriftFeedbackLoopProcessor, BaselineService, GovernanceService, AuditService],
-    exports: [IntegrityGateService, RegistryAgentService, BaselineService, GovernanceService, AuditService],
+    providers: [IntegrityGateService, RegistryAgentService, DriftFeedbackLoopProcessor, BaselineService, GovernanceService, AuditService, QuorumService],
+    exports: [IntegrityGateService, RegistryAgentService, BaselineService, GovernanceService, AuditService, QuorumService],
 })
 export class IntegrityModule { }

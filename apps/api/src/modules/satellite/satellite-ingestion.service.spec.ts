@@ -10,6 +10,7 @@ import { ConsultingService } from "../consulting/consulting.service";
 import { RegistryAgentService } from "../integrity/registry-agent.service";
 import { SatelliteObservationInputDto } from "./dto/satellite.dto";
 import { ShadowAdvisoryService } from "../../shared/memory/shadow-advisory.service";
+import { QuorumService } from "../integrity/quorum.service";
 
 describe("SatelliteIngestionService", () => {
   let service: SatelliteIngestionService;
@@ -19,12 +20,14 @@ describe("SatelliteIngestionService", () => {
   const deviationMock = {} as DeviationService;
   const consultingMock = {} as ConsultingService;
   const registryMock = {} as RegistryAgentService;
+  const quorumMock = { isBlockedByQuorum: jest.fn().mockResolvedValue(false) } as any;
   const driftQueueMock = { add: jest.fn() } as any;
   const integrityGate = new IntegrityGateService(
     prismaMock,
     deviationMock,
     consultingMock,
     registryMock,
+    quorumMock,
     driftQueueMock,
   );
 

@@ -19,7 +19,7 @@ export const GovernanceBar: React.FC = () => {
     const { traceId, integrityStatus } = useSessionIntegrity();
 
     return (
-        <header className="h-16 border-b border-black/5 bg-white/80 backdrop-blur-md flex items-center justify-between px-6 sticky top-0 z-50">
+        <header className="h-16 border-b border-black/5 bg-white/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-50">
             {/* Left: Branding & Integrity */}
             <div className="flex items-center space-x-6">
                 <div className="flex items-center space-x-2">

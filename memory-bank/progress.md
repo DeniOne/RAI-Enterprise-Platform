@@ -331,3 +331,15 @@
 323: - [x] **UI Persistence**: Восстановлен Premium UI (Geist Fonts), исправлены 404 на статике через зачистку кэша `.next`.
 324: - [x] **Database Sync**: Исправлено отсутствие `companyId` в `AuditLog` через нативную миграцию.
 325: - [x] **Zero-Error Build**: Устранены все ошибки типов (`tsc`) в компонентах Knowledge и UI-Policy.
+## Milestone 31: Institutional Frontend Phase 3 — DONE ✅
+**Дата:** 2026-02-21
+**Статус:** INSTITUTIONAL CORE 10/10 (Phase 3 Complete)
+
+- [x] **Redesigned Governance UI**: Премиальный дизайн кнопок (START R3/R4) с градиентами, тенями и состояниями (Scale, Verification badges).
+- [x] **Enhanced FSM**: Интегрировано состояниe `escalated`, `collecting_signatures` и `quorum_met`. Четкое разделение фаз подтверждения.
+- [x] **Layout Repair**: Исправлено "залазание" контента под сайдбар через переход на чистый Flexbox (удалено `fixed`, `ml-350`).
+- [x] **Ledger Binding 10/10**: Подписи комитета привязаны к контексту транзакции и риску.
+- [x] **Simulation SUCCESS**: Пройден полный цикл эскалации R4 (Hard Lock) с разблокировкой через кворум.
+
+---
+**ИТОГ:** Фаза 3 завершена. Система управления (Control Plane) готова к интеграции риск-аналитики и ИИ-объяснимости.

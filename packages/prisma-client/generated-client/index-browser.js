@@ -1585,6 +1585,39 @@ exports.Prisma.LevelFCertAuditScalarFieldEnum = {
   companyId: 'companyId'
 };
 
+exports.Prisma.GovernanceCommitteeScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  version: 'version',
+  members: 'members',
+  quorumThreshold: 'quorumThreshold',
+  companyId: 'companyId'
+};
+
+exports.Prisma.QuorumProcessScalarFieldEnum = {
+  id: 'id',
+  traceId: 'traceId',
+  status: 'status',
+  committeeId: 'committeeId',
+  committeeVersion: 'committeeVersion',
+  cmrRiskId: 'cmrRiskId',
+  decisionRecordId: 'decisionRecordId',
+  companyId: 'companyId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  expiresAt: 'expiresAt'
+};
+
+exports.Prisma.GovernanceSignatureScalarFieldEnum = {
+  id: 'id',
+  signature: 'signature',
+  pubKey: 'pubKey',
+  payloadHash: 'payloadHash',
+  signerId: 'signerId',
+  quorumProcessId: 'quorumProcessId',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -2243,6 +2276,13 @@ exports.CertAuditStatus = exports.$Enums.CertAuditStatus = {
   ERROR: 'ERROR'
 };
 
+exports.QuorumStatus = exports.$Enums.QuorumStatus = {
+  COLLECTING: 'COLLECTING',
+  MET: 'MET',
+  REJECTED: 'REJECTED',
+  EXPIRED: 'EXPIRED'
+};
+
 exports.Prisma.ModelName = {
   Company: 'Company',
   Account: 'Account',
@@ -2357,7 +2397,10 @@ exports.Prisma.ModelName = {
   GovernanceLock: 'GovernanceLock',
   OverrideRequest: 'OverrideRequest',
   ApprovalRequest: 'ApprovalRequest',
-  LevelFCertAudit: 'LevelFCertAudit'
+  LevelFCertAudit: 'LevelFCertAudit',
+  GovernanceCommittee: 'GovernanceCommittee',
+  QuorumProcess: 'QuorumProcess',
+  GovernanceSignature: 'GovernanceSignature'
 };
 
 /**

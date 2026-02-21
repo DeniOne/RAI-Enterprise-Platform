@@ -239,7 +239,7 @@ export function Sidebar({ role }: SidebarProps) {
     }
 
     return (
-        <aside className="w-[350px] h-screen bg-white border-r border-black/10 flex flex-col fixed left-0 top-0 overflow-y-auto font-geist">
+        <aside className="w-[350px] h-screen bg-white border-r border-black/10 flex flex-col sticky left-0 top-0 overflow-y-auto font-geist">
             {/* Header */}
             <div className="p-6 pb-4">
                 <div className="text-gray-900 font-medium tracking-tight text-lg leading-none">

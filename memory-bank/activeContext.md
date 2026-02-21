@@ -21,10 +21,11 @@
   - [x] All 12 Architectural, Engineering, Metric, and Execution specs formalized.
   - [x] **Phase 1 (Crypto Core)**: Cryptographic Integrity (Ed25519, HSM, Merkle DAG) & M-of-N Multisig (5-of-7).
   - [x] **Phase 2 (Two-Phase Execution)**: FSM Core (XState), TraceID generation, PENDING state UI lock, AuthorityContext binding.
+  - [x] **Phase 3 (Escalation & Quorum)**: Premium UI Polish, SignatureGate, Quorum Progress, Zero-Overlap Layout fix.
   - [x] **Phase 4 (API Gateway)**: mTLS Firewall, Token Bucket Rate Limits, SLA/SLO Interceptor.
   - [x] **Phase 5 (Dispute Infra)**: Deterministic Replay API, CRL Bloom Filter, Smart Contract Anchoring, Node-Watcher.
   - [x] **Phase 6 (Simulations)**: E2E Hardcore attacks scenarios (BFT, Zip Bomb, Replay, Panic).
-- **Current Objective**: Подготовка к развертыванию пилота (Tier-1 Enterprise / Insurance), настройка Production-инфраструктуры.
+- **Current Objective**: **Phase 4: Risk Triage & Causal Loops**. Реализация визуализации стратификации рисков (R1-R4) и панели Triggered Effects.
 
 ## Active Decisions
 - **Standardization**: Используем структуру документов с префиксами (00, 10, 20...).

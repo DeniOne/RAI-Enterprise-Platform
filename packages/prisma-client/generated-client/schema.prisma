@@ -116,7 +116,9 @@ model Company {
   auditLogs               AuditLog[]
 
   // Level F: Institutional Oracle Standard
-  levelFCertAudits LevelFCertAudit[]
+  levelFCertAudits     LevelFCertAudit[]
+  governanceCommittees GovernanceCommittee[]
+  quorumProcesses      QuorumProcess[]
 
   @@map("companies")
 }
@@ -493,6 +495,9 @@ model User {
   soilMetrics       SoilMetric[]
   authoredOverrides OverrideRequest[]
   approvedOverrides OverrideRequest[] @relation("OverrideApprover")
+
+  // Phase 2.5: Escalation Signatures
+  governanceSignatures GovernanceSignature[]
 
   @@map("users")
 }
@@ -3553,8 +3558,76 @@ model LevelFCertAudit {
   @@map("level_f_cert_audit")
 }
 
+// --- Phase 2.5: Institutional Escalation Core ---
+
+model GovernanceCommittee {
+  id              String @id @default(cuid())
+  name            String
+  version         Int    @default(1)
+  members         Json // Array of { userId: string, weight: float }
+  quorumThreshold Float  @default(0.66)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  quorumProcesses QuorumProcess[]
+
+  @@unique([name, companyId, version])
+  @@map("governance_committees")
+}
+
+model QuorumProcess {
+  id      String       @id @default(cuid())
+  traceId String       @unique
+  status  QuorumStatus @default(COLLECTING)
+
+  committeeId      String
+  committeeVersion Int
+  committee        GovernanceCommittee @relation(fields: [committeeId], references: [id])
+
+  signatures GovernanceSignature[]
+
+  // Optional links for context (Traceability)
+  cmrRiskId        String?
+  decisionRecordId String?
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  expiresAt DateTime?
+
+  @@index([traceId])
+  @@map("governance_quorum_processes")
+}
+
+model GovernanceSignature {
+  id          String @id @default(cuid())
+  signature   String // Ed25519 hex
+  pubKey      String // hex
+  payloadHash String // sha256
+
+  signerId String
+  signer   User   @relation(fields: [signerId], references: [id])
+
+  quorumProcessId String
+  quorumProcess   QuorumProcess @relation(fields: [quorumProcessId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@map("governance_signatures")
+}
+
 enum CertAuditStatus {
   SIGNATURE_INTENT
   SIGNATURE_COMPLETED
   ERROR
+}
+
+enum QuorumStatus {
+  COLLECTING
+  MET
+  REJECTED
+  EXPIRED
 }

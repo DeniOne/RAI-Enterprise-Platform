@@ -10,6 +10,7 @@ import { RegistryAgentService } from "../integrity/registry-agent.service";
 import { BadRequestException } from "@nestjs/common";
 import { VisionObservationInputDto } from "./dto/vision.dto";
 import { ShadowAdvisoryService } from "../../shared/memory/shadow-advisory.service";
+import { QuorumService } from "../integrity/quorum.service";
 
 describe("VisionIngestionService", () => {
   let service: VisionIngestionService;
@@ -19,12 +20,14 @@ describe("VisionIngestionService", () => {
   const deviationMock = {} as DeviationService;
   const consultingMock = {} as ConsultingService;
   const registryMock = {} as RegistryAgentService;
+  const quorumMock = { isBlockedByQuorum: jest.fn().mockResolvedValue(false) } as any;
   const driftQueueMock = { add: jest.fn() } as any;
   const integrityGate = new IntegrityGateService(
     prismaMock,
     deviationMock,
     consultingMock,
     registryMock,
+    quorumMock,
     driftQueueMock,
   );
 

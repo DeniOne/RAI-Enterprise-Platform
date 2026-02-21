@@ -3,7 +3,7 @@ import { createMachine, assign } from 'xstate';
 /**
  * @file governanceMachine.ts
  * @description Каноническая FSM для протокола Two-Phase Execution.
- * Реализует инварианты детерминированного управления.
+ * ОБНОВЛЕНО v2.1.1: Фикс синтаксиса XState v5 для стабильных переходов.
  */
 
 export type RiskLevel = 'R1' | 'R2' | 'R3' | 'R4';
@@ -21,6 +21,8 @@ export type GovernanceEvent =
     | { type: 'START'; operation: string; traceId: string; riskLevel?: RiskLevel }
     | { type: 'PROPOSE'; riskLevel: RiskLevel; reason?: string }
     | { type: 'APPROVE' }
+    | { type: 'ESCALATE' }
+    | { type: 'QUORUM_MET' }
     | { type: 'REJECT'; reason: string }
     | { type: 'EXECUTE' }
     | { type: 'RETRY' }
@@ -43,11 +45,14 @@ export const governanceMachine = createMachine({
             on: {
                 START: {
                     target: 'initiated',
-                    actions: assign(({ event }) => ({
-                        operation: event.operation,
-                        traceId: event.traceId,
-                        riskLevel: event.riskLevel || 'R1',
-                    })),
+                    actions: assign(({ event }) => {
+                        if (event.type !== 'START') return {};
+                        return {
+                            operation: event.operation,
+                            traceId: event.traceId,
+                            riskLevel: event.riskLevel || 'R1',
+                        };
+                    }),
                 },
             },
         },
@@ -55,23 +60,56 @@ export const governanceMachine = createMachine({
             on: {
                 PROPOSE: {
                     target: 'pending',
-                    actions: assign(({ event }) => ({
-                        riskLevel: event.riskLevel,
-                        reason: event.reason,
-                    })),
+                    actions: assign(({ event }) => {
+                        if (event.type !== 'PROPOSE') return {};
+                        return {
+                            riskLevel: event.riskLevel,
+                            reason: event.reason,
+                        };
+                    }),
                 },
             },
         },
         pending: {
+            always: [
+                {
+                    target: 'escalated',
+                    guard: ({ context }) => context.riskLevel === 'R3' || context.riskLevel === 'R4'
+                }
+            ],
             on: {
-                APPROVE: 'approved',
+                APPROVE: {
+                    target: 'approved',
+                    guard: ({ context }) => context.riskLevel !== 'R3' && context.riskLevel !== 'R4'
+                },
                 REJECT: {
                     target: 'rejected',
-                    actions: assign(({ event }) => ({
-                        reason: event.reason,
-                    })),
+                    actions: assign(({ event }) => {
+                        if (event.type !== 'REJECT') return {};
+                        return {
+                            reason: event.reason,
+                        };
+                    }),
                 },
             },
+        },
+        escalated: {
+            on: {
+                ESCALATE: 'collecting_signatures',
+                REJECT: 'rejected'
+            }
+        },
+        collecting_signatures: {
+            on: {
+                QUORUM_MET: 'quorum_met',
+                REJECT: 'rejected'
+            }
+        },
+        quorum_met: {
+            on: {
+                APPROVE: 'approved',
+                REJECT: 'rejected'
+            }
         },
         approved: {
             on: {
