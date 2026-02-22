@@ -23,14 +23,15 @@
   - [x] **Phase 2 (Two-Phase Execution)**: FSM Core (XState), TraceID generation, PENDING state UI lock, AuthorityContext binding.
   - [x] **Phase 3 (Escalation & Quorum)**: Premium UI Polish, SignatureGate, Quorum Progress, Zero-Overlap Layout fix.
   - [x] **Phase 4 (Layout Hardening)**: Global Navigation via Route Groups, Persistent Sidebar, purged ad-hoc layouts, 100% build stability.
-  - [x] **Phase 5 (AI Explainability)**: 3-уровневое обоснование решений ИИ (WIP).
+  - [x] **Phase 5 (Tenant Isolation 10/10)**: Global RLS (74 tables), Prisma $extends (Strict Mode), ESLint Guardrails, Immutable TenantScope.
+  - [x] **Phase 6 (AI Explainability)**: 3-уровневое обоснование решений ИИ (WIP).
   - [x] **Phase 6 (Simulations)**: E2E Hardcore attacks scenarios (BFT, Zip Bomb, Replay, Panic).
 - **Phase 4 (Risk Triage & Causal Loops)**: **VERIFIED ✅** (10/10 Enterprise Grade)
   - [x] Risk Stratification (R1-R4) visual hierarchy.
   - [x] Triggered Effects Panel with SHA-256 (RFC8785) verification.
   - [x] Conflict Component & Lexicographical BFS escalation path.
   - [x] Institutional Replay Test Suite (100% Determinism).
-- **Current Objective**: **Phase 5: AI Explainability (Trust & Forensic)**. Реализация 3-уровневое обоснования решений ИИ и контрфактуального анализа.
+- **Current Objective**: **Phase 8: Scale & Global Reliability**. Завершение AI-объяснимости и переход к масштабированию инфраструктуры.
 
 ## Active Decisions
 - **Standardization**: Используем структуру документов с префиксами (00, 10, 20...).

@@ -355,3 +355,12 @@
 - [x] **Ad-hoc Purge**: Удалены все дублирующие `AuthenticatedLayout` и `Sidebar` со страниц доменов.
 - [x] **JSX Hardening**: Устранены критические синтаксические ошибки в модулях исполнения.
 - [x] **Zero-Overlap Implementation**: Чистая Flexbox-архитектура, исключающая наложение элементов управления.
+ 
+## Milestone 34: Zero Trust Tenant Isolation 10/10 — DONE ✅
+**Дата:** 2026-02-22
+**Статус:** MAXIMUM SECURITY (10/10)
+- [x] **Global RLS**: Row-Level Security активирована для 74 таблиц через нативную миграцию PostgreSQL.
+- [x] **Prisma Hardening**: Интегрированы `$extends` и `STRICT` режим. Автоматическая инъекция `companyId` и блокировка безконтекстных запросов.
+- [x] **Static Guardrails**: Создан и внедрен `eslint-plugin-tenant-security` для блокировки небезопасного сырого SQL на этапе CI.
+- [x] **Immutable Context**: Рефакторинг `TenantContextService` на использование `TenantScope` (Value Object) и `AsyncLocalStorage`.
+- [x] **System Bypass**: Безопасный режим `@SystemWideOperation()` для легитимных фоновых задач с полным аудитом.

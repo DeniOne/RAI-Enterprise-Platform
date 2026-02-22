@@ -1,0 +1,460 @@
+  modelVersions   ModelVersion[]
+  @@map("companies")
+model Account {
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  @@map("accounts")
+model Contact {
+  @@map("crm_contacts")
+model Interaction {
+  @@map("crm_interactions")
+model Obligation {
+  @@map("crm_obligations")
+model Holding {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@map("holdings")
+model Machinery {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("machinery")
+model StockItem {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("stock_items")
+model StockTransaction {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("stock_transactions")
+  companyId String // ARCH-DEBT-001: Multi-tenancy (NOT NULL)
+  company   Company  @relation(fields: [companyId], references: [id])
+  @@map("users")
+model Invitation {
+  companyId String // В какую компанию
+  company   Company  @relation(fields: [companyId], references: [id])
+  @@map("invitations")
+model Field {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("fields")
+model Rapeseed {
+  companyId String? // Multi-tenancy (если NULL - системная культура)
+  @@unique([name, companyId, version]) // Уникальность имени в рамках компании и версии
+  @@index([companyId])
+  @@map("rapeseeds")
+model RapeseedHistory {
+  @@map("rapeseed_history")
+  companyId     String // Denormalized for performance
+  @@index([id, companyId]) // Для быстрой валидации доступа
+  @@index([companyId, year]) // Для отчетов по годам
+  @@index([companyId, status]) // Для дашбордов
+  @@index([status, companyId]) // Для быстрых фильтров
+  @@index([rapeseedId, companyId]) // Для фильтрации по тенанту
+  @@map("seasons")
+model SeasonSnapshot {
+  companyId String
+  @@index([companyId])
+  @@index([companyId, year])
+  @@map("season_snapshots")
+model AuditFailure {
+  @@map("audit_failures")
+model SeasonStageProgress {
+  @@map("season_stage_progress")
+model SeasonHistory {
+  @@map("season_history")
+model BusinessRule {
+  companyId String? // Если NULL - системное правило
+  @@unique([code, companyId, version])
+  @@map("business_rules")
+model TechnologyCard {
+  companyId String // Изоляция карт на уровне тенанта
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("technology_cards")
+model TechnologyCardOperation {
+  @@map("technology_card_operations")
+model TechnologyCardResource {
+  @@map("technology_card_resources")
+model Task {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("tasks")
+model TaskResourceActual {
+  @@map("task_resource_actuals")
+model EmployeeProfile {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("employee_profiles")
+model HrOnboardingPlan {
+  @@map("hr_onboarding_plans")
+model HrSupportCase {
+  @@map("hr_support_cases")
+model RoleDefinition {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@unique([name, companyId])
+  @@map("role_definitions")
+model AuditLog {
+  companyId String // Multi-tenancy requirement
+  company   Company  @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("audit_logs")
+model ApiUsage {
+  @@map("api_usage")
+model MemoryEntry {
+  companyId  String
+  @@index([companyId, memoryType])
+  @@map("memory_entries")
+model Deal {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("crm_deals")
+model ScoreCard {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("crm_scorecards")
+model Contract {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("crm_contracts")
+model HarvestPlan {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("harvest_plans")
+model PerformanceContract {
+  modelType        String // e.g. "FIXED", "SUCCESS_FEE"
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("harvest_performance_contracts")
+  generationMetadata Json? // { modelId, modelVersion, generatedAt, seed, hash }
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@unique([fieldId, crop, seasonId, companyId, version])
+  @@index([companyId])
+  @@map("tech_maps")
+model MapStage {
+  @@map("tech_map_stages")
+model MapOperation {
+  @@map("tech_map_operations")
+model MapResource {
+  @@map("tech_map_resources")
+model AgronomicStrategy {
+  companyId      String
+  company        Company        @relation(fields: [companyId], references: [id])
+  @@unique([name, companyId, version])
+  @@index([companyId])
+  @@map("agronomic_strategies")
+model GenerationRecord {
+  modelId              String   @default("generative-engine-v1")
+  modelVersion         String   @default("1.0.0")
+  canonicalHash        String   @unique // SHA-256(canonical + modelVersion + seed) — UNIQUE
+  companyId            String
+  company              Company  @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("generation_records")
+model GovernanceConfig {
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("governance_configs")
+model DivergenceRecord {
+  companyId        String
+  company          Company          @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("divergence_records")
+model ExecutionRecord {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("consulting_execution_records")
+model ExecutionOrchestrationLog {
+  @@map("consulting_execution_logs")
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("cmr_deviation_reviews")
+model CmrDecision {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@map("cmr_decisions")
+model CmrRisk {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@map("cmr_risks")
+model InsuranceCoverage {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("cmr_insurance_coverages")
+model FieldObservation {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("field_observations")
+model OkrCycle {
+  companyId  String
+  company    Company     @relation(fields: [companyId], references: [id])
+  @@map("hr_okr_cycles")
+model Objective {
+  @@map("hr_objectives")
+model KeyResult {
+  @@map("hr_key_results")
+model HrKPIIndicator {
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  @@map("hr_kpi_indicators")
+model HrRecognitionEvent {
+  @@map("hr_recognition_events")
+model HrRewardEvent {
+  @@map("hr_reward_events")
+model PulseSurvey {
+  companyId String
+  company   Company          @relation(fields: [companyId], references: [id])
+  @@map("hr_pulse_surveys")
+model SurveyResponse {
+  @@map("hr_survey_responses")
+model HumanAssessmentSnapshot {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@map("hr_human_assessment_snapshots")
+model PersonalCompetencyState {
+  @@map("hr_competency_states")
+model HrDevelopmentPlan {
+  @@map("hr_development_plans")
+model HrDevelopmentAction {
+  @@map("hr_development_actions")
+model TenantState {
+  companyId String     @id
+  company   Company    @relation(fields: [companyId], references: [id])
+  @@map("tenant_states")
+model EconomicEvent {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@unique([companyId, id])
+  @@unique([companyId, replayKey])
+  @@index([companyId])
+  @@map("economic_events")
+model LedgerEntry {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("ledger_entries")
+model AccountBalance {
+  companyId   String
+  company Company @relation(fields: [companyId], references: [id])
+  @@id([companyId, accountCode])
+  @@map("account_balances")
+model CashAccount {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@map("consulting_cash_accounts")
+model Budget {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("budgets")
+model BudgetLine {
+  @@map("budget_lines")
+model RegulatoryBody {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("regulatory_bodies")
+model LegalDocument {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("legal_documents")
+model LegalNorm {
+  @@map("legal_norms")
+model LegalRequirement {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("legal_requirements")
+model LegalObligation {
+  @@map("legal_obligations")
+model Sanction {
+  @@map("legal_sanctions")
+model ComplianceCheck {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("compliance_checks")
+model GrInteraction {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("gr_interactions")
+model PolicySignal {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("policy_signals")
+model ExternalLegalFeed {
+  @@map("external_legal_feeds")
+model ResearchProgram {
+  companyId   String
+  company     Company       @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("research_programs")
+model Experiment {
+  @@map("experiments")
+model Protocol {
+  @@map("research_protocols")
+model Trial {
+  @@map("research_trials")
+model Measurement {
+  @@map("research_measurements")
+model ResearchResult {
+  @@map("research_results")
+model ResearchConclusion {
+  @@map("research_conclusions")
+model KnowledgeNode {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("knowledge_nodes")
+model KnowledgeEdge {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("knowledge_edges")
+model VisionObservation {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("vision_observations")
+model SatelliteObservation {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("satellite_observations")
+model RiskSignal {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("risk_signals")
+model RiskAssessment {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("risk_assessments")
+model RiskStateHistory {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("risk_state_history")
+model DecisionRecord {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("decision_records")
+model BudgetPlan {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("consulting_budget_plans")
+model OutboxMessage {
+  @@map("outbox_messages")
+model EventConsumption {
+  companyId   String?
+  @@index([companyId, processedAt])
+  @@map("event_consumptions")
+model BudgetItem {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@map("consulting_budget_items")
+model ManagementDecision {
+  @@map("consulting_management_decisions")
+model HarvestResult {
+  companyId String
+  company   Company     @relation(fields: [companyId], references: [id])
+  @@index([planId, seasonId, companyId])
+  @@map("harvest_results")
+model StrategicGoal {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@unique([companyId, seasonId, goalType, isActive]) // Protection: Only one active goal of a type per season
+  @@map("consulting_strategic_goals")
+model ModelVersion {
+  companyId     String
+  company       Company      @relation(fields: [companyId], references: [id])
+  @@unique([companyId, name, version])
+  @@index([companyId])
+  @@map("rai_model_versions")
+model TrainingRun {
+  models ModelVersion[]
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("rai_training_runs")
+model DriftReport {
+  modelVersionId String
+  modelVersion   ModelVersion @relation(fields: [modelVersionId], references: [id])
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@index([modelVersionId])
+  @@map("rai_drift_reports")
+model LearningEvent {
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  @@index([companyId])
+  @@map("rai_learning_events")
+model SoilMetric {
+  companyId String
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  @@index([companyId, fieldId, timestamp])
+  @@map("rai_soil_metrics")
+model SustainabilityBaseline {
+  companyId String
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  @@unique([companyId, fieldId, version])
+  @@map("rai_sustainability_baselines")
+model BiodiversityMetric {
+  companyId String
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  @@index([companyId, seasonId])
+  @@map("rai_biodiversity_metrics")
+model GovernanceLock {
+  companyId String
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  @@index([companyId, fieldId])
+  @@map("rai_governance_locks")
+model OverrideRequest {
+  companyId  String
+  company  Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  @@index([companyId, fieldId, createdAt])
+  @@map("rai_override_requests")
+model ApprovalRequest {
+  modelId     String
+  model       ModelVersion @relation(fields: [modelId], references: [id])
+  @@map("rai_approval_requests")
+model LevelFCertAudit {
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  @@index([companyId, snapshotHash])
+  @@map("level_f_cert_audit")
+model GovernanceCommittee {
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  @@unique([name, companyId, version])
+  @@map("governance_committees")
+model QuorumProcess {
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  @@map("governance_quorum_processes")
+model GovernanceSignature {
+  @@map("governance_signatures")

@@ -49,9 +49,11 @@ import { OutboxModule } from './shared/outbox/outbox.module';
 import { InvariantMetricsModule } from "./shared/invariants/invariant-metrics.module";
 import { GatewayModule } from "./level-f/gateway/gateway.module";
 import { CryptoModule } from "./level-f/crypto/crypto.module";
+import { TenantContextModule } from "./shared/tenant-context/tenant-context.module";
 
 @Module({
   imports: [
+    TenantContextModule,
     ConfigModule.forRoot({
       envFilePath: [".env", "../../.env"],
       isGlobal: true,

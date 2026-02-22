@@ -5,7 +5,7 @@ module.exports = {
         tsconfigRootDir: __dirname,
         sourceType: 'module',
     },
-    plugins: ['@typescript-eslint/eslint-plugin'],
+    plugins: ['@typescript-eslint/eslint-plugin', 'tenant-security'],
     extends: [
         'plugin:@typescript-eslint/recommended',
         'plugin:prettier/recommended',
@@ -31,6 +31,7 @@ module.exports = {
                     }
                 ]
             }
-        ]
+        ],
+        "tenant-security/no-unsafe-prisma-access": "error"
     },
 };

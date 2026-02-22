@@ -184,6 +184,7 @@ graph LR
 > - [x] Отрисовывается панель `Triggered Effects`.
 > - [x] Конфликты инвариантов визуально выделены и требуют реакции.
 > - [x] **Deterministic Guarantee (10/10):** RFC8785 Hashing & Lexicographical BFS.
+> - [x] **Institutional Layout (10/10):** Global Sidebar, Persistent Navigation, zero-overlap.
 
 ---
 
