@@ -222,7 +222,7 @@ aligned_with: [principle-vision]
 - [x] **[Backend]** **Liability Matrix Tracking**: Отражение ответственности (AI vs Human) в Audit.
 
 ### 🏛️ 12. Level F: Institutional Cognitive Standard ✅
-- [x] **[Backend]** **Cryptographic Core**: Пул HSM, 5-of-7 Governance, Replay Caching, Snapshot Hashing (RFC 8785).
+- [x] **[Backend]** **Cryptographic Core**: Пул HSM, 5-of-7 Governance, Replay Caching, Snapshot Hashing (RFC 8785 • 10/10 Grade • Lexicographical DFS).
 - [x] **[Backend]** **Certification Data-Pipeline**: Merkle DAG сшивание, Temporal Consistency.
 - [x] **[Backend]** **Certification Engine**: Soft-float Rated grading, Assertion Fences, Ed25519 JWT Minter.
 - [x] **[Infra]** **Gateway & Dispute**: mTLS Firewall, L1 Anchoring, Node-Watchers, Replay API, Bloom Filter CRL.

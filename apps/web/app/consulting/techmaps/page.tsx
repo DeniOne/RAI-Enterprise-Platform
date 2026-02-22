@@ -29,15 +29,14 @@ export default function TechMapsPage() {
     }), [techMap]);
 
     return (
-        <div className="p-8 max-w-7xl mx-auto font-geist">
-            {/* Header Area */}
-            <div className="mb-8">
-                <h1 className="text-2xl font-medium text-gray-900 tracking-tight mb-2">
-                    Технологические Карты
-                </h1>
-                <p className="text-sm text-gray-500 font-normal">
-                    Workbench проектирования и контроля технологических операций
-                </p>
+        <div className="space-y-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <h1 className="text-3xl font-black tracking-tight text-slate-900">Технологические Карты</h1>
+                    <p className="text-sm text-slate-500 font-normal">
+                        Workbench проектирования и контроля технологических операций
+                    </p>
+                </div>
             </div>
 
             {/* INTEGRITY LAYER: System Status Bar */}

@@ -34,7 +34,8 @@ export const api = {
         plans: () => apiClient.get('/consulting/plans'),
         execution: {
             list: () => apiClient.get('/consulting/execution/operations'),
-            start: (operationId: string) => apiClient.post(`/consulting/execution/${operationId}/start`),
+            active: () => apiClient.get('/consulting/execution/active'),
+            start: (operationId: string) => apiClient.post(`/consulting/execution/start/${operationId}`),
             complete: (data: unknown) => apiClient.post('/consulting/execution/complete', data),
         },
         yield: {

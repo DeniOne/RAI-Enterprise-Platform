@@ -268,7 +268,7 @@ aligned_with: [principle-axioms]
     - [ ] AI: Vision Service Integration (Pest Detection)
     - [ ] Tool: Real-time Field Economics Calculator
 - [x] **Section 6.3: Unified Risk Engine (Sprint B6) 🛡️ ✅**
-    - [x] Engine: `@rai/risk-engine` with Deterministic FSM
+    - [x] Engine: `@rai/risk-engine` with Deterministic FSM (RFC8785 & 10/10 Hardening)
     - [x] Feature: Physical Risk Gates in Orchestrators
     - [x] Audit: Decision Traceability & Risk Timeline
 

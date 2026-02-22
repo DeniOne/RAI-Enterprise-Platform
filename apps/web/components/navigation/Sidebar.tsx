@@ -6,7 +6,7 @@ import { UserRole } from '@/lib/config/role-config'; // Assuming this is where U
 import { getVisibleNavigation, NavItem } from '@/lib/consulting/navigation-policy';
 import clsx from 'clsx';
 import { useState, useEffect } from 'react';
-import { ChevronDown, ChevronRight, Circle, LayoutDashboard, Users, ClipboardList, Map, Calculator, AlertTriangle, CheckCircle2, TrendingUp, ShieldCheck, Database, Settings2, BookOpen, Package, Landmark } from 'lucide-react';
+import { ChevronDown, ChevronRight, Circle, LayoutDashboard, Users, ClipboardList, Map, Calculator, AlertTriangle, CheckCircle2, TrendingUp, ShieldCheck, Database, Settings2, BookOpen, Package, Landmark, Sprout, BarChart3 } from 'lucide-react';
 
 // Domain Layer Mapping (Immutable definition for View Layer)
 const DOMAIN_LAYERS: Record<string, number> = {
@@ -34,7 +34,9 @@ const ICON_MAP: Record<string, any> = {
     'gr': ShieldCheck,
     'production': Package,
     'knowledge': BookOpen,
-    'settings': Settings2
+    'settings': Settings2,
+    'exec_agro': Sprout,
+    'exec_manager': BarChart3
 };
 
 interface SidebarProps {
@@ -115,10 +117,13 @@ export function Sidebar({ role }: SidebarProps) {
     };
 
     const isActive = (item: NavItem) => {
-        if (item.subItems) {
-            return pathname.startsWith(item.path);
+        // If it's a sub-item, we want closer match (including hash if it exists)
+        if (!item.subItems) {
+            // Check if current path + hash matches exactly
+            const currentFullPath = typeof window !== 'undefined' ? (window.location.pathname + window.location.hash) : pathname;
+            return currentFullPath === item.path || pathname === item.path;
         }
-        return pathname === item.path;
+        return pathname.startsWith(item.path);
     };
 
     const renderNavItem = (item: NavItem, depth: number = 0, index: number = 0, siblings: NavItem[] = []) => {
@@ -162,12 +167,12 @@ export function Sidebar({ role }: SidebarProps) {
                         // --- Normal items ---
                         !isCoreRoot && "py-2 mb-1",
 
-                        // --- Active Item State (Premium Glassmorphism) ---
+                        // --- Active Item State (Canonical Institutional Style) ---
                         active && !item.subItems
-                            ? "bg-black text-white shadow-[0_4px_12px_rgba(0,0,0,0.12)] scale-[1.02]"
+                            ? "bg-slate-50 text-slate-900"
                             : isSystem
                                 ? "text-gray-400 hover:text-gray-700 hover:bg-gray-50/50"
-                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50/80 hover:translate-x-1",
+                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50/80",
 
                         depth > 0 && "ml-4"
                     )}
@@ -176,7 +181,7 @@ export function Sidebar({ role }: SidebarProps) {
                     {depth === 0 && (
                         <div className={clsx(
                             "mr-3 transition-transform duration-300 group-hover:scale-110",
-                            active ? "text-white" : "text-gray-400 group-hover:text-black"
+                            active ? "text-slate-900" : "text-gray-400 group-hover:text-black"
                         )}>
                             {(() => {
                                 const Icon = ICON_MAP[item.id] || Circle;
@@ -185,50 +190,50 @@ export function Sidebar({ role }: SidebarProps) {
                         </div>
                     )}
 
-                    {/* Link or Button depending on if it has children */}
-                    {item.subItems ? (
-                        <div
-                            className="flex-1 flex items-center justify-between cursor-pointer w-full"
-                            onClick={(e) => toggleExpand(item.id, e)}
-                        >
+                    {/* Label Area (Always navigates) */}
+                    <div className="flex-1 flex items-center">
+                        <Link href={item.path} className="flex-1 flex items-center py-0.5">
+                            {depth > 0 && !item.subItems && (
+                                <Circle size={4} className={clsx("mr-2.5", active ? "fill-slate-900" : "fill-gray-300 group-hover:fill-gray-400")} />
+                            )}
                             <span className={clsx(
                                 "font-medium transition-colors leading-snug",
                                 depth === 0 ? "text-[13px] uppercase tracking-wider" : "text-sm",
-                                isCoreRoot ? "text-slate-900" : (active || domainActive ? "text-gray-900" : "text-gray-500 group-hover:text-gray-900")
-                            )}>
-                                {item.label}
-                            </span>
-                            {isExpanded
-                                ? <ChevronDown size={14} className="opacity-30 group-hover:opacity-100 transition-opacity" />
-                                : <ChevronRight size={14} className="opacity-30 group-hover:opacity-100 transition-opacity" />
-                            }
-                        </div>
-                    ) : (
-                        <Link href={item.path} className="flex-1 flex items-center">
-                            {depth > 0 && (
-                                <Circle size={4} className={clsx("mr-2.5", active ? "fill-white" : "fill-gray-300")} />
-                            )}
-                            <span className={clsx(
-                                "font-medium text-sm transition-colors leading-snug",
-                                active ? "text-white" : (isSystem ? "text-gray-400 group-hover:text-gray-700" : "text-gray-600 group-hover:text-gray-900")
+                                isCoreRoot ? "text-slate-900" : (active || domainActive ? "text-slate-900" : "text-gray-500 group-hover:text-gray-900")
                             )}>
                                 {item.label}
                             </span>
                         </Link>
-                    )}
+
+                        {/* Expand/Collapse Toggle (Separate from label) */}
+                        {item.subItems && (
+                            <button
+                                onClick={(e) => toggleExpand(item.id, e)}
+                                className="p-1 px-2 hover:bg-black/5 rounded-md transition-colors ml-auto"
+                                aria-label={isExpanded ? "Collapse" : "Expand"}
+                            >
+                                {isExpanded
+                                    ? <ChevronDown size={14} className="opacity-30 group-hover:opacity-100 transition-opacity" />
+                                    : <ChevronRight size={14} className="opacity-30 group-hover:opacity-100 transition-opacity" />
+                                }
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* SubItems */}
-                {item.subItems && isExpanded && (
-                    <div className={clsx(
-                        "flex flex-col border-l border-gray-100 mixed-blend-multiply",
-                        // Dynamic left margin based on whether it's inside Core or not
-                        isCoreRoot ? "ml-5 pl-2 border-slate-100 space-y-1 mt-1" : "ml-5 pl-2 space-y-0.5 mt-0.5"
-                    )}>
-                        {item.subItems.map((sub, idx, arr) => renderNavItem(sub, depth + 1, idx, arr))}
-                    </div>
-                )}
-            </div>
+                {
+                    item.subItems && isExpanded && (
+                        <div className={clsx(
+                            "flex flex-col border-l border-gray-100 mixed-blend-multiply",
+                            // Dynamic left margin based on whether it's inside Core or not
+                            isCoreRoot ? "ml-5 pl-2 border-slate-100 space-y-1 mt-1" : "ml-5 pl-2 space-y-0.5 mt-0.5"
+                        )}>
+                            {item.subItems.map((sub, idx, arr) => renderNavItem(sub, depth + 1, idx, arr))}
+                        </div>
+                    )
+                }
+            </div >
         );
     };
 

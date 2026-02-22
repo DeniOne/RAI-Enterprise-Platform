@@ -1,9 +1,10 @@
 import { createMachine, assign } from 'xstate';
+import { InstitutionalEffect, InstitutionalConflict } from './InstitutionalContracts';
 
 /**
  * @file governanceMachine.ts
  * @description Каноническая FSM для протокола Two-Phase Execution.
- * ОБНОВЛЕНО v2.1.1: Фикс синтаксиса XState v5 для стабильных переходов.
+ * ОБНОВЛЕНО v2.2.0: Поддержка Deterministic Impact Engine (Phase 4).
  */
 
 export type RiskLevel = 'R1' | 'R2' | 'R3' | 'R4';
@@ -15,10 +16,15 @@ export interface GovernanceContext {
     actor?: string;
     reason?: string;
     error?: string;
+    effects: InstitutionalEffect[];
+    conflicts: InstitutionalConflict[];
 }
 
 export type GovernanceEvent =
     | { type: 'START'; operation: string; traceId: string; riskLevel?: RiskLevel }
+    | { type: 'ANALYZE_EFFECTS'; effects: InstitutionalEffect[] }
+    | { type: 'DETECT_CONFLICT'; conflicts: InstitutionalConflict[] }
+    | { type: 'RESOLVE_CONFLICT'; conflictId: string }
     | { type: 'PROPOSE'; riskLevel: RiskLevel; reason?: string }
     | { type: 'APPROVE' }
     | { type: 'ESCALATE' }
@@ -39,6 +45,8 @@ export const governanceMachine = createMachine({
         traceId: '',
         operation: '',
         riskLevel: 'R1',
+        effects: [],
+        conflicts: [],
     },
     states: {
         idle: {
@@ -58,29 +66,75 @@ export const governanceMachine = createMachine({
         },
         initiated: {
             on: {
-                PROPOSE: {
-                    target: 'pending',
+                ANALYZE_EFFECTS: {
+                    target: 'effect_analysis',
                     actions: assign(({ event }) => {
-                        if (event.type !== 'PROPOSE') return {};
-                        return {
-                            riskLevel: event.riskLevel,
-                            reason: event.reason,
-                        };
+                        if (event.type !== 'ANALYZE_EFFECTS') return {};
+                        return { effects: event.effects };
                     }),
                 },
             },
+        },
+        effect_analysis: {
+            // Invariant-4.1: Должен быть хотя бы один эффект
+            always: [
+                {
+                    target: 'conflict_detected',
+                    guard: ({ context }) => context.conflicts.length > 0
+                },
+                {
+                    target: 'pending',
+                    guard: ({ context }) => context.effects.length > 0 && context.conflicts.length === 0
+                },
+                {
+                    target: 'rejected',
+                    guard: ({ context }) => context.effects.length === 0,
+                    actions: assign({ error: (_) => 'Invariant-4.1 Violation: No effects produced' })
+                }
+            ],
+            on: {
+                DETECT_CONFLICT: {
+                    target: 'conflict_detected',
+                    actions: assign(({ event }) => {
+                        if (event.type !== 'DETECT_CONFLICT') return {};
+                        return { conflicts: event.conflicts };
+                    }),
+                }
+            }
+        },
+        conflict_detected: {
+            on: {
+                RESOLVE_CONFLICT: {
+                    target: 'initiated',
+                    actions: assign(({ context, event }) => {
+                        if (event.type !== 'RESOLVE_CONFLICT') return {};
+                        return {
+                            // Очищаем эффекты для принудительного повторного анализа (Invariant-4.3)
+                            effects: [],
+                            conflicts: context.conflicts.filter(c => c.conflictId !== event.conflictId)
+                        };
+                    })
+                },
+                REJECT: 'rejected'
+            }
         },
         pending: {
             always: [
                 {
                     target: 'escalated',
-                    guard: ({ context }) => context.riskLevel === 'R3' || context.riskLevel === 'R4'
+                    guard: ({ context }) =>
+                        context.riskLevel === 'R3' ||
+                        context.riskLevel === 'R4' ||
+                        context.effects.some(e => e.requiresEscalation)
                 }
             ],
             on: {
                 APPROVE: {
                     target: 'approved',
-                    guard: ({ context }) => context.riskLevel !== 'R3' && context.riskLevel !== 'R4'
+                    guard: ({ context }) =>
+                        context.riskLevel !== 'R3' &&
+                        context.riskLevel !== 'R4' &&
+                        !context.effects.some(e => e.requiresEscalation)
                 },
                 REJECT: {
                     target: 'rejected',

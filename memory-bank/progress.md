@@ -314,23 +314,17 @@
 - [x] **Fallback Node-Watcher**: Автоматическое переключение RPC (L1 -> Consortium) при даунтайме.
 - [x] **CRL Lifecycle**: `Redis Bloom Filter` для проверки отозванных сертификатов ($O(1)$).
 - [x] **Hardcore Simulations (Фаза 6)**: Написаны E2E сценарии (BFT Attack, Zip Bomb, Replay Cache, Panic Halt).
-317: 
-318: ## Milestone 29.5: Institutional Frontend Phase 1 — DONE ✅
-319: **Дата:** 2026-02-21
-320: **Статус:** ARCHITECTURAL SKELETON COMPLETE (10/10)
-321: - [x] **AuthorityContext Layer**: Реализован провайдер полномочий (`canSign`, `canApprove`, `canEscalate`).
-322: - [x] **Governance Shell**: Созданы базовые компоненты `GovernanceBar`, `DomainTree` и `WorkSurface`.
-323: - [x] **Role Simulation**: Интегрирован переключатель Mock-ролей (CEO, Director, Manager, Agronomist, Guest) для тестирования UI-политик.
-324: - [x] **UI Policy**: Внедрена система `ui-policy.ts` для управления видимостью элементов на основе полномочий.
-325: 
-326: ## Milestone 30: Institutional Frontend Phase 2 — DONE ✅
-319: **Дата:** 2026-02-21
-320: **Статус:** ZERO-ERROR VERIFIED (10/10)
-321: - [x] **FSM Core**: Реализован `governanceMachine` (XState) с поддержкой `traceId` и стратификацией рисков.
-322: - [x] **Authority Binding**: Хук `useGovernanceAction` потребляет `AuthorityContext` для блокировки несанкционированных действий.
-323: - [x] **UI Persistence**: Восстановлен Premium UI (Geist Fonts), исправлены 404 на статике через зачистку кэша `.next`.
-324: - [x] **Database Sync**: Исправлено отсутствие `companyId` в `AuditLog` через нативную миграцию.
-325: - [x] **Zero-Error Build**: Устранены все ошибки типов (`tsc`) в компонентах Knowledge и UI-Policy.
+- [x] **UI Policy**: Внедрена система `ui-policy.ts` для управления видимостью элементов на основе полномочий.
+
+## Milestone 30: Institutional Frontend Phase 2 — DONE ✅
+**Дата:** 2026-02-21
+**Статус:** ZERO-ERROR VERIFIED (10/10)
+- [x] **FSM Core**: Реализован `governanceMachine` (XState) с поддержкой `traceId` и стратификацией рисков.
+- [x] **Authority Binding**: Хук `useGovernanceAction` потребляет `AuthorityContext` для блокировки несанкционированных действий.
+- [x] **UI Persistence**: Восстановлен Premium UI (Geist Fonts), исправлены 404 на статике через зачистку кэша `.next`.
+- [x] **Database Sync**: Исправлено отсутствие `companyId` в `AuditLog` через нативную миграцию.
+- [x] **Zero-Error Build**: Устранены все ошибки типов (`tsc`) в компонентах Knowledge и UI-Policy.
+
 ## Milestone 31: Institutional Frontend Phase 3 — DONE ✅
 **Дата:** 2026-02-21
 **Статус:** INSTITUTIONAL CORE 10/10 (Phase 3 Complete)
@@ -343,3 +337,21 @@
 
 ---
 **ИТОГ:** Фаза 3 завершена. Система управления (Control Plane) готова к интеграции риск-аналитики и ИИ-объяснимости.
+
+## Milestone 32: Institutional Frontend Phase 4 — DONE ✅
+**Дата:** 2026-02-21
+**Статус:** DETERMINISTIC IMPACT ENGINE 10/10 (Institutional Grade)
+
+- [x] **Snapshot Hashing (RFC8785)**: Внедрена канонизация и SHA-256 хеширование эффектов. UI отображает доказательства.
+- [x] **Deterministic Graph Traversal**: Реализован лексикографический BFS в `InstitutionalGraph`. Пути эскалации неизменны.
+- [x] **FSM Re-analysis Cycle**: Принудительный сброс стейта после резолвинга конфликтов для исключения "слепых зон".
+- [x] **Evidence of Hardening**: UI `GovernanceTestButton` визуализирует криптографические подписи и инварианты.
+- [x] **Replay Integrity**: Создан `InstitutionalReplay.test.ts` для верификации воспроизведения 100% идентичных состояний.
+
+## Milestone 33: Institutional Frontend Phase 4 (Layout Hardening) — DONE ✅
+**Дата:** 2026-02-22
+**Статус:** INSTITUTIONAL LAYOUT 10/10 (Global Sidebar Complete)
+- [x] **Canonical Layouts**: Внедрен `ConsultingLayout` с персистентным сайдбаром и хедером через Route Groups.
+- [x] **Ad-hoc Purge**: Удалены все дублирующие `AuthenticatedLayout` и `Sidebar` со страниц доменов.
+- [x] **JSX Hardening**: Устранены критические синтаксические ошибки в модулях исполнения.
+- [x] **Zero-Overlap Implementation**: Чистая Flexbox-архитектура, исключающая наложение элементов управления.

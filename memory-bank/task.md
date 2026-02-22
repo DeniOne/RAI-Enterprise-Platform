@@ -113,3 +113,10 @@
   - [x] `DELTA_ROADMAP.md`
   - [x] `DELTA_ROLLOUT_PLAN.md`
   - [x] `DELTA_GOVERNANCE_APPROVAL.md`
+
+## Institutional Frontend Phase 4: Deterministic Impact Engine ✅ <!-- id: 14 -->
+- [x] **Snapshot Hashing (I30)**: RFC8785 Canonical Serialization + SHA-256 <!-- id: 14.1 -->
+- [x] **Deterministic Graph**: Lexicographical BFS for escalation paths (Invariant-4.3) <!-- id: 14.2 -->
+- [x] **FSM Hardening**: Mandatory re-analysis cycle after conflict resolution <!-- id: 14.3 -->
+- [x] **UI Verification**: Evidence of hardening (hash display) in `GovernanceTestButton` <!-- id: 14.4 -->
+- [x] **Replay Integrity**: `InstitutionalReplay.test.ts` verified (10/10 Grade) <!-- id: 14.5 -->

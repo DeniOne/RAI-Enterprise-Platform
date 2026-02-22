@@ -36,7 +36,7 @@ RAI ENTERPRISE PLATFORM — INSTITUTIONAL ENFORCEMENT MODE v2.0
 - Неизменяемый след событий (Immutable event trace)
 
 ДЕКЛАРАЦИЯ ФАЗЫ
-ФАЗА: <4>
+ФАЗА: <5>
 ОБЛАСТЬ (SCOPE): <определить явно>
 
 IDE ЗАПРЕЩЕНО внедрять функционал вне объявленной фазы.

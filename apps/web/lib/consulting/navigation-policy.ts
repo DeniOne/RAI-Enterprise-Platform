@@ -104,9 +104,9 @@ export const CONSULTING_NAVIGATION: NavItem[] = [
                         domain: 'crop',
                         roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'],
                         subItems: [
-                            { id: 'exec_agro_consult', label: 'Консультирование', path: '/consulting/execution/agronomist/consulting', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
-                            { id: 'exec_agro_control', label: 'Контроль допущений', path: '/consulting/execution/agronomist/control', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
-                            { id: 'exec_agro_dev', label: 'Фиксация отклонений', path: '/consulting/execution/agronomist/deviations', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                            { id: 'exec_agro_consult', label: 'Консультирование', path: '/consulting/execution/agronomist#consult', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                            { id: 'exec_agro_control', label: 'Контроль допущений', path: '/consulting/execution/agronomist#control', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                            { id: 'exec_agro_dev', label: 'Фиксация отклонений', path: '/consulting/execution/agronomist#deviations', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
                         ]
                     },
                     {
@@ -116,10 +116,10 @@ export const CONSULTING_NAVIGATION: NavItem[] = [
                         domain: 'crop',
                         roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'],
                         subItems: [
-                            { id: 'exec_mgr_tasks', label: 'Задачи', path: '/consulting/execution/manager/tasks', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
-                            { id: 'exec_mgr_events', label: 'События', path: '/consulting/execution/manager/events', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
-                            { id: 'exec_mgr_alerts', label: 'Алерты', path: '/consulting/execution/manager/alerts', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
-                            { id: 'exec_mgr_status', label: 'Статус выполнения', path: '/consulting/execution/manager/status', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                            { id: 'exec_mgr_tasks', label: 'Задачи', path: '/consulting/execution/manager#tasks', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                            { id: 'exec_mgr_events', label: 'События', path: '/consulting/execution/manager#events', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                            { id: 'exec_mgr_alerts', label: 'Алерты', path: '/consulting/execution/manager#alerts', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                            { id: 'exec_mgr_status', label: 'Статус выполнения', path: '/consulting/execution/manager#status', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
                         ]
                     },
                 ]
