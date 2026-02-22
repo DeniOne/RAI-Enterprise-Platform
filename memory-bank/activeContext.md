@@ -24,8 +24,10 @@
   - [x] **Phase 3 (Escalation & Quorum)**: Premium UI Polish, SignatureGate, Quorum Progress, Zero-Overlap Layout fix.
   - [x] **Phase 4 (Layout Hardening)**: Global Navigation via Route Groups, Persistent Sidebar, purged ad-hoc layouts, 100% build stability.
   - [x] **Phase 5 (Tenant Isolation 10/10)**: Global RLS (74 tables), Prisma $extends (Strict Mode), ESLint Guardrails, Immutable TenantScope.
-  - [x] **Phase 6 (AI Explainability)**: 3-уровневое обоснование решений ИИ (WIP).
-  - [x] **Phase 6 (Simulations)**: E2E Hardcore attacks scenarios (BFT, Zip Bomb, Replay, Panic).
+- [x] **Phase 6 (AI Explainability)**: **VERIFIED ✅**. 3-уровневое обоснование решений ИИ (Surface/Analytical/Forensic).
+- [x] **Phase 7 (Infrastructure Hardening)**: **VERIFIED ✅**. Устранено 70+ критических ошибок типизации Prisma/TenantContext/Integrity. 0-error build достигнут.
+- [x] **Phase 8 (Navigation Re-org)**: **VERIFIED ✅**. Исправлена иерархия страниц (404 fix) в соответствии с Navigation Policy.
+- [x] **Phase 6 (Simulations)**: E2E Hardcore attacks scenarios (BFT, Zip Bomb, Replay, Panic).
 - **Phase 4 (Risk Triage & Causal Loops)**: **VERIFIED ✅** (10/10 Enterprise Grade)
   - [x] Risk Stratification (R1-R4) visual hierarchy.
   - [x] Triggered Effects Panel with SHA-256 (RFC8785) verification.
