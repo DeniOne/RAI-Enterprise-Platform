@@ -8,6 +8,7 @@ import { Observable } from 'rxjs';
 import { TenantContextService } from './tenant-context.service';
 import { Reflector } from '@nestjs/core';
 import { SYSTEM_WIDE_KEY } from './system-wide-operation.decorator';
+import { TenantScope } from './tenant-scope';
 
 @Injectable()
 export class SystemWideOperationInterceptor implements NestInterceptor {
@@ -23,11 +24,13 @@ export class SystemWideOperationInterceptor implements NestInterceptor {
         ]);
 
         if (isSystemWide) {
-            // Re-run the context with isSystem: true
-            // Note: This assumes current context might already have a tenantId or be empty (Cron)
-            const currentStore = this.tenantContext.getStore() || { companyId: 'SYSTEM' };
+            const currentStore = this.tenantContext.getStore();
+            const companyId = currentStore?.companyId || 'SYSTEM';
+
             return new Observable((subscriber) => {
-                this.tenantContext.run({ ...currentStore, isSystem: true }, () => {
+                this.tenantContext.run({
+                    scope: new TenantScope(companyId, true)
+                }, () => {
                     next.handle().subscribe(subscriber);
                 });
             });

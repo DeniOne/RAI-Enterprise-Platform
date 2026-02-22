@@ -1,3 +1,5 @@
+import { Injectable } from '@nestjs/common';
+import { AsyncLocalStorage } from 'async_hooks';
 import { TenantScope } from './tenant-scope';
 
 export interface TenantStore {

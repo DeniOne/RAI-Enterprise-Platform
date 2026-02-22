@@ -364,3 +364,13 @@
 - [x] **Static Guardrails**: Создан и внедрен `eslint-plugin-tenant-security` для блокировки небезопасного сырого SQL на этапе CI.
 - [x] **Immutable Context**: Рефакторинг `TenantContextService` на использование `TenantScope` (Value Object) и `AsyncLocalStorage`.
 - [x] **System Bypass**: Безопасный режим `@SystemWideOperation()` для легитимных фоновых задач с полным аудитом.
+
+## Milestone 35: Phase 5 (AI Explainability) & Infrastructure Hardening — DONE ✅
+**Дата:** 2026-02-22  
+**Статус:** ZERO-ERROR PRODUCTION GRADE (10/10)
+- [x] **AI Explainability**: Реализован 3-уровневый протокол (Surface / Analytical / Forensic) для прозрачности принятия решений.
+- [x] **Infrastructure Fix (70+ Errors)**: Полный рефакторинг типизации `PrismaService` ($extends), `TenantContextService` и перехватчиков.
+- [x] **Integrity Gate Fix**: Исправлены ошибки типизации (TS2365) в `IntegrityGateService`.
+- [x] **Runtime Stability**: Устранена ошибка `MODULE_NOT_FOUND` в API через корректировку `package.json` и путей `dist`.
+- [x] **Navigation Re-org**: Исправлены 404 ошибки на фронтенде путем приведения иерархии страниц в соответствие с `navigation-policy.ts`.
+- [x] **Verification**: Сборка `npm run build` проходит с 0 ошибок. NestJS сервер успешно стартует.

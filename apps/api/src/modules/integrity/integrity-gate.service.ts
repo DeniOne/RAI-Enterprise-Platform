@@ -416,12 +416,13 @@ export class IntegrityGateService {
             });
 
             const actualTotal = stockItems.reduce((sum, item) => sum + item.quantity, 0);
-            const ratio = plannedAmount > 0 ? actualTotal / plannedAmount : 1;
+            const amount = plannedAmount as number;
+            const ratio = amount > 0 ? actualTotal / amount : 1;
 
             if (ratio < 0.5) {
                 issues.push({
                     type: 'STOCK_CRITICAL_SHORTAGE',
-                    message: `Критическая нехватка ${resName}: затребовано ${plannedAmount}, в наличии ${actualTotal} (${(ratio * 100).toFixed(1)}%)`,
+                    message: `Критическая нехватка ${resName}: затребовано ${amount}, в наличии ${actualTotal} (${(ratio * 100).toFixed(1)}%)`,
                     severity: 'ERROR'
                 });
 

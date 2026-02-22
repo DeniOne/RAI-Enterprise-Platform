@@ -10,6 +10,7 @@ export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
+  private readonly tenantContext: TenantContextService;
   private readonly tenantMode: TenantMode;
   private readonly enforceCohort: Set<string>;
   private tenantViolations = 0;
@@ -98,10 +99,11 @@ export class PrismaService
     "RapeseedHistory",
   ]);
 
-  constructor(private readonly tenantContext: TenantContextService) {
+  constructor(tenantContext: TenantContextService) {
     super({
       log: (process.env.PRISMA_LOG_LEVEL || "").split(",").filter(Boolean) as any[],
     });
+    this.tenantContext = tenantContext;
     const mode = (process.env.TENANT_MIDDLEWARE_MODE || "shadow").toLowerCase();
     this.tenantMode = mode === "off" || mode === "enforce" ? mode : "shadow";
     this.enforceCohort = new Set(
@@ -148,32 +150,36 @@ export class PrismaService
           // 4. Inject companyId into filters
           // For reads/updates/deletes: inject into 'where'
           if (['findUnique', 'findUniqueOrThrow', 'findFirst', 'findFirstOrThrow', 'findMany', 'update', 'updateMany', 'delete', 'deleteMany', 'count', 'aggregate', 'groupBy'].includes(operation)) {
-            args.where = {
-              ...(args.where || {}),
+            const typedArgs = args as { where?: any };
+            typedArgs.where = {
+              ...(typedArgs.where || {}),
               companyId: tenantId,
             };
           }
 
           // For creates: inject into 'data'
           if (operation === 'create') {
-            args.data = {
-              ...(args.data || {}),
+            const typedArgs = args as { data?: any };
+            typedArgs.data = {
+              ...(typedArgs.data || {}),
               companyId: tenantId,
             };
           }
 
           // For createMany/upsert: handle nested data
           if (operation === 'createMany') {
-            if (Array.isArray(args.data)) {
-              args.data = args.data.map(item => ({ ...item, companyId: tenantId }));
+            const typedArgs = args as { data?: any | any[] };
+            if (Array.isArray(typedArgs.data)) {
+              typedArgs.data = typedArgs.data.map(item => ({ ...item, companyId: tenantId }));
             } else {
-              args.data = { ...args.data, companyId: tenantId };
+              typedArgs.data = { ...typedArgs.data, companyId: tenantId };
             }
           }
 
           if (operation === 'upsert') {
-            args.create = { ...(args.create || {}), companyId: tenantId };
-            args.where = { ...(args.where || {}), companyId: tenantId };
+            const typedArgs = args as { create?: any; where?: any };
+            typedArgs.create = { ...(typedArgs.create || {}), companyId: tenantId };
+            typedArgs.where = { ...(typedArgs.where || {}), companyId: tenantId };
           }
 
           return query(args);
@@ -183,70 +189,71 @@ export class PrismaService
   });
 
   // Proxy common methods to use the extended client
-  get account() { return this.tenantClient.account; }
-  get budget() { return this.tenantClient.budget; }
-  get budgetItem() { return this.tenantClient.budgetItem; }
-  get budgetPlan() { return this.tenantClient.budgetPlan; }
-  get cashAccount() { return this.tenantClient.cashAccount; }
-  get cmrDecision() { return this.tenantClient.cmrDecision; }
-  get cmrRisk() { return this.tenantClient.cmrRisk; }
-  get complianceCheck() { return this.tenantClient.complianceCheck; }
-  get contract() { return this.tenantClient.contract; }
-  get deal() { return this.tenantClient.deal; }
-  get decisionRecord() { return this.tenantClient.decisionRecord; }
-  get deviationReview() { return this.tenantClient.deviationReview; }
-  get economicEvent() { return this.tenantClient.economicEvent; }
-  get employeeProfile() { return this.tenantClient.employeeProfile; }
-  get executionRecord() { return this.tenantClient.executionRecord; }
-  get field() { return this.tenantClient.field; }
-  get fieldObservation() { return this.tenantClient.fieldObservation; }
-  get grInteraction() { return this.tenantClient.grInteraction; }
-  get harvestPlan() { return this.tenantClient.harvestPlan; }
-  get harvestResult() { return this.tenantClient.harvestResult; }
-  get holding() { return this.tenantClient.holding; }
-  get hrKPIIndicator() { return this.tenantClient.hrKPIIndicator; }
-  get humanAssessmentSnapshot() { return this.tenantClient.humanAssessmentSnapshot; }
-  get insuranceCoverage() { return this.tenantClient.insuranceCoverage; }
-  get invitation() { return this.tenantClient.invitation; }
-  get knowledgeEdge() { return this.tenantClient.knowledgeEdge; }
-  get knowledgeNode() { return this.tenantClient.knowledgeNode; }
-  get ledgerEntry() { return this.tenantClient.ledgerEntry; }
-  get learningEvent() { return this.tenantClient.learningEvent; }
-  get legalDocument() { return this.tenantClient.legalDocument; }
-  get legalRequirement() { return this.tenantClient.legalRequirement; }
-  get machinery() { return this.tenantClient.machinery; }
-  get modelVersion() { return this.tenantClient.modelVersion; }
-  get okrCycle() { return this.tenantClient.okrCycle; }
-  get performanceContract() { return this.tenantClient.performanceContract; }
-  get policySignal() { return this.tenantClient.policySignal; }
-  get pulseSurvey() { return this.tenantClient.pulseSurvey; }
-  get regulatoryBody() { return this.tenantClient.regulatoryBody; }
-  get researchProgram() { return this.tenantClient.researchProgram; }
-  get riskAssessment() { return this.tenantClient.riskAssessment; }
-  get riskSignal() { return this.tenantClient.riskSignal; }
-  get riskStateHistory() { return this.tenantClient.riskStateHistory; }
-  get roleDefinition() { return this.tenantClient.roleDefinition; }
-  get satelliteObservation() { return this.tenantClient.satelliteObservation; }
-  get scoreCard() { return this.tenantClient.scoreCard; }
-  get stockItem() { return this.tenantClient.stockItem; }
-  get stockTransaction() { return this.tenantClient.stockTransaction; }
-  get strategicGoal() { return this.tenantClient.strategicGoal; }
-  get task() { return this.tenantClient.task; }
-  get techMap() { return this.tenantClient.techMap; }
-  get technologyCard() { return this.tenantClient.technologyCard; }
-  get trainingRun() { return this.tenantClient.trainingRun; }
-  get user() { return this.tenantClient.user; }
-  get visionObservation() { return this.tenantClient.visionObservation; }
-  get driftReport() { return this.tenantClient.driftReport; }
-  get accountBalance() { return this.tenantClient.accountBalance; }
-  get tenantState() { return this.tenantClient.tenantState; }
+  get account() { return (this.tenantClient as any).account; }
+  get budget() { return (this.tenantClient as any).budget; }
+  get budgetItem() { return (this.tenantClient as any).budgetItem; }
+  get budgetPlan() { return (this.tenantClient as any).budgetPlan; }
+  get cashAccount() { return (this.tenantClient as any).cashAccount; }
+  get cmrDecision() { return (this.tenantClient as any).cmrDecision; }
+  get cmrRisk() { return (this.tenantClient as any).cmrRisk; }
+  get complianceCheck() { return (this.tenantClient as any).complianceCheck; }
+  get contract() { return (this.tenantClient as any).contract; }
+  get deal() { return (this.tenantClient as any).deal; }
+  get decisionRecord() { return (this.tenantClient as any).decisionRecord; }
+  get deviationReview() { return (this.tenantClient as any).deviationReview; }
+  get economicEvent() { return (this.tenantClient as any).economicEvent; }
+  get employeeProfile() { return (this.tenantClient as any).employeeProfile; }
+  get executionRecord() { return (this.tenantClient as any).executionRecord; }
+  get field() { return (this.tenantClient as any).field; }
+  get fieldObservation() { return (this.tenantClient as any).fieldObservation; }
+  get grInteraction() { return (this.tenantClient as any).grInteraction; }
+  get harvestPlan() { return (this.tenantClient as any).harvestPlan; }
+  get harvestResult() { return (this.tenantClient as any).harvestResult; }
+  get holding() { return (this.tenantClient as any).holding; }
+  get hrKPIIndicator() { return (this.tenantClient as any).hrKPIIndicator; }
+  get humanAssessmentSnapshot() { return (this.tenantClient as any).humanAssessmentSnapshot; }
+  get insuranceCoverage() { return (this.tenantClient as any).insuranceCoverage; }
+  get invitation() { return (this.tenantClient as any).invitation; }
+  get knowledgeEdge() { return (this.tenantClient as any).knowledgeEdge; }
+  get knowledgeNode() { return (this.tenantClient as any).knowledgeNode; }
+  get ledgerEntry() { return (this.tenantClient as any).ledgerEntry; }
+  get learningEvent() { return (this.tenantClient as any).learningEvent; }
+  get legalDocument() { return (this.tenantClient as any).legalDocument; }
+  get legalRequirement() { return (this.tenantClient as any).legalRequirement; }
+  get machinery() { return (this.tenantClient as any).machinery; }
+  get modelVersion() { return (this.tenantClient as any).modelVersion; }
+  get okrCycle() { return (this.tenantClient as any).okrCycle; }
+  get performanceContract() { return (this.tenantClient as any).performanceContract; }
+  get policySignal() { return (this.tenantClient as any).policySignal; }
+  get pulseSurvey() { return (this.tenantClient as any).pulseSurvey; }
+  get regulatoryBody() { return (this.tenantClient as any).regulatoryBody; }
+  get researchProgram() { return (this.tenantClient as any).researchProgram; }
+  get riskAssessment() { return (this.tenantClient as any).riskAssessment; }
+  get riskSignal() { return (this.tenantClient as any).riskSignal; }
+  get riskStateHistory() { return (this.tenantClient as any).riskStateHistory; }
+  get roleDefinition() { return (this.tenantClient as any).roleDefinition; }
+  get satelliteObservation() { return (this.tenantClient as any).satelliteObservation; }
+  get scoreCard() { return (this.tenantClient as any).scoreCard; }
+  get stockItem() { return (this.tenantClient as any).stockItem; }
+  get stockTransaction() { return (this.tenantClient as any).stockTransaction; }
+  get strategicGoal() { return (this.tenantClient as any).strategicGoal; }
+  get task() { return (this.tenantClient as any).task; }
+  get techMap() { return (this.tenantClient as any).techMap; }
+  get technologyCard() { return (this.tenantClient as any).technologyCard; }
+  get trainingRun() { return (this.tenantClient as any).trainingRun; }
+  get user() { return (this.tenantClient as any).user; }
+  get visionObservation() { return (this.tenantClient as any).visionObservation; }
+  get driftReport() { return (this.tenantClient as any).driftReport; }
+  get accountBalance() { return (this.tenantClient as any).accountBalance; }
+  get tenantState() { return (this.tenantClient as any).tenantState; }
+  get generationRecord() { return (this.tenantClient as any).generationRecord; }
 
   // System/Non-tenant models
-  get company() { return this.tenantClient.company; }
-  get outboxMessage() { return this.tenantClient.outboxMessage; }
-  get eventConsumption() { return this.tenantClient.eventConsumption; }
-  get rapeseed() { return this.tenantClient.rapeseed; }
-  get rapeseedHistory() { return this.tenantClient.rapeseedHistory; }
+  get company() { return (this.tenantClient as any).company; }
+  get outboxMessage() { return (this.tenantClient as any).outboxMessage; }
+  get eventConsumption() { return (this.tenantClient as any).eventConsumption; }
+  get rapeseed() { return (this.tenantClient as any).rapeseed; }
+  get rapeseedHistory() { return (this.tenantClient as any).rapeseedHistory; }
 
   /**
    * Safe wrapper for raw queries that ensures session context is set.

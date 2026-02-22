@@ -31,7 +31,7 @@
   - [x] Triggered Effects Panel with SHA-256 (RFC8785) verification.
   - [x] Conflict Component & Lexicographical BFS escalation path.
   - [x] Institutional Replay Test Suite (100% Determinism).
-- **Current Objective**: **Phase 8: Scale & Global Reliability**. Завершение AI-объяснимости и переход к масштабированию инфраструктуры.
+- **Current Objective**: **Phase 9: Strategic Scaling & Audit Readiness**. Стабилизация системы завершена, переход к расширению бизнес-логики.
 
 ## Active Decisions
 - **Standardization**: Используем структуру документов с префиксами (00, 10, 20...).
