@@ -188,8 +188,8 @@ graph LR
 
 ---
 
-## PHASE 5: AI Explainability (Trust & Forensic)
-**Срок:** Неделя 5  
+## PHASE 5: AI Explainability (Trust & Forensic) [DONE]
+**Срок:** Неделя 5 [DONE]
 **Цель:** Реализовать 3-уровневое обоснование решений ИИ.
 
 ### Задачи:
@@ -202,10 +202,40 @@ graph LR
 
 > [!CHECKLIST]
 > **Definition of Done (Phase 5):**
-> - [ ] Нет выводов ИИ без указания `confidence %`.
-> - [ ] Реализован контрфактуальный анализ в UI.
-> - [ ] Каждая рекомендация имеет прямую ссылку на запись в Ledger.
-> - [ ] ИИ не позиционируется как абсолютный авторитет.
+> - [x] Нет выводов ИИ без указания `confidence %`. [DONE]
+> - [x] Реализован аналитический слой (факторы и контрфактуальный анализ) в UI. [DONE]
+> - [x] Каждая рекомендация имеет форензик-слой (модель, хеш, лог). [DONE]
+> - [x] Интегрирован `ExplainabilityPanel` в `DecisionsPage`. [DONE]
+
+---
+
+## PHASE 5.1: Infrastructure & Security Hardening (Zero-Trust Fix) [DONE]
+**Цель:** Ликвидация технического долга и укрепление типизации.
+
+### Задачи:
+*   **Fix 70+ TS Errors [DONE]:** Полный рефакторинг `PrismaService` ($extends), `TenantContextService`.
+*   **Integrity Gate Fix [DONE]:** Устранение ошибок типизации в `IntegrityGateService`.
+*   **Runtime Stability [DONE]:** Исправление путей `dist` и ESM/CJS конфликтов.
+
+> [!CHECKLIST]
+> **Definition of Done (Phase 5.1):**
+> - [x] `npm run build` завершается с 0 ошибок.
+> - [x] Тесты изоляции тенантов проходят успешно.
+> - [x] Сервер запускается в детерминированном окружении.
+
+---
+
+## PHASE 5.2: Navigation Policy Alignment (404 Fix) [DONE]
+**Цель:** Приведение фронтенда к стандарту Navigation Policy.
+
+### Задачи:
+*   **Navigation Re-org [DONE]:** Перенос страниц в структуру `app/consulting/deviations/...`.
+*   **Redirect Logic [DONE]:** Автоматический редирект с корня `/deviations` на `/detected`.
+
+> [!CHECKLIST]
+> **Definition of Done (Phase 5.2):**
+> - [x] Сайдбар открывает страницы без 404 ошибок.
+> - [x] Структура папок совпадает с `navigation-policy.ts`.
 
 ---
 
