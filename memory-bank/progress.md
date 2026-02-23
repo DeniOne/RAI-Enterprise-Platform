@@ -388,3 +388,12 @@
 - [x] **Runtime Stability**: Устранена ошибка `MODULE_NOT_FOUND` в API через корректировку `package.json` и путей `dist`.
 - [x] **Navigation Re-org**: Исправлены 404 ошибки на фронтенде путем приведения иерархии страниц в соответствие с `navigation-policy.ts`.
 - [x] **Verification**: Сборка `npm run build` проходит с 0 ошибок. NestJS сервер успешно стартует.
+
+## Milestone 36: Frontend Menu - ���������� ������� (MVP) - DONE
+**����:** 2026-02-23
+- [x] Dashboard '/consulting/dashboard' redesigned in RAI style with live KPI widgets.
+- [x] Added clickable KPI/alerts/status blocks with direct navigation to entities.
+- [x] Implemented smart-routing contract (?entity/?severity) with highlight + auto-scroll on target screens.
+- [x] Added reusable hook 'useEntityFocus' for unified entity focus behavior.
+- [x] Added production-ready checklist pattern to menu docs/template.
+- [x] Fixed API dev-watch startup race (dist path + watcher stability).

@@ -9,7 +9,6 @@
         "target": "es2017",
         "sourceMap": true,
         "outDir": "./dist",
-        "rootDir": "../..",
         "baseUrl": ".",
         "paths": {
             "@rai/prisma-client": [

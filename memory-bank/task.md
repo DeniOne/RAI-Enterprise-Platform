@@ -120,3 +120,10 @@
 - [x] **FSM Hardening**: Mandatory re-analysis cycle after conflict resolution <!-- id: 14.3 -->
 - [x] **UI Verification**: Evidence of hardening (hash display) in `GovernanceTestButton` <!-- id: 14.4 -->
 - [x] **Replay Integrity**: `InstitutionalReplay.test.ts` verified (10/10 Grade) <!-- id: 14.5 -->
+
+## Frontend Menu Workstream: Управление Урожаем - COMPLETE (MVP)
+- [x] Documented button behavior and UX contract in docs/10_FRONTEND_MENU_IMPLEMENTATION/01_MENU_Управление_Урожаем.md
+- [x] Implemented live dashboard interactions and deep-link navigation
+- [x] Implemented smart routing with entity highlighting on target pages
+- [x] Added reusable hook useEntityFocus for cross-page consistency
+- [ ] Production-ready debt remains per checklist: real API metrics, text encoding cleanup, E2E route test

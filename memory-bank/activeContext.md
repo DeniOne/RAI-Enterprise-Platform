@@ -54,3 +54,6 @@
 - **DB Guard Enforcement**: Атомарная валидация метаданных транзакций.
 - **FSM Integrity**: Все переходы через `DecisionLog` и RBAC.
 - **Replay Recovery**: Идемпотентные повторы обязаны восстанавливать проекции, если они отсутствуют.
+
+- **Frontend Menu Execution (2026-02-23):** Button '���������� �������' closed at MVP level: interactive dashboard, smart-routing alerts, unified focus hook, and docs checklist contract.
+- **Backend Runtime Note:** API watch mode stabilized by aligning dist entrypoint and preventing watch-time dist deletion race.
