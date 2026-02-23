@@ -6,7 +6,7 @@ import { UserRole } from '@/lib/config/role-config'; // Assuming this is where U
 import { getVisibleNavigation, NavItem } from '@/lib/consulting/navigation-policy';
 import clsx from 'clsx';
 import { useState, useEffect } from 'react';
-import { ChevronDown, ChevronRight, Circle, LayoutDashboard, Users, ClipboardList, Map, Calculator, AlertTriangle, CheckCircle2, TrendingUp, ShieldCheck, Database, Settings2, BookOpen, Package, Landmark, Sprout, BarChart3 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Circle, LayoutDashboard, Users, ClipboardList, Map, Calculator, AlertTriangle, CheckCircle2, TrendingUp, ShieldCheck, Database, Settings2, BookOpen, Package, Landmark, Sprout, BarChart3, Loader2 } from 'lucide-react';
 
 // Domain Layer Mapping (Immutable definition for View Layer)
 const DOMAIN_LAYERS: Record<string, number> = {
@@ -46,6 +46,7 @@ interface SidebarProps {
 export function Sidebar({ role }: SidebarProps) {
     const pathname = usePathname();
     const [navItems, setNavItems] = useState<NavItem[]>([]);
+    const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
 
     // "Crop Management" (domain='crop') is consistently expanded/dominant
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set(['crop_dashboard']));
@@ -96,6 +97,12 @@ export function Sidebar({ role }: SidebarProps) {
         });
 
     }, [role, pathname]);
+
+    useEffect(() => {
+        if (navigatingTo && pathname === navigatingTo) {
+            setNavigatingTo(null);
+        }
+    }, [navigatingTo, pathname]);
 
     const toggleExpand = (id: string, e: React.MouseEvent) => {
         e.preventDefault();
@@ -192,7 +199,15 @@ export function Sidebar({ role }: SidebarProps) {
 
                     {/* Label Area (Always navigates) */}
                     <div className="flex-1 flex items-center">
-                        <Link href={item.path} className="flex-1 flex items-center py-0.5">
+                        <Link
+                            href={item.path}
+                            onClick={() => {
+                                if (item.path !== pathname) {
+                                    setNavigatingTo(item.path);
+                                }
+                            }}
+                            className="flex-1 flex items-center py-0.5"
+                        >
                             {depth > 0 && !item.subItems && (
                                 <Circle size={4} className={clsx("mr-2.5", active ? "fill-slate-900" : "fill-gray-300 group-hover:fill-gray-400")} />
                             )}
@@ -262,6 +277,12 @@ export function Sidebar({ role }: SidebarProps) {
 
             {/* Footer */}
             <div className="p-6 border-t border-black/5 bg-gray-50/50">
+                {navigatingTo ? (
+                    <div className="mb-2 flex items-center gap-2 text-[10px] text-slate-600 font-mono uppercase tracking-wider">
+                        <Loader2 size={12} className="animate-spin" />
+                        Переход...
+                    </div>
+                ) : null}
                 <div className="flex items-center gap-2 text-[10px] text-gray-400 font-mono uppercase tracking-wider">
                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                     System Canonical

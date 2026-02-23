@@ -1,5 +1,13 @@
 # Progress: RAI_EP
 
+## Milestone 26: Dev Runtime Acceleration & S3 Recovery - DONE
+**Дата:** 2026-02-23
+- [x] Frontend dev runtime accelerated (`next dev --turbo`) with reduced heavy transpilation in dev mode.
+- [x] UX loading visibility improved (route loading state + sidebar transition indicator).
+- [x] Backend startup stabilized (Prisma generate lock resolved; tsbuildinfo reset guidance validated).
+- [x] Local MinIO/S3 auth aligned (`MINIO_ACCESS_KEY`/`MINIO_SECRET_KEY`) and S3 connection error removed.
+- [x] Root launch scripts updated (`run_web.bat`, `run_api.bat`, `start_all.bat`) for consistent local startup.
+
 ## Milestone 25: Phase 1-7 Institutional Closure - DONE
 **Дата:** 2026-02-23
 - [x] Синхронизированы чеклисты roadmap и hardening audit.

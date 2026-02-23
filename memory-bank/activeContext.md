@@ -34,6 +34,7 @@
   - [x] Conflict Component & Lexicographical BFS escalation path.
   - [x] Institutional Replay Test Suite (100% Determinism).
 - **Current Objective**: **Phase 1-7 Institutional Closure COMPLETE**. Чеклисты синхронизированы, memory bank актуализирован, roadmap логически и физически закрыт до Phase 7.
+- **Runtime Stabilization (2026-02-23):** Frontend dev ускорен (Turbopack + облегченный dev-transpile), добавлен явный loading feedback в UI, backend startup ускорен и стабилизирован, локальный S3/MinIO auth выровнен.
 
 ## Active Decisions
 - **Standardization**: Используем структуру документов с префиксами (00, 10, 20...).

@@ -1,5 +1,6 @@
 @echo off
 title RAI_EP Full Stack Launcher
+set NEXT_TELEMETRY_DISABLED=1
 
 echo [1/5] STARTING INFRASTRUCTURE (DOCKER)...
 call pnpm docker:up
@@ -23,7 +24,7 @@ echo [5/5] STARTING FRONTEND (WEB)...
 start "RAI_EP Frontend" cmd /k "cd apps/web && pnpm run dev"
 
 echo ==========================================
-echo ✅ ALL SYSTEMS STARTING...
+echo [OK] ALL SYSTEMS STARTING...
 echo ------------------------------------------
 echo Backend API: http://localhost:4000
 echo Telegram Bot: http://localhost:4002 (microservice)
