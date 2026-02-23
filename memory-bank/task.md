@@ -49,12 +49,12 @@
 - [x] **Safety Audit**: Strictly gated optimization logic <!-- id: 12.6 -->
 - [x] **Walkthrough**: Final proof-of-work delivered <!-- id: 12.7 -->
 
-## Sprint Gamma 7: Stabilization & Exit (In Progress) 🚀
+## Sprint Gamma 7: Stabilization & Exit (Complete) 🚀
 - [x] S7.PLAN1 Sprint 7 checklist created
 - [x] S7.PLAN2 Sprint index updated
 - [x] **Phase 5 (Cash Flow Engine) Hardening & Integration** ✅
-- [ ] S7.WP1 S4 Observability Sweep
-- [ ] S7.WP6 Gamma Exit Packet Drafting
+- [x] S7.WP1 S4 Observability Sweep
+- [x] S7.WP6 Gamma Exit Packet Drafting
 
 ---
 **ИТОГ:** Основные функциональные треки Фаз 1-5 успешно завершены и архитектурно закреплены.

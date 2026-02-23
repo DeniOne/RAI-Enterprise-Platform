@@ -1,4 +1,10 @@
-﻿# Progress: RAI_EP
+# Progress: RAI_EP
+
+## Milestone 25: Phase 1-7 Institutional Closure - DONE
+**Дата:** 2026-02-23
+- [x] Синхронизированы чеклисты roadmap и hardening audit.
+- [x] Memory bank обновлен под фактический статус завершения до Phase 7.
+- [x] Актуализирован verification snapshot: web lint/test, api build/test, replay determinism.
 
 ## Milestone 1-8: Completed (Review activeContext.md for details)
 
