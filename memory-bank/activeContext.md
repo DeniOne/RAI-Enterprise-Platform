@@ -67,3 +67,8 @@
   - backend invariant guard for `FROZEN` without linked farms/fields,
   - API regression test added for hierarchy validation.
 
+
+- **Institutional Commerce Core (2026-02-25):** implemented and verified ✅
+  - `Commerce*` schema slice with strict multi-tenant constraints
+  - backend services + DTO + controller workflow
+  - runtime E2E flow validated and migration applied

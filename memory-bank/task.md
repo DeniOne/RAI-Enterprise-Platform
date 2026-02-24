@@ -146,3 +146,11 @@
 - [x] Added backend freeze-guard validation and API test coverage
 - [x] Synced production docs/checklists to DONE status
 
+
+## Institutional Commerce Core (Execution) ✅
+- [x] Prisma models introduced with `Commerce*` side-by-side isolation from legacy CRM `Contract`/`Obligation`.
+- [x] Tenant isolation enforced for new models via Prisma tenant middleware.
+- [x] Services implemented: intercompany check, contract orchestration, fulfillment processing, billing/posting/payment confirmation.
+- [x] DTOs and controller endpoints implemented for operational workflow.
+- [x] Runtime E2E test implemented and passing.
+- [x] Migration status aligned and deployed on dev environment.

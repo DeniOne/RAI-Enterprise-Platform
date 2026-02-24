@@ -1,4 +1,11 @@
-﻿# Progress: RAI_EP
+﻿## Milestone 39: Institutional Commerce Core - DONE
+**Date:** 2026-02-25
+- [x] Added isolated commerce data model with `Commerce*` prefix and strict tenant composite constraints.
+- [x] Implemented domain services: `IntercompanyService`, `CommerceContractService`, `FulfillmentService`, `BillingService`.
+- [x] Added DTO validation layer and HTTP workflow endpoints in `CommerceController`.
+- [x] Added E2E runtime test covering: Contract -> Obligation -> Fulfillment -> Invoice POST -> Payment CONFIRM -> Allocation -> AR Balance.
+- [x] Synchronized DB migrations and applied `commerce_core` migration chain on dev database.
+# Progress: RAI_EP
 
 ## Milestone 26: Dev Runtime Acceleration & S3 Recovery - DONE
 **Р”Р°С‚Р°:** 2026-02-23
@@ -421,4 +428,5 @@
 - [x] Enforced backend hierarchy validation: `FROZEN` is blocked when no linked farms/fields.
 - [x] Added API test coverage for freeze-guard invariant (`crm.service.spec.ts`).
 - [x] Updated docs/checklists: `11_BUTTON_Контрагенты.md`, `99_TECH_DEBT_CHECKLIST.md`, `00_MASTER_MENU_MAP.md`.
+
 

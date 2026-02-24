@@ -1,7 +1,7 @@
-import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
+import { Module, MiddlewareConsumer, RequestMethod } from "@nestjs/common";
 // Force restart
-import * as Joi from 'joi';
-import { EventEmitterModule } from '@nestjs/event-emitter';
+import * as Joi from "joi";
+import { EventEmitterModule } from "@nestjs/event-emitter";
 import { GraphQLModule } from "@nestjs/graphql";
 import { ApolloDriver, ApolloDriverConfig } from "@nestjs/apollo";
 import { ConfigModule } from "@nestjs/config";
@@ -41,11 +41,12 @@ import { ConsultingModule } from "./modules/consulting/consulting.module";
 import { AdvisoryModule } from "./modules/advisory/advisory.module";
 import { HealthModule } from "./modules/health/health.module";
 import { AdaptiveLearningModule } from "./modules/adaptive-learning/adaptive-learning.module";
+import { CommerceModule } from "./modules/commerce/commerce.module";
 import { HttpResilienceModule } from "./shared/http/http-resilience.module";
 import { BullModule } from "@nestjs/bullmq";
 import { join } from "path";
 
-import { OutboxModule } from './shared/outbox/outbox.module';
+import { OutboxModule } from "./shared/outbox/outbox.module";
 import { InvariantMetricsModule } from "./shared/invariants/invariant-metrics.module";
 import { GatewayModule } from "./level-f/gateway/gateway.module";
 import { CryptoModule } from "./level-f/crypto/crypto.module";
@@ -58,13 +59,15 @@ import { TenantContextModule } from "./shared/tenant-context/tenant-context.modu
       envFilePath: [".env", "../../.env"],
       isGlobal: true,
       validationSchema: Joi.object({
-        NODE_ENV: Joi.string().valid('development', 'production', 'test', 'provision').default('development'),
+        NODE_ENV: Joi.string()
+          .valid("development", "production", "test", "provision")
+          .default("development"),
         PORT: Joi.number().default(3000),
         DATABASE_URL: Joi.string().required(),
-        REDIS_HOST: Joi.string().default('localhost'),
+        REDIS_HOST: Joi.string().default("localhost"),
         REDIS_PORT: Joi.number().default(6379),
         JWT_SECRET: Joi.string().required(),
-        MINIO_ENDPOINT: Joi.string().default('localhost'),
+        MINIO_ENDPOINT: Joi.string().default("localhost"),
         MINIO_PORT: Joi.number().default(9000),
         MINIO_ROOT_USER: Joi.string().required(),
         MINIO_ROOT_PASSWORD: Joi.string().required(),
@@ -76,10 +79,12 @@ import { TenantContextModule } from "./shared/tenant-context/tenant-context.modu
     }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
-    ThrottlerModule.forRoot([{
-      ttl: 60000, // 1 minute
-      limit: 1000,  // Increased for load testing
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 1 minute
+        limit: 1000, // Increased for load testing
+      },
+    ]),
     CryptoModule,
     GatewayModule,
     RedisModule,
@@ -117,10 +122,11 @@ import { TenantContextModule } from "./shared/tenant-context/tenant-context.modu
     AdvisoryModule,
     HealthModule,
     AdaptiveLearningModule,
+    CommerceModule,
     HttpResilienceModule,
     BullModule.forRoot({
       connection: {
-        host: process.env.REDIS_HOST || 'localhost',
+        host: process.env.REDIS_HOST || "localhost",
         port: Number(process.env.REDIS_PORT) || 6379,
       },
     }),
@@ -139,4 +145,4 @@ import { TenantContextModule } from "./shared/tenant-context/tenant-context.modu
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

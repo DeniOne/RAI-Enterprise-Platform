@@ -4,6 +4,8 @@
 DO $$
 DECLARE
     t text;
+    has_table boolean;
+    has_company_id boolean;
     tables_to_harden text[] := ARRAY[
         'field_observations', 'cmr_deviation_reviews', 'cmr_risks', 'tasks', 'tech_maps', 
         'accounts', 'machinery', 'risk_signals', 'risk_assessments', 'risk_state_history', 
@@ -28,6 +30,31 @@ DECLARE
 BEGIN
     FOREACH t IN ARRAY tables_to_harden
     LOOP
+        SELECT EXISTS (
+            SELECT 1
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
+              AND table_name = t
+        ) INTO has_table;
+
+        IF NOT has_table THEN
+            RAISE NOTICE 'RLS skipped (table missing): %', t;
+            CONTINUE;
+        END IF;
+
+        SELECT EXISTS (
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = t
+              AND column_name = 'companyId'
+        ) INTO has_company_id;
+
+        IF NOT has_company_id THEN
+            RAISE NOTICE 'RLS skipped (companyId missing): %', t;
+            CONTINUE;
+        END IF;
+
         -- Enable RLS
         EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY;', t);
         EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY;', t);
