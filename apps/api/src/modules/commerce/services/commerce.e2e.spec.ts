@@ -162,15 +162,17 @@ describe("Commerce e2e runtime flow", () => {
       1000,
     );
     expect(invoice.taxSnapshotJson).toBeDefined();
+    expect(Number(invoice.taxTotal)).toBe(200);
 
     const posted = await billingService.postInvoice(invoice.id);
     expect(posted.status).toBe("POSTED");
     expect(posted.ledgerTxId).toBeTruthy();
 
+    const payableTotal = Number(invoice.grandTotal);
     const payment = await billingService.createPayment({
       payerPartyId: "party-buyer",
       payeePartyId: "party-seller",
-      amount: 1000,
+      amount: payableTotal,
       currency: "RUB",
       paymentMethod: "BANK_TRANSFER",
     });
@@ -179,7 +181,7 @@ describe("Commerce e2e runtime flow", () => {
     expect(confirmed.status).toBe("CONFIRMED");
     expect(confirmed.ledgerTxId).toBeTruthy();
 
-    await billingService.allocatePayment(payment.id, invoice.id, 1000);
+    await billingService.allocatePayment(payment.id, invoice.id, payableTotal);
     const balance = await billingService.getArBalance(invoice.id);
     expect(balance).toBe(0);
   });
