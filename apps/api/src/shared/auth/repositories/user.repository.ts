@@ -7,17 +7,27 @@ export class UserRepository implements IUserRepository {
   constructor(private prisma: PrismaService) {}
 
   async findByEmail(email: string): Promise<UserWithCompany | null> {
-    return this.prisma.user.findUnique({ // tenant-lint:ignore repository method has no tenant context in current contract
+    return this.prisma.user.findUnique({
+      // tenant-lint:ignore repository method has no tenant context in current contract
       where: { email },
       include: { company: true },
     }) as Promise<UserWithCompany | null>;
   }
 
   async findById(id: string): Promise<UserWithCompany | null> {
-    return this.prisma.user.findUnique({ // tenant-lint:ignore repository method has no tenant context in current contract
+    return this.prisma.user.findUnique({
+      // tenant-lint:ignore repository method has no tenant context in current contract
       where: { id },
       include: { company: true },
     }) as Promise<UserWithCompany | null>;
+  }
+
+  async findByCompanyId(companyId: string): Promise<UserWithCompany[]> {
+    return this.prisma.user.findMany({
+      where: { companyId },
+      include: { company: true },
+      orderBy: { createdAt: "asc" },
+    }) as Promise<UserWithCompany[]>;
   }
 
   async create(data: any): Promise<any> {

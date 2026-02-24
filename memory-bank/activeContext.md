@@ -59,4 +59,11 @@
 - **Backend Runtime Note:** API watch mode stabilized by aligning dist entrypoint and preventing watch-time dist deletion race.
 
 - **Frontend Menu CRM Button (2026-02-23):** Хозяйства и контрагенты closed at MVP with explicit click-map, loading/empty/error/permission, smart routing ?entity=... (crm/farms/counterparties), and executive latest counterparties (top-5) block.
+- **Frontend Menu CRM Counterparties (2026-02-24):** production closure completed:
+  - hierarchy flow `Holding -> Legal Entity -> Farm`,
+  - full CRM management workspace (registry filters + profile patch + workspace tabs),
+  - CRUD for contacts/interactions/obligations,
+  - responsible selection from company users directory,
+  - backend invariant guard for `FROZEN` without linked farms/fields,
+  - API regression test added for hierarchy validation.
 

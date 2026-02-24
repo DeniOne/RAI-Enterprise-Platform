@@ -7,7 +7,7 @@ export class AuthService {
   constructor(
     private userRepository: UserRepository,
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
     // Find user by email (ARCH-DEBT-001: include company for multi-tenancy)
@@ -62,5 +62,16 @@ export class AuthService {
       companyId: user.companyId,
       company: user.company,
     };
+  }
+
+  async listCompanyUsers(companyId: string) {
+    const users = await this.userRepository.findByCompanyId(companyId);
+    return users.map((user) => ({
+      id: user.id,
+      email: user.email,
+      name: user.name || user.email.split("@")[0],
+      role: user.role,
+      companyId: user.companyId,
+    }));
   }
 }

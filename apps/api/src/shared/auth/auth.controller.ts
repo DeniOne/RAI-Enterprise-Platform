@@ -12,7 +12,12 @@ import {
 import { AuthService } from "./auth.service";
 import { TelegramAuthService } from "./telegram-auth.service";
 import { AuthGuard } from "@nestjs/passport";
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from "@nestjs/swagger";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from "@nestjs/swagger";
 import { Throttle } from "@nestjs/throttler";
 
 @ApiTags("Authentication")
@@ -21,7 +26,7 @@ export class AuthController {
   constructor(
     private authService: AuthService,
     private telegramAuthService: TelegramAuthService,
-  ) { }
+  ) {}
 
   @Get("ping")
   ping() {
@@ -31,7 +36,10 @@ export class AuthController {
   @Post("login")
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute for login
   @ApiOperation({ summary: "User login" })
-  @ApiResponse({ status: 200, description: "Login successful, returns JWT token" })
+  @ApiResponse({
+    status: 200,
+    description: "Login successful, returns JWT token",
+  })
   @ApiResponse({ status: 401, description: "Invalid credentials" })
   @ApiResponse({ status: 429, description: "Too many requests" })
   async login(@Body() body: { email: string; password: string }) {
@@ -40,11 +48,19 @@ export class AuthController {
 
   @Post("telegram-login")
   @ApiOperation({ summary: "Initiate Telegram 2FA login" })
-  @ApiResponse({ status: 200, description: "Login session created, push sent to Telegram" })
+  @ApiResponse({
+    status: 200,
+    description: "Login session created, push sent to Telegram",
+  })
   @ApiResponse({ status: 404, description: "User not found" })
-  async initiateTelegramLogin(@Body() body: { telegramId: string; companyId?: string }) {
+  async initiateTelegramLogin(
+    @Body() body: { telegramId: string; companyId?: string },
+  ) {
     try {
-      const result = await this.telegramAuthService.initiateLogin(body.telegramId, body.companyId);
+      const result = await this.telegramAuthService.initiateLogin(
+        body.telegramId,
+        body.companyId,
+      );
       return result;
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.NOT_FOUND);
@@ -57,12 +73,14 @@ export class AuthController {
   @ApiResponse({ status: 404, description: "Session not found or expired" })
   async checkTelegramLoginStatus(@Param("sessionId") sessionId: string) {
     try {
-      const session = await this.telegramAuthService.checkLoginStatus(sessionId);
+      const session =
+        await this.telegramAuthService.checkLoginStatus(sessionId);
 
       // If approved, return access token
-      if (session.status === 'approved') {
-        const { accessToken } = await this.telegramAuthService.confirmLogin(sessionId);
-        return { status: 'approved', accessToken };
+      if (session.status === "approved") {
+        const { accessToken } =
+          await this.telegramAuthService.confirmLogin(sessionId);
+        return { status: "approved", accessToken };
       }
 
       return { status: session.status };
@@ -75,7 +93,7 @@ export class AuthController {
 @ApiTags("Users")
 @Controller("users")
 export class UsersController {
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
 
   @Get("me")
   @ApiBearerAuth()
@@ -85,5 +103,14 @@ export class UsersController {
   @ApiResponse({ status: 401, description: "Unauthorized" })
   async getProfile(@Request() req) {
     return this.authService.getProfile(req.user.userId);
+  }
+
+  @Get("company/:companyId")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard("jwt"))
+  @ApiOperation({ summary: "Get users by company" })
+  @ApiResponse({ status: 200, description: "Returns users list" })
+  async getCompanyUsers(@Param("companyId") companyId: string) {
+    return this.authService.listCompanyUsers(companyId);
   }
 }

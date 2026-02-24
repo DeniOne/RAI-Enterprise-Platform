@@ -408,3 +408,17 @@
 - [x] Updated master map for CRM group in docs/10_FRONTEND_MENU_IMPLEMENTATION/00_MASTER_MENU_MAP.md
 - [ ] Production-ready debt: e2e route scenario, encoding cleanup, replacing demo metrics with target API metrics
 
+## Milestone 38: Frontend Menu - CRM Counterparties Button (Production Closure) - DONE
+**Date:** 2026-02-24
+- [x] CRM counterparties upgraded from informational list to full management workspace.
+- [x] Implemented hierarchy model `Holding -> Legal Entity -> Farm` in UI actions and flow.
+- [x] Added server-side workspace/profile APIs:
+  - `GET /crm/accounts/:id/workspace`
+  - `PATCH /crm/accounts/:id`
+- [x] Added registry filters: `type`, `status`, `risk`, `responsible`.
+- [x] Added card-level operational tabs and CRUD flows for contacts/interactions/obligations.
+- [x] Added responsible selection from company users directory (`GET /users/company/:companyId`).
+- [x] Enforced backend hierarchy validation: `FROZEN` is blocked when no linked farms/fields.
+- [x] Added API test coverage for freeze-guard invariant (`crm.service.spec.ts`).
+- [x] Updated docs/checklists: `11_BUTTON_Контрагенты.md`, `99_TECH_DEBT_CHECKLIST.md`, `00_MASTER_MENU_MAP.md`.
+

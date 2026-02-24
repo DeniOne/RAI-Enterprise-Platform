@@ -136,3 +136,13 @@
 - [x] Added executive block: latest 5 added counterparties
 - [ ] Production-ready debt: e2e route scenario, encoding cleanup, full API metrics
 
+## Frontend Menu Workstream: CRM Counterparties Button - PRODUCTION CLOSURE COMPLETE
+- [x] Upgraded to full CRM management screen (not informational only)
+- [x] Implemented hierarchy actions for `Holding` and `Legal Entity`
+- [x] Added backend APIs `GET /crm/accounts/:id/workspace` and `PATCH /crm/accounts/:id`
+- [x] Added registry filters (`type`, `status`, `risk`, `responsible`)
+- [x] Added card tabs + CRUD for contacts/interactions/obligations
+- [x] Added responsible picker from company users directory
+- [x] Added backend freeze-guard validation and API test coverage
+- [x] Synced production docs/checklists to DONE status
+
