@@ -17,6 +17,7 @@ out/
 generated/
 *.db
 *.db-journal
+packages/prisma-client/generated-client/query_engine-windows.dll.node.tmp*
 
 # Environment
 .env
@@ -29,6 +30,9 @@ generated/
 *.log
 _*.log
 docs/04-ENGINEERING/*.jsonl
+*.tsbuildinfo
+coverage/
+.nyc_output/
 
 # OS
 .DS_Store
@@ -44,3 +48,8 @@ docker-compose.override.yml
 node_modules
 
 backup_crops.ts
+
+# Local working notes / scratch
+brain/
+Рабочая/
+memory-bank/
