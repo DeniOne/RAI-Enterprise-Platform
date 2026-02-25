@@ -6,6 +6,7 @@ import { EscalationBanner } from '../../components/governance/EscalationBanner';
 import { QuorumVisualizer } from '../../components/governance/QuorumVisualizer';
 import { X } from 'lucide-react';
 import { clsx } from 'clsx';
+import { useSessionIntegrity } from '../hooks/useSessionIntegrity';
 
 /**
  * @file WorkSurface.tsx
@@ -15,6 +16,8 @@ import { clsx } from 'clsx';
 
 export const WorkSurface: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { activeEscalation, isQuorumModalOpen, setQuorumModalOpen } = useGovernanceStore();
+    const { integrityStatus, mismatch, traceId } = useSessionIntegrity();
+    const isFrozenByIntegrity = integrityStatus === 'MISMATCH';
 
     return (
         <main className="flex-1 min-h-[calc(100vh-64px)] bg-[#FDFDFD] p-8 overflow-y-auto relative">
@@ -33,11 +36,34 @@ export const WorkSurface: React.FC<{ children: React.ReactNode }> = ({ children 
                 {/* Main Interface Content */}
                 <div className={clsx(
                     "transition-all duration-500",
-                    activeEscalation?.level === 'R4' && activeEscalation.status === 'COLLECTING' && "blur-sm pointer-events-none opacity-50"
+                    (activeEscalation?.level === 'R4' && activeEscalation.status === 'COLLECTING') && "blur-sm pointer-events-none opacity-50",
+                    isFrozenByIntegrity && "pointer-events-none opacity-20 blur-[2px]"
                 )}>
                     {children}
                 </div>
             </div>
+
+            {isFrozenByIntegrity && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-red-950/80 p-6" data-testid="integrity-freeze-overlay">
+                    <div className="w-full max-w-3xl rounded-xl border border-red-500 bg-black p-6 text-white shadow-2xl">
+                        <h2 className="font-mono text-sm uppercase tracking-widest text-red-300">Integrity Freeze Activated</h2>
+                        <p className="mt-3 text-sm text-red-100">
+                            Ledger mismatch detected. UI is frozen until forensic replay verification completes.
+                        </p>
+                        <div className="mt-4 space-y-1 font-mono text-xs text-red-200">
+                            <div>TRACE_ID: {traceId}</div>
+                            <div>EXPECTED_HASH: {mismatch?.expectedHash ?? 'N/A'}</div>
+                            <div>ACTUAL_HASH: {mismatch?.actualHash ?? 'N/A'}</div>
+                        </div>
+                        <a
+                            href={`/forensics/replay?traceId=${encodeURIComponent(traceId)}`}
+                            className="mt-5 inline-flex rounded border border-red-400 px-3 py-2 font-mono text-xs text-red-100 hover:bg-red-900/50"
+                        >
+                            Open Trace Replay
+                        </a>
+                    </div>
+                </div>
+            )}
 
             {/* Quorum Modal (Institutional Overlay) */}
             {isQuorumModalOpen && activeEscalation && (

@@ -1,5 +1,5 @@
 // Knowledge Graph (Sprint 2)
-﻿import { Injectable } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { KnowledgeGraphUpdatedEvent } from "./events/knowledge-graph.events";
 
 export interface KnowledgeGraphEventHandler {

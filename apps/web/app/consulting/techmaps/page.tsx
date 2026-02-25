@@ -1,70 +1,121 @@
-'use client';
+﻿'use client';
 
-import React, { useState, useMemo } from 'react';
-import { TechMapWorkbench } from '@/components/consulting/TechMapWorkbench';
-import { SystemStatusBar } from '@/components/consulting/SystemStatusBar';
-import { DomainUiContext } from '@/lib/consulting/navigation-policy';
-import { UserRole } from '@/lib/config/role-config';
+import { useEffect, useMemo, useState } from 'react';
+import { Card } from '@/components/ui';
+import { api } from '@/lib/api';
 
-const MOCK_TECHMAP = {
-    id: 'TM-2026-BETA',
-    status: 'ACTIVE' as const,
-    operations: [
-        { id: 'op1', title: 'Подготовка почвы (дискование)', status: 'DONE' as const },
-        { id: 'op2', title: 'Внесение удобрений - Старт', status: 'PENDING' as const },
-        { id: 'op3', title: 'Посев озимых', status: 'PENDING' as const },
-    ]
+type TechMap = {
+    id: string;
+    status: string;
+    version?: number;
+    crop?: string;
+    harvestPlanId?: string;
+    seasonId?: string;
+    updatedAt?: string;
 };
 
-export default function TechMapsPage() {
-    const [techMap] = useState(MOCK_TECHMAP);
-    const [userRole] = useState<UserRole>('AGRONOMIST');
+function nextStatuses(current: string): string[] {
+    if (current === 'DRAFT' || current === 'GENERATED_DRAFT') return ['REVIEW'];
+    if (current === 'REVIEW') return ['APPROVED'];
+    if (current === 'APPROVED') return ['ACTIVE'];
+    if (current === 'ACTIVE') return ['ARCHIVED'];
+    return [];
+}
 
-    const domainContext = useMemo<DomainUiContext>(() => ({
-        plansCount: 1,
-        activeTechMap: techMap.status === 'ACTIVE',
-        lockedBudget: false,
-        criticalDeviations: 0,
-        advisoryRiskLevel: 'low'
-    }), [techMap]);
+export default function TechMapsPage() {
+    const [maps, setMaps] = useState<TechMap[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [busyId, setBusyId] = useState<string | null>(null);
+
+    const fetchMaps = async () => {
+        setLoading(true);
+        try {
+            const response = await api.consulting.techmaps.list();
+            setMaps(Array.isArray(response.data) ? response.data : []);
+        } catch (error) {
+            console.error('Failed to load techmaps:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchMaps();
+    }, []);
+
+    const counters = useMemo(() => {
+        const byStatus: Record<string, number> = {};
+        maps.forEach((m) => {
+            byStatus[m.status] = (byStatus[m.status] || 0) + 1;
+        });
+        return byStatus;
+    }, [maps]);
+
+    const handleTransition = async (id: string, status: string) => {
+        setBusyId(id);
+        try {
+            await api.consulting.techmaps.transition(id, status);
+            await fetchMaps();
+        } catch (error: any) {
+            console.error('Failed to transition techmap:', error);
+            alert(error?.response?.data?.message || 'Ошибка перехода техкарты');
+        } finally {
+            setBusyId(null);
+        }
+    };
 
     return (
-        <div className="space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                    <h1 className="text-3xl font-black tracking-tight text-slate-900">Технологические Карты</h1>
-                    <p className="text-sm text-slate-500 font-normal">
-                        Workbench проектирования и контроля технологических операций
-                    </p>
-                </div>
+        <div className='space-y-6'>
+            <div>
+                <h1 className='text-3xl font-semibold text-gray-900 tracking-tight mb-2'>Технологические карты</h1>
+                <p className='text-sm text-gray-500'>Рабочий реестр техкарт с реальными статусными переходами.</p>
             </div>
 
-            {/* INTEGRITY LAYER: System Status Bar */}
-            <SystemStatusBar context={domainContext} />
-
-            {/* MAIN ACTION: Workbench */}
-            <div className="bg-white border border-black/5 rounded-3xl p-8 shadow-sm">
-                <TechMapWorkbench
-                    techMap={techMap}
-                    userRole={userRole}
-                    context={domainContext}
-                />
+            <div className='grid grid-cols-2 md:grid-cols-5 gap-3'>
+                {['GENERATED_DRAFT', 'DRAFT', 'REVIEW', 'APPROVED', 'ACTIVE'].map((status) => (
+                    <Card key={status}>
+                        <p className='text-xs text-gray-500 mb-1'>{status}</p>
+                        <p className='text-2xl font-semibold'>{counters[status] || 0}</p>
+                    </Card>
+                ))}
             </div>
 
-            {/* Context Notice */}
-            <div className="mt-8 p-6 bg-slate-50 rounded-2xl border border-black/5">
-                <h3 className="text-sm font-medium text-gray-900 mb-2">Правила контурного проектирования</h3>
-                <ul className="space-y-2">
-                    <li className="text-xs text-gray-500 flex items-start space-x-2">
-                        <span className="text-black font-medium">•</span>
-                        <span>Техкарта переходит в статус <strong>ACTIVE</strong> только после проверки агрономом.</span>
-                    </li>
-                    <li className="text-xs text-gray-500 flex items-start space-x-2">
-                        <span className="text-black font-medium">•</span>
-                        <span>При статусе <strong>FROZEN</strong> интерфейс полностью блокирует ввод для предотвращения рассинхронизации.</span>
-                    </li>
-                </ul>
-            </div>
+            <Card>
+                {loading ? (
+                    <p className='text-sm text-gray-500'>Загрузка...</p>
+                ) : maps.length === 0 ? (
+                    <p className='text-sm text-gray-500'>Техкарты отсутствуют.</p>
+                ) : (
+                    <div className='space-y-4'>
+                        {maps.map((map) => (
+                            <div key={map.id} className='border border-black/10 rounded-2xl p-4'>
+                                <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-3'>
+                                    <div>
+                                        <p className='font-semibold text-gray-900'>
+                                            {map.crop || 'Культура не указана'} • v{map.version ?? '-'}
+                                        </p>
+                                        <p className='text-xs text-gray-500'>
+                                            {map.id} • {map.status} • {map.updatedAt ? new Date(map.updatedAt).toLocaleDateString('ru-RU') : '-'}
+                                        </p>
+                                    </div>
+                                    <div className='flex gap-2 flex-wrap'>
+                                        {nextStatuses(map.status).map((status) => (
+                                            <button
+                                                key={status}
+                                                onClick={() => handleTransition(map.id, status)}
+                                                disabled={busyId === map.id}
+                                                className='px-4 py-2 bg-black text-white rounded-xl text-xs font-medium hover:bg-zinc-800 disabled:opacity-50'
+                                            >
+                                                {busyId === map.id ? '...' : `-> ${status}`}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </Card>
         </div>
     );
 }

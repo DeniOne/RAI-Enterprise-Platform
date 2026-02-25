@@ -48,16 +48,21 @@ const DEFAULT_THRESHOLDS: AdvisoryThresholds = {
 
 @Injectable()
 export class ShadowAdvisoryService {
-  private readonly thresholdsCache = new Map<string, { value: AdvisoryThresholds; expiresAt: number }>();
+  private readonly thresholdsCache = new Map<
+    string,
+    { value: AdvisoryThresholds; expiresAt: number }
+  >();
 
   constructor(
     @Inject("EPISODIC_RETRIEVAL")
     private readonly retrieval: Pick<EpisodicRetrievalService, "retrieve">,
     @Inject("AUDIT_SERVICE")
     private readonly auditService: Pick<AuditService, "log" | "findAll">,
-  ) { }
+  ) {}
 
-  async evaluate(request: ShadowAdvisoryRequest): Promise<ShadowAdvisoryResponse> {
+  async evaluate(
+    request: ShadowAdvisoryRequest,
+  ): Promise<ShadowAdvisoryResponse> {
     const retrievalResult = await this.retrieval.retrieve({
       companyId: request.companyId,
       embedding: request.embedding,
@@ -65,8 +70,12 @@ export class ShadowAdvisoryService {
       traceId: request.traceId,
     });
 
-    const aggregate = aggregateEngramScore(retrievalResult.items.map((i) => i.outcome));
-    const confidence = this.computeConfidence(retrievalResult.items.map((i) => i.confidence));
+    const aggregate = aggregateEngramScore(
+      retrievalResult.items.map((i) => i.outcome),
+    );
+    const confidence = this.computeConfidence(
+      retrievalResult.items.map((i) => i.confidence),
+    );
     const thresholds = await this.resolveThresholds(request.companyId);
     const recommendation = this.decide(aggregate.score, confidence, thresholds);
 
@@ -112,14 +121,20 @@ export class ShadowAdvisoryService {
     return Number(Math.max(0, Math.min(1, avg)).toFixed(4));
   }
 
-  private decide(score: number, confidence: number, thresholds: AdvisoryThresholds): "ALLOW" | "REVIEW" | "BLOCK" {
+  private decide(
+    score: number,
+    confidence: number,
+    thresholds: AdvisoryThresholds,
+  ): "ALLOW" | "REVIEW" | "BLOCK" {
     if (confidence < thresholds.confidenceReview) return "REVIEW";
     if (score <= thresholds.blockScore) return "BLOCK";
     if (score >= thresholds.allowScore) return "ALLOW";
     return "REVIEW";
   }
 
-  private async resolveThresholds(companyId: string): Promise<AdvisoryThresholds> {
+  private async resolveThresholds(
+    companyId: string,
+  ): Promise<AdvisoryThresholds> {
     const cached = this.thresholdsCache.get(companyId);
     if (cached && cached.expiresAt > Date.now()) {
       return cached.value;
@@ -129,11 +144,18 @@ export class ShadowAdvisoryService {
     const findAll = this.auditService.findAll;
     if (typeof findAll === "function") {
       try {
-        const response = await findAll.call(this.auditService, { action: "ADVISORY_TUNING_UPDATED" }, { page: 1, limit: 100 });
-        const data = Array.isArray((response as any)?.data) ? (response as any).data : [];
+        const response = await findAll.call(
+          this.auditService,
+          { action: "ADVISORY_TUNING_UPDATED" },
+          { page: 1, limit: 100 },
+        );
+        const data = Array.isArray((response as any)?.data)
+          ? (response as any).data
+          : [];
         for (const log of data) {
           const metadata = log?.metadata;
-          if (!metadata || String(metadata.companyId ?? "") !== companyId) continue;
+          if (!metadata || String(metadata.companyId ?? "") !== companyId)
+            continue;
           const thresholds = metadata.thresholds;
           if (!thresholds) continue;
           const candidate: AdvisoryThresholds = {
@@ -151,7 +173,10 @@ export class ShadowAdvisoryService {
       }
     }
 
-    this.thresholdsCache.set(companyId, { value: resolved, expiresAt: Date.now() + 60_000 });
+    this.thresholdsCache.set(companyId, {
+      value: resolved,
+      expiresAt: Date.now() + 60_000,
+    });
     return resolved;
   }
 
@@ -173,7 +198,12 @@ export class ShadowAdvisoryService {
   }
 
   private buildRationale(
-    aggregate: { positive: number; negative: number; unknown: number; score: number },
+    aggregate: {
+      positive: number;
+      negative: number;
+      unknown: number;
+      score: number;
+    },
     total: number,
   ): string {
     return `cases=${total}; positive=${aggregate.positive}; negative=${aggregate.negative}; unknown=${aggregate.unknown}; score=${aggregate.score}`;
@@ -183,17 +213,38 @@ export class ShadowAdvisoryService {
     traceId: string;
     confidence: number;
     recommendation: "ALLOW" | "REVIEW" | "BLOCK";
-    aggregate: { positive: number; negative: number; unknown: number; score: number };
+    aggregate: {
+      positive: number;
+      negative: number;
+      unknown: number;
+      score: number;
+    };
     totalCases: number;
   }): AdvisoryExplainability {
     return {
       traceId: input.traceId,
       confidence: input.confidence,
-      why: this.buildWhy(input.recommendation, input.aggregate.score, input.totalCases),
+      why: this.buildWhy(
+        input.recommendation,
+        input.aggregate.score,
+        input.totalCases,
+      ),
       factors: [
-        { name: "positiveCases", value: input.aggregate.positive, direction: "POSITIVE" },
-        { name: "negativeCases", value: input.aggregate.negative, direction: "NEGATIVE" },
-        { name: "unknownCases", value: input.aggregate.unknown, direction: "NEUTRAL" },
+        {
+          name: "positiveCases",
+          value: input.aggregate.positive,
+          direction: "POSITIVE",
+        },
+        {
+          name: "negativeCases",
+          value: input.aggregate.negative,
+          direction: "NEGATIVE",
+        },
+        {
+          name: "unknownCases",
+          value: input.aggregate.unknown,
+          direction: "NEUTRAL",
+        },
         {
           name: "aggregateScore",
           value: Number(input.aggregate.score.toFixed(4)),

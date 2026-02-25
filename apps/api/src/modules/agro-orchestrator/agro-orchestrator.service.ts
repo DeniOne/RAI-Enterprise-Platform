@@ -1,24 +1,24 @@
 import {
-    Injectable,
-    NotFoundException,
-    BadRequestException,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
 } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { AuditService } from "../../shared/audit/audit.service";
 import { Season, SeasonStatus, User } from "@rai/prisma-client";
 import {
-    AplStateMachine,
-    AplStage,
-    AplEvent,
-    APL_STATE_METADATA,
+  AplStateMachine,
+  AplStage,
+  AplEvent,
+  APL_STATE_METADATA,
 } from "../../shared/state-machine";
 
 export interface StageTransitionResult {
-    success: boolean;
-    season: Season;
-    previousStage: string | null;
-    newStage: string;
-    message: string;
+  success: boolean;
+  season: Season;
+  previousStage: string | null;
+  newStage: string;
+  message: string;
 }
 
 import { RiskService } from "../risk/risk.service";
@@ -28,313 +28,330 @@ import { RiskBlockedError } from "../risk/risk.errors";
 
 @Injectable()
 export class AgroOrchestratorService {
-    constructor(
-        private readonly prisma: PrismaService,
-        private readonly auditService: AuditService,
-        private readonly riskService: RiskService,
-        private readonly decisionService: ActionDecisionService,
-    ) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditService: AuditService,
+    private readonly riskService: RiskService,
+    private readonly decisionService: ActionDecisionService,
+  ) {}
 
-    /**
-     * Get current stage of a season.
-     */
-    async getCurrentStage(
-        seasonId: string,
-        companyId: string,
-    ): Promise<{ stage: string | null; stageInfo: any }> {
-        const season = await this.prisma.season.findFirst({
-            where: { id: seasonId, companyId },
-        });
+  /**
+   * Get current stage of a season.
+   */
+  async getCurrentStage(
+    seasonId: string,
+    companyId: string,
+  ): Promise<{ stage: string | null; stageInfo: any }> {
+    const season = await this.prisma.season.findFirst({
+      where: { id: seasonId, companyId },
+    });
 
-        if (!season) {
-            throw new NotFoundException("Сезон не найден");
-        }
-
-        const stageId = season.currentStageId as AplStage | null;
-        const stageInfo = stageId ? APL_STATE_METADATA[stageId] : null;
-
-        return { stage: stageId, stageInfo };
+    if (!season) {
+      throw new NotFoundException("Сезон не найден");
     }
 
-    /**
-     * Initialize season with the first APL stage.
-     */
-    async initializeSeason(
-        seasonId: string,
-        companyId: string,
-        user: User,
-    ): Promise<StageTransitionResult> {
-        const season = await this.prisma.season.findFirst({
-            where: { id: seasonId, companyId },
-        });
+    const stageId = season.currentStageId as AplStage | null;
+    const stageInfo = stageId ? APL_STATE_METADATA[stageId] : null;
 
-        if (!season) {
-            throw new NotFoundException("Сезон не найден");
-        }
+    return { stage: stageId, stageInfo };
+  }
 
-        // --- RISK GATE (B6.2) ---
-        const riskAssessment = await this.riskService.assess(
-            companyId,
-            RiskTargetType.SEASON,
-            seasonId
-        );
+  /**
+   * Initialize season with the first APL stage.
+   */
+  async initializeSeason(
+    seasonId: string,
+    companyId: string,
+    user: User,
+  ): Promise<StageTransitionResult> {
+    const season = await this.prisma.season.findFirst({
+      where: { id: seasonId, companyId },
+    });
 
-        if (riskAssessment.verdict === 'BLOCKED') {
-            await this.decisionService.record(
-                companyId,
-                'INIT_SEASON',
-                seasonId,
-                riskAssessment
-            );
-            throw new RiskBlockedError(riskAssessment);
-        }
-        // ------------------------
-
-        if (season.currentStageId) {
-            throw new BadRequestException("Сезон уже инициализирован");
-        }
-
-        const initialStage = AplStateMachine.getInitialStage();
-
-        const updated = await this.prisma.$transaction(async (tx) => {
-            // Tenant-safe update path: enforce companyId in predicate.
-            const initUpdate = await tx.season.updateMany({
-                where: { id: seasonId, companyId },
-                data: {
-                    currentStageId: initialStage,
-                    status: SeasonStatus.ACTIVE,
-                },
-            });
-            if (initUpdate.count === 0) {
-                throw new NotFoundException("Сезон не найден");
-            }
-            const updatedSeason = await tx.season.findFirst({
-                where: { id: seasonId, companyId },
-            });
-            if (!updatedSeason) {
-                throw new NotFoundException("Сезон не найден");
-            }
-
-            // Record stage progress
-            await tx.seasonStageProgress.create({ // tenant-lint:ignore tenant scope inherited from seasonId relation
-                data: {
-                    seasonId,
-                    stageId: initialStage,
-                    metadata: { initializedBy: user.id },
-                },
-            });
-
-            return updatedSeason;
-        });
-
-        await this.auditService.log({
-            action: "SEASON_INITIALIZED",
-            companyId: user.companyId,
-            userId: user.id,
-            metadata: { seasonId, stage: initialStage },
-        });
-
-        return {
-            success: true,
-            season: updated,
-            previousStage: null,
-            newStage: initialStage,
-            message: `Сезон инициализирован: ${APL_STATE_METADATA[initialStage].nameRu} `,
-        };
+    if (!season) {
+      throw new NotFoundException("Сезон не найден");
     }
 
-    /**
-     * Transition season to the next stage by target stage ID (Compatibility wrapper).
-     * @deprecated Use applyEvent for true event-driven transitions.
-     */
-    async transitionToStage(
-        seasonId: string,
-        targetStage: AplStage,
-        companyId: string,
-        user: User,
-        metadata?: Record<string, any>,
-    ): Promise<StageTransitionResult> {
-        // [COMPATIBILITY]: Mapping target stage to ADVANCE event
-        // This is a temporary measure until all clients migrate to applyEvent.
-        return this.applyEvent(seasonId, AplEvent.ADVANCE, companyId, user, metadata);
+    // --- RISK GATE (B6.2) ---
+    const riskAssessment = await this.riskService.assess(
+      companyId,
+      RiskTargetType.SEASON,
+      seasonId,
+    );
+
+    if (riskAssessment.verdict === "BLOCKED") {
+      await this.decisionService.record(
+        companyId,
+        "INIT_SEASON",
+        seasonId,
+        riskAssessment,
+      );
+      throw new RiskBlockedError(riskAssessment);
+    }
+    // ------------------------
+
+    if (season.currentStageId) {
+      throw new BadRequestException("Сезон уже инициализирован");
     }
 
-    /**
-     * Apply event to season lifecycle.
-     */
-    async applyEvent(
-        seasonId: string,
-        event: AplEvent,
-        companyId: string,
-        user: User,
-        metadata?: Record<string, any>,
-    ): Promise<StageTransitionResult> {
-        const season = await this.prisma.season.findFirst({
-            where: { id: seasonId, companyId },
-        });
+    const initialStage = AplStateMachine.getInitialStage();
 
-        if (!season) {
-            throw new NotFoundException("Сезон не найден");
-        }
+    const updated = await this.prisma.$transaction(async (tx) => {
+      // Tenant-safe update path: enforce companyId in predicate.
+      const initUpdate = await tx.season.updateMany({
+        where: { id: seasonId, companyId },
+        data: {
+          currentStageId: initialStage,
+          status: SeasonStatus.ACTIVE,
+        },
+      });
+      if (initUpdate.count === 0) {
+        throw new NotFoundException("Сезон не найден");
+      }
+      const updatedSeason = await tx.season.findFirst({
+        where: { id: seasonId, companyId },
+      });
+      if (!updatedSeason) {
+        throw new NotFoundException("Сезон не найден");
+      }
 
-        // --- RISK GATE (B6.2) ---
-        const riskAssessment = await this.riskService.assess(
-            companyId,
-            RiskTargetType.SEASON,
-            seasonId
-        );
+      // Record stage progress
+      await tx.seasonStageProgress.create({
+        // tenant-lint:ignore tenant scope inherited from seasonId relation
+        data: {
+          seasonId,
+          stageId: initialStage,
+          metadata: { initializedBy: user.id },
+        },
+      });
 
-        if (riskAssessment.verdict === 'BLOCKED') {
-            await this.decisionService.record(
-                companyId,
-                `APL_EVENT_${event}`,
-                seasonId,
-                riskAssessment
-            );
-            throw new RiskBlockedError(riskAssessment);
-        }
-        // ------------------------
+      return updatedSeason;
+    });
 
-        if (season.isLocked) {
-            throw new BadRequestException("Сезон заблокирован и не может быть изменён");
-        }
+    await this.auditService.log({
+      action: "SEASON_INITIALIZED",
+      companyId: user.companyId,
+      userId: user.id,
+      metadata: { seasonId, stage: initialStage },
+    });
 
-        const currentStage = season.currentStageId as AplStage | null;
-        if (!currentStage) {
-            throw new BadRequestException("Сезон не инициализирован. Используйте initializeSeason.");
-        }
+    return {
+      success: true,
+      season: updated,
+      previousStage: null,
+      newStage: initialStage,
+      message: `Сезон инициализирован: ${APL_STATE_METADATA[initialStage].nameRu} `,
+    };
+  }
 
-        // FSM Transition (Pure)
-        if (!AplStateMachine.canTransition(currentStage, event)) {
-            const allowedEvents = AplStateMachine.getAvailableEvents(currentStage);
-            throw new BadRequestException(
-                `Недопустимое событие: ${event} в состоянии ${APL_STATE_METADATA[currentStage].nameRu}.` +
-                `Допустимые события: ${allowedEvents.join(", ")} `,
-            );
-        }
+  /**
+   * Transition season to the next stage by target stage ID (Compatibility wrapper).
+   * @deprecated Use applyEvent for true event-driven transitions.
+   */
+  async transitionToStage(
+    seasonId: string,
+    targetStage: AplStage,
+    companyId: string,
+    user: User,
+    metadata?: Record<string, any>,
+  ): Promise<StageTransitionResult> {
+    // [COMPATIBILITY]: Mapping target stage to ADVANCE event
+    // This is a temporary measure until all clients migrate to applyEvent.
+    return this.applyEvent(
+      seasonId,
+      AplEvent.ADVANCE,
+      companyId,
+      user,
+      metadata,
+    );
+  }
 
-        const resultEntity = AplStateMachine.transition(
-            { id: seasonId, currentStageId: currentStage },
-            event
-        );
-        const targetStage = resultEntity.currentStageId!;
+  /**
+   * Apply event to season lifecycle.
+   */
+  async applyEvent(
+    seasonId: string,
+    event: AplEvent,
+    companyId: string,
+    user: User,
+    metadata?: Record<string, any>,
+  ): Promise<StageTransitionResult> {
+    const season = await this.prisma.season.findFirst({
+      where: { id: seasonId, companyId },
+    });
 
-        const updated = await this.prisma.$transaction(async (tx) => {
-            // Tenant-safe update path: enforce companyId in predicate.
-            const stageUpdate = await tx.season.updateMany({
-                where: { id: seasonId, companyId },
-                data: { currentStageId: targetStage },
-            });
-            if (stageUpdate.count === 0) {
-                throw new NotFoundException("Сезон не найден");
-            }
-            const updatedSeason = await tx.season.findFirst({
-                where: { id: seasonId, companyId },
-            });
-            if (!updatedSeason) {
-                throw new NotFoundException("Сезон не найден");
-            }
+    if (!season) {
+      throw new NotFoundException("Сезон не найден");
+    }
 
-            // Record stage progress
-            await tx.seasonStageProgress.create({ // tenant-lint:ignore tenant scope inherited from seasonId relation
-                data: {
-                    seasonId,
-                    stageId: targetStage,
-                    metadata: {
-                        transitionedBy: user.id,
-                        event,
-                        previousStage: currentStage,
-                        ...metadata,
-                    },
-                },
-            });
+    // --- RISK GATE (B6.2) ---
+    const riskAssessment = await this.riskService.assess(
+      companyId,
+      RiskTargetType.SEASON,
+      seasonId,
+    );
 
-            // If terminal stage, complete the season
-            if (AplStateMachine.isTerminal(targetStage)) {
-                await tx.season.updateMany({
-                    where: { id: seasonId, companyId },
-                    data: {
-                        status: SeasonStatus.COMPLETED,
-                        endDate: new Date(),
-                    },
-                });
-            }
-            return updatedSeason;
-        });
+    if (riskAssessment.verdict === "BLOCKED") {
+      await this.decisionService.record(
+        companyId,
+        `APL_EVENT_${event}`,
+        seasonId,
+        riskAssessment,
+      );
+      throw new RiskBlockedError(riskAssessment);
+    }
+    // ------------------------
 
-        await this.auditService.log({
-            action: "STAGE_TRANSITION",
-            companyId: user.companyId,
-            userId: user.id,
-            metadata: {
-                seasonId,
-                event,
-                from: currentStage,
-                to: targetStage,
-                ...(metadata || {}),
-            },
-        });
+    if (season.isLocked) {
+      throw new BadRequestException(
+        "Сезон заблокирован и не может быть изменён",
+      );
+    }
 
-        return {
-            success: true,
-            season: updated,
+    const currentStage = season.currentStageId as AplStage | null;
+    if (!currentStage) {
+      throw new BadRequestException(
+        "Сезон не инициализирован. Используйте initializeSeason.",
+      );
+    }
+
+    // FSM Transition (Pure)
+    if (!AplStateMachine.canTransition(currentStage, event)) {
+      const allowedEvents = AplStateMachine.getAvailableEvents(currentStage);
+      throw new BadRequestException(
+        `Недопустимое событие: ${event} в состоянии ${APL_STATE_METADATA[currentStage].nameRu}.` +
+          `Допустимые события: ${allowedEvents.join(", ")} `,
+      );
+    }
+
+    const resultEntity = AplStateMachine.transition(
+      { id: seasonId, currentStageId: currentStage },
+      event,
+    );
+    const targetStage = resultEntity.currentStageId!;
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      // Tenant-safe update path: enforce companyId in predicate.
+      const stageUpdate = await tx.season.updateMany({
+        where: { id: seasonId, companyId },
+        data: { currentStageId: targetStage },
+      });
+      if (stageUpdate.count === 0) {
+        throw new NotFoundException("Сезон не найден");
+      }
+      const updatedSeason = await tx.season.findFirst({
+        where: { id: seasonId, companyId },
+      });
+      if (!updatedSeason) {
+        throw new NotFoundException("Сезон не найден");
+      }
+
+      // Record stage progress
+      await tx.seasonStageProgress.create({
+        // tenant-lint:ignore tenant scope inherited from seasonId relation
+        data: {
+          seasonId,
+          stageId: targetStage,
+          metadata: {
+            transitionedBy: user.id,
+            event,
             previousStage: currentStage,
-            newStage: targetStage,
-            message: `Переход выполнен успешно: ${APL_STATE_METADATA[targetStage].nameRu} `,
-        };
+            ...metadata,
+          },
+        },
+      });
+
+      // If terminal stage, complete the season
+      if (AplStateMachine.isTerminal(targetStage)) {
+        await tx.season.updateMany({
+          where: { id: seasonId, companyId },
+          data: {
+            status: SeasonStatus.COMPLETED,
+            endDate: new Date(),
+          },
+        });
+      }
+      return updatedSeason;
+    });
+
+    await this.auditService.log({
+      action: "STAGE_TRANSITION",
+      companyId: user.companyId,
+      userId: user.id,
+      metadata: {
+        seasonId,
+        event,
+        from: currentStage,
+        to: targetStage,
+        ...(metadata || {}),
+      },
+    });
+
+    return {
+      success: true,
+      season: updated,
+      previousStage: currentStage,
+      newStage: targetStage,
+      message: `Переход выполнен успешно: ${APL_STATE_METADATA[targetStage].nameRu} `,
+    };
+  }
+
+  /**
+   * Get available next stages for a season.
+   */
+  async getAvailableTransitions(
+    seasonId: string,
+    companyId: string,
+  ): Promise<
+    { event: AplEvent; stage: string; name: string; nameRu: string }[]
+  > {
+    const season = await this.prisma.season.findFirst({
+      where: { id: seasonId, companyId },
+    });
+
+    if (!season) {
+      throw new NotFoundException("Сезон не найден");
     }
 
-    /**
-     * Get available next stages for a season.
-     */
-    async getAvailableTransitions(
-        seasonId: string,
-        companyId: string,
-    ): Promise<{ event: AplEvent; stage: string; name: string; nameRu: string }[]> {
-        const season = await this.prisma.season.findFirst({
-            where: { id: seasonId, companyId },
-        });
+    const currentStage = season.currentStageId as AplStage | null;
 
-        if (!season) {
-            throw new NotFoundException("Сезон не найден");
-        }
-
-        const currentStage = season.currentStageId as AplStage | null;
-
-        if (!currentStage) {
-            // Not initialized — only initialize is possible
-            return [];
-        }
-
-        // Returns events and their resulting stages
-        return AplStateMachine.getAvailableEvents(currentStage).map(event => {
-            const result = AplStateMachine.transition({ id: seasonId, currentStageId: currentStage }, event);
-            const targetStage = result.currentStageId!;
-            const meta = APL_STATE_METADATA[targetStage];
-            return {
-                event: event,
-                stage: targetStage,
-                name: meta.name,
-                nameRu: meta.nameRu,
-            };
-        });
+    if (!currentStage) {
+      // Not initialized — only initialize is possible
+      return [];
     }
 
-    /**
-     * Get full stage history for a season.
-     */
-    async getStageHistory(seasonId: string, companyId: string) {
-        const season = await this.prisma.season.findFirst({
-            where: { id: seasonId, companyId },
-        });
+    // Returns events and their resulting stages
+    return AplStateMachine.getAvailableEvents(currentStage).map((event) => {
+      const result = AplStateMachine.transition(
+        { id: seasonId, currentStageId: currentStage },
+        event,
+      );
+      const targetStage = result.currentStageId!;
+      const meta = APL_STATE_METADATA[targetStage];
+      return {
+        event: event,
+        stage: targetStage,
+        name: meta.name,
+        nameRu: meta.nameRu,
+      };
+    });
+  }
 
-        if (!season) {
-            throw new NotFoundException("Сезон не найден");
-        }
+  /**
+   * Get full stage history for a season.
+   */
+  async getStageHistory(seasonId: string, companyId: string) {
+    const season = await this.prisma.season.findFirst({
+      where: { id: seasonId, companyId },
+    });
 
-        return this.prisma.seasonStageProgress.findMany({
-            where: { seasonId, season: { companyId } },
-            orderBy: { completedAt: "asc" },
-        });
+    if (!season) {
+      throw new NotFoundException("Сезон не найден");
     }
+
+    return this.prisma.seasonStageProgress.findMany({
+      where: { seasonId, season: { companyId } },
+      orderBy: { completedAt: "asc" },
+    });
+  }
 }

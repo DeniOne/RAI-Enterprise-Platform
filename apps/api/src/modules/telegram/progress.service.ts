@@ -4,14 +4,13 @@ import { Context, Telegraf } from "telegraf";
 import * as fs from "fs";
 import * as path from "path";
 
-
 @Injectable()
 export class ProgressService implements OnModuleInit {
   private readonly logger = new Logger(ProgressService.name);
   private lastStatsHash: string = "";
   private isWatching = false;
 
-  constructor() { }
+  constructor() {}
 
   onModuleInit() {
     this.watchProgress();
@@ -107,16 +106,19 @@ export class ProgressService implements OnModuleInit {
   private async broadcastProgress(stats: any) {
     const report = this.formatReport(stats);
     try {
-      await fetch(`${process.env.BOT_URL || 'http://localhost:4002'}/internal/push-progress`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Internal-API-Key': process.env.INTERNAL_API_KEY || '',
+      await fetch(
+        `${process.env.BOT_URL || "http://localhost:4002"}/internal/push-progress`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Internal-API-Key": process.env.INTERNAL_API_KEY || "",
+          },
+          body: JSON.stringify({
+            report,
+          }),
         },
-        body: JSON.stringify({
-          report,
-        }),
-      });
+      );
       this.logger.log(`✅ Progress broadcasted via Bot Microservice`);
     } catch (error) {
       this.logger.error(`Failed to broadcast progress: ${error.message}`);

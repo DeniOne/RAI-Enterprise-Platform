@@ -12,4 +12,4 @@ import { AuthModule } from "../../shared/auth/auth.module";
   providers: [TelegramUpdate, ProgressService, TelegramNotificationService],
   exports: [ProgressService, TelegramNotificationService],
 })
-export class TelegramModule { }
+export class TelegramModule {}

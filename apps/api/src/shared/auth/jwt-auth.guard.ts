@@ -6,4 +6,4 @@ import { AuthGuard } from "@nestjs/passport";
  * Uses Passport JWT strategy.
  */
 @Injectable()
-export class JwtAuthGuard extends AuthGuard("jwt") { }
+export class JwtAuthGuard extends AuthGuard("jwt") {}

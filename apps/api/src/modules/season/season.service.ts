@@ -30,7 +30,7 @@ export class SeasonService {
     private readonly snapshotService: SeasonSnapshotService,
     private readonly riskService: RiskService,
     private readonly decisionService: ActionDecisionService,
-  ) { }
+  ) {}
 
   /**
    * Creates a new season with multi-tenancy and audit.
@@ -119,13 +119,17 @@ export class SeasonService {
       },
     });
     if (updatedCount.count === 0) {
-      throw new NotFoundException(`Season ${input.id} not found or access denied`);
+      throw new NotFoundException(
+        `Season ${input.id} not found or access denied`,
+      );
     }
     const updatedSeason = await this.prisma.season.findFirst({
       where: { id: input.id, companyId },
     });
     if (!updatedSeason) {
-      throw new NotFoundException(`Season ${input.id} not found or access denied`);
+      throw new NotFoundException(
+        `Season ${input.id} not found or access denied`,
+      );
     }
 
     // Audit simplified for now
@@ -165,64 +169,58 @@ export class SeasonService {
     user: User,
     companyId: string,
   ): Promise<Season> {
-    return this.prisma.$transaction(
-      async (tx) => {
-        // 1. Получаем сезон с проверкой доступа
-        const season = await tx.season.findFirst({
-          where: { id, companyId },
-        });
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Получаем сезон с проверкой доступа
+      const season = await tx.season.findFirst({
+        where: { id, companyId },
+      });
 
-        if (!season) {
-          throw new NotFoundException(
-            `Season ${id} not found or access denied`,
-          );
-        }
-
-        if (season.isLocked) {
-          throw new BadRequestException(
-            `Season ${season.id} is already locked`,
-          );
-        }
-
-        // 2. Обновляем сезон
-        const completedCount = await tx.season.updateMany({
-          where: { id, companyId },
-          data: {
-            status: SeasonStatus.COMPLETED,
-            actualYield,
-            isLocked: true,
-            lockedAt: new Date(),
-            lockedBy: user.id,
-          },
-        });
-        if (completedCount.count === 0) {
-          throw new NotFoundException(`Season ${id} not found or access denied`);
-        }
-        const completedSeason = await tx.season.findFirst({
-          where: { id, companyId },
-        });
-        if (!completedSeason) {
-          throw new NotFoundException(`Season ${id} not found or access denied`);
-        }
-
-        // 3. Создаем снапшот внутри той же транзакции
-        await this.snapshotService.createSnapshotTransaction(
-          tx,
-          completedSeason.id,
-          companyId,
-          user,
-        );
-
-        // 4. Аудит (с гарантией доставки через ретраи)
-        await this.auditService.logWithRetry(
-          AgriculturalAuditEvent.RAPESEED_SEASON_COMPLETED,
-          user,
-          { seasonId: completedSeason.id, actualYield },
-        );
-
-        return completedSeason;
+      if (!season) {
+        throw new NotFoundException(`Season ${id} not found or access denied`);
       }
-    );
+
+      if (season.isLocked) {
+        throw new BadRequestException(`Season ${season.id} is already locked`);
+      }
+
+      // 2. Обновляем сезон
+      const completedCount = await tx.season.updateMany({
+        where: { id, companyId },
+        data: {
+          status: SeasonStatus.COMPLETED,
+          actualYield,
+          isLocked: true,
+          lockedAt: new Date(),
+          lockedBy: user.id,
+        },
+      });
+      if (completedCount.count === 0) {
+        throw new NotFoundException(`Season ${id} not found or access denied`);
+      }
+      const completedSeason = await tx.season.findFirst({
+        where: { id, companyId },
+      });
+      if (!completedSeason) {
+        throw new NotFoundException(`Season ${id} not found or access denied`);
+      }
+
+      // 3. Создаем снапшот внутри той же транзакции
+      await this.snapshotService.createSnapshotTransaction(
+        tx,
+        completedSeason.id,
+        companyId,
+        user,
+      );
+
+      // 4. Аудит (с гарантией доставки через ретраи)
+      await this.auditService.logWithRetry(
+        AgriculturalAuditEvent.RAPESEED_SEASON_COMPLETED,
+        user,
+        { seasonId: completedSeason.id, actualYield },
+      );
+
+      return completedSeason;
+    });
   }
 
   /**
@@ -250,15 +248,15 @@ export class SeasonService {
     const riskAssessment = await this.riskService.assess(
       companyId,
       RiskTargetType.SEASON,
-      id
+      id,
     );
 
-    if (riskAssessment.verdict === 'BLOCKED') {
+    if (riskAssessment.verdict === "BLOCKED") {
       await this.decisionService.record(
         companyId,
         `TRANSITION_${targetStageId}`,
         id,
-        riskAssessment
+        riskAssessment,
       );
       throw new RiskBlockedError(riskAssessment);
     }
@@ -313,7 +311,8 @@ export class SeasonService {
         throw new NotFoundException(`Season ${id} not found or access denied`);
       }
 
-      await tx.seasonStageProgress.create({ // tenant-lint:ignore tenant scope inherited from seasonId relation
+      await tx.seasonStageProgress.create({
+        // tenant-lint:ignore tenant scope inherited from seasonId relation
         data: {
           seasonId: id,
           stageId: targetStageId,

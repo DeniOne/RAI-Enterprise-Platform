@@ -28,6 +28,16 @@
 | Бюджеты | `/consulting/budgets` | READY | Есть |
 | Урожай | `/consulting/yield` | READY | Есть |
 
+## 1.5 Коммерция (`/commerce/*`)
+
+| Пункт меню | Путь | Статус | Комментарий |
+|---|---|---|---|
+| Коммерция (корень) | `/commerce` | READY | Добавлен раздел в sidebar, root редиректит на `/commerce/contracts` |
+| Договоры | `/commerce/contracts` | READY | Подключен `GET /commerce/contracts`, есть loading/empty/error, `entity/severity`, `data-focus` |
+| Исполнение договоров | `/commerce/fulfillment` | READY | Подключен `GET /commerce/fulfillment`, есть loading/empty/error, `entity/severity`, `data-focus` |
+| Документы | `/commerce/invoices` | READY | Подключен `GET /commerce/invoices`, есть loading/empty/error, `entity/severity`, `data-focus` |
+| Оплаты | `/commerce/payments` | READY | Подключен `GET /commerce/payments`, есть loading/empty/error, `entity/severity`, `data-focus` |
+
 ## 2. Стратегия (`/strategy/*`)
 
 | Пункт меню | Путь | Статус | Комментарий |
@@ -80,6 +90,15 @@
 |---|---|---|---|
 | Настройки (главная) | `/settings` | MISSING | Раздел в меню есть, роутинга нет |
 | users/access/audit/integrations/params | `/settings/*` | MISSING | Нет страниц |
+
+## 9. Исследования (`/exploration/*`)
+
+| Пункт меню | Путь | Статус | Комментарий |
+|---|---|---|---|
+| Исследования (главная) | `/exploration` | MISSING | Витрина (Блок прототипов), точка входа в R&D контур |
+| Стратегические исследования | `/exploration/strategic` | MISSING | Strategic Exploration Unit (SEU) - глубокие системные вызовы |
+| Растворение ограничений | `/exploration/constraints` | MISSING | Constraint Dissolution Unit (CDU) - отработка алертов и болей рынка |
+
 
 ## Приоритет реализации (рекомендуемый)
 

@@ -6,9 +6,9 @@ import { AuditModule } from "../../shared/audit/audit.module";
 import { IntegrityModule } from "../integrity/integrity.module";
 
 @Module({
-    imports: [PrismaModule, AuditModule, IntegrityModule],
-    providers: [FieldObservationService],
-    controllers: [FieldObservationController],
-    exports: [FieldObservationService],
+  imports: [PrismaModule, AuditModule, IntegrityModule],
+  providers: [FieldObservationService],
+  controllers: [FieldObservationController],
+  exports: [FieldObservationService],
 })
-export class FieldObservationModule { }
+export class FieldObservationModule {}

@@ -28,8 +28,18 @@ import { RedisModule } from "../redis/redis.module";
       inject: [ConfigService],
     }),
   ],
-  controllers: [AuthController, UsersController, TelegramAuthInternalController],
-  providers: [AuthService, JwtStrategy, UserRepository, TelegramAuthService, InternalApiKeyGuard],
+  controllers: [
+    AuthController,
+    UsersController,
+    TelegramAuthInternalController,
+  ],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    UserRepository,
+    TelegramAuthService,
+    InternalApiKeyGuard,
+  ],
   exports: [AuthService, UserRepository, TelegramAuthService],
 })
-export class AuthModule { }
+export class AuthModule {}

@@ -8,11 +8,14 @@ import { PrismaService } from "../../shared/prisma/prisma.service";
 import { AuditService } from "../../shared/audit/audit.service";
 import { IntegrationService } from "../finance-economy/integrations/application/integration.service";
 import { OutboxService } from "../../shared/outbox/outbox.service";
-import { Task, TaskStatus, Prisma, User, SeasonStatus } from "@rai/prisma-client";
 import {
-  TaskStateMachine,
-  TaskEvent,
-} from "../../shared/state-machine";
+  Task,
+  TaskStatus,
+  Prisma,
+  User,
+  SeasonStatus,
+} from "@rai/prisma-client";
+import { TaskStateMachine, TaskEvent } from "../../shared/state-machine";
 import { assertTransitionAllowed } from "../../shared/state-machine/fsm-transition-policy";
 
 @Injectable()
@@ -22,7 +25,7 @@ export class TaskService {
     private readonly auditService: AuditService,
     private readonly integrationService: IntegrationService,
     private readonly outbox: OutboxService,
-  ) { }
+  ) {}
 
   /**
    * Idempotent task generation from a Season's Technology Card.
@@ -193,13 +196,16 @@ export class TaskService {
         where: { id: taskId, companyId },
       });
       if (!completed) {
-        throw new NotFoundException(`Task ${taskId} not found or access denied`);
+        throw new NotFoundException(
+          `Task ${taskId} not found or access denied`,
+        );
       }
 
       if (actualResources && actualResources.length > 0) {
         // [NOTE]: TaskResourceActual is an event log (fact journal).
         // It does NOT aggregate values. Financial aggregation belongs to a separate layer.
-        await tx.taskResourceActual.createMany({ // tenant-lint:ignore tenant scope inherited from taskId relation
+        await tx.taskResourceActual.createMany({
+          // tenant-lint:ignore tenant scope inherited from taskId relation
           data: actualResources.map((res) => ({
             taskId,
             type: res.type,
@@ -212,7 +218,10 @@ export class TaskService {
         // INTEGRATION: Notify Finance & Economy module
         // Assuming IntegrationService is injected as this.integrationService
         if (this.integrationService) {
-          const totalAmount = actualResources.reduce((sum, res) => sum + (res.cost || 0), 0);
+          const totalAmount = actualResources.reduce(
+            (sum, res) => sum + (res.cost || 0),
+            0,
+          );
           await this.integrationService.handleTaskCompletion({
             taskId,
             companyId: task.companyId,
@@ -334,7 +343,9 @@ export class TaskService {
         where: { id: taskId, companyId },
       });
       if (!updated) {
-        throw new NotFoundException(`Task ${taskId} not found or access denied`);
+        throw new NotFoundException(
+          `Task ${taskId} not found or access denied`,
+        );
       }
 
       await tx.outboxMessage.create({

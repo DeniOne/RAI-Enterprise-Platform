@@ -1,0 +1,245 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input CreateOperationInput {
+  description: String
+  name: String!
+  resources: [CreateResourceInput!]
+  sequence: Int!
+  stageId: String
+}
+
+input CreateRapeseedInput {
+  erucicAcid: Float
+  glucosinolates: Float
+  name: String!
+  oilContent: Float
+  reproduction: String
+  sowingDepthMax: Float
+  sowingDepthMin: Float
+  sowingNormMax: Float
+  sowingNormMin: Float
+  type: RapeseedType!
+  variety: String
+  vegetationPeriod: Int!
+}
+
+input CreateResourceInput {
+  dosage: Float!
+  name: String!
+  type: String!
+  unit: String!
+}
+
+input CreateSeasonInput {
+  endDate: DateTime
+  expectedYield: Float
+  fieldId: String!
+  rapeseedId: String!
+  startDate: DateTime
+  status: SeasonStatus! = PLANNING
+  technologyCardId: String
+  year: Int!
+}
+
+input CreateTasksFromSeasonInput {
+  seasonId: String!
+}
+
+input CreateTechnologyCardInput {
+  description: String
+  name: String!
+  operations: [CreateOperationInput!]
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Mutation {
+  applyTechnologyCardToSeason(cardId: String!, seasonId: String!): Season!
+  assignTask(assigneeId: String!, taskId: String!): Task!
+  cancelTask(reason: String!, taskId: String!): Task!
+  completeSeason(actualYield: Float!, id: String!): Season!
+  completeTask(actuals: [TaskResourceActualInput!], taskId: String!): Task!
+  createRapeseed(input: CreateRapeseedInput!): Rapeseed!
+  createSeason(input: CreateSeasonInput!): Season!
+  createTasksFromSeason(input: CreateTasksFromSeasonInput!): [Task!]!
+  createTechnologyCard(input: CreateTechnologyCardInput!): TechnologyCard!
+  startTask(taskId: String!): Task!
+  transitionSeasonStage(metadata: String, seasonId: String!, targetStageId: String!): Season!
+  updateRapeseed(input: UpdateRapeseedInput!): Rapeseed!
+  updateSeason(input: UpdateSeasonInput!): Season!
+}
+
+type Query {
+  calculateOilYield(area: Float!, rapeseedId: String!): Float!
+  getSeason(id: String!): Season!
+  getSeasons: [Season!]!
+  getTechnologyCard(id: String!): TechnologyCard!
+  getTechnologyCards: [TechnologyCard!]!
+  rapeseedHistory(name: String!): [Rapeseed!]!
+  rapeseedVarieties: [String!]!
+  rapeseeds: [Rapeseed!]!
+}
+
+type Rapeseed {
+  companyId: String
+  createdAt: DateTime!
+  erucicAcid: Float
+  glucosinolates: Float
+  id: String!
+  isLatest: Boolean!
+  name: String!
+  oilContent: Float
+  reproduction: String
+  sowingDepthMax: Float
+  sowingDepthMin: Float
+  sowingNormMax: Float
+  sowingNormMin: Float
+  type: RapeseedType!
+  updatedAt: DateTime!
+  variety: String
+  vegetationPeriod: Int!
+  version: Int!
+}
+
+enum RapeseedType {
+  SPRING
+  WINTER
+}
+
+type Season {
+  actualYield: Float
+  companyId: String!
+  createdAt: DateTime!
+  currentStageId: String
+  endDate: DateTime
+  expectedYield: Float
+  fieldId: String!
+  id: String!
+  isLocked: Boolean!
+  lockedAt: DateTime
+  lockedBy: String
+  rapeseedId: String!
+  stageProgress: [SeasonStageProgress!]
+  startDate: DateTime
+  status: SeasonStatus!
+  technologyCardId: String
+  updatedAt: DateTime!
+  year: Int!
+}
+
+type SeasonStageProgress {
+  completedAt: DateTime!
+  id: String!
+  metadata: String
+  stageId: String!
+}
+
+enum SeasonStatus {
+  ACTIVE
+  CANCELLED
+  COMPLETED
+  PLANNING
+}
+
+type Task {
+  actualResources: [TaskResourceActual!]
+  assigneeId: String
+  companyId: String!
+  completedAt: DateTime
+  createdAt: DateTime!
+  fieldId: String!
+  id: String!
+  name: String!
+  operationId: String
+  plannedDate: DateTime
+  seasonId: String!
+  status: TaskStatus!
+  updatedAt: DateTime!
+}
+
+type TaskResourceActual {
+  amount: Float!
+  createdAt: DateTime!
+  id: String!
+  name: String!
+  taskId: String!
+  type: String!
+  unit: String!
+  updatedAt: DateTime!
+}
+
+input TaskResourceActualInput {
+  amount: Float!
+  name: String!
+  type: String!
+  unit: String!
+}
+
+enum TaskStatus {
+  CANCELLED
+  COMPLETED
+  IN_PROGRESS
+  PENDING
+}
+
+type TechnologyCard {
+  companyId: String!
+  createdAt: DateTime!
+  description: String
+  id: String!
+  name: String!
+  operations: [TechnologyCardOperation!]
+  updatedAt: DateTime!
+}
+
+type TechnologyCardOperation {
+  description: String
+  id: String!
+  name: String!
+  resources: [TechnologyCardResource!]
+  sequence: Int!
+  stageId: String
+}
+
+type TechnologyCardResource {
+  dosage: Float!
+  id: String!
+  name: String!
+  type: String!
+  unit: String!
+}
+
+input UpdateRapeseedInput {
+  changeReason: String
+  erucicAcid: Float
+  glucosinolates: Float
+  id: String!
+  name: String
+  oilContent: Float
+  reproduction: String
+  sowingDepthMax: Float
+  sowingDepthMin: Float
+  sowingNormMax: Float
+  sowingNormMin: Float
+  type: RapeseedType
+  variety: String
+  vegetationPeriod: Int
+}
+
+input UpdateSeasonInput {
+  actualYield: Float
+  endDate: DateTime
+  expectedYield: Float
+  fieldId: String
+  id: String!
+  rapeseedId: String
+  startDate: DateTime
+  status: SeasonStatus = PLANNING
+  technologyCardId: String
+  year: Int
+}

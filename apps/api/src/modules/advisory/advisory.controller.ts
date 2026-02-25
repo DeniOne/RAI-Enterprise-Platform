@@ -33,12 +33,19 @@ export class AdvisoryController {
     @CurrentUser() user: AdvisoryActor,
     @Query("limit", new ParseIntPipe({ optional: true })) limit?: number,
   ) {
-    return this.advisoryService.getPendingRecommendations(user.companyId, this.actorId(user), limit ?? 10);
+    return this.advisoryService.getPendingRecommendations(
+      user.companyId,
+      this.actorId(user),
+      limit ?? 10,
+    );
   }
 
   @Get("pilot/status")
   async getPilotStatus(@CurrentUser() user: AdvisoryActor) {
-    return this.advisoryService.getPilotStatus(user.companyId, this.actorId(user));
+    return this.advisoryService.getPilotStatus(
+      user.companyId,
+      this.actorId(user),
+    );
   }
 
   @Get("pilot/cohort")
@@ -110,9 +117,14 @@ export class AdvisoryController {
   @Post("tuning/thresholds")
   async updateTuningThresholds(
     @CurrentUser() user: AdvisoryActor,
-    @Body() body: {
+    @Body()
+    body: {
       traceId: string;
-      thresholds: { confidenceReview: number; blockScore: number; allowScore: number };
+      thresholds: {
+        confidenceReview: number;
+        blockScore: number;
+        allowScore: number;
+      };
     },
   ) {
     return this.advisoryService.updateTuningThresholds({
@@ -127,9 +139,13 @@ export class AdvisoryController {
   @Get("ops/metrics")
   async getOpsMetrics(
     @CurrentUser() user: AdvisoryActor,
-    @Query("windowHours", new ParseIntPipe({ optional: true })) windowHours?: number,
+    @Query("windowHours", new ParseIntPipe({ optional: true }))
+    windowHours?: number,
   ) {
-    return this.advisoryService.getOpsMetrics(user.companyId, windowHours ?? 24);
+    return this.advisoryService.getOpsMetrics(
+      user.companyId,
+      windowHours ?? 24,
+    );
   }
 
   @Get("incident/kill-switch")
@@ -145,7 +161,12 @@ export class AdvisoryController {
   @Post("rollout/config")
   async configureRollout(
     @CurrentUser() user: AdvisoryActor,
-    @Body() body: { traceId: string; stage: "S0" | "S1" | "S2" | "S3" | "S4"; autoStopEnabled?: boolean },
+    @Body()
+    body: {
+      traceId: string;
+      stage: "S0" | "S1" | "S2" | "S3" | "S4";
+      autoStopEnabled?: boolean;
+    },
   ) {
     return this.advisoryService.configureRollout({
       actorId: this.actorId(user),
@@ -160,10 +181,15 @@ export class AdvisoryController {
   @Post("rollout/gate/evaluate")
   async evaluateRolloutGate(
     @CurrentUser() user: AdvisoryActor,
-    @Body() body: {
+    @Body()
+    body: {
       traceId: string;
       stage: "S0" | "S1" | "S2" | "S3" | "S4";
-      metrics?: { errorRate?: number; p95LatencyMs?: number; conversionRate?: number };
+      metrics?: {
+        errorRate?: number;
+        p95LatencyMs?: number;
+        conversionRate?: number;
+      };
     },
   ) {
     return this.advisoryService.evaluateRolloutGate({
@@ -179,7 +205,8 @@ export class AdvisoryController {
   @Post("rollout/stage/promote")
   async promoteRolloutStage(
     @CurrentUser() user: AdvisoryActor,
-    @Body() body: { traceId: string; targetStage: "S0" | "S1" | "S2" | "S3" | "S4" },
+    @Body()
+    body: { traceId: string; targetStage: "S0" | "S1" | "S2" | "S3" | "S4" },
   ) {
     return this.advisoryService.promoteRolloutStage({
       actorId: this.actorId(user),
@@ -193,7 +220,12 @@ export class AdvisoryController {
   @Post("rollout/stage/rollback")
   async rollbackRolloutStage(
     @CurrentUser() user: AdvisoryActor,
-    @Body() body: { traceId: string; targetStage: "S0" | "S1" | "S2" | "S3" | "S4"; reason?: string },
+    @Body()
+    body: {
+      traceId: string;
+      targetStage: "S0" | "S1" | "S2" | "S3" | "S4";
+      reason?: string;
+    },
   ) {
     return this.advisoryService.rollbackRolloutStage({
       actorId: this.actorId(user),

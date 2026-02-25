@@ -1,5 +1,5 @@
 // Knowledge Graph (Sprint 2)
-﻿import { Module } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { PrismaModule } from "../../shared/prisma/prisma.module";
 import { IntegrityModule } from "../integrity/integrity.module";
 import { KnowledgeGraphEventBus } from "./knowledge-graph.event-bus";

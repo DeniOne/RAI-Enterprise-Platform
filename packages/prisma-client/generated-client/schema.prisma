@@ -87,9 +87,25 @@ model Company {
   satelliteObservations SatelliteObservation[]
 
   // Asset Registries
-  machinery         Machinery[]
-  stockItems        StockItem[]
-  stockTransactions StockTransaction[]
+  machinery                 Machinery[]
+  stockItems                StockItem[]
+  stockTransactions         StockTransaction[]
+  jurisdictions             Jurisdiction[]
+  regulatoryProfiles        RegulatoryProfile[]
+  parties                   Party[]
+  partyRelations            PartyRelation[]
+  commerceContracts         CommerceContract[]
+  commerceContractRoles     CommerceContractPartyRole[]
+  commerceObligations       CommerceObligation[]
+  budgetReservations        BudgetReservation[]
+  paymentSchedules          PaymentSchedule[]
+  commerceFulfillmentEvents CommerceFulfillmentEvent[]
+  stockMoves                StockMove[]
+  revenueRecognitionEvents  RevenueRecognitionEvent[]
+  invoices                  Invoice[]
+  payments                  Payment[]
+  paymentAllocations        PaymentAllocation[]
+  regulatoryArtifacts       RegulatoryArtifact[]
 
   // Phase 4: Strategic OS
   strategicGoals StrategicGoal[]
@@ -129,7 +145,7 @@ model Account {
 
   // CRM Fields
   inn    String?       @unique
-  type   AccountType   @default(CLIENT)
+  type   AccountType   @default(NOT_SET)
   status AccountStatus @default(ACTIVE)
 
   jurisdiction   String?
@@ -233,6 +249,7 @@ model Obligation {
 }
 
 enum AccountType {
+  NOT_SET
   CLIENT
   PARTNER
   REGULATOR
@@ -3630,4 +3647,464 @@ enum QuorumStatus {
   MET
   REJECTED
   EXPIRED
+}
+
+// --- Institutional Commerce Core ---
+
+enum PartyRelationType {
+  OWNERSHIP
+  COMMERCIAL
+  AFFILIATION
+}
+
+enum CommerceContractStatus {
+  DRAFT
+  SIGNED
+  TERMINATED
+}
+
+enum CommerceContractPartyRoleType {
+  SELLER
+  BUYER
+  LESSOR
+  LESSEE
+  AGENT
+  PRINCIPAL
+  PAYER
+  BENEFICIARY
+}
+
+enum CommerceObligationType {
+  DELIVER
+  PAY
+  PERFORM
+}
+
+enum CommerceObligationStatus {
+  OPEN
+  PARTIAL
+  FULFILLED
+}
+
+enum CommerceEventDomain {
+  COMMERCIAL
+  PRODUCTION
+  LOGISTICS
+  FINANCE_ADJ
+}
+
+enum CommerceEventType {
+  GOODS_SHIPMENT
+  SERVICE_ACT
+  LEASE_USAGE
+  MATERIAL_CONSUMPTION
+  HARVEST
+  INTERNAL_TRANSFER
+  WRITE_OFF
+}
+
+enum InvoiceDirection {
+  AR
+  AP
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  POSTED
+  PARTIALLY_PAID
+  PAID
+  CLOSED
+  VOID
+}
+
+enum PaymentStatus {
+  DRAFT
+  CONFIRMED
+  REVERSED
+}
+
+enum RegulatoryArtifactStatus {
+  PENDING
+  ISSUED
+  REJECTED
+  ACCEPTED
+}
+
+enum ArtifactSourceType {
+  INVOICE
+  FULFILLMENT_EVENT
+}
+
+model Jurisdiction {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  code String
+  name String
+
+  parties            Party[]
+  regulatoryProfiles RegulatoryProfile[]
+  contracts          CommerceContract[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, id])
+  @@unique([companyId, code])
+  @@map("commerce_jurisdictions")
+}
+
+model RegulatoryProfile {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  code           String
+  name           String
+  jurisdictionId String
+  jurisdiction   Jurisdiction @relation(fields: [companyId, jurisdictionId], references: [companyId, id])
+  rulesJson      Json?
+
+  parties           Party[]
+  contracts         CommerceContract[]
+  fulfillmentEvents CommerceFulfillmentEvent[]
+  revenueRecEvents  RevenueRecognitionEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, id])
+  @@unique([companyId, code])
+  @@map("commerce_regulatory_profiles")
+}
+
+model Party {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  legalName           String
+  jurisdictionId      String
+  jurisdiction        Jurisdiction       @relation(fields: [companyId, jurisdictionId], references: [companyId, id])
+  regulatoryProfileId String?
+  regulatoryProfile   RegulatoryProfile? @relation(fields: [companyId, regulatoryProfileId], references: [companyId, id])
+
+  sourceRelations PartyRelation[] @relation("PartyRelationSource")
+  targetRelations PartyRelation[] @relation("PartyRelationTarget")
+
+  contractRoles    CommerceContractPartyRole[]
+  outboundPayments Payment[]                   @relation("PaymentPayer")
+  inboundPayments  Payment[]                   @relation("PaymentPayee")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, id])
+  @@index([companyId, legalName])
+  @@map("commerce_parties")
+}
+
+model PartyRelation {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  sourcePartyId String
+  sourceParty   Party  @relation("PartyRelationSource", fields: [companyId, sourcePartyId], references: [companyId, id])
+  targetPartyId String
+  targetParty   Party  @relation("PartyRelationTarget", fields: [companyId, targetPartyId], references: [companyId, id])
+
+  relationType PartyRelationType
+  validFrom    DateTime
+  validTo      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, id])
+  @@index([companyId, sourcePartyId, targetPartyId, relationType])
+  @@map("commerce_party_relations")
+}
+
+model CommerceContract {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  number              String
+  type                String
+  status              CommerceContractStatus @default(DRAFT)
+  validFrom           DateTime
+  validTo             DateTime?
+  jurisdictionId      String
+  jurisdiction        Jurisdiction           @relation(fields: [companyId, jurisdictionId], references: [companyId, id])
+  regulatoryProfileId String?
+  regulatoryProfile   RegulatoryProfile?     @relation(fields: [companyId, regulatoryProfileId], references: [companyId, id])
+
+  roles              CommerceContractPartyRole[]
+  obligations        CommerceObligation[]
+  budgetReservations BudgetReservation[]
+  paymentSchedules   PaymentSchedule[]
+  invoices           Invoice[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, id])
+  @@unique([companyId, number])
+  @@map("commerce_contracts")
+}
+
+model CommerceContractPartyRole {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  contractId String
+  contract   CommerceContract              @relation(fields: [companyId, contractId], references: [companyId, id])
+  partyId    String
+  party      Party                         @relation(fields: [companyId, partyId], references: [companyId, id])
+  role       CommerceContractPartyRoleType
+  isPrimary  Boolean                       @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, id])
+  @@unique([companyId, contractId, partyId, role])
+  @@map("commerce_contract_party_roles")
+}
+
+model CommerceObligation {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  contractId String
+  contract   CommerceContract         @relation(fields: [companyId, contractId], references: [companyId, id])
+  type       CommerceObligationType
+  status     CommerceObligationStatus @default(OPEN)
+  dueDate    DateTime?
+  termsJson  Json?
+
+  fulfillmentEvents  CommerceFulfillmentEvent[]
+  budgetReservations BudgetReservation[]
+  paymentSchedules   PaymentSchedule[]
+  invoices           Invoice[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, id])
+  @@map("commerce_obligations")
+}
+
+model BudgetReservation {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  contractId   String?
+  contract     CommerceContract?   @relation(fields: [companyId, contractId], references: [companyId, id])
+  obligationId String?
+  obligation   CommerceObligation? @relation(fields: [companyId, obligationId], references: [companyId, id])
+  amount       Decimal             @db.Decimal(18, 4)
+  currency     String
+  periodId     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, id])
+  @@map("commerce_budget_reservations")
+}
+
+model PaymentSchedule {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  contractId   String?
+  contract     CommerceContract?   @relation(fields: [companyId, contractId], references: [companyId, id])
+  obligationId String?
+  obligation   CommerceObligation? @relation(fields: [companyId, obligationId], references: [companyId, id])
+  invoiceId    String?
+  invoice      Invoice?            @relation(fields: [companyId, invoiceId], references: [companyId, id])
+  dueDate      DateTime
+  percentage   Decimal?            @db.Decimal(8, 4)
+  amount       Decimal?            @db.Decimal(18, 4)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, id])
+  @@map("commerce_payment_schedules")
+}
+
+model CommerceFulfillmentEvent {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  obligationId        String
+  obligation          CommerceObligation  @relation(fields: [companyId, obligationId], references: [companyId, id])
+  eventDomain         CommerceEventDomain
+  eventType           CommerceEventType
+  eventDate           DateTime
+  assetId             String?
+  payloadJson         Json?
+  proofDocumentId     String?
+  regulatoryProfileId String?
+  regulatoryProfile   RegulatoryProfile?  @relation(fields: [companyId, regulatoryProfileId], references: [companyId, id])
+
+  stockMoves          StockMove[]
+  revenueRecEvents    RevenueRecognitionEvent[]
+  invoices            Invoice[]
+  regulatoryArtifacts RegulatoryArtifact[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, id])
+  @@index([companyId, obligationId, eventDomain, eventType])
+  @@map("commerce_fulfillment_events")
+}
+
+model StockMove {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  fulfillmentEventId String
+  fulfillmentEvent   CommerceFulfillmentEvent @relation(fields: [companyId, fulfillmentEventId], references: [companyId, id])
+  itemId             String
+  uom                String
+  qty                Decimal                  @db.Decimal(18, 4)
+  fromLocationId     String?
+  toLocationId       String?
+  batchId            String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, id])
+  @@map("commerce_stock_moves")
+}
+
+model RevenueRecognitionEvent {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  fulfillmentEventId  String
+  fulfillmentEvent    CommerceFulfillmentEvent @relation(fields: [companyId, fulfillmentEventId], references: [companyId, id])
+  recognitionPolicyId String?
+  regulatoryProfileId String?
+  regulatoryProfile   RegulatoryProfile?       @relation(fields: [companyId, regulatoryProfileId], references: [companyId, id])
+  recognizedAt        DateTime                 @default(now())
+  payloadJson         Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, id])
+  @@map("commerce_revenue_recognition_events")
+}
+
+model Invoice {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  contractId         String
+  contract           CommerceContract          @relation(fields: [companyId, contractId], references: [companyId, id])
+  obligationId       String
+  obligation         CommerceObligation        @relation(fields: [companyId, obligationId], references: [companyId, id])
+  fulfillmentEventId String?
+  fulfillmentEvent   CommerceFulfillmentEvent? @relation(fields: [companyId, fulfillmentEventId], references: [companyId, id])
+  direction          InvoiceDirection
+  status             InvoiceStatus             @default(DRAFT)
+  subtotal           Decimal                   @db.Decimal(18, 4)
+  taxTotal           Decimal                   @db.Decimal(18, 4)
+  grandTotal         Decimal                   @db.Decimal(18, 4)
+  taxSnapshotJson    Json
+  ledgerTxId         String?                   @unique
+
+  paymentSchedules    PaymentSchedule[]
+  paymentAllocations  PaymentAllocation[]
+  regulatoryArtifacts RegulatoryArtifact[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, id])
+  @@map("commerce_invoices")
+}
+
+model Payment {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  payerPartyId  String
+  payerParty    Party         @relation("PaymentPayer", fields: [companyId, payerPartyId], references: [companyId, id])
+  payeePartyId  String
+  payeeParty    Party         @relation("PaymentPayee", fields: [companyId, payeePartyId], references: [companyId, id])
+  amount        Decimal       @db.Decimal(18, 4)
+  currency      String
+  paidAt        DateTime
+  paymentMethod String
+  status        PaymentStatus @default(DRAFT)
+  ledgerTxId    String?       @unique
+
+  allocations PaymentAllocation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, id])
+  @@map("commerce_payments")
+}
+
+model PaymentAllocation {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  paymentId       String
+  payment         Payment  @relation(fields: [companyId, paymentId], references: [companyId, id])
+  invoiceId       String?
+  invoice         Invoice? @relation(fields: [companyId, invoiceId], references: [companyId, id])
+  allocatedAmount Decimal  @db.Decimal(18, 4)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, id])
+  @@map("commerce_payment_allocations")
+}
+
+model RegulatoryArtifact {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  sourceType         ArtifactSourceType
+  invoiceId          String?
+  invoice            Invoice?                  @relation(fields: [companyId, invoiceId], references: [companyId, id])
+  fulfillmentEventId String?
+  fulfillmentEvent   CommerceFulfillmentEvent? @relation(fields: [companyId, fulfillmentEventId], references: [companyId, id])
+  artifactType       String
+  payloadRef         String?
+  status             RegulatoryArtifactStatus  @default(PENDING)
+  externalRefId      String?
+  issuedAt           DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, id])
+  @@map("commerce_regulatory_artifacts")
 }

@@ -1,5 +1,5 @@
 // Knowledge Graph (Sprint 2)
-﻿import { Test, TestingModule } from "@nestjs/testing";
+import { Test, TestingModule } from "@nestjs/testing";
 import { KnowledgeGraphIngestionService } from "./knowledge-graph-ingestion.service";
 import { KnowledgeGraphEventBus } from "./knowledge-graph.event-bus";
 import { IntegrityGateService } from "../integrity/integrity-gate.service";
@@ -25,11 +25,19 @@ describe("KnowledgeGraphIngestionService", () => {
   });
 
   it("should publish event when input is valid", async () => {
-    integrityGate.validateKnowledgeGraphInput.mockReturnValue({ ok: true, errors: [] });
+    integrityGate.validateKnowledgeGraphInput.mockReturnValue({
+      ok: true,
+      errors: [],
+    });
 
     const dto: KnowledgeGraphIngestionDto = {
       nodes: [
-        { id: "n1", type: "CONCEPT" as any, label: "A", source: "MANUAL" as any },
+        {
+          id: "n1",
+          type: "CONCEPT" as any,
+          label: "A",
+          source: "MANUAL" as any,
+        },
       ],
       edges: [],
     };

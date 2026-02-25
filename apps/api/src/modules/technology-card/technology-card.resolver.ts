@@ -11,7 +11,7 @@ import { Season } from "../season/dto/season.type";
 @Resolver(() => TechnologyCard)
 @UseGuards(GqlAuthGuard)
 export class TechnologyCardResolver {
-  constructor(private readonly techCardService: TechnologyCardService) { }
+  constructor(private readonly techCardService: TechnologyCardService) {}
 
   @Mutation(() => TechnologyCard)
   async createTechnologyCard(

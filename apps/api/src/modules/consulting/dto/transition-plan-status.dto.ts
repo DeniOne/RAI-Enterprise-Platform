@@ -1,7 +1,7 @@
-import { IsEnum } from 'class-validator';
-import { HarvestPlanStatus } from '@rai/prisma-client';
+import { IsEnum } from "class-validator";
+import { HarvestPlanStatus } from "@rai/prisma-client";
 
 export class TransitionPlanStatusDto {
-    @IsEnum(HarvestPlanStatus)
-    status: HarvestPlanStatus;
+  @IsEnum(HarvestPlanStatus)
+  status: HarvestPlanStatus;
 }

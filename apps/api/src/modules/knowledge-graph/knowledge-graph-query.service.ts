@@ -1,5 +1,5 @@
 // Knowledge Graph (Sprint 2)
-﻿import { Injectable } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 
 @Injectable()
@@ -39,10 +39,7 @@ export class KnowledgeGraphQueryService {
       const edges = await this.prisma.knowledgeEdge.findMany({
         where: {
           companyId,
-          OR: [
-            { fromNodeId: { in: ids } },
-            { toNodeId: { in: ids } },
-          ],
+          OR: [{ fromNodeId: { in: ids } }, { toNodeId: { in: ids } }],
         },
         orderBy: { createdAt: "asc" },
       });
@@ -58,7 +55,9 @@ export class KnowledgeGraphQueryService {
       frontier = next;
     }
 
-    const nodeIds = Array.from(new Set([nodeId, ...Array.from(visited)])).sort();
+    const nodeIds = Array.from(
+      new Set([nodeId, ...Array.from(visited)]),
+    ).sort();
     const nodes = await this.prisma.knowledgeNode.findMany({
       where: { id: { in: nodeIds }, companyId },
       orderBy: { createdAt: "asc" },

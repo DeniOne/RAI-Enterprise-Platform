@@ -17,7 +17,11 @@ export class VisionIngestionService {
     private readonly shadowAdvisory: ShadowAdvisoryService,
   ) {}
 
-  async ingest(input: VisionObservationInputDto, companyId: string, traceId: string) {
+  async ingest(
+    input: VisionObservationInputDto,
+    companyId: string,
+    traceId: string,
+  ) {
     const validation = this.integrityGate.validateVisionObservation(input);
     if (!validation.ok) {
       throw new BadRequestException(validation.errors.join("; "));
@@ -49,7 +53,9 @@ export class VisionIngestionService {
         memoryType: "CONTEXT",
       });
     } catch (error: any) {
-      this.logger.warn(`[VISION] Shadow advisory skipped (${traceId}): ${error?.message ?? "unknown error"}`);
+      this.logger.warn(
+        `[VISION] Shadow advisory skipped (${traceId}): ${error?.message ?? "unknown error"}`,
+      );
     }
 
     return { status: "accepted", traceId };

@@ -11,7 +11,7 @@ import { User } from "@rai/prisma-client";
 @Resolver(() => Season)
 @UseGuards(GqlAuthGuard)
 export class SeasonResolver {
-  constructor(private readonly seasonService: SeasonService) { }
+  constructor(private readonly seasonService: SeasonService) {}
 
   @Mutation(() => Season)
   async createSeason(

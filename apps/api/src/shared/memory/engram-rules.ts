@@ -7,15 +7,25 @@ export interface EngramScore {
   score: number;
 }
 
-export function resolveEngramOutcome(metadata: Record<string, unknown>): EngramOutcome {
+export function resolveEngramOutcome(
+  metadata: Record<string, unknown>,
+): EngramOutcome {
   const raw = metadata.outcome ?? metadata.label ?? metadata.result;
   if (typeof raw !== "string") return "UNKNOWN";
 
   const normalized = raw.toUpperCase();
-  if (normalized === "POSITIVE" || normalized === "SUCCESS" || normalized === "GOOD") {
+  if (
+    normalized === "POSITIVE" ||
+    normalized === "SUCCESS" ||
+    normalized === "GOOD"
+  ) {
     return "POSITIVE";
   }
-  if (normalized === "NEGATIVE" || normalized === "FAIL" || normalized === "BAD") {
+  if (
+    normalized === "NEGATIVE" ||
+    normalized === "FAIL" ||
+    normalized === "BAD"
+  ) {
     return "NEGATIVE";
   }
   return "UNKNOWN";

@@ -25,7 +25,7 @@ export interface PaginationOptions {
 
 @Injectable()
 export class AuditService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   /**
    * Log an audit event.
@@ -39,12 +39,14 @@ export class AuditService {
       ...data.metadata,
       _tamperEvident: {
         hash: signature,
-        algorithm: 'sha256',
-        timestamp: new Date().toISOString()
-      }
+        algorithm: "sha256",
+        timestamp: new Date().toISOString(),
+      },
     };
 
-    console.log(`[AUDIT] ${data.action} | User: ${data.userId || "GUEST"} | Sig: ${signature.substring(0, 8)}...`);
+    console.log(
+      `[AUDIT] ${data.action} | User: ${data.userId || "GUEST"} | Sig: ${signature.substring(0, 8)}...`,
+    );
 
     return this.prisma.auditLog.create({
       data: {
@@ -59,8 +61,11 @@ export class AuditService {
   }
 
   private signLogEntry(data: AuditLogInput): string {
-    const crypto = require('crypto');
-    const secret = process.env.AUDIT_SECRET || process.env.JWT_SECRET || 'fallback-secret-DO-NOT-USE-IN-PROD';
+    const crypto = require("crypto");
+    const secret =
+      process.env.AUDIT_SECRET ||
+      process.env.JWT_SECRET ||
+      "fallback-secret-DO-NOT-USE-IN-PROD";
 
     // Canonical string representation
     const payload = JSON.stringify({
@@ -68,10 +73,10 @@ export class AuditService {
       userId: data.userId,
       ip: data.ip,
       userAgent: data.userAgent,
-      metadata: data.metadata
+      metadata: data.metadata,
     });
 
-    return crypto.createHmac('sha256', secret).update(payload).digest('hex');
+    return crypto.createHmac("sha256", secret).update(payload).digest("hex");
   }
 
   /**

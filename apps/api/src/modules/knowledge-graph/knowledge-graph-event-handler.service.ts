@@ -1,5 +1,5 @@
 // Knowledge Graph (Sprint 2)
-﻿import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { KnowledgeGraphUpdatedEvent } from "./events/knowledge-graph.events";
 
@@ -10,7 +10,9 @@ export class KnowledgeGraphEventHandlerService {
   constructor(private readonly prisma: PrismaService) {}
 
   async handle(event: KnowledgeGraphUpdatedEvent): Promise<void> {
-    this.logger.log(`[KNOWLEDGE-GRAPH] Applying event ${event.type} (${event.traceId})`);
+    this.logger.log(
+      `[KNOWLEDGE-GRAPH] Applying event ${event.type} (${event.traceId})`,
+    );
 
     if (event.nodes.length > 0) {
       await this.prisma.knowledgeNode.createMany({

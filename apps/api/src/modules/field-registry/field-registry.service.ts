@@ -9,7 +9,7 @@ import { CreateFieldDto } from "./dto/create-field.dto";
 
 @Injectable()
 export class FieldRegistryService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(data: CreateFieldDto, companyId: string): Promise<Field> {
     // 1. Verify Account belongs to Company

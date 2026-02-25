@@ -6,6 +6,40 @@ import { CreateFulfillmentEventDto } from "../dto/create-fulfillment-event.dto";
 export class FulfillmentService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async listEvents() {
+    const events = await this.prisma.commerceFulfillmentEvent.findMany({
+      orderBy: { eventDate: "desc" },
+      include: {
+        obligation: {
+          include: {
+            contract: {
+              select: {
+                id: true,
+                number: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return events.map((event) => ({
+      id: event.id,
+      eventDomain: event.eventDomain,
+      eventType: event.eventType,
+      eventDate: event.eventDate,
+      obligationId: event.obligationId,
+      contract: event.obligation?.contract
+        ? {
+            id: event.obligation.contract.id,
+            number: event.obligation.contract.number,
+          }
+        : null,
+      payloadJson: event.payloadJson,
+      createdAt: event.createdAt,
+    }));
+  }
+
   async createEvent(dto: CreateFulfillmentEventDto) {
     if (dto.eventDomain === "COMMERCIAL" && dto.eventType === "GOODS_SHIPMENT" && !dto.batchId) {
       throw new BadRequestException("batchId is required for COMMERCIAL GOODS_SHIPMENT");

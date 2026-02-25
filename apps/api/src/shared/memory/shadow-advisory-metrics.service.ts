@@ -34,12 +34,13 @@ export class ShadowAdvisoryMetricsService {
           path: ["companyId"],
           equals: request.companyId,
         },
-        createdAt: request.from || request.to
-          ? {
-              gte: request.from,
-              lte: request.to,
-            }
-          : undefined,
+        createdAt:
+          request.from || request.to
+            ? {
+                gte: request.from,
+                lte: request.to,
+              }
+            : undefined,
       },
       select: { metadata: true },
     });
@@ -62,7 +63,8 @@ export class ShadowAdvisoryMetricsService {
 
     // В текущем shadow-контуре один сигнал = один расчет advisory.
     const totalSignals = advisoriesGenerated;
-    const coverage = totalSignals === 0 ? 0 : advisoriesGenerated / totalSignals;
+    const coverage =
+      totalSignals === 0 ? 0 : advisoriesGenerated / totalSignals;
 
     return {
       totalSignals,
@@ -71,10 +73,22 @@ export class ShadowAdvisoryMetricsService {
       allowCount,
       reviewCount,
       blockCount,
-      allowRatio: Number((advisoriesGenerated ? allowCount / advisoriesGenerated : 0).toFixed(4)),
-      reviewRatio: Number((advisoriesGenerated ? reviewCount / advisoriesGenerated : 0).toFixed(4)),
-      blockRatio: Number((advisoriesGenerated ? blockCount / advisoriesGenerated : 0).toFixed(4)),
-      avgConfidence: Number((advisoriesGenerated ? confidenceSum / advisoriesGenerated : 0).toFixed(4)),
+      allowRatio: Number(
+        (advisoriesGenerated ? allowCount / advisoriesGenerated : 0).toFixed(4),
+      ),
+      reviewRatio: Number(
+        (advisoriesGenerated ? reviewCount / advisoriesGenerated : 0).toFixed(
+          4,
+        ),
+      ),
+      blockRatio: Number(
+        (advisoriesGenerated ? blockCount / advisoriesGenerated : 0).toFixed(4),
+      ),
+      avgConfidence: Number(
+        (advisoriesGenerated ? confidenceSum / advisoriesGenerated : 0).toFixed(
+          4,
+        ),
+      ),
     };
   }
 }

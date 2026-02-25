@@ -20,7 +20,9 @@ describe("SatelliteIngestionService", () => {
   const deviationMock = {} as DeviationService;
   const consultingMock = {} as ConsultingService;
   const registryMock = {} as RegistryAgentService;
-  const quorumMock = { isBlockedByQuorum: jest.fn().mockResolvedValue(false) } as any;
+  const quorumMock = {
+    isBlockedByQuorum: jest.fn().mockResolvedValue(false),
+  } as any;
   const driftQueueMock = { add: jest.fn() } as any;
   const integrityGate = new IntegrityGateService(
     prismaMock,
@@ -80,6 +82,8 @@ describe("SatelliteIngestionService", () => {
       confidence: 0.8,
     };
 
-    await expect(service.ingest(dto, "trace-1")).rejects.toThrow(BadRequestException);
+    await expect(service.ingest(dto, "trace-1")).rejects.toThrow(
+      BadRequestException,
+    );
   });
 });

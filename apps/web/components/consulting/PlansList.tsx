@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { HarvestPlanStatus, getEntityTransitions } from '@/lib/consulting/ui-policy';
-import { UserRole } from '@/lib/config/role-config';
 import { DomainUiContext } from '@/lib/consulting/navigation-policy';
 import { api } from '@/lib/api';
 import clsx from 'clsx';
 import { KpiCard } from './KpiCard';
+import { AuthorityContextType } from '@/core/governance/AuthorityContext';
 
 interface Plan {
     id: string;
@@ -15,16 +16,16 @@ interface Plan {
 
 interface PlansListProps {
     plans: Plan[];
-    userRole: UserRole;
+    authority: AuthorityContextType;
     context: DomainUiContext;
     onTransition: (id: string, target: string) => void;
 }
 
 type FsmPhase = 'planning' | 'execution' | 'archive';
 
-function PlanItem({ plan, userRole, context, onTransition, activePhase }: {
+function PlanItem({ plan, authority, context, onTransition, activePhase }: {
     plan: Plan,
-    userRole: UserRole,
+    authority: AuthorityContextType,
     context: DomainUiContext,
     onTransition: (id: string, target: string) => void,
     activePhase: FsmPhase
@@ -53,7 +54,7 @@ function PlanItem({ plan, userRole, context, onTransition, activePhase }: {
         }
     }, [plan.id, plan.status]);
 
-    const perm = getEntityTransitions('harvest-plan', plan.status, userRole, context);
+    const perm = getEntityTransitions('harvest-plan', plan.status, authority, context);
 
     return (
         <div className="bg-white border border-black/5 rounded-[24px] overflow-hidden group hover:border-black/10 transition-all duration-300 hover:shadow-lg hover:shadow-black/[0.02]">
@@ -98,9 +99,12 @@ function PlanItem({ plan, userRole, context, onTransition, activePhase }: {
                         </div>
                     ))}
 
-                    <button className="px-6 py-2.5 bg-white text-gray-900 rounded-xl text-xs font-semibold border border-black/5 hover:bg-stone-50 transition-colors">
+                    <Link
+                        href={`/consulting/plans/${plan.id}`}
+                        className="px-6 py-2.5 bg-white text-gray-900 rounded-xl text-xs font-semibold border border-black/5 hover:bg-stone-50 transition-colors"
+                    >
                         Подробнее
-                    </button>
+                    </Link>
                 </div>
             </div>
 
@@ -126,7 +130,7 @@ function PlanItem({ plan, userRole, context, onTransition, activePhase }: {
     );
 }
 
-export function PlansList({ plans, userRole, context, onTransition }: PlansListProps) {
+export function PlansList({ plans, authority, context, onTransition }: PlansListProps) {
     const [activePhase, setActivePhase] = useState<FsmPhase>('planning');
 
     const phaseConfig: Record<FsmPhase, { label: string; statuses: HarvestPlanStatus[] }> = {
@@ -168,7 +172,7 @@ export function PlansList({ plans, userRole, context, onTransition }: PlansListP
                         <PlanItem
                             key={plan.id}
                             plan={plan}
-                            userRole={userRole}
+                            authority={authority}
                             context={context}
                             onTransition={onTransition}
                             activePhase={activePhase}

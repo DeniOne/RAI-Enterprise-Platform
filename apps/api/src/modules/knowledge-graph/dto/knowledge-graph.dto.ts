@@ -1,5 +1,5 @@
 // Knowledge Graph (Sprint 2)
-﻿export enum KnowledgeNodeType {
+export enum KnowledgeNodeType {
   CONCEPT = "CONCEPT",
   ENTITY = "ENTITY",
   METRIC = "METRIC",

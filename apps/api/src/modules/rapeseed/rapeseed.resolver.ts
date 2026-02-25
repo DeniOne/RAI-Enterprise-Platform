@@ -11,7 +11,7 @@ import { UpdateRapeseedInput } from "./dto/update-rapeseed.input";
 @Resolver(() => Rapeseed)
 @UseGuards(GqlAuthGuard)
 export class RapeseedResolver {
-  constructor(private readonly rapeseedService: RapeseedService) { }
+  constructor(private readonly rapeseedService: RapeseedService) {}
 
   @Mutation(() => Rapeseed)
   async createRapeseed(

@@ -3,7 +3,6 @@
 import React, { useState, useMemo } from 'react';
 import { SystemStatusBar } from '@/components/consulting/SystemStatusBar';
 import { DomainUiContext } from '@/lib/consulting/navigation-policy';
-import { UserRole } from '@/lib/config/role-config';
 import clsx from 'clsx';
 
 const MOCK_ADVISORY = {
@@ -17,7 +16,6 @@ const MOCK_ADVISORY = {
 
 export default function AdvisoryPage() {
     const [advisory] = useState(MOCK_ADVISORY);
-    const [userRole] = useState<UserRole>('ADMIN');
 
     const domainContext = useMemo<DomainUiContext>(() => ({
         plansCount: 2,

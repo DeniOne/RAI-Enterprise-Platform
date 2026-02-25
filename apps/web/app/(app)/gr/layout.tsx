@@ -14,7 +14,7 @@ export default async function GRLayout({
     }
 
     return (
-        <AuthenticatedLayout role={user.role}>
+        <AuthenticatedLayout>
             {children}
         </AuthenticatedLayout>
     );

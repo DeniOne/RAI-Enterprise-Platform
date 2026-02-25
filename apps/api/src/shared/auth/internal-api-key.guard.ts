@@ -12,7 +12,9 @@ export class InternalApiKeyGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
-    const provided = request.headers["x-internal-api-key"] as string | undefined;
+    const provided = request.headers["x-internal-api-key"] as
+      | string
+      | undefined;
     const expected = this.configService.get<string>("INTERNAL_API_KEY") || "";
 
     if (!expected || !provided || provided !== expected) {

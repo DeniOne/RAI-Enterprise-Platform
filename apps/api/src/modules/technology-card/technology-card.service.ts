@@ -5,7 +5,7 @@ import { TechnologyCard, Prisma, User } from "@rai/prisma-client";
 
 @Injectable()
 export class TechnologyCardService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(
     input: CreateTechnologyCardInput,

@@ -1,5 +1,5 @@
 // Knowledge Graph (Sprint 2)
-﻿import { KnowledgeEdgeDto, KnowledgeNodeDto } from "../dto/knowledge-graph.dto";
+import { KnowledgeEdgeDto, KnowledgeNodeDto } from "../dto/knowledge-graph.dto";
 
 export interface KnowledgeGraphUpdatedEvent {
   type: "KnowledgeGraphUpdated";

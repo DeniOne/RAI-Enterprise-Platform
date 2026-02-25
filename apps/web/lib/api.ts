@@ -53,6 +53,12 @@ export const api = {
             company: (seasonId: string) => apiClient.get(`/consulting/kpi/company/${seasonId}`),
         },
     },
+    commerce: {
+        contracts: () => apiClient.get('/commerce/contracts'),
+        fulfillment: () => apiClient.get('/commerce/fulfillment'),
+        invoices: () => apiClient.get('/commerce/invoices'),
+        payments: () => apiClient.get('/commerce/payments'),
+    },
     crm: {
         holdings: (companyId: string) => apiClient.get(`/crm/holdings/${companyId}`),
         createHolding: (data: { name: string; description?: string; companyId: string }) =>

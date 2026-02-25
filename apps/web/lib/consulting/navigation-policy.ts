@@ -1,4 +1,5 @@
 import { UserRole } from '../config/role-config';
+import { CapabilityFlags, capabilitiesFromRole } from './capability-policy';
 
 /**
  * Контракт Контекста UI Домена
@@ -14,6 +15,7 @@ export interface DomainUiContext {
 
 export type Domain =
     | 'crop'
+    | 'commerce'
     | 'strategy'
     | 'economy'
     | 'finance'
@@ -151,6 +153,21 @@ export const CONSULTING_NAVIGATION: NavItem[] = [
         ]
     },
 
+    // 1.5. Коммерция
+    {
+        id: 'commerce',
+        label: 'Коммерция',
+        path: '/commerce/contracts',
+        domain: 'commerce',
+        roles: ['ADMIN', 'CEO', 'MANAGER', 'DIRECTOR_FINANCE', 'SYSTEM_ADMIN', 'FOUNDER'],
+        subItems: [
+            { id: 'commerce_contracts', label: 'Договоры', path: '/commerce/contracts', domain: 'commerce', roles: ['ADMIN', 'CEO', 'MANAGER', 'DIRECTOR_FINANCE', 'SYSTEM_ADMIN', 'FOUNDER'] },
+            { id: 'commerce_fulfillment', label: 'Исполнение договоров', path: '/commerce/fulfillment', domain: 'commerce', roles: ['ADMIN', 'CEO', 'MANAGER', 'DIRECTOR_FINANCE', 'SYSTEM_ADMIN', 'FOUNDER'] },
+            { id: 'commerce_invoices', label: 'Документы', path: '/commerce/invoices', domain: 'commerce', roles: ['ADMIN', 'CEO', 'MANAGER', 'DIRECTOR_FINANCE', 'SYSTEM_ADMIN', 'FOUNDER'] },
+            { id: 'commerce_payments', label: 'Оплаты', path: '/commerce/payments', domain: 'commerce', roles: ['ADMIN', 'CEO', 'MANAGER', 'DIRECTOR_FINANCE', 'SYSTEM_ADMIN', 'FOUNDER'] },
+        ]
+    },
+
     // 2. Стратегия
     {
         id: 'strategy',
@@ -266,34 +283,35 @@ export const CONSULTING_NAVIGATION: NavItem[] = [
 /**
  * Возвращает список видимых элементов навигации с учетом роли и контекста домена.
  */
-export function getVisibleNavigation(role: UserRole, context?: DomainUiContext): NavItem[] {
+export function getVisibleNavigation(
+    roleOrCapabilities: UserRole | CapabilityFlags,
+    context?: DomainUiContext
+): NavItem[] {
+    const capabilities =
+        typeof roleOrCapabilities === 'string'
+            ? capabilitiesFromRole(roleOrCapabilities)
+            : roleOrCapabilities;
+    const role = typeof roleOrCapabilities === 'string' ? roleOrCapabilities : undefined;
+
     const filterItems = (items: NavItem[]): NavItem[] => {
         return items.reduce((acc, item) => {
-            // 1. RBAC Check
-            const hasRole = item.roles.includes(role);
+            // Keep role lists as compatibility matrix, but gate sensitive areas by capabilities.
+            const hasRole = role ? item.roles.includes(role) : true;
             if (!hasRole) return acc;
 
-            // 2. Specific RBAC-aware rules from Audit
-            if (role === 'MANAGER' && item.id === 'advisory') {
-                // MANAGER не видит Advisory (в данном случае Hub, т.к. Company Advisory тоже там)
-                // Согласно аудиту: "MANAGER не видит Advisory Company"
-                // Если разделим Hub на части, можно тоньше. Пока скроем весь, если MANAGER.
-                return acc;
-            }
-            if (role === 'USER' && (item.id === 'decisions' || item.domain === 'gr')) {
+            const canAccessGovernance = capabilities.canSign || capabilities.canOverride || capabilities.canEscalate;
+            if (!canAccessGovernance && (item.id === 'decisions' || item.domain === 'gr' || item.id === 'advisory')) {
                 return acc;
             }
 
             const updatedItem = { ...item };
 
-            // 3. Context-aware visibility/state
             if (context) {
                 if (item.id === 'advisory' && context.plansCount === 0) {
                     updatedItem.disabled = true;
                 }
             }
 
-            // 4. Recursive filter for subItems
             if (item.subItems) {
                 const visibleSubItems = filterItems(item.subItems);
                 if (visibleSubItems.length > 0) {

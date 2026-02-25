@@ -16,7 +16,7 @@ import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 @Controller("registry/clients")
 @UseGuards(JwtAuthGuard)
 export class ClientRegistryController {
-  constructor(private readonly registryService: ClientRegistryService) { }
+  constructor(private readonly registryService: ClientRegistryService) {}
 
   @Post("holdings")
   async createHolding(

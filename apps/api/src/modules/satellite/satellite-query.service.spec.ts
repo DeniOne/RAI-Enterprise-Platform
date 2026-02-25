@@ -29,7 +29,9 @@ describe("SatelliteQueryService", () => {
 
     const result = await service.getObservation("s1", "company-1");
 
-    expect(prismaMock.satelliteObservation.findUnique).toHaveBeenCalledWith({ where: { id: "s1" } });
+    expect(prismaMock.satelliteObservation.findUnique).toHaveBeenCalledWith({
+      where: { id: "s1" },
+    });
     expect(result).toEqual({ id: "s1" });
   });
 
@@ -45,10 +47,15 @@ describe("SatelliteQueryService", () => {
   it("getObservationsByAsset should apply time range and indexType", async () => {
     prismaMock.satelliteObservation.findMany.mockResolvedValue([{ id: "s1" }]);
 
-    const result = await service.getObservationsByAsset("field-1", "company-1", "NDVI" as any, {
-      from: "2026-01-01T00:00:00.000Z",
-      to: "2026-01-02T00:00:00.000Z",
-    });
+    const result = await service.getObservationsByAsset(
+      "field-1",
+      "company-1",
+      "NDVI" as any,
+      {
+        from: "2026-01-01T00:00:00.000Z",
+        to: "2026-01-02T00:00:00.000Z",
+      },
+    );
 
     expect(prismaMock.satelliteObservation.findMany).toHaveBeenCalled();
     expect(result).toEqual([{ id: "s1" }]);

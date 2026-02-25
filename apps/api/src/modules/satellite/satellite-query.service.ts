@@ -13,7 +13,9 @@ export class SatelliteQueryService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getObservation(id: string, companyId: string) {
-    return this.prisma.satelliteObservation.findFirst({ where: { id, companyId } });
+    return this.prisma.satelliteObservation.findFirst({
+      where: { id, companyId },
+    });
   }
 
   async getObservationsByAsset(

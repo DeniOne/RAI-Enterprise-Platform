@@ -6,6 +6,40 @@ import { CreateCommerceContractDto } from "../dto/create-commerce-contract.dto";
 export class CommerceContractService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async listContracts() {
+    const contracts = await this.prisma.commerceContract.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        roles: {
+          include: {
+            party: {
+              select: {
+                id: true,
+                legalName: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return contracts.map((contract) => ({
+      id: contract.id,
+      number: contract.number,
+      type: contract.type,
+      status: contract.status,
+      validFrom: contract.validFrom,
+      validTo: contract.validTo,
+      createdAt: contract.createdAt,
+      roles: contract.roles.map((role) => ({
+        id: role.id,
+        role: role.role,
+        isPrimary: role.isPrimary,
+        party: role.party,
+      })),
+    }));
+  }
+
   async createContract(dto: CreateCommerceContractDto) {
     const uniqueRoleKeys = new Set<string>();
     for (const role of dto.roles) {

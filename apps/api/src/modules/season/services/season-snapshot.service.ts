@@ -9,7 +9,7 @@ export class SeasonSnapshotService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AgroAuditService,
-  ) { }
+  ) {}
 
   /**
    * Creates a physical snapshot of the season data inside a transaction.

@@ -10,4 +10,4 @@ import { AgroAuditController } from "./agro-audit.controller";
   providers: [AgroAuditService],
   exports: [AgroAuditService],
 })
-export class AgroAuditModule { }
+export class AgroAuditModule {}

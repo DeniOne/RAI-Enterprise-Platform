@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { HarvestPlanStatus, getHarvestPlanPermissions } from '@/lib/consulting/ui-policy';
-import { UserRole } from '@/lib/config/role-config';
 import { ActionGuard } from './ActionGuard';
+import { AuthorityContextType } from '@/core/governance/AuthorityContext';
 
 interface PlanData {
     id: string;
@@ -15,13 +15,13 @@ interface PlanData {
 
 interface PlanDesignerProps {
     plan: PlanData;
-    userRole: UserRole;
+    authority: AuthorityContextType;
     onUpdate: (data: Partial<PlanData>) => void;
     onAction: (targetStatus: string) => void;
 }
 
-export function PlanDesigner({ plan, userRole, onUpdate, onAction }: PlanDesignerProps) {
-    const perm = getHarvestPlanPermissions(plan.status, userRole);
+export function PlanDesigner({ plan, authority, onUpdate, onAction }: PlanDesignerProps) {
+    const perm = getHarvestPlanPermissions(plan.status, authority);
     const isEditingDisabled = !perm.canEdit;
 
     return (

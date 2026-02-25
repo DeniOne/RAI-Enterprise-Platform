@@ -12,7 +12,7 @@ export class AgroAuditService {
   constructor(
     private readonly auditService: AuditService,
     private readonly prisma: PrismaService,
-  ) { }
+  ) {}
 
   /**
    * Logs a specific agricultural event.
@@ -89,7 +89,8 @@ export class AgroAuditService {
         // Log to separate failures table
         if (attempt < maxRetries - 1) {
           try {
-            await this.prisma.auditFailure.create({ // tenant-lint:ignore AuditFailure model has no companyId column
+            await this.prisma.auditFailure.create({
+              // tenant-lint:ignore AuditFailure model has no companyId column
               data: {
                 event: event.toString(),
                 userId: user?.id,
@@ -125,7 +126,7 @@ export class AgroAuditService {
   ): Promise<void> {
     await this.log(
       AgriculturalAuditEvent.RAPESEED_ROTATION_VIOLATION,
-      userId ? { id: userId, companyId } : { id: 'SYSTEM', companyId },
+      userId ? { id: userId, companyId } : { id: "SYSTEM", companyId },
       { fieldId, violationRule, severity },
     );
   }

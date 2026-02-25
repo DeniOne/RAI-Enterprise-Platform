@@ -116,14 +116,30 @@ const DEFAULT_THRESHOLDS: AdvisoryThresholds = {
 @Injectable()
 export class AdvisoryService {
   private readonly stateTtlMs = 30_000;
-  private readonly pilotStateCache = new Map<string, { value: PilotStateEvent | null; expiresAt: number }>();
-  private readonly killSwitchCache = new Map<string, { value: { enabled: boolean; createdAt: string } | null; expiresAt: number }>();
-  private readonly rolloutStateCache = new Map<string, { value: { stage: RolloutStage; autoStopEnabled: boolean; updatedAt: string } | null; expiresAt: number }>();
+  private readonly pilotStateCache = new Map<
+    string,
+    { value: PilotStateEvent | null; expiresAt: number }
+  >();
+  private readonly killSwitchCache = new Map<
+    string,
+    { value: { enabled: boolean; createdAt: string } | null; expiresAt: number }
+  >();
+  private readonly rolloutStateCache = new Map<
+    string,
+    {
+      value: {
+        stage: RolloutStage;
+        autoStopEnabled: boolean;
+        updatedAt: string;
+      } | null;
+      expiresAt: number;
+    }
+  >();
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
-  ) { }
+  ) {}
 
   async getPendingRecommendations(
     companyId: string,
@@ -135,12 +151,18 @@ export class AdvisoryService {
       return [];
     }
 
-    const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.min(limit, 50)) : 10;
+    const safeLimit = Number.isFinite(limit)
+      ? Math.max(1, Math.min(limit, 50))
+      : 10;
 
     const logs = await this.prisma.auditLog.findMany({
       where: {
         action: {
-          in: ["SHADOW_ADVISORY_EVALUATED", "ADVISORY_ACCEPTED", "ADVISORY_REJECTED"],
+          in: [
+            "SHADOW_ADVISORY_EVALUATED",
+            "ADVISORY_ACCEPTED",
+            "ADVISORY_REJECTED",
+          ],
         },
       },
       orderBy: { createdAt: "desc" },
@@ -156,7 +178,10 @@ export class AdvisoryService {
       if (String(metadata.companyId ?? "") !== companyId) continue;
 
       if (log.action === "SHADOW_ADVISORY_EVALUATED") {
-        const event = this.parseShadowEvent(metadata, log.createdAt.toISOString());
+        const event = this.parseShadowEvent(
+          metadata,
+          log.createdAt.toISOString(),
+        );
         if (!event) continue;
 
         if (!shadowEvents.has(event.traceId)) {
@@ -164,7 +189,10 @@ export class AdvisoryService {
         }
       }
 
-      if (log.action === "ADVISORY_ACCEPTED" || log.action === "ADVISORY_REJECTED") {
+      if (
+        log.action === "ADVISORY_ACCEPTED" ||
+        log.action === "ADVISORY_REJECTED"
+      ) {
         const traceId = String(metadata.traceId ?? "");
         if (traceId) {
           decidedTraceIds.add(traceId);
@@ -172,25 +200,27 @@ export class AdvisoryService {
       }
     }
 
-    const pending = [...shadowEvents.values()]
-      .filter((event) => !decidedTraceIds.has(event.traceId));
+    const pending = [...shadowEvents.values()].filter(
+      (event) => !decidedTraceIds.has(event.traceId),
+    );
 
     const antiSpamFiltered = this.applyNoiseControl(pending);
 
-    return antiSpamFiltered
-      .slice(0, safeLimit)
-      .map((event) => ({
-        traceId: event.traceId,
-        signalType: event.signalType,
-        recommendation: event.recommendation,
-        confidence: event.confidence,
-        explainability: event.explainability,
-        createdAt: event.createdAt,
-        status: "PENDING" as const,
-      }));
+    return antiSpamFiltered.slice(0, safeLimit).map((event) => ({
+      traceId: event.traceId,
+      signalType: event.signalType,
+      recommendation: event.recommendation,
+      confidence: event.confidence,
+      explainability: event.explainability,
+      createdAt: event.createdAt,
+      status: "PENDING" as const,
+    }));
   }
 
-  async getPilotStatus(companyId: string, userId: string): Promise<AdvisoryPilotStatusDto> {
+  async getPilotStatus(
+    companyId: string,
+    userId: string,
+  ): Promise<AdvisoryPilotStatusDto> {
     const killSwitchEnabled = await this.isKillSwitchEnabled(companyId);
     if (killSwitchEnabled) {
       return {
@@ -211,7 +241,9 @@ export class AdvisoryService {
     };
   }
 
-  async getPilotCohort(companyId: string): Promise<AdvisoryPilotCohortItemDto[]> {
+  async getPilotCohort(
+    companyId: string,
+  ): Promise<AdvisoryPilotCohortItemDto[]> {
     const logs = await this.prisma.auditLog.findMany({
       where: {
         action: {
@@ -240,7 +272,9 @@ export class AdvisoryService {
       });
     }
 
-    return [...latestByUser.values()].sort((a, b) => a.userId.localeCompare(b.userId));
+    return [...latestByUser.values()].sort((a, b) =>
+      a.userId.localeCompare(b.userId),
+    );
   }
 
   async enablePilot(input: {
@@ -250,7 +284,11 @@ export class AdvisoryService {
     traceId: string;
     targetUserId?: string;
   }): Promise<{ status: "ENABLED" }> {
-    await this.assertPilotManagerRole(input.actorRole, input.actorId, input.companyId);
+    await this.assertPilotManagerRole(
+      input.actorRole,
+      input.actorId,
+      input.companyId,
+    );
 
     await this.audit.log({
       action: "ADVISORY_PILOT_ENABLED",
@@ -275,7 +313,11 @@ export class AdvisoryService {
     traceId: string;
     targetUserId?: string;
   }): Promise<{ status: "DISABLED" }> {
-    await this.assertPilotManagerRole(input.actorRole, input.actorId, input.companyId);
+    await this.assertPilotManagerRole(
+      input.actorRole,
+      input.actorId,
+      input.companyId,
+    );
 
     await this.audit.log({
       action: "ADVISORY_PILOT_DISABLED",
@@ -365,7 +407,11 @@ export class AdvisoryService {
     traceId: string;
     thresholds: AdvisoryThresholds;
   }): Promise<AdvisoryThresholds> {
-    await this.assertPilotManagerRole(input.actorRole, input.actorId, input.companyId);
+    await this.assertPilotManagerRole(
+      input.actorRole,
+      input.actorId,
+      input.companyId,
+    );
     this.validateThresholds(input.thresholds);
 
     await this.audit.log({
@@ -382,8 +428,13 @@ export class AdvisoryService {
     return input.thresholds;
   }
 
-  async getOpsMetrics(companyId: string, windowHours = 24): Promise<AdvisoryOpsMetrics> {
-    const safeHours = Number.isFinite(windowHours) ? Math.max(1, Math.min(windowHours, 168)) : 24;
+  async getOpsMetrics(
+    companyId: string,
+    windowHours = 24,
+  ): Promise<AdvisoryOpsMetrics> {
+    const safeHours = Number.isFinite(windowHours)
+      ? Math.max(1, Math.min(windowHours, 168))
+      : 24;
     const dateFrom = new Date(Date.now() - safeHours * 60 * 60 * 1000);
 
     const logs = await this.prisma.auditLog.findMany({
@@ -411,10 +462,18 @@ export class AdvisoryService {
       return metadata ? String(metadata.companyId ?? "") === companyId : false;
     });
 
-    const shadow = filtered.filter((log) => log.action === "SHADOW_ADVISORY_EVALUATED");
-    const accepted = filtered.filter((log) => log.action === "ADVISORY_ACCEPTED");
-    const rejected = filtered.filter((log) => log.action === "ADVISORY_REJECTED");
-    const feedback = filtered.filter((log) => log.action === "ADVISORY_FEEDBACK_RECORDED");
+    const shadow = filtered.filter(
+      (log) => log.action === "SHADOW_ADVISORY_EVALUATED",
+    );
+    const accepted = filtered.filter(
+      (log) => log.action === "ADVISORY_ACCEPTED",
+    );
+    const rejected = filtered.filter(
+      (log) => log.action === "ADVISORY_REJECTED",
+    );
+    const feedback = filtered.filter(
+      (log) => log.action === "ADVISORY_FEEDBACK_RECORDED",
+    );
 
     const shadowByTraceId = new Map<string, Date>();
     for (const log of shadow) {
@@ -435,16 +494,19 @@ export class AdvisoryService {
       if (!traceId) continue;
       const startedAt = shadowByTraceId.get(traceId);
       if (!startedAt) continue;
-      decisionLags.push((log.createdAt.getTime() - startedAt.getTime()) / (60 * 1000));
+      decisionLags.push(
+        (log.createdAt.getTime() - startedAt.getTime()) / (60 * 1000),
+      );
     }
 
     const shadowCount = shadow.length;
     const acceptRate = shadowCount === 0 ? 0 : accepted.length / shadowCount;
     const rejectRate = shadowCount === 0 ? 0 : rejected.length / shadowCount;
     const feedbackRate = shadowCount === 0 ? 0 : feedback.length / shadowCount;
-    const decisionLagAvgMinutes = decisionLags.length === 0
-      ? 0
-      : decisionLags.reduce((a, b) => a + b, 0) / decisionLags.length;
+    const decisionLagAvgMinutes =
+      decisionLags.length === 0
+        ? 0
+        : decisionLags.reduce((a, b) => a + b, 0) / decisionLags.length;
 
     return {
       windowHours: safeHours,
@@ -459,7 +521,9 @@ export class AdvisoryService {
     };
   }
 
-  async getKillSwitchStatus(companyId: string): Promise<{ enabled: boolean; updatedAt?: string }> {
+  async getKillSwitchStatus(
+    companyId: string,
+  ): Promise<{ enabled: boolean; updatedAt?: string }> {
     const status = await this.resolveKillSwitchStatus(companyId);
     return {
       enabled: status?.enabled ?? false,
@@ -485,7 +549,11 @@ export class AdvisoryService {
     stage: RolloutStage;
     autoStopEnabled?: boolean;
   }): Promise<AdvisoryRolloutStatusDto> {
-    await this.assertPilotManagerRole(input.actorRole, input.actorId, input.companyId);
+    await this.assertPilotManagerRole(
+      input.actorRole,
+      input.actorId,
+      input.companyId,
+    );
 
     await this.audit.log({
       action: "ADVISORY_ROLLOUT_CONFIG_UPDATED",
@@ -513,21 +581,32 @@ export class AdvisoryService {
     companyId: string;
     traceId: string;
     stage: RolloutStage;
-    metrics?: { errorRate?: number; p95LatencyMs?: number; conversionRate?: number };
+    metrics?: {
+      errorRate?: number;
+      p95LatencyMs?: number;
+      conversionRate?: number;
+    };
   }): Promise<AdvisoryRolloutGateResultDto> {
-    await this.assertPilotManagerRole(input.actorRole, input.actorId, input.companyId);
+    await this.assertPilotManagerRole(
+      input.actorRole,
+      input.actorId,
+      input.companyId,
+    );
 
     const ops = await this.getOpsMetrics(input.companyId, 24);
     const computedMetrics = {
       errorRate: input.metrics?.errorRate ?? 0,
-      p95LatencyMs: input.metrics?.p95LatencyMs ?? ops.decisionLagAvgMinutes * 60 * 1000,
+      p95LatencyMs:
+        input.metrics?.p95LatencyMs ?? ops.decisionLagAvgMinutes * 60 * 1000,
       conversionRate: input.metrics?.conversionRate ?? ops.acceptRate,
     };
 
     const reasons: string[] = [];
     if (computedMetrics.errorRate > 0.03) reasons.push("error_rate_exceeded");
-    if (computedMetrics.p95LatencyMs > 2500) reasons.push("p95_latency_exceeded");
-    if (computedMetrics.conversionRate < 0.1) reasons.push("conversion_too_low");
+    if (computedMetrics.p95LatencyMs > 2500)
+      reasons.push("p95_latency_exceeded");
+    if (computedMetrics.conversionRate < 0.1)
+      reasons.push("conversion_too_low");
 
     const pass = reasons.length === 0;
 
@@ -575,10 +654,19 @@ export class AdvisoryService {
     traceId: string;
     targetStage: RolloutStage;
   }): Promise<AdvisoryRolloutStatusDto> {
-    await this.assertPilotManagerRole(input.actorRole, input.actorId, input.companyId);
+    await this.assertPilotManagerRole(
+      input.actorRole,
+      input.actorId,
+      input.companyId,
+    );
     const current = await this.getRolloutStatus(input.companyId);
-    if (ROLLOUT_STAGE_PERCENT[input.targetStage] < ROLLOUT_STAGE_PERCENT[current.stage]) {
-      throw new BadRequestException("targetStage must be greater than or equal to current stage");
+    if (
+      ROLLOUT_STAGE_PERCENT[input.targetStage] <
+      ROLLOUT_STAGE_PERCENT[current.stage]
+    ) {
+      throw new BadRequestException(
+        "targetStage must be greater than or equal to current stage",
+      );
     }
 
     await this.audit.log({
@@ -609,10 +697,19 @@ export class AdvisoryService {
     targetStage: RolloutStage;
     reason?: string;
   }): Promise<AdvisoryRolloutStatusDto> {
-    await this.assertPilotManagerRole(input.actorRole, input.actorId, input.companyId);
+    await this.assertPilotManagerRole(
+      input.actorRole,
+      input.actorId,
+      input.companyId,
+    );
     const current = await this.getRolloutStatus(input.companyId);
-    if (ROLLOUT_STAGE_PERCENT[input.targetStage] > ROLLOUT_STAGE_PERCENT[current.stage]) {
-      throw new BadRequestException("rollback targetStage must be less than or equal to current stage");
+    if (
+      ROLLOUT_STAGE_PERCENT[input.targetStage] >
+      ROLLOUT_STAGE_PERCENT[current.stage]
+    ) {
+      throw new BadRequestException(
+        "rollback targetStage must be less than or equal to current stage",
+      );
     }
 
     await this.audit.log({
@@ -643,7 +740,11 @@ export class AdvisoryService {
     traceId: string;
     reason?: string;
   }): Promise<{ status: "ENABLED" }> {
-    await this.assertPilotManagerRole(input.actorRole, input.actorId, input.companyId);
+    await this.assertPilotManagerRole(
+      input.actorRole,
+      input.actorId,
+      input.companyId,
+    );
 
     await this.audit.log({
       action: "ADVISORY_KILL_SWITCH_ENABLED",
@@ -666,7 +767,11 @@ export class AdvisoryService {
     companyId: string;
     traceId: string;
   }): Promise<{ status: "DISABLED" }> {
-    await this.assertPilotManagerRole(input.actorRole, input.actorId, input.companyId);
+    await this.assertPilotManagerRole(
+      input.actorRole,
+      input.actorId,
+      input.companyId,
+    );
 
     await this.audit.log({
       action: "ADVISORY_KILL_SWITCH_DISABLED",
@@ -735,7 +840,10 @@ export class AdvisoryService {
       throw new BadRequestException("feedback reason is required");
     }
 
-    const hasShadowEvent = await this.hasShadowEvent(input.traceId, input.companyId);
+    const hasShadowEvent = await this.hasShadowEvent(
+      input.traceId,
+      input.companyId,
+    );
     if (!hasShadowEvent) {
       throw new NotFoundException("advisory trace not found");
     }
@@ -755,39 +863,52 @@ export class AdvisoryService {
     return { traceId: input.traceId, status: "RECORDED" };
   }
 
-  async getFeedback(companyId: string, traceId: string): Promise<Array<{ reason: string; outcome?: string; createdAt: string }>> {
+  async getFeedback(
+    companyId: string,
+    traceId: string,
+  ): Promise<Array<{ reason: string; outcome?: string; createdAt: string }>> {
     const logs = await this.prisma.auditLog.findMany({
       where: { action: "ADVISORY_FEEDBACK_RECORDED" },
       orderBy: { createdAt: "desc" },
       take: 200,
     });
 
-    const mapped: Array<{ reason: string; outcome?: string; createdAt: string } | null> = logs
-      .map((log) => {
-        const metadata = this.metadataAsRecord(log.metadata);
-        if (!metadata) return null;
-        if (String(metadata.companyId ?? "") !== companyId) return null;
-        if (String(metadata.traceId ?? "") !== traceId) return null;
+    const mapped: Array<{
+      reason: string;
+      outcome?: string;
+      createdAt: string;
+    } | null> = logs.map((log) => {
+      const metadata = this.metadataAsRecord(log.metadata);
+      if (!metadata) return null;
+      if (String(metadata.companyId ?? "") !== companyId) return null;
+      if (String(metadata.traceId ?? "") !== traceId) return null;
 
-        const reason = String(metadata.reason ?? "").trim();
-        if (!reason) return null;
+      const reason = String(metadata.reason ?? "").trim();
+      if (!reason) return null;
 
-        const outcomeRaw = metadata.outcome;
-        const outcome = typeof outcomeRaw === "string" && outcomeRaw.trim().length > 0
+      const outcomeRaw = metadata.outcome;
+      const outcome =
+        typeof outcomeRaw === "string" && outcomeRaw.trim().length > 0
           ? outcomeRaw.trim()
           : undefined;
 
-        return {
-          reason,
-          outcome,
-          createdAt: log.createdAt.toISOString(),
-        };
-      });
+      return {
+        reason,
+        outcome,
+        createdAt: log.createdAt.toISOString(),
+      };
+    });
 
-    return mapped.filter((v): v is { reason: string; outcome?: string; createdAt: string } => v !== null);
+    return mapped.filter(
+      (v): v is { reason: string; outcome?: string; createdAt: string } =>
+        v !== null,
+    );
   }
 
-  private async ensureDecisionAllowed(traceId: string, companyId: string): Promise<void> {
+  private async ensureDecisionAllowed(
+    traceId: string,
+    companyId: string,
+  ): Promise<void> {
     const hasShadowEvent = await this.hasShadowEvent(traceId, companyId);
     if (!hasShadowEvent) {
       throw new NotFoundException("advisory trace not found");
@@ -795,11 +916,16 @@ export class AdvisoryService {
 
     const latestDecision = await this.getLatestDecision(traceId, companyId);
     if (latestDecision) {
-      throw new ConflictException(`advisory already ${latestDecision.action === "ADVISORY_ACCEPTED" ? "accepted" : "rejected"}`);
+      throw new ConflictException(
+        `advisory already ${latestDecision.action === "ADVISORY_ACCEPTED" ? "accepted" : "rejected"}`,
+      );
     }
   }
 
-  private async hasShadowEvent(traceId: string, companyId: string): Promise<boolean> {
+  private async hasShadowEvent(
+    traceId: string,
+    companyId: string,
+  ): Promise<boolean> {
     const logs = await this.prisma.auditLog.findMany({
       where: { action: "SHADOW_ADVISORY_EVALUATED" },
       orderBy: { createdAt: "desc" },
@@ -809,12 +935,16 @@ export class AdvisoryService {
     return logs.some((log) => {
       const metadata = this.metadataAsRecord(log.metadata);
       return metadata
-        ? String(metadata.traceId ?? "") === traceId && String(metadata.companyId ?? "") === companyId
+        ? String(metadata.traceId ?? "") === traceId &&
+            String(metadata.companyId ?? "") === companyId
         : false;
     });
   }
 
-  private async getLatestDecision(traceId: string, companyId: string): Promise<DecisionEvent | null> {
+  private async getLatestDecision(
+    traceId: string,
+    companyId: string,
+  ): Promise<DecisionEvent | null> {
     const logs = await this.prisma.auditLog.findMany({
       where: {
         action: {
@@ -834,7 +964,8 @@ export class AdvisoryService {
       return {
         traceId,
         action: log.action as DecisionEvent["action"],
-        reason: typeof metadata.reason === "string" ? metadata.reason : undefined,
+        reason:
+          typeof metadata.reason === "string" ? metadata.reason : undefined,
         createdAt: log.createdAt.toISOString(),
       };
     }
@@ -842,7 +973,10 @@ export class AdvisoryService {
     return null;
   }
 
-  private async isPilotEnabled(companyId: string, userId: string): Promise<boolean> {
+  private async isPilotEnabled(
+    companyId: string,
+    userId: string,
+  ): Promise<boolean> {
     if (await this.isKillSwitchEnabled(companyId)) {
       return false;
     }
@@ -856,7 +990,10 @@ export class AdvisoryService {
     return state?.enabled ?? false;
   }
 
-  private async resolvePilotStatus(companyId: string, userId: string): Promise<PilotStateEvent | null> {
+  private async resolvePilotStatus(
+    companyId: string,
+    userId: string,
+  ): Promise<PilotStateEvent | null> {
     const cacheKey = `${companyId}:${userId}`;
     const cached = this.pilotStateCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) {
@@ -888,7 +1025,10 @@ export class AdvisoryService {
         enabled: log.action === "ADVISORY_PILOT_ENABLED",
         scope,
         companyId,
-        userId: typeof metadata.targetUserId === "string" ? metadata.targetUserId : undefined,
+        userId:
+          typeof metadata.targetUserId === "string"
+            ? metadata.targetUserId
+            : undefined,
         createdAt: log.createdAt.toISOString(),
       };
 
@@ -921,7 +1061,9 @@ export class AdvisoryService {
     return status?.enabled ?? false;
   }
 
-  private async resolveKillSwitchStatus(companyId: string): Promise<{ enabled: boolean; createdAt: string } | null> {
+  private async resolveKillSwitchStatus(
+    companyId: string,
+  ): Promise<{ enabled: boolean; createdAt: string } | null> {
     const cached = this.killSwitchCache.get(companyId);
     if (cached && cached.expiresAt > Date.now()) {
       return cached.value;
@@ -959,20 +1101,31 @@ export class AdvisoryService {
     return null;
   }
 
-  private parseShadowEvent(metadata: Record<string, unknown>, createdAt: string): ShadowEvent | null {
+  private parseShadowEvent(
+    metadata: Record<string, unknown>,
+    createdAt: string,
+  ): ShadowEvent | null {
     const traceId = String(metadata.traceId ?? "").trim();
     const companyId = String(metadata.companyId ?? "").trim();
     const signalType = String(metadata.signalType ?? "").trim() as SignalType;
-    const recommendation = String(metadata.recommendation ?? "").trim() as Recommendation;
+    const recommendation = String(
+      metadata.recommendation ?? "",
+    ).trim() as Recommendation;
     const confidenceRaw = metadata.confidence;
-    const confidence = typeof confidenceRaw === "number" ? confidenceRaw : Number.NaN;
+    const confidence =
+      typeof confidenceRaw === "number" ? confidenceRaw : Number.NaN;
     const explainabilityRaw = metadata.explainability;
 
     if (!traceId || !companyId || Number.isNaN(confidence)) return null;
     if (!["VISION", "SATELLITE", "OPERATION"].includes(signalType)) return null;
     if (!["ALLOW", "REVIEW", "BLOCK"].includes(recommendation)) return null;
 
-    const explainability = this.toExplainability(explainabilityRaw, traceId, confidence, recommendation);
+    const explainability = this.toExplainability(
+      explainabilityRaw,
+      traceId,
+      confidence,
+      recommendation,
+    );
 
     return {
       traceId,
@@ -1008,16 +1161,28 @@ export class AdvisoryService {
     const factorsRaw = Array.isArray(obj.factors) ? obj.factors : [];
     const factors = factorsRaw
       .map((factor) => {
-        if (!factor || typeof factor !== "object" || Array.isArray(factor)) return null;
+        if (!factor || typeof factor !== "object" || Array.isArray(factor))
+          return null;
         const f = factor as Record<string, unknown>;
         const name = typeof f.name === "string" ? f.name : null;
         const value = typeof f.value === "number" ? f.value : null;
         const direction = typeof f.direction === "string" ? f.direction : null;
         if (!name || value === null) return null;
-        if (direction !== "POSITIVE" && direction !== "NEGATIVE" && direction !== "NEUTRAL") return null;
-        return { name, value, direction } as AdvisoryExplainability["factors"][number];
+        if (
+          direction !== "POSITIVE" &&
+          direction !== "NEGATIVE" &&
+          direction !== "NEUTRAL"
+        )
+          return null;
+        return {
+          name,
+          value,
+          direction,
+        } as AdvisoryExplainability["factors"][number];
       })
-      .filter((f): f is AdvisoryExplainability["factors"][number] => Boolean(f));
+      .filter((f): f is AdvisoryExplainability["factors"][number] =>
+        Boolean(f),
+      );
 
     return {
       traceId,
@@ -1034,7 +1199,11 @@ export class AdvisoryService {
     return metadata as Record<string, unknown>;
   }
 
-  private async assertPilotManagerRole(role?: string, actorId?: string, companyId?: string): Promise<void> {
+  private async assertPilotManagerRole(
+    role?: string,
+    actorId?: string,
+    companyId?: string,
+  ): Promise<void> {
     let normalized = String(role ?? "").toUpperCase();
 
     if (!normalized && actorId) {
@@ -1048,7 +1217,9 @@ export class AdvisoryService {
     if (normalized === "ADMIN" || normalized === "MANAGER") {
       return;
     }
-    throw new ForbiddenException("pilot management requires ADMIN or MANAGER role");
+    throw new ForbiddenException(
+      "pilot management requires ADMIN or MANAGER role",
+    );
   }
 
   private thresholdsFromMetadata(raw: unknown): AdvisoryThresholds | null {
@@ -1106,7 +1277,11 @@ export class AdvisoryService {
     return result;
   }
 
-  private async resolveRolloutState(companyId: string): Promise<{ stage: RolloutStage; autoStopEnabled: boolean; updatedAt: string } | null> {
+  private async resolveRolloutState(companyId: string): Promise<{
+    stage: RolloutStage;
+    autoStopEnabled: boolean;
+    updatedAt: string;
+  } | null> {
     const cached = this.rolloutStateCache.get(companyId);
     if (cached && cached.expiresAt > Date.now()) {
       return cached.value;
@@ -1153,7 +1328,10 @@ export class AdvisoryService {
         }
       }
 
-      if (log.action === "ADVISORY_ROLLOUT_STAGE_PROMOTED" || log.action === "ADVISORY_ROLLOUT_STAGE_ROLLED_BACK") {
+      if (
+        log.action === "ADVISORY_ROLLOUT_STAGE_PROMOTED" ||
+        log.action === "ADVISORY_ROLLOUT_STAGE_ROLLED_BACK"
+      ) {
         const toStage = this.asRolloutStage(metadata.toStage);
         if (toStage && !stage) {
           stage = toStage;
@@ -1186,8 +1364,16 @@ export class AdvisoryService {
   }
 
   private asRolloutStage(raw: unknown): RolloutStage | null {
-    const value = String(raw ?? "").trim().toUpperCase();
-    if (value === "S0" || value === "S1" || value === "S2" || value === "S3" || value === "S4") {
+    const value = String(raw ?? "")
+      .trim()
+      .toUpperCase();
+    if (
+      value === "S0" ||
+      value === "S1" ||
+      value === "S2" ||
+      value === "S3" ||
+      value === "S4"
+    ) {
       return value;
     }
     return null;
@@ -1214,4 +1400,3 @@ export class AdvisoryService {
     this.rolloutStateCache.delete(companyId);
   }
 }
-

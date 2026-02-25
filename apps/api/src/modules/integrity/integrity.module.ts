@@ -16,18 +16,33 @@ import { GenerativeEngineModule } from "../generative-engine/generative-engine.m
 import { QuorumService } from "./quorum.service";
 
 @Module({
-    imports: [
-        PrismaModule,
-        CmrModule,
-        TelegramModule,
-        ConsultingModule,
-        GenerativeEngineModule,
-        ScheduleModule.forRoot(),
-        BullModule.registerQueue({
-            name: 'drift-feedback-loop',
-        })
-    ],
-    providers: [IntegrityGateService, RegistryAgentService, DriftFeedbackLoopProcessor, BaselineService, GovernanceService, AuditService, QuorumService],
-    exports: [IntegrityGateService, RegistryAgentService, BaselineService, GovernanceService, AuditService, QuorumService],
+  imports: [
+    PrismaModule,
+    CmrModule,
+    TelegramModule,
+    ConsultingModule,
+    GenerativeEngineModule,
+    ScheduleModule.forRoot(),
+    BullModule.registerQueue({
+      name: "drift-feedback-loop",
+    }),
+  ],
+  providers: [
+    IntegrityGateService,
+    RegistryAgentService,
+    DriftFeedbackLoopProcessor,
+    BaselineService,
+    GovernanceService,
+    AuditService,
+    QuorumService,
+  ],
+  exports: [
+    IntegrityGateService,
+    RegistryAgentService,
+    BaselineService,
+    GovernanceService,
+    AuditService,
+    QuorumService,
+  ],
 })
-export class IntegrityModule { }
+export class IntegrityModule {}

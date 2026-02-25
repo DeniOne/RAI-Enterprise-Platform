@@ -4,10 +4,10 @@ import React from 'react';
 import { Sidebar } from '@/components/navigation/Sidebar';
 import { GovernanceBar } from '@/shared/components/GovernanceBar';
 import { WorkSurface } from '@/shared/components/WorkSurface';
+import { useAuthSimulationStore } from '@/core/governance/Providers';
 
 interface AuthenticatedLayoutProps {
     children: React.ReactNode;
-    role: string;
 }
 
 /**
@@ -16,11 +16,13 @@ interface AuthenticatedLayoutProps {
  * ОБНОВЛЕНО: Интегрирован институциональный слой (GovernanceBar + WorkSurface).
  * Исправлено: Хедер теперь учитывает ширину сайдбара.
  */
-export function AuthenticatedLayout({ children, role }: AuthenticatedLayoutProps) {
+export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
+    const { currentRole } = useAuthSimulationStore();
+
     return (
         <div className="flex bg-[#FAFAFA] min-h-screen text-[#171717] overflow-x-hidden">
             {/* Сайдбар — теперь часть flex-потока */}
-            <Sidebar role={role} />
+            <Sidebar role={currentRole} />
 
             <div className="flex-1 flex flex-col min-h-screen min-w-0 overflow-hidden">
                 {/* 

@@ -14,5 +14,4 @@ import { OutboxModule } from "../../shared/outbox/outbox.module";
   providers: [TaskService, TaskResolver],
   exports: [TaskService],
 })
-export class TaskModule { }
-
+export class TaskModule {}

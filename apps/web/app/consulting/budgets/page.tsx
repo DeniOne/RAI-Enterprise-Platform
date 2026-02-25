@@ -2,10 +2,10 @@
 
 import React, { useState, useMemo } from 'react';
 import { SystemStatusBar } from '@/components/consulting/SystemStatusBar';
-import { getEntityTransitions, BudgetPlanStatus } from '@/lib/consulting/ui-policy';
+import { getEntityTransitions } from '@/lib/consulting/ui-policy';
 import { DomainUiContext } from '@/lib/consulting/navigation-policy';
-import { UserRole } from '@/lib/config/role-config';
 import clsx from 'clsx';
+import { useAuthority } from '@/core/governance/AuthorityContext';
 
 const MOCK_BUDGETS = [
     { id: 'BU-2026-001', name: 'Бюджет: Пшеница Озимая', status: 'LOCKED' as const, total: 12000000, spent: 4500000 },
@@ -14,7 +14,7 @@ const MOCK_BUDGETS = [
 
 export default function BudgetsPage() {
     const [budgets] = useState(MOCK_BUDGETS);
-    const [userRole] = useState<UserRole>('DIRECTOR_FINANCE');
+    const authority = useAuthority();
 
     const domainContext = useMemo<DomainUiContext>(() => ({
         plansCount: 2,
@@ -50,7 +50,7 @@ export default function BudgetsPage() {
 
                 <div className="grid grid-cols-1 gap-6">
                     {budgets.map(budget => {
-                        const perm = getEntityTransitions('budget', budget.status, userRole, domainContext);
+                        const perm = getEntityTransitions('budget', budget.status, authority, domainContext);
                         const usagePercent = budget.total > 0 ? (budget.spent / budget.total) * 100 : 0;
                         const isOverrun = usagePercent > 100;
                         const isWarning = usagePercent > 90;

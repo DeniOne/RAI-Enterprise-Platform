@@ -9,7 +9,7 @@ export class SeasonBusinessRulesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AgroAuditService,
-  ) { }
+  ) {}
 
   /**
    * entry point for all rapeseed specific validations
@@ -22,7 +22,11 @@ export class SeasonBusinessRulesService {
     if (!rapeseed) return;
 
     // 1. Validate Dates based on Rapeseed Type
-    this.validateRapeseedSeasonDates(season.startDate, rapeseed.type, season.companyId);
+    this.validateRapeseedSeasonDates(
+      season.startDate,
+      rapeseed.type,
+      season.companyId,
+    );
 
     // 2. Validate Yield Target
     this.validateYieldTarget(season.expectedYield);
@@ -87,23 +91,31 @@ export class SeasonBusinessRulesService {
 
     if (previousSeasons.length > 0) {
       const message = `Нарушение севооборота: Рапс уже выращивался на этом поле в последние 4 года (года: ${previousSeasons.map((s) => s.year).join(", ")})`;
-      this._logViolation(message, {
-        fieldId,
-        currentYear,
-        previousYears: previousSeasons.map((s) => s.year),
-      }, companyId);
+      this._logViolation(
+        message,
+        {
+          fieldId,
+          currentYear,
+          previousYears: previousSeasons.map((s) => s.year),
+        },
+        companyId,
+      );
       throw new BadRequestException(message);
     }
   }
 
-  private _logViolation(message: string, context: any, companyId: string): void {
+  private _logViolation(
+    message: string,
+    context: any,
+    companyId: string,
+  ): void {
     this.auditService
       .log(
         AgriculturalAuditEvent.RAPESEED_ROTATION_VIOLATION,
         { id: "SYSTEM", companyId } as any,
         { message, ...context },
       )
-      .catch(() => { });
+      .catch(() => {});
   }
 
   /**

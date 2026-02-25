@@ -5,7 +5,11 @@ import { AuditService } from "../../shared/audit/audit.service";
 import { IntegrationService } from "../finance-economy/integrations/application/integration.service";
 import { OutboxService } from "../../shared/outbox/outbox.service";
 import { TaskStatus, SeasonStatus, User } from "@rai/prisma-client";
-import { NotFoundException, BadRequestException, ConflictException } from "@nestjs/common";
+import {
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from "@nestjs/common";
 
 describe("TaskService", () => {
   let service: TaskService;

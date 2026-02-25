@@ -18,4 +18,3 @@ exports.PrismaClient = void 0;
 __exportStar(require("../generated-client/index.js"), exports);
 var index_js_1 = require("../generated-client/index.js");
 Object.defineProperty(exports, "PrismaClient", { enumerable: true, get: function () { return index_js_1.PrismaClient; } });
-//# sourceMappingURL=index.js.map

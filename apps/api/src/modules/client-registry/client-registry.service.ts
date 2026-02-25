@@ -9,7 +9,7 @@ import { Account, Holding, Prisma } from "@rai/prisma-client";
 
 @Injectable()
 export class ClientRegistryService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   // --- Holdings ---
 

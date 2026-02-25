@@ -3,8 +3,8 @@ import { CrmService } from "./crm.service";
 import { CrmController } from "./crm.controller";
 
 @Module({
-    providers: [CrmService],
-    controllers: [CrmController],
-    exports: [CrmService],
+  providers: [CrmService],
+  controllers: [CrmController],
+  exports: [CrmService],
 })
-export class CrmModule { }
+export class CrmModule {}

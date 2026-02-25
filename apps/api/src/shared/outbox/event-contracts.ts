@@ -18,7 +18,10 @@ export function resolveEventVersion(eventType: string, payload: any): number {
   return DEFAULT_EVENT_VERSION;
 }
 
-export function isEventVersionAllowed(eventType: string, version: number): boolean {
+export function isEventVersionAllowed(
+  eventType: string,
+  version: number,
+): boolean {
   if (!Number.isInteger(version) || version <= 0) {
     return false;
   }
@@ -29,4 +32,3 @@ export function isEventVersionAllowed(eventType: string, version: number): boole
   }
   return allowed.includes(version);
 }
-

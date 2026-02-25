@@ -1,19 +1,19 @@
-import { IsString, IsNotEmpty, IsOptional, IsObject } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsObject } from "class-validator";
 
 export class CreateDeviationDto {
-    @IsString()
-    @IsNotEmpty()
-    stageId: string;
+  @IsString()
+  @IsNotEmpty()
+  stageId: string;
 
-    @IsString()
-    @IsNotEmpty()
-    fieldId: string;
+  @IsString()
+  @IsNotEmpty()
+  fieldId: string;
 
-    @IsObject()
-    @IsNotEmpty()
-    deviationData: any;
+  @IsObject()
+  @IsNotEmpty()
+  deviationData: any;
 
-    @IsString()
-    @IsOptional()
-    comment?: string;
+  @IsString()
+  @IsOptional()
+  comment?: string;
 }

@@ -20,7 +20,9 @@ describe("VisionIngestionService", () => {
   const deviationMock = {} as DeviationService;
   const consultingMock = {} as ConsultingService;
   const registryMock = {} as RegistryAgentService;
-  const quorumMock = { isBlockedByQuorum: jest.fn().mockResolvedValue(false) } as any;
+  const quorumMock = {
+    isBlockedByQuorum: jest.fn().mockResolvedValue(false),
+  } as any;
   const driftQueueMock = { add: jest.fn() } as any;
   const integrityGate = new IntegrityGateService(
     prismaMock,

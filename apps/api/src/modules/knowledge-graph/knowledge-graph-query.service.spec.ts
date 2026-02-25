@@ -32,7 +32,9 @@ describe("KnowledgeGraphQueryService", () => {
 
     const result = await service.getNode("n1", "company-1");
 
-    expect(prismaMock.knowledgeNode.findUnique).toHaveBeenCalledWith({ where: { id: "n1" } });
+    expect(prismaMock.knowledgeNode.findUnique).toHaveBeenCalledWith({
+      where: { id: "n1" },
+    });
     expect(result).toEqual({ id: "n1" });
   });
 

@@ -36,10 +36,22 @@ type CreateForm = {
     holdingId: string;
     description: string;
 };
+type CreatedHoldingHint = {
+    id: string;
+    name: string;
+};
 
 function sanitizeOptional(value: string): string | undefined {
     const normalized = value.trim();
     return normalized ? normalized : undefined;
+}
+
+function accountTypeLabel(type?: string | null): string {
+    const normalized = String(type || '').trim().toUpperCase();
+    if (!normalized) return 'Не задано';
+    if (normalized === 'NOT_SET') return 'Не задано';
+    if (normalized === 'CLIENT') return 'Клиент';
+    return normalized;
 }
 
 export default function CounterpartiesPage() {
@@ -58,12 +70,13 @@ export default function CounterpartiesPage() {
         entityKind: 'LEGAL_ENTITY',
         name: '',
         inn: '',
-        type: 'CLIENT',
+        type: 'NOT_SET',
         holdingId: '',
         description: '',
     });
     const [submitting, setSubmitting] = useState(false);
     const [updatingHoldingId, setUpdatingHoldingId] = useState<string | null>(null);
+    const [createdHoldingHint, setCreatedHoldingHint] = useState<CreatedHoldingHint | null>(null);
 
     const load = async () => {
         setLoading(true);
@@ -146,11 +159,30 @@ export default function CounterpartiesPage() {
         setErrorMessage(null);
         try {
             if (createForm.entityKind === 'HOLDING') {
-                await api.crm.createHolding({
+                const createdHolding = await api.crm.createHolding({
                     companyId,
                     name,
                     description: sanitizeOptional(createForm.description),
                 });
+                const createdHoldingId = String(createdHolding?.data?.id || '').trim();
+                if (createdHoldingId) {
+                    setCreatedHoldingHint({
+                        id: createdHoldingId,
+                        name,
+                    });
+                    setCreateForm({
+                        entityKind: 'LEGAL_ENTITY',
+                        name: '',
+                        inn: '',
+                        type: 'NOT_SET',
+                        holdingId: createdHoldingId,
+                        description: '',
+                    });
+                    setTimeout(() => {
+                        const input = document.getElementById('counterparty-create-name');
+                        if (input instanceof HTMLInputElement) input.focus();
+                    }, 0);
+                }
             } else {
                 await api.crm.createAccount({
                     companyId,
@@ -159,15 +191,16 @@ export default function CounterpartiesPage() {
                     type: sanitizeOptional(createForm.type),
                     holdingId: sanitizeOptional(createForm.holdingId),
                 });
+                setCreateForm({
+                    entityKind: 'LEGAL_ENTITY',
+                    name: '',
+                    inn: '',
+                    type: 'NOT_SET',
+                    holdingId: '',
+                    description: '',
+                });
+                setCreatedHoldingHint(null);
             }
-            setCreateForm({
-                entityKind: 'LEGAL_ENTITY',
-                name: '',
-                inn: '',
-                type: 'CLIENT',
-                holdingId: '',
-                description: '',
-            });
             await load();
         } catch (error) {
             console.error('Failed to create entity:', error);
@@ -196,10 +229,15 @@ export default function CounterpartiesPage() {
     };
 
     const prepareLegalEntityForHolding = (holdingId: string) => {
+        const holding = holdings.find((item) => item.id === holdingId);
+        setCreatedHoldingHint({
+            id: holdingId,
+            name: holding?.name || holdingId,
+        });
         setCreateForm((prev) => ({
             ...prev,
             entityKind: 'LEGAL_ENTITY',
-            type: 'CLIENT',
+            type: 'NOT_SET',
             holdingId,
         }));
         const input = document.getElementById('counterparty-create-name');
@@ -211,7 +249,7 @@ export default function CounterpartiesPage() {
             <h1 className='text-xl font-medium text-gray-900'>Контрагенты CRM</h1>
             <Card>
                 <p className='text-sm text-gray-700'>
-                    Управление иерархией сущностей: Холдинг → Юрлица → Хозяйства. Контрагент и Хозяйство ведутся как разные сущности.
+                    Управление структурой клиентов: Холдинг → Юрлица → Хозяйства. Контрагент и Хозяйство ведутся раздельно.
                 </p>
             </Card>
 
@@ -219,8 +257,8 @@ export default function CounterpartiesPage() {
                 <Card className={hasFocusedEntity ? 'border-sky-200 bg-sky-50' : 'border-amber-200 bg-amber-50'}>
                     <p className={clsx('text-sm', hasFocusedEntity ? 'text-sky-700' : 'text-amber-700')}>
                         {hasFocusedEntity
-                            ? `Найдена сущность: ${focusEntity}. Запись подсвечена.`
-                            : `Сущность ${focusEntity} не найдена в текущем списке.`}
+                            ? `Найдена запись: ${focusEntity}. Запись подсвечена.`
+                            : `Запись ${focusEntity} не найдена в текущем списке.`}
                     </p>
                 </Card>
             )}
@@ -240,14 +278,10 @@ export default function CounterpartiesPage() {
                             className='h-9 rounded-md border border-gray-300 px-3 text-sm text-gray-900 outline-none focus:border-gray-400'
                         />
                         <select value={filterType} onChange={(event) => setFilterType(event.target.value)} className='h-9 rounded-md border border-gray-300 px-2 text-xs text-gray-900 outline-none focus:border-gray-400'>
-                            <option value='ALL'>Тип: все</option>
-                            <option value='HOLDING'>Тип: холдинги</option>
-                            <option value='CLIENT'>Тип: CLIENT</option>
-                            <option value='PARTNER'>Тип: PARTNER</option>
-                            <option value='SUPPLIER'>Тип: SUPPLIER</option>
-                            <option value='INVESTOR'>Тип: INVESTOR</option>
-                            <option value='REGULATOR'>Тип: REGULATOR</option>
-                            <option value='OTHER'>Тип: OTHER</option>
+                            <option value='ALL'>Категория: все</option>
+                            <option value='HOLDING'>Категория: холдинги</option>
+                            <option value='NOT_SET'>Категория: не задано</option>
+                            <option value='CLIENT'>Категория: клиенты</option>
                         </select>
                         <select value={filterStatus} onChange={(event) => setFilterStatus(event.target.value)} className='h-9 rounded-md border border-gray-300 px-2 text-xs text-gray-900 outline-none focus:border-gray-400'>
                             <option value='ALL'>Статус: все</option>
@@ -289,7 +323,7 @@ export default function CounterpartiesPage() {
                             <table className='w-full text-sm'>
                                 <thead>
                                     <tr className='text-left text-gray-500 border-b'>
-                                        <th className='py-2 pr-3'>Сущность</th>
+                                        <th className='py-2 pr-3'>Категория</th>
                                         <th className='py-2 pr-3'>ИНН</th>
                                         <th className='py-2 pr-3'>Тип/статус</th>
                                         <th className='py-2 pr-3'>Холдинг</th>
@@ -310,7 +344,7 @@ export default function CounterpartiesPage() {
                                                 </td>
                                                 <td className='py-2 pr-3 text-gray-700'>{row.entity === 'LEGAL_ENTITY' ? row.inn || '-' : '-'}</td>
                                                 <td className='py-2 pr-3 text-xs text-gray-700'>
-                                                    {isHolding ? 'HOLDING' : `${row.type || '-'} / ${row.status || '-'}`}
+                                                    {isHolding ? 'Холдинг' : `${accountTypeLabel(row.type)} / ${row.status || '-'}`}
                                                 </td>
                                                 <td className='py-2 pr-3'>
                                                     {row.entity === 'LEGAL_ENTITY' ? (
@@ -345,7 +379,11 @@ export default function CounterpartiesPage() {
                                                             <Link href={`/consulting/crm/counterparties/${encodeURIComponent(row.id)}`} className='text-xs font-medium text-gray-700 hover:underline'>
                                                                 Карточка
                                                             </Link>
-                                                        ) : null}
+                                                        ) : (
+                                                            <button onClick={() => prepareLegalEntityForHolding(row.id)} className='text-xs font-medium text-gray-700 hover:underline'>
+                                                                Добавить юрлицо
+                                                            </button>
+                                                        )}
                                                         <Link href={`/consulting/crm/history?entity=${encodeURIComponent(row.name || row.id)}`} className='text-xs font-medium text-gray-700 hover:underline'>
                                                             История
                                                         </Link>
@@ -362,7 +400,7 @@ export default function CounterpartiesPage() {
                 </Card>
 
                 <Card>
-                    <h2 className='text-sm font-semibold text-gray-900 mb-4'>Добавить сущность</h2>
+                    <h2 className='text-sm font-semibold text-gray-900 mb-4'>Добавить запись</h2>
                     <form onSubmit={onCreate} className='space-y-3'>
                         <div>
                             <label className='mb-1 block text-xs text-gray-500'>Категория *</label>
@@ -408,18 +446,14 @@ export default function CounterpartiesPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className='mb-1 block text-xs text-gray-500'>Тип</label>
+                                    <label className='mb-1 block text-xs text-gray-500'>Тип контрагента</label>
                                     <select
                                         value={createForm.type}
                                         onChange={(event) => setCreateForm((prev) => ({ ...prev, type: event.target.value }))}
                                         className='h-9 w-full rounded-md border border-gray-300 px-3 text-sm text-gray-900 outline-none focus:border-gray-400'
                                     >
-                                        <option value='CLIENT'>CLIENT</option>
-                                        <option value='PARTNER'>PARTNER</option>
-                                        <option value='SUPPLIER'>SUPPLIER</option>
-                                        <option value='INVESTOR'>INVESTOR</option>
-                                        <option value='REGULATOR'>REGULATOR</option>
-                                        <option value='OTHER'>OTHER</option>
+                                        <option value='NOT_SET'>Не задано</option>
+                                        <option value='CLIENT'>Клиент</option>
                                     </select>
                                 </div>
                                 <div>
@@ -437,6 +471,11 @@ export default function CounterpartiesPage() {
                         <p className='text-xs text-gray-500'>
                             Правило: `Холдинг` обязан вести дочерние `Юрлица` и связанные `Хозяйства`; `Юрлицо` обязано иметь привязанные `Хозяйства`, даже при совпадении названий.
                         </p>
+                        {createdHoldingHint ? (
+                            <div className='rounded-md border border-sky-200 bg-sky-50 p-3 text-xs text-sky-900'>
+                                Холдинг «{createdHoldingHint.name}» создан. Следующий шаг: добавьте юрлицо и сохраните привязку к этому холдингу.
+                            </div>
+                        ) : null}
 
                         <button
                             type='submit'

@@ -11,7 +11,7 @@ import { User } from "@rai/prisma-client";
 @Resolver(() => Task)
 @UseGuards(GqlAuthGuard)
 export class TaskResolver {
-  constructor(private readonly taskService: TaskService) { }
+  constructor(private readonly taskService: TaskService) {}
 
   @Mutation(() => [Task])
   async createTasksFromSeason(

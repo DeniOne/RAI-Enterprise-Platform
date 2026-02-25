@@ -57,7 +57,7 @@ export default function CounterpartyCardPage() {
     const [editForm, setEditForm] = useState<EditForm>({
         name: '',
         inn: '',
-        type: 'CLIENT',
+        type: 'NOT_SET',
         status: 'ACTIVE',
         holdingId: '',
         jurisdiction: '',
@@ -92,7 +92,7 @@ export default function CounterpartyCardPage() {
                 setEditForm({
                     name: String(payload.account.name || ''),
                     inn: String(payload.account.inn || ''),
-                    type: String(payload.account.type || 'CLIENT'),
+                    type: String(payload.account.type || 'NOT_SET'),
                     status: String(payload.account.status || 'ACTIVE'),
                     holdingId: String(payload.account.holdingId || ''),
                     jurisdiction: String(payload.account.jurisdiction || ''),
@@ -263,7 +263,8 @@ export default function CounterpartyCardPage() {
                                     <input value={editForm.name} onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))} placeholder='Наименование' className='h-9 rounded-md border border-gray-300 px-3' />
                                     <input value={editForm.inn} onChange={(e) => setEditForm((p) => ({ ...p, inn: e.target.value }))} placeholder='ИНН' className='h-9 rounded-md border border-gray-300 px-3' />
                                     <select value={editForm.type} onChange={(e) => setEditForm((p) => ({ ...p, type: e.target.value }))} className='h-9 rounded-md border border-gray-300 px-3'>
-                                        <option value='CLIENT'>CLIENT</option><option value='PARTNER'>PARTNER</option><option value='SUPPLIER'>SUPPLIER</option><option value='INVESTOR'>INVESTOR</option><option value='REGULATOR'>REGULATOR</option><option value='OTHER'>OTHER</option>
+                                        <option value='NOT_SET'>Не задано</option>
+                                        <option value='CLIENT'>Клиент</option>
                                     </select>
                                     <select value={editForm.status} onChange={(e) => setEditForm((p) => ({ ...p, status: e.target.value }))} className='h-9 rounded-md border border-gray-300 px-3'>
                                         <option value='ACTIVE'>ACTIVE</option><option value='RISK'>RISK</option><option value='FROZEN'>FROZEN</option>

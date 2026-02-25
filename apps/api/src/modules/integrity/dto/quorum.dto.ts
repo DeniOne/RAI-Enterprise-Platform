@@ -1,46 +1,53 @@
-import { IsString, IsNotEmpty, IsHexadecimal, IsNumber, IsEnum, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsHexadecimal,
+  IsNumber,
+  IsEnum,
+  IsOptional,
+} from "class-validator";
 
 export class CreateQuorumDto {
-    @IsString()
-    @IsNotEmpty()
-    traceId: string;
+  @IsString()
+  @IsNotEmpty()
+  traceId: string;
 
-    @IsString()
-    @IsNotEmpty()
-    committeeId: string;
+  @IsString()
+  @IsNotEmpty()
+  committeeId: string;
 
-    @IsNumber()
-    committeeVersion: number;
+  @IsNumber()
+  committeeVersion: number;
 
-    @IsOptional()
-    @IsString()
-    cmrRiskId?: string;
+  @IsOptional()
+  @IsString()
+  cmrRiskId?: string;
 
-    @IsOptional()
-    @IsString()
-    decisionRecordId?: string;
+  @IsOptional()
+  @IsString()
+  decisionRecordId?: string;
 }
 
 export class SubmitSignatureDto {
-    @IsString()
-    @IsNotEmpty()
-    traceId: string;
+  @IsString()
+  @IsNotEmpty()
+  traceId: string;
 
-    @IsString()
-    @IsNotEmpty()
-    signature: string;
+  @IsString()
+  @IsNotEmpty()
+  signature: string;
 
-    @IsString()
-    @IsNotEmpty()
-    pubKey: string;
+  @IsString()
+  @IsNotEmpty()
+  pubKey: string;
 
-    @IsString()
-    @IsNotEmpty()
-    payloadHash: string;
+  @IsString()
+  @IsNotEmpty()
+  payloadHash: string;
 
-    @IsNumber()
-    committeeVersion: number;
+  @IsNumber()
+  committeeVersion: number;
 
-    @IsEnum(['R1', 'R2', 'R3', 'R4'])
-    riskLevel: string;
+  @IsEnum(["R1", "R2", "R3", "R4"])
+  riskLevel: string;
 }

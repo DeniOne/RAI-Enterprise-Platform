@@ -4,51 +4,66 @@ import { Telegraf, Context, Markup } from "telegraf";
 
 @Injectable()
 export class TelegramNotificationService {
-    private readonly logger = new Logger(TelegramNotificationService.name);
+  private readonly logger = new Logger(TelegramNotificationService.name);
 
-    constructor() { }
+  constructor() {}
 
-    async sendAssetProposal(telegramId: string, asset: { id: string; name: string; category: string; isRepeat?: boolean }) {
-        const typeRu = asset.category === "MACHINERY" ? "Техника" : "ТМЦ";
-        const repeatLabel = asset.isRepeat ? "⚠️ <b>[ПОВТОРНОЕ РАСПОЗНАВАНИЕ]</b>\n" : "";
+  async sendAssetProposal(
+    telegramId: string,
+    asset: { id: string; name: string; category: string; isRepeat?: boolean },
+  ) {
+    const typeRu = asset.category === "MACHINERY" ? "Техника" : "ТМЦ";
+    const repeatLabel = asset.isRepeat
+      ? "⚠️ <b>[ПОВТОРНОЕ РАСПОЗНАВАНИЕ]</b>\n"
+      : "";
 
-        try {
-            await fetch(`${process.env.BOT_URL || 'http://localhost:4002'}/internal/notify-asset`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Internal-API-Key': process.env.INTERNAL_API_KEY || '',
-                },
-                body: JSON.stringify({
-                    telegramId,
-                    asset: {
-                        id: asset.id,
-                        name: asset.name,
-                        category: asset.category,
-                        isRepeat: asset.isRepeat,
-                    },
-                }),
-            });
-        } catch (error) {
-            this.logger.error(`Failed to notify bot about asset proposal: ${error.message}`);
-        }
+    try {
+      await fetch(
+        `${process.env.BOT_URL || "http://localhost:4002"}/internal/notify-asset`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Internal-API-Key": process.env.INTERNAL_API_KEY || "",
+          },
+          body: JSON.stringify({
+            telegramId,
+            asset: {
+              id: asset.id,
+              name: asset.name,
+              category: asset.category,
+              isRepeat: asset.isRepeat,
+            },
+          }),
+        },
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to notify bot about asset proposal: ${error.message}`,
+      );
     }
+  }
 
-    async sendToGroup(message: string, groupId: string) {
-        try {
-            await fetch(`${process.env.BOT_URL || 'http://localhost:4002'}/internal/notify-group`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Internal-API-Key': process.env.INTERNAL_API_KEY || '',
-                },
-                body: JSON.stringify({
-                    groupId,
-                    message,
-                }),
-            });
-        } catch (error) {
-            this.logger.error(`Failed to send telegram group notification: ${error.message}`);
-        }
+  async sendToGroup(message: string, groupId: string) {
+    try {
+      await fetch(
+        `${process.env.BOT_URL || "http://localhost:4002"}/internal/notify-group`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Internal-API-Key": process.env.INTERNAL_API_KEY || "",
+          },
+          body: JSON.stringify({
+            groupId,
+            message,
+          }),
+        },
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send telegram group notification: ${error.message}`,
+      );
     }
+  }
 }

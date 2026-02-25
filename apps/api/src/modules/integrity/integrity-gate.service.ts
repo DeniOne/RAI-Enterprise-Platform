@@ -7,756 +7,943 @@ import { ConsultingService } from "../consulting/consulting.service";
 import { RegistryAgentService } from "./registry-agent.service";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import {
-    FieldObservation,
-    ObservationType,
-    ObservationIntent,
-    IntegrityStatus,
-    RiskType,
-    RiskLevel,
-    Controllability,
-    LiabilityMode,
-    TaskStatus,
-    AssetStatus,
-    DataSourceType,
-    VerificationStatus
+  FieldObservation,
+  ObservationType,
+  ObservationIntent,
+  IntegrityStatus,
+  RiskType,
+  RiskLevel,
+  Controllability,
+  LiabilityMode,
+  TaskStatus,
+  AssetStatus,
+  DataSourceType,
+  VerificationStatus,
 } from "@rai/prisma-client";
-import { ScienceCalculator, TrustEngine, TrustInput, VelocityCalculator } from "@rai/regenerative-engine";
+import {
+  ScienceCalculator,
+  TrustEngine,
+  TrustInput,
+  VelocityCalculator,
+} from "@rai/regenerative-engine";
 
 import { QuorumService } from "./quorum.service";
 import { QuorumStatus } from "@rai/prisma-client";
 
 @Injectable()
 export class IntegrityGateService {
-    private readonly logger = new Logger(IntegrityGateService.name);
+  private readonly logger = new Logger(IntegrityGateService.name);
 
-    constructor(
-        private readonly prisma: PrismaService,
-        private readonly deviationService: DeviationService,
-        private readonly consultingService: ConsultingService,
-        private readonly registryAgent: RegistryAgentService,
-        private readonly quorum: QuorumService,
-        @InjectQueue('drift-feedback-loop') private readonly driftQueue: Queue,
-    ) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly deviationService: DeviationService,
+    private readonly consultingService: ConsultingService,
+    private readonly registryAgent: RegistryAgentService,
+    private readonly quorum: QuorumService,
+    @InjectQueue("drift-feedback-loop") private readonly driftQueue: Queue,
+  ) {}
 
-    /**
-     * Единственная точка входа (Admission Gate) для влияния Фронт-офиса на Бэк-офис.
-     * Применяет Архитектурный Закон BETA_INTEGRITY_LAYER.
-     */
-    async processObservation(observation: FieldObservation) {
-        this.logger.log(`[INTEGRITY-GATE] Applying Law to observation ${observation.id} (Intent: ${observation.intent})`);
+  /**
+   * Единственная точка входа (Admission Gate) для влияния Фронт-офиса на Бэк-офис.
+   * Применяет Архитектурный Закон BETA_INTEGRITY_LAYER.
+   */
+  async processObservation(observation: FieldObservation) {
+    this.logger.log(
+      `[INTEGRITY-GATE] Applying Law to observation ${observation.id} (Intent: ${observation.intent})`,
+    );
 
-        // [SENSORY-BRAIN] Pre-processing: Intent Classification for Dumb Transport (Text)
-        if (observation.intent === ObservationIntent.MONITORING && observation.content) {
-            const lowerContent = observation.content.toLowerCase().trim();
-            const confirmationKeywords = ['ок', 'ok', '+', 'да', 'yes', 'подтверждаю', 'confirm', 'y', 'ага'];
-            if (confirmationKeywords.some(keyword => lowerContent.includes(keyword))) {
-                this.logger.log(`[INTEGRITY-GATE] Re-classifying text "${observation.content}" as CONFIRMATION`);
-                observation.intent = ObservationIntent.CONFIRMATION;
-            }
-        }
-
-        try {
-            // 0. Recognition Path (AI-Driven Asset Ingestion)
-            // Если наблюдение не привязано к задаче, пробуем распознать активы
-            if (!observation.taskId) {
-                await this.registryAgent.processObservation(observation);
-            }
-
-            // 1. Применение Обязательных Причинно-Следственных Связей (Mandatory Causal Loops)
-            switch (observation.intent) {
-                case ObservationIntent.INCIDENT:
-                case ObservationIntent.CALL:
-                    await this.handleIncidentLoop(observation);
-                    break;
-                case ObservationIntent.CONFIRMATION:
-                    await this.handleEconomicLoop(observation);
-                    break;
-                case ObservationIntent.DELAY:
-                    await this.handleStrategicLoop(observation);
-                    break;
-                case ObservationIntent.MONITORING:
-                    if (observation.type === ObservationType.MEASUREMENT) {
-                        await this.handleSoilMetricLoop(observation);
-                    } else {
-                        this.logger.log(`[INTEGRITY-GATE] Passive monitoring for ${observation.id}`);
-                    }
-                    break;
-                default:
-                    this.logger.warn(`[INTEGRITY-GATE] Unknown intent: ${observation.intent}`);
-            }
-
-            // 2. Обработка Негативного Контура (Evidence Strength)
-            if (observation.integrityStatus === IntegrityStatus.WEAK_EVIDENCE || observation.integrityStatus === IntegrityStatus.NO_EVIDENCE) {
-                await this.handleWeakEvidence(observation);
-            }
-        } catch (error) {
-            this.logger.error(`[INTEGRITY-GATE] Failed to enforce Policy for ${observation.id}: ${error.message}`);
-            throw error;
-        }
+    // [SENSORY-BRAIN] Pre-processing: Intent Classification for Dumb Transport (Text)
+    if (
+      observation.intent === ObservationIntent.MONITORING &&
+      observation.content
+    ) {
+      const lowerContent = observation.content.toLowerCase().trim();
+      const confirmationKeywords = [
+        "ок",
+        "ok",
+        "+",
+        "да",
+        "yes",
+        "подтверждаю",
+        "confirm",
+        "y",
+        "ага",
+      ];
+      if (
+        confirmationKeywords.some((keyword) => lowerContent.includes(keyword))
+      ) {
+        this.logger.log(
+          `[INTEGRITY-GATE] Re-classifying text "${observation.content}" as CONFIRMATION`,
+        );
+        observation.intent = ObservationIntent.CONFIRMATION;
+      }
     }
 
-    private async handleIncidentLoop(observation: FieldObservation) {
-        this.logger.warn(`[LAW] Mandatory Loop: INCIDENT -> CMR DeviationReview`);
+    try {
+      // 0. Recognition Path (AI-Driven Asset Ingestion)
+      // Если наблюдение не привязано к задаче, пробуем распознать активы
+      if (!observation.taskId) {
+        await this.registryAgent.processObservation(observation);
+      }
 
-        const review = await this.deviationService.createReview({
+      // 1. Применение Обязательных Причинно-Следственных Связей (Mandatory Causal Loops)
+      switch (observation.intent) {
+        case ObservationIntent.INCIDENT:
+        case ObservationIntent.CALL:
+          await this.handleIncidentLoop(observation);
+          break;
+        case ObservationIntent.CONFIRMATION:
+          await this.handleEconomicLoop(observation);
+          break;
+        case ObservationIntent.DELAY:
+          await this.handleStrategicLoop(observation);
+          break;
+        case ObservationIntent.MONITORING:
+          if (observation.type === ObservationType.MEASUREMENT) {
+            await this.handleSoilMetricLoop(observation);
+          } else {
+            this.logger.log(
+              `[INTEGRITY-GATE] Passive monitoring for ${observation.id}`,
+            );
+          }
+          break;
+        default:
+          this.logger.warn(
+            `[INTEGRITY-GATE] Unknown intent: ${observation.intent}`,
+          );
+      }
+
+      // 2. Обработка Негативного Контура (Evidence Strength)
+      if (
+        observation.integrityStatus === IntegrityStatus.WEAK_EVIDENCE ||
+        observation.integrityStatus === IntegrityStatus.NO_EVIDENCE
+      ) {
+        await this.handleWeakEvidence(observation);
+      }
+    } catch (error) {
+      this.logger.error(
+        `[INTEGRITY-GATE] Failed to enforce Policy for ${observation.id}: ${error.message}`,
+      );
+      throw error;
+    }
+  }
+
+  private async handleIncidentLoop(observation: FieldObservation) {
+    this.logger.warn(`[LAW] Mandatory Loop: INCIDENT -> CMR DeviationReview`);
+
+    const review = await this.deviationService.createReview({
+      companyId: observation.companyId,
+      // fieldId: observation.fieldId, // [FIX] DeviationReview does not have fieldId in schema
+      seasonId: observation.seasonId,
+      deviationSummary: `[LAW-ENFORCED] Автоматический инцидент из поля. Намерение: ${observation.intent}. Тип пруфа: ${observation.type}.`,
+      aiImpactAssessment:
+        observation.integrityStatus === IntegrityStatus.STRONG_EVIDENCE
+          ? "Высокая достоверность (Strong Evidence)"
+          : "ТРЕБУЕТСЯ ПРОВЕРКА (Weak/No Evidence)",
+    });
+
+    const linkedObservation = await this.prisma.fieldObservation.updateMany({
+      where: { id: observation.id, companyId: observation.companyId },
+      data: { deviationReviewId: review.id },
+    });
+    if (linkedObservation.count !== 1) {
+      this.logger.warn(
+        `[INTEGRITY-GATE] Observation not linked due to tenant scope mismatch: ${observation.id}`,
+      );
+    }
+
+    await this.consultingService.openConsultationThread(
+      review.id,
+      observation.companyId,
+    );
+  }
+
+  private async handleWeakEvidence(observation: FieldObservation) {
+    this.logger.warn(
+      `[LAW] Negative Contour: WEAK_EVIDENCE detected for observation ${observation.id}`,
+    );
+
+    // Получаем задачу для трассировки
+    const task = observation.taskId
+      ? await this.prisma.task.findFirst({
+          where: {
+            id: observation.taskId,
             companyId: observation.companyId,
-            // fieldId: observation.fieldId, // [FIX] DeviationReview does not have fieldId in schema
-            seasonId: observation.seasonId,
-            deviationSummary: `[LAW-ENFORCED] Автоматический инцидент из поля. Намерение: ${observation.intent}. Тип пруфа: ${observation.type}.`,
-            aiImpactAssessment: observation.integrityStatus === IntegrityStatus.STRONG_EVIDENCE
-                ? "Высокая достоверность (Strong Evidence)"
-                : "ТРЕБУЕТСЯ ПРОВЕРКА (Weak/No Evidence)",
-        });
+          },
+        })
+      : null;
 
-        const linkedObservation = await this.prisma.fieldObservation.updateMany({
-            where: { id: observation.id, companyId: observation.companyId },
-            data: { deviationReviewId: review.id },
-        });
-        if (linkedObservation.count !== 1) {
-            this.logger.warn(`[INTEGRITY-GATE] Observation not linked due to tenant scope mismatch: ${observation.id}`);
-        }
+    // Создаем запись о риске с полной трассировкой (Requirement 2.2)
+    await this.prisma.cmrRisk.create({
+      data: {
+        companyId: observation.companyId,
+        seasonId: observation.seasonId,
+        type: RiskType.OPERATIONAL,
+        description: `[LAW-ENFORCED] Низкая достоверность доказательств по задаче. ObservationId: ${observation.id}`,
+        probability: RiskLevel.MEDIUM,
+        impact: RiskLevel.MEDIUM,
+        controllability: Controllability.CONSULTANT,
+        liabilityMode: LiabilityMode.CONSULTANT_ONLY,
+        status: "OPEN",
+        // Трассировка (Law Traceability)
+        taskId: observation.taskId,
+        observationId: observation.id,
+        responsibleId: (task as any)?.responsibleId || observation.authorId,
+      },
+    });
+  }
 
-        await this.consultingService.openConsultationThread(review.id, observation.companyId);
+  /**
+   * Silence Path Monitoring (Requirement 3.B)
+   * Проверяет задачи с истекшим SLA на предмет отсутствия наблюдений.
+   */
+  @Cron(CronExpression.EVERY_HOUR)
+  async checkTaskSilence() {
+    this.logger.log(`[INTEGRITY-GATE] Running Silence Path Audit...`);
+
+    const overdueTasks = await this.prisma.task.findMany({
+      // tenant-lint:ignore system-wide scheduled compliance scan across tenants
+      where: {
+        status: { notIn: [TaskStatus.COMPLETED, TaskStatus.CANCELLED] },
+        slaExpiration: { lt: new Date() },
+        // Проверяем, что по задаче нет ни одного наблюдения
+        fieldObservations: { none: {} },
+      },
+      include: {
+        season: true,
+      },
+    });
+
+    for (const task of overdueTasks) {
+      this.logger.error(
+        `[LAW-VIOLATION] Silence detected for Task ${task.id}. SLA Expired.`,
+      );
+
+      // Создаем риск нарушения регламента (Compliance/Silence Risk)
+      await this.prisma.cmrRisk.create({
+        data: {
+          companyId: task.companyId,
+          seasonId: task.seasonId,
+          type: RiskType.REGULATORY,
+          description: `[SILENCE-PATH] Нарушение регламента: отсутствие отчета по задаче "${task.name}" в рамках SLA.`,
+          probability: RiskLevel.HIGH,
+          impact: RiskLevel.HIGH,
+          controllability: Controllability.CONSULTANT,
+          liabilityMode: LiabilityMode.CONSULTANT_ONLY,
+          status: "OPEN",
+          // Трассировка
+          taskId: task.id,
+          responsibleId:
+            (task as any).responsibleId || (task as any).assigneeId,
+        },
+      });
+
+      // Опционально: переводим задачу в состояние ошибки или эскалации
+      // optional escalation is implemented via dedicated tenant-safe helper
+    }
+  }
+
+  private async handleEconomicLoop(observation: FieldObservation) {
+    this.logger.log(`[LAW] Mandatory Loop: CONFIRMATION -> Asset Activation`);
+
+    // Окно валидности: 24 часа (Tech Lead Requirement)
+    const validityWindow = new Date();
+    validityWindow.setHours(validityWindow.getHours() - 24);
+
+    // Поиск кандидатов (Machinery & Stock)
+    const pendingMachinery = await this.prisma.machinery.findFirst({
+      where: {
+        companyId: observation.companyId,
+        status: AssetStatus.PENDING_CONFIRMATION,
+        createdAt: { gte: validityWindow },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const pendingStock = await this.prisma.stockItem.findFirst({
+      where: {
+        companyId: observation.companyId,
+        status: AssetStatus.PENDING_CONFIRMATION,
+        createdAt: { gte: validityWindow },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Выбор самого свежего кандидата
+    let targetAsset: {
+      type: "MACHINERY" | "STOCK";
+      id: string;
+      name: string;
+      createdAt: Date;
+    } | null = null;
+
+    if (pendingMachinery && pendingStock) {
+      targetAsset =
+        pendingMachinery.createdAt > pendingStock.createdAt
+          ? {
+              type: "MACHINERY",
+              id: pendingMachinery.id,
+              name: pendingMachinery.name,
+              createdAt: pendingMachinery.createdAt,
+            }
+          : {
+              type: "STOCK",
+              id: pendingStock.id,
+              name: pendingStock.name,
+              createdAt: pendingStock.createdAt,
+            };
+    } else if (pendingMachinery) {
+      targetAsset = {
+        type: "MACHINERY",
+        id: pendingMachinery.id,
+        name: pendingMachinery.name,
+        createdAt: pendingMachinery.createdAt,
+      };
+    } else if (pendingStock) {
+      targetAsset = {
+        type: "STOCK",
+        id: pendingStock.id,
+        name: pendingStock.name,
+        createdAt: pendingStock.createdAt,
+      };
     }
 
-    private async handleWeakEvidence(observation: FieldObservation) {
-        this.logger.warn(`[LAW] Negative Contour: WEAK_EVIDENCE detected for observation ${observation.id}`);
+    if (!targetAsset) {
+      this.logger.warn(
+        `[INTEGRITY-GATE] CONFIRMATION received but no PENDING assets found in last 24h.`,
+      );
+      // TODO: Notify user "Nothing to confirm"
+      return;
+    }
 
-        // Получаем задачу для трассировки
-        const task = observation.taskId ? await this.prisma.task.findFirst({
-            where: {
-                id: observation.taskId,
-                companyId: observation.companyId,
-            }
-        }) : null;
+    // Активация
+    if (targetAsset.type === "MACHINERY") {
+      const updated = await this.prisma.machinery.updateMany({
+        where: {
+          id: targetAsset.id,
+          companyId: observation.companyId,
+        },
+        data: {
+          status: AssetStatus.ACTIVE,
+          confirmedByUserId: observation.authorId,
+          confirmedAt: new Date(),
+        },
+      });
+      if (updated.count !== 1) {
+        this.logger.warn(
+          `[INTEGRITY-GATE] Machinery not updated due to tenant scope mismatch: ${targetAsset.id}`,
+        );
+        return;
+      }
+    } else {
+      const updated = await this.prisma.stockItem.updateMany({
+        where: {
+          id: targetAsset.id,
+          companyId: observation.companyId,
+        },
+        data: {
+          status: AssetStatus.ACTIVE,
+          confirmedByUserId: observation.authorId,
+          confirmedAt: new Date(),
+        },
+      });
+      if (updated.count !== 1) {
+        this.logger.warn(
+          `[INTEGRITY-GATE] StockItem not updated due to tenant scope mismatch: ${targetAsset.id}`,
+        );
+        return;
+      }
+    }
 
-        // Создаем запись о риске с полной трассировкой (Requirement 2.2)
+    this.logger.log(
+      `[INTEGRITY-GATE] Asset CONFIRMED: ${targetAsset.type} ${targetAsset.name} (${targetAsset.id})`,
+    );
+
+    // TODO: Send async notification via TelegramNotificationService that asset is ACTIVE
+  }
+
+  private async handleStrategicLoop(observation: FieldObservation) {
+    this.logger.log(
+      `[LAW] Mandatory Loop: DELAY -> DecisionRecord -> TechMap (Placeholder)`,
+    );
+  }
+
+  /**
+   * Валидация допуска техкарты (Admission Gate).
+   * Проверяет готовность техники и наличие ТМЦ.
+   */
+  async validateTechMapAdmission(techMapId: string, companyId: string) {
+    this.logger.log(
+      `[INTEGRITY-GATE] Validating Admission for TechMap ${techMapId}`,
+    );
+
+    const map = await this.prisma.techMap.findFirst({
+      where: { id: techMapId, companyId },
+      include: {
+        stages: {
+          include: {
+            operations: {
+              include: {
+                resources: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!map) throw new Error("TechMap not found");
+
+    const issues: Array<{
+      type: string;
+      message: string;
+      severity: "ERROR" | "WARNING";
+    }> = [];
+
+    // 0. Инвариант I41: Regeneration Guard
+    const regenStatus = await this.checkRegenerationInvariant(
+      map.fieldId!,
+      companyId,
+    );
+
+    // 0.1 PHASE 2.5: Escalation/Quorum Guard
+    // Проверяем наличие заблокированных рисков R3/R4
+    const activeRisks = await this.prisma.cmrRisk.findMany({
+      where: {
+        companyId,
+        seasonId: map.seasonId,
+        status: "OPEN",
+        probability: { in: [RiskLevel.HIGH, RiskLevel.CRITICAL] },
+      },
+    });
+
+    for (const risk of activeRisks) {
+      const isBlocked = await this.quorum.isBlockedByQuorum(risk.id);
+      if (isBlocked) {
+        issues.push({
+          type: "QUORUM_REQUIRED",
+          message: `[GOVERNANCE-BLOCK] Операция заблокирована до получения кворума по риску: ${risk.description}`,
+          severity: "ERROR",
+        });
+      }
+    }
+    if (regenStatus.status === "DEGRADING") {
+      issues.push({
+        type: "I41_REGENERATION_VIOLATION",
+        message: `[INVARIANT-I41] Выполнение техкарты ЗАБЛОКИРОВАНО. Обнаружена деградация почвы (Velocity: ${regenStatus.velocity}). Требуется восстановительный протокол.`,
+        severity: "ERROR",
+      });
+
+      await this.prisma.cmrRisk.create({
+        data: {
+          companyId: map.companyId,
+          seasonId: map.seasonId,
+          type: RiskType.REGULATORY,
+          description: `[I41-BLOCK] Деградация SRI (v=${regenStatus.velocity}) блокирует техкарту ${map.id}`,
+          probability: RiskLevel.CRITICAL,
+          impact: RiskLevel.CRITICAL,
+          controllability: Controllability.CONSULTANT,
+          liabilityMode: LiabilityMode.CONSULTANT_ONLY,
+          status: "OPEN",
+        },
+      });
+    }
+
+    // 1. Проверка Техники (Machinery Readiness)
+    const allOperations = map.stages.flatMap((s) => s.operations);
+    const requiredMachineryTypes = [
+      ...new Set(
+        allOperations.map((o) => o.requiredMachineryType).filter(Boolean),
+      ),
+    ];
+
+    for (const mType of requiredMachineryTypes) {
+      const activeMachinery = await this.prisma.machinery.count({
+        where: {
+          companyId: map.companyId,
+          type: mType!,
+          status: "ACTIVE",
+        },
+      });
+
+      if (activeMachinery === 0) {
+        issues.push({
+          type: "MACHINERY_MISSING",
+          message: `Для активации требуется техника типа ${mType}, но нет ни одной активной единицы в реестре.`,
+          severity: "ERROR",
+        });
+
+        // Law Enforcement: Создаем риск блокировки производства
         await this.prisma.cmrRisk.create({
-            data: {
-                companyId: observation.companyId,
-                seasonId: observation.seasonId,
-                type: RiskType.OPERATIONAL,
-                description: `[LAW-ENFORCED] Низкая достоверность доказательств по задаче. ObservationId: ${observation.id}`,
-                probability: RiskLevel.MEDIUM,
-                impact: RiskLevel.MEDIUM,
-                controllability: Controllability.CONSULTANT,
-                liabilityMode: LiabilityMode.CONSULTANT_ONLY,
-                status: "OPEN",
-                // Трассировка (Law Traceability)
-                taskId: observation.taskId,
-                observationId: observation.id,
-                responsibleId: (task as any)?.responsibleId || observation.authorId,
-            }
+          data: {
+            companyId: map.companyId,
+            seasonId: map.seasonId,
+            type: RiskType.OPERATIONAL,
+            description: `[ADMISSION-BLOCK] Отсутствует активная техника типа ${mType} для техкарты ${map.id}`,
+            probability: RiskLevel.CRITICAL,
+            impact: RiskLevel.CRITICAL,
+            controllability: Controllability.CLIENT,
+            liabilityMode: LiabilityMode.CLIENT_ONLY,
+            status: "OPEN",
+          },
         });
+      }
     }
 
-    /**
-     * Silence Path Monitoring (Requirement 3.B)
-     * Проверяет задачи с истекшим SLA на предмет отсутствия наблюдений.
-     */
-    @Cron(CronExpression.EVERY_HOUR)
-    async checkTaskSilence() {
-        this.logger.log(`[INTEGRITY-GATE] Running Silence Path Audit...`);
+    // 2. Проверка ТМЦ (Stock Sufficiency)
+    const allPlannedResources = allOperations.flatMap((o) => o.resources);
+    // Группируем по типу и имени для сверки с остатками
+    const resourceDemands = allPlannedResources.reduce(
+      (acc, res) => {
+        const key = `${res.type}:${res.name}`;
+        acc[key] = (acc[key] || 0) + res.amount;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
-        const overdueTasks = await this.prisma.task.findMany({ // tenant-lint:ignore system-wide scheduled compliance scan across tenants
-            where: {
-                status: { notIn: [TaskStatus.COMPLETED, TaskStatus.CANCELLED] },
-                slaExpiration: { lt: new Date() },
-                // Проверяем, что по задаче нет ни одного наблюдения
-                fieldObservations: { none: {} }
-            },
-            include: {
-                season: true
-            }
+    for (const [resKey, plannedAmount] of Object.entries(resourceDemands)) {
+      const [resType, resName] = resKey.split(":");
+
+      const stockItems = await this.prisma.stockItem.findMany({
+        where: {
+          companyId: map.companyId,
+          type: resType as any,
+          name: { contains: resName, mode: "insensitive" },
+          status: "ACTIVE",
+        },
+      });
+
+      const actualTotal = stockItems.reduce(
+        (sum, item) => sum + item.quantity,
+        0,
+      );
+      const amount = plannedAmount as number;
+      const ratio = amount > 0 ? actualTotal / amount : 1;
+
+      if (ratio < 0.5) {
+        issues.push({
+          type: "STOCK_CRITICAL_SHORTAGE",
+          message: `Критическая нехватка ${resName}: затребовано ${amount}, в наличии ${actualTotal} (${(ratio * 100).toFixed(1)}%)`,
+          severity: "ERROR",
         });
 
-        for (const task of overdueTasks) {
-            this.logger.error(`[LAW-VIOLATION] Silence detected for Task ${task.id}. SLA Expired.`);
+        await this.prisma.cmrRisk.create({
+          data: {
+            companyId: map.companyId,
+            seasonId: map.seasonId,
+            type: RiskType.OPERATIONAL,
+            description: `[ADMISSION-BLOCK] Критическая нехватка ТМЦ: ${resName} (${(ratio * 100).toFixed(1)}%)`,
+            probability: RiskLevel.HIGH,
+            impact: RiskLevel.CRITICAL,
+            controllability: Controllability.CLIENT,
+            liabilityMode: LiabilityMode.CLIENT_ONLY,
+            status: "OPEN",
+          },
+        });
+      } else if (ratio < 0.9) {
+        issues.push({
+          type: "STOCK_WARNING",
+          message: `Недостаточно ${resName}: в наличии ${(ratio * 100).toFixed(1)}% от плана.`,
+          severity: "WARNING",
+        });
 
-            // Создаем риск нарушения регламента (Compliance/Silence Risk)
-            await this.prisma.cmrRisk.create({
-                data: {
-                    companyId: task.companyId,
-                    seasonId: task.seasonId,
-                    type: RiskType.REGULATORY,
-                    description: `[SILENCE-PATH] Нарушение регламента: отсутствие отчета по задаче "${task.name}" в рамках SLA.`,
-                    probability: RiskLevel.HIGH,
-                    impact: RiskLevel.HIGH,
-                    controllability: Controllability.CONSULTANT,
-                    liabilityMode: LiabilityMode.CONSULTANT_ONLY,
-                    status: "OPEN",
-                    // Трассировка
-                    taskId: task.id,
-                    responsibleId: (task as any).responsibleId || (task as any).assigneeId,
-                }
-            });
-
-            // Опционально: переводим задачу в состояние ошибки или эскалации
-            // optional escalation is implemented via dedicated tenant-safe helper
-        }
+        await this.prisma.cmrRisk.create({
+          data: {
+            companyId: map.companyId,
+            seasonId: map.seasonId,
+            type: RiskType.REGULATORY,
+            description: `[ADMISSION-WARNING] Дефицит ТМЦ: ${resName} (${(ratio * 100).toFixed(1)}%)`,
+            probability: RiskLevel.MEDIUM,
+            impact: RiskLevel.MEDIUM,
+            controllability: Controllability.CLIENT,
+            liabilityMode: LiabilityMode.CLIENT_ONLY,
+            status: "OPEN",
+          },
+        });
+      }
     }
 
-    private async handleEconomicLoop(observation: FieldObservation) {
-        this.logger.log(`[LAW] Mandatory Loop: CONFIRMATION -> Asset Activation`);
+    const hasErrors = issues.some((i) => i.severity === "ERROR");
+    return {
+      success: !hasErrors,
+      issues,
+    };
+  }
 
-        // Окно валидности: 24 часа (Tech Lead Requirement)
-        const validityWindow = new Date();
-        validityWindow.setHours(validityWindow.getHours() - 24);
+  /**
+   * Knowledge Graph Ingestion Gate (Sprint 2)
+   * Только структурная валидация: типы, связи, диапазон confidence.
+   */
+  validateKnowledgeGraphInput(input: {
+    nodes: Array<{ id: string; type: string; label: string; source: string }>;
+    edges: Array<{
+      fromNodeId: string;
+      toNodeId: string;
+      relation: string;
+      confidence: number;
+      source: string;
+    }>;
+  }) {
+    const errors: string[] = [];
 
-        // Поиск кандидатов (Machinery & Stock)
-        const pendingMachinery = await this.prisma.machinery.findFirst({
-            where: {
-                companyId: observation.companyId,
-                status: AssetStatus.PENDING_CONFIRMATION,
-                createdAt: { gte: validityWindow },
-            },
-            orderBy: { createdAt: 'desc' }
-        });
+    const allowedNodeTypes = ["CONCEPT", "ENTITY", "METRIC", "DOCUMENT"];
+    const allowedSources = ["MANUAL", "INGESTION", "AI"];
+    const allowedRelations = [
+      "IMPLEMENTS",
+      "DEPENDS_ON",
+      "MEASURED_BY",
+      "MEASURES",
+      "REFERENCES",
+    ];
 
-        const pendingStock = await this.prisma.stockItem.findFirst({
-            where: {
-                companyId: observation.companyId,
-                status: AssetStatus.PENDING_CONFIRMATION,
-                createdAt: { gte: validityWindow },
-            },
-            orderBy: { createdAt: 'desc' }
-        });
+    const nodeIds = new Set<string>();
+    for (const node of input.nodes || []) {
+      if (!node.id) errors.push("node.id is required");
+      if (!allowedNodeTypes.includes(node.type))
+        errors.push(`node.type invalid: ${node.type}`);
+      if (!node.label) errors.push("node.label is required");
+      if (!allowedSources.includes(node.source))
+        errors.push(`node.source invalid: ${node.source}`);
+      if (node.id) nodeIds.add(node.id);
+    }
 
-        // Выбор самого свежего кандидата
-        let targetAsset: { type: 'MACHINERY' | 'STOCK', id: string, name: string, createdAt: Date } | null = null;
+    for (const edge of input.edges || []) {
+      if (!edge.fromNodeId || !edge.toNodeId)
+        errors.push("edge.fromNodeId and edge.toNodeId are required");
+      if (!allowedRelations.includes(edge.relation))
+        errors.push(`edge.relation invalid: ${edge.relation}`);
+      if (!allowedSources.includes(edge.source))
+        errors.push(`edge.source invalid: ${edge.source}`);
+      if (
+        typeof edge.confidence !== "number" ||
+        edge.confidence < 0 ||
+        edge.confidence > 1
+      ) {
+        errors.push("edge.confidence must be between 0 and 1");
+      }
+      if (edge.fromNodeId && !nodeIds.has(edge.fromNodeId)) {
+        errors.push(`edge.fromNodeId not found: ${edge.fromNodeId}`);
+      }
+      if (edge.toNodeId && !nodeIds.has(edge.toNodeId)) {
+        errors.push(`edge.toNodeId not found: ${edge.toNodeId}`);
+      }
+    }
 
-        if (pendingMachinery && pendingStock) {
-            targetAsset = pendingMachinery.createdAt > pendingStock.createdAt
-                ? { type: 'MACHINERY', id: pendingMachinery.id, name: pendingMachinery.name, createdAt: pendingMachinery.createdAt }
-                : { type: 'STOCK', id: pendingStock.id, name: pendingStock.name, createdAt: pendingStock.createdAt };
-        } else if (pendingMachinery) {
-            targetAsset = { type: 'MACHINERY', id: pendingMachinery.id, name: pendingMachinery.name, createdAt: pendingMachinery.createdAt };
-        } else if (pendingStock) {
-            targetAsset = { type: 'STOCK', id: pendingStock.id, name: pendingStock.name, createdAt: pendingStock.createdAt };
-        }
+    return { ok: errors.length === 0, errors };
+  }
 
-        if (!targetAsset) {
-            this.logger.warn(`[INTEGRITY-GATE] CONFIRMATION received but no PENDING assets found in last 24h.`);
-            // TODO: Notify user "Nothing to confirm"
-            return;
-        }
+  /**
+   * Vision AI Baseline Admission Gate (Sprint 2)
+   * Структурная валидация наблюдения без интерпретаций.
+   */
+  validateVisionObservation(input: {
+    id: string;
+    source: string;
+    assetId: string;
+    timestamp: string;
+    modality: string;
+    rawFeatures?: {
+      ndvi?: number;
+      ndre?: number;
+      texture?: Record<string, number>;
+    };
+    metadata?: { sensor?: string; resolution?: string; cloudCover?: number };
+    confidence: number;
+  }) {
+    const errors: string[] = [];
 
-        // Активация
-        if (targetAsset.type === 'MACHINERY') {
-            const updated = await this.prisma.machinery.updateMany({
-                where: {
-                    id: targetAsset.id,
-                    companyId: observation.companyId,
-                },
-                data: {
-                    status: AssetStatus.ACTIVE,
-                    confirmedByUserId: observation.authorId,
-                    confirmedAt: new Date()
-                }
-            });
-            if (updated.count !== 1) {
-                this.logger.warn(`[INTEGRITY-GATE] Machinery not updated due to tenant scope mismatch: ${targetAsset.id}`);
-                return;
-            }
+    const allowedSources = ["SATELLITE", "DRONE", "PHOTO"];
+    const allowedModalities = ["RGB", "MULTISPECTRAL"];
+
+    if (!input.id) errors.push("id is required");
+    if (!input.assetId) errors.push("assetId is required");
+    if (!input.timestamp) errors.push("timestamp is required");
+    if (!input.source || !allowedSources.includes(input.source)) {
+      errors.push(`source invalid: ${input.source}`);
+    }
+    if (!input.modality || !allowedModalities.includes(input.modality)) {
+      errors.push(`modality invalid: ${input.modality}`);
+    }
+
+    if (input.timestamp) {
+      const parsed = new Date(input.timestamp);
+      if (Number.isNaN(parsed.getTime())) {
+        errors.push("timestamp must be valid ISO-8601");
+      }
+    }
+
+    if (
+      typeof input.confidence !== "number" ||
+      input.confidence < 0 ||
+      input.confidence > 1
+    ) {
+      errors.push("confidence must be between 0 and 1");
+    }
+
+    const allowedBySource: Record<string, string[]> = {
+      SATELLITE: ["RGB", "MULTISPECTRAL"],
+      DRONE: ["RGB", "MULTISPECTRAL"],
+      PHOTO: ["RGB"],
+    };
+    if (input.source && input.modality) {
+      const allowed = allowedBySource[input.source] || [];
+      if (!allowed.includes(input.modality)) {
+        errors.push(
+          `modality ${input.modality} not allowed for source ${input.source}`,
+        );
+      }
+    }
+
+    if (input.rawFeatures) {
+      const { ndvi, ndre, texture } = input.rawFeatures;
+      if (ndvi !== undefined && typeof ndvi !== "number")
+        errors.push("rawFeatures.ndvi must be number");
+      if (ndre !== undefined && typeof ndre !== "number")
+        errors.push("rawFeatures.ndre must be number");
+      if (texture !== undefined) {
+        if (typeof texture !== "object" || Array.isArray(texture)) {
+          errors.push("rawFeatures.texture must be object");
         } else {
-            const updated = await this.prisma.stockItem.updateMany({
-                where: {
-                    id: targetAsset.id,
-                    companyId: observation.companyId,
-                },
-                data: {
-                    status: AssetStatus.ACTIVE,
-                    confirmedByUserId: observation.authorId,
-                    confirmedAt: new Date()
-                }
-            });
-            if (updated.count !== 1) {
-                this.logger.warn(`[INTEGRITY-GATE] StockItem not updated due to tenant scope mismatch: ${targetAsset.id}`);
-                return;
+          for (const [key, value] of Object.entries(texture)) {
+            if (typeof value !== "number") {
+              errors.push(`rawFeatures.texture.${key} must be number`);
             }
+          }
         }
-
-        this.logger.log(`[INTEGRITY-GATE] Asset CONFIRMED: ${targetAsset.type} ${targetAsset.name} (${targetAsset.id})`);
-
-        // TODO: Send async notification via TelegramNotificationService that asset is ACTIVE
+      }
     }
 
-    private async handleStrategicLoop(observation: FieldObservation) {
-        this.logger.log(`[LAW] Mandatory Loop: DELAY -> DecisionRecord -> TechMap (Placeholder)`);
+    if (input.metadata) {
+      const { sensor, resolution, cloudCover } = input.metadata;
+      if (sensor !== undefined && typeof sensor !== "string")
+        errors.push("metadata.sensor must be string");
+      if (resolution !== undefined && typeof resolution !== "string")
+        errors.push("metadata.resolution must be string");
+      if (cloudCover !== undefined && typeof cloudCover !== "number")
+        errors.push("metadata.cloudCover must be number");
     }
 
-    /**
-     * Валидация допуска техкарты (Admission Gate).
-     * Проверяет готовность техники и наличие ТМЦ.
-     */
-    async validateTechMapAdmission(techMapId: string, companyId: string) {
-        this.logger.log(`[INTEGRITY-GATE] Validating Admission for TechMap ${techMapId}`);
+    return { ok: errors.length === 0, errors };
+  }
 
-        const map = await this.prisma.techMap.findFirst({
-            where: { id: techMapId, companyId },
-            include: {
-                stages: {
-                    include: {
-                        operations: {
-                            include: {
-                                resources: true
-                            }
-                        }
-                    }
-                }
-            }
-        });
+  /**
+   * Satellite Ingestion Admission Gate (Sprint 2)
+   * Валидация сигналов NDVI/NDRE без интерпретаций.
+   */
+  validateSatelliteObservation(input: {
+    id: string;
+    assetId: string;
+    companyId: string;
+    timestamp: string;
+    indexType: string;
+    value: number;
+    source: string;
+    resolution: number;
+    cloudCoverage: number;
+    tileId?: string;
+    confidence: number;
+  }) {
+    const errors: string[] = [];
 
-        if (!map) throw new Error("TechMap not found");
+    const allowedIndexTypes = ["NDVI", "NDRE"];
+    const allowedSources = ["SENTINEL2", "LANDSAT8", "LANDSAT9"];
 
-        const issues: Array<{ type: string; message: string; severity: 'ERROR' | 'WARNING' }> = [];
+    if (!input.id) errors.push("id is required");
+    if (!input.assetId) errors.push("assetId is required");
+    if (!input.companyId) errors.push("companyId is required");
+    if (!input.timestamp) errors.push("timestamp is required");
 
-        // 0. Инвариант I41: Regeneration Guard
-        const regenStatus = await this.checkRegenerationInvariant(map.fieldId!, companyId);
-
-        // 0.1 PHASE 2.5: Escalation/Quorum Guard
-        // Проверяем наличие заблокированных рисков R3/R4
-        const activeRisks = await this.prisma.cmrRisk.findMany({
-            where: {
-                companyId,
-                seasonId: map.seasonId,
-                status: 'OPEN',
-                probability: { in: [RiskLevel.HIGH, RiskLevel.CRITICAL] }
-            }
-        });
-
-        for (const risk of activeRisks) {
-            const isBlocked = await this.quorum.isBlockedByQuorum(risk.id);
-            if (isBlocked) {
-                issues.push({
-                    type: 'QUORUM_REQUIRED',
-                    message: `[GOVERNANCE-BLOCK] Операция заблокирована до получения кворума по риску: ${risk.description}`,
-                    severity: 'ERROR'
-                });
-            }
-        }
-        if (regenStatus.status === 'DEGRADING') {
-            issues.push({
-                type: 'I41_REGENERATION_VIOLATION',
-                message: `[INVARIANT-I41] Выполнение техкарты ЗАБЛОКИРОВАНО. Обнаружена деградация почвы (Velocity: ${regenStatus.velocity}). Требуется восстановительный протокол.`,
-                severity: 'ERROR'
-            });
-
-            await this.prisma.cmrRisk.create({
-                data: {
-                    companyId: map.companyId,
-                    seasonId: map.seasonId,
-                    type: RiskType.REGULATORY,
-                    description: `[I41-BLOCK] Деградация SRI (v=${regenStatus.velocity}) блокирует техкарту ${map.id}`,
-                    probability: RiskLevel.CRITICAL,
-                    impact: RiskLevel.CRITICAL,
-                    controllability: Controllability.CONSULTANT,
-                    liabilityMode: LiabilityMode.CONSULTANT_ONLY,
-                    status: "OPEN"
-                }
-            });
-        }
-
-        // 1. Проверка Техники (Machinery Readiness)
-        const allOperations = map.stages.flatMap(s => s.operations);
-        const requiredMachineryTypes = [...new Set(allOperations.map(o => o.requiredMachineryType).filter(Boolean))];
-
-        for (const mType of requiredMachineryTypes) {
-            const activeMachinery = await this.prisma.machinery.count({
-                where: {
-                    companyId: map.companyId,
-                    type: mType!,
-                    status: 'ACTIVE'
-                }
-            });
-
-            if (activeMachinery === 0) {
-                issues.push({
-                    type: 'MACHINERY_MISSING',
-                    message: `Для активации требуется техника типа ${mType}, но нет ни одной активной единицы в реестре.`,
-                    severity: 'ERROR'
-                });
-
-                // Law Enforcement: Создаем риск блокировки производства
-                await this.prisma.cmrRisk.create({
-                    data: {
-                        companyId: map.companyId,
-                        seasonId: map.seasonId,
-                        type: RiskType.OPERATIONAL,
-                        description: `[ADMISSION-BLOCK] Отсутствует активная техника типа ${mType} для техкарты ${map.id}`,
-                        probability: RiskLevel.CRITICAL,
-                        impact: RiskLevel.CRITICAL,
-                        controllability: Controllability.CLIENT,
-                        liabilityMode: LiabilityMode.CLIENT_ONLY,
-                        status: "OPEN"
-                    }
-                });
-            }
-        }
-
-        // 2. Проверка ТМЦ (Stock Sufficiency)
-        const allPlannedResources = allOperations.flatMap(o => o.resources);
-        // Группируем по типу и имени для сверки с остатками
-        const resourceDemands = allPlannedResources.reduce((acc, res) => {
-            const key = `${res.type}:${res.name}`;
-            acc[key] = (acc[key] || 0) + res.amount;
-            return acc;
-        }, {} as Record<string, number>);
-
-        for (const [resKey, plannedAmount] of Object.entries(resourceDemands)) {
-            const [resType, resName] = resKey.split(':');
-
-            const stockItems = await this.prisma.stockItem.findMany({
-                where: {
-                    companyId: map.companyId,
-                    type: resType as any,
-                    name: { contains: resName, mode: 'insensitive' },
-                    status: 'ACTIVE'
-                }
-            });
-
-            const actualTotal = stockItems.reduce((sum, item) => sum + item.quantity, 0);
-            const amount = plannedAmount as number;
-            const ratio = amount > 0 ? actualTotal / amount : 1;
-
-            if (ratio < 0.5) {
-                issues.push({
-                    type: 'STOCK_CRITICAL_SHORTAGE',
-                    message: `Критическая нехватка ${resName}: затребовано ${amount}, в наличии ${actualTotal} (${(ratio * 100).toFixed(1)}%)`,
-                    severity: 'ERROR'
-                });
-
-                await this.prisma.cmrRisk.create({
-                    data: {
-                        companyId: map.companyId,
-                        seasonId: map.seasonId,
-                        type: RiskType.OPERATIONAL,
-                        description: `[ADMISSION-BLOCK] Критическая нехватка ТМЦ: ${resName} (${(ratio * 100).toFixed(1)}%)`,
-                        probability: RiskLevel.HIGH,
-                        impact: RiskLevel.CRITICAL,
-                        controllability: Controllability.CLIENT,
-                        liabilityMode: LiabilityMode.CLIENT_ONLY,
-                        status: "OPEN"
-                    }
-                });
-            } else if (ratio < 0.9) {
-                issues.push({
-                    type: 'STOCK_WARNING',
-                    message: `Недостаточно ${resName}: в наличии ${(ratio * 100).toFixed(1)}% от плана.`,
-                    severity: 'WARNING'
-                });
-
-                await this.prisma.cmrRisk.create({
-                    data: {
-                        companyId: map.companyId,
-                        seasonId: map.seasonId,
-                        type: RiskType.REGULATORY,
-                        description: `[ADMISSION-WARNING] Дефицит ТМЦ: ${resName} (${(ratio * 100).toFixed(1)}%)`,
-                        probability: RiskLevel.MEDIUM,
-                        impact: RiskLevel.MEDIUM,
-                        controllability: Controllability.CLIENT,
-                        liabilityMode: LiabilityMode.CLIENT_ONLY,
-                        status: "OPEN"
-                    }
-                });
-            }
-        }
-
-        const hasErrors = issues.some(i => i.severity === 'ERROR');
-        return {
-            success: !hasErrors,
-            issues
-        };
+    if (!input.indexType || !allowedIndexTypes.includes(input.indexType)) {
+      errors.push(`indexType invalid: ${input.indexType}`);
+    }
+    if (!input.source || !allowedSources.includes(input.source)) {
+      errors.push(`source invalid: ${input.source}`);
     }
 
-    /**
-     * Knowledge Graph Ingestion Gate (Sprint 2)
-     * Только структурная валидация: типы, связи, диапазон confidence.
-     */
-    validateKnowledgeGraphInput(input: {
-        nodes: Array<{ id: string; type: string; label: string; source: string }>;
-        edges: Array<{ fromNodeId: string; toNodeId: string; relation: string; confidence: number; source: string }>;
-    }) {
-        const errors: string[] = [];
-
-        const allowedNodeTypes = ["CONCEPT", "ENTITY", "METRIC", "DOCUMENT"];
-        const allowedSources = ["MANUAL", "INGESTION", "AI"];
-        const allowedRelations = ["IMPLEMENTS", "DEPENDS_ON", "MEASURED_BY", "MEASURES", "REFERENCES"];
-
-        const nodeIds = new Set<string>();
-        for (const node of input.nodes || []) {
-            if (!node.id) errors.push("node.id is required");
-            if (!allowedNodeTypes.includes(node.type)) errors.push(`node.type invalid: ${node.type}`);
-            if (!node.label) errors.push("node.label is required");
-            if (!allowedSources.includes(node.source)) errors.push(`node.source invalid: ${node.source}`);
-            if (node.id) nodeIds.add(node.id);
-        }
-
-        for (const edge of input.edges || []) {
-            if (!edge.fromNodeId || !edge.toNodeId) errors.push("edge.fromNodeId and edge.toNodeId are required");
-            if (!allowedRelations.includes(edge.relation)) errors.push(`edge.relation invalid: ${edge.relation}`);
-            if (!allowedSources.includes(edge.source)) errors.push(`edge.source invalid: ${edge.source}`);
-            if (typeof edge.confidence !== "number" || edge.confidence < 0 || edge.confidence > 1) {
-                errors.push("edge.confidence must be between 0 and 1");
-            }
-            if (edge.fromNodeId && !nodeIds.has(edge.fromNodeId)) {
-                errors.push(`edge.fromNodeId not found: ${edge.fromNodeId}`);
-            }
-            if (edge.toNodeId && !nodeIds.has(edge.toNodeId)) {
-                errors.push(`edge.toNodeId not found: ${edge.toNodeId}`);
-            }
-        }
-
-        return { ok: errors.length === 0, errors };
+    if (input.timestamp) {
+      const parsed = new Date(input.timestamp);
+      if (Number.isNaN(parsed.getTime())) {
+        errors.push("timestamp must be valid ISO-8601");
+      }
     }
 
-    /**
-     * Vision AI Baseline Admission Gate (Sprint 2)
-     * Структурная валидация наблюдения без интерпретаций.
-     */
-    validateVisionObservation(input: {
-        id: string;
-        source: string;
-        assetId: string;
-        timestamp: string;
-        modality: string;
-        rawFeatures?: { ndvi?: number; ndre?: number; texture?: Record<string, number> };
-        metadata?: { sensor?: string; resolution?: string; cloudCover?: number };
-        confidence: number;
-    }) {
-        const errors: string[] = [];
-
-        const allowedSources = ["SATELLITE", "DRONE", "PHOTO"];
-        const allowedModalities = ["RGB", "MULTISPECTRAL"];
-
-        if (!input.id) errors.push("id is required");
-        if (!input.assetId) errors.push("assetId is required");
-        if (!input.timestamp) errors.push("timestamp is required");
-        if (!input.source || !allowedSources.includes(input.source)) {
-            errors.push(`source invalid: ${input.source}`);
-        }
-        if (!input.modality || !allowedModalities.includes(input.modality)) {
-            errors.push(`modality invalid: ${input.modality}`);
-        }
-
-        if (input.timestamp) {
-            const parsed = new Date(input.timestamp);
-            if (Number.isNaN(parsed.getTime())) {
-                errors.push("timestamp must be valid ISO-8601");
-            }
-        }
-
-        if (typeof input.confidence !== "number" || input.confidence < 0 || input.confidence > 1) {
-            errors.push("confidence must be between 0 and 1");
-        }
-
-        const allowedBySource: Record<string, string[]> = {
-            SATELLITE: ["RGB", "MULTISPECTRAL"],
-            DRONE: ["RGB", "MULTISPECTRAL"],
-            PHOTO: ["RGB"],
-        };
-        if (input.source && input.modality) {
-            const allowed = allowedBySource[input.source] || [];
-            if (!allowed.includes(input.modality)) {
-                errors.push(`modality ${input.modality} not allowed for source ${input.source}`);
-            }
-        }
-
-        if (input.rawFeatures) {
-            const { ndvi, ndre, texture } = input.rawFeatures;
-            if (ndvi !== undefined && typeof ndvi !== "number") errors.push("rawFeatures.ndvi must be number");
-            if (ndre !== undefined && typeof ndre !== "number") errors.push("rawFeatures.ndre must be number");
-            if (texture !== undefined) {
-                if (typeof texture !== "object" || Array.isArray(texture)) {
-                    errors.push("rawFeatures.texture must be object");
-                } else {
-                    for (const [key, value] of Object.entries(texture)) {
-                        if (typeof value !== "number") {
-                            errors.push(`rawFeatures.texture.${key} must be number`);
-                        }
-                    }
-                }
-            }
-        }
-
-        if (input.metadata) {
-            const { sensor, resolution, cloudCover } = input.metadata;
-            if (sensor !== undefined && typeof sensor !== "string") errors.push("metadata.sensor must be string");
-            if (resolution !== undefined && typeof resolution !== "string") errors.push("metadata.resolution must be string");
-            if (cloudCover !== undefined && typeof cloudCover !== "number") errors.push("metadata.cloudCover must be number");
-        }
-
-        return { ok: errors.length === 0, errors };
+    if (typeof input.value !== "number" || input.value < 0 || input.value > 1) {
+      errors.push("value must be between 0 and 1");
+    }
+    if (
+      typeof input.cloudCoverage !== "number" ||
+      input.cloudCoverage < 0 ||
+      input.cloudCoverage > 1
+    ) {
+      errors.push("cloudCoverage must be between 0 and 1");
+    }
+    if (
+      typeof input.confidence !== "number" ||
+      input.confidence < 0 ||
+      input.confidence > 1
+    ) {
+      errors.push("confidence must be between 0 and 1");
+    }
+    if (typeof input.resolution !== "number" || input.resolution <= 0) {
+      errors.push("resolution must be > 0");
     }
 
-    /**
-     * Satellite Ingestion Admission Gate (Sprint 2)
-     * Валидация сигналов NDVI/NDRE без интерпретаций.
-     */
-    validateSatelliteObservation(input: {
-        id: string;
-        assetId: string;
-        companyId: string;
-        timestamp: string;
-        indexType: string;
-        value: number;
-        source: string;
-        resolution: number;
-        cloudCoverage: number;
-        tileId?: string;
-        confidence: number;
-    }) {
-        const errors: string[] = [];
-
-        const allowedIndexTypes = ["NDVI", "NDRE"];
-        const allowedSources = ["SENTINEL2", "LANDSAT8", "LANDSAT9"];
-
-        if (!input.id) errors.push("id is required");
-        if (!input.assetId) errors.push("assetId is required");
-        if (!input.companyId) errors.push("companyId is required");
-        if (!input.timestamp) errors.push("timestamp is required");
-
-        if (!input.indexType || !allowedIndexTypes.includes(input.indexType)) {
-            errors.push(`indexType invalid: ${input.indexType}`);
-        }
-        if (!input.source || !allowedSources.includes(input.source)) {
-            errors.push(`source invalid: ${input.source}`);
-        }
-
-        if (input.timestamp) {
-            const parsed = new Date(input.timestamp);
-            if (Number.isNaN(parsed.getTime())) {
-                errors.push("timestamp must be valid ISO-8601");
-            }
-        }
-
-        if (typeof input.value !== "number" || input.value < 0 || input.value > 1) {
-            errors.push("value must be between 0 and 1");
-        }
-        if (typeof input.cloudCoverage !== "number" || input.cloudCoverage < 0 || input.cloudCoverage > 1) {
-            errors.push("cloudCoverage must be between 0 and 1");
-        }
-        if (typeof input.confidence !== "number" || input.confidence < 0 || input.confidence > 1) {
-            errors.push("confidence must be between 0 and 1");
-        }
-        if (typeof input.resolution !== "number" || input.resolution <= 0) {
-            errors.push("resolution must be > 0");
-        }
-
-        const allowedBySource: Record<string, string[]> = {
-            SENTINEL2: ["NDVI", "NDRE"],
-            LANDSAT8: ["NDVI", "NDRE"],
-            LANDSAT9: ["NDVI", "NDRE"],
-        };
-        if (input.source && input.indexType) {
-            const allowed = allowedBySource[input.source] || [];
-            if (!allowed.includes(input.indexType)) {
-                errors.push(`indexType ${input.indexType} not allowed for source ${input.source}`);
-            }
-        }
-
-        return { ok: errors.length === 0, errors };
+    const allowedBySource: Record<string, string[]> = {
+      SENTINEL2: ["NDVI", "NDRE"],
+      LANDSAT8: ["NDVI", "NDRE"],
+      LANDSAT9: ["NDVI", "NDRE"],
+    };
+    if (input.source && input.indexType) {
+      const allowed = allowedBySource[input.source] || [];
+      if (!allowed.includes(input.indexType)) {
+        errors.push(
+          `indexType ${input.indexType} not allowed for source ${input.source}`,
+        );
+      }
     }
 
-    private async handleSoilMetricLoop(observation: FieldObservation) {
-        this.logger.log(`[LAW] Mandatory Loop: MEASUREMENT -> SoilMetric (Level E)`);
+    return { ok: errors.length === 0, errors };
+  }
 
-        if (!observation.telemetryJson || typeof observation.telemetryJson !== 'object') {
-            this.logger.warn(`[INTEGRITY-GATE] Soil Measurement received without telemetry data: ${observation.id}`);
-            return;
-        }
+  private async handleSoilMetricLoop(observation: FieldObservation) {
+    this.logger.log(
+      `[LAW] Mandatory Loop: MEASUREMENT -> SoilMetric (Level E)`,
+    );
 
-        const data = observation.telemetryJson as any;
-        const signature = data.signature; // Expecting hex or base64
-        const publicKeyId = data.publicKeyId;
-
-        // 1. Signature Verification
-        const isVerified = await this.verifySignature(signature, publicKeyId, data);
-
-        // 2. Trust Enforcement Mode
-        const enforcementMode = process.env.TRUST_ENFORCEMENT_MODE || 'SHADOW';
-
-        if (!isVerified) {
-            if (enforcementMode === 'STRICT') {
-                this.logger.error(`[TRUST-VIOLATION] Signature verification FAILED in STRICT mode. Rejecting data for ${observation.id}`);
-                throw new Error("STRICT_TRUST_VIOLATION: Invalid Data Signature");
-            } else if (enforcementMode === 'WARN') {
-                this.logger.warn(`[TRUST-VIOLATION] Signature verification FAILED. Proceeding in WARN mode for ${observation.id}`);
-            } else {
-                this.logger.log(`[TRUST-SHADOW] Signature verification failed for ${observation.id}. Logging in SHADOW mode.`);
-            }
-        }
-
-        // 3. Trust Score Calculation
-        const trustInput: TrustInput = {
-            isSignatureVerified: isVerified,
-            sourceReputation: 0.8, // Default for now
-            dataAgeDays: 0, // Fresh data
-            driftPenalty: 0
-        };
-        const trustScore = TrustEngine.calculateTrustScore(trustInput);
-
-        // 4. Persistence
-        await this.prisma.soilMetric.create({
-            data: {
-                companyId: observation.companyId,
-                fieldId: observation.fieldId!,
-                authorId: observation.authorId,
-                timestamp: observation.createdAt,
-                sri: data.sri || 0,
-                om: data.om || 0,
-                ph: data.ph || 0,
-                source: data.source || DataSourceType.SENSOR,
-                signature: signature ? Buffer.from(signature, 'hex') : null,
-                publicKeyId: publicKeyId,
-                trustScoreSnapshot: trustScore,
-                verificationStatus: isVerified ? VerificationStatus.VERIFIED : VerificationStatus.FAILED,
-                verifiedAt: new Date()
-            }
-        });
-
-        this.logger.log(`[INTEGRITY-GATE] SoilMetric persisted with TrustScore: ${trustScore}`);
-
-        // 5. Trigger Distributed Drift Check
-        await this.driftQueue.add('check-drift', {
-            fieldId: observation.fieldId,
-            companyId: observation.companyId
-        });
+    if (
+      !observation.telemetryJson ||
+      typeof observation.telemetryJson !== "object"
+    ) {
+      this.logger.warn(
+        `[INTEGRITY-GATE] Soil Measurement received without telemetry data: ${observation.id}`,
+      );
+      return;
     }
 
-    private async verifySignature(signature: string, publicKeyId: string, payload: any): Promise<boolean> {
-        if (!signature || !publicKeyId) return false;
+    const data = observation.telemetryJson as any;
+    const signature = data.signature; // Expecting hex or base64
+    const publicKeyId = data.publicKeyId;
 
-        // STUB: In production this would use crypto.verify or a KMS
-        this.logger.log(`[INTEGRITY-GATE] Verifying signature ${signature.substring(0, 8)}... via Key ${publicKeyId}`);
+    // 1. Signature Verification
+    const isVerified = await this.verifySignature(signature, publicKeyId, data);
 
-        // Simple mock for internal testing
-        return signature.startsWith('valid_');
+    // 2. Trust Enforcement Mode
+    const enforcementMode = process.env.TRUST_ENFORCEMENT_MODE || "SHADOW";
+
+    if (!isVerified) {
+      if (enforcementMode === "STRICT") {
+        this.logger.error(
+          `[TRUST-VIOLATION] Signature verification FAILED in STRICT mode. Rejecting data for ${observation.id}`,
+        );
+        throw new Error("STRICT_TRUST_VIOLATION: Invalid Data Signature");
+      } else if (enforcementMode === "WARN") {
+        this.logger.warn(
+          `[TRUST-VIOLATION] Signature verification FAILED. Proceeding in WARN mode for ${observation.id}`,
+        );
+      } else {
+        this.logger.log(
+          `[TRUST-SHADOW] Signature verification failed for ${observation.id}. Logging in SHADOW mode.`,
+        );
+      }
     }
 
-    /**
-     * Проверка Инварианта I41: Запрет на токсичные действия при деградации.
-     */
-    async checkRegenerationInvariant(fieldId: string, companyId: string): Promise<{ status: 'REGENERATING' | 'DEGRADING' | 'STABLE'; velocity: number }> {
-        const baseline = await this.prisma.sustainabilityBaseline.findFirst({
-            where: { fieldId, companyId },
-            orderBy: { createdAt: 'desc' }
-        });
+    // 3. Trust Score Calculation
+    const trustInput: TrustInput = {
+      isSignatureVerified: isVerified,
+      sourceReputation: 0.8, // Default for now
+      dataAgeDays: 0, // Fresh data
+      driftPenalty: 0,
+    };
+    const trustScore = TrustEngine.calculateTrustScore(trustInput);
 
-        if (!baseline) return { status: 'STABLE', velocity: 0 };
+    // 4. Persistence
+    await this.prisma.soilMetric.create({
+      data: {
+        companyId: observation.companyId,
+        fieldId: observation.fieldId!,
+        authorId: observation.authorId,
+        timestamp: observation.createdAt,
+        sri: data.sri || 0,
+        om: data.om || 0,
+        ph: data.ph || 0,
+        source: data.source || DataSourceType.SENSOR,
+        signature: signature ? Buffer.from(signature, "hex") : null,
+        publicKeyId: publicKeyId,
+        trustScoreSnapshot: trustScore,
+        verificationStatus: isVerified
+          ? VerificationStatus.VERIFIED
+          : VerificationStatus.FAILED,
+        verifiedAt: new Date(),
+      },
+    });
 
-        const latestMetric = await this.prisma.soilMetric.findFirst({
-            where: { fieldId, companyId, verificationStatus: VerificationStatus.VERIFIED },
-            orderBy: { timestamp: 'desc' }
-        });
+    this.logger.log(
+      `[INTEGRITY-GATE] SoilMetric persisted with TrustScore: ${trustScore}`,
+    );
 
-        if (!latestMetric) return { status: 'STABLE', velocity: 0 };
+    // 5. Trigger Distributed Drift Check
+    await this.driftQueue.add("check-drift", {
+      fieldId: observation.fieldId,
+      companyId: observation.companyId,
+    });
+  }
 
-        const yearsDelta = (latestMetric.timestamp.getTime() - baseline.createdAt.getTime()) / (1000 * 60 * 60 * 24 * 365);
-        const velocity = VelocityCalculator.calculateVelocity(baseline.initialSri, latestMetric.sri, Math.max(0.1, yearsDelta));
+  private async verifySignature(
+    signature: string,
+    publicKeyId: string,
+    payload: any,
+  ): Promise<boolean> {
+    if (!signature || !publicKeyId) return false;
 
-        if (velocity < -0.05) return { status: 'DEGRADING', velocity };
-        if (velocity > 0.01) return { status: 'REGENERATING', velocity };
-        return { status: 'STABLE', velocity };
-    }
+    // STUB: In production this would use crypto.verify or a KMS
+    this.logger.log(
+      `[INTEGRITY-GATE] Verifying signature ${signature.substring(0, 8)}... via Key ${publicKeyId}`,
+    );
+
+    // Simple mock for internal testing
+    return signature.startsWith("valid_");
+  }
+
+  /**
+   * Проверка Инварианта I41: Запрет на токсичные действия при деградации.
+   */
+  async checkRegenerationInvariant(
+    fieldId: string,
+    companyId: string,
+  ): Promise<{
+    status: "REGENERATING" | "DEGRADING" | "STABLE";
+    velocity: number;
+  }> {
+    const baseline = await this.prisma.sustainabilityBaseline.findFirst({
+      where: { fieldId, companyId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!baseline) return { status: "STABLE", velocity: 0 };
+
+    const latestMetric = await this.prisma.soilMetric.findFirst({
+      where: {
+        fieldId,
+        companyId,
+        verificationStatus: VerificationStatus.VERIFIED,
+      },
+      orderBy: { timestamp: "desc" },
+    });
+
+    if (!latestMetric) return { status: "STABLE", velocity: 0 };
+
+    const yearsDelta =
+      (latestMetric.timestamp.getTime() - baseline.createdAt.getTime()) /
+      (1000 * 60 * 60 * 24 * 365);
+    const velocity = VelocityCalculator.calculateVelocity(
+      baseline.initialSri,
+      latestMetric.sri,
+      Math.max(0.1, yearsDelta),
+    );
+
+    if (velocity < -0.05) return { status: "DEGRADING", velocity };
+    if (velocity > 0.01) return { status: "REGENERATING", velocity };
+    return { status: "STABLE", velocity };
+  }
 }

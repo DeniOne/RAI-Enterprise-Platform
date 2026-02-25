@@ -2,9 +2,9 @@
 
 import React, { useEffect } from 'react';
 import { TechMapStatus, getEntityTransitions } from '@/lib/consulting/ui-policy';
-import { UserRole } from '@/lib/config/role-config';
 import { DomainUiContext } from '@/lib/consulting/navigation-policy';
 import clsx from 'clsx';
+import { AuthorityContextType } from '@/core/governance/AuthorityContext';
 
 interface Operation {
     id: string;
@@ -21,12 +21,12 @@ interface TechMapWorkbenchProps {
         isDegrading?: boolean;
         trustScore?: number;
     };
-    userRole: UserRole;
+    authority: AuthorityContextType;
     context: DomainUiContext;
 }
 
-export function TechMapWorkbench({ techMap, userRole, context }: TechMapWorkbenchProps) {
-    const perm = getEntityTransitions('tech-map', techMap.status, userRole, context);
+export function TechMapWorkbench({ techMap, authority, context }: TechMapWorkbenchProps) {
+    const perm = getEntityTransitions('tech-map', techMap.status, authority, context);
     const isFrozen = techMap.status === 'FROZEN';
 
     // Absolute Lock: Intercept keyboard and prevent anything

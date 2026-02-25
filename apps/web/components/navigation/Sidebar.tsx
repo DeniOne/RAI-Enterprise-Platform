@@ -6,11 +6,12 @@ import { UserRole } from '@/lib/config/role-config'; // Assuming this is where U
 import { getVisibleNavigation, NavItem } from '@/lib/consulting/navigation-policy';
 import clsx from 'clsx';
 import { useState, useEffect } from 'react';
-import { ChevronDown, ChevronRight, Circle, LayoutDashboard, Users, ClipboardList, Map, Calculator, AlertTriangle, CheckCircle2, TrendingUp, ShieldCheck, Database, Settings2, BookOpen, Package, Landmark, Sprout, BarChart3, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Circle, LayoutDashboard, Users, ClipboardList, Map, Calculator, AlertTriangle, CheckCircle2, TrendingUp, ShieldCheck, Database, Settings2, BookOpen, Package, Landmark, Sprout, BarChart3, Loader2, BriefcaseBusiness } from 'lucide-react';
 
 // Domain Layer Mapping (Immutable definition for View Layer)
 const DOMAIN_LAYERS: Record<string, number> = {
     'crop': 1,      // CORE
+    'commerce': 1,
     'strategy': 2,  // STRATEGIC
     'economy': 2,
     'finance': 2,
@@ -28,6 +29,7 @@ const ICON_MAP: Record<string, any> = {
     'execution': TrendingUp,
     'deviations': AlertTriangle,
     'results': CheckCircle2,
+    'commerce': BriefcaseBusiness,
     'strategy': ShieldCheck,
     'economy': Calculator,
     'finance': Landmark,
@@ -201,6 +203,7 @@ export function Sidebar({ role }: SidebarProps) {
                     <div className="flex-1 flex items-center">
                         <Link
                             href={item.path}
+                            data-testid={`nav-link-${item.id}`}
                             onClick={() => {
                                 if (item.path !== pathname) {
                                     setNavigatingTo(item.path);
@@ -251,27 +254,19 @@ export function Sidebar({ role }: SidebarProps) {
             </div >
         );
     };
-
-    // Helper for font sizes to avoid subtle layout shifts or inconsistencies
-    const titleSize = (depth: number) => {
-        if (depth === 0) return "text-xs";
-        return "text-sm";
-    }
-
     return (
-        <aside className="w-[350px] h-screen bg-white border-r border-black/10 flex flex-col sticky left-0 top-0 overflow-y-auto font-geist">
+        <aside className="w-[350px] h-screen bg-white border-r border-black/10 flex flex-col sticky left-0 top-0 font-geist">
             {/* Header */}
-            <div className="p-6 pb-4">
-                <div className="text-gray-900 font-medium tracking-tight text-lg leading-none">
-                    RAI ENTERPRISE
-                </div>
-                <div className="text-[10px] text-gray-400 uppercase tracking-[0.2em] mt-2 font-medium">
-                    {role} SPACE
-                </div>
+            <div className="p-6 pb-4 sticky top-0 z-10 bg-white border-b border-black/5">
+                <img
+                    src="/branding/rai-agroplatforma-transparent.png"
+                    alt="RAI Agroplatform"
+                    className="h-16 w-auto object-contain"
+                />
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 px-4 pb-6 space-y-1">
+            <nav className="flex-1 px-4 pb-6 space-y-1 overflow-y-auto">
                 {navItems.map((item, index, arr) => renderNavItem(item, 0, index, arr))}
             </nav>
 
@@ -280,9 +275,12 @@ export function Sidebar({ role }: SidebarProps) {
                 {navigatingTo ? (
                     <div className="mb-2 flex items-center gap-2 text-[10px] text-slate-600 font-mono uppercase tracking-wider">
                         <Loader2 size={12} className="animate-spin" />
-                        Переход...
+                        Loading...
                     </div>
                 ) : null}
+                <div className="mb-2 text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium">
+                    {role} SPACE
+                </div>
                 <div className="flex items-center gap-2 text-[10px] text-gray-400 font-mono uppercase tracking-wider">
                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                     System Canonical
@@ -291,3 +289,4 @@ export function Sidebar({ role }: SidebarProps) {
         </aside>
     );
 }
+

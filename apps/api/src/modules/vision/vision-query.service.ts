@@ -12,10 +12,16 @@ export class VisionQueryService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getObservation(id: string, companyId: string) {
-    return this.prisma.visionObservation.findFirst({ where: { id, companyId } });
+    return this.prisma.visionObservation.findFirst({
+      where: { id, companyId },
+    });
   }
 
-  async getObservationsByAsset(assetId: string, companyId: string, timeRange?: VisionTimeRange) {
+  async getObservationsByAsset(
+    assetId: string,
+    companyId: string,
+    timeRange?: VisionTimeRange,
+  ) {
     const timestampFilter =
       timeRange?.from || timeRange?.to
         ? {

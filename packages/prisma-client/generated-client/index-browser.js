@@ -1618,6 +1618,208 @@ exports.Prisma.GovernanceSignatureScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.JurisdictionScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  code: 'code',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.RegulatoryProfileScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  code: 'code',
+  name: 'name',
+  jurisdictionId: 'jurisdictionId',
+  rulesJson: 'rulesJson',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PartyScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  legalName: 'legalName',
+  jurisdictionId: 'jurisdictionId',
+  regulatoryProfileId: 'regulatoryProfileId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PartyRelationScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  sourcePartyId: 'sourcePartyId',
+  targetPartyId: 'targetPartyId',
+  relationType: 'relationType',
+  validFrom: 'validFrom',
+  validTo: 'validTo',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CommerceContractScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  number: 'number',
+  type: 'type',
+  status: 'status',
+  validFrom: 'validFrom',
+  validTo: 'validTo',
+  jurisdictionId: 'jurisdictionId',
+  regulatoryProfileId: 'regulatoryProfileId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CommerceContractPartyRoleScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  contractId: 'contractId',
+  partyId: 'partyId',
+  role: 'role',
+  isPrimary: 'isPrimary',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CommerceObligationScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  contractId: 'contractId',
+  type: 'type',
+  status: 'status',
+  dueDate: 'dueDate',
+  termsJson: 'termsJson',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.BudgetReservationScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  contractId: 'contractId',
+  obligationId: 'obligationId',
+  amount: 'amount',
+  currency: 'currency',
+  periodId: 'periodId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PaymentScheduleScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  contractId: 'contractId',
+  obligationId: 'obligationId',
+  invoiceId: 'invoiceId',
+  dueDate: 'dueDate',
+  percentage: 'percentage',
+  amount: 'amount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CommerceFulfillmentEventScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  obligationId: 'obligationId',
+  eventDomain: 'eventDomain',
+  eventType: 'eventType',
+  eventDate: 'eventDate',
+  assetId: 'assetId',
+  payloadJson: 'payloadJson',
+  proofDocumentId: 'proofDocumentId',
+  regulatoryProfileId: 'regulatoryProfileId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.StockMoveScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  fulfillmentEventId: 'fulfillmentEventId',
+  itemId: 'itemId',
+  uom: 'uom',
+  qty: 'qty',
+  fromLocationId: 'fromLocationId',
+  toLocationId: 'toLocationId',
+  batchId: 'batchId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.RevenueRecognitionEventScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  fulfillmentEventId: 'fulfillmentEventId',
+  recognitionPolicyId: 'recognitionPolicyId',
+  regulatoryProfileId: 'regulatoryProfileId',
+  recognizedAt: 'recognizedAt',
+  payloadJson: 'payloadJson',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.InvoiceScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  contractId: 'contractId',
+  obligationId: 'obligationId',
+  fulfillmentEventId: 'fulfillmentEventId',
+  direction: 'direction',
+  status: 'status',
+  subtotal: 'subtotal',
+  taxTotal: 'taxTotal',
+  grandTotal: 'grandTotal',
+  taxSnapshotJson: 'taxSnapshotJson',
+  ledgerTxId: 'ledgerTxId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PaymentScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  payerPartyId: 'payerPartyId',
+  payeePartyId: 'payeePartyId',
+  amount: 'amount',
+  currency: 'currency',
+  paidAt: 'paidAt',
+  paymentMethod: 'paymentMethod',
+  status: 'status',
+  ledgerTxId: 'ledgerTxId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PaymentAllocationScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  paymentId: 'paymentId',
+  invoiceId: 'invoiceId',
+  allocatedAmount: 'allocatedAmount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.RegulatoryArtifactScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  sourceType: 'sourceType',
+  invoiceId: 'invoiceId',
+  fulfillmentEventId: 'fulfillmentEventId',
+  artifactType: 'artifactType',
+  payloadRef: 'payloadRef',
+  status: 'status',
+  externalRefId: 'externalRefId',
+  issuedAt: 'issuedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1648,6 +1850,7 @@ exports.Prisma.JsonNullValueFilter = {
   AnyNull: Prisma.AnyNull
 };
 exports.AccountType = exports.$Enums.AccountType = {
+  NOT_SET: 'NOT_SET',
   CLIENT: 'CLIENT',
   PARTNER: 'PARTNER',
   REGULATOR: 'REGULATOR',
@@ -2283,6 +2486,91 @@ exports.QuorumStatus = exports.$Enums.QuorumStatus = {
   EXPIRED: 'EXPIRED'
 };
 
+exports.PartyRelationType = exports.$Enums.PartyRelationType = {
+  OWNERSHIP: 'OWNERSHIP',
+  COMMERCIAL: 'COMMERCIAL',
+  AFFILIATION: 'AFFILIATION'
+};
+
+exports.CommerceContractStatus = exports.$Enums.CommerceContractStatus = {
+  DRAFT: 'DRAFT',
+  SIGNED: 'SIGNED',
+  TERMINATED: 'TERMINATED'
+};
+
+exports.CommerceContractPartyRoleType = exports.$Enums.CommerceContractPartyRoleType = {
+  SELLER: 'SELLER',
+  BUYER: 'BUYER',
+  LESSOR: 'LESSOR',
+  LESSEE: 'LESSEE',
+  AGENT: 'AGENT',
+  PRINCIPAL: 'PRINCIPAL',
+  PAYER: 'PAYER',
+  BENEFICIARY: 'BENEFICIARY'
+};
+
+exports.CommerceObligationType = exports.$Enums.CommerceObligationType = {
+  DELIVER: 'DELIVER',
+  PAY: 'PAY',
+  PERFORM: 'PERFORM'
+};
+
+exports.CommerceObligationStatus = exports.$Enums.CommerceObligationStatus = {
+  OPEN: 'OPEN',
+  PARTIAL: 'PARTIAL',
+  FULFILLED: 'FULFILLED'
+};
+
+exports.CommerceEventDomain = exports.$Enums.CommerceEventDomain = {
+  COMMERCIAL: 'COMMERCIAL',
+  PRODUCTION: 'PRODUCTION',
+  LOGISTICS: 'LOGISTICS',
+  FINANCE_ADJ: 'FINANCE_ADJ'
+};
+
+exports.CommerceEventType = exports.$Enums.CommerceEventType = {
+  GOODS_SHIPMENT: 'GOODS_SHIPMENT',
+  SERVICE_ACT: 'SERVICE_ACT',
+  LEASE_USAGE: 'LEASE_USAGE',
+  MATERIAL_CONSUMPTION: 'MATERIAL_CONSUMPTION',
+  HARVEST: 'HARVEST',
+  INTERNAL_TRANSFER: 'INTERNAL_TRANSFER',
+  WRITE_OFF: 'WRITE_OFF'
+};
+
+exports.InvoiceDirection = exports.$Enums.InvoiceDirection = {
+  AR: 'AR',
+  AP: 'AP'
+};
+
+exports.InvoiceStatus = exports.$Enums.InvoiceStatus = {
+  DRAFT: 'DRAFT',
+  ISSUED: 'ISSUED',
+  POSTED: 'POSTED',
+  PARTIALLY_PAID: 'PARTIALLY_PAID',
+  PAID: 'PAID',
+  CLOSED: 'CLOSED',
+  VOID: 'VOID'
+};
+
+exports.PaymentStatus = exports.$Enums.PaymentStatus = {
+  DRAFT: 'DRAFT',
+  CONFIRMED: 'CONFIRMED',
+  REVERSED: 'REVERSED'
+};
+
+exports.ArtifactSourceType = exports.$Enums.ArtifactSourceType = {
+  INVOICE: 'INVOICE',
+  FULFILLMENT_EVENT: 'FULFILLMENT_EVENT'
+};
+
+exports.RegulatoryArtifactStatus = exports.$Enums.RegulatoryArtifactStatus = {
+  PENDING: 'PENDING',
+  ISSUED: 'ISSUED',
+  REJECTED: 'REJECTED',
+  ACCEPTED: 'ACCEPTED'
+};
+
 exports.Prisma.ModelName = {
   Company: 'Company',
   Account: 'Account',
@@ -2400,7 +2688,23 @@ exports.Prisma.ModelName = {
   LevelFCertAudit: 'LevelFCertAudit',
   GovernanceCommittee: 'GovernanceCommittee',
   QuorumProcess: 'QuorumProcess',
-  GovernanceSignature: 'GovernanceSignature'
+  GovernanceSignature: 'GovernanceSignature',
+  Jurisdiction: 'Jurisdiction',
+  RegulatoryProfile: 'RegulatoryProfile',
+  Party: 'Party',
+  PartyRelation: 'PartyRelation',
+  CommerceContract: 'CommerceContract',
+  CommerceContractPartyRole: 'CommerceContractPartyRole',
+  CommerceObligation: 'CommerceObligation',
+  BudgetReservation: 'BudgetReservation',
+  PaymentSchedule: 'PaymentSchedule',
+  CommerceFulfillmentEvent: 'CommerceFulfillmentEvent',
+  StockMove: 'StockMove',
+  RevenueRecognitionEvent: 'RevenueRecognitionEvent',
+  Invoice: 'Invoice',
+  Payment: 'Payment',
+  PaymentAllocation: 'PaymentAllocation',
+  RegulatoryArtifact: 'RegulatoryArtifact'
 };
 
 /**

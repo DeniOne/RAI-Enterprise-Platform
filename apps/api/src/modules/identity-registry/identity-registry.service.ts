@@ -13,7 +13,7 @@ import {
 
 @Injectable()
 export class IdentityRegistryService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   // --- Role Definitions (Organizational Positions) ---
 

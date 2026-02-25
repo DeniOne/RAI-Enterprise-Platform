@@ -1,6 +1,6 @@
-import { SetMetadata } from '@nestjs/common';
+import { SetMetadata } from "@nestjs/common";
 
-export const REQUIRE_MTLS_KEY = 'require_mtls';
+export const REQUIRE_MTLS_KEY = "require_mtls";
 
 /**
  * Marks an endpoint or controller as requiring an established mTLS connection.

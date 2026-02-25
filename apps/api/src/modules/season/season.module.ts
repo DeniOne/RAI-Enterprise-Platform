@@ -16,4 +16,4 @@ import { RiskModule } from "../risk/risk.module";
   ],
   exports: [SeasonService, SeasonBusinessRulesService, SeasonSnapshotService],
 })
-export class SeasonModule { }
+export class SeasonModule {}

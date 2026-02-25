@@ -48,9 +48,16 @@ class InvariantMetricsRegistry {
   }
 
   breakdown() {
-    const byTenant = Object.fromEntries([...this.tenantViolationByTenant.entries()]);
-    const byModule = Object.fromEntries([...this.tenantViolationByModule.entries()]);
-    return { tenantViolationsByTenant: byTenant, tenantViolationsByModule: byModule };
+    const byTenant = Object.fromEntries([
+      ...this.tenantViolationByTenant.entries(),
+    ]);
+    const byModule = Object.fromEntries([
+      ...this.tenantViolationByModule.entries(),
+    ]);
+    return {
+      tenantViolationsByTenant: byTenant,
+      tenantViolationsByModule: byModule,
+    };
   }
 
   shouldTriggerFinancialPanic(threshold: number): boolean {

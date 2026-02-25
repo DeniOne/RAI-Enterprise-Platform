@@ -1,14 +1,75 @@
 ﻿import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
-import { NoopTaxEngine, TaxContext, TaxEngine } from "../contracts/tax-engine";
+import { RuleBasedTaxEngine, TaxContext, TaxEngine } from "../contracts/tax-engine";
 
 @Injectable()
 export class BillingService {
-  private readonly taxEngine: TaxEngine = new NoopTaxEngine();
+  private readonly taxEngine: TaxEngine = new RuleBasedTaxEngine();
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async createInvoiceFromFulfillment(fulfillmentEventId: string, taxContext: TaxContext, subtotal: number) {
+  async listInvoices() {
+    const invoices = await this.prisma.invoice.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        contract: {
+          select: {
+            id: true,
+            number: true,
+          },
+        },
+      },
+    });
+
+    return invoices.map((invoice) => ({
+      id: invoice.id,
+      contract: invoice.contract,
+      direction: invoice.direction,
+      status: invoice.status,
+      subtotal: Number(invoice.subtotal),
+      taxTotal: Number(invoice.taxTotal),
+      grandTotal: Number(invoice.grandTotal),
+      createdAt: invoice.createdAt,
+    }));
+  }
+
+  async listPayments() {
+    const payments = await this.prisma.payment.findMany({
+      orderBy: { paidAt: "desc" },
+      include: {
+        payerParty: {
+          select: {
+            id: true,
+            legalName: true,
+          },
+        },
+        payeeParty: {
+          select: {
+            id: true,
+            legalName: true,
+          },
+        },
+      },
+    });
+
+    return payments.map((payment) => ({
+      id: payment.id,
+      amount: Number(payment.amount),
+      currency: payment.currency,
+      paidAt: payment.paidAt,
+      paymentMethod: payment.paymentMethod,
+      status: payment.status,
+      payerParty: payment.payerParty,
+      payeeParty: payment.payeeParty,
+      createdAt: payment.createdAt,
+    }));
+  }
+
+  async createInvoiceFromFulfillment(
+    fulfillmentEventId: string,
+    taxContext: TaxContext,
+    subtotal: number,
+  ) {
     const event = await this.prisma.commerceFulfillmentEvent.findUnique({
       where: { id: fulfillmentEventId },
       include: { obligation: true },

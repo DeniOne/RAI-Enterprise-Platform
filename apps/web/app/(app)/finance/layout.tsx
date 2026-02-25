@@ -14,7 +14,7 @@ export default async function FinanceLayout({
     }
 
     return (
-        <AuthenticatedLayout role={user.role}>
+        <AuthenticatedLayout>
             {children}
         </AuthenticatedLayout>
     );

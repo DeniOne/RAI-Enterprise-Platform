@@ -1,16 +1,26 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import SystemStatusBar from '@/components/consulting/SystemStatusBar';
 import { PlansList } from '@/components/consulting/PlansList';
 import { DomainUiContext } from '@/lib/consulting/navigation-policy';
-import { UserRole } from '@/lib/config/role-config';
+import { useAuthority } from '@/core/governance/AuthorityContext';
 import { api } from '@/lib/api';
 
 export default function PlansPage() {
+    const searchParams = useSearchParams();
     const [plans, setPlans] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [userRole] = useState<UserRole>('ADMIN'); // In real app, from Auth Context
+    const [isCreating, setIsCreating] = useState(false);
+    const [accounts, setAccounts] = useState<Array<{ id: string; name?: string | null }>>([]);
+    const [accountsLoading, setAccountsLoading] = useState(false);
+    const [createForm, setCreateForm] = useState({
+        accountId: '',
+        targetMetric: 'YIELD_QPH',
+        period: '',
+    });
+    const authority = useAuthority();
 
     const fetchPlans = async () => {
         setIsLoading(true);
@@ -26,6 +36,30 @@ export default function PlansPage() {
 
     useEffect(() => {
         fetchPlans();
+    }, [searchParams]);
+
+    useEffect(() => {
+        const fetchAccounts = async () => {
+            setAccountsLoading(true);
+            try {
+                const meRes = await api.users.me();
+                const companyId = meRes?.data?.companyId;
+                if (!companyId) {
+                    setAccounts([]);
+                    return;
+                }
+
+                const accountsRes = await api.crm.accounts(companyId);
+                const data = Array.isArray(accountsRes.data) ? accountsRes.data : [];
+                setAccounts(data);
+            } catch (error) {
+                console.error('Failed to fetch accounts:', error);
+                setAccounts([]);
+            } finally {
+                setAccountsLoading(false);
+            }
+        };
+        fetchAccounts();
     }, []);
 
     const domainContext = useMemo<DomainUiContext>(() => {
@@ -42,14 +76,60 @@ export default function PlansPage() {
         };
     }, [plans]);
 
+    const knownAccountIds = useMemo(
+        () =>
+            Array.from(
+                new Set(
+                    plans
+                        .map((p) => p.accountId)
+                        .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0),
+                ),
+            ),
+        [plans],
+    );
+
+    const accountOptions = useMemo(() => {
+        const optionsFromApi = accounts
+            .filter((a) => typeof a.id === 'string' && a.id.length > 0)
+            .map((a) => ({ id: a.id, name: a.name || a.id }));
+
+        const known = knownAccountIds
+            .filter((id) => !optionsFromApi.some((a) => a.id === id))
+            .map((id) => ({ id, name: id }));
+
+        return [...optionsFromApi, ...known];
+    }, [accounts, knownAccountIds]);
+
     const handleTransition = async (id: string, target: string) => {
         try {
-            // Need to update API transition method if it exists or use generic
-            await api.apiClient.post(`/consulting/plans/${id}/status`, { status: target });
+            await api.consulting.transitionPlan(id, target);
             await fetchPlans();
         } catch (error) {
             console.error(`Failed to transition plan ${id}:`, error);
             alert('Ошибка при смене статуса');
+        }
+    };
+
+    const handleCreatePlan = async () => {
+        if (!createForm.accountId.trim()) {
+            alert('Укажите accountId хозяйства');
+            return;
+        }
+
+        setIsCreating(true);
+        try {
+            await api.consulting.createPlan({
+                accountId: createForm.accountId.trim(),
+                targetMetric: createForm.targetMetric.trim() || 'YIELD_QPH',
+                period: createForm.period.trim() || undefined,
+            });
+            setCreateForm((prev) => ({ ...prev, period: '' }));
+            await fetchPlans();
+        } catch (error) {
+            console.error('Failed to create plan:', error);
+            alert('Ошибка при создании плана');
+        } finally {
+            setIsCreating(false);
         }
     };
 
@@ -75,9 +155,41 @@ export default function PlansPage() {
                         <h2 className="text-xl font-medium text-gray-900">Реестр планов</h2>
                         <p className="text-xs text-gray-400 mt-1">Визуализация FSM и доступных переходов</p>
                     </div>
-                    <button className="px-6 py-3 bg-black text-white rounded-2xl text-sm font-medium hover:bg-zinc-800 transition-all active:scale-95 shadow-xl shadow-black/10">
-                        Создать новый план
-                    </button>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <select
+                            value={createForm.accountId}
+                            onChange={(e) => setCreateForm((prev) => ({ ...prev, accountId: e.target.value }))}
+                            className="px-3 py-2 border border-black/10 rounded-xl text-sm w-64 bg-white"
+                        >
+                            <option value="">
+                                {accountsLoading ? 'Загрузка хозяйств...' : 'Выберите хозяйство'}
+                            </option>
+                            {accountOptions.map((a) => (
+                                <option key={a.id} value={a.id}>
+                                    {a.name}
+                                </option>
+                            ))}
+                        </select>
+                        <input
+                            value={createForm.targetMetric}
+                            onChange={(e) => setCreateForm((prev) => ({ ...prev, targetMetric: e.target.value }))}
+                            placeholder="Метрика"
+                            className="px-3 py-2 border border-black/10 rounded-xl text-sm w-36"
+                        />
+                        <input
+                            value={createForm.period}
+                            onChange={(e) => setCreateForm((prev) => ({ ...prev, period: e.target.value }))}
+                            placeholder="Период (напр. SEASON_2026)"
+                            className="px-3 py-2 border border-black/10 rounded-xl text-sm w-52"
+                        />
+                        <button
+                            onClick={handleCreatePlan}
+                            disabled={isCreating}
+                            className="px-6 py-3 bg-black text-white rounded-2xl text-sm font-medium hover:bg-zinc-800 transition-all active:scale-95 shadow-xl shadow-black/10 disabled:opacity-50"
+                        >
+                            {isCreating ? 'Создание...' : 'Создать план'}
+                        </button>
+                    </div>
                 </div>
 
                 {isLoading ? (
@@ -89,7 +201,7 @@ export default function PlansPage() {
                 ) : (
                     <PlansList
                         plans={plans}
-                        userRole={userRole}
+                        authority={authority}
                         context={domainContext}
                         onTransition={handleTransition}
                     />
@@ -107,7 +219,7 @@ export default function PlansPage() {
                 <div className="p-6 bg-stone-50/50 rounded-2xl border border-black/5">
                     <h4 className="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-3 font-semibold">Ролевая модель</h4>
                     <p className="text-xs text-gray-500 leading-relaxed font-normal">
-                        Ваша роль — <strong>{userRole}</strong>. Утверждение планов в фазу Исполнения доступно только CEO/FOUNDER.
+                        Ваша роль — <strong>authority</strong>. Утверждение планов в фазу Исполнения доступно только CEO/FOUNDER.
                     </p>
                 </div>
                 <div className="p-6 bg-stone-50/50 rounded-2xl border border-black/5">
@@ -120,3 +232,5 @@ export default function PlansPage() {
         </div>
     );
 }
+
+

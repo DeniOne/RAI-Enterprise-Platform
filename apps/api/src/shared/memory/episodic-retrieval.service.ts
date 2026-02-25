@@ -36,7 +36,9 @@ export class EpisodicRetrievalService {
     private readonly memoryManager: Pick<MemoryManager, "recall">,
   ) {}
 
-  async retrieve(request: EpisodicRetrievalRequest): Promise<EpisodicRetrievalResponse> {
+  async retrieve(
+    request: EpisodicRetrievalRequest,
+  ): Promise<EpisodicRetrievalResponse> {
     const recalled = await this.memoryManager.recall(request.embedding, {
       companyId: request.companyId,
       memoryType: request.memoryType ?? "CONTEXT",
@@ -81,7 +83,10 @@ export class EpisodicRetrievalService {
     return resolveEngramOutcome(metadata);
   }
 
-  private calculateConfidence(similarity: number, outcome: EngramOutcome): number {
+  private calculateConfidence(
+    similarity: number,
+    outcome: EngramOutcome,
+  ): number {
     const base = Math.max(0, Math.min(1, Number(similarity ?? 0)));
     if (outcome === "UNKNOWN") {
       return Number((base * 0.8).toFixed(4));

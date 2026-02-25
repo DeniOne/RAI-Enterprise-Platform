@@ -49,7 +49,9 @@ export class SatelliteIngestionService {
         memoryType: "CONTEXT",
       });
     } catch (error: any) {
-      this.logger.warn(`[SATELLITE] Shadow advisory skipped (${traceId}): ${error?.message ?? "unknown error"}`);
+      this.logger.warn(
+        `[SATELLITE] Shadow advisory skipped (${traceId}): ${error?.message ?? "unknown error"}`,
+      );
     }
 
     return { status: "accepted", traceId };

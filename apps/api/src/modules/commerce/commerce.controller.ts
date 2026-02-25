@@ -21,6 +21,11 @@ export class CommerceController {
     return this.contractService.createContract(dto);
   }
 
+  @Get("contracts")
+  listContracts() {
+    return this.contractService.listContracts();
+  }
+
   @Post("obligations")
   createObligation(@Body() dto: CreateCommerceObligationDto) {
     return this.contractService.createObligation(
@@ -33,6 +38,11 @@ export class CommerceController {
   @Post("fulfillment-events")
   createFulfillment(@Body() dto: CreateFulfillmentEventDto) {
     return this.fulfillmentService.createEvent(dto);
+  }
+
+  @Get("fulfillment")
+  listFulfillment() {
+    return this.fulfillmentService.listEvents();
   }
 
   @Post("invoices/from-fulfillment")
@@ -50,6 +60,11 @@ export class CommerceController {
     );
   }
 
+  @Get("invoices")
+  listInvoices() {
+    return this.billingService.listInvoices();
+  }
+
   @Post("invoices/:id/post")
   postInvoice(@Param("id") invoiceId: string) {
     return this.billingService.postInvoice(invoiceId);
@@ -65,6 +80,11 @@ export class CommerceController {
       paymentMethod: dto.paymentMethod,
       paidAt: dto.paidAt ? new Date(dto.paidAt) : undefined,
     });
+  }
+
+  @Get("payments")
+  listPayments() {
+    return this.billingService.listPayments();
   }
 
   @Post("payments/:id/confirm")

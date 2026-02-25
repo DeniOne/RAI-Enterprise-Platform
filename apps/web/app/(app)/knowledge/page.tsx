@@ -1,5 +1,5 @@
 import React from 'react';
-import KnowledgeFabricContent from '../../components/knowledge/KnowledgeFabricContent.tsx';
+import KnowledgeFabricContent from '../../../components/knowledge/KnowledgeFabricContent';
 
 async function getGraph() {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/knowledge/graph`, {

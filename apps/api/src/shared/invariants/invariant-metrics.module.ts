@@ -5,4 +5,3 @@ import { InvariantMetricsController } from "./invariant-metrics.controller";
   controllers: [InvariantMetricsController],
 })
 export class InvariantMetricsModule {}
-

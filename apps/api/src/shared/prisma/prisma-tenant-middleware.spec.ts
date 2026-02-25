@@ -10,11 +10,17 @@ describe("PrismaService tenant isolation ($extends)", () => {
     jest.restoreAllMocks();
   });
 
-  async function bootstrap(mode: "shadow" | "enforce", companyId?: string, isSystem: boolean = false) {
+  async function bootstrap(
+    mode: "shadow" | "enforce",
+    companyId?: string,
+    isSystem: boolean = false,
+  ) {
     process.env.TENANT_MIDDLEWARE_MODE = mode;
 
     const mockTenantContext = {
-      getStore: jest.fn().mockReturnValue(companyId ? { companyId, isSystem } : undefined),
+      getStore: jest
+        .fn()
+        .mockReturnValue(companyId ? { companyId, isSystem } : undefined),
       run: jest.fn(),
       getCompanyId: jest.fn().mockReturnValue(companyId),
       isSystemOperation: jest.fn().mockReturnValue(isSystem),
@@ -35,7 +41,9 @@ describe("PrismaService tenant isolation ($extends)", () => {
 
     // We mock the internal query execution if possible, but simpler is to check what was passed to the underlying PrismaClient
     // Since tenantClient is an extension, we can spy on the base service methods
-    const spy = jest.spyOn(PrismaService.prototype, '$runCommandRaw' as any).mockResolvedValue([]); // Dummy spy
+    const spy = jest
+      .spyOn(PrismaService.prototype, "$runCommandRaw" as any)
+      .mockResolvedValue([]); // Dummy spy
 
     // Actually, testing Prisma extensions is best done by checking if they throw or by mocking the query function
     // For this internal test, we want to ensure the companyId is injected.
@@ -44,19 +52,21 @@ describe("PrismaService tenant isolation ($extends)", () => {
   it("throws error if companyId is missing in enforce mode", async () => {
     const { client } = await bootstrap("enforce", undefined);
 
-    await expect(client.task.findMany({ where: { status: 'PENDING' } as any }))
-      .rejects.toThrow(/TENANT_CONTEXT_MISSING/i);
+    await expect(
+      client.task.findMany({ where: { status: "PENDING" } as any }),
+    ).rejects.toThrow(/TENANT_CONTEXT_MISSING/i);
   });
 
   it("allows system bypass", async () => {
-    const { client } = await bootstrap("enforce", 'SYSTEM', true);
+    const { client } = await bootstrap("enforce", "SYSTEM", true);
 
     // This shouldn't throw even without a regular companyId because isSystem: true
     // We mock the base call to avoid DB connection
     (client as any).$queryRaw = jest.fn().mockResolvedValue([]);
 
     // If it doesn't throw TENANT_CONTEXT_MISSING, it works
-    await expect(client.task.findMany({ where: { status: 'PENDING' } as any }))
-      .resolves.toBeDefined();
+    await expect(
+      client.task.findMany({ where: { status: "PENDING" } as any }),
+    ).resolves.toBeDefined();
   });
 });

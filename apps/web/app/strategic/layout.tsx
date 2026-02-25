@@ -15,7 +15,7 @@ export default async function StrategicLayout({
     }
 
     return (
-        <AuthenticatedLayout role={user.role}>
+        <AuthenticatedLayout>
             <div className="space-y-8">
                 <header className="flex justify-between items-end border-b border-black/5 pb-6">
                     <div>

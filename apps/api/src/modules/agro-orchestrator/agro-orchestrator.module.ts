@@ -6,9 +6,9 @@ import { AuditModule } from "../../shared/audit/audit.module";
 import { RiskModule } from "../risk/risk.module";
 
 @Module({
-    imports: [PrismaModule, AuditModule, RiskModule],
-    controllers: [AgroOrchestratorController],
-    providers: [AgroOrchestratorService],
-    exports: [AgroOrchestratorService],
+  imports: [PrismaModule, AuditModule, RiskModule],
+  controllers: [AgroOrchestratorController],
+  providers: [AgroOrchestratorService],
+  exports: [AgroOrchestratorService],
 })
-export class AgroOrchestratorModule { }
+export class AgroOrchestratorModule {}

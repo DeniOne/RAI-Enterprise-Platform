@@ -1,5 +1,5 @@
 // Knowledge Graph (Sprint 2)
-﻿import { Test, TestingModule } from "@nestjs/testing";
+import { Test, TestingModule } from "@nestjs/testing";
 import { KnowledgeGraphEventHandlerService } from "./knowledge-graph-event-handler.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 
@@ -29,8 +29,23 @@ describe("KnowledgeGraphEventHandlerService", () => {
       traceId: "t1",
       companyId: "c1",
       occurredAt: new Date().toISOString(),
-      nodes: [{ id: "n1", type: "CONCEPT" as any, label: "A", source: "MANUAL" as any }],
-      edges: [{ fromNodeId: "n1", toNodeId: "n2", relation: "DEPENDS_ON" as any, confidence: 0.5, source: "MANUAL" as any }],
+      nodes: [
+        {
+          id: "n1",
+          type: "CONCEPT" as any,
+          label: "A",
+          source: "MANUAL" as any,
+        },
+      ],
+      edges: [
+        {
+          fromNodeId: "n1",
+          toNodeId: "n2",
+          relation: "DEPENDS_ON" as any,
+          confidence: 0.5,
+          source: "MANUAL" as any,
+        },
+      ],
     });
 
     expect(prismaMock.knowledgeNode.createMany).toHaveBeenCalled();

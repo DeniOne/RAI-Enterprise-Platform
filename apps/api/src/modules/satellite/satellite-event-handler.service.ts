@@ -10,7 +10,9 @@ export class SatelliteEventHandlerService {
   constructor(private readonly prisma: PrismaService) {}
 
   async handle(event: SatelliteObservationRecordedEvent): Promise<void> {
-    this.logger.log(`[SATELLITE] Applying event ${event.type} (${event.traceId})`);
+    this.logger.log(
+      `[SATELLITE] Applying event ${event.type} (${event.traceId})`,
+    );
 
     await this.prisma.satelliteObservation.create({
       data: {

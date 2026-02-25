@@ -25,10 +25,22 @@ describe("ShadowAdvisoryMetricsService", () => {
 
   it("должен считать baseline-метрики shadow advisory", async () => {
     prismaMock.auditLog.findMany.mockResolvedValue([
-      { metadata: { companyId: "c1", recommendation: "ALLOW", confidence: 0.8 } },
-      { metadata: { companyId: "c1", recommendation: "REVIEW", confidence: 0.5 } },
-      { metadata: { companyId: "c1", recommendation: "BLOCK", confidence: 0.9 } },
-      { metadata: { companyId: "c1", recommendation: "ALLOW", confidence: 0.7 } },
+      {
+        metadata: { companyId: "c1", recommendation: "ALLOW", confidence: 0.8 },
+      },
+      {
+        metadata: {
+          companyId: "c1",
+          recommendation: "REVIEW",
+          confidence: 0.5,
+        },
+      },
+      {
+        metadata: { companyId: "c1", recommendation: "BLOCK", confidence: 0.9 },
+      },
+      {
+        metadata: { companyId: "c1", recommendation: "ALLOW", confidence: 0.7 },
+      },
     ]);
 
     const result = await service.buildBaseline({ companyId: "c1" });

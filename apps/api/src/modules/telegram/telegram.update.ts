@@ -21,13 +21,14 @@ export class TelegramUpdate {
     private readonly prisma: PrismaService,
     private readonly progressService: ProgressService,
     private readonly telegramAuthService: TelegramAuthService,
-  ) { }
+  ) {}
 
   private async getUser(ctx: Context) {
     if (!ctx.from) return null;
     const telegramId = ctx.from.id.toString();
     // console.log(`🔍 Telegram Auth Attempt: ID=${telegramId}, Username=${ctx.from.username}`);
-    return this.prisma.user.findFirst({ // tenant-lint:ignore telegramId is a global identity binding for bot session
+    return this.prisma.user.findFirst({
+      // tenant-lint:ignore telegramId is a global identity binding for bot session
       where: { telegramId },
     });
   }
@@ -159,9 +160,12 @@ export class TelegramUpdate {
       });
 
       await ctx.answerCbQuery("Пользователь одобрен! ✅");
-      await ctx.editMessageText(`✅ Юзер с ID <code>${tgId}</code> теперь в системе!`, {
-        parse_mode: "HTML",
-      });
+      await ctx.editMessageText(
+        `✅ Юзер с ID <code>${tgId}</code> теперь в системе!`,
+        {
+          parse_mode: "HTML",
+        },
+      );
 
       // 4. Notify User
       await ctx.telegram.sendMessage(
@@ -353,8 +357,8 @@ export class TelegramUpdate {
           data: {
             status: AssetStatus.ACTIVE,
             confirmedByUserId: user.id,
-            confirmedAt: new Date()
-          }
+            confirmedAt: new Date(),
+          },
         });
         if (updated.count !== 1) {
           throw new Error("Asset not found in tenant scope");
@@ -365,15 +369,18 @@ export class TelegramUpdate {
           data: {
             status: AssetStatus.ACTIVE,
             confirmedByUserId: user.id,
-            confirmedAt: new Date()
-          }
+            confirmedAt: new Date(),
+          },
         });
         if (updated.count !== 1) {
           throw new Error("Asset not found in tenant scope");
         }
       }
       await ctx.answerCbQuery("Актив подтвержден! ✅");
-      await ctx.editMessageText(`✅ <b>Актив добавлен в реестр.</b>\nПодтвердил: ${user?.name || user?.email || "System"}`, { parse_mode: "HTML" });
+      await ctx.editMessageText(
+        `✅ <b>Актив добавлен в реестр.</b>\nПодтвердил: ${user?.name || user?.email || "System"}`,
+        { parse_mode: "HTML" },
+      );
     } catch (e) {
       console.error("❌ Error confirming asset:", e);
       await ctx.answerCbQuery("Ошибка подтверждения ❌");
@@ -418,7 +425,10 @@ export class TelegramUpdate {
         }
       }
       await ctx.answerCbQuery("РђРєС‚РёРІ РѕС‚РєР»РѕРЅРµРЅ вќЊ");
-      await ctx.editMessageText("вќЊ <b>РџСЂРµРґР»РѕР¶РµРЅРёРµ РѕС‚РєР»РѕРЅРµРЅРѕ Рё Р°СЂС…РёРІРёСЂРѕРІР°РЅРѕ.</b>", { parse_mode: "HTML" });
+      await ctx.editMessageText(
+        "вќЊ <b>РџСЂРµРґР»РѕР¶РµРЅРёРµ РѕС‚РєР»РѕРЅРµРЅРѕ Рё Р°СЂС…РёРІРёСЂРѕРІР°РЅРѕ.</b>",
+        { parse_mode: "HTML" },
+      );
     } catch (e) {
       console.error("вќЊ Error rejecting asset:", e);
       await ctx.answerCbQuery("РћС€РёР±РєР° РїСЂРё РѕС‚РєР»РѕРЅРµРЅРёРё");

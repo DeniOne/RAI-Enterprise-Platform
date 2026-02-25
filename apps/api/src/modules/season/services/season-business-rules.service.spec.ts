@@ -41,21 +41,33 @@ describe("SeasonBusinessRulesService", () => {
     it("should throw if WINTER rapeseed is sown in Spring", () => {
       const springDate = new Date("2026-04-15");
       expect(() =>
-        service.validateRapeseedSeasonDates(springDate, RapeseedType.WINTER, "company-1"),
+        service.validateRapeseedSeasonDates(
+          springDate,
+          RapeseedType.WINTER,
+          "company-1",
+        ),
       ).toThrow(BadRequestException);
     });
 
     it("should pass if WINTER rapeseed is sown in August", () => {
       const autumnDate = new Date("2026-08-20");
       expect(() =>
-        service.validateRapeseedSeasonDates(autumnDate, RapeseedType.WINTER, "company-1"),
+        service.validateRapeseedSeasonDates(
+          autumnDate,
+          RapeseedType.WINTER,
+          "company-1",
+        ),
       ).not.toThrow();
     });
 
     it("should throw if SPRING rapeseed is sown in Autumn", () => {
       const autumnDate = new Date("2026-09-10");
       expect(() =>
-        service.validateRapeseedSeasonDates(autumnDate, RapeseedType.SPRING, "company-1"),
+        service.validateRapeseedSeasonDates(
+          autumnDate,
+          RapeseedType.SPRING,
+          "company-1",
+        ),
       ).toThrow(BadRequestException);
     });
   });
@@ -65,7 +77,12 @@ describe("SeasonBusinessRulesService", () => {
       prismaMock.season.findMany.mockResolvedValue([{ year: 2024 }]);
 
       await expect(
-        service.validateCropRotation("field-1", 2026, "rapeseed-1", "company-1"),
+        service.validateCropRotation(
+          "field-1",
+          2026,
+          "rapeseed-1",
+          "company-1",
+        ),
       ).rejects.toThrow(BadRequestException);
 
       expect(auditMock.log).toHaveBeenCalled();
@@ -75,7 +92,12 @@ describe("SeasonBusinessRulesService", () => {
       prismaMock.season.findMany.mockResolvedValue([]);
 
       await expect(
-        service.validateCropRotation("field-1", 2026, "rapeseed-1", "company-1"),
+        service.validateCropRotation(
+          "field-1",
+          2026,
+          "rapeseed-1",
+          "company-1",
+        ),
       ).resolves.not.toThrow();
     });
   });

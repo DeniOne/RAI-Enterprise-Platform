@@ -1,1 +1,1 @@
-export * from '../../contracts/finance-ingest.contract';
+export * from "../../contracts/finance-ingest.contract";

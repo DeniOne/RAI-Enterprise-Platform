@@ -1,5 +1,6 @@
 import { UserRole } from '../config/role-config';
 import { DomainUiContext } from './navigation-policy';
+import { CapabilityFlags, capabilitiesFromRole } from './capability-policy';
 
 export type HarvestPlanStatus = 'DRAFT' | 'REVIEW' | 'APPROVED' | 'ACTIVE' | 'DONE' | 'ARCHIVE';
 export type TechMapStatus = 'PROJECT' | 'CHECKING' | 'ACTIVE' | 'FROZEN';
@@ -10,7 +11,7 @@ export type EntityType = 'harvest-plan' | 'tech-map' | 'budget' | 'deviation';
 export interface FSMTransition {
     target: string;
     label: string;
-    requiredRole?: UserRole;
+    requiredCapability?: keyof CapabilityFlags;
 }
 
 export interface BlockedTransition {
@@ -24,22 +25,31 @@ export interface UiPermissionResult {
     allowedTransitions: FSMTransition[];
     blockedTransitions: BlockedTransition[];
     isImmutable: boolean;
-    deniedReasons: string[]; // Reasons for general actions (edit/approve)
+    deniedReasons: string[];
     policyVersion: string;
 }
 
-const POLICY_VERSION = '2.0.0-domain-viz';
+const POLICY_VERSION = '2.1.0-capability-gated';
+
+function resolveCapabilities(roleOrCapabilities: UserRole | CapabilityFlags): CapabilityFlags {
+    return typeof roleOrCapabilities === 'string'
+        ? capabilitiesFromRole(roleOrCapabilities)
+        : roleOrCapabilities;
+}
 
 /**
- * Unified Transition Policy Contract
+ * Unified transition policy contract.
+ *
+ * Backward compatibility: supports legacy `UserRole` input while policy logic
+ * itself is capability-first.
  */
 export function getEntityTransitions(
     type: EntityType,
     status: string,
-    role: UserRole,
+    roleOrCapabilities: UserRole | CapabilityFlags,
     context: DomainUiContext
 ): UiPermissionResult {
-    const isAdmin = role === 'ADMIN' || role === 'SYSTEM_ADMIN' || role === 'FOUNDER';
+    const capabilities = resolveCapabilities(roleOrCapabilities);
 
     const result: UiPermissionResult = {
         canEdit: false,
@@ -53,11 +63,11 @@ export function getEntityTransitions(
 
     switch (type) {
         case 'harvest-plan':
-            return getHarvestPlanPermissions(status as HarvestPlanStatus, role, context);
+            return getHarvestPlanPermissions(status as HarvestPlanStatus, capabilities, context);
         case 'tech-map':
-            return getTechMapPermissions(status as TechMapStatus, role, context);
+            return getTechMapPermissions(status as TechMapStatus, capabilities, context);
         case 'budget':
-            return getBudgetPlanPermissions(status as BudgetPlanStatus, role, context);
+            return getBudgetPlanPermissions(status as BudgetPlanStatus, capabilities, context);
         default:
             return result;
     }
@@ -65,11 +75,11 @@ export function getEntityTransitions(
 
 export function getHarvestPlanPermissions(
     status: HarvestPlanStatus,
-    role: UserRole,
+    roleOrCapabilities: UserRole | CapabilityFlags,
     context: DomainUiContext
 ): UiPermissionResult {
-    const isAdmin = role === 'ADMIN' || role === 'SYSTEM_ADMIN' || role === 'FOUNDER';
-    const isCEO = role === 'CEO' || isAdmin;
+    const capabilities = resolveCapabilities(roleOrCapabilities);
+    const canAuthorize = capabilities.canSign || capabilities.canOverride || capabilities.canApprove;
 
     const result: UiPermissionResult = {
         canEdit: false,
@@ -84,42 +94,41 @@ export function getHarvestPlanPermissions(
     switch (status) {
         case 'DRAFT':
             result.canEdit = true;
-            result.allowedTransitions = [{ target: 'REVIEW', label: 'На проверку' }];
+            result.allowedTransitions = [{ target: 'REVIEW', label: 'Submit for review' }];
             break;
 
         case 'REVIEW':
-            result.canApprove = isCEO;
-            if (isCEO) {
-                result.allowedTransitions = [{ target: 'APPROVED', label: 'Утвердить' }];
+            result.canApprove = canAuthorize;
+            if (canAuthorize) {
+                result.allowedTransitions = [{ target: 'APPROVED', label: 'Approve' }];
             } else {
-                result.deniedReasons.push('Только CEO может утверждать планы');
-                result.blockedTransitions.push({ transition: 'APPROVED', reason: 'Требуется роль CEO' });
+                result.deniedReasons.push('Institutional approval authority is required to approve plans.');
+                result.blockedTransitions.push({ transition: 'APPROVED', reason: 'Missing approval authority capability' });
             }
             break;
 
         case 'APPROVED':
-            if (isCEO) {
-                // Прямое выполнение правила: Нельзя активировать без LOCKED бюджета и активной техкарты
+            if (canAuthorize) {
                 if (context.lockedBudget && context.activeTechMap) {
-                    result.allowedTransitions = [{ target: 'ACTIVE', label: 'Активировать' }];
+                    result.allowedTransitions = [{ target: 'ACTIVE', label: 'Activate' }];
                 } else {
                     const reasons: string[] = [];
-                    if (!context.lockedBudget) reasons.push('Нет заблокированного бюджета');
-                    if (!context.activeTechMap) reasons.push('Нет активной техкарты');
+                    if (!context.lockedBudget) reasons.push('Locked budget is required');
+                    if (!context.activeTechMap) reasons.push('Active tech map is required');
 
                     result.blockedTransitions.push({
                         transition: 'ACTIVE',
-                        reason: `Блокировка: ${reasons.join(', ')}`
+                        reason: reasons.join(', '),
                     });
                 }
             } else {
-                result.blockedTransitions.push({ transition: 'ACTIVE', reason: 'Требуется роль CEO' });
+                result.blockedTransitions.push({ transition: 'ACTIVE', reason: 'Missing approval authority capability' });
             }
             break;
 
         case 'ACTIVE':
             result.isImmutable = true;
-            result.deniedReasons.push('План активен. Изменения через отклонения.');
+            result.deniedReasons.push('Plan is active. Changes must go through deviation workflow.');
             break;
     }
 
@@ -128,7 +137,7 @@ export function getHarvestPlanPermissions(
 
 export function getTechMapPermissions(
     status: TechMapStatus,
-    _role: UserRole,
+    _roleOrCapabilities: UserRole | CapabilityFlags,
     _context: DomainUiContext
 ): UiPermissionResult {
     const result: UiPermissionResult = {
@@ -144,17 +153,17 @@ export function getTechMapPermissions(
     switch (status) {
         case 'PROJECT':
             result.canEdit = true;
-            result.allowedTransitions = [{ target: 'CHECKING', label: 'На проверку' }];
+            result.allowedTransitions = [{ target: 'CHECKING', label: 'Submit for review' }];
             break;
         case 'CHECKING':
-            result.allowedTransitions = [{ target: 'ACTIVE', label: 'Активировать' }];
+            result.allowedTransitions = [{ target: 'ACTIVE', label: 'Activate' }];
             break;
         case 'ACTIVE':
-            result.allowedTransitions = [{ target: 'FROZEN', label: 'Заморозить' }];
+            result.allowedTransitions = [{ target: 'FROZEN', label: 'Freeze' }];
             break;
         case 'FROZEN':
             result.isImmutable = true;
-            result.deniedReasons.push('Техкарта заморожена.');
+            result.deniedReasons.push('Tech map is frozen.');
             break;
     }
 
@@ -163,11 +172,11 @@ export function getTechMapPermissions(
 
 export function getBudgetPlanPermissions(
     status: BudgetPlanStatus,
-    role: UserRole,
+    roleOrCapabilities: UserRole | CapabilityFlags,
     _context: DomainUiContext
 ): UiPermissionResult {
-    const isAdmin = role === 'ADMIN' || role === 'SYSTEM_ADMIN' || role === 'FOUNDER';
-    const isFin = role === 'DIRECTOR_FINANCE' || isAdmin;
+    const capabilities = resolveCapabilities(roleOrCapabilities);
+    const canLockBudget = capabilities.canSign || capabilities.canOverride || capabilities.canApprove;
 
     const result: UiPermissionResult = {
         canEdit: false,
@@ -182,22 +191,22 @@ export function getBudgetPlanPermissions(
     switch (status) {
         case 'DRAFT':
             result.canEdit = true;
-            result.allowedTransitions = [{ target: 'APPROVED', label: 'Утвердить' }];
+            result.allowedTransitions = [{ target: 'APPROVED', label: 'Approve' }];
             break;
         case 'APPROVED':
-            if (isFin) {
-                result.allowedTransitions = [{ target: 'LOCKED', label: 'Заблокировать (Lock)' }];
+            if (canLockBudget) {
+                result.allowedTransitions = [{ target: 'LOCKED', label: 'Lock budget' }];
             } else {
-                result.blockedTransitions.push({ transition: 'LOCKED', reason: 'Требуется роль Финансового директора' });
+                result.blockedTransitions.push({ transition: 'LOCKED', reason: 'Missing signing authority capability' });
             }
             break;
         case 'LOCKED':
             result.isImmutable = true;
-            result.allowedTransitions = [{ target: 'EXECUTING', label: 'В исполнение' }];
+            result.allowedTransitions = [{ target: 'EXECUTING', label: 'Start execution' }];
             break;
         case 'EXECUTING':
             result.isImmutable = true;
-            result.allowedTransitions = [{ target: 'CLOSED', label: 'Закрыть' }];
+            result.allowedTransitions = [{ target: 'CLOSED', label: 'Close' }];
             break;
     }
 

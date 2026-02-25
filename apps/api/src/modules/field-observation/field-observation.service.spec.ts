@@ -1,5 +1,9 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { ObservationIntent, ObservationType, IntegrityStatus } from "@rai/prisma-client";
+import {
+  ObservationIntent,
+  ObservationType,
+  IntegrityStatus,
+} from "@rai/prisma-client";
 import { FieldObservationService } from "./field-observation.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { AuditService } from "../../shared/audit/audit.service";
