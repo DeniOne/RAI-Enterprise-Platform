@@ -1618,6 +1618,130 @@ exports.Prisma.GovernanceSignatureScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.StrategicSignalScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  initiatorId: 'initiatorId',
+  source: 'source',
+  rawPayload: 'rawPayload',
+  confidenceScore: 'confidenceScore',
+  duplicateOfId: 'duplicateOfId',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ExplorationCaseScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  signalId: 'signalId',
+  initiatorId: 'initiatorId',
+  explorationMode: 'explorationMode',
+  type: 'type',
+  status: 'status',
+  triageConfig: 'triageConfig',
+  economicImpactEstimate: 'economicImpactEstimate',
+  riskScore: 'riskScore',
+  resourceCost: 'resourceCost',
+  expectedROI: 'expectedROI',
+  ownerId: 'ownerId',
+  timeboxDeadline: 'timeboxDeadline',
+  timeboxStatus: 'timeboxStatus',
+  riskLevel: 'riskLevel',
+  budgetImpact: 'budgetImpact',
+  requiresBoardReview: 'requiresBoardReview',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WarRoomSessionScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  explorationCaseId: 'explorationCaseId',
+  facilitatorId: 'facilitatorId',
+  participants: 'participants',
+  deadline: 'deadline',
+  status: 'status',
+  resolutionLog: 'resolutionLog',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WarRoomDecisionEventScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  warRoomSessionId: 'warRoomSessionId',
+  participantId: 'participantId',
+  decisionData: 'decisionData',
+  signatureHash: 'signatureHash',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ImpactAuditRecordScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  explorationCaseId: 'explorationCaseId',
+  auditWindowDays: 'auditWindowDays',
+  expectedROI: 'expectedROI',
+  actualROI: 'actualROI',
+  actualRoiSource: 'actualRoiSource',
+  evidenceRefs: 'evidenceRefs',
+  delta: 'delta',
+  verdict: 'verdict',
+  auditedAt: 'auditedAt',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.RewardRecordScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  explorationCaseId: 'explorationCaseId',
+  initiatorId: 'initiatorId',
+  impactAuditId: 'impactAuditId',
+  rewardType: 'rewardType',
+  rewardAmount: 'rewardAmount',
+  formula: 'formula',
+  status: 'status',
+  approvedBy: 'approvedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.LabCapacityConfigScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  maxActiveSEU: 'maxActiveSEU',
+  maxActiveCDU: 'maxActiveCDU',
+  overdueGraceDays: 'overdueGraceDays',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ExternalSourceAllowlistScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  sourceName: 'sourceName',
+  baseUrl: 'baseUrl',
+  status: 'status',
+  lastValidatedAt: 'lastValidatedAt',
+  metadata: 'metadata',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AIScanRunLogScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  sourceAllowlistId: 'sourceAllowlistId',
+  status: 'status',
+  runStartedAt: 'runStartedAt',
+  runFinishedAt: 'runFinishedAt',
+  scannedItems: 'scannedItems',
+  createdSignals: 'createdSignals',
+  errorMessage: 'errorMessage',
+  metadata: 'metadata'
+};
+
 exports.Prisma.JurisdictionScalarFieldEnum = {
   id: 'id',
   companyId: 'companyId',
@@ -2486,6 +2610,102 @@ exports.QuorumStatus = exports.$Enums.QuorumStatus = {
   EXPIRED: 'EXPIRED'
 };
 
+exports.SignalSource = exports.$Enums.SignalSource = {
+  MARKET: 'MARKET',
+  CLIENT: 'CLIENT',
+  AI: 'AI',
+  INTERNAL: 'INTERNAL'
+};
+
+exports.SignalStatus = exports.$Enums.SignalStatus = {
+  RAW: 'RAW',
+  TRIAGED: 'TRIAGED',
+  ARCHIVED: 'ARCHIVED'
+};
+
+exports.ExplorationMode = exports.$Enums.ExplorationMode = {
+  SEU: 'SEU',
+  CDU: 'CDU'
+};
+
+exports.ExplorationType = exports.$Enums.ExplorationType = {
+  PROBLEM: 'PROBLEM',
+  IDEA: 'IDEA',
+  RESEARCH: 'RESEARCH',
+  REGULATORY: 'REGULATORY',
+  OPPORTUNITY: 'OPPORTUNITY'
+};
+
+exports.ExplorationCaseStatus = exports.$Enums.ExplorationCaseStatus = {
+  DRAFT: 'DRAFT',
+  IN_TRIAGE: 'IN_TRIAGE',
+  BOARD_REVIEW: 'BOARD_REVIEW',
+  ACTIVE_EXPLORATION: 'ACTIVE_EXPLORATION',
+  WAR_ROOM: 'WAR_ROOM',
+  RESOLVED: 'RESOLVED',
+  REJECTED: 'REJECTED',
+  IMPLEMENTED: 'IMPLEMENTED',
+  POST_AUDIT: 'POST_AUDIT',
+  ARCHIVED: 'ARCHIVED'
+};
+
+exports.TimeboxStatus = exports.$Enums.TimeboxStatus = {
+  ON_TRACK: 'ON_TRACK',
+  WARNING: 'WARNING',
+  OVERDUE: 'OVERDUE',
+  ARCHIVED_TIMEOUT: 'ARCHIVED_TIMEOUT'
+};
+
+exports.ExplorationRiskLevel = exports.$Enums.ExplorationRiskLevel = {
+  R1: 'R1',
+  R2: 'R2',
+  R3: 'R3',
+  R4: 'R4'
+};
+
+exports.WarRoomStatus = exports.$Enums.WarRoomStatus = {
+  ACTIVE: 'ACTIVE',
+  RESOLVED_WITH_DECISION: 'RESOLVED_WITH_DECISION',
+  TIMEOUT: 'TIMEOUT'
+};
+
+exports.RoiSource = exports.$Enums.RoiSource = {
+  LEDGER: 'LEDGER',
+  FINANCE_REPORT: 'FINANCE_REPORT',
+  MANUAL_CONFIRMED: 'MANUAL_CONFIRMED'
+};
+
+exports.ImpactVerdict = exports.$Enums.ImpactVerdict = {
+  SUCCESS: 'SUCCESS',
+  PARTIAL: 'PARTIAL',
+  FAILED: 'FAILED'
+};
+
+exports.RewardType = exports.$Enums.RewardType = {
+  BONUS: 'BONUS',
+  EQUITY_SHARE: 'EQUITY_SHARE',
+  CAREER_UPGRADE: 'CAREER_UPGRADE',
+  RECOGNITION: 'RECOGNITION'
+};
+
+exports.RewardStatus = exports.$Enums.RewardStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  PAID: 'PAID'
+};
+
+exports.AllowlistStatus = exports.$Enums.AllowlistStatus = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  BLOCKED: 'BLOCKED'
+};
+
+exports.AIScanRunStatus = exports.$Enums.AIScanRunStatus = {
+  STARTED: 'STARTED',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED'
+};
+
 exports.PartyRelationType = exports.$Enums.PartyRelationType = {
   OWNERSHIP: 'OWNERSHIP',
   COMMERCIAL: 'COMMERCIAL',
@@ -2689,6 +2909,15 @@ exports.Prisma.ModelName = {
   GovernanceCommittee: 'GovernanceCommittee',
   QuorumProcess: 'QuorumProcess',
   GovernanceSignature: 'GovernanceSignature',
+  StrategicSignal: 'StrategicSignal',
+  ExplorationCase: 'ExplorationCase',
+  WarRoomSession: 'WarRoomSession',
+  WarRoomDecisionEvent: 'WarRoomDecisionEvent',
+  ImpactAuditRecord: 'ImpactAuditRecord',
+  RewardRecord: 'RewardRecord',
+  LabCapacityConfig: 'LabCapacityConfig',
+  ExternalSourceAllowlist: 'ExternalSourceAllowlist',
+  AIScanRunLog: 'AIScanRunLog',
   Jurisdiction: 'Jurisdiction',
   RegulatoryProfile: 'RegulatoryProfile',
   Party: 'Party',

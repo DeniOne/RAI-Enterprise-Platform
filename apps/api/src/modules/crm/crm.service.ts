@@ -22,7 +22,7 @@ type FarmSeverity = "ok" | "warning" | "critical";
 
 @Injectable()
 export class CrmService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   // --- Holdings ---
 
@@ -254,22 +254,22 @@ export class CrmService {
         ...(riskCategory ? { riskCategory } : {}),
         ...(search
           ? {
-              OR: [
-                { id: { contains: search, mode: "insensitive" } },
-                { name: { contains: search, mode: "insensitive" } },
-                { inn: { contains: search, mode: "insensitive" } },
-              ],
-            }
+            OR: [
+              { id: { contains: search, mode: "insensitive" } },
+              { name: { contains: search, mode: "insensitive" } },
+              { inn: { contains: search, mode: "insensitive" } },
+            ],
+          }
           : {}),
         ...(responsibleId
           ? {
-              obligations: {
-                some: {
-                  responsibleUserId: responsibleId,
-                  status: { not: "FULFILLED" },
-                },
+            obligations: {
+              some: {
+                responsibleUserId: responsibleId,
+                status: { not: "FULFILLED" },
               },
-            }
+            },
+          }
           : {}),
       },
       orderBy: { updatedAt: "desc" },
@@ -311,20 +311,20 @@ export class CrmService {
 
     const legalEntities = account.holdingId
       ? await this.prisma.account.findMany({
-          where: {
-            companyId,
-            holdingId: account.holdingId,
-          },
-          select: {
-            id: true,
-            name: true,
-            inn: true,
-            status: true,
-            type: true,
-            riskCategory: true,
-          },
-          orderBy: { updatedAt: "desc" },
-        })
+        where: {
+          companyId,
+          holdingId: account.holdingId,
+        },
+        select: {
+          id: true,
+          name: true,
+          inn: true,
+          status: true,
+          type: true,
+          riskCategory: true,
+        },
+        orderBy: { updatedAt: "desc" },
+      })
       : [];
 
     const contacts = await this.prisma.contact.findMany({
@@ -567,8 +567,8 @@ export class CrmService {
           : {}),
         ...(this.normalizeStrategicValue(data.strategicValue)
           ? {
-              strategicValue: this.normalizeStrategicValue(data.strategicValue),
-            }
+            strategicValue: this.normalizeStrategicValue(data.strategicValue),
+          }
           : {}),
         ...(typeof data.jurisdiction === "string"
           ? { jurisdiction: data.jurisdiction.trim() || null }
@@ -929,18 +929,18 @@ export class CrmService {
       planIds.length === 0
         ? []
         : await this.prisma.techMap.findMany({
-            where: {
-              companyId,
-              harvestPlanId: { in: planIds },
-            },
-            select: {
-              id: true,
-              status: true,
-              harvestPlanId: true,
-              updatedAt: true,
-            },
-            orderBy: { updatedAt: "desc" },
-          });
+          where: {
+            companyId,
+            harvestPlanId: { in: planIds },
+          },
+          select: {
+            id: true,
+            status: true,
+            harvestPlanId: true,
+            updatedAt: true,
+          },
+          orderBy: { updatedAt: "desc" },
+        });
 
     const totalArea = fields.reduce(
       (sum, field) => sum + Number(field.area || 0),
@@ -998,66 +998,30 @@ export class CrmService {
     const sort = String(options?.sort || "plans_desc").toLowerCase();
     const onlyRisk = Boolean(options?.onlyRisk);
 
-    let accountIdsBySearch: string[] | null = null;
-    if (search) {
-      const matchedAccounts = await this.prisma.account.findMany({
-        where: {
-          companyId,
-          OR: [
-            { id: { contains: search, mode: "insensitive" } },
-            { name: { contains: search, mode: "insensitive" } },
-          ],
-        },
-        select: { id: true },
-      });
-      accountIdsBySearch = matchedAccounts.map((account) => account.id);
-      if (accountIdsBySearch.length === 0) {
-        return {
-          items: [],
-          stats: { total: 0, ok: 0, warning: 0, critical: 0 },
-          page,
-          pageSize,
-          total: 0,
-          totalPages: 1,
-          filters: {
-            severity: severityFilter || null,
-            sort,
-            onlyRisk,
-          },
-        };
-      }
-    }
-
-    const plans = await this.prisma.harvestPlan.findMany({
+    const accounts = await this.prisma.account.findMany({
       where: {
         companyId,
-        ...(accountIdsBySearch
-          ? { accountId: { in: accountIdsBySearch } }
+        ...(search
+          ? {
+            OR: [
+              { id: { contains: search, mode: "insensitive" } },
+              { name: { contains: search, mode: "insensitive" } },
+            ],
+          }
           : {}),
       },
       select: {
         id: true,
-        status: true,
-        accountId: true,
-        account: {
+        name: true,
+        harvestPlans: {
           select: {
-            name: true,
+            status: true,
           },
         },
       },
-      orderBy: { updatedAt: "desc" },
     });
 
-    const farmMap = new Map<
-      string,
-      {
-        id: string;
-        name: string;
-        plans: number;
-        active: number;
-        severity: FarmSeverity;
-      }
-    >();
+    type FarmSeverity = "ok" | "warning" | "critical";
 
     const toSeverity = (
       plansCount: number,
@@ -1068,30 +1032,24 @@ export class CrmService {
       return "ok";
     };
 
-    plans.forEach((plan) => {
-      const id = String(plan.accountId || "UNKNOWN");
-      const name = String(plan.account?.name || plan.accountId || "Не указано");
-      const current = farmMap.get(id) || {
-        id,
-        name,
-        plans: 0,
-        active: 0,
-        severity: "ok" as FarmSeverity,
+    const all = accounts.map((acc) => {
+      const plansCount = acc.harvestPlans.length;
+      const activeCount = acc.harvestPlans.filter((p) =>
+        ["REVIEW", "APPROVED", "ACTIVE"].includes(String(p.status)),
+      ).length;
+
+      return {
+        id: acc.id,
+        name: acc.name,
+        plans: plansCount,
+        active: activeCount,
+        severity: toSeverity(plansCount, activeCount),
       };
-      current.plans += 1;
-      if (["REVIEW", "APPROVED", "ACTIVE"].includes(String(plan.status))) {
-        current.active += 1;
-      }
-      current.severity = toSeverity(current.plans, current.active);
-      farmMap.set(id, current);
     });
 
     const sorters: Record<
       string,
-      (
-        a: { plans: number; active: number; name: string },
-        b: { plans: number; active: number; name: string },
-      ) => number
+      (a: any, b: any) => number
     > = {
       plans_desc: (a, b) => b.plans - a.plans,
       plans_asc: (a, b) => a.plans - b.plans,
@@ -1101,25 +1059,31 @@ export class CrmService {
       name_desc: (a, b) => b.name.localeCompare(a.name),
     };
     const sorter = sorters[sort] || sorters.plans_desc;
-    const all = Array.from(farmMap.values()).sort(sorter);
-    const bySeverity = all.reduce<Record<FarmSeverity, number>>(
-      (acc, item) => {
+    all.sort(sorter);
+
+    const severitySeed: Record<FarmSeverity, number> = {
+      ok: 0,
+      warning: 0,
+      critical: 0,
+    };
+    const bySeverity = all.reduce(
+      (acc: Record<FarmSeverity, number>, item: { severity: FarmSeverity }) => {
         acc[item.severity] += 1;
         return acc;
       },
-      { ok: 0, warning: 0, critical: 0 },
+      severitySeed,
     );
 
     const severityFiltered =
       severityFilter === "ok" ||
-      severityFilter === "warning" ||
-      severityFilter === "critical"
+        severityFilter === "warning" ||
+        severityFilter === "critical"
         ? all.filter((item) => item.severity === severityFilter)
         : all;
     const filtered = onlyRisk
       ? severityFiltered.filter(
-          (item) => item.severity === "warning" || item.severity === "critical",
-        )
+        (item) => item.severity === "warning" || item.severity === "critical",
+      )
       : severityFiltered;
 
     const total = filtered.length;

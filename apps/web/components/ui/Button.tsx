@@ -2,7 +2,7 @@ import React from 'react';
 import clsx from 'clsx';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: 'primary' | 'secondary' | 'ghost';
+    variant?: 'primary' | 'secondary' | 'ghost' | 'default' | 'outline';
     size?: 'default' | 'icon';
     asChild?: boolean; // Mocked for now to avoid Radix dependency
     loading?: boolean;
@@ -10,6 +10,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ({ children, variant = 'primary', size = 'default', asChild, loading, className, disabled, ...props }, ref) => {
+        const normalizedVariant = variant === 'default' ? 'primary' : variant;
         // If asChild is true, we should ideally render the child with these classes.
         // Simplifying to standard button to ensure build passes without Radix.
         return (
@@ -19,9 +20,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
                 className={clsx(
                     'inline-flex items-center justify-center rounded-2xl font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20 disabled:opacity-50',
                     {
-                        'bg-black text-white hover:bg-gray-800': variant === 'primary',
-                        'bg-white border border-black/10 text-gray-900 hover:bg-gray-50': variant === 'secondary',
-                        'bg-transparent hover:bg-gray-100/50 text-gray-600 hover:text-gray-900': variant === 'ghost',
+                        'bg-black text-white hover:bg-gray-800': normalizedVariant === 'primary',
+                        'bg-white border border-black/10 text-gray-900 hover:bg-gray-50': normalizedVariant === 'secondary' || normalizedVariant === 'outline',
+                        'bg-transparent hover:bg-gray-100/50 text-gray-600 hover:text-gray-900': normalizedVariant === 'ghost',
                     },
                     {
                         'px-6 py-3': size === 'default',

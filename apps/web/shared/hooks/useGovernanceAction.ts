@@ -74,6 +74,7 @@ export function useGovernanceAction(operationName: string) {
                 domain: 'AGRONOMY',
                 action: 'SOIL_REGENERATION',
                 impactLevel: risk,
+                requiresEscalation: false,
                 timestamp: Date.now(),
                 originState: 'CURRENT',
                 targetState: 'OPTIMIZED',

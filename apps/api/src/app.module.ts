@@ -42,6 +42,7 @@ import { AdvisoryModule } from "./modules/advisory/advisory.module";
 import { HealthModule } from "./modules/health/health.module";
 import { AdaptiveLearningModule } from "./modules/adaptive-learning/adaptive-learning.module";
 import { CommerceModule } from "./modules/commerce/commerce.module";
+import { ExplorationModule } from "./modules/exploration/exploration.module";
 import { HttpResilienceModule } from "./shared/http/http-resilience.module";
 import { BullModule } from "@nestjs/bullmq";
 import { join } from "path";
@@ -123,6 +124,7 @@ import { TenantContextModule } from "./shared/tenant-context/tenant-context.modu
     HealthModule,
     AdaptiveLearningModule,
     CommerceModule,
+    ExplorationModule,
     HttpResilienceModule,
     BullModule.forRoot({
       connection: {

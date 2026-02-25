@@ -11,12 +11,12 @@ import {
 } from "@nestjs/common";
 import { IdentityRegistryService } from "./identity-registry.service";
 import { LifecycleStatus } from "@rai/prisma-client";
-import { AuthGuard } from "@nestjs/passport";
+import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 
 @Controller("registry/identities")
-@UseGuards(AuthGuard("jwt"))
+@UseGuards(JwtAuthGuard)
 export class IdentityRegistryController {
-  constructor(private readonly registryService: IdentityRegistryService) {}
+  constructor(private readonly registryService: IdentityRegistryService) { }
 
   @Post("roles")
   async createRole(

@@ -121,7 +121,9 @@ function PlanItem({ plan, authority, context, onTransition, activePhase }: {
                             yieldDelta: kpi.yieldDelta,
                             costPerTon: kpi.costPerTon,
                             profitPerHectare: kpi.profitPerHectare,
-                            roi: kpi.roi
+                            roi: kpi.roi,
+                            sri: kpi.sri ?? 0,
+                            sriDelta: kpi.sriDelta ?? 0
                         } : undefined}
                     />
                 </div>

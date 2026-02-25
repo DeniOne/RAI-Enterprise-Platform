@@ -136,6 +136,17 @@ model Company {
   governanceCommittees GovernanceCommittee[]
   quorumProcesses      QuorumProcess[]
 
+  // Institutional Exploration Module (IEM)
+  strategicSignals      StrategicSignal[]
+  explorationCases      ExplorationCase[]
+  warRoomSessions       WarRoomSession[]
+  warRoomDecisionEvents WarRoomDecisionEvent[]
+  impactAuditRecords    ImpactAuditRecord[]
+  rewardRecords         RewardRecord[]
+  labCapacityConfigs    LabCapacityConfig[]
+  externalSourceEntries ExternalSourceAllowlist[]
+  aiScanRunLogs         AIScanRunLog[]
+
   @@map("companies")
 }
 
@@ -515,6 +526,15 @@ model User {
 
   // Phase 2.5: Escalation Signatures
   governanceSignatures GovernanceSignature[]
+
+  // Institutional Exploration Module (IEM)
+  initiatedStrategicSignals StrategicSignal[] @relation("StrategicSignalInitiator")
+  initiatedExplorationCases ExplorationCase[] @relation("ExplorationCaseInitiator")
+  ownedExplorationCases     ExplorationCase[] @relation("ExplorationCaseOwner")
+  facilitatedWarRooms       WarRoomSession[]  @relation("WarRoomFacilitator")
+  warRoomDecisionEvents     WarRoomDecisionEvent[]
+  initiatedRewardRecords    RewardRecord[]    @relation("RewardRecordInitiator")
+  approvedRewardRecords     RewardRecord[]    @relation("RewardRecordApprover")
 
   @@map("users")
 }
@@ -3647,6 +3667,362 @@ enum QuorumStatus {
   MET
   REJECTED
   EXPIRED
+}
+
+// --- Institutional Exploration Module (IEM) ---
+
+model StrategicSignal {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  initiatorId String?
+  initiator   User?   @relation("StrategicSignalInitiator", fields: [initiatorId], references: [id])
+
+  source          SignalSource
+  rawPayload      Json
+  confidenceScore Int          @default(0)
+
+  duplicateOfId String?
+  duplicateOf   StrategicSignal?  @relation("StrategicSignalDuplicateChain", fields: [duplicateOfId], references: [id])
+  duplicates    StrategicSignal[] @relation("StrategicSignalDuplicateChain")
+
+  status    SignalStatus @default(RAW)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  explorationCases ExplorationCase[]
+
+  @@index([companyId])
+  @@index([companyId, status])
+  @@index([companyId, source])
+  @@index([duplicateOfId])
+  @@map("exploration_strategic_signals")
+}
+
+model ExplorationCase {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  signalId String?
+  signal   StrategicSignal? @relation(fields: [signalId], references: [id])
+
+  initiatorId String?
+  initiator   User?   @relation("ExplorationCaseInitiator", fields: [initiatorId], references: [id])
+
+  explorationMode ExplorationMode
+  type            ExplorationType
+  status          ExplorationCaseStatus @default(DRAFT)
+  triageConfig    Json?
+
+  economicImpactEstimate Decimal? @db.Decimal(18, 4)
+  riskScore               Int?
+  resourceCost            Decimal? @db.Decimal(18, 4)
+  expectedROI             Decimal? @db.Decimal(18, 4)
+  ownerId                 String?
+  owner                   User?    @relation("ExplorationCaseOwner", fields: [ownerId], references: [id])
+  timeboxDeadline         DateTime?
+  timeboxStatus           TimeboxStatus @default(ON_TRACK)
+
+  riskLevel           ExplorationRiskLevel?
+  budgetImpact        Decimal? @db.Decimal(18, 4)
+  requiresBoardReview Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  warRoomSessions   WarRoomSession[]
+  impactAuditRecord ImpactAuditRecord[]
+  rewardRecords     RewardRecord[]
+
+  @@index([companyId])
+  @@index([companyId, status])
+  @@index([companyId, explorationMode])
+  @@index([signalId])
+  @@index([timeboxDeadline])
+  @@map("exploration_cases")
+}
+
+model WarRoomSession {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  explorationCaseId String
+  explorationCase   ExplorationCase @relation(fields: [explorationCaseId], references: [id])
+
+  facilitatorId String
+  facilitator   User   @relation("WarRoomFacilitator", fields: [facilitatorId], references: [id])
+
+  participants Json
+  deadline     DateTime
+  status       WarRoomStatus @default(ACTIVE)
+  resolutionLog Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  decisionEvents WarRoomDecisionEvent[]
+
+  @@index([companyId])
+  @@index([explorationCaseId])
+  @@index([companyId, status])
+  @@index([deadline])
+  @@map("war_room_sessions")
+}
+
+model WarRoomDecisionEvent {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  warRoomSessionId String
+  warRoomSession   WarRoomSession @relation(fields: [warRoomSessionId], references: [id])
+
+  participantId String
+  participant   User   @relation(fields: [participantId], references: [id])
+
+  decisionData  Json
+  signatureHash String
+  createdAt     DateTime @default(now())
+
+  @@index([companyId])
+  @@index([warRoomSessionId])
+  @@index([participantId])
+  @@index([companyId, createdAt])
+  @@map("war_room_decision_events")
+}
+
+model ImpactAuditRecord {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  explorationCaseId String
+  explorationCase   ExplorationCase @relation(fields: [explorationCaseId], references: [id])
+
+  auditWindowDays Int
+  expectedROI     Decimal   @db.Decimal(18, 4)
+  actualROI       Decimal   @db.Decimal(18, 4)
+  actualRoiSource RoiSource
+  evidenceRefs    Json
+  delta           Decimal   @db.Decimal(18, 4)
+  verdict         ImpactVerdict
+  auditedAt       DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+
+  rewardRecords RewardRecord[]
+
+  @@index([companyId])
+  @@index([explorationCaseId])
+  @@index([companyId, verdict])
+  @@map("impact_audit_records")
+}
+
+model RewardRecord {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  explorationCaseId String
+  explorationCase   ExplorationCase @relation(fields: [explorationCaseId], references: [id])
+
+  initiatorId String
+  initiator   User   @relation("RewardRecordInitiator", fields: [initiatorId], references: [id])
+
+  impactAuditId String
+  impactAudit   ImpactAuditRecord @relation(fields: [impactAuditId], references: [id])
+
+  rewardType   RewardType
+  rewardAmount Decimal? @db.Decimal(18, 4)
+  formula      String
+  status       RewardStatus @default(PENDING)
+
+  approvedBy String?
+  approver   User?   @relation("RewardRecordApprover", fields: [approvedBy], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([initiatorId])
+  @@index([status])
+  @@index([impactAuditId])
+  @@map("reward_records")
+}
+
+model LabCapacityConfig {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  maxActiveSEU    Int @default(5)
+  maxActiveCDU    Int @default(10)
+  overdueGraceDays Int @default(14)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId])
+  @@map("lab_capacity_configs")
+}
+
+model ExternalSourceAllowlist {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  sourceName      String
+  baseUrl         String?
+  status          AllowlistStatus @default(ACTIVE)
+  lastValidatedAt DateTime?
+  metadata        Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  scanRuns AIScanRunLog[]
+
+  @@unique([companyId, sourceName])
+  @@index([companyId, status])
+  @@map("external_source_allowlist")
+}
+
+model AIScanRunLog {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  sourceAllowlistId String?
+  sourceAllowlist   ExternalSourceAllowlist? @relation(fields: [sourceAllowlistId], references: [id])
+
+  status AIScanRunStatus @default(STARTED)
+
+  runStartedAt  DateTime @default(now())
+  runFinishedAt DateTime?
+  scannedItems  Int      @default(0)
+  createdSignals Int     @default(0)
+  errorMessage  String?
+  metadata      Json?
+
+  @@index([companyId])
+  @@index([status])
+  @@index([sourceAllowlistId])
+  @@index([companyId, runStartedAt])
+  @@map("ai_scan_run_logs")
+}
+
+enum SignalSource {
+  MARKET
+  CLIENT
+  AI
+  INTERNAL
+}
+
+enum SignalStatus {
+  RAW
+  TRIAGED
+  ARCHIVED
+}
+
+enum TriageStatus {
+  PENDING
+  ACCEPTED
+  DUPLICATE
+  REJECTED
+}
+
+enum ExplorationMode {
+  SEU
+  CDU
+}
+
+enum ExplorationType {
+  PROBLEM
+  IDEA
+  RESEARCH
+  REGULATORY
+  OPPORTUNITY
+}
+
+enum ExplorationCaseStatus {
+  DRAFT
+  IN_TRIAGE
+  BOARD_REVIEW
+  ACTIVE_EXPLORATION
+  WAR_ROOM
+  RESOLVED
+  REJECTED
+  IMPLEMENTED
+  POST_AUDIT
+  ARCHIVED
+}
+
+enum ExplorationRiskLevel {
+  R1
+  R2
+  R3
+  R4
+}
+
+enum TimeboxStatus {
+  ON_TRACK
+  WARNING
+  OVERDUE
+  ARCHIVED_TIMEOUT
+}
+
+enum WarRoomStatus {
+  ACTIVE
+  RESOLVED_WITH_DECISION
+  TIMEOUT
+}
+
+enum RoiSource {
+  LEDGER
+  FINANCE_REPORT
+  MANUAL_CONFIRMED
+}
+
+enum ImpactVerdict {
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+enum RewardType {
+  BONUS
+  EQUITY_SHARE
+  CAREER_UPGRADE
+  RECOGNITION
+}
+
+enum RewardStatus {
+  PENDING
+  APPROVED
+  PAID
+}
+
+enum AllowlistStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum AIScanRunStatus {
+  STARTED
+  COMPLETED
+  FAILED
 }
 
 // --- Institutional Commerce Core ---

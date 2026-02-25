@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
 
@@ -18,6 +18,7 @@ type Invoice = {
 
 export default function CommerceInvoicesPage() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const focusedEntity = searchParams.get('entity');
     const severity = searchParams.get('severity');
 
@@ -80,7 +81,13 @@ export default function CommerceInvoicesPage() {
 
     return (
         <div className="space-y-6" data-testid="commerce-invoices-page">
-            <h1 className="text-xl font-medium text-gray-900">Коммерция: Документы</h1>
+            <div className="flex items-center justify-between">
+                <h1 className="text-xl font-medium text-gray-900">Коммерция: Документы</h1>
+                <button type="button" onClick={() => router.push('/commerce/invoices/create')}
+                    className="rounded-2xl bg-black px-6 py-2 text-sm font-medium text-white hover:bg-gray-800">
+                    + Сформировать
+                </button>
+            </div>
             <Card className="rounded-3xl border-black/10">
                 {loading ? <p className="text-sm font-normal text-gray-500">Загрузка документов...</p> : null}
 
@@ -111,28 +118,39 @@ export default function CommerceInvoicesPage() {
                                     <th className="px-3 py-2 font-medium text-gray-900">Статус</th>
                                     <th className="px-3 py-2 font-medium text-gray-900">Сумма</th>
                                     <th className="px-3 py-2 font-medium text-gray-900">Дата</th>
+                                    <th className="px-3 py-2 font-medium text-gray-900">Действия</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredInvoices.map((invoice) => {
                                     const isFocused = focusedInvoiceId === invoice.id;
                                     return (
-                                    <tr
-                                        key={invoice.id}
-                                        data-testid={`invoice-row-${invoice.id}`}
-                                        data-invoice-id={invoice.id}
-                                        data-focus={isFocused ? 'true' : 'false'}
-                                        className={isFocused ? 'border-b border-black/5 bg-amber-50' : 'border-b border-black/5'}
-                                    >
-                                        <td className="px-3 py-2 font-normal">{invoice.contract?.number ?? '—'}</td>
-                                        <td className="px-3 py-2 font-normal">{invoice.direction}</td>
-                                        <td className="px-3 py-2 font-normal">{invoice.status}</td>
-                                        <td className="px-3 py-2 font-normal">
-                                            {invoice.grandTotal.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                        </td>
-                                        <td className="px-3 py-2 font-normal">{new Date(invoice.createdAt).toLocaleDateString('ru-RU')}</td>
-                                    </tr>
-                                )})}
+                                        <tr
+                                            key={invoice.id}
+                                            data-testid={`invoice-row-${invoice.id}`}
+                                            data-invoice-id={invoice.id}
+                                            data-focus={isFocused ? 'true' : 'false'}
+                                            className={isFocused ? 'border-b border-black/5 bg-amber-50' : 'border-b border-black/5'}
+                                        >
+                                            <td className="px-3 py-2 font-normal">{invoice.contract?.number ?? '—'}</td>
+                                            <td className="px-3 py-2 font-normal">{invoice.direction}</td>
+                                            <td className="px-3 py-2 font-normal">{invoice.status}</td>
+                                            <td className="px-3 py-2 font-normal">
+                                                {invoice.grandTotal.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </td>
+                                            <td className="px-3 py-2 font-normal">{new Date(invoice.createdAt).toLocaleDateString('ru-RU')}</td>
+                                            <td className="px-3 py-2">
+                                                {invoice.status === 'DRAFT' ? (
+                                                    <button type="button"
+                                                        onClick={() => { api.commerce.postInvoice(invoice.id).then(() => window.location.reload()); }}
+                                                        className="rounded-lg border border-black/10 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50">
+                                                        Провести
+                                                    </button>
+                                                ) : null}
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
                             </tbody>
                         </table>
                     </div>

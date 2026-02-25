@@ -53,11 +53,84 @@ export const api = {
             company: (seasonId: string) => apiClient.get(`/consulting/kpi/company/${seasonId}`),
         },
     },
+    partyManagement: {
+        // Tenant Discovery (public, no JWT)
+        tenant: () => apiClient.get('/commerce/tenant'),
+
+        // Юрисдикции
+        jurisdictions: (companyId: string) =>
+            apiClient.get('/commerce/jurisdictions', { params: { companyId } }),
+        createJurisdiction: (data: { code: string; name: string; companyId: string }) =>
+            apiClient.post('/commerce/jurisdictions', data),
+
+        // Регуляторные профили
+        regulatoryProfiles: (companyId: string) =>
+            apiClient.get('/commerce/regulatory-profiles', { params: { companyId } }),
+        createRegulatoryProfile: (data: { code: string; name: string; jurisdictionId: string; companyId: string }) =>
+            apiClient.post('/commerce/regulatory-profiles', data),
+
+        // Party (контрагенты)
+        parties: (companyId: string) =>
+            apiClient.get('/commerce/parties', { params: { companyId } }),
+        partyDetails: (partyId: string, companyId: string) =>
+            apiClient.get(`/commerce/parties/${encodeURIComponent(partyId)}`, { params: { companyId } }),
+        createParty: (data: { legalName: string; jurisdictionId: string; regulatoryProfileId?: string; companyId: string }) =>
+            apiClient.post('/commerce/parties', data),
+        updateParty: (partyId: string, data: { companyId: string; legalName?: string; jurisdictionId?: string; regulatoryProfileId?: string }) =>
+            apiClient.patch(`/commerce/parties/${encodeURIComponent(partyId)}`, data),
+
+        // Party Relations
+        partyRelations: (partyId: string, companyId: string) =>
+            apiClient.get(`/commerce/parties/${encodeURIComponent(partyId)}/relations`, { params: { companyId } }),
+        createPartyRelation: (data: { sourcePartyId: string; targetPartyId: string; relationType: string; validFrom: string; validTo?: string; companyId: string }) =>
+            apiClient.post('/commerce/party-relations', data),
+    },
     commerce: {
         contracts: () => apiClient.get('/commerce/contracts'),
         fulfillment: () => apiClient.get('/commerce/fulfillment'),
         invoices: () => apiClient.get('/commerce/invoices'),
         payments: () => apiClient.get('/commerce/payments'),
+        // POST/PATCH
+        createContract: (data: {
+            number: string; type: string; validFrom: string; validTo?: string;
+            jurisdictionId: string; regulatoryProfileId?: string;
+            roles: Array<{ partyId: string; role: string; isPrimary?: boolean }>;
+        }) => apiClient.post('/commerce/contracts', data),
+        createObligation: (data: { contractId: string; type: 'DELIVER' | 'PAY' | 'PERFORM'; dueDate?: string }) =>
+            apiClient.post('/commerce/obligations', data),
+        createFulfillment: (data: {
+            obligationId: string; eventDomain: string; eventType: string; eventDate: string;
+            batchId?: string; itemId?: string; uom?: string; qty?: number;
+        }) => apiClient.post('/commerce/fulfillment-events', data),
+        createInvoice: (data: {
+            fulfillmentEventId: string; sellerJurisdiction: string; buyerJurisdiction: string;
+            supplyType: string; vatPayerStatus: string; subtotal: number; productTaxCode?: string;
+        }) => apiClient.post('/commerce/invoices/from-fulfillment', data),
+        postInvoice: (invoiceId: string) => apiClient.post(`/commerce/invoices/${encodeURIComponent(invoiceId)}/post`),
+        createPayment: (data: {
+            payerPartyId: string; payeePartyId: string; amount: number;
+            currency: string; paymentMethod: string; paidAt?: string;
+        }) => apiClient.post('/commerce/payments', data),
+        confirmPayment: (paymentId: string) => apiClient.post(`/commerce/payments/${encodeURIComponent(paymentId)}/confirm`),
+        allocatePayment: (data: { paymentId: string; invoiceId: string; allocatedAmount: number }) =>
+            apiClient.post('/commerce/payment-allocations', data),
+        arBalance: (invoiceId: string) => apiClient.get(`/commerce/invoices/${encodeURIComponent(invoiceId)}/ar-balance`),
+    },
+    exploration: {
+        showcase: (params?: { mode?: 'SEU' | 'CDU'; status?: string; page?: number; pageSize?: number }) =>
+            apiClient.get('/exploration/showcase', { params }),
+        createSignal: (data: { source?: 'MARKET' | 'CLIENT' | 'AI' | 'INTERNAL'; rawPayload: Record<string, unknown>; confidenceScore?: number; initiatorId?: string }) =>
+            apiClient.post('/exploration/signals', data),
+        triageFromSignal: (signalId: string, data?: { initiatorId?: string; explorationMode?: 'SEU' | 'CDU'; type?: 'PROBLEM' | 'IDEA' | 'RESEARCH' | 'REGULATORY' | 'OPPORTUNITY'; triageConfig?: Record<string, unknown>; ownerId?: string; timeboxDeadline?: string; riskScore?: number }) =>
+            apiClient.post(`/exploration/cases/from-signal/${encodeURIComponent(signalId)}`, data ?? {}),
+        transitionCase: (caseId: string, data: { targetStatus: string; role?: string }) =>
+            apiClient.post(`/exploration/cases/${encodeURIComponent(caseId)}/transition`, data),
+        openWarRoom: (caseId: string, data: { facilitatorId: string; deadline: string; participants: Array<{ userId: string; role: string }> }) =>
+            apiClient.post(`/exploration/cases/${encodeURIComponent(caseId)}/war-room/open`, data),
+        appendWarRoomEvent: (sessionId: string, data: { participantId: string; decisionData: Record<string, unknown>; signatureHash: string }) =>
+            apiClient.post(`/exploration/war-room/${encodeURIComponent(sessionId)}/events`, data),
+        closeWarRoom: (sessionId: string, data: { resolutionLog: Record<string, unknown>; status?: 'ACTIVE' | 'RESOLVED_WITH_DECISION' | 'TIMEOUT' }) =>
+            apiClient.post(`/exploration/war-room/${encodeURIComponent(sessionId)}/close`, data),
     },
     crm: {
         holdings: (companyId: string) => apiClient.get(`/crm/holdings/${companyId}`),

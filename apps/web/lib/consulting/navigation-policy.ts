@@ -16,6 +16,7 @@ export interface DomainUiContext {
 export type Domain =
     | 'crop'
     | 'commerce'
+    | 'exploration'
     | 'strategy'
     | 'economy'
     | 'finance'
@@ -62,7 +63,7 @@ export const CONSULTING_NAVIGATION: NavItem[] = [
                 roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'],
                 subItems: [
                     { id: 'farms', label: 'Реестр хозяйств', path: '/consulting/crm/farms', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
-                    { id: 'counterparties', label: 'Контрагенты', path: '/consulting/crm/counterparties', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                    { id: 'counterparties', label: 'Контрагенты', path: '/commerce/parties', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
                     { id: 'fields', label: 'Поля / Объекты', path: '/consulting/crm/fields', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
                     { id: 'seasons', label: 'История сезонов', path: '/consulting/crm/history', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
                 ]
@@ -165,6 +166,20 @@ export const CONSULTING_NAVIGATION: NavItem[] = [
             { id: 'commerce_fulfillment', label: 'Исполнение договоров', path: '/commerce/fulfillment', domain: 'commerce', roles: ['ADMIN', 'CEO', 'MANAGER', 'DIRECTOR_FINANCE', 'SYSTEM_ADMIN', 'FOUNDER'] },
             { id: 'commerce_invoices', label: 'Документы', path: '/commerce/invoices', domain: 'commerce', roles: ['ADMIN', 'CEO', 'MANAGER', 'DIRECTOR_FINANCE', 'SYSTEM_ADMIN', 'FOUNDER'] },
             { id: 'commerce_payments', label: 'Оплаты', path: '/commerce/payments', domain: 'commerce', roles: ['ADMIN', 'CEO', 'MANAGER', 'DIRECTOR_FINANCE', 'SYSTEM_ADMIN', 'FOUNDER'] },
+        ]
+    },
+
+    // 1.6. Исследования
+    {
+        id: 'exploration',
+        label: 'Исследования',
+        path: '/exploration',
+        domain: 'exploration',
+        roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'DIRECTOR_FINANCE', 'SYSTEM_ADMIN', 'FOUNDER'],
+        subItems: [
+            { id: 'exploration_showcase', label: 'Витрина', path: '/exploration', domain: 'exploration', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'DIRECTOR_FINANCE', 'SYSTEM_ADMIN', 'FOUNDER'] },
+            { id: 'exploration_strategic', label: 'Стратегические', path: '/exploration/strategic', domain: 'exploration', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'DIRECTOR_FINANCE', 'SYSTEM_ADMIN', 'FOUNDER'] },
+            { id: 'exploration_constraints', label: 'Ограничения', path: '/exploration/constraints', domain: 'exploration', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'DIRECTOR_FINANCE', 'SYSTEM_ADMIN', 'FOUNDER'] },
         ]
     },
 

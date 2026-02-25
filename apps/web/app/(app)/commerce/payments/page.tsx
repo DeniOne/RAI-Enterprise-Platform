@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
 
@@ -18,6 +18,7 @@ type Payment = {
 
 export default function CommercePaymentsPage() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const focusedEntity = searchParams.get('entity');
     const severity = searchParams.get('severity');
 
@@ -84,7 +85,13 @@ export default function CommercePaymentsPage() {
 
     return (
         <div className="space-y-6" data-testid="commerce-payments-page">
-            <h1 className="text-xl font-medium text-gray-900">Коммерция: Оплаты</h1>
+            <div className="flex items-center justify-between">
+                <h1 className="text-xl font-medium text-gray-900">Коммерция: Оплаты</h1>
+                <button type="button" onClick={() => router.push('/commerce/payments/create')}
+                    className="rounded-2xl bg-black px-6 py-2 text-sm font-medium text-white hover:bg-gray-800">
+                    + Оплата
+                </button>
+            </div>
             <Card className="rounded-3xl border-black/10">
                 {loading ? <p className="text-sm font-normal text-gray-500">Загрузка оплат...</p> : null}
 
@@ -116,29 +123,40 @@ export default function CommercePaymentsPage() {
                                     <th className="px-3 py-2 font-medium text-gray-900">Метод</th>
                                     <th className="px-3 py-2 font-medium text-gray-900">Статус</th>
                                     <th className="px-3 py-2 font-medium text-gray-900">Дата</th>
+                                    <th className="px-3 py-2 font-medium text-gray-900">Действия</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredPayments.map((payment) => {
                                     const isFocused = focusedPaymentId === payment.id;
                                     return (
-                                    <tr
-                                        key={payment.id}
-                                        data-testid={`payment-row-${payment.id}`}
-                                        data-payment-id={payment.id}
-                                        data-focus={isFocused ? 'true' : 'false'}
-                                        className={isFocused ? 'border-b border-black/5 bg-amber-50' : 'border-b border-black/5'}
-                                    >
-                                        <td className="px-3 py-2 font-normal">{payment.payerParty?.legalName ?? '—'}</td>
-                                        <td className="px-3 py-2 font-normal">{payment.payeeParty?.legalName ?? '—'}</td>
-                                        <td className="px-3 py-2 font-normal">
-                                            {payment.amount.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {payment.currency}
-                                        </td>
-                                        <td className="px-3 py-2 font-normal">{payment.paymentMethod}</td>
-                                        <td className="px-3 py-2 font-normal">{payment.status}</td>
-                                        <td className="px-3 py-2 font-normal">{new Date(payment.paidAt).toLocaleDateString('ru-RU')}</td>
-                                    </tr>
-                                )})}
+                                        <tr
+                                            key={payment.id}
+                                            data-testid={`payment-row-${payment.id}`}
+                                            data-payment-id={payment.id}
+                                            data-focus={isFocused ? 'true' : 'false'}
+                                            className={isFocused ? 'border-b border-black/5 bg-amber-50' : 'border-b border-black/5'}
+                                        >
+                                            <td className="px-3 py-2 font-normal">{payment.payerParty?.legalName ?? '—'}</td>
+                                            <td className="px-3 py-2 font-normal">{payment.payeeParty?.legalName ?? '—'}</td>
+                                            <td className="px-3 py-2 font-normal">
+                                                {payment.amount.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {payment.currency}
+                                            </td>
+                                            <td className="px-3 py-2 font-normal">{payment.paymentMethod}</td>
+                                            <td className="px-3 py-2 font-normal">{payment.status}</td>
+                                            <td className="px-3 py-2 font-normal">{new Date(payment.paidAt).toLocaleDateString('ru-RU')}</td>
+                                            <td className="px-3 py-2">
+                                                {payment.status === 'DRAFT' ? (
+                                                    <button type="button"
+                                                        onClick={() => { api.commerce.confirmPayment(payment.id).then(() => window.location.reload()); }}
+                                                        className="rounded-lg border border-black/10 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50">
+                                                        Подтвердить
+                                                    </button>
+                                                ) : null}
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
                             </tbody>
                         </table>
                     </div>

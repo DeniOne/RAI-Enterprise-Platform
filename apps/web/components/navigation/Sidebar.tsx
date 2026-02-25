@@ -12,6 +12,7 @@ import { ChevronDown, ChevronRight, Circle, LayoutDashboard, Users, ClipboardLis
 const DOMAIN_LAYERS: Record<string, number> = {
     'crop': 1,      // CORE
     'commerce': 1,
+    'exploration': 2,
     'strategy': 2,  // STRATEGIC
     'economy': 2,
     'finance': 2,
@@ -30,6 +31,7 @@ const ICON_MAP: Record<string, any> = {
     'deviations': AlertTriangle,
     'results': CheckCircle2,
     'commerce': BriefcaseBusiness,
+    'exploration': Database,
     'strategy': ShieldCheck,
     'economy': Calculator,
     'finance': Landmark,

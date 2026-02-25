@@ -21,7 +21,13 @@ interface PlanDesignerProps {
 }
 
 export function PlanDesigner({ plan, authority, onUpdate, onAction }: PlanDesignerProps) {
-    const perm = getHarvestPlanPermissions(plan.status, authority);
+    const perm = getHarvestPlanPermissions(plan.status, authority, {
+        plansCount: 0,
+        activeTechMap: false,
+        lockedBudget: false,
+        criticalDeviations: 0,
+        advisoryRiskLevel: 'low',
+    });
     const isEditingDisabled = !perm.canEdit;
 
     return (

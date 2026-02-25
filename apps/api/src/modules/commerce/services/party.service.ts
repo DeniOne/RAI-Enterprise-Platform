@@ -1,0 +1,244 @@
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../../../shared/prisma/prisma.service";
+import { CreatePartyDto, UpdatePartyDto, CreatePartyRelationDto } from "../dto/create-party.dto";
+import { CreateJurisdictionDto } from "../dto/create-jurisdiction.dto";
+import { CreateRegulatoryProfileDto } from "../dto/create-regulatory-profile.dto";
+
+@Injectable()
+export class PartyService {
+    constructor(private readonly prisma: PrismaService) { }
+
+    // ─── Tenant Discovery (no JWT required) ──────────────────────
+
+    async getDefaultTenant() {
+        const company = await this.prisma.company.findFirst({
+            orderBy: { createdAt: 'asc' },
+            select: { id: true, name: true },
+        });
+        if (!company) {
+            throw new NotFoundException('No company found in database');
+        }
+        return company;
+    }
+
+    // ─── Jurisdictions ──────────────────────────────────────────
+
+    async listJurisdictions(companyId: string) {
+        return this.prisma.jurisdiction.findMany({
+            where: { companyId },
+            orderBy: { code: "asc" },
+        });
+    }
+
+    async createJurisdiction(companyId: string, dto: CreateJurisdictionDto) {
+        const existing = await this.prisma.jurisdiction.findFirst({
+            where: { companyId, code: dto.code },
+        });
+        if (existing) {
+            throw new BadRequestException(`Jurisdiction with code "${dto.code}" already exists`);
+        }
+
+        return this.prisma.jurisdiction.create({
+            data: {
+                companyId,
+                code: dto.code,
+                name: dto.name,
+            },
+        });
+    }
+
+    // ─── Regulatory Profiles ────────────────────────────────────
+
+    async listRegulatoryProfiles(companyId: string) {
+        return this.prisma.regulatoryProfile.findMany({
+            where: { companyId },
+            include: { jurisdiction: true },
+            orderBy: { code: "asc" },
+        });
+    }
+
+    async createRegulatoryProfile(companyId: string, dto: CreateRegulatoryProfileDto) {
+        const jurisdiction = await this.prisma.jurisdiction.findFirst({
+            where: { companyId, id: dto.jurisdictionId },
+        });
+        if (!jurisdiction) {
+            throw new BadRequestException("Jurisdiction not found");
+        }
+
+        const existing = await this.prisma.regulatoryProfile.findFirst({
+            where: { companyId, code: dto.code },
+        });
+        if (existing) {
+            throw new BadRequestException(`RegulatoryProfile with code "${dto.code}" already exists`);
+        }
+
+        return this.prisma.regulatoryProfile.create({
+            data: {
+                companyId,
+                code: dto.code,
+                name: dto.name,
+                jurisdictionId: dto.jurisdictionId,
+                rulesJson: dto.rulesJson ?? undefined,
+            },
+            include: { jurisdiction: true },
+        });
+    }
+
+    // ─── Parties ────────────────────────────────────────────────
+
+    async listParties(companyId: string) {
+        return this.prisma.party.findMany({
+            where: { companyId },
+            include: {
+                jurisdiction: true,
+                regulatoryProfile: true,
+            },
+            orderBy: { createdAt: "desc" },
+        });
+    }
+
+    async getParty(companyId: string, partyId: string) {
+        const party = await this.prisma.party.findFirst({
+            where: { companyId, id: partyId },
+            include: {
+                jurisdiction: true,
+                regulatoryProfile: true,
+                contractRoles: {
+                    include: {
+                        contract: {
+                            select: {
+                                id: true,
+                                number: true,
+                                type: true,
+                                status: true,
+                            },
+                        },
+                    },
+                },
+                sourceRelations: {
+                    include: {
+                        targetParty: { select: { id: true, legalName: true } },
+                    },
+                },
+                targetRelations: {
+                    include: {
+                        sourceParty: { select: { id: true, legalName: true } },
+                    },
+                },
+            },
+        });
+
+        if (!party) {
+            throw new NotFoundException("Party not found");
+        }
+
+        return party;
+    }
+
+    async createParty(companyId: string, dto: CreatePartyDto) {
+        const jurisdiction = await this.prisma.jurisdiction.findFirst({
+            where: { companyId, id: dto.jurisdictionId },
+        });
+        if (!jurisdiction) {
+            throw new BadRequestException("Jurisdiction not found");
+        }
+
+        if (dto.regulatoryProfileId) {
+            const profile = await this.prisma.regulatoryProfile.findFirst({
+                where: { companyId, id: dto.regulatoryProfileId },
+            });
+            if (!profile) {
+                throw new BadRequestException("RegulatoryProfile not found");
+            }
+        }
+
+        return this.prisma.party.create({
+            data: {
+                companyId,
+                legalName: dto.legalName,
+                jurisdictionId: dto.jurisdictionId,
+                regulatoryProfileId: dto.regulatoryProfileId ?? null,
+            },
+            include: {
+                jurisdiction: true,
+                regulatoryProfile: true,
+            },
+        });
+    }
+
+    async updateParty(companyId: string, partyId: string, dto: UpdatePartyDto) {
+        const party = await this.prisma.party.findFirst({
+            where: { companyId, id: partyId },
+        });
+        if (!party) {
+            throw new NotFoundException("Party not found");
+        }
+
+        if (dto.jurisdictionId) {
+            const jurisdiction = await this.prisma.jurisdiction.findFirst({
+                where: { companyId, id: dto.jurisdictionId },
+            });
+            if (!jurisdiction) {
+                throw new BadRequestException("Jurisdiction not found");
+            }
+        }
+
+        return this.prisma.party.update({
+            where: { id: partyId },
+            data: {
+                ...(dto.legalName !== undefined && { legalName: dto.legalName }),
+                ...(dto.jurisdictionId !== undefined && { jurisdictionId: dto.jurisdictionId }),
+                ...(dto.regulatoryProfileId !== undefined && {
+                    regulatoryProfileId: dto.regulatoryProfileId ?? null,
+                }),
+            },
+            include: {
+                jurisdiction: true,
+                regulatoryProfile: true,
+            },
+        });
+    }
+
+    // ─── Party Relations ────────────────────────────────────────
+
+    async createPartyRelation(companyId: string, dto: CreatePartyRelationDto) {
+        const [source, target] = await Promise.all([
+            this.prisma.party.findFirst({ where: { companyId, id: dto.sourcePartyId } }),
+            this.prisma.party.findFirst({ where: { companyId, id: dto.targetPartyId } }),
+        ]);
+
+        if (!source) throw new BadRequestException("Source party not found");
+        if (!target) throw new BadRequestException("Target party not found");
+        if (dto.sourcePartyId === dto.targetPartyId) {
+            throw new BadRequestException("Cannot create relation with self");
+        }
+
+        return this.prisma.partyRelation.create({
+            data: {
+                companyId,
+                sourcePartyId: dto.sourcePartyId,
+                targetPartyId: dto.targetPartyId,
+                relationType: dto.relationType,
+                validFrom: new Date(dto.validFrom),
+                validTo: dto.validTo ? new Date(dto.validTo) : null,
+            },
+            include: {
+                sourceParty: { select: { id: true, legalName: true } },
+                targetParty: { select: { id: true, legalName: true } },
+            },
+        });
+    }
+
+    async listPartyRelations(companyId: string, partyId: string) {
+        return this.prisma.partyRelation.findMany({
+            where: {
+                companyId,
+                OR: [{ sourcePartyId: partyId }, { targetPartyId: partyId }],
+            },
+            include: {
+                sourceParty: { select: { id: true, legalName: true } },
+                targetParty: { select: { id: true, legalName: true } },
+            },
+        });
+    }
+}

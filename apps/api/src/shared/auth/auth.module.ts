@@ -9,6 +9,8 @@ import { UserRepository } from "./repositories/user.repository";
 import { TelegramAuthService } from "./telegram-auth.service";
 import { TelegramAuthInternalController } from "./telegram-auth-internal.controller";
 import { InternalApiKeyGuard } from "./internal-api-key.guard";
+import { DevModeService } from "./dev-mode.service";
+import { JwtAuthGuard } from "./jwt-auth.guard";
 
 import { ConfigModule, ConfigService } from "@nestjs/config";
 
@@ -19,6 +21,7 @@ import { RedisModule } from "../redis/redis.module";
     PrismaModule,
     RedisModule,
     PassportModule,
+    ConfigModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -39,7 +42,10 @@ import { RedisModule } from "../redis/redis.module";
     UserRepository,
     TelegramAuthService,
     InternalApiKeyGuard,
+    DevModeService,
+    JwtAuthGuard,
   ],
-  exports: [AuthService, UserRepository, TelegramAuthService],
+  exports: [AuthService, UserRepository, TelegramAuthService, DevModeService, JwtAuthGuard],
 })
-export class AuthModule {}
+export class AuthModule { }
+

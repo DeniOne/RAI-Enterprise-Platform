@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
 
@@ -28,6 +28,7 @@ type CommerceContract = {
 
 export default function CommerceContractsPage() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const focusedEntity = searchParams.get('entity');
     const severity = searchParams.get('severity');
 
@@ -90,7 +91,16 @@ export default function CommerceContractsPage() {
 
     return (
         <div className="space-y-6" data-testid="commerce-contracts-page">
-            <h1 className="text-xl font-medium text-gray-900">Коммерция: Договоры</h1>
+            <div className="flex items-center justify-between">
+                <h1 className="text-xl font-medium text-gray-900">Коммерция: Договоры</h1>
+                <button
+                    type="button"
+                    onClick={() => router.push('/commerce/contracts/create')}
+                    className="rounded-2xl bg-black px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800"
+                >
+                    + Новый договор
+                </button>
+            </div>
             <Card className="rounded-3xl border-black/10">
                 {loading ? (
                     <p className="text-sm font-normal text-gray-500">Загрузка договоров...</p>
@@ -134,7 +144,8 @@ export default function CommerceContractsPage() {
                                             data-testid={`contract-row-${contract.id}`}
                                             data-contract-id={contract.id}
                                             data-focus={isFocused ? 'true' : 'false'}
-                                            className={isFocused ? 'border-b border-black/5 bg-amber-50' : 'border-b border-black/5'}
+                                            className={`cursor-pointer transition-colors hover:bg-gray-50 ${isFocused ? 'border-b border-black/5 bg-amber-50' : 'border-b border-black/5'}`}
+                                            onClick={() => router.push(`/commerce/contracts/${contract.id}`)}
                                         >
                                             <td className="px-3 py-2 font-normal text-gray-800">{contract.number}</td>
                                             <td className="px-3 py-2 font-normal">{contract.type}</td>
@@ -154,6 +165,6 @@ export default function CommerceContractsPage() {
                     </div>
                 ) : null}
             </Card>
-        </div>
+        </div >
     );
 }

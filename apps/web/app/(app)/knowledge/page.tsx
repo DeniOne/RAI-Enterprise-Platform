@@ -17,11 +17,11 @@ export default async function KnowledgePage() {
         return <KnowledgeFabricContent graph={graph} />;
     } catch (error) {
         return (
-            <div className="h-screen flex items-center justify-center bg-slate-950 text-slate-400 p-8 text-center">
+            <div className="h-screen flex items-center justify-center bg-gray-50 text-gray-500 p-8 text-center">
                 <div>
-                    <h1 className="text-2xl font-bold text-white mb-2">Graph Data Unavailable</h1>
+                    <h1 className="text-2xl font-medium text-gray-900 mb-2">Данные графа недоступны</h1>
                     <p className="max-w-md">
-                        Please ensure the API is running and the graph snapshot has been generated using <code className="bg-slate-900 px-1 rounded text-pink-400">scripts/generate_graph.py</code>.
+                        Please ensure the API is running and the graph snapshot has been generated using <code className="bg-gray-100 px-1 rounded text-gray-800">scripts/generate_graph.py</code>.
                     </p>
                 </div>
             </div>

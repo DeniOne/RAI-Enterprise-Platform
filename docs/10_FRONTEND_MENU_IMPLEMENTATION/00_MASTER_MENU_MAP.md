@@ -95,9 +95,9 @@
 
 | Пункт меню | Путь | Статус | Комментарий |
 |---|---|---|---|
-| Исследования (главная) | `/exploration` | MISSING | Витрина (Блок прототипов), точка входа в R&D контур |
-| Стратегические исследования | `/exploration/strategic` | MISSING | Strategic Exploration Unit (SEU) - глубокие системные вызовы |
-| Растворение ограничений | `/exploration/constraints` | MISSING | Constraint Dissolution Unit (CDU) - отработка алертов и болей рынка |
+| Исследования (главная) | `/exploration` | IN_PROGRESS | Готов UI scaffold: route/layout/showcase + triage form + detail pages `/exploration/cases/:id` и `/exploration/war-room/:sessionId`; backend дополнен API-метриками и унифицированными Swagger-описаниями |
+| Стратегические исследования | `/exploration/strategic` | IN_PROGRESS | Route и фильтрация SEU готовы; требуется board-гейты и e2e-покрытие |
+| Растворение ограничений | `/exploration/constraints` | IN_PROGRESS | Route и фильтрация CDU готовы; требуется timebox/SLA контроль и e2e-покрытие |
 
 
 ## Приоритет реализации (рекомендуемый)

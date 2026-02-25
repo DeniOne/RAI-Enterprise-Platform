@@ -142,3 +142,24 @@
 - Выполненный пункт отмечается как `[x]`.
 - В конце строки добавляется дата закрытия в формате `YYYY-MM-DD`.
 - Если долг разбит на подзадачи, создаются отдельные чекбоксы, а родительский пункт закрывается только после закрытия всех подзадач.
+
+- [ ] `[TD-EXP-UI-001]` `Исследования` -> `Базовый каркас UI для Institutional Exploration Module`
+  Описание: backend-контур для exploration уже поднят, но страницы `/exploration`, `/exploration/strategic`, `/exploration/constraints` и компонент `TriageInputForm` не реализованы в production-качестве.
+  Техническое исполнение: добавить роуты и страницы в `apps/web/app/exploration/**`, подключить API-запросы к новым endpoint, реализовать loading/empty/error/permission состояния и smart routing подсветку.
+  Приоритет: `High`.
+  Следующее действие: реализовать страницу `/exploration/page.tsx` с витриной `GET /api/exploration/showcase` и переходами в кейс/war-room.
+  Ожидаемый эффект: модуль станет доступен пользователям в интерфейсе, сократится разрыв между backend-функционалом и UX.
+
+- [ ] `[TD-EXP-API-001]` `Исследования` -> `Доведение API/FSM до production-grade`
+  Описание: реализован backend scaffold (schema, сервисы, FSM, роуты, war-room orchestration, swagger), но не закрыты миграции/стабильный прогон тестов/полный governance-контур `POST_AUDIT`.
+  Техническое исполнение: довести `ExplorationService` до полного цикла `IMPLEMENTED -> POST_AUDIT`, стабилизировать jest/tsc прогон без timeout, добавить интеграционный тестовый контур для auth tenant-context.
+  Приоритет: `High`.
+  Следующее действие: добавить backend шаг `POST_AUDIT` (impact audit creation + переход FSM) и интеграционный тест перехода `IMPLEMENTED -> POST_AUDIT`.
+  Ожидаемый эффект: API-модуль станет полностью соответствовать архитектурному FSM и требованиям institutional governance.
+
+- [ ] `[TD-EXP-LEDGER-001]` `Исследования` -> `ROI evidence ↔ Ledger верификация`
+  Описание: в `ImpactAuditRecord` хранится `evidenceRefs`, но не реализована строгая серверная проверка ссылок на `LedgerEntry.id` перед переводом кейса в `POST_AUDIT`.
+  Техническое исполнение: добавить validator `evidenceRefs` на существование ledger-транзакций текущего tenant, контрактные тесты и блокировку transition при невалидных ссылках.
+  Приоритет: `High`.
+  Следующее действие: реализовать проверку `evidenceRefs` в сервисе post-audit и тест на отказ при несуществующем `LedgerEntry.id`.
+  Ожидаемый эффект: повысится финансовая целостность модуля, снизится риск аудиторских нарушений по экономическому контуру.

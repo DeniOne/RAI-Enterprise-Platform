@@ -12,6 +12,7 @@ import {
 import { AuthService } from "./auth.service";
 import { TelegramAuthService } from "./telegram-auth.service";
 import { AuthGuard } from "@nestjs/passport";
+import { JwtAuthGuard } from "./jwt-auth.guard";
 import {
   ApiTags,
   ApiOperation,
@@ -26,7 +27,7 @@ export class AuthController {
   constructor(
     private authService: AuthService,
     private telegramAuthService: TelegramAuthService,
-  ) {}
+  ) { }
 
   @Get("ping")
   ping() {
@@ -93,21 +94,28 @@ export class AuthController {
 @ApiTags("Users")
 @Controller("users")
 export class UsersController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private devModeService: DevModeService,
+  ) { }
 
   @Get("me")
   @ApiBearerAuth()
-  @UseGuards(AuthGuard("jwt"))
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: "Get current user profile" })
   @ApiResponse({ status: 200, description: "Returns user profile" })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   async getProfile(@Request() req) {
+    // Dev mode: req.user уже содержит { userId, email, companyId } из DevModeService
+    if (this.devModeService.isDevMode()) {
+      return req.user;
+    }
     return this.authService.getProfile(req.user.userId);
   }
 
   @Get("company/:companyId")
   @ApiBearerAuth()
-  @UseGuards(AuthGuard("jwt"))
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: "Get users by company" })
   @ApiResponse({ status: 200, description: "Returns users list" })
   async getCompanyUsers(@Param("companyId") companyId: string) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
 
@@ -16,6 +16,7 @@ type FulfillmentEvent = {
 
 export default function CommerceFulfillmentPage() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const focusedEntity = searchParams.get('entity');
     const severity = searchParams.get('severity');
 
@@ -82,7 +83,13 @@ export default function CommerceFulfillmentPage() {
 
     return (
         <div className="space-y-6" data-testid="commerce-fulfillment-page">
-            <h1 className="text-xl font-medium text-gray-900">Коммерция: Исполнение договоров</h1>
+            <div className="flex items-center justify-between">
+                <h1 className="text-xl font-medium text-gray-900">Коммерция: Исполнение договоров</h1>
+                <button type="button" onClick={() => router.push('/commerce/fulfillment/create')}
+                    className="rounded-2xl bg-black px-6 py-2 text-sm font-medium text-white hover:bg-gray-800">
+                    + Зафиксировать исполнение
+                </button>
+            </div>
             <Card className="rounded-3xl border-black/10">
                 {loading ? <p className="text-sm font-normal text-gray-500">Загрузка событий исполнения...</p> : null}
 
@@ -119,20 +126,21 @@ export default function CommerceFulfillmentPage() {
                                 {filteredEvents.map((event) => {
                                     const isFocused = focusedEventId === event.id;
                                     return (
-                                    <tr
-                                        key={event.id}
-                                        data-testid={`fulfillment-row-${event.id}`}
-                                        data-fulfillment-id={event.id}
-                                        data-focus={isFocused ? 'true' : 'false'}
-                                        className={isFocused ? 'border-b border-black/5 bg-amber-50' : 'border-b border-black/5'}
-                                    >
-                                        <td className="px-3 py-2 font-normal">{new Date(event.eventDate).toLocaleDateString('ru-RU')}</td>
-                                        <td className="px-3 py-2 font-normal">{event.eventDomain}</td>
-                                        <td className="px-3 py-2 font-normal">{event.eventType}</td>
-                                        <td className="px-3 py-2 font-normal">{event.contract?.number ?? '—'}</td>
-                                        <td className="px-3 py-2 font-normal">{event.obligationId}</td>
-                                    </tr>
-                                )})}
+                                        <tr
+                                            key={event.id}
+                                            data-testid={`fulfillment-row-${event.id}`}
+                                            data-fulfillment-id={event.id}
+                                            data-focus={isFocused ? 'true' : 'false'}
+                                            className={isFocused ? 'border-b border-black/5 bg-amber-50' : 'border-b border-black/5'}
+                                        >
+                                            <td className="px-3 py-2 font-normal">{new Date(event.eventDate).toLocaleDateString('ru-RU')}</td>
+                                            <td className="px-3 py-2 font-normal">{event.eventDomain}</td>
+                                            <td className="px-3 py-2 font-normal">{event.eventType}</td>
+                                            <td className="px-3 py-2 font-normal">{event.contract?.number ?? '—'}</td>
+                                            <td className="px-3 py-2 font-normal">{event.obligationId}</td>
+                                        </tr>
+                                    )
+                                })}
                             </tbody>
                         </table>
                     </div>

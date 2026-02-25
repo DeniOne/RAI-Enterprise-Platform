@@ -7,7 +7,7 @@ export class AuthService {
   constructor(
     private userRepository: UserRepository,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async validateUser(email: string, password: string): Promise<any> {
     // Find user by email (ARCH-DEBT-001: include company for multi-tenancy)
@@ -48,6 +48,17 @@ export class AuthService {
   }
 
   async getProfile(userId: string) {
+    // Dev mode: возвращаем заглушку без обращения к БД
+    if (userId === 'dev-user-00000000') {
+      return {
+        id: 'dev-user-00000000',
+        email: 'dev@local.rai',
+        name: 'Dev User',
+        role: 'ADMIN',
+        companyId: null, // companyId уже есть в req.user, здесь не нужен
+      };
+    }
+
     const user = await this.userRepository.findById(userId);
 
     if (!user) {
