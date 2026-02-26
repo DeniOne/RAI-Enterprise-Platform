@@ -1,5 +1,12 @@
 ﻿# Progress: RAI_EP
 
+## Milestone 42: RegulatoryProfile CRUD & 2026 Presets - DONE ✅
+**Дата:** 2026-02-26
+- [x] **Backend**: Реализована полная CRUD модель профилей и юрисдикций. Модель `RegulatoryProfile` расширена денормализованными полями `vatRate`, `effectiveFrom`, `effectiveTo`, `currencyCode`.
+- [x] **Validation**: Внедрен Zod-валидатор JSON для сложных налоговых условий (`rulesJson`), нормализация ставок до математических дробей, проверки Unique Code.
+- [x] **2026 Presets**: Создан seed-скрипт с 7 пресетами налоговых режимов РФ, РБ и РК на 2026 год, включая УСН и ВЭД.
+- [x] **Frontend UI**: Переработан `crm/counterparties`, добавлена система вкладок. Реализована таблица и формы профилей с защитой от редактирования системных пресетов (`isSystemPreset`).
+
 ## Milestone 41: Auto-Onboarding & Dev Mode Guard - DONE ✅
 **Дата:** 2026-02-26
 - [x] **Dev Mode Guard (`AUTH_DISABLED=true`)**: Реализован умный обход JWT (`JwtAuthGuard` + `DevModeService`) для локальной разработки без авторизации.

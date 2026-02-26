@@ -79,14 +79,12 @@
   - backend services + DTO + controller workflow
   - runtime E2E flow validated and migration applied
 
-- **Frontend UX Tree Execution (2026-02-25):** IN PROGRESS
+- **Frontend UX Tree Execution (2026-02-26):** IN PROGRESS
   - CODEX PROMPT created: `docs/07_EXECUTION/CODEX_PROMPT_FRONTEND_USER_TREE.md`
-  - **ARCH DECISION — Party-First (2026-02-25):**
-    - `Party` (commerce_parties) — единственный движок контрагентов для всего Commerce
-    - `Account` (accounts) — legacy CRM, ИЗОЛИРОВАН, в запасе до будущей миграции
-    - **НЕТ FK между Account и Party** — это by design
-    - Party CRUD API — **НЕ РЕАЛИЗОВАН**, это блокер #1 для frontend Commerce
-    - Нужно создать: Party CRUD API, Jurisdiction CRUD, RegulatoryProfile CRUD
-    - Правильная цепочка: Jurisdiction → Party → CommerceContract → Obligation → Fulfillment → Invoice → Payment
-    - CRM UI «Контрагенты» будет перестроен на Party (вместо Account)
+  - **RegulatoryProfile & Party CRUD (Blocker #1 resolved):**
+    - `Party` (commerce_parties) — единственный движок контрагентов для Commerce. `Account` изолирован.
+    - Реализовано API и Frontend для Jurisdiction, RegulatoryProfile и Party.
+    - Добавлены 2026 presets (10/10 Institutional Grade).
+    - CRM UI "/consulting/crm/counterparties" успешно переписан под вкладки профилей.
+    - Следующий шаг: CommerceContract → Obligation → Fulfillment → Invoice → Payment (Блок A).
 
