@@ -58,25 +58,29 @@ export const api = {
         tenant: () => apiClient.get('/commerce/tenant'),
 
         // Юрисдикции
-        jurisdictions: (companyId: string) =>
-            apiClient.get('/commerce/jurisdictions', { params: { companyId } }),
-        createJurisdiction: (data: { code: string; name: string; companyId: string }) =>
+        jurisdictions: () =>
+            apiClient.get('/commerce/jurisdictions'),
+        createJurisdiction: (data: { code: string; name: string }) =>
             apiClient.post('/commerce/jurisdictions', data),
+        updateJurisdiction: (jurisdictionId: string, data: { code?: string; name?: string }) =>
+            apiClient.patch(`/commerce/jurisdictions/${encodeURIComponent(jurisdictionId)}`, data),
+        deleteJurisdiction: (jurisdictionId: string) =>
+            apiClient.delete(`/commerce/jurisdictions/${encodeURIComponent(jurisdictionId)}`),
 
         // Регуляторные профили
-        regulatoryProfiles: (companyId: string) =>
-            apiClient.get('/commerce/regulatory-profiles', { params: { companyId } }),
-        createRegulatoryProfile: (data: { code: string; name: string; jurisdictionId: string; companyId: string }) =>
+        regulatoryProfiles: () =>
+            apiClient.get('/commerce/regulatory-profiles'),
+        createRegulatoryProfile: (data: { code: string; name: string; jurisdictionId: string }) =>
             apiClient.post('/commerce/regulatory-profiles', data),
 
         // Party (контрагенты)
-        parties: (companyId: string) =>
-            apiClient.get('/commerce/parties', { params: { companyId } }),
-        partyDetails: (partyId: string, companyId: string) =>
-            apiClient.get(`/commerce/parties/${encodeURIComponent(partyId)}`, { params: { companyId } }),
-        createParty: (data: { legalName: string; jurisdictionId: string; regulatoryProfileId?: string; companyId: string }) =>
+        parties: () =>
+            apiClient.get('/commerce/parties'),
+        partyDetails: (partyId: string) =>
+            apiClient.get(`/commerce/parties/${encodeURIComponent(partyId)}`),
+        createParty: (data: { legalName: string; jurisdictionId: string; regulatoryProfileId?: string }) =>
             apiClient.post('/commerce/parties', data),
-        updateParty: (partyId: string, data: { companyId: string; legalName?: string; jurisdictionId?: string; regulatoryProfileId?: string }) =>
+        updateParty: (partyId: string, data: { legalName?: string; jurisdictionId?: string; regulatoryProfileId?: string }) =>
             apiClient.patch(`/commerce/parties/${encodeURIComponent(partyId)}`, data),
 
         // Party Relations

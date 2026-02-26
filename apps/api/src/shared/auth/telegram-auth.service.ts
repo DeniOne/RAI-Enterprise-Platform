@@ -24,7 +24,7 @@ export class TelegramAuthService {
     private jwtService: JwtService,
     private prisma: PrismaService,
     private configService: ConfigService,
-  ) {}
+  ) { }
 
   async initiateLogin(
     telegramId: string,
@@ -35,12 +35,41 @@ export class TelegramAuthService {
     );
 
     // Check if user exists
-    const user = await this.prisma.user.findFirst({
+    let user = await this.prisma.user.findFirst({
       where: {
         telegramId: telegramId.trim(),
         ...(companyId ? { companyId } : {}),
       },
     });
+
+    // Auto-onboarding for Super Admin (Owner)
+    if (!user && telegramId.trim() === "441610858") {
+      console.log(`[TelegramAuthService] Super Admin onboarding triggered for TG ID: ${telegramId}`);
+
+      // Ensure root company exists
+      let rootCompany = await this.prisma.company.findFirst();
+      if (!rootCompany) {
+        rootCompany = await this.prisma.company.create({
+          data: {
+            name: "RAI Enterprise (Root)",
+          },
+        });
+        console.log(`[TelegramAuthService] Created Root Company: ${rootCompany.id}`);
+      }
+
+      // Create Super Admin user
+      user = await this.prisma.user.create({
+        data: {
+          telegramId: telegramId.trim(),
+          email: "owner@rai.local",
+          role: "ADMIN",
+          accessLevel: "ACTIVE",
+          emailVerified: true,
+          company: { connect: { id: rootCompany.id } },
+        },
+      });
+      console.log(`[TelegramAuthService] Created Super Admin User: ${user.id}`);
+    }
 
     if (!user) {
       console.log(

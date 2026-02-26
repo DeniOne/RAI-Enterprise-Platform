@@ -9,6 +9,7 @@
 - **Security Hardened**: RBAC, Throttler, and Tenant Isolation (Prisma middleware) fully active.
 
 ## Current Focus
+- **Auto-Onboarding & Dev Mode Guard (2026-02-26)**: Внедрён механизм `AUTH_DISABLED=true` (возврат тестового Tenant ID) и Auto-Onboarding для владельца (создание корневой компании при входе `441610858` в Telegram). Проблема курицы и яйца при старте платформы решена.
 - **Level C: Contradiction-Resilient Intelligence**: **VERIFIED ✅** (50 тестов PASS)
   - [x] FSM Governance Guard (I33) — DivergenceRecord gate + high risk justification
   - [x] ConflictExplainabilityBuilder (I32) — human-readable explanations

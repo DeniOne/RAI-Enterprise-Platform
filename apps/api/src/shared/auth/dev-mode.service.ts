@@ -23,17 +23,26 @@ export class DevModeService {
         return this.config.get<string>('AUTH_DISABLED') === 'true';
     }
 
-    /** Возвращает companyId первой компании из БД (кэшируется в памяти) */
+    /** Возвращает companyId первой компании из БД (кэшируется в памяти).
+     *  Если БД пуста — автоматически создаёт Dev Company. */
     async getDevCompanyId(): Promise<string> {
         if (this._cachedCompanyId) return this._cachedCompanyId;
 
-        const company = await this.prisma.company.findFirst({
+        let company = await this.prisma.company.findFirst({
             orderBy: { createdAt: 'asc' },
             select: { id: true },
         });
 
         if (!company) {
-            throw new Error('[DevModeService] No company found in DB. Run seed first.');
+            // БД пустая — создаём реальную компанию (иначе FK-constraints падают)
+            console.warn('[DevModeService] No company found in DB. Auto-creating Dev Company...');
+            company = await this.prisma.company.create({
+                data: {
+                    name: 'Dev Company (Auto)',
+                },
+                select: { id: true },
+            });
+            console.log(`[DevModeService] Created Dev Company: ${company.id}`);
         }
 
         this._cachedCompanyId = company.id;

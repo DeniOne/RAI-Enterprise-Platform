@@ -7,7 +7,10 @@ import { PartyService } from "./services/party.service";
 import { CommerceController } from "./commerce.controller";
 import { PartyController } from "./party.controller";
 
+import { AuthModule } from "../../shared/auth/auth.module";
+
 @Module({
+  imports: [AuthModule],
   controllers: [CommerceController, PartyController],
   providers: [
     CommerceContractService,

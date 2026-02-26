@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, Request } from "@nestjs/common";
+import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { PartyService } from "./services/party.service";
 import { CreatePartyDto, UpdatePartyDto, CreatePartyRelationDto } from "./dto/create-party.dto";
-import { CreateJurisdictionDto } from "./dto/create-jurisdiction.dto";
+import { CreateJurisdictionDto, UpdateJurisdictionDto } from "./dto/create-jurisdiction.dto";
 import { CreateRegulatoryProfileDto } from "./dto/create-regulatory-profile.dto";
 
 @Controller("commerce")
@@ -17,70 +18,92 @@ export class PartyController {
 
     // ─── Jurisdictions ──────────────────────────────────────────
 
+    @UseGuards(JwtAuthGuard)
     @Get("jurisdictions")
-    listJurisdictions(@Query("companyId") companyId: string) {
-        return this.partyService.listJurisdictions(companyId);
+    listJurisdictions(@Request() req: any) {
+        return this.partyService.listJurisdictions(req.user.companyId);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Post("jurisdictions")
-    createJurisdiction(@Body() body: CreateJurisdictionDto & { companyId: string }) {
-        const { companyId, ...dto } = body;
-        return this.partyService.createJurisdiction(companyId, dto);
+    createJurisdiction(@Request() req: any, @Body() dto: CreateJurisdictionDto) {
+        return this.partyService.createJurisdiction(req.user.companyId, dto);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Patch("jurisdictions/:id")
+    updateJurisdiction(
+        @Request() req: any,
+        @Param("id") jurisdictionId: string,
+        @Body() dto: UpdateJurisdictionDto,
+    ) {
+        return this.partyService.updateJurisdiction(req.user.companyId, jurisdictionId, dto);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete("jurisdictions/:id")
+    deleteJurisdiction(@Request() req: any, @Param("id") jurisdictionId: string) {
+        return this.partyService.deleteJurisdiction(req.user.companyId, jurisdictionId);
     }
 
     // ─── Regulatory Profiles ────────────────────────────────────
 
+    @UseGuards(JwtAuthGuard)
     @Get("regulatory-profiles")
-    listRegulatoryProfiles(@Query("companyId") companyId: string) {
-        return this.partyService.listRegulatoryProfiles(companyId);
+    listRegulatoryProfiles(@Request() req: any) {
+        return this.partyService.listRegulatoryProfiles(req.user.companyId);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Post("regulatory-profiles")
-    createRegulatoryProfile(@Body() body: CreateRegulatoryProfileDto & { companyId: string }) {
-        const { companyId, ...dto } = body;
-        return this.partyService.createRegulatoryProfile(companyId, dto);
+    createRegulatoryProfile(@Request() req: any, @Body() dto: CreateRegulatoryProfileDto) {
+        return this.partyService.createRegulatoryProfile(req.user.companyId, dto);
     }
 
     // ─── Parties ────────────────────────────────────────────────
 
+    @UseGuards(JwtAuthGuard)
     @Get("parties")
-    listParties(@Query("companyId") companyId: string) {
-        return this.partyService.listParties(companyId);
+    listParties(@Request() req: any) {
+        return this.partyService.listParties(req.user.companyId);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Get("parties/:id")
-    getParty(@Param("id") partyId: string, @Query("companyId") companyId: string) {
-        return this.partyService.getParty(companyId, partyId);
+    getParty(@Request() req: any, @Param("id") partyId: string) {
+        return this.partyService.getParty(req.user.companyId, partyId);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Post("parties")
-    createParty(@Body() body: CreatePartyDto & { companyId: string }) {
-        const { companyId, ...dto } = body;
-        return this.partyService.createParty(companyId, dto);
+    createParty(@Request() req: any, @Body() dto: CreatePartyDto) {
+        return this.partyService.createParty(req.user.companyId, dto);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Patch("parties/:id")
     updateParty(
+        @Request() req: any,
         @Param("id") partyId: string,
-        @Body() body: UpdatePartyDto & { companyId: string },
+        @Body() dto: UpdatePartyDto,
     ) {
-        const { companyId, ...dto } = body;
-        return this.partyService.updateParty(companyId, partyId, dto);
+        return this.partyService.updateParty(req.user.companyId, partyId, dto);
     }
 
     // ─── Party Relations ────────────────────────────────────────
 
+    @UseGuards(JwtAuthGuard)
     @Get("parties/:id/relations")
     listPartyRelations(
+        @Request() req: any,
         @Param("id") partyId: string,
-        @Query("companyId") companyId: string,
     ) {
-        return this.partyService.listPartyRelations(companyId, partyId);
+        return this.partyService.listPartyRelations(req.user.companyId, partyId);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Post("party-relations")
-    createPartyRelation(@Body() body: CreatePartyRelationDto & { companyId: string }) {
-        const { companyId, ...dto } = body;
-        return this.partyService.createPartyRelation(companyId, dto);
+    createPartyRelation(@Request() req: any, @Body() dto: CreatePartyRelationDto) {
+        return this.partyService.createPartyRelation(req.user.companyId, dto);
     }
 }

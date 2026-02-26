@@ -26,7 +26,6 @@ type Party = {
 };
 
 export default function PartiesPage() {
-    // ─── State ────────────────────────────────────────────────
     const [companyId, setCompanyId] = useState<string | null>(null);
     const [parties, setParties] = useState<Party[]>([]);
     const [jurisdictions, setJurisdictions] = useState<Jurisdiction[]>([]);
@@ -34,7 +33,6 @@ export default function PartiesPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Форма Party
     const [showForm, setShowForm] = useState(false);
     const [formLegalName, setFormLegalName] = useState('');
     const [formJurisdictionId, setFormJurisdictionId] = useState('');
@@ -43,19 +41,23 @@ export default function PartiesPage() {
     const [formError, setFormError] = useState<string | null>(null);
     const [formSuccess, setFormSuccess] = useState<string | null>(null);
 
-    // Форма Jurisdiction
     const [showJurForm, setShowJurForm] = useState(false);
     const [jurCode, setJurCode] = useState('');
     const [jurName, setJurName] = useState('');
     const [jurSubmitting, setJurSubmitting] = useState(false);
+    const [jurError, setJurError] = useState<string | null>(null);
+    const [editingJurisdictionId, setEditingJurisdictionId] = useState<string | null>(null);
+    const [editJurCode, setEditJurCode] = useState('');
+    const [editJurName, setEditJurName] = useState('');
+    const [jurUpdating, setJurUpdating] = useState(false);
+    const [jurDeletingId, setJurDeletingId] = useState<string | null>(null);
 
-    // ─── Fetch ────────────────────────────────────────────────
-    const fetchParties = useCallback(async (cid: string) => {
+    const fetchParties = useCallback(async () => {
         try {
             const [partiesRes, jurRes, profilesRes] = await Promise.all([
-                api.partyManagement.parties(cid),
-                api.partyManagement.jurisdictions(cid),
-                api.partyManagement.regulatoryProfiles(cid),
+                api.partyManagement.parties(),
+                api.partyManagement.jurisdictions(),
+                api.partyManagement.regulatoryProfiles(),
             ]);
             setParties(partiesRes.data ?? []);
             setJurisdictions(jurRes.data ?? []);
@@ -70,12 +72,12 @@ export default function PartiesPage() {
         setLoading(true);
         setError(null);
 
-        api.partyManagement.tenant()
+        api.users.me()
             .then(res => {
-                const cid = res?.data?.id;
+                const cid = res?.data?.companyId;
                 if (!cid) throw new Error('Company not found');
                 if (active) setCompanyId(cid);
-                return fetchParties(cid);
+                return fetchParties();
             })
             .catch(() => {
                 if (active) setError('Не удалось определить компанию пользователя.');
@@ -87,7 +89,6 @@ export default function PartiesPage() {
         return () => { active = false; };
     }, [fetchParties]);
 
-    // ─── Handlers ─────────────────────────────────────────────
     const handleCreateParty = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!companyId) return;
@@ -100,7 +101,6 @@ export default function PartiesPage() {
                 legalName: formLegalName.trim(),
                 jurisdictionId: formJurisdictionId,
                 regulatoryProfileId: formRegulatoryProfileId || undefined,
-                companyId,
             });
             setFormSuccess('Контрагент создан');
             setFormLegalName('');
@@ -110,7 +110,7 @@ export default function PartiesPage() {
                 setShowForm(false);
                 setFormSuccess(null);
             }, 1200);
-            await fetchParties(companyId);
+            await fetchParties();
         } catch (err: unknown) {
             const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
             setFormError(msg ?? 'Ошибка создания контрагента');
@@ -123,28 +123,79 @@ export default function PartiesPage() {
         e.preventDefault();
         if (!companyId) return;
         setJurSubmitting(true);
+        setJurError(null);
         try {
             await api.partyManagement.createJurisdiction({
                 code: jurCode.trim().toUpperCase(),
                 name: jurName.trim(),
-                companyId,
             });
             setJurCode('');
             setJurName('');
             setShowJurForm(false);
-            await fetchParties(companyId);
-        } catch (error) {
-            console.error('Failed to create jurisdiction:', error);
-            // Игнорируем в UI, но пишем в лог
+            await fetchParties();
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            setJurError(msg ?? 'Ошибка создания юрисдикции');
         } finally {
             setJurSubmitting(false);
         }
     };
 
-    // ─── Render ───────────────────────────────────────────────
+    const startEditJurisdiction = (jurisdiction: Jurisdiction) => {
+        setJurError(null);
+        setEditingJurisdictionId(jurisdiction.id);
+        setEditJurCode(jurisdiction.code);
+        setEditJurName(jurisdiction.name);
+    };
+
+    const cancelEditJurisdiction = () => {
+        setEditingJurisdictionId(null);
+        setEditJurCode('');
+        setEditJurName('');
+    };
+
+    const handleUpdateJurisdiction = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingJurisdictionId) return;
+        setJurUpdating(true);
+        setJurError(null);
+        try {
+            await api.partyManagement.updateJurisdiction(editingJurisdictionId, {
+                code: editJurCode.trim().toUpperCase(),
+                name: editJurName.trim(),
+            });
+            cancelEditJurisdiction();
+            await fetchParties();
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            setJurError(msg ?? 'Ошибка обновления юрисдикции');
+        } finally {
+            setJurUpdating(false);
+        }
+    };
+
+    const handleDeleteJurisdiction = async (jurisdiction: Jurisdiction) => {
+        const ok = window.confirm(`Удалить юрисдикцию "${jurisdiction.code} — ${jurisdiction.name}"?`);
+        if (!ok) return;
+
+        setJurDeletingId(jurisdiction.id);
+        setJurError(null);
+        try {
+            await api.partyManagement.deleteJurisdiction(jurisdiction.id);
+            if (editingJurisdictionId === jurisdiction.id) {
+                cancelEditJurisdiction();
+            }
+            await fetchParties();
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            setJurError(msg ?? 'Ошибка удаления юрисдикции');
+        } finally {
+            setJurDeletingId(null);
+        }
+    };
+
     return (
         <div className="space-y-6" data-testid="parties-page">
-            {/* Header */}
             <div className="flex items-center justify-between">
                 <h1 className="text-xl font-medium text-gray-900">Контрагенты (Party)</h1>
                 <div className="flex gap-2">
@@ -165,28 +216,79 @@ export default function PartiesPage() {
                 </div>
             </div>
 
-            {/* Jurisdiction Form */}
             {showJurForm ? (
                 <Card className="rounded-2xl border-black/10">
                     <h2 className="mb-4 text-base font-medium text-gray-900">Управление юрисдикциями</h2>
 
-                    {/* Список текущих */}
                     {jurisdictions.length > 0 ? (
                         <div className="mb-4 flex flex-wrap gap-2">
                             {jurisdictions.map((j) => (
-                                <span
+                                <div
                                     key={j.id}
-                                    className="rounded-lg border border-black/10 bg-gray-50 px-3 py-1 text-sm font-normal text-gray-700"
+                                    className="flex items-center gap-2 rounded-lg border border-black/10 bg-gray-50 px-3 py-1 text-sm font-normal text-gray-700"
                                 >
                                     {j.code} — {j.name}
-                                </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => startEditJurisdiction(j)}
+                                        className="text-xs text-gray-600 underline underline-offset-2"
+                                    >
+                                        Изменить
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDeleteJurisdiction(j)}
+                                        disabled={jurDeletingId === j.id}
+                                        className="text-xs text-red-600 underline underline-offset-2 disabled:opacity-50"
+                                    >
+                                        {jurDeletingId === j.id ? 'Удаление...' : 'Удалить'}
+                                    </button>
+                                </div>
                             ))}
                         </div>
                     ) : (
                         <p className="mb-4 text-sm font-normal text-gray-500">Юрисдикции пока не созданы.</p>
                     )}
 
-                    {/* Форма добавления */}
+                    {editingJurisdictionId ? (
+                        <form onSubmit={handleUpdateJurisdiction} className="mb-4 flex items-end gap-3">
+                            <div className="flex-1">
+                                <label className="mb-1 block text-xs font-normal text-gray-500">Код</label>
+                                <input
+                                    type="text"
+                                    value={editJurCode}
+                                    onChange={(e) => setEditJurCode(e.target.value)}
+                                    className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal text-gray-800"
+                                    required
+                                />
+                            </div>
+                            <div className="flex-[2]">
+                                <label className="mb-1 block text-xs font-normal text-gray-500">Наименование</label>
+                                <input
+                                    type="text"
+                                    value={editJurName}
+                                    onChange={(e) => setEditJurName(e.target.value)}
+                                    className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal text-gray-800"
+                                    required
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={jurUpdating}
+                                className="rounded-2xl bg-black px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                            >
+                                {jurUpdating ? '...' : 'Сохранить'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={cancelEditJurisdiction}
+                                className="rounded-2xl border border-black/10 px-5 py-2 text-sm font-medium text-gray-700"
+                            >
+                                Отмена
+                            </button>
+                        </form>
+                    ) : null}
+
                     <form onSubmit={handleCreateJurisdiction} className="flex items-end gap-3">
                         <div className="flex-1">
                             <label className="mb-1 block text-xs font-normal text-gray-500">Код</label>
@@ -218,10 +320,10 @@ export default function PartiesPage() {
                             {jurSubmitting ? '...' : 'Добавить'}
                         </button>
                     </form>
+                    {jurError ? <p className="mt-3 text-sm font-normal text-red-700">{jurError}</p> : null}
                 </Card>
             ) : null}
 
-            {/* Party Create Form */}
             {showForm ? (
                 <Card className="rounded-2xl border-black/10">
                     <h2 className="mb-4 text-base font-medium text-gray-900">Новый контрагент</h2>
@@ -241,11 +343,8 @@ export default function PartiesPage() {
                         </div>
                     ) : (
                         <form onSubmit={handleCreateParty} className="space-y-4">
-                            {/* Legal Name */}
                             <div>
-                                <label className="mb-1 block text-xs font-normal text-gray-500">
-                                    Юридическое наименование *
-                                </label>
+                                <label className="mb-1 block text-xs font-normal text-gray-500">Юридическое наименование *</label>
                                 <input
                                     type="text"
                                     value={formLegalName}
@@ -256,11 +355,8 @@ export default function PartiesPage() {
                                 />
                             </div>
 
-                            {/* Jurisdiction */}
                             <div>
-                                <label className="mb-1 block text-xs font-normal text-gray-500">
-                                    Юрисдикция *
-                                </label>
+                                <label className="mb-1 block text-xs font-normal text-gray-500">Юрисдикция *</label>
                                 <select
                                     value={formJurisdictionId}
                                     onChange={(e) => setFormJurisdictionId(e.target.value)}
@@ -274,11 +370,8 @@ export default function PartiesPage() {
                                 </select>
                             </div>
 
-                            {/* Regulatory Profile (optional) */}
                             <div>
-                                <label className="mb-1 block text-xs font-normal text-gray-500">
-                                    Регуляторный профиль
-                                </label>
+                                <label className="mb-1 block text-xs font-normal text-gray-500">Регуляторный профиль</label>
                                 <select
                                     value={formRegulatoryProfileId}
                                     onChange={(e) => setFormRegulatoryProfileId(e.target.value)}
@@ -291,15 +384,9 @@ export default function PartiesPage() {
                                 </select>
                             </div>
 
-                            {/* Errors / Success */}
-                            {formError ? (
-                                <p className="text-sm font-normal text-red-700">{formError}</p>
-                            ) : null}
-                            {formSuccess ? (
-                                <p className="text-sm font-normal text-emerald-700">{formSuccess}</p>
-                            ) : null}
+                            {formError ? <p className="text-sm font-normal text-red-700">{formError}</p> : null}
+                            {formSuccess ? <p className="text-sm font-normal text-emerald-700">{formSuccess}</p> : null}
 
-                            {/* Submit */}
                             <button
                                 type="submit"
                                 disabled={formSubmitting}
@@ -312,11 +399,8 @@ export default function PartiesPage() {
                 </Card>
             ) : null}
 
-            {/* Party Table */}
             <Card className="rounded-2xl border-black/10">
-                {loading ? (
-                    <p className="text-sm font-normal text-gray-500">Загрузка контрагентов...</p>
-                ) : null}
+                {loading ? <p className="text-sm font-normal text-gray-500">Загрузка контрагентов...</p> : null}
 
                 {!loading && error ? (
                     <div className="space-y-3">
@@ -332,13 +416,9 @@ export default function PartiesPage() {
                 ) : null}
 
                 {!loading && !error && parties.length === 0 ? (
-                    <div className="space-y-3 text-center py-8">
-                        <p className="text-sm font-normal text-gray-500">
-                            Контрагенты ещё не созданы.
-                        </p>
-                        <p className="text-xs font-normal text-gray-400">
-                            Нажмите «+ Добавить контрагента» чтобы начать.
-                        </p>
+                    <div className="space-y-3 py-8 text-center">
+                        <p className="text-sm font-normal text-gray-500">Контрагенты ещё не созданы.</p>
+                        <p className="text-xs font-normal text-gray-400">Нажмите «+ Добавить контрагента» чтобы начать.</p>
                     </div>
                 ) : null}
 
@@ -358,16 +438,13 @@ export default function PartiesPage() {
                                     <tr
                                         key={party.id}
                                         data-testid={`party-row-${party.id}`}
-                                        className="border-b border-black/5 transition-colors hover:bg-gray-50 cursor-pointer"
+                                        className="cursor-pointer border-b border-black/5 transition-colors hover:bg-gray-50"
                                     >
-                                        <td className="px-3 py-2 font-normal text-gray-800">
-                                            {party.legalName}
-                                        </td>
+                                        <td className="px-3 py-2 font-normal text-gray-800">{party.legalName}</td>
                                         <td className="px-3 py-2 font-normal">
                                             <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs font-normal text-gray-600">
                                                 {party.jurisdiction.code}
-                                            </span>
-                                            {' '}
+                                            </span>{' '}
                                             {party.jurisdiction.name}
                                         </td>
                                         <td className="px-3 py-2 font-normal text-gray-600">
@@ -386,7 +463,6 @@ export default function PartiesPage() {
                 ) : null}
             </Card>
 
-            {/* Stats */}
             {!loading && !error ? (
                 <div className="flex gap-4">
                     <div className="rounded-2xl border border-black/10 bg-white px-4 py-3">

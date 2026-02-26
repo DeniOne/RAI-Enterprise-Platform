@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
 import { CreatePartyDto, UpdatePartyDto, CreatePartyRelationDto } from "../dto/create-party.dto";
-import { CreateJurisdictionDto } from "../dto/create-jurisdiction.dto";
+import { CreateJurisdictionDto, UpdateJurisdictionDto } from "../dto/create-jurisdiction.dto";
 import { CreateRegulatoryProfileDto } from "../dto/create-regulatory-profile.dto";
 
 @Injectable()
@@ -16,7 +16,11 @@ export class PartyService {
             select: { id: true, name: true },
         });
         if (!company) {
-            throw new NotFoundException('No company found in database');
+            console.warn('[PartyService] No company found in DB. Using fallback.');
+            return {
+                id: '00000000-0000-0000-0000-000000000001',
+                name: 'Dev Company (Fallback)',
+            };
         }
         return company;
     }
@@ -41,10 +45,65 @@ export class PartyService {
         return this.prisma.jurisdiction.create({
             data: {
                 companyId,
-                code: dto.code,
+                code: dto.code.trim().toUpperCase(),
                 name: dto.name,
             },
         });
+    }
+
+    async updateJurisdiction(companyId: string, jurisdictionId: string, dto: UpdateJurisdictionDto) {
+        const existing = await this.prisma.jurisdiction.findFirst({
+            where: { companyId, id: jurisdictionId },
+        });
+        if (!existing) {
+            throw new NotFoundException("Jurisdiction not found");
+        }
+
+        const nextCode = dto.code?.trim().toUpperCase();
+        if (nextCode && nextCode !== existing.code) {
+            const duplicate = await this.prisma.jurisdiction.findFirst({
+                where: { companyId, code: nextCode },
+            });
+            if (duplicate) {
+                throw new BadRequestException(`Jurisdiction with code "${nextCode}" already exists`);
+            }
+        }
+
+        return this.prisma.jurisdiction.update({
+            where: { id: jurisdictionId },
+            data: {
+                ...(nextCode !== undefined && { code: nextCode }),
+                ...(dto.name !== undefined && { name: dto.name }),
+            },
+        });
+    }
+
+    async deleteJurisdiction(companyId: string, jurisdictionId: string) {
+        const existing = await this.prisma.jurisdiction.findFirst({
+            where: { companyId, id: jurisdictionId },
+        });
+        if (!existing) {
+            throw new NotFoundException("Jurisdiction not found");
+        }
+
+        const [profilesCount, partiesCount, contractsCount] = await Promise.all([
+            this.prisma.regulatoryProfile.count({ where: { companyId, jurisdictionId } }),
+            this.prisma.party.count({ where: { companyId, jurisdictionId } }),
+            this.prisma.commerceContract.count({ where: { companyId, jurisdictionId } }),
+        ]);
+
+        const linkedCount = profilesCount + partiesCount + contractsCount;
+        if (linkedCount > 0) {
+            throw new BadRequestException(
+                "Cannot delete jurisdiction: it is used by parties, regulatory profiles, or contracts",
+            );
+        }
+
+        await this.prisma.jurisdiction.delete({
+            where: { id: jurisdictionId },
+        });
+
+        return { ok: true };
     }
 
     // ─── Regulatory Profiles ────────────────────────────────────

@@ -13,6 +13,7 @@ import { AuthService } from "./auth.service";
 import { TelegramAuthService } from "./telegram-auth.service";
 import { AuthGuard } from "@nestjs/passport";
 import { JwtAuthGuard } from "./jwt-auth.guard";
+import { DevModeService } from "./dev-mode.service";
 import {
   ApiTags,
   ApiOperation,

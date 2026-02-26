@@ -1,5 +1,11 @@
 ﻿# Progress: RAI_EP
 
+## Milestone 41: Auto-Onboarding & Dev Mode Guard - DONE ✅
+**Дата:** 2026-02-26
+- [x] **Dev Mode Guard (`AUTH_DISABLED=true`)**: Реализован умный обход JWT (`JwtAuthGuard` + `DevModeService`) для локальной разработки без авторизации.
+- [x] **Fallback Tenant**: Механизм возврата фиктивной компании `000...001` при её отсутствии в БД, предотвращающий 500 ошибку на чистой базе.
+- [x] **Super Admin Auto-Onboarding**: Автосоздание корневого Tenant'а "RAI Enterprise (Root)" и УЗ администратора при входе владельца (Telegram ID 441610858) через Telegram-бота. 
+
 ## Milestone 40: Модуль "Исследования" + LANGUAGE_POLICY - DONE ✅
 **Дата:** 2026-02-25
 - [x] Реализован полный контур модуля `Исследования`: backend (FSM, War Room, API), frontend (маршруты, витрина, triage, detail-экраны).

@@ -9,3 +9,15 @@ export class CreateJurisdictionDto {
     @IsNotEmpty()
     name!: string;
 }
+
+export class UpdateJurisdictionDto {
+    @IsString()
+    @IsOptional()
+    @IsNotEmpty()
+    code?: string;
+
+    @IsString()
+    @IsOptional()
+    @IsNotEmpty()
+    name?: string;
+}

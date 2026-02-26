@@ -1,4 +1,5 @@
-﻿import { Body, Controller, Get, Param, Post } from "@nestjs/common";
+﻿import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
+import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { BillingService } from "./services/billing.service";
 import { CommerceContractService } from "./services/commerce-contract.service";
 import { FulfillmentService } from "./services/fulfillment.service";
@@ -9,12 +10,13 @@ import { CreateInvoiceFromFulfillmentDto } from "./dto/create-invoice-from-fulfi
 import { CreatePaymentAllocationDto, CreatePaymentDto } from "./dto/create-payment.dto";
 
 @Controller("commerce")
+@UseGuards(JwtAuthGuard)
 export class CommerceController {
   constructor(
     private readonly contractService: CommerceContractService,
     private readonly fulfillmentService: FulfillmentService,
     private readonly billingService: BillingService,
-  ) {}
+  ) { }
 
   @Post("contracts")
   createContract(@Body() dto: CreateCommerceContractDto) {
