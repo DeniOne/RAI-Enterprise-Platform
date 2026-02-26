@@ -36,8 +36,8 @@ export default function CreateContractPage() {
 
     useEffect(() => {
         Promise.all([
-            api.partyManagement.jurisdictions(companyId),
-            api.partyManagement.parties(companyId),
+            api.partyManagement.jurisdictions(),
+            api.partyManagement.parties(),
         ]).then(([jurRes, partiesRes]) => {
             setJurisdictions(jurRes.data ?? []);
             setParties(partiesRes.data ?? []);

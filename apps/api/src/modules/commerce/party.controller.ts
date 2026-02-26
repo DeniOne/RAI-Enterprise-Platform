@@ -1,9 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, Request } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, Request } from "@nestjs/common";
 import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { PartyService } from "./services/party.service";
 import { CreatePartyDto, UpdatePartyDto, CreatePartyRelationDto } from "./dto/create-party.dto";
 import { CreateJurisdictionDto, UpdateJurisdictionDto } from "./dto/create-jurisdiction.dto";
-import { CreateRegulatoryProfileDto } from "./dto/create-regulatory-profile.dto";
+import {
+    CreateRegulatoryProfileDto,
+    UpdateRegulatoryProfileDto,
+    ListRegulatoryProfilesQueryDto,
+} from "./dto/create-regulatory-profile.dto";
 
 @Controller("commerce")
 export class PartyController {
@@ -50,14 +54,40 @@ export class PartyController {
 
     @UseGuards(JwtAuthGuard)
     @Get("regulatory-profiles")
-    listRegulatoryProfiles(@Request() req: any) {
-        return this.partyService.listRegulatoryProfiles(req.user.companyId);
+    listRegulatoryProfiles(
+        @Request() req: any,
+        @Query() query: ListRegulatoryProfilesQueryDto,
+    ) {
+        // Нормализуем булевые query-params (из строки в boolean)
+        const normalized = {
+            ...query,
+            isSystemPreset: query.isSystemPreset !== undefined
+                ? String(query.isSystemPreset) === "true"
+                : undefined,
+        };
+        return this.partyService.listRegulatoryProfiles(req.user.companyId, normalized);
     }
 
     @UseGuards(JwtAuthGuard)
     @Post("regulatory-profiles")
     createRegulatoryProfile(@Request() req: any, @Body() dto: CreateRegulatoryProfileDto) {
         return this.partyService.createRegulatoryProfile(req.user.companyId, dto);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Patch("regulatory-profiles/:id")
+    updateRegulatoryProfile(
+        @Request() req: any,
+        @Param("id") profileId: string,
+        @Body() dto: UpdateRegulatoryProfileDto,
+    ) {
+        return this.partyService.updateRegulatoryProfile(req.user.companyId, profileId, dto);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete("regulatory-profiles/:id")
+    deleteRegulatoryProfile(@Request() req: any, @Param("id") profileId: string) {
+        return this.partyService.deleteRegulatoryProfile(req.user.companyId, profileId);
     }
 
     // ─── Parties ────────────────────────────────────────────────

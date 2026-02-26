@@ -1,8 +1,14 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
 import { CreatePartyDto, UpdatePartyDto, CreatePartyRelationDto } from "../dto/create-party.dto";
 import { CreateJurisdictionDto, UpdateJurisdictionDto } from "../dto/create-jurisdiction.dto";
-import { CreateRegulatoryProfileDto } from "../dto/create-regulatory-profile.dto";
+import {
+    CreateRegulatoryProfileDto,
+    UpdateRegulatoryProfileDto,
+    ListRegulatoryProfilesQueryDto,
+    normalizeVatRate,
+    RegulatoryRulesJson,
+} from "../dto/create-regulatory-profile.dto";
 
 @Injectable()
 export class PartyService {
@@ -108,12 +114,32 @@ export class PartyService {
 
     // ─── Regulatory Profiles ────────────────────────────────────
 
-    async listRegulatoryProfiles(companyId: string) {
+    async listRegulatoryProfiles(companyId: string, query?: ListRegulatoryProfilesQueryDto) {
+        const where: Record<string, unknown> = { companyId };
+
+        if (query?.jurisdictionId) {
+            where.jurisdictionId = query.jurisdictionId;
+        }
+        if (query?.isSystemPreset !== undefined) {
+            where.isSystemPreset = query.isSystemPreset;
+        }
+
         return this.prisma.regulatoryProfile.findMany({
-            where: { companyId },
+            where,
             include: { jurisdiction: true },
-            orderBy: { code: "asc" },
+            orderBy: [{ isSystemPreset: "desc" }, { code: "asc" }],
         });
+    }
+
+    private normalizeRulesJson(raw: CreateRegulatoryProfileDto["rulesJson"]): RegulatoryRulesJson | undefined {
+        if (!raw) return undefined;
+        return {
+            ...raw,
+            vatRate: normalizeVatRate(raw.vatRate),
+            vatRateReduced: raw.vatRateReduced !== undefined ? normalizeVatRate(raw.vatRateReduced) : undefined,
+            vatRateZero: raw.vatRateZero !== undefined ? normalizeVatRate(raw.vatRateZero) : undefined,
+            crossBorderVatRate: normalizeVatRate(raw.crossBorderVatRate),
+        };
     }
 
     async createRegulatoryProfile(companyId: string, dto: CreateRegulatoryProfileDto) {
@@ -128,19 +154,97 @@ export class PartyService {
             where: { companyId, code: dto.code },
         });
         if (existing) {
-            throw new BadRequestException(`RegulatoryProfile with code "${dto.code}" already exists`);
+            throw new BadRequestException(`Regulatory profile with code "${dto.code}" already exists`);
         }
+
+        const normalizedRules = this.normalizeRulesJson(dto.rulesJson);
 
         return this.prisma.regulatoryProfile.create({
             data: {
                 companyId,
-                code: dto.code,
+                code: dto.code.trim().toUpperCase(),
                 name: dto.name,
                 jurisdictionId: dto.jurisdictionId,
-                rulesJson: dto.rulesJson ?? undefined,
+                rulesJson: normalizedRules ?? undefined,
             },
             include: { jurisdiction: true },
         });
+    }
+
+    async updateRegulatoryProfile(
+        companyId: string,
+        profileId: string,
+        dto: UpdateRegulatoryProfileDto,
+    ) {
+        const existing = await this.prisma.regulatoryProfile.findFirst({
+            where: { companyId, id: profileId },
+        });
+        if (!existing) {
+            throw new NotFoundException("Regulatory profile not found");
+        }
+
+        // Системный пресет: запрещаем смену code
+        if ((existing as any).isSystemPreset && dto.code && dto.code !== existing.code) {
+            throw new ForbiddenException("Cannot change code of a system preset");
+        }
+
+        // Проверяем уникальность нового кода
+        const nextCode = dto.code?.trim().toUpperCase();
+        if (nextCode && nextCode !== existing.code) {
+            const duplicate = await this.prisma.regulatoryProfile.findFirst({
+                where: { companyId, code: nextCode },
+            });
+            if (duplicate) {
+                throw new BadRequestException(`Regulatory profile with code "${nextCode}" already exists`);
+            }
+        }
+
+        if (dto.jurisdictionId) {
+            const jur = await this.prisma.jurisdiction.findFirst({
+                where: { companyId, id: dto.jurisdictionId },
+            });
+            if (!jur) throw new BadRequestException("Jurisdiction not found");
+        }
+
+        const normalizedRules = dto.rulesJson ? this.normalizeRulesJson(dto.rulesJson) : undefined;
+
+        return this.prisma.regulatoryProfile.update({
+            where: { id: profileId },
+            data: {
+                ...(nextCode !== undefined && { code: nextCode }),
+                ...(dto.name !== undefined && { name: dto.name }),
+                ...(dto.jurisdictionId !== undefined && { jurisdictionId: dto.jurisdictionId }),
+                ...(normalizedRules !== undefined && { rulesJson: normalizedRules }),
+            },
+            include: { jurisdiction: true },
+        });
+    }
+
+    async deleteRegulatoryProfile(companyId: string, profileId: string) {
+        const existing = await this.prisma.regulatoryProfile.findFirst({
+            where: { companyId, id: profileId },
+        });
+        if (!existing) {
+            throw new NotFoundException("Regulatory profile not found");
+        }
+
+        // Системный пресет — запрет удаления
+        if ((existing as any).isSystemPreset) {
+            throw new ForbiddenException("Cannot delete a system preset regulatory profile");
+        }
+
+        // Проверяем привязанных контрагентов
+        const partiesCount = await this.prisma.party.count({
+            where: { companyId, regulatoryProfileId: profileId },
+        });
+        if (partiesCount > 0) {
+            throw new BadRequestException(
+                `Cannot delete regulatory profile: it is used by ${partiesCount} party(ies)`,
+            );
+        }
+
+        await this.prisma.regulatoryProfile.delete({ where: { id: profileId } });
+        return { ok: true };
     }
 
     // ─── Parties ────────────────────────────────────────────────

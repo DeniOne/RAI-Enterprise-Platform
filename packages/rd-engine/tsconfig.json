@@ -13,12 +13,7 @@
             "jest",
             "node"
         ],
-        "baseUrl": ".",
-        "paths": {
-            "@rai/prisma-client": [
-                "../prisma-client/src"
-            ]
-        }
+        "baseUrl": "."
     },
     "include": [
         "src/**/*"

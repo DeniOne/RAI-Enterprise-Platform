@@ -1758,6 +1758,11 @@ exports.Prisma.RegulatoryProfileScalarFieldEnum = {
   name: 'name',
   jurisdictionId: 'jurisdictionId',
   rulesJson: 'rulesJson',
+  isSystemPreset: 'isSystemPreset',
+  effectiveFrom: 'effectiveFrom',
+  effectiveTo: 'effectiveTo',
+  vatRate: 'vatRate',
+  currencyCode: 'currencyCode',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

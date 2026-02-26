@@ -29,7 +29,7 @@ export default function CreatePaymentPage() {
     const [success, setSuccess] = useState(false);
 
     useEffect(() => {
-        api.partyManagement.parties(companyId)
+        api.partyManagement.parties()
             .then((res) => setParties(res.data ?? []))
             .finally(() => setLoadingRef(false));
     }, [companyId]);

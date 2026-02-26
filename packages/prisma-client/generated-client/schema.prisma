@@ -4143,6 +4143,12 @@ model RegulatoryProfile {
   jurisdiction   Jurisdiction @relation(fields: [companyId, jurisdictionId], references: [companyId, id])
   rulesJson      Json?
 
+  isSystemPreset Boolean   @default(false)
+  effectiveFrom  DateTime?
+  effectiveTo    DateTime?
+  vatRate        Decimal?
+  currencyCode   String?
+
   parties           Party[]
   contracts         CommerceContract[]
   fulfillmentEvents CommerceFulfillmentEvent[]

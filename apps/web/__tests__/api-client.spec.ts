@@ -27,14 +27,14 @@ jest.mock('@/lib/api', () => {
             company: (companyId: string) => apiClient.get(`/users/company/${encodeURIComponent(companyId)}`),
         },
         partyManagement: {
-            jurisdictions: (companyId: string) => apiClient.get('/commerce/jurisdictions', { params: { companyId } }),
-            createJurisdiction: (data: { code: string; name: string; companyId: string }) => apiClient.post('/commerce/jurisdictions', data),
-            regulatoryProfiles: (companyId: string) => apiClient.get('/commerce/regulatory-profiles', { params: { companyId } }),
-            createRegulatoryProfile: (data: { code: string; name: string; jurisdictionId: string; companyId: string }) => apiClient.post('/commerce/regulatory-profiles', data),
-            parties: (companyId: string) => apiClient.get('/commerce/parties', { params: { companyId } }),
-            partyDetails: (partyId: string, companyId: string) => apiClient.get(`/commerce/parties/${encodeURIComponent(partyId)}`, { params: { companyId } }),
-            createParty: (data: { legalName: string; jurisdictionId: string; regulatoryProfileId?: string; companyId: string }) => apiClient.post('/commerce/parties', data),
-            updateParty: (partyId: string, data: { companyId: string }) => apiClient.patch(`/commerce/parties/${encodeURIComponent(partyId)}`, data),
+            jurisdictions: () => apiClient.get('/commerce/jurisdictions'),
+            createJurisdiction: (data: { code: string; name: string }) => apiClient.post('/commerce/jurisdictions', data),
+            regulatoryProfiles: (params?: { jurisdictionId?: string; isSystemPreset?: boolean }) => apiClient.get('/commerce/regulatory-profiles', { params }),
+            createRegulatoryProfile: (data: { code: string; name: string; jurisdictionId: string }) => apiClient.post('/commerce/regulatory-profiles', data),
+            parties: () => apiClient.get('/commerce/parties'),
+            partyDetails: (partyId: string) => apiClient.get(`/commerce/parties/${encodeURIComponent(partyId)}`),
+            createParty: (data: { legalName: string; jurisdictionId: string; regulatoryProfileId?: string }) => apiClient.post('/commerce/parties', data),
+            updateParty: (partyId: string, data: { legalName?: string }) => apiClient.patch(`/commerce/parties/${encodeURIComponent(partyId)}`, data),
             partyRelations: (partyId: string, companyId: string) => apiClient.get(`/commerce/parties/${encodeURIComponent(partyId)}/relations`, { params: { companyId } }),
             createPartyRelation: (data: { sourcePartyId: string; targetPartyId: string; relationType: string; validFrom: string; companyId: string }) => apiClient.post('/commerce/party-relations', data),
         },
@@ -72,40 +72,40 @@ describe('API Client — ШАГ 2: Все эндпоинты Commerce', () => {
 
     describe('partyManagement', () => {
         it('должен запрашивать список юрисдикций GET /commerce/jurisdictions', async () => {
-            await api.partyManagement.jurisdictions('cmp-1');
-            expect(apiClient.get).toHaveBeenCalledWith('/commerce/jurisdictions', { params: { companyId: 'cmp-1' } });
+            await api.partyManagement.jurisdictions();
+            expect(apiClient.get).toHaveBeenCalledWith('/commerce/jurisdictions');
         });
 
         it('должен создавать юрисдикцию POST /commerce/jurisdictions', async () => {
-            const data = { code: 'RU', name: 'Российская Федерация', companyId: 'cmp-1' };
+            const data = { code: 'RU', name: 'Российская Федерация' };
             await api.partyManagement.createJurisdiction(data);
             expect(apiClient.post).toHaveBeenCalledWith('/commerce/jurisdictions', data);
         });
 
         it('должен запрашивать список регуляторных профилей', async () => {
-            await api.partyManagement.regulatoryProfiles('cmp-1');
-            expect(apiClient.get).toHaveBeenCalledWith('/commerce/regulatory-profiles', { params: { companyId: 'cmp-1' } });
+            await api.partyManagement.regulatoryProfiles();
+            expect(apiClient.get).toHaveBeenCalledWith('/commerce/regulatory-profiles', { params: undefined });
         });
 
         it('должен создавать регуляторный профиль', async () => {
-            const data = { code: 'AGRO', name: 'Аграрный', jurisdictionId: 'jur-1', companyId: 'cmp-1' };
+            const data = { code: 'AGRO', name: 'Аграрный', jurisdictionId: 'jur-1' };
             await api.partyManagement.createRegulatoryProfile(data);
             expect(apiClient.post).toHaveBeenCalledWith('/commerce/regulatory-profiles', data);
         });
 
         it('должен запрашивать список контрагентов (Party)', async () => {
-            await api.partyManagement.parties('cmp-1');
-            expect(apiClient.get).toHaveBeenCalledWith('/commerce/parties', { params: { companyId: 'cmp-1' } });
+            await api.partyManagement.parties();
+            expect(apiClient.get).toHaveBeenCalledWith('/commerce/parties');
         });
 
         it('должен создавать контрагента (Party)', async () => {
-            const data = { legalName: 'ООО Рассвет', jurisdictionId: 'jur-1', companyId: 'cmp-1' };
+            const data = { legalName: 'ООО Рассвет', jurisdictionId: 'jur-1' };
             await api.partyManagement.createParty(data);
             expect(apiClient.post).toHaveBeenCalledWith('/commerce/parties', data);
         });
 
         it('должен обновлять контрагента (Party)', async () => {
-            const data = { companyId: 'cmp-1' };
+            const data = { legalName: 'ООО Закат' };
             await api.partyManagement.updateParty('party-1', data);
             expect(apiClient.patch).toHaveBeenCalledWith('/commerce/parties/party-1', data);
         });
@@ -145,7 +145,7 @@ describe('API Client — ШАГ 2: Все эндпоинты Commerce', () => {
 
     describe('commerce — A.2 Обязательства', () => {
         it('должен создавать обязательство POST /commerce/obligations', async () => {
-            const data = { contractId: 'c-1', type: 'DELIVER' };
+            const data = { contractId: 'c-1', type: 'DELIVER' as const };
             await api.commerce.createObligation(data);
             expect(apiClient.post).toHaveBeenCalledWith('/commerce/obligations', data);
         });

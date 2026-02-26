@@ -68,10 +68,27 @@ export const api = {
             apiClient.delete(`/commerce/jurisdictions/${encodeURIComponent(jurisdictionId)}`),
 
         // Регуляторные профили
-        regulatoryProfiles: () =>
-            apiClient.get('/commerce/regulatory-profiles'),
-        createRegulatoryProfile: (data: { code: string; name: string; jurisdictionId: string }) =>
-            apiClient.post('/commerce/regulatory-profiles', data),
+        regulatoryProfiles: (params?: { jurisdictionId?: string; isSystemPreset?: boolean }) =>
+            apiClient.get('/commerce/regulatory-profiles', { params }),
+        createRegulatoryProfile: (data: {
+            code: string; name: string; jurisdictionId: string;
+            rulesJson?: {
+                vatRate: number; vatRateReduced?: number; vatRateZero?: number;
+                crossBorderVatRate: number; vatPayerStatus: string; supplyType: string;
+                currencyCode: string; effectiveFrom: string; effectiveTo?: string; notes?: string;
+            };
+        }) => apiClient.post('/commerce/regulatory-profiles', data),
+        updateRegulatoryProfile: (profileId: string, data: {
+            name?: string; code?: string; jurisdictionId?: string;
+            rulesJson?: {
+                vatRate?: number; vatRateReduced?: number; vatRateZero?: number;
+                crossBorderVatRate?: number; vatPayerStatus?: string; supplyType?: string;
+                currencyCode?: string; effectiveFrom?: string; effectiveTo?: string; notes?: string;
+            };
+        }) => apiClient.patch(`/commerce/regulatory-profiles/${encodeURIComponent(profileId)}`, data),
+        deleteRegulatoryProfile: (profileId: string) =>
+            apiClient.delete(`/commerce/regulatory-profiles/${encodeURIComponent(profileId)}`),
+
 
         // Party (контрагенты)
         parties: () =>
