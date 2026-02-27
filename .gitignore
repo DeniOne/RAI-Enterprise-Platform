@@ -17,7 +17,8 @@ out/
 generated/
 *.db
 *.db-journal
-packages/prisma-client/generated-client/query_engine-windows.dll.node.tmp*
+packages/prisma-client/generated-client/
+packages/prisma-client/node_modules/
 
 # Environment
 .env
