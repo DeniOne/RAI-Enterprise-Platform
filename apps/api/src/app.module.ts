@@ -138,6 +138,7 @@ import { TenantContextModule } from "./shared/tenant-context/tenant-context.modu
       autoSchemaFile: join(process.cwd(), "src/schema.gql"),
       sortSchema: true,
       playground: true,
+      context: ({ req, res }) => ({ req, res }),
     }),
   ],
   providers: [

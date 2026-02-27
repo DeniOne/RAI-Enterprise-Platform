@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
+import { PartyForm } from './PartyForm';
 
 // ─── Типы ─────────────────────────────────────────────────────────────────────
 
@@ -35,6 +36,7 @@ type Party = {
     legalName: string;
     jurisdiction: Jurisdiction;
     regulatoryProfile: RegulatoryProfile | null;
+    registrationData?: unknown;
     createdAt: string;
 };
 
@@ -59,9 +61,7 @@ export default function PartiesPage() {
 
     // ─── Party form ───────────────────────────────────────────────
     const [showPartyForm, setShowPartyForm] = useState(false);
-    const [partyLegalName, setPartyLegalName] = useState('');
-    const [partyJurisdictionId, setPartyJurisdictionId] = useState('');
-    const [partyProfileId, setPartyProfileId] = useState('');
+    const [editingPartyId, setEditingPartyId] = useState<string | null>(null);
     const [partySubmitting, setPartySubmitting] = useState(false);
     const [partyError, setPartyError] = useState<string | null>(null);
     const [partySuccess, setPartySuccess] = useState<string | null>(null);
@@ -131,21 +131,35 @@ export default function PartiesPage() {
 
     // ─── Party CRUD ───────────────────────────────────────────────
 
-    const handleCreateParty = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleCreateParty = async (values: {
+        legalName: string;
+        jurisdictionId: string;
+        regulatoryProfileId?: string;
+        registrationData?: unknown;
+    }) => {
         setPartySubmitting(true); setPartyError(null); setPartySuccess(null);
         try {
-            await api.partyManagement.createParty({
-                legalName: partyLegalName.trim(),
-                jurisdictionId: partyJurisdictionId,
-                regulatoryProfileId: partyProfileId || undefined,
-            });
+            const payload = {
+                legalName: values.legalName.trim(),
+                jurisdictionId: values.jurisdictionId,
+                regulatoryProfileId: values.regulatoryProfileId || undefined,
+                registrationData: values.registrationData,
+            };
+            if (editingPartyId) await api.partyManagement.updateParty(editingPartyId, payload);
+            else await api.partyManagement.createParty(payload);
             setPartySuccess('Контрагент создан');
-            setPartyLegalName(''); setPartyJurisdictionId(''); setPartyProfileId('');
+            setEditingPartyId(null);
             setTimeout(() => { setShowPartyForm(false); setPartySuccess(null); }, 1200);
             await fetchAll();
         } catch (err) { setPartyError(errMsg(err)); }
         finally { setPartySubmitting(false); }
+    };
+
+    const openEditParty = (party: Party) => {
+        setEditingPartyId(party.id);
+        setPartyError(null);
+        setPartySuccess(null);
+        setShowPartyForm(true);
     };
 
     // ─── Jurisdiction CRUD ────────────────────────────────────────
@@ -290,7 +304,14 @@ export default function PartiesPage() {
                     {tab === 'parties' && (
                         <button
                             type="button"
-                            onClick={() => setShowPartyForm(!showPartyForm)}
+                            onClick={() => {
+                                if (!showPartyForm) {
+                                    setEditingPartyId(null);
+                                    setPartyError(null);
+                                    setPartySuccess(null);
+                                }
+                                setShowPartyForm(!showPartyForm);
+                            }}
                             className="rounded-2xl bg-black px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800"
                         >
                             {showPartyForm ? 'Отмена' : '+ Добавить контрагента'}
@@ -343,7 +364,23 @@ export default function PartiesPage() {
                             {jurisdictions.length === 0 ? (
                                 <p className="text-sm text-amber-700">⚠ Сначала создайте юрисдикцию на вкладке «Юрисдикции».</p>
                             ) : (
-                                <form onSubmit={handleCreateParty} className="space-y-4">
+                                <>
+                                    <PartyForm
+                                        party={editingPartyId ? parties.find((p) => p.id === editingPartyId) : null}
+                                        jurisdictions={jurisdictions}
+                                        regulatoryProfiles={regulatoryProfiles}
+                                        onSubmit={handleCreateParty}
+                                        onCancel={() => {
+                                            setShowPartyForm(false);
+                                            setEditingPartyId(null);
+                                            setPartyError(null);
+                                            setPartySuccess(null);
+                                        }}
+                                        isSubmitting={partySubmitting}
+                                        error={partyError}
+                                    />
+                                    {partySuccess && <p className="text-sm text-emerald-700">{partySuccess}</p>}
+                                    {/* legacy short form
                                     <div>
                                         <label className="mb-1 block text-xs text-gray-500">Юридическое наименование *</label>
                                         <input
@@ -379,6 +416,8 @@ export default function PartiesPage() {
                                         {partySubmitting ? 'Создание...' : 'Создать контрагента'}
                                     </button>
                                 </form>
+                                    */}
+                                </>
                             )}
                         </Card>
                     )}
@@ -405,7 +444,8 @@ export default function PartiesPage() {
                                     <tbody>
                                         {parties.map(party => (
                                             <tr key={party.id} data-testid={`party-row-${party.id}`}
-                                                className="border-b border-black/5 hover:bg-gray-50">
+                                                className="border-b border-black/5 hover:bg-gray-50 cursor-pointer"
+                                                onClick={() => openEditParty(party)}>
                                                 <td className="px-3 py-2 font-normal">{party.legalName}</td>
                                                 <td className="px-3 py-2">
                                                     <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-600">

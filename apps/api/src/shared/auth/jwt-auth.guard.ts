@@ -13,12 +13,12 @@ import { DevModeService } from "./dev-mode.service";
  */
 @Injectable()
 export class JwtAuthGuard extends AuthGuard("jwt") {
-    constructor(private readonly devModeService: DevModeService) {
+    constructor(private readonly devModeService?: DevModeService) {
         super();
     }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
-        if (this.devModeService.isDevMode()) {
+        if (this.devModeService?.isDevMode?.()) {
             // DEV MODE: пропускаем JWT, подставляем dev-пользователя
             const request = context.switchToHttp().getRequest();
             request.user = await this.devModeService.getDevUser();

@@ -321,6 +321,7 @@ export class PartyService {
                 legalName: dto.legalName,
                 jurisdictionId: dto.jurisdictionId,
                 regulatoryProfileId: dto.regulatoryProfileId ?? null,
+                registrationData: dto.registrationData ?? null,
             },
             include: {
                 jurisdiction: true,
@@ -353,6 +354,9 @@ export class PartyService {
                 ...(dto.jurisdictionId !== undefined && { jurisdictionId: dto.jurisdictionId }),
                 ...(dto.regulatoryProfileId !== undefined && {
                     regulatoryProfileId: dto.regulatoryProfileId ?? null,
+                }),
+                ...(dto.registrationData !== undefined && {
+                    registrationData: dto.registrationData ?? null,
                 }),
             },
             include: {

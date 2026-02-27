@@ -95,10 +95,12 @@ export const api = {
             apiClient.get('/commerce/parties'),
         partyDetails: (partyId: string) =>
             apiClient.get(`/commerce/parties/${encodeURIComponent(partyId)}`),
-        createParty: (data: { legalName: string; jurisdictionId: string; regulatoryProfileId?: string }) =>
+        createParty: (data: { legalName: string; jurisdictionId: string; regulatoryProfileId?: string; registrationData?: any }) =>
             apiClient.post('/commerce/parties', data),
-        updateParty: (partyId: string, data: { legalName?: string; jurisdictionId?: string; regulatoryProfileId?: string }) =>
+        updateParty: (partyId: string, data: { legalName?: string; jurisdictionId?: string; regulatoryProfileId?: string; registrationData?: any }) =>
             apiClient.patch(`/commerce/parties/${encodeURIComponent(partyId)}`, data),
+        deleteParty: (partyId: string) =>
+            apiClient.delete(`/commerce/parties/${encodeURIComponent(partyId)}`),
 
         // Party Relations
         partyRelations: (partyId: string, companyId: string) =>

@@ -12,6 +12,9 @@ export class CreatePartyDto {
     @IsOptional()
     @IsString()
     regulatoryProfileId?: string;
+
+    @IsOptional()
+    registrationData?: any;
 }
 
 export class UpdatePartyDto {
@@ -26,6 +29,9 @@ export class UpdatePartyDto {
     @IsOptional()
     @IsString()
     regulatoryProfileId?: string;
+
+    @IsOptional()
+    registrationData?: any;
 }
 
 const partyRelationTypes = [

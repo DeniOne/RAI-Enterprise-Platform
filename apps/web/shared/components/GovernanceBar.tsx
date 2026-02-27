@@ -59,7 +59,7 @@ export const GovernanceBar: React.FC = () => {
                         <ChevronDown className="w-4 h-4 opacity-50" />
                     </button>
 
-                    <div className="absolute right-0 mt-2 w-48 bg-white border border-black/5 rounded-2xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all p-2 z-[60]">
+                    <div className="absolute right-0 mt-2 w-48 bg-white border border-black/5 rounded-2xl shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 p-2 z-[60]">
                         {(['CEO', 'DIRECTOR', 'MANAGER', 'AGRONOMIST', 'GUEST'] as UserRole[]).map((role) => (
                             <button
                                 key={role}

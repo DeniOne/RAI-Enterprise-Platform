@@ -1773,6 +1773,7 @@ exports.Prisma.PartyScalarFieldEnum = {
   legalName: 'legalName',
   jurisdictionId: 'jurisdictionId',
   regulatoryProfileId: 'regulatoryProfileId',
+  registrationData: 'registrationData',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

@@ -4173,6 +4173,7 @@ model Party {
   jurisdiction        Jurisdiction       @relation(fields: [companyId, jurisdictionId], references: [companyId, id])
   regulatoryProfileId String?
   regulatoryProfile   RegulatoryProfile? @relation(fields: [companyId, regulatoryProfileId], references: [companyId, id])
+  registrationData    Json?
 
   sourceRelations PartyRelation[] @relation("PartyRelationSource")
   targetRelations PartyRelation[] @relation("PartyRelationTarget")
