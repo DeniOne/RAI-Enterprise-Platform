@@ -185,10 +185,10 @@ export default async function DashboardPage() {
         <div className="space-y-12">
             {/* Приветствие */}
             <div>
-                <h1 className="text-3xl font-medium mb-2">
+                <h1 className="text-xl font-medium mb-1">
                     Привет, {user.name || user.email}!
                 </h1>
-                <p className="text-gray-600">
+                <p className="text-sm font-normal text-gray-500">
                     Добро пожаловать в RAI Enterprise Platform
                 </p>
             </div>

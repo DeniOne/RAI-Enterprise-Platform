@@ -40,7 +40,7 @@ export default function DebugPage() {
 
     return (
         <div className="p-8">
-            <h1 className="text-2xl font-bold mb-4">Debug Page</h1>
+            <h1 className="mb-1 text-xl font-medium text-gray-900">Debug Page</h1>
 
             <div className="space-y-4">
                 <div>

@@ -1,0 +1,85 @@
+export type PartyType = 'HOLDING' | 'LEGAL_ENTITY' | 'IP' | 'KFH' | 'MANAGEMENT_CO' | 'BANK' | 'INSURER';
+export type PartyRelationType = 'OWNERSHIP' | 'MANAGEMENT' | 'AFFILIATED' | 'AGENCY';
+export type AssetType = 'FARM' | 'FIELD' | 'OBJECT';
+export type AssetPartyRole = 'OWNER' | 'OPERATOR' | 'LESSEE' | 'MANAGER' | 'BENEFICIARY';
+
+export interface PartyRegistrationData {
+  shortName?: string;
+  comment?: string;
+  inn?: string;
+  kpp?: string;
+  ogrn?: string;
+  ogrnip?: string;
+  unp?: string;
+  bin?: string;
+  addresses?: Array<{
+    type: string;
+    address: string;
+  }>;
+  dataProvenance?: {
+    lookupSource: string;
+    fetchedAt: string;
+    requestKey: string;
+  };
+}
+
+export interface PartyDto {
+  id: string;
+  type: PartyType;
+  legalName: string;
+  shortName?: string;
+  jurisdictionId: string;
+  status: 'ACTIVE' | 'FROZEN';
+  comment?: string;
+  registrationData?: PartyRegistrationData | null;
+}
+
+export interface PartyRelationDto {
+  id: string;
+  fromPartyId: string;
+  toPartyId: string;
+  relationType: PartyRelationType;
+  sharePct?: number;
+  validFrom: string;
+  validTo?: string;
+  basisDocId?: string;
+}
+
+export interface AssetDto {
+  id: string;
+  type: AssetType;
+  name: string;
+  regionCode?: string;
+  status: 'ACTIVE' | 'ARCHIVED';
+}
+
+export interface FarmDto extends AssetDto {
+  type: 'FARM';
+  holdingDerivedName?: string;
+}
+
+export interface AssetPartyRoleDto {
+  id: string;
+  assetId: string;
+  partyId: string;
+  role: AssetPartyRole;
+  validFrom: string;
+  validTo?: string;
+}
+
+export interface PartyListItemVm extends PartyDto {
+  holdingDerivedName?: string;
+  farmsCount?: number;
+}
+
+export interface FarmListItemVm extends FarmDto {
+  operatorParty?: { id: string; name: string };
+  ownerParty?: { id: string; name: string };
+  holdingDerivedName?: string;
+  hasLease?: boolean;
+}
+
+export interface PartyAssetsVm {
+  assets: AssetDto[];
+  roles: AssetPartyRoleDto[];
+}

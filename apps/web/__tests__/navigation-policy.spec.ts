@@ -26,6 +26,13 @@ function extractPaths(content: string): string[] {
 const registeredPaths = extractPaths(navContent);
 
 describe('ШАГ 4: navigation-policy.ts — все подроуты зарегистрированы', () => {
+    const registrySubroutes = ['/parties', '/assets/farms', '/assets/fields', '/assets/objects'];
+    for (const route of registrySubroutes) {
+        it(`Party/Assets: ${route} должен быть в навигации`, () => {
+            expect(registeredPaths).toContain(route);
+        });
+    }
+
     // ─── Финансы (Блок C) ───────────────────────────────────────
     const financeSubroutes = ['/finance/cashflow', '/finance/performance', '/finance/invoices', '/finance/reporting'];
     for (const route of financeSubroutes) {

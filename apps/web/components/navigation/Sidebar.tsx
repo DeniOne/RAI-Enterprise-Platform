@@ -140,6 +140,7 @@ export function Sidebar({ role }: SidebarProps) {
     const renderNavItem = (item: NavItem, depth: number = 0, index: number = 0, siblings: NavItem[] = []) => {
         const isExpanded = expandedIds.has(item.id);
         const active = isActive(item);
+        const isLeaf = !item.subItems;
 
         // Domain Logic
         const domainLayer = DOMAIN_LAYERS[item.domain] || 99;
@@ -170,6 +171,7 @@ export function Sidebar({ role }: SidebarProps) {
                 <div
                     className={clsx(
                         "flex items-center px-3 rounded-xl transition-all duration-300 select-none group relative overflow-hidden",
+                        isLeaf && depth > 0 ? "w-fit max-w-full" : "w-full",
                         item.disabled && "opacity-40 pointer-events-none grayscale",
 
                         // --- Primary Domain Zone (Crop Root) ---
@@ -202,7 +204,7 @@ export function Sidebar({ role }: SidebarProps) {
                     )}
 
                     {/* Label Area (Always navigates) */}
-                    <div className="flex-1 flex items-center">
+                    <div className={clsx(isLeaf ? "flex items-center" : "flex-1 flex items-center")}>
                         <Link
                             href={item.path}
                             data-testid={`nav-link-${item.id}`}
@@ -211,7 +213,7 @@ export function Sidebar({ role }: SidebarProps) {
                                     setNavigatingTo(item.path);
                                 }
                             }}
-                            className="flex-1 flex items-center py-0.5"
+                            className={clsx(isLeaf ? "inline-flex items-center py-0.5" : "flex-1 flex items-center py-0.5")}
                         >
                             {depth > 0 && !item.subItems && (
                                 <Circle size={4} className={clsx("mr-2.5", active ? "fill-slate-900" : "fill-gray-300 group-hover:fill-gray-400")} />
@@ -291,4 +293,3 @@ export function Sidebar({ role }: SidebarProps) {
         </aside>
     );
 }
-

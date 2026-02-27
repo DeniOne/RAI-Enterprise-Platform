@@ -95,11 +95,11 @@ export default function ExecutionHub() {
         <div className="space-y-8">
             <div className="flex justify-between items-center mb-10">
                 <div className="space-y-1">
-                    <h1 className="text-3xl font-black tracking-tight text-slate-900 group flex items-center">
+                    <h1 className="text-xl font-medium tracking-tight text-slate-900 group flex items-center">
                         <Activity className="mr-3 text-emerald-500 w-8 h-8" />
                         Execution Hub
                     </h1>
-                    <p className="text-slate-500 font-medium flex items-center">
+                    <p className="text-sm font-normal text-slate-500 flex items-center">
                         <span className="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse" />
                         Active Harvest Cycle: 2026-ALPHA
                     </p>

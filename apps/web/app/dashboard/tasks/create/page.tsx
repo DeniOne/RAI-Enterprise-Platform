@@ -61,8 +61,8 @@ export default function CreateTaskPage() {
         <div className="min-h-screen p-8">
             <div className="max-w-2xl mx-auto space-y-6">
                 <div>
-                    <h1 className="text-3xl font-medium mb-2">Создать задачу</h1>
-                    <p className="text-gray-600">
+                    <h1 className="text-xl font-medium mb-1">Создать задачу</h1>
+                    <p className="text-sm font-normal text-gray-500">
                         Заполните форму для создания новой задачи
                     </p>
                 </div>

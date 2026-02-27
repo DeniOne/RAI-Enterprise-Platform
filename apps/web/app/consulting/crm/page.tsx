@@ -24,10 +24,10 @@ type PlanItem = {
 };
 
 const sections = [
-    { href: '/consulting/crm/farms', label: 'Реестр хозяйств', desc: 'Клиенты и хозяйства в портфеле.' },
-    { href: '/consulting/crm/counterparties', label: 'Контрагенты', desc: 'Список контрагентов по клиентскому контуру.' },
-    { href: '/consulting/crm/fields', label: 'Поля / Объекты', desc: 'Реестр полей и базовые параметры.' },
-    { href: '/consulting/crm/history', label: 'История сезонов', desc: 'История планов, статусов и изменений.' },
+    { href: '/assets/farms', label: 'Реестр хозяйств', desc: 'Asset:FARM как единый источник истины.' },
+    { href: '/parties', label: 'Контрагенты', desc: 'Party-реестр без смешения с хозяйствами.' },
+    { href: '/assets/fields', label: 'Поля', desc: 'Реестр активов FIELD.' },
+    { href: '/assets/objects', label: 'Объекты', desc: 'Реестр активов OBJECT.' },
 ];
 
 export default function Page() {
@@ -145,8 +145,8 @@ export default function Page() {
             ) : (
                 <>
                     <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
-                        <Link href='/consulting/crm/farms'><Card><p className='text-xs text-gray-500 mb-1'>Хозяйства</p><p className='text-2xl font-semibold'>{loading ? '...' : stats.farms}</p></Card></Link>
-                        <Link href='/consulting/crm/fields'><Card><p className='text-xs text-gray-500 mb-1'>Поля</p><p className='text-2xl font-semibold'>{loading ? '...' : stats.fields}</p></Card></Link>
+                        <Link href='/assets/farms'><Card><p className='text-xs text-gray-500 mb-1'>Хозяйства</p><p className='text-2xl font-semibold'>{loading ? '...' : stats.farms}</p></Card></Link>
+                        <Link href='/assets/fields'><Card><p className='text-xs text-gray-500 mb-1'>Поля</p><p className='text-2xl font-semibold'>{loading ? '...' : stats.fields}</p></Card></Link>
                         <Link href='/consulting/plans'><Card><p className='text-xs text-gray-500 mb-1'>Планы</p><p className='text-2xl font-semibold'>{loading ? '...' : stats.plans}</p></Card></Link>
                         <Link href='/consulting/plans/active'><Card><p className='text-xs text-gray-500 mb-1'>Активные планы</p><p className='text-2xl font-semibold'>{loading ? '...' : stats.activePlans}</p></Card></Link>
                     </div>
@@ -169,7 +169,7 @@ export default function Page() {
                     <Card>
                         <div className='flex items-center justify-between mb-3'>
                             <h3 className='text-sm font-semibold text-gray-900'>Последние добавленные контрагенты</h3>
-                            <Link href='/consulting/crm/counterparties' className='text-xs font-medium text-gray-700 hover:underline'>
+                            <Link href='/parties' className='text-xs font-medium text-gray-700 hover:underline'>
                                 Открыть весь реестр
                             </Link>
                         </div>
@@ -191,7 +191,7 @@ export default function Page() {
                                         {latestCounterparties.map((counterparty) => (
                                             <tr key={counterparty.id} className='border-b last:border-b-0'>
                                                 <td className='py-2 pr-4 text-gray-900'>
-                                                    <Link href={`/consulting/crm/counterparties?entity=${encodeURIComponent(counterparty.name)}`} className='hover:underline'>
+                                                    <Link href={`/parties?entity=${encodeURIComponent(counterparty.name)}`} className='hover:underline'>
                                                         {counterparty.name}
                                                     </Link>
                                                 </td>

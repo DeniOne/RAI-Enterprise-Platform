@@ -82,8 +82,8 @@ export default function YieldEntryPage() {
         <SystemStatusBar>
             <div className="p-8 max-w-4xl mx-auto font-geist">
                 <div className="mb-10">
-                    <h1 className="text-3xl font-semibold text-gray-900 mb-2 tracking-tight">Ввод данных об урожае</h1>
-                    <p className="text-base text-gray-500">Зафиксируйте результаты производства. Финансовый снимок будет сделан автоматически для расчета ROI.</p>
+                    <h1 className="text-xl font-medium text-gray-900 mb-1 tracking-tight">Ввод данных об урожае</h1>
+                    <p className="text-sm font-normal text-gray-500">Зафиксируйте результаты производства. Финансовый снимок будет сделан автоматически для расчета ROI.</p>
                 </div>
 
                 {message && (

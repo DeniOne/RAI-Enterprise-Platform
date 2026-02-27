@@ -29,6 +29,34 @@
 - [x] Added E2E runtime test covering: Contract -> Obligation -> Fulfillment -> Invoice POST -> Payment CONFIRM -> Allocation -> AR Balance.
 - [x] Synchronized DB migrations and applied `commerce_core` migration chain on dev database.
 
+## Milestone 40: Party Wizard Identification & Auto-Fill Patch - DONE
+**Дата:** 2026-02-27
+- [x] В мастер создания `Party` добавлен шаг `Идентификация` после `Юрисдикция` без переписывания существующей логики создания.
+- [x] Реализована UI-логика по юрисдикциям RU/BY/KZ и типам LEGAL_ENTITY/IP/KFH:
+  - поля `inn/kpp/unp/bin`,
+  - debounce `800ms`,
+  - `Найти по реквизитам`, `Заполнить вручную`, `Применить данные`,
+  - loader, preview и блокировка `Далее` во время lookup.
+- [x] Добавлен endpoint `POST /api/party-lookup` (Nest + global prefix), DTO request/response и provider abstraction `CounterpartyLookupProvider`.
+- [x] Реализованы провайдеры:
+  - `DaDataProvider` для RU,
+  - `ByKzStubLookupProvider` для BY/KZ (`NOT_SUPPORTED`).
+- [x] Внедрена checksum-валидация ИНН РФ (10/12), lookup не отправляется при невалидном ИНН.
+- [x] Внедрено Redis-кэширование: `party_lookup:{jurisdiction}:{identifier}` с TTL `86400`.
+- [x] Реализовано audit-логирование каждого lookup (`userId`, `tenantId/companyId`, `identifier`, `provider`, `status`, `timestamp`, `requestKey`, `cacheHit`).
+- [x] Реализована функция применения результата (`applyLookupResult`) с diff-confirm dialog перед перезаписью пользовательских значений.
+- [x] Добавлен UI-бейдж источника в шаге `Профиль`: `Заполнено из DADATA dd.mm.yyyy`.
+- [x] Данные автозаполнения сохраняются в `registrationData` при создании Party:
+  - `requisites`,
+  - `addresses`,
+  - `dataProvenance`.
+- [x] Карточка контрагента обновлена: вкладки `Профиль` и `Реквизиты` отображают сохранённые lookup-данные из `registrationData`.
+- [x] Верификация:
+  - `pnpm --filter web test -- party-lookup.spec.ts` — PASS,
+  - `pnpm --filter web test -- api-client.spec.ts` — PASS,
+  - `pnpm --filter api test -- ru-inn.validator.spec.ts` — PASS,
+  - `pnpm --filter api build` — PASS.
+
 ## Milestone 26: Dev Runtime Acceleration & S3 Recovery - DONE
 **Дата:** 2026-02-23
 - [x] Frontend dev runtime accelerated (`next dev --turbo`) with reduced heavy transpilation in dev mode.
@@ -459,4 +487,3 @@
 - [x] Added DTO validation layer and HTTP workflow endpoints in `CommerceController`.
 - [x] Added E2E runtime test covering: Contract -> Obligation -> Fulfillment -> Invoice POST -> Payment CONFIRM -> Allocation -> AR Balance.
 - [x] Synchronized DB migrations and applied `commerce_core` migration chain on dev database.
-

@@ -71,8 +71,8 @@ export default function ExplorationCasePage() {
     return (
         <div className="space-y-4">
             <div className="space-y-1">
-                <h1 className="text-xl font-semibold text-gray-900">Кейс исследования</h1>
-                <p className="text-sm text-gray-600">ID кейса: {caseId || 'н/д'}</p>
+                <h1 className="text-xl font-medium text-gray-900">Кейс исследования</h1>
+                <p className="text-sm font-normal text-gray-500">ID кейса: {caseId || 'н/д'}</p>
                 <Link href="/exploration" className="text-sm text-blue-700 hover:underline">
                     Назад к витрине
                 </Link>

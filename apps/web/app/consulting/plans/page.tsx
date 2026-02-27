@@ -137,7 +137,7 @@ export default function PlansPage() {
         <div className="p-8 max-w-7xl mx-auto font-geist">
             {/* Header Area */}
             <div className="mb-8">
-                <h1 className="text-3xl font-semibold text-gray-900 tracking-tight mb-2">
+                <h1 className="text-xl font-medium text-gray-900 tracking-tight mb-1">
                     Планы Урожая
                 </h1>
                 <p className="text-sm text-gray-500 font-normal">
@@ -232,5 +232,4 @@ export default function PlansPage() {
         </div>
     );
 }
-
 

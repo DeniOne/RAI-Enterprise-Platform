@@ -81,8 +81,8 @@ export default async function TechMapDetailPage({ params }: { params: { id: stri
                 {/* Header */}
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl font-medium mb-2">Технологическая карта</h1>
-                        <p className="text-gray-500">
+                        <h1 className="text-xl font-medium mb-1">Технологическая карта</h1>
+                        <p className="text-sm font-normal text-gray-500">
                             Версия {techMap.version} • Статус: {techMap.status}
                         </p>
                     </div>

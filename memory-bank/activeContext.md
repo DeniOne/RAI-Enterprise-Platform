@@ -88,3 +88,8 @@
     - CRM UI "/consulting/crm/counterparties" успешно переписан под вкладки профилей.
     - Следующий шаг: CommerceContract → Obligation → Fulfillment → Invoice → Payment (Блок A).
 
+- **Party Identification & Auto-Fill Patch (2026-02-27): COMPLETE**
+  - В `PartyCreateWizard` добавлен шаг `Идентификация` (RU/BY/KZ) без переписывания существующего wizard-flow.
+  - Добавлен lookup-контур `POST /api/party-lookup` с DaData (RU), stub BY/KZ, Redis cache и audit logging.
+  - Реализованы checksum-проверки ИНН РФ и защита от перезаписи пользовательских значений через diff-dialog.
+  - Lookup-данные (`requisites`, `addresses`, `dataProvenance`) сохраняются в `registrationData` и отображаются в карточке контрагента.

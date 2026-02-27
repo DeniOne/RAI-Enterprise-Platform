@@ -77,3 +77,25 @@ describe('Блок B: CRM — страницы существуют', () => {
         });
     }
 });
+
+describe('Party/Assets canonical routes — страницы существуют', () => {
+    const APP_DIR = path.resolve(__dirname, '..', 'app', '(app)');
+
+    const canonicalPages = [
+        'parties/page.tsx',
+        'parties/new/page.tsx',
+        'parties/[id]/page.tsx',
+        'assets/farms/page.tsx',
+        'assets/farms/new/page.tsx',
+        'assets/farms/[id]/page.tsx',
+        'assets/fields/page.tsx',
+        'assets/objects/page.tsx',
+    ];
+
+    for (const p of canonicalPages) {
+        it(`/${p.replace('/page.tsx', '')} должен существовать`, () => {
+            const file = path.join(APP_DIR, p);
+            expect(fs.existsSync(file)).toBe(true);
+        });
+    }
+});

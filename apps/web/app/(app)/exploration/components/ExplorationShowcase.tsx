@@ -99,8 +99,8 @@ export function ExplorationShowcase({
     return (
         <div className="space-y-6" data-testid="exploration-showcase-page">
             <div className="space-y-2">
-                <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
-                <p className="text-sm text-gray-500">
+                <h1 className="text-xl font-medium text-gray-900">{title}</h1>
+                <p className="text-sm font-normal text-gray-500">
                     Витрина кейсов исследований. Поддерживается умная фокусировка через `?entity=...` и `?severity=...`.
                 </p>
             </div>

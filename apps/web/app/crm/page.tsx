@@ -7,7 +7,7 @@ export default function CrmDashboard() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold tracking-tight">CRM Overview</h1>
+                <h1 className="text-xl font-medium tracking-tight">CRM Overview</h1>
                 <Button asChild>
                     <Link href="/crm/accounts/new">Add Account</Link>
                 </Button>

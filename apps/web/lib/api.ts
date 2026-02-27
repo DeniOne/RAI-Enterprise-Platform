@@ -108,6 +108,69 @@ export const api = {
         createPartyRelation: (data: { sourcePartyId: string; targetPartyId: string; relationType: string; validFrom: string; validTo?: string; companyId: string }) =>
             apiClient.post('/commerce/party-relations', data),
     },
+    partyAssets: {
+        lookupParty: (data: {
+            jurisdictionId: 'RU' | 'BY' | 'KZ';
+            partyType: 'LEGAL_ENTITY' | 'IP' | 'KFH';
+            query: { inn?: string; kpp?: string; unp?: string; bin?: string };
+        }) => apiClient.post('/party-lookup', data),
+        parties: (params?: { type?: string; jurisdictionId?: string; q?: string }) =>
+            apiClient.get('/api/parties', { params }),
+        partyDetails: (partyId: string) =>
+            apiClient.get(`/api/parties/${encodeURIComponent(partyId)}`),
+        partyRelations: (partyId: string) =>
+            apiClient.get(`/api/parties/${encodeURIComponent(partyId)}/relations`),
+        partyAssets: (partyId: string) =>
+            apiClient.get(`/api/parties/${encodeURIComponent(partyId)}/assets`),
+        createParty: (data: {
+            type: 'HOLDING' | 'LEGAL_ENTITY' | 'IP' | 'KFH' | 'MANAGEMENT_CO' | 'BANK' | 'INSURER';
+            legalName: string;
+            shortName?: string;
+            jurisdictionId: string;
+            status?: 'ACTIVE' | 'FROZEN';
+            comment?: string;
+            registrationData?: {
+                shortName?: string;
+                comment?: string;
+                inn?: string;
+                kpp?: string;
+                ogrn?: string;
+                ogrnip?: string;
+                unp?: string;
+                bin?: string;
+                addresses?: Array<{ type: string; address: string }>;
+                dataProvenance?: { lookupSource: string; fetchedAt: string; requestKey: string };
+            };
+        }) => apiClient.post('/api/parties', data),
+        createPartyRelation: (data: {
+            fromPartyId: string;
+            toPartyId: string;
+            relationType: 'OWNERSHIP' | 'MANAGEMENT' | 'AFFILIATED' | 'AGENCY';
+            sharePct?: number;
+            validFrom: string;
+            validTo?: string;
+            basisDocId?: string;
+        }) => apiClient.post('/api/party-relations', data),
+        farms: (params?: { q?: string; holdingId?: string; operatorId?: string; hasLease?: boolean }) =>
+            apiClient.get('/api/assets/farms', { params }),
+        farmDetails: (farmId: string) =>
+            apiClient.get(`/api/assets/farms/${encodeURIComponent(farmId)}`),
+        farmFields: (farmId: string) =>
+            apiClient.get(`/api/assets/farms/${encodeURIComponent(farmId)}/fields`),
+        createFarm: (data: { name: string; regionCode?: string; status?: 'ACTIVE' | 'ARCHIVED' }) =>
+            apiClient.post('/api/assets/farms', data),
+        assetRoles: (assetId: string) =>
+            apiClient.get(`/api/assets/${encodeURIComponent(assetId)}/roles`),
+        assignAssetRole: (data: {
+            assetId: string;
+            partyId: string;
+            role: 'OWNER' | 'OPERATOR' | 'LESSEE' | 'MANAGER' | 'BENEFICIARY';
+            validFrom: string;
+            validTo?: string;
+        }) => apiClient.post(`/api/assets/${encodeURIComponent(data.assetId)}/roles`, data),
+        fields: () => apiClient.get('/api/assets/fields'),
+        objects: () => apiClient.get('/api/assets/objects'),
+    },
     commerce: {
         contracts: () => apiClient.get('/commerce/contracts'),
         fulfillment: () => apiClient.get('/commerce/fulfillment'),

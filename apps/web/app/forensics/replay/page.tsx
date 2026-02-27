@@ -44,8 +44,8 @@ export default function ReplayPage() {
     return (
         <div className="mx-auto max-w-5xl space-y-6 p-8">
             <div>
-                <h1 className="text-xl font-semibold text-gray-900">Forensic Trace Replay</h1>
-                <p className="mt-1 text-sm text-gray-600">
+                <h1 className="text-xl font-medium text-gray-900">Forensic Trace Replay</h1>
+                <p className="mt-1 text-sm font-normal text-gray-500">
                     Deterministic replay verification against recorded ledger hash.
                 </p>
             </div>
@@ -91,4 +91,3 @@ export default function ReplayPage() {
         </div>
     );
 }
-

@@ -67,8 +67,8 @@ export default function TechMapsPage() {
     return (
         <div className='space-y-6'>
             <div>
-                <h1 className='text-3xl font-semibold text-gray-900 tracking-tight mb-2'>Технологические карты</h1>
-                <p className='text-sm text-gray-500'>Рабочий реестр техкарт с реальными статусными переходами.</p>
+                <h1 className='text-xl font-medium text-gray-900 tracking-tight mb-1'>Технологические карты</h1>
+                <p className='text-sm font-normal text-gray-500'>Рабочий реестр техкарт с реальными статусными переходами.</p>
             </div>
 
             <div className='grid grid-cols-2 md:grid-cols-5 gap-3'>

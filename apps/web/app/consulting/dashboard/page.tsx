@@ -51,7 +51,7 @@ export default function ConsultingDashboard() {
         <div className="space-y-5">
             <div>
                 <h1 className="text-xl font-medium text-gray-900">Обзор — Управление Урожаем</h1>
-                <p className="text-sm text-gray-500 mt-1">Оперативная сводка по компании test-company-1 в реальном времени.</p>
+                <p className="mt-1 text-sm font-normal text-gray-500">Оперативная сводка по компании test-company-1 в реальном времени.</p>
             </div>
 
             <Card className="py-3">

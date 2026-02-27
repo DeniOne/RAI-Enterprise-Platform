@@ -66,8 +66,8 @@ export default function ExplorationWarRoomPage() {
     return (
         <div className="space-y-4">
             <div className="space-y-1">
-                <h1 className="text-xl font-semibold text-gray-900">Сессия комнаты решений</h1>
-                <p className="text-sm text-gray-600">ID сессии: {sessionId || 'н/д'}</p>
+                <h1 className="text-xl font-medium text-gray-900">Сессия комнаты решений</h1>
+                <p className="text-sm font-normal text-gray-500">ID сессии: {sessionId || 'н/д'}</p>
                 <Link href="/exploration" className="text-sm text-blue-700 hover:underline">
                     Назад к витрине
                 </Link>

@@ -111,7 +111,7 @@ export default function CreateContractPage() {
                     </p>
                     <button
                         type="button"
-                        onClick={() => router.push('/commerce/parties')}
+                        onClick={() => router.push('/parties')}
                         className="mt-3 rounded-2xl bg-black px-6 py-2 text-sm font-medium text-white"
                     >
                         Перейти к контрагентам
