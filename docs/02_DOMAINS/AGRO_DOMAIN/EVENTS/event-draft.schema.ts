@@ -43,6 +43,7 @@ export interface ObservationPayload extends BaseEventPayload {
 
 export interface FieldOperationPayload extends BaseEventPayload {
     operationType: string;      // e.g. SPRAYING / FERTILIZING
+    status: 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED'; // Institutional Lock-In: Единственный источник истины
     areaHa?: number;
     rate?: number;
     rateUnit?: string;

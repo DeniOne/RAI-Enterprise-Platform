@@ -177,9 +177,9 @@
     - [x] Остановка процессов туннелирования
 
 ## Sprint Gamma 8: Agro Domain Controller MVP (Institutional Lock-In) 🚀
-- [ ] **Data Model & Invariants** <!-- id: 15.1 -->
-    - [ ] Внедрить `status: 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED'` в `FieldOperationPayload` <!-- id: 15.1.1 -->
-    - [ ] Запретить альтернативные флаги (completed=true и т.д.) <!-- id: 15.1.2 -->
+- [x] **Data Model & Invariants** <!-- id: 15.1 -->
+    - [x] Внедрить `status: 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED'` в `FieldOperationPayload` <!-- id: 15.1.1 -->
+    - [x] Запретить альтернативные флаги (completed=true и т.д.) <!-- id: 15.1.2 -->
 - [ ] **Controller Integration** <!-- id: 15.2 -->
     - [ ] Расширить `ControllerMetricsService.handleCommittedEvent` <!-- id: 15.2.1 -->
     - [ ] Реализовать фильтрацию: `FIELD_OPERATION` + `COMPLETED` + `taskRef` <!-- id: 15.2.2 -->
