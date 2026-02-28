@@ -10,23 +10,20 @@
 
 | Пункт меню | Путь | Статус | Комментарий |
 |---|---|---|---|
-| Обзор | `/consulting/dashboard` | READY | Страница есть |
-| CRM (группа) | `/consulting/crm/*` | READY | Добавлены сценарии error/permission и smart routing (entity/severity) для crm/farms/counterparties |
-| Реестр хозяйств | `/consulting/crm/farms` | READY | KPI по severity, поиск по хозяйствам, smart routing `entity|severity`, переход в карточку хозяйства `/consulting/crm/farms/:farmId` |
-| Контрагенты | `/consulting/crm/counterparties` | READY | Полный контур управления (см. [Master Doc](file:///root/RAI_EP/docs/10_FRONTEND_MENU_IMPLEMENTATION/11_BUTTON_Контрагенты_Master.md)): холдинги/юрлица, фильтры, карточка с CRUD, SLA и валидация |
-| Планы Урожая | `/consulting/plans` | READY | Базовая страница есть |
-| Планы: черновики/активные/архив | `/consulting/plans/*` | READY | Подроуты созданы |
-| Техкарты | `/consulting/techmaps` | READY | Базовая страница есть |
-| Техкарты: design/active/frozen/archive | `/consulting/techmaps/*` | READY | Подроуты созданы |
-| Исполнение (хаб) | `/consulting/execution` | READY | Есть |
-| Исполнение: агроном | `/consulting/execution/agronomist` | READY | Есть |
-| Исполнение: менеджер | `/consulting/execution/manager` | READY | Есть |
-| Отклонения (хаб) | `/consulting/deviations` | READY | Есть |
-| Отклонения: detected/analysis/decisions | `/consulting/deviations/*` | READY | Есть |
-| Результат и эффект (группа) | `/consulting/results/*` | READY | Создан хаб и ключевые подроуты |
-| Advisory | `/consulting/advisory` | READY | Есть |
-| Бюджеты | `/consulting/budgets` | READY | Есть |
-| Урожай | `/consulting/yield` | READY | Есть |
+| Обзор | `/consulting/dashboard` | READY | Страница реализована |
+| CRM (группа) | `/consulting/crm/*` | READY | Группа разделов crm/farms/counterparties/fields |
+| Реестр хозяйств | `/assets/farms` | READY | Физический роут в `(app)/assets/farms`. Редирект или прямой линк из навигации. |
+| Контрагенты | `/parties` | READY | Физический роут в `(app)/parties`. Полный цикл управления. |
+| Поля | `/assets/fields` | READY | Физический роут в `(app)/assets/fields`. |
+| Объекты | `/assets/objects` | READY | Физический роут в `(app)/assets/objects`. |
+| Планы Урожая | `/consulting/plans` | READY | Хаб и подроуты `/drafts`, `/active`, `/archive` готовы. |
+| Техкарты | `/consulting/techmaps` | READY | Хаб и подроуты `/design`, `/active`, `/frozen`, `/archive` готовы. |
+| Исполнение | `/consulting/execution` | READY | Хаб и контуры `/agronomist`, `/manager` готовы. |
+| Отклонения | `/consulting/deviations` | READY | Хаб и подроуты `/detected`, `/analysis`, `/decisions` готовы. |
+| Результат и эффект | `/consulting/results` | READY | Хаб и подроуты `/actual`, `/plan-fact`, `/performance` готовы. |
+| Advisory | `/consulting/advisory` | READY | Страница реализована. |
+| Бюджеты | `/consulting/budgets` | READY | Страница реализована. |
+| Урожай | `/consulting/yield` | READY | Страница реализована. |
 
 ## 1.5 Коммерция (`/commerce/*`)
 
@@ -42,47 +39,47 @@
 
 | Пункт меню | Путь | Статус | Комментарий |
 |---|---|---|---|
-| Стратегия (главная) | `/strategy` | READY | Есть |
-| Стратегический обзор | `/strategy/overview` | MISSING | Не создано |
-| Портфель | `/strategy/portfolio` | MISSING | Не создано |
-| Карта рисков | `/strategy/risks` | MISSING | Не создано |
-| Сценарии | `/strategy/scenarios` | MISSING | Не создано |
-| Журнал решений | `/strategy/log` | MISSING | Не создано |
+| Стратегия (главная) | `/strategy` | MISSING | Папка `(app)/strategy` есть, но `page.tsx` отсутствует. |
+| Стратегический обзор | `/strategy/overview` | READY | Физический роут создан. |
+| Портфель | `/strategy/portfolio` | READY | Физический роут создан. |
+| Карта рисков | `/strategy/risks` | READY | Физический роут создан. |
+| Сценарии | `/strategy/scenarios` | READY | Физический роут создан. |
+| Журнал решений | `/strategy/log` | READY | Физический роут создан. |
 
 ## 3. Экономика (`/economy/*`)
 
 | Пункт меню | Путь | Статус | Комментарий |
 |---|---|---|---|
-| Экономика (главная) | `/economy` | PARTIAL | Страница-заглушка есть |
-| crop/aggregation/unit/safety/forecast | `/economy/*` | MISSING | Подроутов нет |
+| Экономика (главная) | `/economy` | READY | `page.tsx` и `layout.tsx` на месте. |
+| crop/aggregation/unit/safety/forecast | `/economy/*` | READY | Все подроуты физически созданы. |
 
 ## 4. Финансы (`/finance/*`)
 
 | Пункт меню | Путь | Статус | Комментарий |
 |---|---|---|---|
-| Финансы (главная) | `/finance` | PARTIAL | Страница-заглушка |
-| cashflow/performance/invoices/reporting | `/finance/*` | MISSING | Подроутов нет |
+| Финансы (главная) | `/finance` | READY | `page.tsx` и `layout.tsx` на месте. |
+| cashflow/performance/invoices/reporting | `/finance/*` | READY | Все подроуты физически созданы. |
 
 ## 5. GR (`/gr/*`)
 
 | Пункт меню | Путь | Статус | Комментарий |
 |---|---|---|---|
-| GR (главная) | `/gr` | PARTIAL | Заглушка |
-| regulatory/limits/contracts/compliance/decisions | `/gr/*` | MISSING | Подроутов нет |
+| GR (главная) | `/gr` | READY | `page.tsx` и `layout.tsx` на месте. |
+| regulatory/limits/contracts/compliance/decisions | `/gr/*` | READY | Все подроуты физически созданы. |
 
 ## 6. Производство (`/production/*`)
 
 | Пункт меню | Путь | Статус | Комментарий |
 |---|---|---|---|
-| Производство (главная) | `/production` | PARTIAL | Заглушка |
-| procurement/storage/manufacturing/quality/logistics/analytics | `/production/*` | MISSING | Подроутов нет |
+| Производство (главная) | `/production` | READY | `page.tsx` и `layout.tsx` на месте. |
+| procurement/storage/manufacturing/quality/logistics/analytics | `/production/*` | READY | Все подроуты физически созданы. |
 
 ## 7. Знания (`/knowledge/*`)
 
 | Пункт меню | Путь | Статус | Комментарий |
 |---|---|---|---|
-| Знания (главная) | `/knowledge` | PARTIAL | Есть, но неполный функционал |
-| base/cases/patterns/evolution | `/knowledge/*` | MISSING | Подроутов нет |
+| Знания (главная) | `/knowledge` | READY | `page.tsx` на месте. |
+| base/cases/patterns/evolution | `/knowledge/*` | READY | Все подроуты физически созданы. |
 
 ## 8. Настройки (`/settings/*`)
 
@@ -95,9 +92,11 @@
 
 | Пункт меню | Путь | Статус | Комментарий |
 |---|---|---|---|
-| Исследования (главная) | `/exploration` | IN_PROGRESS | Готов UI scaffold: route/layout/showcase + triage form + detail pages `/exploration/cases/:id` и `/exploration/war-room/:sessionId`; backend дополнен API-метриками и унифицированными Swagger-описаниями |
-| Стратегические исследования | `/exploration/strategic` | IN_PROGRESS | Route и фильтрация SEU готовы; требуется board-гейты и e2e-покрытие |
-| Растворение ограничений | `/exploration/constraints` | IN_PROGRESS | Route и фильтрация CDU готовы; требуется timebox/SLA контроль и e2e-покрытие |
+| Исследования (главная) | `/exploration` | READY | `page.tsx` и `layout.tsx` на месте. |
+| Стратегические исследования | `/exploration/strategic` | READY | Физический роут создан. |
+| Растворение ограничений | `/exploration/constraints` | READY | Физический роут создан. |
+| Исследовательские кейсы | `/exploration/cases/:id` | READY | Подроут для деталей кейсов. |
+| War Room Sessions | `/exploration/war-room/:id` | READY | Подроут для сессий. |
 
 
 ## Приоритет реализации (рекомендуемый)
