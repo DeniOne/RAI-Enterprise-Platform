@@ -33,7 +33,7 @@
 - [x] Реализовать `confirm()`:
     - [x] Проверка MUST.
     - [x] Формирование `CommittedEvent` с хешем.
-    - [ ] Вызов `EventCommitter`.
+    - [x] Вызов `EventCommitter`.
     - [x] Перевод черновика в финальный статус.
 
 ## 6. Интеграция с Telegram Intake

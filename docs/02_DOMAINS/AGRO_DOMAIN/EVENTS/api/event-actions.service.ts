@@ -5,12 +5,16 @@ import { MustValidator } from '../validation/must-validator';
 import { EventDraft } from '../event-draft.schema';
 import * as crypto from 'crypto';
 
+import { EventCommitterService } from '../commit/event-committer.service';
+import { CommittedEvent } from '../event-draft.schema';
+
 @Injectable()
 export class EventActionsService {
     constructor(
         private readonly repository: EventDraftRepository,
         private readonly linker: DraftLinkerService,
         private readonly validator: MustValidator,
+        private readonly committer: EventCommitterService,
     ) { }
 
     async fix(tenantId: string, userId: string, draftId: string, patch: any) {
@@ -81,7 +85,23 @@ export class EventActionsService {
             }))
             .digest('hex');
 
-        // Коммит (в реальности здесь вызов EventCommitter)
+        // Коммит
+        const event: CommittedEvent = {
+            id: draft.id,
+            tenantId,
+            farmRef: draft.farmRef,
+            fieldRef: draft.fieldRef,
+            taskRef: draft.taskRef,
+            eventType: draft.eventType,
+            payload: draft.payload,
+            evidence: draft.evidence,
+            timestamp: draft.timestamp,
+            committedAt: new Date().toISOString(),
+            committedBy: userId,
+            provenanceHash
+        };
+
+        await this.committer.commit(event);
         await this.repository.markCommitted(tenantId, userId, draftId);
 
         const finalDraft = await this.repository.getDraft(tenantId, userId, draftId);

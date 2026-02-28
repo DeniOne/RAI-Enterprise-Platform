@@ -4573,3 +4573,23 @@ model AgroEventDraft {
   @@index([expiresAt])
   @@map("agro_event_drafts")
 }
+
+model AgroEventCommitted {
+  id              String   @id
+  tenantId        String
+  farmRef         String?
+  fieldRef        String?
+  taskRef         String?
+  eventType       String
+  payloadJson     Json
+  evidenceJson    Json
+  timestamp       DateTime
+  committedAt     DateTime @default(now())
+  committedBy     String
+  provenanceHash  String
+
+  @@index([tenantId, eventType])
+  @@index([farmRef, timestamp])
+  @@index([fieldRef, timestamp])
+  @@map("agro_events_committed")
+}
