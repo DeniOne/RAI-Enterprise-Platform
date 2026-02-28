@@ -78,10 +78,10 @@ export function PartyDetailsPage({ partyId }: { partyId: string }) {
             <PartyAssetsTab partyId={partyId} assets={assets} roles={roles} reload={reload} />
           </TabsContent>
           <TabsContent value="contacts">
-            <PartyContactsTab />
+            <PartyContactsTab party={party} />
           </TabsContent>
           <TabsContent value="bank">
-            <PartyBankAccountsTab />
+            <PartyBankAccountsTab party={party} />
           </TabsContent>
           <TabsContent value="documents">
             <p className="text-sm font-normal text-gray-600">Документы: заглушка.</p>

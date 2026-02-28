@@ -1,13 +1,41 @@
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from "class-validator";
 
+const partyTypes = [
+    "HOLDING",
+    "LEGAL_ENTITY",
+    "IP",
+    "KFH",
+    "MANAGEMENT_CO",
+    "BANK",
+    "INSURER",
+] as const;
+
+const partyStatuses = ["ACTIVE", "FROZEN"] as const;
+
 export class CreatePartyDto {
+    @IsOptional()
+    @IsEnum(partyTypes)
+    type?: (typeof partyTypes)[number];
+
     @IsString()
     @IsNotEmpty()
     legalName!: string;
 
+    @IsOptional()
+    @IsString()
+    shortName?: string;
+
     @IsString()
     @IsNotEmpty()
     jurisdictionId!: string;
+
+    @IsOptional()
+    @IsEnum(partyStatuses)
+    status?: (typeof partyStatuses)[number];
+
+    @IsOptional()
+    @IsString()
+    comment?: string;
 
     @IsOptional()
     @IsString()
@@ -19,12 +47,28 @@ export class CreatePartyDto {
 
 export class UpdatePartyDto {
     @IsOptional()
+    @IsEnum(partyTypes)
+    type?: (typeof partyTypes)[number];
+
+    @IsOptional()
     @IsString()
     legalName?: string;
 
     @IsOptional()
     @IsString()
+    shortName?: string;
+
+    @IsOptional()
+    @IsString()
     jurisdictionId?: string;
+
+    @IsOptional()
+    @IsEnum(partyStatuses)
+    status?: (typeof partyStatuses)[number];
+
+    @IsOptional()
+    @IsString()
+    comment?: string;
 
     @IsOptional()
     @IsString()
@@ -36,23 +80,25 @@ export class UpdatePartyDto {
 
 const partyRelationTypes = [
     "OWNERSHIP",
-    "AFFILIATION",
-    "SUBSIDIARY",
-    "FRANCHISE",
-    "JOINT_VENTURE",
+    "MANAGEMENT",
+    "AFFILIATED",
+    "AGENCY",
 ] as const;
 
 export class CreatePartyRelationDto {
     @IsString()
     @IsNotEmpty()
-    sourcePartyId!: string;
+    fromPartyId!: string;
 
     @IsString()
     @IsNotEmpty()
-    targetPartyId!: string;
+    toPartyId!: string;
 
     @IsEnum(partyRelationTypes)
     relationType!: (typeof partyRelationTypes)[number];
+
+    @IsOptional()
+    sharePct?: number;
 
     @IsString()
     @IsNotEmpty()
@@ -61,4 +107,8 @@ export class CreatePartyRelationDto {
     @IsOptional()
     @IsString()
     validTo?: string;
+
+    @IsOptional()
+    @IsString()
+    basisDocId?: string;
 }

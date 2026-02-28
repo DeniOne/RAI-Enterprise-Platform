@@ -1,5 +1,5 @@
-import { PartyDetailsPage } from '@/components/party-assets/parties/PartyDetailsPage';
+import PartyEntityHubPage from '@/app/(app)/crm/parties/[id]/page';
 
-export default function PartyCardRoute({ params }: { params: { id: string } }) {
-  return <PartyDetailsPage partyId={params.id} />;
+export default function PartyCardRoute() {
+  return <PartyEntityHubPage />;
 }

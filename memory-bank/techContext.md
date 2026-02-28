@@ -22,3 +22,5 @@
 ## Global Rules
 - **Formatting**: Git-style markdown.
 - **Language Policy**: Russian (mandatory) + expressive vocabulary.
+- **UI Density Canon**: Приоритет плотности данных над пустотой. Использование `text-[9px]` для метаданных, минимизация `py/px`, обязательное поднятие важного контента выше линии сгиба.
+- **Terminology Rule**: Запрет на "тяжелый" банковский жаргон. Термины должны быть понятны операционным менеджерам (СБ, Реестр, Проверка).

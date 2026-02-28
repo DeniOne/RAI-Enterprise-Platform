@@ -154,3 +154,7 @@
 - [x] DTOs and controller endpoints implemented for operational workflow.
 - [x] Runtime E2E test implemented and passing.
 - [x] Migration status aligned and deployed on dev environment.
+- [x] **Remote UI Access (2026-02-28): CANCELLED**
+    - [x] Анализ вариантов (ngrok, pinggy, localhost.run, cloudflared)
+    - [x] Попытки настройки (заблокировано сетевыми фильтрами клиента)
+    - [x] Остановка процессов туннелирования

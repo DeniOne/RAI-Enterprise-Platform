@@ -40,7 +40,7 @@ export class PartyLookupService {
 
     if (
       request.jurisdictionId === "RU" &&
-      (!request.query.inn || !isRuInnValid(request.query.inn, request.partyType))
+      (!request.identifiers.inn || !isRuInnValid(request.identifiers.inn, request.partyType))
     ) {
       const invalidInnResponse: PartyLookupResponse = {
         status: "ERROR",
@@ -144,11 +144,11 @@ export class PartyLookupService {
     return {
       jurisdictionId: dto.jurisdictionId,
       partyType: dto.partyType,
-      query: {
-        inn: normalizeLookupQueryValue(dto.query?.inn),
-        kpp: normalizeLookupQueryValue(dto.query?.kpp),
-        unp: normalizeLookupQueryValue(dto.query?.unp),
-        bin: normalizeLookupQueryValue(dto.query?.bin),
+      identifiers: {
+        inn: normalizeLookupQueryValue(dto.identifiers?.inn),
+        kpp: normalizeLookupQueryValue(dto.identifiers?.kpp),
+        unp: normalizeLookupQueryValue(dto.identifiers?.unp),
+        bin: normalizeLookupQueryValue(dto.identifiers?.bin),
       },
     };
   }
@@ -157,24 +157,24 @@ export class PartyLookupService {
     return [
       request.jurisdictionId,
       request.partyType,
-      request.query.inn ?? "",
-      request.query.kpp ?? "",
-      request.query.unp ?? "",
-      request.query.bin ?? "",
+      request.identifiers.inn ?? "",
+      request.identifiers.kpp ?? "",
+      request.identifiers.unp ?? "",
+      request.identifiers.bin ?? "",
     ].join(":");
   }
 
   private buildIdentifier(request: PartyLookupRequest): string {
     if (request.jurisdictionId === "RU") {
-      const inn = request.query.inn ?? "";
-      const kpp = request.query.kpp ?? "";
+      const inn = request.identifiers.inn ?? "";
+      const kpp = request.identifiers.kpp ?? "";
       return kpp ? `${inn}:${kpp}` : inn;
     }
     if (request.jurisdictionId === "BY") {
-      return request.query.unp ?? "";
+      return request.identifiers.unp ?? "";
     }
     if (request.jurisdictionId === "KZ") {
-      return request.query.bin ?? "";
+      return request.identifiers.bin ?? "";
     }
     return "";
   }

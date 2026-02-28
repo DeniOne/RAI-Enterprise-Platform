@@ -1,9 +1,50 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { api } from '@/lib/api';
 import { PartyDto } from '@/shared/types/party-assets';
 import { formatLookupBadgeDate } from '@/shared/lib/party-lookup';
+import { getPartyRequisiteFields, getPartyRequisiteValue } from '@/shared/lib/party-requisites-schema';
+
+type Jurisdiction = {
+  id: string;
+  code: string;
+  name: string;
+};
 
 export function PartyRequisitesTab({ party }: { party: PartyDto }) {
   const requisites = party.registrationData;
-  const legalAddress = requisites?.addresses?.find((item) => item.type === 'LEGAL')?.address ?? requisites?.addresses?.[0]?.address ?? '—';
+  const [jurisdictionCode, setJurisdictionCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    api.partyManagement
+      .jurisdictions()
+      .then((response) => {
+        if (!active) {
+          return;
+        }
+
+        const items = Array.isArray(response?.data) ? (response.data as Jurisdiction[]) : [];
+        const matched = items.find((item) => item.id === party.jurisdictionId);
+        setJurisdictionCode(matched?.code ?? null);
+      })
+      .catch(() => {
+        if (active) {
+          setJurisdictionCode(null);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [party.jurisdictionId]);
+
+  const fields = useMemo(
+    () => getPartyRequisiteFields(jurisdictionCode, party.type),
+    [jurisdictionCode, party.type],
+  );
 
   return (
     <div className="space-y-4">
@@ -13,19 +54,12 @@ export function PartyRequisitesTab({ party }: { party: PartyDto }) {
         </span>
       ) : null}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Field label="ИНН" value={requisites?.inn || '—'} />
-        <Field label="КПП" value={requisites?.kpp || '—'} />
-        <Field label="ОГРН" value={requisites?.ogrn || '—'} />
-        <Field label="ОГРНИП" value={requisites?.ogrnip || '—'} />
-        <Field label="УНП" value={requisites?.unp || '—'} />
-        <Field label="БИН" value={requisites?.bin || '—'} />
-        <div className="md:col-span-2">
-          <Field label="Юридический адрес" value={legalAddress} />
-        </div>
+        {fields.map((field) => (
+          <div key={field.key} className={field.key === 'legalAddress' ? 'md:col-span-2' : ''}>
+            <Field label={field.label} value={getPartyRequisiteValue(requisites, field.key)} />
+          </div>
+        ))}
       </div>
-      <p className="text-sm font-normal text-gray-600">
-        Динамические реквизиты для юрисдикции <span className="font-normal text-gray-900">{party.jurisdictionId}</span> рендерятся через серверную схему.
-      </p>
     </div>
   );
 }

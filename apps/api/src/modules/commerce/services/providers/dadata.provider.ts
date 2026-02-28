@@ -43,6 +43,7 @@ export class DaDataProvider implements CounterpartyLookupProvider {
 
   async lookup(req: PartyLookupRequest): Promise<PartyLookupResponse> {
     const token = this.config.get<string>("DADATA_API_KEY");
+    const secret = this.config.get<string>("DADATA_SECRET_KEY");
     const requestKey = this.buildRequestKey(req);
     const fetchedAt = new Date().toISOString();
 
@@ -56,7 +57,7 @@ export class DaDataProvider implements CounterpartyLookupProvider {
       };
     }
 
-    const inn = req.query.inn?.trim();
+    const inn = req.identifiers.inn?.trim();
     if (!inn) {
       return {
         status: "NOT_FOUND",
@@ -69,7 +70,7 @@ export class DaDataProvider implements CounterpartyLookupProvider {
     try {
       const payload = {
         query: inn,
-        kpp: req.query.kpp?.trim() || undefined,
+        kpp: req.identifiers.kpp?.trim() || undefined,
       };
 
       const response = await fetch(
@@ -80,6 +81,7 @@ export class DaDataProvider implements CounterpartyLookupProvider {
             "Content-Type": "application/json",
             Accept: "application/json",
             Authorization: `Token ${token}`,
+            ...(secret ? { "X-Secret": secret } : {}),
           },
           body: JSON.stringify(payload),
         },
@@ -171,10 +173,10 @@ export class DaDataProvider implements CounterpartyLookupProvider {
     return [
       req.jurisdictionId,
       req.partyType,
-      req.query.inn ?? "",
-      req.query.kpp ?? "",
-      req.query.unp ?? "",
-      req.query.bin ?? "",
+      req.identifiers.inn ?? "",
+      req.identifiers.kpp ?? "",
+      req.identifiers.unp ?? "",
+      req.identifiers.bin ?? "",
     ].join(":");
   }
 }

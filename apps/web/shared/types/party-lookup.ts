@@ -2,18 +2,38 @@ import { PartyType } from '@/shared/types/party-assets';
 
 export type PartyLookupJurisdiction = 'RU' | 'BY' | 'KZ';
 export type PartyLookupStatus = 'FOUND' | 'NOT_FOUND' | 'ERROR' | 'NOT_SUPPORTED';
+export type IdentificationFieldKey = 'inn' | 'kpp' | 'unp' | 'bin';
 
-export interface PartyLookupQuery {
-  inn?: string;
-  kpp?: string;
-  unp?: string;
-  bin?: string;
+export interface IdentificationSchemaField {
+  key: IdentificationFieldKey;
+  label: string;
+  dataType: 'string';
+  required: boolean;
+  mask: 'digits' | 'text';
+  minLength: number;
+  maxLength: number;
 }
+
+export interface IdentificationLookupSchema {
+  enabled: boolean;
+  triggerKeys: IdentificationFieldKey[];
+  buttonLabel: string;
+  debounceMs: number;
+}
+
+export interface PartyIdentificationSchema {
+  jurisdictionId: PartyLookupJurisdiction;
+  partyType: PartyType;
+  fields: IdentificationSchemaField[];
+  lookup: IdentificationLookupSchema;
+}
+
+export type PartyLookupIdentifiers = Partial<Record<IdentificationFieldKey, string>>;
 
 export interface PartyLookupRequest {
   jurisdictionId: PartyLookupJurisdiction;
   partyType: Extract<PartyType, 'LEGAL_ENTITY' | 'IP' | 'KFH'>;
-  query: PartyLookupQuery;
+  identifiers: PartyLookupIdentifiers;
 }
 
 export interface PartyLookupAddress {

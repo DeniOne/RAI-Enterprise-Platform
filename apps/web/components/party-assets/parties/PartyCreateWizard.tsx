@@ -3,14 +3,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { partyAssetsApi } from '@/lib/party-assets-api';
-import { PartyType } from '@/shared/types/party-assets';
+import { PartyBankRecord, PartyContactRecord, PartyType } from '@/shared/types/party-assets';
 import { partyTypeLabel } from '@/shared/lib/party-assets-labels';
 import { api } from '@/lib/api';
-import { ConfirmDialog } from '@/components/party-assets/common/ConfirmDialog';
 import { PartyIdentificationFormValue, PartyIdentificationStep } from './PartyIdentificationStep';
-import { formatLookupBadgeDate, isRuInnValid, resolveLookupJurisdictionCode } from '@/shared/lib/party-lookup';
+import { formatLookupBadgeDate, isRuInnValid } from '@/shared/lib/party-lookup';
+import { getPartyRequisiteFields } from '@/shared/lib/party-requisites-schema';
 import {
+  IdentificationFieldKey,
+  PartyIdentificationSchema,
   PartyDataProvenance,
+  PartyLookupIdentifiers,
   PartyLookupRequest,
   PartyLookupResponse,
   PartyLookupStatus,
@@ -28,12 +31,31 @@ type PartyRequisitesState = {
   bin: string;
 };
 type PartyAddress = { type: string; full: string };
+type PartyContactState = PartyContactRecord;
+type PartyBankState = PartyBankRecord;
 type PendingLookupApply = {
   legalName: string;
   shortName: string;
   requisites: PartyRequisitesState;
   addresses: PartyAddress[];
   dataProvenance: PartyDataProvenance;
+};
+type LookupConflictKey =
+  | 'legalName'
+  | 'shortName'
+  | 'address'
+  | 'inn'
+  | 'kpp'
+  | 'ogrn'
+  | 'ogrnip'
+  | 'unp'
+  | 'bin';
+type LookupConflictField = {
+  key: LookupConflictKey;
+  label: string;
+  current: string;
+  found: string;
+  choice: 'mine' | 'found';
 };
 
 const EMPTY_IDENTIFICATION: PartyIdentificationFormValue = {
@@ -65,9 +87,13 @@ export function PartyCreateWizard() {
   const [legalName, setLegalName] = useState('');
   const [shortName, setShortName] = useState('');
   const [comment, setComment] = useState('');
+  const [legalForm, setLegalForm] = useState('');
   const [identification, setIdentification] = useState<PartyIdentificationFormValue>(EMPTY_IDENTIFICATION);
+  const [identificationSchema, setIdentificationSchema] = useState<PartyIdentificationSchema | null>(null);
   const [requisites, setRequisites] = useState<PartyRequisitesState>(EMPTY_REQUISITES);
   const [addresses, setAddresses] = useState<PartyAddress[]>([]);
+  const [contacts, setContacts] = useState<PartyContactState[]>([]);
+  const [banks, setBanks] = useState<PartyBankState[]>([]);
   const [dataProvenance, setDataProvenance] = useState<PartyDataProvenance | null>(null);
   const [manualIdentification, setManualIdentification] = useState(false);
   const [identificationConfirmed, setIdentificationConfirmed] = useState(false);
@@ -76,9 +102,12 @@ export function PartyCreateWizard() {
   const [lookupStatus, setLookupStatus] = useState<PartyLookupStatus | null>(null);
   const [lookupResponse, setLookupResponse] = useState<PartyLookupResponse | null>(null);
   const [pendingLookupApply, setPendingLookupApply] = useState<PendingLookupApply | null>(null);
+  const [conflictFields, setConflictFields] = useState<LookupConflictField[]>([]);
   const [diffDialogOpen, setDiffDialogOpen] = useState(false);
-  const [diffMessage, setDiffMessage] = useState('');
   const lastLookupRequestKeyRef = useRef<string>('');
+  const handleSchemaLoaded = useCallback((schema: PartyIdentificationSchema | null) => {
+    setIdentificationSchema(schema);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -112,16 +141,6 @@ export function PartyCreateWizard() {
     };
   }, []);
 
-  const selectedJurisdiction = useMemo(
-    () => jurisdictions.find((item) => item.id === jurisdictionId),
-    [jurisdictionId, jurisdictions],
-  );
-
-  const lookupJurisdiction = useMemo(
-    () => resolveLookupJurisdictionCode(selectedJurisdiction?.code),
-    [selectedJurisdiction?.code],
-  );
-
   const lookupPartyType = useMemo<PartyLookupSupportedType | null>(() => {
     if (type === 'LEGAL_ENTITY' || type === 'IP' || type === 'KFH') {
       return type;
@@ -129,21 +148,30 @@ export function PartyCreateWizard() {
     return null;
   }, [type]);
 
+  const lookupIdentifiers = useMemo<PartyLookupIdentifiers>(() => {
+    if (!identificationSchema) {
+      return {};
+    }
+
+    return identificationSchema.fields.reduce<PartyLookupIdentifiers>((acc, field) => {
+      const nextValue = identification[field.key]?.trim();
+      if (nextValue) {
+        acc[field.key] = nextValue;
+      }
+      return acc;
+    }, {});
+  }, [identification, identificationSchema]);
+
   const lookupRequest = useMemo<PartyLookupRequest | null>(() => {
-    if (!lookupJurisdiction || !lookupPartyType) {
+    if (!identificationSchema || !lookupPartyType) {
       return null;
     }
     return {
-      jurisdictionId: lookupJurisdiction,
+      jurisdictionId: identificationSchema.jurisdictionId,
       partyType: lookupPartyType,
-      query: {
-        inn: identification.inn || undefined,
-        kpp: identification.kpp || undefined,
-        unp: identification.unp || undefined,
-        bin: identification.bin || undefined,
-      },
+      identifiers: lookupIdentifiers,
     };
-  }, [identification.bin, identification.inn, identification.kpp, identification.unp, lookupJurisdiction, lookupPartyType]);
+  }, [identificationSchema, lookupIdentifiers, lookupPartyType]);
 
   const lookupRequestKey = useMemo(() => {
     if (!lookupRequest) {
@@ -152,73 +180,75 @@ export function PartyCreateWizard() {
     return [
       lookupRequest.jurisdictionId,
       lookupRequest.partyType,
-      lookupRequest.query.inn ?? '',
-      lookupRequest.query.kpp ?? '',
-      lookupRequest.query.unp ?? '',
-      lookupRequest.query.bin ?? '',
+      lookupRequest.identifiers.inn ?? '',
+      lookupRequest.identifiers.kpp ?? '',
+      lookupRequest.identifiers.unp ?? '',
+      lookupRequest.identifiers.bin ?? '',
     ].join(':');
   }, [lookupRequest]);
 
-  const innValidationError = useMemo(() => {
-    if (!lookupRequest || lookupRequest.jurisdictionId !== 'RU') {
-      return null;
+  const fieldErrors = useMemo<Partial<Record<IdentificationFieldKey, string>>>(() => {
+    if (!identificationSchema) {
+      return {};
     }
-    const inn = lookupRequest.query.inn?.trim() ?? '';
-    if (!inn) {
-      return null;
-    }
-    if (!isRuInnValid(inn, lookupRequest.partyType)) {
-      return 'ИНН не прошел checksum-проверку для выбранного типа.';
-    }
-    return null;
-  }, [lookupRequest]);
+
+    return identificationSchema.fields.reduce<Partial<Record<IdentificationFieldKey, string>>>((acc, field) => {
+      const value = identification[field.key]?.trim() ?? '';
+
+      if (!value) {
+        if (field.required) {
+          acc[field.key] = `Поле «${field.label}» обязательно.`;
+        }
+        return acc;
+      }
+
+      if (value.length < field.minLength || value.length > field.maxLength) {
+        acc[field.key] = `${field.label} должен содержать от ${field.minLength} до ${field.maxLength} символов.`;
+        return acc;
+      }
+
+      if (identificationSchema.jurisdictionId === 'RU' && field.key === 'inn' && lookupPartyType && !isRuInnValid(value, lookupPartyType)) {
+        acc[field.key] = 'ИНН не прошел checksum-проверку для выбранного типа.';
+      }
+
+      return acc;
+    }, {});
+  }, [identification, identificationSchema, lookupPartyType]);
 
   const lookupDisabledReason = useMemo(() => {
-    if (!lookupJurisdiction) {
-      return 'Для выбранной юрисдикции автопоиск недоступен.';
+    if (!identificationSchema) {
+      return 'Схема идентификации не загружена.';
     }
-    if (!lookupPartyType || !lookupRequest) {
+    if (!identificationSchema.lookup.enabled) {
+      return 'Автопоиск для этой схемы пока недоступен.';
+    }
+    if (!lookupRequest || !lookupPartyType) {
       return 'Автопоиск доступен только для типов: Юридическое лицо, ИП, КФХ.';
     }
 
-    if (lookupJurisdiction === 'RU') {
-      if (!lookupRequest.query.inn) {
-        return 'Введите ИНН для поиска.';
-      }
-      if (lookupPartyType === 'LEGAL_ENTITY' && lookupRequest.query.inn.length !== 10) {
-        return 'Для юридического лица ИНН должен содержать 10 цифр.';
-      }
-      if ((lookupPartyType === 'IP' || lookupPartyType === 'KFH') && lookupRequest.query.inn.length !== 12) {
-        return 'Для ИП/КФХ ИНН должен содержать 12 цифр.';
-      }
-      if (lookupRequest.query.kpp && lookupRequest.query.kpp.length !== 9) {
-        return 'КПП должен содержать 9 цифр.';
-      }
-      if (innValidationError) {
-        return innValidationError;
-      }
-      return null;
+    const firstFieldError = Object.values(fieldErrors)[0];
+    if (firstFieldError) {
+      return firstFieldError;
     }
 
-    if (lookupJurisdiction === 'BY') {
-      if (!lookupRequest.query.unp) {
-        return 'Введите УНП для поиска.';
+    for (const triggerKey of identificationSchema.lookup.triggerKeys) {
+      const field = identificationSchema.fields.find((item) => item.key === triggerKey);
+      const value = lookupRequest.identifiers[triggerKey]?.trim() ?? '';
+      if (!field || !value) {
+        return `Заполните поле «${field?.label ?? triggerKey.toUpperCase()}» для поиска.`;
       }
-      return null;
+      if (value.length < field.minLength || value.length > field.maxLength) {
+        return `${field.label} должен содержать от ${field.minLength} до ${field.maxLength} символов.`;
+      }
     }
 
-    if (lookupJurisdiction === 'KZ') {
-      if (!lookupRequest.query.bin) {
-        return 'Введите БИН для поиска.';
-      }
-      if (lookupRequest.query.bin.length !== 12) {
-        return 'БИН должен содержать 12 цифр.';
-      }
-      return null;
+    const inn = lookupRequest.identifiers.inn?.trim() ?? '';
+    if (identificationSchema.jurisdictionId === 'RU' && inn && !isRuInnValid(inn, lookupPartyType)) {
+      return 'ИНН не прошел checksum-проверку для выбранного типа.';
     }
 
-    return 'Для выбранной юрисдикции автопоиск недоступен.';
-  }, [innValidationError, lookupJurisdiction, lookupPartyType, lookupRequest]);
+    return null;
+  }, [fieldErrors, identificationSchema, lookupPartyType, lookupRequest]);
 
   const executeLookup = useCallback(async () => {
     if (!lookupRequest || lookupDisabledReason) {
@@ -251,7 +281,7 @@ export function PartyCreateWizard() {
       if (payload.legalName) {
         setLegalName(payload.legalName);
       }
-      if (!shortName.trim() && payload.shortName) {
+      if (payload.shortName) {
         setShortName(payload.shortName);
       }
       setRequisites(payload.requisites);
@@ -260,7 +290,7 @@ export function PartyCreateWizard() {
       setManualIdentification(false);
       setIdentificationConfirmed(true);
     },
-    [shortName],
+    [],
   );
 
   const applyLookupResult = useCallback(
@@ -287,24 +317,9 @@ export function PartyCreateWizard() {
         requestKey: response.requestKey || lookupRequestKey,
       };
 
-      const diff: string[] = [];
-      if (legalName.trim() && nextLegalName && legalName.trim() !== nextLegalName) {
-        diff.push(`Юр. наименование: "${legalName.trim()}" -> "${nextLegalName}"`);
-      }
-      if (shortName.trim() && nextShortName && shortName.trim() !== nextShortName) {
-        diff.push(`Краткое наименование: "${shortName.trim()}" -> "${nextShortName}"`);
-      }
       const requisitesFields: Array<keyof PartyRequisitesState> = ['inn', 'kpp', 'ogrn', 'ogrnip', 'unp', 'bin'];
-      requisitesFields.forEach((field) => {
-        if (requisites[field] && nextRequisites[field] && requisites[field] !== nextRequisites[field]) {
-          diff.push(`${field.toUpperCase()}: "${requisites[field]}" -> "${nextRequisites[field]}"`);
-        }
-      });
       const currentAddress = addresses[0]?.full?.trim() ?? '';
       const lookupAddress = nextAddresses[0]?.full?.trim() ?? '';
-      if (currentAddress && lookupAddress && currentAddress !== lookupAddress) {
-        diff.push(`Адрес: "${currentAddress}" -> "${lookupAddress}"`);
-      }
 
       const payload: PendingLookupApply = {
         legalName: nextLegalName,
@@ -314,20 +329,43 @@ export function PartyCreateWizard() {
         dataProvenance: nextDataProvenance,
       };
 
-      if (diff.length > 0) {
+      const nextConflicts: LookupConflictField[] = [];
+      if (legalName.trim() && nextLegalName && legalName.trim() !== nextLegalName) {
+        nextConflicts.push({ key: 'legalName', label: 'Юридическое наименование', current: legalName.trim(), found: nextLegalName, choice: 'mine' });
+      }
+      if (shortName.trim() && nextShortName && shortName.trim() !== nextShortName) {
+        nextConflicts.push({ key: 'shortName', label: 'Краткое наименование', current: shortName.trim(), found: nextShortName, choice: 'mine' });
+      }
+      (['inn', 'kpp', 'ogrn', 'ogrnip', 'unp', 'bin'] as Array<keyof PartyRequisitesState>).forEach((field) => {
+        if (requisites[field] && nextRequisites[field] && requisites[field] !== nextRequisites[field]) {
+          nextConflicts.push({
+            key: field,
+            label: field.toUpperCase(),
+            current: requisites[field],
+            found: nextRequisites[field],
+            choice: 'mine',
+          });
+        }
+      });
+      if (currentAddress && lookupAddress && currentAddress !== lookupAddress) {
+        nextConflicts.push({ key: 'address', label: 'Юридический адрес', current: currentAddress, found: lookupAddress, choice: 'mine' });
+      }
+
+      if (nextConflicts.length > 0) {
         setPendingLookupApply(payload);
-        setDiffMessage(diff.join(' | '));
+        setConflictFields(nextConflicts);
         setDiffDialogOpen(true);
         return;
       }
 
       commitLookupApply(payload);
+      setStep(4);
     },
     [addresses, commitLookupApply, legalName, lookupRequestKey, requisites, shortName],
   );
 
   useEffect(() => {
-    if (step !== 3 || !lookupRequest || lookupDisabledReason) {
+    if (step !== 3 || !lookupRequest || lookupDisabledReason || !identificationSchema?.lookup.enabled) {
       return;
     }
     if (!lookupRequestKey || lookupRequestKey === lastLookupRequestKeyRef.current) {
@@ -337,21 +375,28 @@ export function PartyCreateWizard() {
     const timer = window.setTimeout(() => {
       lastLookupRequestKeyRef.current = lookupRequestKey;
       void executeLookup();
-    }, 800);
+    }, identificationSchema.lookup.debounceMs || 800);
 
     return () => window.clearTimeout(timer);
-  }, [executeLookup, lookupDisabledReason, lookupRequest, lookupRequestKey, step]);
+  }, [executeLookup, identificationSchema, lookupDisabledReason, lookupRequest, lookupRequestKey, step]);
 
   useEffect(() => {
     setIdentification(EMPTY_IDENTIFICATION);
+    setIdentificationSchema(null);
     setRequisites(EMPTY_REQUISITES);
     setAddresses([]);
+    setContacts([]);
+    setBanks([]);
+    setLegalForm('');
     setDataProvenance(null);
     setManualIdentification(false);
     setIdentificationConfirmed(false);
     setLookupError(null);
     setLookupStatus(null);
     setLookupResponse(null);
+    setPendingLookupApply(null);
+    setConflictFields([]);
+    setDiffDialogOpen(false);
     lastLookupRequestKeyRef.current = '';
   }, [jurisdictionId, type]);
 
@@ -371,6 +416,11 @@ export function PartyCreateWizard() {
     return legalName.trim().length > 0;
   }, [identificationConfirmed, jurisdictionId, legalName, lookupLoading, step, type]);
 
+  const visibleRequisiteFields = useMemo(
+    () => getPartyRequisiteFields(identificationSchema?.jurisdictionId, type),
+    [identificationSchema?.jurisdictionId, type],
+  );
+
   const save = async () => {
     setSaving(true);
     setError(null);
@@ -387,7 +437,10 @@ export function PartyCreateWizard() {
         status: 'ACTIVE',
         comment: comment.trim() || undefined,
         registrationData: {
+          partyType: type,
+          status: 'ACTIVE',
           shortName: shortName.trim() || undefined,
+          legalForm: legalForm.trim() || undefined,
           comment: comment.trim() || undefined,
           inn: requisites.inn.trim() || undefined,
           kpp: requisites.kpp.trim() || undefined,
@@ -396,6 +449,26 @@ export function PartyCreateWizard() {
           unp: requisites.unp.trim() || undefined,
           bin: requisites.bin.trim() || undefined,
           addresses: normalizedAddresses,
+          contacts: contacts
+            .map((item) => ({
+              roleType: item.roleType,
+              fullName: item.fullName.trim(),
+              position: item.position?.trim() || undefined,
+              basisOfAuthority: item.basisOfAuthority?.trim() || undefined,
+              phones: item.phones?.trim() || undefined,
+              email: item.email?.trim() || undefined,
+            }))
+            .filter((item) => item.fullName.length > 0),
+          banks: banks
+            .map((item) => ({
+              bankName: item.bankName.trim(),
+              accountNumber: item.accountNumber.trim(),
+              bic: item.bic?.trim() || undefined,
+              corrAccount: item.corrAccount?.trim() || undefined,
+              currency: item.currency?.trim() || 'RUB',
+              isPrimary: item.isPrimary ?? false,
+            }))
+            .filter((item) => item.bankName.length > 0 && item.accountNumber.length > 0),
           dataProvenance: dataProvenance ?? undefined,
         },
       });
@@ -463,17 +536,18 @@ export function PartyCreateWizard() {
 
       {step === 3 ? (
         <PartyIdentificationStep
+          jurisdictionId={jurisdictionId}
           partyType={type}
-          jurisdictionCode={selectedJurisdiction?.code ?? null}
           value={identification}
-          onChange={(patch) => {
-            setIdentification((prev) => ({ ...prev, ...patch }));
+          onChangeField={(key, nextValue) => {
+            setIdentification((prev) => ({ ...prev, [key]: nextValue }));
             setLookupError(null);
             setLookupStatus(null);
             setLookupResponse(null);
             setIdentificationConfirmed(false);
             setManualIdentification(false);
           }}
+          onSchemaLoaded={handleSchemaLoaded}
           onLookup={() => {
             if (!lookupRequestKey) {
               return;
@@ -497,7 +571,9 @@ export function PartyCreateWizard() {
           lookupError={lookupError}
           lookupStatus={lookupStatus}
           lookupResult={lookupResponse?.status === 'FOUND' ? lookupResponse.result : null}
-          innValidationError={innValidationError}
+          lookupSource={lookupResponse?.source ?? null}
+          lookupFetchedAt={lookupResponse?.fetchedAt ?? null}
+          fieldErrors={fieldErrors}
           lookupDisabledReason={lookupDisabledReason}
         />
       ) : null}
@@ -549,79 +625,261 @@ export function PartyCreateWizard() {
       ) : null}
 
       {step === 5 ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-normal text-gray-700">ИНН</label>
-            <input
-              value={requisites.inn}
-              onChange={(event) => setRequisites((prev) => ({ ...prev, inn: event.target.value.trim() }))}
-              className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
-              placeholder="ИНН"
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-normal text-gray-700">КПП</label>
-            <input
-              value={requisites.kpp}
-              onChange={(event) => setRequisites((prev) => ({ ...prev, kpp: event.target.value.trim() }))}
-              className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
-              placeholder="КПП"
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-normal text-gray-700">ОГРН</label>
-            <input
-              value={requisites.ogrn}
-              onChange={(event) => setRequisites((prev) => ({ ...prev, ogrn: event.target.value.trim() }))}
-              className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
-              placeholder="ОГРН"
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-normal text-gray-700">ОГРНИП</label>
-            <input
-              value={requisites.ogrnip}
-              onChange={(event) => setRequisites((prev) => ({ ...prev, ogrnip: event.target.value.trim() }))}
-              className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
-              placeholder="ОГРНИП"
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-normal text-gray-700">УНП</label>
-            <input
-              value={requisites.unp}
-              onChange={(event) => setRequisites((prev) => ({ ...prev, unp: event.target.value.trim() }))}
-              className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
-              placeholder="УНП"
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-normal text-gray-700">БИН</label>
-            <input
-              value={requisites.bin}
-              onChange={(event) => setRequisites((prev) => ({ ...prev, bin: event.target.value.trim() }))}
-              className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
-              placeholder="БИН"
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="mb-2 block text-sm font-normal text-gray-700">Юридический адрес</label>
-            <input
-              value={addresses[0]?.full ?? ''}
-              onChange={(event) =>
-                setAddresses((prev) => {
-                  const next = [...prev];
-                  if (!next[0]) {
-                    next[0] = { type: 'LEGAL', full: '' };
-                  }
-                  next[0] = { ...next[0], type: 'LEGAL', full: event.target.value };
-                  return next;
-                })
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-normal text-gray-700">Организационно-правовая форма</label>
+              <input
+                value={legalForm}
+                onChange={(event) => setLegalForm(event.target.value)}
+                className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
+                placeholder="ООО, АО, ИП"
+              />
+            </div>
+            {visibleRequisiteFields.map((field) => {
+              if (field.key === 'legalAddress') {
+                return (
+                  <div key={field.key} className="md:col-span-2">
+                    <label className="mb-2 block text-sm font-normal text-gray-700">{field.label}</label>
+                    <input
+                      value={addresses[0]?.full ?? ''}
+                      onChange={(event) =>
+                        setAddresses((prev) => {
+                          const next = [...prev];
+                          if (!next[0]) {
+                            next[0] = { type: 'LEGAL', full: '' };
+                          }
+                          next[0] = { ...next[0], type: 'LEGAL', full: event.target.value };
+                          return next;
+                        })
+                      }
+                      className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
+                      placeholder={field.label}
+                    />
+                  </div>
+                );
               }
-              className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
-              placeholder="Юридический адрес"
-            />
+
+              return (
+                <div key={field.key}>
+                  <label className="mb-2 block text-sm font-normal text-gray-700">{field.label}</label>
+                  <input
+                    value={requisites[field.key]}
+                    onChange={(event) => setRequisites((prev) => ({ ...prev, [field.key]: event.target.value.trim() }))}
+                    className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
+                    placeholder={field.label}
+                  />
+                </div>
+              );
+            })}
           </div>
+
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-gray-900">Банковские счета</p>
+                <p className="text-sm font-normal text-gray-500">Расчётные счета, БИК/SWIFT, корреспондентские счета.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setBanks((prev) => [
+                    ...prev,
+                    { bankName: '', accountNumber: '', bic: '', corrAccount: '', currency: 'RUB', isPrimary: prev.length === 0 },
+                  ])
+                }
+                className="rounded-2xl border border-black/10 px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-50"
+              >
+                + Добавить счёт
+              </button>
+            </div>
+            {banks.length === 0 ? <p className="text-sm font-normal text-gray-500">Банковские счета пока не добавлены.</p> : null}
+            {banks.map((bank, index) => (
+              <div key={`${index}-${bank.bankName}`} className="rounded-2xl border border-black/10 p-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-normal text-gray-700">Наименование банка</label>
+                    <input
+                      value={bank.bankName}
+                      onChange={(event) =>
+                        setBanks((prev) => prev.map((item, itemIndex) => (itemIndex === index ? { ...item, bankName: event.target.value } : item)))
+                      }
+                      className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
+                      placeholder="АО Банк"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-normal text-gray-700">Расчётный счёт / IBAN</label>
+                    <input
+                      value={bank.accountNumber}
+                      onChange={(event) =>
+                        setBanks((prev) => prev.map((item, itemIndex) => (itemIndex === index ? { ...item, accountNumber: event.target.value } : item)))
+                      }
+                      className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
+                      placeholder="40702810..."
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-normal text-gray-700">БИК / SWIFT</label>
+                    <input
+                      value={bank.bic ?? ''}
+                      onChange={(event) =>
+                        setBanks((prev) => prev.map((item, itemIndex) => (itemIndex === index ? { ...item, bic: event.target.value } : item)))
+                      }
+                      className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
+                      placeholder="044525225"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-normal text-gray-700">Корреспондентский счёт</label>
+                    <input
+                      value={bank.corrAccount ?? ''}
+                      onChange={(event) =>
+                        setBanks((prev) => prev.map((item, itemIndex) => (itemIndex === index ? { ...item, corrAccount: event.target.value } : item)))
+                      }
+                      className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
+                      placeholder="30101810..."
+                    />
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <label className="flex items-center gap-2 text-sm font-normal text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={bank.isPrimary ?? false}
+                      onChange={(event) =>
+                        setBanks((prev) =>
+                          prev.map((item, itemIndex) => ({
+                            ...item,
+                            isPrimary: itemIndex === index ? event.target.checked : event.target.checked ? false : item.isPrimary,
+                          })),
+                        )
+                      }
+                    />
+                    Основной счёт
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setBanks((prev) => prev.filter((_, itemIndex) => itemIndex !== index))}
+                    className="text-sm font-medium text-red-600"
+                  >
+                    Удалить
+                  </button>
+                </div>
+              </div>
+            ))}
+          </section>
+
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-gray-900">Контакты</p>
+                <p className="text-sm font-normal text-gray-500">Подписанты и операционные контакты контрагента.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setContacts((prev) => [
+                    ...prev,
+                    { roleType: 'OPERATIONAL', fullName: '', position: '', basisOfAuthority: '', phones: '', email: '' },
+                  ])
+                }
+                className="rounded-2xl border border-black/10 px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-50"
+              >
+                + Добавить контакт
+              </button>
+            </div>
+            {contacts.length === 0 ? <p className="text-sm font-normal text-gray-500">Контакты пока не добавлены.</p> : null}
+            {contacts.map((contact, index) => (
+              <div key={`${index}-${contact.fullName}`} className="rounded-2xl border border-black/10 p-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-normal text-gray-700">Тип контакта</label>
+                    <select
+                      value={contact.roleType}
+                      onChange={(event) =>
+                        setContacts((prev) =>
+                          prev.map((item, itemIndex) =>
+                            itemIndex === index ? { ...item, roleType: event.target.value as PartyContactState['roleType'] } : item,
+                          ),
+                        )
+                      }
+                      className="w-full rounded-lg border border-black/10 bg-white px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
+                    >
+                      <option value="SIGNATORY">Подписант</option>
+                      <option value="OPERATIONAL">Операционный</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-normal text-gray-700">ФИО</label>
+                    <input
+                      value={contact.fullName}
+                      onChange={(event) =>
+                        setContacts((prev) => prev.map((item, itemIndex) => (itemIndex === index ? { ...item, fullName: event.target.value } : item)))
+                      }
+                      className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
+                      placeholder="Иванов Иван Иванович"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-normal text-gray-700">Должность</label>
+                    <input
+                      value={contact.position ?? ''}
+                      onChange={(event) =>
+                        setContacts((prev) => prev.map((item, itemIndex) => (itemIndex === index ? { ...item, position: event.target.value } : item)))
+                      }
+                      className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
+                      placeholder="Генеральный директор"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-normal text-gray-700">Основание полномочий</label>
+                    <input
+                      value={contact.basisOfAuthority ?? ''}
+                      onChange={(event) =>
+                        setContacts((prev) =>
+                          prev.map((item, itemIndex) => (itemIndex === index ? { ...item, basisOfAuthority: event.target.value } : item)),
+                        )
+                      }
+                      className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
+                      placeholder="Устав / доверенность"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-normal text-gray-700">Телефон</label>
+                    <input
+                      value={contact.phones ?? ''}
+                      onChange={(event) =>
+                        setContacts((prev) => prev.map((item, itemIndex) => (itemIndex === index ? { ...item, phones: event.target.value } : item)))
+                      }
+                      className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
+                      placeholder="+7 ..."
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-normal text-gray-700">Email</label>
+                    <input
+                      value={contact.email ?? ''}
+                      onChange={(event) =>
+                        setContacts((prev) => prev.map((item, itemIndex) => (itemIndex === index ? { ...item, email: event.target.value } : item)))
+                      }
+                      className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
+                      placeholder="mail@company.ru"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setContacts((prev) => prev.filter((_, itemIndex) => itemIndex !== index))}
+                    className="text-sm font-medium text-red-600"
+                  >
+                    Удалить
+                  </button>
+                </div>
+              </div>
+            ))}
+          </section>
         </div>
       ) : null}
 
@@ -663,22 +921,131 @@ export function PartyCreateWizard() {
         )}
       </div>
 
-      <ConfirmDialog
+      <PartyLookupDiffDialog
         open={diffDialogOpen}
-        title="Подтвердите перезапись данных"
-        message={`Найдены отличия с уже введенными полями: ${diffMessage}`}
+        conflicts={conflictFields}
+        onChangeChoice={(key, choice) => {
+          setConflictFields((prev) => prev.map((item) => (item.key === key ? { ...item, choice } : item)));
+        }}
         onCancel={() => {
           setDiffDialogOpen(false);
           setPendingLookupApply(null);
+          setConflictFields([]);
         }}
         onConfirm={() => {
           if (pendingLookupApply) {
-            commitLookupApply(pendingLookupApply);
+            const resolvedPayload: PendingLookupApply = {
+              ...pendingLookupApply,
+              requisites: { ...pendingLookupApply.requisites },
+              addresses: [...pendingLookupApply.addresses],
+            };
+
+            conflictFields.forEach((field) => {
+              if (field.choice === 'found') {
+                return;
+              }
+              switch (field.key) {
+                case 'legalName':
+                  resolvedPayload.legalName = legalName.trim();
+                  break;
+                case 'shortName':
+                  resolvedPayload.shortName = shortName.trim();
+                  break;
+                case 'address':
+                  resolvedPayload.addresses = currentAddresses(addresses);
+                  break;
+                case 'inn':
+                case 'kpp':
+                case 'ogrn':
+                case 'ogrnip':
+                case 'unp':
+                case 'bin':
+                  resolvedPayload.requisites[field.key] = requisites[field.key];
+                  break;
+              }
+            });
+
+            commitLookupApply(resolvedPayload);
+            setStep(4);
           }
           setDiffDialogOpen(false);
           setPendingLookupApply(null);
+          setConflictFields([]);
         }}
       />
+    </div>
+  );
+}
+
+function currentAddresses(addresses: PartyAddress[]): PartyAddress[] {
+  if (addresses.length === 0) {
+    return [];
+  }
+  return addresses.map((item) => ({ ...item }));
+}
+
+function PartyLookupDiffDialog({
+  open,
+  conflicts,
+  onChangeChoice,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  conflicts: LookupConflictField[];
+  onChangeChoice: (key: LookupConflictKey, choice: 'mine' | 'found') => void;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+      <div className="w-full max-w-4xl rounded-2xl border border-black/10 bg-white p-6">
+        <h3 className="text-lg font-medium text-gray-900">Выберите значения для применения</h3>
+        <p className="mt-2 text-sm font-normal text-gray-600">
+          Найдены различия между введёнными и найденными данными. Для каждого поля выберите источник значения.
+        </p>
+        <div className="mt-6 space-y-3">
+          {conflicts.map((field) => (
+            <div key={field.key} className="rounded-2xl border border-black/10 p-4">
+              <p className="text-sm font-medium text-gray-900">{field.label}</p>
+              <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => onChangeChoice(field.key, 'mine')}
+                  className={`rounded-2xl border px-4 py-3 text-left text-sm font-normal transition-colors ${
+                    field.choice === 'mine' ? 'border-black/30 bg-gray-50 text-gray-900' : 'border-black/10 text-gray-700'
+                  }`}
+                >
+                  <span className="block text-xs font-medium text-gray-500">Оставить моё</span>
+                  <span className="mt-1 block">{field.current || '—'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onChangeChoice(field.key, 'found')}
+                  className={`rounded-2xl border px-4 py-3 text-left text-sm font-normal transition-colors ${
+                    field.choice === 'found' ? 'border-black/30 bg-gray-50 text-gray-900' : 'border-black/10 text-gray-700'
+                  }`}
+                >
+                  <span className="block text-xs font-medium text-gray-500">Использовать найденное</span>
+                  <span className="mt-1 block">{field.found || '—'}</span>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-6 flex justify-end gap-2">
+          <button type="button" onClick={onCancel} className="rounded-2xl border border-black/10 px-6 py-3 text-sm font-medium transition-colors hover:bg-gray-50">
+            Отмена
+          </button>
+          <button type="button" onClick={onConfirm} className="rounded-2xl bg-black px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800">
+            Применить
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

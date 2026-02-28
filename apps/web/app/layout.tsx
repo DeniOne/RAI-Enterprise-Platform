@@ -6,7 +6,7 @@ import { AiChatRoot } from '@/components/ai-chat/AiChatRoot'
 
 export const metadata: Metadata = {
     title: 'RAI Enterprise Platform',
-    description: 'РџР»Р°С‚С„РѕСЂРјР° СѓРїСЂР°РІР»РµРЅРёСЏ Р°РіСЂРѕР±РёР·РЅРµСЃРѕРј',
+    description: 'Платформа управления агробизнесом',
     icons: {
         icon: '/branding/rai-agroplatforma-transparent.png',
         shortcut: '/branding/rai-agroplatforma-transparent.png',
@@ -16,9 +16,9 @@ export const metadata: Metadata = {
 
 /**
  * @layout RootLayout
- * @description РљРѕСЂРЅРµРІРѕР№ РјР°РєРµС‚ РїСЂРёР»РѕР¶РµРЅРёСЏ.
- * Р¤РРљРЎ: РЈРґР°Р»РµРЅР° РѕР±РµСЂС‚РєР° GovernanceShell, С‚Р°Рє РєР°Рє РѕРЅР° РІС‹Р·С‹РІР°Р»Р° РєРѕРЅС„Р»РёРєС‚ РјР°РєРµС‚РѕРІ.
- * РРЅСЃС‚РёС‚СѓС†РёРѕРЅР°Р»СЊРЅС‹Р№ СЃР»РѕР№ С‚РµРїРµСЂСЊ РІРЅРµРґСЂСЏРµС‚СЃСЏ С‚РѕС‡РµС‡РЅРѕ РІ AuthenticatedLayout.
+ * @description Корневой макет приложения.
+ * ФИКС: Удалена обертка GovernanceShell, так как она вызывала конфликт макетов.
+ * Институциональный слой теперь внедряется точечно в AuthenticatedLayout.
  */
 export default function RootLayout({
     children,
@@ -36,7 +36,6 @@ export default function RootLayout({
                     <AiChatRoot />
                 </Providers>
             </body>
-
         </html>
     )
 }

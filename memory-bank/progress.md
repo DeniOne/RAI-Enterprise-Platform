@@ -1,5 +1,13 @@
 ﻿# Progress: RAI_EP
 
+## Milestone 43: UI Refactoring & Design System Consolidation - DONE ✅
+**Дата:** 2026-02-28
+- [x] **View/Edit Mode (Task B)**: Внедрен глобальный `EditModeProvider` и универсальный компонент `DataField` для переключения между режимом чтения и редактирования без дублирования кода.
+- [x] **Tabular Scalability (Task C)**: Вкладки банковских счетов, контактов и структуры контрагента переведены в табличный вид. Реализована поддержка SidePanelForm (Drawer) для всех CRUD операций внутри вкладок.
+- [x] **Profile Completeness (Task J)**: Внедрена система оценки полноты данных профиля с визуальными индикаторами в реестре и баннерами отсутствующих полей в шапке карточки.
+- [x] **Design System v2.0**: Консолидированы стратегический и продуктовый каноны в новый мастер-стандарт `docs/03_PRODUCT/UI_UX/DESIGN_SYSTEM.md`. Добавлены паттерны B/C/J.
+- [x] **Branding**: Реализовано использование `shortName` в хлебных крошках и хедерах для институциональной чистоты.
+
 ## Milestone 42: RegulatoryProfile CRUD & 2026 Presets - DONE ✅
 **Дата:** 2026-02-26
 - [x] **Backend**: Реализована полная CRUD модель профилей и юрисдикций. Модель `RegulatoryProfile` расширена денормализованными полями `vatRate`, `effectiveFrom`, `effectiveTo`, `currencyCode`.

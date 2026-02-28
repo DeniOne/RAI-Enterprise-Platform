@@ -100,6 +100,7 @@ export class PrismaService
     "Jurisdiction",
     "RegulatoryProfile",
     "PartyRelation",
+    "AssetPartyRole",
     "CommerceContract",
     "CommerceContractPartyRole",
     "CommerceObligation",

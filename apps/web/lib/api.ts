@@ -109,19 +109,21 @@ export const api = {
             apiClient.post('/commerce/party-relations', data),
     },
     partyAssets: {
+        identificationSchema: (jurisdictionId: string, partyType: string) =>
+            apiClient.get(`/jurisdictions/${encodeURIComponent(jurisdictionId)}/identification-schema`, { params: { partyType } }),
         lookupParty: (data: {
             jurisdictionId: 'RU' | 'BY' | 'KZ';
             partyType: 'LEGAL_ENTITY' | 'IP' | 'KFH';
-            query: { inn?: string; kpp?: string; unp?: string; bin?: string };
+            identifiers: { inn?: string; kpp?: string; unp?: string; bin?: string };
         }) => apiClient.post('/party-lookup', data),
         parties: (params?: { type?: string; jurisdictionId?: string; q?: string }) =>
-            apiClient.get('/api/parties', { params }),
+            apiClient.get('/parties', { params }),
         partyDetails: (partyId: string) =>
-            apiClient.get(`/api/parties/${encodeURIComponent(partyId)}`),
+            apiClient.get(`/parties/${encodeURIComponent(partyId)}`),
         partyRelations: (partyId: string) =>
-            apiClient.get(`/api/parties/${encodeURIComponent(partyId)}/relations`),
+            apiClient.get(`/parties/${encodeURIComponent(partyId)}/relations`),
         partyAssets: (partyId: string) =>
-            apiClient.get(`/api/parties/${encodeURIComponent(partyId)}/assets`),
+            apiClient.get(`/parties/${encodeURIComponent(partyId)}/assets`),
         createParty: (data: {
             type: 'HOLDING' | 'LEGAL_ENTITY' | 'IP' | 'KFH' | 'MANAGEMENT_CO' | 'BANK' | 'INSURER';
             legalName: string;
@@ -130,7 +132,10 @@ export const api = {
             status?: 'ACTIVE' | 'FROZEN';
             comment?: string;
             registrationData?: {
+                partyType?: 'HOLDING' | 'LEGAL_ENTITY' | 'IP' | 'KFH' | 'MANAGEMENT_CO' | 'BANK' | 'INSURER';
+                status?: 'ACTIVE' | 'FROZEN';
                 shortName?: string;
+                legalForm?: string;
                 comment?: string;
                 inn?: string;
                 kpp?: string;
@@ -139,9 +144,33 @@ export const api = {
                 unp?: string;
                 bin?: string;
                 addresses?: Array<{ type: string; address: string }>;
+                contacts?: Array<{
+                    roleType: 'SIGNATORY' | 'OPERATIONAL';
+                    fullName: string;
+                    position?: string;
+                    basisOfAuthority?: string;
+                    phones?: string;
+                    email?: string;
+                }>;
+                banks?: Array<{
+                    bankName: string;
+                    accountNumber: string;
+                    bic?: string;
+                    corrAccount?: string;
+                    currency?: string;
+                    isPrimary?: boolean;
+                }>;
                 dataProvenance?: { lookupSource: string; fetchedAt: string; requestKey: string };
             };
-        }) => apiClient.post('/api/parties', data),
+        }) => apiClient.post('/parties', {
+            type: data.type,
+            legalName: data.legalName,
+            shortName: data.shortName,
+            jurisdictionId: data.jurisdictionId,
+            status: data.status,
+            comment: data.comment,
+            registrationData: data.registrationData,
+        }),
         createPartyRelation: (data: {
             fromPartyId: string;
             toPartyId: string;
@@ -150,24 +179,32 @@ export const api = {
             validFrom: string;
             validTo?: string;
             basisDocId?: string;
-        }) => apiClient.post('/api/party-relations', data),
+        }) => apiClient.post('/party-relations', {
+            fromPartyId: data.fromPartyId,
+            toPartyId: data.toPartyId,
+            relationType: data.relationType,
+            sharePct: data.sharePct,
+            validFrom: data.validFrom,
+            validTo: data.validTo,
+            basisDocId: data.basisDocId,
+        }),
         farms: (params?: { q?: string; holdingId?: string; operatorId?: string; hasLease?: boolean }) =>
-            apiClient.get('/api/assets/farms', { params }),
+            apiClient.get('/assets/farms', { params }),
         farmDetails: (farmId: string) =>
-            apiClient.get(`/api/assets/farms/${encodeURIComponent(farmId)}`),
+            apiClient.get(`/assets/farms/${encodeURIComponent(farmId)}`),
         farmFields: (farmId: string) =>
-            apiClient.get(`/api/assets/farms/${encodeURIComponent(farmId)}/fields`),
+            apiClient.get(`/assets/farms/${encodeURIComponent(farmId)}/fields`),
         createFarm: (data: { name: string; regionCode?: string; status?: 'ACTIVE' | 'ARCHIVED' }) =>
-            apiClient.post('/api/assets/farms', data),
+            apiClient.post('/assets/farms', data),
         assetRoles: (assetId: string) =>
-            apiClient.get(`/api/assets/${encodeURIComponent(assetId)}/roles`),
+            apiClient.get(`/assets/${encodeURIComponent(assetId)}/roles`),
         assignAssetRole: (data: {
             assetId: string;
             partyId: string;
             role: 'OWNER' | 'OPERATOR' | 'LESSEE' | 'MANAGER' | 'BENEFICIARY';
             validFrom: string;
             validTo?: string;
-        }) => apiClient.post(`/api/assets/${encodeURIComponent(data.assetId)}/roles`, data),
+        }) => apiClient.post(`/assets/${encodeURIComponent(data.assetId)}/roles`, data),
         fields: () => apiClient.get('/api/assets/fields'),
         objects: () => apiClient.get('/api/assets/objects'),
     },

@@ -40,5 +40,5 @@ export class PartyLookupRequestDto {
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => PartyLookupQueryDto)
-  query!: PartyLookupQueryDto;
+  identifiers!: PartyLookupQueryDto;
 }

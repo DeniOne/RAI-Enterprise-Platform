@@ -5,7 +5,6 @@ import { useAuthSimulationStore } from '@/core/governance/Providers';
 import { Sidebar } from '@/components/navigation/Sidebar';
 import { GovernanceBar } from '@/shared/components/GovernanceBar';
 import { WorkSurface } from '@/shared/components/WorkSurface';
-import { AiChatRoot } from '@/components/ai-chat/AiChatRoot';
 
 export default function AppLayout({
     children,
@@ -23,9 +22,6 @@ export default function AppLayout({
                     {children}
                 </WorkSurface>
             </div>
-
-            {/* Глобальная точка входа AI-Ассистента */}
-            <AiChatRoot />
         </div>
     );
 }

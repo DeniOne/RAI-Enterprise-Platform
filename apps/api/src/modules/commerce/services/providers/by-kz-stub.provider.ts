@@ -20,10 +20,10 @@ export class ByKzStubLookupProvider implements CounterpartyLookupProvider {
       requestKey: [
         req.jurisdictionId,
         req.partyType,
-        req.query.inn ?? "",
-        req.query.kpp ?? "",
-        req.query.unp ?? "",
-        req.query.bin ?? "",
+        req.identifiers.inn ?? "",
+        req.identifiers.kpp ?? "",
+        req.identifiers.unp ?? "",
+        req.identifiers.bin ?? "",
       ].join(":"),
       error: "Провайдер для выбранной юрисдикции пока не подключен.",
     };

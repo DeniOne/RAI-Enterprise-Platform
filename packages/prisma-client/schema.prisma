@@ -94,6 +94,7 @@ model Company {
   regulatoryProfiles        RegulatoryProfile[]
   parties                   Party[]
   partyRelations            PartyRelation[]
+  assetPartyRoles           AssetPartyRole[]
   commerceContracts         CommerceContract[]
   commerceContractRoles     CommerceContractPartyRole[]
   commerceObligations       CommerceObligation[]
@@ -4033,6 +4034,35 @@ enum PartyRelationType {
   AFFILIATION
 }
 
+enum PartyEntityType {
+  HOLDING
+  LEGAL_ENTITY
+  IP
+  KFH
+  MANAGEMENT_CO
+  BANK
+  INSURER
+}
+
+enum PartyEntityStatus {
+  ACTIVE
+  FROZEN
+}
+
+enum AssetLinkType {
+  FARM
+  FIELD
+  OBJECT
+}
+
+enum AssetPartyRoleType {
+  OWNER
+  OPERATOR
+  LESSEE
+  MANAGER
+  BENEFICIARY
+}
+
 enum CommerceContractStatus {
   DRAFT
   SIGNED
@@ -4168,15 +4198,20 @@ model Party {
   companyId String
   company   Company @relation(fields: [companyId], references: [id])
 
+  type                PartyEntityType   @default(LEGAL_ENTITY)
   legalName           String
+  shortName           String?
   jurisdictionId      String
   jurisdiction        Jurisdiction       @relation(fields: [companyId, jurisdictionId], references: [companyId, id])
+  status              PartyEntityStatus  @default(ACTIVE)
+  comment             String?
   regulatoryProfileId String?
   regulatoryProfile   RegulatoryProfile? @relation(fields: [companyId, regulatoryProfileId], references: [companyId, id])
   registrationData    Json?
 
   sourceRelations PartyRelation[] @relation("PartyRelationSource")
   targetRelations PartyRelation[] @relation("PartyRelationTarget")
+  assetRoles      AssetPartyRole[]
 
   contractRoles    CommerceContractPartyRole[]
   outboundPayments Payment[]                   @relation("PaymentPayer")
@@ -4188,6 +4223,29 @@ model Party {
   @@unique([companyId, id])
   @@index([companyId, legalName])
   @@map("commerce_parties")
+}
+
+model AssetPartyRole {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  assetId   String
+  assetType AssetLinkType
+  partyId   String
+  party     Party @relation(fields: [companyId, partyId], references: [companyId, id])
+
+  role      AssetPartyRoleType
+  validFrom DateTime
+  validTo   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, id])
+  @@index([companyId, partyId, assetType])
+  @@index([companyId, assetId, assetType])
+  @@map("commerce_asset_party_roles")
 }
 
 model PartyRelation {

@@ -93,3 +93,17 @@
   - Добавлен lookup-контур `POST /api/party-lookup` с DaData (RU), stub BY/KZ, Redis cache и audit logging.
   - Реализованы checksum-проверки ИНН РФ и защита от перезаписи пользовательских значений через diff-dialog.
   - Lookup-данные (`requisites`, `addresses`, `dataProvenance`) сохраняются в `registrationData` и отображаются в карточке контрагента.
+
+- **UI Refactoring & Design System (2026-02-28): COMPLETE ✅**
+  - [x] **View/Edit Engine**: Реализован через `DataField` и `EditModeProvider`. Чистая архитектура без визуального шума в ViewMode.
+  - [x] **Tabular Scaling**: Переход от карточек к масштабируемым таблицам в HubSpot. Внедрен паттерн Drawers для редактирования.
+  - [x] **Completeness Scoring**: Система 100% готовности профиля к аудиту.
+  - [x] **Master Design System v2.0**: Единый источник истины, объединивший стратегию и продукт с учетом новых UI-инвариантов.
+- **Remote UI Access (2026-02-28):** FAILED (Infrastructure constraints). Decision: manual screenshots exchange.
+
+## Orchestrator Session Start (2026-02-28)
+- **FOUNDATION CHECK**: `CANON.md`, `ARCHITECTURAL_AXIOMS.md`, `FORBIDDEN.md`, `UI_DESIGN_CANON.md`, `SECURITY_CANON.md`, `DECISIONS.log` — проверены.
+- **LANGUAGE_POLICY**: верифицирована.
+- **MEMORY_BANK**: прочитан.
+- **Status**: TECHLEAD готов к приему задач.
+

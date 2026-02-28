@@ -4,6 +4,7 @@ import { partyTypeLabel } from '@/shared/lib/party-assets-labels';
 export function PartyProfileTab({ party }: { party: PartyDto }) {
   const shortName = party.shortName || party.registrationData?.shortName || '—';
   const comment = party.comment || party.registrationData?.comment || '—';
+  const legalForm = party.registrationData?.legalForm || '—';
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -11,6 +12,7 @@ export function PartyProfileTab({ party }: { party: PartyDto }) {
       <Field label="Тип" value={partyTypeLabel(party.type)} />
       <Field label="Юрисдикция" value={party.jurisdictionId} />
       <Field label="Статус" value={party.status} />
+      <Field label="Организационно-правовая форма" value={legalForm} />
       <Field label="Краткое наименование" value={shortName} />
       <Field label="Комментарий" value={comment} />
     </div>

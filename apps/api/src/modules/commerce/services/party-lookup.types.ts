@@ -9,7 +9,7 @@ export type PartyLookupStatus =
 export interface PartyLookupRequest {
   jurisdictionId: PartyLookupJurisdiction;
   partyType: PartyLookupPartyType;
-  query: {
+  identifiers: {
     inn?: string;
     kpp?: string;
     unp?: string;
@@ -47,6 +47,30 @@ export interface PartyLookupResponse {
 export interface CounterpartyLookupProvider {
   supports(jurisdictionId: string): boolean;
   lookup(req: PartyLookupRequest): Promise<PartyLookupResponse>;
+}
+
+export type IdentificationFieldKey = "inn" | "kpp" | "unp" | "bin";
+
+export interface IdentificationSchemaField {
+  key: IdentificationFieldKey;
+  label: string;
+  dataType: "string";
+  required: boolean;
+  mask: "digits" | "text";
+  minLength: number;
+  maxLength: number;
+}
+
+export interface IdentificationSchemaResponse {
+  jurisdictionId: PartyLookupJurisdiction;
+  partyType: string;
+  fields: IdentificationSchemaField[];
+  lookup: {
+    enabled: boolean;
+    triggerKeys: IdentificationFieldKey[];
+    buttonLabel: string;
+    debounceMs: number;
+  };
 }
 
 export function normalizeLookupQueryValue(value: string | undefined): string | undefined {

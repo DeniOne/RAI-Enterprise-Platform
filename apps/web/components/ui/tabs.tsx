@@ -43,7 +43,7 @@ export function Tabs({
 
 export function TabsList({ children, className }: { children: React.ReactNode; className?: string }) {
     return (
-        <div className={clsx('inline-flex items-center justify-center rounded-xl bg-slate-100/80 p-1 text-gray-500', className)}>
+        <div className={clsx('inline-flex items-center gap-2 border-b border-black/5 w-full', className)}>
             {children}
         </div>
     );
@@ -57,9 +57,12 @@ export function TabsTrigger({ value, children, className }: { value: string; chi
         <button
             type="button"
             onClick={() => context.onValueChange(value)}
+            data-state={isActive ? 'active' : 'inactive'}
             className={clsx(
-                'inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-1.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20 disabled:pointer-events-none disabled:opacity-50',
-                isActive ? 'bg-white text-black shadow-sm' : 'hover:bg-white/50 hover:text-gray-900',
+                'inline-flex items-center justify-center whitespace-nowrap px-4 py-3 text-sm font-medium transition-all duration-200 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 tracking-tight border-b-2 -mb-[1px]',
+                isActive
+                    ? 'border-black text-black'
+                    : 'border-transparent text-gray-400 hover:text-gray-900 hover:border-gray-200',
                 className
             )}
         >
@@ -72,5 +75,11 @@ export function TabsContent({ value, children, className }: { value: string; chi
     const context = React.useContext(TabsContext);
     if (context.value !== value) return null;
 
-    return <div className={clsx('mt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20', className)}>{children}</div>;
+    return (
+        <div
+            className={clsx('mt-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20 animate-in fade-in slide-in-from-bottom-2 duration-500', className)}
+        >
+            {children}
+        </div>
+    );
 }

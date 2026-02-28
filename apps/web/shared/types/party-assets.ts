@@ -2,9 +2,36 @@ export type PartyType = 'HOLDING' | 'LEGAL_ENTITY' | 'IP' | 'KFH' | 'MANAGEMENT_
 export type PartyRelationType = 'OWNERSHIP' | 'MANAGEMENT' | 'AFFILIATED' | 'AGENCY';
 export type AssetType = 'FARM' | 'FIELD' | 'OBJECT';
 export type AssetPartyRole = 'OWNER' | 'OPERATOR' | 'LESSEE' | 'MANAGER' | 'BENEFICIARY';
+export type PartyStatus = 'ACTIVE' | 'FROZEN';
+
+export interface PartyAddressRecord {
+  type: string;
+  address: string;
+}
+
+export interface PartyContactRecord {
+  roleType: 'SIGNATORY' | 'OPERATIONAL';
+  fullName: string;
+  position?: string;
+  basisOfAuthority?: string;
+  phones?: string;
+  email?: string;
+}
+
+export interface PartyBankRecord {
+  bankName: string;
+  accountNumber: string;
+  bic?: string;
+  corrAccount?: string;
+  currency?: string;
+  isPrimary?: boolean;
+}
 
 export interface PartyRegistrationData {
+  partyType?: PartyType;
+  status?: PartyStatus;
   shortName?: string;
+  legalForm?: string;
   comment?: string;
   inn?: string;
   kpp?: string;
@@ -12,10 +39,9 @@ export interface PartyRegistrationData {
   ogrnip?: string;
   unp?: string;
   bin?: string;
-  addresses?: Array<{
-    type: string;
-    address: string;
-  }>;
+  addresses?: PartyAddressRecord[];
+  contacts?: PartyContactRecord[];
+  banks?: PartyBankRecord[];
   dataProvenance?: {
     lookupSource: string;
     fetchedAt: string;
@@ -29,7 +55,7 @@ export interface PartyDto {
   legalName: string;
   shortName?: string;
   jurisdictionId: string;
-  status: 'ACTIVE' | 'FROZEN';
+  status: PartyStatus;
   comment?: string;
   registrationData?: PartyRegistrationData | null;
 }

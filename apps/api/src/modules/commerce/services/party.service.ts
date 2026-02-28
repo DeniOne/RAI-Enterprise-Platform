@@ -14,6 +14,31 @@ import {
 export class PartyService {
     constructor(private readonly prisma: PrismaService) { }
 
+    private mapRelationTypeToDb(value: CreatePartyRelationDto["relationType"]): "OWNERSHIP" | "COMMERCIAL" | "AFFILIATION" {
+        switch (value) {
+            case "OWNERSHIP":
+                return "OWNERSHIP";
+            case "MANAGEMENT":
+            case "AGENCY":
+                return "COMMERCIAL";
+            case "AFFILIATED":
+            default:
+                return "AFFILIATION";
+        }
+    }
+
+    private mapRelationTypeFromDb(value: string): "OWNERSHIP" | "MANAGEMENT" | "AFFILIATED" | "AGENCY" {
+        switch (value) {
+            case "OWNERSHIP":
+                return "OWNERSHIP";
+            case "COMMERCIAL":
+                return "MANAGEMENT";
+            case "AFFILIATION":
+            default:
+                return "AFFILIATED";
+        }
+    }
+
     // ─── Tenant Discovery (no JWT required) ──────────────────────
 
     async getDefaultTenant() {
@@ -318,8 +343,12 @@ export class PartyService {
         return this.prisma.party.create({
             data: {
                 companyId,
+                type: (dto.type ?? "LEGAL_ENTITY") as any,
                 legalName: dto.legalName,
+                shortName: dto.shortName ?? null,
                 jurisdictionId: dto.jurisdictionId,
+                status: (dto.status ?? "ACTIVE") as any,
+                comment: dto.comment ?? null,
                 regulatoryProfileId: dto.regulatoryProfileId ?? null,
                 registrationData: dto.registrationData ?? null,
             },
@@ -350,8 +379,12 @@ export class PartyService {
         return this.prisma.party.update({
             where: { id: partyId },
             data: {
+                ...(dto.type !== undefined && { type: dto.type as any }),
                 ...(dto.legalName !== undefined && { legalName: dto.legalName }),
+                ...(dto.shortName !== undefined && { shortName: dto.shortName ?? null }),
                 ...(dto.jurisdictionId !== undefined && { jurisdictionId: dto.jurisdictionId }),
+                ...(dto.status !== undefined && { status: dto.status as any }),
+                ...(dto.comment !== undefined && { comment: dto.comment ?? null }),
                 ...(dto.regulatoryProfileId !== undefined && {
                     regulatoryProfileId: dto.regulatoryProfileId ?? null,
                 }),
@@ -370,22 +403,28 @@ export class PartyService {
 
     async createPartyRelation(companyId: string, dto: CreatePartyRelationDto) {
         const [source, target] = await Promise.all([
-            this.prisma.party.findFirst({ where: { companyId, id: dto.sourcePartyId } }),
-            this.prisma.party.findFirst({ where: { companyId, id: dto.targetPartyId } }),
+            this.prisma.party.findFirst({ where: { companyId, id: dto.fromPartyId } }),
+            this.prisma.party.findFirst({ where: { companyId, id: dto.toPartyId } }),
         ]);
 
         if (!source) throw new BadRequestException("Source party not found");
         if (!target) throw new BadRequestException("Target party not found");
-        if (dto.sourcePartyId === dto.targetPartyId) {
+        if (dto.fromPartyId === dto.toPartyId) {
             throw new BadRequestException("Cannot create relation with self");
+        }
+        if (dto.relationType === "OWNERSHIP" && !(Number(dto.sharePct) > 0 && Number(dto.sharePct) <= 100)) {
+            throw new BadRequestException("OWNERSHIP relation requires sharePct in range (0, 100]");
+        }
+        if (dto.validTo && new Date(dto.validFrom).getTime() >= new Date(dto.validTo).getTime()) {
+            throw new BadRequestException("validFrom must be earlier than validTo");
         }
 
         return this.prisma.partyRelation.create({
             data: {
                 companyId,
-                sourcePartyId: dto.sourcePartyId,
-                targetPartyId: dto.targetPartyId,
-                relationType: dto.relationType,
+                sourcePartyId: dto.fromPartyId,
+                targetPartyId: dto.toPartyId,
+                relationType: this.mapRelationTypeToDb(dto.relationType) as any,
                 validFrom: new Date(dto.validFrom),
                 validTo: dto.validTo ? new Date(dto.validTo) : null,
             },
@@ -397,7 +436,7 @@ export class PartyService {
     }
 
     async listPartyRelations(companyId: string, partyId: string) {
-        return this.prisma.partyRelation.findMany({
+        const rows = await this.prisma.partyRelation.findMany({
             where: {
                 companyId,
                 OR: [{ sourcePartyId: partyId }, { targetPartyId: partyId }],
@@ -407,5 +446,12 @@ export class PartyService {
                 targetParty: { select: { id: true, legalName: true } },
             },
         });
+
+        return rows.map((item) => ({
+            ...item,
+            fromPartyId: item.sourcePartyId,
+            toPartyId: item.targetPartyId,
+            relationType: this.mapRelationTypeFromDb(String(item.relationType)),
+        }));
     }
 }
