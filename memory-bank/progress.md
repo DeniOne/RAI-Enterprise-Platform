@@ -27,6 +27,9 @@
     *   Possible cause 3: `PrismaService` typing mismatch after removing explicit getters.
 
 ### Next Steps:
-1.  Verify if the root `tsconfig.json` resolved the `@nestjs/common` red lines.
-2.  If `agroEventCommitted` is still red, investigate `PrismaService` type shadowing.
-3.  Ensure all domain services (`EventActionsService`, `EventCommitterService`) are error-free.
+1.  **Agro Domain Controller MVP**:
+    *   [ ] Добавить `AgroEscalation` в схему БД и деплойнуть миграцию.
+    *   [ ] Реализовать логику фильтрации и расчета в `ControllerMetricsService`.
+    *   [ ] Подключить эскалацию к подтверждению событий в Telegram.
+    *   [ ] Покрыть тестами всю цепочку от коммита до эскалации.
+2.  Исправить типизацию в корневом `tsconfig.json` (проблема с `@types`).
