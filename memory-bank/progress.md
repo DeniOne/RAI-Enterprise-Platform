@@ -1,5 +1,14 @@
 ﻿# Progress: RAI_EP
 
+## Milestone 44: AGRO_DOMAIN Telegram Intake Persistence - DONE ✅
+**Дата:** 2026-02-28
+- [x] **Checklist**: Создан детальный план реализации хранения и экшнов для Telegram-интейка в `docs/07_EXECUTION/AGRO_TELEGRAM_INTAKE_CHECKLIST.md`.
+- [x] **Prisma Storage**: Модель `AgroEventDraft` внедрена в `schema.prisma`, выполнена синхронизация `db push`.
+- [x] **Repository Layer**: Реализован `EventDraftRepository` с поддержкой 10/10 изоляции тенантов и TTL (7 дней).
+- [x] **API Endpoints**: Реализованы контроллеры и сервисы для экшнов `confirm`, `fix`, `link` с валидацией MUST-полей.
+- [x] **Telegram Integration**: `TelegramIntakeController` обновлен для работы с персистентными черновиками.
+- [x] **Verification**: Написаны unit-тесты `event-actions.service.spec.ts`, проверяющие все ключевые флоу.
+
 ## Milestone 43: UI Refactoring & Design System Consolidation - DONE ✅
 **Дата:** 2026-02-28
 - [x] **View/Edit Mode (Task B)**: Внедрен глобальный `EditModeProvider` и универсальный компонент `DataField` для переключения между режимом чтения и редактирования без дублирования кода.

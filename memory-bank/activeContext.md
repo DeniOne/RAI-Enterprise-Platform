@@ -9,6 +9,7 @@
 - **Security Hardened**: RBAC, Throttler, and Tenant Isolation (Prisma middleware) fully active.
 
 ## Current Focus
+- **Agro Domain: Telegram Intake Persistence (2026-02-28)**: **COMPLETE ✅**. Черновики теперь персистентны. Внедрена модель `AgroEventDraft`, репозиторий с TTL и эндпоинты `confirm/fix/link`. Логика покрыта unit-тестами.
 - **Auto-Onboarding & Dev Mode Guard (2026-02-26)**: Внедрён механизм `AUTH_DISABLED=true` (возврат тестового Tenant ID) и Auto-Onboarding для владельца (создание корневой компании при входе `441610858` в Telegram). Проблема курицы и яйца при старте платформы решена.
 - **Level C: Contradiction-Resilient Intelligence**: **VERIFIED ✅** (50 тестов PASS)
   - [x] FSM Governance Guard (I33) — DivergenceRecord gate + high risk justification
@@ -105,5 +106,6 @@
 - **FOUNDATION CHECK**: `CANON.md`, `ARCHITECTURAL_AXIOMS.md`, `FORBIDDEN.md`, `UI_DESIGN_CANON.md`, `SECURITY_CANON.md`, `DECISIONS.log` — проверены. Все каноны на месте, хуле.
 - **LANGUAGE_POLICY**: верифицирована. Английский — только для кода, остальное — наш великий и могучий.
 - **MEMORY_BANK**: прочитан до корки.
+- **Documentation Hardening**: завершен рефакторинг `10_BUTTON_Реестр_хозяйств.md` до Master-стандарта (v2.0, B/C/J паттерны).
 - **Status**: TECHLEAD готов к приему задач. Жду указаний от USER.
 

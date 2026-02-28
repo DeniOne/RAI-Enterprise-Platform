@@ -4550,3 +4550,26 @@ model RegulatoryArtifact {
   @@unique([companyId, id])
   @@map("commerce_regulatory_artifacts")
 }
+
+model AgroEventDraft {
+  id           String   @id @default(cuid())
+  tenantId     String
+  userId       String            // telegram user id or internal principal
+  status       String            // 'DRAFT' | 'READY_FOR_CONFIRM' | 'COMMITTED'
+  eventType    String
+  timestamp    DateTime
+  farmRef      String?
+  fieldRef     String?
+  taskRef      String?
+  payloadJson  Json
+  evidenceJson Json
+  confidence   Float
+  missingMust  String[]          // Postgres text[]; если у нас не postgres - замени на Json
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  expiresAt    DateTime          // now + 7 days
+
+  @@index([tenantId, userId])
+  @@index([expiresAt])
+  @@map("agro_event_drafts")
+}
