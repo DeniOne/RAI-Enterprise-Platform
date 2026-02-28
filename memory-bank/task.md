@@ -195,9 +195,9 @@
     - [x] Реализовать авто-эскалацию при `severity >= policy.escalateAt` (S3/S4) <!-- id: 15.4.3 -->
 - [x] **Bot Feedback** <!-- id: 15.5 -->
     - [x] Добавить в Telegram logic уведомление о срывах сроков при подтверждении (`confirm`) <!-- id: 15.5.1 -->
-- [ ] **Test Suite** <!-- id: 15.6 -->
-    - [ ] Test 1: Confirm -> CommittedEvent <!-- id: 15.6.1 -->
-    - [ ] Test 2: Controller COMPLETED -> delay calculation <!-- id: 15.6.2 -->
-    - [ ] Test 3: Delay = 4 -> severity S3 <!-- id: 15.6.3 -->
-    - [ ] Test 4: S3 -> AgroEscalation entry <!-- id: 15.6.4 -->
-    - [ ] Test 5: Delay = 1 -> severity S2 (no escalation) <!-- id: 15.6.5 -->
+- [x] **Test Suite** <!-- id: 15.6 -->
+    - [x] Test 1: Confirm -> CommittedEvent <!-- id: 15.6.1 -->
+    - [x] Test 2: Controller COMPLETED -> delay calculation <!-- id: 15.6.2 -->
+    - [x] Test 3: Delay = 4 -> severity S3 <!-- id: 15.6.3 -->
+    - [x] Test 4: S3 -> AgroEscalation entry <!-- id: 15.6.4 -->
+    - [x] Test 5: Delay = 1 -> severity S2 (no escalation) <!-- id: 15.6.5 -->
