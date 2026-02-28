@@ -1,0 +1,48 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "ES2021",
+        "baseUrl": ".",
+        "paths": {
+            "@nestjs/*": [
+                "./apps/api/node_modules/@nestjs/*"
+            ],
+            "@rai/agro-orchestrator": [
+                "./packages/agro-orchestrator/src"
+            ],
+            "@rai/legal-engine": [
+                "./packages/legal-engine/src"
+            ],
+            "@rai/prisma-client": [
+                "./packages/prisma-client/generated-client"
+            ],
+            "@rai/rd-engine": [
+                "./packages/rd-engine/src"
+            ],
+            "@rai/regenerative-engine": [
+                "./packages/regenerative-engine/src"
+            ],
+            "@rai/vector-store": [
+                "./packages/vector-store/src"
+            ]
+        },
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "skipLibCheck": true,
+        "allowSyntheticDefaultImports": true,
+        "moduleResolution": "node",
+        "typeRoots": [
+            "./node_modules/@types",
+            "./apps/api/node_modules/@types"
+        ]
+    },
+    "include": [
+        "apps/**/*.ts",
+        "packages/**/*.ts",
+        "docs/**/*.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "**/dist"
+    ]
+}

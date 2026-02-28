@@ -19,7 +19,7 @@ export class EventCommitterService {
         await this.prisma.agroEventCommitted.upsert({
             where: { id: event.id },
             update: {
-                tenantId: event.tenantId,
+                companyId: event.companyId,
                 farmRef: event.farmRef ?? null,
                 fieldRef: event.fieldRef ?? null,
                 taskRef: event.taskRef ?? null,
@@ -33,7 +33,7 @@ export class EventCommitterService {
             },
             create: {
                 id: event.id,
-                tenantId: event.tenantId,
+                companyId: event.companyId,
                 farmRef: event.farmRef ?? null,
                 fieldRef: event.fieldRef ?? null,
                 taskRef: event.taskRef ?? null,

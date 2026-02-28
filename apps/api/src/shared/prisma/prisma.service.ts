@@ -13,8 +13,8 @@ type TenantMode = "off" | "shadow" | "enforce";
 @Injectable()
 export class PrismaService
   extends PrismaClient
-  implements OnModuleInit, OnModuleDestroy
-{
+  implements OnModuleInit, OnModuleDestroy {
+  [key: string]: any; // Allows transparent Proxy access to Prisma delegates
   private readonly logger = new Logger(PrismaService.name);
   private readonly tenantContext: TenantContextService;
   private readonly tenantMode: TenantMode;
@@ -113,6 +113,8 @@ export class PrismaService
     "Payment",
     "PaymentAllocation",
     "RegulatoryArtifact",
+    "AgroEventDraft",
+    "AgroEventCommitted",
   ]);
 
   // Explicit non-tenant/system models. Any model outside both sets is treated as unknown.
@@ -139,11 +141,45 @@ export class PrismaService
         .map((v) => v.trim())
         .filter(Boolean),
     );
+
+    // Return a Proxy to make the service "transparent" for all Prisma models
+    // while ensuring they all go through the isolated tenantClient.
+    return new Proxy(this, {
+      get(target: any, prop: string | symbol, receiver: any) {
+        // 1. Internal infrastructure and symbols go to target
+        if (
+          typeof prop === "symbol" ||
+          prop === "constructor" ||
+          prop === "then" ||
+          prop === "logger" ||
+          (typeof prop === "string" && prop.startsWith("$"))
+        ) {
+          return Reflect.get(target, prop, receiver);
+        }
+
+        // 2. Service-specific properties/methods defined in PrismaService go to target
+        // We check both the instance (for fields) and the prototype (for methods)
+        if (
+          Object.prototype.hasOwnProperty.call(target, prop) ||
+          Object.prototype.hasOwnProperty.call(PrismaService.prototype, prop)
+        ) {
+          return Reflect.get(target, prop, receiver);
+        }
+
+        // 3. Model delegates go to isolated tenantClient
+        if (typeof prop === "string" && prop in target.tenantClient) {
+          return target.tenantClient[prop];
+        }
+
+        // 4. Fallback to target
+        return Reflect.get(target, prop, receiver);
+      },
+    });
   }
 
   async onModuleInit() {
     this.logger.log(
-      "PrismaService initializing with 10/10 Tenant Isolation ($extends)...",
+      "PrismaService initializing with 10/10 Tenant Isolation (Transparent Proxy)...",
     );
 
     // Connect original client first
@@ -247,246 +283,8 @@ export class PrismaService
     },
   });
 
-  // Proxy common methods to use the extended client
-  get account() {
-    return (this.tenantClient as any).account;
-  }
-  get budget() {
-    return (this.tenantClient as any).budget;
-  }
-  get budgetItem() {
-    return (this.tenantClient as any).budgetItem;
-  }
-  get budgetPlan() {
-    return (this.tenantClient as any).budgetPlan;
-  }
-  get cashAccount() {
-    return (this.tenantClient as any).cashAccount;
-  }
-  get cmrDecision() {
-    return (this.tenantClient as any).cmrDecision;
-  }
-  get cmrRisk() {
-    return (this.tenantClient as any).cmrRisk;
-  }
-  get complianceCheck() {
-    return (this.tenantClient as any).complianceCheck;
-  }
-  get contract() {
-    return (this.tenantClient as any).contract;
-  }
-  get deal() {
-    return (this.tenantClient as any).deal;
-  }
-  get decisionRecord() {
-    return (this.tenantClient as any).decisionRecord;
-  }
-  get deviationReview() {
-    return (this.tenantClient as any).deviationReview;
-  }
-  get economicEvent() {
-    return (this.tenantClient as any).economicEvent;
-  }
-  get employeeProfile() {
-    return (this.tenantClient as any).employeeProfile;
-  }
-  get executionRecord() {
-    return (this.tenantClient as any).executionRecord;
-  }
-  get field() {
-    return (this.tenantClient as any).field;
-  }
-  get fieldObservation() {
-    return (this.tenantClient as any).fieldObservation;
-  }
-  get grInteraction() {
-    return (this.tenantClient as any).grInteraction;
-  }
-  get harvestPlan() {
-    return (this.tenantClient as any).harvestPlan;
-  }
-  get harvestResult() {
-    return (this.tenantClient as any).harvestResult;
-  }
-  get holding() {
-    return (this.tenantClient as any).holding;
-  }
-  get hrKPIIndicator() {
-    return (this.tenantClient as any).hrKPIIndicator;
-  }
-  get humanAssessmentSnapshot() {
-    return (this.tenantClient as any).humanAssessmentSnapshot;
-  }
-  get insuranceCoverage() {
-    return (this.tenantClient as any).insuranceCoverage;
-  }
-  get invitation() {
-    return (this.tenantClient as any).invitation;
-  }
-  get knowledgeEdge() {
-    return (this.tenantClient as any).knowledgeEdge;
-  }
-  get knowledgeNode() {
-    return (this.tenantClient as any).knowledgeNode;
-  }
-  get ledgerEntry() {
-    return (this.tenantClient as any).ledgerEntry;
-  }
-  get learningEvent() {
-    return (this.tenantClient as any).learningEvent;
-  }
-  get legalDocument() {
-    return (this.tenantClient as any).legalDocument;
-  }
-  get legalRequirement() {
-    return (this.tenantClient as any).legalRequirement;
-  }
-  get machinery() {
-    return (this.tenantClient as any).machinery;
-  }
-  get modelVersion() {
-    return (this.tenantClient as any).modelVersion;
-  }
-  get okrCycle() {
-    return (this.tenantClient as any).okrCycle;
-  }
-  get performanceContract() {
-    return (this.tenantClient as any).performanceContract;
-  }
-  get policySignal() {
-    return (this.tenantClient as any).policySignal;
-  }
-  get pulseSurvey() {
-    return (this.tenantClient as any).pulseSurvey;
-  }
-  get regulatoryBody() {
-    return (this.tenantClient as any).regulatoryBody;
-  }
-  get researchProgram() {
-    return (this.tenantClient as any).researchProgram;
-  }
-  get riskAssessment() {
-    return (this.tenantClient as any).riskAssessment;
-  }
-  get riskSignal() {
-    return (this.tenantClient as any).riskSignal;
-  }
-  get riskStateHistory() {
-    return (this.tenantClient as any).riskStateHistory;
-  }
-  get roleDefinition() {
-    return (this.tenantClient as any).roleDefinition;
-  }
-  get satelliteObservation() {
-    return (this.tenantClient as any).satelliteObservation;
-  }
-  get scoreCard() {
-    return (this.tenantClient as any).scoreCard;
-  }
-  get stockItem() {
-    return (this.tenantClient as any).stockItem;
-  }
-  get stockTransaction() {
-    return (this.tenantClient as any).stockTransaction;
-  }
-  get strategicGoal() {
-    return (this.tenantClient as any).strategicGoal;
-  }
-  get task() {
-    return (this.tenantClient as any).task;
-  }
-  get techMap() {
-    return (this.tenantClient as any).techMap;
-  }
-  get technologyCard() {
-    return (this.tenantClient as any).technologyCard;
-  }
-  get trainingRun() {
-    return (this.tenantClient as any).trainingRun;
-  }
-  get user() {
-    return (this.tenantClient as any).user;
-  }
-  get visionObservation() {
-    return (this.tenantClient as any).visionObservation;
-  }
-  get driftReport() {
-    return (this.tenantClient as any).driftReport;
-  }
-  get accountBalance() {
-    return (this.tenantClient as any).accountBalance;
-  }
-  get tenantState() {
-    return (this.tenantClient as any).tenantState;
-  }
-  get generationRecord() {
-    return (this.tenantClient as any).generationRecord;
-  }
-  get party() {
-    return (this.tenantClient as any).party;
-  }
-  get jurisdiction() {
-    return (this.tenantClient as any).jurisdiction;
-  }
-  get regulatoryProfile() {
-    return (this.tenantClient as any).regulatoryProfile;
-  }
-  get partyRelation() {
-    return (this.tenantClient as any).partyRelation;
-  }
-  get commerceContract() {
-    return (this.tenantClient as any).commerceContract;
-  }
-  get commerceContractPartyRole() {
-    return (this.tenantClient as any).commerceContractPartyRole;
-  }
-  get commerceObligation() {
-    return (this.tenantClient as any).commerceObligation;
-  }
-  get budgetReservation() {
-    return (this.tenantClient as any).budgetReservation;
-  }
-  get paymentSchedule() {
-    return (this.tenantClient as any).paymentSchedule;
-  }
-  get commerceFulfillmentEvent() {
-    return (this.tenantClient as any).commerceFulfillmentEvent;
-  }
-  get stockMove() {
-    return (this.tenantClient as any).stockMove;
-  }
-  get revenueRecognitionEvent() {
-    return (this.tenantClient as any).revenueRecognitionEvent;
-  }
-  get invoice() {
-    return (this.tenantClient as any).invoice;
-  }
-  get payment() {
-    return (this.tenantClient as any).payment;
-  }
-  get paymentAllocation() {
-    return (this.tenantClient as any).paymentAllocation;
-  }
-  get regulatoryArtifact() {
-    return (this.tenantClient as any).regulatoryArtifact;
-  }
-
-  // System/Non-tenant models
-  get company() {
-    return (this.tenantClient as any).company;
-  }
-  get outboxMessage() {
-    return (this.tenantClient as any).outboxMessage;
-  }
-  get eventConsumption() {
-    return (this.tenantClient as any).eventConsumption;
-  }
-  get rapeseed() {
-    return (this.tenantClient as any).rapeseed;
-  }
-  get rapeseedHistory() {
-    return (this.tenantClient as any).rapeseedHistory;
-  }
+  // System/Non-tenant models (explicitly excluded from isolation if needed, but proxied automatically)
+  // No more manual getters needed!
 
   /**
    * Safe wrapper for raw queries that ensures session context is set.

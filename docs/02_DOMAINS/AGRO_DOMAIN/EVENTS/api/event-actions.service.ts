@@ -17,8 +17,8 @@ export class EventActionsService {
         private readonly committer: EventCommitterService,
     ) { }
 
-    async fix(tenantId: string, userId: string, draftId: string, patch: any) {
-        const draft = await this.repository.getDraft(tenantId, userId, draftId);
+    async fix(companyId: string, userId: string, draftId: string, patch: any) {
+        const draft = await this.repository.getDraft(companyId, userId, draftId);
 
         // Патчим только разрешенные поля
         const updatedDraft = { ...draft };
@@ -41,12 +41,12 @@ export class EventActionsService {
         linkedDraft.missingMust = this.validator.validateMust(linkedDraft);
         linkedDraft.status = linkedDraft.missingMust.length === 0 ? 'READY_FOR_CONFIRM' : 'DRAFT';
 
-        const saved = await this.repository.updateDraft(tenantId, userId, draftId, linkedDraft);
+        const saved = await this.repository.updateDraft(companyId, userId, draftId, linkedDraft);
         return { draft: saved, ui: this.buildUI(saved) };
     }
 
-    async link(tenantId: string, userId: string, draftId: string, refs: any) {
-        const draft = await this.repository.getDraft(tenantId, userId, draftId);
+    async link(companyId: string, userId: string, draftId: string, refs: any) {
+        const draft = await this.repository.getDraft(companyId, userId, draftId);
 
         if (refs.farmRef) draft.farmRef = refs.farmRef;
         if (refs.fieldRef) draft.fieldRef = refs.fieldRef;
@@ -55,12 +55,12 @@ export class EventActionsService {
         draft.missingMust = this.validator.validateMust(draft);
         draft.status = draft.missingMust.length === 0 ? 'READY_FOR_CONFIRM' : 'DRAFT';
 
-        const saved = await this.repository.updateDraft(tenantId, userId, draftId, draft);
+        const saved = await this.repository.updateDraft(companyId, userId, draftId, draft);
         return { draft: saved, ui: this.buildUI(saved) };
     }
 
-    async confirm(tenantId: string, userId: string, draftId: string) {
-        const draft = await this.repository.getDraft(tenantId, userId, draftId);
+    async confirm(companyId: string, userId: string, draftId: string) {
+        const draft = await this.repository.getDraft(companyId, userId, draftId);
 
         if (draft.status === 'COMMITTED') {
             return { draft, ui: { message: '✅ Event already committed', buttons: ['CONFIRM', 'FIX', 'LINK'] } };
@@ -70,7 +70,7 @@ export class EventActionsService {
         if (missingMust.length > 0) {
             draft.missingMust = missingMust;
             draft.status = 'DRAFT';
-            await this.repository.updateDraft(tenantId, userId, draftId, draft);
+            await this.repository.updateDraft(companyId, userId, draftId, draft);
             return { draft, ui: this.buildUI(draft) };
         }
 
@@ -88,7 +88,7 @@ export class EventActionsService {
         // Коммит
         const event: CommittedEvent = {
             id: draft.id,
-            tenantId,
+            companyId,
             farmRef: draft.farmRef,
             fieldRef: draft.fieldRef,
             taskRef: draft.taskRef,
@@ -102,9 +102,9 @@ export class EventActionsService {
         };
 
         await this.committer.commit(event);
-        await this.repository.markCommitted(tenantId, userId, draftId);
+        await this.repository.markCommitted(companyId, userId, draftId);
 
-        const finalDraft = await this.repository.getDraft(tenantId, userId, draftId);
+        const finalDraft = await this.repository.getDraft(companyId, userId, draftId);
         return {
             draft: finalDraft,
             ui: { message: '✅ Event committed successfully', buttons: ['CONFIRM', 'FIX', 'LINK'] }

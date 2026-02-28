@@ -29,7 +29,7 @@ describe('EventActionsService', () => {
         service = new EventActionsService(repository, linker, validator, committer);
     });
 
-    const tenantId = 't1';
+    const companyId = 't1';
     const userId = 'u1';
     const draftId = 'd1';
 
@@ -45,7 +45,7 @@ describe('EventActionsService', () => {
         validator.validateMust.mockReturnValue([]);
         repository.updateDraft.mockImplementation(async (t, u, id, d) => ({ ...mockDraft, ...d } as any));
 
-        const result = await service.fix(tenantId, userId, draftId, { description: 'new' });
+        const result = await service.fix(companyId, userId, draftId, { description: 'new' });
 
         expect(result.draft.status).toBe('READY_FOR_CONFIRM');
         expect((result.draft.payload as any).description).toBe('new');
@@ -62,7 +62,7 @@ describe('EventActionsService', () => {
         validator.validateMust.mockReturnValue([]); // fieldRef added
         repository.updateDraft.mockImplementation(async (t, u, id, d) => ({ ...mockDraft, ...d } as any));
 
-        const result = await service.link(tenantId, userId, draftId, { fieldRef: 'f1' });
+        const result = await service.link(companyId, userId, draftId, { fieldRef: 'f1' });
 
         expect(result.draft.status).toBe('READY_FOR_CONFIRM');
         expect(result.draft.fieldRef).toBe('f1');
@@ -78,7 +78,7 @@ describe('EventActionsService', () => {
         validator.validateMust.mockReturnValue(['fieldRef']); // Still missing fieldRef
         repository.updateDraft.mockResolvedValue({} as any);
 
-        const result = await service.confirm(tenantId, userId, draftId);
+        const result = await service.confirm(companyId, userId, draftId);
 
         expect(result.draft.status).toBe('DRAFT');
         expect(result.ui.mustQuestions).toContain('Пожалуйста, укажи fieldRef');
@@ -97,9 +97,9 @@ describe('EventActionsService', () => {
         validator.validateMust.mockReturnValue([]);
         repository.markCommitted.mockResolvedValue();
 
-        const result = await service.confirm(tenantId, userId, draftId);
+        const result = await service.confirm(companyId, userId, draftId);
 
-        expect(repository.markCommitted).toHaveBeenCalledWith(tenantId, userId, draftId);
+        expect(repository.markCommitted).toHaveBeenCalledWith(companyId, userId, draftId);
         expect(result.ui.message).toContain('successfully');
     });
 });

@@ -147,7 +147,11 @@ model Company {
   labCapacityConfigs    LabCapacityConfig[]
   externalSourceEntries ExternalSourceAllowlist[]
   aiScanRunLogs         AIScanRunLog[]
-
+ 
+  // Agro Domain
+  agroEventDrafts     AgroEventDraft[]
+  agroEventCommitted  AgroEventCommitted[]
+ 
   @@map("companies")
 }
 
@@ -4553,7 +4557,8 @@ model RegulatoryArtifact {
 
 model AgroEventDraft {
   id           String   @id @default(cuid())
-  tenantId     String
+  companyId    String
+  company      Company  @relation(fields: [companyId], references: [id])
   userId       String            // telegram user id or internal principal
   status       String            // 'DRAFT' | 'READY_FOR_CONFIRM' | 'COMMITTED'
   eventType    String
@@ -4564,19 +4569,20 @@ model AgroEventDraft {
   payloadJson  Json
   evidenceJson Json
   confidence   Float
-  missingMust  String[]          // Postgres text[]; если у нас не postgres - замени на Json
+  missingMust  String[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   expiresAt    DateTime          // now + 7 days
 
-  @@index([tenantId, userId])
+  @@index([companyId, userId])
   @@index([expiresAt])
   @@map("agro_event_drafts")
 }
 
 model AgroEventCommitted {
   id              String   @id
-  tenantId        String
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
   farmRef         String?
   fieldRef        String?
   taskRef         String?
@@ -4588,7 +4594,7 @@ model AgroEventCommitted {
   committedBy     String
   provenanceHash  String
 
-  @@index([tenantId, eventType])
+  @@index([companyId, eventType])
   @@index([farmRef, timestamp])
   @@index([fieldRef, timestamp])
   @@map("agro_events_committed")

@@ -2,7 +2,7 @@ import { EvidenceItem } from '../event-draft.schema';
 
 export interface CommittedEvent {
     id: string;
-    tenantId: string;
+    companyId: string;
 
     farmRef?: string;
     fieldRef?: string;

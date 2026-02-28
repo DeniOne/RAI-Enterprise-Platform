@@ -6,14 +6,14 @@ import { EventDraft } from '../event-draft.schema';
 export class EventDraftRepository {
     constructor(private readonly prisma: PrismaService) { }
 
-    async createDraft(tenantId: string, userId: string, draft: EventDraft): Promise<EventDraft> {
+    async createDraft(companyId: string, userId: string, draft: EventDraft): Promise<EventDraft> {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7);
 
-        const created = await (this.prisma as any).agroEventDraft.create({
+        const created = await this.prisma.agroEventDraft.create({
             data: {
                 id: draft.id,
-                tenantId,
+                companyId,
                 userId,
                 status: draft.status,
                 eventType: draft.eventType,
@@ -32,9 +32,9 @@ export class EventDraftRepository {
         return this.mapToDraft(created);
     }
 
-    async getDraft(tenantId: string, userId: string, draftId: string): Promise<EventDraft> {
-        const draft = await (this.prisma as any).agroEventDraft.findFirst({
-            where: { id: draftId, tenantId, userId },
+    async getDraft(companyId: string, userId: string, draftId: string): Promise<EventDraft> {
+        const draft = await this.prisma.agroEventDraft.findFirst({
+            where: { id: draftId, companyId, userId },
         });
 
         if (!draft) {
@@ -44,7 +44,7 @@ export class EventDraftRepository {
         return this.mapToDraft(draft);
     }
 
-    async updateDraft(tenantId: string, userId: string, draftId: string, patch: Partial<EventDraft>): Promise<EventDraft> {
+    async updateDraft(companyId: string, userId: string, draftId: string, patch: Partial<EventDraft>): Promise<EventDraft> {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7);
 
@@ -60,17 +60,17 @@ export class EventDraftRepository {
         delete data.payload;
         delete data.evidence;
 
-        const updated = await (this.prisma as any).agroEventDraft.update({
-            where: { id: draftId, tenantId, userId },
+        const updated = await this.prisma.agroEventDraft.update({
+            where: { id: draftId, companyId, userId },
             data,
         });
 
         return this.mapToDraft(updated);
     }
 
-    async markCommitted(tenantId: string, userId: string, draftId: string): Promise<void> {
-        await (this.prisma as any).agroEventDraft.update({
-            where: { id: draftId, tenantId, userId },
+    async markCommitted(companyId: string, userId: string, draftId: string): Promise<void> {
+        await this.prisma.agroEventDraft.update({
+            where: { id: draftId, companyId, userId },
             data: {
                 status: 'COMMITTED',
                 expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
@@ -79,7 +79,7 @@ export class EventDraftRepository {
     }
 
     async deleteExpired(now: Date): Promise<number> {
-        const result = await (this.prisma as any).agroEventDraft.deleteMany({
+        const result = await this.prisma.agroEventDraft.deleteMany({
             where: {
                 expiresAt: { lt: now },
                 status: { not: 'COMMITTED' },

@@ -31,10 +31,10 @@ export class TelegramIntakeController {
         };
 
         // 3. Persist Draft
-        const tenantId = '441610858';
+        const companyId = '441610858';
         const userId = update.message?.from?.id?.toString() || 'system';
 
-        const saved = await this.repository.createDraft(tenantId, userId, draft);
+        const saved = await this.repository.createDraft(companyId, userId, draft);
 
         // 4. Return UI response with draftId in buttons
         return {
