@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../../../apps/api/src/shared/prisma/prisma.service';
 import { CommittedEvent } from './committed-event.schema';
 import { ControllerMetricsService } from '../../CONTROL/controller-metrics.service';
+import { MetricResult } from '../../CONTROL/controller-metrics';
 
 @Injectable()
 export class EventCommitterService {
@@ -12,7 +13,7 @@ export class EventCommitterService {
         private readonly controllerMetrics: ControllerMetricsService,
     ) { }
 
-    async commit(event: CommittedEvent) {
+    async commit(event: CommittedEvent): Promise<MetricResult | null> {
         this.logger.log(`Committing event ${event.id} to storage...`);
 
         // 1) persist (идемпотентно)
@@ -48,6 +49,6 @@ export class EventCommitterService {
         });
 
         // 2) trigger metrics/controller
-        await this.controllerMetrics.handleCommittedEvent(event);
+        return await this.controllerMetrics.handleCommittedEvent(event);
     }
 }

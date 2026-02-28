@@ -14,6 +14,20 @@ export interface MetricValue {
     evidenceRefs?: string[]; // events that contributed
 }
 
+import { Severity } from './deviation-policy';
+
+export interface MetricResult {
+    metricKey: ControllerMetricKey;
+    value: number;
+    severity: Severity;
+    explain: string;
+    references: {
+        taskRef: string;
+        fieldRef?: string;
+        eventId: string;
+    };
+}
+
 export interface PlanFactInputs {
     planned: {
         nitrogenKgHa?: number;     // planned for period/task

@@ -151,6 +151,7 @@ model Company {
   // Agro Domain
   agroEventDrafts     AgroEventDraft[]
   agroEventCommitted  AgroEventCommitted[]
+  agroEscalations     AgroEscalation[]
  
   @@map("companies")
 }
@@ -4598,4 +4599,23 @@ model AgroEventCommitted {
   @@index([farmRef, timestamp])
   @@index([fieldRef, timestamp])
   @@map("agro_events_committed")
+}
+
+model AgroEscalation {
+  id         String   @id @default(cuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id])
+  
+  metricKey  String
+  severity   String   // S1..S4
+  reason     String
+  status     String   @default("OPEN") // OPEN | RESOLVED | CLOSED
+  
+  references Json     // { taskRef, fieldRef, eventId }
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  @@index([companyId, status])
+  @@map("agro_escalations")
 }

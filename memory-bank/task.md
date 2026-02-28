@@ -180,21 +180,21 @@
 - [x] **Data Model & Invariants** <!-- id: 15.1 -->
     - [x] Внедрить `status: 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED'` в `FieldOperationPayload` <!-- id: 15.1.1 -->
     - [x] Запретить альтернативные флаги (completed=true и т.д.) <!-- id: 15.1.2 -->
-- [ ] **Controller Integration** <!-- id: 15.2 -->
-    - [ ] Расширить `ControllerMetricsService.handleCommittedEvent` <!-- id: 15.2.1 -->
-    - [ ] Реализовать фильтрацию: `FIELD_OPERATION` + `COMPLETED` + `taskRef` <!-- id: 15.2.2 -->
-    - [ ] Реализовать получение `plannedEnd` из `MapOperation` (TechMapTask) через Prisma <!-- id: 15.2.3 -->
-    - [ ] Вычислить `delayDays` (floor diff) <!-- id: 15.2.4 -->
-- [ ] **Metric Result & Severity** <!-- id: 15.3 -->
-    - [ ] Создать тип `MetricResult` согласно канону <!-- id: 15.3.1 -->
-    - [ ] Интегрировать `DeviationPolicy` (без хардкода) <!-- id: 15.3.2 -->
-    - [ ] Определить `severity` (S1-S4) <!-- id: 15.3.3 -->
-- [ ] **Escalation Layer** <!-- id: 15.4 -->
-    - [ ] Добавить модель `AgroEscalation` в Prisma schema <!-- id: 15.4.1 -->
-    - [ ] Реализовать сервис эскалации <!-- id: 15.4.2 -->
-    - [ ] Реализовать авто-эскалацию при `severity >= policy.escalateAt` (S3/S4) <!-- id: 15.4.3 -->
-- [ ] **Bot Feedback** <!-- id: 15.5 -->
-    - [ ] Добавить в Telegram logic уведомление о срывах сроков при подтверждении (`confirm`) <!-- id: 15.5.1 -->
+- [x] **Controller Integration** <!-- id: 15.2 -->
+    - [x] Расширить `ControllerMetricsService.handleCommittedEvent` <!-- id: 15.2.1 -->
+    - [x] Реализовать фильтрацию: `FIELD_OPERATION` + `COMPLETED` + `taskRef` <!-- id: 15.2.2 -->
+    - [x] Реализовать получение `plannedEnd` из `MapOperation` (TechMapTask) через Prisma <!-- id: 15.2.3 -->
+    - [x] Вычислить `delayDays` (floor diff) <!-- id: 15.2.4 -->
+- [x] **Metric Result & Severity** <!-- id: 15.3 -->
+    - [x] Создать тип `MetricResult` согласно канону <!-- id: 15.3.1 -->
+    - [x] Интегрировать `DeviationPolicy` (без хардкода) <!-- id: 15.3.2 -->
+    - [x] Определить `severity` (S1-S4) <!-- id: 15.3.3 -->
+- [x] **Escalation Layer** <!-- id: 15.4 -->
+    - [x] Добавить модель `AgroEscalation` в Prisma schema <!-- id: 15.4.1 -->
+    - [x] Реализовать сервис эскалации <!-- id: 15.4.2 -->
+    - [x] Реализовать авто-эскалацию при `severity >= policy.escalateAt` (S3/S4) <!-- id: 15.4.3 -->
+- [x] **Bot Feedback** <!-- id: 15.5 -->
+    - [x] Добавить в Telegram logic уведомление о срывах сроков при подтверждении (`confirm`) <!-- id: 15.5.1 -->
 - [ ] **Test Suite** <!-- id: 15.6 -->
     - [ ] Test 1: Confirm -> CommittedEvent <!-- id: 15.6.1 -->
     - [ ] Test 2: Controller COMPLETED -> delay calculation <!-- id: 15.6.2 -->

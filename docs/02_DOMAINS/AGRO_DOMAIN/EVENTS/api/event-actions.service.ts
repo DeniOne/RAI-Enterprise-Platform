@@ -101,13 +101,19 @@ export class EventActionsService {
             provenanceHash
         };
 
-        await this.committer.commit(event);
+        const metricResult = await this.committer.commit(event);
         await this.repository.markCommitted(companyId, userId, draftId);
 
         const finalDraft = await this.repository.getDraft(companyId, userId, draftId);
+
+        let message = '✅ Event committed successfully';
+        if (metricResult && (metricResult.severity === 'S3' || metricResult.severity === 'S4')) {
+            message = `⚠️ Задержка +${metricResult.value} дней! Сформирована эскалация [${metricResult.severity}].`;
+        }
+
         return {
             draft: finalDraft,
-            ui: { message: '✅ Event committed successfully', buttons: ['CONFIRM', 'FIX', 'LINK'] }
+            ui: { message, buttons: ['CONFIRM', 'FIX', 'LINK'] }
         };
     }
 
