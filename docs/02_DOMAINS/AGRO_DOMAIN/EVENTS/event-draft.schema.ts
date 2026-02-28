@@ -72,21 +72,3 @@ export interface EventDraft {
 
     createdAt: string;
 }
-export interface CommittedEvent {
-    id: string;                 // unique event id
-    tenantId: string;
-
-    farmRef?: string;
-    fieldRef?: string;
-    taskRef?: string;
-
-    eventType: EventType;
-    payload: any;               // final payload
-    evidence: EvidenceItem[];   // final evidence
-
-    timestamp: string;          // occurrence time
-    committedAt: string;        // system commit time
-    committedBy: string;        // user/agent id
-
-    provenanceHash: string;     // hash including all above
-}

@@ -8,6 +8,7 @@ describe('EventActionsService', () => {
     let repository: jest.Mocked<EventDraftRepository>;
     let linker: jest.Mocked<DraftLinkerService>;
     let validator: jest.Mocked<MustValidator>;
+    let committer: jest.Mocked<any>;
 
     beforeEach(() => {
         repository = {
@@ -21,8 +22,11 @@ describe('EventActionsService', () => {
         validator = {
             validateMust: jest.fn(),
         } as any;
+        committer = {
+            commit: jest.fn(),
+        } as any;
 
-        service = new EventActionsService(repository, linker, validator);
+        service = new EventActionsService(repository, linker, validator, committer);
     });
 
     const tenantId = 't1';
@@ -39,7 +43,7 @@ describe('EventActionsService', () => {
         repository.getDraft.mockResolvedValue(mockDraft as any);
         linker.linkDraft.mockImplementation(async (d) => d);
         validator.validateMust.mockReturnValue([]);
-        repository.updateDraft.mockImplementation(async (t, u, id, d) => ({ ...mockDraft, ...d }));
+        repository.updateDraft.mockImplementation(async (t, u, id, d) => ({ ...mockDraft, ...d } as any));
 
         const result = await service.fix(tenantId, userId, draftId, { description: 'new' });
 
@@ -56,7 +60,7 @@ describe('EventActionsService', () => {
         };
         repository.getDraft.mockResolvedValue(mockDraft as any);
         validator.validateMust.mockReturnValue([]); // fieldRef added
-        repository.updateDraft.mockImplementation(async (t, u, id, d) => ({ ...mockDraft, ...d }));
+        repository.updateDraft.mockImplementation(async (t, u, id, d) => ({ ...mockDraft, ...d } as any));
 
         const result = await service.link(tenantId, userId, draftId, { fieldRef: 'f1' });
 

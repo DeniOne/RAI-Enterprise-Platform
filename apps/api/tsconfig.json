@@ -56,7 +56,9 @@
     },
     "include": [
         "src/**/*",
-        "verify-beta.ts"
+        "verify-beta.ts",
+        "../../docs/02_DOMAINS/AGRO_DOMAIN/EVENTS/**/*.ts",
+        "../../docs/02_DOMAINS/AGRO_DOMAIN/CONTROL/**/*.ts"
     ],
     "exclude": [
         "node_modules",

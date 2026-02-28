@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CommittedEvent } from '../EVENTS/event-draft.schema';
+import { CommittedEvent } from '../EVENTS/commit/committed-event.schema';
 
 @Injectable()
 export class ControllerMetricsService {

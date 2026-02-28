@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../../../apps/api/src/shared/prisma/prisma.service';
-import { CommittedEvent } from '../event-draft.schema';
+import { CommittedEvent } from './committed-event.schema';
 import { ControllerMetricsService } from '../../CONTROL/controller-metrics.service';
 
 @Injectable()
@@ -16,7 +16,7 @@ export class EventCommitterService {
         this.logger.log(`Committing event ${event.id} to storage...`);
 
         // 1) persist (идемпотентно)
-        await (this.prisma as any).agroEventCommitted.upsert({
+        await this.prisma.agroEventCommitted.upsert({
             where: { id: event.id },
             update: {
                 tenantId: event.tenantId,

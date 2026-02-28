@@ -6,7 +6,7 @@ import { EventDraft } from '../event-draft.schema';
 import * as crypto from 'crypto';
 
 import { EventCommitterService } from '../commit/event-committer.service';
-import { CommittedEvent } from '../event-draft.schema';
+import { CommittedEvent } from '../commit/committed-event.schema';
 
 @Injectable()
 export class EventActionsService {
