@@ -13,7 +13,7 @@
 | Обзор | `/consulting/dashboard` | READY | Страница есть |
 | CRM (группа) | `/consulting/crm/*` | READY | Добавлены сценарии error/permission и smart routing (entity/severity) для crm/farms/counterparties |
 | Реестр хозяйств | `/consulting/crm/farms` | READY | KPI по severity, поиск по хозяйствам, smart routing `entity|severity`, переход в карточку хозяйства `/consulting/crm/farms/:farmId` |
-| Контрагенты | `/consulting/crm/counterparties` | READY | Полный контур управления: холдинги/юрлица, фильтры, карточка с CRUD (контакты/взаимодействия/обязательства), SLA и backend-валидация иерархии |
+| Контрагенты | `/consulting/crm/counterparties` | READY | Полный контур управления (см. [Master Doc](file:///root/RAI_EP/docs/10_FRONTEND_MENU_IMPLEMENTATION/11_BUTTON_Контрагенты_Master.md)): холдинги/юрлица, фильтры, карточка с CRUD, SLA и валидация |
 | Планы Урожая | `/consulting/plans` | READY | Базовая страница есть |
 | Планы: черновики/активные/архив | `/consulting/plans/*` | READY | Подроуты созданы |
 | Техкарты | `/consulting/techmaps` | READY | Базовая страница есть |

@@ -102,8 +102,8 @@
 - **Remote UI Access (2026-02-28):** FAILED (Infrastructure constraints). Decision: manual screenshots exchange.
 
 ## Orchestrator Session Start (2026-02-28)
-- **FOUNDATION CHECK**: `CANON.md`, `ARCHITECTURAL_AXIOMS.md`, `FORBIDDEN.md`, `UI_DESIGN_CANON.md`, `SECURITY_CANON.md`, `DECISIONS.log` — проверены.
-- **LANGUAGE_POLICY**: верифицирована.
-- **MEMORY_BANK**: прочитан.
-- **Status**: TECHLEAD готов к приему задач.
+- **FOUNDATION CHECK**: `CANON.md`, `ARCHITECTURAL_AXIOMS.md`, `FORBIDDEN.md`, `UI_DESIGN_CANON.md`, `SECURITY_CANON.md`, `DECISIONS.log` — проверены. Все каноны на месте, хуле.
+- **LANGUAGE_POLICY**: верифицирована. Английский — только для кода, остальное — наш великий и могучий.
+- **MEMORY_BANK**: прочитан до корки.
+- **Status**: TECHLEAD готов к приему задач. Жду указаний от USER.
 

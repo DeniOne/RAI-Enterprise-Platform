@@ -321,11 +321,21 @@ aligned_with: [principle-axioms]
     - [ ] Agent: `BusinessPlanner` (Strategy generation)
     - [ ] Agent: `LegalAdvisor` (Contract analysis)
 
-### 🏢 BLOCK 10: CONSULTING EXPANSION (TRACK 1 - DONE ✅)
+### 🏢 BLOCK 10: CONSULTING EXPANSION (TRACK 1, 2, 3, 5 - DONE ✅)
 - [x] **Section 10.1: TechMap Integration & Integrity**
     - [x] [DB] PostgreSQL Partial Unique Index for `status = 'ACTIVE'`.
     - [x] [DB] Complex Migration Resolution (CASCADE drops, dependency audit).
     - [x] [Schema] Field/Crop/Season/Version cardinality enforcement.
+- [x] **Track 2: Budget Vertical Slice (Financial Control)** ✅
+    - [x] Entity: `BudgetPlan`, `BudgetItem` (versioning, categories)
+    - [x] Logic: Financial Gate (blocking HarvestPlan without LOCKED budget)
+    - [x] FSM: `DRAFT -> APPROVED -> LOCKED -> CLOSED`
+- [x] **Track 3: Advisory Engine (Analytics)** ✅
+    - [x] Service: `AdvisoryService` (Health Index, Volatility Index)
+    - [x] Logic: Trend Analysis (30-day window) & Confidence Scoring
+- [x] **Track 5: Yield & KPI Engineering** ✅
+    - [x] Entity: `HarvestResult` with financial snapshotting
+    - [x] Service: `YieldOrchestrator` & `KPIService` (ROI calculation)
 
 ### 🌱 BLOCK 11: LEVEL E - REGENERATIVE OPTIMIZATION (CONTRACT-DRIVEN) ✅
 - [x] **Section 11.1: Contract Governance Layer**

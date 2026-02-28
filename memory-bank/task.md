@@ -12,6 +12,17 @@
 
 ## Consulting Expansion (Phase Gamma) вњ…
 
+### Track 1: TechMap Integration & Integrity ✅
+- [x] [DB] Enforced PostgreSQL Partial Unique Index for ACTIVE TechMaps.
+
+### Track 2: Budget Vertical Slice (Financial Control) ✅
+- [x] **Backend**: BudgetPlan/BudgetItem CRUD with versioning.
+- [x] **Financial Gate**: HarvestPlan activation lock.
+
+### Track 3: Advisory Engine (Executive Intelligence) ✅
+- [x] **Analytics**: Health/Volatility Index.
+- [x] **Trend Analysis**: 30-day window metrics.
+
 ### Track 5: Yield & KPI Engineering вњ…
 - [x] **Backend Hardening**: implementation of `YieldOrchestrator` and `HarvestResultRepository`.
 - [x] **Deterministic KPI**: added financial snapshotting (actual costs, budget version) to `HarvestResult`.
@@ -19,6 +30,12 @@
 - [x] **Frontend (Yield)**: developed `yield/page.tsx` with production form and active plan selection.
 - [x] **Frontend (KPI)**: integrated `KpiCard` into `plans/page.tsx` for real-time ROI/Yield visualization.
 - [x] **Verification**: implemented unit tests for orchestration logic and fixed type stability issues.
+
+## UI Refactoring & Design System Consolidation (Milestone 43) ✅
+- [x] **View/Edit Engine**: `EditModeProvider` + `DataField`.
+- [x] **Tabular Scaling**: CRUD via Drawers/SidePanel.
+- [x] **Completeness Scoring**: Visual indicators for audit readiness.
+- [x] **Design System v2.0**: Unified master doc.
 
 ## Sprint Gamma 3: Cognitive Memory вњ…
 - [x] Episodic Retrieval Service
