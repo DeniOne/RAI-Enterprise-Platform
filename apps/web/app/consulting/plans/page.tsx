@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { Suspense, useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import SystemStatusBar from '@/components/consulting/SystemStatusBar';
 import { PlansList } from '@/components/consulting/PlansList';
@@ -9,6 +9,14 @@ import { useAuthority } from '@/core/governance/AuthorityContext';
 import { api } from '@/lib/api';
 
 export default function PlansPage() {
+    return (
+        <Suspense fallback={null}>
+            <PlansPageInner />
+        </Suspense>
+    );
+}
+
+function PlansPageInner() {
     const searchParams = useSearchParams();
     const [plans, setPlans] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);

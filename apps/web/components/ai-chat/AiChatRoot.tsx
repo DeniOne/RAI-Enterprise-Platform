@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { useAiChatStore } from '@/lib/stores/ai-chat-store';
+import { useWorkspaceContextStore } from '@/lib/stores/workspace-context-store';
 import { AiChatFab } from './AiChatFab';
 
 // Ленивая загрузка Overlay — только когда FSM не в closed
@@ -13,14 +14,15 @@ const SproutMorphAnimation = dynamic(
 );
 
 export function AiChatRoot() {
-    const { fsmState, dispatch, updateContext } = useAiChatStore();
+    const { fsmState, dispatch } = useAiChatStore();
+    const setRouteAndReset = useWorkspaceContextStore((s) => s.setRouteAndReset);
     const pathname = usePathname();
     const isFirstMount = useRef(true);
 
     // Context Effect: Обновляем контекст при смене роута
     useEffect(() => {
-        updateContext({ route: pathname });
-    }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+        setRouteAndReset(pathname);
+    }, [pathname, setRouteAndReset]);
 
     // Cleanup / Route Change Handler
     useEffect(() => {

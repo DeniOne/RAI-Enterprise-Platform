@@ -130,7 +130,6 @@ export function PartyProfileTab() {
                         <Button
                             type="button"
                             variant="outline"
-                            size="sm"
                             onClick={() => append({ type: 'LEGAL', city: '', street: '' })}
                             className="rounded-lg border-black/10 bg-white hover:bg-black hover:text-white transition-all h-8 px-4 font-semibold text-xs shadow-sm"
                         >

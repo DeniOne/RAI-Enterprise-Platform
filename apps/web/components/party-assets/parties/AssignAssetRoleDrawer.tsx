@@ -98,7 +98,7 @@ export function AssignAssetRoleDrawer({
             <option value="">Выберите хозяйство...</option>
             {farms.map((farm) => (
               <option key={farm.id} value={farm.id}>
-                {farm.name} ({farm.regionCode || farm.jurisdictionId})
+                {farm.name} {farm.regionCode ? `(${farm.regionCode})` : ''}
               </option>
             ))}
           </select>

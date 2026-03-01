@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import clsx from 'clsx';
 import { Card } from '@/components/ui';
@@ -31,6 +31,14 @@ const sections = [
 ];
 
 export default function Page() {
+    return (
+        <Suspense fallback={null}>
+            <PageInner />
+        </Suspense>
+    );
+}
+
+function PageInner() {
     const [fields, setFields] = useState<FieldItem[]>([]);
     const [plans, setPlans] = useState<PlanItem[]>([]);
     const [loading, setLoading] = useState(true);

@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { SystemStatusBar } from '@/components/consulting/SystemStatusBar';
 import { DomainUiContext } from '@/lib/consulting/navigation-policy';
 import { AIRecommendationBlock, AIExplainabilityDto } from '@/shared/components/AIRecommendationBlock';
@@ -53,6 +53,14 @@ const MOCK_DECISIONS: DecisionItem[] = [
 ];
 
 export default function DecisionsPage() {
+    return (
+        <Suspense fallback={null}>
+            <DecisionsPageInner />
+        </Suspense>
+    );
+}
+
+function DecisionsPageInner() {
     const [decisions] = useState(MOCK_DECISIONS);
     const authority = useAuthority();
 

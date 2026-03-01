@@ -51,14 +51,15 @@ export function PartyQuickCreateDrawer({ open, onClose }: Props) {
         setIsSearching(true);
         setSearchError(null);
         try {
-            const result = await partyAssetsApi.lookupParty({
+            const response = await partyAssetsApi.lookupParty({
                 jurisdictionId,
                 partyType,
-                identification: { inn: innValue },
+                identifiers: { inn: innValue },
             });
-            if (result && result.legalName) {
+            const result = response.result;
+            if (response.status === 'FOUND' && result?.legalName) {
                 setValue('legalName', result.legalName);
-                if (result.identification?.kpp) setValue('kpp', result.identification.kpp);
+                if (result.requisites?.kpp) setValue('kpp', result.requisites.kpp);
             } else {
                 setSearchError('Данные не обнаружены. Пожалуйста, введите наименование вручную.');
             }
@@ -77,10 +78,9 @@ export function PartyQuickCreateDrawer({ open, onClose }: Props) {
                 jurisdictionId: data.jurisdictionId,
                 type: data.type,
                 registrationData: {
-                    identification: {
-                        inn: data.inn,
-                        kpp: data.kpp,
-                    },
+                    partyType: data.type,
+                    inn: data.inn,
+                    kpp: data.kpp,
                 },
                 status: 'ACTIVE',
             });

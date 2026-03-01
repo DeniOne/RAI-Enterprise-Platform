@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-// Типы
+import { useWorkspaceContextStore } from './workspace-context-store';
+
 export type RiskLevel = 'R0' | 'R1' | 'R2' | 'R3' | 'R4';
 
 export interface ChatMessage {
@@ -13,24 +14,16 @@ export interface ChatMessage {
     suggestedActions?: Record<string, any>[];
 }
 
-export interface ChatContext {
-    route: string;
-    moduleKey?: string;
-    entityId?: string;
-}
-
 export type FsmState = 'closed' | 'animating_open' | 'open' | 'animating_close';
 
 interface AiChatStore {
     fsmState: FsmState;
     threadId: string | null;
     messages: ChatMessage[];
-    context: ChatContext | null;
     isLoading: boolean;
     abortController: AbortController | null;
 
     dispatch: (event: 'OPEN' | 'ANIMATION_OPEN_DONE' | 'CLOSE' | 'ANIMATION_CLOSE_DONE' | 'ROUTE_CHANGE') => void;
-    updateContext: (context: Partial<ChatContext>) => void;
     sendMessage: (text: string) => Promise<void>;
     abortRequest: () => void;
     clearHistory: () => void;
@@ -44,7 +37,7 @@ export const useAiChatStore = create<AiChatStore>()(
             fsmState: 'closed',
             threadId: null,
             messages: [],
-            context: null,
+
             isLoading: false,
             abortController: null,
 
@@ -66,12 +59,6 @@ export const useAiChatStore = create<AiChatStore>()(
                 }
             },
 
-            updateContext: (newContext) => {
-                set((state) => ({
-                    context: { ...state.context, ...newContext } as ChatContext
-                }));
-            },
-
             abortRequest: () => {
                 const { abortController } = get();
                 if (abortController) {
@@ -83,7 +70,7 @@ export const useAiChatStore = create<AiChatStore>()(
             clearHistory: () => set({ messages: [], threadId: null }),
 
             sendMessage: async (text: string) => {
-                const { context, threadId, fsmState } = get();
+                const { threadId, fsmState } = get();
                 if (fsmState !== 'open') return;
 
                 const userMsg: ChatMessage = {
@@ -101,14 +88,14 @@ export const useAiChatStore = create<AiChatStore>()(
                 }));
 
                 try {
-                    // NEW: Canonical path in apps/api
+                    const workspaceContext = useWorkspaceContextStore.getState().context;
                     const response = await fetch('/api/rai/chat', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             threadId,
                             message: text,
-                            workspaceContext: context
+                            workspaceContext
                         }),
                         signal: ac.signal,
                     });

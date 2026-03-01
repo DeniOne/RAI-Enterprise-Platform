@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useMemo, useState } from 'react';
 import { SystemStatusBar } from '@/components/consulting/SystemStatusBar';
 import { DomainUiContext } from '@/lib/consulting/navigation-policy';
 import { includesFocus, useEntityFocus } from '@/shared/hooks/useEntityFocus';
@@ -22,6 +22,14 @@ const MOCK_DEVIATIONS: Deviation[] = [
 ];
 
 export default function DeviationsPage() {
+    return (
+        <Suspense fallback={null}>
+            <DeviationsPageInner />
+        </Suspense>
+    );
+}
+
+function DeviationsPageInner() {
     const [deviations] = useState(MOCK_DEVIATIONS);
     const matchDeviation = useCallback((dev: Deviation, context: { focusEntity: string; focusSeverity: string }) => {
         const byEntity = includesFocus([dev.id, dev.title, dev.planName], context.focusEntity);

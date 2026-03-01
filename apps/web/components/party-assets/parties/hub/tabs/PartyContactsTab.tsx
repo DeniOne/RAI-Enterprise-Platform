@@ -19,7 +19,7 @@ const CONTACT_POSITIONS = [
 ];
 
 export function PartyContactsTab() {
-    const { control, formState: { errors }, update } = useFormContext<PartyFullProfileValues>();
+    const { control, formState: { errors } } = useFormContext<PartyFullProfileValues>();
     const { isEdit } = useEditMode();
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);

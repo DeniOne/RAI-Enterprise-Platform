@@ -1,10 +1,11 @@
-﻿'use client';
+'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
 import clsx from 'clsx';
 import { includesFocus, useEntityFocus } from '@/shared/hooks/useEntityFocus';
+import { useWorkspaceContextStore } from '@/lib/stores/workspace-context-store';
 
 type TechMapItem = {
     id: string;
@@ -56,8 +57,19 @@ function MapTable({ rows, isFocused }: { rows: RowItem[]; isFocused: (row: RowIt
 }
 
 export default function Page() {
+    return (
+        <Suspense fallback={null}>
+            <PageInner />
+        </Suspense>
+    );
+}
+
+function PageInner() {
     const [maps, setMaps] = useState<TechMapItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const setActiveEntityRefs = useWorkspaceContextStore((s) => s.setActiveEntityRefs);
+    const setSelectedRowSummary = useWorkspaceContextStore((s) => s.setSelectedRowSummary);
+    const setFilters = useWorkspaceContextStore((s) => s.setFilters);
 
     useEffect(() => {
         const load = async () => {
@@ -87,6 +99,24 @@ export default function Page() {
         matchItem: (row, context) => includesFocus([row.code, row.item.id, row.item.crop, row.item.status], context.focusEntity),
         watch: [activeRows.length],
     });
+
+    useEffect(() => {
+        setFilters({ status: 'ACTIVE' });
+    }, [setFilters]);
+
+    useEffect(() => {
+        const focusedRow = activeRows.find((r) => isFocused(r));
+        if (focusedRow) {
+            setActiveEntityRefs([{ kind: 'techmap', id: focusedRow.item.id }]);
+            setSelectedRowSummary({
+                kind: 'techmap',
+                id: focusedRow.item.id,
+                title: focusedRow.code,
+                subtitle: focusedRow.item.crop ?? '-',
+                status: focusedRow.item.status,
+            });
+        }
+    }, [activeRows, isFocused, setActiveEntityRefs, setSelectedRowSummary]);
 
     return (
         <div className='space-y-6'>

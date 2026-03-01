@@ -2,10 +2,12 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import { useAiChatStore, RiskLevel } from '@/lib/stores/ai-chat-store';
+import { useWorkspaceContextStore } from '@/lib/stores/workspace-context-store';
 import { X, Send, AlertTriangle, ShieldCheck } from 'lucide-react';
 
 export function AiChatPanel() {
-    const { messages, isLoading, sendMessage, dispatch, fsmState, context } = useAiChatStore();
+    const { messages, isLoading, sendMessage, dispatch, fsmState } = useAiChatStore();
+    const context = useWorkspaceContextStore((s) => s.context);
     const [inputText, setInputText] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);

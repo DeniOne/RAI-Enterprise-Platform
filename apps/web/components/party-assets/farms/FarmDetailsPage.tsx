@@ -9,12 +9,15 @@ import { AssetDto, AssetPartyRoleDto, FarmDto } from '@/shared/types/party-asset
 import { FarmProfileTab } from './FarmProfileTab';
 import { FarmRolesTab } from './FarmRolesTab';
 import { FarmFieldsTab } from './FarmFieldsTab';
+import { useWorkspaceContextStore } from '@/lib/stores/workspace-context-store';
 
 export function FarmDetailsPage({ farmId }: { farmId: string }) {
   const [farm, setFarm] = useState<FarmDto | null>(null);
   const [roles, setRoles] = useState<AssetPartyRoleDto[]>([]);
   const [fields, setFields] = useState<AssetDto[]>([]);
   const [loading, setLoading] = useState(true);
+  const setActiveEntityRefs = useWorkspaceContextStore((s) => s.setActiveEntityRefs);
+  const setSelectedRowSummary = useWorkspaceContextStore((s) => s.setSelectedRowSummary);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -31,6 +34,18 @@ export function FarmDetailsPage({ farmId }: { farmId: string }) {
       setLoading(false);
     }
   }, [farmId]);
+
+  useEffect(() => {
+    if (farm) {
+      setActiveEntityRefs([{ kind: 'farm', id: farmId }]);
+      setSelectedRowSummary({
+        kind: 'farm',
+        id: farmId,
+        title: farm.name,
+        subtitle: 'Карточка хозяйства'
+      });
+    }
+  }, [farm, farmId, setActiveEntityRefs, setSelectedRowSummary]);
 
   useEffect(() => {
     void reload();

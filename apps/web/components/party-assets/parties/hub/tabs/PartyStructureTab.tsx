@@ -320,7 +320,6 @@ export function PartyStructureTab() {
                     {!isEdit && (
                         <Button
                             variant="outline"
-                            size="sm"
                             className="h-10 px-8 rounded-xl border-black/10 text-xs font-semibold hover:bg-black hover:text-white transition-all shadow-sm"
                         >
                             Запросить активацию модуля

@@ -19,12 +19,12 @@
   - [x] добавить минимальный контрактный тест на форму ответа (схема/типизация)
 
 ### P0.2 Канонический `WorkspaceContext` (не только route)
-- [ ] **Цель:** агент реально “видит” рабочую область, а не угадывает по URL.
-- [ ] **DoD:** есть единый тип/схема `WorkspaceContext`; ключевые страницы (минимум: CRM, TechMap) публикуют `activeEntityRefs` и краткие summary; в чат уходит **только refs + summaries**, без тяжёлых данных.
-- [ ] **Мини-порядок работ:**
-  - [ ] зафиксировать минимальный контракт (`route`, `activeEntityRefs`, `filters`, `selectedRowSummary`, `lastUserAction`)
-  - [ ] внедрить store/паблишер на страницах CRM/TechMap
-  - [ ] включить передачу контекста в каждый запрос чата
+- [x] **Цель:** агент реально “видит” рабочую область, а не угадывает по URL.
+- [x] **DoD:** есть единый тип/схема `WorkspaceContext`; ключевые страницы (минимум: CRM, TechMap) публикуют `activeEntityRefs` и краткие summary; в чат уходит **только refs + summaries**, без тяжёлых данных.
+- [x] **Мини-порядок работ:**
+  - [x] зафиксировать минимальный контракт (`route`, `activeEntityRefs`, `filters`, `selectedRowSummary`, `lastUserAction`)
+  - [x] внедрить store/паблишер на страницах CRM/TechMap
+  - [x] включить передачу контекста в каждый запрос чата
 
 ### P0.3 Реальный Agro Telegram Draft→Fix/Link→Confirm→Commit в `apps/api` (не “код-спека в docs”)
 - [ ] **Цель:** Telegram становится “терминалом поля” по закону Draft→Commit.

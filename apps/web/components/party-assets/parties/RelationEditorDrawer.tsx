@@ -87,7 +87,7 @@ export function RelationEditorDrawer({
             <option value="">Выберите контрагента...</option>
             {parties.map((party) => (
               <option key={party.id} value={party.id}>
-                {party.legalName} ({party.jurisdictionName})
+                {party.legalName} ({party.jurisdictionId})
               </option>
             ))}
           </select>

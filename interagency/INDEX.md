@@ -6,6 +6,9 @@
   - План: `interagency/plans/2026-03-01_p0-1_api-rai-chat.md`
   - Отчёт: `interagency/reports/2026-03-01_p0-1_api-rai-chat.md`
 
+- `interagency/prompts/2026-03-01_p0-2_workspace-context.md` [READY_FOR_REVIEW]
+  - Отчёт: `interagency/reports/2026-03-01_p0-2_workspace-context-report.md`
+
 ## Шаблоны
 - `interagency/templates/PROMPT_TEMPLATE.md`
 - `interagency/templates/PLAN_TEMPLATE.md`
