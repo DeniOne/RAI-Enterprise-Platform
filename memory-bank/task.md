@@ -208,3 +208,10 @@
 - [x] Ограничение привязки портов Minio (9000, 9001) до localhost <!-- id: 16.3 -->
 - [x] Ограничение привязки портов pgAdmin (8081) до localhost <!-- id: 16.4 -->
 - [x] Перезапуск контейнеров и верификация сетевых слушателей (ss -tlnp) <!-- id: 16.5 -->
+
+## RAI Chat & Agent OS (P0.1) ✅ <!-- id: 17 -->
+- [x] **[API]** Create RaiChatModule, Controller, DTO <!-- id: 17.1 -->
+- [x] **[API]** Implement deterministic POST /api/rai/chat with tenant isolation <!-- id: 17.2 -->
+- [x] **[WEB]** Switch AiChatStore to canonical API <!-- id: 17.3 -->
+- [x] **[WEB]** Cleanup legacy ai-chat route into thin proxy <!-- id: 17.4 -->
+- [x] **[TEST]** Verify controller via unit tests <!-- id: 17.5 -->

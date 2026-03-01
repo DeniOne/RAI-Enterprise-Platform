@@ -374,13 +374,13 @@ export class CrmService {
         assignee: {
           select: {
             id: true,
-            fullName: true,
+            name: true,
           },
         },
         responsible: {
           select: {
             id: true,
-            fullName: true,
+            name: true,
           },
         },
       },

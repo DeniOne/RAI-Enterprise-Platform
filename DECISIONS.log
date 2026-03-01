@@ -749,3 +749,43 @@ Orchestrator = Brain (канон RAI_EP).
 ### Связанные документы
 - `docs/01_ARCHITECTURE/PRINCIPLES/CANON.md`
 - `docs/07_EXECUTION/ARCHITECTURAL ROADMAP (Institutional Build Plan).md`
+
+---
+
+## AG-AI-CHAT-001
+
+**Дата:** 2026-03-01
+**Автор:** TECHLEAD (AI)
+**Статус:** ACCEPTED
+
+### Решение
+Реализация канонической архитектуры RAI Chat. Переход от мок-интерфейса в Next.js на централизованный API-модуль в NestJS с поддержкой виджетов и изоляцией тенантов.
+
+### Scope
+- **Phase:** Gamma
+- **Sprint:** p0.1
+- **Компоненты:**
+  - `apps/api/src/modules/rai-chat/`
+  - `apps/web/lib/stores/ai-chat-store.ts`
+  - `apps/web/app/api/ai-chat/route.ts` (legacy proxy)
+
+### Технические ограничения
+1. **Tenant Isolation:** `companyId` извлекается строго через `TenantContextService`, не принимается в payload.
+2. **Determinism:** Ответы чата на текущем этапе детерминированы (echo + widget) для валидации транспорта.
+3. **Security:** Эндпоинт `/api/rai/chat` защищен `JwtAuthGuard`.
+
+### Definition of Done
+- [x] API отвечает на `POST /api/rai/chat`.
+- [x] Веб-чат отображает ответ бэкенда.
+- [x] Виджеты (placeholder) корректно рендерятся.
+- [x] Изоляция по `companyId` верифицирована.
+- [x] Unit-тесты контроллера пройдены.
+
+### Rollback Conditions
+- Нарушение изоляции данных между компаниями.
+- Регрессия UI чата (невозможность отправки сообщений).
+
+### Связанные документы
+- `interagency/prompts/2026-03-01_p0-1_api-rai-chat.md`
+- `docs/00_STRATEGY/STAGE 2/PROJECT_EXECUTION_CHECKLIST.md`
+- `memory-bank/task.md` (Item 17)

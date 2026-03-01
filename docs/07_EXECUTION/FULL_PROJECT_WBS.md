@@ -228,6 +228,9 @@ aligned_with: [principle-vision]
 - [x] **[Backend]** **Certification Engine**: Soft-float Rated grading, Assertion Fences, Ed25519 JWT Minter.
 - [x] **[Infra]** **Gateway & Dispute**: mTLS Firewall, L1 Anchoring, Node-Watchers, Replay API, Bloom Filter CRL.
 
-### 🌐 13. Ecosystem
-- [ ] **[Platform]** Marketplace API (Поставщики).
-- [ ] **[Platform]** Financial Scoring for Banks.
+### 🏢 14. RAI Chat & Agent OS (P0.1) ✅
+- [x] **[Backend]** **Canonical Chat API**: `POST /api/rai/chat`, Tenant isolation enforced, deterministic logic.
+- [x] **[Frontend]** **Web Chat Integration**: Switch to backend API, remove mock routes.
+- [x] **[Backend]** **Modular Architecture**: `RaiChatModule` integrated in apps/api.
+
+### 🌐 15. Ecosystem

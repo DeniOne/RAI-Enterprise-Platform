@@ -17,6 +17,15 @@
             "@rai/prisma-client/*": [
                 "../../packages/prisma-client/src/*"
             ],
+            "@nestjs/*": [
+                "./node_modules/@nestjs/*"
+            ],
+            "rxjs": [
+                "./node_modules/rxjs"
+            ],
+            "rxjs/*": [
+                "./node_modules/rxjs/*"
+            ],
             "@rai/legal-engine": [
                 "../../packages/legal-engine/src"
             ],
@@ -62,6 +71,7 @@
     ],
     "exclude": [
         "node_modules",
-        "dist"
+        "dist",
+        "**/*.spec.ts"
     ]
 }

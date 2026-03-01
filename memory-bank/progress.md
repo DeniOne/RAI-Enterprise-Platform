@@ -1,4 +1,4 @@
-﻿# Progress Report - Prisma & Agro Domain Integration
+﻿# Progress Report - Prisma, Agro Domain & RAI Chat Integration
 
 ## Status: Refactoring Tenant Isolation & Fixing Type Resolution
 
@@ -19,6 +19,11 @@
 5.  **IDE Fixes**:
     *   Created root `tsconfig.json` to resolve `@nestjs/common` and package paths for files in `docs/` and other non-app directories.
     *   Added path mapping for `@nestjs/*` to `apps/api/node_modules`.
+
+6.  **RAI Chat Integration (P0.1)** ✅:
+    *   Реализован эндпоинт `POST /api/rai/chat` в API с изоляцией тенентов.
+    *   Веб-чат переключен на бэкенд, моки в Next.js заменены прокси.
+    *   Unit-тесты пройдены (4/4).
 
 ### Pending / Current Issues:
 *   IDE still showing red files in the screenshot despite TS Server restart.

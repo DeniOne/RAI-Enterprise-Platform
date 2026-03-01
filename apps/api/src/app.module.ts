@@ -46,6 +46,7 @@ import { ExplorationModule } from "./modules/exploration/exploration.module";
 import { HttpResilienceModule } from "./shared/http/http-resilience.module";
 import { BullModule } from "@nestjs/bullmq";
 import { join } from "path";
+import { RaiChatModule } from "./modules/rai-chat/rai-chat.module";
 
 import { OutboxModule } from "./shared/outbox/outbox.module";
 import { InvariantMetricsModule } from "./shared/invariants/invariant-metrics.module";
@@ -125,6 +126,7 @@ import { TenantContextModule } from "./shared/tenant-context/tenant-context.modu
     AdaptiveLearningModule,
     CommerceModule,
     ExplorationModule,
+    RaiChatModule,
     HttpResilienceModule,
     BullModule.forRoot({
       connection: {
@@ -148,4 +150,4 @@ import { TenantContextModule } from "./shared/tenant-context/tenant-context.modu
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

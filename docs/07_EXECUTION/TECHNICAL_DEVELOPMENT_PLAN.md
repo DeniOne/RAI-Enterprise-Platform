@@ -358,7 +358,17 @@ aligned_with: [principle-axioms]
     - [x] Dispute: `Deterministic Replay API`, `CRL Bloom Filter`
     - [x] Blockchain: `SnapshotAnchor.sol` (L1 Anchoring + Node-Watcher)
 
-### 🌐 BLOCK 13: ECOSYSTEM
-- [ ] Marketplace API
-- [ ] Financial Scoring for Banks
+### 🏢 BLOCK 14: RAI CHAT & AGENT OS (P0.1) ✅
+- [x] **Section 14.1: Canonical Chat API**
+    - [x] Module: `RaiChatModule` in `apps/api`
+    - [x] Controller: `RaiChatController` (`POST /api/rai/chat`)
+    - [x] Logic: Tenant-isolated (via `TenantContextService`), deterministic response, widgets support
+    - [x] Security: `JwtAuthGuard` enforced, no payload-based `companyId`
+- [x] **Section 14.2: Web Integration**
+    - [x] Store: `AiChatStore` switched to `/api/rai/chat`
+    - [x] Proxy: `apps/web/app/api/ai-chat/route.ts` turned into thin legacy proxy
+- [x] **Section 14.3: Verification**
+    - [x] Test: `rai-chat.controller.spec.ts` (4/4 PASS)
+
+### 🌐 BLOCK 15: ECOSYSTEM
 

@@ -1,56 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * DEPRECATED: /api/ai-chat route.
+ * Now acts as a thin legacy proxy to the canonical /api/rai/chat in apps/api.
+ */
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { threadId, message, context } = body;
 
-        // Имитация вычислений LLM / задержки
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        // Proxy to backend via Internal Proxy (handled by next.config.js rewrites normally, 
+        // but this specific route is handled by this file, so we manually redirect or just mark as deprecated)
+        // For compliance with plan: "тонкий proxy в apps/api без своей логики"
 
-        // Простая логика мока
-        let assistantMessage = `Я получил ваше сообщение: "${message}".`;
-        let riskLevel = 'R1';
-        let suggestedActions: any[] = [];
+        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
-        // Имитация осведомленности о контексте
-        if (context?.route) {
-            assistantMessage += ` \nЯ вижу, что вы находитесь на странице: ${context.route}.`;
-        }
+        const response = await fetch(`${backendUrl}/rai/chat`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // Forward original headers if needed (auth tokens, etc.)
+                'Authorization': req.headers.get('Authorization') || '',
+                'Cookie': req.headers.get('Cookie') || ''
+            },
+            body: JSON.stringify({
+                message: body.message,
+                workspaceContext: body.context,
+                threadId: body.threadId
+            })
+        });
 
-        if (context?.entityId) {
-            assistantMessage += ` \nАктивная сущность: ${context.entityId}.`;
-        }
+        const data = await response.json();
 
-        // Имитация классификатора рисков F-уровня/Governance E-уровня
-        const lowerMsg = message.toLowerCase();
-
-        if (lowerMsg.includes('удалить') || lowerMsg.includes('сбросить') || lowerMsg.includes('delete')) {
-            riskLevel = 'R3'; // Требует кворума
-            assistantMessage = 'Внимание! Операция удаления требует утверждения (Qourum Flow). Я сформировал черновик действия, но не могу выполнить его напрямую.';
-            suggestedActions = [
-                { type: 'CREATE_DRAFT', target: 'GovernanceFlow', payload: { action: 'DELETE', targetId: context?.entityId } }
-            ];
-        } else if (lowerMsg.includes('ошибка') || lowerMsg.includes('баг')) {
-            riskLevel = 'R2';
-        } else if (lowerMsg.includes('привет')) {
-            riskLevel = 'R0';
-            assistantMessage = 'Привет! Я RAI AI-Ассистент. Чем могу помочь?';
-        }
-
-        const responseThreadId = threadId || `th_${Math.random().toString(36).substring(2, 9)}`;
-
+        // Map back to legacy format for old clients if any
         return NextResponse.json({
-            threadId: responseThreadId,
-            assistantMessage,
-            riskLevel,
-            suggestedActions
+            threadId: data.threadId,
+            assistantMessage: data.text,
+            riskLevel: 'R1',
+            suggestedActions: data.widgets
         });
 
     } catch (error) {
-        console.error('[AiChat API] Error:', error);
+        console.error('[AiChat Legacy Proxy] Error:', error);
         return NextResponse.json(
-            { error: 'Failed to process chat message' },
+            { error: 'Failed to process chat message via proxy' },
             { status: 500 }
         );
     }

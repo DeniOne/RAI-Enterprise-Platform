@@ -101,10 +101,15 @@ export const useAiChatStore = create<AiChatStore>()(
                 }));
 
                 try {
-                    const response = await fetch('/api/ai-chat', {
+                    // NEW: Canonical path in apps/api
+                    const response = await fetch('/api/rai/chat', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ threadId, message: text, context }),
+                        body: JSON.stringify({
+                            threadId,
+                            message: text,
+                            workspaceContext: context
+                        }),
                         signal: ac.signal,
                     });
 
@@ -114,10 +119,10 @@ export const useAiChatStore = create<AiChatStore>()(
                     const aiMsg: ChatMessage = {
                         id: generateId(),
                         role: 'assistant',
-                        content: data.assistantMessage || 'Ответ не получен',
+                        content: data.text || 'Ответ не получен',
                         timestamp: new Date().toISOString(),
-                        riskLevel: data.riskLevel,
-                        suggestedActions: data.suggestedActions,
+                        riskLevel: data.riskLevel || 'R1', // Default R1 if backend doesn't provide it yet
+                        suggestedActions: data.widgets, // Map widgets to suggestedActions for now
                     };
 
                     set((state) => ({
