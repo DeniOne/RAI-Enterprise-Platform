@@ -789,3 +789,81 @@ Orchestrator = Brain (канон RAI_EP).
 - `interagency/prompts/2026-03-01_p0-1_api-rai-chat.md`
 - `docs/00_STRATEGY/STAGE 2/PROJECT_EXECUTION_CHECKLIST.md`
 - `memory-bank/task.md` (Item 17)
+
+---
+
+## AG-AGRO-DRAFT-COMMIT-001
+
+**Дата:** 2026-03-01
+**Автор:** TECHLEAD (AI)
+**Статус:** ACCEPTED
+
+### Решение
+Разрешить перенос боевого контура Agro `Draft → Fix/Link → Confirm → Commit` из `docs/02_DOMAINS/AGRO_DOMAIN/EVENTS/*` в `apps/api/src/modules/agro-events/*` с обязательным MUST-gate и строгой tenant-изоляцией.
+
+### Scope
+- **Phase:** Gamma
+- **Sprint:** p0.3
+- **Компоненты:**
+  - `apps/api/src/modules/agro-events/*`
+  - `packages/prisma-client/schema.prisma` (использование существующих моделей `AgroEventDraft`, `AgroEventCommitted`; изменения — только при доказанной несовместимости)
+
+### Технические ограничения
+1. **Tenant Isolation:** `companyId` берётся только из доверенного контекста (`@CurrentUser()` / `TenantContextService`), не принимается из payload.
+2. **MUST Gate:** commit запрещён, пока `missingMust[]` не пуст.
+3. **Provenance:** `AgroEventCommitted.provenanceHash` обязателен и вычисляется детерминированно (canonical JSON → SHA-256).
+4. **Scope lock:** в рамках p0.3 не менять Telegram транспорт (`apps/telegram-bot`) и не делать UI-полировку.
+
+### Definition of Done
+- В `apps/api` существует модуль `agro-events` с операциями `create draft`, `fix`, `link`, `confirm`, `commit`.
+- `AgroEventCommitted` создаётся только после прохождения MUST-gate и содержит `provenanceHash`.
+- Есть unit-тесты MUST-gate, подтверждающие блокировку и успешный commit.
+
+### Rollback Conditions
+- Выявлено принятие `companyId` из недоверенного ввода.
+- Обход MUST-gate (commit при непустом `missingMust[]`).
+- Недетерминированный/нестабильный `provenanceHash`.
+
+### Связанные документы
+- `interagency/plans/2026-03-01_p0-3_agro-telegram-draft-commit.md`
+- `interagency/prompts/2026-03-01_p0-3_agro-telegram-draft-commit.md`
+- `docs/00_STRATEGY/STAGE 2/PROJECT_EXECUTION_CHECKLIST.md`
+
+---
+
+## AG-TELEGRAM-DRAFT-COMMIT-001
+
+**Дата:** 2026-03-01
+**Автор:** TECHLEAD (AI)
+**Статус:** ACCEPTED
+
+### Решение
+Разрешить подключение `apps/telegram-bot` к каноническому Agro Draft→Commit API в `apps/api` и прекратить раздвоение телеграм-контуров. Telegram становится транспортом, который всегда создаёт draft и требует ✅ перед commit.
+
+### Scope
+- **Phase:** Gamma
+- **Sprint:** p0.4
+- **Компоненты:**
+  - `apps/telegram-bot/src/telegram/telegram.update.ts`
+  - `apps/telegram-bot/src/shared/api-client/api-client.service.ts`
+  - (интеграция с) `apps/api/src/modules/agro-events/*` (как потребитель; доменная логика остаётся в API)
+
+### Технические ограничения
+1. **Tenant Isolation:** бот не принимает/не формирует `companyId` из пользовательского ввода; tenant определяется доверенно (через auth/session и контекст API).
+2. **Human Confirmation:** commit запускается только по явному нажатию ✅ (confirm).
+3. **Single Transport Canon:** запрещено создавать второй телеграм-контур; канонический транспорт = `apps/telegram-bot`.
+4. **Scope lock:** в рамках p0.4 не делать UI-полировку; только стабильный поток intake → draftId → кнопки → вызовы API.
+
+### Definition of Done
+- Бот создаёт draft при входе (text/voice/photo) и возвращает кнопки ✅✏️🔗 с `draftId`.
+- По кнопкам бот вызывает `fix/link/confirm` соответствующего API.
+- Тест/прогон сценария “фото+текст → draft → link → confirm → committed” воспроизводим и логируется.
+
+### Rollback Conditions
+- Любой приём `companyId` как источника истины из callback/body.
+- Автокоммит без человеческого подтверждения ✅.
+- Появление второго телеграм-контура/дублирующих entrypoints.
+
+### Связанные документы
+- `interagency/prompts/2026-03-01_p0-4_telegram-bot-draft-commit.md`
+- `docs/00_STRATEGY/STAGE 2/PROJECT_EXECUTION_CHECKLIST.md`

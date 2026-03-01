@@ -1,4 +1,4 @@
-﻿# Task: RAI_EP
+# Task: RAI_EP
 
 ## Sprint Gamma 1 (Infrastructure) ✅
 - [x] K8s Setup
@@ -215,3 +215,8 @@
 - [x] **[WEB]** Switch AiChatStore to canonical API <!-- id: 17.3 -->
 - [x] **[WEB]** Cleanup legacy ai-chat route into thin proxy <!-- id: 17.4 -->
 - [x] **[TEST]** Verify controller via unit tests <!-- id: 17.5 -->
+
+## Agro Telegram Draft→Commit (P0.3) ✅
+- [x] **[API]** Боевой модуль `apps/api/src/modules/agro-events/*` (draft/fix/link/confirm/commit)
+- [x] **[SECURITY]** Tenant isolation: `companyId` только из доверенного контекста (`@CurrentUser()`), не из payload
+- [x] **[TEST]** MUST-gate unit-test: `src/modules/agro-events/agro-events.orchestrator.service.spec.ts` (изолированный jest config)

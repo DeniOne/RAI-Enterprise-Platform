@@ -47,6 +47,7 @@ import { HttpResilienceModule } from "./shared/http/http-resilience.module";
 import { BullModule } from "@nestjs/bullmq";
 import { join } from "path";
 import { RaiChatModule } from "./modules/rai-chat/rai-chat.module";
+import { AgroEventsModule } from "./modules/agro-events/agro-events.module";
 
 import { OutboxModule } from "./shared/outbox/outbox.module";
 import { InvariantMetricsModule } from "./shared/invariants/invariant-metrics.module";
@@ -127,6 +128,7 @@ import { TenantContextModule } from "./shared/tenant-context/tenant-context.modu
     CommerceModule,
     ExplorationModule,
     RaiChatModule,
+    AgroEventsModule,
     HttpResilienceModule,
     BullModule.forRoot({
       connection: {

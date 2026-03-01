@@ -233,4 +233,9 @@ aligned_with: [principle-vision]
 - [x] **[Frontend]** **Web Chat Integration**: Switch to backend API, remove mock routes.
 - [x] **[Backend]** **Modular Architecture**: `RaiChatModule` integrated in apps/api.
 
+### 🌾 14.1 Agro Telegram Draft→Commit (P0.3) ✅
+- [x] **[Backend]** **AgroEventsModule**: `apps/api/src/modules/agro-events/*` (draft/fix/link/confirm/commit).
+- [x] **[Security]** Tenant isolation: `companyId` только из доверенного контекста, не из payload.
+- [x] **[Test]** MUST-gate unit-test: изолированный jest config (agro-events).
+
 ### 🌐 15. Ecosystem

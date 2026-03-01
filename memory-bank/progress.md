@@ -1,4 +1,4 @@
-﻿# Progress Report - Prisma, Agro Domain & RAI Chat Integration
+# Progress Report - Prisma, Agro Domain & RAI Chat Integration
 
 ## Status: Refactoring Tenant Isolation & Fixing Type Resolution
 
@@ -25,6 +25,11 @@
     *   Веб-чат переключен на бэкенд, моки в Next.js заменены прокси.
     *   Unit-тесты пройдены (4/4).
 
+7.  **Agro Draft→Commit (P0.3)** ✅:
+    *   Добавлен боевой модуль `apps/api/src/modules/agro-events/*` с операциями draft/fix/link/confirm/commit.
+    *   Tenant isolation: `companyId` берётся из security context, не из payload.
+    *   Проверка MUST-gate: `apps/api/jest.agro-events.config.js` → PASS (4/4).
+
 ### Pending / Current Issues:
 *   IDE still showing red files in the screenshot despite TS Server restart.
     *   Possible cause 1: `tsconfig.json` was missing previously (fixed now with root config).
@@ -38,3 +43,4 @@
     *   [ ] Подключить эскалацию к подтверждению событий в Telegram.
     *   [ ] Покрыть тестами всю цепочку от коммита до эскалации.
 2.  Исправить типизацию в корневом `tsconfig.json` (проблема с `@types`).
+3.  **P0.4 Telegram Bot**: подключить `apps/telegram-bot` к `/api/agro-events/*` и закрепить сценарий “intake → draftId → ✅”.

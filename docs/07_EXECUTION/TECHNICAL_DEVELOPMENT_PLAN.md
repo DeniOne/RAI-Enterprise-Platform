@@ -370,5 +370,10 @@ aligned_with: [principle-axioms]
 - [x] **Section 14.3: Verification**
     - [x] Test: `rai-chat.controller.spec.ts` (4/4 PASS)
 
+### 🌾 BLOCK 14.1: AGRO TELEGRAM DRAFT→COMMIT (P0.3) ✅
+- [x] **Module:** `apps/api/src/modules/agro-events/*` (draft/fix/link/confirm/commit).
+- [x] **Security:** tenant isolation — `companyId` only from trusted context, never from payload.
+- [x] **Verification:** MUST-gate unit-test via isolated jest config (`jest.agro-events.config.js`) — PASS (4/4).
+
 ### 🌐 BLOCK 15: ECOSYSTEM
 
