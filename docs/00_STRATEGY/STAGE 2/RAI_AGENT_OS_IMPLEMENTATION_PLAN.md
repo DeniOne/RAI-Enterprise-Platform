@@ -1,227 +1,201 @@
-# RAI_EP — Agent OS Shell + Persistent Memory
-
-**Статус:** `EXECUTION CHECKLIST`  
-**Тип:** `Engineering Plan`  
-**Основание:** `Agent-First / Chat-First Spec (LAW)`
-
----
-
-## 0. Цель
-
-Переход от **page-first** интерфейса к **Agent OS Shell**:
-- **TopNav**: Верхняя горизонтальная навигация.
-- **Left RAI Chat**: Постоянный левый пилон RAI Chat.
-- **Main Workspace**: Правая рабочая зона.
-- **Reactive Panel**: Реактивная панель виджетов агента.
-- **Persistent Memory**: Персистентная память пользователя «на всё время пользования».
+# RAI_EP — Agent OS Shell + Persistent Memory (Plan/Checklist)
+Статус: EXECUTION CHECKLIST
+Основание: Agent-First / Chat-First Spec (LAW)
+Принцип данных: Carcass + Flex (JSONB attrs под schemaKey, provenance/confidence)
 
 ---
 
-## 1. AppShell Архитектура (UI Foundation)
+## 0) Цель
+Сделать Agent-First оболочку:
+- TopNav (горизонтальное меню)
+- Левый пилон: постоянный RAI Chat (Docked/Focus)
+- Правая часть: Main Workspace (страницы продукта)
+- “РАИ видит воркспэйс” через структурный WorkspaceContext
+- Память пользователя “на всё время” через MemoryAdapter (без привязки к конкретной реализации)
 
-### 1.1 Создать глобальный Shell Layout
-- [ ] Вынести текущий layout в `AppShell`.
-- [ ] Добавить `TopNav` (горизонтальное меню).
-- [ ] Добавить `LeftRaiChatDock`.
-- [ ] Добавить `MainWorkspace`.
-- [ ] Убедиться, что чат не размонтируется при навигации.
-
-**Эффект:** Агент живёт на уровне системы, а не страницы.
-
-### 1.2 Top Navigation (Horizontal)
-- [ ] Перенести текущий sidebar в `TopNav`.
-- [ ] Реализовать dropdown подменю.
-- [ ] Добавить активное состояние маршрута.
-- [ ] Проверить адаптивность.
-
-**Эффект:** Навигация не «съедает» ширину рабочего пространства.
-
-### 1.3 RAI Chat Dock (Left Pillar)
-- [ ] Зафиксировать ширину `320–360px` (Docked).
-- [ ] Реализовать режим Focus `480–560px`.
-- [ ] Добавить toggle в header чата.
-- [ ] Сохранить состояние режима в `localStorage`.
-
-**Эффект:** Агент всегда доступен, но не мешает работе.
+Эффект:
+- агент всегда доступен
+- агент отвечает по контексту текущей страницы
+- память включается как инфраструктурный слой и не ломает домен
 
 ---
 
-## 2. Workspace Context Protocol
+## 1) AppShell (UI Foundation)
 
-### 2.1 Определить структуру workspaceContext
-```typescript
-interface WorkspaceContext {
-  route: string;
-  activeEntityRefs?: {
-    farmRef?: string;
-    fieldRef?: string;
-    partyRef?: string;
-    techmapRef?: string;
-    taskRef?: string;
-  };
-  filters?: Record<string, any>;
-  selectedRow?: {
-    id: string;
-    type: string;
-    summary: string;
-  };
-  lastUserAction?: string;
-}
-```
+### 1.1 Ввести глобальный Shell Layout
+- [ ] Вынести layout в AppShell: TopNav + LeftRaiChatDock + MainWorkspace
+- [ ] Чат живёт в Shell и не размонтируется при навигации
+- [ ] Сохранить текущие маршруты/страницы без переписывания логики
 
-- [ ] Реализовать генерацию `context` на каждой странице.
-- [ ] Передавать `context` в `/api/rai/chat`.
-- [ ] Проверить, что `context` обновляется при изменениях.
+Эффект: агент не “теряется” при переходах, UX становится OS-like.
 
-**Эффект:** Агент «видит» Main Workspace структурно, а не через догадки.
+### 1.2 TopNav (горизонтальная навигация)
+- [ ] Перенести существующую структуру меню в TopNav
+- [ ] Реализовать dropdown подменю (группы: Урожай/CRM/Финансы/Коммерция/Настройки)
+- [ ] Поддержать active route + deep links
+
+Эффект: навигация не съедает ширину, рабочая область шире.
+
+### 1.3 LeftRaiChatDock (Docked/Focus)
+- [ ] Docked width 320–360px
+- [ ] Focus width 480–560px
+- [ ] Toggle в header чата
+- [ ] Persist режима в localStorage
+
+Эффект: чат не мешает работе, но всегда доступен.
 
 ---
 
-## 3. Chat API v1
+## 2) WorkspaceContext (как агент “видит” Main Workspace)
 
-### 3.1 Endpoint
-`POST /api/rai/chat`
+### 2.1 Канонический контракт WorkspaceContext
+- [ ] Ввести единый тип `WorkspaceContext` (не зависит от страниц)
+- [ ] На каждой странице публиковать контекст в общий store (например, `workspaceContextStore`)
+- [ ] В чат запросы всегда отправлять: message + workspaceContext
 
-**Request:**
-```json
-{
-  "message": "string",
-  "workspaceContext": "WorkspaceContext"
-}
-```
+Рекомендуемый минимум:
+- route
+- activeEntityRefs (fieldRef/farmRef/partyRef/techmapRef/taskRef)
+- filters/sort/pagination (без тяжёлых данных)
+- selectedRow summary (id/type/short summary)
+- lastUserAction (строка)
 
-**Response:**
-```json
-{
-  "text": "string",
-  "widgets": "WidgetPayload[]",
-  "openUiToken": "string"
-}
-```
+Эффект: агент отвечает по структуре, а не по “распознаванию экрана”.
 
-- [ ] Подключить `SupervisorAgent`.
-- [ ] Добавить поддержку `widgetPayload`.
-- [ ] Реализовать стрим ответа (если есть infra).
+### 2.2 Правило нагрузки
+- [ ] Никаких больших таблиц/JSON в контексте
+- [ ] Только refs + краткие summary
+- [ ] Детальные данные агент получает typed tool-call’ом (search/read)
 
-**Эффект:** Чат становится полноценным Agent Interface.
+Эффект: быстро и детерминированно, без токен-ада.
 
 ---
 
-## 4. Reactive Panel (Right Overlay)
+## 3) Chat API v1 (Agent Console Protocol)
 
-### 4.1 Создать RaiReactivePanel
-- [ ] Реализовать store для `widgets`.
-- [ ] Рендерить поверх `MainWorkspace`.
-- [ ] Поддержать типы виджетов:
-  - `DeviationList`
-  - `RiskOverview`
-  - `TaskBacklog`
-  - `ForecastSummary`
-  - `Last24hChanges`
-- [ ] Не блокировать взаимодействие с основной страницей.
+### 3.1 Endpoint контракт
+- [ ] POST `/api/rai/chat` принимает:
+  - message
+  - workspaceContext
+  - clientTraceId (для трассировки)
+- [ ] Ответ:
+  - text
+  - widgets[] (structured payload)
+  - toolCalls[] (опционально, для отладки)
+  - openUiToken (опционально)
 
-**Эффект:** Агент не заменяет UI, а усиливает его.
+Эффект: чат становится интерфейсом к агентам и виджетам.
 
----
+### 3.2 Typed Tool Calls only (LAW)
+- [ ] Agent вызывает домен только через типизированные вызовы
+- [ ] Никакого string-execution
+- [ ] Все tool calls логируются (audit)
 
-## 5. Persistent Memory (CRITICAL)
-
-### 5.1 Conversation Log (Raw)
-- [ ] Таблица `RaiConversation`.
-- [ ] Поля: `tenantId`, `userId`, `message`, `response`, `context`, `toolCalls`.
-- [ ] Индекс по `tenantId + userId`.
-- [ ] Audit metadata.
-
-**Эффект:** Полная история взаимодействий.
-
-### 5.2 Episodic Memory
-- [ ] Таблица `RaiEpisode`.
-- [ ] Сжатое `summary` события.
-- [ ] Vector embedding.
-- [ ] Metadata (`route`, `entityRefs`, `severity`, `tags`).
-- [ ] Retrieval top-K по запросу.
-
-**Эффект:** Агент помнит релевантное, а не всё подряд.
-
-### 5.3 Stable Profile Memory
-- [ ] Таблица `RaiUserProfile`.
-- [ ] Предпочтения формата отчётов.
-- [ ] Часто используемые сущности.
-- [ ] Поведенческие паттерны.
-- [ ] Последние активные поля.
-
-**Эффект:** Агент адаптируется к пользователю со временем.
-
-### 5.4 Memory Flow
-Каждый `chat request`:
-1. `retrieveMemory(userId, tenantId, context)`
-2. `composePrompt(message + context + memory)`
-3. `generateResponse()`
-4. `writeConversation()`
-5. `writeEpisode()`
-
-**Эффект:** Память работает «вечно», но детерминированно.
+Эффект: институциональная предсказуемость.
 
 ---
 
-## 6. Security & Isolation
-- [ ] `Tenant isolation`.
-- [ ] `RBAC enforcement`.
-- [ ] Ограничение `cross-tenant retrieval`.
-- [ ] `Retention policy`.
-- [ ] `Data deletion endpoint`.
+## 4) Reactive Panel (правый вывод РАИ)
 
-**Эффект:** Память не становится юридическим риском.
+### 4.1 RaiReactivePanel
+- [ ] Ввести единый renderer `renderWidget(widgetPayload)`
+- [ ] Поддержать MVP виджеты:
+  - DeviationList
+  - RiskOverview
+  - TaskBacklog
+  - FieldStatusCard
+  - Last24hChanges
+- [ ] Виджеты рендерятся справа как overlay/drawer, не блокируя workspace
 
----
-
-## 7. Performance
-- [ ] Лимит длины `memory retrieval`.
-- [ ] `Async embedding generation`.
-- [ ] `Cache frequent episodes`.
-- [ ] `Background compaction`.
-
-**Эффект:** Чат остаётся быстрым даже при долгом использовании.
+Эффект: агент усиливает интерфейс, не превращая систему в “чатик”.
 
 ---
 
-## 8. Phase Rollout
+## 5) Память (ВАЖНО): делаем через MemoryAdapter, а не “сразу новые таблицы”
 
-### Phase A — Shell
-- [ ] `AppShell` + `Chat Dock`.
-- [ ] `WorkspaceContext`.
-- [ ] `Mock API`.
+### 5.1 MemoryAdapter Contract (обязательный слой абстракции)
+- [ ] Создать интерфейс `MemoryAdapter` (server-side):
 
-### Phase B — Agent Wiring
-- [ ] `SupervisorAgent` integration.
-- [ ] `Widget rendering`.
+Методы (минимум):
+- `appendInteraction(ctx, userMessage, agentResponse, toolCalls)`
+- `writeEpisode(ctx, episode)` (сжатый эпизод)
+- `retrieve(ctx, query, limit)` → episodes[]
+- `getProfile(ctx)` / `updateProfile(ctx, patch)`
 
-### Phase C — Persistent Memory
-- [ ] `Conversation log`.
-- [ ] `Episodic retrieval`.
-- [ ] `Profile memory`.
+Эффект: память можно подключить к текущей реализации без миграций UI/агента.
 
-### Phase D — Optimization
-- [ ] `Performance tuning`.
-- [ ] `UX polishing`.
-- [ ] `Security review`.
+### 5.2 Storage Decision (без предположений)
+- [ ] Подключить MemoryAdapter к текущей памяти (что уже есть)
+- [ ] Если текущая память покрывает retrieve+append — используем её как Primary
+- [ ] Если не покрывает — добавляем минимальный Carcass+Flex слой (см. 5.3)
+
+Эффект: не ломаем существующее, расширяем только по необходимости.
+
+### 5.3 Carcass+Flex модель памяти (если нужно расширять)
+НЕ “зоопарк таблиц”.
+Минимальный каркас + JSONB flex.
+
+Carcass (минимум 2 сущности):
+- MemoryInteraction (сырой лог)
+- MemoryEpisode (сжатые эпизоды)
+
+Flex:
+- `attrs` JSONB под `schemaKey`
+- `provenance`, `confidence`, `updatedBy`, `updatedAt`
+
+Чеклист:
+- [ ] schemaKey для Interaction/Episode/Profile
+- [ ] attrs JSONB хранит расширяемые поля
+- [ ] provenance/confidence обязательны
+
+Эффект: память расширяется без переделок схемы каждый раз.
+
+### 5.4 “Память на всё время” — это политика, а не бесконечный токен-лог
+- [ ] Raw log хранить по retention (например, 6–12 месяцев) — это тех. политика
+- [ ] “Вечно” хранить Episodes + Profile (они компактные)
+- [ ] Retrieval всегда top-K + scoped по tenant/user + контекст страницы
+
+Эффект: пользователь получает “вечную память”, система не задыхается.
 
 ---
 
-## 9. Non-Negotiables
-- Чат живёт на уровне **Shell**.
-- Память **персистентна**.
-- **Tenant isolation** строгий.
-- Агент работает только через **typed tool calls**.
-- UI не содержит бизнес-логики.
+## 6) Безопасность памяти (non-negotiable)
+- [ ] Tenant isolation (жёстко)
+- [ ] RBAC на retrieval (роль/контекст)
+- [ ] Audit trail на чтение памяти (особенно profile)
+- [ ] “Delete my data” / purge по userId (юридическая гигиена)
+
+Эффект: память не превращается в риск.
 
 ---
 
-## Итог
+## 7) Минимальный rollout (чтобы быстро показать результат)
 
-После выполнения RAI становится:
-1. Постоянным интеллектом системы.
-2. Осведомлённым о контексте.
-3. Обладающим долговременной памятью.
-4. Интегрированным в рабочий процесс.
-5. Не нарушающим существующую архитектуру.
+### Phase A (1–2 дня)
+- [ ] AppShell
+- [ ] ChatDock Docked/Focus
+- [ ] WorkspaceContext store + отправка в API
+- [ ] Mock `/api/rai/chat` возвращает text + 1 widget
+
+Эффект: появляется Agent OS UX.
+
+### Phase B (следом)
+- [ ] Подключить SupervisorAgent к API
+- [ ] Включить structured widgets справа
+
+Эффект: “Comet-эффект” — агент реагирует на страницу.
+
+### Phase C (CRITICAL)
+- [ ] Подключить MemoryAdapter к существующей памяти
+- [ ] Включить retrieve → prompt composition → append
+
+Эффект: пользовательский контекст становится долговременным.
+
+---
+
+## 8) Definition of Done
+- [ ] Чат не сбрасывается при навигации
+- [ ] Агент получает workspaceContext на каждом запросе
+- [ ] Виджеты рендерятся справа из structured payload
+- [ ] Память работает через MemoryAdapter и изолирована по tenant/user
+- [ ] Episodes/Profile сохраняются и используются при ответах
