@@ -1,6 +1,6 @@
 # PLAN — Подключить apps/telegram-bot к Agro Draft→Commit
 Дата: 2026-03-01  
-Статус: draft  
+Статус: ready_for_review  
 Decision-ID: AG-TELEGRAM-DRAFT-COMMIT-001  
 
 ## Результат (какой артефакт получим)
@@ -21,8 +21,8 @@ Decision-ID: AG-TELEGRAM-DRAFT-COMMIT-001
 
 ## План работ (коротко, исполнимо)
 - [ ] Подтвердить, что `Decision-ID` `AG-TELEGRAM-DRAFT-COMMIT-001` имеет статус `ACCEPTED` и его scope покрывает закрепление `apps/telegram-bot` как единственного Telegram-транспорта; при отсутствии подтверждения остановить реализацию.
-- [ ] Зафиксировать канонические endpoints/контракт P0.3, которые бот будет вызывать: `create draft`, `fix`, `link`, `confirm` (и поведение при `missingMust[]`); если контракт P0.3 не стабилен, остановить реализацию до его фиксации.
-- [ ] Определить формат callback data (коротко и однозначно): `agro:<action>:<draftId>`, где `action ∈ {confirm, fix, link}`.
+- [ ] Подтвердить зависимость: P0.3 API готов и допущен (Decision `AG-AGRO-DRAFT-COMMIT-001` = `ACCEPTED`), а операции `create draft`, `fix`, `link`, `confirm` доступны/стабильны для интеграции; если контракт P0.3 не стабилен, остановить реализацию до его фиксации.
+- [ ] Определить формат callback data (коротко и однозначно, влезает в лимит Telegram `callback_data`): `agro:<action>:<draftId>`, где `action ∈ {confirm, fix, link}`. Никаких `companyId`/tenant-данных в callback data.
 - [ ] Реализовать intake:
   - [ ] text → create draft
   - [ ] photo → create draft с `evidence=photo` / metadata по контракту API
@@ -32,6 +32,14 @@ Decision-ID: AG-TELEGRAM-DRAFT-COMMIT-001
   - [ ] 🔗 link → собрать refs (поле/задача/ферма) и вызвать API link.
   - [ ] ✏️ fix → собрать patch (минимально) и вызвать API fix.
 - [ ] Добавить минимальный прогон: “фото+текст → draft → link → confirm → committed” с логами (или e2e).
+
+## Тест-план (минимальный, но проверяемый)
+- [ ] Smoke: text → draft создаётся, бот возвращает кнопки ✅✏️🔗 с корректным `draftId`.
+- [ ] Smoke: photo → draft создаётся, `draftId` пробрасывается в callback data.
+- [ ] Flow: draft → link → confirm:
+  - [ ] если API возвращает `missingMust[]` непустой — бот показывает MUST-вопросы/статус и НЕ делает вид “committed”.
+  - [ ] если `missingMust[]` пуст — бот показывает успешный результат “committed”.
+- [ ] Security: в коде бота нет принятия/прокидывания `companyId` из текста/кнопок/metadata как источника истины; tenant определяется только доверенным auth/session-контекстом API.
 
 ## DoD
 - [ ] `apps/telegram-bot` создаёт draft для text/voice/photo и возвращает кнопки ✅✏️🔗 с `draftId`.

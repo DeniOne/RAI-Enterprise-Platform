@@ -30,6 +30,10 @@
     *   Tenant isolation: `companyId` берётся из security context, не из payload.
     *   Проверка MUST-gate: `apps/api/jest.agro-events.config.js` → PASS (4/4).
 
+8.  **Telegram Bot → Agro API (P0.4)** ✅:
+    *   Бот подключён к `/api/agro-events/*`: intake text/photo/voice → draft, кнопки ✅✏️🔗, callback `ag:<action>:<draftId>`, вызовы fix/link/confirm.
+    *   Unit + smoke-скрипт пройдены. Ревью APPROVED. Живой e2e не прогнан — приёмка с риском.
+
 ### Pending / Current Issues:
 *   IDE still showing red files in the screenshot despite TS Server restart.
     *   Possible cause 1: `tsconfig.json` was missing previously (fixed now with root config).
@@ -43,4 +47,4 @@
     *   [ ] Подключить эскалацию к подтверждению событий в Telegram.
     *   [ ] Покрыть тестами всю цепочку от коммита до эскалации.
 2.  Исправить типизацию в корневом `tsconfig.json` (проблема с `@types`).
-3.  **P0.4 Telegram Bot**: подключить `apps/telegram-bot` к `/api/agro-events/*` и закрепить сценарий “intake → draftId → ✅”.
+3.  **P0.5 AgroEscalation + controller loop**: верифицировать/подключить создание `AgroEscalation` при пороге S3/S4 после commit (промт: `interagency/prompts/2026-03-01_p0-5_agro-escalation-controller-loop.md`).

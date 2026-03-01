@@ -14,6 +14,10 @@ export interface UserSession {
         answers: Record<string, any>;
     };
     pendingAdvisoryFeedbackTraceId?: string;
+    pendingAgroAction?: {
+        action: 'fix' | 'link';
+        draftId: string;
+    };
 }
 
 @Injectable()

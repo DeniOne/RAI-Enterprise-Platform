@@ -46,6 +46,24 @@ export interface AdvisoryRolloutStatusDto {
     updatedAt?: string;
 }
 
+export interface AgroDraftResponseDto {
+    draft: {
+        id: string;
+        status: 'DRAFT' | 'READY_FOR_CONFIRM' | 'COMMITTED';
+        missingMust?: string[];
+        payload?: Record<string, any>;
+        evidence?: any[];
+    };
+    committed?: {
+        id: string;
+        provenanceHash?: string;
+    };
+    ui?: {
+        message?: string;
+        buttons?: string[];
+    };
+}
+
 @Injectable()
 export class ApiClientService {
     private readonly backendUrl: string;
@@ -259,6 +277,42 @@ export class ApiClientService {
         });
     }
 
+    async createAgroEventDraft(data: any, accessToken: string): Promise<AgroDraftResponseDto> {
+        const idempotencyKey = this._generateIdempotencyKey('createAgroEventDraft', data);
+        return this.request('/api/agro-events/drafts', {
+            method: 'POST',
+            headers: this.getHeaders(accessToken, idempotencyKey),
+            body: JSON.stringify(data),
+        });
+    }
+
+    async fixAgroEventDraft(data: { draftId: string; patch: Record<string, any> }, accessToken: string): Promise<AgroDraftResponseDto> {
+        const idempotencyKey = this._generateIdempotencyKey('fixAgroEventDraft', data);
+        return this.request('/api/agro-events/fix', {
+            method: 'POST',
+            headers: this.getHeaders(accessToken, idempotencyKey),
+            body: JSON.stringify(data),
+        });
+    }
+
+    async linkAgroEventDraft(data: { draftId: string; farmRef?: string; fieldRef?: string; taskRef?: string }, accessToken: string): Promise<AgroDraftResponseDto> {
+        const idempotencyKey = this._generateIdempotencyKey('linkAgroEventDraft', data);
+        return this.request('/api/agro-events/link', {
+            method: 'POST',
+            headers: this.getHeaders(accessToken, idempotencyKey),
+            body: JSON.stringify(data),
+        });
+    }
+
+    async confirmAgroEventDraft(draftId: string, accessToken: string): Promise<AgroDraftResponseDto> {
+        const idempotencyKey = `confirmAgroEventDraft:${draftId}`;
+        return this.request('/api/agro-events/confirm', {
+            method: 'POST',
+            headers: this.getHeaders(accessToken, idempotencyKey),
+            body: JSON.stringify({ draftId }),
+        });
+    }
+
     /**
      * Advisory recommendations (Sprint 4)
      */
@@ -317,4 +371,3 @@ export class ApiClientService {
         });
     }
 }
-

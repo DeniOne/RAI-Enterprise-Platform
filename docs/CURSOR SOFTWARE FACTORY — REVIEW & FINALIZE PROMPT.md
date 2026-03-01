@@ -52,6 +52,7 @@ last_updated: 2026-03-01
 Обязательные:
 - `docs/07_EXECUTION/FULL_PROJECT_WBS.md`
 - `docs/07_EXECUTION/TECHNICAL_DEVELOPMENT_PLAN.md`
+- `docs/00_STRATEGY/STAGE 2/PROJECT_EXECUTION_CHECKLIST.md`
 - `memory-bank/task.md` (если задача трекается там)
 
 Правило:

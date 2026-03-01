@@ -1,4 +1,4 @@
-﻿- **Exploration Module (2026-02-25):** выполнен end-to-end.
+- **Exploration Module (2026-02-25):** выполнен end-to-end.
   - [x] Backend: FSM, War Room orchestration, tenant/RBAC checks, API-метрики.
   - [x] Frontend: `/exploration`, `/exploration/strategic`, `/exploration/constraints`, `/exploration/cases/:id`, `/exploration/war-room/:sessionId`.
   - [x] LANGUAGE_POLICY: пользовательские тексты и Swagger в модуле `Исследования` русифицированы.
@@ -9,6 +9,7 @@
 - **Security Hardened**: RBAC, Throttler, and Tenant Isolation (Prisma middleware) fully active.
 
 ## Current Focus
+- **P0.4 Telegram Bot → Agro API (2026-03-01)**: **COMPLETE ✅**. Бот создаёт draft (text/photo/voice), кнопки ✅✏️🔗, вызовы fix/link/confirm к `apps/api`; callback `ag:<action>:<draftId>`; jest 5/5 + smoke-скрипт. Ревью APPROVED. Живой e2e не прогнан.
 - **Agro Domain: Telegram Intake Persistence (2026-02-28)**: **COMPLETE ✅**. Черновики теперь персистентны. Внедрена модель `AgroEventDraft`, репозиторий с TTL и эндпоинты `confirm/fix/link`. Логика покрыта unit-тестами.
 - **Technical Debt: Prisma Transparent Isolation (2026-02-28)**: **COMPLETE ✅**. Устранена проблема «ручного прописывания делегатов» в `PrismaService`. Внедрен динамический `Proxy`, переименован `tenantId` в `companyId` для 10/10 изоляции. Добавлены корневые скрипты `db:client` и `postinstall` для автоматизации.
 - **Auto-Onboarding & Dev Mode Guard (2026-02-26)**: Внедрён механизм `AUTH_DISABLED=true` (возврат тестового Tenant ID) и Auto-Onboarding для владельца (создание корневой компании при входе `441610858` в Telegram). Проблема курицы и яйца при старте платформы решена.

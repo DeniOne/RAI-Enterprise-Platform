@@ -14,8 +14,12 @@
   - План: `interagency/plans/2026-03-01_p0-3_agro-telegram-draft-commit.md`
   - Отчёт: `interagency/reports/2026-03-01_p0-3_agro-telegram-draft-commit.md`
 
-- `interagency/prompts/2026-03-01_p0-4_telegram-bot-draft-commit.md` [ACTIVE]
+- `interagency/prompts/2026-03-01_p0-4_telegram-bot-draft-commit.md` [DONE]
+  - Результат: бот создаёт draft (text/photo/voice), кнопки ✅✏️🔗, вызовы fix/link/confirm к API; callback `ag:<action>:<draftId>`; unit + smoke-прогон.
   - План: `interagency/plans/2026-03-01_p0-4_telegram-bot-draft-commit.md`
+  - Отчёт: `interagency/reports/2026-03-01_p0-4_telegram-bot-draft-commit.md`
+
+- `interagency/prompts/2026-03-01_p0-5_agro-escalation-controller-loop.md` [DRAFT]
 
 ## Шаблоны
 - `interagency/templates/PROMPT_TEMPLATE.md`

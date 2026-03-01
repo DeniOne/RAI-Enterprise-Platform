@@ -27,25 +27,25 @@
   - [x] включить передачу контекста в каждый запрос чата
 
 ### P0.3 Реальный Agro Telegram Draft→Fix/Link→Confirm→Commit в `apps/api` (не “код-спека в docs”)
-- [ ] **Цель:** Telegram становится “терминалом поля” по закону Draft→Commit.
-- [ ] **DoD:** в `apps/api` существует боевой модуль, который:
+- [x] **Цель:** Telegram становится “терминалом поля” по закону Draft→Commit.
+- [x] **DoD:** в `apps/api` существует боевой модуль, который:
   - создаёт `AgroEventDraft` (TTL, missingMust),
   - поддерживает `fix/link/confirm`,
   - коммитит `AgroEventCommitted` с `provenanceHash`,
   - не принимает `companyId` из payload (только из контекста),
   - имеет unit-тесты на MUST-gate.
-- [ ] **Мини-порядок работ:**
-  - [ ] перенести реализацию из `docs/02_DOMAINS/AGRO_DOMAIN/EVENTS/*` в реальный модуль `apps/api/src/modules/agro-events/*` (или иной канонический доменный модуль)
-  - [ ] подключить модуль в `AppModule`
-  - [ ] покрыть тестами: confirm без MUST → блок; link → READY; confirm → committed
+- [x] **Мини-порядок работ:**
+  - [x] перенести реализацию из `docs/02_DOMAINS/AGRO_DOMAIN/EVENTS/*` в реальный модуль `apps/api/src/modules/agro-events/*` (или иной канонический доменный модуль)
+  - [x] подключить модуль в `AppModule`
+  - [x] покрыть тестами: confirm без MUST → блок; link → READY; confirm → committed
 
 ### P0.4 Подключить `apps/telegram-bot` к Draft→Commit (и прекратить раздвоение телеграм-контуров)
-- [ ] **Цель:** один канонический телеграм-поток, который всегда пишет Draft и требует ✅.
-- [ ] **DoD:** бот создаёт draft при входе (text/voice/photo), возвращает пользователю короткий ответ + кнопки ✅✏️🔗 с `draftId`, и вызывает `fix/link/confirm` по нажатию.
-- [ ] **Мини-порядок работ:**
-  - [ ] выбрать канонический телеграм-контур: `apps/telegram-bot` (транспорт) + API домена в `apps/api`
-  - [ ] оформить payload кнопок (callback data) так, чтобы всегда нести `draftId`
-  - [ ] добавить тест/прогон сценария: “фото+текст → draft → link → confirm → committed”
+- [x] **Цель:** один канонический телеграм-поток, который всегда пишет Draft и требует ✅.
+- [x] **DoD:** бот создаёт draft при входе (text/voice/photo), возвращает пользователю короткий ответ + кнопки ✅✏️🔗 с `draftId`, и вызывает `fix/link/confirm` по нажатию.
+- [x] **Мини-порядок работ:**
+  - [x] выбрать канонический телеграм-контур: `apps/telegram-bot` (транспорт) + API домена в `apps/api`
+  - [x] оформить payload кнопок (callback data) так, чтобы всегда нести `draftId`
+  - [x] добавить тест/прогон сценария: “фото+текст → draft → link → confirm → committed”
 
 ### P0.5 Верифицировать (или реально подключить) `AgroEscalation` + controller loop
 - [ ] **Цель:** “план/факт → severity → эскалация” не на бумаге, а в БД.
