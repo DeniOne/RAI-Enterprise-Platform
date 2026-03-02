@@ -2,6 +2,10 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { RaiChatService } from "./rai-chat.service";
 import { RaiToolsRegistry } from "./tools/rai-tools.registry";
 import { RaiToolName } from "./tools/rai-tools.types";
+import {
+  RAI_CHAT_WIDGETS_SCHEMA_VERSION,
+  RaiChatWidgetType,
+} from "./widgets/rai-chat-widgets.types";
 
 describe("RaiChatService", () => {
   let service: RaiChatService;
@@ -15,7 +19,7 @@ describe("RaiChatService", () => {
     module.get(RaiToolsRegistry).onModuleInit();
   });
 
-  it("returns typed suggested actions and tool execution results", async () => {
+  it("returns typed suggested actions and canonical widgets", async () => {
     const result = await service.handleChat(
       {
         message: "Покажи контекст",
@@ -50,7 +54,12 @@ describe("RaiChatService", () => {
     expect(result.widgets).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          type: "ToolExecutionResults",
+          schemaVersion: RAI_CHAT_WIDGETS_SCHEMA_VERSION,
+          type: RaiChatWidgetType.DeviationList,
+        }),
+        expect.objectContaining({
+          schemaVersion: RAI_CHAT_WIDGETS_SCHEMA_VERSION,
+          type: RaiChatWidgetType.TaskBacklog,
         }),
       ]),
     );

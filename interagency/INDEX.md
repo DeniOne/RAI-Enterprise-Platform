@@ -30,8 +30,10 @@
   - План: `interagency/plans/2026-03-01_p1-1_typed-tools-registry.md`
   - Отчёт: `interagency/reports/2026-03-01_p1-1_typed-tools-registry.md`
 
-- `interagency/prompts/2026-03-01_p1-2_widgets-schema-renderer.md` [DRAFT]
-  - ACCEPTED: `interagency/plans/2026-03-01_p1-2_widgets-schema-renderer.md` — готов к реализации (кодер).
+- `interagency/prompts/2026-03-01_p1-2_widgets-schema-renderer.md` [DONE]
+  - План: `interagency/plans/2026-03-01_p1-2_widgets-schema-renderer.md`
+  - Отчёт: `interagency/reports/2026-03-01_p1-2_widgets-schema-renderer.md`
+  - Результат: Каноническая схема `widgets[]` и renderer (2 виджета) в web-чате.
 
 ## Шаблоны
 - `interagency/templates/PROMPT_TEMPLATE.md`

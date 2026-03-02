@@ -370,6 +370,17 @@ aligned_with: [principle-axioms]
 - [x] **Section 14.3: Verification**
     - [x] Test: `rai-chat.controller.spec.ts` (4/4 PASS)
 
+### 🖼️ BLOCK 14.2: RAI WIDGETS & ARCHITECTURE (P1.x) ✅
+- [x] **Section 14.2.1: Canonical Widgets Schema (v1.0)**
+    - [x] Model: Typed `RaiChatWidget` and payloads (DeviationList, TaskBacklog)
+    - [x] Logic: `buildWidgets` integration in `RaiChatService`
+- [x] **Section 14.2.2: Web Widgets Renderer**
+    - [x] Component: `AiChatWidgetsRail` (right sidebar)
+    - [x] Logic: `AiChatPanel` layout update with responsive rail
+- [x] **Section 14.2.3: Verification**
+    - [x] Test: `rai-chat.service.spec.ts` (API schema)
+    - [x] Test: `ai-chat-widgets-rail.spec.tsx` (Web renderer)
+
 ### 🌾 BLOCK 14.1: AGRO TELEGRAM DRAFT→COMMIT (P0.3) ✅
 - [x] **Module:** `apps/api/src/modules/agro-events/*` (draft/fix/link/confirm/commit).
 - [x] **Security:** tenant isolation — `companyId` only from trusted context, never from payload.

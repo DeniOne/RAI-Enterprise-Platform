@@ -220,3 +220,10 @@
 - [x] **[API]** Боевой модуль `apps/api/src/modules/agro-events/*` (draft/fix/link/confirm/commit)
 - [x] **[SECURITY]** Tenant isolation: `companyId` только из доверенного контекста (`@CurrentUser()`), не из payload
 - [x] **[TEST]** MUST-gate unit-test: `src/modules/agro-events/agro-events.orchestrator.service.spec.ts` (изолированный jest config)
+
+## RAI Widgets & Architecture (P1.x) 🚀
+- [x] **[API]** Canonical `widgets[]` schema v1.0 with typed payloads <!-- id: 18.1 -->
+- [x] **[API]** Integrated `buildWidgets` into `RaiChatService` with `DeviationList` and `TaskBacklog` <!-- id: 18.2 -->
+- [x] **[WEB]** `AiChatWidgetsRail` component with canonical renderer <!-- id: 18.3 -->
+- [x] **[WEB]** Responsive layout in `AiChatPanel` (right rail) <!-- id: 18.4 -->
+- [x] **[TEST]** Unit tests for API schema and Web renderer passing <!-- id: 18.5 -->

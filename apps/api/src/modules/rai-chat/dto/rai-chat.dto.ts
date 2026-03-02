@@ -11,6 +11,7 @@ import {
 } from "class-validator";
 import { Type } from "class-transformer";
 import { RaiSuggestedAction, RaiToolName } from "../tools/rai-tools.types";
+import { RaiChatWidget } from "../widgets/rai-chat-widgets.types";
 
 export enum WorkspaceEntityKind {
   farm = "farm",
@@ -123,10 +124,7 @@ export class RaiChatResponseDto {
   text: string;
 
   @IsObject({ each: true })
-  widgets: Array<{
-    type: string;
-    payload: Record<string, unknown>;
-  }>;
+  widgets: RaiChatWidget[];
 
   @IsString()
   @IsOptional()

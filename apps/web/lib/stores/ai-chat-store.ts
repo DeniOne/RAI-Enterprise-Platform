@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 import { useWorkspaceContextStore } from './workspace-context-store';
+import { RaiChatWidget } from '../ai-chat-widgets';
 
 export type RiskLevel = 'R0' | 'R1' | 'R2' | 'R3' | 'R4';
 
@@ -11,7 +12,7 @@ export interface ChatMessage {
     content: string;
     timestamp: string;
     riskLevel?: RiskLevel;
-    suggestedActions?: Record<string, any>[];
+    widgets?: RaiChatWidget[];
 }
 
 export type FsmState = 'closed' | 'animating_open' | 'open' | 'animating_close';
@@ -109,7 +110,7 @@ export const useAiChatStore = create<AiChatStore>()(
                         content: data.text || 'Ответ не получен',
                         timestamp: new Date().toISOString(),
                         riskLevel: data.riskLevel || 'R1', // Default R1 if backend doesn't provide it yet
-                        suggestedActions: data.widgets, // Map widgets to suggestedActions for now
+                        widgets: Array.isArray(data.widgets) ? data.widgets : [],
                     };
 
                     set((state) => ({

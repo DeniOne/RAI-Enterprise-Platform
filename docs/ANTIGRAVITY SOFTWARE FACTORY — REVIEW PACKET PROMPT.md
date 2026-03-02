@@ -29,7 +29,7 @@ last_updated: 2026-03-01
 ## 2. СОБРАТЬ ПАКЕТ НА РЕВЬЮ (BLOCKING)
 
 ### 2.1 Отчёт (обязателен)
-- Создай/обнови: `interagency/reports/YYYY-MM-DD_<slug>.md`
+- Создай/обнови: `interagency/reports/YYYY-MM-DD_<slug>.md`/root/RAI_EP/docs/ANTIGRAVITY SOFTWARE FACTORY — REVIEW PACKET PROMPT.md
 - Формат: `interagency/templates/REPORT_TEMPLATE.md`
 - Заполни фактами:
   - что было целью,
