@@ -1,6 +1,6 @@
 # PLAN — Проверить и подключить AgroEscalation к commit-loop
 Дата: 2026-03-01  
-Статус: draft  
+Статус: accepted  
 Decision-ID: AG-AGRO-ESCALATION-LOOP-001  
 
 ## Результат (какой артефакт получим)

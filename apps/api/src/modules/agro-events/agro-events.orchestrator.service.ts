@@ -10,6 +10,7 @@ import {
   FixAgroEventDto,
   LinkAgroEventDto,
 } from "./dto/agro-events.dto";
+import { AgroEscalationLoopService } from "./agro-escalation-loop.service";
 import { AgroEventsRepository } from "./agro-events.repository";
 import { AgroEventsMustValidator } from "./agro-events.validator";
 import {
@@ -26,6 +27,7 @@ export class AgroEventsOrchestratorService {
   constructor(
     private readonly repository: AgroEventsRepository,
     private readonly validator: AgroEventsMustValidator,
+    private readonly escalationLoop: AgroEscalationLoopService,
   ) {}
 
   async createDraft(
@@ -214,6 +216,8 @@ export class AgroEventsOrchestratorService {
     this.logger.log(
       `Agro draft committed: ${dto.draftId} (${provenanceHash.slice(0, 8)})`,
     );
+
+    await this.escalationLoop.handleCommittedEvent(result.committed);
 
     return {
       draft: result.draft,

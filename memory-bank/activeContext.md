@@ -9,6 +9,7 @@
 - **Security Hardened**: RBAC, Throttler, and Tenant Isolation (Prisma middleware) fully active.
 
 ## Current Focus
+- **P0.5 AgroEscalation + controller loop (2026-03-02)**: **COMPLETE ✅**. AgroEscalationLoopService после commit; пороги S3/S4; unit 7/7; tenant из committed. Ревью APPROVED. Живой интеграционный прогон не прогнан.
 - **P0.4 Telegram Bot → Agro API (2026-03-01)**: **COMPLETE ✅**. Бот создаёт draft (text/photo/voice), кнопки ✅✏️🔗, вызовы fix/link/confirm к `apps/api`; callback `ag:<action>:<draftId>`; jest 5/5 + smoke-скрипт. Ревью APPROVED. Живой e2e не прогнан.
 - **Agro Domain: Telegram Intake Persistence (2026-02-28)**: **COMPLETE ✅**. Черновики теперь персистентны. Внедрена модель `AgroEventDraft`, репозиторий с TTL и эндпоинты `confirm/fix/link`. Логика покрыта unit-тестами.
 - **Technical Debt: Prisma Transparent Isolation (2026-02-28)**: **COMPLETE ✅**. Устранена проблема «ручного прописывания делегатов» в `PrismaService`. Внедрен динамический `Proxy`, переименован `tenantId` в `companyId` для 10/10 изоляции. Добавлены корневые скрипты `db:client` и `postinstall` для автоматизации.

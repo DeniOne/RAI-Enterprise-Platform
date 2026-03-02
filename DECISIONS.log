@@ -867,3 +867,41 @@ Orchestrator = Brain (канон RAI_EP).
 ### Связанные документы
 - `interagency/prompts/2026-03-01_p0-4_telegram-bot-draft-commit.md`
 - `docs/00_STRATEGY/STAGE 2/PROJECT_EXECUTION_CHECKLIST.md`
+
+---
+
+## AG-AGRO-ESCALATION-LOOP-001
+
+**Дата:** 2026-03-01
+**Автор:** TECHLEAD (AI)
+**Статус:** ACCEPTED
+
+### Решение
+Разрешить верификацию и при необходимости реализацию controller-loop: после commit Agro-события в `apps/api` при пороге severity S3/S4 создаётся запись `AgroEscalation`; источник tenant — только доверенный контекст.
+
+### Scope
+- **Phase:** Gamma
+- **Sprint:** p0.5
+- **Компоненты:**
+  - `apps/api/src/modules/agro-events/*` (hook после commit или отдельный сервис в agro-домене)
+  - модель `AgroEscalation` в Prisma (уже есть; без миграций в рамках p0.5)
+
+### Технические ограничения
+1. **Tenant Isolation:** `companyId` только из доверенного контекста (`@CurrentUser()` / tenant context), не из payload.
+2. **Минимальный метрик:** `metricKey="operationDelayDays"`; пороги P0.5: S3 при delayDays ≥ 4, S4 при delayDays ≥ 7.
+3. **Идемпотентность:** не создавать дубликаты по `eventId + metricKey`.
+4. **Scope lock:** без изменений Prisma schema; без UI/Telegram-изменений в p0.5.
+
+### Definition of Done
+- После commit в `apps/api` при пороге S3/S4 создаётся `AgroEscalation`.
+- Unit-тест: delayDays=4 → escalation; delayDays=0 → нет записи.
+- Tenant isolation проверен (нет companyId из недоверенного ввода).
+
+### Rollback Conditions
+- Приём `companyId` из недоверенного ввода.
+- Отсутствие идемпотентности (дубликаты эскалаций).
+
+### Связанные документы
+- `interagency/plans/2026-03-01_p0-5_agro-escalation-controller-loop.md`
+- `interagency/prompts/2026-03-01_p0-5_agro-escalation-controller-loop.md`
+- `docs/00_STRATEGY/STAGE 2/PROJECT_EXECUTION_CHECKLIST.md`

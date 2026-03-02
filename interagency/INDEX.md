@@ -19,7 +19,10 @@
   - План: `interagency/plans/2026-03-01_p0-4_telegram-bot-draft-commit.md`
   - Отчёт: `interagency/reports/2026-03-01_p0-4_telegram-bot-draft-commit.md`
 
-- `interagency/prompts/2026-03-01_p0-5_agro-escalation-controller-loop.md` [DRAFT]
+- `interagency/prompts/2026-03-01_p0-5_agro-escalation-controller-loop.md` [DONE]
+  - Результат: AgroEscalationLoopService после commit; пороги S3/S4; unit 7/7; tenant из committed, не из payload.
+  - План: `interagency/plans/2026-03-01_p0-5_agro-escalation-controller-loop.md`
+  - Отчёт: `interagency/reports/2026-03-01_p0-5_agro-escalation-controller-loop.md`
 
 ## Шаблоны
 - `interagency/templates/PROMPT_TEMPLATE.md`

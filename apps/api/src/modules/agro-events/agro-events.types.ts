@@ -39,6 +39,8 @@ export interface AgroEventCommittedRecord {
   provenanceHash: string;
 }
 
+export type AgroEscalationSeverity = "S0" | "S1" | "S2" | "S3" | "S4";
+
 export interface AgroEventDraftPatch {
   timestamp?: string;
   farmRef?: string | null;

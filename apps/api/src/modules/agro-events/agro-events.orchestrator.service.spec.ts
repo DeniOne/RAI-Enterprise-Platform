@@ -1,4 +1,5 @@
 import { BadRequestException } from "@nestjs/common";
+import { AgroEscalationLoopService } from "./agro-escalation-loop.service";
 import { AgroEventsOrchestratorService } from "./agro-events.orchestrator.service";
 import { AgroEventsRepository } from "./agro-events.repository";
 import { AgroEventsMustValidator } from "./agro-events.validator";
@@ -7,6 +8,7 @@ describe("AgroEventsOrchestratorService", () => {
   let service: AgroEventsOrchestratorService;
   let repository: jest.Mocked<AgroEventsRepository>;
   let validator: jest.Mocked<AgroEventsMustValidator>;
+  let escalationLoop: jest.Mocked<AgroEscalationLoopService>;
 
   const actor = { companyId: "company-1", userId: "user-1" };
   const baseDraft = {
@@ -41,7 +43,15 @@ describe("AgroEventsOrchestratorService", () => {
       validateMust: jest.fn(),
     } as unknown as jest.Mocked<AgroEventsMustValidator>;
 
-    service = new AgroEventsOrchestratorService(repository, validator);
+    escalationLoop = {
+      handleCommittedEvent: jest.fn(),
+    } as unknown as jest.Mocked<AgroEscalationLoopService>;
+
+    service = new AgroEventsOrchestratorService(
+      repository,
+      validator,
+      escalationLoop,
+    );
   });
 
   it("confirm() не вызывает commit при непустом missingMust", async () => {
@@ -140,6 +150,12 @@ describe("AgroEventsOrchestratorService", () => {
     );
     expect(result.draft.status).toBe("COMMITTED");
     expect(result.committed?.provenanceHash).toBeTruthy();
+    expect(escalationLoop.handleCommittedEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: readyDraft.id,
+        companyId: actor.companyId,
+      }),
+    );
   });
 
   it("commit() бросает ошибку при непустом MUST", async () => {

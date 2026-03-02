@@ -34,6 +34,10 @@
     *   Бот подключён к `/api/agro-events/*`: intake text/photo/voice → draft, кнопки ✅✏️🔗, callback `ag:<action>:<draftId>`, вызовы fix/link/confirm.
     *   Unit + smoke-скрипт пройдены. Ревью APPROVED. Живой e2e не прогнан — приёмка с риском.
 
+9.  **AgroEscalation + controller loop (P0.5)** ✅:
+    *   `AgroEscalationLoopService` подключён после commit в `agro-events`; пороги S3 (delayDays≥4), S4 (delayDays≥7); идемпотентность по eventId+metricKey.
+    *   Unit 7/7, tenant из committed. Ревью APPROVED. Живой интеграционный прогон не прогнан.
+
 ### Pending / Current Issues:
 *   IDE still showing red files in the screenshot despite TS Server restart.
     *   Possible cause 1: `tsconfig.json` was missing previously (fixed now with root config).
@@ -47,4 +51,4 @@
     *   [ ] Подключить эскалацию к подтверждению событий в Telegram.
     *   [ ] Покрыть тестами всю цепочку от коммита до эскалации.
 2.  Исправить типизацию в корневом `tsconfig.json` (проблема с `@types`).
-3.  **P0.5 AgroEscalation + controller loop**: верифицировать/подключить создание `AgroEscalation` при пороге S3/S4 после commit (промт: `interagency/prompts/2026-03-01_p0-5_agro-escalation-controller-loop.md`).
+3.  **P1.1 Typed tools registry** и далее по чеклисту P1.
