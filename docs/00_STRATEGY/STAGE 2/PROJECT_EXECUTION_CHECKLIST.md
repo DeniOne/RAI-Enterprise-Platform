@@ -118,7 +118,10 @@
 - **Как проверить:** `cd apps/web && npx jest --runInBand shared/contracts/commerce-contracts-page.spec.tsx shared/contracts/execution-manager-workspace-context.spec.tsx`
 
 ### P2.2 Интеграция NDVI/погоды/внешних сигналов в controller/advisory
-- [ ] **DoD:** signals → advisory → объяснение → user feedback → episodic memory formation.
+- [x] **DoD:** signals → advisory → объяснение → user feedback → episodic memory formation.
+- **Статус truth-sync:** `VERIFIED`
+- **Доказательство:** `apps/api/src/modules/rai-chat/dto/rai-chat.dto.ts`, `apps/api/src/modules/rai-chat/external-signals.service.ts`, `apps/api/src/modules/rai-chat/rai-chat.service.ts`, `interagency/reports/2026-03-02_p2-2_external-signals-advisory.md`
+- **Как проверить:** `cd apps/api && pnpm test -- --runInBand src/modules/rai-chat/rai-chat.service.spec.ts src/modules/rai-chat/external-signals.service.spec.ts`
 
 ### P2.3 UX шлифовка (Dock/Focus, клавиши, стабильность)
 - [ ] **DoD:** без регрессий; минимальный UX-долг; нет “тяжёлых” анимаций, влияющих на работу.

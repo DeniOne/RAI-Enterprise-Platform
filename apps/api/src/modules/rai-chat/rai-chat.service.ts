@@ -25,6 +25,7 @@ import {
   withTimeout,
 } from "../../shared/memory/rai-chat-memory.util";
 import { RaiChatMemoryPolicy } from "../../shared/memory/rai-chat-memory.policy";
+import { ExternalSignalsService } from "./external-signals.service";
 
 @Injectable()
 export class RaiChatService {
@@ -34,6 +35,7 @@ export class RaiChatService {
     private readonly toolsRegistry: RaiToolsRegistry,
     private readonly memoryManager: MemoryManager,
     private readonly episodicRetrieval: EpisodicRetrievalService,
+    private readonly externalSignalsService: ExternalSignalsService,
   ) { }
 
   async handleChat(
@@ -94,6 +96,14 @@ export class RaiChatService {
       `memory_recall status=${memoryContext.items.length ? "hit" : "miss"} companyId=${companyId} traceId=${traceId} ms=${recallMs} topK=${memoryConfig.recallLimit} minSim=${memoryConfig.minSimilarity}`,
     );
 
+    const externalSignalResult = await this.externalSignalsService.process({
+      companyId,
+      traceId,
+      threadId,
+      signals: request.externalSignals,
+      feedback: request.advisoryFeedback,
+    });
+
     let text = `Принял: ${request.message}`;
     if (request.workspaceContext?.route) {
       text += `\nroute: ${request.workspaceContext.route}`;
@@ -108,12 +118,21 @@ export class RaiChatService {
       text += `\n(Контекст из памяти: "${topMatch.content.slice(0, 50)}...", sim: ${topMatch.similarity.toFixed(2)})`;
     }
 
+    if (externalSignalResult.advisory) {
+      text += `\nAdvisory: ${externalSignalResult.advisory.recommendation} — ${externalSignalResult.advisory.summary}`;
+    }
+
+    if (externalSignalResult.feedbackStored) {
+      text += "\nFeedback по advisory записан в память.";
+    }
+
     const response: RaiChatResponseDto = {
       text,
       widgets: this.buildWidgets(request, companyId),
       traceId,
       threadId,
       suggestedActions: this.buildSuggestedActions(request),
+      advisory: externalSignalResult.advisory,
     };
 
     const sanitized = sanitizeChatTextForMemory(request.message, memoryConfig);

@@ -50,9 +50,14 @@
   - Отчёт: `interagency/reports/2026-03-02_p2-1_workspacecontext-expand.md`
   - Результат: WorkspaceContext расширен на Commerce contracts и consulting/execution/manager; kind contract/operation, web-spec PASS; ревью APPROVED.
 
-- `interagency/prompts/2026-03-02_p2-2_external-signals-advisory.md` [READY_FOR_REVIEW]
+- `interagency/prompts/2026-03-02_p2-2_external-signals-advisory.md` [DONE]
   - План: `interagency/plans/2026-03-02_p2-2_external-signals-advisory.md`
-  - Статус: `Decision-ID AG-EXTERNAL-SIGNALS-001` утверждён; план подготовлен и ожидает приёмки.
+  - Отчёт: `interagency/reports/2026-03-02_p2-2_external-signals-advisory.md`
+  - Результат: тонкий срез `signals -> advisory -> feedback -> memory append` в RAI Chat; tenant isolation, explainability, unit 8/8; ревью APPROVED.
+
+- `interagency/prompts/2026-03-02_p2-3_ux-polish-dock-focus.md` [READY_FOR_REVIEW]
+  - План: `interagency/plans/2026-03-02_p2-3_ux-polish-dock-focus.md`
+  - Статус: `Decision-ID AG-UX-POLISH-001` утверждён; план подготовлен и ожидает приёмки.
 
 
 ## Шаблоны

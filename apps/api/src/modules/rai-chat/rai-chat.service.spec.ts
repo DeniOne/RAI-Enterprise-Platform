@@ -9,6 +9,7 @@ import {
   RaiChatWidgetType,
 } from "./widgets/rai-chat-widgets.types";
 import { RaiChatMemoryPolicy } from "../../shared/memory/rai-chat-memory.policy";
+import { ExternalSignalsService } from "./external-signals.service";
 
 describe("RaiChatService", () => {
   let service: RaiChatService;
@@ -17,6 +18,11 @@ describe("RaiChatService", () => {
   };
   const episodicRetrievalMock = {
     retrieve: jest.fn().mockResolvedValue({ items: [] }),
+  };
+  const externalSignalsServiceMock = {
+    process: jest
+      .fn()
+      .mockResolvedValue({ advisory: undefined, feedbackStored: false }),
   };
 
   beforeEach(async () => {
@@ -32,6 +38,7 @@ describe("RaiChatService", () => {
         RaiToolsRegistry,
         { provide: MemoryManager, useValue: memoryManagerMock },
         { provide: EpisodicRetrievalService, useValue: episodicRetrievalMock },
+        { provide: ExternalSignalsService, useValue: externalSignalsServiceMock },
       ],
     }).compile();
 
@@ -185,5 +192,69 @@ describe("RaiChatService", () => {
     );
 
     expect(memoryManagerMock.store).not.toHaveBeenCalled();
+  });
+
+  it("прогоняет путь signal -> advisory -> feedback -> memory append", async () => {
+    externalSignalsServiceMock.process.mockResolvedValue({
+      advisory: {
+        traceId: "trace-ext-1",
+        recommendation: "REVIEW",
+        confidence: 0.81,
+        summary: "Нужна ручная проверка",
+        explainability: {
+          traceId: "trace-ext-1",
+          why: "score=-0.4000; NDVI указывает на просадку; погода добавляет риск",
+          factors: [{ name: "ndvi", value: 0.31, direction: "NEGATIVE" }],
+          sources: [
+            {
+              kind: "ndvi",
+              source: "sentinel2",
+              observedAt: "2026-03-02T10:00:00.000Z",
+              entityRef: "field-1",
+              provenance: "sentinel-pass",
+            },
+          ],
+        },
+      },
+      feedbackStored: true,
+    });
+
+    const result = await service.handleChat(
+      {
+        message: "Проверь внешние сигналы",
+        threadId: "thread-ext-1",
+        externalSignals: [
+          {
+            id: "sig-1",
+            kind: "ndvi" as any,
+            source: "sentinel2" as any,
+            observedAt: "2026-03-02T10:00:00.000Z",
+            entityRef: "field-1",
+            value: 0.31,
+            confidence: 0.82,
+            provenance: "sentinel-pass",
+          },
+        ],
+        advisoryFeedback: {
+          decision: "accept",
+          reason: "Подтверждаю ручную проверку",
+        },
+      },
+      "company-1",
+    );
+
+    expect(externalSignalsServiceMock.process).toHaveBeenCalledWith(
+      expect.objectContaining({
+        companyId: "company-1",
+        threadId: "thread-ext-1",
+      }),
+    );
+    expect(result.advisory).toEqual(
+      expect.objectContaining({
+        recommendation: "REVIEW",
+      }),
+    );
+    expect(result.text).toContain("Advisory: REVIEW");
+    expect(result.text).toContain("Feedback по advisory записан в память.");
   });
 });

@@ -408,4 +408,10 @@ Evidence: `apps/api/src/modules/agro-events/*`, `apps/api/jest.agro-events.confi
     - [x] Verification: web-spec PASS; tenant isolation сохранён
     - Evidence: `apps/web/app/(app)/commerce/contracts/page.tsx`, `apps/web/app/consulting/execution/manager/page.tsx`, `interagency/reports/2026-03-02_p2-1_workspacecontext-expand.md`
 
+### 🌐 BLOCK 14.4: EXTERNAL SIGNALS ADVISORY (P2.2)
+- [x] **Section 14.4.1: External Signals Advisory (P2.2)**
+    - [x] Тонкий срез `signals -> advisory -> feedback -> memory append` в RAI Chat
+    - [x] Verification: `rai-chat.service.spec.ts` + `external-signals.service.spec.ts` PASS; tenant isolation сохранён
+    - Evidence: `apps/api/src/modules/rai-chat/dto/rai-chat.dto.ts`, `apps/api/src/modules/rai-chat/external-signals.service.ts`, `apps/api/src/modules/rai-chat/rai-chat.service.ts`, `interagency/reports/2026-03-02_p2-2_external-signals-advisory.md`
+
 ### 🌐 BLOCK 15: ECOSYSTEM

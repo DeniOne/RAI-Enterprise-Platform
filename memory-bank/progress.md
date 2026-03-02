@@ -69,6 +69,11 @@
     *   Commerce contracts + consulting/execution/manager публикуют contract/operation refs, summaries, filters.
     *   Web-spec PASS; tenant isolation сохранён. Ревью APPROVED (2026-03-02).
 
+17. **External Signals Advisory (P2.2)** ✅:
+    *   Решение AG-EXTERNAL-SIGNALS-001 ПРИНЯТО.
+    *   Реализован тонкий срез `signals -> advisory -> feedback -> memory append` в RAI Chat; explainability, feedback, episodic memory.
+    *   Unit 8/8 PASS; tenant isolation сохранён. Ревью APPROVED (2026-03-02).
+
 ### Pending / Current Issues:
 *   IDE still showing red files in the screenshot despite TS Server restart.
     *   Possible cause 1: `tsconfig.json` was missing previously (fixed now with root config).
@@ -76,6 +81,5 @@
     *   Possible cause 3: `PrismaService` typing mismatch after removing explicit getters.
 
 ### Next Steps:
-1.  **P2.2** — интеграция NDVI/погоды в advisory.
-2.  **P2.3** — UX шлифовка (Dock/Focus, клавиши).
-3.  Полный truth-sync проход по docs/07_EXECUTION/* (backlog).
+1.  **P2.3** — UX шлифовка (Dock/Focus, клавиши).
+2.  Полный truth-sync проход по docs/07_EXECUTION/* (backlog).

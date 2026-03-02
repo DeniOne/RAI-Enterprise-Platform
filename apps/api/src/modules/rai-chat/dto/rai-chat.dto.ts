@@ -84,6 +84,104 @@ export class WorkspaceContextDto {
   lastUserAction?: string;
 }
 
+export enum ExternalSignalKind {
+  Ndvi = "ndvi",
+  Weather = "weather",
+}
+
+export enum ExternalSignalSource {
+  Sentinel2 = "sentinel2",
+  Landsat8 = "landsat8",
+  Landsat9 = "landsat9",
+  OpenWeather = "openweather",
+}
+
+export enum WeatherSignalMetric {
+  TemperatureC = "temperature_c",
+  PrecipitationMm = "precipitation_mm",
+}
+
+export class ExternalSignalDto {
+  @IsString()
+  @MaxLength(128)
+  id: string;
+
+  @IsEnum(ExternalSignalKind)
+  kind: ExternalSignalKind;
+
+  @IsEnum(ExternalSignalSource)
+  source: ExternalSignalSource;
+
+  @IsString()
+  @MaxLength(128)
+  observedAt: string;
+
+  @IsString()
+  @MaxLength(128)
+  entityRef: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  geoRef?: string;
+
+  @Type(() => Number)
+  value: number;
+
+  @Type(() => Number)
+  confidence: number;
+
+  @IsString()
+  @MaxLength(160)
+  provenance: string;
+
+  @IsEnum(WeatherSignalMetric)
+  @IsOptional()
+  metric?: WeatherSignalMetric;
+
+  @Type(() => Number)
+  @IsOptional()
+  resolution?: number;
+
+  @Type(() => Number)
+  @IsOptional()
+  cloudCoverage?: number;
+}
+
+export class ExternalAdvisoryFeedbackDto {
+  @IsString()
+  @MaxLength(16)
+  decision: "accept" | "reject";
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(240)
+  reason?: string;
+}
+
+export interface ExternalAdvisoryDto {
+  traceId: string;
+  recommendation: "ALLOW" | "REVIEW";
+  confidence: number;
+  summary: string;
+  explainability: {
+    traceId: string;
+    why: string;
+    factors: Array<{
+      name: string;
+      value: number | string;
+      direction: "POSITIVE" | "NEGATIVE" | "NEUTRAL";
+    }>;
+    sources: Array<{
+      kind: ExternalSignalKind;
+      source: ExternalSignalSource;
+      observedAt: string;
+      entityRef: string;
+      provenance: string;
+    }>;
+  };
+}
+
 export class RaiChatRequestDto {
   @IsString()
   @IsNotEmpty()
@@ -111,6 +209,19 @@ export class RaiChatRequestDto {
   @ArrayMaxSize(5)
   @Type(() => RaiToolCallDto)
   toolCalls?: RaiToolCallDto[];
+
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @ArrayMaxSize(4)
+  @Type(() => ExternalSignalDto)
+  externalSignals?: ExternalSignalDto[];
+
+  @IsObject()
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ExternalAdvisoryFeedbackDto)
+  advisoryFeedback?: ExternalAdvisoryFeedbackDto;
 }
 
 export class RaiToolCallDto {
@@ -138,4 +249,7 @@ export class RaiChatResponseDto {
 
   @IsOptional()
   suggestedActions?: RaiSuggestedAction[];
+
+  @IsOptional()
+  advisory?: ExternalAdvisoryDto;
 }

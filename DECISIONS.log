@@ -1133,7 +1133,7 @@ Orchestrator = Brain (канон RAI_EP).
 
 **Дата:** 2026-03-02  
 **Автор:** TECHLEAD (AI)  
-**Статус:** PENDING  
+**Статус:** ACCEPTED  
 
 ### Решение
 Разрешить UX-шлифовку только после VERIFIED P0/P1: Dock/Focus, хоткеи, стабильность. Запрещены тяжёлые анимации и регрессии core-flow (чат, виджеты, Draft→Commit).

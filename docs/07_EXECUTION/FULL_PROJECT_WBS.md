@@ -262,4 +262,10 @@ Truth-sync: `VERIFIED`
 Evidence: `apps/web/app/(app)/commerce/contracts/page.tsx`, `apps/web/app/consulting/execution/manager/page.tsx`, `interagency/reports/2026-03-02_p2-1_workspacecontext-expand.md`
 How to verify: `cd apps/web && npx jest --runInBand shared/contracts/commerce-contracts-page.spec.tsx shared/contracts/execution-manager-workspace-context.spec.tsx`
 
+### 🌐 14.4 External Signals Advisory (P2.2)
+- [x] **[Backend]** **External Signals Advisory (P2.2)**: тонкий срез `signals -> advisory -> feedback -> memory append` в RAI Chat.
+Truth-sync: `VERIFIED`
+Evidence: `apps/api/src/modules/rai-chat/dto/rai-chat.dto.ts`, `apps/api/src/modules/rai-chat/external-signals.service.ts`, `apps/api/src/modules/rai-chat/rai-chat.service.ts`, `interagency/reports/2026-03-02_p2-2_external-signals-advisory.md`
+How to verify: `cd apps/api && pnpm test -- --runInBand src/modules/rai-chat/rai-chat.service.spec.ts src/modules/rai-chat/external-signals.service.spec.ts`
+
 ### 🌐 15. Ecosystem
