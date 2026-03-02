@@ -1,12 +1,23 @@
-import { IsString, IsNotEmpty, IsOptional, IsObject, IsArray, ValidateNested, MaxLength, ArrayMaxSize, IsEnum } from 'class-validator';
-import { Type } from 'class-transformer';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsObject,
+  IsArray,
+  ValidateNested,
+  MaxLength,
+  ArrayMaxSize,
+  IsEnum,
+} from "class-validator";
+import { Type } from "class-transformer";
+import { RaiSuggestedAction, RaiToolName } from "../tools/rai-tools.types";
 
 export enum WorkspaceEntityKind {
-  farm = 'farm',
-  field = 'field',
-  party = 'party',
-  techmap = 'techmap',
-  task = 'task',
+  farm = "farm",
+  field = "field",
+  party = "party",
+  techmap = "techmap",
+  task = "task",
 }
 
 export class WorkspaceEntityRefDto {
@@ -90,6 +101,21 @@ export class RaiChatRequestDto {
   @IsOptional()
   @MaxLength(128)
   clientTraceId?: string;
+
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @ArrayMaxSize(5)
+  @Type(() => RaiToolCallDto)
+  toolCalls?: RaiToolCallDto[];
+}
+
+export class RaiToolCallDto {
+  @IsEnum(RaiToolName)
+  name: RaiToolName;
+
+  @IsObject()
+  payload: Record<string, unknown>;
 }
 
 export class RaiChatResponseDto {
@@ -99,7 +125,7 @@ export class RaiChatResponseDto {
   @IsObject({ each: true })
   widgets: Array<{
     type: string;
-    payload: any;
+    payload: Record<string, unknown>;
   }>;
 
   @IsString()
@@ -109,4 +135,7 @@ export class RaiChatResponseDto {
   @IsString()
   @IsOptional()
   threadId?: string;
+
+  @IsOptional()
+  suggestedActions?: RaiSuggestedAction[];
 }

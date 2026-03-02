@@ -38,6 +38,10 @@
     *   `AgroEscalationLoopService` подключён после commit в `agro-events`; пороги S3 (delayDays≥4), S4 (delayDays≥7); идемпотентность по eventId+metricKey.
     *   Unit 7/7, tenant из committed. Ревью APPROVED. Живой интеграционный прогон не прогнан.
 
+10. **Typed tools registry (P1.1)** ✅:
+    *   `RaiToolsRegistry` (joi, register/execute), 2 инструмента (echo_message, workspace_snapshot), типизированные DTO (toolCalls, suggestedActions, widgets[].payload Record<string, unknown>).
+    *   Unit 4/4 (jest direct; pnpm test 137). Ревью APPROVED.
+
 ### Pending / Current Issues:
 *   IDE still showing red files in the screenshot despite TS Server restart.
     *   Possible cause 1: `tsconfig.json` was missing previously (fixed now with root config).
@@ -51,4 +55,4 @@
     *   [ ] Подключить эскалацию к подтверждению событий в Telegram.
     *   [ ] Покрыть тестами всю цепочку от коммита до эскалации.
 2.  Исправить типизацию в корневом `tsconfig.json` (проблема с `@types`).
-3.  **P1.1 Typed tools registry** и далее по чеклисту P1.
+3.  **P1.1 Typed tools registry**: DONE. RaiToolsRegistry (joi), 2 инструмента, типизированные DTO, unit 4/4 (jest direct). Ревью APPROVED. Далее — P1.2 и чеклист P1.

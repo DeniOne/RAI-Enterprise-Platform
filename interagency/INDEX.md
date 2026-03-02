@@ -24,6 +24,13 @@
   - План: `interagency/plans/2026-03-01_p0-5_agro-escalation-controller-loop.md`
   - Отчёт: `interagency/reports/2026-03-01_p0-5_agro-escalation-controller-loop.md`
 
+- `interagency/prompts/2026-03-01_p1-1_typed-tools-registry.md` [DONE]
+  - Результат: RaiToolsRegistry (joi, register/execute), 2 инструмента (echo_message, workspace_snapshot), типизированные DTO, unit 4/4 (jest direct).
+  - План: `interagency/plans/2026-03-01_p1-1_typed-tools-registry.md`
+  - Отчёт: `interagency/reports/2026-03-01_p1-1_typed-tools-registry.md`
+
+- `interagency/prompts/2026-03-01_p1-2_widgets-schema-renderer.md` [DRAFT]
+
 ## Шаблоны
 - `interagency/templates/PROMPT_TEMPLATE.md`
 - `interagency/templates/PLAN_TEMPLATE.md`

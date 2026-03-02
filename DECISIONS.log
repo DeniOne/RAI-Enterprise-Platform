@@ -905,3 +905,77 @@ Orchestrator = Brain (канон RAI_EP).
 - `interagency/plans/2026-03-01_p0-5_agro-escalation-controller-loop.md`
 - `interagency/prompts/2026-03-01_p0-5_agro-escalation-controller-loop.md`
 - `docs/00_STRATEGY/STAGE 2/PROJECT_EXECUTION_CHECKLIST.md`
+
+---
+
+## AG-TYPED-TOOLS-REGISTRY-001
+
+**Дата:** 2026-03-02
+**Автор:** TECHLEAD (AI)
+**Статус:** ACCEPTED
+
+### Решение
+Разрешить введение в `apps/api` реестра инструментов (ToolsRegistry) со строгой схемной валидацией payload, типизированным исполнением и обязательным логированием вызовов; без string-execution и без `any[]` в критичном контуре.
+
+### Scope
+- **Phase:** Gamma
+- **Sprint:** P1.1
+- **Компоненты:**
+  - `apps/api` — ToolsRegistry (register/execute), typed tool contracts
+  - интеграция с контуром `rai-chat` в объёме, достаточном для proof (минимум 1–2 инструмента)
+
+### Технические ограничения
+1. **Tenant Isolation:** `companyId` только из доверенного контекста (TenantContextService / auth), не из payload инструмента.
+2. **Typed only:** запрет `any[]` для tool payload в критичном контуре; запрет вызова по произвольной строке без регистрации.
+3. **Validation:** payload валидируется схемой до вызова handler; невалидный payload — отказ без исполнения.
+4. **Logging:** каждый вызов логируется (toolName, companyId, traceId, success/fail).
+
+### Definition of Done
+- ToolsRegistry с register/execute, schema-based validation.
+- Минимум 1 зарегистрированный инструмент с unit-тестом.
+- Вызовы логируются; незарегистрированный/невалидный — отклоняется.
+
+### Rollback Conditions
+- Приём tenant identity из payload инструмента.
+- Обход регистрации (string-eval, вызов по имени без белого списка).
+
+### Связанные документы
+- `interagency/plans/2026-03-01_p1-1_typed-tools-registry.md`
+- `interagency/prompts/2026-03-01_p1-1_typed-tools-registry.md`
+- `docs/00_STRATEGY/STAGE 2/PROJECT_EXECUTION_CHECKLIST.md`
+
+---
+
+## AG-WIDGETS-SCHEMA-RENDERER-001
+
+**Дата:** 2026-03-02
+**Автор:** TECHLEAD (AI)
+**Статус:** ACCEPTED
+
+### Решение
+Разрешить введение канонической схемы widgets[] (версионируемой) и рендерера виджетов справа в веб-чате; минимум 2 виджета (например DeviationList, TaskBacklog) работают end-to-end из ответа /api/rai/chat.
+
+### Scope
+- **Phase:** Gamma
+- **Sprint:** P1.2
+- **Компоненты:**
+  - `apps/api` — типы/DTO для widgets[], ответ rai-chat по схеме
+  - `apps/web` — renderer по type, панель виджетов справа, типы вместо any
+
+### Технические ограничения
+1. **Tenant:** данные виджетов в scope companyId из доверенного контекста API; не передавать tenant из недоверенного ввода в payload.
+2. **No eval:** payload виджета — только данные для рендера, без исполнения кода.
+3. **Versioned schema:** тип/версия виджета явно заданы для обратной совместимости.
+
+### Definition of Done
+- Схема widgets[] версионируема; минимум 2 виджета end-to-end (API → web renderer).
+- Типы в критичном контуре не any.
+- Неизвестный type не ломает UI (placeholder или скрыт).
+
+### Rollback Conditions
+- Передача tenant identity в payload виджета из недоверенного ввода.
+- Исполнение кода из payload виджета.
+
+### Связанные документы
+- `interagency/prompts/2026-03-01_p1-2_widgets-schema-renderer.md`
+- `docs/00_STRATEGY/STAGE 2/PROJECT_EXECUTION_CHECKLIST.md`
