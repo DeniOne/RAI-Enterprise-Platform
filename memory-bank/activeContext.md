@@ -9,6 +9,7 @@
 - **Security Hardened**: RBAC, Throttler, and Tenant Isolation (Prisma middleware) fully active.
 
 ## Current Focus
+- **P0.2 WorkspaceContext (2026-03-02)**: **COMPLETE ✅**. Contract + store + publishers (CRM, TechMap); API DTO; companyId только из tenantContext. Ревью APPROVED.
 - **P1.1 Typed tools registry (2026-03-02)**: **COMPLETE ✅**. RaiToolsRegistry (joi), echo_message + workspace_snapshot, типизированные DTO, unit 4/4 (jest direct). Ревью APPROVED. pnpm test 137 — обход через прямой jest.
 - **P0.5 AgroEscalation + controller loop (2026-03-02)**: **COMPLETE ✅**. AgroEscalationLoopService после commit; пороги S3/S4; unit 7/7; tenant из committed. Ревью APPROVED. Живой интеграционный прогон не прогнан.
 - **P0.4 Telegram Bot → Agro API (2026-03-01)**: **COMPLETE ✅**. Бот создаёт draft (text/photo/voice), кнопки ✅✏️🔗, вызовы fix/link/confirm к `apps/api`; callback `ag:<action>:<draftId>`; jest 5/5 + smoke-скрипт. Ревью APPROVED. Живой e2e не прогнан.

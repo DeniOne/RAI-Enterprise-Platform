@@ -52,6 +52,12 @@
 - Масштабирование паблишеров на все ключевые страницы платформы.
 
 ---
+## Ревью: APPROVED
+- CANON/FORBIDDEN/SECURITY_CANON: соблюдены. `companyId` только из `tenantContext.getCompanyId()` в контроллере; `WorkspaceContextDto` не содержит tenant identity, только route/refs/filters/summary.
+- Дифф: секретов/токенов нет; tenant не из payload.
+- Тест-план: tsc + next build PASS; manual check зафиксирован; API test fail в других модулях — не блокирует P0.2.
+
+---
 ## Технические артефакты
 
 ### git status (fragment)

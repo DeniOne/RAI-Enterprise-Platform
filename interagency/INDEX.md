@@ -6,7 +6,8 @@
   - План: `interagency/plans/2026-03-01_p0-1_api-rai-chat.md`
   - Отчёт: `interagency/reports/2026-03-01_p0-1_api-rai-chat.md`
 
-- `interagency/prompts/2026-03-01_p0-2_workspace-context.md` [READY_FOR_REVIEW]
+- `interagency/prompts/2026-03-01_p0-2_workspace-context.md` [DONE]
+  - Результат: канонический WorkspaceContext (contract + store + publishers CRM/TechMap), API DTO без companyId из payload, передача в POST /api/rai/chat.
   - Отчёт: `interagency/reports/2026-03-01_p0-2_workspace-context-report.md`
 
 - `interagency/prompts/2026-03-01_p0-3_agro-telegram-draft-commit.md` [DONE]
@@ -30,6 +31,7 @@
   - Отчёт: `interagency/reports/2026-03-01_p1-1_typed-tools-registry.md`
 
 - `interagency/prompts/2026-03-01_p1-2_widgets-schema-renderer.md` [DRAFT]
+  - ACCEPTED: `interagency/plans/2026-03-01_p1-2_widgets-schema-renderer.md` — готов к реализации (кодер).
 
 ## Шаблоны
 - `interagency/templates/PROMPT_TEMPLATE.md`

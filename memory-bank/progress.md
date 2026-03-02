@@ -42,6 +42,10 @@
     *   `RaiToolsRegistry` (joi, register/execute), 2 инструмента (echo_message, workspace_snapshot), типизированные DTO (toolCalls, suggestedActions, widgets[].payload Record<string, unknown>).
     *   Unit 4/4 (jest direct; pnpm test 137). Ревью APPROVED.
 
+11. **WorkspaceContext (P0.2)** ✅:
+    *   Канонический контракт `workspace-context.ts` (Zod) + store + паблишеры (FarmDetailsPage, TechMap active). AiChatStore передаёт context в POST /api/rai/chat; API DTO валидирует без companyId из payload.
+    *   tsc + next build PASS. Ревью APPROVED (2026-03-02).
+
 ### Pending / Current Issues:
 *   IDE still showing red files in the screenshot despite TS Server restart.
     *   Possible cause 1: `tsconfig.json` was missing previously (fixed now with root config).
