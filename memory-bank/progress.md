@@ -53,6 +53,17 @@
     *   Изучены и приняты к исполнению `ORCHESTRATOR PROMPT` и `STARTER PROMPT`.
     *   Установлен жесткий приоритет `interagency/` ворклоу.
 
+14. **Agent Chat Memory (P1.3)** ✅:
+    *   Решение AG-CHAT-MEMORY-001 ПРИНЯТО.
+    *   Реализованы retrieve + append в RAI Chat; лимиты/timeout/fail-open, denylist секретов.
+    *   Unit-тесты пройдены (5/5), изоляция проверена.
+
+15. **Status Truth Sync (P1.4)** ✅:
+    *   Решение AG-STATUS-TRUTH-001 ПРИНЯТО.
+    *   Truth-sync для PROJECT_EXECUTION_CHECKLIST, FULL_PROJECT_WBS, TECHNICAL_DEVELOPMENT_PLAN.
+    *   Evidence/команды проверки для P0/P1; полный проход docs/07_EXECUTION/* — backlog.
+    *   Ревью APPROVED (2026-03-02).
+
 ### Pending / Current Issues:
 *   IDE still showing red files in the screenshot despite TS Server restart.
     *   Possible cause 1: `tsconfig.json` was missing previously (fixed now with root config).
@@ -60,10 +71,7 @@
     *   Possible cause 3: `PrismaService` typing mismatch after removing explicit getters.
 
 ### Next Steps:
-1.  **Agro Domain Controller MVP**:
-    *   [ ] Добавить `AgroEscalation` в схему БД и деплойнуть миграцию.
-    *   [ ] Реализовать логику фильтрации и расчета в `ControllerMetricsService`.
-    *   [ ] Подключить эскалацию к подтверждению событий в Telegram.
-    *   [ ] Покрыть тестами всю цепочку от коммита до эскалации.
-2.  Исправить типизацию в корневом `tsconfig.json` (проблема с `@types`).
-3.  **P1.1 Typed tools registry**: DONE. RaiToolsRegistry (joi), 2 инструмента, типизированные DTO, unit 4/4 (jest direct). Ревью APPROVED. Далее — P1.2 и чеклист P1.
+1.  **P2.1** — расширение WorkspaceContext на Operations/Commerce.
+2.  **P2.2** — интеграция NDVI/погоды в advisory.
+3.  **P2.3** — UX шлифовка (Dock/Focus, клавиши).
+4.  Полный truth-sync проход по docs/07_EXECUTION/* (backlog).

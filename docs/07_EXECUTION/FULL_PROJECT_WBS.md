@@ -232,10 +232,28 @@ aligned_with: [principle-vision]
 - [x] **[Backend]** **Canonical Chat API**: `POST /api/rai/chat`, Tenant isolation enforced, deterministic logic.
 - [x] **[Frontend]** **Web Chat Integration**: Switch to backend API, remove mock routes.
 - [x] **[Backend]** **Modular Architecture**: `RaiChatModule` integrated in apps/api.
+Truth-sync: `VERIFIED`
+Evidence: `apps/api/src/modules/rai-chat/rai-chat.controller.ts`, `apps/api/test/modules/rai-chat/rai-chat.controller.spec.ts`, `apps/web/lib/stores/ai-chat-store.ts`, `interagency/reports/2026-03-01_p0-1_api-rai-chat.md`
+How to verify: `cd apps/api && npx jest --runInBand test/modules/rai-chat/rai-chat.controller.spec.ts`
 
 ### 🌾 14.1 Agro Telegram Draft→Commit (P0.3) ✅
 - [x] **[Backend]** **AgroEventsModule**: `apps/api/src/modules/agro-events/*` (draft/fix/link/confirm/commit).
 - [x] **[Security]** Tenant isolation: `companyId` только из доверенного контекста, не из payload.
 - [x] **[Test]** MUST-gate unit-test: изолированный jest config (agro-events).
+Truth-sync: `VERIFIED`
+Evidence: `apps/api/src/modules/agro-events/*`, `apps/api/jest.agro-events.config.js`, `interagency/reports/2026-03-01_p0-3_agro-telegram-draft-commit.md`
+How to verify: `cd apps/api && node ./node_modules/jest/bin/jest.js --config ./jest.agro-events.config.js --runInBand`
+
+### 🛰️ 14.2 Agent OS Reinforcements (P0.5 / P1.1 / P1.2 / P1.3)
+- [x] **[Backend]** **AgroEscalation Loop (P0.5)**: escalation на `S3/S4` после commit Agro event.
+Evidence: `apps/api/src/modules/agro-events/agro-escalation-loop.service.ts`, `apps/api/src/modules/agro-events/agro-escalation-loop.service.spec.ts`, `interagency/reports/2026-03-01_p0-5_agro-escalation-controller-loop.md`
+- [x] **[Backend]** **Typed Tools Registry (P1.1)**: `RaiToolsRegistry`, whitelist tools, schema validation, structured logging.
+Evidence: `apps/api/src/modules/rai-chat/tools/*`, `interagency/reports/2026-03-01_p1-1_typed-tools-registry.md`
+- [x] **[Backend/Web]** **Widgets Rail (P1.2)**: канонический `widgets[]` schema + renderer для `DeviationList` и `TaskBacklog`.
+Evidence: `apps/api/src/modules/rai-chat/widgets/*`, `apps/web/components/ai-chat/AiChatWidgetsRail.tsx`, `interagency/reports/2026-03-01_p1-2_widgets-schema-renderer.md`
+- [x] **[Backend]** **Chat Memory (P1.3)**: recall + append в `RaiChatService` с tenant-scope и лимитами.
+Evidence: `apps/api/src/modules/rai-chat/rai-chat.service.ts`, `apps/api/src/modules/rai-chat/rai-chat.service.spec.ts`, `interagency/reports/2026-03-02_p1-3_agent-chat-memory.md`
+- [ ] **[Docs]** **Status Truth Sync (P1.4)**: execution docs and checklists aligned with code evidence.
+Truth-sync: `IN_PROGRESS`, admission `AG-STATUS-TRUTH-001 = ACCEPTED`
 
 ### 🌐 15. Ecosystem

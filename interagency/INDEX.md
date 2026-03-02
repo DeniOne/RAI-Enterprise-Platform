@@ -35,6 +35,17 @@
   - Отчёт: `interagency/reports/2026-03-01_p1-2_widgets-schema-renderer.md`
   - Результат: Каноническая схема `widgets[]` и renderer (2 виджета) в web-чате.
 
+- `interagency/prompts/2026-03-02_p1-3_agent-chat-memory.md` [DONE]
+  - План: `interagency/plans/2026-03-02_p1-3_agent-chat-memory.md`
+  - Отчёт: `interagency/reports/2026-03-02_p1-3_agent-chat-memory.md`
+  - Результат: Retrieve+append в RAI Chat, tenant isolation, лимиты/timeout/fail-open, denylist секретов, unit 5/5.
+
+- `interagency/prompts/2026-03-02_p1-4_status-truth-sync.md` [DONE]
+  - План: `interagency/plans/2026-03-02_p1-4_status-truth-sync.md`
+  - Отчёт: `interagency/reports/2026-03-02_p1-4_status-truth-sync.md`
+  - Результат: truth-sync для execution-доков P0/P1; `VERIFIED`/`IN_PROGRESS` пометки, evidence и команды проверки; полный проход docs/07_EXECUTION/* — в backlog.
+
+
 ## Шаблоны
 - `interagency/templates/PROMPT_TEMPLATE.md`
 - `interagency/templates/PLAN_TEMPLATE.md`

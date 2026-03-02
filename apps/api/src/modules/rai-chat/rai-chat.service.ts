@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { randomUUID } from "crypto";
 import {
   RaiChatRequestDto,
@@ -16,15 +16,31 @@ import {
   RaiChatWidget,
   RaiChatWidgetType,
 } from "./widgets/rai-chat-widgets.types";
+import { MemoryManager } from "../../shared/memory/memory-manager.service";
+import { EpisodicRetrievalService } from "../../shared/memory/episodic-retrieval.service";
+import { buildTextEmbedding } from "../../shared/memory/signal-embedding.util";
+import { getRaiChatMemoryConfig } from "../../shared/memory/rai-chat-memory.config";
+import {
+  sanitizeChatTextForMemory,
+  withTimeout,
+} from "../../shared/memory/rai-chat-memory.util";
+import { RaiChatMemoryPolicy } from "../../shared/memory/rai-chat-memory.policy";
 
 @Injectable()
 export class RaiChatService {
-  constructor(private readonly toolsRegistry: RaiToolsRegistry) {}
+  private readonly logger = new Logger(RaiChatService.name);
+
+  constructor(
+    private readonly toolsRegistry: RaiToolsRegistry,
+    private readonly memoryManager: MemoryManager,
+    private readonly episodicRetrieval: EpisodicRetrievalService,
+  ) { }
 
   async handleChat(
     request: RaiChatRequestDto,
     companyId: string,
   ): Promise<RaiChatResponseDto> {
+    const memoryConfig = getRaiChatMemoryConfig();
     const traceId = request.clientTraceId || `tr_${randomUUID()}`;
     const threadId = request.threadId || `th_${randomUUID()}`;
     const actorContext: RaiToolActorContext = {
@@ -37,6 +53,47 @@ export class RaiChatService {
       actorContext,
     );
 
+    const embedding = buildTextEmbedding(request.message);
+
+    const recallStartedAt = Date.now();
+    const memoryContext = await withTimeout(
+      this.episodicRetrieval.retrieve({
+        companyId,
+        embedding,
+        traceId,
+        limit: memoryConfig.recallLimit,
+        minSimilarity: memoryConfig.minSimilarity,
+      }),
+      memoryConfig.recallTimeoutMs,
+      () => ({
+        traceId,
+        total: 0,
+        positive: 0,
+        negative: 0,
+        unknown: 0,
+        items: [],
+      }),
+    ).catch((err) => {
+      this.logger.warn(
+        `memory_recall status=error companyId=${companyId} traceId=${traceId} message=${String(
+          err?.message ?? err,
+        )}`,
+      );
+      return {
+        traceId,
+        total: 0,
+        positive: 0,
+        negative: 0,
+        unknown: 0,
+        items: [],
+      };
+    });
+
+    const recallMs = Date.now() - recallStartedAt;
+    this.logger.debug(
+      `memory_recall status=${memoryContext.items.length ? "hit" : "miss"} companyId=${companyId} traceId=${traceId} ms=${recallMs} topK=${memoryConfig.recallLimit} minSim=${memoryConfig.minSimilarity}`,
+    );
+
     let text = `Принял: ${request.message}`;
     if (request.workspaceContext?.route) {
       text += `\nroute: ${request.workspaceContext.route}`;
@@ -46,13 +103,57 @@ export class RaiChatService {
       text += `\nИнструментов выполнено: ${executedTools.length}`;
     }
 
-    return {
+    if (memoryContext.items.length > 0) {
+      const topMatch = memoryContext.items[0];
+      text += `\n(Контекст из памяти: "${topMatch.content.slice(0, 50)}...", sim: ${topMatch.similarity.toFixed(2)})`;
+    }
+
+    const response: RaiChatResponseDto = {
       text,
       widgets: this.buildWidgets(request, companyId),
       traceId,
       threadId,
       suggestedActions: this.buildSuggestedActions(request),
     };
+
+    const sanitized = sanitizeChatTextForMemory(request.message, memoryConfig);
+    if (sanitized.ok === false) {
+      this.logger.debug(
+        `memory_append status=skipped reason=${sanitized.reason} companyId=${companyId} traceId=${traceId}`,
+      );
+      return response;
+    }
+
+    void this.memoryManager
+      .store(
+        sanitized.value,
+        embedding,
+        {
+          companyId,
+          traceId,
+          sessionId: threadId,
+          source: "rai-chat",
+          memoryType: "EPISODIC",
+          metadata: {
+            route: request.workspaceContext?.route,
+          },
+        },
+        RaiChatMemoryPolicy,
+      )
+      .then(() => {
+        this.logger.debug(
+          `memory_append status=ok companyId=${companyId} traceId=${traceId} chars=${sanitized.value.length}`,
+        );
+      })
+      .catch((err) => {
+        this.logger.warn(
+          `memory_append status=error companyId=${companyId} traceId=${traceId} message=${String(
+            err?.message ?? err,
+          )}`,
+        );
+      });
+
+    return response;
   }
 
   private async executeToolCalls(

@@ -986,7 +986,7 @@ Orchestrator = Brain (канон RAI_EP).
 
 **Дата:** 2026-03-02  
 **Автор:** TECHLEAD (AI)  
-**Статус:** PENDING  
+**Статус:** ACCEPTED  
 
 ### Решение
 Ввести “память, которую реально потребляет чат”: на каждый запрос `POST /api/rai/chat` выполняется recall (scoped по tenant и лимитам), после ответа — append/store по политике, с метриками (top-K, minSimilarity, timeout, latency).
@@ -1024,7 +1024,7 @@ Orchestrator = Brain (канон RAI_EP).
 
 **Дата:** 2026-03-02  
 **Автор:** TECHLEAD (AI)  
-**Статус:** PENDING  
+**Статус:** ACCEPTED  
 
 ### Решение
 Ввести обязательный truth-sync: `docs/07_EXECUTION/*` и чеклисты должны отражать факты кода/прогонов; SPEC-ONLY помечается явно; “DONE” без доказательства запрещён.

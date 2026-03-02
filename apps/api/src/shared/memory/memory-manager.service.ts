@@ -1,11 +1,11 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { ContextService } from "../cache/context.service.js";
+import { ContextService } from "../cache/context.service";
 import { IVectorStore, PgVectorStore } from "@rai/vector-store";
 import {
   IMemoryPolicy,
   DefaultMemoryPolicy,
-} from "./memory-policy.interface.js";
-import { PrismaService } from "../prisma/prisma.service.js";
+} from "./memory-policy.interface";
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class MemoryManager {

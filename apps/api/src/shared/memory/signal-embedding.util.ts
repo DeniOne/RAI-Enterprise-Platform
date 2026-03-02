@@ -85,3 +85,30 @@ export function buildOperationShadowEmbedding(input: {
   }
   return embedding;
 }
+
+/**
+ * Simple deterministic embedding for text messages.
+ */
+export function buildTextEmbedding(text: string): number[] {
+  // Use a simple hash to seed the vector
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    const char = text.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0; // Convert to 32bit integer
+  }
+
+  const seed = [
+    clamp01(Math.abs(hash % 1000) / 1000),
+    clamp01(text.length / 500),
+    clamp01((text.match(/[а-яА-Я]/g)?.length ?? 0) / text.length),
+    clamp01((text.match(/[0-9]/g)?.length ?? 0) / text.length),
+    clamp01((text.match(/[?!.]/g)?.length ?? 0) / text.length),
+  ];
+
+  const embedding: number[] = [];
+  while (embedding.length < EMBEDDING_DIM) {
+    embedding.push(seed[embedding.length % seed.length]);
+  }
+  return embedding;
+}

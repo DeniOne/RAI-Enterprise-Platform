@@ -369,11 +369,37 @@ aligned_with: [principle-axioms]
     - [x] Proxy: `apps/web/app/api/ai-chat/route.ts` turned into thin legacy proxy
 - [x] **Section 14.3: Verification**
     - [x] Test: `rai-chat.controller.spec.ts` (4/4 PASS)
+Truth-sync: `VERIFIED`
+Evidence: `apps/api/src/modules/rai-chat/rai-chat.controller.ts`, `apps/api/test/modules/rai-chat/rai-chat.controller.spec.ts`, `apps/web/lib/stores/ai-chat-store.ts`, `interagency/reports/2026-03-01_p0-1_api-rai-chat.md`
 
 ### 🌾 BLOCK 14.1: AGRO TELEGRAM DRAFT→COMMIT (P0.3) ✅
 - [x] **Module:** `apps/api/src/modules/agro-events/*` (draft/fix/link/confirm/commit).
 - [x] **Security:** tenant isolation — `companyId` only from trusted context, never from payload.
 - [x] **Verification:** MUST-gate unit-test via isolated jest config (`jest.agro-events.config.js`) — PASS (4/4).
+Truth-sync: `VERIFIED`
+Evidence: `apps/api/src/modules/agro-events/*`, `apps/api/jest.agro-events.config.js`, `interagency/reports/2026-03-01_p0-3_agro-telegram-draft-commit.md`
+
+### 🛰️ BLOCK 14.2: AGENT OS REINFORCEMENTS (P0.5 / P1.1 / P1.2 / P1.3)
+- [x] **Section 14.2.1: AgroEscalation Loop (P0.5)**
+    - [x] Service: `AgroEscalationLoopService`
+    - [x] Verification: isolated jest config, 7/7 PASS
+    - Evidence: `apps/api/src/modules/agro-events/agro-escalation-loop.service.ts`, `interagency/reports/2026-03-01_p0-5_agro-escalation-controller-loop.md`
+- [x] **Section 14.2.2: Typed Tools Registry (P1.1)**
+    - [x] Registry: `RaiToolsRegistry` with whitelist registration and schema validation
+    - [x] Verification: direct `jest` PASS; workspace runner `pnpm --filter api test` remains unstable (`137`)
+    - Evidence: `apps/api/src/modules/rai-chat/tools/*`, `interagency/reports/2026-03-01_p1-1_typed-tools-registry.md`
+- [x] **Section 14.2.3: Widgets Schema + Renderer (P1.2)**
+    - [x] API contract: typed `widgets[]`
+    - [x] Web renderer: `AiChatWidgetsRail` for `DeviationList` and `TaskBacklog`
+    - Evidence: `apps/api/src/modules/rai-chat/widgets/*`, `apps/web/components/ai-chat/AiChatWidgetsRail.tsx`, `interagency/reports/2026-03-01_p1-2_widgets-schema-renderer.md`
+- [x] **Section 14.2.4: Agent Chat Memory (P1.3)**
+    - [x] Recall: `EpisodicRetrievalService` wired into `RaiChatService`
+    - [x] Append: `MemoryManager.store(...)` with limits, timeout, denylist
+    - [x] Verification: `rai-chat.service.spec.ts` covers tenant isolation, timeout fail-open, denylist
+    - Evidence: `apps/api/src/modules/rai-chat/rai-chat.service.ts`, `apps/api/src/modules/rai-chat/rai-chat.service.spec.ts`, `interagency/reports/2026-03-02_p1-3_agent-chat-memory.md`
+- [ ] **Section 14.2.5: Status Truth Sync (P1.4)**
+    - [ ] Execution docs and checklists aligned with code evidence
+    - Admission: `AG-STATUS-TRUTH-001 = ACCEPTED`
+    - Plan: `interagency/plans/2026-03-02_p1-4_status-truth-sync.md`
 
 ### 🌐 BLOCK 15: ECOSYSTEM
-
