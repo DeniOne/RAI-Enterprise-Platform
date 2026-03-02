@@ -81,5 +81,4 @@
     *   Possible cause 3: `PrismaService` typing mismatch after removing explicit getters.
 
 ### Next Steps:
-1.  **P2.3** — UX шлифовка (Dock/Focus, клавиши).
-2.  Полный truth-sync проход по docs/07_EXECUTION/* (backlog).
+1.  Полный truth-sync проход по docs/07_EXECUTION/* (backlog).

@@ -1,13 +1,23 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import { useAiChatStore, RiskLevel } from '@/lib/stores/ai-chat-store';
+import { useAiChatStore, PanelMode, RiskLevel } from '@/lib/stores/ai-chat-store';
 import { useWorkspaceContextStore } from '@/lib/stores/workspace-context-store';
-import { X, Send, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { X, Send, AlertTriangle, ShieldCheck, Maximize2, Minimize2, PanelRight, PanelRightClose } from 'lucide-react';
 import { AiChatWidgetsRail } from './AiChatWidgetsRail';
 
 export function AiChatPanel() {
-    const { messages, isLoading, sendMessage, dispatch, fsmState } = useAiChatStore();
+    const {
+        messages,
+        isLoading,
+        sendMessage,
+        dispatch,
+        fsmState,
+        panelMode,
+        widgetsOpen,
+        togglePanelMode,
+        toggleWidgets,
+    } = useAiChatStore();
     const context = useWorkspaceContextStore((s) => s.context);
     const [inputText, setInputText] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -28,6 +38,33 @@ export function AiChatPanel() {
             inputRef.current.focus();
         }
     }, [fsmState]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (fsmState === 'closed') return;
+
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                inputRef.current?.focus();
+                return;
+            }
+
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === '>') {
+                e.preventDefault();
+                togglePanelMode();
+                return;
+            }
+
+            if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+                e.preventDefault();
+                toggleWidgets();
+                return;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [fsmState, togglePanelMode, toggleWidgets]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -53,8 +90,13 @@ export function AiChatPanel() {
         .find((message) => message.role === 'assistant' && message.widgets && message.widgets.length > 0)
         ?.widgets ?? [];
 
+    const panelWidthClass: Record<PanelMode, string> = {
+        dock: 'w-[760px] max-w-[calc(100vw-32px)] h-[600px]',
+        focus: 'w-[min(1120px,calc(100vw-32px))] h-[min(88vh,760px)]',
+    };
+
     return (
-        <div className="flex w-[760px] max-w-[calc(100vw-32px)] h-[600px] bg-white border border-black/10 rounded-2xl shadow-2xl overflow-hidden">
+        <div className={`flex ${panelWidthClass[panelMode]} bg-white border border-black/10 rounded-2xl shadow-2xl overflow-hidden`}>
             <div className="flex min-w-0 flex-1 flex-col">
 
                 {/* Шапка */}
@@ -66,13 +108,33 @@ export function AiChatPanel() {
                             в сети
                         </span>
                     </div>
-                    <button
-                        onClick={() => dispatch('CLOSE')}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5 text-gray-400 hover:text-gray-900 transition-colors"
-                        aria-label="Закрыть чат"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={toggleWidgets}
+                            className="h-9 w-9 flex items-center justify-center rounded-xl border border-black/10 bg-white text-gray-500 hover:bg-black/5 hover:text-gray-900 transition-colors"
+                            aria-label={widgetsOpen ? 'Свернуть виджеты' : 'Развернуть виджеты'}
+                            title="Ctrl+/"
+                        >
+                            {widgetsOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRight className="w-4 h-4" />}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={togglePanelMode}
+                            className="h-9 w-9 flex items-center justify-center rounded-xl border border-black/10 bg-white text-gray-500 hover:bg-black/5 hover:text-gray-900 transition-colors"
+                            aria-label={panelMode === 'dock' ? 'Режим focus' : 'Режим dock'}
+                            title="Ctrl+Shift+."
+                        >
+                            {panelMode === 'dock' ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
+                        </button>
+                        <button
+                            onClick={() => dispatch('CLOSE')}
+                            className="w-9 h-9 flex items-center justify-center rounded-xl border border-black/10 bg-white text-gray-400 hover:bg-black/5 hover:text-gray-900 transition-colors"
+                            aria-label="Закрыть чат"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Контекстная справка (Empty state) */}
@@ -106,7 +168,7 @@ export function AiChatPanel() {
                                     {m.role === 'assistant' && m.riskLevel && m.riskLevel !== 'R0' && (
                                         <div className="flex items-center gap-1.5 mb-2 pb-2 border-b border-black/10 text-xs uppercase tracking-wider opacity-80 font-medium">
                                             {['R2', 'R3', 'R4'].includes(m.riskLevel) && <AlertTriangle className="w-3.5 h-3.5" />}
-                                            [{m.riskLevel}] Institutional Guard
+                                            [{m.riskLevel}] Guard
                                         </div>
                                     )}
 
@@ -140,7 +202,7 @@ export function AiChatPanel() {
                             type="text"
                             value={inputText}
                             onChange={(e) => setInputText(e.target.value)}
-                            placeholder="Опишите задачу (Ctrl+K)"
+                            placeholder="Опишите задачу (Ctrl/Cmd+K)"
                             className="w-full pl-4 pr-12 py-3 bg-gray-50 border border-black/10 rounded-xl text-sm font-normal text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black/20 focus:bg-white transition-all placeholder:text-gray-400"
                             disabled={isLoading}
                         />
@@ -154,12 +216,18 @@ export function AiChatPanel() {
                         </button>
                     </form>
                     <div className="text-center mt-2">
-                        <span className="text-[10px] text-gray-400">Institutional LLM (Trace ID: th_active)</span>
+                        <span className="text-[10px] text-gray-400">
+                            Ctrl/Cmd+K: ввод · Ctrl+Shift+.: Dock/Focus · Ctrl+/: виджеты
+                        </span>
                     </div>
                 </div>
             </div>
 
-            <AiChatWidgetsRail widgets={latestAssistantWidgets} />
+            <AiChatWidgetsRail
+                widgets={latestAssistantWidgets}
+                isOpen={widgetsOpen}
+                onToggle={toggleWidgets}
+            />
         </div>
     );
 }

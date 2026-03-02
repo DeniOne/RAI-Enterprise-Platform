@@ -37,6 +37,8 @@ export function SproutMorphAnimation() {
     const isVisible = fsmState === 'animating_open' || fsmState === 'open' || fsmState === 'animating_close';
     const isClosing = fsmState === 'animating_close';
 
+    const isFocusMode = useAiChatStore((state) => state.panelMode === 'focus');
+
     return (
         <AnimatePresence>
             {isVisible && (
@@ -45,9 +47,11 @@ export function SproutMorphAnimation() {
                     tabIndex={-1}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: isClosing ? 0 : 1 }}
-                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    transition={{ duration: 0.18, ease: 'easeInOut' }}
                     onAnimationComplete={handleAnimationComplete}
-                    className="fixed inset-0 z-[100000] flex items-end justify-end p-6 bg-black/10 backdrop-blur-[2px] outline-none"
+                    className={`fixed inset-0 z-[100000] flex outline-none ${
+                        isFocusMode ? 'items-center justify-center p-4 bg-black/15 backdrop-blur-[3px]' : 'items-end justify-end p-6 bg-black/10 backdrop-blur-[2px]'
+                    }`}
                     aria-modal="true"
                     role="dialog"
                     aria-label="AI Ассистент"
@@ -58,13 +62,13 @@ export function SproutMorphAnimation() {
                 >
                     {/* Контейнер панели */}
                     <motion.div
-                        initial={{ scale: 0.8, y: 50, opacity: 0, originX: 1, originY: 1 }}
+                        initial={{ scale: 0.94, y: isFocusMode ? 12 : 36, opacity: 0, originX: 1, originY: 1 }}
                         animate={{
-                            scale: isClosing ? 0.8 : 1,
-                            y: isClosing ? 50 : 0,
+                            scale: isClosing ? 0.98 : 1,
+                            y: isClosing ? (isFocusMode ? 12 : 24) : 0,
                             opacity: isClosing ? 0 : 1
                         }}
-                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                        transition={{ type: "spring", damping: 28, stiffness: 340, mass: 0.8 }}
                         className="relative"
                         onClick={(e) => e.stopPropagation()} // Защита от закрытия по клику внутри
                     >

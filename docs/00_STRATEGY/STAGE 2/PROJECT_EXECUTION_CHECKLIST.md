@@ -104,7 +104,7 @@
 - **Как проверить:** `cd apps/api && npx jest --runInBand src/modules/rai-chat/rai-chat.service.spec.ts`
 
 ### P1.4 “Правда о статусе” (синхронизация чеклистов/доков)
-- [x] **Цель:** прекратить самообман “COMPLETE ✅” без кода.
+План для P2.3 создан: 2026-03-02_p2-3_ux-polish-dock-focus.md. Индекс обновлён: INDEX.md.- [x] **Цель:** прекратить самообман “COMPLETE ✅” без кода.
 - [x] **DoD:** документы в `docs/07_EXECUTION/*` отражают реальную картину; где SPEC-ONLY — так и написано.
 - **Статус truth-sync:** `VERIFIED` (срез P0/P1); полный проход docs/07_EXECUTION/* — backlog.
 - **Доказательство:** `interagency/reports/2026-03-02_p1-4_status-truth-sync.md`
@@ -124,7 +124,10 @@
 - **Как проверить:** `cd apps/api && pnpm test -- --runInBand src/modules/rai-chat/rai-chat.service.spec.ts src/modules/rai-chat/external-signals.service.spec.ts`
 
 ### P2.3 UX шлифовка (Dock/Focus, клавиши, стабильность)
-- [ ] **DoD:** без регрессий; минимальный UX-долг; нет “тяжёлых” анимаций, влияющих на работу.
+- [x] **DoD:** без регрессий; минимальный UX-долг; нет “тяжёлых” анимаций, влияющих на работу.
+- **Статус truth-sync:** `VERIFIED`
+- **Доказательство:** `apps/web/lib/stores/ai-chat-store.ts`, `apps/web/components/ai-chat/AiChatPanel.tsx`, `apps/web/components/ai-chat/AiChatWidgetsRail.tsx`, `interagency/reports/2026-03-02_p2-3_ux-polish-dock-focus.md`
+- **Как проверить:** `cd apps/web && pnpm test -- --runInBand __tests__/ai-chat-widgets-rail.spec.tsx __tests__/ai-chat-store.spec.ts && pnpm exec tsc -p tsconfig.json --noEmit`
 
 ## Рекомендуемый “тонкий срез”, который доказывает, что система ожила
 Сценарий: **Telegram фото+текст → Draft (missingMust) → 🔗 Link field → ✅ Confirm → CommittedEvent → Controller severity → (если S3) AgroEscalation → web-чат показывает виджет DeviationList**.

@@ -6,8 +6,10 @@ import { RAI_CHAT_WIDGETS_SCHEMA_VERSION, RaiChatWidgetType } from '@/lib/ai-cha
 describe('AiChatWidgetsRail', () => {
     it('renders DeviationList and TaskBacklog widgets', () => {
         render(
-            <AiChatWidgetsRail
-                widgets={[
+                <AiChatWidgetsRail
+                    isOpen={true}
+                    onToggle={() => {}}
+                    widgets={[
                     {
                         schemaVersion: RAI_CHAT_WIDGETS_SCHEMA_VERSION,
                         type: RaiChatWidgetType.DeviationList,
@@ -54,8 +56,10 @@ describe('AiChatWidgetsRail', () => {
 
     it('renders fallback for unknown widget type without crashing', () => {
         render(
-            <AiChatWidgetsRail
-                widgets={[
+                <AiChatWidgetsRail
+                    isOpen={true}
+                    onToggle={() => {}}
+                    widgets={[
                     {
                         schemaVersion: RAI_CHAT_WIDGETS_SCHEMA_VERSION,
                         type: 'future_widget',
@@ -68,5 +72,18 @@ describe('AiChatWidgetsRail', () => {
 
         expect(screen.getByText('Неизвестный виджет')).toBeInTheDocument();
         expect(screen.getByText(/future_widget/)).toBeInTheDocument();
+    });
+
+    it('collapses rail without losing toggle control', () => {
+        render(
+            <AiChatWidgetsRail
+                isOpen={false}
+                onToggle={() => {}}
+                widgets={[]}
+            />,
+        );
+
+        expect(screen.getByLabelText('Развернуть виджеты')).toBeInTheDocument();
+        expect(screen.queryByText('Операционные виджеты')).not.toBeInTheDocument();
     });
 });

@@ -5,6 +5,7 @@ import { useWorkspaceContextStore } from './workspace-context-store';
 import { RaiChatWidget } from '../ai-chat-widgets';
 
 export type RiskLevel = 'R0' | 'R1' | 'R2' | 'R3' | 'R4';
+export type PanelMode = 'dock' | 'focus';
 
 export interface ChatMessage {
     id: string;
@@ -19,12 +20,17 @@ export type FsmState = 'closed' | 'animating_open' | 'open' | 'animating_close';
 
 interface AiChatStore {
     fsmState: FsmState;
+    panelMode: PanelMode;
+    widgetsOpen: boolean;
     threadId: string | null;
     messages: ChatMessage[];
     isLoading: boolean;
     abortController: AbortController | null;
 
     dispatch: (event: 'OPEN' | 'ANIMATION_OPEN_DONE' | 'CLOSE' | 'ANIMATION_CLOSE_DONE' | 'ROUTE_CHANGE') => void;
+    setPanelMode: (mode: PanelMode) => void;
+    togglePanelMode: () => void;
+    toggleWidgets: () => void;
     sendMessage: (text: string) => Promise<void>;
     abortRequest: () => void;
     clearHistory: () => void;
@@ -36,6 +42,8 @@ export const useAiChatStore = create<AiChatStore>()(
     persist(
         (set, get) => ({
             fsmState: 'closed',
+            panelMode: 'dock',
+            widgetsOpen: true,
             threadId: null,
             messages: [],
 
@@ -56,9 +64,21 @@ export const useAiChatStore = create<AiChatStore>()(
                     set({ fsmState: 'closed' });
                 } else if (event === 'ROUTE_CHANGE' && current !== 'closed') {
                     get().abortRequest();
-                    set({ fsmState: 'closed' });
+                    set({ fsmState: 'closed', panelMode: 'dock', widgetsOpen: true });
                 }
             },
+
+            setPanelMode: (mode) => set({ panelMode: mode }),
+
+            togglePanelMode: () =>
+                set((state) => ({
+                    panelMode: state.panelMode === 'dock' ? 'focus' : 'dock',
+                })),
+
+            toggleWidgets: () =>
+                set((state) => ({
+                    widgetsOpen: !state.widgetsOpen,
+                })),
 
             abortRequest: () => {
                 const { abortController } = get();
@@ -147,6 +167,8 @@ export const useAiChatStore = create<AiChatStore>()(
             onRehydrateStorage: () => (state) => {
                 if (state) {
                     state.fsmState = 'closed';
+                    state.panelMode = 'dock';
+                    state.widgetsOpen = true;
                     state.isLoading = false;
                     state.abortController = null;
                 }

@@ -37,7 +37,7 @@ export function AiChatRoot() {
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             // Открываем чат по Ctrl+K или Cmd+K
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
                 e.preventDefault();
                 dispatch('OPEN');
             }
