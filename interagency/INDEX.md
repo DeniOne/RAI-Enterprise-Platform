@@ -45,6 +45,15 @@
   - Отчёт: `interagency/reports/2026-03-02_p1-4_status-truth-sync.md`
   - Результат: truth-sync для execution-доков P0/P1; `VERIFIED`/`IN_PROGRESS` пометки, evidence и команды проверки; полный проход docs/07_EXECUTION/* — в backlog.
 
+- `interagency/prompts/2026-03-02_p2-1_workspacecontext-expand.md` [DONE]
+  - План: `interagency/plans/2026-03-02_p2-1_workspacecontext-expand.md`
+  - Отчёт: `interagency/reports/2026-03-02_p2-1_workspacecontext-expand.md`
+  - Результат: WorkspaceContext расширен на Commerce contracts и consulting/execution/manager; kind contract/operation, web-spec PASS; ревью APPROVED.
+
+- `interagency/prompts/2026-03-02_p2-2_external-signals-advisory.md` [READY_FOR_REVIEW]
+  - План: `interagency/plans/2026-03-02_p2-2_external-signals-advisory.md`
+  - Статус: `Decision-ID AG-EXTERNAL-SIGNALS-001` утверждён; план подготовлен и ожидает приёмки.
+
 
 ## Шаблоны
 - `interagency/templates/PROMPT_TEMPLATE.md`

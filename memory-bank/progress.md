@@ -64,6 +64,11 @@
     *   Evidence/команды проверки для P0/P1; полный проход docs/07_EXECUTION/* — backlog.
     *   Ревью APPROVED (2026-03-02).
 
+16. **WorkspaceContext Expand (P2.1)** ✅:
+    *   Решение AG-WORKSPACE-CONTEXT-EXPAND-001 ПРИНЯТО.
+    *   Commerce contracts + consulting/execution/manager публикуют contract/operation refs, summaries, filters.
+    *   Web-spec PASS; tenant isolation сохранён. Ревью APPROVED (2026-03-02).
+
 ### Pending / Current Issues:
 *   IDE still showing red files in the screenshot despite TS Server restart.
     *   Possible cause 1: `tsconfig.json` was missing previously (fixed now with root config).
@@ -71,7 +76,6 @@
     *   Possible cause 3: `PrismaService` typing mismatch after removing explicit getters.
 
 ### Next Steps:
-1.  **P2.1** — расширение WorkspaceContext на Operations/Commerce.
-2.  **P2.2** — интеграция NDVI/погоды в advisory.
-3.  **P2.3** — UX шлифовка (Dock/Focus, клавиши).
-4.  Полный truth-sync проход по docs/07_EXECUTION/* (backlog).
+1.  **P2.2** — интеграция NDVI/погоды в advisory.
+2.  **P2.3** — UX шлифовка (Dock/Focus, клавиши).
+3.  Полный truth-sync проход по docs/07_EXECUTION/* (backlog).

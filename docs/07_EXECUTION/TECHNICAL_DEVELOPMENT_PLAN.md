@@ -402,4 +402,10 @@ Evidence: `apps/api/src/modules/agro-events/*`, `apps/api/jest.agro-events.confi
     - Admission: `AG-STATUS-TRUTH-001 = ACCEPTED`
     - Plan: `interagency/plans/2026-03-02_p1-4_status-truth-sync.md`
 
+### 🌐 BLOCK 14.3: WORKSPACE CONTEXT EXPAND (P2.1)
+- [x] **Section 14.3.1: WorkspaceContext Expand (P2.1)**
+    - [x] Commerce contracts + consulting/execution/manager публикуют contract/operation refs, summaries, filters
+    - [x] Verification: web-spec PASS; tenant isolation сохранён
+    - Evidence: `apps/web/app/(app)/commerce/contracts/page.tsx`, `apps/web/app/consulting/execution/manager/page.tsx`, `interagency/reports/2026-03-02_p2-1_workspacecontext-expand.md`
+
 ### 🌐 BLOCK 15: ECOSYSTEM

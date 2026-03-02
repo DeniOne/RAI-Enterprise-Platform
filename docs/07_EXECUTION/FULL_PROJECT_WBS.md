@@ -256,4 +256,10 @@ Evidence: `apps/api/src/modules/rai-chat/rai-chat.service.ts`, `apps/api/src/mod
 - [ ] **[Docs]** **Status Truth Sync (P1.4)**: execution docs and checklists aligned with code evidence.
 Truth-sync: `IN_PROGRESS`, admission `AG-STATUS-TRUTH-001 = ACCEPTED`
 
+### 🌐 14.3 WorkspaceContext Expand (P2.1)
+- [x] **[Web]** **WorkspaceContext Expand (P2.1)**: Commerce contracts + consulting/execution/manager публикуют contract/operation refs, summaries, filters.
+Truth-sync: `VERIFIED`
+Evidence: `apps/web/app/(app)/commerce/contracts/page.tsx`, `apps/web/app/consulting/execution/manager/page.tsx`, `interagency/reports/2026-03-02_p2-1_workspacecontext-expand.md`
+How to verify: `cd apps/web && npx jest --runInBand shared/contracts/commerce-contracts-page.spec.tsx shared/contracts/execution-manager-workspace-context.spec.tsx`
+
 ### 🌐 15. Ecosystem

@@ -1060,7 +1060,7 @@ Orchestrator = Brain (канон RAI_EP).
 
 **Дата:** 2026-03-02  
 **Автор:** TECHLEAD (AI)  
-**Статус:** PENDING  
+**Статус:** ACCEPTED  
 
 ### Решение
 Расширить публикацию `WorkspaceContext` на Operations/Commerce: страницы обязаны публиковать `activeEntityRefs` и краткие summaries (refs+summary only), чтобы агент работал с реальным состоянием рабочей области.
@@ -1096,7 +1096,7 @@ Orchestrator = Brain (канон RAI_EP).
 
 **Дата:** 2026-03-02  
 **Автор:** TECHLEAD (AI)  
-**Статус:** PENDING  
+**Статус:** ACCEPTED  
 
 ### Решение
 Интегрировать внешние сигналы (NDVI/погода/иные) в advisory контур: ingestion → advisory → explainability → user feedback → episodic memory append. Без автодействий, только рекомендации и след.

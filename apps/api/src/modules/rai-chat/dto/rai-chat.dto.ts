@@ -19,6 +19,8 @@ export enum WorkspaceEntityKind {
   party = "party",
   techmap = "techmap",
   task = "task",
+  contract = "contract",
+  operation = "operation",
 }
 
 export class WorkspaceEntityRefDto {

@@ -17,6 +17,7 @@
 - `P1.2` — `VERIFIED`: код `apps/api/src/modules/rai-chat/widgets/*`, `apps/web/components/ai-chat/AiChatWidgetsRail.tsx`, отчёт `interagency/reports/2026-03-01_p1-2_widgets-schema-renderer.md`; ограничение: без browser screenshot/manual UI capture.
 - `P1.3` — `VERIFIED`: код `apps/api/src/modules/rai-chat/rai-chat.service.ts`, `apps/api/src/modules/rai-chat/rai-chat.service.spec.ts`, отчёт `interagency/reports/2026-03-02_p1-3_agent-chat-memory.md`.
 - `P1.4` — `VERIFIED`: truth-sync среза P0/P1 выполнен; отчёт `interagency/reports/2026-03-02_p1-4_status-truth-sync.md`.
+- `P2.1` — `VERIFIED`: Commerce contracts + consulting/execution/manager; отчёт `interagency/reports/2026-03-02_p2-1_workspacecontext-expand.md`; ограничение: нет browser smoke.
 
 ## P0 — Блокирующие (без этого “система как задумано” не существует)
 
@@ -111,7 +112,10 @@
 ## P2 — Полировка и расширение (после P0/P1)
 
 ### P2.1 Расширение WorkspaceContext на остальные страницы
-- [ ] **DoD:** CRM/TechMap/Operations/Commerce дают корректные refs и summaries.
+- [x] **DoD:** CRM/TechMap/Operations/Commerce дают корректные refs и summaries.
+- **Статус truth-sync:** `VERIFIED`
+- **Доказательство:** `apps/web/app/(app)/commerce/contracts/page.tsx`, `apps/web/app/consulting/execution/manager/page.tsx`, `interagency/reports/2026-03-02_p2-1_workspacecontext-expand.md`
+- **Как проверить:** `cd apps/web && npx jest --runInBand shared/contracts/commerce-contracts-page.spec.tsx shared/contracts/execution-manager-workspace-context.spec.tsx`
 
 ### P2.2 Интеграция NDVI/погоды/внешних сигналов в controller/advisory
 - [ ] **DoD:** signals → advisory → объяснение → user feedback → episodic memory formation.

@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
+import { useWorkspaceContextStore } from '@/lib/stores/workspace-context-store';
+import { buildWorkspaceRef, buildWorkspaceSummary } from '@/lib/workspace-context-utils';
 
 type ContractRole = {
     id: string;
@@ -35,6 +37,10 @@ export default function CommerceContractsPage() {
     const [contracts, setContracts] = useState<CommerceContract[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const setActiveEntityRefs = useWorkspaceContextStore((s) => s.setActiveEntityRefs);
+    const setSelectedRowSummary = useWorkspaceContextStore((s) => s.setSelectedRowSummary);
+    const setFilters = useWorkspaceContextStore((s) => s.setFilters);
+    const setLastUserAction = useWorkspaceContextStore((s) => s.setLastUserAction);
 
     useEffect(() => {
         let active = true;
@@ -81,6 +87,35 @@ export default function CommerceContractsPage() {
         }
         return contracts.filter((item) => resolveSeverity(item.status) === severity);
     }, [contracts, severity]);
+
+    useEffect(() => {
+        setFilters({
+            domain: 'commerce',
+            section: 'contracts',
+            severity: severity ?? null,
+        });
+    }, [setFilters, severity]);
+
+    useEffect(() => {
+        const focusedContract = contracts.find((item) => item.id === focusedContractId);
+        if (!focusedContract) {
+            setActiveEntityRefs([]);
+            setSelectedRowSummary(undefined);
+            return;
+        }
+
+        setActiveEntityRefs([buildWorkspaceRef('contract', focusedContract.id)]);
+        setSelectedRowSummary(
+            buildWorkspaceSummary({
+                kind: 'contract',
+                id: focusedContract.id,
+                title: focusedContract.number,
+                subtitle: focusedContract.roles.map((role) => `${role.role}: ${role.party.legalName}`).join('; ') || focusedContract.type,
+                status: focusedContract.status,
+            }),
+        );
+        setLastUserAction(`focus-contract:${focusedContract.id}`);
+    }, [contracts, focusedContractId, setActiveEntityRefs, setLastUserAction, setSelectedRowSummary]);
 
     useEffect(() => {
         if (!focusedContractId) return;
@@ -145,7 +180,20 @@ export default function CommerceContractsPage() {
                                             data-contract-id={contract.id}
                                             data-focus={isFocused ? 'true' : 'false'}
                                             className={`cursor-pointer transition-colors hover:bg-gray-50 ${isFocused ? 'border-b border-black/5 bg-amber-50' : 'border-b border-black/5'}`}
-                                            onClick={() => router.push(`/commerce/contracts/${contract.id}`)}
+                                            onClick={() => {
+                                                setActiveEntityRefs([buildWorkspaceRef('contract', contract.id)]);
+                                                setSelectedRowSummary(
+                                                    buildWorkspaceSummary({
+                                                        kind: 'contract',
+                                                        id: contract.id,
+                                                        title: contract.number,
+                                                        subtitle: contract.roles.map((role) => `${role.role}: ${role.party.legalName}`).join('; ') || contract.type,
+                                                        status: contract.status,
+                                                    }),
+                                                );
+                                                setLastUserAction(`open-contract:${contract.id}`);
+                                                router.push(`/commerce/contracts/${contract.id}`);
+                                            }}
                                         >
                                             <td className="px-3 py-2 font-normal text-gray-800">{contract.number}</td>
                                             <td className="px-3 py-2 font-normal">{contract.type}</td>

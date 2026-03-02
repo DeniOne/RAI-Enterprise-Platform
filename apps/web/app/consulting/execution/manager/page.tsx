@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ExecutionCard } from '../components/ExecutionCard';
@@ -14,6 +14,9 @@ import { AuthenticatedLayout } from '@/components/layouts/AuthenticatedLayout';
 import { useAuthSimulationStore } from '@/core/governance/Providers';
 import { useRouter } from 'next/navigation';
 import { Loader2, ShieldCheck, Activity, Filter, AlertTriangle, Clock, Calendar, BarChart3, ChevronLeft } from 'lucide-react';
+import { useEntityFocus, includesFocus } from '@/shared/hooks/useEntityFocus';
+import { useWorkspaceContextStore } from '@/lib/stores/workspace-context-store';
+import { buildWorkspaceRef, buildWorkspaceSummary } from '@/lib/workspace-context-utils';
 
 /**
  * ManagerContour
@@ -26,6 +29,10 @@ export default function ManagerContour() {
     const [selectedOperation, setSelectedOperation] = useState<any>(null);
     const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
     const { currentRole } = useAuthSimulationStore();
+    const setActiveEntityRefs = useWorkspaceContextStore((s) => s.setActiveEntityRefs);
+    const setSelectedRowSummary = useWorkspaceContextStore((s) => s.setSelectedRowSummary);
+    const setFilters = useWorkspaceContextStore((s) => s.setFilters);
+    const setLastUserAction = useWorkspaceContextStore((s) => s.setLastUserAction);
 
     const gov = useGovernanceAction('MANAGER_EXECUTION');
 
@@ -34,8 +41,57 @@ export default function ManagerContour() {
         queryFn: () => api.consulting.execution.active().then(res => res.data),
     });
 
+    const operationRows = useMemo(() => {
+        return Array.isArray(operations) ? operations : [];
+    }, [operations]);
+
+    const { isFocused } = useEntityFocus({
+        items: operationRows,
+        matchItem: (operation, context) =>
+            includesFocus(
+                [
+                    operation.id,
+                    operation.name,
+                    operation.mapStage?.name,
+                    operation.executionRecord?.status,
+                ],
+                context.focusEntity,
+            ),
+        watch: [operationRows.length],
+    });
+
+    useEffect(() => {
+        setFilters({
+            domain: 'operations',
+            section: 'execution-manager',
+            status: selectedOperation?.executionRecord?.status ?? null,
+        });
+    }, [selectedOperation, setFilters]);
+
+    useEffect(() => {
+        const focusedOperation = operationRows.find((operation) => isFocused(operation));
+        if (!focusedOperation) {
+            setActiveEntityRefs([]);
+            setSelectedRowSummary(undefined);
+            return;
+        }
+
+        setActiveEntityRefs([buildWorkspaceRef('operation', focusedOperation.id)]);
+        setSelectedRowSummary(
+            buildWorkspaceSummary({
+                kind: 'operation',
+                id: focusedOperation.id,
+                title: focusedOperation.name ?? 'Операция',
+                subtitle: focusedOperation.mapStage?.name ?? 'Execution Manager',
+                status: focusedOperation.executionRecord?.status ?? 'PLANNED',
+            }),
+        );
+        setLastUserAction(`focus-operation:${focusedOperation.id}`);
+    }, [isFocused, operationRows, setActiveEntityRefs, setLastUserAction, setSelectedRowSummary]);
+
     const handleStart = (id: string) => {
         gov.initiate('R1');
+        setLastUserAction(`start-operation:${id}`);
         api.consulting.execution.start(id).then(() => {
             queryClient.invalidateQueries({ queryKey: ['consulting', 'active-operations'] });
             gov.execute();
@@ -44,6 +100,17 @@ export default function ManagerContour() {
 
     const handleCompleteRequest = (operation: any) => {
         setSelectedOperation(operation);
+        setActiveEntityRefs([buildWorkspaceRef('operation', operation.id)]);
+        setSelectedRowSummary(
+            buildWorkspaceSummary({
+                kind: 'operation',
+                id: operation.id,
+                title: operation.name ?? 'Операция',
+                subtitle: operation.mapStage?.name ?? 'Execution Manager',
+                status: operation.executionRecord?.status ?? 'IN_PROGRESS',
+            }),
+        );
+        setLastUserAction(`complete-operation:${operation.id}`);
         gov.initiate(operation.riskLevel || 'R1');
         setIsCompleteModalOpen(true);
     };

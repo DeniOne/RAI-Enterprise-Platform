@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const WorkspaceEntityRefSchema = z.object({
-    kind: z.enum(['farm', 'field', 'party', 'techmap', 'task']),
+    kind: z.enum(['farm', 'field', 'party', 'techmap', 'task', 'contract', 'operation']),
     id: z.string().max(128),
 });
 
