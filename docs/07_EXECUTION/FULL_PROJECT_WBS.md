@@ -233,11 +233,6 @@ aligned_with: [principle-vision]
 - [x] **[Frontend]** **Web Chat Integration**: Switch to backend API, remove mock routes.
 - [x] **[Backend]** **Modular Architecture**: `RaiChatModule` integrated in apps/api.
 
-### 🖼️ 14.2 RAI Widgets & Architecture (P1.x) ✅
-- [x] **[Backend]** **Canonical Widgets Schema**: v1.0, typed payloads, `RaiChatService` integration.
-- [x] **[Frontend]** **Widgets Renderer**: Right rail panel, `AiChatWidgetsRail`, support for `DeviationList`/`TaskBacklog`.
-- [x] **[Test]** **Verification**: API/Web unit tests passing.
-
 ### 🌾 14.1 Agro Telegram Draft→Commit (P0.3) ✅
 - [x] **[Backend]** **AgroEventsModule**: `apps/api/src/modules/agro-events/*` (draft/fix/link/confirm/commit).
 - [x] **[Security]** Tenant isolation: `companyId` только из доверенного контекста, не из payload.

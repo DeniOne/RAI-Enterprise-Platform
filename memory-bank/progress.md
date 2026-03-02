@@ -47,9 +47,7 @@
     *   tsc + next build PASS. Ревью APPROVED (2026-03-02).
 
 12. **Widgets Schema & Renderer (P1.2)** ✅:
-    *   Каноническая типизированная схема `widgets[]` v1.0 (API/Web). `RaiChatService` возвращает `DeviationList` и `TaskBacklog` виджеты.
-    *   В `apps/web` реализована правая панель (rail) с каноническим рендерером.
-    *   Unit-тесты API (rai-chat.service) и Web (AiChatWidgetsRail) — PASS. Ревью APPROVED (2026-03-02).
+    *   Каноническая типизированная схема `widgets[]` v1.0 (API/Web). `RaiChatService` возвращает `DeviationList` и `TaskBacklog` виджеты. Ревью APPROVED (2026-03-02).
 
 ### Pending / Current Issues:
 *   IDE still showing red files in the screenshot despite TS Server restart.

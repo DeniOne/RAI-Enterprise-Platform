@@ -11,7 +11,7 @@
 ## Current Focus
 - **P0.2 WorkspaceContext (2026-03-02)**: **COMPLETE ✅**. Contract + store + publishers (CRM, TechMap); API DTO; companyId только из tenantContext. Ревью APPROVED.
 - **P1.1 Typed tools registry (2026-03-02)**: **COMPLETE ✅**. RaiToolsRegistry (joi), echo_message + workspace_snapshot, типизированные DTO, unit 4/4 (jest direct). Ревью APPROVED. pnpm test 137 — обход через прямой jest.
-- **P1.2 Widgets Schema & Renderer (2026-03-02)**: **COMPLETE ✅**. Каноническая схема `widgets[]` v1.0, Renderer в `apps/web` (DeviationList, TaskBacklog). Правая панель (rail) добавлена в чат. Unit-тесты PASS. Ревью APPROVED.
+- **P1.2 Widgets Schema & Renderer (2026-03-02)**: **COMPLETE ✅**. Каноническая схема `widgets[]` v1.0, Renderer в `apps/web` (DeviationList, TaskBacklog). Ревью APPROVED (2026-03-02).
 - **P0.5 AgroEscalation + controller loop (2026-03-02)**: **COMPLETE ✅**. AgroEscalationLoopService после commit; пороги S3/S4; unit 7/7; tenant из committed. Ревью APPROVED. Живой интеграционный прогон не прогнан.
 - **P0.4 Telegram Bot → Agro API (2026-03-01)**: **COMPLETE ✅**. Бот создаёт draft (text/photo/voice), кнопки ✅✏️🔗, вызовы fix/link/confirm к `apps/api`; callback `ag:<action>:<draftId>`; jest 5/5 + smoke-скрипт. Ревью APPROVED. Живой e2e не прогнан.
 - **Agro Domain: Telegram Intake Persistence (2026-02-28)**: **COMPLETE ✅**. Черновики теперь персистентны. Внедрена модель `AgroEventDraft`, репозиторий с TTL и эндпоинты `confirm/fix/link`. Логика покрыта unit-тестами.
@@ -170,9 +170,8 @@
 - Проведена интеграция с фронтендом (вывод из режима мока в режим реального API).
 - Проведена синхронизация всех чеклистов и WBS согласно канону FINALIZATION.
 
-### Logical Action (2026-03-02 09:50 UTC)
+### Logical Action (2026-03-02 09:55 UTC)
 - Выполнено ревью и финализация задачи **P1.2: Widgets Schema & Renderer**.
-- Каноническая схема `widgets[]` v1.0 внедрена в API и Web.
-- Реализована правая панель (rail) в чате с поддержкой первых двух типов виджетов.
-- Тесты (API + Web) пройдены успешно.
-- Чеклисты и memory-bank синхронизированы. Ревью APPROVED.
+- Проверено соответствие коду и тестам. Статус: APPROVED.
+- Отмечен пункт P1.2 в `PROJECT_EXECUTION_CHECKLIST.md`.
+- Отменена ошибочная отметка P1.4 и самовольные изменения структуры WBS.
