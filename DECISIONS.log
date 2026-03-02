@@ -979,3 +979,186 @@ Orchestrator = Brain (канон RAI_EP).
 ### Связанные документы
 - `interagency/prompts/2026-03-01_p1-2_widgets-schema-renderer.md`
 - `docs/00_STRATEGY/STAGE 2/PROJECT_EXECUTION_CHECKLIST.md`
+
+---
+
+## AG-CHAT-MEMORY-001
+
+**Дата:** 2026-03-02  
+**Автор:** TECHLEAD (AI)  
+**Статус:** PENDING  
+
+### Решение
+Ввести “память, которую реально потребляет чат”: на каждый запрос `POST /api/rai/chat` выполняется recall (scoped по tenant и лимитам), после ответа — append/store по политике, с метриками (top-K, minSimilarity, timeout, latency).
+
+### Scope
+- **Phase:** Gamma
+- **Sprint:** P1.3
+- **Компоненты:**
+  - `apps/api` — интеграция recall/append в chat-flow
+  - memory infra (`apps/api/src/shared/memory/*`, `@rai/vector-store`) — в объёме, нужном для e2e
+
+### Технические ограничения
+1. **Tenant Isolation:** `companyId` только из доверенного контекста, не из payload.
+2. **Latency budget:** retrieval ограничен top-K/minSimilarity и таймаутом.
+3. **No side effects:** память влияет только на ответ чата (retrieval), без автодействий на пользователя.
+4. **Traceability:** traceId/логирование recall+append обязательно.
+
+### Definition of Done
+- Recall выполняется (или фиксируется miss) на каждом запросе чата в tenant-scope.
+- Append выполняется после ответа по политике.
+- Лимиты и метрики зафиксированы и проверяемы.
+- Нет принятия `companyId` из payload.
+
+### Rollback Conditions
+- Нарушение tenant-изоляции (кросс-тенантный доступ).
+- Деградация latency чата из-за retrieval.
+
+### Связанные документы
+- `interagency/prompts/2026-03-02_p1-3_agent-chat-memory.md`
+- `docs/00_STRATEGY/STAGE 2/PROJECT_EXECUTION_CHECKLIST.md`
+
+---
+
+## AG-STATUS-TRUTH-001
+
+**Дата:** 2026-03-02  
+**Автор:** TECHLEAD (AI)  
+**Статус:** PENDING  
+
+### Решение
+Ввести обязательный truth-sync: `docs/07_EXECUTION/*` и чеклисты должны отражать факты кода/прогонов; SPEC-ONLY помечается явно; “DONE” без доказательства запрещён.
+
+### Scope
+- **Phase:** Gamma
+- **Sprint:** P1.4
+- **Компоненты:**
+  - `docs/07_EXECUTION/*`
+  - связанные чеклисты/доки статуса (по необходимости)
+
+### Технические ограничения
+1. **No fake DONE:** никаких галочек без ссылок на код/прогон.
+2. **SPEC-ONLY labeling:** всё, что не реализовано/не проверено — помечать явно.
+3. **No UI-polish:** это задача правды статуса, не “улучшения интерфейса”.
+
+### Definition of Done
+- В execution-доках нет “DONE” без доказательств.
+- SPEC-ONLY явно помечены.
+- Есть минимальные инструкции “как проверить” для заявленного DONE.
+
+### Rollback Conditions
+- Документы продолжают расходиться с реальностью (самообман не устранён).
+
+### Связанные документы
+- `interagency/prompts/2026-03-02_p1-4_status-truth-sync.md`
+- `docs/CURSOR SOFTWARE FACTORY — REVIEW & FINALIZE PROMPT.md`
+- `docs/00_STRATEGY/STAGE 2/PROJECT_EXECUTION_CHECKLIST.md`
+
+---
+
+## AG-WORKSPACE-CONTEXT-EXPAND-001
+
+**Дата:** 2026-03-02  
+**Автор:** TECHLEAD (AI)  
+**Статус:** PENDING  
+
+### Решение
+Расширить публикацию `WorkspaceContext` на Operations/Commerce: страницы обязаны публиковать `activeEntityRefs` и краткие summaries (refs+summary only), чтобы агент работал с реальным состоянием рабочей области.
+
+### Scope
+- **Phase:** Gamma
+- **Sprint:** P2.1
+- **Компоненты:**
+  - `apps/web` — publishers/store для WorkspaceContext на Operations/Commerce
+  - `apps/api` — потребление контекста уже через `POST /api/rai/chat` (без изменений протокола)
+
+### Технические ограничения
+1. **Tenant Isolation:** не переносить/не принимать `companyId` из payload.
+2. **Lightweight context:** только refs + краткий summary; жёсткий лимит размера.
+3. **Scope lock:** без переписывания страниц/архитектуры; только publisher слой.
+
+### Definition of Done
+- Operations и Commerce публикуют контекст (refs/summaries) в канонический store.
+- Контекст уходит в каждый запрос чата и ограничен по размеру.
+- Нет принятия `companyId` из payload.
+
+### Rollback Conditions
+- Контекст “раздувается” тяжёлыми данными или ломает производительность.
+- Появляется недоверенный tenant identity в payload.
+
+### Связанные документы
+- `interagency/prompts/2026-03-02_p2-1_workspacecontext-expand.md`
+- `docs/00_STRATEGY/STAGE 2/PROJECT_EXECUTION_CHECKLIST.md`
+
+---
+
+## AG-EXTERNAL-SIGNALS-001
+
+**Дата:** 2026-03-02  
+**Автор:** TECHLEAD (AI)  
+**Статус:** PENDING  
+
+### Решение
+Интегрировать внешние сигналы (NDVI/погода/иные) в advisory контур: ingestion → advisory → explainability → user feedback → episodic memory append. Без автодействий, только рекомендации и след.
+
+### Scope
+- **Phase:** Gamma
+- **Sprint:** P2.2
+- **Компоненты:**
+  - `apps/api` — модель сигналов, ingestion, advisory pipeline
+  - memory контур — запись feedback/эпизодов (в объёме e2e)
+
+### Технические ограничения
+1. **Tenant Isolation:** всё строго по `companyId` из доверенного контекста.
+2. **Human-in-the-loop:** advisory не имеет права на side effects.
+3. **Explainability:** у каждого advisory обязано быть объяснение факторов/источников.
+4. **Thin slice:** 1–2 источника сигналов, один pipeline.
+
+### Definition of Done
+- Есть e2e тонкий срез: сигнал → advisory+explainability → feedback → memory append.
+- Tenant isolation проверяемо.
+- Нет автодействий.
+
+### Rollback Conditions
+- Любые пользовательские side effects.
+- Кросс-тенантные чтения/записи.
+
+### Связанные документы
+- `interagency/prompts/2026-03-02_p2-2_external-signals-advisory.md`
+- `docs/00_STRATEGY/STAGE 2/PROJECT_EXECUTION_CHECKLIST.md`
+
+---
+
+## AG-UX-POLISH-001
+
+**Дата:** 2026-03-02  
+**Автор:** TECHLEAD (AI)  
+**Статус:** PENDING  
+
+### Решение
+Разрешить UX-шлифовку только после VERIFIED P0/P1: Dock/Focus, хоткеи, стабильность. Запрещены тяжёлые анимации и регрессии core-flow (чат, виджеты, Draft→Commit).
+
+### Scope
+- **Phase:** Gamma
+- **Sprint:** P2.3
+- **Компоненты:**
+  - `apps/web` — UI состояния Dock/Focus, клавиши, стабилизация
+
+### Технические ограничения
+1. **Gate:** начинать только после VERIFIED P0/P1, не “на словах”.
+2. **No heavy animations:** никаких тяжёлых визуальных эффектов.
+3. **No regressions:** core-flow должен пройти smoke-прогон.
+4. **UI canon:** соблюдать `UI_DESIGN_CANON.md` (если применимо к изменениям).
+
+### Definition of Done
+- Dock/Focus и хоткеи работают.
+- Core-flow без регрессий.
+- Нет тяжёлых анимаций; UI canon соблюдён.
+
+### Rollback Conditions
+- Регрессии core-flow.
+- Деградация производительности/стабильности.
+
+### Связанные документы
+- `interagency/prompts/2026-03-02_p2-3_ux-polish-dock-focus.md`
+- `docs/00_STRATEGY/STAGE 2/PROJECT_EXECUTION_CHECKLIST.md`

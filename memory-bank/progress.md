@@ -49,6 +49,10 @@
 12. **Widgets Schema & Renderer (P1.2)** ✅:
     *   Каноническая типизированная схема `widgets[]` v1.0 (API/Web). `RaiChatService` возвращает `DeviationList` и `TaskBacklog` виджеты. Ревью APPROVED (2026-03-02).
 
+13. **Interagency Synchronization** ✅:
+    *   Изучены и приняты к исполнению `ORCHESTRATOR PROMPT` и `STARTER PROMPT`.
+    *   Установлен жесткий приоритет `interagency/` ворклоу.
+
 ### Pending / Current Issues:
 *   IDE still showing red files in the screenshot despite TS Server restart.
     *   Possible cause 1: `tsconfig.json` was missing previously (fixed now with root config).
