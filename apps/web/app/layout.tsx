@@ -17,8 +17,8 @@ export const metadata: Metadata = {
 /**
  * @layout RootLayout
  * @description Корневой макет приложения.
- * ФИКС: Удалена обертка GovernanceShell, так как она вызывала конфликт макетов.
- * Институциональный слой теперь внедряется точечно в AuthenticatedLayout.
+ * Shell не внедряется на корневом уровне: он подключается точечно
+ * через route layouts (`consulting`, `(app)`, `AuthenticatedLayout`).
  */
 export default function RootLayout({
     children,
@@ -29,10 +29,8 @@ export default function RootLayout({
         <html lang="ru" className={GeistSans.className} suppressHydrationWarning>
             <body>
                 <Providers>
-                    {/* Контент теперь рендерится напрямую или через макеты страниц */}
                     {children}
 
-                    {/* Глобальная точка входа AI-Ассистента (Institutional Grade) */}
                     <AiChatRoot />
                 </Providers>
             </body>

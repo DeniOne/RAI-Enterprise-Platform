@@ -3,10 +3,14 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useAiChatStore, PanelMode, RiskLevel } from '@/lib/stores/ai-chat-store';
 import { useWorkspaceContextStore } from '@/lib/stores/workspace-context-store';
-import { X, Send, AlertTriangle, ShieldCheck, Maximize2, Minimize2, PanelRight, PanelRightClose } from 'lucide-react';
-import { AiChatWidgetsRail } from './AiChatWidgetsRail';
+import { Send, AlertTriangle, ShieldCheck, PanelRightClose } from 'lucide-react';
+import clsx from 'clsx';
 
-export function AiChatPanel() {
+interface AiChatPanelProps {
+    variant?: 'overlay' | 'shell';
+}
+
+export function AiChatPanel({ variant = 'overlay' }: AiChatPanelProps) {
     const {
         messages,
         isLoading,
@@ -14,9 +18,6 @@ export function AiChatPanel() {
         dispatch,
         fsmState,
         panelMode,
-        widgetsOpen,
-        togglePanelMode,
-        toggleWidgets,
     } = useAiChatStore();
     const context = useWorkspaceContextStore((s) => s.context);
     const [inputText, setInputText] = useState('');
@@ -46,25 +47,12 @@ export function AiChatPanel() {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
                 e.preventDefault();
                 inputRef.current?.focus();
-                return;
-            }
-
-            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === '>') {
-                e.preventDefault();
-                togglePanelMode();
-                return;
-            }
-
-            if ((e.ctrlKey || e.metaKey) && e.key === '/') {
-                e.preventDefault();
-                toggleWidgets();
-                return;
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [fsmState, togglePanelMode, toggleWidgets]);
+    }, [fsmState]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -85,18 +73,24 @@ export function AiChatPanel() {
         }
     };
 
-    const latestAssistantWidgets = [...messages]
-        .reverse()
-        .find((message) => message.role === 'assistant' && message.widgets && message.widgets.length > 0)
-        ?.widgets ?? [];
-
     const panelWidthClass: Record<PanelMode, string> = {
         dock: 'w-[760px] max-w-[calc(100vw-32px)] h-[600px]',
         focus: 'w-[min(1120px,calc(100vw-32px))] h-[min(88vh,760px)]',
     };
 
+    const shellWidthClass: Record<PanelMode, string> = {
+        dock: 'w-full h-[calc(100vh-160px)]',
+        focus: 'w-full h-[calc(100vh-160px)]',
+    };
+
     return (
-        <div className={`flex ${panelWidthClass[panelMode]} bg-white border border-black/10 rounded-2xl shadow-2xl overflow-hidden`}>
+        <div
+            className={clsx(
+                'flex overflow-hidden border border-black/10 bg-white',
+                variant === 'shell' ? shellWidthClass[panelMode] : panelWidthClass[panelMode],
+                variant === 'shell' ? 'rounded-3xl shadow-sm' : 'rounded-2xl shadow-2xl'
+            )}
+        >
             <div className="flex min-w-0 flex-1 flex-col">
 
                 {/* Шапка */}
@@ -109,31 +103,15 @@ export function AiChatPanel() {
                         </span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button
-                            type="button"
-                            onClick={toggleWidgets}
-                            className="h-9 w-9 flex items-center justify-center rounded-xl border border-black/10 bg-white text-gray-500 hover:bg-black/5 hover:text-gray-900 transition-colors"
-                            aria-label={widgetsOpen ? 'Свернуть виджеты' : 'Развернуть виджеты'}
-                            title="Ctrl+/"
-                        >
-                            {widgetsOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRight className="w-4 h-4" />}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={togglePanelMode}
-                            className="h-9 w-9 flex items-center justify-center rounded-xl border border-black/10 bg-white text-gray-500 hover:bg-black/5 hover:text-gray-900 transition-colors"
-                            aria-label={panelMode === 'dock' ? 'Режим focus' : 'Режим dock'}
-                            title="Ctrl+Shift+."
-                        >
-                            {panelMode === 'dock' ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
-                        </button>
-                        <button
-                            onClick={() => dispatch('CLOSE')}
-                            className="w-9 h-9 flex items-center justify-center rounded-xl border border-black/10 bg-white text-gray-400 hover:bg-black/5 hover:text-gray-900 transition-colors"
-                            aria-label="Закрыть чат"
-                        >
-                            <X className="w-4 h-4" />
-                        </button>
+                        {variant !== 'shell' ? (
+                            <button
+                                onClick={() => dispatch('CLOSE')}
+                                className="w-9 h-9 flex items-center justify-center rounded-xl border border-black/10 bg-white text-gray-400 hover:bg-black/5 hover:text-gray-900 transition-colors"
+                                aria-label="Закрыть чат"
+                            >
+                                <PanelRightClose className="w-4 h-4" />
+                            </button>
+                        ) : null}
                     </div>
                 </div>
 
@@ -217,17 +195,11 @@ export function AiChatPanel() {
                     </form>
                     <div className="text-center mt-2">
                         <span className="text-[10px] text-gray-400">
-                            Ctrl/Cmd+K: ввод · Ctrl+Shift+.: Dock/Focus · Ctrl+/: виджеты
+                            Ctrl/Cmd+K: ввод
                         </span>
                     </div>
                 </div>
             </div>
-
-            <AiChatWidgetsRail
-                widgets={latestAssistantWidgets}
-                isOpen={widgetsOpen}
-                onToggle={toggleWidgets}
-            />
         </div>
     );
 }

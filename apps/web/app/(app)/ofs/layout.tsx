@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { AuthenticatedLayout } from '@/components/layouts/AuthenticatedLayout';
 import { getUserData } from '@/lib/api/auth-server';
 
 export default async function OFSLayout({
@@ -13,9 +12,5 @@ export default async function OFSLayout({
         redirect('/login')
     }
 
-    return (
-        <AuthenticatedLayout>
-            {children}
-        </AuthenticatedLayout>
-    );
+    return children;
 }

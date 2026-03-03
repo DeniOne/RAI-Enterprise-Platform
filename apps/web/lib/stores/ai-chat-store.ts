@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 import { useWorkspaceContextStore } from './workspace-context-store';
-import { RaiChatWidget } from '../ai-chat-widgets';
+import { RaiChatWidget, RaiChatWidgetType } from '../ai-chat-widgets';
 
 export type RiskLevel = 'R0' | 'R1' | 'R2' | 'R3' | 'R4';
 export type PanelMode = 'dock' | 'focus';
@@ -18,17 +18,29 @@ export interface ChatMessage {
 
 export type FsmState = 'closed' | 'animating_open' | 'open' | 'animating_close';
 
+export interface RaiSignalTarget {
+    widgetType: RaiChatWidgetType | string;
+    itemId?: string;
+}
+
 interface AiChatStore {
     fsmState: FsmState;
     panelMode: PanelMode;
     widgetsOpen: boolean;
+    chatWidth: number;
     threadId: string | null;
     messages: ChatMessage[];
+    readSignalIds: string[];
+    selectedSignalTarget: RaiSignalTarget | null;
     isLoading: boolean;
     abortController: AbortController | null;
 
     dispatch: (event: 'OPEN' | 'ANIMATION_OPEN_DONE' | 'CLOSE' | 'ANIMATION_CLOSE_DONE' | 'ROUTE_CHANGE') => void;
     setPanelMode: (mode: PanelMode) => void;
+    setChatWidth: (width: number) => void;
+    setWidgetsOpen: (open: boolean) => void;
+    setSelectedSignalTarget: (target: RaiSignalTarget | null) => void;
+    markSignalRead: (signalId: string) => void;
     togglePanelMode: () => void;
     toggleWidgets: () => void;
     sendMessage: (text: string) => Promise<void>;
@@ -44,8 +56,11 @@ export const useAiChatStore = create<AiChatStore>()(
             fsmState: 'closed',
             panelMode: 'dock',
             widgetsOpen: true,
+            chatWidth: 420,
             threadId: null,
             messages: [],
+            readSignalIds: [],
+            selectedSignalTarget: null,
 
             isLoading: false,
             abortController: null,
@@ -54,21 +69,42 @@ export const useAiChatStore = create<AiChatStore>()(
                 const current = get().fsmState;
 
                 if (event === 'OPEN' && current === 'closed') {
-                    set({ fsmState: 'animating_open' });
+                    set({ fsmState: 'open' });
                 } else if (event === 'ANIMATION_OPEN_DONE' && current === 'animating_open') {
                     set({ fsmState: 'open' });
                 } else if (event === 'CLOSE' && (current === 'open' || current === 'animating_open')) {
                     get().abortRequest();
-                    set({ fsmState: 'animating_close' });
+                    set({ fsmState: 'closed' });
                 } else if (event === 'ANIMATION_CLOSE_DONE' && current === 'animating_close') {
                     set({ fsmState: 'closed' });
-                } else if (event === 'ROUTE_CHANGE' && current !== 'closed') {
-                    get().abortRequest();
-                    set({ fsmState: 'closed', panelMode: 'dock', widgetsOpen: true });
+                } else if (event === 'ROUTE_CHANGE') {
+                    return;
                 }
             },
 
             setPanelMode: (mode) => set({ panelMode: mode }),
+
+            setChatWidth: (width) =>
+                set({
+                    chatWidth: Math.max(360, Math.min(720, Math.round(width))),
+                }),
+
+            setWidgetsOpen: (open) =>
+                set({
+                    widgetsOpen: open,
+                }),
+
+            setSelectedSignalTarget: (target) =>
+                set({
+                    selectedSignalTarget: target,
+                }),
+
+            markSignalRead: (signalId) =>
+                set((state) => ({
+                    readSignalIds: state.readSignalIds.includes(signalId)
+                        ? state.readSignalIds
+                        : [...state.readSignalIds, signalId],
+                })),
 
             togglePanelMode: () =>
                 set((state) => ({
@@ -162,13 +198,15 @@ export const useAiChatStore = create<AiChatStore>()(
             storage: createJSONStorage(() => localStorage),
             partialize: (state) => ({
                 messages: state.messages.slice(-50),
-                threadId: state.threadId
+                threadId: state.threadId,
+                panelMode: state.panelMode,
+                widgetsOpen: state.widgetsOpen,
+                chatWidth: state.chatWidth,
+                readSignalIds: state.readSignalIds,
             }),
             onRehydrateStorage: () => (state) => {
                 if (state) {
                     state.fsmState = 'closed';
-                    state.panelMode = 'dock';
-                    state.widgetsOpen = true;
                     state.isLoading = false;
                     state.abortController = null;
                 }

@@ -1,20 +1,12 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { useAiChatStore } from '@/lib/stores/ai-chat-store';
 import { useWorkspaceContextStore } from '@/lib/stores/workspace-context-store';
-import { AiChatFab } from './AiChatFab';
-
-// Ленивая загрузка Overlay — только когда FSM не в closed
-const SproutMorphAnimation = dynamic(
-    () => import('./SproutMorphAnimation').then(mod => mod.SproutMorphAnimation),
-    { ssr: false }
-);
 
 export function AiChatRoot() {
-    const { fsmState, dispatch } = useAiChatStore();
+    const dispatch = useAiChatStore((state) => state.dispatch);
     const setRouteAndReset = useWorkspaceContextStore((s) => s.setRouteAndReset);
     const pathname = usePathname();
     const isFirstMount = useRef(true);
@@ -31,7 +23,7 @@ export function AiChatRoot() {
             return;
         }
         dispatch('ROUTE_CHANGE');
-    }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [pathname, dispatch]);
 
     // Глобальные Hotkeys
     useEffect(() => {
@@ -47,16 +39,5 @@ export function AiChatRoot() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [dispatch]);
 
-    const isVisible = fsmState !== 'closed';
-
-    return (
-        <>
-            <AiChatFab />
-
-            {/* Рендерим тяжелые анимации/модалки только когда они нужны */}
-            {isVisible && (
-                <SproutMorphAnimation />
-            )}
-        </>
-    );
+    return null;
 }
