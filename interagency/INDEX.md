@@ -28,6 +28,10 @@
   - План: `interagency/plans/2026-03-03_s5-5_episodes-profile-integration.md` [ACCEPTED]
   - Отчёт: `interagency/reports/2026-03-03_s5-5_episodes-profile-integration.md`
   - Статус: `MemoryEpisode` и `MemoryProfile` подключены в runtime-path; `SupervisorAgent` использует profile context; `tsc` PASS, targeted jest PASS.
+- `interagency/prompts/2026-03-03_s5-6_memory-observability-debug-panel.md` [DONE]
+  - План: `interagency/plans/2026-03-03_s5-6_memory-observability-debug-panel.md` [ACCEPTED]
+  - Отчёт: `interagency/reports/2026-03-03_s5-6_memory-observability-debug-panel.md`
+  - Статус: `memoryUsed` добавлен в chat contract, debug-плашка `Memory Used` доступна в привилегированном режиме; backend/web tests PASS.
 - `interagency/prompts/2026-03-03_s5-3_memory-schema-implementation.md` [DONE]
   - План: `interagency/plans/2026-03-03_s5-3_memory-schema-implementation.md` [ACCEPTED]
   - Отчёт: `interagency/reports/2026-03-03_s5-3_memory-schema-implementation.md` [APPROVED] Физическая схема памяти (Prisma) создана.

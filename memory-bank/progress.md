@@ -186,3 +186,9 @@
     *   `appendInteraction` теперь пишет компактный `MemoryEpisode` рядом с raw interaction.
     *   `SupervisorAgent` использует profile context в ответе и обновляет профиль после interaction.
     *   Верификация: `apps/api` tsc PASS, targeted jest PASS, ревью APPROVED.
+
+34. **Memory Observability Debug Panel (S5.6)** ✅:
+    *   В `RaiChatResponseDto` добавлено поле `memoryUsed`.
+    *   `SupervisorAgent` возвращает безопасный summary по episode/profile context.
+    *   В web chat добавлена debug-плашка `Memory Used` для привилегированного режима.
+    *   Верификация: `apps/api` tsc PASS, `apps/api` targeted jest PASS, `apps/web` store test PASS.

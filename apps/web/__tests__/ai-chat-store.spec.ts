@@ -101,6 +101,10 @@ describe('AiChatStore UX modes', () => {
             json: async () => ({
                 text: 'ok',
                 widgets: [],
+                memoryUsed: [
+                    { kind: 'episode', label: 'deviation PANy 2d ago', confidence: 0.82, source: 'episode' },
+                    { kind: 'profile', label: 'prefers dashboard summary', confidence: 0.8, source: 'profile' },
+                ],
                 threadId: 'thread-1',
             }),
         });
@@ -138,5 +142,9 @@ describe('AiChatStore UX modes', () => {
                 signal: expect.any(AbortSignal),
             }),
         );
+        expect(useAiChatStore.getState().messages.at(-1)?.memoryUsed).toEqual([
+            { kind: 'episode', label: 'deviation PANy 2d ago', confidence: 0.82, source: 'episode' },
+            { kind: 'profile', label: 'prefers dashboard summary', confidence: 0.8, source: 'profile' },
+        ]);
     });
 });

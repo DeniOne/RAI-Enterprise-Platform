@@ -86,6 +86,7 @@
   - widgets[] (structured payload)
   - toolCalls[] (валидация выполненных инструментов)
   - openUiToken (сигнал на открытие UI)
+  - memoryUsed[] (debug/explainability summary для admin режима)
 - **Статус truth-sync:** `VERIFIED`
 - **Доказательство:** [rai-chat.dto.ts](file:///root/RAI_EP/apps/api/src/modules/rai-chat/dto/rai-chat.dto.ts), [rai-chat.service.ts](file:///root/RAI_EP/apps/api/src/modules/rai-chat/rai-chat.service.ts), отчет [2026-03-03_s3-1_chat-api-v1.md](file:///root/RAI_EP/interagency/reports/2026-03-03_s3-1_chat-api-v1.md)
 

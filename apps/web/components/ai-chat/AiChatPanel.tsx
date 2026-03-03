@@ -5,6 +5,7 @@ import { useAiChatStore, PanelMode, RiskLevel } from '@/lib/stores/ai-chat-store
 import { useWorkspaceContextStore } from '@/lib/stores/workspace-context-store';
 import { Send, AlertTriangle, ShieldCheck, PanelRightClose } from 'lucide-react';
 import clsx from 'clsx';
+import { useAuthority } from '@/core/governance/AuthorityContext';
 
 interface AiChatPanelProps {
     variant?: 'overlay' | 'shell';
@@ -20,6 +21,7 @@ export function AiChatPanel({ variant = 'overlay' }: AiChatPanelProps) {
         panelMode,
     } = useAiChatStore();
     const context = useWorkspaceContextStore((s) => s.context);
+    const authority = useAuthority();
     const [inputText, setInputText] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -151,6 +153,27 @@ export function AiChatPanel({ variant = 'overlay' }: AiChatPanelProps) {
                                     )}
 
                                     <p className="whitespace-pre-wrap">{m.content}</p>
+
+                                    {m.role === 'assistant' && authority.canApprove && m.memoryUsed && m.memoryUsed.length > 0 && (
+                                        <div className="mt-3 rounded-xl border border-black/10 bg-white/70 p-3 text-xs text-gray-700">
+                                            <div className="mb-2 uppercase tracking-[0.16em] text-[10px] text-gray-400">
+                                                Memory Used
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                {m.memoryUsed.map((item, index) => (
+                                                    <div key={`${m.id}-memory-${index}`} className="flex flex-wrap items-center gap-2">
+                                                        <span className="rounded-full bg-black/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-gray-500">
+                                                            {item.kind}
+                                                        </span>
+                                                        <span>{item.label}</span>
+                                                        <span className="text-[10px] text-gray-400">
+                                                            confidence {item.confidence.toFixed(2)}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Time */}

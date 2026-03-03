@@ -231,3 +231,8 @@
 - `DefaultMemoryAdapter` теперь пишет `MemoryEpisode`, читает и обновляет `MemoryProfile`.
 - `SupervisorAgent` начал использовать profile context при ответе и обновлять профиль после interaction.
 - Пункт DoD `Episodes/Profile сохраняются и используются при ответах` закрыт.
+
+### Logical Action (2026-03-03 16:05 UTC)
+- Реализован memory observability debug-layer.
+- `SupervisorAgent` теперь возвращает `memoryUsed` как безопасный summary применённого episode/profile context.
+- В `AiChatPanel` добавлена debug-плашка `Memory Used`, gated через привилегированный governance-режим.

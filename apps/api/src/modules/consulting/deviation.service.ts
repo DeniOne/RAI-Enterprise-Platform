@@ -78,7 +78,15 @@ export class DeviationService {
         status: { not: "CLOSED" },
       },
       include: {
-        harvestPlan: true,
+        harvestPlan: {
+          include: {
+            techMaps: {
+              select: {
+                fieldId: true,
+              },
+            },
+          },
+        },
         budgetPlan: true,
       },
     });

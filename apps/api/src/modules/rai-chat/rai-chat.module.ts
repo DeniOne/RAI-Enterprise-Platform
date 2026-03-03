@@ -8,9 +8,21 @@ import { SatelliteModule } from "../satellite/satellite.module";
 import { ExternalSignalsService } from "./external-signals.service";
 import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
 import { SupervisorAgent } from "./supervisor-agent.service";
+import { TechMapModule } from "../tech-map/tech-map.module";
+import { ConsultingModule } from "../consulting/consulting.module";
+import { AgroEventsModule } from "../agro-events/agro-events.module";
+import { PrismaModule } from "../../shared/prisma/prisma.module";
 
 @Module({
-  imports: [AuthModule, TenantContextModule, SatelliteModule],
+  imports: [
+    AuthModule,
+    TenantContextModule,
+    SatelliteModule,
+    TechMapModule,
+    ConsultingModule,
+    AgroEventsModule,
+    PrismaModule,
+  ],
   controllers: [RaiChatController],
   providers: [
     RaiChatService,
