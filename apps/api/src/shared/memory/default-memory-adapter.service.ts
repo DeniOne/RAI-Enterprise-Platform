@@ -77,6 +77,27 @@ export class DefaultMemoryAdapter implements MemoryAdapter {
                     );
                 }
 
+                await tx.memoryEpisode.create({
+                    data: {
+                        companyId,
+                        userId,
+                        content: interaction.userMessage,
+                        attrs: {
+                            schemaKey: "memory.episode.v1",
+                            provenance: source,
+                            confidence: 0.7,
+                            traceId,
+                            source,
+                            sessionId: sessionId ?? null,
+                            summary: interaction.userMessage.slice(0, 240),
+                            route:
+                                metadata && typeof metadata.route === "string"
+                                    ? metadata.route
+                                    : null,
+                        },
+                    },
+                });
+
                 this.logger.debug(
                     `memory_interaction_appended companyId=${companyId} traceId=${traceId} id=${created.id}`,
                 );
@@ -123,19 +144,84 @@ export class DefaultMemoryAdapter implements MemoryAdapter {
     }
 
     async getProfile(ctx: MemoryContext): Promise<Record<string, unknown>> {
-        this.logger.debug(
-            `get_profile_stub companyId=${ctx.companyId} traceId=${ctx.traceId}`,
-        );
-        return {};
+        const profile = await this.prisma.memoryProfile.findUnique({
+            where: {
+                companyId_userId: {
+                    companyId: ctx.companyId,
+                    userId: ctx.userId ?? null,
+                },
+            },
+        });
+
+        if (!profile || !profile.attrs || typeof profile.attrs !== "object" || Array.isArray(profile.attrs)) {
+            return {};
+        }
+
+        return profile.attrs as Record<string, unknown>;
     }
 
     async updateProfile(
         ctx: MemoryContext,
         patch: Record<string, unknown>,
     ): Promise<void> {
-        this.logger.debug(
-            `update_profile_stub companyId=${ctx.companyId} traceId=${ctx.traceId}`,
-        );
+        const existing = await this.prisma.memoryProfile.findUnique({
+            where: {
+                companyId_userId: {
+                    companyId: ctx.companyId,
+                    userId: ctx.userId ?? null,
+                },
+            },
+        });
+
+        const existingAttrs =
+            existing && existing.attrs && typeof existing.attrs === "object" && !Array.isArray(existing.attrs)
+                ? (existing.attrs as Record<string, unknown>)
+                : {};
+
+        const sanitizedPatch = this.sanitizeJsonValue(patch, new WeakSet());
+        const patchObject =
+            sanitizedPatch && typeof sanitizedPatch === "object" && !Array.isArray(sanitizedPatch)
+                ? (sanitizedPatch as Record<string, Prisma.InputJsonValue | null>)
+                : {};
+
+        const attrs: Prisma.InputJsonValue = {
+            schemaKey: "memory.profile.v1",
+            provenance: "system",
+            confidence: 0.8,
+            updatedFromTraceId: ctx.traceId,
+            ...existingAttrs,
+            ...patchObject,
+        };
+
+        const content = JSON.stringify({
+            route:
+                patchObject && typeof patchObject.lastRoute === "string"
+                    ? patchObject.lastRoute
+                    : existingAttrs.lastRoute ?? null,
+            preferences:
+                patchObject && patchObject.preferences && typeof patchObject.preferences === "object"
+                    ? patchObject.preferences
+                    : existingAttrs.preferences ?? null,
+        });
+
+        await this.prisma.memoryProfile.upsert({
+            where: {
+                companyId_userId: {
+                    companyId: ctx.companyId,
+                    userId: ctx.userId ?? null,
+                },
+            },
+            create: {
+                companyId: ctx.companyId,
+                userId: ctx.userId,
+                content,
+                attrs,
+            },
+            update: {
+                content,
+                attrs,
+            },
+        });
     }
 
     private sanitizeJsonValue(

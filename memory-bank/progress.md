@@ -180,3 +180,9 @@
     *   `RaiChatService` превращен в thin facade над `SupervisorAgent`.
     *   Сохранены typed tools, widgets, memory, advisory и append-flow без ломки API-контракта.
     *   Верификация: `apps/api` tsc PASS, targeted jest PASS, ревью APPROVED.
+
+33. **Episodes/Profile Runtime Integration (S5.5)** ✅:
+    *   `DefaultMemoryAdapter.getProfile/updateProfile` больше не заглушки и работают с `MemoryProfile`.
+    *   `appendInteraction` теперь пишет компактный `MemoryEpisode` рядом с raw interaction.
+    *   `SupervisorAgent` использует profile context в ответе и обновляет профиль после interaction.
+    *   Верификация: `apps/api` tsc PASS, targeted jest PASS, ревью APPROVED.

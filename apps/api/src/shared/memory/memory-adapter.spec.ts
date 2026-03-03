@@ -14,6 +14,13 @@ describe("DefaultMemoryAdapter", () => {
         memoryInteraction: {
             create: jest.fn().mockResolvedValue({ id: "mi-1" }),
         },
+        memoryEpisode: {
+            create: jest.fn().mockResolvedValue({ id: "me-1" }),
+        },
+        memoryProfile: {
+            findUnique: jest.fn().mockResolvedValue(null),
+            upsert: jest.fn().mockResolvedValue({ id: "mp-1" }),
+        },
         $executeRawUnsafe: jest.fn().mockResolvedValue([]),
         $transaction: jest.fn(async (cb) => cb(prismaMock)),
     };
@@ -85,6 +92,13 @@ describe("DefaultMemoryAdapter", () => {
             "[0.1,0.2]",
             "mi-1",
         );
+        expect(prismaMock.memoryEpisode.create).toHaveBeenCalledWith({
+            data: expect.objectContaining({
+                companyId: "company-1",
+                userId: "user-1",
+                content: "Hello",
+            }),
+        });
     });
 
     it("appendInteraction sanitizes nested invalid JSON fields without dropping the whole payload", async () => {
@@ -194,6 +208,84 @@ describe("DefaultMemoryAdapter", () => {
         expect(warnSpy).toHaveBeenCalledWith(
             expect.stringContaining("vector update failed"),
         );
+    });
+
+    it("getProfile returns stored attrs from MemoryProfile", async () => {
+        prismaMock.memoryProfile.findUnique.mockResolvedValueOnce({
+            id: "mp-1",
+            attrs: {
+                schemaKey: "memory.profile.v1",
+                lastRoute: "/consulting/dashboard",
+                lastMessagePreview: "hello",
+            },
+        });
+
+        const result = await adapter.getProfile({
+            companyId: "company-1",
+            traceId: "trace-1",
+            userId: "user-1",
+        });
+
+        expect(prismaMock.memoryProfile.findUnique).toHaveBeenCalledWith({
+            where: {
+                companyId_userId: {
+                    companyId: "company-1",
+                    userId: "user-1",
+                },
+            },
+        });
+        expect(result).toEqual(
+            expect.objectContaining({
+                lastRoute: "/consulting/dashboard",
+                lastMessagePreview: "hello",
+            }),
+        );
+    });
+
+    it("updateProfile upserts sanitized profile attrs", async () => {
+        prismaMock.memoryProfile.findUnique.mockResolvedValueOnce(null);
+
+        await adapter.updateProfile(
+            {
+                companyId: "company-1",
+                traceId: "trace-9",
+                userId: "user-9",
+            },
+            {
+                lastRoute: "/registry/fields",
+                preferences: {
+                    pinned: true,
+                    onBroken: undefined,
+                },
+            },
+        );
+
+        expect(prismaMock.memoryProfile.upsert).toHaveBeenCalledWith({
+            where: {
+                companyId_userId: {
+                    companyId: "company-1",
+                    userId: "user-9",
+                },
+            },
+            create: expect.objectContaining({
+                companyId: "company-1",
+                userId: "user-9",
+                attrs: expect.objectContaining({
+                    schemaKey: "memory.profile.v1",
+                    lastRoute: "/registry/fields",
+                    preferences: {
+                        pinned: true,
+                        onBroken: null,
+                    },
+                }),
+            }),
+            update: expect.objectContaining({
+                attrs: expect.objectContaining({
+                    schemaKey: "memory.profile.v1",
+                    lastRoute: "/registry/fields",
+                }),
+            }),
+        });
     });
 
     it("retrieve delegates to episodicRetrieval.retrieve", async () => {

@@ -205,4 +205,4 @@ Flex:
 - [x] Агент получает workspaceContext на каждом запросе
 - [x] Виджеты рендерятся справа из structured payload
 - [x] Память работает через MemoryAdapter и изолирована по tenant/user
-- [ ] Episodes/Profile сохраняются и используются при ответах (в процессе)
+- [x] Episodes/Profile сохраняются и используются при ответах

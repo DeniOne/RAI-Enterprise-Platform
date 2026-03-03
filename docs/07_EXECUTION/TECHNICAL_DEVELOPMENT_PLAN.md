@@ -65,6 +65,7 @@ aligned_with: [principle-axioms]
     - [x] Logic: Policy-driven `MemoryManager`
     - [x] Adapter write routing (S5.4): `DefaultMemoryAdapter.appendInteraction` пишет в `MemoryInteraction` с `userId`, recursive JSON sanitization и transactional embedding update
     - [x] SupervisorAgent integration (Phase B): orchestration вынесена из `RaiChatService` в отдельный agent-layer
+    - [x] Episodes/Profile integration (S5.5): `MemoryEpisode`/`MemoryProfile` подключены к runtime-path и используются в `SupervisorAgent`
 
 ### 🌐 BLOCK 4.5: FRONTEND (WEB INTERFACE)
 - [x] **Section 4.5.1: Next.js 14 Setup**

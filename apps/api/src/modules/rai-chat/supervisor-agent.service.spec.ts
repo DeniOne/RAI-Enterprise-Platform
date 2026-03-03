@@ -82,6 +82,12 @@ describe("SupervisorAgent", () => {
     );
     expect(result.traceId).toEqual(expect.stringMatching(/^tr_/));
     expect(result.threadId).toEqual(expect.stringMatching(/^th_/));
+    expect(memoryAdapterMock.getProfile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        companyId: "company-1",
+        userId: "user-1",
+      }),
+    );
     expect(memoryAdapterMock.appendInteraction).toHaveBeenCalledWith(
       expect.objectContaining({
         companyId: "company-1",
@@ -90,6 +96,34 @@ describe("SupervisorAgent", () => {
       expect.objectContaining({
         userMessage: "Покажи контекст",
       }),
+    );
+    expect(memoryAdapterMock.updateProfile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        companyId: "company-1",
+        userId: "user-1",
+      }),
+      expect.objectContaining({
+        lastRoute: "/registry/fields",
+      }),
+    );
+  });
+
+  it("includes profile summary in response when profile exists", async () => {
+    memoryAdapterMock.getProfile.mockResolvedValueOnce({
+      lastRoute: "/consulting/dashboard",
+      lastMessagePreview: "Покажи KPI",
+    });
+
+    const result = await agent.orchestrate(
+      {
+        message: "Что дальше?",
+      },
+      "company-2",
+      "user-2",
+    );
+
+    expect(result.text).toContain(
+      "(Профиль: lastRoute=/consulting/dashboard; lastMessage=Покажи KPI)",
     );
   });
 });

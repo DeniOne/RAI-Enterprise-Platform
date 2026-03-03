@@ -45,6 +45,11 @@ export class SupervisorAgent {
       companyId,
       traceId,
     };
+    const profile = await this.memoryAdapter.getProfile({
+      companyId,
+      traceId,
+      userId,
+    });
 
     const executedTools = await this.executeToolCalls(
       request.toolCalls ?? [],
@@ -116,6 +121,11 @@ export class SupervisorAgent {
       text += `\n(Контекст из памяти: "${topMatch.content.slice(0, 50)}...", sim: ${topMatch.similarity.toFixed(2)})`;
     }
 
+    const profileSummary = this.extractProfileSummary(profile);
+    if (profileSummary) {
+      text += `\n(Профиль: ${profileSummary})`;
+    }
+
     if (externalSignalResult.advisory) {
       text += `\nAdvisory: ${externalSignalResult.advisory.recommendation} — ${externalSignalResult.advisory.summary}`;
     }
@@ -182,7 +192,43 @@ export class SupervisorAgent {
         );
       });
 
+    void this.memoryAdapter
+      .updateProfile(
+        {
+          companyId,
+          traceId,
+          userId,
+        },
+        {
+          lastRoute: request.workspaceContext?.route ?? null,
+          lastMessagePreview: sanitized.value.slice(0, 160),
+          lastInteractionAt: new Date().toISOString(),
+        },
+      )
+      .catch((err) => {
+        this.logger.warn(
+          `memory_profile_update status=error companyId=${companyId} traceId=${traceId} message=${String(
+            err?.message ?? err,
+          )}`,
+        );
+      });
+
     return response;
+  }
+
+  private extractProfileSummary(profile: Record<string, unknown>): string | null {
+    const lastRoute =
+      typeof profile.lastRoute === "string" && profile.lastRoute.length > 0
+        ? profile.lastRoute
+        : null;
+    const lastMessagePreview =
+      typeof profile.lastMessagePreview === "string" &&
+      profile.lastMessagePreview.length > 0
+        ? profile.lastMessagePreview
+        : null;
+
+    const parts = [lastRoute ? `lastRoute=${lastRoute}` : null, lastMessagePreview ? `lastMessage=${lastMessagePreview}` : null].filter(Boolean);
+    return parts.length > 0 ? parts.join("; ") : null;
   }
 
   private async executeToolCalls(

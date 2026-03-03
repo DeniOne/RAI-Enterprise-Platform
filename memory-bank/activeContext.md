@@ -225,3 +225,9 @@
 - Реализован `SupervisorAgent` в `apps/api/src/modules/rai-chat/supervisor-agent.service.ts`.
 - Orchestration flow вынесен из `RaiChatService` в отдельный agent-layer без поломки контракта `POST /api/rai/chat`.
 - `Phase B` закрыта: оба пункта rollout-блока теперь выполнены и синхронизированы с interagency/docs/memory-bank.
+
+### Logical Action (2026-03-03 15:35 UTC)
+- Реализована runtime-интеграция `MemoryEpisode` и `MemoryProfile`.
+- `DefaultMemoryAdapter` теперь пишет `MemoryEpisode`, читает и обновляет `MemoryProfile`.
+- `SupervisorAgent` начал использовать profile context при ответе и обновлять профиль после interaction.
+- Пункт DoD `Episodes/Profile сохраняются и используются при ответах` закрыт.
