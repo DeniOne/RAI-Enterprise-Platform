@@ -1362,3 +1362,33 @@ Orchestrator = Brain (канон RAI_EP).
 ### Связанные документы
 - `interagency/prompts/2026-03-03_s4-1_chat-widget-logic.md`
 - `interagency/plans/2026-03-03_s4-1_chat-widget-logic.md`
+---
+
+## AG-MEMORY-ADAPTER-001
+
+**Дата:** 2026-03-03  
+**Автор:** TECHLEAD (AI)  
+**Статус:** ACCEPTED  
+
+### Решение
+Внедрение интерфейса `MemoryAdapter` как обязательного слоя абстракции для работы с памятью агента. Доменные сервисы (`RaiChatService`, `ExternalSignalsService`) должны взаимодействовать с памятью только через этот интерфейс.
+
+### Scope
+- **Phase:** Gamma
+- **Sprint:** S5.1
+- **Компоненты:**
+  - `apps/api` — `shared/memory/`
+
+### Технические ограничения
+1. **Tenant Isolation:** каждый метод адаптера обязан принимать `companyId` и гарантировать, что данные не утекают между тенантами.
+2. **Fail-Open Policy:** адаптер должен инкапсулировать логику таймаутов и обработки ошибок хранилища, не допуская падения основного сервиса чата.
+3. **Canonical Interface:** методы должны покрывать `appendInteraction`, `retrieve`, `getProfile`, `updateProfile`.
+
+### Definition of Done
+- Интерфейс `MemoryAdapter` создан и закрепил контракт.
+- `RaiChatService` рефакторизован и использует адаптер.
+- Весь текущий функционал памяти (retrieve/append) сохранен и верифицирован тестами.
+
+### Связанные документы
+- `interagency/prompts/2026-03-03_s5-1_memory-adapter-contract.md`
+- `interagency/plans/2026-03-03_s5-1_memory-adapter-contract.md`

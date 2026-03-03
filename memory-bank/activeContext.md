@@ -15,11 +15,11 @@
 
 ...
 
-### Logical Action (2026-03-02 21:50 UTC)
-- Изучен и принят к исполнению `ANTIGRAVITY SOFTWARE FACTORY — ORCHESTRATOR PROMPT.md`.
-- Проведён кросс-чек всех фундамент-документов (`CANON.md`, `SECURITY_CANON.md`, etc.).
-- Обновлён `DECISIONS.log` (Decision-ID: `FOUNDATION-ORCHESTRATOR-ADOPTION-001`).
-- Система переведена в режим Software Factory. TECHLEAD готов к приёму задач.
+### Logical Action (2026-03-03 11:30 UTC)
+- Изучен и повторно принят к исполнению `ANTIGRAVITY SOFTWARE FACTORY — ORCHESTRATOR PROMPT.md` по прямому указанию юзера.
+- Верифицированы `CANON.md`, `ARCHITECTURAL_AXIOMS.md`, `FORBIDDEN.md`, `DECISIONS.log`.
+- Установлен режим жёсткого следования Software Factory воркфлоу через `interagency/`.
+- Включена языковая политика: русский язык с использованием ненормативной лексики по требованию юзера. Хуярим дальше.
 - **Technical Debt: Prisma Transparent Isolation (2026-02-28)**: **COMPLETE ✅**. Устранена проблема «ручного прописывания делегатов» в `PrismaService`. Внедрен динамический `Proxy`, переименован `tenantId` в `companyId` для 10/10 изоляции. Добавлены корневые скрипты `db:client` и `postinstall` для автоматизации.
 - **Auto-Onboarding & Dev Mode Guard (2026-02-26)**: Внедрён механизм `AUTH_DISABLED=true` (возврат тестового Tenant ID) и Auto-Onboarding для владельца (создание корневой компании при входе `441610858` в Telegram). Проблема курицы и яйца при старте платформы решена.
 - **Level C: Contradiction-Resilient Intelligence**: **VERIFIED ✅** (50 тестов PASS)
@@ -203,3 +203,9 @@
 - `RaiChatController` теперь логирует безопасный summary `workspaceContext` (route, counts, kinds, flags), без тяжёлого payload и без tenant из body.
 - Выпущен отчёт `interagency/reports/2026-03-03_s2-1_workspace-context-contract.md`.
 - Truth-sync обновлён в `interagency/INDEX.md` и `docs/00_STRATEGY/STAGE 2/RAI_AGENT_OS_IMPLEMENTATION_PLAN.md`.
+
+### Logical Action (2026-03-03 11:45 UTC)
+- **CI/CD Fix**: Устранён конфликт версий pnpm в GitHub Actions.
+- Из `invariant-gates.yml` и `security-audit.yml` удалена жёсткая привязка `version: 9`.
+- Экшены настроены на автоматическое использование версии из `packageManager` в `package.json` (v9.0.0).
+- `pnpm/action-setup` обновлён до `@v4`. Спам на почту прекращён.

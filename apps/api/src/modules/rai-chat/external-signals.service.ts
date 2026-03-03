@@ -1,6 +1,9 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import { AuditService } from "../../shared/audit/audit.service";
-import { MemoryManager } from "../../shared/memory/memory-manager.service";
+import {
+  MemoryAdapter,
+  MemoryContext,
+} from "../../shared/memory/memory-adapter.interface";
 import { RaiChatMemoryPolicy } from "../../shared/memory/rai-chat-memory.policy";
 import { buildTextEmbedding } from "../../shared/memory/signal-embedding.util";
 import {
@@ -31,9 +34,10 @@ export class ExternalSignalsService {
 
   constructor(
     private readonly auditService: AuditService,
-    private readonly memoryManager: MemoryManager,
+    @Inject("MEMORY_ADAPTER")
+    private readonly memoryAdapter: MemoryAdapter,
     private readonly satelliteIngestionService: SatelliteIngestionService,
-  ) {}
+  ) { }
 
   async process(params: ProcessExternalSignalsParams): Promise<{
     advisory?: ExternalAdvisoryDto;
@@ -115,22 +119,24 @@ export class ExternalSignalsService {
       });
 
       const content = this.describeSignal(signal);
-      await this.memoryManager.store(
-        content,
-        buildTextEmbedding(content),
+      await this.memoryAdapter.appendInteraction(
         {
           companyId,
           traceId,
-          source: "external-signal",
-          memoryType: "CONTEXT",
           metadata: {
+            source: "external-signal",
+            memoryType: "CONTEXT",
             signalId: signal.id,
             signalKind: signal.kind,
             provenance: signal.provenance,
             entityRef: signal.entityRef,
           },
         },
-        RaiChatMemoryPolicy,
+        {
+          userMessage: content,
+          agentResponse: "", // Сигналы не имеют ответа агента в этом контексте
+          embedding: buildTextEmbedding(content),
+        },
       );
     }
   }
@@ -161,16 +167,14 @@ export class ExternalSignalsService {
       },
     });
 
-    await this.memoryManager.store(
-      content,
-      buildTextEmbedding(content),
+    await this.memoryAdapter.appendInteraction(
       {
         companyId: input.companyId,
         traceId: input.traceId,
         sessionId: input.threadId,
-        source: "external-advisory-feedback",
-        memoryType: "EPISODIC",
         metadata: {
+          source: "external-advisory-feedback",
+          memoryType: "EPISODIC",
           advisoryTraceId: input.advisory.traceId,
           decision: input.feedback.decision,
           reason: input.feedback.reason ?? null,
@@ -178,7 +182,11 @@ export class ExternalSignalsService {
             input.feedback.decision === "accept" ? "POSITIVE" : "NEGATIVE",
         },
       },
-      RaiChatMemoryPolicy,
+      {
+        userMessage: content,
+        agentResponse: "",
+        embedding: buildTextEmbedding(content),
+      },
     );
 
     this.logger.debug(

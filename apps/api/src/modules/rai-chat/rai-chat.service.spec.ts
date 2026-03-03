@@ -14,11 +14,12 @@ import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
 
 describe("RaiChatService", () => {
   let service: RaiChatService;
-  const memoryManagerMock = {
+  const memoryAdapterMock = {
     store: jest.fn().mockResolvedValue(undefined),
-  };
-  const episodicRetrievalMock = {
     retrieve: jest.fn().mockResolvedValue({ items: [] }),
+    appendInteraction: jest.fn().mockResolvedValue(undefined),
+    getProfile: jest.fn().mockResolvedValue({}),
+    updateProfile: jest.fn().mockResolvedValue(undefined),
   };
   const externalSignalsServiceMock = {
     process: jest
@@ -38,8 +39,7 @@ describe("RaiChatService", () => {
         RaiChatService,
         RaiToolsRegistry,
         RaiChatWidgetBuilder,
-        { provide: MemoryManager, useValue: memoryManagerMock },
-        { provide: EpisodicRetrievalService, useValue: episodicRetrievalMock },
+        { provide: "MEMORY_ADAPTER", useValue: memoryAdapterMock },
         { provide: ExternalSignalsService, useValue: externalSignalsServiceMock },
       ],
     }).compile();
@@ -123,7 +123,7 @@ describe("RaiChatService", () => {
   });
 
   it("интегрируется с памятью: вызывает retrieve и store", async () => {
-    episodicRetrievalMock.retrieve.mockResolvedValue({
+    memoryAdapterMock.retrieve.mockResolvedValue({
       items: [
         {
           id: "m1",
@@ -145,22 +145,23 @@ describe("RaiChatService", () => {
     );
 
     // Проверяем вызов retrieve
-    expect(episodicRetrievalMock.retrieve).toHaveBeenCalledWith(
+    expect(memoryAdapterMock.retrieve).toHaveBeenCalledWith(
       expect.objectContaining({
         companyId: "company-1",
       }),
+      expect.any(Array),
+      expect.any(Object),
     );
 
-    // Проверяем вызов store
-    expect(memoryManagerMock.store).toHaveBeenCalledWith(
-      "Что мы обсуждали?",
-      expect.any(Array),
+    // Проверяем вызов appendInteraction
+    expect(memoryAdapterMock.appendInteraction).toHaveBeenCalledWith(
       expect.objectContaining({
         companyId: "company-1",
-        source: "rai-chat",
         sessionId: "thread-123",
       }),
-      RaiChatMemoryPolicy,
+      expect.objectContaining({
+        userMessage: "Что мы обсуждали?",
+      }),
     );
 
     // Проверяем, что контекст попал в текст ответа
@@ -179,27 +180,27 @@ describe("RaiChatService", () => {
     await service.handleChat(maliciousRequest as any, "trusted-company-id");
 
     // Проверяем, что в память ушло правильное ID
-    expect(memoryManagerMock.store).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.any(Array),
+    expect(memoryAdapterMock.appendInteraction).toHaveBeenCalledWith(
       expect.objectContaining({
         companyId: "trusted-company-id",
       }),
-      RaiChatMemoryPolicy,
+      expect.any(Object),
     );
 
     // И в поиск тоже
-    expect(episodicRetrievalMock.retrieve).toHaveBeenCalledWith(
+    expect(memoryAdapterMock.retrieve).toHaveBeenCalledWith(
       expect.objectContaining({
         companyId: "trusted-company-id",
       }),
+      expect.any(Array),
+      expect.any(Object),
     );
   });
 
   it("fail-open: таймаут retrieval не ломает чат", async () => {
     process.env.RAI_CHAT_MEMORY_RECALL_TIMEOUT_MS = "1";
-    episodicRetrievalMock.retrieve.mockImplementation(
-      () => new Promise(() => {}),
+    memoryAdapterMock.retrieve.mockImplementation(
+      () => new Promise(() => { }),
     );
 
     const result = await service.handleChat(
@@ -221,7 +222,7 @@ describe("RaiChatService", () => {
       "company-1",
     );
 
-    expect(memoryManagerMock.store).not.toHaveBeenCalled();
+    expect(memoryAdapterMock.appendInteraction).not.toHaveBeenCalled();
   });
 
   it("прогоняет путь signal -> advisory -> feedback -> memory append", async () => {

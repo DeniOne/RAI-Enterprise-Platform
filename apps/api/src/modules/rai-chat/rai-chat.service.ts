@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import { randomUUID } from "crypto";
 import {
   RaiChatRequestDto,
@@ -16,8 +16,11 @@ import {
   RaiChatWidget,
   RaiChatWidgetType,
 } from "./widgets/rai-chat-widgets.types";
-import { MemoryManager } from "../../shared/memory/memory-manager.service";
-import { EpisodicRetrievalService } from "../../shared/memory/episodic-retrieval.service";
+import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
+import {
+  MemoryAdapter,
+  MemoryContext,
+} from "../../shared/memory/memory-adapter.interface";
 import { buildTextEmbedding } from "../../shared/memory/signal-embedding.util";
 import { getRaiChatMemoryConfig } from "../../shared/memory/rai-chat-memory.config";
 import {
@@ -26,7 +29,6 @@ import {
 } from "../../shared/memory/rai-chat-memory.util";
 import { RaiChatMemoryPolicy } from "../../shared/memory/rai-chat-memory.policy";
 import { ExternalSignalsService } from "./external-signals.service";
-import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
 
 @Injectable()
 export class RaiChatService {
@@ -34,8 +36,8 @@ export class RaiChatService {
 
   constructor(
     private readonly toolsRegistry: RaiToolsRegistry,
-    private readonly memoryManager: MemoryManager,
-    private readonly episodicRetrieval: EpisodicRetrievalService,
+    @Inject("MEMORY_ADAPTER")
+    private readonly memoryAdapter: MemoryAdapter,
     private readonly externalSignalsService: ExternalSignalsService,
     private readonly widgetBuilder: RaiChatWidgetBuilder,
   ) { }
@@ -61,13 +63,14 @@ export class RaiChatService {
 
     const recallStartedAt = Date.now();
     const memoryContext = await withTimeout(
-      this.episodicRetrieval.retrieve({
-        companyId,
+      this.memoryAdapter.retrieve(
+        { companyId, traceId },
         embedding,
-        traceId,
-        limit: memoryConfig.recallLimit,
-        minSimilarity: memoryConfig.minSimilarity,
-      }),
+        {
+          limit: memoryConfig.recallLimit,
+          minSimilarity: memoryConfig.minSimilarity,
+        },
+      ),
       memoryConfig.recallTimeoutMs,
       () => ({
         traceId,
@@ -77,21 +80,22 @@ export class RaiChatService {
         unknown: 0,
         items: [],
       }),
-    ).catch((err) => {
-      this.logger.warn(
-        `memory_recall status=error companyId=${companyId} traceId=${traceId} message=${String(
-          err?.message ?? err,
-        )}`,
-      );
-      return {
-        traceId,
-        total: 0,
-        positive: 0,
-        negative: 0,
-        unknown: 0,
-        items: [],
-      };
-    });
+    )
+      .catch((err) => {
+        this.logger.warn(
+          `memory_recall status=error companyId=${companyId} traceId=${traceId} message=${String(
+            err?.message ?? err,
+          )}`,
+        );
+        return {
+          traceId,
+          total: 0,
+          positive: 0,
+          negative: 0,
+          unknown: 0,
+          items: [],
+        };
+      });
 
     const recallMs = Date.now() - recallStartedAt;
     this.logger.debug(
@@ -155,30 +159,30 @@ export class RaiChatService {
       return response;
     }
 
-    void this.memoryManager
-      .store(
-        sanitized.value,
-        embedding,
+    void this.memoryAdapter
+      .appendInteraction(
         {
           companyId,
           traceId,
           sessionId: threadId,
-          source: "rai-chat",
-          memoryType: "EPISODIC",
           metadata: {
             route: request.workspaceContext?.route,
           },
         },
-        RaiChatMemoryPolicy,
+        {
+          userMessage: sanitized.value,
+          agentResponse: response.text, // Сохраняем текст ответа
+          embedding,
+        },
       )
       .then(() => {
         this.logger.debug(
-          `memory_append status=ok companyId=${companyId} traceId=${traceId} chars=${sanitized.value.length}`,
+          `memory_append_interaction status=ok companyId=${companyId} traceId=${traceId} chars=${sanitized.value.length}`,
         );
       })
       .catch((err) => {
         this.logger.warn(
-          `memory_append status=error companyId=${companyId} traceId=${traceId} message=${String(
+          `memory_append_interaction status=error companyId=${companyId} traceId=${traceId} message=${String(
             err?.message ?? err,
           )}`,
         );

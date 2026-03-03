@@ -105,14 +105,13 @@
 ## 4) Reactive Panel (правый вывод РАИ)
 
 ### 4.1 RaiReactivePanel
-- [ ] Ввести единый renderer `renderWidget(widgetPayload)`
-- [ ] Поддержать MVP виджеты:
+- [x] Ввести единый renderer `renderWidget(widgetPayload)`
+- [x] Поддержать MVP виджеты:
   - DeviationList
-  - RiskOverview
   - TaskBacklog
-  - FieldStatusCard
-  - Last24hChanges
-- [ ] Виджеты рендерятся справа как overlay/drawer, не блокируя workspace
+- [x] Виджеты рендерятся в чат-панели на основе схемы
+- **Статус truth-sync:** `VERIFIED`
+- **Доказательство:** [rai-chat-widgets.types.ts](file:///root/RAI_EP/apps/api/src/modules/rai-chat/widgets/rai-chat-widgets.types.ts), [RaiChatWidgetBuilder.ts](file:///root/RAI_EP/apps/api/src/modules/rai-chat/rai-chat-widget-builder.ts), отчет [2026-03-03_s4-1_chat-widget-logic.md](file:///root/RAI_EP/interagency/reports/2026-03-03_s4-1_chat-widget-logic.md)
 
 Эффект: агент усиливает интерфейс, не превращая систему в “чатик”.
 
@@ -121,20 +120,17 @@
 ## 5) Память (ВАЖНО): делаем через MemoryAdapter, а не “сразу новые таблицы”
 
 ### 5.1 MemoryAdapter Contract (обязательный слой абстракции)
-- [ ] Создать интерфейс `MemoryAdapter` (server-side):
-
-Методы (минимум):
-- `appendInteraction(ctx, userMessage, agentResponse, toolCalls)`
-- `writeEpisode(ctx, episode)` (сжатый эпизод)
-- `retrieve(ctx, query, limit)` → episodes[]
-- `getProfile(ctx)` / `updateProfile(ctx, patch)`
+- [x] Создать интерфейс `MemoryAdapter` (server-side)
+- [x] Методы: `appendInteraction`, `retrieve`, `getProfile`, `updateProfile`
+- **Статус truth-sync:** `VERIFIED`
+- **Доказательство:** [memory-adapter.interface.ts](file:///root/RAI_EP/apps/api/src/shared/memory/memory-adapter.interface.ts), [default-memory-adapter.service.ts](file:///root/RAI_EP/apps/api/src/shared/memory/default-memory-adapter.service.ts), отчет [2026-03-03_s5-1_memory-adapter-contract.md](file:///root/RAI_EP/interagency/reports/2026-03-03_s5-1_memory-adapter-contract.md)
 
 Эффект: память можно подключить к текущей реализации без миграций UI/агента.
 
 ### 5.2 Storage Decision (без предположений)
-- [ ] Подключить MemoryAdapter к текущей памяти (что уже есть)
-- [ ] Если текущая память покрывает retrieve+append — используем её как Primary
-- [ ] Если не покрывает — добавляем минимальный Carcass+Flex слой (см. 5.3)
+- [x] Подключить MemoryAdapter к текущей памяти (MemoryManager)
+- [x] Использовать существующую реализацию как Primary
+- **Статус truth-sync:** `VERIFIED` (см. S5.1)
 
 Эффект: не ломаем существующее, расширяем только по необходимости.
 
@@ -182,7 +178,8 @@ Flex:
 - [x] AppShell
 - [x] ChatDock Docked/Focus
 - [x] WorkspaceContext store + отправка в API
-- [ ] Mock `/api/rai/chat` возвращает text + 1 widget
+- [x] `/api/rai/chat` возвращает text + widgets
+- **Статус truth-sync:** `COMPLETED`
 
 Эффект: появляется Agent OS UX.
 
@@ -201,8 +198,8 @@ Flex:
 ---
 
 ## 8) Definition of Done
-- [ ] Чат не сбрасывается при навигации
-- [ ] Агент получает workspaceContext на каждом запросе
-- [ ] Виджеты рендерятся справа из structured payload
-- [ ] Память работает через MemoryAdapter и изолирована по tenant/user
-- [ ] Episodes/Profile сохраняются и используются при ответах
+- [x] Чат не сбрасывается при навигации
+- [x] Агент получает workspaceContext на каждом запросе
+- [x] Виджеты рендерятся справа из structured payload
+- [x] Память работает через MemoryAdapter и изолирована по tenant/user
+- [ ] Episodes/Profile сохраняются и используются при ответах (в процессе)

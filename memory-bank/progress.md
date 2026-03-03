@@ -47,6 +47,7 @@
 - [x] Чтение текущего состояния проекта (INDEX.md, Checklist)
 - [x] Ревью готовых отчетов (S4.1) [APPROVED]
 - [x] Финализация S4.1 (INDEX, Report, MB) [DONE]
+- [x] Ревью и финализация S5.1 (Memory Adapter) [DONE]
 - [ ] Определение следующего шага по Stage 2 Plan [PENDING]
 [x] Подготовить план создания промта `implementation_plan.md`
 - [x] Создать файл промта `interagency/prompts/2026-03-03_s4-1_chat-widget-logic.md`
@@ -141,4 +142,18 @@
 
 ### Next Steps:
 1.  Полный truth-sync проход по docs/07_EXECUTION/* (backlog).
-2.  Перейти к **3.2 Typed Tool Calls only (LAW)** — инспекция и типизация всех инструментов.
+145: 2.  Перейти к **3.2 Typed Tool Calls only (LAW)** — инспекция и типизация всех инструментов.
+146: 
+147: 26. **Software Factory Adoption Reinforcement (2026-03-03)** ✅:
+148:     *   Повторно принят `ORCHESTRATOR PROMPT` (DOC-ARH-GEN-173).
+149:     *   Подтверждено следование `interagency/` воркфлоу.
+150:     *   Активирована языковая политика «Русский + мат».
+27. **Memory Adapter Contract (S5.1)** ✅:
+    *   Внедрен `MemoryAdapter` в `shared/memory`.
+    *   Рефакторинг `RaiChatService` и `ExternalSignalsService` на использование адаптера.
+    *   Верифицировано 10/10 тестов, изоляция тенантов сохранена.
+
+28. **CI/CD Stability (pnpm fix)** ✅:
+    *   Устранён конфликт версий pnpm в GitHub Actions (`Multiple versions of pnpm specified`).
+    *   Ворклоу переведены на авто-детект версии из `package.json`.
+    *   Обновлён `pnpm/action-setup@v4`.

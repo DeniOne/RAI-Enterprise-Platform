@@ -282,4 +282,11 @@ Truth-sync: `VERIFIED`
 Evidence: `apps/api/src/modules/rai-chat/rai-chat-widget-builder.ts`, `apps/api/src/modules/rai-chat/rai-chat.service.ts`, `interagency/reports/2026-03-03_s4-1_chat-widget-logic.md`
 How to verify: `cd apps/api && npx jest --runInBand src/modules/rai-chat/rai-chat.service.spec.ts`
 
+### 🌐 14.7 Memory Adapter Contract (S5.1)
+- [x] **[Backend]** **Memory Abstraction Layer**: `MemoryAdapter` interface and `DefaultMemoryAdapter` implementation.
+- [x] **[Backend]** **Service Refactoring**: `RaiChatService` и `ExternalSignalsService` используют адаптер.
+Truth-sync: `VERIFIED`
+Evidence: `apps/api/src/shared/memory/memory-adapter.interface.ts`, `apps/api/src/shared/memory/default-memory-adapter.service.ts`, `interagency/reports/2026-03-03_s5-1_memory-adapter-contract.md`
+How to verify: `cd apps/api && npx jest --runInBand src/shared/memory/memory-adapter.spec.ts src/modules/rai-chat/rai-chat.service.spec.ts`
+
 ### 🌐 15. Ecosystem
