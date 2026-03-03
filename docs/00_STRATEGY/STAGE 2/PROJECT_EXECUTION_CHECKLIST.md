@@ -18,6 +18,8 @@
 - `P1.3` — `VERIFIED`: код `apps/api/src/modules/rai-chat/rai-chat.service.ts`, `apps/api/src/modules/rai-chat/rai-chat.service.spec.ts`, отчёт `interagency/reports/2026-03-02_p1-3_agent-chat-memory.md`.
 - `P1.4` — `VERIFIED`: truth-sync среза P0/P1 выполнен; отчёт `interagency/reports/2026-03-02_p1-4_status-truth-sync.md`.
 - `P2.1` — `VERIFIED`: Commerce contracts + consulting/execution/manager; отчёт `interagency/reports/2026-03-02_p2-1_workspacecontext-expand.md`; ограничение: нет browser smoke.
+- `S1.1` — `VERIFIED`: AppShell + LeftRaiChatDock, чат не размонтируется при навигации; код `apps/web/components/layouts/AppShell.tsx`, `apps/web/components/ai-chat/LeftRaiChatDock.tsx`, `apps/web/lib/stores/ai-chat-store.ts`; отчёт `interagency/reports/2026-03-02_s1-1_app-shell-persistent-rai-chat.md`; ограничение: manual smoke не выполнен.
+- `S1.2` — `VERIFIED`: TopNav навигация, удаление Sidebar; отчёт `interagency/reports/2026-03-02_s1-2_topnav-navigation.md`; тесты PASS (189/189).
 
 ## P0 — Блокирующие (без этого “система как задумано” не существует)
 
@@ -128,6 +130,19 @@
 - **Статус truth-sync:** `VERIFIED`
 - **Доказательство:** `apps/web/lib/stores/ai-chat-store.ts`, `apps/web/components/ai-chat/AiChatPanel.tsx`, `apps/web/components/ai-chat/AiChatWidgetsRail.tsx`, `interagency/reports/2026-03-02_p2-3_ux-polish-dock-focus.md`
 - **Как проверить:** `cd apps/web && pnpm test -- --runInBand __tests__/ai-chat-widgets-rail.spec.tsx __tests__/ai-chat-store.spec.ts && pnpm exec tsc -p tsconfig.json --noEmit`
+
+### S1.1 AppShell (персистентный чат)
+- [x] **DoD:** чат живёт в Shell, не размонтируется при навигации; история и Dock/Focus сохраняются.
+- **Статус truth-sync:** `VERIFIED`
+- **Доказательство:** `apps/web/components/layouts/AppShell.tsx`, `apps/web/components/ai-chat/LeftRaiChatDock.tsx`, `apps/web/lib/stores/ai-chat-store.ts`, `interagency/reports/2026-03-02_s1-1_app-shell-persistent-rai-chat.md`
+- **Как проверить:** `cd apps/web && pnpm exec tsc -p tsconfig.json --noEmit && pnpm test -- --runInBand __tests__/ai-chat-store.spec.ts __tests__/ai-chat-widgets-rail.spec.tsx`
+- **Ограничение:** manual smoke не выполнен.
+
+### S1.2 TopNav (горизонтальная навигация)
+- [x] **DoD:** меню перенесено в TopNav, Sidebar удален, поддержка active route и dropdowns.
+- **Статус truth-sync:** `VERIFIED`
+- **Доказательство:** `apps/web/components/ui/TopNav.tsx`, `apps/web/components/layouts/AppShell.tsx`, `interagency/reports/2026-03-02_s1-2_topnav-navigation.md`
+- **Как проверить:** запустить `pnpm build` (tsc завершается успешно), проверить визуально наличие TopNav и отсутствие Sidebar.
 
 ## Рекомендуемый “тонкий срез”, который доказывает, что система ожила
 Сценарий: **Telegram фото+текст → Draft (missingMust) → 🔗 Link field → ✅ Confirm → CommittedEvent → Controller severity → (если S3) AgroEscalation → web-чат показывает виджет DeviationList**.

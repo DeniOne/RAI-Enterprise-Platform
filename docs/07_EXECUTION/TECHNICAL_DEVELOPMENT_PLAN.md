@@ -414,4 +414,11 @@ Evidence: `apps/api/src/modules/agro-events/*`, `apps/api/jest.agro-events.confi
     - [x] Verification: `rai-chat.service.spec.ts` + `external-signals.service.spec.ts` PASS; tenant isolation сохранён
     - Evidence: `apps/api/src/modules/rai-chat/dto/rai-chat.dto.ts`, `apps/api/src/modules/rai-chat/external-signals.service.ts`, `apps/api/src/modules/rai-chat/rai-chat.service.ts`, `interagency/reports/2026-03-02_p2-2_external-signals-advisory.md`
 
+### 🌐 BLOCK 14.5: APPSHELL (S1.1)
+- [x] **Section 14.5.1: AppShell + LeftRaiChatDock**
+    - [x] Чат живёт в shell, не размонтируется при навигации; история и Dock/Focus сохраняются
+    - [x] Verification: tsc + ai-chat-store + ai-chat-widgets-rail PASS
+    - Evidence: `apps/web/components/layouts/AppShell.tsx`, `apps/web/components/ai-chat/LeftRaiChatDock.tsx`, `apps/web/lib/stores/ai-chat-store.ts`, `interagency/reports/2026-03-02_s1-1_app-shell-persistent-rai-chat.md`
+    - Ограничение: manual smoke не выполнен.
+
 ### 🌐 BLOCK 15: ECOSYSTEM

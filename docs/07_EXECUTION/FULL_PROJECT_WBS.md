@@ -268,4 +268,11 @@ Truth-sync: `VERIFIED`
 Evidence: `apps/api/src/modules/rai-chat/dto/rai-chat.dto.ts`, `apps/api/src/modules/rai-chat/external-signals.service.ts`, `apps/api/src/modules/rai-chat/rai-chat.service.ts`, `interagency/reports/2026-03-02_p2-2_external-signals-advisory.md`
 How to verify: `cd apps/api && pnpm test -- --runInBand src/modules/rai-chat/rai-chat.service.spec.ts src/modules/rai-chat/external-signals.service.spec.ts`
 
+### 🌐 14.5 AppShell (S1.1)
+- [x] **[Web]** **AppShell + LeftRaiChatDock**: чат живёт в shell, не размонтируется при навигации; история и Dock/Focus сохраняются.
+Truth-sync: `VERIFIED`
+Evidence: `apps/web/components/layouts/AppShell.tsx`, `apps/web/components/ai-chat/LeftRaiChatDock.tsx`, `apps/web/lib/stores/ai-chat-store.ts`, `interagency/reports/2026-03-02_s1-1_app-shell-persistent-rai-chat.md`
+How to verify: `cd apps/web && pnpm exec tsc -p tsconfig.json --noEmit && pnpm test -- --runInBand __tests__/ai-chat-store.spec.ts __tests__/ai-chat-widgets-rail.spec.tsx`
+Ограничение: manual smoke не выполнен.
+
 ### 🌐 15. Ecosystem

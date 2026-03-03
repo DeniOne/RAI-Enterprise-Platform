@@ -2,6 +2,10 @@
 Актуальные документы (обновлять по мере работы).
 
 ## Активные промты (в работе)
+- `interagency/prompts/2026-03-03_s2-2_workspace-context-load-rule.md` [READY]
+  - План: еще не создан
+  - Статус: промт создан, ожидает взятия в работу.
+
 - `interagency/prompts/2026-03-03_s2-1_workspace-context-contract.md` [DONE]
   - План: `interagency/plans/2026-03-03_s2-1_workspace-context-contract.md` [ACCEPTED]
   - Отчёт: `interagency/reports/2026-03-03_s2-1_workspace-context-contract.md`
