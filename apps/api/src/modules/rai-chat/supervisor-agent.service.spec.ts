@@ -214,4 +214,137 @@ describe("SupervisorAgent", () => {
     );
     expect(result.text).toContain("Отклонений найдено: 1");
   });
+
+  it("auto-runs plan fact tool when KPI intent is detected", async () => {
+    prismaServiceMock.harvestPlan.findFirst
+      .mockResolvedValueOnce({
+        id: "plan-9",
+        status: "ACTIVE",
+        seasonId: "season-9",
+        companyId: "company-1",
+      })
+      .mockResolvedValueOnce({
+        id: "plan-9",
+        status: "ACTIVE",
+        seasonId: "season-9",
+        companyId: "company-1",
+      });
+    kpiServiceMock.calculatePlanKPI.mockResolvedValueOnce({
+      hasData: true,
+      roi: 16.5,
+      ebitda: 2200,
+      revenue: 4100,
+      totalActualCost: 1800,
+      totalPlannedCost: 1900,
+    });
+
+    const result = await agent.orchestrate(
+      {
+        message: "kpi план факт по сезону",
+        workspaceContext: {
+          route: "/consulting",
+          filters: { seasonId: "season-9" },
+        },
+      },
+      "company-1",
+      "user-1",
+    );
+
+    expect(result.toolCalls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: RaiToolName.ComputePlanFact,
+          payload: expect.objectContaining({
+            planId: "plan-9",
+            seasonId: "season-9",
+            roi: 16.5,
+          }),
+        }),
+      ]),
+    );
+    expect(result.text).toContain("План-факт по плану plan-9");
+  });
+
+  it("auto-runs alerts tool when alert intent is detected", async () => {
+    prismaServiceMock.agroEscalation.findMany.mockResolvedValueOnce([
+      {
+        id: "esc-1",
+        severity: "S3",
+        reason: "late operation",
+        status: "OPEN",
+        references: { taskRef: "task-1" },
+      },
+    ]);
+
+    const result = await agent.orchestrate(
+      {
+        message: "есть ли алерт эскалация",
+        workspaceContext: {
+          route: "/consulting",
+        },
+      },
+      "company-1",
+      "user-1",
+    );
+
+    expect(result.toolCalls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: RaiToolName.EmitAlerts,
+          payload: expect.objectContaining({
+            count: 1,
+            severity: "S3",
+          }),
+        }),
+      ]),
+    );
+    expect(result.text).toContain("Открытых эскалаций S3+ : 1");
+  });
+
+  it("auto-runs tech map draft tool when field and season context exist", async () => {
+    techMapServiceMock.createDraftStub.mockResolvedValueOnce({
+      draftId: "tm-42",
+      status: "DRAFT",
+      fieldRef: "field-42",
+      seasonRef: "season-42",
+      crop: "rapeseed",
+      missingMust: ["targets"],
+      tasks: [],
+      assumptions: [],
+    });
+
+    const result = await agent.orchestrate(
+      {
+        message: "сделай техкарту рапс",
+        workspaceContext: {
+          route: "/consulting/techmaps",
+          activeEntityRefs: [
+            { kind: WorkspaceEntityKind.field, id: "field-42" },
+          ],
+          filters: { seasonId: "season-42" },
+        },
+      },
+      "company-1",
+      "user-1",
+    );
+
+    expect(techMapServiceMock.createDraftStub).toHaveBeenCalledWith({
+      fieldRef: "field-42",
+      seasonRef: "season-42",
+      crop: "rapeseed",
+      companyId: "company-1",
+    });
+    expect(result.toolCalls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: RaiToolName.GenerateTechMapDraft,
+          payload: expect.objectContaining({
+            draftId: "tm-42",
+            status: "DRAFT",
+          }),
+        }),
+      ]),
+    );
+    expect(result.text).toContain("Черновик техкарты создан: tm-42");
+  });
 });

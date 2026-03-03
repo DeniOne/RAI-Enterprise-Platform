@@ -20,6 +20,8 @@
 - `P2.1` — `VERIFIED`: Commerce contracts + consulting/execution/manager; отчёт `interagency/reports/2026-03-02_p2-1_workspacecontext-expand.md`; ограничение: нет browser smoke.
 - `S1.1` — `VERIFIED`: AppShell + LeftRaiChatDock, чат не размонтируется при навигации; код `apps/web/components/layouts/AppShell.tsx`, `apps/web/components/ai-chat/LeftRaiChatDock.tsx`, `apps/web/lib/stores/ai-chat-store.ts`; отчёт `interagency/reports/2026-03-02_s1-1_app-shell-persistent-rai-chat.md`; ограничение: manual smoke не выполнен.
 - `S1.2` — `VERIFIED`: TopNav навигация, удаление Sidebar; отчёт `interagency/reports/2026-03-02_s1-2_topnav-navigation.md`; тесты PASS (189/189).
+- `Sprint 1 P1` — `VERIFIED`: unit/spec покрытие для 4 tools и 4 intent-маршрутов расширено; живой `POST /api/rai/chat` smoke подтверждён для `compute_deviations`, `compute_plan_fact`, `emit_alerts`, `generate_tech_map_draft`; запись `TechMap` со `status=DRAFT` подтверждена в БД; отчёт `interagency/reports/2026-03-03_sprint1-p2_tests-smoke-telegram.md`.
+- `S5.6` — `VERIFIED`: `memoryUsed[]` присутствует в chat contract и возвращается живым `/api/rai/chat`; доказательства в `interagency/reports/2026-03-03_s5-6_memory-observability-debug-panel.md` и `interagency/reports/2026-03-03_sprint1-p2_tests-smoke-telegram.md`.
 
 ## P0 — Блокирующие (без этого “система как задумано” не существует)
 
@@ -168,6 +170,18 @@
 - [x] **DoD:** `RaiChatService` больше не содержит статики; выделен `RaiChatWidgetBuilder`; виджеты динамически зависят от `route` и `companyId`; тесты PASS.
 - **Статус truth-sync:** `VERIFIED`
 - **Доказательство:** [rai-chat-widget-builder.ts](file:///root/RAI_EP/apps/api/src/modules/rai-chat/rai-chat-widget-builder.ts), [rai-chat.service.ts](file:///root/RAI_EP/apps/api/src/modules/rai-chat/rai-chat.service.ts), отчет [2026-03-03_s4-1_chat-widget-logic.md](file:///root/RAI_EP/interagency/reports/2026-03-03_s4-1_chat-widget-logic.md)
+
+### Sprint 1 P1 — Tests, Smoke, Telegram Linking
+- [x] **DoD:** `pnpm --filter api test -- rai-tools.registry.spec.ts supervisor-agent.service.spec.ts` проходит; все 4 маршрута `POST /api/rai/chat` подтверждены живым smoke; `generate_tech_map_draft` создаёт `TechMap` со `status=DRAFT`; `memoryUsed[]` присутствует в ответе чата.
+- **Статус truth-sync:** `VERIFIED`
+- **Доказательство:** `apps/api/src/modules/rai-chat/tools/rai-tools.registry.spec.ts`, `apps/api/src/modules/rai-chat/supervisor-agent.service.spec.ts`, `interagency/reports/2026-03-03_sprint1-p2_tests-smoke-telegram.md`
+- **Как проверить:** `cd apps/api && pnpm test -- --runInBand src/modules/rai-chat/tools/rai-tools.registry.spec.ts src/modules/rai-chat/supervisor-agent.service.spec.ts`
+- **Как проверить:** `curl -sS -X POST 'http://localhost:4000/api/rai/chat' -H 'Content-Type: application/json' -d '{"message":"покажи отклонения","workspaceContext":{"route":"/consulting/techmaps"}}'`
+- **Как проверить:** `curl -sS -X POST 'http://localhost:4000/api/rai/chat' -H 'Content-Type: application/json' -d '{"message":"kpi по плану","workspaceContext":{"route":"/consulting","filters":{"seasonId":"demo-season-2026-kuban-1"}}}'`
+- **Как проверить:** `curl -sS -X POST 'http://localhost:4000/api/rai/chat' -H 'Content-Type: application/json' -d '{"message":"есть ли алерты и эскалации","workspaceContext":{"route":"/consulting"}}'`
+- **Как проверить:** `curl -sS -X POST 'http://localhost:4000/api/rai/chat' -H 'Content-Type: application/json' -d '{"message":"сделай техкарту рапс","workspaceContext":{"route":"/consulting/techmaps","activeEntityRefs":[{"kind":"field","id":"demo-field-kuban-1"}],"filters":{"seasonId":"demo-season-2026-kuban-1"}}}'`
+- **Как проверить:** `cd /root/RAI_EP && node -e 'require("dotenv").config({ path: ".env" }); const { PrismaClient } = require("./packages/prisma-client/generated-client"); const prisma = new PrismaClient(); prisma.techMap.findUnique({ where: { id: "cmmb1tdc20007jivbaiornnpa" }, select: { id: true, status: true, companyId: true, fieldId: true, seasonId: true, crop: true, version: true } }).then((x) => { console.log(JSON.stringify(x, null, 2)); return prisma.$disconnect(); });'`
+- **Ограничение:** `apps/telegram-bot/src/telegram/telegram.update.ts` поддерживает linking для `AgroEventDraft`, но не формирует `workspaceContext` для `/api/rai/chat`; минимальный фикс не вносился, так как чатовый вызов из Telegram-контура в текущем scope отсутствует.
 
 ## Рекомендуемый “тонкий срез”
 , который доказывает, что система ожила

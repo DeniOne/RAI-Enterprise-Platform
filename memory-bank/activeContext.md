@@ -236,3 +236,19 @@
 - Реализован memory observability debug-layer.
 - `SupervisorAgent` теперь возвращает `memoryUsed` как безопасный summary применённого episode/profile context.
 - В `AiChatPanel` добавлена debug-плашка `Memory Used`, gated через привилегированный governance-режим.
+
+### Logical Action (2026-03-03 18:00 UTC) — Sprint 1 P1 DONE
+- Наполнен `RaiToolsRegistry` 4 боевыми инструментами: `compute_deviations`, `compute_plan_fact`, `emit_alerts`, `generate_tech_map_draft`.
+- В `SupervisorAgent` добавлен `detectIntent()` — keyword routing по типу запроса.
+- `generate_tech_map_draft` — stub: создаёт пустой DRAFT в БД с tenant-scope. Полная генерация — отдельный Sprint (TechMap Intake).
+- DI: `DeviationService`, `ConsultingService`, `AgroEscalationLoopService`, `TechMapService` подключены в `RaiChatModule`.
+- Устранён runtime-блокер: `axios` добавлен в `apps/api/package.json`.
+- Верификация: tsc PASS, unit 14/14 PASS, smoke 4/4 PASS, TechMap DRAFT в БД подтверждён.
+
+### Logical Action (2026-03-03 20:30 UTC) — Sprint 1 P2 DONE
+- Прогнаны unit-тесты — 14/14 PASS.
+- Выполнены 4 live E2E smoke через `POST /api/rai/chat` — все маршруты работают.
+- Подтверждено: `generate_tech_map_draft` создаёт реальную запись TechMap в БД со статусом DRAFT.
+- Telegram linking cascade проверен: поддерживает AgroEventDraft, но Telegram→chat bridge отсутствует — зафиксировано в backlog как задача Sprint TechMap Intake.
+- `PROJECT_EXECUTION_CHECKLIST.md` актуализирован. `interagency/INDEX.md` синхронизирован.
+- Backlog Sprint TechMap Intake: Telegram→/api/rai/chat bridge + workspaceContext из Telegram-чата + полная генерация TechMap.

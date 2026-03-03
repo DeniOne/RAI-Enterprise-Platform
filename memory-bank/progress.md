@@ -192,3 +192,20 @@
     *   `SupervisorAgent` возвращает безопасный summary по episode/profile context.
     *   В web chat добавлена debug-плашка `Memory Used` для привилегированного режима.
     *   Верификация: `apps/api` tsc PASS, `apps/api` targeted jest PASS, `apps/web` store test PASS.
+
+35. **Agent-First Sprint 1 P1 — Tools Registry Domain Bridge (2026-03-03)** ✅:
+    *   `RaiToolsRegistry` расширен 4 боевыми инструментами: `compute_deviations`, `compute_plan_fact`, `emit_alerts`, `generate_tech_map_draft`.
+    *   Typed payload/result контракты добавлены в `rai-tools.types.ts`; `companyId` только из `RaiToolActorContext`, никогда из payload.
+    *   `generate_tech_map_draft` замкнут на `TechMapService.createDraftStub()` — создаёт DRAFT с правильным tenant-scope (TODO: полная генерация — Sprint TechMap Intake).
+    *   В `SupervisorAgent` добавлен `detectIntent()` — keyword routing по 4 паттернам (отклонения, kpi/план-факт, алерты, техкарта).
+    *   DI: `DeviationService`, `ConsultingService`, `AgroEscalationLoopService`, `TechMapService` подключены в `RaiChatModule`.
+    *   `axios` добавлен в `apps/api/package.json` (runtime-блокер `HttpResilienceModule` устранён).
+    *   Верификация: `apps/api` tsc PASS, unit 14/14 PASS, smoke curl PASS. Ревью APPROVED.
+
+36. **Agent-First Sprint 1 P2 — Tests, E2E Smoke & Telegram Linking (2026-03-03)** ✅:
+    *   Прогнаны unit-тесты на все 4 tool-маршрута и `detectIntent` — 14/14 PASS.
+    *   Выполнены 4 live smoke-проверки через `POST /api/rai/chat`: все 4 тула подтверждены.
+    *   `generate_tech_map_draft` создал реальную запись `TechMap` в БД (`status=DRAFT`, `companyId=default-rai-company`, `crop=rapeseed`).
+    *   Telegram linking cascade проверен: `telegram.update.ts` поддерживает link-patch для `AgroEventDraft`, но Telegram→`/api/rai/chat` маршрута нет — зафиксировано в backlog.
+    *   `PROJECT_EXECUTION_CHECKLIST.md` обновлён с truth-sync по Sprint 1.
+    *   Верификация: unit 14/14 PASS, smoke 4/4 PASS, TechMap DRAFT в БД подтверждён. Ревью APPROVED.

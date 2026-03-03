@@ -218,4 +218,97 @@ describe("RaiToolsRegistry", () => {
       }),
     );
   });
+
+  it("filters deviations by season and field within tenant scope", async () => {
+    const registry = createRegistry();
+    registry.onModuleInit();
+    deviationServiceMock.getActiveDeviations.mockResolvedValueOnce([
+      {
+        id: "dev-1",
+        status: "OPEN",
+        harvestPlanId: "plan-1",
+        budgetPlanId: "budget-1",
+        harvestPlan: {
+          seasonId: "season-1",
+          techMaps: [{ fieldId: "field-1" }],
+        },
+      },
+      {
+        id: "dev-2",
+        status: "OPEN",
+        harvestPlanId: "plan-2",
+        budgetPlanId: null,
+        harvestPlan: {
+          seasonId: "season-2",
+          techMaps: [{ fieldId: "field-2" }],
+        },
+      },
+    ]);
+
+    const result = await registry.execute(
+      RaiToolName.ComputeDeviations,
+      { scope: { seasonId: "season-1", fieldId: "field-1" } },
+      actorContext,
+    );
+
+    expect(deviationServiceMock.getActiveDeviations).toHaveBeenCalledWith({
+      companyId: "company-1",
+    });
+    expect(result).toEqual({
+      count: 1,
+      seasonId: "season-1",
+      fieldId: "field-1",
+      items: [
+        {
+          id: "dev-1",
+          status: "OPEN",
+          harvestPlanId: "plan-1",
+          budgetPlanId: "budget-1",
+        },
+      ],
+    });
+  });
+
+  it("returns open alerts with severity filter in tenant scope", async () => {
+    const registry = createRegistry();
+    registry.onModuleInit();
+    prismaMock.agroEscalation.findMany.mockResolvedValueOnce([
+      {
+        id: "esc-1",
+        severity: "S4",
+        reason: "critical deviation",
+        status: "OPEN",
+        references: { fieldRef: "field-1" },
+      },
+    ]);
+
+    const result = await registry.execute(
+      RaiToolName.EmitAlerts,
+      { severity: "S4" },
+      actorContext,
+    );
+
+    expect(prismaMock.agroEscalation.findMany).toHaveBeenCalledWith({
+      where: {
+        companyId: "company-1",
+        status: "OPEN",
+        severity: { in: ["S4"] },
+      },
+      orderBy: [{ severity: "desc" }, { createdAt: "desc" }],
+      take: 20,
+    });
+    expect(result).toEqual({
+      count: 1,
+      severity: "S4",
+      items: [
+        {
+          id: "esc-1",
+          severity: "S4",
+          reason: "critical deviation",
+          status: "OPEN",
+          references: { fieldRef: "field-1" },
+        },
+      ],
+    });
+  });
 });

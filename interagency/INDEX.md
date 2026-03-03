@@ -2,6 +2,15 @@
 Актуальные документы (обновлять по мере работы).
 
 ## Активные промты (в работе)
+
+- `interagency/prompts/2026-03-03_sprint1-p2_tests-smoke-telegram.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-03_sprint1-p2_tests-smoke-telegram.md`
+  - Статус: DONE. Unit 14/14 PASS. Smoke 4/4 PASS. TechMap DRAFT в БД подтверждён. Telegram→chat bridge отсутствует — зафиксировано в backlog.
+
+- `interagency/prompts/2026-03-03_sprint1-p1_tools-registry-domain-bridge.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-03_sprint1-p1_tools-registry-domain-bridge.md`
+  - Статус: DONE. 4 тула в `RaiToolsRegistry`, intent routing в `SupervisorAgent`. tsc PASS, unit PASS, smoke curl PASS.
+
 - `interagency/prompts/2026-03-03_s1-3_topnav-role-switch-hotfix.md` [DONE]
   - План: `interagency/plans/2026-03-03_s1-3_topnav-role-switch-hotfix.md` [ACCEPTED]
   - Отчёт: `interagency/reports/2026-03-03_s1-3_topnav-role-switch-hotfix.md`
