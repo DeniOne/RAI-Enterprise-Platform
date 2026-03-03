@@ -92,9 +92,11 @@
 Эффект: чат становится интерфейсом к агентам и виджетам.
 
 ### 3.2 Typed Tool Calls only (LAW)
-- [ ] Agent вызывает домен только через типизированные вызовы
-- [ ] Никакого string-execution
-- [ ] Все tool calls логируются (audit)
+- [x] Agent вызывает домен только через типизированные вызовы
+- [x] Никакого string-execution
+- [x] Все tool calls логируются (audit + payload)
+- **Статус truth-sync:** `VERIFIED`
+- **Доказательство:** [rai-tools.registry.ts](file:///root/RAI_EP/apps/api/src/modules/rai-chat/tools/rai-tools.registry.ts), [rai-tools.registry.spec.ts](file:///root/RAI_EP/apps/api/src/modules/rai-chat/tools/rai-tools.registry.spec.ts), отчет [2026-03-03_s3-2_typed-tool-calls.md](file:///root/RAI_EP/interagency/reports/2026-03-03_s3-2_typed-tool-calls.md)
 
 Эффект: институциональная предсказуемость.
 

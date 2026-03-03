@@ -54,6 +54,12 @@ describe("RaiToolsRegistry", () => {
 
     expect(handler).not.toHaveBeenCalled();
     expect(warnSpy).toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('"payload":{"wrong":true}'),
+    );
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('"reason":"validation_failed"'),
+    );
   });
 
   it("logs every successful tool call", async () => {
@@ -74,6 +80,41 @@ describe("RaiToolsRegistry", () => {
     );
     expect(logSpy).toHaveBeenCalledWith(
       expect.stringContaining('"status":"success"'),
+    );
+    expect(logSpy).toHaveBeenCalledWith(
+      expect.stringContaining('"payload":{"route":"/tasks","lastUserAction":"open-task"}'),
+    );
+  });
+
+  it("logs payload when handler execution fails", async () => {
+    const registry = new RaiToolsRegistry();
+    const warnSpy = jest
+      .spyOn(Logger.prototype, "warn")
+      .mockImplementation(() => undefined);
+
+    registry.register(
+      RaiToolName.EchoMessage,
+      Joi.object({
+        message: Joi.string().required(),
+      }),
+      async () => {
+        throw new Error("boom");
+      },
+    );
+
+    await expect(
+      registry.execute(
+        RaiToolName.EchoMessage,
+        { message: "hello" },
+        actorContext,
+      ),
+    ).rejects.toThrow("boom");
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('"payload":{"message":"hello"}'),
+    );
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('"reason":"handler_failed"'),
     );
   });
 });

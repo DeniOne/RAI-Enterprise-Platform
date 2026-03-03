@@ -7,9 +7,10 @@
   - Отчёт: `interagency/reports/2026-03-03_s2-2_workspace-context-load-rule.md`
   - Статус: РЕАЛИЗАЦИЯ ЗАВЕРШЕНА. Gatekeeper-слой (truncation, flat filters validation) внедрен в store и верифицирован unit-тестами.
 
-- `interagency/prompts/2026-03-03_s3-2_typed-tool-calls.md` [READY]
-  - План: еще не создан
-  - Статус: промт создан. Требует усиления аудита реестра инструментов.
+- `interagency/prompts/2026-03-03_s3-2_typed-tool-calls.md` [DONE]
+  - План: `interagency/plans/2026-03-03_s3-2_typed-tool-calls.md` [ACCEPTED]
+  - Отчёт: `interagency/reports/2026-03-03_s3-2_typed-tool-calls.md`
+  - Статус: РЕАЛИЗАЦИЯ ЗАВЕРШЕНА. Forensic-логирование пэйлоадов внедрено. Типизированный шлюз закреплен как единственный законный путь к домену.
 
 - `interagency/prompts/2026-03-03_s3-1_chat-api-v1.md` [DONE]
   - План: `interagency/plans/2026-03-03_s3-1_chat-api-v1.md` [ACCEPTED]

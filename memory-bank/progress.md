@@ -111,6 +111,12 @@
     *   Реализован возврат фактически исполненных инструментов из `RaiChatService`.
     *   Верификация: сервисные тесты PASS (проверка контракта, traceId, threadId), `apps/api` tsc PASS. Ревью APPROVED (2026-03-03).
 
+24. **Typed Tool Calls / Forensic (S3.2)** ✅:
+    *   Усилен «Закон типизированных вызовов» (LAW).
+    *   Внедрено принудительное Forensic-логирование пэйлоадов всех инструментов в `RaiToolsRegistry`.
+    *   Гарантировано использование `execute()` как единственного шлюза к домену.
+    *   Верификация: юнит-тесты PASS (проверка логов при успехе/валидации/ошибке), `apps/api` tsc PASS. Ревью APPROVED (2026-03-03).
+
 ### Pending / Current Issues:
 *   IDE still showing red files in the screenshot despite TS Server restart.
 *   Possible cause 1: `tsconfig.json` was missing previously (fixed now with root config).

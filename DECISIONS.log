@@ -1300,6 +1300,35 @@ Orchestrator = Brain (канон RAI_EP).
 - Тесты на `handleChat` подтверждают наличие новых полей.
 
 ### Связанные документы
-- `interagency/prompts/2026-03-03_s3-1_chat-api-v1.md`
-- `interagency/plans/2026-03-03_s3-1_chat-api-v1.md`
 - `docs/00_STRATEGY/STAGE 2/SPEC_AGENT_FIRST_RAI_EP.md`
+
+---
+
+## AG-FORENSIC-AUDIT-001
+
+**Дата:** 2026-03-03  
+**Автор:** TECHLEAD (AI)  
+**Статус:** ACCEPTED  
+
+### Решение
+Усилить механизм аудита («Закон типизированных вызовов»), внедрив обязательное логирование пэйлоадов всех инструментов в `RaiToolsRegistry`. Это необходимо для Forensic-анализа действий агента и обеспечения полной прозрачности доменных взаимодействий.
+
+### Scope
+- **Phase:** Gamma
+- **Sprint:** S3.2
+- **Компоненты:**
+  - `apps/api` — `RaiToolsRegistry`.
+
+### Технические ограничения
+1. **Security:** логируемые пэйлоады должны быть сериализованы в JSON.
+2. **Completeness:** логирование должно происходить как при успехе, так и при любой ошибке (валидации или исполнения).
+3. **Bypass Protection:** типизированный `execute` должен оставаться единственным шлюзом к инструментам.
+
+### Definition of Done
+- `RaiToolsRegistry` логирует `payload` всех вызовов.
+- Тесты подтверждают наличие пэйлоада в логах.
+
+### Связанные документы
+- `interagency/prompts/2026-03-03_s3-2_typed-tool-calls.md`
+- `interagency/plans/2026-03-03_s3-2_typed-tool-calls.md`
+- `docs/00_STRATEGY/STAGE 2/RAI_AGENT_OS_IMPLEMENTATION_PLAN.md`

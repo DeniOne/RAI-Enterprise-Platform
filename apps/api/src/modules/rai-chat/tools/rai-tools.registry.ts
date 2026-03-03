@@ -58,7 +58,7 @@ export class RaiToolsRegistry implements OnModuleInit {
   ): Promise<RaiToolResultMap[TName]> {
     const tool = this.tools.get(name) as RegisteredTool<TName> | undefined;
     if (!tool) {
-      this.logToolCall(name, actorContext, false, "tool_not_registered");
+      this.logToolCall(name, actorContext, false, payload, "tool_not_registered");
       throw new BadRequestException(`Unknown tool: ${name}`);
     }
 
@@ -69,7 +69,7 @@ export class RaiToolsRegistry implements OnModuleInit {
     });
 
     if (validation.error) {
-      this.logToolCall(name, actorContext, false, "validation_failed");
+      this.logToolCall(name, actorContext, false, payload, "validation_failed");
       throw new BadRequestException(
         `Invalid payload for tool ${name}: ${validation.error.message}`,
       );
@@ -77,10 +77,16 @@ export class RaiToolsRegistry implements OnModuleInit {
 
     try {
       const result = await tool.handler(validation.value, actorContext);
-      this.logToolCall(name, actorContext, true);
+      this.logToolCall(name, actorContext, true, validation.value);
       return result;
     } catch (error) {
-      this.logToolCall(name, actorContext, false, "handler_failed");
+      this.logToolCall(
+        name,
+        actorContext,
+        false,
+        validation.value,
+        "handler_failed",
+      );
       throw error;
     }
   }
@@ -115,6 +121,7 @@ export class RaiToolsRegistry implements OnModuleInit {
     toolName: string,
     actorContext: RaiToolActorContext,
     success: boolean,
+    payload: unknown,
     reason?: string,
   ) {
     const logPayload = JSON.stringify({
@@ -122,6 +129,7 @@ export class RaiToolsRegistry implements OnModuleInit {
       companyId: actorContext.companyId,
       traceId: actorContext.traceId,
       status: success ? "success" : "fail",
+      payload: this.serializePayload(payload),
       reason,
     });
 
@@ -131,5 +139,17 @@ export class RaiToolsRegistry implements OnModuleInit {
     }
 
     this.logger.warn(logPayload);
+  }
+
+  private serializePayload(payload: unknown): unknown {
+    if (payload === undefined) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(JSON.stringify(payload));
+    } catch {
+      return "[unserializable_payload]";
+    }
   }
 }
