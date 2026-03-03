@@ -1448,3 +1448,47 @@ Orchestrator = Brain (канон RAI_EP).
 
 ### Связанные документы
 - `interagency/plans/2026-03-03_s5-4_adapter-write-routing.md`
+
+---
+
+## AG-TM-DATA-001
+
+**Дата:** 2026-03-03
+**Автор:** TECHLEAD (AI)
+**Статус:** ACCEPTED
+
+### Решение
+Реализация Sprint TM-1 (Data Foundation) — расширение Prisma-схемы для модуля TechMap. Добавление новых моделей (SoilProfile, RegionProfile, InputCatalog, CropZone), расширение существующих (Field, TechMap, MapOperation, MapResource) nullable-полями, создание 5 новых enums и Zod DTO.
+
+### Scope
+- **Phase:** TechMap Implementation (GRAND_SYNTHESIS)
+- **Sprint:** TM-1 (Data Foundation)
+- **Компоненты:**
+  - `packages/prisma-client/schema.prisma` (4 новые модели, 5 enums, расширение 4 существующих моделей)
+  - `apps/api/src/modules/tech-map/dto/` (4 Zod DTO файла)
+- **Не входит:** UI, TechMapService бизнес-логика, API endpoints, домены вне TechMap
+
+### Технические ограничения
+1. **Tenant Isolation:** Все новые модели обязаны иметь `companyId` + `@@index([companyId])` + `Company @relation`.
+2. **Backward Compatibility:** Существующие поля НЕ удалять. Все новые поля — nullable. Связки TechMap→Season/Field остаются.
+3. **Schema-Only:** Изменения только в Prisma schema + DTO. Никакой бизнес-логики.
+4. **Enum Policy:** Enums только в Prisma (не string). Если enum > 20 значений — тогда String.
+
+### Definition of Done
+- `npx prisma validate` PASS
+- `npx prisma db push` PASS
+- `pnpm --filter api exec tsc --noEmit` PASS
+- `pnpm --filter api test` не ухудшает текущий уровень
+- 4 Zod DTO файла с минимум 8 тестами (happy path + validation error)
+- Все новые модели: tenant-scoped
+
+### Rollback Conditions
+- DB push ломает существующие данные
+- Существующие тесты регрессят
+- Нарушение tenant isolation
+
+### Связанные документы
+- `docs/00_STRATEGY/TECHMAP/GRAND_SYNTHESIS.md` §2
+- `docs/00_STRATEGY/TECHMAP/TECHMAP_IMPLEMENTATION_CHECKLIST.md`
+- `interagency/prompts/2026-03-03_tm-1_data-foundation.md`
+- `interagency/plans/2026-03-03_tm-1_data-foundation.md`

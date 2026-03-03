@@ -3,6 +3,17 @@
 
 ## Активные промты (в работе)
 
+- `interagency/prompts/2026-03-03_tm-1_data-foundation.md` [DONE]
+  - План: `interagency/plans/2026-03-03_tm-1_data-foundation.md` [ACCEPTED]
+  - Отчёт: `interagency/reports/2026-03-03_tm-1_data-foundation.md` [APPROVED]
+  - Decision-ID: AG-TM-DATA-001
+  - Статус: DONE. prisma validate/db push/tsc/8 DTO-тестов PASS. 4 новые модели (SoilProfile, RegionProfile, InputCatalog, CropZone) + расширение Field/TechMap/MapOperation/MapResource + 5 enums. Pre-existing failures в 8 модулях — не scope TM-1.
+
+- `interagency/prompts/2026-03-03_tm-2_dag-validation.md` [ACTIVE]
+  - Мастер-чеклист: `docs/00_STRATEGY/TECHMAP/TECHMAP_IMPLEMENTATION_CHECKLIST.md`
+  - Технический базис: `docs/00_STRATEGY/TECHMAP/GRAND_SYNTHESIS.md` §3
+  - Статус: промт создан, ожидает план от кодера.
+
 - `interagency/prompts/2026-03-03_sprint1-p2_tests-smoke-telegram.md` [DONE]
   - Отчёт: `interagency/reports/2026-03-03_sprint1-p2_tests-smoke-telegram.md`
   - Статус: DONE. Unit 14/14 PASS. Smoke 4/4 PASS. TechMap DRAFT в БД подтверждён. Telegram→chat bridge отсутствует — зафиксировано в backlog.

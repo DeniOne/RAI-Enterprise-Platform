@@ -209,3 +209,37 @@
     *   Telegram linking cascade проверен: `telegram.update.ts` поддерживает link-patch для `AgroEventDraft`, но Telegram→`/api/rai/chat` маршрута нет — зафиксировано в backlog.
     *   `PROJECT_EXECUTION_CHECKLIST.md` обновлён с truth-sync по Sprint 1.
     *   Верификация: unit 14/14 PASS, smoke 4/4 PASS, TechMap DRAFT в БД подтверждён. Ревью APPROVED.
+
+37. **Techmap Prompt Synthesis (2026-03-03)** ✅:
+    *   Синтезирован мета-промт для создания Техкарты на основе 6 AI-отчетов.
+    *   Объединены требования из `Промт_Гранд_Синтез.md` и `Промт_синтез.md`.
+    *   Добавлены строгие критерии экстракции (Блоки A-H) из оригинального `Промт для исследования`, чтобы исключить "воду" и саммари.
+
+38. **TechMap Grand Synthesis — Полный Синтез 6 AI-исследований (2026-03-03)** ✅:
+    *   Прочитаны все 6 источников: ChatGPT, ChatGPT#2, CLUADE, COMET, GEMINI, GROK.
+    *   Создан `docs/00_STRATEGY/TECHMAP/GRAND_SYNTHESIS.md` — 770 строк, 8 частей:
+        - Часть 1: Executive Summary (7 фундаментальных аксиом, консенсус всех источников)
+        - Часть 2: Модель данных (15+ сущностей с JSON-схемами, enum-словари, Provenance/Confidence)
+        - Часть 3: Методология расчётов (нормы высева, окна GDD, дозы удобрений, ЭПВ, AdaptiveRules, валидация)
+        - Часть 4: Юридическая и операционная модель (Contract Core + Execution Layer, ChangeOrder, Evidence, DAG, матрица делегирования ИИ↔Человек)
+        - Часть 5: Регионализация (3 профиля) + Экономика (бюджет, KPI, правила перерасхода)
+        - Часть 6: Карта противоречий (7 конфликтов с архитектурными вердиктами)
+        - Часть 7: 10 инженерных слепых зон (мульти-полевая оптимизация, склад, офлайн-режим и др.)
+        - Часть 8: Мини-пример (10 операций для озимого рапса MARITIME_HUMID)
+    *   Документ готов как технический базис для имплементации модуля TechMap в RAI EP.
+
+39. **TechMap Implementation Master Checklist (2026-03-03)** ✅:
+    *   Проведён полный аудит кодовой базы: найдены существующие `TechMap`, `MapStage`, `MapOperation`, `MapResource`, `ExecutionRecord`, `Field`, `Season`, `Rapeseed`, `AgronomicStrategy`, `GenerationRecord`, `DivergenceRecord`.
+    *   Gap-анализ: ~60% сущностей из GRAND_SYNTHESIS покрыты, недостаёт `SoilProfile`, `RegionProfile`, `InputCatalog`, `CropZone`, `Evidence`, `ChangeOrder`, `AdaptiveRule`.
+    *   Создан `docs/00_STRATEGY/TECHMAP/TECHMAP_IMPLEMENTATION_CHECKLIST.md` — мастер-чеклист на 5 спринтов (TM-1..TM-5) + пост-консолидация.
+    *   Создана директория `docs/00_STRATEGY/TECHMAP/SPRINTS/` для промтов кодеру.
+
+40. **TechMap Sprint TM-1 — Data Foundation CLOSED (2026-03-03)** ✅:
+    *   Добавлены 4 новые Prisma-модели: `SoilProfile` (L1639), `RegionProfile` (L1666), `InputCatalog` (L1691), `CropZone` (L1712).
+    *   Добавлены 5 Prisma enums: `SoilGranulometricType`, `ClimateType`, `InputType`, `OperationType`, `ApplicationMethod`.
+    *   Расширены существующие модели nullable-полями: `Field` (+slope/drainage/protectedZones), `TechMap` (+budgetCap/hash/cropZoneId), `MapOperation` (+BBCH-окна/dependencies/evidenceRequired), `MapResource` (+inputCatalogId/rates/applicationMethod).
+    *   Созданы Zod DTO: `apps/api/src/modules/tech-map/dto/` (4 файла + 4 spec).
+    *   Верификация: `prisma validate` ✅, `db push` ✅, `tsc --noEmit` ✅, 8/8 DTO-тестов ✅.
+    *   Ревью Orchestrator: APPROVED. Pre-existing failures в 8 модулях (NestJS DI) подтверждены как не scope TM-1.
+    *   Decision-ID: `AG-TM-DATA-001` (DECISIONS.log).
+    *   TM-2 промт создан: `interagency/prompts/2026-03-03_tm-2_dag-validation.md`.
