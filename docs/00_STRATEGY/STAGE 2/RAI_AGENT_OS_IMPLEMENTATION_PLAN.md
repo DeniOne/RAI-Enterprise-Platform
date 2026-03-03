@@ -186,7 +186,9 @@ Flex:
 
 ### Phase B (следом)
 - [ ] Подключить SupervisorAgent к API
-- [ ] Включить structured widgets справа
+- [x] Включить structured widgets справа
+
+**Статус truth-sync:** `IN_PROGRESS`
 
 Эффект: “Comet-эффект” — агент реагирует на страницу.
 

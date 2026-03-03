@@ -215,3 +215,8 @@
 - `userId` прокинут из JWT сквозь `RaiChatController -> RaiChatService -> ExternalSignalsService -> MemoryAdapter`.
 - Для `attrs` внедрена рекурсивная JSON sanitization; циклические и невалидные поля больше не обнуляют весь payload.
 - `embedding` пишется транзакционно через raw vector update внутри `$transaction`; targeted tests и `apps/api` tsc прошли.
+
+### Logical Action (2026-03-03 14:40 UTC)
+- Выполнен truth-sync `Phase B` в Agent OS Implementation Plan.
+- Подтверждено, что `structured widgets справа` уже реализованы в backend/web и не являются открытым хвостом.
+- Подтверждено, что единственный незакрытый пункт `Phase B` — интеграция `SupervisorAgent` в API.
