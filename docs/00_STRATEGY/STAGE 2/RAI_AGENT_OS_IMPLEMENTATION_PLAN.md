@@ -119,7 +119,7 @@
 
 ## 5) Память (ВАЖНО): делаем через MemoryAdapter, а не “сразу новые таблицы”
 
-### 5.1 MemoryAdapter Contract (обязательный слой абстракции)
+### 5.1 MemoryAdapter Contract (S5.1 - ОБЯЗАТЕЛЬНЫЙ СЛОЙ)
 - [x] Создать интерфейс `MemoryAdapter` (server-side)
 - [x] Методы: `appendInteraction`, `retrieve`, `getProfile`, `updateProfile`
 - **Статус truth-sync:** `VERIFIED`
@@ -127,16 +127,16 @@
 
 Эффект: память можно подключить к текущей реализации без миграций UI/агента.
 
-### 5.2 Storage Decision (без предположений)
+### 5.2 Storage Decision (S5.1 - ИНТЕГРАЦИЯ)
 - [x] Подключить MemoryAdapter к текущей памяти (MemoryManager)
 - [x] Использовать существующую реализацию как Primary
 - **Статус truth-sync:** `VERIFIED` (см. S5.1)
 
 Эффект: не ломаем существующее, расширяем только по необходимости.
 
-### 5.3 Carcass+Flex модель памяти (если нужно расширять)
+### 5.3 Carcass+Flex модель памяти (S5.2 - MEMORY CANON)
 НЕ “зоопарк таблиц”.
-Минимальный каркас + JSONB flex.
+Минимальный каркас + JSONB flex. Детали зафиксированы в [MEMORY_CANON.md](file:///root/RAI_EP/docs/01_ARCHITECTURE/PRINCIPLES/MEMORY_CANON.md).
 
 Carcass (минимум 2 сущности):
 - MemoryInteraction (сырой лог)
@@ -147,26 +147,26 @@ Flex:
 - `provenance`, `confidence`, `updatedBy`, `updatedAt`
 
 Чеклист:
-- [ ] schemaKey для Interaction/Episode/Profile
-- [ ] attrs JSONB хранит расширяемые поля
-- [ ] provenance/confidence обязательны
+- [x] schemaKey для Interaction/Episode/Profile (зафиксировано в каноне)
+- [x] attrs JSONB хранит расширяемые поля (зафиксировано в каноне)
+- [x] provenance/confidence обязательны (зафиксировано в каноне)
 
 Эффект: память расширяется без переделок схемы каждый раз.
 
-### 5.4 “Память на всё время” — это политика, а не бесконечный токен-лог
-- [ ] Raw log хранить по retention (например, 6–12 месяцев) — это тех. политика
-- [ ] “Вечно” хранить Episodes + Profile (они компактные)
-- [ ] Retrieval всегда top-K + scoped по tenant/user + контекст страницы
+### 5.4 “Память на всё время” — это политика (S5.2 - MEMORY CANON)
+- [x] Raw log хранить по retention (например, 6–12 месяцев) — это тех. политика (зафиксировано)
+- [x] “Вечно” хранить Episodes + Profile (они компактные) (зафиксировано)
+- [x] Retrieval всегда top-K + scoped по tenant/user + контекст страницы (зафиксировано)
 
 Эффект: пользователь получает “вечную память”, система не задыхается.
 
 ---
 
-## 6) Безопасность памяти (non-negotiable)
-- [ ] Tenant isolation (жёстко)
-- [ ] RBAC на retrieval (роль/контекст)
-- [ ] Audit trail на чтение памяти (особенно profile)
-- [ ] “Delete my data” / purge по userId (юридическая гигиена)
+## 6) Безопасность памяти (non-negotiable) (S5.2 - MEMORY CANON)
+- [x] Tenant isolation (жёстко) (зафиксировано)
+- [x] RBAC на retrieval (роль/контекст) (зафиксировано)
+- [x] Audit trail на чтение памяти (особенно profile) (зафиксировано)
+- [x] “Delete my data” / purge по userId (зафиксировано)
 
 Эффект: память не превращается в риск.
 

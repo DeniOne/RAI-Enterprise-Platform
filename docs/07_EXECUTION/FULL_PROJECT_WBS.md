@@ -289,4 +289,10 @@ Truth-sync: `VERIFIED`
 Evidence: `apps/api/src/shared/memory/memory-adapter.interface.ts`, `apps/api/src/shared/memory/default-memory-adapter.service.ts`, `interagency/reports/2026-03-03_s5-1_memory-adapter-contract.md`
 How to verify: `cd apps/api && npx jest --runInBand src/shared/memory/memory-adapter.spec.ts src/modules/rai-chat/rai-chat.service.spec.ts`
 
+### 🌐 14.8 Memory Storage Canon (S5.2)
+- [x] **[Architecture]** **Tiered Storage**: Описание уровней хранения S/M/L Tiers.
+- [x] **[Architecture]** **Carcass+Flex**: Правила расширения памяти агента через JSONB.
+Truth-sync: `VERIFIED`
+Evidence: `docs/01_ARCHITECTURE/PRINCIPLES/MEMORY_CANON.md`, `DECISIONS.log` (AG-MEMORY-CANON-001)
+
 ### 🌐 15. Ecosystem

@@ -153,7 +153,12 @@
     *   Рефакторинг `RaiChatService` и `ExternalSignalsService` на использование адаптера.
     *   Верифицировано 10/10 тестов, изоляция тенантов сохранена.
 
-28. **CI/CD Stability (pnpm fix)** ✅:
+28. **Memory Storage Canon (S5.2)** ✅:
+    *   Сформирован канон хранения долговременной памяти `MEMORY_CANON.md` (AG-MEMORY-CANON-001).
+    *   Определены 3 уровня (S-Tier, M-Tier, L-Tier) и принцип "Carcass + Flex".
+    *   Изоляция `companyId` формально закреплена во всех слоях.
+
+29. **CI/CD Stability (pnpm fix)** ✅:
     *   Устранён конфликт версий pnpm в GitHub Actions (`Multiple versions of pnpm specified`).
     *   Ворклоу переведены на авто-детект версии из `package.json`.
     *   Обновлён `pnpm/action-setup@v4`.

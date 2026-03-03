@@ -1392,3 +1392,34 @@ Orchestrator = Brain (канон RAI_EP).
 ### Связанные документы
 - `interagency/prompts/2026-03-03_s5-1_memory-adapter-contract.md`
 - `interagency/plans/2026-03-03_s5-1_memory-adapter-contract.md`
+
+---
+
+## AG-MEMORY-CANON-001
+
+**Дата:** 2026-03-03  
+**Автор:** TECHLEAD (AI)  
+**Статус:** ACCEPTED  
+
+### Решение
+Фиксация архитектурных стандартов хранения памяти агента (`MEMORY_CANON.md`), определение уровней хранения (S/M/L Tiers) и структуры данных "Carcass + Flex" для долговременной памяти.
+
+### Scope
+- **Phase:** Gamma
+- **Sprint:** S5.2
+- **Компоненты:**
+  - `docs/01_ARCHITECTURE/PRINCIPLES/MEMORY_CANON.md`
+
+### Технические ограничения
+1. **Tenant Isolation:** Все операции консолидации и поиска ограничены `companyId`.
+2. **Expansion Model:** Любые новые метаданные в памяти хранятся в JSONB `attrs` с валидацией по `schemaKey` и обязательными `provenance/confidence`.
+3. **Retention Policy:** Разделение логики хранения: S-Tier (короткий срок), M-Tier и L-Tier (пожизненно или до запроса пользователя).
+
+### Definition of Done
+- Создан документ `MEMORY_CANON.md`.
+- Правила Carcass+Flex задокументированы и залинкованы в `RAI_AGENT_OS_IMPLEMENTATION_PLAN.md`.
+
+### Связанные документы
+- `interagency/prompts/2026-03-03_s5-2_memory-storage-canon.md`
+- `interagency/plans/2026-03-03_s5-2_memory-storage-canon.md`
+- `docs/00_STRATEGY/STAGE 2/RAI_AGENT_OS_IMPLEMENTATION_PLAN.md`
