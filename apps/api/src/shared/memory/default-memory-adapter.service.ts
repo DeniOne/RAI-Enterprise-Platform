@@ -1,53 +1,86 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { Prisma } from "@rai/prisma-client";
 import {
     MemoryAdapter,
     MemoryContext,
     MemoryInteraction,
     MemoryRetrieveOptions,
 } from "./memory-adapter.interface";
-import { MemoryManager } from "./memory-manager.service";
 import {
     EpisodicRetrievalResponse,
     EpisodicRetrievalService,
 } from "./episodic-retrieval.service";
-import { RaiChatMemoryPolicy } from "./rai-chat-memory.policy";
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class DefaultMemoryAdapter implements MemoryAdapter {
     private readonly logger = new Logger(DefaultMemoryAdapter.name);
 
     constructor(
-        private readonly memoryManager: MemoryManager,
         private readonly episodicRetrieval: EpisodicRetrievalService,
+        private readonly prisma: PrismaService,
     ) { }
 
     async appendInteraction(
         ctx: MemoryContext,
         interaction: MemoryInteraction,
     ): Promise<void> {
-        const { companyId, traceId, sessionId, metadata } = ctx;
+        const { companyId, traceId, sessionId, userId, metadata } = ctx;
 
         try {
-            await this.memoryManager.store(
-                interaction.userMessage,
-                interaction.embedding,
-                {
-                    companyId,
-                    traceId,
-                    sessionId,
-                    source: (metadata?.source as string) || "rai-chat",
-                    memoryType: (metadata?.memoryType as string) || "EPISODIC",
-                    metadata: {
-                        ...metadata,
-                        agentResponse: interaction.agentResponse.slice(0, 500), // Сохраняем кусок ответа для контекста
-                    },
-                },
-                RaiChatMemoryPolicy,
+            const source = (metadata?.source as string) || "rai-chat";
+            const content = [
+                `user: ${interaction.userMessage}`,
+                `assistant: ${interaction.agentResponse}`,
+            ].join("\n\n");
+
+            const safeMetadata = this.sanitizeJsonValue(metadata ?? {}, new WeakSet());
+            const safeToolCalls = this.sanitizeJsonValue(
+                interaction.toolCalls ?? [],
+                new WeakSet(),
             );
 
-            this.logger.debug(
-                `memory_interaction_appended companyId=${companyId} traceId=${traceId}`,
-            );
+            const attrs: Prisma.InputJsonValue = {
+                schemaKey: "memory.interaction.v1",
+                provenance: "system",
+                confidence: 1,
+                traceId,
+                source,
+                toolCalls: safeToolCalls as Prisma.InputJsonValue,
+                userMessage: interaction.userMessage,
+                agentResponse: interaction.agentResponse.slice(0, 500),
+                metadata: safeMetadata as Prisma.InputJsonValue,
+            };
+
+            await this.prisma.$transaction(async (tx) => {
+                const created = await tx.memoryInteraction.create({
+                    data: {
+                        companyId,
+                        sessionId,
+                        userId,
+                        content,
+                        attrs,
+                    },
+                });
+
+                const embedding = interaction.embedding;
+                if (embedding && embedding.length > 0) {
+                    const isValidEmbedding = Array.isArray(embedding) && embedding.every(n => typeof n === "number" && Number.isFinite(n));
+                    if (!isValidEmbedding) {
+                        throw new Error("Invalid embedding vector: contains non-finite numbers");
+                    }
+                    const vectorStr = `[${embedding.join(',')}]`;
+                    await tx.$executeRawUnsafe(
+                        `UPDATE memory_interactions SET embedding = $1::vector WHERE id = $2`,
+                        vectorStr,
+                        created.id
+                    );
+                }
+
+                this.logger.debug(
+                    `memory_interaction_appended companyId=${companyId} traceId=${traceId} id=${created.id}`,
+                );
+            });
         } catch (err) {
             this.logger.warn(
                 `memory_interaction_append_error companyId=${companyId} traceId=${traceId} message=${String(
@@ -103,5 +136,75 @@ export class DefaultMemoryAdapter implements MemoryAdapter {
         this.logger.debug(
             `update_profile_stub companyId=${ctx.companyId} traceId=${ctx.traceId}`,
         );
+    }
+
+    private sanitizeJsonValue(
+        value: unknown,
+        seen: WeakSet<object>,
+    ): Prisma.InputJsonValue | null {
+        if (value === null || value === undefined) {
+            return null;
+        }
+
+        if (
+            typeof value === "string" ||
+            typeof value === "boolean" ||
+            (typeof value === "number" && Number.isFinite(value))
+        ) {
+            return value;
+        }
+
+        if (typeof value === "number") {
+            return `[NonFiniteNumber:${String(value)}]`;
+        }
+
+        if (typeof value === "bigint") {
+            return value.toString();
+        }
+
+        if (typeof value === "function" || typeof value === "symbol") {
+            return null;
+        }
+
+        if (value instanceof Date) {
+            return value.toISOString();
+        }
+
+        if (Array.isArray(value)) {
+            return value.map((item) => this.sanitizeJsonValue(item, seen));
+        }
+
+        if (typeof value === "object") {
+            if (seen.has(value)) {
+                return "[Circular]";
+            }
+            seen.add(value);
+
+            if (value instanceof Map) {
+                const mapped: Record<string, Prisma.InputJsonValue | null> = {};
+                for (const [key, entryValue] of value.entries()) {
+                    mapped[String(key)] = this.sanitizeJsonValue(entryValue, seen);
+                }
+                seen.delete(value);
+                return mapped;
+            }
+
+            if (value instanceof Set) {
+                const result = Array.from(value).map((item) =>
+                    this.sanitizeJsonValue(item, seen),
+                );
+                seen.delete(value);
+                return result;
+            }
+
+            const sanitized: Record<string, Prisma.InputJsonValue | null> = {};
+            for (const [key, entryValue] of Object.entries(value)) {
+                sanitized[key] = this.sanitizeJsonValue(entryValue, seen);
+            }
+            seen.delete(value);
+            return sanitized;
+        }
+
+        return `[Unsupported:${typeof value}]`;
     }
 }

@@ -7,6 +7,7 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
+import { CurrentUser } from "../../shared/auth/current-user.decorator";
 import { TenantContextService } from "../../shared/tenant-context/tenant-context.service";
 import { RaiChatRequestDto, RaiChatResponseDto } from "./dto/rai-chat.dto";
 import { RaiChatService } from "./rai-chat.service";
@@ -19,10 +20,13 @@ export class RaiChatController {
   constructor(
     private readonly tenantContext: TenantContextService,
     private readonly raiChatService: RaiChatService,
-  ) {}
+  ) { }
 
   @Post()
-  async handleChat(@Body() body: RaiChatRequestDto): Promise<RaiChatResponseDto> {
+  async handleChat(
+    @Body() body: RaiChatRequestDto,
+    @CurrentUser() user: any,
+  ): Promise<RaiChatResponseDto> {
     const companyId = this.tenantContext.getCompanyId();
 
     if (!companyId) {
@@ -32,14 +36,14 @@ export class RaiChatController {
 
     const workspaceContextSummary = body.workspaceContext
       ? {
-          route: body.workspaceContext.route,
-          activeEntityRefsCount: body.workspaceContext.activeEntityRefs?.length ?? 0,
-          activeEntityKinds:
-            body.workspaceContext.activeEntityRefs?.map((ref) => ref.kind) ?? [],
-          hasFilters: Boolean(body.workspaceContext.filters),
-          hasSelectedRowSummary: Boolean(body.workspaceContext.selectedRowSummary),
-          lastUserAction: body.workspaceContext.lastUserAction ?? null,
-        }
+        route: body.workspaceContext.route,
+        activeEntityRefsCount: body.workspaceContext.activeEntityRefs?.length ?? 0,
+        activeEntityKinds:
+          body.workspaceContext.activeEntityRefs?.map((ref) => ref.kind) ?? [],
+        hasFilters: Boolean(body.workspaceContext.filters),
+        hasSelectedRowSummary: Boolean(body.workspaceContext.selectedRowSummary),
+        lastUserAction: body.workspaceContext.lastUserAction ?? null,
+      }
       : null;
 
     this.logger.log(
@@ -48,6 +52,6 @@ export class RaiChatController {
       )}`,
     );
 
-    return this.raiChatService.handleChat(body, companyId);
+    return this.raiChatService.handleChat(body, companyId, user?.userId);
   }
 }

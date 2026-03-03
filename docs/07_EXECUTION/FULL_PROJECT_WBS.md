@@ -253,6 +253,8 @@ Evidence: `apps/api/src/modules/rai-chat/tools/*`, `interagency/reports/2026-03-
 Evidence: `apps/api/src/modules/rai-chat/widgets/*`, `apps/web/components/ai-chat/AiChatWidgetsRail.tsx`, `interagency/reports/2026-03-01_p1-2_widgets-schema-renderer.md`
 - [x] **[Backend]** **Chat Memory (P1.3)**: recall + append в `RaiChatService` с tenant-scope и лимитами.
 Evidence: `apps/api/src/modules/rai-chat/rai-chat.service.ts`, `apps/api/src/modules/rai-chat/rai-chat.service.spec.ts`, `interagency/reports/2026-03-02_p1-3_agent-chat-memory.md`
+- [x] **[Backend]** **Memory Adapter Write Routing (S5.4)**: `appendInteraction` переведен на `MemoryInteraction`, `userId` прокинут сквозь RAI Chat, embedding пишется транзакционно, JSON attrs санитизируется рекурсивно.
+Evidence: `apps/api/src/shared/memory/default-memory-adapter.service.ts`, `apps/api/src/shared/memory/memory-adapter.spec.ts`, `interagency/reports/2026-03-03_s5-4_adapter-write-routing.md`
 - [ ] **[Docs]** **Status Truth Sync (P1.4)**: execution docs and checklists aligned with code evidence.
 Truth-sync: `IN_PROGRESS`, admission `AG-STATUS-TRUTH-001 = ACCEPTED`
 

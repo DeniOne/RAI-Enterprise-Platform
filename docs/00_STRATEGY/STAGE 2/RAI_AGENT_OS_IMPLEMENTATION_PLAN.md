@@ -191,8 +191,8 @@ Flex:
 Эффект: “Comet-эффект” — агент реагирует на страницу.
 
 ### Phase C (CRITICAL)
-- [ ] Подключить MemoryAdapter к существующей памяти
-- [ ] Включить retrieve → prompt composition → append
+- [x] Подключить MemoryAdapter к существующей памяти
+- [x] Включить retrieve → prompt composition → append
 
 Эффект: пользовательский контекст становится долговременным.
 

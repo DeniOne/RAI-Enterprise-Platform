@@ -45,6 +45,7 @@ export class RaiChatService {
   async handleChat(
     request: RaiChatRequestDto,
     companyId: string,
+    userId?: string,
   ): Promise<RaiChatResponseDto> {
     const memoryConfig = getRaiChatMemoryConfig();
     const traceId = request.clientTraceId || `tr_${randomUUID()}`;
@@ -106,6 +107,7 @@ export class RaiChatService {
       companyId,
       traceId,
       threadId,
+      userId,
       signals: request.externalSignals,
       feedback: request.advisoryFeedback,
     });
@@ -165,6 +167,7 @@ export class RaiChatService {
           companyId,
           traceId,
           sessionId: threadId,
+          userId,
           metadata: {
             route: request.workspaceContext?.route,
           },

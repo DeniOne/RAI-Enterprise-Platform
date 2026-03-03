@@ -209,3 +209,9 @@
 - Старая модель `MemoryEntry` оставлена для обратной совместимости.
 - Созданы TypeScript-типы (`memory.types.ts`).
 - Все чек-листы (`INDEX.md`, `FULL_PROJECT_WBS.md`, `RAI_AGENT_OS_IMPLEMENTATION_PLAN.md`) обновлены. Отчет зафинализирован (APPROVED).
+
+### Logical Action (2026-03-03 14:10 UTC)
+- **S5.4 Adapter Write Routing**: `DefaultMemoryAdapter.appendInteraction` переведен на прямую запись в `MemoryInteraction` через `PrismaService`.
+- `userId` прокинут из JWT сквозь `RaiChatController -> RaiChatService -> ExternalSignalsService -> MemoryAdapter`.
+- Для `attrs` внедрена рекурсивная JSON sanitization; циклические и невалидные поля больше не обнуляют весь payload.
+- `embedding` пишется транзакционно через raw vector update внутри `$transaction`; targeted tests и `apps/api` tsc прошли.

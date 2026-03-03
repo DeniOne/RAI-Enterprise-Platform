@@ -4,6 +4,7 @@ export interface MemoryContext {
     companyId: string;
     traceId: string;
     sessionId?: string;
+    userId?: string;
     metadata?: Record<string, unknown>;
 }
 

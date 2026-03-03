@@ -167,3 +167,10 @@
     *   Устранён конфликт версий pnpm в GitHub Actions (`Multiple versions of pnpm specified`).
     *   Ворклоу переведены на авто-детект версии из `package.json`.
     *   Обновлён `pnpm/action-setup@v4`.
+
+31. **Memory Adapter Bugfixes (S5.4)** ✅:
+    *   `DefaultMemoryAdapter.appendInteraction` переведен на новую таблицу `MemoryInteraction`.
+    *   `userId` прокинут из JWT через `RaiChatController` / `RaiChatService` / `ExternalSignalsService` в carcass памяти.
+    *   Внедрена recursive JSON sanitization для `attrs.metadata` и `attrs.toolCalls` без обнуления всего payload.
+    *   `embedding` пишется транзакционно через `create + raw vector update`; невалидные векторы отсекаются.
+    *   Верификация: `apps/api` tsc PASS, targeted jest PASS, ревью APPROVED.

@@ -24,6 +24,7 @@ interface ProcessExternalSignalsParams {
   companyId: string;
   traceId: string;
   threadId: string;
+  userId?: string;
   signals?: ExternalSignalDto[];
   feedback?: ExternalAdvisoryFeedbackDto;
 }
@@ -47,7 +48,7 @@ export class ExternalSignalsService {
     let advisory: ExternalAdvisoryDto | undefined;
 
     if (signals.length > 0) {
-      await this.ingestSignals(signals, params.companyId, params.traceId);
+      await this.ingestSignals(signals, params.companyId, params.traceId, params.userId);
       advisory = this.buildAdvisory(signals, params.traceId);
       await this.auditService.log({
         action: "EXTERNAL_ADVISORY_GENERATED",
@@ -65,6 +66,7 @@ export class ExternalSignalsService {
       companyId: params.companyId,
       traceId: params.traceId,
       threadId: params.threadId,
+      userId: params.userId,
       advisory,
       feedback: params.feedback,
     });
@@ -76,6 +78,7 @@ export class ExternalSignalsService {
     signals: ExternalSignalDto[],
     companyId: string,
     traceId: string,
+    userId?: string,
   ): Promise<void> {
     for (const signal of signals) {
       if (signal.kind === ExternalSignalKind.Ndvi) {
@@ -123,6 +126,7 @@ export class ExternalSignalsService {
         {
           companyId,
           traceId,
+          userId,
           metadata: {
             source: "external-signal",
             memoryType: "CONTEXT",
@@ -145,6 +149,7 @@ export class ExternalSignalsService {
     companyId: string;
     traceId: string;
     threadId: string;
+    userId?: string;
     advisory?: ExternalAdvisoryDto;
     feedback?: ExternalAdvisoryFeedbackDto;
   }): Promise<boolean> {
@@ -172,6 +177,7 @@ export class ExternalSignalsService {
         companyId: input.companyId,
         traceId: input.traceId,
         sessionId: input.threadId,
+        userId: input.userId,
         metadata: {
           source: "external-advisory-feedback",
           memoryType: "EPISODIC",
