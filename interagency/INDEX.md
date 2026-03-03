@@ -2,10 +2,19 @@
 Актуальные документы (обновлять по мере работы).
 
 ## Активные промты (в работе)
+- `interagency/prompts/2026-03-03_s1-3_topnav-role-switch-hotfix.md` [DONE]
+  - План: `interagency/plans/2026-03-03_s1-3_topnav-role-switch-hotfix.md` [ACCEPTED]
+  - Отчёт: `interagency/reports/2026-03-03_s1-3_topnav-role-switch-hotfix.md`
+  - Статус: hotfix завершён. `TopNav` и `GovernanceBar` канонически оформлены, `tsc` PASS, manual check PASS.
+
 - `interagency/prompts/2026-03-03_s2-2_workspace-context-load-rule.md` [DONE]
   - План: `interagency/plans/2026-03-03_s2-2_workspace-context-load-rule.md` [ACCEPTED]
   - Отчёт: `interagency/reports/2026-03-03_s2-2_workspace-context-load-rule.md`
   - Статус: РЕАЛИЗАЦИЯ ЗАВЕРШЕНА. Gatekeeper-слой (truncation, flat filters validation) внедрен в store и верифицирован unit-тестами.
+
+- `interagency/prompts/2026-03-03_s4-1_chat-widget-logic.md` [READY]
+  - План: еще не создан
+  - Статус: промт создан. Требует динамизации виджетов на основе контекста.
 
 - `interagency/prompts/2026-03-03_s3-2_typed-tool-calls.md` [DONE]
   - План: `interagency/plans/2026-03-03_s3-2_typed-tool-calls.md` [ACCEPTED]

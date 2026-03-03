@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuthority, UserRole } from '@/core/governance/AuthorityContext';
 import { useAuthSimulationStore } from '@/core/governance/Providers';
 import { Shield, Activity, Fingerprint, ChevronDown } from 'lucide-react';
@@ -17,6 +17,7 @@ export const GovernanceBar: React.FC = () => {
     const { currentRole, setRole } = useAuthSimulationStore();
     const { canOverride, canApprove } = useAuthority();
     const { traceId, integrityStatus } = useSessionIntegrity();
+    const [isRoleMenuOpen, setIsRoleMenuOpen] = useState(false);
 
     return (
         <header className="h-16 border-b border-black/5 bg-white/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-50">
@@ -53,17 +54,37 @@ export const GovernanceBar: React.FC = () => {
                 </div>
 
                 {/* Role Simulator Dropdown */}
-                <div className="relative group">
+                <div
+                    className="relative"
+                    onMouseEnter={() => setIsRoleMenuOpen(true)}
+                    onMouseLeave={() => setIsRoleMenuOpen(false)}
+                >
                     <button className="flex items-center space-x-2 px-4 py-2 bg-black text-white rounded-xl text-sm font-medium hover:bg-black/90 transition-all shadow-lg shadow-black/10">
                         <span>Simulate: {currentRole}</span>
-                        <ChevronDown className="w-4 h-4 opacity-50" />
+                        <ChevronDown className={cn("w-4 h-4 opacity-50 transition-transform duration-200", isRoleMenuOpen && "rotate-180")} />
                     </button>
 
-                    <div className="absolute right-0 mt-2 w-48 bg-white border border-black/5 rounded-2xl shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 p-2 z-[60]">
+                    <div
+                        className={cn(
+                            "absolute right-0 top-full pt-2 w-48 z-[60]",
+                            isRoleMenuOpen ? "pointer-events-auto" : "pointer-events-none",
+                        )}
+                    >
+                        <div
+                            className={cn(
+                                "rounded-2xl border border-black/5 bg-white p-2 shadow-xl transition-all duration-200",
+                                isRoleMenuOpen
+                                    ? "translate-y-0 opacity-100"
+                                    : "-translate-y-1 opacity-0",
+                            )}
+                        >
                         {(['CEO', 'DIRECTOR', 'MANAGER', 'AGRONOMIST', 'GUEST'] as UserRole[]).map((role) => (
                             <button
                                 key={role}
-                                onClick={() => setRole(role)}
+                                onClick={() => {
+                                    setRole(role);
+                                    setIsRoleMenuOpen(false);
+                                }}
                                 className={cn(
                                     "w-full text-left px-3 py-2 rounded-xl text-xs transition-colors",
                                     currentRole === role ? "bg-gray-100 font-medium" : "hover:bg-gray-50 text-gray-500"
@@ -72,6 +93,7 @@ export const GovernanceBar: React.FC = () => {
                                 {role}
                             </button>
                         ))}
+                        </div>
                     </div>
                 </div>
             </div>

@@ -32,8 +32,8 @@
 ### 1.2 TopNav (горизонтальная навигация)
 - [x] **Цель:** навигация не съедает ширину, поддерживается active route и группы меню.
 - **Статус truth-sync:** `VERIFIED` (см. S1.2)
-- **Доказательство:** [TopNav.tsx](file:///root/RAI_EP/apps/web/components/ui/TopNav.tsx), отчет [2026-03-02_s1-2_topnav-navigation.md](file:///root/RAI_EP/interagency/reports/2026-03-02_s1-2_topnav-navigation.md)
-- **Детали:** Sidebar удален, все ссылки перенесены в TopNav. tsc PASS.
+- **Доказательство:** [TopNav.tsx](file:///root/RAI_EP/apps/web/components/navigation/TopNav.tsx), отчет [2026-03-02_s1-2_topnav-navigation.md](file:///root/RAI_EP/interagency/reports/2026-03-02_s1-2_topnav-navigation.md), hotfix-отчет [2026-03-03_s1-3_topnav-role-switch-hotfix.md](file:///root/RAI_EP/interagency/reports/2026-03-03_s1-3_topnav-role-switch-hotfix.md)
+- **Детали:** Sidebar удален, все ссылки перенесены в TopNav. Иконки вынесены в головное меню, dropdown ролей закреплён в GovernanceBar. tsc PASS, manual check PASS.
 
 Эффект: навигация не съедает ширину, рабочая область шире.
 

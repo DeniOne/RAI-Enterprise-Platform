@@ -85,6 +85,11 @@
     *   Реализована доменная группировка меню (Урожай, CRM, Финансы, Коммерция, Настройки).
     *   Интегрирован визуальный отклик в RAI Output (авто-скролл и подсветка виджетов из мини-инбокса).
     *   Тесты Кодекса PASS (189/189). Ревью APPROVED (2026-03-03).
+21. **TopNav / Role Switch Hotfix (S1.3)** ✅:
+    *   Внеплановые UI-правки проведены через отдельный canonical hotfix-контур.
+    *   `TopNav`: иконки вынесены в головное меню, убран дублирующий заголовок в dropdown, длинные названия нормализованы под двухстрочный перенос.
+    *   `GovernanceBar`: роль оставлена только в верхней control panel, dropdown ролей переведён на устойчивое open-state без hover-gap.
+    *   Верификация: `apps/web` tsc PASS, manual check PASS. Ревью APPROVED (2026-03-03).
 
     *   Верификация: web-spec PASS (5 suites / 11 tests), `apps/web` tsc PASS, `apps/api` controller spec PASS. Ревью APPROVED (2026-03-03).
 

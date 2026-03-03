@@ -61,11 +61,15 @@ interface TopNavProps {
 }
 
 function splitLabel(label: string): string[] {
-    if (!label.includes(' ')) {
-        return [label];
+    if (label === 'Управление Урожаем') {
+        return ['Управление', 'Урожаем'];
     }
 
-    return label.split(' ');
+    if (label === 'Производство (Грипил)') {
+        return ['Производство', '(Грипил)'];
+    }
+
+    return [label];
 }
 
 function getItemIcon(item: NavItem): LucideIcon {
@@ -140,16 +144,6 @@ export function TopNav({ role }: TopNavProps) {
         return (
             <div className="absolute left-0 top-full z-50 mt-2 min-w-[300px] rounded-[24px] border border-black/10 bg-white p-3 shadow-[0_20px_60px_rgba(15,23,42,0.12)]">
                 <div className="space-y-1">
-                    <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                        <div className="flex items-center gap-3 text-[18px] leading-6 text-slate-900">
-                            {(() => {
-                                const Icon = getItemIcon(item);
-                                return <Icon size={18} strokeWidth={1.7} className="shrink-0 text-slate-500" />;
-                            })()}
-                            <span className="font-medium">{item.label}</span>
-                        </div>
-                    </div>
-
                     {items.map((subItem) => {
                         const hasNestedItems = Boolean(subItem.subItems?.length);
                         const isSubItemActive = isItemActive(subItem, pathname);
@@ -213,10 +207,12 @@ export function TopNav({ role }: TopNavProps) {
                 </Link>
             </div>
 
-            <nav className="flex h-full min-w-0 items-center gap-1.5">
+            <nav className="flex h-full min-w-0 items-center gap-2.5">
                 {navItems.map((item) => {
                     const isActive = activeRootId === item.id;
                     const labelLines = splitLabel(item.label);
+                    const isCompactTwoLine = labelLines.length > 1;
+                    const Icon = getItemIcon(item);
 
                     return (
                         <div
@@ -227,22 +223,44 @@ export function TopNav({ role }: TopNavProps) {
                         >
                             <button
                                 className={clsx(
-                                    'flex min-h-10 items-center gap-2 rounded-2xl px-4 py-2 text-sm uppercase tracking-[0.06em] transition-colors',
+                                    'flex min-h-10 items-center gap-2.5 rounded-2xl px-4 py-2 text-[15px] transition-all duration-200',
                                     isActive
-                                        ? 'bg-slate-50 text-slate-900'
-                                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900',
+                                        ? 'bg-slate-50 text-[#1f2a44]'
+                                        : 'text-slate-500 hover:bg-slate-50 hover:text-[#1f2a44]',
                                 )}
                             >
-                                <span className="flex flex-col items-start leading-[1.05]">
+                                <Icon
+                                    size={16}
+                                    strokeWidth={1.7}
+                                    className={clsx(
+                                        'shrink-0',
+                                        isActive ? 'text-slate-600' : 'text-slate-400',
+                                    )}
+                                />
+                                <span
+                                    className={clsx(
+                                        'flex font-medium tracking-[0.01em] text-left',
+                                        isCompactTwoLine ? 'flex-col items-start leading-[0.96]' : 'items-center whitespace-nowrap',
+                                    )}
+                                >
                                     {labelLines.map((line, index) => (
-                                        <span key={`${item.id}-${index}`} className="whitespace-nowrap">
+                                        <span
+                                            key={`${item.id}-${index}`}
+                                            className={clsx(
+                                                'whitespace-nowrap',
+                                                isCompactTwoLine && index === 1 && 'mt-0.5',
+                                            )}
+                                        >
                                             {line}
                                         </span>
                                     ))}
                                 </span>
                                 <ChevronDown
-                                    size={14}
-                                    className={clsx('shrink-0 transition-transform duration-200', openMenuId === item.id && 'rotate-180')}
+                                    size={13}
+                                    className={clsx(
+                                        'shrink-0 text-slate-400 transition-transform duration-200',
+                                        openMenuId === item.id && 'rotate-180 text-slate-600',
+                                    )}
                                 />
                             </button>
 
@@ -252,12 +270,7 @@ export function TopNav({ role }: TopNavProps) {
                 })}
             </nav>
 
-            <div className="ml-auto flex items-center gap-4">
-                <div className="flex items-center gap-2 rounded-full border border-slate-100 bg-slate-50 px-3 py-1.5">
-                    <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
-                    <span className="font-mono text-[10px] uppercase tracking-wider text-slate-500">{role}</span>
-                </div>
-            </div>
+            <div className="ml-auto" />
         </header>
     );
 }

@@ -238,3 +238,8 @@
 - [x] **[WEB]** Integrate signal-to-widget highlighting in `RaiOutputOverlay` <!-- id: 17.8 -->
 - [x] **[TEST]** Verify role-based availability for ADMIN/AGRONOMIST <!-- id: 17.9 -->
 - [x] **[TEST]** Pass Codex prompt tests (189/189) <!-- id: 17.10 -->
+## TopNav / Role Switch Hotfix (S1.3) ✅
+- [x] **[WEB]** Move section icons into top-level `TopNav` menu and remove dropdown header duplication <!-- id: 18.5 -->
+- [x] **[WEB]** Keep role indicator only in `GovernanceBar` and fix role dropdown hover-gap <!-- id: 18.6 -->
+- [x] **[TEST]** Pass `apps/web` TypeScript verification after hotfix <!-- id: 18.7 -->
+- [x] **[REVIEW]** Approve hotfix via separate interagency prompt/plan/report cycle <!-- id: 18.8 -->
