@@ -12,6 +12,9 @@
   - Отчёт: `interagency/reports/2026-03-03_s2-2_workspace-context-load-rule.md`
   - Статус: РЕАЛИЗАЦИЯ ЗАВЕРШЕНА. Gatekeeper-слой (truncation, flat filters validation) внедрен в store и верифицирован unit-тестами.
 
+- `interagency/prompts/2026-03-03_s5-3_memory-schema-implementation.md` [DONE]
+  - План: `interagency/plans/2026-03-03_s5-3_memory-schema-implementation.md` [ACCEPTED]
+  - Отчёт: `interagency/reports/2026-03-03_s5-3_memory-schema-implementation.md` [APPROVED] Физическая схема памяти (Prisma) создана.
 - `interagency/prompts/2026-03-03_s5-2_memory-storage-canon.md` [DONE]
   - План: `interagency/plans/2026-03-03_s5-2_memory-storage-canon.md` [ACCEPTED]
   - Отчёт: `interagency/reports/2026-03-03_s5-2_memory-storage-canon.md` [APPROVED] Формализован канон памяти (3-Tiers, Carcass+Flex).

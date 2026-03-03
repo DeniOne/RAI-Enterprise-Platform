@@ -134,13 +134,14 @@
 
 Эффект: не ломаем существующее, расширяем только по необходимости.
 
-### 5.3 Carcass+Flex модель памяти (S5.2 - MEMORY CANON)
+### 5.3 Carcass+Flex модель памяти (S5.2 - MEMORY CANON, S5.3 - PRISMA SCHEMA)
 НЕ “зоопарк таблиц”.
 Минимальный каркас + JSONB flex. Детали зафиксированы в [MEMORY_CANON.md](file:///root/RAI_EP/docs/01_ARCHITECTURE/PRINCIPLES/MEMORY_CANON.md).
 
 Carcass (минимум 2 сущности):
-- MemoryInteraction (сырой лог)
-- MemoryEpisode (сжатые эпизоды)
+- [x] `MemoryInteraction` (сырой лог) реализовано в Prisma.
+- [x] `MemoryEpisode` (сжатые эпизоды) реализовано в Prisma.
+- [x] `MemoryProfile` (L-Tier) реализовано в Prisma.
 
 Flex:
 - `attrs` JSONB под `schemaKey`

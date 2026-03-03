@@ -1,4 +1,3 @@
-import { MemoryInteraction } from "./memory-adapter.interface";
 import { EpisodicRetrievalResponse } from "./episodic-retrieval.service";
 
 export interface MemoryContext {

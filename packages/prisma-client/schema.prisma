@@ -1198,6 +1198,68 @@ model MemoryEntry {
   @@map("memory_entries")
 }
 
+// --- Carcass + Flex Memory System (AG-MEMORY-CANON-001) ---
+
+model MemoryInteraction {
+  id         String                       @id @default(cuid())
+  content    String                       @db.Text
+  embedding  Unsupported("vector(1536)")?
+  
+  // Carcass
+  companyId  String
+  userId     String?
+  sessionId  String?
+
+  // Flex
+  attrs      Json                         @default("{}") // { schemaKey, provenance, confidence, ... }
+  
+  createdAt  DateTime                     @default(now())
+  updatedAt  DateTime                     @updatedAt
+
+  @@index([companyId])
+  @@index([sessionId])
+  @@map("memory_interactions")
+}
+
+model MemoryEpisode {
+  id         String                       @id @default(cuid())
+  content    String                       @db.Text
+  embedding  Unsupported("vector(1536)")?
+  
+  // Carcass
+  companyId  String
+  userId     String?
+  
+  // Flex
+  attrs      Json                         @default("{}") // { schemaKey, provenance, confidence, ... }
+  
+  createdAt  DateTime                     @default(now())
+  updatedAt  DateTime                     @updatedAt
+
+  @@index([companyId])
+  @@index([userId])
+  @@map("memory_episodes")
+}
+
+model MemoryProfile {
+  id         String                       @id @default(cuid())
+  content    String                       @db.Text
+  
+  // Carcass
+  companyId  String
+  userId     String?
+  
+  // Flex
+  attrs      Json                         @default("{}") // { schemaKey, provenance, confidence, ... }
+  
+  createdAt  DateTime                     @default(now())
+  updatedAt  DateTime                     @updatedAt
+
+  @@unique([companyId, userId]) // Профиль один на тенанта (null) или пользователя (userId)
+  @@index([companyId])
+  @@map("memory_profiles")
+}
+
 // --- CRM Models ---
 
 model Deal {

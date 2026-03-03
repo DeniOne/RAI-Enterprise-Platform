@@ -158,7 +158,12 @@
     *   Определены 3 уровня (S-Tier, M-Tier, L-Tier) и принцип "Carcass + Flex".
     *   Изоляция `companyId` формально закреплена во всех слоях.
 
-29. **CI/CD Stability (pnpm fix)** ✅:
+29. **Memory Schema Implementation (S5.3)** ✅:
+    *   Добавлены модели `MemoryInteraction`, `MemoryEpisode`, `MemoryProfile` в Prisma.
+    *   Сохранена старая модель `MemoryEntry` для обратной совместимости.
+    *   Созданы DTO типы в `memory.types.ts` и соблюдена изоляция.
+
+30. **CI/CD Stability (pnpm fix)** ✅:
     *   Устранён конфликт версий pnpm в GitHub Actions (`Multiple versions of pnpm specified`).
     *   Ворклоу переведены на авто-детект версии из `package.json`.
     *   Обновлён `pnpm/action-setup@v4`.

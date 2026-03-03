@@ -295,4 +295,10 @@ How to verify: `cd apps/api && npx jest --runInBand src/shared/memory/memory-ada
 Truth-sync: `VERIFIED`
 Evidence: `docs/01_ARCHITECTURE/PRINCIPLES/MEMORY_CANON.md`, `DECISIONS.log` (AG-MEMORY-CANON-001)
 
+### 🌐 14.9 Memory Schema Implementation (S5.3)
+- [x] **[Database]** **Memory DB Schema**: Добавлены Prisma-модели `MemoryInteraction`, `MemoryEpisode`, `MemoryProfile`.
+- [x] **[Types]** **Memory DTOs**: Zod/TS типы определены в `shared/memory`.
+Truth-sync: `VERIFIED`
+Evidence: `packages/prisma-client/schema.prisma`, `interagency/reports/2026-03-03_s5-3_memory-schema-implementation.md`
+
 ### 🌐 15. Ecosystem
