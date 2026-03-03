@@ -255,6 +255,8 @@ Evidence: `apps/api/src/modules/rai-chat/widgets/*`, `apps/web/components/ai-cha
 Evidence: `apps/api/src/modules/rai-chat/rai-chat.service.ts`, `apps/api/src/modules/rai-chat/rai-chat.service.spec.ts`, `interagency/reports/2026-03-02_p1-3_agent-chat-memory.md`
 - [x] **[Backend]** **Memory Adapter Write Routing (S5.4)**: `appendInteraction` переведен на `MemoryInteraction`, `userId` прокинут сквозь RAI Chat, embedding пишется транзакционно, JSON attrs санитизируется рекурсивно.
 Evidence: `apps/api/src/shared/memory/default-memory-adapter.service.ts`, `apps/api/src/shared/memory/memory-adapter.spec.ts`, `interagency/reports/2026-03-03_s5-4_adapter-write-routing.md`
+- [x] **[Backend]** **SupervisorAgent API Integration (Phase B closeout)**: orchestration вынесена в `SupervisorAgent`, `RaiChatService` оставлен thin facade.
+Evidence: `apps/api/src/modules/rai-chat/supervisor-agent.service.ts`, `apps/api/src/modules/rai-chat/supervisor-agent.service.spec.ts`, `interagency/reports/2026-03-03_s2-c_supervisor-agent-api-integration.md`
 - [ ] **[Docs]** **Status Truth Sync (P1.4)**: execution docs and checklists aligned with code evidence.
 Truth-sync: `IN_PROGRESS`, admission `AG-STATUS-TRUTH-001 = ACCEPTED`
 

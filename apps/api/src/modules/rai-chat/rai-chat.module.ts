@@ -7,12 +7,14 @@ import { RaiToolsRegistry } from "./tools/rai-tools.registry";
 import { SatelliteModule } from "../satellite/satellite.module";
 import { ExternalSignalsService } from "./external-signals.service";
 import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
+import { SupervisorAgent } from "./supervisor-agent.service";
 
 @Module({
   imports: [AuthModule, TenantContextModule, SatelliteModule],
   controllers: [RaiChatController],
   providers: [
     RaiChatService,
+    SupervisorAgent,
     RaiToolsRegistry,
     ExternalSignalsService,
     RaiChatWidgetBuilder,

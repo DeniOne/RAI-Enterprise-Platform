@@ -220,3 +220,8 @@
 - Выполнен truth-sync `Phase B` в Agent OS Implementation Plan.
 - Подтверждено, что `structured widgets справа` уже реализованы в backend/web и не являются открытым хвостом.
 - Подтверждено, что единственный незакрытый пункт `Phase B` — интеграция `SupervisorAgent` в API.
+
+### Logical Action (2026-03-03 15:05 UTC)
+- Реализован `SupervisorAgent` в `apps/api/src/modules/rai-chat/supervisor-agent.service.ts`.
+- Orchestration flow вынесен из `RaiChatService` в отдельный agent-layer без поломки контракта `POST /api/rai/chat`.
+- `Phase B` закрыта: оба пункта rollout-блока теперь выполнены и синхронизированы с interagency/docs/memory-bank.

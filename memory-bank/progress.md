@@ -174,3 +174,9 @@
     *   Внедрена recursive JSON sanitization для `attrs.metadata` и `attrs.toolCalls` без обнуления всего payload.
     *   `embedding` пишется транзакционно через `create + raw vector update`; невалидные векторы отсекаются.
     *   Верификация: `apps/api` tsc PASS, targeted jest PASS, ревью APPROVED.
+
+32. **SupervisorAgent API Integration (Phase B closeout)** ✅:
+    *   Создан `SupervisorAgent` как отдельный orchestration layer для `rai-chat`.
+    *   `RaiChatService` превращен в thin facade над `SupervisorAgent`.
+    *   Сохранены typed tools, widgets, memory, advisory и append-flow без ломки API-контракта.
+    *   Верификация: `apps/api` tsc PASS, targeted jest PASS, ревью APPROVED.

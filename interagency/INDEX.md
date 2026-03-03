@@ -20,6 +20,10 @@
   - План: `interagency/plans/2026-03-03_s2-b_phase-b-truth-sync.md` [ACCEPTED]
   - Отчёт: `interagency/reports/2026-03-03_s2-b_phase-b-truth-sync.md`
   - Статус: truth-sync по `Phase B` завершён; widgets rail подтвержден как реализованный, единственный pending-хвост `Phase B` — интеграция `SupervisorAgent` в API.
+- `interagency/prompts/2026-03-03_s2-c_supervisor-agent-api-integration.md` [DONE]
+  - План: `interagency/plans/2026-03-03_s2-c_supervisor-agent-api-integration.md` [ACCEPTED]
+  - Отчёт: `interagency/reports/2026-03-03_s2-c_supervisor-agent-api-integration.md`
+  - Статус: `SupervisorAgent` внедрён как orchestration layer для `rai-chat`; `RaiChatService` стал thin facade; `tsc` PASS, targeted jest PASS.
 - `interagency/prompts/2026-03-03_s5-3_memory-schema-implementation.md` [DONE]
   - План: `interagency/plans/2026-03-03_s5-3_memory-schema-implementation.md` [ACCEPTED]
   - Отчёт: `interagency/reports/2026-03-03_s5-3_memory-schema-implementation.md` [APPROVED] Физическая схема памяти (Prisma) создана.

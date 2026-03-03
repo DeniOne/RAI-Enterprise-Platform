@@ -1,14 +1,12 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { RaiChatService } from "./rai-chat.service";
+import { SupervisorAgent } from "./supervisor-agent.service";
 import { RaiToolsRegistry } from "./tools/rai-tools.registry";
-import { MemoryManager } from "../../shared/memory/memory-manager.service";
-import { EpisodicRetrievalService } from "../../shared/memory/episodic-retrieval.service";
 import { RaiToolName } from "./tools/rai-tools.types";
 import {
   RAI_CHAT_WIDGETS_SCHEMA_VERSION,
   RaiChatWidgetType,
 } from "./widgets/rai-chat-widgets.types";
-import { RaiChatMemoryPolicy } from "../../shared/memory/rai-chat-memory.policy";
 import { ExternalSignalsService } from "./external-signals.service";
 import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
 
@@ -37,6 +35,7 @@ describe("RaiChatService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RaiChatService,
+        SupervisorAgent,
         RaiToolsRegistry,
         RaiChatWidgetBuilder,
         { provide: "MEMORY_ADAPTER", useValue: memoryAdapterMock },

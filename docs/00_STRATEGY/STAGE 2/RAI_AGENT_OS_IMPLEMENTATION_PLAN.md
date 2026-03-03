@@ -185,10 +185,10 @@ Flex:
 Эффект: появляется Agent OS UX.
 
 ### Phase B (следом)
-- [ ] Подключить SupervisorAgent к API
+- [x] Подключить SupervisorAgent к API
 - [x] Включить structured widgets справа
 
-**Статус truth-sync:** `IN_PROGRESS`
+**Статус truth-sync:** `COMPLETED`
 
 Эффект: “Comet-эффект” — агент реагирует на страницу.
 
