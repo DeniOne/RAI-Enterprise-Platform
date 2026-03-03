@@ -81,6 +81,9 @@ describe('EventActionsService', () => {
         const result = await service.confirm(companyId, userId, draftId);
 
         expect(result.draft.status).toBe('DRAFT');
+        if (!('mustQuestions' in result.ui)) {
+            throw new Error('mustQuestions expected for incomplete draft');
+        }
         expect(result.ui.mustQuestions).toContain('Пожалуйста, укажи fieldRef');
     });
 

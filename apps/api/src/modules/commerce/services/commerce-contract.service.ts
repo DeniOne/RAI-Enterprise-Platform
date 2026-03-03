@@ -61,6 +61,7 @@ export class CommerceContractService {
 
     return this.prisma.commerceContract.create({
       data: {
+        companyId: parties[0].companyId,
         number: dto.number,
         type: dto.type,
         validFrom: new Date(dto.validFrom),
@@ -69,6 +70,7 @@ export class CommerceContractService {
         regulatoryProfileId: dto.regulatoryProfileId,
         roles: {
           create: dto.roles.map((role) => ({
+            companyId: parties[0].companyId,
             partyId: role.partyId,
             role: role.role,
             isPrimary: role.isPrimary ?? false,
@@ -87,6 +89,7 @@ export class CommerceContractService {
 
     return this.prisma.commerceObligation.create({
       data: {
+        companyId: contract.companyId,
         contractId,
         type,
         dueDate: dueDate ?? null,

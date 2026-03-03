@@ -308,7 +308,7 @@ console.log('║  ТЕСТ 8: Нет хардкода default-company           
 console.log('╚══════════════════════════════════════════════════════════════╝\n');
 
 const CRITICAL_FILES = [
-    path.join(APP_APP_DIR, 'commerce', 'parties', 'page.tsx'),
+    path.join(APP_APP_DIR, 'parties', 'page.tsx'),
 ];
 
 for (const filePath of CRITICAL_FILES) {

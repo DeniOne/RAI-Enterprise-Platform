@@ -1,4 +1,5 @@
 ﻿import { BadRequestException, Injectable } from "@nestjs/common";
+import { Prisma } from "@rai/prisma-client";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
 import { CreateFulfillmentEventDto } from "../dto/create-fulfillment-event.dto";
 
@@ -45,8 +46,18 @@ export class FulfillmentService {
       throw new BadRequestException("batchId is required for COMMERCIAL GOODS_SHIPMENT");
     }
 
+    const obligation = await this.prisma.commerceObligation.findUnique({
+      where: { id: dto.obligationId },
+      select: { id: true, companyId: true },
+    });
+
+    if (!obligation) {
+      throw new BadRequestException("Obligation not found");
+    }
+
     const event = await this.prisma.commerceFulfillmentEvent.create({
       data: {
+        companyId: obligation.companyId,
         obligationId: dto.obligationId,
         eventDomain: dto.eventDomain,
         eventType: dto.eventType,
@@ -56,13 +67,14 @@ export class FulfillmentService {
           itemId: dto.itemId,
           uom: dto.uom,
           qty: dto.qty,
-        },
+        } as Prisma.InputJsonValue,
       },
     });
 
     if (dto.eventDomain === "COMMERCIAL" && dto.eventType === "GOODS_SHIPMENT") {
       await this.prisma.stockMove.create({
         data: {
+          companyId: obligation.companyId,
           fulfillmentEventId: event.id,
           itemId: dto.itemId ?? "UNKNOWN_ITEM",
           uom: dto.uom ?? "unit",

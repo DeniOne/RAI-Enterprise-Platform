@@ -25,23 +25,34 @@ export class S3Service implements OnModuleInit {
     private redis: RedisService,
     private prisma: PrismaService,
   ) {
+    const accessKey =
+      this.configService.get<string>("MINIO_ACCESS_KEY") ??
+      this.configService.get<string>("MINIO_ROOT_USER", "minio");
+    const secretKey =
+      this.configService.get<string>("MINIO_SECRET_KEY") ??
+      this.configService.get<string>("MINIO_ROOT_PASSWORD", "minio123");
+
     this.client = new Minio.Client({
       endPoint: this.configService.get<string>("MINIO_ENDPOINT", "localhost"),
       port: this.configService.get<number>("MINIO_PORT", 9000),
       useSSL: this.configService.get<boolean>("MINIO_USE_SSL", false),
-      accessKey: this.configService.get<string>("MINIO_ACCESS_KEY", "minio"),
-      secretKey: this.configService.get<string>("MINIO_SECRET_KEY", "minio123"),
+      accessKey,
+      secretKey,
     });
   }
 
   async onModuleInit() {
     try {
-      const exists = await this.client.bucketExists("rai-artifacts");
+      const bucketName = this.configService.get<string>(
+        "MINIO_BUCKET_NAME",
+        "rai-artifacts",
+      );
+      const exists = await this.client.bucketExists(bucketName);
       if (!exists) {
-        await this.client.makeBucket("rai-artifacts", "us-east-1");
+        await this.client.makeBucket(bucketName, "us-east-1");
       }
       this.isAvailable = true;
-      this.logger.log("📦 S3 Storage (Minio) is ready.");
+      this.logger.log(`📦 S3 Storage (Minio) is ready. bucket=${bucketName}`);
     } catch (e) {
       this.logger.error(`❌ S3 Connection failed: ${e.message}`);
     }

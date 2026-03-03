@@ -9,6 +9,8 @@ import { RedisService } from "../../../shared/redis/redis.service";
 export class CrlService {
   private readonly logger = new Logger(CrlService.name);
   private readonly BLOOM_KEY = "crl:bloom:certificates";
+  private readonly FALLBACK_SET_KEY = "crl:set:certificates";
+  private bloomAvailable = false;
 
   constructor(private readonly redisService: RedisService) {}
 
@@ -21,16 +23,21 @@ export class CrlService {
       try {
         // Reserve bloom filter space for 1 Million certs with 0.01 error rate
         await client.call("BF.RESERVE", this.BLOOM_KEY, "0.01", "1000000");
+        this.bloomAvailable = true;
         this.logger.log(
           `Initialized Redis Bloom Filter for CRL: ${this.BLOOM_KEY}`,
         );
       } catch (err) {
         // If it already exists, RedisBloom will throw ERR item exists
-        if (!err.message.includes("exists")) {
-          this.logger.warn(
-            `RedisBloom initialization failed (fallback to Sets?): ${err.message}`,
-          );
+        if (err.message.includes("exists")) {
+          this.bloomAvailable = true;
+          return;
         }
+
+        this.bloomAvailable = false;
+        this.logger.warn(
+          `RedisBloom unavailable, switching CRL to Redis Set fallback: ${err.message}`,
+        );
       }
     }
   }
@@ -41,7 +48,11 @@ export class CrlService {
   async revokeCertificate(certificateId: string): Promise<boolean> {
     const client = this.redisService.getClient();
     try {
-      await client.call("BF.ADD", this.BLOOM_KEY, certificateId);
+      if (this.bloomAvailable) {
+        await client.call("BF.ADD", this.BLOOM_KEY, certificateId);
+      } else {
+        await client.sadd(this.FALLBACK_SET_KEY, certificateId);
+      }
       this.logger.warn(`Certificate REVOKED: ${certificateId}`);
 
       // Здесь должна быть логика триггеров рассылки Webhook'ов
@@ -61,11 +72,16 @@ export class CrlService {
   async isRevoked(certificateId: string): Promise<boolean> {
     const client = this.redisService.getClient();
     try {
-      const exists = await client.call(
-        "BF.EXISTS",
-        this.BLOOM_KEY,
-        certificateId,
-      );
+      if (this.bloomAvailable) {
+        const exists = await client.call(
+          "BF.EXISTS",
+          this.BLOOM_KEY,
+          certificateId,
+        );
+        return exists === 1;
+      }
+
+      const exists = await client.sismember(this.FALLBACK_SET_KEY, certificateId);
       return exists === 1;
     } catch (error) {
       this.logger.error(`Failed to check CRL for ${certificateId}`, error);

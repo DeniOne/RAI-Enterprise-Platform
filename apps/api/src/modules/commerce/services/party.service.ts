@@ -1,4 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@rai/prisma-client";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
 import { CreatePartyDto, UpdatePartyDto, CreatePartyRelationDto } from "../dto/create-party.dto";
 import { CreateJurisdictionDto, UpdateJurisdictionDto } from "../dto/create-jurisdiction.dto";
@@ -190,7 +191,7 @@ export class PartyService {
                 code: dto.code.trim().toUpperCase(),
                 name: dto.name,
                 jurisdictionId: dto.jurisdictionId,
-                rulesJson: normalizedRules ?? undefined,
+                rulesJson: normalizedRules as unknown as Prisma.InputJsonValue | undefined,
             },
             include: { jurisdiction: true },
         });
@@ -238,8 +239,9 @@ export class PartyService {
             data: {
                 ...(nextCode !== undefined && { code: nextCode }),
                 ...(dto.name !== undefined && { name: dto.name }),
+                companyId,
                 ...(dto.jurisdictionId !== undefined && { jurisdictionId: dto.jurisdictionId }),
-                ...(normalizedRules !== undefined && { rulesJson: normalizedRules }),
+                ...(normalizedRules !== undefined && { rulesJson: normalizedRules as unknown as Prisma.InputJsonValue }),
             },
             include: { jurisdiction: true },
         });

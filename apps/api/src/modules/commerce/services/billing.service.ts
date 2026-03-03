@@ -1,4 +1,5 @@
 ﻿import { BadRequestException, Injectable } from "@nestjs/common";
+import { Prisma } from "@rai/prisma-client";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
 import { RuleBasedTaxEngine, TaxContext, TaxEngine } from "../contracts/tax-engine";
 
@@ -83,6 +84,7 @@ export class BillingService {
 
     return this.prisma.invoice.create({
       data: {
+        companyId: event.companyId,
         contractId: event.obligation.contractId,
         obligationId: event.obligationId,
         fulfillmentEventId,
@@ -91,7 +93,7 @@ export class BillingService {
         subtotal: String(subtotal),
         taxTotal: String(tax.taxAmount),
         grandTotal: String(subtotal + tax.taxAmount),
-        taxSnapshotJson: tax,
+        taxSnapshotJson: tax as unknown as Prisma.InputJsonValue,
       },
     });
   }
@@ -134,8 +136,22 @@ export class BillingService {
     paymentMethod: string;
     paidAt?: Date;
   }) {
+    const [payer, payee] = await Promise.all([
+      this.prisma.party.findUnique({ where: { id: params.payerPartyId }, select: { id: true, companyId: true } }),
+      this.prisma.party.findUnique({ where: { id: params.payeePartyId }, select: { id: true, companyId: true } }),
+    ]);
+
+    if (!payer || !payee) {
+      throw new BadRequestException("Payer or payee not found");
+    }
+
+    if (payer.companyId !== payee.companyId) {
+      throw new BadRequestException("Cross-tenant payment is forbidden");
+    }
+
     return this.prisma.payment.create({
       data: {
+        companyId: payer.companyId,
         payerPartyId: params.payerPartyId,
         payeePartyId: params.payeePartyId,
         amount: String(params.amount),
@@ -156,8 +172,13 @@ export class BillingService {
       throw new BadRequestException("Payment or invoice not found");
     }
 
+    if (payment.companyId !== invoice.companyId) {
+      throw new BadRequestException("Cross-tenant allocation is forbidden");
+    }
+
     return this.prisma.paymentAllocation.create({
       data: {
+        companyId: payment.companyId,
         paymentId,
         invoiceId,
         allocatedAmount: String(allocatedAmount),
