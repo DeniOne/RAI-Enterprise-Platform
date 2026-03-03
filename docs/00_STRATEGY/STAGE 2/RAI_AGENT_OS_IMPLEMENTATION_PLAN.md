@@ -64,9 +64,11 @@
 Эффект: агент отвечает по структуре, а не по “распознаванию экрана”.
 
 ### 2.2 Правило нагрузки
-- [ ] Никаких больших таблиц/JSON в контексте
-- [ ] Только refs + краткие summary
-- [ ] Детальные данные агент получает typed tool-call’ом (search/read)
+- [x] Никаких больших таблиц/JSON в контексте
+- [x] Только refs + краткие summary
+- [x] Детальные данные агент получает typed tool-call’ом (search/read)
+- **Статус truth-sync:** `VERIFIED`
+- **Доказательство:** [workspace-context-store.ts](file:///root/RAI_EP/apps/web/lib/stores/workspace-context-store.ts), отчет [2026-03-03_s2-2_workspace-context-load-rule.md](file:///root/RAI_EP/interagency/reports/2026-03-03_s2-2_workspace-context-load-rule.md)
 
 Эффект: быстро и детерминированно, без токен-ада.
 

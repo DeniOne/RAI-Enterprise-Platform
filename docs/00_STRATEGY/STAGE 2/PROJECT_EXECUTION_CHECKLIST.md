@@ -144,5 +144,20 @@
 - **Доказательство:** `apps/web/components/ui/TopNav.tsx`, `apps/web/components/layouts/AppShell.tsx`, `interagency/reports/2026-03-02_s1-2_topnav-navigation.md`
 - **Как проверить:** запустить `pnpm build` (tsc завершается успешно), проверить визуально наличие TopNav и отсутствие Sidebar.
 
+### S1.3 LeftRaiChatDock (Docked/Focus)
+- [x] **DoD:** Docked (360px) и Focus (560px) режимы работают; персистентность в localStorage; кнопки в хедере присутствуют.
+- **Статус truth-sync:** `VERIFIED` (реализовано в рамках P2.3)
+- **Доказательство:** [AiChatPanel.tsx](file:///root/RAI_EP/apps/web/components/ai-chat/AiChatPanel.tsx), [ai-chat-store.ts](file:///root/RAI_EP/apps/web/lib/stores/ai-chat-store.ts), отчет [2026-03-02_p2-3_ux-polish-dock-focus.md](file:///root/RAI_EP/interagency/reports/2026-03-02_p2-3_ux-polish-dock-focus.md)
+
+### S2.1 WorkspaceContext Contract
+- [x] **DoD:** route lifecycle обеспечивается через `setRouteAndReset`; `Yield/KPI` страница публикует контекст; чат отправляет контекст в API.
+- **Статус truth-sync:** `VERIFIED`
+- **Доказательство:** [workspace-context-store.ts](file:///root/RAI_EP/apps/web/lib/stores/workspace-context-store.ts), [yield/page.tsx](file:///root/RAI_EP/apps/web/app/consulting/yield/page.tsx), отчет [2026-03-03_s2-1_workspace-context-contract.md](file:///root/RAI_EP/interagency/reports/2026-03-03_s2-1_workspace-context-contract.md)
+
+### S2.2 WorkspaceContext Load Rule
+- [x] **DoD:** автоматическая обрезка (truncate) строк; блокировка вложенных объектов в filters; лимит на 10 activeEntityRefs; fail-safe в store.
+- **Статус truth-sync:** `VERIFIED`
+- **Доказательство:** [workspace-context-store.ts](file:///root/RAI_EP/apps/web/lib/stores/workspace-context-store.ts), [workspace-context-load-rule.spec.ts](file:///root/RAI_EP/apps/web/__tests__/workspace-context-load-rule.spec.ts), отчет [2026-03-03_s2-2_workspace-context-load-rule.md](file:///root/RAI_EP/interagency/reports/2026-03-03_s2-2_workspace-context-load-rule.md)
+
 ## Рекомендуемый “тонкий срез”, который доказывает, что система ожила
 Сценарий: **Telegram фото+текст → Draft (missingMust) → 🔗 Link field → ✅ Confirm → CommittedEvent → Controller severity → (если S3) AgroEscalation → web-чат показывает виджет DeviationList**.

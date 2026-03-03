@@ -1,7 +1,14 @@
 # PLAN — Внешние сигналы в advisory контуре
 Дата: 2026-03-02  
-Статус: draft  
+Статус: ACCEPTED (by TECHLEAD)
+Промпт-источник: `interagency/prompts/2026-03-02_p2-2_external-signals-advisory.md`  
+Чеклист-источник: `docs/00_STRATEGY/STAGE 2/PROJECT_EXECUTION_CHECKLIST.md` (`P2.2`)  
 Decision-ID: AG-EXTERNAL-SIGNALS-001  
+
+## Блокеры принятия
+- Реализация запрещена, пока `AG-EXTERNAL-SIGNALS-001` не добавлен в `DECISIONS.log` и не имеет статус `ACCEPTED`.
+- Любой поток с tenant-данными обязан брать `companyId` только из доверенного security context.
+- Scope ограничен thin slice: `NDVI`/погода, один advisory pipeline, explainability, feedback, episodic memory append.
 
 ## Результат (какой артефакт получим)
 - Исполнимый план для `P2.2`: ввести тонкий tenant-safe контур внешних сигналов в `apps/api`, где 1-2 источника (`NDVI`/погода) проходят путь ingestion → advisory → explainability → user feedback → episodic memory append.

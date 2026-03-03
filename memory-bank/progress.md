@@ -86,13 +86,14 @@
     *   Интегрирован визуальный отклик в RAI Output (авто-скролл и подсветка виджетов из мини-инбокса).
     *   Тесты Кодекса PASS (189/189). Ревью APPROVED (2026-03-03).
 
-21. **WorkspaceContext Contract (S2.1)** ✅:
-    *   План `2026-03-03_s2-1_workspace-context-contract.md` принят и реализован.
-    *   Подтверждено, что `AiChatRoot` выполняет `setRouteAndReset(pathname)` и не допускает протекания page-level контекста между route.
-    *   `AiChatStore` покрыт тестом на фактическую отправку актуального `workspaceContext` в `POST /api/rai/chat`.
-    *   `consulting/yield/page.tsx` теперь публикует `filters`, `activeEntityRefs`, `selectedRowSummary`, `lastUserAction` для сценария Yield/KPI.
-    *   `RaiChatController` логирует безопасный summary `workspaceContext` без тяжёлого dump и без `companyId` из payload.
     *   Верификация: web-spec PASS (5 suites / 11 tests), `apps/web` tsc PASS, `apps/api` controller spec PASS. Ревью APPROVED (2026-03-03).
+
+22. **WorkspaceContext Load Rule (S2.2)** ✅:
+    *   Внедрен "gatekeeper" слой в `useWorkspaceContextStore`.
+    *   Реализована автоматическая обрезка (truncate) строк: title (160), subtitle (240), lastUserAction (200).
+    *   Введен лимит на 10 `activeEntityRefs`, избыток отсекается.
+    *   `filters` защищены от вложенных объектов (fail-safe + console.warn в dev).
+    *   Верификация: юнит-тесты PASS (3/3), `apps/web` tsc PASS. Ревью APPROVED (2026-03-03).
 
 19. **Software Factory Reinforcement** ✅:
     *   Ре-верифицированы и приняты `STARTER PROMPT` (DOC-ARH-GEN-175) и `REVIEW & FINALIZE PROMPT` (DOC-ARH-GEN-176).
@@ -106,5 +107,4 @@
 
 ### Next Steps:
 1.  Полный truth-sync проход по docs/07_EXECUTION/* (backlog).
-2.  Закрыть `2.2 Правило нагрузки` enforcement-слоем для `WorkspaceContext`.
-3.  Перейти к `3.1 Chat API v1` и формальному контракту `clientTraceId/widgets/toolCalls/openUiToken`.
+2.  Перейти к `3.1 Chat API v1` и формальному контракту `clientTraceId/widgets/toolCalls/openUiToken`.
