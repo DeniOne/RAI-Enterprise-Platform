@@ -57,7 +57,9 @@ import { OutboxModule } from "../../shared/outbox/outbox.module";
   exports: [
     ConsultingService,
     BudgetPlanService,
+    DeviationService,
     ExecutionService,
+    KpiService,
     ManagementDecisionService,
     StrategicViewService,
     StrategicGoalService,

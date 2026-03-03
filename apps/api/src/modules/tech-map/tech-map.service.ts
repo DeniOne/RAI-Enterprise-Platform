@@ -72,6 +72,75 @@ export class TechMapService {
     });
   }
 
+  async createDraftStub(params: {
+    fieldRef: string;
+    seasonRef: string;
+    crop: "rapeseed" | "sunflower";
+    companyId: string;
+  }) {
+    const season = await this.prisma.season.findFirst({
+      where: {
+        id: params.seasonRef,
+        companyId: params.companyId,
+        fieldId: params.fieldRef,
+      },
+    });
+
+    if (!season) {
+      throw new NotFoundException("Season not found for field/company scope");
+    }
+
+    const plan = await this.prisma.harvestPlan.findFirst({
+      where: {
+        companyId: params.companyId,
+        seasonId: params.seasonRef,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    if (!plan) {
+      throw new NotFoundException("Harvest Plan not found for season/company");
+    }
+
+    const lastMap = await this.prisma.techMap.findFirst({
+      where: {
+        fieldId: params.fieldRef,
+        crop: params.crop,
+        seasonId: params.seasonRef,
+        companyId: params.companyId,
+      },
+      orderBy: { version: "desc" },
+    });
+
+    const nextVersion = lastMap ? lastMap.version + 1 : 1;
+
+    // TODO: Sprint TechMap Intake - полноценная генерация.
+    const draft = await this.prisma.techMap.create({
+      data: {
+        harvestPlanId: plan.id,
+        seasonId: params.seasonRef,
+        companyId: params.companyId,
+        fieldId: params.fieldRef,
+        crop: params.crop,
+        status: TechMapStatus.DRAFT,
+        version: nextVersion,
+      },
+    });
+
+    return {
+      draftId: draft.id,
+      status: "DRAFT" as const,
+      fieldRef: params.fieldRef,
+      seasonRef: params.seasonRef,
+      crop: params.crop,
+      missingMust: ["soilType", "moisture", "precursor", "stages"],
+      tasks: [] as [],
+      assumptions: [] as [],
+    };
+  }
+
   async transitionStatus(
     id: string,
     targetStatus: TechMapStatus,

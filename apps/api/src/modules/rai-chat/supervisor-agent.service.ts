@@ -9,7 +9,12 @@ import {
 import {
   RaiSuggestedAction,
   RaiToolActorContext,
+  RaiToolCall,
   RaiToolName,
+  ComputeDeviationsResult,
+  ComputePlanFactResult,
+  EmitAlertsResult,
+  GenerateTechMapDraftResult,
 } from "./tools/rai-tools.types";
 import { RaiToolsRegistry } from "./tools/rai-tools.registry";
 import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
@@ -52,8 +57,20 @@ export class SupervisorAgent {
       userId,
     });
 
+    const autoToolCall = this.buildAutoToolCall(request.message, request);
+    const requestedToolCalls: RaiToolCallDto[] = [...(request.toolCalls ?? [])];
+    if (
+      autoToolCall &&
+      !requestedToolCalls.some((tool) => tool.name === autoToolCall.name)
+    ) {
+      requestedToolCalls.unshift({
+        name: autoToolCall.name,
+        payload: autoToolCall.payload as Record<string, unknown>,
+      });
+    }
+
     const executedTools = await this.executeToolCalls(
-      request.toolCalls ?? [],
+      requestedToolCalls,
       actorContext,
     );
 
@@ -115,6 +132,10 @@ export class SupervisorAgent {
 
     if (executedTools.length > 0) {
       text += `\nИнструментов выполнено: ${executedTools.length}`;
+      const toolSummary = this.summarizeExecutedTools(executedTools);
+      if (toolSummary) {
+        text += `\n${toolSummary}`;
+      }
     }
 
     if (memoryContext.items.length > 0) {
@@ -323,5 +344,130 @@ export class SupervisorAgent {
     }
 
     return actions;
+  }
+
+  private detectIntent(message: string): RaiToolName | null {
+    const normalized = message.toLowerCase();
+
+    if (/отклонени|deviation/.test(normalized)) {
+      return RaiToolName.ComputeDeviations;
+    }
+
+    if (/план[ .-]?факт|plan fact|kpi/.test(normalized)) {
+      return RaiToolName.ComputePlanFact;
+    }
+
+    if (/алерт|эскалац|alert/.test(normalized)) {
+      return RaiToolName.EmitAlerts;
+    }
+
+    if (/техкарт|techmap|сделай карту/.test(normalized)) {
+      return RaiToolName.GenerateTechMapDraft;
+    }
+
+    return null;
+  }
+
+  private buildAutoToolCall(
+    message: string,
+    request: RaiChatRequestDto,
+  ): RaiToolCall | null {
+    const intent = this.detectIntent(message);
+    if (!intent) {
+      return null;
+    }
+
+    const activeRefs = request.workspaceContext?.activeEntityRefs ?? [];
+    const filters = request.workspaceContext?.filters ?? {};
+
+    if (intent === RaiToolName.ComputeDeviations) {
+      return {
+        name: intent,
+        payload: {
+          scope: {
+            seasonId:
+              typeof filters.seasonId === "string" ? filters.seasonId : undefined,
+            fieldId: activeRefs.find((item) => item.kind === "field")?.id,
+          },
+        },
+      };
+    }
+
+    if (intent === RaiToolName.ComputePlanFact) {
+      return {
+        name: intent,
+        payload: {
+          scope: {
+            planId: typeof filters.planId === "string" ? filters.planId : undefined,
+            seasonId:
+              typeof filters.seasonId === "string" ? filters.seasonId : undefined,
+          },
+        },
+      };
+    }
+
+    if (intent === RaiToolName.EmitAlerts) {
+      return {
+        name: intent,
+        payload: {
+          severity: /s4/.test(message.toLowerCase()) ? "S4" : "S3",
+        },
+      };
+    }
+
+    if (intent === RaiToolName.GenerateTechMapDraft) {
+      const fieldRef = activeRefs.find((item) => item.kind === "field")?.id;
+      const seasonRef =
+        typeof filters.seasonId === "string" ? filters.seasonId : undefined;
+
+      if (!fieldRef || !seasonRef) {
+        return null;
+      }
+
+      return {
+        name: intent,
+        payload: {
+          fieldRef,
+          seasonRef,
+          crop: /подсолнеч|sunflower/.test(message.toLowerCase())
+            ? "sunflower"
+            : "rapeseed",
+        },
+      };
+    }
+
+    return null;
+  }
+
+  private summarizeExecutedTools(
+    executedTools: Array<{ name: RaiToolName; result: unknown }>,
+  ): string | null {
+    const parts = executedTools
+      .map((tool) => {
+        if (tool.name === RaiToolName.ComputeDeviations) {
+          const result = tool.result as ComputeDeviationsResult;
+          return `Отклонений найдено: ${result.count}`;
+        }
+
+        if (tool.name === RaiToolName.ComputePlanFact) {
+          const result = tool.result as ComputePlanFactResult;
+          return `План-факт по плану ${result.planId}: ROI ${result.roi}, EBITDA ${result.ebitda}`;
+        }
+
+        if (tool.name === RaiToolName.EmitAlerts) {
+          const result = tool.result as EmitAlertsResult;
+          return `Открытых эскалаций ${result.severity}+ : ${result.count}`;
+        }
+
+        if (tool.name === RaiToolName.GenerateTechMapDraft) {
+          const result = tool.result as GenerateTechMapDraftResult;
+          return `Черновик техкарты создан: ${result.draftId}`;
+        }
+
+        return null;
+      })
+      .filter((item): item is string => Boolean(item));
+
+    return parts.length > 0 ? parts.join("\n") : null;
   }
 }

@@ -17,6 +17,6 @@ import { AgroEventsMustValidator } from "./agro-events.validator";
     AgroEventsService,
   ],
   controllers: [AgroEventsController],
-  exports: [AgroEventsService],
+  exports: [AgroEventsService, AgroEscalationLoopService],
 })
 export class AgroEventsModule {}
