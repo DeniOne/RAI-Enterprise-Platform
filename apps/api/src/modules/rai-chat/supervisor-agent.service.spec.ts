@@ -41,6 +41,13 @@ describe("SupervisorAgent", () => {
   });
 
   it("orchestrates response contract through the supervisor layer", async () => {
+    memoryAdapterMock.getProfile.mockResolvedValueOnce({
+      lastRoute: "/registry/fields",
+      lastMessagePreview: "Покажи контекст",
+      confidence: 0.82,
+      provenance: "profile",
+    });
+
     const result = await agent.orchestrate(
       {
         message: "Покажи контекст",
@@ -82,6 +89,14 @@ describe("SupervisorAgent", () => {
     );
     expect(result.traceId).toEqual(expect.stringMatching(/^tr_/));
     expect(result.threadId).toEqual(expect.stringMatching(/^th_/));
+    expect(result.memoryUsed).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "profile",
+          confidence: 0.82,
+        }),
+      ]),
+    );
     expect(memoryAdapterMock.getProfile).toHaveBeenCalledWith(
       expect.objectContaining({
         companyId: "company-1",
@@ -124,6 +139,14 @@ describe("SupervisorAgent", () => {
 
     expect(result.text).toContain(
       "(Профиль: lastRoute=/consulting/dashboard; lastMessage=Покажи KPI)",
+    );
+    expect(result.memoryUsed).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "profile",
+          label: "lastRoute=/consulting/dashboard; lastMessage=Покажи KPI",
+        }),
+      ]),
     );
   });
 });

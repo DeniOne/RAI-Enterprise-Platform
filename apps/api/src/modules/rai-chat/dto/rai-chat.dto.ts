@@ -182,6 +182,13 @@ export interface ExternalAdvisoryDto {
   };
 }
 
+export interface RaiMemoryUsedDto {
+  kind: "episode" | "profile";
+  label: string;
+  confidence: number;
+  source?: string;
+}
+
 export class RaiChatRequestDto {
   @IsString()
   @IsNotEmpty()
@@ -263,4 +270,7 @@ export class RaiChatResponseDto {
 
   @IsOptional()
   advisory?: ExternalAdvisoryDto;
+
+  @IsOptional()
+  memoryUsed?: RaiMemoryUsedDto[];
 }

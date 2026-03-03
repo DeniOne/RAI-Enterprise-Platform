@@ -14,6 +14,12 @@ export interface ChatMessage {
     timestamp: string;
     riskLevel?: RiskLevel;
     widgets?: RaiChatWidget[];
+    memoryUsed?: Array<{
+        kind: 'episode' | 'profile';
+        label: string;
+        confidence: number;
+        source?: string;
+    }>;
 }
 
 export type FsmState = 'closed' | 'animating_open' | 'open' | 'animating_close';
@@ -167,6 +173,7 @@ export const useAiChatStore = create<AiChatStore>()(
                         timestamp: new Date().toISOString(),
                         riskLevel: data.riskLevel || 'R1', // Default R1 if backend doesn't provide it yet
                         widgets: Array.isArray(data.widgets) ? data.widgets : [],
+                        memoryUsed: Array.isArray(data.memoryUsed) ? data.memoryUsed : [],
                     };
 
                     set((state) => ({

@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import {
   RaiChatRequestDto,
   RaiChatResponseDto,
+  RaiMemoryUsedDto,
   RaiToolCallDto,
 } from "./dto/rai-chat.dto";
 import {
@@ -152,6 +153,7 @@ export class SupervisorAgent {
       suggestedActions: this.buildSuggestedActions(request),
       openUiToken: undefined,
       advisory: externalSignalResult.advisory,
+      memoryUsed: this.buildMemoryUsed(profile, memoryContext),
     };
 
     const sanitized = sanitizeChatTextForMemory(request.message, memoryConfig);
@@ -229,6 +231,48 @@ export class SupervisorAgent {
 
     const parts = [lastRoute ? `lastRoute=${lastRoute}` : null, lastMessagePreview ? `lastMessage=${lastMessagePreview}` : null].filter(Boolean);
     return parts.length > 0 ? parts.join("; ") : null;
+  }
+
+  private buildMemoryUsed(
+    profile: Record<string, unknown>,
+    memoryContext: {
+      items: Array<{
+        content: string;
+        confidence: number;
+        metadata: Record<string, unknown>;
+      }>;
+    },
+  ): RaiMemoryUsedDto[] {
+    const items: RaiMemoryUsedDto[] = [];
+
+    const topEpisode = memoryContext.items[0];
+    if (topEpisode && topEpisode.content) {
+      items.push({
+        kind: "episode",
+        label: topEpisode.content.slice(0, 80),
+        confidence: Number(topEpisode.confidence ?? 0),
+        source:
+          typeof topEpisode.metadata?.source === "string"
+            ? topEpisode.metadata.source
+            : "episode",
+      });
+    }
+
+    const profileSummary = this.extractProfileSummary(profile);
+    if (profileSummary) {
+      items.push({
+        kind: "profile",
+        label: profileSummary,
+        confidence:
+          typeof profile.confidence === "number"
+            ? Number(profile.confidence)
+            : 0.8,
+        source:
+          typeof profile.provenance === "string" ? profile.provenance : "profile",
+      });
+    }
+
+    return items;
   }
 
   private async executeToolCalls(
