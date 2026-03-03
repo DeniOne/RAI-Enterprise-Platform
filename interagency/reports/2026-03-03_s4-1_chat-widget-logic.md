@@ -40,9 +40,10 @@
 - Builder использует не только `route`, но и `selectedRowSummary`/`lastUserAction`, чтобы заглушки были ближе к будущей доменной интеграции.
 - Сервис чата стал проще: orchestration и widget assembly теперь разделены.
 
-## Следующий шаг
-- Передать пакет на внешнее ревью.
-- После ревью синхронизировать execution-чеклисты и `memory-bank`.
+## Ревью: APPROVED
+- **Дата ревью:** 2026-03-03
+- **Вердикт:** APPROVED
+- **Замечания:** Динамика виджетов проверена через `rai-chat.service.spec.ts`. Security policy соблюдена (companyId из TenantContext). Код соответствует канону Software Factory.
 
 ## Технические артефакты
 
@@ -56,7 +57,7 @@
  M memory-bank/progress.md
 ?? apps/api/src/modules/rai-chat/rai-chat-widget-builder.ts
 ?? interagency/plans/2026-03-03_s4-1_chat-widget-logic.md
-?? interagency/prompts/2026-03-03_s4-1_chat-widget-logic.md
+- interagency/prompts/2026-03-03_s4-1_chat-widget-logic.md [DONE]
 ```
 
 ### git diff

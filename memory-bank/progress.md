@@ -43,7 +43,12 @@
     *   Unit 4/4 (jest direct; pnpm test 137). Ревью APPROVED.
 
 11. **WorkspaceContext (P0.2)** ✅:
-    *   Канонический контракт `workspace-context.ts` (Zod) + store + паблишеры (FarmDetailsPage, TechMap active). AiChatStore передаёт context в POST /api/rai/chat; API- [x] Подготовить план создания промта `implementation_plan.md`
+    *   Канонический контракт `workspace-context.ts` (Zod) + store + паблишеры (FarmDetailsPage, TechMap active). AiChatStore передаёт context в POST /api/rai/chat; API- ## 2026-03-03 (Session Start)
+- [x] Чтение текущего состояния проекта (INDEX.md, Checklist)
+- [x] Ревью готовых отчетов (S4.1) [APPROVED]
+- [x] Финализация S4.1 (INDEX, Report, MB) [DONE]
+- [ ] Определение следующего шага по Stage 2 Plan [PENDING]
+[x] Подготовить план создания промта `implementation_plan.md`
 - [x] Создать файл промта `interagency/prompts/2026-03-03_s4-1_chat-widget-logic.md`
 - [x] Обновить `interagency/INDEX.md`
 - [ ] Реализация и отчет S4.1 [ ]
@@ -123,8 +128,10 @@
     *   Гарантировано использование `execute()` как единственного шлюза к домену.
     *   Верификация: юнит-тесты PASS (проверка логов при успехе/валидации/ошибке), `apps/api` tsc PASS. Ревью APPROVED (2026-03-03).
 
-25. **Chat Widget Logic / Domain Bridge (S4.1)** [/]:
-    *   План принят (ACCEPTED). Предстоит разделение логики и внедрение динамических виджетов.
+25. **Chat Widget Logic / Domain Bridge (S4.1)** [x]:
+    *   План принят (ACCEPTED). Предстоит разделение логики- [x] S4.1 Реализация динамической логики виджетов
+- [x] Ревью и финализация S4.1
+.
 
 ### Pending / Current Issues:
 *   IDE still showing red files in the screenshot despite TS Server restart.

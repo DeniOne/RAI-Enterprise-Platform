@@ -49,6 +49,7 @@
 
 ## Sprint Gamma 5: Pilot & Tuning ✅
 - [x] Incident Runbook
+- [x] S4.1: Chat Widget Logic (Domain Bridge)
 - [x] Pilot Activation (Cohort 1)
 - [x] Ranking Tuning
 

@@ -275,4 +275,11 @@ Evidence: `apps/web/components/layouts/AppShell.tsx`, `apps/web/components/ai-ch
 How to verify: `cd apps/web && pnpm exec tsc -p tsconfig.json --noEmit && pnpm test -- --runInBand __tests__/ai-chat-store.spec.ts __tests__/ai-chat-widgets-rail.spec.tsx`
 Ограничение: manual smoke не выполнен.
 
+### 🌐 14.6 Chat Widget Logic (S4.1)
+- [x] **[Backend]** **Modular Widget Builder**: логика формирования виджетов вынесена в `RaiChatWidgetBuilder`.
+- [x] **[Backend]** **Context-Aware Widgets**: виджеты (`DeviationList`, `TaskBacklog`) зависят от `route` и `companyId`.
+Truth-sync: `VERIFIED`
+Evidence: `apps/api/src/modules/rai-chat/rai-chat-widget-builder.ts`, `apps/api/src/modules/rai-chat/rai-chat.service.ts`, `interagency/reports/2026-03-03_s4-1_chat-widget-logic.md`
+How to verify: `cd apps/api && npx jest --runInBand src/modules/rai-chat/rai-chat.service.spec.ts`
+
 ### 🌐 15. Ecosystem
