@@ -2,7 +2,7 @@
 Статус: EXECUTION CHECKLIST
 Основание: Agent-First / Chat-First Spec (LAW)
 Принцип данных: Carcass + Flex (JSONB attrs под schemaKey, provenance/confidence)
-
+Смотри для контекста в /root/RAI_EP/docs/00_STRATEGY/STAGE 2/SPEC_AGENT_FIRST_RAI_EP.md
 ---
 
 ## 0) Цель
@@ -23,35 +23,36 @@
 ## 1) AppShell (UI Foundation)
 
 ### 1.1 Ввести глобальный Shell Layout
-- [ ] Вынести layout в AppShell: TopNav + LeftRaiChatDock + MainWorkspace
-- [ ] Чат живёт в Shell и не размонтируется при навигации
-- [ ] Сохранить текущие маршруты/страницы без переписывания логики
+- [x] **Цель:** чат живёт в Shell и не размонтируется при навигации; TopNav + LeftRaiChatDock + MainWorkspace интегрированы.
+- **Статус truth-sync:** `VERIFIED` (см. S1.1)
+- **Доказательство:** [AppShell.tsx](file:///root/RAI_EP/apps/web/components/layouts/AppShell.tsx), [LeftRaiChatDock.tsx](file:///root/RAI_EP/apps/web/components/ai-chat/LeftRaiChatDock.tsx), отчет [2026-03-02_s1-1_app-shell-persistent-rai-chat.md](file:///root/RAI_EP/interagency/reports/2026-03-02_s1-1_app-shell-persistent-rai-chat.md)
 
 Эффект: агент не “теряется” при переходах, UX становится OS-like.
 
 ### 1.2 TopNav (горизонтальная навигация)
-- [ ] Перенести существующую структуру меню в TopNav
-- [ ] Реализовать dropdown подменю (группы: Урожай/CRM/Финансы/Коммерция/Настройки)
-- [ ] Поддержать active route + deep links
+- [x] **Цель:** навигация не съедает ширину, поддерживается active route и группы меню.
+- **Статус truth-sync:** `VERIFIED` (см. S1.2)
+- **Доказательство:** [TopNav.tsx](file:///root/RAI_EP/apps/web/components/ui/TopNav.tsx), отчет [2026-03-02_s1-2_topnav-navigation.md](file:///root/RAI_EP/interagency/reports/2026-03-02_s1-2_topnav-navigation.md)
+- **Детали:** Sidebar удален, все ссылки перенесены в TopNav. tsc PASS.
 
 Эффект: навигация не съедает ширину, рабочая область шире.
 
 ### 1.3 LeftRaiChatDock (Docked/Focus)
-- [ ] Docked width 320–360px
-- [ ] Focus width 480–560px
-- [ ] Toggle в header чата
-- [ ] Persist режима в localStorage
-
-Эффект: чат не мешает работе, но всегда доступен.
+- [x] **Цель:** чат не мешает работе, но всегда доступен, режимы Docked/Focus переключаются.
+- **Статус truth-sync:** `VERIFIED` (реализовано в рамках P2.3)
+- **Доказательство:** [AiChatPanel.tsx](file:///root/RAI_EP/apps/web/components/ai-chat/AiChatPanel.tsx), [ai-chat-store.ts](file:///root/RAI_EP/apps/web/lib/stores/ai-chat-store.ts), отчет [2026-03-02_p2-3_ux-polish-dock-focus.md](file:///root/RAI_EP/interagency/reports/2026-03-02_p2-3_ux-polish-dock-focus.md)
+- **Детали:** ручной ресайз (`chatWidth`), переключение режимов `dock/focus`, персистентность в `localStorage`. Эффект достигнут.
 
 ---
 
 ## 2) WorkspaceContext (как агент “видит” Main Workspace)
 
 ### 2.1 Канонический контракт WorkspaceContext
-- [ ] Ввести единый тип `WorkspaceContext` (не зависит от страниц)
-- [ ] На каждой странице публиковать контекст в общий store (например, `workspaceContextStore`)
-- [ ] В чат запросы всегда отправлять: message + workspaceContext
+- [x] Ввести единый тип `WorkspaceContext` (не зависит от страниц)
+- [x] На каждой странице публиковать контекст в общий store (например, `workspaceContextStore`)
+- [x] В чат запросы всегда отправлять: message + workspaceContext
+- **Статус truth-sync:** `VERIFIED` (см. S2.1)
+- **Доказательство:** `apps/web/shared/contracts/workspace-context.ts`, `apps/web/lib/stores/workspace-context-store.ts`, `apps/web/app/consulting/yield/page.tsx`, `apps/web/__tests__/ai-chat-store.spec.ts`, отчёт `interagency/reports/2026-03-03_s2-1_workspace-context-contract.md`
 
 Рекомендуемый минимум:
 - route
@@ -172,9 +173,9 @@ Flex:
 ## 7) Минимальный rollout (чтобы быстро показать результат)
 
 ### Phase A (1–2 дня)
-- [ ] AppShell
-- [ ] ChatDock Docked/Focus
-- [ ] WorkspaceContext store + отправка в API
+- [x] AppShell
+- [x] ChatDock Docked/Focus
+- [x] WorkspaceContext store + отправка в API
 - [ ] Mock `/api/rai/chat` возвращает text + 1 widget
 
 Эффект: появляется Agent OS UX.

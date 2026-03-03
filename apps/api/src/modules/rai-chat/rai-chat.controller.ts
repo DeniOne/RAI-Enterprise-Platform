@@ -30,7 +30,23 @@ export class RaiChatController {
       throw new BadRequestException("Security Context: companyId is missing");
     }
 
-    this.logger.log(`RAI Chat message received for company: ${companyId}`);
+    const workspaceContextSummary = body.workspaceContext
+      ? {
+          route: body.workspaceContext.route,
+          activeEntityRefsCount: body.workspaceContext.activeEntityRefs?.length ?? 0,
+          activeEntityKinds:
+            body.workspaceContext.activeEntityRefs?.map((ref) => ref.kind) ?? [],
+          hasFilters: Boolean(body.workspaceContext.filters),
+          hasSelectedRowSummary: Boolean(body.workspaceContext.selectedRowSummary),
+          lastUserAction: body.workspaceContext.lastUserAction ?? null,
+        }
+      : null;
+
+    this.logger.log(
+      `RAI Chat message received for company: ${companyId}; workspaceContext=${JSON.stringify(
+        workspaceContextSummary,
+      )}`,
+    );
 
     return this.raiChatService.handleChat(body, companyId);
   }

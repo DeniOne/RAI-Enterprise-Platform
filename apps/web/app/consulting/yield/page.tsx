@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '@/lib/api';
 import SystemStatusBar from '@/components/consulting/SystemStatusBar';
+import { useWorkspaceContextStore } from '@/lib/stores/workspace-context-store';
 
 export default function YieldEntryPage() {
     const [plans, setPlans] = useState<any[]>([]);
@@ -10,6 +11,10 @@ export default function YieldEntryPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const setActiveEntityRefs = useWorkspaceContextStore((s) => s.setActiveEntityRefs);
+    const setSelectedRowSummary = useWorkspaceContextStore((s) => s.setSelectedRowSummary);
+    const setFilters = useWorkspaceContextStore((s) => s.setFilters);
+    const setLastUserAction = useWorkspaceContextStore((s) => s.setLastUserAction);
 
     const [yieldData, setYieldData] = useState({
         plannedYield: 0,
@@ -44,13 +49,50 @@ export default function YieldEntryPage() {
         [plans, selectedPlanId]);
 
     useEffect(() => {
+        setFilters({ domain: 'yield', hasSelectedPlan: Boolean(selectedPlanId) });
+    }, [selectedPlanId, setFilters]);
+
+    useEffect(() => {
         if (selectedPlan) {
             setYieldData(prev => ({
                 ...prev,
                 plannedYield: selectedPlan.optValue || 0
             }));
+
+            const refs: Array<{ kind: 'techmap' | 'field' | 'farm'; id: string }> = [];
+            const techMap = selectedPlan.activeTechMap || selectedPlan.techMaps?.[0];
+
+            if (techMap?.id) {
+                refs.push({ kind: 'techmap', id: techMap.id });
+            }
+            if (techMap?.fieldId) {
+                refs.push({ kind: 'field', id: techMap.fieldId });
+            }
+            if (techMap?.farmId) {
+                refs.push({ kind: 'farm', id: techMap.farmId });
+            }
+
+            setActiveEntityRefs(refs);
+            setSelectedRowSummary({
+                kind: 'yield',
+                id: selectedPlan.id,
+                title: `План уборки ${selectedPlan.id}`,
+                subtitle: techMap?.crop || selectedPlan.account?.name || 'Yield entry',
+                status: selectedPlan.status,
+            });
+            setLastUserAction(`select-plan:${selectedPlan.id}`);
+            return;
         }
-    }, [selectedPlan]);
+
+        setActiveEntityRefs([]);
+        setSelectedRowSummary(undefined);
+        setLastUserAction('yield-page:idle');
+    }, [
+        selectedPlan,
+        setActiveEntityRefs,
+        setLastUserAction,
+        setSelectedRowSummary,
+    ]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

@@ -2,6 +2,21 @@
 Актуальные документы (обновлять по мере работы).
 
 ## Активные промты (в работе)
+- `interagency/prompts/2026-03-03_s2-1_workspace-context-contract.md` [DONE]
+  - План: `interagency/plans/2026-03-03_s2-1_workspace-context-contract.md` [ACCEPTED]
+  - Отчёт: `interagency/reports/2026-03-03_s2-1_workspace-context-contract.md`
+  - Статус: РЕАЛИЗАЦИЯ ЗАВЕРШЕНА. WorkspaceContext lifecycle, yield coverage и backend observability верифицированы.
+
+- `interagency/prompts/2026-03-02_s1-2_topnav-navigation.md` [DONE]
+  - План: `interagency/plans/2026-03-02_s1-2_topnav-navigation.md`
+  - Отчёт: `interagency/reports/2026-03-02_s1-2_topnav-navigation.md`
+  - Статус: РЕАЛИЗАЦИЯ ЗАВЕРШЕНА. TopNav внедрен, Sidebar удален, интеграция с RaiOutputOverlay верифицирована.
+
+- `interagency/prompts/2026-03-02_s1-1_app-shell-persistent-rai-chat.md` [DONE]
+  - План: `interagency/plans/2026-03-02_s1-1_app-shell-persistent-rai-chat.md`
+  - Отчёт: `interagency/reports/2026-03-02_s1-1_app-shell-persistent-rai-chat.md`
+  - Результат: AppShell + LeftRaiChatDock, чат не размонтируется при навигации; tsc + unit PASS; manual smoke pending.
+
 - `interagency/prompts/2026-03-01_p0-1_api-rai-chat.md` [DONE]
   - План: `interagency/plans/2026-03-01_p0-1_api-rai-chat.md`
   - Отчёт: `interagency/reports/2026-03-01_p0-1_api-rai-chat.md`

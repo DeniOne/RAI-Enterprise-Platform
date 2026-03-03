@@ -218,5 +218,23 @@
 
 ## Agro Telegram Draft→Commit (P0.3) ✅
 - [x] **[API]** Боевой модуль `apps/api/src/modules/agro-events/*` (draft/fix/link/confirm/commit)
+
+## WorkspaceContext Contract Hardening (S2.1) ✅ <!-- id: 18 -->
+- [x] **[WEB]** Подтвердить route-lifecycle и page-scoped reset через `AiChatRoot` + `workspace-context-store` <!-- id: 18.1 -->
+- [x] **[WEB]** Верифицировать отправку актуального `workspaceContext` в `POST /api/rai/chat` из `AiChatStore` <!-- id: 18.2 -->
+- [x] **[WEB]** Добрать coverage для `Yield/KPI` сценария (`consulting/yield/page.tsx`) <!-- id: 18.3 -->
+- [x] **[API]** Включить безопасное observability-логирование summary `workspaceContext` в `RaiChatController` <!-- id: 18.4 -->
+- [x] **[TEST]** Добавить web/api specs и обновить truth-sync документы/отчёт `S2.1` <!-- id: 18.5 -->
 - [x] **[SECURITY]** Tenant isolation: `companyId` только из доверенного контекста (`@CurrentUser()`), не из payload
 - [x] **[TEST]** MUST-gate unit-test: `src/modules/agro-events/agro-events.orchestrator.service.spec.ts` (изолированный jest config)
+## Software Factory Mode Adoption ✅ <!-- id: 18 -->
+- [x] Изучение `ANTIGRAVITY SOFTWARE FACTORY — ORCHESTRATOR PROMPT.md` <!-- id: 18.1 -->
+- [x] Кросс-валидация `CANON.md`, `SECURITY_CANON.md`, `LANGUAGE_POLICY.md` <!-- id: 18.2 -->
+- [x] Обновление `DECISIONS.log` и `activeContext.md` <!-- id: 18.3 -->
+- [x] Переход в режим TECHLEAD Software Factory <!-- id: 18.4 -->
+## RAI Chat & TopNav (S1.2) ✅
+- [x] **[WEB]** Implement `TopNav.tsx` with domain grouping <!-- id: 17.6 -->
+- [x] **[WEB]** Replace `Sidebar` with `TopNav` in `AppShell` <!-- id: 17.7 -->
+- [x] **[WEB]** Integrate signal-to-widget highlighting in `RaiOutputOverlay` <!-- id: 17.8 -->
+- [x] **[TEST]** Verify role-based availability for ADMIN/AGRONOMIST <!-- id: 17.9 -->
+- [x] **[TEST]** Pass Codex prompt tests (189/189) <!-- id: 17.10 -->

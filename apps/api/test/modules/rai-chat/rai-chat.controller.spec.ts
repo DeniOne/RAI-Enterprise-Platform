@@ -3,12 +3,18 @@ import { RaiChatController } from '../../../src/modules/rai-chat/rai-chat.contro
 import { TenantContextService } from '../../../src/shared/tenant-context/tenant-context.service';
 import { RaiChatRequestDto } from '../../../src/modules/rai-chat/dto/rai-chat.dto';
 import { BadRequestException } from '@nestjs/common';
+import { RaiChatService } from '../../../src/modules/rai-chat/rai-chat.service';
 
 describe('RaiChatController', () => {
     let controller: RaiChatController;
     let tenantContextService: TenantContextService;
+    let raiChatService: { handleChat: jest.Mock };
 
     beforeEach(async () => {
+        raiChatService = {
+            handleChat: jest.fn(),
+        };
+
         const module: TestingModule = await Test.createTestingModule({
             controllers: [RaiChatController],
             providers: [
@@ -17,6 +23,10 @@ describe('RaiChatController', () => {
                     useValue: {
                         getCompanyId: jest.fn(),
                     },
+                },
+                {
+                    provide: RaiChatService,
+                    useValue: raiChatService,
                 },
             ],
         }).compile();
@@ -40,6 +50,17 @@ describe('RaiChatController', () => {
     it('should return a deterministic response if companyId is present', async () => {
         const mockCompanyId = 'comp_123';
         jest.spyOn(tenantContextService, 'getCompanyId').mockReturnValue(mockCompanyId);
+        raiChatService.handleChat.mockResolvedValue({
+            text: 'Принял: test message\nroute: /dashboard',
+            widgets: [
+                {
+                    type: 'Last24hChanges',
+                    version: 1,
+                    schemaVersion: '1.0.0',
+                    payload: {},
+                },
+            ],
+        });
 
         const dto: RaiChatRequestDto = {
             message: 'test message',
@@ -53,16 +74,22 @@ describe('RaiChatController', () => {
         expect(result.text).toContain('route: /dashboard');
         expect(result.widgets).toHaveLength(1);
         expect(result.widgets[0].type).toBe('Last24hChanges');
+        expect(raiChatService.handleChat).toHaveBeenCalledWith(dto, mockCompanyId);
     });
 
     it('should work without workspaceContext', async () => {
         const mockCompanyId = 'comp_123';
         jest.spyOn(tenantContextService, 'getCompanyId').mockReturnValue(mockCompanyId);
+        raiChatService.handleChat.mockResolvedValue({
+            text: 'Принял: hello',
+            widgets: [],
+        });
 
         const dto: RaiChatRequestDto = { message: 'hello' };
 
         const result = await controller.handleChat(dto);
 
         expect(result.text).toBe('Принял: hello');
+        expect(raiChatService.handleChat).toHaveBeenCalledWith(dto, mockCompanyId);
     });
 });

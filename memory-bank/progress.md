@@ -74,6 +74,30 @@
     *   Реализован тонкий срез `signals -> advisory -> feedback -> memory append` в RAI Chat; explainability, feedback, episodic memory.
     *   Unit 8/8 PASS; tenant isolation сохранён. Ревью APPROVED (2026-03-02).
 
+18. **AppShell (S1.1)** ✅:
+    *   Решение AG-APP-SHELL-001 ПРИНЯТО.
+    *   AppShell + LeftRaiChatDock, чат не размонтируется при навигации; история и Dock/Focus сохраняются.
+    *   tsc + unit PASS; manual smoke не выполнен. Ревью APPROVED (2026-03-02).
+
+20. **TopNav Navigation (S1.2)** ✅:
+    *   Решение AG-S1-2-TOPNAV-001 ПРИНЯТО.
+    *   Внедрена горизонтальная навигация (TopNav), удален Sidebar.
+    *   Реализована доменная группировка меню (Урожай, CRM, Финансы, Коммерция, Настройки).
+    *   Интегрирован визуальный отклик в RAI Output (авто-скролл и подсветка виджетов из мини-инбокса).
+    *   Тесты Кодекса PASS (189/189). Ревью APPROVED (2026-03-03).
+
+21. **WorkspaceContext Contract (S2.1)** ✅:
+    *   План `2026-03-03_s2-1_workspace-context-contract.md` принят и реализован.
+    *   Подтверждено, что `AiChatRoot` выполняет `setRouteAndReset(pathname)` и не допускает протекания page-level контекста между route.
+    *   `AiChatStore` покрыт тестом на фактическую отправку актуального `workspaceContext` в `POST /api/rai/chat`.
+    *   `consulting/yield/page.tsx` теперь публикует `filters`, `activeEntityRefs`, `selectedRowSummary`, `lastUserAction` для сценария Yield/KPI.
+    *   `RaiChatController` логирует безопасный summary `workspaceContext` без тяжёлого dump и без `companyId` из payload.
+    *   Верификация: web-spec PASS (5 suites / 11 tests), `apps/web` tsc PASS, `apps/api` controller spec PASS. Ревью APPROVED (2026-03-03).
+
+19. **Software Factory Reinforcement** ✅:
+    *   Ре-верифицированы и приняты `STARTER PROMPT` (DOC-ARH-GEN-175) и `REVIEW & FINALIZE PROMPT` (DOC-ARH-GEN-176).
+    *   TECHLEAD готов к работе по канону.
+
 ### Pending / Current Issues:
 *   IDE still showing red files in the screenshot despite TS Server restart.
     *   Possible cause 1: `tsconfig.json` was missing previously (fixed now with root config).
@@ -82,3 +106,5 @@
 
 ### Next Steps:
 1.  Полный truth-sync проход по docs/07_EXECUTION/* (backlog).
+2.  Закрыть `2.2 Правило нагрузки` enforcement-слоем для `WorkspaceContext`.
+3.  Перейти к `3.1 Chat API v1` и формальному контракту `clientTraceId/widgets/toolCalls/openUiToken`.
