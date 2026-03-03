@@ -159,5 +159,10 @@
 - **Статус truth-sync:** `VERIFIED`
 - **Доказательство:** [workspace-context-store.ts](file:///root/RAI_EP/apps/web/lib/stores/workspace-context-store.ts), [workspace-context-load-rule.spec.ts](file:///root/RAI_EP/apps/web/__tests__/workspace-context-load-rule.spec.ts), отчет [2026-03-03_s2-2_workspace-context-load-rule.md](file:///root/RAI_EP/interagency/reports/2026-03-03_s2-2_workspace-context-load-rule.md)
 
+### S3.1 Chat API v1 (Formal Contract)
+- [x] **DoD:** `RaiChatResponseDto` содержит `toolCalls` и `openUiToken`; сервис возвращает исполненные инстументы; тесты на контракт PASS.
+- **Статус truth-sync:** `VERIFIED`
+- **Доказательство:** [rai-chat.dto.ts](file:///root/RAI_EP/apps/api/src/modules/rai-chat/dto/rai-chat.dto.ts), [rai-chat.service.ts](file:///root/RAI_EP/apps/api/src/modules/rai-chat/rai-chat.service.ts), отчет [2026-03-03_s3-1_chat-api-v1.md](file:///root/RAI_EP/interagency/reports/2026-03-03_s3-1_chat-api-v1.md)
+
 ## Рекомендуемый “тонкий срез”, который доказывает, что система ожила
 Сценарий: **Telegram фото+текст → Draft (missingMust) → 🔗 Link field → ✅ Confirm → CommittedEvent → Controller severity → (если S3) AgroEscalation → web-чат показывает виджет DeviationList**.

@@ -129,9 +129,16 @@ export class RaiChatService {
     const response: RaiChatResponseDto = {
       text,
       widgets: this.buildWidgets(request, companyId),
+      toolCalls: executedTools.map((tool) => ({
+        name: tool.name,
+        payload: tool.result && typeof tool.result === "object"
+          ? (tool.result as Record<string, unknown>)
+          : { result: tool.result ?? null },
+      })),
       traceId,
       threadId,
       suggestedActions: this.buildSuggestedActions(request),
+      openUiToken: undefined,
       advisory: externalSignalResult.advisory,
     };
 

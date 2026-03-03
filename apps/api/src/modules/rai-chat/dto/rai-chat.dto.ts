@@ -239,6 +239,12 @@ export class RaiChatResponseDto {
   @IsObject({ each: true })
   widgets: RaiChatWidget[];
 
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => RaiToolCallDto)
+  toolCalls?: RaiToolCallDto[];
+
   @IsString()
   @IsOptional()
   traceId?: string;
@@ -249,6 +255,11 @@ export class RaiChatResponseDto {
 
   @IsOptional()
   suggestedActions?: RaiSuggestedAction[];
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  openUiToken?: string;
 
   @IsOptional()
   advisory?: ExternalAdvisoryDto;

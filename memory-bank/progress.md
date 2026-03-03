@@ -105,6 +105,18 @@
     *   Possible cause 2: `node_modules` resolution for files in `docs/` was failing (fixed with paths mapping).
     *   Possible cause 3: `PrismaService` typing mismatch after removing explicit getters.
 
+23. **Chat API v1 Protocol (S3.1)** ✅:
+    *   Формализован контракт `POST /api/rai/chat` (V1).
+    *   `RaiChatResponseDto` расширен полями `toolCalls` (типизированный список выполненных инструментов) и `openUiToken`.
+    *   Реализован возврат фактически исполненных инструментов из `RaiChatService`.
+    *   Верификация: сервисные тесты PASS (проверка контракта, traceId, threadId), `apps/api` tsc PASS. Ревью APPROVED (2026-03-03).
+
+### Pending / Current Issues:
+*   IDE still showing red files in the screenshot despite TS Server restart.
+*   Possible cause 1: `tsconfig.json` was missing previously (fixed now with root config).
+*   Possible cause 2: `node_modules` resolution for files in `docs/` was failing (fixed with paths mapping).
+*   Possible cause 3: `PrismaService` typing mismatch after removing explicit getters.
+
 ### Next Steps:
 1.  Полный truth-sync проход по docs/07_EXECUTION/* (backlog).
-2.  Перейти к `3.1 Chat API v1` и формальному контракту `clientTraceId/widgets/toolCalls/openUiToken`.
+2.  Перейти к **3.2 Typed Tool Calls only (LAW)** — инспекция и типизация всех инструментов.

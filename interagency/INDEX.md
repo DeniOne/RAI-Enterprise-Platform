@@ -7,6 +7,15 @@
   - Отчёт: `interagency/reports/2026-03-03_s2-2_workspace-context-load-rule.md`
   - Статус: РЕАЛИЗАЦИЯ ЗАВЕРШЕНА. Gatekeeper-слой (truncation, flat filters validation) внедрен в store и верифицирован unit-тестами.
 
+- `interagency/prompts/2026-03-03_s3-2_typed-tool-calls.md` [READY]
+  - План: еще не создан
+  - Статус: промт создан. Требует усиления аудита реестра инструментов.
+
+- `interagency/prompts/2026-03-03_s3-1_chat-api-v1.md` [DONE]
+  - План: `interagency/plans/2026-03-03_s3-1_chat-api-v1.md` [ACCEPTED]
+  - Отчёт: `interagency/reports/2026-03-03_s3-1_chat-api-v1.md`
+  - Статус: РЕАЛИЗАЦИЯ ЗАВЕРШЕНА. Контракт V1 формализован, поддержка toolCalls и openUiToken внедрена и протестирована.
+
 - `interagency/prompts/2026-03-03_s2-1_workspace-context-contract.md` [DONE]
   - План: `interagency/plans/2026-03-03_s2-1_workspace-context-contract.md` [ACCEPTED]
   - Отчёт: `interagency/reports/2026-03-03_s2-1_workspace-context-contract.md`

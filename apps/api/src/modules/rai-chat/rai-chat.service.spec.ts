@@ -90,6 +90,20 @@ describe("RaiChatService", () => {
         }),
       ]),
     );
+
+    expect(result.toolCalls).toEqual([
+      {
+        name: RaiToolName.WorkspaceSnapshot,
+        payload: {
+          route: "/registry/fields",
+          lastUserAction: "open-field",
+          hasSelection: true,
+        },
+      },
+    ]);
+    expect(result.traceId).toEqual(expect.stringMatching(/^tr_/));
+    expect(result.threadId).toEqual(expect.stringMatching(/^th_/));
+    expect(result.openUiToken).toBeUndefined();
   });
 
   it("интегрируется с памятью: вызывает retrieve и store", async () => {

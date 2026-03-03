@@ -77,15 +77,17 @@
 ## 3) Chat API v1 (Agent Console Protocol)
 
 ### 3.1 Endpoint контракт
-- [ ] POST `/api/rai/chat` принимает:
+- [x] POST `/api/rai/chat` принимает:
   - message
   - workspaceContext
   - clientTraceId (для трассировки)
-- [ ] Ответ:
+- [x] Ответ (V1):
   - text
   - widgets[] (structured payload)
-  - toolCalls[] (опционально, для отладки)
-  - openUiToken (опционально)
+  - toolCalls[] (валидация выполненных инструментов)
+  - openUiToken (сигнал на открытие UI)
+- **Статус truth-sync:** `VERIFIED`
+- **Доказательство:** [rai-chat.dto.ts](file:///root/RAI_EP/apps/api/src/modules/rai-chat/dto/rai-chat.dto.ts), [rai-chat.service.ts](file:///root/RAI_EP/apps/api/src/modules/rai-chat/rai-chat.service.ts), отчет [2026-03-03_s3-1_chat-api-v1.md](file:///root/RAI_EP/interagency/reports/2026-03-03_s3-1_chat-api-v1.md)
 
 Эффект: чат становится интерфейсом к агентам и виджетам.
 

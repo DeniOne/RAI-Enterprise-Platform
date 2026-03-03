@@ -1271,3 +1271,35 @@ Orchestrator = Brain (канон RAI_EP).
 - `interagency/prompts/2026-03-02_s1-1_app-shell-persistent-rai-chat.md`
 - `interagency/plans/2026-03-02_s1-1_app-shell-persistent-rai-chat.md`
 - `docs/00_STRATEGY/STAGE 2/RAI_AGENT_OS_IMPLEMENTATION_PLAN.md`
+
+---
+
+## AG-CHAT-API-V1-001
+
+**Дата:** 2026-03-03  
+**Автор:** TECHLEAD (AI)  
+**Статус:** ACCEPTED  
+
+### Решение
+Формализовать контракт Chat API (V1), внедрив обязательные поля для прозрачности работы агента: `toolCalls` (фактически выполненные инструменты), `traceId`, `threadId` и зарезервировать `openUiToken`. 
+
+### Scope
+- **Phase:** Gamma
+- **Sprint:** S3.1
+- **Компоненты:**
+  - `apps/api` — DTO / Service layer для Chat API.
+
+### Технические ограничения
+1. **Compliance:** DTO должны строго валидироваться через `class-validator/class-transformer`.
+2. **Transparency:** `toolCalls` в ответе должны содержать реально выполненные инструменты, а не просто копию запроса.
+3. **Immutability:** не менять структуру `workspaceContext` и логику `companyId`.
+
+### Definition of Done
+- `RaiChatResponseDto` содержит `toolCalls` и `openUiToken`.
+- `RaiChatService` возвращает список выполненных инструментов.
+- Тесты на `handleChat` подтверждают наличие новых полей.
+
+### Связанные документы
+- `interagency/prompts/2026-03-03_s3-1_chat-api-v1.md`
+- `interagency/plans/2026-03-03_s3-1_chat-api-v1.md`
+- `docs/00_STRATEGY/STAGE 2/SPEC_AGENT_FIRST_RAI_EP.md`
