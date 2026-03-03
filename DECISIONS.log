@@ -1423,3 +1423,28 @@ Orchestrator = Brain (канон RAI_EP).
 - `interagency/prompts/2026-03-03_s5-2_memory-storage-canon.md`
 - `interagency/plans/2026-03-03_s5-2_memory-storage-canon.md`
 - `docs/00_STRATEGY/STAGE 2/RAI_AGENT_OS_IMPLEMENTATION_PLAN.md`
+
+## AG-MEMORY-CANON-002
+**Дата:** 2026-03-03  
+**Автор:** TECHLEAD (AI)  
+**Статус:** ACCEPTED  
+
+### Решение
+Реализовать маршрутизацию записи S-Tier (raw logs) напрямую в новую Prisma-модель `MemoryInteraction` через `DefaultMemoryAdapter`, без использования механизма dual-write (старый `MemoryManager` выводится из контура записи сырых логов).
+
+### Scope
+- **Phase:** Gamma
+- **Sprint:** S5.4
+- **Компоненты:**
+  - `apps/api/src/shared/memory/default-memory-adapter.service.ts`
+
+### Технические ограничения
+1. **Tenant Isolation:** Сохранение `companyId` из `MemoryContext`.
+2. **Carcass+Flex:** Обязательное логирование `schemaKey`, `provenance` и `confidence` в JSONB.
+3. **No Dual-Write:** Отказ от дублирующей записи во избежание расхождений состояний; старый контур будет удален позже.
+
+### Definition of Done
+- Прямой маппинг `appendInteraction` в `prisma.memoryInteraction.create`.
+
+### Связанные документы
+- `interagency/plans/2026-03-03_s5-4_adapter-write-routing.md`
