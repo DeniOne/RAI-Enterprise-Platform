@@ -43,11 +43,12 @@
     *   Unit 4/4 (jest direct; pnpm test 137). Ревью APPROVED.
 
 11. **WorkspaceContext (P0.2)** ✅:
-    *   Канонический контракт `workspace-context.ts` (Zod) + store + паблишеры (FarmDetailsPage, TechMap active). AiChatStore передаёт context в POST /api/rai/chat; API DTO валидирует без companyId из payload.
-    *   tsc + next build PASS. Ревью APPROVED (2026-03-02).
-
-12. **Widgets Schema & Renderer (P1.2)** ✅:
-    *   Каноническая типизированная схема `widgets[]` v1.0 (API/Web). `RaiChatService` возвращает `DeviationList` и `TaskBacklog` виджеты. Ревью APPROVED (2026-03-02).
+    *   Канонический контракт `workspace-context.ts` (Zod) + store + паблишеры (FarmDetailsPage, TechMap active). AiChatStore передаёт context в POST /api/rai/chat; API- [x] Подготовить план создания промта `implementation_plan.md`
+- [x] Создать файл промта `interagency/prompts/2026-03-03_s4-1_chat-widget-logic.md`
+- [x] Обновить `interagency/INDEX.md`
+- [ ] Реализация и отчет S4.1 [ ]
+- [ ] Уведомить пользователя
+ская типизированная схема `widgets[]` v1.0 (API/Web). `RaiChatService` возвращает `DeviationList` и `TaskBacklog` виджеты. Ревью APPROVED (2026-03-02).
 
 13. **Interagency Synchronization** ✅:
     *   Изучены и приняты к исполнению `ORCHESTRATOR PROMPT` и `STARTER PROMPT`.
@@ -121,6 +122,9 @@
     *   Внедрено принудительное Forensic-логирование пэйлоадов всех инструментов в `RaiToolsRegistry`.
     *   Гарантировано использование `execute()` как единственного шлюза к домену.
     *   Верификация: юнит-тесты PASS (проверка логов при успехе/валидации/ошибке), `apps/api` tsc PASS. Ревью APPROVED (2026-03-03).
+
+25. **Chat Widget Logic / Domain Bridge (S4.1)** [/]:
+    *   План принят (ACCEPTED). Предстоит разделение логики и внедрение динамических виджетов.
 
 ### Pending / Current Issues:
 *   IDE still showing red files in the screenshot despite TS Server restart.

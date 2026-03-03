@@ -164,10 +164,11 @@
 - **Статус truth-sync:** `VERIFIED`
 - **Доказательство:** [rai-chat.dto.ts](file:///root/RAI_EP/apps/api/src/modules/rai-chat/dto/rai-chat.dto.ts), [rai-chat.service.ts](file:///root/RAI_EP/apps/api/src/modules/rai-chat/rai-chat.service.ts), отчет [2026-03-03_s3-1_chat-api-v1.md](file:///root/RAI_EP/interagency/reports/2026-03-03_s3-1_chat-api-v1.md)
 
-### S3.2 Typed Tool Calls only (LAW)
-- [x] **DoD:** `RaiToolsRegistry` логирует `payload` всех вызовов; типизированный `execute` — единственный шлюз; тесты на Forensic-логирование PASS.
+### S4.1 Chat Widget Logic (Domain Bridge)
+- [x] **DoD:** `RaiChatService` больше не содержит статики; выделен `RaiChatWidgetBuilder`; виджеты динамически зависят от `route` и `companyId`; тесты PASS.
 - **Статус truth-sync:** `VERIFIED`
-- **Доказательство:** [rai-tools.registry.ts](file:///root/RAI_EP/apps/api/src/modules/rai-chat/tools/rai-tools.registry.ts), [rai-tools.registry.spec.ts](file:///root/RAI_EP/apps/api/src/modules/rai-chat/tools/rai-tools.registry.spec.ts), отчет [2026-03-03_s3-2_typed-tool-calls.md](file:///root/RAI_EP/interagency/reports/2026-03-03_s3-2_typed-tool-calls.md)
+- **Доказательство:** [rai-chat-widget-builder.ts](file:///root/RAI_EP/apps/api/src/modules/rai-chat/rai-chat-widget-builder.ts), [rai-chat.service.ts](file:///root/RAI_EP/apps/api/src/modules/rai-chat/rai-chat.service.ts), отчет [2026-03-03_s4-1_chat-widget-logic.md](file:///root/RAI_EP/interagency/reports/2026-03-03_s4-1_chat-widget-logic.md)
 
-## Рекомендуемый “тонкий срез”, который доказывает, что система ожила
+## Рекомендуемый “тонкий срез”
+, который доказывает, что система ожила
 Сценарий: **Telegram фото+текст → Draft (missingMust) → 🔗 Link field → ✅ Confirm → CommittedEvent → Controller severity → (если S3) AgroEscalation → web-чат показывает виджет DeviationList**.

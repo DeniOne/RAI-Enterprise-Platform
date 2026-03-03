@@ -26,6 +26,7 @@ import {
 } from "../../shared/memory/rai-chat-memory.util";
 import { RaiChatMemoryPolicy } from "../../shared/memory/rai-chat-memory.policy";
 import { ExternalSignalsService } from "./external-signals.service";
+import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
 
 @Injectable()
 export class RaiChatService {
@@ -36,6 +37,7 @@ export class RaiChatService {
     private readonly memoryManager: MemoryManager,
     private readonly episodicRetrieval: EpisodicRetrievalService,
     private readonly externalSignalsService: ExternalSignalsService,
+    private readonly widgetBuilder: RaiChatWidgetBuilder,
   ) { }
 
   async handleChat(
@@ -128,7 +130,10 @@ export class RaiChatService {
 
     const response: RaiChatResponseDto = {
       text,
-      widgets: this.buildWidgets(request, companyId),
+      widgets: this.widgetBuilder.build({
+        companyId,
+        workspaceContext: request.workspaceContext,
+      }),
       toolCalls: executedTools.map((tool) => ({
         name: tool.name,
         payload: tool.result && typeof tool.result === "object"
@@ -230,65 +235,5 @@ export class RaiChatService {
     }
 
     return actions;
-  }
-
-  private buildWidgets(
-    request: RaiChatRequestDto,
-    companyId: string,
-  ): RaiChatWidget[] {
-    const route = request.workspaceContext?.route ?? "/unknown";
-    const routeSuffix = route.split("/").filter(Boolean).at(-1) ?? "workspace";
-    const companyMarker = companyId.slice(-4).toUpperCase();
-
-    return [
-      {
-        schemaVersion: RAI_CHAT_WIDGETS_SCHEMA_VERSION,
-        type: RaiChatWidgetType.DeviationList,
-        version: 1,
-        payload: {
-          title: "Критические отклонения",
-          items: [
-            {
-              id: `dev-${companyMarker}-1`,
-              title: `Просадка выполнения на маршруте ${routeSuffix}`,
-              severity: "high",
-              fieldLabel: "Поле Север-12",
-              status: "open",
-            },
-            {
-              id: `dev-${companyMarker}-2`,
-              title: "Рост операционного риска по задаче опрыскивания",
-              severity: "medium",
-              fieldLabel: "Поле Восток-04",
-              status: "watch",
-            },
-          ],
-        },
-      },
-      {
-        schemaVersion: RAI_CHAT_WIDGETS_SCHEMA_VERSION,
-        type: RaiChatWidgetType.TaskBacklog,
-        version: 1,
-        payload: {
-          title: "Бэклог задач на сегодня",
-          items: [
-            {
-              id: `task-${companyMarker}-1`,
-              title: `Проверить контур ${routeSuffix}`,
-              dueLabel: "Сегодня, 14:00",
-              ownerLabel: "Операционный штаб",
-              status: "queued",
-            },
-            {
-              id: `task-${companyMarker}-2`,
-              title: "Подтвердить пакет действий по отклонениям",
-              dueLabel: "Сегодня, 16:30",
-              ownerLabel: "Куратор участка",
-              status: "in_progress",
-            },
-          ],
-        },
-      },
-    ];
   }
 }

@@ -10,6 +10,7 @@ import {
 } from "./widgets/rai-chat-widgets.types";
 import { RaiChatMemoryPolicy } from "../../shared/memory/rai-chat-memory.policy";
 import { ExternalSignalsService } from "./external-signals.service";
+import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
 
 describe("RaiChatService", () => {
   let service: RaiChatService;
@@ -36,6 +37,7 @@ describe("RaiChatService", () => {
       providers: [
         RaiChatService,
         RaiToolsRegistry,
+        RaiChatWidgetBuilder,
         { provide: MemoryManager, useValue: memoryManagerMock },
         { provide: EpisodicRetrievalService, useValue: episodicRetrievalMock },
         { provide: ExternalSignalsService, useValue: externalSignalsServiceMock },
@@ -87,6 +89,20 @@ describe("RaiChatService", () => {
         expect.objectContaining({
           schemaVersion: RAI_CHAT_WIDGETS_SCHEMA_VERSION,
           type: RaiChatWidgetType.TaskBacklog,
+        }),
+      ]),
+    );
+    expect(result.widgets).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          payload: expect.objectContaining({
+            title: "Отклонения по маршруту registry / fields",
+          }),
+        }),
+        expect.objectContaining({
+          payload: expect.objectContaining({
+            title: "Бэклог NY-1 для registry / fields",
+          }),
         }),
       ]),
     );
@@ -270,5 +286,62 @@ describe("RaiChatService", () => {
     );
     expect(result.text).toContain("Advisory: REVIEW");
     expect(result.text).toContain("Feedback по advisory записан в память.");
+  });
+
+  it("динамически меняет виджеты при смене route и companyId", async () => {
+    const executionResult = await service.handleChat(
+      {
+        message: "Проверь исполнение",
+        workspaceContext: {
+          route: "/consulting/execution/manager",
+          lastUserAction: "open-manager",
+          selectedRowSummary: {
+            kind: "operation",
+            id: "op-1",
+            title: "Опрыскивание 12",
+          },
+        },
+      },
+      "company-AB12",
+    );
+
+    const dashboardResult = await service.handleChat(
+      {
+        message: "Покажи дашборд",
+        workspaceContext: {
+          route: "/consulting/dashboard",
+        },
+      },
+      "company-ZX99",
+    );
+
+    expect(executionResult.widgets[0]).toEqual(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          title: "Отклонения по маршруту consulting / execution / manager",
+          items: expect.arrayContaining([
+            expect.objectContaining({
+              id: expect.stringContaining("AB12-manager"),
+              severity: "high",
+              fieldLabel: "Контекст: Опрыскивание 12",
+            }),
+          ]),
+        }),
+      }),
+    );
+
+    expect(dashboardResult.widgets[1]).toEqual(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          title: "Бэклог ZX99 для consulting / dashboard",
+          items: expect.arrayContaining([
+            expect.objectContaining({
+              id: expect.stringContaining("ZX99-dashboard"),
+              ownerLabel: "Компания ZX99",
+            }),
+          ]),
+        }),
+      }),
+    );
   });
 });

@@ -1332,3 +1332,33 @@ Orchestrator = Brain (канон RAI_EP).
 - `interagency/prompts/2026-03-03_s3-2_typed-tool-calls.md`
 - `interagency/plans/2026-03-03_s3-2_typed-tool-calls.md`
 - `docs/00_STRATEGY/STAGE 2/RAI_AGENT_OS_IMPLEMENTATION_PLAN.md`
+
+---
+
+## AG-WIDGET-DOMAIN-BRIDGE-001
+
+**Дата:** 2026-03-03  
+**Автор:** TECHLEAD (AI)  
+**Статус:** ACCEPTED  
+
+### Решение
+Разделить логику обработки чата и формирования операционных виджетов. Внедрить переходный слой («Domain Bridge»), который переводит генерацию виджетов со статических заглушек на динамическое наполнение на основе `workspaceContext` и `companyId`.
+
+### Scope
+- **Phase:** Gamma
+- **Sprint:** S4.1
+- **Компоненты:**
+  - `apps/api` — `RaiChatService`, новый `RaiChatWidgetBuilder` (или эквивалентный хелпер).
+
+### Технические ограничения
+1. **Context Dependency:** данные виджетов (заголовки, айтемы) должны напрямую зависеть от текущего `route` и `companyId`.
+2. **Architecture:** `RaiChatService` должен делегировать сборку виджетов, фокусируясь только на оркестрации.
+3. **Forensic Integrity:** динамически сформированные виджеты должны логироваться в Forensic-аудите (LAW).
+
+### Definition of Done
+- Виджеты в ответе API меняются при изменении контекста запроса.
+- Тесты подтверждают динамику наполнения (mock-data v2).
+
+### Связанные документы
+- `interagency/prompts/2026-03-03_s4-1_chat-widget-logic.md`
+- `interagency/plans/2026-03-03_s4-1_chat-widget-logic.md`

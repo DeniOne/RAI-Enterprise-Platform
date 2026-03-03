@@ -12,9 +12,10 @@
   - Отчёт: `interagency/reports/2026-03-03_s2-2_workspace-context-load-rule.md`
   - Статус: РЕАЛИЗАЦИЯ ЗАВЕРШЕНА. Gatekeeper-слой (truncation, flat filters validation) внедрен в store и верифицирован unit-тестами.
 
-- `interagency/prompts/2026-03-03_s4-1_chat-widget-logic.md` [READY]
-  - План: еще не создан
-  - Статус: промт создан. Требует динамизации виджетов на основе контекста.
+- `interagency/prompts/2026-03-03_s4-1_chat-widget-logic.md` [READY_FOR_REVIEW]
+  - План: `interagency/plans/2026-03-03_s4-1_chat-widget-logic.md` [ACCEPTED]
+  - Отчёт: `interagency/reports/2026-03-03_s4-1_chat-widget-logic.md`
+  - Статус: widget logic вынесена в `RaiChatWidgetBuilder`; виджеты динамически зависят от `companyId` и `workspaceContext`; `jest` PASS, `tsc` PASS.
 
 - `interagency/prompts/2026-03-03_s3-2_typed-tool-calls.md` [DONE]
   - План: `interagency/plans/2026-03-03_s3-2_typed-tool-calls.md` [ACCEPTED]

@@ -6,10 +6,16 @@ import { RaiChatService } from "./rai-chat.service";
 import { RaiToolsRegistry } from "./tools/rai-tools.registry";
 import { SatelliteModule } from "../satellite/satellite.module";
 import { ExternalSignalsService } from "./external-signals.service";
+import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
 
 @Module({
   imports: [AuthModule, TenantContextModule, SatelliteModule],
   controllers: [RaiChatController],
-  providers: [RaiChatService, RaiToolsRegistry, ExternalSignalsService],
+  providers: [
+    RaiChatService,
+    RaiToolsRegistry,
+    ExternalSignalsService,
+    RaiChatWidgetBuilder,
+  ],
 })
 export class RaiChatModule {}
