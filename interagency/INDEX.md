@@ -3,9 +3,10 @@
 
 ## Активные промты (в работе)
 
-- `interagency/prompts/2026-03-04_a_rai-f1-1_intent-router-agro-registry.md` [IN_PROGRESS]
-  - Decision-ID: AG-ARAI-F1-001
-  - Статус: Промт создан, ожидает исполнения. Задачи: IntentRouter (выделение из SupervisorAgent), AgroToolsRegistry (доменный реестр агро-инструментов), TraceId Binding в AiAuditEntry.
+- `interagency/prompts/2026-03-04_a_rai-f1-1_intent-router-agro-registry.md` [DONE]
+  - Decision-ID: AG-ARAI-F1-001 [зарегистрирован в DECISIONS.log]
+  - Отчёт: `interagency/reports/2026-03-04_a_rai-f1-1_intent-router-agro-registry.md` [APPROVED]
+  - Статус: DONE. `IntentRouterService` (regex+LLM-ready), `AgroToolsRegistry` (изоляция agro-инструментов), `AiAuditEntry` (TraceId в БД). tsc PASS, 26/26 тестов PASS.
 
 - `interagency/prompts/2026-03-04_a_rai-f1-2_domain-registries-agronom-stub.md` [IN_PROGRESS]
   - Decision-ID: AG-ARAI-F1-002

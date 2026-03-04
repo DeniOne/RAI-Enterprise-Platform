@@ -11,13 +11,13 @@
 **Цель:** Разделить монолит SupervisorAgent и создать доменные реестры.
 
 ### 1.1 Декомпозиция Supervisor
-- [/] **IntentRouter** (`intent-router.service.ts`) — классификация запросов (GPT-4o-mini). | **AG-ARAI-F1-001** | IN_PROGRESS
+- [x] **IntentRouter** (`intent-router.service.ts`) — классификация запросов (regex, LLM-ready). | **AG-ARAI-F1-001** | DONE
 - [ ] **MemoryCoordinator** (`memory-coordinator.service.ts`) — работа с Episodic Memory + Tenant Isolation.
 - [ ] **AgentRuntime** (`agent-runtime.service.ts`) — жизненный цикл агента, дедлайны (30с).
 - [ ] **ResponseComposer** (`response-composer.service.ts`) — сборка ответа и виджетов.
 
 ### 1.2 Доменные реестры (Capability-based)
-- [/] **AgroToolsRegistry** — инструменты агрономии и техкарт. | **AG-ARAI-F1-001** | IN_PROGRESS
+- [x] **AgroToolsRegistry** — инструменты агрономии и техкарт. | **AG-ARAI-F1-001** | DONE
 - [/] **FinanceToolsRegistry** — экономика и ROI (только READ). | **AG-ARAI-F1-002** | IN_PROGRESS
 - [/] **RiskToolsRegistry** — алерты и спутники. | **AG-ARAI-F1-002** | IN_PROGRESS
 - [/] **KnowledgeToolsRegistry** — база знаний и RAG. | **AG-ARAI-F1-002** | IN_PROGRESS
@@ -26,7 +26,7 @@
 - [/] **AgroDeterministicEngineFacade** — обёртка над кодом расчётов с выводом формул и объяснений (`ExplainableResult`). | **AG-ARAI-F1-003** | IN_PROGRESS
 
 ### 1.4 Трассировка и аудит
-- [/] **TraceId Binding** — проброс ID сквозь все вызовы AI в `AuditLog`. | **AG-ARAI-F1-001** | IN_PROGRESS
+- [x] **TraceId Binding** — проброс ID сквозь все вызовы AI в `AuditLog`. | **AG-ARAI-F1-001** | DONE
 - [ ] **ExplainabilityPanel Service** — сервис для отображения "почему Рэй так решил".
 
 ---
