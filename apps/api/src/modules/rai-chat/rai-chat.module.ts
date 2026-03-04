@@ -9,6 +9,8 @@ import { FinanceToolsRegistry } from "./tools/finance-tools.registry";
 import { RiskToolsRegistry } from "./tools/risk-tools.registry";
 import { KnowledgeToolsRegistry } from "./tools/knowledge-tools.registry";
 import { AgronomAgent } from "./agents/agronom-agent.service";
+import { AgroDeterministicEngineFacade } from "./deterministic/agro-deterministic.facade";
+import { BudgetControllerService } from "./security/budget-controller.service";
 import { IntentRouterService } from "./intent-router/intent-router.service";
 import { SatelliteModule } from "../satellite/satellite.module";
 import { ExternalSignalsService } from "./external-signals.service";
@@ -32,6 +34,8 @@ import { PrismaModule } from "../../shared/prisma/prisma.module";
   controllers: [RaiChatController],
   providers: [
     IntentRouterService,
+    AgroDeterministicEngineFacade,
+    BudgetControllerService,
     AgroToolsRegistry,
     FinanceToolsRegistry,
     RiskToolsRegistry,

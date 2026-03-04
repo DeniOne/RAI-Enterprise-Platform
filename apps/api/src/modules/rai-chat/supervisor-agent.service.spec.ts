@@ -6,6 +6,7 @@ import { FinanceToolsRegistry } from "./tools/finance-tools.registry";
 import { RiskToolsRegistry } from "./tools/risk-tools.registry";
 import { KnowledgeToolsRegistry } from "./tools/knowledge-tools.registry";
 import { AgronomAgent } from "./agents/agronom-agent.service";
+import { AgroDeterministicEngineFacade } from "./deterministic/agro-deterministic.facade";
 import { IntentRouterService } from "./intent-router/intent-router.service";
 import { ExternalSignalsService } from "./external-signals.service";
 import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
@@ -74,6 +75,7 @@ describe("SupervisorAgent", () => {
         FinanceToolsRegistry,
         RiskToolsRegistry,
         KnowledgeToolsRegistry,
+        AgroDeterministicEngineFacade,
         AgronomAgent,
         RaiToolsRegistry,
         RaiChatWidgetBuilder,

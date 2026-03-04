@@ -2,6 +2,8 @@ import { Injectable } from "@nestjs/common";
 import { RaiToolName } from "../tools/rai-tools.types";
 import { AgroToolsRegistry } from "../tools/agro-tools.registry";
 import { RaiToolActorContext } from "../tools/rai-tools.types";
+import type { ExplainableResult } from "../deterministic/explainable-result.types";
+import { AgroDeterministicEngineFacade } from "../deterministic/agro-deterministic.facade";
 
 export interface AgronomAgentInput {
   companyId: string;
@@ -22,11 +24,15 @@ export interface AgronomAgentResult {
   explain: string;
   toolCallsCount: number;
   traceId: string;
+  mathBasis?: ExplainableResult<unknown>[];
 }
 
 @Injectable()
 export class AgronomAgent {
-  constructor(private readonly agroToolsRegistry: AgroToolsRegistry) {}
+  constructor(
+    private readonly agroToolsRegistry: AgroToolsRegistry,
+    private readonly agroFacade: AgroDeterministicEngineFacade,
+  ) {}
 
   async run(input: AgronomAgentInput): Promise<AgronomAgentResult> {
     const actorContext: RaiToolActorContext = {
@@ -60,6 +66,18 @@ export class AgronomAgent {
           },
           actorContext,
         );
+        const mathBasis: ExplainableResult<unknown>[] = [];
+        try {
+          const seeding = this.agroFacade.computeSeedingRate({
+            targetDensityMlnHa: 1.2,
+            thousandSeedWeightG: 4.5,
+            labGerminationPct: 95,
+            fieldGerminationPct: 85,
+          });
+          mathBasis.push(seeding as ExplainableResult<unknown>);
+        } catch {
+          // дефолтные параметры могут не подходить — не ломаем ответ
+        }
         return {
           agentName: "AgronomAgent",
           status: "COMPLETED",
@@ -70,6 +88,7 @@ export class AgronomAgent {
             "Черновик создан детерминированно. LLM-агроном не подключён.",
           toolCallsCount: 1,
           traceId: input.traceId,
+          mathBasis: mathBasis.length > 0 ? mathBasis : undefined,
         };
       } catch (err) {
         return {

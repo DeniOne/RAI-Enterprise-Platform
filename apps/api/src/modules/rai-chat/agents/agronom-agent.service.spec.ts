@@ -1,6 +1,6 @@
 import { AgronomAgent } from "./agronom-agent.service";
 import { AgroToolsRegistry } from "../tools/agro-tools.registry";
-import { RaiToolName } from "../tools/rai-tools.types";
+import { AgroDeterministicEngineFacade } from "../deterministic/agro-deterministic.facade";
 
 describe("AgronomAgent", () => {
   const techMapMock = { createDraftStub: jest.fn() };
@@ -10,8 +10,8 @@ describe("AgronomAgent", () => {
     techMapMock as any,
   );
   agroRegistry.onModuleInit();
-
-  const agent = new AgronomAgent(agroRegistry);
+  const agroFacade = new AgroDeterministicEngineFacade();
+  const agent = new AgronomAgent(agroRegistry, agroFacade);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -42,6 +42,14 @@ describe("AgronomAgent", () => {
     expect(result.explain).toContain("Черновик создан детерминированно");
     expect(result.toolCallsCount).toBe(1);
     expect((result.data as { draftId: string }).draftId).toBe("tm-1");
+    expect(Array.isArray(result.mathBasis)).toBe(true);
+    expect((result.mathBasis ?? []).length).toBeGreaterThan(0);
+    expect((result.mathBasis ?? [])[0]).toMatchObject({
+      value: expect.any(Number),
+      formula: expect.any(String),
+      unit: "кг/га",
+      explanation: expect.any(String),
+    });
   });
 
   it("generate_tech_map_draft without fieldRef returns NEEDS_MORE_DATA", async () => {

@@ -13,9 +13,10 @@
   - Отчёт: `interagency/reports/2026-03-04_a_rai-f1-2_domain-registries-agronom-stub.md` [APPROVED]
   - Статус: DONE. `FinanceToolsRegistry`, `RiskToolsRegistry`, `KnowledgeToolsRegistry`, `AgronomAgent` stub. tsc PASS, 50/50 тестов PASS.
 
-- `interagency/prompts/2026-03-04_a_rai-f1-3_budget-deterministic-bridge.md` [IN_PROGRESS]
-  - Decision-ID: AG-ARAI-F1-003
-  - Статус: Промт создан, ожидает исполнения. Задачи: BudgetController (защита лимитов), AgroDeterministicEngineFacade (Explainable Math).
+- `interagency/prompts/2026-03-04_a_rai-f1-3_budget-deterministic-bridge.md` [DONE]
+  - Decision-ID: AG-ARAI-F1-003 [зарегистрирован в DECISIONS.log]
+  - Отчёт: `interagency/reports/2026-03-04_a_rai-f1-3_budget-deterministic-bridge.md` [APPROVED]
+  - Статус: DONE. `AgroDeterministicEngineFacade` (ExplainableResult, 3 метода), `BudgetControllerService` (validateTransaction + BudgetExceededError). tsc PASS, 12/12 тестов PASS.
 
 
 

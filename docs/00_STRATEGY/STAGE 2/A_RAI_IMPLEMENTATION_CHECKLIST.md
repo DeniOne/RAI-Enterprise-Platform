@@ -23,7 +23,7 @@
 - [x] **KnowledgeToolsRegistry** — база знаний и RAG. | **AG-ARAI-F1-002** | DONE
 
 ### 1.3 Детерминированный мост
-- [/] **AgroDeterministicEngineFacade** — обёртка над кодом расчётов с выводом формул и объяснений (`ExplainableResult`). | **AG-ARAI-F1-003** | IN_PROGRESS
+- [x] **AgroDeterministicEngineFacade** — обёртка над кодом расчётов с выводом формул и объяснений (`ExplainableResult`). | **AG-ARAI-F1-003** | DONE
 
 ### 1.4 Трассировка и аудит
 - [x] **TraceId Binding** — проброс ID сквозь все вызовы AI в `AuditLog`. | **AG-ARAI-F1-001** | DONE
