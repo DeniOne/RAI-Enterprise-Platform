@@ -1,264 +1,30 @@
-- **Exploration Module (2026-02-25):** выполнен end-to-end.
-  - [x] Backend: FSM, War Room orchestration, tenant/RBAC checks, API-метрики.
-  - [x] Frontend: `/exploration`, `/exploration/strategic`, `/exploration/constraints`, `/exploration/cases/:id`, `/exploration/war-room/:sessionId`.
-  - [x] LANGUAGE_POLICY: пользовательские тексты и Swagger в модуле `Исследования` русифицированы.
-  - [x] Проверки: `apps/web` lint/tsc/spec — пройдены; `apps/api` tsc — пройден.
-  - [~] `apps/api` exploration e2e в текущей сессии нестабилен из-за инфраструктурного timeout раннера.
-- **Foundation Stabilization Status**: **COMPLETE ✅**. System hardened, secured, and load-tested.
-- [2026-02-16] **Load Test Success**: 100% success rate (713 requests, p95 < 350ms) achieved after fixing database schema and API validation.
-- **Security Hardened**: RBAC, Throttler, and Tenant Isolation (Prisma middleware) fully active.
+# Активный контекст RAI_EP
 
-## Current Focus
-- **FOUNDATION ORCHESTRATOR PROMPT (ADOPTED) ✅**: Переход на канонический ворклоу Software Factory. Все процессы теперь идут через `interagency/` и жёсткие роли (TECHLEAD/CODER).
-- **TM-POST-C UI TechMap Workbench v2**: Ожидание/Ревью плана реализации новой версии воркбенча с DAG-визуализацией.
-- **Соблюдение Канона**: Безусловное следование `CANON.md`, `LANGUAGE_POLICY.md` и `UI_DESIGN_CANON.md`.
-- **Подготовка к задачам**: Ожидание новых промтов в `interagency/prompts/`.
+## Текущая задача
 
-...
+Завершено проектирование мульти-агентной AI архитектуры для RAI Enterprise Platform.
 
-### Logical Action (2026-03-03 11:30 UTC)
-- Изучен и повторно принят к исполнению `ANTIGRAVITY SOFTWARE FACTORY — ORCHESTRATOR PROMPT.md` по прямому указанию юзера.
-- Верифицированы `CANON.md`, `ARCHITECTURAL_AXIOMS.md`, `FORBIDDEN.md`, `DECISIONS.log`.
-- Установлен режим жёсткого следования Software Factory воркфлоу через `interagency/`.
-- Включена языковая политика: русский язык с использованием ненормативной лексики по требованию юзера. Хуярим дальше.
-- **Technical Debt: Prisma Transparent Isolation (2026-02-28)**: **COMPLETE ✅**. Устранена проблема «ручного прописывания делегатов» в `PrismaService`. Внедрен динамический `Proxy`, переименован `tenantId` в `companyId` для 10/10 изоляции. Добавлены корневые скрипты `db:client` и `postinstall` для автоматизации.
-- **Auto-Onboarding & Dev Mode Guard (2026-02-26)**: Внедрён механизм `AUTH_DISABLED=true` (возврат тестового Tenant ID) и Auto-Onboarding для владельца (создание корневой компании при входе `441610858` в Telegram). Проблема курицы и яйца при старте платформы решена.
-- **Level C: Contradiction-Resilient Intelligence**: **VERIFIED ✅** (50 тестов PASS)
-  - [x] FSM Governance Guard (I33) — DivergenceRecord gate + high risk justification
-  - [x] ConflictExplainabilityBuilder (I32) — human-readable explanations
-  - [x] Industrial Guardrails — 1000-run determinism, policy chaos, drift detection
-  - [x] E2E Override Pipeline — full cycle verified
-- **Level D: Adaptive Self-Learning Domain**: **VERIFIED ✅** (Pilot Hardening COMPLETE)
-  - [x] Phase C: Industrial Hardening (Atomics, Statistical Gating, Genesis Guard)
-  - [x] Chaos Testing & Load Readiness verified
-- **Level E: Contract-Driven Regenerative Optimization**: **VERIFIED ✅** (Industrial Grade 10/10)
-  - [x] Contract-Driven Governance & Mode Gating (Managed vs Seasonal)
-  - [x] Severity Matrix (R1-R4) & Formal P05 Tail Risk
-  - [x] Delegated Authority & Emergency Locks (I34/I41)
-  - [x] Enhanced Audit Trail (LiabilityTag, ContractType)
-- **Backend Stability**: **VERIFIED ✅** (Server running on port 4000). Resolved ESM/CJS, types, and import issues.
-- **Level F: Institutional Oracle Standard & Architectures**: **VERIFIED ✅** (10/10 Formal Documentation & Architecture Complete)
-  - [x] All 12 Architectural, Engineering, Metric, and Execution specs formalized.
-  - [x] **Phase 1 (Crypto Core)**: Cryptographic Integrity (Ed25519, HSM, Merkle DAG) & M-of-N Multisig (5-of-7).
-  - [x] **Phase 2 (Two-Phase Execution)**: FSM Core (XState), TraceID generation, PENDING state UI lock, AuthorityContext binding.
-  - [x] **Phase 3 (Escalation & Quorum)**: Premium UI Polish, SignatureGate, Quorum Progress, Zero-Overlap Layout fix.
-  - [x] **Phase 4 (Layout Hardening)**: Global Navigation via Route Groups, Persistent Sidebar, purged ad-hoc layouts, 100% build stability.
-  - [x] **Phase 5 (Tenant Isolation 10/10)**: Global RLS (74 tables), Prisma $extends (Strict Mode), ESLint Guardrails, Immutable TenantScope.
-- [x] **Phase 6 (AI Explainability)**: **VERIFIED ✅**. 3-уровневое обоснование решений ИИ (Surface/Analytical/Forensic).
-- [x] **Phase 7 (Infrastructure Hardening)**: **VERIFIED ✅**. Устранено 70+ критических ошибок типизации Prisma/TenantContext/Integrity. 0-error build достигнут.
-- [x] **Phase 8 (Navigation Re-org)**: **VERIFIED ✅**. Исправлена иерархия страниц (404 fix) в соответствии с Navigation Policy.
-- [x] **Phase 6 (Simulations)**: E2E Hardcore attacks scenarios (BFT, Zip Bomb, Replay, Panic).
-- **Phase 4 (Risk Triage & Causal Loops)**: **VERIFIED ✅** (10/10 Enterprise Grade)
-  - [x] Risk Stratification (R1-R4) visual hierarchy.
-  - [x] Triggered Effects Panel with SHA-256 (RFC8785) verification.
-  - [x] Conflict Component & Lexicographical BFS escalation path.
-  - [x] Institutional Replay Test Suite (100% Determinism).
-## Current Objective
-- [x] Ревью и финализация задачи TM-POST-B (Season/CropZone/CropVariety) [DONE]
-- [ ] Ревью плана POST-C (UI Workbench v2) [IN_PROGRESS]
-- [ ] Планирование Phase C (Memory Integration) [PENDING]
+## Созданные документы
 
-Чеклисты синхронизированы, memory bank актуализирован, roadmap логически и физически закрыт до Phase 7.
-- **Runtime Stabilization (2026-02-23):** Frontend dev ускорен (Turbopack + облегчённый dev-transpile), добавлен явный loading feedback в UI, backend startup ускорен и стабилизирован, локальный S3/MinIO auth выровнен.
+### RAI_AI_SYSTEM_RESEARCH.md (Фаза 1)
+- Полный анализ архитектуры RAI_EP
+- 12 секций: обзор архитектуры, доменные модули, бэкенд-сервисы, event-driven компоненты, операционные потоки, точки интеграции AI, риски, ограничения, инварианты, оценка осуществимости мульти-агентной архитектуры, стратегия интеграции, архитектурное заключение
+- Путь: `/root/RAI_EP/docs/RAI_AI_SYSTEM_RESEARCH.md`
 
-## Active Decisions
-- **Standardization**: Используем структуру документов с префиксами (00, 10, 20...).
-- **Language**: Русский язык, экспрессивная лексика.
-- **Ledger-First Cash Flow**: Касса — это проекция, а не хранилище.
-- **Settlement Guard**: Любое расчетное событие обязано иметь леджер-проекцию (атомарно).
-- **Contradiction-Resilient Intelligence**: Level C FSM формально защищён — OVERRIDE_ANALYSIS → DRAFT без DivergenceRecord невозможен.
+### RAI_AI_SYSTEM_ARCHITECTURE.md (Фаза 2)
+- Production-grade архитектурный документ мульти-агентной AI системы
+- 14 секций + самоаудит: принципы (7 шт.), Swarm-структура, 5 типов агентов (Supervisor, Agro, Economist, Monitoring, Knowledge), runtime FSM (8 состояний), правила оркестрации (6 правил), Tool Registry (14 инструментов), event-driven AI (6 триггеров), трёхслойная память (рабочая/эпизодическая/институциональная), контроль стоимости (4 тира моделей), безопасность (4 слоя защиты), наблюдаемость (9 метрик), graceful degradation (4 уровня), Human-in-the-Loop (8 уровней автономности), дорожная карта (3 стадии: 4-6 + 6-10 + 10-16 недель)
+- Путь: `/root/RAI_EP/docs/RAI_AI_SYSTEM_ARCHITECTURE.md`
 
-## Architectural Invariants (Hardened)
-- **I29**: ΔRisk ∈ [-1, 1], DIS = clamp(Σ w_i * f_i, 0, 1).
-- **I30**: simulationHash = SHA256(UTF8(RFC8785(RoundedCanonical))).
-- **I31**: DivergenceRecord + GovernanceConfig — Append-Only, immutable.
-- **I32**: explanation ≠ empty string. Human-readable for every divergence.
-- **I33**: OVERRIDE_ANALYSIS → DRAFT запрещён без DivergenceRecord. DIS > 0.7 → justification обязателен.
-- **Policy Loop**: `PolicySignal` -> `RiskEngine`.
-- **Zero-Mutation Projection**: Проекции (Cash Flow, KPI) не меняют стейт.
-- **DB Guard Enforcement**: Атомарная валидация метаданных транзакций.
-- **FSM Integrity**: Все переходы через `DecisionLog` и RBAC.
-- **Replay Recovery**: Идемпотентные повторы обязаны восстанавливать проекции, если они отсутствуют.
+## Ключевые архитектурные решения
 
-- **Frontend Menu Execution (2026-02-23):** Button 'Управление Урожаем' closed at MVP level: interactive dashboard, smart-routing alerts, unified focus hook, and docs checklist contract.
-- **Backend Runtime Note:** API watch mode stabilized by aligning dist entrypoint and preventing watch-time dist deletion race.
+1. **AI — советник, не авторитет** (P-01)
+2. **Детерминированное ядро** — расчёты выполняются кодом, не LLM (P-02)
+3. **Tool-gated access** — агенты не трогают БД напрямую (P-03)
+4. **5 агентов** вместо «агентного зоопарка» (обосновано)
+5. **3-стадийная дорожная карта** — итеративная эволюция
 
-- **Frontend Menu CRM Button (2026-02-23):** Хозяйства и контрагенты closed at MVP with explicit click-map, loading/empty/error/permission, smart routing ?entity=... (crm/farms/counterparties), and executive latest counterparties (top-5) block.
-- **Frontend Menu CRM Counterparties (2026-02-24):** production closure completed:
-  - hierarchy flow `Holding -> Legal Entity -> Farm`,
-  - full CRM management workspace (registry filters + profile patch + workspace tabs),
-  - CRUD for contacts/interactions/obligations,
-  - responsible selection from company users directory,
-  - backend invariant guard for `FROZEN` without linked farms/fields,
-  - API regression test added for hierarchy validation.
+## Следующие шаги
 
-- **Institutional Commerce Core (2026-02-25):** implemented and verified ✅
-  - `Commerce*` schema slice with strict multi-tenant constraints
-  - backend services + DTO + controller workflow
-  - runtime E2E flow validated and migration applied
-
-- **Frontend UX Tree Execution (2026-02-26):** IN PROGRESS
-  - CODEX PROMPT created: `docs/07_EXECUTION/CODEX_PROMPT_FRONTEND_USER_TREE.md`
-  - **RegulatoryProfile & Party CRUD (Blocker #1 resolved):**
-    - `Party` (commerce_parties) — единственный движок контрагентов для Commerce. `Account` изолирован.
-    - Реализовано API и Frontend для Jurisdiction, RegulatoryProfile и Party.
-    - Добавлены 2026 presets (10/10 Institutional Grade).
-    - CRM UI "/consulting/crm/counterparties" успешно переписан под вкладки профилей.
-    - Следующий шаг: CommerceContract → Obligation → Fulfillment → Invoice → Payment (Блок A).
-
-- **Party Identification & Auto-Fill Patch (2026-02-27): COMPLETE**
-  - В `PartyCreateWizard` добавлен шаг `Идентификация` (RU/BY/KZ) без переписывания существующего wizard-flow.
-  - Добавлен lookup-контур `POST /api/party-lookup` с DaData (RU), stub BY/KZ, Redis cache и audit logging.
-  - Реализованы checksum-проверки ИНН РФ и защита от перезаписи пользовательских значений через diff-dialog.
-  - Lookup-данные (`requisites`, `addresses`, `dataProvenance`) сохраняются в `registrationData` и отображаются в карточке контрагента.
-
-- **UI Refactoring & Design System (2026-02-28): COMPLETE ✅**
-  - [x] **View/Edit Engine**: Реализован через `DataField` и `EditModeProvider`. Чистая архитектура без визуального шума в ViewMode.
-  - [x] **Tabular Scaling**: Переход от карточек к масштабируемым таблицам в HubSpot. Внедрен паттерн Drawers для редактирования.
-  - [x] **Completeness Scoring**: Система 100% готовности профиля к аудиту.
-  - [x] **Master Design System v2.0**: Единый источник истины, объединивший стратегию и продукт с учетом новых UI-инвариантов.
-- **Remote UI Access (2026-02-28):** FAILED (Infrastructure constraints). Decision: manual screenshots exchange.
-
-## Orchestrator Session Start (2026-02-28)
-- **FOUNDATION CHECK**: `CANON.md`, `ARCHITECTURAL_AXIOMS.md`, `FORBIDDEN.md`, `UI_DESIGN_CANON.md`, `SECURITY_CANON.md`, `DECISIONS.log` — проверены. Все каноны на месте, хуле.
-- **LANGUAGE_POLICY**: верифицирована. Английский — только для кода, остальное — наш великий и могучий.
-- **MEMORY_BANK**: прочитан до корки.
-- **Documentation Hardening**: завершен рефакторинг `10_BUTTON_Реестр_хозяйств.md` до Master-стандарта (v2.0, B/C/J паттерны).
-- **Status**: TECHLEAD готов к приему задач. Жду указаний от USER.
-
-### Logical Action (2026-02-28 21:08 UTC)
-- Инициирована новая сессия TECHLEAD.
-- Состояние: Интеграция Agro Domain + Prisma в процессе стабилизации.
-- Блокеры: Ошибки типизации в файлах `/docs/` из-за отсутствия глобальных `@types`.
-
-### Logical Action (2026-02-28 21:15 UTC)
-- Сформирован план (чеклист) для спринта **Agro Domain Controller MVP**.
-- Цель: реальный контроль `operationDelayDays` с авто-эскалацией.
-- Назначены идентификаторы задач в `task.md`.
-
-### Logical Action (2026-02-28 21:25 UTC)
-- **15.1** выполнена. Статус операции в `FieldOperationPayload` канонизирован: `PLANNED` | `IN_PROGRESS` | `COMPLETED`.
-- Альтернативные флаги (`completed=true`) запрещены архитектурно.
-- База для детерминированного контроллера готова.
-
-### Logical Action (2026-02-28 21:32 UTC)
-- **15.2** выполнена. Реализован `ControllerMetricsService.handleCommittedEvent`.
-- Настроена фильтрация: обрабатываются только события `FIELD_OPERATION` со статусом `COMPLETED`.
-- Интегрирован запрос к Prisma для извлечения `plannedEndTime` из `MapOperation`.
-- Реализован расчет `operationDelayDays`. Контроллер выдает детерминированное значение задержки.
-
-### Logical Action (2026-02-28 21:38 UTC)
-- **15.3** выполнена. Внедрен канонический тип `MetricResult`.
-- Интегрирована `DeviationPolicy` для оценки критичности отклонений.
-- Реализован метод `evaluateSeverity`: задержка мапится в S1-S4 на основе порогов из политики.
-- Формируется детальное обоснование (`explain`) задержки.
-
-### Logical Action (2026-02-28 21:55 UTC)
-- **15.4** выполнена. В `schema.prisma` добавлена модель `AgroEscalation`.
-- Выполнен `db push` и регенерация Prisma Client.
-- В `ControllerMetricsService` реализован механизм авто-эскалации.
-- При достижении порога `escalateAt` (по умолчанию S3) в БД автоматически создается запись об эскалации со статусом `OPEN`.
-
-### Logical Action (2026-02-28 22:05 UTC)
-- **15.5** выполнена. Замкнут цикл обратной связи в Telegram.
-- `EventActionsService.confirm` теперь получает результат от контроллера.
-- Если зафиксирована критическая задержка (S3/S4), пользователь получает мгновенное уведомление в боте с указанием количества дней задержки и факта создания эскалации.
-
-### Logical Action (2026-02-28 22:15 UTC)
-- **15.6** выполнена. Реализован и пройден набор из 5 юнит-тестов (`agro-controller.spec.ts`).
-- Верифицирована вся цепочка: от расчета задержки до создания записи эскалации в БД.
-- Спринт Gamma 8 полностью закрыт (Complete).
-
-### Logical Action (2026-02-28 22:58 UTC)
-- Документ [RAI_AGENT_OS_IMPLEMENTATION_PLAN.md](file:///root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_OS_IMPLEMENTATION_PLAN.md) приведен в порядок.
-- Выполнено форматирование под институциональный канон: Geist-типографика (через Markdown-структуру), типизация интерфейсов и JSON-структур.
-- Все оригинальные идеи и этапы внедрения сохранены в полном объеме.
-- Репозиторий готов к пушу.
-
-
-### Logical Action (2026-03-01 12:05 UTC)
-- Реализован канонический модуль RaiChat в apps/api.
-- Проведена интеграция с фронтендом (вывод из режима мока в режим реального API).
-- Проведена синхронизация всех чеклистов и WBS согласно канону FINALIZATION.
-
-### Logical Action (2026-03-02 09:55 UTC)
-- Выполнено ревью и финализация задачи **P1.2: Widgets Schema & Renderer**.
-- Проверено соответствие коду и тестам. Статус: APPROVED.
-- Отмечен пункт P1.2 в `PROJECT_EXECUTION_CHECKLIST.md`.
-- Отменена ошибочная отметка P1.4 и самовольные изменения структуры WBS.
-
-### Logical Action (2026-03-02 09:58 UTC)
-- Изучен `ANTIGRAVITY SOFTWARE FACTORY — ORCHESTRATOR PROMPT.md` (CANONICAL).
-- Изучен `CURSOR SOFTWARE FACTORY — STARTER PROMPT.md`.
-- Подтверждено следование ролевой модели (USER/TECHLEAD/CODER) и межведомственному ворклоу (interagency/).
-- Состояние: TECHLEAD полностью синхронизирован с канонами и готов к выполнению задач через `interagency/prompts/`.
-
-### Logical Action (2026-03-03 08:20 UTC)
-- ОТМЕНА: Промт `2026-03-03_s1-3_left-rai-chat-dock.md` удалён. Установлено, что функционал (изменяемый размер, Dock/Focus, персистентность) уже реализован в рамках **P2.3 (UX Polish)** и **S1.1 (AppShell)**.
-- СИНХРОНИЗАЦИЯ: `INDEX.md`, `RAI_AGENT_OS_IMPLEMENTATION_PLAN.md` и `PROJECT_EXECUTION_CHECKLIST.md` актуализированы. Задача 1.3 и S1.2 переведены в статус **DONE / VERIFIED**.
-- TECHLEAD подтверждает полную готовность системы к следующему этапу.
-
-### Logical Action (2026-03-03 08:55 UTC)
-- Реализован и закрыт пакет **S2.1 / WorkspaceContext contract** по утверждённому interagency-плану.
-- Факт: route lifecycle уже обеспечивался через `AiChatRoot -> setRouteAndReset(pathname)`; это зафиксировано тестом `workspace-context-store.spec.ts`.
-- Добран coverage для `Yield/KPI`: `apps/web/app/consulting/yield/page.tsx` публикует `activeEntityRefs` (`techmap/field/farm`), `selectedRowSummary`, `filters`, `lastUserAction`.
-- `AiChatStore` покрыт тестом на отправку актуального `workspaceContext` в `/api/rai/chat`.
-- `RaiChatController` теперь логирует безопасный summary `workspaceContext` (route, counts, kinds, flags), без тяжёлого payload и без tenant из body.
-- Выпущен отчёт `interagency/reports/2026-03-03_s2-1_workspace-context-contract.md`.
-- Truth-sync обновлён в `interagency/INDEX.md` и `docs/00_STRATEGY/STAGE 2/RAI_AGENT_OS_IMPLEMENTATION_PLAN.md`.
-
-### Logical Action (2026-03-03 12:25 UTC)
-- **S5.3 Memory Schema Implementation**: Созданы физические модели `MemoryInteraction`, `MemoryEpisode`, `MemoryProfile` в Prisma.
-- Старая модель `MemoryEntry` оставлена для обратной совместимости.
-- Созданы TypeScript-типы (`memory.types.ts`).
-- Все чек-листы (`INDEX.md`, `FULL_PROJECT_WBS.md`, `RAI_AGENT_OS_IMPLEMENTATION_PLAN.md`) обновлены. Отчет зафинализирован (APPROVED).
-
-### Logical Action (2026-03-03 14:10 UTC)
-- **S5.4 Adapter Write Routing**: `DefaultMemoryAdapter.appendInteraction` переведен на прямую запись в `MemoryInteraction` через `PrismaService`.
-- `userId` прокинут из JWT сквозь `RaiChatController -> RaiChatService -> ExternalSignalsService -> MemoryAdapter`.
-- Для `attrs` внедрена рекурсивная JSON sanitization; циклические и невалидные поля больше не обнуляют весь payload.
-- `embedding` пишется транзакционно через raw vector update внутри `$transaction`; targeted tests и `apps/api` tsc прошли.
-
-### Logical Action (2026-03-03 14:40 UTC)
-- Выполнен truth-sync `Phase B` в Agent OS Implementation Plan.
-
-### Logical Action (2026-03-04 16:20 UTC)
-- Исполнен TM POST-A после `ACCEPTED: interagency/plans/2026-03-04_tm-post-a_consolidation.md`.
-- `TechMapService` консолидирован: методы `activate` и `createNextVersion` перенесены в `apps/api/src/modules/tech-map/tech-map.service.ts`.
-- `ConsultingModule` переведён на импорт `TechMapModule`; локальный `consulting/tech-map.service.ts` удалён.
-- Для DI в `TechMapModule` зарегистрированы `TechMapValidator` и `UnitNormalizationService`.
-- Документация TM-POST.5 обновлена: расширен `techmap-task.schema.ts`, добавлен API-слой TM-4/TM-5, зафиксирован статус в memory-bank.
-- Подтверждено, что `structured widgets справа` уже реализованы в backend/web и не являются открытым хвостом.
-- Подтверждено, что единственный незакрытый пункт `Phase B` — интеграция `SupervisorAgent` в API.
-
-### Logical Action (2026-03-03 15:05 UTC)
-- Реализован `SupervisorAgent` в `apps/api/src/modules/rai-chat/supervisor-agent.service.ts`.
-- Orchestration flow вынесен из `RaiChatService` в отдельный agent-layer без поломки контракта `POST /api/rai/chat`.
-- `Phase B` закрыта: оба пункта rollout-блока теперь выполнены и синхронизированы с interagency/docs/memory-bank.
-
-### Logical Action (2026-03-03 15:35 UTC)
-- Реализована runtime-интеграция `MemoryEpisode` и `MemoryProfile`.
-- `DefaultMemoryAdapter` теперь пишет `MemoryEpisode`, читает и обновляет `MemoryProfile`.
-- `SupervisorAgent` начал использовать profile context при ответе и обновлять профиль после interaction.
-- Пункт DoD `Episodes/Profile сохраняются и используются при ответах` закрыт.
-
-### Logical Action (2026-03-03 16:05 UTC)
-- Реализован memory observability debug-layer.
-- `SupervisorAgent` теперь возвращает `memoryUsed` как безопасный summary применённого episode/profile context.
-- В `AiChatPanel` добавлена debug-плашка `Memory Used`, gated через привилегированный governance-режим.
-
-### Logical Action (2026-03-03 18:00 UTC) — Sprint 1 P1 DONE
-- Наполнен `RaiToolsRegistry` 4 боевыми инструментами: `compute_deviations`, `compute_plan_fact`, `emit_alerts`, `generate_tech_map_draft`.
-- В `SupervisorAgent` добавлен `detectIntent()` — keyword routing по типу запроса.
-- `generate_tech_map_draft` — stub: создаёт пустой DRAFT в БД с tenant-scope. Полная генерация — отдельный Sprint (TechMap Intake).
-- DI: `DeviationService`, `ConsultingService`, `AgroEscalationLoopService`, `TechMapService` подключены в `RaiChatModule`.
-- Устранён runtime-блокер: `axios` добавлен в `apps/api/package.json`.
-- Верификация: tsc PASS, unit 14/14 PASS, smoke 4/4 PASS, TechMap DRAFT в БД подтверждён.
-
-### Logical Action (2026-03-03 20:30 UTC) — Sprint 1 P2 DONE
-- Прогнаны unit-тесты — 14/14 PASS.
-- Выполнены 4 live E2E smoke через `POST /api/rai/chat` — все маршруты работают.
-- Подтверждено: `generate_tech_map_draft` создаёт реальную запись TechMap в БД со статусом DRAFT.
-- Telegram linking cascade проверен: поддерживает AgroEventDraft, но Telegram→chat bridge отсутствует — зафиксировано в backlog как задача Sprint TechMap Intake.
-- `PROJECT_EXECUTION_CHECKLIST.md` актуализирован. `interagency/INDEX.md` синхронизирован.
-- Backlog Sprint TechMap Intake: Telegram→/api/rai/chat bridge + workspaceContext из Telegram-чата + полная генерация TechMap.
+- Рассмотрение и утверждение архитектуры
+- Начало Stage 1 (интеграция LLM API, расширение Tool Registry, token-бюджеты, observability)
