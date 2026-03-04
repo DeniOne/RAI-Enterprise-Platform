@@ -22,6 +22,10 @@
   - Decision-ID: AG-ARAI-F1-004
   - Статус: Промт создан, ожидает исполнения. Задачи: MemoryCoordinator, AgentRuntime, ResponseComposer.
 
+- `interagency/prompts/2026-03-04_a_rai-f2-1_parallel-fan-out.md` [IN_PROGRESS]
+  - Decision-ID: AG-ARAI-F2-001
+  - Статус: Промт создан, ожидает исполнения. Задачи: ToolCallPlanner, Parallel Fan-Out, EconomistAgent Stub.
+
 
 
 

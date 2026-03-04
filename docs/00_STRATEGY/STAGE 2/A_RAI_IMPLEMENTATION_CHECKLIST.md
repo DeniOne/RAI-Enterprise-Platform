@@ -36,12 +36,12 @@
 **Цель:** Полноценные субагенты и параллельное выполнение задач.
 
 ### 2.1 Runtime Evolution
-- [ ] **Parallel Fan-out** — одновременный запуск нескольких агентов (напр. Agronom + Economist).
-- [ ] **ToolCall Planner** — оптимизация количества вызовов LLM.
+- [/] **Parallel Fan-out** — одновременный запуск нескольких агентов (напр. Agronom + Economist). | **AG-ARAI-F2-001** | IN_PROGRESS
+- [/] **ToolCall Planner** — оптимизация количества вызовов LLM. | **AG-ARAI-F2-001** | IN_PROGRESS
 
 ### 2.2 Специализированные агенты
 - [x] **AgronomAgent** — ТРИАЖ (stub без LLM) + Ответ с explain. | **AG-ARAI-F1-002** | DONE
-- [ ] **EconomistAgent** — Расчёт Δ, маржинальности и вознаграждения RAI.
+- [/] **EconomistAgent** — Расчёт Δ, маржинальности и вознаграждения RAI. | **AG-ARAI-F2-001** | IN_PROGRESS
 - [ ] **KnowledgeAgent** — Поиск по институциональной памяти и RegionProfile.
 
 ### 2.3 Качество и оценка (Eval)
