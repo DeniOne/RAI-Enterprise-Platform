@@ -8,9 +8,10 @@
   - Отчёт: `interagency/reports/2026-03-04_a_rai-f1-1_intent-router-agro-registry.md` [APPROVED]
   - Статус: DONE. `IntentRouterService` (regex+LLM-ready), `AgroToolsRegistry` (изоляция agro-инструментов), `AiAuditEntry` (TraceId в БД). tsc PASS, 26/26 тестов PASS.
 
-- `interagency/prompts/2026-03-04_a_rai-f1-2_domain-registries-agronom-stub.md` [IN_PROGRESS]
-  - Decision-ID: AG-ARAI-F1-002
-  - Статус: Промт создан, ожидает исполнения. Задачи: FinanceToolsRegistry, RiskToolsRegistry, KnowledgeToolsRegistry, AgronomAgent Stub.
+- `interagency/prompts/2026-03-04_a_rai-f1-2_domain-registries-agronom-stub.md` [DONE]
+  - Decision-ID: AG-ARAI-F1-002 [зарегистрирован в DECISIONS.log]
+  - Отчёт: `interagency/reports/2026-03-04_a_rai-f1-2_domain-registries-agronom-stub.md` [APPROVED]
+  - Статус: DONE. `FinanceToolsRegistry`, `RiskToolsRegistry`, `KnowledgeToolsRegistry`, `AgronomAgent` stub. tsc PASS, 50/50 тестов PASS.
 
 - `interagency/prompts/2026-03-04_a_rai-f1-3_budget-deterministic-bridge.md` [IN_PROGRESS]
   - Decision-ID: AG-ARAI-F1-003

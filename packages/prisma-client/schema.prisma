@@ -141,6 +141,7 @@ model Company {
   governanceLocks         GovernanceLock[]
   overrideRequests        OverrideRequest[]
   auditLogs               AuditLog[]
+  aiAuditEntries          AiAuditEntry[]
 
   // Level F: Institutional Oracle Standard
   levelFCertAudits     LevelFCertAudit[]
@@ -1356,6 +1357,23 @@ model AuditLog {
   @@index([companyId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+model AiAuditEntry {
+  id         String   @id @default(cuid())
+  traceId    String
+  companyId  String
+  company    Company @relation(fields: [companyId], references: [id])
+  toolNames  String[] // executed tool names
+  model      String   @default("deterministic")
+  intentMethod String? // regex | llm
+  tokensUsed Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([companyId])
+  @@index([traceId])
+  @@index([createdAt])
+  @@map("ai_audit_entries")
 }
 
 model ApiUsage {

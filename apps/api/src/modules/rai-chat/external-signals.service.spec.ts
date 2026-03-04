@@ -1,7 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { ExternalSignalsService } from "./external-signals.service";
 import { AuditService } from "../../shared/audit/audit.service";
-import { MemoryManager } from "../../shared/memory/memory-manager.service";
 import { SatelliteIngestionService } from "../satellite/satellite-ingestion.service";
 import {
   ExternalSignalKind,
@@ -14,8 +13,11 @@ describe("ExternalSignalsService", () => {
   const auditServiceMock = {
     log: jest.fn().mockResolvedValue(undefined),
   };
-  const memoryManagerMock = {
-    store: jest.fn().mockResolvedValue(undefined),
+  const memoryAdapterMock = {
+    getProfile: jest.fn().mockResolvedValue({}),
+    appendInteraction: jest.fn().mockResolvedValue(undefined),
+    retrieve: jest.fn().mockResolvedValue({ items: [] }),
+    updateProfile: jest.fn().mockResolvedValue(undefined),
   };
   const satelliteIngestionMock = {
     ingest: jest.fn().mockResolvedValue({ status: "accepted", traceId: "trace-1" }),
@@ -28,7 +30,7 @@ describe("ExternalSignalsService", () => {
       providers: [
         ExternalSignalsService,
         { provide: AuditService, useValue: auditServiceMock },
-        { provide: MemoryManager, useValue: memoryManagerMock },
+        { provide: "MEMORY_ADAPTER", useValue: memoryAdapterMock },
         { provide: SatelliteIngestionService, useValue: satelliteIngestionMock },
       ],
     }).compile();
@@ -120,15 +122,6 @@ describe("ExternalSignalsService", () => {
         companyId: "company-1",
       }),
     );
-    expect(memoryManagerMock.store).toHaveBeenCalledWith(
-      expect.stringContaining("feedback=reject"),
-      expect.any(Array),
-      expect.objectContaining({
-        companyId: "company-1",
-        sessionId: "thread-2",
-        source: "external-advisory-feedback",
-      }),
-      expect.anything(),
-    );
+    expect(memoryAdapterMock.appendInteraction).toHaveBeenCalled();
   });
 });

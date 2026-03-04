@@ -2,6 +2,12 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { RaiChatService } from "./rai-chat.service";
 import { SupervisorAgent } from "./supervisor-agent.service";
 import { RaiToolsRegistry } from "./tools/rai-tools.registry";
+import { AgroToolsRegistry } from "./tools/agro-tools.registry";
+import { FinanceToolsRegistry } from "./tools/finance-tools.registry";
+import { RiskToolsRegistry } from "./tools/risk-tools.registry";
+import { KnowledgeToolsRegistry } from "./tools/knowledge-tools.registry";
+import { AgronomAgent } from "./agents/agronom-agent.service";
+import { IntentRouterService } from "./intent-router/intent-router.service";
 import { RaiToolName } from "./tools/rai-tools.types";
 import {
   RAI_CHAT_WIDGETS_SCHEMA_VERSION,
@@ -9,6 +15,10 @@ import {
 } from "./widgets/rai-chat-widgets.types";
 import { ExternalSignalsService } from "./external-signals.service";
 import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
+import { TechMapService } from "../tech-map/tech-map.service";
+import { DeviationService } from "../consulting/deviation.service";
+import { KpiService } from "../consulting/kpi.service";
+import { PrismaService } from "../../shared/prisma/prisma.service";
 
 describe("RaiChatService", () => {
   let service: RaiChatService;
@@ -36,14 +46,28 @@ describe("RaiChatService", () => {
       providers: [
         RaiChatService,
         SupervisorAgent,
+        AgroToolsRegistry,
+        FinanceToolsRegistry,
+        RiskToolsRegistry,
+        KnowledgeToolsRegistry,
+        AgronomAgent,
+        IntentRouterService,
         RaiToolsRegistry,
         RaiChatWidgetBuilder,
         { provide: "MEMORY_ADAPTER", useValue: memoryAdapterMock },
         { provide: ExternalSignalsService, useValue: externalSignalsServiceMock },
+        { provide: TechMapService, useValue: { createDraftStub: jest.fn() } },
+        { provide: DeviationService, useValue: { getActiveDeviations: jest.fn().mockResolvedValue([]) } },
+        { provide: KpiService, useValue: { calculatePlanKPI: jest.fn() } },
+        { provide: PrismaService, useValue: { harvestPlan: { findFirst: jest.fn() }, agroEscalation: { findMany: jest.fn().mockResolvedValue([]) }, aiAuditEntry: { create: jest.fn().mockResolvedValue({}) } } },
       ],
     }).compile();
 
     service = module.get(RaiChatService);
+    module.get(AgroToolsRegistry).onModuleInit();
+    module.get(FinanceToolsRegistry).onModuleInit();
+    module.get(RiskToolsRegistry).onModuleInit();
+    module.get(KnowledgeToolsRegistry).onModuleInit();
     module.get(RaiToolsRegistry).onModuleInit();
   });
 

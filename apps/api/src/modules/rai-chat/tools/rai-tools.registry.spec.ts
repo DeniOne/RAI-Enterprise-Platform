@@ -1,6 +1,10 @@
 import { BadRequestException, Logger } from "@nestjs/common";
 import * as Joi from "joi";
 import { RaiToolsRegistry } from "./rai-tools.registry";
+import { AgroToolsRegistry } from "./agro-tools.registry";
+import { FinanceToolsRegistry } from "./finance-tools.registry";
+import { RiskToolsRegistry } from "./risk-tools.registry";
+import { KnowledgeToolsRegistry } from "./knowledge-tools.registry";
 import { RaiToolName } from "./rai-tools.types";
 
 describe("RaiToolsRegistry", () => {
@@ -18,20 +22,35 @@ describe("RaiToolsRegistry", () => {
     calculatePlanKPI: jest.fn(),
   };
   const prismaMock = {
-    harvestPlan: {
-      findFirst: jest.fn(),
-    },
-    agroEscalation: {
-      findMany: jest.fn().mockResolvedValue([]),
-    },
+    harvestPlan: { findFirst: jest.fn() },
+    agroEscalation: { findMany: jest.fn().mockResolvedValue([]) },
   };
+  const agroToolsRegistry = new AgroToolsRegistry(
+    deviationServiceMock as any,
+    techMapServiceMock as any,
+  );
+  agroToolsRegistry.onModuleInit();
+  const memoryAdapterMock = { getProfile: jest.fn().mockResolvedValue({}) };
+  const financeToolsRegistry = new FinanceToolsRegistry(
+    kpiServiceMock as any,
+    prismaMock as any,
+  );
+  financeToolsRegistry.onModuleInit();
+  const riskToolsRegistry = new RiskToolsRegistry(prismaMock as any);
+  riskToolsRegistry.onModuleInit();
+  const knowledgeToolsRegistry = new KnowledgeToolsRegistry(
+    memoryAdapterMock as any,
+  );
+  knowledgeToolsRegistry.onModuleInit();
 
   const createRegistry = () =>
     new RaiToolsRegistry(
       techMapServiceMock as any,
       deviationServiceMock as any,
-      kpiServiceMock as any,
-      prismaMock as any,
+      agroToolsRegistry,
+      financeToolsRegistry,
+      riskToolsRegistry,
+      knowledgeToolsRegistry,
     );
 
   beforeEach(() => {

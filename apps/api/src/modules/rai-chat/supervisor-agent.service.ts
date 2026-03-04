@@ -9,7 +9,6 @@ import {
 import {
   RaiSuggestedAction,
   RaiToolActorContext,
-  RaiToolCall,
   RaiToolName,
   ComputeDeviationsResult,
   ComputePlanFactResult,
@@ -17,6 +16,8 @@ import {
   GenerateTechMapDraftResult,
 } from "./tools/rai-tools.types";
 import { RaiToolsRegistry } from "./tools/rai-tools.registry";
+import { IntentRouterService } from "./intent-router/intent-router.service";
+import { AgronomAgent } from "./agents/agronom-agent.service";
 import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
 import { MemoryAdapter } from "../../shared/memory/memory-adapter.interface";
 import { buildTextEmbedding } from "../../shared/memory/signal-embedding.util";
@@ -26,6 +27,7 @@ import {
   withTimeout,
 } from "../../shared/memory/rai-chat-memory.util";
 import { ExternalSignalsService } from "./external-signals.service";
+import { PrismaService } from "../../shared/prisma/prisma.service";
 
 @Injectable()
 export class SupervisorAgent {
@@ -33,10 +35,13 @@ export class SupervisorAgent {
 
   constructor(
     private readonly toolsRegistry: RaiToolsRegistry,
+    private readonly intentRouter: IntentRouterService,
+    private readonly agronomAgent: AgronomAgent,
     @Inject("MEMORY_ADAPTER")
     private readonly memoryAdapter: MemoryAdapter,
     private readonly externalSignalsService: ExternalSignalsService,
     private readonly widgetBuilder: RaiChatWidgetBuilder,
+    private readonly prisma: PrismaService,
   ) {}
 
   async orchestrate(
@@ -57,7 +62,15 @@ export class SupervisorAgent {
       userId,
     });
 
-    const autoToolCall = this.buildAutoToolCall(request.message, request);
+    const classification = this.intentRouter.classify(
+      request.message,
+      request.workspaceContext,
+    );
+    const autoToolCall = this.intentRouter.buildAutoToolCall(
+      request.message,
+      request,
+      classification,
+    );
     const requestedToolCalls: RaiToolCallDto[] = [...(request.toolCalls ?? [])];
     if (
       autoToolCall &&
@@ -177,6 +190,13 @@ export class SupervisorAgent {
       memoryUsed: this.buildMemoryUsed(profile, memoryContext),
     };
 
+    void this.writeAiAuditEntry({
+      companyId,
+      traceId,
+      toolNames: executedTools.map((t) => t.name),
+      intentMethod: classification.method,
+    });
+
     const sanitized = sanitizeChatTextForMemory(request.message, memoryConfig);
     if (sanitized.ok === false) {
       this.logger.debug(
@@ -237,6 +257,30 @@ export class SupervisorAgent {
       });
 
     return response;
+  }
+
+  private writeAiAuditEntry(params: {
+    companyId: string;
+    traceId: string;
+    toolNames: string[];
+    intentMethod: string;
+  }): void {
+    this.prisma.aiAuditEntry
+      .create({
+        data: {
+          traceId: params.traceId,
+          companyId: params.companyId,
+          toolNames: params.toolNames,
+          model: "deterministic",
+          intentMethod: params.intentMethod,
+          tokensUsed: 0,
+        },
+      })
+      .catch((err) =>
+        this.logger.warn(
+          `ai_audit_entry create failed traceId=${params.traceId} err=${String(err?.message ?? err)}`,
+        ),
+      );
   }
 
   private extractProfileSummary(profile: Record<string, unknown>): string | null {
@@ -303,15 +347,30 @@ export class SupervisorAgent {
     const results: Array<{ name: RaiToolName; result: unknown }> = [];
 
     for (const toolCall of toolCalls) {
+      if (
+        toolCall.name === RaiToolName.GenerateTechMapDraft ||
+        toolCall.name === RaiToolName.ComputeDeviations
+      ) {
+        const payload = toolCall.payload as Record<string, unknown>;
+        const scope = payload?.scope as { seasonId?: string; fieldId?: string } | undefined;
+        const agentResult = await this.agronomAgent.run({
+          companyId: actorContext.companyId,
+          traceId: actorContext.traceId,
+          intent: toolCall.name === RaiToolName.GenerateTechMapDraft ? "generate_tech_map_draft" : "compute_deviations",
+          fieldRef: typeof payload?.fieldRef === "string" ? payload.fieldRef : undefined,
+          seasonRef: typeof payload?.seasonRef === "string" ? payload.seasonRef : undefined,
+          crop: payload?.crop === "sunflower" ? "sunflower" : "rapeseed",
+          scope,
+        });
+        results.push({ name: toolCall.name, result: agentResult });
+        continue;
+      }
       const result = await this.toolsRegistry.execute(
         toolCall.name,
         toolCall.payload,
         actorContext,
       );
-      results.push({
-        name: toolCall.name,
-        result,
-      });
+      results.push({ name: toolCall.name, result });
     }
 
     return results;
@@ -346,106 +405,16 @@ export class SupervisorAgent {
     return actions;
   }
 
-  private detectIntent(message: string): RaiToolName | null {
-    const normalized = message.toLowerCase();
-
-    if (/отклонени|deviation/.test(normalized)) {
-      return RaiToolName.ComputeDeviations;
-    }
-
-    if (/план[ .-]?факт|plan fact|kpi/.test(normalized)) {
-      return RaiToolName.ComputePlanFact;
-    }
-
-    if (/алерт|эскалац|alert/.test(normalized)) {
-      return RaiToolName.EmitAlerts;
-    }
-
-    if (/техкарт|techmap|сделай карту/.test(normalized)) {
-      return RaiToolName.GenerateTechMapDraft;
-    }
-
-    return null;
-  }
-
-  private buildAutoToolCall(
-    message: string,
-    request: RaiChatRequestDto,
-  ): RaiToolCall | null {
-    const intent = this.detectIntent(message);
-    if (!intent) {
-      return null;
-    }
-
-    const activeRefs = request.workspaceContext?.activeEntityRefs ?? [];
-    const filters = request.workspaceContext?.filters ?? {};
-
-    if (intent === RaiToolName.ComputeDeviations) {
-      return {
-        name: intent,
-        payload: {
-          scope: {
-            seasonId:
-              typeof filters.seasonId === "string" ? filters.seasonId : undefined,
-            fieldId: activeRefs.find((item) => item.kind === "field")?.id,
-          },
-        },
-      };
-    }
-
-    if (intent === RaiToolName.ComputePlanFact) {
-      return {
-        name: intent,
-        payload: {
-          scope: {
-            planId: typeof filters.planId === "string" ? filters.planId : undefined,
-            seasonId:
-              typeof filters.seasonId === "string" ? filters.seasonId : undefined,
-          },
-        },
-      };
-    }
-
-    if (intent === RaiToolName.EmitAlerts) {
-      return {
-        name: intent,
-        payload: {
-          severity: /s4/.test(message.toLowerCase()) ? "S4" : "S3",
-        },
-      };
-    }
-
-    if (intent === RaiToolName.GenerateTechMapDraft) {
-      const fieldRef = activeRefs.find((item) => item.kind === "field")?.id;
-      const seasonRef =
-        typeof filters.seasonId === "string" ? filters.seasonId : undefined;
-
-      if (!fieldRef || !seasonRef) {
-        return null;
-      }
-
-      return {
-        name: intent,
-        payload: {
-          fieldRef,
-          seasonRef,
-          crop: /подсолнеч|sunflower/.test(message.toLowerCase())
-            ? "sunflower"
-            : "rapeseed",
-        },
-      };
-    }
-
-    return null;
-  }
-
   private summarizeExecutedTools(
     executedTools: Array<{ name: RaiToolName; result: unknown }>,
   ): string | null {
     const parts = executedTools
       .map((tool) => {
         if (tool.name === RaiToolName.ComputeDeviations) {
-          const result = tool.result as ComputeDeviationsResult;
+          const result = tool.result as ComputeDeviationsResult & { explain?: string; agentName?: string };
+          if (result.agentName === "AgronomAgent" && result.explain) {
+            return result.explain;
+          }
           return `Отклонений найдено: ${result.count}`;
         }
 
@@ -460,8 +429,11 @@ export class SupervisorAgent {
         }
 
         if (tool.name === RaiToolName.GenerateTechMapDraft) {
-          const result = tool.result as GenerateTechMapDraftResult;
-          return `Черновик техкарты создан: ${result.draftId}`;
+          const result = tool.result as GenerateTechMapDraftResult & { explain?: string; agentName?: string };
+          if (result.agentName === "AgronomAgent" && result.explain) {
+            return result.explain;
+          }
+          return `Черновик техкарты создан: ${(result as GenerateTechMapDraftResult).draftId}`;
         }
 
         return null;

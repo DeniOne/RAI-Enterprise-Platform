@@ -1,6 +1,12 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { SupervisorAgent } from "./supervisor-agent.service";
 import { RaiToolsRegistry } from "./tools/rai-tools.registry";
+import { AgroToolsRegistry } from "./tools/agro-tools.registry";
+import { FinanceToolsRegistry } from "./tools/finance-tools.registry";
+import { RiskToolsRegistry } from "./tools/risk-tools.registry";
+import { KnowledgeToolsRegistry } from "./tools/knowledge-tools.registry";
+import { AgronomAgent } from "./agents/agronom-agent.service";
+import { IntentRouterService } from "./intent-router/intent-router.service";
 import { ExternalSignalsService } from "./external-signals.service";
 import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
 import { RaiToolName } from "./tools/rai-tools.types";
@@ -37,22 +43,41 @@ describe("SupervisorAgent", () => {
     calculatePlanKPI: jest.fn(),
   };
   const prismaServiceMock = {
-    harvestPlan: {
-      findFirst: jest.fn(),
-    },
-    agroEscalation: {
-      findMany: jest.fn().mockResolvedValue([]),
-    },
+    harvestPlan: { findFirst: jest.fn() },
+    agroEscalation: { findMany: jest.fn().mockResolvedValue([]) },
+    aiAuditEntry: { create: jest.fn().mockResolvedValue({}) },
+  };
+  const intentRouterMock = {
+    classify: jest.fn().mockReturnValue({
+      toolName: null,
+      confidence: 0,
+      method: "regex" as const,
+      reason: "no_match",
+    }),
+    buildAutoToolCall: jest.fn().mockReturnValue(null),
   };
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    intentRouterMock.buildAutoToolCall.mockReturnValue(null);
+    intentRouterMock.classify.mockReturnValue({
+      toolName: null,
+      confidence: 0,
+      method: "regex",
+      reason: "no_match",
+    });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SupervisorAgent,
+        AgroToolsRegistry,
+        FinanceToolsRegistry,
+        RiskToolsRegistry,
+        KnowledgeToolsRegistry,
+        AgronomAgent,
         RaiToolsRegistry,
         RaiChatWidgetBuilder,
+        { provide: IntentRouterService, useValue: intentRouterMock },
         { provide: "MEMORY_ADAPTER", useValue: memoryAdapterMock },
         { provide: ExternalSignalsService, useValue: externalSignalsServiceMock },
         { provide: TechMapService, useValue: techMapServiceMock },
@@ -63,6 +88,10 @@ describe("SupervisorAgent", () => {
     }).compile();
 
     agent = module.get(SupervisorAgent);
+    module.get(AgroToolsRegistry).onModuleInit();
+    module.get(FinanceToolsRegistry).onModuleInit();
+    module.get(RiskToolsRegistry).onModuleInit();
+    module.get(KnowledgeToolsRegistry).onModuleInit();
     module.get(RaiToolsRegistry).onModuleInit();
   });
 
@@ -177,6 +206,18 @@ describe("SupervisorAgent", () => {
   });
 
   it("auto-runs deviation tool when intent is detected from the message", async () => {
+    intentRouterMock.classify.mockReturnValueOnce({
+      toolName: RaiToolName.ComputeDeviations,
+      confidence: 0.7,
+      method: "regex",
+      reason: "match",
+    });
+    intentRouterMock.buildAutoToolCall.mockReturnValueOnce({
+      name: RaiToolName.ComputeDeviations,
+      payload: {
+        scope: { seasonId: "season-1", fieldId: "field-1" },
+      },
+    });
     deviationServiceMock.getActiveDeviations.mockResolvedValueOnce([
       {
         id: "dev-1",
@@ -209,13 +250,27 @@ describe("SupervisorAgent", () => {
       expect.arrayContaining([
         expect.objectContaining({
           name: RaiToolName.ComputeDeviations,
+          payload: expect.objectContaining({
+            agentName: "AgronomAgent",
+            explain: expect.any(String),
+          }),
         }),
       ]),
     );
-    expect(result.text).toContain("Отклонений найдено: 1");
+    expect(result.text).toContain("Отклонения получены из AgroToolsRegistry");
   });
 
   it("auto-runs plan fact tool when KPI intent is detected", async () => {
+    intentRouterMock.classify.mockReturnValueOnce({
+      toolName: RaiToolName.ComputePlanFact,
+      confidence: 0.7,
+      method: "regex",
+      reason: "match",
+    });
+    intentRouterMock.buildAutoToolCall.mockReturnValueOnce({
+      name: RaiToolName.ComputePlanFact,
+      payload: { scope: { seasonId: "season-9" } },
+    });
     prismaServiceMock.harvestPlan.findFirst
       .mockResolvedValueOnce({
         id: "plan-9",
@@ -266,6 +321,16 @@ describe("SupervisorAgent", () => {
   });
 
   it("auto-runs alerts tool when alert intent is detected", async () => {
+    intentRouterMock.classify.mockReturnValueOnce({
+      toolName: RaiToolName.EmitAlerts,
+      confidence: 0.7,
+      method: "regex",
+      reason: "match",
+    });
+    intentRouterMock.buildAutoToolCall.mockReturnValueOnce({
+      name: RaiToolName.EmitAlerts,
+      payload: { severity: "S3" },
+    });
     prismaServiceMock.agroEscalation.findMany.mockResolvedValueOnce([
       {
         id: "esc-1",
@@ -302,6 +367,20 @@ describe("SupervisorAgent", () => {
   });
 
   it("auto-runs tech map draft tool when field and season context exist", async () => {
+    intentRouterMock.classify.mockReturnValueOnce({
+      toolName: RaiToolName.GenerateTechMapDraft,
+      confidence: 0.7,
+      method: "regex",
+      reason: "match",
+    });
+    intentRouterMock.buildAutoToolCall.mockReturnValueOnce({
+      name: RaiToolName.GenerateTechMapDraft,
+      payload: {
+        fieldRef: "field-42",
+        seasonRef: "season-42",
+        crop: "rapeseed",
+      },
+    });
     techMapServiceMock.createDraftStub.mockResolvedValueOnce({
       draftId: "tm-42",
       status: "DRAFT",
@@ -339,12 +418,16 @@ describe("SupervisorAgent", () => {
         expect.objectContaining({
           name: RaiToolName.GenerateTechMapDraft,
           payload: expect.objectContaining({
-            draftId: "tm-42",
-            status: "DRAFT",
+            agentName: "AgronomAgent",
+            explain: expect.any(String),
+            data: expect.objectContaining({
+              draftId: "tm-42",
+              status: "DRAFT",
+            }),
           }),
         }),
       ]),
     );
-    expect(result.text).toContain("Черновик техкарты создан: tm-42");
+    expect(result.text).toContain("Черновик создан детерминированно");
   });
 });

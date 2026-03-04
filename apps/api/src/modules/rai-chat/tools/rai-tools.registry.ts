@@ -8,11 +8,7 @@ import * as Joi from "joi";
 import { ObjectSchema } from "joi";
 import { UserRole } from "@rai/prisma-client";
 import {
-  ComputeDeviationsPayload,
-  ComputePlanFactPayload,
   EchoMessagePayload,
-  EmitAlertsPayload,
-  GenerateTechMapDraftPayload,
   RaiToolActorContext,
   RaiToolName,
   RaiToolPayloadMap,
@@ -20,9 +16,11 @@ import {
   WorkspaceSnapshotPayload,
 } from "./rai-tools.types";
 import { DeviationService } from "../../consulting/deviation.service";
-import { KpiService } from "../../consulting/kpi.service";
 import { TechMapService } from "../../tech-map/tech-map.service";
-import { PrismaService } from "../../../shared/prisma/prisma.service";
+import { AgroToolsRegistry } from "./agro-tools.registry";
+import { FinanceToolsRegistry } from "./finance-tools.registry";
+import { RiskToolsRegistry } from "./risk-tools.registry";
+import { KnowledgeToolsRegistry } from "./knowledge-tools.registry";
 
 type ToolHandler<TName extends RaiToolName> = (
   payload: RaiToolPayloadMap[TName],
@@ -43,8 +41,10 @@ export class RaiToolsRegistry implements OnModuleInit {
   constructor(
     private readonly techMapService: TechMapService,
     private readonly deviationService: DeviationService,
-    private readonly kpiService: KpiService,
-    private readonly prisma: PrismaService,
+    private readonly agroToolsRegistry: AgroToolsRegistry,
+    private readonly financeToolsRegistry: FinanceToolsRegistry,
+    private readonly riskToolsRegistry: RiskToolsRegistry,
+    private readonly knowledgeToolsRegistry: KnowledgeToolsRegistry,
   ) {}
 
   onModuleInit() {
@@ -72,6 +72,23 @@ export class RaiToolsRegistry implements OnModuleInit {
     payload: unknown,
     actorContext: RaiToolActorContext,
   ): Promise<RaiToolResultMap[TName]> {
+    if (this.agroToolsRegistry.has(name)) {
+      return this.agroToolsRegistry.execute(
+        name as TName & (RaiToolName.ComputeDeviations | RaiToolName.GenerateTechMapDraft),
+        payload,
+        actorContext,
+      );
+    }
+    if (this.financeToolsRegistry.has(name)) {
+      return this.financeToolsRegistry.execute(name as never, payload, actorContext) as Promise<RaiToolResultMap[TName]>;
+    }
+    if (this.riskToolsRegistry.has(name)) {
+      return this.riskToolsRegistry.execute(name as never, payload, actorContext) as Promise<RaiToolResultMap[TName]>;
+    }
+    if (this.knowledgeToolsRegistry.has(name)) {
+      return this.knowledgeToolsRegistry.execute(name as never, payload, actorContext) as Promise<RaiToolResultMap[TName]>;
+    }
+
     const tool = this.tools.get(name) as RegisteredTool<TName> | undefined;
     if (!tool) {
       this.logToolCall(name, actorContext, false, payload, "tool_not_registered");
@@ -130,172 +147,6 @@ export class RaiToolsRegistry implements OnModuleInit {
         hasSelection: Boolean(payload.lastUserAction),
         lastUserAction: payload.lastUserAction,
       }),
-    );
-
-    this.register(
-      RaiToolName.ComputeDeviations,
-      Joi.object<ComputeDeviationsPayload>({
-        scope: Joi.object({
-          seasonId: Joi.string().trim().max(128).optional(),
-          fieldId: Joi.string().trim().max(128).optional(),
-        })
-          .default({})
-          .required(),
-      }),
-      async (payload, actorContext) => {
-        const active = await this.deviationService.getActiveDeviations({
-          companyId: actorContext.companyId,
-        });
-
-        const filtered = active.filter((item) => {
-          if (
-            payload.scope.seasonId &&
-            item.harvestPlan?.seasonId !== payload.scope.seasonId
-          ) {
-            return false;
-          }
-
-          if (
-            payload.scope.fieldId &&
-            !(item.harvestPlan?.techMaps ?? []).some(
-              (techMap) => techMap.fieldId === payload.scope.fieldId,
-            )
-          ) {
-            return false;
-          }
-
-          return true;
-        });
-
-        return {
-          count: filtered.length,
-          seasonId: payload.scope.seasonId,
-          fieldId: payload.scope.fieldId,
-          items: filtered.map((item) => ({
-            id: item.id,
-            status: item.status,
-            harvestPlanId: item.harvestPlanId,
-            budgetPlanId: item.budgetPlanId,
-          })),
-        };
-      },
-    );
-
-    this.register(
-      RaiToolName.ComputePlanFact,
-      Joi.object<ComputePlanFactPayload>({
-        scope: Joi.object({
-          planId: Joi.string().trim().max(128).optional(),
-          seasonId: Joi.string().trim().max(128).optional(),
-        })
-          .default({})
-          .required(),
-      }),
-      async (payload, actorContext) => {
-        let planId = payload.scope.planId;
-
-        if (!planId) {
-          const plan = await this.prisma.harvestPlan.findFirst({
-            where: {
-              companyId: actorContext.companyId,
-              ...(payload.scope.seasonId
-                ? { seasonId: payload.scope.seasonId }
-                : {}),
-            },
-            orderBy: {
-              createdAt: "desc",
-            },
-          });
-
-          if (!plan) {
-            throw new BadRequestException("No harvest plan found for tool scope");
-          }
-
-          planId = plan.id;
-        }
-
-        const plan = await this.prisma.harvestPlan.findFirst({
-          where: {
-            id: planId,
-            companyId: actorContext.companyId,
-          },
-        });
-
-        if (!plan) {
-          throw new BadRequestException("Harvest plan not found in tenant scope");
-        }
-
-        const result = await this.kpiService.calculatePlanKPI(plan.id, {
-          companyId: actorContext.companyId,
-          role: UserRole.ADMIN,
-          userId: "rai-agent",
-        });
-
-        return {
-          planId: plan.id,
-          status: plan.status,
-          seasonId: plan.seasonId,
-          hasData: result.hasData,
-          roi: result.roi,
-          ebitda: result.ebitda,
-          revenue: result.revenue,
-          totalActualCost: result.totalActualCost,
-          totalPlannedCost: result.totalPlannedCost,
-        };
-      },
-    );
-
-    this.register(
-      RaiToolName.EmitAlerts,
-      Joi.object<EmitAlertsPayload>({
-        severity: Joi.string().valid("S3", "S4").default("S3"),
-      }),
-      async (payload, actorContext) => {
-        const severities =
-          payload.severity === "S4" ? ["S4"] : (["S3", "S4"] as const);
-        const items = await this.prisma.agroEscalation.findMany({
-          where: {
-            companyId: actorContext.companyId,
-            status: "OPEN",
-            severity: { in: [...severities] },
-          },
-          orderBy: [{ severity: "desc" }, { createdAt: "desc" }],
-          take: 20,
-        });
-
-        return {
-          count: items.length,
-          severity: payload.severity,
-          items: items.map((item) => ({
-            id: item.id,
-            severity: item.severity,
-            reason: item.reason,
-            status: item.status,
-            references:
-              item.references && typeof item.references === "object"
-                ? (item.references as Record<string, unknown>)
-                : {},
-          })),
-        };
-      },
-    );
-
-    this.register(
-      RaiToolName.GenerateTechMapDraft,
-      Joi.object<GenerateTechMapDraftPayload>({
-        fieldRef: Joi.string().trim().max(128).required(),
-        seasonRef: Joi.string().trim().max(128).required(),
-        crop: Joi.string()
-          .valid("rapeseed", "sunflower")
-          .required(),
-      }),
-      async (payload, actorContext) =>
-        this.techMapService.createDraftStub({
-          fieldRef: payload.fieldRef,
-          seasonRef: payload.seasonRef,
-          crop: payload.crop,
-          companyId: actorContext.companyId,
-        }),
     );
   }
 

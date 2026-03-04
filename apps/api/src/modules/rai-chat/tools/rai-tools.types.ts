@@ -5,6 +5,10 @@ export enum RaiToolName {
   ComputePlanFact = "compute_plan_fact",
   EmitAlerts = "emit_alerts",
   GenerateTechMapDraft = "generate_tech_map_draft",
+  SimulateScenario = "simulate_scenario",
+  ComputeRiskAssessment = "compute_risk_assessment",
+  GetWeatherForecast = "get_weather_forecast",
+  QueryKnowledge = "query_knowledge",
 }
 
 export interface RaiToolActorContext {
@@ -45,6 +49,23 @@ export interface GenerateTechMapDraftPayload {
   crop: "rapeseed" | "sunflower";
 }
 
+export interface SimulateScenarioPayload {
+  scope?: { planId?: string; seasonId?: string };
+}
+
+export interface ComputeRiskAssessmentPayload {
+  scope?: { planId?: string; seasonId?: string };
+}
+
+export interface GetWeatherForecastPayload {
+  region?: string;
+  days?: number;
+}
+
+export interface QueryKnowledgePayload {
+  query: string;
+}
+
 export interface RaiToolPayloadMap {
   [RaiToolName.EchoMessage]: EchoMessagePayload;
   [RaiToolName.WorkspaceSnapshot]: WorkspaceSnapshotPayload;
@@ -52,6 +73,10 @@ export interface RaiToolPayloadMap {
   [RaiToolName.ComputePlanFact]: ComputePlanFactPayload;
   [RaiToolName.EmitAlerts]: EmitAlertsPayload;
   [RaiToolName.GenerateTechMapDraft]: GenerateTechMapDraftPayload;
+  [RaiToolName.SimulateScenario]: SimulateScenarioPayload;
+  [RaiToolName.ComputeRiskAssessment]: ComputeRiskAssessmentPayload;
+  [RaiToolName.GetWeatherForecast]: GetWeatherForecastPayload;
+  [RaiToolName.QueryKnowledge]: QueryKnowledgePayload;
 }
 
 export interface EchoMessageResult {
@@ -112,6 +137,30 @@ export interface GenerateTechMapDraftResult {
   assumptions: [];
 }
 
+export interface SimulateScenarioResult {
+  scenarioId: string;
+  roi: number;
+  ebitda: number;
+  source: string;
+}
+
+export interface ComputeRiskAssessmentResult {
+  planId: string;
+  riskLevel: string;
+  factors: string[];
+  source: string;
+}
+
+export interface GetWeatherForecastResult {
+  forecast: string;
+  source: string;
+}
+
+export interface QueryKnowledgeResult {
+  hits: number;
+  items: Array<{ content: string; score: number }>;
+}
+
 export interface RaiToolResultMap {
   [RaiToolName.EchoMessage]: EchoMessageResult;
   [RaiToolName.WorkspaceSnapshot]: WorkspaceSnapshotResult;
@@ -119,6 +168,10 @@ export interface RaiToolResultMap {
   [RaiToolName.ComputePlanFact]: ComputePlanFactResult;
   [RaiToolName.EmitAlerts]: EmitAlertsResult;
   [RaiToolName.GenerateTechMapDraft]: GenerateTechMapDraftResult;
+  [RaiToolName.SimulateScenario]: SimulateScenarioResult;
+  [RaiToolName.ComputeRiskAssessment]: ComputeRiskAssessmentResult;
+  [RaiToolName.GetWeatherForecast]: GetWeatherForecastResult;
+  [RaiToolName.QueryKnowledge]: QueryKnowledgeResult;
 }
 
 export interface RaiToolCall<TName extends RaiToolName = RaiToolName> {
