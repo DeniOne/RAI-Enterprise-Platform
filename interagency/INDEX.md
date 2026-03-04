@@ -32,6 +32,10 @@
   - Decision-ID: AG-ARAI-F2-002
   - Статус: Промт создан, ожидает исполнения. Задачи: EconomistAgent (логика explain), KnowledgeAgent (RAG stub), интеграция в AgentRuntime.
 
+- `interagency/prompts/2026-03-04_a_rai-f2-3_eval-quality.md` [IN_PROGRESS]
+  - Decision-ID: AG-ARAI-F2-003
+  - Статус: Промт создан, ожидает исполнения. Задачи: AgentScoreCard (Prisma), GoldenTestRunnerService, PROMPT_CHANGE_RFC.md.
+
 
 
 
