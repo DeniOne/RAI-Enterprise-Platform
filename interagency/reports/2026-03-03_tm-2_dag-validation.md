@@ -1,7 +1,29 @@
 # REPORT — TechMap Sprint TM-2: Operations DAG + Validation Engine
 Дата: 2026-03-03
 Decision-ID: AG-TM-DAG-002
-Статус: **READY_FOR_REVIEW**
+Статус: **APPROVED**
+
+## Ревью: APPROVED
+**Ревьюер**: Antigravity Orchestrator
+**Дата**: 2026-03-04
+
+### Чек-лист ревью
+| # | Критерий | Результат |
+|---|----------|----|
+| 1 | Нет секретов в диффе | ✅ PASS |
+| 2 | Нет изменений Prisma-схемы | ✅ PASS — schema.prisma не трогалась |
+| 3 | Нет новых контроллеров | ✅ PASS |
+| 4 | companyId во всех методах TechMapService | ✅ PASS — validateTechMap, validateDAG, getCalculationContext |
+| 5 | Pure functions (калькуляторы) | ✅ PASS — нет imports PrismaService, нет IO |
+| 6 | Guards в калькуляторах | ✅ PASS — SeedingRate бросает Error при density≤0, germination out of range |
+| 7 | DAG алгоритм | ✅ PASS — WHITE/GRAY/BLACK DFS + CPM (ES/EF/LS/LF) с FS/SS/FF и lagDays |
+| 8 | tsc | ✅ PASS |
+| 9 | validation/ 15/15, calculators/ 9/9, tech-map/ 56/56 | ✅ PASS — 24 новых теста |
+
+**Замечаний к доработке**: нет.
+
+---
+
 
 ---
 

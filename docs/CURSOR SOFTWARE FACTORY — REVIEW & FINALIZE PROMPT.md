@@ -50,7 +50,7 @@ last_updated: 2026-03-01
 
 ### 2.2 Обновление чеклистов (главные + по задаче)
 Обязательные:
-- `docs/00_STRATEGY/STAGE 2/RAI_AGENT_OS_IMPLEMENTATION_PLAN.md`
+- `docs/00_STRATEGY/TECHMAP/TECHMAP_IMPLEMENTATION_CHECKLIST.md`
 - `docs/07_EXECUTION/FULL_PROJECT_WBS.md`
 - `docs/07_EXECUTION/TECHNICAL_DEVELOPMENT_PLAN.md`
 - `memory-bank/task.md` (если задача трекается там)
