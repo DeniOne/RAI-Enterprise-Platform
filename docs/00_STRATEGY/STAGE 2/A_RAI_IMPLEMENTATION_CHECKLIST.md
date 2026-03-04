@@ -12,9 +12,9 @@
 
 ### 1.1 Декомпозиция Supervisor
 - [x] **IntentRouter** (`intent-router.service.ts`) — классификация запросов (regex, LLM-ready). | **AG-ARAI-F1-001** | DONE
-- [ ] **MemoryCoordinator** (`memory-coordinator.service.ts`) — работа с Episodic Memory + Tenant Isolation.
-- [ ] **AgentRuntime** (`agent-runtime.service.ts`) — жизненный цикл агента, дедлайны (30с).
-- [ ] **ResponseComposer** (`response-composer.service.ts`) — сборка ответа и виджетов.
+- [/] **MemoryCoordinator** (`memory-coordinator.service.ts`) — работа с Episodic Memory + Tenant Isolation. | **AG-ARAI-F1-004** | IN_PROGRESS
+- [/] **AgentRuntime** (`agent-runtime.service.ts`) — жизненный цикл агента, дедлайны (30с). | **AG-ARAI-F1-004** | IN_PROGRESS
+- [/] **ResponseComposer** (`response-composer.service.ts`) — сборка ответа и виджетов. | **AG-ARAI-F1-004** | IN_PROGRESS
 
 ### 1.2 Доменные реестры (Capability-based)
 - [x] **AgroToolsRegistry** — инструменты агрономии и техкарт. | **AG-ARAI-F1-001** | DONE
