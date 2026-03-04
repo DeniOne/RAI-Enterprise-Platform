@@ -260,3 +260,20 @@
     *   Ревью Orchestrator: APPROVED. `calculateContingency` с nullable-дефолтом, append-only через транзакции, FSM не переписан.
     *   Decision-ID: `AG-TM-EV-003`.
     *   TM-3 промт: `interagency/prompts/2026-03-03_tm-3_evidence-changeorder.md`.
+
+43. **TechMap Sprint TM-4 — Adaptive Rules + Regionalization CLOSED (2026-03-04)** ✅:
+    *   Модели: `AdaptiveRule` (triggerType, condition/changeTemplate Json, isActive, lastEvaluatedAt), `HybridPhenologyModel` (gddToStage Json, baseTemp, companyId optional).
+    *   Enums: `TriggerType` (WEATHER/NDVI/OBSERVATION/PHENOLOGY/PRICE), `TriggerOperator` (GT/GTE/LT/LTE/EQ/NOT_EQ).
+    *   Сервисы: `TriggerEvaluationService` (pure `evaluateCondition` + `evaluateTriggers` + `applyTriggeredRule` → ChangeOrderService), `RegionProfileService` (3 climate profile sowing windows, suggestOperationTypes: CONTINENTAL_COLD→DESICCATION mandatory, MARITIME_HUMID→2×FUNGICIDE), `HybridPhenologyService` (GDD→BBCH prediction, tenant→global lookup).
+    *   DTO: adaptive-rule, hybrid-phenology.
+    *   Тесты: 17/17 адресных PASS (5 suites). Регрессия tech-map/: 22 suites / 75 tests PASS.
+    *   Fix: опечатка `tecmhMap` в `tech-map.concurrency.spec.ts` исправлена.
+    *   Decision-ID: `AG-TM-AR-004`.
+
+44. **TechMap Sprint TM-5 — Economics + Contract Core CLOSED (2026-03-04)** ✅:
+    *   Модель: `BudgetLine` (TechMap-scoped: techMapId, category, plannedCost, actualCost, tolerancePct). Enum: `BudgetCategory` (9 категорий).
+    *   Сервисы: `TechMapBudgetService` (calculateBudget с byCategory ledger/withinCap/overCap; checkOverspend: SEEDS 5%, остальные 10% tolerance → ChangeOrderService), `TechMapKPIService` (pure `computeKPIs`: C_ha, C_t, marginPerHa, marginPct, riskAdjustedMarginPerHa, variancePct), `ContractCoreService` (generateContractCore, inline recursive `stableStringify` → SHA-256 → `TechMap.basePlanHash`, verifyIntegrity), `RecalculationEngine` (event-driven: CHANGE_ORDER_APPLIED/ACTUAL_YIELD_UPDATED/PRICE_CHANGED/TRIGGER_FIRED).
+    *   DTO: budget-line, tech-map-kpi.
+    *   Тесты: 20/20 адресных PASS (6 suites). Регрессия: 28 suites / 95 tests PASS.
+    *   Ревью: APPROVED. `computeKPIs` pure fn, `stableStringify` recursive без внешних dep, `basePlanHash` не дублировался.
+    *   Decision-ID: `AG-TM-EC-005`.
