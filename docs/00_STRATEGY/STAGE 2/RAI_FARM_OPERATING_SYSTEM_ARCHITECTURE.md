@@ -1,257 +1,337 @@
-# RAI Farm Operating System — Архитектурный манифест
+# A_RAI — Операционная система консалтингового бизнеса RAI
 
-> **Версия:** 1.0 | **Дата:** 2026-03-04  
+> **Версия:** 2.0 | **Дата:** 2026-03-04  
 > **Статус:** System Manifesto — Top-Level Architecture Document  
-> **Кодовое имя:** **A_RAI** (Agent RAI) | в разговоре: _Рэй, Рая, А-РАЙ_
+> **Кодовое имя:** **A_RAI** (Agent RAI) | в разговоре: _Рэй, Рая, А-РАЙ_  
+> **Переработан:** Исправлена ключевая рамка — RAI_EP управляет не фермой, а консалтинговым бизнесом
 
 ---
 
-## Что такое RAI Farm OS
+## Важнейший контекст: Кто мы и что мы делаем
 
-**RAI Farm OS** — это операционная система агропредприятия.
+**RAI_EP — это НЕ система управления фермой.**
 
-Не программа. Не модуль. Не чат-бот.
+RAI_EP — это **операционная система результатного агроконсалтинга**.
 
-**Операционная система** — как macOS для компьютера или Android для телефона. Только для фермы.
+Наши клиенты — агрохозяйства. Наш продукт — доказанный рост урожайности и управляемая экономика производства. Наш бизнес строится на формуле:
 
-Она управляет:
-- **данными** (поля, почва, погода, спутники, склад, техника)
-- **знаниями** (агрономические правила, нормативы, история урожаев)
-- **решениями** (рекомендации, черновики, алерты)
-- **исполнением** (техкарты, задачи, бюджеты, контроль)
-- **обучением** (система становится умнее с каждым сезоном)
+```
+Вознаграждение = Δ урожайности × Доля × Рыночная цена
+```
 
-В центре всего — **A_RAI**.
+Где `Δ = Фактический урожай − Базовая урожайность хозяйства`.
+
+Мы зарабатываем только тогда, когда хозяйство-клиент зарабатывает больше обычного.
 
 ---
 
-## A_RAI — центральный интеллект
+## Стратегическая проблема масштабирования
 
-**A_RAI** (читается: _Эй-Рай_, _Рэй_, в разговоре — _Рая_) — это главный мозг Farm OS.
+Сейчас 1 опытный агроном-консультант может качественно вести 10–15 хозяйств.
 
-Аналогия: **Джарвис у Тони Старка**.
+Цель RAI v3.0 — **500+ хозяйств в разных юрисдикциях**.
 
-Джарвис не является просто голосовым помощником. Он:
-- знает состояние всего Старк-тауэра в реальном времени
-- управляет системами брони, безопасности, лабораторий
-- инициирует действия при угрозах
-- объясняет свои решения
-- учится на поведении Старка
-- **никогда не принимает финальное решение за хозяина**
+Это математически невозможно без **институционального AI-компонента**, который:
+- сохраняет экспертизу консультанта в систему (институциональная память)
+- автоматизирует рутину (анализ отклонений, мониторинг, типовые рекомендации)
+- масштабирует экспертное качество без пропорционального роста штата
+- не теряет контекст ни одного клиента при любой нагрузке
+
+Это и есть **A_RAI**.
+
+---
+
+## A_RAI — Джарвис для консалтинговой команды RAI
+
+**Аналогия**: Джарвис у Тони Старка.
+
+Джарвис — не у клиента Старка. Джарвис — у **самого Старка**. Он позволяет одному человеку оперировать как целая армия: одновременно контролировать, анализировать, прогнозировать, реагировать— без потери качества и контекста.
 
 Так же работает A_RAI:
 
 ```
-A_RAI знает → всё о предприятии (поля, бюджеты, погода, риски)
-A_RAI реагирует → на аномалии, события, запросы
-A_RAI объясняет → почему такая рекомендация, какие данные использованы
-A_RAI учится → из принятых и отклонённых решений каждый сезон
-A_RAI ограничен → финальное решение всегда за агрономом / директором
+Без A_RAI:  1 консультант → 10–15 хозяйств (ограничен когнитивной нагрузкой)
+
+С A_RAI:    1 консультант + A_RAI → 50–100 хозяйств (A_RAI берёт рутину)
+            Команда RAI + A_RAI → 500+ хозяйств (институциональное масштабирование)
+```
+
+**A_RAI не заменяет агронома-консультанта. A_RAI делает его суперчеловеком.**
+
+---
+
+## Что A_RAI делает конкретно
+
+### Для консультанта RAI:
+
+| Задача | Без A_RAI | С A_RAI |
+|--------|----------|---------|
+| Контроль 50 хозяйств | Невозможно | A_RAI мониторит все, консультант только реагирует на S3/S4 |
+| Разработка техкарты | 3–5 часов на одно хозяйство | A_RAI генерирует DRAFT, консультант правит и подписывает |
+| Анализ отклонений план/факт | Ручной анализ по каждому | A_RAI автоматически детектирует, ранжирует по риску |
+| Помять контекст клиента | В голове / Excel | Институциональная память: каждый сезон, каждое решение |
+| Экономический анализ what-if | Часы в Excel | EconomistAgent: сценарии за секунды |
+| Обнаружение риска | Постфактум, при звонке | MonitoringAgent: превентивно, до потерь |
+
+### Для хозяйства-клиента (через консультанта):
+
+- Получает профессиональную техкарту под **свой конкретный контекст** (не шаблон)
+- Видит объяснение каждой рекомендации с источником данных и confidence
+- Получает алерты о рисках до того, как они стали убытками
+- Имеет прозрачную экономику: каждый рубль затрат = доказанное событие в системе
+
+---
+
+## Операционный цикл RAI (куда встраивается A_RAI)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    КОНСАЛТИНГОВЫЙ ЦИКЛ RAI                     │
+├────────────┬────────────┬──────────────┬───────────┬───────────┤
+│   CRM      │ HarvestPlan│   TechMap    │   Task    │  Economy  │
+│            │            │              │Execution  │  Ledger   │
+│  Контекст  │   DRAFT    │  DRAFT       │           │           │
+│ хозяйства  │     ↓      │     ↓        │Observation│   Δ →     │
+│            │  ACTIVE    │  APPROVED    │     ↓     │Monetisat. │
+│            │   FSM      │   FSM        │ Evidence  │           │
+└────────────┴────────────┴──────────────┴───────────┴───────────┘
+      ↑              ↑              ↑           ↑           ↑
+      │              │              │           │           │
+┌─────┴──────────────┴──────────────┴───────────┴───────────┴────┐
+│                          A _ R A I                              │
+│   "Рэй наблюдает, анализирует и предлагает на каждом шаге"     │
+│                                                                 │
+│  KnowledgeAgent ──→ контекст хозяйства (из памяти)             │
+│  AgronomAgent   ──→ DRAFT техкарты (консультант правит)        │
+│  EconomistAgent ──→ экономический анализ сценариев             │
+│  Controller     ──→ мониторинг исполнения, детекция отклонений │
+│  Verifier       ──→ проверка: расчёты корректны, нет галлюцин. │
+└────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Архитектура Farm OS
+## Архитектура A_RAI как системы
 
 ```
 ╔══════════════════════════════════════════════════════════════════╗
 ║                        A _ R A I                                 ║
-║                  Farm Operating System                           ║
+║         Масштабирование экспертизы консалтинга RAI               ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║                                                                  ║
-║  INTELLIGENCE LAYER                                              ║
-║  ┌─────────────────────────────────────────────────────────┐    ║
-║  │  SupervisorAgent (Декомпозирован)                       │    ║
-║  │  IntentRouter | BudgetController | AgentRuntime         │    ║
-║  │  MemoryCoordinator | ResponseComposer                   │    ║
-║  └───────────────────────────┬─────────────────────────────┘    ║
-║                              │                                   ║
-║  ┌───────────────────────────┼───────────────────────────┐      ║
-║  ▼           ▼              ▼             ▼              ▼       ║
-║ A_RAI_      A_RAI_        A_RAI_        A_RAI_          A_RAI_  ║
-║ Agronom     Economist     Controller    Knowledge       Verifier ║
-║ (Агроном)   (Экономист)   (Дежурный)    (Энциклопед.)  (Анти-   ║
-║                                                         галл.)  ║
+║  INTELLIGENCE LAYER (Агентный рой)                               ║
+║  ┌──────────────────────────────────────────────────────────┐   ║
+║  │             Декомпозированный Supervisor                 │   ║
+║  │  IntentRouter | BudgetController | AgentRuntime          │   ║
+║  │  MemoryCoordinator | ResponseComposer                    │   ║
+║  └──────────────────────────┬───────────────────────────────┘   ║
+║                             │ spawn (параллельно)                ║
+║  ┌──────────┬───────────┬───┴─────┬───────────┬─────────────┐  ║
+║  │ Agronom  │ Economist │Control- │ Knowledge │  Verifier   │  ║
+║  │ Agent    │ Agent     │ ler     │ Agent     │  Agent      │  ║
+║  │          │           │ Agent   │           │             │  ║
+║  │TechMap   │ROI/what-if│Monitor/ │База знан. │Anti-halluc. │  ║
+║  │DRAFT     │сценарии   │алерты   │RAG        │Evidence     │  ║
+║  └──────────┴───────────┴─────────┴───────────┴─────────────┘  ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║                                                                  ║
-║  PERCEPTION LAYER (Нервная система / Agronomic Nervous System)  ║
+║  DOMAIN TOOLS LAYER (Доменные подреестры — capability-based)     ║
 ║                                                                  ║
-║  Satellite NDVI/NDRE  Weather Alerts  Field Observations        ║
-║  Budget Deviations    Risk Signals    IoT / Telemetry           ║
-║                                                                  ║
-╠══════════════════════════════════════════════════════════════════╣
-║                                                                  ║
-║  DIGITAL TWIN LAYER (Цифровой двойник / Agronomic Digital Twin) ║
-║                                                                  ║
-║  Field Model  Season State  Crop Phenology  Economic Model      ║
-║  Soil Profile  Weather Forecast  Risk Forecast                  ║
+║  AgroToolsRegistry    → TechMapService, AgroDeterministicEngine  ║
+║  FinanceToolsRegistry → KpiService, EconomyService, Ledger       ║
+║  RiskToolsRegistry    → RiskEngine, IntegrityGate (READ-ONLY)   ║
+║  KnowledgeToolsRegistry → KnowledgeGraph, pgvector RAG           ║
 ║                                                                  ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║                                                                  ║
-║  MEMORY / LEARNING LAYER (Эволюция / Evolution Engine)          ║
+║  MEMORY LAYER (Институциональная память RAI)                     ║
 ║                                                                  ║
-║  Working Memory (Redis)  Episodic Memory (pgvector)             ║
-║  Institutional Memory (Knowledge Graph)                         ║
-║  AgentScoreCard  RewardPolicy  PromptVersioning  EvalRun        ║
-║                                                                  ║
-╠══════════════════════════════════════════════════════════════════╣
-║                                                                  ║
-║  EXECUTION LAYER (Детерминированное ядро)                       ║
-║                                                                  ║
-║  AgroDeterministicEngine  TechMapService  RiskEngine            ║
-║  ConsultingOrchestrator  BudgetPlanService  FSM Controllers     ║
+║  Working Memory (Redis)     — текущий контекст сессии           ║
+║  Episodic Memory (pgvector) — история по хозяйству/сезону       ║
+║  Institutional Memory (KG)  — накопленная экспертиза RAI        ║
+║  AgentScoreCard + EvalRun   — эволюция качества агентов         ║
 ║                                                                  ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║                                                                  ║
-║  DATA LAYER                                                      ║
+║  EXECUTION LAYER (Детерминированный фундамент RAI_EP)            ║
 ║                                                                  ║
-║  PostgreSQL + pgvector  Redis  MinIO  Satellite APIs            ║
+║  AgroDeterministicEngine  — расчёты (код, не LLM)               ║
+║  HarvestPlan/TechMap FSM  — строгие переходы состояний          ║
+║  IntegrityGate/RiskGate   — контроль и блокировки               ║
+║  EconomyService + Ledger  — финансовая строгость                ║
+║  AuditService             — tamper-evident аудит                 ║
 ║                                                                  ║
 ╚══════════════════════════════════════════════════════════════════╝
 ```
 
 ---
 
-## Пять измерений Farm OS
+## Шесть контуров RAI — где A_RAI в каждом
 
-### 1. Восприятие (Agronomic Nervous System)
+По бизнес-архитектуре v2.0, RAI_EP имеет 6 контуров управления:
 
-Платформа постоянно слушает:
-- спутниковые данные (NDVI/NDRE)
-- погодные сигналы
-- полевые наблюдения скаутов
-- отклонения бюджета и план-факта
-- сигналы от техники
-
-Это **нервная система** — сигналы → событийная шина → агенты реагируют.
-
-→ *[Подробно: RAI_AGRONOMIC_NERVOUS_SYSTEM_ARCHITECTURE.md]*
-
-### 2. Понимание (Agronomic Digital Twin)
-
-На каждое поле, каждый сезон, каждую культуру — **цифровой двойник**.
-
-Двойник содержит всё: геометрию поля, состояние почвы, фенологию культуры, историю операций, экономические показатели, прогноз урожайности.
-
-A_RAI думает не о "поле №7", а о **полной цифровой модели поля №7** — со всей историей и прогнозом.
-
-→ *[Подробно: RAI_AGRONOMIC_DIGITAL_TWIN_ARCHITECTURE.md]*
-
-### 3. Интеллект (AI Swarm)
-
-Пять специализированных агентов:
-
-| Агент | Имя | Специализация |
-|-------|-----|---------------|
-| `A_RAI_Agronom` | Агроном | Техкарты, защита растений, севооборот, фенология |
-| `A_RAI_Economist` | Экономист | ROI, бюджеты, what-if сценарии, маржинальность |
-| `A_RAI_Controller` | Дежурный | Мониторинг, алерты, отклонения, план-факт |
-| `A_RAI_Knowledge` | Энциклопедист | БЗ, нормативы, агрономические справочники |
-| `A_RAI_Verifier` | Верификатор | Антигаллюцинационная проверка, evidence protocol |
-
-Все управляются **SupervisorAgent** (декомпозирован на 5 компонентов).
-
-→ *[Подробно: RAI_AI_SYSTEM_ARCHITECTURE.md, RAI_AI_SWARM_RUNTIME_ARCHITECTURE.md]*
-
-### 4. Надёжность (Anti-Hallucination)
-
-A_RAI не врёт, потому что:
-- **RAG**: каждый ответ основан на реальных данных из системы
-- **Deterministic Core**: числа считает код, не LLM
-- **Evidence Protocol**: каждая рекомендация содержит источники и confidence
-- **Cross-Model Validation**: критические рекомендации проверяет вторая модель
-- **Confidence Scoring**: ответы с низкой уверенностью → эскалация к человеку
-- **Human-in-the-Loop**: финальное решение всегда за человеком
-
-Целевой `hallucination_rate < 3%`.
-
-→ *[Подробно: RAI_AI_ANTIHALLUCINATION_ARCHITECTURE.md]*
-
-### 5. Эволюция (Evolution Engine)
-
-A_RAI **становится лучше** с каждым сезоном:
-
-```
-Агент принял решение
-      ↓
-Агроном принял / отклонил / изменил
-      ↓
-Результат записывается (Memory + AgentScoreCard)
-      ↓
-Pattern Detection — что работает, что нет
-      ↓
-PromptOptimizer + ModelRouter — корректировка
-      ↓
-EvalRun против GoldenTestSet — проверка регрессии
-      ↓
-Canary rollout → Production
-```
-
-Система агентского репутации **L1 → L4**:
-- `L1 Experimental` — новый агент, строгий human review
-- `L2 Stable` — проверен, стандартный контроль
-- `L3 Trusted` — высокое acceptance rate, расширенный budget
-- `L4 Autonomous` — только для MonitoringAgent READ-ONLY режима
-
-→ *[Подробно: RAI_AI_EVOLUTION_ARCHITECTURE.md]*
+| Контур RAI | Роль A_RAI |
+|-----------|-----------|
+| **Производственный** (Season, TechMap, Task) | `AgronomAgent` генерирует DRAFT техкарты; `ControllerAgent` мониторит выполнение задач |
+| **Доказательный** (Observation, IntegrityGate, Evidence) | `ControllerAgent` запрашивает Evidence; автоматически детектирует weak evidence → ChangeOrder |
+| **Рисков и решений** (RiskEngine, CMR, Quorum) | `ControllerAgent` (READ-ONLY к RiskToolsRegistry); S3/S4 — Human review, не AI |
+| **Финансовый** (EconomyEvent, Ledger, Budget) | `EconomistAgent` — только READ, аналитика и what-if; запись в Ledger — только Human |
+| **ИИ-сопровождения** (ShadowAdvisory, Pilot, Rollout) | A_RAI работает в режиме Shadow → Pilot → Rollout с kill-switch |
+| **Институциональной безопасности** (Audit, Tenant, Outbox) | A_RAI полностью изолирован по `companyId`; каждое действие — в AuditLog с traceId |
 
 ---
 
-## Ключевые инварианты Farm OS
+## Инварианты: что A_RAI НИКОГДА не делает
+
+Эти инварианты вытекают из `RAI BUSINESS ARCHITECTURE v2.0` и `RAI STRATEGY v3.0`:
 
 ```
-I-01 TENANT ISOLATION    Каждый запрос фильтруется по companyId. Нет исключений.
-I-02 FSM INTEGRITY       Переходы состояний — только через FSM. AI не обходит FSM.
-I-03 AUDIT TRAIL         Все AI-действия логируются. traceId сквозной от запроса до AuditLog.
-I-04 HUMAN AUTHORITY     AI — советник. Финальное решение — человек. Всегда.
-I-05 DETERMINISTIC CORE  Числа считает код. Формулы, а не LLM.
-I-06 EVIDENCE REQUIRED   Рекомендация без источников не выдаётся пользователю.
-I-07 EVOLUTIONARY SAFETY Изменения промтов — только через PromptChange RFC + EvalRun.
+❌ A_RAI не меняет статус HarvestPlan или TechMap напрямую
+   → Статусы меняет только FSM через Human-подтверждённое действие
+
+❌ A_RAI не создаёт записи в финансовом Ledger
+   → Ledger пишет только EconomyService после подтверждённого события
+
+❌ A_RAI не активирует техкарту
+   → Активация требует Integrity Admission + Human КЭП
+
+❌ A_RAI не обходит RiskGate / IntegrityGate
+   → Эти контуры стоят ПЕРЕД слоем AI, не после
+
+❌ A_RAI не выдаёт рекомендацию без источника данных
+   → Evidence Protocol обязателен: нет данных = "Недостаточно информации"
+
+❌ A_RAI не смешивает данные разных хозяйств
+   → Tenant isolation: companyId enforcement на каждом уровне
+
+✅ A_RAI всегда: предлагает → объясняет (формула + источник) →
+                 ждёт подтверждения агронома/директора → фиксирует в AuditLog
 ```
 
 ---
 
-## Отличие от стандартных AI-чат-ботов
+## Как A_RAI масштабирует консалтинг (конкретные сценарии)
 
-| Характеристика | Обычный AI-чатбот | A_RAI / Farm OS |
-|---------------|-------------------|-----------------|
-| **Источник знаний** | Обучающая выборка (hallucinations risk) | Реальные данные через RAG + tool calls |
-| **Расчёты** | LLM генерирует числа | Детерминированный движок, LLM только предлагает параметры |
-| **Решения** | Ответ в свободной форме | Структурированный JSON + evidence + confidence |
-| **Память** | Нет (или только в рамках контекста) | 3-слойная: рабочая, эпизодическая, институциональная |
-| **Обучение** | Нет (статическая модель) | Evolution Loop — агент улучшается из обратной связи |
-| **Безопасность** | Базовые guardrails | RiskPolicy Engine, Two-Person Rule, AutonomousExecutionContext |
-| **Репутация** | Нет | AgentScoreCard L1-L4, Reward/Penalty Engine |
-| **Аудит** | Нет | Forensic-grade: trace → GenerationRecord → ExplainabilityPanel → AuditLog |
+### Сценарий 1: Разработка техкарты для нового хозяйства
+
+```
+Консультант открывает интерфейс RAI Chat:
+"Создай техкарту для ООО Агро-Север, поле №8, рапс озимый, сезон 2026"
+
+A_RAI (KnowledgeAgent):
+→ Загружает из памяти: история поля, предшественники, почвенные анализы, риски
+→ Confidence score на каждый параметр (если данных нет → запрашивает)
+
+A_RAI (AgronomAgent):
+→ Вызывает AgroDeterministicEngine: норма высева, дозы удобрений, окна BBCH
+→ Проверяет через TechMapValidationEngine: совместимость смесей, Hard Stops
+→ Генерирует DRAFT с 10 операциями
+
+A_RAI (EconomistAgent, параллельно):
+→ Считает бюджет: себестоимость/га, ROI при целевой урожайности, точка безубыточности
+
+ResponseComposer:
+→ Виджет на экране: DRAFT техкарты + экономика + confidence по каждому параметру
+→ Suggested actions: "Подтвердить", "Исправить норму высева", "Запросить анализ почвы"
+
+Консультант:
+→ Проверяет, правит, подписывает → TechMap переходит DRAFT → UNDER_REVIEW
+→ A_RAI зафиксировал весь трейл: traceId → AuditLog
+```
+
+**Время консультанта:** 20–30 минут вместо 3–5 часов.
+
+### Сценарий 2: Мониторинг 200 хозяйств одновременно
+
+```
+A_RAI (ControllerAgent, event-driven, фоновый):
+→ Каждую ночь: анализирует все активные TechMap во всех хозяйствах
+→ Сравнивает план vs факт по задачам, NDVI, погоде
+→ Ранжирует по критичности
+
+Утром консультанту:
+→ Дайджест: 3 хозяйства в S3 (алерт), 12 в S1 (норм), 185 без изменений
+→ По каждому S3: что случилось, какие данные, предлагаемые действия
+→ One-click: "Принять рекомендацию" → формируется ChangeOrder → Human подписывает
+
+Что НЕ сделает A_RAI сам:
+→ Не отправит ChangeOrder без подписи консультанта
+→ Не запишет отклонение в Ledger
+→ Не эскалирует S4 без двух подтверждений (two-person rule)
+```
+
+**Покрытие:** 1 консультант контролирует 200 хозяйств с тем же качеством, что раньше 15.
 
 ---
 
-## Карта документов STAGE 2
+## Принцип "Простота интерфейса + Строгость ядра" (из RAI STRATEGY v3.0)
 
-*Каждый документ описывает одно измерение Farm OS:*
+```
+Клиент-хозяйство видит:
+  "Рэй говорит: внесите азот на этой неделе. Причина: BBCH 30, температура стабильная."
 
-| Документ | Измерение | Описывает |
+Что стоит за этим:
+  AgronomAgent → AgroToolsRegistry.get_field_context
+                + AgroToolsRegistry.get_satellite_data
+                + AgroDeterministicEngine.computeFertilizerDose (формула + explain)
+                + TechMapValidationEngine.validate (Hard Stop проверки)
+                + Confidence scoring: 0.87 (все данные актуальны)
+                + SensitiveDataFilter (PII masked)
+  TraceId → GenerationRecord → ExplainabilityPanel → AuditLog
+  BudgetController: 3,200 токенов использовано из 16,000 лимита агента
+```
+
+Фасад прост. Внутри — forensic-grade строгость.
+
+---
+
+## Эволюция: как A_RAI становится умнее
+
+Каждый сезон — цикл институционального накопления знаний:
+
+```
+Консультант принял рекомендацию Рэя → accepted
+Консультант изменил рекомендацию Рэя → corrected (зафиксировано что и почему)
+Консультант отклонил рекомендацию Рэя → rejected (зафиксировано причина)
+                ↓
+AgentScoreCard: acceptance_rate, correction_rate, hallucination_flag_rate
+                ↓
+Если rejection_rate вырос → автоматический PromptChange RFC → EvalRun → canary rollout
+                ↓
+Institutional Memory: паттерны успешных решений → Knowledge Graph
+                ↓
+Следующий сезон: A_RAI точнее, быстрее, увереннее
+
+После 5 сезонов: A_RAI знает о рапсе в Краснодарском крае больше,
+чем любая другая система в мире — потому что это реальные данные реальных хозяйств.
+```
+
+---
+
+## Карта документов STAGE 2 (обновлено)
+
+*Каждый документ описывает один аспект A_RAI как бизнес-инструмента:*
+
+| Документ | Контур RAI | Описывает |
 |----------|-----------|-----------|
-| **RAI_FARM_OPERATING_SYSTEM_ARCHITECTURE.md** ← *ты здесь* | **ВЕСЬ Farm OS** | Манифест, связывающий все измерения |
-| [RAI_AI_SYSTEM_ARCHITECTURE.md](./RAI_AI_SYSTEM_ARCHITECTURE.md) | Интеллект (v2) | Декомпозиция Supervisor, 10 архитектурных решений, Roadmap |
-| [RAI_AI_SYSTEM_RESEARCH.md](./RAI_AI_SYSTEM_RESEARCH.md) | Исследование (v2) | Анализ текущей кодовой базы, gap-анализ |
-| [RAI_AI_SWARM_RUNTIME_ARCHITECTURE.md](./RAI_AI_SWARM_RUNTIME_ARCHITECTURE.md) | Интеллект (Runtime) | Правила оркестрации, Agent FSM, бюджеты, TechCouncil |
-| [RAI_AI_EVOLUTION_ARCHITECTURE.md](./RAI_AI_EVOLUTION_ARCHITECTURE.md) | Эволюция | AgentScore, Reputation L1-L4, Reward Engine, PromptVersioning |
-| [RAI_AI_ANTIHALLUCINATION_ARCHITECTURE.md](./RAI_AI_ANTIHALLUCINATION_ARCHITECTURE.md) | Надёжность | RAG, Evidence Protocol, CrossModel, Confidence Scoring |
-| [RAI_AGRONOMIC_DIGITAL_TWIN_ARCHITECTURE.md](./RAI_AGRONOMIC_DIGITAL_TWIN_ARCHITECTURE.md) | Понимание | Цифровой двойник поля: геометрия, почва, климат, экономика |
-| [RAI_AGRONOMIC_NERVOUS_SYSTEM_ARCHITECTURE.md](./RAI_AGRONOMIC_NERVOUS_SYSTEM_ARCHITECTURE.md) | Восприятие | Событийная система, signal → event → agent, Alert Levels S1-S4 |
-| [AI_SWARM_ARCHITECTURE_ECONOMICS.md](./AI_SWARM_ARCHITECTURE_ECONOMICS.md) | Экономика | Стоимость, Model Tiering T0-T4, ROI |
-| [RAI_AGENT_OS_IMPLEMENTATION_PLAN.md](./RAI_AGENT_OS_IMPLEMENTATION_PLAN.md) | Реализация | Детальный план имплементации |
-| [SPEC_AGENT_FIRST_RAI_EP.md](./SPEC_AGENT_FIRST_RAI_EP.md) | Спецификация | Agent-First подход для RAI_EP |
+| **RAI_FARM_OPERATING_SYSTEM_ARCHITECTURE.md** ← *ты здесь* | **ВСЕ** | Манифест: A_RAI как масштабирование консалтинга. Бизнес-рамка. |
+| [RAI_AI_SYSTEM_ARCHITECTURE.md](./RAI_AI_SYSTEM_ARCHITECTURE.md) | ИИ-сопровождения | Техническая архитектура: декомпозиция Supervisor, 10 решений v2 |
+| [RAI_AI_SYSTEM_RESEARCH.md](./RAI_AI_SYSTEM_RESEARCH.md) | ИИ-сопровождения | Анализ кодовой базы: gap-анализ, что уже есть, что нужно |
+| [RAI_AI_SWARM_RUNTIME_ARCHITECTURE.md](./RAI_AI_SWARM_RUNTIME_ARCHITECTURE.md) | ИИ-сопровождения | Runtime агентов: FSM, бюджеты, TechCouncil protocol |
+| [RAI_AI_EVOLUTION_ARCHITECTURE.md](./RAI_AI_EVOLUTION_ARCHITECTURE.md) | ИИ-сопровождения | Как A_RAI учится: AgentScore, Reputation L1-L4, PromptVersioning |
+| [RAI_AI_ANTIHALLUCINATION_ARCHITECTURE.md](./RAI_AI_ANTIHALLUCINATION_ARCHITECTURE.md) | ИИ-сопровождения | Надёжность: RAG, Evidence Protocol, Confidence Scoring |
+| [RAI_AGRONOMIC_DIGITAL_TWIN_ARCHITECTURE.md](./RAI_AGRONOMIC_DIGITAL_TWIN_ARCHITECTURE.md) | Производственный | Цифровая модель хозяйства-клиента: поля, почва, климат, сезон |
+| [RAI_AGRONOMIC_NERVOUS_SYSTEM_ARCHITECTURE.md](./RAI_AGRONOMIC_NERVOUS_SYSTEM_ARCHITECTURE.md) | Доказательный + Рисков | Сигналы и события: Satellite → NDVI → Event → Agent → Алерт |
 
 ---
 
-## Vision
+## Vision RAI v3.0
 
-К концу 2026 года A_RAI знает о каждом поле предприятия больше, чем любой отдельный специалист.
+> **RAI STRATEGY v3.0:** _"Построить управляемую, доказуемую и финансово-строгую систему управления агрорезультатом, способную обслуживать 500+ хозяйств в разных юрисдикциях."_
 
-Не потому что он умнее — а потому что он **помнит всё** (институциональная память), **видит всё** (нервная система, спутники, IoT), **считает точно** (детерминированное ядро) и **учится** (evolution loop).
+A_RAI — это то, что делает эту цифру достижимой.
 
-Агроном при этом **не теряет контроль** — он получает суперспособности.
+Не за счёт найма 200 агрономов.  
+А за счёт того, что каждый агроном RAI работает как 20 — с институциональной памятью всего бизнеса, детерминированной точностью расчётов и сигналами о рисках раньше, чем они стали убытками.
 
-> *A_RAI is not replacing the agronomist. A_RAI is making the agronomist Iron Man.*
+> _A_RAI is not replacing the consultant. A_RAI is making the consultant Iron Man._
