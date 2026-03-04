@@ -7,6 +7,11 @@
   - Decision-ID: AG-ARAI-F1-001
   - Статус: Промт создан, ожидает исполнения. Задачи: IntentRouter (выделение из SupervisorAgent), AgroToolsRegistry (доменный реестр агро-инструментов), TraceId Binding в AiAuditEntry.
 
+- `interagency/prompts/2026-03-04_a_rai-f1-2_domain-registries-agronom-stub.md` [IN_PROGRESS]
+  - Decision-ID: AG-ARAI-F1-002
+  - Статус: Промт создан, ожидает исполнения. Задачи: FinanceToolsRegistry, RiskToolsRegistry, KnowledgeToolsRegistry, AgronomAgent Stub.
+
+
 
 - `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
   - План: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [ACCEPTED]

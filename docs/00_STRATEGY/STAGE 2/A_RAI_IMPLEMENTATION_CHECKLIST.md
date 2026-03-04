@@ -19,9 +19,9 @@
 
 ### 1.2 Доменные реестры (Capability-based)
 - [/] **AgroToolsRegistry** — инструменты агрономии и техкарт. | **AG-ARAI-F1-001** | IN_PROGRESS
-- [ ] **FinanceToolsRegistry** — экономика и ROI (только READ).
-- [ ] **RiskToolsRegistry** — алерты и спутники.
-- [ ] **KnowledgeToolsRegistry** — база знаний и RAG.
+- [/] **FinanceToolsRegistry** — экономика и ROI (только READ). | **AG-ARAI-F1-002** | IN_PROGRESS
+- [/] **RiskToolsRegistry** — алерты и спутники. | **AG-ARAI-F1-002** | IN_PROGRESS
+- [/] **KnowledgeToolsRegistry** — база знаний и RAG. | **AG-ARAI-F1-002** | IN_PROGRESS
 
 ### 1.3 Детерминированный мост
 - [ ] **AgroDeterministicEngineFacade** — обёртка над кодом расчётов с выводом формул и объяснений (`ExplainableResult`).
@@ -41,7 +41,7 @@
 - [ ] **ToolCall Planner** — оптимизация количества вызовов LLM.
 
 ### 2.2 Специализированные агенты
-- [ ] **AgronomAgent** — ТРИАЖ (7 слоёв контекста) + Генерация DRAFT техкарты.
+- [/] **AgronomAgent** — ТРИАЖ (7 слоёв контекста) + Генерация DRAFT техкарты. | **AG-ARAI-F1-002** | IN_PROGRESS
 - [ ] **EconomistAgent** — Расчёт Δ, маржинальности и вознаграждения RAI.
 - [ ] **KnowledgeAgent** — Поиск по институциональной памяти и RegionProfile.
 
