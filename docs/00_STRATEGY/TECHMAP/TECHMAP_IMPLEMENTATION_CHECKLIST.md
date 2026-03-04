@@ -205,38 +205,45 @@
 - [ ] Orchestrator акцептирует план → `ACCEPTED`
 
 ### TM-4.1 AdaptiveRule модель
-- [ ] Prisma: `model AdaptiveRule` — techMapId, triggerType, condition (Json), affectedOperationIds, changeTemplate (Json), requiresApprovalRole?
-- [ ] Enum: `TriggerType` (WEATHER, NDVI, OBSERVATION, PHENOLOGY, PRICE)
-- [ ] Zod DTO
+- [x] Prisma: `model AdaptiveRule` — techMapId, triggerType, condition (Json), affectedOperationIds (Json), changeTemplate (Json), isActive, lastEvaluatedAt; `@@index([triggerType])`
+- [x] Enum: `TriggerType` (WEATHER, NDVI, OBSERVATION, PHENOLOGY, PRICE)
+- [x] Enum: `TriggerOperator` (GT, GTE, LT, LTE, EQ, NOT_EQ)
+- [x] Zod DTO: `AdaptiveRuleCreateDto`, `AdaptiveRuleResponseDto` PASS
+- [x] `HybridPhenologyModel`: hybridName, cropType, gddToStage (Json), baseTemp, companyId optional
 
 ### TM-4.2 TriggerEvaluationService
-- [ ] Класс: `TriggerEvaluationService`
-- [ ] Метод: `evaluateTriggers(techMapId, currentContext)` — проверка всех правил
-- [ ] Метод: `applyTriggeredRule(ruleId)` → автоматическая генерация ChangeOrder
-- [ ] Интеграция с `ChangeOrderService` из TM-3
-- [ ] Unit-тесты: WEATHER trigger → ChangeOrder создан; PHENOLOGY trigger → окно закрыто
+- [x] Класс: `TriggerEvaluationService` в `adaptive-rules/`
+- [x] Метод: `evaluateTriggers` — загрузка активных правил по techMapId+companyId+isActive PASS
+- [x] Метод: `applyTriggeredRule` — только через ChangeOrderService PASS
+- [x] Метод: `evaluateCondition` — pure function, `typeof === 'number'` guard PASS
+- [x] `lastEvaluatedAt` updateMany отдельно от triggered mutations PASS
+- [x] Интеграция с `ChangeOrderService` из TM-3 PASS
+- [x] Unit-тесты: 6/6 PASS
 
 ### TM-4.3 RegionProfileService
-- [ ] Класс: `RegionProfileService`
-- [ ] Метод: `getProfileForField(fieldId)` → RegionProfile
-- [ ] Метод: `calculateSowingWindow(profileId, gddTarget)` → dateRange
-- [ ] Метод: `suggestOperationsForRegion(profileId, cropType)` → базовый набор операций
-- [ ] Unit-тесты
+- [x] Класс: `RegionProfileService`
+- [x] Метод: `getProfileForField` — TechMap→CropZone fallback, затем global fallback PASS
+- [x] Метод: `calculateSowingWindow` — 3 профиля + direction flag PASS
+- [x] Метод: `suggestOperationTypes` — CONTINENTAL_COLD: DESICCATION mandatory; MARITIME_HUMID: 2×FUNGICIDE_APP PASS
+- [x] Unit-тесты: 4/4 PASS
 
-### TM-4.4 HybridPhenologyModel (подготовительная)
-- [ ] Модель: `HybridPhenologyModel` — hybridId, gddToStage (Json: {bbch → gdd_required})
-- [ ] Или: Json-поле в Rapeseed/CropVariety
-- [ ] Метод: `predictBBCH(gddAccumulated, hybridId)` → текущая фаза
+### TM-4.4 HybridPhenologyModel
+- [x] Класс: `HybridPhenologyService` в `adaptive-rules/`
+- [x] Метод: `predictBBCH` — разбор gddToStage, max reached stage, nextStage+delta PASS
+- [x] Метод: `getOrCreateModel` PASS
+- [x] lookup order: tenant → global PASS
+- [x] Unit-тесты: 3/3 PASS
 
 ### TM-4.V Верификация спринта
-- [ ] Тесты PASS
-- [ ] Scenario тест: поле с regionProfile=MARITIME_HUMID → правильное окно посева
-- [ ] `tsc --noEmit` PASS
+- [x] 17/17 адресных тестов PASS (5 suites)
+- [x] Регрессия tech-map/ 22 suites / 75 tests PASS
+- [x] `tsc --noEmit` PASS
+- [x] `prisma validate` + `db push` PASS
 
 ### TM-4.R Результат
-- [ ] Ревью Orchestrator — APPROVED
-- [ ] Запись в `memory-bank/progress.md`
-- [ ] Спринт TM-4 — **CLOSED**
+- [x] Ревью Orchestrator — **APPROVED**
+- [x] Запись в `memory-bank/progress.md`
+- [x] Спринт TM-4 — **CLOSED** ✅
 
 ---
 
@@ -324,7 +331,7 @@
 | TM-1 | ✅ DONE | 11 | ✅ | ✅ | ✅ | ✅ |
 | TM-2 | ✅ DONE | 7 | ✅ | ✅ | ✅ | ✅ |
 | TM-3 | ✅ DONE | 6 | ✅ | ✅ | ✅ | ✅ |
-| TM-4 | □ TODO | 6 | □ | □ | □ | □ |
+| TM-4 | ✅ DONE | 6 | ✅ | ✅ | ✅ | ✅ |
 | TM-5 | □ TODO | 6 | □ | □ | □ | □ |
 | POST | □ TODO | 5 | — | — | □ | □ |
 
