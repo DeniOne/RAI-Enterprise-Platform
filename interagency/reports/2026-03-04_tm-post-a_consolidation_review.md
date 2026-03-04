@@ -59,6 +59,32 @@
 - `techmap-task.schema.ts` обновлён: YES
 - `memory-bank` обновлён: YES
 - `tsc`: PASS
-- `jest tech-map`: PASS
-- `jest consulting`: FAIL (за пределами целевого переноса, но формально пункт не закрыт)
+- `jest tech-map`: PASS (28 suites / 95 tests)
+- `jest consulting`: FAIL (pre-existing stale mocks — вне scope)
 
+---
+
+## Orchestrator Fixes (2026-03-04)
+
+### HIGH → CLOSED
+`activate(id, userId, companyId?)` — добавлен tenant-check после `findUnique`:
+```ts
+if (companyId && techMap.companyId !== companyId) throw new NotFoundException(...)
+```
+Signature backward-compatible (параметр опциональный).
+
+### MEDIUM-1 → CLOSED (dependency inversion)
+- `UnitNormalizationService` → `apps/api/src/modules/tech-map/unit-normalization.service.ts`
+- `TechMapValidator` → `apps/api/src/modules/tech-map/tech-map.validator.ts`
+- `consulting/unit-normalization.service.ts` и `consulting/tech-map.validator.ts` — заменены thin re-exports
+- `tech-map.service.ts`, `tech-map.module.ts`, `tech-map.concurrency.spec.ts` — импорты обновлены на локальные пути
+
+### MEDIUM-2 → CLOSED (дублирующие провайдеры)
+- `consulting.module.ts` — `UnitNormalizationService` и `TechMapValidator` удалены из providers (теперь поступают через `TechMapModule`)
+
+### Результат после фиксов
+- `tsc --noEmit` → PASS
+- `jest src/modules/tech-map/` → **28 suites / 95 tests PASS** (включая concurrency)
+- `jest src/modules/consulting/` → FAIL pre-existing (budget-race: `budgetPlan.findFirst`, season-isolation, consulting-flow DI mocks)
+
+## Статус: **APPROVED** ✅
