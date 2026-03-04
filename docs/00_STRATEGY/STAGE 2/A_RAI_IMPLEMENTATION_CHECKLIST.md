@@ -1,7 +1,8 @@
 # A_RAI — Чек-лист имплементации (Phase 2-4)
 
-> **Статус:** `DRAFT` | **Дата:** 2026-03-04
+> **Статус:** `ACTIVE` | **Дата:** 2026-03-04
 > Этот документ является рабочим чек-листом для реализации архитектуры A_RAI v2.0.
+
 
 ---
 
@@ -10,14 +11,14 @@
 **Цель:** Разделить монолит SupervisorAgent и создать доменные реестры.
 
 ### 1.1 Декомпозиция Supervisor
-- [ ] **IntentRouter** (`intent-router.service.ts`) — классификация запросов (GPT-4o-mini).
+- [/] **IntentRouter** (`intent-router.service.ts`) — классификация запросов (GPT-4o-mini). | **AG-ARAI-F1-001** | IN_PROGRESS
 - [ ] **BudgetController** (`budget-controller.service.ts`) — лимиты токенов и понижение моделей.
 - [ ] **MemoryCoordinator** (`memory-coordinator.service.ts`) — работа с Episodic Memory + Tenant Isolation.
 - [ ] **AgentRuntime** (`agent-runtime.service.ts`) — жизненный цикл агента, дедлайны (30с).
 - [ ] **ResponseComposer** (`response-composer.service.ts`) — сборка ответа и виджетов.
 
 ### 1.2 Доменные реестры (Capability-based)
-- [ ] **AgroToolsRegistry** — инструменты агрономии и техкарт.
+- [/] **AgroToolsRegistry** — инструменты агрономии и техкарт. | **AG-ARAI-F1-001** | IN_PROGRESS
 - [ ] **FinanceToolsRegistry** — экономика и ROI (только READ).
 - [ ] **RiskToolsRegistry** — алерты и спутники.
 - [ ] **KnowledgeToolsRegistry** — база знаний и RAG.
@@ -26,7 +27,7 @@
 - [ ] **AgroDeterministicEngineFacade** — обёртка над кодом расчётов с выводом формул и объяснений (`ExplainableResult`).
 
 ### 1.4 Трассировка и аудит
-- [ ] **TraceId Binding** — проброс ID сквозь все вызовы AI в `AuditLog`.
+- [/] **TraceId Binding** — проброс ID сквозь все вызовы AI в `AuditLog`. | **AG-ARAI-F1-001** | IN_PROGRESS
 - [ ] **ExplainabilityPanel Service** — сервис для отображения "почему Рэй так решил".
 
 ---

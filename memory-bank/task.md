@@ -244,3 +244,11 @@
 - [x] **[WEB]** Keep role indicator only in `GovernanceBar` and fix role dropdown hover-gap <!-- id: 18.6 -->
 - [x] **[TEST]** Pass `apps/web` TypeScript verification after hotfix <!-- id: 18.7 -->
 - [x] **[REVIEW]** Approve hotfix via separate interagency prompt/plan/report cycle <!-- id: 18.8 -->
+
+## A_RAI Фаза 1 — Декомпозиция SupervisorAgent (IN_PROGRESS) <!-- id: 19 -->
+- [/] **IntentRouter** — выделение `IntentRouterService` из монолита `SupervisorAgent` <!-- id: 19.1 -->
+- [/] **AgroToolsRegistry** — доменный реестр агро-инструментов (compute_deviations, generate_tech_map_draft) <!-- id: 19.2 -->
+- [/] **TraceId Binding** — запись `AiAuditEntry` в БД с `traceId` по каждому запросу чата <!-- id: 19.3 -->
+- [ ] **READY_FOR_REVIEW** — кодер возвращает план/отчёт <!-- id: 19.4 -->
+- Decision-ID: AG-ARAI-F1-001
+- Промт: `interagency/prompts/2026-03-04_a_rai-f1-1_intent-router-agro-registry.md`

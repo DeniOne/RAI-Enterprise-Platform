@@ -1706,3 +1706,45 @@ Orchestrator = Brain (канон RAI_EP).
 ### Связанные документы
 - `interagency/prompts/2026-03-04_tm-post-c_ui-workbench-v2.md`
 - `interagency/plans/2026-03-04_tm-post-c_ui-workbench-v2.md`
+
+---
+
+## AG-ARAI-F1-001
+
+**Дата:** 2026-03-04
+**Автор:** TECHLEAD (AI)
+**Статус:** ACCEPTED
+
+### Решение
+Старт ФАЗЫ 1 A_RAI — декомпозиция монолитного `SupervisorAgent` и создание доменной архитектуры.
+
+Задача включает три первоочередных блока:
+1. **IntentRouterService** — выделение логики классификации намерений из `SupervisorAgent.detectIntent()` в отдельный сервис с LLM-ready контрактом (`classify()` → `IntentClassification`).
+2. **AgroToolsRegistry** — изоляция агро-инструментов (`compute_deviations`, `generate_tech_map_draft`) из общего `RaiToolsRegistry` в доменный реестр.
+3. **TraceId Binding** — запись каждого запроса чата в `AiAuditEntry` с `traceId` для forensic-трассировки.
+
+### Scope
+- `apps/api/src/modules/rai-chat/intent-router/intent-router.service.ts` (НОВЫЙ)
+- `apps/api/src/modules/rai-chat/tools/agro-tools.registry.ts` (НОВЫЙ)
+- `apps/api/src/modules/rai-chat/supervisor-agent.service.ts` (МОДИФИКАЦИЯ)
+- `apps/api/src/modules/rai-chat/rai-chat.module.ts` (МОДИФИКАЦИЯ)
+- `packages/prisma-client/schema.prisma` — модель `AiAuditEntry` (НОВАЯ)
+
+### Технические ограничения
+- `companyId` — только из `actorContext`, никогда из payload
+- Backward compatibility: `RaiToolsRegistry.execute()` работает для существующих тестов без изменений
+- Нет LLM-вызовов в этой задаче (детерминированный IntentRouter)
+- Scope не включает UI, Prisma-миграции за пределами `AiAuditEntry`, модуль памяти
+
+### Definition of Done
+- `tsc --noEmit` PASS
+- Все существующие тесты `src/modules/rai-chat/` PASS (без регрессий)
+- 6+ новых тестов для `IntentRouterService`
+- 3+ новых тестов для `AgroToolsRegistry`
+- `AiAuditEntry` в БД с `traceId` после живого POST /api/rai/chat
+
+### Связанные документы
+- `interagency/prompts/2026-03-04_a_rai-f1-1_intent-router-agro-registry.md`
+- `docs/00_STRATEGY/STAGE 2/A_RAI_IMPLEMENTATION_CHECKLIST.md` (пп. 1.1, 1.2, 1.4)
+- `docs/00_STRATEGY/STAGE 2/RAI_AI_SYSTEM_ARCHITECTURE.md` (§2.1, §5.2, §9.1)
+

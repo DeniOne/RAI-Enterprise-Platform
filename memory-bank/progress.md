@@ -321,3 +321,13 @@
     *   Спроектированы: Tool Registry (14 тулов), 3-слойная память, 4 тира моделей, HITL-матрица, Roadmap на 3 стадии.
     *   Обновлен `memory-bank/activeContext.md`.
     *   Ревью: DONE. Готов к имплементации Stage 1.
+
+48. **A_RAI Фаза 1 — Старт декомпозиции SupervisorAgent (2026-03-04)** [IN_PROGRESS]:
+    *   Принят к исполнению `CURSOR SOFTWARE FACTORY — STARTER PROMPT.md`.
+    *   Прочитаны все обязательные документы: `RAI_FARM_OPERATING_SYSTEM_ARCHITECTURE.md`, `RAI_AI_SYSTEM_ARCHITECTURE.md`, `A_RAI_IMPLEMENTATION_CHECKLIST.md`, `PROJECT_EXECUTION_CHECKLIST.md`.
+    *   Состояние: все задачи Фаза 1-3 A_RAI открыты; все Sprint S-серии и TM-серии DONE.
+    *   Определён первый шаг: IntentRouter + AgroToolsRegistry + TraceId Binding.
+    *   Создан промт: `interagency/prompts/2026-03-04_a_rai-f1-1_intent-router-agro-registry.md`.
+    *   Зарегистрирован Decision-ID: AG-ARAI-F1-001 в `DECISIONS.log`.
+    *   Обновлены: `A_RAI_IMPLEMENTATION_CHECKLIST.md` (пп. 1.1, 1.2, 1.4 → `[/]`), `interagency/INDEX.md`, `memory-bank/task.md`.
+
