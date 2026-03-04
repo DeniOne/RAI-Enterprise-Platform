@@ -216,6 +216,10 @@ aligned_with: [principle-vision]
 - [x] **Track 2: Budget Vertical Slice (Financial Control)** ✅
 - [x] **Track 3: Advisory Engine (Analytics)** ✅
 - [x] **Track 5: Yield & KPI Engineering** ✅
+- [x] **Track 6: TechMap Season & Catalog Refactoring (POST-B)** ✅
+  - [x] Season global scope & CropZone primary linkage.
+  - [x] Multi-crop catalog via `CropVariety` (refactored from Rapeseed).
+  - [x] Legacy data migration (idempotent scripts + schema gate).
 
 ### 🌱 11. Level E: Regenerative Optimization ✅
 - [x] **[Backend]** **Contract Governance**: Типы контрактов (`SEASONAL`, `MANAGED_REGENERATIVE`).
