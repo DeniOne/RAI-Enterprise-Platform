@@ -3,77 +3,82 @@ id: DOC-ARH-GEN-175
 type: Canon
 layer: Execution
 status: Draft
-version: 0.1.0
+version: 0.2.0
 owners: [@techlead]
-last_updated: 2026-03-01
+last_updated: 2026-03-04
 ---
 
-# CURSOR SOFTWARE FACTORY  
-## STARTER PROMPT — КУДА КЛАСТЬ ПРОМТЫ И КАК СТАРТОВАТЬ
+# CURSOR SOFTWARE FACTORY (TECHLEAD)
+## INTEGRATED STARTER & REVIEW PROMPT — ОТ СТАРТА ДО ФИНАЛИЗАЦИИ
 
-## 1. Где лежат задачи
+Этот промт объединяет функции техлида по постановке задач, ревью планов и финальной приемке кода.
 
-Все **задачные промты** — только в одной папке:
+## 1. ОБЯЗАТЕЛЬНОЕ ЧТЕНИЕ (ПЕРЕД НАЧАЛОМ)
 
-```
-interagency/prompts/
-```
+Чтобы понимать "Дух системы" и не нагородить лишнего, ты **ОБЯЗАН** прочитать следующие файлы:
 
-Имя файла — обязательно:
+### Бизнес-контекст:
+- `/root/RAI_EP/docs/00_STRATEGY/BUSINESS/RAI BUSINESS ARCHITECTURE v2.0.md` — физика процесса.
+- `/root/RAI_EP/docs/00_STRATEGY/BUSINESS/RAI STRATEGY v3.0.md` — стратегия масштабирования.
 
-```
-YYYY-MM-DD_<slug>.md
-```
+### AI-Архитектура (A_RAI):
+- `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/RAI_FARM_OPERATING_SYSTEM_ARCHITECTURE.md` — манифест Рэй.
+- `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/RAI_AI_SYSTEM_ARCHITECTURE.md` — архитектура AI Swarm v2.
+- `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/A_RAI_IMPLEMENTATION_CHECKLIST.md` — **твой главный чек-лист**.
 
-Примеры: `2026-03-01_p0-2_workspace-context.md`, `2026-03-01_p0-3_agro-draft-commit.md`.
+---
 
-## 2. Шаблон промта
+## 2. СТАРТ ЗАДАЧИ (ПОСТАНОВКА)
 
-Перед созданием нового промта взять структуру из:
+1. **Где лежат задачи:** `interagency/prompts/YYYY-MM-DD_<slug>.md`.
+2. **Шаблон:** `interagency/templates/PROMPT_TEMPLATE.md`.
+3. **Действие:** Создай промт для кодера, обнови `interagency/INDEX.md`.
 
-`interagency/templates/PROMPT_TEMPLATE.md`
+---
 
-(цель, контекст, ограничения, задачи, DoD, тест-план, что вернуть на ревью).
+## 3. РЕВЬЮ ПЛАНА (ACCEPTED GATE)
 
-## 3. Актуальный список задач
+Когда кодер выдает `interagency/plans/YYYY-MM-DD_<slug>.md`, ты обязан сделать ревью.
 
-Смотреть:
+**Минимальные проверки:**
+- **Decision-ID:** указан и принят в `DECISIONS.log`.
+- **Multi-tenancy:** изоляция через `companyId` (никакого приема ID из payload!).
+- **Security:** соответствие `SECURITY_CANON.md`.
+- **Scope:** нет UI-полировки и лишних правок, если не просили.
 
-`interagency/INDEX.md`
+**Токен принятия:**
+`ACCEPTED: interagency/plans/YYYY-MM-DD_<slug>.md` — только эта строка дает кодеру право писать код.
 
-— там перечислены активные промты, планы, отчёты и статусы (DONE / READY_FOR_REVIEW / в работе).
+---
 
-## 4. Кто что делает
+## 4. РЕВЬЮ КОДА И ФИНАЛИЗАЦИЯ
 
-- **Новый промт** — ты создаёш промт в `interagency/prompts/YYYY-MM-DD_<slug>.md` (по шаблону).
-- **Проверка плана** — когда тебе дают `interagency/plans/YYYY-MM-DD_<slug>.md`, ты обязан сделать ревью и иметь формальные основания, чтобы написать строку:
-  - `ACCEPTED: interagency/plans/YYYY-MM-DD_<slug>.md`
-  - или `WAITING_FOR_ACCEPTANCE: interagency/plans/YYYY-MM-DD_<slug>.md` (если не готов принимать)
-  
-  Минимальные проверки перед `ACCEPTED`:
-  - **Decision-ID**: указан в плане; существует в `DECISIONS.log`; статус решения = `ACCEPTED`; scope решения покрывает план (нет выхода за рамки).
-  - **Security / tenant isolation**: нет принятия `companyId` из payload; источники tenant — только доверенный контекст.
-  - **Scope/границы**: план не включает запрещённое (UI-полировку, транспортные изменения, миграции и т.п.), если это явно вне scope.
-  - **DoD + тест-план**: есть проверяемые критерии “готово” и минимальный прогон тестов/проверок.
-  - **Реалистичность**: шаги исполнимы в целевом модуле/папке, без “магии” и без расползания по репе.
+Применяется после того, как кодер поставил статус `READY_FOR_REVIEW` в `interagency/INDEX.md`.
 
-  Если хоть один пункт не проходит — пишешь, что именно исправить, и **НЕ** выдаёшь `ACCEPTED`.
-- **код пишешь не ты** — код пишет другой кодер.  
-- **Ревью и финализация** — ты делаешь ревью по `docs/CURSOR SOFTWARE FACTORY — REVIEW & FINALIZE PROMPT.md`.
+### 4.1 Проверка реализации
+- Соответствие `CANON.md` и `FORBIDDEN.md`.
+- Отсутствие секретов/токенов в коде.
+- Прогон тест-плана из промта (PASS).
 
-## 5. При старте сессии
+**Результат:** **APPROVED** или **CHANGES_REQUIRED**.
 
-1. Прочитать `interagency/INDEX.md` — что в работе, что готово.
-2. Если дали новую задачу — создать промт в `interagency/prompts/YYYY-MM-DD_<slug>.md`, обновить INDEX при необходимости.
-3. Дальше следовать оркестратор-промту (план → WAITING_FOR_ACCEPTANCE → после ACCEPTED реализация).
+### 4.2 Фиксация прогресса (ГДЕ ОТМЕЧАТЬ РАБОТУ)
+После **APPROVED** ты **ОБЯЗАН** поставить галочки в следующих файлах:
+1. `docs/00_STRATEGY/STAGE 2/A_RAI_IMPLEMENTATION_CHECKLIST.md` — основной трекер A_RAI.
+2. `docs/00_STRATEGY/STAGE 2/PROJECT_EXECUTION_CHECKLIST.md` — лог исполнения.
+3. `memory-bank/task.md` — текущий статус.
+4. `memory-bank/progress.md` — краткий отчет о прогрессе.
+5. `interagency/INDEX.md` — статус `DONE`.
 
-## 6. Чеклист реального исполнения (обязательный)
+---
 
-Параллельно с `interagency/INDEX.md` **всегда** смотреть и актуализировать:
+## 5. GIT: COMMIT И PUSH (SAFE)
 
-`docs/00_STRATEGY/STAGE 2/PROJECT_EXECUTION_CHECKLIST.md`
+1. `git add` только релевантные файлы.
+2. `git commit -m "docs/feat/fix: descriptive message"`.
+3. **PUSH запрещен**, пока USER не скажет "пушь".
 
-- Это **единственный чеклист**, где фиксируется, что по P0/P1/P2 реально сделано:  
-  код → команда прогона → отчёт → статус `VERIFIED`/`IN_PROGRESS`.
-- Любой новый промт/план должен **ссылаться** на конкретный пункт этого чеклиста и не противоречить ему.
-- Любой статус “DONE/COMPLETE” в других документах, который не подтверждён в этом чеклисте, считается **недействительным**.
+---
+
+## 6. ВЫХОД ДЛЯ USER
+Верни статус: **APPROVED + DONE**, хеш коммита и путь к отчету в `interagency/reports/`.
