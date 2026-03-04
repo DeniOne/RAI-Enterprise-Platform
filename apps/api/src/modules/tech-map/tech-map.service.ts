@@ -55,7 +55,6 @@ export class TechMapService {
 
     const season = await this.prisma.season.findFirst({
       where: { id: seasonId },
-      include: { rapeseed: true },
     });
 
     if (!plan || !season) {
@@ -66,10 +65,23 @@ export class TechMapService {
     }
 
     // Get max version for this context
+    const cropZone = await (this.prisma as any).cropZone.findFirst({
+      where: {
+        seasonId,
+        companyId: plan.companyId,
+      },
+      orderBy: { createdAt: "asc" },
+    });
+    if (!cropZone) {
+      throw new NotFoundException("CropZone not found for season/company");
+    }
+
+    const crop = String(cropZone.cropType ?? "RAPESEED").toLowerCase();
+
     const lastMap = await this.prisma.techMap.findFirst({
       where: {
-        fieldId: season.fieldId,
-        crop: season.rapeseed.name,
+        fieldId: cropZone.fieldId,
+        crop,
         seasonId,
         companyId: plan.companyId,
       },
@@ -81,10 +93,11 @@ export class TechMapService {
     return this.prisma.techMap.create({
       data: {
         seasonId,
+        cropZoneId: cropZone.id,
         harvestPlanId: plan.id,
         companyId: plan.companyId,
-        fieldId: season.fieldId,
-        crop: season.rapeseed.name,
+        fieldId: cropZone.fieldId,
+        crop,
         status: TechMapStatus.DRAFT,
         version: nextVersion,
       },
@@ -101,7 +114,6 @@ export class TechMapService {
       where: {
         id: params.seasonRef,
         companyId: params.companyId,
-        fieldId: params.fieldRef,
       },
     });
 
@@ -123,9 +135,28 @@ export class TechMapService {
       throw new NotFoundException("Harvest Plan not found for season/company");
     }
 
-    const lastMap = await this.prisma.techMap.findFirst({
+    let cropZone = await (this.prisma as any).cropZone.findFirst({
       where: {
         fieldId: params.fieldRef,
+        seasonId: params.seasonRef,
+        companyId: params.companyId,
+      },
+    });
+    if (!cropZone) {
+      cropZone = await (this.prisma as any).cropZone.create({
+        data: {
+          fieldId: params.fieldRef,
+          seasonId: params.seasonRef,
+          companyId: params.companyId,
+          cropType: params.crop.toUpperCase(),
+          varietyHybrid: null,
+        },
+      });
+    }
+
+    const lastMap = await this.prisma.techMap.findFirst({
+      where: {
+        fieldId: cropZone.fieldId,
         crop: params.crop,
         seasonId: params.seasonRef,
         companyId: params.companyId,
@@ -140,8 +171,9 @@ export class TechMapService {
       data: {
         harvestPlanId: plan.id,
         seasonId: params.seasonRef,
+        cropZoneId: cropZone.id,
         companyId: params.companyId,
-        fieldId: params.fieldRef,
+        fieldId: cropZone.fieldId,
         crop: params.crop,
         status: TechMapStatus.DRAFT,
         version: nextVersion,
@@ -594,6 +626,7 @@ export class TechMapService {
         data: {
           harvestPlanId: source.harvestPlanId,
           seasonId: source.seasonId,
+          cropZoneId: source.cropZoneId!,
           fieldId: source.fieldId,
           crop: source.crop,
           companyId: source.companyId,

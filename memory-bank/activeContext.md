@@ -10,6 +10,7 @@
 
 ## Current Focus
 - **FOUNDATION ORCHESTRATOR PROMPT (ADOPTED) ✅**: Переход на канонический ворклоу Software Factory. Все процессы теперь идут через `interagency/` и жёсткие роли (TECHLEAD/CODER).
+- **TM-POST-C UI TechMap Workbench v2**: Ожидание/Ревью плана реализации новой версии воркбенча с DAG-визуализацией.
 - **Соблюдение Канона**: Безусловное следование `CANON.md`, `LANGUAGE_POLICY.md` и `UI_DESIGN_CANON.md`.
 - **Подготовка к задачам**: Ожидание новых промтов в `interagency/prompts/`.
 
@@ -52,9 +53,11 @@
   - [x] Triggered Effects Panel with SHA-256 (RFC8785) verification.
   - [x] Conflict Component & Lexicographical BFS escalation path.
   - [x] Institutional Replay Test Suite (100% Determinism).
-- **## Current Objective
-- [ ] Ревью и финализация задачи S4.1 (Chat Widget Logic) [IN_PROGRESS]
+## Current Objective
+- [x] Ревью и финализация задачи TM-POST-B (Season/CropZone/CropVariety) [DONE]
+- [ ] Ревью плана POST-C (UI Workbench v2) [IN_PROGRESS]
 - [ ] Планирование Phase C (Memory Integration) [PENDING]
+
 Чеклисты синхронизированы, memory bank актуализирован, roadmap логически и физически закрыт до Phase 7.
 - **Runtime Stabilization (2026-02-23):** Frontend dev ускорен (Turbopack + облегчённый dev-transpile), добавлен явный loading feedback в UI, backend startup ускорен и стабилизирован, локальный S3/MinIO auth выровнен.
 

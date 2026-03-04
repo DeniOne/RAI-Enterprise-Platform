@@ -700,6 +700,56 @@ model RapeseedHistory {
   @@map("rapeseed_history")
 }
 
+model CropVariety {
+  id           String   @id @default(cuid())
+  name         String
+  variety      String?
+  reproduction String?
+  type         RapeseedType
+  cropType     CropType
+
+  oilContent       Float?
+  erucicAcid       Float?
+  glucosinolates   Float?
+  vegetationPeriod Int
+  sowingNormMin    Float?
+  sowingNormMax    Float?
+  sowingDepthMin   Float?
+  sowingDepthMax   Float?
+
+  version  Int     @default(1)
+  isLatest Boolean @default(true)
+
+  companyId String?
+
+  seasons   Season[]
+  cropZones CropZone[]
+  history   CropVarietyHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, cropType, companyId, version])
+  @@index([companyId])
+  @@index([cropType])
+  @@map("crop_varieties")
+}
+
+model CropVarietyHistory {
+  id            String      @id @default(cuid())
+  cropVarietyId String
+  cropVariety   CropVariety @relation(fields: [cropVarietyId], references: [id])
+  version       Int
+  changeReason  String?
+  changedBy     String?
+  snapshot      Json
+
+  createdAt DateTime @default(now())
+
+  @@index([cropVarietyId, version])
+  @@map("crop_variety_history")
+}
+
 // --- Production Cycle & Planning ---
 
 model Season {
@@ -707,12 +757,15 @@ model Season {
   year   Int
   status SeasonStatus @default(PLANNING)
 
-  fieldId String
-  field   Field  @relation(fields: [fieldId], references: [id])
+  fieldId String?
+  field   Field? @relation(fields: [fieldId], references: [id])
+  farmId  String?
 
   cropId     String? // BACKWARD COMPATIBILITY (Temporary)
-  rapeseedId String
-  rapeseed   Rapeseed @relation(fields: [rapeseedId], references: [id])
+  rapeseedId String?
+  rapeseed   Rapeseed? @relation(fields: [rapeseedId], references: [id])
+  cropVarietyId String?
+  cropVariety   CropVariety? @relation(fields: [cropVarietyId], references: [id])
 
   technologyCardId String?
   technologyCard   TechnologyCard? @relation(fields: [technologyCardId], references: [id])
@@ -765,6 +818,8 @@ model Season {
   @@index([companyId, status]) // Для дашбордов
   @@index([status, companyId]) // Для быстрых фильтров
   @@index([rapeseedId, companyId]) // Для фильтрации по тенанту
+  @@index([cropVarietyId, companyId])
+  @@index([farmId, year])
   @@map("seasons")
 }
 
@@ -776,8 +831,9 @@ model SeasonSnapshot {
   // Данные на момент фиксации
   year       Int
   status     SeasonStatus
-  fieldId    String
-  rapeseedId String
+  fieldId       String?
+  rapeseedId    String?
+  cropVarietyId String?
 
   expectedYield Float?
   actualYield   Float?
@@ -798,6 +854,7 @@ model SeasonSnapshot {
   @@index([seasonId, createdAt])
   @@index([companyId, year])
   @@index([rapeseedId, year])
+  @@index([cropVarietyId, year])
   @@map("season_snapshots")
 }
 
@@ -1133,6 +1190,16 @@ enum ApprovalDecision {
 enum RapeseedType {
   WINTER // Озимый
   SPRING // Яровой
+}
+
+enum CropType {
+  RAPESEED
+  WINTER_WHEAT
+  SPRING_WHEAT
+  CORN
+  SUNFLOWER
+  BARLEY
+  OTHER
 }
 
 enum SeasonStatus {
@@ -1557,16 +1624,16 @@ model TechMap {
   harvestPlanId String // Mandatory link per canon
   harvestPlan   HarvestPlan @relation(fields: [harvestPlanId], references: [id])
 
-  seasonId String // Allowed multiple maps per season (versions)
-  season   Season @relation(fields: [seasonId], references: [id])
+  seasonId String? // Deprecated: cropZoneId is primary relation
+  season   Season? @relation(fields: [seasonId], references: [id])
 
   harvestPlanActive HarvestPlan? @relation("ActiveTechMap")
 
   crop String // Denormalization for uniqueness index
-  cropZoneId String?
+  cropZoneId String
 
   stages MapStage[]
-  cropZone CropZone? @relation("CropZoneTechMaps", fields: [cropZoneId], references: [id])
+  cropZone CropZone @relation("CropZoneTechMaps", fields: [cropZoneId], references: [id])
 
   // Metadata for AI Generation
   soilType  SoilType?
@@ -1594,8 +1661,8 @@ model TechMap {
   version  Int     @default(1)
   isLatest Boolean @default(true)
 
-  fieldId String // Denormalization for uniqueness index
-  field   Field  @relation(fields: [fieldId], references: [id])
+  fieldId String? // Denormalization for uniqueness index (deprecated)
+  field   Field?  @relation(fields: [fieldId], references: [id])
 
   companyId String
   company   Company @relation(fields: [companyId], references: [id])
@@ -1805,7 +1872,9 @@ model CropZone {
   field           Field     @relation(fields: [fieldId], references: [id])
   seasonId        String
   season          Season    @relation(fields: [seasonId], references: [id])
-  cropType        String
+  cropType        CropType
+  cropVarietyId   String?
+  cropVariety     CropVariety? @relation(fields: [cropVarietyId], references: [id])
   varietyHybrid   String?
   predecessorCrop String?
   targetYieldTHa  Float?
@@ -1823,6 +1892,8 @@ model CropZone {
   @@index([fieldId])
   @@index([seasonId])
   @@index([companyId])
+  @@index([cropVarietyId])
+  @@index([cropType])
   @@map("crop_zones")
 }
 

@@ -5,6 +5,8 @@ import { AgroAuditService } from "../agro-audit/agro-audit.service";
 import { SeasonBusinessRulesService } from "./services/season-business-rules.service";
 import { SeasonSnapshotService } from "./services/season-snapshot.service";
 import { NotFoundException, BadRequestException } from "@nestjs/common";
+import { RiskService } from "../risk/risk.service";
+import { ActionDecisionService } from "../risk/decision.service";
 
 describe("SeasonService.transitionStage", () => {
   let service: SeasonService;
@@ -29,6 +31,7 @@ describe("SeasonService.transitionStage", () => {
             season: {
               findFirst: jest.fn(),
               update: jest.fn(),
+              updateMany: jest.fn().mockResolvedValue({ count: 1 }),
             },
             seasonStageProgress: {
               create: jest.fn(),
@@ -39,6 +42,13 @@ describe("SeasonService.transitionStage", () => {
         { provide: AgroAuditService, useValue: { log: jest.fn() } },
         { provide: SeasonBusinessRulesService, useValue: {} },
         { provide: SeasonSnapshotService, useValue: {} },
+        {
+          provide: RiskService,
+          useValue: {
+            assess: jest.fn().mockResolvedValue({ verdict: "ALLOWED" }),
+          },
+        },
+        { provide: ActionDecisionService, useValue: { record: jest.fn() } },
       ],
     }).compile();
 
@@ -48,7 +58,12 @@ describe("SeasonService.transitionStage", () => {
 
   it("should successfully transition to the next stage (IO -> Brain -> IO)", async () => {
     const targetId = "02_TILLAGE_MAIN";
-    (prisma.season.findFirst as jest.Mock).mockResolvedValue(mockSeason);
+    (prisma.season.findFirst as jest.Mock)
+      .mockResolvedValueOnce(mockSeason)
+      .mockResolvedValueOnce({
+        ...mockSeason,
+        currentStageId: targetId,
+      });
     (prisma.season.update as jest.Mock).mockResolvedValue({
       ...mockSeason,
       currentStageId: targetId,

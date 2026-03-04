@@ -20,11 +20,17 @@ export class Season {
   @Field(() => SeasonStatus)
   status: SeasonStatus;
 
-  @Field(() => String)
-  fieldId: string;
+  @Field(() => String, { nullable: true })
+  fieldId?: string;
 
-  @Field(() => String)
-  rapeseedId: string;
+  @Field(() => String, { nullable: true })
+  rapeseedId?: string;
+
+  @Field(() => String, { nullable: true })
+  cropVarietyId?: string;
+
+  @Field(() => String, { nullable: true })
+  farmId?: string;
 
   @Field(() => String, { nullable: true })
   technologyCardId?: string;

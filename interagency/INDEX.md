@@ -3,6 +3,18 @@
 
 ## Активные промты (в работе)
 
+- `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
+  - План: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [ACCEPTED]
+  - Отчёт: `interagency/reports/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [APPROVED]
+  - Decision-ID: AG-TM-POST-B-006 [зарегистрирован в DECISIONS.log]
+  - Статус: DONE. Реализация и миграции выполнены успешно. Схема БД синхронизирована, тесты (34 + 95) PASS. Данные `Rapeseed` перенесены в `CropVariety`, `Season` стал глобальным, `TechMap` привязан к `CropZone`.
+  - Задачи: Season→глобальный, CropZone→primary для TechMap, Rapeseed→CropVariety (новый модуль), data-migration скрипт.
+
+- `interagency/prompts/2026-03-04_tm-post-c_ui-workbench-v2.md` [READY_FOR_PLAN]
+  - Decision-ID: AG-TM-POST-C-007
+  - Статус: ОЖИДАНИЕ ПЛАНА от кодера. Зависит от POST-B (нужны CropZone данные в интерфейсе).
+  - Задачи: DAG-визуализация операций, Evidence Upload UI, ChangeOrder Panel.
+
 - `interagency/prompts/2026-03-03_tm-1_data-foundation.md` [DONE]
   - План: `interagency/plans/2026-03-03_tm-1_data-foundation.md` [ACCEPTED]
   - Отчёт: `interagency/reports/2026-03-03_tm-1_data-foundation.md` [APPROVED]

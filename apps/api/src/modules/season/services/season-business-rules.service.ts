@@ -15,6 +15,8 @@ export class SeasonBusinessRulesService {
    * entry point for all rapeseed specific validations
    */
   async validateRapeseedSeason(season: any): Promise<void> {
+    if (!season?.rapeseedId) return;
+
     const rapeseed = await this.prisma.rapeseed.findFirst({
       where: { id: season.rapeseedId, companyId: season.companyId },
     });
@@ -32,12 +34,14 @@ export class SeasonBusinessRulesService {
     this.validateYieldTarget(season.expectedYield);
 
     // 3. Validate Crop Rotation
-    await this.validateCropRotation(
-      season.fieldId,
-      season.year,
-      season.rapeseedId,
-      season.companyId,
-    );
+    if (season.fieldId) {
+      await this.validateCropRotation(
+        season.fieldId,
+        season.year,
+        season.rapeseedId,
+        season.companyId,
+      );
+    }
   }
 
   /**

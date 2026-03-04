@@ -30,7 +30,7 @@ export class SeasonSnapshotService {
             operations: true,
           },
         },
-      },
+      } as any,
     });
 
     if (!season) return;
@@ -40,8 +40,9 @@ export class SeasonSnapshotService {
         seasonId: season.id,
         year: season.year,
         status: season.status,
-        fieldId: season.fieldId,
-        rapeseedId: season.rapeseedId,
+        fieldId: season.fieldId ?? null,
+        rapeseedId: season.rapeseedId ?? null,
+        cropVarietyId: (season as any).cropVarietyId ?? null,
         expectedYield: season.expectedYield,
         actualYield: season.actualYield,
         startDate: season.startDate,
@@ -49,7 +50,7 @@ export class SeasonSnapshotService {
         companyId: season.companyId,
         createdBy: user.id,
         snapshotData: season as any,
-      },
+      } as any,
     });
   }
 

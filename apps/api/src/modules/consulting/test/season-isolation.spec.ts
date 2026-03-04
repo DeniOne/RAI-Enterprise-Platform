@@ -28,6 +28,7 @@ describe("Season & Company Isolation", () => {
         create: jest.fn(),
         findFirst: jest.fn(),
         findMany: jest.fn(),
+        count: jest.fn(),
         update: jest.fn(),
       },
     };
@@ -129,6 +130,7 @@ describe("Season & Company Isolation", () => {
       prisma.deviationReview.findMany.mockResolvedValue([
         { id: "dev-1", companyId: "comp-1", seasonId: "season-1" },
       ]);
+      prisma.deviationReview.count.mockResolvedValue(1);
 
       const result = await deviationService.findAll("comp-1");
 
@@ -137,7 +139,8 @@ describe("Season & Company Isolation", () => {
           where: { companyId: "comp-1" },
         }),
       );
-      expect(result).toHaveLength(1);
+      expect(result.data).toHaveLength(1);
+      expect(result.meta.total).toBe(1);
     });
 
     it("DecisionService.findBySeason фильтрует по seasonId + companyId", async () => {

@@ -1643,3 +1643,66 @@ Orchestrator = Brain (канон RAI_EP).
 - `interagency/prompts/2026-03-04_tm-post-a_consolidation.md`
 - `interagency/plans/2026-03-04_tm-post-a_consolidation.md`
 - ADR-013: Zero Trust Tenant Isolation
+
+## AG-TM-POST-B-006
+
+**Дата:** 2026-03-04
+**Автор:** TECHLEAD (Оркестратор)
+**Статус:** ACCEPTED
+
+### Решение
+Пост-спринт POST-B: миграция Season → глобальный + CropZone → primary relation для TechMap + Rapeseed → CropVariety (мультикультурность). Объединено в один промт ввиду тесной связи сущностей.
+
+### Scope
+- `packages/prisma-client/schema.prisma`: Season (fieldId nullable, farmId?), CropZone (cropType, cropVarietyId?), TechMap (cropZoneId NOT NULL, seasonId deprecated), CropVariety+CropVarietyHistory (новые), CropType enum
+- `apps/api/src/modules/crop-variety/*` — новый модуль (service + DTO + tests)
+- `apps/api/src/modules/season/` — SeasonService.create (fieldId не обязателен)
+- `apps/api/src/modules/tech-map/` — TechMapService (cropZoneId как primary)
+- `packages/prisma-client/scripts/migrate-rapeseed-to-cropvariety.ts` — data-migration скрипт
+- **Не входит:** UI, FSM, EvidenceService, ChangeOrderService, AdaptiveRule, удаление Rapeseed*
+
+### Технические ограничения
+1. Blocking-gate: pg_dump обязателен до любых DDL/миграций данных
+2. Security: companyId только из trusted context (JWT/session параметра сервиса), никогда из payload
+3. Rapeseed / RapeseedHistory — не удалять, только deprecated-пометка
+4. TechMap.seasonId — nullable (deprecation), не удалять
+
+### DoD
+- prisma validate + db push PASS, tsc PASS
+- crop-variety тесты ≥6 PASS (включая tenant isolation)
+- tech-map регрессия: 28 suites / ≥95 tests PASS
+
+### Связанные документы
+- `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md`
+- `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md`
+- ADR-013: Zero Trust Tenant Isolation
+
+## AG-TM-POST-C-007
+
+**Дата:** 2026-03-04
+**Автор:** TECHLEAD (Оркестратор)
+**Статус:** ACCEPTED
+
+### Решение
+Пост-спринт POST-C: UI TechMap Workbench v2 — обновление TechMapWorkbench.tsx с DAG-визуализацией операций (SVG, без внешних библиотек), Evidence Upload Panel и ChangeOrder Panel.
+
+### Scope
+- `apps/web/components/consulting/TechMapWorkbench.tsx` — обновление
+- `apps/web/components/consulting/OperationDagView.tsx` — новый
+- `apps/web/components/consulting/EvidencePanel.tsx` — новый
+- `apps/web/components/consulting/ChangeOrderPanel.tsx` — новый
+- `apps/web/components/consulting/TechMapWorkbench.spec.tsx` — тесты (≥4 RTL)
+- **Не входит:** Prisma-схема, новые API-эндпоинты, новые npm-зависимости
+
+### Технические ограничения
+1. companyId только из AuthorityContext, не из props/URL
+2. Нет прямых Prisma-вызовов — только fetch к API
+3. Нет d3/reactflow/внешних граф-библиотек — только HTML/SVG/Canvas
+4. FROZEN-режим: все интерактивные элементы заблокированы
+
+### DoD
+- tsc (apps/web) PASS, ≥4 RTL-тестов PASS, нет новых npm-зависимостей
+
+### Связанные документы
+- `interagency/prompts/2026-03-04_tm-post-c_ui-workbench-v2.md`
+- `interagency/plans/2026-03-04_tm-post-c_ui-workbench-v2.md`

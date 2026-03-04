@@ -6,6 +6,8 @@ import { SeasonBusinessRulesService } from "./services/season-business-rules.ser
 import { SeasonSnapshotService } from "./services/season-snapshot.service";
 import { SeasonStatus, User } from "@rai/prisma-client";
 import { NotFoundException, BadRequestException } from "@nestjs/common";
+import { RiskService } from "../risk/risk.service";
+import { ActionDecisionService } from "../risk/decision.service";
 
 describe("SeasonService", () => {
   let service: SeasonService;
@@ -32,6 +34,7 @@ describe("SeasonService", () => {
       findMany: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     },
     field: {
       findFirst: jest.fn(),
@@ -64,6 +67,8 @@ describe("SeasonService", () => {
         { provide: AgroAuditService, useValue: auditMock },
         { provide: SeasonBusinessRulesService, useValue: businessRulesMock },
         { provide: SeasonSnapshotService, useValue: snapshotMock },
+        { provide: RiskService, useValue: { assess: jest.fn() } },
+        { provide: ActionDecisionService, useValue: { record: jest.fn() } },
       ],
     }).compile();
 
@@ -97,6 +102,14 @@ describe("SeasonService", () => {
   describe("Atomicity & Transactions (completeSeason)", () => {
     it("should perform lock and snapshot in a transaction", async () => {
       prismaMock.season.findFirst.mockResolvedValue(mockSeason);
+      prismaMock.season.updateMany.mockResolvedValue({ count: 1 });
+      prismaMock.season.findFirst
+        .mockResolvedValueOnce(mockSeason)
+        .mockResolvedValueOnce({
+          ...mockSeason,
+          isLocked: true,
+          status: SeasonStatus.COMPLETED,
+        });
       prismaMock.season.update.mockResolvedValue({
         ...mockSeason,
         isLocked: true,
@@ -110,16 +123,10 @@ describe("SeasonService", () => {
         "company-1",
       );
 
-      expect(prismaMock.$transaction).toHaveBeenCalledWith(
-        expect.any(Function),
+      expect(prismaMock.$transaction).toHaveBeenCalledWith(expect.any(Function));
+      expect(prismaMock.season.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          maxWait: 5000,
-          timeout: 10000,
-        }),
-      );
-      expect(prismaMock.season.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: "season-1" },
+          where: { id: "season-1", companyId: "company-1" },
           data: expect.objectContaining({
             status: SeasonStatus.COMPLETED,
             isLocked: true,
@@ -141,7 +148,7 @@ describe("SeasonService", () => {
         service.completeSeason("season-1", 4.5, mockUser, "company-1"),
       ).rejects.toThrow(BadRequestException);
 
-      expect(prismaMock.season.update).not.toHaveBeenCalled();
+      expect(prismaMock.season.updateMany).not.toHaveBeenCalled();
     });
   });
 
@@ -162,6 +169,22 @@ describe("SeasonService", () => {
       );
 
       expect(businessRulesMock.validateRapeseedSeason).toHaveBeenCalled();
+    });
+
+    it("should allow creation without fieldId", async () => {
+      prismaMock.rapeseed.findFirst.mockResolvedValue({ id: "rapeseed-1" });
+      prismaMock.season.create.mockResolvedValue({ ...mockSeason, fieldId: null });
+
+      await expect(
+        service.create(
+          {
+            year: 2026,
+            rapeseedId: "rapeseed-1",
+          } as any,
+          mockUser,
+          "company-1",
+        ),
+      ).resolves.toBeDefined();
     });
   });
 });

@@ -40,27 +40,46 @@ export class SeasonService {
     user: User,
     companyId: string,
   ): Promise<Season> {
-    // 1. Verify Field belongs to Company
-    const field = await this.prisma.field.findFirst({
-      where: { id: input.fieldId, client: { companyId } },
-    });
-    if (!field) {
-      throw new NotFoundException(
-        `Field ${input.fieldId} not found or access denied`,
-      );
+    // 1. Verify Field belongs to Company (optional for global Season)
+    if (input.fieldId) {
+      const field = await this.prisma.field.findFirst({
+        where: { id: input.fieldId, client: { companyId } },
+      });
+      if (!field) {
+        throw new NotFoundException(
+          `Field ${input.fieldId} not found or access denied`,
+        );
+      }
     }
 
-    // 2. Verify Rapeseed belongs to Company or is system-wide
-    const rapeseed = await this.prisma.rapeseed.findFirst({
-      where: {
-        id: input.rapeseedId,
-        OR: [{ companyId: null }, { companyId }],
-      },
-    });
-    if (!rapeseed) {
-      throw new NotFoundException(
-        `Rapeseed ${input.rapeseedId} not found or access denied`,
-      );
+    // 2. Verify Rapeseed belongs to Company or is system-wide (legacy optional)
+    if (input.rapeseedId) {
+      const rapeseed = await this.prisma.rapeseed.findFirst({
+        where: {
+          id: input.rapeseedId,
+          OR: [{ companyId: null }, { companyId }],
+        },
+      });
+      if (!rapeseed) {
+        throw new NotFoundException(
+          `Rapeseed ${input.rapeseedId} not found or access denied`,
+        );
+      }
+    }
+
+    // 2.1 Verify CropVariety in tenant scope (new primary catalog)
+    if (input.cropVarietyId) {
+      const cropVariety = await (this.prisma as any).cropVariety.findFirst({
+        where: {
+          id: input.cropVarietyId,
+          OR: [{ companyId: null }, { companyId }],
+        },
+      });
+      if (!cropVariety) {
+        throw new NotFoundException(
+          `CropVariety ${input.cropVarietyId} not found or access denied`,
+        );
+      }
     }
 
     // 3. Validate Business Rules
@@ -75,7 +94,7 @@ export class SeasonService {
         ...input,
         companyId,
         isLocked: false,
-      },
+      } as any,
     });
 
     // 5. Audit
@@ -84,8 +103,9 @@ export class SeasonService {
       user,
       {
         seasonId: season.id,
-        fieldId: season.fieldId,
-        rapeseedId: season.rapeseedId,
+        fieldId: season.fieldId ?? null,
+        rapeseedId: season.rapeseedId ?? null,
+        cropVarietyId: (season as any).cropVarietyId ?? null,
       },
     );
 

@@ -24,15 +24,25 @@ export class CreateSeasonInput {
   @IsEnum(SeasonStatus)
   status?: SeasonStatus;
 
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  fieldId: string;
+  fieldId?: string;
 
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  rapeseedId: string;
+  rapeseedId?: string;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsString()
+  cropVarietyId?: string;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsString()
+  farmId?: string;
 
   @Field(() => String, { nullable: true })
   @IsOptional()

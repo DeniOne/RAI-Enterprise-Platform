@@ -284,3 +284,30 @@
     *   Тесты: 20/20 адресных PASS (6 suites). Регрессия: 28 suites / 95 tests PASS.
     *   Ревью: APPROVED. `computeKPIs` pure fn, `stableStringify` recursive без внешних dep, `basePlanHash` не дублировался.
     *   Decision-ID: `AG-TM-EC-005`.
+
+## 2026-03-04 — Оркестратор: POST-B и POST-C промты
+
+**Действие**: Создание промтов для пост-спринтов B и C
+
+### POST-B: Season → CropZone + Rapeseed → CropVariety
+- Файл: `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md`
+- Decision-ID: AG-TM-POST-B-006
+- Статус: READY_FOR_PLAN (🔴 Высокий риск — миграция данных, обязателен pg_dump)
+- Ключевые ограничения: Season.fieldId → nullable, CropZone.cropZoneId → NOT NULL для TechMap, Rapeseed модель НЕ удаляется (deprecated)
+
+### POST-C: UI TechMap Workbench v2
+- Файл: `interagency/prompts/2026-03-04_tm-post-c_ui-workbench-v2.md`
+- Decision-ID: AG-TM-POST-C-007
+- Статус: READY_FOR_PLAN (🟡 Средний риск, зависит от POST-B)
+- Ключевые ограничения: нет d3/reactflow, только SVG, нет новых npm-зависимостей
+
+45. **TM-POST-B: Season → CropZone + Rapeseed → CropVariety CLOSED (2026-03-04)** ✅:
+    *   Модели: `Season` (fieldId nullable), `CropZone` (primary link), `CropVariety`, `CropVarietyHistory`, `CropType` enum внедрены.
+    *   `TechMapService` переключен на `CropZone` как основной источник связи.
+    *   Data-migration: `Rapeseed` -> `CropVariety` и `Season` -> `CropZone` выполнены (idempotent скрипты).
+    *   Backup: `backups/rai_platform_20260304T114020Z.dump` создан перед DDL.
+    *   Верификация: tsc PASS, prisma validate PASS, tests (34 + 95) PASS. Ревью APPROVED.
+
+### Обновлены
+- `interagency/INDEX.md` — POST-B и POST-C добавлены как READY_FOR_PLAN
+- `docs/00_STRATEGY/TECHMAP/TECHMAP_IMPLEMENTATION_CHECKLIST.md` — POST.2/3/4 → POST.B/C, таблица статусов

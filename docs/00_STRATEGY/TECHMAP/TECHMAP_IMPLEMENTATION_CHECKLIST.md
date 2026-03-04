@@ -306,21 +306,23 @@
 - [x] tenant-check в `activate(companyId?)` [ADR-013] PASS
 - [x] Тесты: tsc PASS, jest tech-map/ 28 suites / 95 tests PASS
 
-### TM-POST.2 Миграция Season → CropZone
-- [ ] Сделать `Season` глобальным (не привязанным к Field)
-- [ ] `CropZone` становится primary связкой для TechMap
-- [ ] Миграция данных: существующие Season → CropZone
+### TM-POST.B Season → CropZone + Rapeseed → CropVariety
+- [x] Промт: `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` ✅ ВЫПОЛНЕН
+- [x] Кодер создаёт план: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` ✅ ПРИНЯТ
+- [x] Orchestrator акцептирует план → `ACCEPTED` ✅
+- [x] Сделать `Season` глобальным (не привязанным к Field) ✅
+- [x] `CropZone` становится primary связкой для TechMap (`cropZoneId` NOT NULL) ✅
+- [x] Создать `CropVariety` модуль + `CropType` enum ✅
+- [x] Data-migration скрипт: Rapeseed → CropVariety, Season → CropZone ✅
+- [x] ⚠️ Обязателен pg_dump перед запуском миграции ✅ (closed: `backups/rai_platform_20260304T114020Z.dump`)
 
-### TM-POST.3 Rapeseed → CropVariety (мультикультурность)
-- [ ] Переименовать/расширить `Rapeseed` → `CropVariety`
-- [ ] Поддержка множественных культур через `CropType` enum
-- [ ] Миграция данных
-
-### TM-POST.4 UI — TechMap Workbench v2
-- [ ] Обновить `TechMapWorkbench.tsx` для работы с DAG операций
-- [ ] Визуализация зависимостей между операциями
-- [ ] Evidence upload UI
-- [ ] ChangeOrder workflow UI
+### TM-POST.C UI — TechMap Workbench v2
+- [/] Промт: `interagency/prompts/2026-03-04_tm-post-c_ui-workbench-v2.md` ✅ СОЗДАН
+- [ ] Кодер создаёт план: `interagency/plans/2026-03-04_tm-post-c_ui-workbench-v2.md`
+- [ ] Orchestrator акцептирует план → `ACCEPTED`
+- [ ] `OperationDagView` — визуализация зависимостей (SVG, без d3)
+- [ ] `EvidencePanel` — upload доказательств
+- [ ] `ChangeOrderPanel` — workflow запросов на изменение
 
 ### TM-POST.5 Документация
 - [x] Обновить `docs/02_DOMAINS/AGRO_DOMAIN/CORE/techmap-task.schema.ts` (TM-4..TM-5 модели)
@@ -340,5 +342,7 @@
 | TM-4 | ✅ DONE | 6 | ✅ | ✅ | ✅ | ✅ |
 | TM-5 | ✅ DONE | 6 | ✅ | ✅ | ✅ | ✅ |
 | POST-A | ✅ DONE | — | ✅ | ✅ | ✅ | ✅ |
+| POST-B | ✅ DONE | 8 | ✅ | ✅ | ✅ | ✅ |
+| POST-C | 🔄 IN PROGRESS | 6 | ✅ | ⬜ | ⬜ | ⬜ |
 
 **Легенда**: ⬜ TODO | 🔄 IN PROGRESS | ✅ DONE | ❌ BLOCKED
