@@ -12,7 +12,6 @@
 
 ### 1.1 Декомпозиция Supervisor
 - [/] **IntentRouter** (`intent-router.service.ts`) — классификация запросов (GPT-4o-mini). | **AG-ARAI-F1-001** | IN_PROGRESS
-- [ ] **BudgetController** (`budget-controller.service.ts`) — лимиты токенов и понижение моделей.
 - [ ] **MemoryCoordinator** (`memory-coordinator.service.ts`) — работа с Episodic Memory + Tenant Isolation.
 - [ ] **AgentRuntime** (`agent-runtime.service.ts`) — жизненный цикл агента, дедлайны (30с).
 - [ ] **ResponseComposer** (`response-composer.service.ts`) — сборка ответа и виджетов.
@@ -24,7 +23,7 @@
 - [/] **KnowledgeToolsRegistry** — база знаний и RAG. | **AG-ARAI-F1-002** | IN_PROGRESS
 
 ### 1.3 Детерминированный мост
-- [ ] **AgroDeterministicEngineFacade** — обёртка над кодом расчётов с выводом формул и объяснений (`ExplainableResult`).
+- [/] **AgroDeterministicEngineFacade** — обёртка над кодом расчётов с выводом формул и объяснений (`ExplainableResult`). | **AG-ARAI-F1-003** | IN_PROGRESS
 
 ### 1.4 Трассировка и аудит
 - [/] **TraceId Binding** — проброс ID сквозь все вызовы AI в `AuditLog`. | **AG-ARAI-F1-001** | IN_PROGRESS

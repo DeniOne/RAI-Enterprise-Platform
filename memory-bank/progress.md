@@ -328,6 +328,7 @@
     *   Состояние: все задачи Фаза 1-3 A_RAI открыты; все Sprint S-серии и TM-серии DONE.
     *   Определён первый шаг: IntentRouter + AgroToolsRegistry + TraceId Binding.
     *   Создан промт: `interagency/prompts/2026-03-04_a_rai-f1-1_intent-router-agro-registry.md`.
-    *   Зарегистрирован Decision-ID: AG-ARAI-F1-001 в `DECISIONS.log`.
-    *   Обновлены: `A_RAI_IMPLEMENTATION_CHECKLIST.md` (пп. 1.1, 1.2, 1.4 → `[/]`), `interagency/INDEX.md`, `memory-bank/task.md`.
+    *   Зарегистрированы Decision-ID: AG-ARAI-F1-001, AG-ARAI-F1-002, AG-ARAI-F1-003 в `DECISIONS.log`.
+    *   Обновлены: `A_RAI_IMPLEMENTATION_CHECKLIST.md` (пп. 1.1, 1.2, 1.3, 1.4, 1.5, 2.2 → `[/]`), `interagency/INDEX.md`, `memory-bank/task.md`.
+    *   Промт F1-3: `interagency/prompts/2026-03-04_a_rai-f1-3_budget-deterministic-bridge.md`.
 

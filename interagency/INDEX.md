@@ -11,6 +11,11 @@
   - Decision-ID: AG-ARAI-F1-002
   - Статус: Промт создан, ожидает исполнения. Задачи: FinanceToolsRegistry, RiskToolsRegistry, KnowledgeToolsRegistry, AgronomAgent Stub.
 
+- `interagency/prompts/2026-03-04_a_rai-f1-3_budget-deterministic-bridge.md` [IN_PROGRESS]
+  - Decision-ID: AG-ARAI-F1-003
+  - Статус: Промт создан, ожидает исполнения. Задачи: BudgetController (защита лимитов), AgroDeterministicEngineFacade (Explainable Math).
+
+
 
 
 - `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
