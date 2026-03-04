@@ -299,6 +299,7 @@
 ## Пост-спринты: Консолидация
 
 ### TM-POST.1 Консолидация TechMapService
+- [x] Промт: `interagency/prompts/2026-03-04_tm-post-a_consolidation.md`
 - [ ] Объединить `modules/tech-map/tech-map.service.ts` и `modules/consulting/tech-map.service.ts`
 - [ ] Единый сервис в `modules/tech-map/`, consulting-модуль импортирует
 - [ ] Тесты PASS

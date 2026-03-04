@@ -1611,3 +1611,35 @@ Orchestrator = Brain (канон RAI_EP).
 - `docs/00_STRATEGY/TECHMAP/GRAND_SYNTHESIS.md` §5
 - `interagency/prompts/2026-03-04_tm-4_adaptive-rules.md`
 - `interagency/plans/2026-03-04_tm-4_adaptive-rules.md`
+
+---
+
+## AG-TM-POST-A-001
+
+**Дата:** 2026-03-04
+**Автор:** TECHLEAD (AI)
+**Статус:** ACCEPTED
+
+### Решение
+Консолидация TM-POST-A: перенос `activate` и `createNextVersion` из `consulting/tech-map.service.ts` в единый `tech-map/tech-map.service.ts`. `ConsultingModule` переводится на импорт `TechMapModule`. Документирование TM-4..TM-5 (TM-POST.5).
+
+### Scope
+- `apps/api/src/modules/tech-map/tech-map.service.ts` (+ activate, createNextVersion)
+- `apps/api/src/modules/tech-map/tech-map.module.ts` (+ TechMapValidator, UnitNormalizationService)
+- `apps/api/src/modules/consulting/consulting.module.ts` (imports TechMapModule)
+- `apps/api/src/modules/consulting/tech-map.service.ts` (удалить или re-export)
+- `docs/02_DOMAINS/AGRO_DOMAIN/CORE/techmap-task.schema.ts`
+- **Не входит:** Prisma-схема, FSM, UI
+
+### Технические ограничения
+1. DI-order: удалять `consulting/tech-map.service.ts` только ПОСЛЕ `TechMapModule` в imports
+2. Security (ADR-013): tenant-check в `activate` после `findUnique`
+3. Сигнатуры не меняются
+
+### DoD
+- tsc PASS, jest tech-map/ ≥95, jest consulting/ PASS, full run PASS
+
+### Связанные документы
+- `interagency/prompts/2026-03-04_tm-post-a_consolidation.md`
+- `interagency/plans/2026-03-04_tm-post-a_consolidation.md`
+- ADR-013: Zero Trust Tenant Isolation

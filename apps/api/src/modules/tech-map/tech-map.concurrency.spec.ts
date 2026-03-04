@@ -7,6 +7,8 @@ import { TechMapStatus, UserRole } from "@rai/prisma-client";
 import { TechMapActiveConflictError } from "./tech-map.errors";
 import { TechMapValidationEngine } from "./validation/techmap-validation.engine";
 import { DAGValidationService } from "./validation/dag-validation.service";
+import { TechMapValidator } from "./tech-map.validator";
+import { UnitNormalizationService } from "./unit-normalization.service";
 
 // Полноценный mock объект для PrismaService — используется и напрямую и внутри $transaction
 const makePrismaMock = () => ({
@@ -60,6 +62,14 @@ describe("TechMapService Concurrency (Track 1)", () => {
             calculateCriticalPath: jest.fn(),
             detectResourceConflicts: jest.fn(),
           },
+        },
+        {
+          provide: UnitNormalizationService,
+          useValue: { normalize: jest.fn((value: number, unit: string) => ({ value, unit })) },
+        },
+        {
+          provide: TechMapValidator,
+          useValue: { validateForActivation: jest.fn() },
         },
       ],
     }).compile();

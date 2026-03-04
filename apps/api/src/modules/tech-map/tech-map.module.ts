@@ -16,6 +16,8 @@ import { TechMapBudgetService } from "./economics/tech-map-budget.service";
 import { TechMapKPIService } from "./economics/tech-map-kpi.service";
 import { ContractCoreService } from "./economics/contract-core.service";
 import { RecalculationEngine } from "./economics/recalculation.engine";
+import { TechMapValidator } from "./tech-map.validator";
+import { UnitNormalizationService } from "./unit-normalization.service";
 
 @Module({
   imports: [PrismaModule, IntegrityModule],
@@ -35,6 +37,8 @@ import { RecalculationEngine } from "./economics/recalculation.engine";
     TechMapKPIService,
     ContractCoreService,
     RecalculationEngine,
+    UnitNormalizationService,
+    TechMapValidator,
   ],
   exports: [
     TechMapService,
@@ -44,6 +48,8 @@ import { RecalculationEngine } from "./economics/recalculation.engine";
     TechMapBudgetService,
     TechMapKPIService,
     ContractCoreService,
+    UnitNormalizationService,
+    TechMapValidator,
   ],
 })
 export class TechMapModule { }

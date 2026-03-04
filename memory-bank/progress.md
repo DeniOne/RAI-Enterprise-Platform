@@ -218,6 +218,13 @@
 38. **TechMap Grand Synthesis — Полный Синтез 6 AI-исследований (2026-03-03)** ✅:
     *   Прочитаны все 6 источников: ChatGPT, ChatGPT#2, CLUADE, COMET, GEMINI, GROK.
     *   Создан `docs/00_STRATEGY/TECHMAP/GRAND_SYNTHESIS.md` — 770 строк, 8 частей:
+
+39. **TM POST-A: TechMapService Consolidation + Docs (2026-03-04)** ✅:
+    *   После `ACCEPTED` исполнен план `interagency/plans/2026-03-04_tm-post-a_consolidation.md`.
+    *   Методы `activate` и `createNextVersion` перенесены в доменный `apps/api/src/modules/tech-map/tech-map.service.ts` без изменения сигнатур.
+    *   `ConsultingModule` переведён на `TechMapModule`; локальный `apps/api/src/modules/consulting/tech-map.service.ts` удалён.
+    *   В `TechMapModule` добавлены `TechMapValidator` и `UnitNormalizationService` (providers/exports) для единого сервиса.
+    *   Документация TM-POST.5 обновлена: `docs/02_DOMAINS/AGRO_DOMAIN/CORE/techmap-task.schema.ts` + `docs/02_DOMAINS/AGRO_DOMAIN/CORE/techmap-services-api.tm4-tm5.md`.
         - Часть 1: Executive Summary (7 фундаментальных аксиом, консенсус всех источников)
         - Часть 2: Модель данных (15+ сущностей с JSON-схемами, enum-словари, Provenance/Confidence)
         - Часть 3: Методология расчётов (нормы высева, окна GDD, дозы удобрений, ЭПВ, AdaptiveRules, валидация)

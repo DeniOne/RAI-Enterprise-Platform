@@ -35,6 +35,12 @@
   - Decision-ID: AG-TM-EC-005
   - Статус: DONE. tsc/validate/db push PASS. 20/20 адресных тестов PASS, регрессия 28 suites / 95 tests PASS. TechMapBudgetService, TechMapKPIService, ContractCoreService (SHA-256 stableStringify), RecalculationEngine.
 
+- `interagency/prompts/2026-03-04_tm-post-a_consolidation.md` [ACTIVE]
+  - План: `interagency/plans/2026-03-04_tm-post-a_consolidation.md` [ACCEPTED]
+  - Decision-ID: AG-TM-POST-A-001
+  - Охватывает: TM-POST.1 (merge TechMapService) + TM-POST.5 (docs)
+  - Статус: план ACCEPTED, ожидает реализацию кодером.
+
 - `interagency/prompts/2026-03-03_sprint1-p2_tests-smoke-telegram.md` [DONE]
   - Отчёт: `interagency/reports/2026-03-03_sprint1-p2_tests-smoke-telegram.md`
   - Статус: DONE. Unit 14/14 PASS. Smoke 4/4 PASS. TechMap DRAFT в БД подтверждён. Telegram→chat bridge отсутствует — зафиксировано в backlog.

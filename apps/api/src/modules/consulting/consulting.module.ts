@@ -13,9 +13,7 @@ import { HarvestResultRepository } from "./repositories/harvest-result.repositor
 import { YieldOrchestrator } from "./yield.orchestrator";
 import { BudgetGeneratorService } from "./budget-generator.service";
 import { DeviationService } from "./deviation.service";
-import { TechMapService } from "./tech-map.service";
-import { TechMapValidator } from "./tech-map.validator";
-import { UnitNormalizationService } from "./unit-normalization.service";
+
 import { EconomyModule } from "../finance-economy/economy/economy.module";
 import { ManagementDecisionService } from "./management-decision.service";
 import { StrategicViewService } from "./strategic-view.service";
@@ -26,9 +24,10 @@ import { StrategicAdvisoryService } from "./strategic-advisory.service";
 import { CashFlowService } from "./cash-flow.service";
 import { LiquidityRiskService } from "./liquidity-risk.service";
 import { OutboxModule } from "../../shared/outbox/outbox.module";
+import { TechMapModule } from "../tech-map/tech-map.module";
 
 @Module({
-  imports: [PrismaModule, CmrModule, EconomyModule, OutboxModule],
+  imports: [PrismaModule, CmrModule, EconomyModule, OutboxModule, TechMapModule],
   controllers: [ConsultingController],
   providers: [
     ConsultingService,
@@ -40,9 +39,6 @@ import { OutboxModule } from "../../shared/outbox/outbox.module";
     KpiService,
     HarvestResultRepository,
     YieldOrchestrator,
-    UnitNormalizationService,
-    TechMapValidator,
-    TechMapService,
     BudgetGeneratorService,
     DeviationService,
     ManagementDecisionService,
@@ -70,4 +66,4 @@ import { OutboxModule } from "../../shared/outbox/outbox.module";
     LiquidityRiskService,
   ],
 })
-export class ConsultingModule {}
+export class ConsultingModule { }

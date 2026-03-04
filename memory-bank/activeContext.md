@@ -218,6 +218,13 @@
 
 ### Logical Action (2026-03-03 14:40 UTC)
 - Выполнен truth-sync `Phase B` в Agent OS Implementation Plan.
+
+### Logical Action (2026-03-04 16:20 UTC)
+- Исполнен TM POST-A после `ACCEPTED: interagency/plans/2026-03-04_tm-post-a_consolidation.md`.
+- `TechMapService` консолидирован: методы `activate` и `createNextVersion` перенесены в `apps/api/src/modules/tech-map/tech-map.service.ts`.
+- `ConsultingModule` переведён на импорт `TechMapModule`; локальный `consulting/tech-map.service.ts` удалён.
+- Для DI в `TechMapModule` зарегистрированы `TechMapValidator` и `UnitNormalizationService`.
+- Документация TM-POST.5 обновлена: расширен `techmap-task.schema.ts`, добавлен API-слой TM-4/TM-5, зафиксирован статус в memory-bank.
 - Подтверждено, что `structured widgets справа` уже реализованы в backend/web и не являются открытым хвостом.
 - Подтверждено, что единственный незакрытый пункт `Phase B` — интеграция `SupervisorAgent` в API.
 
