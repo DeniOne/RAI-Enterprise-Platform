@@ -15,6 +15,18 @@ import {
 import { IntegrityGateService } from "../integrity/integrity-gate.service";
 import { TechMapStateMachine } from "./fsm/tech-map.fsm";
 import { TechMapActiveConflictError } from "./tech-map.errors";
+import {
+  TechMapValidationEngine,
+  ValidationReport,
+  ValidationInput,
+  OperationWithResources,
+} from "./validation/techmap-validation.engine";
+import {
+  DAGValidationService,
+  ValidationResult,
+  OperationNode,
+  OperationDependency,
+} from "./validation/dag-validation.service";
 
 @Injectable()
 export class TechMapService {
@@ -24,7 +36,9 @@ export class TechMapService {
     private readonly prisma: PrismaService,
     private readonly integrityGate: IntegrityGateService,
     private readonly fsm: TechMapStateMachine,
-  ) {}
+    private readonly validationEngine: TechMapValidationEngine,
+    private readonly dagValidation: DAGValidationService,
+  ) { }
 
   async generateMap(harvestPlanId: string, seasonId: string) {
     const plan = await this.prisma.harvestPlan.findFirst({
@@ -333,5 +347,158 @@ export class TechMapService {
     }
 
     return map;
+  }
+
+  // ────────────────────────────────────────────────────────────
+  // Sprint TM-2: Validation & Calculation Context
+  // ────────────────────────────────────────────────────────────
+
+  /**
+   * Загружает полную техкарту с операциями/ресурсами/полем
+   * и прогоняет через TechMapValidationEngine (7 правил).
+   */
+  async validateTechMap(
+    techMapId: string,
+    companyId: string,
+    currentBBCH?: number | null,
+  ): Promise<ValidationReport> {
+    this.logger.log(`validateTechMap: techMapId=${techMapId}, companyId=${companyId}`);
+
+    const map = await this.prisma.techMap.findFirst({
+      where: { id: techMapId, companyId },
+      include: {
+        field: true,
+        stages: {
+          include: {
+            operations: {
+              include: {
+                resources: {
+                  include: {
+                    inputCatalog: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        cropZone: true,
+      },
+    });
+
+    if (!map) {
+      throw new NotFoundException("TechMap not found");
+    }
+
+    const allOps: OperationWithResources[] = map.stages.flatMap((stage) =>
+      stage.operations.map((op) => ({
+        id: op.id,
+        operationType: (op as any).operationType ?? null,
+        bbchWindowFrom: (op as any).bbchWindowFrom ?? null,
+        bbchWindowTo: (op as any).bbchWindowTo ?? null,
+        isCritical: (op as any).isCritical ?? false,
+        actualStartDate: (op as any).actualStartDate ?? null,
+        plannedStartDate: (op as any).plannedStartDate ?? null,
+        plannedDurationHours: (op as any).plannedDurationHours ?? 8,
+        dependencies: (() => {
+          const raw = (op as any).dependencies;
+          if (!Array.isArray(raw)) return [];
+          return raw as OperationDependency[];
+        })(),
+        resources: op.resources.map((res) => ({
+          id: res.id,
+          plannedRate: (res as any).plannedRate ?? null,
+          maxRate: (res as any).maxRate ?? null,
+          inputCatalogId: (res as any).inputCatalogId ?? null,
+          tankMixGroupId: (res as any).tankMixGroupId ?? null,
+          inputCatalog: (res as any).inputCatalog ?? null,
+        })),
+      })),
+    );
+
+    const input: ValidationInput = {
+      operations: allOps,
+      field: {
+        protectedZoneFlags: (map.field as any)?.protectedZoneFlags ?? null,
+      },
+      cropZone: {
+        targetYieldTHa: (map.cropZone as any)?.targetYieldTHa ?? 0,
+      },
+      currentBBCH,
+    };
+
+    return this.validationEngine.validate(input);
+  }
+
+  /**
+   * Загружает операции техкарты и проверяет DAG на отсутствие циклов.
+   */
+  async validateDAG(
+    techMapId: string,
+    companyId: string,
+  ): Promise<ValidationResult> {
+    this.logger.log(`validateDAG: techMapId=${techMapId}, companyId=${companyId}`);
+
+    const map = await this.prisma.techMap.findFirst({
+      where: { id: techMapId, companyId },
+      include: {
+        stages: {
+          include: {
+            operations: true,
+          },
+        },
+      },
+    });
+
+    if (!map) {
+      throw new NotFoundException("TechMap not found");
+    }
+
+    const nodes: OperationNode[] = map.stages.flatMap((stage) =>
+      stage.operations.map((op) => {
+        const raw = (op as any).dependencies;
+        const deps: OperationDependency[] = Array.isArray(raw) ? raw : [];
+        return {
+          id: op.id,
+          plannedDurationHours: (op as any).plannedDurationHours ?? 8,
+          isCritical: (op as any).isCritical ?? false,
+          dependencies: deps,
+        };
+      }),
+    );
+
+    return this.dagValidation.validateAcyclicity(nodes);
+  }
+
+  /**
+   * Загружает контекст для агрономических калькуляторов:
+   * SoilProfile и RegionProfile через CropZone.
+   */
+  async getCalculationContext(
+    cropZoneId: string,
+    companyId: string,
+  ) {
+    this.logger.log(`getCalculationContext: cropZoneId=${cropZoneId}, companyId=${companyId}`);
+
+    const cropZone = await (this.prisma as any).cropZone?.findFirst({
+      where: { id: cropZoneId, companyId },
+      include: {
+        soilProfile: true,
+        regionProfile: true,
+      },
+    });
+
+    if (!cropZone) {
+      throw new NotFoundException("CropZone not found");
+    }
+
+    return {
+      cropZone: {
+        id: cropZone.id,
+        targetYieldTHa: cropZone.targetYieldTHa,
+        crop: cropZone.crop,
+      },
+      soilProfile: cropZone.soilProfile ?? null,
+      regionProfile: cropZone.regionProfile ?? null,
+    };
   }
 }

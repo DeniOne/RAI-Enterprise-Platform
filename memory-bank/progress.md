@@ -243,3 +243,20 @@
     *   Ревью Orchestrator: APPROVED. Pre-existing failures в 8 модулях (NestJS DI) подтверждены как не scope TM-1.
     *   Decision-ID: `AG-TM-DATA-001` (DECISIONS.log).
     *   TM-2 промт создан: `interagency/prompts/2026-03-03_tm-2_dag-validation.md`.
+
+41. **TechMap Sprint TM-2 — DAG + Validation CLOSED (2026-03-03)**:
+    *   Реализованы `DAGValidationService` (DFS + CPM критический путь), `TechMapValidationEngine` (7 классов ошибок: HARD_STOP/WARNING), `TankMixCompatibilityService`.
+    *   Реализованы 3 pure-function калькулятора: `SeedingRateCalculator`, `FertilizerDoseCalculator`, `GDDWindowCalculator`.
+    *   Добавлены в `TechMapService`: `validateTechMap()`, `validateDAG()`, `getCalculationContext()`.
+    *   Тесты: validation/ 15/15 PASS, calculators/ 9/9 PASS, tech-map/ 56/56 PASS. tsc PASS.
+    *   Decision-ID: `AG-TM-DAG-002`.
+
+42. **TechMap Sprint TM-3 — Evidence + ChangeOrder CLOSED (2026-03-03)** ✅:
+    *   Добавлены Prisma-модели: `Evidence`, `ChangeOrder`, `Approval` + 5 enums.
+    *   Расширены `Company`, `TechMap`, `MapOperation` relation-полями. `PrismaService` обновлён tenant-列表ом.
+    *   Реализованы: `EvidenceService` (attachEvidence, validateOperationCompletion, getByOperation) и `ChangeOrderService` (5 методов с routing по ролям + $transaction).
+    *   Zod DTO: evidence, change-order, approval + 6 spec.
+    *   Тесты: 5 suites / 16/16 PASS. prisma validate/db push/tsc PASS.
+    *   Ревью Orchestrator: APPROVED. `calculateContingency` с nullable-дефолтом, append-only через транзакции, FSM не переписан.
+    *   Decision-ID: `AG-TM-EV-003`.
+    *   TM-3 промт: `interagency/prompts/2026-03-03_tm-3_evidence-changeorder.md`.

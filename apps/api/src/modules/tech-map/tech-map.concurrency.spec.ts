@@ -5,38 +5,66 @@ import { TechMapStateMachine } from "./fsm/tech-map.fsm";
 import { IntegrityGateService } from "../integrity/integrity-gate.service";
 import { TechMapStatus, UserRole } from "@rai/prisma-client";
 import { TechMapActiveConflictError } from "./tech-map.errors";
+import { TechMapValidationEngine } from "./validation/techmap-validation.engine";
+import { DAGValidationService } from "./validation/dag-validation.service";
+
+// Полноценный mock объект для PrismaService — используется и напрямую и внутри $transaction
+const makePrismaMock = () => ({
+  $transaction: jest.fn(),
+  techMap: {
+    findFirst: jest.fn(),
+    findFirstOrThrow: jest.fn(),
+    updateMany: jest.fn(),
+    update: jest.fn(),
+    create: jest.fn(),
+  },
+  harvestPlan: {
+    update: jest.fn(),
+    updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+  },
+  season: { findUnique: jest.fn() },
+});
 
 describe("TechMapService Concurrency (Track 1)", () => {
   let service: TechMapService;
-  let prisma: PrismaService;
+  let prismaMock: ReturnType<typeof makePrismaMock>;
 
   beforeEach(async () => {
+    prismaMock = makePrismaMock();
+
+    // $transaction вызывает callback с тем же mock-объектом
+    prismaMock.$transaction.mockImplementation((cb: (tx: any) => any) =>
+      cb(prismaMock),
+    );
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TechMapService,
         {
           provide: PrismaService,
-          useValue: {
-            $transaction: jest.fn((cb) => cb(prisma)),
-            techMap: {
-              findFirst: jest.fn(),
-              update: jest.fn(),
-              create: jest.fn(),
-            },
-            harvestPlan: { update: jest.fn() },
-            season: { findUnique: jest.fn() },
-          },
+          useValue: prismaMock,
         },
         {
           provide: IntegrityGateService,
           useValue: { validateTechMapAdmission: jest.fn() },
         },
         TechMapStateMachine,
+        {
+          provide: TechMapValidationEngine,
+          useValue: { validate: jest.fn() },
+        },
+        {
+          provide: DAGValidationService,
+          useValue: {
+            validateAcyclicity: jest.fn(),
+            calculateCriticalPath: jest.fn(),
+            detectResourceConflicts: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<TechMapService>(TechMapService);
-    prisma = module.get<PrismaService>(PrismaService);
   });
 
   it("should throw TechMapActiveConflictError on P2002 duplicate active map", async () => {
@@ -51,8 +79,10 @@ describe("TechMapService Concurrency (Track 1)", () => {
       stages: [],
     };
 
-    jest.spyOn(prisma.techMap, "findFirst").mockResolvedValue(mockMap as any);
-    jest.spyOn(prisma.techMap, "update").mockRejectedValue({ code: "P2002" });
+    prismaMock.techMap.findFirst.mockResolvedValue(mockMap as any);
+    prismaMock.techMap.updateMany.mockResolvedValue({ count: 1 });
+    prismaMock.harvestPlan.updateMany.mockResolvedValue({ count: 1 });
+    prismaMock.techMap.findFirstOrThrow.mockRejectedValue({ code: "P2002" });
 
     await expect(
       service.transitionStatus(
@@ -74,10 +104,16 @@ describe("TechMapService Concurrency (Track 1)", () => {
       stages: [],
     };
 
-    jest.spyOn(prisma.techMap, "findFirst").mockResolvedValue(mockMap as any);
-    jest
-      .spyOn(prisma.techMap, "update")
-      .mockResolvedValue({ ...mockMap, status: TechMapStatus.ARCHIVED } as any);
+    prismaMock.techMap.findFirst.mockResolvedValue(mockMap as any);
+    prismaMock.techMap.updateMany.mockResolvedValue({ count: 1 });
+    prismaMock.tecmhMap?.findFirstOrThrow?.mockResolvedValue({
+      ...mockMap,
+      status: TechMapStatus.ARCHIVED,
+    });
+    prismaMock.techMap.findFirstOrThrow.mockResolvedValue({
+      ...mockMap,
+      status: TechMapStatus.ARCHIVED,
+    });
 
     await service.transitionStatus(
       "map-1",
@@ -87,8 +123,8 @@ describe("TechMapService Concurrency (Track 1)", () => {
       "user-1",
     );
 
-    expect(prisma.harvestPlan.update).toHaveBeenCalledWith({
-      where: { id: "plan-1" },
+    expect(prismaMock.harvestPlan.updateMany).toHaveBeenCalledWith({
+      where: { id: "plan-1", companyId: "comp-1" },
       data: { activeTechMapId: null },
     });
   });

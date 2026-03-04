@@ -147,8 +147,8 @@
 **Цель**: Система доказательств исполнения и протокол изменений техкарты.
 
 ### TM-3.0 Промт и план
-- [ ] Создать промт: `interagency/prompts/YYYY-MM-DD_tm-3_evidence-changeorder.md`
-- [ ] Кодер создаёт план: `interagency/plans/YYYY-MM-DD_tm-3_evidence-changeorder.md`
+- [x] Создать промт: `interagency/prompts/2026-03-03_tm-3_evidence-changeorder.md`
+- [ ] Кодер создаёт план: `interagency/plans/2026-03-03_tm-3_evidence-changeorder.md`
 - [ ] Orchestrator акцептирует план → `ACCEPTED`
 
 ### TM-3.1 Evidence модель

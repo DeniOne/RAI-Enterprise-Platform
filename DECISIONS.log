@@ -1492,3 +1492,89 @@ Orchestrator = Brain (канон RAI_EP).
 - `docs/00_STRATEGY/TECHMAP/TECHMAP_IMPLEMENTATION_CHECKLIST.md`
 - `interagency/prompts/2026-03-03_tm-1_data-foundation.md`
 - `interagency/plans/2026-03-03_tm-1_data-foundation.md`
+
+---
+
+## AG-TM-DAG-002
+
+**Дата:** 2026-03-03
+**Автор:** TECHLEAD (AI)
+**Статус:** ACCEPTED
+
+### Решение
+Реализация Sprint TM-2 (Operations DAG + Validation Engine) — добавление сервисов валидации DAG-графа операций и математических калькуляторов. Без изменения Prisma-схемы и API-контроллеров.
+
+### Scope
+- **Phase:** TechMap Implementation (GRAND_SYNTHESIS)
+- **Sprint:** TM-2 (DAG + Validation)
+- **Предусловие:** TM-1 CLOSED (AG-TM-DATA-001 ACCEPTED)
+- **Компоненты:**
+  - `apps/api/src/modules/tech-map/validation/` (3 сервиса + 3 spec)
+  - `apps/api/src/modules/tech-map/calculators/` (3 pure-function модуля + 3 spec)
+  - `apps/api/src/modules/tech-map/tech-map.service.ts` (3 новых метода)
+  - `apps/api/src/modules/tech-map/tech-map.module.ts` (3 новых провайдера)
+- **Не входит:** UI, Prisma-схема, новые контроллеры, домены вне TechMap
+
+### Технические ограничения
+1. **Tenant isolation:** Все 3 метода TechMapService принимают `companyId` первым параметром.
+2. **Pure functions:** Калькуляторы — без side-effects, без IO.
+3. **No schema changes:** TM-1 закрыт; схема не трогается.
+4. **No new endpoints:** Только domain-сервисы, без контроллеров.
+5. **Infrastructure isolation:** Сервисы валидации не обращаются к PrismaService напрямую — данные передаются как параметры.
+
+### Definition of Done
+- tsc PASS
+- ≥ 20 unit-тестов (validation/ + calculators/) PASS
+- Существующие тесты не ухудшены
+- Все методы с `companyId` фильтруют данные через него
+
+### Rollback Conditions
+- Существующие тесты FSM/concurrency ломаются после расширения конструктора TechMapService
+- Нарушение tenant isolation
+
+### Связанные документы
+- `docs/00_STRATEGY/TECHMAP/GRAND_SYNTHESIS.md` §3
+- `docs/00_STRATEGY/TECHMAP/TECHMAP_IMPLEMENTATION_CHECKLIST.md`
+- `interagency/prompts/2026-03-03_tm-2_dag-validation.md`
+- `interagency/plans/2026-03-03_tm-2_dag-validation.md`
+
+---
+
+## AG-TM-EV-003
+
+**Дата:** 2026-03-03
+**Автор:** TECHLEAD (AI)
+**Статус:** ACCEPTED
+
+### Решение
+Реализация Sprint TM-3 (Evidence + ChangeOrder Protocol) — добавление контура цифровых доказательств операций и протокола изменений техкарты с маршрутизацией по ролям.
+
+### Scope
+- **Phase:** TechMap Implementation (GRAND_SYNTHESIS)
+- **Sprint:** TM-3 (Evidence + ChangeOrder)
+- **Предусловие:** TM-2 CLOSED (AG-TM-DAG-002 ACCEPTED)
+- **Компоненты:**
+  - `packages/prisma-client/schema.prisma` (Evidence, ChangeOrder, Approval + 5 enums)
+  - `apps/api/src/modules/tech-map/evidence/` (EvidenceService + spec)
+  - `apps/api/src/modules/tech-map/change-order/` (ChangeOrderService + spec)
+  - `apps/api/src/modules/tech-map/dto/` (evidence, change-order, approval DTO + specs)
+  - `apps/api/src/modules/tech-map/tech-map.module.ts`
+- **Не входит:** UI, API-контроллеры, переписывание FSM, домены вне TechMap
+
+### Технические ограничения
+1. **Tenant isolation:** Все 3 новые модели обязательны с `companyId` + `@@index([companyId])`.
+2. **Append-only:** ChangeOrder и Evidence только создаются; изменение статуса через выделенные методы + транзакции.
+3. **No FSM rewrite:** Только hook-методы вокруг существующей `TechMapStateMachine`.
+4. **observationId в Evidence:** Без Prisma-relation (Observation-модель — в TM-4+).
+5. **Routing formula:** delta > contingency → [AGRONOMIST, FINANCE]; иначе → [AGRONOMIST]. При nullable — дефолт AGRONOMIST.
+
+### Definition of Done
+- prisma validate + db push PASS
+- tsc PASS
+- ≥ 16 unit-тестов PASS
+- Все 3 модели tenant-scoped
+
+### Связанные документы
+- `docs/00_STRATEGY/TECHMAP/GRAND_SYNTHESIS.md` §4
+- `interagency/prompts/2026-03-03_tm-3_evidence-changeorder.md`
+- `interagency/plans/2026-03-03_tm-3_evidence-changeorder.md`

@@ -42,6 +42,9 @@ model Company {
   regionProfiles     RegionProfile[]
   inputCatalog       InputCatalog[]
   cropZones          CropZone[]
+  evidence           Evidence[]
+  changeOrders       ChangeOrder[]
+  approvals          Approval[]
   deviationReviews   DeviationReview[]
   budgetPlans        BudgetPlan[]
   cmrDecisions       CmrDecision[]
@@ -1069,6 +1072,44 @@ enum ApplicationMethod {
   SEED_TREATMENT
 }
 
+enum EvidenceType {
+  PHOTO
+  VIDEO
+  GEO_TRACK
+  LAB_REPORT
+  INVOICE
+  CONTRACT
+  WEATHER_API_SNAPSHOT
+  SATELLITE_IMAGE
+}
+
+enum ChangeOrderType {
+  SHIFT_DATE
+  CHANGE_INPUT
+  CHANGE_RATE
+  CANCEL_OP
+  ADD_OP
+}
+
+enum ChangeOrderStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+}
+
+enum ApproverRole {
+  AGRONOMIST
+  DIRECTOR
+  LEGAL
+  FINANCE
+}
+
+enum ApprovalDecision {
+  APPROVED
+  REJECTED
+}
+
 enum RapeseedType {
   WINTER // Озимый
   SPRING // Яровой
@@ -1540,6 +1581,7 @@ model TechMap {
   company   Company @relation(fields: [companyId], references: [id])
 
   budgetPlanSnapshots BudgetPlan[] @relation("BudgetPlanTechMapSnapshot")
+  changeOrders        ChangeOrder[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1595,6 +1637,7 @@ model MapOperation {
   durationHours    Int?
 
   resources MapResource[]
+  evidence  Evidence[]
 
   requiredMachineryType MachineryType?
 
@@ -1734,6 +1777,71 @@ model CropZone {
   @@index([seasonId])
   @@index([companyId])
   @@map("crop_zones")
+}
+
+model Evidence {
+  id               String        @id @default(cuid())
+  operationId      String?
+  operation        MapOperation? @relation(fields: [operationId], references: [id])
+  observationId    String?
+  evidenceType     EvidenceType
+  fileUrl          String
+  geoPoint         Json?
+  capturedAt       DateTime
+  capturedByUserId String?
+  checksum         String
+  metadata         Json?
+  companyId        String
+  company          Company       @relation(fields: [companyId], references: [id])
+  createdAt        DateTime      @default(now())
+
+  @@index([operationId])
+  @@index([companyId])
+  @@map("evidence")
+}
+
+model ChangeOrder {
+  id               String            @id @default(cuid())
+  techMapId        String
+  techMap          TechMap           @relation(fields: [techMapId], references: [id])
+  versionFrom      Int
+  versionTo        Int?
+  changeType       ChangeOrderType
+  reason           String
+  diffPayload      Json
+  deltaCostRub     Float?
+  status           ChangeOrderStatus @default(DRAFT)
+  triggeredByObsId String?
+  approvals        Approval[]
+  createdByUserId  String?
+  appliedAt        DateTime?
+  companyId        String
+  company          Company           @relation(fields: [companyId], references: [id])
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([techMapId])
+  @@index([companyId])
+  @@index([status])
+  @@map("change_orders")
+}
+
+model Approval {
+  id             String            @id @default(cuid())
+  changeOrderId  String
+  changeOrder    ChangeOrder       @relation(fields: [changeOrderId], references: [id])
+  approverRole   ApproverRole
+  approverUserId String?
+  decision       ApprovalDecision?
+  comment        String?
+  decidedAt      DateTime?
+  companyId      String
+  company        Company           @relation(fields: [companyId], references: [id])
+  createdAt      DateTime          @default(now())
+
+  @@index([changeOrderId])
+  @@index([companyId])
+  @@map("approvals")
 }
 
 enum TechMapStatus {
