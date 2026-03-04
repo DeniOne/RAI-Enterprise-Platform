@@ -18,9 +18,10 @@
   - Отчёт: `interagency/reports/2026-03-04_a_rai-f1-3_budget-deterministic-bridge.md` [APPROVED]
   - Статус: DONE. `AgroDeterministicEngineFacade` (ExplainableResult, 3 метода), `BudgetControllerService` (validateTransaction + BudgetExceededError). tsc PASS, 12/12 тестов PASS.
 
-- `interagency/prompts/2026-03-04_a_rai-f1-4_supervisor-decomposition.md` [IN_PROGRESS]
-  - Decision-ID: AG-ARAI-F1-004
-  - Статус: Промт создан, ожидает исполнения. Задачи: MemoryCoordinator, AgentRuntime, ResponseComposer.
+- `interagency/prompts/2026-03-04_a_rai-f1-4_supervisor-decomposition.md` [DONE]
+  - Decision-ID: AG-ARAI-F1-004 [зарегистрирован в DECISIONS.log]
+  - Отчёт: `interagency/reports/2026-03-04_a_rai-f1-4_supervisor-decomposition.md` [APPROVED]
+  - Статус: DONE. Декомпозиция выполнена. `MemoryCoordinator`, `ResponseComposer`, `AgentRuntime` вынесены; `SupervisorAgent` ~120 строк. tsc PASS, 64/64 тестов rai-chat PASS.
 
 - `interagency/prompts/2026-03-04_a_rai-f2-1_parallel-fan-out.md` [IN_PROGRESS]
   - Decision-ID: AG-ARAI-F2-001
