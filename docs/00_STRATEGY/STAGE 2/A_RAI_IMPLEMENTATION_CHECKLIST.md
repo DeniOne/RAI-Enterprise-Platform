@@ -12,9 +12,9 @@
 
 ### 1.1 Декомпозиция Supervisor
 - [x] **IntentRouter** (`intent-router.service.ts`) — классификация запросов (regex, LLM-ready). | **AG-ARAI-F1-001** | DONE
-- [/] **MemoryCoordinator** (`memory-coordinator.service.ts`) — работа с Episodic Memory + Tenant Isolation. | **AG-ARAI-F1-004** | IN_PROGRESS
-- [/] **AgentRuntime** (`agent-runtime.service.ts`) — жизненный цикл агента, дедлайны (30с). | **AG-ARAI-F1-004** | IN_PROGRESS
-- [/] **ResponseComposer** (`response-composer.service.ts`) — сборка ответа и виджетов. | **AG-ARAI-F1-004** | IN_PROGRESS
+- [x] **MemoryCoordinator** (`memory-coordinator.service.ts`) — работа с Episodic Memory + Tenant Isolation. | **AG-ARAI-F1-004** | DONE
+- [x] **AgentRuntime** (`agent-runtime.service.ts`) — жизненный цикл агента, дедлайны (30с). | **AG-ARAI-F1-004** | DONE
+- [x] **ResponseComposer** (`response-composer.service.ts`) — сборка ответа и виджетов. | **AG-ARAI-F1-004** | DONE
 
 ### 1.2 Доменные реестры (Capability-based)
 - [x] **AgroToolsRegistry** — инструменты агрономии и техкарт. | **AG-ARAI-F1-001** | DONE
@@ -41,8 +41,8 @@
 
 ### 2.2 Специализированные агенты
 - [x] **AgronomAgent** — ТРИАЖ (stub без LLM) + Ответ с explain. | **AG-ARAI-F1-002** | DONE
-- [/] **EconomistAgent** — Расчёт Δ, маржинальности и вознаграждения RAI. | **AG-ARAI-F2-001** | IN_PROGRESS
-- [ ] **KnowledgeAgent** — Поиск по институциональной памяти и RegionProfile.
+- [/] **EconomistAgent** — Расчёт Δ, маржинальности и вознаграждения RAI. | **AG-ARAI-F2-001**, **AG-ARAI-F2-002** | IN_PROGRESS
+- [/] **KnowledgeAgent** — Поиск по институциональной памяти и RegionProfile. | **AG-ARAI-F2-002** | IN_PROGRESS
 
 ### 2.3 Качество и оценка (Eval)
 - [ ] **AgentScoreCard** — метрики (acceptance/correction rate) в БД.

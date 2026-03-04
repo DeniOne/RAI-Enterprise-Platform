@@ -27,6 +27,10 @@
   - Decision-ID: AG-ARAI-F2-001
   - Статус: Промт создан, ожидает исполнения. Задачи: ToolCallPlanner, Parallel Fan-Out, EconomistAgent Stub.
 
+- `interagency/prompts/2026-03-04_a_rai-f2-2_economist-knowledge-agents.md` [IN_PROGRESS]
+  - Decision-ID: AG-ARAI-F2-002
+  - Статус: Промт создан, ожидает исполнения. Задачи: EconomistAgent (логика explain), KnowledgeAgent (RAG stub), интеграция в AgentRuntime.
+
 
 
 
