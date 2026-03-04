@@ -1,6 +1,7 @@
 # ПЛАН — TechMap Sprint TM-5: Economics + Contract Core
 Дата: 2026-03-04
-Статус: draft
+Статус: **ACCEPTED**
+Decision-ID: AG-TM-EC-005
 
 ## Результат
 - Подготовленный к исполнению план для финансового слоя TechMap: расчёт бюджета, KPI, Contract Core и движок пересчёта.

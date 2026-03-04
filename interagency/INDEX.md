@@ -30,8 +30,10 @@
   - Статус: DONE. prisma validate/db push/tsc/17 тестов PASS. AdaptiveRule, HybridPhenologyModel, TriggerEvaluationService, RegionProfileService, HybridPhenologyService. concurrency.spec.ts typo fixed.
 
 - `interagency/prompts/2026-03-04_tm-5_economics-contract.md` [ACTIVE]
+  - План: `interagency/plans/2026-03-04_tm-5_economics-contract.md` [ACCEPTED]
+  - Decision-ID: AG-TM-EC-005
   - Технический базис: `docs/00_STRATEGY/TECHMAP/GRAND_SYNTHESIS.md` §5.3
-  - Статус: промт создан, ожидает план от кодера.
+  - Статус: план ACCEPTED, ожидает реализацию кодером.
 
 - `interagency/prompts/2026-03-03_sprint1-p2_tests-smoke-telegram.md` [DONE]
   - Отчёт: `interagency/reports/2026-03-03_sprint1-p2_tests-smoke-telegram.md`

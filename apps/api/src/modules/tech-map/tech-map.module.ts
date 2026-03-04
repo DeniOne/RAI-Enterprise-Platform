@@ -12,6 +12,10 @@ import { ChangeOrderService } from "./change-order/change-order.service";
 import { TriggerEvaluationService } from "./adaptive-rules/trigger-evaluation.service";
 import { RegionProfileService } from "./adaptive-rules/region-profile.service";
 import { HybridPhenologyService } from "./adaptive-rules/hybrid-phenology.service";
+import { TechMapBudgetService } from "./economics/tech-map-budget.service";
+import { TechMapKPIService } from "./economics/tech-map-kpi.service";
+import { ContractCoreService } from "./economics/contract-core.service";
+import { RecalculationEngine } from "./economics/recalculation.engine";
 
 @Module({
   imports: [PrismaModule, IntegrityModule],
@@ -27,12 +31,19 @@ import { HybridPhenologyService } from "./adaptive-rules/hybrid-phenology.servic
     TriggerEvaluationService,
     RegionProfileService,
     HybridPhenologyService,
+    TechMapBudgetService,
+    TechMapKPIService,
+    ContractCoreService,
+    RecalculationEngine,
   ],
   exports: [
     TechMapService,
     EvidenceService,
     ChangeOrderService,
     TriggerEvaluationService,
+    TechMapBudgetService,
+    TechMapKPIService,
+    ContractCoreService,
   ],
 })
 export class TechMapModule { }
