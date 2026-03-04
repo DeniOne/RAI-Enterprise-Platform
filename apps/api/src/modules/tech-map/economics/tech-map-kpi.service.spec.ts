@@ -17,14 +17,12 @@ describe("TechMapKPIService", () => {
       lossRiskFactor: 0.1,
     });
 
-    expect(result).toMatchObject({
-      costPerHa: 12000,
-      costPerTon: 3000,
-      grossRevenuePerHa: 24000,
-      marginPerHa: 12000,
-      marginPct: 50,
-      riskAdjustedMarginPerHa: 10800,
-    });
+    expect(result.costPerHa).toBe(12000);
+    expect(result.costPerTon).toBe(3000);
+    expect(result.grossRevenuePerHa).toBe(24000);
+    expect(result.marginPerHa).toBe(12000);
+    expect(result.marginPct).toBe(50);
+    expect(result.riskAdjustedMarginPerHa).toBeCloseTo(10800);
     expect(result.variancePct).toBeCloseTo(5);
   });
 

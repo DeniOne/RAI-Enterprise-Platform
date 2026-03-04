@@ -1,6 +1,5 @@
 import { createHash } from "crypto";
 import { Injectable, NotFoundException } from "@nestjs/common";
-import stringify from "fast-json-stable-stringify";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
 
 export interface ContractCorePayload {
@@ -81,7 +80,7 @@ export class ContractCoreService {
   }
 
   hashContractCore(core: ContractCorePayload): string {
-    const canonical = stringify(core);
+    const canonical = this.stableStringify(core);
     return createHash("sha256").update(canonical).digest("hex");
   }
 
@@ -143,5 +142,26 @@ export class ContractCoreService {
 
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  private stableStringify(value: unknown): string {
+    if (value == null || typeof value !== "object") {
+      return JSON.stringify(value);
+    }
+
+    if (Array.isArray(value)) {
+      return `[${value.map((item) => this.stableStringify(item)).join(",")}]`;
+    }
+
+    const entries = Object.entries(value as Record<string, unknown>).sort(
+      ([left], [right]) => left.localeCompare(right),
+    );
+
+    return `{${entries
+      .map(
+        ([key, nestedValue]) =>
+          `${JSON.stringify(key)}:${this.stableStringify(nestedValue)}`,
+      )
+      .join(",")}}`;
   }
 }
