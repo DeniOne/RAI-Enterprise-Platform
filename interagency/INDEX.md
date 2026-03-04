@@ -33,13 +33,13 @@
   - Decision-ID: AG-TM-DATA-001
   - Статус: DONE. prisma validate/db push/tsc/8 DTO-тестов PASS. 4 новые модели (SoilProfile, RegionProfile, InputCatalog, CropZone) + расширение Field/TechMap/MapOperation/MapResource + 5 enums. Pre-existing failures в 8 модулях — не scope TM-1.
 
-- `interagency/prompts/2026-03-03_tm-2_dag-validation.md` [READY_FOR_REVIEW]
+- `interagency/prompts/2026-03-03_tm-2_dag-validation.md` [DONE]
   - План: `interagency/plans/2026-03-03_tm-2_dag-validation.md` [ACCEPTED]
-  - Отчёт: `interagency/reports/2026-03-03_tm-2_dag-validation.md`
-  - Decision-ID: AG-TM-DAG-002
+  - Отчёт: `interagency/reports/2026-03-03_tm-2_dag-validation.md` [APPROVED]
+  - Decision-ID: AG-TM-DAG-002 [зарегистрирован в DECISIONS.log]
   - Мастер-чеклист: `docs/00_STRATEGY/TECHMAP/TECHMAP_IMPLEMENTATION_CHECKLIST.md`
   - Технический базис: `docs/00_STRATEGY/TECHMAP/GRAND_SYNTHESIS.md` §3
-  - Статус: `DAGValidationService`, `TechMapValidationEngine`, `TankMixCompatibilityService` и 3 калькулятора реализованы; `tsc` PASS, validation/ 15/15 PASS, calculators/ 9/9 PASS, tech-map/ 17/17 суит PASS (56 тестов).
+  - Статус: DONE. `DAGValidationService`, `TechMapValidationEngine`, `TankMixCompatibilityService` и 3 калькулятора реализованы; `tsc` PASS, 24/24 тестов PASS.
 
 - `interagency/prompts/2026-03-03_tm-3_evidence-changeorder.md` [DONE]
   - План: `interagency/plans/2026-03-03_tm-3_evidence-changeorder.md` [ACCEPTED]
