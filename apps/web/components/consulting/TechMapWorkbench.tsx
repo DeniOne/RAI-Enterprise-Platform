@@ -1,15 +1,46 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { TechMapStatus, getEntityTransitions } from '@/lib/consulting/ui-policy';
 import { DomainUiContext } from '@/lib/consulting/navigation-policy';
 import clsx from 'clsx';
 import { AuthorityContextType } from '@/core/governance/AuthorityContext';
+import { OperationDagView } from './OperationDagView';
+import { EvidencePanel } from './EvidencePanel';
+import { ChangeOrderPanel } from './ChangeOrderPanel';
 
-interface Operation {
+export interface OperationDependency {
+    operationId: string;
+    dependencyType: 'FS' | 'SS' | 'FF';
+    lagDays: number;
+}
+
+export interface EvidenceSummary {
+    id: string;
+    evidenceType: string;
+    fileUrl?: string;
+    capturedAt: string;
+}
+
+export interface ChangeOrderSummary {
+    id: string;
+    status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED';
+    reason: string;
+    deltaCoastRub?: number;
+    createdAt: string;
+}
+
+export interface Operation {
     id: string;
     title: string;
     status: 'PENDING' | 'DONE' | 'DELAYED';
+    dependencies?: OperationDependency[];
+    operationType?: string;
+    bbchWindowStart?: number;
+    bbchWindowEnd?: number;
+    isCritical?: boolean;
+    evidenceRequired?: boolean;
+    evidences?: EvidenceSummary[];
 }
 
 interface TechMapWorkbenchProps {
@@ -20,6 +51,9 @@ interface TechMapWorkbenchProps {
         sri?: number;
         isDegrading?: boolean;
         trustScore?: number;
+        changeOrders?: ChangeOrderSummary[];
+        areaHa?: number;
+        cropZoneId?: string;
     };
     authority: AuthorityContextType;
     context: DomainUiContext;
@@ -28,6 +62,9 @@ interface TechMapWorkbenchProps {
 export function TechMapWorkbench({ techMap, authority, context }: TechMapWorkbenchProps) {
     const perm = getEntityTransitions('tech-map', techMap.status, authority, context);
     const isFrozen = techMap.status === 'FROZEN';
+    const [viewMode, setViewMode] = useState<'list' | 'graph'>('list');
+    const [showEvidencePanel, setShowEvidencePanel] = useState(false);
+    const [showChangeOrderPanel, setShowChangeOrderPanel] = useState(false);
 
     // Absolute Lock: Intercept keyboard and prevent anything
     useEffect(() => {
@@ -63,8 +100,8 @@ export function TechMapWorkbench({ techMap, authority, context }: TechMapWorkben
 
                         {techMap.sri !== undefined && (
                             <div className="flex items-center space-x-1 px-2 py-0.5 bg-gray-100 rounded-lg">
-                                <span className="text-[10px] text-gray-500 font-bold uppercase">SRI:</span>
-                                <span className={clsx("text-[10px] font-bold", techMap.isDegrading ? "text-red-600" : "text-blue-600")}>
+                                <span className="text-[10px] text-gray-500 uppercase">SRI:</span>
+                                <span className={clsx("text-[10px]", techMap.isDegrading ? "text-red-600" : "text-blue-600")}>
                                     {techMap.sri.toFixed(2)}
                                 </span>
                             </div>
@@ -72,9 +109,27 @@ export function TechMapWorkbench({ techMap, authority, context }: TechMapWorkben
 
                         {techMap.trustScore !== undefined && (
                             <div className="flex items-center space-x-1 px-2 py-0.5 bg-gray-100 rounded-lg">
-                                <span className="text-[10px] text-gray-500 font-bold uppercase">Trust:</span>
-                                <span className="text-[10px] font-bold text-emerald-600">
+                                <span className="text-[10px] text-gray-500 uppercase">Trust:</span>
+                                <span className="text-[10px] text-emerald-600">
                                     {(techMap.trustScore * 100).toFixed(0)}%
+                                </span>
+                            </div>
+                        )}
+
+                        {techMap.areaHa !== undefined && (
+                            <div className="flex items-center space-x-1 px-2 py-0.5 bg-gray-100 rounded-lg">
+                                <span className="text-[10px] text-gray-500 uppercase">Площадь:</span>
+                                <span className="text-[10px] text-gray-700">
+                                    {techMap.areaHa.toFixed(1)}&nbsp;га
+                                </span>
+                            </div>
+                        )}
+
+                        {techMap.cropZoneId && (
+                            <div className="flex items-center space-x-1 px-2 py-0.5 bg-gray-100 rounded-lg">
+                                <span className="text-[10px] text-gray-500 uppercase">Зона:</span>
+                                <span className="text-[10px] text-gray-700">
+                                    {techMap.cropZoneId}
                                 </span>
                             </div>
                         )}
@@ -82,7 +137,7 @@ export function TechMapWorkbench({ techMap, authority, context }: TechMapWorkben
                 </div>
 
                 {techMap.isDegrading && (
-                    <div className="px-5 py-2 bg-red-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center space-x-2 animate-bounce">
+                    <div className="px-5 py-2 bg-red-600 text-white rounded-xl text-[10px] uppercase tracking-widest flex items-center space-x-2 animate-bounce">
                         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                         </svg>
@@ -91,11 +146,16 @@ export function TechMapWorkbench({ techMap, authority, context }: TechMapWorkben
                 )}
 
                 <div className="flex items-center space-x-3">
-                    {/* FSM Controls integrated into Workbench */}
                     {perm.allowedTransitions.map(t => (
                         <button
                             key={t.target}
-                            className="px-5 py-2 bg-black text-white rounded-xl text-xs font-medium hover:bg-gray-800 transition-all active:scale-95"
+                            disabled={isFrozen}
+                            className={clsx(
+                                "px-5 py-2 rounded-xl text-xs font-medium transition-all",
+                                isFrozen
+                                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                    : "bg-black text-white hover:bg-gray-800 active:scale-95"
+                            )}
                         >
                             {t.label}
                         </button>
@@ -109,6 +169,33 @@ export function TechMapWorkbench({ techMap, authority, context }: TechMapWorkben
                 </div>
             </div>
 
+            <div className="flex justify-end items-center space-x-2">
+                <button
+                    type="button"
+                    disabled={isFrozen}
+                    onClick={() => setViewMode('list')}
+                    className={clsx(
+                        "px-3 py-1.5 rounded-xl text-[11px] border text-gray-700",
+                        viewMode === 'list' ? 'bg-black text-white border-black' : 'bg-white border-black/10',
+                        isFrozen && 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                    )}
+                >
+                    Список
+                </button>
+                <button
+                    type="button"
+                    disabled={isFrozen}
+                    onClick={() => setViewMode('graph')}
+                    className={clsx(
+                        "px-3 py-1.5 rounded-xl text-[11px] border text-gray-700",
+                        viewMode === 'graph' ? 'bg-black text-white border-black' : 'bg-white border-black/10',
+                        isFrozen && 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                    )}
+                >
+                    График
+                </button>
+            </div>
+
             <div className={clsx(
                 "grid grid-cols-1 gap-4 transition-all duration-500",
                 isFrozen ? 'pointer-events-none grayscale-[0.5] opacity-80' : ''
@@ -117,7 +204,7 @@ export function TechMapWorkbench({ techMap, authority, context }: TechMapWorkben
                     {isFrozen ? 'Режим просмотра. Все элементы управления заблокированы.' : 'Режим проектирования активен.'}
                 </div>
 
-                {techMap.operations.map(op => (
+                {viewMode === 'list' && techMap.operations.map(op => (
                     <div key={op.id} className="p-5 bg-white border border-black/5 rounded-2xl flex items-center justify-between group hover:border-black/10 transition-colors">
                         <div className="flex items-center space-x-4">
                             <input
@@ -126,14 +213,66 @@ export function TechMapWorkbench({ techMap, authority, context }: TechMapWorkben
                                 readOnly={isFrozen}
                                 className="w-4 h-4 rounded-full border-black/10 accent-black transition-all"
                             />
-                            <span className="text-sm font-medium text-gray-700">{op.title}</span>
+                            <div className="flex flex-col">
+                                <span className="text-sm font-medium text-gray-700">{op.title}</span>
+                                {op.operationType && (
+                                    <span className="text-[11px] text-gray-400">
+                                        {op.operationType}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                         <span className="text-[10px] font-medium text-gray-300 uppercase tracking-tighter">Phase 1</span>
                     </div>
                 ))}
+
+                {viewMode === 'graph' && (
+                    <OperationDagView operations={techMap.operations} isFrozen={isFrozen} />
+                )}
             </div>
 
-            {/* Locked Reason Explanation if Frozen */}
+            <div className="space-y-3">
+                <button
+                    type="button"
+                    disabled={isFrozen}
+                    onClick={() => setShowEvidencePanel((v) => !v)}
+                    className={clsx(
+                        "w-full flex items-center justify-between px-4 py-2 rounded-2xl border text-xs",
+                        "bg-white border-black/5 text-gray-700",
+                        isFrozen && "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                    )}
+                >
+                    <span>Доказательства по операциям</span>
+                    <span className="text-[10px] text-gray-400">{showEvidencePanel ? 'Свернуть' : 'Развернуть'}</span>
+                </button>
+
+                {showEvidencePanel && (
+                    <EvidencePanel operations={techMap.operations} isFrozen={isFrozen} />
+                )}
+
+                <button
+                    type="button"
+                    disabled={isFrozen}
+                    onClick={() => setShowChangeOrderPanel((v) => !v)}
+                    className={clsx(
+                        "w-full flex items-center justify-between px-4 py-2 rounded-2xl border text-xs",
+                        "bg-white border-black/5 text-gray-700",
+                        isFrozen && "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                    )}
+                >
+                    <span>Запросы на изменение техкарты</span>
+                    <span className="text-[10px] text-gray-400">{showChangeOrderPanel ? 'Свернуть' : 'Развернуть'}</span>
+                </button>
+
+                {!isFrozen && showChangeOrderPanel && (
+                    <ChangeOrderPanel
+                        techMapId={techMap.id}
+                        changeOrders={techMap.changeOrders}
+                        isFrozen={isFrozen}
+                    />
+                )}
+            </div>
+
             {isFrozen && (
                 <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50 flex items-start space-x-3">
                     <div className="p-2 bg-blue-100 rounded-lg">

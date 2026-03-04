@@ -1,6 +1,6 @@
 # ПЛАН — TM-POST-C: UI TechMap Workbench v2
 Дата: 2026-03-04
-Статус: **DRAFT**
+Статус: **ACCEPTED** (Antigravity Orchestrator)
 Decision-ID: AG-TM-POST-C-007
 
 ## Результат

@@ -298,8 +298,14 @@
 ### POST-C: UI TechMap Workbench v2
 - Файл: `interagency/prompts/2026-03-04_tm-post-c_ui-workbench-v2.md`
 - Decision-ID: AG-TM-POST-C-007
-- Статус: READY_FOR_PLAN (🟡 Средний риск, зависит от POST-B)
-- Ключевые ограничения: нет d3/reactflow, только SVG, нет новых npm-зависимостей
+- Статус: DONE (Завершена конфигурация UI компонентов для техкарты)
+
+46. **TM-POST-C: UI TechMap Workbench v2 CLOSED (2026-03-04)** ✅:
+    * Отчет утвержден (APPROVED).
+    * Реализована DAG-визуализация без внешних библиотек (на SVG).
+    * Создана EvidencePanel (UI загрузки) и ChangeOrderPanel (запросы на изменения).
+    * isFrozen режим жестко отключает интерфейс по Transition-политикам.
+    * TypeScript (`tsc --noEmit`), Jest (`testPathPatterns=TechMapWorkbench`) PASS.
 
 45. **TM-POST-B: Season → CropZone + Rapeseed → CropVariety CLOSED (2026-03-04)** ✅:
     *   Модели: `Season` (fieldId nullable), `CropZone` (primary link), `CropVariety`, `CropVarietyHistory`, `CropType` enum внедрены.

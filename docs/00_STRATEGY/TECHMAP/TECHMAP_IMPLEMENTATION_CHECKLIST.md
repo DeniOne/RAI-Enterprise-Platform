@@ -317,12 +317,12 @@
 - [x] ⚠️ Обязателен pg_dump перед запуском миграции ✅ (closed: `backups/rai_platform_20260304T114020Z.dump`)
 
 ### TM-POST.C UI — TechMap Workbench v2
-- [/] Промт: `interagency/prompts/2026-03-04_tm-post-c_ui-workbench-v2.md` ✅ СОЗДАН
-- [ ] Кодер создаёт план: `interagency/plans/2026-03-04_tm-post-c_ui-workbench-v2.md`
-- [ ] Orchestrator акцептирует план → `ACCEPTED`
-- [ ] `OperationDagView` — визуализация зависимостей (SVG, без d3)
-- [ ] `EvidencePanel` — upload доказательств
-- [ ] `ChangeOrderPanel` — workflow запросов на изменение
+- [x] Промт: `interagency/prompts/2026-03-04_tm-post-c_ui-workbench-v2.md` ✅ СОЗДАН
+- [x] Кодер создаёт план: `interagency/plans/2026-03-04_tm-post-c_ui-workbench-v2.md` ✅ ПЛАН ЕСТЬ
+- [x] Orchestrator акцептирует план → `ACCEPTED` ✅ ПЛАН УТВЕРЖДЕН
+- [x] Реализация DAG-visualizer (`OperationDagView.tsx` — без D3/ReactFlow, только SVG)
+- [x] Интеграция `EvidencePanel` (upload UI) доказательств
+- [x] `ChangeOrderPanel` — workflow запросов на изменение
 
 ### TM-POST.5 Документация
 - [x] Обновить `docs/02_DOMAINS/AGRO_DOMAIN/CORE/techmap-task.schema.ts` (TM-4..TM-5 модели)
@@ -343,6 +343,6 @@
 | TM-5 | ✅ DONE | 6 | ✅ | ✅ | ✅ | ✅ |
 | POST-A | ✅ DONE | — | ✅ | ✅ | ✅ | ✅ |
 | POST-B | ✅ DONE | 8 | ✅ | ✅ | ✅ | ✅ |
-| POST-C | 🔄 IN PROGRESS | 6 | ✅ | ⬜ | ⬜ | ⬜ |
+| POST-C | ✅ DONE | 6 | ✅ | ✅ | ✅ | ✅ |
 
 **Легенда**: ⬜ TODO | 🔄 IN PROGRESS | ✅ DONE | ❌ BLOCKED
