@@ -300,9 +300,11 @@
 
 ### TM-POST.1 Консолидация TechMapService
 - [x] Промт: `interagency/prompts/2026-03-04_tm-post-a_consolidation.md`
-- [ ] Объединить `modules/tech-map/tech-map.service.ts` и `modules/consulting/tech-map.service.ts`
-- [ ] Единый сервис в `modules/tech-map/`, consulting-модуль импортирует
-- [ ] Тесты PASS
+- [x] `activate` + `createNextVersion` перенесены в `tech-map/tech-map.service.ts` PASS
+- [x] `ConsultingModule` импортирует `TechMapModule`, локальный `TechMapService` удалён PASS
+- [x] `UnitNormalizationService` + `TechMapValidator` → `tech-map/`, re-exports в `consulting/` PASS
+- [x] tenant-check в `activate(companyId?)` [ADR-013] PASS
+- [x] Тесты: tsc PASS, jest tech-map/ 28 suites / 95 tests PASS
 
 ### TM-POST.2 Миграция Season → CropZone
 - [ ] Сделать `Season` глобальным (не привязанным к Field)
@@ -321,9 +323,10 @@
 - [ ] ChangeOrder workflow UI
 
 ### TM-POST.5 Документация
-- [ ] Обновить `docs/02_DOMAINS/AGRO_DOMAIN/CORE/techmap-task.schema.ts`
-- [ ] Создать API-документацию для новых endpoints
-- [ ] Обновить memory-bank
+- [x] Обновить `docs/02_DOMAINS/AGRO_DOMAIN/CORE/techmap-task.schema.ts` (TM-4..TM-5 модели)
+- [x] Создать `docs/02_DOMAINS/AGRO_DOMAIN/CORE/techmap-services-api.tm4-tm5.md` (API-список)
+- [x] Обновить memory-bank PASS
+- [x] POST-A CLOSED ✅
 
 ---
 
@@ -336,6 +339,6 @@
 | TM-3 | ✅ DONE | 6 | ✅ | ✅ | ✅ | ✅ |
 | TM-4 | ✅ DONE | 6 | ✅ | ✅ | ✅ | ✅ |
 | TM-5 | ✅ DONE | 6 | ✅ | ✅ | ✅ | ✅ |
-| POST | □ TODO | 5 | — | — | □ | □ |
+| POST-A | ✅ DONE | — | ✅ | ✅ | ✅ | ✅ |
 
 **Легенда**: ⬜ TODO | 🔄 IN PROGRESS | ✅ DONE | ❌ BLOCKED

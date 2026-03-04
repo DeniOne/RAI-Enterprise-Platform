@@ -35,11 +35,11 @@
   - Decision-ID: AG-TM-EC-005
   - Статус: DONE. tsc/validate/db push PASS. 20/20 адресных тестов PASS, регрессия 28 suites / 95 tests PASS. TechMapBudgetService, TechMapKPIService, ContractCoreService (SHA-256 stableStringify), RecalculationEngine.
 
-- `interagency/prompts/2026-03-04_tm-post-a_consolidation.md` [ACTIVE]
+- `interagency/prompts/2026-03-04_tm-post-a_consolidation.md` [DONE]
   - План: `interagency/plans/2026-03-04_tm-post-a_consolidation.md` [ACCEPTED]
+  - Отчёт: `interagency/reports/2026-03-04_tm-post-a_consolidation_review.md` [APPROVED]
   - Decision-ID: AG-TM-POST-A-001
-  - Охватывает: TM-POST.1 (merge TechMapService) + TM-POST.5 (docs)
-  - Статус: план ACCEPTED, ожидает реализацию кодером.
+  - Статус: DONE. tsc PASS, jest tech-map/ 28 suites / 95 tests PASS. UnitNormal+TechMapValidator → tech-map/, tenant-check в activate [ADR-013], consulting.module.ts очищен.
 
 - `interagency/prompts/2026-03-03_sprint1-p2_tests-smoke-telegram.md` [DONE]
   - Отчёт: `interagency/reports/2026-03-03_sprint1-p2_tests-smoke-telegram.md`
