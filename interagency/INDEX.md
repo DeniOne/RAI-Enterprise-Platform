@@ -23,9 +23,10 @@
   - Отчёт: `interagency/reports/2026-03-04_a_rai-f1-4_supervisor-decomposition.md` [APPROVED]
   - Статус: DONE. Декомпозиция выполнена. `MemoryCoordinator`, `ResponseComposer`, `AgentRuntime` вынесены; `SupervisorAgent` ~120 строк. tsc PASS, 64/64 тестов rai-chat PASS.
 
-- `interagency/prompts/2026-03-04_a_rai-f2-1_parallel-fan-out.md` [IN_PROGRESS]
-  - Decision-ID: AG-ARAI-F2-001
-  - Статус: Промт создан, ожидает исполнения. Задачи: ToolCallPlanner, Parallel Fan-Out, EconomistAgent Stub.
+- `interagency/prompts/2026-03-04_a_rai-f2-1_parallel-fan-out.md` [DONE]
+  - Decision-ID: AG-ARAI-F2-001 [зарегистрирован в DECISIONS.log]
+  - Отчёт: `interagency/reports/2026-03-04_a_rai-f2-1_parallel-fan-out.md` [APPROVED]
+  - Статус: DONE. ToolCallPlanner, Parallel Fan-Out (Promise.allSettled + 30s timeout + partial), EconomistAgent stub. tsc PASS, 16/16 тестов PASS (+1 skip на timeout).
 
 - `interagency/prompts/2026-03-04_a_rai-f2-2_economist-knowledge-agents.md` [IN_PROGRESS]
   - Decision-ID: AG-ARAI-F2-002
