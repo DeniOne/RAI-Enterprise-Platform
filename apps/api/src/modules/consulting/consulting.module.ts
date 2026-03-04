@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { ConsultingService } from "./consulting.service";
 import { ConsultingController } from "./consulting.controller";
 import { PrismaModule } from "../../shared/prisma/prisma.module";
@@ -27,7 +27,7 @@ import { OutboxModule } from "../../shared/outbox/outbox.module";
 import { TechMapModule } from "../tech-map/tech-map.module";
 
 @Module({
-  imports: [PrismaModule, CmrModule, EconomyModule, OutboxModule, TechMapModule],
+  imports: [PrismaModule, CmrModule, EconomyModule, OutboxModule, forwardRef(() => TechMapModule)],
   controllers: [ConsultingController],
   providers: [
     ConsultingService,
