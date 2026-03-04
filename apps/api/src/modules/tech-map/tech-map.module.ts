@@ -9,6 +9,9 @@ import { TechMapValidationEngine } from "./validation/techmap-validation.engine"
 import { TankMixCompatibilityService } from "./validation/tank-mix-compatibility.service";
 import { EvidenceService } from "./evidence/evidence.service";
 import { ChangeOrderService } from "./change-order/change-order.service";
+import { TriggerEvaluationService } from "./adaptive-rules/trigger-evaluation.service";
+import { RegionProfileService } from "./adaptive-rules/region-profile.service";
+import { HybridPhenologyService } from "./adaptive-rules/hybrid-phenology.service";
 
 @Module({
   imports: [PrismaModule, IntegrityModule],
@@ -21,7 +24,15 @@ import { ChangeOrderService } from "./change-order/change-order.service";
     TankMixCompatibilityService,
     EvidenceService,
     ChangeOrderService,
+    TriggerEvaluationService,
+    RegionProfileService,
+    HybridPhenologyService,
   ],
-  exports: [TechMapService, EvidenceService, ChangeOrderService],
+  exports: [
+    TechMapService,
+    EvidenceService,
+    ChangeOrderService,
+    TriggerEvaluationService,
+  ],
 })
 export class TechMapModule { }

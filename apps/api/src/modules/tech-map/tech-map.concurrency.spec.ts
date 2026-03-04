@@ -106,10 +106,6 @@ describe("TechMapService Concurrency (Track 1)", () => {
 
     prismaMock.techMap.findFirst.mockResolvedValue(mockMap as any);
     prismaMock.techMap.updateMany.mockResolvedValue({ count: 1 });
-    prismaMock.tecmhMap?.findFirstOrThrow?.mockResolvedValue({
-      ...mockMap,
-      status: TechMapStatus.ARCHIVED,
-    });
     prismaMock.techMap.findFirstOrThrow.mockResolvedValue({
       ...mockMap,
       status: TechMapStatus.ARCHIVED,

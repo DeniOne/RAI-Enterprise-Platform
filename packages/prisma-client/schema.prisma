@@ -42,6 +42,8 @@ model Company {
   regionProfiles     RegionProfile[]
   inputCatalog       InputCatalog[]
   cropZones          CropZone[]
+  adaptiveRules      AdaptiveRule[]
+  hybridPhenologyModels HybridPhenologyModel[]
   evidence           Evidence[]
   changeOrders       ChangeOrder[]
   approvals          Approval[]
@@ -1037,6 +1039,23 @@ enum ClimateType {
   CONTINENTAL_COLD
 }
 
+enum TriggerType {
+  WEATHER
+  NDVI
+  OBSERVATION
+  PHENOLOGY
+  PRICE
+}
+
+enum TriggerOperator {
+  GT
+  GTE
+  LT
+  LTE
+  EQ
+  NOT_EQ
+}
+
 enum InputType {
   SEED
   FERTILIZER_SOLID
@@ -1582,6 +1601,7 @@ model TechMap {
 
   budgetPlanSnapshots BudgetPlan[] @relation("BudgetPlanTechMapSnapshot")
   changeOrders        ChangeOrder[]
+  adaptiveRules       AdaptiveRule[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1752,6 +1772,30 @@ model InputCatalog {
   @@map("input_catalog")
 }
 
+model AdaptiveRule {
+  id                   String       @id @default(cuid())
+  techMapId            String
+  techMap              TechMap      @relation(fields: [techMapId], references: [id])
+  name                 String
+  description          String?
+  triggerType          TriggerType
+  condition            Json
+  affectedOperationIds Json
+  changeTemplate       Json
+  requiresApprovalRole String?
+  isActive             Boolean      @default(true)
+  lastEvaluatedAt      DateTime?
+  companyId            String
+  company              Company      @relation(fields: [companyId], references: [id])
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  @@index([techMapId])
+  @@index([companyId])
+  @@index([triggerType])
+  @@map("adaptive_rules")
+}
+
 model CropZone {
   id              String    @id @default(cuid())
   fieldId         String
@@ -1777,6 +1821,24 @@ model CropZone {
   @@index([seasonId])
   @@index([companyId])
   @@map("crop_zones")
+}
+
+model HybridPhenologyModel {
+  id         String    @id @default(cuid())
+  hybridName String
+  cropType   String
+  gddToStage Json
+  baseTemp   Float     @default(5.0)
+  source     String?
+  companyId  String?
+  company    Company?  @relation(fields: [companyId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([hybridName])
+  @@index([cropType])
+  @@index([companyId])
+  @@map("hybrid_phenology_models")
 }
 
 model Evidence {

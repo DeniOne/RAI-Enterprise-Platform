@@ -200,8 +200,8 @@
 **Цель**: Второй контур техкарты — триггерно-адаптивная система и привязка к региональным профилям.
 
 ### TM-4.0 Промт и план
-- [ ] Создать промт: `interagency/prompts/YYYY-MM-DD_tm-4_adaptive-rules.md`
-- [ ] Кодер создаёт план: `interagency/plans/YYYY-MM-DD_tm-4_adaptive-rules.md`
+- [x] Создать промт: `interagency/prompts/2026-03-04_tm-4_adaptive-rules.md`
+- [ ] Кодер создаёт план: `interagency/plans/2026-03-04_tm-4_adaptive-rules.md`
 - [ ] Orchestrator акцептирует план → `ACCEPTED`
 
 ### TM-4.1 AdaptiveRule модель
@@ -245,8 +245,8 @@
 **Цель**: Финансовая модель техкарты и юридический слой (Contract Core с хэшированием).
 
 ### TM-5.0 Промт и план
-- [ ] Создать промт: `interagency/prompts/YYYY-MM-DD_tm-5_economics-contract.md`
-- [ ] Кодер создаёт план: `interagency/plans/YYYY-MM-DD_tm-5_economics-contract.md`
+- [x] Создать промт: `interagency/prompts/2026-03-04_tm-5_economics-contract.md`
+- [ ] Кодер создаёт план: `interagency/plans/2026-03-04_tm-5_economics-contract.md`
 - [ ] Orchestrator акцептирует план → `ACCEPTED`
 
 ### TM-5.1 TechMapBudgetService
