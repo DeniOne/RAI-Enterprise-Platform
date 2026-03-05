@@ -20,6 +20,8 @@ export interface RaiToolActorContext {
   traceId: string;
   /** В автономном контексте (MonitoringAgent) запрещены WRITE/CRITICAL инструменты. */
   isAutonomous?: boolean;
+  /** Safe Replay: WRITE/CRITICAL не выполняются, возвращается mock success. */
+  replayMode?: boolean;
   /** Для RiskPolicy: кто инициировал (при подтверждении — кто подтвердил). */
   userId?: string;
   userRole?: string;

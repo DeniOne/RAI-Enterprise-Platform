@@ -29,11 +29,16 @@ export class SupervisorAgent {
     request: RaiChatRequestDto,
     companyId: string,
     userId?: string,
+    options?: { replayMode?: boolean },
   ): Promise<RaiChatResponseDto> {
     const startedAt = Date.now();
     const traceId = request.clientTraceId ?? `tr_${randomUUID()}`;
     const threadId = request.threadId ?? `th_${randomUUID()}`;
-    const actorContext: RaiToolActorContext = { companyId, traceId };
+    const actorContext: RaiToolActorContext = {
+      companyId,
+      traceId,
+      replayMode: options?.replayMode,
+    };
 
     const recallResult = await this.memoryCoordinator.recallContext(
       request,

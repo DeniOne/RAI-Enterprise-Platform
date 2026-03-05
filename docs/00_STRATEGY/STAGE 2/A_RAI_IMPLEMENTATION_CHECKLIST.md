@@ -83,14 +83,14 @@
 - [x] **Drift / Regression Alerts** — автоматические алерты при деградации BS% или Acceptance Rate после обновлений. | **AG-ARAI-F4-006** | DONE
 
 ### 4.3 Swarm Dashboard & Control UI (Визуализация)
-- [ ] **SLO / Error Budget** — мониторинг latency, error rate по агентам и клиентам (`companyId`). | **AG-ARAI-F4-012** | IN_PROGRESS
-- [ ] **Cost Decomposition & Workload Hotspots** — отслеживание расхода бюджета (LLM vs DB) и самых "дорогих/долгих" сессий.
+- [x] **SLO / Error Budget** — мониторинг latency, error rate по агентам и клиентам (`companyId`). | **AG-ARAI-F4-012** | DONE
+- [x] **Cost Decomposition & Workload Hotspots** — отслеживание расхода бюджета (LLM vs DB) и самых "дорогих/долгих" сессий. | **AG-ARAI-F4-013** | DONE
 - [x] **Quality & Evals Panel** — визуализация Acceptance Rate, Correction Rate, BS% и Evidence Coverage. | **AG-ARAI-F4-005** | DONE
 - [x] **Explainability Explorer (Forensics)** — Decision Timeline разбора инцидентов (Router → fan-out → tools → composer + evidence refs). | **AG-ARAI-F4-010** | DONE
 - [x] **Agent Connection Map** — топология падений (Retry/Failure topology) и подсветка критического пути по `traceId`. | **AG-ARAI-F4-014** | DONE
-- [ ] **Queues & Backpressure Panel** — очереди, ретраи, timeouts, cancellations, deadline misses. | **AG-ARAI-F4-012** | IN_PROGRESS
-- [ ] **Critical Path Analyzer** — вычисление и визуализация, где реально ушло время внутри trace (router/агенты/tools/compose).
-- [ ] **Safe Replay Trace** — повтор прогона по traceId в READ-ONLY/mocked tools режиме, без сайд-эффектов.
+- [x] **Queues & Backpressure Panel** — очереди, ретраи, timeouts, cancellations, deadline misses. | **AG-ARAI-F4-012** | DONE
+- [x] **Critical Path Analyzer** — вычисление и визуализация, где реально ушло время внутри trace (router/агенты/tools/compose). | **AG-ARAI-F4-014** | DONE
+- [ ] **Safe Replay Trace** — повтор прогона по traceId в READ-ONLY/mocked tools режиме, без сайд-эффектов. | **AG-ARAI-F4-015** | IN_PROGRESS
 
 ### 4.4 Управление Автономностью и Рейтинги
 - [x] **Политики автономности по BS%** — автоматический переход в режимы "tool-first" или "quarantine" при превышении порогов (<5% = автономность, >30% = карантин). | **AG-ARAI-F4-007** | DONE

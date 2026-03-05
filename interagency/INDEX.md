@@ -112,6 +112,9 @@
 - `interagency/prompts/2026-03-05_a_rai-f4-15_safe-replay-trace.md` [ACTIVE]
   - Описание: Safe Replay Trace (повтор прогона трейса в READ-ONLY режиме без сайд-эффектов).
 
+- `interagency/prompts/2026-03-05_a_rai-f4-16_agent-configurator.md` [ACTIVE]
+  - Описание: Agent Configurator API (создание, настройка и привязка Capabilities к агентам через БД).
+
 - `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
   - План: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [ACCEPTED]
   - Отчёт: `interagency/reports/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [APPROVED]
