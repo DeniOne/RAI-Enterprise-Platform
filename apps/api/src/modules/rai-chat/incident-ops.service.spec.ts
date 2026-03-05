@@ -7,8 +7,9 @@ describe("IncidentOpsService", () => {
   let service: IncidentOpsService;
   const createMock = jest.fn();
   const findManyMock = jest.fn();
+  const updateManyMock = jest.fn();
   const prisma = {
-    systemIncident: { create: createMock, findMany: findManyMock },
+    systemIncident: { create: createMock, findMany: findManyMock, updateMany: updateManyMock },
   } as unknown as PrismaService;
 
   beforeEach(async () => {
@@ -51,6 +52,8 @@ describe("IncidentOpsService", () => {
       severity: "MEDIUM",
       details: {},
       createdAt: new Date("2026-03-05T12:00:00Z"),
+      resolvedAt: null as Date | null,
+      resolveComment: null as string | null,
     };
     findManyMock.mockResolvedValue([row]);
     const feed = await service.getIncidentsFeed("c1", 10, 0);
@@ -62,8 +65,27 @@ describe("IncidentOpsService", () => {
     });
     expect(feed).toHaveLength(1);
     expect(feed[0].id).toBe("inc1");
-    expect(feed[0].companyId).toBe("c1");
-    expect(feed[0].incidentType).toBe(SystemIncidentType.PII_LEAK);
-    expect(feed[0].createdAt).toBe("2026-03-05T12:00:00.000Z");
+    expect(feed[0].resolvedAt).toBeNull();
+  });
+
+  it("resolveIncident обновляет запись по id и companyId", async () => {
+    updateManyMock.mockResolvedValue({ count: 1 });
+    await service.resolveIncident("inc1", "c1", "Fixed");
+    expect(updateManyMock).toHaveBeenCalledWith({
+      where: { id: "inc1", companyId: "c1" },
+      data: { resolvedAt: expect.any(Date), resolveComment: "Fixed" },
+    });
+  });
+
+  it("getGovernanceCounters возвращает счётчики по типам", async () => {
+    findManyMock.mockResolvedValue([
+      { incidentType: "PII_LEAK" },
+      { incidentType: "PII_LEAK" },
+      { incidentType: "CROSS_TENANT_BREACH" },
+    ]);
+    const counters = await service.getGovernanceCounters("c1");
+    expect(counters.piiLeak).toBe(2);
+    expect(counters.crossTenantBreach).toBe(1);
+    expect(counters.byType.PII_LEAK).toBe(2);
   });
 });

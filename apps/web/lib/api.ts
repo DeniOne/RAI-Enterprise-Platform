@@ -319,6 +319,31 @@ export const api = {
         toggle: (role: string, isActive: boolean) =>
             apiClient.patch('/rai/agents/config/toggle', { role, isActive }),
     },
+    governance: {
+        incidentsFeed: (params?: { limit?: number; offset?: number }) =>
+            apiClient.get<IncidentFeedItem[]>('/rai/incidents/feed', { params: params ?? {} }),
+        resolveIncident: (id: string, comment: string) =>
+            apiClient.post(`/rai/incidents/${encodeURIComponent(id)}/resolve`, { comment }),
+        counters: () => apiClient.get<GovernanceCountersDto>('/rai/governance/counters'),
+    },
+}
+
+export interface IncidentFeedItem {
+    id: string;
+    companyId: string | null;
+    traceId: string | null;
+    incidentType: string;
+    severity: string;
+    details: unknown;
+    createdAt: string;
+    resolvedAt: string | null;
+    resolveComment: string | null;
+}
+
+export interface GovernanceCountersDto {
+    crossTenantBreach: number;
+    piiLeak: number;
+    byType: Record<string, number>;
 }
 
 export interface AgentConfigItem {

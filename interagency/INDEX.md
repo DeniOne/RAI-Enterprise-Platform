@@ -126,6 +126,10 @@
   - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-18_agent-management-ui.md` [APPROVED]
   - Статус: DONE. Реестр агентов (глобальные + tenant overrides), редактор (systemPrompt, модель, capabilities, scope), toggle isActive, кнопка «Добавить переопределение». api.agents в lib/api. tsc (api + web) PASS, jest explainability/agent-management 42 PASS.
 
+- `interagency/prompts/2026-03-05_a_rai-f4-19_governance-security-ui.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-19_governance-security-ui.md` [APPROVED]
+  - Статус: DONE. Backend: SystemIncident.resolvedAt/resolveComment, GET /rai/incidents/feed, POST /rai/incidents/:id/resolve, GET /rai/governance/counters (ADMIN). Frontend: /governance/security — счётчики, лента инцидентов с фильтром и Resolve, ссылки на control-tower/trace. tsc PASS, incident-ops 4/4 jest PASS.
+
 - `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
   - План: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [ACCEPTED]
   - Отчёт: `interagency/reports/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [APPROVED]

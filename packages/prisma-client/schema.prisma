@@ -1476,14 +1476,16 @@ enum SystemIncidentType {
 }
 
 model SystemIncident {
-  id           String              @id @default(cuid())
-  companyId    String?
-  company      Company?            @relation(fields: [companyId], references: [id])
-  traceId      String?
-  incidentType SystemIncidentType
-  severity     String              // LOW | MEDIUM | HIGH
-  details      Json                @default("{}")
-  createdAt    DateTime            @default(now())
+  id             String              @id @default(cuid())
+  companyId      String?
+  company        Company?            @relation(fields: [companyId], references: [id])
+  traceId        String?
+  incidentType   SystemIncidentType
+  severity       String              // LOW | MEDIUM | HIGH
+  details        Json                @default("{}")
+  createdAt      DateTime            @default(now())
+  resolvedAt     DateTime?
+  resolveComment String?            @db.Text
 
   @@index([companyId])
   @@index([createdAt])

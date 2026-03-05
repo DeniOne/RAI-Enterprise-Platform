@@ -39,6 +39,7 @@ import { AutonomyPolicyService } from "./autonomy-policy.service";
 import { AgentReputationService } from "./agent-reputation.service";
 import { FeedbackCredibilityService } from "./feedback-credibility.service";
 import { IncidentOpsService } from "./incident-ops.service";
+import { IncidentsGovernanceController } from "./incidents-governance.controller";
 import { PerformanceMetricsService } from "./performance/performance-metrics.service";
 import { QueueMetricsService } from "./performance/queue-metrics.service";
 import { SafeReplayService } from "./safe-replay.service";
@@ -53,7 +54,7 @@ import { SafeReplayService } from "./safe-replay.service";
     AgroEventsModule,
     PrismaModule,
   ],
-  controllers: [RaiChatController],
+  controllers: [RaiChatController, IncidentsGovernanceController],
   providers: [
     IntentRouterService,
     AgroDeterministicEngineFacade,

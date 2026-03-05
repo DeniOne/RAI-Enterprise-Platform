@@ -18,6 +18,14 @@ export interface IncidentFeedItem {
   severity: string;
   details: unknown;
   createdAt: string;
+  resolvedAt: string | null;
+  resolveComment: string | null;
+}
+
+export interface GovernanceCountersDto {
+  crossTenantBreach: number;
+  piiLeak: number;
+  byType: Record<string, number>;
 }
 
 @Injectable()
@@ -65,6 +73,31 @@ export class IncidentOpsService {
       severity: r.severity,
       details: r.details,
       createdAt: r.createdAt.toISOString(),
+      resolvedAt: r.resolvedAt?.toISOString() ?? null,
+      resolveComment: r.resolveComment ?? null,
     }));
+  }
+
+  async resolveIncident(incidentId: string, companyId: string, comment: string): Promise<void> {
+    await this.prisma.systemIncident.updateMany({
+      where: { id: incidentId, companyId },
+      data: { resolvedAt: new Date(), resolveComment: comment ?? "" },
+    });
+  }
+
+  async getGovernanceCounters(companyId: string): Promise<GovernanceCountersDto> {
+    const rows = await this.prisma.systemIncident.findMany({
+      where: { companyId },
+      select: { incidentType: true },
+    });
+    const byType: Record<string, number> = {};
+    for (const r of rows) {
+      byType[r.incidentType] = (byType[r.incidentType] ?? 0) + 1;
+    }
+    return {
+      crossTenantBreach: byType["CROSS_TENANT_BREACH"] ?? 0,
+      piiLeak: byType["PII_LEAK"] ?? 0,
+      byType,
+    };
   }
 }
