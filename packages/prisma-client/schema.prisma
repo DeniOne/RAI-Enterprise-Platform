@@ -147,6 +147,8 @@ model Company {
   qualityAlerts           QualityAlert[]
   agentReputations        AgentReputation[]
   userCredibilityProfiles UserCredibilityProfile[]
+  systemIncidents         SystemIncident[]
+  performanceMetrics      PerformanceMetric[]
 
   // Level F: Institutional Oracle Standard
   levelFCertAudits     LevelFCertAudit[]
@@ -1463,6 +1465,50 @@ model UserCredibilityProfile {
   @@unique([companyId, userId], name: "user_credibility_company_user_unique")
   @@index([companyId])
   @@map("ai_user_credibility_profiles")
+}
+
+enum SystemIncidentType {
+  CROSS_TENANT_BREACH
+  PII_LEAK
+  RATE_LIMIT
+  UNKNOWN
+}
+
+model SystemIncident {
+  id           String              @id @default(cuid())
+  companyId    String?
+  company      Company?            @relation(fields: [companyId], references: [id])
+  traceId      String?
+  incidentType SystemIncidentType
+  severity     String              // LOW | MEDIUM | HIGH
+  details      Json                @default("{}")
+  createdAt    DateTime            @default(now())
+
+  @@index([companyId])
+  @@index([createdAt])
+  @@map("system_incidents")
+}
+
+enum PerformanceMetricType {
+  LATENCY
+  ERROR_RATE
+  QUEUE_SIZE
+}
+
+model PerformanceMetric {
+  id         String                @id @default(cuid())
+  companyId  String
+  company    Company               @relation(fields: [companyId], references: [id])
+  metricType PerformanceMetricType
+  agentRole  String?
+  toolName   String?
+  value      Float
+  timestamp  DateTime              @default(now())
+
+  @@index([companyId])
+  @@index([companyId, metricType, timestamp])
+  @@index([timestamp])
+  @@map("performance_metrics")
 }
 
 enum PendingActionStatus {

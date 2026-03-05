@@ -1,5 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { SensitiveDataFilterService } from "./sensitive-data-filter.service";
+import { IncidentOpsService } from "../incident-ops.service";
+import { SystemIncidentType } from "@rai/prisma-client";
 
 describe("SensitiveDataFilterService", () => {
   let service: SensitiveDataFilterService;
@@ -9,6 +11,41 @@ describe("SensitiveDataFilterService", () => {
       providers: [SensitiveDataFilterService],
     }).compile();
     service = module.get(SensitiveDataFilterService);
+  });
+
+  describe("с моком IncidentOpsService", () => {
+    let logIncident: jest.Mock;
+
+    beforeEach(async () => {
+      logIncident = jest.fn();
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          SensitiveDataFilterService,
+          { provide: IncidentOpsService, useValue: { logIncident } },
+        ],
+      }).compile();
+      service = module.get(SensitiveDataFilterService);
+    });
+
+    it("при маскировке PII с context вызывает logIncident PII_LEAK", () => {
+      service.mask("Пишите test@mail.ru", {
+        companyId: "c1",
+        traceId: "tr1",
+      });
+      expect(logIncident).toHaveBeenCalledTimes(1);
+      expect(logIncident).toHaveBeenCalledWith({
+        companyId: "c1",
+        traceId: "tr1",
+        incidentType: SystemIncidentType.PII_LEAK,
+        severity: "MEDIUM",
+        details: { snippetLength: 19 },
+      });
+    });
+
+    it("без PII в тексте не вызывает logIncident", () => {
+      service.mask("Норма высева 4.5 кг/га", { companyId: "c1" });
+      expect(logIncident).not.toHaveBeenCalled();
+    });
   });
 
   it("маскирует ИНН 10 цифр", () => {

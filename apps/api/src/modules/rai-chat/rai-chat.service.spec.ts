@@ -28,6 +28,8 @@ import { PrismaService } from "../../shared/prisma/prisma.service";
 import { RiskPolicyEngineService } from "./security/risk-policy-engine.service";
 import { PendingActionService } from "./security/pending-action.service";
 import { SensitiveDataFilterService } from "./security/sensitive-data-filter.service";
+import { TraceSummaryService } from "./trace-summary.service";
+import { AutonomyPolicyService } from "./autonomy-policy.service";
 
 describe("RaiChatService", () => {
   let service: RaiChatService;
@@ -85,6 +87,8 @@ describe("RaiChatService", () => {
         RiskPolicyEngineService,
         PendingActionService,
         { provide: SensitiveDataFilterService, useValue: { mask: (s: string) => s } },
+        { provide: TraceSummaryService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
+        { provide: AutonomyPolicyService, useValue: { getCompanyAutonomyLevel: jest.fn().mockResolvedValue("AUTONOMOUS") } },
       ],
     }).compile();
 

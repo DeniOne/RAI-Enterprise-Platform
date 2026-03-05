@@ -38,6 +38,9 @@ import { QualityAlertingService } from "./quality-alerting.service";
 import { AutonomyPolicyService } from "./autonomy-policy.service";
 import { AgentReputationService } from "./agent-reputation.service";
 import { FeedbackCredibilityService } from "./feedback-credibility.service";
+import { IncidentOpsService } from "./incident-ops.service";
+import { PerformanceMetricsService } from "./performance/performance-metrics.service";
+import { QueueMetricsService } from "./performance/queue-metrics.service";
 
 @Module({
   imports: [
@@ -82,6 +85,9 @@ import { FeedbackCredibilityService } from "./feedback-credibility.service";
     AutonomyPolicyService,
     AgentReputationService,
     FeedbackCredibilityService,
+    IncidentOpsService,
+    PerformanceMetricsService,
+    QueueMetricsService,
   ],
 })
 export class RaiChatModule {}

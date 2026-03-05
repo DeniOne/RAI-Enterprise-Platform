@@ -23,6 +23,8 @@ import { TechMapService } from "../tech-map/tech-map.service";
 import { DeviationService } from "../consulting/deviation.service";
 import { KpiService } from "../consulting/kpi.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
+import { TraceSummaryService } from "./trace-summary.service";
+import { AutonomyPolicyService } from "./autonomy-policy.service";
 import { WorkspaceEntityKind } from "./dto/rai-chat.dto";
 import {
   RAI_CHAT_WIDGETS_SCHEMA_VERSION,
@@ -110,6 +112,8 @@ describe("SupervisorAgent", () => {
         { provide: KpiService, useValue: kpiServiceMock },
         { provide: PrismaService, useValue: prismaServiceMock },
         { provide: SensitiveDataFilterService, useValue: { mask: (s: string) => s } },
+        { provide: TraceSummaryService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
+        { provide: AutonomyPolicyService, useValue: { getCompanyAutonomyLevel: jest.fn().mockResolvedValue("AUTONOMOUS") } },
       ],
     }).compile();
 
