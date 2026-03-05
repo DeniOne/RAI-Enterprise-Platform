@@ -75,7 +75,7 @@
 
 ### 4.1 Телеметрия и Сбор Данных (TraceSummary)
 - [x] **TraceSummary Data Contract** — расширение базового `traceId` полями: токены, время, версии промпта/модели/инструментов. | **AG-ARAI-F4-002** | DONE
-- [ ] **Evidence Tagging** — привязка каждого утверждения агента (claim) к источнику (DB row, tool result).
+- [x] **Evidence Tagging** — привязка каждого утверждения агента (claim) к источнику (DB row, tool result). | **AG-ARAI-F4-003** | DONE
 
 ### 4.2 Алгоритмы Качества и Честности (Truthfulness Engine)
 - [ ] **Claim Taxonomy & Weights v1** — типы утверждений (general/agro/finance/legal/safety) и веса (1/2/3), плюс критерии Verified/Unverified/Invalid.

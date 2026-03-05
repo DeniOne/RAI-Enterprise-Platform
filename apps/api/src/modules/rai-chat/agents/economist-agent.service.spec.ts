@@ -34,6 +34,8 @@ describe("EconomistAgent", () => {
     expect(result.explain).toMatch(/ROI|План|EBITDA|выручка|затрат/i);
     expect(result.explain).toContain("12"); // roi 0.12 -> 12%
     expect(result.toolCallsCount).toBe(1);
+    expect(result.evidence).toBeDefined();
+    expect(result.evidence.length).toBeGreaterThan(0);
     expect(financeRegistryMock.execute).toHaveBeenCalledWith(
       expect.any(String),
       { scope: { seasonId: "s1" } },
@@ -84,5 +86,6 @@ describe("EconomistAgent", () => {
     });
     expect(result.status).toBe("FAILED");
     expect(result.explain).toBe("No plan");
+    expect(result.evidence).toEqual([]);
   });
 });

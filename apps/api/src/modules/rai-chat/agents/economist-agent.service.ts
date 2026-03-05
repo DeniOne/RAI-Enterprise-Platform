@@ -99,6 +99,7 @@ export class EconomistAgent {
         explain,
         toolCallsCount: 1,
         traceId: input.traceId,
+        evidence: this.buildEvidence(input, toolName as FinanceToolName),
       };
     } catch (err) {
       return {
@@ -109,7 +110,29 @@ export class EconomistAgent {
         explain: String((err as Error).message),
         toolCallsCount: 1,
         traceId: input.traceId,
+        evidence: [],
       };
     }
+  }
+
+  private buildEvidence(
+    input: EconomistAgentInput,
+    toolName: FinanceToolName,
+  ): EvidenceReference[] {
+    const claimBase =
+      input.intent === "compute_plan_fact"
+        ? "Финансовый анализ плана выполнен на основе детерминированных расчётов ComputePlanFact."
+        : input.intent === "simulate_scenario"
+          ? "Сценарный анализ выполнен на основе детерминированных расчётов SimulateScenario."
+          : "Оценка риска выполнена на основе детерминированных расчётов ComputeRiskAssessment.";
+
+    return [
+      {
+        claim: claimBase,
+        sourceType: "TOOL_RESULT",
+        sourceId: toolName,
+        confidenceScore: 0.9,
+      },
+    ];
   }
 }

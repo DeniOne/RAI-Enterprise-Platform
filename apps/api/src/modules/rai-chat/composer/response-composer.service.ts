@@ -4,6 +4,7 @@ import {
   RaiChatResponseDto,
   RaiMemoryUsedDto,
   ExternalAdvisoryDto,
+  EvidenceReference,
 } from "../dto/rai-chat.dto";
 import {
   RaiSuggestedAction,
@@ -72,6 +73,8 @@ export class ResponseComposerService {
     }
     text = this.sensitiveDataFilter.mask(text);
 
+    const evidence = this.collectEvidence(executionResult);
+
     return {
       text,
       widgets: this.widgetBuilder.build({
@@ -91,6 +94,7 @@ export class ResponseComposerService {
       openUiToken: undefined,
       advisory: externalSignalResult.advisory,
       memoryUsed: this.buildMemoryUsed(profile, recall),
+      evidence: evidence.length > 0 ? evidence : undefined,
     };
   }
 
@@ -188,5 +192,20 @@ export class ResponseComposerService {
       })
       .filter((x): x is string => Boolean(x));
     return parts.length > 0 ? parts.join("\n") : null;
+  }
+
+  private collectEvidence(
+    executionResult: ExecutionResult,
+  ): EvidenceReference[] {
+    const acc: EvidenceReference[] = [];
+    for (const tool of executionResult.executedTools) {
+      const payload = tool.result as
+        | { evidence?: EvidenceReference[] }
+        | undefined;
+      if (payload?.evidence && Array.isArray(payload.evidence)) {
+        acc.push(...payload.evidence);
+      }
+    }
+    return acc;
   }
 }

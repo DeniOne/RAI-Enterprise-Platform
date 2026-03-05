@@ -61,8 +61,9 @@
   - Описание: Реализация TraceSummary Data Contract v1 (Prisma, DTO, сбор метрик токенов/времени/версий).
   - Статус: DONE. Модель Prisma `TraceSummary` (tenant-изолированная), Zod DTO `TraceSummaryDto`, сервис `TraceSummaryService`, интеграция в `SupervisorAgent`. tsc PASS, jest PASS. [APPROVED]
 
-- `interagency/prompts/2026-03-05_a_rai-f4-3_evidence-tagging.md` [ACTIVE]
+- `interagency/prompts/2026-03-05_a_rai-f4-3_evidence-tagging.md` [DONE]
   - Описание: Реализация MVP Evidence Tagging (привязка claim -> source).
+  - Статус: DONE. Тип `EvidenceReference` добавлен, агенты Economist/Knowledge расширены полем `evidence`, ResponseComposer агрегирует evidenceRefs. tsc PASS, jest PASS. [APPROVED]
 
 - `interagency/prompts/2026-03-05_a_rai-f4-4_truthfulness-engine.md` [ACTIVE]
   - Описание: Реализация Truthfulness Engine (Расчёт метрики BS% по таксономии и весам утверждений).

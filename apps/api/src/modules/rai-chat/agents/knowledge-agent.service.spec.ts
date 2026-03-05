@@ -35,6 +35,7 @@ describe("KnowledgeAgent", () => {
       { query: "норма высева рапса" },
       { companyId: "c1", traceId: "tr1" },
     );
+    expect(result.evidence.length).toBeGreaterThan(0);
   });
 
   it("при 0 hits возвращает explain «ничего не найдено»", async () => {
@@ -46,6 +47,7 @@ describe("KnowledgeAgent", () => {
     });
     expect(result.status).toBe("COMPLETED");
     expect(result.explain).toMatch(/ничего не найдено|Найдено совпадений: 0/i);
+    expect(result.evidence).toEqual([]);
   });
 
   it("при ошибке registry возвращает FAILED", async () => {

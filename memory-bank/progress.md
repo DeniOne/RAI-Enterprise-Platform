@@ -340,6 +340,6 @@
     *   Промт F3-3 (Конфиденциальность: SensitiveDataFilter, Red-Team Suite): `interagency/prompts/2026-03-05_a_rai-f3-3_privacy-red-team.md`.
     *   Промт F4-1 (Explainability Panel): `interagency/prompts/2026-03-05_a_rai-f4-1_explainability-panel.md` [APPROVED].
     *   Промт F4-2 (TraceSummary Data Contract v1): `interagency/prompts/2026-03-05_a_rai-f4-2_tracesummary-contract.md` [APPROVED].
-    *   Промт F4-3 (Evidence Tagging MVP): `interagency/prompts/2026-03-05_a_rai-f4-3_evidence-tagging.md` (добавлено в индекс).
+    *   Промт F4-3 (Evidence Tagging MVP): `interagency/prompts/2026-03-05_a_rai-f4-3_evidence-tagging.md` [APPROVED].
     *   Промт F4-4 (Truthfulness Engine BS%): `interagency/prompts/2026-03-05_a_rai-f4-4_truthfulness-engine.md` (добавлено в индекс).
 

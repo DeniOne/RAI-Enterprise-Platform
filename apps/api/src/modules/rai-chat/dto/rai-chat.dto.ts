@@ -280,4 +280,7 @@ export class RaiChatResponseDto {
 
   @IsOptional()
   memoryUsed?: RaiMemoryUsedDto[];
+
+  @IsOptional()
+  evidence?: EvidenceReference[];
 }

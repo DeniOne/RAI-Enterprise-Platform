@@ -52,6 +52,7 @@ export class KnowledgeAgent {
         explain: explainFromResult(d),
         toolCallsCount: 1,
         traceId: input.traceId,
+        evidence: this.buildEvidence(input, d),
       };
     } catch (err) {
       return {
@@ -62,7 +63,23 @@ export class KnowledgeAgent {
         explain: String((err as Error).message),
         toolCallsCount: 1,
         traceId: input.traceId,
+        evidence: [],
       };
     }
+  }
+
+  private buildEvidence(
+    input: KnowledgeAgentInput,
+    d: QueryKnowledgeResult,
+  ): EvidenceReference[] {
+    if (!d.hits || d.items.length === 0) {
+      return [];
+    }
+    return d.items.slice(0, 3).map((item, index) => ({
+      claim: `Ответ сформирован с опорой на фрагмент #${index + 1} из базы знаний по запросу "${input.query}".`,
+      sourceType: "DOC",
+      sourceId: `knowledge_item_${index + 1}`,
+      confidenceScore: item.score,
+    }));
   }
 }
