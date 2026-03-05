@@ -97,6 +97,11 @@
 - [ ] **Governance Counters** — счетчики Tenant Isolation Sentinel (кросс-тенант попытки) и SensitiveDataFilter.
 - [ ] **Incidents Feed & Auto-Runbooks** — лента инцидентов с привязкой к `traceId` и автоматические скрипты реагирования (напр. fallback или quarantine).
 
+### 4.6 Agent Registry & Management UI (Frontend)
+- [ ] **Agent Configurator** — интерфейс для создания, настройки и включения/выключения агентов (задание System Prompt, моделей, лимитов).
+- [ ] **Capabilities Mapping** — динамическое подключение доступных `ToolsRegistry` к агентам через UI.
+- [ ] **Tenant Agent Access** — управление доступом конкретных клиентов (tenant) к специфическим/новым агентам.
+
 ---
 
 ## 🏁 С чего начинаем (План на ближайший спринт)
