@@ -113,8 +113,9 @@
   - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-15_safe-replay-trace.md` [APPROVED]
   - Статус: DONE. replayMode в RaiToolActorContext; RaiToolsRegistry мокает WRITE при replayMode; SupervisorAgent options.replayMode, сохранение replayInput в AiAuditEntry; SafeReplayService + POST /rai/explainability/trace/:traceId/replay (ADMIN); tsc PASS, jest 16 (registry+safe-replay) PASS.
 
-- `interagency/prompts/2026-03-05_a_rai-f4-16_agent-configurator.md` [ACTIVE]
-  - Описание: Agent Configurator API (создание, настройка и привязка Capabilities к агентам через БД).
+- `interagency/prompts/2026-03-05_a_rai-f4-16_agent-configurator.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-16_agent-configurator.md` [APPROVED]
+  - Статус: DONE. AgentConfiguration (Prisma), AgentManagementService (getAgentConfigs, upsert, toggle), CRUD /rai/agents/config (ADMIN), unit 4/4; tsc PASS, jest explainability 42/42 PASS.
 
 - `interagency/prompts/2026-03-05_a_rai-f4-17_control-tower-ui.md` [ACTIVE]
   - Описание: Control Tower Observability Dashboard (frontend для SLO, затрат и топологии трейсов).

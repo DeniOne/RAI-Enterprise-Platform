@@ -91,6 +91,6 @@ import { SafeReplayService } from "./safe-replay.service";
     QueueMetricsService,
     SafeReplayService,
   ],
-  exports: [SafeReplayService],
+  exports: [SafeReplayService, PerformanceMetricsService],
 })
 export class RaiChatModule {}

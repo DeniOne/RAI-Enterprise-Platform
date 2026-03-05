@@ -9,6 +9,7 @@ import { ExplainabilityPanelService } from "./explainability-panel.service";
 import { CostAnalyticsService, CostHotspotsResponseDto } from "./cost-analytics.service";
 import { TraceTopologyService } from "./trace-topology.service";
 import { SafeReplayService, ReplayResultDto } from "../rai-chat/safe-replay.service";
+import { PerformanceMetricsService, AggregatedMetrics } from "../rai-chat/performance/performance-metrics.service";
 import { CostHotspotsQueryDto } from "./dto/cost-hotspots.dto";
 import { ExplainabilityTimelineResponseDto } from "./dto/explainability-timeline.dto";
 import { TraceForensicsResponseDto } from "./dto/trace-forensics.dto";
@@ -24,6 +25,7 @@ export class ExplainabilityPanelController {
     private readonly costAnalytics: CostAnalyticsService,
     private readonly traceTopology: TraceTopologyService,
     private readonly safeReplay: SafeReplayService,
+    private readonly performanceMetrics: PerformanceMetricsService,
   ) {}
 
   @Get("dashboard")

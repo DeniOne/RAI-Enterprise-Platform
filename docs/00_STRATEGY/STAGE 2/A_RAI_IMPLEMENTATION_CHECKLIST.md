@@ -103,9 +103,9 @@
 - [x] **Incidents Feed & Auto-Runbooks** — лента инцидентов с привязкой к `traceId` и автоматические скрипты реагирования (напр. fallback или quarantine). | **AG-ARAI-F4-011** | DONE
 
 ### 4.6 Agent Registry & Management UI (Frontend)
-- [ ] **Agent Configurator** — интерфейс для создания, настройки и включения/выключения агентов (задание System Prompt, моделей, лимитов). | **AG-ARAI-F4-016** | IN_PROGRESS
-- [ ] **Capabilities Mapping** — динамическое подключение доступных `ToolsRegistry` к агентам через UI.
-- [ ] **Tenant Agent Access** — управление доступом конкретных клиентов (tenant) к специфическим/новым агентам.
+- [x] **Agent Configurator** — интерфейс для создания, настройки и включения/выключения агентов (задание System Prompt, моделей, лимитов). | **AG-ARAI-F4-016** | DONE
+- [x] **Capabilities Mapping** — динамическое подключение доступных `ToolsRegistry` к агентам через UI. | **AG-ARAI-F4-016** | DONE
+- [x] **Tenant Agent Access** — управление доступом конкретных клиентов (tenant) к специфическим/новым агентам. | **AG-ARAI-F4-016** | DONE
 
 ---
 
