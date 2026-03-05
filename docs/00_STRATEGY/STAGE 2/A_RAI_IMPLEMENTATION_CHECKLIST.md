@@ -73,22 +73,23 @@
 
 **Цель:** Контроль инфраструктуры роя агентов, измерение честности ответов (BS%), управление автономностью (L1-L4) и обработка инцидентов.
 
-### 4.1 Swarm Dashboard & Control UI
-- [ ] **SLO / Error Budget** — мониторинг latency, error rate по агентам и клиентам (`companyId`).
-- [ ] **Queues / Backpressure** — мониторинг таймаутов, дедлайнов и ретраев.
-- [ ] **Cost Decomposition & Workload Hotspots** — отслеживание расхода бюджета (LLM vs DB) и самых "дорогих/долгих" сессий.
+### 4.1 Телеметрия и Сбор Данных (TraceSummary)
+- [ ] **TraceSummary Data Contract** — расширение базового `traceId` полями: токены, время, версии промпта/модели/инструментов.
+- [ ] **Evidence Tagging** — привязка каждого утверждения агента (claim) к источнику (DB row, tool result).
 
-### 4.2 Связь, Взаимодействие и Explainability
-- [ ] **Agent Connection Map** — топология падений (Retry/Failure topology) и подсветка критического пути по `traceId`.
-- [ ] **Explainability Explorer (Forensics)** — Decision Timeline разбора инцидентов (Router → fan-out → tools → composer + evidence refs). 
-
-### 4.3 Качество и Честность (Truthfulness)
+### 4.2 Алгоритмы Качества и Честности (Truthfulness Engine)
 - [ ] **Метрика "BS%" (Bullshit Percent)** — расчёт процента неподтверждённых (Unverified) или противоречивых (Invalid) утверждений по `traceId` с учётом весов (агрономия/риски весят больше).
-- [ ] **Quality & Evals Panel** — визуализация Acceptance Rate, Correction Rate, BS% и Evidence Coverage.
-- [ ] **Drift / Regression Alerts** — автоматические алерты при деградации BS% или Acceptance Rate после обновлений (prompt/model version).
-- [ ] **Политики автономности по BS%** — автоматический переход в режимы "tool-first" или "quarantine" при превышении порогов (<5% = автономность, >30% = карантин).
+- [ ] **Drift / Regression Alerts** — автоматические алерты при деградации BS% или Acceptance Rate после обновлений.
 
-### 4.4 Рейтинги, Баллы и Награды (Rewards)
+### 4.3 Swarm Dashboard & Control UI (Визуализация)
+- [ ] **SLO / Error Budget** — мониторинг latency, error rate по агентам и клиентам (`companyId`).
+- [ ] **Cost Decomposition & Workload Hotspots** — отслеживание расхода бюджета (LLM vs DB) и самых "дорогих/долгих" сессий.
+- [ ] **Quality & Evals Panel** — визуализация Acceptance Rate, Correction Rate, BS% и Evidence Coverage.
+- [ ] **Explainability Explorer (Forensics)** — Decision Timeline разбора инцидентов (Router → fan-out → tools → composer + evidence refs).
+- [ ] **Agent Connection Map** — топология падений (Retry/Failure topology) и подсветка критического пути по `traceId`.
+
+### 4.4 Управление Автономностью и Рейтинги
+- [ ] **Политики автономности по BS%** — автоматический переход в режимы "tool-first" или "quarantine" при превышении порогов (<5% = автономность, >30% = карантин).
 - [ ] **Agent Points** — начисление баллов агенту за accept и штрафов за BS% / invalid claims.
 - [ ] **Reputation Levels (L1-L4)** — автоматический перевод агентов по уровням автономности (Stable, Trusted, Autonomous) на базе окна `N` дней.
 - [ ] **Feedback Credibility Score** — вес пользовательского фидбэка в рейтингах зависит от корреляции с фактическими outcome'ами.
