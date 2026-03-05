@@ -7,6 +7,7 @@ import { MemoryCoordinatorService } from "./memory/memory-coordinator.service";
 import { AgentRuntimeService } from "./runtime/agent-runtime.service";
 import { ResponseComposerService } from "./composer/response-composer.service";
 import { ExternalSignalsService } from "./external-signals.service";
+import { Prisma } from "@rai/prisma-client";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { TraceSummaryService } from "./trace-summary.service";
 
@@ -108,15 +109,18 @@ export class SupervisorAgent {
       traceId,
       toolNames: executionResult.executedTools.map((t) => t.name),
       intentMethod: classification.method,
+      replayInput: options?.replayMode ? undefined : { message: request.message, workspaceContext: request.workspaceContext },
     });
 
-    this.memoryCoordinator.commitInteraction(
+    if (!options?.replayMode) {
+      this.memoryCoordinator.commitInteraction(
       request,
       response.text,
       actorContext,
       threadId,
       userId,
     );
+    }
 
     return response;
   }
@@ -126,7 +130,18 @@ export class SupervisorAgent {
     traceId: string;
     toolNames: string[];
     intentMethod: string;
+    replayInput?: { message: string; workspaceContext?: unknown };
   }): void {
+    const metadata: Prisma.InputJsonValue | undefined = params.replayInput
+      ? (JSON.parse(
+          JSON.stringify({
+            replayInput: {
+              message: params.replayInput.message,
+              workspaceContext: params.replayInput.workspaceContext ?? null,
+            },
+          }),
+        ) as Prisma.InputJsonValue)
+      : undefined;
     this.prisma.aiAuditEntry
       .create({
         data: {
@@ -136,6 +151,7 @@ export class SupervisorAgent {
           model: "deterministic",
           intentMethod: params.intentMethod,
           tokensUsed: 0,
+          metadata,
         },
       })
       .catch((err) =>

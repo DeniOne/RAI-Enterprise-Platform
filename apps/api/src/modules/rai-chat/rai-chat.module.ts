@@ -41,6 +41,7 @@ import { FeedbackCredibilityService } from "./feedback-credibility.service";
 import { IncidentOpsService } from "./incident-ops.service";
 import { PerformanceMetricsService } from "./performance/performance-metrics.service";
 import { QueueMetricsService } from "./performance/queue-metrics.service";
+import { SafeReplayService } from "./safe-replay.service";
 
 @Module({
   imports: [
@@ -88,6 +89,8 @@ import { QueueMetricsService } from "./performance/queue-metrics.service";
     IncidentOpsService,
     PerformanceMetricsService,
     QueueMetricsService,
+    SafeReplayService,
   ],
+  exports: [SafeReplayService],
 })
 export class RaiChatModule {}

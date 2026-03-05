@@ -86,7 +86,7 @@ export class RaiToolsRegistry implements OnModuleInit {
     const riskInfo = TOOL_RISK_MAP[name];
     if (actorContext.replayMode && riskInfo && riskInfo.riskLevel !== "READ") {
       this.logToolCall(name, actorContext, true, payload, "replay_mock");
-      return { replayed: true, mock: true } as RaiToolResultMap[TName];
+      return { replayed: true, mock: true } as unknown as RaiToolResultMap[TName];
     }
     let autonomyLevel: AutonomyLevel | null = null;
     if (riskInfo && riskInfo.riskLevel !== "READ") {

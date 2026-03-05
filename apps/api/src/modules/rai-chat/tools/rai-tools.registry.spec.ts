@@ -183,6 +183,36 @@ describe("RaiToolsRegistry", () => {
     );
   });
 
+  it("replayMode: WRITE tool returns mock and does not call handler", async () => {
+    const registry = createRegistry();
+    registry.onModuleInit();
+
+    const result = await registry.execute(
+      RaiToolName.GenerateTechMapDraft,
+      { fieldRef: "field-1", seasonRef: "season-1", crop: "rapeseed" },
+      { ...actorContext, replayMode: true },
+    );
+
+    expect(result).toEqual({ replayed: true, mock: true });
+    expect(techMapServiceMock.createDraftStub).not.toHaveBeenCalled();
+  });
+
+  it("replayMode: READ tool executes normally", async () => {
+    const registry = createRegistry();
+    registry.onModuleInit();
+
+    const result = await registry.execute(
+      RaiToolName.EchoMessage,
+      { message: "hello" },
+      { ...actorContext, replayMode: true },
+    );
+
+    expect(result).toEqual({
+      echoedMessage: "hello",
+      companyId: "company-1",
+    });
+  });
+
   it("WRITE tool GenerateTechMapDraft blocked by RiskPolicy, creates PendingAction", async () => {
     const registry = createRegistry();
     registry.onModuleInit();

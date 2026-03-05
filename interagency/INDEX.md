@@ -109,8 +109,9 @@
   - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-14_connection-map-critical-path.md` [APPROVED]
   - Статус: DONE. TraceTopologyService (граф из AiAuditEntry + TraceSummary, critical path = самая длинная ветка), GET /rai/explainability/trace/:traceId/topology, tenant isolation; tsc PASS, jest PASS.
 
-- `interagency/prompts/2026-03-05_a_rai-f4-15_safe-replay-trace.md` [ACTIVE]
-  - Описание: Safe Replay Trace (повтор прогона трейса в READ-ONLY режиме без сайд-эффектов).
+- `interagency/prompts/2026-03-05_a_rai-f4-15_safe-replay-trace.md` [READY_FOR_REVIEW]
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-15_safe-replay-trace.md` [READY_FOR_REVIEW]
+  - Статус: DONE. replayMode в RaiToolActorContext; RaiToolsRegistry мокает WRITE при replayMode; SupervisorAgent options.replayMode, сохранение replayInput в AiAuditEntry; SafeReplayService + POST /rai/explainability/trace/:traceId/replay (ADMIN); tsc PASS, jest 16 (registry+safe-replay) PASS.
 
 - `interagency/prompts/2026-03-05_a_rai-f4-16_agent-configurator.md` [ACTIVE]
   - Описание: Agent Configurator API (создание, настройка и привязка Capabilities к агентам через БД).

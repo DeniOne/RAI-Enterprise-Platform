@@ -149,6 +149,7 @@ model Company {
   userCredibilityProfiles UserCredibilityProfile[]
   systemIncidents         SystemIncident[]
   performanceMetrics      PerformanceMetric[]
+  agentConfigurations     AgentConfiguration[]
 
   // Level F: Institutional Oracle Standard
   levelFCertAudits     LevelFCertAudit[]
@@ -1539,6 +1540,25 @@ model PendingAction {
   @@index([status])
   @@index([expiresAt])
   @@map("pending_actions")
+}
+
+model AgentConfiguration {
+  id           String   @id @default(cuid())
+  name         String
+  role         String   // unique key: agronomist | economist | knowledge | monitoring
+  systemPrompt String   @db.Text
+  llmModel     String
+  maxTokens    Int
+  isActive     Boolean  @default(true)
+  companyId    String?
+  company      Company? @relation(fields: [companyId], references: [id])
+  capabilities Json     @default("[]") // ["AgroToolsRegistry", "SearchWeb"] or tool names
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([role, companyId], name: "agent_config_role_company_unique")
+  @@index([companyId])
+  @@map("agent_configurations")
 }
 
 model AgentScoreCard {

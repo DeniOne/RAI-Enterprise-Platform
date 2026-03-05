@@ -1,9 +1,14 @@
-import { BadRequestException, Controller, Get, Param, Query, UseGuards } from "@nestjs/common";
+import { BadRequestException, Controller, Get, Param, Post, Query, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
+import { RolesGuard } from "../../shared/auth/roles.guard";
+import { Roles } from "../../shared/auth/roles.decorator";
+import { UserRole } from "@rai/prisma-client";
+import { CurrentUser } from "../../shared/auth/current-user.decorator";
 import { TenantContextService } from "../../shared/tenant-context/tenant-context.service";
 import { ExplainabilityPanelService } from "./explainability-panel.service";
 import { CostAnalyticsService, CostHotspotsResponseDto } from "./cost-analytics.service";
 import { TraceTopologyService } from "./trace-topology.service";
+import { SafeReplayService, ReplayResultDto } from "../rai-chat/safe-replay.service";
 import { CostHotspotsQueryDto } from "./dto/cost-hotspots.dto";
 import { ExplainabilityTimelineResponseDto } from "./dto/explainability-timeline.dto";
 import { TraceForensicsResponseDto } from "./dto/trace-forensics.dto";
@@ -18,6 +23,7 @@ export class ExplainabilityPanelController {
     private readonly explainabilityPanel: ExplainabilityPanelService,
     private readonly costAnalytics: CostAnalyticsService,
     private readonly traceTopology: TraceTopologyService,
+    private readonly safeReplay: SafeReplayService,
   ) {}
 
   @Get("dashboard")
@@ -70,6 +76,22 @@ export class ExplainabilityPanelController {
     }
 
     return this.traceTopology.getTraceTopology(traceId, companyId);
+  }
+
+  @Post("trace/:traceId/replay")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  async replayTrace(
+    @Param("traceId") traceId: string,
+    @CurrentUser() user: { userId?: string },
+  ): Promise<ReplayResultDto> {
+    const companyId = this.tenantContext.getCompanyId();
+
+    if (!companyId) {
+      throw new BadRequestException("Security Context: companyId is missing");
+    }
+
+    return this.safeReplay.runReplay(traceId, companyId, user?.userId);
   }
 
   @Get("cost-hotspots")

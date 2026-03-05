@@ -90,7 +90,7 @@
 - [x] **Agent Connection Map** — топология падений (Retry/Failure topology) и подсветка критического пути по `traceId`. | **AG-ARAI-F4-014** | DONE
 - [x] **Queues & Backpressure Panel** — очереди, ретраи, timeouts, cancellations, deadline misses. | **AG-ARAI-F4-012** | DONE
 - [x] **Critical Path Analyzer** — вычисление и визуализация, где реально ушло время внутри trace (router/агенты/tools/compose). | **AG-ARAI-F4-014** | DONE
-- [ ] **Safe Replay Trace** — повтор прогона по traceId в READ-ONLY/mocked tools режиме, без сайд-эффектов. | **AG-ARAI-F4-015** | IN_PROGRESS
+- [x] **Safe Replay Trace** — повтор прогона по traceId в READ-ONLY/mocked tools режиме, без сайд-эффектов. | **AG-ARAI-F4-015** | DONE
 
 ### 4.4 Управление Автономностью и Рейтинги
 - [x] **Политики автономности по BS%** — автоматический переход в режимы "tool-first" или "quarantine" при превышении порогов (<5% = автономность, >30% = карантин). | **AG-ARAI-F4-007** | DONE
@@ -103,7 +103,7 @@
 - [x] **Incidents Feed & Auto-Runbooks** — лента инцидентов с привязкой к `traceId` и автоматические скрипты реагирования (напр. fallback или quarantine). | **AG-ARAI-F4-011** | DONE
 
 ### 4.6 Agent Registry & Management UI (Frontend)
-- [ ] **Agent Configurator** — интерфейс для создания, настройки и включения/выключения агентов (задание System Prompt, моделей, лимитов).
+- [ ] **Agent Configurator** — интерфейс для создания, настройки и включения/выключения агентов (задание System Prompt, моделей, лимитов). | **AG-ARAI-F4-016** | IN_PROGRESS
 - [ ] **Capabilities Mapping** — динамическое подключение доступных `ToolsRegistry` к агентам через UI.
 - [ ] **Tenant Agent Access** — управление доступом конкретных клиентов (tenant) к специфическим/новым агентам.
 
