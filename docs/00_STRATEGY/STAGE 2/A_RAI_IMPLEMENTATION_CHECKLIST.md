@@ -99,8 +99,8 @@
 - [x] **Feedback Credibility Score** — вес пользовательского фидбэка в рейтингах зависит от корреляции с фактическими outcome'ами. | **AG-ARAI-F4-009** | DONE
 
 ### 4.5 Security & Incident Ops
-- [ ] **Governance Counters** — счетчики Tenant Isolation Sentinel (кросс-тенант попытки) и SensitiveDataFilter. | **AG-ARAI-F4-011** | IN_PROGRESS
-- [ ] **Incidents Feed & Auto-Runbooks** — лента инцидентов с привязкой к `traceId` и автоматические скрипты реагирования (напр. fallback или quarantine). | **AG-ARAI-F4-011** | IN_PROGRESS
+- [x] **Governance Counters** — счетчики Tenant Isolation Sentinel (кросс-тенант попытки) и SensitiveDataFilter. | **AG-ARAI-F4-011** | DONE
+- [x] **Incidents Feed & Auto-Runbooks** — лента инцидентов с привязкой к `traceId` и автоматические скрипты реагирования (напр. fallback или quarantine). | **AG-ARAI-F4-011** | DONE
 
 ### 4.6 Agent Registry & Management UI (Frontend)
 - [ ] **Agent Configurator** — интерфейс для создания, настройки и включения/выключения агентов (задание System Prompt, моделей, лимитов).

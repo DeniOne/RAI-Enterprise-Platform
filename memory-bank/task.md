@@ -264,5 +264,5 @@
 - [x] Создан промт для Agent Points & Reputation: `interagency/prompts/2026-03-05_a_rai-f4-8_agent-points.md` `[APPROVED]`
 - [x] Создан промт для Feedback Credibility: `interagency/prompts/2026-03-05_a_rai-f4-9_feedback-credibility.md` `[APPROVED]`
 - [x] Создан промт для Explainability Explorer: `interagency/prompts/2026-03-05_a_rai-f4-10_explainability-explorer.md` `[APPROVED]`
-- [/] Создан промт для Incident Ops (Security): `interagency/prompts/2026-03-05_a_rai-f4-11_incident-ops.md`
+- [x] Создан промт для Incident Ops (Security): `interagency/prompts/2026-03-05_a_rai-f4-11_incident-ops.md` `[APPROVED]`
 - [/] Создан промт для Performance Metrics: `interagency/prompts/2026-03-05_a_rai-f4-12_performance-metrics.md`
