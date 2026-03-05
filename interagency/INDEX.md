@@ -73,8 +73,9 @@
   - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-5_truthfulness-panel-api.md` [APPROVED]
   - Статус: DONE. Реализован Truthfulness/Quality Panel API: эндпоинт `GET /rai/explainability/dashboard` с tenant isolation, агрегацией avg/p95 BS% и avg EvidenceCoverage по `TraceSummary`, топ-10 худших трейсов; tsc PASS, целевые jest-тесты PASS.
 
-- `interagency/prompts/2026-03-05_a_rai-f4-6_drift-alerts.md` [ACTIVE]
-  - Описание: Реализация Drift / Regression Alerts по метрике BS%.
+- `interagency/prompts/2026-03-05_a_rai-f4-6_drift-alerts.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-6_drift-alerts.md` [APPROVED]
+  - Статус: DONE. Реализован `QualityAlert` (Prisma + tenant isolation), сервис `QualityAlertingService` с окнами 24ч/7дней и cooldown, интеграция в `RaiChatModule`; tsc (apps/api) PASS, целевые jest-тесты PASS.
 
 - `interagency/prompts/2026-03-05_a_rai-f4-7_autonomy-policies.md` [ACTIVE]
   - Описание: Политики автономности по BS% (автоматический переход в tool-first / quarantine).

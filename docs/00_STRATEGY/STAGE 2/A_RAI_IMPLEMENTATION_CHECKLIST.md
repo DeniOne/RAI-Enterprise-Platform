@@ -80,7 +80,7 @@
 ### 4.2 Алгоритмы Качества и Честности (Truthfulness Engine)
 - [x] **Claim Taxonomy & Weights v1** — типы утверждений (general/agro/finance/legal/safety) и веса (1/2/3), плюс критерии Verified/Unverified/Invalid. | **AG-ARAI-F4-004** | DONE
 - [x] **Метрика "BS%" (Bullshit Percent)** — расчёт процента неподтверждённых (Unverified) или противоречивых (Invalid) утверждений по `traceId` с учётом весов (агрономия/риски весят больше). | **AG-ARAI-F4-004** | DONE
-- [ ] **Drift / Regression Alerts** — автоматические алерты при деградации BS% или Acceptance Rate после обновлений.
+- [x] **Drift / Regression Alerts** — автоматические алерты при деградации BS% или Acceptance Rate после обновлений. | **AG-ARAI-F4-006** | DONE
 
 ### 4.3 Swarm Dashboard & Control UI (Визуализация)
 - [ ] **SLO / Error Budget** — мониторинг latency, error rate по агентам и клиентам (`companyId`).

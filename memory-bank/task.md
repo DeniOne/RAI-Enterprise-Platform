@@ -259,5 +259,5 @@
 - [x] Создан промт для Evidence Tagging MVP: `interagency/prompts/2026-03-05_a_rai-f4-3_evidence-tagging.md` `[APPROVED]`
 - [x] Создан промт для Truthfulness Engine (Расчет BS%): `interagency/prompts/2026-03-05_a_rai-f4-4_truthfulness-engine.md` `[APPROVED]`
 - [x] Создан промт для Truthfulness Panel API: `interagency/prompts/2026-03-05_a_rai-f4-5_truthfulness-panel-api.md` `[APPROVED]`
-- [/] Создан промт для Drift Alerts: `interagency/prompts/2026-03-05_a_rai-f4-6_drift-alerts.md`
-
+- [x] Создан промт для Drift Alerts: `interagency/prompts/2026-03-05_a_rai-f4-6_drift-alerts.md` `[APPROVED]`
+- [x] Создан промт для Autonomy Policies: `interagency/prompts/2026-03-05_a_rai-f4-7_autonomy-policies.md`

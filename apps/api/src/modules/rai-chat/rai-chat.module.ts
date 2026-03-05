@@ -34,6 +34,7 @@ import { MonitoringAgent } from "./agents/monitoring-agent.service";
 import { MonitoringTriggerService } from "./monitoring-trigger.service";
 import { TraceSummaryService } from "./trace-summary.service";
 import { TruthfulnessEngineService } from "./truthfulness-engine.service";
+import { QualityAlertingService } from "./quality-alerting.service";
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { TruthfulnessEngineService } from "./truthfulness-engine.service";
     MonitoringTriggerService,
     TraceSummaryService,
     TruthfulnessEngineService,
+    QualityAlertingService,
   ],
 })
 export class RaiChatModule {}
