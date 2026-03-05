@@ -146,6 +146,7 @@ model Company {
   traceSummaries          TraceSummary[]
   qualityAlerts           QualityAlert[]
   agentReputations        AgentReputation[]
+  userCredibilityProfiles UserCredibilityProfile[]
 
   // Level F: Institutional Oracle Standard
   levelFCertAudits     LevelFCertAudit[]
@@ -1446,6 +1447,21 @@ model AgentReputation {
   @@unique([companyId, agentRole], name: "agent_reputation_company_role_unique")
   @@index([companyId])
   @@map("ai_agent_reputations")
+}
+
+model UserCredibilityProfile {
+  id                  String   @id @default(cuid())
+  userId              String
+  companyId           String
+  company             Company  @relation(fields: [companyId], references: [id])
+  credibilityScore    Float    @default(100)
+  totalFeedbacks      Int      @default(0)
+  invalidatedFeedbacks Int     @default(0)
+  updatedAt           DateTime @updatedAt
+
+  @@unique([companyId, userId], name: "user_credibility_company_user_unique")
+  @@index([companyId])
+  @@map("ai_user_credibility_profiles")
 }
 
 enum PendingActionStatus {

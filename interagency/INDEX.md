@@ -85,8 +85,9 @@
   - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-8_agent-points.md` [APPROVED]
   - Статус: DONE. Модель `AgentReputation`, enum `ReputationLevel` (STABLE/TRUSTED/AUTONOMOUS), `AgentReputationService` (award/deduct, пороги 100/500); tenant isolation; tsc PASS, jest 4/4 PASS. [APPROVED]
 
-- `interagency/prompts/2026-03-05_a_rai-f4-9_feedback-credibility.md` [ACTIVE]
-  - Описание: Feedback Credibility Score (вес фидбэка пользователя на базе корреляции с outcome'ами).
+- `interagency/prompts/2026-03-05_a_rai-f4-9_feedback-credibility.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-9_feedback-credibility.md` [APPROVED]
+  - Статус: DONE. Модель `UserCredibilityProfile`, сервис `FeedbackCredibilityService` (мультипликатор 0.1–1.0, invalidateFeedback), tenant isolation; tsc (apps/api) PASS, целевые jest-тесты PASS. [APPROVED]
 
 - `interagency/prompts/2026-03-05_a_rai-f4-10_explainability-explorer.md` [ACTIVE]
   - Описание: Explainability Explorer (Decision Timeline разбора инцидентов).
