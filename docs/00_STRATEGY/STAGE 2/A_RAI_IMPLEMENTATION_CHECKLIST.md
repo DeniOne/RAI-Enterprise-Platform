@@ -75,7 +75,7 @@
 
 ### 4.1 Swarm Dashboard (UI)
 - [ ] **Agent Telemetry View** — визуализация нагрузки, Latency, количества активных сессий по каждому агенту (Agronom, Economist, Controller).
-- [ ] **Token & Budget Monitor** — отслеживание расходов токенов по хозяйствам и агентам (в связке с BudgetController).
+- [ ] **Token & Budget Monitor** — отслеживание расходов токенов по клиентам (tenant/companyId) и агентам (в связке с BudgetController).
 - [ ] **Throughput & Stats** — конверсия принятия рекомендаций (Acceptance Rate), процент автоматических исправлений.
 
 ### 4.2 Связь и взаимодействие
