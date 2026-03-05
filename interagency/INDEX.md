@@ -53,8 +53,12 @@
   - Отчёт: `interagency/reports/2026-03-05_a_rai-f3-3_privacy-red-team.md` [APPROVED]
   - Статус: DONE. SensitiveDataFilterService (маскировка PII), Red-Team Suite (инъекции, bypass), интеграция фильтра в ResponseComposer. tsc PASS. 115 тестов PASS.
 
+- `interagency/prompts/2026-03-05_a_rai-f4-1_explainability-panel.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-1_explainability-panel.md` [APPROVED]
+  - Статус: DONE. ExplainabilityPanelService + DTO + API endpoint `/rai/explainability/trace/:traceId`, tenant isolation (Forbidden на чужой traceId), PII-маскирование через SensitiveDataFilterService, targeted jest PASS.
 
-
+- `interagency/prompts/2026-03-05_a_rai-f4-2_tracesummary-contract.md` [ACTIVE]
+  - Описание: Реализация TraceSummary Data Contract v1 (Prisma, DTO, сбор метрик токенов/времени/версий).
 
 - `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
   - План: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [ACCEPTED]

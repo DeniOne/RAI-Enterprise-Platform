@@ -55,6 +55,7 @@ import { InvariantMetricsModule } from "./shared/invariants/invariant-metrics.mo
 import { GatewayModule } from "./level-f/gateway/gateway.module";
 import { CryptoModule } from "./level-f/crypto/crypto.module";
 import { TenantContextModule } from "./shared/tenant-context/tenant-context.module";
+import { ExplainabilityPanelModule } from "./modules/explainability/explainability-panel.module";
 
 @Module({
   imports: [
@@ -134,6 +135,7 @@ import { TenantContextModule } from "./shared/tenant-context/tenant-context.modu
     ExplorationModule,
     RaiChatModule,
     AgroEventsModule,
+    ExplainabilityPanelModule,
     HttpResilienceModule,
     BullModule.forRoot({
       connection: {

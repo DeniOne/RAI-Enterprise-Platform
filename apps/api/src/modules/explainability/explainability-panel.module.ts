@@ -1,0 +1,15 @@
+import { Module } from "@nestjs/common";
+import { ExplainabilityPanelController } from "./explainability-panel.controller";
+import { ExplainabilityPanelService } from "./explainability-panel.service";
+import { PrismaModule } from "../../shared/prisma/prisma.module";
+import { AuthModule } from "../../shared/auth/auth.module";
+import { TenantContextModule } from "../../shared/tenant-context/tenant-context.module";
+import { SensitiveDataFilterService } from "../rai-chat/security/sensitive-data-filter.service";
+
+@Module({
+  imports: [AuthModule, TenantContextModule, PrismaModule],
+  controllers: [ExplainabilityPanelController],
+  providers: [ExplainabilityPanelService, SensitiveDataFilterService],
+})
+export class ExplainabilityPanelModule {}
+

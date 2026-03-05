@@ -27,7 +27,7 @@
 
 ### 1.4 Трассировка и аудит
 - [x] **TraceId Binding** — проброс ID сквозь все вызовы AI в `AuditLog`. | **AG-ARAI-F1-001** | DONE
-- [ ] **ExplainabilityPanel Service** — сервис для отображения "почему Рэй так решил" (Приоритет №1 в Фазе 4).
+- [x] **ExplainabilityPanel Service** — сервис для отображения "почему Рэй так решил" (Приоритет №1 в Фазе 4). | **AG-ARAI-F4-001** | DONE
 
 ---
 

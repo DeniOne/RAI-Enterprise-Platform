@@ -338,4 +338,6 @@
     *   Промт F3-1 (Мониторинг и автономность: MonitoringAgent, AutonomousExecutionContext): `interagency/prompts/2026-03-05_a_rai-f3-1_monitoring-agent.md`.
     *   Промт F3-2 (Политики рисков: RiskPolicyEngine, Two-Person Rule): `interagency/prompts/2026-03-05_a_rai-f3-2_risk-policy.md`.
     *   Промт F3-3 (Конфиденциальность: SensitiveDataFilter, Red-Team Suite): `interagency/prompts/2026-03-05_a_rai-f3-3_privacy-red-team.md`.
+    *   Промт F4-1 (Explainability Panel): `interagency/prompts/2026-03-05_a_rai-f4-1_explainability-panel.md` [APPROVED].
+    *   Промт F4-2 (TraceSummary Data Contract v1): `interagency/prompts/2026-03-05_a_rai-f4-2_tracesummary-contract.md` (добавлено в индекс).
 
