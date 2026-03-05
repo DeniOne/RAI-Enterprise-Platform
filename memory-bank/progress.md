@@ -348,4 +348,5 @@
     *   Промт F4-8 (Agent Points): `interagency/prompts/2026-03-05_a_rai-f4-8_agent-points.md` [APPROVED].
     *   Промт F4-9 (Feedback Credibility): `interagency/prompts/2026-03-05_a_rai-f4-9_feedback-credibility.md` [APPROVED].
     *   Промт F4-10 (Explainability Explorer): `interagency/prompts/2026-03-05_a_rai-f4-10_explainability-explorer.md` (добавлено в индекс).
+    *   Промт F4-11 (Incident Ops): `interagency/prompts/2026-03-05_a_rai-f4-11_incident-ops.md` (добавлено в индекс).
 

@@ -1365,15 +1365,16 @@ model AuditLog {
 }
 
 model AiAuditEntry {
-  id         String   @id @default(cuid())
-  traceId    String
-  companyId  String
-  company    Company @relation(fields: [companyId], references: [id])
-  toolNames  String[] // executed tool names
-  model      String   @default("deterministic")
-  intentMethod String? // regex | llm
-  tokensUsed Int      @default(0)
-  createdAt  DateTime @default(now())
+  id           String   @id @default(cuid())
+  traceId      String
+  companyId    String
+  company      Company  @relation(fields: [companyId], references: [id])
+  toolNames    String[] // executed tool names
+  model        String   @default("deterministic")
+  intentMethod String?  // regex | llm
+  tokensUsed   Int      @default(0)
+  metadata     Json?    // evidenceRefs and other agent payload (Evidence Tagging)
+  createdAt    DateTime @default(now())
 
   @@index([companyId])
   @@index([traceId])

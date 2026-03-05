@@ -14,6 +14,8 @@ describe("ExplainabilityPanelService", () => {
   const mockDecisionFindMany = jest.fn();
   const mockQuorumFindMany = jest.fn();
   const mockTraceSummaryFindMany = jest.fn();
+  const mockTraceSummaryFindFirst = jest.fn();
+  const mockQualityAlertFindMany = jest.fn();
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -38,6 +40,10 @@ describe("ExplainabilityPanelService", () => {
             },
             traceSummary: {
               findMany: mockTraceSummaryFindMany,
+              findFirst: mockTraceSummaryFindFirst,
+            },
+            qualityAlert: {
+              findMany: mockQualityAlertFindMany,
             },
           },
         },

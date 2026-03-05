@@ -92,6 +92,9 @@
 - `interagency/prompts/2026-03-05_a_rai-f4-10_explainability-explorer.md` [ACTIVE]
   - Описание: Explainability Explorer (Decision Timeline разбора инцидентов).
 
+- `interagency/prompts/2026-03-05_a_rai-f4-11_incident-ops.md` [ACTIVE]
+  - Описание: Security & Incident Ops (Governance Counters, лента инцидентов PII и кросс-tenant попыток).
+
 - `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
   - План: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [ACCEPTED]
   - Отчёт: `interagency/reports/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [APPROVED]

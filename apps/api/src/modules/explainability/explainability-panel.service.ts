@@ -5,6 +5,13 @@ import {
   ExplainabilityTimelineNodeDto,
   ExplainabilityTimelineResponseDto,
 } from "./dto/explainability-timeline.dto";
+import {
+  TraceForensicsResponseDto,
+  TraceForensicsSummaryDto,
+  TraceForensicsEntryDto,
+  TraceForensicsAlertDto,
+  EvidenceRefDto,
+} from "./dto/trace-forensics.dto";
 import { TruthfulnessDashboardResponseDto } from "./dto/truthfulness-dashboard.dto";
 
 @Injectable()
@@ -183,6 +190,102 @@ export class ExplainabilityPanelService {
       traceId,
       companyId: baseCompanyId,
       nodes,
+    };
+  }
+
+  async getTraceForensics(
+    traceId: string,
+    companyId: string,
+  ): Promise<TraceForensicsResponseDto> {
+    const auditEntries = await this.prisma.aiAuditEntry.findMany({
+      where: { traceId },
+      orderBy: { createdAt: "asc" },
+    });
+
+    if (!auditEntries.length) {
+      throw new NotFoundException("TRACE_NOT_FOUND");
+    }
+
+    const hasForeignTenant = auditEntries.some((e) => e.companyId !== companyId);
+    const ownEntry = auditEntries.find((e) => e.companyId === companyId);
+    if (!ownEntry && hasForeignTenant) {
+      throw new ForbiddenException("TRACE_TENANT_MISMATCH");
+    }
+    const baseCompanyId = ownEntry?.companyId ?? auditEntries[0].companyId;
+    if (baseCompanyId !== companyId) {
+      throw new ForbiddenException("TRACE_TENANT_MISMATCH");
+    }
+
+    const traceTime =
+      auditEntries[0].createdAt ?? new Date();
+    const windowStart = new Date(traceTime.getTime() - 12 * 60 * 60 * 1000);
+    const windowEnd = new Date(traceTime.getTime() + 12 * 60 * 60 * 1000);
+
+    const [summaryRow, qualityAlertsRows] = await Promise.all([
+      this.prisma.traceSummary.findFirst({
+        where: { traceId, companyId },
+      }),
+      this.prisma.qualityAlert.findMany({
+        where: {
+          companyId,
+          alertType: "BS_DRIFT",
+          createdAt: { gte: windowStart, lte: windowEnd },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
+
+    const summary: TraceForensicsSummaryDto | null = summaryRow
+      ? {
+          traceId: summaryRow.traceId,
+          companyId: summaryRow.companyId,
+          totalTokens: summaryRow.totalTokens,
+          promptTokens: summaryRow.promptTokens,
+          completionTokens: summaryRow.completionTokens,
+          durationMs: summaryRow.durationMs,
+          modelId: summaryRow.modelId,
+          promptVersion: summaryRow.promptVersion,
+          toolsVersion: summaryRow.toolsVersion,
+          policyId: summaryRow.policyId,
+          bsScorePct: summaryRow.bsScorePct ?? 0,
+          evidenceCoveragePct: summaryRow.evidenceCoveragePct ?? 0,
+          invalidClaimsPct: summaryRow.invalidClaimsPct ?? 0,
+          createdAt: summaryRow.createdAt.toISOString(),
+        }
+      : null;
+
+    const timeline: TraceForensicsEntryDto[] = auditEntries.map((e) => {
+      const meta = (e as { metadata?: { evidence?: EvidenceRefDto[] } }).metadata;
+      const evidenceRefs = Array.isArray(meta?.evidence) ? meta.evidence : [];
+      return {
+        id: e.id,
+        traceId: e.traceId,
+        companyId: e.companyId,
+        toolNames: e.toolNames ?? [],
+        model: e.model ?? "deterministic",
+        intentMethod: e.intentMethod ?? null,
+        tokensUsed: e.tokensUsed ?? 0,
+        createdAt: e.createdAt.toISOString(),
+        evidenceRefs,
+      };
+    });
+
+    const qualityAlerts: TraceForensicsAlertDto[] = qualityAlertsRows.map(
+      (a) => ({
+        id: a.id,
+        alertType: a.alertType,
+        severity: a.severity,
+        message: a.message,
+        createdAt: a.createdAt.toISOString(),
+      }),
+    );
+
+    return {
+      traceId,
+      companyId,
+      summary,
+      timeline,
+      qualityAlerts,
     };
   }
 
