@@ -87,7 +87,7 @@
 - [ ] **Cost Decomposition & Workload Hotspots** — отслеживание расхода бюджета (LLM vs DB) и самых "дорогих/долгих" сессий.
 - [x] **Quality & Evals Panel** — визуализация Acceptance Rate, Correction Rate, BS% и Evidence Coverage. | **AG-ARAI-F4-005** | DONE
 - [x] **Explainability Explorer (Forensics)** — Decision Timeline разбора инцидентов (Router → fan-out → tools → composer + evidence refs). | **AG-ARAI-F4-010** | DONE
-- [ ] **Agent Connection Map** — топология падений (Retry/Failure topology) и подсветка критического пути по `traceId`.
+- [x] **Agent Connection Map** — топология падений (Retry/Failure topology) и подсветка критического пути по `traceId`. | **AG-ARAI-F4-014** | DONE
 - [ ] **Queues & Backpressure Panel** — очереди, ретраи, timeouts, cancellations, deadline misses. | **AG-ARAI-F4-012** | IN_PROGRESS
 - [ ] **Critical Path Analyzer** — вычисление и визуализация, где реально ушло время внутри trace (router/агенты/tools/compose).
 - [ ] **Safe Replay Trace** — повтор прогона по traceId в READ-ONLY/mocked tools режиме, без сайд-эффектов.

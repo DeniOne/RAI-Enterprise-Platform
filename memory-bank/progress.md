@@ -354,3 +354,4 @@
 - [2026-03-05 18:16:48] Проверен отчёт 2026-03-05_a_rai-f4-11_incident-ops.md по IncidentOps. Заебись.
 - [2026-03-05 18:34:33] Проверен отчёт 2026-03-05_a_rai-f4-12_performance-metrics.md. Performance Metrics & SLO DONE.
 - [2026-03-05 18:48:28] Проверен отчёт 2026-03-05_a_rai-f4-13_cost-workload-hotspots.md. Cost Decomposition DONE.
+- [2026-03-05 18:57:10] Проверен отчёт 2026-03-05_a_rai-f4-14_connection-map-critical-path.md. Agent Connection Map DONE.

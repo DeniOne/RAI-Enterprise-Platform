@@ -105,9 +105,12 @@
   - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-13_cost-workload-hotspots.md` [APPROVED]
   - Статус: DONE. CostAnalyticsService (getTenantCost, getHotspots по TraceSummary), рейты $2.5/1M input, $10/1M output; GET /rai/explainability/cost-hotspots; tenant isolation; tsc PASS, jest 3/3 cost-analytics + explainability-panel PASS.
 
-- `interagency/prompts/2026-03-05_a_rai-f4-14_connection-map-critical-path.md` [READY_FOR_REVIEW]
-  - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-14_connection-map-critical-path.md` [READY_FOR_REVIEW]
-  - Статус: DONE. TraceTopologyService (граф из AiAuditEntry + TraceSummary, critical path = самая длинная ветка), GET /rai/explainability/trace/:traceId/topology, tenant isolation; tsc PASS, jest 4/4 trace-topology + 38 explainability PASS.
+- `interagency/prompts/2026-03-05_a_rai-f4-14_connection-map-critical-path.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-14_connection-map-critical-path.md` [APPROVED]
+  - Статус: DONE. TraceTopologyService (граф из AiAuditEntry + TraceSummary, critical path = самая длинная ветка), GET /rai/explainability/trace/:traceId/topology, tenant isolation; tsc PASS, jest PASS.
+
+- `interagency/prompts/2026-03-05_a_rai-f4-15_safe-replay-trace.md` [ACTIVE]
+  - Описание: Safe Replay Trace (повтор прогона трейса в READ-ONLY режиме без сайд-эффектов).
 
 - `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
   - План: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [ACCEPTED]
