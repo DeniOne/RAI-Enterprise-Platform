@@ -97,9 +97,12 @@
   - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-11_incident-ops.md` [APPROVED]
   - Статус: DONE. SystemIncident (Prisma), IncidentOpsService (logIncident, getIncidentsFeed), PII_LEAK в SensitiveDataFilterService при mask(..., context); jest 12/12 PASS. [APPROVED]
 
-- `interagency/prompts/2026-03-05_a_rai-f4-12_performance-metrics.md` [READY_FOR_REVIEW]
-  - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-12_performance-metrics.md` [READY_FOR_REVIEW]
+- `interagency/prompts/2026-03-05_a_rai-f4-12_performance-metrics.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-12_performance-metrics.md` [APPROVED]
   - Статус: DONE. PerformanceMetric (Prisma), PerformanceMetricsService (recordLatency, recordError, getAggregatedMetrics), QueueMetricsService (recordQueueSize, getQueueMetrics stub); tsc PASS, jest 150/150 rai-chat PASS.
+
+- `interagency/prompts/2026-03-05_a_rai-f4-13_cost-workload-hotspots.md` [ACTIVE]
+  - Описание: Cost Decomposition & Workload Hotspots (анализ стоимости сессий и долгих трейсов).
 
 - `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
   - План: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [ACCEPTED]
