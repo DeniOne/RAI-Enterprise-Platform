@@ -101,8 +101,9 @@
   - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-12_performance-metrics.md` [APPROVED]
   - Статус: DONE. PerformanceMetric (Prisma), PerformanceMetricsService (recordLatency, recordError, getAggregatedMetrics), QueueMetricsService (recordQueueSize, getQueueMetrics stub); tsc PASS, jest 150/150 rai-chat PASS.
 
-- `interagency/prompts/2026-03-05_a_rai-f4-13_cost-workload-hotspots.md` [ACTIVE]
-  - Описание: Cost Decomposition & Workload Hotspots (анализ стоимости сессий и долгих трейсов).
+- `interagency/prompts/2026-03-05_a_rai-f4-13_cost-workload-hotspots.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-13_cost-workload-hotspots.md` [APPROVED]
+  - Статус: DONE. CostAnalyticsService (getTenantCost, getHotspots по TraceSummary), рейты $2.5/1M input, $10/1M output; GET /rai/explainability/cost-hotspots; tenant isolation; tsc PASS, jest 3/3 cost-analytics + explainability-panel PASS.
 
 - `interagency/prompts/2026-03-05_a_rai-f4-14_connection-map-critical-path.md` [ACTIVE]
   - Описание: Agent Connection Map & Critical Path Analysis (топология трейса и графическое представление долгих участков).
