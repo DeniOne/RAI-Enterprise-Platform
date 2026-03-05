@@ -48,10 +48,10 @@
   - Отчёт: `interagency/reports/2026-03-05_a_rai-f3-2_risk-policy.md` [APPROVED]
   - Статус: DONE. PendingAction (Prisma), RiskPolicyEngineService, PendingActionService, интеграция в RaiToolsRegistry, Two-Person Rule (approveFirst/approveFinal). tsc PASS, все 112 тестов PASS (включая фикс `supervisor-agent.service.spec.ts` и `rai-chat.service.spec.ts`).
 
-- `interagency/prompts/2026-03-05_a_rai-f3-3_privacy-red-team.md` [READY_FOR_REVIEW]
-  - Decision-ID: AG-ARAI-F3-003
-  - Отчёт: `interagency/reports/2026-03-05_a_rai-f3-3_privacy-red-team.md`
-  - Статус: SensitiveDataFilterService (ИНН, р/с, email, телефон), ResponseComposer.mask(), eval/red-team (payloads + spec). tsc PASS, 115 тестов rai-chat PASS.
+- `interagency/prompts/2026-03-05_a_rai-f3-3_privacy-red-team.md` [DONE]
+  - Decision-ID: AG-ARAI-F3-003 [зарегистрирован в DECISIONS.log]
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-f3-3_privacy-red-team.md` [APPROVED]
+  - Статус: DONE. SensitiveDataFilterService (маскировка PII), Red-Team Suite (инъекции, bypass), интеграция фильтра в ResponseComposer. tsc PASS. 115 тестов PASS.
 
 
 
