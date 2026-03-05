@@ -81,11 +81,15 @@
   - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-7_autonomy-policies.md` [APPROVED]
   - Статус: DONE. `AutonomyLevel` (AUTONOMOUS/TOOL_FIRST/QUARANTINE), `AutonomyPolicyService.getCompanyAutonomyLevel(companyId)` по окну 24ч BS%; интеграция в `RaiToolsRegistry`: QUARANTINE блокирует мутации, TOOL_FIRST форсирует PendingAction; tsc PASS, jest 13/13 PASS. [APPROVED]
 
-- `interagency/prompts/2026-03-05_a_rai-f4-8_agent-points.md` [ACTIVE]
-  - Описание: Agent Points & Reputation Levels (баллы и карьерный рост агентов).
+- `interagency/prompts/2026-03-05_a_rai-f4-8_agent-points.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-8_agent-points.md` [APPROVED]
+  - Статус: DONE. Модель `AgentReputation`, enum `ReputationLevel` (STABLE/TRUSTED/AUTONOMOUS), `AgentReputationService` (award/deduct, пороги 100/500); tenant isolation; tsc PASS, jest 4/4 PASS. [APPROVED]
 
 - `interagency/prompts/2026-03-05_a_rai-f4-9_feedback-credibility.md` [ACTIVE]
   - Описание: Feedback Credibility Score (вес фидбэка пользователя на базе корреляции с outcome'ами).
+
+- `interagency/prompts/2026-03-05_a_rai-f4-10_explainability-explorer.md` [ACTIVE]
+  - Описание: Explainability Explorer (Decision Timeline разбора инцидентов).
 
 - `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
   - План: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [ACCEPTED]

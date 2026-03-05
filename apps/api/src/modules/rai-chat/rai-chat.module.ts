@@ -36,6 +36,7 @@ import { TraceSummaryService } from "./trace-summary.service";
 import { TruthfulnessEngineService } from "./truthfulness-engine.service";
 import { QualityAlertingService } from "./quality-alerting.service";
 import { AutonomyPolicyService } from "./autonomy-policy.service";
+import { AgentReputationService } from "./agent-reputation.service";
 
 @Module({
   imports: [
@@ -78,6 +79,7 @@ import { AutonomyPolicyService } from "./autonomy-policy.service";
     TruthfulnessEngineService,
     QualityAlertingService,
     AutonomyPolicyService,
+    AgentReputationService,
   ],
 })
 export class RaiChatModule {}

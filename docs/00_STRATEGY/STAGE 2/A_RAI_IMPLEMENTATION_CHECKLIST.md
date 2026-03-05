@@ -86,7 +86,7 @@
 - [ ] **SLO / Error Budget** — мониторинг latency, error rate по агентам и клиентам (`companyId`).
 - [ ] **Cost Decomposition & Workload Hotspots** — отслеживание расхода бюджета (LLM vs DB) и самых "дорогих/долгих" сессий.
 - [x] **Quality & Evals Panel** — визуализация Acceptance Rate, Correction Rate, BS% и Evidence Coverage. | **AG-ARAI-F4-005** | DONE
-- [ ] **Explainability Explorer (Forensics)** — Decision Timeline разбора инцидентов (Router → fan-out → tools → composer + evidence refs).
+- [ ] **Explainability Explorer (Forensics)** — Decision Timeline разбора инцидентов (Router → fan-out → tools → composer + evidence refs). | **AG-ARAI-F4-010** | IN_PROGRESS
 - [ ] **Agent Connection Map** — топология падений (Retry/Failure topology) и подсветка критического пути по `traceId`.
 - [ ] **Queues & Backpressure Panel** — очереди, ретраи, timeouts, cancellations, deadline misses.
 - [ ] **Critical Path Analyzer** — вычисление и визуализация, где реально ушло время внутри trace (router/агенты/tools/compose).
@@ -94,8 +94,8 @@
 
 ### 4.4 Управление Автономностью и Рейтинги
 - [x] **Политики автономности по BS%** — автоматический переход в режимы "tool-first" или "quarantine" при превышении порогов (<5% = автономность, >30% = карантин). | **AG-ARAI-F4-007** | DONE
-- [ ] **Agent Points** — начисление баллов агенту за accept и штрафов за BS% / invalid claims. | **AG-ARAI-F4-008** | IN_PROGRESS
-- [ ] **Reputation Levels (L1-L4)** — автоматический перевод агентов по уровням автономности (Stable, Trusted, Autonomous) на базе окна `N` дней. | **AG-ARAI-F4-008** | IN_PROGRESS
+- [x] **Agent Points** — начисление баллов агенту за accept и штрафов за BS% / invalid claims. | **AG-ARAI-F4-008** | DONE
+- [x] **Reputation Levels (L1-L4)** — автоматический перевод агентов по уровням автономности (Stable, Trusted, Autonomous) на базе окна `N` дней. | **AG-ARAI-F4-008** | DONE
 - [ ] **Feedback Credibility Score** — вес пользовательского фидбэка в рейтингах зависит от корреляции с фактическими outcome'ами. | **AG-ARAI-F4-009** | IN_PROGRESS
 
 ### 4.5 Security & Incident Ops

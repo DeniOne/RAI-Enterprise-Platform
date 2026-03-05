@@ -41,7 +41,9 @@ describe("TraceSummaryService", () => {
     });
 
     expect(prisma.traceSummary.upsert).toHaveBeenCalledWith({
-      where: { traceId_companyId: { traceId: "tr_1", companyId: "c_1" } },
+      where: {
+        trace_summary_trace_company_unique: { traceId: "tr_1", companyId: "c_1" },
+      },
       create: {
         traceId: "tr_1",
         companyId: "c_1",
@@ -90,7 +92,9 @@ describe("TraceSummaryService", () => {
     });
 
     expect(prisma.traceSummary.upsert).toHaveBeenCalledWith({
-      where: { traceId_companyId: { traceId: "tr_2", companyId: "c_2" } },
+      where: {
+        trace_summary_trace_company_unique: { traceId: "tr_2", companyId: "c_2" },
+      },
       create: {
         traceId: "tr_2",
         companyId: "c_2",

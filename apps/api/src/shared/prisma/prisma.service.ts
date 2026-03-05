@@ -119,6 +119,7 @@ export class PrismaService
     "AgroEventDraft",
     "AgroEventCommitted",
     "QualityAlert",
+    "AgentReputation",
   ]);
 
   // Explicit non-tenant/system models. Any model outside both sets is treated as unknown.

@@ -345,6 +345,7 @@
     *   Промт F4-5 (Truthfulness Panel API): `interagency/prompts/2026-03-05_a_rai-f4-5_truthfulness-panel-api.md` [APPROVED].
     *   Промт F4-6 (Drift Alerts): `interagency/prompts/2026-03-05_a_rai-f4-6_drift-alerts.md` [APPROVED].
     *   Промт F4-7 (Autonomy Policies): `interagency/prompts/2026-03-05_a_rai-f4-7_autonomy-policies.md` [APPROVED].
-    *   Промт F4-8 (Agent Points): `interagency/prompts/2026-03-05_a_rai-f4-8_agent-points.md` [ACTIVE].
+    *   Промт F4-8 (Agent Points): `interagency/prompts/2026-03-05_a_rai-f4-8_agent-points.md` [APPROVED].
     *   Промт F4-9 (Feedback Credibility): `interagency/prompts/2026-03-05_a_rai-f4-9_feedback-credibility.md` [ACTIVE].
+    *   Промт F4-10 (Explainability Explorer): `interagency/prompts/2026-03-05_a_rai-f4-10_explainability-explorer.md` (добавлено в индекс).
 

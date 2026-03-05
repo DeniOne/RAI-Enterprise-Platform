@@ -43,7 +43,7 @@ export class TraceSummaryService {
     await this.prisma.traceSummary
       .upsert({
         where: {
-          traceId_companyId: {
+          trace_summary_trace_company_unique: {
             traceId,
             companyId,
           },

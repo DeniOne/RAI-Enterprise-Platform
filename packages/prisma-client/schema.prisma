@@ -145,6 +145,7 @@ model Company {
   pendingActions          PendingAction[]
   traceSummaries          TraceSummary[]
   qualityAlerts           QualityAlert[]
+  agentReputations        AgentReputation[]
 
   // Level F: Institutional Oracle Standard
   levelFCertAudits     LevelFCertAudit[]
@@ -1425,6 +1426,26 @@ model QualityAlert {
   @@index([companyId])
   @@index([createdAt])
   @@map("ai_quality_alerts")
+}
+
+enum ReputationLevel {
+  STABLE
+  TRUSTED
+  AUTONOMOUS
+}
+
+model AgentReputation {
+  id               String          @id @default(cuid())
+  companyId        String
+  company          Company         @relation(fields: [companyId], references: [id])
+  agentRole        String
+  points           Int             @default(0)
+  reputationLevel  ReputationLevel @default(STABLE)
+  updatedAt        DateTime        @updatedAt
+
+  @@unique([companyId, agentRole], name: "agent_reputation_company_role_unique")
+  @@index([companyId])
+  @@map("ai_agent_reputations")
 }
 
 enum PendingActionStatus {
