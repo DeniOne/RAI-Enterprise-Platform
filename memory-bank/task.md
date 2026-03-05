@@ -261,3 +261,4 @@
 - [x] Создан промт для Truthfulness Panel API: `interagency/prompts/2026-03-05_a_rai-f4-5_truthfulness-panel-api.md` `[APPROVED]`
 - [x] Создан промт для Drift Alerts: `interagency/prompts/2026-03-05_a_rai-f4-6_drift-alerts.md` `[APPROVED]`
 - [x] Создан промт для Autonomy Policies: `interagency/prompts/2026-03-05_a_rai-f4-7_autonomy-policies.md`
+- [/] Создан промт для Agent Points & Reputation: `interagency/prompts/2026-03-05_a_rai-f4-8_agent-points.md`

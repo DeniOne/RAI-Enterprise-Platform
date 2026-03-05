@@ -80,6 +80,9 @@
 - `interagency/prompts/2026-03-05_a_rai-f4-7_autonomy-policies.md` [ACTIVE]
   - Описание: Политики автономности по BS% (автоматический переход в tool-first / quarantine).
 
+- `interagency/prompts/2026-03-05_a_rai-f4-8_agent-points.md` [ACTIVE]
+  - Описание: Agent Points & Reputation Levels (баллы и карьерный рост агентов).
+
 - `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
   - План: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [ACCEPTED]
   - Отчёт: `interagency/reports/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [APPROVED]
