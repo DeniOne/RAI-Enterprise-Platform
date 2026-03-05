@@ -81,7 +81,10 @@ export default function ControlTowerPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 p-6 text-zinc-300">
-      <h1 className="text-2xl font-semibold text-white">Control Tower</h1>
+      <div className="flex items-center gap-4">
+        <h1 className="text-2xl font-semibold text-white">Control Tower</h1>
+        <Link href="/control-tower/agents" className="text-sm text-sky-400 hover:underline">Реестр агентов</Link>
+      </div>
       <p className="mt-1 text-sm text-zinc-500">SLO, стоимость, топология роя агентов</p>
 
       <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">

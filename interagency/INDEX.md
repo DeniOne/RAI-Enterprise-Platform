@@ -121,8 +121,10 @@
   - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-17_control-tower-ui.md` [APPROVED]
   - Статус: DONE. API GET /rai/explainability/performance; дашборд /control-tower (SLO, Cost, Quality, худшие трейсы); /control-tower/trace/[traceId] (Forensics + Topology Map, кнопка Replay); api.explainability в lib/api; tsc PASS (web build падает на существующих страницах).
 
-- `interagency/prompts/2026-03-05_a_rai-f4-18_agent-management-ui.md` [ACTIVE]
+- `interagency/prompts/2026-03-05_a_rai-f4-18_agent-management-ui.md` [DONE]
   - Описание: Agent Registry & Configurator UI (frontend для настройки агентов и доступов).
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-18_agent-management-ui.md` [APPROVED]
+  - Статус: DONE. Реестр агентов (глобальные + tenant overrides), редактор (systemPrompt, модель, capabilities, scope), toggle isActive, кнопка «Добавить переопределение». api.agents в lib/api. tsc (api + web) PASS, jest explainability/agent-management 42 PASS.
 
 - `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
   - План: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [ACCEPTED]

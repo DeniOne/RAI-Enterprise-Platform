@@ -271,5 +271,5 @@
 - [x] Создан промт для Safe Replay Trace: `interagency/prompts/2026-03-05_a_rai-f4-15_safe-replay-trace.md` `[APPROVED]`
 - [x] Создан промт для Agent Configurator: `interagency/prompts/2026-03-05_a_rai-f4-16_agent-configurator.md` `[APPROVED]`
 - [x] Создан промт для Control Tower UI: `interagency/prompts/2026-03-05_a_rai-f4-17_control-tower-ui.md` `[APPROVED]`
-- [/] Создан промт для Agent Registry UI: `interagency/prompts/2026-03-05_a_rai-f4-18_agent-management-ui.md`
-- [/] Создан промт для Governance & Security UI (Phase 4.19)
+- [x] Создан промт для Agent Registry UI: `interagency/prompts/2026-03-05_a_rai-f4-18_agent-management-ui.md` `[APPROVED]`
+- [/] Создан промт для Governance & Security UI (Phase 4.19): `interagency/prompts/2026-03-05_a_rai-f4-19_governance-security-ui.md`

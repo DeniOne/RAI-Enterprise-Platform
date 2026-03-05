@@ -358,3 +358,4 @@
 - [2026-03-05 19:17:34] Проверен отчёт 2026-03-05_a_rai-f4-15_safe-replay-trace.md. Safe Replay Trace DONE.
 - [2026-03-05 19:24:27] Проверен отчёт 2026-03-05_a_rai-f4-16_agent-configurator.md. Agent Configurator API DONE.
 - [2026-03-05 19:43:27] Проверен отчет 2026-03-05_a_rai-f4-17_control-tower-ui.md. Control Tower UI DONE.
+- [2026-03-05 19:51:12] Запущены API (port 4000) и Web (port 3000) серверы.
