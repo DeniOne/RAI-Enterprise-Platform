@@ -76,6 +76,9 @@
 - `interagency/prompts/2026-03-05_a_rai-f4-6_drift-alerts.md` [ACTIVE]
   - Описание: Реализация Drift / Regression Alerts по метрике BS%.
 
+- `interagency/prompts/2026-03-05_a_rai-f4-7_autonomy-policies.md` [ACTIVE]
+  - Описание: Политики автономности по BS% (автоматический переход в tool-first / quarantine).
+
 - `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
   - План: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [ACCEPTED]
   - Отчёт: `interagency/reports/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [APPROVED]
