@@ -9,6 +9,10 @@ import { RaiToolName } from "./rai-tools.types";
 import { RiskPolicyEngineService } from "../security/risk-policy-engine.service";
 import { PendingActionService } from "../security/pending-action.service";
 import { RiskPolicyBlockedError } from "../security/risk-policy-blocked.error";
+import {
+  AutonomyLevel,
+  AutonomyPolicyService,
+} from "../autonomy-policy.service";
 
 describe("RaiToolsRegistry", () => {
   const actorContext = {
@@ -50,6 +54,11 @@ describe("RaiToolsRegistry", () => {
 
   const riskPolicyEngine = new RiskPolicyEngineService();
   const pendingActionService = new PendingActionService(prismaMock as any);
+  const autonomyPolicy = {
+    getCompanyAutonomyLevel: jest
+      .fn()
+      .mockResolvedValue(AutonomyLevel.AUTONOMOUS),
+  } as unknown as AutonomyPolicyService;
 
   const createRegistry = () =>
     new RaiToolsRegistry(
@@ -61,6 +70,7 @@ describe("RaiToolsRegistry", () => {
       knowledgeToolsRegistry,
       riskPolicyEngine,
       pendingActionService,
+      autonomyPolicy,
     );
 
   beforeEach(() => {
@@ -305,5 +315,47 @@ describe("RaiToolsRegistry", () => {
         riskLevel: "WRITE",
       }),
     });
+  });
+
+  it("QUARANTINE level блокирует мутирующие тулзы до RiskPolicy", async () => {
+    const registry = createRegistry();
+    registry.onModuleInit();
+    (autonomyPolicy.getCompanyAutonomyLevel as jest.Mock).mockResolvedValueOnce(
+      AutonomyLevel.QUARANTINE,
+    );
+
+    await expect(
+      registry.execute(
+        RaiToolName.GenerateTechMapDraft,
+        { fieldRef: "field-1", seasonRef: "season-1", crop: "rapeseed" },
+        actorContext,
+      ),
+    ).rejects.toBeInstanceOf(RiskPolicyBlockedError);
+
+    expect(techMapServiceMock.createDraftStub).not.toHaveBeenCalled();
+    expect(pendingActionCreateMock).not.toHaveBeenCalled();
+  });
+
+  it("TOOL_FIRST форсирует PendingAction даже при ALLOWED из RiskPolicy", async () => {
+    const registry = createRegistry();
+    registry.onModuleInit();
+    (autonomyPolicy.getCompanyAutonomyLevel as jest.Mock).mockResolvedValueOnce(
+      AutonomyLevel.TOOL_FIRST,
+    );
+    jest
+      .spyOn(riskPolicyEngine, "evaluate")
+      .mockReturnValue("ALLOWED" as any);
+    pendingActionCreateMock.mockResolvedValueOnce({ id: "pa-auto" });
+
+    await expect(
+      registry.execute(
+        RaiToolName.GenerateTechMapDraft,
+        { fieldRef: "field-1", seasonRef: "season-1", crop: "rapeseed" },
+        actorContext,
+      ),
+    ).rejects.toBeInstanceOf(RiskPolicyBlockedError);
+
+    expect(pendingActionCreateMock).toHaveBeenCalled();
+    expect(techMapServiceMock.createDraftStub).not.toHaveBeenCalled();
   });
 });

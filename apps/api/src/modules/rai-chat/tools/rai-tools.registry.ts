@@ -25,6 +25,10 @@ import { KnowledgeToolsRegistry } from "./knowledge-tools.registry";
 import { RiskPolicyEngineService } from "../security/risk-policy-engine.service";
 import { PendingActionService } from "../security/pending-action.service";
 import { RiskPolicyBlockedError } from "../security/risk-policy-blocked.error";
+import {
+  AutonomyLevel,
+  AutonomyPolicyService,
+} from "../autonomy-policy.service";
 
 type ToolHandler<TName extends RaiToolName> = (
   payload: RaiToolPayloadMap[TName],
@@ -51,6 +55,7 @@ export class RaiToolsRegistry implements OnModuleInit {
     private readonly knowledgeToolsRegistry: KnowledgeToolsRegistry,
     private readonly riskPolicyEngine: RiskPolicyEngineService,
     private readonly pendingActionService: PendingActionService,
+    private readonly autonomyPolicy: AutonomyPolicyService,
   ) {}
 
   onModuleInit() {
@@ -79,13 +84,38 @@ export class RaiToolsRegistry implements OnModuleInit {
     actorContext: RaiToolActorContext,
   ): Promise<RaiToolResultMap[TName]> {
     const riskInfo = TOOL_RISK_MAP[name];
+    let autonomyLevel: AutonomyLevel | null = null;
+    if (riskInfo && riskInfo.riskLevel !== "READ") {
+      autonomyLevel = await this.autonomyPolicy.getCompanyAutonomyLevel(
+        actorContext.companyId,
+      );
+      if (autonomyLevel === AutonomyLevel.QUARANTINE) {
+        this.logToolCall(
+          name,
+          actorContext,
+          false,
+          payload,
+          "autonomy_quarantine_block",
+        );
+        throw new RiskPolicyBlockedError(
+          "AUTONOMY_QUARANTINE",
+          name,
+          "Выполнение инструмента заблокировано политикой автономности (QUARANTINE: только чтение, мутации запрещены).",
+        );
+      }
+    }
     if (riskInfo) {
       const verdict = this.riskPolicyEngine.evaluate(
         riskInfo.riskLevel,
         riskInfo.domain,
         actorContext.userRole as UserRole | undefined,
       );
-      if (this.pendingActionService.requiresConfirmation(verdict)) {
+      const requiresByRisk =
+        this.pendingActionService.requiresConfirmation(verdict);
+      const requiresByAutonomy =
+        autonomyLevel === AutonomyLevel.TOOL_FIRST &&
+        riskInfo.riskLevel !== "READ";
+      if (requiresByRisk || requiresByAutonomy) {
         const action = await this.pendingActionService.create({
           companyId: actorContext.companyId,
           traceId: actorContext.traceId,
@@ -94,11 +124,19 @@ export class RaiToolsRegistry implements OnModuleInit {
           riskLevel: riskInfo.riskLevel,
           requestedByUserId: actorContext.userId,
         });
-        this.logToolCall(name, actorContext, false, payload, "risk_policy_blocked");
+        this.logToolCall(
+          name,
+          actorContext,
+          false,
+          payload,
+          requiresByRisk ? "risk_policy_blocked" : "autonomy_tool_first_block",
+        );
         throw new RiskPolicyBlockedError(
           action.id,
           name,
-          `Выполнение инструмента заблокировано RiskPolicy. Создан PendingAction #${action.id}. Ожидается подтверждение человека.`,
+          `Выполнение инструмента заблокировано ${
+            requiresByRisk ? "RiskPolicy" : "AutonomyPolicy (TOOL_FIRST)"
+          }. Создан PendingAction #${action.id}. Ожидается подтверждение человека.`,
         );
       }
     }

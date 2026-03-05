@@ -153,5 +153,5 @@ cd apps/api && pnpm test -- --runTestsByPath src/modules/rai-chat/quality-alerti
   - Tenant isolation обеспечивается уже существующим `PrismaService` (Transparent Proxy + tenant middleware) и включением `QualityAlert` в `tenantScopedModels`.
 - Вывод:
   - Механизм Drift / Regression Alerts по BS% реализован, интегрирован с текущей tenant-инфраструктурой и корректно отрабатывает детект резкого роста BS% и подавление дубликатов через cooldown.
-  - Готов к дальнейшей интеграции в Monitoring/Policy-слой (вызов `QualityAlertingService.evaluateBsDrift` из cron/MonitoringAgent).
+  - Операционный цикл замкнут: часовой cron в `MonitoringTriggerService.hourlyCycle` вызывает `runBsDriftChecks`, который в системном tenant scope проходит по всем компаниям с недавними `TraceSummary` и запускает `QualityAlertingService.evaluateBsDrift` для каждой.
 

@@ -93,10 +93,10 @@
 - [ ] **Safe Replay Trace** — повтор прогона по traceId в READ-ONLY/mocked tools режиме, без сайд-эффектов.
 
 ### 4.4 Управление Автономностью и Рейтинги
-- [ ] **Политики автономности по BS%** — автоматический переход в режимы "tool-first" или "quarantine" при превышении порогов (<5% = автономность, >30% = карантин). | **AG-ARAI-F4-007** | IN_PROGRESS
+- [x] **Политики автономности по BS%** — автоматический переход в режимы "tool-first" или "quarantine" при превышении порогов (<5% = автономность, >30% = карантин). | **AG-ARAI-F4-007** | DONE
 - [ ] **Agent Points** — начисление баллов агенту за accept и штрафов за BS% / invalid claims. | **AG-ARAI-F4-008** | IN_PROGRESS
 - [ ] **Reputation Levels (L1-L4)** — автоматический перевод агентов по уровням автономности (Stable, Trusted, Autonomous) на базе окна `N` дней. | **AG-ARAI-F4-008** | IN_PROGRESS
-- [ ] **Feedback Credibility Score** — вес пользовательского фидбэка в рейтингах зависит от корреляции с фактическими outcome'ами.
+- [ ] **Feedback Credibility Score** — вес пользовательского фидбэка в рейтингах зависит от корреляции с фактическими outcome'ами. | **AG-ARAI-F4-009** | IN_PROGRESS
 
 ### 4.5 Security & Incident Ops
 - [ ] **Governance Counters** — счетчики Tenant Isolation Sentinel (кросс-тенант попытки) и SensitiveDataFilter.

@@ -77,11 +77,15 @@
   - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-6_drift-alerts.md` [APPROVED]
   - Статус: DONE. Реализован `QualityAlert` (Prisma + tenant isolation), сервис `QualityAlertingService` с окнами 24ч/7дней и cooldown, интеграция в `RaiChatModule`; tsc (apps/api) PASS, целевые jest-тесты PASS.
 
-- `interagency/prompts/2026-03-05_a_rai-f4-7_autonomy-policies.md` [ACTIVE]
-  - Описание: Политики автономности по BS% (автоматический переход в tool-first / quarantine).
+- `interagency/prompts/2026-03-05_a_rai-f4-7_autonomy-policies.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-7_autonomy-policies.md` [APPROVED]
+  - Статус: DONE. `AutonomyLevel` (AUTONOMOUS/TOOL_FIRST/QUARANTINE), `AutonomyPolicyService.getCompanyAutonomyLevel(companyId)` по окну 24ч BS%; интеграция в `RaiToolsRegistry`: QUARANTINE блокирует мутации, TOOL_FIRST форсирует PendingAction; tsc PASS, jest 13/13 PASS. [APPROVED]
 
 - `interagency/prompts/2026-03-05_a_rai-f4-8_agent-points.md` [ACTIVE]
   - Описание: Agent Points & Reputation Levels (баллы и карьерный рост агентов).
+
+- `interagency/prompts/2026-03-05_a_rai-f4-9_feedback-credibility.md` [ACTIVE]
+  - Описание: Feedback Credibility Score (вес фидбэка пользователя на базе корреляции с outcome'ами).
 
 - `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
   - План: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [ACCEPTED]

@@ -260,5 +260,6 @@
 - [x] Создан промт для Truthfulness Engine (Расчет BS%): `interagency/prompts/2026-03-05_a_rai-f4-4_truthfulness-engine.md` `[APPROVED]`
 - [x] Создан промт для Truthfulness Panel API: `interagency/prompts/2026-03-05_a_rai-f4-5_truthfulness-panel-api.md` `[APPROVED]`
 - [x] Создан промт для Drift Alerts: `interagency/prompts/2026-03-05_a_rai-f4-6_drift-alerts.md` `[APPROVED]`
-- [x] Создан промт для Autonomy Policies: `interagency/prompts/2026-03-05_a_rai-f4-7_autonomy-policies.md`
+- [x] Создан промт для Autonomy Policies: `interagency/prompts/2026-03-05_a_rai-f4-7_autonomy-policies.md` `[APPROVED]`
 - [/] Создан промт для Agent Points & Reputation: `interagency/prompts/2026-03-05_a_rai-f4-8_agent-points.md`
+- [/] Создан промт для Feedback Credibility: `interagency/prompts/2026-03-05_a_rai-f4-9_feedback-credibility.md`
