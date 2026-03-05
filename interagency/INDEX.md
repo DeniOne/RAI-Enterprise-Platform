@@ -60,6 +60,9 @@
 - `interagency/prompts/2026-03-05_a_rai-f4-2_tracesummary-contract.md` [ACTIVE]
   - Описание: Реализация TraceSummary Data Contract v1 (Prisma, DTO, сбор метрик токенов/времени/версий).
 
+- `interagency/prompts/2026-03-05_a_rai-f4-3_evidence-tagging.md` [ACTIVE]
+  - Описание: Реализация MVP Evidence Tagging (привязка claim -> source).
+
 - `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
   - План: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [ACCEPTED]
   - Отчёт: `interagency/reports/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [APPROVED]
