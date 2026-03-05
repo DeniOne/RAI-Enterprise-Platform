@@ -65,8 +65,12 @@
   - Описание: Реализация MVP Evidence Tagging (привязка claim -> source).
   - Статус: DONE. Тип `EvidenceReference` добавлен, агенты Economist/Knowledge расширены полем `evidence`, ResponseComposer агрегирует evidenceRefs. tsc PASS, jest PASS. [APPROVED]
 
-- `interagency/prompts/2026-03-05_a_rai-f4-4_truthfulness-engine.md` [ACTIVE]
+- `interagency/prompts/2026-03-05_a_rai-f4-4_truthfulness-engine.md` [DONE]
   - Описание: Реализация Truthfulness Engine (Расчёт метрики BS% по таксономии и весам утверждений).
+  - Статус: DONE. В `rai-chat` реализован `TruthfulnessEngineService.calculateTraceTruthfulness(traceId, companyId)`, который читает evidenceRefs из `AiAuditEntry.metadata`, классифицирует их по доменам (AGRO/FINANCE/LEGAL/SAFETY/GENERAL) и статусу (VERIFIED/UNVERIFIED/INVALID) с весами (3/3/3/3/1), считает BS% по формуле и обновляет `bsScorePct` в `TraceSummary` (fallback 100% для пустых/без-evidence трейсов). tsc PASS, целевые unit-тесты PASS. [APPROVED]
+
+- `interagency/prompts/2026-03-05_a_rai-f4-5_truthfulness-panel-api.md` [ACTIVE]
+  - Описание: Реализация API для Truthfulness/Quality Panel (BS% avg/p95, EvidenceCoverage).
 
 - `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
   - План: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [ACCEPTED]

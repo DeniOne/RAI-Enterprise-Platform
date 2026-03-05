@@ -257,5 +257,6 @@
 - [x] Создан первый промт для ExplainabilityPanel Service: `interagency/prompts/2026-03-05_a_rai-f4-1_explainability-panel.md` `[APPROVED]`
 - [x] Создан промт для TraceSummary Data Contract: `interagency/prompts/2026-03-05_a_rai-f4-2_tracesummary-contract.md` `[APPROVED]`
 - [x] Создан промт для Evidence Tagging MVP: `interagency/prompts/2026-03-05_a_rai-f4-3_evidence-tagging.md` `[APPROVED]`
-- [/] Создан промт для Truthfulness Engine (Расчет BS%): `interagency/prompts/2026-03-05_a_rai-f4-4_truthfulness-engine.md`
+- [x] Создан промт для Truthfulness Engine (Расчет BS%): `interagency/prompts/2026-03-05_a_rai-f4-4_truthfulness-engine.md` `[APPROVED]`
+- [/] Создан промт для Truthfulness Panel API: `interagency/prompts/2026-03-05_a_rai-f4-5_truthfulness-panel-api.md`
 

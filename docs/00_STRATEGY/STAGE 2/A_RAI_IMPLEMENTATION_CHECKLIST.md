@@ -78,8 +78,8 @@
 - [x] **Evidence Tagging** — привязка каждого утверждения агента (claim) к источнику (DB row, tool result). | **AG-ARAI-F4-003** | DONE
 
 ### 4.2 Алгоритмы Качества и Честности (Truthfulness Engine)
-- [ ] **Claim Taxonomy & Weights v1** — типы утверждений (general/agro/finance/legal/safety) и веса (1/2/3), плюс критерии Verified/Unverified/Invalid.
-- [ ] **Метрика "BS%" (Bullshit Percent)** — расчёт процента неподтверждённых (Unverified) или противоречивых (Invalid) утверждений по `traceId` с учётом весов (агрономия/риски весят больше).
+- [x] **Claim Taxonomy & Weights v1** — типы утверждений (general/agro/finance/legal/safety) и веса (1/2/3), плюс критерии Verified/Unverified/Invalid. | **AG-ARAI-F4-004** | DONE
+- [x] **Метрика "BS%" (Bullshit Percent)** — расчёт процента неподтверждённых (Unverified) или противоречивых (Invalid) утверждений по `traceId` с учётом весов (агрономия/риски весят больше). | **AG-ARAI-F4-004** | DONE
 - [ ] **Drift / Regression Alerts** — автоматические алерты при деградации BS% или Acceptance Rate после обновлений.
 
 ### 4.3 Swarm Dashboard & Control UI (Визуализация)

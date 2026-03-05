@@ -33,6 +33,7 @@ import { GoldenTestRunnerService } from "./eval/golden-test-runner.service";
 import { MonitoringAgent } from "./agents/monitoring-agent.service";
 import { MonitoringTriggerService } from "./monitoring-trigger.service";
 import { TraceSummaryService } from "./trace-summary.service";
+import { TruthfulnessEngineService } from "./truthfulness-engine.service";
 
 @Module({
   imports: [
@@ -72,6 +73,7 @@ import { TraceSummaryService } from "./trace-summary.service";
     MonitoringAgent,
     MonitoringTriggerService,
     TraceSummaryService,
+    TruthfulnessEngineService,
   ],
 })
 export class RaiChatModule {}
