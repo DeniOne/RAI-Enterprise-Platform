@@ -69,8 +69,9 @@
   - Описание: Реализация Truthfulness Engine (Расчёт метрики BS% по таксономии и весам утверждений).
   - Статус: DONE. В `rai-chat` реализован `TruthfulnessEngineService.calculateTraceTruthfulness(traceId, companyId)`, который читает evidenceRefs из `AiAuditEntry.metadata`, классифицирует их по доменам (AGRO/FINANCE/LEGAL/SAFETY/GENERAL) и статусу (VERIFIED/UNVERIFIED/INVALID) с весами (3/3/3/3/1), считает BS% по формуле и обновляет `bsScorePct` в `TraceSummary` (fallback 100% для пустых/без-evidence трейсов). tsc PASS, целевые unit-тесты PASS. [APPROVED]
 
-- `interagency/prompts/2026-03-05_a_rai-f4-5_truthfulness-panel-api.md` [ACTIVE]
-  - Описание: Реализация API для Truthfulness/Quality Panel (BS% avg/p95, EvidenceCoverage).
+- `interagency/prompts/2026-03-05_a_rai-f4-5_truthfulness-panel-api.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-5_truthfulness-panel-api.md` [APPROVED]
+  - Статус: DONE. Реализован Truthfulness/Quality Panel API: эндпоинт `GET /rai/explainability/dashboard` с tenant isolation, агрегацией avg/p95 BS% и avg EvidenceCoverage по `TraceSummary`, топ-10 худших трейсов; tsc PASS, целевые jest-тесты PASS.
 
 - `interagency/prompts/2026-03-05_a_rai-f4-6_drift-alerts.md` [ACTIVE]
   - Описание: Реализация Drift / Regression Alerts по метрике BS%.

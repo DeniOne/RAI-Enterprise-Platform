@@ -13,6 +13,7 @@ describe("ExplainabilityPanelService", () => {
   const mockPendingFindMany = jest.fn();
   const mockDecisionFindMany = jest.fn();
   const mockQuorumFindMany = jest.fn();
+  const mockTraceSummaryFindMany = jest.fn();
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -34,6 +35,9 @@ describe("ExplainabilityPanelService", () => {
             },
             quorumProcess: {
               findMany: mockQuorumFindMany,
+            },
+            traceSummary: {
+              findMany: mockTraceSummaryFindMany,
             },
           },
         },
@@ -140,6 +144,72 @@ describe("ExplainabilityPanelService", () => {
     expect(prisma.decisionRecord.findMany).toHaveBeenCalledWith({
       where: { traceId, companyId },
     });
+  });
+
+  it("calculates dashboard metrics for multiple trace summaries", async () => {
+    const companyId = "c1";
+    const now = new Date();
+
+    mockTraceSummaryFindMany.mockResolvedValue([
+      {
+        traceId: "tr_1",
+        companyId,
+        bsScorePct: 10,
+        evidenceCoveragePct: 80,
+        invalidClaimsPct: 5,
+        createdAt: new Date(now.getTime() - 1_000),
+      },
+      {
+        traceId: "tr_2",
+        companyId,
+        bsScorePct: 30,
+        evidenceCoveragePct: 60,
+        invalidClaimsPct: 10,
+        createdAt: new Date(now.getTime() - 2_000),
+      },
+      {
+        traceId: "tr_3",
+        companyId,
+        bsScorePct: 50,
+        evidenceCoveragePct: 40,
+        invalidClaimsPct: 20,
+        createdAt: new Date(now.getTime() - 3_000),
+      },
+    ]);
+
+    const result = await service.getTruthfulnessDashboard(companyId, 24);
+
+    expect(mockTraceSummaryFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          companyId,
+        }),
+      }),
+    );
+
+    expect(result.companyId).toBe(companyId);
+    expect(result.worstTraces).toHaveLength(3);
+    expect(result.worstTraces[0].traceId).toBe("tr_3");
+    expect(result.worstTraces[1].traceId).toBe("tr_2");
+    expect(result.worstTraces[2].traceId).toBe("tr_1");
+
+    expect(result.avgBsScore).toBeCloseTo((10 + 30 + 50) / 3);
+    expect(result.avgEvidenceCoverage).toBeCloseTo((80 + 60 + 40) / 3);
+    expect(result.p95BsScore).toBeGreaterThanOrEqual(30);
+    expect(result.p95BsScore).toBeLessThanOrEqual(50);
+  });
+
+  it("returns zero metrics and empty list when no trace summaries", async () => {
+    const companyId = "c1";
+    mockTraceSummaryFindMany.mockResolvedValue([]);
+
+    const result = await service.getTruthfulnessDashboard(companyId, 24);
+
+    expect(result.companyId).toBe(companyId);
+    expect(result.avgBsScore).toBe(0);
+    expect(result.p95BsScore).toBe(0);
+    expect(result.avgEvidenceCoverage).toBe(0);
+    expect(result.worstTraces).toHaveLength(0);
   });
 });
 

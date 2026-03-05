@@ -85,7 +85,7 @@
 ### 4.3 Swarm Dashboard & Control UI (Визуализация)
 - [ ] **SLO / Error Budget** — мониторинг latency, error rate по агентам и клиентам (`companyId`).
 - [ ] **Cost Decomposition & Workload Hotspots** — отслеживание расхода бюджета (LLM vs DB) и самых "дорогих/долгих" сессий.
-- [ ] **Quality & Evals Panel** — визуализация Acceptance Rate, Correction Rate, BS% и Evidence Coverage.
+- [x] **Quality & Evals Panel** — визуализация Acceptance Rate, Correction Rate, BS% и Evidence Coverage. | **AG-ARAI-F4-005** | DONE
 - [ ] **Explainability Explorer (Forensics)** — Decision Timeline разбора инцидентов (Router → fan-out → tools → composer + evidence refs).
 - [ ] **Agent Connection Map** — топология падений (Retry/Failure topology) и подсветка критического пути по `traceId`.
 - [ ] **Queues & Backpressure Panel** — очереди, ретраи, timeouts, cancellations, deadline misses.

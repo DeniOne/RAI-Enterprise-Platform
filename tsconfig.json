@@ -37,8 +37,7 @@
         ],
         "types": [
             "node",
-            "uuid",
-            "fast-json-stable-stringify"
+            "uuid"
         ]
     },
     "include": [

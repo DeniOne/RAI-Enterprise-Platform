@@ -1405,6 +1405,27 @@ model TraceSummary {
   @@map("ai_trace_summaries")
 }
 
+enum QualityAlertType {
+  BS_DRIFT
+}
+
+model QualityAlert {
+  id        String         @id @default(cuid())
+  companyId String
+  company   Company        @relation(fields: [companyId], references: [id])
+
+  alertType QualityAlertType
+  severity  RiskSeverity
+  message   String
+
+  createdAt DateTime       @default(now())
+  resolvedAt DateTime?
+
+  @@index([companyId])
+  @@index([createdAt])
+  @@map("ai_quality_alerts")
+}
+
 enum PendingActionStatus {
   PENDING
   APPROVED_FIRST
