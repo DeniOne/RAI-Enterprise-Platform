@@ -41,8 +41,8 @@
 
 ### 2.2 Специализированные агенты
 - [x] **AgronomAgent** — ТРИАЖ (stub без LLM) + Ответ с explain. | **AG-ARAI-F1-002** | DONE
-- [/] **EconomistAgent** — Расчёт Δ, маржинальности и вознаграждения RAI. | **AG-ARAI-F2-001**, **AG-ARAI-F2-002** | IN_PROGRESS
-- [/] **KnowledgeAgent** — Поиск по институциональной памяти и RegionProfile. | **AG-ARAI-F2-002** | IN_PROGRESS
+- [x] **EconomistAgent** — Расчёт Δ, маржинальности и вознаграждения RAI. | **AG-ARAI-F2-001**, **AG-ARAI-F2-002** | DONE
+- [x] **KnowledgeAgent** — Поиск по институциональной памяти и RegionProfile. | **AG-ARAI-F2-002** | DONE
 
 ### 2.3 Качество и оценка (Eval)
 - [/] **AgentScoreCard** — метрики (acceptance/correction rate) в БД. | **AG-ARAI-F2-003** | IN_PROGRESS

@@ -28,9 +28,10 @@
   - Отчёт: `interagency/reports/2026-03-04_a_rai-f2-1_parallel-fan-out.md` [APPROVED]
   - Статус: DONE. ToolCallPlanner, Parallel Fan-Out (Promise.allSettled + 30s timeout + partial), EconomistAgent stub. tsc PASS, 16/16 тестов PASS (+1 skip на timeout).
 
-- `interagency/prompts/2026-03-04_a_rai-f2-2_economist-knowledge-agents.md` [IN_PROGRESS]
-  - Decision-ID: AG-ARAI-F2-002
-  - Статус: Промт создан, ожидает исполнения. Задачи: EconomistAgent (логика explain), KnowledgeAgent (RAG stub), интеграция в AgentRuntime.
+- `interagency/prompts/2026-03-04_a_rai-f2-2_economist-knowledge-agents.md` [DONE]
+  - Decision-ID: AG-ARAI-F2-002 [зарегистрирован в DECISIONS.log]
+  - Отчёт: `interagency/reports/2026-03-04_a_rai-f2-2_economist-knowledge-agents.md` [APPROVED]
+  - Статус: DONE. EconomistAgent (rule-based explain по ответам FinanceToolsRegistry), KnowledgeAgent (с вызовом QueryKnowledge), интеграция Fan-Out. tsc PASS, целевые тесты PASS.
 
 - `interagency/prompts/2026-03-04_a_rai-f2-3_eval-quality.md` [IN_PROGRESS]
   - Decision-ID: AG-ARAI-F2-003
