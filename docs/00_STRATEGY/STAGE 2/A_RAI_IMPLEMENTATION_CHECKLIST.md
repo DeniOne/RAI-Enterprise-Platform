@@ -69,18 +69,33 @@
 
 ---
 
-## 👁️ ФАЗА 4: OBSERVABILITY & CONTROL TOWER (Управление роем)
+## 👁️ ФАЗА 4: OBSERVABILITY & CONTROL TOWER (Качество, BS%, Рейтинги)
 
-**Цель:** Визуальный дашборд для контроля за всеми агентами и метриками в реальном времени.
+**Цель:** Контроль инфраструктуры роя агентов, измерение честности ответов (BS%), управление автономностью (L1-L4) и обработка инцидентов.
 
-### 4.1 Swarm Dashboard (UI)
-- [ ] **Agent Telemetry View** — визуализация нагрузки, Latency, количества активных сессий по каждому агенту (Agronom, Economist, Controller).
-- [ ] **Token & Budget Monitor** — отслеживание расходов токенов по клиентам (tenant/companyId) и агентам (в связке с BudgetController).
-- [ ] **Throughput & Stats** — конверсия принятия рекомендаций (Acceptance Rate), процент автоматических исправлений.
+### 4.1 Swarm Dashboard & Control UI
+- [ ] **SLO / Error Budget** — мониторинг latency, error rate по агентам и клиентам (`companyId`).
+- [ ] **Queues / Backpressure** — мониторинг таймаутов, дедлайнов и ретраев.
+- [ ] **Cost Decomposition & Workload Hotspots** — отслеживание расхода бюджета (LLM vs DB) и самых "дорогих/долгих" сессий.
 
-### 4.2 Связь и взаимодействие
-- [ ] **Agent Connection Map** — граф вызовов (кто кого вызывает, routing, ошибки, узкие горлышки).
-- [ ] **Explainability Explorer** — интерфейс для проваливания в `traceId` конкретного вызова (разбор ответов LLM и прогонов Eval).
+### 4.2 Связь, Взаимодействие и Explainability
+- [ ] **Agent Connection Map** — топология падений (Retry/Failure topology) и подсветка критического пути по `traceId`.
+- [ ] **Explainability Explorer (Forensics)** — Decision Timeline разбора инцидентов (Router → fan-out → tools → composer + evidence refs). 
+
+### 4.3 Качество и Честность (Truthfulness)
+- [ ] **Метрика "BS%" (Bullshit Percent)** — расчёт процента неподтверждённых (Unverified) или противоречивых (Invalid) утверждений по `traceId` с учётом весов (агрономия/риски весят больше).
+- [ ] **Quality & Evals Panel** — визуализация Acceptance Rate, Correction Rate, BS% и Evidence Coverage.
+- [ ] **Drift / Regression Alerts** — автоматические алерты при деградации BS% или Acceptance Rate после обновлений (prompt/model version).
+- [ ] **Политики автономности по BS%** — автоматический переход в режимы "tool-first" или "quarantine" при превышении порогов (<5% = автономность, >30% = карантин).
+
+### 4.4 Рейтинги, Баллы и Награды (Rewards)
+- [ ] **Agent Points** — начисление баллов агенту за accept и штрафов за BS% / invalid claims.
+- [ ] **Reputation Levels (L1-L4)** — автоматический перевод агентов по уровням автономности (Stable, Trusted, Autonomous) на базе окна `N` дней.
+- [ ] **Feedback Credibility Score** — вес пользовательского фидбэка в рейтингах зависит от корреляции с фактическими outcome'ами.
+
+### 4.5 Security & Incident Ops
+- [ ] **Governance Counters** — счетчики Tenant Isolation Sentinel (кросс-тенант попытки) и SensitiveDataFilter.
+- [ ] **Incidents Feed & Auto-Runbooks** — лента инцидентов с привязкой к `traceId` и автоматические скрипты реагирования (напр. fallback или quarantine).
 
 ---
 
