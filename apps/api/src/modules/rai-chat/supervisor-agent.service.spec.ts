@@ -6,10 +6,18 @@ import { FinanceToolsRegistry } from "./tools/finance-tools.registry";
 import { RiskToolsRegistry } from "./tools/risk-tools.registry";
 import { KnowledgeToolsRegistry } from "./tools/knowledge-tools.registry";
 import { AgronomAgent } from "./agents/agronom-agent.service";
+import { EconomistAgent } from "./agents/economist-agent.service";
+import { KnowledgeAgent } from "./agents/knowledge-agent.service";
 import { AgroDeterministicEngineFacade } from "./deterministic/agro-deterministic.facade";
 import { IntentRouterService } from "./intent-router/intent-router.service";
 import { ExternalSignalsService } from "./external-signals.service";
 import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
+import { RiskPolicyEngineService } from "./security/risk-policy-engine.service";
+import { PendingActionService } from "./security/pending-action.service";
+import { MemoryCoordinatorService } from "./memory/memory-coordinator.service";
+import { AgentRuntimeService } from "./runtime/agent-runtime.service";
+import { ResponseComposerService } from "./composer/response-composer.service";
+import { SensitiveDataFilterService } from "./security/sensitive-data-filter.service";
 import { RaiToolName } from "./tools/rai-tools.types";
 import { TechMapService } from "../tech-map/tech-map.service";
 import { DeviationService } from "../consulting/deviation.service";
@@ -24,7 +32,14 @@ import {
 describe("SupervisorAgent", () => {
   let agent: SupervisorAgent;
   const memoryAdapterMock = {
-    retrieve: jest.fn().mockResolvedValue({ items: [] }),
+    retrieve: jest.fn().mockResolvedValue({
+      traceId: undefined,
+      total: 0,
+      positive: 0,
+      negative: 0,
+      unknown: 0,
+      items: [],
+    }),
     appendInteraction: jest.fn().mockResolvedValue(undefined),
     getProfile: jest.fn().mockResolvedValue({}),
     updateProfile: jest.fn().mockResolvedValue(undefined),
@@ -47,6 +62,7 @@ describe("SupervisorAgent", () => {
     harvestPlan: { findFirst: jest.fn() },
     agroEscalation: { findMany: jest.fn().mockResolvedValue([]) },
     aiAuditEntry: { create: jest.fn().mockResolvedValue({}) },
+    pendingAction: { create: jest.fn().mockResolvedValue({ id: "pa-1" }) },
   };
   const intentRouterMock = {
     classify: jest.fn().mockReturnValue({
@@ -71,13 +87,20 @@ describe("SupervisorAgent", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SupervisorAgent,
+        MemoryCoordinatorService,
+        AgentRuntimeService,
+        ResponseComposerService,
         AgroToolsRegistry,
         FinanceToolsRegistry,
         RiskToolsRegistry,
         KnowledgeToolsRegistry,
         AgroDeterministicEngineFacade,
         AgronomAgent,
+        EconomistAgent,
+        KnowledgeAgent,
         RaiToolsRegistry,
+        RiskPolicyEngineService,
+        PendingActionService,
         RaiChatWidgetBuilder,
         { provide: IntentRouterService, useValue: intentRouterMock },
         { provide: "MEMORY_ADAPTER", useValue: memoryAdapterMock },
@@ -86,6 +109,7 @@ describe("SupervisorAgent", () => {
         { provide: DeviationService, useValue: deviationServiceMock },
         { provide: KpiService, useValue: kpiServiceMock },
         { provide: PrismaService, useValue: prismaServiceMock },
+        { provide: SensitiveDataFilterService, useValue: { mask: (s: string) => s } },
       ],
     }).compile();
 
@@ -253,13 +277,14 @@ describe("SupervisorAgent", () => {
         expect.objectContaining({
           name: RaiToolName.ComputeDeviations,
           payload: expect.objectContaining({
-            agentName: "AgronomAgent",
-            explain: expect.any(String),
+            count: 1,
+            seasonId: "season-1",
+            fieldId: "field-1",
           }),
         }),
       ]),
     );
-    expect(result.text).toContain("Отклонения получены из AgroToolsRegistry");
+    expect(result.text).toContain("Отклонений найдено: 1");
   });
 
   it("auto-runs plan fact tool when KPI intent is detected", async () => {
@@ -322,7 +347,7 @@ describe("SupervisorAgent", () => {
     expect(result.text).toContain("План-факт по плану plan-9");
   });
 
-  it("auto-runs alerts tool when alert intent is detected", async () => {
+  it("auto-runs alerts tool when alert intent is detected — RiskPolicy blocks WRITE, returns PendingAction", async () => {
     intentRouterMock.classify.mockReturnValueOnce({
       toolName: RaiToolName.EmitAlerts,
       confidence: 0.7,
@@ -333,15 +358,6 @@ describe("SupervisorAgent", () => {
       name: RaiToolName.EmitAlerts,
       payload: { severity: "S3" },
     });
-    prismaServiceMock.agroEscalation.findMany.mockResolvedValueOnce([
-      {
-        id: "esc-1",
-        severity: "S3",
-        reason: "late operation",
-        status: "OPEN",
-        references: { taskRef: "task-1" },
-      },
-    ]);
 
     const result = await agent.orchestrate(
       {
@@ -359,16 +375,16 @@ describe("SupervisorAgent", () => {
         expect.objectContaining({
           name: RaiToolName.EmitAlerts,
           payload: expect.objectContaining({
-            count: 1,
-            severity: "S3",
+            riskPolicyBlocked: true,
+            actionId: "pa-1",
           }),
         }),
       ]),
     );
-    expect(result.text).toContain("Открытых эскалаций S3+ : 1");
+    expect(prismaServiceMock.agroEscalation.findMany).not.toHaveBeenCalled();
   });
 
-  it("auto-runs tech map draft tool when field and season context exist", async () => {
+  it("auto-runs tech map draft — RiskPolicy blocks WRITE, creates PendingAction", async () => {
     intentRouterMock.classify.mockReturnValueOnce({
       toolName: RaiToolName.GenerateTechMapDraft,
       confidence: 0.7,
@@ -382,16 +398,6 @@ describe("SupervisorAgent", () => {
         seasonRef: "season-42",
         crop: "rapeseed",
       },
-    });
-    techMapServiceMock.createDraftStub.mockResolvedValueOnce({
-      draftId: "tm-42",
-      status: "DRAFT",
-      fieldRef: "field-42",
-      seasonRef: "season-42",
-      crop: "rapeseed",
-      missingMust: ["targets"],
-      tasks: [],
-      assumptions: [],
     });
 
     const result = await agent.orchestrate(
@@ -409,27 +415,17 @@ describe("SupervisorAgent", () => {
       "user-1",
     );
 
-    expect(techMapServiceMock.createDraftStub).toHaveBeenCalledWith({
-      fieldRef: "field-42",
-      seasonRef: "season-42",
-      crop: "rapeseed",
-      companyId: "company-1",
-    });
+    expect(techMapServiceMock.createDraftStub).not.toHaveBeenCalled();
     expect(result.toolCalls).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           name: RaiToolName.GenerateTechMapDraft,
           payload: expect.objectContaining({
-            agentName: "AgronomAgent",
-            explain: expect.any(String),
-            data: expect.objectContaining({
-              draftId: "tm-42",
-              status: "DRAFT",
-            }),
+            riskPolicyBlocked: true,
+            actionId: "pa-1",
           }),
         }),
       ]),
     );
-    expect(result.text).toContain("Черновик создан детерминированно");
   });
 });

@@ -6,6 +6,9 @@ import { FinanceToolsRegistry } from "./finance-tools.registry";
 import { RiskToolsRegistry } from "./risk-tools.registry";
 import { KnowledgeToolsRegistry } from "./knowledge-tools.registry";
 import { RaiToolName } from "./rai-tools.types";
+import { RiskPolicyEngineService } from "../security/risk-policy-engine.service";
+import { PendingActionService } from "../security/pending-action.service";
+import { RiskPolicyBlockedError } from "../security/risk-policy-blocked.error";
 
 describe("RaiToolsRegistry", () => {
   const actorContext = {
@@ -21,9 +24,11 @@ describe("RaiToolsRegistry", () => {
   const kpiServiceMock = {
     calculatePlanKPI: jest.fn(),
   };
+  const pendingActionCreateMock = jest.fn().mockResolvedValue({ id: "pa-1" });
   const prismaMock = {
     harvestPlan: { findFirst: jest.fn() },
     agroEscalation: { findMany: jest.fn().mockResolvedValue([]) },
+    pendingAction: { create: pendingActionCreateMock },
   };
   const agroToolsRegistry = new AgroToolsRegistry(
     deviationServiceMock as any,
@@ -43,6 +48,9 @@ describe("RaiToolsRegistry", () => {
   );
   knowledgeToolsRegistry.onModuleInit();
 
+  const riskPolicyEngine = new RiskPolicyEngineService();
+  const pendingActionService = new PendingActionService(prismaMock as any);
+
   const createRegistry = () =>
     new RaiToolsRegistry(
       techMapServiceMock as any,
@@ -51,6 +59,8 @@ describe("RaiToolsRegistry", () => {
       financeToolsRegistry,
       riskToolsRegistry,
       knowledgeToolsRegistry,
+      riskPolicyEngine,
+      pendingActionService,
     );
 
   beforeEach(() => {
@@ -163,42 +173,33 @@ describe("RaiToolsRegistry", () => {
     );
   });
 
-  it("routes generate tech map draft through TechMapService with scoped companyId", async () => {
+  it("WRITE tool GenerateTechMapDraft blocked by RiskPolicy, creates PendingAction", async () => {
     const registry = createRegistry();
     registry.onModuleInit();
-    techMapServiceMock.createDraftStub.mockResolvedValueOnce({
-      draftId: "tm-1",
-      status: "DRAFT",
-      fieldRef: "field-1",
-      seasonRef: "season-1",
-      crop: "rapeseed",
-      missingMust: ["stages"],
-      tasks: [],
-      assumptions: [],
-    });
+    pendingActionCreateMock.mockResolvedValueOnce({ id: "pa-123" });
 
-    const result = await registry.execute(
-      RaiToolName.GenerateTechMapDraft,
-      {
-        fieldRef: "field-1",
-        seasonRef: "season-1",
-        crop: "rapeseed",
-      },
-      actorContext,
-    );
-
-    expect(techMapServiceMock.createDraftStub).toHaveBeenCalledWith({
-      fieldRef: "field-1",
-      seasonRef: "season-1",
-      crop: "rapeseed",
-      companyId: "company-1",
-    });
-    expect(result).toEqual(
-      expect.objectContaining({
-        draftId: "tm-1",
-        status: "DRAFT",
+    let err: unknown;
+    try {
+      await registry.execute(
+        RaiToolName.GenerateTechMapDraft,
+        { fieldRef: "field-1", seasonRef: "season-1", crop: "rapeseed" },
+        actorContext,
+      );
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(RiskPolicyBlockedError);
+    expect((err as RiskPolicyBlockedError).actionId).toBe("pa-123");
+    expect(techMapServiceMock.createDraftStub).not.toHaveBeenCalled();
+    expect(pendingActionCreateMock).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        companyId: "company-1",
+        traceId: "trace-1",
+        toolName: RaiToolName.GenerateTechMapDraft,
+        riskLevel: "WRITE",
+        status: "PENDING",
       }),
-    );
+    });
   });
 
   it("computes plan fact within tenant scope", async () => {
@@ -288,46 +289,21 @@ describe("RaiToolsRegistry", () => {
     });
   });
 
-  it("returns open alerts with severity filter in tenant scope", async () => {
+  it("WRITE tool EmitAlerts blocked by RiskPolicy, creates PendingAction", async () => {
     const registry = createRegistry();
     registry.onModuleInit();
-    prismaMock.agroEscalation.findMany.mockResolvedValueOnce([
-      {
-        id: "esc-1",
-        severity: "S4",
-        reason: "critical deviation",
-        status: "OPEN",
-        references: { fieldRef: "field-1" },
-      },
-    ]);
+    pendingActionCreateMock.mockResolvedValueOnce({ id: "pa-emit" });
 
-    const result = await registry.execute(
-      RaiToolName.EmitAlerts,
-      { severity: "S4" },
-      actorContext,
-    );
+    await expect(
+      registry.execute(RaiToolName.EmitAlerts, { severity: "S4" }, actorContext),
+    ).rejects.toThrow(RiskPolicyBlockedError);
 
-    expect(prismaMock.agroEscalation.findMany).toHaveBeenCalledWith({
-      where: {
-        companyId: "company-1",
-        status: "OPEN",
-        severity: { in: ["S4"] },
-      },
-      orderBy: [{ severity: "desc" }, { createdAt: "desc" }],
-      take: 20,
-    });
-    expect(result).toEqual({
-      count: 1,
-      severity: "S4",
-      items: [
-        {
-          id: "esc-1",
-          severity: "S4",
-          reason: "critical deviation",
-          status: "OPEN",
-          references: { fieldRef: "field-1" },
-        },
-      ],
+    expect(prismaMock.agroEscalation.findMany).not.toHaveBeenCalled();
+    expect(pendingActionCreateMock).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        toolName: RaiToolName.EmitAlerts,
+        riskLevel: "WRITE",
+      }),
     });
   });
 });

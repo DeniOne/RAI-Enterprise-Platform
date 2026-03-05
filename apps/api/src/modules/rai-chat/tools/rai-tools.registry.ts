@@ -13,6 +13,7 @@ import {
   RaiToolName,
   RaiToolPayloadMap,
   RaiToolResultMap,
+  TOOL_RISK_MAP,
   WorkspaceSnapshotPayload,
 } from "./rai-tools.types";
 import { DeviationService } from "../../consulting/deviation.service";
@@ -21,6 +22,9 @@ import { AgroToolsRegistry } from "./agro-tools.registry";
 import { FinanceToolsRegistry } from "./finance-tools.registry";
 import { RiskToolsRegistry } from "./risk-tools.registry";
 import { KnowledgeToolsRegistry } from "./knowledge-tools.registry";
+import { RiskPolicyEngineService } from "../security/risk-policy-engine.service";
+import { PendingActionService } from "../security/pending-action.service";
+import { RiskPolicyBlockedError } from "../security/risk-policy-blocked.error";
 
 type ToolHandler<TName extends RaiToolName> = (
   payload: RaiToolPayloadMap[TName],
@@ -45,6 +49,8 @@ export class RaiToolsRegistry implements OnModuleInit {
     private readonly financeToolsRegistry: FinanceToolsRegistry,
     private readonly riskToolsRegistry: RiskToolsRegistry,
     private readonly knowledgeToolsRegistry: KnowledgeToolsRegistry,
+    private readonly riskPolicyEngine: RiskPolicyEngineService,
+    private readonly pendingActionService: PendingActionService,
   ) {}
 
   onModuleInit() {
@@ -72,6 +78,31 @@ export class RaiToolsRegistry implements OnModuleInit {
     payload: unknown,
     actorContext: RaiToolActorContext,
   ): Promise<RaiToolResultMap[TName]> {
+    const riskInfo = TOOL_RISK_MAP[name];
+    if (riskInfo) {
+      const verdict = this.riskPolicyEngine.evaluate(
+        riskInfo.riskLevel,
+        riskInfo.domain,
+        actorContext.userRole as UserRole | undefined,
+      );
+      if (this.pendingActionService.requiresConfirmation(verdict)) {
+        const action = await this.pendingActionService.create({
+          companyId: actorContext.companyId,
+          traceId: actorContext.traceId,
+          toolName: name,
+          payload: (payload ?? {}) as Record<string, unknown>,
+          riskLevel: riskInfo.riskLevel,
+          requestedByUserId: actorContext.userId,
+        });
+        this.logToolCall(name, actorContext, false, payload, "risk_policy_blocked");
+        throw new RiskPolicyBlockedError(
+          action.id,
+          name,
+          `Выполнение инструмента заблокировано RiskPolicy. Создан PendingAction #${action.id}. Ожидается подтверждение человека.`,
+        );
+      }
+    }
+
     if (this.agroToolsRegistry.has(name)) {
       return this.agroToolsRegistry.execute(
         name as TName & (RaiToolName.ComputeDeviations | RaiToolName.GenerateTechMapDraft),

@@ -11,9 +11,42 @@ export enum RaiToolName {
   QueryKnowledge = "query_knowledge",
 }
 
+export type ToolRiskLevel = "READ" | "WRITE" | "CRITICAL";
+
+export type ToolRiskDomain = "agro" | "finance" | "risk" | "knowledge";
+
 export interface RaiToolActorContext {
   companyId: string;
   traceId: string;
+  /** В автономном контексте (MonitoringAgent) запрещены WRITE/CRITICAL инструменты. */
+  isAutonomous?: boolean;
+  /** Для RiskPolicy: кто инициировал (при подтверждении — кто подтвердил). */
+  userId?: string;
+  userRole?: string;
+}
+
+/** Маппинг инструмент → riskLevel и domain для RiskPolicyEngine. */
+export const TOOL_RISK_MAP: Partial<
+  Record<RaiToolName, { riskLevel: ToolRiskLevel; domain: ToolRiskDomain }>
+> = {
+  [RaiToolName.EchoMessage]: { riskLevel: "READ", domain: "knowledge" },
+  [RaiToolName.WorkspaceSnapshot]: { riskLevel: "READ", domain: "knowledge" },
+  [RaiToolName.ComputeDeviations]: { riskLevel: "READ", domain: "agro" },
+  [RaiToolName.GenerateTechMapDraft]: { riskLevel: "WRITE", domain: "agro" },
+  [RaiToolName.ComputePlanFact]: { riskLevel: "READ", domain: "finance" },
+  [RaiToolName.SimulateScenario]: { riskLevel: "READ", domain: "finance" },
+  [RaiToolName.ComputeRiskAssessment]: { riskLevel: "READ", domain: "finance" },
+  [RaiToolName.EmitAlerts]: { riskLevel: "WRITE", domain: "risk" },
+  [RaiToolName.GetWeatherForecast]: { riskLevel: "READ", domain: "risk" },
+  [RaiToolName.QueryKnowledge]: { riskLevel: "READ", domain: "knowledge" },
+};
+
+/** Контекст для автономного исполнения (без userId/threadId). Блокирует WRITE/CRITICAL в реестрах. */
+export function createAutonomousExecutionContext(
+  companyId: string,
+  traceId: string,
+): RaiToolActorContext {
+  return { companyId, traceId, isAutonomous: true };
 }
 
 export interface EchoMessagePayload {

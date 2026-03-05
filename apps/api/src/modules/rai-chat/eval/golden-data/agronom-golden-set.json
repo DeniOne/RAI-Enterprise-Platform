@@ -1,0 +1,20 @@
+[
+  {
+    "id": "agronom-1",
+    "requestText": "Сгенерируй техкарту озимого рапса для Краснодарского края, 30 ц/га",
+    "expectedIntent": "tech_map_draft",
+    "expectedToolCalls": ["get_field_context", "generate_tech_map_draft"]
+  },
+  {
+    "id": "agronom-2",
+    "requestText": "Какая норма высева для озимого рапса при предшественнике пшеница?",
+    "expectedIntent": "agro_query",
+    "expectedToolCalls": ["get_soil_profile", "workspace_snapshot"]
+  },
+  {
+    "id": "agronom-3",
+    "requestText": "Рассчитай отклонения план-факт по полю №7",
+    "expectedIntent": "compute_deviations",
+    "expectedToolCalls": ["compute_deviations"]
+  }
+]

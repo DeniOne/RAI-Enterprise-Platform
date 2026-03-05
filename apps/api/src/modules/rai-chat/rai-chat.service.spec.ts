@@ -7,6 +7,8 @@ import { FinanceToolsRegistry } from "./tools/finance-tools.registry";
 import { RiskToolsRegistry } from "./tools/risk-tools.registry";
 import { KnowledgeToolsRegistry } from "./tools/knowledge-tools.registry";
 import { AgronomAgent } from "./agents/agronom-agent.service";
+import { EconomistAgent } from "./agents/economist-agent.service";
+import { KnowledgeAgent } from "./agents/knowledge-agent.service";
 import { AgroDeterministicEngineFacade } from "./deterministic/agro-deterministic.facade";
 import { IntentRouterService } from "./intent-router/intent-router.service";
 import { RaiToolName } from "./tools/rai-tools.types";
@@ -16,16 +18,29 @@ import {
 } from "./widgets/rai-chat-widgets.types";
 import { ExternalSignalsService } from "./external-signals.service";
 import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
+import { MemoryCoordinatorService } from "./memory/memory-coordinator.service";
+import { AgentRuntimeService } from "./runtime/agent-runtime.service";
+import { ResponseComposerService } from "./composer/response-composer.service";
 import { TechMapService } from "../tech-map/tech-map.service";
 import { DeviationService } from "../consulting/deviation.service";
 import { KpiService } from "../consulting/kpi.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
+import { RiskPolicyEngineService } from "./security/risk-policy-engine.service";
+import { PendingActionService } from "./security/pending-action.service";
+import { SensitiveDataFilterService } from "./security/sensitive-data-filter.service";
 
 describe("RaiChatService", () => {
   let service: RaiChatService;
   const memoryAdapterMock = {
     store: jest.fn().mockResolvedValue(undefined),
-    retrieve: jest.fn().mockResolvedValue({ items: [] }),
+    retrieve: jest.fn().mockResolvedValue({
+      traceId: undefined,
+      total: 0,
+      positive: 0,
+      negative: 0,
+      unknown: 0,
+      items: [],
+    }),
     appendInteraction: jest.fn().mockResolvedValue(undefined),
     getProfile: jest.fn().mockResolvedValue({}),
     updateProfile: jest.fn().mockResolvedValue(undefined),
@@ -47,12 +62,17 @@ describe("RaiChatService", () => {
       providers: [
         RaiChatService,
         SupervisorAgent,
+        MemoryCoordinatorService,
+        AgentRuntimeService,
+        ResponseComposerService,
         AgroToolsRegistry,
         FinanceToolsRegistry,
         RiskToolsRegistry,
         KnowledgeToolsRegistry,
         AgroDeterministicEngineFacade,
         AgronomAgent,
+        EconomistAgent,
+        KnowledgeAgent,
         IntentRouterService,
         RaiToolsRegistry,
         RaiChatWidgetBuilder,
@@ -61,7 +81,10 @@ describe("RaiChatService", () => {
         { provide: TechMapService, useValue: { createDraftStub: jest.fn() } },
         { provide: DeviationService, useValue: { getActiveDeviations: jest.fn().mockResolvedValue([]) } },
         { provide: KpiService, useValue: { calculatePlanKPI: jest.fn() } },
-        { provide: PrismaService, useValue: { harvestPlan: { findFirst: jest.fn() }, agroEscalation: { findMany: jest.fn().mockResolvedValue([]) }, aiAuditEntry: { create: jest.fn().mockResolvedValue({}) } } },
+        { provide: PrismaService, useValue: { harvestPlan: { findFirst: jest.fn() }, agroEscalation: { findMany: jest.fn().mockResolvedValue([]) }, aiAuditEntry: { create: jest.fn().mockResolvedValue({}) }, pendingAction: { create: jest.fn().mockResolvedValue({ id: "pa-1" }) } } },
+        RiskPolicyEngineService,
+        PendingActionService,
+        { provide: SensitiveDataFilterService, useValue: { mask: (s: string) => s } },
       ],
     }).compile();
 

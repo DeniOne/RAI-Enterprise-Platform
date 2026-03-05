@@ -60,8 +60,8 @@
 - [x] **AutonomousExecutionContext** — изоляция для монитора (технический READ-ONLY). | **AG-ARAI-F3-001** | DONE
 
 ### 3.2 Политики рисков
-- [/] **RiskPolicy Engine** — правила блокировок и подтверждений. | **AG-ARAI-F3-002** | IN_PROGRESS
-- [/] **Two-Person Rule** — обязательное второе подтверждение для критических действий. | **AG-ARAI-F3-002** | IN_PROGRESS
+- [x] **RiskPolicy Engine** — правила блокировок и подтверждений. | **AG-ARAI-F3-002** | DONE
+- [x] **Two-Person Rule** — обязательное второе подтверждение для критических действий. | **AG-ARAI-F3-002** | DONE
 
 ### 3.3 Конфиденциальность
 - [/] **SensitiveDataFilter** — маскировка PII (ИНН, р/с, данные лиц) на выходе из LLM. | **AG-ARAI-F3-003** | IN_PROGRESS

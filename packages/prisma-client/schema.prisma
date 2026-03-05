@@ -142,6 +142,7 @@ model Company {
   overrideRequests        OverrideRequest[]
   auditLogs               AuditLog[]
   aiAuditEntries          AiAuditEntry[]
+  pendingActions          PendingAction[]
 
   // Level F: Institutional Oracle Standard
   levelFCertAudits     LevelFCertAudit[]
@@ -1374,6 +1375,56 @@ model AiAuditEntry {
   @@index([traceId])
   @@index([createdAt])
   @@map("ai_audit_entries")
+}
+
+enum PendingActionStatus {
+  PENDING
+  APPROVED_FIRST
+  APPROVED_FINAL
+  EXPIRED
+  REJECTED
+}
+
+model PendingAction {
+  id                 String              @id @default(cuid())
+  createdAt          DateTime            @default(now())
+  expiresAt          DateTime
+  traceId            String
+  companyId          String
+  company            Company             @relation(fields: [companyId], references: [id])
+  toolName           String
+  payload            Json
+  riskLevel          String              // READ | WRITE | CRITICAL
+  status             PendingActionStatus @default(PENDING)
+  requestedByUserId  String?
+  approvedFirstBy    String?
+  approvedFinalBy    String?
+
+  @@index([companyId])
+  @@index([traceId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("pending_actions")
+}
+
+model AgentScoreCard {
+  id                    String   @id @default(cuid())
+  createdAt             DateTime @default(now())
+  agentName             String
+  promptVersion         String   // hash
+  modelVersion          String
+  periodFrom            DateTime
+  periodTo              DateTime
+  toolFailureRate       Float
+  hallucinationFlagRate Float
+  avgConfidence         Float
+  avgLatencyMs          Float
+  avgTokensUsed         Float
+  acceptanceRate        Float
+
+  @@index([agentName, promptVersion])
+  @@index([createdAt])
+  @@map("agent_score_cards")
 }
 
 model ApiUsage {

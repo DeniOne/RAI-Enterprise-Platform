@@ -1,5 +1,7 @@
+import * as Joi from "joi";
 import { RiskToolsRegistry } from "./risk-tools.registry";
 import { RaiToolName } from "./rai-tools.types";
+import { SecurityViolationError } from "../security/security-violation.error";
 
 describe("RiskToolsRegistry", () => {
   const actorContext = { companyId: "company-1", traceId: "trace-1" };
@@ -49,5 +51,38 @@ describe("RiskToolsRegistry", () => {
       actorContext,
     );
     expect(result).toEqual({ forecast: "unavailable", source: "stub" });
+  });
+
+  it("READ tools work with isAutonomous context", async () => {
+    prismaMock.agroEscalation.findMany.mockResolvedValueOnce([]);
+    const r = createRegistry();
+    const autonomousContext = {
+      companyId: "company-1",
+      traceId: "trace-1",
+      isAutonomous: true,
+    };
+    const result = await r.execute(
+      RaiToolName.EmitAlerts,
+      { severity: "S3" },
+      autonomousContext,
+    );
+    expect(result.count).toBe(0);
+  });
+
+  it("throws SecurityViolationError when WRITE tool called from autonomous context", async () => {
+    const r = new RiskToolsRegistry(prismaMock as any);
+    r.register(
+      RaiToolName.EmitAlerts,
+      Joi.object({ severity: Joi.string().valid("S3", "S4").default("S3") }),
+      "WRITE",
+      async () => ({ count: 0, severity: "S3", items: [] }),
+    );
+    await expect(
+      r.execute(RaiToolName.EmitAlerts, {}, {
+        companyId: "c1",
+        traceId: "t1",
+        isAutonomous: true,
+      }),
+    ).rejects.toThrow(SecurityViolationError);
   });
 });

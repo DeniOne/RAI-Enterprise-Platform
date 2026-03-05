@@ -43,8 +43,9 @@ describe('RaiChatController', () => {
         jest.spyOn(tenantContextService, 'getCompanyId').mockReturnValue(undefined);
 
         const dto: RaiChatRequestDto = { message: 'hello' };
+        const user = { userId: 'u1' };
 
-        await expect(controller.handleChat(dto)).rejects.toThrow(BadRequestException);
+        await expect(controller.handleChat(dto, user)).rejects.toThrow(BadRequestException);
     });
 
     it('should return a deterministic response if companyId is present', async () => {
@@ -67,14 +68,15 @@ describe('RaiChatController', () => {
             workspaceContext: { route: '/dashboard' }
         };
 
-        const result = await controller.handleChat(dto);
+        const user = { userId: 'u1' };
+        const result = await controller.handleChat(dto, user);
 
         expect(result).toBeDefined();
         expect(result.text).toContain('Принял: test message');
         expect(result.text).toContain('route: /dashboard');
         expect(result.widgets).toHaveLength(1);
         expect(result.widgets[0].type).toBe('Last24hChanges');
-        expect(raiChatService.handleChat).toHaveBeenCalledWith(dto, mockCompanyId);
+        expect(raiChatService.handleChat).toHaveBeenCalledWith(dto, mockCompanyId, 'u1');
     });
 
     it('should work without workspaceContext', async () => {
@@ -86,10 +88,10 @@ describe('RaiChatController', () => {
         });
 
         const dto: RaiChatRequestDto = { message: 'hello' };
-
-        const result = await controller.handleChat(dto);
+        const user = { userId: 'u2' };
+        const result = await controller.handleChat(dto, user);
 
         expect(result.text).toBe('Принял: hello');
-        expect(raiChatService.handleChat).toHaveBeenCalledWith(dto, mockCompanyId);
+        expect(raiChatService.handleChat).toHaveBeenCalledWith(dto, mockCompanyId, 'u2');
     });
 });

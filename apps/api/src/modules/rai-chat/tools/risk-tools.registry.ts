@@ -8,8 +8,10 @@ import {
   RaiToolName,
   RaiToolPayloadMap,
   RaiToolResultMap,
+  ToolRiskLevel,
 } from "./rai-tools.types";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
+import { SecurityViolationError } from "../security/security-violation.error";
 
 const RISK_TOOL_NAMES: RaiToolName[] = [
   RaiToolName.EmitAlerts,
@@ -29,6 +31,7 @@ interface RegisteredRiskTool<TName extends RiskToolName> {
   name: TName;
   schema: ObjectSchema<RaiToolPayloadMap[TName]>;
   handler: ToolHandler<TName>;
+  riskLevel: ToolRiskLevel;
 }
 
 @Injectable()
@@ -46,6 +49,7 @@ export class RiskToolsRegistry implements OnModuleInit {
       Joi.object<EmitAlertsPayload>({
         severity: Joi.string().valid("S3", "S4").default("S3"),
       }),
+      "READ",
       async (payload, actorContext) => {
         const severities =
           payload.severity === "S4" ? ["S4"] : (["S3", "S4"] as const);
@@ -81,6 +85,7 @@ export class RiskToolsRegistry implements OnModuleInit {
         region: Joi.string().trim().max(128).optional(),
         days: Joi.number().min(1).max(14).optional(),
       }),
+      "READ",
       async () => ({
         forecast: "unavailable",
         source: "stub",
@@ -91,6 +96,7 @@ export class RiskToolsRegistry implements OnModuleInit {
   register<TName extends RiskToolName>(
     name: TName,
     schema: ObjectSchema<RaiToolPayloadMap[TName]>,
+    riskLevel: ToolRiskLevel,
     handler: ToolHandler<TName>,
   ) {
     if (this.tools.has(name)) {
@@ -100,6 +106,7 @@ export class RiskToolsRegistry implements OnModuleInit {
       name,
       schema,
       handler,
+      riskLevel,
     } as RegisteredRiskTool<RiskToolName>);
   }
 
@@ -115,6 +122,16 @@ export class RiskToolsRegistry implements OnModuleInit {
     const tool = this.tools.get(name) as RegisteredRiskTool<TName> | undefined;
     if (!tool) {
       throw new BadRequestException(`Unknown risk tool: ${name}`);
+    }
+    if (
+      actorContext.isAutonomous &&
+      (tool.riskLevel === "WRITE" || tool.riskLevel === "CRITICAL")
+    ) {
+      throw new SecurityViolationError(
+        name,
+        tool.riskLevel,
+        `Tool ${name} (${tool.riskLevel}) not allowed in autonomous context`,
+      );
     }
     const validation = tool.schema.validate(payload, {
       abortEarly: false,

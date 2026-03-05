@@ -43,13 +43,15 @@
   - Отчёт: `interagency/reports/2026-03-05_a_rai-f3-1_monitoring-agent.md` [APPROVED]
   - Статус: DONE. AutonomousExecutionContext (isAutonomous + SecurityViolationError), RiskToolsRegistry riskLevel READ + блокировка WRITE/CRITICAL, MonitoringAgent (emit_alerts, дедуп, rate limit 10/ч, signals snapshot), MonitoringTriggerService (triggerMonitoringCycle + Cron). tsc PASS, 8/8 целевых тестов PASS.
 
-- `interagency/prompts/2026-03-05_a_rai-f3-2_risk-policy.md` [IN_PROGRESS]
-  - Decision-ID: AG-ARAI-F3-002
-  - Статус: Промт создан, ожидает исполнения. Задачи: PendingAction (Prisma), RiskPolicyEngineService (матрица допусков), Two-Person Rule.
+- `interagency/prompts/2026-03-05_a_rai-f3-2_risk-policy.md` [DONE]
+  - Decision-ID: AG-ARAI-F3-002 [зарегистрирован в DECISIONS.log]
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-f3-2_risk-policy.md` [APPROVED]
+  - Статус: DONE. PendingAction (Prisma), RiskPolicyEngineService, PendingActionService, интеграция в RaiToolsRegistry, Two-Person Rule (approveFirst/approveFinal). tsc PASS, все 112 тестов PASS (включая фикс `supervisor-agent.service.spec.ts` и `rai-chat.service.spec.ts`).
 
-- `interagency/prompts/2026-03-05_a_rai-f3-3_privacy-red-team.md` [IN_PROGRESS]
+- `interagency/prompts/2026-03-05_a_rai-f3-3_privacy-red-team.md` [READY_FOR_REVIEW]
   - Decision-ID: AG-ARAI-F3-003
-  - Статус: Промт создан, ожидает исполнения. Задачи: SensitiveDataFilterService (маскировка PII), Red-Team Suite (инъекции, bypass).
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-f3-3_privacy-red-team.md`
+  - Статус: SensitiveDataFilterService (ИНН, р/с, email, телефон), ResponseComposer.mask(), eval/red-team (payloads + spec). tsc PASS, 115 тестов rai-chat PASS.
 
 
 
