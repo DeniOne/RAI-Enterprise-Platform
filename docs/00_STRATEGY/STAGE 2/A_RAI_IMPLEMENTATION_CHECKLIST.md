@@ -109,21 +109,12 @@
 
 ---
 
-## 🏁 С чего начинаем (План на ближайший спринт — Phase 4)
-1. **ExplainabilityPanel Service** — поднять сервис и API для Forensics/Explorer (Decision Timeline + provenance).
-   **Эффект:** любой инцидент разбирается по `traceId` в UI, а не через логи.
+## 🏁 Финализация Phase 4 (Текущий фокус)
+1. **Agent Registry & Configurator UI (F4.18)** — реализация интерфейса управления системными промптами, моделями и правами (Capabilities) агентов.
+   **Эффект:** Возможность менять поведение роя без деплоя и настройки специфичных конфигов для тенантов.
 
-2. **TraceSummary Data Contract v1** — зафиксировать поля: tokens/time, prompt/model/tool versions, policyId, plus quality поля (evidenceCoverage, invalid%, BS% placeholder).
-   **Эффект:** появляется единый источник правды для дашбордов и политик.
+2. **Governance & Security Control UI (F4.19)** — лента инцидентов, счетчики блокировок (Sentinel) и алерты безопасности.
+   **Эффект:** Полный контроль над безопасностью и прозрачность автоматических мер реагирования.
 
-3. **Evidence Tagging (MVP)** — привязка claim → evidenceRef (tool result / DB row / doc chunk).
-   **Эффект:** начинается измерение честности (BS%) на реальной опоре.
-
-4. **BS% Calculator v1 + Claim Taxonomy/Weights** — Verified/Unverified/Invalid + веса (1/2/3), расчёт BS% по `traceId`.
-   **Эффект:** честность становится числом, управляет автономностью.
-
-5. **Truthfulness/Quality Panel** — BS% avg/p95, EvidenceCoverage, Invalid%, top worst traces (deep-link в Explorer).
-   **Эффект:** виден “радар честности” по агентам и тенантам.
-
-6. **SLO + Queues/Backpressure** — error budget + очереди/ретраи/timeouts/cancel.
-   **Эффект:** контроль продовой надёжности и узких мест, MTTR снижается.
+3. **E2E Валидация всей Фазы 4** — проверка связки "Инцидент в чате → Алерты в Governance UI → Разбор в Control Tower → Реплей трейса → Исправление промпта в Configurator".
+   **Эффект:** Подтверждение готовности инфраструктуры доверия (Trust Infrastructure) к эксплуатации.

@@ -312,4 +312,35 @@ export const api = {
         replayTrace: (traceId: string) =>
             apiClient.post(`/rai/explainability/trace/${encodeURIComponent(traceId)}/replay`),
     },
+    agents: {
+        getConfig: () => apiClient.get<{ global: AgentConfigItem[]; tenantOverrides: AgentConfigItem[] }>('/rai/agents/config'),
+        upsertConfig: (data: UpsertAgentConfigBody, scope: 'tenant' | 'global') =>
+            apiClient.post('/rai/agents/config', data, { params: { scope } }),
+        toggle: (role: string, isActive: boolean) =>
+            apiClient.patch('/rai/agents/config/toggle', { role, isActive }),
+    },
+}
+
+export interface AgentConfigItem {
+    id: string;
+    name: string;
+    role: string;
+    systemPrompt: string;
+    llmModel: string;
+    maxTokens: number;
+    isActive: boolean;
+    companyId: string | null;
+    capabilities: string[];
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface UpsertAgentConfigBody {
+    name: string;
+    role: string;
+    systemPrompt: string;
+    llmModel: string;
+    maxTokens: number;
+    isActive?: boolean;
+    capabilities?: string[];
 }
