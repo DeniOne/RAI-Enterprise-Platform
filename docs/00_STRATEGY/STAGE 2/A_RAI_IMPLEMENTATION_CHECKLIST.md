@@ -45,9 +45,9 @@
 - [x] **KnowledgeAgent** — Поиск по институциональной памяти и RegionProfile. | **AG-ARAI-F2-002** | DONE
 
 ### 2.3 Качество и оценка (Eval)
-- [/] **AgentScoreCard** — метрики (acceptance/correction rate) в БД. | **AG-ARAI-F2-003** | IN_PROGRESS
-- [/] **GoldenTestSet** — набор эталонных тестов для проверки регрессий. | **AG-ARAI-F2-003** | IN_PROGRESS
-- [/] **PromptChange RFC** — процесс изменения промтов через обязательный EvalRun. | **AG-ARAI-F2-003** | IN_PROGRESS
+- [x] **AgentScoreCard** — метрики (acceptance/correction rate) в БД. | **AG-ARAI-F2-003** | DONE
+- [x] **GoldenTestSet** — набор эталонных тестов для проверки регрессий. | **AG-ARAI-F2-003** | DONE
+- [x] **PromptChange RFC** — процесс изменения промтов через обязательный EvalRun. | **AG-ARAI-F2-003** | DONE
 
 ---
 

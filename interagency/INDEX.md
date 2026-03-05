@@ -33,9 +33,10 @@
   - Отчёт: `interagency/reports/2026-03-04_a_rai-f2-2_economist-knowledge-agents.md` [APPROVED]
   - Статус: DONE. EconomistAgent (rule-based explain по ответам FinanceToolsRegistry), KnowledgeAgent (с вызовом QueryKnowledge), интеграция Fan-Out. tsc PASS, целевые тесты PASS.
 
-- `interagency/prompts/2026-03-04_a_rai-f2-3_eval-quality.md` [IN_PROGRESS]
-  - Decision-ID: AG-ARAI-F2-003
-  - Статус: Промт создан, ожидает исполнения. Задачи: AgentScoreCard (Prisma), GoldenTestRunnerService, PROMPT_CHANGE_RFC.md.
+- `interagency/prompts/2026-03-04_a_rai-f2-3_eval-quality.md` [DONE]
+  - Decision-ID: AG-ARAI-F2-003 [зарегистрирован в DECISIONS.log]
+  - Отчёт: `interagency/reports/2026-03-04_a_rai-f2-3_eval-quality.md` [APPROVED]
+  - Статус: DONE. AgentScoreCard (Prisma + Service), GoldenTestSet + GoldenTestRunnerService, PROMPT_CHANGE_RFC.md. tsc PASS, eval-тесты 5/5 PASS.
 
 - `interagency/prompts/2026-03-05_a_rai-f3-1_monitoring-agent.md` [IN_PROGRESS]
   - Decision-ID: AG-ARAI-F3-001
