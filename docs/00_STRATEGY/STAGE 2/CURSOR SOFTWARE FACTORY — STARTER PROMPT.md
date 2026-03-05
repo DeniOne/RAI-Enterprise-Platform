@@ -67,6 +67,7 @@ last_updated: 2026-03-04
 - Соответствие `CANON.md` и `FORBIDDEN.md`.
 - Отсутствие секретов/токенов в коде.
 - Прогон тест-плана из промта (PASS).
+- **Quality & Traceability (Фаза 4):** Если код затрагивает AI, обязательно наличие заполненного `TraceSummary` (токены, версии) и Evidence Tagging (расчет BS%).
 
 **Результат:** **APPROVED** или **CHANGES_REQUIRED**.
 
