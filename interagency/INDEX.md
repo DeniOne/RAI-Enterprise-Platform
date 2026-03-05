@@ -64,6 +64,9 @@
 - `interagency/prompts/2026-03-05_a_rai-f4-3_evidence-tagging.md` [ACTIVE]
   - Описание: Реализация MVP Evidence Tagging (привязка claim -> source).
 
+- `interagency/prompts/2026-03-05_a_rai-f4-4_truthfulness-engine.md` [ACTIVE]
+  - Описание: Реализация Truthfulness Engine (Расчёт метрики BS% по таксономии и весам утверждений).
+
 - `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
   - План: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [ACCEPTED]
   - Отчёт: `interagency/reports/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [APPROVED]

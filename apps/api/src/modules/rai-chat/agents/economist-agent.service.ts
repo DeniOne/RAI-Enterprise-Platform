@@ -7,6 +7,7 @@ import type {
 } from "../tools/rai-tools.types";
 import { FinanceToolsRegistry } from "../tools/finance-tools.registry";
 import { RaiToolActorContext } from "../tools/rai-tools.types";
+import type { EvidenceReference } from "../dto/rai-chat.dto";
 
 export type EconomistIntent =
   | "compute_plan_fact"
@@ -28,6 +29,7 @@ export interface EconomistAgentResult {
   explain: string;
   toolCallsCount: number;
   traceId: string;
+  evidence: EvidenceReference[];
 }
 
 const INTENT_TOOL: Record<EconomistIntent, RaiToolName> = {

@@ -3,6 +3,7 @@ import { RaiToolName } from "../tools/rai-tools.types";
 import { KnowledgeToolsRegistry } from "../tools/knowledge-tools.registry";
 import { RaiToolActorContext } from "../tools/rai-tools.types";
 import type { QueryKnowledgeResult } from "../tools/rai-tools.types";
+import type { EvidenceReference } from "../dto/rai-chat.dto";
 
 export interface KnowledgeAgentInput {
   companyId: string;
@@ -18,6 +19,7 @@ export interface KnowledgeAgentResult {
   explain: string;
   toolCallsCount: number;
   traceId: string;
+  evidence: EvidenceReference[];
 }
 
 function explainFromResult(d: QueryKnowledgeResult): string {

@@ -189,6 +189,13 @@ export interface RaiMemoryUsedDto {
   source?: string;
 }
 
+export interface EvidenceReference {
+  claim: string;
+  sourceType: "TOOL_RESULT" | "DB" | "DOC";
+  sourceId: string;
+  confidenceScore: number;
+}
+
 export class RaiChatRequestDto {
   @IsString()
   @IsNotEmpty()
