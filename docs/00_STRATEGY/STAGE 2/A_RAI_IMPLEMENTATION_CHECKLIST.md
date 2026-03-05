@@ -56,8 +56,8 @@
 **Цель:** Автономный мониторинг и защита данных.
 
 ### 3.1 Мониторинг и автономность
-- [ ] **MonitoringAgent** — event-driven наблюдатель (подписка на Outbox).
-- [ ] **AutonomousExecutionContext** — изоляция для монитора (технический READ-ONLY).
+- [/] **MonitoringAgent** — event-driven наблюдатель (подписка на Outbox). | **AG-ARAI-F3-001** | IN_PROGRESS
+- [/] **AutonomousExecutionContext** — изоляция для монитора (технический READ-ONLY). | **AG-ARAI-F3-001** | IN_PROGRESS
 
 ### 3.2 Политики рисков
 - [ ] **RiskPolicy Engine** — правила блокировок и подтверждений.

@@ -37,6 +37,10 @@
   - Decision-ID: AG-ARAI-F2-003
   - Статус: Промт создан, ожидает исполнения. Задачи: AgentScoreCard (Prisma), GoldenTestRunnerService, PROMPT_CHANGE_RFC.md.
 
+- `interagency/prompts/2026-03-05_a_rai-f3-1_monitoring-agent.md` [IN_PROGRESS]
+  - Decision-ID: AG-ARAI-F3-001
+  - Статус: Промт создан, ожидает исполнения. Задачи: AutonomousExecutionContext (блокировка WRITE), MonitoringAgent (алерты, дедупликация, rate limit).
+
 
 
 
