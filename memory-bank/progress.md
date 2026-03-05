@@ -347,6 +347,7 @@
     *   Промт F4-7 (Autonomy Policies): `interagency/prompts/2026-03-05_a_rai-f4-7_autonomy-policies.md` [APPROVED].
     *   Промт F4-8 (Agent Points): `interagency/prompts/2026-03-05_a_rai-f4-8_agent-points.md` [APPROVED].
     *   Промт F4-9 (Feedback Credibility): `interagency/prompts/2026-03-05_a_rai-f4-9_feedback-credibility.md` [APPROVED].
-    *   Промт F4-10 (Explainability Explorer): `interagency/prompts/2026-03-05_a_rai-f4-10_explainability-explorer.md` (добавлено в индекс).
-    *   Промт F4-11 (Incident Ops): `interagency/prompts/2026-03-05_a_rai-f4-11_incident-ops.md` (добавлено в индекс).
+    *   Промт F4-10 (Explainability Explorer): `interagency/prompts/2026-03-05_a_rai-f4-10_explainability-explorer.md` [APPROVED].
+    *   Промт F4-11 (Incident Ops): `interagency/prompts/2026-03-05_a_rai-f4-11_incident-ops.md` [ACTIVE].
+    *   Промт F4-12 (Performance Metrics): `interagency/prompts/2026-03-05_a_rai-f4-12_performance-metrics.md` (добавлено в индекс).
 

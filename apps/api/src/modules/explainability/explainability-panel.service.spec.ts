@@ -217,5 +217,93 @@ describe("ExplainabilityPanelService", () => {
     expect(result.avgEvidenceCoverage).toBe(0);
     expect(result.worstTraces).toHaveLength(0);
   });
+
+  describe("getTraceForensics", () => {
+    it("returns summary, timeline with evidenceRefs, and qualityAlerts for own trace", async () => {
+      const traceId = "tr_forensics";
+      const companyId = "c1";
+
+      mockAiAuditFindMany.mockResolvedValue([
+        {
+          id: "ae1",
+          traceId,
+          companyId,
+          toolNames: ["compute_deviations"],
+          model: "gpt-4",
+          intentMethod: "regex",
+          tokensUsed: 100,
+          metadata: {
+            evidence: [
+              {
+                claim: "Данные по отклонениям из детерминированного расчёта.",
+                sourceType: "TOOL_RESULT",
+                sourceId: "compute_deviations",
+                confidenceScore: 0.9,
+              },
+            ],
+          },
+          createdAt: new Date("2026-03-05T10:00:00.000Z"),
+        },
+      ]);
+      mockTraceSummaryFindFirst.mockResolvedValue({
+        traceId,
+        companyId,
+        totalTokens: 150,
+        promptTokens: 80,
+        completionTokens: 70,
+        durationMs: 1200,
+        modelId: "gpt-4",
+        promptVersion: "v1",
+        toolsVersion: "v1",
+        policyId: "default",
+        bsScorePct: 10,
+        evidenceCoveragePct: 85,
+        invalidClaimsPct: 5,
+        createdAt: new Date("2026-03-05T10:00:00.000Z"),
+      });
+      mockQualityAlertFindMany.mockResolvedValue([
+        {
+          id: "qa1",
+          alertType: "BS_DRIFT",
+          severity: "HIGH",
+          message: "BS% вырос с 5 до 25.",
+          createdAt: new Date("2026-03-05T09:30:00.000Z"),
+        },
+      ]);
+
+      const result = await service.getTraceForensics(traceId, companyId);
+
+      expect(result.traceId).toBe(traceId);
+      expect(result.companyId).toBe(companyId);
+      expect(result.summary).not.toBeNull();
+      expect(result.summary?.bsScorePct).toBe(10);
+      expect(result.timeline).toHaveLength(1);
+      expect(result.timeline[0].evidenceRefs).toHaveLength(1);
+      expect(result.timeline[0].evidenceRefs[0].claim).toContain("отклонениям");
+      expect(result.qualityAlerts).toHaveLength(1);
+      expect(result.qualityAlerts[0].alertType).toBe("BS_DRIFT");
+    });
+
+    it("returns 403 Forbidden for trace of another tenant", async () => {
+      const traceId = "tr_other";
+      mockAiAuditFindMany.mockResolvedValue([
+        {
+          id: "ae2",
+          traceId,
+          companyId: "other-company",
+          toolNames: [],
+          model: "deterministic",
+          intentMethod: "regex",
+          tokensUsed: 0,
+          metadata: null,
+          createdAt: new Date(),
+        },
+      ]);
+
+      await expect(
+        service.getTraceForensics(traceId, "c1"),
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
 });
 

@@ -89,11 +89,15 @@
   - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-9_feedback-credibility.md` [APPROVED]
   - Статус: DONE. Модель `UserCredibilityProfile`, сервис `FeedbackCredibilityService` (мультипликатор 0.1–1.0, invalidateFeedback), tenant isolation; tsc (apps/api) PASS, целевые jest-тесты PASS. [APPROVED]
 
-- `interagency/prompts/2026-03-05_a_rai-f4-10_explainability-explorer.md` [ACTIVE]
-  - Описание: Explainability Explorer (Decision Timeline разбора инцидентов).
+- `interagency/prompts/2026-03-05_a_rai-f4-10_explainability-explorer.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-10_explainability-explorer.md` [APPROVED]
+  - Статус: DONE. AiAuditEntry.metadata (Json); getTraceForensics (summary + timeline с evidenceRefs + qualityAlerts); GET /rai/explainability/trace/:traceId/forensics; tenant 403; tsc PASS, jest 8/8 PASS. [APPROVED]
 
 - `interagency/prompts/2026-03-05_a_rai-f4-11_incident-ops.md` [ACTIVE]
   - Описание: Security & Incident Ops (Governance Counters, лента инцидентов PII и кросс-tenant попыток).
+
+- `interagency/prompts/2026-03-05_a_rai-f4-12_performance-metrics.md` [ACTIVE]
+  - Описание: SLO, Error Budget & Queues Backpressure (мониторинг задержек, ошибок и пулов выполнения).
 
 - `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
   - План: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [ACCEPTED]
