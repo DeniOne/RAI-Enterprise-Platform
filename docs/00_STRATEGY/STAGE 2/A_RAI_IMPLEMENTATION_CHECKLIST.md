@@ -27,7 +27,7 @@
 
 ### 1.4 Трассировка и аудит
 - [x] **TraceId Binding** — проброс ID сквозь все вызовы AI в `AuditLog`. | **AG-ARAI-F1-001** | DONE
-- [ ] **ExplainabilityPanel Service** — сервис для отображения "почему Рэй так решил".
+- [ ] **ExplainabilityPanel Service** — сервис для отображения "почему Рэй так решил" (Приоритет №1 в Фазе 4).
 
 ---
 
@@ -78,6 +78,7 @@
 - [ ] **Evidence Tagging** — привязка каждого утверждения агента (claim) к источнику (DB row, tool result).
 
 ### 4.2 Алгоритмы Качества и Честности (Truthfulness Engine)
+- [ ] **Claim Taxonomy & Weights v1** — типы утверждений (general/agro/finance/legal/safety) и веса (1/2/3), плюс критерии Verified/Unverified/Invalid.
 - [ ] **Метрика "BS%" (Bullshit Percent)** — расчёт процента неподтверждённых (Unverified) или противоречивых (Invalid) утверждений по `traceId` с учётом весов (агрономия/риски весят больше).
 - [ ] **Drift / Regression Alerts** — автоматические алерты при деградации BS% или Acceptance Rate после обновлений.
 
@@ -87,6 +88,9 @@
 - [ ] **Quality & Evals Panel** — визуализация Acceptance Rate, Correction Rate, BS% и Evidence Coverage.
 - [ ] **Explainability Explorer (Forensics)** — Decision Timeline разбора инцидентов (Router → fan-out → tools → composer + evidence refs).
 - [ ] **Agent Connection Map** — топология падений (Retry/Failure topology) и подсветка критического пути по `traceId`.
+- [ ] **Queues & Backpressure Panel** — очереди, ретраи, timeouts, cancellations, deadline misses.
+- [ ] **Critical Path Analyzer** — вычисление и визуализация, где реально ушло время внутри trace (router/агенты/tools/compose).
+- [ ] **Safe Replay Trace** — повтор прогона по traceId в READ-ONLY/mocked tools режиме, без сайд-эффектов.
 
 ### 4.4 Управление Автономностью и Рейтинги
 - [ ] **Политики автономности по BS%** — автоматический переход в режимы "tool-first" или "quarantine" при превышении порогов (<5% = автономность, >30% = карантин).
@@ -105,8 +109,21 @@
 
 ---
 
-## 🏁 С чего начинаем (План на ближайший спринт)
-1. **IntentRouter** — классификация "что хочет консультант".
-2. **AgroToolsRegistry** — выделение агро-инструментов из общей кучи.
-3. **TraceId** в аудите — чтобы видеть весь путь решения.
-4. **AgronomAgent (Stub)** — первая версия триажа без сложной логики.
+## 🏁 С чего начинаем (План на ближайший спринт — Phase 4)
+1. **ExplainabilityPanel Service** — поднять сервис и API для Forensics/Explorer (Decision Timeline + provenance).
+   **Эффект:** любой инцидент разбирается по `traceId` в UI, а не через логи.
+
+2. **TraceSummary Data Contract v1** — зафиксировать поля: tokens/time, prompt/model/tool versions, policyId, plus quality поля (evidenceCoverage, invalid%, BS% placeholder).
+   **Эффект:** появляется единый источник правды для дашбордов и политик.
+
+3. **Evidence Tagging (MVP)** — привязка claim → evidenceRef (tool result / DB row / doc chunk).
+   **Эффект:** начинается измерение честности (BS%) на реальной опоре.
+
+4. **BS% Calculator v1 + Claim Taxonomy/Weights** — Verified/Unverified/Invalid + веса (1/2/3), расчёт BS% по `traceId`.
+   **Эффект:** честность становится числом, управляет автономностью.
+
+5. **Truthfulness/Quality Panel** — BS% avg/p95, EvidenceCoverage, Invalid%, top worst traces (deep-link в Explorer).
+   **Эффект:** виден “радар честности” по агентам и тенантам.
+
+6. **SLO + Queues/Backpressure** — error budget + очереди/ретраи/timeouts/cancel.
+   **Эффект:** контроль продовой надёжности и узких мест, MTTR снижается.
