@@ -109,12 +109,18 @@
   - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-14_connection-map-critical-path.md` [APPROVED]
   - Статус: DONE. TraceTopologyService (граф из AiAuditEntry + TraceSummary, critical path = самая длинная ветка), GET /rai/explainability/trace/:traceId/topology, tenant isolation; tsc PASS, jest PASS.
 
-- `interagency/prompts/2026-03-05_a_rai-f4-15_safe-replay-trace.md` [READY_FOR_REVIEW]
-  - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-15_safe-replay-trace.md` [READY_FOR_REVIEW]
+- `interagency/prompts/2026-03-05_a_rai-f4-15_safe-replay-trace.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-15_safe-replay-trace.md` [APPROVED]
   - Статус: DONE. replayMode в RaiToolActorContext; RaiToolsRegistry мокает WRITE при replayMode; SupervisorAgent options.replayMode, сохранение replayInput в AiAuditEntry; SafeReplayService + POST /rai/explainability/trace/:traceId/replay (ADMIN); tsc PASS, jest 16 (registry+safe-replay) PASS.
 
 - `interagency/prompts/2026-03-05_a_rai-f4-16_agent-configurator.md` [ACTIVE]
   - Описание: Agent Configurator API (создание, настройка и привязка Capabilities к агентам через БД).
+
+- `interagency/prompts/2026-03-05_a_rai-f4-17_control-tower-ui.md` [ACTIVE]
+  - Описание: Control Tower Observability Dashboard (frontend для SLO, затрат и топологии трейсов).
+
+- `interagency/prompts/2026-03-05_a_rai-f4-18_agent-management-ui.md` [ACTIVE]
+  - Описание: Agent Registry & Configurator UI (frontend для настройки агентов и доступов).
 
 - `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
   - План: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [ACCEPTED]
