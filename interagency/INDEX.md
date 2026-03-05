@@ -42,6 +42,10 @@
   - Decision-ID: AG-ARAI-F3-001
   - Статус: Промт создан, ожидает исполнения. Задачи: AutonomousExecutionContext (блокировка WRITE), MonitoringAgent (алерты, дедупликация, rate limit).
 
+- `interagency/prompts/2026-03-05_a_rai-f3-2_risk-policy.md` [IN_PROGRESS]
+  - Decision-ID: AG-ARAI-F3-002
+  - Статус: Промт создан, ожидает исполнения. Задачи: PendingAction (Prisma), RiskPolicyEngineService (матрица допусков), Two-Person Rule.
+
 
 
 

@@ -328,12 +328,13 @@
     *   Состояние: все задачи Фаза 1-3 A_RAI открыты; все Sprint S-серии и TM-серии DONE.
     *   Определён первый шаг: IntentRouter + AgroToolsRegistry + TraceId Binding.
     *   Создан промт: `interagency/prompts/2026-03-04_a_rai-f1-1_intent-router-agro-registry.md`.
-    *   Зарегистрированы Decision-ID: AG-ARAI-F1-001, AG-ARAI-F1-002, AG-ARAI-F1-003, AG-ARAI-F1-004, AG-ARAI-F2-001, AG-ARAI-F2-002, AG-ARAI-F2-003, AG-ARAI-F3-001 в `DECISIONS.log`.
-    *   Обновлены: `A_RAI_IMPLEMENTATION_CHECKLIST.md` (пп. 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 3.1 → `[/]`), `interagency/INDEX.md`, `memory-bank/task.md`.
+    *   Зарегистрированы Decision-ID: AG-ARAI-F1-001, AG-ARAI-F1-002, AG-ARAI-F1-003, AG-ARAI-F1-004, AG-ARAI-F2-001, AG-ARAI-F2-002, AG-ARAI-F2-003, AG-ARAI-F3-001, AG-ARAI-F3-002 в `DECISIONS.log`.
+    *   Обновлены: `A_RAI_IMPLEMENTATION_CHECKLIST.md` (пп. 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 3.1, 3.2 → `[/]`), `interagency/INDEX.md`, `memory-bank/task.md`.
     *   Промт F1-3: `interagency/prompts/2026-03-04_a_rai-f1-3_budget-deterministic-bridge.md`.
     *   Промт F1-4 (Декомпозиция SupervisorAgent: MemoryCoordinator, AgentRuntime, ResponseComposer): `interagency/prompts/2026-03-04_a_rai-f1-4_supervisor-decomposition.md`.
     *   Промт F2-1 (Parallel Fan-Out + ToolCall Planner): `interagency/prompts/2026-03-04_a_rai-f2-1_parallel-fan-out.md`.
     *   Промт F2-2 (EconomistAgent + KnowledgeAgent): `interagency/prompts/2026-03-04_a_rai-f2-2_economist-knowledge-agents.md`.
     *   Промт F2-3 (Eval & Quality: AgentScoreCard, GoldenTestSet): `interagency/prompts/2026-03-04_a_rai-f2-3_eval-quality.md`.
     *   Промт F3-1 (Мониторинг и автономность: MonitoringAgent, AutonomousExecutionContext): `interagency/prompts/2026-03-05_a_rai-f3-1_monitoring-agent.md`.
+    *   Промт F3-2 (Политики рисков: RiskPolicyEngine, Two-Person Rule): `interagency/prompts/2026-03-05_a_rai-f3-2_risk-policy.md`.
 
