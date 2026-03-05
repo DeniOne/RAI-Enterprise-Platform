@@ -57,8 +57,9 @@
   - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-1_explainability-panel.md` [APPROVED]
   - Статус: DONE. ExplainabilityPanelService + DTO + API endpoint `/rai/explainability/trace/:traceId`, tenant isolation (Forbidden на чужой traceId), PII-маскирование через SensitiveDataFilterService, targeted jest PASS.
 
-- `interagency/prompts/2026-03-05_a_rai-f4-2_tracesummary-contract.md` [ACTIVE]
+- `interagency/prompts/2026-03-05_a_rai-f4-2_tracesummary-contract.md` [DONE]
   - Описание: Реализация TraceSummary Data Contract v1 (Prisma, DTO, сбор метрик токенов/времени/версий).
+  - Статус: DONE. Модель Prisma `TraceSummary` (tenant-изолированная), Zod DTO `TraceSummaryDto`, сервис `TraceSummaryService`, интеграция в `SupervisorAgent`. tsc PASS, jest PASS. [APPROVED]
 
 - `interagency/prompts/2026-03-05_a_rai-f4-3_evidence-tagging.md` [ACTIVE]
   - Описание: Реализация MVP Evidence Tagging (привязка claim -> source).

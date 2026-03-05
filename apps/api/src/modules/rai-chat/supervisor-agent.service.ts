@@ -8,6 +8,7 @@ import { AgentRuntimeService } from "./runtime/agent-runtime.service";
 import { ResponseComposerService } from "./composer/response-composer.service";
 import { ExternalSignalsService } from "./external-signals.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
+import { TraceSummaryService } from "./trace-summary.service";
 
 @Injectable()
 export class SupervisorAgent {
@@ -20,6 +21,8 @@ export class SupervisorAgent {
     private readonly responseComposer: ResponseComposerService,
     private readonly externalSignalsService: ExternalSignalsService,
     private readonly prisma: PrismaService,
+    @Inject(TraceSummaryService)
+    private readonly traceSummaryService: TraceSummaryService,
   ) {}
 
   async orchestrate(
@@ -27,6 +30,7 @@ export class SupervisorAgent {
     companyId: string,
     userId?: string,
   ): Promise<RaiChatResponseDto> {
+    const startedAt = Date.now();
     const traceId = request.clientTraceId ?? `tr_${randomUUID()}`;
     const threadId = request.threadId ?? `th_${randomUUID()}`;
     const actorContext: RaiToolActorContext = { companyId, traceId };
@@ -79,6 +83,19 @@ export class SupervisorAgent {
       traceId,
       threadId,
       companyId,
+    });
+
+    void this.traceSummaryService.record({
+      traceId,
+      companyId,
+      totalTokens: 0,
+      promptTokens: 0,
+      completionTokens: 0,
+      durationMs: Date.now() - startedAt,
+      modelId: "deterministic",
+      promptVersion: "v1",
+      toolsVersion: "v1",
+      policyId: "default",
     });
 
     this.writeAiAuditEntry({

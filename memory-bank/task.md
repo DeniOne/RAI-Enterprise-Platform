@@ -255,6 +255,6 @@
 
 ## A_RAI Фаза 4 — Observability & Control Tower (IN_PROGRESS)
 - [x] Создан первый промт для ExplainabilityPanel Service: `interagency/prompts/2026-03-05_a_rai-f4-1_explainability-panel.md` `[APPROVED]`
-- [/] Создан промт для TraceSummary Data Contract: `interagency/prompts/2026-03-05_a_rai-f4-2_tracesummary-contract.md`
+- [x] Создан промт для TraceSummary Data Contract: `interagency/prompts/2026-03-05_a_rai-f4-2_tracesummary-contract.md` `[APPROVED]`
 - [/] Создан промт для Evidence Tagging MVP: `interagency/prompts/2026-03-05_a_rai-f4-3_evidence-tagging.md`
 
