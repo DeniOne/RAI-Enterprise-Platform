@@ -47,6 +47,10 @@
   - Decision-ID: AG-ARAI-F3-002
   - Статус: Промт создан, ожидает исполнения. Задачи: PendingAction (Prisma), RiskPolicyEngineService (матрица допусков), Two-Person Rule.
 
+- `interagency/prompts/2026-03-05_a_rai-f3-3_privacy-red-team.md` [IN_PROGRESS]
+  - Decision-ID: AG-ARAI-F3-003
+  - Статус: Промт создан, ожидает исполнения. Задачи: SensitiveDataFilterService (маскировка PII), Red-Team Suite (инъекции, bypass).
+
 
 
 
