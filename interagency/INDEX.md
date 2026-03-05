@@ -104,6 +104,9 @@
 - `interagency/prompts/2026-03-05_a_rai-f4-13_cost-workload-hotspots.md` [ACTIVE]
   - Описание: Cost Decomposition & Workload Hotspots (анализ стоимости сессий и долгих трейсов).
 
+- `interagency/prompts/2026-03-05_a_rai-f4-14_connection-map-critical-path.md` [ACTIVE]
+  - Описание: Agent Connection Map & Critical Path Analysis (топология трейса и графическое представление долгих участков).
+
 - `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
   - План: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [ACCEPTED]
   - Отчёт: `interagency/reports/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [APPROVED]

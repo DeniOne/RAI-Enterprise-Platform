@@ -267,3 +267,4 @@
 - [x] Создан промт для Incident Ops (Security): `interagency/prompts/2026-03-05_a_rai-f4-11_incident-ops.md` `[APPROVED]`
 - [x] Создан промт для Performance Metrics: `interagency/prompts/2026-03-05_a_rai-f4-12_performance-metrics.md` `[APPROVED]`
 - [/] Создан промт для Cost Decomposition: `interagency/prompts/2026-03-05_a_rai-f4-13_cost-workload-hotspots.md`
+- [/] Создан промт для Agent Connection Map: `interagency/prompts/2026-03-05_a_rai-f4-14_connection-map-critical-path.md`

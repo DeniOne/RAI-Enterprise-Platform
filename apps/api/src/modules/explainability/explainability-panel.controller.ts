@@ -2,6 +2,8 @@ import { BadRequestException, Controller, Get, Param, Query, UseGuards } from "@
 import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { TenantContextService } from "../../shared/tenant-context/tenant-context.service";
 import { ExplainabilityPanelService } from "./explainability-panel.service";
+import { CostAnalyticsService, CostHotspotsResponseDto } from "./cost-analytics.service";
+import { CostHotspotsQueryDto } from "./dto/cost-hotspots.dto";
 import { ExplainabilityTimelineResponseDto } from "./dto/explainability-timeline.dto";
 import { TraceForensicsResponseDto } from "./dto/trace-forensics.dto";
 import { TruthfulnessDashboardResponseDto } from "./dto/truthfulness-dashboard.dto";
@@ -12,6 +14,7 @@ export class ExplainabilityPanelController {
   constructor(
     private readonly tenantContext: TenantContextService,
     private readonly explainabilityPanel: ExplainabilityPanelService,
+    private readonly costAnalytics: CostAnalyticsService,
   ) {}
 
   @Get("dashboard")
@@ -53,6 +56,29 @@ export class ExplainabilityPanelController {
     }
 
     return this.explainabilityPanel.getTraceForensics(traceId, companyId);
+  }
+
+  @Get("cost-hotspots")
+  async getCostHotspots(
+    @Query() query: CostHotspotsQueryDto,
+  ): Promise<CostHotspotsResponseDto> {
+    const companyId = this.tenantContext.getCompanyId();
+
+    if (!companyId) {
+      throw new BadRequestException("Security Context: companyId is missing");
+    }
+
+    const timeWindowMs = query.timeWindowMs ?? 86400000;
+    const limit = query.limit ?? 10;
+
+    if (!Number.isFinite(timeWindowMs) || timeWindowMs <= 0) {
+      throw new BadRequestException("Invalid timeWindowMs");
+    }
+    if (!Number.isFinite(limit) || limit <= 0 || limit > 100) {
+      throw new BadRequestException("Invalid limit (1..100)");
+    }
+
+    return this.costAnalytics.getCostHotspots(companyId, timeWindowMs, limit);
   }
 }
 
