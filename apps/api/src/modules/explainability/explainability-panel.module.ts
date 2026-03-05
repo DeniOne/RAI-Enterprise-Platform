@@ -10,7 +10,6 @@ import { AuthModule } from "../../shared/auth/auth.module";
 import { TenantContextModule } from "../../shared/tenant-context/tenant-context.module";
 import { SensitiveDataFilterService } from "../rai-chat/security/sensitive-data-filter.service";
 import { RaiChatModule } from "../rai-chat/rai-chat.module";
-import { PerformanceMetricsService } from "../rai-chat/performance/performance-metrics.service";
 
 @Module({
   imports: [AuthModule, TenantContextModule, PrismaModule, RaiChatModule],

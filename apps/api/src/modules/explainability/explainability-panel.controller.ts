@@ -28,6 +28,19 @@ export class ExplainabilityPanelController {
     private readonly performanceMetrics: PerformanceMetricsService,
   ) {}
 
+  @Get("performance")
+  async getPerformance(@Query("timeWindowMs") timeWindowMs?: string): Promise<AggregatedMetrics> {
+    const companyId = this.tenantContext.getCompanyId();
+    if (!companyId) {
+      throw new BadRequestException("Security Context: companyId is missing");
+    }
+    const windowMs = timeWindowMs !== undefined ? Number(timeWindowMs) : 3600000;
+    if (!Number.isFinite(windowMs) || windowMs <= 0) {
+      throw new BadRequestException("Invalid timeWindowMs");
+    }
+    return this.performanceMetrics.getAggregatedMetrics(companyId, windowMs);
+  }
+
   @Get("dashboard")
   async getDashboard(
     @Query("hours") hours?: string,

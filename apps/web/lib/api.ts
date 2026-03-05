@@ -296,4 +296,20 @@ export const api = {
         farmMap: (farmId: string, companyId: string) =>
             apiClient.get(`/crm/farms/${encodeURIComponent(farmId)}/map/${companyId}`),
     },
+    explainability: {
+        dashboard: (params?: { hours?: number }) =>
+            apiClient.get('/rai/explainability/dashboard', { params: params?.hours != null ? { hours: params.hours } : {} }),
+        performance: (params?: { timeWindowMs?: number }) =>
+            apiClient.get('/rai/explainability/performance', { params: params?.timeWindowMs != null ? { timeWindowMs: params.timeWindowMs } : {} }),
+        costHotspots: (params?: { timeWindowMs?: number; limit?: number }) =>
+            apiClient.get('/rai/explainability/cost-hotspots', { params: params ?? {} }),
+        traceTimeline: (traceId: string) =>
+            apiClient.get(`/rai/explainability/trace/${encodeURIComponent(traceId)}`),
+        traceForensics: (traceId: string) =>
+            apiClient.get(`/rai/explainability/trace/${encodeURIComponent(traceId)}/forensics`),
+        traceTopology: (traceId: string) =>
+            apiClient.get(`/rai/explainability/trace/${encodeURIComponent(traceId)}/topology`),
+        replayTrace: (traceId: string) =>
+            apiClient.post(`/rai/explainability/trace/${encodeURIComponent(traceId)}/replay`),
+    },
 }

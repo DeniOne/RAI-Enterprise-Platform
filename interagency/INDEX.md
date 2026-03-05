@@ -117,8 +117,9 @@
   - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-16_agent-configurator.md` [APPROVED]
   - Статус: DONE. AgentConfiguration (Prisma), AgentManagementService (getAgentConfigs, upsert, toggle), CRUD /rai/agents/config (ADMIN), unit 4/4; tsc PASS, jest explainability 42/42 PASS.
 
-- `interagency/prompts/2026-03-05_a_rai-f4-17_control-tower-ui.md` [ACTIVE]
-  - Описание: Control Tower Observability Dashboard (frontend для SLO, затрат и топологии трейсов).
+- `interagency/prompts/2026-03-05_a_rai-f4-17_control-tower-ui.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-f4-17_control-tower-ui.md` [APPROVED]
+  - Статус: DONE. API GET /rai/explainability/performance; дашборд /control-tower (SLO, Cost, Quality, худшие трейсы); /control-tower/trace/[traceId] (Forensics + Topology Map, кнопка Replay); api.explainability в lib/api; tsc PASS (web build падает на существующих страницах).
 
 - `interagency/prompts/2026-03-05_a_rai-f4-18_agent-management-ui.md` [ACTIVE]
   - Описание: Agent Registry & Configurator UI (frontend для настройки агентов и доступов).
