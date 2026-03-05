@@ -38,9 +38,10 @@
   - Отчёт: `interagency/reports/2026-03-04_a_rai-f2-3_eval-quality.md` [APPROVED]
   - Статус: DONE. AgentScoreCard (Prisma + Service), GoldenTestSet + GoldenTestRunnerService, PROMPT_CHANGE_RFC.md. tsc PASS, eval-тесты 5/5 PASS.
 
-- `interagency/prompts/2026-03-05_a_rai-f3-1_monitoring-agent.md` [IN_PROGRESS]
-  - Decision-ID: AG-ARAI-F3-001
-  - Статус: Промт создан, ожидает исполнения. Задачи: AutonomousExecutionContext (блокировка WRITE), MonitoringAgent (алерты, дедупликация, rate limit).
+- `interagency/prompts/2026-03-05_a_rai-f3-1_monitoring-agent.md` [DONE]
+  - Decision-ID: AG-ARAI-F3-001 [зарегистрирован в DECISIONS.log]
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-f3-1_monitoring-agent.md` [APPROVED]
+  - Статус: DONE. AutonomousExecutionContext (isAutonomous + SecurityViolationError), RiskToolsRegistry riskLevel READ + блокировка WRITE/CRITICAL, MonitoringAgent (emit_alerts, дедуп, rate limit 10/ч, signals snapshot), MonitoringTriggerService (triggerMonitoringCycle + Cron). tsc PASS, 8/8 целевых тестов PASS.
 
 - `interagency/prompts/2026-03-05_a_rai-f3-2_risk-policy.md` [IN_PROGRESS]
   - Decision-ID: AG-ARAI-F3-002
