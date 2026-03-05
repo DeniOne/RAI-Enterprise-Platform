@@ -72,6 +72,9 @@
 - `interagency/prompts/2026-03-05_a_rai-f4-5_truthfulness-panel-api.md` [ACTIVE]
   - Описание: Реализация API для Truthfulness/Quality Panel (BS% avg/p95, EvidenceCoverage).
 
+- `interagency/prompts/2026-03-05_a_rai-f4-6_drift-alerts.md` [ACTIVE]
+  - Описание: Реализация Drift / Regression Alerts по метрике BS%.
+
 - `interagency/prompts/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [DONE]
   - План: `interagency/plans/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [ACCEPTED]
   - Отчёт: `interagency/reports/2026-03-04_tm-post-b_season-cropzone-cropvariety.md` [APPROVED]

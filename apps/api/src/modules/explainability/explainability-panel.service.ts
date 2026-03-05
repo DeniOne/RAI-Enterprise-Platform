@@ -5,6 +5,7 @@ import {
   ExplainabilityTimelineNodeDto,
   ExplainabilityTimelineResponseDto,
 } from "./dto/explainability-timeline.dto";
+import { TruthfulnessDashboardResponseDto } from "./dto/truthfulness-dashboard.dto";
 
 @Injectable()
 export class ExplainabilityPanelService {
@@ -12,6 +13,66 @@ export class ExplainabilityPanelService {
     private readonly prisma: PrismaService,
     private readonly sensitiveDataFilter: SensitiveDataFilterService,
   ) {}
+
+  async getTruthfulnessDashboard(companyId: string, timeWindowHours: number): Promise<TruthfulnessDashboardResponseDto> {
+    const windowHours = Number.isFinite(timeWindowHours) && timeWindowHours > 0 ? timeWindowHours : 24;
+    const from = new Date(Date.now() - windowHours * 60 * 60 * 1000);
+
+    const summaries = await this.prisma.traceSummary.findMany({
+      where: {
+        companyId,
+        createdAt: {
+          gte: from,
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    if (!summaries.length) {
+      return {
+        companyId,
+        avgBsScore: 0,
+        p95BsScore: 0,
+        avgEvidenceCoverage: 0,
+        worstTraces: [],
+      };
+    }
+
+    const bsValues = summaries.map((s) => s.bsScorePct ?? 0);
+    const evidenceValues = summaries.map((s) => s.evidenceCoveragePct ?? 0);
+
+    const avg = (values: number[]): number =>
+      values.length ? values.reduce((sum, v) => sum + v, 0) / values.length : 0;
+
+    const avgBsScore = avg(bsValues);
+    const avgEvidenceCoverage = avg(evidenceValues);
+
+    const sortedForP95 = [...bsValues].sort((a, b) => a - b);
+    const p95Index = Math.floor(0.95 * (sortedForP95.length - 1));
+    const p95BsScore = sortedForP95[p95Index] ?? 0;
+
+    const worstTraces = summaries
+      .slice()
+      .sort((a, b) => b.bsScorePct - a.bsScorePct)
+      .slice(0, 10)
+      .map((s) => ({
+        traceId: s.traceId,
+        bsScorePct: s.bsScorePct,
+        evidenceCoveragePct: s.evidenceCoveragePct,
+        invalidClaimsPct: s.invalidClaimsPct,
+        createdAt: s.createdAt.toISOString(),
+      }));
+
+    return {
+      companyId,
+      avgBsScore,
+      p95BsScore,
+      avgEvidenceCoverage,
+      worstTraces,
+    };
+  }
 
   async getTraceTimeline(traceId: string, companyId: string): Promise<ExplainabilityTimelineResponseDto> {
     const auditEntries = await this.prisma.aiAuditEntry.findMany({
