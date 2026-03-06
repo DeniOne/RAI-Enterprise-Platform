@@ -14,6 +14,19 @@ const TAXONOMY_WEIGHTS: Record<ClaimTaxonomyType, number> = {
   GENERAL: 1,
 };
 
+export interface TruthfulnessResult {
+  bsScorePct: number;
+  evidenceCoveragePct: number;
+  invalidClaimsPct: number;
+  accounting: {
+    total: number;
+    evidenced: number;
+    verified: number;
+    unverified: number;
+    invalid: number;
+  };
+}
+
 export interface ClaimWithClassification {
   evidence: EvidenceReference;
   taxonomy: ClaimTaxonomyType;
@@ -23,18 +36,23 @@ export interface ClaimWithClassification {
 
 @Injectable()
 export class TruthfulnessEngineService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
-  async calculateTraceTruthfulness(traceId: string, companyId: string): Promise<void> {
+  async calculateTraceTruthfulness(traceId: string, companyId: string): Promise<TruthfulnessResult> {
     const auditEntries = await this.prisma.aiAuditEntry.findMany({
       where: { traceId, companyId },
       orderBy: { createdAt: "asc" },
     });
 
-    // Если по трейсу вообще нет записей — считаем, что BS% = 100 (ничего не знаем о честности)
+    const defaultValue: TruthfulnessResult = {
+      bsScorePct: 100, // Агент без записей — 100% BS (ничего не доказано)
+      evidenceCoveragePct: 0,
+      invalidClaimsPct: 0,
+      accounting: { total: 0, evidenced: 0, verified: 0, unverified: 0, invalid: 0 },
+    };
+
     if (auditEntries.length === 0) {
-      await this.updateTraceSummary(traceId, companyId, 100);
-      return;
+      return defaultValue;
     }
 
     const evidenceRefs: EvidenceReference[] = [];
@@ -47,17 +65,23 @@ export class TruthfulnessEngineService {
       }
     }
 
-    // Нет evidence — агент говорит без пруфов → BS% = 100
     if (evidenceRefs.length === 0) {
-      await this.updateTraceSummary(traceId, companyId, 100);
-      return;
+      return defaultValue;
     }
 
     const classified = this.classifyEvidence(evidenceRefs);
     const totalWeight = classified.reduce((acc, c) => acc + c.weight, 0);
-    if (totalWeight <= 0) {
-      await this.updateTraceSummary(traceId, companyId, 100);
-      return;
+
+    const accounting = {
+      total: classified.length,
+      evidenced: classified.filter((c) => c.evidence.sourceId?.trim()).length,
+      verified: classified.filter((c) => c.status === "VERIFIED").length,
+      unverified: classified.filter((c) => c.status === "UNVERIFIED").length,
+      invalid: classified.filter((c) => c.status === "INVALID").length,
+    };
+
+    if (totalWeight <= 0 || accounting.total === 0) {
+      return defaultValue;
     }
 
     const unverifiedWeight = classified
@@ -70,7 +94,16 @@ export class TruthfulnessEngineService {
     const bsFraction = (unverifiedWeight + invalidWeight) / totalWeight;
     const bsScorePct = Math.min(100, Math.max(0, Math.round(bsFraction * 100)));
 
-    await this.updateTraceSummary(traceId, companyId, bsScorePct);
+    // Канонические метрики покрытия и невалидности
+    const evidenceCoveragePct = Math.round((accounting.evidenced / accounting.total) * 100);
+    const invalidClaimsPct = Math.round((accounting.invalid / accounting.total) * 100);
+
+    return {
+      bsScorePct,
+      evidenceCoveragePct,
+      invalidClaimsPct,
+      accounting,
+    };
   }
 
   private classifyEvidence(evidence: EvidenceReference[]): ClaimWithClassification[] {
@@ -111,16 +144,4 @@ export class TruthfulnessEngineService {
     }
     return "VERIFIED";
   }
-
-  private async updateTraceSummary(
-    traceId: string,
-    companyId: string,
-    bsScorePct: number,
-  ): Promise<void> {
-    await this.prisma.traceSummary.updateMany({
-      where: { traceId, companyId },
-      data: { bsScorePct },
-    });
-  }
 }
-

@@ -12,9 +12,13 @@ import { Type } from "class-transformer";
 
 const NODE_KINDS = [
   "router",
-  "agents",
+  "agent",
   "tools",
   "composer",
+  "trace_summary_record",
+  "audit_write",
+  "truthfulness",
+  "quality_update",
   "pending_action",
   "decision",
   "quorum",

@@ -2,7 +2,7 @@
 export interface TraceTopologyNodeDto {
   id: string;
   label: string;
-  kind: "router" | "agent" | "tools" | "composer" | "request";
+  kind: "router" | "agent" | "tools" | "composer" | "request" | "trace_summary_record" | "truthfulness" | "quality_update" | "audit_write";
   durationMs: number;
   parentId: string | null;
   childrenIds: string[];

@@ -15,9 +15,9 @@ export const TraceSummaryDtoSchema = z.object({
   toolsVersion: z.string().min(1).max(256),
   policyId: z.string().min(1).max(256),
 
-  evidenceCoveragePct: z.number().min(0).max(100),
-  invalidClaimsPct: z.number().min(0).max(100),
-  bsScorePct: z.number().min(0).max(100),
+  evidenceCoveragePct: z.number().min(0).max(100).nullable(),
+  invalidClaimsPct: z.number().min(0).max(100).nullable(),
+  bsScorePct: z.number().min(0).max(100).nullable(),
 
   createdAt: z.coerce.date(),
 });

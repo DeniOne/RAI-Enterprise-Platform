@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
@@ -26,6 +26,8 @@ import {
     ClipboardList,
     AlertTriangle,
     CheckCircle2,
+    Monitor,
+    ShieldAlert,
 } from 'lucide-react';
 import { UserRole } from '@/lib/config/role-config';
 import { getVisibleNavigation, NavItem } from '@/lib/consulting/navigation-policy';
@@ -50,10 +52,16 @@ const ICON_MAP: Record<string, LucideIcon> = {
     exploration: Database,
     economy: Calculator,
     finance: Landmark,
-    gr: ShieldCheck,
     production: Package,
     knowledge: BookOpen,
+    trust: ShieldCheck,
+    control_tower: Monitor,
+    governance_security: ShieldAlert,
     settings: Settings2,
+    ct_dashboard: Monitor,
+    ct_agents: Users,
+    sec_dashboard: ShieldCheck,
+    sec_monitoring: ShieldAlert,
 };
 
 interface TopNavProps {
@@ -89,6 +97,26 @@ export function TopNav({ role }: TopNavProps) {
     const [navItems, setNavItems] = useState<NavItem[]>([]);
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const [hoveredSubmenuId, setHoveredSubmenuId] = useState<string | null>(null);
+    const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    const clearCloseTimeout = () => {
+        if (closeTimeoutRef.current) {
+            clearTimeout(closeTimeoutRef.current);
+            closeTimeoutRef.current = null;
+        }
+    };
+
+    const handleMouseEnter = (id: string) => {
+        clearCloseTimeout();
+        setOpenMenuId(id);
+    };
+
+    const handleMouseLeave = () => {
+        clearCloseTimeout();
+        closeTimeoutRef.current = setTimeout(() => {
+            setOpenMenuId(null);
+        }, 150); // Блядский зазор в 8 пикселей требует времени на «прыжок»
+    };
 
     useEffect(() => {
         setNavItems(getVisibleNavigation(role as UserRole));
@@ -118,19 +146,12 @@ export function TopNav({ role }: TopNavProps) {
                         key={subItem.id}
                         href={subItem.path}
                         className={clsx(
-                            'flex items-start gap-3 rounded-2xl px-3 py-2.5 text-sm leading-5 transition-colors',
+                            'block rounded-xl px-4 py-2 text-[13px] font-medium transition-colors',
                             isItemActive(subItem, pathname)
-                                ? 'bg-slate-50 text-slate-900'
-                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900',
+                                ? 'bg-slate-50 text-[#030213]'
+                                : 'text-[#717182] hover:bg-slate-50 hover:text-[#030213]',
                         )}
                     >
-                        <Circle
-                            size={6}
-                            className={clsx(
-                                'mt-[7px] shrink-0',
-                                isItemActive(subItem, pathname) ? 'fill-slate-900 text-slate-900' : 'fill-slate-300 text-slate-300',
-                            )}
-                        />
                         <span className="break-words">{subItem.label}</span>
                     </Link>
                 ))}
@@ -142,7 +163,11 @@ export function TopNav({ role }: TopNavProps) {
         const items = item.subItems ?? [];
 
         return (
-            <div className="absolute left-0 top-full z-50 mt-2 min-w-[300px] rounded-[24px] border border-black/10 bg-white p-3 shadow-[0_20px_60px_rgba(15,23,42,0.12)]">
+            <div
+                className="absolute left-0 top-full z-50 mt-2 min-w-[300px] rounded-[24px] border border-black/10 bg-white p-3 shadow-[0_20px_60px_rgba(15,23,42,0.12)]"
+                onMouseEnter={clearCloseTimeout}
+                onMouseLeave={handleMouseLeave}
+            >
                 <div className="space-y-1">
                     {items.map((subItem) => {
                         const hasNestedItems = Boolean(subItem.subItems?.length);
@@ -158,23 +183,16 @@ export function TopNav({ role }: TopNavProps) {
                                 <Link
                                     href={subItem.path}
                                     className={clsx(
-                                        'flex items-start gap-3 rounded-2xl px-4 py-2.5 text-sm leading-5 transition-colors',
+                                        'block rounded-xl px-4 py-2.5 text-[13px] font-medium transition-colors',
                                         isSubItemActive
-                                            ? 'bg-slate-50 text-slate-900'
-                                            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900',
+                                            ? 'bg-slate-50 text-[#030213]'
+                                            : 'text-[#717182] hover:bg-slate-50 hover:text-[#030213]',
                                     )}
                                 >
-                                    <Circle
-                                        size={6}
-                                        className={clsx(
-                                            'mt-[7px] shrink-0',
-                                            isSubItemActive ? 'fill-slate-900 text-slate-900' : 'fill-slate-300 text-slate-300',
-                                        )}
-                                    />
-                                    <span className="min-w-0 flex-1 break-words">{subItem.label}</span>
-                                    {hasNestedItems ? (
-                                        <ChevronRight size={14} className="mt-1 shrink-0 text-slate-400" />
-                                    ) : null}
+                                    <span className="min-w-0 flex-1 break-words block">{subItem.label}</span>
+                                    {hasNestedItems && (
+                                        <ChevronRight size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    )}
                                 </Link>
 
                                 {hasNestedItems ? (
@@ -218,8 +236,8 @@ export function TopNav({ role }: TopNavProps) {
                         <div
                             key={item.id}
                             className="relative flex h-full items-center"
-                            onMouseEnter={() => setOpenMenuId(item.id)}
-                            onMouseLeave={() => setOpenMenuId(null)}
+                            onMouseEnter={() => handleMouseEnter(item.id)}
+                            onMouseLeave={handleMouseLeave}
                         >
                             <button
                                 className={clsx(

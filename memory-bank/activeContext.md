@@ -24,7 +24,7 @@
 4. **5 агентов** вместо «агентного зоопарка» (обосновано)
 5. **3-стадийная дорожная карта** — итеративная эволюция
 
-## Следующие шаги
-
-- Рассмотрение и утверждение архитектуры
-- Начало Stage 1 (интеграция LLM API, расширение Tool Registry, token-бюджеты, observability)
+- **R1-R3**: Завершены и выставлены в `READY_FOR_REVIEW` (Evidence Backbone,- **R5. Forensics Timeline Depth**: Вчера был внедрен R4 (Claim Accounting). Сегодня переходим к восстановлению глубокой причинной цепочки в Forensics.
+  - Промт: [2026-03-06_a_rai-r5_trace-forensics-depth.md](file:///root/RAI_EP/interagency/prompts/2026-03-06_a_rai-r5_trace-forensics-depth.md)
+  - Статус: В процессе (Step 3: Анализ текущей реализации timeline и topology).
+- **В ОЖИДАНИИ**: Реакция техлида на ревью-паки R1-R3.

@@ -270,6 +270,8 @@
 - [x] Создан промт для Agent Connection Map: `interagency/prompts/2026-03-05_a_rai-f4-14_connection-map-critical-path.md` `[APPROVED]`
 - [x] Создан промт для Safe Replay Trace: `interagency/prompts/2026-03-05_a_rai-f4-15_safe-replay-trace.md` `[APPROVED]`
 - [x] Создан промт для Agent Configurator: `interagency/prompts/2026-03-05_a_rai-f4-16_agent-configurator.md` `[APPROVED]`
-- [x] Создан промт для Control Tower UI: `interagency/prompts/2026-03-05_a_rai-f4-17_control-tower-ui.md` `[APPROVED]`
-- [x] Создан промт для Agent Registry UI: `interagency/prompts/2026-03-05_a_rai-f4-18_agent-management-ui.md` `[APPROVED]`
 - [x] Создан промт для Governance & Security UI (Phase 4.19): `interagency/prompts/2026-03-05_a_rai-f4-19_governance-security-ui.md` `[APPROVED]`
+
+## Stage 2 Truth-Sync (План d97a1f1c)
+- [/] Принятие ORCHESTRATOR PROMPT к исполнению.
+- [x] **R1. Evidence Backbone** — READY_FOR_REVIEW (Отчёт `interagency/reports/2026-03-05_a_rai-r1_evidence-audit-backbone_report.md` готов)

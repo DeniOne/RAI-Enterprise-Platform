@@ -1,7 +1,8 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { apiClient } from '@/lib/api';
 import { AuthorityProvider, UserRole } from './AuthorityContext';
 import { create } from 'zustand';
 
@@ -19,6 +20,11 @@ import { ThemeProvider } from '@/shared/components/ThemeProvider';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
     const { currentRole } = useAuthSimulationStore();
+
+    useEffect(() => {
+        apiClient.defaults.headers.common['x-simulated-role'] = currentRole;
+    }, [currentRole]);
+
     const [queryClient] = useState(() => new QueryClient({
         defaultOptions: {
             queries: {

@@ -105,8 +105,36 @@ describe("TraceTopologyService", () => {
     const result = await service.getTraceTopology(traceId, companyId);
 
     expect(result.criticalPathNodeIds).toContain("__root__");
-    expect(result.criticalPathNodeIds).toContain("slow");
-    const slowNode = result.nodes.find((n) => n.id === "slow");
+    // ID теперь взрывается как entryId:phaseName или entryId:index
+    expect(result.criticalPathNodeIds.some(id => id.startsWith("slow:"))).toBe(true);
+    const slowNode = result.nodes.find((n) => n.id.startsWith("slow:"));
     expect(slowNode?.durationMs).toBe(200);
+  });
+
+  it("explodes multiple phases into separate topology nodes", async () => {
+    const createdAt = new Date();
+    (prisma.aiAuditEntry.findMany as jest.Mock).mockResolvedValue([
+      {
+        id: "e1",
+        traceId,
+        companyId,
+        toolNames: ["t1"],
+        metadata: {
+          phases: [
+            { name: "router", durationMs: 10, timestamp: createdAt.toISOString() },
+            { name: "tools", durationMs: 50, timestamp: createdAt.toISOString() },
+          ],
+        },
+        createdAt,
+      },
+    ]);
+    (prisma.traceSummary.findFirst as jest.Mock).mockResolvedValue({ durationMs: 60 });
+
+    const result = await service.getTraceTopology(traceId, companyId);
+
+    expect(result.nodes).toHaveLength(3); // root + 2 phases
+    expect(result.nodes.find(n => n.id === "e1:router")).toBeDefined();
+    expect(result.nodes.find(n => n.id === "e1:tools")).toBeDefined();
+    expect(result.nodes.find(n => n.id === "e1:tools")?.label).toContain("tools: t1");
   });
 });

@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { randomUUID } from "crypto";
-import { RaiChatRequestDto, RaiChatResponseDto } from "./dto/rai-chat.dto";
+import { RaiChatRequestDto, RaiChatResponseDto, EvidenceReference } from "./dto/rai-chat.dto";
 import { RaiToolActorContext } from "./tools/rai-tools.types";
 import { IntentRouterService } from "./intent-router/intent-router.service";
 import { MemoryCoordinatorService } from "./memory/memory-coordinator.service";
@@ -10,6 +10,7 @@ import { ExternalSignalsService } from "./external-signals.service";
 import { Prisma } from "@rai/prisma-client";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { TraceSummaryService } from "./trace-summary.service";
+import { TruthfulnessEngineService } from "./truthfulness-engine.service";
 
 @Injectable()
 export class SupervisorAgent {
@@ -24,7 +25,8 @@ export class SupervisorAgent {
     private readonly prisma: PrismaService,
     @Inject(TraceSummaryService)
     private readonly traceSummaryService: TraceSummaryService,
-  ) {}
+    private readonly truthfulnessEngine: TruthfulnessEngineService,
+  ) { }
 
   async orchestrate(
     request: RaiChatRequestDto,
@@ -47,6 +49,7 @@ export class SupervisorAgent {
       userId,
     );
 
+    const tRouter = Date.now();
     const classification = this.intentRouter.classify(
       request.message,
       request.workspaceContext,
@@ -67,11 +70,13 @@ export class SupervisorAgent {
       });
     }
 
+    const tExecStart = Date.now();
     const executionResult = await this.agentRuntime.run({
       requestedToolCalls,
       actorContext,
     });
 
+    const tExternalSignals = Date.now();
     const externalSignalResult = await this.externalSignalsService.process({
       companyId,
       traceId,
@@ -81,6 +86,7 @@ export class SupervisorAgent {
       feedback: request.advisoryFeedback,
     });
 
+    const tComposerStart = Date.now();
     const response = await this.responseComposer.buildResponse({
       request,
       executionResult,
@@ -91,58 +97,123 @@ export class SupervisorAgent {
       companyId,
     });
 
-    void this.traceSummaryService.record({
-      traceId,
-      companyId,
-      totalTokens: 0,
-      promptTokens: 0,
-      completionTokens: 0,
-      durationMs: Date.now() - startedAt,
-      modelId: "deterministic",
-      promptVersion: "v1",
-      toolsVersion: "v1",
-      policyId: "default",
-    });
-
-    this.writeAiAuditEntry({
-      companyId,
-      traceId,
-      toolNames: executionResult.executedTools.map((t) => t.name),
-      intentMethod: classification.method,
-      replayInput: options?.replayMode ? undefined : { message: request.message, workspaceContext: request.workspaceContext },
-    });
+    const tComposerEnd = Date.now();
+    const durationMs = tComposerEnd - startedAt;
 
     if (!options?.replayMode) {
+      const tSummaryStart = Date.now();
+      // Шаг 1: initial record — live execution metadata (await to prevent race with updateQuality)
+      await this.traceSummaryService.record({
+        traceId,
+        companyId,
+        totalTokens: 0,
+        promptTokens: 0,
+        completionTokens: 0,
+        durationMs,
+        modelId: "deterministic",
+        promptVersion: "v1",
+        toolsVersion: "v1", // Restore: tool list is NOT a version
+        policyId: "default", // Restore: intent method is NOT a policyId
+      });
+
+      const tSummaryEnd = Date.now();
+
+      // Шаг 2: writeAiAuditEntry — await, чтобы гарантировать персистентность записи
+      const auditEntryId = await this.writeAiAuditEntry({
+        companyId,
+        traceId,
+        toolNames: executionResult.executedTools.map((t) => t.name),
+        intentMethod: classification.method,
+        evidence: response.evidence,
+        replayInput: {
+          message: request.message,
+          workspaceContext: request.workspaceContext,
+        },
+        phases: [
+          { name: "router", timestamp: new Date(tRouter).toISOString(), durationMs: tExecStart - tRouter },
+          { name: "tools", timestamp: new Date(tExecStart).toISOString(), durationMs: tExternalSignals - tExecStart },
+          { name: "composer", timestamp: new Date(tComposerStart).toISOString(), durationMs: tComposerEnd - tComposerStart },
+          { name: "trace_summary_record", timestamp: new Date(tSummaryStart).toISOString(), durationMs: tSummaryEnd - tSummaryStart },
+          { name: "audit_write", timestamp: new Date(tSummaryEnd).toISOString(), durationMs: 0 },
+        ],
+      });
+
+      // Шаг 3: Truthfulness pipeline — считает BS%, покрытие и невалидность
+      const tTruthStart = Date.now();
+      void this.truthfulnessEngine
+        .calculateTraceTruthfulness(traceId, companyId)
+        .then(async (result) => {
+          const tTruthEnd = Date.now();
+          const tQualityStart = Date.now();
+          await this.traceSummaryService.updateQuality({
+            traceId,
+            companyId,
+            bsScorePct: result.bsScorePct,
+            evidenceCoveragePct: result.evidenceCoveragePct,
+            invalidClaimsPct: result.invalidClaimsPct,
+          });
+          const tQualityEnd = Date.now();
+
+          // Опционально: дописываем фазы в аудит-запись для Forensics
+          if (auditEntryId) {
+            await this.appendForensicPhases(auditEntryId, [
+              { name: "truthfulness", timestamp: new Date(tTruthStart).toISOString(), durationMs: tTruthEnd - tTruthStart },
+              { name: "quality_update", timestamp: new Date(tQualityStart).toISOString(), durationMs: tQualityEnd - tQualityStart },
+            ]);
+          }
+        })
+        .catch((err) =>
+          this.logger.warn(
+            `truthfulness_engine failed traceId=${traceId} err=${String((err as Error)?.message ?? err)}`,
+          ),
+        );
+
       this.memoryCoordinator.commitInteraction(
-      request,
-      response.text,
-      actorContext,
-      threadId,
-      userId,
-    );
+        request,
+        response.text,
+        actorContext,
+        threadId,
+        userId,
+      );
     }
 
     return response;
   }
 
-  private writeAiAuditEntry(params: {
+  /**
+   * Записывает AiAuditEntry в БД и ждёт завершения операции (async/await).
+   * Это гарантирует, что TruthfulnessEngine, читающий audit trail после этого вызова,
+   * увидит реальные данные — гонка исключена архитектурно, а не «надеждой на event loop».
+   * Ошибка записи логируется, но не пробрасывается — response клиента не ломается.
+   */
+  private async writeAiAuditEntry(params: {
     companyId: string;
     traceId: string;
     toolNames: string[];
     intentMethod: string;
     replayInput?: { message: string; workspaceContext?: unknown };
-  }): void {
-    const metadata: Prisma.InputJsonValue | undefined = params.replayInput
-      ? (JSON.parse(
-          JSON.stringify({
-            replayInput: {
-              message: params.replayInput.message,
-              workspaceContext: params.replayInput.workspaceContext ?? null,
-            },
-          }),
-        ) as Prisma.InputJsonValue)
-      : undefined;
-    this.prisma.aiAuditEntry
+    evidence?: EvidenceReference[];
+    phases?: Array<{ name: string; timestamp: string; durationMs: number }>;
+  }): Promise<string | null> {
+    const metadataObj: Record<string, unknown> = {};
+    if (params.replayInput) {
+      metadataObj.replayInput = {
+        message: params.replayInput.message,
+        workspaceContext: params.replayInput.workspaceContext ?? null,
+      };
+    }
+    if (params.evidence && params.evidence.length > 0) {
+      metadataObj.evidence = params.evidence;
+    }
+    if (params.phases && params.phases.length > 0) {
+      metadataObj.phases = params.phases;
+    }
+
+    const metadata: Prisma.InputJsonValue | undefined =
+      Object.keys(metadataObj).length > 0
+        ? (JSON.parse(JSON.stringify(metadataObj)) as Prisma.InputJsonValue)
+        : undefined;
+    const entry = await this.prisma.aiAuditEntry
       .create({
         data: {
           traceId: params.traceId,
@@ -154,10 +225,35 @@ export class SupervisorAgent {
           metadata,
         },
       })
-      .catch((err) =>
+      .catch((err) => {
         this.logger.warn(
           `ai_audit_entry create failed traceId=${params.traceId} err=${String((err as Error)?.message ?? err)}`,
-        ),
-      );
+        );
+        return null;
+      });
+    return entry?.id ?? null;
+  }
+
+  /**
+   * Дописывает фазы в существующую запись AiAuditEntry.
+   */
+  private async appendForensicPhases(
+    id: string,
+    newPhases: Array<{ name: string; timestamp: string; durationMs: number }>,
+  ): Promise<void> {
+    const entry = await this.prisma.aiAuditEntry.findUnique({ where: { id } });
+    if (!entry) return;
+
+    const metadata = (entry.metadata as Record<string, unknown>) ?? {};
+    const phases = Array.isArray(metadata.phases) ? [...metadata.phases] : [];
+    phases.push(...newPhases);
+    metadata.phases = phases;
+
+    await this.prisma.aiAuditEntry.update({
+      where: { id },
+      data: {
+        metadata: JSON.parse(JSON.stringify(metadata)) as Prisma.InputJsonValue,
+      },
+    });
   }
 }

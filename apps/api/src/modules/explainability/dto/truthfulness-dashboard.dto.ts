@@ -18,18 +18,20 @@ export class TruthfulnessWorstTraceDto {
   @IsNumber()
   @Min(0)
   @Max(100)
-  bsScorePct: number;
-
-  @IsNumber()
-  @Min(0)
-  @Max(100)
-  evidenceCoveragePct: number;
+  @IsOptional()
+  bsScorePct: number | null;
 
   @IsNumber()
   @Min(0)
   @Max(100)
   @IsOptional()
-  invalidClaimsPct?: number;
+  evidenceCoveragePct: number | null;
+
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  invalidClaimsPct?: number | null;
 
   @IsISO8601()
   createdAt: string;

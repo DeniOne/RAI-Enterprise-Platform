@@ -1401,9 +1401,9 @@ model TraceSummary {
   toolsVersion      String
   policyId          String
 
-  evidenceCoveragePct Float  @default(0)
-  invalidClaimsPct    Float  @default(0)
-  bsScorePct          Float  @default(0)
+  evidenceCoveragePct Float?
+  invalidClaimsPct    Float?
+  bsScorePct          Float?
 
   createdAt         DateTime @default(now())
 

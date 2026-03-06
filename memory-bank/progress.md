@@ -359,3 +359,31 @@
 - [2026-03-05 19:24:27] Проверен отчёт 2026-03-05_a_rai-f4-16_agent-configurator.md. Agent Configurator API DONE.
 - [2026-03-05 19:43:27] Проверен отчет 2026-03-05_a_rai-f4-17_control-tower-ui.md. Control Tower UI DONE.
 - [2026-03-05 19:51:12] Запущены API (port 4000) и Web (port 3000) серверы.
+- [2026-03-05 20:35:00] Исправлен баг в `TopNav.tsx`: добавлен таймаут 150мс на закрытие меню. Сука, зазор в 8 пикселей больше не ломает навигацию.
+
+## 2026-03-05 — R2 TraceSummary Live Metrics (READY_FOR_REVIEW)
+- `TraceSummaryService.updateQuality(traceId, companyId, bsScorePct, evidenceCoveragePct, invalidClaimsPct)` — новый метод для патча quality-полей
+- `TruthfulnessEngineService.calculateTraceTruthfulness()` — сигнатура изменена с `Promise<void>` на `Promise<number>` (bsScorePct); убран внутренний `updateTraceSummary`
+- `SupervisorAgent`: 2-шаговая запись TraceSummary — initial record (exe metadata) + updateQuality (quality после TruthfulnessEngine)
+- Live поля: `toolsVersion` = список выполненных tools, `policyId` = classification.method, `bsScorePct` + `evidenceCoveragePct` из runtime
+- tsc PASS | trace-summary.spec 4/4 | truthfulness-engine.spec 5/5 | supervisor-agent.spec 6/6
+
+## 2026-03-05 — R3 Truthfulness Runtime Trigger (READY_FOR_REVIEW)
+- Гонка устранена: `writeAiAuditEntry` дожидается выполнения перед `calculateTraceTruthfulness`.
+- `replayMode` корректно блокирует вычет truthfulness.
+- Убран фальшивый fallback `bsScorePct ?? 0` — движок теперь честно отдает 100 для пустых трейсов.
+- Добавлено 5 тестов `Truthfulness runtime pipeline`.
+- tsc PASS, targeted jest PASS.
+
+## 2026-03-06 — R4 Claim Accounting and Coverage (DONE)
+- Внедрена каноническая модель Claim Accounting: `total / evidenced / verified / invalid`.
+- Формулы `evidenceCoveragePct` и `invalidClaimsPct` переведены на прозрачные знаменатели.
+- `TruthfulnessEngineService` теперь возвращает `TruthfulnessResult` вместо `number`.
+- `TraceSummary` теперь честно сохраняет `invalidClaimsPct`.
+- Регрессия тестов (3 сюиты, 20 тестов) — PASS.
+- Decision AG-RAI-R4-001 зафиксирован.
+
+## 2026-03-06 — R5 Forensics Timeline Depth (STARTED)
+- Взят промт `2026-03-06_a_rai-r5_trace-forensics-depth.md`.
+- Цель: Восстановление полной причинной цепочки (`router -> summary -> audit -> truthfulness -> quality -> composer`).
+- Анализ `TraceTopologyService` и `ExplainabilityPanelService` выявил расхождения в логике восстановления фаз.

@@ -1,3 +1,5 @@
+import { ExplainabilityTimelineNodeKind } from "./explainability-timeline.dto";
+
 /**
  * DTO для Explainability Explorer (Forensics): обогащённый таймлайн трейса с evidence и алертами.
  */
@@ -13,9 +15,9 @@ export interface TraceForensicsSummaryDto {
   promptVersion: string;
   toolsVersion: string;
   policyId: string;
-  bsScorePct: number;
-  evidenceCoveragePct: number;
-  invalidClaimsPct: number;
+  bsScorePct: number | null;
+  evidenceCoveragePct: number | null;
+  invalidClaimsPct: number | null;
   createdAt: string;
 }
 
@@ -33,6 +35,10 @@ export interface TraceForensicsEntryDto {
   toolNames: string[];
   model: string;
   intentMethod: string | null;
+  phase: string;
+  kind?: ExplainabilityTimelineNodeKind;
+  label?: string;
+  durationMs?: number;
   tokensUsed: number;
   createdAt: string;
   evidenceRefs: EvidenceRefDto[];

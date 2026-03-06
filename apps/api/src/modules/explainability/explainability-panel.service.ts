@@ -3,6 +3,7 @@ import { PrismaService } from "../../shared/prisma/prisma.service";
 import { SensitiveDataFilterService } from "../rai-chat/security/sensitive-data-filter.service";
 import {
   ExplainabilityTimelineNodeDto,
+  ExplainabilityTimelineNodeKind,
   ExplainabilityTimelineResponseDto,
 } from "./dto/explainability-timeline.dto";
 import {
@@ -19,7 +20,7 @@ export class ExplainabilityPanelService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly sensitiveDataFilter: SensitiveDataFilterService,
-  ) {}
+  ) { }
 
   async getTruthfulnessDashboard(companyId: string, timeWindowHours: number): Promise<TruthfulnessDashboardResponseDto> {
     const windowHours = Number.isFinite(timeWindowHours) && timeWindowHours > 0 ? timeWindowHours : 24;
@@ -47,22 +48,28 @@ export class ExplainabilityPanelService {
       };
     }
 
-    const bsValues = summaries.map((s) => s.bsScorePct ?? 0);
-    const evidenceValues = summaries.map((s) => s.evidenceCoveragePct ?? 0);
+    // Avg только по трейсам где quality уже посчитана (не-null).
+    // Трейсы с NULL = quality pending — не включаем в среднее: это честнее, чем ?? 0.
+    const bsKnown = summaries
+      .map((s) => s.bsScorePct)
+      .filter((v): v is number => v !== null);
+    const evidenceKnown = summaries
+      .map((s) => s.evidenceCoveragePct)
+      .filter((v): v is number => v !== null);
 
     const avg = (values: number[]): number =>
       values.length ? values.reduce((sum, v) => sum + v, 0) / values.length : 0;
 
-    const avgBsScore = avg(bsValues);
-    const avgEvidenceCoverage = avg(evidenceValues);
+    const avgBsScore = avg(bsKnown);
+    const avgEvidenceCoverage = avg(evidenceKnown);
 
-    const sortedForP95 = [...bsValues].sort((a, b) => a - b);
+    const sortedForP95 = [...bsKnown].sort((a, b) => a - b);
     const p95Index = Math.floor(0.95 * (sortedForP95.length - 1));
     const p95BsScore = sortedForP95[p95Index] ?? 0;
 
     const worstTraces = summaries
       .slice()
-      .sort((a, b) => b.bsScorePct - a.bsScorePct)
+      .sort((a, b) => (b.bsScorePct ?? 0) - (a.bsScorePct ?? 0))
       .slice(0, 10)
       .map((s) => ({
         traceId: s.traceId,
@@ -117,31 +124,55 @@ export class ExplainabilityPanelService {
 
     const nodes: ExplainabilityTimelineNodeDto[] = [];
 
-    nodes.push({
-      kind: "router",
-      timestamp: ownEntry?.createdAt.toISOString() ?? auditEntries[0].createdAt.toISOString(),
-      label: "IntentRouter",
-      status: ownEntry?.intentMethod ?? undefined,
-      metadata: this.deepMask({
-        model: ownEntry?.model ?? undefined,
-      }) as Record<string, unknown>,
-    });
+    // Попытка извлечь доменные фазы из metadata (R5)
+    let hasSystemPhases = false;
+    for (const entry of auditEntries) {
+      const meta = (entry.metadata as { phases?: Array<{ name: string; timestamp: string; durationMs: number }> }) ?? {};
+      if (Array.isArray(meta.phases)) {
+        hasSystemPhases = true;
+        for (const phase of meta.phases) {
+          nodes.push({
+            kind: phase.name as ExplainabilityTimelineNodeKind,
+            timestamp: phase.timestamp,
+            label: this.getPhaseLabel(phase.name),
+            status: phase.name === "router" ? (entry.intentMethod ?? undefined) : undefined,
+            metadata: {
+              durationMs: phase.durationMs,
+              ...(phase.name === "tools" ? { toolNames: entry.toolNames } : {}),
+            },
+          });
+        }
+      }
+    }
 
-    nodes.push({
-      kind: "tools",
-      timestamp: ownEntry?.createdAt.toISOString() ?? auditEntries[0].createdAt.toISOString(),
-      label: "Executed tools",
-      metadata: this.deepMask({
-        toolNames: ownEntry?.toolNames ?? [],
-      }) as Record<string, unknown>,
-    });
+    if (!hasSystemPhases) {
+      // Fallback: старая логика синтетических нод (Backward Compatibility)
+      nodes.push({
+        kind: "router",
+        timestamp: ownEntry?.createdAt.toISOString() ?? auditEntries[0].createdAt.toISOString(),
+        label: "IntentRouter",
+        status: ownEntry?.intentMethod ?? undefined,
+        metadata: this.deepMask({
+          model: ownEntry?.model ?? undefined,
+        }) as Record<string, unknown>,
+      });
 
-    nodes.push({
-      kind: "composer",
-      timestamp: ownEntry?.createdAt.toISOString() ?? auditEntries[0].createdAt.toISOString(),
-      label: "ResponseComposer",
-      metadata: {},
-    });
+      nodes.push({
+        kind: "tools",
+        timestamp: ownEntry?.createdAt.toISOString() ?? auditEntries[0].createdAt.toISOString(),
+        label: "Executed tools",
+        metadata: this.deepMask({
+          toolNames: ownEntry?.toolNames ?? [],
+        }) as Record<string, unknown>,
+      });
+
+      nodes.push({
+        kind: "composer",
+        timestamp: ownEntry?.createdAt.toISOString() ?? auditEntries[0].createdAt.toISOString(),
+        label: "ResponseComposer",
+        metadata: {},
+      });
+    }
 
     for (const action of pendingActions) {
       nodes.push({
@@ -237,38 +268,66 @@ export class ExplainabilityPanelService {
 
     const summary: TraceForensicsSummaryDto | null = summaryRow
       ? {
-          traceId: summaryRow.traceId,
-          companyId: summaryRow.companyId,
-          totalTokens: summaryRow.totalTokens,
-          promptTokens: summaryRow.promptTokens,
-          completionTokens: summaryRow.completionTokens,
-          durationMs: summaryRow.durationMs,
-          modelId: summaryRow.modelId,
-          promptVersion: summaryRow.promptVersion,
-          toolsVersion: summaryRow.toolsVersion,
-          policyId: summaryRow.policyId,
-          bsScorePct: summaryRow.bsScorePct ?? 0,
-          evidenceCoveragePct: summaryRow.evidenceCoveragePct ?? 0,
-          invalidClaimsPct: summaryRow.invalidClaimsPct ?? 0,
-          createdAt: summaryRow.createdAt.toISOString(),
-        }
+        traceId: summaryRow.traceId,
+        companyId: summaryRow.companyId,
+        totalTokens: summaryRow.totalTokens,
+        promptTokens: summaryRow.promptTokens,
+        completionTokens: summaryRow.completionTokens,
+        durationMs: summaryRow.durationMs,
+        modelId: summaryRow.modelId,
+        promptVersion: summaryRow.promptVersion,
+        toolsVersion: summaryRow.toolsVersion,
+        policyId: summaryRow.policyId,
+        bsScorePct: summaryRow.bsScorePct,
+        evidenceCoveragePct: summaryRow.evidenceCoveragePct,
+        invalidClaimsPct: summaryRow.invalidClaimsPct,
+        createdAt: summaryRow.createdAt.toISOString(),
+      }
       : null;
 
-    const timeline: TraceForensicsEntryDto[] = auditEntries.map((e) => {
-      const meta = (e as { metadata?: { evidence?: EvidenceRefDto[] } }).metadata;
+    const timeline: TraceForensicsEntryDto[] = [];
+    for (const e of auditEntries) {
+      const meta = (e as { metadata?: { phases?: Array<{ name: string; timestamp: string; durationMs: number }>; evidence?: EvidenceRefDto[] } })
+        .metadata;
+      const phases = Array.isArray(meta?.phases) ? meta.phases : [];
       const evidenceRefs = Array.isArray(meta?.evidence) ? meta.evidence : [];
-      return {
-        id: e.id,
-        traceId: e.traceId,
-        companyId: e.companyId,
-        toolNames: e.toolNames ?? [],
-        model: e.model ?? "deterministic",
-        intentMethod: e.intentMethod ?? null,
-        tokensUsed: e.tokensUsed ?? 0,
-        createdAt: e.createdAt.toISOString(),
-        evidenceRefs,
-      };
-    });
+
+      if (phases.length) {
+        for (const p of phases) {
+          const nodeId = `${e.id}:${p.name}`;
+          timeline.push({
+            id: nodeId,
+            traceId: e.traceId,
+            companyId: e.companyId,
+            toolNames: p.name === "tools" ? (e.toolNames ?? []) : [],
+            model: e.model ?? "deterministic",
+            intentMethod: p.name === "router" ? (e.intentMethod ?? null) : null,
+            phase: p.name,
+            label: this.getPhaseLabel(p.name),
+            kind: p.name as ExplainabilityTimelineNodeKind,
+            durationMs: p.durationMs,
+            tokensUsed: p.name === "composer" ? (e.tokensUsed ?? 0) : 0,
+            createdAt: p.timestamp,
+            evidenceRefs: (p.name === "tools" || p.name === "composer") ? evidenceRefs : [],
+          });
+        }
+      } else {
+        // Fallback: старая запись без фаз
+        timeline.push({
+          id: e.id,
+          traceId: e.traceId,
+          companyId: e.companyId,
+          toolNames: e.toolNames ?? [],
+          model: e.model ?? "deterministic",
+          intentMethod: e.intentMethod ?? null,
+          phase: e.toolNames?.length ? "tools" : "agent",
+          label: e.toolNames?.length ? "Tool Execution" : "Agent Execution",
+          tokensUsed: e.tokensUsed ?? 0,
+          createdAt: e.createdAt.toISOString(),
+          evidenceRefs,
+        });
+      }
+    }
 
     const qualityAlerts: TraceForensicsAlertDto[] = qualityAlertsRows.map(
       (a) => ({
@@ -287,6 +346,19 @@ export class ExplainabilityPanelService {
       timeline,
       qualityAlerts,
     };
+  }
+
+  private getPhaseLabel(name: string): string {
+    const map: Record<string, string> = {
+      router: "Intent Classification",
+      tools: "Tool Execution",
+      composer: "Response Composition",
+      trace_summary_record: "Initial Quality Trace",
+      audit_write: "Audit Trail Commit",
+      truthfulness: "Truthfulness Engine",
+      quality_update: "Final Quality Sync",
+    };
+    return map[name] ?? name;
   }
 
   private deepMask(value: unknown): unknown {

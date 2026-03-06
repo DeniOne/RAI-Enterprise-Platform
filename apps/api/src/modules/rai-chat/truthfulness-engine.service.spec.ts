@@ -25,7 +25,7 @@ describe("TruthfulnessEngineService", () => {
     service = mod.get(TruthfulnessEngineService);
   });
 
-  it("100% verified evidence → BS% = 0", async () => {
+  it("100% verified evidence → возвращает объект с BS%=0, coverage=100", async () => {
     prisma.aiAuditEntry.findMany.mockResolvedValue([
       {
         metadata: {
@@ -41,15 +41,16 @@ describe("TruthfulnessEngineService", () => {
       },
     ]);
 
-    await service.calculateTraceTruthfulness("tr1", "c1");
+    const result = await service.calculateTraceTruthfulness("tr1", "c1");
 
-    expect(prisma.traceSummary.updateMany).toHaveBeenCalledWith({
-      where: { traceId: "tr1", companyId: "c1" },
-      data: { bsScorePct: 0 },
-    });
+    expect(result.bsScorePct).toBe(0);
+    expect(result.evidenceCoveragePct).toBe(100);
+    expect(result.invalidClaimsPct).toBe(0);
+    expect(result.accounting.total).toBe(1);
+    expect(result.accounting.verified).toBe(1);
   });
 
-  it("1 agro invalid (3) + 1 general verified (1) → BS% = 75", async () => {
+  it("1 agro invalid (3) + 1 general verified (1) → возвращает BS%=75, coverage=100, invalidPct=50", async () => {
     prisma.aiAuditEntry.findMany.mockResolvedValue([
       {
         metadata: {
@@ -58,49 +59,74 @@ describe("TruthfulnessEngineService", () => {
               claim: "Норма высева рапса указана неверно.",
               sourceType: "TOOL_RESULT",
               sourceId: "compute_deviations",
-              confidenceScore: 0.1, // INVALID
+              confidenceScore: 0.1, // INVALID (weight 3)
             },
             {
               claim: "Общее пояснение без домена.",
               sourceType: "DOC",
               sourceId: "doc1",
-              confidenceScore: 0.9, // VERIFIED GENERAL
+              confidenceScore: 0.9, // VERIFIED GENERAL (weight 1)
             },
           ],
         },
       },
     ]);
 
-    await service.calculateTraceTruthfulness("tr2", "c1");
+    const result = await service.calculateTraceTruthfulness("tr2", "c1");
 
-    expect(prisma.traceSummary.updateMany).toHaveBeenCalledWith({
-      where: { traceId: "tr2", companyId: "c1" },
-      data: { bsScorePct: 75 },
-    });
+    expect(result.bsScorePct).toBe(75);
+    expect(result.evidenceCoveragePct).toBe(100);
+    expect(result.invalidClaimsPct).toBe(50);
+    expect(result.accounting.total).toBe(2);
+    expect(result.accounting.invalid).toBe(1);
+    expect(result.accounting.verified).toBe(1);
   });
 
-  it("пустой трейс → BS% = 100", async () => {
+  it("пустой трейс → возвращает BS%=100, coverage=0", async () => {
     prisma.aiAuditEntry.findMany.mockResolvedValue([]);
 
-    await service.calculateTraceTruthfulness("tr3", "c1");
+    const result = await service.calculateTraceTruthfulness("tr3", "c1");
 
-    expect(prisma.traceSummary.updateMany).toHaveBeenCalledWith({
-      where: { traceId: "tr3", companyId: "c1" },
-      data: { bsScorePct: 100 },
-    });
+    expect(result.bsScorePct).toBe(100);
+    expect(result.evidenceCoveragePct).toBe(0);
+    expect(result.accounting.total).toBe(0);
   });
 
-  it("есть трейс, но нет evidence → BS% = 100", async () => {
+  it("есть трейс, но нет evidence → возвращает BS%=100, coverage=0", async () => {
     prisma.aiAuditEntry.findMany.mockResolvedValue([
       { metadata: {} },
     ]);
 
-    await service.calculateTraceTruthfulness("tr4", "c1");
+    const result = await service.calculateTraceTruthfulness("tr4", "c1");
 
-    expect(prisma.traceSummary.updateMany).toHaveBeenCalledWith({
-      where: { traceId: "tr4", companyId: "c1" },
-      data: { bsScorePct: 100 },
-    });
+    expect(result.bsScorePct).toBe(100);
+    expect(result.evidenceCoveragePct).toBe(0);
+    expect(result.accounting.total).toBe(0);
+  });
+
+  it("утверждение без sourceId (unverified) → coverage=0, bsScore=100", async () => {
+    prisma.aiAuditEntry.findMany.mockResolvedValue([
+      {
+        metadata: {
+          evidence: [
+            {
+              claim: "Я просто так сказал.",
+              sourceType: "NONE",
+              sourceId: "", // EMPTY
+              confidenceScore: 1.0,
+            },
+          ],
+        },
+      },
+    ]);
+
+    const result = await service.calculateTraceTruthfulness("tr-unv", "c1");
+
+    expect(result.bsScorePct).toBe(100);
+    expect(result.evidenceCoveragePct).toBe(0);
+    expect(result.accounting.total).toBe(1);
+    expect(result.accounting.evidenced).toBe(0);
+    expect(result.accounting.unverified).toBe(1);
   });
 });
 

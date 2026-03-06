@@ -5,7 +5,7 @@ layer: Execution
 status: Active
 version: 0.3.0
 owners: [@techlead]
-last_updated: 2026-03-04
+last_updated: 2026-03-05
 ---
 
 # ANTIGRAVITY SOFTWARE FACTORY
@@ -18,7 +18,8 @@ last_updated: 2026-03-04
 - `/root/RAI_EP/docs/00_STRATEGY/BUSINESS/RAI BUSINESS ARCHITECTURE v2.0.md` — как работает бизнес.
 - `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/RAI_FARM_OPERATING_SYSTEM_ARCHITECTURE.md` — принципы Рэй.
 - `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/RAI_AI_SYSTEM_ARCHITECTURE.md` — топория AI Swarm.
-- `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/A_RAI_IMPLEMENTATION_CHECKLIST.md` — текущий план работ.
+- `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/TRUTH_SYNC_RECOVERY_CHECKLIST.md` — основной операционный чеклист текущей серии работ `R1-R12`. Каждый промт и ревью-пак должен двигать соответствующий пункт этого чеклиста.
+- `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md` — верхний production-readiness gate. Используй его как ограничение и критерий полноты: нельзя закрывать локальные задачи так, чтобы это ухудшало готовность мультиагентной системы к внедрению AI.
 
 ---
 
@@ -29,6 +30,7 @@ last_updated: 2026-03-04
 3. **Multi-tenancy:** Всегда используй `companyId` для изоляции данных. **НИКОГДА** не бери `companyId` из payload запроса.
 4. **Service = IO / Orchestrator = Brain:** Не смешивай логику. Инфраструктура (БД/Redis) — только в сервисах.
 5. **Язык:** Весь вывод — **СТРОГО НА РУССКОМ**. См. `memory-bank/LANGUAGE_POLICY.md`.
+6. **Рабочий vs Финальный чеклист:** `TRUTH_SYNC_RECOVERY_CHECKLIST.md` — это текущий рабочий инструмент для выполнения промта. `A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md` — это финальный стратегический gate перед реальным внедрением AI. Если локальная задача закрыта, но нарушает production-readiness, задача считается проваленной.
 
 ---
 

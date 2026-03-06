@@ -12,12 +12,12 @@ import {
 
 @Controller("rai")
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.ADMIN)
+@Roles(UserRole.ADMIN, UserRole.CEO, UserRole.MANAGER)
 export class IncidentsGovernanceController {
   constructor(
     private readonly tenantContext: TenantContextService,
     private readonly incidentOps: IncidentOpsService,
-  ) {}
+  ) { }
 
   @Get("incidents/feed")
   async getIncidentsFeed(

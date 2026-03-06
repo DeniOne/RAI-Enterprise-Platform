@@ -13,12 +13,12 @@ import {
 
 @Controller("rai/agents")
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.ADMIN)
+@Roles(UserRole.ADMIN, UserRole.CEO, UserRole.MANAGER, UserRole.AGRONOMIST, UserRole.CFO, UserRole.CLIENT_ADMIN)
 export class AgentsConfigController {
   constructor(
     private readonly tenantContext: TenantContextService,
     private readonly agentManagement: AgentManagementService,
-  ) {}
+  ) { }
 
   @Get("config")
   async getConfig(): Promise<AgentConfigsResponseDto> {

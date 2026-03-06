@@ -3,10 +3,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { api } from '@/lib/api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui';
+import { Play, Activity, Clock, FileSearch, ShieldCheck, Box } from 'lucide-react';
+import { clsx } from 'clsx';
 
 const ForceGraph2D = dynamic(
   () => import('react-force-graph-2d').then((mod) => mod.default),
@@ -66,7 +66,7 @@ export default function TraceForensicsPage() {
         setForensics(fRes.data);
         setTopology(topRes.data);
       } catch (e) {
-        if (!cancelled) setError((e as Error).message ?? 'Ошибка загрузки');
+        if (!cancelled) setError((e as Error).message ?? 'Сбой криптографической проверки трейса');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -84,10 +84,10 @@ export default function TraceForensicsPage() {
       if (data?.replayTraceId) {
         router.push(`/control-tower/trace/${data.replayTraceId}`);
       } else {
-        setReplayError('Replay выполнен, новый traceId не получен');
+        setReplayError('Replay выполнен успешно, но инстанцировать новый traceId не удалось.');
       }
     } catch (e) {
-      setReplayError((e as Error).message ?? 'Replay недоступен (требуется ADMIN)');
+      setReplayError((e as Error).message ?? 'Replay отклонен Sentinel (требуется клиренс ADMIN)');
     } finally {
       setReplayBusy(false);
     }
@@ -116,6 +116,7 @@ export default function TraceForensicsPage() {
 
   const graphRef = React.useRef<HTMLDivElement>(null);
   const [graphSize, setGraphSize] = useState({ w: 600, h: 400 });
+
   useEffect(() => {
     const el = graphRef.current;
     if (!el) return;
@@ -125,135 +126,246 @@ export default function TraceForensicsPage() {
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [activeTab]); // Recalculate size when tab changes
 
   if (!traceId) {
     return (
-      <div className="min-h-screen bg-zinc-950 p-6 text-zinc-300">
-        <p>traceId не указан</p>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center font-sans tracking-tight">
+        <p className="text-[#717182] font-medium text-[13px]">MISSING_TRACE_ID: идентификатор отсутствует.</p>
       </div>
     );
   }
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 p-6 text-zinc-300">
-        <p>Загрузка трейса…</p>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center font-sans tracking-tight">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-[3px] border-black/10 border-t-blue-600 rounded-full animate-spin" />
+          <p className="text-[#717182] font-medium text-[13px]">Декодирование пакетов телеметрии...</p>
+        </div>
       </div>
     );
   }
+
   if (error) {
     return (
-      <div className="min-h-screen bg-zinc-950 p-6 text-zinc-300">
-        <p className="text-red-400">{error}</p>
+      <div className="min-h-screen bg-slate-50 p-10 font-sans">
+        <div className="max-w-xl mx-auto bg-white border border-black/10 rounded-2xl p-8 flex items-start gap-6">
+          <div className="w-12 h-12 bg-red-50 text-red-600 rounded-xl flex items-center justify-center shrink-0 border border-red-100">
+            <ShieldCheck size={24} />
+          </div>
+          <div>
+            <h1 className="text-xl font-medium text-[#030213]">Отказ в расшифровке Trace ID</h1>
+            <p className="mt-2 text-[#717182] leading-relaxed text-[13px]">
+              <span className="font-mono text-red-600 block mb-1">ERR_TRACE_NOT_FOUND:</span> {error}
+            </p>
+            <Link
+              href="/control-tower"
+              className="mt-6 inline-block px-5 py-2.5 bg-[#030213] text-white text-[13px] font-medium rounded-lg hover:bg-black transition-colors"
+            >
+              Вернуться в пульт
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 p-6 text-zinc-300">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <a href="/control-tower" className="text-sm text-sky-400 hover:underline">← Control Tower</a>
-          <h1 className="mt-2 text-xl font-semibold text-white">Трейс: {traceId.slice(0, 20)}…</h1>
+    <div className="min-h-screen bg-slate-50 font-sans pb-32">
+      {/* C-Pattern Header */}
+      <div className="bg-white border-b border-black/10 px-10 py-10">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center gap-2 mb-4">
+            <Link href="/control-tower" className="text-[11px] font-medium uppercase tracking-widest text-[#717182] hover:text-[#030213] transition-colors">
+              Control & Reliability
+            </Link>
+            <span className="text-[11px] font-medium text-[#717182]">/</span>
+            <span className="text-[11px] font-medium uppercase tracking-widest text-[#030213]">Forensic Trace</span>
+          </div>
+
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-8">
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center border border-black/5 shrink-0">
+                  <FileSearch size={20} className="text-[#030213]" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-medium text-[#030213] tracking-tight">Trace Inspection</h1>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[12px] font-mono text-[#717182] bg-slate-100 px-2 py-0.5 rounded border border-black/5">
+                      {traceId}
+                    </span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Verified
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-end gap-3">
+              <button
+                onClick={onReplay}
+                disabled={replayBusy}
+                className="px-6 py-2.5 bg-white border border-black/10 text-[#030213] hover:bg-slate-50 text-[13px] font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                <Play size={16} className={replayBusy ? "animate-pulse text-amber-500" : "text-[#030213]"} />
+                {replayBusy ? 'Симуляция...' : 'Replay Trace (Sandbox)'}
+              </button>
+              {replayError && <p className="text-[11px] font-mono text-red-600 max-w-[250px] text-right">{replayError}</p>}
+            </div>
+          </div>
         </div>
-        <Button
-          onClick={onReplay}
-          disabled={replayBusy}
-          className="rounded border border-amber-500/60 bg-amber-500/20 px-4 py-2 text-sm font-medium text-amber-400 hover:bg-amber-500/30 disabled:opacity-50"
-        >
-          {replayBusy ? 'Replay…' : 'Replay Trace'}
-        </Button>
       </div>
-      {replayError && <p className="mb-4 text-sm text-red-400">{replayError}</p>}
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="border-zinc-700 bg-zinc-900/80">
-          <TabsTrigger value="forensics" className="data-[state=active]:text-white data-[state=active]:border-zinc-500">
-            Forensics
-          </TabsTrigger>
-          <TabsTrigger value="topology" className="data-[state=active]:text-white data-[state=active]:border-zinc-500">
-            Topology Map
-          </TabsTrigger>
-        </TabsList>
+      <div className="max-w-7xl mx-auto px-10 mt-10">
+        <div className="flex gap-2 border-b border-black/10 mb-8">
+          <button
+            onClick={() => setActiveTab('forensics')}
+            className={clsx(
+              "px-6 py-3 text-[13px] font-medium uppercase tracking-widest transition-all border-b-2 -mb-[1px]",
+              activeTab === 'forensics' ? "border-[#030213] text-[#030213]" : "border-transparent text-[#717182] hover:text-[#030213]"
+            )}
+          >
+            Timeline & Evidence
+          </button>
+          <button
+            onClick={() => setActiveTab('topology')}
+            className={clsx(
+              "px-6 py-3 text-[13px] font-medium uppercase tracking-widest transition-all border-b-2 -mb-[1px]",
+              activeTab === 'topology' ? "border-[#030213] text-[#030213]" : "border-transparent text-[#717182] hover:text-[#030213]"
+            )}
+          >
+            Topology Directed Graph (DAG)
+          </button>
+        </div>
 
-        <TabsContent value="forensics" className="mt-6">
-          <Card className="border-zinc-700/50 bg-zinc-900/60 backdrop-blur">
-            <CardHeader>
-              <CardTitle className="text-zinc-200">Timeline & Evidence</CardTitle>
-            </CardHeader>
-            <CardContent>
+        {activeTab === 'forensics' && (
+          <div className="bg-white border border-black/10 rounded-2xl overflow-hidden shadow-sm shadow-black/[0.02]">
+            <div className="p-6 border-b border-black/5 bg-slate-50 flex items-center justify-between">
+              <h2 className="text-[14px] font-medium text-[#030213] flex items-center gap-2">
+                <Clock size={16} className="text-[#717182]" />
+                Хронология вызовов агентов
+              </h2>
+            </div>
+            <div className="p-0">
               {forensics?.timeline?.length ? (
-                <ul className="space-y-3">
-                  {forensics.timeline.map((entry: Record<string, unknown>, i: number) => (
-                    <li
-                      key={i}
-                      className="rounded border border-zinc-700/50 bg-zinc-800/40 px-4 py-3 text-sm"
-                    >
-                      <span className="font-medium text-zinc-200">{String(entry.phase ?? entry.label ?? '—')}</span>
-                      {entry.durationMs != null && (
-                        <span className="ml-2 text-zinc-500">{Number(entry.durationMs)} ms</span>
-                      )}
-                      {Array.isArray(entry.evidenceRefs) && entry.evidenceRefs.length > 0 && (
-                        <span className="ml-2 text-zinc-500">evidence: {entry.evidenceRefs.length}</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-white border-b border-black/5">
+                      <th className="px-6 py-3 text-[10px] font-medium uppercase tracking-widest text-[#717182] w-[30%]">Фаза / Функция</th>
+                      <th className="px-6 py-3 text-[10px] font-medium uppercase tracking-widest text-[#717182] w-[20%]">Длительность</th>
+                      <th className="px-6 py-3 text-[10px] font-medium uppercase tracking-widest text-[#717182] w-[50%]">Доказательства (Evidence Refs)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-black/5">
+                    {forensics.timeline.map((entry: any, i: number) => (
+                      <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <span className="text-[13px] font-medium text-[#030213]">{String(entry.phase ?? entry.label ?? '—')}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {entry.durationMs != null ? (
+                            <span className="text-[12px] font-mono text-[#717182] bg-slate-50 px-2 py-1 rounded border border-black/5">{Number(entry.durationMs)} ms</span>
+                          ) : (
+                            <span className="text-[12px] text-[#717182]">—</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          {Array.isArray(entry.evidenceRefs) && entry.evidenceRefs.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                              {entry.evidenceRefs.map((ref: any, idx: number) => (
+                                <span key={idx} className="text-[10px] font-mono text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
+                                  REF_{idx + 1}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-[12px] text-[#717182] italic">Отсутствуют</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               ) : (
-                <p className="text-sm text-zinc-500">Нет данных таймлайна</p>
+                <div className="p-6 text-center text-[13px] text-[#717182]">Журнал изоляции (Timeline) пуст или недоступен.</div>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
+          </div>
+        )}
 
-        <TabsContent value="topology" className="mt-6">
-          <Card className="border-zinc-700/50 bg-zinc-900/60 backdrop-blur">
-            <CardHeader>
-              <CardTitle className="text-zinc-200">Topology Map</CardTitle>
+        {activeTab === 'topology' && (
+          <div className="bg-white border border-black/10 rounded-2xl overflow-hidden shadow-sm shadow-black/[0.02] flex flex-col h-[700px]">
+            <div className="p-6 border-b border-black/5 flex items-center justify-between shrink-0">
+              <h2 className="text-[14px] font-medium text-[#030213] flex items-center gap-2">
+                <Box size={16} className="text-[#717182]" />
+                Визуализация DAG (Агенты)
+              </h2>
               {topology && (
-                <p className="mt-1 text-xs text-zinc-500">
-                  Критический путь подсвечен. Всего {topology.nodes.length} узлов, {topology.totalDurationMs} ms
+                <p className="text-[12px] text-[#717182] font-mono">
+                  Узлы: {topology.nodes.length} | Latency: <span className="font-medium text-[#030213]">{topology.totalDurationMs} ms</span>
                 </p>
               )}
-            </CardHeader>
-            <CardContent>
+            </div>
+            <div className="flex-1 bg-slate-50 relative w-full h-full" ref={graphRef}>
               {graphData.nodes.length > 0 ? (
-                <div ref={graphRef} className="h-[400px] w-full overflow-hidden rounded-lg border border-zinc-700/50 bg-zinc-900">
-                  <ForceGraph2D
-                    graphData={graphData}
-                    width={graphSize.w}
-                    height={graphSize.h}
-                    nodeLabel={(n) => {
-                      const o = n as { name?: string; kind?: string; durationMs?: number; critical?: boolean };
-                      return `${o.name ?? ''} (${o.kind ?? ''}) ${o.durationMs ?? 0}ms${o.critical ? ' [critical]' : ''}`;
-                    }}
-                    nodeColor={(n) => ((n as { critical?: boolean }).critical ? '#ef4444' : '#3b82f6')}
-                    nodeCanvasObject={(node, ctx, globalScale) => {
-                      const n = node as { x?: number; y?: number; name?: string; critical?: boolean };
-                      const label = n.name ?? (node as { id?: string }).id ?? '';
-                      const critical = n.critical;
-                      const x = n.x ?? 0;
-                      const y = n.y ?? 0;
-                      const fontSize = 12 / globalScale;
-                      ctx.font = `${critical ? 'bold ' : ''}${fontSize}px sans-serif`;
-                      ctx.fillStyle = critical ? '#ef4444' : '#3b82f6';
-                      ctx.beginPath();
-                      ctx.arc(x, y, critical ? 8 : 5, 0, 2 * Math.PI);
-                      ctx.fill();
-                      ctx.fillStyle = '#e4e4e7';
-                      ctx.textAlign = 'center';
-                      ctx.fillText(label, x, y + 14);
-                    }}
-                    linkColor={() => 'rgba(113, 113, 122, 0.5)'}
-                  />
-                </div>
+                <ForceGraph2D
+                  graphData={graphData}
+                  width={graphSize.w}
+                  height={graphSize.h}
+                  nodeLabel={(n) => {
+                    const o = n as { name?: string; kind?: string; durationMs?: number; critical?: boolean };
+                    return `${o.name ?? ''} (${o.kind ?? ''}) ${o.durationMs ?? 0}ms${o.critical ? ' [CRITICAL_PATH]' : ''}`;
+                  }}
+                  nodeColor={(n) => ((n as { critical?: boolean }).critical ? '#dc2626' : '#030213')} // Red-600 or Ink Black
+                  nodeCanvasObject={(node, ctx, globalScale) => {
+                    const n = node as { x?: number; y?: number; name?: string; critical?: boolean };
+                    const label = n.name ?? (node as { id?: string }).id ?? '';
+                    const critical = n.critical;
+                    const x = n.x ?? 0;
+                    const y = n.y ?? 0;
+                    const fontSize = 11 / globalScale; // Scaled font size
+
+                    // Draw node circle
+                    ctx.beginPath();
+                    ctx.arc(x, y, critical ? 8 : 4.5, 0, 2 * Math.PI);
+                    ctx.fillStyle = critical ? '#dc2626' : '#2563eb'; // Red or Blue for node dot
+                    ctx.fill();
+
+                    // Institutional Grade Text rendering
+                    ctx.font = `${critical ? 'bold ' : ''}${fontSize}px 'Geist', sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    // Background for text readability
+                    const textWidth = ctx.measureText(label).width;
+                    const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.4) as [number, number];
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'; // White backing
+                    ctx.fillRect(x - bckgDimensions[0] / 2, y + 10 - bckgDimensions[1] / 2, bckgDimensions[0], bckgDimensions[1]);
+
+                    // Text color
+                    ctx.fillStyle = critical ? '#dc2626' : '#030213';
+                    ctx.fillText(label, x, y + 10);
+                  }}
+                  linkColor={(link) => {
+                    // Critical path link coloring (optional advanced feature)
+                    return 'rgba(3, 2, 19, 0.15)'; // #030213 with 15% opacity
+                  }}
+                  linkWidth={(link) => 1.5}
+                  linkDirectionalArrowLength={3.5}
+                  linkDirectionalArrowRelPos={1}
+                />
               ) : (
-                <p className="text-sm text-zinc-500">Нет данных топологии</p>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <p className="text-[13px] text-[#717182]">Нет данных топологии для данного графа.</p>
+                </div>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

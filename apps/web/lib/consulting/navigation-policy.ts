@@ -23,6 +23,7 @@ export type Domain =
     | 'gr'
     | 'production'
     | 'knowledge'
+    | 'trust'
     | 'settings';
 
 export interface NavItem {
@@ -291,6 +292,30 @@ export const CONSULTING_NAVIGATION: NavItem[] = [
             { id: 'set_audit', label: 'Аудит', path: '/settings/audit', domain: 'settings', roles: ['ADMIN', 'SYSTEM_ADMIN', 'FOUNDER'] },
             { id: 'set_integrations', label: 'Интеграции', path: '/settings/integrations', domain: 'settings', roles: ['ADMIN', 'SYSTEM_ADMIN', 'FOUNDER'] },
             { id: 'set_params', label: 'Системные параметры', path: '/settings/params', domain: 'settings', roles: ['ADMIN', 'SYSTEM_ADMIN', 'FOUNDER'] },
+        ]
+    },
+
+    // 9. Доверие и Инфраструктура (Phase 4)
+    {
+        id: 'control_tower',
+        label: 'Главный пульт',
+        path: '/control-tower',
+        domain: 'trust',
+        roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'],
+        subItems: [
+            { id: 'ct_dashboard', label: 'Центр управления', path: '/control-tower', domain: 'trust', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
+            { id: 'ct_agents', label: 'Реестр агентов', path: '/control-tower/agents', domain: 'trust', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
+        ]
+    },
+    {
+        id: 'governance_security',
+        label: 'Безопасность',
+        path: '/governance/security',
+        domain: 'trust',
+        roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'],
+        subItems: [
+            { id: 'sec_dashboard', label: 'Security Control', path: '/governance/security', domain: 'trust', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
+            { id: 'sec_monitoring', label: 'Мониторинг инцидентов', path: '/governance/security#incidents', domain: 'trust', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
         ]
     }
 ];

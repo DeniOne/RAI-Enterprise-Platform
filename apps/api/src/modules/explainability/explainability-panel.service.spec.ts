@@ -83,6 +83,45 @@ describe("ExplainabilityPanelService", () => {
     expect(result.nodes[1].kind).toBe("tools");
   });
 
+  it("restores causal timeline from metadata phases", async () => {
+    const traceId = "tr_phases";
+    const companyId = "c1";
+
+    mockAiAuditFindMany.mockResolvedValue([
+      {
+        id: "a1",
+        traceId,
+        companyId,
+        toolNames: ["tool1"],
+        model: "deterministic",
+        intentMethod: "regex",
+        tokensUsed: 0,
+        metadata: {
+          phases: [
+            { name: "router", timestamp: "2026-03-06T10:00:00Z", durationMs: 5 },
+            { name: "tools", timestamp: "2026-03-06T10:00:01Z", durationMs: 100 },
+            { name: "composer", timestamp: "2026-03-06T10:00:02Z", durationMs: 20 },
+            { name: "truthfulness", timestamp: "2026-03-06T10:00:05Z", durationMs: 10 },
+          ],
+        },
+        createdAt: new Date("2026-03-06T10:00:00Z"),
+      },
+    ]);
+    mockPendingFindMany.mockResolvedValue([]);
+    mockDecisionFindMany.mockResolvedValue([]);
+    mockQuorumFindMany.mockResolvedValue([]);
+
+    const result = await service.getTraceTimeline(traceId, companyId);
+
+    // Должно быть 4 ноды из phases
+    expect(result.nodes).toHaveLength(4);
+    expect(result.nodes[0].kind).toBe("router");
+    expect(result.nodes[1].kind).toBe("tools");
+    expect(result.nodes[1].metadata?.toolNames).toContain("tool1");
+    expect(result.nodes[3].kind).toBe("truthfulness");
+    expect(result.nodes[3].label).toBe("Truthfulness Engine");
+  });
+
   it("throws NotFoundException when trace is missing", async () => {
     mockAiAuditFindMany.mockResolvedValue([]);
 

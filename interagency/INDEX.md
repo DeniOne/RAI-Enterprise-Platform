@@ -3,7 +3,24 @@
 
 ## Активные промты (в работе)
 
-- `interagency/prompts/2026-03-04_a_rai-f1-1_intent-router-agro-registry.md` [DONE]
+- `interagency/prompts/2026-03-05_a_rai-r3_truthfulness-runtime-trigger.md` [READY_FOR_REVIEW]
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-r3_truthfulness-runtime-trigger.md`
+  - Статус: READY_FOR_REVIEW. Гонка устранена (`writeAiAuditEntry` -> `await`). `bsScorePct ?? 0` фальшивый fallback убран (dvigok честно отдает 100). replayMode блокирует вызов truthfulness. 5 новых тестов `Truthfulness runtime pipeline` добавлены. tsc PASS, targeted jest (supervisor, truthfulness) PASS.
+- `interagency/prompts/2026-03-06_a_rai-r4_claim-accounting-and-coverage.md` [READY_FOR_REVIEW]
+  - Отчёт: `interagency/reports/2026-03-06_a_rai-r4_claim-accounting-and-coverage_report.md`
+  - Статус: READY_FOR_REVIEW. Внедрена каноническая модель Claim Accounting (`total / evidenced / verified / invalid`). Формулы `evidenceCoveragePct` и `invalidClaimsPct` переведены на прозрачные знаменатели. `TruthfulnessEngineService` возвращает расширенный `TruthfulnessResult`. `TraceSummary` пишет честный `invalidClaimsPct`. tsc PASS, targeted jest (engine, summary, supervisor) PASS.
+
+- `interagency/prompts/2026-03-06_a_rai-r5_trace-forensics-depth.md` [READY_FOR_REVIEW]
+  - Отчёт: `interagency/reports/2026-03-06_a_rai-r5_trace-forensics-depth_report.md`
+  - Статус: READY_FOR_REVIEW. Реализована каноническая модель Forensic Phases. Регрессии R1/R2 (replayInput, toolsVersion) устранены. `SupervisorAgent` пишет таймстемпы фаз в `metadata.phases`. `ExplainabilityPanel` и `TraceTopology` взрывают фазы в таймлайн и DAG. tsc PASS, 25/25 тестов PASS.
+
+- `interagency/prompts/2026-03-05_a_rai-r2_trace-summary-live-metrics.md` [READY_FOR_REVIEW]
+  - Отчёт: `interagency/reports/2026-03-05_a_rai-r2_trace-summary-live-metrics.md`
+  - Статус: READY_FOR_REVIEW. `TraceSummaryService.updateQuality()` добавлен; `TruthfulnessEngine.calculateTraceTruthfulness()` возвращает `Promise<number>`; `SupervisorAgent` делает 2-шаговую запись с live `durationMs`, `toolsVersion` (список tool names), `policyId` (classification.method), `evidenceCoveragePct`, `bsScorePct`. tsc PASS, 15/15 целевых тестов PASS.
+
+- `interagency/prompts/2026-03-05_a_rai-r1_evidence-audit-backbone.md` [READY_FOR_REVIEW]
+  - Статус: READY_FOR_REVIEW. `SupervisorAgent` вызывает `TruthfulnessEngineService.calculateTraceTruthfulness()` после записи audit entry. Все части цепочки (evidence→audit→TruthfulnessEngine) работают. tsc PASS, целевые тесты PASS.
+
   - Decision-ID: AG-ARAI-F1-001 [зарегистрирован в DECISIONS.log]
   - Отчёт: `interagency/reports/2026-03-04_a_rai-f1-1_intent-router-agro-registry.md` [APPROVED]
   - Статус: DONE. `IntentRouterService` (regex+LLM-ready), `AgroToolsRegistry` (изоляция agro-инструментов), `AiAuditEntry` (TraceId в БД). tsc PASS, 26/26 тестов PASS.

@@ -24,6 +24,7 @@ import { DeviationService } from "../consulting/deviation.service";
 import { KpiService } from "../consulting/kpi.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { TraceSummaryService } from "./trace-summary.service";
+import { TruthfulnessEngineService } from "./truthfulness-engine.service";
 import { AutonomyPolicyService } from "./autonomy-policy.service";
 import { WorkspaceEntityKind } from "./dto/rai-chat.dto";
 import {
@@ -112,8 +113,9 @@ describe("SupervisorAgent", () => {
         { provide: KpiService, useValue: kpiServiceMock },
         { provide: PrismaService, useValue: prismaServiceMock },
         { provide: SensitiveDataFilterService, useValue: { mask: (s: string) => s } },
-        { provide: TraceSummaryService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
+        { provide: TraceSummaryService, useValue: { record: jest.fn().mockResolvedValue(undefined), updateQuality: jest.fn().mockResolvedValue(undefined) } },
         { provide: AutonomyPolicyService, useValue: { getCompanyAutonomyLevel: jest.fn().mockResolvedValue("AUTONOMOUS") } },
+        { provide: TruthfulnessEngineService, useValue: { calculateTraceTruthfulness: jest.fn().mockResolvedValue(20) } },
       ],
     }).compile();
 
@@ -431,5 +433,180 @@ describe("SupervisorAgent", () => {
         }),
       ]),
     );
+  });
+
+  describe("Truthfulness runtime pipeline", () => {
+    let traceSummaryMock: { record: jest.Mock; updateQuality: jest.Mock };
+    let truthfulnessMock: { calculateTraceTruthfulness: jest.Mock };
+    let auditCreateMock: jest.Mock;
+
+    beforeEach(() => {
+      traceSummaryMock = { record: jest.fn().mockResolvedValue(undefined), updateQuality: jest.fn().mockResolvedValue(undefined) };
+      truthfulnessMock = {
+        calculateTraceTruthfulness: jest.fn().mockResolvedValue({
+          bsScorePct: 20,
+          evidenceCoveragePct: 100,
+          invalidClaimsPct: 0,
+          accounting: { total: 1, evidenced: 1, verified: 1, unverified: 0, invalid: 0 },
+        }),
+      };
+      auditCreateMock = jest.fn().mockResolvedValue({});
+    });
+
+    async function buildAgent(overrides?: {
+      auditCreate?: jest.Mock;
+      traceSummary?: object;
+      truthfulness?: object;
+    }): Promise<SupervisorAgent> {
+      const mod: TestingModule = await Test.createTestingModule({
+        providers: [
+          SupervisorAgent,
+          MemoryCoordinatorService,
+          AgentRuntimeService,
+          ResponseComposerService,
+          AgroToolsRegistry,
+          FinanceToolsRegistry,
+          RiskToolsRegistry,
+          KnowledgeToolsRegistry,
+          AgroDeterministicEngineFacade,
+          AgronomAgent,
+          EconomistAgent,
+          KnowledgeAgent,
+          RaiToolsRegistry,
+          RiskPolicyEngineService,
+          PendingActionService,
+          RaiChatWidgetBuilder,
+          { provide: IntentRouterService, useValue: intentRouterMock },
+          { provide: "MEMORY_ADAPTER", useValue: memoryAdapterMock },
+          { provide: ExternalSignalsService, useValue: externalSignalsServiceMock },
+          { provide: TechMapService, useValue: techMapServiceMock },
+          { provide: DeviationService, useValue: deviationServiceMock },
+          { provide: KpiService, useValue: kpiServiceMock },
+          {
+            provide: PrismaService,
+            useValue: {
+              ...prismaServiceMock,
+              aiAuditEntry: { create: overrides?.auditCreate ?? auditCreateMock },
+            },
+          },
+          { provide: SensitiveDataFilterService, useValue: { mask: (s: string) => s } },
+          { provide: TraceSummaryService, useValue: overrides?.traceSummary ?? traceSummaryMock },
+          { provide: AutonomyPolicyService, useValue: { getCompanyAutonomyLevel: jest.fn().mockResolvedValue("AUTONOMOUS") } },
+          { provide: TruthfulnessEngineService, useValue: overrides?.truthfulness ?? truthfulnessMock },
+        ],
+      }).compile();
+      const ag = mod.get(SupervisorAgent);
+      mod.get(AgroToolsRegistry).onModuleInit();
+      mod.get(FinanceToolsRegistry).onModuleInit();
+      mod.get(RiskToolsRegistry).onModuleInit();
+      mod.get(KnowledgeToolsRegistry).onModuleInit();
+      mod.get(RaiToolsRegistry).onModuleInit();
+      return ag;
+    }
+
+    const baseRequest = { message: "test" };
+
+    it("success path: audit create → calculateTraceTruthfulness → updateQuality с реальным набором метрик", async () => {
+      truthfulnessMock.calculateTraceTruthfulness.mockResolvedValue({
+        bsScorePct: 35,
+        evidenceCoveragePct: 90,
+        invalidClaimsPct: 5,
+        accounting: { total: 20, evidenced: 18, verified: 15, unverified: 4, invalid: 1 },
+      });
+      const ag = await buildAgent();
+
+      await ag.orchestrate(baseRequest, "company-1", "user-1");
+      // Даём микро-задержку для fire-and-forget цепочки
+      await new Promise((r) => setTimeout(r, 10));
+
+      expect(auditCreateMock).toHaveBeenCalledTimes(1);
+      expect(truthfulnessMock.calculateTraceTruthfulness).toHaveBeenCalledTimes(1);
+      expect(traceSummaryMock.updateQuality).toHaveBeenCalledWith(
+        expect.objectContaining({
+          bsScorePct: 35,
+          evidenceCoveragePct: 90,
+          invalidClaimsPct: 5,
+        }),
+      );
+    });
+
+    it("no-evidence path: движок вернул 100 → updateQuality получает bsScorePct=100, coverage=0", async () => {
+      truthfulnessMock.calculateTraceTruthfulness.mockResolvedValue({
+        bsScorePct: 100,
+        evidenceCoveragePct: 0,
+        invalidClaimsPct: 0,
+        accounting: { total: 0, evidenced: 0, verified: 0, unverified: 0, invalid: 0 },
+      });
+      const ag = await buildAgent();
+
+      await ag.orchestrate(baseRequest, "company-1", "user-1");
+      await new Promise((r) => setTimeout(r, 10));
+
+      expect(traceSummaryMock.updateQuality).toHaveBeenCalledWith(
+        expect.objectContaining({ bsScorePct: 100, evidenceCoveragePct: 0 }),
+      );
+    });
+
+    it("failure path: ошибка движка не ломает orchestrate(), updateQuality не вызывается", async () => {
+      truthfulnessMock.calculateTraceTruthfulness.mockRejectedValue(new Error("engine boom"));
+      const ag = await buildAgent();
+
+      const result = await ag.orchestrate(baseRequest, "company-1", "user-1");
+      await new Promise((r) => setTimeout(r, 10));
+
+      // Response возвращён корректно
+      expect(result).toHaveProperty("traceId");
+      // updateQuality не вызван при ошибке движка
+      expect(traceSummaryMock.updateQuality).not.toHaveBeenCalled();
+    });
+
+    it("replayMode: truthfulness pipeline, audit entry и trace summary record пропущены", async () => {
+      const ag = await buildAgent();
+
+      await ag.orchestrate(baseRequest, "company-1", "user-1", { replayMode: true });
+      await new Promise((r) => setTimeout(r, 10));
+
+      // В replay режиме side effects в БД не пишутся
+      expect(auditCreateMock).not.toHaveBeenCalled();
+      expect(traceSummaryMock.record).not.toHaveBeenCalled();
+
+      // И truthfulness pipeline не запускается (read-only invariant)
+      expect(truthfulnessMock.calculateTraceTruthfulness).not.toHaveBeenCalled();
+      expect(traceSummaryMock.updateQuality).not.toHaveBeenCalled();
+    });
+
+    it("ordering: updateQuality вызывается только после resolve traceSummary.record и aiAuditEntry.create", async () => {
+      const callOrder: string[] = [];
+
+      traceSummaryMock.record.mockImplementation(() =>
+        new Promise<void>((res) => setTimeout(() => { callOrder.push("record"); res(); }, 5)),
+      );
+      // audit create — задержка 5ms чтобы убедиться, что await реально ждёт
+      auditCreateMock.mockImplementation(() =>
+        new Promise<object>((res) => setTimeout(() => { callOrder.push("audit"); res({}); }, 5)),
+      );
+      truthfulnessMock.calculateTraceTruthfulness.mockImplementation(() => {
+        callOrder.push("truthfulness");
+        return Promise.resolve({
+          bsScorePct: 42,
+          evidenceCoveragePct: 100,
+          invalidClaimsPct: 0,
+          accounting: { total: 1, evidenced: 1, verified: 1, unverified: 0, invalid: 0 },
+        });
+      });
+      traceSummaryMock.updateQuality.mockImplementation(() => {
+        callOrder.push("updateQuality");
+        return Promise.resolve();
+      });
+
+      const ag = await buildAgent();
+      await ag.orchestrate(baseRequest, "company-1", "user-1");
+      await new Promise((r) => setTimeout(r, 30));
+
+      // Гарантируем порядок: сначала record, потом audit, потом truthfulness, потом updateQuality
+      expect(callOrder.indexOf("record")).toBeLessThan(callOrder.indexOf("audit"));
+      expect(callOrder.indexOf("audit")).toBeLessThan(callOrder.indexOf("truthfulness"));
+      expect(callOrder.indexOf("truthfulness")).toBeLessThan(callOrder.indexOf("updateQuality"));
+    });
   });
 });

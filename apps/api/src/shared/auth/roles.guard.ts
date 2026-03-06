@@ -5,7 +5,7 @@ import { ROLES_KEY } from "./roles.decorator";
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(private reflector: Reflector) { }
 
   canActivate(context: ExecutionContext): boolean {
     const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
@@ -17,18 +17,21 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const { user } = context.switchToHttp().getRequest();
+    const { user, headers } = context.switchToHttp().getRequest();
 
     // Если пользователя нет в запросе (например, публичный эндпоинт без AuthGuard)
     if (!user) {
       return false;
     }
 
+    const simulatedRole = headers['x-simulated-role'];
+    const effectiveRole = simulatedRole ? simulatedRole : user.role;
+
     // ADMIN имеет доступ ко всему
-    if (user.role === UserRole.ADMIN) {
+    if (effectiveRole === UserRole.ADMIN) {
       return true;
     }
 
-    return requiredRoles.some((role) => user.role === role);
+    return requiredRoles.some((role) => effectiveRole === role);
   }
 }

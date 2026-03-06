@@ -15,7 +15,7 @@ interface PhaseMeta {
 
 @Injectable()
 export class TraceTopologyService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async getTraceTopology(traceId: string, companyId: string): Promise<TraceTopologyResponseDto> {
     const [entries, summary] = await Promise.all([
@@ -58,35 +58,59 @@ export class TraceTopologyService {
 
     for (let i = 0; i < entries.length; i++) {
       const e = entries[i];
-      const meta = (e as { metadata?: { phases?: PhaseMeta[]; error?: boolean } }).metadata;
+      const meta = (e as { metadata?: { phases?: Array<{ name: string; timestamp: string; durationMs: number }>; error?: boolean } }).metadata;
       const phases = Array.isArray(meta?.phases) ? meta.phases : [];
       const hasError = Boolean(meta?.error);
-      const nextTs = entries[i + 1]?.createdAt?.getTime();
-      const curTs = e.createdAt.getTime();
-      const durationFromDelta = nextTs != null ? nextTs - curTs : totalDurationMs - (curTs - rootCreatedAt.getTime());
 
-      let durationMs = 0;
       if (phases.length) {
-        durationMs = phases.reduce((sum, p) => sum + (p.durationMs ?? 0), 0);
+        // R5: Ингестим фазы как отдельные узлы топологии для полноты картины
+        for (const p of phases) {
+          const nodeId = `${e.id}:${p.name}`;
+          nodes.push({
+            id: nodeId,
+            label: p.name === "tools" ? `tools: ${e.toolNames?.join(", ") ?? "none"}` : p.name,
+            kind: p.name as TraceTopologyNodeDto["kind"],
+            durationMs: p.durationMs ?? 0,
+            parentId: ROOT_NODE_ID,
+            childrenIds: [],
+            createdAt: p.timestamp,
+            hasError: (p.name === "tools" && hasError) ? true : undefined,
+            toolNames: p.name === "tools" ? e.toolNames ?? [] : undefined,
+          });
+          // Добавляем ID в список детей рута (хотя он уже там через parentId, но для детей рута в DTO)
+          const rootNode = nodes.find((n) => n.id === ROOT_NODE_ID);
+          if (rootNode && !rootNode.childrenIds.includes(nodeId)) {
+            rootNode.childrenIds.push(nodeId);
+          }
+        }
+        // Убираем временную привязку entries.map((e) => e.id) из rootNode, 
+        // так как мы теперь используем взрыв фаз.
+        const rootNode = nodes.find((n) => n.id === ROOT_NODE_ID);
+        if (rootNode) {
+          rootNode.childrenIds = rootNode.childrenIds.filter(cid => cid !== e.id);
+        }
       } else {
-        durationMs = Math.max(0, durationFromDelta);
+        // Fallback: старая логика
+        const nextTs = entries[i + 1]?.createdAt?.getTime();
+        const curTs = e.createdAt.getTime();
+        const durationFromDelta = nextTs != null ? nextTs - curTs : totalDurationMs - (curTs - rootCreatedAt.getTime());
+
+        const label = e.toolNames?.length
+          ? `tools: ${e.toolNames.join(", ")}`
+          : (e.intentMethod ? `router: ${e.intentMethod}` : "agent");
+
+        nodes.push({
+          id: e.id,
+          label,
+          kind: e.toolNames?.length ? "tools" : "router",
+          durationMs: Math.max(0, durationFromDelta),
+          parentId: ROOT_NODE_ID,
+          childrenIds: [],
+          createdAt: e.createdAt.toISOString(),
+          hasError: hasError || undefined,
+          toolNames: e.toolNames?.length ? e.toolNames : undefined,
+        });
       }
-
-      const label = e.toolNames?.length
-        ? `tools: ${e.toolNames.join(", ")}`
-        : (e.intentMethod ? `router: ${e.intentMethod}` : "agent");
-
-      nodes.push({
-        id: e.id,
-        label,
-        kind: e.toolNames?.length ? "tools" : "router",
-        durationMs,
-        parentId: ROOT_NODE_ID,
-        childrenIds: [],
-        createdAt: e.createdAt.toISOString(),
-        hasError: hasError || undefined,
-        toolNames: e.toolNames?.length ? e.toolNames : undefined,
-      });
     }
 
     const criticalPathNodeIds = this.computeCriticalPath(nodes, ROOT_NODE_ID);

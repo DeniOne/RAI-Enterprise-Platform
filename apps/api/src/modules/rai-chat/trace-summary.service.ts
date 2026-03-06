@@ -17,11 +17,19 @@ export interface TraceSummaryRecordParams {
   bsScorePct?: number;
 }
 
+export interface UpdateTraceSummaryQualityParams {
+  traceId: string;
+  companyId: string;
+  bsScorePct: number;
+  evidenceCoveragePct: number;
+  invalidClaimsPct: number;
+}
+
 @Injectable()
 export class TraceSummaryService {
   private readonly logger = new Logger(TraceSummaryService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async record(params: TraceSummaryRecordParams): Promise<void> {
     const {
@@ -35,9 +43,6 @@ export class TraceSummaryService {
       promptVersion,
       toolsVersion,
       policyId,
-      evidenceCoveragePct = 0,
-      invalidClaimsPct = 0,
-      bsScorePct = 0,
     } = params;
 
     await this.prisma.traceSummary
@@ -59,9 +64,6 @@ export class TraceSummaryService {
           promptVersion,
           toolsVersion,
           policyId,
-          evidenceCoveragePct,
-          invalidClaimsPct,
-          bsScorePct,
         },
         update: {
           totalTokens,
@@ -72,9 +74,6 @@ export class TraceSummaryService {
           promptVersion,
           toolsVersion,
           policyId,
-          evidenceCoveragePct,
-          invalidClaimsPct,
-          bsScorePct,
         },
       })
       .catch((err) => {
@@ -83,5 +82,25 @@ export class TraceSummaryService {
         );
       });
   }
-}
 
+  async updateQuality(params: UpdateTraceSummaryQualityParams): Promise<void> {
+    const { traceId, companyId, bsScorePct, evidenceCoveragePct, invalidClaimsPct } = params;
+
+    await this.prisma.traceSummary
+      .update({
+        where: {
+          trace_summary_trace_company_unique: { traceId, companyId },
+        },
+        data: {
+          bsScorePct,
+          evidenceCoveragePct,
+          invalidClaimsPct,
+        },
+      })
+      .catch((err) => {
+        this.logger.warn(
+          `trace_summary updateQuality failed traceId=${traceId} companyId=${companyId} err=${String((err as Error)?.message ?? err)}`,
+        );
+      });
+  }
+}
