@@ -29,6 +29,8 @@ import {
   AutonomyLevel,
   AutonomyPolicyService,
 } from "../autonomy-policy.service";
+import { AgentRuntimeConfigService } from "../agent-runtime-config.service";
+import { AgentConfigBlockedError } from "../security/agent-config-blocked.error";
 
 type ToolHandler<TName extends RaiToolName> = (
   payload: RaiToolPayloadMap[TName],
@@ -56,6 +58,7 @@ export class RaiToolsRegistry implements OnModuleInit {
     private readonly riskPolicyEngine: RiskPolicyEngineService,
     private readonly pendingActionService: PendingActionService,
     private readonly autonomyPolicy: AutonomyPolicyService,
+    private readonly agentRuntimeConfig: AgentRuntimeConfigService,
   ) {}
 
   onModuleInit() {
@@ -87,6 +90,28 @@ export class RaiToolsRegistry implements OnModuleInit {
     if (actorContext.replayMode && riskInfo && riskInfo.riskLevel !== "READ") {
       this.logToolCall(name, actorContext, true, payload, "replay_mock");
       return { replayed: true, mock: true } as unknown as RaiToolResultMap[TName];
+    }
+    const configDecision = await this.agentRuntimeConfig.resolveToolAccess(
+      actorContext.companyId,
+      name,
+    );
+    if (!actorContext.replayMode && !configDecision.allowed) {
+      this.logToolCall(
+        name,
+        actorContext,
+        false,
+        payload,
+        configDecision.reasonCode === "AGENT_DISABLED"
+          ? "agent_disabled"
+          : "capability_denied",
+      );
+      throw new AgentConfigBlockedError(
+        configDecision.reasonCode!,
+        name,
+        configDecision.reasonCode === "AGENT_DISABLED"
+          ? `Выполнение инструмента ${name} заблокировано: агент ${configDecision.role} выключен в runtime-конфиге.`
+          : `Выполнение инструмента ${name} заблокировано: у агента ${configDecision.role} отсутствует capability ${configDecision.requiredCapability}.`,
+      );
     }
     let autonomyLevel: AutonomyLevel | null = null;
     if (riskInfo && riskInfo.riskLevel !== "READ") {

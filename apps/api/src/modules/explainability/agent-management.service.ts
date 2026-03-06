@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import type { AgentConfiguration } from "@rai/prisma-client";
 import type { AgentConfigItemDto, AgentConfigsResponseDto, UpsertAgentConfigDto } from "./dto/agent-config.dto";
+import { AgentConfigGuardService } from "./agent-config-guard.service";
 
 function toItemDto(row: AgentConfiguration): AgentConfigItemDto {
   const capabilities = Array.isArray(row.capabilities) ? (row.capabilities as string[]) : [];
@@ -20,9 +21,25 @@ function toItemDto(row: AgentConfiguration): AgentConfigItemDto {
   };
 }
 
+function toAuditMetadata(item: AgentConfigItemDto, extra?: Record<string, unknown>) {
+  return {
+    role: item.role,
+    name: item.name,
+    llmModel: item.llmModel,
+    maxTokens: item.maxTokens,
+    isActive: item.isActive,
+    companyId: item.companyId,
+    capabilities: item.capabilities,
+    ...extra,
+  };
+}
+
 @Injectable()
 export class AgentManagementService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configGuard: AgentConfigGuardService,
+  ) {}
 
   async getAgentConfigs(companyId: string): Promise<AgentConfigsResponseDto> {
     const [global, tenantOverrides] = await Promise.all([
@@ -40,6 +57,7 @@ export class AgentManagementService {
     dto: UpsertAgentConfigDto,
     scope: "tenant" | "global",
   ): Promise<AgentConfigItemDto> {
+    const evalResult = await this.configGuard.assertUpsertAllowed(callerCompanyId, dto);
     if (scope === "global") {
       // только глобальный конфиг — companyId null; право проверяется на уровне контроллера
     }
@@ -65,7 +83,15 @@ export class AgentManagementService {
         where: { id: existing.id },
         data,
       });
-      return toItemDto(updated);
+      const item = toItemDto(updated);
+      await this.prisma.auditLog.create({
+        data: {
+          action: "AGENT_CONFIG_UPDATED",
+          companyId: callerCompanyId,
+          metadata: toAuditMetadata(item, { scope, evalResult }),
+        },
+      });
+      return item;
     }
     const created = await this.prisma.agentConfiguration.create({
       data: {
@@ -74,7 +100,15 @@ export class AgentManagementService {
         companyId,
       },
     });
-    return toItemDto(created);
+    const item = toItemDto(created);
+    await this.prisma.auditLog.create({
+      data: {
+        action: "AGENT_CONFIG_CREATED",
+        companyId: callerCompanyId,
+        metadata: toAuditMetadata(item, { scope, evalResult }),
+      },
+    });
+    return item;
   }
 
   async toggleAgent(companyId: string, role: string, isActive: boolean): Promise<AgentConfigItemDto> {
@@ -82,11 +116,25 @@ export class AgentManagementService {
       where: { agent_config_role_company_unique: { role, companyId } },
     });
     if (override) {
+      await this.configGuard.assertToggleAllowed(
+        companyId,
+        role,
+        isActive,
+        override.llmModel,
+      );
       const updated = await this.prisma.agentConfiguration.update({
         where: { id: override.id },
         data: { isActive },
       });
-      return toItemDto(updated);
+      const item = toItemDto(updated);
+      await this.prisma.auditLog.create({
+        data: {
+          action: "AGENT_CONFIG_TOGGLED",
+          companyId,
+          metadata: toAuditMetadata(item),
+        },
+      });
+      return item;
     }
     const globalRow = await this.prisma.agentConfiguration.findUnique({
       where: { agent_config_role_company_unique: { role, companyId: null } },
@@ -94,6 +142,12 @@ export class AgentManagementService {
     if (!globalRow) {
       throw new ForbiddenException(`Agent role ${role} not found`);
     }
+    await this.configGuard.assertToggleAllowed(
+      companyId,
+      role,
+      isActive,
+      globalRow.llmModel,
+    );
     const created = await this.prisma.agentConfiguration.create({
       data: {
         name: globalRow.name,
@@ -106,6 +160,14 @@ export class AgentManagementService {
         capabilities: (globalRow.capabilities as string[]) ?? [],
       },
     });
-    return toItemDto(created);
+    const item = toItemDto(created);
+    await this.prisma.auditLog.create({
+      data: {
+        action: "AGENT_CONFIG_TOGGLED",
+        companyId,
+        metadata: toAuditMetadata(item),
+      },
+    });
+    return item;
   }
 }

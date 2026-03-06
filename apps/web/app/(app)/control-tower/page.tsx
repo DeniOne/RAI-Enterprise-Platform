@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { api } from '@/lib/api';
+import { api, type AutonomyStatusDto } from '@/lib/api';
 import { Monitor, ShieldCheck, Zap, Activity, DollarSign, TerminalSquare, AlertCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -14,7 +14,9 @@ interface DashboardData {
   avgBsScore: number;
   p95BsScore: number;
   avgEvidenceCoverage: number;
-  worstTraces: Array<{ traceId: string; bsScorePct: number; evidenceCoveragePct: number; createdAt: string }>;
+  acceptanceRate: number | null;
+  correctionRate: number | null;
+  worstTraces: Array<{ traceId: string; bsScorePct: number | null; evidenceCoveragePct: number | null; createdAt: string }>;
 }
 
 interface PerformanceData {
@@ -35,6 +37,7 @@ export default function ControlTowerPage() {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [performance, setPerformance] = useState<PerformanceData | null>(null);
   const [cost, setCost] = useState<CostData | null>(null);
+  const [autonomy, setAutonomy] = useState<AutonomyStatusDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,15 +45,17 @@ export default function ControlTowerPage() {
     let cancelled = false;
     (async () => {
       try {
-        const [dRes, pRes, cRes] = await Promise.all([
+        const [dRes, pRes, cRes, aRes] = await Promise.all([
           api.explainability.dashboard({ hours: 24 }),
           api.explainability.performance({ timeWindowMs: 3600000 }),
           api.explainability.costHotspots({ timeWindowMs: 86400000, limit: 10 }),
+          api.autonomy.status(),
         ]);
         if (cancelled) return;
         setDashboard(dRes.data);
         setPerformance(pRes.data);
         setCost(cRes.data);
+        setAutonomy(aRes.data);
       } catch (e) {
         if (!cancelled) setError((e as Error).message ?? 'Сбой получения телеметрии');
       } finally {
@@ -176,10 +181,41 @@ export default function ControlTowerPage() {
                     value={`${dashboard.avgEvidenceCoverage.toFixed(1)}%`}
                     status={dashboard.avgEvidenceCoverage >= 85 ? 'success' : 'warning'}
                   />
+                  <DataRow
+                    label="Acceptance Rate (advisory)"
+                    value={formatPctOrPending(dashboard.acceptanceRate)}
+                    status={
+                      dashboard.acceptanceRate === null
+                        ? 'warning'
+                        : dashboard.acceptanceRate >= 70
+                          ? 'success'
+                          : dashboard.acceptanceRate >= 40
+                            ? 'warning'
+                            : 'error'
+                    }
+                  />
+                  <DataRow
+                    label="Correction Rate"
+                    value={dashboard.correctionRate === null ? 'N/A' : `${dashboard.correctionRate.toFixed(1)}%`}
+                    status="warning"
+                  />
+                  <DataRow
+                    label="Autonomy Mode"
+                    value={autonomy ? formatAutonomyLevel(autonomy.level) : 'pending'}
+                    status={
+                      autonomy?.level === 'AUTONOMOUS'
+                        ? 'success'
+                        : autonomy?.level === 'TOOL_FIRST'
+                          ? 'warning'
+                          : autonomy?.level === 'QUARANTINE'
+                            ? 'error'
+                            : 'warning'
+                    }
+                  />
 
                   <div className="mt-8 p-4 bg-slate-50 border border-black/5 rounded-xl">
                     <p className="text-[12px] text-[#717182] leading-relaxed">
-                      Система RAI гарантирует детерминизм через Evidence Tagging. Текущий уровень покрытия соответствует Institutional Grade (Stage 4).
+                      `Acceptance Rate` строится по tenant-scoped advisory decisions. `Correction Rate` пока не инструментирован как отдельный live source и поэтому не подменяется фейковой цифрой. `Autonomy Mode` зависит от реально посчитанного BS%-окна, а при отсутствии quality-данных система уходит в безопасный `TOOL_FIRST`.
                     </p>
                   </div>
                 </>
@@ -253,7 +289,9 @@ export default function ControlTowerPage() {
                 </thead>
                 <tbody className="divide-y divide-black/5">
                   {dashboard.worstTraces.map(trace => {
-                    const isR4 = trace.bsScorePct > 60;
+                    const bsScore = trace.bsScorePct ?? null;
+                    const evidenceCoverage = trace.evidenceCoveragePct ?? null;
+                    const isR4 = bsScore !== null && bsScore > 60;
                     return (
                       <tr key={trace.traceId} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-6 py-4">
@@ -266,16 +304,16 @@ export default function ControlTowerPage() {
                         </td>
                         <td className="px-6 py-4">
                           <span className={clsx("text-[13px] font-mono font-medium", isR4 ? 'text-red-600' : 'text-amber-600')}>
-                            {trace.bsScorePct.toFixed(0)}%
+                            {bsScore === null ? 'pending' : `${bsScore.toFixed(0)}%`}
                           </span>
                         </td>
                         <td className="px-6 py-4">
                           <span className="text-[13px] font-mono text-[#030213]">
-                            {trace.evidenceCoveragePct.toFixed(0)}%
+                            {evidenceCoverage === null ? 'pending' : `${evidenceCoverage.toFixed(0)}%`}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <RiskBadge level={isR4 ? 'R4' : 'R3'} />
+                          <RiskBadge level={bsScore === null ? 'R2' : isR4 ? 'R4' : 'R3'} />
                         </td>
                       </tr>
                     );
@@ -326,6 +364,23 @@ function DataRow({ label, value, status }: { label: string; value: string; statu
       </span>
     </div>
   );
+}
+
+function formatPctOrPending(value: number | null) {
+  return value === null ? 'pending' : `${value.toFixed(1)}%`;
+}
+
+function formatAutonomyLevel(level: AutonomyStatusDto['level']) {
+  switch (level) {
+    case 'AUTONOMOUS':
+      return 'autonomous';
+    case 'TOOL_FIRST':
+      return 'tool-first';
+    case 'QUARANTINE':
+      return 'quarantine';
+    default:
+      return 'pending';
+  }
 }
 
 function RiskBadge({ level }: { level: 'R1' | 'R2' | 'R3' | 'R4' | 'Success' }) {

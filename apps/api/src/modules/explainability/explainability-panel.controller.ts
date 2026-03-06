@@ -10,6 +10,8 @@ import { CostAnalyticsService, CostHotspotsResponseDto } from "./cost-analytics.
 import { TraceTopologyService } from "./trace-topology.service";
 import { SafeReplayService, ReplayResultDto } from "../rai-chat/safe-replay.service";
 import { PerformanceMetricsService, AggregatedMetrics } from "../rai-chat/performance/performance-metrics.service";
+import { AutonomyPolicyService } from "../rai-chat/autonomy-policy.service";
+import { AutonomyStatusDto } from "./dto/autonomy-status.dto";
 import { CostHotspotsQueryDto } from "./dto/cost-hotspots.dto";
 import { ExplainabilityTimelineResponseDto } from "./dto/explainability-timeline.dto";
 import { TraceForensicsResponseDto } from "./dto/trace-forensics.dto";
@@ -26,6 +28,7 @@ export class ExplainabilityPanelController {
     private readonly traceTopology: TraceTopologyService,
     private readonly safeReplay: SafeReplayService,
     private readonly performanceMetrics: PerformanceMetricsService,
+    private readonly autonomyPolicy: AutonomyPolicyService,
   ) {}
 
   @Get("performance")
@@ -58,6 +61,23 @@ export class ExplainabilityPanelController {
     }
 
     return this.explainabilityPanel.getTruthfulnessDashboard(companyId, timeWindowHours);
+  }
+
+  @Get("autonomy-status")
+  async getAutonomyStatus(): Promise<AutonomyStatusDto> {
+    const companyId = this.tenantContext.getCompanyId();
+
+    if (!companyId) {
+      throw new BadRequestException("Security Context: companyId is missing");
+    }
+
+    const status = await this.autonomyPolicy.getCompanyAutonomyStatus(companyId);
+    return {
+      companyId,
+      level: status.level,
+      avgBsScorePct: status.avgBsScorePct,
+      knownTraceCount: status.knownTraceCount,
+    };
   }
 
   @Get("trace/:traceId")

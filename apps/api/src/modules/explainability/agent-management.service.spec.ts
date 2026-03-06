@@ -2,10 +2,15 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { AgentManagementService } from "./agent-management.service";
+import { AgentConfigGuardService } from "./agent-config-guard.service";
 
 describe("AgentManagementService", () => {
   let service: AgentManagementService;
   let prisma: PrismaService;
+  const configGuard = {
+    assertUpsertAllowed: jest.fn().mockResolvedValue(null),
+    assertToggleAllowed: jest.fn().mockResolvedValue(undefined),
+  };
 
   const companyId = "company-1";
   const globalConfig = {
@@ -39,6 +44,7 @@ describe("AgentManagementService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AgentManagementService,
+        { provide: AgentConfigGuardService, useValue: configGuard },
         {
           provide: PrismaService,
           useValue: {
@@ -47,6 +53,9 @@ describe("AgentManagementService", () => {
               findUnique: jest.fn(),
               create: jest.fn(),
               update: jest.fn(),
+            },
+            auditLog: {
+              create: jest.fn().mockResolvedValue({ id: "audit-1" }),
             },
           },
         },
@@ -86,12 +95,19 @@ describe("AgentManagementService", () => {
       capabilities: ["AgroToolsRegistry", "SearchWeb"],
     };
     const result = await service.upsertAgentConfig(companyId, dto, "tenant");
+    expect(configGuard.assertUpsertAllowed).toHaveBeenCalledWith(companyId, dto);
     expect(result.capabilities).toEqual(["AgroToolsRegistry", "SearchWeb"]);
     expect(prisma.agentConfiguration.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         role: "agronomist",
         companyId,
         capabilities: ["AgroToolsRegistry", "SearchWeb"],
+      }),
+    });
+    expect(prisma.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "AGENT_CONFIG_CREATED",
+        companyId,
       }),
     });
   });
@@ -105,12 +121,24 @@ describe("AgentManagementService", () => {
       isActive: false,
     });
     const result = await service.toggleAgent(companyId, "agronomist", false);
+    expect(configGuard.assertToggleAllowed).toHaveBeenCalledWith(
+      companyId,
+      "agronomist",
+      false,
+      "gpt-4o",
+    );
     expect(result.isActive).toBe(false);
     expect(prisma.agentConfiguration.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         role: "agronomist",
         companyId,
         isActive: false,
+      }),
+    });
+    expect(prisma.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "AGENT_CONFIG_TOGGLED",
+        companyId,
       }),
     });
   });

@@ -44,6 +44,8 @@ export class ExplainabilityPanelService {
         avgBsScore: 0,
         p95BsScore: 0,
         avgEvidenceCoverage: 0,
+        acceptanceRate: null,
+        correctionRate: null,
         worstTraces: [],
       };
     }
@@ -79,11 +81,36 @@ export class ExplainabilityPanelService {
         createdAt: s.createdAt.toISOString(),
       }));
 
+    // Acceptance Rate: пока единственный честный tenant-scoped live source —
+    // advisory decisions в AuditLog. Correction Rate не инструментирован отдельно,
+    // поэтому возвращаем null вместо фейковой цифры.
+    const advisoryLogs = await this.prisma.auditLog.findMany({
+      where: {
+        companyId,
+        action: {
+          in: ["ADVISORY_ACCEPTED", "ADVISORY_REJECTED"],
+        },
+        createdAt: {
+          gte: from,
+        },
+      },
+      select: {
+        action: true,
+      },
+    });
+    const accepted = advisoryLogs.filter((log) => log.action === "ADVISORY_ACCEPTED").length;
+    const rejected = advisoryLogs.filter((log) => log.action === "ADVISORY_REJECTED").length;
+    const decisionCount = accepted + rejected;
+    const acceptanceRate =
+      decisionCount > 0 ? Number(((accepted / decisionCount) * 100).toFixed(1)) : null;
+
     return {
       companyId,
       avgBsScore,
       p95BsScore,
       avgEvidenceCoverage,
+      acceptanceRate,
+      correctionRate: null,
       worstTraces,
     };
   }

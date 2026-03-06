@@ -118,38 +118,38 @@
 - [x] Forensics реально показывает evidence refs.
 - [x] Forensics показывает ключевые этапы `router -> runtime -> tools -> composer`.
 - [x] Для критичного trace можно восстановить причину решения без ручного гадания.
-- [ ] `Safe Replay` работает в read-only режиме.
-- [ ] Replay не создаёт side effects.
+- [x] `Safe Replay` работает в read-only режиме.
+- [x] Replay не создаёт side effects.
 
 ## 10. Observability and Control Tower
 
-- [ ] `Control Tower` читает живые данные, а не мок/нулевые записи.
+- [x] `Control Tower` читает живые данные, а не мок/нулевые записи.
 - [ ] В панели реально отображаются `BS%`, `Evidence Coverage`, `Acceptance Rate`, `Correction Rate`.
-- [ ] Есть панель худших traces.
+- [x] Есть панель худших traces.
 - [ ] Есть critical path visibility.
-- [ ] Есть cost visibility.
+- [x] Есть cost visibility.
 - [ ] Есть queue/backpressure visibility.
-- [ ] Есть error-rate visibility.
-- [ ] Есть latency visibility.
+- [x] Есть error-rate visibility.
+- [x] Есть latency visibility.
 
 ## 11. Incidents and Governance
 
-- [ ] Есть единая модель incident lifecycle.
-- [ ] Пишутся security incidents.
-- [ ] Пишутся quality incidents.
+- [x] Есть единая модель incident lifecycle.
+- [x] Пишутся security incidents.
+- [x] Пишутся quality incidents.
 - [ ] Пишутся autonomy/policy incidents.
-- [ ] У incident есть `traceId`, `type`, `severity`, `status`.
-- [ ] Incident feed читается из живых данных.
-- [ ] Есть resolve workflow.
+- [x] У incident есть `traceId`, `type`, `severity`, `status`.
+- [x] Incident feed читается из живых данных.
+- [x] Есть resolve workflow.
 - [ ] Есть runbook/fallback action для критичных инцидентов.
 
 ## 12. Autonomy Control
 
-- [ ] Есть явные уровни автономности.
-- [ ] Переход между уровнями управляется метриками, а не ручной магией.
-- [ ] При деградации качества система умеет уходить в `tool-first`.
-- [ ] При сильной деградации система умеет уходить в `quarantine`.
-- [ ] Policy changes реально влияют на runtime.
+- [x] Есть явные уровни автономности.
+- [x] Переход между уровнями управляется метриками, а не ручной магией.
+- [x] При деградации качества система умеет уходить в `tool-first`.
+- [x] При сильной деградации система умеет уходить в `quarantine`.
+- [x] Policy changes реально влияют на runtime.
 - [ ] Автономность нельзя случайно обойти через UI или ручной config.
 
 ## 13. Agent Registry and Runtime Authority
@@ -158,31 +158,31 @@
 - [ ] Есть first-class сущность агента.
 - [ ] Есть first-class mapping agent -> tools/capabilities.
 - [ ] Есть first-class tenant access control.
-- [ ] Registry влияет на runtime.
-- [ ] Disable agent реально выключает поведение.
-- [ ] Capability narrowing реально ограничивает tool access.
-- [ ] Tenant deny реально enforced в runtime.
+- [x] Registry влияет на runtime.
+- [x] Disable agent реально выключает поведение.
+- [x] Capability narrowing реально ограничивает tool access.
+- [x] Tenant deny реально enforced в runtime.
 
 ## 14. Prompt Governance and Safe Evolution
 
 - [ ] Есть versioning prompt/model/config changes.
-- [ ] Есть `GoldenTestSet` не в виде заглушки.
-- [ ] Есть реальный `EvalRun`.
-- [ ] Изменение prompt/model/config проходит через eval gate.
-- [ ] Есть canary mechanism.
-- [ ] Есть rollback mechanism.
-- [ ] Без проваленного eval нельзя считать конфиг боевым.
-- [ ] Есть audit trail изменений prompt/config.
+- [x] Есть `GoldenTestSet` не в виде заглушки.
+- [x] Есть реальный `EvalRun`.
+- [x] Изменение prompt/model/config проходит через eval gate.
+- [x] Есть canary mechanism.
+- [x] Есть rollback mechanism.
+- [x] Без проваленного eval нельзя считать конфиг боевым.
+- [x] Есть audit trail изменений prompt/config.
 
 ## 15. Testing Readiness
 
-- [ ] Есть unit tests на ключевые контракты.
+- [x] Есть unit tests на ключевые контракты.
 - [ ] Есть integration tests на runtime spine.
-- [ ] Есть tests на tenant isolation.
-- [ ] Есть tests на evidence/truthfulness path.
-- [ ] Есть tests на replay safety.
-- [ ] Есть tests на governance incidents.
-- [ ] Есть tests на autonomy transitions.
+- [x] Есть tests на tenant isolation.
+- [x] Есть tests на evidence/truthfulness path.
+- [x] Есть tests на replay safety.
+- [x] Есть tests на governance incidents.
+- [x] Есть tests на autonomy transitions.
 - [ ] Есть smoke tests на живые API маршруты.
 
 ## 16. Delivery and Techlead Discipline
@@ -208,11 +208,11 @@
 
 ## 18. Hard Stop Conditions
 
-- [ ] Нельзя запускать AI, если `Evidence -> BS% -> Governance` spine не замкнут.
-- [ ] Нельзя запускать AI, если registry не влияет на runtime.
+- [x] Нельзя запускать AI, если `Evidence -> BS% -> Governance` spine не замкнут.
+- [x] Нельзя запускать AI, если registry не влияет на runtime.
 - [ ] Нельзя запускать AI, если tenant isolation не подтверждён тестами.
-- [ ] Нельзя запускать AI, если `TraceSummary` и observability питаются заглушками.
-- [ ] Нельзя запускать AI, если incidents feed не ловит quality/security события.
+- [x] Нельзя запускать AI, если `TraceSummary` и observability питаются заглушками.
+- [x] Нельзя запускать AI, если incidents feed не ловит quality/security события.
 - [ ] Нельзя запускать AI, если prompt/config changes могут обходить eval/canary/rollback.
 
 ## Финальный критерий готовности

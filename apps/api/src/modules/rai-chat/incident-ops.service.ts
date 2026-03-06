@@ -25,6 +25,7 @@ export interface IncidentFeedItem {
 export interface GovernanceCountersDto {
   crossTenantBreach: number;
   piiLeak: number;
+  qualityBsDrift: number;
   byType: Record<string, number>;
 }
 
@@ -69,7 +70,7 @@ export class IncidentOpsService {
       id: r.id,
       companyId: r.companyId,
       traceId: r.traceId,
-      incidentType: r.incidentType,
+      incidentType: this.normalizeIncidentType(r.incidentType, r.details),
       severity: r.severity,
       details: r.details,
       createdAt: r.createdAt.toISOString(),
@@ -88,16 +89,32 @@ export class IncidentOpsService {
   async getGovernanceCounters(companyId: string): Promise<GovernanceCountersDto> {
     const rows = await this.prisma.systemIncident.findMany({
       where: { companyId },
-      select: { incidentType: true },
+      select: { incidentType: true, details: true },
     });
     const byType: Record<string, number> = {};
     for (const r of rows) {
-      byType[r.incidentType] = (byType[r.incidentType] ?? 0) + 1;
+      const type = this.normalizeIncidentType(r.incidentType, r.details);
+      byType[type] = (byType[type] ?? 0) + 1;
     }
     return {
       crossTenantBreach: byType["CROSS_TENANT_BREACH"] ?? 0,
       piiLeak: byType["PII_LEAK"] ?? 0,
+      qualityBsDrift: byType["QUALITY_BS_DRIFT"] ?? 0,
       byType,
     };
+  }
+
+  private normalizeIncidentType(incidentType: string, details: unknown): string {
+    if (incidentType !== SystemIncidentType.UNKNOWN) {
+      return incidentType;
+    }
+    let subtype: string | null = null;
+    if (details && typeof details === "object") {
+      const record = details as Record<string, unknown>;
+      if (typeof record.subtype === "string") {
+        subtype = record.subtype;
+      }
+    }
+    return subtype ?? incidentType;
   }
 }

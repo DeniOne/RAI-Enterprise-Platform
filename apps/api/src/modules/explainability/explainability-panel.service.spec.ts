@@ -16,6 +16,7 @@ describe("ExplainabilityPanelService", () => {
   const mockTraceSummaryFindMany = jest.fn();
   const mockTraceSummaryFindFirst = jest.fn();
   const mockQualityAlertFindMany = jest.fn();
+  const mockAuditLogFindMany = jest.fn();
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -41,6 +42,9 @@ describe("ExplainabilityPanelService", () => {
             traceSummary: {
               findMany: mockTraceSummaryFindMany,
               findFirst: mockTraceSummaryFindFirst,
+            },
+            auditLog: {
+              findMany: mockAuditLogFindMany,
             },
             qualityAlert: {
               findMany: mockQualityAlertFindMany,
@@ -221,6 +225,11 @@ describe("ExplainabilityPanelService", () => {
         createdAt: new Date(now.getTime() - 3_000),
       },
     ]);
+    mockAuditLogFindMany.mockResolvedValue([
+      { action: "ADVISORY_ACCEPTED" },
+      { action: "ADVISORY_ACCEPTED" },
+      { action: "ADVISORY_REJECTED" },
+    ]);
 
     const result = await service.getTruthfulnessDashboard(companyId, 24);
 
@@ -240,6 +249,8 @@ describe("ExplainabilityPanelService", () => {
 
     expect(result.avgBsScore).toBeCloseTo((10 + 30 + 50) / 3);
     expect(result.avgEvidenceCoverage).toBeCloseTo((80 + 60 + 40) / 3);
+    expect(result.acceptanceRate).toBeCloseTo(66.7, 1);
+    expect(result.correctionRate).toBeNull();
     expect(result.p95BsScore).toBeGreaterThanOrEqual(30);
     expect(result.p95BsScore).toBeLessThanOrEqual(50);
   });
@@ -247,6 +258,7 @@ describe("ExplainabilityPanelService", () => {
   it("returns zero metrics and empty list when no trace summaries", async () => {
     const companyId = "c1";
     mockTraceSummaryFindMany.mockResolvedValue([]);
+    mockAuditLogFindMany.mockResolvedValue([]);
 
     const result = await service.getTruthfulnessDashboard(companyId, 24);
 
@@ -254,6 +266,8 @@ describe("ExplainabilityPanelService", () => {
     expect(result.avgBsScore).toBe(0);
     expect(result.p95BsScore).toBe(0);
     expect(result.avgEvidenceCoverage).toBe(0);
+    expect(result.acceptanceRate).toBeNull();
+    expect(result.correctionRate).toBeNull();
     expect(result.worstTraces).toHaveLength(0);
   });
 
