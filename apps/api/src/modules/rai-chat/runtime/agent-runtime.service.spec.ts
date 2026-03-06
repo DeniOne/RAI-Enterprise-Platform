@@ -2,11 +2,17 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { AgentRuntimeService } from "./agent-runtime.service";
 import { RaiToolsRegistry } from "../tools/rai-tools.registry";
 import { RaiToolName } from "../tools/rai-tools.types";
+import { PerformanceMetricsService } from "../performance/performance-metrics.service";
+import { AgentConfigBlockedError } from "../security/agent-config-blocked.error";
 
 describe("AgentRuntimeService", () => {
   let service: AgentRuntimeService;
   const toolsRegistryMock = {
     execute: jest.fn().mockResolvedValue({ echoedMessage: "hi", companyId: "c1" }),
+  };
+  const performanceMetricsMock = {
+    recordLatency: jest.fn().mockResolvedValue(undefined),
+    recordError: jest.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -15,6 +21,7 @@ describe("AgentRuntimeService", () => {
       providers: [
         AgentRuntimeService,
         { provide: RaiToolsRegistry, useValue: toolsRegistryMock },
+        { provide: PerformanceMetricsService, useValue: performanceMetricsMock },
       ],
     }).compile();
     service = module.get(AgentRuntimeService);
@@ -37,6 +44,12 @@ describe("AgentRuntimeService", () => {
       RaiToolName.EchoMessage,
       { message: "hi" },
       { companyId: "c1", traceId: "tr_1" },
+    );
+    expect(performanceMetricsMock.recordLatency).toHaveBeenCalledWith(
+      "c1",
+      expect.any(Number),
+      "RuntimeAgent",
+      RaiToolName.EchoMessage,
     );
   });
 
@@ -62,6 +75,18 @@ describe("AgentRuntimeService", () => {
       expect.objectContaining({ scope: { seasonId: "s1" } }),
       expect.any(Object),
     );
+    expect(performanceMetricsMock.recordLatency).toHaveBeenCalledWith(
+      "c1",
+      expect.any(Number),
+      "AgronomAgent",
+      RaiToolName.GenerateTechMapDraft,
+    );
+    expect(performanceMetricsMock.recordLatency).toHaveBeenCalledWith(
+      "c1",
+      expect.any(Number),
+      "EconomistAgent",
+      RaiToolName.ComputePlanFact,
+    );
   });
 
   it("fan-out: knowledge вызывается при QueryKnowledge", async () => {
@@ -79,5 +104,38 @@ describe("AgentRuntimeService", () => {
       { query: "нормы высева рапса" },
       expect.any(Object),
     );
+    expect(performanceMetricsMock.recordLatency).toHaveBeenCalledWith(
+      "c1",
+      expect.any(Number),
+      "KnowledgeAgent",
+      RaiToolName.QueryKnowledge,
+    );
+  });
+
+  it("returns blocked result when agent config denies tool", async () => {
+    toolsRegistryMock.execute.mockRejectedValueOnce(
+      new AgentConfigBlockedError(
+        "AGENT_DISABLED",
+        RaiToolName.GenerateTechMapDraft,
+        "agent disabled",
+      ),
+    );
+
+    const result = await service.run({
+      requestedToolCalls: [
+        { name: RaiToolName.GenerateTechMapDraft, payload: { fieldRef: "f1", seasonRef: "s1", crop: "rapeseed" } },
+      ],
+      actorContext: { companyId: "c1", traceId: "tr_1" },
+    });
+
+    expect(result.executedTools).toEqual([
+      {
+        name: RaiToolName.GenerateTechMapDraft,
+        result: expect.objectContaining({
+          agentConfigBlocked: true,
+          reasonCode: "AGENT_DISABLED",
+        }),
+      },
+    ]);
   });
 });

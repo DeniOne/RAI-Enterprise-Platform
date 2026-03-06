@@ -68,6 +68,24 @@ describe("IncidentOpsService", () => {
     expect(feed[0].resolvedAt).toBeNull();
   });
 
+  it("getIncidentsFeed нормализует UNKNOWN subtype QUALITY_BS_DRIFT", async () => {
+    findManyMock.mockResolvedValue([
+      {
+        id: "inc-q1",
+        companyId: "c1",
+        traceId: "tr-q1",
+        incidentType: SystemIncidentType.UNKNOWN,
+        severity: "HIGH",
+        details: { subtype: "QUALITY_BS_DRIFT" },
+        createdAt: new Date("2026-03-05T12:00:00Z"),
+        resolvedAt: null,
+        resolveComment: null,
+      },
+    ]);
+    const feed = await service.getIncidentsFeed("c1", 10, 0);
+    expect(feed[0].incidentType).toBe("QUALITY_BS_DRIFT");
+  });
+
   it("resolveIncident обновляет запись по id и companyId", async () => {
     updateManyMock.mockResolvedValue({ count: 1 });
     await service.resolveIncident("inc1", "c1", "Fixed");
@@ -79,13 +97,16 @@ describe("IncidentOpsService", () => {
 
   it("getGovernanceCounters возвращает счётчики по типам", async () => {
     findManyMock.mockResolvedValue([
-      { incidentType: "PII_LEAK" },
-      { incidentType: "PII_LEAK" },
-      { incidentType: "CROSS_TENANT_BREACH" },
+      { incidentType: "PII_LEAK", details: {} },
+      { incidentType: "PII_LEAK", details: {} },
+      { incidentType: "CROSS_TENANT_BREACH", details: {} },
+      { incidentType: "UNKNOWN", details: { subtype: "QUALITY_BS_DRIFT" } },
     ]);
     const counters = await service.getGovernanceCounters("c1");
     expect(counters.piiLeak).toBe(2);
     expect(counters.crossTenantBreach).toBe(1);
+    expect(counters.qualityBsDrift).toBe(1);
     expect(counters.byType.PII_LEAK).toBe(2);
+    expect(counters.byType.QUALITY_BS_DRIFT).toBe(1);
   });
 });

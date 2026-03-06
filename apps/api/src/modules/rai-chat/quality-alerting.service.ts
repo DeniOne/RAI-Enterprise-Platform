@@ -1,5 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
+import { IncidentOpsService } from "./incident-ops.service";
+import { SystemIncidentType } from "@rai/prisma-client";
 
 const DEFAULT_DELTA_THRESHOLD = 15; // п.п. ухудшения
 const DEFAULT_ABSOLUTE_THRESHOLD = 30; // абсолютный BS%
@@ -21,7 +23,10 @@ export interface QualityAlertingResult {
 export class QualityAlertingService {
   private readonly logger = new Logger(QualityAlertingService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly incidentOps: IncidentOpsService,
+  ) {}
 
   async evaluateBsDrift(
     params: QualityAlertingParams,
@@ -42,7 +47,7 @@ export class QualityAlertingService {
       baselineWindowEnd.getTime() - 7 * 24 * 60 * 60 * 1000,
     );
 
-    const [recentAgg, baselineAgg, existingAlert] = await Promise.all([
+    const [recentAgg, baselineAgg, existingAlert, hottestTrace] = await Promise.all([
       this.prisma.traceSummary.aggregate({
         _avg: { bsScorePct: true },
         where: {
@@ -64,6 +69,25 @@ export class QualityAlertingService {
         },
       }),
       this.findExistingTodayAlert(companyId, now),
+      this.prisma.traceSummary.findFirst({
+        where: {
+          companyId,
+          createdAt: {
+            gte: recentWindowStart,
+            lt: recentWindowEnd,
+          },
+          bsScorePct: {
+            not: null,
+          },
+        },
+        orderBy: {
+          bsScorePct: "desc",
+        },
+        select: {
+          traceId: true,
+          bsScorePct: true,
+        },
+      }),
     ]);
 
     const recentAvg = recentAgg._avg.bsScorePct ?? 0;
@@ -106,6 +130,20 @@ export class QualityAlertingService {
         alertType: "BS_DRIFT",
         severity,
         message,
+      },
+    });
+    this.incidentOps.logIncident({
+      companyId,
+      traceId: hottestTrace?.traceId ?? null,
+      incidentType: SystemIncidentType.UNKNOWN,
+      severity,
+      details: {
+        subtype: "QUALITY_BS_DRIFT",
+        recentAvgBsPct: Number(recentAvg.toFixed(1)),
+        baselineAvgBsPct: Number(baselineAvg.toFixed(1)),
+        deltaPct: Number(delta.toFixed(1)),
+        hottestTraceId: hottestTrace?.traceId ?? null,
+        hottestTraceBsPct: hottestTrace?.bsScorePct ?? null,
       },
     });
 

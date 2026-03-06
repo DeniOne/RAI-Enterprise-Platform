@@ -56,6 +56,18 @@ export class TruthfulnessDashboardResponseDto {
   @Max(100)
   avgEvidenceCoverage: number;
 
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  acceptanceRate: number | null;
+
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  correctionRate: number | null;
+
   @IsArray()
   @ArrayMaxSize(10)
   @ValidateNested({ each: true })

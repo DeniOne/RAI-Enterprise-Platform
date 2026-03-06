@@ -326,6 +326,9 @@ export const api = {
             apiClient.post(`/rai/incidents/${encodeURIComponent(id)}/resolve`, { comment }),
         counters: () => apiClient.get<GovernanceCountersDto>('/rai/governance/counters'),
     },
+    autonomy: {
+        status: () => apiClient.get<AutonomyStatusDto>('/rai/explainability/autonomy-status'),
+    },
 }
 
 export interface IncidentFeedItem {
@@ -343,7 +346,15 @@ export interface IncidentFeedItem {
 export interface GovernanceCountersDto {
     crossTenantBreach: number;
     piiLeak: number;
+    qualityBsDrift: number;
     byType: Record<string, number>;
+}
+
+export interface AutonomyStatusDto {
+    companyId: string;
+    level: 'AUTONOMOUS' | 'TOOL_FIRST' | 'QUARANTINE';
+    avgBsScorePct: number | null;
+    knownTraceCount: number;
 }
 
 export interface AgentConfigItem {

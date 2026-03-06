@@ -43,6 +43,7 @@ import { IncidentsGovernanceController } from "./incidents-governance.controller
 import { PerformanceMetricsService } from "./performance/performance-metrics.service";
 import { QueueMetricsService } from "./performance/queue-metrics.service";
 import { SafeReplayService } from "./safe-replay.service";
+import { AgentRuntimeConfigService } from "./agent-runtime-config.service";
 
 @Module({
   imports: [
@@ -91,7 +92,8 @@ import { SafeReplayService } from "./safe-replay.service";
     PerformanceMetricsService,
     QueueMetricsService,
     SafeReplayService,
+    AgentRuntimeConfigService,
   ],
-  exports: [SafeReplayService, PerformanceMetricsService],
+  exports: [SafeReplayService, PerformanceMetricsService, GoldenTestRunnerService],
 })
 export class RaiChatModule {}

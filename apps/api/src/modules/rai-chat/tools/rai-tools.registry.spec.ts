@@ -13,6 +13,8 @@ import {
   AutonomyLevel,
   AutonomyPolicyService,
 } from "../autonomy-policy.service";
+import { AgentRuntimeConfigService } from "../agent-runtime-config.service";
+import { AgentConfigBlockedError } from "../security/agent-config-blocked.error";
 
 describe("RaiToolsRegistry", () => {
   const actorContext = {
@@ -59,6 +61,9 @@ describe("RaiToolsRegistry", () => {
       .fn()
       .mockResolvedValue(AutonomyLevel.AUTONOMOUS),
   } as unknown as AutonomyPolicyService;
+  const agentRuntimeConfig = {
+    resolveToolAccess: jest.fn().mockResolvedValue({ allowed: true }),
+  } as unknown as AgentRuntimeConfigService;
 
   const createRegistry = () =>
     new RaiToolsRegistry(
@@ -71,11 +76,13 @@ describe("RaiToolsRegistry", () => {
       riskPolicyEngine,
       pendingActionService,
       autonomyPolicy,
+      agentRuntimeConfig,
     );
 
   beforeEach(() => {
     jest.restoreAllMocks();
     jest.clearAllMocks();
+    (agentRuntimeConfig.resolveToolAccess as jest.Mock).mockResolvedValue({ allowed: true });
   });
 
   it("executes a registered tool with a valid payload", async () => {
@@ -240,6 +247,47 @@ describe("RaiToolsRegistry", () => {
         status: "PENDING",
       }),
     });
+  });
+
+  it("disabled agent blocks tool execution before RiskPolicy/handler", async () => {
+    const registry = createRegistry();
+    registry.onModuleInit();
+    (agentRuntimeConfig.resolveToolAccess as jest.Mock).mockResolvedValueOnce({
+      allowed: false,
+      reasonCode: "AGENT_DISABLED",
+      role: "agronomist",
+      requiredCapability: "AgroToolsRegistry",
+    });
+
+    await expect(
+      registry.execute(
+        RaiToolName.GenerateTechMapDraft,
+        { fieldRef: "field-1", seasonRef: "season-1", crop: "rapeseed" },
+        actorContext,
+      ),
+    ).rejects.toBeInstanceOf(AgentConfigBlockedError);
+
+    expect(techMapServiceMock.createDraftStub).not.toHaveBeenCalled();
+    expect(pendingActionCreateMock).not.toHaveBeenCalled();
+  });
+
+  it("missing capability blocks tool execution before handler", async () => {
+    const registry = createRegistry();
+    registry.onModuleInit();
+    (agentRuntimeConfig.resolveToolAccess as jest.Mock).mockResolvedValueOnce({
+      allowed: false,
+      reasonCode: "CAPABILITY_DENIED",
+      role: "knowledge",
+      requiredCapability: "KnowledgeToolsRegistry",
+    });
+
+    await expect(
+      registry.execute(
+        RaiToolName.QueryKnowledge,
+        { query: "нормы высева" },
+        actorContext,
+      ),
+    ).rejects.toBeInstanceOf(AgentConfigBlockedError);
   });
 
   it("computes plan fact within tenant scope", async () => {

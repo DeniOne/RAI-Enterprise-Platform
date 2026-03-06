@@ -99,7 +99,7 @@ export default function GovernanceSecurityPage() {
             </div>
             <h1 className="text-3xl font-medium text-[#030213] tracking-tight">Безопасность и Доверие</h1>
             <p className="text-sm text-[#717182] max-w-2xl leading-relaxed">
-              Среда управления рисками (Risk-first priority). Мониторинг изоляции тенантов, PII инциденты и операционный аудит системы Sentinel.
+              Среда управления рисками (Risk-first priority). Здесь сходятся security-инциденты Sentinel и quality-driven инциденты AI-контура.
             </p>
           </div>
           <div className="flex">
@@ -125,6 +125,12 @@ export default function GovernanceSecurityPage() {
             value={counters?.piiLeak ?? 0}
             desc="Заблокировано данных (R3)"
             icon={<Lock size={20} />}
+          />
+          <CounterBox
+            label="Quality Drift"
+            value={counters?.qualityBsDrift ?? 0}
+            desc="BS%-инциденты качества"
+            icon={<ShieldCheck size={20} />}
           />
           {counters?.byType && Object.entries(counters.byType).map(([type, n]) => (
             <CounterBox
@@ -181,6 +187,9 @@ export default function GovernanceSecurityPage() {
                     {filtered.map(inc => {
                       const isHigh = inc.severity === 'HIGH';
                       const level = isHigh ? 'R4' : (inc.severity === 'MEDIUM' ? 'R3' : 'R2');
+                      const details = (inc.details && typeof inc.details === 'object') ? (inc.details as Record<string, unknown>) : null;
+                      const subtype = typeof details?.subtype === 'string' ? details.subtype : null;
+                      const isQualityDrift = inc.incidentType === 'QUALITY_BS_DRIFT' || subtype === 'QUALITY_BS_DRIFT';
 
                       return (
                         <tr key={inc.id} className="hover:bg-slate-50/50 transition-colors align-top">
@@ -203,8 +212,17 @@ export default function GovernanceSecurityPage() {
                                 </p>
                               ) : (
                                 <p className="text-[13px] text-[#717182] leading-relaxed italic">
-                                  Requires immediate quorum validation. Escalated to Security Ops.
+                                  {isQualityDrift
+                                    ? 'Quality drift detected. Нужен разбор trace, BS%-контекста и причин деградации.'
+                                    : 'Requires immediate quorum validation. Escalated to Security Ops.'}
                                 </p>
+                              )}
+                              {isQualityDrift && details && (
+                                <div className="text-[12px] text-[#717182] leading-relaxed space-y-1">
+                                  <div>Recent BS%: {typeof details.recentAvgBsPct === 'number' ? `${details.recentAvgBsPct}%` : 'n/a'}</div>
+                                  <div>Baseline BS%: {typeof details.baselineAvgBsPct === 'number' ? `${details.baselineAvgBsPct}%` : 'n/a'}</div>
+                                  <div>Delta: {typeof details.deltaPct === 'number' ? `+${details.deltaPct} п.п.` : 'n/a'}</div>
+                                </div>
                               )}
                               {inc.traceId && (
                                 <div>
@@ -262,6 +280,7 @@ export default function GovernanceSecurityPage() {
             <div className="bg-white border border-black/10 rounded-2xl p-6 space-y-6">
               <ComplianceRow id="RL-01" title="Tenant Isolation" status={counters?.crossTenantBreach === 0 ? 'Verified' : 'Breach'} />
               <ComplianceRow id="RL-04" title="PII Masking (Sentinel)" status={counters?.piiLeak === 0 ? 'Verified' : 'Breach'} />
+              <ComplianceRow id="QL-01" title="Quality Drift Alerts" status={counters?.qualityBsDrift === 0 ? 'Verified' : 'Breach'} />
               <ComplianceRow id="RL-07" title="A-Filter Validation" status="Active" isInfo />
             </div>
 

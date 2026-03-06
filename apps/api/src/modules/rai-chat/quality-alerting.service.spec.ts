@@ -4,6 +4,8 @@ import {
   QualityAlertingService,
   QualityAlertingResult,
 } from "./quality-alerting.service";
+import { IncidentOpsService } from "./incident-ops.service";
+import { SystemIncidentType } from "@rai/prisma-client";
 
 describe("QualityAlertingService", () => {
   let service: QualityAlertingService;
@@ -11,12 +13,16 @@ describe("QualityAlertingService", () => {
   const prisma = {
     traceSummary: {
       aggregate: jest.fn(),
+      findFirst: jest.fn(),
     },
     qualityAlert: {
       findFirst: jest.fn(),
       create: jest.fn(),
     },
   } as unknown as PrismaService;
+  const incidentOps = {
+    logIncident: jest.fn(),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -24,6 +30,7 @@ describe("QualityAlertingService", () => {
       providers: [
         QualityAlertingService,
         { provide: PrismaService, useValue: prisma },
+        { provide: IncidentOpsService, useValue: incidentOps },
       ],
     }).compile();
 
@@ -38,6 +45,7 @@ describe("QualityAlertingService", () => {
       _avg: { bsScorePct: 10 },
     });
     (prisma.qualityAlert.findFirst as jest.Mock).mockResolvedValue(null);
+    (prisma.traceSummary.findFirst as jest.Mock).mockResolvedValue(null);
 
     const result = (await service.evaluateBsDrift({
       companyId: "c1",
@@ -59,6 +67,10 @@ describe("QualityAlertingService", () => {
     (prisma.qualityAlert.create as jest.Mock).mockResolvedValue({
       id: "qa1",
     });
+    (prisma.traceSummary.findFirst as jest.Mock).mockResolvedValue({
+      traceId: "tr-hot",
+      bsScorePct: 51,
+    });
 
     const result = (await service.evaluateBsDrift({
       companyId: "c1",
@@ -73,6 +85,20 @@ describe("QualityAlertingService", () => {
         severity: "HIGH",
       }),
     });
+    expect(incidentOps.logIncident).toHaveBeenCalledWith({
+      companyId: "c1",
+      traceId: "tr-hot",
+      incidentType: SystemIncidentType.UNKNOWN,
+      severity: "HIGH",
+      details: expect.objectContaining({
+        subtype: "QUALITY_BS_DRIFT",
+        recentAvgBsPct: 45,
+        baselineAvgBsPct: 10,
+        deltaPct: 35,
+        hottestTraceId: "tr-hot",
+        hottestTraceBsPct: 51,
+      }),
+    });
   });
 
   it("Cooldown: если алерт уже есть сегодня — второй не создаём", async () => {
@@ -85,6 +111,7 @@ describe("QualityAlertingService", () => {
     (prisma.qualityAlert.findFirst as jest.Mock).mockResolvedValue({
       id: "existing",
     });
+    (prisma.traceSummary.findFirst as jest.Mock).mockResolvedValue(null);
 
     const result = (await service.evaluateBsDrift({
       companyId: "c1",
@@ -93,6 +120,7 @@ describe("QualityAlertingService", () => {
 
     expect(result.alertCreated).toBe(false);
     expect(prisma.qualityAlert.create).not.toHaveBeenCalled();
+    expect(incidentOps.logIncident).not.toHaveBeenCalled();
   });
 });
 
