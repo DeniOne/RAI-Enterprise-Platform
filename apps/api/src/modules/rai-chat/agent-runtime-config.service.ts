@@ -1,54 +1,18 @@
 import { Injectable } from "@nestjs/common";
-import { PrismaService } from "../../shared/prisma/prisma.service";
 import { RaiToolName } from "./tools/rai-tools.types";
-
-type AgentRuntimeRole = "agronomist" | "economist" | "knowledge" | "monitoring";
-
-interface ToolRuntimeMapping {
-  role: AgentRuntimeRole;
-  requiredCapability: string;
-}
-
-const TOOL_RUNTIME_MAP: Partial<Record<RaiToolName, ToolRuntimeMapping>> = {
-  [RaiToolName.GenerateTechMapDraft]: {
-    role: "agronomist",
-    requiredCapability: "AgroToolsRegistry",
-  },
-  [RaiToolName.ComputeDeviations]: {
-    role: "agronomist",
-    requiredCapability: "AgroToolsRegistry",
-  },
-  [RaiToolName.ComputePlanFact]: {
-    role: "economist",
-    requiredCapability: "FinanceToolsRegistry",
-  },
-  [RaiToolName.SimulateScenario]: {
-    role: "economist",
-    requiredCapability: "FinanceToolsRegistry",
-  },
-  [RaiToolName.ComputeRiskAssessment]: {
-    role: "economist",
-    requiredCapability: "FinanceToolsRegistry",
-  },
-  [RaiToolName.QueryKnowledge]: {
-    role: "knowledge",
-    requiredCapability: "KnowledgeToolsRegistry",
-  },
-  [RaiToolName.EmitAlerts]: {
-    role: "monitoring",
-    requiredCapability: "RiskToolsRegistry",
-  },
-  [RaiToolName.GetWeatherForecast]: {
-    role: "monitoring",
-    requiredCapability: "RiskToolsRegistry",
-  },
-};
+import {
+  AgentRegistryService,
+  getDefaultToolsForRole,
+  type AgentRuntimeRole,
+} from "./agent-registry.service";
 
 export interface EffectiveAgentRuntimeConfig {
   role: AgentRuntimeRole;
   isActive: boolean;
   capabilities: string[];
+  tools: RaiToolName[];
   source: "tenant" | "global";
+  bindingsSource: "persisted" | "bootstrap";
 }
 
 export interface ToolAccessDecision {
@@ -56,56 +20,54 @@ export interface ToolAccessDecision {
   reasonCode?: "AGENT_DISABLED" | "CAPABILITY_DENIED";
   role?: AgentRuntimeRole;
   requiredCapability?: string;
+  source?: "persisted" | "bootstrap";
 }
 
 @Injectable()
 export class AgentRuntimeConfigService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly agentRegistry: AgentRegistryService) {}
 
   async resolveToolAccess(
     companyId: string,
     toolName: RaiToolName,
   ): Promise<ToolAccessDecision> {
-    const mapping = TOOL_RUNTIME_MAP[toolName];
-    if (!mapping) {
-      return { allowed: true };
-    }
-
-    const config = await this.getEffectiveConfig(companyId, mapping.role);
+    const config = await this.getEffectiveConfigForTool(companyId, toolName);
     if (!config) {
-      // Backward compatibility: пока нет runtime-конфига, не ломаем исполнение.
-      return {
-        allowed: true,
-        role: mapping.role,
-        requiredCapability: mapping.requiredCapability,
-      };
+      if (this.isGovernedTool(toolName)) {
+        return {
+          allowed: false,
+          reasonCode: "CAPABILITY_DENIED",
+          source: "persisted",
+        };
+      }
+      return { allowed: true };
     }
 
     if (!config.isActive) {
       return {
         allowed: false,
         reasonCode: "AGENT_DISABLED",
-        role: mapping.role,
-        requiredCapability: mapping.requiredCapability,
+        role: config.role,
+        requiredCapability: this.primaryCapability(config.capabilities),
+        source: config.bindingsSource,
       };
     }
 
-    const hasCapability =
-      config.capabilities.includes(mapping.requiredCapability) ||
-      config.capabilities.includes(toolName);
-    if (!hasCapability) {
+    if (!config.tools.includes(toolName)) {
       return {
         allowed: false,
         reasonCode: "CAPABILITY_DENIED",
-        role: mapping.role,
-        requiredCapability: mapping.requiredCapability,
+        role: config.role,
+        requiredCapability: this.primaryCapability(config.capabilities),
+        source: config.bindingsSource,
       };
     }
 
     return {
       allowed: true,
-      role: mapping.role,
-      requiredCapability: mapping.requiredCapability,
+      role: config.role,
+      requiredCapability: this.primaryCapability(config.capabilities),
+      source: config.bindingsSource,
     };
   }
 
@@ -113,37 +75,50 @@ export class AgentRuntimeConfigService {
     companyId: string,
     role: AgentRuntimeRole,
   ): Promise<EffectiveAgentRuntimeConfig | null> {
-    const [tenantOverride, globalDefault] = await Promise.all([
-      this.prisma.agentConfiguration.findUnique({
-        where: {
-          agent_config_role_company_unique: {
-            role,
-            companyId,
-          },
-        },
-      }),
-      this.prisma.agentConfiguration.findUnique({
-        where: {
-          agent_config_role_company_unique: {
-            role,
-            companyId: null,
-          },
-        },
-      }),
-    ]);
+    const entry = await this.agentRegistry.getEffectiveAgent(companyId, role);
+    if (!entry) {
+      return null;
+    }
+    return {
+      role: entry.definition.role,
+      isActive: entry.runtime.isActive,
+      capabilities: entry.runtime.capabilities,
+      tools: entry.runtime.tools,
+      source: entry.runtime.source,
+      bindingsSource: entry.runtime.bindingsSource,
+    };
+  }
 
-    const row = tenantOverride ?? globalDefault;
-    if (!row) {
+  private async getEffectiveConfigForTool(
+    companyId: string,
+    toolName: RaiToolName,
+  ): Promise<EffectiveAgentRuntimeConfig | null> {
+    const registry = await this.agentRegistry.getRegistry(companyId);
+    const owner = registry.find((entry) => entry.runtime.tools.includes(toolName));
+    if (!owner) {
       return null;
     }
 
     return {
-      role: row.role as AgentRuntimeRole,
-      isActive: row.isActive,
-      capabilities: Array.isArray(row.capabilities)
-        ? (row.capabilities as string[])
-        : [],
-      source: tenantOverride ? "tenant" : "global",
+      role: owner.definition.role,
+      isActive: owner.runtime.isActive,
+      capabilities: owner.runtime.capabilities,
+      tools: owner.runtime.tools,
+      source: owner.runtime.source,
+      bindingsSource: owner.runtime.bindingsSource,
     };
+  }
+
+  private primaryCapability(capabilities: string[]): string | undefined {
+    return capabilities[0];
+  }
+
+  private isGovernedTool(toolName: RaiToolName): boolean {
+    return (Object.keys({
+      ...Object.fromEntries(getDefaultToolsForRole("agronomist").map((tool) => [tool, true])),
+      ...Object.fromEntries(getDefaultToolsForRole("economist").map((tool) => [tool, true])),
+      ...Object.fromEntries(getDefaultToolsForRole("knowledge").map((tool) => [tool, true])),
+      ...Object.fromEntries(getDefaultToolsForRole("monitoring").map((tool) => [tool, true])),
+    }) as RaiToolName[]).includes(toolName);
   }
 }

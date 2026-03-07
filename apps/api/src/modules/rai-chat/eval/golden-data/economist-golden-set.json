@@ -1,0 +1,20 @@
+[
+  {
+    "id": "economist-1",
+    "requestText": "покажи план факт по сезону",
+    "expectedIntent": "compute_plan_fact",
+    "expectedToolCalls": ["compute_plan_fact"]
+  },
+  {
+    "id": "economist-2",
+    "requestText": "смоделируй экономический сценарий по плану",
+    "expectedIntent": "simulate_scenario",
+    "expectedToolCalls": ["simulate_scenario"]
+  },
+  {
+    "id": "economist-3",
+    "requestText": "оцени риск по плану на следующий квартал",
+    "expectedIntent": "compute_risk_assessment",
+    "expectedToolCalls": ["compute_risk_assessment"]
+  }
+]

@@ -44,11 +44,14 @@ import { PerformanceMetricsService } from "./performance/performance-metrics.ser
 import { QueueMetricsService } from "./performance/queue-metrics.service";
 import { SafeReplayService } from "./safe-replay.service";
 import { AgentRuntimeConfigService } from "./agent-runtime-config.service";
+import { AgentRegistryService } from "./agent-registry.service";
+import { MemoryModule } from "../../shared/memory/memory.module";
 
 @Module({
   imports: [
     AuthModule,
     TenantContextModule,
+    MemoryModule,
     SatelliteModule,
     TechMapModule,
     ConsultingModule,
@@ -92,8 +95,17 @@ import { AgentRuntimeConfigService } from "./agent-runtime-config.service";
     PerformanceMetricsService,
     QueueMetricsService,
     SafeReplayService,
+    AgentRegistryService,
     AgentRuntimeConfigService,
   ],
-  exports: [SafeReplayService, PerformanceMetricsService, GoldenTestRunnerService],
+  exports: [
+    SafeReplayService,
+    PerformanceMetricsService,
+    QueueMetricsService,
+    GoldenTestRunnerService,
+    AgentRegistryService,
+    IncidentOpsService,
+    AutonomyPolicyService,
+  ],
 })
 export class RaiChatModule {}

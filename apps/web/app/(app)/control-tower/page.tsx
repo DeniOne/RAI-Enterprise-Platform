@@ -11,12 +11,15 @@ const THRESHOLD_SUCCESS_RATE_PCT = 95;
 
 interface DashboardData {
   companyId: string;
-  avgBsScore: number;
-  p95BsScore: number;
-  avgEvidenceCoverage: number;
+  avgBsScore: number | null;
+  p95BsScore: number | null;
+  avgEvidenceCoverage: number | null;
   acceptanceRate: number | null;
   correctionRate: number | null;
   worstTraces: Array<{ traceId: string; bsScorePct: number | null; evidenceCoveragePct: number | null; createdAt: string }>;
+  qualityKnownTraceCount: number;
+  qualityPendingTraceCount: number;
+  criticalPath: Array<{ traceId: string; phase: string; durationMs: number; totalDurationMs: number | null; createdAt: string }>;
 }
 
 interface PerformanceData {
@@ -33,10 +36,27 @@ interface CostData {
   topByDuration: Array<{ traceId: string; costUsd: number; durationMs: number }>;
 }
 
+interface QueuePressureData {
+  companyId: string;
+  pressureState: 'IDLE' | 'STABLE' | 'PRESSURED' | 'SATURATED' | null;
+  signalFresh: boolean;
+  totalBacklog: number | null;
+  hottestQueue: string | null;
+  observedQueues: Array<{
+    queueName: string;
+    lastSize: number;
+    avgSize: number;
+    peakSize: number;
+    samples: number;
+    lastObservedAt: string | null;
+  }>;
+}
+
 export default function ControlTowerPage() {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [performance, setPerformance] = useState<PerformanceData | null>(null);
   const [cost, setCost] = useState<CostData | null>(null);
+  const [queuePressure, setQueuePressure] = useState<QueuePressureData | null>(null);
   const [autonomy, setAutonomy] = useState<AutonomyStatusDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,16 +65,18 @@ export default function ControlTowerPage() {
     let cancelled = false;
     (async () => {
       try {
-        const [dRes, pRes, cRes, aRes] = await Promise.all([
+        const [dRes, pRes, cRes, qRes, aRes] = await Promise.all([
           api.explainability.dashboard({ hours: 24 }),
           api.explainability.performance({ timeWindowMs: 3600000 }),
           api.explainability.costHotspots({ timeWindowMs: 86400000, limit: 10 }),
+          api.explainability.queuePressure({ timeWindowMs: 3600000 }),
           api.autonomy.status(),
         ]);
         if (cancelled) return;
         setDashboard(dRes.data);
         setPerformance(pRes.data);
         setCost(cRes.data);
+        setQueuePressure(qRes.data);
         setAutonomy(aRes.data);
       } catch (e) {
         if (!cancelled) setError((e as Error).message ?? 'Сбой получения телеметрии');
@@ -143,6 +165,21 @@ export default function ControlTowerPage() {
                   <DataRow label="Задержка R95" value={`${performance.p95LatencyMs.toFixed(0)} ms`} status={latencyOk ? 'success' : 'error'} />
                   <DataRow label="Средний отклик" value={`${performance.avgLatencyMs.toFixed(0)} ms`} />
                   <DataRow label="Успешность (SLO)" value={`${performance.successRatePct.toFixed(1)}%`} status={successRateOk ? 'success' : 'error'} />
+                  <DataRow
+                    label="Runtime pressure"
+                    value={formatQueuePressureState(queuePressure?.pressureState)}
+                    status={queuePressureStatus(queuePressure)}
+                  />
+                  <DataRow
+                    label="Backlog depth"
+                    value={queuePressure?.totalBacklog === null || queuePressure?.totalBacklog === undefined ? 'pending' : `${queuePressure.totalBacklog}`}
+                    status={queuePressureStatus(queuePressure)}
+                  />
+                  <DataRow
+                    label="Queue signal"
+                    value={queuePressure ? (queuePressure.signalFresh ? 'live' : 'stale') : 'pending'}
+                    status={queuePressure?.signalFresh ? 'success' : 'warning'}
+                  />
 
                   {performance.byAgent.length > 0 && (
                     <div className="mt-6 pt-5 border-t border-black/5">
@@ -152,6 +189,19 @@ export default function ControlTowerPage() {
                           <div key={a.agentRole} className="flex items-center justify-between py-1.5">
                             <span className="text-[13px] font-medium text-[#030213]">{a.agentRole}</span>
                             <span className="text-[13px] font-mono text-[#717182]">{a.avgLatencyMs.toFixed(0)} ms</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {queuePressure && queuePressure.observedQueues.length > 0 && (
+                    <div className="mt-6 pt-5 border-t border-black/5">
+                      <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Queue contour</p>
+                      <div className="space-y-0.5">
+                        {queuePressure.observedQueues.slice(0, 3).map(queue => (
+                          <div key={queue.queueName} className="flex items-center justify-between py-1.5">
+                            <span className="text-[12px] font-medium text-[#030213]">{queue.queueName}</span>
+                            <span className="text-[12px] font-mono text-[#717182]">last {queue.lastSize} / peak {queue.peakSize}</span>
                           </div>
                         ))}
                       </div>
@@ -169,17 +219,25 @@ export default function ControlTowerPage() {
                 <>
                   <DataRow
                     label="Риск галлюцинаций (BS%)"
-                    value={`${dashboard.avgBsScore.toFixed(1)}%`}
-                    status={dashboard.avgBsScore <= 15 ? 'success' : dashboard.avgBsScore <= 40 ? 'warning' : 'error'}
+                    value={formatPctOrPending(dashboard.avgBsScore)}
+                    status={
+                      dashboard.avgBsScore === null
+                        ? 'warning'
+                        : dashboard.avgBsScore <= 15 ? 'success' : dashboard.avgBsScore <= 40 ? 'warning' : 'error'
+                    }
                   />
                   <DataRow
                     label="P95 BS% Score"
-                    value={`${dashboard.p95BsScore.toFixed(1)}%`}
+                    value={formatPctOrPending(dashboard.p95BsScore)}
                   />
                   <DataRow
                     label="Доказательная база"
-                    value={`${dashboard.avgEvidenceCoverage.toFixed(1)}%`}
-                    status={dashboard.avgEvidenceCoverage >= 85 ? 'success' : 'warning'}
+                    value={formatPctOrPending(dashboard.avgEvidenceCoverage)}
+                    status={
+                      dashboard.avgEvidenceCoverage === null
+                        ? 'warning'
+                        : dashboard.avgEvidenceCoverage >= 85 ? 'success' : 'warning'
+                    }
                   />
                   <DataRow
                     label="Acceptance Rate (advisory)"
@@ -196,8 +254,16 @@ export default function ControlTowerPage() {
                   />
                   <DataRow
                     label="Correction Rate"
-                    value={dashboard.correctionRate === null ? 'N/A' : `${dashboard.correctionRate.toFixed(1)}%`}
-                    status="warning"
+                    value={formatPctOrPending(dashboard.correctionRate)}
+                    status={
+                      dashboard.correctionRate === null
+                        ? 'warning'
+                        : dashboard.correctionRate <= 15
+                          ? 'success'
+                          : dashboard.correctionRate <= 35
+                            ? 'warning'
+                            : 'error'
+                    }
                   />
                   <DataRow
                     label="Autonomy Mode"
@@ -215,8 +281,17 @@ export default function ControlTowerPage() {
 
                   <div className="mt-8 p-4 bg-slate-50 border border-black/5 rounded-xl">
                     <p className="text-[12px] text-[#717182] leading-relaxed">
-                      `Acceptance Rate` строится по tenant-scoped advisory decisions. `Correction Rate` пока не инструментирован как отдельный live source и поэтому не подменяется фейковой цифрой. `Autonomy Mode` зависит от реально посчитанного BS%-окна, а при отсутствии quality-данных система уходит в безопасный `TOOL_FIRST`.
+                      `Acceptance Rate` строится по tenant-scoped advisory decisions. `Correction Rate` строится по decision-scoped persisted advisory feedback с `outcome=corrected` и дедупликацией по `traceId`; при отсутствии decision base он остаётся `pending`. Quality-метрики без persisted evidence показываются как `pending`, а не как synthetic `0/100`. `Autonomy Mode` зависит от реально посчитанного BS%-окна и активных quality drift alerts.
                     </p>
+                    <p className="text-[12px] text-[#717182] leading-relaxed mt-3">
+                      Quality ready traces: <span className="font-mono text-[#030213]">{dashboard.qualityKnownTraceCount}</span>, pending traces: <span className="font-mono text-[#030213]">{dashboard.qualityPendingTraceCount}</span>.
+                    </p>
+                    {autonomy && (
+                      <p className="text-[12px] text-[#717182] leading-relaxed mt-3">
+                        Autonomy driver: <span className="font-mono text-[#030213]">{autonomy.driver}</span>
+                        {autonomy.activeQualityAlert ? ' (active quality alert)' : ''}.
+                      </p>
+                    )}
                   </div>
                 </>
               ) : <NoData />}
@@ -323,6 +398,44 @@ export default function ControlTowerPage() {
             </div>
           </div>
         )}
+
+        {dashboard && dashboard.criticalPath.length > 0 && (
+          <div className="mt-12">
+            <div className="flex items-center gap-3 mb-6">
+              <Activity size={20} className="text-[#030213]" />
+              <h2 className="text-xl font-medium text-[#030213] tracking-tight">Critical Path Visibility</h2>
+            </div>
+
+            <div className="bg-white border border-black/10 rounded-2xl overflow-hidden">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-black/5 bg-slate-50">
+                    <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Trace</th>
+                    <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Bottleneck phase</th>
+                    <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Phase duration</th>
+                    <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Total trace</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-black/5">
+                  {dashboard.criticalPath.map((item) => (
+                    <tr key={`${item.traceId}:${item.phase}`} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <Link href={`/control-tower/trace/${item.traceId}`} className="text-[13px] font-mono text-blue-600 hover:underline block">
+                          {item.traceId}
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 text-[13px] font-medium text-[#030213]">{item.phase}</td>
+                      <td className="px-6 py-4 text-[13px] font-mono text-[#030213]">{item.durationMs.toFixed(0)} ms</td>
+                      <td className="px-6 py-4 text-[13px] font-mono text-[#717182]">
+                        {item.totalDurationMs === null ? 'pending' : `${item.totalDurationMs.toFixed(0)} ms`}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -381,6 +494,34 @@ function formatAutonomyLevel(level: AutonomyStatusDto['level']) {
     default:
       return 'pending';
   }
+}
+
+function formatQueuePressureState(state: QueuePressureData['pressureState'] | undefined) {
+  switch (state) {
+    case 'IDLE':
+      return 'idle';
+    case 'STABLE':
+      return 'stable';
+    case 'PRESSURED':
+      return 'pressured';
+    case 'SATURATED':
+      return 'saturated';
+    default:
+      return 'pending';
+  }
+}
+
+function queuePressureStatus(queuePressure: QueuePressureData | null): 'success' | 'warning' | 'error' {
+  if (!queuePressure || !queuePressure.signalFresh || queuePressure.pressureState === null) {
+    return 'warning';
+  }
+  if (queuePressure.pressureState === 'SATURATED') {
+    return 'error';
+  }
+  if (queuePressure.pressureState === 'PRESSURED') {
+    return 'warning';
+  }
+  return 'success';
 }
 
 function RiskBadge({ level }: { level: 'R1' | 'R2' | 'R3' | 'R4' | 'Success' }) {

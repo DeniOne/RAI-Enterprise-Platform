@@ -2,7 +2,7 @@ import { BadRequestException, Body, Controller, Get, Param, Post, Query, UseGuar
 import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { RolesGuard } from "../../shared/auth/roles.guard";
 import { Roles } from "../../shared/auth/roles.decorator";
-import { UserRole } from "@rai/prisma-client";
+import { IncidentRunbookAction, UserRole } from "@rai/prisma-client";
 import { TenantContextService } from "../../shared/tenant-context/tenant-context.service";
 import {
   IncidentOpsService,
@@ -40,6 +40,27 @@ export class IncidentsGovernanceController {
     if (!companyId) throw new BadRequestException("companyId is missing");
     await this.incidentOps.resolveIncident(id, companyId, body?.comment ?? "");
     return { ok: true };
+  }
+
+  @Post("incidents/:id/runbook")
+  async executeRunbook(
+    @Param("id") id: string,
+    @Body() body: { action?: IncidentRunbookAction; comment?: string },
+  ): Promise<{ ok: true; result: Record<string, unknown> }> {
+    const companyId = this.tenantContext.getCompanyId();
+    if (!companyId) throw new BadRequestException("companyId is missing");
+    if (
+      body?.action !== IncidentRunbookAction.REQUIRE_HUMAN_REVIEW &&
+      body?.action !== IncidentRunbookAction.ROLLBACK_CHANGE_REQUEST
+    ) {
+      throw new BadRequestException("Valid runbook action is required");
+    }
+    return this.incidentOps.executeRunbook({
+      incidentId: id,
+      companyId,
+      action: body.action,
+      comment: body.comment ?? "",
+    });
   }
 
   @Get("governance/counters")

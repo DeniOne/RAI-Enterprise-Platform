@@ -15,6 +15,8 @@ import {
 } from "../autonomy-policy.service";
 import { AgentRuntimeConfigService } from "../agent-runtime-config.service";
 import { AgentConfigBlockedError } from "../security/agent-config-blocked.error";
+import { IncidentOpsService } from "../incident-ops.service";
+import { SystemIncidentType } from "@rai/prisma-client";
 
 describe("RaiToolsRegistry", () => {
   const actorContext = {
@@ -64,6 +66,9 @@ describe("RaiToolsRegistry", () => {
   const agentRuntimeConfig = {
     resolveToolAccess: jest.fn().mockResolvedValue({ allowed: true }),
   } as unknown as AgentRuntimeConfigService;
+  const incidentOps = {
+    logIncident: jest.fn(),
+  } as unknown as IncidentOpsService;
 
   const createRegistry = () =>
     new RaiToolsRegistry(
@@ -77,12 +82,70 @@ describe("RaiToolsRegistry", () => {
       pendingActionService,
       autonomyPolicy,
       agentRuntimeConfig,
+      incidentOps,
     );
 
   beforeEach(() => {
     jest.restoreAllMocks();
     jest.clearAllMocks();
     (agentRuntimeConfig.resolveToolAccess as jest.Mock).mockResolvedValue({ allowed: true });
+  });
+
+  it("QUARANTINE создаёт autonomy incident", async () => {
+    const registry = createRegistry();
+    registry.onModuleInit();
+    (autonomyPolicy.getCompanyAutonomyLevel as jest.Mock).mockResolvedValueOnce(
+      AutonomyLevel.QUARANTINE,
+    );
+
+    await expect(
+      registry.execute(
+        RaiToolName.GenerateTechMapDraft,
+        { fieldRef: "field-1", seasonRef: "season-1", crop: "rapeseed" },
+        actorContext,
+      ),
+    ).rejects.toBeInstanceOf(RiskPolicyBlockedError);
+
+    expect(incidentOps.logIncident).toHaveBeenCalledWith({
+      companyId: "company-1",
+      traceId: "trace-1",
+      incidentType: SystemIncidentType.AUTONOMY_QUARANTINE,
+      severity: "HIGH",
+      details: expect.objectContaining({
+        toolName: RaiToolName.GenerateTechMapDraft,
+      }),
+    });
+  });
+
+  it("TOOL_FIRST forced PendingAction создаёт autonomy incident", async () => {
+    const registry = createRegistry();
+    registry.onModuleInit();
+    (autonomyPolicy.getCompanyAutonomyLevel as jest.Mock).mockResolvedValueOnce(
+      AutonomyLevel.TOOL_FIRST,
+    );
+    jest
+      .spyOn(pendingActionService, "requiresConfirmation")
+      .mockReturnValue(false);
+    pendingActionCreateMock.mockResolvedValueOnce({ id: "pa-toolfirst" });
+
+    await expect(
+      registry.execute(
+        RaiToolName.GenerateTechMapDraft,
+        { fieldRef: "field-1", seasonRef: "season-1", crop: "rapeseed" },
+        actorContext,
+      ),
+    ).rejects.toBeInstanceOf(RiskPolicyBlockedError);
+
+    expect(incidentOps.logIncident).toHaveBeenCalledWith({
+      companyId: "company-1",
+      traceId: "trace-1",
+      incidentType: SystemIncidentType.AUTONOMY_TOOL_FIRST,
+      severity: "MEDIUM",
+      details: expect.objectContaining({
+        pendingActionId: "pa-toolfirst",
+        policySource: "AutonomyPolicy",
+      }),
+    });
   });
 
   it("executes a registered tool with a valid payload", async () => {

@@ -14,6 +14,7 @@ import { AutonomyPolicyService } from "../rai-chat/autonomy-policy.service";
 import { AutonomyStatusDto } from "./dto/autonomy-status.dto";
 import { CostHotspotsQueryDto } from "./dto/cost-hotspots.dto";
 import { ExplainabilityTimelineResponseDto } from "./dto/explainability-timeline.dto";
+import { QueuePressureResponseDto } from "./dto/queue-pressure.dto";
 import { TraceForensicsResponseDto } from "./dto/trace-forensics.dto";
 import { TraceTopologyResponseDto } from "./dto/trace-topology.dto";
 import { TruthfulnessDashboardResponseDto } from "./dto/truthfulness-dashboard.dto";
@@ -63,6 +64,21 @@ export class ExplainabilityPanelController {
     return this.explainabilityPanel.getTruthfulnessDashboard(companyId, timeWindowHours);
   }
 
+  @Get("queue-pressure")
+  async getQueuePressure(
+    @Query("timeWindowMs") timeWindowMs?: string,
+  ): Promise<QueuePressureResponseDto> {
+    const companyId = this.tenantContext.getCompanyId();
+    if (!companyId) {
+      throw new BadRequestException("Security Context: companyId is missing");
+    }
+    const windowMs = timeWindowMs !== undefined ? Number(timeWindowMs) : 3600000;
+    if (!Number.isFinite(windowMs) || windowMs <= 0) {
+      throw new BadRequestException("Invalid timeWindowMs");
+    }
+    return this.explainabilityPanel.getQueuePressure(companyId, windowMs);
+  }
+
   @Get("autonomy-status")
   async getAutonomyStatus(): Promise<AutonomyStatusDto> {
     const companyId = this.tenantContext.getCompanyId();
@@ -77,6 +93,8 @@ export class ExplainabilityPanelController {
       level: status.level,
       avgBsScorePct: status.avgBsScorePct,
       knownTraceCount: status.knownTraceCount,
+      driver: status.driver,
+      activeQualityAlert: status.activeQualityAlert,
     };
   }
 
@@ -152,4 +170,3 @@ export class ExplainabilityPanelController {
     return this.costAnalytics.getCostHotspots(companyId, timeWindowMs, limit);
   }
 }
-

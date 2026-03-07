@@ -7,13 +7,19 @@
   },
   {
     "id": "agronom-2",
-    "requestText": "Какая норма высева для озимого рапса при предшественнике пшеница?",
-    "expectedIntent": "agro_query",
-    "expectedToolCalls": ["get_soil_profile", "workspace_snapshot"]
+    "requestText": "Подготовь черновик техкарты для подсолнечника по полю 12",
+    "expectedIntent": "tech_map_draft",
+    "expectedToolCalls": ["generate_tech_map_draft"]
   },
   {
     "id": "agronom-3",
     "requestText": "Рассчитай отклонения план-факт по полю №7",
+    "expectedIntent": "compute_deviations",
+    "expectedToolCalls": ["compute_deviations"]
+  },
+  {
+    "id": "agronom-4",
+    "requestText": "Покажи отклонения по сезону для участка север",
     "expectedIntent": "compute_deviations",
     "expectedToolCalls": ["compute_deviations"]
   }

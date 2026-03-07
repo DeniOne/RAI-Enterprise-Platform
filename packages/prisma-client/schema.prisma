@@ -148,8 +148,13 @@ model Company {
   agentReputations        AgentReputation[]
   userCredibilityProfiles UserCredibilityProfile[]
   systemIncidents         SystemIncident[]
+  incidentRunbookExecutions IncidentRunbookExecution[]
   performanceMetrics      PerformanceMetric[]
   agentConfigurations     AgentConfiguration[]
+  agentConfigChanges      AgentConfigChangeRequest[]
+  agentCapabilityBindings AgentCapabilityBinding[]
+  agentToolBindings       AgentToolBinding[]
+  evalRuns                EvalRun[]
 
   // Level F: Institutional Oracle Standard
   levelFCertAudits     LevelFCertAudit[]
@@ -1472,7 +1477,27 @@ enum SystemIncidentType {
   CROSS_TENANT_BREACH
   PII_LEAK
   RATE_LIMIT
+  AUTONOMY_QUARANTINE
+  AUTONOMY_TOOL_FIRST
+  POLICY_BLOCKED_CRITICAL_ACTION
+  PROMPT_CHANGE_ROLLBACK
   UNKNOWN
+}
+
+enum SystemIncidentStatus {
+  OPEN
+  RESOLVED
+  RUNBOOK_EXECUTED
+}
+
+enum IncidentRunbookAction {
+  REQUIRE_HUMAN_REVIEW
+  ROLLBACK_CHANGE_REQUEST
+}
+
+enum IncidentRunbookExecutionStatus {
+  EXECUTED
+  FAILED
 }
 
 model SystemIncident {
@@ -1481,15 +1506,35 @@ model SystemIncident {
   company        Company?            @relation(fields: [companyId], references: [id])
   traceId        String?
   incidentType   SystemIncidentType
+  status         SystemIncidentStatus @default(OPEN)
   severity       String              // LOW | MEDIUM | HIGH
   details        Json                @default("{}")
   createdAt      DateTime            @default(now())
   resolvedAt     DateTime?
   resolveComment String?            @db.Text
+  runbookExecutions IncidentRunbookExecution[]
 
   @@index([companyId])
+  @@index([companyId, status])
   @@index([createdAt])
   @@map("system_incidents")
+}
+
+model IncidentRunbookExecution {
+  id         String                       @id @default(cuid())
+  incidentId String
+  incident   SystemIncident               @relation(fields: [incidentId], references: [id])
+  companyId  String
+  company    Company                      @relation(fields: [companyId], references: [id])
+  action     IncidentRunbookAction
+  status     IncidentRunbookExecutionStatus
+  comment    String?                      @db.Text
+  result     Json                         @default("{}")
+  createdAt  DateTime                     @default(now())
+
+  @@index([incidentId])
+  @@index([companyId, createdAt])
+  @@map("incident_runbook_executions")
 }
 
 enum PerformanceMetricType {
@@ -1561,6 +1606,125 @@ model AgentConfiguration {
   @@unique([role, companyId], name: "agent_config_role_company_unique")
   @@index([companyId])
   @@map("agent_configurations")
+}
+
+model AgentCapabilityBinding {
+  id         String   @id @default(cuid())
+  role       String
+  capability String
+  isEnabled  Boolean  @default(true)
+  companyId  String?
+  company    Company? @relation(fields: [companyId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([role, capability, companyId], name: "agent_capability_binding_role_capability_company_unique")
+  @@index([companyId, role])
+  @@map("agent_capability_bindings")
+}
+
+model AgentToolBinding {
+  id        String   @id @default(cuid())
+  role      String
+  toolName  String
+  isEnabled Boolean  @default(true)
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([role, toolName, companyId], name: "agent_tool_binding_role_tool_company_unique")
+  @@index([companyId, role])
+  @@map("agent_tool_bindings")
+}
+
+enum AgentConfigChangeScope {
+  GLOBAL
+  TENANT
+}
+
+enum AgentConfigChangeStatus {
+  EVAL_FAILED
+  READY_FOR_CANARY
+  CANARY_ACTIVE
+  APPROVED_FOR_PRODUCTION
+  PROMOTED
+  ROLLED_BACK
+}
+
+enum AgentCanaryStatus {
+  NOT_STARTED
+  ACTIVE
+  PASSED
+  DEGRADED
+}
+
+enum AgentRollbackStatus {
+  NOT_REQUIRED
+  EXECUTED
+}
+
+enum AgentProductionDecision {
+  PENDING
+  APPROVED
+  REJECTED
+  ROLLED_BACK
+}
+
+model AgentConfigChangeRequest {
+  id                 String                  @id @default(cuid())
+  companyId          String
+  company            Company                 @relation(fields: [companyId], references: [id])
+  role               String
+  scope              AgentConfigChangeScope
+  targetVersion      String
+  requestedConfig    Json
+  previousConfig     Json?
+  status             AgentConfigChangeStatus
+  evalVerdict        String?
+  evalSummary        Json?
+  canaryStatus       AgentCanaryStatus       @default(NOT_STARTED)
+  canarySummary      Json?
+  rollbackStatus     AgentRollbackStatus     @default(NOT_REQUIRED)
+  rollbackSummary    Json?
+  productionDecision AgentProductionDecision @default(PENDING)
+  productionConfigId String?
+  evalRunId          String?
+  evalRun            EvalRun?                @relation("CurrentEvalRun", fields: [evalRunId], references: [id])
+  evalRuns           EvalRun[]               @relation("EvalRunChangeRequest")
+  promotedAt         DateTime?
+  rolledBackAt       DateTime?
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+
+  @@unique([companyId, role, targetVersion], name: "agent_config_change_company_role_version_unique")
+  @@unique([evalRunId])
+  @@index([companyId, role])
+  @@index([companyId, status])
+  @@map("agent_config_change_requests")
+}
+
+model EvalRun {
+  id               String   @id @default(cuid())
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id])
+  changeRequestId  String?
+  changeRequest    AgentConfigChangeRequest? @relation("EvalRunChangeRequest", fields: [changeRequestId], references: [id])
+  currentForChange AgentConfigChangeRequest? @relation("CurrentEvalRun")
+  role             String
+  agentName        String
+  promptVersion    String
+  modelName        String
+  candidateConfig  Json
+  corpusSummary    Json
+  caseResults      Json
+  verdict          String
+  verdictBasis     Json
+  createdAt        DateTime @default(now())
+
+  @@index([companyId, role, createdAt])
+  @@index([changeRequestId])
+  @@map("eval_runs")
 }
 
 model AgentScoreCard {

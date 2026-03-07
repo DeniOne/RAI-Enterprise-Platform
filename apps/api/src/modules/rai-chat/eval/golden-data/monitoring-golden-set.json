@@ -1,0 +1,20 @@
+[
+  {
+    "id": "monitoring-1",
+    "requestText": "дай прогноз погоды для поля",
+    "expectedIntent": "get_weather_forecast",
+    "expectedToolCalls": ["get_weather_forecast"]
+  },
+  {
+    "id": "monitoring-2",
+    "requestText": "подними алерт s4 по критичному риску",
+    "expectedIntent": "emit_alerts",
+    "expectedToolCalls": ["emit_alerts"]
+  },
+  {
+    "id": "monitoring-3",
+    "requestText": "дай прогноз погоды на 7 дней для южного кластера",
+    "expectedIntent": "get_weather_forecast",
+    "expectedToolCalls": ["get_weather_forecast"]
+  }
+]

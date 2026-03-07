@@ -1,0 +1,14 @@
+[
+  {
+    "id": "knowledge-1",
+    "requestText": "найди знания по нормам высева рапса",
+    "expectedIntent": "query_knowledge",
+    "expectedToolCalls": ["query_knowledge"]
+  },
+  {
+    "id": "knowledge-2",
+    "requestText": "найди регламент по агрономическим отклонениям",
+    "expectedIntent": "query_knowledge",
+    "expectedToolCalls": ["query_knowledge"]
+  }
+]

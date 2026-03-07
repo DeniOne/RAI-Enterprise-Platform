@@ -22,10 +22,10 @@
 
 ## 0. Executive Gate
 
-- [ ] Есть единый источник правды по статусу готовности AI-контура.
-- [ ] `docs/00_STRATEGY/STAGE 2/TRUTH_SYNC_STAGE_2_CLAIMS.md` актуален.
-- [ ] Критичные claims больше не находятся в `PARTIAL` или `MISSING` без явного плана закрытия.
-- [ ] Есть список блокеров, которые запрещают rollout при незакрытии.
+- [x] Есть единый источник правды по статусу готовности AI-контура.
+- [x] `docs/00_STRATEGY/STAGE 2/TRUTH_SYNC_STAGE_2_CLAIMS.md` актуален.
+- [x] Критичные claims больше не находятся в `PARTIAL` или `MISSING` без явного плана закрытия.
+- [x] Есть список блокеров, которые запрещают rollout при незакрытии.
 - [ ] Есть owner на каждый критичный трек.
 
 ## 1. Business Fit and Scope Control
@@ -40,7 +40,7 @@
 
 - [ ] `Supervisor` реально декомпозирован на рабочие компоненты.
 - [ ] `IntentRouter` не декоративный и реально маршрутизирует запросы.
-- [ ] `BudgetController` реально участвует в execution path.
+- [x] `BudgetController` реально участвует в execution path.
 - [ ] `MemoryCoordinator` реально участвует в recall/append/profile flow.
 - [ ] `AgentRuntime` реально управляет lifecycle, deadline, fan-out.
 - [ ] `ResponseComposer` реально собирает output и режет PII.
@@ -59,7 +59,7 @@
 
 ## 4. Tool Gating and Capability Control
 
-- [ ] Все tool calls идут через typed registry.
+- [x] Все tool calls идут через typed registry.
 - [ ] Нет string-execution и невалидированных payload calls.
 - [ ] Все tool payloads валидируются схемами.
 - [ ] У каждого инструмента есть risk-level.
@@ -124,11 +124,11 @@
 ## 10. Observability and Control Tower
 
 - [x] `Control Tower` читает живые данные, а не мок/нулевые записи.
-- [ ] В панели реально отображаются `BS%`, `Evidence Coverage`, `Acceptance Rate`, `Correction Rate`.
+- [x] В панели реально отображаются `BS%`, `Evidence Coverage`, `Acceptance Rate`, `Correction Rate`.
 - [x] Есть панель худших traces.
-- [ ] Есть critical path visibility.
+- [x] Есть critical path visibility.
 - [x] Есть cost visibility.
-- [ ] Есть queue/backpressure visibility.
+- [x] Есть queue/backpressure visibility.
 - [x] Есть error-rate visibility.
 - [x] Есть latency visibility.
 
@@ -137,11 +137,11 @@
 - [x] Есть единая модель incident lifecycle.
 - [x] Пишутся security incidents.
 - [x] Пишутся quality incidents.
-- [ ] Пишутся autonomy/policy incidents.
+- [x] Пишутся autonomy/policy incidents.
 - [x] У incident есть `traceId`, `type`, `severity`, `status`.
 - [x] Incident feed читается из живых данных.
 - [x] Есть resolve workflow.
-- [ ] Есть runbook/fallback action для критичных инцидентов.
+- [x] Есть runbook/fallback action для критичных инцидентов.
 
 ## 12. Autonomy Control
 
@@ -150,14 +150,14 @@
 - [x] При деградации качества система умеет уходить в `tool-first`.
 - [x] При сильной деградации система умеет уходить в `quarantine`.
 - [x] Policy changes реально влияют на runtime.
-- [ ] Автономность нельзя случайно обойти через UI или ручной config.
+- [x] Автономность нельзя случайно обойти через UI или ручной config.
 
 ## 13. Agent Registry and Runtime Authority
 
-- [ ] Registry существует как доменная модель, а не только как config CRUD.
-- [ ] Есть first-class сущность агента.
-- [ ] Есть first-class mapping agent -> tools/capabilities.
-- [ ] Есть first-class tenant access control.
+- [x] Registry существует как доменная модель, а не только как config CRUD.
+- [x] Есть first-class сущность агента.
+- [x] Есть first-class mapping agent -> tools/capabilities.
+- [x] Есть first-class tenant access control.
 - [x] Registry влияет на runtime.
 - [x] Disable agent реально выключает поведение.
 - [x] Capability narrowing реально ограничивает tool access.
@@ -165,7 +165,7 @@
 
 ## 14. Prompt Governance and Safe Evolution
 
-- [ ] Есть versioning prompt/model/config changes.
+- [x] Есть versioning prompt/model/config changes.
 - [x] Есть `GoldenTestSet` не в виде заглушки.
 - [x] Есть реальный `EvalRun`.
 - [x] Изменение prompt/model/config проходит через eval gate.
@@ -177,22 +177,22 @@
 ## 15. Testing Readiness
 
 - [x] Есть unit tests на ключевые контракты.
-- [ ] Есть integration tests на runtime spine.
+- [x] Есть integration tests на runtime spine.
 - [x] Есть tests на tenant isolation.
 - [x] Есть tests на evidence/truthfulness path.
 - [x] Есть tests на replay safety.
 - [x] Есть tests на governance incidents.
 - [x] Есть tests на autonomy transitions.
-- [ ] Есть smoke tests на живые API маршруты.
+- [x] Есть smoke tests на живые API маршруты.
 
 ## 16. Delivery and Techlead Discipline
 
-- [ ] Для каждого critical task есть prompt в `interagency/prompts/`.
-- [ ] Для каждого completed task есть report в `interagency/reports/`.
-- [ ] `interagency/INDEX.md` актуален.
-- [ ] `memory-bank/task.md` актуален.
-- [ ] `memory-bank/progress.md` не врёт о готовности.
-- [ ] Ни один `APPROVED` не выдан без code evidence.
+- [x] Для каждого critical task есть prompt в `interagency/prompts/`.
+- [x] Для каждого completed task есть report в `interagency/reports/`.
+- [x] `interagency/INDEX.md` актуален.
+- [x] `memory-bank/task.md` актуален.
+- [x] `memory-bank/progress.md` не врёт о готовности.
+- [x] Ни один `APPROVED` не выдан без code evidence.
 - [ ] Ни один `DONE` не поставлен, если runtime не подтверждён.
 
 ## 17. Pre-Launch Gate
@@ -213,7 +213,7 @@
 - [ ] Нельзя запускать AI, если tenant isolation не подтверждён тестами.
 - [x] Нельзя запускать AI, если `TraceSummary` и observability питаются заглушками.
 - [x] Нельзя запускать AI, если incidents feed не ловит quality/security события.
-- [ ] Нельзя запускать AI, если prompt/config changes могут обходить eval/canary/rollback.
+- [x] Нельзя запускать AI, если prompt/config changes могут обходить eval/canary/rollback.
 
 ## Финальный критерий готовности
 

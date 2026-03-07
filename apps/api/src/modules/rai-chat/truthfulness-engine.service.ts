@@ -15,9 +15,9 @@ const TAXONOMY_WEIGHTS: Record<ClaimTaxonomyType, number> = {
 };
 
 export interface TruthfulnessResult {
-  bsScorePct: number;
-  evidenceCoveragePct: number;
-  invalidClaimsPct: number;
+  bsScorePct: number | null;
+  evidenceCoveragePct: number | null;
+  invalidClaimsPct: number | null;
   accounting: {
     total: number;
     evidenced: number;
@@ -25,6 +25,7 @@ export interface TruthfulnessResult {
     unverified: number;
     invalid: number;
   };
+  qualityStatus: "READY" | "PENDING_EVIDENCE";
 }
 
 export interface ClaimWithClassification {
@@ -45,10 +46,11 @@ export class TruthfulnessEngineService {
     });
 
     const defaultValue: TruthfulnessResult = {
-      bsScorePct: 100, // Агент без записей — 100% BS (ничего не доказано)
-      evidenceCoveragePct: 0,
-      invalidClaimsPct: 0,
+      bsScorePct: null,
+      evidenceCoveragePct: null,
+      invalidClaimsPct: null,
       accounting: { total: 0, evidenced: 0, verified: 0, unverified: 0, invalid: 0 },
+      qualityStatus: "PENDING_EVIDENCE",
     };
 
     if (auditEntries.length === 0) {
@@ -103,6 +105,7 @@ export class TruthfulnessEngineService {
       evidenceCoveragePct,
       invalidClaimsPct,
       accounting,
+      qualityStatus: "READY",
     };
   }
 

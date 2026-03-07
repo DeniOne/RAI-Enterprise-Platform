@@ -14,12 +14,15 @@ import {
   EvidenceRefDto,
 } from "./dto/trace-forensics.dto";
 import { TruthfulnessDashboardResponseDto } from "./dto/truthfulness-dashboard.dto";
+import { QueuePressureResponseDto } from "./dto/queue-pressure.dto";
+import { QueueMetricsService } from "../rai-chat/performance/queue-metrics.service";
 
 @Injectable()
 export class ExplainabilityPanelService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly sensitiveDataFilter: SensitiveDataFilterService,
+    private readonly queueMetrics: QueueMetricsService,
   ) { }
 
   async getTruthfulnessDashboard(companyId: string, timeWindowHours: number): Promise<TruthfulnessDashboardResponseDto> {
@@ -41,12 +44,15 @@ export class ExplainabilityPanelService {
     if (!summaries.length) {
       return {
         companyId,
-        avgBsScore: 0,
-        p95BsScore: 0,
-        avgEvidenceCoverage: 0,
+        avgBsScore: null,
+        p95BsScore: null,
+        avgEvidenceCoverage: null,
         acceptanceRate: null,
         correctionRate: null,
         worstTraces: [],
+        qualityKnownTraceCount: 0,
+        qualityPendingTraceCount: 0,
+        criticalPath: [],
       };
     }
 
@@ -62,12 +68,12 @@ export class ExplainabilityPanelService {
     const avg = (values: number[]): number =>
       values.length ? values.reduce((sum, v) => sum + v, 0) / values.length : 0;
 
-    const avgBsScore = avg(bsKnown);
-    const avgEvidenceCoverage = avg(evidenceKnown);
+    const avgBsScore = bsKnown.length > 0 ? avg(bsKnown) : null;
+    const avgEvidenceCoverage = evidenceKnown.length > 0 ? avg(evidenceKnown) : null;
 
     const sortedForP95 = [...bsKnown].sort((a, b) => a - b);
     const p95Index = Math.floor(0.95 * (sortedForP95.length - 1));
-    const p95BsScore = sortedForP95[p95Index] ?? 0;
+    const p95BsScore = sortedForP95.length > 0 ? (sortedForP95[p95Index] ?? sortedForP95[sortedForP95.length - 1]) : null;
 
     const worstTraces = summaries
       .slice()
@@ -81,6 +87,23 @@ export class ExplainabilityPanelService {
         createdAt: s.createdAt.toISOString(),
       }));
 
+    const qualityKnownTraceCount = summaries.filter(
+      (s) => s.bsScorePct !== null && s.evidenceCoveragePct !== null,
+    ).length;
+    const qualityPendingTraceCount = summaries.length - qualityKnownTraceCount;
+
+    const traceIds = summaries.map((s) => s.traceId);
+    const auditEntries = await this.prisma.aiAuditEntry.findMany({
+      where: { companyId, traceId: { in: traceIds } },
+      select: {
+        traceId: true,
+        createdAt: true,
+        metadata: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    const criticalPath = this.buildCriticalPathCards(auditEntries, summaries);
+
     // Acceptance Rate: пока единственный честный tenant-scoped live source —
     // advisory decisions в AuditLog. Correction Rate не инструментирован отдельно,
     // поэтому возвращаем null вместо фейковой цифры.
@@ -88,7 +111,11 @@ export class ExplainabilityPanelService {
       where: {
         companyId,
         action: {
-          in: ["ADVISORY_ACCEPTED", "ADVISORY_REJECTED"],
+          in: [
+            "ADVISORY_ACCEPTED",
+            "ADVISORY_REJECTED",
+            "ADVISORY_FEEDBACK_RECORDED",
+          ],
         },
         createdAt: {
           gte: from,
@@ -96,13 +123,60 @@ export class ExplainabilityPanelService {
       },
       select: {
         action: true,
+        metadata: true,
       },
     });
-    const accepted = advisoryLogs.filter((log) => log.action === "ADVISORY_ACCEPTED").length;
-    const rejected = advisoryLogs.filter((log) => log.action === "ADVISORY_REJECTED").length;
-    const decisionCount = accepted + rejected;
+    const advisoryTraceId = (log: { metadata: unknown }): string => {
+      const metadata =
+        log.metadata && typeof log.metadata === "object"
+          ? (log.metadata as Record<string, unknown>)
+          : null;
+      return typeof metadata?.traceId === "string"
+        ? metadata.traceId.trim()
+        : "";
+    };
+    const acceptedTraceIds = new Set(
+      advisoryLogs
+        .filter((log) => log.action === "ADVISORY_ACCEPTED")
+        .map(advisoryTraceId)
+        .filter((traceId) => traceId.length > 0),
+    );
+    const rejectedTraceIds = new Set(
+      advisoryLogs
+        .filter((log) => log.action === "ADVISORY_REJECTED")
+        .map(advisoryTraceId)
+        .filter((traceId) => traceId.length > 0),
+    );
+    const decisionTraceIds = new Set([...acceptedTraceIds, ...rejectedTraceIds]);
+    const accepted = acceptedTraceIds.size;
+    const rejected = rejectedTraceIds.size;
+    const decisionCount = decisionTraceIds.size;
     const acceptanceRate =
       decisionCount > 0 ? Number(((accepted / decisionCount) * 100).toFixed(1)) : null;
+    const correctedTraceIds = new Set(
+      advisoryLogs
+        .filter((log) => log.action === "ADVISORY_FEEDBACK_RECORDED")
+        .map((log) => {
+          const metadata =
+            log.metadata && typeof log.metadata === "object"
+              ? (log.metadata as Record<string, unknown>)
+              : null;
+          const traceId =
+            typeof metadata?.traceId === "string" ? metadata.traceId.trim() : "";
+          const outcome =
+            typeof metadata?.outcome === "string"
+              ? metadata.outcome.trim().toLowerCase()
+              : "";
+          return outcome === "corrected" && decisionTraceIds.has(traceId)
+            ? traceId
+            : "";
+        })
+        .filter((traceId) => traceId.length > 0),
+    );
+    const correctionRate =
+      decisionCount > 0
+        ? Number(((correctedTraceIds.size / decisionCount) * 100).toFixed(1))
+        : null;
 
     return {
       companyId,
@@ -110,8 +184,11 @@ export class ExplainabilityPanelService {
       p95BsScore,
       avgEvidenceCoverage,
       acceptanceRate,
-      correctionRate: null,
+      correctionRate,
       worstTraces,
+      qualityKnownTraceCount,
+      qualityPendingTraceCount,
+      criticalPath,
     };
   }
 
@@ -248,6 +325,21 @@ export class ExplainabilityPanelService {
       traceId,
       companyId: baseCompanyId,
       nodes,
+    };
+  }
+
+  async getQueuePressure(
+    companyId: string,
+    timeWindowMs: number,
+  ): Promise<QueuePressureResponseDto> {
+    const summary = await this.queueMetrics.getQueuePressure(companyId, timeWindowMs);
+    return {
+      companyId,
+      pressureState: summary.pressureState,
+      signalFresh: summary.signalFresh,
+      totalBacklog: summary.totalBacklog,
+      hottestQueue: summary.hottestQueue,
+      observedQueues: summary.observedQueues,
     };
   }
 
@@ -404,5 +496,45 @@ export class ExplainabilityPanelService {
     }
     return value;
   }
-}
 
+  private buildCriticalPathCards(
+    auditEntries: Array<{ traceId: string; createdAt: Date; metadata: unknown }>,
+    summaries: Array<{ traceId: string; durationMs: number; createdAt: Date }>,
+  ): TruthfulnessDashboardResponseDto["criticalPath"] {
+    const summaryByTrace = new Map(
+      summaries.map((summary) => [summary.traceId, summary]),
+    );
+    const bestByTrace = new Map<
+      string,
+      { phase: string; durationMs: number; createdAt: string }
+    >();
+
+    for (const entry of auditEntries) {
+      const meta = (entry.metadata as {
+        phases?: Array<{ name: string; timestamp: string; durationMs: number }>;
+      }) ?? {};
+      const phases = Array.isArray(meta.phases) ? meta.phases : [];
+      for (const phase of phases) {
+        const current = bestByTrace.get(entry.traceId);
+        if (!current || phase.durationMs > current.durationMs) {
+          bestByTrace.set(entry.traceId, {
+            phase: phase.name,
+            durationMs: phase.durationMs,
+            createdAt: phase.timestamp,
+          });
+        }
+      }
+    }
+
+    return Array.from(bestByTrace.entries())
+      .map(([traceId, value]) => ({
+        traceId,
+        phase: value.phase,
+        durationMs: value.durationMs,
+        totalDurationMs: summaryByTrace.get(traceId)?.durationMs ?? null,
+        createdAt: value.createdAt,
+      }))
+      .sort((a, b) => b.durationMs - a.durationMs)
+      .slice(0, 5);
+  }
+}

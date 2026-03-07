@@ -3,7 +3,10 @@ import { AgentRuntimeService } from "./agent-runtime.service";
 import { RaiToolsRegistry } from "../tools/rai-tools.registry";
 import { RaiToolName } from "../tools/rai-tools.types";
 import { PerformanceMetricsService } from "../performance/performance-metrics.service";
+import { QueueMetricsService } from "../performance/queue-metrics.service";
 import { AgentConfigBlockedError } from "../security/agent-config-blocked.error";
+import { BudgetControllerService } from "../security/budget-controller.service";
+import { IncidentOpsService } from "../incident-ops.service";
 
 describe("AgentRuntimeService", () => {
   let service: AgentRuntimeService;
@@ -14,6 +17,25 @@ describe("AgentRuntimeService", () => {
     recordLatency: jest.fn().mockResolvedValue(undefined),
     recordError: jest.fn().mockResolvedValue(undefined),
   };
+  const budgetControllerMock = {
+    evaluateRuntimeBudget: jest.fn().mockResolvedValue({
+      outcome: "ALLOW",
+      reason: "WITHIN_BUDGET",
+      source: "agent_registry_max_tokens",
+      estimatedTokens: 300,
+      budgetLimit: 4000,
+      allowedToolNames: [RaiToolName.EchoMessage],
+      droppedToolNames: [],
+      ownerRoles: ["knowledge"],
+    }),
+  };
+  const incidentOpsMock = {
+    logIncident: jest.fn(),
+  };
+  const queueMetricsMock = {
+    beginRuntimeExecution: jest.fn().mockResolvedValue(undefined),
+    endRuntimeExecution: jest.fn().mockResolvedValue(undefined),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -22,6 +44,9 @@ describe("AgentRuntimeService", () => {
         AgentRuntimeService,
         { provide: RaiToolsRegistry, useValue: toolsRegistryMock },
         { provide: PerformanceMetricsService, useValue: performanceMetricsMock },
+        { provide: QueueMetricsService, useValue: queueMetricsMock },
+        { provide: BudgetControllerService, useValue: budgetControllerMock },
+        { provide: IncidentOpsService, useValue: incidentOpsMock },
       ],
     }).compile();
     service = module.get(AgentRuntimeService);
@@ -51,6 +76,9 @@ describe("AgentRuntimeService", () => {
       "RuntimeAgent",
       RaiToolName.EchoMessage,
     );
+    expect(result.runtimeBudget?.outcome).toBe("ALLOW");
+    expect(queueMetricsMock.beginRuntimeExecution).toHaveBeenCalledWith("c1", 1);
+    expect(queueMetricsMock.endRuntimeExecution).toHaveBeenCalledWith("c1", 1);
   });
 
   it("fan-out: agronom и economist вызываются через registry параллельно", async () => {
@@ -137,5 +165,68 @@ describe("AgentRuntimeService", () => {
         }),
       },
     ]);
+  });
+
+  it("degrades runtime and drops over-budget secondary tools", async () => {
+    budgetControllerMock.evaluateRuntimeBudget.mockResolvedValueOnce({
+      outcome: "DEGRADE",
+      reason: "TOKEN_BUDGET_DEGRADED",
+      source: "agent_registry_max_tokens",
+      estimatedTokens: 3500,
+      budgetLimit: 4000,
+      allowedToolNames: [RaiToolName.QueryKnowledge],
+      droppedToolNames: [RaiToolName.QueryKnowledge],
+      ownerRoles: ["knowledge"],
+    });
+    toolsRegistryMock.execute.mockResolvedValueOnce({ hits: 1, items: [] });
+
+    const result = await service.run({
+      requestedToolCalls: [
+        { name: RaiToolName.QueryKnowledge, payload: { query: "A" } },
+        { name: RaiToolName.QueryKnowledge, payload: { query: "B" } },
+      ],
+      actorContext: { companyId: "c1", traceId: "tr_1" },
+    });
+
+    expect(result.runtimeBudget?.outcome).toBe("DEGRADE");
+    expect(result.executedTools).toHaveLength(1);
+    expect(toolsRegistryMock.execute).toHaveBeenCalledTimes(1);
+    expect(incidentOpsMock.logIncident).toHaveBeenCalledWith(
+      expect.objectContaining({
+        details: expect.objectContaining({ subtype: "BUDGET_RUNTIME_DEGRADED" }),
+      }),
+    );
+  });
+
+  it("denies runtime before tool execution when budget controller blocks execution", async () => {
+    budgetControllerMock.evaluateRuntimeBudget.mockResolvedValueOnce({
+      outcome: "DENY",
+      reason: "TOKEN_BUDGET_EXCEEDED:agronomist:generate_tech_map_draft",
+      source: "agent_registry_max_tokens",
+      estimatedTokens: 9000,
+      budgetLimit: 8000,
+      allowedToolNames: [],
+      droppedToolNames: [RaiToolName.GenerateTechMapDraft],
+      ownerRoles: ["agronomist"],
+    });
+
+    const result = await service.run({
+      requestedToolCalls: [
+        {
+          name: RaiToolName.GenerateTechMapDraft,
+          payload: { fieldRef: "f1", seasonRef: "s1", crop: "rapeseed" },
+        },
+      ],
+      actorContext: { companyId: "c1", traceId: "tr_1" },
+    });
+
+    expect(result.executedTools).toEqual([]);
+    expect(result.runtimeBudget?.outcome).toBe("DENY");
+    expect(toolsRegistryMock.execute).not.toHaveBeenCalled();
+    expect(incidentOpsMock.logIncident).toHaveBeenCalledWith(
+      expect.objectContaining({
+        details: expect.objectContaining({ subtype: "BUDGET_RUNTIME_DENIED" }),
+      }),
+    );
   });
 });

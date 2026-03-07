@@ -60,4 +60,30 @@ export class CanaryService {
     }
     return isCanary;
   }
+
+  evaluateRejectionRateCanary(
+    baselineRejectionRate: number,
+    canaryRejectionRate: number,
+    sampleSize: number,
+  ) {
+    if (sampleSize < 20) {
+      return { rollback: false, decision: "INSUFFICIENT_SAMPLE" as const };
+    }
+
+    const degradation = canaryRejectionRate - baselineRejectionRate;
+    if (degradation > 0.05) {
+      return {
+        rollback: true,
+        decision: "ROLLBACK" as const,
+        degradation,
+        reason: "REJECTION_RATE_DEGRADATION_THRESHOLD_EXCEEDED",
+      };
+    }
+
+    return {
+      rollback: false,
+      decision: "APPROVE" as const,
+      degradation,
+    };
+  }
 }

@@ -196,6 +196,17 @@ export interface EvidenceReference {
   confidenceScore: number;
 }
 
+export interface RuntimeBudgetDto {
+  outcome: "ALLOW" | "DEGRADE" | "DENY";
+  reason: string;
+  source: "agent_registry_max_tokens" | "replay_bypass";
+  estimatedTokens: number;
+  budgetLimit: number | null;
+  allowedToolNames: RaiToolName[];
+  droppedToolNames: RaiToolName[];
+  ownerRoles: string[];
+}
+
 export class RaiChatRequestDto {
   @IsString()
   @IsNotEmpty()
@@ -283,4 +294,7 @@ export class RaiChatResponseDto {
 
   @IsOptional()
   evidence?: EvidenceReference[];
+
+  @IsOptional()
+  runtimeBudget?: RuntimeBudgetDto;
 }

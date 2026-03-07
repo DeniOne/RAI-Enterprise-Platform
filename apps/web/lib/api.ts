@@ -301,6 +301,8 @@ export const api = {
             apiClient.get('/rai/explainability/dashboard', { params: params?.hours != null ? { hours: params.hours } : {} }),
         performance: (params?: { timeWindowMs?: number }) =>
             apiClient.get('/rai/explainability/performance', { params: params?.timeWindowMs != null ? { timeWindowMs: params.timeWindowMs } : {} }),
+        queuePressure: (params?: { timeWindowMs?: number }) =>
+            apiClient.get('/rai/explainability/queue-pressure', { params: params?.timeWindowMs != null ? { timeWindowMs: params.timeWindowMs } : {} }),
         costHotspots: (params?: { timeWindowMs?: number; limit?: number }) =>
             apiClient.get('/rai/explainability/cost-hotspots', { params: params ?? {} }),
         traceTimeline: (traceId: string) =>
@@ -313,11 +315,9 @@ export const api = {
             apiClient.post(`/rai/explainability/trace/${encodeURIComponent(traceId)}/replay`),
     },
     agents: {
-        getConfig: () => apiClient.get<{ global: AgentConfigItem[]; tenantOverrides: AgentConfigItem[] }>('/rai/agents/config'),
-        upsertConfig: (data: UpsertAgentConfigBody, scope: 'tenant' | 'global') =>
-            apiClient.post('/rai/agents/config', data, { params: { scope } }),
-        toggle: (role: string, isActive: boolean) =>
-            apiClient.patch('/rai/agents/config/toggle', { role, isActive }),
+        getConfig: () => apiClient.get<AgentConfigsResponse>('/rai/agents/config'),
+        createChangeRequest: (data: UpsertAgentConfigBody, scope: 'tenant' | 'global') =>
+            apiClient.post('/rai/agents/config/change-requests', data, { params: { scope } }),
     },
     governance: {
         incidentsFeed: (params?: { limit?: number; offset?: number }) =>
@@ -347,6 +347,11 @@ export interface GovernanceCountersDto {
     crossTenantBreach: number;
     piiLeak: number;
     qualityBsDrift: number;
+    autonomyPolicyIncidents: number;
+    promptChangeRollback: number;
+    openIncidents: number;
+    resolvedIncidents: number;
+    runbookExecutedIncidents: number;
     byType: Record<string, number>;
 }
 
@@ -355,6 +360,8 @@ export interface AutonomyStatusDto {
     level: 'AUTONOMOUS' | 'TOOL_FIRST' | 'QUARANTINE';
     avgBsScorePct: number | null;
     knownTraceCount: number;
+    driver: 'QUALITY_ALERT' | 'BS_AVG_AUTONOMOUS' | 'BS_AVG_TOOL_FIRST' | 'BS_AVG_QUARANTINE' | 'NO_QUALITY_DATA';
+    activeQualityAlert?: boolean;
 }
 
 export interface AgentConfigItem {
@@ -371,6 +378,40 @@ export interface AgentConfigItem {
     updatedAt: string;
 }
 
+export interface AgentRegistryRuntimeItem {
+    configId: string | null;
+    source: 'global' | 'tenant';
+    bindingsSource: 'persisted' | 'bootstrap';
+    llmModel: string;
+    maxTokens: number;
+    systemPrompt: string;
+    capabilities: string[];
+    tools: string[];
+    isActive: boolean;
+}
+
+export interface AgentTenantAccessItem {
+    companyId: string;
+    mode: 'INHERITED' | 'OVERRIDE' | 'DENIED';
+    source: 'global' | 'tenant';
+    isActive: boolean;
+}
+
+export interface AgentConfiguratorItem {
+    role: string;
+    agentName: string;
+    businessRole: string;
+    ownerDomain: 'agro' | 'finance' | 'knowledge' | 'risk';
+    runtime: AgentRegistryRuntimeItem;
+    tenantAccess: AgentTenantAccessItem;
+}
+
+export interface AgentConfigsResponse {
+    global: AgentConfigItem[];
+    tenantOverrides: AgentConfigItem[];
+    agents: AgentConfiguratorItem[];
+}
+
 export interface UpsertAgentConfigBody {
     name: string;
     role: string;
@@ -379,4 +420,5 @@ export interface UpsertAgentConfigBody {
     maxTokens: number;
     isActive?: boolean;
     capabilities?: string[];
+    tools?: string[];
 }

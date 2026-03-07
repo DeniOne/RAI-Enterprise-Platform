@@ -82,25 +82,29 @@ describe("TruthfulnessEngineService", () => {
     expect(result.accounting.verified).toBe(1);
   });
 
-  it("пустой трейс → возвращает BS%=100, coverage=0", async () => {
+  it("пустой трейс → возвращает pending quality вместо synthetic BS%", async () => {
     prisma.aiAuditEntry.findMany.mockResolvedValue([]);
 
     const result = await service.calculateTraceTruthfulness("tr3", "c1");
 
-    expect(result.bsScorePct).toBe(100);
-    expect(result.evidenceCoveragePct).toBe(0);
+    expect(result.bsScorePct).toBeNull();
+    expect(result.evidenceCoveragePct).toBeNull();
+    expect(result.invalidClaimsPct).toBeNull();
+    expect(result.qualityStatus).toBe("PENDING_EVIDENCE");
     expect(result.accounting.total).toBe(0);
   });
 
-  it("есть трейс, но нет evidence → возвращает BS%=100, coverage=0", async () => {
+  it("есть трейс, но нет evidence → возвращает pending quality вместо fake 100", async () => {
     prisma.aiAuditEntry.findMany.mockResolvedValue([
       { metadata: {} },
     ]);
 
     const result = await service.calculateTraceTruthfulness("tr4", "c1");
 
-    expect(result.bsScorePct).toBe(100);
-    expect(result.evidenceCoveragePct).toBe(0);
+    expect(result.bsScorePct).toBeNull();
+    expect(result.evidenceCoveragePct).toBeNull();
+    expect(result.invalidClaimsPct).toBeNull();
+    expect(result.qualityStatus).toBe("PENDING_EVIDENCE");
     expect(result.accounting.total).toBe(0);
   });
 
@@ -124,9 +128,9 @@ describe("TruthfulnessEngineService", () => {
 
     expect(result.bsScorePct).toBe(100);
     expect(result.evidenceCoveragePct).toBe(0);
+    expect(result.qualityStatus).toBe("READY");
     expect(result.accounting.total).toBe(1);
     expect(result.accounting.evidenced).toBe(0);
     expect(result.accounting.unverified).toBe(1);
   });
 });
-

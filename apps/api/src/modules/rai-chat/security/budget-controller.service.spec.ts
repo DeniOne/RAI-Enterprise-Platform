@@ -4,11 +4,14 @@ import { TechMapBudgetService } from "../../tech-map/economics/tech-map-budget.s
 import { PrismaService } from "../../../shared/prisma/prisma.service";
 import { BudgetExceededError } from "./budget-exceeded.error";
 import { RaiToolActorContext } from "../tools/rai-tools.types";
+import { AgentRegistryService } from "../agent-registry.service";
+import { RaiToolName } from "../tools/rai-tools.types";
 
 describe("BudgetControllerService", () => {
   let service: BudgetControllerService;
   let budgetService: jest.Mocked<TechMapBudgetService>;
   let prisma: any;
+  let agentRegistry: jest.Mocked<AgentRegistryService>;
 
   const actorContext: RaiToolActorContext = {
     companyId: "company-1",
@@ -24,7 +27,25 @@ describe("BudgetControllerService", () => {
         findFirst: jest.fn(),
       },
     };
-    service = new BudgetControllerService(budgetService, prisma);
+    agentRegistry = {
+      getRegistry: jest.fn().mockResolvedValue([
+        {
+          definition: { role: "knowledge" },
+          runtime: { tools: [RaiToolName.QueryKnowledge], maxTokens: 4000 },
+        },
+        {
+          definition: { role: "agronomist" },
+          runtime: {
+            tools: [
+              RaiToolName.GenerateTechMapDraft,
+              RaiToolName.ComputeDeviations,
+            ],
+            maxTokens: 10000,
+          },
+        },
+      ]),
+    } as any;
+    service = new BudgetControllerService(budgetService, prisma, agentRegistry);
   });
 
   it("validateTransaction проходит при projected в пределах лимита", async () => {
@@ -95,5 +116,70 @@ describe("BudgetControllerService", () => {
     const r = service.isChangeAllowed("tm-1", "ADD_OP");
     expect(r.allowed).toBe(true);
     expect(r.requiresValidation).toBe(true);
+  });
+
+  it("evaluateRuntimeBudget: ALLOW если набор инструментов укладывается в maxTokens registry", async () => {
+    const result = await service.evaluateRuntimeBudget(
+      [{ name: RaiToolName.QueryKnowledge, payload: { query: "что по влаге" } }],
+      actorContext,
+    );
+
+    expect(result.outcome).toBe("ALLOW");
+    expect(result.allowedToolNames).toEqual([RaiToolName.QueryKnowledge]);
+    expect(result.droppedToolNames).toEqual([]);
+  });
+
+  it("evaluateRuntimeBudget: DEGRADE если вторичный READ tool не помещается в бюджет owner-а", async () => {
+    const result = await service.evaluateRuntimeBudget(
+      [
+        { name: RaiToolName.QueryKnowledge, payload: { query: "A" } },
+        { name: RaiToolName.QueryKnowledge, payload: { query: "B" } },
+      ],
+      actorContext,
+    );
+
+    expect(result.outcome).toBe("DEGRADE");
+    expect(result.allowedToolNames).toEqual([RaiToolName.QueryKnowledge]);
+    expect(result.droppedToolNames).toEqual([RaiToolName.QueryKnowledge]);
+  });
+
+  it("evaluateRuntimeBudget: DENY если WRITE tool сам по себе превышает budget owner-а", async () => {
+    agentRegistry.getRegistry.mockResolvedValueOnce([
+      {
+        definition: { role: "agronomist" },
+        runtime: {
+          tools: [RaiToolName.GenerateTechMapDraft],
+          maxTokens: 8000,
+        },
+      },
+    ] as any);
+
+    const result = await service.evaluateRuntimeBudget(
+      [
+        {
+          name: RaiToolName.GenerateTechMapDraft,
+          payload: { fieldRef: "f1", seasonRef: "s1", crop: "rapeseed" },
+        },
+      ],
+      actorContext,
+    );
+
+    expect(result.outcome).toBe("DENY");
+    expect(result.droppedToolNames).toEqual([RaiToolName.GenerateTechMapDraft]);
+  });
+
+  it("evaluateRuntimeBudget: replayMode обходит budget enforcement", async () => {
+    const result = await service.evaluateRuntimeBudget(
+      [
+        {
+          name: RaiToolName.GenerateTechMapDraft,
+          payload: { fieldRef: "f1", seasonRef: "s1", crop: "rapeseed" },
+        },
+      ],
+      { ...actorContext, replayMode: true },
+    );
+
+    expect(result.outcome).toBe("ALLOW");
+    expect(result.source).toBe("replay_bypass");
   });
 });

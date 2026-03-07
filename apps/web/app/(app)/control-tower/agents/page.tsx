@@ -2,27 +2,18 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { api, type AgentConfigItem } from '@/lib/api';
-import { Settings2, UserCog, CheckCircle2, Bot } from 'lucide-react';
-import clsx from 'clsx';
-
-type AgentConfigs = { global: AgentConfigItem[]; tenantOverrides: AgentConfigItem[] };
+import { api, type AgentConfigsResponse, type AgentConfiguratorItem } from '@/lib/api';
+import { Settings2, UserCog, Bot, ShieldCheck } from 'lucide-react';
 
 const LLM_MODELS = ['GPT-4o', 'GPT-4o-mini', 'Claude-3.5-Sonnet', 'Claude-3-Opus'];
 const CAPABILITY_OPTIONS = ['AgroToolsRegistry', 'FinanceToolsRegistry', 'RiskToolsRegistry', 'KnowledgeToolsRegistry'];
 const KNOWN_ROLES = ['agronomist', 'economist', 'knowledge', 'monitoring'];
 
-function effectiveAgent(global: AgentConfigItem[], overrides: AgentConfigItem[], role: string): AgentConfigItem | null {
-  const ov = overrides.find((a) => a.role === role);
-  if (ov) return ov;
-  return global.find((a) => a.role === role) ?? null;
-}
-
 export default function AgentsPage() {
-  const [configs, setConfigs] = useState<AgentConfigs | null>(null);
+  const [configs, setConfigs] = useState<AgentConfigsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editing, setEditing] = useState<AgentConfigItem | null>(null);
+  const [editing, setEditing] = useState<AgentConfiguratorItem | null>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -38,19 +29,12 @@ export default function AgentsPage() {
     load();
   }, []);
 
-  const toggle = (role: string, isActive: boolean) => {
-    api.agents
-      .toggle(role, isActive)
-      .then(() => load())
-      .catch((e) => setError((e as Error).message));
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center font-sans">
         <div className="flex flex-col items-center gap-4">
           <div className="w-8 h-8 border-[3px] border-black/10 border-t-[#030213] rounded-full animate-spin" />
-          <p className="text-[#717182] font-medium text-[13px]">Синхронизация профилей агентов...</p>
+          <p className="text-[#717182] font-medium text-[13px]">Синхронизация effective runtime state...</p>
         </div>
       </div>
     );
@@ -81,13 +65,10 @@ export default function AgentsPage() {
     );
   }
 
-  const global = configs!.global;
-  const overrides = configs!.tenantOverrides;
-  const roles = [...new Set([...global.map((a) => a.role), ...overrides.map((a) => a.role)])];
+  const agents = configs?.agents ?? [];
 
   return (
     <div className="min-h-screen bg-slate-50 text-[#030213] font-sans pb-32">
-      {/* Header — Белая Канва */}
       <div className="bg-white border-b border-black/10 px-10 py-10">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-8">
           <div className="space-y-3">
@@ -96,17 +77,16 @@ export default function AgentsPage() {
                 Control & Reliability
               </Link>
               <span className="text-[11px] font-medium text-[#717182]">/</span>
-              <span className="text-[11px] font-medium uppercase tracking-widest text-[#030213]">Agent Registry</span>
+              <span className="text-[11px] font-medium uppercase tracking-widest text-[#030213]">Agent Configurator</span>
             </div>
-
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center border border-black/5">
                 <Bot size={16} className="text-[#030213]" />
               </div>
-              <h1 className="text-3xl font-medium text-[#030213] tracking-tight">Реестр агентов</h1>
+              <h1 className="text-3xl font-medium text-[#030213] tracking-tight">Agent Configurator</h1>
             </div>
-            <p className="text-sm text-[#717182] max-w-2xl leading-relaxed mt-1">
-              Управление конфигурацией роя: промпты, модели, возможности. Переопределения для тенанта изолированы.
+            <p className="text-sm text-[#717182] max-w-3xl leading-relaxed mt-1">
+              Surface читает effective runtime/governed state из registry-aware read model. Production change не происходит напрямую из формы: любые изменения проходят через change request, eval, canary и promote/rollback.
             </p>
           </div>
           <div className="flex">
@@ -115,85 +95,108 @@ export default function AgentsPage() {
               className="px-6 py-2.5 bg-[#030213] hover:bg-black text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
             >
               <Settings2 size={16} />
-              Добавить переопределение
+              Создать change request
             </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-10 mt-10">
+      <div className="max-w-7xl mx-auto px-10 mt-10 space-y-6">
+        <div className="p-4 bg-white border border-black/10 rounded-2xl">
+          <p className="text-[12px] text-[#717182] leading-relaxed">
+            `Runtime source` показывает, откуда реально собран effective config (`global` / `tenant`). `Bindings source` показывает, authority ли это persisted bindings или legacy bootstrap fallback. `Tenant access` показывает, как текущий tenant реально видит агента в runtime, а не как это выглядит в локальном form state.
+          </p>
+        </div>
+
         <div className="bg-white border border-black/10 rounded-2xl overflow-hidden shadow-sm shadow-black/[0.02]">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-black/10">
-                <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182] w-[30%]">Swarm Agent / Role</th>
-                <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182] w-[20%]">LLM Model</th>
-                <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182] w-[20%]">Status / Scope</th>
-                <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182] w-[30%] text-right">Action</th>
+                <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Agent / Role</th>
+                <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Runtime Truth</th>
+                <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Bindings / Access</th>
+                <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Capabilities / Tools</th>
+                <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182] text-right">Governed Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-black/5">
-              {roles.map((role) => {
-                const agent = effectiveAgent(global, overrides, role);
-                if (!agent) return null;
-                const isOverride = overrides.some((a) => a.role === role);
-                return (
-                  <tr key={`${agent.role}-${agent.companyId ?? 'global'}`} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-5">
-                      <span className="text-[14px] font-medium text-[#030213] block">{agent.name}</span>
-                      <span className="text-[11px] font-mono text-[#717182] mt-1 block">{agent.role}</span>
-                    </td>
-                    <td className="px-6 py-5">
-                      <span className="text-[13px] font-mono text-[#030213] bg-slate-100 px-2 py-1 rounded inline-block border border-black/5">
-                        {agent.llmModel}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex flex-col gap-2 items-start">
-                        {agent.isActive ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Active
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-widest bg-slate-100 text-slate-600 border border-slate-200">
-                            Disabled
-                          </span>
-                        )}
-                        {isOverride ? (
-                          <span className="text-[10px] font-medium uppercase tracking-widest text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                            Tenant Override
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-medium uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                            Global Default
-                          </span>
-                        )}
+              {agents.map((agent) => (
+                <tr key={agent.role} className="hover:bg-slate-50/50 transition-colors align-top">
+                  <td className="px-6 py-5">
+                    <div className="space-y-2">
+                      <span className="text-[14px] font-medium text-[#030213] block">{agent.agentName}</span>
+                      <span className="text-[11px] font-mono text-[#717182] block">{agent.role}</span>
+                      <span className="text-[12px] text-[#717182] block">{agent.businessRole}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    <div className="space-y-2 text-[12px]">
+                      <div className="font-mono text-[#030213]">{agent.runtime.llmModel}</div>
+                      <div className="text-[#717182]">maxTokens: <span className="font-mono text-[#030213]">{agent.runtime.maxTokens}</span></div>
+                      <Badge
+                        tone={agent.runtime.isActive ? 'green' : 'slate'}
+                        label={agent.runtime.isActive ? 'Runtime Active' : 'Runtime Disabled'}
+                      />
+                      <Badge tone="blue" label={`Runtime source: ${agent.runtime.source}`} />
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    <div className="space-y-2 text-[12px]">
+                      <Badge
+                        tone={agent.runtime.bindingsSource === 'persisted' ? 'green' : 'amber'}
+                        label={`Bindings: ${agent.runtime.bindingsSource}`}
+                      />
+                      <Badge
+                        tone={
+                          agent.tenantAccess.mode === 'DENIED'
+                            ? 'red'
+                            : agent.tenantAccess.mode === 'OVERRIDE'
+                              ? 'amber'
+                              : 'blue'
+                        }
+                        label={`Tenant access: ${agent.tenantAccess.mode}`}
+                      />
+                      <div className="text-[#717182]">
+                        access source: <span className="font-mono text-[#030213]">{agent.tenantAccess.source}</span>
                       </div>
-                    </td>
-                    <td className="px-6 py-5 text-right">
-                      <div className="flex items-center justify-end gap-4">
-                        <label className="flex items-center gap-2 cursor-pointer group">
-                          <span className="text-[12px] font-medium text-[#717182] group-hover:text-[#030213] transition-colors">Вкл / Выкл</span>
-                          <input
-                            type="checkbox"
-                            checked={agent.isActive}
-                            onChange={(e) => toggle(agent.role, e.target.checked)}
-                            className="h-4 w-4 rounded border-black/20 text-[#030213] focus:ring-[#030213] transition-colors"
-                          />
-                        </label>
-
-                        <button
-                          type="button"
-                          onClick={() => setEditing(agent)}
-                          className="px-4 py-1.5 border border-black/10 rounded-md text-[13px] font-medium text-[#030213] hover:bg-slate-50 transition-colors"
-                        >
-                          Настроить
-                        </button>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-2">Capabilities</p>
+                        <div className="flex flex-wrap gap-2">
+                          {agent.runtime.capabilities.map((capability) => (
+                            <Tag key={capability} label={capability} />
+                          ))}
+                        </div>
                       </div>
-                    </td>
-                  </tr>
-                );
-              })}
+                      <div>
+                        <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-2">Tools</p>
+                        <div className="flex flex-wrap gap-2">
+                          {agent.runtime.tools.map((tool) => (
+                            <Tag key={tool} label={tool} mono />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5 text-right">
+                    <div className="flex flex-col items-end gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setEditing(agent)}
+                        className="px-4 py-1.5 border border-black/10 rounded-md text-[13px] font-medium text-[#030213] hover:bg-slate-50 transition-colors"
+                      >
+                        Создать change request
+                      </button>
+                      <div className="max-w-[220px] text-[11px] text-[#717182] leading-relaxed">
+                        Instant toggle/write path отсутствует на этой поверхности намеренно.
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -203,28 +206,35 @@ export default function AgentsPage() {
         <AgentEditor
           agent={editing}
           onClose={() => setEditing(null)}
-          onSaved={() => { setEditing(null); load(); }}
+          onSaved={() => {
+            setEditing(null);
+            load();
+          }}
           setSaving={setSaving}
         />
       )}
       {creating && (
         <AgentEditor
-          agent={{
-            id: '', name: '', role: '', systemPrompt: '',
-            llmModel: 'GPT-4o-mini', maxTokens: 8000, isActive: true,
-            companyId: null, capabilities: [], createdAt: '', updatedAt: '',
-          }}
+          agent={null}
           onClose={() => setCreating(false)}
-          onSaved={() => { setCreating(false); load(); }}
+          onSaved={() => {
+            setCreating(false);
+            load();
+          }}
           setSaving={setSaving}
           createMode
         />
+      )}
+
+      {saving && (
+        <div className="fixed bottom-6 right-6 px-4 py-2 bg-[#030213] text-white text-[12px] rounded-lg shadow-lg">
+          Change request отправляется в governed workflow...
+        </div>
       )}
     </div>
   );
 }
 
-// Side Panel B-Pattern 
 function AgentEditor({
   agent,
   onClose,
@@ -232,19 +242,20 @@ function AgentEditor({
   setSaving,
   createMode = false,
 }: {
-  agent: AgentConfigItem;
+  agent: AgentConfiguratorItem | null;
   onClose: () => void;
   onSaved: () => void;
   setSaving: (v: boolean) => void;
   createMode?: boolean;
 }) {
-  const [role, setRole] = useState(agent.role);
-  const [name, setName] = useState(agent.name);
-  const [systemPrompt, setSystemPrompt] = useState(agent.systemPrompt);
-  const [llmModel, setLlmModel] = useState(agent.llmModel);
-  const [maxTokens, setMaxTokens] = useState(agent.maxTokens);
-  const [capabilities, setCapabilities] = useState<string[]>(agent.capabilities ?? []);
-  const [scope, setScope] = useState<'tenant' | 'global'>(agent.companyId ? 'tenant' : 'tenant');
+  const [role, setRole] = useState(agent?.role ?? '');
+  const [name, setName] = useState(agent?.agentName ?? '');
+  const [systemPrompt, setSystemPrompt] = useState(agent?.runtime.systemPrompt ?? '');
+  const [llmModel, setLlmModel] = useState(agent?.runtime.llmModel ?? 'GPT-4o-mini');
+  const [maxTokens, setMaxTokens] = useState(agent?.runtime.maxTokens ?? 8000);
+  const [capabilities, setCapabilities] = useState<string[]>(agent?.runtime.capabilities ?? []);
+  const [tools, setTools] = useState<string[]>(agent?.runtime.tools ?? []);
+  const [scope, setScope] = useState<'tenant' | 'global'>(agent?.runtime.source === 'global' ? 'global' : 'tenant');
   const [err, setErr] = useState<string | null>(null);
 
   const toggleCap = (cap: string) => {
@@ -252,13 +263,22 @@ function AgentEditor({
   };
 
   const save = () => {
-    const r = createMode ? role : agent.role;
-    if (!r?.trim()) { setErr('Укажите роль'); return; }
+    const effectiveRole = createMode ? role : agent?.role ?? role;
+    if (!effectiveRole?.trim()) { setErr('Укажите роль'); return; }
     if (!name?.trim()) { setErr('Укажите название'); return; }
     setErr(null);
     setSaving(true);
     api.agents
-      .upsertConfig({ name: name.trim(), role: r, systemPrompt, llmModel, maxTokens, isActive: agent.isActive, capabilities }, scope)
+      .createChangeRequest({
+        name: name.trim(),
+        role: effectiveRole,
+        systemPrompt,
+        llmModel,
+        maxTokens,
+        isActive: agent?.runtime.isActive ?? true,
+        capabilities,
+        tools,
+      }, scope)
       .then(() => onSaved())
       .catch((e) => setErr((e as Error).message))
       .finally(() => setSaving(false));
@@ -267,17 +287,27 @@ function AgentEditor({
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/20 backdrop-blur-sm p-4 font-sans">
       <div className="h-full w-full max-w-xl bg-white rounded-3xl border border-black/10 shadow-2xl flex flex-col pt-8 pb-6 px-8 animate-in slide-in-from-right duration-300">
-
         <div className="flex items-start justify-between mb-8">
           <div>
             <p className="text-[11px] font-medium uppercase tracking-widest text-[#717182] mb-1">
-              {createMode ? 'Новая конфигурация' : 'Редактирование'}
+              {createMode ? 'Новый change request' : 'Governed update request'}
             </p>
-            <h2 className="text-2xl font-medium text-[#030213] tracking-tight">{createMode ? 'Создать агента' : `Агент: ${agent.name}`}</h2>
+            <h2 className="text-2xl font-medium text-[#030213] tracking-tight">
+              {createMode ? 'Создать change request' : `Change request: ${agent?.agentName}`}
+            </h2>
           </div>
           <button type="button" onClick={onClose} className="text-[#717182] hover:text-[#030213] transition-colors p-2 -mr-2">
             ✕
           </button>
+        </div>
+
+        <div className="mb-5 p-4 bg-slate-50 border border-black/5 rounded-xl">
+          <div className="flex items-start gap-3">
+            <ShieldCheck size={18} className="text-[#030213] mt-0.5" />
+            <p className="text-[12px] text-[#717182] leading-relaxed">
+              Эта форма не пишет production config напрямую. Она создаёт governed request для eval - canary - promote/rollback.
+            </p>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto pr-4 -mr-4 space-y-6">
@@ -289,7 +319,7 @@ function AgentEditor({
 
           {createMode && (
             <div>
-              <label className="mb-2 block text-[13px] font-medium text-[#717182]">Роль (ID агента)</label>
+              <label className="mb-2 block text-[13px] font-medium text-[#717182]">Роль (канонический registry role)</label>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
@@ -304,21 +334,20 @@ function AgentEditor({
           )}
 
           <div>
-            <label className="mb-2 block text-[13px] font-medium text-[#717182]">Отображаемое Имя</label>
+            <label className="mb-2 block text-[13px] font-medium text-[#717182]">Отображаемое имя</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
-              placeholder="Например: Агроном-Аналитик"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-[13px] font-medium text-[#717182]">Language Model (LLM)</label>
+            <label className="mb-2 block text-[13px] font-medium text-[#717182]">Runtime model</label>
             <select
               value={llmModel}
               onChange={(e) => setLlmModel(e.target.value)}
-              className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] font-mono text-[#030213] focus:border-black/30 outline-none"
+              className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
             >
               {LLM_MODELS.map((m) => (
                 <option key={m} value={m}>{m}</option>
@@ -327,80 +356,107 @@ function AgentEditor({
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-[13px] font-medium text-[#717182]">System Prompt</label>
-              <span className="text-[11px] font-mono text-[#717182] bg-slate-100 px-1.5 py-0.5 rounded">Markdown Supported</span>
-            </div>
-            <textarea
-              value={systemPrompt}
-              onChange={(e) => setSystemPrompt(e.target.value)}
-              rows={12}
-              className="w-full rounded-lg border border-black/10 bg-white px-3 py-3 font-mono text-[12px] text-[#030213] focus:border-black/30 outline-none leading-relaxed resize-none"
-              placeholder="Системные инструкции для LLM..."
+            <label className="mb-2 block text-[13px] font-medium text-[#717182]">Max Tokens</label>
+            <input
+              type="number"
+              value={maxTokens}
+              onChange={(e) => setMaxTokens(Number(e.target.value))}
+              className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="mb-2 block text-[13px] font-medium text-[#717182]">Макс. Токенов (Output)</label>
-              <input
-                type="number"
-                value={maxTokens}
-                onChange={(e) => setMaxTokens(Number(e.target.value))}
-                className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] font-mono text-[#030213] focus:border-black/30 outline-none"
-              />
-            </div>
-            {!createMode && (
-              <div>
-                <label className="mb-2 block text-[13px] font-medium text-[#717182]">Изоляция Конфига</label>
-                <select
-                  value={scope}
-                  onChange={(e) => setScope(e.target.value as 'tenant' | 'global')}
-                  className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
-                >
-                  <option value="tenant">Тенант (Локально)</option>
-                  <option value="global">Global (Для всех)</option>
-                </select>
-              </div>
-            )}
+          <div>
+            <label className="mb-2 block text-[13px] font-medium text-[#717182]">System Prompt</label>
+            <textarea
+              value={systemPrompt}
+              onChange={(e) => setSystemPrompt(e.target.value)}
+              className="w-full min-h-[180px] rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
+            />
           </div>
 
           <div>
-            <label className="mb-3 block text-[13px] font-medium text-[#717182]">Разрешенные Инструменты (Capabilities)</label>
-            <div className="flex flex-col gap-2.5">
+            <label className="mb-2 block text-[13px] font-medium text-[#717182]">Capabilities</label>
+            <div className="flex flex-wrap gap-2">
               {CAPABILITY_OPTIONS.map((cap) => (
-                <label key={cap} className="flex items-center gap-3 p-3 rounded-lg border border-black/5 hover:bg-slate-50 transition-colors cursor-pointer group">
-                  <div className="relative flex items-center justify-center">
-                    <input
-                      type="checkbox"
-                      checked={capabilities.includes(cap)}
-                      onChange={() => toggleCap(cap)}
-                      className="peer appearance-none w-4 h-4 rounded border border-black/20 checked:bg-[#030213] checked:border-[#030213] transition-colors"
-                    />
-                    <CheckCircle2 size={12} className="text-white absolute opacity-0 peer-checked:opacity-100 pointer-events-none" strokeWidth={3} />
-                  </div>
-                  <span className="text-[13px] text-[#030213] font-medium">{cap}</span>
-                </label>
+                <button
+                  key={cap}
+                  type="button"
+                  onClick={() => toggleCap(cap)}
+                  className={`px-3 py-1.5 rounded-md border text-[12px] transition-colors ${
+                    capabilities.includes(cap)
+                      ? 'bg-[#030213] text-white border-[#030213]'
+                      : 'bg-white text-[#030213] border-black/10 hover:bg-slate-50'
+                  }`}
+                >
+                  {cap}
+                </button>
               ))}
             </div>
           </div>
+
+          <div>
+            <label className="mb-2 block text-[13px] font-medium text-[#717182]">Tools (runtime authority target)</label>
+            <input
+              value={tools.join(', ')}
+              onChange={(e) => setTools(e.target.value.split(',').map((x) => x.trim()).filter(Boolean))}
+              className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] font-mono focus:border-black/30 outline-none"
+              placeholder="generate_tech_map_draft, compute_deviations"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-[13px] font-medium text-[#717182]">Scope</label>
+            <select
+              value={scope}
+              onChange={(e) => setScope(e.target.value as 'tenant' | 'global')}
+              className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
+            >
+              <option value="tenant">Tenant change request</option>
+              <option value="global">Global change request</option>
+            </select>
+          </div>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-black/10 flex justify-end gap-3 shrink-0">
+        <div className="pt-6 mt-6 border-t border-black/10 flex items-center justify-end gap-3">
           <button
+            type="button"
             onClick={onClose}
-            className="px-6 py-2.5 border border-black/10 text-[#030213] text-[13px] font-medium rounded-lg hover:bg-slate-50 transition-colors"
+            className="px-5 py-2.5 rounded-lg text-[13px] font-medium border border-black/10 hover:bg-slate-50 transition-colors"
           >
             Отмена
           </button>
           <button
+            type="button"
             onClick={save}
-            className="px-6 py-2.5 bg-[#030213] text-white text-[13px] font-medium rounded-lg hover:bg-black transition-colors"
+            className="px-5 py-2.5 rounded-lg text-[13px] font-medium bg-[#030213] text-white hover:bg-black transition-colors"
           >
-            Сохранить в Ledger
+            Отправить в governance
           </button>
         </div>
       </div>
     </div>
+  );
+}
+
+function Badge({ label, tone }: { label: string; tone: 'green' | 'amber' | 'blue' | 'red' | 'slate' }) {
+  const map = {
+    green: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    amber: 'bg-amber-50 text-amber-700 border-amber-200',
+    blue: 'bg-blue-50 text-blue-700 border-blue-200',
+    red: 'bg-red-50 text-red-700 border-red-200',
+    slate: 'bg-slate-100 text-slate-600 border-slate-200',
+  };
+  return (
+    <span className={`px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-widest border ${map[tone]}`}>
+      {label}
+    </span>
+  );
+}
+
+function Tag({ label, mono = false }: { label: string; mono?: boolean }) {
+  return (
+    <span className={`px-2 py-1 rounded-md border border-black/10 bg-slate-50 text-[11px] text-[#030213] ${mono ? 'font-mono' : ''}`}>
+      {label}
+    </span>
   );
 }

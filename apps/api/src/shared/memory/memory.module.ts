@@ -1,16 +1,17 @@
 import { Module, Global } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import { ContextService } from "../cache/context.service.js";
-import { MemoryManager } from "./memory-manager.service.js";
+import { ContextService } from "../cache/context.service";
+import { MemoryManager } from "./memory-manager.service";
 import { EpisodicRetrievalService } from "./episodic-retrieval.service";
 import { DefaultMemoryAdapter } from "./default-memory-adapter.service";
 import { ShadowAdvisoryService } from "./shadow-advisory.service";
 import { AuditService } from "../audit/audit.service";
+import { AuditModule } from "../audit/audit.module";
 import { ShadowAdvisoryMetricsService } from "./shadow-advisory-metrics.service";
 
 @Global()
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule, AuditModule],
   providers: [
     ContextService,
     MemoryManager,

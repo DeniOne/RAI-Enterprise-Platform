@@ -22,6 +22,8 @@
 - `S1.2` — `VERIFIED`: TopNav навигация, удаление Sidebar; отчёт `interagency/reports/2026-03-02_s1-2_topnav-navigation.md`; тесты PASS (189/189).
 - `Sprint 1 P1` — `VERIFIED`: unit/spec покрытие для 4 tools и 4 intent-маршрутов расширено; живой `POST /api/rai/chat` smoke подтверждён для `compute_deviations`, `compute_plan_fact`, `emit_alerts`, `generate_tech_map_draft`; запись `TechMap` со `status=DRAFT` подтверждена в БД; отчёт `interagency/reports/2026-03-03_sprint1-p2_tests-smoke-telegram.md`.
 - `S5.6` — `VERIFIED`: `memoryUsed[]` присутствует в chat contract и возвращается живым `/api/rai/chat`; доказательства в `interagency/reports/2026-03-03_s5-6_memory-observability-debug-panel.md` и `interagency/reports/2026-03-03_sprint1-p2_tests-smoke-telegram.md`.
+- `A_RAI R10` — `VERIFIED (STAGED)`: `AgentRegistryService` принят как first-class authority layer; runtime больше не самовключает агентов из `catalog` без persisted authority; management/API замкнуты на канонические agent roles; отчёт `interagency/reports/2026-03-07_a_rai-r10_registry-domain-model_report.md`; ограничение: persisted `AgentToolMapping` и полная Prisma-модель registry остаются следующим шагом.
+- `A_RAI R12` — `VERIFIED (STAGED)`: persisted workflow `AgentConfigChangeRequest` + `AgentPromptGovernanceService` принят как backend safe-evolution контур; config/prompt/model change больше не должен обходить `eval -> canary -> promote`; отчёт `interagency/reports/2026-03-07_a_rai-r12_prompt-governance-reality_report.md`; ограничение: нет HTTP-level smoke и UI ещё не переведён на новый workflow.
 
 ## P0 — Блокирующие (без этого “система как задумано” не существует)
 

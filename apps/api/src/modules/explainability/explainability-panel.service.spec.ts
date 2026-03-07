@@ -4,6 +4,7 @@ import { ForbiddenException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { SensitiveDataFilterService } from "../rai-chat/security/sensitive-data-filter.service";
 import { ExplainabilityPanelService } from "./explainability-panel.service";
+import { QueueMetricsService } from "../rai-chat/performance/queue-metrics.service";
 
 describe("ExplainabilityPanelService", () => {
   let service: ExplainabilityPanelService;
@@ -17,6 +18,9 @@ describe("ExplainabilityPanelService", () => {
   const mockTraceSummaryFindFirst = jest.fn();
   const mockQualityAlertFindMany = jest.fn();
   const mockAuditLogFindMany = jest.fn();
+  const queueMetricsMock = {
+    getQueuePressure: jest.fn(),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -24,6 +28,10 @@ describe("ExplainabilityPanelService", () => {
       providers: [
         ExplainabilityPanelService,
         SensitiveDataFilterService,
+        {
+          provide: QueueMetricsService,
+          useValue: queueMetricsMock,
+        },
         {
           provide: PrismaService,
           useValue: {
@@ -56,6 +64,36 @@ describe("ExplainabilityPanelService", () => {
 
     service = module.get(ExplainabilityPanelService);
     prisma = module.get(PrismaService);
+  });
+
+  it("returns tenant-scoped queue pressure from live queue metrics source", async () => {
+    queueMetricsMock.getQueuePressure.mockResolvedValue({
+      pressureState: "PRESSURED",
+      signalFresh: true,
+      totalBacklog: 7,
+      hottestQueue: "runtime_active_tool_calls",
+      observedQueues: [
+        {
+          queueName: "runtime_active_tool_calls",
+          lastSize: 5,
+          avgSize: 3,
+          peakSize: 5,
+          samples: 2,
+          lastObservedAt: new Date("2026-03-07T10:00:00Z").toISOString(),
+        },
+      ],
+    });
+
+    const result = await service.getQueuePressure("c1", 3600_000);
+
+    expect(queueMetricsMock.getQueuePressure).toHaveBeenCalledWith("c1", 3600_000);
+    expect(result).toMatchObject({
+      companyId: "c1",
+      pressureState: "PRESSURED",
+      signalFresh: true,
+      totalBacklog: 7,
+      hottestQueue: "runtime_active_tool_calls",
+    });
   });
 
   it("aggregates timeline for own trace", async () => {
@@ -226,9 +264,32 @@ describe("ExplainabilityPanelService", () => {
       },
     ]);
     mockAuditLogFindMany.mockResolvedValue([
-      { action: "ADVISORY_ACCEPTED" },
-      { action: "ADVISORY_ACCEPTED" },
-      { action: "ADVISORY_REJECTED" },
+      { action: "ADVISORY_ACCEPTED", metadata: { traceId: "adv-1" } },
+      { action: "ADVISORY_ACCEPTED", metadata: { traceId: "adv-2" } },
+      { action: "ADVISORY_REJECTED", metadata: { traceId: "adv-3" } },
+      { action: "ADVISORY_FEEDBACK_RECORDED", metadata: { traceId: "adv-2", outcome: "corrected" } },
+    ]);
+    mockAiAuditFindMany.mockResolvedValue([
+      {
+        traceId: "tr_1",
+        companyId,
+        createdAt: new Date(now.getTime() - 1_000),
+        metadata: {
+          phases: [
+            { name: "tools", timestamp: new Date(now.getTime() - 1_000).toISOString(), durationMs: 120 },
+          ],
+        },
+      },
+      {
+        traceId: "tr_2",
+        companyId,
+        createdAt: new Date(now.getTime() - 2_000),
+        metadata: {
+          phases: [
+            { name: "truthfulness", timestamp: new Date(now.getTime() - 2_000).toISOString(), durationMs: 220 },
+          ],
+        },
+      },
     ]);
 
     const result = await service.getTruthfulnessDashboard(companyId, 24);
@@ -250,12 +311,46 @@ describe("ExplainabilityPanelService", () => {
     expect(result.avgBsScore).toBeCloseTo((10 + 30 + 50) / 3);
     expect(result.avgEvidenceCoverage).toBeCloseTo((80 + 60 + 40) / 3);
     expect(result.acceptanceRate).toBeCloseTo(66.7, 1);
-    expect(result.correctionRate).toBeNull();
+    expect(result.correctionRate).toBeCloseTo(33.3, 1);
     expect(result.p95BsScore).toBeGreaterThanOrEqual(30);
     expect(result.p95BsScore).toBeLessThanOrEqual(50);
+    expect(result.qualityKnownTraceCount).toBe(3);
+    expect(result.qualityPendingTraceCount).toBe(0);
+    expect(result.criticalPath[0]).toMatchObject({
+      traceId: "tr_2",
+      phase: "truthfulness",
+      durationMs: 220,
+    });
   });
 
-  it("returns zero metrics and empty list when no trace summaries", async () => {
+  it("deduplicates corrected feedback by advisory traceId and never inflates correctionRate above 100%", async () => {
+    const companyId = "c1";
+    mockTraceSummaryFindMany.mockResolvedValue([
+      {
+        traceId: "tr_1",
+        companyId,
+        bsScorePct: 10,
+        evidenceCoveragePct: 80,
+        invalidClaimsPct: 0,
+        createdAt: new Date(),
+      },
+    ]);
+    mockAuditLogFindMany.mockResolvedValue([
+      { action: "ADVISORY_ACCEPTED", metadata: { traceId: "adv-1" } },
+      { action: "ADVISORY_REJECTED", metadata: { traceId: "adv-2" } },
+      { action: "ADVISORY_FEEDBACK_RECORDED", metadata: { traceId: "adv-1", outcome: "corrected" } },
+      { action: "ADVISORY_FEEDBACK_RECORDED", metadata: { traceId: "adv-1", outcome: "corrected" } },
+      { action: "ADVISORY_FEEDBACK_RECORDED", metadata: { traceId: "adv-x", outcome: "corrected" } },
+    ]);
+    mockAiAuditFindMany.mockResolvedValue([]);
+
+    const result = await service.getTruthfulnessDashboard(companyId, 24);
+
+    expect(result.acceptanceRate).toBe(50);
+    expect(result.correctionRate).toBe(50);
+  });
+
+  it("returns pending quality metrics and empty list when no trace summaries", async () => {
     const companyId = "c1";
     mockTraceSummaryFindMany.mockResolvedValue([]);
     mockAuditLogFindMany.mockResolvedValue([]);
@@ -263,12 +358,46 @@ describe("ExplainabilityPanelService", () => {
     const result = await service.getTruthfulnessDashboard(companyId, 24);
 
     expect(result.companyId).toBe(companyId);
-    expect(result.avgBsScore).toBe(0);
-    expect(result.p95BsScore).toBe(0);
-    expect(result.avgEvidenceCoverage).toBe(0);
+    expect(result.avgBsScore).toBeNull();
+    expect(result.p95BsScore).toBeNull();
+    expect(result.avgEvidenceCoverage).toBeNull();
     expect(result.acceptanceRate).toBeNull();
     expect(result.correctionRate).toBeNull();
     expect(result.worstTraces).toHaveLength(0);
+    expect(result.qualityKnownTraceCount).toBe(0);
+    expect(result.qualityPendingTraceCount).toBe(0);
+    expect(result.criticalPath).toHaveLength(0);
+  });
+
+  it("keeps pending traces out of averaged quality metrics", async () => {
+    const companyId = "c1";
+    mockTraceSummaryFindMany.mockResolvedValue([
+      {
+        traceId: "tr_ready",
+        companyId,
+        bsScorePct: 20,
+        evidenceCoveragePct: 80,
+        invalidClaimsPct: 0,
+        createdAt: new Date(),
+      },
+      {
+        traceId: "tr_pending",
+        companyId,
+        bsScorePct: null,
+        evidenceCoveragePct: null,
+        invalidClaimsPct: null,
+        createdAt: new Date(),
+      },
+    ]);
+    mockAuditLogFindMany.mockResolvedValue([]);
+    mockAiAuditFindMany.mockResolvedValue([]);
+
+    const result = await service.getTruthfulnessDashboard(companyId, 24);
+
+    expect(result.avgBsScore).toBe(20);
+    expect(result.avgEvidenceCoverage).toBe(80);
+    expect(result.qualityKnownTraceCount).toBe(1);
+    expect(result.qualityPendingTraceCount).toBe(1);
   });
 
   describe("getTraceForensics", () => {
@@ -359,4 +488,3 @@ describe("ExplainabilityPanelService", () => {
     });
   });
 });
-

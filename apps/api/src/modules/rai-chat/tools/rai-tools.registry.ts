@@ -31,6 +31,8 @@ import {
 } from "../autonomy-policy.service";
 import { AgentRuntimeConfigService } from "../agent-runtime-config.service";
 import { AgentConfigBlockedError } from "../security/agent-config-blocked.error";
+import { IncidentOpsService } from "../incident-ops.service";
+import { SystemIncidentType } from "@rai/prisma-client";
 
 type ToolHandler<TName extends RaiToolName> = (
   payload: RaiToolPayloadMap[TName],
@@ -59,6 +61,7 @@ export class RaiToolsRegistry implements OnModuleInit {
     private readonly pendingActionService: PendingActionService,
     private readonly autonomyPolicy: AutonomyPolicyService,
     private readonly agentRuntimeConfig: AgentRuntimeConfigService,
+    private readonly incidentOps: IncidentOpsService,
   ) {}
 
   onModuleInit() {
@@ -119,6 +122,16 @@ export class RaiToolsRegistry implements OnModuleInit {
         actorContext.companyId,
       );
       if (autonomyLevel === AutonomyLevel.QUARANTINE) {
+        this.incidentOps.logIncident({
+          companyId: actorContext.companyId,
+          traceId: actorContext.traceId,
+          incidentType: SystemIncidentType.AUTONOMY_QUARANTINE,
+          severity: "HIGH",
+          details: {
+            toolName: name,
+            reason: "autonomy_quarantine_block",
+          },
+        });
         this.logToolCall(
           name,
           actorContext,
@@ -152,6 +165,20 @@ export class RaiToolsRegistry implements OnModuleInit {
           payload: (payload ?? {}) as Record<string, unknown>,
           riskLevel: riskInfo.riskLevel,
           requestedByUserId: actorContext.userId,
+        });
+        this.incidentOps.logIncident({
+          companyId: actorContext.companyId,
+          traceId: actorContext.traceId,
+          incidentType: requiresByRisk
+            ? SystemIncidentType.POLICY_BLOCKED_CRITICAL_ACTION
+            : SystemIncidentType.AUTONOMY_TOOL_FIRST,
+          severity: riskInfo.riskLevel === "CRITICAL" ? "HIGH" : "MEDIUM",
+          details: {
+            toolName: name,
+            pendingActionId: action.id,
+            riskLevel: riskInfo.riskLevel,
+            policySource: requiresByRisk ? "RiskPolicy" : "AutonomyPolicy",
+          },
         });
         this.logToolCall(
           name,

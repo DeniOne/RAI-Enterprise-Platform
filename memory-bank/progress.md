@@ -1,5 +1,111 @@
 # Progress Report - Prisma, Agro Domain & RAI Chat Integration
 
+## 2026-03-07
+
+51. **A_RAI S23 — Live API Smoke** [APPROVED]:
+    *   Добавлен live HTTP smoke suite `apps/api/test/a_rai-live-api-smoke.spec.ts`, который поднимает реальный feature-module graph `RaiChatModule + ExplainabilityPanelModule` и ходит в него через `supertest`.
+    *   Покрыт канонический Stage 2 API slice: `GET /api/rai/explainability/queue-pressure`, `GET /api/rai/incidents/feed`, `GET /api/rai/agents/config`, `POST /api/rai/agents/config/change-requests`, плюс negative case `POST /api/rai/agents/config -> 404`.
+    *   Smoke вскрыл и помог закрыть реальные wiring gaps: `RaiChatModule -> MemoryModule`, `MemoryModule -> AuditModule`, export `AutonomyPolicyService`.
+    *   Пункт readiness `Есть smoke tests на живые API маршруты` переведён в `[x]`.
+    *   Верификация: `pnpm --filter api exec tsc --noEmit` PASS, `CI=1 pnpm --filter api test -- --runInBand --detectOpenHandles test/a_rai-live-api-smoke.spec.ts` PASS.
+
+50. **A_RAI S22 — Queue & Backpressure Visibility** [APPROVED]:
+    *   `AgentRuntimeService` теперь пишет per-instance live queue snapshots в `QueueMetricsService`, а `QueueMetricsService` агрегирует tenant-wide latest state по `queueName + instanceId` из persisted `PerformanceMetric`.
+    *   Добавлен live API `GET /rai/explainability/queue-pressure`; `Control Tower` показывает runtime pressure, backlog depth, freshness и queue contour без synthetic fallback.
+    *   Добавлен producer-side proof на multi-instance semantics: backlog не схлопывается до последнего snapshot одной ноды.
+    *   Пункт readiness `Есть queue/backpressure visibility` переведён в `[x]`.
+    *   Верификация: `pnpm --filter api exec tsc --noEmit` PASS, `pnpm --filter web exec tsc --noEmit` PASS, targeted API jest PASS, targeted web jest PASS.
+
+49. **A_RAI S21 — Runtime Spine Integration Proof** [APPROVED]:
+    *   Добавлен integration suite `runtime-spine.integration.spec.ts`, который гоняет реальный путь `Supervisor -> Runtime -> Registry/Governance/Budget/Policy -> Audit/Trace`.
+    *   Доказаны три сценария: happy path, `budget deny` с persisted incident/audit/trace, и governed registry block path через effective runtime state.
+    *   Пункт readiness `Есть integration tests на runtime spine` переведён в `[x]`.
+    *   Верификация: `pnpm --filter api exec tsc --noEmit` PASS, `CI=1 pnpm --filter api test -- --runInBand --detectOpenHandles src/modules/rai-chat/runtime/runtime-spine.integration.spec.ts` PASS.
+
+48. **A_RAI S20 — Agent Configurator Closeout** [APPROVED]:
+    *   `control-tower/agents` больше не строится вокруг `global/tenantOverrides + toggle`, а читает runtime-aware `agents[]` read model с `runtime.source`, `bindingsSource`, `tenantAccess`, `capabilities`, `tools` и `isActive`.
+    *   Client contract больше не экспортирует configurator `toggle`, а legacy backend route `PATCH /rai/agents/config/toggle` удалён.
+    *   Configurator surface оставляет только governed `createChangeRequest`; HTTP proof подтверждает effective registry-aware read model и `404` для старого toggle path.
+    *   Claim `Agent Configurator существует как UI + API настройки агентов` переведён в `CONFIRMED`.
+    *   Верификация: `pnpm --filter api exec tsc --noEmit` PASS, `pnpm --filter web exec tsc --noEmit` PASS, targeted jest PASS.
+
+47. **A_RAI S19 — Quality Governance Loop** [APPROVED]:
+    *   `ExplainabilityPanelService` теперь считает `Correction Rate` по decision-scoped persisted advisory feedback с дедупликацией по `traceId`, а не по декоративной или потенциально раздуваемой модели.
+    *   `AutonomyPolicyService` форсирует `QUALITY_ALERT -> QUARANTINE` при активном `BS_DRIFT`, а runtime enforcement по-прежнему идёт через `RaiToolsRegistry`, без обхода через UI/config path.
+    *   `IncidentOpsService` отдаёт lifecycle-aware governance counters/feed с breakdown по quality/autonomy/policy incidents.
+    *   Claims `Quality & Evals Panel`, `Автономность регулируется по BS% и quality alerts`, `Governance counters и incidents feed реально живые` переведены в `CONFIRMED`.
+    *   Верификация: `pnpm --filter api exec tsc --noEmit` PASS, `pnpm --filter web exec tsc --noEmit` PASS, targeted jest PASS.
+
+46. **A_RAI S18 — Budget Controller Runtime** [APPROVED]:
+    *   `BudgetControllerService` перестал быть боковым сервисом и теперь читает persisted `agentRegistry.maxTokens`, возвращая реальные runtime outcomes `ALLOW / DEGRADE / DENY`.
+    *   `AgentRuntimeService` применяет budget decision до fan-out: `DEGRADE` режет execution set, `DENY` останавливает выполнение до вызова tools.
+    *   `ResponseComposerService` и `SupervisorAgent` довозят `runtimeBudget` до response и `AiAuditEntry.metadata`.
+    *   На degraded/denied path через `IncidentOpsService` пишутся budget incidents.
+    *   Верификация: `pnpm --filter api exec tsc --noEmit` PASS, targeted jest PASS.
+
+45. **A_RAI S17 — Control Tower Honesty** [APPROVED]:
+    *   Persisted evidence trail доведён до честного контура `evidence -> audit -> forensics/dashboard`.
+    *   `TruthfulnessEngineService` больше не рисует synthetic fallback для `BS%` и возвращает честные nullable/pending quality-метрики.
+    *   `ExplainabilityPanelService` и `/control-tower` показывают `Acceptance Rate`, `BS%`, `Evidence Coverage`, `qualityKnown/pending` counters и `criticalPath`.
+    *   `Correction Rate` честно оставлен как `null/N/A`, потому что отдельный live source ещё не инструментирован.
+    *   Верификация: `pnpm --filter api exec tsc --noEmit` PASS, `pnpm --filter web exec tsc --noEmit` PASS, targeted jest PASS.
+
+44. **A_RAI S16 — Eval Productionization** [APPROVED]:
+    *   Добавлен persisted `EvalRun` и живая связь с `AgentConfigChangeRequest` через реальные Prisma relations и DB-level foreign keys.
+    *   `GoldenTestRunnerService` усилен до run-level evidence: `corpusSummary`, `caseResults`, `verdictBasis`, явные verdicts `APPROVED / REVIEW_REQUIRED / ROLLBACK`.
+    *   `AgentConfigGuardService` и `AgentPromptGovernanceService` теперь пишут и используют candidate-specific eval evidence как gate.
+    *   Golden corpus расширен для канонических агентов.
+    *   Верификация: `pnpm --filter @rai/prisma-client run db:generate` PASS, `pnpm --filter api exec tsc --noEmit` PASS, targeted jest PASS.
+
+43. **A_RAI S15 — Registry Persisted Bindings** [APPROVED]:
+    *   Введены persisted Prisma-модели `AgentCapabilityBinding` и `AgentToolBinding`, а `AgentRegistryService` теперь строит effective runtime bindings из БД.
+    *   `AgentRuntimeConfigService` переведён на deny-by-default для governed tools без owner/binding; primary authority больше не идёт через `TOOL_RUNTIME_MAP`.
+    *   `UpsertAgentConfigDto` получил explicit `tools`, а governed sync перестал автогенерировать tool bindings только из дефолтов роли.
+    *   Persisted `agent -> tools/capabilities` mapping стал реальной authority-моделью для runtime и management path.
+    *   Верификация: `pnpm --filter @rai/prisma-client run db:generate` PASS, `pnpm --filter api exec tsc --noEmit` PASS, targeted jest PASS.
+
+42. **A_RAI S14 — Prompt Governance Closeout** [APPROVED]:
+    *   Canonical control-plane contract переведён на `POST /rai/agents/config/change-requests` и `.../change-requests/:id/...`.
+    *   Legacy direct-write path `POST /rai/agents/config` убран; controller-level HTTP proof подтверждает, что старый write path отсутствует.
+    *   Добавлены controller-level проверки на create change request, degraded canary rollback outcome и tenant-bypass denial.
+    *   Client contract `apps/web/lib/api.ts` и control-plane surface `control-tower/agents` переведены на governed semantics вместо direct CRUD-иллюзии.
+    *   Claim `PromptChange RFC` переведён из `PARTIAL` в `CONFIRMED`.
+    *   Верификация: `pnpm --filter api exec tsc --noEmit` PASS, targeted jest PASS.
+
+41. **A_RAI S13 — Autonomy/Policy Incidents & Runbooks** [APPROVED]:
+    *   `SystemIncident` расширен explicit lifecycle `status`; добавлены live autonomy/policy incident types.
+    *   Добавлена persisted модель `IncidentRunbookExecution`.
+    *   `RaiToolsRegistry` теперь пишет live incidents для `QUARANTINE`, `TOOL_FIRST` и `RiskPolicy` blocked critical actions.
+    *   `AgentPromptGovernanceService` пишет live `PROMPT_CHANGE_ROLLBACK` incident.
+    *   Реализован endpoint `POST /rai/incidents/:id/runbook` с исполняемыми actions `REQUIRE_HUMAN_REVIEW` и `ROLLBACK_CHANGE_REQUEST`.
+    *   Governance feed/counters теперь учитывают autonomy/policy incidents отдельно и возвращают explicit incident status.
+    *   Верификация: `pnpm prisma:generate` PASS, `pnpm prisma:build-client` PASS, `pnpm --dir apps/api exec tsc --noEmit` PASS, targeted jest PASS.
+
+43. **A_RAI R12 — Prompt Governance Reality** [READY_FOR_REVIEW]:
+    *   Добавлен persisted workflow `AgentConfigChangeRequest` для agent prompt/model/config changes.
+    *   Реализован `AgentPromptGovernanceService` с обязательным путём `create change -> eval -> canary start -> canary review -> promote/rollback`.
+    *   `POST /rai/agents/config` больше не пишет production config напрямую; production activation выполняется только через `promoteApprovedChange()`.
+    *   Прямой bypass через `toggle(true)` заблокирован; enable требует governed workflow.
+    *   `GoldenTestRunnerService` расширен до agent-aware режима: добавлены golden sets для `EconomistAgent`, `KnowledgeAgent`, `MonitoringAgent`, eval привязан к реальному change candidate (`promptVersion`, `modelName`).
+    *   В `CanaryService` добавлена rejection-rate evaluation для prompt/config canary path; degraded canary уводит workflow в rollback и quarantine outcome.
+    *   Верификация: `pnpm prisma:generate` PASS, `pnpm prisma:build-client` PASS, `pnpm --dir apps/api exec tsc --noEmit` PASS, targeted jest PASS.
+
+## 2026-03-07
+
+42. **A_RAI R10 — Registry Domain Model** [APPROVED]:
+    *   Добавлен `AgentRegistryService` как first-class доменный слой authority для агентов `agronomist`, `economist`, `knowledge`, `monitoring`.
+    *   Registry теперь явно собирает `AgentDefinition`, effective runtime policy и `AgentTenantAccess` (`INHERITED` / `OVERRIDE` / `DENIED`).
+    *   `AgentRuntimeConfigService` больше не читает `AgentConfiguration` напрямую; runtime решения идут через registry-domain layer.
+    *   `AgentConfiguration` переведён в роль legacy storage / projection, а management API (`AgentManagementService`) теперь отдаёт доменную read model `agents`.
+    *   Исправлены замечания техлида: убрано `catalog` auto-enable без persisted authority; `role` замкнут на канонический домен `agronomist|economist|knowledge|monitoring`.
+    *   Верификация: `pnpm --dir apps/api exec tsc --noEmit` PASS; targeted jest PASS (26 tests); execution path подтверждает `agent_disabled` и `capability_denied`.
+
+43. **A_RAI R12 — Prompt Governance Reality** [APPROVED]:
+    *   Введён persisted safe-evolution workflow: `AgentConfigChangeRequest` + `AgentPromptGovernanceService` со state machine `change request -> eval -> canary -> promote/rollback`.
+    *   Прямой production write через `POST /rai/agents/config` убран; `toggle(true)` и service-level bypass на запись production config заблокированы.
+    *   `GoldenTestRunnerService` усилен до agent/candidate-aware eval logic: verdict теперь зависит от role, activation, prompt/model metadata, budget и capability/tool bindings, а не от одного `IntentRouter`.
+    *   Верификация: `pnpm --dir apps/api exec tsc --noEmit` PASS; targeted jest PASS (15 tests).
+
 ## Status: Refactoring Tenant Isolation & Fixing Type Resolution
 
 ### Completed:
@@ -397,3 +503,8 @@
 - [/] Реформатирование `GEMINI#2.md` (83KB). Применены Python-скрипты для первичной разбивки на секции.
 - [ ] Окончательная очистка и фикс таблиц в `GEMINI#2.md`.
 - [x] Создан финальный промт Гранд-Синтеза: `Promt_Grand_Sintez_FINAL.md` — объединяет роль/правила из шаблона с полной 11-секционной структурой + 6 приложений + 7 правил триангуляции + критерии качества.
+
+## 2026-03-07 — Анализ готовности мультиагентов
+- [x] Изучены чеклисты `STAGE 2` (Implementation, Readiness, Truth Sync).
+- [x] Сопоставлен код с claims: обнаружено, что Agent Registry пока существует лишь как CRUD-иллюзия `AgentConfiguration` в Prisma.
+- [x] Сформирован дальнейший roadmap: реализация `R10. Registry Domain Model`.

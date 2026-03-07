@@ -11,9 +11,17 @@ import { TenantContextModule } from "../../shared/tenant-context/tenant-context.
 import { SensitiveDataFilterService } from "../rai-chat/security/sensitive-data-filter.service";
 import { RaiChatModule } from "../rai-chat/rai-chat.module";
 import { AgentConfigGuardService } from "./agent-config-guard.service";
+import { AdaptiveLearningModule } from "../adaptive-learning/adaptive-learning.module";
+import { AgentPromptGovernanceService } from "./agent-prompt-governance.service";
 
 @Module({
-  imports: [AuthModule, TenantContextModule, PrismaModule, RaiChatModule],
+  imports: [
+    AuthModule,
+    TenantContextModule,
+    PrismaModule,
+    RaiChatModule,
+    AdaptiveLearningModule,
+  ],
   controllers: [ExplainabilityPanelController, AgentsConfigController],
   providers: [
     ExplainabilityPanelService,
@@ -22,7 +30,7 @@ import { AgentConfigGuardService } from "./agent-config-guard.service";
     SensitiveDataFilterService,
     AgentManagementService,
     AgentConfigGuardService,
+    AgentPromptGovernanceService,
   ],
 })
 export class ExplainabilityPanelModule {}
-

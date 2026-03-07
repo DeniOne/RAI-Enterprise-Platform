@@ -8,10 +8,18 @@ import { RaiToolsRegistry } from "../tools/rai-tools.registry";
 import { planByToolCalls } from "./tool-call.planner";
 import { RiskPolicyBlockedError } from "../security/risk-policy-blocked.error";
 import { PerformanceMetricsService } from "../performance/performance-metrics.service";
+import { QueueMetricsService } from "../performance/queue-metrics.service";
 import { AgentConfigBlockedError } from "../security/agent-config-blocked.error";
+import {
+  BudgetControllerService,
+  RuntimeBudgetDecision,
+} from "../security/budget-controller.service";
+import { IncidentOpsService } from "../incident-ops.service";
+import { SystemIncidentType } from "@rai/prisma-client";
 
 export interface ExecutionResult {
   executedTools: Array<{ name: RaiToolName; result: unknown }>;
+  runtimeBudget?: RuntimeBudgetDecision;
 }
 
 const AGENT_DEADLINE_MS = 30_000;
@@ -28,11 +36,53 @@ export class AgentRuntimeService {
   constructor(
     private readonly toolsRegistry: RaiToolsRegistry,
     private readonly performanceMetrics: PerformanceMetricsService,
+    private readonly queueMetrics: QueueMetricsService,
+    private readonly budgetController: BudgetControllerService,
+    private readonly incidentOps: IncidentOpsService,
   ) {}
 
   async run(params: RunParams): Promise<ExecutionResult> {
-    const plan = planByToolCalls(params.requestedToolCalls);
+    const budgetDecision = await this.budgetController.evaluateRuntimeBudget(
+      params.requestedToolCalls,
+      params.actorContext,
+    );
+    if (budgetDecision.outcome !== "ALLOW") {
+      this.incidentOps.logIncident({
+        companyId: params.actorContext.companyId,
+        traceId: params.actorContext.traceId,
+        incidentType: SystemIncidentType.UNKNOWN,
+        severity: budgetDecision.outcome === "DENY" ? "HIGH" : "MEDIUM",
+        details: {
+          subtype:
+            budgetDecision.outcome === "DENY"
+              ? "BUDGET_RUNTIME_DENIED"
+              : "BUDGET_RUNTIME_DEGRADED",
+          reason: budgetDecision.reason,
+          estimatedTokens: budgetDecision.estimatedTokens,
+          budgetLimit: budgetDecision.budgetLimit,
+          allowedToolNames: budgetDecision.allowedToolNames,
+          droppedToolNames: budgetDecision.droppedToolNames,
+          ownerRoles: budgetDecision.ownerRoles,
+        },
+      });
+    }
+    if (budgetDecision.outcome === "DENY") {
+      return { executedTools: [], runtimeBudget: budgetDecision };
+    }
+
+    const allowedToolCalls =
+      budgetDecision.outcome === "DEGRADE"
+        ? this.filterAllowedToolCalls(
+            params.requestedToolCalls,
+            budgetDecision.allowedToolNames,
+          )
+        : params.requestedToolCalls;
+    await this.queueMetrics.beginRuntimeExecution(
+      params.actorContext.companyId,
+      allowedToolCalls.length,
+    );
     const partial: Array<{ name: RaiToolName; result: unknown }> = [];
+    const effectivePlan = planByToolCalls(allowedToolCalls);
 
     const toEntry = (name: RaiToolName, result: unknown) => {
       const entry = { name, result };
@@ -40,9 +90,9 @@ export class AgentRuntimeService {
       return entry;
     };
     const resolveAgentRole = (name: RaiToolName): string => {
-      if (plan.agronom.some((call) => call.name === name)) return "AgronomAgent";
-      if (plan.economist.some((call) => call.name === name)) return "EconomistAgent";
-      if (plan.knowledge.some((call) => call.name === name)) return "KnowledgeAgent";
+      if (effectivePlan.agronom.some((call) => call.name === name)) return "AgronomAgent";
+      if (effectivePlan.economist.some((call) => call.name === name)) return "EconomistAgent";
+      if (effectivePlan.knowledge.some((call) => call.name === name)) return "KnowledgeAgent";
       return "RuntimeAgent";
     };
     const runOne = (call: { name: RaiToolName; payload: Record<string, unknown> }) =>
@@ -84,10 +134,10 @@ export class AgentRuntimeService {
         });
       };
 
-    const agronomPromises = plan.agronom.map((call) => runOne(call));
-    const economistPromises = plan.economist.map((call) => runOne(call));
-    const knowledgePromises = plan.knowledge.map((call) => runOne(call));
-    const otherPromises = plan.other.map((call) => runOne(call));
+    const agronomPromises = effectivePlan.agronom.map((call) => runOne(call));
+    const economistPromises = effectivePlan.economist.map((call) => runOne(call));
+    const knowledgePromises = effectivePlan.knowledge.map((call) => runOne(call));
+    const otherPromises = effectivePlan.other.map((call) => runOne(call));
 
     const allPromises = [...agronomPromises, ...economistPromises, ...knowledgePromises, ...otherPromises];
     let timeoutHandle: NodeJS.Timeout | null = null;
@@ -108,7 +158,7 @@ export class AgentRuntimeService {
       const executedTools = (settled as PromiseSettledResult<{ name: RaiToolName; result: unknown }>[])
         .filter((s): s is PromiseFulfilledResult<{ name: RaiToolName; result: unknown }> => s.status === "fulfilled")
         .map((s) => s.value);
-      return { executedTools };
+      return { executedTools, runtimeBudget: budgetDecision };
     } catch (err) {
       void this.performanceMetrics.recordError(
         params.actorContext.companyId,
@@ -117,11 +167,34 @@ export class AgentRuntimeService {
       this.logger.warn(
         `agent_runtime deadline or error companyId=${params.actorContext.companyId} traceId=${params.actorContext.traceId} message=${String((err as Error)?.message ?? err)}`,
       );
-      return { executedTools: partial };
+      return { executedTools: partial, runtimeBudget: budgetDecision };
     } finally {
+      await this.queueMetrics.endRuntimeExecution(
+        params.actorContext.companyId,
+        allowedToolCalls.length,
+      );
       if (timeoutHandle) {
         clearTimeout(timeoutHandle);
       }
     }
+  }
+
+  private filterAllowedToolCalls(
+    requestedToolCalls: RaiToolCallDto[],
+    allowedToolNames: RaiToolName[],
+  ): RaiToolCallDto[] {
+    const remaining = new Map<RaiToolName, number>();
+    for (const toolName of allowedToolNames) {
+      remaining.set(toolName, (remaining.get(toolName) ?? 0) + 1);
+    }
+
+    return requestedToolCalls.filter((call) => {
+      const left = remaining.get(call.name) ?? 0;
+      if (left <= 0) {
+        return false;
+      }
+      remaining.set(call.name, left - 1);
+      return true;
+    });
   }
 }

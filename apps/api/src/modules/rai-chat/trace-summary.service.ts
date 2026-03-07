@@ -20,9 +20,9 @@ export interface TraceSummaryRecordParams {
 export interface UpdateTraceSummaryQualityParams {
   traceId: string;
   companyId: string;
-  bsScorePct: number;
-  evidenceCoveragePct: number;
-  invalidClaimsPct: number;
+  bsScorePct: number | null;
+  evidenceCoveragePct: number | null;
+  invalidClaimsPct: number | null;
 }
 
 @Injectable()

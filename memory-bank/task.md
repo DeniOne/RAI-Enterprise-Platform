@@ -1,5 +1,88 @@
 # Task: RAI_EP
 
+## A_RAI S23 — Live API Smoke (APPROVED)
+- [x] Поднять live HTTP smoke harness для `apps/api`
+- [x] Подтвердить ключевые Stage 2 маршруты через реальные API-вызовы
+- [x] Проверить хотя бы один negative/bypass case
+- [x] Получить техлидский вердикт `APPROVED`
+
+## A_RAI S22 — Queue & Backpressure Visibility (APPROVED)
+- [x] Ввести live source для queue/backpressure signal
+- [x] Довести backend contract и Control Tower surface до честной queue visibility
+- [x] Подтвердить multi-instance-safe агрегацию без synthetic fallback
+- [x] Закрыть readiness-пункт `Есть queue/backpressure visibility`
+- [x] Получить техлидский вердикт `APPROVED`
+
+## A_RAI S21 — Runtime Spine Integration Proof (APPROVED)
+- [x] Добавить integration suite на канонический runtime spine
+- [x] Доказать happy-path, guarded path и governed registry path через `Supervisor -> Runtime -> Audit/Trace`
+- [x] Закрыть readiness-пункт `Есть integration tests на runtime spine`
+- [x] Получить техлидский вердикт `APPROVED`
+
+## A_RAI S20 — Agent Configurator Closeout (APPROVED)
+- [x] Довести `Agent Configurator` до governed/runtime-aware semantics без legacy CRUD-иллюзии
+- [x] Убедиться, что read model отражает effective runtime state, bindings и tenant access
+- [x] Подтвердить тестами отсутствие direct production bypass через configurator path
+- [x] Получить техлидский вердикт `APPROVED`
+
+## A_RAI S19 — Quality Governance Loop (APPROVED)
+- [x] Закрыть `Correction Rate` как live decision-scoped метрику без synthetic fallback
+- [x] Замкнуть quality-driven autonomy loop `QUALITY_ALERT -> QUARANTINE`
+- [x] Довести governance feed/counters до lifecycle-aware persisted semantics
+- [x] Перевести claims `Quality & Evals Panel`, `Autonomy by BS%`, `Governance counters/feed` в `CONFIRMED`
+- [x] Получить техлидский вердикт `APPROVED`
+
+## A_RAI S18 — Budget Controller Runtime (APPROVED)
+- [x] Превратить `BudgetControllerService` из бокового сервиса в runtime authority до fan-out
+- [x] Встроить `ALLOW / DEGRADE / DENY` в `AgentRuntimeService` и реально резать/блокировать execution
+- [x] Довезти `runtimeBudget` до response и `AiAuditEntry.metadata`
+- [x] Логировать degraded/denied budget path как incidents
+- [x] Получить техлидский вердикт `APPROVED`
+
+## A_RAI S17 — Control Tower Honesty (APPROVED)
+- [x] Довести persisted `evidence -> audit -> forensics/dashboard` spine до честного состояния
+- [x] Убрать synthetic fallback для `BS%` и nullable quality-метрик
+- [x] Подтвердить `criticalPath` visibility и честный `null/N/A` для неинструментированного `Correction Rate`
+- [x] Получить техлидский вердикт `APPROVED`
+
+## A_RAI S16 — Eval Productionization (APPROVED)
+- [x] Ввести persisted `EvalRun` и привязку к `AgentConfigChangeRequest`
+- [x] Довести eval contract до run-level evidence, corpus summary и verdict basis
+- [x] Подтвердить candidate-specific eval gate и DB-level integrity через relations/FK
+- [x] Получить техлидский вердикт `APPROVED`
+
+## A_RAI S15 — Registry Persisted Bindings (APPROVED)
+- [x] Ввести persisted first-class mapping `agent -> capabilities/tools` вместо derived-only/hardcoded authority
+- [x] Привязать runtime resolver к persisted bindings как source of truth
+- [x] Подтвердить deny-by-default/runtime enforcement и backward-safe migration path
+- [x] Получить техлидский вердикт `APPROVED`
+
+## A_RAI S14 — Prompt Governance Closeout (APPROVED)
+- [x] Перевести control-plane contract на governed change-request endpoints
+- [x] Убрать legacy direct-write semantics `POST /rai/agents/config`
+- [x] Доказать controller-level HTTP proof для create request / rollback / tenant denial / absence of legacy write path
+- [x] Перевести claim `PromptChange RFC` в `CONFIRMED`
+- [x] Получить техлидский вердикт `APPROVED`
+
+## A_RAI S13 — Autonomy/Policy Incidents & Runbooks (APPROVED)
+- [x] Логировать autonomy/policy incidents как first-class live incidents, а не только quality/security
+- [x] Добавить runbook/fallback action для критичных quality/autonomy incidents
+- [x] Доказать, что governance feed показывает эти incidents и action lifecycle
+- [x] Получить техлидский вердикт `APPROVED`
+
+## A_RAI R12 — Prompt Governance Reality (APPROVED)
+- [x] Сделать исполняемый workflow для prompt/model/config change через eval -> canary -> rollback
+- [x] Убрать остаточную декоративность `GoldenTestSet` / `EvalRun` и привязать их к реальным агентным конфигам
+- [x] Доказать, что config change не может стать боевым в обход verdict/canary/rollback
+- [x] Получить техлидский вердикт `APPROVED`
+
+## A_RAI R10 — Registry Domain Model (APPROVED)
+- [x] Вынести runtime authority в first-class доменный слой `AgentRegistryService`
+- [x] Перевести `AgentRuntimeConfigService` на чтение registry-domain вместо прямого CRUD по `AgentConfiguration`
+- [x] Добавить first-class read model `agents` в management API
+- [x] Подтвердить runtime enforcement тестами (`agent disabled`, `capability denied`, tenant access)
+- [x] Получить техлидский вердикт `APPROVED`
+
 ## Sprint Gamma 1 (Infrastructure) ✅
 - [x] K8s Setup
 - [x] Secrets Management

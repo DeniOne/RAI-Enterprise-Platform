@@ -27,6 +27,11 @@ import { TraceSummaryService } from "./trace-summary.service";
 import { TruthfulnessEngineService } from "./truthfulness-engine.service";
 import { AutonomyPolicyService } from "./autonomy-policy.service";
 import { WorkspaceEntityKind } from "./dto/rai-chat.dto";
+import { PerformanceMetricsService } from "./performance/performance-metrics.service";
+import { QueueMetricsService } from "./performance/queue-metrics.service";
+import { AgentRuntimeConfigService } from "./agent-runtime-config.service";
+import { IncidentOpsService } from "./incident-ops.service";
+import { BudgetControllerService } from "./security/budget-controller.service";
 import {
   RAI_CHAT_WIDGETS_SCHEMA_VERSION,
   RaiChatWidgetType,
@@ -76,6 +81,32 @@ describe("SupervisorAgent", () => {
     }),
     buildAutoToolCall: jest.fn().mockReturnValue(null),
   };
+  const performanceMetricsServiceMock = {
+    recordLatency: jest.fn().mockResolvedValue(undefined),
+    recordError: jest.fn().mockResolvedValue(undefined),
+  };
+  const queueMetricsServiceMock = {
+    beginRuntimeExecution: jest.fn().mockResolvedValue(undefined),
+    endRuntimeExecution: jest.fn().mockResolvedValue(undefined),
+  };
+  const agentRuntimeConfigServiceMock = {
+    resolveToolAccess: jest.fn().mockResolvedValue({ allowed: true }),
+  };
+  const incidentOpsServiceMock = {
+    logIncident: jest.fn(),
+  };
+  const budgetControllerServiceMock = {
+    evaluateRuntimeBudget: jest.fn().mockResolvedValue({
+      outcome: "ALLOW",
+      reason: "WITHIN_BUDGET",
+      source: "agent_registry_max_tokens",
+      estimatedTokens: 0,
+      budgetLimit: null,
+      allowedToolNames: [],
+      droppedToolNames: [],
+      ownerRoles: [],
+    }),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -113,6 +144,11 @@ describe("SupervisorAgent", () => {
         { provide: KpiService, useValue: kpiServiceMock },
         { provide: PrismaService, useValue: prismaServiceMock },
         { provide: SensitiveDataFilterService, useValue: { mask: (s: string) => s } },
+        { provide: PerformanceMetricsService, useValue: performanceMetricsServiceMock },
+        { provide: QueueMetricsService, useValue: queueMetricsServiceMock },
+        { provide: AgentRuntimeConfigService, useValue: agentRuntimeConfigServiceMock },
+        { provide: IncidentOpsService, useValue: incidentOpsServiceMock },
+        { provide: BudgetControllerService, useValue: budgetControllerServiceMock },
         { provide: TraceSummaryService, useValue: { record: jest.fn().mockResolvedValue(undefined), updateQuality: jest.fn().mockResolvedValue(undefined) } },
         { provide: AutonomyPolicyService, useValue: { getCompanyAutonomyLevel: jest.fn().mockResolvedValue("AUTONOMOUS") } },
         { provide: TruthfulnessEngineService, useValue: { calculateTraceTruthfulness: jest.fn().mockResolvedValue(20) } },
@@ -435,6 +471,52 @@ describe("SupervisorAgent", () => {
     );
   });
 
+  it("returns runtimeBudget in response and audit metadata when budget governor denies execution", async () => {
+    budgetControllerServiceMock.evaluateRuntimeBudget.mockResolvedValueOnce({
+      outcome: "DENY",
+      reason: "TOKEN_BUDGET_EXCEEDED:agronomist:generate_tech_map_draft",
+      source: "agent_registry_max_tokens",
+      estimatedTokens: 9000,
+      budgetLimit: 8000,
+      allowedToolNames: [],
+      droppedToolNames: [RaiToolName.GenerateTechMapDraft],
+      ownerRoles: ["agronomist"],
+    });
+
+    const result = await agent.orchestrate(
+      {
+        message: "сделай техкарту",
+        toolCalls: [
+          {
+            name: RaiToolName.GenerateTechMapDraft,
+            payload: { fieldRef: "field-42", seasonRef: "season-42", crop: "rapeseed" },
+          },
+        ],
+      },
+      "company-1",
+      "user-1",
+    );
+
+    expect(result.runtimeBudget).toEqual(
+      expect.objectContaining({
+        outcome: "DENY",
+        droppedToolNames: [RaiToolName.GenerateTechMapDraft],
+      }),
+    );
+    expect(result.toolCalls).toEqual([]);
+    expect(prismaServiceMock.aiAuditEntry.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          metadata: expect.objectContaining({
+            runtimeBudget: expect.objectContaining({
+              outcome: "DENY",
+            }),
+          }),
+        }),
+      }),
+    );
+  });
+
   describe("Truthfulness runtime pipeline", () => {
     let traceSummaryMock: { record: jest.Mock; updateQuality: jest.Mock };
     let truthfulnessMock: { calculateTraceTruthfulness: jest.Mock };
@@ -490,6 +572,11 @@ describe("SupervisorAgent", () => {
             },
           },
           { provide: SensitiveDataFilterService, useValue: { mask: (s: string) => s } },
+          { provide: PerformanceMetricsService, useValue: performanceMetricsServiceMock },
+          { provide: QueueMetricsService, useValue: queueMetricsServiceMock },
+          { provide: AgentRuntimeConfigService, useValue: agentRuntimeConfigServiceMock },
+          { provide: IncidentOpsService, useValue: incidentOpsServiceMock },
+          { provide: BudgetControllerService, useValue: budgetControllerServiceMock },
           { provide: TraceSummaryService, useValue: overrides?.traceSummary ?? traceSummaryMock },
           { provide: AutonomyPolicyService, useValue: { getCompanyAutonomyLevel: jest.fn().mockResolvedValue("AUTONOMOUS") } },
           { provide: TruthfulnessEngineService, useValue: overrides?.truthfulness ?? truthfulnessMock },
@@ -512,6 +599,7 @@ describe("SupervisorAgent", () => {
         evidenceCoveragePct: 90,
         invalidClaimsPct: 5,
         accounting: { total: 20, evidenced: 18, verified: 15, unverified: 4, invalid: 1 },
+        qualityStatus: "READY",
       });
       const ag = await buildAgent();
 
@@ -530,12 +618,13 @@ describe("SupervisorAgent", () => {
       );
     });
 
-    it("no-evidence path: движок вернул 100 → updateQuality получает bsScorePct=100, coverage=0", async () => {
+    it("no-evidence path: движок возвращает pending quality и updateQuality не подменяет цифры", async () => {
       truthfulnessMock.calculateTraceTruthfulness.mockResolvedValue({
-        bsScorePct: 100,
-        evidenceCoveragePct: 0,
-        invalidClaimsPct: 0,
+        bsScorePct: null,
+        evidenceCoveragePct: null,
+        invalidClaimsPct: null,
         accounting: { total: 0, evidenced: 0, verified: 0, unverified: 0, invalid: 0 },
+        qualityStatus: "PENDING_EVIDENCE",
       });
       const ag = await buildAgent();
 
@@ -543,7 +632,7 @@ describe("SupervisorAgent", () => {
       await new Promise((r) => setTimeout(r, 10));
 
       expect(traceSummaryMock.updateQuality).toHaveBeenCalledWith(
-        expect.objectContaining({ bsScorePct: 100, evidenceCoveragePct: 0 }),
+        expect.objectContaining({ bsScorePct: null, evidenceCoveragePct: null, invalidClaimsPct: null }),
       );
     });
 

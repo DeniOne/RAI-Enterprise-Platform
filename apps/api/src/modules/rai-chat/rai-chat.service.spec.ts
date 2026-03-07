@@ -30,6 +30,11 @@ import { PendingActionService } from "./security/pending-action.service";
 import { SensitiveDataFilterService } from "./security/sensitive-data-filter.service";
 import { TraceSummaryService } from "./trace-summary.service";
 import { AutonomyPolicyService } from "./autonomy-policy.service";
+import { PerformanceMetricsService } from "./performance/performance-metrics.service";
+import { QueueMetricsService } from "./performance/queue-metrics.service";
+import { BudgetControllerService } from "./security/budget-controller.service";
+import { IncidentOpsService } from "./incident-ops.service";
+import { TruthfulnessEngineService } from "./truthfulness-engine.service";
 
 describe("RaiChatService", () => {
   let service: RaiChatService;
@@ -87,8 +92,13 @@ describe("RaiChatService", () => {
         RiskPolicyEngineService,
         PendingActionService,
         { provide: SensitiveDataFilterService, useValue: { mask: (s: string) => s } },
+        { provide: PerformanceMetricsService, useValue: { recordLatency: jest.fn().mockResolvedValue(undefined), recordError: jest.fn().mockResolvedValue(undefined) } },
+        { provide: QueueMetricsService, useValue: { beginRuntimeExecution: jest.fn().mockResolvedValue(undefined), endRuntimeExecution: jest.fn().mockResolvedValue(undefined) } },
+        { provide: BudgetControllerService, useValue: { evaluateRuntimeBudget: jest.fn().mockResolvedValue({ outcome: "ALLOW", reason: "WITHIN_BUDGET", source: "agent_registry_max_tokens", estimatedTokens: 0, budgetLimit: null, allowedToolNames: [], droppedToolNames: [], ownerRoles: [] }) } },
+        { provide: IncidentOpsService, useValue: { logIncident: jest.fn() } },
         { provide: TraceSummaryService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
         { provide: AutonomyPolicyService, useValue: { getCompanyAutonomyLevel: jest.fn().mockResolvedValue("AUTONOMOUS") } },
+        { provide: TruthfulnessEngineService, useValue: { calculateTraceTruthfulness: jest.fn().mockResolvedValue({ bsScorePct: 0, evidenceCoveragePct: 0, invalidClaimsPct: 0 }) } },
       ],
     }).compile();
 

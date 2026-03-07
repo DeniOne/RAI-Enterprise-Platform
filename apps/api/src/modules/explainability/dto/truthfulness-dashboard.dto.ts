@@ -37,6 +37,24 @@ export class TruthfulnessWorstTraceDto {
   createdAt: string;
 }
 
+export class CriticalPathDashboardDto {
+  @IsString()
+  traceId: string;
+
+  @IsString()
+  phase: string;
+
+  @IsNumber()
+  durationMs: number;
+
+  @IsNumber()
+  @IsOptional()
+  totalDurationMs: number | null;
+
+  @IsISO8601()
+  createdAt: string;
+}
+
 export class TruthfulnessDashboardResponseDto {
   @IsString()
   companyId: string;
@@ -44,17 +62,20 @@ export class TruthfulnessDashboardResponseDto {
   @IsNumber()
   @Min(0)
   @Max(100)
-  avgBsScore: number;
+  @IsOptional()
+  avgBsScore: number | null;
 
   @IsNumber()
   @Min(0)
   @Max(100)
-  p95BsScore: number;
+  @IsOptional()
+  p95BsScore: number | null;
 
   @IsNumber()
   @Min(0)
   @Max(100)
-  avgEvidenceCoverage: number;
+  @IsOptional()
+  avgEvidenceCoverage: number | null;
 
   @IsNumber()
   @Min(0)
@@ -73,5 +94,15 @@ export class TruthfulnessDashboardResponseDto {
   @ValidateNested({ each: true })
   @Type(() => TruthfulnessWorstTraceDto)
   worstTraces: TruthfulnessWorstTraceDto[];
-}
 
+  @IsNumber()
+  qualityKnownTraceCount: number;
+
+  @IsNumber()
+  qualityPendingTraceCount: number;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CriticalPathDashboardDto)
+  criticalPath: CriticalPathDashboardDto[];
+}

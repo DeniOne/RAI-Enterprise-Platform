@@ -2,14 +2,47 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { ChangeOrderType } from "@rai/prisma-client";
 import { TechMapBudgetService } from "../../tech-map/economics/tech-map-budget.service";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
-import { RaiToolActorContext } from "../tools/rai-tools.types";
+import {
+  RaiToolActorContext,
+  RaiToolCall,
+  RaiToolName,
+  TOOL_RISK_MAP,
+} from "../tools/rai-tools.types";
 import { BudgetExceededError } from "./budget-exceeded.error";
+import { AgentRegistryService, AgentRuntimeRole } from "../agent-registry.service";
+
+export type RuntimeBudgetOutcome = "ALLOW" | "DEGRADE" | "DENY";
+
+export interface RuntimeBudgetDecision {
+  outcome: RuntimeBudgetOutcome;
+  reason: string;
+  source: "agent_registry_max_tokens" | "replay_bypass";
+  estimatedTokens: number;
+  budgetLimit: number | null;
+  allowedToolNames: RaiToolName[];
+  droppedToolNames: RaiToolName[];
+  ownerRoles: AgentRuntimeRole[];
+}
+
+const TOOL_TOKEN_COST: Record<RaiToolName, number> = {
+  [RaiToolName.EchoMessage]: 300,
+  [RaiToolName.WorkspaceSnapshot]: 500,
+  [RaiToolName.ComputeDeviations]: 3000,
+  [RaiToolName.ComputePlanFact]: 2500,
+  [RaiToolName.EmitAlerts]: 3500,
+  [RaiToolName.GenerateTechMapDraft]: 9000,
+  [RaiToolName.SimulateScenario]: 5000,
+  [RaiToolName.ComputeRiskAssessment]: 3000,
+  [RaiToolName.GetWeatherForecast]: 1200,
+  [RaiToolName.QueryKnowledge]: 3500,
+};
 
 @Injectable()
 export class BudgetControllerService {
   constructor(
     private readonly budgetService: TechMapBudgetService,
     private readonly prisma: PrismaService,
+    private readonly agentRegistry: AgentRegistryService,
   ) {}
 
   /**
@@ -63,5 +96,112 @@ export class BudgetControllerService {
       return { allowed: true, requiresValidation: false };
     }
     return { allowed: true, requiresValidation: true };
+  }
+
+  async evaluateRuntimeBudget(
+    requestedToolCalls: RaiToolCall[],
+    actorContext: RaiToolActorContext,
+  ): Promise<RuntimeBudgetDecision> {
+    if (actorContext.replayMode) {
+      return {
+        outcome: "ALLOW",
+        reason: "REPLAY_BYPASS",
+        source: "replay_bypass",
+        estimatedTokens: this.sumToolCosts(requestedToolCalls.map((call) => call.name)),
+        budgetLimit: null,
+        allowedToolNames: requestedToolCalls.map((call) => call.name),
+        droppedToolNames: [],
+        ownerRoles: [],
+      };
+    }
+
+    if (requestedToolCalls.length === 0) {
+      return {
+        outcome: "ALLOW",
+        reason: "NO_TOOL_CALLS",
+        source: "agent_registry_max_tokens",
+        estimatedTokens: 0,
+        budgetLimit: null,
+        allowedToolNames: [],
+        droppedToolNames: [],
+        ownerRoles: [],
+      };
+    }
+
+    const registry = await this.agentRegistry.getRegistry(actorContext.companyId);
+    const ownersByTool = new Map(
+      registry.flatMap((entry) =>
+        entry.runtime.tools.map((tool) => [tool, entry] as const),
+      ),
+    );
+
+    const ownerBudgets = new Map<AgentRuntimeRole, number>();
+    const selected: RaiToolName[] = [];
+    const dropped: RaiToolName[] = [];
+    const ownerRoles = new Set<AgentRuntimeRole>();
+
+    for (const call of requestedToolCalls) {
+      const owner = ownersByTool.get(call.name);
+      if (!owner) {
+        selected.push(call.name);
+        continue;
+      }
+
+      ownerRoles.add(owner.definition.role);
+      const current = ownerBudgets.get(owner.definition.role) ?? 0;
+      const next = current + this.estimateToolCost(call.name);
+      const limit = owner.runtime.maxTokens;
+      if (next <= limit) {
+        ownerBudgets.set(owner.definition.role, next);
+        selected.push(call.name);
+        continue;
+      }
+
+      const risk = TOOL_RISK_MAP[call.name]?.riskLevel ?? "READ";
+      const hasSelectedForOwner = selected.some(
+        (toolName) => ownersByTool.get(toolName)?.definition.role === owner.definition.role,
+      );
+      if (risk !== "READ" || !hasSelectedForOwner) {
+        return {
+          outcome: "DENY",
+          reason: `TOKEN_BUDGET_EXCEEDED:${owner.definition.role}:${call.name}`,
+          source: "agent_registry_max_tokens",
+          estimatedTokens: this.sumToolCosts(requestedToolCalls.map((item) => item.name)),
+          budgetLimit: limit,
+          allowedToolNames: selected,
+          droppedToolNames: [...dropped, call.name],
+          ownerRoles: [...ownerRoles],
+        };
+      }
+
+      dropped.push(call.name);
+    }
+
+    return {
+      outcome: dropped.length > 0 ? "DEGRADE" : "ALLOW",
+      reason: dropped.length > 0 ? "TOKEN_BUDGET_DEGRADED" : "WITHIN_BUDGET",
+      source: "agent_registry_max_tokens",
+      estimatedTokens: this.sumToolCosts(selected),
+      budgetLimit:
+        ownerRoles.size > 0
+          ? Math.min(
+              ...[...ownerRoles].map(
+                (role) =>
+                  registry.find((entry) => entry.definition.role === role)?.runtime.maxTokens ?? Number.MAX_SAFE_INTEGER,
+              ),
+            )
+          : null,
+      allowedToolNames: selected,
+      droppedToolNames: dropped,
+      ownerRoles: [...ownerRoles],
+    };
+  }
+
+  private estimateToolCost(toolName: RaiToolName): number {
+    return TOOL_TOKEN_COST[toolName] ?? 1000;
+  }
+
+  private sumToolCosts(toolNames: RaiToolName[]): number {
+    return toolNames.reduce((sum, toolName) => sum + this.estimateToolCost(toolName), 0);
   }
 }

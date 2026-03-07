@@ -8,7 +8,7 @@ owners: [@techlead]
 last_updated: 2026-03-05
 ---
 
-# ANTIGRAVITY SOFTWARE FACTORY
+# SOFTWARE FACTORY
 ## ORCHESTRATOR PROMPT — ИНСТРУКЦИИ ДЛЯ КОДЕРА
 
 ## 1. ОБЯЗАТЕЛЬНОЕ ЧТЕНИЕ (ПЕРЕД НАЧАЛОМ)

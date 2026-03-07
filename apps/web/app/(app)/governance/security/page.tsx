@@ -132,6 +132,24 @@ export default function GovernanceSecurityPage() {
             desc="BS%-инциденты качества"
             icon={<ShieldCheck size={20} />}
           />
+          <CounterBox
+            label="Autonomy Policy"
+            value={counters?.autonomyPolicyIncidents ?? 0}
+            desc="Autonomy/policy incidents"
+            icon={<ShieldAlert size={20} />}
+          />
+          <CounterBox
+            label="Open Incidents"
+            value={counters?.openIncidents ?? 0}
+            desc="Открытый lifecycle"
+            icon={<Eye size={20} />}
+          />
+          <CounterBox
+            label="Runbooks"
+            value={counters?.runbookExecutedIncidents ?? 0}
+            desc="Runbook-executed incidents"
+            icon={<CheckCircle2 size={20} />}
+          />
           {counters?.byType && Object.entries(counters.byType).map(([type, n]) => (
             <CounterBox
               key={type}

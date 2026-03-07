@@ -3,6 +3,58 @@
 
 ## Активные промты (в работе)
 
+- `interagency/prompts/2026-03-07_a_rai-s23_live-api-smoke.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-07_a_rai-s23_live-api-smoke_report.md`
+  - Статус: DONE. `apps/api/test/a_rai-live-api-smoke.spec.ts` поднимает реальный feature-module graph (`RaiChatModule + ExplainabilityPanelModule`) через `createNestApplication()` и проверяет через `supertest` канонический Stage 2 API slice: `GET /api/rai/explainability/queue-pressure`, `GET /api/rai/incidents/feed`, `GET /api/rai/agents/config`, `POST /api/rai/agents/config/change-requests`, плюс negative case `POST /api/rai/agents/config -> 404`. По дороге закрыты реальные wiring gaps: `RaiChatModule -> MemoryModule`, `MemoryModule -> AuditModule`, export `AutonomyPolicyService`. Tenant-scoped и governed semantics проверяются явно. `tsc` PASS, targeted smoke PASS. [APPROVED]
+
+- `interagency/prompts/2026-03-07_a_rai-s22_queue-backpressure-visibility.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-07_a_rai-s22_queue-backpressure-visibility_report.md`
+  - Статус: DONE. `AgentRuntimeService` теперь пишет per-instance live queue snapshots в `QueueMetricsService` из канонического runtime path; `QueueMetricsService` агрегирует tenant-wide latest state по `queueName + instanceId` и считает `pressureState / totalBacklog / hottestQueue / observedQueues` из persisted `PerformanceMetric` rows без synthetic fallback; `GET /rai/explainability/queue-pressure` и `Control Tower` показывают live runtime pressure/backlog/freshness. Multi-instance producer-side proof добавлен. `tsc` (api+web) PASS, targeted API jest PASS, targeted web jest PASS. [APPROVED]
+
+- `interagency/prompts/2026-03-07_a_rai-s21_runtime-spine-integration.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-07_a_rai-s21_runtime-spine-integration_report.md`
+  - Статус: DONE. Добавлен integration suite `runtime-spine.integration.spec.ts`, который прогоняет реальный путь `Supervisor -> Runtime -> Registry/Governance/Budget/Policy -> Audit/Trace` через `SupervisorAgent`, `AgentRuntimeService`, `RaiToolsRegistry`, `AgentRegistryService`, `BudgetControllerService`, `AgentRuntimeConfigService`, `TraceSummaryService` и `IncidentOpsService` на in-memory persistence harness. Доказаны happy-path, `budget deny` и governed registry block path. `tsc` PASS, targeted jest PASS. [APPROVED]
+
+- `interagency/prompts/2026-03-07_a_rai-s20_agent-configurator-closeout.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-07_a_rai-s20_agent-configurator-closeout_report.md`
+  - Статус: DONE. `control-tower/agents` больше не построен вокруг `global/tenantOverrides + toggle`, а читает runtime-aware `agents[]` read model с `runtime.source`, `bindingsSource`, `tenantAccess`, `capabilities` и `tools`. Client contract в `apps/web/lib/api.ts` больше не экспортирует configurator `toggle`, legacy backend toggle path удалён, а surface оставляет только governed `createChangeRequest`. HTTP proof на effective registry-aware read model и `404` для старого toggle path добавлен. `tsc` PASS, targeted jest PASS. [APPROVED]
+
+- `interagency/prompts/2026-03-07_a_rai-s19_quality-governance-loop.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-07_a_rai-s19_quality-governance-loop_report.md`
+  - Статус: DONE. `ExplainabilityPanelService` теперь считает live `Correction Rate` из decision-scoped persisted advisory feedback с дедупликацией по `traceId`, `AutonomyPolicyService` форсирует `QUALITY_ALERT -> QUARANTINE` как fail-safe поверх BS%-окна, а `IncidentOpsService` отдаёт lifecycle-aware governance counters/feed по quality/autonomy/policy incidents. `/control-tower` и `/governance/security` показывают эти source-of-truth-backed значения без synthetic fallback. `tsc` PASS, targeted jest PASS. [APPROVED]
+
+- `interagency/prompts/2026-03-07_a_rai-s18_budget-controller-runtime.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-07_a_rai-s18_budget-controller-runtime_report.md`
+  - Статус: DONE. `BudgetControllerService` теперь читает persisted `agentRegistry.maxTokens` и возвращает runtime outcomes `ALLOW / DEGRADE / DENY`; `AgentRuntimeService` применяет решение до fan-out, реально режет/блокирует tool execution и пишет budget incidents; `SupervisorAgent`/`ResponseComposer` довозят `runtimeBudget` до response и `AiAuditEntry.metadata`. `tsc` PASS, targeted jest PASS. [APPROVED]
+
+- `interagency/prompts/2026-03-07_a_rai-s17_control-tower-honesty.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-07_a_rai-s17_control-tower-honesty_report.md`
+  - Статус: DONE. `SupervisorAgent` теперь persist’ит `metadata.evidence` в `AiAuditEntry`, `TruthfulnessEngineService` считает `BS%`/coverage из persisted evidence trail и возвращает `pending`, а не synthetic fallback. `ExplainabilityPanelService` и `/control-tower` показывают честные nullable quality-метрики, `Acceptance Rate`, `qualityKnown/pending` counters и `criticalPath` visibility; `Correction Rate` оставлен `null/N/A`, потому что live source ещё не инструментирован. `tsc` PASS, targeted jest PASS. [APPROVED]
+
+- `interagency/prompts/2026-03-07_a_rai-s16_eval-productionization.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-07_a_rai-s16_eval-productionization_report.md`
+  - Статус: DONE. Добавлен persisted `EvalRun` contract с corpus summary, case-level results и verdict basis; governance path теперь привязывает `change request` к конкретному eval run/evidence через `evalRunId`. `GoldenTestRunnerService` различает `APPROVED / REVIEW_REQUIRED / ROLLBACK` по regressions и coverage, а agent-specific golden sets расширены для канонических агентов. `tsc` PASS, targeted jest PASS. [APPROVED]
+
+- `interagency/prompts/2026-03-07_a_rai-s15_registry-persisted-bindings.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-07_a_rai-s15_registry-persisted-bindings_report.md`
+  - Статус: DONE. Добавлены persisted Prisma-модели `AgentCapabilityBinding` и `AgentToolBinding`; `AgentRegistryService` теперь строит effective runtime bindings из БД и помечает bootstrap как явный fallback. `AgentRuntimeConfigService` больше не использует `TOOL_RUNTIME_MAP` как primary authority path и резолвит доступ к tool через persisted registry. Governed promotion/restore синхронизируют bindings и пишут audit `AGENT_BINDINGS_SYNCED`. `tsc` PASS, targeted jest PASS. [APPROVED]
+
+- `interagency/prompts/2026-03-07_a_rai-s14_prompt-governance-closeout.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-07_a_rai-s14_prompt-governance-closeout_report.md`
+  - Статус: DONE. Canonical control-plane contract переведён на `POST /rai/agents/config/change-requests` и `.../change-requests/:id/...`; legacy direct-write path `POST /rai/agents/config` убран. Добавлен controller-level HTTP proof на create request, degraded canary rollback, tenant-bypass denial и отсутствие старого write path. UI `control-tower/agents` переписан в change-request-centric семантику. `tsc` PASS, targeted jest PASS. [APPROVED]
+
+- `interagency/prompts/2026-03-07_a_rai-s13_autonomy-policy-incidents-runbooks.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-07_a_rai-s13_autonomy-policy-incidents-runbooks_report.md`
+  - Статус: DONE. Введены live incident types `AUTONOMY_QUARANTINE`, `AUTONOMY_TOOL_FIRST`, `POLICY_BLOCKED_CRITICAL_ACTION`, `PROMPT_CHANGE_ROLLBACK`; `SystemIncident` получил explicit `status`, добавлен persisted `IncidentRunbookExecution`, runtime path `RaiToolsRegistry` и governed rollback path теперь пишут autonomy/policy incidents. Добавлен endpoint `POST /rai/incidents/:id/runbook` с исполняемыми actions `REQUIRE_HUMAN_REVIEW` и `ROLLBACK_CHANGE_REQUEST`. Prisma generate/build PASS, `tsc` PASS, targeted jest PASS. [APPROVED]
+
+- `interagency/prompts/2026-03-07_a_rai-r12_prompt-governance-reality.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-07_a_rai-r12_prompt-governance-reality_report.md`
+  - Статус: DONE. Введён persisted workflow `AgentConfigChangeRequest` и `AgentPromptGovernanceService`: `change request -> eval -> canary -> promote/rollback`. `POST /rai/agents/config` больше не пишет production config напрямую, service-level bypass на production write закрыт, `toggle(true)` заблокирован, canary degradation ведёт к rollback/quarantine, `GoldenTestRunnerService` переведён на agent/candidate-aware eval logic. Prisma generate/build PASS, `tsc` PASS, targeted jest PASS. [APPROVED]
+
+- `interagency/prompts/2026-03-07_a_rai-r10_registry-domain-model.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-07_a_rai-r10_registry-domain-model_report.md`
+  - Статус: DONE. `AgentRegistryService` принят как first-class authority-слой для `agronomist/economist/knowledge/monitoring`; runtime config читается из registry-domain layer, `AgentConfiguration` переведён в legacy storage/projection, `catalog` auto-enable без persisted authority убран, API `role` замкнут на канонический домен. `tsc` PASS, targeted jest PASS (26 tests). [APPROVED]
+
 - `interagency/prompts/2026-03-05_a_rai-r3_truthfulness-runtime-trigger.md` [READY_FOR_REVIEW]
   - Отчёт: `interagency/reports/2026-03-05_a_rai-r3_truthfulness-runtime-trigger.md`
   - Статус: READY_FOR_REVIEW. Гонка устранена (`writeAiAuditEntry` -> `await`). `bsScorePct ?? 0` фальшивый fallback убран (dvigok честно отдает 100). replayMode блокирует вызов truthfulness. 5 новых тестов `Truthfulness runtime pipeline` добавлены. tsc PASS, targeted jest (supervisor, truthfulness) PASS.

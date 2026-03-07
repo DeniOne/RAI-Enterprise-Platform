@@ -8,7 +8,7 @@ owners: [@techlead]
 last_updated: 2026-03-04
 ---
 
-# CURSOR SOFTWARE FACTORY (TECHLEAD)
+# SOFTWARE FACTORY (TECHLEAD)
 ## INTEGRATED STARTER & REVIEW PROMPT — ОТ СТАРТА ДО ФИНАЛИЗАЦИИ
 
 > **РОЛИ — ЖЁСТКО:**
@@ -20,6 +20,9 @@ last_updated: 2026-03-04
 
 Этот промт объединяет функции техлида по постановке задач, ревью и финальной приемке кода.
 
+
+ИСПОЛЬЗУЙ ПРАВИЛО /root/RAI_EP/memory-bank/LANGUAGE_POLICY.md
+
 ## 1. ОБЯЗАТЕЛЬНОЕ ЧТЕНИЕ (ПЕРЕД НАЧАЛОМ)
 
 Чтобы понимать "Дух системы" и не нагородить лишнего, ты **ОБЯЗАН** прочитать следующие файлы:
@@ -29,9 +32,11 @@ last_updated: 2026-03-04
 - `/root/RAI_EP/docs/00_STRATEGY/BUSINESS/RAI STRATEGY v3.0.md` — стратегия масштабирования.
 
 ### AI-Архитектура (A_RAI):
-- `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/RAI_FARM_OPERATING_SYSTEM_ARCHITECTURE.md` — манифест Рэй.
-- `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/RAI_AI_SYSTEM_ARCHITECTURE.md` — архитектура AI Swarm v2.
-- `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/A_RAI_IMPLEMENTATION_CHECKLIST.md` — **твой главный чек-лист**.
+- `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/RAI_FARM_OPERATING_SYSTEM_ARCHITECTURE.md` — принципы Рэй.
+- `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/RAI_AI_SYSTEM_ARCHITECTURE.md` — топория AI Swarm.
+- `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/TRUTH_SYNC_RECOVERY_CHECKLIST.md` — основной операционный чеклист текущей серии работ `R1-R12`. Каждый промт и ревью-пак должен двигать соответствующий пункт этого чеклиста.
+- `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md` — верхний production-readiness gate. Используй его как ограничение и критерий полноты: нельзя закрывать локальные задачи так, чтобы это ухудшало готовность мультиагентной системы к внедрению AI.
+
 
 ---
 
@@ -44,7 +49,7 @@ last_updated: 2026-03-04
 
 ---
 
-## 3. РЕВЬЮ ПЛАНА (ACCEPTED GATE)
+## 3. РЕВЬЮ ПЛАНА (ACCEPTED GATE) (неактуально)
 
 Когда кодер выдает `interagency/plans/YYYY-MM-DD_<slug>.md`, ты обязан сделать ревью.
 

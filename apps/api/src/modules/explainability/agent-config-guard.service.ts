@@ -2,11 +2,13 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import {
   GoldenTestRunnerService,
+  type AgentEvalCandidate,
   type EvalRunResult,
 } from "../rai-chat/eval/golden-test-runner.service";
 import type { UpsertAgentConfigDto } from "./dto/agent-config.dto";
+import type { AgentRuntimeRole } from "../rai-chat/agent-registry.service";
 
-const ROLE_TO_AGENT_NAME: Record<string, string> = {
+const ROLE_TO_AGENT_NAME: Record<AgentRuntimeRole, string> = {
   agronomist: "AgronomAgent",
   economist: "EconomistAgent",
   knowledge: "KnowledgeAgent",
@@ -24,8 +26,33 @@ export class AgentConfigGuardService {
     companyId: string,
     dto: UpsertAgentConfigDto,
   ): Promise<EvalRunResult | null> {
+    const evalResult = await this.evaluateChange(companyId, dto);
+    if (evalResult && evalResult.verdict !== "APPROVED") {
+      throw new BadRequestException({
+        code: "EVAL_GATE_FAILED",
+        message: `Конфиг агента ${dto.role} не прошёл preflight eval.`,
+        evalResult,
+      });
+    }
+    return evalResult;
+  }
+
+  async evaluateChange(
+    companyId: string,
+    dto: UpsertAgentConfigDto,
+    options?: { changeRequestId?: string | null },
+  ): Promise<EvalRunResult | null> {
     await this.assertModelNotQuarantined(companyId, dto.llmModel);
-    return this.runEvalIfSupported(dto.role);
+    const candidate = {
+      role: dto.role,
+      promptVersion: dto.systemPrompt,
+      modelName: dto.llmModel,
+      maxTokens: dto.maxTokens,
+      capabilities: dto.capabilities,
+      tools: dto.tools,
+      isActive: dto.isActive ?? true,
+    };
+    return this.runEvalIfSupported(companyId, dto.role, candidate, options);
   }
 
   async assertToggleAllowed(
@@ -65,23 +92,34 @@ export class AgentConfigGuardService {
     }
   }
 
-  private runEvalIfSupported(role: string): EvalRunResult | null {
+  private async runEvalIfSupported(
+    companyId: string,
+    role: AgentRuntimeRole,
+    candidate: AgentEvalCandidate,
+    options?: { changeRequestId?: string | null },
+  ): Promise<EvalRunResult | null> {
     const agentName = ROLE_TO_AGENT_NAME[role];
-    if (!agentName) {
-      return null;
-    }
     const goldenSet = this.goldenTestRunner.loadGoldenSet(agentName);
     if (goldenSet.length === 0) {
       return null;
     }
-    const evalResult = this.goldenTestRunner.runEval(agentName, goldenSet);
-    if (evalResult.verdict !== "APPROVED") {
-      throw new BadRequestException({
-        code: "EVAL_GATE_FAILED",
-        message: `Конфиг агента ${role} не прошёл preflight eval.`,
-        evalResult,
-      });
-    }
-    return evalResult;
+    const evalRun = this.goldenTestRunner.runEval(agentName, goldenSet, candidate);
+    await this.prisma.evalRun.create({
+      data: {
+        id: evalRun.id,
+        companyId,
+        changeRequestId: options?.changeRequestId ?? null,
+        role,
+        agentName,
+        promptVersion: evalRun.promptVersion,
+        modelName: evalRun.modelName,
+        candidateConfig: candidate as any,
+        corpusSummary: evalRun.corpusSummary as any,
+        caseResults: evalRun.caseResults as any,
+        verdict: evalRun.verdict,
+        verdictBasis: evalRun.verdictBasis as any,
+      },
+    });
+    return evalRun;
   }
 }

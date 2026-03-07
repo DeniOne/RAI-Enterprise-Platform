@@ -102,13 +102,13 @@
 - [x] Claim `SLO / performance observability` улучшен
 
 ### R10. Registry Domain Model
-- [ ] Создан промт
-- [ ] Получен ревью-пак
-- [ ] Появились first-class сущности registry-домена
-- [ ] Старый `AgentConfiguration` либо мигрирован, либо честно объявлен legacy
-- [ ] API registry соответствует доменной модели, а не CRUD-иллюзии
-- [~] Техлидский вердикт: `PARTIAL`
-- [ ] Claim `Phase 4.6 registry model` улучшен
+- [x] Создан промт
+- [x] Получен ревью-пак
+- [x] Появились first-class сущности registry-домена
+- [x] Старый `AgentConfiguration` либо мигрирован, либо честно объявлен legacy
+- [x] API registry соответствует доменной модели, а не CRUD-иллюзии
+- [x] Техлидский вердикт: `APPROVED`
+- [x] Claim `Phase 4.6 registry model` улучшен
 
 ### R11. Registry Runtime Enforcement
 - [x] Выполнено в режиме `dual-role` без отдельного prompt/report
@@ -122,9 +122,9 @@
 - [x] Выполнен минимальный `dual-role` gate без отдельного prompt/report
 - [x] Проверено, что eval/golden tests больше не pure-stub-only
 - [x] Проверено, что config change проходит через eval verdict
-- [~] Проверено, что canary / rollback gate частично участвует в workflow
-- [~] Техлидский вердикт: `PARTIAL`
-- [ ] Claim `PromptChange RFC / EvalRun` улучшен
+- [x] Проверено, что canary / rollback gate частично участвует в workflow
+- [x] Техлидский вердикт: `APPROVED`
+- [x] Claim `PromptChange RFC / EvalRun` улучшен
 
 ## Truth-Sync Delta Checklist
 
@@ -134,23 +134,23 @@
 - [x] `Quality & Evals Panel`
 - [x] `Autonomy by BS%`
 - [x] `Governance counters / incidents feed`
-- [ ] `PromptChange RFC`
+- [x] `PromptChange RFC`
 
 ### Критичный claim, который обязан уйти из `MISSING`
-- [ ] `Phase 4.6 полноценный Agent Registry`
+- [x] `Phase 4.6 полноценный Agent Registry`
 
 ## Техлидский контроль качества
 
 - [x] Ни один `APPROVED` не выдан без producer-side теста на ключевой контракт
 - [x] Ни один claim не переведён в лучший статус без code evidence
 - [x] Ни один UI-элемент не принят как “готово”, если backend-источник метрики декоративный
-- [ ] После каждого принятого шага обновлён `TRUTH_SYNC_STAGE_2_CLAIMS.md`
-- [ ] После каждого принятого шага обновлён `interagency/INDEX.md`
-- [ ] После каждого принятого шага обновлён `memory-bank/task.md`
+- [x] После каждого принятого шага обновлён `TRUTH_SYNC_STAGE_2_CLAIMS.md`
+- [x] После каждого принятого шага обновлён `interagency/INDEX.md`
+- [x] После каждого принятого шага обновлён `memory-bank/task.md`
 
 ## Финишный критерий
 
 - [x] Truth spine `evidence -> audit -> traceSummary -> BS% -> governance` замкнут
 - [ ] `Control Tower` перестал быть витриной и стал источником правды
-- [ ] `Agent Registry` реально влияет на runtime
-- [ ] Папка `STAGE 2` больше не врёт в ключевых claims
+- [x] `Agent Registry` реально влияет на runtime
+- [~] Папка `STAGE 2` больше не врёт в ключевых claims

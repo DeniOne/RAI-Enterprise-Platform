@@ -125,6 +125,7 @@ export class SupervisorAgent {
         toolNames: executionResult.executedTools.map((t) => t.name),
         intentMethod: classification.method,
         evidence: response.evidence,
+        runtimeBudget: response.runtimeBudget,
         replayInput: {
           message: request.message,
           workspaceContext: request.workspaceContext,
@@ -193,6 +194,7 @@ export class SupervisorAgent {
     intentMethod: string;
     replayInput?: { message: string; workspaceContext?: unknown };
     evidence?: EvidenceReference[];
+    runtimeBudget?: RaiChatResponseDto["runtimeBudget"];
     phases?: Array<{ name: string; timestamp: string; durationMs: number }>;
   }): Promise<string | null> {
     const metadataObj: Record<string, unknown> = {};
@@ -204,6 +206,9 @@ export class SupervisorAgent {
     }
     if (params.evidence && params.evidence.length > 0) {
       metadataObj.evidence = params.evidence;
+    }
+    if (params.runtimeBudget) {
+      metadataObj.runtimeBudget = params.runtimeBudget;
     }
     if (params.phases && params.phases.length > 0) {
       metadataObj.phases = params.phases;

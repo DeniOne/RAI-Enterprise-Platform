@@ -95,6 +95,7 @@ export class ResponseComposerService {
       advisory: externalSignalResult.advisory,
       memoryUsed: this.buildMemoryUsed(profile, recall),
       evidence: evidence.length > 0 ? evidence : undefined,
+      runtimeBudget: executionResult.runtimeBudget,
     };
   }
 
