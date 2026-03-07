@@ -9,6 +9,9 @@ import { useWorkspaceContextStore } from '@/lib/stores/workspace-context-store';
 
 type TechMapItem = {
     id: string;
+    fieldId?: string;
+    seasonId?: string;
+    harvestPlanId?: string;
     status?: string;
     version?: number;
     crop?: string;
@@ -101,13 +104,21 @@ function PageInner() {
     });
 
     useEffect(() => {
-        setFilters({ status: 'ACTIVE' });
-    }, [setFilters]);
+        const focusedRow = activeRows.find((r) => isFocused(r));
+        setFilters({
+            status: 'ACTIVE',
+            ...(focusedRow?.item.seasonId ? { seasonId: focusedRow.item.seasonId } : {}),
+            ...(focusedRow?.item.harvestPlanId ? { harvestPlanId: focusedRow.item.harvestPlanId } : {}),
+        });
+    }, [activeRows, isFocused, setFilters]);
 
     useEffect(() => {
         const focusedRow = activeRows.find((r) => isFocused(r));
         if (focusedRow) {
-            setActiveEntityRefs([{ kind: 'techmap', id: focusedRow.item.id }]);
+            setActiveEntityRefs([
+                { kind: 'techmap', id: focusedRow.item.id },
+                ...(focusedRow.item.fieldId ? [{ kind: 'field' as const, id: focusedRow.item.fieldId }] : []),
+            ]);
             setSelectedRowSummary({
                 kind: 'techmap',
                 id: focusedRow.item.id,

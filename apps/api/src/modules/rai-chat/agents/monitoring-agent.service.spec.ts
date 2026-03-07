@@ -1,5 +1,7 @@
 import { MonitoringAgent } from "./monitoring-agent.service";
 import { RiskToolsRegistry } from "../tools/risk-tools.registry";
+import { OpenRouterGatewayService } from "../agent-platform/openrouter-gateway.service";
+import { AgentPromptAssemblyService } from "../agent-platform/agent-prompt-assembly.service";
 
 describe("MonitoringAgent", () => {
   const riskRegistryMock = { execute: jest.fn() };
@@ -12,7 +14,11 @@ describe("MonitoringAgent", () => {
       severity: "S4",
       items: [{ id: "e1", severity: "S4", reason: "r1", status: "OPEN", references: {} }],
     });
-    agent = new MonitoringAgent(riskRegistryMock as unknown as RiskToolsRegistry);
+    agent = new MonitoringAgent(
+      riskRegistryMock as unknown as RiskToolsRegistry,
+      { generate: jest.fn().mockRejectedValue(new Error("OPENROUTER_API_KEY_MISSING")) } as unknown as OpenRouterGatewayService,
+      { buildMessages: jest.fn().mockReturnValue([]) } as unknown as AgentPromptAssemblyService,
+    );
   });
 
   it("run вызывает emit_alerts с autonomous контекстом и возвращает COMPLETED с explain", async () => {

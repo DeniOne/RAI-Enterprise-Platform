@@ -57,6 +57,28 @@
 - [ ] Для каждого агента есть fallback при ошибке/таймауте.
 - [ ] Для каждого агента есть тесты happy-path и failure-path.
 
+## 3.1 Interactive Agent UX Contracts
+
+- [x] Есть хотя бы один живой managed clarification loop без засорения чата техническим текстом.
+- [x] Для этого сценария backend отдаёт structured `pendingClarification`.
+- [x] Для этого сценария backend отдаёт typed `workWindows[]`.
+- [x] Правая зона остаётся продуктовой поверхностью, а агентное окно открывается как overlay.
+- [x] Есть как минимум один `context_acquisition` window type.
+- [x] Есть как минимум один secondary hint-window type.
+- [x] Агентные окна можно не только свернуть, но и закрыть без поломки связанного window-graph.
+- [x] После добора обязательного контекста система умеет auto-resume без повторного ручного запроса.
+- [x] Есть live HTTP proof на initial clarification path.
+- [x] Есть live HTTP proof на completed resume path.
+- [x] То же поведение обобщено минимум на 2 и более agent families.
+- [x] Левый `AI Dock` собран по канону `header -> signals -> history -> composer`.
+- [x] `SignalsStrip` живёт внутри dock, а не отдельным тяжёлым мини-инбоксом.
+- [x] Legacy `widgets[]` не являются primary UX path и автоматически мигрируются в typed `workWindows[]`.
+- [x] Есть как минимум ещё 3 typed rich-output families поверх clarification windows:
+  - `structured_result`
+  - `related_signals`
+  - `comparison`
+- [x] Есть non-legacy rich-output proof path как минимум на одной agent family.
+
 ## 4. Tool Gating and Capability Control
 
 - [x] Все tool calls идут через typed registry.
@@ -162,6 +184,8 @@
 - [x] Disable agent реально выключает поведение.
 - [x] Capability narrowing реально ограничивает tool access.
 - [x] Tenant deny реально enforced в runtime.
+- [x] Future role может быть подключён через explicit adapter binding без новой hardcoded runtime branch.
+- [x] Future role binding виден в governed onboarding/config surface и HTTP read model.
 
 ## 14. Prompt Governance and Safe Evolution
 
@@ -173,6 +197,7 @@
 - [x] Есть rollback mechanism.
 - [x] Без проваленного eval нельзя считать конфиг боевым.
 - [x] Есть audit trail изменений prompt/config.
+- [x] Future role с explicit adapter binding проходит eval/governance path, а не silent skip.
 
 ## 15. Testing Readiness
 

@@ -508,3 +508,18 @@
 - [x] Изучены чеклисты `STAGE 2` (Implementation, Readiness, Truth Sync).
 - [x] Сопоставлен код с claims: обнаружено, что Agent Registry пока существует лишь как CRUD-иллюзия `AgentConfiguration` в Prisma.
 - [x] Сформирован дальнейший roadmap: реализация `R10. Registry Domain Model`.
+
+## 2026-03-07 — Stage 2 Interaction Blueprint Finalized ✅
+- [x] Закрыт `clarification / overlay / auto-resume / result windows` как production-like path.
+- [x] Unified window protocol подтверждён на reference families:
+  - `agronomist`
+  - `economist`
+  - `knowledge`
+  - `monitoring`
+- [x] Введён backend contract-layer `Focus / Intent / Required Context / UI Action`.
+- [x] `IntentRouter`, `Supervisor`, `ResponseComposer` переведены на общий interaction contract source.
+- [x] `AI Dock` приведён к IDE-подобной композиции: header, history toggle, new chat, conversation, composer.
+- [x] Legacy `widgets[]` переведены в compatibility path через `workWindows[]`.
+- [x] Window layer поддерживает `context_*`, `structured_result`, `related_signals`, `comparison`.
+- [x] Документация и handoff синхронизированы до состояния `DONE / implemented canon`.
+- [x] Memory-bank синхронизирован перед публикацией в git.

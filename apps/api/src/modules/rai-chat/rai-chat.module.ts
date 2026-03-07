@@ -46,6 +46,9 @@ import { SafeReplayService } from "./safe-replay.service";
 import { AgentRuntimeConfigService } from "./agent-runtime-config.service";
 import { AgentRegistryService } from "./agent-registry.service";
 import { MemoryModule } from "../../shared/memory/memory.module";
+import { OpenRouterGatewayService } from "./agent-platform/openrouter-gateway.service";
+import { AgentPromptAssemblyService } from "./agent-platform/agent-prompt-assembly.service";
+import { AgentExecutionAdapterService } from "./runtime/agent-execution-adapter.service";
 
 @Module({
   imports: [
@@ -75,6 +78,7 @@ import { MemoryModule } from "../../shared/memory/memory.module";
     KnowledgeAgent,
     MemoryCoordinatorService,
     AgentRuntimeService,
+    AgentExecutionAdapterService,
     ResponseComposerService,
     RaiChatService,
     SupervisorAgent,
@@ -97,6 +101,8 @@ import { MemoryModule } from "../../shared/memory/memory.module";
     SafeReplayService,
     AgentRegistryService,
     AgentRuntimeConfigService,
+    OpenRouterGatewayService,
+    AgentPromptAssemblyService,
   ],
   exports: [
     SafeReplayService,

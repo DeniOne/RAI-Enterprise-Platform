@@ -115,6 +115,75 @@ describe("AgentPromptGovernanceService", () => {
     });
   });
 
+  it("future adapter-bound role enters canary path with eval evidence", async () => {
+    configGuard.evaluateChange.mockResolvedValue({
+      id: "eval-marketer-1",
+      timestamp: new Date("2026-03-07T00:00:00.000Z"),
+      role: "marketer",
+      agentName: "KnowledgeAgent",
+      promptVersion: "prompt-v1",
+      modelName: "openai/gpt-4o-mini",
+      corpusSummary: {
+        totalCases: 1,
+        executableCases: 1,
+        passed: 1,
+        failed: 0,
+        skipped: 0,
+        coveragePct: 1,
+        regressions: [],
+      },
+      caseResults: [],
+      verdict: "APPROVED",
+      verdictBasis: {
+        failedCaseIds: [],
+        skippedCaseIds: [],
+        coveragePct: 1,
+        executableCases: 1,
+        policy: "APPROVED",
+      },
+    });
+    agentManagement.getStoredConfigSnapshot.mockResolvedValue(null);
+    (prisma.agentConfigChangeRequest.upsert as jest.Mock).mockResolvedValue({
+      id: "change-marketer-1",
+      companyId,
+      role: "marketer",
+      scope: "TENANT",
+      targetVersion: "v1",
+      requestedConfig: {
+        ...dto,
+        role: "marketer",
+      },
+      previousConfig: null,
+      status: AgentConfigChangeStatus.READY_FOR_CANARY,
+      evalVerdict: "APPROVED",
+      canaryStatus: AgentCanaryStatus.NOT_STARTED,
+      rollbackStatus: AgentRollbackStatus.NOT_REQUIRED,
+      productionDecision: AgentProductionDecision.PENDING,
+      evalRunId: "eval-marketer-1",
+      promotedAt: null,
+      rolledBackAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const result = await service.createChangeRequest(companyId, {
+      ...dto,
+      role: "marketer",
+      capabilities: ["MarketingToolsRegistry"],
+      tools: [],
+      runtimeProfile: {
+        executionAdapterRole: "knowledge",
+      },
+    }, "tenant");
+
+    expect(result.status).toBe("READY_FOR_CANARY");
+    expect(result.evalVerdict).toBe("APPROVED");
+    expect(prisma.evalRun.updateMany).toHaveBeenCalledWith({
+      where: { id: "eval-marketer-1", companyId, changeRequestId: null },
+      data: { changeRequestId: "change-marketer-1" },
+    });
+  });
+
   it("canary degradation ведёт к rollback/quarantine outcome", async () => {
     (prisma.agentConfigChangeRequest.findFirst as jest.Mock).mockResolvedValue({
       id: "change-1",

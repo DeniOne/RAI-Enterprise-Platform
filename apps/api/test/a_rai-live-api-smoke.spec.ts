@@ -14,7 +14,34 @@ jest.mock("../src/modules/tech-map/tech-map.module", () => {
   class MockTechMapModule {}
   Module({
     providers: [
-      { provide: TechMapService, useValue: {} },
+      {
+        provide: TechMapService,
+        useValue: {
+          createDraftStub: jest.fn().mockImplementation(
+            async ({
+              fieldRef,
+              seasonRef,
+              crop,
+              companyId,
+            }: {
+              fieldRef: string;
+              seasonRef: string;
+              crop: "rapeseed" | "sunflower";
+              companyId: string;
+            }) => ({
+              draftId: `draft-${fieldRef}-${seasonRef}`,
+              status: "DRAFT",
+              fieldRef,
+              seasonRef,
+              crop,
+              companyId,
+              missingMust: ["soilType", "moisture", "precursor", "stages"],
+              tasks: [],
+              assumptions: [],
+            }),
+          ),
+        },
+      },
       { provide: TechMapBudgetService, useValue: {} },
     ],
     exports: [TechMapService, TechMapBudgetService],
@@ -30,7 +57,19 @@ jest.mock("../src/modules/consulting/consulting.module", () => {
   Module({
     providers: [
       { provide: DeviationService, useValue: {} },
-      { provide: KpiService, useValue: {} },
+      {
+        provide: KpiService,
+        useValue: {
+          calculatePlanKPI: jest.fn().mockResolvedValue({
+            hasData: true,
+            roi: 0.165,
+            ebitda: 2200,
+            revenue: 4100,
+            totalActualCost: 1800,
+            totalPlannedCost: 1900,
+          }),
+        },
+      },
     ],
     exports: [DeviationService, KpiService],
   })(MockConsultingModule);
@@ -89,6 +128,7 @@ import { CostAnalyticsService } from "../src/modules/explainability/cost-analyti
 import { TraceTopologyService } from "../src/modules/explainability/trace-topology.service";
 import { SafeReplayService } from "../src/modules/rai-chat/safe-replay.service";
 import { AutonomyPolicyService } from "../src/modules/rai-chat/autonomy-policy.service";
+import { IntentRouterService } from "../src/modules/rai-chat/intent-router/intent-router.service";
 
 class TestJwtAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
@@ -192,8 +232,13 @@ describe("A_RAI live API smoke", () => {
     promoteApprovedChange: jest.fn(),
     rollbackPromotedChange: jest.fn(),
   };
+  const intentRouter = {
+    classify: jest.fn(),
+    buildAutoToolCall: jest.fn(),
+  };
 
   const prismaProxy = createPrismaProxy();
+  const prismaProxyTyped = prismaProxy as any;
   const redisMock = {
     get: jest.fn(),
     set: jest.fn(),
@@ -220,6 +265,7 @@ describe("A_RAI live API smoke", () => {
 
   beforeAll(async () => {
     process.env.JWT_SECRET = process.env.JWT_SECRET || "smoke-secret";
+    process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
 
     const moduleRef = await Test.createTestingModule({
       imports: [RaiChatModule, ExplainabilityPanelModule],
@@ -249,6 +295,8 @@ describe("A_RAI live API smoke", () => {
       .useValue(agentManagement)
       .overrideProvider(AgentPromptGovernanceService)
       .useValue(promptGovernance)
+      .overrideProvider(IntentRouterService)
+      .useValue(intentRouter)
       .overrideProvider(PrismaService)
       .useValue(prismaProxy)
       .overrideProvider(RedisService)
@@ -272,6 +320,31 @@ describe("A_RAI live API smoke", () => {
     jest.clearAllMocks();
     tenantContext.getCompanyId.mockReturnValue("company-a");
     tenantContext.getStore.mockReturnValue({ companyId: "company-a" });
+    intentRouter.classify.mockReturnValue({
+      targetRole: "knowledge",
+      intent: null,
+      toolName: null,
+      confidence: 0,
+      method: "smoke",
+      reason: "default",
+    });
+    intentRouter.buildAutoToolCall.mockReturnValue(null);
+    memoryAdapterMock.retrieve.mockResolvedValue({
+      traceId: "trace-memory",
+      total: 0,
+      positive: 0,
+      negative: 0,
+      unknown: 0,
+      items: [],
+    });
+    memoryAdapterMock.appendInteraction.mockResolvedValue(undefined);
+    memoryAdapterMock.getProfile.mockResolvedValue({});
+    memoryAdapterMock.updateProfile.mockResolvedValue(undefined);
+    (prismaProxyTyped.agentConfiguration.findUnique as jest.Mock).mockResolvedValue(null);
+    (prismaProxyTyped.agentConfiguration.findMany as jest.Mock).mockResolvedValue([]);
+    (prismaProxyTyped.agentCapabilityBinding.findMany as jest.Mock).mockResolvedValue([]);
+    (prismaProxyTyped.agentToolBinding.findMany as jest.Mock).mockResolvedValue([]);
+    (prismaProxyTyped.agentConnectorBinding.findMany as jest.Mock).mockResolvedValue([]);
   });
 
   it("GET /api/rai/explainability/queue-pressure отвечает live observability contract", async () => {
@@ -365,6 +438,106 @@ describe("A_RAI live API smoke", () => {
             source: "tenant",
             isActive: true,
           },
+          kernel: {
+            runtimeProfile: {
+              profileId: "agronomist-runtime-v1",
+              modelRoutingClass: "strong",
+              provider: "openrouter",
+              model: "gpt-4o",
+              maxInputTokens: 8000,
+              maxOutputTokens: 4000,
+              temperature: 0.2,
+              timeoutMs: 15000,
+              supportsStreaming: false,
+            },
+            memoryPolicy: {
+              policyId: "agronom-memory-v1",
+              allowedScopes: ["tenant", "domain"],
+              retrievalPolicy: "scoped_recall",
+              writePolicy: "append_summary",
+              sensitiveDataPolicy: "allow_masked_only",
+            },
+            outputContract: {
+              contractId: "agronom-v1",
+              responseSchemaVersion: "v1",
+              sections: ["summary", "evidence"],
+              requiresEvidence: true,
+              requiresDeterministicValidation: true,
+              fallbackMode: "deterministic_summary",
+            },
+            governancePolicy: {
+              policyId: "agronom-governance-v1",
+              allowedAutonomyModes: ["advisory"],
+              humanGateRules: ["write_tools_require_review"],
+              criticalActionRules: ["no_critical_actions"],
+              auditRequirements: ["trace"],
+              fallbackRules: ["use_deterministic_summary_if_llm_unavailable"],
+            },
+            toolBindings: [],
+            connectorBindings: [],
+          },
+        },
+        {
+          role: "marketer",
+          agentName: "MarketerAgent",
+          businessRole: "Campaign planning and governed recommendations",
+          ownerDomain: "marketing",
+          runtime: {
+            configId: "cfg-marketer",
+            source: "tenant",
+            bindingsSource: "persisted",
+            llmModel: "openai/gpt-4o-mini",
+            maxTokens: 8000,
+            systemPrompt: "You are marketer.",
+            capabilities: ["MarketingToolsRegistry"],
+            tools: [],
+            isActive: true,
+          },
+          tenantAccess: {
+            companyId: "company-a",
+            mode: "OVERRIDE",
+            source: "tenant",
+            isActive: true,
+          },
+          kernel: {
+            runtimeProfile: {
+              profileId: "marketer-runtime-v1",
+              modelRoutingClass: "fast",
+              provider: "openrouter",
+              model: "openai/gpt-4o-mini",
+              executionAdapterRole: "knowledge",
+              maxInputTokens: 8000,
+              maxOutputTokens: 3000,
+              temperature: 0.2,
+              timeoutMs: 15000,
+              supportsStreaming: false,
+            },
+            memoryPolicy: {
+              policyId: "marketer-memory-v1",
+              allowedScopes: ["tenant", "domain"],
+              retrievalPolicy: "scoped_recall",
+              writePolicy: "append_summary",
+              sensitiveDataPolicy: "mask",
+            },
+            outputContract: {
+              contractId: "marketer-v1",
+              responseSchemaVersion: "v1",
+              sections: ["summary", "recommendations", "evidence"],
+              requiresEvidence: true,
+              requiresDeterministicValidation: false,
+              fallbackMode: "retrieval_summary",
+            },
+            governancePolicy: {
+              policyId: "marketer-governance-v1",
+              allowedAutonomyModes: ["advisory"],
+              humanGateRules: ["campaign_launch_requires_human_gate"],
+              criticalActionRules: ["no_unreviewed_writes"],
+              auditRequirements: ["trace", "evidence"],
+              fallbackRules: ["use_read_model_summary_if_llm_unavailable"],
+            },
+            toolBindings: [],
+            connectorBindings: [],
+          },
         },
       ],
     });
@@ -373,15 +546,26 @@ describe("A_RAI live API smoke", () => {
       .get("/api/rai/agents/config")
       .expect(200);
 
-    expect(response.body.agents).toEqual([
-      expect.objectContaining({
-        role: "agronomist",
-        runtime: expect.objectContaining({
-          source: "tenant",
-          bindingsSource: "persisted",
+    expect(response.body.agents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          role: "agronomist",
+          runtime: expect.objectContaining({
+            source: "tenant",
+            bindingsSource: "persisted",
+          }),
         }),
-      }),
-    ]);
+        expect.objectContaining({
+          role: "marketer",
+          ownerDomain: "marketing",
+          kernel: expect.objectContaining({
+            runtimeProfile: expect.objectContaining({
+              executionAdapterRole: "knowledge",
+            }),
+          }),
+        }),
+      ]),
+    );
     expect(agentManagement.getAgentConfigs).toHaveBeenCalledWith("company-a");
   });
 
@@ -446,4 +630,692 @@ describe("A_RAI live API smoke", () => {
       })
       .expect(404);
   });
+
+  it("POST /api/rai/chat отдаёт clarification overlay payload для agronomist tech_map_draft без контекста", async () => {
+    intentRouter.classify.mockReturnValue({
+      targetRole: "agronomist",
+      intent: "generate_tech_map_draft",
+      toolName: "generate_tech_map_draft",
+      confidence: 0.88,
+      method: "smoke",
+      reason: "forced techmap route",
+    });
+    intentRouter.buildAutoToolCall.mockReturnValue(null);
+    (prismaProxyTyped.agentConfiguration.findUnique as jest.Mock).mockImplementation(
+      async ({
+        where,
+      }: {
+        where: { agent_config_role_company_unique: { role: string; companyId: string | null } };
+      }) => {
+        const { role, companyId } = where.agent_config_role_company_unique;
+        if (role === "agronomist" && companyId === "company-a") {
+          return {
+            id: "cfg-agronomist-company-a",
+            name: "AgronomAgent",
+            role: "agronomist",
+            systemPrompt: "You are agronomist.",
+            llmModel: "openai/gpt-4o",
+            maxTokens: 8000,
+            isActive: true,
+            companyId: "company-a",
+            capabilities: ["AgroToolsRegistry"],
+            runtimeProfile: {
+              profileId: "agronomist-runtime-v1",
+              modelRoutingClass: "strong",
+              provider: "openrouter",
+              model: "openai/gpt-4o",
+              maxInputTokens: 8000,
+              maxOutputTokens: 4000,
+              temperature: 0.2,
+              timeoutMs: 15000,
+              supportsStreaming: false,
+            },
+            memoryPolicy: {},
+            outputContract: {
+              contractId: "agronom-v1",
+              responseSchemaVersion: "v1",
+              sections: ["summary", "deterministic_basis", "assumptions", "missing_data", "evidence"],
+              requiresEvidence: true,
+              requiresDeterministicValidation: true,
+              fallbackMode: "deterministic_summary",
+            },
+            governancePolicy: {},
+            autonomyMode: "advisory",
+          };
+        }
+        return null;
+      },
+    );
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/chat")
+      .send({
+        message: "Составь черновик техкарты по озимому рапсу",
+        workspaceContext: {
+          route: "/consulting/techmaps",
+        },
+      })
+      .expect(201);
+
+    expect(response.body.agentRole).toBe("agronomist");
+    expect(response.body.text).toContain("Чтобы подготовить техкарту");
+    expect(response.body.pendingClarification).toEqual(
+      expect.objectContaining({
+        kind: "missing_context",
+        intentId: "tech_map_draft",
+      }),
+    );
+    expect(response.body.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "context_acquisition",
+          parentWindowId: null,
+          category: "clarification",
+          priority: 85,
+          mode: "panel",
+          status: "needs_user_input",
+        }),
+        expect.objectContaining({
+          type: "context_hint",
+          parentWindowId: expect.any(String),
+          category: "analysis",
+          priority: 40,
+          actions: expect.arrayContaining([
+            expect.objectContaining({
+              kind: "focus_window",
+            }),
+          ]),
+        }),
+      ]),
+    );
+  });
+
+  it("POST /api/rai/chat resume-path возвращает completed result windows для agronomist tech_map_draft", async () => {
+    (prismaProxyTyped.agentConfiguration.findUnique as jest.Mock).mockImplementation(
+      async ({
+        where,
+      }: {
+        where: { agent_config_role_company_unique: { role: string; companyId: string | null } };
+      }) => {
+        const { role, companyId } = where.agent_config_role_company_unique;
+        if (role === "agronomist" && companyId === "company-a") {
+          return {
+            id: "cfg-agronomist-company-a",
+            name: "AgronomAgent",
+            role: "agronomist",
+            systemPrompt: "You are agronomist.",
+            llmModel: "openai/gpt-4o",
+            maxTokens: 8000,
+            isActive: true,
+            companyId: "company-a",
+            capabilities: ["AgroToolsRegistry"],
+            runtimeProfile: {
+              profileId: "agronomist-runtime-v1",
+              modelRoutingClass: "strong",
+              provider: "openrouter",
+              model: "openai/gpt-4o",
+              maxInputTokens: 8000,
+              maxOutputTokens: 4000,
+              temperature: 0.2,
+              timeoutMs: 15000,
+              supportsStreaming: false,
+            },
+            memoryPolicy: {},
+            outputContract: {
+              contractId: "agronom-v1",
+              responseSchemaVersion: "v1",
+              sections: ["summary", "deterministic_basis", "assumptions", "missing_data", "evidence"],
+              requiresEvidence: true,
+              requiresDeterministicValidation: true,
+              fallbackMode: "deterministic_summary",
+            },
+            governancePolicy: {},
+            autonomyMode: "advisory",
+          };
+        }
+        return null;
+      },
+    );
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/chat")
+      .send({
+        message: "Составь черновик техкарты по озимому рапсу",
+        clarificationResume: {
+          windowId: "win-techmap-smoke",
+          intentId: "tech_map_draft",
+          agentRole: "agronomist",
+          collectedContext: {
+            fieldRef: "field-42",
+            seasonRef: "season-42",
+          },
+        },
+        workspaceContext: {
+          route: "/consulting/techmaps/active",
+          activeEntityRefs: [{ kind: "field", id: "field-42", label: "Поле 42" }],
+          filters: {
+            seasonId: "season-42",
+          },
+        },
+        threadId: "thread-smoke-techmap",
+      })
+      .expect(201);
+
+    expect(response.body.agentRole).toBe("agronomist");
+    expect(response.body.pendingClarification).toBeNull();
+    expect(response.body.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          windowId: "win-techmap-smoke",
+          type: "context_acquisition",
+          category: "result",
+          priority: 70,
+          mode: "takeover",
+          status: "completed",
+          payload: expect.objectContaining({
+            fieldRef: "field-42",
+            seasonRef: "season-42",
+            missingKeys: [],
+          }),
+        }),
+        expect.objectContaining({
+          windowId: "win-techmap-smoke-result-hint",
+          type: "context_hint",
+          parentWindowId: "win-techmap-smoke",
+          category: "result",
+          actions: expect.arrayContaining([
+            expect.objectContaining({
+              kind: "focus_window",
+              targetWindowId: "win-techmap-smoke",
+            }),
+            expect.objectContaining({
+              kind: "open_field_card",
+            }),
+            expect.objectContaining({
+              kind: "go_to_techmap",
+              targetRoute: "/consulting/techmaps/active",
+            }),
+          ]),
+        }),
+      ]),
+    );
+  });
+
+  it("POST /api/rai/chat отдаёт clarification overlay payload для economist plan-fact без контекста", async () => {
+    intentRouter.classify.mockReturnValue({
+      targetRole: "economist",
+      intent: "compute_plan_fact",
+      toolName: "compute_plan_fact",
+      confidence: 0.88,
+      method: "smoke",
+      reason: "forced finance route",
+    });
+    intentRouter.buildAutoToolCall.mockReturnValue({
+      name: "compute_plan_fact",
+      payload: {
+        scope: {},
+      },
+    });
+    (prismaProxyTyped.agentConfiguration.findUnique as jest.Mock).mockImplementation(
+      async ({
+        where,
+      }: {
+        where: { agent_config_role_company_unique: { role: string; companyId: string | null } };
+      }) => {
+        const { role, companyId } = where.agent_config_role_company_unique;
+        if (role === "economist" && companyId === "company-a") {
+          return {
+            id: "cfg-economist-company-a",
+            name: "EconomistAgent",
+            role: "economist",
+            systemPrompt: "You are economist.",
+            llmModel: "openai/gpt-4o-mini",
+            maxTokens: 8000,
+            isActive: true,
+            companyId: "company-a",
+            capabilities: ["FinanceToolsRegistry"],
+            runtimeProfile: {
+              profileId: "economist-runtime-v1",
+              modelRoutingClass: "fast",
+              provider: "openrouter",
+              model: "openai/gpt-4o-mini",
+              maxInputTokens: 8000,
+              maxOutputTokens: 3000,
+              temperature: 0.2,
+              timeoutMs: 15000,
+              supportsStreaming: false,
+            },
+            memoryPolicy: {},
+            outputContract: {
+              contractId: "economist-v1",
+              responseSchemaVersion: "v1",
+              sections: ["summary", "evidence"],
+              requiresEvidence: true,
+              requiresDeterministicValidation: false,
+              fallbackMode: "deterministic_summary",
+            },
+            governancePolicy: {},
+            autonomyMode: "advisory",
+          };
+        }
+        return null;
+      },
+    );
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/chat")
+      .send({
+        message: "Покажи план-факт по сезону",
+        workspaceContext: {
+          route: "/consulting/yield",
+        },
+      })
+      .expect(201);
+
+    expect(response.body.agentRole).toBe("economist");
+    expect(response.body.text).toContain("Чтобы показать план-факт");
+    expect(response.body.pendingClarification).toEqual(
+      expect.objectContaining({
+        kind: "missing_context",
+        intentId: "compute_plan_fact",
+        agentRole: "economist",
+      }),
+    );
+    expect(response.body.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "context_acquisition",
+          title: "Добор контекста для план-факта",
+          category: "clarification",
+          payload: expect.objectContaining({
+            intentId: "compute_plan_fact",
+            missingKeys: ["seasonId"],
+          }),
+        }),
+        expect.objectContaining({
+          type: "context_hint",
+          actions: expect.arrayContaining([
+            expect.objectContaining({
+              kind: "open_route",
+              targetRoute: "/consulting/yield",
+            }),
+          ]),
+        }),
+      ]),
+    );
+  });
+
+  it("POST /api/rai/chat отдаёт comparison work windows для economist scenario path", async () => {
+    intentRouter.classify.mockReturnValue({
+      targetRole: "economist",
+      intent: "simulate_scenario",
+      toolName: "simulate_scenario",
+      confidence: 0.91,
+      method: "smoke",
+      reason: "forced scenario route",
+    });
+    intentRouter.buildAutoToolCall.mockReturnValue({
+      name: "simulate_scenario",
+      payload: {
+        scope: {},
+      },
+    });
+    (prismaProxyTyped.agentConfiguration.findUnique as jest.Mock).mockImplementation(
+      async ({
+        where,
+      }: {
+        where: { agent_config_role_company_unique: { role: string; companyId: string | null } };
+      }) => {
+        const { role, companyId } = where.agent_config_role_company_unique;
+        if (role === "economist" && companyId === "company-a") {
+          return {
+            id: "cfg-economist-company-a",
+            name: "EconomistAgent",
+            role: "economist",
+            systemPrompt: "You are economist.",
+            llmModel: "openai/gpt-4o-mini",
+            maxTokens: 8000,
+            isActive: true,
+            companyId: "company-a",
+            capabilities: ["FinanceToolsRegistry"],
+            runtimeProfile: {
+              profileId: "economist-runtime-v1",
+              modelRoutingClass: "fast",
+              provider: "openrouter",
+              model: "openai/gpt-4o-mini",
+              maxInputTokens: 8000,
+              maxOutputTokens: 3000,
+              temperature: 0.2,
+              timeoutMs: 15000,
+              supportsStreaming: false,
+            },
+            memoryPolicy: {},
+            outputContract: {
+              contractId: "economist-v1",
+              responseSchemaVersion: "v1",
+              sections: ["summary", "evidence"],
+              requiresEvidence: true,
+              requiresDeterministicValidation: false,
+              fallbackMode: "deterministic_summary",
+            },
+            governancePolicy: {},
+            autonomyMode: "advisory",
+          };
+        }
+        return null;
+      },
+    );
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/chat")
+      .send({
+        message: "Сравни сценарий по экономике",
+        workspaceContext: {
+          route: "/consulting/yield",
+        },
+      })
+      .expect(201);
+
+    expect(response.body.agentRole).toBe("economist");
+    expect(response.body.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "comparison",
+          category: "analysis",
+          mode: "takeover",
+          payload: expect.objectContaining({
+            columns: ["Текущий сценарий", "Комментарий"],
+          }),
+        }),
+        expect.objectContaining({
+          type: "related_signals",
+          category: "signals",
+          actions: expect.arrayContaining([
+            expect.objectContaining({
+              kind: "focus_window",
+            }),
+          ]),
+        }),
+      ]),
+    );
+  });
+
+  it("POST /api/rai/chat resume-path возвращает completed result windows для economist plan-fact", async () => {
+    (prismaProxyTyped.agentConfiguration.findUnique as jest.Mock).mockImplementation(
+      async ({
+        where,
+      }: {
+        where: { agent_config_role_company_unique: { role: string; companyId: string | null } };
+      }) => {
+        const { role, companyId } = where.agent_config_role_company_unique;
+        if (role === "economist" && companyId === "company-a") {
+          return {
+            id: "cfg-economist-company-a",
+            name: "EconomistAgent",
+            role: "economist",
+            systemPrompt: "You are economist.",
+            llmModel: "openai/gpt-4o-mini",
+            maxTokens: 8000,
+            isActive: true,
+            companyId: "company-a",
+            capabilities: ["FinanceToolsRegistry"],
+            runtimeProfile: {
+              profileId: "economist-runtime-v1",
+              modelRoutingClass: "fast",
+              provider: "openrouter",
+              model: "openai/gpt-4o-mini",
+              maxInputTokens: 8000,
+              maxOutputTokens: 3000,
+              temperature: 0.2,
+              timeoutMs: 15000,
+              supportsStreaming: false,
+            },
+            memoryPolicy: {},
+            outputContract: {
+              contractId: "economist-v1",
+              responseSchemaVersion: "v1",
+              sections: ["summary", "evidence"],
+              requiresEvidence: true,
+              requiresDeterministicValidation: false,
+              fallbackMode: "deterministic_summary",
+            },
+            governancePolicy: {},
+            autonomyMode: "advisory",
+          };
+        }
+        return null;
+      },
+    );
+    (prismaProxyTyped.harvestPlan.findFirst as jest.Mock)
+      .mockResolvedValueOnce({
+        id: "plan-9",
+        status: "ACTIVE",
+        seasonId: "season-9",
+        companyId: "company-a",
+      })
+      .mockResolvedValueOnce({
+        id: "plan-9",
+        status: "ACTIVE",
+        seasonId: "season-9",
+        companyId: "company-a",
+      });
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/chat")
+      .send({
+        message: "Покажи план-факт по сезону",
+        clarificationResume: {
+          windowId: "win-planfact-smoke",
+          intentId: "compute_plan_fact",
+          agentRole: "economist",
+          collectedContext: {
+            seasonId: "season-9",
+          },
+        },
+        workspaceContext: {
+          route: "/consulting/yield",
+          filters: {
+            seasonId: "season-9",
+          },
+        },
+        threadId: "thread-smoke-planfact",
+      })
+      .expect(201);
+
+    expect(response.body.agentRole).toBe("economist");
+    expect(response.body.pendingClarification).toBeNull();
+    expect(response.body.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          windowId: "win-planfact-smoke",
+          type: "context_acquisition",
+          category: "result",
+          mode: "takeover",
+          status: "completed",
+          payload: expect.objectContaining({
+            intentId: "compute_plan_fact",
+            seasonId: "season-9",
+            missingKeys: [],
+          }),
+        }),
+        expect.objectContaining({
+          windowId: "win-planfact-smoke-result-hint",
+          type: "context_hint",
+          actions: expect.arrayContaining([
+            expect.objectContaining({
+              kind: "focus_window",
+              targetWindowId: "win-planfact-smoke",
+            }),
+            expect.objectContaining({
+              kind: "open_route",
+              targetRoute: "/consulting/yield",
+            }),
+          ]),
+        }),
+      ]),
+    );
+  });
+
+  it("POST /api/rai/chat knowledge path возвращает structured_result и related_signals окна", async () => {
+    memoryAdapterMock.getProfile.mockResolvedValueOnce({
+      lastMessagePreview: "Регламент по технике безопасности и производственной дисциплине.",
+    });
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/chat")
+      .send({
+        message: "регламент",
+        workspaceContext: {
+          route: "/knowledge/base",
+        },
+      })
+      .expect(201);
+
+    expect(response.body.agentRole).toBe("knowledge");
+    expect(response.body.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "structured_result",
+          category: "result",
+          payload: expect.objectContaining({
+            intentId: "query_knowledge",
+          }),
+        }),
+        expect.objectContaining({
+          type: "related_signals",
+          category: "signals",
+          payload: expect.objectContaining({
+            intentId: "query_knowledge",
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it("POST /api/rai/chat monitoring path возвращает related_signals и structured_result окна", async () => {
+    intentRouter.classify.mockReturnValueOnce({
+      targetRole: "monitoring",
+      intent: "emit_alerts",
+      toolName: "EmitAlerts",
+      confidence: 0.8,
+      method: "smoke",
+      reason: "forced monitoring route",
+    });
+    intentRouter.buildAutoToolCall.mockReturnValueOnce({
+      name: "EmitAlerts",
+      payload: { severity: "S4" },
+    });
+    (prismaProxyTyped.agroEscalation.findMany as jest.Mock).mockResolvedValueOnce([
+      {
+        id: "esc-1",
+        severity: "S4",
+        reason: "Резкий рост риска",
+        status: "OPEN",
+        references: { fieldRef: "FIELD-12" },
+        createdAt: new Date("2026-03-07T10:00:00.000Z"),
+      },
+    ]);
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/chat")
+      .send({
+        message: "покажи алерты",
+        workspaceContext: {
+          route: "/governance/security#incidents",
+        },
+      })
+      .expect(201);
+
+    expect(response.body.agentRole).toBe("monitoring");
+    expect(response.body.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "related_signals",
+          category: "signals",
+          payload: expect.objectContaining({
+            intentId: "emit_alerts",
+          }),
+        }),
+        expect.objectContaining({
+          type: "structured_result",
+          category: "analysis",
+          payload: expect.objectContaining({
+            intentId: "emit_alerts",
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it("POST /api/rai/chat исполняет future role через executionAdapterRole binding", async () => {
+    intentRouter.classify.mockReturnValue({
+      targetRole: "marketer",
+      intent: null,
+      toolName: null,
+      confidence: 0.91,
+      method: "smoke",
+      reason: "forced marketer route",
+    });
+    (prismaProxyTyped.agentConfiguration.findUnique as jest.Mock).mockImplementation(
+      async ({
+        where,
+      }: {
+        where: { agent_config_role_company_unique: { role: string; companyId: string | null } };
+      }) => {
+        const { role, companyId } = where.agent_config_role_company_unique;
+        if (role === "marketer" && companyId === "company-a") {
+          return {
+            id: "cfg-marketer-company-a",
+            name: "MarketerAgent",
+            role: "marketer",
+            systemPrompt: "You are marketer.",
+            llmModel: "openai/gpt-4o-mini",
+            maxTokens: 8000,
+            isActive: true,
+            companyId: "company-a",
+            capabilities: ["MarketingToolsRegistry"],
+            runtimeProfile: {
+              profileId: "marketer-runtime-v1",
+              modelRoutingClass: "fast",
+              provider: "openrouter",
+              model: "openai/gpt-4o-mini",
+              maxInputTokens: 8000,
+              maxOutputTokens: 3000,
+              temperature: 0.2,
+              timeoutMs: 15000,
+              supportsStreaming: false,
+              executionAdapterRole: "knowledge",
+            },
+            memoryPolicy: {},
+            outputContract: {
+              contractId: "marketer-v1",
+              responseSchemaVersion: "v1",
+              sections: ["summary", "recommendations", "evidence"],
+              requiresEvidence: true,
+              requiresDeterministicValidation: false,
+              fallbackMode: "retrieval_summary",
+            },
+            governancePolicy: {},
+            autonomyMode: "advisory",
+          };
+        }
+        return null;
+      },
+    );
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/chat")
+      .send({
+        message: "Нужны идеи маркетинговой кампании по рапсу",
+        workspaceContext: {
+          route: "/marketing/campaigns",
+        },
+      })
+      .expect(201);
+
+    expect(response.body.agentRole).toBe("marketer");
+    expect(response.body.outputContractVersion).toBe("v1");
+    expect(typeof response.body.text).toBe("string");
+  });
+
 });

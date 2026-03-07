@@ -154,4 +154,64 @@ describe("AgentConfigGuardService", () => {
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
+
+  it("runs adapter-bound eval for future roles when executionAdapterRole is provided", async () => {
+    goldenTestRunner.loadGoldenSet.mockReturnValue([
+      {
+        id: "knowledge-1",
+        requestText: "market insight",
+        expectedIntent: "query_knowledge",
+        expectedToolCalls: ["query_knowledge"],
+      },
+    ]);
+    goldenTestRunner.runEval.mockReturnValue({
+      id: "eval-3",
+      timestamp: new Date("2026-03-07T00:00:00.000Z"),
+      role: "marketer",
+      agentName: "KnowledgeAgent",
+      promptVersion: "prompt-v1",
+      modelName: "openai/gpt-4o-mini",
+      corpusSummary: {
+        totalCases: 1,
+        executableCases: 1,
+        passed: 1,
+        failed: 0,
+        skipped: 0,
+        coveragePct: 1,
+        regressions: [],
+      },
+      caseResults: [],
+      verdict: "APPROVED",
+      verdictBasis: {
+        failedCaseIds: [],
+        skippedCaseIds: [],
+        coveragePct: 1,
+        executableCases: 1,
+        policy: "APPROVED",
+      },
+    });
+
+    const result = await service.evaluateChange("company-1", {
+      name: "Marketer",
+      role: "marketer",
+      systemPrompt: "prompt-v1",
+      llmModel: "openai/gpt-4o-mini",
+      maxTokens: 8000,
+      isActive: true,
+      capabilities: ["MarketingToolsRegistry"],
+      tools: [],
+      runtimeProfile: {
+        executionAdapterRole: "knowledge",
+      },
+    });
+
+    expect(result?.verdict).toBe("APPROVED");
+    expect(goldenTestRunner.loadGoldenSet).toHaveBeenCalledWith("KnowledgeAgent");
+    expect(prisma.evalRun.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        role: "marketer",
+        agentName: "KnowledgeAgent",
+      }),
+    });
+  });
 });

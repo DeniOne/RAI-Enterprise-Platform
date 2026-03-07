@@ -8,6 +8,55 @@ import { Settings2, UserCog, Bot, ShieldCheck } from 'lucide-react';
 const LLM_MODELS = ['GPT-4o', 'GPT-4o-mini', 'Claude-3.5-Sonnet', 'Claude-3-Opus'];
 const CAPABILITY_OPTIONS = ['AgroToolsRegistry', 'FinanceToolsRegistry', 'RiskToolsRegistry', 'KnowledgeToolsRegistry'];
 const KNOWN_ROLES = ['agronomist', 'economist', 'knowledge', 'monitoring'];
+const ADAPTER_ROLES = ['agronomist', 'economist', 'knowledge', 'monitoring'];
+
+function sourceLabel(value: 'global' | 'tenant') {
+  return value === 'global' ? 'глобальный' : 'арендаторский';
+}
+
+function bindingsLabel(value: 'persisted' | 'bootstrap') {
+  return value === 'persisted' ? 'сохранённые' : 'начальные';
+}
+
+function accessModeLabel(value: 'INHERITED' | 'OVERRIDE' | 'DENIED') {
+  if (value === 'INHERITED') return 'наследуется';
+  if (value === 'OVERRIDE') return 'переопределён';
+  return 'запрещён';
+}
+
+function displayAgentName(role: string, fallbackName: string) {
+  const labels: Record<string, string> = {
+    agronomist: 'Агроном-А',
+    economist: 'Экономист-А',
+    knowledge: 'Знание-А',
+    monitoring: 'Мониторинг-А',
+    marketer: 'Маркетолог-А',
+    strategist: 'Стратег-А',
+    finance_advisor: 'Финсоветник-А',
+    legal_advisor: 'Юрист-А',
+    crm_agent: 'CRM-А',
+    controller: 'Контролёр-А',
+    personal_assistant: 'Ассистент-А',
+  };
+  return labels[role] ?? fallbackName;
+}
+
+function HeaderWithHint({ label, hint }: { label: string; hint?: string }) {
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span>{label}</span>
+      {hint ? (
+        <span
+          className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-black/15 bg-white text-[10px] font-semibold normal-case tracking-normal text-[#717182] cursor-help"
+          title={hint}
+          aria-label={hint}
+        >
+          i
+        </span>
+      ) : null}
+    </span>
+  );
+}
 
 export default function AgentsPage() {
   const [configs, setConfigs] = useState<AgentConfigsResponse | null>(null);
@@ -34,7 +83,7 @@ export default function AgentsPage() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center font-sans">
         <div className="flex flex-col items-center gap-4">
           <div className="w-8 h-8 border-[3px] border-black/10 border-t-[#030213] rounded-full animate-spin" />
-          <p className="text-[#717182] font-medium text-[13px]">Синхронизация effective runtime state...</p>
+          <p className="text-[#717182] font-medium text-[13px]">Синхронизация текущего состояния исполнения...</p>
         </div>
       </div>
     );
@@ -50,8 +99,8 @@ export default function AgentsPage() {
           <div>
             <h1 className="text-xl font-medium text-[#030213]">Отклонение доступа R4</h1>
             <p className="mt-2 text-[#717182] text-[13px] leading-relaxed">
-              <span className="font-mono text-red-600 block mb-1">ERR_FORBIDDEN:</span>
-              Вы не обладаете клиренсом Audit/Executive для конфигурации роя. <br /> {error}.
+              <span className="font-mono text-red-600 block mb-1">ДОСТУП_ЗАПРЕЩЁН:</span>
+              У вас нет прав для изменения настроек агентов. <br /> {error}.
             </p>
             <button
               onClick={() => window.history.back()}
@@ -74,20 +123,24 @@ export default function AgentsPage() {
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Link href="/control-tower" className="text-[11px] font-medium uppercase tracking-widest text-[#717182] hover:text-[#030213] transition-colors">
-                Control & Reliability
+                Контроль и надёжность
               </Link>
               <span className="text-[11px] font-medium text-[#717182]">/</span>
-              <span className="text-[11px] font-medium uppercase tracking-widest text-[#030213]">Agent Configurator</span>
+              <span className="text-[11px] font-medium uppercase tracking-widest text-[#030213]">Конфигуратор агентов</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center border border-black/5">
                 <Bot size={16} className="text-[#030213]" />
               </div>
-              <h1 className="text-3xl font-medium text-[#030213] tracking-tight">Agent Configurator</h1>
+              <h1 className="text-3xl font-medium text-[#030213] tracking-tight">Конфигуратор агентов</h1>
+              <span
+                className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-black/15 bg-white text-[11px] font-semibold text-[#717182] cursor-help"
+                title="Здесь можно посмотреть текущие настройки агентов и отправить запрос на их изменение. Изменения применяются только после проверки и утверждения."
+                aria-label="Здесь можно посмотреть текущие настройки агентов и отправить запрос на их изменение. Изменения применяются только после проверки и утверждения."
+              >
+                i
+              </span>
             </div>
-            <p className="text-sm text-[#717182] max-w-3xl leading-relaxed mt-1">
-              Surface читает effective runtime/governed state из registry-aware read model. Production change не происходит напрямую из формы: любые изменения проходят через change request, eval, canary и promote/rollback.
-            </p>
           </div>
           <div className="flex">
             <button
@@ -95,28 +148,37 @@ export default function AgentsPage() {
               className="px-6 py-2.5 bg-[#030213] hover:bg-black text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
             >
               <Settings2 size={16} />
-              Создать change request
+              Создать запрос на изменение
             </button>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-10 mt-10 space-y-6">
-        <div className="p-4 bg-white border border-black/10 rounded-2xl">
-          <p className="text-[12px] text-[#717182] leading-relaxed">
-            `Runtime source` показывает, откуда реально собран effective config (`global` / `tenant`). `Bindings source` показывает, authority ли это persisted bindings или legacy bootstrap fallback. `Tenant access` показывает, как текущий tenant реально видит агента в runtime, а не как это выглядит в локальном form state.
-          </p>
-        </div>
-
         <div className="bg-white border border-black/10 rounded-2xl overflow-hidden shadow-sm shadow-black/[0.02]">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-black/10">
-                <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Agent / Role</th>
-                <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Runtime Truth</th>
-                <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Bindings / Access</th>
-                <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Capabilities / Tools</th>
-                <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182] text-right">Governed Action</th>
+                <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Агент / Роль</th>
+                <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182]">
+                  <HeaderWithHint
+                    label="Истина исполнения"
+                    hint="Здесь показано, какая модель сейчас использует агент, включён ли он и откуда взяты его рабочие настройки."
+                  />
+                </th>
+                <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182]">
+                  <HeaderWithHint
+                    label="Связки / Доступ"
+                    hint="Здесь видно, откуда взяты связки агента и доступен ли он текущему арендатору."
+                  />
+                </th>
+                <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182]">
+                  <HeaderWithHint
+                    label="Возможности / Инструменты"
+                    hint="Здесь перечислены подключённые наборы возможностей и конкретные инструменты, которыми агент может пользоваться."
+                  />
+                </th>
+                <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182] text-right">Управляемое действие</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-black/5">
@@ -124,7 +186,7 @@ export default function AgentsPage() {
                 <tr key={agent.role} className="hover:bg-slate-50/50 transition-colors align-top">
                   <td className="px-6 py-5">
                     <div className="space-y-2">
-                      <span className="text-[14px] font-medium text-[#030213] block">{agent.agentName}</span>
+                      <span className="text-[14px] font-medium text-[#030213] block">{displayAgentName(agent.role, agent.agentName)}</span>
                       <span className="text-[11px] font-mono text-[#717182] block">{agent.role}</span>
                       <span className="text-[12px] text-[#717182] block">{agent.businessRole}</span>
                     </div>
@@ -132,19 +194,22 @@ export default function AgentsPage() {
                   <td className="px-6 py-5">
                     <div className="space-y-2 text-[12px]">
                       <div className="font-mono text-[#030213]">{agent.runtime.llmModel}</div>
-                      <div className="text-[#717182]">maxTokens: <span className="font-mono text-[#030213]">{agent.runtime.maxTokens}</span></div>
+                      <div className="text-[#717182]">Лимит токенов: <span className="font-mono text-[#030213]">{agent.runtime.maxTokens}</span></div>
+                      {agent.kernel?.runtimeProfile.executionAdapterRole && (
+                        <Badge tone="blue" label={`Адаптер: ${agent.kernel.runtimeProfile.executionAdapterRole}`} />
+                      )}
                       <Badge
                         tone={agent.runtime.isActive ? 'green' : 'slate'}
-                        label={agent.runtime.isActive ? 'Runtime Active' : 'Runtime Disabled'}
+                        label={agent.runtime.isActive ? 'Исполнение активно' : 'Исполнение выключено'}
                       />
-                      <Badge tone="blue" label={`Runtime source: ${agent.runtime.source}`} />
+                      <Badge tone="blue" label={`Источник исполнения: ${sourceLabel(agent.runtime.source)}`} />
                     </div>
                   </td>
                   <td className="px-6 py-5">
                     <div className="space-y-2 text-[12px]">
                       <Badge
                         tone={agent.runtime.bindingsSource === 'persisted' ? 'green' : 'amber'}
-                        label={`Bindings: ${agent.runtime.bindingsSource}`}
+                        label={`Связки: ${bindingsLabel(agent.runtime.bindingsSource)}`}
                       />
                       <Badge
                         tone={
@@ -154,17 +219,17 @@ export default function AgentsPage() {
                               ? 'amber'
                               : 'blue'
                         }
-                        label={`Tenant access: ${agent.tenantAccess.mode}`}
+                        label={`Доступ арендатора: ${accessModeLabel(agent.tenantAccess.mode)}`}
                       />
                       <div className="text-[#717182]">
-                        access source: <span className="font-mono text-[#030213]">{agent.tenantAccess.source}</span>
+                        источник доступа: <span className="font-mono text-[#030213]">{sourceLabel(agent.tenantAccess.source)}</span>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-5">
                     <div className="space-y-3">
                       <div>
-                        <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-2">Capabilities</p>
+                        <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-2">Возможности</p>
                         <div className="flex flex-wrap gap-2">
                           {agent.runtime.capabilities.map((capability) => (
                             <Tag key={capability} label={capability} />
@@ -172,7 +237,7 @@ export default function AgentsPage() {
                         </div>
                       </div>
                       <div>
-                        <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-2">Tools</p>
+                        <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-2">Инструменты</p>
                         <div className="flex flex-wrap gap-2">
                           {agent.runtime.tools.map((tool) => (
                             <Tag key={tool} label={tool} mono />
@@ -188,10 +253,10 @@ export default function AgentsPage() {
                         onClick={() => setEditing(agent)}
                         className="px-4 py-1.5 border border-black/10 rounded-md text-[13px] font-medium text-[#030213] hover:bg-slate-50 transition-colors"
                       >
-                        Создать change request
+                        Создать запрос на изменение
                       </button>
                       <div className="max-w-[220px] text-[11px] text-[#717182] leading-relaxed">
-                        Instant toggle/write path отсутствует на этой поверхности намеренно.
+                        Прямой путь включения и записи на этой поверхности намеренно отсутствует.
                       </div>
                     </div>
                   </td>
@@ -228,7 +293,7 @@ export default function AgentsPage() {
 
       {saving && (
         <div className="fixed bottom-6 right-6 px-4 py-2 bg-[#030213] text-white text-[12px] rounded-lg shadow-lg">
-          Change request отправляется в governed workflow...
+          Запрос на изменение отправляется в процесс согласования...
         </div>
       )}
     </div>
@@ -255,6 +320,7 @@ function AgentEditor({
   const [maxTokens, setMaxTokens] = useState(agent?.runtime.maxTokens ?? 8000);
   const [capabilities, setCapabilities] = useState<string[]>(agent?.runtime.capabilities ?? []);
   const [tools, setTools] = useState<string[]>(agent?.runtime.tools ?? []);
+  const [executionAdapterRole, setExecutionAdapterRole] = useState(agent?.kernel?.runtimeProfile.executionAdapterRole ?? '');
   const [scope, setScope] = useState<'tenant' | 'global'>(agent?.runtime.source === 'global' ? 'global' : 'tenant');
   const [err, setErr] = useState<string | null>(null);
 
@@ -278,6 +344,7 @@ function AgentEditor({
         isActive: agent?.runtime.isActive ?? true,
         capabilities,
         tools,
+        runtimeProfile: executionAdapterRole ? { executionAdapterRole } : undefined,
       }, scope)
       .then(() => onSaved())
       .catch((e) => setErr((e as Error).message))
@@ -290,10 +357,10 @@ function AgentEditor({
         <div className="flex items-start justify-between mb-8">
           <div>
             <p className="text-[11px] font-medium uppercase tracking-widest text-[#717182] mb-1">
-              {createMode ? 'Новый change request' : 'Governed update request'}
+              {createMode ? 'Новый запрос на изменение' : 'Запрос на обновление'}
             </p>
             <h2 className="text-2xl font-medium text-[#030213] tracking-tight">
-              {createMode ? 'Создать change request' : `Change request: ${agent?.agentName}`}
+              {createMode ? 'Создать запрос на изменение' : `Запрос на изменение: ${agent?.agentName}`}
             </h2>
           </div>
           <button type="button" onClick={onClose} className="text-[#717182] hover:text-[#030213] transition-colors p-2 -mr-2">
@@ -305,7 +372,7 @@ function AgentEditor({
           <div className="flex items-start gap-3">
             <ShieldCheck size={18} className="text-[#030213] mt-0.5" />
             <p className="text-[12px] text-[#717182] leading-relaxed">
-              Эта форма не пишет production config напрямую. Она создаёт governed request для eval - canary - promote/rollback.
+              Эта форма не меняет настройки сразу. Сначала создаётся запрос, затем он проходит проверку и только после этого может быть утверждён.
             </p>
           </div>
         </div>
@@ -319,17 +386,19 @@ function AgentEditor({
 
           {createMode && (
             <div>
-              <label className="mb-2 block text-[13px] font-medium text-[#717182]">Роль (канонический registry role)</label>
-              <select
+              <label className="mb-2 block text-[13px] font-medium text-[#717182]">Роль</label>
+              <input
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
-              >
-                <option value="">— Выбрать системную роль —</option>
+                placeholder="например, marketer или knowledge"
+                list="known-agent-roles"
+              />
+              <datalist id="known-agent-roles">
                 {KNOWN_ROLES.map((r) => (
-                  <option key={r} value={r}>{r}</option>
+                  <option key={r} value={r} />
                 ))}
-              </select>
+              </datalist>
             </div>
           )}
 
@@ -343,7 +412,7 @@ function AgentEditor({
           </div>
 
           <div>
-            <label className="mb-2 block text-[13px] font-medium text-[#717182]">Runtime model</label>
+              <label className="mb-2 block text-[13px] font-medium text-[#717182]">Модель</label>
             <select
               value={llmModel}
               onChange={(e) => setLlmModel(e.target.value)}
@@ -356,7 +425,7 @@ function AgentEditor({
           </div>
 
           <div>
-            <label className="mb-2 block text-[13px] font-medium text-[#717182]">Max Tokens</label>
+              <label className="mb-2 block text-[13px] font-medium text-[#717182]">Максимум токенов</label>
             <input
               type="number"
               value={maxTokens}
@@ -366,7 +435,24 @@ function AgentEditor({
           </div>
 
           <div>
-            <label className="mb-2 block text-[13px] font-medium text-[#717182]">System Prompt</label>
+              <label className="mb-2 block text-[13px] font-medium text-[#717182]">Базовый агент</label>
+            <select
+              value={executionAdapterRole}
+              onChange={(e) => setExecutionAdapterRole(e.target.value)}
+              className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
+            >
+              <option value="">— Без явной связки —</option>
+              {ADAPTER_ROLES.map((adapterRole) => (
+                <option key={adapterRole} value={adapterRole}>{adapterRole}</option>
+              ))}
+            </select>
+            <p className="mt-2 text-[11px] text-[#717182] leading-relaxed">
+              Для новых ролей здесь выбирается, какой базовый агент будет выполнять запросы.
+            </p>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-[13px] font-medium text-[#717182]">Системная инструкция</label>
             <textarea
               value={systemPrompt}
               onChange={(e) => setSystemPrompt(e.target.value)}
@@ -375,7 +461,7 @@ function AgentEditor({
           </div>
 
           <div>
-            <label className="mb-2 block text-[13px] font-medium text-[#717182]">Capabilities</label>
+            <label className="mb-2 block text-[13px] font-medium text-[#717182]">Возможности</label>
             <div className="flex flex-wrap gap-2">
               {CAPABILITY_OPTIONS.map((cap) => (
                 <button
@@ -395,7 +481,7 @@ function AgentEditor({
           </div>
 
           <div>
-            <label className="mb-2 block text-[13px] font-medium text-[#717182]">Tools (runtime authority target)</label>
+            <label className="mb-2 block text-[13px] font-medium text-[#717182]">Инструменты</label>
             <input
               value={tools.join(', ')}
               onChange={(e) => setTools(e.target.value.split(',').map((x) => x.trim()).filter(Boolean))}
@@ -405,14 +491,14 @@ function AgentEditor({
           </div>
 
           <div>
-            <label className="mb-2 block text-[13px] font-medium text-[#717182]">Scope</label>
+            <label className="mb-2 block text-[13px] font-medium text-[#717182]">Область действия</label>
             <select
               value={scope}
               onChange={(e) => setScope(e.target.value as 'tenant' | 'global')}
               className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
             >
-              <option value="tenant">Tenant change request</option>
-              <option value="global">Global change request</option>
+              <option value="tenant">Запрос на изменение для арендатора</option>
+              <option value="global">Глобальный запрос на изменение</option>
             </select>
           </div>
         </div>

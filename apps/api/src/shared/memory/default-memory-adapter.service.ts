@@ -144,11 +144,15 @@ export class DefaultMemoryAdapter implements MemoryAdapter {
     }
 
     async getProfile(ctx: MemoryContext): Promise<Record<string, unknown>> {
+        if (!ctx.userId) {
+            return {};
+        }
+
         const profile = await this.prisma.memoryProfile.findUnique({
             where: {
                 companyId_userId: {
                     companyId: ctx.companyId,
-                    userId: ctx.userId ?? null,
+                    userId: ctx.userId,
                 },
             },
         });
@@ -164,11 +168,15 @@ export class DefaultMemoryAdapter implements MemoryAdapter {
         ctx: MemoryContext,
         patch: Record<string, unknown>,
     ): Promise<void> {
+        if (!ctx.userId) {
+            return;
+        }
+
         const existing = await this.prisma.memoryProfile.findUnique({
             where: {
                 companyId_userId: {
                     companyId: ctx.companyId,
-                    userId: ctx.userId ?? null,
+                    userId: ctx.userId,
                 },
             },
         });
@@ -208,7 +216,7 @@ export class DefaultMemoryAdapter implements MemoryAdapter {
             where: {
                 companyId_userId: {
                     companyId: ctx.companyId,
-                    userId: ctx.userId ?? null,
+                    userId: ctx.userId,
                 },
             },
             create: {

@@ -7,6 +7,12 @@ import { QueueMetricsService } from "../performance/queue-metrics.service";
 import { AgentConfigBlockedError } from "../security/agent-config-blocked.error";
 import { BudgetControllerService } from "../security/budget-controller.service";
 import { IncidentOpsService } from "../incident-ops.service";
+import { AgentRuntimeConfigService } from "../agent-runtime-config.service";
+import { AgronomAgent } from "../agents/agronom-agent.service";
+import { EconomistAgent } from "../agents/economist-agent.service";
+import { KnowledgeAgent } from "../agents/knowledge-agent.service";
+import { MonitoringAgent } from "../agents/monitoring-agent.service";
+import { AgentExecutionAdapterService } from "./agent-execution-adapter.service";
 
 describe("AgentRuntimeService", () => {
   let service: AgentRuntimeService;
@@ -36,9 +42,56 @@ describe("AgentRuntimeService", () => {
     beginRuntimeExecution: jest.fn().mockResolvedValue(undefined),
     endRuntimeExecution: jest.fn().mockResolvedValue(undefined),
   };
+  const agentRuntimeConfigMock = {
+    getEffectiveKernel: jest.fn().mockResolvedValue({
+      definition: {
+        role: "knowledge",
+        defaultAutonomyMode: "advisory",
+      },
+      runtimeProfile: {
+        provider: "openrouter",
+        model: "openrouter/knowledge",
+        responseSchemaVersion: "v1",
+      },
+      outputContract: {
+        contractId: "knowledge-v1",
+        responseSchemaVersion: "v1",
+        requiresEvidence: true,
+        requiresDeterministicValidation: false,
+      },
+      toolBindings: [
+        {
+          toolName: RaiToolName.QueryKnowledge,
+          isEnabled: true,
+        },
+      ],
+      connectorBindings: [],
+      isActive: true,
+    }),
+  };
+  const agronomAgentMock = { run: jest.fn() };
+  const economistAgentMock = { run: jest.fn() };
+  const knowledgeAgentMock = {
+    run: jest.fn().mockResolvedValue({
+      status: "COMPLETED",
+      explain: "Grounded answer",
+      data: { hits: 1, items: [{ content: "doc", score: 0.9 }] },
+      evidence: [
+        {
+          claim: "grounded",
+          sourceType: "DOC",
+          sourceId: "knowledge_item_1",
+          confidenceScore: 0.9,
+        },
+      ],
+      fallbackUsed: false,
+    }),
+  };
+  const monitoringAgentMock = { run: jest.fn() };
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    delete process.env.RAI_AGENT_RUNTIME_MODE;
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AgentRuntimeService,
@@ -47,6 +100,12 @@ describe("AgentRuntimeService", () => {
         { provide: QueueMetricsService, useValue: queueMetricsMock },
         { provide: BudgetControllerService, useValue: budgetControllerMock },
         { provide: IncidentOpsService, useValue: incidentOpsMock },
+        { provide: AgentRuntimeConfigService, useValue: agentRuntimeConfigMock },
+        AgentExecutionAdapterService,
+        { provide: AgronomAgent, useValue: agronomAgentMock },
+        { provide: EconomistAgent, useValue: economistAgentMock },
+        { provide: KnowledgeAgent, useValue: knowledgeAgentMock },
+        { provide: MonitoringAgent, useValue: monitoringAgentMock },
       ],
     }).compile();
     service = module.get(AgentRuntimeService);
@@ -228,5 +287,171 @@ describe("AgentRuntimeService", () => {
         details: expect.objectContaining({ subtype: "BUDGET_RUNTIME_DENIED" }),
       }),
     );
+  });
+
+  it("executeAgent returns structured agent execution in hybrid mode", async () => {
+    process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+
+    const result = await service.executeAgent(
+      {
+        role: "knowledge",
+        message: "что известно про рапс",
+        memoryContext: { profile: {}, recalledEpisodes: [] },
+        requestedTools: [
+          { name: RaiToolName.QueryKnowledge, payload: { query: "рапс" } },
+        ],
+        traceId: "tr_2",
+        threadId: "th_2",
+      },
+      { companyId: "c1", traceId: "tr_2" },
+    );
+
+    expect(agentRuntimeConfigMock.getEffectiveKernel).toHaveBeenCalledWith(
+      "c1",
+      "knowledge",
+    );
+    expect(knowledgeAgentMock.run).toHaveBeenCalled();
+    expect(result.agentExecution).toMatchObject({
+      role: "knowledge",
+      text: "Grounded answer",
+      fallbackUsed: false,
+      outputContractVersion: "v1",
+      validation: { passed: true, reasons: [] },
+    });
+    expect(result.executedTools).toEqual([
+      {
+        name: RaiToolName.QueryKnowledge,
+        result: { hits: 1, items: [{ content: "doc", score: 0.9 }] },
+      },
+    ]);
+  });
+
+  it("does not require evidence when agronom agent returns NEEDS_MORE_DATA", async () => {
+    process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+    agentRuntimeConfigMock.getEffectiveKernel.mockResolvedValueOnce({
+      definition: {
+        role: "agronomist",
+        defaultAutonomyMode: "advisory",
+      },
+      runtimeProfile: {
+        provider: "openrouter",
+        model: "openrouter/agronom",
+        responseSchemaVersion: "v1",
+      },
+      outputContract: {
+        contractId: "agronom-v1",
+        responseSchemaVersion: "v1",
+        requiresEvidence: true,
+        requiresDeterministicValidation: true,
+      },
+      toolBindings: [
+        {
+          toolName: RaiToolName.GenerateTechMapDraft,
+          isEnabled: true,
+        },
+      ],
+      connectorBindings: [],
+      isActive: true,
+    });
+    agronomAgentMock.run.mockResolvedValueOnce({
+      status: "NEEDS_MORE_DATA",
+      explain: "Не хватает контекста: fieldRef, seasonRef",
+      data: {},
+      missingContext: ["fieldRef", "seasonRef"],
+      mathBasis: [],
+      evidence: [],
+      fallbackUsed: false,
+      toolCallsCount: 0,
+    });
+
+    const result = await service.executeAgent(
+      {
+        role: "agronomist",
+        message: "prepare tech map",
+        memoryContext: { profile: {}, recalledEpisodes: [] },
+        requestedTools: [],
+        traceId: "tr_3",
+        threadId: "th_3",
+      },
+      { companyId: "c1", traceId: "tr_3" },
+    );
+
+    expect(result.agentExecution).toMatchObject({
+      role: "agronomist",
+      validation: { passed: true, reasons: [] },
+    });
+  });
+
+  it("does not require evidence for knowledge no-hit responses with explicit uncertainty", async () => {
+    process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+    knowledgeAgentMock.run.mockResolvedValueOnce({
+      status: "COMPLETED",
+      explain: "По запросу ничего не найдено в базе знаний.",
+      data: { hits: 0, items: [] },
+      evidence: [],
+      fallbackUsed: true,
+    });
+
+    const result = await service.executeAgent(
+      {
+        role: "knowledge",
+        message: "unknown topic",
+        memoryContext: { profile: {}, recalledEpisodes: [] },
+        requestedTools: [],
+        traceId: "tr_4",
+        threadId: "th_4",
+      },
+      { companyId: "c1", traceId: "tr_4" },
+    );
+
+    expect(result.agentExecution).toMatchObject({
+      role: "knowledge",
+      validation: { passed: true, reasons: [] },
+      fallbackUsed: true,
+    });
+  });
+
+  it("executes future role through executionAdapterRole binding without hardcoded runtime branch", async () => {
+    process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+    agentRuntimeConfigMock.getEffectiveKernel.mockResolvedValueOnce({
+      definition: {
+        role: "marketer",
+        defaultAutonomyMode: "advisory",
+      },
+      runtimeProfile: {
+        provider: "openrouter",
+        model: "openrouter/marketing",
+        executionAdapterRole: "knowledge",
+      },
+      outputContract: {
+        contractId: "marketer-v1",
+        responseSchemaVersion: "v1",
+        requiresEvidence: true,
+        requiresDeterministicValidation: false,
+      },
+      toolBindings: [],
+      connectorBindings: [],
+      isActive: true,
+    });
+
+    const result = await service.executeAgent(
+      {
+        role: "marketer",
+        message: "подбери идеи для кампании по рапсу",
+        memoryContext: { profile: {}, recalledEpisodes: [] },
+        requestedTools: [],
+        traceId: "tr_5",
+        threadId: "th_5",
+      },
+      { companyId: "c1", traceId: "tr_5" },
+    );
+
+    expect(agentRuntimeConfigMock.getEffectiveKernel).toHaveBeenCalledWith("c1", "marketer");
+    expect(knowledgeAgentMock.run).toHaveBeenCalled();
+    expect(result.agentExecution).toMatchObject({
+      role: "marketer",
+      text: "Grounded answer",
+      outputContractVersion: "v1",
+    });
   });
 });

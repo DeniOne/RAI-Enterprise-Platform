@@ -30,6 +30,14 @@ import { DeviationService } from "../../consulting/deviation.service";
 import { TechMapService } from "../../tech-map/tech-map.service";
 import { KpiService } from "../../consulting/kpi.service";
 import { TechMapBudgetService } from "../../tech-map/economics/tech-map-budget.service";
+import { AgroDeterministicEngineFacade } from "../deterministic/agro-deterministic.facade";
+import { AgronomAgent } from "../agents/agronom-agent.service";
+import { EconomistAgent } from "../agents/economist-agent.service";
+import { KnowledgeAgent } from "../agents/knowledge-agent.service";
+import { MonitoringAgent } from "../agents/monitoring-agent.service";
+import { OpenRouterGatewayService } from "../agent-platform/openrouter-gateway.service";
+import { AgentPromptAssemblyService } from "../agent-platform/agent-prompt-assembly.service";
+import { AgentExecutionAdapterService } from "./agent-execution-adapter.service";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -37,6 +45,7 @@ interface InMemoryPrismaState {
   agentConfigurations: Array<JsonRecord>;
   agentCapabilityBindings: Array<JsonRecord>;
   agentToolBindings: Array<JsonRecord>;
+  agentConnectorBindings: Array<JsonRecord>;
   aiAuditEntries: Array<JsonRecord>;
   traceSummaries: Array<JsonRecord>;
   systemIncidents: Array<JsonRecord>;
@@ -115,6 +124,11 @@ const createPrismaMock = (state: InMemoryPrismaState) => ({
   agentToolBinding: {
     findMany: jest.fn(async ({ where }: { where?: JsonRecord }) =>
       state.agentToolBindings.filter((row) => matchesWhere(row, where)),
+    ),
+  },
+  agentConnectorBinding: {
+    findMany: jest.fn(async ({ where }: { where?: JsonRecord }) =>
+      state.agentConnectorBindings.filter((row) => matchesWhere(row, where)),
     ),
   },
   aiAuditEntry: {
@@ -296,6 +310,7 @@ const baseRegistryState = (): InMemoryPrismaState => ({
     { role: "monitoring", companyId: null, toolName: RaiToolName.EmitAlerts, isEnabled: true },
     { role: "monitoring", companyId: null, toolName: RaiToolName.GetWeatherForecast, isEnabled: true },
   ],
+  agentConnectorBindings: [],
   aiAuditEntries: [],
   traceSummaries: [],
   systemIncidents: [],
@@ -350,6 +365,12 @@ describe("Runtime spine integration", () => {
   };
   const techMapBudgetMock = {
     calculateBudget: jest.fn(),
+  };
+  const openRouterGatewayMock = {
+    generate: jest.fn().mockRejectedValue(new Error("OPENROUTER_API_KEY_MISSING")),
+  };
+  const agentPromptAssemblyMock = {
+    buildMessages: jest.fn().mockReturnValue([]),
   };
 
   const buildModule = async () => {
@@ -423,14 +444,20 @@ describe("Runtime spine integration", () => {
         IntentRouterService,
         MemoryCoordinatorService,
         AgentRuntimeService,
+        AgentExecutionAdapterService,
         ResponseComposerService,
         RaiChatWidgetBuilder,
         TraceSummaryService,
         RaiToolsRegistry,
         AgroToolsRegistry,
+        AgroDeterministicEngineFacade,
         FinanceToolsRegistry,
         RiskToolsRegistry,
         KnowledgeToolsRegistry,
+        AgronomAgent,
+        EconomistAgent,
+        KnowledgeAgent,
+        MonitoringAgent,
         RiskPolicyEngineService,
         PendingActionService,
         AutonomyPolicyService,
@@ -449,6 +476,8 @@ describe("Runtime spine integration", () => {
         { provide: TechMapService, useValue: techMapServiceMock },
         { provide: KpiService, useValue: kpiServiceMock },
         { provide: TechMapBudgetService, useValue: techMapBudgetMock },
+        { provide: OpenRouterGatewayService, useValue: openRouterGatewayMock },
+        { provide: AgentPromptAssemblyService, useValue: agentPromptAssemblyMock },
       ],
     }).compile();
 
@@ -466,7 +495,9 @@ describe("Runtime spine integration", () => {
   });
 
   afterEach(async () => {
-    await moduleRef.close();
+    if (moduleRef) {
+      await moduleRef.close();
+    }
   });
 
   it("проходит happy-path через Supervisor -> Runtime -> Registry -> Audit/Trace", async () => {

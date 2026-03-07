@@ -1,6 +1,8 @@
 import { AgronomAgent } from "./agronom-agent.service";
 import { AgroToolsRegistry } from "../tools/agro-tools.registry";
 import { AgroDeterministicEngineFacade } from "../deterministic/agro-deterministic.facade";
+import { OpenRouterGatewayService } from "../agent-platform/openrouter-gateway.service";
+import { AgentPromptAssemblyService } from "../agent-platform/agent-prompt-assembly.service";
 
 describe("AgronomAgent", () => {
   const techMapMock = { createDraftStub: jest.fn() };
@@ -11,7 +13,12 @@ describe("AgronomAgent", () => {
   );
   agroRegistry.onModuleInit();
   const agroFacade = new AgroDeterministicEngineFacade();
-  const agent = new AgronomAgent(agroRegistry, agroFacade);
+  const agent = new AgronomAgent(
+    agroRegistry,
+    agroFacade,
+    { generate: jest.fn().mockRejectedValue(new Error("OPENROUTER_API_KEY_MISSING")) } as unknown as OpenRouterGatewayService,
+    { buildMessages: jest.fn().mockReturnValue([]) } as unknown as AgentPromptAssemblyService,
+  );
 
   beforeEach(() => {
     jest.clearAllMocks();

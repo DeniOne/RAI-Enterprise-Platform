@@ -31,6 +31,8 @@ describe("AgentsConfigController (HTTP)", () => {
 
   const agentManagement = {
     getAgentConfigs: jest.fn(),
+    getFutureAgentTemplates: jest.fn(),
+    validateFutureAgentManifest: jest.fn(),
   };
 
   const promptGovernance = {
@@ -146,6 +148,113 @@ describe("AgentsConfigController (HTTP)", () => {
             source: "tenant",
             isActive: true,
           },
+          kernel: {
+            runtimeProfile: {
+              profileId: "agronomist-runtime-v1",
+              modelRoutingClass: "strong",
+              provider: "openrouter",
+              model: "openrouter/agronom",
+              maxInputTokens: 8000,
+              maxOutputTokens: 4000,
+              temperature: 0.2,
+              timeoutMs: 15000,
+              supportsStreaming: false,
+            },
+            outputContract: {
+              contractId: "agronom-v1",
+              responseSchemaVersion: "v1",
+              sections: ["summary", "evidence"],
+              requiresEvidence: true,
+              requiresDeterministicValidation: true,
+              fallbackMode: "deterministic_summary",
+            },
+            memoryPolicy: {
+              policyId: "agronom-memory-v1",
+              allowedScopes: ["tenant", "domain"],
+              retrievalPolicy: "scoped_recall",
+              writePolicy: "append_summary",
+              sensitiveDataPolicy: "allow_masked_only",
+            },
+            governancePolicy: {
+              policyId: "agronom-governance-v1",
+              allowedAutonomyModes: ["advisory"],
+              humanGateRules: ["write_tools_require_review"],
+              criticalActionRules: ["no_critical_actions"],
+              auditRequirements: ["trace"],
+              fallbackRules: ["use_deterministic_summary_if_llm_unavailable"],
+            },
+            toolBindings: [
+              {
+                toolName: "generate_tech_map_draft",
+                isEnabled: true,
+                requiresHumanGate: true,
+                riskLevel: "WRITE",
+              },
+            ],
+            connectorBindings: [],
+          },
+        },
+        {
+          role: "marketer",
+          agentName: "MarketerAgent",
+          businessRole: "Campaign planning and governed recommendations",
+          ownerDomain: "marketing",
+          runtime: {
+            configId: "cfg-marketer",
+            source: "tenant",
+            bindingsSource: "persisted",
+            llmModel: "openai/gpt-4o-mini",
+            maxTokens: 8000,
+            systemPrompt: "You are marketer.",
+            capabilities: ["MarketingToolsRegistry"],
+            tools: [],
+            isActive: true,
+          },
+          tenantAccess: {
+            companyId: "company-a",
+            mode: "OVERRIDE",
+            source: "tenant",
+            isActive: true,
+          },
+          kernel: {
+            runtimeProfile: {
+              profileId: "marketer-runtime-v1",
+              modelRoutingClass: "fast",
+              provider: "openrouter",
+              model: "openai/gpt-4o-mini",
+              executionAdapterRole: "knowledge",
+              maxInputTokens: 8000,
+              maxOutputTokens: 3000,
+              temperature: 0.2,
+              timeoutMs: 15000,
+              supportsStreaming: false,
+            },
+            outputContract: {
+              contractId: "marketer-v1",
+              responseSchemaVersion: "v1",
+              sections: ["summary", "recommendations", "evidence"],
+              requiresEvidence: true,
+              requiresDeterministicValidation: false,
+              fallbackMode: "retrieval_summary",
+            },
+            memoryPolicy: {
+              policyId: "marketer-memory-v1",
+              allowedScopes: ["tenant", "domain"],
+              retrievalPolicy: "scoped_recall",
+              writePolicy: "append_summary",
+              sensitiveDataPolicy: "mask",
+            },
+            governancePolicy: {
+              policyId: "marketer-governance-v1",
+              allowedAutonomyModes: ["advisory"],
+              humanGateRules: ["campaign_launch_requires_human_gate"],
+              criticalActionRules: ["no_unreviewed_writes"],
+              auditRequirements: ["trace", "evidence"],
+              fallbackRules: ["use_read_model_summary_if_llm_unavailable"],
+            },
+            toolBindings: [],
+            connectorBindings: [],
+          },
         },
       ],
     });
@@ -154,18 +263,140 @@ describe("AgentsConfigController (HTTP)", () => {
       .get("/api/rai/agents/config")
       .expect(200);
 
-    expect(response.body.agents).toEqual([
-      expect.objectContaining({
-        role: "agronomist",
-        runtime: expect.objectContaining({
-          source: "tenant",
-          bindingsSource: "persisted",
+    expect(response.body.agents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          role: "agronomist",
+          runtime: expect.objectContaining({
+            source: "tenant",
+            bindingsSource: "persisted",
+          }),
+          tenantAccess: expect.objectContaining({
+            mode: "OVERRIDE",
+          }),
+          kernel: expect.objectContaining({
+            runtimeProfile: expect.objectContaining({
+              provider: "openrouter",
+              modelRoutingClass: "strong",
+            }),
+            outputContract: expect.objectContaining({
+              contractId: "agronom-v1",
+            }),
+          }),
         }),
-        tenantAccess: expect.objectContaining({
-          mode: "OVERRIDE",
+        expect.objectContaining({
+          role: "marketer",
+          ownerDomain: "marketing",
+          kernel: expect.objectContaining({
+            runtimeProfile: expect.objectContaining({
+              executionAdapterRole: "knowledge",
+              provider: "openrouter",
+            }),
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it("GET /api/rai/agents/onboarding/templates returns future-agent manifests", async () => {
+    agentManagement.getFutureAgentTemplates.mockReturnValue([
+      {
+        templateId: "marketer",
+        label: "Marketer",
+        manifest: {
+          role: "marketer",
+          name: "MarketerAgent",
+        },
+        rolloutChecklist: ["Register prompt governance entry"],
+      },
+    ]);
+
+    const response = await request(app.getHttpServer())
+      .get("/api/rai/agents/onboarding/templates")
+      .expect(200);
+
+    expect(response.body.templates).toEqual([
+      expect.objectContaining({
+        templateId: "marketer",
+        manifest: expect.objectContaining({
+          role: "marketer",
         }),
       }),
     ]);
+  });
+
+  it("POST /api/rai/agents/onboarding/validate validates manifest contract", async () => {
+    agentManagement.validateFutureAgentManifest.mockReturnValue({
+      valid: true,
+      normalizedRole: "marketer",
+      compatibleWithRuntimeWithoutCodeChanges: true,
+      missingRequirements: [],
+      warnings: [],
+    });
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/agents/onboarding/validate")
+      .send({
+        role: "marketer",
+        name: "MarketerAgent",
+        kind: "domain_advisor",
+        ownerDomain: "marketing",
+        description: "Campaign planning agent",
+        defaultAutonomyMode: "advisory",
+        runtimeProfile: {
+          profileId: "marketer-runtime-v1",
+          modelRoutingClass: "fast",
+          provider: "openrouter",
+          model: "openai/gpt-4o-mini",
+          executionAdapterRole: "knowledge",
+          maxInputTokens: 8000,
+          maxOutputTokens: 3000,
+          temperature: 0.2,
+          timeoutMs: 15000,
+          supportsStreaming: false,
+        },
+        memoryPolicy: {
+          policyId: "marketer-memory-v1",
+          allowedScopes: ["tenant", "domain"],
+          retrievalPolicy: "scoped_recall",
+          writePolicy: "append_summary",
+          sensitiveDataPolicy: "mask",
+        },
+        capabilityPolicy: {
+          capabilities: ["MarketingToolsRegistry"],
+          toolAccessMode: "allowlist",
+          connectorAccessMode: "allowlist",
+        },
+        toolBindings: [],
+        connectorBindings: [],
+        outputContract: {
+          contractId: "marketer-v1",
+          responseSchemaVersion: "v1",
+          sections: ["summary", "evidence"],
+          requiresEvidence: true,
+          requiresDeterministicValidation: false,
+          fallbackMode: "retrieval_summary",
+        },
+        governancePolicy: {
+          policyId: "marketer-governance-v1",
+          allowedAutonomyModes: ["advisory"],
+          humanGateRules: ["campaign_launch_requires_human_gate"],
+          criticalActionRules: ["no_unreviewed_writes"],
+          auditRequirements: ["trace", "evidence"],
+          fallbackRules: ["use_read_model_summary_if_llm_unavailable"],
+        },
+      })
+      .expect(201);
+
+    expect(response.body).toMatchObject({
+      valid: true,
+      normalizedRole: "marketer",
+    });
+    expect(agentManagement.validateFutureAgentManifest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        role: "marketer",
+      }),
+    );
   });
 
   it("POST /api/rai/agents/config/change-requests/:id/canary/review отражает degraded rollback outcome", async () => {

@@ -6,9 +6,12 @@ import {
   type EvalRunResult,
 } from "../rai-chat/eval/golden-test-runner.service";
 import type { UpsertAgentConfigDto } from "./dto/agent-config.dto";
-import type { AgentRuntimeRole } from "../rai-chat/agent-registry.service";
+import {
+  CanonicalAgentRuntimeRole,
+  isAgentRuntimeRole,
+} from "../rai-chat/agent-registry.service";
 
-const ROLE_TO_AGENT_NAME: Record<AgentRuntimeRole, string> = {
+const ROLE_TO_AGENT_NAME: Record<CanonicalAgentRuntimeRole, string> = {
   agronomist: "AgronomAgent",
   economist: "EconomistAgent",
   knowledge: "KnowledgeAgent",
@@ -43,6 +46,10 @@ export class AgentConfigGuardService {
     options?: { changeRequestId?: string | null },
   ): Promise<EvalRunResult | null> {
     await this.assertModelNotQuarantined(companyId, dto.llmModel);
+    const evalAgentName = this.resolveEvalAgentName(dto.role, dto.runtimeProfile);
+    if (!evalAgentName) {
+      return null;
+    }
     const candidate = {
       role: dto.role,
       promptVersion: dto.systemPrompt,
@@ -52,7 +59,7 @@ export class AgentConfigGuardService {
       tools: dto.tools,
       isActive: dto.isActive ?? true,
     };
-    return this.runEvalIfSupported(companyId, dto.role, candidate, options);
+    return this.runEvalIfSupported(companyId, dto.role, evalAgentName, candidate, options);
   }
 
   async assertToggleAllowed(
@@ -94,11 +101,11 @@ export class AgentConfigGuardService {
 
   private async runEvalIfSupported(
     companyId: string,
-    role: AgentRuntimeRole,
+    role: string,
+    agentName: string,
     candidate: AgentEvalCandidate,
     options?: { changeRequestId?: string | null },
   ): Promise<EvalRunResult | null> {
-    const agentName = ROLE_TO_AGENT_NAME[role];
     const goldenSet = this.goldenTestRunner.loadGoldenSet(agentName);
     if (goldenSet.length === 0) {
       return null;
@@ -121,5 +128,19 @@ export class AgentConfigGuardService {
       },
     });
     return evalRun;
+  }
+
+  private resolveEvalAgentName(
+    role: string,
+    runtimeProfile?: UpsertAgentConfigDto["runtimeProfile"],
+  ): string | null {
+    if (isAgentRuntimeRole(role)) {
+      return ROLE_TO_AGENT_NAME[role];
+    }
+    const adapterRole = runtimeProfile?.executionAdapterRole;
+    if (typeof adapterRole === "string" && isAgentRuntimeRole(adapterRole)) {
+      return ROLE_TO_AGENT_NAME[adapterRole];
+    }
+    return null;
   }
 }

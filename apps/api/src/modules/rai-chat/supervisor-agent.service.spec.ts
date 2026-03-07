@@ -8,6 +8,7 @@ import { KnowledgeToolsRegistry } from "./tools/knowledge-tools.registry";
 import { AgronomAgent } from "./agents/agronom-agent.service";
 import { EconomistAgent } from "./agents/economist-agent.service";
 import { KnowledgeAgent } from "./agents/knowledge-agent.service";
+import { MonitoringAgent } from "./agents/monitoring-agent.service";
 import { AgroDeterministicEngineFacade } from "./deterministic/agro-deterministic.facade";
 import { IntentRouterService } from "./intent-router/intent-router.service";
 import { ExternalSignalsService } from "./external-signals.service";
@@ -32,6 +33,9 @@ import { QueueMetricsService } from "./performance/queue-metrics.service";
 import { AgentRuntimeConfigService } from "./agent-runtime-config.service";
 import { IncidentOpsService } from "./incident-ops.service";
 import { BudgetControllerService } from "./security/budget-controller.service";
+import { OpenRouterGatewayService } from "./agent-platform/openrouter-gateway.service";
+import { AgentPromptAssemblyService } from "./agent-platform/agent-prompt-assembly.service";
+import { AgentExecutionAdapterService } from "./runtime/agent-execution-adapter.service";
 import {
   RAI_CHAT_WIDGETS_SCHEMA_VERSION,
   RaiChatWidgetType,
@@ -91,9 +95,53 @@ describe("SupervisorAgent", () => {
   };
   const agentRuntimeConfigServiceMock = {
     resolveToolAccess: jest.fn().mockResolvedValue({ allowed: true }),
+    getEffectiveKernel: jest.fn().mockResolvedValue({
+      definition: { defaultAutonomyMode: "advisory" },
+      outputContract: {
+        responseSchemaVersion: "v1",
+        contractId: "agronom-v1",
+        requiresEvidence: true,
+        requiresDeterministicValidation: false,
+      },
+      runtimeProfile: { model: "openrouter/test", provider: "openrouter" },
+      toolBindings: [
+        {
+          toolName: RaiToolName.GenerateTechMapDraft,
+          isEnabled: true,
+          requiresHumanGate: true,
+          riskLevel: "WRITE",
+        },
+        {
+          toolName: RaiToolName.ComputeDeviations,
+          isEnabled: true,
+          requiresHumanGate: false,
+          riskLevel: "READ",
+        },
+        {
+          toolName: RaiToolName.ComputePlanFact,
+          isEnabled: true,
+          requiresHumanGate: false,
+          riskLevel: "READ",
+        },
+        {
+          toolName: RaiToolName.EmitAlerts,
+          isEnabled: true,
+          requiresHumanGate: true,
+          riskLevel: "WRITE",
+        },
+      ],
+      connectorBindings: [],
+      isActive: true,
+    }),
   };
   const incidentOpsServiceMock = {
     logIncident: jest.fn(),
+  };
+  const openRouterGatewayMock = {
+    generate: jest.fn().mockRejectedValue(new Error("OPENROUTER_API_KEY_MISSING")),
+  };
+  const agentPromptAssemblyMock = {
+    buildMessages: jest.fn().mockReturnValue([]),
   };
   const budgetControllerServiceMock = {
     evaluateRuntimeBudget: jest.fn().mockResolvedValue({
@@ -110,6 +158,7 @@ describe("SupervisorAgent", () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    delete process.env.RAI_AGENT_RUNTIME_MODE;
     intentRouterMock.buildAutoToolCall.mockReturnValue(null);
     intentRouterMock.classify.mockReturnValue({
       toolName: null,
@@ -123,6 +172,7 @@ describe("SupervisorAgent", () => {
         SupervisorAgent,
         MemoryCoordinatorService,
         AgentRuntimeService,
+        AgentExecutionAdapterService,
         ResponseComposerService,
         AgroToolsRegistry,
         FinanceToolsRegistry,
@@ -132,6 +182,7 @@ describe("SupervisorAgent", () => {
         AgronomAgent,
         EconomistAgent,
         KnowledgeAgent,
+        MonitoringAgent,
         RaiToolsRegistry,
         RiskPolicyEngineService,
         PendingActionService,
@@ -149,6 +200,8 @@ describe("SupervisorAgent", () => {
         { provide: AgentRuntimeConfigService, useValue: agentRuntimeConfigServiceMock },
         { provide: IncidentOpsService, useValue: incidentOpsServiceMock },
         { provide: BudgetControllerService, useValue: budgetControllerServiceMock },
+        { provide: OpenRouterGatewayService, useValue: openRouterGatewayMock },
+        { provide: AgentPromptAssemblyService, useValue: agentPromptAssemblyMock },
         { provide: TraceSummaryService, useValue: { record: jest.fn().mockResolvedValue(undefined), updateQuality: jest.fn().mockResolvedValue(undefined) } },
         { provide: AutonomyPolicyService, useValue: { getCompanyAutonomyLevel: jest.fn().mockResolvedValue("AUTONOMOUS") } },
         { provide: TruthfulnessEngineService, useValue: { calculateTraceTruthfulness: jest.fn().mockResolvedValue(20) } },
@@ -517,6 +570,332 @@ describe("SupervisorAgent", () => {
     );
   });
 
+  it("превращает agronomist NEEDS_MORE_DATA в payload добора контекста для техкарты", async () => {
+    process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+    intentRouterMock.classify.mockReturnValueOnce({
+      targetRole: "agronomist",
+      intent: "generate_tech_map_draft",
+      toolName: RaiToolName.GenerateTechMapDraft,
+      confidence: 0.7,
+      method: "regex",
+      reason: "match: техкарт",
+    });
+    intentRouterMock.buildAutoToolCall.mockReturnValueOnce(null);
+
+    const result = await agent.orchestrate(
+      {
+        message: "Составь техкарту по озимому рапсу",
+        workspaceContext: {
+          route: "/consulting/techmaps",
+        },
+      },
+      "company-1",
+      "user-1",
+    );
+
+    expect(result.text).toContain("Чтобы подготовить техкарту");
+    expect(result.agentRole).toBe("agronomist");
+    expect(result.pendingClarification).toEqual(
+      expect.objectContaining({
+        kind: "missing_context",
+        intentId: "tech_map_draft",
+        autoResume: true,
+      }),
+    );
+    expect(result.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "context_acquisition",
+          parentWindowId: null,
+          relatedWindowIds: [expect.stringContaining("win-techmap-")],
+          category: "clarification",
+          priority: 85,
+          mode: "panel",
+          status: "needs_user_input",
+          payload: expect.objectContaining({
+            missingKeys: ["fieldRef", "seasonRef"],
+          }),
+        }),
+        expect.objectContaining({
+          type: "context_hint",
+          parentWindowId: expect.stringContaining("win-techmap-"),
+          relatedWindowIds: [expect.stringContaining("win-techmap-")],
+          category: "analysis",
+          priority: 40,
+          actions: expect.arrayContaining([
+            expect.objectContaining({
+              kind: "focus_window",
+              targetWindowId: expect.stringContaining("win-techmap-"),
+            }),
+          ]),
+        }),
+      ]),
+    );
+    expect(result.activeWindowId).toEqual(expect.stringContaining("win-techmap-"));
+  });
+
+  it("отдаёт inline mode, если для техкарты не хватает только одного поля контекста", async () => {
+    process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+    intentRouterMock.classify.mockReturnValueOnce({
+      targetRole: "agronomist",
+      intent: "generate_tech_map_draft",
+      toolName: RaiToolName.GenerateTechMapDraft,
+      confidence: 0.7,
+      method: "regex",
+      reason: "match: техкарт",
+    });
+    intentRouterMock.buildAutoToolCall.mockReturnValueOnce(null);
+
+    const result = await agent.orchestrate(
+      {
+        message: "Составь техкарту по озимому рапсу",
+        workspaceContext: {
+          route: "/consulting/techmaps",
+          filters: {
+            seasonId: "season-2026",
+          },
+        },
+      },
+      "company-1",
+      "user-1",
+    );
+
+    expect(result.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "context_acquisition",
+          parentWindowId: null,
+          category: "clarification",
+          priority: 95,
+          mode: "inline",
+          status: "needs_user_input",
+          payload: expect.objectContaining({
+            seasonRef: "season-2026",
+            missingKeys: ["fieldRef"],
+          }),
+        }),
+        expect.objectContaining({
+          type: "context_hint",
+          parentWindowId: expect.stringContaining("win-techmap-"),
+          mode: "inline",
+          category: "analysis",
+          actions: expect.arrayContaining([
+            expect.objectContaining({
+              kind: "focus_window",
+            }),
+          ]),
+        }),
+      ]),
+    );
+  });
+
+  it("resume path повторно запускает tech_map_draft и возвращает completed window", async () => {
+    process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+    const result = await agent.orchestrate(
+      {
+        message: "Составь техкарту по озимому рапсу",
+        clarificationResume: {
+          windowId: "win-techmap-thread-1",
+          intentId: "tech_map_draft",
+          agentRole: "agronomist",
+          collectedContext: {
+            fieldRef: "field-42",
+            seasonRef: "season-42",
+          },
+        },
+        workspaceContext: {
+          route: "/consulting/techmaps",
+        },
+        threadId: "thread-1",
+      },
+      "company-1",
+      "user-1",
+    );
+
+    expect(result.pendingClarification).toBeNull();
+    expect(result.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          windowId: "win-techmap-thread-1",
+          parentWindowId: null,
+          relatedWindowIds: ["win-techmap-thread-1-result-hint"],
+          category: "result",
+          priority: 70,
+          mode: "takeover",
+          status: "completed",
+          payload: expect.objectContaining({
+            fieldRef: "field-42",
+            seasonRef: "season-42",
+            missingKeys: [],
+          }),
+        }),
+        expect.objectContaining({
+          windowId: "win-techmap-thread-1-result-hint",
+          type: "context_hint",
+          parentWindowId: "win-techmap-thread-1",
+          category: "result",
+          priority: 30,
+          mode: "inline",
+          status: "completed",
+          actions: expect.arrayContaining([
+            expect.objectContaining({
+              kind: "focus_window",
+              targetWindowId: "win-techmap-thread-1",
+            }),
+            expect.objectContaining({
+              kind: "open_field_card",
+              label: "Открыть поле",
+            }),
+            expect.objectContaining({
+              kind: "go_to_techmap",
+              targetRoute: "/consulting/techmaps/active",
+            }),
+          ]),
+        }),
+      ]),
+    );
+  });
+
+  it("превращает economist NEEDS_MORE_DATA в payload добора контекста для план-факта", async () => {
+    process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+    intentRouterMock.classify.mockReturnValueOnce({
+      targetRole: "economist",
+      intent: "compute_plan_fact",
+      toolName: RaiToolName.ComputePlanFact,
+      confidence: 0.78,
+      method: "regex",
+      reason: "match: plan-fact",
+    });
+    intentRouterMock.buildAutoToolCall.mockReturnValueOnce({
+      name: RaiToolName.ComputePlanFact,
+      payload: { scope: {} },
+    });
+
+    const result = await agent.orchestrate(
+      {
+        message: "Покажи план-факт по сезону",
+        workspaceContext: {
+          route: "/consulting/yield",
+        },
+      },
+      "company-1",
+      "user-1",
+    );
+
+    expect(result.text).toContain("Чтобы показать план-факт");
+    expect(result.agentRole).toBe("economist");
+    expect(result.pendingClarification).toEqual(
+      expect.objectContaining({
+        kind: "missing_context",
+        intentId: "compute_plan_fact",
+        agentRole: "economist",
+      }),
+    );
+    expect(result.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "context_acquisition",
+          title: "Добор контекста для план-факта",
+          category: "clarification",
+          status: "needs_user_input",
+          payload: expect.objectContaining({
+            intentId: "compute_plan_fact",
+            missingKeys: ["seasonId"],
+          }),
+        }),
+        expect.objectContaining({
+          type: "context_hint",
+          title: "Что ещё нужно для план-факта",
+          actions: expect.arrayContaining([
+            expect.objectContaining({
+              kind: "open_route",
+              targetRoute: "/consulting/yield",
+            }),
+          ]),
+        }),
+      ]),
+    );
+  });
+
+  it("resume path повторно запускает compute_plan_fact и возвращает completed window", async () => {
+    process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+    prismaServiceMock.harvestPlan.findFirst
+      .mockResolvedValueOnce({
+        id: "plan-9",
+        status: "ACTIVE",
+        seasonId: "season-9",
+        companyId: "company-1",
+      })
+      .mockResolvedValueOnce({
+        id: "plan-9",
+        status: "ACTIVE",
+        seasonId: "season-9",
+        companyId: "company-1",
+      });
+    kpiServiceMock.calculatePlanKPI.mockResolvedValueOnce({
+      hasData: true,
+      roi: 0.165,
+      ebitda: 2200,
+      revenue: 4100,
+      totalActualCost: 1800,
+      totalPlannedCost: 1900,
+    });
+
+    const result = await agent.orchestrate(
+      {
+        message: "Покажи план-факт по сезону",
+        clarificationResume: {
+          windowId: "win-planfact-thread-1",
+          intentId: "compute_plan_fact",
+          agentRole: "economist",
+          collectedContext: {
+            seasonId: "season-9",
+          },
+        },
+        workspaceContext: {
+          route: "/consulting/yield",
+          filters: { seasonId: "season-9" },
+        },
+        threadId: "thread-1",
+      },
+      "company-1",
+      "user-1",
+    );
+
+    expect(result.pendingClarification).toBeNull();
+    expect(result.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          windowId: "win-planfact-thread-1",
+          title: "План-факт готов",
+          category: "result",
+          mode: "takeover",
+          status: "completed",
+          payload: expect.objectContaining({
+            intentId: "compute_plan_fact",
+            seasonId: "season-9",
+            missingKeys: [],
+          }),
+        }),
+        expect.objectContaining({
+          windowId: "win-planfact-thread-1-result-hint",
+          type: "context_hint",
+          category: "result",
+          actions: expect.arrayContaining([
+            expect.objectContaining({
+              kind: "focus_window",
+              targetWindowId: "win-planfact-thread-1",
+            }),
+            expect.objectContaining({
+              kind: "open_route",
+              targetRoute: "/consulting/yield",
+            }),
+          ]),
+        }),
+      ]),
+    );
+  });
+
   describe("Truthfulness runtime pipeline", () => {
     let traceSummaryMock: { record: jest.Mock; updateQuality: jest.Mock };
     let truthfulnessMock: { calculateTraceTruthfulness: jest.Mock };
@@ -545,6 +924,7 @@ describe("SupervisorAgent", () => {
           SupervisorAgent,
           MemoryCoordinatorService,
           AgentRuntimeService,
+          AgentExecutionAdapterService,
           ResponseComposerService,
           AgroToolsRegistry,
           FinanceToolsRegistry,
@@ -554,6 +934,7 @@ describe("SupervisorAgent", () => {
           AgronomAgent,
           EconomistAgent,
           KnowledgeAgent,
+          MonitoringAgent,
           RaiToolsRegistry,
           RiskPolicyEngineService,
           PendingActionService,
@@ -577,6 +958,8 @@ describe("SupervisorAgent", () => {
           { provide: AgentRuntimeConfigService, useValue: agentRuntimeConfigServiceMock },
           { provide: IncidentOpsService, useValue: incidentOpsServiceMock },
           { provide: BudgetControllerService, useValue: budgetControllerServiceMock },
+          { provide: OpenRouterGatewayService, useValue: openRouterGatewayMock },
+          { provide: AgentPromptAssemblyService, useValue: agentPromptAssemblyMock },
           { provide: TraceSummaryService, useValue: overrides?.traceSummary ?? traceSummaryMock },
           { provide: AutonomyPolicyService, useValue: { getCompanyAutonomyLevel: jest.fn().mockResolvedValue("AUTONOMOUS") } },
           { provide: TruthfulnessEngineService, useValue: overrides?.truthfulness ?? truthfulnessMock },
@@ -696,6 +1079,99 @@ describe("SupervisorAgent", () => {
       expect(callOrder.indexOf("record")).toBeLessThan(callOrder.indexOf("audit"));
       expect(callOrder.indexOf("audit")).toBeLessThan(callOrder.indexOf("truthfulness"));
       expect(callOrder.indexOf("truthfulness")).toBeLessThan(callOrder.indexOf("updateQuality"));
+    });
+  });
+
+  describe("platform-wide interaction contracts", () => {
+    it("knowledge path возвращает unified windows через contract-layer", async () => {
+      process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+      memoryAdapterMock.getProfile.mockResolvedValueOnce({
+        lastMessagePreview: "Регламент по сезону и технике безопасности для полевых работ.",
+      });
+
+      const response = await agent.orchestrate(
+        {
+          message: "регламент",
+          workspaceContext: {
+            route: "/knowledge/base",
+          },
+        },
+        "company-a",
+        "user-1",
+      );
+
+      expect(response.agentRole).toBe("knowledge");
+      expect(response.workWindows).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: "structured_result",
+            payload: expect.objectContaining({
+              intentId: "query_knowledge",
+            }),
+          }),
+          expect.objectContaining({
+            type: "related_signals",
+            payload: expect.objectContaining({
+              intentId: "query_knowledge",
+            }),
+          }),
+        ]),
+      );
+    });
+
+    it("monitoring path возвращает unified windows через contract-layer", async () => {
+      process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+      intentRouterMock.classify.mockReturnValueOnce({
+        targetRole: "monitoring",
+        intent: "emit_alerts",
+        toolName: RaiToolName.EmitAlerts,
+        confidence: 0.8,
+        method: "regex",
+        reason: "match: алерт|alert",
+      });
+      intentRouterMock.buildAutoToolCall.mockReturnValueOnce({
+        name: RaiToolName.EmitAlerts,
+        payload: { severity: "S4" },
+      });
+      prismaServiceMock.agroEscalation.findMany.mockResolvedValueOnce([
+        {
+          id: "esc-1",
+          severity: "S4",
+          reason: "Risk spike",
+          status: "OPEN",
+          references: { entity: "FIELD-12" },
+          createdAt: new Date("2026-03-07T10:00:00.000Z"),
+        },
+      ]);
+
+      const response = await agent.orchestrate(
+        {
+          message: "покажи алерты",
+          workspaceContext: {
+            route: "/governance/security#incidents",
+          },
+        },
+        "company-a",
+        "user-1",
+      );
+
+      expect(response.agentRole).toBe("monitoring");
+      expect(response.workWindows).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: "related_signals",
+            payload: expect.objectContaining({
+              intentId: "emit_alerts",
+            }),
+          }),
+          expect.objectContaining({
+            type: "structured_result",
+            payload: expect.objectContaining({
+              intentId: "emit_alerts",
+            }),
+          }),
+        ]),
+      );
     });
   });
 });

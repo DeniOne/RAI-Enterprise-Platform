@@ -9,6 +9,7 @@ import { KnowledgeToolsRegistry } from "./tools/knowledge-tools.registry";
 import { AgronomAgent } from "./agents/agronom-agent.service";
 import { EconomistAgent } from "./agents/economist-agent.service";
 import { KnowledgeAgent } from "./agents/knowledge-agent.service";
+import { MonitoringAgent } from "./agents/monitoring-agent.service";
 import { AgroDeterministicEngineFacade } from "./deterministic/agro-deterministic.facade";
 import { IntentRouterService } from "./intent-router/intent-router.service";
 import { RaiToolName } from "./tools/rai-tools.types";
@@ -20,6 +21,7 @@ import { ExternalSignalsService } from "./external-signals.service";
 import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
 import { MemoryCoordinatorService } from "./memory/memory-coordinator.service";
 import { AgentRuntimeService } from "./runtime/agent-runtime.service";
+import { AgentExecutionAdapterService } from "./runtime/agent-execution-adapter.service";
 import { ResponseComposerService } from "./composer/response-composer.service";
 import { TechMapService } from "../tech-map/tech-map.service";
 import { DeviationService } from "../consulting/deviation.service";
@@ -35,6 +37,10 @@ import { QueueMetricsService } from "./performance/queue-metrics.service";
 import { BudgetControllerService } from "./security/budget-controller.service";
 import { IncidentOpsService } from "./incident-ops.service";
 import { TruthfulnessEngineService } from "./truthfulness-engine.service";
+import { AgentRegistryService } from "./agent-registry.service";
+import { AgentRuntimeConfigService } from "./agent-runtime-config.service";
+import { OpenRouterGatewayService } from "./agent-platform/openrouter-gateway.service";
+import { AgentPromptAssemblyService } from "./agent-platform/agent-prompt-assembly.service";
 
 describe("RaiChatService", () => {
   let service: RaiChatService;
@@ -71,6 +77,7 @@ describe("RaiChatService", () => {
         SupervisorAgent,
         MemoryCoordinatorService,
         AgentRuntimeService,
+        AgentExecutionAdapterService,
         ResponseComposerService,
         AgroToolsRegistry,
         FinanceToolsRegistry,
@@ -80,6 +87,7 @@ describe("RaiChatService", () => {
         AgronomAgent,
         EconomistAgent,
         KnowledgeAgent,
+        MonitoringAgent,
         IntentRouterService,
         RaiToolsRegistry,
         RaiChatWidgetBuilder,
@@ -99,6 +107,29 @@ describe("RaiChatService", () => {
         { provide: TraceSummaryService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
         { provide: AutonomyPolicyService, useValue: { getCompanyAutonomyLevel: jest.fn().mockResolvedValue("AUTONOMOUS") } },
         { provide: TruthfulnessEngineService, useValue: { calculateTraceTruthfulness: jest.fn().mockResolvedValue({ bsScorePct: 0, evidenceCoveragePct: 0, invalidClaimsPct: 0 }) } },
+        {
+          provide: AgentRegistryService,
+          useValue: {
+            getEffectiveKernel: jest.fn().mockResolvedValue({
+              definition: { defaultAutonomyMode: "advisory" },
+              outputContract: {
+                responseSchemaVersion: "v1",
+                contractId: "knowledge-v1",
+                requiresEvidence: true,
+                requiresDeterministicValidation: false,
+              },
+              runtimeProfile: { model: "openrouter/test", provider: "openrouter" },
+              toolBindings: [],
+              connectorBindings: [],
+              isActive: true,
+            }),
+            getRegistry: jest.fn().mockResolvedValue([]),
+            getEffectiveAgent: jest.fn().mockResolvedValue(null),
+          },
+        },
+        AgentRuntimeConfigService,
+        { provide: OpenRouterGatewayService, useValue: { generate: jest.fn().mockRejectedValue(new Error("OPENROUTER_API_KEY_MISSING")) } },
+        AgentPromptAssemblyService,
       ],
     }).compile();
 

@@ -159,6 +159,47 @@ export class ExternalAdvisoryFeedbackDto {
   reason?: string;
 }
 
+export class ClarificationResumeCollectedContextDto {
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  fieldRef?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  seasonRef?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  seasonId?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  planId?: string;
+}
+
+export class ClarificationResumeDto {
+  @IsString()
+  @MaxLength(128)
+  windowId: string;
+
+  @IsString()
+  @MaxLength(64)
+  intentId: "tech_map_draft" | "compute_plan_fact";
+
+  @IsString()
+  @MaxLength(64)
+  agentRole: "agronomist" | "economist";
+
+  @IsObject()
+  @ValidateNested()
+  @Type(() => ClarificationResumeCollectedContextDto)
+  collectedContext: ClarificationResumeCollectedContextDto;
+}
+
 export interface ExternalAdvisoryDto {
   traceId: string;
   recommendation: "ALLOW" | "REVIEW";
@@ -207,6 +248,99 @@ export interface RuntimeBudgetDto {
   ownerRoles: string[];
 }
 
+export interface PendingClarificationItemDto {
+  key: "fieldRef" | "seasonRef" | "seasonId" | "planId";
+  label: string;
+  required: true;
+  reason: string;
+  sourcePriority: Array<"workspace" | "record" | "user">;
+  status: "missing" | "resolved";
+  resolvedFrom?: "workspace" | "record" | "user";
+  value?: string;
+}
+
+export interface PendingClarificationDto {
+  kind: "missing_context";
+  agentRole: string;
+  intentId: "tech_map_draft" | "compute_plan_fact" | "query_knowledge" | "emit_alerts";
+  summary: string;
+  autoResume: boolean;
+  items: PendingClarificationItemDto[];
+}
+
+export interface RaiWorkWindowActionDto {
+  id: string;
+  kind:
+    | "use_workspace_field"
+    | "open_field_card"
+    | "open_season_picker"
+    | "refresh_context"
+    | "focus_window"
+    | "go_to_techmap"
+    | "open_route"
+    | "open_entity";
+  label: string;
+  enabled: boolean;
+  targetWindowId?: string;
+  targetRoute?: string;
+  entityType?: string;
+  entityId?: string;
+}
+
+export interface RaiWorkWindowDto {
+  windowId: string;
+  originMessageId: string | null;
+  agentRole: string;
+  type:
+    | "context_acquisition"
+    | "context_hint"
+    | "structured_result"
+    | "related_signals"
+    | "comparison";
+  parentWindowId?: string | null;
+  relatedWindowIds?: string[];
+  category: "clarification" | "result" | "analysis" | "signals";
+  priority: number;
+  mode: "inline" | "panel" | "takeover";
+  title: string;
+  status: "needs_user_input" | "resolved" | "completed" | "informational";
+  payload: {
+    intentId: "tech_map_draft" | "compute_plan_fact" | "query_knowledge" | "emit_alerts";
+    summary: string;
+    fieldRef?: string;
+    seasonRef?: string;
+    seasonId?: string;
+    planId?: string;
+    missingKeys: Array<"fieldRef" | "seasonRef" | "seasonId" | "planId">;
+    resultText?: string;
+    sections?: Array<{
+      id: string;
+      title: string;
+      items: Array<{
+        label: string;
+        value: string;
+        tone?: "neutral" | "positive" | "warning" | "critical";
+      }>;
+    }>;
+    signalItems?: Array<{
+      id: string;
+      tone: "critical" | "warning" | "info";
+      text: string;
+      targetWindowId?: string;
+      targetRoute?: string;
+    }>;
+    columns?: string[];
+    rows?: Array<{
+      id: string;
+      label: string;
+      values: string[];
+      emphasis?: "neutral" | "best" | "risk";
+    }>;
+  };
+  actions: RaiWorkWindowActionDto[];
+  isPinned: boolean;
+}
+
 export class RaiChatRequestDto {
   @IsString()
   @IsNotEmpty()
@@ -247,6 +381,12 @@ export class RaiChatRequestDto {
   @ValidateNested()
   @Type(() => ExternalAdvisoryFeedbackDto)
   advisoryFeedback?: ExternalAdvisoryFeedbackDto;
+
+  @IsObject()
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ClarificationResumeDto)
+  clarificationResume?: ClarificationResumeDto;
 }
 
 export class RaiToolCallDto {
@@ -297,4 +437,34 @@ export class RaiChatResponseDto {
 
   @IsOptional()
   runtimeBudget?: RuntimeBudgetDto;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(64)
+  agentRole?: string;
+
+  @IsOptional()
+  fallbackUsed?: boolean;
+
+  @IsOptional()
+  validation?: {
+    passed: boolean;
+    reasons: string[];
+  };
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(32)
+  outputContractVersion?: string;
+
+  @IsOptional()
+  pendingClarification?: PendingClarificationDto | null;
+
+  @IsOptional()
+  workWindows?: RaiWorkWindowDto[];
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  activeWindowId?: string | null;
 }

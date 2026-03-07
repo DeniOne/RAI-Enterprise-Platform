@@ -30,3 +30,42 @@
 - **СБОР И АНАЛИЗ ДАННЫХ**: Форматирование и структурирование результатов исследования проблематики рапса (Gemini Research).
   - Файлы: `CEMINI#1.md` (готово), `GEMINI#2.md` (в процессе).
 - **В ОЖИДАНИИ**: Реакция техлида на ревью-паки R1-R3.
+
+## 2026-03-07 — Stage 2 Interaction Blueprint закрыт
+
+- Stage 2 interaction blueprint доведён до состояния `implemented canon`.
+- Backend:
+  - unified `agent interaction contracts`
+  - contract-backed `IntentRouter`
+  - contract-backed `clarificationResume`
+  - contract-backed `clarification/result windows`
+- Frontend:
+  - IDE-like `AI Dock`
+  - история чатов и `Новый чат`
+  - unified overlay windows
+  - `collapse / restore / close / pin`
+  - `inline / panel / takeover`
+  - voice input scaffold с выбором языка
+- Reference families, подтверждённые live/runtime path:
+  - `agronomist / tech_map_draft`
+  - `economist / compute_plan_fact`
+  - `knowledge / query_knowledge`
+  - `monitoring / emit_alerts`
+- Следующий слой после этого закрытия:
+  - расширение platform contracts на future/non-canonical roles
+  - platform-wide intent catalog beyond reference agents
+
+## 2026-03-07 — Memory Bank Sync / Push Context
+
+- Пользовательский запрос на этом шаге: зафиксировать весь массив выполненных изменений в memory-bank и отправить текущий пакет в удалённый репозиторий.
+- Текущее операционное состояние:
+  - Stage 2 interaction blueprint закрыт и заtruth-sync-ен в стратегии, handoff и closeout-report.
+  - `AI Dock + Unified Window Protocol + interaction contracts` являются текущим каноном реализации.
+  - Reference families, покрытые новым interaction/runtime contract-path:
+    - `agronomist`
+    - `economist`
+    - `knowledge`
+    - `monitoring`
+- Ближайший следующий слой после push:
+  - future-role/platform contract expansion
+  - углубление канона на non-canonical roles и расширенный catalog intents/actions

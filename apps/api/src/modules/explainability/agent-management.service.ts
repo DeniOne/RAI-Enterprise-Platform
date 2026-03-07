@@ -1,22 +1,509 @@
-import { BadRequestException, ForbiddenException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
-import type { AgentConfiguration } from "@rai/prisma-client";
+import { Prisma, type AgentConfiguration } from "@rai/prisma-client";
 import { RaiToolName } from "../rai-chat/tools/rai-tools.types";
 import type {
   AgentConfigItemDto,
   AgentConfigsResponseDto,
+  AgentKernelViewDto,
   AgentRegistryItemDto,
+  AgentTemplateId,
+  FutureAgentManifestDto,
+  FutureAgentManifestValidationDto,
+  FutureAgentTemplateDto,
   UpsertAgentConfigDto,
 } from "./dto/agent-config.dto";
 import { AgentConfigGuardService } from "./agent-config-guard.service";
 import {
   AgentRegistryService,
   getDefaultToolsForRole,
-  type AgentRuntimeRole,
   isAgentRuntimeRole,
 } from "../rai-chat/agent-registry.service";
+import { EffectiveAgentKernelEntry } from "../rai-chat/agent-platform/agent-platform.types";
 
-function toItemDto(row: AgentConfiguration & { role: AgentRuntimeRole }): AgentConfigItemDto {
+const FUTURE_AGENT_TEMPLATES: FutureAgentTemplateDto[] = [
+  {
+    templateId: "marketer",
+    label: "Marketer",
+    manifest: {
+      templateId: "marketer",
+      role: "marketer",
+      name: "MarketerAgent",
+      kind: "domain_advisor",
+      ownerDomain: "marketing",
+      description: "Campaign planning and funnel analysis with governed advisory outputs.",
+      defaultAutonomyMode: "advisory",
+      runtimeProfile: {
+        profileId: "marketer-runtime-v1",
+        modelRoutingClass: "fast",
+        provider: "openrouter",
+        model: "openai/gpt-4o-mini",
+        executionAdapterRole: "knowledge",
+        maxInputTokens: 8000,
+        maxOutputTokens: 3000,
+        temperature: 0.2,
+        timeoutMs: 15000,
+        supportsStreaming: false,
+      },
+      memoryPolicy: {
+        policyId: "marketer-memory-v1",
+        allowedScopes: ["tenant", "domain", "team", "task_workflow"],
+        retrievalPolicy: "scoped_recall",
+        writePolicy: "append_summary",
+        sensitiveDataPolicy: "mask",
+      },
+      capabilityPolicy: {
+        capabilities: ["MarketingToolsRegistry"],
+        toolAccessMode: "allowlist",
+        connectorAccessMode: "allowlist",
+      },
+      toolBindings: [],
+      connectorBindings: [
+        {
+          connectorName: "crm_read_model",
+          accessMode: "read",
+          scopes: ["tenant", "campaigns"],
+        },
+      ],
+      outputContract: {
+        contractId: "marketer-v1",
+        responseSchemaVersion: "v1",
+        sections: ["summary", "recommendations", "risks", "evidence", "next_steps"],
+        requiresEvidence: true,
+        requiresDeterministicValidation: false,
+        fallbackMode: "retrieval_summary",
+      },
+      governancePolicy: {
+        policyId: "marketer-governance-v1",
+        allowedAutonomyModes: ["advisory"],
+        humanGateRules: ["campaign_launch_requires_human_gate"],
+        criticalActionRules: ["no_unreviewed_writes"],
+        auditRequirements: ["trace", "evidence"],
+        fallbackRules: ["use_read_model_summary_if_llm_unavailable"],
+      },
+      domainAdapter: {
+        adapterId: "marketing-domain-adapter",
+        status: "optional",
+        notes: "Only needed for campaign-specific deterministic enrichments.",
+      },
+    },
+    rolloutChecklist: [
+      "Register prompt governance entry",
+      "Bind read-only CRM connector",
+      "Add campaign recommendation eval set",
+    ],
+  },
+  {
+    templateId: "strategist",
+    label: "Strategist",
+    manifest: {
+      templateId: "strategist",
+      role: "strategist",
+      name: "StrategistAgent",
+      kind: "domain_advisor",
+      ownerDomain: "strategy",
+      description: "Scenario analysis and strategic tradeoff assessment.",
+      defaultAutonomyMode: "advisory",
+      runtimeProfile: {
+        profileId: "strategist-runtime-v1",
+        modelRoutingClass: "strong",
+        provider: "openrouter",
+        model: "openai/gpt-4.1",
+        executionAdapterRole: "knowledge",
+        maxInputTokens: 12000,
+        maxOutputTokens: 4000,
+        temperature: 0.2,
+        timeoutMs: 20000,
+        supportsStreaming: false,
+      },
+      memoryPolicy: {
+        policyId: "strategist-memory-v1",
+        allowedScopes: ["tenant", "domain", "team", "task_workflow", "sensitive_compliance"],
+        retrievalPolicy: "scoped_recall",
+        writePolicy: "append_summary",
+        sensitiveDataPolicy: "mask",
+      },
+      capabilityPolicy: {
+        capabilities: ["StrategyToolsRegistry"],
+        toolAccessMode: "allowlist",
+        connectorAccessMode: "allowlist",
+      },
+      toolBindings: [],
+      connectorBindings: [],
+      outputContract: {
+        contractId: "strategist-v1",
+        responseSchemaVersion: "v1",
+        sections: ["thesis", "scenarios", "assumptions", "risks", "evidence"],
+        requiresEvidence: true,
+        requiresDeterministicValidation: false,
+        fallbackMode: "retrieval_summary",
+      },
+      governancePolicy: {
+        policyId: "strategist-governance-v1",
+        allowedAutonomyModes: ["advisory"],
+        humanGateRules: ["strategy_changes_require_exec_review"],
+        criticalActionRules: ["no_autonomous_execution"],
+        auditRequirements: ["trace", "evidence", "validation"],
+        fallbackRules: ["use_structured_summary_if_llm_unavailable"],
+      },
+      domainAdapter: {
+        adapterId: "strategy-domain-adapter",
+        status: "optional",
+        notes: "Use only if deterministic scenario engines are introduced.",
+      },
+    },
+    rolloutChecklist: [
+      "Define strategic source corpus",
+      "Attach scenario evaluation set",
+      "Keep autonomy in advisory mode",
+    ],
+  },
+  {
+    templateId: "finance_advisor",
+    label: "Finance Advisor",
+    manifest: {
+      templateId: "finance_advisor",
+      role: "finance_advisor",
+      name: "FinanceAdvisorAgent",
+      kind: "domain_advisor",
+      ownerDomain: "finance",
+      description: "Governed finance advisory on top of deterministic metrics and scenarios.",
+      defaultAutonomyMode: "advisory",
+      runtimeProfile: {
+        profileId: "finance-advisor-runtime-v1",
+        modelRoutingClass: "strong",
+        provider: "openrouter",
+        model: "openai/gpt-4.1",
+        executionAdapterRole: "economist",
+        maxInputTokens: 10000,
+        maxOutputTokens: 3500,
+        temperature: 0.15,
+        timeoutMs: 20000,
+        supportsStreaming: false,
+      },
+      memoryPolicy: {
+        policyId: "finance-advisor-memory-v1",
+        allowedScopes: ["tenant", "domain", "task_workflow", "sensitive_compliance"],
+        retrievalPolicy: "scoped_recall",
+        writePolicy: "append_summary",
+        sensitiveDataPolicy: "mask",
+      },
+      capabilityPolicy: {
+        capabilities: ["FinanceToolsRegistry"],
+        toolAccessMode: "allowlist",
+        connectorAccessMode: "allowlist",
+      },
+      toolBindings: [],
+      connectorBindings: [],
+      outputContract: {
+        contractId: "finance-advisor-v1",
+        responseSchemaVersion: "v1",
+        sections: ["summary", "metrics", "risks", "caveats", "evidence"],
+        requiresEvidence: true,
+        requiresDeterministicValidation: true,
+        fallbackMode: "deterministic_summary",
+      },
+      governancePolicy: {
+        policyId: "finance-advisor-governance-v1",
+        allowedAutonomyModes: ["advisory"],
+        humanGateRules: ["financial_actions_disallowed"],
+        criticalActionRules: ["no_payment_or_booking_writes"],
+        auditRequirements: ["trace", "evidence", "validation"],
+        fallbackRules: ["use_deterministic_finance_summary_if_llm_unavailable"],
+      },
+      domainAdapter: {
+        adapterId: "finance-domain-adapter",
+        status: "optional",
+        notes: "Reuse existing economist deterministic toolchain when available.",
+      },
+    },
+    rolloutChecklist: [
+      "Map deterministic finance evidence sources",
+      "Add plan-fact and scenario eval set",
+      "Keep advice non-transactional",
+    ],
+  },
+  {
+    templateId: "legal_advisor",
+    label: "Legal Advisor",
+    manifest: {
+      templateId: "legal_advisor",
+      role: "legal_advisor",
+      name: "LegalAdvisorAgent",
+      kind: "domain_advisor",
+      ownerDomain: "legal",
+      description: "Evidence-grounded legal research and clause risk analysis.",
+      defaultAutonomyMode: "advisory",
+      runtimeProfile: {
+        profileId: "legal-advisor-runtime-v1",
+        modelRoutingClass: "strong",
+        provider: "openrouter",
+        model: "openai/gpt-4.1",
+        executionAdapterRole: "knowledge",
+        maxInputTokens: 12000,
+        maxOutputTokens: 3500,
+        temperature: 0.1,
+        timeoutMs: 20000,
+        supportsStreaming: false,
+      },
+      memoryPolicy: {
+        policyId: "legal-advisor-memory-v1",
+        allowedScopes: ["tenant", "domain", "team", "sensitive_compliance"],
+        retrievalPolicy: "scoped_recall",
+        writePolicy: "append_summary",
+        sensitiveDataPolicy: "allow_masked_only",
+      },
+      capabilityPolicy: {
+        capabilities: ["LegalToolsRegistry"],
+        toolAccessMode: "allowlist",
+        connectorAccessMode: "allowlist",
+      },
+      toolBindings: [],
+      connectorBindings: [
+        {
+          connectorName: "legal_corpus",
+          accessMode: "read",
+          scopes: ["tenant", "clauses", "policies"],
+        },
+      ],
+      outputContract: {
+        contractId: "legal-advisor-v1",
+        responseSchemaVersion: "v1",
+        sections: ["summary", "clause_risks", "sources", "uncertainty", "next_steps"],
+        requiresEvidence: true,
+        requiresDeterministicValidation: false,
+        fallbackMode: "retrieval_summary",
+      },
+      governancePolicy: {
+        policyId: "legal-advisor-governance-v1",
+        allowedAutonomyModes: ["advisory"],
+        humanGateRules: ["legal_decisions_require_human_review"],
+        criticalActionRules: ["no_autonomous_legal_commitments"],
+        auditRequirements: ["trace", "evidence", "validation"],
+        fallbackRules: ["use_corpus_summary_if_llm_unavailable"],
+      },
+      domainAdapter: {
+        adapterId: "legal-domain-adapter",
+        status: "required",
+        notes: "Required when clause parsing or jurisdiction-specific deterministic checks exist.",
+      },
+    },
+    rolloutChecklist: [
+      "Bind legal corpus connector",
+      "Add clause-risk regression set",
+      "Keep all outputs advisory only",
+    ],
+  },
+  {
+    templateId: "crm_agent",
+    label: "CRM Agent",
+    manifest: {
+      templateId: "crm_agent",
+      role: "crm_agent",
+      name: "CrmAgent",
+      kind: "worker_hybrid",
+      ownerDomain: "crm",
+      description: "Customer record summarization and governed workflow support.",
+      defaultAutonomyMode: "hybrid",
+      runtimeProfile: {
+        profileId: "crm-agent-runtime-v1",
+        modelRoutingClass: "fast",
+        provider: "openrouter",
+        model: "openai/gpt-4o-mini",
+        executionAdapterRole: "knowledge",
+        maxInputTokens: 8000,
+        maxOutputTokens: 2500,
+        temperature: 0.15,
+        timeoutMs: 15000,
+        supportsStreaming: false,
+      },
+      memoryPolicy: {
+        policyId: "crm-agent-memory-v1",
+        allowedScopes: ["tenant", "domain", "user", "task_workflow"],
+        retrievalPolicy: "scoped_recall",
+        writePolicy: "append_interaction",
+        sensitiveDataPolicy: "mask",
+      },
+      capabilityPolicy: {
+        capabilities: ["CrmToolsRegistry"],
+        toolAccessMode: "allowlist",
+        connectorAccessMode: "allowlist",
+      },
+      toolBindings: [],
+      connectorBindings: [
+        {
+          connectorName: "crm_primary",
+          accessMode: "governed_write",
+          scopes: ["contacts", "activities"],
+        },
+      ],
+      outputContract: {
+        contractId: "crm-agent-v1",
+        responseSchemaVersion: "v1",
+        sections: ["summary", "recommended_actions", "record_changes", "evidence"],
+        requiresEvidence: true,
+        requiresDeterministicValidation: true,
+        fallbackMode: "deterministic_summary",
+      },
+      governancePolicy: {
+        policyId: "crm-agent-governance-v1",
+        allowedAutonomyModes: ["advisory", "hybrid"],
+        humanGateRules: ["write_actions_require_governed_gate"],
+        criticalActionRules: ["no_unreviewed_record_mutations"],
+        auditRequirements: ["trace", "evidence", "validation", "gate_status"],
+        fallbackRules: ["use_read_model_summary_if_llm_unavailable"],
+      },
+      domainAdapter: {
+        adapterId: "crm-domain-adapter",
+        status: "optional",
+        notes: "Add if CRM-specific deterministic action formatting is needed.",
+      },
+    },
+    rolloutChecklist: [
+      "Prove read-only path first",
+      "Enable governed_write only with human gate",
+      "Add CRM activity audit assertions",
+    ],
+  },
+  {
+    templateId: "controller",
+    label: "Controller",
+    manifest: {
+      templateId: "controller",
+      role: "controller",
+      name: "ControllerAgent",
+      kind: "worker_hybrid",
+      ownerDomain: "finance",
+      description: "Controls monitoring, reconciliation support, and governed escalations.",
+      defaultAutonomyMode: "hybrid",
+      runtimeProfile: {
+        profileId: "controller-runtime-v1",
+        modelRoutingClass: "fast",
+        provider: "openrouter",
+        model: "openai/gpt-4o-mini",
+        executionAdapterRole: "monitoring",
+        maxInputTokens: 8000,
+        maxOutputTokens: 2500,
+        temperature: 0.1,
+        timeoutMs: 15000,
+        supportsStreaming: false,
+      },
+      memoryPolicy: {
+        policyId: "controller-memory-v1",
+        allowedScopes: ["tenant", "domain", "task_workflow", "sensitive_compliance"],
+        retrievalPolicy: "scoped_recall",
+        writePolicy: "append_summary",
+        sensitiveDataPolicy: "mask",
+      },
+      capabilityPolicy: {
+        capabilities: ["FinanceToolsRegistry", "RiskToolsRegistry"],
+        toolAccessMode: "allowlist",
+        connectorAccessMode: "allowlist",
+      },
+      toolBindings: [],
+      connectorBindings: [],
+      outputContract: {
+        contractId: "controller-v1",
+        responseSchemaVersion: "v1",
+        sections: ["signal_summary", "exceptions", "recommended_actions", "evidence"],
+        requiresEvidence: true,
+        requiresDeterministicValidation: true,
+        fallbackMode: "deterministic_summary",
+      },
+      governancePolicy: {
+        policyId: "controller-governance-v1",
+        allowedAutonomyModes: ["advisory", "hybrid"],
+        humanGateRules: ["escalations_require_review_for_writes"],
+        criticalActionRules: ["deny_unreviewed_postings"],
+        auditRequirements: ["trace", "evidence", "validation", "gate_status"],
+        fallbackRules: ["use_controls_summary_if_llm_unavailable"],
+      },
+      domainAdapter: {
+        adapterId: "controller-domain-adapter",
+        status: "optional",
+        notes: "Useful when reconciliation engines emit structured exceptions.",
+      },
+    },
+    rolloutChecklist: [
+      "Connect controls evidence sources",
+      "Prove no-write default path",
+      "Add escalation policy tests",
+    ],
+  },
+  {
+    templateId: "personal_assistant",
+    label: "Personal Assistant",
+    manifest: {
+      templateId: "personal_assistant",
+      role: "personal_assistant",
+      name: "PersonalAssistantAgent",
+      kind: "personal_delegated",
+      ownerDomain: "personal_ops",
+      description: "Personal task planning and summarization under delegated boundaries.",
+      defaultAutonomyMode: "advisory",
+      runtimeProfile: {
+        profileId: "personal-assistant-runtime-v1",
+        modelRoutingClass: "fast",
+        provider: "openrouter",
+        model: "openai/gpt-4o-mini",
+        executionAdapterRole: "knowledge",
+        maxInputTokens: 8000,
+        maxOutputTokens: 2500,
+        temperature: 0.25,
+        timeoutMs: 15000,
+        supportsStreaming: false,
+      },
+      memoryPolicy: {
+        policyId: "personal-assistant-memory-v1",
+        allowedScopes: ["tenant", "user", "task_workflow"],
+        retrievalPolicy: "scoped_recall",
+        writePolicy: "append_interaction",
+        sensitiveDataPolicy: "allow_masked_only",
+      },
+      capabilityPolicy: {
+        capabilities: ["ProductivityToolsRegistry"],
+        toolAccessMode: "allowlist",
+        connectorAccessMode: "allowlist",
+      },
+      toolBindings: [],
+      connectorBindings: [
+        {
+          connectorName: "calendar_read_model",
+          accessMode: "read",
+          scopes: ["events", "availability"],
+        },
+      ],
+      outputContract: {
+        contractId: "personal-assistant-v1",
+        responseSchemaVersion: "v1",
+        sections: ["summary", "tasks", "constraints", "next_steps"],
+        requiresEvidence: false,
+        requiresDeterministicValidation: false,
+        fallbackMode: "retrieval_summary",
+      },
+      governancePolicy: {
+        policyId: "personal-assistant-governance-v1",
+        allowedAutonomyModes: ["advisory"],
+        humanGateRules: ["delegated_actions_require_confirmation"],
+        criticalActionRules: ["no_unreviewed_external_writes"],
+        auditRequirements: ["trace", "validation"],
+        fallbackRules: ["use_context_summary_if_llm_unavailable"],
+      },
+      domainAdapter: {
+        adapterId: "personal-ops-adapter",
+        status: "optional",
+        notes: "Introduce only when calendar/task systems need deterministic formatting.",
+      },
+    },
+    rolloutChecklist: [
+      "Restrict memory to user/task scopes",
+      "Keep connectors read-only by default",
+      "Add confirmation-gate tests",
+    ],
+  },
+];
+
+function toItemDto(row: AgentConfiguration): AgentConfigItemDto {
   const capabilities = Array.isArray(row.capabilities) ? (row.capabilities as string[]) : [];
   return {
     id: row.id,
@@ -28,6 +515,23 @@ function toItemDto(row: AgentConfiguration & { role: AgentRuntimeRole }): AgentC
     isActive: row.isActive,
     companyId: row.companyId,
     capabilities,
+    autonomyMode: (row.autonomyMode as AgentConfigItemDto["autonomyMode"]) ?? "advisory",
+    runtimeProfile:
+      row.runtimeProfile && typeof row.runtimeProfile === "object"
+        ? (row.runtimeProfile as Record<string, unknown>)
+        : {},
+    memoryPolicy:
+      row.memoryPolicy && typeof row.memoryPolicy === "object"
+        ? (row.memoryPolicy as Record<string, unknown>)
+        : {},
+    outputContract:
+      row.outputContract && typeof row.outputContract === "object"
+        ? (row.outputContract as Record<string, unknown>)
+        : {},
+    governancePolicy:
+      row.governancePolicy && typeof row.governancePolicy === "object"
+        ? (row.governancePolicy as Record<string, unknown>)
+        : {},
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -42,25 +546,17 @@ function toAuditMetadata(item: AgentConfigItemDto, extra?: Record<string, unknow
     isActive: item.isActive,
     companyId: item.companyId,
     capabilities: item.capabilities,
+    autonomyMode: item.autonomyMode,
+    runtimeProfile: item.runtimeProfile,
+    memoryPolicy: item.memoryPolicy,
+    outputContract: item.outputContract,
+    governancePolicy: item.governancePolicy,
     ...extra,
   };
 }
 
-function isCanonicalAgentConfig(
-  row: AgentConfiguration,
-): row is AgentConfiguration & { role: AgentRuntimeRole } {
-  return isAgentRuntimeRole(row.role);
-}
-
-function assertCanonicalAgentConfig(
-  row: AgentConfiguration,
-): AgentConfiguration & { role: AgentRuntimeRole } {
-  if (!isCanonicalAgentConfig(row)) {
-    throw new ForbiddenException(
-      `Agent role ${row.role} is outside canonical registry domain`,
-    );
-  }
-  return row;
+function toJsonValue(value: unknown): Prisma.InputJsonValue {
+  return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 }
 
 @Injectable()
@@ -77,9 +573,19 @@ export class AgentManagementService {
       this.prisma.agentConfiguration.findMany({ where: { companyId } }),
       this.agentRegistry.getRegistry(companyId),
     ]);
+    const kernels = await Promise.all(
+      registry.map((entry) =>
+        this.agentRegistry.getEffectiveKernel(companyId, entry.definition.role),
+      ),
+    );
+    const kernelByRole = new Map(
+      kernels
+        .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+        .map((entry) => [entry.definition.role, this.toKernelDto(entry)]),
+    );
     return {
-      global: global.filter(isCanonicalAgentConfig).map(toItemDto),
-      tenantOverrides: tenantOverrides.filter(isCanonicalAgentConfig).map(toItemDto),
+      global: global.map(toItemDto),
+      tenantOverrides: tenantOverrides.map(toItemDto),
       agents: registry.map((entry): AgentRegistryItemDto => ({
         role: entry.definition.role,
         agentName: entry.definition.name,
@@ -102,7 +608,76 @@ export class AgentManagementService {
           source: entry.tenantAccess.source,
           isActive: entry.tenantAccess.isActive,
         },
+        kernel: kernelByRole.get(entry.definition.role),
       })),
+    };
+  }
+
+  getFutureAgentTemplates(): FutureAgentTemplateDto[] {
+    return FUTURE_AGENT_TEMPLATES.map((template) => ({
+      ...template,
+      manifest: JSON.parse(JSON.stringify(template.manifest)) as FutureAgentManifestDto,
+      rolloutChecklist: [...template.rolloutChecklist],
+    }));
+  }
+
+  validateFutureAgentManifest(
+    manifest: FutureAgentManifestDto,
+  ): FutureAgentManifestValidationDto {
+    const normalizedRole = manifest.role.trim().toLowerCase();
+    const missingRequirements: string[] = [];
+    const warnings: string[] = [];
+
+    if (!manifest.runtimeProfile.model.startsWith("openrouter/") && !manifest.runtimeProfile.model.startsWith("openai/")) {
+      warnings.push("runtime_profile_model_should_use_openrouter_catalog_name");
+    }
+    if (!isAgentRuntimeRole(normalizedRole)) {
+      if (!manifest.runtimeProfile.executionAdapterRole) {
+        missingRequirements.push("future_role_requires_execution_adapter_role");
+      } else if (!isAgentRuntimeRole(manifest.runtimeProfile.executionAdapterRole)) {
+        missingRequirements.push("execution_adapter_role_must_reference_canonical_runtime");
+      }
+    }
+    if (manifest.governancePolicy.allowedAutonomyModes.includes("autonomous")) {
+      warnings.push("autonomous_mode_requires_manual_governance_review");
+    }
+    if (manifest.connectorBindings.some((binding) => binding.accessMode !== "read")) {
+      warnings.push("non_read_connector_requires_governed_write_review");
+    }
+    if (manifest.toolBindings.some((binding) => binding.riskLevel === "CRITICAL" && !binding.requiresHumanGate)) {
+      missingRequirements.push("critical_tools_must_require_human_gate");
+    }
+    if (
+      manifest.outputContract.requiresEvidence &&
+      manifest.outputContract.sections.every((section) => !section.toLowerCase().includes("evidence"))
+    ) {
+      missingRequirements.push("output_contract_requires_evidence_section");
+    }
+    if (
+      manifest.defaultAutonomyMode !== "advisory" &&
+      !manifest.governancePolicy.humanGateRules.some((rule) => rule.includes("gate") || rule.includes("review"))
+    ) {
+      missingRequirements.push("non_advisory_agents_need_explicit_human_gate_rules");
+    }
+    if (manifest.capabilityPolicy.capabilities.length === 0) {
+      missingRequirements.push("capability_policy_requires_at_least_one_capability");
+    }
+    if (manifest.governancePolicy.auditRequirements.length === 0) {
+      missingRequirements.push("governance_policy_requires_audit_requirements");
+    }
+    if (
+      manifest.domainAdapter?.status === "required" &&
+      !manifest.domainAdapter.adapterId.trim()
+    ) {
+      missingRequirements.push("required_domain_adapter_must_have_adapter_id");
+    }
+
+    return {
+      valid: missingRequirements.length === 0,
+      normalizedRole,
+      compatibleWithRuntimeWithoutCodeChanges: missingRequirements.length === 0,
+      missingRequirements,
+      warnings,
     };
   }
 
@@ -118,7 +693,7 @@ export class AgentManagementService {
 
   async getStoredConfigSnapshot(
     callerCompanyId: string,
-    role: AgentRuntimeRole,
+    role: string,
     scope: "tenant" | "global",
   ): Promise<UpsertAgentConfigDto | null> {
     const companyId = scope === "global" ? null : callerCompanyId;
@@ -127,7 +702,7 @@ export class AgentManagementService {
         agent_config_role_company_unique: { role, companyId },
       },
     });
-    if (!existing || !isCanonicalAgentConfig(existing)) {
+    if (!existing) {
       return null;
     }
     return {
@@ -140,13 +715,31 @@ export class AgentManagementService {
       capabilities: Array.isArray(existing.capabilities)
         ? (existing.capabilities as string[])
         : [],
+      autonomyMode: existing.autonomyMode as UpsertAgentConfigDto["autonomyMode"],
+      runtimeProfile:
+        existing.runtimeProfile && typeof existing.runtimeProfile === "object"
+          ? (existing.runtimeProfile as UpsertAgentConfigDto["runtimeProfile"])
+          : undefined,
+      memoryPolicy:
+        existing.memoryPolicy && typeof existing.memoryPolicy === "object"
+          ? (existing.memoryPolicy as UpsertAgentConfigDto["memoryPolicy"])
+          : undefined,
+      outputContract:
+        existing.outputContract && typeof existing.outputContract === "object"
+          ? (existing.outputContract as UpsertAgentConfigDto["outputContract"])
+          : undefined,
+      governancePolicy:
+        existing.governancePolicy && typeof existing.governancePolicy === "object"
+          ? (existing.governancePolicy as UpsertAgentConfigDto["governancePolicy"])
+          : undefined,
       tools: await this.getStoredToolBindings(role, companyId),
+      connectors: await this.getStoredConnectorBindings(role, companyId),
     };
   }
 
   async restoreStoredConfigSnapshot(
     callerCompanyId: string,
-    role: AgentRuntimeRole,
+    role: string,
     scope: "tenant" | "global",
     snapshot: UpsertAgentConfigDto | null,
   ): Promise<void> {
@@ -168,6 +761,9 @@ export class AgentManagementService {
         await this.prisma.agentToolBinding.deleteMany({
           where: { role, companyId },
         });
+        await this.prisma.agentConnectorBinding.deleteMany({
+          where: { role, companyId },
+        });
       }
       return;
     }
@@ -182,6 +778,11 @@ export class AgentManagementService {
           maxTokens: snapshot.maxTokens,
           isActive: snapshot.isActive,
           capabilities: snapshot.capabilities,
+          autonomyMode: snapshot.autonomyMode ?? "advisory",
+          runtimeProfile: snapshot.runtimeProfile ?? {},
+          memoryPolicy: snapshot.memoryPolicy ?? {},
+          outputContract: snapshot.outputContract ?? {},
+          governancePolicy: snapshot.governancePolicy ?? {},
         },
       });
       await this.syncPersistedBindings(callerCompanyId, snapshot, scope);
@@ -197,6 +798,11 @@ export class AgentManagementService {
         maxTokens: snapshot.maxTokens,
         isActive: snapshot.isActive,
         capabilities: snapshot.capabilities,
+        autonomyMode: snapshot.autonomyMode ?? "advisory",
+        runtimeProfile: snapshot.runtimeProfile ?? {},
+        memoryPolicy: snapshot.memoryPolicy ?? {},
+        outputContract: snapshot.outputContract ?? {},
+        governancePolicy: snapshot.governancePolicy ?? {},
         companyId,
       },
     });
@@ -224,6 +830,11 @@ export class AgentManagementService {
       maxTokens: dto.maxTokens,
       isActive: dto.isActive ?? true,
       capabilities: dto.capabilities ?? [],
+      autonomyMode: dto.autonomyMode ?? "advisory",
+      runtimeProfile: dto.runtimeProfile ?? {},
+      memoryPolicy: dto.memoryPolicy ?? {},
+      outputContract: dto.outputContract ?? {},
+      governancePolicy: dto.governancePolicy ?? {},
     };
 
     if (existing) {
@@ -232,12 +843,12 @@ export class AgentManagementService {
         data,
       });
       await this.syncPersistedBindings(callerCompanyId, dto, scope);
-      const item = toItemDto(assertCanonicalAgentConfig(updated));
+      const item = toItemDto(updated);
       await this.prisma.auditLog.create({
         data: {
           action: "AGENT_CONFIG_PROMOTED_UPDATE",
           companyId: callerCompanyId,
-          metadata: toAuditMetadata(item, { scope, ...governanceMetadata }),
+          metadata: toJsonValue(toAuditMetadata(item, { scope, ...governanceMetadata })),
         },
       });
       await this.writeBindingsAudit(callerCompanyId, dto, scope, governanceMetadata);
@@ -252,12 +863,12 @@ export class AgentManagementService {
       },
     });
     await this.syncPersistedBindings(callerCompanyId, dto, scope);
-    const item = toItemDto(assertCanonicalAgentConfig(created));
+    const item = toItemDto(created);
     await this.prisma.auditLog.create({
       data: {
         action: "AGENT_CONFIG_PROMOTED_CREATE",
         companyId: callerCompanyId,
-        metadata: toAuditMetadata(item, { scope, ...governanceMetadata }),
+        metadata: toJsonValue(toAuditMetadata(item, { scope, ...governanceMetadata })),
       },
     });
     await this.writeBindingsAudit(callerCompanyId, dto, scope, governanceMetadata);
@@ -300,6 +911,22 @@ export class AgentManagementService {
         })),
       });
     }
+
+    await this.prisma.agentConnectorBinding.deleteMany({
+      where: { role: dto.role, companyId },
+    });
+    if ((dto.connectors ?? []).length > 0) {
+      await this.prisma.agentConnectorBinding.createMany({
+        data: (dto.connectors ?? []).map((connector) => ({
+          role: dto.role,
+          connectorName: connector.connectorName,
+          accessMode: connector.accessMode,
+          scopes: connector.scopes,
+          companyId,
+          isEnabled: connector.isEnabled ?? true,
+        })),
+      });
+    }
   }
 
   private async writeBindingsAudit(
@@ -319,8 +946,9 @@ export class AgentManagementService {
           scope,
           capabilities: dto.capabilities ?? [],
           tools: resolvedTools,
+          connectors: dto.connectors ?? [],
           ...governanceMetadata,
-        },
+        } as Prisma.InputJsonValue,
       },
     });
   }
@@ -339,11 +967,13 @@ export class AgentManagementService {
     }
 
     // Backward-compatibility bootstrap only for legacy clients that do not send explicit tool bindings yet.
-    return (dto.capabilities ?? []).length > 0 ? getDefaultToolsForRole(dto.role) : [];
+    return (dto.capabilities ?? []).length > 0 && isAgentRuntimeRole(dto.role)
+      ? getDefaultToolsForRole(dto.role)
+      : [];
   }
 
   private async getStoredToolBindings(
-    role: AgentRuntimeRole,
+    role: string,
     companyId: string | null,
   ): Promise<RaiToolName[]> {
     const rows = await this.prisma.agentToolBinding.findMany({
@@ -351,5 +981,32 @@ export class AgentManagementService {
       orderBy: { toolName: "asc" },
     });
     return rows.map((row) => row.toolName as RaiToolName);
+  }
+
+  private async getStoredConnectorBindings(
+    role: string,
+    companyId: string | null,
+  ): Promise<NonNullable<UpsertAgentConfigDto["connectors"]>> {
+    const rows = await this.prisma.agentConnectorBinding.findMany({
+      where: { role, companyId, isEnabled: true },
+      orderBy: { connectorName: "asc" },
+    });
+    return rows.map((row) => ({
+      connectorName: row.connectorName,
+      accessMode: row.accessMode as "read" | "write" | "governed_write",
+      scopes: Array.isArray(row.scopes) ? (row.scopes as string[]) : [],
+      isEnabled: row.isEnabled,
+    }));
+  }
+
+  private toKernelDto(entry: EffectiveAgentKernelEntry): AgentKernelViewDto {
+    return {
+      runtimeProfile: entry.runtimeProfile,
+      memoryPolicy: entry.memoryPolicy,
+      outputContract: entry.outputContract,
+      governancePolicy: entry.governancePolicy,
+      toolBindings: entry.toolBindings,
+      connectorBindings: entry.connectorBindings,
+    };
   }
 }

@@ -1,5 +1,7 @@
 import { KnowledgeAgent } from "./knowledge-agent.service";
 import { KnowledgeToolsRegistry } from "../tools/knowledge-tools.registry";
+import { OpenRouterGatewayService } from "../agent-platform/openrouter-gateway.service";
+import { AgentPromptAssemblyService } from "../agent-platform/agent-prompt-assembly.service";
 
 describe("KnowledgeAgent", () => {
   const knowledgeRegistryMock = {
@@ -16,7 +18,11 @@ describe("KnowledgeAgent", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    agent = new KnowledgeAgent(knowledgeRegistryMock as unknown as KnowledgeToolsRegistry);
+    agent = new KnowledgeAgent(
+      knowledgeRegistryMock as unknown as KnowledgeToolsRegistry,
+      { generate: jest.fn().mockRejectedValue(new Error("OPENROUTER_API_KEY_MISSING")) } as unknown as OpenRouterGatewayService,
+      { buildMessages: jest.fn().mockReturnValue([]) } as unknown as AgentPromptAssemblyService,
+    );
   });
 
   it("query_knowledge вызывает KnowledgeToolsRegistry и возвращает COMPLETED с explain", async () => {

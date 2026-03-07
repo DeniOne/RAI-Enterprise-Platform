@@ -401,9 +401,23 @@ export interface AgentConfiguratorItem {
     role: string;
     agentName: string;
     businessRole: string;
-    ownerDomain: 'agro' | 'finance' | 'knowledge' | 'risk';
+    ownerDomain: string;
     runtime: AgentRegistryRuntimeItem;
     tenantAccess: AgentTenantAccessItem;
+    kernel?: {
+        runtimeProfile: {
+            profileId: string;
+            modelRoutingClass: 'cheap' | 'fast' | 'strong';
+            provider: 'openrouter';
+            model: string;
+            executionAdapterRole?: string;
+            maxInputTokens: number;
+            maxOutputTokens: number;
+            temperature: number;
+            timeoutMs: number;
+            supportsStreaming: boolean;
+        };
+    };
 }
 
 export interface AgentConfigsResponse {
@@ -418,6 +432,9 @@ export interface UpsertAgentConfigBody {
     systemPrompt: string;
     llmModel: string;
     maxTokens: number;
+    runtimeProfile?: {
+        executionAdapterRole?: string;
+    };
     isActive?: boolean;
     capabilities?: string[];
     tools?: string[];
