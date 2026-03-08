@@ -214,4 +214,22 @@ describe("AgentConfigGuardService", () => {
       }),
     });
   });
+
+  it("rejects config when tools violate responsibility binding", async () => {
+    await expect(
+      service.evaluateChange("company-1", {
+        name: "Marketer",
+        role: "marketer",
+        systemPrompt: "prompt-v1",
+        llmModel: "openai/gpt-4o-mini",
+        maxTokens: 8000,
+        isActive: true,
+        capabilities: ["MarketingToolsRegistry"],
+        tools: [RaiToolName.EmitAlerts],
+        runtimeProfile: {
+          executionAdapterRole: "knowledge",
+        },
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
 });

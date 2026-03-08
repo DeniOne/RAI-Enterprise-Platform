@@ -83,6 +83,9 @@ export function AiChatPanel({ variant = 'overlay' }: AiChatPanelProps) {
     const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
     const dictatedTextRef = useRef('');
 
+    const getDisplayMemoryItems = (items: NonNullable<typeof messages[number]['memoryUsed']>) =>
+        items.filter((item) => item.kind !== 'profile');
+
     // Скролл вниз при загрузке и новом сообщении
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -224,8 +227,8 @@ export function AiChatPanel({ variant = 'overlay' }: AiChatPanelProps) {
     };
 
     const shellWidthClass: Record<PanelMode, string> = {
-        dock: 'w-full h-[calc(100vh-160px)]',
-        focus: 'w-full h-[calc(100vh-160px)]',
+        dock: 'w-full h-[calc(100vh-224px)]',
+        focus: 'w-full h-[calc(100vh-224px)]',
     };
 
     return (
@@ -236,7 +239,7 @@ export function AiChatPanel({ variant = 'overlay' }: AiChatPanelProps) {
                 variant === 'shell' ? 'rounded-3xl shadow-sm' : 'rounded-2xl shadow-2xl'
             )}
         >
-            <div className="flex min-w-0 flex-1 flex-col">
+            <div className="flex min-w-0 min-h-0 flex-1 flex-col">
 
                 {/* Шапка */}
                 <div className="shrink-0 border-b border-black/5 bg-[#FCFBF8] px-4 py-3">
@@ -269,83 +272,81 @@ export function AiChatPanel({ variant = 'overlay' }: AiChatPanelProps) {
 
                 {variant === 'shell' ? <AiChatSessionsStrip /> : null}
 
-                {/* Контекстная справка (Empty state) */}
-                {messages.length === 0 && (
-                    <div className="flex flex-1 flex-col items-center justify-center bg-gray-50/20 p-6 text-center">
-                        <ShieldCheck className="mb-3 h-10 w-10 text-gray-300" />
-                        <p className="mb-1 text-sm font-medium text-gray-900">Операционный помощник</p>
-                        <p className="max-w-sm text-xs leading-5 text-gray-500">
-                            {context?.route
-                                ? `Я вижу контекст страницы: ${context.route}. Сформулируйте задачу или задайте вопрос.`
-                                : 'В данный момент не выбран специфический контекст.'}
-                        </p>
-                    </div>
-                )}
+                <div className="min-h-0 flex-1 overflow-hidden">
+                    {/* Контекстная справка (Empty state) */}
+                    {messages.length === 0 && (
+                        <div className="flex h-full flex-col items-center justify-center bg-gray-50/20 p-6 text-center">
+                            <ShieldCheck className="mb-3 h-10 w-10 text-gray-300" />
+                            <p className="mb-1 text-sm font-medium text-gray-900">Операционный помощник</p>
+                            <p className="max-w-sm text-xs leading-5 text-gray-500">
+                                {context?.route
+                                    ? `Я вижу контекст страницы: ${context.route}. Сформулируйте задачу или задайте вопрос.`
+                                    : 'В данный момент не выбран специфический контекст.'}
+                            </p>
+                        </div>
+                    )}
 
-                {/* Зона сообщений */}
-                {messages.length > 0 && (
-                    <div className="flex-1 space-y-3 overflow-y-auto px-3 py-3">
-                        {messages.map((m) => (
-                            <div key={m.id} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
+                    {/* Зона сообщений */}
+                    {messages.length > 0 && (
+                        <div className="flex h-full min-h-0 flex-col">
+                            <div className="flex-1 space-y-3 overflow-y-auto px-3 py-3">
+                                {messages.map((m) => (
+                                    <div key={m.id} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
 
-                                {/* Пузырь сообщения */}
-                                <div className={`
+                                        {/* Пузырь сообщения */}
+                                        <div className={`
                  max-w-[82%] px-3.5 py-2.5 text-[13px] leading-5
                  ${m.role === 'user'
-                                    ? 'bg-gray-900 text-white rounded-2xl rounded-br-sm'
-                                    : `rounded-2xl rounded-bl-sm ${getRiskColor(m.riskLevel)}`
-                                }
+                                                ? 'bg-gray-900 text-white rounded-2xl rounded-br-sm'
+                                                : `rounded-2xl rounded-bl-sm ${getRiskColor(m.riskLevel)}`
+                                            }
                `}>
-                                    {/* Governance / Risk tag для ассистента */}
-                                    {m.role === 'assistant' && m.riskLevel && m.riskLevel !== 'R0' && (
-                                        <div className="flex items-center gap-1.5 mb-2 pb-2 border-b border-black/10 text-xs uppercase tracking-wider opacity-80 font-medium">
-                                            {['R2', 'R3', 'R4'].includes(m.riskLevel) && <AlertTriangle className="w-3.5 h-3.5" />}
-                                            [{m.riskLevel}] Guard
-                                        </div>
-                                    )}
+                                            {/* Governance / Risk tag для ассистента */}
+                                            {m.role === 'assistant' && m.riskLevel && m.riskLevel !== 'R0' && (
+                                                <div className="flex items-center gap-1.5 mb-2 pb-2 border-b border-black/10 text-xs uppercase tracking-wider opacity-80 font-medium">
+                                                    {['R2', 'R3', 'R4'].includes(m.riskLevel) && <AlertTriangle className="w-3.5 h-3.5" />}
+                                                    [{m.riskLevel}] Guard
+                                                </div>
+                                            )}
 
-                                    <p className="whitespace-pre-wrap">{m.content}</p>
+                                            <p className="whitespace-pre-wrap">{m.content}</p>
 
-                                    {m.role === 'assistant' && authority.canApprove && m.memoryUsed && m.memoryUsed.length > 0 && (
-                                        <div className="mt-2 rounded-xl border border-black/10 bg-white/70 p-3 text-xs text-gray-700">
-                                            <div className="mb-2 text-[10px] uppercase tracking-[0.16em] text-gray-400">
-                                                Использованная память
-                                            </div>
-                                            <div className="space-y-1.5">
-                                                {m.memoryUsed.map((item, index) => (
-                                                    <div key={`${m.id}-memory-${index}`} className="flex flex-wrap items-center gap-2">
-                                                        <span className="rounded-full bg-black/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-gray-500">
-                                                            {item.kind}
-                                                        </span>
-                                                        <span>{item.label}</span>
-                                                        <span className="text-[10px] text-gray-400">
-                                                            confidence {item.confidence.toFixed(2)}
-                                                        </span>
+                                            {m.role === 'assistant' && authority.canApprove && m.memoryUsed && getDisplayMemoryItems(m.memoryUsed).length > 0 && (
+                                                <div className="mt-2 rounded-xl border border-black/10 bg-white/70 p-3 text-xs text-gray-700">
+                                                    <div className="mb-2 text-[10px] uppercase tracking-[0.16em] text-gray-400">
+                                                        Использованная память
                                                     </div>
-                                                ))}
-                                            </div>
+                                                    <div className="space-y-1.5">
+                                                        {getDisplayMemoryItems(m.memoryUsed).map((item, index) => (
+                                                            <div key={`${m.id}-memory-${index}`} className="flex flex-wrap items-center gap-2">
+                                                                <span>{item.label}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
 
-                                {/* Time */}
-                                <span className="mx-1 mt-1 text-[10px] text-gray-400">
-                                    {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
+                                        {/* Time */}
+                                        <span className="mx-1 mt-1 text-[10px] text-gray-400">
+                                            {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                    </div>
+                                ))}
+
+                                {isLoading && (
+                                    <div className="flex items-center gap-2 px-2 text-gray-400">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-gray-300 animate-bounce [animation-delay:-0.3s]"></span>
+                                        <span className="h-1.5 w-1.5 rounded-full bg-gray-300 animate-bounce [animation-delay:-0.15s]"></span>
+                                        <span className="h-1.5 w-1.5 rounded-full bg-gray-300 animate-bounce"></span>
+                                    </div>
+                                )}
+
+                                <div ref={messagesEndRef} />
                             </div>
-                        ))}
-
-                        {isLoading && (
-                            <div className="flex items-center gap-2 px-2 text-gray-400">
-                                <span className="h-1.5 w-1.5 rounded-full bg-gray-300 animate-bounce [animation-delay:-0.3s]"></span>
-                                <span className="h-1.5 w-1.5 rounded-full bg-gray-300 animate-bounce [animation-delay:-0.15s]"></span>
-                                <span className="h-1.5 w-1.5 rounded-full bg-gray-300 animate-bounce"></span>
-                            </div>
-                        )}
-
-                        <div ref={messagesEndRef} />
-                    </div>
-                )}
+                        </div>
+                    )}
+                </div>
 
                 {/* Input */}
                 <div className="p-4 bg-white border-t border-black/5 shrink-0">

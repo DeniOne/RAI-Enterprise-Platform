@@ -256,6 +256,65 @@ Company (tenant root)
 | **TraceSummary** | Агрегация метрик качества: Brier Score, Evidence Coverage, Invalid Claims |
 | **Explainability Panel** | UI для forensic-анализа. Timeline, Topology, Cost Analytics |
 
+### 7.5 Как создать нового агента
+
+Новый агент создаётся не прямой записью в production-конфиг, а через управляемый контур:
+
+`onboarding manifest -> validation -> change request -> governance`
+
+Основные поверхности:
+
+- UX: `/control-tower/agents`
+- API шаблонов: `GET /api/rai/agents/onboarding/templates`
+- API валидации: `POST /api/rai/agents/onboarding/validate`
+- API governed-запроса: `POST /api/rai/agents/config/change-requests`
+
+Пошаговый алгоритм:
+
+1. Открыть `Контроль и надёжность -> Конфигуратор агентов`.
+2. Нажать `Создать запрос на изменение`.
+3. Выбрать шаблон onboarding или оставить `Пустой манифест`.
+4. Заполнить идентичность агента:
+   - `role`
+   - `name`
+   - `ownerDomain`
+   - `description`
+   - `kind`
+   - `defaultAutonomyMode`
+5. Настроить runtime:
+   - модель
+   - лимит токенов
+   - `modelRoutingClass`
+   - `executionAdapterRole`
+6. Указать `capabilities` и `tools`.
+7. Заполнить `responsibilityBinding`:
+   - от какого canonical profile наследуется агент
+   - какие intent-ы разрешены
+   - какие intent-ы запрещены
+   - какие дополнительные UI-действия допустимы
+8. Заполнить `systemPrompt`.
+9. Запустить проверку манифеста через `onboarding/validate`.
+10. Исправить все `missingRequirements`, если validation вернул ошибки.
+11. Отправить governed change request.
+12. Дождаться прохождения eval / canary / approve path.
+13. После утверждения агент появляется в effective registry state.
+
+Что именно проверяется при validation:
+
+- совместимость runtime-профиля;
+- корректность `executionAdapterRole` для future role;
+- совместимость `tools` с responsibility profile;
+- корректность `responsibilityBinding`;
+- governance-ограничения;
+- обязательные требования к output / audit / human gate.
+
+Ключевое ограничение текущей версии:
+
+- нового агента уже можно создать через продуктовый UX;
+- его уже можно провалидировать и отправить в governance;
+- но он создаётся как `future role` поверх существующего canonical runtime-адаптера;
+- полностью новый native runtime family без доработки кода пока не создаётся.
+
 ---
 
 ## 8. Безопасность, аудит, комплаенс

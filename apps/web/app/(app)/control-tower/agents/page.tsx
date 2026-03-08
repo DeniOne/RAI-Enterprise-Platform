@@ -2,13 +2,104 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { api, type AgentConfigsResponse, type AgentConfiguratorItem } from '@/lib/api';
+import {
+  api,
+  type AgentConfigsResponse,
+  type AgentConfiguratorItem,
+  type FutureAgentManifestBody,
+  type FutureAgentManifestValidation,
+  type FutureAgentTemplateItem,
+} from '@/lib/api';
 import { Settings2, UserCog, Bot, ShieldCheck } from 'lucide-react';
 
-const LLM_MODELS = ['GPT-4o', 'GPT-4o-mini', 'Claude-3.5-Sonnet', 'Claude-3-Opus'];
-const CAPABILITY_OPTIONS = ['AgroToolsRegistry', 'FinanceToolsRegistry', 'RiskToolsRegistry', 'KnowledgeToolsRegistry'];
-const KNOWN_ROLES = ['agronomist', 'economist', 'knowledge', 'monitoring'];
-const ADAPTER_ROLES = ['agronomist', 'economist', 'knowledge', 'monitoring'];
+const LLM_MODELS = [
+  { label: 'Gemini 3.1 Flash Lite', value: 'google/gemini-3.1-flash-lite-preview' },
+  { label: 'GPT-5 Mini', value: 'openai/gpt-5-mini' },
+  { label: 'Claude Haiku 4.5', value: 'anthropic/claude-haiku-4.5' },
+  { label: 'Claude Sonnet 4.6', value: 'anthropic/claude-sonnet-4.6' },
+  { label: 'GPT-5.2', value: 'openai/gpt-5.2' },
+  { label: 'Gemini 2.5 Pro', value: 'google/gemini-2.5-pro-preview-06-05' },
+  { label: 'GPT-5.3 Codex', value: 'openai/gpt-5.3-codex' },
+];
+const CAPABILITY_OPTIONS = [
+  'AgroToolsRegistry',
+  'FinanceToolsRegistry',
+  'RiskToolsRegistry',
+  'KnowledgeToolsRegistry',
+  'CrmToolsRegistry',
+  'LegalToolsRegistry',
+  'StrategyToolsRegistry',
+  'ProductivityToolsRegistry',
+  'MarketingToolsRegistry',
+];
+const KNOWN_ROLES = ['agronomist', 'economist', 'knowledge', 'monitoring', 'crm_agent'];
+const ADAPTER_ROLES = ['agronomist', 'economist', 'knowledge', 'monitoring', 'crm_agent'];
+const TEMPLATE_OPTIONS = ['marketer', 'strategist', 'finance_advisor', 'legal_advisor', 'crm_agent', 'controller', 'personal_assistant'] as const;
+const KIND_OPTIONS = ['domain_advisor', 'worker_hybrid', 'personal_delegated'] as const;
+const AUTONOMY_OPTIONS = ['advisory', 'hybrid', 'autonomous'] as const;
+const MODEL_ROUTING_CLASSES = ['cheap', 'fast', 'strong'] as const;
+const RESPONSIBILITY_INTENT_OPTIONS = [
+  'tech_map_draft',
+  'compute_deviations',
+  'compute_plan_fact',
+  'simulate_scenario',
+  'compute_risk_assessment',
+  'query_knowledge',
+  'emit_alerts',
+  'register_counterparty',
+  'create_counterparty_relation',
+  'create_crm_account',
+  'review_account_workspace',
+  'update_account_profile',
+  'create_crm_contact',
+  'update_crm_contact',
+  'delete_crm_contact',
+  'log_crm_interaction',
+  'create_crm_obligation',
+  'update_crm_interaction',
+  'delete_crm_interaction',
+  'update_crm_obligation',
+  'delete_crm_obligation',
+] as const;
+type CanonicalAdapterRole = 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent';
+
+function roleOptionLabel(role: string) {
+  const labels: Record<string, string> = {
+    agronomist: 'agronomist / Агроном',
+    economist: 'economist / Экономист',
+    knowledge: 'knowledge / Знание',
+    monitoring: 'monitoring / Мониторинг',
+    crm_agent: 'crm_agent / CRM-агент',
+  };
+  return labels[role] ?? role;
+}
+
+function kindLabel(kind: (typeof KIND_OPTIONS)[number]) {
+  const labels: Record<(typeof KIND_OPTIONS)[number], string> = {
+    domain_advisor: 'Доменный советник',
+    worker_hybrid: 'Гибридный исполнитель',
+    personal_delegated: 'Персональный делегат',
+  };
+  return labels[kind];
+}
+
+function autonomyLabel(mode: (typeof AUTONOMY_OPTIONS)[number]) {
+  const labels: Record<(typeof AUTONOMY_OPTIONS)[number], string> = {
+    advisory: 'Рекомендательный',
+    hybrid: 'Гибридный',
+    autonomous: 'Автономный',
+  };
+  return labels[mode];
+}
+
+function routingClassLabel(mode: (typeof MODEL_ROUTING_CLASSES)[number]) {
+  const labels: Record<(typeof MODEL_ROUTING_CLASSES)[number], string> = {
+    cheap: 'Экономичный',
+    fast: 'Быстрый',
+    strong: 'Сильный',
+  };
+  return labels[mode];
+}
 
 function sourceLabel(value: 'global' | 'tenant') {
   return value === 'global' ? 'глобальный' : 'арендаторский';
@@ -39,6 +130,99 @@ function displayAgentName(role: string, fallbackName: string) {
     personal_assistant: 'Ассистент-А',
   };
   return labels[role] ?? fallbackName;
+}
+
+function parseDelimitedList(value: string) {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function stringifyDelimitedList(value: string[] | undefined) {
+  return (value ?? []).join(', ');
+}
+
+function buildDefaultManifest(params: {
+  role: string;
+  name: string;
+  templateId?: FutureAgentTemplateItem['templateId'];
+  kind: FutureAgentManifestBody['kind'];
+  ownerDomain: string;
+  description: string;
+  defaultAutonomyMode: FutureAgentManifestBody['defaultAutonomyMode'];
+  llmModel: string;
+  maxTokens: number;
+  executionAdapterRole?: string;
+  capabilities: string[];
+  tools: string[];
+  responsibilityBinding?: FutureAgentManifestBody['responsibilityBinding'];
+  modelRoutingClass: FutureAgentManifestBody['runtimeProfile']['modelRoutingClass'];
+}): FutureAgentManifestBody {
+  const toolBindings = params.tools.map((toolName) => ({
+    toolName,
+    isEnabled: true,
+    requiresHumanGate: false,
+    riskLevel: 'READ' as const,
+  }));
+
+  return {
+    templateId: params.templateId,
+    role: params.role,
+    name: params.name,
+    kind: params.kind,
+    ownerDomain: params.ownerDomain,
+    description: params.description,
+    defaultAutonomyMode: params.defaultAutonomyMode,
+    runtimeProfile: {
+      profileId: `${params.role}-runtime-v1`,
+      modelRoutingClass: params.modelRoutingClass,
+      provider: 'openrouter',
+      model: params.llmModel,
+      executionAdapterRole: params.executionAdapterRole || undefined,
+      maxInputTokens: Math.max(params.maxTokens, 4000),
+      maxOutputTokens: Math.max(Math.round(params.maxTokens / 3), 1500),
+      temperature: 0.2,
+      timeoutMs: 15000,
+      supportsStreaming: false,
+    },
+    responsibilityBinding: params.responsibilityBinding,
+    memoryPolicy: {
+      policyId: `${params.role}-memory-v1`,
+      allowedScopes: ['tenant', 'domain', 'task_workflow'],
+      retrievalPolicy: 'scoped_recall',
+      writePolicy: 'append_summary',
+      sensitiveDataPolicy: 'mask',
+    },
+    capabilityPolicy: {
+      capabilities: params.capabilities,
+      toolAccessMode: 'allowlist',
+      connectorAccessMode: 'allowlist',
+    },
+    toolBindings,
+    connectorBindings: [],
+    outputContract: {
+      contractId: `${params.role}-v1`,
+      responseSchemaVersion: 'v1',
+      sections: ['summary', 'recommendations', 'evidence'],
+      requiresEvidence: true,
+      requiresDeterministicValidation: toolBindings.length > 0,
+      fallbackMode: 'retrieval_summary',
+    },
+    governancePolicy: {
+      policyId: `${params.role}-governance-v1`,
+      allowedAutonomyModes: [params.defaultAutonomyMode],
+      humanGateRules: ['review_required_for_change_request'],
+      criticalActionRules: ['no_unreviewed_writes'],
+      auditRequirements: ['trace', 'evidence'],
+      fallbackRules: ['use_summary_if_llm_unavailable'],
+    },
+    domainAdapter: {
+      adapterId: `${params.role}-domain-adapter`,
+      status: 'optional',
+      notes: 'Optional deterministic adapter for domain-specific enrichments.',
+    },
+  };
 }
 
 function HeaderWithHint({ label, hint }: { label: string; hint?: string }) {
@@ -313,31 +497,208 @@ function AgentEditor({
   setSaving: (v: boolean) => void;
   createMode?: boolean;
 }) {
+  const [templates, setTemplates] = useState<FutureAgentTemplateItem[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(createMode);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<FutureAgentTemplateItem['templateId'] | ''>('');
   const [role, setRole] = useState(agent?.role ?? '');
   const [name, setName] = useState(agent?.agentName ?? '');
   const [systemPrompt, setSystemPrompt] = useState(agent?.runtime.systemPrompt ?? '');
-  const [llmModel, setLlmModel] = useState(agent?.runtime.llmModel ?? 'GPT-4o-mini');
+  const [llmModel, setLlmModel] = useState(agent?.runtime.llmModel ?? 'openai/gpt-5-mini');
   const [maxTokens, setMaxTokens] = useState(agent?.runtime.maxTokens ?? 8000);
   const [capabilities, setCapabilities] = useState<string[]>(agent?.runtime.capabilities ?? []);
   const [tools, setTools] = useState<string[]>(agent?.runtime.tools ?? []);
   const [executionAdapterRole, setExecutionAdapterRole] = useState(agent?.kernel?.runtimeProfile.executionAdapterRole ?? '');
+  const [ownerDomain, setOwnerDomain] = useState('');
+  const [description, setDescription] = useState('');
+  const [kind, setKind] = useState<FutureAgentManifestBody['kind']>('domain_advisor');
+  const [defaultAutonomyMode, setDefaultAutonomyMode] = useState<FutureAgentManifestBody['defaultAutonomyMode']>('advisory');
+  const [modelRoutingClass, setModelRoutingClass] = useState<FutureAgentManifestBody['runtimeProfile']['modelRoutingClass']>('fast');
+  const [bindingRole, setBindingRole] = useState('');
+  const [bindingInheritsFrom, setBindingInheritsFrom] = useState('');
+  const [bindingTitle, setBindingTitle] = useState('');
+  const [allowedIntentsInput, setAllowedIntentsInput] = useState('');
+  const [forbiddenIntentsInput, setForbiddenIntentsInput] = useState('');
+  const [extraUiActionsInput, setExtraUiActionsInput] = useState('');
   const [scope, setScope] = useState<'tenant' | 'global'>(agent?.runtime.source === 'global' ? 'global' : 'tenant');
+  const [validation, setValidation] = useState<FutureAgentManifestValidation | null>(null);
+  const [validating, setValidating] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!createMode) {
+      return;
+    }
+    api.agents
+      .getOnboardingTemplates()
+      .then((response) => setTemplates(response.data.templates))
+      .catch((error) => setErr((error as Error).message))
+      .finally(() => setTemplatesLoading(false));
+  }, [createMode]);
+
+  useEffect(() => {
+    if (!createMode || !selectedTemplateId) {
+      return;
+    }
+    const template = templates.find((item) => item.templateId === selectedTemplateId);
+    if (!template) {
+      return;
+    }
+
+    const manifest = template.manifest;
+    setRole(manifest.role);
+    setName(manifest.name);
+    setOwnerDomain(manifest.ownerDomain);
+    setDescription(manifest.description);
+    setKind(manifest.kind);
+    setDefaultAutonomyMode(manifest.defaultAutonomyMode);
+    setLlmModel(manifest.runtimeProfile.model);
+    setMaxTokens(manifest.runtimeProfile.maxInputTokens);
+    setExecutionAdapterRole(manifest.runtimeProfile.executionAdapterRole ?? '');
+    setModelRoutingClass(manifest.runtimeProfile.modelRoutingClass);
+    setCapabilities(manifest.capabilityPolicy.capabilities);
+    setTools(manifest.toolBindings.map((binding) => binding.toolName));
+    setBindingRole(manifest.responsibilityBinding?.role ?? manifest.role);
+    setBindingInheritsFrom(manifest.responsibilityBinding?.inheritsFromRole ?? manifest.runtimeProfile.executionAdapterRole ?? '');
+    setBindingTitle(manifest.responsibilityBinding?.overrides?.title ?? '');
+    setAllowedIntentsInput(stringifyDelimitedList(manifest.responsibilityBinding?.overrides?.allowedIntents));
+    setForbiddenIntentsInput(stringifyDelimitedList(manifest.responsibilityBinding?.overrides?.forbiddenIntents));
+    setExtraUiActionsInput(stringifyDelimitedList(manifest.responsibilityBinding?.overrides?.extraUiActions));
+    setValidation(null);
+  }, [createMode, selectedTemplateId, templates]);
 
   const toggleCap = (cap: string) => {
     setCapabilities((prev) => (prev.includes(cap) ? prev.filter((c) => c !== cap) : [...prev, cap]));
   };
 
-  const save = () => {
+  const currentManifest = (): FutureAgentManifestBody => {
+    const effectiveRole = createMode ? role.trim() : agent?.role ?? role.trim();
+    const responsibilityBinding =
+      bindingInheritsFrom.trim()
+        ? {
+            role: bindingRole.trim() || effectiveRole,
+            inheritsFromRole: bindingInheritsFrom.trim() as CanonicalAdapterRole,
+            overrides: {
+              ...(bindingTitle.trim() ? { title: bindingTitle.trim() } : {}),
+              ...(parseDelimitedList(allowedIntentsInput).length > 0
+                ? { allowedIntents: parseDelimitedList(allowedIntentsInput) }
+                : {}),
+              ...(parseDelimitedList(forbiddenIntentsInput).length > 0
+                ? { forbiddenIntents: parseDelimitedList(forbiddenIntentsInput) }
+                : {}),
+              ...(parseDelimitedList(extraUiActionsInput).length > 0
+                ? { extraUiActions: parseDelimitedList(extraUiActionsInput) }
+                : {}),
+            },
+          }
+        : undefined;
+
+    const template = selectedTemplateId
+      ? templates.find((item) => item.templateId === selectedTemplateId)
+      : null;
+
+    return template
+      ? {
+          ...template.manifest,
+          role: effectiveRole,
+          name: name.trim(),
+          ownerDomain: ownerDomain.trim() || template.manifest.ownerDomain,
+          description: description.trim() || template.manifest.description,
+          kind,
+          defaultAutonomyMode,
+          runtimeProfile: {
+            ...template.manifest.runtimeProfile,
+            model: llmModel,
+            executionAdapterRole: executionAdapterRole || undefined,
+            modelRoutingClass,
+            maxInputTokens: maxTokens,
+            maxOutputTokens: Math.max(Math.round(maxTokens / 3), 1500),
+          },
+          responsibilityBinding,
+          capabilityPolicy: {
+            ...template.manifest.capabilityPolicy,
+            capabilities,
+          },
+          toolBindings: tools.map((toolName) => ({
+            toolName,
+            isEnabled: true,
+            requiresHumanGate: false,
+            riskLevel: 'READ',
+          })),
+        }
+      : buildDefaultManifest({
+          role: effectiveRole,
+          name: name.trim(),
+          kind,
+          ownerDomain: ownerDomain.trim() || 'custom_domain',
+          description: description.trim() || 'Governed future agent.',
+          defaultAutonomyMode,
+          llmModel,
+          maxTokens,
+          executionAdapterRole: executionAdapterRole || undefined,
+          capabilities,
+          tools,
+          responsibilityBinding,
+          modelRoutingClass,
+        });
+  };
+
+  const validateManifest = async () => {
+    if (!createMode) {
+      return null;
+    }
+    setValidating(true);
+    setErr(null);
+    try {
+      const response = await api.agents.validateOnboardingManifest(currentManifest());
+      setValidation(response.data);
+      return response.data;
+    } catch (error) {
+      const message = (error as Error).message;
+      setErr(message);
+      setValidation(null);
+      return null;
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  const save = async () => {
     const effectiveRole = createMode ? role : agent?.role ?? role;
     if (!effectiveRole?.trim()) { setErr('Укажите роль'); return; }
     if (!name?.trim()) { setErr('Укажите название'); return; }
+    if (createMode && !ownerDomain.trim()) { setErr('Укажите owner domain'); return; }
+    if (createMode && !description.trim()) { setErr('Укажите описание агента'); return; }
     setErr(null);
+
+    if (createMode) {
+      const manifestValidation = await validateManifest();
+      if (!manifestValidation?.valid) {
+        setErr('Манифест не прошёл validation. Исправьте ошибки ниже.');
+        return;
+      }
+    }
+
+    const allowedIntents = parseDelimitedList(allowedIntentsInput);
+    const forbiddenIntents = parseDelimitedList(forbiddenIntentsInput);
+    const extraUiActions = parseDelimitedList(extraUiActionsInput);
+    const responsibilityBinding = bindingInheritsFrom.trim()
+      ? {
+          role: bindingRole.trim() || effectiveRole.trim(),
+          inheritsFromRole: bindingInheritsFrom.trim() as 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent',
+          overrides: {
+            ...(bindingTitle.trim() ? { title: bindingTitle.trim() } : {}),
+            ...(allowedIntents.length > 0 ? { allowedIntents } : {}),
+            ...(forbiddenIntents.length > 0 ? { forbiddenIntents } : {}),
+            ...(extraUiActions.length > 0 ? { extraUiActions } : {}),
+          },
+        }
+      : undefined;
+
     setSaving(true);
     api.agents
       .createChangeRequest({
         name: name.trim(),
-        role: effectiveRole,
+        role: effectiveRole.trim(),
         systemPrompt,
         llmModel,
         maxTokens,
@@ -345,6 +706,7 @@ function AgentEditor({
         capabilities,
         tools,
         runtimeProfile: executionAdapterRole ? { executionAdapterRole } : undefined,
+        responsibilityBinding,
       }, scope)
       .then(() => onSaved())
       .catch((e) => setErr((e as Error).message))
@@ -386,20 +748,104 @@ function AgentEditor({
 
           {createMode && (
             <div>
+              <label className="mb-2 block text-[13px] font-medium text-[#717182]">Шаблон онбординга</label>
+              <select
+                value={selectedTemplateId}
+                onChange={(e) => setSelectedTemplateId(e.target.value as FutureAgentTemplateItem['templateId'] | '')}
+                className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
+                disabled={templatesLoading}
+              >
+                <option value="">— Пустой манифест —</option>
+                {templates.map((template) => (
+                  <option key={template.templateId} value={template.templateId}>
+                    {template.label}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-2 text-[11px] text-[#717182] leading-relaxed">
+                Шаблон подставляет стандартные настройки runtime и governance. Для `crm_agent` backend-шаблон уже существует.
+              </p>
+            </div>
+          )}
+
+          {createMode && (
+            <div>
               <label className="mb-2 block text-[13px] font-medium text-[#717182]">Роль</label>
               <input
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
-                placeholder="например, marketer или knowledge"
+                placeholder="например, crm_agent или knowledge"
                 list="known-agent-roles"
               />
               <datalist id="known-agent-roles">
                 {KNOWN_ROLES.map((r) => (
-                  <option key={r} value={r} />
+                  <option key={r} value={r}>{roleOptionLabel(r)}</option>
                 ))}
               </datalist>
             </div>
+          )}
+
+          {createMode && (
+            <>
+              <div>
+                <label className="mb-2 block text-[13px] font-medium text-[#717182]">Домен-владелец</label>
+                <input
+                  value={ownerDomain}
+                  onChange={(e) => setOwnerDomain(e.target.value)}
+                  className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
+                  placeholder="например, crm"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-[13px] font-medium text-[#717182]">Описание агента</label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full min-h-[96px] rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="mb-2 block text-[13px] font-medium text-[#717182]">Тип агента</label>
+                  <select
+                    value={kind}
+                    onChange={(e) => setKind(e.target.value as FutureAgentManifestBody['kind'])}
+                    className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
+                  >
+                    {KIND_OPTIONS.map((option) => (
+                      <option key={option} value={option}>{kindLabel(option)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-2 block text-[13px] font-medium text-[#717182]">Режим автономности</label>
+                  <select
+                    value={defaultAutonomyMode}
+                    onChange={(e) => setDefaultAutonomyMode(e.target.value as FutureAgentManifestBody['defaultAutonomyMode'])}
+                    className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
+                  >
+                    {AUTONOMY_OPTIONS.map((option) => (
+                      <option key={option} value={option}>{autonomyLabel(option)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-2 block text-[13px] font-medium text-[#717182]">Класс маршрутизации модели</label>
+                  <select
+                    value={modelRoutingClass}
+                    onChange={(e) => setModelRoutingClass(e.target.value as FutureAgentManifestBody['runtimeProfile']['modelRoutingClass'])}
+                    className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
+                  >
+                    {MODEL_ROUTING_CLASSES.map((option) => (
+                      <option key={option} value={option}>{routingClassLabel(option)}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </>
           )}
 
           <div>
@@ -419,7 +865,7 @@ function AgentEditor({
               className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
             >
               {LLM_MODELS.map((m) => (
-                <option key={m} value={m}>{m}</option>
+                <option key={m.value} value={m.value}>{m.label}</option>
               ))}
             </select>
           </div>
@@ -443,13 +889,96 @@ function AgentEditor({
             >
               <option value="">— Без явной связки —</option>
               {ADAPTER_ROLES.map((adapterRole) => (
-                <option key={adapterRole} value={adapterRole}>{adapterRole}</option>
+                <option key={adapterRole} value={adapterRole}>{roleOptionLabel(adapterRole)}</option>
               ))}
             </select>
             <p className="mt-2 text-[11px] text-[#717182] leading-relaxed">
               Для новых ролей здесь выбирается, какой базовый агент будет выполнять запросы.
             </p>
           </div>
+
+          {createMode && (
+            <div className="space-y-4 rounded-2xl border border-black/10 bg-slate-50 p-4">
+              <div>
+                <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182] mb-3">Связка ответственности</p>
+                <p className="text-[12px] text-[#717182] leading-relaxed">
+                  Здесь задаётся, от какого канонического профиля ответственности наследуется новый агент и какие intent-ы ему разрешены.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-2 block text-[13px] font-medium text-[#717182]">Роль в связке</label>
+                  <input
+                    value={bindingRole}
+                    onChange={(e) => setBindingRole(e.target.value)}
+                    className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
+                    placeholder="обычно совпадает с role"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-[13px] font-medium text-[#717182]">Наследует от</label>
+                  <select
+                    value={bindingInheritsFrom}
+                    onChange={(e) => setBindingInheritsFrom(e.target.value)}
+                    className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
+                  >
+                    <option value="">— Авто из базового агента —</option>
+                    {ADAPTER_ROLES.map((adapterRole) => (
+                      <option key={adapterRole} value={adapterRole}>{roleOptionLabel(adapterRole)}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-[13px] font-medium text-[#717182]">Переопределённый заголовок</label>
+                <input
+                  value={bindingTitle}
+                  onChange={(e) => setBindingTitle(e.target.value)}
+                  className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
+                  placeholder="например, CRM-агент"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-[13px] font-medium text-[#717182]">Разрешённые intent-ы</label>
+                <input
+                  value={allowedIntentsInput}
+                  onChange={(e) => setAllowedIntentsInput(e.target.value)}
+                  className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] font-mono focus:border-black/30 outline-none"
+                  placeholder={RESPONSIBILITY_INTENT_OPTIONS.join(', ')}
+                  list="responsibility-intents"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-[13px] font-medium text-[#717182]">Запрещённые intent-ы</label>
+                <input
+                  value={forbiddenIntentsInput}
+                  onChange={(e) => setForbiddenIntentsInput(e.target.value)}
+                  className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] font-mono focus:border-black/30 outline-none"
+                  placeholder="intent1, intent2"
+                  list="responsibility-intents"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-[13px] font-medium text-[#717182]">Дополнительные UI-действия</label>
+                <input
+                  value={extraUiActionsInput}
+                  onChange={(e) => setExtraUiActionsInput(e.target.value)}
+                  className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] font-mono focus:border-black/30 outline-none"
+                  placeholder="open_account, refresh_context"
+                />
+              </div>
+              <datalist id="responsibility-intents">
+                {RESPONSIBILITY_INTENT_OPTIONS.map((intent) => (
+                  <option key={intent} value={intent} />
+                ))}
+              </datalist>
+            </div>
+          )}
 
           <div>
             <label className="mb-2 block text-[13px] font-medium text-[#717182]">Системная инструкция</label>
@@ -501,6 +1030,61 @@ function AgentEditor({
               <option value="global">Глобальный запрос на изменение</option>
             </select>
           </div>
+
+          {createMode && (
+            <div className="rounded-2xl border border-black/10 bg-white p-4 space-y-3">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                      <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182]">Onboarding validation</p>
+                      <p className="text-[12px] text-[#717182] leading-relaxed">
+                    Перед отправкой манифест проверяется backend-валидатором на совместимость runtime, governance и responsibility.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { void validateManifest(); }}
+                  className="px-4 py-2 rounded-lg text-[12px] font-medium border border-black/10 hover:bg-slate-50 transition-colors"
+                  disabled={validating}
+                >
+                  {validating ? 'Проверка...' : 'Проверить манифест'}
+                </button>
+              </div>
+
+              {validation && (
+                <div className="space-y-3">
+                  <div className={`rounded-xl border px-3 py-2 text-[12px] ${
+                    validation.valid
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                      : 'border-red-200 bg-red-50 text-red-700'
+                  }`}>
+                    {validation.valid
+                      ? `Манифест валиден. Нормализованная роль: ${validation.normalizedRole}.`
+                      : 'Манифест невалиден. Исправьте missing requirements перед отправкой.'}
+                  </div>
+                  {validation.missingRequirements.length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-medium uppercase tracking-widest text-[#717182] mb-2">Обязательные исправления</p>
+                      <div className="flex flex-wrap gap-2">
+                        {validation.missingRequirements.map((item) => (
+                          <Tag key={item} label={item} mono />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {validation.warnings.length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-medium uppercase tracking-widest text-[#717182] mb-2">Предупреждения</p>
+                      <div className="flex flex-wrap gap-2">
+                        {validation.warnings.map((item) => (
+                          <Tag key={item} label={item} mono />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="pt-6 mt-6 border-t border-black/10 flex items-center justify-end gap-3">

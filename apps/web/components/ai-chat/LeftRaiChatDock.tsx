@@ -49,7 +49,7 @@ export function LeftRaiChatDock() {
     }, [isResizing, setChatWidth]);
 
     return (
-        <aside className="sticky top-0 shrink-0 self-start" style={{ width: `${chatWidth}px` }} aria-label="RAI Chat Dock">
+        <aside className="sticky top-8 shrink-0 self-start" style={{ width: `${chatWidth}px` }} aria-label="RAI Chat Dock">
             <div className="relative flex flex-col">
                 <button
                     type="button"

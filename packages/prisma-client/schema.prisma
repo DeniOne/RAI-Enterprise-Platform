@@ -5172,6 +5172,7 @@ model AssetPartyRole {
   role      AssetPartyRoleType
   validFrom DateTime
   validTo   DateTime?
+  basisDoc  String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -5193,8 +5194,10 @@ model PartyRelation {
   targetParty   Party  @relation("PartyRelationTarget", fields: [companyId, targetPartyId], references: [companyId, id])
 
   relationType PartyRelationType
+  sharePct     Float?
   validFrom    DateTime
   validTo      DateTime?
+  basisDocId   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

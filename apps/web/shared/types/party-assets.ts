@@ -69,6 +69,8 @@ export interface PartyRelationDto {
   validFrom: string;
   validTo?: string;
   basisDocId?: string;
+  fromPartyName?: string;
+  toPartyName?: string;
 }
 
 export interface AssetDto {
@@ -91,6 +93,7 @@ export interface AssetPartyRoleDto {
   role: AssetPartyRole;
   validFrom: string;
   validTo?: string;
+  basisDoc?: string;
 }
 
 export interface PartyListItemVm extends PartyDto {

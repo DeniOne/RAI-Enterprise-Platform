@@ -37,4 +37,30 @@ export class CreateAssetRoleDto {
   @IsOptional()
   @IsEnum(assetTypes)
   assetType?: (typeof assetTypes)[number];
+
+  @IsOptional()
+  @IsString()
+  basisDoc?: string;
+}
+
+export class UpdateAssetRoleDto {
+  @IsOptional()
+  @IsEnum(assetPartyRoles)
+  role?: (typeof assetPartyRoles)[number];
+
+  @IsOptional()
+  @IsString()
+  validFrom?: string;
+
+  @IsOptional()
+  @IsString()
+  validTo?: string | null;
+
+  @IsOptional()
+  @IsEnum(assetTypes)
+  assetType?: (typeof assetTypes)[number];
+
+  @IsOptional()
+  @IsString()
+  basisDoc?: string | null;
 }

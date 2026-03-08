@@ -366,3 +366,372 @@ Stage 2 runtime/governance/kernel слой в основном доведён.
 - как он должен взаимодействовать с UI и пользователем.
 
 Без этого платформа будет иметь исполнимых агентов, но не будет иметь по-настоящему зрелых продуктовых агентных модулей.
+
+---
+
+## 12. Implementation Plan
+
+### 12.1 Цель пакета
+
+Сделать `Agent Responsibility Contracts` не только архитектурным тезисом, а runtime/governance truth-source.
+
+После выполнения этого пакета система должна явно знать:
+
+- за что отвечает агент;
+- какие задачи он имеет право брать;
+- какой контекст обязан собрать до исполнения;
+- какие UI-действия и окна он может инициировать;
+- что ему запрещено;
+- как future roles наследуют responsibility profile.
+
+### 12.2 Что считаем done
+
+Пакет считается завершённым, когда одновременно выполнено всё:
+
+1. Есть единый машинно-читаемый source of truth для:
+   - `Focus Contract`
+   - `Intent Catalog`
+   - `Required Context Contract`
+   - `UI Action Surface Contract`
+   - `Guardrails Contract`
+2. Для canonical families описаны и реально используются responsibility contracts:
+   - `agronomist`
+   - `economist`
+   - `knowledge`
+   - `monitoring`
+3. `IntentRouter` опирается на responsibility contracts, а не на semi-hardcoded responsibility heuristics.
+4. Clarification flow берёт required context из общего contract source.
+5. Window actions и guided overlays собираются из `UI Action Surface Contract`.
+6. Future role может наследовать canonical responsibility profile через binding.
+7. Governance surface валидирует manifest/change request на предмет responsibility binding и intent compatibility.
+8. Есть tests + live smoke минимум для canonical families и хотя бы одного future role.
+
+### 12.3 Основная модель данных
+
+#### Agent Focus Contract
+
+```ts
+interface AgentFocusContract {
+  role: string;
+  title: string;
+  businessDomain: string;
+  responsibilities: string[];
+  allowedEntityTypes: string[];
+  disallowedEntityTypes?: string[];
+  allowedRoutes?: string[];
+  forbiddenRoutes?: string[];
+}
+```
+
+#### Intent Catalog
+
+```ts
+interface AgentIntentDefinition {
+  id: string;
+  role: string;
+  description: string;
+  triggerHints: string[];
+  toolName?: string;
+  outputMode: "answer" | "clarification" | "window" | "comparison";
+  requiredContextKeys: string[];
+  optionalContextKeys?: string[];
+  allowedWithoutContext?: boolean;
+}
+```
+
+#### Required Context Contract
+
+```ts
+interface RequiredContextDefinition {
+  key: string;
+  label: string;
+  entityType?: string;
+  required: boolean;
+  sourcePriority: Array<"workspace" | "record" | "thread" | "user">;
+  reason: string;
+}
+```
+
+#### UI Action Surface Contract
+
+```ts
+interface AgentUiActionDefinition {
+  id: string;
+  role: string;
+  intentId?: string;
+  kind: "focus_window" | "open_route" | "open_entity" | "refresh_context" | "pick_context";
+  label: string;
+  targetRoutePattern?: string;
+  allowedWindowTypes?: string[];
+  allowedEntityTypes?: string[];
+}
+```
+
+#### Guardrails Contract
+
+```ts
+interface AgentGuardrailDefinition {
+  role: string;
+  forbiddenIntentIds?: string[];
+  forbiddenEntityTypes?: string[];
+  forbiddenActions?: string[];
+  forbiddenDomains?: string[];
+}
+```
+
+#### Future-role Responsibility Binding
+
+```ts
+interface ResponsibilityBinding {
+  role: string;
+  inheritsFromRole: string;
+  overrides?: {
+    title?: string;
+    allowedIntents?: string[];
+    forbiddenIntents?: string[];
+    extraUiActions?: string[];
+  };
+}
+```
+
+### 12.4 Минимальный канонический intent catalog
+
+#### `agronomist`
+
+- `tech_map_draft`
+- `execution_deviation_review`
+- `field_operation_guidance`
+
+#### `economist`
+
+- `compute_plan_fact`
+- `scenario_comparison`
+- `risk_assessment`
+
+#### `knowledge`
+
+- `query_knowledge`
+- `policy_lookup`
+- `document_grounding`
+
+#### `monitoring`
+
+- `signal_review`
+- `emit_alerts`
+- `escalation_summary`
+
+### 12.5 Required context examples
+
+#### `agronomist / tech_map_draft`
+
+- `fieldRef`
+- `seasonRef`
+
+#### `economist / compute_plan_fact`
+
+- `harvestPlanId`
+- `seasonRef`
+
+#### `knowledge / query_knowledge`
+
+- может быть `allowedWithoutContext = true`
+
+#### `monitoring / signal_review`
+
+- `route`
+- `tenantContext`
+- опционально `alertId`
+
+### 12.6 UI action surface examples
+
+#### `agronomist`
+
+- `open_field_card`
+- `go_to_techmap`
+- `pick_season`
+- `focus_window`
+
+#### `economist`
+
+- `open_plan_fact`
+- `go_to_budget_dashboard`
+- `open_scenario_compare`
+
+#### `knowledge`
+
+- `open_document`
+- `open_policy_page`
+
+#### `monitoring`
+
+- `open_signal_center`
+- `open_alert_route`
+- `open_trace_detail`
+
+### 12.7 Архитектурный план реализации
+
+#### Step 1. Responsibility contract registry
+
+Создать единый source of truth, например:
+
+- `/root/RAI_EP/apps/api/src/modules/rai-chat/agent-contracts/agent-responsibility.contracts.ts`
+
+В нём для каждого canonical role должны жить:
+
+- focus
+- intents
+- required context
+- ui actions
+- guardrails
+
+#### Step 2. Перевести router на contracts
+
+`IntentRouter` должен использовать:
+
+- `Intent Catalog`
+- `Focus Contract`
+- route/entity hints как scoring input
+
+И отдавать:
+
+- `targetRole`
+- `intentId`
+- `confidence`
+- `matchedBy`
+- `requiredContextKeys`
+
+#### Step 3. Перевести clarification flow на contracts
+
+После выбора `intentId` система должна:
+
+- брать required keys из `Required Context Contract`
+- пробовать собрать их из `workspaceContext`
+- если не хватает:
+  - строить `pendingClarification`
+  - строить `context_acquisition` window
+  - собирать actions из `UI Action Surface Contract`
+
+#### Step 4. Перевести window actions на contracts
+
+`ResponseComposer` должен брать разрешённые actions из `UI Action Surface Contract`, а не собирать их ad-hoc в процедурной логике.
+
+#### Step 5. Future-role inheritance
+
+Нужно ввести для promoted/future roles не только `executionAdapterRole`, но и:
+
+- `responsibilityProfileRole`
+
+Либо equivalent binding, который говорит, чей semantic responsibility profile наследуется.
+
+Пример:
+
+- `marketer -> knowledge`
+
+#### Step 6. Governance validation
+
+`validateFutureAgentManifest()` и related governance guards должны проверять:
+
+- есть ли responsibility binding/profile
+- совместим ли declared domain с inherited profile
+- не заявляет ли future role forbidden intents
+- есть ли допустимый UI action surface
+
+### 12.8 Рекомендуемые file-level changes
+
+#### Backend
+
+- `/root/RAI_EP/apps/api/src/modules/rai-chat/agent-contracts/agent-responsibility.contracts.ts`
+- `/root/RAI_EP/apps/api/src/modules/rai-chat/intent-router/intent-router.service.ts`
+- `/root/RAI_EP/apps/api/src/modules/rai-chat/supervisor-agent.service.ts`
+- `/root/RAI_EP/apps/api/src/modules/rai-chat/composer/response-composer.service.ts`
+- `/root/RAI_EP/apps/api/src/modules/rai-chat/dto/rai-chat.dto.ts`
+- `/root/RAI_EP/apps/api/src/modules/rai-chat/agent-registry.service.ts`
+- `/root/RAI_EP/apps/api/src/modules/rai-chat/agent-runtime-config.service.ts`
+- `/root/RAI_EP/apps/api/src/modules/explainability/agent-management.service.ts`
+- `/root/RAI_EP/apps/api/src/modules/explainability/agent-config-guard.service.ts`
+- `/root/RAI_EP/apps/api/src/modules/explainability/agent-prompt-governance.service.ts`
+
+#### Frontend
+
+Минимально:
+
+- `/root/RAI_EP/apps/web/lib/api.ts`
+- `/root/RAI_EP/apps/web/lib/stores/ai-chat-store.ts`
+
+Если выводить responsibility truth в UI:
+
+- `/root/RAI_EP/apps/web/app/(app)/control-tower/agents/page.tsx`
+
+### 12.9 Тестовый план
+
+#### Backend unit
+
+1. Для каждого canonical role существует валидный responsibility profile.
+2. Каждый intent привязан к существующему role.
+3. Каждый required context key существует и связан с intent.
+4. Каждый UI action surface не выходит за allowed domain.
+5. Router корректно выбирает:
+   - `agronomist / tech_map_draft`
+   - `economist / compute_plan_fact`
+   - `knowledge / query_knowledge`
+   - `monitoring / signal_review` или `emit_alerts`
+6. Clarification берёт missing context из contract source, а не из ad-hoc логики.
+7. Future role с responsibility binding валиден.
+8. Future role без responsibility binding невалиден.
+
+#### Backend live smoke
+
+1. `/api/rai/chat` agronomist path
+2. `/api/rai/chat` economist path
+3. `/api/rai/chat` knowledge path
+4. `/api/rai/chat` monitoring path
+5. `/api/rai/agents/config` future role показывает responsibility binding
+6. onboarding/validate для future manifest проверяет responsibility profile
+
+#### Frontend/manual smoke
+
+1. control-tower показывает responsibility truth для role
+2. clarification окна используют только разрешённые действия
+3. future role не выглядит generic-агентом без фокусной зоны
+
+### 12.10 Truth-sync после реализации
+
+После завершения пакета обновить:
+
+- `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md`
+- `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md`
+- `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md`
+- новый handoff / closeout report
+
+### 12.11 Порядок выполнения
+
+#### Phase 1
+
+1. Responsibility contracts для 4 canonical families
+2. Router from contract source
+3. Clarification from contract source
+
+#### Phase 2
+
+1. UI actions from contract source
+2. Future-role responsibility binding
+3. Governance validation
+
+#### Phase 3
+
+1. Tests
+2. Live smoke
+3. Truth-sync docs
+4. memory-bank + push
+
+### 12.12 Pragmatic cut для следующего чата
+
+Для следующего execution-пакета брать именно такой объём:
+
+1. canonical responsibility contracts для 4 reference families
+2. router + clarification + ui actions from contract source
+3. future-role `responsibilityProfileRole`
+4. governance validation for future roles
+5. tests + live smoke + truth-sync
+
+Это даёт архитектурно честное завершение следующего слоя Stage 2 без расползания в бесконечную метамодель.

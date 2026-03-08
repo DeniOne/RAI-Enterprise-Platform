@@ -40,6 +40,72 @@ export const UpsertAgentConfigDtoSchema = z.object({
       supportsStreaming: z.boolean().optional(),
     })
     .optional(),
+  responsibilityBinding: z
+    .object({
+      role: z.string().min(2).max(64),
+      inheritsFromRole: z.enum(["agronomist", "economist", "knowledge", "monitoring", "crm_agent"]),
+      overrides: z
+        .object({
+          title: z.string().min(1).optional(),
+          allowedIntents: z
+            .array(
+              z.enum([
+                "tech_map_draft",
+                "compute_deviations",
+                "compute_plan_fact",
+                "simulate_scenario",
+                "compute_risk_assessment",
+                "query_knowledge",
+                "emit_alerts",
+                "register_counterparty",
+                "create_counterparty_relation",
+                "create_crm_account",
+                "review_account_workspace",
+                "update_account_profile",
+                "create_crm_contact",
+                "update_crm_contact",
+                "delete_crm_contact",
+                "log_crm_interaction",
+                "update_crm_interaction",
+                "delete_crm_interaction",
+                "create_crm_obligation",
+                "update_crm_obligation",
+                "delete_crm_obligation",
+              ]),
+            )
+            .optional(),
+          forbiddenIntents: z
+            .array(
+              z.enum([
+                "tech_map_draft",
+                "compute_deviations",
+                "compute_plan_fact",
+                "simulate_scenario",
+                "compute_risk_assessment",
+                "query_knowledge",
+                "emit_alerts",
+                "register_counterparty",
+                "create_counterparty_relation",
+                "create_crm_account",
+                "review_account_workspace",
+                "update_account_profile",
+                "create_crm_contact",
+                "update_crm_contact",
+                "delete_crm_contact",
+                "log_crm_interaction",
+                "update_crm_interaction",
+                "delete_crm_interaction",
+                "create_crm_obligation",
+                "update_crm_obligation",
+                "delete_crm_obligation",
+              ]),
+            )
+            .optional(),
+          extraUiActions: z.array(z.string().min(1)).optional(),
+        })
+        .optional(),
+    })
+    .optional(),
   memoryPolicy: z
     .object({
       allowedScopes: z
@@ -263,6 +329,72 @@ export const FutureAgentManifestDtoSchema = z.object({
     timeoutMs: z.number().int().positive(),
     supportsStreaming: z.boolean(),
   }),
+  responsibilityBinding: z
+    .object({
+      role: z.string().min(2).max(64),
+      inheritsFromRole: z.enum(["agronomist", "economist", "knowledge", "monitoring", "crm_agent"]),
+      overrides: z
+        .object({
+          title: z.string().min(1).optional(),
+          allowedIntents: z
+            .array(
+              z.enum([
+                "tech_map_draft",
+                "compute_deviations",
+                "compute_plan_fact",
+                "simulate_scenario",
+                "compute_risk_assessment",
+                "query_knowledge",
+                "emit_alerts",
+                "register_counterparty",
+                "create_counterparty_relation",
+                "create_crm_account",
+                "review_account_workspace",
+                "update_account_profile",
+                "create_crm_contact",
+                "update_crm_contact",
+                "delete_crm_contact",
+                "log_crm_interaction",
+                "update_crm_interaction",
+                "delete_crm_interaction",
+                "create_crm_obligation",
+                "update_crm_obligation",
+                "delete_crm_obligation",
+              ]),
+            )
+            .optional(),
+          forbiddenIntents: z
+            .array(
+              z.enum([
+                "tech_map_draft",
+                "compute_deviations",
+                "compute_plan_fact",
+                "simulate_scenario",
+                "compute_risk_assessment",
+                "query_knowledge",
+                "emit_alerts",
+                "register_counterparty",
+                "create_counterparty_relation",
+                "create_crm_account",
+                "review_account_workspace",
+                "update_account_profile",
+                "create_crm_contact",
+                "update_crm_contact",
+                "delete_crm_contact",
+                "log_crm_interaction",
+                "update_crm_interaction",
+                "delete_crm_interaction",
+                "create_crm_obligation",
+                "update_crm_obligation",
+                "delete_crm_obligation",
+              ]),
+            )
+            .optional(),
+          extraUiActions: z.array(z.string().min(1)).optional(),
+        })
+        .optional(),
+    })
+    .optional(),
   memoryPolicy: z.object({
     policyId: z.string().min(1),
     allowedScopes: z.array(

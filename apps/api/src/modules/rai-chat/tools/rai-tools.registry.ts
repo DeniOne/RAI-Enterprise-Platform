@@ -22,6 +22,7 @@ import { AgroToolsRegistry } from "./agro-tools.registry";
 import { FinanceToolsRegistry } from "./finance-tools.registry";
 import { RiskToolsRegistry } from "./risk-tools.registry";
 import { KnowledgeToolsRegistry } from "./knowledge-tools.registry";
+import { CrmToolsRegistry } from "./crm-tools.registry";
 import { RiskPolicyEngineService } from "../security/risk-policy-engine.service";
 import { PendingActionService } from "../security/pending-action.service";
 import { RiskPolicyBlockedError } from "../security/risk-policy-blocked.error";
@@ -57,6 +58,7 @@ export class RaiToolsRegistry implements OnModuleInit {
     private readonly financeToolsRegistry: FinanceToolsRegistry,
     private readonly riskToolsRegistry: RiskToolsRegistry,
     private readonly knowledgeToolsRegistry: KnowledgeToolsRegistry,
+    private readonly crmToolsRegistry: CrmToolsRegistry,
     private readonly riskPolicyEngine: RiskPolicyEngineService,
     private readonly pendingActionService: PendingActionService,
     private readonly autonomyPolicy: AutonomyPolicyService,
@@ -152,8 +154,16 @@ export class RaiToolsRegistry implements OnModuleInit {
         riskInfo.domain,
         actorContext.userRole as UserRole | undefined,
       );
+      const directCrmUserWrite =
+        riskInfo.domain === "crm" &&
+        riskInfo.riskLevel === "WRITE" &&
+        actorContext.userConfirmed === true &&
+        Boolean(actorContext.userId) &&
+        !actorContext.isAutonomous &&
+        !actorContext.replayMode;
       const requiresByRisk =
-        this.pendingActionService.requiresConfirmation(verdict);
+        this.pendingActionService.requiresConfirmation(verdict) &&
+        !directCrmUserWrite;
       const requiresByAutonomy =
         autonomyLevel === AutonomyLevel.TOOL_FIRST &&
         riskInfo.riskLevel !== "READ";
@@ -212,6 +222,9 @@ export class RaiToolsRegistry implements OnModuleInit {
     }
     if (this.knowledgeToolsRegistry.has(name)) {
       return this.knowledgeToolsRegistry.execute(name as never, payload, actorContext) as Promise<RaiToolResultMap[TName]>;
+    }
+    if (this.crmToolsRegistry.has(name)) {
+      return this.crmToolsRegistry.execute(name as never, payload, actorContext) as Promise<RaiToolResultMap[TName]>;
     }
 
     const tool = this.tools.get(name) as RegisteredTool<TName> | undefined;

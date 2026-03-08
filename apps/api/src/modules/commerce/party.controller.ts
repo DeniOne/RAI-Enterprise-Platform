@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, Request } from "@nestjs/common";
 import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { PartyService } from "./services/party.service";
-import { CreatePartyDto, UpdatePartyDto, CreatePartyRelationDto } from "./dto/create-party.dto";
+import { CreatePartyDto, UpdatePartyDto, CreatePartyRelationDto, UpdatePartyRelationDto } from "./dto/create-party.dto";
 import { CreateJurisdictionDto, UpdateJurisdictionDto } from "./dto/create-jurisdiction.dto";
 import {
     CreateRegulatoryProfileDto,
@@ -135,5 +135,21 @@ export class PartyController {
     @Post("party-relations")
     createPartyRelation(@Request() req: any, @Body() dto: CreatePartyRelationDto) {
         return this.partyService.createPartyRelation(req.user.companyId, dto);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Patch("party-relations/:id")
+    updatePartyRelation(
+        @Request() req: any,
+        @Param("id") relationId: string,
+        @Body() dto: UpdatePartyRelationDto,
+    ) {
+        return this.partyService.updatePartyRelation(req.user.companyId, relationId, dto);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete("party-relations/:id")
+    deletePartyRelation(@Request() req: any, @Param("id") relationId: string) {
+        return this.partyService.deletePartyRelation(req.user.companyId, relationId);
     }
 }

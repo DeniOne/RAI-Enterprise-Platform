@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Param, Post, Query, Request, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
-import { CreatePartyDto, CreatePartyRelationDto } from "./dto/create-party.dto";
-import { CreateAssetRoleDto, CreateFarmDto } from "./dto/asset-role.dto";
+import { CreatePartyDto, CreatePartyRelationDto, UpdatePartyRelationDto } from "./dto/create-party.dto";
+import { CreateAssetRoleDto, CreateFarmDto, UpdateAssetRoleDto } from "./dto/asset-role.dto";
 import { PartyService } from "./services/party.service";
 import { AssetRoleService } from "./services/asset-role.service";
 
@@ -36,6 +36,20 @@ export class PartyAssetsController {
   @Post("party-relations")
   createPartyRelation(@Request() req: any, @Body() dto: CreatePartyRelationDto) {
     return this.partyService.createPartyRelation(req.user.companyId, dto);
+  }
+
+  @Patch("party-relations/:id")
+  updatePartyRelation(
+    @Request() req: any,
+    @Param("id") relationId: string,
+    @Body() dto: UpdatePartyRelationDto,
+  ) {
+    return this.partyService.updatePartyRelation(req.user.companyId, relationId, dto);
+  }
+
+  @Delete("party-relations/:id")
+  deletePartyRelation(@Request() req: any, @Param("id") relationId: string) {
+    return this.partyService.deletePartyRelation(req.user.companyId, relationId);
   }
 
   @Get("parties/:id/assets")
@@ -74,6 +88,16 @@ export class PartyAssetsController {
     return this.assetRoleService.getFarmFields(req.user.companyId, farmId);
   }
 
+  @Get("assets/fields")
+  listFields(@Request() req: any) {
+    return this.assetRoleService.listFields(req.user.companyId);
+  }
+
+  @Get("assets/objects")
+  listObjects(@Request() req: any) {
+    return this.assetRoleService.listObjects(req.user.companyId);
+  }
+
   @Get("assets/:id/roles")
   getAssetRoles(@Request() req: any, @Param("id") assetId: string) {
     return this.assetRoleService.listAssetRoles(req.user.companyId, assetId);
@@ -86,5 +110,24 @@ export class PartyAssetsController {
     @Body() dto: CreateAssetRoleDto,
   ) {
     return this.assetRoleService.createAssetRole(req.user.companyId, assetId, dto);
+  }
+
+  @Patch("assets/:id/roles/:roleId")
+  updateAssetRole(
+    @Request() req: any,
+    @Param("id") assetId: string,
+    @Param("roleId") roleId: string,
+    @Body() dto: UpdateAssetRoleDto,
+  ) {
+    return this.assetRoleService.updateAssetRole(req.user.companyId, assetId, roleId, dto);
+  }
+
+  @Delete("assets/:id/roles/:roleId")
+  deleteAssetRole(
+    @Request() req: any,
+    @Param("id") assetId: string,
+    @Param("roleId") roleId: string,
+  ) {
+    return this.assetRoleService.deleteAssetRole(req.user.companyId, assetId, roleId);
   }
 }

@@ -10,12 +10,17 @@ import {
   CanonicalAgentRuntimeRole,
   isAgentRuntimeRole,
 } from "../rai-chat/agent-registry.service";
+import {
+  buildResponsibilityBinding,
+  validateResponsibilityProfileCompatibility,
+} from "../rai-chat/agent-contracts/agent-interaction-contracts";
 
 const ROLE_TO_AGENT_NAME: Record<CanonicalAgentRuntimeRole, string> = {
   agronomist: "AgronomAgent",
   economist: "EconomistAgent",
   knowledge: "KnowledgeAgent",
   monitoring: "MonitoringAgent",
+  crm_agent: "CrmAgent",
 };
 
 @Injectable()
@@ -46,6 +51,7 @@ export class AgentConfigGuardService {
     options?: { changeRequestId?: string | null },
   ): Promise<EvalRunResult | null> {
     await this.assertModelNotQuarantined(companyId, dto.llmModel);
+    this.assertResponsibilityCompatibility(dto);
     const evalAgentName = this.resolveEvalAgentName(dto.role, dto.runtimeProfile);
     if (!evalAgentName) {
       return null;
@@ -142,5 +148,26 @@ export class AgentConfigGuardService {
       return ROLE_TO_AGENT_NAME[adapterRole];
     }
     return null;
+  }
+
+  private assertResponsibilityCompatibility(dto: UpsertAgentConfigDto): void {
+    const validation = validateResponsibilityProfileCompatibility({
+      role: dto.role,
+      tools: dto.tools,
+      runtimeAdapterRole: dto.runtimeProfile?.executionAdapterRole,
+      responsibilityBinding: buildResponsibilityBinding(
+        dto.role,
+        dto.runtimeProfile?.executionAdapterRole,
+        dto.responsibilityBinding,
+      ),
+    });
+
+    if (!validation.valid) {
+      throw new BadRequestException({
+        code: "RESPONSIBILITY_CONTRACT_FAILED",
+        message: `Конфиг агента ${dto.role} нарушает responsibility contract.`,
+        responsibility: validation,
+      });
+    }
   }
 }

@@ -49,6 +49,14 @@ const OUTPUT_CONTRACTS: Record<CanonicalAgentRuntimeRole, AgentOutputContract> =
     requiresDeterministicValidation: true,
     fallbackMode: "alert_summary",
   },
+  crm_agent: {
+    contractId: "crm-agent-v1",
+    responseSchemaVersion: "v1",
+    sections: ["summary", "crm_state", "recommended_actions", "record_changes", "evidence"],
+    requiresEvidence: true,
+    requiresDeterministicValidation: true,
+    fallbackMode: "deterministic_summary",
+  },
 };
 
 const MEMORY_POLICIES: Record<CanonicalAgentRuntimeRole, AgentMemoryPolicy> = {
@@ -79,6 +87,13 @@ const MEMORY_POLICIES: Record<CanonicalAgentRuntimeRole, AgentMemoryPolicy> = {
     retrievalPolicy: "scoped_recall",
     writePolicy: "none",
     sensitiveDataPolicy: "deny",
+  },
+  crm_agent: {
+    policyId: "crm-agent-memory-v1",
+    allowedScopes: ["tenant", "domain", "user", "task_workflow"],
+    retrievalPolicy: "scoped_recall",
+    writePolicy: "append_interaction",
+    sensitiveDataPolicy: "mask",
   },
 };
 
@@ -115,6 +130,14 @@ const GOVERNANCE_POLICIES: Record<CanonicalAgentRuntimeRole, AgentGovernancePoli
     auditRequirements: ["trace", "evidence", "gate_status"],
     fallbackRules: ["use_alert_summary_if_llm_unavailable"],
   },
+  crm_agent: {
+    policyId: "crm-agent-governance-v1",
+    allowedAutonomyModes: ["advisory", "hybrid"],
+    humanGateRules: ["crm_write_actions_require_user_confirmation"],
+    criticalActionRules: ["deny_unreviewed_record_mutations"],
+    auditRequirements: ["trace", "evidence", "validation", "gate_status"],
+    fallbackRules: ["use_crm_summary_if_llm_unavailable"],
+  },
 };
 
 const CAPABILITY_POLICIES: Record<CanonicalAgentRuntimeRole, AgentCapabilityPolicy> = {
@@ -138,6 +161,11 @@ const CAPABILITY_POLICIES: Record<CanonicalAgentRuntimeRole, AgentCapabilityPoli
     toolAccessMode: "allowlist",
     connectorAccessMode: "allowlist",
   },
+  crm_agent: {
+    capabilities: ["CrmToolsRegistry"],
+    toolAccessMode: "allowlist",
+    connectorAccessMode: "allowlist",
+  },
 };
 
 const CONNECTOR_BINDINGS: Record<CanonicalAgentRuntimeRole, AgentConnectorBinding[]> = {
@@ -145,6 +173,18 @@ const CONNECTOR_BINDINGS: Record<CanonicalAgentRuntimeRole, AgentConnectorBindin
   economist: [],
   knowledge: [],
   monitoring: [],
+  crm_agent: [
+    {
+      connectorName: "crm_primary",
+      accessMode: "governed_write",
+      scopes: ["parties", "accounts", "interactions", "obligations"],
+    },
+    {
+      connectorName: "party_registry",
+      accessMode: "read",
+      scopes: ["lookup", "registration_data", "relations"],
+    },
+  ],
 };
 
 export function buildDefaultRuntimeProfile(
@@ -153,7 +193,7 @@ export function buildDefaultRuntimeProfile(
   maxTokens: number,
 ): AgentRuntimeProfile {
   const modelRoutingClass =
-    role === "monitoring" ? "cheap" : role === "knowledge" ? "fast" : "strong";
+    role === "monitoring" ? "cheap" : role === "knowledge" || role === "crm_agent" ? "fast" : "strong";
   return {
     profileId: `${role}-runtime-v1`,
     modelRoutingClass,
@@ -161,7 +201,7 @@ export function buildDefaultRuntimeProfile(
     model,
     maxInputTokens: Math.max(maxTokens, 4000),
     maxOutputTokens: Math.min(Math.max(Math.floor(maxTokens / 2), 800), 8000),
-    temperature: role === "monitoring" ? 0.1 : 0.2,
+    temperature: role === "monitoring" ? 0.1 : role === "crm_agent" ? 0.15 : 0.2,
     timeoutMs: 15_000,
     supportsStreaming: false,
   };
@@ -177,10 +217,10 @@ export function buildDefaultDefinition(
   return {
     role,
     name,
-    kind: baseRole === "monitoring" ? "worker_hybrid" : "domain_advisor",
+    kind: baseRole === "monitoring" || baseRole === "crm_agent" ? "worker_hybrid" : "domain_advisor",
     ownerDomain,
     description,
-    defaultAutonomyMode: baseRole === "monitoring" ? "hybrid" : "advisory",
+    defaultAutonomyMode: baseRole === "monitoring" || baseRole === "crm_agent" ? "hybrid" : "advisory",
     outputContractId: OUTPUT_CONTRACTS[baseRole].contractId,
     runtimeProfileId: `${role}-runtime-v1`,
     governancePolicyId: GOVERNANCE_POLICIES[baseRole].policyId,

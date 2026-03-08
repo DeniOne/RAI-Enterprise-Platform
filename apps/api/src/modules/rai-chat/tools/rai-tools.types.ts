@@ -9,11 +9,26 @@ export enum RaiToolName {
   ComputeRiskAssessment = "compute_risk_assessment",
   GetWeatherForecast = "get_weather_forecast",
   QueryKnowledge = "query_knowledge",
+  LookupCounterpartyByInn = "lookup_counterparty_by_inn",
+  RegisterCounterparty = "register_counterparty",
+  CreateCounterpartyRelation = "create_counterparty_relation",
+  CreateCrmAccount = "create_crm_account",
+  GetCrmAccountWorkspace = "get_crm_account_workspace",
+  UpdateCrmAccount = "update_crm_account",
+  CreateCrmContact = "create_crm_contact",
+  UpdateCrmContact = "update_crm_contact",
+  DeleteCrmContact = "delete_crm_contact",
+  CreateCrmInteraction = "create_crm_interaction",
+  UpdateCrmInteraction = "update_crm_interaction",
+  DeleteCrmInteraction = "delete_crm_interaction",
+  CreateCrmObligation = "create_crm_obligation",
+  UpdateCrmObligation = "update_crm_obligation",
+  DeleteCrmObligation = "delete_crm_obligation",
 }
 
 export type ToolRiskLevel = "READ" | "WRITE" | "CRITICAL";
 
-export type ToolRiskDomain = "agro" | "finance" | "risk" | "knowledge";
+export type ToolRiskDomain = "agro" | "finance" | "risk" | "knowledge" | "crm";
 
 export interface RaiToolActorContext {
   companyId: string;
@@ -25,6 +40,8 @@ export interface RaiToolActorContext {
   /** Для RiskPolicy: кто инициировал (при подтверждении — кто подтвердил). */
   userId?: string;
   userRole?: string;
+  /** Прямое пользовательское действие в живом UX считается явным подтверждением на уровне запроса. */
+  userConfirmed?: boolean;
 }
 
 /** Маппинг инструмент → riskLevel и domain для RiskPolicyEngine. */
@@ -41,6 +58,21 @@ export const TOOL_RISK_MAP: Partial<
   [RaiToolName.EmitAlerts]: { riskLevel: "WRITE", domain: "risk" },
   [RaiToolName.GetWeatherForecast]: { riskLevel: "READ", domain: "risk" },
   [RaiToolName.QueryKnowledge]: { riskLevel: "READ", domain: "knowledge" },
+  [RaiToolName.LookupCounterpartyByInn]: { riskLevel: "READ", domain: "crm" },
+  [RaiToolName.RegisterCounterparty]: { riskLevel: "WRITE", domain: "crm" },
+  [RaiToolName.CreateCounterpartyRelation]: { riskLevel: "WRITE", domain: "crm" },
+  [RaiToolName.CreateCrmAccount]: { riskLevel: "WRITE", domain: "crm" },
+  [RaiToolName.GetCrmAccountWorkspace]: { riskLevel: "READ", domain: "crm" },
+  [RaiToolName.UpdateCrmAccount]: { riskLevel: "WRITE", domain: "crm" },
+  [RaiToolName.CreateCrmContact]: { riskLevel: "WRITE", domain: "crm" },
+  [RaiToolName.UpdateCrmContact]: { riskLevel: "WRITE", domain: "crm" },
+  [RaiToolName.DeleteCrmContact]: { riskLevel: "WRITE", domain: "crm" },
+  [RaiToolName.CreateCrmInteraction]: { riskLevel: "WRITE", domain: "crm" },
+  [RaiToolName.UpdateCrmInteraction]: { riskLevel: "WRITE", domain: "crm" },
+  [RaiToolName.DeleteCrmInteraction]: { riskLevel: "WRITE", domain: "crm" },
+  [RaiToolName.CreateCrmObligation]: { riskLevel: "WRITE", domain: "crm" },
+  [RaiToolName.UpdateCrmObligation]: { riskLevel: "WRITE", domain: "crm" },
+  [RaiToolName.DeleteCrmObligation]: { riskLevel: "WRITE", domain: "crm" },
 };
 
 /** Контекст для автономного исполнения (без userId/threadId). Блокирует WRITE/CRITICAL в реестрах. */
@@ -101,6 +133,121 @@ export interface QueryKnowledgePayload {
   query: string;
 }
 
+export interface LookupCounterpartyByInnPayload {
+  inn: string;
+  jurisdictionCode?: "RU" | "BY" | "KZ";
+  partyType?: "LEGAL_ENTITY" | "IP" | "KFH";
+}
+
+export interface RegisterCounterpartyPayload {
+  inn: string;
+  jurisdictionCode?: "RU" | "BY" | "KZ";
+  partyType?: "LEGAL_ENTITY" | "IP" | "KFH";
+  legalName?: string;
+  shortName?: string;
+  comment?: string;
+}
+
+export interface CreateCounterpartyRelationPayload {
+  fromPartyId: string;
+  toPartyId: string;
+  relationType: "OWNERSHIP" | "MANAGEMENT" | "AFFILIATED" | "AGENCY";
+  sharePct?: number;
+  validFrom: string;
+  validTo?: string;
+}
+
+export interface CreateCrmAccountPayload {
+  name: string;
+  inn?: string;
+  type?: string;
+  holdingId?: string;
+}
+
+export interface GetCrmAccountWorkspacePayload {
+  accountId: string;
+}
+
+export interface UpdateCrmAccountPayload {
+  accountId: string;
+  name?: string;
+  inn?: string | null;
+  type?: string;
+  status?: string;
+  holdingId?: string | null;
+  jurisdiction?: string | null;
+  riskCategory?: string;
+  strategicValue?: string;
+}
+
+export interface CreateCrmContactPayload {
+  accountId: string;
+  firstName: string;
+  lastName?: string;
+  role?: string;
+  influenceLevel?: number;
+  email?: string;
+  phone?: string;
+  source?: string;
+}
+
+export interface UpdateCrmContactPayload {
+  contactId: string;
+  firstName?: string;
+  lastName?: string | null;
+  role?: string;
+  influenceLevel?: number | null;
+  email?: string | null;
+  phone?: string | null;
+  source?: string | null;
+}
+
+export interface DeleteCrmContactPayload {
+  contactId: string;
+}
+
+export interface CreateCrmInteractionPayload {
+  accountId: string;
+  type: string;
+  summary: string;
+  date?: string;
+  contactId?: string | null;
+  relatedEventId?: string | null;
+}
+
+export interface UpdateCrmInteractionPayload {
+  interactionId: string;
+  type?: string;
+  summary?: string;
+  date?: string;
+  contactId?: string | null;
+  relatedEventId?: string | null;
+}
+
+export interface DeleteCrmInteractionPayload {
+  interactionId: string;
+}
+
+export interface CreateCrmObligationPayload {
+  accountId: string;
+  description: string;
+  dueDate: string;
+  responsibleUserId?: string | null;
+  status?: string;
+}
+
+export interface UpdateCrmObligationPayload {
+  obligationId: string;
+  description?: string;
+  dueDate?: string;
+  responsibleUserId?: string | null;
+  status?: string;
+}
+
+export interface DeleteCrmObligationPayload {
+  obligationId: string;
+}
+
 export interface RaiToolPayloadMap {
   [RaiToolName.EchoMessage]: EchoMessagePayload;
   [RaiToolName.WorkspaceSnapshot]: WorkspaceSnapshotPayload;
@@ -112,6 +259,21 @@ export interface RaiToolPayloadMap {
   [RaiToolName.ComputeRiskAssessment]: ComputeRiskAssessmentPayload;
   [RaiToolName.GetWeatherForecast]: GetWeatherForecastPayload;
   [RaiToolName.QueryKnowledge]: QueryKnowledgePayload;
+  [RaiToolName.LookupCounterpartyByInn]: LookupCounterpartyByInnPayload;
+  [RaiToolName.RegisterCounterparty]: RegisterCounterpartyPayload;
+  [RaiToolName.CreateCounterpartyRelation]: CreateCounterpartyRelationPayload;
+  [RaiToolName.CreateCrmAccount]: CreateCrmAccountPayload;
+  [RaiToolName.GetCrmAccountWorkspace]: GetCrmAccountWorkspacePayload;
+  [RaiToolName.UpdateCrmAccount]: UpdateCrmAccountPayload;
+  [RaiToolName.CreateCrmContact]: CreateCrmContactPayload;
+  [RaiToolName.UpdateCrmContact]: UpdateCrmContactPayload;
+  [RaiToolName.DeleteCrmContact]: DeleteCrmContactPayload;
+  [RaiToolName.CreateCrmInteraction]: CreateCrmInteractionPayload;
+  [RaiToolName.UpdateCrmInteraction]: UpdateCrmInteractionPayload;
+  [RaiToolName.DeleteCrmInteraction]: DeleteCrmInteractionPayload;
+  [RaiToolName.CreateCrmObligation]: CreateCrmObligationPayload;
+  [RaiToolName.UpdateCrmObligation]: UpdateCrmObligationPayload;
+  [RaiToolName.DeleteCrmObligation]: DeleteCrmObligationPayload;
 }
 
 export interface EchoMessageResult {
@@ -196,6 +358,142 @@ export interface QueryKnowledgeResult {
   items: Array<{ content: string; score: number }>;
 }
 
+export interface LookupCounterpartyByInnResult {
+  status: "FOUND" | "NOT_FOUND" | "ERROR" | "NOT_SUPPORTED";
+  source: string;
+  requestKey: string;
+  existingPartyId?: string;
+  existingPartyName?: string;
+  result?: {
+    legalName: string;
+    shortName?: string;
+    inn?: string;
+    kpp?: string;
+    ogrn?: string;
+    ogrnip?: string;
+    address?: string;
+    managerName?: string;
+    registeredAt?: string;
+  };
+  error?: string;
+}
+
+export interface RegisterCounterpartyResult {
+  created: boolean;
+  source: string;
+  partyId: string;
+  legalName: string;
+  shortName?: string | null;
+  inn?: string;
+  jurisdictionCode: string;
+  lookupStatus: "FOUND" | "NOT_FOUND" | "ERROR" | "NOT_SUPPORTED";
+  alreadyExisted: boolean;
+}
+
+export interface CreateCounterpartyRelationResult {
+  relationId: string;
+  fromPartyId: string;
+  toPartyId: string;
+  relationType: string;
+  validFrom: string;
+  validTo?: string | null;
+}
+
+export interface CreateCrmAccountResult {
+  accountId: string;
+  name: string;
+  inn?: string | null;
+  type?: string | null;
+  holdingId?: string | null;
+  status?: string | null;
+}
+
+export interface GetCrmAccountWorkspaceResult {
+  account: Record<string, unknown>;
+  legalEntities: Array<Record<string, unknown>>;
+  contacts: Array<Record<string, unknown>>;
+  interactions: Array<Record<string, unknown>>;
+  obligations: Array<Record<string, unknown>>;
+  documents: Array<Record<string, unknown>>;
+  risks: Array<Record<string, unknown>>;
+}
+
+export interface UpdateCrmAccountResult {
+  accountId: string;
+  name?: string;
+  inn?: string | null;
+  status?: string;
+  riskCategory?: string | null;
+  strategicValue?: string | null;
+  updatedAt?: string;
+}
+
+export interface CreateCrmContactResult {
+  contactId: string;
+  accountId: string;
+  firstName: string;
+  lastName?: string | null;
+  role?: string | null;
+  email?: string | null;
+  phone?: string | null;
+}
+
+export interface UpdateCrmContactResult {
+  contactId: string;
+  firstName: string;
+  lastName?: string | null;
+  role?: string | null;
+  email?: string | null;
+  phone?: string | null;
+}
+
+export interface DeleteCrmContactResult {
+  contactId: string;
+  deleted: true;
+}
+
+export interface CreateCrmInteractionResult {
+  interactionId: string;
+  accountId: string;
+  type: string;
+  summary: string;
+  date: string;
+}
+
+export interface UpdateCrmInteractionResult {
+  interactionId: string;
+  accountId: string;
+  type: string;
+  summary: string;
+  date: string;
+}
+
+export interface DeleteCrmInteractionResult {
+  interactionId: string;
+  deleted: true;
+}
+
+export interface CreateCrmObligationResult {
+  obligationId: string;
+  accountId: string;
+  description: string;
+  dueDate: string;
+  status: string;
+}
+
+export interface UpdateCrmObligationResult {
+  obligationId: string;
+  accountId: string;
+  description: string;
+  dueDate: string;
+  status: string;
+}
+
+export interface DeleteCrmObligationResult {
+  obligationId: string;
+  deleted: true;
+}
+
 export interface RaiToolResultMap {
   [RaiToolName.EchoMessage]: EchoMessageResult;
   [RaiToolName.WorkspaceSnapshot]: WorkspaceSnapshotResult;
@@ -207,6 +505,21 @@ export interface RaiToolResultMap {
   [RaiToolName.ComputeRiskAssessment]: ComputeRiskAssessmentResult;
   [RaiToolName.GetWeatherForecast]: GetWeatherForecastResult;
   [RaiToolName.QueryKnowledge]: QueryKnowledgeResult;
+  [RaiToolName.LookupCounterpartyByInn]: LookupCounterpartyByInnResult;
+  [RaiToolName.RegisterCounterparty]: RegisterCounterpartyResult;
+  [RaiToolName.CreateCounterpartyRelation]: CreateCounterpartyRelationResult;
+  [RaiToolName.CreateCrmAccount]: CreateCrmAccountResult;
+  [RaiToolName.GetCrmAccountWorkspace]: GetCrmAccountWorkspaceResult;
+  [RaiToolName.UpdateCrmAccount]: UpdateCrmAccountResult;
+  [RaiToolName.CreateCrmContact]: CreateCrmContactResult;
+  [RaiToolName.UpdateCrmContact]: UpdateCrmContactResult;
+  [RaiToolName.DeleteCrmContact]: DeleteCrmContactResult;
+  [RaiToolName.CreateCrmInteraction]: CreateCrmInteractionResult;
+  [RaiToolName.UpdateCrmInteraction]: UpdateCrmInteractionResult;
+  [RaiToolName.DeleteCrmInteraction]: DeleteCrmInteractionResult;
+  [RaiToolName.CreateCrmObligation]: CreateCrmObligationResult;
+  [RaiToolName.UpdateCrmObligation]: UpdateCrmObligationResult;
+  [RaiToolName.DeleteCrmObligation]: DeleteCrmObligationResult;
 }
 
 export interface RaiToolCall<TName extends RaiToolName = RaiToolName> {

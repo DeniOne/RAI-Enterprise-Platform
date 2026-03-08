@@ -15,6 +15,20 @@ import {
   ComputePlanFactResult,
   EmitAlertsResult,
   GenerateTechMapDraftResult,
+  RegisterCounterpartyResult,
+  CreateCounterpartyRelationResult,
+  CreateCrmAccountResult,
+  CreateCrmContactResult,
+  GetCrmAccountWorkspaceResult,
+  UpdateCrmAccountResult,
+  UpdateCrmContactResult,
+  DeleteCrmContactResult,
+  CreateCrmInteractionResult,
+  UpdateCrmInteractionResult,
+  DeleteCrmInteractionResult,
+  CreateCrmObligationResult,
+  UpdateCrmObligationResult,
+  DeleteCrmObligationResult,
   QueryKnowledgeResult,
   SimulateScenarioResult,
 } from "../tools/rai-tools.types";
@@ -52,6 +66,77 @@ export class ResponseComposerService {
     private readonly sensitiveDataFilter: SensitiveDataFilterService,
   ) {}
 
+  private isRiskPolicyBlockedResult(
+    result: unknown,
+  ): result is { riskPolicyBlocked: true; actionId?: string; message?: string } {
+    return Boolean(
+      result &&
+        typeof result === "object" &&
+        (result as { riskPolicyBlocked?: boolean }).riskPolicyBlocked === true,
+    );
+  }
+
+  private isAgentConfigBlockedResult(
+    result: unknown,
+  ): result is { agentConfigBlocked: true; reasonCode?: string; message?: string } {
+    return Boolean(
+      result &&
+        typeof result === "object" &&
+        (result as { agentConfigBlocked?: boolean }).agentConfigBlocked === true,
+    );
+  }
+
+  private buildToolDisplayName(toolName: RaiToolName): string {
+    switch (toolName) {
+      case RaiToolName.RegisterCounterparty:
+        return "регистрация контрагента";
+      case RaiToolName.CreateCounterpartyRelation:
+        return "создание связи контрагентов";
+      case RaiToolName.CreateCrmAccount:
+        return "создание CRM-аккаунта";
+      case RaiToolName.UpdateCrmAccount:
+        return "обновление профиля аккаунта";
+      case RaiToolName.CreateCrmContact:
+        return "создание контакта";
+      case RaiToolName.UpdateCrmContact:
+        return "обновление контакта";
+      case RaiToolName.DeleteCrmContact:
+        return "удаление контакта";
+      case RaiToolName.CreateCrmInteraction:
+        return "создание взаимодействия";
+      case RaiToolName.UpdateCrmInteraction:
+        return "обновление взаимодействия";
+      case RaiToolName.DeleteCrmInteraction:
+        return "удаление взаимодействия";
+      case RaiToolName.CreateCrmObligation:
+        return "создание обязательства";
+      case RaiToolName.UpdateCrmObligation:
+        return "обновление обязательства";
+      case RaiToolName.DeleteCrmObligation:
+        return "удаление обязательства";
+      default:
+        return toolName;
+    }
+  }
+
+  private summarizeBlockedToolResult(
+    tool: { name: RaiToolName; result: unknown },
+  ): string | null {
+    if (this.isRiskPolicyBlockedResult(tool.result)) {
+      const actionId =
+        typeof tool.result.actionId === "string" && tool.result.actionId.length > 0
+          ? ` PendingAction #${tool.result.actionId}.`
+          : "";
+      return `Действие "${this.buildToolDisplayName(tool.name)}" ожидает подтверждения.${actionId}`;
+    }
+
+    if (this.isAgentConfigBlockedResult(tool.result)) {
+      return `Действие "${this.buildToolDisplayName(tool.name)}" заблокировано конфигурацией агента.`;
+    }
+
+    return null;
+  }
+
   async buildResponse(params: BuildResponseParams): Promise<RaiChatResponseDto> {
     const {
       request,
@@ -65,20 +150,14 @@ export class ResponseComposerService {
     const { recall, profile } = recallResult;
 
     let text = `Принял: ${request.message}`;
-    if (request.workspaceContext?.route) {
-      text += `\nroute: ${request.workspaceContext.route}`;
-    }
     if (executionResult.executedTools.length > 0) {
-      text += `\nИнструментов выполнено: ${executionResult.executedTools.length}`;
       const toolSummary = this.summarizeExecutedTools(executionResult.executedTools);
       if (toolSummary) text += `\n${toolSummary}`;
     }
     if (recall.items.length > 0) {
       const top = recall.items[0];
-      text += `\n(Контекст из памяти: "${top.content.slice(0, 50)}...", sim: ${top.similarity.toFixed(2)})`;
+      text += `\nУчтён предыдущий контекст: ${top.content.slice(0, 80)}`;
     }
-    const profileSummary = this.extractProfileSummary(profile);
-    if (profileSummary) text += `\n(Профиль: ${profileSummary})`;
     if (externalSignalResult.advisory) {
       const a = externalSignalResult.advisory;
       text += `\nAdvisory: ${a.recommendation} — ${a.summary}`;
@@ -327,6 +406,14 @@ export class ResponseComposerService {
     );
     if (monitoringPayload) {
       return monitoringPayload;
+    }
+
+    const crmPayload = this.buildCrmRichOutputPayload(
+      request,
+      executionResult,
+    );
+    if (crmPayload) {
+      return crmPayload;
     }
 
     const mapped = composeWindowsFromLegacyWidgets({
@@ -623,6 +710,293 @@ export class ResponseComposerService {
     };
   }
 
+  private buildCrmRichOutputPayload(
+    request: RaiChatRequestDto,
+    executionResult: ExecutionResult,
+  ): {
+    workWindows: RaiWorkWindowDto[];
+    activeWindowId: string | null;
+  } | null {
+    const agentExecution = executionResult.agentExecution;
+    const explicitCrmTool = executionResult.executedTools.find((tool) =>
+      [
+        RaiToolName.RegisterCounterparty,
+        RaiToolName.CreateCounterpartyRelation,
+        RaiToolName.CreateCrmAccount,
+        RaiToolName.GetCrmAccountWorkspace,
+        RaiToolName.UpdateCrmAccount,
+        RaiToolName.CreateCrmContact,
+        RaiToolName.UpdateCrmContact,
+        RaiToolName.DeleteCrmContact,
+        RaiToolName.CreateCrmInteraction,
+        RaiToolName.UpdateCrmInteraction,
+        RaiToolName.DeleteCrmInteraction,
+        RaiToolName.CreateCrmObligation,
+        RaiToolName.UpdateCrmObligation,
+        RaiToolName.DeleteCrmObligation,
+      ].includes(tool.name),
+    );
+
+    if (
+      agentExecution &&
+      agentExecution.role !== "crm_agent" &&
+      !explicitCrmTool
+    ) {
+      return null;
+    }
+
+    if (!agentExecution && !explicitCrmTool) {
+      return null;
+    }
+
+    const structured = ((agentExecution?.structuredOutput ?? {}) as {
+      data?: unknown;
+      intent?: string;
+    });
+    const toolIntentMap: Partial<Record<RaiToolName, string>> = {
+      [RaiToolName.RegisterCounterparty]: "register_counterparty",
+      [RaiToolName.CreateCounterpartyRelation]: "create_counterparty_relation",
+      [RaiToolName.CreateCrmAccount]: "create_crm_account",
+      [RaiToolName.GetCrmAccountWorkspace]: "review_account_workspace",
+      [RaiToolName.UpdateCrmAccount]: "update_account_profile",
+      [RaiToolName.CreateCrmContact]: "create_crm_contact",
+      [RaiToolName.UpdateCrmContact]: "update_crm_contact",
+      [RaiToolName.DeleteCrmContact]: "delete_crm_contact",
+      [RaiToolName.CreateCrmInteraction]: "log_crm_interaction",
+      [RaiToolName.UpdateCrmInteraction]: "update_crm_interaction",
+      [RaiToolName.DeleteCrmInteraction]: "delete_crm_interaction",
+      [RaiToolName.CreateCrmObligation]: "create_crm_obligation",
+      [RaiToolName.UpdateCrmObligation]: "update_crm_obligation",
+      [RaiToolName.DeleteCrmObligation]: "delete_crm_obligation",
+    };
+    const intent = structured.intent ?? (explicitCrmTool ? toolIntentMap[explicitCrmTool.name] : undefined);
+    if (
+      intent !== "register_counterparty" &&
+      intent !== "create_counterparty_relation" &&
+      intent !== "create_crm_account" &&
+      intent !== "review_account_workspace" &&
+      intent !== "update_account_profile" &&
+      intent !== "create_crm_contact" &&
+      intent !== "update_crm_contact" &&
+      intent !== "delete_crm_contact" &&
+      intent !== "log_crm_interaction" &&
+      intent !== "update_crm_interaction" &&
+      intent !== "delete_crm_interaction" &&
+      intent !== "create_crm_obligation" &&
+      intent !== "update_crm_obligation" &&
+      intent !== "delete_crm_obligation"
+    ) {
+      return null;
+    }
+
+    const data = structured.data ?? explicitCrmTool?.result;
+    const crmWindowId = `win-crm-${request.threadId ?? "new"}`;
+    const nextStepWindowId = `${crmWindowId}-next`;
+
+    if (
+      explicitCrmTool &&
+      (this.isRiskPolicyBlockedResult(data) || this.isAgentConfigBlockedResult(data))
+    ) {
+      const actionId =
+        this.isRiskPolicyBlockedResult(data) &&
+        typeof data.actionId === "string" &&
+        data.actionId.length > 0
+          ? data.actionId
+          : null;
+      const blockedSummary =
+        typeof data.message === "string" && data.message.length > 0
+          ? data.message
+          : this.isAgentConfigBlockedResult(data)
+            ? "CRM-действие заблокировано конфигурацией агента."
+            : "CRM-действие ещё не выполнено. Система создала ожидающее действие.";
+      const workWindows: RaiWorkWindowDto[] = [
+        {
+          windowId: crmWindowId,
+          originMessageId: null,
+          agentRole: "crm_agent",
+          type: "structured_result",
+          parentWindowId: null,
+          relatedWindowIds: [nextStepWindowId],
+          category: "result",
+          priority: 76,
+          mode: "panel",
+          title: this.isAgentConfigBlockedResult(data)
+            ? "Выполнение заблокировано"
+            : "Требуется подтверждение",
+          status: this.isAgentConfigBlockedResult(data) ? "informational" : "needs_user_input",
+          payload: {
+            intentId: intent,
+            summary: blockedSummary,
+            missingKeys: [],
+            sections: [
+              {
+                id: "crm_pending_action",
+                title: "Статус",
+                items: [
+                  {
+                    label: "Операция",
+                    value: this.buildToolDisplayName(explicitCrmTool.name),
+                    tone: "warning",
+                  },
+                  {
+                    label: "Статус",
+                    value: this.isAgentConfigBlockedResult(data)
+                      ? "Заблокировано конфигурацией"
+                      : "Ожидает подтверждения",
+                    tone: this.isAgentConfigBlockedResult(data) ? "critical" : "warning",
+                  },
+                  {
+                    label: this.isAgentConfigBlockedResult(data) ? "Причина" : "PendingAction",
+                    value: this.isAgentConfigBlockedResult(data)
+                      ? data.reasonCode ?? "не указана"
+                      : actionId ?? "не указан",
+                    tone: "neutral",
+                  },
+                ],
+              },
+            ],
+          },
+          actions: [
+            {
+              id: "open_crm_route_pending",
+              kind: "open_route",
+              label: "Перейти в CRM",
+              enabled: true,
+              targetRoute: "/consulting/crm",
+            },
+          ],
+          isPinned: false,
+        },
+        {
+          windowId: nextStepWindowId,
+          originMessageId: null,
+          agentRole: "crm_agent",
+          type: "related_signals",
+          parentWindowId: crmWindowId,
+          relatedWindowIds: [crmWindowId],
+          category: "signals",
+          priority: 28,
+          mode: "inline",
+          title: "Следующий шаг",
+          status: "informational",
+          payload: {
+            intentId: intent,
+            summary: this.isAgentConfigBlockedResult(data)
+              ? "Исправьте runtime-конфиг агента и повторите CRM-операцию."
+              : "Подтвердите действие в governance-контуре, затем повторите операцию.",
+            missingKeys: [],
+            signalItems: [
+              {
+                id: `${nextStepWindowId}-signal`,
+                tone: this.isAgentConfigBlockedResult(data) ? "critical" : "warning",
+                text: this.isAgentConfigBlockedResult(data)
+                  ? "Нужна корректировка конфигурации агента."
+                  : actionId
+                    ? `Создан PendingAction #${actionId}.`
+                    : "CRM-действие ожидает подтверждения.",
+                targetWindowId: crmWindowId,
+              },
+            ],
+          },
+          actions: [
+            {
+              id: "focus_crm_pending",
+              kind: "focus_window",
+              label: "Открыть статус",
+              enabled: true,
+              targetWindowId: crmWindowId,
+            },
+          ],
+          isPinned: false,
+        },
+      ];
+
+      return {
+        activeWindowId: resolveActiveWorkWindowId(workWindows),
+        workWindows,
+      };
+    }
+
+    if (agentExecution && agentExecution.status !== "COMPLETED") {
+      return null;
+    }
+
+    const sections = this.buildCrmSections(intent, data);
+    const summary = this.buildCrmSummary(intent, data, agentExecution?.text ?? "CRM-операция выполнена.");
+
+    const workWindows: RaiWorkWindowDto[] = [
+      {
+        windowId: crmWindowId,
+        originMessageId: null,
+        agentRole: "crm_agent",
+        type: "structured_result",
+        parentWindowId: null,
+        relatedWindowIds: [nextStepWindowId],
+        category: "result",
+        priority: 76,
+        mode: "panel",
+        title: this.buildCrmTitle(intent),
+        status: "completed",
+        payload: {
+          intentId: intent,
+          summary,
+          missingKeys: [],
+          sections,
+        },
+        actions: this.buildCrmActions(intent, data, crmWindowId),
+        isPinned: false,
+      },
+      {
+        windowId: nextStepWindowId,
+        originMessageId: null,
+        agentRole: "crm_agent",
+        type: "related_signals",
+        parentWindowId: crmWindowId,
+        relatedWindowIds: [crmWindowId],
+        category: "signals",
+        priority: 28,
+        mode: "inline",
+        title: "Следующий шаг",
+        status: "informational",
+        payload: {
+          intentId: intent,
+          summary: this.buildCrmNextStepSummary(intent),
+          missingKeys: [],
+          signalItems: [
+            {
+              id: `${nextStepWindowId}-signal`,
+              tone: "info",
+              text: this.buildCrmNextStepSummary(intent),
+              targetWindowId: crmWindowId,
+            },
+          ],
+        },
+        actions: [
+          {
+            id: "focus_crm_result",
+            kind: "focus_window",
+            label: "Открыть результат",
+            enabled: true,
+            targetWindowId: crmWindowId,
+          },
+          {
+            id: "go_crm_route",
+            kind: "open_route",
+            label: "Перейти в CRM",
+            enabled: true,
+            targetRoute: "/consulting/crm",
+          },
+        ],
+        isPinned: false,
+      },
+    ];
+
+    return {
+      activeWindowId: resolveActiveWorkWindowId(workWindows),
+      workWindows,
+    };
+  }
+
   private buildEconomistComparisonPayload(
     request: RaiChatRequestDto,
     executionResult: ExecutionResult,
@@ -785,6 +1159,442 @@ export class ResponseComposerService {
     return "panel";
   }
 
+  private buildCrmTitle(intent: string): string {
+    switch (intent) {
+      case "register_counterparty":
+        return "Контрагент зарегистрирован";
+      case "create_counterparty_relation":
+        return "Связь контрагентов создана";
+      case "create_crm_account":
+        return "CRM-аккаунт создан";
+      case "review_account_workspace":
+        return "Рабочее пространство аккаунта";
+      case "update_account_profile":
+        return "Профиль аккаунта обновлён";
+      case "create_crm_contact":
+        return "Контакт создан";
+      case "update_crm_contact":
+        return "Контакт обновлён";
+      case "delete_crm_contact":
+        return "Контакт удалён";
+      case "log_crm_interaction":
+        return "CRM-взаимодействие сохранено";
+      case "update_crm_interaction":
+        return "CRM-взаимодействие обновлено";
+      case "delete_crm_interaction":
+        return "CRM-взаимодействие удалено";
+      case "create_crm_obligation":
+        return "Обязательство создано";
+      case "update_crm_obligation":
+        return "Обязательство обновлено";
+      case "delete_crm_obligation":
+        return "Обязательство удалено";
+      default:
+        return "Результат CRM-агента";
+    }
+  }
+
+  private buildCrmSummary(intent: string, data: unknown, fallbackText: string): string {
+    if (intent === "register_counterparty") {
+      const result = data as RegisterCounterpartyResult;
+      return result.alreadyExisted
+        ? `Контрагент уже был в реестре: ${result.legalName}.`
+        : `Создана карточка контрагента ${result.legalName}.`;
+    }
+    if (intent === "create_counterparty_relation") {
+      const result = data as CreateCounterpartyRelationResult;
+      return `Создана связь ${result.fromPartyId} -> ${result.toPartyId}.`;
+    }
+    if (intent === "create_crm_account") {
+      const result = data as CreateCrmAccountResult;
+      return `Создан CRM-аккаунт ${result.name}.`;
+    }
+    if (intent === "review_account_workspace") {
+      const result = data as GetCrmAccountWorkspaceResult;
+      const account = result.account as Record<string, unknown>;
+      return `Карточка ${String(account?.name ?? account?.id ?? "клиента")} загружена.`;
+    }
+    if (intent === "update_account_profile") {
+      const result = data as UpdateCrmAccountResult;
+      return `Профиль аккаунта ${result.accountId} обновлён.`;
+    }
+    if (intent === "create_crm_contact") {
+      const result = data as CreateCrmContactResult;
+      return `Контакт ${result.firstName}${result.lastName ? ` ${result.lastName}` : ""} создан.`;
+    }
+    if (intent === "update_crm_contact") {
+      const result = data as UpdateCrmContactResult;
+      return `Контакт ${result.contactId} обновлён.`;
+    }
+    if (intent === "delete_crm_contact") {
+      const result = data as DeleteCrmContactResult;
+      return `Контакт ${result.contactId} удалён.`;
+    }
+    if (intent === "log_crm_interaction") {
+      const result = data as CreateCrmInteractionResult;
+      return `Взаимодействие ${result.interactionId} сохранено.`;
+    }
+    if (intent === "update_crm_interaction") {
+      const result = data as UpdateCrmInteractionResult;
+      return `Взаимодействие ${result.interactionId} обновлено.`;
+    }
+    if (intent === "delete_crm_interaction") {
+      const result = data as DeleteCrmInteractionResult;
+      return `Взаимодействие ${result.interactionId} удалено.`;
+    }
+    if (intent === "create_crm_obligation") {
+      const result = data as CreateCrmObligationResult;
+      return `Обязательство ${result.obligationId} поставлено в работу.`;
+    }
+    if (intent === "update_crm_obligation") {
+      const result = data as UpdateCrmObligationResult;
+      return `Обязательство ${result.obligationId} обновлено.`;
+    }
+    if (intent === "delete_crm_obligation") {
+      const result = data as DeleteCrmObligationResult;
+      return `Обязательство ${result.obligationId} удалено.`;
+    }
+    return fallbackText;
+  }
+
+  private buildCrmSections(
+    intent: string,
+    data: unknown,
+  ): Array<{
+    id: string;
+    title: string;
+    items: Array<{
+      label: string;
+      value: string;
+      tone?: "neutral" | "positive" | "warning" | "critical";
+    }>;
+  }> {
+    if (intent === "register_counterparty") {
+      const result = data as RegisterCounterpartyResult;
+      return [
+        {
+          id: "crm_counterparty_registration",
+          title: "Карточка",
+          items: [
+            { label: "Контрагент", value: result.legalName, tone: "positive" },
+            { label: "ID", value: result.partyId, tone: "neutral" },
+            { label: "ИНН", value: result.inn ?? "не указан", tone: "neutral" },
+            { label: "Источник", value: result.source, tone: "neutral" },
+          ],
+        },
+      ];
+    }
+    if (intent === "create_counterparty_relation") {
+      const result = data as CreateCounterpartyRelationResult;
+      return [
+        {
+          id: "crm_relation",
+          title: "Связь",
+          items: [
+            { label: "Источник", value: result.fromPartyId, tone: "neutral" },
+            { label: "Целевой контрагент", value: result.toPartyId, tone: "neutral" },
+            { label: "Тип", value: result.relationType, tone: "positive" },
+            { label: "Действует с", value: result.validFrom, tone: "neutral" },
+          ],
+        },
+      ];
+    }
+    if (intent === "create_crm_account") {
+      const result = data as CreateCrmAccountResult;
+      return [
+        {
+          id: "crm_account_create",
+          title: "Новая карточка",
+          items: [
+            { label: "Аккаунт", value: result.name, tone: "positive" },
+            { label: "ID", value: result.accountId, tone: "neutral" },
+            { label: "ИНН", value: result.inn ?? "не указан", tone: "neutral" },
+            { label: "Статус", value: result.status ?? "не указан", tone: "neutral" },
+          ],
+        },
+      ];
+    }
+    if (intent === "review_account_workspace") {
+      const result = data as GetCrmAccountWorkspaceResult;
+      return [
+        {
+          id: "crm_workspace_summary",
+          title: "Сводка",
+          items: [
+            {
+              label: "Контакты",
+              value: `${result.contacts.length}`,
+              tone: result.contacts.length > 0 ? "positive" : "warning",
+            },
+            {
+              label: "Взаимодействия",
+              value: `${result.interactions.length}`,
+              tone: result.interactions.length > 0 ? "positive" : "neutral",
+            },
+            {
+              label: "Обязательства",
+              value: `${result.obligations.length}`,
+              tone: result.obligations.length > 0 ? "warning" : "neutral",
+            },
+            {
+              label: "Риски",
+              value: `${result.risks.length}`,
+              tone: result.risks.length > 0 ? "critical" : "neutral",
+            },
+          ],
+        },
+      ];
+    }
+    if (intent === "update_account_profile") {
+      const result = data as UpdateCrmAccountResult;
+      return [
+        {
+          id: "crm_account_update",
+          title: "Изменения",
+          items: [
+            { label: "Аккаунт", value: result.accountId, tone: "neutral" },
+            { label: "Статус", value: result.status ?? "без изменений", tone: "neutral" },
+            { label: "Риск", value: result.riskCategory ?? "без изменений", tone: "warning" },
+            { label: "Стратегическая ценность", value: result.strategicValue ?? "без изменений", tone: "neutral" },
+          ],
+        },
+      ];
+    }
+    if (intent === "create_crm_contact") {
+      const result = data as CreateCrmContactResult;
+      return [
+        {
+          id: "crm_contact_create",
+          title: "Контакт",
+          items: [
+            { label: "ID", value: result.contactId, tone: "neutral" },
+            { label: "Имя", value: `${result.firstName}${result.lastName ? ` ${result.lastName}` : ""}`, tone: "positive" },
+            { label: "Роль", value: result.role ?? "не указана", tone: "neutral" },
+            { label: "Email", value: result.email ?? "не указан", tone: "neutral" },
+          ],
+        },
+      ];
+    }
+    if (intent === "update_crm_contact") {
+      const result = data as UpdateCrmContactResult;
+      return [
+        {
+          id: "crm_contact_update",
+          title: "Контакт",
+          items: [
+            { label: "ID", value: result.contactId, tone: "neutral" },
+            { label: "Имя", value: `${result.firstName}${result.lastName ? ` ${result.lastName}` : ""}`, tone: "positive" },
+            { label: "Роль", value: result.role ?? "без изменений", tone: "neutral" },
+            { label: "Телефон", value: result.phone ?? "не указан", tone: "neutral" },
+          ],
+        },
+      ];
+    }
+    if (intent === "delete_crm_contact") {
+      const result = data as DeleteCrmContactResult;
+      return [
+        {
+          id: "crm_contact_delete",
+          title: "Удаление",
+          items: [
+            { label: "Контакт", value: result.contactId, tone: "warning" },
+            { label: "Статус", value: "Удалён", tone: "critical" },
+          ],
+        },
+      ];
+    }
+    if (intent === "log_crm_interaction") {
+      const result = data as CreateCrmInteractionResult;
+      return [
+        {
+          id: "crm_interaction",
+          title: "Взаимодействие",
+          items: [
+            { label: "ID", value: result.interactionId, tone: "neutral" },
+            { label: "Тип", value: result.type, tone: "positive" },
+            { label: "Дата", value: result.date, tone: "neutral" },
+            { label: "Сводка", value: result.summary, tone: "neutral" },
+          ],
+        },
+      ];
+    }
+    if (intent === "update_crm_interaction") {
+      const result = data as UpdateCrmInteractionResult;
+      return [
+        {
+          id: "crm_interaction_update",
+          title: "Взаимодействие",
+          items: [
+            { label: "ID", value: result.interactionId, tone: "neutral" },
+            { label: "Тип", value: result.type, tone: "positive" },
+            { label: "Дата", value: result.date, tone: "neutral" },
+            { label: "Сводка", value: result.summary, tone: "neutral" },
+          ],
+        },
+      ];
+    }
+    if (intent === "delete_crm_interaction") {
+      const result = data as DeleteCrmInteractionResult;
+      return [
+        {
+          id: "crm_interaction_delete",
+          title: "Удаление",
+          items: [
+            { label: "Взаимодействие", value: result.interactionId, tone: "warning" },
+            { label: "Статус", value: "Удалено", tone: "critical" },
+          ],
+        },
+      ];
+    }
+    if (intent === "create_crm_obligation") {
+      const result = data as CreateCrmObligationResult;
+      return [
+        {
+          id: "crm_obligation",
+          title: "Обязательство",
+          items: [
+            { label: "ID", value: result.obligationId, tone: "neutral" },
+            { label: "Срок", value: result.dueDate, tone: "warning" },
+            { label: "Статус", value: result.status, tone: "neutral" },
+            { label: "Описание", value: result.description, tone: "neutral" },
+          ],
+        },
+      ];
+    }
+    if (intent === "update_crm_obligation") {
+      const result = data as UpdateCrmObligationResult;
+      return [
+        {
+          id: "crm_obligation_update",
+          title: "Обязательство",
+          items: [
+            { label: "ID", value: result.obligationId, tone: "neutral" },
+            { label: "Срок", value: result.dueDate, tone: "warning" },
+            { label: "Статус", value: result.status, tone: "neutral" },
+            { label: "Описание", value: result.description, tone: "neutral" },
+          ],
+        },
+      ];
+    }
+    if (intent === "delete_crm_obligation") {
+      const result = data as DeleteCrmObligationResult;
+      return [
+        {
+          id: "crm_obligation_delete",
+          title: "Удаление",
+          items: [
+            { label: "Обязательство", value: result.obligationId, tone: "warning" },
+            { label: "Статус", value: "Удалено", tone: "critical" },
+          ],
+        },
+      ];
+    }
+    return [];
+  }
+
+  private buildCrmActions(
+    intent: string,
+    data: unknown,
+    windowId: string,
+  ): RaiWorkWindowDto["actions"] {
+    const openPartiesAction = {
+      id: "go_parties_registry",
+      kind: "open_route" as const,
+      label: "Открыть реестр контрагентов",
+      enabled: true,
+      targetRoute: "/parties",
+    };
+    const openCrmAction = {
+      id: "go_crm_workspace",
+      kind: "open_route" as const,
+      label: "Открыть CRM",
+      enabled: true,
+      targetRoute: "/consulting/crm",
+    };
+
+    if (intent === "register_counterparty") {
+      const result = data as RegisterCounterpartyResult;
+      return [
+        {
+          id: "focus_registered_counterparty",
+          kind: "focus_window",
+          label: "Открыть результат",
+          enabled: true,
+          targetWindowId: windowId,
+        },
+        {
+          ...openPartiesAction,
+          targetRoute: `/parties/${encodeURIComponent(result.partyId)}`,
+          label: "Открыть карточку контрагента",
+        },
+      ];
+    }
+
+    if (intent === "create_crm_account") {
+      const result = data as CreateCrmAccountResult;
+      return [
+        {
+          id: "open_created_account",
+          kind: "focus_window",
+          label: "Открыть результат",
+          enabled: true,
+          targetWindowId: windowId,
+        },
+        {
+          ...openCrmAction,
+          targetRoute: `/crm/accounts/${encodeURIComponent(result.accountId)}`,
+          label: "Открыть карточку клиента",
+        },
+      ];
+    }
+
+    return [
+      {
+        id: "focus_crm_window",
+        kind: "focus_window",
+        label: "Открыть результат",
+        enabled: true,
+        targetWindowId: windowId,
+      },
+      intent === "create_counterparty_relation" ? openPartiesAction : openCrmAction,
+    ];
+  }
+
+  private buildCrmNextStepSummary(intent: string): string {
+    switch (intent) {
+      case "register_counterparty":
+        return "Проверьте карточку контрагента, связи и реквизиты перед следующими CRM-действиями.";
+      case "create_counterparty_relation":
+        return "Откройте структуру контрагентов и убедитесь, что связь отражает реальную зависимость.";
+      case "create_crm_account":
+        return "Откройте новую карточку клиента и проверьте профиль, контакты и следующий шаг продаж.";
+      case "review_account_workspace":
+        return "Проверьте риски, обязательства и последние взаимодействия перед следующим касанием клиента.";
+      case "update_account_profile":
+        return "После изменения профиля обновите рабочий контекст и проверьте связанные обязательства.";
+      case "create_crm_contact":
+        return "Проверьте роль контакта и при необходимости зафиксируйте первое взаимодействие.";
+      case "update_crm_contact":
+        return "Проверьте, что контактные данные и роль отражают актуальное состояние клиента.";
+      case "delete_crm_contact":
+        return "Убедитесь, что у клиента остались актуальные контактные лица после удаления.";
+      case "log_crm_interaction":
+        return "После фиксации взаимодействия при необходимости поставьте follow-up обязательство.";
+      case "update_crm_interaction":
+        return "Проверьте журнал активностей и убедитесь, что сводка взаимодействия обновлена корректно.";
+      case "delete_crm_interaction":
+        return "Проверьте таймлайн клиента и убедитесь, что удалено именно ошибочное взаимодействие.";
+      case "create_crm_obligation":
+        return "Проверьте ответственного и срок, затем откройте CRM для контроля исполнения.";
+      case "update_crm_obligation":
+        return "После обновления обязательства проверьте срок, статус и ответственного.";
+      case "delete_crm_obligation":
+        return "Проверьте CRM-карточку и убедитесь, что обязательство больше не требуется.";
+      default:
+        return "Откройте CRM-контур и проверьте результат операции.";
+    }
+  }
+
   buildSuggestedActions(request: RaiChatRequestDto): RaiSuggestedAction[] {
     const actions: RaiSuggestedAction[] = [
       {
@@ -826,7 +1636,7 @@ export class ResponseComposerService {
   }
 
   private buildMemoryUsed(
-    profile: Record<string, unknown>,
+    _profile: Record<string, unknown>,
     recall: EpisodicRetrievalResponse,
   ): RaiMemoryUsedDto[] {
     const items: RaiMemoryUsedDto[] = [];
@@ -839,15 +1649,6 @@ export class ResponseComposerService {
         source: typeof top.metadata?.source === "string" ? top.metadata.source : "episode",
       });
     }
-    const profileSummary = this.extractProfileSummary(profile);
-    if (profileSummary) {
-      items.push({
-        kind: "profile",
-        label: profileSummary,
-        confidence: typeof profile.confidence === "number" ? Number(profile.confidence) : 0.8,
-        source: typeof profile.provenance === "string" ? profile.provenance : "profile",
-      });
-    }
     return items;
   }
 
@@ -856,6 +1657,10 @@ export class ResponseComposerService {
   ): string | null {
     const parts = executedTools
       .map((tool) => {
+        const blockedSummary = this.summarizeBlockedToolResult(tool);
+        if (blockedSummary) {
+          return blockedSummary;
+        }
         if (tool.name === RaiToolName.ComputeDeviations) {
           const r = tool.result as ComputeDeviationsResult & { explain?: string; agentName?: string };
           if (r?.agentName === "AgronomAgent" && r.explain) return r.explain;
@@ -874,6 +1679,58 @@ export class ResponseComposerService {
           const r = tool.result as GenerateTechMapDraftResult & { explain?: string; agentName?: string };
           if (r?.agentName === "AgronomAgent" && r.explain) return r.explain;
           return `Черновик техкарты создан: ${(r as GenerateTechMapDraftResult)?.draftId}`;
+        }
+        if (tool.name === RaiToolName.RegisterCounterparty) {
+          const r = tool.result as RegisterCounterpartyResult;
+          return `Контрагент: ${r.legalName}, карточка ${r.partyId}`;
+        }
+        if (tool.name === RaiToolName.CreateCounterpartyRelation) {
+          const r = tool.result as CreateCounterpartyRelationResult;
+          return `Связь контрагентов: ${r.fromPartyId} -> ${r.toPartyId}`;
+        }
+        if (tool.name === RaiToolName.CreateCrmAccount) {
+          const r = tool.result as CreateCrmAccountResult;
+          return `CRM-аккаунт: ${r.name}, карточка ${r.accountId}`;
+        }
+        if (tool.name === RaiToolName.GetCrmAccountWorkspace) {
+          const r = tool.result as GetCrmAccountWorkspaceResult;
+          return `CRM-карточка: контактов ${r.contacts.length}, обязательств ${r.obligations.length}`;
+        }
+        if (tool.name === RaiToolName.CreateCrmContact) {
+          const r = tool.result as CreateCrmContactResult;
+          return `Контакт создан: ${r.firstName}${r.lastName ? ` ${r.lastName}` : ""}`;
+        }
+        if (tool.name === RaiToolName.UpdateCrmContact) {
+          const r = tool.result as UpdateCrmContactResult;
+          return `Контакт обновлён: ${r.contactId}`;
+        }
+        if (tool.name === RaiToolName.DeleteCrmContact) {
+          const r = tool.result as DeleteCrmContactResult;
+          return `Контакт удалён: ${r.contactId}`;
+        }
+        if (tool.name === RaiToolName.CreateCrmInteraction) {
+          const r = tool.result as CreateCrmInteractionResult;
+          return `Взаимодействие создано: ${r.interactionId}`;
+        }
+        if (tool.name === RaiToolName.UpdateCrmInteraction) {
+          const r = tool.result as UpdateCrmInteractionResult;
+          return `Взаимодействие обновлено: ${r.interactionId}`;
+        }
+        if (tool.name === RaiToolName.DeleteCrmInteraction) {
+          const r = tool.result as DeleteCrmInteractionResult;
+          return `Взаимодействие удалено: ${r.interactionId}`;
+        }
+        if (tool.name === RaiToolName.CreateCrmObligation) {
+          const r = tool.result as CreateCrmObligationResult;
+          return `Обязательство создано: ${r.obligationId}`;
+        }
+        if (tool.name === RaiToolName.UpdateCrmObligation) {
+          const r = tool.result as UpdateCrmObligationResult;
+          return `Обязательство обновлено: ${r.obligationId}`;
+        }
+        if (tool.name === RaiToolName.DeleteCrmObligation) {
+          const r = tool.result as DeleteCrmObligationResult;
+          return `Обязательство удалено: ${r.obligationId}`;
         }
         return null;
       })

@@ -129,6 +129,7 @@ export class GoldenTestRunnerService {
       EconomistAgent: "economist-golden-set.json",
       KnowledgeAgent: "knowledge-golden-set.json",
       MonitoringAgent: "monitoring-golden-set.json",
+      CrmAgent: "crm-golden-set.json",
     };
     const file = fileMap[agentName] ?? null;
     if (!file) return [];
@@ -201,6 +202,22 @@ export class GoldenTestRunnerService {
       ],
       KnowledgeAgent: ["query_knowledge"],
       MonitoringAgent: ["emit_alerts", "get_weather_forecast"],
+      CrmAgent: [
+        "register_counterparty",
+        "create_counterparty_relation",
+        "create_crm_account",
+        "review_account_workspace",
+        "update_account_profile",
+        "create_crm_contact",
+        "update_crm_contact",
+        "delete_crm_contact",
+        "log_crm_interaction",
+        "create_crm_obligation",
+        "update_crm_interaction",
+        "delete_crm_interaction",
+        "update_crm_obligation",
+        "delete_crm_obligation",
+      ],
     };
     return supported[agentName]?.includes(expectedIntent) ?? false;
   }
@@ -247,6 +264,7 @@ export class GoldenTestRunnerService {
       EconomistAgent: 2000,
       KnowledgeAgent: 1000,
       MonitoringAgent: 1000,
+      CrmAgent: 2000,
     };
     return maxTokens >= (minBudget[agentName] ?? 1000);
   }
@@ -265,6 +283,22 @@ export class GoldenTestRunnerService {
       case RaiToolName.EmitAlerts:
       case RaiToolName.GetWeatherForecast:
         return "RiskToolsRegistry";
+      case RaiToolName.LookupCounterpartyByInn:
+      case RaiToolName.RegisterCounterparty:
+      case RaiToolName.CreateCounterpartyRelation:
+      case RaiToolName.CreateCrmAccount:
+      case RaiToolName.GetCrmAccountWorkspace:
+      case RaiToolName.UpdateCrmAccount:
+      case RaiToolName.CreateCrmContact:
+      case RaiToolName.UpdateCrmContact:
+      case RaiToolName.DeleteCrmContact:
+      case RaiToolName.CreateCrmInteraction:
+      case RaiToolName.UpdateCrmInteraction:
+      case RaiToolName.DeleteCrmInteraction:
+      case RaiToolName.CreateCrmObligation:
+      case RaiToolName.UpdateCrmObligation:
+      case RaiToolName.DeleteCrmObligation:
+        return "CrmToolsRegistry";
       default:
         return null;
     }
@@ -288,6 +322,34 @@ export class GoldenTestRunnerService {
         return RaiToolName.EmitAlerts;
       case "get_weather_forecast":
         return RaiToolName.GetWeatherForecast;
+      case "register_counterparty":
+        return RaiToolName.RegisterCounterparty;
+      case "create_counterparty_relation":
+        return RaiToolName.CreateCounterpartyRelation;
+      case "create_crm_account":
+        return RaiToolName.CreateCrmAccount;
+      case "review_account_workspace":
+        return RaiToolName.GetCrmAccountWorkspace;
+      case "update_account_profile":
+        return RaiToolName.UpdateCrmAccount;
+      case "create_crm_contact":
+        return RaiToolName.CreateCrmContact;
+      case "update_crm_contact":
+        return RaiToolName.UpdateCrmContact;
+      case "delete_crm_contact":
+        return RaiToolName.DeleteCrmContact;
+      case "log_crm_interaction":
+        return RaiToolName.CreateCrmInteraction;
+      case "update_crm_interaction":
+        return RaiToolName.UpdateCrmInteraction;
+      case "delete_crm_interaction":
+        return RaiToolName.DeleteCrmInteraction;
+      case "create_crm_obligation":
+        return RaiToolName.CreateCrmObligation;
+      case "update_crm_obligation":
+        return RaiToolName.UpdateCrmObligation;
+      case "delete_crm_obligation":
+        return RaiToolName.DeleteCrmObligation;
       default:
         return null;
     }
@@ -310,6 +372,36 @@ export class GoldenTestRunnerService {
         normalized.push(RaiToolName.EmitAlerts);
       } else if (name === "get_weather_forecast") {
         normalized.push(RaiToolName.GetWeatherForecast);
+      } else if (name === "lookup_counterparty_by_inn") {
+        normalized.push(RaiToolName.LookupCounterpartyByInn);
+      } else if (name === "register_counterparty") {
+        normalized.push(RaiToolName.RegisterCounterparty);
+      } else if (name === "create_counterparty_relation") {
+        normalized.push(RaiToolName.CreateCounterpartyRelation);
+      } else if (name === "create_crm_account") {
+        normalized.push(RaiToolName.CreateCrmAccount);
+      } else if (name === "get_crm_account_workspace") {
+        normalized.push(RaiToolName.GetCrmAccountWorkspace);
+      } else if (name === "update_crm_account") {
+        normalized.push(RaiToolName.UpdateCrmAccount);
+      } else if (name === "create_crm_contact") {
+        normalized.push(RaiToolName.CreateCrmContact);
+      } else if (name === "update_crm_contact") {
+        normalized.push(RaiToolName.UpdateCrmContact);
+      } else if (name === "delete_crm_contact") {
+        normalized.push(RaiToolName.DeleteCrmContact);
+      } else if (name === "create_crm_interaction") {
+        normalized.push(RaiToolName.CreateCrmInteraction);
+      } else if (name === "update_crm_interaction") {
+        normalized.push(RaiToolName.UpdateCrmInteraction);
+      } else if (name === "delete_crm_interaction") {
+        normalized.push(RaiToolName.DeleteCrmInteraction);
+      } else if (name === "create_crm_obligation") {
+        normalized.push(RaiToolName.CreateCrmObligation);
+      } else if (name === "update_crm_obligation") {
+        normalized.push(RaiToolName.UpdateCrmObligation);
+      } else if (name === "delete_crm_obligation") {
+        normalized.push(RaiToolName.DeleteCrmObligation);
       }
     }
     return normalized;

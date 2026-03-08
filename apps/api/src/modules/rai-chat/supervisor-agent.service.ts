@@ -46,6 +46,8 @@ export class SupervisorAgent {
       companyId,
       traceId,
       replayMode: options?.replayMode,
+      userId,
+      userConfirmed: Boolean(userId) && !options?.replayMode,
     };
 
     const recallResult = await this.memoryCoordinator.recallContext(

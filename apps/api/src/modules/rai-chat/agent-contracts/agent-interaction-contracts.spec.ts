@@ -1,12 +1,16 @@
 import { RaiToolName } from "../tools/rai-tools.types";
 import {
   buildAutoToolCallFromContracts,
+  buildResponsibilityBinding,
   buildPendingClarificationItems,
   buildResumeExecutionPlan,
   classifyByAgentContracts,
   detectClarificationContract,
+  getFocusContract,
+  getIntentCatalog,
   resolveContextValues,
   resolveMissingContextKeys,
+  validateResponsibilityProfileCompatibility,
 } from "./agent-interaction-contracts";
 
 describe("agent interaction contracts", () => {
@@ -18,6 +22,19 @@ describe("agent interaction contracts", () => {
     expect(result.targetRole).toBe("agronomist");
     expect(result.intent).toBe("tech_map_draft");
     expect(result.toolName).toBe(RaiToolName.GenerateTechMapDraft);
+  });
+
+  it("классифицирует регистрацию контрагента в CRM", () => {
+    const result = classifyByAgentContracts(
+      "Давай зарегистрируем в системе контрагента с ИНН 2610000615",
+      {
+        route: "/consulting/crm",
+      },
+    );
+
+    expect(result.targetRole).toBe("crm_agent");
+    expect(result.intent).toBe("register_counterparty");
+    expect(result.toolName).toBe(RaiToolName.RegisterCounterparty);
   });
 
   it("строит auto tool call для план-факта из workspace filters", () => {
@@ -44,6 +61,81 @@ describe("agent interaction contracts", () => {
           planId: "plan-77",
           seasonId: "season-2026",
         },
+      },
+    });
+  });
+
+  it("строит auto tool call для регистрации контрагента по ИНН", () => {
+    const classification = classifyByAgentContracts(
+      "зарегистрируй контрагента по ИНН 2610000615",
+      {
+        route: "/consulting/crm",
+      },
+    );
+
+    const toolCall = buildAutoToolCallFromContracts(
+      {
+        message: "зарегистрируй контрагента по ИНН 2610000615",
+        workspaceContext: {
+          route: "/consulting/crm",
+        },
+      },
+      classification,
+    );
+
+    expect(toolCall).toEqual({
+      name: RaiToolName.RegisterCounterparty,
+      payload: {
+        inn: "2610000615",
+        jurisdictionCode: "RU",
+        partyType: "LEGAL_ENTITY",
+      },
+    });
+  });
+
+  it("классифицирует создание контакта в CRM", () => {
+    const result = classifyByAgentContracts(
+      'добавь контакт "Иван Петров" в карточку клиента',
+      {
+        route: "/consulting/crm",
+      },
+    );
+
+    expect(result.targetRole).toBe("crm_agent");
+    expect(result.intent).toBe("create_crm_contact");
+    expect(result.toolName).toBe(RaiToolName.CreateCrmContact);
+  });
+
+  it("строит auto tool call для обновления обязательства по selected row", () => {
+    const classification = classifyByAgentContracts(
+      "обнови обязательство и поставь статус выполнено",
+      {
+        route: "/consulting/crm",
+      },
+    );
+
+    const toolCall = buildAutoToolCallFromContracts(
+      {
+        message: "обнови обязательство и поставь статус выполнено",
+        workspaceContext: {
+          route: "/consulting/crm",
+          selectedRowSummary: {
+            kind: "obligation",
+            id: "obl-1",
+            title: "Follow-up по клиенту",
+          },
+        },
+      },
+      classification,
+    );
+
+    expect(toolCall).toEqual({
+      name: RaiToolName.UpdateCrmObligation,
+      payload: {
+        obligationId: "obl-1",
+        description: undefined,
+        dueDate: undefined,
+        status: "FULFILLED",
       },
     });
   });
@@ -102,5 +194,49 @@ describe("agent interaction contracts", () => {
       expect.objectContaining({ key: "fieldRef", status: "resolved" }),
       expect.objectContaining({ key: "seasonRef", status: "resolved" }),
     ]);
+  });
+
+  it("экспортирует focus contract и intent catalog для canonical role", () => {
+    const focus = getFocusContract("economist");
+    const catalog = getIntentCatalog("economist");
+
+    expect(focus.businessDomain).toBe("finance");
+    expect(catalog.map((item) => item.intentId)).toEqual(
+      expect.arrayContaining(["compute_plan_fact", "simulate_scenario", "compute_risk_assessment"]),
+    );
+  });
+
+  it("валидирует responsibility binding для future role", () => {
+    const binding = buildResponsibilityBinding("marketer", "knowledge", {
+      role: "marketer",
+      inheritsFromRole: "knowledge",
+      overrides: {
+        allowedIntents: ["query_knowledge"],
+      },
+    });
+
+    const result = validateResponsibilityProfileCompatibility({
+      role: "marketer",
+      tools: [RaiToolName.QueryKnowledge],
+      runtimeAdapterRole: "knowledge",
+      responsibilityBinding: binding,
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.effectiveRole).toBe("knowledge");
+    expect(result.allowedIntentIds).toEqual(["query_knowledge"]);
+  });
+
+  it("отклоняет tool binding вне responsibility profile", () => {
+    const result = validateResponsibilityProfileCompatibility({
+      role: "marketer",
+      tools: [RaiToolName.EmitAlerts],
+      runtimeAdapterRole: "knowledge",
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.missingRequirements).toContain(
+      "tool_not_allowed_by_responsibility_profile:emit_alerts",
+    );
   });
 });

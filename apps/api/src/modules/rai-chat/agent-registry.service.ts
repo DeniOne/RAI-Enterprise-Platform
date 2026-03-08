@@ -9,7 +9,8 @@ export type CanonicalAgentRuntimeRole =
   | "agronomist"
   | "economist"
   | "knowledge"
-  | "monitoring";
+  | "monitoring"
+  | "crm_agent";
 
 export type AgentRuntimeRole = string;
 
@@ -89,6 +90,15 @@ const AGENT_DEFINITIONS: Record<CanonicalAgentRuntimeRole, AgentDefinition> = {
     defaultMaxTokens: 4000,
     defaultCapabilities: ["RiskToolsRegistry"],
   },
+  crm_agent: {
+    role: "crm_agent",
+    name: "CrmAgent",
+    businessRole: "CRM-операции по контрагентам, связям, карточкам и клиентским действиям",
+    ownerDomain: "crm",
+    defaultModel: "openai/gpt-5-mini",
+    defaultMaxTokens: 8000,
+    defaultCapabilities: ["CrmToolsRegistry"],
+  },
 };
 
 const AGENT_ROLES = Object.keys(AGENT_DEFINITIONS) as CanonicalAgentRuntimeRole[];
@@ -125,6 +135,23 @@ export const DEFAULT_TOOL_BINDINGS: Record<CanonicalAgentRuntimeRole, RaiToolNam
   ],
   knowledge: [RaiToolName.QueryKnowledge],
   monitoring: [RaiToolName.EmitAlerts, RaiToolName.GetWeatherForecast],
+  crm_agent: [
+    RaiToolName.LookupCounterpartyByInn,
+    RaiToolName.RegisterCounterparty,
+    RaiToolName.CreateCounterpartyRelation,
+    RaiToolName.CreateCrmAccount,
+    RaiToolName.GetCrmAccountWorkspace,
+    RaiToolName.UpdateCrmAccount,
+    RaiToolName.CreateCrmContact,
+    RaiToolName.UpdateCrmContact,
+    RaiToolName.DeleteCrmContact,
+    RaiToolName.CreateCrmInteraction,
+    RaiToolName.UpdateCrmInteraction,
+    RaiToolName.DeleteCrmInteraction,
+    RaiToolName.CreateCrmObligation,
+    RaiToolName.UpdateCrmObligation,
+    RaiToolName.DeleteCrmObligation,
+  ],
 };
 
 export function isAgentRuntimeRole(value: string): value is CanonicalAgentRuntimeRole {

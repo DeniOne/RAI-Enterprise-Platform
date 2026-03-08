@@ -17,6 +17,11 @@ export enum WorkspaceEntityKind {
   farm = "farm",
   field = "field",
   party = "party",
+  account = "account",
+  contact = "contact",
+  interaction = "interaction",
+  obligation = "obligation",
+  holding = "holding",
   techmap = "techmap",
   task = "task",
   contract = "contract",
@@ -305,7 +310,25 @@ export interface RaiWorkWindowDto {
   title: string;
   status: "needs_user_input" | "resolved" | "completed" | "informational";
   payload: {
-    intentId: "tech_map_draft" | "compute_plan_fact" | "query_knowledge" | "emit_alerts";
+    intentId:
+      | "tech_map_draft"
+      | "compute_plan_fact"
+      | "query_knowledge"
+      | "emit_alerts"
+      | "register_counterparty"
+      | "create_counterparty_relation"
+      | "create_crm_account"
+      | "review_account_workspace"
+      | "update_account_profile"
+      | "create_crm_contact"
+      | "update_crm_contact"
+      | "delete_crm_contact"
+      | "log_crm_interaction"
+      | "update_crm_interaction"
+      | "delete_crm_interaction"
+      | "create_crm_obligation"
+      | "update_crm_obligation"
+      | "delete_crm_obligation";
     summary: string;
     fieldRef?: string;
     seasonRef?: string;

@@ -8,9 +8,11 @@ import { AgroToolsRegistry } from "./tools/agro-tools.registry";
 import { FinanceToolsRegistry } from "./tools/finance-tools.registry";
 import { RiskToolsRegistry } from "./tools/risk-tools.registry";
 import { KnowledgeToolsRegistry } from "./tools/knowledge-tools.registry";
+import { CrmToolsRegistry } from "./tools/crm-tools.registry";
 import { AgronomAgent } from "./agents/agronom-agent.service";
 import { EconomistAgent } from "./agents/economist-agent.service";
 import { KnowledgeAgent } from "./agents/knowledge-agent.service";
+import { CrmAgent } from "./agents/crm-agent.service";
 import { AgroDeterministicEngineFacade } from "./deterministic/agro-deterministic.facade";
 import { BudgetControllerService } from "./security/budget-controller.service";
 import { RiskPolicyEngineService } from "./security/risk-policy-engine.service";
@@ -49,6 +51,8 @@ import { MemoryModule } from "../../shared/memory/memory.module";
 import { OpenRouterGatewayService } from "./agent-platform/openrouter-gateway.service";
 import { AgentPromptAssemblyService } from "./agent-platform/agent-prompt-assembly.service";
 import { AgentExecutionAdapterService } from "./runtime/agent-execution-adapter.service";
+import { CrmModule } from "../crm/crm.module";
+import { CommerceModule } from "../commerce/commerce.module";
 
 @Module({
   imports: [
@@ -60,6 +64,8 @@ import { AgentExecutionAdapterService } from "./runtime/agent-execution-adapter.
     ConsultingModule,
     AgroEventsModule,
     PrismaModule,
+    CrmModule,
+    CommerceModule,
   ],
   controllers: [RaiChatController, IncidentsGovernanceController],
   providers: [
@@ -73,9 +79,11 @@ import { AgentExecutionAdapterService } from "./runtime/agent-execution-adapter.
     FinanceToolsRegistry,
     RiskToolsRegistry,
     KnowledgeToolsRegistry,
+    CrmToolsRegistry,
     AgronomAgent,
     EconomistAgent,
     KnowledgeAgent,
+    CrmAgent,
     MemoryCoordinatorService,
     AgentRuntimeService,
     AgentExecutionAdapterService,

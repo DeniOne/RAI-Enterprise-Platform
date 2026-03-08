@@ -2,6 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { ResponseComposerService } from "./response-composer.service";
 import { RaiChatWidgetBuilder } from "../rai-chat-widget-builder";
 import { SensitiveDataFilterService } from "../security/sensitive-data-filter.service";
+import { RaiToolName } from "../tools/rai-tools.types";
 
 describe("ResponseComposerService", () => {
   let service: ResponseComposerService;
@@ -32,5 +33,98 @@ describe("ResponseComposerService", () => {
     });
     expect(actions.length).toBeGreaterThanOrEqual(1);
     expect(actions[0].toolName).toBe("echo_message");
+  });
+
+  it("не показывает ложный успех CRM, если действие заблокировано RiskPolicy", async () => {
+    const response = await service.buildResponse({
+      request: {
+        message: "зарегистрируй контрагента по ИНН 2610000615",
+        threadId: "th-1",
+        workspaceContext: { route: "/consulting/crm" },
+      },
+      executionResult: {
+        executedTools: [
+          {
+            name: RaiToolName.RegisterCounterparty,
+            result: {
+              riskPolicyBlocked: true,
+              actionId: "pa-77",
+              message: "Создан PendingAction #pa-77. Ожидается подтверждение человека.",
+            },
+          },
+        ],
+      },
+      recallResult: {
+        recall: { items: [] },
+        profile: {},
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-1",
+      threadId: "th-1",
+      companyId: "company-1",
+    });
+
+    expect(response.text).toContain("ожидает подтверждения");
+    expect(response.text).not.toContain("undefined");
+    expect(response.workWindows?.[0]?.title).toBe("Требуется подтверждение");
+    expect(response.workWindows?.[0]?.payload).toEqual(
+      expect.objectContaining({
+        summary: expect.stringContaining("PendingAction"),
+      }),
+    );
+  });
+
+  it("не добавляет в пользовательский текст технические подписи маршрута и профиля", async () => {
+    const response = await service.buildResponse({
+      request: {
+        message: "покажи статус",
+        threadId: "th-2",
+        workspaceContext: { route: "/consulting/dashboard" },
+      },
+      executionResult: {
+        executedTools: [
+          {
+            name: RaiToolName.RegisterCounterparty,
+            result: {
+              partyId: "party-1",
+              legalName: "ООО Ромашка",
+              inn: "1234567890",
+            },
+          },
+        ],
+      } as any,
+      recallResult: {
+        recall: {
+          items: [
+            {
+              content: "Пользователь недавно работал с карточкой клиента",
+              similarity: 0.92,
+              confidence: 0.88,
+              metadata: { source: "episode" },
+            },
+          ],
+        },
+        profile: {
+          lastRoute: "/consulting/dashboard",
+          lastMessagePreview: "покажи статус",
+          confidence: 0.8,
+        },
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-2",
+      threadId: "th-2",
+      companyId: "company-1",
+    });
+
+    expect(response.text).toContain("Принял: покажи статус");
+    expect(response.text).toContain("Учтён предыдущий контекст");
+    expect(response.text).not.toContain("route:");
+    expect(response.text).not.toContain("Инструментов выполнено");
+    expect(response.text).not.toContain("Профиль:");
+    expect(response.memoryUsed).toEqual([
+      expect.objectContaining({
+        kind: "episode",
+      }),
+    ]);
   });
 });

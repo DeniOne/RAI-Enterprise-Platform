@@ -161,6 +161,7 @@ export class AgentRuntimeService {
       if (effectivePlan.agronom.some((call) => call.name === name)) return "AgronomAgent";
       if (effectivePlan.economist.some((call) => call.name === name)) return "EconomistAgent";
       if (effectivePlan.knowledge.some((call) => call.name === name)) return "KnowledgeAgent";
+      if (effectivePlan.crm.some((call) => call.name === name)) return "CrmAgent";
       return "RuntimeAgent";
     };
     const runOne = (call: { name: RaiToolName; payload: Record<string, unknown> }) => {
@@ -205,6 +206,7 @@ export class AgentRuntimeService {
       ...effectivePlan.agronom.map((call) => runOne(call)),
       ...effectivePlan.economist.map((call) => runOne(call)),
       ...effectivePlan.knowledge.map((call) => runOne(call)),
+      ...effectivePlan.crm.map((call) => runOne(call)),
       ...effectivePlan.other.map((call) => runOne(call)),
     ];
     let timeoutHandle: NodeJS.Timeout | null = null;

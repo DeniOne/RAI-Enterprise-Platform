@@ -40,21 +40,27 @@ export const ContactSchema = z.object({
 // --- Вспомогательные схемы для связей ---
 
 export const PartyRelationSchema = z.object({
+    id: z.string().optional(),
     type: z.enum(['PARENT', 'CHILD', 'MANAGING', 'MANAGED'], {
         errorMap: () => ({ message: 'Выберите тип связи' }),
     }),
     relatedPartyId: z.string().min(1, 'Выберите контрагента'),
+    relatedPartyName: z.string().optional(),
     validFrom: z.string().optional(),
     validTo: z.string().optional(),
+    basisDocId: z.string().optional(),
     share: z.number().min(0).max(100).optional().or(z.literal(0)),
 });
 
 export const AssetRelationSchema = z.object({
-    assetId: z.string().min(1, 'Выберите хозяйство'),
+    id: z.string().optional(),
+    assetId: z.string().min(1, 'Выберите актив'),
     role: z.enum(['OWNER', 'TENANT', 'OPERATOR', 'PLEDGEE'], {
         errorMap: () => ({ message: 'Выберите роль' }),
     }),
     basis: z.string().min(1, 'Укажите основание (договор/свидетельство)'),
+    validFrom: z.string().optional(),
+    validTo: z.string().optional(),
 });
 
 // --- Основные схемы форм ---
