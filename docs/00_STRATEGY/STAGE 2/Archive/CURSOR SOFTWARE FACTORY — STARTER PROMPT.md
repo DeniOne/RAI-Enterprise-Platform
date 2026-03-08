@@ -36,10 +36,13 @@ last_updated: 2026-03-04
 - `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/RAI_AI_SYSTEM_ARCHITECTURE.md` — топория AI Swarm.
 - `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/TRUTH_SYNC_RECOVERY_CHECKLIST.md` — основной операционный чеклист текущей серии работ `R1-R12`. Каждый промт и ревью-пак должен двигать соответствующий пункт этого чеклиста.
 - `/root/RAI_EP/docs/00_STRATEGY/STAGE 2/A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md` — верхний production-readiness gate. Используй его как ограничение и критерий полноты: нельзя закрывать локальные задачи так, чтобы это ухудшало готовность мультиагентной системы к внедрению AI.
+<<<<<<< Updated upstream:docs/00_STRATEGY/STAGE 2/Archive/CURSOR SOFTWARE FACTORY — STARTER PROMPT.md
 <<<<<<< Updated upstream
 
 =======
 >>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes:docs/00_STRATEGY/STAGE 2/CURSOR SOFTWARE FACTORY — STARTER PROMPT.md
 
 ---
 
