@@ -5,6 +5,7 @@ import { AgroToolsRegistry } from "./agro-tools.registry";
 import { FinanceToolsRegistry } from "./finance-tools.registry";
 import { RiskToolsRegistry } from "./risk-tools.registry";
 import { KnowledgeToolsRegistry } from "./knowledge-tools.registry";
+import { CrmToolsRegistry } from "./crm-tools.registry";
 import { RaiToolName } from "./rai-tools.types";
 import { RiskPolicyEngineService } from "../security/risk-policy-engine.service";
 import { PendingActionService } from "../security/pending-action.service";
@@ -55,6 +56,28 @@ describe("RaiToolsRegistry", () => {
     memoryAdapterMock as any,
   );
   knowledgeToolsRegistry.onModuleInit();
+  const crmToolsRegistry = {
+    has: jest.fn((name: RaiToolName) =>
+      [
+        RaiToolName.LookupCounterpartyByInn,
+        RaiToolName.RegisterCounterparty,
+        RaiToolName.CreateCounterpartyRelation,
+        RaiToolName.CreateCrmAccount,
+        RaiToolName.GetCrmAccountWorkspace,
+        RaiToolName.UpdateCrmAccount,
+        RaiToolName.CreateCrmContact,
+        RaiToolName.UpdateCrmContact,
+        RaiToolName.DeleteCrmContact,
+        RaiToolName.CreateCrmInteraction,
+        RaiToolName.UpdateCrmInteraction,
+        RaiToolName.DeleteCrmInteraction,
+        RaiToolName.CreateCrmObligation,
+        RaiToolName.UpdateCrmObligation,
+        RaiToolName.DeleteCrmObligation,
+      ].includes(name),
+    ),
+    execute: jest.fn(),
+  } as unknown as CrmToolsRegistry;
 
   const riskPolicyEngine = new RiskPolicyEngineService();
   const pendingActionService = new PendingActionService(prismaMock as any);
@@ -78,6 +101,7 @@ describe("RaiToolsRegistry", () => {
       financeToolsRegistry,
       riskToolsRegistry,
       knowledgeToolsRegistry,
+      crmToolsRegistry,
       riskPolicyEngine,
       pendingActionService,
       autonomyPolicy,
@@ -89,6 +113,7 @@ describe("RaiToolsRegistry", () => {
     jest.restoreAllMocks();
     jest.clearAllMocks();
     (agentRuntimeConfig.resolveToolAccess as jest.Mock).mockResolvedValue({ allowed: true });
+    (crmToolsRegistry.execute as jest.Mock).mockReset();
   });
 
   it("QUARANTINE создаёт autonomy incident", async () => {
@@ -456,6 +481,47 @@ describe("RaiToolsRegistry", () => {
         riskLevel: "WRITE",
       }),
     });
+  });
+
+  it("прямой пользовательский CRM WRITE выполняется без PendingAction", async () => {
+    const registry = createRegistry();
+    registry.onModuleInit();
+    (crmToolsRegistry.execute as jest.Mock).mockResolvedValueOnce({
+      created: true,
+      source: "DADATA",
+      partyId: "party-42",
+      legalName: "ООО Ромашка",
+      inn: "2610000615",
+      jurisdictionCode: "RU",
+      lookupStatus: "FOUND",
+      alreadyExisted: false,
+    });
+
+    const result = await registry.execute(
+      RaiToolName.RegisterCounterparty,
+      { inn: "2610000615", jurisdictionCode: "RU" },
+      {
+        ...actorContext,
+        userId: "user-1",
+        userConfirmed: true,
+      },
+    );
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        partyId: "party-42",
+        legalName: "ООО Ромашка",
+      }),
+    );
+    expect(crmToolsRegistry.execute).toHaveBeenCalledWith(
+      RaiToolName.RegisterCounterparty,
+      { inn: "2610000615", jurisdictionCode: "RU" },
+      expect.objectContaining({
+        userId: "user-1",
+        userConfirmed: true,
+      }),
+    );
+    expect(pendingActionCreateMock).not.toHaveBeenCalled();
   });
 
   it("QUARANTINE level блокирует мутирующие тулзы до RiskPolicy", async () => {

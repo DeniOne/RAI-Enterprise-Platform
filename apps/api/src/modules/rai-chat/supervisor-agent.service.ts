@@ -11,6 +11,11 @@ import { Prisma } from "@rai/prisma-client";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { TraceSummaryService } from "./trace-summary.service";
 import { TruthfulnessEngineService } from "./truthfulness-engine.service";
+import { AgentExecutionRequest } from "./agent-platform/agent-platform.types";
+import { RaiToolName } from "./tools/rai-tools.types";
+import {
+  buildResumeExecutionPlan,
+} from "./agent-contracts/agent-interaction-contracts";
 
 @Injectable()
 export class SupervisorAgent {
@@ -41,6 +46,8 @@ export class SupervisorAgent {
       companyId,
       traceId,
       replayMode: options?.replayMode,
+      userId,
+      userConfirmed: Boolean(userId) && !options?.replayMode,
     };
 
     const recallResult = await this.memoryCoordinator.recallContext(
@@ -50,31 +57,31 @@ export class SupervisorAgent {
     );
 
     const tRouter = Date.now();
-    const classification = this.intentRouter.classify(
-      request.message,
-      request.workspaceContext,
-    );
-    const autoToolCall = this.intentRouter.buildAutoToolCall(
-      request.message,
-      request,
-      classification,
-    );
-    const requestedToolCalls = [...(request.toolCalls ?? [])];
-    if (
-      autoToolCall &&
-      !requestedToolCalls.some((t) => t.name === autoToolCall.name)
-    ) {
-      requestedToolCalls.unshift({
-        name: autoToolCall.name,
-        payload: autoToolCall.payload as Record<string, unknown>,
-      });
-    }
+    const plannedExecution = this.planExecution(request);
+    const { classification, requestedToolCalls } = plannedExecution;
 
     const tExecStart = Date.now();
-    const executionResult = await this.agentRuntime.run({
-      requestedToolCalls,
+    const executionRequest: AgentExecutionRequest = {
+      role: classification.targetRole ?? "knowledge",
+      message: request.message,
+      workspaceContext: request.workspaceContext,
+      memoryContext: {
+        profile: recallResult.profile,
+        recalledEpisodes: recallResult.recall.items.map((item) => ({
+          content: item.content,
+          similarity: item.similarity,
+          confidence: typeof item.confidence === "number" ? item.confidence : undefined,
+          source: typeof item.metadata?.source === "string" ? item.metadata.source : undefined,
+        })),
+      },
+      requestedTools: requestedToolCalls,
+      traceId,
+      threadId,
+    };
+    const executionResult = await this.agentRuntime.executeAgent(
+      executionRequest,
       actorContext,
-    });
+    );
 
     const tExternalSignals = Date.now();
     const externalSignalResult = await this.externalSignalsService.process({
@@ -130,6 +137,9 @@ export class SupervisorAgent {
           message: request.message,
           workspaceContext: request.workspaceContext,
         },
+        agentRole: executionResult.agentExecution?.role,
+        fallbackUsed: executionResult.agentExecution?.fallbackUsed,
+        validation: executionResult.agentExecution?.validation,
         phases: [
           { name: "router", timestamp: new Date(tRouter).toISOString(), durationMs: tExecStart - tRouter },
           { name: "tools", timestamp: new Date(tExecStart).toISOString(), durationMs: tExternalSignals - tExecStart },
@@ -181,6 +191,65 @@ export class SupervisorAgent {
     return response;
   }
 
+  private planExecution(request: RaiChatRequestDto): {
+    classification: {
+      targetRole: string | null;
+      intent: string | null;
+      toolName: RaiToolName | null;
+      confidence: number;
+      method: string;
+      reason: string;
+    };
+    requestedToolCalls: RaiChatRequestDto["toolCalls"];
+  } {
+    const resumePlan = buildResumeExecutionPlan(request);
+    if (resumePlan) {
+      return {
+        classification: {
+          targetRole: resumePlan.classification.targetRole ?? null,
+          intent: resumePlan.classification.intent ?? null,
+          toolName: resumePlan.classification.toolName ?? null,
+          confidence: resumePlan.classification.confidence,
+          method: "clarification_resume",
+          reason: resumePlan.classification.reason,
+        },
+        requestedToolCalls: resumePlan.requestedToolCalls,
+      };
+    }
+
+    const classification = this.intentRouter.classify(
+      request.message,
+      request.workspaceContext,
+    );
+    const autoToolCall = this.intentRouter.buildAutoToolCall(
+      request.message,
+      request,
+      classification,
+    );
+    const requestedToolCalls = [...(request.toolCalls ?? [])];
+    if (
+      autoToolCall &&
+      !requestedToolCalls.some((t) => t.name === autoToolCall.name)
+    ) {
+      requestedToolCalls.unshift({
+        name: autoToolCall.name,
+        payload: autoToolCall.payload as Record<string, unknown>,
+      });
+    }
+
+    return {
+      classification: {
+        targetRole: classification.targetRole ?? null,
+        intent: classification.intent ?? null,
+        toolName: classification.toolName ?? null,
+        confidence: classification.confidence,
+        method: classification.method,
+        reason: classification.reason,
+      },
+      requestedToolCalls,
+    };
+  }
+
   /**
    * Записывает AiAuditEntry в БД и ждёт завершения операции (async/await).
    * Это гарантирует, что TruthfulnessEngine, читающий audit trail после этого вызова,
@@ -195,6 +264,9 @@ export class SupervisorAgent {
     replayInput?: { message: string; workspaceContext?: unknown };
     evidence?: EvidenceReference[];
     runtimeBudget?: RaiChatResponseDto["runtimeBudget"];
+    agentRole?: string;
+    fallbackUsed?: boolean;
+    validation?: RaiChatResponseDto["validation"];
     phases?: Array<{ name: string; timestamp: string; durationMs: number }>;
   }): Promise<string | null> {
     const metadataObj: Record<string, unknown> = {};
@@ -209,6 +281,15 @@ export class SupervisorAgent {
     }
     if (params.runtimeBudget) {
       metadataObj.runtimeBudget = params.runtimeBudget;
+    }
+    if (params.agentRole) {
+      metadataObj.agentRole = params.agentRole;
+    }
+    if (typeof params.fallbackUsed === "boolean") {
+      metadataObj.fallbackUsed = params.fallbackUsed;
+    }
+    if (params.validation) {
+      metadataObj.validation = params.validation;
     }
     if (params.phases && params.phases.length > 0) {
       metadataObj.phases = params.phases;

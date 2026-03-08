@@ -358,3 +358,18 @@
 ## Stage 2 Truth-Sync (План d97a1f1c)
 - [/] Принятие ORCHESTRATOR PROMPT к исполнению.
 - [x] **R1. Evidence Backbone** — READY_FOR_REVIEW (Отчёт `interagency/reports/2026-03-05_a_rai-r1_evidence-audit-backbone_report.md` готов)
+
+## 2026-03-07 — Stage 2 Interaction Blueprint / Final Sync
+- [x] Довести interaction blueprint от концепта до реализованного канона.
+- [x] Закрыть единый путь `clarification -> overlay -> auto-resume -> result windows`.
+- [x] Внедрить unified `workWindows[]` protocol и migration path для legacy `widgets[]`.
+- [x] Привести `AI Dock` к IDE-подобной композиции с историей чатов и `Новый чат`.
+- [x] Внедрить interaction contract-layer `Focus / Intent / Required Context / UI Action`.
+- [x] Распространить contract-backed interaction path на reference families:
+  - `agronomist`
+  - `economist`
+  - `knowledge`
+  - `monitoring`
+- [x] Выполнить truth-sync в `blueprint`, `master-plan`, `addendum`, `handoff`, `closeout-report`.
+- [x] Синхронизировать memory-bank перед публикацией.
+- [ ] Следующий слой после push: future-role expansion и platform-wide non-canonical interaction contracts.

@@ -22,6 +22,9 @@
 | [RAI_AI_ANTIHALLUCINATION_ARCHITECTURE.md](./RAI_AI_ANTIHALLUCINATION_ARCHITECTURE.md) | `CANON INPUT` | Принципы anti-hallucination, evidence, verification |
 | [A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md](./A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md) | `CANON INPUT` | Верхний readiness gate |
 | [TRUTH_SYNC_STAGE_2_CLAIMS.md](./TRUTH_SYNC_STAGE_2_CLAIMS.md) | `CANON INPUT` | Truth baseline по claims |
+| [A_RAI_AGENT_INTERACTION_BLUEPRINT.md](./A_RAI_AGENT_INTERACTION_BLUEPRINT.md) | `CANON INPUT` | Blueprint UX/runtime-композиции: chat thread, overlay canvas, мультиоконность, clarification loop |
+| [2026-03-07_a_rai-s24_interactive-clarification-overlay-closeout_report.md](../../../interagency/reports/2026-03-07_a_rai-s24_interactive-clarification-overlay-closeout_report.md) | `REFERENCE ONLY` | Closeout evidence по reusable clarification/window pattern для agronomist + economist |
+| [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md](./RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md) | `ACTIVE ADDENDUM` | Дополнение к master-plan: фокусные зоны ответственности агентов, intent-каталог, required context и UI action contracts |
 
 ---
 

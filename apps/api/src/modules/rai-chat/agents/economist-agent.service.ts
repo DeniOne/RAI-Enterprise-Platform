@@ -1,13 +1,18 @@
 import { Injectable } from "@nestjs/common";
-import { RaiToolName } from "../tools/rai-tools.types";
+import { RaiToolName, RaiToolActorContext } from "../tools/rai-tools.types";
 import type {
   ComputePlanFactResult,
   SimulateScenarioResult,
   ComputeRiskAssessmentResult,
 } from "../tools/rai-tools.types";
 import { FinanceToolsRegistry } from "../tools/finance-tools.registry";
-import { RaiToolActorContext } from "../tools/rai-tools.types";
 import type { EvidenceReference } from "../dto/rai-chat.dto";
+import { OpenRouterGatewayService } from "../agent-platform/openrouter-gateway.service";
+import { AgentPromptAssemblyService } from "../agent-platform/agent-prompt-assembly.service";
+import {
+  AgentExecutionRequest,
+  EffectiveAgentKernelEntry,
+} from "../agent-platform/agent-platform.types";
 
 export type EconomistIntent =
   | "compute_plan_fact"
@@ -26,10 +31,12 @@ export interface EconomistAgentResult {
   status: "COMPLETED" | "FAILED" | "NEEDS_MORE_DATA";
   data: unknown;
   confidence: number;
+  missingContext: string[];
   explain: string;
   toolCallsCount: number;
   traceId: string;
   evidence: EvidenceReference[];
+  fallbackUsed: boolean;
 }
 
 const INTENT_TOOL: Record<EconomistIntent, RaiToolName> = {
@@ -69,9 +76,35 @@ function explainRisk(d: ComputeRiskAssessmentResult): string {
 
 @Injectable()
 export class EconomistAgent {
-  constructor(private readonly financeToolsRegistry: FinanceToolsRegistry) {}
+  constructor(
+    private readonly financeToolsRegistry: FinanceToolsRegistry,
+    private readonly openRouterGateway: OpenRouterGatewayService,
+    private readonly promptAssembly: AgentPromptAssemblyService,
+  ) {}
 
-  async run(input: EconomistAgentInput): Promise<EconomistAgentResult> {
+  async run(
+    input: EconomistAgentInput,
+    options?: { kernel?: EffectiveAgentKernelEntry; request?: AgentExecutionRequest },
+  ): Promise<EconomistAgentResult> {
+    if (
+      input.intent === "compute_plan_fact" &&
+      !input.scope?.planId &&
+      !input.scope?.seasonId
+    ) {
+      return {
+        agentName: "EconomistAgent",
+        status: "NEEDS_MORE_DATA",
+        data: {},
+        confidence: 0,
+        missingContext: ["seasonId"],
+        explain: "Не хватает контекста: seasonId",
+        toolCallsCount: 0,
+        traceId: input.traceId,
+        evidence: [],
+        fallbackUsed: false,
+      };
+    }
+
     const actorContext: RaiToolActorContext = {
       companyId: input.companyId,
       traceId: input.traceId,
@@ -83,23 +116,48 @@ export class EconomistAgent {
         { scope: input.scope ?? {} },
         actorContext,
       );
-      let explain: string;
-      if (input.intent === "compute_plan_fact") {
-        explain = explainPlanFact(data as ComputePlanFactResult);
-      } else if (input.intent === "simulate_scenario") {
-        explain = explainScenario(data as SimulateScenarioResult);
-      } else {
-        explain = explainRisk(data as ComputeRiskAssessmentResult);
+      let explain =
+        input.intent === "compute_plan_fact"
+          ? explainPlanFact(data as ComputePlanFactResult)
+          : input.intent === "simulate_scenario"
+            ? explainScenario(data as SimulateScenarioResult)
+            : explainRisk(data as ComputeRiskAssessmentResult);
+      let fallbackUsed = true;
+
+      if (options?.kernel && options.request) {
+        try {
+          const llm = await this.openRouterGateway.generate({
+            traceId: input.traceId,
+            agentRole: "economist",
+            model: options.kernel.runtimeProfile.model,
+            messages: this.promptAssembly.buildMessages(options.kernel, options.request).concat([
+              {
+                role: "user",
+                content: `Finance result: ${JSON.stringify(data)}. Explain tradeoffs and caveats without inventing new facts.`,
+              },
+            ]),
+            temperature: options.kernel.runtimeProfile.temperature,
+            maxTokens: options.kernel.runtimeProfile.maxOutputTokens,
+            timeoutMs: options.kernel.runtimeProfile.timeoutMs,
+          });
+          explain = llm.outputText;
+          fallbackUsed = false;
+        } catch {
+          fallbackUsed = true;
+        }
       }
+
       return {
         agentName: "EconomistAgent",
         status: "COMPLETED",
         data,
-        confidence: 0.85,
+        confidence: fallbackUsed ? 0.85 : 0.9,
+        missingContext: [],
         explain,
         toolCallsCount: 1,
         traceId: input.traceId,
         evidence: this.buildEvidence(input, toolName as FinanceToolName),
+        fallbackUsed,
       };
     } catch (err) {
       return {
@@ -107,10 +165,12 @@ export class EconomistAgent {
         status: "FAILED",
         data: {},
         confidence: 0,
+        missingContext: [],
         explain: String((err as Error).message),
         toolCallsCount: 1,
         traceId: input.traceId,
         evidence: [],
+        fallbackUsed: true,
       };
     }
   }

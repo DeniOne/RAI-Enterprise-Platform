@@ -9,6 +9,9 @@ import { AgentPromptGovernanceService } from "./agent-prompt-governance.service"
 import {
   AgentConfigsResponseDto,
   CanaryReviewDtoSchema,
+  FutureAgentManifestDtoSchema,
+  FutureAgentManifestValidationDto,
+  FutureAgentTemplatesResponseDto,
   RollbackChangeDtoSchema,
   UpsertAgentConfigDtoSchema,
   type AgentConfigChangeRequestDto,
@@ -31,6 +34,24 @@ export class AgentsConfigController {
       throw new BadRequestException("Security Context: companyId is missing");
     }
     return this.agentManagement.getAgentConfigs(companyId);
+  }
+
+  @Get("onboarding/templates")
+  async getOnboardingTemplates(): Promise<FutureAgentTemplatesResponseDto> {
+    return {
+      templates: this.agentManagement.getFutureAgentTemplates(),
+    };
+  }
+
+  @Post("onboarding/validate")
+  async validateOnboardingManifest(
+    @Body() body: unknown,
+  ): Promise<FutureAgentManifestValidationDto> {
+    const parsed = FutureAgentManifestDtoSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten().fieldErrors);
+    }
+    return this.agentManagement.validateFutureAgentManifest(parsed.data);
   }
 
   @Post("config/change-requests")

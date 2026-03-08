@@ -1,5 +1,7 @@
 import { EconomistAgent } from "./economist-agent.service";
 import { FinanceToolsRegistry } from "../tools/finance-tools.registry";
+import { OpenRouterGatewayService } from "../agent-platform/openrouter-gateway.service";
+import { AgentPromptAssemblyService } from "../agent-platform/agent-prompt-assembly.service";
 
 describe("EconomistAgent", () => {
   const financeRegistryMock = {
@@ -19,7 +21,11 @@ describe("EconomistAgent", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    agent = new EconomistAgent(financeRegistryMock as unknown as FinanceToolsRegistry);
+    agent = new EconomistAgent(
+      financeRegistryMock as unknown as FinanceToolsRegistry,
+      { generate: jest.fn().mockRejectedValue(new Error("OPENROUTER_API_KEY_MISSING")) } as unknown as OpenRouterGatewayService,
+      { buildMessages: jest.fn().mockReturnValue([]) } as unknown as AgentPromptAssemblyService,
+    );
   });
 
   it("compute_plan_fact вызывает FinanceToolsRegistry и возвращает COMPLETED с explain по данным", async () => {
@@ -36,6 +42,7 @@ describe("EconomistAgent", () => {
     expect(result.toolCallsCount).toBe(1);
     expect(result.evidence).toBeDefined();
     expect(result.evidence.length).toBeGreaterThan(0);
+    expect(result.missingContext).toEqual([]);
     expect(financeRegistryMock.execute).toHaveBeenCalledWith(
       expect.any(String),
       { scope: { seasonId: "s1" } },
@@ -87,5 +94,19 @@ describe("EconomistAgent", () => {
     expect(result.status).toBe("FAILED");
     expect(result.explain).toBe("No plan");
     expect(result.evidence).toEqual([]);
+    expect(result.missingContext).toEqual([]);
+  });
+
+  it("compute_plan_fact без planId и seasonId возвращает NEEDS_MORE_DATA", async () => {
+    const result = await agent.run({
+      companyId: "c1",
+      traceId: "tr1",
+      intent: "compute_plan_fact",
+    });
+
+    expect(result.status).toBe("NEEDS_MORE_DATA");
+    expect(result.missingContext).toEqual(["seasonId"]);
+    expect(result.toolCallsCount).toBe(0);
+    expect(financeRegistryMock.execute).not.toHaveBeenCalled();
   });
 });

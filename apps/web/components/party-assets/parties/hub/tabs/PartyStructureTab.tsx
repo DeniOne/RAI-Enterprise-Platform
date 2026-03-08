@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form';
 import {
     Plus,
@@ -21,6 +21,7 @@ import { useEditMode } from '@/components/party-assets/common/DataField';
 import { SidePanelForm } from '@/components/party-assets/common/SidePanelForm';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { partyAssetsApi } from '@/lib/party-assets-api';
 
 const RELATION_TYPES = [
     { value: 'PARENT', label: 'Материнская компания' },
@@ -39,6 +40,8 @@ const ASSET_ROLES = [
 export function PartyStructureTab() {
     const { control } = useFormContext<PartyFullProfileValues>();
     const { isEdit } = useEditMode();
+    const [partyOptions, setPartyOptions] = useState<Array<{ id: string; label: string }>>([]);
+    const [assetOptions, setAssetOptions] = useState<Array<{ id: string; label: string; type: 'FARM' | 'FIELD' | 'OBJECT' }>>([]);
 
     const [editingRelationIndex, setEditingRelationIndex] = useState<number | null>(null);
     const [isRelationDrawerOpen, setIsRelationDrawerOpen] = useState(false);
@@ -65,6 +68,50 @@ export function PartyStructureTab() {
         control,
         name: 'assetRelations',
     });
+
+    useEffect(() => {
+        let mounted = true;
+
+        async function loadOptions() {
+            try {
+                const [parties, farms, fields, objects] = await Promise.all([
+                    partyAssetsApi.listParties(),
+                    partyAssetsApi.listFarms(),
+                    partyAssetsApi.listAssetsByType('FIELD'),
+                    partyAssetsApi.listAssetsByType('OBJECT'),
+                ]);
+
+                if (!mounted) {
+                    return;
+                }
+
+                setPartyOptions(
+                    parties.map((party) => ({
+                        id: party.id,
+                        label: party.shortName || party.legalName,
+                    })),
+                );
+                setAssetOptions([
+                    ...farms.map((farm) => ({ id: farm.id, label: farm.name, type: 'FARM' as const })),
+                    ...fields.map((field) => ({ id: field.id, label: field.name, type: 'FIELD' as const })),
+                    ...objects.map((object) => ({ id: object.id, label: object.name, type: 'OBJECT' as const })),
+                ]);
+            } catch (error) {
+                console.error('Failed to load structure options:', error);
+            }
+        }
+
+        loadOptions();
+
+        return () => {
+            mounted = false;
+        };
+    }, []);
+
+    const assetOptionMap = useMemo(
+        () => new Map(assetOptions.map((item) => [item.id, item])),
+        [assetOptions],
+    );
 
     const handleAddRelation = () => {
         setEditingRelationIndex(null);
@@ -144,7 +191,9 @@ export function PartyStructureTab() {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
                                                 <LinkIcon className="h-3 w-3 text-gray-400" />
-                                                <span className="font-semibold text-gray-900 leading-none">{field.relatedPartyId || 'Не указан'}</span>
+                                                <span className="font-semibold text-gray-900 leading-none">
+                                                    {field.relatedPartyName || partyOptions.find((item) => item.id === field.relatedPartyId)?.label || field.relatedPartyId || 'Не указан'}
+                                                </span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -214,7 +263,7 @@ export function PartyStructureTab() {
                 <div className="flex items-center justify-between pb-2 border-b border-black/5">
                     <div className="flex items-center gap-2">
                         <Landmark className="h-3.5 w-3.5 text-gray-400" />
-                        <h2 className="text-sm font-medium text-gray-900 tracking-tight">Операционные активы (Хозяйства / Фермы)</h2>
+                        <h2 className="text-sm font-medium text-gray-900 tracking-tight">Операционные активы (фермы, поля, объекты)</h2>
                     </div>
                     {isEdit && (
                         <Button
@@ -224,7 +273,7 @@ export function PartyStructureTab() {
                             className="h-8 px-4 rounded-xl border-black/10 bg-white hover:bg-black hover:text-white transition-all text-[11px] font-bold uppercase tracking-wider shadow-sm"
                         >
                             <Plus className="h-3.5 w-3.5 mr-1.5" />
-                            Привязать хозяйство
+                            Привязать актив
                         </Button>
                     )}
                 </div>
@@ -246,13 +295,27 @@ export function PartyStructureTab() {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
                                                 <div className="h-2 w-2 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.6)]" />
-                                                <Link
-                                                    href={`/assets/farms/${field.assetId}`}
-                                                    className="font-semibold text-gray-900 hover:text-blue-600 transition-colors flex items-center gap-1"
-                                                >
-                                                    {field.assetId || '—'}
-                                                    <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                </Link>
+                                                {(() => {
+                                                    const assetOption = assetOptionMap.get(field.assetId);
+                                                    const label = assetOption?.label || field.assetId || '—';
+                                                    const href = assetOption?.type === 'FARM'
+                                                        ? `/assets/farms/${field.assetId}`
+                                                        : undefined;
+
+                                                    if (!href) {
+                                                        return <span className="font-semibold text-gray-900">{label}</span>;
+                                                    }
+
+                                                    return (
+                                                        <Link
+                                                            href={href}
+                                                            className="font-semibold text-gray-900 hover:text-blue-600 transition-colors flex items-center gap-1"
+                                                        >
+                                                            {label}
+                                                            <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                        </Link>
+                                                    );
+                                                })()}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -294,7 +357,7 @@ export function PartyStructureTab() {
                                                 <div className="h-10 w-10 rounded-2xl bg-gray-50 flex items-center justify-center border border-black/5 border-dashed">
                                                     <Shield className="h-5 w-5 text-gray-300" />
                                                 </div>
-                                                <span className="text-sm font-normal text-gray-400">Привязанные хозяйства отсутствуют</span>
+                                                <span className="text-sm font-normal text-gray-400">Привязанные активы отсутствуют</span>
                                             </div>
                                         </td>
                                     </tr>
@@ -333,6 +396,7 @@ export function PartyStructureTab() {
                 onClose={() => setIsRelationDrawerOpen(false)}
                 onSave={handleSaveRelation}
                 initialData={editingRelationIndex !== null ? relationFields[editingRelationIndex] : null}
+                partyOptions={partyOptions}
             />
 
             <AssetRelationDrawer
@@ -340,36 +404,55 @@ export function PartyStructureTab() {
                 onClose={() => setIsAssetDrawerOpen(false)}
                 onSave={handleSaveAsset}
                 initialData={editingAssetIndex !== null ? assetFields[editingAssetIndex] : null}
+                assetOptions={assetOptions}
             />
         </div>
     );
 }
 
-function RelationDrawer({ open, onClose, onSave, initialData }: {
+function RelationDrawer({ open, onClose, onSave, initialData, partyOptions }: {
     open: boolean;
     onClose: () => void;
     onSave: (data: any) => void;
     initialData: any;
+    partyOptions: Array<{ id: string; label: string }>;
 }) {
     const [data, setData] = useState({
+        id: undefined as string | undefined,
         type: 'CHILD',
         relatedPartyId: '',
+        relatedPartyName: '',
         share: 0,
         validFrom: '',
         validTo: '',
+        basisDocId: '',
     });
 
-    useState(() => {
+    useEffect(() => {
         if (initialData) {
             setData({
+                id: initialData.id,
                 type: initialData.type || 'CHILD',
                 relatedPartyId: initialData.relatedPartyId || '',
+                relatedPartyName: initialData.relatedPartyName || '',
                 share: initialData.share || 0,
                 validFrom: initialData.validFrom || '',
                 validTo: initialData.validTo || '',
+                basisDocId: initialData.basisDocId || '',
+            });
+        } else {
+            setData({
+                id: undefined,
+                type: 'CHILD',
+                relatedPartyId: '',
+                relatedPartyName: '',
+                share: 0,
+                validFrom: '',
+                validTo: '',
+                basisDocId: '',
             });
         }
-    });
+    }, [initialData, open]);
 
     const isAdd = !initialData;
 
@@ -392,12 +475,19 @@ function RelationDrawer({ open, onClose, onSave, initialData }: {
 
                     <div className="space-y-1.5">
                         <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider px-1">Связанный контрагент</label>
-                        <Input
+                        <select
                             value={data.relatedPartyId}
-                            onChange={e => setData({ ...data, relatedPartyId: e.target.value })}
-                            placeholder="Напр. ООО «Август»"
-                            className="h-11 rounded-xl border-black/10 focus:ring-black/5"
-                        />
+                            onChange={e => {
+                                const option = partyOptions.find((item) => item.id === e.target.value);
+                                setData({ ...data, relatedPartyId: e.target.value, relatedPartyName: option?.label || '' });
+                            }}
+                            className="w-full h-11 rounded-xl border border-black/10 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-black/5 outline-none transition-all"
+                        >
+                            <option value="">Выберите контрагента...</option>
+                            {partyOptions.map((option) => (
+                                <option key={option.id} value={option.id}>{option.label}</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div className="space-y-1.5">
@@ -431,6 +521,16 @@ function RelationDrawer({ open, onClose, onSave, initialData }: {
                             />
                         </div>
                     </div>
+
+                    <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider px-1">Основание / документ</label>
+                        <Input
+                            value={data.basisDocId}
+                            onChange={e => setData({ ...data, basisDocId: e.target.value })}
+                            placeholder="Напр. устав, договор, решение участника"
+                            className="h-11 rounded-xl border-black/10 focus:ring-black/5"
+                        />
+                    </div>
                 </div>
 
                 <div className="pt-6">
@@ -446,44 +546,63 @@ function RelationDrawer({ open, onClose, onSave, initialData }: {
     );
 }
 
-function AssetRelationDrawer({ open, onClose, onSave, initialData }: {
+function AssetRelationDrawer({ open, onClose, onSave, initialData, assetOptions }: {
     open: boolean;
     onClose: () => void;
     onSave: (data: any) => void;
     initialData: any;
+    assetOptions: Array<{ id: string; label: string; type: 'FARM' | 'FIELD' | 'OBJECT' }>;
 }) {
     const [data, setData] = useState({
+        id: undefined as string | undefined,
         assetId: '',
         role: 'OPERATOR',
         basis: '',
+        validFrom: '',
+        validTo: '',
     });
 
-    useState(() => {
+    useEffect(() => {
         if (initialData) {
             setData({
+                id: initialData.id,
                 assetId: initialData.assetId || '',
                 role: initialData.role || 'OPERATOR',
                 basis: initialData.basis || '',
+                validFrom: initialData.validFrom || '',
+                validTo: initialData.validTo || '',
+            });
+        } else {
+            setData({
+                id: undefined,
+                assetId: '',
+                role: 'OPERATOR',
+                basis: '',
+                validFrom: '',
+                validTo: '',
             });
         }
-    });
+    }, [initialData, open]);
 
     const isAdd = !initialData;
 
     return (
-        <SidePanelForm open={open} onClose={onClose} title={isAdd ? "Привязка хозяйства" : "Редактирование привязки"}>
+        <SidePanelForm open={open} onClose={onClose} title={isAdd ? "Привязка актива" : "Редактирование привязки"}>
             <div className="space-y-6 pt-4">
                 <div className="grid grid-cols-1 gap-5">
                     <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider px-1">Объект (Хозяйство)</label>
+                        <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider px-1">Актив</label>
                         <select
                             value={data.assetId}
                             onChange={e => setData({ ...data, assetId: e.target.value })}
                             className="w-full h-11 rounded-xl border border-black/10 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-black/5 outline-none transition-all"
                         >
                             <option value="">Выберите из списка...</option>
-                            <option value="farm-1">ООО «Авангард» (Краснодар)</option>
-                            <option value="farm-2">КФХ «Светлый путь» (Ставрополь)</option>
+                            {assetOptions.map((option) => (
+                                <option key={option.id} value={option.id}>
+                                    {option.label} [{option.type}]
+                                </option>
+                            ))}
                         </select>
                     </div>
 
@@ -509,6 +628,27 @@ function AssetRelationDrawer({ open, onClose, onSave, initialData }: {
                             rows={3}
                             className="w-full bg-white border border-black/10 rounded-xl px-4 py-3 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-black/5 transition-all resize-none leading-normal"
                         />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider px-1">Действует с</label>
+                            <Input
+                                type="date"
+                                value={data.validFrom}
+                                onChange={e => setData({ ...data, validFrom: e.target.value })}
+                                className="h-11 rounded-xl border-black/10 focus:ring-black/5"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider px-1">Действует по</label>
+                            <Input
+                                type="date"
+                                value={data.validTo}
+                                onChange={e => setData({ ...data, validTo: e.target.value })}
+                                className="h-11 rounded-xl border-black/10 focus:ring-black/5"
+                            />
+                        </div>
                     </div>
                 </div>
 

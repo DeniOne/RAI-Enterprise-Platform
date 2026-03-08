@@ -232,6 +232,7 @@ export class AssetRoleService {
       role: item.role as CanonicalAssetRole,
       validFrom: item.validFrom.toISOString().slice(0, 10),
       validTo: item.validTo ? item.validTo.toISOString().slice(0, 10) : undefined,
+      basisDoc: item.basisDoc ?? undefined,
     }));
   }
 
@@ -244,6 +245,7 @@ export class AssetRoleService {
       validFrom: string;
       validTo?: string;
       assetType?: CanonicalAssetType;
+      basisDoc?: string;
     },
   ) {
     const party = await this.prisma.party.findFirst({
@@ -296,6 +298,7 @@ export class AssetRoleService {
         role: input.role as any,
         validFrom,
         validTo,
+        basisDoc: input.basisDoc?.trim() || null,
       },
     });
 
@@ -306,7 +309,109 @@ export class AssetRoleService {
       role: created.role as CanonicalAssetRole,
       validFrom: created.validFrom.toISOString().slice(0, 10),
       validTo: created.validTo ? created.validTo.toISOString().slice(0, 10) : undefined,
+      basisDoc: created.basisDoc ?? undefined,
     };
+  }
+
+  async updateAssetRole(
+    companyId: string,
+    assetId: string,
+    roleId: string,
+    input: {
+      role?: CanonicalAssetRole;
+      validFrom?: string;
+      validTo?: string | null;
+      assetType?: CanonicalAssetType;
+      basisDoc?: string | null;
+    },
+  ) {
+    const existing = await this.prisma.assetPartyRole.findFirst({
+      where: { companyId, id: roleId, assetId },
+    });
+
+    if (!existing) {
+      throw new NotFoundException("Asset role not found");
+    }
+
+    const assetType = input.assetType ?? (existing.assetType as CanonicalAssetType);
+    const nextRole = input.role ?? (existing.role as CanonicalAssetRole);
+    const nextValidFrom = input.validFrom ? new Date(input.validFrom) : existing.validFrom;
+    const nextValidTo =
+      input.validTo === undefined
+        ? existing.validTo
+        : input.validTo
+          ? new Date(input.validTo)
+          : null;
+
+    if (Number.isNaN(nextValidFrom.getTime())) {
+      throw new BadRequestException("validFrom is invalid");
+    }
+    if (nextValidTo && Number.isNaN(nextValidTo.getTime())) {
+      throw new BadRequestException("validTo is invalid");
+    }
+    if (nextValidTo && nextValidFrom.getTime() >= nextValidTo.getTime()) {
+      throw new BadRequestException("validFrom must be earlier than validTo");
+    }
+
+    const duplicates = await this.prisma.assetPartyRole.findMany({
+      where: {
+        companyId,
+        assetId,
+        assetType: assetType as any,
+        partyId: existing.partyId,
+        role: nextRole as any,
+        NOT: { id: roleId },
+      },
+    });
+
+    if (
+      duplicates.some((item) =>
+        this.rangesOverlap(nextValidFrom, nextValidTo, item.validFrom, item.validTo),
+      )
+    ) {
+      throw new BadRequestException("Duplicate asset role with overlapping dates is forbidden");
+    }
+
+    const updated = await this.prisma.assetPartyRole.update({
+      where: { id: roleId },
+      data: {
+        assetType: assetType as any,
+        role: nextRole as any,
+        validFrom: nextValidFrom,
+        validTo: nextValidTo,
+        basisDoc:
+          input.basisDoc === undefined
+            ? existing.basisDoc
+            : input.basisDoc?.trim() || null,
+      },
+    });
+
+    return {
+      id: updated.id,
+      assetId: updated.assetId,
+      partyId: updated.partyId,
+      role: updated.role as CanonicalAssetRole,
+      validFrom: updated.validFrom.toISOString().slice(0, 10),
+      validTo: updated.validTo ? updated.validTo.toISOString().slice(0, 10) : undefined,
+      basisDoc: updated.basisDoc ?? undefined,
+    };
+  }
+
+  async deleteAssetRole(companyId: string, assetId: string, roleId: string) {
+    const existing = await this.prisma.assetPartyRole.findFirst({
+      where: { companyId, id: roleId, assetId },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      throw new NotFoundException("Asset role not found");
+    }
+
+    await this.prisma.assetPartyRole.delete({
+      where: { id: roleId },
+    });
+
+    return { ok: true };
   }
 
   async listPartyAssets(companyId: string, partyId: string) {
@@ -381,6 +486,7 @@ export class AssetRoleService {
       role: item.role as CanonicalAssetRole,
       validFrom: item.validFrom.toISOString().slice(0, 10),
       validTo: item.validTo ? item.validTo.toISOString().slice(0, 10) : undefined,
+      basisDoc: item.basisDoc ?? undefined,
     }));
 
     return { assets, roles };

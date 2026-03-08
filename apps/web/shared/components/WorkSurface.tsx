@@ -20,7 +20,7 @@ export const WorkSurface: React.FC<{ children: React.ReactNode }> = ({ children 
     const isFrozenByIntegrity = integrityStatus === 'MISMATCH';
 
     return (
-        <main className="relative min-h-[calc(100vh-64px)] flex-1 overflow-y-auto bg-[#FDFDFD] p-8">
+        <main className="relative min-h-0 flex-1 overflow-y-auto bg-[#FDFDFD] p-8">
             <div className="w-full space-y-6">
                 {/* Institutional Escalation Banner (Phase 3) */}
                 {activeEscalation && (

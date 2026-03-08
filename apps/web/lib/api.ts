@@ -316,6 +316,9 @@ export const api = {
     },
     agents: {
         getConfig: () => apiClient.get<AgentConfigsResponse>('/rai/agents/config'),
+        getOnboardingTemplates: () => apiClient.get<FutureAgentTemplatesResponse>('/rai/agents/onboarding/templates'),
+        validateOnboardingManifest: (data: FutureAgentManifestBody) =>
+            apiClient.post<FutureAgentManifestValidation>('/rai/agents/onboarding/validate', data),
         createChangeRequest: (data: UpsertAgentConfigBody, scope: 'tenant' | 'global') =>
             apiClient.post('/rai/agents/config/change-requests', data, { params: { scope } }),
     },
@@ -401,9 +404,23 @@ export interface AgentConfiguratorItem {
     role: string;
     agentName: string;
     businessRole: string;
-    ownerDomain: 'agro' | 'finance' | 'knowledge' | 'risk';
+    ownerDomain: string;
     runtime: AgentRegistryRuntimeItem;
     tenantAccess: AgentTenantAccessItem;
+    kernel?: {
+        runtimeProfile: {
+            profileId: string;
+            modelRoutingClass: 'cheap' | 'fast' | 'strong';
+            provider: 'openrouter';
+            model: string;
+            executionAdapterRole?: string;
+            maxInputTokens: number;
+            maxOutputTokens: number;
+            temperature: number;
+            timeoutMs: number;
+            supportsStreaming: boolean;
+        };
+    };
 }
 
 export interface AgentConfigsResponse {
@@ -418,7 +435,115 @@ export interface UpsertAgentConfigBody {
     systemPrompt: string;
     llmModel: string;
     maxTokens: number;
+    runtimeProfile?: {
+        executionAdapterRole?: string;
+    };
+    responsibilityBinding?: {
+        role: string;
+        inheritsFromRole: 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent';
+        overrides?: {
+            title?: string;
+            allowedIntents?: string[];
+            forbiddenIntents?: string[];
+            extraUiActions?: string[];
+        };
+    };
     isActive?: boolean;
     capabilities?: string[];
     tools?: string[];
+}
+
+export interface FutureAgentManifestBody {
+    templateId?: 'marketer' | 'strategist' | 'finance_advisor' | 'legal_advisor' | 'crm_agent' | 'controller' | 'personal_assistant';
+    role: string;
+    name: string;
+    kind: 'domain_advisor' | 'worker_hybrid' | 'personal_delegated';
+    ownerDomain: string;
+    description: string;
+    defaultAutonomyMode: 'advisory' | 'hybrid' | 'autonomous';
+    runtimeProfile: {
+        profileId: string;
+        modelRoutingClass: 'cheap' | 'fast' | 'strong';
+        provider: 'openrouter';
+        model: string;
+        executionAdapterRole?: string;
+        maxInputTokens: number;
+        maxOutputTokens: number;
+        temperature: number;
+        timeoutMs: number;
+        supportsStreaming: boolean;
+    };
+    responsibilityBinding?: {
+        role: string;
+        inheritsFromRole: 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent';
+        overrides?: {
+            title?: string;
+            allowedIntents?: string[];
+            forbiddenIntents?: string[];
+            extraUiActions?: string[];
+        };
+    };
+    memoryPolicy: {
+        policyId: string;
+        allowedScopes: Array<'tenant' | 'domain' | 'user' | 'team' | 'task_workflow' | 'sensitive_compliance'>;
+        retrievalPolicy: string;
+        writePolicy: string;
+        sensitiveDataPolicy: string;
+    };
+    capabilityPolicy: {
+        capabilities: string[];
+        toolAccessMode: 'allowlist';
+        connectorAccessMode: 'allowlist';
+    };
+    toolBindings: Array<{
+        toolName: string;
+        isEnabled: boolean;
+        requiresHumanGate: boolean;
+        riskLevel: 'READ' | 'WRITE' | 'CRITICAL';
+    }>;
+    connectorBindings: Array<{
+        connectorName: string;
+        accessMode: 'read' | 'write' | 'governed_write';
+        scopes: string[];
+    }>;
+    outputContract: {
+        contractId: string;
+        responseSchemaVersion: string;
+        sections: string[];
+        requiresEvidence: boolean;
+        requiresDeterministicValidation: boolean;
+        fallbackMode: string;
+    };
+    governancePolicy: {
+        policyId: string;
+        allowedAutonomyModes: Array<'advisory' | 'hybrid' | 'autonomous'>;
+        humanGateRules: string[];
+        criticalActionRules: string[];
+        auditRequirements: string[];
+        fallbackRules: string[];
+    };
+    domainAdapter?: {
+        adapterId: string;
+        status: 'optional' | 'required';
+        notes: string;
+    };
+}
+
+export interface FutureAgentTemplateItem {
+    templateId: 'marketer' | 'strategist' | 'finance_advisor' | 'legal_advisor' | 'crm_agent' | 'controller' | 'personal_assistant';
+    label: string;
+    manifest: FutureAgentManifestBody;
+    rolloutChecklist: string[];
+}
+
+export interface FutureAgentTemplatesResponse {
+    templates: FutureAgentTemplateItem[];
+}
+
+export interface FutureAgentManifestValidation {
+    valid: boolean;
+    normalizedRole: string;
+    compatibleWithRuntimeWithoutCodeChanges: boolean;
+    missingRequirements: string[];
+    warnings: string[];
 }

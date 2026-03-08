@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from "class-validator";
 
 const partyTypes = [
     "HOLDING",
@@ -98,6 +98,9 @@ export class CreatePartyRelationDto {
     relationType!: (typeof partyRelationTypes)[number];
 
     @IsOptional()
+    @IsNumber()
+    @Min(0)
+    @Max(100)
     sharePct?: number;
 
     @IsString()
@@ -111,4 +114,36 @@ export class CreatePartyRelationDto {
     @IsOptional()
     @IsString()
     basisDocId?: string;
+}
+
+export class UpdatePartyRelationDto {
+    @IsOptional()
+    @IsString()
+    fromPartyId?: string;
+
+    @IsOptional()
+    @IsString()
+    toPartyId?: string;
+
+    @IsOptional()
+    @IsEnum(partyRelationTypes)
+    relationType?: (typeof partyRelationTypes)[number];
+
+    @IsOptional()
+    @IsNumber()
+    @Min(0)
+    @Max(100)
+    sharePct?: number | null;
+
+    @IsOptional()
+    @IsString()
+    validFrom?: string;
+
+    @IsOptional()
+    @IsString()
+    validTo?: string | null;
+
+    @IsOptional()
+    @IsString()
+    basisDocId?: string | null;
 }

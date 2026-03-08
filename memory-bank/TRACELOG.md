@@ -22,3 +22,26 @@
 [2026-03-07] Подъем API и Web
 - Запущена команда `pnpm --filter api --filter web dev` для локальной разработки.
 - Процессы api и web работают в фоне.
+
+[2026-03-07] Git Push Master Plan
+- Закомичен и запушен новый мастер-документ `RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md`.
+- Устаревшие доки перенесены в папку `Archive`.
+- Изменения успешно залиты в `origin/main` (с предварительным `git pull --rebase`).
+
+[2026-03-07] RAI Agent Interaction Blueprint Closeout
+- Закрыт Stage 2 interaction blueprint как реализованный канон.
+- Unified `workWindows[]` protocol подтверждён для `agronomist`, `economist`, `knowledge`, `monitoring`.
+- В backend введён единый contract-layer: `Focus / Intent / Required Context / UI Action`.
+- `IntentRouter`, `Supervisor resume-path` и `ResponseComposer` переведены на общий contract source.
+- Левый `AI Dock` переведён в IDE-подобную композицию: компактная шапка, история чатов, новый чат, упрощённый ритм.
+- Legacy `widgets[]` мигрируются в typed windows; работают `context_*`, `structured_result`, `related_signals`, `comparison`.
+- Добавлены window capabilities: `inline / panel / takeover`, `collapse / restore / close / pin`, parent/related graph.
+- В интерфейс добавлен голосовой ввод с Web Speech API, автоотправкой и выбором языка распознавания.
+- Truth-sync обновлён в `blueprint`, `master-plan`, `addendum`, `handoff`, `interagency index`, создан финальный closeout-report.
+
+[2026-03-07] Memory Bank Sync Before Push
+- Memory-bank синхронизирован перед git push по итогам полного пакета Stage 2 Agent Platform / Interaction Blueprint.
+- Зафиксировано, что blueprint закрыт как `implemented canon`, а не как draft/vision-only документ.
+- Подтверждён production-ready слой `clarification -> overlay -> auto-resume -> result windows`.
+- Зафиксирована унификация UI shell: IDE-подобный `AI Dock`, история чатов, `Новый чат`, compact header, overlay-only агентные окна.
+- Зафиксирован platform contract-layer для reference families и truth-sync по стратегиям, handoff и closeout-отчётам.

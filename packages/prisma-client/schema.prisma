@@ -154,6 +154,7 @@ model Company {
   agentConfigChanges      AgentConfigChangeRequest[]
   agentCapabilityBindings AgentCapabilityBinding[]
   agentToolBindings       AgentToolBinding[]
+  agentConnectorBindings  AgentConnectorBinding[]
   evalRuns                EvalRun[]
 
   // Level F: Institutional Oracle Standard
@@ -1590,18 +1591,23 @@ model PendingAction {
 }
 
 model AgentConfiguration {
-  id           String   @id @default(cuid())
-  name         String
-  role         String   // unique key: agronomist | economist | knowledge | monitoring
-  systemPrompt String   @db.Text
-  llmModel     String
-  maxTokens    Int
-  isActive     Boolean  @default(true)
-  companyId    String?
-  company      Company? @relation(fields: [companyId], references: [id])
-  capabilities Json     @default("[]") // ["AgroToolsRegistry", "SearchWeb"] or tool names
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(cuid())
+  name             String
+  role             String   // unique key: agronomist | economist | knowledge | monitoring
+  systemPrompt     String   @db.Text
+  llmModel         String
+  maxTokens        Int
+  isActive         Boolean  @default(true)
+  autonomyMode     String   @default("advisory")
+  runtimeProfile   Json     @default("{}")
+  memoryPolicy     Json     @default("{}")
+  outputContract   Json     @default("{}")
+  governancePolicy Json     @default("{}")
+  companyId        String?
+  company          Company? @relation(fields: [companyId], references: [id])
+  capabilities     Json     @default("[]") // ["AgroToolsRegistry", "SearchWeb"] or tool names
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@unique([role, companyId], name: "agent_config_role_company_unique")
   @@index([companyId])
@@ -1636,6 +1642,23 @@ model AgentToolBinding {
   @@unique([role, toolName, companyId], name: "agent_tool_binding_role_tool_company_unique")
   @@index([companyId, role])
   @@map("agent_tool_bindings")
+}
+
+model AgentConnectorBinding {
+  id           String   @id @default(cuid())
+  role         String
+  connectorName String
+  accessMode   String   @default("read")
+  scopes       Json     @default("[]")
+  isEnabled    Boolean  @default(true)
+  companyId    String?
+  company      Company? @relation(fields: [companyId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([role, connectorName, companyId], name: "agent_connector_binding_role_connector_company_unique")
+  @@index([companyId, role])
+  @@map("agent_connector_bindings")
 }
 
 enum AgentConfigChangeScope {
@@ -5149,6 +5172,7 @@ model AssetPartyRole {
   role      AssetPartyRoleType
   validFrom DateTime
   validTo   DateTime?
+  basisDoc  String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -5170,8 +5194,10 @@ model PartyRelation {
   targetParty   Party  @relation("PartyRelationTarget", fields: [companyId, targetPartyId], references: [companyId, id])
 
   relationType PartyRelationType
+  sharePct     Float?
   validFrom    DateTime
   validTo      DateTime?
+  basisDocId   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

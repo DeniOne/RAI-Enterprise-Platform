@@ -68,20 +68,27 @@ interface TopNavProps {
     role: string;
 }
 
-function splitLabel(label: string): string[] {
-    if (label === 'Управление Урожаем') {
-        return ['Управление', 'Урожаем'];
-    }
-
-    if (label === 'Производство (Грипил)') {
-        return ['Производство', '(Грипил)'];
-    }
-
-    return [label];
-}
+const SHORT_LABEL_MAP: Record<string, string> = {
+    crop_dashboard: 'Урожай',
+    commerce: 'Коммерция',
+    exploration: 'Исследования',
+    strategy: 'Стратегия',
+    economy: 'Экономика',
+    finance: 'Финансы',
+    gr: 'GR',
+    production: 'Производство',
+    knowledge: 'Знания',
+    settings: 'Настройки',
+    control_tower: 'Пульт',
+    governance_security: 'Безопасность',
+};
 
 function getItemIcon(item: NavItem): LucideIcon {
     return ICON_MAP[item.id] ?? ICON_MAP[item.domain] ?? Circle;
+}
+
+function getShortLabel(item: NavItem): string {
+    return SHORT_LABEL_MAP[item.id] ?? item.label;
 }
 
 function isItemActive(item: NavItem, pathname: string): boolean {
@@ -97,26 +104,7 @@ export function TopNav({ role }: TopNavProps) {
     const [navItems, setNavItems] = useState<NavItem[]>([]);
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const [hoveredSubmenuId, setHoveredSubmenuId] = useState<string | null>(null);
-    const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-    const clearCloseTimeout = () => {
-        if (closeTimeoutRef.current) {
-            clearTimeout(closeTimeoutRef.current);
-            closeTimeoutRef.current = null;
-        }
-    };
-
-    const handleMouseEnter = (id: string) => {
-        clearCloseTimeout();
-        setOpenMenuId(id);
-    };
-
-    const handleMouseLeave = () => {
-        clearCloseTimeout();
-        closeTimeoutRef.current = setTimeout(() => {
-            setOpenMenuId(null);
-        }, 150); // Блядский зазор в 8 пикселей требует времени на «прыжок»
-    };
+    const headerRef = useRef<HTMLElement | null>(null);
 
     useEffect(() => {
         setNavItems(getVisibleNavigation(role as UserRole));
@@ -138,18 +126,44 @@ export function TopNav({ role }: TopNavProps) {
         setHoveredSubmenuId(firstExpandableSubItem?.id ?? null);
     }, [navItems, openMenuId]);
 
+    useEffect(() => {
+        setOpenMenuId(null);
+    }, [pathname]);
+
+    useEffect(() => {
+        const handlePointerDown = (event: PointerEvent) => {
+            if (!headerRef.current?.contains(event.target as Node)) {
+                setOpenMenuId(null);
+            }
+        };
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setOpenMenuId(null);
+            }
+        };
+
+        document.addEventListener('pointerdown', handlePointerDown);
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('pointerdown', handlePointerDown);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []);
+
     const renderFlyout = (subItems: NavItem[]) => (
-        <div className="absolute left-full top-0 ml-2 min-w-[250px] rounded-[22px] border border-black/10 bg-white p-3 shadow-[0_18px_48px_rgba(15,23,42,0.12)]">
+        <div className="absolute left-full top-0 ml-3 min-w-[250px] rounded-[24px] border border-black/10 bg-white/95 p-3 shadow-[0_24px_60px_rgba(15,23,42,0.16)] backdrop-blur-xl">
             <div className="space-y-1">
                 {subItems.map((subItem) => (
                     <Link
                         key={subItem.id}
                         href={subItem.path}
                         className={clsx(
-                            'block rounded-xl px-4 py-2 text-[13px] font-medium transition-colors',
+                            'block rounded-2xl px-4 py-2.5 text-[13px] font-medium transition-all duration-150',
                             isItemActive(subItem, pathname)
-                                ? 'bg-slate-50 text-[#030213]'
-                                : 'text-[#717182] hover:bg-slate-50 hover:text-[#030213]',
+                                ? 'bg-[#F4F6FB] text-[#030213] shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)]'
+                                : 'text-[#717182] hover:bg-[#F7F8FB] hover:text-[#030213]',
                         )}
                     >
                         <span className="break-words">{subItem.label}</span>
@@ -164,9 +178,7 @@ export function TopNav({ role }: TopNavProps) {
 
         return (
             <div
-                className="absolute left-0 top-full z-50 mt-2 min-w-[300px] rounded-[24px] border border-black/10 bg-white p-3 shadow-[0_20px_60px_rgba(15,23,42,0.12)]"
-                onMouseEnter={clearCloseTimeout}
-                onMouseLeave={handleMouseLeave}
+                className="absolute left-0 top-full z-50 mt-3 min-w-[320px] rounded-[26px] border border-black/10 bg-white/95 p-3 shadow-[0_26px_70px_rgba(15,23,42,0.16)] backdrop-blur-xl"
             >
                 <div className="space-y-1">
                     {items.map((subItem) => {
@@ -183,10 +195,10 @@ export function TopNav({ role }: TopNavProps) {
                                 <Link
                                     href={subItem.path}
                                     className={clsx(
-                                        'block rounded-xl px-4 py-2.5 text-[13px] font-medium transition-colors',
+                                        'block rounded-2xl px-4 py-3 text-[13px] font-medium transition-all duration-150',
                                         isSubItemActive
-                                            ? 'bg-slate-50 text-[#030213]'
-                                            : 'text-[#717182] hover:bg-slate-50 hover:text-[#030213]',
+                                            ? 'bg-[#F4F6FB] text-[#030213] shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)]'
+                                            : 'text-[#717182] hover:bg-[#F7F8FB] hover:text-[#030213]',
                                     )}
                                 >
                                     <span className="min-w-0 flex-1 break-words block">{subItem.label}</span>
@@ -214,81 +226,88 @@ export function TopNav({ role }: TopNavProps) {
     };
 
     return (
-        <header className="sticky top-0 z-40 flex h-16 w-full items-center border-b border-black/10 bg-white px-6">
-            <div className="mr-8 shrink-0">
+        <header
+            ref={headerRef}
+            className="sticky top-16 z-40 flex h-16 w-full items-center gap-4 border-b border-black/10 bg-white/95 px-4 backdrop-blur-md sm:px-5 lg:px-6"
+        >
+            <div className="shrink-0">
                 <Link href="/consulting/dashboard">
                     <img
                         src="/branding/rai-agroplatforma-transparent.png"
                         alt="RAI Agroplatform"
-                        className="h-10 w-auto object-contain"
+                        className="h-8 w-auto object-contain lg:h-10"
                     />
                 </Link>
             </div>
 
-            <nav className="flex h-full min-w-0 items-center gap-2.5">
+            <nav className="flex min-w-0 flex-1 items-center gap-1.5 lg:gap-2">
                 {navItems.map((item) => {
                     const isActive = activeRootId === item.id;
-                    const labelLines = splitLabel(item.label);
-                    const isCompactTwoLine = labelLines.length > 1;
+                    const isOpen = openMenuId === item.id;
                     const Icon = getItemIcon(item);
+                    const shortLabel = getShortLabel(item);
+                    const iconWrapClass = clsx(
+                        'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all duration-200',
+                        isActive
+                            ? 'bg-white text-slate-700 shadow-[0_8px_18px_rgba(15,23,42,0.08)]'
+                            : isOpen
+                                ? 'bg-white text-slate-700 shadow-[0_8px_18px_rgba(15,23,42,0.08)]'
+                                : 'bg-[#F4F6FB] text-slate-500 group-hover:bg-white group-hover:text-slate-700 group-hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)]',
+                    );
 
                     return (
-                        <div
-                            key={item.id}
-                            className="relative flex h-full items-center"
-                            onMouseEnter={() => handleMouseEnter(item.id)}
-                            onMouseLeave={handleMouseLeave}
-                        >
+                        <div key={item.id} className="relative flex items-center">
                             <button
+                                type="button"
+                                onClick={() => setOpenMenuId((current) => (current === item.id ? null : item.id))}
+                                aria-label={item.label}
+                                aria-expanded={isOpen}
                                 className={clsx(
-                                    'flex min-h-10 items-center gap-2.5 rounded-2xl px-4 py-2 text-[15px] transition-all duration-200',
+                                    'group relative flex h-12 items-center rounded-[20px] border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15',
                                     isActive
-                                        ? 'bg-slate-50 text-[#1f2a44]'
-                                        : 'text-slate-500 hover:bg-slate-50 hover:text-[#1f2a44]',
+                                        ? 'gap-2.5 border-black/10 bg-[linear-gradient(180deg,#F7F8FC_0%,#EFF2F8_100%)] px-3.5 text-[#1f2a44] shadow-[0_10px_30px_rgba(15,23,42,0.08)]'
+                                        : 'w-12 justify-center border-transparent bg-transparent text-slate-500 hover:border-black/5 hover:bg-[#F7F8FB] hover:text-[#1f2a44]',
+                                    isOpen && !isActive && 'border-black/10 bg-[linear-gradient(180deg,#F7F8FC_0%,#EFF2F8_100%)] text-[#1f2a44] shadow-[0_10px_30px_rgba(15,23,42,0.08)]',
                                 )}
                             >
-                                <Icon
-                                    size={16}
-                                    strokeWidth={1.7}
-                                    className={clsx(
-                                        'shrink-0',
-                                        isActive ? 'text-slate-600' : 'text-slate-400',
-                                    )}
-                                />
-                                <span
-                                    className={clsx(
-                                        'flex font-medium tracking-[0.01em] text-left',
-                                        isCompactTwoLine ? 'flex-col items-start leading-[0.96]' : 'items-center whitespace-nowrap',
-                                    )}
-                                >
-                                    {labelLines.map((line, index) => (
-                                        <span
-                                            key={`${item.id}-${index}`}
-                                            className={clsx(
-                                                'whitespace-nowrap',
-                                                isCompactTwoLine && index === 1 && 'mt-0.5',
-                                            )}
-                                        >
-                                            {line}
-                                        </span>
-                                    ))}
+                                <span className={iconWrapClass}>
+                                    <Icon
+                                        size={20}
+                                        strokeWidth={1.9}
+                                        className={clsx(
+                                            'shrink-0',
+                                            isActive || isOpen ? 'text-slate-700' : 'text-slate-500',
+                                        )}
+                                    />
                                 </span>
-                                <ChevronDown
-                                    size={13}
-                                    className={clsx(
-                                        'shrink-0 text-slate-400 transition-transform duration-200',
-                                        openMenuId === item.id && 'rotate-180 text-slate-600',
-                                    )}
-                                />
+
+                                {isActive ? (
+                                    <>
+                                        <span className="whitespace-nowrap pr-0.5 text-[14px] font-medium tracking-[0.01em] text-left">
+                                            {shortLabel}
+                                        </span>
+                                        <ChevronDown
+                                            size={14}
+                                            className={clsx(
+                                                'shrink-0 text-slate-400 transition-transform duration-200',
+                                                isOpen && 'rotate-180 text-slate-600',
+                                            )}
+                                        />
+                                    </>
+                                ) : null}
+
+                                {!isActive && !isOpen ? (
+                                    <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 translate-y-1 rounded-xl border border-black/10 bg-white/95 px-3 py-1.5 text-[12px] font-medium whitespace-nowrap text-[#1f2a44] opacity-0 shadow-[0_16px_36px_rgba(15,23,42,0.14)] backdrop-blur-md transition-all duration-150 group-hover:translate-y-0 group-hover:opacity-100">
+                                        {item.label}
+                                    </span>
+                                ) : null}
                             </button>
 
-                            {openMenuId === item.id ? renderDropdown(item) : null}
+                            {isOpen ? renderDropdown(item) : null}
                         </div>
                     );
                 })}
             </nav>
-
-            <div className="ml-auto" />
         </header>
     );
 }

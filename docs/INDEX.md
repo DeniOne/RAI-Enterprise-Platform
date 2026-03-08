@@ -69,6 +69,11 @@ QA Инфраструктура: Спецификации тестов, матр
 ### 09 — [АРХИВ (09_ARCHIVE/)](file:///f:/RAI_EP/docs/09_ARCHIVE/)
 Исторические документы, устаревшие концепции, старые ADR.
 
+### 11 — [ИНСТРУКЦИИ (/root/RAI_EP/docs/11_INSTRUCTIONS/)](/root/RAI_EP/docs/11_INSTRUCTIONS/)
+Практические пошаговые инструкции по выполнению критичных работ.
+- [INDEX.md](/root/RAI_EP/docs/11_INSTRUCTIONS/INDEX.md)
+- [INSTRUCTION_AGENT_CREATION_FULL_LIFECYCLE.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_AGENT_CREATION_FULL_LIFECYCLE.md)
+
 ---
 
 ## 🛠️ Системные инструменты

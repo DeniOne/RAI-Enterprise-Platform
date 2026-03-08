@@ -16,8 +16,8 @@ export function AppShell({ children }: AppShellProps) {
     const { currentRole } = useAuthSimulationStore();
 
     return (
-        <div className="min-h-screen overflow-x-hidden bg-[#FAFAFA] text-[#171717]">
-            <div className="flex min-h-screen min-w-0 flex-1 flex-col overflow-visible">
+        <div className="h-screen overflow-hidden bg-[#FAFAFA] text-[#171717]">
+            <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
                 <GovernanceBar />
                 <TopNav role={currentRole} />
                 <WorkSurface>

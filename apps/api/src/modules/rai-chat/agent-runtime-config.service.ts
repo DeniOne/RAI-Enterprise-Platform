@@ -3,11 +3,13 @@ import { RaiToolName } from "./tools/rai-tools.types";
 import {
   AgentRegistryService,
   getDefaultToolsForRole,
+  isAgentRuntimeRole,
   type AgentRuntimeRole,
 } from "./agent-registry.service";
+import { EffectiveAgentKernelEntry } from "./agent-platform/agent-platform.types";
 
 export interface EffectiveAgentRuntimeConfig {
-  role: AgentRuntimeRole;
+  role: string;
   isActive: boolean;
   capabilities: string[];
   tools: RaiToolName[];
@@ -18,7 +20,7 @@ export interface EffectiveAgentRuntimeConfig {
 export interface ToolAccessDecision {
   allowed: boolean;
   reasonCode?: "AGENT_DISABLED" | "CAPABILITY_DENIED";
-  role?: AgentRuntimeRole;
+    role?: string;
   requiredCapability?: string;
   source?: "persisted" | "bootstrap";
 }
@@ -73,8 +75,22 @@ export class AgentRuntimeConfigService {
 
   async getEffectiveConfig(
     companyId: string,
-    role: AgentRuntimeRole,
+    role: string,
   ): Promise<EffectiveAgentRuntimeConfig | null> {
+    if (!isAgentRuntimeRole(role)) {
+      const kernel = await this.agentRegistry.getEffectiveKernel(companyId, role);
+      if (!kernel) {
+        return null;
+      }
+      return {
+        role: kernel.definition.role,
+        isActive: kernel.isActive,
+        capabilities: kernel.capabilityPolicy.capabilities,
+        tools: kernel.toolBindings.filter((binding) => binding.isEnabled).map((binding) => binding.toolName as RaiToolName),
+        source: kernel.source,
+        bindingsSource: kernel.bindingsSource,
+      };
+    }
     const entry = await this.agentRegistry.getEffectiveAgent(companyId, role);
     if (!entry) {
       return null;
@@ -87,6 +103,13 @@ export class AgentRuntimeConfigService {
       source: entry.runtime.source,
       bindingsSource: entry.runtime.bindingsSource,
     };
+  }
+
+  async getEffectiveKernel(
+    companyId: string,
+    role: string,
+  ): Promise<EffectiveAgentKernelEntry | null> {
+    return this.agentRegistry.getEffectiveKernel(companyId, role);
   }
 
   private async getEffectiveConfigForTool(
@@ -114,11 +137,8 @@ export class AgentRuntimeConfigService {
   }
 
   private isGovernedTool(toolName: RaiToolName): boolean {
-    return (Object.keys({
-      ...Object.fromEntries(getDefaultToolsForRole("agronomist").map((tool) => [tool, true])),
-      ...Object.fromEntries(getDefaultToolsForRole("economist").map((tool) => [tool, true])),
-      ...Object.fromEntries(getDefaultToolsForRole("knowledge").map((tool) => [tool, true])),
-      ...Object.fromEntries(getDefaultToolsForRole("monitoring").map((tool) => [tool, true])),
-    }) as RaiToolName[]).includes(toolName);
+    return (["agronomist", "economist", "knowledge", "monitoring", "crm_agent"] as const)
+      .flatMap((role) => getDefaultToolsForRole(role))
+      .includes(toolName);
   }
 }

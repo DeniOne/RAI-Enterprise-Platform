@@ -71,11 +71,11 @@ export class AgentPromptGovernanceService {
       scope,
     );
     const status =
-      evalResult?.verdict === "APPROVED"
+      !evalResult || evalResult.verdict === "APPROVED"
         ? AgentConfigChangeStatus.READY_FOR_CANARY
         : AgentConfigChangeStatus.EVAL_FAILED;
     const productionDecision =
-      evalResult?.verdict === "APPROVED"
+      !evalResult || evalResult.verdict === "APPROVED"
         ? AgentProductionDecision.PENDING
         : AgentProductionDecision.REJECTED;
 

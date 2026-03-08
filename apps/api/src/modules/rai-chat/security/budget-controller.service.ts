@@ -35,6 +35,21 @@ const TOOL_TOKEN_COST: Record<RaiToolName, number> = {
   [RaiToolName.ComputeRiskAssessment]: 3000,
   [RaiToolName.GetWeatherForecast]: 1200,
   [RaiToolName.QueryKnowledge]: 3500,
+  [RaiToolName.LookupCounterpartyByInn]: 1800,
+  [RaiToolName.RegisterCounterparty]: 4200,
+  [RaiToolName.CreateCounterpartyRelation]: 2600,
+  [RaiToolName.CreateCrmAccount]: 3200,
+  [RaiToolName.GetCrmAccountWorkspace]: 2400,
+  [RaiToolName.UpdateCrmAccount]: 3000,
+  [RaiToolName.CreateCrmContact]: 2400,
+  [RaiToolName.UpdateCrmContact]: 2200,
+  [RaiToolName.DeleteCrmContact]: 1800,
+  [RaiToolName.CreateCrmInteraction]: 2600,
+  [RaiToolName.UpdateCrmInteraction]: 2300,
+  [RaiToolName.DeleteCrmInteraction]: 1800,
+  [RaiToolName.CreateCrmObligation]: 2800,
+  [RaiToolName.UpdateCrmObligation]: 2400,
+  [RaiToolName.DeleteCrmObligation]: 1800,
 };
 
 @Injectable()

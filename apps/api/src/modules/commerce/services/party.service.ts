@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@rai/prisma-client";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
-import { CreatePartyDto, UpdatePartyDto, CreatePartyRelationDto } from "../dto/create-party.dto";
+import { CreatePartyDto, UpdatePartyDto, CreatePartyRelationDto, UpdatePartyRelationDto } from "../dto/create-party.dto";
 import { CreateJurisdictionDto, UpdateJurisdictionDto } from "../dto/create-jurisdiction.dto";
 import {
     CreateRegulatoryProfileDto,
@@ -427,14 +427,101 @@ export class PartyService {
                 sourcePartyId: dto.fromPartyId,
                 targetPartyId: dto.toPartyId,
                 relationType: this.mapRelationTypeToDb(dto.relationType) as any,
+                sharePct: dto.sharePct ?? null,
                 validFrom: new Date(dto.validFrom),
                 validTo: dto.validTo ? new Date(dto.validTo) : null,
+                basisDocId: dto.basisDocId ?? null,
             },
             include: {
                 sourceParty: { select: { id: true, legalName: true } },
                 targetParty: { select: { id: true, legalName: true } },
             },
         });
+    }
+
+    async updatePartyRelation(companyId: string, relationId: string, dto: UpdatePartyRelationDto) {
+        const existing = await this.prisma.partyRelation.findFirst({
+            where: { companyId, id: relationId },
+        });
+        if (!existing) {
+            throw new NotFoundException("Party relation not found");
+        }
+
+        const nextFromPartyId = dto.fromPartyId ?? existing.sourcePartyId;
+        const nextToPartyId = dto.toPartyId ?? existing.targetPartyId;
+        const nextRelationType = dto.relationType ?? this.mapRelationTypeFromDb(String(existing.relationType));
+        const nextSharePct = dto.sharePct === undefined ? existing.sharePct : dto.sharePct;
+        const nextValidFrom = dto.validFrom ? new Date(dto.validFrom) : existing.validFrom;
+        const nextValidTo =
+            dto.validTo === undefined
+                ? existing.validTo
+                : dto.validTo
+                    ? new Date(dto.validTo)
+                    : null;
+
+        const [source, target] = await Promise.all([
+            this.prisma.party.findFirst({ where: { companyId, id: nextFromPartyId } }),
+            this.prisma.party.findFirst({ where: { companyId, id: nextToPartyId } }),
+        ]);
+
+        if (!source) throw new BadRequestException("Source party not found");
+        if (!target) throw new BadRequestException("Target party not found");
+        if (nextFromPartyId === nextToPartyId) {
+            throw new BadRequestException("Cannot create relation with self");
+        }
+        if (
+            nextRelationType === "OWNERSHIP" &&
+            nextSharePct !== null &&
+            nextSharePct !== undefined &&
+            !(Number(nextSharePct) > 0 && Number(nextSharePct) <= 100)
+        ) {
+            throw new BadRequestException("OWNERSHIP relation requires sharePct in range (0, 100]");
+        }
+        if (Number.isNaN(nextValidFrom.getTime())) {
+            throw new BadRequestException("validFrom is invalid");
+        }
+        if (nextValidTo && Number.isNaN(nextValidTo.getTime())) {
+            throw new BadRequestException("validTo is invalid");
+        }
+        if (nextValidTo && nextValidFrom.getTime() >= nextValidTo.getTime()) {
+            throw new BadRequestException("validFrom must be earlier than validTo");
+        }
+
+        return this.prisma.partyRelation.update({
+            where: { id: relationId },
+            data: {
+                sourcePartyId: nextFromPartyId,
+                targetPartyId: nextToPartyId,
+                relationType: this.mapRelationTypeToDb(nextRelationType) as any,
+                sharePct: nextSharePct ?? null,
+                validFrom: nextValidFrom,
+                validTo: nextValidTo,
+                basisDocId:
+                    dto.basisDocId === undefined
+                        ? existing.basisDocId
+                        : dto.basisDocId ?? null,
+            },
+            include: {
+                sourceParty: { select: { id: true, legalName: true } },
+                targetParty: { select: { id: true, legalName: true } },
+            },
+        });
+    }
+
+    async deletePartyRelation(companyId: string, relationId: string) {
+        const existing = await this.prisma.partyRelation.findFirst({
+            where: { companyId, id: relationId },
+            select: { id: true },
+        });
+        if (!existing) {
+            throw new NotFoundException("Party relation not found");
+        }
+
+        await this.prisma.partyRelation.delete({
+            where: { id: relationId },
+        });
+
+        return { ok: true };
     }
 
     async listPartyRelations(companyId: string, partyId: string) {
@@ -454,6 +541,8 @@ export class PartyService {
             fromPartyId: item.sourcePartyId,
             toPartyId: item.targetPartyId,
             relationType: this.mapRelationTypeFromDb(String(item.relationType)),
+            sharePct: item.sharePct ?? undefined,
+            basisDocId: item.basisDocId ?? undefined,
         }));
     }
 }

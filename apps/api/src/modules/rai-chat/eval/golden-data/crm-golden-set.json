@@ -1,0 +1,38 @@
+[
+  {
+    "id": "crm-1",
+    "requestText": "зарегистрируй контрагента по ИНН 2610000615",
+    "expectedIntent": "register_counterparty",
+    "expectedToolCalls": ["register_counterparty"]
+  },
+  {
+    "id": "crm-2",
+    "requestText": "создай связь между контрагентами",
+    "expectedIntent": "create_counterparty_relation",
+    "expectedToolCalls": ["create_counterparty_relation"]
+  },
+  {
+    "id": "crm-3",
+    "requestText": "открой рабочее пространство по аккаунту клиента",
+    "expectedIntent": "review_account_workspace",
+    "expectedToolCalls": ["get_crm_account_workspace"]
+  },
+  {
+    "id": "crm-4",
+    "requestText": "обнови риск и статус аккаунта",
+    "expectedIntent": "update_account_profile",
+    "expectedToolCalls": ["update_crm_account"]
+  },
+  {
+    "id": "crm-5",
+    "requestText": "зафиксируй звонок с клиентом",
+    "expectedIntent": "log_crm_interaction",
+    "expectedToolCalls": ["create_crm_interaction"]
+  },
+  {
+    "id": "crm-6",
+    "requestText": "поставь обязательство по клиенту",
+    "expectedIntent": "create_crm_obligation",
+    "expectedToolCalls": ["create_crm_obligation"]
+  }
+]

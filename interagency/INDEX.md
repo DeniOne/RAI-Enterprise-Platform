@@ -3,6 +3,12 @@
 
 ## Активные промты (в работе)
 
+- `interagency/prompts/2026-03-07_a_rai-s24_agent-platform-handoff.md` [DONE]
+  - Отчёт: `interagency/reports/2026-03-07_a_rai-s24_interactive-clarification-overlay-closeout_report.md`
+  - Финальный closeout interaction blueprint: `interagency/reports/2026-03-07_a_rai-agent-interaction-blueprint-closeout.md`
+  - Статус: DONE. В kernel/runtime profile введён явный `executionAdapterRole`; non-canonical roles теперь проходят governed onboarding validation, adapter-bound eval, canary/promote и реально исполняются через `/api/rai/chat` без новой hardcoded ветки в `AgentRuntimeService`. `marketer` подтверждён в runtime и control-plane: появляется в effective `agents[]`, а `GET /api/rai/agents/config` возвращает `kernel.runtimeProfile.executionAdapterRole`. `tsc` PASS (api+web), targeted jest PASS, live API smoke PASS. [APPROVED]
+  - Дополнение closeout: interactive clarification/window pattern, unified dock/windows protocol и contract-backed interaction layer теперь подтверждены для `agronomist`, `economist`, `knowledge`, `monitoring`, включая live HTTP smoke.
+
 - `interagency/prompts/2026-03-07_a_rai-s23_live-api-smoke.md` [DONE]
   - Отчёт: `interagency/reports/2026-03-07_a_rai-s23_live-api-smoke_report.md`
   - Статус: DONE. `apps/api/test/a_rai-live-api-smoke.spec.ts` поднимает реальный feature-module graph (`RaiChatModule + ExplainabilityPanelModule`) через `createNestApplication()` и проверяет через `supertest` канонический Stage 2 API slice: `GET /api/rai/explainability/queue-pressure`, `GET /api/rai/incidents/feed`, `GET /api/rai/agents/config`, `POST /api/rai/agents/config/change-requests`, плюс negative case `POST /api/rai/agents/config -> 404`. По дороге закрыты реальные wiring gaps: `RaiChatModule -> MemoryModule`, `MemoryModule -> AuditModule`, export `AutonomyPolicyService`. Tenant-scoped и governed semantics проверяются явно. `tsc` PASS, targeted smoke PASS. [APPROVED]
@@ -49,7 +55,7 @@
 
 - `interagency/prompts/2026-03-07_a_rai-r12_prompt-governance-reality.md` [DONE]
   - Отчёт: `interagency/reports/2026-03-07_a_rai-r12_prompt-governance-reality_report.md`
-  - Статус: DONE. Введён persisted workflow `AgentConfigChangeRequest` и `AgentPromptGovernanceService`: `change request -> eval -> canary -> promote/rollback`. `POST /rai/agents/config` больше не пишет production config напрямую, service-level bypass на production write закрыт, `toggle(true)` заблокирован, canary degradation ведёт к rollback/quarantine, `GoldenTestRunnerService` переведён на agent/candidate-aware eval logic. Prisma generate/build PASS, `tsc` PASS, targeted jest PASS. [APPROVED]
+  - Статус: DONE. Введён persisted workflow `AgentConfigChangeRequest` и `AgentPromptGovernanceService`: `change request -> eval -> canary -> promote/rollback`. `POST /rai/agents/config` больше не пишет боевой конфиг напрямую, service-level bypass на production write закрыт, `toggle(true)` заблокирован, canary degradation ведёт к rollback/quarantine, `GoldenTestRunnerService` переведён на agent/candidate-aware eval logic. Prisma generate/build PASS, `tsc` PASS, targeted jest PASS. [APPROVED]
 
 - `interagency/prompts/2026-03-07_a_rai-r10_registry-domain-model.md` [DONE]
   - Отчёт: `interagency/reports/2026-03-07_a_rai-r10_registry-domain-model_report.md`

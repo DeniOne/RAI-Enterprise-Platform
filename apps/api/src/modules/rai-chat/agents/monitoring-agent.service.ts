@@ -5,6 +5,13 @@ import {
   RaiToolName,
 } from "../tools/rai-tools.types";
 import { RiskToolsRegistry } from "../tools/risk-tools.registry";
+import { OpenRouterGatewayService } from "../agent-platform/openrouter-gateway.service";
+import { AgentPromptAssemblyService } from "../agent-platform/agent-prompt-assembly.service";
+import {
+  AgentExecutionRequest,
+  EffectiveAgentKernelEntry,
+} from "../agent-platform/agent-platform.types";
+import { EvidenceReference } from "../dto/rai-chat.dto";
 
 export interface MonitoringSignal {
   type: string;
@@ -24,6 +31,8 @@ export interface MonitoringAgentResult {
   explain: string;
   traceId: string;
   signalsSnapshot?: Record<string, unknown>;
+  evidence: EvidenceReference[];
+  fallbackUsed: boolean;
 }
 
 const ALERTS_PER_HOUR = 10;
@@ -31,19 +40,20 @@ const ALERTS_PER_HOUR = 10;
 @Injectable()
 export class MonitoringAgent {
   private readonly logger = new Logger(MonitoringAgent.name);
-  private readonly rateLimit = new Map<
-    string,
-    { count: number; resetAt: number }
-  >();
+  private readonly rateLimit = new Map<string, { count: number; resetAt: number }>();
   private readonly dedupHashes = new Map<string, Set<string>>();
 
-  constructor(private readonly riskToolsRegistry: RiskToolsRegistry) {}
+  constructor(
+    private readonly riskToolsRegistry: RiskToolsRegistry,
+    private readonly openRouterGateway: OpenRouterGatewayService,
+    private readonly promptAssembly: AgentPromptAssemblyService,
+  ) {}
 
-  async run(input: MonitoringAgentInput): Promise<MonitoringAgentResult> {
-    const ctx = createAutonomousExecutionContext(
-      input.companyId,
-      input.traceId,
-    );
+  async run(
+    input: MonitoringAgentInput,
+    options?: { kernel?: EffectiveAgentKernelEntry; request?: AgentExecutionRequest },
+  ): Promise<MonitoringAgentResult> {
+    const ctx = createAutonomousExecutionContext(input.companyId, input.traceId);
     const signals = input.signals ?? this.mockSignals();
     const snapshot = {
       traceId: input.traceId,
@@ -55,9 +65,6 @@ export class MonitoringAgent {
     );
 
     if (!this.checkRateLimit(input.companyId)) {
-      this.logger.warn(
-        `Rate limit exceeded companyId=${input.companyId} traceId=${input.traceId}`,
-      );
       return {
         agentName: "MonitoringAgent",
         status: "RATE_LIMITED",
@@ -65,6 +72,8 @@ export class MonitoringAgent {
         explain: "Лимит алертов в час исчерпан.",
         traceId: input.traceId,
         signalsSnapshot: snapshot,
+        evidence: [],
+        fallbackUsed: true,
       };
     }
 
@@ -75,9 +84,6 @@ export class MonitoringAgent {
     );
     const fingerprint = this.alertFingerprint(result);
     if (this.isDuplicate(input.companyId, fingerprint)) {
-      this.logger.log(
-        `Dedup skip companyId=${input.companyId} traceId=${input.traceId}`,
-      );
       return {
         agentName: "MonitoringAgent",
         status: "COMPLETED",
@@ -85,21 +91,54 @@ export class MonitoringAgent {
         explain: "Алерт совпадает с недавним, пропуск (дедупликация).",
         traceId: input.traceId,
         signalsSnapshot: snapshot,
+        evidence: [],
+        fallbackUsed: true,
       };
     }
     this.recordDedup(input.companyId, fingerprint);
     this.incRateLimit(input.companyId);
 
-    this.logger.log(
-      `Alert emitted companyId=${input.companyId} traceId=${input.traceId} count=${result.count} snapshot=${JSON.stringify(snapshot)}`,
-    );
+    let explain = `Получено алертов: ${result.count}. Причина: ${JSON.stringify(signals.map((s) => s.type))}.`;
+    let fallbackUsed = true;
+    if (options?.kernel && options.request) {
+      try {
+        const llm = await this.openRouterGateway.generate({
+          traceId: input.traceId,
+          agentRole: "monitoring",
+          model: options.kernel.runtimeProfile.model,
+          messages: this.promptAssembly.buildMessages(options.kernel, options.request).concat([
+            {
+              role: "user",
+              content: `Monitoring snapshot: ${JSON.stringify(snapshot)}. Alert result: ${JSON.stringify(result)}.`,
+            },
+          ]),
+          temperature: options.kernel.runtimeProfile.temperature,
+          maxTokens: options.kernel.runtimeProfile.maxOutputTokens,
+          timeoutMs: options.kernel.runtimeProfile.timeoutMs,
+        });
+        explain = llm.outputText;
+        fallbackUsed = false;
+      } catch {
+        fallbackUsed = true;
+      }
+    }
+
     return {
       agentName: "MonitoringAgent",
       status: "COMPLETED",
       alertsEmitted: result.count,
-      explain: `Получено алертов: ${result.count}. Причина: ${JSON.stringify(signals.map((s) => s.type))}.`,
+      explain,
       traceId: input.traceId,
       signalsSnapshot: snapshot,
+      evidence: [
+        {
+          claim: "Monitoring summary grounded in deterministic alert execution.",
+          sourceType: "TOOL_RESULT",
+          sourceId: RaiToolName.EmitAlerts,
+          confidenceScore: 0.9,
+        },
+      ],
+      fallbackUsed,
     };
   }
 
@@ -133,11 +172,7 @@ export class MonitoringAgent {
     const now = Date.now();
     const hour = 60 * 60 * 1000;
     const entry = this.rateLimit.get(companyId);
-    if (!entry) {
-      this.rateLimit.set(companyId, { count: 1, resetAt: now + hour });
-      return;
-    }
-    if (now >= entry.resetAt) {
+    if (!entry || now >= entry.resetAt) {
       this.rateLimit.set(companyId, { count: 1, resetAt: now + hour });
       return;
     }
@@ -146,8 +181,7 @@ export class MonitoringAgent {
 
   private isDuplicate(companyId: string, hash: string): boolean {
     const set = this.dedupHashes.get(companyId);
-    if (!set) return false;
-    return set.has(hash);
+    return set ? set.has(hash) : false;
   }
 
   private recordDedup(companyId: string, hash: string): void {

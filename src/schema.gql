@@ -33,10 +33,12 @@ input CreateResourceInput {
 }
 
 input CreateSeasonInput {
+  cropVarietyId: String
   endDate: DateTime
   expectedYield: Float
-  fieldId: String!
-  rapeseedId: String!
+  farmId: String
+  fieldId: String
+  rapeseedId: String
   startDate: DateTime
   status: SeasonStatus! = PLANNING
   technologyCardId: String
@@ -115,15 +117,17 @@ type Season {
   actualYield: Float
   companyId: String!
   createdAt: DateTime!
+  cropVarietyId: String
   currentStageId: String
   endDate: DateTime
   expectedYield: Float
-  fieldId: String!
+  farmId: String
+  fieldId: String
   id: String!
   isLocked: Boolean!
   lockedAt: DateTime
   lockedBy: String
-  rapeseedId: String!
+  rapeseedId: String
   stageProgress: [SeasonStageProgress!]
   startDate: DateTime
   status: SeasonStatus!
@@ -233,8 +237,10 @@ input UpdateRapeseedInput {
 
 input UpdateSeasonInput {
   actualYield: Float
+  cropVarietyId: String
   endDate: DateTime
   expectedYield: Float
+  farmId: String
   fieldId: String
   id: String!
   rapeseedId: String

@@ -18,7 +18,15 @@ describe("IntentRouterService", () => {
   it("classifies plan-fact/KPI intent", () => {
     const r = service.classify("план факт по сезону");
     expect(r.toolName).toBe(RaiToolName.ComputePlanFact);
-    expect(r.confidence).toBe(0.7);
+    expect(r.confidence).toBe(0.75);
+  });
+
+  it("prioritizes economist for finance cash-flow prompts even when deviations are mentioned", () => {
+    const r = service.classify("Compare plan vs fact cash flow risks and deviations for March", {
+      route: "/finance/dashboard",
+    });
+    expect(r.targetRole).toBe("economist");
+    expect(r.toolName).toBe(RaiToolName.ComputePlanFact);
   });
 
   it("classifies alerts intent", () => {
