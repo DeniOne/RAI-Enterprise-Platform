@@ -45,3 +45,9 @@
 - Подтверждён production-ready слой `clarification -> overlay -> auto-resume -> result windows`.
 - Зафиксирована унификация UI shell: IDE-подобный `AI Dock`, история чатов, `Новый чат`, compact header, overlay-only агентные окна.
 - Зафиксирован platform contract-layer для reference families и truth-sync по стратегиям, handoff и closeout-отчётам.
+
+[2026-03-09] Git Push
+- Закоммитил и запушил все актуальные изменения агентов и документации в ветку `main`.
+
+[2026-03-09] Git Push (Дополнительно)
+- Закоммитил и запушил обновленные документы STAGE 2 и Front Office Strategy.
