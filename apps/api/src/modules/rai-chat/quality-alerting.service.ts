@@ -1,7 +1,9 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { IncidentOpsService } from "./incident-ops.service";
-import { SystemIncidentType } from "@rai/prisma-client";
+import { RuntimeGovernanceEventType, SystemIncidentType } from "@rai/prisma-client";
+import { RuntimeGovernanceEventService } from "./runtime-governance/runtime-governance-event.service";
+import { RuntimeGovernanceRecommendationService } from "./runtime-governance/runtime-governance-recommendation.service";
 
 const DEFAULT_DELTA_THRESHOLD = 15; // п.п. ухудшения
 const DEFAULT_ABSOLUTE_THRESHOLD = 30; // абсолютный BS%
@@ -26,6 +28,8 @@ export class QualityAlertingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly incidentOps: IncidentOpsService,
+    private readonly governanceEvents: RuntimeGovernanceEventService,
+    private readonly recommendationService: RuntimeGovernanceRecommendationService,
   ) {}
 
   async evaluateBsDrift(
@@ -132,6 +136,18 @@ export class QualityAlertingService {
         message,
       },
     });
+    await this.governanceEvents.record({
+      companyId,
+      traceId: hottestTrace?.traceId ?? null,
+      eventType: RuntimeGovernanceEventType.QUALITY_DRIFT_DETECTED,
+      fallbackReason: "NO_EVIDENCE",
+      fallbackMode: "READ_ONLY_SUPPORT",
+      value: Number(recentAvg.toFixed(1)),
+      metadata: {
+        baselineAvgBsPct: Number(baselineAvg.toFixed(1)),
+        deltaPct: Number(delta.toFixed(1)),
+      },
+    });
     this.incidentOps.logIncident({
       companyId,
       traceId: hottestTrace?.traceId ?? null,
@@ -145,6 +161,12 @@ export class QualityAlertingService {
         hottestTraceId: hottestTrace?.traceId ?? null,
         hottestTraceBsPct: hottestTrace?.bsScorePct ?? null,
       },
+    });
+    await this.recommendationService.handleQualityAlertCreated({
+      companyId,
+      traceId: hottestTrace?.traceId ?? null,
+      recentAvgBsPct: Number(recentAvg.toFixed(1)),
+      baselineAvgBsPct: Number(baselineAvg.toFixed(1)),
     });
 
     this.logger.warn(
@@ -177,4 +199,3 @@ export class QualityAlertingService {
     });
   }
 }
-

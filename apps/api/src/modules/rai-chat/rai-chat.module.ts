@@ -56,6 +56,10 @@ import { AgentExecutionAdapterService } from "./runtime/agent-execution-adapter.
 import { CrmModule } from "../crm/crm.module";
 import { CommerceModule } from "../commerce/commerce.module";
 import { AuditModule } from "../../shared/audit/audit.module";
+import { RuntimeGovernancePolicyService } from "./runtime-governance/runtime-governance-policy.service";
+import { RuntimeGovernanceEventService } from "./runtime-governance/runtime-governance-event.service";
+import { AgentReliabilityService } from "./runtime-governance/agent-reliability.service";
+import { RuntimeGovernanceRecommendationService } from "./runtime-governance/runtime-governance-recommendation.service";
 
 @Module({
   imports: [
@@ -117,6 +121,10 @@ import { AuditModule } from "../../shared/audit/audit.module";
     AgentRuntimeConfigService,
     OpenRouterGatewayService,
     AgentPromptAssemblyService,
+    RuntimeGovernancePolicyService,
+    RuntimeGovernanceEventService,
+    AgentReliabilityService,
+    RuntimeGovernanceRecommendationService,
   ],
   exports: [
     SafeReplayService,
@@ -126,6 +134,10 @@ import { AuditModule } from "../../shared/audit/audit.module";
     AgentRegistryService,
     IncidentOpsService,
     AutonomyPolicyService,
+    RuntimeGovernancePolicyService,
+    RuntimeGovernanceEventService,
+    AgentReliabilityService,
+    RuntimeGovernanceRecommendationService,
   ],
 })
 export class RaiChatModule {}

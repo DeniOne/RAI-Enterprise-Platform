@@ -1,5 +1,6 @@
 import { RaiToolName } from "../tools/rai-tools.types";
 import { IntentClassification } from "../intent-router/intent-router.types";
+import { RuntimeConcurrencyEnvelope } from "../runtime-governance/runtime-governance-policy.types";
 
 const AGRONOM_TOOLS: RaiToolName[] = [
   RaiToolName.GenerateTechMapDraft,
@@ -45,6 +46,15 @@ export interface AgentExecutionPlan {
 
 export type ToolCallInput = { name: RaiToolName; payload: Record<string, unknown> };
 
+const PLAN_GROUP_ORDER = [
+  "agronom",
+  "economist",
+  "knowledge",
+  "crm",
+  "frontOffice",
+  "other",
+] as const satisfies ReadonlyArray<keyof AgentExecutionPlan>;
+
 /**
  * Строит план выполнения: группирует tool calls по агентам для параллельного fan-out.
  * Agronom / Economist / Knowledge запускаются параллельно; other — через общий registry.
@@ -65,6 +75,37 @@ export function planByToolCalls(toolCalls: ToolCallInput[]): AgentExecutionPlan 
     else other.push(call);
   }
   return { agronom, economist, knowledge, crm, frontOffice, other };
+}
+
+export function buildExecutionBatches(
+  plan: AgentExecutionPlan,
+  envelope: RuntimeConcurrencyEnvelope,
+): ToolCallInput[][] {
+  const nonEmptyGroups = PLAN_GROUP_ORDER
+    .map((groupName) => ({ groupName, calls: plan[groupName] }))
+    .filter((group) => group.calls.length > 0);
+
+  if (nonEmptyGroups.length === 0) {
+    return [];
+  }
+
+  const maxParallelGroups = Math.max(1, envelope.maxParallelGroups);
+  const maxParallelToolCalls = Math.max(1, envelope.maxParallelToolCalls);
+  const batches: ToolCallInput[][] = [];
+
+  for (let groupIndex = 0; groupIndex < nonEmptyGroups.length; groupIndex += maxParallelGroups) {
+    const groupSlice = nonEmptyGroups.slice(groupIndex, groupIndex + maxParallelGroups);
+    const flattened = groupSlice.flatMap((group) => group.calls);
+    for (
+      let callIndex = 0;
+      callIndex < flattened.length;
+      callIndex += maxParallelToolCalls
+    ) {
+      batches.push(flattened.slice(callIndex, callIndex + maxParallelToolCalls));
+    }
+  }
+
+  return batches;
 }
 
 /**

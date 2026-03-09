@@ -42,6 +42,7 @@ export type ToolRiskDomain =
 export interface RaiToolActorContext {
   companyId: string;
   traceId: string;
+  agentRole?: string;
   /** В автономном контексте (MonitoringAgent) запрещены WRITE/CRITICAL инструменты. */
   isAutonomous?: boolean;
   /** Safe Replay: WRITE/CRITICAL не выполняются, возвращается mock success. */

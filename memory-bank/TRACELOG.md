@@ -61,3 +61,11 @@
 - Добавлена документация: `RAI_FRONT_OFFICE_AGENT_CANON.md`, профиль агента, инструкции по энейблменту.
 - Обновлены контракты взаимодействия и DTO для поддержки новых типов окон и интентов.
 - Интегрированы `FrontOfficeTools` в общий реестр инструментов.
+
+[2026-03-09] Agent Runtime Governance & Front Office Extensions
+- Реализована система `Runtime Governance` для агентов (Prisma schema, миграции, read-model сервис).
+- Добавлен контроллер и DTO для панели управления `Explainability`.
+- Расширен `AgentConfigGuard` и `QualityAlertingService` для работы с новыми политиками управления.
+- Реализованы расширения Front Office: `MASTER_PLAN`, `BACKLOG`, `USER_FLOWS` и контракты API.
+- Обновлены тесты `SupervisorAgent`, `AgentRuntime` и реестра инструментов для поддержки новых сущностей.
+- Запушен `RAI_AGENT_RUNTIME_GOVERNANCE.md` как основной канон управления жизненным циклом агентов.

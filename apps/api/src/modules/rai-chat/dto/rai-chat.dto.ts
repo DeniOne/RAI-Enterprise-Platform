@@ -251,6 +251,15 @@ export interface RuntimeBudgetDto {
   allowedToolNames: RaiToolName[];
   droppedToolNames: RaiToolName[];
   ownerRoles: string[];
+  fallbackReason?: string;
+  fallbackMode?: string;
+}
+
+export interface RuntimeGovernanceDto {
+  fallbackReason: string;
+  fallbackMode: string;
+  degraded: boolean;
+  recommendation?: string;
 }
 
 export interface PendingClarificationItemDto {
@@ -470,6 +479,9 @@ export class RaiChatResponseDto {
 
   @IsOptional()
   runtimeBudget?: RuntimeBudgetDto;
+
+  @IsOptional()
+  runtimeGovernance?: RuntimeGovernanceDto;
 
   @IsString()
   @IsOptional()

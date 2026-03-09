@@ -13,6 +13,7 @@ import { RaiChatModule } from "../rai-chat/rai-chat.module";
 import { AgentConfigGuardService } from "./agent-config-guard.service";
 import { AdaptiveLearningModule } from "../adaptive-learning/adaptive-learning.module";
 import { AgentPromptGovernanceService } from "./agent-prompt-governance.service";
+import { RuntimeGovernanceReadModelService } from "./runtime-governance-read-model.service";
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { AgentPromptGovernanceService } from "./agent-prompt-governance.service"
     AgentManagementService,
     AgentConfigGuardService,
     AgentPromptGovernanceService,
+    RuntimeGovernanceReadModelService,
   ],
 })
 export class ExplainabilityPanelModule {}

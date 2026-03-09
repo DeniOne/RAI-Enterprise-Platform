@@ -232,4 +232,50 @@ describe("AgentConfigGuardService", () => {
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
+
+  it("rejects runtime governance overrides with invalid concurrency envelope", async () => {
+    await expect(
+      service.evaluateChange("company-1", {
+        name: "CRM Agent",
+        role: "crm_agent",
+        systemPrompt: "prompt-v1",
+        llmModel: "openai/gpt-5-mini",
+        maxTokens: 8000,
+        isActive: true,
+        capabilities: ["CrmToolsRegistry"],
+        tools: [RaiToolName.RegisterCounterparty],
+        governancePolicy: {
+          runtimeGovernanceOverrides: {
+            concurrencyEnvelope: {
+              maxParallelToolCalls: 2,
+              maxParallelGroups: 3,
+            },
+          },
+        },
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it("rejects runtime governance overrides when review threshold exceeds quarantine threshold", async () => {
+    await expect(
+      service.evaluateChange("company-1", {
+        name: "CRM Agent",
+        role: "crm_agent",
+        systemPrompt: "prompt-v1",
+        llmModel: "openai/gpt-5-mini",
+        maxTokens: 8000,
+        isActive: true,
+        capabilities: ["CrmToolsRegistry"],
+        tools: [RaiToolName.RegisterCounterparty],
+        governancePolicy: {
+          runtimeGovernanceOverrides: {
+            truthfulnessThresholds: {
+              bsReviewThresholdPct: 40,
+              bsQuarantineThresholdPct: 30,
+            },
+          },
+        },
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
 });

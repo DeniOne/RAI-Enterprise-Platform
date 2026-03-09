@@ -10,6 +10,7 @@ import {
 } from "../tools/rai-tools.types";
 import { BudgetExceededError } from "./budget-exceeded.error";
 import { AgentRegistryService, AgentRuntimeRole } from "../agent-registry.service";
+import { FallbackMode, FallbackReason } from "../runtime-governance/runtime-governance-policy.types";
 
 export type RuntimeBudgetOutcome = "ALLOW" | "DEGRADE" | "DENY";
 
@@ -22,6 +23,8 @@ export interface RuntimeBudgetDecision {
   allowedToolNames: RaiToolName[];
   droppedToolNames: RaiToolName[];
   ownerRoles: AgentRuntimeRole[];
+  fallbackReason?: FallbackReason;
+  fallbackMode?: FallbackMode;
 }
 
 const TOOL_TOKEN_COST: Record<RaiToolName, number> = {
@@ -130,6 +133,8 @@ export class BudgetControllerService {
         allowedToolNames: requestedToolCalls.map((call) => call.name),
         droppedToolNames: [],
         ownerRoles: [],
+        fallbackReason: "REPLAY_MODE",
+        fallbackMode: "READ_ONLY_SUPPORT",
       };
     }
 
@@ -143,6 +148,8 @@ export class BudgetControllerService {
         allowedToolNames: [],
         droppedToolNames: [],
         ownerRoles: [],
+        fallbackReason: "NONE",
+        fallbackMode: "NONE",
       };
     }
 
@@ -189,6 +196,8 @@ export class BudgetControllerService {
           allowedToolNames: selected,
           droppedToolNames: [...dropped, call.name],
           ownerRoles: [...ownerRoles],
+          fallbackReason: "BUDGET_DENIED",
+          fallbackMode: "MANUAL_HUMAN_REQUIRED",
         };
       }
 
@@ -212,6 +221,8 @@ export class BudgetControllerService {
       allowedToolNames: selected,
       droppedToolNames: dropped,
       ownerRoles: [...ownerRoles],
+      fallbackReason: dropped.length > 0 ? "BUDGET_DEGRADED" : "NONE",
+      fallbackMode: dropped.length > 0 ? "READ_ONLY_SUPPORT" : "NONE",
     };
   }
 

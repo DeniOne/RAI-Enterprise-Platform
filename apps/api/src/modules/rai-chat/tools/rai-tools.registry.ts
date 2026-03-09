@@ -35,6 +35,9 @@ import { AgentRuntimeConfigService } from "../agent-runtime-config.service";
 import { AgentConfigBlockedError } from "../security/agent-config-blocked.error";
 import { IncidentOpsService } from "../incident-ops.service";
 import { SystemIncidentType } from "@rai/prisma-client";
+import { RuntimeGovernanceEventType } from "@rai/prisma-client";
+import { RuntimeGovernanceEventService } from "../runtime-governance/runtime-governance-event.service";
+import { RuntimeGovernancePolicyService } from "../runtime-governance/runtime-governance-policy.service";
 
 type ToolHandler<TName extends RaiToolName> = (
   payload: RaiToolPayloadMap[TName],
@@ -66,6 +69,8 @@ export class RaiToolsRegistry implements OnModuleInit {
     private readonly autonomyPolicy: AutonomyPolicyService,
     private readonly agentRuntimeConfig: AgentRuntimeConfigService,
     private readonly incidentOps: IncidentOpsService,
+    private readonly governanceEvents: RuntimeGovernanceEventService,
+    private readonly runtimeGovernancePolicy: RuntimeGovernancePolicyService,
   ) {}
 
   onModuleInit() {
@@ -112,6 +117,22 @@ export class RaiToolsRegistry implements OnModuleInit {
           ? "agent_disabled"
           : "capability_denied",
       );
+      await this.governanceEvents.record({
+        companyId: actorContext.companyId,
+        traceId: actorContext.traceId,
+        agentRole: actorContext.agentRole,
+        toolName: name,
+        eventType: RuntimeGovernanceEventType.POLICY_BLOCKED,
+        fallbackReason: "POLICY_BLOCKED",
+        fallbackMode: this.runtimeGovernancePolicy.resolveFallbackMode(
+          actorContext.agentRole,
+          "POLICY_BLOCKED",
+        ),
+        metadata: {
+          reasonCode: configDecision.reasonCode,
+          policySource: "agent_runtime_config",
+        },
+      });
       throw new AgentConfigBlockedError(
         configDecision.reasonCode!,
         name,
@@ -143,6 +164,21 @@ export class RaiToolsRegistry implements OnModuleInit {
           payload,
           "autonomy_quarantine_block",
         );
+        await this.governanceEvents.record({
+          companyId: actorContext.companyId,
+          traceId: actorContext.traceId,
+          agentRole: actorContext.agentRole,
+          toolName: name,
+          eventType: RuntimeGovernanceEventType.POLICY_BLOCKED,
+          fallbackReason: "POLICY_BLOCKED",
+          fallbackMode: this.runtimeGovernancePolicy.resolveFallbackMode(
+            actorContext.agentRole,
+            "POLICY_BLOCKED",
+          ),
+          metadata: {
+            policySource: "autonomy_quarantine",
+          },
+        });
         throw new RiskPolicyBlockedError(
           "AUTONOMY_QUARANTINE",
           name,
@@ -199,6 +235,27 @@ export class RaiToolsRegistry implements OnModuleInit {
           payload,
           requiresByRisk ? "risk_policy_blocked" : "autonomy_tool_first_block",
         );
+        await this.governanceEvents.record({
+          companyId: actorContext.companyId,
+          traceId: actorContext.traceId,
+          agentRole: actorContext.agentRole,
+          toolName: name,
+          eventType: requiresByRisk
+            ? RuntimeGovernanceEventType.POLICY_BLOCKED
+            : RuntimeGovernanceEventType.PENDING_ACTION_CREATED,
+          fallbackReason: requiresByRisk
+            ? "POLICY_BLOCKED"
+            : "PENDING_USER_CONFIRMATION",
+          fallbackMode: this.runtimeGovernancePolicy.resolveFallbackMode(
+            actorContext.agentRole,
+            requiresByRisk ? "POLICY_BLOCKED" : "PENDING_USER_CONFIRMATION",
+          ),
+          metadata: {
+            pendingActionId: action.id,
+            policySource: requiresByRisk ? "risk_policy" : "autonomy_tool_first",
+            riskLevel: riskInfo.riskLevel,
+          },
+        });
         throw new RiskPolicyBlockedError(
           action.id,
           name,
@@ -263,6 +320,21 @@ export class RaiToolsRegistry implements OnModuleInit {
         validation.value,
         "handler_failed",
       );
+      await this.governanceEvents.record({
+        companyId: actorContext.companyId,
+        traceId: actorContext.traceId,
+        agentRole: actorContext.agentRole,
+        toolName: name,
+        eventType: RuntimeGovernanceEventType.TOOL_FAILURE,
+        fallbackReason: "TOOL_FAILURE",
+        fallbackMode: this.runtimeGovernancePolicy.resolveFallbackMode(
+          actorContext.agentRole,
+          "TOOL_FAILURE",
+        ),
+        metadata: {
+          message: String((error as Error)?.message ?? error),
+        },
+      });
       throw error;
     }
   }

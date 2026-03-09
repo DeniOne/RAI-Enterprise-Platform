@@ -19,6 +19,8 @@ import { AgentRuntimeConfigService } from "../agent-runtime-config.service";
 import { AgentConfigBlockedError } from "../security/agent-config-blocked.error";
 import { IncidentOpsService } from "../incident-ops.service";
 import { SystemIncidentType } from "@rai/prisma-client";
+import { RuntimeGovernanceEventService } from "../runtime-governance/runtime-governance-event.service";
+import { RuntimeGovernancePolicyService } from "../runtime-governance/runtime-governance-policy.service";
 
 describe("RaiToolsRegistry", () => {
   const actorContext = {
@@ -103,6 +105,12 @@ describe("RaiToolsRegistry", () => {
   const incidentOps = {
     logIncident: jest.fn(),
   } as unknown as IncidentOpsService;
+  const governanceEvents = {
+    record: jest.fn().mockResolvedValue(undefined),
+  } as unknown as RuntimeGovernanceEventService;
+  const runtimeGovernancePolicy = {
+    resolveFallbackMode: jest.fn().mockReturnValue("MANUAL_HUMAN_REQUIRED"),
+  } as unknown as RuntimeGovernancePolicyService;
 
   const createRegistry = () =>
     new RaiToolsRegistry(
@@ -119,6 +127,8 @@ describe("RaiToolsRegistry", () => {
       autonomyPolicy,
       agentRuntimeConfig,
       incidentOps,
+      governanceEvents,
+      runtimeGovernancePolicy,
     );
 
   beforeEach(() => {

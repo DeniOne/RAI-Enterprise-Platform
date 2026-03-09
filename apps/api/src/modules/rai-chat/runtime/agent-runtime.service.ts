@@ -1,9 +1,9 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { SystemIncidentType } from "@rai/prisma-client";
-import { RaiToolCallDto } from "../dto/rai-chat.dto";
+import { RuntimeGovernanceEventType, SystemIncidentType } from "@rai/prisma-client";
+import { RaiToolCallDto, RuntimeGovernanceDto } from "../dto/rai-chat.dto";
 import { RaiToolActorContext, RaiToolName } from "../tools/rai-tools.types";
 import { RaiToolsRegistry } from "../tools/rai-tools.registry";
-import { planByToolCalls } from "./tool-call.planner";
+import { buildExecutionBatches, planByToolCalls } from "./tool-call.planner";
 import { RiskPolicyBlockedError } from "../security/risk-policy-blocked.error";
 import { PerformanceMetricsService } from "../performance/performance-metrics.service";
 import { QueueMetricsService } from "../performance/queue-metrics.service";
@@ -20,14 +20,21 @@ import {
   EffectiveAgentKernelEntry,
 } from "../agent-platform/agent-platform.types";
 import { AgentExecutionAdapterService } from "./agent-execution-adapter.service";
+import { RuntimeGovernanceEventService } from "../runtime-governance/runtime-governance-event.service";
+import { RuntimeGovernancePolicyService } from "../runtime-governance/runtime-governance-policy.service";
+import {
+  FallbackReason,
+  RuntimeConcurrencyEnvelope,
+  RuntimeGovernanceOverrides,
+  RuntimeGovernanceRolePolicy,
+} from "../runtime-governance/runtime-governance-policy.types";
 
 export interface ExecutionResult {
   executedTools: Array<{ name: RaiToolName; result: unknown }>;
   runtimeBudget?: RuntimeBudgetDecision;
   agentExecution?: AgentExecutionResult;
+  runtimeGovernance?: RuntimeGovernanceDto;
 }
-
-const AGENT_DEADLINE_MS = 30_000;
 
 export interface RunParams {
   requestedToolCalls: RaiToolCallDto[];
@@ -46,6 +53,8 @@ export class AgentRuntimeService {
     private readonly incidentOps: IncidentOpsService,
     private readonly agentRuntimeConfig: AgentRuntimeConfigService,
     private readonly executionAdapter: AgentExecutionAdapterService,
+    private readonly governanceEvents: RuntimeGovernanceEventService,
+    private readonly runtimeGovernancePolicy: RuntimeGovernancePolicyService,
   ) {}
 
   async executeAgent(
@@ -65,9 +74,25 @@ export class AgentRuntimeService {
       request.role,
     );
     if (!kernel || !kernel.isActive) {
+      const runtimeGovernance = this.buildGovernanceMeta(
+        request.role,
+        "NO_INTENT_OWNER",
+        true,
+      );
+      await this.recordGovernanceEvent(
+        actorContext.companyId,
+        request.traceId,
+        request.role,
+        RuntimeGovernanceEventType.FALLBACK_USED,
+        runtimeGovernance,
+        {
+          reason: "agent_unavailable",
+        },
+      );
       return {
         executedTools: [],
         agentExecution: this.buildUnavailableResult(request.role, kernel),
+        runtimeGovernance,
       };
     }
 
@@ -75,20 +100,63 @@ export class AgentRuntimeService {
       request.requestedTools ?? [],
       kernel,
     );
+    const runtimeOverrides = kernel.governancePolicy?.runtimeGovernanceOverrides;
     const budgetDecision = await this.budgetController.evaluateRuntimeBudget(
       requestedToolCalls,
       actorContext,
     );
     if (budgetDecision.outcome === "DENY") {
+      const runtimeGovernance = this.buildGovernanceMeta(
+        request.role,
+        budgetDecision.fallbackReason ?? "BUDGET_DENIED",
+        true,
+        undefined,
+        runtimeOverrides,
+      );
+      await this.recordGovernanceEvent(
+        actorContext.companyId,
+        request.traceId,
+        request.role,
+        RuntimeGovernanceEventType.BUDGET_DENIED,
+        runtimeGovernance,
+        {
+          estimatedTokens: budgetDecision.estimatedTokens,
+          budgetLimit: budgetDecision.budgetLimit,
+          droppedToolNames: budgetDecision.droppedToolNames,
+        },
+      );
       return {
         executedTools: [],
         runtimeBudget: budgetDecision,
+        runtimeGovernance,
         agentExecution: {
           ...this.buildUnavailableResult(request.role, kernel),
           text: "Выполнение отклонено budget policy.",
           runtimeBudget: budgetDecision,
+          runtimeGovernance,
         },
       };
+    }
+
+    if (budgetDecision.outcome === "DEGRADE") {
+      await this.recordGovernanceEvent(
+        actorContext.companyId,
+        request.traceId,
+        request.role,
+        RuntimeGovernanceEventType.BUDGET_DEGRADED,
+        this.buildGovernanceMeta(
+          request.role,
+          budgetDecision.fallbackReason ?? "BUDGET_DEGRADED",
+          true,
+          undefined,
+          runtimeOverrides,
+        ),
+        {
+          estimatedTokens: budgetDecision.estimatedTokens,
+          budgetLimit: budgetDecision.budgetLimit,
+          droppedToolNames: budgetDecision.droppedToolNames,
+        },
+      );
     }
 
     const execution = await this.dispatchAgent(
@@ -99,6 +167,27 @@ export class AgentRuntimeService {
       budgetDecision,
     );
 
+    if (execution.status === "NEEDS_MORE_DATA") {
+      const runtimeGovernance = this.buildGovernanceMeta(
+        request.role,
+        "NEEDS_MORE_DATA",
+        true,
+        undefined,
+        runtimeOverrides,
+      );
+      execution.runtimeGovernance = runtimeGovernance;
+      await this.recordGovernanceEvent(
+        actorContext.companyId,
+        request.traceId,
+        request.role,
+        RuntimeGovernanceEventType.NEEDS_MORE_DATA,
+        runtimeGovernance,
+        {
+          validation: execution.validation,
+        },
+      );
+    }
+
     return {
       executedTools: execution.toolCalls.map((tool) => ({
         name: tool.name as RaiToolName,
@@ -106,6 +195,17 @@ export class AgentRuntimeService {
       })),
       runtimeBudget: budgetDecision,
       agentExecution: execution,
+      runtimeGovernance:
+        execution.runtimeGovernance ??
+        (budgetDecision.outcome === "DEGRADE"
+          ? this.buildGovernanceMeta(
+              request.role,
+              budgetDecision.fallbackReason ?? "BUDGET_DEGRADED",
+              true,
+              undefined,
+              runtimeOverrides,
+            )
+          : undefined),
     };
   }
 
@@ -135,7 +235,47 @@ export class AgentRuntimeService {
       });
     }
     if (budgetDecision.outcome === "DENY") {
-      return { executedTools: [], runtimeBudget: budgetDecision };
+      const runtimeGovernance = this.buildGovernanceMeta(
+        params.actorContext.agentRole,
+        budgetDecision.fallbackReason ?? "BUDGET_DENIED",
+        true,
+      );
+      await this.recordGovernanceEvent(
+        params.actorContext.companyId,
+        params.actorContext.traceId,
+        params.actorContext.agentRole,
+        RuntimeGovernanceEventType.BUDGET_DENIED,
+        runtimeGovernance,
+        {
+          estimatedTokens: budgetDecision.estimatedTokens,
+          budgetLimit: budgetDecision.budgetLimit,
+          droppedToolNames: budgetDecision.droppedToolNames,
+        },
+      );
+      return { executedTools: [], runtimeBudget: budgetDecision, runtimeGovernance };
+    }
+
+    const budgetGovernance =
+      budgetDecision.outcome === "DEGRADE"
+        ? this.buildGovernanceMeta(
+            params.actorContext.agentRole,
+            budgetDecision.fallbackReason ?? "BUDGET_DEGRADED",
+            true,
+          )
+        : undefined;
+    if (budgetDecision.outcome === "DEGRADE" && budgetGovernance) {
+      await this.recordGovernanceEvent(
+        params.actorContext.companyId,
+        params.actorContext.traceId,
+        params.actorContext.agentRole,
+        RuntimeGovernanceEventType.BUDGET_DEGRADED,
+        budgetGovernance,
+        {
+          estimatedTokens: budgetDecision.estimatedTokens,
+          budgetLimit: budgetDecision.budgetLimit,
+          droppedToolNames: budgetDecision.droppedToolNames,
+        },
+      );
     }
 
     const allowedToolCalls =
@@ -151,6 +291,15 @@ export class AgentRuntimeService {
     );
     const partial: Array<{ name: RaiToolName; result: unknown }> = [];
     const effectivePlan = planByToolCalls(allowedToolCalls);
+    const rolePolicy = this.runtimeGovernancePolicy.getRolePolicy(
+      params.actorContext.agentRole,
+    );
+    const concurrencyEnvelope = await this.resolveConcurrencyEnvelope(
+      params.actorContext.companyId,
+      params.actorContext.traceId,
+      params.actorContext.agentRole,
+      rolePolicy,
+    );
 
     const toEntry = (name: RaiToolName, result: unknown) => {
       const entry = { name, result };
@@ -199,51 +348,99 @@ export class AgentRuntimeService {
             agentRole,
             call.name,
           );
+          void this.governanceEvents.record({
+            companyId: params.actorContext.companyId,
+            traceId: params.actorContext.traceId,
+            agentRole: params.actorContext.agentRole ?? agentRole,
+            toolName: call.name,
+            eventType: RuntimeGovernanceEventType.TOOL_FAILURE,
+            fallbackReason: "TOOL_FAILURE",
+            fallbackMode: this.runtimeGovernancePolicy.resolveFallbackMode(
+              params.actorContext.agentRole ?? agentRole,
+              "TOOL_FAILURE",
+            ),
+            metadata: {
+              message: String((err as Error)?.message ?? err),
+            },
+          });
           throw err;
         });
     };
 
-    const allPromises = [
-      ...effectivePlan.agronom.map((call) => runOne(call)),
-      ...effectivePlan.economist.map((call) => runOne(call)),
-      ...effectivePlan.knowledge.map((call) => runOne(call)),
-      ...effectivePlan.crm.map((call) => runOne(call)),
-      ...effectivePlan.frontOffice.map((call) => runOne(call)),
-      ...effectivePlan.other.map((call) => runOne(call)),
-    ];
+    const executionBatches = buildExecutionBatches(
+      effectivePlan,
+      concurrencyEnvelope,
+    );
     let timeoutHandle: NodeJS.Timeout | null = null;
+    const deadlineMs = concurrencyEnvelope.deadlineMs;
     const timeoutPromise = new Promise<never>((_, reject) => {
       timeoutHandle = setTimeout(
         () => reject(new Error("AGENT_RUNTIME_DEADLINE_EXCEEDED")),
-        AGENT_DEADLINE_MS,
+        deadlineMs,
       );
     });
 
     try {
+      const executeBatches = async () => {
+        const executedTools: Array<{ name: RaiToolName; result: unknown }> = [];
+        for (const batch of executionBatches) {
+          const settled = await Promise.allSettled(batch.map((call) => runOne(call)));
+          executedTools.push(
+            ...settled
+              .filter(
+                (
+                  entry,
+                ): entry is PromiseFulfilledResult<{ name: RaiToolName; result: unknown }> =>
+                  entry.status === "fulfilled",
+              )
+              .map((entry) => entry.value),
+          );
+        }
+        return executedTools;
+      };
       const settled = await Promise.race([
-        Promise.allSettled(allPromises),
+        executeBatches(),
         timeoutPromise,
       ]);
-      const executedTools = (
-        settled as PromiseSettledResult<{ name: RaiToolName; result: unknown }>[]
-      )
-        .filter(
-          (
-            entry,
-          ): entry is PromiseFulfilledResult<{ name: RaiToolName; result: unknown }> =>
-            entry.status === "fulfilled",
-        )
-        .map((entry) => entry.value);
-      return { executedTools, runtimeBudget: budgetDecision };
+      const executedTools = settled as Array<{ name: RaiToolName; result: unknown }>;
+      return {
+        executedTools,
+        runtimeBudget: budgetDecision,
+        runtimeGovernance:
+          this.resolveRuntimeGovernanceFromResults(
+            params.actorContext.agentRole,
+            executedTools,
+          ) ?? budgetGovernance,
+      };
     } catch (err) {
       void this.performanceMetrics.recordError(
         params.actorContext.companyId,
         "RuntimeAgent",
       );
+      const runtimeGovernance = this.buildGovernanceMeta(
+        params.actorContext.agentRole,
+        "DEADLINE_EXCEEDED",
+        true,
+      );
+      await this.recordGovernanceEvent(
+        params.actorContext.companyId,
+        params.actorContext.traceId,
+        params.actorContext.agentRole,
+        RuntimeGovernanceEventType.FALLBACK_USED,
+        runtimeGovernance,
+        {
+          message: String((err as Error)?.message ?? err),
+          partialToolCount: partial.length,
+        },
+      );
       this.logger.warn(
         `agent_runtime deadline or error companyId=${params.actorContext.companyId} traceId=${params.actorContext.traceId} message=${String((err as Error)?.message ?? err)}`,
       );
-      return { executedTools: partial, runtimeBudget: budgetDecision };
+      return {
+        executedTools: partial,
+        runtimeBudget: budgetDecision,
+        runtimeGovernance,
+      };
     } finally {
       await this.queueMetrics.endRuntimeExecution(
         params.actorContext.companyId,
@@ -284,6 +481,7 @@ export class AgentRuntimeService {
       connectorCalls: [],
       evidence: [],
       validation: { passed: false, reasons: ["agent_unavailable"] },
+      runtimeGovernance: this.buildGovernanceMeta(role, "NO_INTENT_OWNER", true),
       fallbackUsed: true,
       outputContractVersion: kernel?.outputContract.responseSchemaVersion ?? "v1",
       auditPayload: {
@@ -328,4 +526,133 @@ export class AgentRuntimeService {
     });
   }
 
+  private resolveRuntimeGovernanceFromResults(
+    agentRole: string | undefined,
+    executedTools: Array<{ name: RaiToolName; result: unknown }>,
+  ): RuntimeGovernanceDto | undefined {
+    const blocked = executedTools.find(
+      (tool) =>
+        Boolean(
+          tool.result &&
+            typeof tool.result === "object" &&
+            ((tool.result as { riskPolicyBlocked?: boolean }).riskPolicyBlocked === true ||
+              (tool.result as { agentConfigBlocked?: boolean }).agentConfigBlocked === true),
+        ),
+    );
+    if (blocked) {
+      return this.buildGovernanceMeta(agentRole, "POLICY_BLOCKED", true);
+    }
+
+    const needsMoreData = executedTools.find(
+      (tool) =>
+        Boolean(
+          tool.result &&
+            typeof tool.result === "object" &&
+            (tool.result as { status?: string }).status === "NEEDS_MORE_DATA",
+        ),
+    );
+    if (needsMoreData) {
+      return this.buildGovernanceMeta(agentRole, "NEEDS_MORE_DATA", true);
+    }
+
+    return undefined;
+  }
+
+  private buildGovernanceMeta(
+    agentRole: string | undefined,
+    fallbackReason: FallbackReason,
+    degraded: boolean,
+    recommendation?: string,
+    overrides?: RuntimeGovernanceOverrides | null,
+  ): RuntimeGovernanceDto {
+    return {
+      fallbackReason,
+      fallbackMode: this.runtimeGovernancePolicy.resolveFallbackMode(
+        agentRole,
+        fallbackReason,
+        overrides,
+      ),
+      degraded,
+      recommendation,
+    };
+  }
+
+  private async resolveConcurrencyEnvelope(
+    companyId: string,
+    traceId: string,
+    agentRole: string | undefined,
+    rolePolicy: RuntimeGovernanceRolePolicy,
+  ): Promise<RuntimeConcurrencyEnvelope> {
+    const queuePressure = await this.queueMetrics.getQueuePressure(
+      companyId,
+      5 * 60 * 1000,
+    );
+    if (
+      this.isQueuePressureExceeded(
+        queuePressure.pressureState,
+        rolePolicy.thresholds.queueSaturationThreshold,
+      )
+    ) {
+      await this.governanceEvents.record({
+        companyId,
+        traceId,
+        agentRole,
+        eventType: RuntimeGovernanceEventType.QUEUE_SATURATION_DETECTED,
+        metadata: {
+          pressureState: queuePressure.pressureState,
+          hottestQueue: queuePressure.hottestQueue,
+          totalBacklog: queuePressure.totalBacklog,
+          degradedEnvelope: true,
+        },
+      });
+      return {
+        maxParallelToolCalls: Math.max(
+          1,
+          Math.floor(rolePolicy.concurrency.maxParallelToolCalls / 2),
+        ),
+        maxParallelGroups: Math.max(
+          1,
+          Math.floor(rolePolicy.concurrency.maxParallelGroups / 2),
+        ),
+        deadlineMs: rolePolicy.concurrency.deadlineMs,
+      };
+    }
+    return rolePolicy.concurrency;
+  }
+
+  private isQueuePressureExceeded(
+    pressureState: "IDLE" | "STABLE" | "PRESSURED" | "SATURATED" | null,
+    threshold: "PRESSURED" | "SATURATED",
+  ): boolean {
+    if (!pressureState) {
+      return false;
+    }
+    const order = {
+      IDLE: 0,
+      STABLE: 1,
+      PRESSURED: 2,
+      SATURATED: 3,
+    } as const;
+    return order[pressureState] >= order[threshold];
+  }
+
+  private async recordGovernanceEvent(
+    companyId: string,
+    traceId: string,
+    agentRole: string | undefined,
+    eventType: RuntimeGovernanceEventType,
+    runtimeGovernance: RuntimeGovernanceDto,
+    metadata?: Record<string, unknown>,
+  ): Promise<void> {
+    await this.governanceEvents.record({
+      companyId,
+      traceId,
+      agentRole,
+      eventType,
+      fallbackReason: runtimeGovernance.fallbackReason as FallbackReason,
+      fallbackMode: runtimeGovernance.fallbackMode as never,
+      recommendationType: (runtimeGovernance.recommendation as never) ?? null,
+      metadata,
+    });
+  }
 }

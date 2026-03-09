@@ -1,5 +1,11 @@
-import { EvidenceReference, RuntimeBudgetDto, WorkspaceContextDto } from "../dto/rai-chat.dto";
+import {
+  EvidenceReference,
+  RuntimeBudgetDto,
+  RuntimeGovernanceDto,
+  WorkspaceContextDto,
+} from "../dto/rai-chat.dto";
 import { RaiToolCallDto } from "../dto/rai-chat.dto";
+import { RuntimeGovernanceOverrides } from "../runtime-governance/runtime-governance-policy.types";
 
 export type AgentKind = "domain_advisor" | "worker_hybrid" | "personal_delegated";
 export type AgentAutonomyMode = "advisory" | "hybrid" | "autonomous";
@@ -54,6 +60,7 @@ export interface AgentGovernancePolicy {
   criticalActionRules: string[];
   auditRequirements: string[];
   fallbackRules: string[];
+  runtimeGovernanceOverrides?: RuntimeGovernanceOverrides;
 }
 
 export interface AgentRuntimeProfile {
@@ -129,6 +136,7 @@ export interface AgentExecutionResult {
   evidence: EvidenceReference[];
   validation: AgentExecutionValidation;
   runtimeBudget?: RuntimeBudgetDto;
+  runtimeGovernance?: RuntimeGovernanceDto;
   fallbackUsed: boolean;
   outputContractVersion: string;
   auditPayload: AgentExecutionAuditPayload;

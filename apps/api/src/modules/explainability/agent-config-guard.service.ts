@@ -53,6 +53,7 @@ export class AgentConfigGuardService {
   ): Promise<EvalRunResult | null> {
     await this.assertModelNotQuarantined(companyId, dto.llmModel);
     this.assertResponsibilityCompatibility(dto);
+    this.assertRuntimeGovernanceCompatibility(dto);
     const evalAgentName = this.resolveEvalAgentName(dto.role, dto.runtimeProfile);
     if (!evalAgentName) {
       return null;
@@ -168,6 +169,68 @@ export class AgentConfigGuardService {
         code: "RESPONSIBILITY_CONTRACT_FAILED",
         message: `Конфиг агента ${dto.role} нарушает responsibility contract.`,
         responsibility: validation,
+      });
+    }
+  }
+
+  private assertRuntimeGovernanceCompatibility(dto: UpsertAgentConfigDto): void {
+    const overrides = dto.governancePolicy?.runtimeGovernanceOverrides;
+    if (!overrides) {
+      return;
+    }
+
+    if (!isAgentRuntimeRole(dto.role) && !dto.runtimeProfile?.executionAdapterRole) {
+      throw new BadRequestException({
+        code: "RUNTIME_GOVERNANCE_OVERRIDE_REQUIRES_RUNTIME_OWNER",
+        message:
+          `Конфиг агента ${dto.role} не может использовать runtime governance overrides ` +
+          "без executionAdapterRole.",
+      });
+    }
+
+    const concurrency = overrides.concurrencyEnvelope;
+    if (
+      typeof concurrency?.maxParallelToolCalls === "number" &&
+      typeof concurrency?.maxParallelGroups === "number" &&
+      concurrency.maxParallelGroups > concurrency.maxParallelToolCalls
+    ) {
+      throw new BadRequestException({
+        code: "RUNTIME_GOVERNANCE_CONCURRENCY_INVALID",
+        message:
+          "runtimeGovernanceOverrides.concurrencyEnvelope.maxParallelGroups " +
+          "не может превышать maxParallelToolCalls.",
+      });
+    }
+
+    const truthfulness = overrides.truthfulnessThresholds;
+    const recommendation = overrides.recommendationThresholds;
+    const bsReviewThresholdPct =
+      recommendation?.bsReviewThresholdPct ?? truthfulness?.bsReviewThresholdPct;
+    const bsQuarantineThresholdPct =
+      recommendation?.bsQuarantineThresholdPct ?? truthfulness?.bsQuarantineThresholdPct;
+    if (
+      typeof bsReviewThresholdPct === "number" &&
+      typeof bsQuarantineThresholdPct === "number" &&
+      bsReviewThresholdPct > bsQuarantineThresholdPct
+    ) {
+      throw new BadRequestException({
+        code: "RUNTIME_GOVERNANCE_THRESHOLDS_INVALID",
+        message:
+          "bsReviewThresholdPct не может превышать bsQuarantineThresholdPct " +
+          "в runtime governance overrides.",
+      });
+    }
+
+    const budget = overrides.budgetThresholds;
+    if (
+      typeof budget?.degradePct === "number" &&
+      typeof budget?.denyPct === "number" &&
+      budget.degradePct > budget.denyPct
+    ) {
+      throw new BadRequestException({
+        code: "RUNTIME_GOVERNANCE_BUDGET_INVALID",
+        message:
+          "budgetThresholds.degradePct не может превышать budgetThresholds.denyPct.",
       });
     }
   }

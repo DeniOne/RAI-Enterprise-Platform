@@ -303,6 +303,10 @@ export const api = {
             apiClient.get('/rai/explainability/performance', { params: params?.timeWindowMs != null ? { timeWindowMs: params.timeWindowMs } : {} }),
         queuePressure: (params?: { timeWindowMs?: number }) =>
             apiClient.get('/rai/explainability/queue-pressure', { params: params?.timeWindowMs != null ? { timeWindowMs: params.timeWindowMs } : {} }),
+        runtimeGovernanceSummary: (params?: { timeWindowMs?: number }) =>
+            apiClient.get<RuntimeGovernanceSummaryDto>('/rai/explainability/runtime-governance/summary', { params: params?.timeWindowMs != null ? { timeWindowMs: params.timeWindowMs } : {} }),
+        runtimeGovernanceAgents: (params?: { timeWindowMs?: number }) =>
+            apiClient.get<RuntimeGovernanceAgentDto[]>('/rai/explainability/runtime-governance/agents', { params: params?.timeWindowMs != null ? { timeWindowMs: params.timeWindowMs } : {} }),
         costHotspots: (params?: { timeWindowMs?: number; limit?: number }) =>
             apiClient.get('/rai/explainability/cost-hotspots', { params: params ?? {} }),
         traceTimeline: (traceId: string) =>
@@ -365,6 +369,84 @@ export interface AutonomyStatusDto {
     knownTraceCount: number;
     driver: 'QUALITY_ALERT' | 'BS_AVG_AUTONOMOUS' | 'BS_AVG_TOOL_FIRST' | 'BS_AVG_QUARANTINE' | 'NO_QUALITY_DATA';
     activeQualityAlert?: boolean;
+}
+
+export interface ExplainabilityQueuePressureDto {
+    pressureState: 'IDLE' | 'STABLE' | 'PRESSURED' | 'SATURATED' | null;
+    signalFresh: boolean;
+    totalBacklog: number | null;
+    hottestQueue: string | null;
+    observedQueues: Array<{
+        queueName: string;
+        lastSize: number;
+        avgSize: number;
+        peakSize: number;
+        samples: number;
+        activeInstances: number;
+        lastObservedAt: string | null;
+    }>;
+}
+
+export interface RuntimeGovernanceRecommendationDto {
+    type: string;
+    reason: string;
+    agentRole?: string | null;
+    score?: number | null;
+    traceId?: string | null;
+    metadata?: Record<string, unknown>;
+}
+
+export interface RuntimeGovernanceSummaryDto {
+    companyId: string;
+    queuePressure: ExplainabilityQueuePressureDto;
+    topFallbackReasons: Array<{
+        fallbackReason: string;
+        count: number;
+    }>;
+    recentIncidents: Array<{
+        id: string;
+        incidentType: string;
+        severity: string;
+        traceId: string | null;
+        createdAt: string;
+    }>;
+    activeRecommendations: RuntimeGovernanceRecommendationDto[];
+    quality: {
+        avgBsScorePct: number | null;
+        avgEvidenceCoveragePct: number | null;
+        qualityAlertCount: number;
+    };
+    autonomy: {
+        level: string;
+        avgBsScorePct: number;
+        knownTraceCount: number;
+        driver: string | null;
+        activeQualityAlert: boolean;
+    };
+    hottestAgents: Array<{
+        agentRole: string;
+        fallbackRatePct: number | null;
+        avgBsScorePct: number | null;
+        incidentCount: number;
+    }>;
+}
+
+export interface RuntimeGovernanceAgentDto {
+    agentRole: string;
+    executionCount: number;
+    successRatePct: number | null;
+    fallbackRatePct: number | null;
+    budgetDeniedRatePct: number | null;
+    budgetDegradedRatePct: number | null;
+    policyBlockRatePct: number | null;
+    needsMoreDataRatePct: number | null;
+    toolFailureRatePct: number | null;
+    avgLatencyMs: number | null;
+    p95LatencyMs: number | null;
+    avgBsScorePct: number | null;
+    avgEvidenceCoveragePct: number | null;
+    incidentCount: number;
+    lastRecommendation: string | null;
 }
 
 export interface AgentConfigItem {

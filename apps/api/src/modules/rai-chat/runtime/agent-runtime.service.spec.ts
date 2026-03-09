@@ -13,6 +13,10 @@ import { EconomistAgent } from "../agents/economist-agent.service";
 import { KnowledgeAgent } from "../agents/knowledge-agent.service";
 import { MonitoringAgent } from "../agents/monitoring-agent.service";
 import { AgentExecutionAdapterService } from "./agent-execution-adapter.service";
+import { CrmAgent } from "../agents/crm-agent.service";
+import { FrontOfficeAgent } from "../agents/front-office-agent.service";
+import { RuntimeGovernanceEventService } from "../runtime-governance/runtime-governance-event.service";
+import { RuntimeGovernancePolicyService } from "../runtime-governance/runtime-governance-policy.service";
 
 describe("AgentRuntimeService", () => {
   let service: AgentRuntimeService;
@@ -33,6 +37,8 @@ describe("AgentRuntimeService", () => {
       allowedToolNames: [RaiToolName.EchoMessage],
       droppedToolNames: [],
       ownerRoles: ["knowledge"],
+      fallbackReason: "NONE",
+      fallbackMode: "NONE",
     }),
   };
   const incidentOpsMock = {
@@ -41,6 +47,13 @@ describe("AgentRuntimeService", () => {
   const queueMetricsMock = {
     beginRuntimeExecution: jest.fn().mockResolvedValue(undefined),
     endRuntimeExecution: jest.fn().mockResolvedValue(undefined),
+    getQueuePressure: jest.fn().mockResolvedValue({
+      pressureState: "STABLE",
+      signalFresh: true,
+      totalBacklog: 1,
+      hottestQueue: "runtime_active_tool_calls",
+      observedQueues: [],
+    }),
   };
   const agentRuntimeConfigMock = {
     getEffectiveKernel: jest.fn().mockResolvedValue({
@@ -88,6 +101,24 @@ describe("AgentRuntimeService", () => {
     }),
   };
   const monitoringAgentMock = { run: jest.fn() };
+  const crmAgentMock = { run: jest.fn() };
+  const frontOfficeAgentMock = { run: jest.fn() };
+  const runtimeGovernanceEventsMock = {
+    record: jest.fn().mockResolvedValue(undefined),
+  };
+  const runtimeGovernancePolicyMock = {
+    getRolePolicy: jest.fn().mockReturnValue({
+      concurrency: {
+        maxParallelToolCalls: 8,
+        maxParallelGroups: 6,
+        deadlineMs: 30_000,
+      },
+      thresholds: {
+        queueSaturationThreshold: "SATURATED",
+      },
+    }),
+    resolveFallbackMode: jest.fn().mockReturnValue("READ_ONLY_SUPPORT"),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -106,6 +137,10 @@ describe("AgentRuntimeService", () => {
         { provide: EconomistAgent, useValue: economistAgentMock },
         { provide: KnowledgeAgent, useValue: knowledgeAgentMock },
         { provide: MonitoringAgent, useValue: monitoringAgentMock },
+        { provide: CrmAgent, useValue: crmAgentMock },
+        { provide: FrontOfficeAgent, useValue: frontOfficeAgentMock },
+        { provide: RuntimeGovernanceEventService, useValue: runtimeGovernanceEventsMock },
+        { provide: RuntimeGovernancePolicyService, useValue: runtimeGovernancePolicyMock },
       ],
     }).compile();
     service = module.get(AgentRuntimeService);
@@ -236,6 +271,8 @@ describe("AgentRuntimeService", () => {
       allowedToolNames: [RaiToolName.QueryKnowledge],
       droppedToolNames: [RaiToolName.QueryKnowledge],
       ownerRoles: ["knowledge"],
+      fallbackReason: "BUDGET_DEGRADED",
+      fallbackMode: "READ_ONLY_SUPPORT",
     });
     toolsRegistryMock.execute.mockResolvedValueOnce({ hits: 1, items: [] });
 
@@ -257,6 +294,40 @@ describe("AgentRuntimeService", () => {
     );
   });
 
+  it("records queue saturation and degrades concurrency envelope before execution", async () => {
+    queueMetricsMock.getQueuePressure.mockResolvedValueOnce({
+      pressureState: "SATURATED",
+      signalFresh: true,
+      totalBacklog: 12,
+      hottestQueue: "runtime_active_tool_calls",
+      observedQueues: [],
+    });
+    toolsRegistryMock.execute
+      .mockResolvedValueOnce({ echoedMessage: "a" })
+      .mockResolvedValueOnce({ echoedMessage: "b" });
+
+    const result = await service.run({
+      requestedToolCalls: [
+        { name: RaiToolName.EchoMessage, payload: { message: "a" } },
+        { name: RaiToolName.EchoMessage, payload: { message: "b" } },
+      ],
+      actorContext: { companyId: "c1", traceId: "tr_sat" },
+    });
+
+    expect(result.executedTools).toHaveLength(2);
+    expect(queueMetricsMock.getQueuePressure).toHaveBeenCalledWith(
+      "c1",
+      5 * 60 * 1000,
+    );
+    expect(runtimeGovernanceEventsMock.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        companyId: "c1",
+        traceId: "tr_sat",
+        eventType: "QUEUE_SATURATION_DETECTED",
+      }),
+    );
+  });
+
   it("denies runtime before tool execution when budget controller blocks execution", async () => {
     budgetControllerMock.evaluateRuntimeBudget.mockResolvedValueOnce({
       outcome: "DENY",
@@ -267,6 +338,8 @@ describe("AgentRuntimeService", () => {
       allowedToolNames: [],
       droppedToolNames: [RaiToolName.GenerateTechMapDraft],
       ownerRoles: ["agronomist"],
+      fallbackReason: "BUDGET_DENIED",
+      fallbackMode: "MANUAL_HUMAN_REQUIRED",
     });
 
     const result = await service.run({

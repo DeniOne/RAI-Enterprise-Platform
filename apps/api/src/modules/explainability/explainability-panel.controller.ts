@@ -18,6 +18,9 @@ import { QueuePressureResponseDto } from "./dto/queue-pressure.dto";
 import { TraceForensicsResponseDto } from "./dto/trace-forensics.dto";
 import { TraceTopologyResponseDto } from "./dto/trace-topology.dto";
 import { TruthfulnessDashboardResponseDto } from "./dto/truthfulness-dashboard.dto";
+import { RuntimeGovernanceSummaryDto } from "./dto/runtime-governance-summary.dto";
+import { RuntimeGovernanceAgentDto } from "./dto/runtime-governance-agent.dto";
+import { RuntimeGovernanceReadModelService } from "./runtime-governance-read-model.service";
 
 @Controller("rai/explainability")
 @UseGuards(JwtAuthGuard)
@@ -30,6 +33,7 @@ export class ExplainabilityPanelController {
     private readonly safeReplay: SafeReplayService,
     private readonly performanceMetrics: PerformanceMetricsService,
     private readonly autonomyPolicy: AutonomyPolicyService,
+    private readonly runtimeGovernanceReadModel: RuntimeGovernanceReadModelService,
   ) {}
 
   @Get("performance")
@@ -96,6 +100,36 @@ export class ExplainabilityPanelController {
       driver: status.driver,
       activeQualityAlert: status.activeQualityAlert,
     };
+  }
+
+  @Get("runtime-governance/summary")
+  async getRuntimeGovernanceSummary(
+    @Query("timeWindowMs") timeWindowMs?: string,
+  ): Promise<RuntimeGovernanceSummaryDto> {
+    const companyId = this.tenantContext.getCompanyId();
+    if (!companyId) {
+      throw new BadRequestException("Security Context: companyId is missing");
+    }
+    const windowMs = timeWindowMs !== undefined ? Number(timeWindowMs) : 3600000;
+    if (!Number.isFinite(windowMs) || windowMs <= 0) {
+      throw new BadRequestException("Invalid timeWindowMs");
+    }
+    return this.runtimeGovernanceReadModel.getSummary(companyId, windowMs);
+  }
+
+  @Get("runtime-governance/agents")
+  async getRuntimeGovernanceAgents(
+    @Query("timeWindowMs") timeWindowMs?: string,
+  ): Promise<RuntimeGovernanceAgentDto[]> {
+    const companyId = this.tenantContext.getCompanyId();
+    if (!companyId) {
+      throw new BadRequestException("Security Context: companyId is missing");
+    }
+    const windowMs = timeWindowMs !== undefined ? Number(timeWindowMs) : 3600000;
+    if (!Number.isFinite(windowMs) || windowMs <= 0) {
+      throw new BadRequestException("Invalid timeWindowMs");
+    }
+    return this.runtimeGovernanceReadModel.getAgents(companyId, windowMs);
   }
 
   @Get("trace/:traceId")

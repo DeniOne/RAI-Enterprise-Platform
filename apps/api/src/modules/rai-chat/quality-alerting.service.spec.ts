@@ -6,6 +6,8 @@ import {
 } from "./quality-alerting.service";
 import { IncidentOpsService } from "./incident-ops.service";
 import { SystemIncidentType } from "@rai/prisma-client";
+import { RuntimeGovernanceEventService } from "./runtime-governance/runtime-governance-event.service";
+import { RuntimeGovernanceRecommendationService } from "./runtime-governance/runtime-governance-recommendation.service";
 
 describe("QualityAlertingService", () => {
   let service: QualityAlertingService;
@@ -17,11 +19,21 @@ describe("QualityAlertingService", () => {
     },
     qualityAlert: {
       findFirst: jest.fn(),
+      count: jest.fn(),
       create: jest.fn(),
+    },
+    aiAuditEntry: {
+      findFirst: jest.fn(),
     },
   } as unknown as PrismaService;
   const incidentOps = {
     logIncident: jest.fn(),
+  };
+  const governanceEvents = {
+    record: jest.fn().mockResolvedValue(undefined),
+  };
+  const recommendationService = {
+    handleQualityAlertCreated: jest.fn().mockResolvedValue(null),
   };
 
   beforeEach(async () => {
@@ -31,6 +43,8 @@ describe("QualityAlertingService", () => {
         QualityAlertingService,
         { provide: PrismaService, useValue: prisma },
         { provide: IncidentOpsService, useValue: incidentOps },
+        { provide: RuntimeGovernanceEventService, useValue: governanceEvents },
+        { provide: RuntimeGovernanceRecommendationService, useValue: recommendationService },
       ],
     }).compile();
 
@@ -45,6 +59,7 @@ describe("QualityAlertingService", () => {
       _avg: { bsScorePct: 10 },
     });
     (prisma.qualityAlert.findFirst as jest.Mock).mockResolvedValue(null);
+    (prisma.qualityAlert.count as jest.Mock).mockResolvedValue(0);
     (prisma.traceSummary.findFirst as jest.Mock).mockResolvedValue(null);
 
     const result = (await service.evaluateBsDrift({
@@ -64,6 +79,7 @@ describe("QualityAlertingService", () => {
       _avg: { bsScorePct: 10 },
     });
     (prisma.qualityAlert.findFirst as jest.Mock).mockResolvedValue(null);
+    (prisma.qualityAlert.count as jest.Mock).mockResolvedValue(1);
     (prisma.qualityAlert.create as jest.Mock).mockResolvedValue({
       id: "qa1",
     });
@@ -99,6 +115,19 @@ describe("QualityAlertingService", () => {
         hottestTraceBsPct: 51,
       }),
     });
+    expect(governanceEvents.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "QUALITY_DRIFT_DETECTED",
+      }),
+    );
+    expect(recommendationService.handleQualityAlertCreated).toHaveBeenCalledWith(
+      expect.objectContaining({
+        companyId: "c1",
+        traceId: "tr-hot",
+        recentAvgBsPct: 45,
+        baselineAvgBsPct: 10,
+      }),
+    );
   });
 
   it("Cooldown: если алерт уже есть сегодня — второй не создаём", async () => {
@@ -111,6 +140,7 @@ describe("QualityAlertingService", () => {
     (prisma.qualityAlert.findFirst as jest.Mock).mockResolvedValue({
       id: "existing",
     });
+    (prisma.qualityAlert.count as jest.Mock).mockResolvedValue(1);
     (prisma.traceSummary.findFirst as jest.Mock).mockResolvedValue(null);
 
     const result = (await service.evaluateBsDrift({
@@ -123,4 +153,3 @@ describe("QualityAlertingService", () => {
     expect(incidentOps.logIncident).not.toHaveBeenCalled();
   });
 });
-

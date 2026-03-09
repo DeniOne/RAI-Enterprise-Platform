@@ -4,6 +4,10 @@ import {
 } from "../../rai-chat/agent-registry.service";
 import { RaiToolName } from "../../rai-chat/tools/rai-tools.types";
 import { AgentAutonomyMode, AgentMemoryScope } from "../../rai-chat/agent-platform/agent-platform.types";
+import {
+  FALLBACK_MODES,
+  RuntimeGovernanceOverrides,
+} from "../../rai-chat/runtime-governance/runtime-governance-policy.types";
 
 export const AgentRuntimeRoleSchema = z
   .string()
@@ -13,6 +17,67 @@ export const AgentRuntimeRoleSchema = z
   .refine((value) => isAgentRuntimeRole(value) || value.includes("_") || /^[a-z]+$/.test(value), {
     message: "role must be a lowercase runtime role or future-agent manifest role",
   });
+
+const RuntimeGovernanceFallbackPolicySchema = z
+  .object({
+    NONE: z.enum(FALLBACK_MODES).optional(),
+    BUDGET_DENIED: z.enum(FALLBACK_MODES).optional(),
+    BUDGET_DEGRADED: z.enum(FALLBACK_MODES).optional(),
+    POLICY_BLOCKED: z.enum(FALLBACK_MODES).optional(),
+    PENDING_USER_CONFIRMATION: z.enum(FALLBACK_MODES).optional(),
+    DEADLINE_EXCEEDED: z.enum(FALLBACK_MODES).optional(),
+    TOOL_FAILURE: z.enum(FALLBACK_MODES).optional(),
+    NO_INTENT_OWNER: z.enum(FALLBACK_MODES).optional(),
+    NO_EVIDENCE: z.enum(FALLBACK_MODES).optional(),
+    LLM_UNAVAILABLE: z.enum(FALLBACK_MODES).optional(),
+    REPLAY_MODE: z.enum(FALLBACK_MODES).optional(),
+    NEEDS_MORE_DATA: z.enum(FALLBACK_MODES).optional(),
+  })
+  .strict();
+
+const RuntimeConcurrencyEnvelopeSchema = z
+  .object({
+    maxParallelToolCalls: z.number().int().positive().optional(),
+    maxParallelGroups: z.number().int().positive().optional(),
+    deadlineMs: z.number().int().positive().optional(),
+  })
+  .strict();
+
+const RuntimeTruthfulnessThresholdsSchema = z
+  .object({
+    bsReviewThresholdPct: z.number().min(0).max(100).optional(),
+    bsQuarantineThresholdPct: z.number().min(0).max(100).optional(),
+    evidenceCoverageMinPct: z.number().min(0).max(100).optional(),
+  })
+  .strict();
+
+const RuntimeBudgetThresholdsSchema = z
+  .object({
+    degradePct: z.number().min(0).max(100).optional(),
+    denyPct: z.number().min(0).max(100).optional(),
+    budgetDeniedRateThresholdPct: z.number().min(0).max(100).optional(),
+  })
+  .strict();
+
+const RuntimeRecommendationThresholdsSchema = z
+  .object({
+    bsReviewThresholdPct: z.number().min(0).max(100).optional(),
+    bsQuarantineThresholdPct: z.number().min(0).max(100).optional(),
+    budgetDeniedRateThresholdPct: z.number().min(0).max(100).optional(),
+    queueSaturationThreshold: z.enum(["PRESSURED", "SATURATED"]).optional(),
+    toolFailureRateThresholdPct: z.number().min(0).max(100).optional(),
+  })
+  .strict();
+
+const RuntimeGovernanceOverridesSchema = z
+  .object({
+    concurrencyEnvelope: RuntimeConcurrencyEnvelopeSchema.optional(),
+    truthfulnessThresholds: RuntimeTruthfulnessThresholdsSchema.optional(),
+    budgetThresholds: RuntimeBudgetThresholdsSchema.optional(),
+    fallbackPolicy: RuntimeGovernanceFallbackPolicySchema.optional(),
+    recommendationThresholds: RuntimeRecommendationThresholdsSchema.optional(),
+  })
+  .strict();
 
 export const UpsertAgentConfigDtoSchema = z.object({
   name: z.string().min(1),
@@ -158,6 +223,7 @@ export const UpsertAgentConfigDtoSchema = z.object({
       criticalActionRules: z.array(z.string()).optional(),
       auditRequirements: z.array(z.string()).optional(),
       fallbackRules: z.array(z.string()).optional(),
+      runtimeGovernanceOverrides: RuntimeGovernanceOverridesSchema.optional(),
     })
     .optional(),
   connectors: z
@@ -227,6 +293,7 @@ export interface AgentKernelViewDto {
     criticalActionRules: string[];
     auditRequirements: string[];
     fallbackRules: string[];
+    runtimeGovernanceOverrides?: RuntimeGovernanceOverrides;
   };
   toolBindings: Array<{
     toolName: string;
@@ -475,6 +542,7 @@ export const FutureAgentManifestDtoSchema = z.object({
     criticalActionRules: z.array(z.string()),
     auditRequirements: z.array(z.string()).min(1),
     fallbackRules: z.array(z.string()).min(1),
+    runtimeGovernanceOverrides: RuntimeGovernanceOverridesSchema.optional(),
   }),
   domainAdapter: z
     .object({

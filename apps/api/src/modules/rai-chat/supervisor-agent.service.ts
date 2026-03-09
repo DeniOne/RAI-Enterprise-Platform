@@ -78,6 +78,7 @@ export class SupervisorAgent {
       traceId,
       threadId,
     };
+    actorContext.agentRole = executionRequest.role;
     const executionResult = await this.agentRuntime.executeAgent(
       executionRequest,
       actorContext,
@@ -140,6 +141,7 @@ export class SupervisorAgent {
         agentRole: executionResult.agentExecution?.role,
         fallbackUsed: executionResult.agentExecution?.fallbackUsed,
         validation: executionResult.agentExecution?.validation,
+        runtimeGovernance: response.runtimeGovernance,
         phases: [
           { name: "router", timestamp: new Date(tRouter).toISOString(), durationMs: tExecStart - tRouter },
           { name: "tools", timestamp: new Date(tExecStart).toISOString(), durationMs: tExternalSignals - tExecStart },
@@ -267,6 +269,7 @@ export class SupervisorAgent {
     agentRole?: string;
     fallbackUsed?: boolean;
     validation?: RaiChatResponseDto["validation"];
+    runtimeGovernance?: RaiChatResponseDto["runtimeGovernance"];
     phases?: Array<{ name: string; timestamp: string; durationMs: number }>;
   }): Promise<string | null> {
     const metadataObj: Record<string, unknown> = {};
@@ -290,6 +293,9 @@ export class SupervisorAgent {
     }
     if (params.validation) {
       metadataObj.validation = params.validation;
+    }
+    if (params.runtimeGovernance) {
+      metadataObj.runtimeGovernance = params.runtimeGovernance;
     }
     if (params.phases && params.phases.length > 0) {
       metadataObj.phases = params.phases;

@@ -149,6 +149,7 @@ model Company {
   userCredibilityProfiles UserCredibilityProfile[]
   systemIncidents         SystemIncident[]
   incidentRunbookExecutions IncidentRunbookExecution[]
+  runtimeGovernanceEvents RuntimeGovernanceEvent[]
   performanceMetrics      PerformanceMetric[]
   agentConfigurations     AgentConfiguration[]
   agentConfigChanges      AgentConfigChangeRequest[]
@@ -1542,6 +1543,41 @@ enum PerformanceMetricType {
   LATENCY
   ERROR_RATE
   QUEUE_SIZE
+}
+
+enum RuntimeGovernanceEventType {
+  FALLBACK_USED
+  BUDGET_DEGRADED
+  BUDGET_DENIED
+  POLICY_BLOCKED
+  PENDING_ACTION_CREATED
+  NEEDS_MORE_DATA
+  TOOL_FAILURE
+  QUALITY_DRIFT_DETECTED
+  GOVERNANCE_RECOMMENDATION_EMITTED
+  QUEUE_SATURATION_DETECTED
+}
+
+model RuntimeGovernanceEvent {
+  id                 String                     @id @default(cuid())
+  companyId          String
+  company            Company                    @relation(fields: [companyId], references: [id])
+  traceId            String?
+  agentRole          String?
+  toolName           String?
+  eventType          RuntimeGovernanceEventType
+  fallbackReason     String?
+  fallbackMode       String?
+  recommendationType String?
+  value              Float?
+  metadata           Json                       @default("{}")
+  createdAt          DateTime                   @default(now())
+
+  @@index([companyId])
+  @@index([companyId, eventType, createdAt])
+  @@index([companyId, agentRole, createdAt])
+  @@index([traceId])
+  @@map("runtime_governance_events")
 }
 
 model PerformanceMetric {

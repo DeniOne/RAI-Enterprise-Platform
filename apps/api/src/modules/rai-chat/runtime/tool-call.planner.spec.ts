@@ -1,5 +1,9 @@
 import { RaiToolName } from "../tools/rai-tools.types";
-import { planByToolCalls, planByIntents } from "./tool-call.planner";
+import {
+  buildExecutionBatches,
+  planByToolCalls,
+  planByIntents,
+} from "./tool-call.planner";
 import type { IntentClassification } from "../intent-router/intent-router.types";
 
 describe("ToolCallPlanner", () => {
@@ -104,6 +108,49 @@ describe("ToolCallPlanner", () => {
       ]);
       expect(frontOffice).toHaveLength(1);
       expect(frontOffice[0].toolName).toBe(RaiToolName.CreateFrontOfficeEscalation);
+    });
+  });
+
+  describe("buildExecutionBatches", () => {
+    it("уважает maxParallelGroups и maxParallelToolCalls", () => {
+      const plan = planByToolCalls([
+        { name: RaiToolName.GenerateTechMapDraft, payload: { fieldRef: "f1" } },
+        { name: RaiToolName.ComputePlanFact, payload: { scope: { seasonId: "s1" } } },
+        { name: RaiToolName.QueryKnowledge, payload: { query: "рапс" } },
+      ]);
+
+      const batches = buildExecutionBatches(plan, {
+        maxParallelToolCalls: 2,
+        maxParallelGroups: 2,
+        deadlineMs: 10_000,
+      });
+
+      expect(batches).toHaveLength(2);
+      expect(batches[0].map((call) => call.name)).toEqual([
+        RaiToolName.GenerateTechMapDraft,
+        RaiToolName.ComputePlanFact,
+      ]);
+      expect(batches[1].map((call) => call.name)).toEqual([
+        RaiToolName.QueryKnowledge,
+      ]);
+    });
+
+    it("разбивает большой batch, если превышен maxParallelToolCalls", () => {
+      const plan = planByToolCalls([
+        { name: RaiToolName.CreateCrmContact, payload: { accountId: "a1" } },
+        { name: RaiToolName.UpdateCrmContact, payload: { contactId: "c1" } },
+        { name: RaiToolName.DeleteCrmContact, payload: { contactId: "c2" } },
+      ]);
+
+      const batches = buildExecutionBatches(plan, {
+        maxParallelToolCalls: 2,
+        maxParallelGroups: 1,
+        deadlineMs: 10_000,
+      });
+
+      expect(batches).toHaveLength(2);
+      expect(batches[0]).toHaveLength(2);
+      expect(batches[1]).toHaveLength(1);
     });
   });
 });

@@ -2,7 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { api, type AutonomyStatusDto } from '@/lib/api';
+import {
+  api,
+  type AutonomyStatusDto,
+  type RuntimeGovernanceAgentDto,
+  type RuntimeGovernanceSummaryDto,
+} from '@/lib/api';
 import { Monitor, ShieldCheck, Zap, Activity, DollarSign, TerminalSquare, AlertCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -58,6 +63,8 @@ export default function ControlTowerPage() {
   const [cost, setCost] = useState<CostData | null>(null);
   const [queuePressure, setQueuePressure] = useState<QueuePressureData | null>(null);
   const [autonomy, setAutonomy] = useState<AutonomyStatusDto | null>(null);
+  const [runtimeGovernanceSummary, setRuntimeGovernanceSummary] = useState<RuntimeGovernanceSummaryDto | null>(null);
+  const [runtimeGovernanceAgents, setRuntimeGovernanceAgents] = useState<RuntimeGovernanceAgentDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,12 +72,14 @@ export default function ControlTowerPage() {
     let cancelled = false;
     (async () => {
       try {
-        const [dRes, pRes, cRes, qRes, aRes] = await Promise.all([
+        const [dRes, pRes, cRes, qRes, aRes, rgSummaryRes, rgAgentsRes] = await Promise.all([
           api.explainability.dashboard({ hours: 24 }),
           api.explainability.performance({ timeWindowMs: 3600000 }),
           api.explainability.costHotspots({ timeWindowMs: 86400000, limit: 10 }),
           api.explainability.queuePressure({ timeWindowMs: 3600000 }),
           api.autonomy.status(),
+          api.explainability.runtimeGovernanceSummary({ timeWindowMs: 3600000 }),
+          api.explainability.runtimeGovernanceAgents({ timeWindowMs: 3600000 }),
         ]);
         if (cancelled) return;
         setDashboard(dRes.data);
@@ -78,6 +87,8 @@ export default function ControlTowerPage() {
         setCost(cRes.data);
         setQueuePressure(qRes.data);
         setAutonomy(aRes.data);
+        setRuntimeGovernanceSummary(rgSummaryRes.data);
+        setRuntimeGovernanceAgents(rgAgentsRes.data);
       } catch (e) {
         if (!cancelled) setError((e as Error).message ?? 'Сбой получения телеметрии');
       } finally {
@@ -344,6 +355,193 @@ export default function ControlTowerPage() {
 
         </div>
 
+        {runtimeGovernanceSummary && (
+          <div className="mt-12">
+            <div className="flex items-center gap-3 mb-6">
+              <ShieldCheck size={20} className="text-[#030213]" />
+              <h2 className="text-xl font-medium text-[#030213] tracking-tight">Runtime Governance</h2>
+            </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <UnitCard
+                title="Governance Signals"
+                icon={<ShieldCheck size={20} />}
+                subtitle="Runtime Control"
+              >
+                <div className="space-y-1">
+                  <DataRow
+                    label="Активные рекомендации"
+                    value={`${runtimeGovernanceSummary.activeRecommendations.length}`}
+                    status={runtimeGovernanceSummary.activeRecommendations.length > 0 ? 'warning' : 'success'}
+                  />
+                  <DataRow
+                    label="Quality alerts"
+                    value={`${runtimeGovernanceSummary.quality.qualityAlertCount}`}
+                    status={runtimeGovernanceSummary.quality.qualityAlertCount > 0 ? 'warning' : 'success'}
+                  />
+                  <DataRow
+                    label="Queue pressure"
+                    value={formatQueuePressureState(runtimeGovernanceSummary.queuePressure.pressureState)}
+                    status={queuePressureStatus(runtimeGovernanceSummary.queuePressure)}
+                  />
+                  <DataRow
+                    label="Autonomy"
+                    value={formatAutonomyLevel(runtimeGovernanceSummary.autonomy.level as AutonomyStatusDto['level'])}
+                    status={
+                      runtimeGovernanceSummary.autonomy.level === 'AUTONOMOUS'
+                        ? 'success'
+                        : runtimeGovernanceSummary.autonomy.level === 'QUARANTINE'
+                          ? 'error'
+                          : 'warning'
+                    }
+                  />
+                  <DataRow
+                    label="Средний BS%"
+                    value={formatPctOrPending(runtimeGovernanceSummary.quality.avgBsScorePct)}
+                    status={
+                      runtimeGovernanceSummary.quality.avgBsScorePct === null
+                        ? 'warning'
+                        : runtimeGovernanceSummary.quality.avgBsScorePct <= 15
+                          ? 'success'
+                          : runtimeGovernanceSummary.quality.avgBsScorePct <= 35
+                            ? 'warning'
+                            : 'error'
+                    }
+                  />
+                </div>
+              </UnitCard>
+
+              <UnitCard
+                title="Fallback Contour"
+                icon={<Zap size={20} />}
+                subtitle="Routing & Recovery"
+              >
+                <div className="space-y-0.5">
+                  {runtimeGovernanceSummary.topFallbackReasons.length > 0 ? (
+                    runtimeGovernanceSummary.topFallbackReasons.slice(0, 5).map((item) => (
+                      <div key={item.fallbackReason} className="flex items-center justify-between py-2 border-b border-black/[0.03] last:border-0">
+                        <span className="text-[13px] text-[#030213] font-medium">{formatGovernanceKey(item.fallbackReason)}</span>
+                        <span className="text-[13px] font-mono text-[#717182]">{item.count}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <NoData />
+                  )}
+
+                  {runtimeGovernanceSummary.recentIncidents.length > 0 && (
+                    <div className="mt-6 pt-5 border-t border-black/5">
+                      <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Последние инциденты</p>
+                      <div className="space-y-2">
+                        {runtimeGovernanceSummary.recentIncidents.slice(0, 3).map((incident) => (
+                          <div key={incident.id} className="flex items-center justify-between gap-4">
+                            <div className="min-w-0">
+                              <p className="text-[12px] font-medium text-[#030213] truncate">{incident.incidentType}</p>
+                              <p className="text-[11px] text-[#717182] truncate">
+                                {incident.traceId ?? 'без trace'} • {new Date(incident.createdAt).toLocaleString('ru')}
+                              </p>
+                            </div>
+                            <RiskBadge level={severityToRiskLevel(incident.severity)} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </UnitCard>
+
+              <UnitCard
+                title="Hottest Agents"
+                icon={<Activity size={20} />}
+                subtitle="Reliability Ranking"
+              >
+                <div className="space-y-0.5">
+                  {runtimeGovernanceSummary.hottestAgents.length > 0 ? (
+                    runtimeGovernanceSummary.hottestAgents.map((agent) => (
+                      <div key={agent.agentRole} className="flex items-center justify-between py-2 border-b border-black/[0.03] last:border-0">
+                        <div>
+                          <p className="text-[13px] font-medium text-[#030213]">{agent.agentRole}</p>
+                          <p className="text-[11px] text-[#717182]">
+                            fallback {formatPctOrPending(agent.fallbackRatePct)} • BS {formatPctOrPending(agent.avgBsScorePct)}
+                          </p>
+                        </div>
+                        <span className="text-[12px] font-mono text-[#717182]">{agent.incidentCount} inc</span>
+                      </div>
+                    ))
+                  ) : (
+                    <NoData />
+                  )}
+                </div>
+              </UnitCard>
+            </div>
+
+            <div className="mt-6 bg-white border border-black/10 rounded-2xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-black/5 bg-slate-50">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-1">Agent Reliability Table</p>
+                    <h3 className="text-lg font-medium text-[#030213] tracking-tight">Нездоровые роли ранжированы первыми</h3>
+                  </div>
+                  <div className="text-[12px] text-[#717182]">
+                    {runtimeGovernanceAgents.length} ролей в контуре
+                  </div>
+                </div>
+              </div>
+
+              {runtimeGovernanceAgents.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-black/5 bg-white">
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Роль</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Success</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Fallback</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Budget deny</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Tool fail</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">P95 latency</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">BS / Evidence</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Recommendation</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-black/5">
+                      {runtimeGovernanceAgents.map((agent) => (
+                        <tr key={agent.agentRole} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="text-[13px] font-medium text-[#030213]">{agent.agentRole}</div>
+                            <div className="text-[11px] text-[#717182]">{agent.executionCount} runs • {agent.incidentCount} incidents</div>
+                          </td>
+                          <td className="px-6 py-4 text-[13px] font-mono text-[#030213]">{formatPctOrPending(agent.successRatePct)}</td>
+                          <td className="px-6 py-4 text-[13px] font-mono text-amber-600">{formatPctOrPending(agent.fallbackRatePct)}</td>
+                          <td className="px-6 py-4 text-[13px] font-mono text-[#030213]">{formatPctOrPending(agent.budgetDeniedRatePct)}</td>
+                          <td className="px-6 py-4 text-[13px] font-mono text-[#030213]">{formatPctOrPending(agent.toolFailureRatePct)}</td>
+                          <td className="px-6 py-4 text-[13px] font-mono text-[#030213]">
+                            {agent.p95LatencyMs === null ? 'pending' : `${agent.p95LatencyMs.toFixed(0)} ms`}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-[13px] font-mono text-[#030213]">{formatPctOrPending(agent.avgBsScorePct)}</div>
+                            <div className="text-[11px] text-[#717182]">{formatPctOrPending(agent.avgEvidenceCoveragePct)}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={clsx(
+                              'inline-flex px-2.5 py-1 rounded text-[10px] font-medium uppercase tracking-widest border',
+                              recommendationBadgeClass(agent.lastRecommendation),
+                            )}>
+                              {formatGovernanceKey(agent.lastRecommendation ?? 'NONE')}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="px-6 py-6">
+                  <NoData />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* C-Pattern: Табличный вывод инцидентов / аномалий */}
         {dashboard && dashboard.worstTraces.length > 0 && (
           <div className="mt-12">
@@ -511,7 +709,11 @@ function formatQueuePressureState(state: QueuePressureData['pressureState'] | un
   }
 }
 
-function queuePressureStatus(queuePressure: QueuePressureData | null): 'success' | 'warning' | 'error' {
+function queuePressureStatus(
+  queuePressure:
+    | Pick<QueuePressureData, 'pressureState' | 'signalFresh'>
+    | null,
+): 'success' | 'warning' | 'error' {
   if (!queuePressure || !queuePressure.signalFresh || queuePressure.pressureState === null) {
     return 'warning';
   }
@@ -522,6 +724,41 @@ function queuePressureStatus(queuePressure: QueuePressureData | null): 'success'
     return 'warning';
   }
   return 'success';
+}
+
+function formatGovernanceKey(value: string) {
+  return value
+    .toLowerCase()
+    .replaceAll('_', ' ');
+}
+
+function severityToRiskLevel(severity: string): 'R1' | 'R2' | 'R3' | 'R4' | 'Success' {
+  switch (severity.toUpperCase()) {
+    case 'CRITICAL':
+      return 'R4';
+    case 'HIGH':
+      return 'R3';
+    case 'MEDIUM':
+      return 'R2';
+    case 'LOW':
+      return 'R1';
+    default:
+      return 'R2';
+  }
+}
+
+function recommendationBadgeClass(recommendation: string | null) {
+  switch (recommendation) {
+    case 'QUARANTINE_RECOMMENDED':
+    case 'ROLLBACK_RECOMMENDED':
+      return 'bg-red-50 text-red-700 border-red-200';
+    case 'REVIEW_REQUIRED':
+    case 'CONCURRENCY_TUNING_RECOMMENDED':
+    case 'BUDGET_TUNING_RECOMMENDED':
+      return 'bg-amber-50 text-amber-700 border-amber-200';
+    default:
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+  }
 }
 
 function RiskBadge({ level }: { level: 'R1' | 'R2' | 'R3' | 'R4' | 'Success' }) {

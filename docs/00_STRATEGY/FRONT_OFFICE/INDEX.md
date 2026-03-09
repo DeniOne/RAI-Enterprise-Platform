@@ -14,6 +14,11 @@ last_updated: 2026-03-09
 
 Этот индекс собран после сверки стратегии, архитектурных правил, execution-документов и текущего кода на `2026-03-09`.
 
+## Главный активный документ
+
+**[FRONT_OFFICE_MASTER_PLAN.md](./FRONT_OFFICE_MASTER_PLAN.md)**  
+→ Главный active canon блока `Front-Office`. С него нужно начинать. Остальные документы блока являются активными приложениями и детализацией.
+
 ## 1. Что входит в блок Front-Office
 
 - исполнительный и сенсорный контур работы с хозяйствами;
@@ -24,6 +29,7 @@ last_updated: 2026-03-09
 
 | Документ | Статус | Роль |
 |----------|--------|------|
+| [FRONT_OFFICE_MASTER_PLAN.md](./FRONT_OFFICE_MASTER_PLAN.md) | `ACTIVE CANON` | Главный сводный документ блока |
 | [../VISION_SCOPE.md](../VISION_SCOPE.md) | `CANON INPUT` | Верхнеуровневая модель двух контуров и scope Front-Office |
 | [../BUSINESS/RAI BUSINESS ARCHITECTURE v2.0.md](../BUSINESS/RAI%20BUSINESS%20ARCHITECTURE%20v2.0.md) | `ACTIVE REALITY MAP` | Фактическая картина по коду: что реально реализовано |
 | [../../01_ARCHITECTURE/PRINCIPLES/Front-Office_Function_Admission_Rules.md](../../01_ARCHITECTURE/PRINCIPLES/Front-Office_Function_Admission_Rules.md) | `NORMATIVE` | Что вообще разрешено реализовывать во Front-Office |
@@ -76,6 +82,6 @@ last_updated: 2026-03-09
 
 - [FRONT_OFFICE_SCOPE.md](./FRONT_OFFICE_SCOPE.md) — границы блока и его business outcome.
 - [FRONT_OFFICE_IA.md](./FRONT_OFFICE_IA.md) — структура раздела, навигация и кабинеты ролей.
-- `FRONT_OFFICE_USER_FLOWS.md` — ключевые пользовательские сценарии.
-- `FRONT_OFFICE_API_CONTRACTS.md` — целевые read/write контракты.
-- `FRONT_OFFICE_BACKLOG.md` — очередь работ по web/UI/API harmonization.
+- [FRONT_OFFICE_USER_FLOWS.md](./FRONT_OFFICE_USER_FLOWS.md) — ключевые пользовательские сценарии.
+- [FRONT_OFFICE_API_CONTRACTS.md](./FRONT_OFFICE_API_CONTRACTS.md) — целевые read/write контракты.
+- [FRONT_OFFICE_BACKLOG.md](./FRONT_OFFICE_BACKLOG.md) — очередь работ по web/UI/API harmonization.
