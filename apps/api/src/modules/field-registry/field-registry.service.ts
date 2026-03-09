@@ -48,6 +48,26 @@ export class FieldRegistryService {
     });
   }
 
+  async findOne(id: string, companyId: string): Promise<Field> {
+    const field = await this.prisma.field.findFirst({
+      where: { id, companyId },
+      include: {
+        client: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!field) {
+      throw new ForbiddenException(`Field ${id} not found or access denied`);
+    }
+
+    return field as Field;
+  }
+
   private validateGeoJson(geojson: any) {
     if (!geojson || typeof geojson !== "object") {
       throw new BadRequestException("Invalid GeoJSON object");

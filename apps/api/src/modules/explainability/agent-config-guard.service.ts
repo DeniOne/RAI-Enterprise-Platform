@@ -22,6 +22,7 @@ const ROLE_TO_AGENT_NAME: Record<CanonicalAgentRuntimeRole, string> = {
   monitoring: "MonitoringAgent",
   crm_agent: "CrmAgent",
   front_office_agent: "FrontOfficeAgent",
+  contracts_agent: "ContractsAgent",
 };
 
 @Injectable()

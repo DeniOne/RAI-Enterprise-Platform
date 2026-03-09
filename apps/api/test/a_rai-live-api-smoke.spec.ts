@@ -3,6 +3,7 @@ import {
   ExecutionContext,
   INestApplication,
 } from "@nestjs/common";
+import { ConfigModule, ConfigService } from "@nestjs/config";
 import { Test } from "@nestjs/testing";
 import { Provider } from "@nestjs/common";
 import request = require("supertest");
@@ -212,6 +213,12 @@ describe("A_RAI live API smoke", () => {
   const safeReplay = {
     runReplay: jest.fn(),
   };
+  const configService = {
+    get: jest.fn((key: string) => {
+      if (key === "LOOKUP_PROVIDER_PRIMARY") return "DADATA";
+      return undefined;
+    }),
+  };
 
   const incidentOps = {
     getIncidentsFeed: jest.fn(),
@@ -262,13 +269,46 @@ describe("A_RAI live API smoke", () => {
     provide: "MEMORY_ADAPTER",
     useValue: memoryAdapterMock,
   };
+  const buildContractsAgentConfig = (companyId = "company-a") => ({
+    id: `cfg-contracts-${companyId}`,
+    name: "ContractsAgent",
+    role: "contracts_agent",
+    systemPrompt: "You are contracts agent.",
+    llmModel: "openai/gpt-5-mini",
+    maxTokens: 8000,
+    isActive: true,
+    companyId,
+    capabilities: ["ContractsToolsRegistry"],
+    runtimeProfile: {
+      profileId: "contracts-runtime-v1",
+      modelRoutingClass: "strong",
+      provider: "openrouter",
+      model: "openai/gpt-5-mini",
+      maxInputTokens: 8000,
+      maxOutputTokens: 4000,
+      temperature: 0.1,
+      timeoutMs: 20000,
+      supportsStreaming: false,
+    },
+    memoryPolicy: {},
+    outputContract: {
+      contractId: "contracts-agent-v1",
+      responseSchemaVersion: "v1",
+      sections: ["summary", "commerce_state", "evidence"],
+      requiresEvidence: true,
+      requiresDeterministicValidation: true,
+      fallbackMode: "deterministic_summary",
+    },
+    governancePolicy: {},
+    autonomyMode: "advisory",
+  });
 
   beforeAll(async () => {
     process.env.JWT_SECRET = process.env.JWT_SECRET || "smoke-secret";
     process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
 
     const moduleRef = await Test.createTestingModule({
-      imports: [RaiChatModule, ExplainabilityPanelModule],
+      imports: [ConfigModule.forRoot({ isGlobal: true }), RaiChatModule, ExplainabilityPanelModule],
       providers: [memoryAdapterProvider],
     })
       .overrideGuard(JwtAuthGuard)
@@ -289,6 +329,8 @@ describe("A_RAI live API smoke", () => {
       .useValue(traceTopology)
       .overrideProvider(SafeReplayService)
       .useValue(safeReplay)
+      .overrideProvider(ConfigService)
+      .useValue(configService)
       .overrideProvider(IncidentOpsService)
       .useValue(incidentOps)
       .overrideProvider(AgentManagementService)
@@ -313,13 +355,19 @@ describe("A_RAI live API smoke", () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    if (app) {
+      await app.close();
+    }
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
     tenantContext.getCompanyId.mockReturnValue("company-a");
     tenantContext.getStore.mockReturnValue({ companyId: "company-a" });
+    configService.get.mockImplementation((key: string) => {
+      if (key === "LOOKUP_PROVIDER_PRIMARY") return "DADATA";
+      return undefined;
+    });
     intentRouter.classify.mockReturnValue({
       targetRole: "knowledge",
       intent: null,
@@ -1151,6 +1199,773 @@ describe("A_RAI live API smoke", () => {
               targetRoute: "/consulting/yield",
             }),
           ]),
+        }),
+      ]),
+    );
+  });
+
+  it("POST /api/rai/chat отдаёт clarification windows для contracts_agent при нехватке контекста договора", async () => {
+    intentRouter.classify.mockReturnValue({
+      targetRole: "contracts_agent",
+      intent: "create_commerce_contract",
+      toolName: "create_commerce_contract",
+      confidence: 0.93,
+      method: "smoke",
+      reason: "forced contracts route",
+    });
+    intentRouter.buildAutoToolCall.mockReturnValue({
+      name: "create_commerce_contract",
+      payload: {
+        number: "DOG-001",
+      },
+    });
+    (prismaProxyTyped.agentConfiguration.findUnique as jest.Mock).mockImplementation(
+      async ({
+        where,
+      }: {
+        where: { agent_config_role_company_unique: { role: string; companyId: string | null } };
+      }) => {
+        const { role, companyId } = where.agent_config_role_company_unique;
+        if (role === "contracts_agent" && companyId === "company-a") {
+          return {
+            id: "cfg-contracts-company-a",
+            name: "ContractsAgent",
+            role: "contracts_agent",
+            systemPrompt: "You are contracts agent.",
+            llmModel: "openai/gpt-5-mini",
+            maxTokens: 8000,
+            isActive: true,
+            companyId: "company-a",
+            capabilities: ["ContractsToolsRegistry"],
+            runtimeProfile: {
+              profileId: "contracts-runtime-v1",
+              modelRoutingClass: "strong",
+              provider: "openrouter",
+              model: "openai/gpt-5-mini",
+              maxInputTokens: 8000,
+              maxOutputTokens: 4000,
+              temperature: 0.1,
+              timeoutMs: 20000,
+              supportsStreaming: false,
+            },
+            memoryPolicy: {},
+            outputContract: {
+              contractId: "contracts-agent-v1",
+              responseSchemaVersion: "v1",
+              sections: ["summary", "commerce_state", "evidence"],
+              requiresEvidence: true,
+              requiresDeterministicValidation: true,
+              fallbackMode: "deterministic_summary",
+            },
+            governancePolicy: {},
+            autonomyMode: "advisory",
+          };
+        }
+        return null;
+      },
+    );
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/chat")
+      .send({
+        message: "Давай заключим новый договор с Казьминский",
+        workspaceContext: {
+          route: "/commerce/contracts",
+        },
+      })
+      .expect(201);
+
+    expect(response.body.agentRole).toBe("contracts_agent");
+    expect(response.body.pendingClarification).toBeUndefined();
+    expect(response.body.text).toContain("Не хватает контекста");
+    expect(response.body.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "context_acquisition",
+          category: "clarification",
+          title: "Нужен контекст для commerce-операции",
+          status: "needs_user_input",
+          payload: expect.objectContaining({
+            intentId: "create_commerce_contract",
+            missingKeys: expect.arrayContaining([
+              "validFrom",
+              "jurisdictionId",
+              "roles",
+            ]),
+          }),
+          actions: expect.arrayContaining([
+            expect.objectContaining({
+              kind: "open_route",
+              targetRoute: "/commerce/contracts/create",
+            }),
+          ]),
+        }),
+        expect.objectContaining({
+          type: "context_hint",
+          category: "analysis",
+        }),
+      ]),
+    );
+  });
+
+  it("POST /api/rai/chat resume-path создаёт договор через contracts_agent и возвращает rich result", async () => {
+    (prismaProxyTyped.agentConfiguration.findUnique as jest.Mock).mockImplementation(
+      async ({
+        where,
+      }: {
+        where: { agent_config_role_company_unique: { role: string; companyId: string | null } };
+      }) => {
+        const { role, companyId } = where.agent_config_role_company_unique;
+        if (role === "contracts_agent" && companyId === "company-a") {
+          return {
+            id: "cfg-contracts-company-a",
+            name: "ContractsAgent",
+            role: "contracts_agent",
+            systemPrompt: "You are contracts agent.",
+            llmModel: "openai/gpt-5-mini",
+            maxTokens: 8000,
+            isActive: true,
+            companyId: "company-a",
+            capabilities: ["ContractsToolsRegistry"],
+            runtimeProfile: {
+              profileId: "contracts-runtime-v1",
+              modelRoutingClass: "strong",
+              provider: "openrouter",
+              model: "openai/gpt-5-mini",
+              maxInputTokens: 8000,
+              maxOutputTokens: 4000,
+              temperature: 0.1,
+              timeoutMs: 20000,
+              supportsStreaming: false,
+            },
+            memoryPolicy: {},
+            outputContract: {
+              contractId: "contracts-agent-v1",
+              responseSchemaVersion: "v1",
+              sections: ["summary", "commerce_state", "evidence"],
+              requiresEvidence: true,
+              requiresDeterministicValidation: true,
+              fallbackMode: "deterministic_summary",
+            },
+            governancePolicy: {},
+            autonomyMode: "advisory",
+          };
+        }
+        return null;
+      },
+    );
+    (prismaProxyTyped.party.findMany as jest.Mock).mockResolvedValueOnce([
+      { id: "party-1", companyId: "company-a" },
+    ]);
+    (prismaProxyTyped.commerceContract.create as jest.Mock).mockResolvedValueOnce({
+      id: "contract-1",
+      number: "DOG-001",
+      type: "SUPPLY",
+      status: "DRAFT",
+      validFrom: new Date("2026-03-09T00:00:00.000Z"),
+      validTo: null,
+      jurisdictionId: "jur-1",
+      regulatoryProfileId: null,
+      roles: [
+        {
+          id: "role-1",
+          partyId: "party-1",
+          role: "BUYER",
+          isPrimary: true,
+        },
+      ],
+    });
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/chat")
+      .send({
+        message: "Заключим договор поставки",
+        clarificationResume: {
+          windowId: "win-contract-smoke",
+          intentId: "create_commerce_contract",
+          agentRole: "contracts_agent",
+          collectedContext: {
+            number: "DOG-001",
+            type: "SUPPLY",
+            validFrom: "2026-03-09T00:00:00.000Z",
+            jurisdictionId: "jur-1",
+            roles: [{ partyId: "party-1", role: "BUYER", isPrimary: true }],
+          },
+        },
+        workspaceContext: {
+          route: "/commerce/contracts",
+        },
+        threadId: "thread-smoke-contract",
+      })
+      .expect(201);
+
+    expect(response.body.agentRole).toBe("contracts_agent");
+    expect(response.body.pendingClarification).toBeUndefined();
+    expect(response.body.text).toContain("Договор DOG-001 создан");
+    expect(response.body.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "structured_result",
+          category: "result",
+          title: "Договор создан",
+          payload: expect.objectContaining({
+            intentId: "create_commerce_contract",
+            summary: "Создан договор DOG-001.",
+            sections: expect.arrayContaining([
+              expect.objectContaining({
+                title: "Договор",
+              }),
+            ]),
+          }),
+          actions: expect.arrayContaining([
+            expect.objectContaining({
+              kind: "open_route",
+              targetRoute: "/commerce/contracts/contract-1",
+            }),
+          ]),
+        }),
+        expect.objectContaining({
+          type: "related_signals",
+          category: "signals",
+        }),
+      ]),
+    );
+  });
+
+  it("POST /api/rai/chat resume-path создаёт обязательство через contracts_agent", async () => {
+    (prismaProxyTyped.agentConfiguration.findUnique as jest.Mock).mockImplementation(
+      async ({
+        where,
+      }: {
+        where: { agent_config_role_company_unique: { role: string; companyId: string | null } };
+      }) => {
+        const { role, companyId } = where.agent_config_role_company_unique;
+        if (role === "contracts_agent" && companyId === "company-a") {
+          return buildContractsAgentConfig("company-a");
+        }
+        return null;
+      },
+    );
+    (prismaProxyTyped.commerceContract.findUnique as jest.Mock).mockResolvedValueOnce({
+      id: "contract-1",
+      companyId: "company-a",
+    });
+    (prismaProxyTyped.commerceObligation.create as jest.Mock).mockResolvedValueOnce({
+      id: "obligation-1",
+      contractId: "contract-1",
+      type: "DELIVER",
+      status: "OPEN",
+      dueDate: new Date("2026-03-15T00:00:00.000Z"),
+      createdAt: new Date("2026-03-09T00:00:00.000Z"),
+    });
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/chat")
+      .send({
+        message: "Создай обязательство DELIVER",
+        clarificationResume: {
+          windowId: "win-obligation-smoke",
+          intentId: "create_contract_obligation",
+          agentRole: "contracts_agent",
+          collectedContext: {
+            contractId: "contract-1",
+            obligationType: "DELIVER",
+            dueDate: "2026-03-15T00:00:00.000Z",
+          },
+        },
+        workspaceContext: {
+          route: "/commerce/contracts/contract-1",
+        },
+        threadId: "thread-smoke-obligation",
+      })
+      .expect(201);
+
+    expect(response.body.agentRole).toBe("contracts_agent");
+    expect(response.body.pendingClarification).toBeUndefined();
+    expect(response.body.text).toContain("Обязательство obligation-1 создано");
+    expect(response.body.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "structured_result",
+          title: "Обязательство создано",
+          payload: expect.objectContaining({
+            intentId: "create_contract_obligation",
+            summary: "Создано обязательство obligation-1.",
+            sections: expect.arrayContaining([
+              expect.objectContaining({
+                title: "Обязательство",
+              }),
+            ]),
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it("POST /api/rai/chat resume-path фиксирует исполнение через contracts_agent", async () => {
+    (prismaProxyTyped.agentConfiguration.findUnique as jest.Mock).mockImplementation(
+      async ({
+        where,
+      }: {
+        where: { agent_config_role_company_unique: { role: string; companyId: string | null } };
+      }) => {
+        const { role, companyId } = where.agent_config_role_company_unique;
+        if (role === "contracts_agent" && companyId === "company-a") {
+          return buildContractsAgentConfig("company-a");
+        }
+        return null;
+      },
+    );
+    (prismaProxyTyped.commerceObligation.findUnique as jest.Mock).mockResolvedValueOnce({
+      id: "obligation-1",
+      companyId: "company-a",
+    });
+    (prismaProxyTyped.commerceFulfillmentEvent.create as jest.Mock).mockResolvedValueOnce({
+      id: "fulfillment-1",
+      obligationId: "obligation-1",
+      eventDomain: "COMMERCIAL",
+      eventType: "GOODS_SHIPMENT",
+      eventDate: new Date("2026-03-10T00:00:00.000Z"),
+      payloadJson: { batchId: "batch-1", itemId: "item-1", uom: "kg", qty: 10 },
+      createdAt: new Date("2026-03-10T00:00:00.000Z"),
+    });
+    (prismaProxyTyped.stockMove.create as jest.Mock).mockResolvedValueOnce({
+      id: "stock-move-1",
+    });
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/chat")
+      .send({
+        message: "Зафиксируй исполнение",
+        clarificationResume: {
+          windowId: "win-fulfillment-smoke",
+          intentId: "create_fulfillment_event",
+          agentRole: "contracts_agent",
+          collectedContext: {
+            obligationId: "obligation-1",
+            eventDomain: "COMMERCIAL",
+            eventType: "GOODS_SHIPMENT",
+            eventDate: "2026-03-10T00:00:00.000Z",
+            batchId: "batch-1",
+            itemId: "item-1",
+            uom: "kg",
+            qty: 10,
+          },
+        },
+        workspaceContext: {
+          route: "/commerce/fulfillment",
+        },
+        threadId: "thread-smoke-fulfillment",
+      })
+      .expect(201);
+
+    expect(response.body.agentRole).toBe("contracts_agent");
+    expect(response.body.pendingClarification).toBeUndefined();
+    expect(response.body.text).toContain("Событие исполнения fulfillment-1 зафиксировано");
+    expect(response.body.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "structured_result",
+          title: "Исполнение зафиксировано",
+          payload: expect.objectContaining({
+            intentId: "create_fulfillment_event",
+            summary: "Событие исполнения fulfillment-1 зафиксировано.",
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it("POST /api/rai/chat resume-path создаёт счёт из исполнения через contracts_agent", async () => {
+    (prismaProxyTyped.agentConfiguration.findUnique as jest.Mock).mockImplementation(
+      async ({
+        where,
+      }: {
+        where: { agent_config_role_company_unique: { role: string; companyId: string | null } };
+      }) => {
+        const { role, companyId } = where.agent_config_role_company_unique;
+        if (role === "contracts_agent" && companyId === "company-a") {
+          return buildContractsAgentConfig("company-a");
+        }
+        return null;
+      },
+    );
+    (prismaProxyTyped.commerceFulfillmentEvent.findUnique as jest.Mock).mockResolvedValueOnce({
+      id: "fulfillment-1",
+      companyId: "company-a",
+      obligationId: "obligation-1",
+      obligation: {
+        contractId: "contract-1",
+      },
+    });
+    (prismaProxyTyped.invoice.create as jest.Mock).mockResolvedValueOnce({
+      id: "invoice-1",
+      contractId: "contract-1",
+      obligationId: "obligation-1",
+      fulfillmentEventId: "fulfillment-1",
+      direction: "AR",
+      status: "ISSUED",
+      subtotal: "1000",
+      taxTotal: "200",
+      grandTotal: "1200",
+    });
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/chat")
+      .send({
+        message: "Сформируй счёт",
+        clarificationResume: {
+          windowId: "win-invoice-smoke",
+          intentId: "create_invoice_from_fulfillment",
+          agentRole: "contracts_agent",
+          collectedContext: {
+            fulfillmentEventId: "fulfillment-1",
+            sellerJurisdiction: "RU",
+            buyerJurisdiction: "RU",
+            supplyType: "GOODS",
+            vatPayerStatus: "PAYER",
+            subtotal: 1000,
+          },
+        },
+        workspaceContext: {
+          route: "/commerce/invoices",
+        },
+        threadId: "thread-smoke-invoice",
+      })
+      .expect(201);
+
+    expect(response.body.agentRole).toBe("contracts_agent");
+    expect(response.body.pendingClarification).toBeUndefined();
+    expect(response.body.text).toContain("Счёт invoice-1 создан");
+    expect(response.body.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "structured_result",
+          title: "Счёт создан",
+          payload: expect.objectContaining({
+            intentId: "create_invoice_from_fulfillment",
+            summary: "Счёт invoice-1 создан на сумму 1 200 ₽.",
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it("POST /api/rai/chat resume-path разносит платёж через contracts_agent", async () => {
+    (prismaProxyTyped.agentConfiguration.findUnique as jest.Mock).mockImplementation(
+      async ({
+        where,
+      }: {
+        where: { agent_config_role_company_unique: { role: string; companyId: string | null } };
+      }) => {
+        const { role, companyId } = where.agent_config_role_company_unique;
+        if (role === "contracts_agent" && companyId === "company-a") {
+          return buildContractsAgentConfig("company-a");
+        }
+        return null;
+      },
+    );
+    (prismaProxyTyped.payment.findUnique as jest.Mock).mockResolvedValueOnce({
+      id: "payment-1",
+      companyId: "company-a",
+    });
+    (prismaProxyTyped.invoice.findUnique as jest.Mock).mockResolvedValueOnce({
+      id: "invoice-1",
+      companyId: "company-a",
+    });
+    (prismaProxyTyped.paymentAllocation.create as jest.Mock).mockResolvedValueOnce({
+      id: "allocation-1",
+      paymentId: "payment-1",
+      invoiceId: "invoice-1",
+      allocatedAmount: "1200",
+    });
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/chat")
+      .send({
+        message: "Разнеси платёж",
+        clarificationResume: {
+          windowId: "win-allocation-smoke",
+          intentId: "allocate_payment",
+          agentRole: "contracts_agent",
+          collectedContext: {
+            paymentId: "payment-1",
+            invoiceId: "invoice-1",
+            allocatedAmount: 1200,
+          },
+        },
+        workspaceContext: {
+          route: "/commerce/payments",
+        },
+        threadId: "thread-smoke-allocation",
+      })
+      .expect(201);
+
+    expect(response.body.agentRole).toBe("contracts_agent");
+    expect(response.body.pendingClarification).toBeUndefined();
+    expect(response.body.text).toContain("Платёж payment-1 разнесён на счёт invoice-1");
+    expect(response.body.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "structured_result",
+          title: "Платёж разнесён",
+          payload: expect.objectContaining({
+            intentId: "allocate_payment",
+            summary: "Платёж payment-1 разнесён на счёт invoice-1.",
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it("POST /api/rai/chat resume-path создаёт платёж через contracts_agent", async () => {
+    (prismaProxyTyped.agentConfiguration.findUnique as jest.Mock).mockImplementation(
+      async ({
+        where,
+      }: {
+        where: { agent_config_role_company_unique: { role: string; companyId: string | null } };
+      }) => {
+        const { role, companyId } = where.agent_config_role_company_unique;
+        if (role === "contracts_agent" && companyId === "company-a") {
+          return buildContractsAgentConfig("company-a");
+        }
+        return null;
+      },
+    );
+    (prismaProxyTyped.party.findUnique as jest.Mock)
+      .mockResolvedValueOnce({
+        id: "party-payer",
+        companyId: "company-a",
+      })
+      .mockResolvedValueOnce({
+        id: "party-payee",
+        companyId: "company-a",
+      });
+    (prismaProxyTyped.payment.create as jest.Mock).mockResolvedValueOnce({
+      id: "payment-1",
+      payerPartyId: "party-payer",
+      payeePartyId: "party-payee",
+      amount: "1200",
+      currency: "RUB",
+      paymentMethod: "WIRE",
+      status: "PENDING",
+      paidAt: new Date("2026-03-11T00:00:00.000Z"),
+    });
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/chat")
+      .send({
+        message: "Создай платёж",
+        clarificationResume: {
+          windowId: "win-payment-smoke",
+          intentId: "create_payment",
+          agentRole: "contracts_agent",
+          collectedContext: {
+            payerPartyId: "party-payer",
+            payeePartyId: "party-payee",
+            amount: 1200,
+            currency: "RUB",
+            paymentMethod: "WIRE",
+          },
+        },
+        workspaceContext: {
+          route: "/commerce/payments",
+        },
+        threadId: "thread-smoke-payment",
+      })
+      .expect(201);
+
+    expect(response.body.agentRole).toBe("contracts_agent");
+    expect(response.body.pendingClarification).toBeUndefined();
+    expect(response.body.text).toContain("Платёж payment-1 создан");
+    expect(response.body.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "structured_result",
+          title: "Платёж создан",
+          payload: expect.objectContaining({
+            intentId: "create_payment",
+            summary: "Платёж payment-1 создан.",
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it("POST /api/rai/chat resume-path подтверждает платёж через contracts_agent", async () => {
+    (prismaProxyTyped.agentConfiguration.findUnique as jest.Mock).mockImplementation(
+      async ({
+        where,
+      }: {
+        where: { agent_config_role_company_unique: { role: string; companyId: string | null } };
+      }) => {
+        const { role, companyId } = where.agent_config_role_company_unique;
+        if (role === "contracts_agent" && companyId === "company-a") {
+          return buildContractsAgentConfig("company-a");
+        }
+        return null;
+      },
+    );
+    (prismaProxyTyped.payment.findUnique as jest.Mock).mockResolvedValueOnce({
+      id: "payment-1",
+      ledgerTxId: null,
+    });
+    (prismaProxyTyped.payment.update as jest.Mock).mockResolvedValueOnce({
+      id: "payment-1",
+      status: "CONFIRMED",
+      ledgerTxId: "ledger-pay-payment-1",
+    });
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/chat")
+      .send({
+        message: "Подтверди платёж",
+        clarificationResume: {
+          windowId: "win-payment-confirm-smoke",
+          intentId: "confirm_payment",
+          agentRole: "contracts_agent",
+          collectedContext: {
+            paymentId: "payment-1",
+          },
+        },
+        workspaceContext: {
+          route: "/commerce/payments",
+        },
+        threadId: "thread-smoke-payment-confirm",
+      })
+      .expect(201);
+
+    expect(response.body.agentRole).toBe("contracts_agent");
+    expect(response.body.pendingClarification).toBeUndefined();
+    expect(response.body.text).toContain("Платёж payment-1 подтверждён");
+    expect(response.body.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "structured_result",
+          title: "Платёж подтверждён",
+          payload: expect.objectContaining({
+            intentId: "confirm_payment",
+            summary: "Платёж payment-1 подтверждён.",
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it("POST /api/rai/chat resume-path проводит счёт через contracts_agent", async () => {
+    (prismaProxyTyped.agentConfiguration.findUnique as jest.Mock).mockImplementation(
+      async ({
+        where,
+      }: {
+        where: { agent_config_role_company_unique: { role: string; companyId: string | null } };
+      }) => {
+        const { role, companyId } = where.agent_config_role_company_unique;
+        if (role === "contracts_agent" && companyId === "company-a") {
+          return buildContractsAgentConfig("company-a");
+        }
+        return null;
+      },
+    );
+    (prismaProxyTyped.invoice.findUnique as jest.Mock).mockResolvedValueOnce({
+      id: "invoice-1",
+      ledgerTxId: null,
+    });
+    (prismaProxyTyped.invoice.update as jest.Mock).mockResolvedValueOnce({
+      id: "invoice-1",
+      status: "POSTED",
+      ledgerTxId: "ledger-inv-invoice-1",
+    });
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/chat")
+      .send({
+        message: "Проведи счёт",
+        clarificationResume: {
+          windowId: "win-post-invoice-smoke",
+          intentId: "post_invoice",
+          agentRole: "contracts_agent",
+          collectedContext: {
+            invoiceId: "invoice-1",
+          },
+        },
+        workspaceContext: {
+          route: "/commerce/invoices",
+        },
+        threadId: "thread-smoke-post-invoice",
+      })
+      .expect(201);
+
+    expect(response.body.agentRole).toBe("contracts_agent");
+    expect(response.body.pendingClarification).toBeUndefined();
+    expect(response.body.text).toContain("Счёт invoice-1 проведён");
+    expect(response.body.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "structured_result",
+          title: "Счёт проведён",
+          payload: expect.objectContaining({
+            intentId: "post_invoice",
+            summary: "Счёт invoice-1 проведён.",
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it("POST /api/rai/chat resume-path показывает дебиторский остаток через contracts_agent", async () => {
+    (prismaProxyTyped.agentConfiguration.findUnique as jest.Mock).mockImplementation(
+      async ({
+        where,
+      }: {
+        where: { agent_config_role_company_unique: { role: string; companyId: string | null } };
+      }) => {
+        const { role, companyId } = where.agent_config_role_company_unique;
+        if (role === "contracts_agent" && companyId === "company-a") {
+          return buildContractsAgentConfig("company-a");
+        }
+        return null;
+      },
+    );
+    (prismaProxyTyped.invoice.findUnique as jest.Mock).mockResolvedValue({
+      id: "invoice-1",
+      grandTotal: 1200,
+    });
+    (prismaProxyTyped.paymentAllocation.findMany as jest.Mock).mockResolvedValue([
+      { allocatedAmount: "200" },
+      { allocatedAmount: "300" },
+    ]);
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/chat")
+      .send({
+        message: "Покажи дебиторку",
+        clarificationResume: {
+          windowId: "win-ar-balance-smoke",
+          intentId: "review_ar_balance",
+          agentRole: "contracts_agent",
+          collectedContext: {
+            invoiceId: "invoice-1",
+          },
+        },
+        workspaceContext: {
+          route: "/commerce/invoices",
+        },
+        threadId: "thread-smoke-ar-balance",
+      })
+      .expect(201);
+
+    expect(response.body.agentRole).toBe("contracts_agent");
+    expect(response.body.pendingClarification).toBeUndefined();
+    expect(response.body.text).toContain("700");
+    expect(response.body.workWindows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "structured_result",
+          title: "Дебиторский остаток",
+          payload: expect.objectContaining({
+            intentId: "review_ar_balance",
+            summary: "Остаток по счёту invoice-1: 700 ₽.",
+          }),
         }),
       ]),
     );

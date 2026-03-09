@@ -11,7 +11,8 @@ export type CanonicalAgentRuntimeRole =
   | "knowledge"
   | "monitoring"
   | "crm_agent"
-  | "front_office_agent";
+  | "front_office_agent"
+  | "contracts_agent";
 
 export type AgentRuntimeRole = string;
 
@@ -109,6 +110,15 @@ const AGENT_DEFINITIONS: Record<CanonicalAgentRuntimeRole, AgentDefinition> = {
     defaultMaxTokens: 6000,
     defaultCapabilities: ["FrontOfficeToolsRegistry"],
   },
+  contracts_agent: {
+    role: "contracts_agent",
+    name: "ContractsAgent",
+    businessRole: "Коммерческие договоры, обязательства, исполнение, счета, платежи и аллокации",
+    ownerDomain: "commerce",
+    defaultModel: "openai/gpt-5.2",
+    defaultMaxTokens: 10000,
+    defaultCapabilities: ["ContractsToolsRegistry"],
+  },
 };
 
 const AGENT_ROLES = Object.keys(AGENT_DEFINITIONS) as CanonicalAgentRuntimeRole[];
@@ -166,6 +176,21 @@ export const DEFAULT_TOOL_BINDINGS: Record<CanonicalAgentRuntimeRole, RaiToolNam
     RaiToolName.LogDialogMessage,
     RaiToolName.ClassifyDialogThread,
     RaiToolName.CreateFrontOfficeEscalation,
+  ],
+  contracts_agent: [
+    RaiToolName.CreateCommerceContract,
+    RaiToolName.ListCommerceContracts,
+    RaiToolName.GetCommerceContract,
+    RaiToolName.CreateCommerceObligation,
+    RaiToolName.CreateFulfillmentEvent,
+    RaiToolName.ListFulfillmentEvents,
+    RaiToolName.CreateInvoiceFromFulfillment,
+    RaiToolName.PostInvoice,
+    RaiToolName.ListInvoices,
+    RaiToolName.CreatePayment,
+    RaiToolName.ConfirmPayment,
+    RaiToolName.AllocatePayment,
+    RaiToolName.GetArBalance,
   ],
 };
 

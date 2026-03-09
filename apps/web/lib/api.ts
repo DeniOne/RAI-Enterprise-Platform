@@ -307,6 +307,8 @@ export const api = {
             apiClient.get<RuntimeGovernanceSummaryDto>('/rai/explainability/runtime-governance/summary', { params: params?.timeWindowMs != null ? { timeWindowMs: params.timeWindowMs } : {} }),
         runtimeGovernanceAgents: (params?: { timeWindowMs?: number }) =>
             apiClient.get<RuntimeGovernanceAgentDto[]>('/rai/explainability/runtime-governance/agents', { params: params?.timeWindowMs != null ? { timeWindowMs: params.timeWindowMs } : {} }),
+        runtimeGovernanceDrilldowns: (params?: { timeWindowMs?: number; agentRole?: string }) =>
+            apiClient.get<RuntimeGovernanceDrilldownsDto>('/rai/explainability/runtime-governance/drilldowns', { params: params ?? {} }),
         costHotspots: (params?: { timeWindowMs?: number; limit?: number }) =>
             apiClient.get('/rai/explainability/cost-hotspots', { params: params ?? {} }),
         traceTimeline: (traceId: string) =>
@@ -335,6 +337,10 @@ export const api = {
     },
     autonomy: {
         status: () => apiClient.get<AutonomyStatusDto>('/rai/explainability/autonomy-status'),
+        setOverride: (data: { level: 'TOOL_FIRST' | 'QUARANTINE'; reason: string }) =>
+            apiClient.post<AutonomyStatusDto>('/rai/explainability/runtime-governance/autonomy/override', data),
+        clearOverride: () =>
+            apiClient.post<AutonomyStatusDto>('/rai/explainability/runtime-governance/autonomy/override/clear'),
     },
 }
 
@@ -367,8 +373,15 @@ export interface AutonomyStatusDto {
     level: 'AUTONOMOUS' | 'TOOL_FIRST' | 'QUARANTINE';
     avgBsScorePct: number | null;
     knownTraceCount: number;
-    driver: 'QUALITY_ALERT' | 'BS_AVG_AUTONOMOUS' | 'BS_AVG_TOOL_FIRST' | 'BS_AVG_QUARANTINE' | 'NO_QUALITY_DATA';
+    driver: 'QUALITY_ALERT' | 'BS_AVG_AUTONOMOUS' | 'BS_AVG_TOOL_FIRST' | 'BS_AVG_QUARANTINE' | 'NO_QUALITY_DATA' | 'MANUAL_OVERRIDE';
     activeQualityAlert?: boolean;
+    manualOverride?: {
+        active: boolean;
+        level: 'TOOL_FIRST' | 'QUARANTINE';
+        reason: string;
+        createdAt: string;
+        createdByUserId: string | null;
+    } | null;
 }
 
 export interface ExplainabilityQueuePressureDto {
@@ -416,12 +429,25 @@ export interface RuntimeGovernanceSummaryDto {
         avgEvidenceCoveragePct: number | null;
         qualityAlertCount: number;
     };
+    flags: {
+        apiEnabled: boolean;
+        uiEnabled: boolean;
+        enforcementEnabled: boolean;
+        autoQuarantineEnabled: boolean;
+    };
     autonomy: {
         level: string;
         avgBsScorePct: number;
         knownTraceCount: number;
         driver: string | null;
         activeQualityAlert: boolean;
+        manualOverride?: {
+            active: boolean;
+            level: string;
+            reason: string;
+            createdAt: string;
+            createdByUserId: string | null;
+        } | null;
     };
     hottestAgents: Array<{
         agentRole: string;
@@ -447,6 +473,51 @@ export interface RuntimeGovernanceAgentDto {
     avgEvidenceCoveragePct: number | null;
     incidentCount: number;
     lastRecommendation: string | null;
+}
+
+export interface RuntimeGovernanceDrilldownsDto {
+    flags: {
+        apiEnabled: boolean;
+        uiEnabled: boolean;
+        enforcementEnabled: boolean;
+        autoQuarantineEnabled: boolean;
+    };
+    fallbackHistory: Array<{
+        agentRole: string;
+        fallbackReason: string;
+        count: number;
+        lastSeenAt: string;
+    }>;
+    qualityDriftHistory: Array<{
+        agentRole: string | null;
+        traceId: string | null;
+        recentAvgBsPct: number | null;
+        baselineAvgBsPct: number | null;
+        recommendationType: string | null;
+        createdAt: string;
+    }>;
+    budgetHotspots: Array<{
+        toolName: string;
+        agentRole: string | null;
+        deniedCount: number;
+        degradedCount: number;
+        lastSeenAt: string;
+    }>;
+    queueSaturationTimeline: Array<{
+        observedAt: string;
+        pressureState: 'IDLE' | 'STABLE' | 'PRESSURED' | 'SATURATED';
+        totalBacklog: number;
+        hottestQueue: string | null;
+    }>;
+    correlation: Array<{
+        createdAt: string;
+        traceId: string | null;
+        agentRole: string | null;
+        fallbackReason: string | null;
+        recommendationType: string | null;
+        incidentType: string | null;
+        severity: string | null;
+    }>;
 }
 
 export interface AgentConfigItem {
@@ -522,7 +593,7 @@ export interface UpsertAgentConfigBody {
     };
     responsibilityBinding?: {
         role: string;
-        inheritsFromRole: 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent' | 'front_office_agent';
+        inheritsFromRole: 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent' | 'front_office_agent' | 'contracts_agent';
         overrides?: {
             title?: string;
             allowedIntents?: string[];
@@ -536,7 +607,7 @@ export interface UpsertAgentConfigBody {
 }
 
 export interface FutureAgentManifestBody {
-    templateId?: 'marketer' | 'strategist' | 'finance_advisor' | 'legal_advisor' | 'crm_agent' | 'front_office_agent' | 'controller' | 'personal_assistant';
+    templateId?: 'marketer' | 'strategist' | 'finance_advisor' | 'legal_advisor' | 'crm_agent' | 'front_office_agent' | 'contracts_agent' | 'controller' | 'personal_assistant';
     role: string;
     name: string;
     kind: 'domain_advisor' | 'worker_hybrid' | 'personal_delegated';
@@ -557,7 +628,7 @@ export interface FutureAgentManifestBody {
     };
     responsibilityBinding?: {
         role: string;
-        inheritsFromRole: 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent' | 'front_office_agent';
+        inheritsFromRole: 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent' | 'front_office_agent' | 'contracts_agent';
         overrides?: {
             title?: string;
             allowedIntents?: string[];
@@ -612,7 +683,7 @@ export interface FutureAgentManifestBody {
 }
 
 export interface FutureAgentTemplateItem {
-    templateId: 'marketer' | 'strategist' | 'finance_advisor' | 'legal_advisor' | 'crm_agent' | 'front_office_agent' | 'controller' | 'personal_assistant';
+    templateId: 'marketer' | 'strategist' | 'finance_advisor' | 'legal_advisor' | 'crm_agent' | 'front_office_agent' | 'contracts_agent' | 'controller' | 'personal_assistant';
     label: string;
     manifest: FutureAgentManifestBody;
     rolloutChecklist: string[];

@@ -4,6 +4,7 @@ import { IncidentOpsService } from "./incident-ops.service";
 import { RuntimeGovernanceEventType, SystemIncidentType } from "@rai/prisma-client";
 import { RuntimeGovernanceEventService } from "./runtime-governance/runtime-governance-event.service";
 import { RuntimeGovernanceRecommendationService } from "./runtime-governance/runtime-governance-recommendation.service";
+import { RuntimeGovernanceAutomationService } from "./runtime-governance/runtime-governance-automation.service";
 
 const DEFAULT_DELTA_THRESHOLD = 15; // п.п. ухудшения
 const DEFAULT_ABSOLUTE_THRESHOLD = 30; // абсолютный BS%
@@ -30,6 +31,7 @@ export class QualityAlertingService {
     private readonly incidentOps: IncidentOpsService,
     private readonly governanceEvents: RuntimeGovernanceEventService,
     private readonly recommendationService: RuntimeGovernanceRecommendationService,
+    private readonly automationService: RuntimeGovernanceAutomationService,
   ) {}
 
   async evaluateBsDrift(
@@ -162,12 +164,13 @@ export class QualityAlertingService {
         hottestTraceBsPct: hottestTrace?.bsScorePct ?? null,
       },
     });
-    await this.recommendationService.handleQualityAlertCreated({
+    const recommendation = await this.recommendationService.handleQualityAlertCreated({
       companyId,
       traceId: hottestTrace?.traceId ?? null,
       recentAvgBsPct: Number(recentAvg.toFixed(1)),
       baselineAvgBsPct: Number(baselineAvg.toFixed(1)),
     });
+    await this.automationService.applyRecommendation(companyId, recommendation);
 
     this.logger.warn(
       `Quality alert emitted companyId=${companyId} severity=${severity} recentAvg=${recentAvg} baselineAvg=${baselineAvg}`,

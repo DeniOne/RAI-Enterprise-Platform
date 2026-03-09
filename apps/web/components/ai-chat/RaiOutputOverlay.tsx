@@ -23,7 +23,7 @@ export function RaiOutputOverlay() {
         collapsedWindowIds,
         pendingClarification,
         messages,
-        useWorkspaceFieldForClarification,
+        useWorkspaceFieldForClarification: applyWorkspaceFieldForClarification,
         refreshClarificationContext,
         setWorkWindowMode,
         togglePinWorkWindow,
@@ -72,7 +72,7 @@ export function RaiOutputOverlay() {
 
         switch (action.kind) {
             case 'use_workspace_field':
-                void useWorkspaceFieldForClarification();
+                void applyWorkspaceFieldForClarification();
                 return;
             case 'refresh_context':
                 void refreshClarificationContext();

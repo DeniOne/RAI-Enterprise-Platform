@@ -189,6 +189,9 @@ last_updated: 2026-03-08
 - `economist-agent.service.ts`
 - `knowledge-agent.service.ts`
 - `monitoring-agent.service.ts`
+- `crm-agent.service.ts`
+- `front-office-agent.service.ts`
+- `contracts-agent.service.ts`
 
 Новый агентный сервис обязан:
 
@@ -481,4 +484,3 @@ last_updated: 2026-03-08
 - `docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md`
 - `docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md`
 - `README.md`
-

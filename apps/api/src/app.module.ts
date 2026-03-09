@@ -56,6 +56,7 @@ import { GatewayModule } from "./level-f/gateway/gateway.module";
 import { CryptoModule } from "./level-f/crypto/crypto.module";
 import { TenantContextModule } from "./shared/tenant-context/tenant-context.module";
 import { ExplainabilityPanelModule } from "./modules/explainability/explainability-panel.module";
+import { FrontOfficeModule } from "./modules/front-office/front-office.module";
 
 @Module({
   imports: [
@@ -129,6 +130,7 @@ import { ExplainabilityPanelModule } from "./modules/explainability/explainabili
     IntegrityModule,
     ConsultingModule,
     AdvisoryModule,
+    FrontOfficeModule,
     HealthModule,
     AdaptiveLearningModule,
     CommerceModule,

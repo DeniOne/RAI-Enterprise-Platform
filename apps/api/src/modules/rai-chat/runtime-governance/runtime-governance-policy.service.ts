@@ -172,6 +172,28 @@ const DEFAULT_POLICY: RuntimeGovernancePolicy = {
       },
       budget: { degradePct: 80, denyPct: 100 },
     },
+    contracts_agent: {
+      role: "contracts_agent",
+      fallbackModeByReason: buildFallbackModes({
+        POLICY_BLOCKED: "MANUAL_HUMAN_REQUIRED",
+        PENDING_USER_CONFIRMATION: "MANUAL_HUMAN_REQUIRED",
+        TOOL_FAILURE: "READ_ONLY_SUPPORT",
+      }),
+      thresholds: {
+        bsReviewThresholdPct: 18,
+        bsQuarantineThresholdPct: 30,
+        evidenceCoverageMinPct: 75,
+        budgetDeniedRateThresholdPct: 10,
+        queueSaturationThreshold: "PRESSURED",
+        toolFailureRateThresholdPct: 6,
+      },
+      concurrency: {
+        maxParallelToolCalls: 4,
+        maxParallelGroups: 3,
+        deadlineMs: 25_000,
+      },
+      budget: { degradePct: 75, denyPct: 100 },
+    },
   },
 };
 

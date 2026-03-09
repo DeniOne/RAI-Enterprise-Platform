@@ -8,6 +8,7 @@ import {
   MaxLength,
   ArrayMaxSize,
   IsEnum,
+  IsNumber,
 } from "class-validator";
 import { Type } from "class-transformer";
 import { RaiSuggestedAction, RaiToolName } from "../tools/rai-tools.types";
@@ -184,6 +185,149 @@ export class ClarificationResumeCollectedContextDto {
   @IsOptional()
   @MaxLength(128)
   planId?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  number?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(64)
+  type?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  validFrom?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  validTo?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  jurisdictionId?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  regulatoryProfileId?: string;
+
+  @IsArray()
+  @IsOptional()
+  roles?: Array<{
+    partyId: string;
+    role: string;
+    isPrimary?: boolean;
+  }>;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  contractId?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(64)
+  obligationType?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  dueDate?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  obligationId?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(64)
+  eventDomain?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(64)
+  eventType?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  eventDate?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  fulfillmentEventId?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  sellerJurisdiction?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  buyerJurisdiction?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(32)
+  supplyType?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(32)
+  vatPayerStatus?: string;
+
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  subtotal?: number;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  payerPartyId?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  payeePartyId?: string;
+
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  amount?: number;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(16)
+  currency?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(64)
+  paymentMethod?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  paymentId?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  invoiceId?: string;
+
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  allocatedAmount?: number;
 }
 
 export class ClarificationResumeDto {
@@ -193,11 +337,20 @@ export class ClarificationResumeDto {
 
   @IsString()
   @MaxLength(64)
-  intentId: "tech_map_draft" | "compute_plan_fact";
+  intentId:
+    | "tech_map_draft"
+    | "compute_plan_fact"
+    | "create_commerce_contract"
+    | "create_contract_obligation"
+    | "create_fulfillment_event"
+    | "create_invoice_from_fulfillment"
+    | "create_payment"
+    | "allocate_payment"
+    | "review_ar_balance";
 
   @IsString()
   @MaxLength(64)
-  agentRole: "agronomist" | "economist";
+  agentRole: "agronomist" | "economist" | "contracts_agent";
 
   @IsObject()
   @ValidateNested()
@@ -263,7 +416,35 @@ export interface RuntimeGovernanceDto {
 }
 
 export interface PendingClarificationItemDto {
-  key: "fieldRef" | "seasonRef" | "seasonId" | "planId";
+  key:
+    | "fieldRef"
+    | "seasonRef"
+    | "seasonId"
+    | "planId"
+    | "number"
+    | "type"
+    | "validFrom"
+    | "jurisdictionId"
+    | "roles"
+    | "contractId"
+    | "obligationId"
+    | "eventDomain"
+    | "eventType"
+    | "eventDate"
+    | "fulfillmentEventId"
+    | "sellerJurisdiction"
+    | "buyerJurisdiction"
+    | "supplyType"
+    | "vatPayerStatus"
+    | "subtotal"
+    | "payerPartyId"
+    | "payeePartyId"
+    | "amount"
+    | "currency"
+    | "paymentMethod"
+    | "paymentId"
+    | "invoiceId"
+    | "allocatedAmount";
   label: string;
   required: true;
   reason: string;
@@ -281,6 +462,17 @@ export interface PendingClarificationDto {
     | "compute_plan_fact"
     | "query_knowledge"
     | "emit_alerts"
+    | "create_commerce_contract"
+    | "list_commerce_contracts"
+    | "review_commerce_contract"
+    | "create_contract_obligation"
+    | "create_fulfillment_event"
+    | "create_invoice_from_fulfillment"
+    | "post_invoice"
+    | "create_payment"
+    | "confirm_payment"
+    | "allocate_payment"
+    | "review_ar_balance"
     | "log_dialog_message"
     | "classify_dialog_thread"
     | "create_front_office_escalation";
@@ -331,6 +523,17 @@ export interface RaiWorkWindowDto {
       | "compute_plan_fact"
       | "query_knowledge"
       | "emit_alerts"
+      | "create_commerce_contract"
+      | "list_commerce_contracts"
+      | "review_commerce_contract"
+      | "create_contract_obligation"
+      | "create_fulfillment_event"
+      | "create_invoice_from_fulfillment"
+      | "post_invoice"
+      | "create_payment"
+      | "confirm_payment"
+      | "allocate_payment"
+      | "review_ar_balance"
       | "log_dialog_message"
       | "classify_dialog_thread"
       | "create_front_office_escalation"
@@ -353,7 +556,7 @@ export interface RaiWorkWindowDto {
     seasonRef?: string;
     seasonId?: string;
     planId?: string;
-    missingKeys: Array<"fieldRef" | "seasonRef" | "seasonId" | "planId">;
+    missingKeys: PendingClarificationItemDto["key"][];
     resultText?: string;
     sections?: Array<{
       id: string;

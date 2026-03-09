@@ -145,6 +145,7 @@ model Company {
   pendingActions          PendingAction[]
   traceSummaries          TraceSummary[]
   qualityAlerts           QualityAlert[]
+  autonomyOverrides       AutonomyOverride[]
   agentReputations        AgentReputation[]
   userCredibilityProfiles UserCredibilityProfile[]
   systemIncidents         SystemIncident[]
@@ -1520,6 +1521,24 @@ model SystemIncident {
   @@index([companyId, status])
   @@index([createdAt])
   @@map("system_incidents")
+}
+
+model AutonomyOverride {
+  id              String   @id @default(cuid())
+  companyId       String
+  level           String   // TOOL_FIRST | QUARANTINE
+  reason          String   @db.Text
+  createdByUserId String?
+  isActive        Boolean  @default(true)
+  clearedAt       DateTime?
+  clearedByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, isActive, createdAt])
+  @@map("rai_autonomy_overrides")
 }
 
 model IncidentRunbookExecution {

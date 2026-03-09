@@ -8,7 +8,8 @@ export type RiskPolicyDomain =
   | "risk"
   | "knowledge"
   | "crm"
-  | "front_office";
+  | "front_office"
+  | "commerce";
 
 export type RiskPolicyVerdict =
   | "ALLOWED"
@@ -50,6 +51,9 @@ export class RiskPolicyEngineService {
       return "REQUIRES_USER_CONFIRMATION";
     }
     if (domain === "front_office") {
+      return "REQUIRES_USER_CONFIRMATION";
+    }
+    if (domain === "commerce") {
       return "REQUIRES_USER_CONFIRMATION";
     }
     return "ALLOWED"; // knowledge WRITE (нет таких тулов пока)

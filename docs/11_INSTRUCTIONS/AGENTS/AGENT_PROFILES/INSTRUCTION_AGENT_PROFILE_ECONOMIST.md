@@ -120,6 +120,7 @@ last_updated: 2026-03-08
 - С `knowledge`: handoff для политики и регламентов.
 - С `monitoring`: handoff по signal escalation допустим только через оркестратор.
 - С `crm_agent`: прямой overlap запрещён.
+- С `contracts_agent`: advisory handoff по финансовым последствиям договора, счетов, оплат и дебиторки.
 
 ## 13. Связи с доменными модулями
 
@@ -186,4 +187,3 @@ last_updated: 2026-03-08
 - [agent-registry.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agent-registry.service.ts)
 - [agent-interaction-contracts.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agent-contracts/agent-interaction-contracts.ts)
 - [economist-agent.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agents/economist-agent.service.ts)
-

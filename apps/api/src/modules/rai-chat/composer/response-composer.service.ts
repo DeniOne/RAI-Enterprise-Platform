@@ -29,6 +29,17 @@ import {
   CreateCrmObligationResult,
   UpdateCrmObligationResult,
   DeleteCrmObligationResult,
+  CreateCommerceContractResult,
+  ListCommerceContractsResult,
+  GetCommerceContractResult,
+  CreateCommerceObligationResult,
+  CreateFulfillmentEventResult,
+  CreateInvoiceFromFulfillmentResult,
+  PostInvoiceResult,
+  CreatePaymentResult,
+  ConfirmPaymentResult,
+  AllocatePaymentResult,
+  GetArBalanceResult,
   QueryKnowledgeResult,
   SimulateScenarioResult,
 } from "../tools/rai-tools.types";
@@ -114,6 +125,30 @@ export class ResponseComposerService {
         return "обновление обязательства";
       case RaiToolName.DeleteCrmObligation:
         return "удаление обязательства";
+      case RaiToolName.CreateCommerceContract:
+        return "создание договора";
+      case RaiToolName.ListCommerceContracts:
+        return "просмотр реестра договоров";
+      case RaiToolName.GetCommerceContract:
+        return "просмотр карточки договора";
+      case RaiToolName.CreateCommerceObligation:
+        return "создание договорного обязательства";
+      case RaiToolName.CreateFulfillmentEvent:
+        return "фиксация исполнения";
+      case RaiToolName.CreateInvoiceFromFulfillment:
+        return "создание счета";
+      case RaiToolName.PostInvoice:
+        return "проведение счета";
+      case RaiToolName.ListInvoices:
+        return "просмотр счетов";
+      case RaiToolName.CreatePayment:
+        return "создание платежа";
+      case RaiToolName.ConfirmPayment:
+        return "подтверждение платежа";
+      case RaiToolName.AllocatePayment:
+        return "аллокация платежа";
+      case RaiToolName.GetArBalance:
+        return "просмотр дебиторского остатка";
       default:
         return toolName;
     }
@@ -417,6 +452,14 @@ export class ResponseComposerService {
     );
     if (crmPayload) {
       return crmPayload;
+    }
+
+    const contractsPayload = this.buildContractsRichOutputPayload(
+      request,
+      executionResult,
+    );
+    if (contractsPayload) {
+      return contractsPayload;
     }
 
     const mapped = composeWindowsFromLegacyWidgets({
@@ -988,6 +1031,356 @@ export class ResponseComposerService {
             label: "Перейти в CRM",
             enabled: true,
             targetRoute: "/consulting/crm",
+          },
+        ],
+        isPinned: false,
+      },
+    ];
+
+    return {
+      activeWindowId: resolveActiveWorkWindowId(workWindows),
+      workWindows,
+    };
+  }
+
+  private buildContractsRichOutputPayload(
+    request: RaiChatRequestDto,
+    executionResult: ExecutionResult,
+  ): {
+    workWindows: RaiWorkWindowDto[];
+    activeWindowId: string | null;
+  } | null {
+    type ContractsWindowIntent = Extract<
+      RaiWorkWindowDto["payload"]["intentId"],
+      | "create_commerce_contract"
+      | "list_commerce_contracts"
+      | "review_commerce_contract"
+      | "create_contract_obligation"
+      | "create_fulfillment_event"
+      | "create_invoice_from_fulfillment"
+      | "post_invoice"
+      | "create_payment"
+      | "confirm_payment"
+      | "allocate_payment"
+      | "review_ar_balance"
+    >;
+    const agentExecution = executionResult.agentExecution;
+    const explicitContractsTool = executionResult.executedTools.find((tool) =>
+      [
+        RaiToolName.CreateCommerceContract,
+        RaiToolName.ListCommerceContracts,
+        RaiToolName.GetCommerceContract,
+        RaiToolName.CreateCommerceObligation,
+        RaiToolName.CreateFulfillmentEvent,
+        RaiToolName.CreateInvoiceFromFulfillment,
+        RaiToolName.PostInvoice,
+        RaiToolName.CreatePayment,
+        RaiToolName.ConfirmPayment,
+        RaiToolName.AllocatePayment,
+        RaiToolName.GetArBalance,
+      ].includes(tool.name),
+    );
+
+    if (agentExecution && agentExecution.role !== "contracts_agent" && !explicitContractsTool) {
+      return null;
+    }
+    if (!agentExecution && !explicitContractsTool) {
+      return null;
+    }
+
+    const structured = (agentExecution?.structuredOutput ?? {}) as {
+      data?: unknown;
+      intent?: string;
+      missingContext?: string[];
+    };
+    const toolIntentMap: Partial<Record<RaiToolName, string>> = {
+      [RaiToolName.CreateCommerceContract]: "create_commerce_contract",
+      [RaiToolName.ListCommerceContracts]: "list_commerce_contracts",
+      [RaiToolName.GetCommerceContract]: "review_commerce_contract",
+      [RaiToolName.CreateCommerceObligation]: "create_contract_obligation",
+      [RaiToolName.CreateFulfillmentEvent]: "create_fulfillment_event",
+      [RaiToolName.CreateInvoiceFromFulfillment]: "create_invoice_from_fulfillment",
+      [RaiToolName.PostInvoice]: "post_invoice",
+      [RaiToolName.CreatePayment]: "create_payment",
+      [RaiToolName.ConfirmPayment]: "confirm_payment",
+      [RaiToolName.AllocatePayment]: "allocate_payment",
+      [RaiToolName.GetArBalance]: "review_ar_balance",
+    };
+    const intent = (structured.intent ?? (explicitContractsTool ? toolIntentMap[explicitContractsTool.name] : undefined)) as
+      | ContractsWindowIntent
+      | undefined;
+    if (
+      intent !== "create_commerce_contract" &&
+      intent !== "list_commerce_contracts" &&
+      intent !== "review_commerce_contract" &&
+      intent !== "create_contract_obligation" &&
+      intent !== "create_fulfillment_event" &&
+      intent !== "create_invoice_from_fulfillment" &&
+      intent !== "post_invoice" &&
+      intent !== "create_payment" &&
+      intent !== "confirm_payment" &&
+      intent !== "allocate_payment" &&
+      intent !== "review_ar_balance"
+    ) {
+      return null;
+    }
+
+    const data = structured.data ?? explicitContractsTool?.result;
+    const contractsWindowId = `win-contracts-${request.threadId ?? "new"}`;
+    const nextStepWindowId = `${contractsWindowId}-next`;
+
+    if (
+      explicitContractsTool &&
+      (this.isRiskPolicyBlockedResult(data) || this.isAgentConfigBlockedResult(data))
+    ) {
+      const blockedSummary =
+        typeof data.message === "string" && data.message.length > 0
+          ? data.message
+          : this.isAgentConfigBlockedResult(data)
+            ? "Commerce-действие заблокировано конфигурацией агента."
+            : "Commerce-действие ожидает подтверждения.";
+      const workWindows: RaiWorkWindowDto[] = [
+        {
+          windowId: contractsWindowId,
+          originMessageId: null,
+          agentRole: "contracts_agent",
+          type: "structured_result",
+          parentWindowId: null,
+          relatedWindowIds: [nextStepWindowId],
+          category: "result",
+          priority: 76,
+          mode: "panel",
+          title: this.isAgentConfigBlockedResult(data)
+            ? "Commerce-выполнение заблокировано"
+            : "Требуется подтверждение",
+          status: this.isAgentConfigBlockedResult(data) ? "informational" : "needs_user_input",
+          payload: {
+            intentId: intent,
+            summary: blockedSummary,
+            missingKeys: [],
+            sections: [
+              {
+                id: "contracts_pending_action",
+                title: "Статус",
+                items: [
+                  {
+                    label: "Операция",
+                    value: this.buildToolDisplayName(explicitContractsTool.name),
+                    tone: "warning",
+                  },
+                  {
+                    label: "Статус",
+                    value: this.isAgentConfigBlockedResult(data)
+                      ? "Заблокировано конфигурацией"
+                      : "Ожидает подтверждения",
+                    tone: this.isAgentConfigBlockedResult(data) ? "critical" : "warning",
+                  },
+                ],
+              },
+            ],
+          },
+          actions: [
+            {
+              id: "open_contracts_route_pending",
+              kind: "open_route",
+              label: "Открыть реестр договоров",
+              enabled: true,
+              targetRoute: "/commerce/contracts",
+            },
+          ],
+          isPinned: false,
+        },
+        {
+          windowId: nextStepWindowId,
+          originMessageId: null,
+          agentRole: "contracts_agent",
+          type: "related_signals",
+          parentWindowId: contractsWindowId,
+          relatedWindowIds: [contractsWindowId],
+          category: "signals",
+          priority: 28,
+          mode: "inline",
+          title: "Следующий шаг",
+          status: "informational",
+          payload: {
+            intentId: intent,
+            summary: "Подтвердите commerce-действие в governance-контуре и повторите команду.",
+            missingKeys: [],
+            signalItems: [
+              {
+                id: `${nextStepWindowId}-signal`,
+                tone: "warning",
+                text: "Commerce write path ожидает управляемого подтверждения.",
+                targetWindowId: contractsWindowId,
+              },
+            ],
+          },
+          actions: [
+            {
+              id: "focus_contracts_pending",
+              kind: "focus_window",
+              label: "Открыть статус",
+              enabled: true,
+              targetWindowId: contractsWindowId,
+            },
+          ],
+          isPinned: false,
+        },
+      ];
+
+      return {
+        activeWindowId: resolveActiveWorkWindowId(workWindows),
+        workWindows,
+      };
+    }
+
+    if (agentExecution?.status === "NEEDS_MORE_DATA") {
+      const missingContext = (Array.isArray(structured.missingContext)
+        ? structured.missingContext
+        : []) as RaiWorkWindowDto["payload"]["missingKeys"];
+      const workWindows: RaiWorkWindowDto[] = [
+        {
+          windowId: contractsWindowId,
+          originMessageId: null,
+          agentRole: "contracts_agent",
+          type: "context_acquisition",
+          parentWindowId: null,
+          relatedWindowIds: [nextStepWindowId],
+          category: "clarification",
+          priority: 86,
+          mode: "panel",
+          title: "Нужен контекст для commerce-операции",
+          status: "needs_user_input",
+          payload: {
+            intentId: intent,
+            summary: `Нужно дополнить: ${missingContext.join(", ")}`,
+            missingKeys: missingContext,
+          },
+          actions: [
+            {
+              id: "open_contract_create_route",
+              kind: "open_route",
+              label: "Открыть создание договора",
+              enabled: intent === "create_commerce_contract",
+              targetRoute: "/commerce/contracts/create",
+            },
+            {
+              id: "open_contracts_registry_route",
+              kind: "open_route",
+              label: "Открыть реестр договоров",
+              enabled: true,
+              targetRoute: "/commerce/contracts",
+            },
+            {
+              id: "refresh_contracts_context",
+              kind: "refresh_context",
+              label: "Обновить контекст",
+              enabled: true,
+            },
+          ],
+          isPinned: false,
+        },
+        {
+          windowId: nextStepWindowId,
+          originMessageId: null,
+          agentRole: "contracts_agent",
+          type: "context_hint",
+          parentWindowId: contractsWindowId,
+          relatedWindowIds: [contractsWindowId],
+          category: "analysis",
+          priority: 34,
+          mode: "inline",
+          title: "Что нужно дополнить",
+          status: "needs_user_input",
+          payload: {
+            intentId: intent,
+            summary: `Commerce-операция не может быть завершена без: ${missingContext.join(", ")}`,
+            missingKeys: missingContext,
+          },
+          actions: [
+            {
+              id: "focus_contracts_clarification",
+              kind: "focus_window",
+              label: "Открыть панель добора",
+              enabled: true,
+              targetWindowId: contractsWindowId,
+            },
+          ],
+          isPinned: false,
+        },
+      ];
+
+      return {
+        activeWindowId: resolveActiveWorkWindowId(workWindows),
+        workWindows,
+      };
+    }
+
+    if (agentExecution && agentExecution.status !== "COMPLETED") {
+      return null;
+    }
+
+    const workWindows: RaiWorkWindowDto[] = [
+      {
+        windowId: contractsWindowId,
+        originMessageId: null,
+        agentRole: "contracts_agent",
+        type: "structured_result",
+        parentWindowId: null,
+        relatedWindowIds: [nextStepWindowId],
+        category: "result",
+        priority: 76,
+        mode: "panel",
+        title: this.buildContractsTitle(intent),
+        status: "completed",
+        payload: {
+          intentId: intent,
+          summary: this.buildContractsSummary(intent, data, agentExecution?.text ?? "Commerce-операция выполнена."),
+          missingKeys: [],
+          sections: this.buildContractsSections(intent, data),
+        },
+        actions: this.buildContractsActions(intent, data, contractsWindowId),
+        isPinned: false,
+      },
+      {
+        windowId: nextStepWindowId,
+        originMessageId: null,
+        agentRole: "contracts_agent",
+        type: "related_signals",
+        parentWindowId: contractsWindowId,
+        relatedWindowIds: [contractsWindowId],
+        category: "signals",
+        priority: 28,
+        mode: "inline",
+        title: "Следующий шаг",
+        status: "informational",
+        payload: {
+          intentId: intent,
+          summary: this.buildContractsNextStepSummary(intent),
+          missingKeys: [],
+          signalItems: [
+            {
+              id: `${nextStepWindowId}-signal`,
+              tone: "info",
+              text: this.buildContractsNextStepSummary(intent),
+              targetWindowId: contractsWindowId,
+            },
+          ],
+        },
+        actions: [
+          {
+            id: "focus_contracts_result",
+            kind: "focus_window",
+            label: "Открыть результат",
+            enabled: true,
+            targetWindowId: contractsWindowId,
+          },
+          {
+            id: "go_contracts_route",
+            kind: "open_route",
+            label: "Перейти к коммерции",
+            enabled: true,
+            targetRoute: "/commerce/contracts",
           },
         ],
         isPinned: false,
@@ -1595,6 +1988,354 @@ export class ResponseComposerService {
         return "Проверьте CRM-карточку и убедитесь, что обязательство больше не требуется.";
       default:
         return "Откройте CRM-контур и проверьте результат операции.";
+    }
+  }
+
+  private buildContractsTitle(intent: string): string {
+    switch (intent) {
+      case "create_commerce_contract":
+        return "Договор создан";
+      case "list_commerce_contracts":
+        return "Реестр договоров";
+      case "review_commerce_contract":
+        return "Карточка договора";
+      case "create_contract_obligation":
+        return "Обязательство создано";
+      case "create_fulfillment_event":
+        return "Исполнение зафиксировано";
+      case "create_invoice_from_fulfillment":
+        return "Счёт создан";
+      case "post_invoice":
+        return "Счёт проведён";
+      case "create_payment":
+        return "Платёж создан";
+      case "confirm_payment":
+        return "Платёж подтверждён";
+      case "allocate_payment":
+        return "Платёж разнесён";
+      case "review_ar_balance":
+        return "Дебиторский остаток";
+      default:
+        return "Результат contracts-агента";
+    }
+  }
+
+  private buildContractsSummary(intent: string, data: unknown, fallbackText: string): string {
+    if (intent === "create_commerce_contract") {
+      const result = data as CreateCommerceContractResult;
+      return `Создан договор ${result.number}.`;
+    }
+    if (intent === "list_commerce_contracts") {
+      const result = data as ListCommerceContractsResult;
+      return `В реестре ${result.items.length} договоров.`;
+    }
+    if (intent === "review_commerce_contract") {
+      const result = data as GetCommerceContractResult;
+      return `Открыта карточка договора ${result.number}.`;
+    }
+    if (intent === "create_contract_obligation") {
+      const result = data as CreateCommerceObligationResult;
+      return `Создано обязательство ${result.id}.`;
+    }
+    if (intent === "create_fulfillment_event") {
+      const result = data as CreateFulfillmentEventResult;
+      return `Событие исполнения ${result.id} зафиксировано.`;
+    }
+    if (intent === "create_invoice_from_fulfillment") {
+      const result = data as CreateInvoiceFromFulfillmentResult;
+      return `Счёт ${result.id} создан на сумму ${result.grandTotal.toLocaleString("ru-RU")} ₽.`;
+    }
+    if (intent === "post_invoice") {
+      const result = data as PostInvoiceResult;
+      return `Счёт ${result.id} проведён.`;
+    }
+    if (intent === "create_payment") {
+      const result = data as CreatePaymentResult;
+      return `Платёж ${result.id} создан.`;
+    }
+    if (intent === "confirm_payment") {
+      const result = data as ConfirmPaymentResult;
+      return `Платёж ${result.id} подтверждён.`;
+    }
+    if (intent === "allocate_payment") {
+      const result = data as AllocatePaymentResult;
+      return `Платёж ${result.paymentId} разнесён на счёт ${result.invoiceId}.`;
+    }
+    if (intent === "review_ar_balance") {
+      const result = data as GetArBalanceResult;
+      return `Остаток по счёту ${result.invoiceId}: ${result.balance.toLocaleString("ru-RU")} ₽.`;
+    }
+    return fallbackText;
+  }
+
+  private buildContractsSections(
+    intent: string,
+    data: unknown,
+  ): Array<{
+    id: string;
+    title: string;
+    items: Array<{
+      label: string;
+      value: string;
+      tone?: "neutral" | "positive" | "warning" | "critical";
+    }>;
+  }> {
+    if (intent === "create_commerce_contract") {
+      const result = data as CreateCommerceContractResult;
+      return [
+        {
+          id: "contracts_card",
+          title: "Договор",
+          items: [
+            { label: "Номер", value: result.number, tone: "positive" },
+            { label: "ID", value: result.id, tone: "neutral" },
+            { label: "Тип", value: result.type, tone: "neutral" },
+            { label: "Статус", value: result.status, tone: "neutral" },
+            { label: "Ролей сторон", value: `${result.roles.length}`, tone: "neutral" },
+          ],
+        },
+      ];
+    }
+    if (intent === "list_commerce_contracts") {
+      const result = data as ListCommerceContractsResult;
+      return [
+        {
+          id: "contracts_registry",
+          title: "Сводка",
+          items: [
+            { label: "Договоров", value: `${result.items.length}`, tone: "positive" },
+            {
+              label: "Последний",
+              value: result.items[0]?.number ?? "нет данных",
+              tone: "neutral",
+            },
+          ],
+        },
+      ];
+    }
+    if (intent === "review_commerce_contract") {
+      const result = data as GetCommerceContractResult;
+      return [
+        {
+          id: "contract_detail",
+          title: "Карточка договора",
+          items: [
+            { label: "Номер", value: result.number, tone: "positive" },
+            { label: "ID", value: result.id, tone: "neutral" },
+            { label: "Тип", value: result.type, tone: "neutral" },
+            { label: "Статус", value: result.status, tone: "neutral" },
+            { label: "Сторон", value: `${result.roles.length}`, tone: "neutral" },
+          ],
+        },
+      ];
+    }
+    if (intent === "create_contract_obligation") {
+      const result = data as CreateCommerceObligationResult;
+      return [
+        {
+          id: "contract_obligation",
+          title: "Обязательство",
+          items: [
+            { label: "ID", value: result.id, tone: "positive" },
+            { label: "Договор", value: result.contractId, tone: "neutral" },
+            { label: "Тип", value: result.type, tone: "neutral" },
+            { label: "Срок", value: result.dueDate ?? "не указан", tone: "warning" },
+          ],
+        },
+      ];
+    }
+    if (intent === "create_fulfillment_event") {
+      const result = data as CreateFulfillmentEventResult;
+      return [
+        {
+          id: "fulfillment_event",
+          title: "Исполнение",
+          items: [
+            { label: "ID", value: result.id, tone: "positive" },
+            { label: "Обязательство", value: result.obligationId, tone: "neutral" },
+            { label: "Домен", value: result.eventDomain, tone: "neutral" },
+            { label: "Тип", value: result.eventType, tone: "neutral" },
+          ],
+        },
+      ];
+    }
+    if (intent === "create_invoice_from_fulfillment") {
+      const result = data as CreateInvoiceFromFulfillmentResult;
+      return [
+        {
+          id: "invoice_created",
+          title: "Счёт",
+          items: [
+            { label: "ID", value: result.id, tone: "positive" },
+            { label: "Статус", value: result.status, tone: "warning" },
+            { label: "Subtotal", value: `${result.subtotal}`, tone: "neutral" },
+            { label: "Итого", value: `${result.grandTotal}`, tone: "positive" },
+          ],
+        },
+      ];
+    }
+    if (intent === "post_invoice") {
+      const result = data as PostInvoiceResult;
+      return [
+        {
+          id: "invoice_posted",
+          title: "Проведение",
+          items: [
+            { label: "Счёт", value: result.id, tone: "positive" },
+            { label: "Статус", value: result.status, tone: "warning" },
+            { label: "Ledger", value: result.ledgerTxId ?? "не создан", tone: "neutral" },
+          ],
+        },
+      ];
+    }
+    if (intent === "create_payment") {
+      const result = data as CreatePaymentResult;
+      return [
+        {
+          id: "payment_created",
+          title: "Платёж",
+          items: [
+            { label: "ID", value: result.id, tone: "positive" },
+            { label: "Сумма", value: `${result.amount} ${result.currency}`, tone: "neutral" },
+            { label: "Метод", value: result.paymentMethod, tone: "neutral" },
+            { label: "Статус", value: result.status, tone: "warning" },
+          ],
+        },
+      ];
+    }
+    if (intent === "confirm_payment") {
+      const result = data as ConfirmPaymentResult;
+      return [
+        {
+          id: "payment_confirmed",
+          title: "Подтверждение",
+          items: [
+            { label: "Платёж", value: result.id, tone: "positive" },
+            { label: "Статус", value: result.status, tone: "warning" },
+            { label: "Ledger", value: result.ledgerTxId ?? "не создан", tone: "neutral" },
+          ],
+        },
+      ];
+    }
+    if (intent === "allocate_payment") {
+      const result = data as AllocatePaymentResult;
+      return [
+        {
+          id: "payment_allocation",
+          title: "Аллокация",
+          items: [
+            { label: "Платёж", value: result.paymentId, tone: "neutral" },
+            { label: "Счёт", value: result.invoiceId, tone: "neutral" },
+            { label: "Сумма", value: `${result.allocatedAmount}`, tone: "positive" },
+          ],
+        },
+      ];
+    }
+    if (intent === "review_ar_balance") {
+      const result = data as GetArBalanceResult;
+      return [
+        {
+          id: "ar_balance",
+          title: "Дебиторка",
+          items: [
+            { label: "Счёт", value: result.invoiceId, tone: "neutral" },
+            { label: "Остаток", value: `${result.balance}`, tone: result.balance > 0 ? "warning" : "positive" },
+          ],
+        },
+      ];
+    }
+    return [];
+  }
+
+  private buildContractsActions(
+    intent: string,
+    data: unknown,
+    windowId: string,
+  ): RaiWorkWindowDto["actions"] {
+    const openContractsAction = {
+      id: "go_contracts_registry",
+      kind: "open_route" as const,
+      label: "Открыть реестр договоров",
+      enabled: true,
+      targetRoute: "/commerce/contracts",
+    };
+    const openPaymentsAction = {
+      id: "go_payments_registry",
+      kind: "open_route" as const,
+      label: "Открыть платежи",
+      enabled: true,
+      targetRoute: "/commerce/payments",
+    };
+
+    if (intent === "create_commerce_contract" || intent === "review_commerce_contract") {
+      const result = data as CreateCommerceContractResult | GetCommerceContractResult;
+      return [
+        {
+          id: "focus_contract_result",
+          kind: "focus_window",
+          label: "Открыть результат",
+          enabled: true,
+          targetWindowId: windowId,
+        },
+        {
+          ...openContractsAction,
+          targetRoute: `/commerce/contracts/${encodeURIComponent(result.id)}`,
+          label: "Открыть карточку договора",
+        },
+      ];
+    }
+
+    if (intent === "create_payment" || intent === "confirm_payment") {
+      return [
+        {
+          id: "focus_payment_result",
+          kind: "focus_window",
+          label: "Открыть результат",
+          enabled: true,
+          targetWindowId: windowId,
+        },
+        openPaymentsAction,
+      ];
+    }
+
+    return [
+      {
+        id: "focus_contracts_window",
+        kind: "focus_window",
+        label: "Открыть результат",
+        enabled: true,
+        targetWindowId: windowId,
+      },
+      openContractsAction,
+    ];
+  }
+
+  private buildContractsNextStepSummary(intent: string): string {
+    switch (intent) {
+      case "create_commerce_contract":
+        return "Откройте карточку договора и при необходимости добавьте обязательства сторон.";
+      case "list_commerce_contracts":
+        return "Выберите нужный договор из реестра и продолжите работу по обязательствам или счетам.";
+      case "review_commerce_contract":
+        return "Проверьте роли сторон и при необходимости создайте обязательство.";
+      case "create_contract_obligation":
+        return "После создания обязательства можно зафиксировать исполнение или перейти к биллингу.";
+      case "create_fulfillment_event":
+        return "На основе исполнения можно сформировать счёт.";
+      case "create_invoice_from_fulfillment":
+        return "Проведите счёт или дождитесь оплаты.";
+      case "post_invoice":
+        return "После проведения счёта можно контролировать дебиторку и платежи.";
+      case "create_payment":
+        return "Подтвердите платёж и затем выполните аллокацию на счёт.";
+      case "confirm_payment":
+        return "После подтверждения разнесите платёж на соответствующий счёт.";
+      case "allocate_payment":
+        return "Проверьте остаток по счёту и статус взаиморасчётов.";
+      case "review_ar_balance":
+        return "Если остаток не нулевой, создайте платёж или проверьте аллокации.";
+      default:
+        return "Откройте commerce-контур и проверьте результат операции.";
     }
   }
 

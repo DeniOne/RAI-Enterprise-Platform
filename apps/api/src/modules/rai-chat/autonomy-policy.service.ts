@@ -18,8 +18,16 @@ export interface AutonomyStatus {
     | "BS_AVG_AUTONOMOUS"
     | "BS_AVG_TOOL_FIRST"
     | "BS_AVG_QUARANTINE"
-    | "NO_QUALITY_DATA";
+    | "NO_QUALITY_DATA"
+    | "MANUAL_OVERRIDE";
   activeQualityAlert: boolean;
+  manualOverride?: {
+    active: boolean;
+    level: AutonomyLevel;
+    reason: string;
+    createdAt: string;
+    createdByUserId: string | null;
+  } | null;
 }
 
 @Injectable()
@@ -37,7 +45,7 @@ export class AutonomyPolicyService {
       now.getTime() - DEFAULT_WINDOW_HOURS * 60 * 60 * 1000,
     );
 
-    const [rows, activeQualityAlert] = await Promise.all([
+    const [rows, activeQualityAlert, activeManualOverride] = await Promise.all([
       this.prisma.traceSummary.findMany({
         select: { bsScorePct: true },
         where: {
@@ -58,20 +66,52 @@ export class AutonomyPolicyService {
         },
         select: { id: true },
       }),
+      this.prisma.autonomyOverride.findFirst({
+        where: {
+          companyId,
+          isActive: true,
+        },
+        orderBy: { createdAt: "desc" },
+      }),
     ]);
 
     const knownTraceCount = rows.length;
+    const avgBsScorePct =
+      knownTraceCount === 0
+        ? null
+        : rows.reduce((sum, row) => sum + (row.bsScorePct ?? 0), 0) / knownTraceCount;
+    const manualOverride =
+      activeManualOverride &&
+      (activeManualOverride.level === AutonomyLevel.QUARANTINE ||
+        activeManualOverride.level === AutonomyLevel.TOOL_FIRST)
+        ? {
+            active: true,
+            level: activeManualOverride.level as AutonomyLevel,
+            reason: activeManualOverride.reason,
+            createdAt: activeManualOverride.createdAt.toISOString(),
+            createdByUserId: activeManualOverride.createdByUserId ?? null,
+          }
+        : null;
+
+    if (manualOverride) {
+      return {
+        level: manualOverride.level,
+        avgBsScorePct,
+        knownTraceCount,
+        driver: "MANUAL_OVERRIDE",
+        activeQualityAlert: Boolean(activeQualityAlert),
+        manualOverride,
+      };
+    }
+
     if (activeQualityAlert) {
       return {
         level: AutonomyLevel.QUARANTINE,
-        avgBsScorePct:
-          knownTraceCount === 0
-            ? null
-            : rows.reduce((sum, row) => sum + (row.bsScorePct ?? 0), 0) /
-              knownTraceCount,
+        avgBsScorePct,
         knownTraceCount,
         driver: "QUALITY_ALERT",
         activeQualityAlert: true,
+        manualOverride: null,
       };
     }
     if (knownTraceCount === 0) {
@@ -81,36 +121,37 @@ export class AutonomyPolicyService {
         knownTraceCount: 0,
         driver: "NO_QUALITY_DATA",
         activeQualityAlert: false,
+        manualOverride: null,
       };
     }
 
-    const avg =
-      rows.reduce((sum, row) => sum + (row.bsScorePct ?? 0), 0) / knownTraceCount;
-
-    if (avg < 5) {
+    if ((avgBsScorePct ?? 0) < 5) {
       return {
         level: AutonomyLevel.AUTONOMOUS,
-        avgBsScorePct: avg,
+        avgBsScorePct,
         knownTraceCount,
         driver: "BS_AVG_AUTONOMOUS",
         activeQualityAlert: false,
+        manualOverride: null,
       };
     }
-    if (avg <= 30) {
+    if ((avgBsScorePct ?? 0) <= 30) {
       return {
         level: AutonomyLevel.TOOL_FIRST,
-        avgBsScorePct: avg,
+        avgBsScorePct,
         knownTraceCount,
         driver: "BS_AVG_TOOL_FIRST",
         activeQualityAlert: false,
+        manualOverride: null,
       };
     }
     return {
       level: AutonomyLevel.QUARANTINE,
-      avgBsScorePct: avg,
+      avgBsScorePct,
       knownTraceCount,
       driver: "BS_AVG_QUARANTINE",
       activeQualityAlert: false,
+      manualOverride: null,
     };
   }
 }

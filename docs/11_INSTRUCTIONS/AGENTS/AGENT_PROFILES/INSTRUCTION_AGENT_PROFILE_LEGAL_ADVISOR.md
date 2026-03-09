@@ -89,7 +89,7 @@ last_updated: 2026-03-08
 ## 12. Связи с другими агентами
 
 - С `knowledge`: текущее adapter inheritance.
-- С будущим `contracts_agent`: необходимый legal handoff.
+- С `contracts_agent`: необходимый legal handoff для clause review, compliance и legal risk commentary.
 - С `crm_agent`: возможен handoff по юридическим аспектам контрагента, но не ownership.
 
 ## 13. Связи с доменными модулями
@@ -146,4 +146,3 @@ last_updated: 2026-03-08
 - [A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md)
 - [agent-management.service.ts](/root/RAI_EP/apps/api/src/modules/explainability/agent-management.service.ts)
 - [page.tsx](/root/RAI_EP/apps/web/app/(app)/control-tower/agents/page.tsx)
-

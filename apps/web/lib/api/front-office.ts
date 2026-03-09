@@ -3,6 +3,7 @@ export interface Field {
     name: string;
     area: number;
     status: string;
+    client?: { id: string; name: string };
 }
 
 export interface Task {
@@ -24,6 +25,13 @@ export interface OrchestratorEvent {
     type: string;
     timestamp: string;
     metadata: any;
+}
+
+export interface SeasonSummary {
+    id: string;
+    year: number;
+    status: string;
+    fieldId?: string;
 }
 
 const BASE_URL = 'http://localhost:4000/api';
@@ -49,6 +57,7 @@ export const frontOfficeApi = {
     // Fields
     getFields: (token: string) => fetchWithAuth('/registry/fields', token),
     getField: (id: string, token: string) => fetchWithAuth(`/registry/fields/${id}`, token),
+    getOverview: (token: string) => fetchWithAuth('/front-office/overview', token),
 
     // Tasks
     getMyTasks: (token: string) => fetchWithAuth('/tasks/my', token),
@@ -57,13 +66,19 @@ export const frontOfficeApi = {
         fetchWithAuth(`/tasks/${id}/${status}`, token, { method: 'POST' }),
 
     // Tech Maps
+    getTechMaps: (token: string) => fetchWithAuth('/tech-map', token),
     getTechMapsBySeason: (seasonId: string, token: string) =>
         fetchWithAuth(`/tech-map/season/${seasonId}`, token),
     getTechMap: (id: string, token: string) => fetchWithAuth(`/tech-map/${id}`, token),
-    activateTechMap: (id: string, token: string) =>
-        fetchWithAuth(`/tech-map/${id}/activate`, token, { method: 'POST' }),
+    transitionTechMap: (id: string, status: string, token: string) =>
+        fetchWithAuth(`/tech-map/${id}/transition`, token, {
+            method: 'PATCH',
+            body: JSON.stringify({ status }),
+        }),
 
     // Orchestrator
+    getSeasons: (token: string) => fetchWithAuth('/seasons', token),
+    getSeason: (id: string, token: string) => fetchWithAuth(`/seasons/${id}`, token),
     getSeasonStage: (seasonId: string, token: string) =>
         fetchWithAuth(`/orchestrator/seasons/${seasonId}/stage`, token),
     getSeasonHistory: (seasonId: string, token: string) =>
@@ -71,6 +86,9 @@ export const frontOfficeApi = {
     triggerTransition: (seasonId: string, transition: string, token: string) =>
         fetchWithAuth(`/orchestrator/seasons/${seasonId}/transition`, token, {
             method: 'POST',
-            body: JSON.stringify({ transition }),
+            body: JSON.stringify({ targetStage: transition }),
         }),
+    getDeviations: (token: string) => fetchWithAuth('/front-office/deviations', token),
+    getConsultations: (token: string) => fetchWithAuth('/front-office/consultations', token),
+    getContextUpdates: (token: string) => fetchWithAuth('/front-office/context-updates', token),
 };

@@ -14,6 +14,8 @@ import { AgentConfigGuardService } from "./agent-config-guard.service";
 import { AdaptiveLearningModule } from "../adaptive-learning/adaptive-learning.module";
 import { AgentPromptGovernanceService } from "./agent-prompt-governance.service";
 import { RuntimeGovernanceReadModelService } from "./runtime-governance-read-model.service";
+import { RuntimeGovernanceControlService } from "./runtime-governance-control.service";
+import { RuntimeGovernanceDrilldownService } from "./runtime-governance-drilldown.service";
 
 @Module({
   imports: [
@@ -33,6 +35,8 @@ import { RuntimeGovernanceReadModelService } from "./runtime-governance-read-mod
     AgentConfigGuardService,
     AgentPromptGovernanceService,
     RuntimeGovernanceReadModelService,
+    RuntimeGovernanceControlService,
+    RuntimeGovernanceDrilldownService,
   ],
 })
 export class ExplainabilityPanelModule {}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState, useRef } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
@@ -232,9 +233,11 @@ export function TopNav({ role }: TopNavProps) {
         >
             <div className="shrink-0">
                 <Link href="/consulting/dashboard">
-                    <img
+                    <Image
                         src="/branding/rai-agroplatforma-transparent.png"
                         alt="RAI Agroplatform"
+                        width={180}
+                        height={40}
                         className="h-8 w-auto object-contain lg:h-10"
                     />
                 </Link>

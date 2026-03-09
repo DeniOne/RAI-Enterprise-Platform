@@ -6,6 +6,7 @@ import {
   api,
   type AutonomyStatusDto,
   type RuntimeGovernanceAgentDto,
+  type RuntimeGovernanceDrilldownsDto,
   type RuntimeGovernanceSummaryDto,
 } from '@/lib/api';
 import { Monitor, ShieldCheck, Zap, Activity, DollarSign, TerminalSquare, AlertCircle } from 'lucide-react';
@@ -65,6 +66,8 @@ export default function ControlTowerPage() {
   const [autonomy, setAutonomy] = useState<AutonomyStatusDto | null>(null);
   const [runtimeGovernanceSummary, setRuntimeGovernanceSummary] = useState<RuntimeGovernanceSummaryDto | null>(null);
   const [runtimeGovernanceAgents, setRuntimeGovernanceAgents] = useState<RuntimeGovernanceAgentDto[]>([]);
+  const [runtimeGovernanceDrilldowns, setRuntimeGovernanceDrilldowns] = useState<RuntimeGovernanceDrilldownsDto | null>(null);
+  const [governanceActionLoading, setGovernanceActionLoading] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,7 +75,7 @@ export default function ControlTowerPage() {
     let cancelled = false;
     (async () => {
       try {
-        const [dRes, pRes, cRes, qRes, aRes, rgSummaryRes, rgAgentsRes] = await Promise.all([
+        const [dRes, pRes, cRes, qRes, aRes, rgSummaryRes, rgAgentsRes, rgDrilldownsRes] = await Promise.all([
           api.explainability.dashboard({ hours: 24 }),
           api.explainability.performance({ timeWindowMs: 3600000 }),
           api.explainability.costHotspots({ timeWindowMs: 86400000, limit: 10 }),
@@ -80,6 +83,7 @@ export default function ControlTowerPage() {
           api.autonomy.status(),
           api.explainability.runtimeGovernanceSummary({ timeWindowMs: 3600000 }),
           api.explainability.runtimeGovernanceAgents({ timeWindowMs: 3600000 }),
+          api.explainability.runtimeGovernanceDrilldowns({ timeWindowMs: 3600000 }),
         ]);
         if (cancelled) return;
         setDashboard(dRes.data);
@@ -89,6 +93,7 @@ export default function ControlTowerPage() {
         setAutonomy(aRes.data);
         setRuntimeGovernanceSummary(rgSummaryRes.data);
         setRuntimeGovernanceAgents(rgAgentsRes.data);
+        setRuntimeGovernanceDrilldowns(rgDrilldownsRes.data);
       } catch (e) {
         if (!cancelled) setError((e as Error).message ?? 'Сбой получения телеметрии');
       } finally {
@@ -97,6 +102,53 @@ export default function ControlTowerPage() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  async function reloadRuntimeGovernance() {
+    const [autonomyRes, summaryRes, agentsRes, drilldownsRes] = await Promise.all([
+      api.autonomy.status(),
+      api.explainability.runtimeGovernanceSummary({ timeWindowMs: 3600000 }),
+      api.explainability.runtimeGovernanceAgents({ timeWindowMs: 3600000 }),
+      api.explainability.runtimeGovernanceDrilldowns({ timeWindowMs: 3600000 }),
+    ]);
+    setAutonomy(autonomyRes.data);
+    setRuntimeGovernanceSummary(summaryRes.data);
+    setRuntimeGovernanceAgents(agentsRes.data);
+    setRuntimeGovernanceDrilldowns(drilldownsRes.data);
+  }
+
+  async function handleSetAutonomyOverride(level: 'TOOL_FIRST' | 'QUARANTINE') {
+    const reason = window.prompt(
+      level === 'QUARANTINE'
+        ? 'Укажи причину для manual quarantine'
+        : 'Укажи причину для manual tool-first',
+      '',
+    );
+    if (!reason || reason.trim().length < 3) {
+      return;
+    }
+
+    try {
+      setGovernanceActionLoading(level);
+      await api.autonomy.setOverride({ level, reason: reason.trim() });
+      await reloadRuntimeGovernance();
+    } catch (e) {
+      window.alert((e as Error).message ?? 'Не удалось применить override');
+    } finally {
+      setGovernanceActionLoading(null);
+    }
+  }
+
+  async function handleClearAutonomyOverride() {
+    try {
+      setGovernanceActionLoading('CLEAR');
+      await api.autonomy.clearOverride();
+      await reloadRuntimeGovernance();
+    } catch (e) {
+      window.alert((e as Error).message ?? 'Не удалось снять override');
+    } finally {
+      setGovernanceActionLoading(null);
+    }
+  }
 
   if (loading) {
     return (
@@ -355,7 +407,7 @@ export default function ControlTowerPage() {
 
         </div>
 
-        {runtimeGovernanceSummary && (
+        {runtimeGovernanceSummary && runtimeGovernanceSummary.flags.uiEnabled && (
           <div className="mt-12">
             <div className="flex items-center gap-3 mb-6">
               <ShieldCheck size={20} className="text-[#030213]" />
@@ -408,6 +460,55 @@ export default function ControlTowerPage() {
                             : 'error'
                     }
                   />
+                  <DataRow
+                    label="Auto quarantine"
+                    value={runtimeGovernanceSummary.flags.autoQuarantineEnabled ? 'enabled' : 'disabled'}
+                    status={runtimeGovernanceSummary.flags.autoQuarantineEnabled ? 'warning' : 'success'}
+                  />
+                </div>
+                <div className="mt-6 pt-5 border-t border-black/5">
+                  <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Manual autonomy override</p>
+                  {runtimeGovernanceSummary.autonomy.manualOverride ? (
+                    <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                      <p className="text-[12px] font-medium text-[#030213]">
+                        Активен override: {formatAutonomyLevel(runtimeGovernanceSummary.autonomy.manualOverride.level as AutonomyStatusDto['level'])}
+                      </p>
+                      <p className="mt-2 text-[12px] text-[#717182] leading-relaxed">
+                        Причина: {runtimeGovernanceSummary.autonomy.manualOverride.reason}
+                      </p>
+                      <p className="mt-2 text-[11px] text-[#717182]">
+                        {new Date(runtimeGovernanceSummary.autonomy.manualOverride.createdAt).toLocaleString('ru')}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="mb-4 text-[12px] text-[#717182]">Активный manual override отсутствует.</p>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSetAutonomyOverride('TOOL_FIRST')}
+                      disabled={governanceActionLoading !== null || !runtimeGovernanceSummary.flags.enforcementEnabled}
+                      className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {governanceActionLoading === 'TOOL_FIRST' ? 'Применение...' : 'Перевести в TOOL-FIRST'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSetAutonomyOverride('QUARANTINE')}
+                      disabled={governanceActionLoading !== null || !runtimeGovernanceSummary.flags.enforcementEnabled}
+                      className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {governanceActionLoading === 'QUARANTINE' ? 'Применение...' : 'Включить QUARANTINE'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleClearAutonomyOverride}
+                      disabled={governanceActionLoading !== null || !runtimeGovernanceSummary.autonomy.manualOverride || !runtimeGovernanceSummary.flags.enforcementEnabled}
+                      className="rounded-lg border border-black/10 bg-white px-3 py-2 text-[12px] font-medium text-[#030213] transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {governanceActionLoading === 'CLEAR' ? 'Снятие...' : 'Снять override'}
+                    </button>
+                  </div>
                 </div>
               </UnitCard>
 
@@ -539,6 +640,130 @@ export default function ControlTowerPage() {
                 </div>
               )}
             </div>
+
+            {runtimeGovernanceDrilldowns && (
+              <div className="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <UnitCard
+                  title="Fallback History"
+                  icon={<Zap size={20} />}
+                  subtitle="Drilldown"
+                >
+                  <div className="space-y-0.5">
+                    {runtimeGovernanceDrilldowns.fallbackHistory.length > 0 ? (
+                      runtimeGovernanceDrilldowns.fallbackHistory.slice(0, 8).map((item) => (
+                        <div key={`${item.agentRole}:${item.fallbackReason}`} className="flex items-center justify-between py-2 border-b border-black/[0.03] last:border-0">
+                          <div>
+                            <p className="text-[13px] font-medium text-[#030213]">{item.agentRole}</p>
+                            <p className="text-[11px] text-[#717182]">{formatGovernanceKey(item.fallbackReason)}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[13px] font-mono text-[#030213]">{item.count}</p>
+                            <p className="text-[11px] text-[#717182]">{new Date(item.lastSeenAt).toLocaleString('ru')}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <NoData />
+                    )}
+                  </div>
+                </UnitCard>
+
+                <UnitCard
+                  title="Budget Hotspots"
+                  icon={<DollarSign size={20} />}
+                  subtitle="Drilldown"
+                >
+                  <div className="space-y-0.5">
+                    {runtimeGovernanceDrilldowns.budgetHotspots.length > 0 ? (
+                      runtimeGovernanceDrilldowns.budgetHotspots.slice(0, 8).map((item) => (
+                        <div key={`${item.agentRole ?? 'unknown'}:${item.toolName}`} className="flex items-center justify-between py-2 border-b border-black/[0.03] last:border-0">
+                          <div>
+                            <p className="text-[13px] font-medium text-[#030213]">{item.toolName}</p>
+                            <p className="text-[11px] text-[#717182]">{item.agentRole ?? 'unknown'}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[13px] font-mono text-[#030213]">deny {item.deniedCount} / degrade {item.degradedCount}</p>
+                            <p className="text-[11px] text-[#717182]">{new Date(item.lastSeenAt).toLocaleString('ru')}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <NoData />
+                    )}
+                  </div>
+                </UnitCard>
+
+                <UnitCard
+                  title="Quality Drift History"
+                  icon={<ShieldCheck size={20} />}
+                  subtitle="Drilldown"
+                >
+                  <div className="space-y-0.5">
+                    {runtimeGovernanceDrilldowns.qualityDriftHistory.length > 0 ? (
+                      runtimeGovernanceDrilldowns.qualityDriftHistory.slice(0, 8).map((item, index) => (
+                        <div key={`${item.traceId ?? 'trace'}:${index}`} className="flex items-center justify-between py-2 border-b border-black/[0.03] last:border-0">
+                          <div className="min-w-0">
+                            <p className="text-[13px] font-medium text-[#030213] truncate">{item.agentRole ?? 'unknown'}</p>
+                            <p className="text-[11px] text-[#717182] truncate">
+                              {item.traceId ?? 'без trace'} • rec {formatGovernanceKey(item.recommendationType ?? 'NONE')}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[13px] font-mono text-[#030213]">{formatPctOrPending(item.recentAvgBsPct)}</p>
+                            <p className="text-[11px] text-[#717182]">base {formatPctOrPending(item.baselineAvgBsPct)}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <NoData />
+                    )}
+                  </div>
+                </UnitCard>
+
+                <UnitCard
+                  title="Queue & Correlation"
+                  icon={<Activity size={20} />}
+                  subtitle="Drilldown"
+                >
+                  <div className="space-y-0.5">
+                    {runtimeGovernanceDrilldowns.queueSaturationTimeline.length > 0 ? (
+                      runtimeGovernanceDrilldowns.queueSaturationTimeline.slice(0, 4).map((item) => (
+                        <div key={item.observedAt} className="flex items-center justify-between py-2 border-b border-black/[0.03] last:border-0">
+                          <div>
+                            <p className="text-[13px] font-medium text-[#030213]">{formatQueuePressureState(item.pressureState)}</p>
+                            <p className="text-[11px] text-[#717182]">{item.hottestQueue ?? 'runtime'} • {new Date(item.observedAt).toLocaleString('ru')}</p>
+                          </div>
+                          <p className="text-[13px] font-mono text-[#030213]">{item.totalBacklog}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <NoData />
+                    )}
+
+                    {runtimeGovernanceDrilldowns.correlation.length > 0 && (
+                      <div className="mt-6 pt-5 border-t border-black/5">
+                        <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Correlation</p>
+                        <div className="space-y-2">
+                          {runtimeGovernanceDrilldowns.correlation.slice(0, 4).map((item, index) => (
+                            <div key={`${item.traceId ?? 'trace'}:${index}`} className="rounded-xl border border-black/5 bg-slate-50 px-3 py-3">
+                              <p className="text-[12px] font-medium text-[#030213]">
+                                {item.agentRole ?? 'unknown'} • {formatGovernanceKey(item.fallbackReason ?? 'NONE')}
+                              </p>
+                              <p className="mt-1 text-[11px] text-[#717182]">
+                                rec {formatGovernanceKey(item.recommendationType ?? 'NONE')} • incident {item.incidentType ?? 'none'}
+                              </p>
+                              <p className="mt-1 text-[11px] text-[#717182]">
+                                {item.traceId ?? 'без trace'} • {new Date(item.createdAt).toLocaleString('ru')}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </UnitCard>
+              </div>
+            )}
           </div>
         )}
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
@@ -15,6 +15,14 @@ type FulfillmentEvent = {
 };
 
 export default function CommerceFulfillmentPage() {
+    return (
+        <Suspense fallback={null}>
+            <CommerceFulfillmentPageInner />
+        </Suspense>
+    );
+}
+
+function CommerceFulfillmentPageInner() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const focusedEntity = searchParams.get('entity');

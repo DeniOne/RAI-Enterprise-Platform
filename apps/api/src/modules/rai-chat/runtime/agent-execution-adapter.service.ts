@@ -17,6 +17,11 @@ import {
   type FrontOfficeAgentIntent,
 } from "../agents/front-office-agent.service";
 import {
+  ContractsAgent,
+  type ContractsAgentInput,
+  type ContractsAgentIntent,
+} from "../agents/contracts-agent.service";
+import {
   CanonicalAgentRuntimeRole,
   isAgentRuntimeRole,
 } from "../agent-registry.service";
@@ -38,6 +43,7 @@ export class AgentExecutionAdapterService {
     private readonly monitoringAgent: MonitoringAgent,
     private readonly crmAgent: CrmAgent,
     private readonly frontOfficeAgent: FrontOfficeAgent,
+    private readonly contractsAgent: ContractsAgent,
   ) {}
 
   async execute(params: ExecuteAdapterParams): Promise<AgentExecutionResult> {
@@ -466,6 +472,147 @@ export class AgentExecutionAdapterService {
       };
     }
 
+    if (adapterRole === "contracts_agent") {
+      const payload = this.firstPayload(params.allowedToolCalls);
+      const intent = this.detectContractsIntent(params.allowedToolCalls, params.request.message);
+      const result = await this.contractsAgent.run({
+        companyId: params.actorContext.companyId,
+        traceId: params.request.traceId,
+        userId: params.actorContext.userId,
+        userRole: params.actorContext.userRole,
+        userConfirmed: params.actorContext.userConfirmed,
+        intent,
+        contractId:
+          typeof payload.contractId === "string"
+            ? payload.contractId
+            : this.resolveEntityId(params.request, ["contract"]),
+        obligationId:
+          typeof payload.obligationId === "string"
+            ? payload.obligationId
+            : this.resolveEntityId(params.request, ["obligation"]),
+        invoiceId:
+          typeof payload.invoiceId === "string"
+            ? payload.invoiceId
+            : this.resolveEntityId(params.request, ["invoice"]),
+        paymentId:
+          typeof payload.paymentId === "string"
+            ? payload.paymentId
+            : this.resolveEntityId(params.request, ["payment"]),
+        fulfillmentEventId:
+          typeof payload.fulfillmentEventId === "string"
+            ? payload.fulfillmentEventId
+            : this.resolveEntityId(params.request, ["fulfillment_event", "fulfillment"]),
+        number:
+          typeof payload.number === "string"
+            ? payload.number
+            : this.extractContractNumber(params.request.message),
+        type:
+          typeof payload.type === "string" ? payload.type : this.extractContractType(params.request.message),
+        validFrom: typeof payload.validFrom === "string" ? payload.validFrom : undefined,
+        validTo: typeof payload.validTo === "string" ? payload.validTo : undefined,
+        jurisdictionId:
+          typeof payload.jurisdictionId === "string" ? payload.jurisdictionId : undefined,
+        regulatoryProfileId:
+          typeof payload.regulatoryProfileId === "string"
+            ? payload.regulatoryProfileId
+            : undefined,
+        roles:
+          Array.isArray(payload.roles) &&
+          payload.roles.every(
+            (item) =>
+              item &&
+              typeof item === "object" &&
+              typeof (item as { partyId?: unknown }).partyId === "string" &&
+              typeof (item as { role?: unknown }).role === "string",
+          )
+            ? (payload.roles as ContractsAgentInput["roles"])
+            : undefined,
+        obligationType:
+          payload.type === "DELIVER" || payload.type === "PAY" || payload.type === "PERFORM"
+            ? payload.type
+            : this.extractObligationType(params.request.message),
+        dueDate: typeof payload.dueDate === "string" ? payload.dueDate : undefined,
+        eventDomain:
+          payload.eventDomain === "COMMERCIAL" ||
+          payload.eventDomain === "PRODUCTION" ||
+          payload.eventDomain === "LOGISTICS" ||
+          payload.eventDomain === "FINANCE_ADJ"
+            ? payload.eventDomain
+            : this.extractEventDomain(params.request.message),
+        eventType:
+          this.isKnownFulfillmentEventType(payload.eventType)
+            ? payload.eventType
+            : this.extractEventType(params.request.message),
+        eventDate: typeof payload.eventDate === "string" ? payload.eventDate : undefined,
+        batchId: typeof payload.batchId === "string" ? payload.batchId : undefined,
+        itemId: typeof payload.itemId === "string" ? payload.itemId : undefined,
+        uom: typeof payload.uom === "string" ? payload.uom : undefined,
+        qty: typeof payload.qty === "number" ? payload.qty : undefined,
+        sellerJurisdiction:
+          typeof payload.sellerJurisdiction === "string"
+            ? payload.sellerJurisdiction
+            : undefined,
+        buyerJurisdiction:
+          typeof payload.buyerJurisdiction === "string"
+            ? payload.buyerJurisdiction
+            : undefined,
+        supplyType:
+          payload.supplyType === "GOODS" ||
+          payload.supplyType === "SERVICE" ||
+          payload.supplyType === "LEASE"
+            ? payload.supplyType
+            : this.extractSupplyType(params.request.message),
+        vatPayerStatus:
+          payload.vatPayerStatus === "PAYER" || payload.vatPayerStatus === "NON_PAYER"
+            ? payload.vatPayerStatus
+            : undefined,
+        subtotal: typeof payload.subtotal === "number" ? payload.subtotal : undefined,
+        productTaxCode:
+          typeof payload.productTaxCode === "string" ? payload.productTaxCode : undefined,
+        payerPartyId:
+          typeof payload.payerPartyId === "string" ? payload.payerPartyId : undefined,
+        payeePartyId:
+          typeof payload.payeePartyId === "string" ? payload.payeePartyId : undefined,
+        amount: typeof payload.amount === "number" ? payload.amount : undefined,
+        currency: typeof payload.currency === "string" ? payload.currency : undefined,
+        paymentMethod:
+          typeof payload.paymentMethod === "string" ? payload.paymentMethod : undefined,
+        paidAt: typeof payload.paidAt === "string" ? payload.paidAt : undefined,
+        allocatedAmount:
+          typeof payload.allocatedAmount === "number" ? payload.allocatedAmount : undefined,
+      });
+
+      return {
+        role: params.request.role,
+        status: result.status,
+        text: result.explain,
+        structuredOutput: {
+          data: result.data,
+          missingContext: result.missingContext,
+          intent,
+        },
+        toolCalls: [
+          {
+            name: this.detectContractsTool(params.allowedToolCalls, intent),
+            result: result.data,
+          },
+        ],
+        connectorCalls: [],
+        evidence: result.evidence,
+        validation: this.validateOutput(
+          params.kernel,
+          result.evidence,
+          result.status === "NEEDS_MORE_DATA" || result.evidence.length > 0,
+          result.status,
+          result.status === "NEEDS_MORE_DATA",
+        ),
+        runtimeBudget: params.budgetDecision,
+        fallbackUsed: result.fallbackUsed,
+        outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
+        auditPayload,
+      };
+    }
+
     const result = await this.monitoringAgent.run(
       {
         companyId: params.actorContext.companyId,
@@ -686,6 +833,114 @@ export class AgentExecutionAdapterService {
     return "log_dialog_message";
   }
 
+  private detectContractsIntent(
+    toolCalls: RaiToolCallDto[],
+    message: string,
+  ): ContractsAgentIntent {
+    if (toolCalls.some((call) => call.name === RaiToolName.CreateCommerceContract)) {
+      return "create_commerce_contract";
+    }
+    if (toolCalls.some((call) => call.name === RaiToolName.ListCommerceContracts)) {
+      return "list_commerce_contracts";
+    }
+    if (toolCalls.some((call) => call.name === RaiToolName.GetCommerceContract)) {
+      return "review_commerce_contract";
+    }
+    if (toolCalls.some((call) => call.name === RaiToolName.CreateCommerceObligation)) {
+      return "create_contract_obligation";
+    }
+    if (toolCalls.some((call) => call.name === RaiToolName.CreateFulfillmentEvent)) {
+      return "create_fulfillment_event";
+    }
+    if (toolCalls.some((call) => call.name === RaiToolName.CreateInvoiceFromFulfillment)) {
+      return "create_invoice_from_fulfillment";
+    }
+    if (toolCalls.some((call) => call.name === RaiToolName.PostInvoice)) {
+      return "post_invoice";
+    }
+    if (toolCalls.some((call) => call.name === RaiToolName.CreatePayment)) {
+      return "create_payment";
+    }
+    if (toolCalls.some((call) => call.name === RaiToolName.ConfirmPayment)) {
+      return "confirm_payment";
+    }
+    if (toolCalls.some((call) => call.name === RaiToolName.AllocatePayment)) {
+      return "allocate_payment";
+    }
+    if (toolCalls.some((call) => call.name === RaiToolName.GetArBalance)) {
+      return "review_ar_balance";
+    }
+
+    const normalized = message.toLowerCase();
+    if (/дебитор|ar balance|остаток.*счет|задолжен/i.test(normalized)) {
+      return "review_ar_balance";
+    }
+    if (/разнес|аллокац/i.test(normalized)) {
+      return "allocate_payment";
+    }
+    if (/подтверд.*оплат/i.test(normalized)) {
+      return "confirm_payment";
+    }
+    if (/созд(ай|ать).*(платеж|оплат)/i.test(normalized)) {
+      return "create_payment";
+    }
+    if (/провед.*счет|опубликуй.*счет|post invoice/i.test(normalized)) {
+      return "post_invoice";
+    }
+    if (/сформир.*счет|созд(ай|ать).*(счет|инвойс)/i.test(normalized)) {
+      return "create_invoice_from_fulfillment";
+    }
+    if (/зафиксир.*исполн|исполнени|отгрузк|shipment/i.test(normalized)) {
+      return "create_fulfillment_event";
+    }
+    if (/обязательств/i.test(normalized)) {
+      return "create_contract_obligation";
+    }
+    if (/реестр.*договор|список.*договор|покажи.*договор/i.test(normalized)) {
+      return "list_commerce_contracts";
+    }
+    if (/карточк.*договор|договор .*покажи|review contract/i.test(normalized)) {
+      return "review_commerce_contract";
+    }
+    return "create_commerce_contract";
+  }
+
+  private detectContractsTool(
+    toolCalls: RaiToolCallDto[],
+    intent: ContractsAgentIntent,
+  ): RaiToolName {
+    const explicit = toolCalls[0]?.name;
+    if (explicit) {
+      return explicit;
+    }
+    switch (intent) {
+      case "create_commerce_contract":
+        return RaiToolName.CreateCommerceContract;
+      case "list_commerce_contracts":
+        return RaiToolName.ListCommerceContracts;
+      case "review_commerce_contract":
+        return RaiToolName.GetCommerceContract;
+      case "create_contract_obligation":
+        return RaiToolName.CreateCommerceObligation;
+      case "create_fulfillment_event":
+        return RaiToolName.CreateFulfillmentEvent;
+      case "create_invoice_from_fulfillment":
+        return RaiToolName.CreateInvoiceFromFulfillment;
+      case "post_invoice":
+        return RaiToolName.PostInvoice;
+      case "create_payment":
+        return RaiToolName.CreatePayment;
+      case "confirm_payment":
+        return RaiToolName.ConfirmPayment;
+      case "allocate_payment":
+        return RaiToolName.AllocatePayment;
+      case "review_ar_balance":
+        return RaiToolName.GetArBalance;
+      default:
+        return RaiToolName.CreateCommerceContract;
+    }
+  }
+
   private detectFrontOfficeTool(
     toolCalls: RaiToolCallDto[],
     intent: FrontOfficeAgentIntent,
@@ -735,5 +990,71 @@ export class AgentExecutionAdapterService {
 
   private buildObligationDescription(message: string): string {
     return message.trim().slice(0, 500);
+  }
+
+  private extractContractNumber(message: string): string | undefined {
+    const match = message.match(/\b([A-ZА-Я]{1,4}-?\d{2,4}-?\d{1,6})\b/u);
+    return match?.[1];
+  }
+
+  private extractContractType(message: string): string | undefined {
+    const normalized = message.toLowerCase();
+    if (/аренд/i.test(normalized)) return "LEASE";
+    if (/агент/i.test(normalized)) return "AGENCY";
+    if (/услуг/i.test(normalized)) return "SERVICE";
+    if (/поставк|договор/i.test(normalized)) return "SUPPLY";
+    return undefined;
+  }
+
+  private extractObligationType(
+    message: string,
+  ): "DELIVER" | "PAY" | "PERFORM" | undefined {
+    const normalized = message.toLowerCase();
+    if (/оплат/i.test(normalized)) return "PAY";
+    if (/исполн|услуг/i.test(normalized)) return "PERFORM";
+    if (/постав|отгруз/i.test(normalized)) return "DELIVER";
+    return undefined;
+  }
+
+  private extractEventDomain(
+    message: string,
+  ): "COMMERCIAL" | "PRODUCTION" | "LOGISTICS" | "FINANCE_ADJ" | undefined {
+    const normalized = message.toLowerCase();
+    if (/логист/i.test(normalized)) return "LOGISTICS";
+    if (/производ|урож|материал/i.test(normalized)) return "PRODUCTION";
+    if (/финанс/i.test(normalized)) return "FINANCE_ADJ";
+    if (/исполн|отгруз|shipment|service/i.test(normalized)) return "COMMERCIAL";
+    return undefined;
+  }
+
+  private isKnownFulfillmentEventType(value: unknown): value is ContractsAgentInput["eventType"] {
+    return (
+      value === "GOODS_SHIPMENT" ||
+      value === "SERVICE_ACT" ||
+      value === "LEASE_USAGE" ||
+      value === "MATERIAL_CONSUMPTION" ||
+      value === "HARVEST" ||
+      value === "INTERNAL_TRANSFER" ||
+      value === "WRITE_OFF"
+    );
+  }
+
+  private extractEventType(message: string): ContractsAgentInput["eventType"] {
+    const normalized = message.toLowerCase();
+    if (/отгруз|shipment/i.test(normalized)) return "GOODS_SHIPMENT";
+    if (/аренд/i.test(normalized)) return "LEASE_USAGE";
+    if (/урож/i.test(normalized)) return "HARVEST";
+    if (/списа/i.test(normalized)) return "WRITE_OFF";
+    if (/перемещ/i.test(normalized)) return "INTERNAL_TRANSFER";
+    if (/материал/i.test(normalized)) return "MATERIAL_CONSUMPTION";
+    return "SERVICE_ACT";
+  }
+
+  private extractSupplyType(message: string): "GOODS" | "SERVICE" | "LEASE" | undefined {
+    const normalized = message.toLowerCase();
+    if (/аренд/i.test(normalized)) return "LEASE";
+    if (/услуг|service/i.test(normalized)) return "SERVICE";
+    if (/товар|постав|отгруз|goods/i.test(normalized)) return "GOODS";
+    return undefined;
   }
 }

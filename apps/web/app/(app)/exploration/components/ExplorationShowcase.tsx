@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui';
@@ -32,6 +32,20 @@ type ShowcaseResponse = {
 };
 
 export function ExplorationShowcase({
+    mode,
+    title,
+}: {
+    mode?: 'SEU' | 'CDU';
+    title: string;
+}) {
+    return (
+        <Suspense fallback={null}>
+            <ExplorationShowcaseInner mode={mode} title={title} />
+        </Suspense>
+    );
+}
+
+function ExplorationShowcaseInner({
     mode,
     title,
 }: {

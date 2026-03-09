@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
@@ -17,6 +17,14 @@ type Payment = {
 };
 
 export default function CommercePaymentsPage() {
+    return (
+        <Suspense fallback={null}>
+            <CommercePaymentsPageInner />
+        </Suspense>
+    );
+}
+
+function CommercePaymentsPageInner() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const focusedEntity = searchParams.get('entity');

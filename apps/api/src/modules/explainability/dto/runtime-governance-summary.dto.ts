@@ -21,12 +21,25 @@ export interface RuntimeGovernanceSummaryDto {
     avgEvidenceCoveragePct: number | null;
     qualityAlertCount: number;
   };
+  flags: {
+    apiEnabled: boolean;
+    uiEnabled: boolean;
+    enforcementEnabled: boolean;
+    autoQuarantineEnabled: boolean;
+  };
   autonomy: {
     level: string;
     avgBsScorePct: number;
     knownTraceCount: number;
     driver: string | null;
     activeQualityAlert: boolean;
+    manualOverride?: {
+      active: boolean;
+      level: string;
+      reason: string;
+      createdAt: string;
+      createdByUserId: string | null;
+    } | null;
   };
   hottestAgents: Array<{
     agentRole: string;

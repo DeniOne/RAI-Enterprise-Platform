@@ -12,6 +12,8 @@ import { SafeReplayService } from "../rai-chat/safe-replay.service";
 import { PerformanceMetricsService } from "../rai-chat/performance/performance-metrics.service";
 import { AutonomyPolicyService } from "../rai-chat/autonomy-policy.service";
 import { RuntimeGovernanceReadModelService } from "./runtime-governance-read-model.service";
+import { RuntimeGovernanceControlService } from "./runtime-governance-control.service";
+import { RuntimeGovernanceDrilldownService } from "./runtime-governance-drilldown.service";
 
 class TestJwtAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
@@ -58,6 +60,13 @@ describe("ExplainabilityPanelController (HTTP)", () => {
     getSummary: jest.fn(),
     getAgents: jest.fn(),
   };
+  const runtimeGovernanceControl = {
+    setManualAutonomyOverride: jest.fn(),
+    clearManualAutonomyOverride: jest.fn(),
+  };
+  const runtimeGovernanceDrilldowns = {
+    getDrilldowns: jest.fn(),
+  };
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -73,6 +82,14 @@ describe("ExplainabilityPanelController (HTTP)", () => {
         {
           provide: RuntimeGovernanceReadModelService,
           useValue: runtimeGovernanceReadModel,
+        },
+        {
+          provide: RuntimeGovernanceControlService,
+          useValue: runtimeGovernanceControl,
+        },
+        {
+          provide: RuntimeGovernanceDrilldownService,
+          useValue: runtimeGovernanceDrilldowns,
         },
       ],
     })
@@ -164,6 +181,84 @@ describe("ExplainabilityPanelController (HTTP)", () => {
     expect(runtimeGovernanceReadModel.getAgents).toHaveBeenCalledWith(
       "company-a",
       3600000,
+    );
+  });
+
+  it("POST /api/rai/explainability/runtime-governance/autonomy/override включает manual override", async () => {
+    runtimeGovernanceControl.setManualAutonomyOverride.mockResolvedValue({
+      level: "QUARANTINE",
+      avgBsScorePct: 18,
+      knownTraceCount: 4,
+      driver: "MANUAL_OVERRIDE",
+      activeQualityAlert: false,
+      manualOverride: {
+        active: true,
+        level: "QUARANTINE",
+        reason: "manual operator decision",
+        createdAt: "2026-03-09T15:30:00.000Z",
+        createdByUserId: "u-test",
+      },
+    });
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/explainability/runtime-governance/autonomy/override")
+      .send({ level: "QUARANTINE", reason: "manual operator decision" })
+      .expect(201);
+
+    expect(response.body.driver).toBe("MANUAL_OVERRIDE");
+    expect(runtimeGovernanceControl.setManualAutonomyOverride).toHaveBeenCalledWith({
+      companyId: "company-a",
+      level: "QUARANTINE",
+      reason: "manual operator decision",
+      userId: undefined,
+    });
+  });
+
+  it("POST /api/rai/explainability/runtime-governance/autonomy/override/clear снимает manual override", async () => {
+    runtimeGovernanceControl.clearManualAutonomyOverride.mockResolvedValue({
+      level: "TOOL_FIRST",
+      avgBsScorePct: 11,
+      knownTraceCount: 6,
+      driver: "BS_AVG_TOOL_FIRST",
+      activeQualityAlert: false,
+      manualOverride: null,
+    });
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/explainability/runtime-governance/autonomy/override/clear")
+      .expect(201);
+
+    expect(response.body.manualOverride).toBeNull();
+    expect(runtimeGovernanceControl.clearManualAutonomyOverride).toHaveBeenCalledWith({
+      companyId: "company-a",
+      userId: undefined,
+    });
+  });
+
+  it("GET /api/rai/explainability/runtime-governance/drilldowns отдаёт drilldowns", async () => {
+    runtimeGovernanceDrilldowns.getDrilldowns.mockResolvedValue({
+      flags: {
+        apiEnabled: true,
+        uiEnabled: true,
+        enforcementEnabled: true,
+        autoQuarantineEnabled: true,
+      },
+      fallbackHistory: [],
+      qualityDriftHistory: [],
+      budgetHotspots: [],
+      queueSaturationTimeline: [],
+      correlation: [],
+    });
+
+    const response = await request(app.getHttpServer())
+      .get("/api/rai/explainability/runtime-governance/drilldowns?timeWindowMs=120000&agentRole=crm_agent")
+      .expect(200);
+
+    expect(response.body.flags.apiEnabled).toBe(true);
+    expect(runtimeGovernanceDrilldowns.getDrilldowns).toHaveBeenCalledWith(
+      "company-a",
+      120000,
+      "crm_agent",
     );
   });
 });

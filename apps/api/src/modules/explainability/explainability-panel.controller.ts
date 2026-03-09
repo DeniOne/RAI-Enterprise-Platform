@@ -1,4 +1,13 @@
-import { BadRequestException, Controller, Get, Param, Post, Query, UseGuards } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from "@nestjs/common";
 import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { RolesGuard } from "../../shared/auth/roles.guard";
 import { Roles } from "../../shared/auth/roles.decorator";
@@ -21,6 +30,42 @@ import { TruthfulnessDashboardResponseDto } from "./dto/truthfulness-dashboard.d
 import { RuntimeGovernanceSummaryDto } from "./dto/runtime-governance-summary.dto";
 import { RuntimeGovernanceAgentDto } from "./dto/runtime-governance-agent.dto";
 import { RuntimeGovernanceReadModelService } from "./runtime-governance-read-model.service";
+import { RuntimeGovernanceControlService } from "./runtime-governance-control.service";
+import { SetRuntimeAutonomyOverrideDtoSchema } from "./dto/runtime-governance-control.dto";
+import { RuntimeGovernanceDrilldownService } from "./runtime-governance-drilldown.service";
+import { RuntimeGovernanceDrilldownsDto } from "./dto/runtime-governance-drilldowns.dto";
+
+function toManualOverrideDto(
+  manualOverride:
+    | {
+        active: boolean;
+        level: string;
+        reason: string;
+        createdAt: string;
+        createdByUserId: string | null;
+      }
+    | null
+    | undefined,
+): {
+  active: boolean;
+  level: "TOOL_FIRST" | "QUARANTINE";
+  reason: string;
+  createdAt: string;
+  createdByUserId: string | null;
+} | null {
+  if (!manualOverride) {
+    return null;
+  }
+  const level: "TOOL_FIRST" | "QUARANTINE" =
+    manualOverride.level === "QUARANTINE" ? "QUARANTINE" : "TOOL_FIRST";
+  return {
+    active: manualOverride.active,
+    level,
+    reason: manualOverride.reason,
+    createdAt: manualOverride.createdAt,
+    createdByUserId: manualOverride.createdByUserId,
+  };
+}
 
 @Controller("rai/explainability")
 @UseGuards(JwtAuthGuard)
@@ -34,6 +79,8 @@ export class ExplainabilityPanelController {
     private readonly performanceMetrics: PerformanceMetricsService,
     private readonly autonomyPolicy: AutonomyPolicyService,
     private readonly runtimeGovernanceReadModel: RuntimeGovernanceReadModelService,
+    private readonly runtimeGovernanceControl: RuntimeGovernanceControlService,
+    private readonly runtimeGovernanceDrilldowns: RuntimeGovernanceDrilldownService,
   ) {}
 
   @Get("performance")
@@ -99,6 +146,7 @@ export class ExplainabilityPanelController {
       knownTraceCount: status.knownTraceCount,
       driver: status.driver,
       activeQualityAlert: status.activeQualityAlert,
+      manualOverride: toManualOverrideDto(status.manualOverride),
     };
   }
 
@@ -130,6 +178,80 @@ export class ExplainabilityPanelController {
       throw new BadRequestException("Invalid timeWindowMs");
     }
     return this.runtimeGovernanceReadModel.getAgents(companyId, windowMs);
+  }
+
+  @Get("runtime-governance/drilldowns")
+  async getRuntimeGovernanceDrilldowns(
+    @Query("timeWindowMs") timeWindowMs?: string,
+    @Query("agentRole") agentRole?: string,
+  ): Promise<RuntimeGovernanceDrilldownsDto> {
+    const companyId = this.tenantContext.getCompanyId();
+    if (!companyId) {
+      throw new BadRequestException("Security Context: companyId is missing");
+    }
+    const windowMs = timeWindowMs ? Number(timeWindowMs) : 3_600_000;
+    return this.runtimeGovernanceDrilldowns.getDrilldowns(
+      companyId,
+      Number.isFinite(windowMs) && windowMs > 0 ? windowMs : 3_600_000,
+      agentRole?.trim() || undefined,
+    );
+  }
+
+  @Post("runtime-governance/autonomy/override")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.CEO, UserRole.CLIENT_ADMIN)
+  async setRuntimeAutonomyOverride(
+    @Body() body: unknown,
+    @CurrentUser() user: { userId?: string },
+  ): Promise<AutonomyStatusDto> {
+    const companyId = this.tenantContext.getCompanyId();
+    if (!companyId) {
+      throw new BadRequestException("Security Context: companyId is missing");
+    }
+    const parsed = SetRuntimeAutonomyOverrideDtoSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten().fieldErrors);
+    }
+    const status = await this.runtimeGovernanceControl.setManualAutonomyOverride({
+      companyId,
+      level: parsed.data.level,
+      reason: parsed.data.reason,
+      userId: user?.userId,
+    });
+    return {
+      companyId,
+      level: status.level,
+      avgBsScorePct: status.avgBsScorePct,
+      knownTraceCount: status.knownTraceCount,
+      driver: status.driver,
+      activeQualityAlert: status.activeQualityAlert,
+      manualOverride: toManualOverrideDto(status.manualOverride),
+    };
+  }
+
+  @Post("runtime-governance/autonomy/override/clear")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.CEO, UserRole.CLIENT_ADMIN)
+  async clearRuntimeAutonomyOverride(
+    @CurrentUser() user: { userId?: string },
+  ): Promise<AutonomyStatusDto> {
+    const companyId = this.tenantContext.getCompanyId();
+    if (!companyId) {
+      throw new BadRequestException("Security Context: companyId is missing");
+    }
+    const status = await this.runtimeGovernanceControl.clearManualAutonomyOverride({
+      companyId,
+      userId: user?.userId,
+    });
+    return {
+      companyId,
+      level: status.level,
+      avgBsScorePct: status.avgBsScorePct,
+      knownTraceCount: status.knownTraceCount,
+      driver: status.driver,
+      activeQualityAlert: status.activeQualityAlert,
+      manualOverride: toManualOverrideDto(status.manualOverride),
+    };
   }
 
   @Get("trace/:traceId")

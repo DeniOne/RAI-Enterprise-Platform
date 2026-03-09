@@ -37,6 +37,52 @@ describe("agent interaction contracts", () => {
     expect(result.toolName).toBe(RaiToolName.RegisterCounterparty);
   });
 
+  it("классифицирует создание договора в contracts agent", () => {
+    const result = classifyByAgentContracts(
+      "Давай заключим новый договор с Казьминский",
+      {
+        route: "/commerce/contracts",
+      },
+    );
+
+    expect(result.targetRole).toBe("contracts_agent");
+    expect(result.intent).toBe("create_commerce_contract");
+    expect(result.toolName).toBe(RaiToolName.CreateCommerceContract);
+  });
+
+  it("строит auto tool call для просмотра дебиторки по invoice", () => {
+    const classification = classifyByAgentContracts("покажи дебиторку по счету", {
+      route: "/commerce/invoices",
+      selectedRowSummary: {
+        kind: "invoice",
+        id: "invoice-1",
+        title: "Счет INV-001",
+      },
+    } as any);
+
+    const toolCall = buildAutoToolCallFromContracts(
+      {
+        message: "покажи дебиторку по счету",
+        workspaceContext: {
+          route: "/commerce/invoices",
+          selectedRowSummary: {
+            kind: "invoice",
+            id: "invoice-1",
+            title: "Счет INV-001",
+          },
+        },
+      },
+      classification,
+    );
+
+    expect(toolCall).toEqual({
+      name: RaiToolName.GetArBalance,
+      payload: {
+        invoiceId: "invoice-1",
+      },
+    });
+  });
+
   it("строит auto tool call для план-факта из workspace filters", () => {
     const classification = classifyByAgentContracts("покажи план-факт", {
       route: "/finance/cashflow",

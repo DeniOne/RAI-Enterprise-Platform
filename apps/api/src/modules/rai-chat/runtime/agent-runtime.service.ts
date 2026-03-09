@@ -312,6 +312,7 @@ export class AgentRuntimeService {
       if (effectivePlan.knowledge.some((call) => call.name === name)) return "KnowledgeAgent";
       if (effectivePlan.crm.some((call) => call.name === name)) return "CrmAgent";
       if (effectivePlan.frontOffice.some((call) => call.name === name)) return "FrontOfficeAgent";
+      if (effectivePlan.contracts.some((call) => call.name === name)) return "ContractsAgent";
       return "RuntimeAgent";
     };
     const runOne = (call: { name: RaiToolName; payload: Record<string, unknown> }) => {

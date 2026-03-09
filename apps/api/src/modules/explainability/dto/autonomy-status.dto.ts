@@ -22,14 +22,25 @@ export class AutonomyStatusDto {
     "BS_AVG_TOOL_FIRST",
     "BS_AVG_QUARANTINE",
     "NO_QUALITY_DATA",
+    "MANUAL_OVERRIDE",
   ])
   driver:
     | "QUALITY_ALERT"
     | "BS_AVG_AUTONOMOUS"
     | "BS_AVG_TOOL_FIRST"
     | "BS_AVG_QUARANTINE"
-    | "NO_QUALITY_DATA";
+    | "NO_QUALITY_DATA"
+    | "MANUAL_OVERRIDE";
 
   @IsOptional()
   activeQualityAlert?: boolean;
+
+  @IsOptional()
+  manualOverride?: {
+    active: boolean;
+    level: "TOOL_FIRST" | "QUARANTINE";
+    reason: string;
+    createdAt: string;
+    createdByUserId: string | null;
+  } | null;
 }

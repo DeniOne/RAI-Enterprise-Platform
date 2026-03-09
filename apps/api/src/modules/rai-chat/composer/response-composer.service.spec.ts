@@ -127,4 +127,73 @@ describe("ResponseComposerService", () => {
       }),
     ]);
   });
+
+  it("строит rich output для contracts_agent без fallback backlog", async () => {
+    const response = await service.buildResponse({
+      request: {
+        message: "заключим договор",
+        threadId: "th-3",
+        workspaceContext: { route: "/commerce/contracts" },
+      },
+      executionResult: {
+        executedTools: [
+          {
+            name: RaiToolName.CreateCommerceContract,
+            result: {
+              id: "contract-1",
+              number: "DOG-001",
+              type: "SUPPLY",
+              status: "DRAFT",
+              validFrom: "2026-03-09T00:00:00.000Z",
+              validTo: null,
+              jurisdictionId: "jur-1",
+              regulatoryProfileId: null,
+              roles: [],
+            },
+          },
+        ],
+        agentExecution: {
+          role: "contracts_agent",
+          text: "Договор DOG-001 создан.",
+          fallbackUsed: false,
+          validation: { actionAllowed: true, explain: "" },
+          outputContractVersion: "v1",
+          toolCalls: [{ name: RaiToolName.CreateCommerceContract, result: {} }],
+          confidence: 0.92,
+          evidence: [],
+          structuredOutput: {
+            intent: "create_commerce_contract",
+            data: {
+              id: "contract-1",
+              number: "DOG-001",
+              type: "SUPPLY",
+              status: "DRAFT",
+              validFrom: "2026-03-09T00:00:00.000Z",
+              validTo: null,
+              jurisdictionId: "jur-1",
+              regulatoryProfileId: null,
+              roles: [],
+            },
+          },
+          status: "COMPLETED",
+        },
+      } as any,
+      recallResult: {
+        recall: { items: [] },
+        profile: {},
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-3",
+      threadId: "th-3",
+      companyId: "company-1",
+    });
+
+    expect(response.workWindows?.[0]?.agentRole).toBe("contracts_agent");
+    expect(response.workWindows?.[0]?.title).toContain("Договор");
+    expect(response.workWindows?.[0]?.payload).toEqual(
+      expect.objectContaining({
+        summary: expect.stringContaining("DOG-001"),
+      }),
+    );
+  });
 });

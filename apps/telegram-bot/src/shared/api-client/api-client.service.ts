@@ -277,6 +277,20 @@ export class ApiClientService {
         });
     }
 
+    async getFrontOfficeOverview(accessToken: string): Promise<any> {
+        return this.request('/api/front-office/overview', {
+            method: 'GET',
+            headers: this.getHeaders(accessToken),
+        });
+    }
+
+    async getFrontOfficeDeviations(accessToken: string): Promise<any> {
+        return this.request('/api/front-office/deviations', {
+            method: 'GET',
+            headers: this.getHeaders(accessToken),
+        });
+    }
+
     async createAgroEventDraft(data: any, accessToken: string): Promise<AgroDraftResponseDto> {
         const idempotencyKey = this._generateIdempotencyKey('createAgroEventDraft', data);
         return this.request('/api/agro-events/drafts', {

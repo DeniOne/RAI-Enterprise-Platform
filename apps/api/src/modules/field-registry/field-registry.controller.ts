@@ -5,6 +5,7 @@ import {
   Body,
   UseGuards,
   Request,
+  Param,
 } from "@nestjs/common";
 import { FieldRegistryService } from "./field-registry.service";
 import { CreateFieldDto } from "./dto/create-field.dto";
@@ -25,5 +26,11 @@ export class FieldRegistryController {
   async findAll(@Request() req) {
     const companyId = req.user.companyId;
     return this.fieldRegistryService.findAll(companyId);
+  }
+
+  @Get(":id")
+  async findOne(@Param("id") id: string, @Request() req) {
+    const companyId = req.user.companyId;
+    return this.fieldRegistryService.findOne(id, companyId);
   }
 }

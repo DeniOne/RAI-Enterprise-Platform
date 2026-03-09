@@ -56,6 +56,19 @@ const TOOL_TOKEN_COST: Record<RaiToolName, number> = {
   [RaiToolName.CreateCrmObligation]: 2800,
   [RaiToolName.UpdateCrmObligation]: 2400,
   [RaiToolName.DeleteCrmObligation]: 1800,
+  [RaiToolName.CreateCommerceContract]: 4200,
+  [RaiToolName.ListCommerceContracts]: 1600,
+  [RaiToolName.GetCommerceContract]: 1800,
+  [RaiToolName.CreateCommerceObligation]: 2800,
+  [RaiToolName.CreateFulfillmentEvent]: 3200,
+  [RaiToolName.ListFulfillmentEvents]: 1800,
+  [RaiToolName.CreateInvoiceFromFulfillment]: 3400,
+  [RaiToolName.PostInvoice]: 2600,
+  [RaiToolName.ListInvoices]: 1800,
+  [RaiToolName.CreatePayment]: 3000,
+  [RaiToolName.ConfirmPayment]: 2600,
+  [RaiToolName.AllocatePayment]: 2400,
+  [RaiToolName.GetArBalance]: 1600,
 };
 
 @Injectable()

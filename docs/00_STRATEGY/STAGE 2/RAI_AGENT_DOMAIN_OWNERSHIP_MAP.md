@@ -179,6 +179,8 @@
 - `knowledge`
 - `monitoring`
 - `crm_agent`
+- `front_office_agent`
+- `contracts_agent`
 
 Источники:
 
@@ -234,7 +236,7 @@ Ownership и handoff должны проходить через:
 | `monitoring` | сигналы, алерты, risk contour, monitoring summaries | `risk`, `/control-tower`, supporting monitoring routes | `monitoring` | `knowledge` | `controller`, `economist` | `monitoring`, `knowledge` | `monitoring`, `controller` | отсутствует | `READ_ONLY_SUPPORT` | `MEDIUM` | `CANONICAL` | Signal owner, не business execution owner. |
 | `crm` | контрагенты, аккаунты, контакты, взаимодействия, обязательства, структуры | `crm`, `commerce/parties`, `client-registry`, `/consulting/crm`, `/crm`, `/parties` | `crm_agent` | `knowledge` | `economist` | `crm_agent`, `knowledge`, `monitoring` по сигналам | `crm_agent`, `economist` | `crm_agent` через governed CRM write path | `NONE` | `MEDIUM` | `CANONICAL` | Core CRM owner подтверждён. |
 | `front_office` | входящие и исходящие сообщения, диалоги, классификация общения, task/process detection, эскалации | `front-office`, `telegram`, `task`, `advisory`, `/front-office` | `front_office_agent` | `knowledge` | `crm_agent`, `personal_assistant` | `front_office_agent`, `knowledge`, `crm_agent` по клиентскому контексту | `front_office_agent`, `crm_agent`, `personal_assistant` | только communicator log, thread state, escalation/task records своего домена | `MANUAL_HUMAN_REQUIRED` | `HIGH` | `CANONICAL FIRST WAVE` | Owner коммуникационного ingress уже реализован как canonical role первой волны; ещё не завершены Telegram adapter, отдельный thread store и полный task/handoff contour. |
-| `contracts` | договоры, договорные роли, обязательства в контуре договора | `commerce`, `/commerce/contracts` | отсутствует | `knowledge` | `legal_advisor`, `economist` | route/module read и `knowledge` | `legal_advisor`, `economist` как future advisory | отсутствует | `ROUTE_FALLBACK` | `CRITICAL` | `MISSING OWNER` | Главный текущий разрыв: модуль есть, agent-owner нет. |
+| `contracts` | договоры, договорные роли, обязательства, fulfillment events, invoices, payments, allocations, AR balance | `commerce`, `/commerce/contracts`, `/commerce/fulfillment`, `/commerce/invoices`, `/commerce/payments` | `contracts_agent` | `knowledge` | `legal_advisor`, `economist` | `contracts_agent`, `knowledge`, `crm_agent` по связанному контрагенту | `contracts_agent`, `legal_advisor`, `economist` | `contracts_agent` через governed commerce write path | `NONE` | `MEDIUM` | `CANONICAL` | Договорный и commerce execution owner реализован как canonical runtime role первой волны; legal и economic interpretation остаются secondary advisory ownership. |
 | `legal` | clauses, policy review, legal risk, legal corpus | `legal`, `/strategic/legal` | `legal_advisor` | `knowledge` | отсутствует | `legal_advisor`, `knowledge` | `legal_advisor` | отсутствует | `MANUAL_HUMAN_REQUIRED` | `HIGH` | `FUTURE ROLE` | Роль есть в template, canonical runtime owner ещё нет. |
 | `strategy` | strategic scenarios, portfolio tradeoffs, initiatives | `strategic`, `rd`, `/strategy`, `/strategic/rd` | `strategist` | `knowledge` | `economist` | `strategist`, `knowledge` | `strategist`, `economist` | отсутствует | `MANUAL_HUMAN_REQUIRED` | `HIGH` | `FUTURE ROLE` | Роль есть, canonical owner-agent ещё нет. |
 | `marketing` | campaigns, segments, funnel advisory | supporting front-office routes, CRM read models | `marketer` | `crm_agent`, `knowledge` | отсутствует | `marketer`, `crm_agent`, `knowledge` | `marketer` | отсутствует | `BACKLOG_ONLY` | `MEDIUM` | `FUTURE ROLE` | На уровне template уже зафиксирован. |
@@ -286,6 +288,17 @@ Ownership и handoff должны проходить через:
 | `create_crm_obligation` | `crm` | `crm_agent` | `knowledge` | `economist` потенциально | `crm_agent` через governed path | `CONFIRMED` | CRM owner-intent. |
 | `update_crm_obligation` | `crm` | `crm_agent` | отсутствует | `economist` потенциально | `crm_agent` через governed path | `CONFIRMED` | CRM owner-intent. |
 | `delete_crm_obligation` | `crm` | `crm_agent` | отсутствует | отсутствует | `crm_agent` через governed path | `CONFIRMED` | CRM owner-intent. |
+| `create_commerce_contract` | `contracts` | `contracts_agent` | `knowledge` | `legal_advisor`, `economist` | `contracts_agent` через governed path | `CONFIRMED` | Commerce owner-intent. |
+| `list_commerce_contracts` | `contracts` | `contracts_agent` | `knowledge` | `economist` | отсутствует | `CONFIRMED` | Commerce owner-intent. |
+| `review_commerce_contract` | `contracts` | `contracts_agent` | `knowledge` | `legal_advisor`, `economist` | отсутствует | `CONFIRMED` | Commerce owner-intent. |
+| `create_contract_obligation` | `contracts` | `contracts_agent` | `knowledge` | `economist` | `contracts_agent` через governed path | `CONFIRMED` | Commerce owner-intent. |
+| `create_fulfillment_event` | `contracts` | `contracts_agent` | `knowledge` | `economist` | `contracts_agent` через governed path | `CONFIRMED` | Commerce owner-intent. |
+| `create_invoice_from_fulfillment` | `contracts` | `contracts_agent` | `knowledge` | `economist` | `contracts_agent` через governed path | `CONFIRMED` | Commerce owner-intent. |
+| `post_invoice` | `contracts` | `contracts_agent` | `knowledge` | `economist` | `contracts_agent` через pending-action / risk gate | `CONFIRMED` | Commerce owner-intent. |
+| `create_payment` | `contracts` | `contracts_agent` | `knowledge` | `economist` | `contracts_agent` через governed path | `CONFIRMED` | Commerce owner-intent. |
+| `confirm_payment` | `contracts` | `contracts_agent` | `knowledge` | `economist` | `contracts_agent` через pending-action / risk gate | `CONFIRMED` | Commerce owner-intent. |
+| `allocate_payment` | `contracts` | `contracts_agent` | `knowledge` | `economist` | `contracts_agent` через pending-action / risk gate | `CONFIRMED` | Commerce owner-intent. |
+| `review_ar_balance` | `contracts` | `contracts_agent` | `knowledge` | `economist` | отсутствует | `CONFIRMED` | Commerce owner-intent. |
 
 ### 6.2 Зафиксированные future intent-owner зоны
 
@@ -294,7 +307,6 @@ Ownership и handoff должны проходить через:
 | Домен | Будущий owner-agent | Intent-owner зона |
 |---|---|---|
 | `marketing` | `marketer` | campaigns, segments, funnel recommendations |
-| `front_office` | `front_office_agent` | dialogue logging, communicator filtering, task/process detection, escalation routing |
 | `strategy` | `strategist` | scenario framing, strategic tradeoffs, initiative prioritization |
 | `finance` advisory | `finance_advisor` | executive finance advisory поверх deterministic evidence |
 | `legal` | `legal_advisor` | clause risks, legal summaries, policy review |
@@ -305,7 +317,6 @@ Ownership и handoff должны проходить через:
 
 | Домен | Missing intent owner | Fallback mode | Gap severity | Комментарий |
 |---|---|---|---|---|
-| `contracts` | отсутствует | `ROUTE_FALLBACK` | `CRITICAL` | Нет primary owner для договорных create/review/update сценариев. |
 | `hr` | отсутствует | `MANUAL_HUMAN_REQUIRED` | `MEDIUM` | Доменные сценарии в platform map присутствуют, owner-agent не назначен. |
 | `exploration` | отсутствует | `BACKLOG_ONLY` | `LOW` | Нет agent-owner и intent-owner. |
 
@@ -328,20 +339,23 @@ Ownership и handoff должны проходить через:
 | `monitoring` | `crm_agent` | сигнал относится к клиентскому или CRM-контексту | через оркестратор | `ALLOWED / PARTIAL` |
 | `crm_agent` | `knowledge` | нужен policy / corpus grounding | через оркестратор | `ALLOWED` |
 | `crm_agent` | `economist` | нужен финансовый follow-up по клиентскому кейсу | через оркестратор | `ALLOWED / PARTIAL` |
-| `front_office_agent` | `crm_agent` | клиентский запрос или CRM-контекст | через оркестратор | `REQUIRED FUTURE` |
-| `front_office_agent` | `agronomist` | агро-задача или полевой вопрос | через оркестратор | `REQUIRED FUTURE` |
-| `front_office_agent` | `economist` | финансовый вопрос или process signal | через оркестратор | `REQUIRED FUTURE` |
-| `front_office_agent` | `monitoring` | escalation signal или тревожный паттерн | через оркестратор | `REQUIRED FUTURE` |
+| `front_office_agent` | `crm_agent` | клиентский запрос или CRM-контекст | через оркестратор | `ALLOWED / PARTIAL` |
+| `front_office_agent` | `agronomist` | агро-задача или полевой вопрос | через оркестратор | `ALLOWED / PARTIAL` |
+| `front_office_agent` | `economist` | финансовый вопрос или process signal | через оркестратор | `ALLOWED / PARTIAL` |
+| `front_office_agent` | `monitoring` | escalation signal или тревожный паттерн | через оркестратор | `ALLOWED / PARTIAL` |
+| `front_office_agent` | `contracts_agent` | разговор перешёл в договорный процесс | через оркестратор | `ALLOWED / PARTIAL` |
+| `crm_agent` | `contracts_agent` | создание и сопровождение договоров по контрагенту | через оркестратор | `ALLOWED / PARTIAL` |
+| `contracts_agent` | `knowledge` | нужен grounding по политике или документу | через оркестратор | `ALLOWED` |
+| `contracts_agent` | `legal_advisor` | нужен legal review и clause commentary | через оркестратор | `REQUIRED FUTURE` |
+| `contracts_agent` | `economist` | нужны финансовые последствия договора, счета, оплаты и дебиторка | через оркестратор | `ALLOWED / PARTIAL` |
 
 ### 7.2 Обязательные future handoff paths
 
 | Source owner | Target owner | Для чего нужен путь | Статус |
 |---|---|---|---|
-| `front_office_agent` | `contracts_agent` | разговор перешёл в договорный процесс | `REQUIRED FUTURE` |
 | `front_office_agent` | `legal_advisor` | нужен юридический разбор коммуникации | `REQUIRED FUTURE` |
-| `crm_agent` | `contracts_agent` | создание и сопровождение договоров по контрагенту | `REQUIRED FUTURE` |
 | `contracts_agent` | `legal_advisor` | clause review, legal risk, compliance | `REQUIRED FUTURE` |
-| `contracts_agent` | `economist` / `finance_advisor` | финансовые последствия договора | `REQUIRED FUTURE` |
+| `contracts_agent` | `finance_advisor` | executive finance advisory поверх commerce facts | `REQUIRED FUTURE` |
 | `strategist` | `economist` | стратегический сценарий требует финансовой оценки | `REQUIRED FUTURE` |
 | `controller` | `economist` | control exception требует finance follow-up | `REQUIRED FUTURE` |
 | `controller` | `monitoring` | escalation и signal correlation | `REQUIRED FUTURE` |
@@ -361,24 +375,7 @@ Ownership и handoff должны проходить через:
 
 ## 8. Домены без закрытого ownership
 
-### 8.1 Главный текущий разрыв
-
-`commerce/contracts`
-
-Почему это критично:
-
-- модуль есть;
-- маршрут есть;
-- пользовательский сценарий существует;
-- но нет owner-agent и intent-owner.
-
-Следствие:
-
-- чат уходит в `ROUTE_FALLBACK`;
-- UI может выглядеть “как будто система поняла”;
-- реального agent path нет.
-
-### 8.2 Вторичные разрывы
+### 8.1 Главные текущие разрывы
 
 - `legal` — роль формализована, но runtime owner ещё не создан.
 - `strategy` — роль формализована, но runtime owner ещё не создан.
@@ -387,12 +384,16 @@ Ownership и handoff должны проходить через:
 - `personal_ops` — роль формализована, но runtime owner ещё не создан.
 - `hr`, `exploration` — домены присутствуют, ownership map не закрыта.
 
+### 8.2 Вторичные разрывы
+
+- `front_office_agent` уже реализован, но ещё не доведён до полного Telegram-first ingress и отдельного thread/task state.
+- `contracts_agent` уже реализован как owner-agent, но legal advisory handoff и расширенный product UX вокруг commerce-контура остаются следующей волной.
+
 ### 8.3 Ранжирование разрывов по severity
 
 | Домен | Severity | Почему |
 |---|---|---|
-| `contracts` | `CRITICAL` | Есть модуль, маршрут и реальный пользовательский сценарий, но нет owner-agent и intent-owner. |
-| `front_office` | `HIGH` | В платформе уже есть Telegram, task, advisory и front-office UI, но нет owner-agent коммуникационного ingress. |
+| `front_office` | `HIGH` | Owner-agent уже есть, но ingress-контур ещё не доведён до полного production envelope. |
 | `legal` | `HIGH` | Доменно важный контур уже существует, но agent ownership только template-level. |
 | `strategy` | `HIGH` | Доменно важный контур уже существует, но ownership ещё не доведён до runtime family. |
 | `control` | `HIGH` | Важен для governed operations и quality loops, но role пока только template-level. |
@@ -419,10 +420,10 @@ Ownership map считается зрелой, если для каждого б
 
 ## 10. Naming decision для договорного owner-domain
 
-Для Stage 2 фиксируется нормативное решение:
+Для Stage 2 зафиксировано нормативное решение:
 
 - домен называется `contracts`;
-- будущий canonical owner-agent называется `contracts_agent`.
+- canonical owner-agent называется `contracts_agent`.
 
 Что это означает:
 
@@ -462,10 +463,10 @@ Ownership map считается зрелой, если для каждого б
 
 ## 12. Непосредственные следующие шаги
 
-1. Зафиксировать `contracts` как отдельный owner-domain, а не расширять его молча в `crm_agent`.
-2. Создать отдельный canonical ownership plan для `contracts_agent`.
-3. После этого формализовать `legal` и `strategy` как следующие owner families.
-4. Для всех future-role перевести template ownership в canonical runtime ownership.
+1. Поддерживать `contracts_agent` как отдельный owner-domain, а не размывать его в `crm_agent`.
+2. Формализовать `legal` и `strategy` как следующие owner families.
+3. Довести `front_office_agent -> contracts_agent` до полного production handoff на реальном ingress.
+4. Для всех future-role переводить template ownership в canonical runtime ownership.
 5. Поддерживать эту карту как обязательный источник истины при добавлении нового домена или intent-а.
 
 ---
@@ -479,12 +480,16 @@ Ownership map считается зрелой, если для каждого б
 - `knowledge`
 - `monitoring`
 - `crm_agent`
+- `front_office_agent`
+- `contracts_agent`
 
 Но platform-wide ownership ещё не замкнут.
 
-Главный структурный разрыв:
+Главные структурные разрывы:
 
-- `contracts` существует без owner-agent.
+- `legal` и `strategy` пока ещё не подняты как canonical runtime families;
+- часть future-role всё ещё остаётся на template-уровне;
+- `front_office_agent` ещё не доведён до полного production ingress envelope.
 
 Главное архитектурное правило:
 

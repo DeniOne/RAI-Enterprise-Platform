@@ -60,6 +60,14 @@ describe("ToolCallPlanner", () => {
       expect(plan.frontOffice).toHaveLength(1);
       expect(plan.frontOffice[0].name).toBe(RaiToolName.ClassifyDialogThread);
     });
+
+    it("contracts инструменты попадают в contracts", () => {
+      const plan = planByToolCalls([
+        { name: RaiToolName.CreateCommerceContract, payload: { number: "DOG-1" } },
+      ]);
+      expect(plan.contracts).toHaveLength(1);
+      expect(plan.contracts[0].name).toBe(RaiToolName.CreateCommerceContract);
+    });
   });
 
   describe("planByIntents", () => {
@@ -108,6 +116,21 @@ describe("ToolCallPlanner", () => {
       ]);
       expect(frontOffice).toHaveLength(1);
       expect(frontOffice[0].toolName).toBe(RaiToolName.CreateFrontOfficeEscalation);
+    });
+
+    it("contracts intent попадает в contracts", () => {
+      const { contracts } = planByIntents([
+        {
+          targetRole: "contracts_agent",
+          intent: "create_commerce_contract",
+          toolName: RaiToolName.CreateCommerceContract,
+          confidence: 0.92,
+          method: "regex",
+          reason: "contracts",
+        },
+      ]);
+      expect(contracts).toHaveLength(1);
+      expect(contracts[0].toolName).toBe(RaiToolName.CreateCommerceContract);
     });
   });
 

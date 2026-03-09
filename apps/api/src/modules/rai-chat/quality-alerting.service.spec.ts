@@ -8,6 +8,7 @@ import { IncidentOpsService } from "./incident-ops.service";
 import { SystemIncidentType } from "@rai/prisma-client";
 import { RuntimeGovernanceEventService } from "./runtime-governance/runtime-governance-event.service";
 import { RuntimeGovernanceRecommendationService } from "./runtime-governance/runtime-governance-recommendation.service";
+import { RuntimeGovernanceAutomationService } from "./runtime-governance/runtime-governance-automation.service";
 
 describe("QualityAlertingService", () => {
   let service: QualityAlertingService;
@@ -35,6 +36,9 @@ describe("QualityAlertingService", () => {
   const recommendationService = {
     handleQualityAlertCreated: jest.fn().mockResolvedValue(null),
   };
+  const automationService = {
+    applyRecommendation: jest.fn().mockResolvedValue({ applied: false }),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -45,6 +49,7 @@ describe("QualityAlertingService", () => {
         { provide: IncidentOpsService, useValue: incidentOps },
         { provide: RuntimeGovernanceEventService, useValue: governanceEvents },
         { provide: RuntimeGovernanceRecommendationService, useValue: recommendationService },
+        { provide: RuntimeGovernanceAutomationService, useValue: automationService },
       ],
     }).compile();
 
@@ -127,6 +132,10 @@ describe("QualityAlertingService", () => {
         recentAvgBsPct: 45,
         baselineAvgBsPct: 10,
       }),
+    );
+    expect(automationService.applyRecommendation).toHaveBeenCalledWith(
+      "c1",
+      null,
     );
   });
 

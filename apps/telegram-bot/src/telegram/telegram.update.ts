@@ -243,7 +243,7 @@ export class TelegramUpdate {
 
     const keyboard = Markup.keyboard([
       ["📋 Мои задачи", "📊 Прогресс"],
-      ["📊 Опросы", "🧠 Рекомендации"]
+      ["🧠 Рекомендации", "📊 Опросы"],
     ]).resize();
 
     await ctx.reply(
@@ -915,6 +915,7 @@ export class TelegramUpdate {
       }
 
       const pendingAgroAction = session?.pendingAgroAction;
+
       if (pendingAgroAction?.action === "fix") {
         const result = await this.apiClient.fixAgroEventDraft(
           {

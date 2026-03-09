@@ -34,6 +34,21 @@ const FRONT_OFFICE_TOOLS: RaiToolName[] = [
   RaiToolName.ClassifyDialogThread,
   RaiToolName.CreateFrontOfficeEscalation,
 ];
+const CONTRACTS_TOOLS: RaiToolName[] = [
+  RaiToolName.CreateCommerceContract,
+  RaiToolName.ListCommerceContracts,
+  RaiToolName.GetCommerceContract,
+  RaiToolName.CreateCommerceObligation,
+  RaiToolName.CreateFulfillmentEvent,
+  RaiToolName.ListFulfillmentEvents,
+  RaiToolName.CreateInvoiceFromFulfillment,
+  RaiToolName.PostInvoice,
+  RaiToolName.ListInvoices,
+  RaiToolName.CreatePayment,
+  RaiToolName.ConfirmPayment,
+  RaiToolName.AllocatePayment,
+  RaiToolName.GetArBalance,
+];
 
 export interface AgentExecutionPlan {
   agronom: Array<{ name: RaiToolName; payload: Record<string, unknown> }>;
@@ -41,6 +56,7 @@ export interface AgentExecutionPlan {
   knowledge: Array<{ name: RaiToolName; payload: Record<string, unknown> }>;
   crm: Array<{ name: RaiToolName; payload: Record<string, unknown> }>;
   frontOffice: Array<{ name: RaiToolName; payload: Record<string, unknown> }>;
+  contracts: Array<{ name: RaiToolName; payload: Record<string, unknown> }>;
   other: Array<{ name: RaiToolName; payload: Record<string, unknown> }>;
 }
 
@@ -52,6 +68,7 @@ const PLAN_GROUP_ORDER = [
   "knowledge",
   "crm",
   "frontOffice",
+  "contracts",
   "other",
 ] as const satisfies ReadonlyArray<keyof AgentExecutionPlan>;
 
@@ -65,6 +82,7 @@ export function planByToolCalls(toolCalls: ToolCallInput[]): AgentExecutionPlan 
   const knowledge: ToolCallInput[] = [];
   const crm: ToolCallInput[] = [];
   const frontOffice: ToolCallInput[] = [];
+  const contracts: ToolCallInput[] = [];
   const other: ToolCallInput[] = [];
   for (const call of toolCalls) {
     if (AGRONOM_TOOLS.includes(call.name)) agronom.push(call);
@@ -72,9 +90,10 @@ export function planByToolCalls(toolCalls: ToolCallInput[]): AgentExecutionPlan 
     else if (KNOWLEDGE_TOOLS.includes(call.name)) knowledge.push(call);
     else if (CRM_TOOLS.includes(call.name)) crm.push(call);
     else if (FRONT_OFFICE_TOOLS.includes(call.name)) frontOffice.push(call);
+    else if (CONTRACTS_TOOLS.includes(call.name)) contracts.push(call);
     else other.push(call);
   }
-  return { agronom, economist, knowledge, crm, frontOffice, other };
+  return { agronom, economist, knowledge, crm, frontOffice, contracts, other };
 }
 
 export function buildExecutionBatches(
@@ -118,12 +137,14 @@ export function planByIntents(intents: IntentClassification[]): {
   knowledge: IntentClassification[];
   crm: IntentClassification[];
   frontOffice: IntentClassification[];
+  contracts: IntentClassification[];
 } {
   const agronom: IntentClassification[] = [];
   const economist: IntentClassification[] = [];
   const knowledge: IntentClassification[] = [];
   const crm: IntentClassification[] = [];
   const frontOffice: IntentClassification[] = [];
+  const contracts: IntentClassification[] = [];
   for (const c of intents) {
     if (!c.toolName) continue;
     if (AGRONOM_TOOLS.includes(c.toolName)) agronom.push(c);
@@ -131,6 +152,7 @@ export function planByIntents(intents: IntentClassification[]): {
     else if (KNOWLEDGE_TOOLS.includes(c.toolName)) knowledge.push(c);
     else if (CRM_TOOLS.includes(c.toolName)) crm.push(c);
     else if (FRONT_OFFICE_TOOLS.includes(c.toolName)) frontOffice.push(c);
+    else if (CONTRACTS_TOOLS.includes(c.toolName)) contracts.push(c);
   }
-  return { agronom, economist, knowledge, crm, frontOffice };
+  return { agronom, economist, knowledge, crm, frontOffice, contracts };
 }

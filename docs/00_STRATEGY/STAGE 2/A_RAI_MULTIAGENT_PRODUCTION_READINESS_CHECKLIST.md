@@ -27,6 +27,7 @@
 - [x] Критичные claims больше не находятся в `PARTIAL` или `MISSING` без явного плана закрытия.
 - [x] Есть список блокеров, которые запрещают rollout при незакрытии.
 - [ ] Есть owner на каждый критичный трек.
+  Сейчас `contracts_agent` закрыл commerce/contracts ownership gap, но `legal` и `strategy` ещё не подняты как canonical runtime families.
 
 ## 1. Business Fit and Scope Control
 

@@ -79,29 +79,7 @@ last_updated: 2026-03-08
 
 ## 5. Текущий перечень доменов без владельца
 
-## 5.1 `commerce/contracts`
-
-### Что подтверждено кодом
-
-- модуль существует;
-- есть контроллер и сервис:
-  - [commerce.controller.ts](/root/RAI_EP/apps/api/src/modules/commerce/commerce.controller.ts)
-  - [commerce-contract.service.ts](/root/RAI_EP/apps/api/src/modules/commerce/services/commerce-contract.service.ts)
-
-### Чего нет
-
-- нет канонического contract-owner агента;
-- нет intent-а на создание/ведение договора в routing layer;
-- нет AI tool surface для договоров;
-- текущий `crm_agent` не включает `contracts` в свою подтверждённую owner-зону.
-
-### Как проявляется в UX
-
-- пользователь пишет про новый договор;
-- чат рисует route-based fallback;
-- создаётся видимость работы системы, но реального owner-agent нет.
-
-## 5.2 `legal`
+## 5.1 `legal`
 
 ### Что подтверждено
 
@@ -113,7 +91,7 @@ last_updated: 2026-03-08
 - нет канонического runtime-agent уровня `legal`;
 - нет подтверждённого platform-wide contract-layer для legal-сценариев.
 
-## 5.3 `strategy`
+## 5.2 `strategy`
 
 ### Что подтверждено
 
@@ -131,7 +109,6 @@ last_updated: 2026-03-08
 
 | Домен | Рекомендуемый owner-agent | Причина |
 |---|---|---|
-| `commerce/contracts` | отдельный `contracts_agent` | договорный контур должен быть выделен как самостоятельный owner-domain, а не размыт внутри `crm_agent` или generic `commerce`. |
 | `legal` | `legal_advisor` как будущий canonical agent | role уже предусмотрена в templates и логически соответствует домену |
 | `strategy` | `strategist` как будущий canonical agent | стратегический домен уже выделен как отдельная role-template |
 
@@ -197,6 +174,7 @@ last_updated: 2026-03-08
 - [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md)
 - [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md)
 - [A_RAI_AGENT_INTERACTION_BLUEPRINT.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/A_RAI_AGENT_INTERACTION_BLUEPRINT.md)
+- [RAI_CONTRACTS_AGENT_CANON.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_CONTRACTS_AGENT_CANON.md)
 - [commerce.controller.ts](/root/RAI_EP/apps/api/src/modules/commerce/commerce.controller.ts)
 - [commerce-contract.service.ts](/root/RAI_EP/apps/api/src/modules/commerce/services/commerce-contract.service.ts)
 - [agent-interaction-contracts.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agent-contracts/agent-interaction-contracts.ts)

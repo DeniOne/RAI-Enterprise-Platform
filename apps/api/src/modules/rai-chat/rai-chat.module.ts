@@ -10,11 +10,13 @@ import { RiskToolsRegistry } from "./tools/risk-tools.registry";
 import { KnowledgeToolsRegistry } from "./tools/knowledge-tools.registry";
 import { CrmToolsRegistry } from "./tools/crm-tools.registry";
 import { FrontOfficeToolsRegistry } from "./tools/front-office-tools.registry";
+import { ContractsToolsRegistry } from "./tools/contracts-tools.registry";
 import { AgronomAgent } from "./agents/agronom-agent.service";
 import { EconomistAgent } from "./agents/economist-agent.service";
 import { KnowledgeAgent } from "./agents/knowledge-agent.service";
 import { CrmAgent } from "./agents/crm-agent.service";
 import { FrontOfficeAgent } from "./agents/front-office-agent.service";
+import { ContractsAgent } from "./agents/contracts-agent.service";
 import { AgroDeterministicEngineFacade } from "./deterministic/agro-deterministic.facade";
 import { BudgetControllerService } from "./security/budget-controller.service";
 import { RiskPolicyEngineService } from "./security/risk-policy-engine.service";
@@ -60,6 +62,9 @@ import { RuntimeGovernancePolicyService } from "./runtime-governance/runtime-gov
 import { RuntimeGovernanceEventService } from "./runtime-governance/runtime-governance-event.service";
 import { AgentReliabilityService } from "./runtime-governance/agent-reliability.service";
 import { RuntimeGovernanceRecommendationService } from "./runtime-governance/runtime-governance-recommendation.service";
+import { RuntimeGovernanceFeatureFlagsService } from "./runtime-governance/runtime-governance-feature-flags.service";
+import { RuntimeGovernanceAutomationService } from "./runtime-governance/runtime-governance-automation.service";
+import { RuntimeGovernanceOverrideService } from "./runtime-governance/runtime-governance-override.service";
 
 @Module({
   imports: [
@@ -89,11 +94,13 @@ import { RuntimeGovernanceRecommendationService } from "./runtime-governance/run
     KnowledgeToolsRegistry,
     CrmToolsRegistry,
     FrontOfficeToolsRegistry,
+    ContractsToolsRegistry,
     AgronomAgent,
     EconomistAgent,
     KnowledgeAgent,
     CrmAgent,
     FrontOfficeAgent,
+    ContractsAgent,
     MemoryCoordinatorService,
     AgentRuntimeService,
     AgentExecutionAdapterService,
@@ -122,11 +129,16 @@ import { RuntimeGovernanceRecommendationService } from "./runtime-governance/run
     OpenRouterGatewayService,
     AgentPromptAssemblyService,
     RuntimeGovernancePolicyService,
+    RuntimeGovernanceFeatureFlagsService,
     RuntimeGovernanceEventService,
+    RuntimeGovernanceOverrideService,
     AgentReliabilityService,
     RuntimeGovernanceRecommendationService,
+    RuntimeGovernanceAutomationService,
   ],
   exports: [
+    FrontOfficeToolsRegistry,
+    FrontOfficeAgent,
     SafeReplayService,
     PerformanceMetricsService,
     QueueMetricsService,
@@ -135,9 +147,12 @@ import { RuntimeGovernanceRecommendationService } from "./runtime-governance/run
     IncidentOpsService,
     AutonomyPolicyService,
     RuntimeGovernancePolicyService,
+    RuntimeGovernanceFeatureFlagsService,
     RuntimeGovernanceEventService,
+    RuntimeGovernanceOverrideService,
     AgentReliabilityService,
     RuntimeGovernanceRecommendationService,
+    RuntimeGovernanceAutomationService,
   ],
 })
 export class RaiChatModule {}

@@ -33,9 +33,9 @@ const CAPABILITY_OPTIONS = [
   'ProductivityToolsRegistry',
   'MarketingToolsRegistry',
 ];
-const KNOWN_ROLES = ['agronomist', 'economist', 'knowledge', 'monitoring', 'crm_agent', 'front_office_agent'];
-const ADAPTER_ROLES = ['agronomist', 'economist', 'knowledge', 'monitoring', 'crm_agent', 'front_office_agent'];
-const TEMPLATE_OPTIONS = ['marketer', 'strategist', 'finance_advisor', 'legal_advisor', 'crm_agent', 'front_office_agent', 'controller', 'personal_assistant'] as const;
+const KNOWN_ROLES = ['agronomist', 'economist', 'knowledge', 'monitoring', 'crm_agent', 'front_office_agent', 'contracts_agent'];
+const ADAPTER_ROLES = ['agronomist', 'economist', 'knowledge', 'monitoring', 'crm_agent', 'front_office_agent', 'contracts_agent'];
+const TEMPLATE_OPTIONS = ['marketer', 'strategist', 'finance_advisor', 'legal_advisor', 'crm_agent', 'front_office_agent', 'contracts_agent', 'controller', 'personal_assistant'] as const;
 const KIND_OPTIONS = ['domain_advisor', 'worker_hybrid', 'personal_delegated'] as const;
 const AUTONOMY_OPTIONS = ['advisory', 'hybrid', 'autonomous'] as const;
 const MODEL_ROUTING_CLASSES = ['cheap', 'fast', 'strong'] as const;
@@ -61,11 +61,22 @@ const RESPONSIBILITY_INTENT_OPTIONS = [
   'delete_crm_interaction',
   'update_crm_obligation',
   'delete_crm_obligation',
+  'create_commerce_contract',
+  'list_commerce_contracts',
+  'review_commerce_contract',
+  'create_contract_obligation',
+  'create_fulfillment_event',
+  'create_invoice_from_fulfillment',
+  'post_invoice',
+  'create_payment',
+  'confirm_payment',
+  'allocate_payment',
+  'review_ar_balance',
   'log_dialog_message',
   'classify_dialog_thread',
   'create_front_office_escalation',
 ] as const;
-type CanonicalAdapterRole = 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent' | 'front_office_agent';
+type CanonicalAdapterRole = 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent' | 'front_office_agent' | 'contracts_agent';
 
 function roleOptionLabel(role: string) {
   const labels: Record<string, string> = {
@@ -75,6 +86,7 @@ function roleOptionLabel(role: string) {
     monitoring: 'monitoring / Мониторинг',
     crm_agent: 'crm_agent / CRM-агент',
     front_office_agent: 'front_office_agent / Фронт-офис агент',
+    contracts_agent: 'contracts_agent / Contracts-агент',
   };
   return labels[role] ?? role;
 }
@@ -132,6 +144,7 @@ function displayAgentName(role: string, fallbackName: string) {
     legal_advisor: 'Юрист-А',
     crm_agent: 'CRM-А',
     front_office_agent: 'ФронтОфис-А',
+    contracts_agent: 'Контракты-А',
     controller: 'Контролёр-А',
     personal_assistant: 'Ассистент-А',
   };
@@ -769,7 +782,7 @@ function AgentEditor({
                 ))}
               </select>
               <p className="mt-2 text-[11px] text-[#717182] leading-relaxed">
-                Шаблон подставляет стандартные настройки runtime и governance. Для `crm_agent` и `front_office_agent` backend-шаблоны уже существуют.
+                Шаблон подставляет стандартные настройки runtime и governance. Для `crm_agent`, `front_office_agent` и `contracts_agent` backend-шаблоны уже существуют.
               </p>
             </div>
           )}
@@ -781,7 +794,7 @@ function AgentEditor({
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
-                placeholder="например, front_office_agent или crm_agent"
+                placeholder="например, contracts_agent или front_office_agent"
                 list="known-agent-roles"
               />
               <datalist id="known-agent-roles">

@@ -4,6 +4,7 @@ import { AutonomyPolicyService } from "../rai-chat/autonomy-policy.service";
 import { QueueMetricsService } from "../rai-chat/performance/queue-metrics.service";
 import { AgentReliabilityService } from "../rai-chat/runtime-governance/agent-reliability.service";
 import { RuntimeGovernanceRecommendationService } from "../rai-chat/runtime-governance/runtime-governance-recommendation.service";
+import { RuntimeGovernanceFeatureFlagsService } from "../rai-chat/runtime-governance/runtime-governance-feature-flags.service";
 import { RuntimeGovernanceAgentDto } from "./dto/runtime-governance-agent.dto";
 import { RuntimeGovernanceSummaryDto } from "./dto/runtime-governance-summary.dto";
 
@@ -15,6 +16,7 @@ export class RuntimeGovernanceReadModelService {
     private readonly agentReliability: AgentReliabilityService,
     private readonly recommendationService: RuntimeGovernanceRecommendationService,
     private readonly autonomyPolicy: AutonomyPolicyService,
+    private readonly featureFlags: RuntimeGovernanceFeatureFlagsService,
   ) {}
 
   async getSummary(
@@ -121,12 +123,14 @@ export class RuntimeGovernanceReadModelService {
             : null,
         qualityAlertCount,
       },
+      flags: this.featureFlags.getFlags(),
       autonomy: {
         level: autonomy.level,
         avgBsScorePct: autonomy.avgBsScorePct,
         knownTraceCount: autonomy.knownTraceCount,
         driver: autonomy.driver,
         activeQualityAlert: autonomy.activeQualityAlert,
+        manualOverride: autonomy.manualOverride ?? null,
       },
       hottestAgents: reliability.slice(0, 5).map((agent) => ({
         agentRole: agent.agentRole,

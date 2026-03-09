@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
@@ -17,6 +17,14 @@ type Invoice = {
 };
 
 export default function CommerceInvoicesPage() {
+    return (
+        <Suspense fallback={null}>
+            <CommerceInvoicesPageInner />
+        </Suspense>
+    );
+}
+
+function CommerceInvoicesPageInner() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const focusedEntity = searchParams.get('entity');

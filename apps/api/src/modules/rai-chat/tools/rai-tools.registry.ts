@@ -24,6 +24,7 @@ import { RiskToolsRegistry } from "./risk-tools.registry";
 import { KnowledgeToolsRegistry } from "./knowledge-tools.registry";
 import { CrmToolsRegistry } from "./crm-tools.registry";
 import { FrontOfficeToolsRegistry } from "./front-office-tools.registry";
+import { ContractsToolsRegistry } from "./contracts-tools.registry";
 import { RiskPolicyEngineService } from "../security/risk-policy-engine.service";
 import { PendingActionService } from "../security/pending-action.service";
 import { RiskPolicyBlockedError } from "../security/risk-policy-blocked.error";
@@ -38,6 +39,7 @@ import { SystemIncidentType } from "@rai/prisma-client";
 import { RuntimeGovernanceEventType } from "@rai/prisma-client";
 import { RuntimeGovernanceEventService } from "../runtime-governance/runtime-governance-event.service";
 import { RuntimeGovernancePolicyService } from "../runtime-governance/runtime-governance-policy.service";
+import { RuntimeGovernanceFeatureFlagsService } from "../runtime-governance/runtime-governance-feature-flags.service";
 
 type ToolHandler<TName extends RaiToolName> = (
   payload: RaiToolPayloadMap[TName],
@@ -64,6 +66,7 @@ export class RaiToolsRegistry implements OnModuleInit {
     private readonly knowledgeToolsRegistry: KnowledgeToolsRegistry,
     private readonly crmToolsRegistry: CrmToolsRegistry,
     private readonly frontOfficeToolsRegistry: FrontOfficeToolsRegistry,
+    private readonly contractsToolsRegistry: ContractsToolsRegistry,
     private readonly riskPolicyEngine: RiskPolicyEngineService,
     private readonly pendingActionService: PendingActionService,
     private readonly autonomyPolicy: AutonomyPolicyService,
@@ -71,6 +74,7 @@ export class RaiToolsRegistry implements OnModuleInit {
     private readonly incidentOps: IncidentOpsService,
     private readonly governanceEvents: RuntimeGovernanceEventService,
     private readonly runtimeGovernancePolicy: RuntimeGovernancePolicyService,
+    private readonly runtimeGovernanceFlags: RuntimeGovernanceFeatureFlagsService,
   ) {}
 
   onModuleInit() {
@@ -141,8 +145,10 @@ export class RaiToolsRegistry implements OnModuleInit {
           : `Выполнение инструмента ${name} заблокировано: у агента ${configDecision.role} отсутствует capability ${configDecision.requiredCapability}.`,
       );
     }
+    const enforcementEnabled =
+      this.runtimeGovernanceFlags.getFlags().enforcementEnabled;
     let autonomyLevel: AutonomyLevel | null = null;
-    if (riskInfo && riskInfo.riskLevel !== "READ") {
+    if (enforcementEnabled && riskInfo && riskInfo.riskLevel !== "READ") {
       autonomyLevel = await this.autonomyPolicy.getCompanyAutonomyLevel(
         actorContext.companyId,
       );
@@ -203,6 +209,7 @@ export class RaiToolsRegistry implements OnModuleInit {
         this.pendingActionService.requiresConfirmation(verdict) &&
         !directCrmUserWrite;
       const requiresByAutonomy =
+        enforcementEnabled &&
         autonomyLevel === AutonomyLevel.TOOL_FIRST &&
         riskInfo.riskLevel !== "READ";
       if (requiresByRisk || requiresByAutonomy) {
@@ -287,6 +294,9 @@ export class RaiToolsRegistry implements OnModuleInit {
     }
     if (this.frontOfficeToolsRegistry.has(name)) {
       return this.frontOfficeToolsRegistry.execute(name as never, payload, actorContext) as Promise<RaiToolResultMap[TName]>;
+    }
+    if (this.contractsToolsRegistry.has(name)) {
+      return this.contractsToolsRegistry.execute(name as never, payload, actorContext) as Promise<RaiToolResultMap[TName]>;
     }
 
     const tool = this.tools.get(name) as RegisteredTool<TName> | undefined;

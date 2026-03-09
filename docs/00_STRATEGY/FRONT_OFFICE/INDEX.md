@@ -38,6 +38,8 @@ last_updated: 2026-03-09
 | [../../07_EXECUTION/PHASE_BETA/BETA_CONTOUR_ANALYSIS_2026-02-08.md](../../07_EXECUTION/PHASE_BETA/BETA_CONTOUR_ANALYSIS_2026-02-08.md) | `GAP ANALYSIS` | Зафиксированные разрывы между backend и frontend |
 | [../../03_PRODUCT/UI_UX/Prompt_for_design_research.md](../../03_PRODUCT/UI_UX/Prompt_for_design_research.md) | `UX REFERENCE` | Общие требования к зрелому enterprise UX для операционного контура |
 | [../../10_FRONTEND_MENU_IMPLEMENTATION/01_MENU_Управление_Урожаем.md](../../10_FRONTEND_MENU_IMPLEMENTATION/01_MENU_%D0%A3%D0%BF%D1%80%D0%B0%D0%B2%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5_%D0%A3%D1%80%D0%BE%D0%B6%D0%B0%D0%B5%D0%BC.md) | `PRODUCT IA REFERENCE` | Операционный UX-контекст, близкий к Front-Office domain |
+| [FRONT_OFFICE_DEMO_FLOWS.md](./FRONT_OFFICE_DEMO_FLOWS.md) | `ACTIVE APPENDIX` | Канонические demo-сценарии для пилота, показов и smoke/e2e |
+| [FRONT_OFFICE_REFACTOR_PLAN.md](./FRONT_OFFICE_REFACTOR_PLAN.md) | `ACTIVE APPENDIX` | Точный план доведения кода до канонического `Draft / Thread / Confirm` контура |
 
 ## 3. Карта кода
 
@@ -85,3 +87,5 @@ last_updated: 2026-03-09
 - [FRONT_OFFICE_USER_FLOWS.md](./FRONT_OFFICE_USER_FLOWS.md) — ключевые пользовательские сценарии.
 - [FRONT_OFFICE_API_CONTRACTS.md](./FRONT_OFFICE_API_CONTRACTS.md) — целевые read/write контракты.
 - [FRONT_OFFICE_BACKLOG.md](./FRONT_OFFICE_BACKLOG.md) — очередь работ по web/UI/API harmonization.
+- [FRONT_OFFICE_DEMO_FLOWS.md](./FRONT_OFFICE_DEMO_FLOWS.md) — канонические demo-сценарии для пилота и показов.
+- [FRONT_OFFICE_REFACTOR_PLAN.md](./FRONT_OFFICE_REFACTOR_PLAN.md) — точный план исправления текущей реализации до канонического состояния.

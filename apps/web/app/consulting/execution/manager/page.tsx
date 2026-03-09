@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ExecutionCard } from '../components/ExecutionCard';
@@ -24,6 +24,14 @@ import { buildWorkspaceRef, buildWorkspaceSummary } from '@/lib/workspace-contex
  * Phase 4: Institutional Control Plane.
  */
 export default function ManagerContour() {
+    return (
+        <Suspense fallback={null}>
+            <ManagerContourInner />
+        </Suspense>
+    );
+}
+
+function ManagerContourInner() {
     const queryClient = useQueryClient();
     const router = useRouter();
     const [selectedOperation, setSelectedOperation] = useState<any>(null);

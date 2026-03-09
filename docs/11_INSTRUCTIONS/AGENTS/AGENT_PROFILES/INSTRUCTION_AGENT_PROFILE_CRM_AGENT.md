@@ -91,7 +91,7 @@ last_updated: 2026-03-08
 - Выполнять finance, agronomy и monitoring intent-ы.
 - Брать ownership договора только потому, что договор связан с контрагентом.
 - Выходить в legal commitments.
-- Маскировать отсутствие отдельного contract owner-agent.
+- Маскировать handoff в `contracts_agent` или пытаться незаметно захватывать commerce ownership.
 
 ## 9. Текущий фактический функционал
 
@@ -139,7 +139,8 @@ last_updated: 2026-03-08
 - С `knowledge`: для policy / corpus grounding по CRM-сценарию.
 - С `economist`: для финансового follow-up по клиентскому контексту.
 - С `monitoring`: для incident/risk escalation, но не наоборот по ownership.
-- С будущим `contracts_agent` и `legal_advisor`: для договорного и правового handoff.
+- С `contracts_agent`: для договорного и commerce handoff по контрагенту.
+- С `legal_advisor`: для правового advisory handoff.
 
 ## 13. Связи с доменными модулями
 
@@ -204,11 +205,11 @@ last_updated: 2026-03-08
 
 - Запрещённые домены: `agronomy`, `finance`, `monitoring`.
 - Запрещённые intent-ы: agro, finance, knowledge-owner, monitoring-owner.
-- Запрещённый scope: contracts ownership пока не включён в канонический профиль.
+- Запрещённый scope: contracts execution ownership вынесен в отдельный канонический профиль `contracts_agent`.
 
 ## 19. Основные риски и failure modes
 
-- Fallback-маскировка отсутствующего contract owner-agent.
+- Некорректная маршрутизация в CRM вместо `contracts_agent` на договорных сценариях.
 - Ложный успех при blocked/governed write, если composer скрывает статус.
 - Неполный контекст для CRM write path.
 - Расширение CRM ownership на legal/contracts по инерции маршрута.
@@ -227,7 +228,7 @@ last_updated: 2026-03-08
 - CRM write path governed и честно отражает gate status.
 - UI не скрывает blocked / pending / failed состояния.
 - Есть smoke-набор на новых и существующих контрагентов.
-- Разрыв по `commerce/contracts` явно задокументирован и не маскируется.
+- Договорные сценарии честно уходят в `contracts_agent`, а не размываются в CRM scope.
 
 ## 22. Связанные файлы и точки кода
 

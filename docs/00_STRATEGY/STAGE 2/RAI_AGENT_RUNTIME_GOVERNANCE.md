@@ -46,6 +46,12 @@
 - вводятся новые quality gates;
 - обсуждаются runtime budgets, hallucination policy или telemetry.
 
+Отдельно документ уже применяется к runtime envelopes для:
+
+- `front_office_agent`;
+- `contracts_agent`;
+- canonical owner-agents первой рабочей волны.
+
 ---
 
 ## 3. Канонические источники
@@ -57,6 +63,7 @@
 - [RAI_AI_ANTIHALLUCINATION_ARCHITECTURE.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AI_ANTIHALLUCINATION_ARCHITECTURE.md)
 - [A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md)
 - [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md)
+- [RAI_SWARM_CONTROL_TOWER_ARCHITECTURE.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_SWARM_CONTROL_TOWER_ARCHITECTURE.md)
 
 И с текущими runtime/governance источниками в коде:
 
@@ -344,6 +351,8 @@ intent -> runtime plan -> budget check -> policy check -> execution -> evidence 
 - telemetry tool execution;
 - telemetry quality/incidents;
 - telemetry ownership attribution.
+
+Operator canon для представления, ranking, heatmap, drilldowns и управляющих действий над этим telemetry-слоем зафиксирован в [RAI_SWARM_CONTROL_TOWER_ARCHITECTURE.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_SWARM_CONTROL_TOWER_ARCHITECTURE.md).
 
 ### 10.2 Что подтверждено кодом
 

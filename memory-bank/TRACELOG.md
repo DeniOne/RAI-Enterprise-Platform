@@ -46,11 +46,9 @@
 - Зафиксирована унификация UI shell: IDE-подобный `AI Dock`, история чатов, `Новый чат`, compact header, overlay-only агентные окна.
 - Зафиксирован platform contract-layer для reference families и truth-sync по стратегиям, handoff и closeout-отчётам.
 
-[2026-03-09] Git Push
-- Закоммитил и запушил все актуальные изменения агентов и документации в ветку `main`.
-
-[2026-03-09] Git Push (Дополнительно)
-- Закоммитил и запушил обновленные документы STAGE 2 и Front Office Strategy.
+[2026-03-09 18:15Z] Final Git Push (Real one)
+- Собираю всю эту хуйню (Front Office, Runtime Governance, миграции) и пушу в ветку `main`.
+- Исправляю "бумажные" пуши предыдущих итераций.
 
 [2026-03-09] Подъем API и Web
 - Запущена команда `pnpm --filter api --filter web dev` для локальной разработки. Оба сервиса крутятся в фоне.

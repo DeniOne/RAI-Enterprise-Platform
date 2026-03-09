@@ -8,6 +8,9 @@ describe("TelegramUpdate agro flow", () => {
 
   const buildApiClient = () => ({
     getUser: jest.fn().mockResolvedValue({ id: "user-1", email: "worker@rai.local" }),
+    getMyTasks: jest.fn(),
+    startTask: jest.fn(),
+    completeTask: jest.fn(),
     createAgroEventDraft: jest.fn(),
     fixAgroEventDraft: jest.fn(),
     linkAgroEventDraft: jest.fn(),
@@ -36,6 +39,7 @@ describe("TelegramUpdate agro flow", () => {
         message: { text: "draft message" },
       },
       answerCbQuery: jest.fn(),
+      editMessageText: jest.fn(),
       reply: jest.fn(),
     }) as any;
 
@@ -85,6 +89,60 @@ describe("TelegramUpdate agro flow", () => {
     expect(ctx.reply).toHaveBeenCalledWith(
       expect.stringContaining("draft-1"),
       expect.objectContaining({ parse_mode: "HTML" }),
+    );
+  });
+
+  it("получает задачи и показывает CTA start/complete", async () => {
+    const apiClient = buildApiClient();
+    const sessionService = buildSessionService();
+    sessionService.getSession.mockResolvedValue({
+      token: "token-1",
+      lastActive: Date.now(),
+    });
+    apiClient.getMyTasks.mockResolvedValue([
+      {
+        id: "task-pending",
+        name: "Осмотр поля",
+        status: "PENDING",
+        field: { name: "Поле 7" },
+        seasonId: "season-1",
+      },
+      {
+        id: "task-progress",
+        name: "Подтверждение обработки",
+        status: "IN_PROGRESS",
+        field: { name: "Поле 8" },
+        seasonId: "season-2",
+      },
+    ]);
+
+    const update = new TelegramUpdate(
+      progressService as any,
+      apiClient as any,
+      sessionService as any,
+    );
+    const ctx = {
+      from: { id: 101, username: "worker" },
+      reply: jest.fn(),
+    } as any;
+
+    await update.onMyTasks(ctx);
+
+    expect(apiClient.getMyTasks).toHaveBeenCalledWith("token-1");
+    expect(ctx.reply).toHaveBeenCalledTimes(2);
+    expect(ctx.reply).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining("Осмотр поля"),
+      expect.objectContaining({
+        parse_mode: "HTML",
+      }),
+    );
+    expect(ctx.reply).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining("Подтверждение обработки"),
+      expect.objectContaining({
+        parse_mode: "HTML",
+      }),
     );
   });
 
@@ -225,5 +283,61 @@ describe("TelegramUpdate agro flow", () => {
       expect.stringContaining("commit-1"),
       expect.objectContaining({ parse_mode: "HTML" }),
     );
+  });
+
+  it("старт задачи вызывает API и сохраняет activeTaskId", async () => {
+    const apiClient = buildApiClient();
+    const sessionService = buildSessionService();
+    sessionService.getSession.mockResolvedValue({
+      token: "token-1",
+      lastActive: 123,
+    });
+    apiClient.startTask.mockResolvedValue({ id: "task-42" });
+
+    const update = new TelegramUpdate(
+      progressService as any,
+      apiClient as any,
+      sessionService as any,
+    );
+    const ctx = buildActionContext("start_task:task-42", [
+      "start_task:task-42",
+      "task-42",
+    ]);
+
+    await update.onStartTask(ctx);
+
+    expect(apiClient.startTask).toHaveBeenCalledWith("task-42", "token-1");
+    expect(sessionService.saveSession).toHaveBeenCalledWith(
+      101,
+      expect.objectContaining({
+        activeTaskId: "task-42",
+      }),
+    );
+    expect(ctx.answerCbQuery).toHaveBeenCalledWith("Задача начата! ▶");
+  });
+
+  it("завершение задачи вызывает complete API", async () => {
+    const apiClient = buildApiClient();
+    const sessionService = buildSessionService();
+    sessionService.getSession.mockResolvedValue({
+      token: "token-1",
+      lastActive: 123,
+    });
+    apiClient.completeTask.mockResolvedValue({ id: "task-42" });
+
+    const update = new TelegramUpdate(
+      progressService as any,
+      apiClient as any,
+      sessionService as any,
+    );
+    const ctx = buildActionContext("complete_task:task-42", [
+      "complete_task:task-42",
+      "task-42",
+    ]);
+
+    await update.onCompleteTask(ctx);
+
+    expect(apiClient.completeTask).toHaveBeenCalledWith("task-42", "token-1");
+    expect(ctx.answerCbQuery).toHaveBeenCalledWith("Задача завершена! ✅");
   });
 });

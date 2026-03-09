@@ -78,6 +78,9 @@ Infrastructure и governed runtime-контур Stage 2 в основном до
 
 - слой больше не “начат”, а уже действует как runtime-backed contract layer;
 - platform-wide reference coverage по 4 canonical agent families Stage 2 уже есть.
+- coverage расширена до новых canonical owner-agents первой волны:
+  - `front_office_agent`
+  - `contracts_agent`
 
 ---
 

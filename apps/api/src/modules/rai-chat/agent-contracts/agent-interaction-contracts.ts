@@ -9,7 +9,8 @@ export type AgentContractRole =
   | "knowledge"
   | "monitoring"
   | "crm_agent"
-  | "front_office_agent";
+  | "front_office_agent"
+  | "contracts_agent";
 export type AgentContractIntentId =
   | "tech_map_draft"
   | "compute_deviations"
@@ -32,6 +33,17 @@ export type AgentContractIntentId =
   | "create_crm_obligation"
   | "update_crm_obligation"
   | "delete_crm_obligation"
+  | "create_commerce_contract"
+  | "list_commerce_contracts"
+  | "review_commerce_contract"
+  | "create_contract_obligation"
+  | "create_fulfillment_event"
+  | "create_invoice_from_fulfillment"
+  | "post_invoice"
+  | "create_payment"
+  | "confirm_payment"
+  | "allocate_payment"
+  | "review_ar_balance"
   | "log_dialog_message"
   | "classify_dialog_thread"
   | "create_front_office_escalation";
@@ -1197,6 +1209,369 @@ const CANONICAL_RESPONSIBILITY_PROFILES: Record<AgentContractRole, AgentResponsi
       },
     ],
   },
+  contracts_agent: {
+    role: "contracts_agent",
+    focus: {
+      role: "contracts_agent",
+      title: "Contracts-агент",
+      businessDomain: "commerce",
+      responsibilities: [
+        "реестр договоров и карточки договора",
+        "договорные роли сторон",
+        "обязательства по договору",
+        "события исполнения",
+        "создание и проведение счетов",
+        "создание, подтверждение и аллокация платежей",
+        "просмотр дебиторского остатка",
+      ],
+      allowedEntityTypes: ["contract", "party", "obligation", "invoice", "payment", "fulfillment_event"],
+      disallowedEntityTypes: ["field", "tech_map", "contact", "agro_signal"],
+      allowedRoutes: ["/commerce/contracts", "/commerce/fulfillment", "/commerce/invoices", "/commerce/payments"],
+      forbiddenRoutes: ["/consulting/techmaps", "/consulting/crm", "/knowledge"],
+    },
+    guardrails: {
+      role: "contracts_agent",
+      forbiddenIntentIds: [
+        "tech_map_draft",
+        "compute_deviations",
+        "compute_plan_fact",
+        "simulate_scenario",
+        "compute_risk_assessment",
+        "query_knowledge",
+        "emit_alerts",
+        "register_counterparty",
+        "create_counterparty_relation",
+        "create_crm_account",
+        "review_account_workspace",
+        "update_account_profile",
+        "create_crm_contact",
+        "update_crm_contact",
+        "delete_crm_contact",
+        "log_crm_interaction",
+        "update_crm_interaction",
+        "delete_crm_interaction",
+        "create_crm_obligation",
+        "update_crm_obligation",
+        "delete_crm_obligation",
+      ],
+      forbiddenEntityTypes: ["field", "tech_map", "contact", "agro_signal"],
+      forbiddenActions: ["open_field_card", "open_knowledge_route"],
+      forbiddenDomains: ["agronomy", "crm", "monitoring"],
+    },
+    intents: [
+      {
+        id: "create_commerce_contract",
+        intentId: "create_commerce_contract",
+        role: "contracts_agent",
+        description: "Создать новый коммерческий договор.",
+        taskFamily: "commerce_contract_create",
+        triggerHints: ["заключи договор", "создай договор", "оформи договор", "новый договор", "контракт"],
+        toolName: RaiToolName.CreateCommerceContract,
+        outputMode: "window",
+        requiredContextKeys: [],
+        optionalContextKeys: [],
+        allowedWithoutContext: true,
+        keywordsPattern: /заключи.*договор|созд(ай|ать).*(договор|контракт)|оформи.*договор|новый договор/i,
+        routeHints: { includesAny: ["commerce", "contract"] },
+        classificationReason: "responsibility:commerce:create_contract",
+        classificationConfidence: 0.84,
+        contextContract: [],
+        uiActionSurface: {
+          defaultWindowType: "structured_result",
+          defaultWindowMode: "panel",
+          allowedUiActions: ["focus_window", "open_route", "open_entity", "refresh_context"],
+          allowedNavigationTargets: ["/commerce/contracts", "/commerce/contracts/create"],
+        },
+      },
+      {
+        id: "list_commerce_contracts",
+        intentId: "list_commerce_contracts",
+        role: "contracts_agent",
+        description: "Показать реестр договоров.",
+        taskFamily: "commerce_contract_registry",
+        triggerHints: ["реестр договор", "список договор", "покажи договор", "контракты"],
+        toolName: RaiToolName.ListCommerceContracts,
+        outputMode: "analysis",
+        requiredContextKeys: [],
+        optionalContextKeys: [],
+        allowedWithoutContext: true,
+        keywordsPattern: /реестр.*договор|список.*договор|покажи.*договор|контракты/i,
+        routeHints: { includesAny: ["commerce", "contract"] },
+        classificationReason: "responsibility:commerce:list_contracts",
+        classificationConfidence: 0.78,
+        contextContract: [],
+        uiActionSurface: {
+          defaultWindowType: "structured_result",
+          defaultWindowMode: "panel",
+          allowedUiActions: ["focus_window", "open_route", "refresh_context"],
+          allowedNavigationTargets: ["/commerce/contracts"],
+        },
+      },
+      {
+        id: "review_commerce_contract",
+        intentId: "review_commerce_contract",
+        role: "contracts_agent",
+        description: "Открыть карточку конкретного договора.",
+        taskFamily: "commerce_contract_review",
+        triggerHints: ["карточка договора", "покажи договор", "открой договор", "review contract"],
+        toolName: RaiToolName.GetCommerceContract,
+        outputMode: "analysis",
+        requiredContextKeys: [],
+        optionalContextKeys: [],
+        allowedWithoutContext: true,
+        keywordsPattern: /карточк.*договор|покажи.*договор|открой.*договор|review contract/i,
+        routeHints: { includesAny: ["commerce", "contract"] },
+        classificationReason: "responsibility:commerce:review_contract",
+        classificationConfidence: 0.77,
+        contextContract: [],
+        uiActionSurface: {
+          defaultWindowType: "structured_result",
+          defaultWindowMode: "panel",
+          allowedUiActions: ["focus_window", "open_route", "open_entity"],
+          allowedNavigationTargets: ["/commerce/contracts"],
+        },
+      },
+      {
+        id: "create_contract_obligation",
+        intentId: "create_contract_obligation",
+        role: "contracts_agent",
+        description: "Создать обязательство по договору.",
+        taskFamily: "commerce_obligation_create",
+        triggerHints: ["добавь обязательство", "создай обязательство", "обязательство deliver", "обязательство pay"],
+        toolName: RaiToolName.CreateCommerceObligation,
+        outputMode: "window",
+        requiredContextKeys: [],
+        optionalContextKeys: [],
+        allowedWithoutContext: true,
+        keywordsPattern: /добавь.*обязательств|созд(ай|ать).*(обязательств)|obligation|deliver|perform|pay/i,
+        routeHints: { includesAny: ["commerce", "contract"] },
+        classificationReason: "responsibility:commerce:create_obligation",
+        classificationConfidence: 0.8,
+        contextContract: [],
+        uiActionSurface: {
+          defaultWindowType: "structured_result",
+          defaultWindowMode: "panel",
+          allowedUiActions: ["focus_window", "open_route", "open_entity"],
+          allowedNavigationTargets: ["/commerce/contracts"],
+        },
+      },
+      {
+        id: "create_fulfillment_event",
+        intentId: "create_fulfillment_event",
+        role: "contracts_agent",
+        description: "Зафиксировать событие исполнения по обязательству.",
+        taskFamily: "commerce_fulfillment_create",
+        triggerHints: ["зафиксируй исполнение", "исполнение", "отгрузка", "shipment"],
+        toolName: RaiToolName.CreateFulfillmentEvent,
+        outputMode: "window",
+        requiredContextKeys: [],
+        optionalContextKeys: [],
+        allowedWithoutContext: true,
+        keywordsPattern: /зафиксир.*исполн|исполнени|отгрузк|shipment/i,
+        routeHints: { includesAny: ["commerce", "fulfillment"] },
+        classificationReason: "responsibility:commerce:create_fulfillment",
+        classificationConfidence: 0.8,
+        contextContract: [],
+        uiActionSurface: {
+          defaultWindowType: "structured_result",
+          defaultWindowMode: "panel",
+          allowedUiActions: ["focus_window", "open_route", "open_entity"],
+          allowedNavigationTargets: ["/commerce/fulfillment", "/commerce/contracts"],
+        },
+      },
+      {
+        id: "create_invoice_from_fulfillment",
+        intentId: "create_invoice_from_fulfillment",
+        role: "contracts_agent",
+        description: "Сформировать счёт из события исполнения.",
+        taskFamily: "commerce_invoice_create",
+        triggerHints: ["сформируй счет", "создай счет", "инвойс", "invoice"],
+        toolName: RaiToolName.CreateInvoiceFromFulfillment,
+        outputMode: "window",
+        requiredContextKeys: [],
+        optionalContextKeys: [],
+        allowedWithoutContext: true,
+        keywordsPattern: /сформир.*счет|созд(ай|ать).*(счет|инвойс)|invoice/i,
+        routeHints: { includesAny: ["commerce", "invoice"] },
+        classificationReason: "responsibility:commerce:create_invoice",
+        classificationConfidence: 0.82,
+        contextContract: [],
+        uiActionSurface: {
+          defaultWindowType: "structured_result",
+          defaultWindowMode: "panel",
+          allowedUiActions: ["focus_window", "open_route", "open_entity"],
+          allowedNavigationTargets: ["/commerce/invoices", "/commerce/contracts"],
+        },
+      },
+      {
+        id: "post_invoice",
+        intentId: "post_invoice",
+        role: "contracts_agent",
+        description: "Провести счёт.",
+        taskFamily: "commerce_invoice_post",
+        triggerHints: ["проведи счет", "опубликуй счет", "post invoice"],
+        toolName: RaiToolName.PostInvoice,
+        outputMode: "window",
+        requiredContextKeys: [],
+        optionalContextKeys: [],
+        allowedWithoutContext: true,
+        keywordsPattern: /провед.*счет|опубликуй.*счет|post invoice/i,
+        routeHints: { includesAny: ["commerce", "invoice"] },
+        classificationReason: "responsibility:commerce:post_invoice",
+        classificationConfidence: 0.76,
+        contextContract: [],
+        uiActionSurface: {
+          defaultWindowType: "structured_result",
+          defaultWindowMode: "panel",
+          allowedUiActions: ["focus_window", "open_route", "open_entity"],
+          allowedNavigationTargets: ["/commerce/invoices"],
+        },
+      },
+      {
+        id: "create_payment",
+        intentId: "create_payment",
+        role: "contracts_agent",
+        description: "Создать платёж по договорному контуру.",
+        taskFamily: "commerce_payment_create",
+        triggerHints: ["создай платеж", "добавь оплату", "зарегистрируй оплату"],
+        toolName: RaiToolName.CreatePayment,
+        outputMode: "window",
+        requiredContextKeys: [],
+        optionalContextKeys: [],
+        allowedWithoutContext: true,
+        keywordsPattern: /созд(ай|ать).*(платеж|оплат)|добавь.*оплат|зарегистрируй.*оплат/i,
+        routeHints: { includesAny: ["commerce", "payment"] },
+        classificationReason: "responsibility:commerce:create_payment",
+        classificationConfidence: 0.78,
+        contextContract: [],
+        uiActionSurface: {
+          defaultWindowType: "structured_result",
+          defaultWindowMode: "panel",
+          allowedUiActions: ["focus_window", "open_route", "open_entity"],
+          allowedNavigationTargets: ["/commerce/payments"],
+        },
+      },
+      {
+        id: "confirm_payment",
+        intentId: "confirm_payment",
+        role: "contracts_agent",
+        description: "Подтвердить платёж.",
+        taskFamily: "commerce_payment_confirm",
+        triggerHints: ["подтверди оплату", "подтверди платеж"],
+        toolName: RaiToolName.ConfirmPayment,
+        outputMode: "window",
+        requiredContextKeys: [],
+        optionalContextKeys: [],
+        allowedWithoutContext: true,
+        keywordsPattern: /подтверд.*(оплат|платеж)/i,
+        routeHints: { includesAny: ["commerce", "payment"] },
+        classificationReason: "responsibility:commerce:confirm_payment",
+        classificationConfidence: 0.78,
+        contextContract: [],
+        uiActionSurface: {
+          defaultWindowType: "structured_result",
+          defaultWindowMode: "panel",
+          allowedUiActions: ["focus_window", "open_route", "open_entity"],
+          allowedNavigationTargets: ["/commerce/payments"],
+        },
+      },
+      {
+        id: "allocate_payment",
+        intentId: "allocate_payment",
+        role: "contracts_agent",
+        description: "Разнести платёж на счёт.",
+        taskFamily: "commerce_payment_allocate",
+        triggerHints: ["разнеси оплату", "аллокация платежа", "allocate payment"],
+        toolName: RaiToolName.AllocatePayment,
+        outputMode: "window",
+        requiredContextKeys: [],
+        optionalContextKeys: [],
+        allowedWithoutContext: true,
+        keywordsPattern: /разнеси.*оплат|аллокац|allocate payment/i,
+        routeHints: { includesAny: ["commerce", "payment", "invoice"] },
+        classificationReason: "responsibility:commerce:allocate_payment",
+        classificationConfidence: 0.78,
+        contextContract: [],
+        uiActionSurface: {
+          defaultWindowType: "structured_result",
+          defaultWindowMode: "panel",
+          allowedUiActions: ["focus_window", "open_route", "open_entity"],
+          allowedNavigationTargets: ["/commerce/payments", "/commerce/invoices"],
+        },
+      },
+      {
+        id: "review_ar_balance",
+        intentId: "review_ar_balance",
+        role: "contracts_agent",
+        description: "Показать дебиторский остаток по счёту.",
+        taskFamily: "commerce_ar_balance",
+        triggerHints: ["покажи дебиторку", "дебиторка", "ar balance", "остаток по счету"],
+        toolName: RaiToolName.GetArBalance,
+        outputMode: "analysis",
+        requiredContextKeys: [],
+        optionalContextKeys: [],
+        allowedWithoutContext: true,
+        keywordsPattern: /покажи.*дебитор|дебиторк|ar balance|остаток.*счет/i,
+        routeHints: { includesAny: ["commerce", "invoice"] },
+        classificationReason: "responsibility:commerce:review_ar_balance",
+        classificationConfidence: 0.76,
+        contextContract: [],
+        uiActionSurface: {
+          defaultWindowType: "structured_result",
+          defaultWindowMode: "panel",
+          allowedUiActions: ["focus_window", "open_route", "open_entity"],
+          allowedNavigationTargets: ["/commerce/invoices"],
+        },
+      },
+    ],
+    uiActions: [
+      {
+        id: "open_contracts_route",
+        role: "contracts_agent",
+        kind: "open_route",
+        label: "Открыть реестр договоров",
+        targetRoutePattern: "/commerce/contracts",
+      },
+      {
+        id: "open_contract_create_route",
+        role: "contracts_agent",
+        intentId: "create_commerce_contract",
+        kind: "open_route",
+        label: "Открыть создание договора",
+        targetRoutePattern: "/commerce/contracts/create",
+      },
+      {
+        id: "open_contract",
+        role: "contracts_agent",
+        intentId: "review_commerce_contract",
+        kind: "open_entity",
+        label: "Открыть договор",
+        allowedEntityTypes: ["contract"],
+      },
+      {
+        id: "open_invoice",
+        role: "contracts_agent",
+        intentId: "review_ar_balance",
+        kind: "open_entity",
+        label: "Открыть счёт",
+        allowedEntityTypes: ["invoice"],
+      },
+      {
+        id: "open_payment",
+        role: "contracts_agent",
+        intentId: "create_payment",
+        kind: "open_entity",
+        label: "Открыть платёж",
+        allowedEntityTypes: ["payment"],
+      },
+      {
+        id: "refresh_commerce_context",
+        role: "contracts_agent",
+        kind: "refresh_context",
+        label: "Обновить commerce-контекст",
+      },
+    ],
+  },
   front_office_agent: {
     role: "front_office_agent",
     focus: {
@@ -1353,7 +1728,8 @@ function isCanonicalRole(role: string | null | undefined): role is AgentContract
     role === "knowledge" ||
     role === "monitoring" ||
     role === "crm_agent" ||
-    role === "front_office_agent"
+    role === "front_office_agent" ||
+    role === "contracts_agent"
   );
 }
 
@@ -1687,6 +2063,28 @@ function extractCrmPersonName(message: string): { firstName?: string; lastName?:
     firstName: contactMatch[1],
     lastName: contactMatch[2],
   };
+}
+
+function extractContractNumber(message: string): string | undefined {
+  const match = message.match(/\b([A-ZА-Я]{1,4}-?\d{2,4}-?\d{1,6})\b/u);
+  return match?.[1];
+}
+
+function extractContractType(message: string): string | undefined {
+  const normalized = message.toLowerCase();
+  if (/аренд/i.test(normalized)) return "LEASE";
+  if (/агент/i.test(normalized)) return "AGENCY";
+  if (/услуг/i.test(normalized)) return "SERVICE";
+  if (/поставк|договор|контракт/i.test(normalized)) return "SUPPLY";
+  return undefined;
+}
+
+function extractObligationType(message: string): "DELIVER" | "PAY" | "PERFORM" | undefined {
+  const normalized = message.toLowerCase();
+  if (/оплат/i.test(normalized)) return "PAY";
+  if (/исполн|услуг/i.test(normalized)) return "PERFORM";
+  if (/постав|отгруз/i.test(normalized)) return "DELIVER";
+  return undefined;
 }
 
 function resolveRefId(
@@ -2051,6 +2449,187 @@ export function buildAutoToolCallFromContracts(
           obligationId: resolveRefId(activeRefs, filters, selectedRowId, selectedRowKind, ["obligation"], ["obligationId"]),
         },
       };
+    case "create_commerce_contract":
+      return {
+        name: intentContract.toolName,
+        payload: {
+          number: typeof filters.number === "string" ? filters.number : extractContractNumber(request.message),
+          type: typeof filters.type === "string" ? filters.type : extractContractType(request.message),
+          validFrom: typeof filters.validFrom === "string" ? filters.validFrom : undefined,
+          validTo: typeof filters.validTo === "string" ? filters.validTo : undefined,
+          jurisdictionId:
+            typeof filters.jurisdictionId === "string" ? filters.jurisdictionId : undefined,
+          regulatoryProfileId:
+            typeof filters.regulatoryProfileId === "string"
+              ? filters.regulatoryProfileId
+              : undefined,
+          roles:
+            Array.isArray(filters.roles) &&
+            filters.roles.every(
+              (item) =>
+                item &&
+                typeof item === "object" &&
+                typeof (item as { partyId?: unknown }).partyId === "string" &&
+                typeof (item as { role?: unknown }).role === "string",
+            )
+              ? filters.roles
+              : undefined,
+        },
+      };
+    case "list_commerce_contracts":
+      return {
+        name: intentContract.toolName,
+        payload: {
+          limit: typeof filters.limit === "number" ? filters.limit : 20,
+        },
+      };
+    case "review_commerce_contract":
+      return {
+        name: intentContract.toolName,
+        payload: {
+          contractId: resolveRefId(activeRefs, filters, selectedRowId, selectedRowKind, ["contract"], ["contractId"]),
+        },
+      };
+    case "create_contract_obligation":
+      return {
+        name: intentContract.toolName,
+        payload: {
+          contractId: resolveRefId(activeRefs, filters, selectedRowId, selectedRowKind, ["contract"], ["contractId"]),
+          type:
+            typeof filters.type === "string" &&
+            ["DELIVER", "PAY", "PERFORM"].includes(filters.type)
+              ? filters.type
+              : extractObligationType(request.message),
+          dueDate: typeof filters.dueDate === "string" ? filters.dueDate : undefined,
+        },
+      };
+    case "create_fulfillment_event":
+      {
+        const eventDomain =
+          typeof filters.eventDomain === "string" &&
+          ["COMMERCIAL", "PRODUCTION", "LOGISTICS", "FINANCE_ADJ"].includes(filters.eventDomain)
+            ? (filters.eventDomain as "COMMERCIAL" | "PRODUCTION" | "LOGISTICS" | "FINANCE_ADJ")
+            : "COMMERCIAL";
+        const eventType =
+          typeof filters.eventType === "string" &&
+          [
+            "GOODS_SHIPMENT",
+            "SERVICE_ACT",
+            "LEASE_USAGE",
+            "MATERIAL_CONSUMPTION",
+            "HARVEST",
+            "INTERNAL_TRANSFER",
+            "WRITE_OFF",
+          ].includes(filters.eventType)
+            ? (filters.eventType as
+                | "GOODS_SHIPMENT"
+                | "SERVICE_ACT"
+                | "LEASE_USAGE"
+                | "MATERIAL_CONSUMPTION"
+                | "HARVEST"
+                | "INTERNAL_TRANSFER"
+                | "WRITE_OFF")
+            : /отгруз|shipment/i.test(normalizedMessage)
+              ? "GOODS_SHIPMENT"
+              : /аренд/i.test(normalizedMessage)
+                ? "LEASE_USAGE"
+                : "SERVICE_ACT";
+      return {
+        name: intentContract.toolName,
+        payload: {
+          obligationId: resolveRefId(activeRefs, filters, selectedRowId, selectedRowKind, ["obligation"], ["obligationId"]),
+          eventDomain,
+          eventType,
+          eventDate:
+            typeof filters.eventDate === "string"
+              ? filters.eventDate
+              : new Date().toISOString(),
+          batchId: typeof filters.batchId === "string" ? filters.batchId : undefined,
+          itemId: typeof filters.itemId === "string" ? filters.itemId : undefined,
+          uom: typeof filters.uom === "string" ? filters.uom : undefined,
+          qty: typeof filters.qty === "number" ? filters.qty : undefined,
+        },
+      };
+      }
+    case "create_invoice_from_fulfillment":
+      {
+        const supplyType =
+          typeof filters.supplyType === "string" &&
+          ["GOODS", "SERVICE", "LEASE"].includes(filters.supplyType)
+            ? (filters.supplyType as "GOODS" | "SERVICE" | "LEASE")
+            : /аренд/i.test(normalizedMessage)
+              ? "LEASE"
+              : /услуг/i.test(normalizedMessage)
+                ? "SERVICE"
+                : "GOODS";
+        const vatPayerStatus =
+          typeof filters.vatPayerStatus === "string" &&
+          ["PAYER", "NON_PAYER"].includes(filters.vatPayerStatus)
+            ? (filters.vatPayerStatus as "PAYER" | "NON_PAYER")
+            : undefined;
+      return {
+        name: intentContract.toolName,
+        payload: {
+          fulfillmentEventId:
+            resolveRefId(activeRefs, filters, selectedRowId, selectedRowKind, ["fulfillment_event", "fulfillment"], ["fulfillmentEventId"]),
+          sellerJurisdiction:
+            typeof filters.sellerJurisdiction === "string" ? filters.sellerJurisdiction : undefined,
+          buyerJurisdiction:
+            typeof filters.buyerJurisdiction === "string" ? filters.buyerJurisdiction : undefined,
+          supplyType,
+          vatPayerStatus,
+          subtotal: typeof filters.subtotal === "number" ? filters.subtotal : undefined,
+          productTaxCode:
+            typeof filters.productTaxCode === "string" ? filters.productTaxCode : undefined,
+        },
+      };
+      }
+    case "post_invoice":
+      return {
+        name: intentContract.toolName,
+        payload: {
+          invoiceId: resolveRefId(activeRefs, filters, selectedRowId, selectedRowKind, ["invoice"], ["invoiceId"]),
+        },
+      };
+    case "create_payment":
+      return {
+        name: intentContract.toolName,
+        payload: {
+          payerPartyId:
+            typeof filters.payerPartyId === "string" ? filters.payerPartyId : undefined,
+          payeePartyId:
+            typeof filters.payeePartyId === "string" ? filters.payeePartyId : undefined,
+          amount: typeof filters.amount === "number" ? filters.amount : undefined,
+          currency: typeof filters.currency === "string" ? filters.currency : undefined,
+          paymentMethod:
+            typeof filters.paymentMethod === "string" ? filters.paymentMethod : undefined,
+          paidAt: typeof filters.paidAt === "string" ? filters.paidAt : undefined,
+        },
+      };
+    case "confirm_payment":
+      return {
+        name: intentContract.toolName,
+        payload: {
+          paymentId: resolveRefId(activeRefs, filters, selectedRowId, selectedRowKind, ["payment"], ["paymentId"]),
+        },
+      };
+    case "allocate_payment":
+      return {
+        name: intentContract.toolName,
+        payload: {
+          paymentId: resolveRefId(activeRefs, filters, selectedRowId, selectedRowKind, ["payment"], ["paymentId"]),
+          invoiceId: resolveRefId(activeRefs, filters, selectedRowId, selectedRowKind, ["invoice"], ["invoiceId"]),
+          allocatedAmount:
+            typeof filters.allocatedAmount === "number" ? filters.allocatedAmount : undefined,
+        },
+      };
+    case "review_ar_balance":
+      return {
+        name: intentContract.toolName,
+        payload: {
+          invoiceId: resolveRefId(activeRefs, filters, selectedRowId, selectedRowKind, ["invoice"], ["invoiceId"]),
+        },
+      };
     default:
       return null;
   }
@@ -2089,6 +2668,148 @@ export function buildResumeExecutionPlan(request: RaiChatRequestDto): {
               ...(context.seasonId ? { seasonId: context.seasonId } : {}),
             },
           },
+        },
+      ],
+    };
+  }
+
+  if (contract.role === "contracts_agent") {
+    const activeRefs = request.workspaceContext?.activeEntityRefs ?? [];
+    const filters = request.workspaceContext?.filters ?? {};
+    const collected = request.clarificationResume.collectedContext as Record<string, unknown>;
+    const resolveString = (...values: unknown[]): string | undefined => {
+      for (const value of values) {
+        if (typeof value === "string" && value.trim().length > 0) {
+          return value.trim();
+        }
+      }
+      return undefined;
+    };
+    const resolveNumber = (...values: unknown[]): number | undefined => {
+      for (const value of values) {
+        if (typeof value === "number" && Number.isFinite(value)) {
+          return value;
+        }
+        if (typeof value === "string" && value.trim().length > 0) {
+          const parsed = Number(value);
+          if (Number.isFinite(parsed)) {
+            return parsed;
+          }
+        }
+      }
+      return undefined;
+    };
+    const resolveEntityId = (kinds: string[], filterKeys: string[]): string | undefined => {
+      const fromRef = activeRefs.find((item) => kinds.includes(item.kind))?.id;
+      const fromFilter = filterKeys
+        .map((key) => filters[key])
+        .find((value): value is string => typeof value === "string" && value.trim().length > 0);
+      return resolveString(fromRef, fromFilter);
+    };
+
+    const payloadByIntent: Partial<Record<AgentContractIntentId, Record<string, unknown>>> = {
+      create_commerce_contract: {
+        number: resolveString(collected.number),
+        type: resolveString(collected.type),
+        validFrom: resolveString(collected.validFrom),
+        validTo: resolveString(collected.validTo),
+        jurisdictionId: resolveString(collected.jurisdictionId),
+        regulatoryProfileId: resolveString(collected.regulatoryProfileId),
+        roles:
+          Array.isArray(collected.roles) &&
+          collected.roles.every(
+            (item) =>
+              item &&
+              typeof item === "object" &&
+              typeof (item as { partyId?: unknown }).partyId === "string" &&
+              typeof (item as { role?: unknown }).role === "string",
+          )
+            ? collected.roles
+            : undefined,
+      },
+      create_contract_obligation: {
+        contractId: resolveString(
+          collected.contractId,
+          resolveEntityId(["contract"], ["contractId"]),
+        ),
+        type: resolveString(collected.obligationType, collected.type),
+        dueDate: resolveString(collected.dueDate),
+      },
+      create_fulfillment_event: {
+        obligationId: resolveString(
+          collected.obligationId,
+          resolveEntityId(["obligation"], ["obligationId"]),
+        ),
+        eventDomain: resolveString(collected.eventDomain),
+        eventType: resolveString(collected.eventType),
+        eventDate: resolveString(collected.eventDate),
+        batchId: resolveString(collected.batchId),
+        itemId: resolveString(collected.itemId),
+        uom: resolveString(collected.uom),
+        qty: resolveNumber(collected.qty),
+      },
+      create_invoice_from_fulfillment: {
+        fulfillmentEventId: resolveString(
+          collected.fulfillmentEventId,
+          resolveEntityId(["fulfillment_event", "fulfillment"], ["fulfillmentEventId"]),
+        ),
+        sellerJurisdiction: resolveString(collected.sellerJurisdiction),
+        buyerJurisdiction: resolveString(collected.buyerJurisdiction),
+        supplyType: resolveString(collected.supplyType),
+        vatPayerStatus: resolveString(collected.vatPayerStatus),
+        subtotal: resolveNumber(collected.subtotal),
+      },
+      post_invoice: {
+        invoiceId: resolveString(
+          collected.invoiceId,
+          resolveEntityId(["invoice"], ["invoiceId"]),
+        ),
+      },
+      create_payment: {
+        payerPartyId: resolveString(collected.payerPartyId),
+        payeePartyId: resolveString(collected.payeePartyId),
+        amount: resolveNumber(collected.amount),
+        currency: resolveString(collected.currency),
+        paymentMethod: resolveString(collected.paymentMethod),
+      },
+      confirm_payment: {
+        paymentId: resolveString(
+          collected.paymentId,
+          resolveEntityId(["payment"], ["paymentId"]),
+        ),
+      },
+      allocate_payment: {
+        paymentId: resolveString(
+          collected.paymentId,
+          resolveEntityId(["payment"], ["paymentId"]),
+        ),
+        invoiceId: resolveString(
+          collected.invoiceId,
+          resolveEntityId(["invoice"], ["invoiceId"]),
+        ),
+        allocatedAmount: resolveNumber(collected.allocatedAmount),
+      },
+      review_ar_balance: {
+        invoiceId: resolveString(
+          collected.invoiceId,
+          resolveEntityId(["invoice"], ["invoiceId"]),
+        ),
+      },
+    };
+
+    return {
+      classification: {
+        targetRole: "contracts_agent",
+        intent: contract.id,
+        toolName: contract.toolName,
+        confidence: 1,
+        method: "regex",
+        reason: `resume:${contract.id}`,
+      },
+      requestedToolCalls: [
+        {
+          name: contract.toolName,
+          payload: payloadByIntent[contract.id] ?? {},
         },
       ],
     };

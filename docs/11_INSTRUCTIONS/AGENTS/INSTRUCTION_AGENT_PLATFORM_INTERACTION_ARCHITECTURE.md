@@ -100,6 +100,8 @@ last_updated: 2026-03-08
 - `knowledge`
 - `monitoring`
 - `crm_agent`
+- `front_office_agent`
+- `contracts_agent`
 
 Источник: [agent-registry.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agent-registry.service.ts)
 
@@ -135,6 +137,7 @@ last_updated: 2026-03-08
 - `economist`
 - `knowledge`
 - `crm`
+- `contracts`
 - `other`
 
 Источник: [tool-call.planner.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/runtime/tool-call.planner.ts)
@@ -163,6 +166,8 @@ UI / AI Dock
         -> KnowledgeAgent
         -> MonitoringAgent
         -> CrmAgent
+        -> FrontOfficeAgent
+        -> ContractsAgent
       -> typed tool calls
       -> domain registries
     -> ResponseComposerService
@@ -332,16 +337,16 @@ UI / AI Dock
 
 ### 9.1 Доменные модули без owner-agent
 
-Подтверждённый пример:
+Подтверждённые примеры:
 
-- `commerce/contracts`
+- `legal`
+- `strategy`
 
 Факт:
 
-- модуль существует;
-- backend-контур есть;
-- AI-intent owner отсутствует;
-- чат может падать в route-based fallback.
+- доменные контуры и template roles уже существуют;
+- advisory ownership зафиксирован;
+- canonical runtime owner-agent ещё не реализован.
 
 ### 9.2 Плановые роли не равны каноническим runtime-агентам
 

@@ -171,6 +171,9 @@ last_updated: 2026-03-08
 - [INSTRUCTION_FRONT_OFFICE_AGENT_ENABLEMENT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_FRONT_OFFICE_AGENT_ENABLEMENT.md)
   Практическая инструкция по включению `front_office_agent`: communicator ingress, dialogue log, process detection, escalation и handoff в owner-domains.
 
+- [INSTRUCTION_CONTRACTS_AGENT_ENABLEMENT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_CONTRACTS_AGENT_ENABLEMENT.md)
+  Практическая инструкция по включению `contracts_agent`: договоры, обязательства, fulfillment, счета, оплаты и governed commerce execution path.
+
 - [INSTRUCTION_CRM_AGENT_INTERACTION_DIAGNOSTICS_AND_FAILURE_MODES.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_CRM_AGENT_INTERACTION_DIAGNOSTICS_AND_FAILURE_MODES.md)
   Разбор проблематики взаимодействия CRM-агента: инцидент регистрации контрагента по ИНН, двойная ошибка execution/composer, соседние риски и обязательные сценарии диагностики.
 
@@ -193,7 +196,10 @@ last_updated: 2026-03-08
   Подробный профиль `monitoring`: сигналы, alerts, risk contour и ограничения на перехват бизнес-доменов.
 
 - [INSTRUCTION_AGENT_PROFILE_CRM_AGENT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_CRM_AGENT.md)
-  Подробный профиль `crm_agent`: контрагенты, аккаунты, контакты, взаимодействия, обязательства и текущий разрыв по `contracts`.
+  Подробный профиль `crm_agent`: контрагенты, аккаунты, контакты, взаимодействия, обязательства и handoff в `contracts_agent`.
+
+- [INSTRUCTION_AGENT_PROFILE_CONTRACTS_AGENT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_CONTRACTS_AGENT.md)
+  Профиль `contracts_agent`: договоры, обязательства, fulfillment, счета, оплаты, allocations и AR balance как канонический commerce owner-agent.
 
 - [INSTRUCTION_AGENT_PROFILE_MARKETER.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_MARKETER.md)
   Профиль плановой роли `marketer`: template-состояние, допустимый marketing scope и требования к canonical enablement.

@@ -27,6 +27,19 @@ export enum RaiToolName {
   CreateCrmObligation = "create_crm_obligation",
   UpdateCrmObligation = "update_crm_obligation",
   DeleteCrmObligation = "delete_crm_obligation",
+  CreateCommerceContract = "create_commerce_contract",
+  ListCommerceContracts = "list_commerce_contracts",
+  GetCommerceContract = "get_commerce_contract",
+  CreateCommerceObligation = "create_commerce_obligation",
+  CreateFulfillmentEvent = "create_fulfillment_event",
+  ListFulfillmentEvents = "list_fulfillment_events",
+  CreateInvoiceFromFulfillment = "create_invoice_from_fulfillment",
+  PostInvoice = "post_invoice",
+  ListInvoices = "list_invoices",
+  CreatePayment = "create_payment",
+  ConfirmPayment = "confirm_payment",
+  AllocatePayment = "allocate_payment",
+  GetArBalance = "get_ar_balance",
 }
 
 export type ToolRiskLevel = "READ" | "WRITE" | "CRITICAL";
@@ -37,7 +50,8 @@ export type ToolRiskDomain =
   | "risk"
   | "knowledge"
   | "crm"
-  | "front_office";
+  | "front_office"
+  | "commerce";
 
 export interface RaiToolActorContext {
   companyId: string;
@@ -89,6 +103,19 @@ export const TOOL_RISK_MAP: Partial<
   [RaiToolName.CreateCrmObligation]: { riskLevel: "WRITE", domain: "crm" },
   [RaiToolName.UpdateCrmObligation]: { riskLevel: "WRITE", domain: "crm" },
   [RaiToolName.DeleteCrmObligation]: { riskLevel: "WRITE", domain: "crm" },
+  [RaiToolName.CreateCommerceContract]: { riskLevel: "WRITE", domain: "commerce" },
+  [RaiToolName.ListCommerceContracts]: { riskLevel: "READ", domain: "commerce" },
+  [RaiToolName.GetCommerceContract]: { riskLevel: "READ", domain: "commerce" },
+  [RaiToolName.CreateCommerceObligation]: { riskLevel: "WRITE", domain: "commerce" },
+  [RaiToolName.CreateFulfillmentEvent]: { riskLevel: "WRITE", domain: "commerce" },
+  [RaiToolName.ListFulfillmentEvents]: { riskLevel: "READ", domain: "commerce" },
+  [RaiToolName.CreateInvoiceFromFulfillment]: { riskLevel: "WRITE", domain: "commerce" },
+  [RaiToolName.PostInvoice]: { riskLevel: "CRITICAL", domain: "commerce" },
+  [RaiToolName.ListInvoices]: { riskLevel: "READ", domain: "commerce" },
+  [RaiToolName.CreatePayment]: { riskLevel: "WRITE", domain: "commerce" },
+  [RaiToolName.ConfirmPayment]: { riskLevel: "CRITICAL", domain: "commerce" },
+  [RaiToolName.AllocatePayment]: { riskLevel: "CRITICAL", domain: "commerce" },
+  [RaiToolName.GetArBalance]: { riskLevel: "READ", domain: "commerce" },
 };
 
 /** Контекст для автономного исполнения (без userId/threadId). Блокирует WRITE/CRITICAL в реестрах. */
@@ -298,6 +325,106 @@ export interface DeleteCrmObligationPayload {
   obligationId: string;
 }
 
+export interface CreateCommerceContractPayload {
+  number: string;
+  type: string;
+  validFrom: string;
+  validTo?: string;
+  jurisdictionId: string;
+  regulatoryProfileId?: string;
+  roles: Array<{
+    partyId: string;
+    role:
+      | "SELLER"
+      | "BUYER"
+      | "LESSOR"
+      | "LESSEE"
+      | "AGENT"
+      | "PRINCIPAL"
+      | "PAYER"
+      | "BENEFICIARY";
+    isPrimary?: boolean;
+  }>;
+}
+
+export interface ListCommerceContractsPayload {
+  limit?: number;
+}
+
+export interface GetCommerceContractPayload {
+  contractId: string;
+}
+
+export interface CreateCommerceObligationPayload {
+  contractId: string;
+  type: "DELIVER" | "PAY" | "PERFORM";
+  dueDate?: string;
+}
+
+export interface CreateFulfillmentEventPayload {
+  obligationId: string;
+  eventDomain: "COMMERCIAL" | "PRODUCTION" | "LOGISTICS" | "FINANCE_ADJ";
+  eventType:
+    | "GOODS_SHIPMENT"
+    | "SERVICE_ACT"
+    | "LEASE_USAGE"
+    | "MATERIAL_CONSUMPTION"
+    | "HARVEST"
+    | "INTERNAL_TRANSFER"
+    | "WRITE_OFF";
+  eventDate: string;
+  batchId?: string;
+  itemId?: string;
+  uom?: string;
+  qty?: number;
+}
+
+export interface ListFulfillmentEventsPayload {
+  contractId?: string;
+  obligationId?: string;
+}
+
+export interface CreateInvoiceFromFulfillmentPayload {
+  fulfillmentEventId: string;
+  sellerJurisdiction: string;
+  buyerJurisdiction: string;
+  supplyType: "GOODS" | "SERVICE" | "LEASE";
+  vatPayerStatus: "PAYER" | "NON_PAYER";
+  subtotal: number;
+  productTaxCode?: string;
+}
+
+export interface PostInvoicePayload {
+  invoiceId: string;
+}
+
+export interface ListInvoicesPayload {
+  contractId?: string;
+}
+
+export interface CreatePaymentPayload {
+  payerPartyId: string;
+  payeePartyId: string;
+  amount: number;
+  currency: string;
+  paymentMethod: string;
+  paidAt?: string;
+}
+
+export interface ConfirmPaymentPayload {
+  paymentId: string;
+}
+
+export interface AllocatePaymentPayload {
+  paymentId: string;
+  invoiceId: string;
+  allocatedAmount: number;
+}
+
+export interface GetArBalancePayload {
+  invoiceId: string;
+}
+
 export interface RaiToolPayloadMap {
   [RaiToolName.EchoMessage]: EchoMessagePayload;
   [RaiToolName.WorkspaceSnapshot]: WorkspaceSnapshotPayload;
@@ -327,6 +454,19 @@ export interface RaiToolPayloadMap {
   [RaiToolName.CreateCrmObligation]: CreateCrmObligationPayload;
   [RaiToolName.UpdateCrmObligation]: UpdateCrmObligationPayload;
   [RaiToolName.DeleteCrmObligation]: DeleteCrmObligationPayload;
+  [RaiToolName.CreateCommerceContract]: CreateCommerceContractPayload;
+  [RaiToolName.ListCommerceContracts]: ListCommerceContractsPayload;
+  [RaiToolName.GetCommerceContract]: GetCommerceContractPayload;
+  [RaiToolName.CreateCommerceObligation]: CreateCommerceObligationPayload;
+  [RaiToolName.CreateFulfillmentEvent]: CreateFulfillmentEventPayload;
+  [RaiToolName.ListFulfillmentEvents]: ListFulfillmentEventsPayload;
+  [RaiToolName.CreateInvoiceFromFulfillment]: CreateInvoiceFromFulfillmentPayload;
+  [RaiToolName.PostInvoice]: PostInvoicePayload;
+  [RaiToolName.ListInvoices]: ListInvoicesPayload;
+  [RaiToolName.CreatePayment]: CreatePaymentPayload;
+  [RaiToolName.ConfirmPayment]: ConfirmPaymentPayload;
+  [RaiToolName.AllocatePayment]: AllocatePaymentPayload;
+  [RaiToolName.GetArBalance]: GetArBalancePayload;
 }
 
 export interface EchoMessageResult {
@@ -573,6 +713,142 @@ export interface DeleteCrmObligationResult {
   deleted: true;
 }
 
+export interface CommerceContractRoleResult {
+  id: string;
+  role: string;
+  isPrimary: boolean;
+  party: {
+    id: string;
+    legalName: string;
+  };
+}
+
+export interface CommerceContractResultItem {
+  id: string;
+  number: string;
+  type: string;
+  status: string;
+  validFrom: string;
+  validTo: string | null;
+  createdAt: string;
+  roles: CommerceContractRoleResult[];
+}
+
+export interface CreateCommerceContractResult {
+  id: string;
+  number: string;
+  type: string;
+  status: string;
+  validFrom: string;
+  validTo: string | null;
+  jurisdictionId: string;
+  regulatoryProfileId?: string | null;
+  roles: Array<{
+    id: string;
+    partyId: string;
+    role: string;
+    isPrimary: boolean;
+  }>;
+}
+
+export interface ListCommerceContractsResult {
+  items: CommerceContractResultItem[];
+}
+
+export interface GetCommerceContractResult extends CommerceContractResultItem {}
+
+export interface CreateCommerceObligationResult {
+  id: string;
+  contractId: string;
+  type: string;
+  status: string;
+  dueDate: string | null;
+  createdAt: string;
+}
+
+export interface CreateFulfillmentEventResult {
+  id: string;
+  obligationId: string;
+  eventDomain: string;
+  eventType: string;
+  eventDate: string;
+  payloadJson: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export interface ListFulfillmentEventsResult {
+  items: Array<{
+    id: string;
+    obligationId: string;
+    eventDomain: string;
+    eventType: string;
+    eventDate: string;
+    contract: { id: string; number: string } | null;
+    payloadJson: Record<string, unknown> | null;
+    createdAt: string;
+  }>;
+}
+
+export interface CreateInvoiceFromFulfillmentResult {
+  id: string;
+  contractId: string;
+  obligationId: string;
+  fulfillmentEventId: string;
+  direction: string;
+  status: string;
+  subtotal: number;
+  taxTotal: number;
+  grandTotal: number;
+}
+
+export interface PostInvoiceResult {
+  id: string;
+  status: string;
+  ledgerTxId: string | null;
+}
+
+export interface ListInvoicesResult {
+  items: Array<{
+    id: string;
+    contract: { id: string; number: string } | null;
+    direction: string;
+    status: string;
+    subtotal: number;
+    taxTotal: number;
+    grandTotal: number;
+    createdAt: string;
+  }>;
+}
+
+export interface CreatePaymentResult {
+  id: string;
+  payerPartyId: string;
+  payeePartyId: string;
+  amount: number;
+  currency: string;
+  paymentMethod: string;
+  status: string;
+  paidAt: string;
+}
+
+export interface ConfirmPaymentResult {
+  id: string;
+  status: string;
+  ledgerTxId: string | null;
+}
+
+export interface AllocatePaymentResult {
+  id: string;
+  paymentId: string;
+  invoiceId: string;
+  allocatedAmount: number;
+}
+
+export interface GetArBalanceResult {
+  invoiceId: string;
+  balance: number;
+}
+
 export interface RaiToolResultMap {
   [RaiToolName.EchoMessage]: EchoMessageResult;
   [RaiToolName.WorkspaceSnapshot]: WorkspaceSnapshotResult;
@@ -602,6 +878,19 @@ export interface RaiToolResultMap {
   [RaiToolName.CreateCrmObligation]: CreateCrmObligationResult;
   [RaiToolName.UpdateCrmObligation]: UpdateCrmObligationResult;
   [RaiToolName.DeleteCrmObligation]: DeleteCrmObligationResult;
+  [RaiToolName.CreateCommerceContract]: CreateCommerceContractResult;
+  [RaiToolName.ListCommerceContracts]: ListCommerceContractsResult;
+  [RaiToolName.GetCommerceContract]: GetCommerceContractResult;
+  [RaiToolName.CreateCommerceObligation]: CreateCommerceObligationResult;
+  [RaiToolName.CreateFulfillmentEvent]: CreateFulfillmentEventResult;
+  [RaiToolName.ListFulfillmentEvents]: ListFulfillmentEventsResult;
+  [RaiToolName.CreateInvoiceFromFulfillment]: CreateInvoiceFromFulfillmentResult;
+  [RaiToolName.PostInvoice]: PostInvoiceResult;
+  [RaiToolName.ListInvoices]: ListInvoicesResult;
+  [RaiToolName.CreatePayment]: CreatePaymentResult;
+  [RaiToolName.ConfirmPayment]: ConfirmPaymentResult;
+  [RaiToolName.AllocatePayment]: AllocatePaymentResult;
+  [RaiToolName.GetArBalance]: GetArBalanceResult;
 }
 
 export interface RaiToolCall<TName extends RaiToolName = RaiToolName> {

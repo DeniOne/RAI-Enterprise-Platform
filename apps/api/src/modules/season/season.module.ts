@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { SeasonService } from "./season.service";
 import { SeasonResolver } from "./season.resolver";
+import { SeasonController } from "./season.controller";
 import { SeasonBusinessRulesService } from "./services/season-business-rules.service";
 import { SeasonSnapshotService } from "./services/season-snapshot.service";
 import { AgroAuditModule } from "../agro-audit/agro-audit.module";
@@ -14,6 +15,7 @@ import { RiskModule } from "../risk/risk.module";
     SeasonBusinessRulesService,
     SeasonSnapshotService,
   ],
+  controllers: [SeasonController],
   exports: [SeasonService, SeasonBusinessRulesService, SeasonSnapshotService],
 })
 export class SeasonModule {}

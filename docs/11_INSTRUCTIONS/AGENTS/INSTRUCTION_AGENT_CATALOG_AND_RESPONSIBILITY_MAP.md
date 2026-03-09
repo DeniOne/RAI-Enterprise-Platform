@@ -111,6 +111,8 @@ last_updated: 2026-03-08
 - `knowledge`
 - `monitoring`
 - `crm_agent`
+- `front_office_agent`
+- `contracts_agent`
 
 Источник: [agent-registry.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agent-registry.service.ts)
 
@@ -121,6 +123,8 @@ last_updated: 2026-03-08
 - `knowledge` — RAG, knowledge lookup, grounding.
 - `monitoring` — сигналы, alerts, read-only monitoring contour.
 - `crm_agent` — контрагенты, карточки, связи, CRM-операции.
+- `front_office_agent` — коммуникационный ingress, dialogue log, task/process detection, эскалации.
+- `contracts_agent` — полный commerce-контур: договоры, обязательства, fulfillment, счета, оплаты и AR balance.
 
 ---
 
@@ -157,19 +161,21 @@ last_updated: 2026-03-08
 
 ### 7.3 Реализованная стратегическая роль нового поколения
 
-Отдельно зафиксирован `front_office_agent` как уже реализованный canonical first-wave owner-agent для коммуникационного ingress-контура.
+Отдельно зафиксированы:
 
-При этом его второй и третий уровни enablement ещё впереди: полноценный Telegram adapter, отдельный thread state store и расширенный handoff/work queue.
+- `front_office_agent` как уже реализованный canonical first-wave owner-agent для коммуникационного ingress-контура;
+- `contracts_agent` как уже реализованный canonical owner-agent для commerce-контура первой рабочей волны.
+
+При этом их следующие уровни enablement ещё впереди:
+
+- для `front_office_agent`: полноценный Telegram adapter, отдельный thread state store и расширенный handoff/work queue;
+- для `contracts_agent`: дальнейшее расширение legal advisory handoff, product UX и extended commerce scenarios.
 
 ---
 
 ## 8. Домены без agent-owner
 
-### 8.1 Подтверждённый минимальный перечень
-
-- `commerce/contracts`
-
-### 8.2 Дополнительные подтверждённые зоны риска
+### 8.1 Подтверждённые зоны риска
 
 На уровне `Stage 2` и текущего кода owner-agent ещё не доведён до canonical состояния для следующих доменных направлений:
 
@@ -188,15 +194,15 @@ last_updated: 2026-03-08
 | `economist` | активен | канонический | финансы и экономика | `finance` | рабочий reference agent | `compute_plan_fact`, `simulate_scenario`, `compute_risk_assessment` | `plan`, `season`, `budget`, `finance_metric` | `crm`, `knowledge`, `agronomy` operational writes | canonical | [INSTRUCTION_AGENT_PROFILE_ECONOMIST.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_ECONOMIST.md) |
 | `knowledge` | активен | канонический | знания и регламенты | `knowledge` | рабочий reference agent | `query_knowledge` | `document`, `policy`, `knowledge_article` | operational write domains | canonical | [INSTRUCTION_AGENT_PROFILE_KNOWLEDGE.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_KNOWLEDGE.md) |
 | `monitoring` | активен | канонический | мониторинг и сигналы | `risk` | рабочий reference agent | `emit_alerts` | `signal`, `alert`, `incident` | `crm`, `finance`, `agronomy` business execution | canonical | [INSTRUCTION_AGENT_PROFILE_MONITORING.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_MONITORING.md) |
-| `crm_agent` | активен | канонический | CRM | `crm` | рабочий reference agent | контрагенты, аккаунты, контакты, взаимодействия, обязательства | `party`, `account`, `contact`, `interaction`, `obligation`, `holding`, `farm` | `agronomy`, `finance`, `monitoring`; вне scope сейчас `contracts` | canonical | [INSTRUCTION_AGENT_PROFILE_CRM_AGENT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_CRM_AGENT.md) |
+| `crm_agent` | активен | канонический | CRM | `crm` | рабочий reference agent | контрагенты, аккаунты, контакты, взаимодействия, обязательства | `party`, `account`, `contact`, `interaction`, `obligation`, `holding`, `farm` | `agronomy`, `finance`, `monitoring`; contracts execution ownership вынесен в `contracts_agent` | canonical | [INSTRUCTION_AGENT_PROFILE_CRM_AGENT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_CRM_AGENT.md) |
+| `front_office_agent` | активен | канонический | front office / communicator ingress | `front_office` | canonical first-wave agent | dialogue logging, communicator filtering, task/process detection, escalation routing | `message`, `dialog_thread`, `task_signal`, `escalation` | чужие domain writes | canonical | [INSTRUCTION_AGENT_PROFILE_FRONT_OFFICE_AGENT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_FRONT_OFFICE_AGENT.md) |
+| `contracts_agent` | активен | канонический | commerce / contracts | `contracts` | canonical first-wave commerce agent | договоры, обязательства, fulfillment, invoice, payment, allocation, AR balance | `contract`, `party_role`, `obligation`, `fulfillment_event`, `invoice`, `payment` | `crm` ownership, legal authority, agronomy, monitoring | canonical | [INSTRUCTION_AGENT_PROFILE_CONTRACTS_AGENT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_CONTRACTS_AGENT.md) |
 | `marketer` | плановый | template role | маркетинг | `marketing` | onboarding template | кампании, воронка, read-model summary | `campaign`, `lead`, `segment` | критичные writes вне governance | future/template | [INSTRUCTION_AGENT_PROFILE_MARKETER.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_MARKETER.md) |
 | `strategist` | плановый | template role | стратегия | `strategy` | onboarding template | сценарии, стратегические компромиссы | `scenario`, `initiative`, `portfolio` | autonomous execution | future/template | [INSTRUCTION_AGENT_PROFILE_STRATEGIST.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_STRATEGIST.md) |
 | `finance_advisor` | плановый | template role | финансы | `finance` | onboarding template | managed financial advisory | `metric`, `budget`, `plan` | payment / booking writes | future/template | [INSTRUCTION_AGENT_PROFILE_FINANCE_ADVISOR.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_FINANCE_ADVISOR.md) |
 | `legal_advisor` | плановый | template role | право | `legal` | onboarding template | clause risks, policy summary, legal corpus | `clause`, `policy`, `requirement` | autonomous legal commitments | future/template | [INSTRUCTION_AGENT_PROFILE_LEGAL_ADVISOR.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_LEGAL_ADVISOR.md) |
 | `controller` | плановый | template role | контроль и сверки | `finance` | onboarding template | сверки, контрольный мониторинг, эскалации | `control_case`, `metric`, `signal` | uncontrolled autonomous action | future/template | [INSTRUCTION_AGENT_PROFILE_CONTROLLER.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_CONTROLLER.md) |
 | `personal_assistant` | плановый | template role | персональная координация | `productivity` | onboarding template | agenda, coordination, task support | `task`, `reminder`, `summary` | critical governed writes | future/template | [INSTRUCTION_AGENT_PROFILE_PERSONAL_ASSISTANT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_PERSONAL_ASSISTANT.md) |
-| `front_office_agent` | активен | канонический | front office / communicator ingress | `front_office` | canonical first-wave agent | dialogue logging, communicator filtering, task/process detection, escalation routing | `message`, `dialog_thread`, `task_signal`, `escalation` | чужие domain writes | canonical | [INSTRUCTION_AGENT_PROFILE_FRONT_OFFICE_AGENT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_FRONT_OFFICE_AGENT.md) |
-| `commerce/contracts` | разрыв | домен без owner-agent | договоры | отсутствует | модуль есть, owner-agent нет | создание и сопровождение договоров | `contract`, `role`, `obligation` | не определено | no owner | [INSTRUCTION_AGENT_DOMAIN_GAPS_AND_UNOWNED_MODULES.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_AGENT_DOMAIN_GAPS_AND_UNOWNED_MODULES.md) |
 
 ---
 
@@ -208,9 +214,10 @@ last_updated: 2026-03-08
 | `economist` | `Supervisor -> Runtime -> Adapter` | только через центральный spine | не подтверждены | `consulting`, `finance-economy` | financial owner map шире текущих intent-ов |
 | `knowledge` | `Supervisor -> Runtime -> Adapter` | только через центральный spine | не подтверждены | `knowledge` | knowledge role не должна подменять operational owners |
 | `monitoring` | `Supervisor -> Runtime -> Adapter` | только через центральный spine | не подтверждены | `risk`, `monitoring` | risk contour не должен захватывать чужие домены |
-| `crm_agent` | `Supervisor -> Runtime -> Adapter` | только через центральный spine | не подтверждены | `crm`, `commerce/parties` | `contracts` модуль не входит в owner-scope |
+| `crm_agent` | `Supervisor -> Runtime -> Adapter` | только через центральный spine | не подтверждены | `crm`, `commerce/parties` | договорный handoff должен идти в `contracts_agent`, а не расширять CRM scope |
+| `front_office_agent` | `Supervisor -> Runtime -> Adapter` | только через центральный spine | не подтверждены | `front-office`, `telegram`, `task`, `advisory` | полный production ingress и work queue ещё не завершены |
+| `contracts_agent` | `Supervisor -> Runtime -> Adapter` | только через центральный spine | не подтверждены | `commerce`, `contracts`, `fulfillment`, `billing` | legal runtime owner ещё не создан, часть handoff остаётся advisory-only |
 | template roles | через future-role onboarding и adapter binding | только через canonical adapter | не подтверждены | зависит от template | нет собственной canonical runtime family |
-| `commerce/contracts` | route fallback / direct module use | отсутствует | отсутствуют | `commerce` | нет owner-agent, нет intent-owner, нет tool surface |
 
 ---
 
@@ -219,7 +226,7 @@ last_updated: 2026-03-08
 - Не для каждого домена Stage 2 есть owner-agent.
 - Не каждая стратегическая роль доведена до canonical runtime family.
 - Плановые роли существуют как template/governance сущности, но ещё не как полные агенты.
-- Домен `contracts` подтверждает, что наличие backend-модуля не равно наличию агентного владельца.
+- Домен `contracts` больше не является ownership gap: теперь он подтверждает, что unowned module нужно доводить до canonical owner-agent, а не маскировать fallback-ом.
 - Полная ownership map платформы ещё не замкнута.
 
 ---

@@ -65,6 +65,14 @@ const OUTPUT_CONTRACTS: Record<CanonicalAgentRuntimeRole, AgentOutputContract> =
     requiresDeterministicValidation: true,
     fallbackMode: "deterministic_summary",
   },
+  contracts_agent: {
+    contractId: "contracts-agent-v1",
+    responseSchemaVersion: "v1",
+    sections: ["summary", "commerce_state", "recommended_actions", "record_changes", "evidence"],
+    requiresEvidence: true,
+    requiresDeterministicValidation: true,
+    fallbackMode: "deterministic_summary",
+  },
 };
 
 const MEMORY_POLICIES: Record<CanonicalAgentRuntimeRole, AgentMemoryPolicy> = {
@@ -106,6 +114,13 @@ const MEMORY_POLICIES: Record<CanonicalAgentRuntimeRole, AgentMemoryPolicy> = {
   front_office_agent: {
     policyId: "front-office-agent-memory-v1",
     allowedScopes: ["tenant", "domain", "user", "task_workflow"],
+    retrievalPolicy: "scoped_recall",
+    writePolicy: "append_summary",
+    sensitiveDataPolicy: "mask",
+  },
+  contracts_agent: {
+    policyId: "contracts-agent-memory-v1",
+    allowedScopes: ["tenant", "domain", "user", "task_workflow", "sensitive_compliance"],
     retrievalPolicy: "scoped_recall",
     writePolicy: "append_summary",
     sensitiveDataPolicy: "mask",
@@ -161,6 +176,14 @@ const GOVERNANCE_POLICIES: Record<CanonicalAgentRuntimeRole, AgentGovernancePoli
     auditRequirements: ["trace", "evidence", "validation", "gate_status"],
     fallbackRules: ["use_front_office_summary_if_llm_unavailable"],
   },
+  contracts_agent: {
+    policyId: "contracts-agent-governance-v1",
+    allowedAutonomyModes: ["advisory", "hybrid"],
+    humanGateRules: ["commerce_write_actions_require_gate"],
+    criticalActionRules: ["deny_unreviewed_financial_posting_actions"],
+    auditRequirements: ["trace", "evidence", "validation", "gate_status"],
+    fallbackRules: ["use_contracts_summary_if_llm_unavailable"],
+  },
 };
 
 const CAPABILITY_POLICIES: Record<CanonicalAgentRuntimeRole, AgentCapabilityPolicy> = {
@@ -194,6 +217,11 @@ const CAPABILITY_POLICIES: Record<CanonicalAgentRuntimeRole, AgentCapabilityPoli
     toolAccessMode: "allowlist",
     connectorAccessMode: "allowlist",
   },
+  contracts_agent: {
+    capabilities: ["ContractsToolsRegistry"],
+    toolAccessMode: "allowlist",
+    connectorAccessMode: "allowlist",
+  },
 };
 
 const CONNECTOR_BINDINGS: Record<CanonicalAgentRuntimeRole, AgentConnectorBinding[]> = {
@@ -220,6 +248,13 @@ const CONNECTOR_BINDINGS: Record<CanonicalAgentRuntimeRole, AgentConnectorBindin
       scopes: ["dialogs", "messages", "handoff_records"],
     },
   ],
+  contracts_agent: [
+    {
+      connectorName: "commerce_primary",
+      accessMode: "governed_write",
+      scopes: ["contracts", "obligations", "fulfillment", "invoices", "payments", "allocations"],
+    },
+  ],
 };
 
 export function buildDefaultRuntimeProfile(
@@ -231,6 +266,7 @@ export function buildDefaultRuntimeProfile(
     role === "monitoring"
       ? "cheap"
       : role === "knowledge" || role === "crm_agent" || role === "front_office_agent"
+        || role === "contracts_agent"
         ? "fast"
         : "strong";
   return {
@@ -241,7 +277,11 @@ export function buildDefaultRuntimeProfile(
     maxInputTokens: Math.max(maxTokens, 4000),
     maxOutputTokens: Math.min(Math.max(Math.floor(maxTokens / 2), 800), 8000),
     temperature:
-      role === "monitoring" ? 0.1 : role === "crm_agent" || role === "front_office_agent" ? 0.15 : 0.2,
+      role === "monitoring"
+        ? 0.1
+        : role === "crm_agent" || role === "front_office_agent" || role === "contracts_agent"
+          ? 0.15
+          : 0.2,
     timeoutMs: 15_000,
     supportsStreaming: false,
   };
@@ -258,13 +298,19 @@ export function buildDefaultDefinition(
     role,
     name,
     kind:
-      baseRole === "monitoring" || baseRole === "crm_agent" || baseRole === "front_office_agent"
+      baseRole === "monitoring" ||
+      baseRole === "crm_agent" ||
+      baseRole === "front_office_agent" ||
+      baseRole === "contracts_agent"
         ? "worker_hybrid"
         : "domain_advisor",
     ownerDomain,
     description,
     defaultAutonomyMode:
-      baseRole === "monitoring" || baseRole === "crm_agent" || baseRole === "front_office_agent"
+      baseRole === "monitoring" ||
+      baseRole === "crm_agent" ||
+      baseRole === "front_office_agent" ||
+      baseRole === "contracts_agent"
         ? "hybrid"
         : "advisory",
     outputContractId: OUTPUT_CONTRACTS[baseRole].contractId,

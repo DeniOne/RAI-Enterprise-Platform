@@ -7,6 +7,7 @@ import { RiskToolsRegistry } from "./risk-tools.registry";
 import { KnowledgeToolsRegistry } from "./knowledge-tools.registry";
 import { CrmToolsRegistry } from "./crm-tools.registry";
 import { FrontOfficeToolsRegistry } from "./front-office-tools.registry";
+import { ContractsToolsRegistry } from "./contracts-tools.registry";
 import { RaiToolName } from "./rai-tools.types";
 import { RiskPolicyEngineService } from "../security/risk-policy-engine.service";
 import { PendingActionService } from "../security/pending-action.service";
@@ -21,6 +22,7 @@ import { IncidentOpsService } from "../incident-ops.service";
 import { SystemIncidentType } from "@rai/prisma-client";
 import { RuntimeGovernanceEventService } from "../runtime-governance/runtime-governance-event.service";
 import { RuntimeGovernancePolicyService } from "../runtime-governance/runtime-governance-policy.service";
+import { RuntimeGovernanceFeatureFlagsService } from "../runtime-governance/runtime-governance-feature-flags.service";
 
 describe("RaiToolsRegistry", () => {
   const actorContext = {
@@ -91,6 +93,26 @@ describe("RaiToolsRegistry", () => {
     ),
     execute: jest.fn(),
   } as unknown as FrontOfficeToolsRegistry;
+  const contractsToolsRegistry = {
+    has: jest.fn((name: RaiToolName) =>
+      [
+        RaiToolName.CreateCommerceContract,
+        RaiToolName.ListCommerceContracts,
+        RaiToolName.GetCommerceContract,
+        RaiToolName.CreateCommerceObligation,
+        RaiToolName.CreateFulfillmentEvent,
+        RaiToolName.ListFulfillmentEvents,
+        RaiToolName.CreateInvoiceFromFulfillment,
+        RaiToolName.PostInvoice,
+        RaiToolName.ListInvoices,
+        RaiToolName.CreatePayment,
+        RaiToolName.ConfirmPayment,
+        RaiToolName.AllocatePayment,
+        RaiToolName.GetArBalance,
+      ].includes(name),
+    ),
+    execute: jest.fn(),
+  } as unknown as ContractsToolsRegistry;
 
   const riskPolicyEngine = new RiskPolicyEngineService();
   const pendingActionService = new PendingActionService(prismaMock as any);
@@ -111,6 +133,14 @@ describe("RaiToolsRegistry", () => {
   const runtimeGovernancePolicy = {
     resolveFallbackMode: jest.fn().mockReturnValue("MANUAL_HUMAN_REQUIRED"),
   } as unknown as RuntimeGovernancePolicyService;
+  const runtimeGovernanceFlags = {
+    getFlags: jest.fn().mockReturnValue({
+      apiEnabled: true,
+      uiEnabled: true,
+      enforcementEnabled: true,
+      autoQuarantineEnabled: true,
+    }),
+  } as unknown as RuntimeGovernanceFeatureFlagsService;
 
   const createRegistry = () =>
     new RaiToolsRegistry(
@@ -122,6 +152,7 @@ describe("RaiToolsRegistry", () => {
       knowledgeToolsRegistry,
       crmToolsRegistry,
       frontOfficeToolsRegistry,
+      contractsToolsRegistry,
       riskPolicyEngine,
       pendingActionService,
       autonomyPolicy,
@@ -129,14 +160,25 @@ describe("RaiToolsRegistry", () => {
       incidentOps,
       governanceEvents,
       runtimeGovernancePolicy,
+      runtimeGovernanceFlags,
     );
 
   beforeEach(() => {
     jest.restoreAllMocks();
     jest.clearAllMocks();
     (agentRuntimeConfig.resolveToolAccess as jest.Mock).mockResolvedValue({ allowed: true });
+    (autonomyPolicy.getCompanyAutonomyLevel as jest.Mock).mockResolvedValue(
+      AutonomyLevel.AUTONOMOUS,
+    );
     (crmToolsRegistry.execute as jest.Mock).mockReset();
     (frontOfficeToolsRegistry.execute as jest.Mock).mockReset();
+    (contractsToolsRegistry.execute as jest.Mock).mockReset();
+    (runtimeGovernanceFlags.getFlags as jest.Mock).mockReturnValue({
+      apiEnabled: true,
+      uiEnabled: true,
+      enforcementEnabled: true,
+      autoQuarantineEnabled: true,
+    });
   });
 
   it("QUARANTINE создаёт autonomy incident", async () => {
@@ -194,6 +236,30 @@ describe("RaiToolsRegistry", () => {
         policySource: "AutonomyPolicy",
       }),
     });
+  });
+
+  it("при выключенном enforcement autonomy policy не блокирует write tool", async () => {
+    const registry = createRegistry();
+    registry.onModuleInit();
+    (runtimeGovernanceFlags.getFlags as jest.Mock).mockReturnValue({
+      apiEnabled: true,
+      uiEnabled: true,
+      enforcementEnabled: false,
+      autoQuarantineEnabled: true,
+    });
+    jest
+      .spyOn(riskPolicyEngine, "evaluate")
+      .mockReturnValue("ALLOWED" as any);
+
+    await expect(
+      registry.execute(
+        RaiToolName.GenerateTechMapDraft,
+        { fieldRef: "field-1", seasonRef: "season-1", crop: "rapeseed" },
+        actorContext,
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(autonomyPolicy.getCompanyAutonomyLevel).not.toHaveBeenCalled();
   });
 
   it("executes a registered tool with a valid payload", async () => {
@@ -435,6 +501,31 @@ describe("RaiToolsRegistry", () => {
         status: "ACTIVE",
         roi: 12.3,
       }),
+    );
+  });
+
+  it("routes contracts tools into ContractsToolsRegistry", async () => {
+    const registry = createRegistry();
+    registry.onModuleInit();
+    (contractsToolsRegistry.execute as jest.Mock).mockResolvedValue({
+      invoiceId: "invoice-1",
+      balance: 1200,
+    });
+    jest
+      .spyOn(riskPolicyEngine, "evaluate")
+      .mockReturnValue("ALLOWED" as any);
+
+    const result = await registry.execute(
+      RaiToolName.GetArBalance,
+      { invoiceId: "invoice-1" },
+      actorContext,
+    );
+
+    expect(result).toEqual({ invoiceId: "invoice-1", balance: 1200 });
+    expect(contractsToolsRegistry.execute).toHaveBeenCalledWith(
+      RaiToolName.GetArBalance,
+      { invoiceId: "invoice-1" },
+      actorContext,
     );
   });
 
