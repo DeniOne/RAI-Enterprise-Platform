@@ -27,6 +27,9 @@ export interface RuntimeBudgetDecision {
 const TOOL_TOKEN_COST: Record<RaiToolName, number> = {
   [RaiToolName.EchoMessage]: 300,
   [RaiToolName.WorkspaceSnapshot]: 500,
+  [RaiToolName.LogDialogMessage]: 700,
+  [RaiToolName.ClassifyDialogThread]: 1200,
+  [RaiToolName.CreateFrontOfficeEscalation]: 1800,
   [RaiToolName.ComputeDeviations]: 3000,
   [RaiToolName.ComputePlanFact]: 2500,
   [RaiToolName.EmitAlerts]: 3500,

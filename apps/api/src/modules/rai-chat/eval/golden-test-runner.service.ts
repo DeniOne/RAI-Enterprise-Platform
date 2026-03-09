@@ -130,6 +130,7 @@ export class GoldenTestRunnerService {
       KnowledgeAgent: "knowledge-golden-set.json",
       MonitoringAgent: "monitoring-golden-set.json",
       CrmAgent: "crm-golden-set.json",
+      FrontOfficeAgent: "front-office-golden-set.json",
     };
     const file = fileMap[agentName] ?? null;
     if (!file) return [];
@@ -218,6 +219,11 @@ export class GoldenTestRunnerService {
         "update_crm_obligation",
         "delete_crm_obligation",
       ],
+      FrontOfficeAgent: [
+        "log_dialog_message",
+        "classify_dialog_thread",
+        "create_front_office_escalation",
+      ],
     };
     return supported[agentName]?.includes(expectedIntent) ?? false;
   }
@@ -265,6 +271,7 @@ export class GoldenTestRunnerService {
       KnowledgeAgent: 1000,
       MonitoringAgent: 1000,
       CrmAgent: 2000,
+      FrontOfficeAgent: 1500,
     };
     return maxTokens >= (minBudget[agentName] ?? 1000);
   }
@@ -299,6 +306,10 @@ export class GoldenTestRunnerService {
       case RaiToolName.UpdateCrmObligation:
       case RaiToolName.DeleteCrmObligation:
         return "CrmToolsRegistry";
+      case RaiToolName.LogDialogMessage:
+      case RaiToolName.ClassifyDialogThread:
+      case RaiToolName.CreateFrontOfficeEscalation:
+        return "FrontOfficeToolsRegistry";
       default:
         return null;
     }
@@ -350,6 +361,12 @@ export class GoldenTestRunnerService {
         return RaiToolName.UpdateCrmObligation;
       case "delete_crm_obligation":
         return RaiToolName.DeleteCrmObligation;
+      case "log_dialog_message":
+        return RaiToolName.LogDialogMessage;
+      case "classify_dialog_thread":
+        return RaiToolName.ClassifyDialogThread;
+      case "create_front_office_escalation":
+        return RaiToolName.CreateFrontOfficeEscalation;
       default:
         return null;
     }

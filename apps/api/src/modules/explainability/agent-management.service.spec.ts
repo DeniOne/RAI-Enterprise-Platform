@@ -369,6 +369,15 @@ describe("AgentManagementService", () => {
             }),
           }),
         }),
+        expect.objectContaining({
+          templateId: "front_office_agent",
+          manifest: expect.objectContaining({
+            role: "front_office_agent",
+            runtimeProfile: expect.objectContaining({
+              executionAdapterRole: "front_office_agent",
+            }),
+          }),
+        }),
       ]),
     );
   });

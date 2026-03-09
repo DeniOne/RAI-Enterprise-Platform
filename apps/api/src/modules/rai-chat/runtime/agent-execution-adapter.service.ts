@@ -13,6 +13,10 @@ import { KnowledgeAgent } from "../agents/knowledge-agent.service";
 import { MonitoringAgent } from "../agents/monitoring-agent.service";
 import { CrmAgent, type CrmAgentIntent } from "../agents/crm-agent.service";
 import {
+  FrontOfficeAgent,
+  type FrontOfficeAgentIntent,
+} from "../agents/front-office-agent.service";
+import {
   CanonicalAgentRuntimeRole,
   isAgentRuntimeRole,
 } from "../agent-registry.service";
@@ -33,6 +37,7 @@ export class AgentExecutionAdapterService {
     private readonly knowledgeAgent: KnowledgeAgent,
     private readonly monitoringAgent: MonitoringAgent,
     private readonly crmAgent: CrmAgent,
+    private readonly frontOfficeAgent: FrontOfficeAgent,
   ) {}
 
   async execute(params: ExecuteAdapterParams): Promise<AgentExecutionResult> {
@@ -387,6 +392,80 @@ export class AgentExecutionAdapterService {
       };
     }
 
+    if (adapterRole === "front_office_agent") {
+      const payload = this.firstPayload(params.allowedToolCalls);
+      const intent = this.detectFrontOfficeIntent(params.allowedToolCalls);
+      const result = await this.frontOfficeAgent.run(
+        {
+          companyId: params.actorContext.companyId,
+          traceId: params.request.traceId,
+          userId: params.actorContext.userId,
+          userRole: params.actorContext.userRole,
+          userConfirmed: params.actorContext.userConfirmed,
+          intent,
+          channel:
+            payload.channel === "telegram" ||
+            payload.channel === "web_chat" ||
+            payload.channel === "internal"
+              ? payload.channel
+              : params.request.workspaceContext?.route?.toLowerCase().includes("telegram")
+                ? "telegram"
+                : "web_chat",
+          messageText:
+            typeof payload.messageText === "string" ? payload.messageText : params.request.message,
+          direction:
+            payload.direction === "inbound" || payload.direction === "outbound"
+              ? payload.direction
+              : "inbound",
+          threadExternalId:
+            typeof payload.threadExternalId === "string"
+              ? payload.threadExternalId
+              : params.request.threadId,
+          dialogExternalId:
+            typeof payload.dialogExternalId === "string" ? payload.dialogExternalId : undefined,
+          senderExternalId:
+            typeof payload.senderExternalId === "string" ? payload.senderExternalId : undefined,
+          recipientExternalId:
+            typeof payload.recipientExternalId === "string"
+              ? payload.recipientExternalId
+              : undefined,
+          route: params.request.workspaceContext?.route,
+          targetOwnerRole:
+            typeof payload.targetOwnerRole === "string" ? payload.targetOwnerRole : undefined,
+        },
+        { kernel: params.kernel, request: params.request },
+      );
+
+      return {
+        role: params.request.role,
+        status: result.status,
+        text: result.explain,
+        structuredOutput: {
+          data: result.data,
+          intent,
+        },
+        toolCalls: [
+          {
+            name: this.detectFrontOfficeTool(params.allowedToolCalls, intent),
+            result: result.data,
+          },
+        ],
+        connectorCalls: [],
+        evidence: result.evidence,
+        validation: this.validateOutput(
+          params.kernel,
+          result.evidence,
+          true,
+          result.status,
+          false,
+        ),
+        runtimeBudget: params.budgetDecision,
+        fallbackUsed: result.fallbackUsed,
+        outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
+        auditPayload,
+      };
+    }
+
     const result = await this.monitoringAgent.run(
       {
         companyId: params.actorContext.companyId,
@@ -592,6 +671,36 @@ export class AgentExecutionAdapterService {
         return RaiToolName.DeleteCrmObligation;
       default:
         return RaiToolName.GetCrmAccountWorkspace;
+    }
+  }
+
+  private detectFrontOfficeIntent(
+    toolCalls: RaiToolCallDto[],
+  ): FrontOfficeAgentIntent {
+    if (toolCalls.some((call) => call.name === RaiToolName.CreateFrontOfficeEscalation)) {
+      return "create_front_office_escalation";
+    }
+    if (toolCalls.some((call) => call.name === RaiToolName.ClassifyDialogThread)) {
+      return "classify_dialog_thread";
+    }
+    return "log_dialog_message";
+  }
+
+  private detectFrontOfficeTool(
+    toolCalls: RaiToolCallDto[],
+    intent: FrontOfficeAgentIntent,
+  ): RaiToolName {
+    const explicit = toolCalls[0]?.name;
+    if (explicit) {
+      return explicit;
+    }
+    switch (intent) {
+      case "classify_dialog_thread":
+        return RaiToolName.ClassifyDialogThread;
+      case "create_front_office_escalation":
+        return RaiToolName.CreateFrontOfficeEscalation;
+      default:
+        return RaiToolName.LogDialogMessage;
     }
   }
 

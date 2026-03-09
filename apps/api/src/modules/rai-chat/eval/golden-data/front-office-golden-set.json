@@ -1,0 +1,20 @@
+[
+  {
+    "id": "fo-001",
+    "requestText": "Сохрани эту переписку в журнал фронт-офиса",
+    "expectedIntent": "log_dialog_message",
+    "expectedToolCalls": ["log_dialog_message"]
+  },
+  {
+    "id": "fo-002",
+    "requestText": "Определи, это задача или просто общение",
+    "expectedIntent": "classify_dialog_thread",
+    "expectedToolCalls": ["classify_dialog_thread"]
+  },
+  {
+    "id": "fo-003",
+    "requestText": "Срочно передай это в работу и эскалируй",
+    "expectedIntent": "create_front_office_escalation",
+    "expectedToolCalls": ["create_front_office_escalation"]
+  }
+]

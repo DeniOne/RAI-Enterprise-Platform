@@ -10,7 +10,8 @@ export type CanonicalAgentRuntimeRole =
   | "economist"
   | "knowledge"
   | "monitoring"
-  | "crm_agent";
+  | "crm_agent"
+  | "front_office_agent";
 
 export type AgentRuntimeRole = string;
 
@@ -99,6 +100,15 @@ const AGENT_DEFINITIONS: Record<CanonicalAgentRuntimeRole, AgentDefinition> = {
     defaultMaxTokens: 8000,
     defaultCapabilities: ["CrmToolsRegistry"],
   },
+  front_office_agent: {
+    role: "front_office_agent",
+    name: "FrontOfficeAgent",
+    businessRole: "Коммуникационный ingress: журнал диалогов, классификация сообщений и эскалация в owner-домены",
+    ownerDomain: "front_office",
+    defaultModel: "openai/gpt-5-mini",
+    defaultMaxTokens: 6000,
+    defaultCapabilities: ["FrontOfficeToolsRegistry"],
+  },
 };
 
 const AGENT_ROLES = Object.keys(AGENT_DEFINITIONS) as CanonicalAgentRuntimeRole[];
@@ -151,6 +161,11 @@ export const DEFAULT_TOOL_BINDINGS: Record<CanonicalAgentRuntimeRole, RaiToolNam
     RaiToolName.CreateCrmObligation,
     RaiToolName.UpdateCrmObligation,
     RaiToolName.DeleteCrmObligation,
+  ],
+  front_office_agent: [
+    RaiToolName.LogDialogMessage,
+    RaiToolName.ClassifyDialogThread,
+    RaiToolName.CreateFrontOfficeEscalation,
   ],
 };
 

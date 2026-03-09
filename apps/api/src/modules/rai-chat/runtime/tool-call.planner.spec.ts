@@ -45,39 +45,65 @@ describe("ToolCallPlanner", () => {
       expect(plan.agronom).toEqual([]);
       expect(plan.economist).toEqual([]);
       expect(plan.knowledge).toEqual([]);
+      expect(plan.frontOffice).toEqual([]);
       expect(plan.other).toEqual([]);
+    });
+
+    it("front-office инструменты попадают в frontOffice", () => {
+      const plan = planByToolCalls([
+        { name: RaiToolName.ClassifyDialogThread, payload: { channel: "web_chat", messageText: "Нужно в работу" } },
+      ]);
+      expect(plan.frontOffice).toHaveLength(1);
+      expect(plan.frontOffice[0].name).toBe(RaiToolName.ClassifyDialogThread);
     });
   });
 
   describe("planByIntents", () => {
     it("группирует интенты по агентам", () => {
       const intents: IntentClassification[] = [
-        { toolName: RaiToolName.GenerateTechMapDraft, confidence: 0.8, method: "regex", reason: "a" },
-        { toolName: RaiToolName.ComputePlanFact, confidence: 0.7, method: "regex", reason: "b" },
+        { targetRole: "agronomist", intent: "tech_map_draft", toolName: RaiToolName.GenerateTechMapDraft, confidence: 0.8, method: "regex", reason: "a" },
+        { targetRole: "economist", intent: "compute_plan_fact", toolName: RaiToolName.ComputePlanFact, confidence: 0.7, method: "regex", reason: "b" },
       ];
-      const { agronom, economist, knowledge } = planByIntents(intents);
+      const { agronom, economist, knowledge, frontOffice } = planByIntents(intents);
       expect(agronom).toHaveLength(1);
       expect(agronom[0].toolName).toBe(RaiToolName.GenerateTechMapDraft);
       expect(economist).toHaveLength(1);
       expect(economist[0].toolName).toBe(RaiToolName.ComputePlanFact);
       expect(knowledge).toHaveLength(0);
+      expect(frontOffice).toHaveLength(0);
     });
 
     it("QueryKnowledge попадает в knowledge", () => {
       const { knowledge } = planByIntents([
-        { toolName: RaiToolName.QueryKnowledge, confidence: 0.9, method: "regex", reason: "q" },
+        { targetRole: "knowledge", intent: "query_knowledge", toolName: RaiToolName.QueryKnowledge, confidence: 0.9, method: "regex", reason: "q" },
       ]);
       expect(knowledge).toHaveLength(1);
       expect(knowledge[0].toolName).toBe(RaiToolName.QueryKnowledge);
     });
 
     it("игнорирует null toolName", () => {
-      const { agronom, economist, knowledge } = planByIntents([
-        { toolName: null, confidence: 0, method: "regex", reason: "no_match" },
+      const { agronom, economist, knowledge, frontOffice } = planByIntents([
+        { targetRole: null, intent: null, toolName: null, confidence: 0, method: "regex", reason: "no_match" },
       ]);
       expect(agronom).toHaveLength(0);
       expect(economist).toHaveLength(0);
       expect(knowledge).toHaveLength(0);
+      expect(frontOffice).toHaveLength(0);
+    });
+
+    it("front-office intent попадает в frontOffice", () => {
+      const { frontOffice } = planByIntents([
+        {
+          targetRole: "front_office_agent",
+          intent: "create_front_office_escalation",
+          toolName: RaiToolName.CreateFrontOfficeEscalation,
+          confidence: 0.9,
+          method: "regex",
+          reason: "front_office",
+        },
+      ]);
+      expect(frontOffice).toHaveLength(1);
+      expect(frontOffice[0].toolName).toBe(RaiToolName.CreateFrontOfficeEscalation);
     });
   });
 });

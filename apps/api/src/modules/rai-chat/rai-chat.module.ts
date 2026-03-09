@@ -9,10 +9,12 @@ import { FinanceToolsRegistry } from "./tools/finance-tools.registry";
 import { RiskToolsRegistry } from "./tools/risk-tools.registry";
 import { KnowledgeToolsRegistry } from "./tools/knowledge-tools.registry";
 import { CrmToolsRegistry } from "./tools/crm-tools.registry";
+import { FrontOfficeToolsRegistry } from "./tools/front-office-tools.registry";
 import { AgronomAgent } from "./agents/agronom-agent.service";
 import { EconomistAgent } from "./agents/economist-agent.service";
 import { KnowledgeAgent } from "./agents/knowledge-agent.service";
 import { CrmAgent } from "./agents/crm-agent.service";
+import { FrontOfficeAgent } from "./agents/front-office-agent.service";
 import { AgroDeterministicEngineFacade } from "./deterministic/agro-deterministic.facade";
 import { BudgetControllerService } from "./security/budget-controller.service";
 import { RiskPolicyEngineService } from "./security/risk-policy-engine.service";
@@ -53,6 +55,7 @@ import { AgentPromptAssemblyService } from "./agent-platform/agent-prompt-assemb
 import { AgentExecutionAdapterService } from "./runtime/agent-execution-adapter.service";
 import { CrmModule } from "../crm/crm.module";
 import { CommerceModule } from "../commerce/commerce.module";
+import { AuditModule } from "../../shared/audit/audit.module";
 
 @Module({
   imports: [
@@ -66,6 +69,7 @@ import { CommerceModule } from "../commerce/commerce.module";
     PrismaModule,
     CrmModule,
     CommerceModule,
+    AuditModule,
   ],
   controllers: [RaiChatController, IncidentsGovernanceController],
   providers: [
@@ -80,10 +84,12 @@ import { CommerceModule } from "../commerce/commerce.module";
     RiskToolsRegistry,
     KnowledgeToolsRegistry,
     CrmToolsRegistry,
+    FrontOfficeToolsRegistry,
     AgronomAgent,
     EconomistAgent,
     KnowledgeAgent,
     CrmAgent,
+    FrontOfficeAgent,
     MemoryCoordinatorService,
     AgentRuntimeService,
     AgentExecutionAdapterService,

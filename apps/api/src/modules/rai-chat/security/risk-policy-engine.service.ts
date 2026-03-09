@@ -2,7 +2,13 @@ import { Injectable } from "@nestjs/common";
 import { UserRole } from "@rai/prisma-client";
 import type { ToolRiskLevel } from "../tools/rai-tools.types";
 
-export type RiskPolicyDomain = "agro" | "finance" | "risk" | "knowledge" | "crm";
+export type RiskPolicyDomain =
+  | "agro"
+  | "finance"
+  | "risk"
+  | "knowledge"
+  | "crm"
+  | "front_office";
 
 export type RiskPolicyVerdict =
   | "ALLOWED"
@@ -41,6 +47,9 @@ export class RiskPolicyEngineService {
       return "REQUIRES_USER_CONFIRMATION";
     }
     if (domain === "crm") {
+      return "REQUIRES_USER_CONFIRMATION";
+    }
+    if (domain === "front_office") {
       return "REQUIRES_USER_CONFIRMATION";
     }
     return "ALLOWED"; // knowledge WRITE (нет таких тулов пока)

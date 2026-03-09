@@ -131,7 +131,7 @@ last_updated: 2026-03-08
 
 | Домен | Рекомендуемый owner-agent | Причина |
 |---|---|---|
-| `commerce/contracts` | отдельный `contracts_agent` или `commerce_agent` | договорный контур слишком широк, чтобы безоговорочно вшивать его в текущий `crm_agent` |
+| `commerce/contracts` | отдельный `contracts_agent` | договорный контур должен быть выделен как самостоятельный owner-domain, а не размыт внутри `crm_agent` или generic `commerce`. |
 | `legal` | `legal_advisor` как будущий canonical agent | role уже предусмотрена в templates и логически соответствует домену |
 | `strategy` | `strategist` как будущий canonical agent | стратегический домен уже выделен как отдельная role-template |
 

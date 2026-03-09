@@ -394,6 +394,95 @@ const FUTURE_AGENT_TEMPLATES: FutureAgentTemplateDto[] = [
     ],
   },
   {
+    templateId: "front_office_agent",
+    label: "Фронт-офис агент",
+    manifest: {
+      templateId: "front_office_agent",
+      role: "front_office_agent",
+      name: "ФронтОфис-А",
+      kind: "worker_hybrid",
+      ownerDomain: "front_office",
+      description:
+        "Коммуникационный ingress: логирование диалогов, классификация сообщений и эскалация в owner-домены.",
+      defaultAutonomyMode: "hybrid",
+      runtimeProfile: {
+        profileId: "front-office-agent-runtime-v1",
+        modelRoutingClass: "fast",
+        provider: "openrouter",
+        model: "openai/gpt-5-mini",
+        executionAdapterRole: "front_office_agent",
+        maxInputTokens: 8000,
+        maxOutputTokens: 2500,
+        temperature: 0.1,
+        timeoutMs: 15000,
+        supportsStreaming: false,
+      },
+      responsibilityBinding: {
+        role: "front_office_agent",
+        inheritsFromRole: "front_office_agent",
+        overrides: {
+          title: "Фронт-офис агент",
+          allowedIntents: [
+            "log_dialog_message",
+            "classify_dialog_thread",
+            "create_front_office_escalation",
+          ],
+          extraUiActions: [
+            "open_front_office_route",
+            "refresh_front_office_context",
+            "focus_front_office_result",
+          ],
+        },
+      },
+      memoryPolicy: {
+        policyId: "front-office-agent-memory-v1",
+        allowedScopes: ["tenant", "domain", "user", "task_workflow"],
+        retrievalPolicy: "scoped_recall",
+        writePolicy: "append_summary",
+        sensitiveDataPolicy: "mask",
+      },
+      capabilityPolicy: {
+        capabilities: ["FrontOfficeToolsRegistry"],
+        toolAccessMode: "allowlist",
+        connectorAccessMode: "allowlist",
+      },
+      toolBindings: [],
+      connectorBindings: [
+        {
+          connectorName: "telegram_primary",
+          accessMode: "governed_write",
+          scopes: ["dialogs", "messages"],
+        },
+      ],
+      outputContract: {
+        contractId: "front-office-agent-v1",
+        responseSchemaVersion: "v1",
+        sections: ["summary", "classification", "handoff", "evidence"],
+        requiresEvidence: true,
+        requiresDeterministicValidation: true,
+        fallbackMode: "deterministic_summary",
+      },
+      governancePolicy: {
+        policyId: "front-office-agent-governance-v1",
+        allowedAutonomyModes: ["advisory", "hybrid"],
+        humanGateRules: ["external_message_writes_require_gate"],
+        criticalActionRules: ["no_cross_domain_writes"],
+        auditRequirements: ["trace", "evidence", "validation", "gate_status"],
+        fallbackRules: ["use_audit_summary_if_llm_unavailable"],
+      },
+      domainAdapter: {
+        adapterId: "front-office-domain-adapter",
+        status: "optional",
+        notes: "На первой волне достаточно audit-backed message logging и классификации thread.",
+      },
+    },
+    rolloutChecklist: [
+      "Подключить Telegram как первый communicator ingress",
+      "Подтвердить log/classification/escalation сценарии через audit trail",
+      "Зафиксировать handoff-map в owner-domains",
+    ],
+  },
+  {
     templateId: "controller",
     label: "Контролёр",
     manifest: {

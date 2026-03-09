@@ -43,7 +43,14 @@ export const UpsertAgentConfigDtoSchema = z.object({
   responsibilityBinding: z
     .object({
       role: z.string().min(2).max(64),
-      inheritsFromRole: z.enum(["agronomist", "economist", "knowledge", "monitoring", "crm_agent"]),
+      inheritsFromRole: z.enum([
+        "agronomist",
+        "economist",
+        "knowledge",
+        "monitoring",
+        "crm_agent",
+        "front_office_agent",
+      ]),
       overrides: z
         .object({
           title: z.string().min(1).optional(),
@@ -71,6 +78,9 @@ export const UpsertAgentConfigDtoSchema = z.object({
                 "create_crm_obligation",
                 "update_crm_obligation",
                 "delete_crm_obligation",
+                "log_dialog_message",
+                "classify_dialog_thread",
+                "create_front_office_escalation",
               ]),
             )
             .optional(),
@@ -98,6 +108,9 @@ export const UpsertAgentConfigDtoSchema = z.object({
                 "create_crm_obligation",
                 "update_crm_obligation",
                 "delete_crm_obligation",
+                "log_dialog_message",
+                "classify_dialog_thread",
+                "create_front_office_escalation",
               ]),
             )
             .optional(),
@@ -300,6 +313,7 @@ export const AgentTemplateIdSchema = z.enum([
   "finance_advisor",
   "legal_advisor",
   "crm_agent",
+  "front_office_agent",
   "controller",
   "personal_assistant",
 ]);
@@ -332,7 +346,14 @@ export const FutureAgentManifestDtoSchema = z.object({
   responsibilityBinding: z
     .object({
       role: z.string().min(2).max(64),
-      inheritsFromRole: z.enum(["agronomist", "economist", "knowledge", "monitoring", "crm_agent"]),
+      inheritsFromRole: z.enum([
+        "agronomist",
+        "economist",
+        "knowledge",
+        "monitoring",
+        "crm_agent",
+        "front_office_agent",
+      ]),
       overrides: z
         .object({
           title: z.string().min(1).optional(),
@@ -360,6 +381,9 @@ export const FutureAgentManifestDtoSchema = z.object({
                 "create_crm_obligation",
                 "update_crm_obligation",
                 "delete_crm_obligation",
+                "log_dialog_message",
+                "classify_dialog_thread",
+                "create_front_office_escalation",
               ]),
             )
             .optional(),
@@ -387,6 +411,9 @@ export const FutureAgentManifestDtoSchema = z.object({
                 "create_crm_obligation",
                 "update_crm_obligation",
                 "delete_crm_obligation",
+                "log_dialog_message",
+                "classify_dialog_thread",
+                "create_front_office_escalation",
               ]),
             )
             .optional(),

@@ -267,7 +267,14 @@ export interface PendingClarificationItemDto {
 export interface PendingClarificationDto {
   kind: "missing_context";
   agentRole: string;
-  intentId: "tech_map_draft" | "compute_plan_fact" | "query_knowledge" | "emit_alerts";
+  intentId:
+    | "tech_map_draft"
+    | "compute_plan_fact"
+    | "query_knowledge"
+    | "emit_alerts"
+    | "log_dialog_message"
+    | "classify_dialog_thread"
+    | "create_front_office_escalation";
   summary: string;
   autoResume: boolean;
   items: PendingClarificationItemDto[];
@@ -315,6 +322,9 @@ export interface RaiWorkWindowDto {
       | "compute_plan_fact"
       | "query_knowledge"
       | "emit_alerts"
+      | "log_dialog_message"
+      | "classify_dialog_thread"
+      | "create_front_office_escalation"
       | "register_counterparty"
       | "create_counterparty_relation"
       | "create_crm_account"

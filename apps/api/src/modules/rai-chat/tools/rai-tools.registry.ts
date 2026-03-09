@@ -23,6 +23,7 @@ import { FinanceToolsRegistry } from "./finance-tools.registry";
 import { RiskToolsRegistry } from "./risk-tools.registry";
 import { KnowledgeToolsRegistry } from "./knowledge-tools.registry";
 import { CrmToolsRegistry } from "./crm-tools.registry";
+import { FrontOfficeToolsRegistry } from "./front-office-tools.registry";
 import { RiskPolicyEngineService } from "../security/risk-policy-engine.service";
 import { PendingActionService } from "../security/pending-action.service";
 import { RiskPolicyBlockedError } from "../security/risk-policy-blocked.error";
@@ -59,6 +60,7 @@ export class RaiToolsRegistry implements OnModuleInit {
     private readonly riskToolsRegistry: RiskToolsRegistry,
     private readonly knowledgeToolsRegistry: KnowledgeToolsRegistry,
     private readonly crmToolsRegistry: CrmToolsRegistry,
+    private readonly frontOfficeToolsRegistry: FrontOfficeToolsRegistry,
     private readonly riskPolicyEngine: RiskPolicyEngineService,
     private readonly pendingActionService: PendingActionService,
     private readonly autonomyPolicy: AutonomyPolicyService,
@@ -225,6 +227,9 @@ export class RaiToolsRegistry implements OnModuleInit {
     }
     if (this.crmToolsRegistry.has(name)) {
       return this.crmToolsRegistry.execute(name as never, payload, actorContext) as Promise<RaiToolResultMap[TName]>;
+    }
+    if (this.frontOfficeToolsRegistry.has(name)) {
+      return this.frontOfficeToolsRegistry.execute(name as never, payload, actorContext) as Promise<RaiToolResultMap[TName]>;
     }
 
     const tool = this.tools.get(name) as RegisteredTool<TName> | undefined;

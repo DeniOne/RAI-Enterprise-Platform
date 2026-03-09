@@ -155,6 +155,12 @@ last_updated: 2026-03-08
 
 Но они ещё не равны полноценным отдельным runtime families.
 
+### 7.3 Реализованная стратегическая роль нового поколения
+
+Отдельно зафиксирован `front_office_agent` как уже реализованный canonical first-wave owner-agent для коммуникационного ingress-контура.
+
+При этом его второй и третий уровни enablement ещё впереди: полноценный Telegram adapter, отдельный thread state store и расширенный handoff/work queue.
+
 ---
 
 ## 8. Домены без agent-owner
@@ -189,6 +195,7 @@ last_updated: 2026-03-08
 | `legal_advisor` | плановый | template role | право | `legal` | onboarding template | clause risks, policy summary, legal corpus | `clause`, `policy`, `requirement` | autonomous legal commitments | future/template | [INSTRUCTION_AGENT_PROFILE_LEGAL_ADVISOR.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_LEGAL_ADVISOR.md) |
 | `controller` | плановый | template role | контроль и сверки | `finance` | onboarding template | сверки, контрольный мониторинг, эскалации | `control_case`, `metric`, `signal` | uncontrolled autonomous action | future/template | [INSTRUCTION_AGENT_PROFILE_CONTROLLER.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_CONTROLLER.md) |
 | `personal_assistant` | плановый | template role | персональная координация | `productivity` | onboarding template | agenda, coordination, task support | `task`, `reminder`, `summary` | critical governed writes | future/template | [INSTRUCTION_AGENT_PROFILE_PERSONAL_ASSISTANT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_PERSONAL_ASSISTANT.md) |
+| `front_office_agent` | активен | канонический | front office / communicator ingress | `front_office` | canonical first-wave agent | dialogue logging, communicator filtering, task/process detection, escalation routing | `message`, `dialog_thread`, `task_signal`, `escalation` | чужие domain writes | canonical | [INSTRUCTION_AGENT_PROFILE_FRONT_OFFICE_AGENT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_FRONT_OFFICE_AGENT.md) |
 | `commerce/contracts` | разрыв | домен без owner-agent | договоры | отсутствует | модуль есть, owner-agent нет | создание и сопровождение договоров | `contract`, `role`, `obligation` | не определено | no owner | [INSTRUCTION_AGENT_DOMAIN_GAPS_AND_UNOWNED_MODULES.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_AGENT_DOMAIN_GAPS_AND_UNOWNED_MODULES.md) |
 
 ---

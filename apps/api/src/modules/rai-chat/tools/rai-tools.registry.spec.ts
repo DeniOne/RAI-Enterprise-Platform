@@ -6,6 +6,7 @@ import { FinanceToolsRegistry } from "./finance-tools.registry";
 import { RiskToolsRegistry } from "./risk-tools.registry";
 import { KnowledgeToolsRegistry } from "./knowledge-tools.registry";
 import { CrmToolsRegistry } from "./crm-tools.registry";
+import { FrontOfficeToolsRegistry } from "./front-office-tools.registry";
 import { RaiToolName } from "./rai-tools.types";
 import { RiskPolicyEngineService } from "../security/risk-policy-engine.service";
 import { PendingActionService } from "../security/pending-action.service";
@@ -78,6 +79,16 @@ describe("RaiToolsRegistry", () => {
     ),
     execute: jest.fn(),
   } as unknown as CrmToolsRegistry;
+  const frontOfficeToolsRegistry = {
+    has: jest.fn((name: RaiToolName) =>
+      [
+        RaiToolName.LogDialogMessage,
+        RaiToolName.ClassifyDialogThread,
+        RaiToolName.CreateFrontOfficeEscalation,
+      ].includes(name),
+    ),
+    execute: jest.fn(),
+  } as unknown as FrontOfficeToolsRegistry;
 
   const riskPolicyEngine = new RiskPolicyEngineService();
   const pendingActionService = new PendingActionService(prismaMock as any);
@@ -102,6 +113,7 @@ describe("RaiToolsRegistry", () => {
       riskToolsRegistry,
       knowledgeToolsRegistry,
       crmToolsRegistry,
+      frontOfficeToolsRegistry,
       riskPolicyEngine,
       pendingActionService,
       autonomyPolicy,
@@ -114,6 +126,7 @@ describe("RaiToolsRegistry", () => {
     jest.clearAllMocks();
     (agentRuntimeConfig.resolveToolAccess as jest.Mock).mockResolvedValue({ allowed: true });
     (crmToolsRegistry.execute as jest.Mock).mockReset();
+    (frontOfficeToolsRegistry.execute as jest.Mock).mockReset();
   });
 
   it("QUARANTINE создаёт autonomy incident", async () => {

@@ -1,6 +1,9 @@
 export enum RaiToolName {
   EchoMessage = "echo_message",
   WorkspaceSnapshot = "workspace_snapshot",
+  LogDialogMessage = "log_dialog_message",
+  ClassifyDialogThread = "classify_dialog_thread",
+  CreateFrontOfficeEscalation = "create_front_office_escalation",
   ComputeDeviations = "compute_deviations",
   ComputePlanFact = "compute_plan_fact",
   EmitAlerts = "emit_alerts",
@@ -28,7 +31,13 @@ export enum RaiToolName {
 
 export type ToolRiskLevel = "READ" | "WRITE" | "CRITICAL";
 
-export type ToolRiskDomain = "agro" | "finance" | "risk" | "knowledge" | "crm";
+export type ToolRiskDomain =
+  | "agro"
+  | "finance"
+  | "risk"
+  | "knowledge"
+  | "crm"
+  | "front_office";
 
 export interface RaiToolActorContext {
   companyId: string;
@@ -50,6 +59,12 @@ export const TOOL_RISK_MAP: Partial<
 > = {
   [RaiToolName.EchoMessage]: { riskLevel: "READ", domain: "knowledge" },
   [RaiToolName.WorkspaceSnapshot]: { riskLevel: "READ", domain: "knowledge" },
+  [RaiToolName.LogDialogMessage]: { riskLevel: "READ", domain: "front_office" },
+  [RaiToolName.ClassifyDialogThread]: { riskLevel: "READ", domain: "front_office" },
+  [RaiToolName.CreateFrontOfficeEscalation]: {
+    riskLevel: "WRITE",
+    domain: "front_office",
+  },
   [RaiToolName.ComputeDeviations]: { riskLevel: "READ", domain: "agro" },
   [RaiToolName.GenerateTechMapDraft]: { riskLevel: "WRITE", domain: "agro" },
   [RaiToolName.ComputePlanFact]: { riskLevel: "READ", domain: "finance" },
@@ -90,6 +105,40 @@ export interface EchoMessagePayload {
 export interface WorkspaceSnapshotPayload {
   route: string;
   lastUserAction?: string;
+}
+
+export interface LogDialogMessagePayload {
+  channel: "telegram" | "web_chat" | "internal";
+  direction: "inbound" | "outbound";
+  messageText: string;
+  threadExternalId?: string;
+  dialogExternalId?: string;
+  senderExternalId?: string;
+  recipientExternalId?: string;
+  route?: string;
+  messageTs?: string;
+}
+
+export interface ClassifyDialogThreadPayload {
+  channel: "telegram" | "web_chat" | "internal";
+  messageText: string;
+  threadExternalId?: string;
+  route?: string;
+  counterpartyHint?: string;
+}
+
+export interface CreateFrontOfficeEscalationPayload {
+  channel: "telegram" | "web_chat" | "internal";
+  messageText: string;
+  classification?:
+    | "free_chat"
+    | "task_process"
+    | "client_request"
+    | "escalation_signal";
+  threadExternalId?: string;
+  route?: string;
+  targetOwnerRole?: string;
+  summary?: string;
 }
 
 export interface ComputeDeviationsPayload {
@@ -251,6 +300,9 @@ export interface DeleteCrmObligationPayload {
 export interface RaiToolPayloadMap {
   [RaiToolName.EchoMessage]: EchoMessagePayload;
   [RaiToolName.WorkspaceSnapshot]: WorkspaceSnapshotPayload;
+  [RaiToolName.LogDialogMessage]: LogDialogMessagePayload;
+  [RaiToolName.ClassifyDialogThread]: ClassifyDialogThreadPayload;
+  [RaiToolName.CreateFrontOfficeEscalation]: CreateFrontOfficeEscalationPayload;
   [RaiToolName.ComputeDeviations]: ComputeDeviationsPayload;
   [RaiToolName.ComputePlanFact]: ComputePlanFactPayload;
   [RaiToolName.EmitAlerts]: EmitAlertsPayload;
@@ -285,6 +337,32 @@ export interface WorkspaceSnapshotResult {
   route: string;
   hasSelection: boolean;
   lastUserAction?: string;
+}
+
+export interface LogDialogMessageResult {
+  logged: true;
+  auditLogId: string;
+  threadKey: string;
+  channel: "telegram" | "web_chat" | "internal";
+  direction: "inbound" | "outbound";
+}
+
+export interface ClassifyDialogThreadResult {
+  classification: "free_chat" | "task_process" | "client_request" | "escalation_signal";
+  confidence: number;
+  reasons: string[];
+  targetOwnerRole?: string;
+  needsEscalation: boolean;
+  threadKey: string;
+}
+
+export interface CreateFrontOfficeEscalationResult {
+  created: true;
+  auditLogId: string;
+  classification: "free_chat" | "task_process" | "client_request" | "escalation_signal";
+  targetOwnerRole?: string;
+  summary: string;
+  threadKey: string;
 }
 
 export interface ComputeDeviationsResult {
@@ -497,6 +575,9 @@ export interface DeleteCrmObligationResult {
 export interface RaiToolResultMap {
   [RaiToolName.EchoMessage]: EchoMessageResult;
   [RaiToolName.WorkspaceSnapshot]: WorkspaceSnapshotResult;
+  [RaiToolName.LogDialogMessage]: LogDialogMessageResult;
+  [RaiToolName.ClassifyDialogThread]: ClassifyDialogThreadResult;
+  [RaiToolName.CreateFrontOfficeEscalation]: CreateFrontOfficeEscalationResult;
   [RaiToolName.ComputeDeviations]: ComputeDeviationsResult;
   [RaiToolName.ComputePlanFact]: ComputePlanFactResult;
   [RaiToolName.EmitAlerts]: EmitAlertsResult;

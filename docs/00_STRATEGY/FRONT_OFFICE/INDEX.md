@@ -74,8 +74,8 @@ last_updated: 2026-03-09
 
 ## 6. Что логично складывать в эту папку дальше
 
-- `FRONT_OFFICE_SCOPE.md` — границы блока и его business outcome.
-- `FRONT_OFFICE_IA.md` — структура раздела, навигация и кабинеты ролей.
+- [FRONT_OFFICE_SCOPE.md](./FRONT_OFFICE_SCOPE.md) — границы блока и его business outcome.
+- [FRONT_OFFICE_IA.md](./FRONT_OFFICE_IA.md) — структура раздела, навигация и кабинеты ролей.
 - `FRONT_OFFICE_USER_FLOWS.md` — ключевые пользовательские сценарии.
 - `FRONT_OFFICE_API_CONTRACTS.md` — целевые read/write контракты.
 - `FRONT_OFFICE_BACKLOG.md` — очередь работ по web/UI/API harmonization.

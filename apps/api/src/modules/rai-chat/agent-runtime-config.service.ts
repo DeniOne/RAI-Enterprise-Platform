@@ -137,7 +137,14 @@ export class AgentRuntimeConfigService {
   }
 
   private isGovernedTool(toolName: RaiToolName): boolean {
-    return (["agronomist", "economist", "knowledge", "monitoring", "crm_agent"] as const)
+    return ([
+      "agronomist",
+      "economist",
+      "knowledge",
+      "monitoring",
+      "crm_agent",
+      "front_office_agent",
+    ] as const)
       .flatMap((role) => getDefaultToolsForRole(role))
       .includes(toolName);
   }

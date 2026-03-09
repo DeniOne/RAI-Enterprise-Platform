@@ -3,7 +3,13 @@ import { IntentClassification, WorkspaceContextForIntent } from "../intent-route
 import { ExecutionResult } from "../runtime/agent-runtime.service";
 import { RaiToolCall, RaiToolName } from "../tools/rai-tools.types";
 
-export type AgentContractRole = "agronomist" | "economist" | "knowledge" | "monitoring" | "crm_agent";
+export type AgentContractRole =
+  | "agronomist"
+  | "economist"
+  | "knowledge"
+  | "monitoring"
+  | "crm_agent"
+  | "front_office_agent";
 export type AgentContractIntentId =
   | "tech_map_draft"
   | "compute_deviations"
@@ -25,7 +31,10 @@ export type AgentContractIntentId =
   | "delete_crm_interaction"
   | "create_crm_obligation"
   | "update_crm_obligation"
-  | "delete_crm_obligation";
+  | "delete_crm_obligation"
+  | "log_dialog_message"
+  | "classify_dialog_thread"
+  | "create_front_office_escalation";
 export type ContextKey = "fieldRef" | "seasonRef" | "seasonId" | "planId";
 
 type OutputMode = "answer" | "clarification" | "window" | "comparison" | "analysis";
@@ -1188,6 +1197,149 @@ const CANONICAL_RESPONSIBILITY_PROFILES: Record<AgentContractRole, AgentResponsi
       },
     ],
   },
+  front_office_agent: {
+    role: "front_office_agent",
+    focus: {
+      role: "front_office_agent",
+      title: "Front Office",
+      businessDomain: "front_office",
+      responsibilities: [
+        "dialogue logging",
+        "communicator message filtering",
+        "free chat versus process detection",
+        "task and escalation routing",
+      ],
+      allowedEntityTypes: ["message", "dialog_thread", "task_signal", "escalation"],
+      disallowedEntityTypes: ["tech_map", "invoice", "contract", "budget_plan"],
+      allowedRoutes: ["/front-office", "/telegram", "/communicator", "/consulting/dashboard"],
+      forbiddenRoutes: ["/finance/critical-write", "/consulting/techmaps/active/edit"],
+    },
+    guardrails: {
+      role: "front_office_agent",
+      forbiddenIntentIds: [
+        "tech_map_draft",
+        "compute_deviations",
+        "compute_plan_fact",
+        "simulate_scenario",
+        "compute_risk_assessment",
+        "query_knowledge",
+        "emit_alerts",
+        "register_counterparty",
+        "create_counterparty_relation",
+        "create_crm_account",
+        "review_account_workspace",
+        "update_account_profile",
+        "create_crm_contact",
+        "update_crm_contact",
+        "delete_crm_contact",
+        "log_crm_interaction",
+        "update_crm_interaction",
+        "delete_crm_interaction",
+        "create_crm_obligation",
+        "update_crm_obligation",
+        "delete_crm_obligation",
+      ],
+      forbiddenEntityTypes: ["contract", "account", "field", "budget_plan"],
+      forbiddenActions: ["open_finance_route", "open_field_card"],
+      forbiddenDomains: ["agronomy", "finance", "contracts", "legal"],
+    },
+    intents: [
+      {
+        id: "log_dialog_message",
+        intentId: "log_dialog_message",
+        role: "front_office_agent",
+        description: "Зафиксировать сообщение в журнале коммуникаций.",
+        taskFamily: "front_office_dialog_logging",
+        triggerHints: ["сохрани переписку", "залогируй сообщение", "запиши диалог", "в журнал"],
+        toolName: RaiToolName.LogDialogMessage,
+        outputMode: "answer",
+        requiredContextKeys: [],
+        optionalContextKeys: [],
+        allowedWithoutContext: true,
+        keywordsPattern: /сохрани.*переписк|залогир|запиши.*диалог|в журнал/i,
+        routeHints: { includesAny: ["front-office", "telegram", "communicator"] },
+        classificationReason: "responsibility:front_office:dialog_logging",
+        classificationConfidence: 0.72,
+        contextContract: [],
+        uiActionSurface: {
+          defaultWindowType: "structured_result",
+          defaultWindowMode: "panel",
+          allowedUiActions: ["focus_window", "open_route", "refresh_context"],
+          allowedNavigationTargets: ["/front-office"],
+        },
+      },
+      {
+        id: "classify_dialog_thread",
+        intentId: "classify_dialog_thread",
+        role: "front_office_agent",
+        description: "Определить, является ли диалог свободным общением, процессом или клиентским запросом.",
+        taskFamily: "front_office_dialog_classification",
+        triggerHints: ["классифицируй диалог", "это задача или общение", "разбери переписку", "это процесс", "свободное общение"],
+        toolName: RaiToolName.ClassifyDialogThread,
+        outputMode: "analysis",
+        requiredContextKeys: [],
+        optionalContextKeys: [],
+        allowedWithoutContext: true,
+        keywordsPattern: /классифицируй.*диалог|это задача.*общени|общени.*задач|разбери.*переписк|это процесс|свободное общение/i,
+        routeHints: { includesAny: ["front-office", "telegram", "communicator"] },
+        classificationReason: "responsibility:front_office:dialog_classification",
+        classificationConfidence: 0.78,
+        contextContract: [],
+        uiActionSurface: {
+          defaultWindowType: "structured_result",
+          defaultWindowMode: "panel",
+          allowedUiActions: ["focus_window", "open_route", "refresh_context"],
+          allowedNavigationTargets: ["/front-office"],
+        },
+      },
+      {
+        id: "create_front_office_escalation",
+        intentId: "create_front_office_escalation",
+        role: "front_office_agent",
+        description: "Создать эскалацию из коммуникатора и подготовить handoff в owner-domain.",
+        taskFamily: "front_office_escalation",
+        triggerHints: ["эскалируй", "передай в работу", "создай эскалацию", "нужно в работу", "срочно"],
+        toolName: RaiToolName.CreateFrontOfficeEscalation,
+        outputMode: "window",
+        requiredContextKeys: [],
+        optionalContextKeys: [],
+        allowedWithoutContext: true,
+        keywordsPattern: /эскалир|передай в работу|создай эскалац|нужно в работу|срочно/i,
+        routeHints: { includesAny: ["front-office", "telegram", "communicator"] },
+        classificationReason: "responsibility:front_office:create_escalation",
+        classificationConfidence: 0.8,
+        contextContract: [],
+        uiActionSurface: {
+          defaultWindowType: "structured_result",
+          defaultWindowMode: "panel",
+          allowedUiActions: ["focus_window", "open_route", "refresh_context"],
+          allowedNavigationTargets: ["/front-office"],
+        },
+      },
+    ],
+    uiActions: [
+      {
+        id: "open_front_office_route",
+        role: "front_office_agent",
+        kind: "open_route",
+        label: "Открыть фронт-офис",
+        targetRoutePattern: "/front-office",
+      },
+      {
+        id: "refresh_front_office_context",
+        role: "front_office_agent",
+        kind: "refresh_context",
+        label: "Обновить контекст диалога",
+      },
+      {
+        id: "focus_front_office_result",
+        role: "front_office_agent",
+        kind: "focus_window",
+        label: "Открыть результат front-office",
+        allowedWindowTypes: ["structured_result"],
+      },
+    ],
+  },
 };
 
 const ALL_INTENT_CONTRACTS = Object.values(CANONICAL_RESPONSIBILITY_PROFILES).flatMap(
@@ -1200,7 +1352,8 @@ function isCanonicalRole(role: string | null | undefined): role is AgentContract
     role === "economist" ||
     role === "knowledge" ||
     role === "monitoring" ||
-    role === "crm_agent"
+    role === "crm_agent" ||
+    role === "front_office_agent"
   );
 }
 
@@ -1609,6 +1762,43 @@ export function buildAutoToolCallFromContracts(
         name: intentContract.toolName,
         payload: {
           query: request.message,
+        },
+      };
+    case "log_dialog_message":
+      return {
+        name: intentContract.toolName,
+        payload: {
+          channel: request.workspaceContext?.route?.toLowerCase().includes("telegram")
+            ? "telegram"
+            : "web_chat",
+          direction: "inbound",
+          messageText: request.message,
+          threadExternalId: request.threadId,
+          route: request.workspaceContext?.route,
+        },
+      };
+    case "classify_dialog_thread":
+      return {
+        name: intentContract.toolName,
+        payload: {
+          channel: request.workspaceContext?.route?.toLowerCase().includes("telegram")
+            ? "telegram"
+            : "web_chat",
+          messageText: request.message,
+          threadExternalId: request.threadId,
+          route: request.workspaceContext?.route,
+        },
+      };
+    case "create_front_office_escalation":
+      return {
+        name: intentContract.toolName,
+        payload: {
+          channel: request.workspaceContext?.route?.toLowerCase().includes("telegram")
+            ? "telegram"
+            : "web_chat",
+          messageText: request.message,
+          threadExternalId: request.threadId,
+          route: request.workspaceContext?.route,
         },
       };
     case "tech_map_draft": {

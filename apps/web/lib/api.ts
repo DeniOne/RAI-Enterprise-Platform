@@ -440,7 +440,7 @@ export interface UpsertAgentConfigBody {
     };
     responsibilityBinding?: {
         role: string;
-        inheritsFromRole: 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent';
+        inheritsFromRole: 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent' | 'front_office_agent';
         overrides?: {
             title?: string;
             allowedIntents?: string[];
@@ -454,7 +454,7 @@ export interface UpsertAgentConfigBody {
 }
 
 export interface FutureAgentManifestBody {
-    templateId?: 'marketer' | 'strategist' | 'finance_advisor' | 'legal_advisor' | 'crm_agent' | 'controller' | 'personal_assistant';
+    templateId?: 'marketer' | 'strategist' | 'finance_advisor' | 'legal_advisor' | 'crm_agent' | 'front_office_agent' | 'controller' | 'personal_assistant';
     role: string;
     name: string;
     kind: 'domain_advisor' | 'worker_hybrid' | 'personal_delegated';
@@ -475,7 +475,7 @@ export interface FutureAgentManifestBody {
     };
     responsibilityBinding?: {
         role: string;
-        inheritsFromRole: 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent';
+        inheritsFromRole: 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent' | 'front_office_agent';
         overrides?: {
             title?: string;
             allowedIntents?: string[];
@@ -530,7 +530,7 @@ export interface FutureAgentManifestBody {
 }
 
 export interface FutureAgentTemplateItem {
-    templateId: 'marketer' | 'strategist' | 'finance_advisor' | 'legal_advisor' | 'crm_agent' | 'controller' | 'personal_assistant';
+    templateId: 'marketer' | 'strategist' | 'finance_advisor' | 'legal_advisor' | 'crm_agent' | 'front_office_agent' | 'controller' | 'personal_assistant';
     label: string;
     manifest: FutureAgentManifestBody;
     rolloutChecklist: string[];

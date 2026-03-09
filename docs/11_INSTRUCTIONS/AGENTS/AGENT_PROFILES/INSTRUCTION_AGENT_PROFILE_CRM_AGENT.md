@@ -139,7 +139,7 @@ last_updated: 2026-03-08
 - С `knowledge`: для policy / corpus grounding по CRM-сценарию.
 - С `economist`: для финансового follow-up по клиентскому контексту.
 - С `monitoring`: для incident/risk escalation, но не наоборот по ownership.
-- С будущим `contracts_agent` или `legal_advisor`: для договорного и правового handoff.
+- С будущим `contracts_agent` и `legal_advisor`: для договорного и правового handoff.
 
 ## 13. Связи с доменными модулями
 

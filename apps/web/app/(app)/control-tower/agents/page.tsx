@@ -27,14 +27,15 @@ const CAPABILITY_OPTIONS = [
   'RiskToolsRegistry',
   'KnowledgeToolsRegistry',
   'CrmToolsRegistry',
+  'FrontOfficeToolsRegistry',
   'LegalToolsRegistry',
   'StrategyToolsRegistry',
   'ProductivityToolsRegistry',
   'MarketingToolsRegistry',
 ];
-const KNOWN_ROLES = ['agronomist', 'economist', 'knowledge', 'monitoring', 'crm_agent'];
-const ADAPTER_ROLES = ['agronomist', 'economist', 'knowledge', 'monitoring', 'crm_agent'];
-const TEMPLATE_OPTIONS = ['marketer', 'strategist', 'finance_advisor', 'legal_advisor', 'crm_agent', 'controller', 'personal_assistant'] as const;
+const KNOWN_ROLES = ['agronomist', 'economist', 'knowledge', 'monitoring', 'crm_agent', 'front_office_agent'];
+const ADAPTER_ROLES = ['agronomist', 'economist', 'knowledge', 'monitoring', 'crm_agent', 'front_office_agent'];
+const TEMPLATE_OPTIONS = ['marketer', 'strategist', 'finance_advisor', 'legal_advisor', 'crm_agent', 'front_office_agent', 'controller', 'personal_assistant'] as const;
 const KIND_OPTIONS = ['domain_advisor', 'worker_hybrid', 'personal_delegated'] as const;
 const AUTONOMY_OPTIONS = ['advisory', 'hybrid', 'autonomous'] as const;
 const MODEL_ROUTING_CLASSES = ['cheap', 'fast', 'strong'] as const;
@@ -60,8 +61,11 @@ const RESPONSIBILITY_INTENT_OPTIONS = [
   'delete_crm_interaction',
   'update_crm_obligation',
   'delete_crm_obligation',
+  'log_dialog_message',
+  'classify_dialog_thread',
+  'create_front_office_escalation',
 ] as const;
-type CanonicalAdapterRole = 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent';
+type CanonicalAdapterRole = 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent' | 'front_office_agent';
 
 function roleOptionLabel(role: string) {
   const labels: Record<string, string> = {
@@ -70,6 +74,7 @@ function roleOptionLabel(role: string) {
     knowledge: 'knowledge / Знание',
     monitoring: 'monitoring / Мониторинг',
     crm_agent: 'crm_agent / CRM-агент',
+    front_office_agent: 'front_office_agent / Фронт-офис агент',
   };
   return labels[role] ?? role;
 }
@@ -126,6 +131,7 @@ function displayAgentName(role: string, fallbackName: string) {
     finance_advisor: 'Финсоветник-А',
     legal_advisor: 'Юрист-А',
     crm_agent: 'CRM-А',
+    front_office_agent: 'ФронтОфис-А',
     controller: 'Контролёр-А',
     personal_assistant: 'Ассистент-А',
   };
@@ -684,7 +690,7 @@ function AgentEditor({
     const responsibilityBinding = bindingInheritsFrom.trim()
       ? {
           role: bindingRole.trim() || effectiveRole.trim(),
-          inheritsFromRole: bindingInheritsFrom.trim() as 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent',
+          inheritsFromRole: bindingInheritsFrom.trim() as 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent' | 'front_office_agent',
           overrides: {
             ...(bindingTitle.trim() ? { title: bindingTitle.trim() } : {}),
             ...(allowedIntents.length > 0 ? { allowedIntents } : {}),
@@ -763,7 +769,7 @@ function AgentEditor({
                 ))}
               </select>
               <p className="mt-2 text-[11px] text-[#717182] leading-relaxed">
-                Шаблон подставляет стандартные настройки runtime и governance. Для `crm_agent` backend-шаблон уже существует.
+                Шаблон подставляет стандартные настройки runtime и governance. Для `crm_agent` и `front_office_agent` backend-шаблоны уже существуют.
               </p>
             </div>
           )}
@@ -775,7 +781,7 @@ function AgentEditor({
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
-                placeholder="например, crm_agent или knowledge"
+                placeholder="например, front_office_agent или crm_agent"
                 list="known-agent-roles"
               />
               <datalist id="known-agent-roles">

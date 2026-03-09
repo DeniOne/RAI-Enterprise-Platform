@@ -168,6 +168,9 @@ last_updated: 2026-03-08
 - [INSTRUCTION_AGENT_CREATION_FULL_LIFECYCLE.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_AGENT_CREATION_FULL_LIFECYCLE.md)
   Полная инструкция по созданию нового агента: от идеи и контрактов до runtime, UX, governance, тестов и production-ready состояния.
 
+- [INSTRUCTION_FRONT_OFFICE_AGENT_ENABLEMENT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_FRONT_OFFICE_AGENT_ENABLEMENT.md)
+  Практическая инструкция по включению `front_office_agent`: communicator ingress, dialogue log, process detection, escalation и handoff в owner-domains.
+
 - [INSTRUCTION_CRM_AGENT_INTERACTION_DIAGNOSTICS_AND_FAILURE_MODES.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_CRM_AGENT_INTERACTION_DIAGNOSTICS_AND_FAILURE_MODES.md)
   Разбор проблематики взаимодействия CRM-агента: инцидент регистрации контрагента по ИНН, двойная ошибка execution/composer, соседние риски и обязательные сценарии диагностики.
 
@@ -209,3 +212,6 @@ last_updated: 2026-03-08
 
 - [INSTRUCTION_AGENT_PROFILE_PERSONAL_ASSISTANT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_PERSONAL_ASSISTANT.md)
   Профиль плановой роли `personal_assistant`: personal ops scope, privacy guardrails и требования к подтверждениям.
+
+- [INSTRUCTION_AGENT_PROFILE_FRONT_OFFICE_AGENT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_FRONT_OFFICE_AGENT.md)
+  Профиль `front_office_agent`: фильтрация коммуникаций, журнал диалогов, отделение общения от процесса и governed handoff.

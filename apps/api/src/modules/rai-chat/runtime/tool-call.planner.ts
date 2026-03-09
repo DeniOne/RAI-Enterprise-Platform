@@ -28,12 +28,18 @@ const CRM_TOOLS: RaiToolName[] = [
   RaiToolName.UpdateCrmObligation,
   RaiToolName.DeleteCrmObligation,
 ];
+const FRONT_OFFICE_TOOLS: RaiToolName[] = [
+  RaiToolName.LogDialogMessage,
+  RaiToolName.ClassifyDialogThread,
+  RaiToolName.CreateFrontOfficeEscalation,
+];
 
 export interface AgentExecutionPlan {
   agronom: Array<{ name: RaiToolName; payload: Record<string, unknown> }>;
   economist: Array<{ name: RaiToolName; payload: Record<string, unknown> }>;
   knowledge: Array<{ name: RaiToolName; payload: Record<string, unknown> }>;
   crm: Array<{ name: RaiToolName; payload: Record<string, unknown> }>;
+  frontOffice: Array<{ name: RaiToolName; payload: Record<string, unknown> }>;
   other: Array<{ name: RaiToolName; payload: Record<string, unknown> }>;
 }
 
@@ -48,15 +54,17 @@ export function planByToolCalls(toolCalls: ToolCallInput[]): AgentExecutionPlan 
   const economist: ToolCallInput[] = [];
   const knowledge: ToolCallInput[] = [];
   const crm: ToolCallInput[] = [];
+  const frontOffice: ToolCallInput[] = [];
   const other: ToolCallInput[] = [];
   for (const call of toolCalls) {
     if (AGRONOM_TOOLS.includes(call.name)) agronom.push(call);
     else if (ECONOMIST_TOOLS.includes(call.name)) economist.push(call);
     else if (KNOWLEDGE_TOOLS.includes(call.name)) knowledge.push(call);
     else if (CRM_TOOLS.includes(call.name)) crm.push(call);
+    else if (FRONT_OFFICE_TOOLS.includes(call.name)) frontOffice.push(call);
     else other.push(call);
   }
-  return { agronom, economist, knowledge, crm, other };
+  return { agronom, economist, knowledge, crm, frontOffice, other };
 }
 
 /**
@@ -68,17 +76,20 @@ export function planByIntents(intents: IntentClassification[]): {
   economist: IntentClassification[];
   knowledge: IntentClassification[];
   crm: IntentClassification[];
+  frontOffice: IntentClassification[];
 } {
   const agronom: IntentClassification[] = [];
   const economist: IntentClassification[] = [];
   const knowledge: IntentClassification[] = [];
   const crm: IntentClassification[] = [];
+  const frontOffice: IntentClassification[] = [];
   for (const c of intents) {
     if (!c.toolName) continue;
     if (AGRONOM_TOOLS.includes(c.toolName)) agronom.push(c);
     else if (ECONOMIST_TOOLS.includes(c.toolName)) economist.push(c);
     else if (KNOWLEDGE_TOOLS.includes(c.toolName)) knowledge.push(c);
     else if (CRM_TOOLS.includes(c.toolName)) crm.push(c);
+    else if (FRONT_OFFICE_TOOLS.includes(c.toolName)) frontOffice.push(c);
   }
-  return { agronom, economist, knowledge, crm };
+  return { agronom, economist, knowledge, crm, frontOffice };
 }

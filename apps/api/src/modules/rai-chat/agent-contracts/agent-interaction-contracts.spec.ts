@@ -106,6 +106,49 @@ describe("agent interaction contracts", () => {
     expect(result.toolName).toBe(RaiToolName.CreateCrmContact);
   });
 
+  it("классифицирует front-office разбор диалога", () => {
+    const result = classifyByAgentContracts(
+      "Определи, это задача или просто общение",
+      {
+        route: "/front-office",
+      },
+    );
+
+    expect(result.targetRole).toBe("front_office_agent");
+    expect(result.intent).toBe("classify_dialog_thread");
+    expect(result.toolName).toBe(RaiToolName.ClassifyDialogThread);
+  });
+
+  it("строит auto tool call для front-office эскалации", () => {
+    const classification = classifyByAgentContracts(
+      "Срочно передай это в работу и эскалируй",
+      {
+        route: "/front-office",
+      },
+    );
+
+    const toolCall = buildAutoToolCallFromContracts(
+      {
+        message: "Срочно передай это в работу и эскалируй",
+        threadId: "thread-front-1",
+        workspaceContext: {
+          route: "/front-office",
+        },
+      },
+      classification,
+    );
+
+    expect(toolCall).toEqual({
+      name: RaiToolName.CreateFrontOfficeEscalation,
+      payload: {
+        channel: "web_chat",
+        messageText: "Срочно передай это в работу и эскалируй",
+        threadExternalId: "thread-front-1",
+        route: "/front-office",
+      },
+    });
+  });
+
   it("строит auto tool call для обновления обязательства по selected row", () => {
     const classification = classifyByAgentContracts(
       "обнови обязательство и поставь статус выполнено",
