@@ -10,6 +10,8 @@
 Видение проекта, бизнес-модель и дорожная карта развития (Alpha -> Delta).
 - [Vision & Scope](file:///f:/RAI_EP/docs/00_STRATEGY/VISION_SCOPE.md)
 - [Level F Strategy](file:///f:/RAI_EP/docs/00_STRATEGY/LEVEL%20F%20—%20INDUSTRY%20COGNITIVE%20STANDARD.md)
+- [STAGE 2 Canon Index](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/INDEX.md)
+- [Swarm Control Tower Architecture](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_SWARM_CONTROL_TOWER_ARCHITECTURE.md)
 
 ### [🏗️ 01-ARCHITECTURE](file:///f:/RAI_EP/docs/01_ARCHITECTURE/)
 Технический фундамент и описание Бизнес-Ядра.

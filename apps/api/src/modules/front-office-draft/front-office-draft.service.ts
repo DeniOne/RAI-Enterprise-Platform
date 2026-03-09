@@ -245,7 +245,12 @@ export class FrontOfficeDraftService {
       action: "FRONT_OFFICE_DRAFT_FIXED",
       companyId,
       userId: user.id,
-      metadata: { traceId, draftId, patch },
+      metadata: {
+        traceId,
+        draftId,
+        threadKey: updated.payload.threadKey ?? null,
+        patch,
+      },
     });
 
     return this.presentDraft(updated, await this.repository.findCommitted(companyId, updated.id));
@@ -289,7 +294,11 @@ export class FrontOfficeDraftService {
       action: "FRONT_OFFICE_DRAFT_LINKED",
       companyId,
       userId,
-      metadata: { draftId, anchor },
+      metadata: {
+        draftId,
+        threadKey: updated.payload.threadKey ?? null,
+        anchor,
+      },
     });
 
     return this.presentDraft(updated, await this.repository.findCommitted(companyId, updated.id));
@@ -341,6 +350,7 @@ export class FrontOfficeDraftService {
       userId: user.id,
       metadata: {
         draftId,
+        threadKey: committed.draft.payload.threadKey ?? null,
         intent,
         commitResult,
       },
@@ -354,24 +364,25 @@ export class FrontOfficeDraftService {
       this.repository.listDrafts(companyId, { take: 100 }),
       this.repository.listCommitted(companyId, 12),
     ]);
+    const activeDrafts = drafts.filter((item) => item.status !== "COMMITTED");
 
     return {
       counts: {
-        newIngress: drafts.length,
-        needsLink: drafts.filter((item) => item.status === "NEEDS_LINK").length,
-        needsClarification: drafts.filter(
+        newIngress: activeDrafts.length,
+        needsLink: activeDrafts.filter((item) => item.status === "NEEDS_LINK").length,
+        needsClarification: activeDrafts.filter(
           (item) => item.status === "NEEDS_MUST_CLARIFICATION",
         ).length,
-        readyToConfirm: drafts.filter(
+        readyToConfirm: activeDrafts.filter(
           (item) => item.status === "READY_TO_CONFIRM",
         ).length,
       },
-      newIngress: drafts,
-      needsLink: drafts.filter((item) => item.status === "NEEDS_LINK"),
-      needsClarification: drafts.filter(
+      newIngress: activeDrafts,
+      needsLink: activeDrafts.filter((item) => item.status === "NEEDS_LINK"),
+      needsClarification: activeDrafts.filter(
         (item) => item.status === "NEEDS_MUST_CLARIFICATION",
       ),
-      readyToConfirm: drafts.filter(
+      readyToConfirm: activeDrafts.filter(
         (item) => item.status === "READY_TO_CONFIRM",
       ),
       recentCommits,
