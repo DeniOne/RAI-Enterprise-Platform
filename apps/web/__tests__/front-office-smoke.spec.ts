@@ -26,12 +26,16 @@ describe('Front-Office smoke contract', () => {
 
     it('keeps server API adapters aligned to front-office endpoints', () => {
         const api = read('lib/api/front-office-server.ts');
+        const workspacePage = read('app/telegram/workspace/page.tsx');
 
         expect(api).toContain('"/front-office/overview"');
         expect(api).toContain('"/front-office/deviations"');
         expect(api).toContain('"/front-office/consultations"');
         expect(api).toContain('"/front-office/context-updates"');
+        expect(api).toContain('"/front-office/manager/bootstrap"');
+        expect(api).toContain('"/front-office/manager/farms"');
         expect(api).toContain('`/field-observation/task/${id}`');
         expect(api).toContain('"/seasons"');
+        expect(workspacePage).toContain('TelegramWorkspaceClient');
     });
 });

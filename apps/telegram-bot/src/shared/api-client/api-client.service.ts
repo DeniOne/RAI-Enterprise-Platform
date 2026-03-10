@@ -68,6 +68,10 @@ export interface FrontOfficeDraftResponseDto {
     status: 'DRAFT_RECORDED' | 'COMMITTED';
     confirmationRequired: boolean;
     draftId: string;
+    targetOwnerRole?: string | null;
+    handoffId?: string | null;
+    handoffStatus?: string | null;
+    ownerResultRef?: string | null;
     threadKey?: string | null;
     classification?: {
         classification?: string | null;

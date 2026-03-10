@@ -143,6 +143,11 @@ interface PersistedConnectorBinding {
   isEnabled: boolean;
 }
 
+interface PersistedLifecycleOverride {
+  role: string;
+  state: "FROZEN" | "RETIRED";
+}
+
 export const DEFAULT_TOOL_BINDINGS: Record<CanonicalAgentRuntimeRole, RaiToolName[]> = {
   agronomist: [
     RaiToolName.GenerateTechMapDraft,
@@ -253,6 +258,7 @@ export class AgentRegistryService {
       tenantToolBindings,
       globalConnectorBindings,
       tenantConnectorBindings,
+      lifecycleOverrides,
     ] = await Promise.all([
       this.prisma.agentConfiguration.findMany({ where: { companyId: null } }),
       this.prisma.agentConfiguration.findMany({ where: { companyId } }),
@@ -262,6 +268,7 @@ export class AgentRegistryService {
       this.prisma.agentToolBinding.findMany({ where: { companyId } }),
       this.prisma.agentConnectorBinding.findMany({ where: { companyId: null } }),
       this.prisma.agentConnectorBinding.findMany({ where: { companyId } }),
+      this.getActiveLifecycleOverrides(companyId),
     ]);
 
     const globalByRole = indexByRole(globalRows);
@@ -272,11 +279,15 @@ export class AgentRegistryService {
     const tenantToolsByRole = indexBindingsByRole(tenantToolBindings);
     const globalConnectorsByRole = indexBindingsByRole(globalConnectorBindings);
     const tenantConnectorsByRole = indexBindingsByRole(tenantConnectorBindings);
+    const lifecycleOverridesByRole = new Map<string, PersistedLifecycleOverride>(
+      lifecycleOverrides.map((item) => [item.role, item]),
+    );
 
     const canonicalEntries = AGENT_ROLES.map((role) =>
       this.buildEntry(
         companyId,
         role,
+        lifecycleOverridesByRole.get(role),
         globalByRole.get(role),
         tenantByRole.get(role),
         globalCapabilitiesByRole.get(role) ?? [],
@@ -297,6 +308,7 @@ export class AgentRegistryService {
         this.buildFutureEntry(
           companyId,
           role,
+          lifecycleOverridesByRole.get(role),
           globalRows.find((row) => row.role === role),
           tenantRows.find((row) => row.role === role),
           globalCapabilityBindings.filter((binding) => binding.role === role),
@@ -323,6 +335,7 @@ export class AgentRegistryService {
       tenantToolBindings,
       globalConnectorBindings,
       tenantConnectorBindings,
+      lifecycleOverrides,
     ] = await Promise.all([
       this.prisma.agentConfiguration.findUnique({
         where: {
@@ -358,11 +371,13 @@ export class AgentRegistryService {
       this.prisma.agentConnectorBinding.findMany({
         where: { role, companyId },
       }),
+      this.getActiveLifecycleOverrides(companyId, role),
     ]);
 
     return this.buildEntry(
       companyId,
       role,
+      lifecycleOverrides[0],
       globalRow ?? undefined,
       tenantRow ?? undefined,
       globalCapabilityBindings,
@@ -429,7 +444,7 @@ export class AgentRegistryService {
     companyId: string,
     role: string,
   ): Promise<EffectiveAgentKernelEntry | null> {
-    const [globalRow, tenantRow, globalToolBindings, tenantToolBindings, globalConnectorBindings, tenantConnectorBindings] =
+    const [globalRow, tenantRow, globalToolBindings, tenantToolBindings, globalConnectorBindings, tenantConnectorBindings, lifecycleOverrides] =
       await Promise.all([
         this.prisma.agentConfiguration.findUnique({
           where: { agent_config_role_company_unique: { role, companyId: null } },
@@ -441,6 +456,7 @@ export class AgentRegistryService {
         this.prisma.agentToolBinding.findMany({ where: { role, companyId, isEnabled: true } }),
         this.prisma.agentConnectorBinding.findMany({ where: { role, companyId: null, isEnabled: true } }),
         this.prisma.agentConnectorBinding.findMany({ where: { role, companyId, isEnabled: true } }),
+        this.getActiveLifecycleOverrides(companyId, role),
       ]);
 
     const effectiveRow = tenantRow ?? globalRow;
@@ -462,7 +478,7 @@ export class AgentRegistryService {
       maxTokens: effectiveRow.maxTokens,
       systemPrompt:
         effectiveRow.systemPrompt || `You are ${effectiveRow.name}. Stay governed, concise, and evidence-grounded.`,
-      isActive: effectiveRow.isActive,
+      isActive: lifecycleOverrides[0] ? false : effectiveRow.isActive,
       source: tenantRow ? "tenant" : "global",
       bindingsSource: enabledTools.length > 0 ? "persisted" : "bootstrap",
       capabilities: Array.isArray(effectiveRow.capabilities) ? (effectiveRow.capabilities as string[]) : [],
@@ -486,6 +502,7 @@ export class AgentRegistryService {
   private buildEntry(
     companyId: string,
     role: CanonicalAgentRuntimeRole,
+    lifecycleOverride?: PersistedLifecycleOverride,
     globalRow?: AgentConfiguration,
     tenantRow?: AgentConfiguration,
     globalCapabilityBindings: PersistedCapabilityBinding[] = [],
@@ -499,7 +516,7 @@ export class AgentRegistryService {
     const effectiveRow = tenantRow ?? globalRow;
     const source = tenantRow ? "tenant" : "global";
     const isBootstrapOnly = !effectiveRow;
-    const isActive = effectiveRow?.isActive ?? true;
+    const isActive = lifecycleOverride ? false : effectiveRow?.isActive ?? true;
     const persistedCapabilities = this.resolveCapabilities(
       role,
       globalCapabilityBindings,
@@ -533,7 +550,7 @@ export class AgentRegistryService {
         outputContract: this.asObject(effectiveRow?.outputContract),
         governancePolicy: this.asObject(effectiveRow?.governancePolicy),
         isActive,
-        source,
+        source: lifecycleOverride || tenantRow ? "tenant" : "global",
         bindingsSource:
           hasPersistedCapabilityBindings && hasPersistedToolBindings
             ? "persisted"
@@ -542,15 +559,17 @@ export class AgentRegistryService {
       tenantAccess: {
         companyId,
         role,
-        mode: tenantRow
-          ? tenantRow.isActive
+        mode: lifecycleOverride
+          ? "DENIED"
+          : tenantRow
+            ? tenantRow.isActive
             ? "OVERRIDE"
             : "DENIED"
           : isBootstrapOnly
             ? "INHERITED"
             : "INHERITED",
         isActive,
-        source: tenantRow ? "tenant" : "global",
+        source: lifecycleOverride || tenantRow ? "tenant" : "global",
       },
     };
   }
@@ -558,6 +577,7 @@ export class AgentRegistryService {
   private buildFutureEntry(
     companyId: string,
     role: string,
+    lifecycleOverride?: PersistedLifecycleOverride,
     globalRow?: AgentConfiguration,
     tenantRow?: AgentConfiguration,
     globalCapabilityBindings: PersistedCapabilityBinding[] = [],
@@ -630,19 +650,58 @@ export class AgentRegistryService {
         memoryPolicy: this.asObject(effectiveRow.memoryPolicy),
         outputContract: this.asObject(effectiveRow.outputContract),
         governancePolicy: this.asObject(effectiveRow.governancePolicy),
-        isActive: effectiveRow.isActive ?? true,
-        source,
+        isActive: lifecycleOverride ? false : effectiveRow.isActive ?? true,
+        source: lifecycleOverride || tenantRow ? "tenant" : source,
         bindingsSource:
           hasPersistedCapabilityBindings || hasPersistedToolBindings ? "persisted" : "bootstrap",
       },
       tenantAccess: {
         companyId,
         role,
-        mode: tenantRow ? (tenantRow.isActive ? "OVERRIDE" : "DENIED") : "INHERITED",
-        isActive: effectiveRow.isActive ?? true,
-        source,
+        mode: lifecycleOverride
+          ? "DENIED"
+          : tenantRow
+            ? (tenantRow.isActive ? "OVERRIDE" : "DENIED")
+            : "INHERITED",
+        isActive: lifecycleOverride ? false : effectiveRow.isActive ?? true,
+        source: lifecycleOverride || tenantRow ? "tenant" : source,
       },
     };
+  }
+
+  private async getActiveLifecycleOverrides(
+    companyId: string,
+    role?: string,
+  ): Promise<PersistedLifecycleOverride[]> {
+    const delegate = (
+      this.prisma as PrismaService & {
+        agentLifecycleOverride?: {
+          findMany: (args: unknown) => Promise<Array<{ role: string; state: string }>>;
+        };
+      }
+    ).agentLifecycleOverride;
+
+    if (!delegate?.findMany) {
+      return [];
+    }
+
+    const rows = await delegate.findMany({
+      where: {
+        companyId,
+        isActive: true,
+        ...(role ? { role } : {}),
+      },
+      select: {
+        role: true,
+        state: true,
+      },
+    });
+
+    return (Array.isArray(rows) ? rows : [])
+      .filter(
+        (item): item is PersistedLifecycleOverride =>
+          item.state === "FROZEN" || item.state === "RETIRED",
+      );
   }
 
   private asObject(value: unknown): Record<string, unknown> | undefined {

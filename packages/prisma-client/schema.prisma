@@ -146,6 +146,7 @@ model Company {
   traceSummaries          TraceSummary[]
   qualityAlerts           QualityAlert[]
   autonomyOverrides       AutonomyOverride[]
+  agentLifecycleOverrides AgentLifecycleOverride[]
   agentReputations        AgentReputation[]
   userCredibilityProfiles UserCredibilityProfile[]
   systemIncidents         SystemIncident[]
@@ -179,6 +180,11 @@ model Company {
   agroEventDrafts     AgroEventDraft[]
   agroEventCommitted  AgroEventCommitted[]
   agroEscalations     AgroEscalation[]
+  backOfficeFarmAssignments BackOfficeFarmAssignment[]
+  frontOfficeThreads  FrontOfficeThread[]
+  frontOfficeMessages FrontOfficeThreadMessage[]
+  frontOfficeHandoffs FrontOfficeHandoffRecord[]
+  frontOfficeThreadParticipantStates FrontOfficeThreadParticipantState[]
  
   @@map("companies")
 }
@@ -214,6 +220,8 @@ model Account {
   scoreCards   ScoreCard[]
   contracts    Contract[]
   harvestPlans HarvestPlan[]
+  backOfficeFarmAssignments BackOfficeFarmAssignment[]
+  frontOfficeThreads FrontOfficeThread[]
 
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -515,6 +523,8 @@ model User {
   company   Company  @relation(fields: [companyId], references: [id])
   accountId String?
   account   Account? @relation(fields: [accountId], references: [id])
+  backOfficeFarmAssignments BackOfficeFarmAssignment[]
+  frontOfficeThreadParticipantStates FrontOfficeThreadParticipantState[]
 
   accessLevel   UserAccessLevel @default(DEMO)
   invitedBy     String? // ID того, кто пригласил
@@ -1541,6 +1551,26 @@ model AutonomyOverride {
   @@map("rai_autonomy_overrides")
 }
 
+model AgentLifecycleOverride {
+  id              String   @id @default(cuid())
+  companyId       String
+  role            String
+  state           String   // FROZEN | RETIRED
+  reason          String   @db.Text
+  createdByUserId String?
+  isActive        Boolean  @default(true)
+  clearedAt       DateTime?
+  clearedByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, role, isActive, createdAt])
+  @@index([companyId, state, isActive, createdAt])
+  @@map("rai_agent_lifecycle_overrides")
+}
+
 model IncidentRunbookExecution {
   id         String                       @id @default(cuid())
   incidentId String
@@ -1575,6 +1605,8 @@ enum RuntimeGovernanceEventType {
   QUALITY_DRIFT_DETECTED
   GOVERNANCE_RECOMMENDATION_EMITTED
   QUEUE_SATURATION_DETECTED
+  LIFECYCLE_OVERRIDE_SET
+  LIFECYCLE_OVERRIDE_CLEARED
 }
 
 model RuntimeGovernanceEvent {
@@ -5605,4 +5637,136 @@ model AgroEscalation {
   
   @@index([companyId, status])
   @@map("agro_escalations")
+}
+
+model FrontOfficeThread {
+  id                    String   @id @default(cuid())
+  companyId             String
+  company               Company  @relation(fields: [companyId], references: [id])
+  threadKey             String
+  channel               String
+  farmAccountId         String?
+  farmAccount           Account? @relation(fields: [farmAccountId], references: [id])
+  farmNameSnapshot      String?
+  representativeUserId  String?
+  representativeTelegramId String?
+  threadExternalId      String?
+  dialogExternalId      String?
+  senderExternalId      String?
+  recipientExternalId   String?
+  route                 String?
+  currentClassification String?
+  currentOwnerRole      String?
+  currentHandoffStatus  String?
+  lastDraftId           String?
+  lastMessageDirection  String?
+  lastMessageAt         DateTime?
+  lastMessagePreview    String?
+  messageCount          Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  messages FrontOfficeThreadMessage[]
+  handoffs FrontOfficeHandoffRecord[]
+  participantStates FrontOfficeThreadParticipantState[]
+
+  @@unique([companyId, threadKey])
+  @@index([companyId, updatedAt])
+  @@index([companyId, currentHandoffStatus])
+  @@index([companyId, farmAccountId, updatedAt])
+  @@map("rai_front_office_threads")
+}
+
+model BackOfficeFarmAssignment {
+  id            String   @id @default(cuid())
+  companyId      String
+  company        Company @relation(fields: [companyId], references: [id])
+  userId         String
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  farmAccountId  String
+  farmAccount    Account @relation(fields: [farmAccountId], references: [id], onDelete: Cascade)
+  status         String  @default("ACTIVE")
+  priority       Int     @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([companyId, userId, farmAccountId], name: "back_office_farm_assignment_unique")
+  @@index([companyId, userId, status])
+  @@index([companyId, farmAccountId, status])
+  @@map("rai_back_office_farm_assignments")
+}
+
+model FrontOfficeThreadMessage {
+  id              String   @id @default(cuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  threadId        String
+  thread          FrontOfficeThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  draftId         String?
+  auditLogId      String?
+  traceId         String?
+  channel         String
+  direction       String
+  messageText     String
+  sourceMessageId String?
+  chatId          String?
+  route           String?
+  evidenceJson    Json?
+  metadataJson    Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([companyId, threadId, createdAt])
+  @@index([companyId, draftId])
+  @@map("rai_front_office_thread_messages")
+}
+
+model FrontOfficeHandoffRecord {
+  id               String   @id @default(cuid())
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id])
+  threadId         String
+  thread           FrontOfficeThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  draftId          String?
+  traceId          String?
+  targetOwnerRole  String?
+  sourceIntent     String
+  status           String
+  summary          String
+  ownerRoute       String?
+  nextAction       String?
+  ownerResultRef   String?
+  rejectionReason  String?
+  claimedBy        String?
+  claimedAt        DateTime?
+  resolvedBy       String?
+  resolvedAt       DateTime?
+  evidenceJson     Json?
+  operatorNotesJson Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([companyId, status, createdAt])
+  @@index([companyId, targetOwnerRole, status])
+  @@index([companyId, draftId])
+  @@map("rai_front_office_handoffs")
+}
+
+model FrontOfficeThreadParticipantState {
+  id                String   @id @default(cuid())
+  companyId         String
+  company           Company  @relation(fields: [companyId], references: [id])
+  threadId          String
+  thread            FrontOfficeThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadMessageId String?
+  lastReadAt        DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([companyId, threadId, userId], name: "front_office_participant_state_unique")
+  @@index([companyId, userId, updatedAt])
+  @@index([companyId, threadId])
+  @@map("rai_front_office_thread_participant_states")
 }

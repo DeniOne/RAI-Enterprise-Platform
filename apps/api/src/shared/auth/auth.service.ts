@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { UserRepository } from "./repositories/user.repository";
+import { resolveTelegramTunnel } from "./telegram-tunnel.resolver";
 
 @Injectable()
 export class AuthService {
@@ -34,6 +35,8 @@ export class AuthService {
       email: user.email,
       sub: user.id,
       companyId: user.companyId, // ARCH-DEBT-001: from user.companyId (NOT NULL)
+      role: user.role,
+      accountId: user.accountId ?? null,
     };
 
     return {
@@ -43,6 +46,7 @@ export class AuthService {
         email: user.email,
         name: user.name || user.email.split("@")[0],
         role: user.role,
+        accountId: user.accountId ?? null,
       },
     };
   }
@@ -71,6 +75,9 @@ export class AuthService {
       name: user.name || user.email.split("@")[0],
       role: user.role,
       companyId: user.companyId,
+      accountId: user.accountId ?? null,
+      employeeProfile: user.employeeProfile ?? null,
+      telegramTunnel: resolveTelegramTunnel(user),
       company: user.company,
     };
   }
@@ -83,6 +90,7 @@ export class AuthService {
       name: user.name || user.email.split("@")[0],
       role: user.role,
       companyId: user.companyId,
+      accountId: user.accountId ?? null,
     }));
   }
 }

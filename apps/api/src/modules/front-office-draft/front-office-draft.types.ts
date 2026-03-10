@@ -4,11 +4,28 @@ export type FrontOfficeIntent =
   | "consultation"
   | "context_update";
 
+export type FrontOfficeChannel = "telegram" | "web_chat" | "internal";
+
 export type FrontOfficeDraftStatus =
   | "NEEDS_LINK"
   | "NEEDS_MUST_CLARIFICATION"
   | "READY_TO_CONFIRM"
   | "COMMITTED";
+
+export type FrontOfficeThreadClassification =
+  | "free_chat"
+  | "task_process"
+  | "client_request"
+  | "escalation_signal";
+
+export type FrontOfficeHandoffStatus =
+  | "NEW"
+  | "ROUTED"
+  | "PENDING_APPROVAL"
+  | "MANUAL_REQUIRED"
+  | "CLAIMED"
+  | "COMPLETED"
+  | "REJECTED";
 
 export interface FrontOfficeDraftAnchor {
   farmRef: string | null;
@@ -45,4 +62,125 @@ export interface FrontOfficeCommittedRecord {
   payload: Record<string, any>;
   evidence: any[];
   anchor: FrontOfficeDraftAnchor;
+}
+
+export interface FrontOfficeThreadRecord {
+  id: string;
+  companyId: string;
+  threadKey: string;
+  channel: FrontOfficeChannel;
+  farmAccountId: string | null;
+  farmNameSnapshot: string | null;
+  representativeUserId: string | null;
+  representativeTelegramId: string | null;
+  threadExternalId: string | null;
+  dialogExternalId: string | null;
+  senderExternalId: string | null;
+  recipientExternalId: string | null;
+  route: string | null;
+  currentClassification: FrontOfficeThreadClassification | null;
+  currentOwnerRole: string | null;
+  currentHandoffStatus: FrontOfficeHandoffStatus | null;
+  lastDraftId: string | null;
+  lastMessageDirection: "inbound" | "outbound" | null;
+  lastMessageAt: string | null;
+  lastMessagePreview: string | null;
+  messageCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FrontOfficeMessageRecord {
+  id: string;
+  companyId: string;
+  threadId: string;
+  draftId: string | null;
+  auditLogId: string | null;
+  traceId: string | null;
+  channel: FrontOfficeChannel;
+  direction: "inbound" | "outbound";
+  messageText: string;
+  sourceMessageId: string | null;
+  chatId: string | null;
+  route: string | null;
+  evidence: any[] | null;
+  metadata: Record<string, any> | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FrontOfficeHandoffRecord {
+  id: string;
+  companyId: string;
+  threadId: string;
+  draftId: string | null;
+  traceId: string | null;
+  targetOwnerRole: string | null;
+  sourceIntent: FrontOfficeIntent;
+  status: FrontOfficeHandoffStatus;
+  summary: string;
+  ownerRoute: string | null;
+  nextAction: string | null;
+  ownerResultRef: string | null;
+  rejectionReason: string | null;
+  claimedBy: string | null;
+  claimedAt: string | null;
+  resolvedBy: string | null;
+  resolvedAt: string | null;
+  evidence: any[] | null;
+  operatorNotes: Array<{
+    at: string;
+    by: string | null;
+    note: string;
+    kind: "manual_note" | "claim" | "reject" | "resolve";
+  }> | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BackOfficeFarmAssignmentRecord {
+  id: string;
+  companyId: string;
+  userId: string;
+  farmAccountId: string;
+  farmName: string | null;
+  status: string;
+  priority: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FrontOfficeThreadParticipantStateRecord {
+  id: string;
+  companyId: string;
+  threadId: string;
+  userId: string;
+  lastReadMessageId: string | null;
+  lastReadAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FrontOfficeThreadListItemRecord {
+  threadKey: string;
+  threadId: string;
+  farmAccountId: string | null;
+  farmNameSnapshot: string | null;
+  representativeTelegramId: string | null;
+  lastMessagePreview: string | null;
+  lastMessageAt: string | null;
+  lastMessageDirection: "inbound" | "outbound" | null;
+  currentHandoffStatus: FrontOfficeHandoffStatus | null;
+  currentOwnerRole: string | null;
+  unreadCount: number;
+}
+
+export interface FrontOfficeManagerFarmInboxRecord {
+  farmAccountId: string;
+  farmName: string;
+  unreadCount: number;
+  threadCount: number;
+  lastMessagePreview: string | null;
+  lastMessageAt: string | null;
+  lastHandoffStatus: FrontOfficeHandoffStatus | null;
 }

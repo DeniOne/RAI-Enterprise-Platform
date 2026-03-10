@@ -8,6 +8,7 @@ import {
 } from "@rai/prisma-client";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { AuditService } from "../../shared/audit/audit.service";
+import { resolveTelegramTunnel } from "../../shared/auth/telegram-tunnel.resolver";
 import { FieldObservationService } from "../field-observation/field-observation.service";
 import { DeviationService } from "../cmr/deviation.service";
 import {
@@ -191,6 +192,177 @@ export class FrontOfficeService {
 
   async getThread(companyId: string, threadKey: string) {
     return this.frontOfficeDraftService.getThread(companyId, threadKey);
+  }
+
+  async listMessages(companyId: string, threadKey: string) {
+    return this.frontOfficeDraftService.listMessages(companyId, threadKey);
+  }
+
+  async listMessagesForViewer(
+    companyId: string,
+    viewer: { id: string; role?: string; accountId?: string | null },
+    threadKey: string,
+  ) {
+    return this.frontOfficeDraftService.listMessagesForViewer(
+      companyId,
+      viewer,
+      threadKey,
+    );
+  }
+
+  async listThreads(companyId: string) {
+    return this.frontOfficeDraftService.listThreads(companyId);
+  }
+
+  async getTelegramWorkspaceBootstrap(companyId: string, userId: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, companyId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        companyId: true,
+        accountId: true,
+        employeeProfile: {
+          select: {
+            clientId: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name ?? user.email.split("@")[0],
+        role: user.role,
+        companyId: user.companyId,
+        accountId: user.accountId ?? null,
+        employeeProfile: user.employeeProfile ?? null,
+      },
+      telegramTunnel: resolveTelegramTunnel(user),
+      miniAppUrl:
+        process.env.TELEGRAM_MINIAPP_URL ||
+        process.env.WEBAPP_URL ||
+        process.env.FRONTEND_URL ||
+        "http://localhost:3000/telegram/workspace",
+    };
+  }
+
+  async listManagerFarms(companyId: string, userId: string) {
+    return this.frontOfficeDraftService.listManagerFarms(companyId, userId);
+  }
+
+  async listManagerFarmThreads(
+    companyId: string,
+    userId: string,
+    farmAccountId: string,
+  ) {
+    return this.frontOfficeDraftService.listManagerFarmThreads(
+      companyId,
+      userId,
+      farmAccountId,
+    );
+  }
+
+  async replyToThread(
+    companyId: string,
+    user: { id: string; role?: string },
+    threadKey: string,
+    messageText: string,
+  ) {
+    return this.frontOfficeDraftService.replyToThread(
+      companyId,
+      user,
+      threadKey,
+      messageText,
+    );
+  }
+
+  async markThreadRead(
+    companyId: string,
+    userId: string,
+    threadKey: string,
+    lastMessageId?: string,
+  ) {
+    return this.frontOfficeDraftService.markThreadRead(
+      companyId,
+      userId,
+      threadKey,
+      lastMessageId,
+    );
+  }
+
+  async listAssignments(companyId: string) {
+    return this.frontOfficeDraftService.listAssignments(companyId);
+  }
+
+  async createAssignment(
+    companyId: string,
+    input: { userId: string; farmAccountId: string; status?: string; priority?: number },
+  ) {
+    return this.frontOfficeDraftService.createAssignment(companyId, input);
+  }
+
+  async deleteAssignment(companyId: string, assignmentId: string) {
+    return this.frontOfficeDraftService.deleteAssignment(companyId, assignmentId);
+  }
+
+  async listHandoffs(companyId: string) {
+    return this.frontOfficeDraftService.listHandoffs(companyId);
+  }
+
+  async getHandoff(companyId: string, handoffId: string) {
+    return this.frontOfficeDraftService.getHandoff(companyId, handoffId);
+  }
+
+  async claimHandoff(companyId: string, handoffId: string, userId?: string) {
+    return this.frontOfficeDraftService.claimHandoff(companyId, handoffId, userId);
+  }
+
+  async rejectHandoff(
+    companyId: string,
+    handoffId: string,
+    userId: string | undefined,
+    reason: string,
+  ) {
+    return this.frontOfficeDraftService.rejectHandoff(
+      companyId,
+      handoffId,
+      userId,
+      reason,
+    );
+  }
+
+  async resolveHandoff(
+    companyId: string,
+    handoffId: string,
+    userId: string | undefined,
+    ownerResultRef?: string,
+    note?: string,
+  ) {
+    return this.frontOfficeDraftService.resolveHandoff(
+      companyId,
+      handoffId,
+      userId,
+      ownerResultRef,
+      note,
+    );
+  }
+
+  async addManualNote(
+    companyId: string,
+    handoffId: string,
+    userId: string | undefined,
+    note: string,
+  ) {
+    return this.frontOfficeDraftService.addManualNote(companyId, handoffId, userId, note);
   }
 
   async createConsultation(

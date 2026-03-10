@@ -26,6 +26,9 @@ describe("AgentRegistryService", () => {
             agentConnectorBinding: {
               findMany: jest.fn(),
             },
+            agentLifecycleOverride: {
+              findMany: jest.fn(),
+            },
           },
         },
       ],
@@ -79,7 +82,7 @@ describe("AgentRegistryService", () => {
     const result = await service.getRegistry("company-1");
     const agronom = result.find((entry) => entry.definition.role === "agronomist");
 
-    expect(result).toHaveLength(4);
+    expect(result).toHaveLength(7);
     expect(agronom).toMatchObject({
       definition: {
         role: "agronomist",
@@ -286,6 +289,40 @@ describe("AgentRegistryService", () => {
     expect(result.runtime.tools).toEqual(["emit_alerts"]);
     expect(result.tenantAccess.mode).toBe("DENIED");
     expect(result.tenantAccess.source).toBe("tenant");
+  });
+
+  it("active lifecycle override принудительно замораживает runtime access", async () => {
+    (prisma.agentConfiguration.findUnique as jest.Mock)
+      .mockResolvedValueOnce({
+        id: "cfg-global-crm",
+        name: "Crm",
+        role: "crm_agent",
+        systemPrompt: "Global prompt",
+        llmModel: "openai/gpt-5-mini",
+        maxTokens: 8000,
+        isActive: true,
+        companyId: null,
+        capabilities: ["CrmToolsRegistry"],
+      })
+      .mockResolvedValueOnce(null);
+    (prisma.agentCapabilityBinding.findMany as jest.Mock)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+    (prisma.agentToolBinding.findMany as jest.Mock)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+    (prisma.agentConnectorBinding.findMany as jest.Mock)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+    (prisma.agentLifecycleOverride.findMany as jest.Mock).mockResolvedValue([
+      { role: "crm_agent", state: "FROZEN" },
+    ]);
+
+    const result = await service.getEffectiveAgent("company-1", "crm_agent");
+
+    expect(result?.runtime.isActive).toBe(false);
+    expect(result?.tenantAccess.mode).toBe("DENIED");
+    expect(result?.runtime.source).toBe("tenant");
   });
 
   it("builds effective kernel view for runtime consumers", async () => {

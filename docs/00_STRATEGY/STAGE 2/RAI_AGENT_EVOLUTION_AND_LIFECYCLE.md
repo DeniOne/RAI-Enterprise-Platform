@@ -5,7 +5,7 @@ layer: Stage 2
 status: Active Canon
 version: 1.0.0
 owners: [@techlead]
-last_updated: 2026-03-09
+last_updated: 2026-03-10
 ---
 
 # RAI AGENT EVOLUTION AND LIFECYCLE
@@ -72,6 +72,8 @@ last_updated: 2026-03-09
 - [agent-config-guard.service.ts](/root/RAI_EP/apps/api/src/modules/explainability/agent-config-guard.service.ts)
 - [agent-config.dto.ts](/root/RAI_EP/apps/api/src/modules/explainability/dto/agent-config.dto.ts)
 - [explainability-panel.controller.ts](/root/RAI_EP/apps/api/src/modules/explainability/explainability-panel.controller.ts)
+- [agent-lifecycle-read-model.service.ts](/root/RAI_EP/apps/api/src/modules/explainability/agent-lifecycle-read-model.service.ts)
+- [agent-lifecycle-control.service.ts](/root/RAI_EP/apps/api/src/modules/explainability/agent-lifecycle-control.service.ts)
 - [runtime-governance-control.service.ts](/root/RAI_EP/apps/api/src/modules/explainability/runtime-governance-control.service.ts)
 - [autonomy-policy.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/autonomy-policy.service.ts)
 - [quality-alerting.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/quality-alerting.service.ts)
@@ -210,6 +212,12 @@ Agent остаётся в системе, но его evolution path замор�
 - unresolved governance issues;
 - platform migration.
 
+Текущее фактическое состояние:
+
+- `FROZEN` уже реализован как first-class lifecycle override;
+- override хранится отдельно от autonomy governance;
+- `Control Tower` умеет выставлять и снимать freeze.
+
 #### `ROLLBACK_PENDING`
 
 Agent или его новая версия признаны unsafe для продолжения rollout.
@@ -221,6 +229,14 @@ Agent или его новая версия признаны unsafe для пр�
 - оставить audit trail.
 
 #### `RETIRED`
+
+Роль выведена из эксплуатации как управляемый модуль.
+
+Текущее фактическое состояние:
+
+- `RETIRED` уже реализован как persisted lifecycle override;
+- retired role виден в lifecycle board и lifecycle history;
+- retired role больше не должен считаться активным runtime-owner.
 
 Agent окончательно выведен из активной эксплуатации.
 

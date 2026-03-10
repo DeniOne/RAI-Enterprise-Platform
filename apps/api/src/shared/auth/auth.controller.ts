@@ -90,6 +90,21 @@ export class AuthController {
       throw new HttpException(error.message, HttpStatus.NOT_FOUND);
     }
   }
+
+  @Post("telegram-webapp-login")
+  @ApiOperation({ summary: "Authenticate Telegram Mini App session" })
+  @ApiResponse({
+    status: 200,
+    description: "Returns access token and current user profile for Telegram Mini App",
+  })
+  @ApiResponse({ status: 401, description: "Invalid Telegram WebApp initData" })
+  async loginTelegramWebApp(@Body() body: { initData: string }) {
+    try {
+      return await this.telegramAuthService.loginViaTelegramWebApp(body.initData);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.UNAUTHORIZED);
+    }
+  }
 }
 
 @ApiTags("Users")

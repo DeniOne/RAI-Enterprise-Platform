@@ -4,15 +4,21 @@ import { AuditService } from "../../shared/audit/audit.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { DeviationService } from "../cmr/deviation.service";
 import { FieldObservationService } from "../field-observation/field-observation.service";
+import { FrontOfficeCommunicationRepository } from "./front-office-communication.repository";
 import { FrontOfficeAgent } from "../rai-chat/agents/front-office-agent.service";
 import { FrontOfficeDraftRepository } from "./front-office-draft.repository";
+import { FrontOfficeHandoffOrchestrator } from "./front-office-handoff.orchestrator.service";
 import { FrontOfficeDraftService } from "./front-office-draft.service";
+import { TelegramNotificationService } from "../telegram/telegram-notification.service";
 
 describe("FrontOfficeDraftService", () => {
   let service: FrontOfficeDraftService;
 
   const prismaMock = {
     task: { findFirst: jest.fn() },
+    user: { findFirst: jest.fn() },
+    account: { findFirst: jest.fn() },
+    field: { findFirst: jest.fn() },
     auditLog: { findMany: jest.fn() },
     fieldObservation: { update: jest.fn() },
   };
@@ -20,6 +26,24 @@ describe("FrontOfficeDraftService", () => {
   const fieldObservationMock = { createObservation: jest.fn() };
   const deviationMock = { createReview: jest.fn() };
   const agentMock = { run: jest.fn() };
+  const communicationRepositoryMock = {
+    upsertThread: jest.fn(),
+    createMessage: jest.fn(),
+    getThreadByKey: jest.fn(),
+    getThreadById: jest.fn(),
+    listThreads: jest.fn(),
+    listMessages: jest.fn(),
+    findAssignment: jest.fn(),
+  };
+  const handoffOrchestratorMock = {
+    routeDraftHandoff: jest.fn(),
+    listHandoffs: jest.fn(),
+    getHandoff: jest.fn(),
+    claimHandoff: jest.fn(),
+    rejectHandoff: jest.fn(),
+    resolveHandoff: jest.fn(),
+    addManualNote: jest.fn(),
+  };
   const repositoryMock = {
     createDraft: jest.fn(),
     getDraft: jest.fn(),
@@ -28,6 +52,10 @@ describe("FrontOfficeDraftService", () => {
     listCommitted: jest.fn(),
     findCommitted: jest.fn(),
     commitDraft: jest.fn(),
+  };
+  const telegramNotificationMock = {
+    sendFrontOfficeReply: jest.fn(),
+    notifyFrontOfficeThread: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -39,12 +67,79 @@ describe("FrontOfficeDraftService", () => {
         { provide: FieldObservationService, useValue: fieldObservationMock },
         { provide: DeviationService, useValue: deviationMock },
         { provide: FrontOfficeAgent, useValue: agentMock },
+        { provide: FrontOfficeCommunicationRepository, useValue: communicationRepositoryMock },
         { provide: FrontOfficeDraftRepository, useValue: repositoryMock },
+        { provide: FrontOfficeHandoffOrchestrator, useValue: handoffOrchestratorMock },
+        { provide: TelegramNotificationService, useValue: telegramNotificationMock },
       ],
     }).compile();
 
     service = module.get(FrontOfficeDraftService);
     jest.clearAllMocks();
+    prismaMock.user.findFirst.mockResolvedValue(null);
+    prismaMock.account.findFirst.mockResolvedValue(null);
+    prismaMock.field.findFirst.mockResolvedValue(null);
+    communicationRepositoryMock.upsertThread.mockResolvedValue({
+      id: "thread-1",
+      threadKey: "c1:telegram:tg-1",
+      channel: "telegram",
+      companyId: "c1",
+      farmAccountId: null,
+      farmNameSnapshot: null,
+      representativeUserId: null,
+      representativeTelegramId: null,
+      lastMessageDirection: "inbound",
+      lastMessagePreview: null,
+      lastMessageAt: null,
+      currentOwnerRole: null,
+      currentHandoffStatus: null,
+    });
+    communicationRepositoryMock.createMessage.mockResolvedValue({ id: "msg-1" });
+    communicationRepositoryMock.listMessages.mockResolvedValue([]);
+    communicationRepositoryMock.findAssignment.mockResolvedValue(null);
+    communicationRepositoryMock.getThreadByKey.mockResolvedValue({
+      id: "thread-1",
+      threadKey: "c1:telegram:tg-1",
+      channel: "telegram",
+      companyId: "c1",
+      farmAccountId: null,
+      farmNameSnapshot: null,
+      representativeUserId: null,
+      representativeTelegramId: null,
+      threadExternalId: "tg-1",
+      dialogExternalId: null,
+      senderExternalId: null,
+      recipientExternalId: null,
+      route: null,
+      lastDraftId: null,
+      lastMessageDirection: "inbound",
+      lastMessagePreview: null,
+      lastMessageAt: null,
+      currentOwnerRole: null,
+      currentHandoffStatus: null,
+    });
+    communicationRepositoryMock.getThreadById.mockResolvedValue({
+      id: "thread-1",
+      threadKey: "c1:telegram:tg-1",
+      channel: "telegram",
+      companyId: "c1",
+      farmAccountId: null,
+      farmNameSnapshot: null,
+      representativeUserId: null,
+      representativeTelegramId: null,
+      threadExternalId: "tg-1",
+      dialogExternalId: null,
+      senderExternalId: null,
+      recipientExternalId: null,
+      route: null,
+      lastDraftId: null,
+      lastMessageDirection: "inbound",
+      lastMessagePreview: null,
+      lastMessageAt: null,
+      currentOwnerRole: null,
+      currentHandoffStatus: null,
+    });
+    handoffOrchestratorMock.listHandoffs.mockResolvedValue([]);
   });
 
   it("creates ready-to-confirm draft from task-anchored task process signal", async () => {
@@ -405,5 +500,195 @@ describe("FrontOfficeDraftService", () => {
     expect((result as any).commitResult).toEqual(
       expect.objectContaining({ kind: "observation", id: "obs-4" }),
     );
+  });
+
+  it("blocks manager from reading unassigned farm thread messages", async () => {
+    communicationRepositoryMock.getThreadByKey.mockResolvedValue({
+      id: "thread-10",
+      threadKey: "c1:telegram:tg-10",
+      companyId: "c1",
+      channel: "telegram",
+      farmAccountId: "farm-10",
+      farmNameSnapshot: "Farm 10",
+      representativeUserId: "rep-10",
+      representativeTelegramId: "90010",
+      threadExternalId: "90010",
+      dialogExternalId: null,
+      senderExternalId: "90010",
+      recipientExternalId: null,
+      route: null,
+      lastDraftId: null,
+      lastMessageDirection: "inbound",
+      lastMessagePreview: "Нужна помощь",
+      lastMessageAt: "2026-03-09T00:00:00.000Z",
+      currentOwnerRole: "crm_agent",
+      currentHandoffStatus: null,
+    });
+
+    await expect(
+      service.listMessagesForViewer(
+        "c1",
+        { id: "manager-1", role: "MANAGER", accountId: null },
+        "c1:telegram:tg-10",
+      ),
+    ).rejects.toThrow("User manager-1 is not assigned to farm farm-10");
+  });
+
+  it("confirms consultation draft into governed handoff instead of audit-only commit", async () => {
+    repositoryMock.getDraft.mockResolvedValue({
+      id: "draft-5",
+      companyId: "c1",
+      userId: "u1",
+      status: "READY_TO_CONFIRM",
+      eventType: "FRONT_OFFICE_CONSULTATION",
+      timestamp: "2026-03-09T00:00:00.000Z",
+      anchor: {
+        farmRef: null,
+        fieldId: "field-5",
+        seasonId: "season-5",
+        taskId: null,
+      },
+      payload: {
+        suggestedIntent: "consultation",
+        messageText: "Нужно завести клиента в CRM и продолжить сопровождение",
+        traceId: "trace-5",
+        threadKey: "c1:telegram:tg-5",
+        channel: "telegram",
+        targetOwnerRole: "crm_agent",
+      },
+      evidence: [],
+      confidence: 0.91,
+      mustClarifications: [],
+      createdAt: "2026-03-09T00:00:00.000Z",
+      updatedAt: "2026-03-09T00:00:00.000Z",
+      expiresAt: "2026-03-16T00:00:00.000Z",
+    });
+    handoffOrchestratorMock.routeDraftHandoff.mockResolvedValue({
+      id: "handoff-1",
+      threadId: "thread-1",
+      draftId: "draft-5",
+      targetOwnerRole: "crm_agent",
+      status: "ROUTED",
+      ownerRoute: "/crm",
+      nextAction: "Открыть /crm и забрать handoff в работу.",
+      ownerResultRef: null,
+      createdAt: "2026-03-09T00:05:00.000Z",
+    });
+    repositoryMock.updateDraft.mockResolvedValue({
+      id: "draft-5",
+      companyId: "c1",
+      userId: "u1",
+      status: "READY_TO_CONFIRM",
+      eventType: "FRONT_OFFICE_CONSULTATION",
+      timestamp: "2026-03-09T00:00:00.000Z",
+      anchor: {
+        farmRef: null,
+        fieldId: "field-5",
+        seasonId: "season-5",
+        taskId: null,
+      },
+      payload: {
+        suggestedIntent: "consultation",
+        messageText: "Нужно завести клиента в CRM и продолжить сопровождение",
+        traceId: "trace-5",
+        threadKey: "c1:telegram:tg-5",
+        channel: "telegram",
+        targetOwnerRole: "crm_agent",
+        commitResult: {
+          kind: "handoff",
+          handoffId: "handoff-1",
+          handoffStatus: "ROUTED",
+          targetOwnerRole: "crm_agent",
+          ownerRoute: "/crm",
+        },
+      },
+      evidence: [],
+      confidence: 0.91,
+      mustClarifications: [],
+      createdAt: "2026-03-09T00:00:00.000Z",
+      updatedAt: "2026-03-09T00:01:00.000Z",
+      expiresAt: "2026-03-16T00:00:00.000Z",
+    });
+    repositoryMock.commitDraft.mockResolvedValue({
+      draft: {
+        id: "draft-5",
+        companyId: "c1",
+        userId: "u1",
+        status: "COMMITTED",
+        eventType: "FRONT_OFFICE_CONSULTATION",
+        timestamp: "2026-03-09T00:00:00.000Z",
+        anchor: {
+          farmRef: null,
+          fieldId: "field-5",
+          seasonId: "season-5",
+          taskId: null,
+        },
+        payload: {
+          suggestedIntent: "consultation",
+          messageText: "Нужно завести клиента в CRM и продолжить сопровождение",
+          traceId: "trace-5",
+          threadKey: "c1:telegram:tg-5",
+          channel: "telegram",
+          targetOwnerRole: "crm_agent",
+          commitResult: {
+            kind: "handoff",
+            handoffId: "handoff-1",
+            handoffStatus: "ROUTED",
+            targetOwnerRole: "crm_agent",
+            ownerRoute: "/crm",
+          },
+        },
+        evidence: [],
+        confidence: 0.91,
+        mustClarifications: [],
+        createdAt: "2026-03-09T00:00:00.000Z",
+        updatedAt: "2026-03-09T00:02:00.000Z",
+        expiresAt: "2026-03-16T00:00:00.000Z",
+      },
+      committed: {
+        id: "draft-5",
+        companyId: "c1",
+        eventType: "FRONT_OFFICE_CONSULTATION",
+        timestamp: "2026-03-09T00:00:00.000Z",
+        committedAt: "2026-03-09T00:02:00.000Z",
+        committedBy: "u1",
+        provenanceHash: "hash-5",
+        payload: {
+          commitResult: {
+            kind: "handoff",
+            handoffId: "handoff-1",
+            handoffStatus: "ROUTED",
+            targetOwnerRole: "crm_agent",
+            ownerRoute: "/crm",
+          },
+        },
+        evidence: [],
+        anchor: {
+          farmRef: null,
+          fieldId: "field-5",
+          seasonId: "season-5",
+          taskId: null,
+        },
+      },
+    });
+    auditMock.log.mockResolvedValue({ id: "audit-5", createdAt: new Date() });
+
+    const result = await service.confirmDraft(
+      "c1",
+      { id: "u1", role: "USER" },
+      "draft-5",
+    );
+
+    expect(handoffOrchestratorMock.routeDraftHandoff).toHaveBeenCalledWith(
+      expect.objectContaining({
+        companyId: "c1",
+        draftId: "draft-5",
+        targetOwnerRole: "crm_agent",
+        sourceIntent: "consultation",
+      }),
+    );
+    expect((result as any).handoffId).toBe("handoff-1");
+    expect((result as any).handoffStatus).toBe("ROUTED");
+    expect((result as any).targetOwnerRole).toBe("crm_agent");
   });
 });

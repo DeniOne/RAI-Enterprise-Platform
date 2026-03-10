@@ -4,6 +4,9 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   api,
+  type AgentLifecycleHistoryItemDto,
+  type AgentLifecycleItemDto,
+  type AgentLifecycleSummaryDto,
   type AutonomyStatusDto,
   type RuntimeGovernanceAgentDto,
   type RuntimeGovernanceDrilldownsDto,
@@ -67,7 +70,11 @@ export default function ControlTowerPage() {
   const [runtimeGovernanceSummary, setRuntimeGovernanceSummary] = useState<RuntimeGovernanceSummaryDto | null>(null);
   const [runtimeGovernanceAgents, setRuntimeGovernanceAgents] = useState<RuntimeGovernanceAgentDto[]>([]);
   const [runtimeGovernanceDrilldowns, setRuntimeGovernanceDrilldowns] = useState<RuntimeGovernanceDrilldownsDto | null>(null);
+  const [lifecycleSummary, setLifecycleSummary] = useState<AgentLifecycleSummaryDto | null>(null);
+  const [lifecycleAgents, setLifecycleAgents] = useState<AgentLifecycleItemDto[]>([]);
+  const [lifecycleHistory, setLifecycleHistory] = useState<AgentLifecycleHistoryItemDto[]>([]);
   const [governanceActionLoading, setGovernanceActionLoading] = useState<string | null>(null);
+  const [lifecycleActionLoading, setLifecycleActionLoading] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -75,7 +82,7 @@ export default function ControlTowerPage() {
     let cancelled = false;
     (async () => {
       try {
-        const [dRes, pRes, cRes, qRes, aRes, rgSummaryRes, rgAgentsRes, rgDrilldownsRes] = await Promise.all([
+        const [dRes, pRes, cRes, qRes, aRes, rgSummaryRes, rgAgentsRes, rgDrilldownsRes, lifecycleSummaryRes, lifecycleAgentsRes, lifecycleHistoryRes] = await Promise.all([
           api.explainability.dashboard({ hours: 24 }),
           api.explainability.performance({ timeWindowMs: 3600000 }),
           api.explainability.costHotspots({ timeWindowMs: 86400000, limit: 10 }),
@@ -84,6 +91,9 @@ export default function ControlTowerPage() {
           api.explainability.runtimeGovernanceSummary({ timeWindowMs: 3600000 }),
           api.explainability.runtimeGovernanceAgents({ timeWindowMs: 3600000 }),
           api.explainability.runtimeGovernanceDrilldowns({ timeWindowMs: 3600000 }),
+          api.explainability.lifecycleSummary(),
+          api.explainability.lifecycleAgents(),
+          api.explainability.lifecycleHistory({ limit: 12 }),
         ]);
         if (cancelled) return;
         setDashboard(dRes.data);
@@ -94,6 +104,9 @@ export default function ControlTowerPage() {
         setRuntimeGovernanceSummary(rgSummaryRes.data);
         setRuntimeGovernanceAgents(rgAgentsRes.data);
         setRuntimeGovernanceDrilldowns(rgDrilldownsRes.data);
+        setLifecycleSummary(lifecycleSummaryRes.data);
+        setLifecycleAgents(lifecycleAgentsRes.data);
+        setLifecycleHistory(lifecycleHistoryRes.data);
       } catch (e) {
         if (!cancelled) setError((e as Error).message ?? 'Сбой получения телеметрии');
       } finally {
@@ -114,6 +127,21 @@ export default function ControlTowerPage() {
     setRuntimeGovernanceSummary(summaryRes.data);
     setRuntimeGovernanceAgents(agentsRes.data);
     setRuntimeGovernanceDrilldowns(drilldownsRes.data);
+  }
+
+  async function reloadLifecycleBoard() {
+    const [summaryRes, agentsRes, historyRes] = await Promise.all([
+      api.explainability.lifecycleSummary(),
+      api.explainability.lifecycleAgents(),
+      api.explainability.lifecycleHistory({ limit: 12 }),
+    ]);
+    setLifecycleSummary(summaryRes.data);
+    setLifecycleAgents(agentsRes.data);
+    setLifecycleHistory(historyRes.data);
+  }
+
+  async function reloadLifecycleAndGovernance() {
+    await Promise.all([reloadLifecycleBoard(), reloadRuntimeGovernance()]);
   }
 
   async function handleSetAutonomyOverride(level: 'TOOL_FIRST' | 'QUARANTINE') {
@@ -147,6 +175,120 @@ export default function ControlTowerPage() {
       window.alert((e as Error).message ?? 'Не удалось снять override');
     } finally {
       setGovernanceActionLoading(null);
+    }
+  }
+
+  async function handleStartCanary(changeId: string) {
+    try {
+      setLifecycleActionLoading(`start:${changeId}`);
+      await api.agents.startCanary(changeId);
+      await reloadLifecycleAndGovernance();
+    } catch (e) {
+      window.alert((e as Error).message ?? 'Не удалось запустить canary');
+    } finally {
+      setLifecycleActionLoading(null);
+    }
+  }
+
+  async function handleReviewCanary(changeId: string) {
+    const baseline = window.prompt('Baseline rejection rate (0..1)', '0.05');
+    const canary = window.prompt('Canary rejection rate (0..1)', '0.05');
+    const sampleSize = window.prompt('Sample size', '100');
+    const baselineValue = Number(baseline);
+    const canaryValue = Number(canary);
+    const sampleSizeValue = Number(sampleSize);
+    if (
+      !Number.isFinite(baselineValue) ||
+      !Number.isFinite(canaryValue) ||
+      !Number.isFinite(sampleSizeValue) ||
+      baselineValue < 0 ||
+      canaryValue < 0 ||
+      baselineValue > 1 ||
+      canaryValue > 1 ||
+      sampleSizeValue < 0
+    ) {
+      return;
+    }
+
+    try {
+      setLifecycleActionLoading(`review:${changeId}`);
+      await api.agents.reviewCanary(changeId, {
+        baselineRejectionRate: baselineValue,
+        canaryRejectionRate: canaryValue,
+        sampleSize: Math.trunc(sampleSizeValue),
+      });
+      await reloadLifecycleAndGovernance();
+    } catch (e) {
+      window.alert((e as Error).message ?? 'Не удалось завершить review canary');
+    } finally {
+      setLifecycleActionLoading(null);
+    }
+  }
+
+  async function handlePromoteChange(changeId: string) {
+    try {
+      setLifecycleActionLoading(`promote:${changeId}`);
+      await api.agents.promoteChange(changeId);
+      await reloadLifecycleAndGovernance();
+    } catch (e) {
+      window.alert((e as Error).message ?? 'Не удалось выполнить promote');
+    } finally {
+      setLifecycleActionLoading(null);
+    }
+  }
+
+  async function handleRollbackChange(changeId: string) {
+    const reason = window.prompt('Укажи причину rollback', '');
+    if (!reason || reason.trim().length < 3) {
+      return;
+    }
+
+    try {
+      setLifecycleActionLoading(`rollback:${changeId}`);
+      await api.agents.rollbackChange(changeId, reason.trim());
+      await reloadLifecycleAndGovernance();
+    } catch (e) {
+      window.alert((e as Error).message ?? 'Не удалось выполнить rollback');
+    } finally {
+      setLifecycleActionLoading(null);
+    }
+  }
+
+  async function handleSetLifecycleOverride(role: string, state: 'FROZEN' | 'RETIRED') {
+    const reason = window.prompt(
+      state === 'RETIRED'
+        ? `Укажи причину retirement для ${role}`
+        : `Укажи причину freeze для ${role}`,
+      '',
+    );
+    if (!reason || reason.trim().length < 3) {
+      return;
+    }
+
+    try {
+      setLifecycleActionLoading(`${state.toLowerCase()}:${role}`);
+      await api.explainability.setLifecycleOverride({
+        role,
+        state,
+        reason: reason.trim(),
+      });
+      await reloadLifecycleBoard();
+    } catch (e) {
+      window.alert((e as Error).message ?? 'Не удалось применить lifecycle override');
+    } finally {
+      setLifecycleActionLoading(null);
+    }
+  }
+
+  async function handleClearLifecycleOverride(role: string) {
+    try {
+      setLifecycleActionLoading(`clear-lifecycle:${role}`);
+      await api.explainability.clearLifecycleOverride({ role });
+      await reloadLifecycleBoard();
+    } catch (e) {
+      window.alert((e as Error).message ?? 'Не удалось снять lifecycle override');
+    } finally {
+      setLifecycleActionLoading(null);
     }
   }
 
@@ -187,6 +329,8 @@ export default function ControlTowerPage() {
 
   const latencyOk = performance ? performance.p95LatencyMs <= THRESHOLD_LATENCY_P95_MS : true;
   const successRateOk = performance ? performance.successRatePct >= THRESHOLD_SUCCESS_RATE_PCT : true;
+  const retirementArchive = lifecycleHistory.filter((item) => item.state === 'RETIRED');
+  const activeRetirements = retirementArchive.filter((item) => item.isActive);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-32">
@@ -406,6 +550,393 @@ export default function ControlTowerPage() {
           </UnitCard>
 
         </div>
+
+        {lifecycleSummary && (
+          <div className="mt-12">
+            <div className="flex items-center gap-3 mb-6">
+              <TerminalSquare size={20} className="text-[#030213]" />
+              <h2 className="text-xl font-medium text-[#030213] tracking-tight">Agent Lifecycle Board</h2>
+            </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <UnitCard title="Lifecycle Summary" icon={<TerminalSquare size={20} />} subtitle="Fleet Stages">
+                <div className="space-y-1">
+                  <DataRow label="Tracked roles" value={`${lifecycleSummary.totalTrackedRoles}`} status="success" />
+                  <DataRow label="Template catalog" value={`${lifecycleSummary.templateCatalogCount}`} status="success" />
+                  <DataRow label="Future roles" value={`${lifecycleSummary.stateCounts.FUTURE_ROLE}`} status={lifecycleSummary.stateCounts.FUTURE_ROLE > 0 ? 'warning' : 'success'} />
+                  <DataRow label="Promotion candidates" value={`${lifecycleSummary.stateCounts.PROMOTION_CANDIDATE}`} status={lifecycleSummary.stateCounts.PROMOTION_CANDIDATE > 0 ? 'warning' : 'success'} />
+                  <DataRow label="Active canaries" value={`${lifecycleSummary.stateCounts.CANARY}`} status={lifecycleSummary.stateCounts.CANARY > 0 ? 'warning' : 'success'} />
+                  <DataRow label="Rolled back" value={`${lifecycleSummary.stateCounts.ROLLED_BACK}`} status={lifecycleSummary.stateCounts.ROLLED_BACK > 0 ? 'error' : 'success'} />
+                </div>
+              </UnitCard>
+
+              <UnitCard title="Canary Contour" icon={<Activity size={20} />} subtitle="Promotion Path">
+                <div className="space-y-0.5">
+                  {lifecycleSummary.activeCanaries.length > 0 ? (
+                    lifecycleSummary.activeCanaries.slice(0, 5).map((item) => (
+                      <div key={item.changeRequestId} className="flex items-center justify-between py-2 border-b border-black/[0.03] last:border-0">
+                        <div>
+                          <p className="text-[13px] font-medium text-[#030213]">{item.role}</p>
+                          <p className="text-[11px] text-[#717182]">{item.targetVersion}</p>
+                        </div>
+                        <span className="text-[11px] font-mono text-amber-600">active</span>
+                      </div>
+                    ))
+                  ) : (
+                    <NoData />
+                  )}
+
+                  {lifecycleSummary.degradedCanaries.length > 0 && (
+                    <div className="mt-6 pt-5 border-t border-black/5">
+                      <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Degraded canaries</p>
+                      <div className="space-y-2">
+                        {lifecycleSummary.degradedCanaries.slice(0, 4).map((item) => (
+                          <div key={item.changeRequestId} className="rounded-xl border border-red-200 bg-red-50 px-3 py-3">
+                            <p className="text-[12px] font-medium text-[#030213]">{item.role}</p>
+                            <p className="mt-1 text-[11px] text-[#717182]">{item.targetVersion}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </UnitCard>
+
+              <UnitCard title="Rollback & Freeze" icon={<ShieldCheck size={20} />} subtitle="Lifecycle Risk">
+                <div className="space-y-1">
+                  <DataRow label="Frozen" value={`${lifecycleSummary.stateCounts.FROZEN}`} status={lifecycleSummary.stateCounts.FROZEN > 0 ? 'warning' : 'success'} />
+                  <DataRow label="Canonical active" value={`${lifecycleSummary.stateCounts.CANONICAL_ACTIVE}`} status="success" />
+                  <DataRow label="Retired" value={`${lifecycleSummary.stateCounts.RETIRED}`} status="success" />
+                </div>
+
+                <div className="mt-6 pt-5 border-t border-black/5">
+                  <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Rollback history</p>
+                  {lifecycleSummary.rolledBackRoles.length > 0 ? (
+                    <div className="space-y-2">
+                      {lifecycleSummary.rolledBackRoles.slice(0, 4).map((item) => (
+                        <div key={`${item.role}:${item.targetVersion}`} className="rounded-xl border border-black/5 bg-slate-50 px-3 py-3">
+                          <p className="text-[12px] font-medium text-[#030213]">{item.role}</p>
+                          <p className="mt-1 text-[11px] text-[#717182]">
+                            {item.targetVersion} • {item.rolledBackAt ? new Date(item.rolledBackAt).toLocaleString('ru') : 'time pending'}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <NoData />
+                  )}
+                </div>
+              </UnitCard>
+
+              <UnitCard title="Retirement Archive" icon={<ShieldCheck size={20} />} subtitle="Version Exit">
+                <div className="space-y-1">
+                  <DataRow label="Retired events" value={`${retirementArchive.length}`} status={retirementArchive.length > 0 ? 'warning' : 'success'} />
+                  <DataRow label="Active retirements" value={`${activeRetirements.length}`} status={activeRetirements.length > 0 ? 'warning' : 'success'} />
+                  <DataRow label="Archive signal" value={retirementArchive.length > 0 ? 'recorded' : 'empty'} status={retirementArchive.length > 0 ? 'success' : 'warning'} />
+                </div>
+
+                <div className="mt-6 pt-5 border-t border-black/5">
+                  <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Retired roles</p>
+                  {retirementArchive.length > 0 ? (
+                    <div className="space-y-2">
+                      {retirementArchive.slice(0, 4).map((item) => (
+                        <div key={`${item.role}:${item.createdAt}:retired`} className="rounded-xl border border-red-200 bg-red-50 px-3 py-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-[12px] font-medium text-[#030213]">{item.role}</p>
+                            <span className={clsx(
+                              'inline-flex px-2 py-1 rounded text-[10px] font-medium uppercase tracking-widest border',
+                              item.isActive
+                                ? 'bg-red-100 text-red-700 border-red-200'
+                                : 'bg-white text-slate-700 border-slate-200',
+                            )}>
+                              {item.isActive ? 'retired' : 'cleared'}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-[11px] text-[#717182] leading-relaxed">{item.reason}</p>
+                          <p className="mt-2 text-[11px] text-[#717182] font-mono">
+                            {new Date(item.createdAt).toLocaleString('ru-RU')}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <NoData />
+                  )}
+                </div>
+              </UnitCard>
+            </div>
+
+            <div className="mt-6 bg-white border border-black/10 rounded-2xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-black/5 bg-slate-50">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-1">Lifecycle History</p>
+                    <h3 className="text-lg font-medium text-[#030213] tracking-tight">История freeze / retire / clear</h3>
+                  </div>
+                  <div className="text-[12px] text-[#717182]">
+                    {lifecycleHistory.length} событий
+                  </div>
+                </div>
+              </div>
+
+              {lifecycleHistory.length > 0 ? (
+                <div className="divide-y divide-black/5">
+                  {lifecycleHistory.map((item) => (
+                    <div key={`${item.role}:${item.createdAt}:${item.state}`} className="px-6 py-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[13px] font-medium text-[#030213]">{item.role}</span>
+                          <span className={clsx(
+                            'inline-flex px-2.5 py-1 rounded text-[10px] font-medium uppercase tracking-widest border',
+                            item.state === 'RETIRED'
+                              ? 'bg-red-50 text-red-700 border-red-200'
+                              : 'bg-amber-50 text-amber-700 border-amber-200',
+                          )}>
+                            {item.state === 'RETIRED' ? 'retired' : 'frozen'}
+                          </span>
+                          <span className={clsx(
+                            'inline-flex px-2.5 py-1 rounded text-[10px] font-medium uppercase tracking-widest border',
+                            item.isActive
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : 'bg-slate-100 text-slate-700 border-slate-200',
+                          )}>
+                            {item.isActive ? 'active' : 'cleared'}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-[12px] text-[#717182] leading-relaxed">
+                          {item.reason}
+                        </div>
+                      </div>
+                      <div className="text-[11px] text-[#717182] font-mono lg:text-right">
+                        <div>{new Date(item.createdAt).toLocaleString('ru-RU')}</div>
+                        <div>{item.clearedAt ? `cleared ${new Date(item.clearedAt).toLocaleString('ru-RU')}` : 'not cleared'}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="px-6 py-6">
+                  <NoData />
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 bg-white border border-black/10 rounded-2xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-black/5 bg-slate-50">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-1">Lifecycle Table</p>
+                    <h3 className="text-lg font-medium text-[#030213] tracking-tight">Стадии эволюции флота агентов</h3>
+                  </div>
+                  <div className="text-[12px] text-[#717182]">
+                    {lifecycleAgents.length} ролей
+                  </div>
+                </div>
+              </div>
+
+              {lifecycleAgents.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-black/5 bg-white">
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Роль</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Domain</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Class</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Lifecycle</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Current / Candidate</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Change</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Canary / Rollback</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Runtime</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Notes</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-black/5">
+                      {lifecycleAgents.map((agent) => (
+                        <tr key={agent.role} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="text-[13px] font-medium text-[#030213]">{agent.role}</div>
+                            <div className="text-[11px] text-[#717182]">{agent.agentName}</div>
+                          </td>
+                          <td className="px-6 py-4 text-[13px] text-[#030213]">{agent.ownerDomain}</td>
+                          <td className="px-6 py-4">
+                            <span className={clsx(
+                              'inline-flex px-2.5 py-1 rounded text-[10px] font-medium uppercase tracking-widest border',
+                              agent.class === 'canonical'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : 'bg-amber-50 text-amber-700 border-amber-200',
+                            )}>
+                              {agent.class === 'canonical' ? 'canonical' : 'future'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={clsx(
+                              'inline-flex px-2.5 py-1 rounded text-[10px] font-medium uppercase tracking-widest border',
+                              lifecycleBadgeClass(agent.lifecycleState),
+                            )}>
+                              {formatLifecycleState(agent.lifecycleState)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-[13px] font-mono text-[#030213]">{agent.currentVersion ?? 'pending'}</div>
+                            <div className="text-[11px] text-[#717182]">stable {agent.stableVersion ?? 'pending'}</div>
+                            <div className="text-[11px] text-[#717182]">candidate {agent.candidateVersion ?? 'pending'}</div>
+                            {agent.previousStableVersion && (
+                              <div className="text-[10px] text-[#9a9aa5]">prev {agent.previousStableVersion}</div>
+                            )}
+                            <div className="mt-2">
+                              <span className={clsx(
+                                'inline-flex px-2 py-1 rounded text-[10px] font-medium uppercase tracking-widest border',
+                                agent.versionDelta === 'AHEAD_OF_STABLE'
+                                  ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                  : agent.versionDelta === 'ROLLED_BACK_TO_STABLE'
+                                    ? 'bg-red-50 text-red-700 border-red-200'
+                                    : agent.versionDelta === 'MATCHES_STABLE'
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                      : 'bg-slate-100 text-slate-700 border-slate-200',
+                              )}>
+                                {formatGovernanceKey(agent.versionDelta)}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-[11px] text-[#717182]">{agent.changeRequestStatus ? formatGovernanceKey(agent.changeRequestStatus) : 'no change'}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-[13px] font-mono text-[#030213]">{agent.canaryStatus ? formatGovernanceKey(agent.canaryStatus) : 'pending'}</div>
+                            <div className="text-[11px] text-[#717182]">{agent.rollbackStatus ? formatGovernanceKey(agent.rollbackStatus) : 'pending'}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-[13px] font-mono text-[#030213]">{agent.runtimeActive ? 'active' : 'inactive'}</div>
+                            <div className="text-[11px] text-[#717182]">{agent.tenantAccessMode.toLowerCase()}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            {agent.notes.length > 0 ? (
+                              <div className="flex flex-wrap gap-2">
+                                {agent.notes.slice(0, 2).map((note) => (
+                                  <span key={note} className="inline-flex px-2 py-1 rounded bg-slate-100 text-[10px] font-medium uppercase tracking-widest text-[#717182]">
+                                    {formatGovernanceKey(note)}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-[12px] text-[#717182]">no notes</span>
+                            )}
+                            {agent.lifecycleOverride && (
+                              <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                                <div className="text-[10px] font-medium uppercase tracking-widest text-amber-700">
+                                  {agent.lifecycleOverride.state === 'RETIRED' ? 'retired override' : 'frozen override'}
+                                </div>
+                                <div className="mt-1 text-[11px] text-amber-800 leading-relaxed">
+                                  {agent.lifecycleOverride.reason}
+                                </div>
+                              </div>
+                            )}
+                            {agent.lineage.length > 0 && (
+                              <div className="mt-3 space-y-1">
+                                {agent.lineage.slice(0, 2).map((item) => (
+                                  <div key={item.changeRequestId} className="text-[10px] text-[#717182] font-mono">
+                                    {item.targetVersion} • {formatGovernanceKey(item.status)}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-wrap gap-2">
+                              {agent.lifecycleOverride ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleClearLifecycleOverride(agent.role)}
+                                  disabled={lifecycleActionLoading !== null}
+                                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[12px] font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {lifecycleActionLoading === `clear-lifecycle:${agent.role}` ? 'Снятие...' : 'Clear lifecycle state'}
+                                </button>
+                              ) : (
+                                <>
+                                  {agent.lifecycleState !== 'RETIRED' && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSetLifecycleOverride(agent.role, 'FROZEN')}
+                                      disabled={lifecycleActionLoading !== null}
+                                      className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                      {lifecycleActionLoading === `frozen:${agent.role}` ? 'Freeze...' : 'Freeze'}
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSetLifecycleOverride(agent.role, 'RETIRED')}
+                                    disabled={lifecycleActionLoading !== null}
+                                    className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {lifecycleActionLoading === `retired:${agent.role}` ? 'Retiring...' : 'Retire'}
+                                  </button>
+                                </>
+                              )}
+                              {agent.latestChangeRequestId ? (
+                                <>
+                                {agent.changeRequestStatus === 'READY_FOR_CANARY' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStartCanary(agent.latestChangeRequestId as string)}
+                                    disabled={lifecycleActionLoading !== null}
+                                    className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-[12px] font-medium text-blue-700 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {lifecycleActionLoading === `start:${agent.latestChangeRequestId}` ? 'Запуск...' : 'Start canary'}
+                                  </button>
+                                )}
+                                {agent.canaryStatus === 'ACTIVE' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleReviewCanary(agent.latestChangeRequestId as string)}
+                                    disabled={lifecycleActionLoading !== null}
+                                    className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {lifecycleActionLoading === `review:${agent.latestChangeRequestId}` ? 'Review...' : 'Review canary'}
+                                  </button>
+                                )}
+                                {agent.changeRequestStatus === 'APPROVED_FOR_PRODUCTION' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handlePromoteChange(agent.latestChangeRequestId as string)}
+                                    disabled={lifecycleActionLoading !== null}
+                                    className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[12px] font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {lifecycleActionLoading === `promote:${agent.latestChangeRequestId}` ? 'Promote...' : 'Promote'}
+                                  </button>
+                                )}
+                                {(agent.changeRequestStatus === 'PROMOTED' || agent.changeRequestStatus === 'APPROVED_FOR_PRODUCTION') && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRollbackChange(agent.latestChangeRequestId as string)}
+                                    disabled={lifecycleActionLoading !== null}
+                                    className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {lifecycleActionLoading === `rollback:${agent.latestChangeRequestId}` ? 'Rollback...' : 'Rollback'}
+                                  </button>
+                                )}
+                                </>
+                              ) : null}
+                              {!agent.latestChangeRequestId && !agent.lifecycleOverride && (
+                                <span className="text-[12px] text-[#717182]">no change actions</span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="px-6 py-6">
+                  <NoData />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {runtimeGovernanceSummary && runtimeGovernanceSummary.flags.uiEnabled && (
           <div className="mt-12">
@@ -955,6 +1486,48 @@ function formatGovernanceKey(value: string) {
   return value
     .toLowerCase()
     .replaceAll('_', ' ');
+}
+
+function formatLifecycleState(state: AgentLifecycleItemDto['lifecycleState']) {
+  switch (state) {
+    case 'CANARY':
+      return 'canary';
+    case 'PROMOTION_CANDIDATE':
+      return 'promotion';
+    case 'FROZEN':
+      return 'frozen';
+    case 'ROLLED_BACK':
+      return 'rolled back';
+    case 'FUTURE_ROLE':
+      return 'future role';
+    case 'RETIRED':
+      return 'retired';
+    case 'CANONICAL_ACTIVE':
+      return 'active';
+    default:
+      return 'pending';
+  }
+}
+
+function lifecycleBadgeClass(state: AgentLifecycleItemDto['lifecycleState']) {
+  switch (state) {
+    case 'CANARY':
+      return 'bg-amber-50 text-amber-700 border-amber-200';
+    case 'PROMOTION_CANDIDATE':
+      return 'bg-blue-50 text-blue-700 border-blue-200';
+    case 'FROZEN':
+      return 'bg-slate-100 text-slate-700 border-slate-300';
+    case 'ROLLED_BACK':
+      return 'bg-red-50 text-red-700 border-red-200';
+    case 'FUTURE_ROLE':
+      return 'bg-orange-50 text-orange-700 border-orange-200';
+    case 'RETIRED':
+      return 'bg-neutral-100 text-neutral-700 border-neutral-300';
+    case 'CANONICAL_ACTIVE':
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    default:
+      return 'bg-slate-100 text-slate-700 border-slate-300';
+  }
 }
 
 function severityToRiskLevel(severity: string): 'R1' | 'R2' | 'R3' | 'R4' | 'Success' {

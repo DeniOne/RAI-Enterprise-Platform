@@ -106,6 +106,30 @@
     *   `GoldenTestRunnerService` усилен до agent/candidate-aware eval logic: verdict теперь зависит от role, activation, prompt/model metadata, budget и capability/tool bindings, а не от одного `IntentRouter`.
     *   Верификация: `pnpm --dir apps/api exec tsc --noEmit` PASS; targeted jest PASS (15 tests).
 
+## 2026-03-10
+
+52. **GIT PUSH Stage 2 & Front Office & Runtime Governance** [DONE]:
+    *   Все локальные изменения по Stage 2 Interaction Blueprint, Front Office Agent и Runtime Governance (миграции Prisma, сервисы, контроллеры) запушены в мастер.
+    *   Репозиторий синхронизирован.
+    *   Добавлены новые гайдлайны по эволюции агентов и GAP-анализ по Control Tower.
+
+53. **Front Office Threads & Handoffs Implementation** [DONE]:
+    *   Реализована модель `FrontOfficeThread` и `FrontOfficeHandoff` в Prisma.
+    *   Добавлен `FrontOfficeCommunicationRepository` и `FrontOfficeHandoffOrchestratorService`.
+    *   Поддерживается перевод чата из режима "Agent Only" в "Manager Assisted".
+    *   Верификация: tsc PASS, prisma migrations PASS.
+
+54. **Agent Lifecycle Runtime Control** [DONE]:
+    *   Реализован `AgentLifecycleControlService` для форсирования состояний FROZEN и RETIRED.
+    *   Добавлена поддержка `agentLifecycleOverride` в runtime governance.
+    *   Обновлен канон `RAI_AGENT_EVOLUTION_AND_LIFECYCLE.md`.
+    *   Верификация: unit tests PASS.
+
+55. **Telegram Hybrid Manager Workspace** [DONE]:
+    *   Добавлена поддержка Telegram WebApp для управления воркспейсом менеджера.
+    *   Реализован `TelegramPollingConflictGuard` для безопасной работы бота в гибридном режиме.
+    *   Внедрена авторизация `telegram-webapp` в `apps/web`.
+
 ## Status: Refactoring Tenant Isolation & Fixing Type Resolution
 
 ### Completed:

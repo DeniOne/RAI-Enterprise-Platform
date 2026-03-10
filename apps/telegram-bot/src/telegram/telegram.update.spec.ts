@@ -105,6 +105,31 @@ describe("TelegramUpdate front-office flow", () => {
     );
   });
 
+  it("не маршрутизирует raw text менеджера в front-office intake", async () => {
+    const apiClient = buildApiClient();
+    apiClient.getUser.mockResolvedValue({
+      id: "manager-1",
+      email: "manager@rai.local",
+      role: "MANAGER",
+      telegramTunnel: "back_office_operator",
+    });
+    const sessionService = buildSessionService();
+    const update = new TelegramUpdate(
+      progressService as any,
+      apiClient as any,
+      sessionService as any,
+    );
+    const ctx = buildTextContext("напиши клиенту, что я на связи");
+
+    await update.onText(ctx);
+
+    expect(apiClient.createFrontOfficeDraft).not.toHaveBeenCalled();
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.stringContaining("Рабочее место бэкофиса"),
+      expect.objectContaining({ parse_mode: "HTML" }),
+    );
+  });
+
   it("получает задачи и показывает CTA start/complete", async () => {
     const apiClient = buildApiClient();
     const sessionService = buildSessionService();
