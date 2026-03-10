@@ -1,7 +1,15 @@
 import { User, Prisma } from "@rai/prisma-client";
 
 export type UserWithCompany = Prisma.UserGetPayload<{
-  include: { company: true };
+  include: {
+    company: true;
+    account: true;
+    employeeProfile: {
+      select: {
+        clientId: true;
+      };
+    };
+  };
 }>;
 
 export interface IUserRepository {

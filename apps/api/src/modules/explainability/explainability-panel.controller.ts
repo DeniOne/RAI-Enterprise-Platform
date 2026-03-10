@@ -34,6 +34,15 @@ import { RuntimeGovernanceControlService } from "./runtime-governance-control.se
 import { SetRuntimeAutonomyOverrideDtoSchema } from "./dto/runtime-governance-control.dto";
 import { RuntimeGovernanceDrilldownService } from "./runtime-governance-drilldown.service";
 import { RuntimeGovernanceDrilldownsDto } from "./dto/runtime-governance-drilldowns.dto";
+import { AgentLifecycleReadModelService } from "./agent-lifecycle-read-model.service";
+import { AgentLifecycleSummaryDto } from "./dto/agent-lifecycle-summary.dto";
+import { AgentLifecycleItemDto } from "./dto/agent-lifecycle-item.dto";
+import { AgentLifecycleHistoryItemDto } from "./dto/agent-lifecycle-history.dto";
+import { AgentLifecycleControlService } from "./agent-lifecycle-control.service";
+import {
+  ClearAgentLifecycleOverrideDtoSchema,
+  SetAgentLifecycleOverrideDtoSchema,
+} from "./dto/agent-lifecycle-control.dto";
 
 function toManualOverrideDto(
   manualOverride:
@@ -81,6 +90,8 @@ export class ExplainabilityPanelController {
     private readonly runtimeGovernanceReadModel: RuntimeGovernanceReadModelService,
     private readonly runtimeGovernanceControl: RuntimeGovernanceControlService,
     private readonly runtimeGovernanceDrilldowns: RuntimeGovernanceDrilldownService,
+    private readonly agentLifecycleReadModel: AgentLifecycleReadModelService,
+    private readonly agentLifecycleControl: AgentLifecycleControlService,
   ) {}
 
   @Get("performance")
@@ -178,6 +189,86 @@ export class ExplainabilityPanelController {
       throw new BadRequestException("Invalid timeWindowMs");
     }
     return this.runtimeGovernanceReadModel.getAgents(companyId, windowMs);
+  }
+
+  @Get("lifecycle/summary")
+  async getLifecycleSummary(): Promise<AgentLifecycleSummaryDto> {
+    const companyId = this.tenantContext.getCompanyId();
+    if (!companyId) {
+      throw new BadRequestException("Security Context: companyId is missing");
+    }
+    return this.agentLifecycleReadModel.getSummary(companyId);
+  }
+
+  @Get("lifecycle/agents")
+  async getLifecycleAgents(): Promise<AgentLifecycleItemDto[]> {
+    const companyId = this.tenantContext.getCompanyId();
+    if (!companyId) {
+      throw new BadRequestException("Security Context: companyId is missing");
+    }
+    return this.agentLifecycleReadModel.getAgents(companyId);
+  }
+
+  @Get("lifecycle/history")
+  async getLifecycleHistory(
+    @Query("limit") limit?: string,
+  ): Promise<AgentLifecycleHistoryItemDto[]> {
+    const companyId = this.tenantContext.getCompanyId();
+    if (!companyId) {
+      throw new BadRequestException("Security Context: companyId is missing");
+    }
+    const parsedLimit = limit !== undefined ? Number(limit) : 20;
+    const safeLimit =
+      Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.min(Math.trunc(parsedLimit), 100) : 20;
+    return this.agentLifecycleReadModel.getHistory(companyId, safeLimit);
+  }
+
+  @Post("lifecycle/override")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.CEO, UserRole.CLIENT_ADMIN)
+  async setLifecycleOverride(
+    @Body() body: unknown,
+    @CurrentUser() user: { userId?: string },
+  ): Promise<AgentLifecycleItemDto[]> {
+    const companyId = this.tenantContext.getCompanyId();
+    if (!companyId) {
+      throw new BadRequestException("Security Context: companyId is missing");
+    }
+    const parsed = SetAgentLifecycleOverrideDtoSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten().fieldErrors);
+    }
+    await this.agentLifecycleControl.setOverride({
+      companyId,
+      role: parsed.data.role,
+      state: parsed.data.state,
+      reason: parsed.data.reason,
+      userId: user?.userId,
+    });
+    return this.agentLifecycleReadModel.getAgents(companyId);
+  }
+
+  @Post("lifecycle/override/clear")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.CEO, UserRole.CLIENT_ADMIN)
+  async clearLifecycleOverride(
+    @Body() body: unknown,
+    @CurrentUser() user: { userId?: string },
+  ): Promise<AgentLifecycleItemDto[]> {
+    const companyId = this.tenantContext.getCompanyId();
+    if (!companyId) {
+      throw new BadRequestException("Security Context: companyId is missing");
+    }
+    const parsed = ClearAgentLifecycleOverrideDtoSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten().fieldErrors);
+    }
+    await this.agentLifecycleControl.clearOverride({
+      companyId,
+      role: parsed.data.role,
+      userId: user?.userId,
+    });
+    return this.agentLifecycleReadModel.getAgents(companyId);
   }
 
   @Get("runtime-governance/drilldowns")

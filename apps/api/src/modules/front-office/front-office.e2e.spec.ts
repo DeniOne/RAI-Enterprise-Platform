@@ -3,9 +3,12 @@ import { AuditService } from "../../shared/audit/audit.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { DeviationService } from "../cmr/deviation.service";
 import { FieldObservationService } from "../field-observation/field-observation.service";
+import { FrontOfficeCommunicationRepository } from "../front-office-draft/front-office-communication.repository";
 import { FrontOfficeDraftRepository } from "../front-office-draft/front-office-draft.repository";
+import { FrontOfficeHandoffOrchestrator } from "../front-office-draft/front-office-handoff.orchestrator.service";
 import { FrontOfficeDraftService } from "../front-office-draft/front-office-draft.service";
 import { FrontOfficeAgent } from "../rai-chat/agents/front-office-agent.service";
+import { TelegramNotificationService } from "../telegram/telegram-notification.service";
 import { FrontOfficeService } from "./front-office.service";
 
 function createRuntime() {
@@ -30,12 +33,20 @@ function createRuntime() {
     auditLogs: [] as any[],
     drafts: [] as any[],
     committed: [] as any[],
+    threads: [] as any[],
+    threadMessages: [] as any[],
+    handoffs: [] as any[],
   };
 
   const prismaMock = {
     field: {
       count: jest.fn(async ({ where }: any) =>
         state.fields.filter((item) => item.companyId === where.companyId).length,
+      ),
+      findFirst: jest.fn(async ({ where }: any) =>
+        state.fields.find(
+          (item) => item.id === where.id && item.companyId === where.companyId,
+        ) ?? null,
       ),
     },
     season: {
@@ -92,6 +103,12 @@ function createRuntime() {
         }
         return observation;
       }),
+    },
+    user: {
+      findFirst: jest.fn(async () => null),
+    },
+    account: {
+      findFirst: jest.fn(async () => null),
     },
   };
 
@@ -255,13 +272,119 @@ function createRuntime() {
     }),
   };
 
+  const communicationRepositoryMock = {
+    upsertThread: jest.fn(async (payload: any) => {
+      const existing = state.threads.find(
+        (item) => item.companyId === payload.companyId && item.threadKey === payload.threadKey,
+      );
+      if (existing) {
+        Object.assign(existing, {
+          channel: payload.channel ?? existing.channel,
+          currentClassification:
+            payload.currentClassification !== undefined
+              ? payload.currentClassification
+              : existing.currentClassification,
+          currentOwnerRole:
+            payload.currentOwnerRole !== undefined
+              ? payload.currentOwnerRole
+              : existing.currentOwnerRole,
+          currentHandoffStatus:
+            payload.currentHandoffStatus !== undefined
+              ? payload.currentHandoffStatus
+              : existing.currentHandoffStatus,
+          lastDraftId:
+            payload.lastDraftId !== undefined ? payload.lastDraftId : existing.lastDraftId,
+          lastMessagePreview:
+            payload.lastMessagePreview !== undefined
+              ? payload.lastMessagePreview
+              : existing.lastMessagePreview,
+          messageCount:
+            typeof payload.messageCountIncrement === "number"
+              ? (existing.messageCount ?? 0) + payload.messageCountIncrement
+              : existing.messageCount,
+        });
+        return existing;
+      }
+      const thread = {
+        id: `thread-${state.threads.length + 1}`,
+        companyId: payload.companyId,
+        threadKey: payload.threadKey,
+        channel: payload.channel,
+        currentClassification: payload.currentClassification ?? null,
+        currentOwnerRole: payload.currentOwnerRole ?? null,
+        currentHandoffStatus: payload.currentHandoffStatus ?? null,
+        lastDraftId: payload.lastDraftId ?? null,
+        lastMessagePreview: payload.lastMessagePreview ?? null,
+        messageCount: payload.messageCountIncrement ?? 0,
+      };
+      state.threads.push(thread);
+      return thread;
+    }),
+    createMessage: jest.fn(async (payload: any) => {
+      const message = { id: `msg-${state.threadMessages.length + 1}`, ...payload };
+      state.threadMessages.push(message);
+      return message;
+    }),
+    getThreadByKey: jest.fn(async (companyId: string, threadKey: string) => {
+      return state.threads.find(
+        (item) => item.companyId === companyId && item.threadKey === threadKey,
+      );
+    }),
+    getThreadById: jest.fn(async (companyId: string, threadId: string) => {
+      return state.threads.find(
+        (item) => item.companyId === companyId && item.id === threadId,
+      );
+    }),
+    listThreads: jest.fn(async (companyId: string) =>
+      state.threads.filter((item) => item.companyId === companyId),
+    ),
+    listMessages: jest.fn(async (companyId: string, threadId: string) =>
+      state.threadMessages.filter(
+        (item) => item.companyId === companyId && item.threadId === threadId,
+      ),
+    ),
+    createHandoff: jest.fn(async (payload: any) => {
+      const handoff = {
+        id: `handoff-${state.handoffs.length + 1}`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        ...payload,
+      };
+      state.handoffs.push(handoff);
+      return handoff;
+    }),
+    updateHandoff: jest.fn(async (_companyId: string, handoffId: string, patch: any) => {
+      const handoff = state.handoffs.find((item) => item.id === handoffId);
+      Object.assign(handoff, patch);
+      return handoff;
+    }),
+    getHandoff: jest.fn(async (companyId: string, handoffId: string) =>
+      state.handoffs.find((item) => item.companyId === companyId && item.id === handoffId),
+    ),
+    listHandoffs: jest.fn(async (companyId: string) =>
+      state.handoffs.filter((item) => item.companyId === companyId),
+    ),
+  };
+  const telegramNotificationMock = {
+    sendFrontOfficeReply: jest.fn(async () => ({ success: true, messageId: "m-1" })),
+    notifyFrontOfficeThread: jest.fn(async () => ({ success: true })),
+  };
+
+  const handoffOrchestrator = new FrontOfficeHandoffOrchestrator(
+    auditMock as unknown as AuditService,
+    communicationRepositoryMock as unknown as FrontOfficeCommunicationRepository,
+  );
+
   const draftService = new FrontOfficeDraftService(
     prismaMock as unknown as PrismaService,
     auditMock as unknown as AuditService,
     observationMock as unknown as FieldObservationService,
     deviationMock as unknown as DeviationService,
     agentMock as unknown as FrontOfficeAgent,
+    communicationRepositoryMock as unknown as FrontOfficeCommunicationRepository,
+    handoffOrchestrator,
     draftRepositoryMock as unknown as FrontOfficeDraftRepository,
+    telegramNotificationMock as unknown as TelegramNotificationService,
   );
 
   const service = new FrontOfficeService(

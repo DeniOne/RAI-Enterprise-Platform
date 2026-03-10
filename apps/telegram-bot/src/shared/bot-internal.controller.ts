@@ -22,6 +22,19 @@ interface PushProgressDto {
     report: string;
 }
 
+interface SendFrontOfficeThreadMessageDto {
+    chatId: string;
+    messageText: string;
+}
+
+interface NotifyFrontOfficeThreadDto {
+    telegramId: string;
+    farmName: string;
+    threadKey: string;
+    preview: string;
+    workspaceUrl: string;
+}
+
 @Controller('internal')
 export class BotInternalController {
     private readonly logger = new Logger(BotInternalController.name);
@@ -30,6 +43,33 @@ export class BotInternalController {
         @InjectBot() private bot: Telegraf,
         private apiClient: ApiClientService,
     ) { }
+
+    private normalizeTelegramChatId(rawChatId: string): string {
+        return rawChatId.startsWith('telegram:')
+            ? rawChatId.slice('telegram:'.length)
+            : rawChatId;
+    }
+
+    private appendThreadKey(workspaceUrl: string, threadKey: string): string {
+        const separator = workspaceUrl.includes('?') ? '&' : '?';
+        return `${workspaceUrl}${separator}threadKey=${encodeURIComponent(threadKey)}`;
+    }
+
+    private isTelegramMiniAppUrl(workspaceUrl: string): boolean {
+        return /^https:\/\//i.test(workspaceUrl);
+    }
+
+    private buildWorkspaceKeyboard(label: string, workspaceUrl: string, threadKey?: string) {
+        if (!this.isTelegramMiniAppUrl(workspaceUrl)) {
+            return null;
+        }
+        const targetUrl = threadKey
+            ? this.appendThreadKey(workspaceUrl, threadKey)
+            : workspaceUrl;
+        const button = Markup.button.webApp(label, targetUrl);
+
+        return Markup.inlineKeyboard([[button]]);
+    }
 
     @Post('notify-login')
     async notifyLogin(
@@ -109,6 +149,55 @@ export class BotInternalController {
         }
 
         return { success: true, count: users.length };
+    }
+
+    @Post('front-office/send-message')
+    async sendFrontOfficeThreadMessage(
+        @Headers('x-internal-api-key') apiKey: string,
+        @Body() dto: SendFrontOfficeThreadMessageDto,
+    ) {
+        this.validateApiKey(apiKey);
+
+        const sent = await this.bot.telegram.sendMessage(
+            this.normalizeTelegramChatId(dto.chatId),
+            dto.messageText,
+            {
+                parse_mode: 'HTML',
+            },
+        );
+
+        return {
+            success: true,
+            messageId: sent.message_id?.toString?.() ?? null,
+            chatId: dto.chatId,
+        };
+    }
+
+    @Post('front-office/notify-thread')
+    async notifyFrontOfficeThread(
+        @Headers('x-internal-api-key') apiKey: string,
+        @Body() dto: NotifyFrontOfficeThreadDto,
+    ) {
+        this.validateApiKey(apiKey);
+
+        const keyboard = this.buildWorkspaceKeyboard(
+            'Открыть диалог',
+            dto.workspaceUrl,
+            dto.threadKey,
+        );
+        const manualUrl = this.appendThreadKey(dto.workspaceUrl, dto.threadKey);
+        await this.bot.telegram.sendMessage(
+            dto.telegramId,
+            keyboard
+                ? `📨 <b>${dto.farmName}</b>\n${dto.preview}`
+                : `📨 <b>${dto.farmName}</b>\n${dto.preview}\n\nMini App локально: ${manualUrl}`,
+            {
+                parse_mode: 'HTML',
+                ...(keyboard ?? {}),
+            },
+        );
+
+        return { success: true };
     }
 
     private validateApiKey(apiKey: string) {

@@ -10,7 +10,15 @@ export class UserRepository implements IUserRepository {
     return this.prisma.user.findUnique({
       // tenant-lint:ignore repository method has no tenant context in current contract
       where: { email },
-      include: { company: true },
+      include: {
+        company: true,
+        account: true,
+        employeeProfile: {
+          select: {
+            clientId: true,
+          },
+        },
+      },
     }) as Promise<UserWithCompany | null>;
   }
 
@@ -18,14 +26,30 @@ export class UserRepository implements IUserRepository {
     return this.prisma.user.findUnique({
       // tenant-lint:ignore repository method has no tenant context in current contract
       where: { id },
-      include: { company: true },
+      include: {
+        company: true,
+        account: true,
+        employeeProfile: {
+          select: {
+            clientId: true,
+          },
+        },
+      },
     }) as Promise<UserWithCompany | null>;
   }
 
   async findByCompanyId(companyId: string): Promise<UserWithCompany[]> {
     return this.prisma.user.findMany({
       where: { companyId },
-      include: { company: true },
+      include: {
+        company: true,
+        account: true,
+        employeeProfile: {
+          select: {
+            clientId: true,
+          },
+        },
+      },
       orderBy: { createdAt: "asc" },
     }) as Promise<UserWithCompany[]>;
   }

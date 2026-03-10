@@ -14,6 +14,8 @@ import { AutonomyPolicyService } from "../rai-chat/autonomy-policy.service";
 import { RuntimeGovernanceReadModelService } from "./runtime-governance-read-model.service";
 import { RuntimeGovernanceControlService } from "./runtime-governance-control.service";
 import { RuntimeGovernanceDrilldownService } from "./runtime-governance-drilldown.service";
+import { AgentLifecycleReadModelService } from "./agent-lifecycle-read-model.service";
+import { AgentLifecycleControlService } from "./agent-lifecycle-control.service";
 
 class TestJwtAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
@@ -67,6 +69,15 @@ describe("ExplainabilityPanelController (HTTP)", () => {
   const runtimeGovernanceDrilldowns = {
     getDrilldowns: jest.fn(),
   };
+  const agentLifecycleReadModel = {
+    getSummary: jest.fn(),
+    getAgents: jest.fn(),
+    getHistory: jest.fn(),
+  };
+  const agentLifecycleControl = {
+    setOverride: jest.fn(),
+    clearOverride: jest.fn(),
+  };
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -90,6 +101,14 @@ describe("ExplainabilityPanelController (HTTP)", () => {
         {
           provide: RuntimeGovernanceDrilldownService,
           useValue: runtimeGovernanceDrilldowns,
+        },
+        {
+          provide: AgentLifecycleReadModelService,
+          useValue: agentLifecycleReadModel,
+        },
+        {
+          provide: AgentLifecycleControlService,
+          useValue: agentLifecycleControl,
         },
       ],
     })
@@ -260,5 +279,161 @@ describe("ExplainabilityPanelController (HTTP)", () => {
       120000,
       "crm_agent",
     );
+  });
+
+  it("GET /api/rai/explainability/lifecycle/summary отдаёт lifecycle summary", async () => {
+    agentLifecycleReadModel.getSummary.mockResolvedValue({
+      companyId: "company-a",
+      templateCatalogCount: 8,
+      totalTrackedRoles: 9,
+      stateCounts: {
+        FUTURE_ROLE: 2,
+        PROMOTION_CANDIDATE: 1,
+        CANARY: 1,
+        CANONICAL_ACTIVE: 4,
+        FROZEN: 1,
+        ROLLED_BACK: 0,
+        RETIRED: 0,
+      },
+      activeCanaries: [],
+      degradedCanaries: [],
+      promotionCandidates: [],
+      rolledBackRoles: [],
+    });
+
+    const response = await request(app.getHttpServer())
+      .get("/api/rai/explainability/lifecycle/summary")
+      .expect(200);
+
+    expect(response.body.totalTrackedRoles).toBe(9);
+    expect(agentLifecycleReadModel.getSummary).toHaveBeenCalledWith("company-a");
+  });
+
+  it("GET /api/rai/explainability/lifecycle/agents отдаёт lifecycle table", async () => {
+    agentLifecycleReadModel.getAgents.mockResolvedValue([
+      {
+        role: "contracts_agent",
+        agentName: "ContractsAgent",
+        ownerDomain: "commerce",
+        class: "canonical",
+        lifecycleState: "CANARY",
+        runtimeActive: true,
+        tenantAccessMode: "INHERITED",
+        effectiveConfigId: "cfg-1",
+        candidateVersion: "v2",
+        latestChangeRequestId: "chg-1",
+        changeRequestStatus: "CANARY_ACTIVE",
+        canaryStatus: "ACTIVE",
+        rollbackStatus: "NOT_REQUIRED",
+        productionDecision: "PENDING",
+        currentVersion: "v2",
+        stableVersion: "cfg-1",
+        previousStableVersion: null,
+        versionDelta: "AHEAD_OF_STABLE",
+        promotedAt: null,
+        rolledBackAt: null,
+        updatedAt: "2026-03-10T00:00:00.000Z",
+        lifecycleOverride: null,
+        lineage: [],
+        notes: [],
+      },
+    ]);
+
+    const response = await request(app.getHttpServer())
+      .get("/api/rai/explainability/lifecycle/agents")
+      .expect(200);
+
+    expect(response.body[0].role).toBe("contracts_agent");
+    expect(agentLifecycleReadModel.getAgents).toHaveBeenCalledWith("company-a");
+  });
+
+  it("GET /api/rai/explainability/lifecycle/history отдаёт lifecycle history", async () => {
+    agentLifecycleReadModel.getHistory.mockResolvedValue([
+      {
+        role: "crm_agent",
+        state: "FROZEN",
+        reason: "manual freeze",
+        isActive: true,
+        createdAt: "2026-03-10T00:00:00.000Z",
+        updatedAt: "2026-03-10T00:00:00.000Z",
+        clearedAt: null,
+        createdByUserId: "u-1",
+        clearedByUserId: null,
+      },
+    ]);
+
+    const response = await request(app.getHttpServer())
+      .get("/api/rai/explainability/lifecycle/history?limit=5")
+      .expect(200);
+
+    expect(response.body[0].role).toBe("crm_agent");
+    expect(agentLifecycleReadModel.getHistory).toHaveBeenCalledWith("company-a", 5);
+  });
+
+  it("POST /api/rai/explainability/lifecycle/override включает freeze/retire override", async () => {
+    agentLifecycleControl.setOverride.mockResolvedValue(undefined);
+    agentLifecycleReadModel.getAgents.mockResolvedValue([
+      {
+        role: "crm_agent",
+        agentName: "CrmAgent",
+        ownerDomain: "crm",
+        class: "canonical",
+        lifecycleState: "FROZEN",
+        runtimeActive: false,
+        tenantAccessMode: "DENIED",
+        effectiveConfigId: "cfg-1",
+        candidateVersion: null,
+        latestChangeRequestId: null,
+        changeRequestStatus: null,
+        canaryStatus: null,
+        rollbackStatus: null,
+        productionDecision: null,
+        currentVersion: "cfg-1",
+        stableVersion: "cfg-1",
+        previousStableVersion: null,
+        versionDelta: "MATCHES_STABLE",
+        promotedAt: null,
+        rolledBackAt: null,
+        updatedAt: null,
+        lifecycleOverride: {
+          state: "FROZEN",
+          reason: "manual freeze",
+          createdAt: "2026-03-10T00:00:00.000Z",
+          createdByUserId: "u-test",
+        },
+        lineage: [],
+        notes: ["manual_lifecycle_override"],
+      },
+    ]);
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/explainability/lifecycle/override")
+      .send({ role: "crm_agent", state: "FROZEN", reason: "manual freeze" })
+      .expect(201);
+
+    expect(response.body[0].lifecycleState).toBe("FROZEN");
+    expect(agentLifecycleControl.setOverride).toHaveBeenCalledWith({
+      companyId: "company-a",
+      role: "crm_agent",
+      state: "FROZEN",
+      reason: "manual freeze",
+      userId: undefined,
+    });
+  });
+
+  it("POST /api/rai/explainability/lifecycle/override/clear снимает lifecycle override", async () => {
+    agentLifecycleControl.clearOverride.mockResolvedValue(undefined);
+    agentLifecycleReadModel.getAgents.mockResolvedValue([]);
+
+    await request(app.getHttpServer())
+      .post("/api/rai/explainability/lifecycle/override/clear")
+      .send({ role: "crm_agent" })
+      .expect(201);
+
+    expect(agentLifecycleControl.clearOverride).toHaveBeenCalledWith({
+      companyId: "company-a",
+      role: "crm_agent",
+      userId: undefined,
+    });
   });
 });

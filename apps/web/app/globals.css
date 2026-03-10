@@ -3,17 +3,32 @@
 @tailwind utilities;
 
 :root {
-  --font-geist-sans: 'Geist', sans-serif;
+  --font-geist-sans: "Geist", sans-serif;
 }
 
 body {
   font-family: var(--font-geist-sans);
   font-weight: 400; /* font-normal */
-  background-color: #FAFAFA;
+  background-color: #fafafa;
   color: #171717;
 }
 
-h1, h2, h3, h4, h5, h6 {
+html,
+body {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: auto;
+  touch-action: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-weight: 500; /* font-medium */
 }
 

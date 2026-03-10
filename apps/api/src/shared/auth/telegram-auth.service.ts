@@ -5,7 +5,8 @@ import { PrismaService } from "../prisma/prisma.service";
 import { ConfigService } from "@nestjs/config";
 import { UserRole, UserAccessLevel } from "@rai/prisma-client";
 // Removed: InjectBot, Telegraf - bot is now a separate microservice
-import { randomUUID } from "crypto";
+import { createHmac, randomUUID, timingSafeEqual } from "crypto";
+import { resolveTelegramTunnel } from "./telegram-tunnel.resolver";
 
 export interface TelegramLoginSession {
   sessionId: string;
@@ -13,6 +14,13 @@ export interface TelegramLoginSession {
   status: "pending" | "approved" | "denied";
   createdAt: string;
   expiresAt: string;
+}
+
+interface TelegramWebAppIdentity {
+  telegramId: string;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
 }
 
 @Injectable()
@@ -24,7 +32,7 @@ export class TelegramAuthService {
     private jwtService: JwtService,
     private prisma: PrismaService,
     private configService: ConfigService,
-  ) { }
+  ) {}
 
   async initiateLogin(
     telegramId: string,
@@ -44,7 +52,9 @@ export class TelegramAuthService {
 
     // Auto-onboarding for Super Admin (Owner)
     if (!user && telegramId.trim() === "441610858") {
-      console.log(`[TelegramAuthService] Super Admin onboarding triggered for TG ID: ${telegramId}`);
+      console.log(
+        `[TelegramAuthService] Super Admin onboarding triggered for TG ID: ${telegramId}`,
+      );
 
       // Ensure root company exists
       let rootCompany = await this.prisma.company.findFirst();
@@ -54,7 +64,9 @@ export class TelegramAuthService {
             name: "RAI Enterprise (Root)",
           },
         });
-        console.log(`[TelegramAuthService] Created Root Company: ${rootCompany.id}`);
+        console.log(
+          `[TelegramAuthService] Created Root Company: ${rootCompany.id}`,
+        );
       }
 
       // Create Super Admin user
@@ -160,15 +172,92 @@ export class TelegramAuthService {
       throw new Error("User not found");
     }
 
+    return { accessToken: this.generateTokenForUser(user) };
+  }
+
+  private generateTokenForUser(user: {
+    id: string;
+    email: string;
+    companyId: string;
+    role: UserRole | string;
+    accountId?: string | null;
+  }): string {
     const payload = {
       sub: user.id,
       email: user.email,
       companyId: user.companyId,
+      role: user.role,
+      accountId: user.accountId ?? null,
     };
 
-    const accessToken = this.jwtService.sign(payload);
+    return this.jwtService.sign(payload);
+  }
 
-    return { accessToken };
+  private verifyTelegramWebAppInitData(
+    initData: string,
+  ): TelegramWebAppIdentity {
+    const params = new URLSearchParams(initData);
+    const hash = params.get("hash");
+    if (!hash) {
+      throw new Error("Telegram WebApp hash is missing");
+    }
+
+    const dataCheckEntries: string[] = [];
+    for (const [key, value] of params.entries()) {
+      if (key === "hash") {
+        continue;
+      }
+      dataCheckEntries.push(`${key}=${value}`);
+    }
+    dataCheckEntries.sort();
+    const dataCheckString = dataCheckEntries.join("\n");
+
+    const botToken = this.configService.get<string>("TELEGRAM_BOT_TOKEN");
+    if (!botToken) {
+      throw new Error("TELEGRAM_BOT_TOKEN is not configured");
+    }
+
+    const secret = createHmac("sha256", "WebAppData").update(botToken).digest();
+    const calculatedHash = createHmac("sha256", secret)
+      .update(dataCheckString)
+      .digest("hex");
+
+    const calculated = Buffer.from(calculatedHash, "hex");
+    const provided = Buffer.from(hash, "hex");
+    if (
+      calculated.length !== provided.length ||
+      !timingSafeEqual(calculated, provided)
+    ) {
+      throw new Error("Telegram WebApp initData signature is invalid");
+    }
+
+    const userJson = params.get("user");
+    if (!userJson) {
+      throw new Error("Telegram WebApp user is missing");
+    }
+
+    let userPayload: {
+      id?: number | string;
+      first_name?: string;
+      last_name?: string;
+      username?: string;
+    } | null = null;
+    try {
+      userPayload = JSON.parse(userJson);
+    } catch {
+      throw new Error("Telegram WebApp user payload is invalid");
+    }
+
+    if (!userPayload?.id) {
+      throw new Error("Telegram WebApp user id is missing");
+    }
+
+    return {
+      telegramId: String(userPayload.id),
+      firstName: userPayload.first_name?.trim() || undefined,
+      lastName: userPayload.last_name?.trim() || undefined,
+      username: userPayload.username?.trim() || undefined,
+    };
   }
 
   async denyLogin(sessionId: string): Promise<void> {
@@ -197,12 +286,88 @@ export class TelegramAuthService {
   }
 
   async getUserByTelegramId(telegramId: string, companyId?: string) {
-    return this.prisma.user.findFirst({
+    const user = await this.prisma.user.findFirst({
       where: {
         telegramId: telegramId.trim(),
         ...(companyId ? { companyId } : {}),
       },
+      include: {
+        account: true,
+        employeeProfile: {
+          select: {
+            clientId: true,
+          },
+        },
+      },
     });
+
+    if (!user) {
+      return null;
+    }
+
+    return {
+      ...user,
+      telegramTunnel: resolveTelegramTunnel(user),
+    };
+  }
+
+  async loginViaTelegramWebApp(initData: string) {
+    const telegramIdentity = this.verifyTelegramWebAppInitData(initData);
+    const user = await this.prisma.user.findFirst({
+      where: { telegramId: telegramIdentity.telegramId },
+      include: {
+        company: true,
+        account: true,
+        employeeProfile: {
+          select: {
+            clientId: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const telegramDisplayName =
+      [telegramIdentity.firstName, telegramIdentity.lastName]
+        .filter(Boolean)
+        .join(" ")
+        .trim() ||
+      telegramIdentity.username ||
+      undefined;
+
+    const fallbackName = user.email.split("@")[0];
+    const shouldRefreshName =
+      Boolean(telegramDisplayName) &&
+      (!user.name?.trim() || user.name.trim() === fallbackName);
+
+    const effectiveName =
+      shouldRefreshName && telegramDisplayName
+        ? telegramDisplayName
+        : user.name;
+
+    if (shouldRefreshName && telegramDisplayName) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { name: telegramDisplayName },
+      });
+    }
+
+    return {
+      accessToken: this.generateTokenForUser(user),
+      user: {
+        id: user.id,
+        email: user.email,
+        name: effectiveName ?? fallbackName,
+        role: user.role,
+        companyId: user.companyId,
+        accountId: user.accountId ?? null,
+        employeeProfile: user.employeeProfile ?? null,
+        telegramTunnel: resolveTelegramTunnel(user),
+      },
+    };
   }
 
   async upsertUserFromTelegram(data: {

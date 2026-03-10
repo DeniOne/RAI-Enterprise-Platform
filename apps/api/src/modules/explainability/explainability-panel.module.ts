@@ -16,6 +16,8 @@ import { AgentPromptGovernanceService } from "./agent-prompt-governance.service"
 import { RuntimeGovernanceReadModelService } from "./runtime-governance-read-model.service";
 import { RuntimeGovernanceControlService } from "./runtime-governance-control.service";
 import { RuntimeGovernanceDrilldownService } from "./runtime-governance-drilldown.service";
+import { AgentLifecycleReadModelService } from "./agent-lifecycle-read-model.service";
+import { AgentLifecycleControlService } from "./agent-lifecycle-control.service";
 
 @Module({
   imports: [
@@ -37,6 +39,8 @@ import { RuntimeGovernanceDrilldownService } from "./runtime-governance-drilldow
     RuntimeGovernanceReadModelService,
     RuntimeGovernanceControlService,
     RuntimeGovernanceDrilldownService,
+    AgentLifecycleReadModelService,
+    AgentLifecycleControlService,
   ],
 })
 export class ExplainabilityPanelModule {}

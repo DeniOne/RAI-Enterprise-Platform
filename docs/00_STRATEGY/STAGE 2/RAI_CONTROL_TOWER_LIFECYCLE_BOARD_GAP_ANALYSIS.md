@@ -132,10 +132,10 @@ last_updated: 2026-03-10
 | Future role tracking | `PARTIAL` | Есть manifests и governance path | Нет fleet-wide lifecycle stage board |
 | Promotion candidate visibility | `PARTIAL` | Backend статусы есть | Нет dedicated operator surface |
 | Canary rollout board | `PARTIAL` | Canary backend path есть | Нет visual board and unhealthy-first rollout view |
-| Freeze | `PARTIAL` | Есть quarantine/tool-first overrides, но это autonomy governance, а не lifecycle freeze | Нет отдельного freeze state board |
-| Rollback | `PARTIAL` | Backend rollback path и runbooks есть | Нет явного rollback board и version comparison |
-| Retirement | `MISSING` | Нет first-class retirement surface | Нет lifecycle retirement workflow |
-| Versioning board | `PARTIAL` | Config snapshots/change requests есть | Нет unified version lineage in Control Tower |
+| Freeze | `DONE` | Есть persisted lifecycle override, operator action и board/history surface | Нужен только live smoke |
+| Rollback | `PARTIAL` | Backend rollback path и runbooks есть, board action есть | Нужен richer comparison and lineage drilldown |
+| Retirement | `DONE` | Есть first-class retirement override и operator surface | Нужен только более глубокий archival workflow |
+| Versioning board | `PARTIAL` | Config snapshots/change requests есть, lineage уже surfaced | Нужен richer version comparison |
 | Fleet lifecycle heatmap | `MISSING` | Нет lifecycle heatmap | Нет operator summary по стадиям эволюции |
 
 ---
@@ -183,14 +183,12 @@ last_updated: 2026-03-10
 - где нужен rollback;
 - какие rollout windows unsafe.
 
-### 8.3 Freeze смешан с autonomy override
+### 8.3 Freeze больше не смешан с autonomy override
 
-Сейчас `QUARANTINE` и `TOOL_FIRST` уже работают, но это не то же самое, что lifecycle `freeze`.
+Этот разрыв закрыт:
 
-Разница:
-
-- `autonomy override` управляет способом исполнения;
-- `freeze` должен управлять эволюцией и продвижением версии/агента.
+- `autonomy override` остаётся runtime governance механизмом;
+- `freeze` теперь отдельный lifecycle override с собственной persistence и operator control.
 
 ### 8.4 Rollback существует без удобного operator board
 
@@ -200,13 +198,13 @@ Rollback path и runbooks уже есть, но оператор не имеет
 - сравнения `previous stable -> current candidate`;
 - наглядной цепочки `incident -> degraded canary -> rollback`.
 
-### 8.5 Retirement как lifecycle state фактически не surfaced
+### 8.5 Retirement surfaced, но archival workflow ещё можно усилить
 
-Сейчас можно логически считать роль выведенной, но нет:
+Сейчас уже есть:
 
-- отдельного retirement workflow;
-- retirement board;
-- retirement status summary.
+- отдельный retirement override;
+- retirement status в lifecycle summary;
+- retirement visibility в lifecycle table и history.
 
 ### 8.6 Versioning ещё не собран как lineage view
 

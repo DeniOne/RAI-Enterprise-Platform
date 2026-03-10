@@ -309,6 +309,16 @@ export const api = {
             apiClient.get<RuntimeGovernanceAgentDto[]>('/rai/explainability/runtime-governance/agents', { params: params?.timeWindowMs != null ? { timeWindowMs: params.timeWindowMs } : {} }),
         runtimeGovernanceDrilldowns: (params?: { timeWindowMs?: number; agentRole?: string }) =>
             apiClient.get<RuntimeGovernanceDrilldownsDto>('/rai/explainability/runtime-governance/drilldowns', { params: params ?? {} }),
+        lifecycleSummary: () =>
+            apiClient.get<AgentLifecycleSummaryDto>('/rai/explainability/lifecycle/summary'),
+        lifecycleAgents: () =>
+            apiClient.get<AgentLifecycleItemDto[]>('/rai/explainability/lifecycle/agents'),
+        lifecycleHistory: (params?: { limit?: number }) =>
+            apiClient.get<AgentLifecycleHistoryItemDto[]>('/rai/explainability/lifecycle/history', { params: params ?? {} }),
+        setLifecycleOverride: (data: { role: string; state: 'FROZEN' | 'RETIRED'; reason: string }) =>
+            apiClient.post<AgentLifecycleItemDto[]>('/rai/explainability/lifecycle/override', data),
+        clearLifecycleOverride: (data: { role: string }) =>
+            apiClient.post<AgentLifecycleItemDto[]>('/rai/explainability/lifecycle/override/clear', data),
         costHotspots: (params?: { timeWindowMs?: number; limit?: number }) =>
             apiClient.get('/rai/explainability/cost-hotspots', { params: params ?? {} }),
         traceTimeline: (traceId: string) =>
@@ -327,6 +337,14 @@ export const api = {
             apiClient.post<FutureAgentManifestValidation>('/rai/agents/onboarding/validate', data),
         createChangeRequest: (data: UpsertAgentConfigBody, scope: 'tenant' | 'global') =>
             apiClient.post('/rai/agents/config/change-requests', data, { params: { scope } }),
+        startCanary: (changeId: string) =>
+            apiClient.post<AgentConfigChangeRequestDto>(`/rai/agents/config/change-requests/${encodeURIComponent(changeId)}/canary/start`),
+        reviewCanary: (changeId: string, data: { baselineRejectionRate: number; canaryRejectionRate: number; sampleSize: number }) =>
+            apiClient.post<AgentConfigChangeRequestDto>(`/rai/agents/config/change-requests/${encodeURIComponent(changeId)}/canary/review`, data),
+        promoteChange: (changeId: string) =>
+            apiClient.post<AgentConfigChangeRequestDto>(`/rai/agents/config/change-requests/${encodeURIComponent(changeId)}/promote`),
+        rollbackChange: (changeId: string, reason: string) =>
+            apiClient.post<AgentConfigChangeRequestDto>(`/rai/agents/config/change-requests/${encodeURIComponent(changeId)}/rollback`, { reason }),
     },
     governance: {
         incidentsFeed: (params?: { limit?: number; offset?: number }) =>
@@ -518,6 +536,112 @@ export interface RuntimeGovernanceDrilldownsDto {
         incidentType: string | null;
         severity: string | null;
     }>;
+}
+
+export type AgentLifecycleStateDto =
+    | 'FUTURE_ROLE'
+    | 'PROMOTION_CANDIDATE'
+    | 'CANARY'
+    | 'CANONICAL_ACTIVE'
+    | 'FROZEN'
+    | 'ROLLED_BACK'
+    | 'RETIRED';
+
+export interface AgentLifecycleSummaryDto {
+    companyId: string;
+    templateCatalogCount: number;
+    totalTrackedRoles: number;
+    stateCounts: Record<AgentLifecycleStateDto, number>;
+    activeCanaries: Array<{
+        role: string;
+        targetVersion: string;
+        changeRequestId: string;
+    }>;
+    degradedCanaries: Array<{
+        role: string;
+        targetVersion: string;
+        changeRequestId: string;
+    }>;
+    promotionCandidates: Array<{
+        role: string;
+        targetVersion: string;
+        status: string;
+    }>;
+    rolledBackRoles: Array<{
+        role: string;
+        targetVersion: string;
+        rolledBackAt: string | null;
+    }>;
+}
+
+export interface AgentLifecycleItemDto {
+    role: string;
+    agentName: string;
+    ownerDomain: string;
+    class: 'canonical' | 'future_role';
+    lifecycleState: AgentLifecycleStateDto;
+    runtimeActive: boolean;
+    tenantAccessMode: 'INHERITED' | 'OVERRIDE' | 'DENIED' | 'UNKNOWN';
+    effectiveConfigId: string | null;
+    candidateVersion: string | null;
+    latestChangeRequestId: string | null;
+    changeRequestStatus: string | null;
+    canaryStatus: string | null;
+    rollbackStatus: string | null;
+    productionDecision: string | null;
+    currentVersion: string | null;
+    stableVersion: string | null;
+    previousStableVersion: string | null;
+    versionDelta: 'MATCHES_STABLE' | 'AHEAD_OF_STABLE' | 'ROLLED_BACK_TO_STABLE' | 'UNKNOWN';
+    promotedAt: string | null;
+    rolledBackAt: string | null;
+    updatedAt: string | null;
+    lifecycleOverride: {
+        state: 'FROZEN' | 'RETIRED';
+        reason: string;
+        createdAt: string;
+        createdByUserId: string | null;
+    } | null;
+    lineage: Array<{
+        changeRequestId: string;
+        targetVersion: string;
+        status: string;
+        canaryStatus: string;
+        rollbackStatus: string;
+        createdAt: string;
+        promotedAt: string | null;
+        rolledBackAt: string | null;
+    }>;
+    notes: string[];
+}
+
+export interface AgentLifecycleHistoryItemDto {
+    role: string;
+    state: 'FROZEN' | 'RETIRED';
+    reason: string;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+    clearedAt: string | null;
+    createdByUserId: string | null;
+    clearedByUserId: string | null;
+}
+
+export interface AgentConfigChangeRequestDto {
+    id: string;
+    role: string;
+    scope: 'GLOBAL' | 'TENANT';
+    targetVersion: string;
+    status: 'EVAL_FAILED' | 'READY_FOR_CANARY' | 'CANARY_ACTIVE' | 'APPROVED_FOR_PRODUCTION' | 'PROMOTED' | 'ROLLED_BACK';
+    evalVerdict: string | null;
+    canaryStatus: 'NOT_STARTED' | 'ACTIVE' | 'PASSED' | 'DEGRADED';
+    rollbackStatus: 'NOT_REQUIRED' | 'EXECUTED';
+    productionDecision: 'PENDING' | 'APPROVED' | 'REJECTED' | 'ROLLED_BACK';
+    requestedConfig: unknown;
+    promotedAt: string | null;
+    rolledBackAt: string | null;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface AgentConfigItem {

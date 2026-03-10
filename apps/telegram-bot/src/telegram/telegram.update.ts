@@ -16,6 +16,7 @@ const FRONT_OFFICE_CALLBACK_PREFIX = "fo";
 const FRONT_OFFICE_CALLBACK_MAX_LENGTH = 64;
 
 type FrontOfficeActionCode = "c" | "f" | "l";
+type TelegramTunnel = "front_office_rep" | "back_office_operator";
 
 interface FrontOfficeLinkPatch {
   farmRef?: string;
@@ -49,6 +50,64 @@ export class TelegramUpdate {
     if (!ctx.from) return null;
     const session = await this.session.getSession(ctx.from.id);
     return session?.token || null;
+  }
+
+  private resolveTelegramTunnel(user: any): TelegramTunnel {
+    if (user?.telegramTunnel === "back_office_operator") {
+      return "back_office_operator";
+    }
+
+    if (["MANAGER", "ADMIN", "CEO", "CFO", "AGRONOMIST"].includes(user?.role)) {
+      return "back_office_operator";
+    }
+
+    if (user?.accountId || user?.account?.id || user?.employeeProfile?.clientId) {
+      return "front_office_rep";
+    }
+
+    return "front_office_rep";
+  }
+
+  private getMiniAppUrl(): string {
+    return (
+      process.env.TELEGRAM_MINIAPP_URL ||
+      process.env.WEBAPP_URL ||
+      process.env.FRONTEND_URL ||
+      "http://localhost:3000/telegram/workspace"
+    );
+  }
+
+  private isTelegramMiniAppUrl(url: string): boolean {
+    return /^https:\/\//i.test(url);
+  }
+
+  private getBackOfficeLauncherKeyboard() {
+    const miniAppUrl = this.getMiniAppUrl();
+    if (!this.isTelegramMiniAppUrl(miniAppUrl)) {
+      return Markup.inlineKeyboard([
+        [Markup.button.callback("Помощь", "backoffice_help")],
+      ]);
+    }
+    return Markup.inlineKeyboard([
+      [Markup.button.webApp("Открыть рабочее место", miniAppUrl)],
+      [Markup.button.callback("Помощь", "backoffice_help")],
+    ]);
+  }
+
+  private async replyWithWorkspaceLauncher(
+    ctx: Context,
+    message = "Работа с хозяйствами и A-RAI вынесена в Telegram Mini App.",
+  ) {
+    const miniAppUrl = this.getMiniAppUrl();
+    await ctx.reply(
+      this.isTelegramMiniAppUrl(miniAppUrl)
+        ? `🧭 <b>Рабочее место бэкофиса</b>\n\n${message}\n\nВ общем чате бот больше не принимает свободный текст от менеджера.`
+        : `🧭 <b>Рабочее место бэкофиса</b>\n\n${message}\n\nВ общем чате бот больше не принимает свободный текст от менеджера.\n\nДля локального теста откройте вручную: ${miniAppUrl}`,
+      {
+        parse_mode: "HTML",
+        ...this.getBackOfficeLauncherKeyboard(),
+      },
+    );
   }
 
   private buildFrontOfficeCallbackData(
@@ -93,8 +152,12 @@ export class TelegramUpdate {
     const committedId = result.commitResult?.id
       ? `\ncommit: <code>${result.commitResult.id}</code>`
       : "";
+    const handoff =
+      result.handoffId || result.handoffStatus || result.targetOwnerRole
+        ? `\nhandoff: <b>${result.handoffStatus ?? "PENDING"}</b>${result.targetOwnerRole ? ` -> ${result.targetOwnerRole}` : ""}${result.handoffId ? ` (#<code>${result.handoffId}</code>)` : ""}`
+        : "";
 
-    return `${message}\ndraft: <code>${draftId}</code>\nstatus: <b>${status}</b>${intent}\n${must}${committedId}`;
+    return `${message}\ndraft: <code>${draftId}</code>\nstatus: <b>${status}</b>${intent}${handoff}\n${must}${committedId}`;
   }
 
   private async replyWithFrontOfficeDraft(
@@ -244,6 +307,14 @@ export class TelegramUpdate {
       return;
     }
 
+    if (this.resolveTelegramTunnel(user) === "back_office_operator") {
+      await this.replyWithWorkspaceLauncher(
+        ctx,
+        "Выберите хозяйство в Mini App или откройте вкладку A-RAI для отдельного диалога.",
+      );
+      return;
+    }
+
     const keyboard = Markup.keyboard([
       ["📋 Мои задачи", "📊 Прогресс"],
       ["🧠 Рекомендации", "📊 Опросы"],
@@ -252,6 +323,15 @@ export class TelegramUpdate {
     await ctx.reply(
       `👋 Добро пожаловать! Вы вошли как ${user.email ?? "Полевой работник"}.\nИспользуйте меню для навигации.`,
       keyboard,
+    );
+  }
+
+  @Action("backoffice_help")
+  async onBackOfficeHelp(@Ctx() ctx: Context): Promise<void> {
+    await ctx.answerCbQuery();
+    await this.replyWithWorkspaceLauncher(
+      ctx,
+      "Сценарий v1 такой: хозяйство пишет сюда, менеджер открывает Mini App, выбирает назначенное хозяйство и отвечает оттуда.",
     );
   }
 
@@ -897,6 +977,14 @@ export class TelegramUpdate {
     const user = await this.getUser(ctx);
     if (!user) return;
 
+    if (this.resolveTelegramTunnel(user) === "back_office_operator") {
+      await this.replyWithWorkspaceLauncher(
+        ctx,
+        "Чтобы написать хозяйству, сначала выберите его в разделе «Хозяйства». Чтобы поговорить с A-RAI, откройте отдельную вкладку внутри Mini App.",
+      );
+      return;
+    }
+
     const accessToken = await this.getAccessToken(ctx);
     if (!accessToken) return;
 
@@ -977,6 +1065,14 @@ export class TelegramUpdate {
   @On("photo")
   async onPhoto(@Ctx() ctx: any) {
     if (!ctx.from || !ctx.message.photo) return;
+    const user = await this.getUser(ctx);
+    if (user && this.resolveTelegramTunnel(user) === "back_office_operator") {
+      await this.replyWithWorkspaceLauncher(
+        ctx,
+        "Медиа от менеджера в общий бот не маршрутизируются. Используйте Mini App и конкретный thread хозяйства.",
+      );
+      return;
+    }
     const session = await this.session.getSession(ctx.from.id);
     if (!session?.token) return;
 
@@ -991,6 +1087,14 @@ export class TelegramUpdate {
   @On("voice")
   async onVoice(@Ctx() ctx: any) {
     if (!ctx.from || !ctx.message.voice) return;
+    const user = await this.getUser(ctx);
+    if (user && this.resolveTelegramTunnel(user) === "back_office_operator") {
+      await this.replyWithWorkspaceLauncher(
+        ctx,
+        "Голосовые сообщения менеджера не идут в общий ingress. Откройте Mini App и работайте из нужного контекста хозяйства.",
+      );
+      return;
+    }
     const session = await this.session.getSession(ctx.from.id);
     if (!session?.token) return;
 

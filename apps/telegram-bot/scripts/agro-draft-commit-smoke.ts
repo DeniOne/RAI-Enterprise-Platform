@@ -17,46 +17,61 @@ async function main() {
 
   const apiClient = {
     getUser: async () => ({ id: "user-1", email: "worker@rai.local" }),
-    createAgroEventDraft: async (payload: any) => {
-      logs.push(`draft:create eventType=${payload.eventType}`);
+    createFrontOfficeDraft: async (payload: any) => {
+      logs.push(`draft:create channel=${payload.channel}`);
       return {
+        status: "DRAFT_RECORDED",
+        confirmationRequired: true,
+        draftId: "draft-smoke-1",
         draft: {
           id: "draft-smoke-1",
-          status: "DRAFT",
-          missingMust: ["fieldRef"],
+          status: "NEEDS_LINK",
+          mustClarifications: ["LINK_OBJECT"],
         },
-        ui: { message: "Draft создан" },
+        mustClarifications: ["LINK_OBJECT"],
+        allowedActions: ["LINK", "FIX", "CONFIRM"],
       };
     },
-    fixAgroEventDraft: async () => {
+    fixFrontOfficeDraft: async () => {
       throw new Error("fix not used in smoke");
     },
-    linkAgroEventDraft: async (payload: any) => {
+    linkFrontOfficeDraft: async (draftId: string, payload: any) => {
       logs.push(
-        `draft:link draftId=${payload.draftId} farmRef=${payload.farmRef} fieldRef=${payload.fieldRef} taskRef=${payload.taskRef}`,
+        `draft:link draftId=${draftId} farmRef=${payload.farmRef} fieldId=${payload.fieldId} taskId=${payload.taskId}`,
       );
       return {
+        status: "DRAFT_RECORDED",
+        confirmationRequired: true,
+        draftId,
         draft: {
-          id: payload.draftId,
-          status: "READY_FOR_CONFIRM",
-          missingMust: [],
+          id: draftId,
+          status: "READY_TO_CONFIRM",
+          mustClarifications: [],
         },
-        ui: { message: "Draft обновлён" },
+        mustClarifications: [],
+        allowedActions: ["CONFIRM"],
       };
     },
-    confirmAgroEventDraft: async (draftId: string) => {
+    confirmFrontOfficeDraft: async (draftId: string) => {
       logs.push(`draft:confirm draftId=${draftId}`);
       return {
+        status: "COMMITTED",
+        confirmationRequired: false,
+        draftId,
         draft: {
           id: draftId,
           status: "COMMITTED",
-          missingMust: [],
+          mustClarifications: [],
         },
-        committed: {
-          id: "commit-smoke-1",
-          provenanceHash: "hash-smoke-1",
+        commitResult: {
+          kind: "handoff",
+          id: "handoff-smoke-1",
+          handoffId: "handoff-smoke-1",
+          handoffStatus: "ROUTED",
         },
-        ui: { message: "Событие успешно закоммичено" },
+        handoffId: "handoff-smoke-1",
+        handoffStatus: "ROUTED",
+        targetOwnerRole: "crm_agent",
       };
     },
     recordAdvisoryFeedback: async () => ({ traceId: "trace-1", status: "RECORDED" }),
@@ -91,10 +106,10 @@ async function main() {
     },
   } as any);
 
-  await update.onAgroAction({
+  await update.onFrontOfficeAction({
     from: { id: 101, username: "worker" },
-    match: ["ag:l:draft-smoke-1", "l", "draft-smoke-1"],
-    callbackQuery: { data: "ag:l:draft-smoke-1" },
+    match: ["fo:l:draft-smoke-1", "l", "draft-smoke-1"],
+    callbackQuery: { data: "fo:l:draft-smoke-1" },
     answerCbQuery: async (text?: string) => {
       logs.push(`callback:link ${text ?? ""}`.trim());
     },
@@ -105,16 +120,16 @@ async function main() {
 
   await update.onText({
     from: { id: 101, username: "worker" },
-    message: { text: "farm=farm-1 field=field-2 task=task-1" },
+    message: { text: "farm=farm-1 field=field-2 season=season-2 task=task-1" },
     reply: async (text: string) => {
       logs.push(`reply:text ${text.replace(/\n/g, " | ")}`);
     },
   } as any);
 
-  await update.onAgroAction({
+  await update.onFrontOfficeAction({
     from: { id: 101, username: "worker" },
-    match: ["ag:c:draft-smoke-1", "c", "draft-smoke-1"],
-    callbackQuery: { data: "ag:c:draft-smoke-1" },
+    match: ["fo:c:draft-smoke-1", "c", "draft-smoke-1"],
+    callbackQuery: { data: "fo:c:draft-smoke-1" },
     answerCbQuery: async (text?: string) => {
       logs.push(`callback:confirm ${text ?? ""}`.trim());
     },
@@ -123,7 +138,7 @@ async function main() {
     },
   } as any);
 
-  console.log("smoke: telegram agro draft->link->confirm");
+  console.log("smoke: telegram front-office draft->link->confirm");
   for (const line of logs) {
     console.log(line);
   }
