@@ -1,145 +1,264 @@
----
+﻿---
 id: DOC-INS-AGT-PROFILE-007
 type: Instruction
 layer: Agents
 status: Active
-version: 1.0.0
+version: 1.1.0
 owners: [@techlead]
-last_updated: 2026-03-08
+last_updated: 2026-03-10
 ---
 
-# ИНСТРУКЦИЯ — ПРОФИЛЬ АГЕНТА STRATEGIST
+# РРќРЎРўР РЈРљР¦РРЇ вЂ” РџР РћР¤РР›Р¬ РђР“Р•РќРўРђ STRATEGIST
 
-## 1. Назначение
+## 1. РќР°Р·РЅР°С‡РµРЅРёРµ
 
-Документ описывает role `strategist` как плановый стратегический агент.
+Р”РѕРєСѓРјРµРЅС‚ РѕРїРёСЃС‹РІР°РµС‚ role `strategist` РєР°Рє РїР»Р°РЅРѕРІС‹Р№ СЃС‚СЂР°С‚РµРіРёС‡РµСЃРєРёР№ Р°РіРµРЅС‚.
 
-## 2. Когда применять
+## 2. РљРѕРіРґР° РїСЂРёРјРµРЅСЏС‚СЊ
 
-Использовать документ при проектировании отдельного стратегического owner-agent и сценарного advisory.
+РСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РґРѕРєСѓРјРµРЅС‚ РїСЂРё РїСЂРѕРµРєС‚РёСЂРѕРІР°РЅРёРё РѕС‚РґРµР»СЊРЅРѕРіРѕ СЃС‚СЂР°С‚РµРіРёС‡РµСЃРєРѕРіРѕ owner-agent Рё СЃС†РµРЅР°СЂРЅРѕРіРѕ advisory.
 
-## 3. Статус агента
+## 3. РЎС‚Р°С‚СѓСЃ Р°РіРµРЅС‚Р°
 
-- Статус: плановая template/future role.
-- Runtime family: не реализована.
-- Owner domain в template: `strategy`.
+- РЎС‚Р°С‚СѓСЃ: РїР»Р°РЅРѕРІР°СЏ template/future role.
+- Runtime family: РЅРµ СЂРµР°Р»РёР·РѕРІР°РЅР°.
+- Owner domain РІ template: `strategy`.
 - Execution adapter: `knowledge`.
 
-## 4. Стратегический образ агента в Stage 2
+## 4. РЎС‚СЂР°С‚РµРіРёС‡РµСЃРєРёР№ РѕР±СЂР°Р· Р°РіРµРЅС‚Р° РІ Stage 2
 
-Стратегически агент должен отвечать за:
+РЎС‚СЂР°С‚РµРіРёС‡РµСЃРєРё Р°РіРµРЅС‚ РґРѕР»Р¶РµРЅ РѕС‚РІРµС‡Р°С‚СЊ Р·Р°:
 
-- сценарии;
-- стратегические компромиссы;
+- СЃС†РµРЅР°СЂРёРё;
+- СЃС‚СЂР°С‚РµРіРёС‡РµСЃРєРёРµ РєРѕРјРїСЂРѕРјРёСЃСЃС‹;
 - portfolio thinking;
-- long-range advisory без автономного исполнения.
+- long-range advisory Р±РµР· Р°РІС‚РѕРЅРѕРјРЅРѕРіРѕ РёСЃРїРѕР»РЅРµРЅРёСЏ.
 
-## 5. Фактическое состояние агента по коду
+## 5. Р¤Р°РєС‚РёС‡РµСЃРєРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ Р°РіРµРЅС‚Р° РїРѕ РєРѕРґСѓ
 
-Подтверждён только как onboarding template:
+РџРѕРґС‚РІРµСЂР¶РґС‘РЅ С‚РѕР»СЊРєРѕ РєР°Рє onboarding template:
 
 - `ownerDomain: strategy`
-- advisory-only режим
+- advisory-only СЂРµР¶РёРј
 - `StrategyToolsRegistry`
 - strong-model routing
 
-Canonical runtime role не реализована.
+Canonical runtime role РЅРµ СЂРµР°Р»РёР·РѕРІР°РЅР°.
 
-## 6. Домены ответственности
+## 6. Р”РѕРјРµРЅС‹ РѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕСЃС‚Рё
 
-- стратегия;
-- инициативы;
-- сценарии;
-- portfolio tradeoffs.
+- СЃС‚СЂР°С‚РµРіРёСЏ;
+- РёРЅРёС†РёР°С‚РёРІС‹;
+- СЃС†РµРЅР°СЂРёРё;
+- portfolio tradeoffs;
+- strategic interpretation Рё long-range advisory РєР°Рє advisory-only СЃР»РѕР№, Р° РЅРµ execution-layer.
 
-## 7. Что агент обязан делать
+## 7. Р§С‚Рѕ Р°РіРµРЅС‚ РѕР±СЏР·Р°РЅ РґРµР»Р°С‚СЊ
 
-- Давать стратегические варианты и assumptions.
-- Отделять thesis от evidence.
-- Оставаться advisory-only.
+- Р”Р°РІР°С‚СЊ СЃС‚СЂР°С‚РµРіРёС‡РµСЃРєРёРµ РІР°СЂРёР°РЅС‚С‹ Рё assumptions.
+- РћС‚РґРµР»СЏС‚СЊ thesis РѕС‚ evidence.
+- РћСЃС‚Р°РІР°С‚СЊСЃСЏ advisory-only.
 
-## 8. Что агенту запрещено делать
+## 8. Р§С‚Рѕ Р°РіРµРЅС‚Сѓ Р·Р°РїСЂРµС‰РµРЅРѕ РґРµР»Р°С‚СЊ
 
-- Автономно менять стратегию компании.
-- Подменять economist, legal или controller ownership.
-- Выполнять реальные бизнес-действия.
+- РђРІС‚РѕРЅРѕРјРЅРѕ РјРµРЅСЏС‚СЊ СЃС‚СЂР°С‚РµРіРёСЋ РєРѕРјРїР°РЅРёРё.
+- Р‘СЂР°С‚СЊ ownership РїРѕ plan/fact, scenario simulation РёР»Рё finance risk assessment С‚РѕР»СЊРєРѕ РїРѕС‚РѕРјСѓ, С‡С‚Рѕ РІРѕРїСЂРѕСЃ СЃС„РѕСЂРјСѓР»РёСЂРѕРІР°РЅ СЃС‚СЂР°С‚РµРіРёС‡РµСЃРєРё.
+- РџРѕРґРјРµРЅСЏС‚СЊ economist, legal РёР»Рё controller ownership.
+- РџСЂРёС‚РІРѕСЂСЏС‚СЊСЃСЏ production-ready runtime owner, РїРѕРєР° canonical strategy family РЅРµ РїРѕРґРЅСЏС‚Р°.
+- Р’С‹РїРѕР»РЅСЏС‚СЊ СЂРµР°Р»СЊРЅС‹Рµ Р±РёР·РЅРµСЃ-РґРµР№СЃС‚РІРёСЏ.
 
-## 9. Текущий фактический функционал
+## 9. РўРµРєСѓС‰РёР№ С„Р°РєС‚РёС‡РµСЃРєРёР№ С„СѓРЅРєС†РёРѕРЅР°Р»
 
-- Template manifest;
-- governance path;
-- runtime defaults для будущего агента.
+РџРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Р№ current state РЅР° template-СѓСЂРѕРІРЅРµ:
 
-## 10. Максимально допустимый функционал
+- template manifest РґР»СЏ `strategist`;
+- governance path Рё advisory-only policy;
+- runtime defaults РґР»СЏ Р±СѓРґСѓС‰РµРіРѕ Р°РіРµРЅС‚Р°;
+- `StrategyToolsRegistry` РЅР° template-СѓСЂРѕРІРЅРµ;
+- template semantics РґР»СЏ strategic scenarios, tradeoffs Рё initiative prioritization.
+
+Р§С‚Рѕ РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ СЃРµР№С‡Р°СЃ РєР°Рє runtime-С„СѓРЅРєС†РёРѕРЅР°Р»:
+
+- canonical runtime family;
+- РїРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Р№ strategy intent catalog РІ `rai-chat`;
+- production strategy tool surface;
+- direct production routing РІ `strategist` РєР°Рє РІ `primary owner-agent`.
+
+## 10. РњР°РєСЃРёРјР°Р»СЊРЅРѕ РґРѕРїСѓСЃС‚РёРјС‹Р№ С„СѓРЅРєС†РёРѕРЅР°Р»
 
 - Strategic scenario analysis;
 - initiative prioritization;
 - tradeoff maps;
-- long-horizon recommendations с evidence.
+- long-horizon recommendations СЃ evidence;
+- portfolio framing Рё strategic thesis building;
+- governed advisory handoff РґР»СЏ strategy / finance / control РєРѕРЅС‚СѓСЂРѕРІ.
 
-## 11. Связи с оркестратором
+Р РѕР»СЊ РЅРµ РґРѕР»Р¶РЅР° Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё СЂР°СЃС€РёСЂСЏС‚СЊСЃСЏ РґРѕ:
 
-- Пока только template binding через onboarding.
-- В runtime agent topology не присутствует.
+- ownership РЅР°Рґ `compute_plan_fact`, `simulate_scenario`, `compute_risk_assessment`;
+- execution ownership РІ contracts, CRM, agronomy РёР»Рё monitoring;
+- autonomous strategy execution;
+- СЃРєСЂС‹С‚РѕРіРѕ runtime-РґСѓР±Р»СЏ `economist`.
 
-## 12. Связи с другими агентами
+## 11. РЎРІСЏР·Рё СЃ РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂРѕРј
 
-- С `economist`: будущий handoff по финансовым сценариям.
-- С `knowledge`: текущее template execution inheritance.
-- С `controller`: будущий контроль исполнения стратегических решений.
+- РџРѕРєР° С‚РѕР»СЊРєРѕ template binding С‡РµСЂРµР· onboarding.
+- Р’ runtime agent topology РЅРµ РїСЂРёСЃСѓС‚СЃС‚РІСѓРµС‚.
+- Р”Рѕ canonical enablement direct production routing РІ `strategist` Р·Р°РїСЂРµС‰С‘РЅ.
 
-## 13. Связи с доменными модулями
+## 12. РЎРІСЏР·Рё СЃ РґСЂСѓРіРёРјРё Р°РіРµРЅС‚Р°РјРё
 
-- Будущий `StrategyToolsRegistry`
-- стратегические источники и corpora
+- РЎ `economist`: Р±СѓРґСѓС‰РёР№ handoff РїРѕ С„РёРЅР°РЅСЃРѕРІС‹Рј СЃС†РµРЅР°СЂРёСЏРј.
+- РЎ `knowledge`: С‚РµРєСѓС‰РµРµ template execution inheritance.
+- РЎ `controller`: Р±СѓРґСѓС‰РёР№ РєРѕРЅС‚СЂРѕР»СЊ РёСЃРїРѕР»РЅРµРЅРёСЏ СЃС‚СЂР°С‚РµРіРёС‡РµСЃРєРёС… СЂРµС€РµРЅРёР№.
+
+### 12.1 РќРѕСЂРјР°С‚РёРІРЅС‹Рµ handoff-trigger Р·РѕРЅС‹
+
+`strategist` РјРѕР¶РµС‚ Р±С‹С‚СЊ owner С‚РѕР»СЊРєРѕ standalone strategy/advisory-Р·Р°РїСЂРѕСЃР°, РєРѕРіРґР° РґРѕРјРёРЅРёСЂСѓСЋС‰РµРµ РґРµР№СЃС‚РІРёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РѕС‚РЅРѕСЃРёС‚СЃСЏ Рє strategic framing:
+
+- СЃС„РѕСЂРјРёСЂРѕРІР°С‚СЊ strategic options;
+- РїСЂРёРѕСЂРёС‚РёР·РёСЂРѕРІР°С‚СЊ РёРЅРёС†РёР°С‚РёРІС‹;
+- СЃРѕР±СЂР°С‚СЊ portfolio tradeoffs;
+- РѕС„РѕСЂРјРёС‚СЊ long-range recommendation;
+- РґР°С‚СЊ strategic thesis Рё assumptions РїРѕ РЅРµСЃРєРѕР»СЊРєРёРј СЃС†РµРЅР°СЂРёСЏРј.
+
+Р”Р°Р¶Рµ РІ СЌС‚РёС… СЃР»СѓС‡Р°СЏС… РґРѕ canonical enablement direct production routing РІ `strategist` РѕСЃС‚Р°С‘С‚СЃСЏ Р·Р°РїСЂРµС‰С‘РЅРЅС‹Рј. РћСЂРєРµСЃС‚СЂР°С‚РѕСЂ РґРѕР»Р¶РµРЅ С‚СЂР°РєС‚РѕРІР°С‚СЊ СЌС‚Рѕ РєР°Рє future advisory-path, Р° РЅРµ РєР°Рє СѓР¶Рµ РґРѕСЃС‚СѓРїРЅС‹Р№ runtime owner.
+
+Ownership РЅРµ РґРѕР»Р¶РµРЅ РїРµСЂРµС…РѕРґРёС‚СЊ РІ `strategist`, РєРѕРіРґР° РіР»Р°РІРЅРѕРµ РґРµР№СЃС‚РІРёРµ РѕСЃС‚Р°С‘С‚СЃСЏ Сѓ runtime owner:
+
+- РїРѕСЃС‡РёС‚Р°С‚СЊ plan/fact;
+- РІС‹РїРѕР»РЅРёС‚СЊ scenario simulation РєР°Рє deterministic finance-analysis;
+- РІС‹РїРѕР»РЅРёС‚СЊ finance risk assessment;
+- СЃРѕР·РґР°С‚СЊ РёР»Рё РёСЃРїРѕР»РЅРёС‚СЊ РґРѕРіРѕРІРѕСЂРЅС‹Р№ РѕР±СЉРµРєС‚;
+- РІС‹РїРѕР»РЅРёС‚СЊ CRM, agronomy РёР»Рё monitoring action.
+
+Р–С‘СЃС‚РєРёРµ СЂР°Р·Р»РёС‡РёСЏ:
+
+- `strategist` РґР°С‘С‚ strategic framing, tradeoffs Рё long-horizon advisory;
+- `economist` РІР»Р°РґРµРµС‚ deterministic finance analysis Рё economic interpretation;
+- `knowledge` РІР»Р°РґРµРµС‚ corpus retrieval Рё evidence lookup;
+- `controller` РІ Р±СѓРґСѓС‰РµРј РЅСѓР¶РµРЅ РґР»СЏ control implications, Р° РЅРµ РґР»СЏ strategy authorship.
+
+Р”РѕРїСѓСЃС‚РёРјС‹Рµ governed handoff:
+
+- РёР· `economist`, РєРѕРіРґР° deterministic finance outputs РЅСѓР¶РЅРѕ РїРѕРґРЅСЏС‚СЊ РЅР° strategic advisory-СѓСЂРѕРІРµРЅСЊ;
+- РёР· `knowledge`, РєРѕРіРґР° corpus retrieval СѓР¶Рµ РЅР°Р№РґРµРЅ Рё РЅСѓР¶РµРЅ strategic interpretation СЃР»РѕР№;
+- РёР· `controller`, РєРѕРіРґР° control exception С‚СЂРµР±СѓРµС‚ strategic implication review;
+- РІ `economist`, РєРѕРіРґР° strategic scenario С‚СЂРµР±СѓРµС‚ С„РёРЅР°РЅСЃРѕРІРѕР№ РѕС†РµРЅРєРё.
+
+РђРЅС‚Рё-С‚СЂРёРіРіРµСЂС‹:
+
+- РЅР°Р»РёС‡РёРµ СЃР»РѕРІ `strategy`, `initiative`, `portfolio`, РµСЃР»Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РїРѕ СЃСѓС‚Рё РїСЂРѕСЃРёС‚ `compute_plan_fact` РёР»Рё `simulate_scenario`;
+- РЅР°Р»РёС‡РёРµ strategic route Р±РµР· СЃРјРµРЅС‹ РґРѕРјРёРЅРёСЂСѓСЋС‰РµРіРѕ РґРµР№СЃС‚РІРёСЏ;
+- РЅР°Р»РёС‡РёРµ С„РёРЅР°РЅСЃРѕРІС‹С… РјРµС‚СЂРёРє Р±РµР· СЃР°РјРѕСЃС‚РѕСЏС‚РµР»СЊРЅРѕРіРѕ strategic question;
+- РЅР°Р»РёС‡РёРµ СЃС†РµРЅР°СЂРЅРѕРіРѕ СЃР»РѕРІР° РІ execution-Р·Р°РїСЂРѕСЃРµ РґСЂСѓРіРѕРіРѕ РґРѕРјРµРЅР°.
+
+Р­С‚Рё РїСЂРёР·РЅР°РєРё РЅРµ РґРѕР»Р¶РЅС‹ РїРµСЂРµРІРѕРґРёС‚СЊ ownership РІ `strategist`, РµСЃР»Рё РіР»Р°РІРЅРѕРµ РґРµР№СЃС‚РІРёРµ РѕСЃС‚Р°С‘С‚СЃСЏ Сѓ `economist` РёР»Рё РґСЂСѓРіРѕРіРѕ РґРѕРјРµРЅРЅРѕРіРѕ owner-Р°.
+
+## 13. РЎРІСЏР·Рё СЃ РґРѕРјРµРЅРЅС‹РјРё РјРѕРґСѓР»СЏРјРё
+
+- Р‘СѓРґСѓС‰РёР№ `StrategyToolsRegistry`
+- СЃС‚СЂР°С‚РµРіРёС‡РµСЃРєРёРµ РёСЃС‚РѕС‡РЅРёРєРё Рё corpora
 
 ## 14. Required Context Contract
 
-Ещё не формализован как canonical runtime contract.
+РљР°Рє canonical runtime contract РЅРµ С„РѕСЂРјР°Р»РёР·РѕРІР°РЅ.
+
+РќР° future/template-СѓСЂРѕРІРЅРµ СЃС‚СЂР°С‚РµРіРёС‡РµСЃРєРё РїРѕР»РµР·РЅС‹:
+
+- scenario set РёР»Рё initiative context;
+- portfolio / strategic horizon;
+- supporting finance evidence РёР»Рё corpus evidence;
+- СЏРІРЅС‹Р№ strategic question РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ.
 
 ## 15. Intent Catalog
 
-Ещё не формализован как canonical runtime catalog.
+### 15.1 РџРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Рµ current intent-С‹
+
+РџРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹С… canonical runtime intent-РѕРІ СЃРµР№С‡Р°СЃ РЅРµС‚.
+
+Р•СЃС‚СЊ С‚РѕР»СЊРєРѕ template-level semantics РґР»СЏ:
+
+- strategic scenario framing;
+- initiative prioritization;
+- portfolio tradeoff commentary;
+- long-horizon strategic summary.
+
+### 15.2 РњР°РєСЃРёРјР°Р»СЊРЅРѕ РґРѕРїСѓСЃС‚РёРјС‹Р№ intent-scope
+
+Р’ РїСЂРµРґРµР»Р°С… strategy-domain РґРѕРїСѓСЃС‚РёРјС‹ С‚РѕР»СЊРєРѕ С‚Р°РєРёРµ Р±СѓРґСѓС‰РёРµ intent-С‹:
+
+- strategic framing;
+- initiative prioritization;
+- portfolio tradeoff analysis;
+- strategic summary Рё thesis building;
+- governed advisory handoff support РґР»СЏ strategy / finance / control РєРѕРЅС‚СѓСЂРѕРІ.
+
+Р­С‚Рё intent-С‹ РЅРµ РґРѕР»Р¶РЅС‹ РїСЂРµРІСЂР°С‰Р°С‚СЊ `strategist` РІ owner РґР»СЏ `economist` analysis, contracts execution, CRM, agronomy РёР»Рё monitoring.
 
 ## 16. Tool surface
 
-- `StrategyToolsRegistry` заявлен в template.
+### 16.1 РџРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Р№ current tool surface
+
+РќР° С‚РµРєСѓС‰РµРј СЌС‚Р°РїРµ РїРѕРґС‚РІРµСЂР¶РґС‘РЅ С‚РѕР»СЊРєРѕ template-level surface:
+
+- `StrategyToolsRegistry`
+
+Canonical runtime tool surface РІ `rai-chat` РїРѕРєР° РЅРµ РїРѕРґС‚РІРµСЂР¶РґС‘РЅ.
+
+### 16.2 РњР°РєСЃРёРјР°Р»СЊРЅРѕ РґРѕРїСѓСЃС‚РёРјС‹Р№ tool surface
+
+Р’ С†РµР»РµРІРѕР№ РјРѕРґРµР»Рё РґРѕРїСѓСЃС‚РёРјС‹ С‚РѕР»СЊРєРѕ strategy-СЃРїРµС†РёС„РёС‡РЅС‹Рµ СЂР°СЃС€РёСЂРµРЅРёСЏ:
+
+- scenario framing tooling;
+- tradeoff mapping tooling;
+- strategic summary assembly;
+- advisory context preparation.
+
+Tool surface РЅРµ РґРѕР»Р¶РµРЅ СЂР°СЃС€РёСЂСЏС‚СЊСЃСЏ РІ:
+
+- finance-owner tools;
+- contracts execution tools;
+- CRM tools;
+- agronomy tools;
+- monitoring-owner tools.
 
 ## 17. UI surface
 
-- Пока только onboarding.
-- Отдельные strategy work windows не подтверждены кодом.
+- РџРѕРєР° С‚РѕР»СЊРєРѕ onboarding.
+- РћС‚РґРµР»СЊРЅС‹Рµ strategy work windows РЅРµ РїРѕРґС‚РІРµСЂР¶РґРµРЅС‹ РєРѕРґРѕРј.
 
 ## 18. Guardrails
 
-- Только advisory.
+- РўРѕР»СЊРєРѕ advisory.
 - `strategy_changes_require_exec_review`
 - `no_autonomous_execution`
 
-## 19. Основные риски и failure modes
+## 19. РћСЃРЅРѕРІРЅС‹Рµ СЂРёСЃРєРё Рё failure modes
 
-- Превращение стратегической роли в vague chatbot.
-- Подмена economist-owner на сценарных задачах.
-- Отсутствие явного owner-agent при существующем strategic module.
+- РџСЂРµРІСЂР°С‰РµРЅРёРµ СЃС‚СЂР°С‚РµРіРёС‡РµСЃРєРѕР№ СЂРѕР»Рё РІ vague chatbot.
+- РџРѕРґРјРµРЅР° economist-owner РЅР° СЃС†РµРЅР°СЂРЅС‹С… Р·Р°РґР°С‡Р°С….
+- РћС‚СЃСѓС‚СЃС‚РІРёРµ СЏРІРЅРѕРіРѕ owner-agent РїСЂРё СЃСѓС‰РµСЃС‚РІСѓСЋС‰РµРј strategic module.
 
-## 20. Требования к тестам
+## 20. РўСЂРµР±РѕРІР°РЅРёСЏ Рє С‚РµСЃС‚Р°Рј
 
 - Template validation.
 - Governance validation.
-- После enablement: routing, evidence, scenario regression sets.
+- РџРѕСЃР»Рµ enablement: routing, evidence, scenario regression sets.
 
-## 21. Критерии production-ready
+## 21. РљСЂРёС‚РµСЂРёРё production-ready
 
 - Canonical runtime family.
 - Strategy-specific contracts.
 - Evidence-backed scenario engine or read corpus.
-- Smoke-набор стратегических кейсов.
+- Smoke-РЅР°Р±РѕСЂ СЃС‚СЂР°С‚РµРіРёС‡РµСЃРєРёС… РєРµР№СЃРѕРІ.
 
-## 22. Связанные файлы и точки кода
+## 22. РЎРІСЏР·Р°РЅРЅС‹Рµ С„Р°Р№Р»С‹ Рё С‚РѕС‡РєРё РєРѕРґР°
 
-- [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md)
-- [A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md)
-- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
-- [agent-management.service.ts](/root/RAI_EP/apps/api/src/modules/explainability/agent-management.service.ts)
-- [page.tsx](/root/RAI_EP/apps/web/app/(app)/control-tower/agents/page.tsx)
+- [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md](../../00_STRATEGY/STAGE%202/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md)
+- [A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md](../../00_STRATEGY/STAGE%202/A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md)
+- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](../INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
+- [agent-management.service.ts](../../../apps/api/src/modules/explainability/agent-management.service.ts)
+- [page.tsx](../../../apps/web/app/(app)/control-tower/agents/page.tsx)
+
 

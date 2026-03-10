@@ -1,101 +1,106 @@
----
+﻿---
 id: DOC-INS-AGT-003
 type: Instruction
 layer: Agents
 status: Active
-version: 1.0.0
+version: 1.1.0
 owners: [@techlead]
-last_updated: 2026-03-08
+last_updated: 2026-03-10
 ---
 
-# ИНСТРУКЦИЯ — АРХИТЕКТУРА ВЗАИМОДЕЙСТВИЯ АГЕНТНОЙ ПЛАТФОРМЫ
+# РРќРЎРўР РЈРљР¦РРЇ вЂ” РђР РҐРРўР•РљРўРЈР Рђ Р’Р—РђРРњРћР”Р•Р™РЎРўР’РРЇ РђР“Р•РќРўРќРћР™ РџР›РђРўР¤РћР РњР«
 
-## 1. Назначение
+## 1. РќР°Р·РЅР°С‡РµРЅРёРµ
 
-Этот документ фиксирует:
+Р­С‚РѕС‚ РґРѕРєСѓРјРµРЅС‚ С„РёРєСЃРёСЂСѓРµС‚:
 
-- как фактически устроена текущая агентная платформа `RAI_EP`;
-- как должна выглядеть целевая схема по канону `Stage 2`;
-- где между стратегическим замыслом и кодом уже есть разрывы;
-- как правильно интерпретировать связи между оркестратором, агентами, инструментами и доменными модулями.
+- РєР°Рє С„Р°РєС‚РёС‡РµСЃРєРё СѓСЃС‚СЂРѕРµРЅР° С‚РµРєСѓС‰Р°СЏ Р°РіРµРЅС‚РЅР°СЏ РїР»Р°С‚С„РѕСЂРјР° `RAI_EP`;
+- РєР°Рє РґРѕР»Р¶РЅР° РІС‹РіР»СЏРґРµС‚СЊ С†РµР»РµРІР°СЏ СЃС…РµРјР° РїРѕ РєР°РЅРѕРЅСѓ `Stage 2`;
+- РіРґРµ РјРµР¶РґСѓ СЃС‚СЂР°С‚РµРіРёС‡РµСЃРєРёРј Р·Р°РјС‹СЃР»РѕРј Рё РєРѕРґРѕРј СѓР¶Рµ РµСЃС‚СЊ СЂР°Р·СЂС‹РІС‹;
+- РєР°Рє РїСЂР°РІРёР»СЊРЅРѕ РёРЅС‚РµСЂРїСЂРµС‚РёСЂРѕРІР°С‚СЊ СЃРІСЏР·Рё РјРµР¶РґСѓ РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂРѕРј, Р°РіРµРЅС‚Р°РјРё, РёРЅСЃС‚СЂСѓРјРµРЅС‚Р°РјРё Рё РґРѕРјРµРЅРЅС‹РјРё РјРѕРґСѓР»СЏРјРё.
 
-Документ нужен как рабочий стандарт для:
+Р”РѕРєСѓРјРµРЅС‚ РЅСѓР¶РµРЅ РєР°Рє СЂР°Р±РѕС‡РёР№ СЃС‚Р°РЅРґР°СЂС‚ РґР»СЏ:
 
-- проектирования новых agent flows;
-- выделения owner-agent для доменных контуров;
-- проверки, не маскирует ли UI fallback отсутствие реального agent-owner;
-- проектирования governed handoff между агентами.
-
----
-
-## 2. Когда применять
-
-Использовать документ обязательно, когда:
-
-- создаётся новый агент;
-- расширяется зона ответственности существующего агента;
-- подключается новый доменный модуль к AI-контуру;
-- проектируется handoff между агентами;
-- выявлен сценарий, где чат показывает fallback вместо реальной агентной работы;
-- нужно понять, является ли проблема “ошибкой агента” или “отсутствием owner-agent”.
+- РїСЂРѕРµРєС‚РёСЂРѕРІР°РЅРёСЏ РЅРѕРІС‹С… agent flows;
+- РІС‹РґРµР»РµРЅРёСЏ owner-agent РґР»СЏ РґРѕРјРµРЅРЅС‹С… РєРѕРЅС‚СѓСЂРѕРІ;
+- РїСЂРѕРІРµСЂРєРё, РЅРµ РјР°СЃРєРёСЂСѓРµС‚ Р»Рё UI fallback РѕС‚СЃСѓС‚СЃС‚РІРёРµ СЂРµР°Р»СЊРЅРѕРіРѕ agent-owner;
+- РїСЂРѕРµРєС‚РёСЂРѕРІР°РЅРёСЏ governed handoff РјРµР¶РґСѓ Р°РіРµРЅС‚Р°РјРё.
 
 ---
 
-## 3. Предварительные условия
+## 2. РљРѕРіРґР° РїСЂРёРјРµРЅСЏС‚СЊ
 
-Перед использованием этого документа нужно опираться на:
+РСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РґРѕРєСѓРјРµРЅС‚ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ, РєРѕРіРґР°:
 
-- [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md)
-- [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md)
-- [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md)
-- [RAI_AGENT_RUNTIME_GOVERNANCE.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_RUNTIME_GOVERNANCE.md)
-- [RAI_SWARM_CONTROL_TOWER_ARCHITECTURE.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_SWARM_CONTROL_TOWER_ARCHITECTURE.md)
-- [A_RAI_AGENT_INTERACTION_BLUEPRINT.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/A_RAI_AGENT_INTERACTION_BLUEPRINT.md)
-- [A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md)
-- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
-- [agent-registry.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agent-registry.service.ts)
-- [supervisor-agent.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/supervisor-agent.service.ts)
-- [agent-execution-adapter.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/runtime/agent-execution-adapter.service.ts)
-- [tool-call.planner.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/runtime/tool-call.planner.ts)
-- [agent-interaction-contracts.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agent-contracts/agent-interaction-contracts.ts)
+- СЃРѕР·РґР°С‘С‚СЃСЏ РЅРѕРІС‹Р№ Р°РіРµРЅС‚;
+- СЂР°СЃС€РёСЂСЏРµС‚СЃСЏ Р·РѕРЅР° РѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕСЃС‚Рё СЃСѓС‰РµСЃС‚РІСѓСЋС‰РµРіРѕ Р°РіРµРЅС‚Р°;
+- РїРѕРґРєР»СЋС‡Р°РµС‚СЃСЏ РЅРѕРІС‹Р№ РґРѕРјРµРЅРЅС‹Р№ РјРѕРґСѓР»СЊ Рє AI-РєРѕРЅС‚СѓСЂСѓ;
+- РїСЂРѕРµРєС‚РёСЂСѓРµС‚СЃСЏ handoff РјРµР¶РґСѓ Р°РіРµРЅС‚Р°РјРё;
+- РІС‹СЏРІР»РµРЅ СЃС†РµРЅР°СЂРёР№, РіРґРµ С‡Р°С‚ РїРѕРєР°Р·С‹РІР°РµС‚ fallback РІРјРµСЃС‚Рѕ СЂРµР°Р»СЊРЅРѕР№ Р°РіРµРЅС‚РЅРѕР№ СЂР°Р±РѕС‚С‹;
+- РЅСѓР¶РЅРѕ РїРѕРЅСЏС‚СЊ, СЏРІР»СЏРµС‚СЃСЏ Р»Рё РїСЂРѕР±Р»РµРјР° вЂњРѕС€РёР±РєРѕР№ Р°РіРµРЅС‚Р°вЂќ РёР»Рё вЂњРѕС‚СЃСѓС‚СЃС‚РІРёРµРј owner-agentвЂќ.
 
 ---
 
-## 4. Стратегический канон Stage 2 по агентной платформе
+## 3. РџСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Рµ СѓСЃР»РѕРІРёСЏ
 
-### 4.1 Что задумано в стратегическом каноне
+РџРµСЂРµРґ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµРј СЌС‚РѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р° РЅСѓР¶РЅРѕ РѕРїРёСЂР°С‚СЊСЃСЏ РЅР°:
 
-По `Stage 2` агентная платформа должна быть не набором LLM-ботов, а governed product-layer системой, где:
+- [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md](../00_STRATEGY/STAGE%202/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md)
+- [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md](../00_STRATEGY/STAGE%202/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md)
+- [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](../00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md)
+- [RAI_AGENT_RUNTIME_GOVERNANCE.md](../00_STRATEGY/STAGE%202/RAI_AGENT_RUNTIME_GOVERNANCE.md)
+- [RAI_SWARM_CONTROL_TOWER_ARCHITECTURE.md](../00_STRATEGY/STAGE%202/RAI_SWARM_CONTROL_TOWER_ARCHITECTURE.md)
+- [A_RAI_AGENT_INTERACTION_BLUEPRINT.md](../00_STRATEGY/STAGE%202/A_RAI_AGENT_INTERACTION_BLUEPRINT.md)
+- [A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md](../00_STRATEGY/STAGE%202/A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md)
+- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](./INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
+- [agent-registry.service.ts](../../apps/api/src/modules/rai-chat/agent-registry.service.ts)
+- [supervisor-agent.service.ts](../../apps/api/src/modules/rai-chat/supervisor-agent.service.ts)
+- [agent-execution-adapter.service.ts](../../apps/api/src/modules/rai-chat/runtime/agent-execution-adapter.service.ts)
+- [tool-call.planner.ts](../../apps/api/src/modules/rai-chat/runtime/tool-call.planner.ts)
+- [agent-interaction-contracts.ts](../../apps/api/src/modules/rai-chat/agent-contracts/agent-interaction-contracts.ts)
 
-- есть единый orchestration spine;
-- агент определяется не только `prompt` и `model`, а через product contracts;
-- у агента есть first-class зона ответственности;
-- чат не должен скрывать архитектурные дыры красивым fallback-ответом;
-- правая рабочая зона должна получать typed work windows, а не декоративные текстовые заглушки.
+РќРѕСЂРјР°С‚РёРІРЅРѕРµ СЂР°Р·РґРµР»РµРЅРёРµ source of truth:
 
-Это зафиксировано в:
-
-- master-plan как переход от `platform mostly done` к `functional agentization`;
-- addendum по `Focus / Intent / Required Context / UI Action Surface`;
-- interaction blueprint как канон `пользователь <-> оркестратор <-> агент <-> рабочие окна`;
-- readiness checklist как требование к реальному owner на каждый критичный трек.
-
-### 4.2 Что стратегический канон запрещает
-
-Стратегически запрещено считать нормой:
-
-- свободную `all-to-all` mesh-сеть между агентами;
-- “агент без owner-domain и без explicit contracts”;
-- UI fallback, который выглядит как рабочий результат при отсутствии agent-owner;
-- прямой обход orchestration spine ad-hoc вызовами доменных сервисов.
+- trigger-level routing, primary owner Рё handoff rules С„РёРєСЃРёСЂСѓСЋС‚СЃСЏ РІ [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](./INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md);
+- РіСЂР°РЅРёС†С‹ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ Р°РіРµРЅС‚Р°, РµРіРѕ `current / max allowed / handoff boundaries` С„РёРєСЃРёСЂСѓСЋС‚СЃСЏ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµРј РїСЂРѕС„РёР»СЊРЅРѕРј РїР°СЃРїРѕСЂС‚Рµ РІ `AGENT_PROFILES`.
 
 ---
 
-## 5. Текущее фактическое устройство по коду
+## 4. РЎС‚СЂР°С‚РµРіРёС‡РµСЃРєРёР№ РєР°РЅРѕРЅ Stage 2 РїРѕ Р°РіРµРЅС‚РЅРѕР№ РїР»Р°С‚С„РѕСЂРјРµ
 
-### 5.1 Канонические runtime-агенты
+### 4.1 Р§С‚Рѕ Р·Р°РґСѓРјР°РЅРѕ РІ СЃС‚СЂР°С‚РµРіРёС‡РµСЃРєРѕРј РєР°РЅРѕРЅРµ
 
-По коду текущими каноническими runtime-ролями являются:
+РџРѕ `Stage 2` Р°РіРµРЅС‚РЅР°СЏ РїР»Р°С‚С„РѕСЂРјР° РґРѕР»Р¶РЅР° Р±С‹С‚СЊ РЅРµ РЅР°Р±РѕСЂРѕРј LLM-Р±РѕС‚РѕРІ, Р° governed product-layer СЃРёСЃС‚РµРјРѕР№, РіРґРµ:
+
+- РµСЃС‚СЊ РµРґРёРЅС‹Р№ orchestration spine;
+- Р°РіРµРЅС‚ РѕРїСЂРµРґРµР»СЏРµС‚СЃСЏ РЅРµ С‚РѕР»СЊРєРѕ `prompt` Рё `model`, Р° С‡РµСЂРµР· product contracts;
+- Сѓ Р°РіРµРЅС‚Р° РµСЃС‚СЊ first-class Р·РѕРЅР° РѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕСЃС‚Рё;
+- С‡Р°С‚ РЅРµ РґРѕР»Р¶РµРЅ СЃРєСЂС‹РІР°С‚СЊ Р°СЂС…РёС‚РµРєС‚СѓСЂРЅС‹Рµ РґС‹СЂС‹ РєСЂР°СЃРёРІС‹Рј fallback-РѕС‚РІРµС‚РѕРј;
+- РїСЂР°РІР°СЏ СЂР°Р±РѕС‡Р°СЏ Р·РѕРЅР° РґРѕР»Р¶РЅР° РїРѕР»СѓС‡Р°С‚СЊ typed work windows, Р° РЅРµ РґРµРєРѕСЂР°С‚РёРІРЅС‹Рµ С‚РµРєСЃС‚РѕРІС‹Рµ Р·Р°РіР»СѓС€РєРё.
+
+Р­С‚Рѕ Р·Р°С„РёРєСЃРёСЂРѕРІР°РЅРѕ РІ:
+
+- master-plan РєР°Рє РїРµСЂРµС…РѕРґ РѕС‚ `platform mostly done` Рє `functional agentization`;
+- addendum РїРѕ `Focus / Intent / Required Context / UI Action Surface`;
+- interaction blueprint РєР°Рє РєР°РЅРѕРЅ `РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ <-> РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ <-> Р°РіРµРЅС‚ <-> СЂР°Р±РѕС‡РёРµ РѕРєРЅР°`;
+- readiness checklist РєР°Рє С‚СЂРµР±РѕРІР°РЅРёРµ Рє СЂРµР°Р»СЊРЅРѕРјСѓ owner РЅР° РєР°Р¶РґС‹Р№ РєСЂРёС‚РёС‡РЅС‹Р№ С‚СЂРµРє.
+
+### 4.2 Р§С‚Рѕ СЃС‚СЂР°С‚РµРіРёС‡РµСЃРєРёР№ РєР°РЅРѕРЅ Р·Р°РїСЂРµС‰Р°РµС‚
+
+РЎС‚СЂР°С‚РµРіРёС‡РµСЃРєРё Р·Р°РїСЂРµС‰РµРЅРѕ СЃС‡РёС‚Р°С‚СЊ РЅРѕСЂРјРѕР№:
+
+- СЃРІРѕР±РѕРґРЅСѓСЋ `all-to-all` mesh-СЃРµС‚СЊ РјРµР¶РґСѓ Р°РіРµРЅС‚Р°РјРё;
+- вЂњР°РіРµРЅС‚ Р±РµР· owner-domain Рё Р±РµР· explicit contractsвЂќ;
+- UI fallback, РєРѕС‚РѕСЂС‹Р№ РІС‹РіР»СЏРґРёС‚ РєР°Рє СЂР°Р±РѕС‡РёР№ СЂРµР·СѓР»СЊС‚Р°С‚ РїСЂРё РѕС‚СЃСѓС‚СЃС‚РІРёРё agent-owner;
+- РїСЂСЏРјРѕР№ РѕР±С…РѕРґ orchestration spine ad-hoc РІС‹Р·РѕРІР°РјРё РґРѕРјРµРЅРЅС‹С… СЃРµСЂРІРёСЃРѕРІ.
+
+---
+
+## 5. РўРµРєСѓС‰РµРµ С„Р°РєС‚РёС‡РµСЃРєРѕРµ СѓСЃС‚СЂРѕР№СЃС‚РІРѕ РїРѕ РєРѕРґСѓ
+
+### 5.1 РљР°РЅРѕРЅРёС‡РµСЃРєРёРµ runtime-Р°РіРµРЅС‚С‹
+
+РџРѕ РєРѕРґСѓ С‚РµРєСѓС‰РёРјРё РєР°РЅРѕРЅРёС‡РµСЃРєРёРјРё runtime-СЂРѕР»СЏРјРё СЏРІР»СЏСЋС‚СЃСЏ:
 
 - `agronomist`
 - `economist`
@@ -105,14 +110,14 @@ last_updated: 2026-03-08
 - `front_office_agent`
 - `contracts_agent`
 
-Источник: [agent-registry.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agent-registry.service.ts)
+РСЃС‚РѕС‡РЅРёРє: [agent-registry.service.ts](../../apps/api/src/modules/rai-chat/agent-registry.service.ts)
 
-### 5.2 Центральный orchestration spine
+### 5.2 Р¦РµРЅС‚СЂР°Р»СЊРЅС‹Р№ orchestration spine
 
-Фактический путь исполнения запроса выглядит так:
+Р¤Р°РєС‚РёС‡РµСЃРєРёР№ РїСѓС‚СЊ РёСЃРїРѕР»РЅРµРЅРёСЏ Р·Р°РїСЂРѕСЃР° РІС‹РіР»СЏРґРёС‚ С‚Р°Рє:
 
 ```text
-Пользователь
+РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ
   -> UI / AI Dock
   -> RaiChatController
   -> RaiChatService
@@ -120,20 +125,20 @@ last_updated: 2026-03-08
   -> IntentRouterService
   -> AgentRuntimeService
   -> AgentExecutionAdapterService
-  -> конкретный агент
+  -> РєРѕРЅРєСЂРµС‚РЅС‹Р№ Р°РіРµРЅС‚
   -> tools registry / deterministic services / domain modules
   -> ResponseComposerService
-  -> чат + work windows
+  -> С‡Р°С‚ + work windows
 ```
 
-Источники:
+РСЃС‚РѕС‡РЅРёРєРё:
 
-- [rai-chat.module.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/rai-chat.module.ts)
-- [supervisor-agent.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/supervisor-agent.service.ts)
+- [rai-chat.module.ts](../../apps/api/src/modules/rai-chat/rai-chat.module.ts)
+- [supervisor-agent.service.ts](../../apps/api/src/modules/rai-chat/supervisor-agent.service.ts)
 
-### 5.3 Как реально сгруппированы вызовы в runtime
+### 5.3 РљР°Рє СЂРµР°Р»СЊРЅРѕ СЃРіСЂСѓРїРїРёСЂРѕРІР°РЅС‹ РІС‹Р·РѕРІС‹ РІ runtime
 
-На уровне planner fan-out идёт по группам:
+РќР° СѓСЂРѕРІРЅРµ planner fan-out РёРґС‘С‚ РїРѕ РіСЂСѓРїРїР°Рј:
 
 - `agronom`
 - `economist`
@@ -142,19 +147,19 @@ last_updated: 2026-03-08
 - `contracts`
 - `other`
 
-Источник: [tool-call.planner.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/runtime/tool-call.planner.ts)
+РСЃС‚РѕС‡РЅРёРє: [tool-call.planner.ts](../../apps/api/src/modules/rai-chat/runtime/tool-call.planner.ts)
 
-Это означает:
+Р­С‚Рѕ РѕР·РЅР°С‡Р°РµС‚:
 
-- orchestration идёт через единый hub;
-- прямой свободной сети `агент -> агент -> агент` сейчас в коде нет;
-- агентный контур ближе к `hub-and-spoke`, чем к `mesh`.
+- orchestration РёРґС‘С‚ С‡РµСЂРµР· РµРґРёРЅС‹Р№ hub;
+- РїСЂСЏРјРѕР№ СЃРІРѕР±РѕРґРЅРѕР№ СЃРµС‚Рё `Р°РіРµРЅС‚ -> Р°РіРµРЅС‚ -> Р°РіРµРЅС‚` СЃРµР№С‡Р°СЃ РІ РєРѕРґРµ РЅРµС‚;
+- Р°РіРµРЅС‚РЅС‹Р№ РєРѕРЅС‚СѓСЂ Р±Р»РёР¶Рµ Рє `hub-and-spoke`, С‡РµРј Рє `mesh`.
 
 ---
 
-## 6. Схема связей: текущее состояние
+## 6. РЎС…РµРјР° СЃРІСЏР·РµР№: С‚РµРєСѓС‰РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ
 
-### 6.1 Общая схема
+### 6.1 РћР±С‰Р°СЏ СЃС…РµРјР°
 
 ```text
 UI / AI Dock
@@ -173,29 +178,29 @@ UI / AI Dock
       -> typed tool calls
       -> domain registries
     -> ResponseComposerService
-  -> чат + work windows + structured output
+  -> С‡Р°С‚ + work windows + structured output
 ```
 
-### 6.2 Кто с кем связан сейчас
+### 6.2 РљС‚Рѕ СЃ РєРµРј СЃРІСЏР·Р°РЅ СЃРµР№С‡Р°СЃ
 
-#### Один со всеми
+#### РћРґРёРЅ СЃРѕ РІСЃРµРјРё
 
-В текущей реализации роль “один со всеми” выполняет orchestration spine:
+Р’ С‚РµРєСѓС‰РµР№ СЂРµР°Р»РёР·Р°С†РёРё СЂРѕР»СЊ вЂњРѕРґРёРЅ СЃРѕ РІСЃРµРјРёвЂќ РІС‹РїРѕР»РЅСЏРµС‚ orchestration spine:
 
 - `SupervisorAgent`
 - `AgentRuntimeService`
 - `AgentExecutionAdapterService`
 
-Именно они знают:
+РРјРµРЅРЅРѕ РѕРЅРё Р·РЅР°СЋС‚:
 
-- какой агент должен быть выбран;
-- какой tool должен быть вызван;
-- какой runtime budget действует;
-- как собрать итоговый ответ.
+- РєР°РєРѕР№ Р°РіРµРЅС‚ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІС‹Р±СЂР°РЅ;
+- РєР°РєРѕР№ tool РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІС‹Р·РІР°РЅ;
+- РєР°РєРѕР№ runtime budget РґРµР№СЃС‚РІСѓРµС‚;
+- РєР°Рє СЃРѕР±СЂР°С‚СЊ РёС‚РѕРіРѕРІС‹Р№ РѕС‚РІРµС‚.
 
-#### Все с одним
+#### Р’СЃРµ СЃ РѕРґРЅРёРј
 
-Все специализированные агенты фактически связаны с единым центром:
+Р’СЃРµ СЃРїРµС†РёР°Р»РёР·РёСЂРѕРІР°РЅРЅС‹Рµ Р°РіРµРЅС‚С‹ С„Р°РєС‚РёС‡РµСЃРєРё СЃРІСЏР·Р°РЅС‹ СЃ РµРґРёРЅС‹Рј С†РµРЅС‚СЂРѕРј:
 
 - `AgronomAgent`
 - `EconomistAgent`
@@ -203,63 +208,63 @@ UI / AI Dock
 - `MonitoringAgent`
 - `CrmAgent`
 
-Они не являются независимой peer-to-peer сетью.
+РћРЅРё РЅРµ СЏРІР»СЏСЋС‚СЃСЏ РЅРµР·Р°РІРёСЃРёРјРѕР№ peer-to-peer СЃРµС‚СЊСЋ.
 
-#### Все со всеми
+#### Р’СЃРµ СЃРѕ РІСЃРµРјРё
 
-В текущем коде полноценной модели `все со всеми` нет.
+Р’ С‚РµРєСѓС‰РµРј РєРѕРґРµ РїРѕР»РЅРѕС†РµРЅРЅРѕР№ РјРѕРґРµР»Рё `РІСЃРµ СЃРѕ РІСЃРµРјРё` РЅРµС‚.
 
-То есть неверно описывать текущую платформу как:
+РўРѕ РµСЃС‚СЊ РЅРµРІРµСЂРЅРѕ РѕРїРёСЃС‹РІР°С‚СЊ С‚РµРєСѓС‰СѓСЋ РїР»Р°С‚С„РѕСЂРјСѓ РєР°Рє:
 
-- “каждый агент может свободно разговаривать с каждым”;
-- “агенты образуют mesh без центрального координатора”.
+- вЂњРєР°Р¶РґС‹Р№ Р°РіРµРЅС‚ РјРѕР¶РµС‚ СЃРІРѕР±РѕРґРЅРѕ СЂР°Р·РіРѕРІР°СЂРёРІР°С‚СЊ СЃ РєР°Р¶РґС‹РјвЂќ;
+- вЂњР°РіРµРЅС‚С‹ РѕР±СЂР°Р·СѓСЋС‚ mesh Р±РµР· С†РµРЅС‚СЂР°Р»СЊРЅРѕРіРѕ РєРѕРѕСЂРґРёРЅР°С‚РѕСЂР°вЂќ.
 
-### 6.3 Что сейчас считается нормой
+### 6.3 Р§С‚Рѕ СЃРµР№С‡Р°СЃ СЃС‡РёС‚Р°РµС‚СЃСЏ РЅРѕСЂРјРѕР№
 
-Нормой считается:
+РќРѕСЂРјРѕР№ СЃС‡РёС‚Р°РµС‚СЃСЏ:
 
-- `все с одним`
-- `один со всеми`
-- `governed orchestration через центральный spine`
+- `РІСЃРµ СЃ РѕРґРЅРёРј`
+- `РѕРґРёРЅ СЃРѕ РІСЃРµРјРё`
+- `governed orchestration С‡РµСЂРµР· С†РµРЅС‚СЂР°Р»СЊРЅС‹Р№ spine`
 
-Не считается нормой:
+РќРµ СЃС‡РёС‚Р°РµС‚СЃСЏ РЅРѕСЂРјРѕР№:
 
 - uncontrolled peer-to-peer;
-- скрытый прямой вызов чужого домена как будто это handoff.
+- СЃРєСЂС‹С‚С‹Р№ РїСЂСЏРјРѕР№ РІС‹Р·РѕРІ С‡СѓР¶РѕРіРѕ РґРѕРјРµРЅР° РєР°Рє Р±СѓРґС‚Рѕ СЌС‚Рѕ handoff.
 
 ---
 
-## 7. Схема связей: целевое состояние
+## 7. РЎС…РµРјР° СЃРІСЏР·РµР№: С†РµР»РµРІРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ
 
-### 7.1 Целевая модель Stage 2
+### 7.1 Р¦РµР»РµРІР°СЏ РјРѕРґРµР»СЊ Stage 2
 
-Целевая архитектура должна выглядеть так:
+Р¦РµР»РµРІР°СЏ Р°СЂС…РёС‚РµРєС‚СѓСЂР° РґРѕР»Р¶РЅР° РІС‹РіР»СЏРґРµС‚СЊ С‚Р°Рє:
 
 ```text
-Пользователь
-  -> единый оркестратор
-  -> классификация по Focus / Intent / Context contracts
-  -> owner-agent по домену
+РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ
+  -> РµРґРёРЅС‹Р№ РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ
+  -> РєР»Р°СЃСЃРёС„РёРєР°С†РёСЏ РїРѕ Focus / Intent / Context contracts
+  -> owner-agent РїРѕ РґРѕРјРµРЅСѓ
   -> governed tool / connector path
   -> typed result / clarification / work windows
-  -> при необходимости governed handoff обратно через оркестратор
+  -> РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё governed handoff РѕР±СЂР°С‚РЅРѕ С‡РµСЂРµР· РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ
 ```
 
-### 7.2 Целевой handoff
+### 7.2 Р¦РµР»РµРІРѕР№ handoff
 
-Допустимый handoff в целевой модели:
+Р”РѕРїСѓСЃС‚РёРјС‹Р№ handoff РІ С†РµР»РµРІРѕР№ РјРѕРґРµР»Рё:
 
-- не прямой `agent A -> agent B` как скрытый вызов;
-- а `agent A -> orchestration decision -> agent B`.
+- РЅРµ РїСЂСЏРјРѕР№ `agent A -> agent B` РєР°Рє СЃРєСЂС‹С‚С‹Р№ РІС‹Р·РѕРІ;
+- Р° `agent A -> orchestration decision -> agent B`.
 
-Иными словами:
+РРЅС‹РјРё СЃР»РѕРІР°РјРё:
 
-- handoff допустим;
-- скрытая mesh-модель не допустима.
+- handoff РґРѕРїСѓСЃС‚РёРј;
+- СЃРєСЂС‹С‚Р°СЏ mesh-РјРѕРґРµР»СЊ РЅРµ РґРѕРїСѓСЃС‚РёРјР°.
 
-### 7.3 Что должно быть у каждого домена
+### 7.3 Р§С‚Рѕ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ Сѓ РєР°Р¶РґРѕРіРѕ РґРѕРјРµРЅР°
 
-Чтобы домен считался нормально подключённым к платформе, у него должны быть:
+Р§С‚РѕР±С‹ РґРѕРјРµРЅ СЃС‡РёС‚Р°Р»СЃСЏ РЅРѕСЂРјР°Р»СЊРЅРѕ РїРѕРґРєР»СЋС‡С‘РЅРЅС‹Рј Рє РїР»Р°С‚С„РѕСЂРјРµ, Сѓ РЅРµРіРѕ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ:
 
 - owner-agent;
 - `Focus Contract`;
@@ -269,90 +274,90 @@ UI / AI Dock
 - tool surface;
 - rich-output path;
 - governance path;
-- тесты и smoke-proof.
+- С‚РµСЃС‚С‹ Рё smoke-proof.
 
 ---
 
-## 8. Типы связности
+## 8. РўРёРїС‹ СЃРІСЏР·РЅРѕСЃС‚Рё
 
-### 8.1 Все с одним
+### 8.1 Р’СЃРµ СЃ РѕРґРЅРёРј
 
-Это текущий основной паттерн платформы.
+Р­С‚Рѕ С‚РµРєСѓС‰РёР№ РѕСЃРЅРѕРІРЅРѕР№ РїР°С‚С‚РµСЂРЅ РїР»Р°С‚С„РѕСЂРјС‹.
 
-Смысл:
+РЎРјС‹СЃР»:
 
-- все агенты работают через единый координационный центр;
-- оркестратор решает, кто owner;
-- orchestration spine управляет execution path.
+- РІСЃРµ Р°РіРµРЅС‚С‹ СЂР°Р±РѕС‚Р°СЋС‚ С‡РµСЂРµР· РµРґРёРЅС‹Р№ РєРѕРѕСЂРґРёРЅР°С†РёРѕРЅРЅС‹Р№ С†РµРЅС‚СЂ;
+- РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ СЂРµС€Р°РµС‚, РєС‚Рѕ owner;
+- orchestration spine СѓРїСЂР°РІР»СЏРµС‚ execution path.
 
-Статус:
+РЎС‚Р°С‚СѓСЃ:
 
-- реализовано;
-- является каноническим текущим режимом.
+- СЂРµР°Р»РёР·РѕРІР°РЅРѕ;
+- СЏРІР»СЏРµС‚СЃСЏ РєР°РЅРѕРЅРёС‡РµСЃРєРёРј С‚РµРєСѓС‰РёРј СЂРµР¶РёРјРѕРј.
 
-### 8.2 Один со всеми
+### 8.2 РћРґРёРЅ СЃРѕ РІСЃРµРјРё
 
-Это вторая сторона текущей же модели.
+Р­С‚Рѕ РІС‚РѕСЂР°СЏ СЃС‚РѕСЂРѕРЅР° С‚РµРєСѓС‰РµР№ Р¶Рµ РјРѕРґРµР»Рё.
 
-Смысл:
+РЎРјС‹СЃР»:
 
-- центральный orchestration hub знает все подключённые agent families;
-- он выбирает и активирует конкретного исполнителя.
+- С†РµРЅС‚СЂР°Р»СЊРЅС‹Р№ orchestration hub Р·РЅР°РµС‚ РІСЃРµ РїРѕРґРєР»СЋС‡С‘РЅРЅС‹Рµ agent families;
+- РѕРЅ РІС‹Р±РёСЂР°РµС‚ Рё Р°РєС‚РёРІРёСЂСѓРµС‚ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ РёСЃРїРѕР»РЅРёС‚РµР»СЏ.
 
-Статус:
+РЎС‚Р°С‚СѓСЃ:
 
-- реализовано;
-- является нормой.
+- СЂРµР°Р»РёР·РѕРІР°РЅРѕ;
+- СЏРІР»СЏРµС‚СЃСЏ РЅРѕСЂРјРѕР№.
 
-### 8.3 Все со всеми
+### 8.3 Р’СЃРµ СЃРѕ РІСЃРµРјРё
 
-Смысл:
+РЎРјС‹СЃР»:
 
-- любой агент может напрямую вызывать любого другого;
-- orchestration center перестаёт быть обязательным.
+- Р»СЋР±РѕР№ Р°РіРµРЅС‚ РјРѕР¶РµС‚ РЅР°РїСЂСЏРјСѓСЋ РІС‹Р·С‹РІР°С‚СЊ Р»СЋР±РѕРіРѕ РґСЂСѓРіРѕРіРѕ;
+- orchestration center РїРµСЂРµСЃС‚Р°С‘С‚ Р±С‹С‚СЊ РѕР±СЏР·Р°С‚РµР»СЊРЅС‹Рј.
 
-Статус:
+РЎС‚Р°С‚СѓСЃ:
 
-- не реализовано;
-- не должно считаться текущей архитектурой;
-- не должно описываться как действующая норма.
+- РЅРµ СЂРµР°Р»РёР·РѕРІР°РЅРѕ;
+- РЅРµ РґРѕР»Р¶РЅРѕ СЃС‡РёС‚Р°С‚СЊСЃСЏ С‚РµРєСѓС‰РµР№ Р°СЂС…РёС‚РµРєС‚СѓСЂРѕР№;
+- РЅРµ РґРѕР»Р¶РЅРѕ РѕРїРёСЃС‹РІР°С‚СЊСЃСЏ РєР°Рє РґРµР№СЃС‚РІСѓСЋС‰Р°СЏ РЅРѕСЂРјР°.
 
-### 8.4 Управляемый handoff через центральный узел
+### 8.4 РЈРїСЂР°РІР»СЏРµРјС‹Р№ handoff С‡РµСЂРµР· С†РµРЅС‚СЂР°Р»СЊРЅС‹Р№ СѓР·РµР»
 
-Это целевой безопасный паттерн.
+Р­С‚Рѕ С†РµР»РµРІРѕР№ Р±РµР·РѕРїР°СЃРЅС‹Р№ РїР°С‚С‚РµСЂРЅ.
 
-Смысл:
+РЎРјС‹СЃР»:
 
-- межагентная передача возможна;
-- но только через оркестрационный spine;
-- owner-agent и принимающий агент должны быть явными;
-- handoff должен быть governed и traceable.
+- РјРµР¶Р°РіРµРЅС‚РЅР°СЏ РїРµСЂРµРґР°С‡Р° РІРѕР·РјРѕР¶РЅР°;
+- РЅРѕ С‚РѕР»СЊРєРѕ С‡РµСЂРµР· РѕСЂРєРµСЃС‚СЂР°С†РёРѕРЅРЅС‹Р№ spine;
+- owner-agent Рё РїСЂРёРЅРёРјР°СЋС‰РёР№ Р°РіРµРЅС‚ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ СЏРІРЅС‹РјРё;
+- handoff РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ governed Рё traceable.
 
-Статус:
+РЎС‚Р°С‚СѓСЃ:
 
-- частично поддержан концептуально;
-- не является ещё полностью реализованным platform-wide стандартом.
+- С‡Р°СЃС‚РёС‡РЅРѕ РїРѕРґРґРµСЂР¶Р°РЅ РєРѕРЅС†РµРїС‚СѓР°Р»СЊРЅРѕ;
+- РЅРµ СЏРІР»СЏРµС‚СЃСЏ РµС‰С‘ РїРѕР»РЅРѕСЃС‚СЊСЋ СЂРµР°Р»РёР·РѕРІР°РЅРЅС‹Рј platform-wide СЃС‚Р°РЅРґР°СЂС‚РѕРј.
 
 ---
 
-## 9. Разрывы между текущим и целевым состоянием
+## 9. Р Р°Р·СЂС‹РІС‹ РјРµР¶РґСѓ С‚РµРєСѓС‰РёРј Рё С†РµР»РµРІС‹Рј СЃРѕСЃС‚РѕСЏРЅРёРµРј
 
-### 9.1 Доменные модули без owner-agent
+### 9.1 Р”РѕРјРµРЅРЅС‹Рµ РјРѕРґСѓР»Рё Р±РµР· owner-agent
 
-Подтверждённые примеры:
+РџРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Рµ РїСЂРёРјРµСЂС‹:
 
 - `legal`
 - `strategy`
 
-Факт:
+Р¤Р°РєС‚:
 
-- доменные контуры и template roles уже существуют;
-- advisory ownership зафиксирован;
-- canonical runtime owner-agent ещё не реализован.
+- РґРѕРјРµРЅРЅС‹Рµ РєРѕРЅС‚СѓСЂС‹ Рё template roles СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓСЋС‚;
+- advisory ownership Р·Р°С„РёРєСЃРёСЂРѕРІР°РЅ;
+- canonical runtime owner-agent РµС‰С‘ РЅРµ СЂРµР°Р»РёР·РѕРІР°РЅ.
 
-### 9.2 Плановые роли не равны каноническим runtime-агентам
+### 9.2 РџР»Р°РЅРѕРІС‹Рµ СЂРѕР»Рё РЅРµ СЂР°РІРЅС‹ РєР°РЅРѕРЅРёС‡РµСЃРєРёРј runtime-Р°РіРµРЅС‚Р°Рј
 
-В системе уже есть template/future roles:
+Р’ СЃРёСЃС‚РµРјРµ СѓР¶Рµ РµСЃС‚СЊ template/future roles:
 
 - `marketer`
 - `strategist`
@@ -361,65 +366,66 @@ UI / AI Dock
 - `controller`
 - `personal_assistant`
 
-Но они не являются полноценными canonical runtime families.
+РќРѕ РѕРЅРё РЅРµ СЏРІР»СЏСЋС‚СЃСЏ РїРѕР»РЅРѕС†РµРЅРЅС‹РјРё canonical runtime families.
 
-### 9.3 Не у всех доменов есть first-class ownership map
+### 9.3 РќРµ Сѓ РІСЃРµС… РґРѕРјРµРЅРѕРІ РµСЃС‚СЊ first-class ownership map
 
-Разрыв:
+Р Р°Р·СЂС‹РІ:
 
-- доменные модули и стратегические роли Stage 2 уже описаны;
-- но не для каждого домена зафиксирован owner-agent;
-- из-за этого часть UX сценариев попадает в fallback вместо реального исполнения.
+- РґРѕРјРµРЅРЅС‹Рµ РјРѕРґСѓР»Рё Рё СЃС‚СЂР°С‚РµРіРёС‡РµСЃРєРёРµ СЂРѕР»Рё Stage 2 СѓР¶Рµ РѕРїРёСЃР°РЅС‹;
+- РЅРѕ РЅРµ РґР»СЏ РєР°Р¶РґРѕРіРѕ РґРѕРјРµРЅР° Р·Р°С„РёРєСЃРёСЂРѕРІР°РЅ owner-agent;
+- РёР·-Р·Р° СЌС‚РѕРіРѕ С‡Р°СЃС‚СЊ UX СЃС†РµРЅР°СЂРёРµРІ РїРѕРїР°РґР°РµС‚ РІ fallback РІРјРµСЃС‚Рѕ СЂРµР°Р»СЊРЅРѕРіРѕ РёСЃРїРѕР»РЅРµРЅРёСЏ.
 
-### 9.4 Fallback может маскировать архитектурную дыру
+### 9.4 Fallback РјРѕР¶РµС‚ РјР°СЃРєРёСЂРѕРІР°С‚СЊ Р°СЂС…РёС‚РµРєС‚СѓСЂРЅСѓСЋ РґС‹СЂСѓ
 
-Если intent-owner отсутствует, пользователь может увидеть:
+Р•СЃР»Рё intent-owner РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚, РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РјРѕР¶РµС‚ СѓРІРёРґРµС‚СЊ:
 
 - backlog;
 - route-based task list;
-- видимость “система что-то поняла”.
+- РІРёРґРёРјРѕСЃС‚СЊ вЂњСЃРёСЃС‚РµРјР° С‡С‚Рѕ-С‚Рѕ РїРѕРЅСЏР»Р°вЂќ.
 
-Но это не означает, что домен реально подключён к агентной платформе.
-
----
-
-## 10. Критические ошибки и запреты
-
-- Запрещено описывать текущую платформу как свободную `all-to-all` агентную сеть.
-- Запрещено считать наличие backend-модуля доказательством того, что у домена уже есть owner-agent.
-- Запрещено считать UI fallback рабочим агентным сценарием.
-- Запрещено называть future/template role полноценным canonical runtime-agent, если она не подключена как отдельная runtime family.
-- Запрещено проектировать direct peer-to-peer handoff как default-модель без orchestration spine.
+РќРѕ СЌС‚Рѕ РЅРµ РѕР·РЅР°С‡Р°РµС‚, С‡С‚Рѕ РґРѕРјРµРЅ СЂРµР°Р»СЊРЅРѕ РїРѕРґРєР»СЋС‡С‘РЅ Рє Р°РіРµРЅС‚РЅРѕР№ РїР»Р°С‚С„РѕСЂРјРµ.
 
 ---
 
-## 11. Проверка готовности
+## 10. РљСЂРёС‚РёС‡РµСЃРєРёРµ РѕС€РёР±РєРё Рё Р·Р°РїСЂРµС‚С‹
 
-Документ считается оформленным правильно, если:
-
-- явно описано текущее состояние по коду;
-- явно описана целевая схема по Stage 2;
-- разобраны режимы `все с одним`, `один со всеми`, `все со всеми`;
-- показано, что текущая модель = `hub-and-spoke`;
-- перечислены реальные архитектурные разрывы;
-- не смешаны стратегический канон и фактическая реализация;
-- приведены конкретные точки кода.
+- Р—Р°РїСЂРµС‰РµРЅРѕ РѕРїРёСЃС‹РІР°С‚СЊ С‚РµРєСѓС‰СѓСЋ РїР»Р°С‚С„РѕСЂРјСѓ РєР°Рє СЃРІРѕР±РѕРґРЅСѓСЋ `all-to-all` Р°РіРµРЅС‚РЅСѓСЋ СЃРµС‚СЊ.
+- Р—Р°РїСЂРµС‰РµРЅРѕ СЃС‡РёС‚Р°С‚СЊ РЅР°Р»РёС‡РёРµ backend-РјРѕРґСѓР»СЏ РґРѕРєР°Р·Р°С‚РµР»СЊСЃС‚РІРѕРј С‚РѕРіРѕ, С‡С‚Рѕ Сѓ РґРѕРјРµРЅР° СѓР¶Рµ РµСЃС‚СЊ owner-agent.
+- Р—Р°РїСЂРµС‰РµРЅРѕ СЃС‡РёС‚Р°С‚СЊ UI fallback СЂР°Р±РѕС‡РёРј Р°РіРµРЅС‚РЅС‹Рј СЃС†РµРЅР°СЂРёРµРј.
+- Р—Р°РїСЂРµС‰РµРЅРѕ РЅР°Р·С‹РІР°С‚СЊ future/template role РїРѕР»РЅРѕС†РµРЅРЅС‹Рј canonical runtime-agent, РµСЃР»Рё РѕРЅР° РЅРµ РїРѕРґРєР»СЋС‡РµРЅР° РєР°Рє РѕС‚РґРµР»СЊРЅР°СЏ runtime family.
+- Р—Р°РїСЂРµС‰РµРЅРѕ РїСЂРѕРµРєС‚РёСЂРѕРІР°С‚СЊ direct peer-to-peer handoff РєР°Рє default-РјРѕРґРµР»СЊ Р±РµР· orchestration spine.
 
 ---
 
-## 12. Связанные файлы и точки кода
+## 11. РџСЂРѕРІРµСЂРєР° РіРѕС‚РѕРІРЅРѕСЃС‚Рё
 
-- [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md)
-- [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md)
-- [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md)
-- [A_RAI_AGENT_INTERACTION_BLUEPRINT.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/A_RAI_AGENT_INTERACTION_BLUEPRINT.md)
-- [A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md)
-- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
-- [rai-chat.module.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/rai-chat.module.ts)
-- [supervisor-agent.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/supervisor-agent.service.ts)
-- [agent-runtime.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/runtime/agent-runtime.service.ts)
-- [agent-execution-adapter.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/runtime/agent-execution-adapter.service.ts)
-- [tool-call.planner.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/runtime/tool-call.planner.ts)
-- [agent-registry.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agent-registry.service.ts)
-- [agent-interaction-contracts.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agent-contracts/agent-interaction-contracts.ts)
-- [response-composer.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/composer/response-composer.service.ts)
+Р”РѕРєСѓРјРµРЅС‚ СЃС‡РёС‚Р°РµС‚СЃСЏ РѕС„РѕСЂРјР»РµРЅРЅС‹Рј РїСЂР°РІРёР»СЊРЅРѕ, РµСЃР»Рё:
+
+- СЏРІРЅРѕ РѕРїРёСЃР°РЅРѕ С‚РµРєСѓС‰РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ РїРѕ РєРѕРґСѓ;
+- СЏРІРЅРѕ РѕРїРёСЃР°РЅР° С†РµР»РµРІР°СЏ СЃС…РµРјР° РїРѕ Stage 2;
+- СЂР°Р·РѕР±СЂР°РЅС‹ СЂРµР¶РёРјС‹ `РІСЃРµ СЃ РѕРґРЅРёРј`, `РѕРґРёРЅ СЃРѕ РІСЃРµРјРё`, `РІСЃРµ СЃРѕ РІСЃРµРјРё`;
+- РїРѕРєР°Р·Р°РЅРѕ, С‡С‚Рѕ С‚РµРєСѓС‰Р°СЏ РјРѕРґРµР»СЊ = `hub-and-spoke`;
+- РїРµСЂРµС‡РёСЃР»РµРЅС‹ СЂРµР°Р»СЊРЅС‹Рµ Р°СЂС…РёС‚РµРєС‚СѓСЂРЅС‹Рµ СЂР°Р·СЂС‹РІС‹;
+- РЅРµ СЃРјРµС€Р°РЅС‹ СЃС‚СЂР°С‚РµРіРёС‡РµСЃРєРёР№ РєР°РЅРѕРЅ Рё С„Р°РєС‚РёС‡РµСЃРєР°СЏ СЂРµР°Р»РёР·Р°С†РёСЏ;
+- РїСЂРёРІРµРґРµРЅС‹ РєРѕРЅРєСЂРµС‚РЅС‹Рµ С‚РѕС‡РєРё РєРѕРґР°.
+
+---
+
+## 12. РЎРІСЏР·Р°РЅРЅС‹Рµ С„Р°Р№Р»С‹ Рё С‚РѕС‡РєРё РєРѕРґР°
+
+- [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md](../00_STRATEGY/STAGE%202/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md)
+- [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md](../00_STRATEGY/STAGE%202/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md)
+- [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](../00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md)
+- [A_RAI_AGENT_INTERACTION_BLUEPRINT.md](../00_STRATEGY/STAGE%202/A_RAI_AGENT_INTERACTION_BLUEPRINT.md)
+- [A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md](../00_STRATEGY/STAGE%202/A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md)
+- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](./INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
+- [rai-chat.module.ts](../../apps/api/src/modules/rai-chat/rai-chat.module.ts)
+- [supervisor-agent.service.ts](../../apps/api/src/modules/rai-chat/supervisor-agent.service.ts)
+- [agent-runtime.service.ts](../../apps/api/src/modules/rai-chat/runtime/agent-runtime.service.ts)
+- [agent-execution-adapter.service.ts](../../apps/api/src/modules/rai-chat/runtime/agent-execution-adapter.service.ts)
+- [tool-call.planner.ts](../../apps/api/src/modules/rai-chat/runtime/tool-call.planner.ts)
+- [agent-registry.service.ts](../../apps/api/src/modules/rai-chat/agent-registry.service.ts)
+- [agent-interaction-contracts.ts](../../apps/api/src/modules/rai-chat/agent-contracts/agent-interaction-contracts.ts)
+- [response-composer.service.ts](../../apps/api/src/modules/rai-chat/composer/response-composer.service.ts)
+

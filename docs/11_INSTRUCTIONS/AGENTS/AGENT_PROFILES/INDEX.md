@@ -1,81 +1,106 @@
----
+﻿---
 id: DOC-INS-AGT-PROFILE-000
 type: InstructionIndex
 layer: Agents
 status: Active
-version: 1.0.0
+version: 1.1.0
 owners: [@techlead]
-last_updated: 2026-03-08
+last_updated: 2026-03-10
 ---
 
-# ПРОФИЛИ АГЕНТОВ — УКАЗАТЕЛЬ
+# РџР РћР¤РР›Р РђР“Р•РќРўРћР’ вЂ” РЈРљРђР—РђРўР•Р›Р¬
 
-## 1. Назначение
+## 1. РќР°Р·РЅР°С‡РµРЅРёРµ
 
-Этот файл собирает подробные профили всех канонических и плановых агентных ролей платформы.
+Р­С‚РѕС‚ С„Р°Р№Р» СЃРѕР±РёСЂР°РµС‚ РїРѕРґСЂРѕР±РЅС‹Рµ РїСЂРѕС„РёР»Рё РІСЃРµС… РєР°РЅРѕРЅРёС‡РµСЃРєРёС… Рё РїР»Р°РЅРѕРІС‹С… Р°РіРµРЅС‚РЅС‹С… СЂРѕР»РµР№ РїР»Р°С‚С„РѕСЂРјС‹.
 
-## 2. Когда применять
+РўРµРєСѓС‰РёР№ РїР°РєРµС‚ РїСЂРѕС„РёР»РµР№ РЅРѕСЂРјР°Р»РёР·РѕРІР°РЅ РІ РµРґРёРЅС‹Р№ РїР°СЃРїРѕСЂС‚РЅС‹Р№ С„РѕСЂРјР°С‚ Рё РїРѕРєСЂС‹РІР°РµС‚:
 
-Использовать указатель, когда нужно:
+- 7 canonical runtime-Р°РіРµРЅС‚РѕРІ;
+- 6 template/future roles;
+- РµРґРёРЅС‹Р№ РїСЂРѕС„РёР»СЊРЅС‹Р№ С€Р°Р±Р»РѕРЅ `current / max allowed / handoff boundaries`.
 
-- быстро открыть профиль конкретного агента;
-- сравнить канонические и плановые роли;
-- найти подробное описание ownership, guardrails и допустимого функционала.
+## 2. РљРѕРіРґР° РїСЂРёРјРµРЅСЏС‚СЊ
 
-## 3. Предварительные условия
+РСЃРїРѕР»СЊР·РѕРІР°С‚СЊ СѓРєР°Р·Р°С‚РµР»СЊ, РєРѕРіРґР° РЅСѓР¶РЅРѕ:
 
-Перед использованием полезно открыть:
+- Р±С‹СЃС‚СЂРѕ РѕС‚РєСЂС‹С‚СЊ РїСЂРѕС„РёР»СЊ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ Р°РіРµРЅС‚Р°;
+- СЃСЂР°РІРЅРёС‚СЊ РєР°РЅРѕРЅРёС‡РµСЃРєРёРµ Рё РїР»Р°РЅРѕРІС‹Рµ СЂРѕР»Рё;
+- РЅР°Р№С‚Рё РїРѕРґСЂРѕР±РЅРѕРµ РѕРїРёСЃР°РЅРёРµ ownership, guardrails Рё РґРѕРїСѓСЃС‚РёРјРѕРіРѕ С„СѓРЅРєС†РёРѕРЅР°Р»Р°.
 
-- [INSTRUCTION_AGENT_PLATFORM_INTERACTION_ARCHITECTURE.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_AGENT_PLATFORM_INTERACTION_ARCHITECTURE.md)
-- [INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md)
-- [INSTRUCTION_AGENT_DOMAIN_GAPS_AND_UNOWNED_MODULES.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_AGENT_DOMAIN_GAPS_AND_UNOWNED_MODULES.md)
-- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
+## 3. РќРѕСЂРјР°С‚РёРІРЅС‹Р№ С„РѕСЂРјР°С‚ РїСЂРѕС„РёР»СЏ
 
-## 4. Пошаговый алгоритм
+РљР°Р¶РґС‹Р№ РїСЂРѕС„РёР»СЊ РІ СЌС‚РѕРј РїР°РєРµС‚Рµ С‚РµРїРµСЂСЊ РґРѕР»Р¶РµРЅ С‡РёС‚Р°С‚СЊСЃСЏ РєР°Рє РµРґРёРЅС‹Р№ РїР°СЃРїРѕСЂС‚ Р°РіРµРЅС‚Р°. РћР±СЏР·Р°С‚РµР»СЊРЅС‹Рµ Р±Р»РѕРєРё:
 
-1. Сначала открыть общий каталог агентов и определить, является ли роль канонической, плановой или относится к доменному разрыву.
-2. Затем открыть подробный профиль нужного агента из списка ниже.
-3. При проектировании новых связей сверять профиль агента с архитектурным документом и картой доменных разрывов.
+- `РўРµРєСѓС‰РёР№ С„Р°РєС‚РёС‡РµСЃРєРёР№ С„СѓРЅРєС†РёРѕРЅР°Р»`
+- `РњР°РєСЃРёРјР°Р»СЊРЅРѕ РґРѕРїСѓСЃС‚РёРјС‹Р№ С„СѓРЅРєС†РёРѕРЅР°Р»`
+- `РќРѕСЂРјР°С‚РёРІРЅС‹Рµ handoff-trigger Р·РѕРЅС‹`
+- `РџРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Рµ current intent-С‹`
+- `РњР°РєСЃРёРјР°Р»СЊРЅРѕ РґРѕРїСѓСЃС‚РёРјС‹Р№ intent-scope`
+- `РџРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Р№ current tool surface`
+- `РњР°РєСЃРёРјР°Р»СЊРЅРѕ РґРѕРїСѓСЃС‚РёРјС‹Р№ tool surface`
+- СЏРІРЅР°СЏ С„РёРєСЃР°С†РёСЏ production-routing СЃС‚Р°С‚СѓСЃР°
 
-## 5. Что должно получиться на выходе
+Р­С‚Рѕ РїСЂР°РІРёР»Рѕ РѕРґРёРЅР°РєРѕРІРѕ РґР»СЏ canonical runtime-Р°РіРµРЅС‚РѕРІ Рё РґР»СЏ template/future roles.
 
-На выходе должен быть выбран конкретный профиль агента как source of truth для его зоны ответственности, связей и ограничений.
+## 4. РџСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Рµ СѓСЃР»РѕРІРёСЏ
 
-## 6. Критические ошибки и запреты
+РџРµСЂРµРґ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµРј РїРѕР»РµР·РЅРѕ РѕС‚РєСЂС‹С‚СЊ:
 
-- Запрещено путать profile template-role и profile канонического runtime-агента.
-- Запрещено использовать профиль как доказательство готовности runtime family, если в нём явно указан template-only статус.
+- [INSTRUCTION_AGENT_PLATFORM_INTERACTION_ARCHITECTURE.md](../INSTRUCTION_AGENT_PLATFORM_INTERACTION_ARCHITECTURE.md)
+- [INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md](../INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md)
+- [INSTRUCTION_AGENT_DOMAIN_GAPS_AND_UNOWNED_MODULES.md](../INSTRUCTION_AGENT_DOMAIN_GAPS_AND_UNOWNED_MODULES.md)
+- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](../INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
 
-## 7. Проверка готовности
+## 5. РџРѕС€Р°РіРѕРІС‹Р№ Р°Р»РіРѕСЂРёС‚Рј
 
-Указатель считается готовым, если:
+1. РЎРЅР°С‡Р°Р»Р° РѕС‚РєСЂС‹С‚СЊ РѕР±С‰РёР№ РєР°С‚Р°Р»РѕРі Р°РіРµРЅС‚РѕРІ Рё РѕРїСЂРµРґРµР»РёС‚СЊ, СЏРІР»СЏРµС‚СЃСЏ Р»Рё СЂРѕР»СЊ РєР°РЅРѕРЅРёС‡РµСЃРєРѕР№, РїР»Р°РЅРѕРІРѕР№ РёР»Рё РѕС‚РЅРѕСЃРёС‚СЃСЏ Рє РґРѕРјРµРЅРЅРѕРјСѓ СЂР°Р·СЂС‹РІСѓ.
+2. Р—Р°С‚РµРј РѕС‚РєСЂС‹С‚СЊ [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](../INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md), РµСЃР»Рё РІРѕРїСЂРѕСЃ РєР°СЃР°РµС‚СЃСЏ routing, handoff РёР»Рё primary owner.
+3. РџРѕСЃР»Рµ СЌС‚РѕРіРѕ РѕС‚РєСЂС‹С‚СЊ РїРѕРґСЂРѕР±РЅС‹Р№ РїСЂРѕС„РёР»СЊ РЅСѓР¶РЅРѕРіРѕ Р°РіРµРЅС‚Р° РёР· СЃРїРёСЃРєР° РЅРёР¶Рµ Рё С‡РёС‚Р°С‚СЊ РµРіРѕ С‡РµСЂРµР· РїР°СЃРїРѕСЂС‚РЅС‹Рµ Р±Р»РѕРєРё `current / max allowed / handoff boundaries`.
+4. РџСЂРё РїСЂРѕРµРєС‚РёСЂРѕРІР°РЅРёРё РЅРѕРІС‹С… СЃРІСЏР·РµР№ СЃРІРµСЂСЏС‚СЊ РїСЂРѕС„РёР»СЊ Р°РіРµРЅС‚Р° СЃ Р°СЂС…РёС‚РµРєС‚СѓСЂРЅС‹Рј РґРѕРєСѓРјРµРЅС‚РѕРј Рё РєР°СЂС‚РѕР№ РґРѕРјРµРЅРЅС‹С… СЂР°Р·СЂС‹РІРѕРІ.
 
-- перечислены все канонические агенты;
-- перечислены все plan/template roles;
-- есть ссылки на ключевые корневые документы пакета.
+## 6. Р§С‚Рѕ РґРѕР»Р¶РЅРѕ РїРѕР»СѓС‡РёС‚СЊСЃСЏ РЅР° РІС‹С…РѕРґРµ
 
-## 8. Связанные файлы и точки кода
+РќР° РІС‹С…РѕРґРµ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІС‹Р±СЂР°РЅ РєРѕРЅРєСЂРµС‚РЅС‹Р№ РїСЂРѕС„РёР»СЊ Р°РіРµРЅС‚Р° РєР°Рє source of truth РґР»СЏ РµРіРѕ Р·РѕРЅС‹ РѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕСЃС‚Рё, СЃРІСЏР·РµР№ Рё РѕРіСЂР°РЅРёС‡РµРЅРёР№.
 
-- [INSTRUCTION_AGENT_PLATFORM_INTERACTION_ARCHITECTURE.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_AGENT_PLATFORM_INTERACTION_ARCHITECTURE.md)
-- [INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md)
-- [INSTRUCTION_AGENT_DOMAIN_GAPS_AND_UNOWNED_MODULES.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_AGENT_DOMAIN_GAPS_AND_UNOWNED_MODULES.md)
-- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
+## 7. РљСЂРёС‚РёС‡РµСЃРєРёРµ РѕС€РёР±РєРё Рё Р·Р°РїСЂРµС‚С‹
 
-## 9. Канонические агенты
+- Р—Р°РїСЂРµС‰РµРЅРѕ РїСѓС‚Р°С‚СЊ profile template-role Рё profile РєР°РЅРѕРЅРёС‡РµСЃРєРѕРіРѕ runtime-Р°РіРµРЅС‚Р°.
+- Р—Р°РїСЂРµС‰РµРЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РїСЂРѕС„РёР»СЊ РєР°Рє РґРѕРєР°Р·Р°С‚РµР»СЊСЃС‚РІРѕ РіРѕС‚РѕРІРЅРѕСЃС‚Рё runtime family, РµСЃР»Рё РІ РЅС‘Рј СЏРІРЅРѕ СѓРєР°Р·Р°РЅ template-only СЃС‚Р°С‚СѓСЃ.
+- Р—Р°РїСЂРµС‰РµРЅРѕ С‡РёС‚Р°С‚СЊ РїСЂРѕС„РёР»СЊ С‚РѕР»СЊРєРѕ РїРѕ СЂР°Р·РґРµР»Сѓ РѕР±СЏР·Р°РЅРЅРѕСЃС‚РµР№ Рё РёРіРЅРѕСЂРёСЂРѕРІР°С‚СЊ СЃРµРєС†РёРё `РњР°РєСЃРёРјР°Р»СЊРЅРѕ РґРѕРїСѓСЃС‚РёРјС‹Р№ С„СѓРЅРєС†РёРѕРЅР°Р»` Рё `РќРѕСЂРјР°С‚РёРІРЅС‹Рµ handoff-trigger Р·РѕРЅС‹`.
 
-- [INSTRUCTION_AGENT_PROFILE_AGRONOMIST.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_AGRONOMIST.md)
-- [INSTRUCTION_AGENT_PROFILE_ECONOMIST.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_ECONOMIST.md)
-- [INSTRUCTION_AGENT_PROFILE_KNOWLEDGE.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_KNOWLEDGE.md)
-- [INSTRUCTION_AGENT_PROFILE_MONITORING.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_MONITORING.md)
-- [INSTRUCTION_AGENT_PROFILE_CRM_AGENT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_CRM_AGENT.md)
-- [INSTRUCTION_AGENT_PROFILE_FRONT_OFFICE_AGENT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_FRONT_OFFICE_AGENT.md)
-- [INSTRUCTION_AGENT_PROFILE_CONTRACTS_AGENT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_CONTRACTS_AGENT.md)
+## 8. РџСЂРѕРІРµСЂРєР° РіРѕС‚РѕРІРЅРѕСЃС‚Рё
 
-## 10. Плановые роли
+РЈРєР°Р·Р°С‚РµР»СЊ СЃС‡РёС‚Р°РµС‚СЃСЏ РіРѕС‚РѕРІС‹Рј, РµСЃР»Рё:
 
-- [INSTRUCTION_AGENT_PROFILE_MARKETER.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_MARKETER.md)
-- [INSTRUCTION_AGENT_PROFILE_STRATEGIST.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_STRATEGIST.md)
-- [INSTRUCTION_AGENT_PROFILE_FINANCE_ADVISOR.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_FINANCE_ADVISOR.md)
-- [INSTRUCTION_AGENT_PROFILE_LEGAL_ADVISOR.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_LEGAL_ADVISOR.md)
-- [INSTRUCTION_AGENT_PROFILE_CONTROLLER.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_CONTROLLER.md)
-- [INSTRUCTION_AGENT_PROFILE_PERSONAL_ASSISTANT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_PERSONAL_ASSISTANT.md)
+- РїРµСЂРµС‡РёСЃР»РµРЅС‹ РІСЃРµ РєР°РЅРѕРЅРёС‡РµСЃРєРёРµ Р°РіРµРЅС‚С‹;
+- РїРµСЂРµС‡РёСЃР»РµРЅС‹ РІСЃРµ plan/template roles;
+- РґР»СЏ РІСЃРµРіРѕ РїР°РєРµС‚Р° Р·Р°С„РёРєСЃРёСЂРѕРІР°РЅ РµРґРёРЅС‹Р№ РїР°СЃРїРѕСЂС‚РЅС‹Р№ С„РѕСЂРјР°С‚ РїСЂРѕС„РёР»СЏ;
+- РµСЃС‚СЊ СЃСЃС‹Р»РєРё РЅР° РєР»СЋС‡РµРІС‹Рµ РєРѕСЂРЅРµРІС‹Рµ РґРѕРєСѓРјРµРЅС‚С‹ РїР°РєРµС‚Р°.
+
+## 9. РЎРІСЏР·Р°РЅРЅС‹Рµ С„Р°Р№Р»С‹ Рё С‚РѕС‡РєРё РєРѕРґР°
+
+- [INSTRUCTION_AGENT_PLATFORM_INTERACTION_ARCHITECTURE.md](../INSTRUCTION_AGENT_PLATFORM_INTERACTION_ARCHITECTURE.md)
+- [INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md](../INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md)
+- [INSTRUCTION_AGENT_DOMAIN_GAPS_AND_UNOWNED_MODULES.md](../INSTRUCTION_AGENT_DOMAIN_GAPS_AND_UNOWNED_MODULES.md)
+- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](../INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
+
+## 10. РљР°РЅРѕРЅРёС‡РµСЃРєРёРµ Р°РіРµРЅС‚С‹
+
+- [INSTRUCTION_AGENT_PROFILE_AGRONOMIST.md](./INSTRUCTION_AGENT_PROFILE_AGRONOMIST.md)
+- [INSTRUCTION_AGENT_PROFILE_ECONOMIST.md](./INSTRUCTION_AGENT_PROFILE_ECONOMIST.md)
+- [INSTRUCTION_AGENT_PROFILE_KNOWLEDGE.md](./INSTRUCTION_AGENT_PROFILE_KNOWLEDGE.md)
+- [INSTRUCTION_AGENT_PROFILE_MONITORING.md](./INSTRUCTION_AGENT_PROFILE_MONITORING.md)
+- [INSTRUCTION_AGENT_PROFILE_CRM_AGENT.md](./INSTRUCTION_AGENT_PROFILE_CRM_AGENT.md)
+- [INSTRUCTION_AGENT_PROFILE_FRONT_OFFICE_AGENT.md](./INSTRUCTION_AGENT_PROFILE_FRONT_OFFICE_AGENT.md)
+- [INSTRUCTION_AGENT_PROFILE_CONTRACTS_AGENT.md](./INSTRUCTION_AGENT_PROFILE_CONTRACTS_AGENT.md)
+
+## 11. РџР»Р°РЅРѕРІС‹Рµ СЂРѕР»Рё
+
+- [INSTRUCTION_AGENT_PROFILE_MARKETER.md](./INSTRUCTION_AGENT_PROFILE_MARKETER.md)
+- [INSTRUCTION_AGENT_PROFILE_STRATEGIST.md](./INSTRUCTION_AGENT_PROFILE_STRATEGIST.md)
+- [INSTRUCTION_AGENT_PROFILE_FINANCE_ADVISOR.md](./INSTRUCTION_AGENT_PROFILE_FINANCE_ADVISOR.md)
+- [INSTRUCTION_AGENT_PROFILE_LEGAL_ADVISOR.md](./INSTRUCTION_AGENT_PROFILE_LEGAL_ADVISOR.md)
+- [INSTRUCTION_AGENT_PROFILE_CONTROLLER.md](./INSTRUCTION_AGENT_PROFILE_CONTROLLER.md)
+- [INSTRUCTION_AGENT_PROFILE_PERSONAL_ASSISTANT.md](./INSTRUCTION_AGENT_PROFILE_PERSONAL_ASSISTANT.md)
+
