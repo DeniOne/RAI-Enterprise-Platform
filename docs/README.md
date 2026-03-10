@@ -12,6 +12,8 @@
 - [Level F Strategy](file:///f:/RAI_EP/docs/00_STRATEGY/LEVEL%20F%20—%20INDUSTRY%20COGNITIVE%20STANDARD.md)
 - [STAGE 2 Canon Index](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/INDEX.md)
 - [Swarm Control Tower Architecture](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_SWARM_CONTROL_TOWER_ARCHITECTURE.md)
+- [Agent Evolution and Lifecycle](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_EVOLUTION_AND_LIFECYCLE.md)
+- [Control Tower Lifecycle Board Gap Analysis](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_CONTROL_TOWER_LIFECYCLE_BOARD_GAP_ANALYSIS.md)
 
 ### [🏗️ 01-ARCHITECTURE](file:///f:/RAI_EP/docs/01_ARCHITECTURE/)
 Технический фундамент и описание Бизнес-Ядра.

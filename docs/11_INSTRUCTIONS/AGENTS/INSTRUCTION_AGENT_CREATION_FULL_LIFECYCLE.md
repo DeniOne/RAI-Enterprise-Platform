@@ -56,6 +56,10 @@ last_updated: 2026-03-08
 - какие UI-поверхности он должен открывать;
 - какие риски и ограничения у него есть.
 
+Дополнительно обязательно учитывать lifecycle-канон:
+
+- [RAI_AGENT_EVOLUTION_AND_LIFECYCLE.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_EVOLUTION_AND_LIFECYCLE.md)
+
 Перед началом реализации обязательно ответить на вопросы:
 
 1. Это действительно новый агент, а не новый intent существующего агента?
@@ -81,6 +85,12 @@ last_updated: 2026-03-08
 - clarification flow работает;
 - UX умеет показать его рабочие окна и действия;
 - governance валидирует его конфиги;
+- определён lifecycle path:
+  - onboarding
+  - promotion
+  - canary
+  - rollback
+  - retirement
 - есть unit / integration / eval / smoke tests;
 - агент можно честно включать в production.
 

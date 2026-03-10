@@ -28,6 +28,8 @@
 | [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](./RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md) | `ACTIVE MAP` | Единая карта доменов платформы, owner-агентов, intent-owner и нормативных handoff paths |
 | [RAI_AGENT_RUNTIME_GOVERNANCE.md](./RAI_AGENT_RUNTIME_GOVERNANCE.md) | `ACTIVE CANON` | Единый runtime-governance canon: budgets, concurrency, escalation, reliability, hallucination scoring и swarm telemetry |
 | [RAI_SWARM_CONTROL_TOWER_ARCHITECTURE.md](./RAI_SWARM_CONTROL_TOWER_ARCHITECTURE.md) | `ACTIVE CANON` | Верхний operator-plane canon для `Agent OS + Control Tower`: dashboard, ranking, reliability heatmap, BS monitoring, telemetry и runtime queue health |
+| [RAI_AGENT_EVOLUTION_AND_LIFECYCLE.md](./RAI_AGENT_EVOLUTION_AND_LIFECYCLE.md) | `ACTIVE CANON` | Верхний lifecycle canon по onboarding, promotion, canary, freeze, rollback, retirement и versioning агентного флота |
+| [RAI_CONTROL_TOWER_LIFECYCLE_BOARD_GAP_ANALYSIS.md](./RAI_CONTROL_TOWER_LIFECYCLE_BOARD_GAP_ANALYSIS.md) | `ACTIVE ANALYSIS` | Gap analysis между текущим `Control Tower` кодом и целевым lifecycle board: lifecycle states, canary board, rollback board, freeze, retirement, version lineage |
 | [RAI_FRONT_OFFICE_AGENT_CANON.md](./RAI_FRONT_OFFICE_AGENT_CANON.md) | `ACTIVE TARGET` | Канон будущего `front_office_agent`: коммуникационный ingress, dialogue log, process detection и handoff в owner-domains |
 | [RAI_CONTRACTS_AGENT_CANON.md](./RAI_CONTRACTS_AGENT_CANON.md) | `ACTIVE CANON` | Канон `contracts_agent`: canonical commerce owner-agent для договоров, обязательств, fulfillment, invoices, payments и AR balance |
 

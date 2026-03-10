@@ -14,7 +14,7 @@ export interface UserSession {
         answers: Record<string, any>;
     };
     pendingAdvisoryFeedbackTraceId?: string;
-    pendingAgroAction?: {
+    pendingFrontOfficeAction?: {
         action: 'fix' | 'link';
         draftId: string;
     };

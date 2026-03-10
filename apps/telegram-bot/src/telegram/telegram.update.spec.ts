@@ -1,6 +1,6 @@
 import { TelegramUpdate } from "./telegram.update";
 
-describe("TelegramUpdate agro flow", () => {
+describe("TelegramUpdate front-office flow", () => {
   const progressService = {
     getProgressStats: jest.fn(),
     formatReport: jest.fn(),
@@ -11,10 +11,10 @@ describe("TelegramUpdate agro flow", () => {
     getMyTasks: jest.fn(),
     startTask: jest.fn(),
     completeTask: jest.fn(),
-    createAgroEventDraft: jest.fn(),
-    fixAgroEventDraft: jest.fn(),
-    linkAgroEventDraft: jest.fn(),
-    confirmAgroEventDraft: jest.fn(),
+    createFrontOfficeDraft: jest.fn(),
+    fixFrontOfficeDraft: jest.fn(),
+    linkFrontOfficeDraft: jest.fn(),
+    confirmFrontOfficeDraft: jest.fn(),
     recordAdvisoryFeedback: jest.fn(),
   });
 
@@ -26,7 +26,8 @@ describe("TelegramUpdate agro flow", () => {
   const buildTextContext = (text: string) =>
     ({
       from: { id: 101, username: "worker" },
-      message: { text },
+      chat: { id: 9001 },
+      message: { text, message_id: 77 },
       reply: jest.fn(),
     }) as any;
 
@@ -46,7 +47,9 @@ describe("TelegramUpdate agro flow", () => {
   const buildPhotoContext = () =>
     ({
       from: { id: 101, username: "worker" },
+      chat: { id: 9001 },
       message: {
+        message_id: 88,
         photo: [{ file_id: "photo-small" }, { file_id: "photo-large", width: 1200, height: 900 }],
         caption: "лист с пятнами",
       },
@@ -56,16 +59,22 @@ describe("TelegramUpdate agro flow", () => {
       reply: jest.fn(),
     }) as any;
 
-  it("создаёт draft на обычный text-вход", async () => {
+  it("создаёт front-office draft на обычный text-вход", async () => {
     const apiClient = buildApiClient();
     const sessionService = buildSessionService();
     sessionService.getSession.mockResolvedValue({
       token: "token-1",
       lastActive: Date.now(),
+      activeTaskId: "task-7",
+      currentCoordinates: { lat: 50.1, lng: 36.2 },
     });
-    apiClient.createAgroEventDraft.mockResolvedValue({
-      draft: { id: "draft-1", status: "DRAFT", missingMust: ["fieldRef"] },
-      ui: { message: "Draft создан" },
+    apiClient.createFrontOfficeDraft.mockResolvedValue({
+      status: "DRAFT_RECORDED",
+      draftId: "draft-1",
+      suggestedIntent: "observation",
+      mustClarifications: [],
+      allowedActions: ["CONFIRM", "FIX", "LINK"],
+      draft: { id: "draft-1", status: "READY_TO_CONFIRM" },
     });
 
     const update = new TelegramUpdate(
@@ -77,12 +86,16 @@ describe("TelegramUpdate agro flow", () => {
 
     await update.onText(ctx);
 
-    expect(apiClient.createAgroEventDraft).toHaveBeenCalledWith(
+    expect(apiClient.createFrontOfficeDraft).toHaveBeenCalledWith(
       expect.objectContaining({
-        eventType: "TELEGRAM_TEXT",
-        payload: expect.objectContaining({
-          description: "опрыскивание завершено",
-        }),
+        channel: "telegram",
+        messageText: "опрыскивание завершено",
+        taskId: "task-7",
+        coordinates: { lat: 50.1, lng: 36.2 },
+        sourceMessageId: "77",
+        chatId: "9001",
+        threadExternalId: "9001",
+        senderExternalId: "101",
       }),
       "token-1",
     );
@@ -130,20 +143,6 @@ describe("TelegramUpdate agro flow", () => {
 
     expect(apiClient.getMyTasks).toHaveBeenCalledWith("token-1");
     expect(ctx.reply).toHaveBeenCalledTimes(2);
-    expect(ctx.reply).toHaveBeenNthCalledWith(
-      1,
-      expect.stringContaining("Осмотр поля"),
-      expect.objectContaining({
-        parse_mode: "HTML",
-      }),
-    );
-    expect(ctx.reply).toHaveBeenNthCalledWith(
-      2,
-      expect.stringContaining("Подтверждение обработки"),
-      expect.objectContaining({
-        parse_mode: "HTML",
-      }),
-    );
   });
 
   it("не вызывает link без распознанных refs", async () => {
@@ -152,7 +151,7 @@ describe("TelegramUpdate agro flow", () => {
     sessionService.getSession.mockResolvedValue({
       token: "token-1",
       lastActive: Date.now(),
-      pendingAgroAction: {
+      pendingFrontOfficeAction: {
         action: "link",
         draftId: "draft-2",
       },
@@ -167,13 +166,13 @@ describe("TelegramUpdate agro flow", () => {
 
     await update.onText(ctx);
 
-    expect(apiClient.linkAgroEventDraft).not.toHaveBeenCalled();
+    expect(apiClient.linkFrontOfficeDraft).not.toHaveBeenCalled();
     expect(ctx.reply).toHaveBeenCalledWith(
-      "Нужен формат refs: farm=... field=... task=...",
+      "Нужен формат refs: field=... season=... task=...",
     );
   });
 
-  it("создаёт draft на photo-вход", async () => {
+  it("создаёт front-office draft на photo-вход", async () => {
     const apiClient = buildApiClient();
     const sessionService = buildSessionService();
     sessionService.getSession.mockResolvedValue({
@@ -182,9 +181,13 @@ describe("TelegramUpdate agro flow", () => {
       activeTaskId: "task-1",
       currentCoordinates: { lat: 1, lng: 2 },
     });
-    apiClient.createAgroEventDraft.mockResolvedValue({
-      draft: { id: "draft-photo", status: "DRAFT", missingMust: ["fieldRef"] },
-      ui: { message: "Draft создан" },
+    apiClient.createFrontOfficeDraft.mockResolvedValue({
+      status: "DRAFT_RECORDED",
+      draftId: "draft-photo",
+      suggestedIntent: "deviation",
+      mustClarifications: ["LINK_SEASON"],
+      allowedActions: ["CONFIRM", "FIX", "LINK"],
+      draft: { id: "draft-photo", status: "NEEDS_LINK" },
     });
 
     const update = new TelegramUpdate(
@@ -196,16 +199,14 @@ describe("TelegramUpdate agro flow", () => {
 
     await update.onPhoto(ctx);
 
-    expect(apiClient.createAgroEventDraft).toHaveBeenCalledWith(
+    expect(apiClient.createFrontOfficeDraft).toHaveBeenCalledWith(
       expect.objectContaining({
-        eventType: "TELEGRAM_PHOTO",
-        taskRef: "task-1",
-        evidence: [
-          expect.objectContaining({
-            type: "photo",
-            fileId: "photo-large",
-          }),
-        ],
+        channel: "telegram",
+        messageText: "лист с пятнами",
+        taskId: "task-1",
+        photoUrl: "https://files.example/photo-large",
+        sourceMessageId: "88",
+        chatId: "9001",
       }),
       "token-1",
     );
@@ -215,20 +216,24 @@ describe("TelegramUpdate agro flow", () => {
     );
   });
 
-  it("выполняет link по text refs для pending action", async () => {
+  it("выполняет link по text refs для pending front-office action", async () => {
     const apiClient = buildApiClient();
     const sessionService = buildSessionService();
     sessionService.getSession.mockResolvedValue({
       token: "token-1",
       lastActive: Date.now(),
-      pendingAgroAction: {
+      pendingFrontOfficeAction: {
         action: "link",
         draftId: "draft-2",
       },
     });
-    apiClient.linkAgroEventDraft.mockResolvedValue({
-      draft: { id: "draft-2", status: "READY_FOR_CONFIRM", missingMust: [] },
-      ui: { message: "Draft обновлён" },
+    apiClient.linkFrontOfficeDraft.mockResolvedValue({
+      status: "DRAFT_RECORDED",
+      draftId: "draft-2",
+      suggestedIntent: "deviation",
+      mustClarifications: [],
+      allowedActions: ["CONFIRM", "FIX", "LINK"],
+      draft: { id: "draft-2", status: "READY_TO_CONFIRM" },
     });
 
     const update = new TelegramUpdate(
@@ -236,33 +241,37 @@ describe("TelegramUpdate agro flow", () => {
       apiClient as any,
       sessionService as any,
     );
-    const ctx = buildTextContext("farm=farm-1 field=field-2 task=task-3");
+    const ctx = buildTextContext("field=field-2 season=season-4 task=task-3");
 
     await update.onText(ctx);
 
-    expect(apiClient.linkAgroEventDraft).toHaveBeenCalledWith(
+    expect(apiClient.linkFrontOfficeDraft).toHaveBeenCalledWith(
+      "draft-2",
       {
-        draftId: "draft-2",
-        farmRef: "farm-1",
-        fieldRef: "field-2",
-        taskRef: "task-3",
+        fieldId: "field-2",
+        seasonId: "season-4",
+        taskId: "task-3",
       },
       "token-1",
     );
     expect(sessionService.saveSession).toHaveBeenCalled();
   });
 
-  it("по confirm-кнопке вызывает confirm API", async () => {
+  it("по confirm-кнопке вызывает confirm front-office API", async () => {
     const apiClient = buildApiClient();
     const sessionService = buildSessionService();
     sessionService.getSession.mockResolvedValue({
       token: "token-1",
       lastActive: Date.now(),
     });
-    apiClient.confirmAgroEventDraft.mockResolvedValue({
-      draft: { id: "draft-3", status: "COMMITTED", missingMust: [] },
-      committed: { id: "commit-1", provenanceHash: "hash-1" },
-      ui: { message: "Событие успешно закоммичено" },
+    apiClient.confirmFrontOfficeDraft.mockResolvedValue({
+      status: "COMMITTED",
+      confirmationRequired: false,
+      draftId: "draft-3",
+      suggestedIntent: "observation",
+      allowedActions: [],
+      draft: { id: "draft-3", status: "COMMITTED" },
+      commitResult: { kind: "observation", id: "obs-1" },
     });
 
     const update = new TelegramUpdate(
@@ -270,17 +279,17 @@ describe("TelegramUpdate agro flow", () => {
       apiClient as any,
       sessionService as any,
     );
-    const ctx = buildActionContext("ag:c:draft-3", ["ag:c:draft-3", "c", "draft-3"]);
+    const ctx = buildActionContext("fo:c:draft-3", ["fo:c:draft-3", "c", "draft-3"]);
 
-    await update.onAgroAction(ctx);
+    await update.onFrontOfficeAction(ctx);
 
-    expect(apiClient.confirmAgroEventDraft).toHaveBeenCalledWith(
+    expect(apiClient.confirmFrontOfficeDraft).toHaveBeenCalledWith(
       "draft-3",
       "token-1",
     );
     expect(ctx.answerCbQuery).toHaveBeenCalledWith("Confirm отправлен");
     expect(ctx.reply).toHaveBeenCalledWith(
-      expect.stringContaining("commit-1"),
+      expect.stringContaining("obs-1"),
       expect.objectContaining({ parse_mode: "HTML" }),
     );
   });

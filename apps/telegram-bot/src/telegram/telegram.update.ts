@@ -3,8 +3,8 @@ import { Context, Markup } from "telegraf";
 import { Logger } from "@nestjs/common";
 import { ProgressService } from "./progress.service";
 import {
-  AgroDraftResponseDto,
   ApiClientService,
+  FrontOfficeDraftResponseDto,
 } from "../shared/api-client/api-client.service";
 import {
   SessionService,
@@ -12,15 +12,16 @@ import {
 } from "../shared/session/session.service";
 
 const ADMIN_TG_ID = "441610858";
-const AGRO_CALLBACK_PREFIX = "ag";
-const AGRO_CALLBACK_MAX_LENGTH = 64;
+const FRONT_OFFICE_CALLBACK_PREFIX = "fo";
+const FRONT_OFFICE_CALLBACK_MAX_LENGTH = 64;
 
-type AgroActionCode = "c" | "f" | "l";
+type FrontOfficeActionCode = "c" | "f" | "l";
 
-interface AgroLinkPatch {
+interface FrontOfficeLinkPatch {
   farmRef?: string;
-  fieldRef?: string;
-  taskRef?: string;
+  fieldId?: string;
+  seasonId?: string;
+  taskId?: string;
 }
 
 @Update()
@@ -50,54 +51,61 @@ export class TelegramUpdate {
     return session?.token || null;
   }
 
-  private buildAgroCallbackData(
-    action: AgroActionCode,
+  private buildFrontOfficeCallbackData(
+    action: FrontOfficeActionCode,
     draftId: string,
   ): string {
-    const callback = `${AGRO_CALLBACK_PREFIX}:${action}:${draftId}`;
-    if (callback.length > AGRO_CALLBACK_MAX_LENGTH) {
-      throw new Error("Agro callback data exceeds Telegram limit");
+    const callback = `${FRONT_OFFICE_CALLBACK_PREFIX}:${action}:${draftId}`;
+    if (callback.length > FRONT_OFFICE_CALLBACK_MAX_LENGTH) {
+      throw new Error("Front-office callback data exceeds Telegram limit");
     }
     return callback;
   }
 
-  private getAgroKeyboard(draftId: string) {
+  private getFrontOfficeKeyboard(draftId: string) {
     return Markup.inlineKeyboard([
       [
-        Markup.button.callback("✅", this.buildAgroCallbackData("c", draftId)),
-        Markup.button.callback("✏️", this.buildAgroCallbackData("f", draftId)),
-        Markup.button.callback("🔗", this.buildAgroCallbackData("l", draftId)),
+        Markup.button.callback("✅", this.buildFrontOfficeCallbackData("c", draftId)),
+        Markup.button.callback("✏️", this.buildFrontOfficeCallbackData("f", draftId)),
+        Markup.button.callback("🔗", this.buildFrontOfficeCallbackData("l", draftId)),
       ],
     ]);
   }
 
-  private formatMissingMust(missingMust?: string[]): string {
-    if (!missingMust || missingMust.length === 0) {
+  private formatMissingMust(mustClarifications?: string[]): string {
+    if (!mustClarifications || mustClarifications.length === 0) {
       return "MUST закрыты.";
     }
 
-    return `Нужно заполнить: ${missingMust.join(", ")}`;
+    return `Нужно уточнить: ${mustClarifications.join(", ")}`;
   }
 
-  private formatAgroReply(result: AgroDraftResponseDto): string {
-    const draftId = result.draft.id;
-    const status = result.draft.status;
-    const message = result.ui?.message ?? "Draft обновлён";
-    const must = this.formatMissingMust(result.draft.missingMust);
-    const committedId = result.committed?.id
-      ? `\ncommit: <code>${result.committed.id}</code>`
+  private formatFrontOfficeReply(result: FrontOfficeDraftResponseDto): string {
+    const draftId = result.draftId ?? result.draft?.id ?? "unknown";
+    const status = result.draft?.status ?? result.status;
+    const message = result.status === "COMMITTED" ? "Сигнал подтверждён" : "Сигнал зафиксирован";
+    const must = this.formatMissingMust(
+      result.mustClarifications ?? result.draft?.mustClarifications,
+    );
+    const intent = result.suggestedIntent
+      ? `\nintent: <b>${result.suggestedIntent}</b>`
+      : "";
+    const committedId = result.commitResult?.id
+      ? `\ncommit: <code>${result.commitResult.id}</code>`
       : "";
 
-    return `${message}\ndraft: <code>${draftId}</code>\nstatus: <b>${status}</b>\n${must}${committedId}`;
+    return `${message}\ndraft: <code>${draftId}</code>\nstatus: <b>${status}</b>${intent}\n${must}${committedId}`;
   }
 
-  private async replyWithAgroDraft(
+  private async replyWithFrontOfficeDraft(
     ctx: Context,
-    result: AgroDraftResponseDto,
+    result: FrontOfficeDraftResponseDto,
   ): Promise<void> {
-    await ctx.reply(this.formatAgroReply(result), {
+    await ctx.reply(this.formatFrontOfficeReply(result), {
       parse_mode: "HTML",
-      ...this.getAgroKeyboard(result.draft.id),
+      ...(result.allowedActions?.length
+        ? this.getFrontOfficeKeyboard(result.draftId)
+        : {}),
     });
   }
 
@@ -116,12 +124,13 @@ export class TelegramUpdate {
     });
   }
 
-  private parseLinkPatch(message: string): AgroLinkPatch | null {
-    const patch: AgroLinkPatch = {};
-    const patterns: Array<[keyof AgroLinkPatch, RegExp]> = [
+  private parseLinkPatch(message: string): FrontOfficeLinkPatch | null {
+    const patch: FrontOfficeLinkPatch = {};
+    const patterns: Array<[keyof FrontOfficeLinkPatch, RegExp]> = [
       ["farmRef", /(?:^|\s)(?:farm|farmRef)\s*[:=]\s*([^\s,;]+)/i],
-      ["fieldRef", /(?:^|\s)(?:field|fieldRef)\s*[:=]\s*([^\s,;]+)/i],
-      ["taskRef", /(?:^|\s)(?:task|taskRef)\s*[:=]\s*([^\s,;]+)/i],
+      ["fieldId", /(?:^|\s)(?:field|fieldId)\s*[:=]\s*([^\s,;]+)/i],
+      ["seasonId", /(?:^|\s)(?:season|seasonId)\s*[:=]\s*([^\s,;]+)/i],
+      ["taskId", /(?:^|\s)(?:task|taskId)\s*[:=]\s*([^\s,;]+)/i],
     ];
 
     for (const [key, pattern] of patterns) {
@@ -134,26 +143,31 @@ export class TelegramUpdate {
     return Object.keys(patch).length > 0 ? patch : null;
   }
 
-  private async createAgroDraftFromText(
+  private async createFrontOfficeDraftFromText(
     ctx: Context,
     accessToken: string,
     message: string,
   ): Promise<void> {
-    const result = await this.apiClient.createAgroEventDraft(
+    const session = await this.session.getSession(ctx.from!.id);
+    const result = await this.apiClient.createFrontOfficeDraft(
       {
-        eventType: "TELEGRAM_TEXT",
-        payload: {
-          description: message,
-          source: "telegram",
-        },
+        channel: "telegram",
+        messageText: message,
+        direction: "inbound",
+        taskId: session?.activeTaskId,
+        coordinates: session?.currentCoordinates,
+        sourceMessageId: (ctx.message as any)?.message_id?.toString?.(),
+        chatId: (ctx.chat as any)?.id?.toString?.(),
+        threadExternalId: (ctx.chat as any)?.id?.toString?.(),
+        senderExternalId: ctx.from?.id?.toString?.(),
       },
       accessToken,
     );
 
-    await this.replyWithAgroDraft(ctx, result);
+    await this.replyWithFrontOfficeDraft(ctx, result);
   }
 
-  private async createAgroDraftFromPhoto(
+  private async createFrontOfficeDraftFromPhoto(
     ctx: any,
     accessToken: string,
     session: UserSession,
@@ -164,32 +178,26 @@ export class TelegramUpdate {
       ? ctx.message.caption
       : undefined;
 
-    const result = await this.apiClient.createAgroEventDraft(
+    const result = await this.apiClient.createFrontOfficeDraft(
       {
-        eventType: "TELEGRAM_PHOTO",
-        taskRef: session.activeTaskId,
-        payload: {
-          description: caption,
-          source: "telegram",
-          coordinates: session.currentCoordinates,
-        },
-        evidence: [
-          {
-            type: "photo",
-            url: fileLink.toString(),
-            fileId: photo.file_id,
-            width: photo.width,
-            height: photo.height,
-          },
-        ],
+        channel: "telegram",
+        messageText: caption ?? "[photo]",
+        direction: "inbound",
+        taskId: session.activeTaskId,
+        coordinates: session.currentCoordinates,
+        sourceMessageId: ctx.message.message_id?.toString?.(),
+        chatId: ctx.chat?.id?.toString?.(),
+        threadExternalId: ctx.chat?.id?.toString?.(),
+        senderExternalId: ctx.from?.id?.toString?.(),
+        photoUrl: fileLink.toString(),
       },
       accessToken,
     );
 
-    await this.replyWithAgroDraft(ctx, result);
+    await this.replyWithFrontOfficeDraft(ctx, result);
   }
 
-  private async createAgroDraftFromVoice(
+  private async createFrontOfficeDraftFromVoice(
     ctx: any,
     accessToken: string,
     session: UserSession,
@@ -197,28 +205,23 @@ export class TelegramUpdate {
     const voice = ctx.message.voice;
     const fileLink = await ctx.telegram.getFileLink(voice.file_id);
 
-    const result = await this.apiClient.createAgroEventDraft(
+    const result = await this.apiClient.createFrontOfficeDraft(
       {
-        eventType: "TELEGRAM_VOICE",
-        taskRef: session.activeTaskId,
-        payload: {
-          source: "telegram",
-          coordinates: session.currentCoordinates,
-        },
-        evidence: [
-          {
-            type: "audio",
-            url: fileLink.toString(),
-            fileId: voice.file_id,
-            duration: voice.duration,
-            mimeType: voice.mime_type,
-          },
-        ],
+        channel: "telegram",
+        messageText: "[voice]",
+        direction: "inbound",
+        taskId: session.activeTaskId,
+        coordinates: session.currentCoordinates,
+        sourceMessageId: ctx.message.message_id?.toString?.(),
+        chatId: ctx.chat?.id?.toString?.(),
+        threadExternalId: ctx.chat?.id?.toString?.(),
+        senderExternalId: ctx.from?.id?.toString?.(),
+        voiceUrl: fileLink.toString(),
       },
       accessToken,
     );
 
-    await this.replyWithAgroDraft(ctx, result);
+    await this.replyWithFrontOfficeDraft(ctx, result);
   }
 
 
@@ -473,16 +476,16 @@ export class TelegramUpdate {
     }
   }
 
-  @Action(/ag:([cfl]):([A-Za-z0-9-]+)/)
-  async onAgroAction(@Ctx() ctx: Context): Promise<void> {
+  @Action(/fo:([cfl]):([A-Za-z0-9-]+)/)
+  async onFrontOfficeAction(@Ctx() ctx: Context): Promise<void> {
     if (!("match" in ctx && ctx.match) || !ctx.from) return;
 
-    const action = ctx.match[1] as AgroActionCode;
+    const action = ctx.match[1] as FrontOfficeActionCode;
     const draftId = ctx.match[2];
     const callbackData = (ctx.callbackQuery as any)?.data;
     if (
       typeof callbackData !== "string" ||
-      callbackData.length > AGRO_CALLBACK_MAX_LENGTH
+      callbackData.length > FRONT_OFFICE_CALLBACK_MAX_LENGTH
     ) {
       await ctx.answerCbQuery("Некорректная кнопка");
       return;
@@ -498,24 +501,26 @@ export class TelegramUpdate {
 
     try {
       if (action === "c") {
-        const result = await this.apiClient.confirmAgroEventDraft(
+        const result = await this.apiClient.confirmFrontOfficeDraft(
           draftId,
           accessToken,
         );
         await this.saveSessionWithPatch(ctx.from.id, session, {
-          pendingAgroAction: undefined,
+          pendingFrontOfficeAction: undefined,
         });
         await ctx.answerCbQuery("Confirm отправлен");
-        await ctx.reply(this.formatAgroReply(result), {
+        await ctx.reply(this.formatFrontOfficeReply(result), {
           parse_mode: "HTML",
-          ...this.getAgroKeyboard(draftId),
+          ...(result.allowedActions?.length
+            ? this.getFrontOfficeKeyboard(draftId)
+            : {}),
         });
         return;
       }
 
       const pendingAction = action === "f" ? "fix" : "link";
       await this.saveSessionWithPatch(ctx.from.id, session, {
-        pendingAgroAction: {
+        pendingFrontOfficeAction: {
           action: pendingAction,
           draftId,
         },
@@ -527,12 +532,12 @@ export class TelegramUpdate {
       await ctx.reply(
         pendingAction === "fix"
           ? `Отправьте правку для draft <code>${draftId}</code>.`
-          : `Отправьте refs для draft <code>${draftId}</code> в формате farm=... field=... task=...`,
+          : `Отправьте refs для draft <code>${draftId}</code> в формате field=... season=... task=...`,
         { parse_mode: "HTML" },
       );
     } catch (e) {
-      this.logger.error(`[AGRO] Action ${action} failed: ${e.message}`);
-      await ctx.answerCbQuery("Ошибка agro");
+      this.logger.error(`[FRONT_OFFICE] Action ${action} failed: ${e.message}`);
+      await ctx.answerCbQuery("Ошибка front-office");
     }
   }
 
@@ -914,54 +919,52 @@ export class TelegramUpdate {
         return;
       }
 
-      const pendingAgroAction = session?.pendingAgroAction;
+      const pendingFrontOfficeAction = session?.pendingFrontOfficeAction;
 
-      if (pendingAgroAction?.action === "fix") {
-        const result = await this.apiClient.fixAgroEventDraft(
+      if (pendingFrontOfficeAction?.action === "fix") {
+        const result = await this.apiClient.fixFrontOfficeDraft(
+          pendingFrontOfficeAction.draftId,
           {
-            draftId: pendingAgroAction.draftId,
-            patch: {
-              description: message,
-            },
+            messageText: message,
+            taskId: session?.activeTaskId,
+            coordinates: session?.currentCoordinates,
           },
           accessToken,
         );
 
         await this.saveSessionWithPatch(ctx.from.id, session, {
-          pendingAgroAction: undefined,
+          pendingFrontOfficeAction: undefined,
         });
-        await this.replyWithAgroDraft(ctx, result);
+        await this.replyWithFrontOfficeDraft(ctx, result);
         return;
       }
 
-      if (pendingAgroAction?.action === "link") {
+      if (pendingFrontOfficeAction?.action === "link") {
         const patch = this.parseLinkPatch(message);
         if (!patch) {
           await ctx.reply(
-            "Нужен формат refs: farm=... field=... task=...",
+            "Нужен формат refs: field=... season=... task=...",
           );
           return;
         }
 
-        const result = await this.apiClient.linkAgroEventDraft(
-          {
-            draftId: pendingAgroAction.draftId,
-            ...patch,
-          },
+        const result = await this.apiClient.linkFrontOfficeDraft(
+          pendingFrontOfficeAction.draftId,
+          patch,
           accessToken,
         );
 
         await this.saveSessionWithPatch(ctx.from.id, session, {
-          pendingAgroAction: undefined,
+          pendingFrontOfficeAction: undefined,
         });
-        await this.replyWithAgroDraft(ctx, result);
+        await this.replyWithFrontOfficeDraft(ctx, result);
         return;
       }
 
-      await this.createAgroDraftFromText(ctx, accessToken, message);
+      await this.createFrontOfficeDraftFromText(ctx, accessToken, message);
     } catch (e) {
-      this.logger.error(`[AGRO] Text intake failed: ${e.message}`);
-      await ctx.reply("❌ Ошибка при создании draft.");
+      this.logger.error(`[FRONT_OFFICE] Text intake failed: ${e.message}`);
+      await ctx.reply("❌ Ошибка при создании front-office draft.");
     }
   }
 
@@ -978,9 +981,9 @@ export class TelegramUpdate {
     if (!session?.token) return;
 
     try {
-      await this.createAgroDraftFromPhoto(ctx, session.token, session);
+      await this.createFrontOfficeDraftFromPhoto(ctx, session.token, session);
     } catch (e) {
-      this.logger.error(`[AGRO] Photo intake failed: ${e.message}`);
+      this.logger.error(`[FRONT_OFFICE] Photo intake failed: ${e.message}`);
       await ctx.reply("❌ Ошибка при создании photo draft.");
     }
   }
@@ -992,9 +995,9 @@ export class TelegramUpdate {
     if (!session?.token) return;
 
     try {
-      await this.createAgroDraftFromVoice(ctx, session.token, session);
+      await this.createFrontOfficeDraftFromVoice(ctx, session.token, session);
     } catch (e) {
-      this.logger.error(`[AGRO] Voice intake failed: ${e.message}`);
+      this.logger.error(`[FRONT_OFFICE] Voice intake failed: ${e.message}`);
       await ctx.reply("❌ Ошибка при создании voice draft.");
     }
   }

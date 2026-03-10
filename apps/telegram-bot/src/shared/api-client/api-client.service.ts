@@ -64,6 +64,43 @@ export interface AgroDraftResponseDto {
     };
 }
 
+export interface FrontOfficeDraftResponseDto {
+    status: 'DRAFT_RECORDED' | 'COMMITTED';
+    confirmationRequired: boolean;
+    draftId: string;
+    threadKey?: string | null;
+    classification?: {
+        classification?: string | null;
+        confidence?: number | null;
+        targetOwnerRole?: string | null;
+        threadKey?: string | null;
+    };
+    suggestedIntent?: 'observation' | 'deviation' | 'consultation' | 'context_update';
+    anchor?: {
+        farmRef?: string | null;
+        fieldId?: string | null;
+        seasonId?: string | null;
+        taskId?: string | null;
+    };
+    mustClarifications?: string[];
+    allowedActions?: string[];
+    draft?: {
+        id: string;
+        status: string;
+        payload?: Record<string, any>;
+        mustClarifications?: string[];
+    };
+    committed?: {
+        id: string;
+        eventType?: string;
+        committedAt?: string;
+    } | null;
+    commitResult?: {
+        kind?: string;
+        id?: string;
+    } | null;
+}
+
 @Injectable()
 export class ApiClientService {
     private readonly backendUrl: string;
@@ -288,6 +325,59 @@ export class ApiClientService {
         return this.request('/api/front-office/deviations', {
             method: 'GET',
             headers: this.getHeaders(accessToken),
+        });
+    }
+
+    async createFrontOfficeDraft(data: any, accessToken: string): Promise<FrontOfficeDraftResponseDto> {
+        const idempotencyKey = this._generateIdempotencyKey('createFrontOfficeDraft', data);
+        return this.request('/api/front-office/intake/message', {
+            method: 'POST',
+            headers: this.getHeaders(accessToken, idempotencyKey),
+            body: JSON.stringify(data),
+        });
+    }
+
+    async getFrontOfficeDraft(draftId: string, accessToken: string): Promise<FrontOfficeDraftResponseDto> {
+        return this.request(`/api/front-office/drafts/${draftId}`, {
+            method: 'GET',
+            headers: this.getHeaders(accessToken),
+        });
+    }
+
+    async fixFrontOfficeDraft(
+        draftId: string,
+        patch: Record<string, any>,
+        accessToken: string,
+    ): Promise<FrontOfficeDraftResponseDto> {
+        const idempotencyKey = this._generateIdempotencyKey('fixFrontOfficeDraft', { draftId, patch });
+        return this.request(`/api/front-office/drafts/${draftId}/fix`, {
+            method: 'POST',
+            headers: this.getHeaders(accessToken, idempotencyKey),
+            body: JSON.stringify(patch),
+        });
+    }
+
+    async linkFrontOfficeDraft(
+        draftId: string,
+        link: { taskId?: string; fieldId?: string; seasonId?: string; farmRef?: string },
+        accessToken: string,
+    ): Promise<FrontOfficeDraftResponseDto> {
+        const idempotencyKey = this._generateIdempotencyKey('linkFrontOfficeDraft', { draftId, link });
+        return this.request(`/api/front-office/drafts/${draftId}/link`, {
+            method: 'POST',
+            headers: this.getHeaders(accessToken, idempotencyKey),
+            body: JSON.stringify(link),
+        });
+    }
+
+    async confirmFrontOfficeDraft(
+        draftId: string,
+        accessToken: string,
+    ): Promise<FrontOfficeDraftResponseDto> {
+        const idempotencyKey = `confirmFrontOfficeDraft:${draftId}`;
+        return this.request(`/api/front-office/drafts/${draftId}/confirm`, {
+            method: 'POST',
+            headers: this.getHeaders(accessToken, idempotencyKey),
         });
     }
 
