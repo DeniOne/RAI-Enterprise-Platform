@@ -1,7 +1,7 @@
 # RAI Agent Domain Ownership Map
 
-> Версия: 1.0  
-> Дата: 2026-03-09  
+> Версия: 1.1  
+> Дата: 2026-03-10  
 > Статус: Active Canon Input  
 > Назначение: единая карта доменов платформы, owner-агентов, intent-owner и handoff paths для Stage 2.
 
@@ -30,6 +30,7 @@
 - [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md)
 - [A_RAI_AGENT_INTERACTION_BLUEPRINT.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/A_RAI_AGENT_INTERACTION_BLUEPRINT.md)
 - [TRUTH_SYNC_STAGE_2_CLAIMS.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/TRUTH_SYNC_STAGE_2_CLAIMS.md)
+- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
 
 ---
 
@@ -166,6 +167,20 @@
 9. `Secondary read/evidence owner` и `secondary advisory owner` не могут переопределять primary owner.
 10. Fallback mode обязан быть формализован, а не скрыт в prose.
 
+### 3.1 Production routing gate для future/template roles
+
+Эта карта фиксирует два разных уровня истины:
+
+- логический owner домена в целевой Stage 2-модели;
+- production routing owner, в которого оркестратор уже имеет право направлять реальный запрос.
+
+Жёсткое правило:
+
+- future/template role может быть уже назначена логическим owner соответствующего домена;
+- но это не означает, что она уже является допустимым `primary owner-agent` для production-routing;
+- direct production routing в future/template role разрешается только после появления canonical runtime family, intent contract и подтверждённого execution path;
+- source of truth для production-routing и enablement gate находится в [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md).
+
 ---
 
 ## 4. Текущая топология ownership
@@ -231,17 +246,17 @@ Ownership и handoff должны проходить через:
 | Домен | Основной scope | Связанные модули / маршруты | Primary owner-agent | Secondary read / evidence owner | Secondary advisory owner | Read authority | Advisory authority | Write authority | Fallback mode | Gap severity | Статус ownership | Комментарий |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | `agronomy` | техкарты, поля, сезон, отклонения, агро-рекомендации | `consulting`, `tech-map`, `technology-card`, `agro-events`, `field-registry`, `field-observation`, `season`, `crop-variety`, `satellite`, `vision`, `/consulting/techmaps`, `/consulting/deviations` | `agronomist` | `knowledge` | `economist` | `agronomist`, `knowledge`, `monitoring` | `agronomist`, `economist` | `agronomist` | `NONE` | `MEDIUM` | `CANONICAL` | Owner подтверждён, но покрывает не весь агро-контур platform-wide. |
-| `finance` | plan/fact, сценарии, risk assessment, финансовая аналитика | `finance-economy`, `/finance`, `/consulting/plans`, `/consulting/budgets`, `/consulting/results`, `/consulting/yield` | `economist` | `knowledge` | `strategist`, `finance_advisor` | `economist`, `knowledge`, `controller` | `economist`, `finance_advisor`, `strategist` | `economist` в пределах tools; транзакционный write не делегирован | `READ_ONLY_SUPPORT` | `MEDIUM` | `CANONICAL` | Owner подтверждён для core intents, но не для всего finance landscape. |
+| `finance` | plan/fact, сценарии, risk assessment, финансовая аналитика | `finance-economy`, `/finance`, `/consulting/plans`, `/consulting/budgets`, `/consulting/results`, `/consulting/yield` | `economist` | `knowledge` | `strategist`, `finance_advisor` | `economist`, `knowledge`, `controller` | `economist`, `finance_advisor`, `strategist` | `economist` в пределах tools; транзакционный write не делегирован | `READ_ONLY_SUPPORT` | `MEDIUM` | `CANONICAL` | Owner подтверждён для core intents, но не для всего finance landscape; `strategist`, `finance_advisor`, `controller` здесь advisory/template-only и не являются production primary owners. |
 | `knowledge` | документы, политики, knowledge corpus, grounding | `knowledge`, `knowledge-graph`, `/knowledge` | `knowledge` | отсутствует | отсутствует | `knowledge` | `knowledge` | отсутствует | `READ_ONLY_SUPPORT` | `LOW` | `CANONICAL` | Это evidence-owner домен, а не operational write domain. |
-| `monitoring` | сигналы, алерты, risk contour, monitoring summaries | `risk`, `/control-tower`, supporting monitoring routes | `monitoring` | `knowledge` | `controller`, `economist` | `monitoring`, `knowledge` | `monitoring`, `controller` | отсутствует | `READ_ONLY_SUPPORT` | `MEDIUM` | `CANONICAL` | Signal owner, не business execution owner. |
+| `monitoring` | сигналы, алерты, risk contour, monitoring summaries | `risk`, `/control-tower`, supporting monitoring routes | `monitoring` | `knowledge` | `controller`, `economist` | `monitoring`, `knowledge` | `monitoring`, `controller` | отсутствует | `READ_ONLY_SUPPORT` | `MEDIUM` | `CANONICAL` | Signal owner, не business execution owner; `controller` остаётся future/template advisory role и не перехватывает production ownership. |
 | `crm` | контрагенты, аккаунты, контакты, взаимодействия, обязательства, структуры | `crm`, `commerce/parties`, `client-registry`, `/consulting/crm`, `/crm`, `/parties` | `crm_agent` | `knowledge` | `economist` | `crm_agent`, `knowledge`, `monitoring` по сигналам | `crm_agent`, `economist` | `crm_agent` через governed CRM write path | `NONE` | `MEDIUM` | `CANONICAL` | Core CRM owner подтверждён. |
-| `front_office` | входящие и исходящие сообщения, диалоги, классификация общения, task/process detection, эскалации | `front-office`, `telegram`, `task`, `advisory`, `/front-office` | `front_office_agent` | `knowledge` | `crm_agent`, `personal_assistant` | `front_office_agent`, `knowledge`, `crm_agent` по клиентскому контексту | `front_office_agent`, `crm_agent`, `personal_assistant` | только communicator log, thread state, escalation/task records своего домена | `MANUAL_HUMAN_REQUIRED` | `HIGH` | `CANONICAL FIRST WAVE` | Owner коммуникационного ingress уже реализован как canonical role первой волны; ещё не завершены Telegram adapter, отдельный thread store и полный task/handoff contour. |
-| `contracts` | договоры, договорные роли, обязательства, fulfillment events, invoices, payments, allocations, AR balance | `commerce`, `/commerce/contracts`, `/commerce/fulfillment`, `/commerce/invoices`, `/commerce/payments` | `contracts_agent` | `knowledge` | `legal_advisor`, `economist` | `contracts_agent`, `knowledge`, `crm_agent` по связанному контрагенту | `contracts_agent`, `legal_advisor`, `economist` | `contracts_agent` через governed commerce write path | `NONE` | `MEDIUM` | `CANONICAL` | Договорный и commerce execution owner реализован как canonical runtime role первой волны; legal и economic interpretation остаются secondary advisory ownership. |
-| `legal` | clauses, policy review, legal risk, legal corpus | `legal`, `/strategic/legal` | `legal_advisor` | `knowledge` | отсутствует | `legal_advisor`, `knowledge` | `legal_advisor` | отсутствует | `MANUAL_HUMAN_REQUIRED` | `HIGH` | `FUTURE ROLE` | Роль есть в template, canonical runtime owner ещё нет. |
-| `strategy` | strategic scenarios, portfolio tradeoffs, initiatives | `strategic`, `rd`, `/strategy`, `/strategic/rd` | `strategist` | `knowledge` | `economist` | `strategist`, `knowledge` | `strategist`, `economist` | отсутствует | `MANUAL_HUMAN_REQUIRED` | `HIGH` | `FUTURE ROLE` | Роль есть, canonical owner-agent ещё нет. |
-| `marketing` | campaigns, segments, funnel advisory | supporting front-office routes, CRM read models | `marketer` | `crm_agent`, `knowledge` | отсутствует | `marketer`, `crm_agent`, `knowledge` | `marketer` | отсутствует | `BACKLOG_ONLY` | `MEDIUM` | `FUTURE ROLE` | На уровне template уже зафиксирован. |
-| `control` | сверки, control exceptions, управляемые эскалации | `finance-economy`, `risk`, control-related workflows | `controller` | `monitoring`, `knowledge` | `economist` | `controller`, `monitoring`, `knowledge` | `controller`, `economist` | отсутствует | `READ_ONLY_SUPPORT` | `HIGH` | `FUTURE ROLE` | Логически отдельный домен, но runtime family ещё нет. |
-| `personal_ops` | tasks, reminders, delegated summaries, personal coordination | `task`, `/dashboard/tasks`, calendar read model | `personal_assistant` | `knowledge` | отсутствует | `personal_assistant`, `knowledge` | `personal_assistant` | отсутствует без подтверждения | `MANUAL_HUMAN_REQUIRED` | `MEDIUM` | `FUTURE ROLE` | Личный контур, не бизнес-owner для доменных операций. |
+| `front_office` | входящие и исходящие сообщения, диалоги, классификация общения, task/process detection, эскалации | `front-office`, `telegram`, `task`, `advisory`, `/front-office` | `front_office_agent` | `knowledge` | `crm_agent`, `personal_assistant` | `front_office_agent`, `knowledge`, `crm_agent` по клиентскому контексту | `front_office_agent`, `crm_agent`, `personal_assistant` | только communicator log, thread state, escalation/task records своего домена | `MANUAL_HUMAN_REQUIRED` | `HIGH` | `CANONICAL FIRST WAVE` | Owner коммуникационного ingress уже реализован как canonical role первой волны; `personal_assistant` здесь только future/template advisory semantics и не production owner. |
+| `contracts` | договоры, договорные роли, обязательства, fulfillment events, invoices, payments, allocations, AR balance | `commerce`, `/commerce/contracts`, `/commerce/fulfillment`, `/commerce/invoices`, `/commerce/payments` | `contracts_agent` | `knowledge` | `legal_advisor`, `economist` | `contracts_agent`, `knowledge`, `crm_agent` по связанному контрагенту | `contracts_agent`, `legal_advisor`, `economist` | `contracts_agent` через governed commerce write path | `NONE` | `MEDIUM` | `CANONICAL` | Договорный и commerce execution owner реализован как canonical runtime role первой волны; `legal_advisor` остаётся secondary advisory future path и не production primary owner. |
+| `legal` | clauses, policy review, legal risk, legal corpus | `legal`, `/strategic/legal` | `legal_advisor` | `knowledge` | отсутствует | `legal_advisor`, `knowledge` | `legal_advisor` | отсутствует | `MANUAL_HUMAN_REQUIRED` | `HIGH` | `FUTURE ROLE` | Это логический owner legal-домена в целевой модели, но direct production routing в `legal_advisor` пока запрещён: canonical runtime owner ещё не поднят. |
+| `strategy` | strategic scenarios, portfolio tradeoffs, initiatives | `strategic`, `rd`, `/strategy`, `/strategic/rd` | `strategist` | `knowledge` | `economist` | `strategist`, `knowledge` | `strategist`, `economist` | отсутствует | `MANUAL_HUMAN_REQUIRED` | `HIGH` | `FUTURE ROLE` | Это логический owner strategy-домена, но не production-routable owner: canonical runtime family ещё нет. |
+| `marketing` | campaigns, segments, funnel advisory | supporting front-office routes, CRM read models | `marketer` | `crm_agent`, `knowledge` | отсутствует | `marketer`, `crm_agent`, `knowledge` | `marketer` | отсутствует | `BACKLOG_ONLY` | `MEDIUM` | `FUTURE ROLE` | Template-level owner semantics уже есть, но отдельный production owner-agent ещё не разрешён. |
+| `control` | сверки, control exceptions, управляемые эскалации | `finance-economy`, `risk`, control-related workflows | `controller` | `monitoring`, `knowledge` | `economist` | `controller`, `monitoring`, `knowledge` | `controller`, `economist` | отсутствует | `READ_ONLY_SUPPORT` | `HIGH` | `FUTURE ROLE` | Это логический control owner в целевой модели, но не production-routable owner: runtime family ещё нет. |
+| `personal_ops` | tasks, reminders, delegated summaries, personal coordination | `task`, `/dashboard/tasks`, calendar read model | `personal_assistant` | `knowledge` | отсутствует | `personal_assistant`, `knowledge` | `personal_assistant` | отсутствует без подтверждения | `MANUAL_HUMAN_REQUIRED` | `MEDIUM` | `FUTURE ROLE` | Личный контур остаётся template-only; direct production routing в `personal_assistant` как owner запрещён до enablement. |
 | `hr` | кадровые сценарии | `hr`, `/hr` | отсутствует | `knowledge` | отсутствует | module/UI read | отсутствует | отсутствует | `MANUAL_HUMAN_REQUIRED` | `MEDIUM` | `NO AGENT YET` | Домен есть в платформе, но agent ownership не формализован. |
 | `exploration` | exploration / research views | `exploration`, `/exploration` | отсутствует | `knowledge` | `strategist` потенциально | module/UI read | отсутствует | отсутствует | `BACKLOG_ONLY` | `LOW` | `NO AGENT YET` | Доменно присутствует, agent-owner не определён. |
 
@@ -304,14 +319,20 @@ Ownership и handoff должны проходить через:
 
 Это ещё не подтверждённые runtime intent-ы, а ownership направления, которые уже логически закреплены в platform templates.
 
-| Домен | Будущий owner-agent | Intent-owner зона |
-|---|---|---|
-| `marketing` | `marketer` | campaigns, segments, funnel recommendations |
-| `strategy` | `strategist` | scenario framing, strategic tradeoffs, initiative prioritization |
-| `finance` advisory | `finance_advisor` | executive finance advisory поверх deterministic evidence |
-| `legal` | `legal_advisor` | clause risks, legal summaries, policy review |
-| `control` | `controller` | reconciliation exceptions, control alerts, governed escalation |
-| `personal_ops` | `personal_assistant` | personal tasks, reminders, delegated summaries |
+Жёсткое правило:
+
+- эти строки описывают целевое ownership-направление;
+- но не дают оркестратору права делать direct production routing в указанные роли;
+- до enablement production-routing должен оставаться на canonical runtime owners, описанных в [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md).
+
+| Домен | Будущий owner-agent | Intent-owner зона | Production routing сегодня |
+|---|---|---|---|
+| `marketing` | `marketer` | campaigns, segments, funnel recommendations | запрещён; использовать `knowledge` или `crm_agent` по доминирующему действию |
+| `strategy` | `strategist` | scenario framing, strategic tradeoffs, initiative prioritization | запрещён; использовать `economist` или `knowledge` по доминирующему действию |
+| `finance` advisory | `finance_advisor` | executive finance advisory поверх deterministic evidence | запрещён; advisory остаётся у `economist` или `contracts_agent` |
+| `legal` | `legal_advisor` | clause risks, legal summaries, policy review | запрещён; advisory future-path нормирован, но runtime owner ещё не enabled |
+| `control` | `controller` | reconciliation exceptions, control alerts, governed escalation | запрещён; использовать `monitoring` или `economist` по доминирующему действию |
+| `personal_ops` | `personal_assistant` | personal tasks, reminders, delegated summaries | запрещён; доменные business-запросы остаются у canonical owner-agents |
 
 ### 6.3 Критичные missing intent owners
 
@@ -350,6 +371,8 @@ Ownership и handoff должны проходить через:
 | `contracts_agent` | `economist` | нужны финансовые последствия договора, счета, оплаты и дебиторка | через оркестратор | `ALLOWED / PARTIAL` |
 
 ### 7.2 Обязательные future handoff paths
+
+Ниже перечислены целевые handoff paths будущей модели. Эти пути не считаются активными production-routing переходами, пока target role остаётся template/future и не пройдёт enablement gate оркестратора.
 
 | Source owner | Target owner | Для чего нужен путь | Статус |
 |---|---|---|---|

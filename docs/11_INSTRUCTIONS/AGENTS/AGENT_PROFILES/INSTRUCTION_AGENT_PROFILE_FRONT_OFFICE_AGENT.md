@@ -208,6 +208,7 @@ last_updated: 2026-03-09
 
 - [RAI_FRONT_OFFICE_AGENT_CANON.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_FRONT_OFFICE_AGENT_CANON.md)
 - [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md)
+- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
 - [front-office-agent.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agents/front-office-agent.service.ts)
 - [front-office-tools.registry.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/tools/front-office-tools.registry.ts)
 - [agent-registry.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agent-registry.service.ts)

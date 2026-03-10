@@ -5,7 +5,7 @@ layer: Agents
 status: Active
 version: 1.0.0
 owners: [@techlead]
-last_updated: 2026-03-08
+last_updated: 2026-03-10
 ---
 
 # ИНСТРУКЦИЯ — КАТАЛОГ АГЕНТОВ И КАРТА ОТВЕТСТВЕННОСТИ
@@ -44,6 +44,7 @@ last_updated: 2026-03-08
 - [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md)
 - [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md)
 - [TRUTH_SYNC_STAGE_2_CLAIMS.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/TRUTH_SYNC_STAGE_2_CLAIMS.md)
+- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
 - [agent-registry.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agent-registry.service.ts)
 - [agent-management.service.ts](/root/RAI_EP/apps/api/src/modules/explainability/agent-management.service.ts)
 - [agent-interaction-contracts.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agent-contracts/agent-interaction-contracts.ts)
@@ -159,6 +160,12 @@ last_updated: 2026-03-08
 
 Но они ещё не равны полноценным отдельным runtime families.
 
+Жёсткое правило:
+
+- наличие profile, template manifest или adapter binding не даёт права production-routing в такую роль как в `primary owner-agent`;
+- direct routing в template/future role запрещён до появления canonical runtime family, intent contract и подтверждённого execution path;
+- source of truth для production-routing находится в [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md).
+
 ### 7.3 Реализованная стратегическая роль нового поколения
 
 Отдельно зафиксированы:
@@ -197,12 +204,12 @@ last_updated: 2026-03-08
 | `crm_agent` | активен | канонический | CRM | `crm` | рабочий reference agent | контрагенты, аккаунты, контакты, взаимодействия, обязательства | `party`, `account`, `contact`, `interaction`, `obligation`, `holding`, `farm` | `agronomy`, `finance`, `monitoring`; contracts execution ownership вынесен в `contracts_agent` | canonical | [INSTRUCTION_AGENT_PROFILE_CRM_AGENT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_CRM_AGENT.md) |
 | `front_office_agent` | активен | канонический | front office / communicator ingress | `front_office` | canonical first-wave agent | dialogue logging, communicator filtering, task/process detection, escalation routing | `message`, `dialog_thread`, `task_signal`, `escalation` | чужие domain writes | canonical | [INSTRUCTION_AGENT_PROFILE_FRONT_OFFICE_AGENT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_FRONT_OFFICE_AGENT.md) |
 | `contracts_agent` | активен | канонический | commerce / contracts | `contracts` | canonical first-wave commerce agent | договоры, обязательства, fulfillment, invoice, payment, allocation, AR balance | `contract`, `party_role`, `obligation`, `fulfillment_event`, `invoice`, `payment` | `crm` ownership, legal authority, agronomy, monitoring | canonical | [INSTRUCTION_AGENT_PROFILE_CONTRACTS_AGENT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_CONTRACTS_AGENT.md) |
-| `marketer` | плановый | template role | маркетинг | `marketing` | onboarding template | кампании, воронка, read-model summary | `campaign`, `lead`, `segment` | критичные writes вне governance | future/template | [INSTRUCTION_AGENT_PROFILE_MARKETER.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_MARKETER.md) |
-| `strategist` | плановый | template role | стратегия | `strategy` | onboarding template | сценарии, стратегические компромиссы | `scenario`, `initiative`, `portfolio` | autonomous execution | future/template | [INSTRUCTION_AGENT_PROFILE_STRATEGIST.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_STRATEGIST.md) |
-| `finance_advisor` | плановый | template role | финансы | `finance` | onboarding template | managed financial advisory | `metric`, `budget`, `plan` | payment / booking writes | future/template | [INSTRUCTION_AGENT_PROFILE_FINANCE_ADVISOR.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_FINANCE_ADVISOR.md) |
-| `legal_advisor` | плановый | template role | право | `legal` | onboarding template | clause risks, policy summary, legal corpus | `clause`, `policy`, `requirement` | autonomous legal commitments | future/template | [INSTRUCTION_AGENT_PROFILE_LEGAL_ADVISOR.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_LEGAL_ADVISOR.md) |
-| `controller` | плановый | template role | контроль и сверки | `finance` | onboarding template | сверки, контрольный мониторинг, эскалации | `control_case`, `metric`, `signal` | uncontrolled autonomous action | future/template | [INSTRUCTION_AGENT_PROFILE_CONTROLLER.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_CONTROLLER.md) |
-| `personal_assistant` | плановый | template role | персональная координация | `productivity` | onboarding template | agenda, coordination, task support | `task`, `reminder`, `summary` | critical governed writes | future/template | [INSTRUCTION_AGENT_PROFILE_PERSONAL_ASSISTANT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_PERSONAL_ASSISTANT.md) |
+| `marketer` | плановый | template role | маркетинг | `marketing` | onboarding template | кампании, воронка, read-model summary | `campaign`, `lead`, `segment` | критичные writes вне governance | future/template; not production-routable | [INSTRUCTION_AGENT_PROFILE_MARKETER.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_MARKETER.md) |
+| `strategist` | плановый | template role | стратегия | `strategy` | onboarding template | сценарии, стратегические компромиссы | `scenario`, `initiative`, `portfolio` | autonomous execution | future/template; not production-routable | [INSTRUCTION_AGENT_PROFILE_STRATEGIST.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_STRATEGIST.md) |
+| `finance_advisor` | плановый | template role | финансы | `finance` | onboarding template | managed financial advisory | `metric`, `budget`, `plan` | payment / booking writes | future/template; not production-routable | [INSTRUCTION_AGENT_PROFILE_FINANCE_ADVISOR.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_FINANCE_ADVISOR.md) |
+| `legal_advisor` | плановый | template role | право | `legal` | onboarding template | clause risks, policy summary, legal corpus | `clause`, `policy`, `requirement` | autonomous legal commitments | future/template; not production-routable | [INSTRUCTION_AGENT_PROFILE_LEGAL_ADVISOR.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_LEGAL_ADVISOR.md) |
+| `controller` | плановый | template role | контроль и сверки | `finance` | onboarding template | сверки, контрольный мониторинг, эскалации | `control_case`, `metric`, `signal` | uncontrolled autonomous action | future/template; not production-routable | [INSTRUCTION_AGENT_PROFILE_CONTROLLER.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_CONTROLLER.md) |
+| `personal_assistant` | плановый | template role | персональная координация | `productivity` | onboarding template | agenda, coordination, task support | `task`, `reminder`, `summary` | critical governed writes | future/template; not production-routable | [INSTRUCTION_AGENT_PROFILE_PERSONAL_ASSISTANT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_PERSONAL_ASSISTANT.md) |
 
 ---
 
@@ -217,7 +224,7 @@ last_updated: 2026-03-08
 | `crm_agent` | `Supervisor -> Runtime -> Adapter` | только через центральный spine | не подтверждены | `crm`, `commerce/parties` | договорный handoff должен идти в `contracts_agent`, а не расширять CRM scope |
 | `front_office_agent` | `Supervisor -> Runtime -> Adapter` | только через центральный spine | не подтверждены | `front-office`, `telegram`, `task`, `advisory` | полный production ingress и work queue ещё не завершены |
 | `contracts_agent` | `Supervisor -> Runtime -> Adapter` | только через центральный spine | не подтверждены | `commerce`, `contracts`, `fulfillment`, `billing` | legal runtime owner ещё не создан, часть handoff остаётся advisory-only |
-| template roles | через future-role onboarding и adapter binding | только через canonical adapter | не подтверждены | зависит от template | нет собственной canonical runtime family |
+| template roles | через future-role onboarding и adapter binding | только через canonical adapter | не подтверждены | зависит от template | нет собственной canonical runtime family; прямой production-routing запрещён |
 
 ---
 
@@ -226,6 +233,7 @@ last_updated: 2026-03-08
 - Не для каждого домена Stage 2 есть owner-agent.
 - Не каждая стратегическая роль доведена до canonical runtime family.
 - Плановые роли существуют как template/governance сущности, но ещё не как полные агенты.
+- Логический owner future-роли не равен production owner для оркестратора, пока не пройден enablement gate.
 - Домен `contracts` больше не является ownership gap: теперь он подтверждает, что unowned module нужно доводить до canonical owner-agent, а не маскировать fallback-ом.
 - Полная ownership map платформы ещё не замкнута.
 
@@ -246,6 +254,7 @@ last_updated: 2026-03-08
 ## 13. Критические ошибки и запреты
 
 - Запрещено называть template-role каноническим агентом.
+- Запрещено маршрутизировать production-запрос прямо в template-role как в `primary owner-agent`.
 - Запрещено называть доменный модуль агентом, если у него нет owner-agent.
 - Запрещено скрывать разрывы ownership за формулировкой “сценарий пока обрабатывается fallback-ом”.
 - Запрещено дублировать зоны ответственности между агентами без явной фиксации owner.
@@ -261,6 +270,7 @@ last_updated: 2026-03-08
 - отдельно выделены домены без owner-agent;
 - есть матрица ответственности;
 - есть матрица связей;
+- template roles явно отделены от production-routing;
 - каталог ссылается на подробные профили;
 - описание опирается и на Stage 2, и на код.
 
@@ -272,6 +282,7 @@ last_updated: 2026-03-08
 - [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md)
 - [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md)
 - [TRUTH_SYNC_STAGE_2_CLAIMS.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/TRUTH_SYNC_STAGE_2_CLAIMS.md)
+- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
 - [agent-registry.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agent-registry.service.ts)
 - [agent-management.service.ts](/root/RAI_EP/apps/api/src/modules/explainability/agent-management.service.ts)
 - [agent-interaction-contracts.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agent-contracts/agent-interaction-contracts.ts)

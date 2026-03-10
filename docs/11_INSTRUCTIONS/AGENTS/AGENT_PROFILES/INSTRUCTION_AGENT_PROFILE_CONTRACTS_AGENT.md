@@ -213,6 +213,7 @@ last_updated: 2026-03-09
 
 - [RAI_CONTRACTS_AGENT_CANON.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_CONTRACTS_AGENT_CANON.md)
 - [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](/root/RAI_EP/docs/00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md)
+- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
 - [contracts-agent.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agents/contracts-agent.service.ts)
 - [contracts-tools.registry.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/tools/contracts-tools.registry.ts)
 - [agent-interaction-contracts.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agent-contracts/agent-interaction-contracts.ts)
