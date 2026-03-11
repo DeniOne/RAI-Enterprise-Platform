@@ -1,4 +1,4 @@
-﻿---
+---
 id: DOC-INS-AGT-007
 type: Instruction
 layer: Agents
@@ -8,39 +8,39 @@ owners: [@techlead]
 last_updated: 2026-03-10
 ---
 
-# РРќРЎРўР РЈРљР¦РРЇ вЂ” РћР РљР•РЎРўР РђРўРћР : ROUTING Р Р’Р«Р‘РћР  РђР“Р•РќРўРђ
+# ИНСТРУКЦИЯ — ОРКЕСТРАТОР: ROUTING И ВЫБОР АГЕНТА
 
-## 1. РќР°Р·РЅР°С‡РµРЅРёРµ
+## 1. Назначение
 
-Р­С‚РѕС‚ РґРѕРєСѓРјРµРЅС‚ С„РёРєСЃРёСЂСѓРµС‚ РµРґРёРЅС‹Р№ РєР°РЅРѕРЅ РґР»СЏ РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂР° `RAI_EP`:
+Этот документ фиксирует единый канон для оркестратора `RAI_EP`:
 
-- РєР°Рє РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ РІС‹Р±РёСЂР°РµС‚ primary owner-agent РґР»СЏ Р·Р°РїСЂРѕСЃР°;
-- РєР°Рє РѕРЅ РѕРїСЂРµРґРµР»СЏРµС‚ РґРѕРїСѓСЃС‚РёРјС‹Р№ handoff;
-- РєР°Рє РѕРЅ РѕС‚Р»РёС‡Р°РµС‚ agent path РѕС‚ fallback;
-- РєР°Рє РѕРЅ СЂР°Р·СЂСѓР»РёРІР°РµС‚ РєРѕРЅС„Р»РёРєС‚С‹ ownership РјРµР¶РґСѓ Р°РіРµРЅС‚Р°РјРё;
-- РєР°РєРёРµ РґРѕРєСѓРјРµРЅС‚С‹ Рё С‚РѕС‡РєРё РєРѕРґР° СЃС‡РёС‚Р°СЋС‚СЃСЏ source of truth РґР»СЏ РјР°СЂС€СЂСѓС‚РёР·Р°С†РёРё.
+- как оркестратор выбирает primary owner-agent для запроса;
+- как он определяет допустимый handoff;
+- как он отличает agent path от fallback;
+- как он разруливает конфликты ownership между агентами;
+- какие документы и точки кода считаются source of truth для маршрутизации.
 
-Р”РѕРєСѓРјРµРЅС‚ РЅСѓР¶РµРЅ РєР°Рє С†РµРЅС‚СЂР°Р»СЊРЅС‹Р№ СЃС‚Р°РЅРґР°СЂС‚ РјР°СЂС€СЂСѓС‚РёР·Р°С†РёРё РґР»СЏ `SupervisorAgent`, `IntentRouterService`, `AgentRuntimeService` Рё СЃРІСЏР·Р°РЅРЅС‹С… product-layer СЂРµС€РµРЅРёР№.
-
----
-
-## 2. РљРѕРіРґР° РїСЂРёРјРµРЅСЏС‚СЊ
-
-РСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РґРѕРєСѓРјРµРЅС‚ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ, РєРѕРіРґР°:
-
-- РґРѕР±Р°РІР»СЏРµС‚СЃСЏ РЅРѕРІС‹Р№ intent;
-- РґРѕР±Р°РІР»СЏРµС‚СЃСЏ РЅРѕРІС‹Р№ Р°РіРµРЅС‚ РёР»Рё future-role;
-- РјРµРЅСЏРµС‚СЃСЏ ownership РґРѕРјРµРЅР°;
-- РїСЂРѕРµРєС‚РёСЂСѓРµС‚СЃСЏ handoff РјРµР¶РґСѓ Р°РіРµРЅС‚Р°РјРё;
-- РІРѕР·РЅРёРєР°РµС‚ СЃРїРѕСЂ, РєРѕРјСѓ РґРѕР»Р¶РµРЅ РїСЂРёРЅР°РґР»РµР¶Р°С‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёР№ СЃС†РµРЅР°СЂРёР№;
-- РЅСѓР¶РЅРѕ РїРѕРЅСЏС‚СЊ, СЌС‚Рѕ routing bug, ownership gap РёР»Рё РєРѕСЂСЂРµРєС‚РЅС‹Р№ fallback;
-- РЅСѓР¶РЅРѕ СЃРѕРіР»Р°СЃРѕРІР°С‚СЊ agent profile СЃ РїРѕРІРµРґРµРЅРёРµРј РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂР°.
+Документ нужен как центральный стандарт маршрутизации для `SupervisorAgent`, `IntentRouterService`, `AgentRuntimeService` и связанных product-layer решений.
 
 ---
 
-## 3. РџСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Рµ СѓСЃР»РѕРІРёСЏ
+## 2. Когда применять
 
-РџРµСЂРµРґ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµРј СЌС‚РѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р° РЅСѓР¶РЅРѕ РѕРїРёСЂР°С‚СЊСЃСЏ РЅР°:
+Использовать документ обязательно, когда:
+
+- добавляется новый intent;
+- добавляется новый агент или future-role;
+- меняется ownership домена;
+- проектируется handoff между агентами;
+- возникает спор, кому должен принадлежать пользовательский сценарий;
+- нужно понять, это routing bug, ownership gap или корректный fallback;
+- нужно согласовать agent profile с поведением оркестратора.
+
+---
+
+## 3. Предварительные условия
+
+Перед использованием этого документа нужно опираться на:
 
 - [INSTRUCTION_AGENT_PLATFORM_INTERACTION_ARCHITECTURE.md](./INSTRUCTION_AGENT_PLATFORM_INTERACTION_ARCHITECTURE.md)
 - [INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md](./INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md)
@@ -53,259 +53,259 @@ last_updated: 2026-03-10
 
 ---
 
-## 4. Р РѕР»СЊ РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂР°
+## 4. Роль оркестратора
 
-### 4.1 Р§С‚Рѕ С‚Р°РєРѕРµ РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ РІ С‚РµРєСѓС‰РµРј РєР°РЅРѕРЅРµ
+### 4.1 Что такое оркестратор в текущем каноне
 
-РћСЂРєРµСЃС‚СЂР°С‚РѕСЂ вЂ” СЌС‚Рѕ РЅРµ Р±РёР·РЅРµСЃ-Р°РіРµРЅС‚ Рё РЅРµ РµС‰С‘ РѕРґРёРЅ РґРѕРјРµРЅРЅС‹Р№ owner.
+Оркестратор — это не бизнес-агент и не ещё один доменный owner.
 
-РћСЂРєРµСЃС‚СЂР°С‚РѕСЂ РѕС‚РІРµС‡Р°РµС‚ Р·Р°:
+Оркестратор отвечает за:
 
-- РІС‹Р±РѕСЂ primary owner-agent;
-- РїСЂРѕРІРµСЂРєСѓ intent ownership;
-- РїСЂРѕРІРµСЂРєСѓ РґРѕСЃС‚СѓРїРЅРѕРіРѕ РєРѕРЅС‚РµРєСЃС‚Р°;
-- Р·Р°РїСѓСЃРє clarification path, РєРѕРіРґР° РєРѕРЅС‚РµРєСЃС‚Р° РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ;
-- Р·Р°РїСѓСЃРє governed handoff С‡РµСЂРµР· С†РµРЅС‚СЂР°Р»СЊРЅС‹Р№ spine;
-- Р·Р°РїСЂРµС‚ РЅРµРІР°Р»РёРґРЅС‹С… cross-domain РїРµСЂРµС…РѕРґРѕРІ;
-- РІС‹Р±РѕСЂ РјРµР¶РґСѓ agent path, fallback Рё manual-human-required.
+- выбор primary owner-agent;
+- проверку intent ownership;
+- проверку доступного контекста;
+- запуск clarification path, когда контекста недостаточно;
+- запуск governed handoff через центральный spine;
+- запрет невалидных cross-domain переходов;
+- выбор между agent path, fallback и manual-human-required.
 
-### 4.2 Р§РµРј РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ РЅРµ СЏРІР»СЏРµС‚СЃСЏ
+### 4.2 Чем оркестратор не является
 
-РћСЂРєРµСЃС‚СЂР°С‚РѕСЂ РЅРµ РґРѕР»Р¶РµРЅ:
+Оркестратор не должен:
 
-- Р±СЂР°С‚СЊ ownership Р±РёР·РЅРµСЃ-РґРѕРјРµРЅР°;
-- РїРѕРґРјРµРЅСЏС‚СЊ РѕС‚СЃСѓС‚СЃС‚РІРёРµ owner-agent РєСЂР°СЃРёРІС‹Рј РѕС‚РІРµС‚РѕРј;
-- СЃРѕР·РґР°РІР°С‚СЊ РїСЂСЏРјСѓСЋ `agent -> agent` mesh-РјРѕРґРµР»СЊ;
-- РјРµРЅСЏС‚СЊ owner-agent С‚РѕР»СЊРєРѕ РїРѕС‚РѕРјСѓ, С‡С‚Рѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РѕС‚РєСЂС‹Р» РґСЂСѓРіРѕР№ route;
-- СЃС‡РёС‚Р°С‚СЊ template/future role РїРѕР»РЅРѕС†РµРЅРЅС‹Рј runtime-owner Р±РµР· РѕС‚РґРµР»СЊРЅРѕРіРѕ enablement.
-
----
-
-## 5. РРµСЂР°СЂС…РёСЏ РёСЃС‚РѕС‡РЅРёРєРѕРІ РёСЃС‚РёРЅС‹ РґР»СЏ routing
-
-РџСЂРё РєРѕРЅС„Р»РёРєС‚Рµ РёСЃС‚РѕС‡РЅРёРєРѕРІ РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ РґРѕР»Р¶РµРЅ С‡РёС‚Р°С‚СЊ СЃРёСЃС‚РµРјСѓ РІ С‚Р°РєРѕРј РїРѕСЂСЏРґРєРµ:
-
-1. `agent-interaction-contracts.ts` вЂ” РїРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Рµ intent-С‹, guardrails, UI surface, Р±Р°Р·РѕРІР°СЏ РєР»Р°СЃСЃРёС„РёРєР°С†РёСЏ.
-2. `RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md` вЂ” primary owner, secondary read/advisory owner, РґРѕРїСѓСЃС‚РёРјС‹Рµ handoff, fallback mode.
-3. agent profile РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ Р°РіРµРЅС‚Р° вЂ” РіСЂР°РЅРёС†С‹ РґРѕРјРµРЅР°, Р·Р°РїСЂРµС‚С‹, РјР°РєСЃРёРјР°Р»СЊРЅС‹Р№ РґРѕРїСѓСЃС‚РёРјС‹Р№ С„СѓРЅРєС†РёРѕРЅР°Р».
-4. `agent-registry.service.ts` вЂ” СЃРїРёСЃРѕРє РєР°РЅРѕРЅРёС‡РµСЃРєРёС… runtime-Р°РіРµРЅС‚РѕРІ Рё РёС… tool surface.
-5. future templates РІ `agent-management.service.ts` вЂ” С‚РѕР»СЊРєРѕ РєР°Рє template/future semantics, РЅРѕ РЅРµ РєР°Рє РґРѕРєР°Р·Р°С‚РµР»СЊСЃС‚РІРѕ runtime ownership.
-
-Р–С‘СЃС‚РєРѕРµ РїСЂР°РІРёР»Рѕ:
-
-- РЅР°Р»РёС‡РёРµ backend-РјРѕРґСѓР»СЏ РЅРµ РґРѕРєР°Р·С‹РІР°РµС‚ РЅР°Р»РёС‡РёРµ owner-agent;
-- РЅР°Р»РёС‡РёРµ profile РЅРµ РґРѕРєР°Р·С‹РІР°РµС‚ РЅР°Р»РёС‡РёРµ runtime family;
-- РЅР°Р»РёС‡РёРµ template manifest РЅРµ РґРѕРєР°Р·С‹РІР°РµС‚ РїСЂР°РІРѕ РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂР° РјР°СЂС€СЂСѓС‚РёР·РёСЂРѕРІР°С‚СЊ С‚СѓРґР° production scenario.
+- брать ownership бизнес-домена;
+- подменять отсутствие owner-agent красивым ответом;
+- создавать прямую `agent -> agent` mesh-модель;
+- менять owner-agent только потому, что пользователь открыл другой route;
+- считать template/future role полноценным runtime-owner без отдельного enablement.
 
 ---
 
-## 6. Р‘Р°Р·РѕРІС‹Р№ Р°Р»РіРѕСЂРёС‚Рј РІС‹Р±РѕСЂР° Р°РіРµРЅС‚Р°
+## 5. Иерархия источников истины для routing
 
-### 6.1 РљР°РЅРѕРЅРёС‡РµСЃРєРёР№ РїСѓС‚СЊ
+При конфликте источников оркестратор должен читать систему в таком порядке:
+
+1. `agent-interaction-contracts.ts` — подтверждённые intent-ы, guardrails, UI surface, базовая классификация.
+2. `RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md` — primary owner, secondary read/advisory owner, допустимые handoff, fallback mode.
+3. agent profile конкретного агента — границы домена, запреты, максимальный допустимый функционал.
+4. `agent-registry.service.ts` — список канонических runtime-агентов и их tool surface.
+5. future templates в `agent-management.service.ts` — только как template/future semantics, но не как доказательство runtime ownership.
+
+Жёсткое правило:
+
+- наличие backend-модуля не доказывает наличие owner-agent;
+- наличие profile не доказывает наличие runtime family;
+- наличие template manifest не доказывает право оркестратора маршрутизировать туда production scenario.
+
+---
+
+## 6. Базовый алгоритм выбора агента
+
+### 6.1 Канонический путь
 
 ```text
-РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ / UI
+Пользователь / UI
   -> SupervisorAgent
   -> IntentRouterService
-  -> РѕРїСЂРµРґРµР»РµРЅРёРµ primary owner-agent
-  -> РїСЂРѕРІРµСЂРєР° authority Рё required context
+  -> определение primary owner-agent
+  -> проверка authority и required context
   -> AgentRuntimeService
   -> AgentExecutionAdapterService
   -> tool / domain path
   -> typed result / clarification / governed handoff
 ```
 
-### 6.2 РџСЂР°РІРёР»Р° РІС‹Р±РѕСЂР°
+### 6.2 Правила выбора
 
-1. РЎРЅР°С‡Р°Р»Р° РѕРїСЂРµРґРµР»РёС‚СЊ intent, Р° РЅРµ route.
-2. Р—Р°С‚РµРј РѕРїСЂРµРґРµР»РёС‚СЊ primary owner-agent РїРѕ ownership map.
-3. РџРѕС‚РѕРј РїСЂРѕРІРµСЂРёС‚СЊ, СЃСѓС‰РµСЃС‚РІСѓРµС‚ Р»Рё Сѓ owner-agent РїРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Р№ runtime path.
-4. РџРѕС‚РѕРј РїСЂРѕРІРµСЂРёС‚СЊ, С…РІР°С‚Р°РµС‚ Р»Рё required context.
-5. РџСЂРё РЅРµС…РІР°С‚РєРµ РєРѕРЅС‚РµРєСЃС‚Р° Р·Р°РїСѓСЃРєР°С‚СЊ clarification, Р° РЅРµ routing РІ СЃРѕСЃРµРґРЅРёР№ РґРѕРјРµРЅ.
-6. Secondary read/advisory owner РїРѕРґРєР»СЋС‡Р°С‚СЊ С‚РѕР»СЊРєРѕ РїРѕСЃР»Рµ С„РёРєСЃР°С†РёРё primary owner.
-7. Р›СЋР±РѕР№ handoff РїСЂРѕРІРѕРґРёС‚СЊ С‚РѕР»СЊРєРѕ РїРѕ СЃС…РµРјРµ `source agent -> orchestrator -> target agent`.
+1. Сначала определить intent, а не route.
+2. Затем определить primary owner-agent по ownership map.
+3. Потом проверить, существует ли у owner-agent подтверждённый runtime path.
+4. Потом проверить, хватает ли required context.
+5. При нехватке контекста запускать clarification, а не routing в соседний домен.
+6. Secondary read/advisory owner подключать только после фиксации primary owner.
+7. Любой handoff проводить только по схеме `source agent -> orchestrator -> target agent`.
 
-### 6.3 Р§С‚Рѕ СЃС‡РёС‚Р°РµС‚СЃСЏ РєРѕСЂСЂРµРєС‚РЅС‹Рј СЂРµР·СѓР»СЊС‚Р°С‚РѕРј РІС‹Р±РѕСЂР°
+### 6.3 Что считается корректным результатом выбора
 
-РћСЂРєРµСЃС‚СЂР°С‚РѕСЂ СЃС‡РёС‚Р°РµС‚СЃСЏ РѕС‚СЂР°Р±РѕС‚Р°РІС€РёРј РїСЂР°РІРёР»СЊРЅРѕ, РµСЃР»Рё РЅР° РІС‹С…РѕРґРµ РїРѕР»СѓС‡РёР»РѕСЃСЊ РѕРґРЅРѕ РёР· СЃРѕСЃС‚РѕСЏРЅРёР№:
+Оркестратор считается отработавшим правильно, если на выходе получилось одно из состояний:
 
-- РІС‹Р±СЂР°РЅ РѕРґРёРЅ primary owner-agent;
-- РѕС‚РєСЂС‹С‚ clarification path Сѓ СЌС‚РѕРіРѕ owner-agent;
-- РІС‹РїРѕР»РЅРµРЅ governed handoff РІ РґРѕРїСѓСЃС‚РёРјС‹Р№ target agent;
-- С‡РµСЃС‚РЅРѕ РІРѕР·РІСЂР°С‰С‘РЅ fallback mode, РїСЂРµРґСѓСЃРјРѕС‚СЂРµРЅРЅС‹Р№ ownership map;
-- СЃС†РµРЅР°СЂРёР№ РѕСЃС‚Р°РЅРѕРІР»РµРЅ РєР°Рє `MANUAL_HUMAN_REQUIRED`.
+- выбран один primary owner-agent;
+- открыт clarification path у этого owner-agent;
+- выполнен governed handoff в допустимый target agent;
+- честно возвращён fallback mode, предусмотренный ownership map;
+- сценарий остановлен как `MANUAL_HUMAN_REQUIRED`.
 
 ---
 
-## 7. РўРµРєСѓС‰Р°СЏ РјР°С‚СЂРёС†Р° primary routing
+## 7. Текущая матрица primary routing
 
-| РўРёРї Р·Р°РїСЂРѕСЃР° / СЃС†РµРЅР°СЂРёСЏ | Primary owner-agent | Р§С‚Рѕ СЃС‡РёС‚Р°РµС‚СЃСЏ С‚СЂРёРіРіРµСЂРѕРј | Р§С‚Рѕ РЅРµ РґРѕР»Р¶РЅРѕ РїРµСЂРµС…РІР°С‚С‹РІР°С‚СЊ ownership |
+| Тип запроса / сценария | Primary owner-agent | Что считается триггером | Что не должно перехватывать ownership |
 |---|---|---|---|
-| РўРµС…РєР°СЂС‚С‹, Р°РіСЂРѕ-РѕС‚РєР»РѕРЅРµРЅРёСЏ, РїРѕР»РµРІС‹Рµ СЂРµРєРѕРјРµРЅРґР°С†РёРё | `agronomist` | РїРѕР»СЏ, СЃРµР·РѕРЅС‹, С‚РµС…РєР°СЂС‚С‹, РѕС‚РєР»РѕРЅРµРЅРёСЏ, agro execution context | `economist`, `knowledge`, `monitoring` |
-| Plan/fact, СЃС†РµРЅР°СЂРёРё, risk assessment, core finance analytics | `economist` | Р±СЋРґР¶РµС‚С‹, РїР»Р°РЅ-С„Р°РєС‚, СЃС†РµРЅР°СЂРёРё, С„РёРЅР°РЅСЃРѕРІС‹Рµ KPI | `strategist`, `finance_advisor`, `monitoring` |
-| РџРѕРёСЃРє РґРѕРєСѓРјРµРЅС‚РѕРІ, РїРѕР»РёС‚РёРє, РЅРѕСЂРјР°С‚РёРІРЅРѕР№ Р±Р°Р·С‹, grounding | `knowledge` | policy lookup, corpus lookup, evidence lookup | Р»СЋР±РѕР№ operational owner |
-| РЎРёРіРЅР°Р»С‹, alerts, incidents, risk summaries | `monitoring` | СЃРёРіРЅР°Р»С‹, РїСЂРµРґСѓРїСЂРµР¶РґРµРЅРёСЏ, incident review | `controller`, `economist`, Р»СЋР±РѕР№ business owner |
-| РљРѕРЅС‚СЂР°РіРµРЅС‚С‹, Р°РєРєР°СѓРЅС‚С‹, РєРѕРЅС‚Р°РєС‚С‹, CRM interactions | `crm_agent` | CRM record management, client workspace, party relations | `contracts_agent`, `front_office_agent` |
-| Р’С…РѕРґСЏС‰РёРµ РґРёР°Р»РѕРіРё, thread classification, communicator escalation | `front_office_agent` | message ingress, dialog thread, escalation routing; РїРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Рµ intent-С‹: `log_dialog_message`, `classify_dialog_thread`, `create_front_office_escalation` | downstream business owner Р±РµР· РїСЂРёР·РЅР°РєР° РїРµСЂРµС…РѕРґР° РґРѕРјРµРЅР° |
-| Р”РѕРіРѕРІРѕСЂС‹, РѕР±СЏР·Р°С‚РµР»СЊСЃС‚РІР°, fulfillment, invoice, payment, allocation, AR | `contracts_agent` | contract lifecycle Рё commerce execution | `crm_agent`, `legal_advisor`, `economist` |
+| Техкарты, агро-отклонения, полевые рекомендации | `agronomist` | поля, сезоны, техкарты, отклонения, agro execution context | `economist`, `knowledge`, `monitoring` |
+| Plan/fact, сценарии, risk assessment, core finance analytics | `economist` | бюджеты, план-факт, сценарии, финансовые KPI | `strategist`, `finance_advisor`, `monitoring` |
+| Поиск документов, политик, нормативной базы, grounding | `knowledge` | policy lookup, corpus lookup, evidence lookup | любой operational owner |
+| Сигналы, alerts, incidents, risk summaries | `monitoring` | сигналы, предупреждения, incident review | `controller`, `economist`, любой business owner |
+| Контрагенты, аккаунты, контакты, CRM interactions | `crm_agent` | CRM record management, client workspace, party relations | `contracts_agent`, `front_office_agent` |
+| Входящие диалоги, thread classification, communicator escalation | `front_office_agent` | message ingress, dialog thread, escalation routing; подтверждённые intent-ы: `log_dialog_message`, `classify_dialog_thread`, `create_front_office_escalation` | downstream business owner без признака перехода домена |
+| Договоры, обязательства, fulfillment, invoice, payment, allocation, AR | `contracts_agent` | contract lifecycle и commerce execution | `crm_agent`, `legal_advisor`, `economist` |
 
-### 7.1 Master-С‚Р°Р±Р»РёС†Р° `trigger -> owner -> handoff`
+### 7.1 Master-таблица `trigger -> owner -> handoff`
 
-Р­С‚Р° С‚Р°Р±Р»РёС†Р° РЅРµ Р·Р°РјРµРЅСЏРµС‚ РґРµС‚Р°Р»СЊРЅС‹Рµ РєРѕРЅС„Р»РёРєС‚РЅС‹Рµ СЃРµРєС†РёРё РЅРёР¶Рµ. Р­С‚Рѕ Р±С‹СЃС‚СЂС‹Р№ operational cheat sheet РґР»СЏ РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂР°: СЃРЅР°С‡Р°Р»Р° РІС‹Р±РёСЂР°РµС‚СЃСЏ СЃС‚СЂРѕРєР° РїРѕ РґРѕРјРёРЅРёСЂСѓСЋС‰РµРјСѓ РґРµР№СЃС‚РІРёСЋ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ, Р·Р°С‚РµРј РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РѕС‚РєСЂС‹РІР°РµС‚СЃСЏ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёР№ РґРµС‚Р°Р»СЊРЅС‹Р№ Р±Р»РѕРє.
+Эта таблица не заменяет детальные конфликтные секции ниже. Это быстрый operational cheat sheet для оркестратора: сначала выбирается строка по доминирующему действию пользователя, затем при необходимости открывается соответствующий детальный блок.
 
-| Р”РѕРјРёРЅРёСЂСѓСЋС‰РµРµ РґРµР№СЃС‚РІРёРµ / trigger | Primary owner-agent | Secondary owner / governed handoff | Р§С‚Рѕ РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ РґРѕР»Р¶РµРЅ РїСЂРѕРІРµСЂРёС‚СЊ СЃСЂР°Р·Сѓ | Р§С‚Рѕ РґРµР»Р°С‚СЊ РїСЂРё РЅРµС…РІР°С‚РєРµ РєРѕРЅС‚РµРєСЃС‚Р° | Р”РµС‚Р°Р»РёР·Р°С†РёСЏ |
+| Доминирующее действие / trigger | Primary owner-agent | Secondary owner / governed handoff | Что оркестратор должен проверить сразу | Что делать при нехватке контекста | Детализация |
 |---|---|---|---|---|---|
-| РЎРѕС…СЂР°РЅРёС‚СЊ СЃРѕРѕР±С‰РµРЅРёРµ, РєР»Р°СЃСЃРёС„РёС†РёСЂРѕРІР°С‚СЊ thread, Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊ escalation, РѕР±СЂР°Р±РѕС‚Р°С‚СЊ communicator ingress | `front_office_agent` | downstream owner С‚РѕР»СЊРєРѕ РїРѕСЃР»Рµ СЏРІРЅРѕРіРѕ РґРѕРјРµРЅРЅРѕРіРѕ trigger | `message_id`, `thread_id`, С‚РёРї ingress-intent, РЅР°Р»РёС‡РёРµ РїСЂРёР·РЅР°РєР° РїРµСЂРµС…РѕРґР° РІ Р±РёР·РЅРµСЃ-РґРѕРјРµРЅ | РћС‚РєСЂС‹С‚СЊ clarification path Сѓ `front_office_agent`, РЅРµ РїРµСЂРµРІРѕРґРёС‚СЊ Р·Р°РїСЂРѕСЃ РІ РґРѕРјРµРЅРЅС‹Р№ agent РїСЂРµР¶РґРµРІСЂРµРјРµРЅРЅРѕ | `8.1` |
-| РћР±РЅРѕРІРёС‚СЊ РєР°СЂС‚РѕС‡РєСѓ РєР»РёРµРЅС‚Р°, Р°РєРєР°СѓРЅС‚, РєРѕРЅС‚Р°РєС‚, CRM interaction, СЃРІСЏР·Р°С‚СЊ party relations | `crm_agent` | `knowledge` РєР°Рє read/evidence; `contracts_agent` С‚РѕР»СЊРєРѕ РїРѕСЃР»Рµ РїРµСЂРµРєР»СЋС‡РµРЅРёСЏ РІ contract lifecycle | `party_id`, `account_id`, `contact_id`, РРќРќ/РєРѕРЅС‚СЂР°РіРµРЅС‚, С‡С‚Рѕ РёРјРµРЅРЅРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ С…РѕС‡РµС‚ СЃРґРµР»Р°С‚СЊ СЃ CRM-record | РћС‚РєСЂС‹С‚СЊ clarification path Сѓ `crm_agent`, РЅРµ РїРѕРґРјРµРЅСЏС‚СЊ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёР№ CRM-context РґРѕРіРѕРІРѕСЂРЅС‹Рј path | `8.1`, `8.2` |
-| РЎРѕР·РґР°С‚СЊ/РїСЂРѕСЃРјРѕС‚СЂРµС‚СЊ/РёСЃРїРѕР»РЅРёС‚СЊ РґРѕРіРѕРІРѕСЂ, РѕР±СЏР·Р°С‚РµР»СЊСЃС‚РІРѕ, fulfillment, invoice, payment, allocation, AR | `contracts_agent` | `economist` РєР°Рє advisory, `legal_advisor` РєР°Рє advisory/future path, `knowledge` РєР°Рє read/evidence | `contract_id` РёР»Рё РґР°РЅРЅС‹Рµ РґРѕРіРѕРІРѕСЂР°, СЃС‚РѕСЂРѕРЅР°, РѕР±СЏР·Р°С‚РµР»СЊСЃС‚РІРѕ, invoice/payment context, СЃС‚Р°РґРёСЏ contract lifecycle | РћС‚РєСЂС‹С‚СЊ clarification path Сѓ `contracts_agent`, РЅРµ РїРµСЂРµРґР°РІР°С‚СЊ write-intent РІ `crm_agent`, `economist` РёР»Рё `legal_advisor` | `8.2`, `8.3`, `8.4` |
-| Р”Р°С‚СЊ legal interpretation РїРѕ clause, compliance, СЂРёСЃРєР°Рј С„РѕСЂРјСѓР»РёСЂРѕРІРєРё, legal review РґРѕРєСѓРјРµРЅС‚Р° | `legal_advisor` С‚РѕР»СЊРєРѕ РґР»СЏ standalone legal-advisory path; РІ СЃРјРµС€Р°РЅРЅРѕРј execution-Р·Р°РїСЂРѕСЃРµ owner РѕСЃС‚Р°С‘С‚СЃСЏ `contracts_agent` | `contracts_agent` РєР°Рє domain owner СЃРјРµС€Р°РЅРЅРѕРіРѕ Р·Р°РїСЂРѕСЃР° | РµСЃС‚СЊ Р»Рё Р·Р°РїСЂРѕСЃ РЅР° РїСЂР°РІРѕРІСѓСЋ РёРЅС‚РµСЂРїСЂРµС‚Р°С†РёСЋ РёР»Рё РЅР° business execution; РµСЃС‚СЊ Р»Рё clause/document reference | Р•СЃР»Рё РЅРµС‚ РґРѕРєСѓРјРµРЅС‚Р°/РїСѓРЅРєС‚Р°, РѕС‚РєСЂС‹С‚СЊ clarification path; РµСЃР»Рё runtime legal-path РЅРµ enabled, РІРµСЂРЅСѓС‚СЊ advisory-gap, Р° РЅРµ СЃРёРјСѓР»РёСЂРѕРІР°С‚СЊ owner | `8.3` |
-| РџРѕСЃС‡РёС‚Р°С‚СЊ plan/fact, Р±СЋРґР¶РµС‚, KPI, СЃС†РµРЅР°СЂРёР№, С„РёРЅР°РЅСЃРѕРІСѓСЋ РѕС†РµРЅРєСѓ, risk assessment | `economist` | `knowledge` РєР°Рє read/evidence; `monitoring` РєР°Рє signal-input | РїРµСЂРёРѕРґ, СЃС†РµРЅР°СЂРёР№, KPI, СЃСѓС‰РЅРѕСЃС‚СЊ Р°РЅР°Р»РёР·Р°, С‚СЂРµР±СѓРµРјС‹Р№ С„РёРЅР°РЅСЃРѕРІС‹Р№ СЂРµР·СѓР»СЊС‚Р°С‚ | РћС‚РєСЂС‹С‚СЊ clarification path Сѓ `economist`, РЅРµ РїРµСЂРµРІРѕРґРёС‚СЊ Р·Р°РїСЂРѕСЃ РІ `monitoring` С‚РѕР»СЊРєРѕ РёР·-Р·Р° СЃР»РѕРІР° risk | `8.4` |
-| РћС†РµРЅРёС‚СЊ С„РёРЅР°РЅСЃРѕРІС‹Рµ РїРѕСЃР»РµРґСЃС‚РІРёСЏ РґРѕРіРѕРІРѕСЂР°, invoices, payments, РґРµР±РёС‚РѕСЂРєРё РІРЅСѓС‚СЂРё contract execution | `contracts_agent` | `economist` РєР°Рє advisory | РµСЃС‚СЊ Р»Рё РґРµР№СЃС‚РІСѓСЋС‰РёР№ contract/payment/invoice context Рё РЅСѓР¶РµРЅ Р»Рё execution path РёР»Рё С‚РѕР»СЊРєРѕ analysis | РћС‚РєСЂС‹С‚СЊ clarification path Сѓ `contracts_agent`; РїСЂРё СЃРјРµС€Р°РЅРЅРѕРј Р·Р°РїСЂРѕСЃРµ СѓРґРµСЂР¶РёРІР°С‚СЊ owner РІ contract contour | `8.4` |
-| РќР°Р№С‚Рё РґРѕРєСѓРјРµРЅС‚, РїРѕР»РёС‚РёРєСѓ, СЂРµРіР»Р°РјРµРЅС‚, РЅРѕСЂРјСѓ, corpus evidence Р±РµР· Р±РёР·РЅРµСЃ-РёСЃРїРѕР»РЅРµРЅРёСЏ | `knowledge` | operational owner С‚РѕР»СЊРєРѕ РµСЃР»Рё РїРѕСЃР»Рµ retrieval РІРѕР·РЅРёРєР°РµС‚ РѕС‚РґРµР»СЊРЅС‹Р№ business action | corpus scope, РёСЃС‚РѕС‡РЅРёРє Р·РЅР°РЅРёСЏ, policy/document reference, РІРѕРїСЂРѕСЃ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РёРјРµРЅРЅРѕ РїСЂРѕ lookup | РћС‚РєСЂС‹С‚СЊ clarification path Сѓ `knowledge`, РЅРµ РїСЂРµРІСЂР°С‰Р°С‚СЊ retrieval РІ operational ownership | `8.5` |
-| РџРѕРєР°Р·Р°С‚СЊ СЃРёРіРЅР°Р», alert, incident summary, anomaly snapshot, monitoring risk signal | `monitoring` | domain owner РґР»СЏ remediation; `knowledge` РєР°Рє evidence РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё | РёСЃС‚РѕС‡РЅРёРє СЃРёРіРЅР°Р»Р°, alert/incident id, С‚РёРї СЃРѕР±С‹С‚РёСЏ, РЅСѓР¶РµРЅ Р»Рё РёРјРµРЅРЅРѕ signal review РёР»Рё СѓР¶Рµ remediation | РћС‚РєСЂС‹С‚СЊ clarification path Сѓ `monitoring`; remediation-routing РґРµР»Р°С‚СЊ С‚РѕР»СЊРєРѕ РїРѕСЃР»Рµ С„РёРєСЃР°С†РёРё РґРѕРјРµРЅРЅРѕРіРѕ owner | `8.6` |
-| Р”Р°С‚СЊ Р°РіСЂРѕРЅРѕРјРёС‡РµСЃРєСѓСЋ СЂРµРєРѕРјРµРЅРґР°С†РёСЋ РїРѕ РїРѕР»СЋ, СЃРµР·РѕРЅСѓ, С‚РµС…РєР°СЂС‚Рµ, РѕС‚РєР»РѕРЅРµРЅРёСЋ, Р°РіСЂРѕ-СЃС†РµРЅР°СЂРёСЋ | `agronomist` | `knowledge` РєР°Рє read/evidence; `monitoring` РєР°Рє signal-input РїСЂРё РЅР°Р»РёС‡РёРё С‚СЂРµРІРѕРі | `field_id`, СЃРµР·РѕРЅ, РєСѓР»СЊС‚СѓСЂР°, С‚РµС…РєР°СЂС‚Р°, РѕС‚РєР»РѕРЅРµРЅРёРµ, С‡С‚Рѕ РёРјРµРЅРЅРѕ РЅСѓР¶РЅРѕ: СЂРµРєРѕРјРµРЅРґР°С†РёСЏ, РїСЂРѕРІРµСЂРєР°, СЂР°Р·Р±РѕСЂ | РћС‚РєСЂС‹С‚СЊ clarification path Сѓ `agronomist`, РЅРµ РїРµСЂРµРІРѕРґРёС‚СЊ Р·Р°РїСЂРѕСЃ РІ `economist` РёР»Рё `monitoring` РїРѕ РІС‚РѕСЂРёС‡РЅС‹Рј СЃР»РѕРІР°Рј | `7` |
+| Сохранить сообщение, классифицировать thread, зарегистрировать escalation, обработать communicator ingress | `front_office_agent` | downstream owner только после явного доменного trigger | `message_id`, `thread_id`, тип ingress-intent, наличие признака перехода в бизнес-домен | Открыть clarification path у `front_office_agent`, не переводить запрос в доменный agent преждевременно | `8.1` |
+| Обновить карточку клиента, аккаунт, контакт, CRM interaction, связать party relations | `crm_agent` | `knowledge` как read/evidence; `contracts_agent` только после переключения в contract lifecycle | `party_id`, `account_id`, `contact_id`, ИНН/контрагент, что именно пользователь хочет сделать с CRM-record | Открыть clarification path у `crm_agent`, не подменять отсутствующий CRM-context договорным path | `8.1`, `8.2` |
+| Создать/просмотреть/исполнить договор, обязательство, fulfillment, invoice, payment, allocation, AR | `contracts_agent` | `economist` как advisory, `legal_advisor` как advisory/future path, `knowledge` как read/evidence | `contract_id` или данные договора, сторона, обязательство, invoice/payment context, стадия contract lifecycle | Открыть clarification path у `contracts_agent`, не передавать write-intent в `crm_agent`, `economist` или `legal_advisor` | `8.2`, `8.3`, `8.4` |
+| Дать legal interpretation по clause, compliance, рискам формулировки, legal review документа | `legal_advisor` только для standalone legal-advisory path; в смешанном execution-запросе owner остаётся `contracts_agent` | `contracts_agent` как domain owner смешанного запроса | есть ли запрос на правовую интерпретацию или на business execution; есть ли clause/document reference | Если нет документа/пункта, открыть clarification path; если runtime legal-path не enabled, вернуть advisory-gap, а не симулировать owner | `8.3` |
+| Посчитать plan/fact, бюджет, KPI, сценарий, финансовую оценку, risk assessment | `economist` | `knowledge` как read/evidence; `monitoring` как signal-input | период, сценарий, KPI, сущность анализа, требуемый финансовый результат | Открыть clarification path у `economist`, не переводить запрос в `monitoring` только из-за слова risk | `8.4` |
+| Оценить финансовые последствия договора, invoices, payments, дебиторки внутри contract execution | `contracts_agent` | `economist` как advisory | есть ли действующий contract/payment/invoice context и нужен ли execution path или только analysis | Открыть clarification path у `contracts_agent`; при смешанном запросе удерживать owner в contract contour | `8.4` |
+| Найти документ, политику, регламент, норму, corpus evidence без бизнес-исполнения | `knowledge` | operational owner только если после retrieval возникает отдельный business action | corpus scope, источник знания, policy/document reference, вопрос пользователя именно про lookup | Открыть clarification path у `knowledge`, не превращать retrieval в operational ownership | `8.5` |
+| Показать сигнал, alert, incident summary, anomaly snapshot, monitoring risk signal | `monitoring` | domain owner для remediation; `knowledge` как evidence при необходимости | источник сигнала, alert/incident id, тип события, нужен ли именно signal review или уже remediation | Открыть clarification path у `monitoring`; remediation-routing делать только после фиксации доменного owner | `8.6` |
+| Дать агрономическую рекомендацию по полю, сезону, техкарте, отклонению, агро-сценарию | `agronomist` | `knowledge` как read/evidence; `monitoring` как signal-input при наличии тревог | `field_id`, сезон, культура, техкарта, отклонение, что именно нужно: рекомендация, проверка, разбор | Открыть clarification path у `agronomist`, не переводить запрос в `economist` или `monitoring` по вторичным словам | `7` |
 
-### 7.2 Production gating РґР»СЏ template/future roles
+### 7.2 Production gating для template/future roles
 
-РќР°Р»РёС‡РёРµ profile, template manifest РёР»Рё `executionAdapterRole` РµС‰С‘ РЅРµ РґР°С‘С‚ РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂСѓ РїСЂР°РІР° РјР°СЂС€СЂСѓС‚РёР·РёСЂРѕРІР°С‚СЊ production-Р·Р°РїСЂРѕСЃ РІ С‚Р°РєСѓСЋ СЂРѕР»СЊ РєР°Рє РІ `primary owner-agent`.
+Наличие profile, template manifest или `executionAdapterRole` ещё не даёт оркестратору права маршрутизировать production-запрос в такую роль как в `primary owner-agent`.
 
-Р–С‘СЃС‚РєРѕРµ РїСЂР°РІРёР»Рѕ:
+Жёсткое правило:
 
-- РіСЂР°РЅРёС†С‹ РѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕСЃС‚Рё future-role РјРѕРіСѓС‚ Р±С‹С‚СЊ СѓР¶Рµ РѕРїРёСЃР°РЅС‹ РЅРѕСЂРјР°С‚РёРІРЅРѕ;
-- РЅРѕ direct production routing СЂР°Р·СЂРµС€Р°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РїРѕСЃР»Рµ РїРѕСЏРІР»РµРЅРёСЏ canonical runtime family, intent contract Рё РїРѕРґС‚РІРµСЂР¶РґС‘РЅРЅРѕРіРѕ execution path;
-- adapter inheritance РѕС‚ canonical runtime role РЅРµ РїСЂРµРІСЂР°С‰Р°РµС‚ future-role РІ production owner;
-- РґРµС‚Р°Р»СЊРЅС‹Рµ СЃРµРєС†РёРё РЅРёР¶Рµ РѕРїСЂРµРґРµР»СЏСЋС‚ ownership boundaries, РЅРѕ РЅРµ РѕС‚РјРµРЅСЏСЋС‚ enablement gate.
+- границы ответственности future-role могут быть уже описаны нормативно;
+- но direct production routing разрешается только после появления canonical runtime family, intent contract и подтверждённого execution path;
+- adapter inheritance от canonical runtime role не превращает future-role в production owner;
+- детальные секции ниже определяют ownership boundaries, но не отменяют enablement gate.
 
-Р­С‚Рѕ РїСЂР°РІРёР»Рѕ РѕСЃРѕР±РµРЅРЅРѕ РІР°Р¶РЅРѕ РґР»СЏ СЂРѕР»РµР№, РєРѕС‚РѕСЂС‹Рµ СѓР¶Рµ РІС‹РіР»СЏРґСЏС‚ "РіРѕС‚РѕРІС‹РјРё" РІ onboarding templates, РЅРѕ РїРѕ С„Р°РєС‚Сѓ РѕСЃС‚Р°СЋС‚СЃСЏ template-only.
+Это правило особенно важно для ролей, которые уже выглядят "готовыми" в onboarding templates, но по факту остаются template-only.
 
-| Role | РџРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Р№ СЃС‚Р°С‚СѓСЃ | РўРµРєСѓС‰РёР№ adapter / inheritance | РњРѕР¶РµС‚ Р±С‹С‚СЊ `primary owner` РІ production СЃРµР№С‡Р°СЃ | Р§С‚Рѕ РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ РјРѕР¶РµС‚ РґРµР»Р°С‚СЊ СЃРµР№С‡Р°СЃ | Р§С‚Рѕ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ РЅСѓР¶РЅРѕ РґР»СЏ enablement |
+| Role | Подтверждённый статус | Текущий adapter / inheritance | Может быть `primary owner` в production сейчас | Что оркестратор может делать сейчас | Что обязательно нужно для enablement |
 |---|---|---|---|---|---|
-| `strategist` | template/future role | `knowledge` | РЅРµС‚ | РґРµСЂР¶Р°С‚СЊ РєР°Рє Р±СѓРґСѓС‰РёР№ advisory-domain; production-Р·Р°РїСЂРѕСЃС‹ РјР°СЂС€СЂСѓС‚РёР·РёСЂРѕРІР°С‚СЊ РІ `economist` РёР»Рё `knowledge` РїРѕ РґРѕРјРёРЅРёСЂСѓСЋС‰РµРјСѓ РґРµР№СЃС‚РІРёСЋ | canonical runtime family, strategy-specific intent catalog, evidence path, own execution contract |
-| `finance_advisor` | template/future role | `economist` | РЅРµС‚ | РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С‚РѕР»СЊРєРѕ РєР°Рє future advisory semantics; production-routing РѕСЃС‚Р°РІР»СЏС‚СЊ Сѓ `economist` РёР»Рё `contracts_agent` | formal ownership split c `economist`, own intent contract, no-write runtime governance |
-| `controller` | template/future role | `monitoring` | РЅРµС‚ | РґРµСЂР¶Р°С‚СЊ РєР°Рє future control contour; production-routing РѕСЃС‚Р°РІР»СЏС‚СЊ Сѓ `monitoring` РёР»Рё `economist` | canonical runtime family, exception model, split c `monitoring` Рё `economist`, governed escalation contract |
-| `marketer` | template/future role | `knowledge` | РЅРµС‚ | marketing/advisory-Р·Р°РїСЂРѕСЃС‹ РґРµСЂР¶Р°С‚СЊ РІ `knowledge` РёР»Рё `crm_agent` РїРѕ РєРѕРЅС‚РµРєСЃС‚Сѓ; РЅРµ СЃРѕР·РґР°РІР°С‚СЊ РѕС‚РґРµР»СЊРЅС‹Р№ production owner | canonical runtime family, marketing intents, real tool surface, CRM handoff contract |
-| `personal_assistant` | template/future role | `knowledge` | РЅРµС‚ | РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С‚РѕР»СЊРєРѕ РєР°Рє future delegated/personal contour; Р±РёР·РЅРµСЃ-Р·Р°РїСЂРѕСЃС‹ РѕСЃС‚Р°РІР»СЏС‚СЊ Сѓ РґРѕРјРµРЅРЅРѕРіРѕ owner-agent | canonical runtime family, personal context contract, privacy-safe tool surface, confirmation rules |
+| `strategist` | template/future role | `knowledge` | нет | держать как будущий advisory-domain; production-запросы маршрутизировать в `economist` или `knowledge` по доминирующему действию | canonical runtime family, strategy-specific intent catalog, evidence path, own execution contract |
+| `finance_advisor` | template/future role | `economist` | нет | использовать только как future advisory semantics; production-routing оставлять у `economist` или `contracts_agent` | formal ownership split c `economist`, own intent contract, no-write runtime governance |
+| `controller` | template/future role | `monitoring` | нет | держать как future control contour; production-routing оставлять у `monitoring` или `economist` | canonical runtime family, exception model, split c `monitoring` и `economist`, governed escalation contract |
+| `marketer` | template/future role | `knowledge` | нет | marketing/advisory-запросы держать в `knowledge` или `crm_agent` по контексту; не создавать отдельный production owner | canonical runtime family, marketing intents, real tool surface, CRM handoff contract |
+| `personal_assistant` | template/future role | `knowledge` | нет | использовать только как future delegated/personal contour; бизнес-запросы оставлять у доменного owner-agent | canonical runtime family, personal context contract, privacy-safe tool surface, confirmation rules |
 
-РћС‚РґРµР»СЊРЅРѕРµ СѓС‚РѕС‡РЅРµРЅРёРµ:
+Отдельное уточнение:
 
-- `legal_advisor` СѓР¶Рµ РЅРѕСЂРјРёСЂРѕРІР°РЅ РІ СЃРµРєС†РёРё `8.3` РєР°Рє required future advisory-path, РЅРѕ СЌС‚Рѕ РЅРµ РѕС‚РјРµРЅСЏРµС‚ РѕР±С‰РёР№ enablement gate РґР»СЏ template/future roles.
+- `legal_advisor` уже нормирован в секции `8.3` как required future advisory-path, но это не отменяет общий enablement gate для template/future roles.
 
 ---
 
-## 8. РџСЂР°РІРёР»Р° routing РїРѕ РєРѕРЅС„Р»РёРєС‚РЅС‹Рј Р·РѕРЅР°Рј
+## 8. Правила routing по конфликтным зонам
 
 ### 8.1 `front_office_agent` vs downstream owner
 
-`front_office_agent` РѕСЃС‚Р°С‘С‚СЃСЏ owner С‚РѕР»СЊРєРѕ РїРѕРєР° СЃС†РµРЅР°СЂРёР№ РЅР°С…РѕРґРёС‚СЃСЏ РІ ingress-РєРѕРЅС‚СѓСЂРµ:
+`front_office_agent` остаётся owner только пока сценарий находится в ingress-контуре:
 
-- Р»РѕРіРёСЂРѕРІР°РЅРёРµ СЃРѕРѕР±С‰РµРЅРёСЏ;
-- РєР»Р°СЃСЃРёС„РёРєР°С†РёСЏ thread;
-- С„РёРєСЃР°С†РёСЏ escalation;
-- Р±Р°Р·РѕРІР°СЏ РјР°СЂС€СЂСѓС‚РёР·Р°С†РёСЏ РІ owner-domain.
+- логирование сообщения;
+- классификация thread;
+- фиксация escalation;
+- базовая маршрутизация в owner-domain.
 
-РљР°Рє С‚РѕР»СЊРєРѕ Р·Р°РїСЂРѕСЃ СЃС‚Р°РЅРѕРІРёС‚СЃСЏ РїСЂРµРґРјРµС‚РЅС‹Рј Р±РёР·РЅРµСЃ-СЃС†РµРЅР°СЂРёРµРј, owner РґРѕР»Р¶РµРЅ РїРµСЂРµС…РѕРґРёС‚СЊ РІ РґРѕРјРµРЅРЅС‹Р№ Р°РіРµРЅС‚:
+Как только запрос становится предметным бизнес-сценарием, owner должен переходить в доменный агент:
 
-- РґРѕРіРѕРІРѕСЂРЅС‹Р№ РїСЂРѕС†РµСЃСЃ -> `contracts_agent`
-- CRM-СЂР°Р±РѕС‚Р° РїРѕ РєР°СЂС‚РѕС‡РєРµ РєР»РёРµРЅС‚Р° -> `crm_agent`
-- Р°РіСЂРѕРЅРѕРјРёС‡РµСЃРєРёР№ РІРѕРїСЂРѕСЃ -> `agronomist`
-- С„РёРЅР°РЅСЃРѕРІС‹Р№ СЂР°Р·Р±РѕСЂ -> `economist`
+- договорный процесс -> `contracts_agent`
+- CRM-работа по карточке клиента -> `crm_agent`
+- агрономический вопрос -> `agronomist`
+- финансовый разбор -> `economist`
 
-### 8.1.1 РљРѕРіРґР° `front_office_agent` РѕСЃС‚Р°С‘С‚СЃСЏ primary owner
+### 8.1.1 Когда `front_office_agent` остаётся primary owner
 
-`front_office_agent` РѕСЃС‚Р°С‘С‚СЃСЏ primary owner, С‚РѕР»СЊРєРѕ РєРѕРіРґР° РїРѕРґС‚РІРµСЂР¶РґС‘РЅ РѕРґРёРЅ РёР· ingress-intent-РѕРІ:
+`front_office_agent` остаётся primary owner, только когда подтверждён один из ingress-intent-ов:
 
 - `log_dialog_message`
 - `classify_dialog_thread`
 - `create_front_office_escalation`
 
-РР»Рё РєРѕРіРґР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёР№ Р·Р°РїСЂРѕСЃ РµС‰С‘ РЅРµ РІС‹С€РµР» РёР· СЃР»РѕСЏ РєРѕРјРјСѓРЅРёРєР°С†РёРё:
+Или когда пользовательский запрос ещё не вышел из слоя коммуникации:
 
-- РЅСѓР¶РЅРѕ СЃРѕС…СЂР°РЅРёС‚СЊ СЃРѕРѕР±С‰РµРЅРёРµ, РїРµСЂРµРїРёСЃРєСѓ РёР»Рё thread;
-- РЅСѓР¶РЅРѕ РїРѕРЅСЏС‚СЊ, СЌС‚Рѕ `free_chat`, `task_process`, `client_request` РёР»Рё `escalation_signal`;
-- РЅСѓР¶РЅРѕ Р·Р°РІРµСЃС‚Рё escalation record Р±РµР· РёСЃРїРѕР»РЅРµРЅРёСЏ Р±РёР·РЅРµСЃ-РїСЂРѕС†РµСЃСЃР°;
-- РЅСѓР¶РЅРѕ РїРѕРґРіРѕС‚РѕРІРёС‚СЊ handoff, РЅРѕ РЅРµ РІС‹РїРѕР»РЅСЏС‚СЊ downstream action.
+- нужно сохранить сообщение, переписку или thread;
+- нужно понять, это `free_chat`, `task_process`, `client_request` или `escalation_signal`;
+- нужно завести escalation record без исполнения бизнес-процесса;
+- нужно подготовить handoff, но не выполнять downstream action.
 
-### 8.1.2 РўСЂРёРіРіРµСЂС‹ РІС‹С…РѕРґР° РёР· ingress РІ РґРѕРјРµРЅРЅС‹Р№ owner
+### 8.1.2 Триггеры выхода из ingress в доменный owner
 
-| Р§С‚Рѕ СѓРІРёРґРµР» РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ РІ Р·Р°РїСЂРѕСЃРµ | РљСѓРґР° РїРµСЂРµРІРѕРґРёС‚СЊ owner | РџРѕС‡РµРјСѓ |
+| Что увидел оркестратор в запросе | Куда переводить owner | Почему |
 |---|---|---|
-| РРќРќ, РєРѕРЅС‚СЂР°РіРµРЅС‚, РєР°СЂС‚РѕС‡РєР° РєР»РёРµРЅС‚Р°, CRM-account, contact, interaction, obligation РїРѕ РєР»РёРµРЅС‚Сѓ | `crm_agent` | СЌС‚Рѕ CRM record management, Р° РЅРµ РєРѕРјРјСѓРЅРёРєР°С†РёРѕРЅРЅС‹Р№ ingress |
-| Р”РѕРіРѕРІРѕСЂ, РєРѕРЅС‚СЂР°РєС‚, РѕР±СЏР·Р°С‚РµР»СЊСЃС‚РІРѕ РїРѕ РґРѕРіРѕРІРѕСЂСѓ, РѕС‚РіСЂСѓР·РєР°, РёСЃРїРѕР»РЅРµРЅРёРµ, СЃС‡С‘С‚, РѕРїР»Р°С‚Р°, Р°Р»Р»РѕРєР°С†РёСЏ, РґРµР±РёС‚РѕСЂРєР° | `contracts_agent` | СЌС‚Рѕ contract lifecycle Рё commerce execution |
-| РџРѕР»Рµ, СЃРµР·РѕРЅ, С‚РµС…РєР°СЂС‚Р°, РѕС‚РєР»РѕРЅРµРЅРёРµ, Р°РіСЂРѕ-СЂРµРєРѕРјРµРЅРґР°С†РёСЏ | `agronomist` | СЌС‚Рѕ agronomy owner-intent |
-| РџР»Р°РЅ-С„Р°РєС‚, Р±СЋРґР¶РµС‚, СЃС†РµРЅР°СЂРёР№, risk assessment, С„РёРЅР°РЅСЃРѕРІР°СЏ РѕС†РµРЅРєР° | `economist` | СЌС‚Рѕ finance owner-intent |
-| РўСЂРµРІРѕР¶РЅС‹Р№ СЃРёРіРЅР°Р», incident, alert, monitoring snapshot | `monitoring` | СЌС‚Рѕ signal/risk contour |
+| ИНН, контрагент, карточка клиента, CRM-account, contact, interaction, obligation по клиенту | `crm_agent` | это CRM record management, а не коммуникационный ingress |
+| Договор, контракт, обязательство по договору, отгрузка, исполнение, счёт, оплата, аллокация, дебиторка | `contracts_agent` | это contract lifecycle и commerce execution |
+| Поле, сезон, техкарта, отклонение, агро-рекомендация | `agronomist` | это agronomy owner-intent |
+| План-факт, бюджет, сценарий, risk assessment, финансовая оценка | `economist` | это finance owner-intent |
+| Тревожный сигнал, incident, alert, monitoring snapshot | `monitoring` | это signal/risk contour |
 
-### 8.1.3 РђРЅС‚Рё-С‚СЂРёРіРіРµСЂС‹ РґР»СЏ `front_office_agent`
+### 8.1.3 Анти-триггеры для `front_office_agent`
 
-РЎР»РµРґСѓСЋС‰РёРµ РїСЂРёР·РЅР°РєРё РЅРµ РґРѕР»Р¶РЅС‹ СѓРґРµСЂР¶РёРІР°С‚СЊ ownership Сѓ `front_office_agent`:
+Следующие признаки не должны удерживать ownership у `front_office_agent`:
 
-- РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РїСЂРёС€С‘Р» РёР· Telegram РёР»Рё communicator;
-- РІ СЃРѕРѕР±С‰РµРЅРёРё РµСЃС‚СЊ СЃР»РѕРІР° "РєР»РёРµРЅС‚", "РЅСѓР¶РЅРѕ РІ СЂР°Р±РѕС‚Сѓ", "РїРµСЂРµРґР°Р№", "СЃСЂРѕС‡РЅРѕ";
-- Р·Р°РїСЂРѕСЃ РЅР°С‡Р°Р»СЃСЏ РєР°Рє РїРµСЂРµРїРёСЃРєР°, РЅРѕ СѓР¶Рµ СЃРѕРґРµСЂР¶РёС‚ РїСЂРµРґРјРµС‚РЅС‹Р№ Р±РёР·РЅРµСЃ-intent;
-- С„СЂРѕРЅС‚-РѕС„РёСЃ СѓР¶Рµ РІС‹РґРµР»РёР» `client_request` РёР»Рё `task_process`.
+- пользователь пришёл из Telegram или communicator;
+- в сообщении есть слова "клиент", "нужно в работу", "передай", "срочно";
+- запрос начался как переписка, но уже содержит предметный бизнес-intent;
+- фронт-офис уже выделил `client_request` или `task_process`.
 
-Р–С‘СЃС‚РєРѕРµ РїСЂР°РІРёР»Рѕ:
+Жёсткое правило:
 
-- `front_office_agent` РѕРїСЂРµРґРµР»СЏРµС‚, С‡С‚Рѕ РЅР°С‡Р°Р»СЃСЏ РїСЂРѕС†РµСЃСЃ;
-- РґРѕРјРµРЅРЅС‹Р№ owner РѕРїСЂРµРґРµР»СЏРµС‚ Рё РёСЃРїРѕР»РЅСЏРµС‚ СЃР°Рј РїСЂРѕС†РµСЃСЃ.
+- `front_office_agent` определяет, что начался процесс;
+- доменный owner определяет и исполняет сам процесс.
 
-### 8.1.4 Р Р°Р·СЂРµС€РµРЅРёРµ СЃРїРѕСЂР° `front_office_agent` vs `crm_agent`
+### 8.1.4 Разрешение спора `front_office_agent` vs `crm_agent`
 
-РќРѕСЂРјР°С‚РёРІРЅР°СЏ РіСЂР°РЅРёС†Р°:
+Нормативная граница:
 
-- РёСЃС‚РѕСЂРёСЏ РѕР±С‰РµРЅРёСЏ, thread, communicator log, escalation trail -> `front_office_agent`
-- РєРѕРЅС‚СЂР°РіРµРЅС‚, account workspace, contact, relation, CRM obligation -> `crm_agent`
+- история общения, thread, communicator log, escalation trail -> `front_office_agent`
+- контрагент, account workspace, contact, relation, CRM obligation -> `crm_agent`
 
-РЎР»РµРґСЃС‚РІРёРµ:
+Следствие:
 
-- РєР»РёРµРЅС‚СЃРєРёР№ Р·Р°РїСЂРѕСЃ РЅРµ СЂР°РІРµРЅ CRM ownership;
-- CRM ownership РЅР°С‡РёРЅР°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ С‚Р°Рј, РіРґРµ РїРѕСЏРІР»СЏРµС‚СЃСЏ СЂР°Р±РѕС‚Р° СЃ CRM-СЃСѓС‰РЅРѕСЃС‚СЊСЋ, Р° РЅРµ РїСЂРѕСЃС‚Рѕ СЃРѕРѕР±С‰РµРЅРёРµ Рѕ РєР»РёРµРЅС‚Рµ.
+- клиентский запрос не равен CRM ownership;
+- CRM ownership начинается только там, где появляется работа с CRM-сущностью, а не просто сообщение о клиенте.
 
-### 8.1.5 Р Р°Р·СЂРµС€РµРЅРёРµ СЃРїРѕСЂР° `front_office_agent` vs `contracts_agent`
+### 8.1.5 Разрешение спора `front_office_agent` vs `contracts_agent`
 
-РќРѕСЂРјР°С‚РёРІРЅР°СЏ РіСЂР°РЅРёС†Р°:
+Нормативная граница:
 
-- С„Р°РєС‚ СЂР°Р·РіРѕРІРѕСЂР° Рѕ РґРѕРіРѕРІРѕСЂРµ, С„РёРєСЃР°С†РёСЏ thread Рё СЌСЃРєР°Р»Р°С†РёРё -> `front_office_agent`
-- СЃРѕР·РґР°РЅРёРµ, РїСЂРѕСЃРјРѕС‚СЂ, РёР·РјРµРЅРµРЅРёРµ Рё РёСЃРїРѕР»РЅРµРЅРёРµ РґРѕРіРѕРІРѕСЂР° -> `contracts_agent`
+- факт разговора о договоре, фиксация thread и эскалации -> `front_office_agent`
+- создание, просмотр, изменение и исполнение договора -> `contracts_agent`
 
-РЎР»РµРґСЃС‚РІРёРµ:
+Следствие:
 
-- СЂР°Р·РіРѕРІРѕСЂ РїСЂРѕ РґРѕРіРѕРІРѕСЂ РЅРµ РґРѕР»Р¶РµРЅ РѕСЃС‚Р°РІР°С‚СЊСЃСЏ РІРѕ С„СЂРѕРЅС‚-РѕС„РёСЃРµ РґРѕР»СЊС€Рµ, С‡РµРј РЅСѓР¶РЅРѕ РґР»СЏ handoff;
-- РЅР°Р»РёС‡РёРµ client context РЅРµ РїРµСЂРµРІРѕРґРёС‚ РґРѕРіРѕРІРѕСЂРЅС‹Р№ СЃС†РµРЅР°СЂРёР№ РІ `crm_agent`.
+- разговор про договор не должен оставаться во фронт-офисе дольше, чем нужно для handoff;
+- наличие client context не переводит договорный сценарий в `crm_agent`.
 
 ### 8.2 `crm_agent` vs `contracts_agent`
 
-Р“СЂР°РЅРёС†Р° РїСЂРѕС…РѕРґРёС‚ С‚Р°Рє:
+Граница проходит так:
 
-- `crm_agent` РІР»Р°РґРµРµС‚ РєРѕРЅС‚СЂР°РіРµРЅС‚РѕРј, Р°РєРєР°СѓРЅС‚РѕРј, РєРѕРЅС‚Р°РєС‚РѕРј, CRM-history, РѕС‚РЅРѕС€РµРЅРёСЏРјРё;
-- `contracts_agent` РІР»Р°РґРµРµС‚ РґРѕРіРѕРІРѕСЂРѕРј, РґРѕРіРѕРІРѕСЂРЅС‹Рј РѕР±СЏР·Р°С‚РµР»СЊСЃС‚РІРѕРј, РёСЃРїРѕР»РЅРµРЅРёРµРј, СЃС‡РµС‚РѕРј, РїР»Р°С‚РµР¶РѕРј, Р°Р»Р»РѕРєР°С†РёРµР№ Рё AR.
+- `crm_agent` владеет контрагентом, аккаунтом, контактом, CRM-history, отношениями;
+- `contracts_agent` владеет договором, договорным обязательством, исполнением, счетом, платежом, аллокацией и AR.
 
-Р–С‘СЃС‚РєРѕРµ РїСЂР°РІРёР»Рѕ:
+Жёсткое правило:
 
-- РЅР°Р»РёС‡РёРµ РєРѕРЅС‚СЂР°РіРµРЅС‚Р° РІ РєРѕРЅС‚РµРєСЃС‚Рµ РЅРµ РґР°С‘С‚ `crm_agent` ownership РЅР°Рґ РґРѕРіРѕРІРѕСЂРЅС‹Рј СЃС†РµРЅР°СЂРёРµРј;
-- РЅР°Р»РёС‡РёРµ РґРѕРіРѕРІРѕСЂР° РІ РєРѕРЅС‚РµРєСЃС‚Рµ РЅРµ РґР°С‘С‚ `contracts_agent` ownership РЅР°Рґ CRM-РєР°СЂС‚РѕС‡РєРѕР№.
+- наличие контрагента в контексте не даёт `crm_agent` ownership над договорным сценарием;
+- наличие договора в контексте не даёт `contracts_agent` ownership над CRM-карточкой.
 
-### 8.2.1 РљРѕРіРґР° primary owner = `crm_agent`
+### 8.2.1 Когда primary owner = `crm_agent`
 
-РћСЂРєРµСЃС‚СЂР°С‚РѕСЂ РґРѕР»Р¶РµРЅ РІС‹Р±РёСЂР°С‚СЊ `crm_agent`, РµСЃР»Рё Р·Р°РїСЂРѕСЃ РѕС‚РЅРѕСЃРёС‚СЃСЏ Рє РѕРґРЅРѕР№ РёР· CRM-СЃСѓС‰РЅРѕСЃС‚РµР№:
+Оркестратор должен выбирать `crm_agent`, если запрос относится к одной из CRM-сущностей:
 
 - `party`
 - `account`
 - `contact`
 - `interaction`
 - `crm obligation`
-- relation graph РјРµР¶РґСѓ РєРѕРЅС‚СЂР°РіРµРЅС‚Р°РјРё
+- relation graph между контрагентами
 
-Р РµСЃР»Рё РґРµР№СЃС‚РІРёРµ РѕС‚РЅРѕСЃРёС‚СЃСЏ Рє CRM lifecycle:
+И если действие относится к CRM lifecycle:
 
-- РЅР°Р№С‚Рё РёР»Рё Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊ РєРѕРЅС‚СЂР°РіРµРЅС‚Р°;
-- СЃРѕР·РґР°С‚СЊ РёР»Рё РѕР±РЅРѕРІРёС‚СЊ CRM-Р°РєРєР°СѓРЅС‚;
-- РѕС‚РєСЂС‹С‚СЊ account workspace;
-- СЃРѕР·РґР°С‚СЊ, РёР·РјРµРЅРёС‚СЊ РёР»Рё СѓРґР°Р»РёС‚СЊ РєРѕРЅС‚Р°РєС‚;
-- СЃРѕР·РґР°С‚СЊ, РёР·РјРµРЅРёС‚СЊ РёР»Рё СѓРґР°Р»РёС‚СЊ interaction;
-- СЃРѕР·РґР°С‚СЊ, РёР·РјРµРЅРёС‚СЊ РёР»Рё СѓРґР°Р»РёС‚СЊ CRM-obligation.
+- найти или зарегистрировать контрагента;
+- создать или обновить CRM-аккаунт;
+- открыть account workspace;
+- создать, изменить или удалить контакт;
+- создать, изменить или удалить interaction;
+- создать, изменить или удалить CRM-obligation.
 
-РџРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Рµ owner-intent-С‹ СЌС‚РѕРіРѕ РєРѕРЅС‚СѓСЂР°:
+Подтверждённые owner-intent-ы этого контура:
 
 - `register_counterparty`
 - `create_counterparty_relation`
@@ -322,9 +322,9 @@ last_updated: 2026-03-10
 - `update_crm_obligation`
 - `delete_crm_obligation`
 
-### 8.2.2 РљРѕРіРґР° primary owner = `contracts_agent`
+### 8.2.2 Когда primary owner = `contracts_agent`
 
-РћСЂРєРµСЃС‚СЂР°С‚РѕСЂ РґРѕР»Р¶РµРЅ РІС‹Р±РёСЂР°С‚СЊ `contracts_agent`, РµСЃР»Рё Р·Р°РїСЂРѕСЃ РѕС‚РЅРѕСЃРёС‚СЃСЏ Рє РѕРґРЅРѕР№ РёР· РґРѕРіРѕРІРѕСЂРЅС‹С… СЃСѓС‰РЅРѕСЃС‚РµР№:
+Оркестратор должен выбирать `contracts_agent`, если запрос относится к одной из договорных сущностей:
 
 - `contract`
 - contract role
@@ -335,17 +335,17 @@ last_updated: 2026-03-10
 - payment allocation
 - `ar balance`
 
-Р РµСЃР»Рё РґРµР№СЃС‚РІРёРµ РѕС‚РЅРѕСЃРёС‚СЃСЏ Рє contract lifecycle:
+И если действие относится к contract lifecycle:
 
-- СЃРѕР·РґР°С‚СЊ РґРѕРіРѕРІРѕСЂ;
-- РѕС‚РєСЂС‹С‚СЊ СЂРµРµСЃС‚СЂ РґРѕРіРѕРІРѕСЂРѕРІ РёР»Рё РєР°СЂС‚РѕС‡РєСѓ РґРѕРіРѕРІРѕСЂР°;
-- СЃРѕР·РґР°С‚СЊ РѕР±СЏР·Р°С‚РµР»СЊСЃС‚РІРѕ РїРѕ РґРѕРіРѕРІРѕСЂСѓ;
-- Р·Р°С„РёРєСЃРёСЂРѕРІР°С‚СЊ РёСЃРїРѕР»РЅРµРЅРёРµ;
-- СЃРѕР·РґР°С‚СЊ РёР»Рё РїСЂРѕРІРµСЃС‚Рё СЃС‡С‘С‚;
-- СЃРѕР·РґР°С‚СЊ, РїРѕРґС‚РІРµСЂРґРёС‚СЊ РёР»Рё СЂР°Р·РЅРµСЃС‚Рё РїР»Р°С‚С‘Р¶;
-- РїРѕСЃРјРѕС‚СЂРµС‚СЊ РґРµР±РёС‚РѕСЂСЃРєРёР№ РѕСЃС‚Р°С‚РѕРє.
+- создать договор;
+- открыть реестр договоров или карточку договора;
+- создать обязательство по договору;
+- зафиксировать исполнение;
+- создать или провести счёт;
+- создать, подтвердить или разнести платёж;
+- посмотреть дебиторский остаток.
 
-РџРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Рµ owner-intent-С‹ СЌС‚РѕРіРѕ РєРѕРЅС‚СѓСЂР°:
+Подтверждённые owner-intent-ы этого контура:
 
 - `create_commerce_contract`
 - `list_commerce_contracts`
@@ -359,314 +359,314 @@ last_updated: 2026-03-10
 - `allocate_payment`
 - `review_ar_balance`
 
-### 8.2.3 Trigger-РјР°С‚СЂРёС†Р° РґР»СЏ СЃРїРѕСЂРЅС‹С… СЃС†РµРЅР°СЂРёРµРІ
+### 8.2.3 Trigger-матрица для спорных сценариев
 
-| Р§С‚Рѕ СѓРІРёРґРµР» РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ | Primary owner-agent | РџРѕС‡РµРјСѓ |
+| Что увидел оркестратор | Primary owner-agent | Почему |
 |---|---|---|
-| РРќРќ, СЂРµРіРёСЃС‚СЂР°С†РёСЏ РєРѕРЅС‚СЂР°РіРµРЅС‚Р°, СЃРІСЏР·СЊ РєРѕРЅС‚СЂР°РіРµРЅС‚РѕРІ, CRM-Р°РєРєР°СѓРЅС‚, РєР°СЂС‚РѕС‡РєР° РєР»РёРµРЅС‚Р°, РєРѕРЅС‚Р°РєС‚, РІР·Р°РёРјРѕРґРµР№СЃС‚РІРёРµ | `crm_agent` | СЌС‚Рѕ CRM record management |
-| Р”РѕРіРѕРІРѕСЂ, РєРѕРЅС‚СЂР°РєС‚, СѓСЃР»РѕРІРёСЏ РґРѕРіРѕРІРѕСЂР°, РѕР±СЏР·Р°С‚РµР»СЊСЃС‚РІРѕ РїРѕ РґРѕРіРѕРІРѕСЂСѓ, РёСЃРїРѕР»РЅРµРЅРёРµ, РѕС‚РіСЂСѓР·РєР°, СЃС‡С‘С‚, РїР»Р°С‚С‘Р¶, РґРµР±РёС‚РѕСЂРєР° | `contracts_agent` | СЌС‚Рѕ contract lifecycle Рё commerce execution |
-| РљРѕРЅС‚СЂР°РіРµРЅС‚ СѓРїРѕРјРёРЅР°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РєР°Рє СЃС‚РѕСЂРѕРЅР° РґРѕРіРѕРІРѕСЂР° | `contracts_agent` | РєРѕРЅС‚СЂР°РіРµРЅС‚ Р·РґРµСЃСЊ С‡Р°СЃС‚СЊ contract context, Р° РЅРµ CRM owner-scope |
-| Р”РѕРіРѕРІРѕСЂ СѓРїРѕРјРёРЅР°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РєР°Рє РІР»РѕР¶РµРЅРёРµ РІ РєР°СЂС‚РѕС‡РєСѓ РєР»РёРµРЅС‚Р°, РЅРѕ РґРµР№СЃС‚РІРёРµ РЅР°РїСЂР°РІР»РµРЅРѕ РЅР° РїСЂРѕСЃРјРѕС‚СЂ/РѕР±РЅРѕРІР»РµРЅРёРµ CRM-СЃСѓС‰РЅРѕСЃС‚Рё | `crm_agent` | РґРѕРіРѕРІРѕСЂРЅС‹Р№ РєРѕРЅС‚РµРєСЃС‚ РЅРµ РїРµСЂРµРІРѕРґРёС‚ ownership СЃР°Рј РїРѕ СЃРµР±Рµ |
+| ИНН, регистрация контрагента, связь контрагентов, CRM-аккаунт, карточка клиента, контакт, взаимодействие | `crm_agent` | это CRM record management |
+| Договор, контракт, условия договора, обязательство по договору, исполнение, отгрузка, счёт, платёж, дебиторка | `contracts_agent` | это contract lifecycle и commerce execution |
+| Контрагент упоминается только как сторона договора | `contracts_agent` | контрагент здесь часть contract context, а не CRM owner-scope |
+| Договор упоминается только как вложение в карточку клиента, но действие направлено на просмотр/обновление CRM-сущности | `crm_agent` | договорный контекст не переводит ownership сам по себе |
 
-### 8.2.4 Р”РµР№СЃС‚РІРёСЏ-РїРµСЂРµРєР»СЋС‡Р°С‚РµР»Рё owner
+### 8.2.4 Действия-переключатели owner
 
-РЎР»РµРґСѓСЋС‰РёРµ РіР»Р°РіРѕР»С‹ Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РЅР°РјРµСЂРµРЅРёСЏ РґРѕР»Р¶РЅС‹ РїРµСЂРµРІРѕРґРёС‚СЊ ownership РІ `contracts_agent`, РґР°Р¶Рµ РµСЃР»Рё СЃС‚Р°СЂС‚РѕРІС‹Р№ РєРѕРЅС‚РµРєСЃС‚ Р±С‹Р» CRM:
+Следующие глаголы и пользовательские намерения должны переводить ownership в `contracts_agent`, даже если стартовый контекст был CRM:
 
-- Р·Р°РєР»СЋС‡РёС‚СЊ РґРѕРіРѕРІРѕСЂ
-- РѕС„РѕСЂРјРёС‚СЊ РґРѕРіРѕРІРѕСЂ
-- СЃРѕРіР»Р°СЃРѕРІР°С‚СЊ РєРѕРЅС‚СЂР°РєС‚
-- РґРѕР±Р°РІРёС‚СЊ РґРѕРіРѕРІРѕСЂРЅРѕРµ РѕР±СЏР·Р°С‚РµР»СЊСЃС‚РІРѕ
-- Р·Р°С„РёРєСЃРёСЂРѕРІР°С‚СЊ РёСЃРїРѕР»РЅРµРЅРёРµ
-- РІС‹СЃС‚Р°РІРёС‚СЊ СЃС‡С‘С‚
-- РїСЂРѕРІРµСЃС‚Рё СЃС‡С‘С‚
-- Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊ РѕРїР»Р°С‚Сѓ
-- РїРѕРґС‚РІРµСЂРґРёС‚СЊ РїР»Р°С‚С‘Р¶
-- СЂР°Р·РЅРµСЃС‚Рё РїР»Р°С‚С‘Р¶
-- РїРѕСЃРјРѕС‚СЂРµС‚СЊ РґРµР±РёС‚РѕСЂРєСѓ
+- заключить договор
+- оформить договор
+- согласовать контракт
+- добавить договорное обязательство
+- зафиксировать исполнение
+- выставить счёт
+- провести счёт
+- зарегистрировать оплату
+- подтвердить платёж
+- разнести платёж
+- посмотреть дебиторку
 
-РЎР»РµРґСѓСЋС‰РёРµ РґРµР№СЃС‚РІРёСЏ РґРѕР»Р¶РЅС‹ СѓРґРµСЂР¶РёРІР°С‚СЊ ownership РІ `crm_agent`, РґР°Р¶Рµ РµСЃР»Рё РІ Р·Р°РїСЂРѕСЃРµ СѓРїРѕРјСЏРЅСѓС‚ РґРѕРіРѕРІРѕСЂ:
+Следующие действия должны удерживать ownership в `crm_agent`, даже если в запросе упомянут договор:
 
-- РЅР°Р№С‚Рё РєРѕРЅС‚СЂР°РіРµРЅС‚Р°
-- Р·Р°РІРµСЃС‚Рё РєР°СЂС‚РѕС‡РєСѓ РєР»РёРµРЅС‚Р°
-- РѕР±РЅРѕРІРёС‚СЊ РїСЂРѕС„РёР»СЊ Р°РєРєР°СѓРЅС‚Р°
-- РґРѕР±Р°РІРёС‚СЊ РєРѕРЅС‚Р°РєС‚
-- Р·Р°РїРёСЃР°С‚СЊ РІР·Р°РёРјРѕРґРµР№СЃС‚РІРёРµ
-- РѕР±РЅРѕРІРёС‚СЊ CRM-obligation
-- РїРѕСЃРјРѕС‚СЂРµС‚СЊ account workspace
+- найти контрагента
+- завести карточку клиента
+- обновить профиль аккаунта
+- добавить контакт
+- записать взаимодействие
+- обновить CRM-obligation
+- посмотреть account workspace
 
-### 8.2.5 РђРЅС‚Рё-С‚СЂРёРіРіРµСЂС‹ Рё РѕС€РёР±РєРё РјР°СЂС€СЂСѓС‚РёР·Р°С†РёРё
+### 8.2.5 Анти-триггеры и ошибки маршрутизации
 
-РЎР»РµРґСѓСЋС‰РёРµ РїСЂРёР·РЅР°РєРё РЅРµ РґРѕР»Р¶РЅС‹ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІРµСЃС‚Рё РІ `crm_agent`:
+Следующие признаки не должны автоматически вести в `crm_agent`:
 
-- РІ Р·Р°РїСЂРѕСЃРµ РµСЃС‚СЊ СЃР»РѕРІРѕ "РєР»РёРµРЅС‚";
-- РґРѕРіРѕРІРѕСЂ СЃРІСЏР·Р°РЅ СЃ РєРѕРЅС‚СЂР°РіРµРЅС‚РѕРј;
-- РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РїСЂРёС€С‘Р» РёР· CRM-route;
-- РІ account workspace РІРёРґРµРЅ СЃРїРёСЃРѕРє РґРѕРіРѕРІРѕСЂРѕРІ.
+- в запросе есть слово "клиент";
+- договор связан с контрагентом;
+- пользователь пришёл из CRM-route;
+- в account workspace виден список договоров.
 
-РЎР»РµРґСѓСЋС‰РёРµ РїСЂРёР·РЅР°РєРё РЅРµ РґРѕР»Р¶РЅС‹ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІРµСЃС‚Рё РІ `contracts_agent`:
+Следующие признаки не должны автоматически вести в `contracts_agent`:
 
-- Сѓ РєР»РёРµРЅС‚Р° СѓР¶Рµ РµСЃС‚СЊ РґРѕРіРѕРІРѕСЂС‹;
-- РІ СЃРѕРѕР±С‰РµРЅРёРё РїСЂРѕСЃС‚Рѕ СѓРїРѕРјРёРЅР°РµС‚СЃСЏ РєРѕРЅС‚СЂР°РєС‚ Р±РµР· РґРµР№СЃС‚РІРёСЏ РЅР°Рґ contract lifecycle;
-- РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅР°С…РѕРґРёС‚СЃСЏ РІ РєРѕРЅС‚РµРєСЃС‚Рµ РєРѕРЅС‚СЂР°РіРµРЅС‚Р°, РЅРѕ С…РѕС‡РµС‚ РѕР±РЅРѕРІРёС‚СЊ CRM-РїСЂРѕС„РёР»СЊ РёР»Рё РєРѕРЅС‚Р°РєС‚С‹.
+- у клиента уже есть договоры;
+- в сообщении просто упоминается контракт без действия над contract lifecycle;
+- пользователь находится в контексте контрагента, но хочет обновить CRM-профиль или контакты.
 
-### 8.2.6 РќРѕСЂРјР°С‚РёРІРЅРѕРµ РїСЂР°РІРёР»Рѕ СЂР°Р·СЂРµС€РµРЅРёСЏ РєРѕРЅС„Р»РёРєС‚Р°
+### 8.2.6 Нормативное правило разрешения конфликта
 
-РџСЂРё СЃРїРѕСЂРµ РјРµР¶РґСѓ `crm_agent` Рё `contracts_agent` РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ РѕР±СЏР·Р°РЅ РѕС‚РІРµС‡Р°С‚СЊ РЅР° РІРѕРїСЂРѕСЃ:
+При споре между `crm_agent` и `contracts_agent` оркестратор обязан отвечать на вопрос:
 
-`РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ С…РѕС‡РµС‚ СѓРїСЂР°РІР»СЏС‚СЊ РєР»РёРµРЅС‚СЃРєРѕР№ СЃСѓС‰РЅРѕСЃС‚СЊСЋ РёР»Рё РґРѕРіРѕРІРѕСЂРЅС‹Рј РѕР±СЏР·Р°С‚РµР»СЊСЃС‚РІРѕРј?`
+`Пользователь хочет управлять клиентской сущностью или договорным обязательством?`
 
-Р•СЃР»Рё РѕС‚РІРµС‚:
+Если ответ:
 
-- РєР»РёРµРЅС‚СЃРєР°СЏ СЃСѓС‰РЅРѕСЃС‚СЊ -> `crm_agent`
-- РґРѕРіРѕРІРѕСЂРЅРѕРµ РѕР±СЏР·Р°С‚РµР»СЊСЃС‚РІРѕ РёР»Рё РёСЃРїРѕР»РЅРµРЅРёРµ -> `contracts_agent`
+- клиентская сущность -> `crm_agent`
+- договорное обязательство или исполнение -> `contracts_agent`
 
-РџСЂРё СЃРјРµС€Р°РЅРЅРѕРј Р·Р°РїСЂРѕСЃРµ:
+При смешанном запросе:
 
-- primary owner РІС‹Р±РёСЂР°РµС‚СЃСЏ РїРѕ РіР»Р°РІРЅРѕРјСѓ РґРµР№СЃС‚РІРёСЋ;
-- РІС‚РѕСЂРѕР№ РґРѕРјРµРЅ РїРѕРґРєР»СЋС‡Р°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РєР°Рє governed handoff С‡РµСЂРµР· РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ;
-- РѕРґРёРЅ Р·Р°РїСЂРѕСЃ РЅРµ РґРѕР»Р¶РµРЅ РїРѕСЂРѕР¶РґР°С‚СЊ РґРІР° primary owner РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕ.
+- primary owner выбирается по главному действию;
+- второй домен подключается только как governed handoff через оркестратор;
+- один запрос не должен порождать два primary owner одновременно.
 
 ### 8.3 `contracts_agent` vs `legal_advisor`
 
-Р“СЂР°РЅРёС†Р° РїСЂРѕС…РѕРґРёС‚ С‚Р°Рє:
+Граница проходит так:
 
-- `contracts_agent` вЂ” execution owner;
-- `legal_advisor` вЂ” advisory owner РїРѕ legal review, clause risk, compliance.
+- `contracts_agent` — execution owner;
+- `legal_advisor` — advisory owner по legal review, clause risk, compliance.
 
-РЎР»РµРґСЃС‚РІРёРµ:
+Следствие:
 
-- СЋСЂРёРґРёС‡РµСЃРєР°СЏ РёРЅС‚РµСЂРїСЂРµС‚Р°С†РёСЏ РЅРµ РїРµСЂРµРІРѕРґРёС‚ ownership РґРѕРіРѕРІРѕСЂР° РІ `legal_advisor`;
-- legal handoff РґРѕРїСѓСЃС‚РёРј С‚РѕР»СЊРєРѕ С‡РµСЂРµР· РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ Рё РїРѕРєР° РѕСЃС‚Р°С‘С‚СЃСЏ future/required path.
+- юридическая интерпретация не переводит ownership договора в `legal_advisor`;
+- legal handoff допустим только через оркестратор и пока остаётся future/required path.
 
-### 8.3.1 РљРѕРіРґР° `legal_advisor` РЅРµ РґРѕР»Р¶РµРЅ СЃС‚Р°РЅРѕРІРёС‚СЊСЃСЏ primary owner
+### 8.3.1 Когда `legal_advisor` не должен становиться primary owner
 
-РћСЂРєРµСЃС‚СЂР°С‚РѕСЂ РЅРµ РґРѕР»Р¶РµРЅ РїРµСЂРµРІРѕРґРёС‚СЊ ownership РІ `legal_advisor`, РєРѕРіРґР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ С…РѕС‡РµС‚:
+Оркестратор не должен переводить ownership в `legal_advisor`, когда пользователь хочет:
 
-- СЃРѕР·РґР°С‚СЊ РґРѕРіРѕРІРѕСЂ;
-- РѕС‚РєСЂС‹С‚СЊ РёР»Рё РёР·РјРµРЅРёС‚СЊ РєР°СЂС‚РѕС‡РєСѓ РґРѕРіРѕРІРѕСЂР°;
-- СЃРѕР·РґР°С‚СЊ РґРѕРіРѕРІРѕСЂРЅРѕРµ РѕР±СЏР·Р°С‚РµР»СЊСЃС‚РІРѕ;
-- Р·Р°С„РёРєСЃРёСЂРѕРІР°С‚СЊ РёСЃРїРѕР»РЅРµРЅРёРµ;
-- СЃРѕР·РґР°С‚СЊ РёР»Рё РїСЂРѕРІРµСЃС‚Рё СЃС‡С‘С‚;
-- СЃРѕР·РґР°С‚СЊ, РїРѕРґС‚РІРµСЂРґРёС‚СЊ РёР»Рё СЂР°Р·РЅРµСЃС‚Рё РїР»Р°С‚С‘Р¶;
-- РїРѕСЃРјРѕС‚СЂРµС‚СЊ operational status РґРѕРіРѕРІРѕСЂР°, РёСЃРїРѕР»РЅРµРЅРёСЏ, СЃС‡С‘С‚Р° РёР»Рё РѕРїР»Р°С‚С‹.
+- создать договор;
+- открыть или изменить карточку договора;
+- создать договорное обязательство;
+- зафиксировать исполнение;
+- создать или провести счёт;
+- создать, подтвердить или разнести платёж;
+- посмотреть operational status договора, исполнения, счёта или оплаты.
 
-Р’Рѕ РІСЃРµС… СЌС‚РёС… СЃР»СѓС‡Р°СЏС… primary owner РѕСЃС‚Р°С‘С‚СЃСЏ `contracts_agent`, РґР°Р¶Рµ РµСЃР»Рё Р·Р°РїСЂРѕСЃ СЃРѕРґРµСЂР¶РёС‚:
+Во всех этих случаях primary owner остаётся `contracts_agent`, даже если запрос содержит:
 
-- СЋСЂРёРґРёС‡РµСЃРєРёР№ СЂРёСЃРє;
+- юридический риск;
 - clause risk;
 - compliance concern;
-- РїСЂРѕСЃСЊР±Сѓ "РїСЂРѕРІРµСЂСЊ СЋСЂРёРґРёС‡РµСЃРєРё" РєР°Рє С‡Р°СЃС‚СЊ contract workflow.
+- просьбу "проверь юридически" как часть contract workflow.
 
-### 8.3.2 РљРѕРіРґР° `legal_advisor` СЃС‚Р°РЅРѕРІРёС‚СЃСЏ owner С‚РѕР»СЊРєРѕ advisory-Р·Р°РїСЂРѕСЃР°
+### 8.3.2 Когда `legal_advisor` становится owner только advisory-запроса
 
-`legal_advisor` РјРѕР¶РµС‚ Р±С‹С‚СЊ owner С‚РѕР»СЊРєРѕ РѕС‚РґРµР»СЊРЅРѕРіРѕ legal/advisory-Р·Р°РїСЂРѕСЃР°, РєРѕРіРґР° РїСЂРµРґРјРµС‚РѕРј Р·Р°РїСЂРѕСЃР° СЏРІР»СЏРµС‚СЃСЏ:
+`legal_advisor` может быть owner только отдельного legal/advisory-запроса, когда предметом запроса является:
 
-- СЂР°Р·Р±РѕСЂ clause risk;
-- legal commentary РїРѕ СѓСЃР»РѕРІРёСЋ;
+- разбор clause risk;
+- legal commentary по условию;
 - policy review;
 - compliance interpretation;
-- legal corpus lookup РєР°Рє СЃР°РјРѕСЃС‚РѕСЏС‚РµР»СЊРЅС‹Р№ СЂРµР·СѓР»СЊС‚Р°С‚.
+- legal corpus lookup как самостоятельный результат.
 
-РќРѕ РґР°Р¶Рµ РІ СЌС‚РѕРј СЂРµР¶РёРјРµ:
+Но даже в этом режиме:
 
-- СЂРѕР»СЊ РѕСЃС‚Р°С‘С‚СЃСЏ template/future role;
-- runtime-owner РґР»СЏ production legal domain РµС‰С‘ РЅРµ РґРѕРІРµРґС‘РЅ РґРѕ canonical family;
-- fallback РґР»СЏ legal РѕСЃС‚Р°С‘С‚СЃСЏ `MANUAL_HUMAN_REQUIRED`, Р° РЅРµ РїРѕР»РЅРѕС†РµРЅРЅС‹Р№ agent execution path.
+- роль остаётся template/future role;
+- runtime-owner для production legal domain ещё не доведён до canonical family;
+- fallback для legal остаётся `MANUAL_HUMAN_REQUIRED`, а не полноценный agent execution path.
 
-### 8.3.3 Trigger-РјР°С‚СЂРёС†Р° `contracts_agent` vs `legal_advisor`
+### 8.3.3 Trigger-матрица `contracts_agent` vs `legal_advisor`
 
-| Р§С‚Рѕ СѓРІРёРґРµР» РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ | Primary owner-agent | РџРѕС‡РµРјСѓ |
+| Что увидел оркестратор | Primary owner-agent | Почему |
 |---|---|---|
-| РЎРѕР·РґР°С‚СЊ РёР»Рё РёСЃРїРѕР»РЅРёС‚СЊ РґРѕРіРѕРІРѕСЂРЅС‹Р№ РѕР±СЉРµРєС‚ | `contracts_agent` | СЌС‚Рѕ commerce execution |
-| РџСЂРѕРІРµСЂРёС‚СЊ СЂРёСЃРє РїСѓРЅРєС‚Р°, С‚СЂР°РєС‚РѕРІРєСѓ СѓСЃР»РѕРІРёСЏ, СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРµ РїРѕР»РёС‚РёРєРµ, compliance-РєРѕРјРјРµРЅС‚Р°СЂРёР№ | `legal_advisor` РєР°Рє advisory-only future path | СЌС‚Рѕ legal interpretation, Р° РЅРµ contract execution |
-| Р’ РѕРґРЅРѕРј Р·Р°РїСЂРѕСЃРµ РµСЃС‚СЊ Рё РґРµР№СЃС‚РІРёРµ РїРѕ РґРѕРіРѕРІРѕСЂСѓ, Рё РїСЂРѕСЃСЊР±Р° Рѕ legal review | `contracts_agent` | РіР»Р°РІРЅРѕРµ РґРµР№СЃС‚РІРёРµ execution, legal РїРѕРґРєР»СЋС‡Р°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РєР°Рє handoff |
-| Р—Р°РїСЂРѕСЃ СЃРѕСЃС‚РѕРёС‚ С‚РѕР»СЊРєРѕ РёР· legal review Р±РµР· contract write-action | `legal_advisor` РєР°Рє advisory-only future path | СЌС‚Рѕ СЃР°РјРѕСЃС‚РѕСЏС‚РµР»СЊРЅС‹Р№ legal intent |
+| Создать или исполнить договорный объект | `contracts_agent` | это commerce execution |
+| Проверить риск пункта, трактовку условия, соответствие политике, compliance-комментарий | `legal_advisor` как advisory-only future path | это legal interpretation, а не contract execution |
+| В одном запросе есть и действие по договору, и просьба о legal review | `contracts_agent` | главное действие execution, legal подключается только как handoff |
+| Запрос состоит только из legal review без contract write-action | `legal_advisor` как advisory-only future path | это самостоятельный legal intent |
 
-### 8.3.4 РђРЅС‚Рё-С‚СЂРёРіРіРµСЂС‹ РґР»СЏ `legal_advisor`
+### 8.3.4 Анти-триггеры для `legal_advisor`
 
-РЎР»РµРґСѓСЋС‰РёРµ РїСЂРёР·РЅР°РєРё РЅРµ РґРѕР»Р¶РЅС‹ РїРµСЂРµРІРѕРґРёС‚СЊ ownership РІ `legal_advisor`:
+Следующие признаки не должны переводить ownership в `legal_advisor`:
 
-- РІ Р·Р°РїСЂРѕСЃРµ РµСЃС‚СЊ СЃР»РѕРІРѕ "РґРѕРіРѕРІРѕСЂ";
-- РѕР±СЃСѓР¶РґР°РµС‚СЃСЏ СЋСЂРёРґРёС‡РµСЃРєРёР№ СЂРёСЃРє РІРЅСѓС‚СЂРё СѓР¶Рµ РёРґСѓС‰РµРіРѕ contract workflow;
-- РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅР°С…РѕРґРёС‚СЃСЏ РІ contract route;
-- РґР»СЏ РІС‹РїРѕР»РЅРµРЅРёСЏ РЅСѓР¶РЅРѕ РјРµРЅСЏС‚СЊ РґРѕРіРѕРІРѕСЂРЅРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ, Р° РЅРµ С‚РѕР»СЊРєРѕ РёРЅС‚РµСЂРїСЂРµС‚РёСЂРѕРІР°С‚СЊ РµРіРѕ.
+- в запросе есть слово "договор";
+- обсуждается юридический риск внутри уже идущего contract workflow;
+- пользователь находится в contract route;
+- для выполнения нужно менять договорное состояние, а не только интерпретировать его.
 
-Р–С‘СЃС‚РєРѕРµ РїСЂР°РІРёР»Рѕ:
+Жёсткое правило:
 
-- legal interpretation РЅРµ РјРѕР¶РµС‚ Р·Р°С…РІР°С‚С‹РІР°С‚СЊ write authority РґРѕРіРѕРІРѕСЂРЅРѕРіРѕ РєРѕРЅС‚СѓСЂР°.
+- legal interpretation не может захватывать write authority договорного контура.
 
 ### 8.4 `contracts_agent` vs `economist`
 
-Р“СЂР°РЅРёС†Р° РїСЂРѕС…РѕРґРёС‚ С‚Р°Рє:
+Граница проходит так:
 
-- `contracts_agent` РІР»Р°РґРµРµС‚ С„Р°РєС‚РѕРј РґРѕРіРѕРІРѕСЂРЅРѕРіРѕ РёСЃРїРѕР»РЅРµРЅРёСЏ;
-- `economist` РІР»Р°РґРµРµС‚ С„РёРЅР°РЅСЃРѕРІРѕР№ РёРЅС‚РµСЂРїСЂРµС‚Р°С†РёРµР№ РїРѕСЃР»РµРґСЃС‚РІРёР№.
+- `contracts_agent` владеет фактом договорного исполнения;
+- `economist` владеет финансовой интерпретацией последствий.
 
-РЎР»РµРґСЃС‚РІРёРµ:
+Следствие:
 
-- РґРµР±РёС‚РѕСЂРєР° РєР°Рє operational artefact РѕСЃС‚Р°С‘С‚СЃСЏ РІ РґРѕРіРѕРІРѕСЂРЅРѕРј РєРѕРЅС‚СѓСЂРµ;
-- С„РёРЅР°РЅСЃРѕРІС‹Р№ Р°РЅР°Р»РёР· РґРµР±РёС‚РѕСЂРєРё РѕСЃС‚Р°С‘С‚СЃСЏ advisory-layer Сѓ `economist`.
+- дебиторка как operational artefact остаётся в договорном контуре;
+- финансовый анализ дебиторки остаётся advisory-layer у `economist`.
 
-### 8.4.1 РљРѕРіРґР° `economist` РЅРµ РґРѕР»Р¶РµРЅ СЃС‚Р°РЅРѕРІРёС‚СЊСЃСЏ primary owner
+### 8.4.1 Когда `economist` не должен становиться primary owner
 
-РћСЂРєРµСЃС‚СЂР°С‚РѕСЂ РЅРµ РґРѕР»Р¶РµРЅ РїРµСЂРµРІРѕРґРёС‚СЊ ownership РІ `economist`, РєРѕРіРґР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ С…РѕС‡РµС‚:
+Оркестратор не должен переводить ownership в `economist`, когда пользователь хочет:
 
-- СЃРѕР·РґР°С‚СЊ РґРѕРіРѕРІРѕСЂРЅРѕРµ РѕР±СЏР·Р°С‚РµР»СЊСЃС‚РІРѕ;
-- Р·Р°С„РёРєСЃРёСЂРѕРІР°С‚СЊ РёСЃРїРѕР»РЅРµРЅРёРµ;
-- РІС‹СЃС‚Р°РІРёС‚СЊ СЃС‡С‘С‚;
-- РїСЂРѕРІРµСЃС‚Рё СЃС‡С‘С‚;
-- СЃРѕР·РґР°С‚СЊ РїР»Р°С‚С‘Р¶;
-- РїРѕРґС‚РІРµСЂРґРёС‚СЊ РїР»Р°С‚С‘Р¶;
-- СЂР°Р·РЅРµСЃС‚Рё РїР»Р°С‚С‘Р¶;
-- РїРѕСЃРјРѕС‚СЂРµС‚СЊ operational AR РєР°Рє С‡Р°СЃС‚СЊ contract execution flow.
+- создать договорное обязательство;
+- зафиксировать исполнение;
+- выставить счёт;
+- провести счёт;
+- создать платёж;
+- подтвердить платёж;
+- разнести платёж;
+- посмотреть operational AR как часть contract execution flow.
 
-Р’Рѕ РІСЃРµС… СЌС‚РёС… СЃР»СѓС‡Р°СЏС… primary owner РѕСЃС‚Р°С‘С‚СЃСЏ `contracts_agent`, РґР°Р¶Рµ РµСЃР»Рё РІ Р·Р°РїСЂРѕСЃРµ РµСЃС‚СЊ СЃР»РѕРІР°:
+Во всех этих случаях primary owner остаётся `contracts_agent`, даже если в запросе есть слова:
 
-- РјР°СЂР¶Р°;
-- С„РёРЅР°РЅСЃРѕРІС‹Р№ СЂРёСЃРє;
-- РґРµР±РёС‚РѕСЂРєР°;
-- СЌРєРѕРЅРѕРјРёРєР° СЃРґРµР»РєРё;
+- маржа;
+- финансовый риск;
+- дебиторка;
+- экономика сделки;
 - cash flow impact.
 
-### 8.4.2 РљРѕРіРґР° `economist` СЃС‚Р°РЅРѕРІРёС‚СЃСЏ primary owner
+### 8.4.2 Когда `economist` становится primary owner
 
-РћСЂРєРµСЃС‚СЂР°С‚РѕСЂ РґРѕР»Р¶РµРЅ РІС‹Р±РёСЂР°С‚СЊ `economist`, РєРѕРіРґР° РіР»Р°РІРЅС‹Р№ СЂРµР·СѓР»СЊС‚Р°С‚ Р·Р°РїСЂРѕСЃР°:
+Оркестратор должен выбирать `economist`, когда главный результат запроса:
 
 - plan/fact;
-- СЃС†РµРЅР°СЂРЅРѕРµ СЃСЂР°РІРЅРµРЅРёРµ;
+- сценарное сравнение;
 - risk assessment;
-- С„РёРЅР°РЅСЃРѕРІР°СЏ РёРЅС‚РµСЂРїСЂРµС‚Р°С†РёСЏ РїРѕСЃР»РµРґСЃС‚РІРёР№ РґРѕРіРѕРІРѕСЂР°, РѕРїР»Р°С‚С‹, СЃС‡С‘С‚Р°, РґРµР±РёС‚РѕСЂРєРё;
-- Р°РЅР°Р»РёС‚РёРєР° KPI, Р±СЋРґР¶РµС‚Р°, cash flow РёР»Рё profitability.
+- финансовая интерпретация последствий договора, оплаты, счёта, дебиторки;
+- аналитика KPI, бюджета, cash flow или profitability.
 
-### 8.4.3 Trigger-РјР°С‚СЂРёС†Р° `contracts_agent` vs `economist`
+### 8.4.3 Trigger-матрица `contracts_agent` vs `economist`
 
-| Р§С‚Рѕ СѓРІРёРґРµР» РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ | Primary owner-agent | РџРѕС‡РµРјСѓ |
+| Что увидел оркестратор | Primary owner-agent | Почему |
 |---|---|---|
-| РќСѓР¶РЅРѕ РІС‹РїРѕР»РЅРёС‚СЊ contract lifecycle action | `contracts_agent` | СЌС‚Рѕ operational execution |
-| РќСѓР¶РЅРѕ РѕС†РµРЅРёС‚СЊ С„РёРЅР°РЅСЃРѕРІС‹Рµ РїРѕСЃР»РµРґСЃС‚РІРёСЏ РґРѕРіРѕРІРѕСЂР°, СЃС‡С‘С‚Р°, РѕРїР»Р°С‚С‹, РґРµР±РёС‚РѕСЂРєРё | `economist` | СЌС‚Рѕ finance interpretation |
-| Р’ РѕРґРЅРѕРј Р·Р°РїСЂРѕСЃРµ РµСЃС‚СЊ Рё payment action, Рё РїСЂРѕСЃСЊР±Р° РѕС†РµРЅРёС‚СЊ impact | `contracts_agent` | РіР»Р°РІРЅРѕРµ РґРµР№СЃС‚РІРёРµ execution, `economist` РїРѕРґРєР»СЋС‡Р°РµС‚СЃСЏ РєР°Рє advisory handoff |
-| Р’ Р·Р°РїСЂРѕСЃРµ РЅРµС‚ contract write, С‚РѕР»СЊРєРѕ Р°РЅР°Р»РёР· СЌРєРѕРЅРѕРјРёРєРё СЃРґРµР»РєРё РёР»Рё РґРµР±РёС‚РѕСЂРєРё | `economist` | СЌС‚Рѕ СЃР°РјРѕСЃС‚РѕСЏС‚РµР»СЊРЅС‹Р№ finance intent |
+| Нужно выполнить contract lifecycle action | `contracts_agent` | это operational execution |
+| Нужно оценить финансовые последствия договора, счёта, оплаты, дебиторки | `economist` | это finance interpretation |
+| В одном запросе есть и payment action, и просьба оценить impact | `contracts_agent` | главное действие execution, `economist` подключается как advisory handoff |
+| В запросе нет contract write, только анализ экономики сделки или дебиторки | `economist` | это самостоятельный finance intent |
 
-### 8.4.4 РђРЅС‚Рё-С‚СЂРёРіРіРµСЂС‹ РґР»СЏ `economist`
+### 8.4.4 Анти-триггеры для `economist`
 
-РЎР»РµРґСѓСЋС‰РёРµ РїСЂРёР·РЅР°РєРё РЅРµ РґРѕР»Р¶РЅС‹ РїРµСЂРµРІРѕРґРёС‚СЊ ownership РІ `economist`:
+Следующие признаки не должны переводить ownership в `economist`:
 
-- РІ Р·Р°РїСЂРѕСЃРµ РµСЃС‚СЊ РґРµРЅСЊРіРё, СЃСѓРјРјР°, РѕРїР»Р°С‚Р° РёР»Рё СЃС‡С‘С‚ РєР°Рє С‡Р°СЃС‚СЊ contract action;
-- РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ СЃРјРѕС‚СЂРёС‚ invoice РёР»Рё payment route;
-- РЅСѓР¶РЅРѕ РјРµРЅСЏС‚СЊ payment/invoice status, Р° РЅРµ Р°РЅР°Р»РёР·РёСЂРѕРІР°С‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚;
-- РІ Р·Р°РїСЂРѕСЃРµ СѓРїРѕРјСЏРЅСѓС‚Р° РґРµР±РёС‚РѕСЂРєР°, РЅРѕ РґРµР№СЃС‚РІРёРµ РЅР°РїСЂР°РІР»РµРЅРѕ РЅР° contract-side operational state.
+- в запросе есть деньги, сумма, оплата или счёт как часть contract action;
+- пользователь смотрит invoice или payment route;
+- нужно менять payment/invoice status, а не анализировать результат;
+- в запросе упомянута дебиторка, но действие направлено на contract-side operational state.
 
-Р–С‘СЃС‚РєРѕРµ РїСЂР°РІРёР»Рѕ:
+Жёсткое правило:
 
-- `economist` РёРЅС‚РµСЂРїСЂРµС‚РёСЂСѓРµС‚ С„РёРЅР°РЅСЃРѕРІС‹Рµ РїРѕСЃР»РµРґСЃС‚РІРёСЏ;
-- `contracts_agent` РёСЃРїРѕР»РЅСЏРµС‚ РґРѕРіРѕРІРѕСЂРЅРѕРµ Рё РїР»Р°С‚С‘Р¶РЅРѕРµ РґРµР№СЃС‚РІРёРµ.
+- `economist` интерпретирует финансовые последствия;
+- `contracts_agent` исполняет договорное и платёжное действие.
 
-### 8.5 `knowledge` vs Р»СЋР±РѕР№ operational owner
+### 8.5 `knowledge` vs любой operational owner
 
-`knowledge` РЅРµ РґРѕР»Р¶РµРЅ СЃС‚Р°РЅРѕРІРёС‚СЊСЃСЏ owner Р±РёР·РЅРµСЃ-РїСЂРѕС†РµСЃСЃР°, РґР°Р¶Рµ РєРѕРіРґР°:
+`knowledge` не должен становиться owner бизнес-процесса, даже когда:
 
-- Р·Р°РїСЂРѕСЃ СЃС„РѕСЂРјСѓР»РёСЂРѕРІР°РЅ РєР°Рє РІРѕРїСЂРѕСЃ Рѕ РїРѕР»РёС‚РёРєРµ;
-- РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ РЅСѓР¶РµРЅ РґРѕРєСѓРјРµРЅС‚;
-- Р°РіРµРЅС‚Сѓ РЅСѓР¶РµРЅ evidence/grounding.
+- запрос сформулирован как вопрос о политике;
+- пользователю нужен документ;
+- агенту нужен evidence/grounding.
 
-Р’ СЌС‚РёС… СЃР»СѓС‡Р°СЏС… `knowledge` РѕСЃС‚Р°С‘С‚СЃСЏ secondary read/evidence owner.
+В этих случаях `knowledge` остаётся secondary read/evidence owner.
 
-### 8.5.1 РљРѕРіРґР° `knowledge` СЏРІР»СЏРµС‚СЃСЏ primary owner
+### 8.5.1 Когда `knowledge` является primary owner
 
-РћСЂРєРµСЃС‚СЂР°С‚РѕСЂ РґРѕР»Р¶РµРЅ РІС‹Р±РёСЂР°С‚СЊ `knowledge` РєР°Рє primary owner С‚РѕР»СЊРєРѕ С‚РѕРіРґР°, РєРѕРіРґР° РіР»Р°РІРЅС‹Р№ СЂРµР·СѓР»СЊС‚Р°С‚ Р·Р°РїСЂРѕСЃР°:
+Оркестратор должен выбирать `knowledge` как primary owner только тогда, когда главный результат запроса:
 
-- РЅР°Р№С‚Рё РґРѕРєСѓРјРµРЅС‚;
-- РЅР°Р№С‚Рё РїРѕР»РёС‚РёРєСѓ;
-- РЅР°Р№С‚Рё СЂРµРіР»Р°РјРµРЅС‚;
-- РІРµСЂРЅСѓС‚СЊ knowledge-based answer РїРѕ corpus lookup;
-- РґР°С‚СЊ grounded summary РїРѕ РґРѕРєСѓРјРµРЅС‚Р°Рј Р±РµР· business execution.
+- найти документ;
+- найти политику;
+- найти регламент;
+- вернуть knowledge-based answer по corpus lookup;
+- дать grounded summary по документам без business execution.
 
-РџРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Р№ owner-intent СЌС‚РѕРіРѕ РєРѕРЅС‚СѓСЂР°:
+Подтверждённый owner-intent этого контура:
 
 - `query_knowledge`
 
-### 8.5.2 РљРѕРіРґР° `knowledge` РЅРµ РґРѕР»Р¶РµРЅ СЃС‚Р°РЅРѕРІРёС‚СЊСЃСЏ primary owner
+### 8.5.2 Когда `knowledge` не должен становиться primary owner
 
-РћСЂРєРµСЃС‚СЂР°С‚РѕСЂ РЅРµ РґРѕР»Р¶РµРЅ РїРµСЂРµРІРѕРґРёС‚СЊ ownership РІ `knowledge`, РєРѕРіРґР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ С…РѕС‡РµС‚:
+Оркестратор не должен переводить ownership в `knowledge`, когда пользователь хочет:
 
-- РІС‹РїРѕР»РЅРёС‚СЊ CRM-РґРµР№СЃС‚РІРёРµ;
-- РІС‹РїРѕР»РЅРёС‚СЊ agronomy-РґРµР№СЃС‚РІРёРµ;
-- РІС‹РїРѕР»РЅРёС‚СЊ contract lifecycle action;
-- РІС‹РїРѕР»РЅРёС‚СЊ finance scenario РёР»Рё plan/fact;
-- РІС‹РїРѕР»РЅРёС‚СЊ remediation РїРѕ alert РёР»Рё incident.
+- выполнить CRM-действие;
+- выполнить agronomy-действие;
+- выполнить contract lifecycle action;
+- выполнить finance scenario или plan/fact;
+- выполнить remediation по alert или incident.
 
-Р”Р°Р¶Рµ РµСЃР»Рё РІ Р·Р°РїСЂРѕСЃРµ РµСЃС‚СЊ:
+Даже если в запросе есть:
 
-- "РїРѕРєР°Р¶Рё РїРѕР»РёС‚РёРєСѓ";
-- "РЅР°Р№РґРё СЂРµРіР»Р°РјРµРЅС‚";
-- "РµСЃС‚СЊ Р»Рё РїСЂР°РІРёР»Рѕ";
-- "РЅР° С‡С‚Рѕ СЃРѕСЃР»Р°С‚СЊСЃСЏ";
-- "РґР°Р№ РґРѕРєСѓРјРµРЅС‚Р°Р»СЊРЅРѕРµ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ".
+- "покажи политику";
+- "найди регламент";
+- "есть ли правило";
+- "на что сослаться";
+- "дай документальное подтверждение".
 
-Р’ СЌС‚РёС… СЃР»СѓС‡Р°СЏС… `knowledge` РѕСЃС‚Р°С‘С‚СЃСЏ С‚РѕР»СЊРєРѕ СЃР»РѕРµРј evidence/grounding РґР»СЏ primary owner.
+В этих случаях `knowledge` остаётся только слоем evidence/grounding для primary owner.
 
-### 8.5.3 Trigger-РјР°С‚СЂРёС†Р° `knowledge` vs operational owner
+### 8.5.3 Trigger-матрица `knowledge` vs operational owner
 
-| Р§С‚Рѕ СѓРІРёРґРµР» РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ | Primary owner-agent | РџРѕС‡РµРјСѓ |
+| Что увидел оркестратор | Primary owner-agent | Почему |
 |---|---|---|
-| Р—Р°РїСЂРѕСЃ С‚РѕР»СЊРєРѕ РЅР° РїРѕРёСЃРє РґРѕРєСѓРјРµРЅС‚Р°, РїРѕР»РёС‚РёРєРё, СЂРµРіР»Р°РјРµРЅС‚Р°, С„СЂР°РіРјРµРЅС‚Р° corpus | `knowledge` | СЌС‚Рѕ СЃР°РјРѕСЃС‚РѕСЏС‚РµР»СЊРЅС‹Р№ retrieval intent |
-| Р—Р°РїСЂРѕСЃ РЅР° РІС‹РїРѕР»РЅРµРЅРёРµ Р±РёР·РЅРµСЃ-РґРµР№СЃС‚РІРёСЏ СЃ РїСЂРѕСЃСЊР±РѕР№ РїСЂРёР»РѕР¶РёС‚СЊ policy/evidence | operational owner | РіР»Р°РІРЅРѕРµ РґРµР№СЃС‚РІРёРµ РЅРµ retrieval, Р° execution РёР»Рё domain analysis |
-| Р—Р°РїСЂРѕСЃ РЅР° РѕР±СЉСЏСЃРЅРµРЅРёРµ domain-result С‡РµСЂРµР· РґРѕРєСѓРјРµРЅС‚С‹ | operational owner | `knowledge` Р·РґРµСЃСЊ evidence-owner, Р° РЅРµ owner СЂРµР·СѓР»СЊС‚Р°С‚Р° |
-| РќСѓР¶РµРЅ corpus lookup РґР»СЏ handoff РёР»Рё РїСЂРѕРІРµСЂРєРё РїСЂР°РІРёР»Р° | source owner РѕСЃС‚Р°С‘С‚СЃСЏ РїСЂРµР¶РЅРёРј | `knowledge` РїРѕРґРєР»СЋС‡Р°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РІС‚РѕСЂРёС‡РЅРѕ |
+| Запрос только на поиск документа, политики, регламента, фрагмента corpus | `knowledge` | это самостоятельный retrieval intent |
+| Запрос на выполнение бизнес-действия с просьбой приложить policy/evidence | operational owner | главное действие не retrieval, а execution или domain analysis |
+| Запрос на объяснение domain-result через документы | operational owner | `knowledge` здесь evidence-owner, а не owner результата |
+| Нужен corpus lookup для handoff или проверки правила | source owner остаётся прежним | `knowledge` подключается только вторично |
 
-### 8.5.4 РђРЅС‚Рё-С‚СЂРёРіРіРµСЂС‹ РґР»СЏ `knowledge`
+### 8.5.4 Анти-триггеры для `knowledge`
 
-РЎР»РµРґСѓСЋС‰РёРµ РїСЂРёР·РЅР°РєРё РЅРµ РґРѕР»Р¶РЅС‹ РїРµСЂРµРІРѕРґРёС‚СЊ ownership РІ `knowledge`:
+Следующие признаки не должны переводить ownership в `knowledge`:
 
-- РІ Р·Р°РїСЂРѕСЃРµ РµСЃС‚СЊ СЃР»РѕРІР° "РїРѕР»РёС‚РёРєР°", "СЂРµРіР»Р°РјРµРЅС‚", "РґРѕРєСѓРјРµРЅС‚", "РёРЅСЃС‚СЂСѓРєС†РёСЏ";
-- РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РѕС‚РєСЂС‹С‚ РЅР° route `/knowledge`, РЅРѕ РґРµР№СЃС‚РІРёРµ РїСЂРµРґРјРµС‚РЅРѕ РѕС‚РЅРѕСЃРёС‚СЃСЏ Рє РґСЂСѓРіРѕРјСѓ РґРѕРјРµРЅСѓ;
-- РґРѕРјРµРЅРЅС‹Р№ Р°РіРµРЅС‚ РїСЂРѕСЃРёС‚ grounding РґР»СЏ already-owned scenario;
-- РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ РЅСѓР¶РµРЅ РґРѕРєСѓРјРµРЅС‚ РєР°Рє РѕР±РѕСЃРЅРѕРІР°РЅРёРµ СѓР¶Рµ РІС‹Р±СЂР°РЅРЅРѕРіРѕ РґРµР№СЃС‚РІРёСЏ.
+- в запросе есть слова "политика", "регламент", "документ", "инструкция";
+- пользователь открыт на route `/knowledge`, но действие предметно относится к другому домену;
+- доменный агент просит grounding для already-owned scenario;
+- пользователю нужен документ как обоснование уже выбранного действия.
 
-Р–С‘СЃС‚РєРѕРµ РїСЂР°РІРёР»Рѕ:
+Жёсткое правило:
 
-- `knowledge` РІР»Р°РґРµРµС‚ retrieval;
-- РґРѕРјРµРЅРЅС‹Р№ owner РІР»Р°РґРµРµС‚ СЂРµС€РµРЅРёРµРј Рё РёСЃРїРѕР»РЅРµРЅРёРµРј.
+- `knowledge` владеет retrieval;
+- доменный owner владеет решением и исполнением.
 
-### 8.6 `monitoring` vs Р»СЋР±РѕР№ operational owner
+### 8.6 `monitoring` vs любой operational owner
 
-`monitoring` РЅРµ СЃС‚Р°РЅРѕРІРёС‚СЃСЏ owner remediation path.
+`monitoring` не становится owner remediation path.
 
-РћРЅ РјРѕР¶РµС‚:
+Он может:
 
-- С„РёРєСЃРёСЂРѕРІР°С‚СЊ СЃРёРіРЅР°Р»;
-- РѕР±СЉСЏСЃРЅСЏС‚СЊ snapshot;
-- РёРЅРёС†РёРёСЂРѕРІР°С‚СЊ governed escalation.
+- фиксировать сигнал;
+- объяснять snapshot;
+- инициировать governed escalation.
 
-РћРЅ РЅРµ РјРѕР¶РµС‚:
+Он не может:
 
-- РёСЃРїРѕР»РЅСЏС‚СЊ С‡СѓР¶РѕР№ Р±РёР·РЅРµСЃ-РїСЂРѕС†РµСЃСЃ;
-- РїРѕРґРјРµРЅСЏС‚СЊ РѕС‚СЃСѓС‚СЃС‚РІРёРµ owner-agent РІ СЃРјРµР¶РЅРѕРј РґРѕРјРµРЅРµ.
+- исполнять чужой бизнес-процесс;
+- подменять отсутствие owner-agent в смежном домене.
 
-### 8.6.1 РљРѕРіРґР° `monitoring` СЏРІР»СЏРµС‚СЃСЏ primary owner
+### 8.6.1 Когда `monitoring` является primary owner
 
-РћСЂРєРµСЃС‚СЂР°С‚РѕСЂ РґРѕР»Р¶РµРЅ РІС‹Р±РёСЂР°С‚СЊ `monitoring` РєР°Рє primary owner, РєРѕРіРґР° РіР»Р°РІРЅС‹Р№ СЂРµР·СѓР»СЊС‚Р°С‚ Р·Р°РїСЂРѕСЃР°:
+Оркестратор должен выбирать `monitoring` как primary owner, когда главный результат запроса:
 
-- РѕР±СЂР°Р±РѕС‚Р°С‚СЊ СЃРёРіРЅР°Р»;
-- РІС‹РїСѓСЃС‚РёС‚СЊ alert;
-- РїРѕРєР°Р·Р°С‚СЊ monitoring summary;
-- РѕР±СЉСЏСЃРЅРёС‚СЊ incident snapshot;
-- РїСЂРёРѕСЂРёС‚РёР·РёСЂРѕРІР°С‚СЊ СЂРёСЃРє Р±РµР· Р·Р°РїСѓСЃРєР° remediation.
+- обработать сигнал;
+- выпустить alert;
+- показать monitoring summary;
+- объяснить incident snapshot;
+- приоритизировать риск без запуска remediation.
 
-РџРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Р№ owner-intent СЌС‚РѕРіРѕ РєРѕРЅС‚СѓСЂР°:
+Подтверждённый owner-intent этого контура:
 
 - `emit_alerts`
 
-### 8.6.2 РљРѕРіРґР° `monitoring` РЅРµ РґРѕР»Р¶РµРЅ СЃС‚Р°РЅРѕРІРёС‚СЊСЃСЏ primary owner
+### 8.6.2 Когда `monitoring` не должен становиться primary owner
 
-РћСЂРєРµСЃС‚СЂР°С‚РѕСЂ РЅРµ РґРѕР»Р¶РµРЅ РїРµСЂРµРІРѕРґРёС‚СЊ ownership РІ `monitoring`, РєРѕРіРґР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ С…РѕС‡РµС‚:
+Оркестратор не должен переводить ownership в `monitoring`, когда пользователь хочет:
 
-- РёСЃРїСЂР°РІРёС‚СЊ business problem;
-- РёР·РјРµРЅРёС‚СЊ CRM/contract/agro/finance state;
-- РІС‹РїРѕР»РЅРёС‚СЊ operational remediation;
-- РїСЂРёРЅСЏС‚СЊ СЂРµС€РµРЅРёРµ РІРјРµСЃС‚Рѕ domain owner.
+- исправить business problem;
+- изменить CRM/contract/agro/finance state;
+- выполнить operational remediation;
+- принять решение вместо domain owner.
 
-Р”Р°Р¶Рµ РµСЃР»Рё РІ Р·Р°РїСЂРѕСЃРµ РµСЃС‚СЊ:
+Даже если в запросе есть:
 
 - alert;
 - incident;
@@ -674,166 +674,166 @@ last_updated: 2026-03-10
 - anomaly;
 - red flag.
 
-Р’ СЌС‚РёС… СЃР»СѓС‡Р°СЏС… `monitoring` РѕСЃС‚Р°С‘С‚СЃСЏ signal owner Рё РґРѕР»Р¶РµРЅ С‚РѕР»СЊРєРѕ РїРµСЂРµРґР°С‚СЊ СЃРёРіРЅР°Р» РІ РїСЂР°РІРёР»СЊРЅС‹Р№ owner-domain С‡РµСЂРµР· governed escalation.
+В этих случаях `monitoring` остаётся signal owner и должен только передать сигнал в правильный owner-domain через governed escalation.
 
-### 8.6.3 Trigger-РјР°С‚СЂРёС†Р° `monitoring` vs operational owner
+### 8.6.3 Trigger-матрица `monitoring` vs operational owner
 
-| Р§С‚Рѕ СѓРІРёРґРµР» РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ | Primary owner-agent | РџРѕС‡РµРјСѓ |
+| Что увидел оркестратор | Primary owner-agent | Почему |
 |---|---|---|
-| РќСѓР¶РЅР° РіРµРЅРµСЂР°С†РёСЏ alerts, СЃРІРѕРґРєР° СЃРёРіРЅР°Р»РѕРІ, incident snapshot | `monitoring` | СЌС‚Рѕ signal/risk contour |
-| РќСѓР¶РЅР° СЂРµР°РєС†РёСЏ РЅР° agro-risk С‡РµСЂРµР· РїРѕР»РµРІРѕРµ РґРµР№СЃС‚РІРёРµ | `agronomist` | СЃРёРіРЅР°Р» РѕС‚РЅРѕСЃРёС‚СЃСЏ Рє agronomy execution |
-| РќСѓР¶РЅР° СЂРµР°РєС†РёСЏ РЅР° finance-risk РёР»Рё economic consequence | `economist` | СЃРёРіРЅР°Р» РѕС‚РЅРѕСЃРёС‚СЃСЏ Рє finance analysis |
-| РќСѓР¶РЅР° СЂРµР°РєС†РёСЏ РЅР° РєР»РёРµРЅС‚СЃРєРёР№ СЂРёСЃРє, account issue, CRM anomaly | `crm_agent` | СЃРёРіРЅР°Р» РѕС‚РЅРѕСЃРёС‚СЃСЏ Рє CRM owner-domain |
-| РќСѓР¶РЅР° СЂРµР°РєС†РёСЏ РЅР° РґРѕРіРѕРІРѕСЂРЅС‹Р№ СЃР±РѕР№, invoice/payment issue | `contracts_agent` | СЃРёРіРЅР°Р» РѕС‚РЅРѕСЃРёС‚СЃСЏ Рє contract execution contour |
+| Нужна генерация alerts, сводка сигналов, incident snapshot | `monitoring` | это signal/risk contour |
+| Нужна реакция на agro-risk через полевое действие | `agronomist` | сигнал относится к agronomy execution |
+| Нужна реакция на finance-risk или economic consequence | `economist` | сигнал относится к finance analysis |
+| Нужна реакция на клиентский риск, account issue, CRM anomaly | `crm_agent` | сигнал относится к CRM owner-domain |
+| Нужна реакция на договорный сбой, invoice/payment issue | `contracts_agent` | сигнал относится к contract execution contour |
 
-### 8.6.4 РђРЅС‚Рё-С‚СЂРёРіРіРµСЂС‹ РґР»СЏ `monitoring`
+### 8.6.4 Анти-триггеры для `monitoring`
 
-РЎР»РµРґСѓСЋС‰РёРµ РїСЂРёР·РЅР°РєРё РЅРµ РґРѕР»Р¶РЅС‹ СѓРґРµСЂР¶РёРІР°С‚СЊ ownership Сѓ `monitoring`:
+Следующие признаки не должны удерживать ownership у `monitoring`:
 
-- alert РѕС‚РЅРѕСЃРёС‚СЃСЏ Рє СѓР¶Рµ РёР·РІРµСЃС‚РЅРѕРјСѓ business object;
-- incident С‚СЂРµР±СѓРµС‚ downstream write-action;
-- РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РїСЂРѕСЃРёС‚ "РёСЃРїСЂР°РІРёС‚СЊ", "Р·Р°РєСЂС‹С‚СЊ", "РїСЂРѕРІРµСЃС‚Рё", "РѕР±РЅРѕРІРёС‚СЊ", "СЃРѕР·РґР°С‚СЊ";
-- monitoring route РѕС‚РєСЂС‹С‚ РєР°Рє РІС…РѕРґРЅР°СЏ С‚РѕС‡РєР°, РЅРѕ С†РµР»РµРІРѕРµ РґРµР№СЃС‚РІРёРµ РґРѕРјРµРЅРЅРѕРµ.
+- alert относится к уже известному business object;
+- incident требует downstream write-action;
+- пользователь просит "исправить", "закрыть", "провести", "обновить", "создать";
+- monitoring route открыт как входная точка, но целевое действие доменное.
 
-Р–С‘СЃС‚РєРѕРµ РїСЂР°РІРёР»Рѕ:
+Жёсткое правило:
 
-- `monitoring` С„РёРєСЃРёСЂСѓРµС‚ Рё РѕР±СЉСЏСЃРЅСЏРµС‚ СЃРёРіРЅР°Р»;
-- remediation Рё business action РёСЃРїРѕР»РЅСЏРµС‚ РґРѕРјРµРЅРЅС‹Р№ owner.
+- `monitoring` фиксирует и объясняет сигнал;
+- remediation и business action исполняет доменный owner.
 
 ### 8.7 `agronomist` vs `economist` vs `monitoring`
 
-Р­С‚Р° РєРѕРЅС„Р»РёРєС‚РЅР°СЏ Р·РѕРЅР° РІРѕР·РЅРёРєР°РµС‚ РІ СЃРјРµС€Р°РЅРЅС‹С… РїРѕР»РµРІС‹С… СЃС†РµРЅР°СЂРёСЏС…, РіРґРµ СЂСЏРґРѕРј РІСЃС‚СЂРµС‡Р°СЋС‚СЃСЏ:
+Эта конфликтная зона возникает в смешанных полевых сценариях, где рядом встречаются:
 
-- Р°РіСЂРѕ-РѕРїРµСЂР°С†РёСЏ РёР»Рё РѕС‚РєР»РѕРЅРµРЅРёРµ;
-- С„РёРЅР°РЅСЃРѕРІР°СЏ РѕС†РµРЅРєР° РїРѕСЃР»РµРґСЃС‚РІРёР№;
-- monitoring signal РёР»Рё risk alert.
+- агро-операция или отклонение;
+- финансовая оценка последствий;
+- monitoring signal или risk alert.
 
-РџРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Рµ owner-intent-С‹ РїРѕ С‚РµРєСѓС‰РµРјСѓ РєРѕРґСѓ:
+Подтверждённые owner-intent-ы по текущему коду:
 
 - `agronomist`: `tech_map_draft`, `compute_deviations`
 - `economist`: `compute_plan_fact`, `simulate_scenario`, `compute_risk_assessment`
 - `monitoring`: `emit_alerts`
 
-### 8.7.1 РљРѕРіРґР° `agronomist` СЏРІР»СЏРµС‚СЃСЏ primary owner
+### 8.7.1 Когда `agronomist` является primary owner
 
-`agronomist` РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ primary owner, РєРѕРіРґР° РґРѕРјРёРЅРёСЂСѓСЋС‰РµРµ РґРµР№СЃС‚РІРёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РѕС‚РЅРѕСЃРёС‚СЃСЏ Рє agronomy execution РёР»Рё agronomy interpretation:
+`agronomist` должен быть primary owner, когда доминирующее действие пользователя относится к agronomy execution или agronomy interpretation:
 
-- СЃРѕСЃС‚Р°РІРёС‚СЊ РёР»Рё СѓС‚РѕС‡РЅРёС‚СЊ С‚РµС…РєР°СЂС‚Сѓ;
-- СЂР°Р·РѕР±СЂР°С‚СЊ РѕС‚РєР»РѕРЅРµРЅРёРµ РїРѕ РїРѕР»СЋ, СЃРµР·РѕРЅСѓ, РѕРїРµСЂР°С†РёРё, РєСѓР»СЊС‚СѓСЂРµ;
-- РїСЂРµРґР»РѕР¶РёС‚СЊ Р°РіСЂРѕРЅРѕРјРёС‡РµСЃРєРѕРµ РґРµР№СЃС‚РІРёРµ РёР»Рё remediation;
-- РѕР±СЉСЏСЃРЅРёС‚СЊ, С‡С‚Рѕ РїСЂРѕРёСЃС…РѕРґРёС‚ РІ РїРѕР»Рµ Рё РєР°Рє РєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ РїРѕР»РµРІСѓСЋ СЂР°Р±РѕС‚Сѓ.
+- составить или уточнить техкарту;
+- разобрать отклонение по полю, сезону, операции, культуре;
+- предложить агрономическое действие или remediation;
+- объяснить, что происходит в поле и как корректировать полевую работу.
 
-Р”Р°Р¶Рµ РµСЃР»Рё РІ Р·Р°РїСЂРѕСЃРµ РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕ РІСЃС‚СЂРµС‡Р°СЋС‚СЃСЏ:
+Даже если в запросе одновременно встречаются:
 
-- СЃС‚РѕРёРјРѕСЃС‚СЊ;
-- РїРѕС‚РµСЂРё;
-- СЂРёСЃРє;
+- стоимость;
+- потери;
+- риск;
 - alert;
-- Р±СЋРґР¶РµС‚РЅС‹Рµ РїРѕСЃР»РµРґСЃС‚РІРёСЏ.
+- бюджетные последствия.
 
-Р’ СЌС‚РёС… СЃР»СѓС‡Р°СЏС… `agronomist` РѕСЃС‚Р°С‘С‚СЃСЏ owner, РµСЃР»Рё РіР»Р°РІРЅРѕРµ РґРµР№СЃС‚РІРёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ СЃРІСЏР·Р°РЅРѕ СЃ РїРѕР»РµРј, С‚РµС…РєР°СЂС‚РѕР№, РѕС‚РєР»РѕРЅРµРЅРёРµРј РёР»Рё agronomy decision.
+В этих случаях `agronomist` остаётся owner, если главное действие пользователя связано с полем, техкартой, отклонением или agronomy decision.
 
-### 8.7.2 РљРѕРіРґР° `economist` СЏРІР»СЏРµС‚СЃСЏ primary owner
+### 8.7.2 Когда `economist` является primary owner
 
-`economist` РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ primary owner, РєРѕРіРґР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РїСЂРѕСЃРёС‚ РЅРµ Р°РіСЂРѕ-РёСЃРїРѕР»РЅРµРЅРёРµ, Р° С„РёРЅР°РЅСЃРѕРІСѓСЋ РёРЅС‚РµСЂРїСЂРµС‚Р°С†РёСЋ РёР»Рё СЃСЂР°РІРЅРµРЅРёРµ РІР°СЂРёР°РЅС‚РѕРІ:
+`economist` должен быть primary owner, когда пользователь просит не агро-исполнение, а финансовую интерпретацию или сравнение вариантов:
 
-- РѕС†РµРЅРёС‚СЊ СЌРєРѕРЅРѕРјРёС‡РµСЃРєРёР№ СЌС„С„РµРєС‚ Р°РіСЂРѕ-СЂРµС€РµРЅРёСЏ;
-- СЃСЂР°РІРЅРёС‚СЊ СЃС†РµРЅР°СЂРёРё РїРѕ Р±СЋРґР¶РµС‚Сѓ, ROI, cost delta, EBITDA;
-- РїРѕСЃС‡РёС‚Р°С‚СЊ plan/fact РїРѕ СЃРµР·РѕРЅСѓ РёР»Рё РїР»Р°РЅСѓ;
-- РІС‹РїРѕР»РЅРёС‚СЊ risk assessment РєР°Рє finance-analysis.
+- оценить экономический эффект агро-решения;
+- сравнить сценарии по бюджету, ROI, cost delta, EBITDA;
+- посчитать plan/fact по сезону или плану;
+- выполнить risk assessment как finance-analysis.
 
-Р”Р°Р¶Рµ РµСЃР»Рё СЂР°СЃС‡С‘С‚ РѕСЃРЅРѕРІР°РЅ РЅР° Р°РіСЂРѕРґР°РЅРЅС‹С…, `economist` РѕСЃС‚Р°С‘С‚СЃСЏ owner, РµСЃР»Рё РґРѕРјРёРЅРёСЂСѓСЋС‰РёР№ СЂРµР·СѓР»СЊС‚Р°С‚ Р·Р°РїСЂРѕСЃР°:
+Даже если расчёт основан на агроданных, `economist` остаётся owner, если доминирующий результат запроса:
 
-- С„РёРЅР°РЅСЃРѕРІС‹Р№ РІС‹РІРѕРґ;
-- СЃС†РµРЅР°СЂРЅРѕРµ СЃСЂР°РІРЅРµРЅРёРµ;
+- финансовый вывод;
+- сценарное сравнение;
 - budget impact;
-- СЌРєРѕРЅРѕРјРёС‡РµСЃРєР°СЏ РїСЂРёРѕСЂРёС‚РёР·Р°С†РёСЏ.
+- экономическая приоритизация.
 
-### 8.7.3 РљРѕРіРґР° `monitoring` СЏРІР»СЏРµС‚СЃСЏ primary owner
+### 8.7.3 Когда `monitoring` является primary owner
 
-`monitoring` РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ primary owner, РєРѕРіРґР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РїСЂРѕСЃРёС‚ РёРјРµРЅРЅРѕ signal/risk review, Р° РЅРµ Р°РіСЂРѕ- РёР»Рё finance-action:
+`monitoring` должен быть primary owner, когда пользователь просит именно signal/risk review, а не агро- или finance-action:
 
-- РїРѕРєР°Р·Р°С‚СЊ alerts РїРѕ РїРѕР»СЏРј РёР»Рё СЃРµР·РѕРЅР°Рј;
-- СЃРѕР±СЂР°С‚СЊ incident snapshot;
-- РІС‹РІРµСЃС‚Рё anomaly summary;
-- РѕР±СЉСЏСЃРЅРёС‚СЊ, РєР°РєРёРµ СЃРёРіРЅР°Р»С‹ СЃСЂР°Р±РѕС‚Р°Р»Рё Рё РїРѕС‡РµРјСѓ.
+- показать alerts по полям или сезонам;
+- собрать incident snapshot;
+- вывести anomaly summary;
+- объяснить, какие сигналы сработали и почему.
 
-РљР°Рє С‚РѕР»СЊРєРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РїСЂРѕСЃРёС‚:
+Как только пользователь просит:
 
-- РёСЃРїСЂР°РІРёС‚СЊ РїРѕР»РµРІСѓСЋ СЃРёС‚СѓР°С†РёСЋ;
-- РІС‹Р±СЂР°С‚СЊ Р°РіСЂРѕ-РґРµР№СЃС‚РІРёРµ;
-- РѕС†РµРЅРёС‚СЊ СЌРєРѕРЅРѕРјРёС‡РµСЃРєРѕРµ РїРѕСЃР»РµРґСЃС‚РІРёРµ;
-- РІС‹РїРѕР»РЅРёС‚СЊ remediation;
+- исправить полевую ситуацию;
+- выбрать агро-действие;
+- оценить экономическое последствие;
+- выполнить remediation;
 
-owner РґРѕР»Р¶РµРЅ СѓС…РѕРґРёС‚СЊ РёР· `monitoring` РІ `agronomist` РёР»Рё `economist`.
+owner должен уходить из `monitoring` в `agronomist` или `economist`.
 
-### 8.7.4 Trigger-РјР°С‚СЂРёС†Р° `agronomist` vs `economist` vs `monitoring`
+### 8.7.4 Trigger-матрица `agronomist` vs `economist` vs `monitoring`
 
-| Р§С‚Рѕ СѓРІРёРґРµР» РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ | Primary owner-agent | РџРѕС‡РµРјСѓ |
+| Что увидел оркестратор | Primary owner-agent | Почему |
 |---|---|---|
-| РќСѓР¶РЅР° С‚РµС…РєР°СЂС‚Р°, Р°РіСЂРѕ-СЂРµРєРѕРјРµРЅРґР°С†РёСЏ, СЂР°Р·Р±РѕСЂ РїРѕР»РµРІРѕРіРѕ РѕС‚РєР»РѕРЅРµРЅРёСЏ, agronomy remediation | `agronomist` | СЌС‚Рѕ agronomy execution / agronomy interpretation |
-| РќСѓР¶РµРЅ СЂР°СЃС‡С‘С‚ plan/fact, economic scenario, budget impact, finance-risk analysis | `economist` | СЌС‚Рѕ finance owner-intent |
-| РќСѓР¶РЅС‹ alerts, incident summary, anomaly snapshot, signal digest | `monitoring` | СЌС‚Рѕ signal/risk contour |
-| РќСѓР¶РЅР° СЌРєРѕРЅРѕРјРёС‡РµСЃРєР°СЏ РѕС†РµРЅРєР° Р°РіСЂРѕРЅРѕРјРёС‡РµСЃРєРѕРіРѕ СЂРµС€РµРЅРёСЏ РїРѕ РїРѕР»СЋ РёР»Рё СЃРµР·РѕРЅСѓ | `economist` | РіР»Р°РІРЅРѕРµ РґРµР№СЃС‚РІРёРµ - financial interpretation, Р° РЅРµ field execution |
-| РќСѓР¶РЅР° Р°РіСЂРѕРЅРѕРјРёС‡РµСЃРєР°СЏ СЂРµР°РєС†РёСЏ РЅР° agro-alert РёР»Рё field anomaly | `agronomist` | СЃРёРіРЅР°Р» СЏРІР»СЏРµС‚СЃСЏ РІС…РѕРґРѕРј, РЅРѕ С†РµР»РµРІРѕРµ РґРµР№СЃС‚РІРёРµ РѕС‚РЅРѕСЃРёС‚СЃСЏ Рє agronomy owner |
-| РќСѓР¶РµРЅ С‚РѕР»СЊРєРѕ РѕР±Р·РѕСЂ СЃРёРіРЅР°Р»РѕРІ РїРѕ РїРѕР»СЏРј РїРµСЂРµРґ РґР°Р»СЊРЅРµР№С€РёРј СЂРµС€РµРЅРёРµРј | `monitoring` | РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РїРѕРєР° РїСЂРѕСЃРёС‚ signal review, Р° РЅРµ remediation |
+| Нужна техкарта, агро-рекомендация, разбор полевого отклонения, agronomy remediation | `agronomist` | это agronomy execution / agronomy interpretation |
+| Нужен расчёт plan/fact, economic scenario, budget impact, finance-risk analysis | `economist` | это finance owner-intent |
+| Нужны alerts, incident summary, anomaly snapshot, signal digest | `monitoring` | это signal/risk contour |
+| Нужна экономическая оценка агрономического решения по полю или сезону | `economist` | главное действие - financial interpretation, а не field execution |
+| Нужна агрономическая реакция на agro-alert или field anomaly | `agronomist` | сигнал является входом, но целевое действие относится к agronomy owner |
+| Нужен только обзор сигналов по полям перед дальнейшим решением | `monitoring` | пользователь пока просит signal review, а не remediation |
 
-### 8.7.5 РђРЅС‚Рё-С‚СЂРёРіРіРµСЂС‹ РґР»СЏ СЃРјРµС€Р°РЅРЅРѕРіРѕ agro/finance/risk routing
+### 8.7.5 Анти-триггеры для смешанного agro/finance/risk routing
 
-РЎР»РµРґСѓСЋС‰РёРµ РїСЂРёР·РЅР°РєРё СЃР°РјРё РїРѕ СЃРµР±Рµ РЅРµ РґРѕР»Р¶РЅС‹ РјРµРЅСЏС‚СЊ owner:
+Следующие признаки сами по себе не должны менять owner:
 
-- СЃР»РѕРІРѕ "СЂРёСЃРє" Р±РµР· СѓС‚РѕС‡РЅРµРЅРёСЏ, СЌС‚Рѕ signal review, finance-risk РёР»Рё agronomy deviation;
-- СЃР»РѕРІРѕ "СЃС‚РѕРёРјРѕСЃС‚СЊ" РІРЅСѓС‚СЂРё Р°РіСЂРѕРЅРѕРјРёС‡РµСЃРєРѕРіРѕ remediation-Р·Р°РїСЂРѕСЃР°;
-- РЅР°Р»РёС‡РёРµ alert РІ Р·Р°РїСЂРѕСЃРµ, РµСЃР»Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РїСЂРѕСЃРёС‚ РёРјРµРЅРЅРѕ РїРѕР»РµРІРѕРµ РґРµР№СЃС‚РІРёРµ;
-- РЅР°Р»РёС‡РёРµ field РёР»Рё season РІ finance-analysis Р·Р°РїСЂРѕСЃРµ;
-- РѕС‚РєСЂС‹С‚РёРµ СЃС†РµРЅР°СЂРёСЏ РёР· monitoring UI РёР»Рё agro UI Р±РµР· СЃРјРµРЅС‹ РґРѕРјРёРЅРёСЂСѓСЋС‰РµРіРѕ РґРµР№СЃС‚РІРёСЏ.
+- слово "риск" без уточнения, это signal review, finance-risk или agronomy deviation;
+- слово "стоимость" внутри агрономического remediation-запроса;
+- наличие alert в запросе, если пользователь просит именно полевое действие;
+- наличие field или season в finance-analysis запросе;
+- открытие сценария из monitoring UI или agro UI без смены доминирующего действия.
 
-### 8.7.6 РќРѕСЂРјР°С‚РёРІРЅРѕРµ РїСЂР°РІРёР»Рѕ СЂР°Р·СЂРµС€РµРЅРёСЏ РєРѕРЅС„Р»РёРєС‚Р°
+### 8.7.6 Нормативное правило разрешения конфликта
 
-РћСЂРєРµСЃС‚СЂР°С‚РѕСЂ РґРѕР»Р¶РµРЅ РІС‹Р±РёСЂР°С‚СЊ owner РїРѕ РіР»Р°РІРЅРѕРјСѓ РґРµР№СЃС‚РІРёСЋ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ:
+Оркестратор должен выбирать owner по главному действию пользователя:
 
-- РЅСѓР¶РµРЅ agronomy decision РёР»Рё field remediation -> `agronomist`
-- РЅСѓР¶РµРЅ financial conclusion РёР»Рё scenario comparison -> `economist`
-- РЅСѓР¶РµРЅ signal digest РёР»Рё incident review -> `monitoring`
+- нужен agronomy decision или field remediation -> `agronomist`
+- нужен financial conclusion или scenario comparison -> `economist`
+- нужен signal digest или incident review -> `monitoring`
 
-Р’ СЃРјРµС€Р°РЅРЅРѕРј Р·Р°РїСЂРѕСЃРµ:
+В смешанном запросе:
 
-- `monitoring` РґР°С‘С‚ С‚РѕР»СЊРєРѕ signal input;
-- `agronomist` РґР°С‘С‚ agronomy context Рё agronomy action;
-- `economist` РґР°С‘С‚ С„РёРЅР°РЅСЃРѕРІСѓСЋ РёРЅС‚РµСЂРїСЂРµС‚Р°С†РёСЋ;
-- РїСЂСЏРјРѕР№ `monitoring -> agronomist` РёР»Рё `agronomist -> economist` peer-call Р·Р°РїСЂРµС‰С‘РЅ, С‚РѕР»СЊРєРѕ С‡РµСЂРµР· РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ.
+- `monitoring` даёт только signal input;
+- `agronomist` даёт agronomy context и agronomy action;
+- `economist` даёт финансовую интерпретацию;
+- прямой `monitoring -> agronomist` или `agronomist -> economist` peer-call запрещён, только через оркестратор.
 
 ---
 
-## 9. Authority model РґР»СЏ РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂР°
+## 9. Authority model для оркестратора
 
-Р”Р»СЏ РєР°Р¶РґРѕРіРѕ РґРѕРјРµРЅР° РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ РѕР±СЏР·Р°РЅ СЂР°Р·Р»РёС‡Р°С‚СЊ С‚СЂРё СѓСЂРѕРІРЅСЏ authority:
+Для каждого домена оркестратор обязан различать три уровня authority:
 
 - `read authority`
 - `advisory authority`
 - `write authority`
 
-РљР»СЋС‡РµРІРѕРµ РїСЂР°РІРёР»Рѕ:
+Ключевое правило:
 
-- `primary owner` РЅРµ РІСЃРµРіРґР° СЂР°РІРµРЅ РµРґРёРЅСЃС‚РІРµРЅРЅРѕРјСѓ С‡РёС‚Р°С‚РµР»СЋ РґРѕРјРµРЅР°;
-- `read authority` РЅРµ РґР°С‘С‚ РїСЂР°РІР° РїРµСЂРµС…РІР°С‚С‹РІР°С‚СЊ ownership;
-- `advisory authority` РЅРµ РґР°С‘С‚ РїСЂР°РІР° РІС‹РїРѕР»РЅСЏС‚СЊ write-path;
-- `write authority` РґР»СЏ Р±РёР·РЅРµСЃ-РґРѕРјРµРЅР° РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РїСЂРёРІСЏР·Р°РЅ Рє СЏРІРЅРѕРјСѓ owner-agent Рё governed tool path.
+- `primary owner` не всегда равен единственному читателю домена;
+- `read authority` не даёт права перехватывать ownership;
+- `advisory authority` не даёт права выполнять write-path;
+- `write authority` для бизнес-домена должен быть привязан к явному owner-agent и governed tool path.
 
-Р”Р»СЏ С‚РµРєСѓС‰РёС… РєРѕРЅС„Р»РёРєС‚РЅС‹С… Р·РѕРЅ:
+Для текущих конфликтных зон:
 
-- `contracts_agent` РёРјРµРµС‚ write authority РІ contract lifecycle;
-- `crm_agent` РёРјРµРµС‚ write authority РІ CRM;
-- `front_office_agent` РёРјРµРµС‚ write authority С‚РѕР»СЊРєРѕ РІ СЃРІРѕС‘Рј ingress/domain state;
-- `legal_advisor`, `economist`, `knowledge`, `monitoring` РІ СЃРїРѕСЂРЅС‹С… СЃС†РµРЅР°СЂРёСЏС… РЅРµ Р·Р°РјРµРЅСЏСЋС‚ primary owner.
+- `contracts_agent` имеет write authority в contract lifecycle;
+- `crm_agent` имеет write authority в CRM;
+- `front_office_agent` имеет write authority только в своём ingress/domain state;
+- `legal_advisor`, `economist`, `knowledge`, `monitoring` в спорных сценариях не заменяют primary owner.
 
 ---
 
-## 10. РџСЂР°РІРёР»Р° handoff
+## 10. Правила handoff
 
-### 10.1 Р”РѕРїСѓСЃС‚РёРјС‹Рµ handoff
+### 10.1 Допустимые handoff
 
-РџРѕРґС‚РІРµСЂР¶РґС‘РЅРЅРѕ РґРѕРїСѓСЃС‚РёРјС‹:
+Подтверждённо допустимы:
 
 - `front_office_agent -> contracts_agent`
 - `front_office_agent -> crm_agent`
@@ -851,7 +851,7 @@ owner РґРѕР»Р¶РµРЅ СѓС…РѕРґРёС‚СЊ РёР· `monitori
 
 ### 10.2 Future / required handoff
 
-РўСЂРµР±СѓСЋС‚ РѕС‚РґРµР»СЊРЅРѕРіРѕ enablement:
+Требуют отдельного enablement:
 
 - `contracts_agent -> legal_advisor`
 - `front_office_agent -> legal_advisor`
@@ -859,34 +859,34 @@ owner РґРѕР»Р¶РµРЅ СѓС…РѕРґРёС‚СЊ РёР· `monitori
 - `controller -> economist`
 - `controller -> monitoring`
 
-### 10.3 Р—Р°РїСЂРµС‰С‘РЅРЅС‹Рµ handoff
+### 10.3 Запрещённые handoff
 
-Р—Р°РїСЂРµС‰РµРЅРѕ:
+Запрещено:
 
-- `agent -> agent` РЅР°РїСЂСЏРјСѓСЋ Р±РµР· РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂР°;
-- handoff РІ РґРѕРјРµРЅ Р±РµР· owner-agent РєР°Рє Р±СѓРґС‚Рѕ owner СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚;
-- handoff, РєРѕС‚РѕСЂС‹Р№ РјРµРЅСЏРµС‚ ownership С‚РѕР»СЊРєРѕ РїРѕ UI route РёР»Рё prompt wording;
-- handoff РёР· signal owner РЅР°РїСЂСЏРјСѓСЋ РІ write-path С‡СѓР¶РѕРіРѕ РґРѕРјРµРЅР°;
-- РїСЂРµРІСЂР°С‰РµРЅРёРµ clarification РІ СЃРєСЂС‹С‚С‹Р№ cross-domain handoff.
+- `agent -> agent` напрямую без оркестратора;
+- handoff в домен без owner-agent как будто owner уже существует;
+- handoff, который меняет ownership только по UI route или prompt wording;
+- handoff из signal owner напрямую в write-path чужого домена;
+- превращение clarification в скрытый cross-domain handoff.
 
 ---
 
-## 11. Fallback Рё ownership gaps
+## 11. Fallback и ownership gaps
 
-РћСЂРєРµСЃС‚СЂР°С‚РѕСЂ РѕР±СЏР·Р°РЅ РѕС‚Р»РёС‡Р°С‚СЊ РїСЏС‚СЊ СЃРѕСЃС‚РѕСЏРЅРёР№:
+Оркестратор обязан отличать пять состояний:
 
-- `NONE` вЂ” РµСЃС‚СЊ РїРѕР»РЅРѕС†РµРЅРЅС‹Р№ agent path;
-- `READ_ONLY_SUPPORT` вЂ” РјРѕР¶РЅРѕ С‚РѕР»СЊРєРѕ С‡РёС‚Р°С‚СЊ Рё РѕР±СЉСЏСЃРЅСЏС‚СЊ;
-- `ROUTE_FALLBACK` вЂ” UI СѓРјРµРµС‚ РјР°СЂС€СЂСѓС‚, РЅРѕ owner-agent РЅРµ РїРѕРґС‚РІРµСЂР¶РґС‘РЅ;
-- `BACKLOG_ONLY` вЂ” РјРѕР¶РЅРѕ С‚РѕР»СЊРєРѕ СЃС„РѕСЂРјРёСЂРѕРІР°С‚СЊ Р·Р°РґР°С‡Сѓ РёР»Рё backlog;
-- `MANUAL_HUMAN_REQUIRED` вЂ” СЃС†РµРЅР°СЂРёР№ РґРѕР»Р¶РµРЅ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ С‡РµР»РѕРІРµРє.
+- `NONE` — есть полноценный agent path;
+- `READ_ONLY_SUPPORT` — можно только читать и объяснять;
+- `ROUTE_FALLBACK` — UI умеет маршрут, но owner-agent не подтверждён;
+- `BACKLOG_ONLY` — можно только сформировать задачу или backlog;
+- `MANUAL_HUMAN_REQUIRED` — сценарий должен обрабатывать человек.
 
-Р–С‘СЃС‚РєРѕРµ РїСЂР°РІРёР»Рѕ:
+Жёсткое правило:
 
-- fallback РЅРµ РґРѕР»Р¶РµРЅ РІС‹РіР»СЏРґРµС‚СЊ РєР°Рє Р±СѓРґС‚Рѕ Р°РіРµРЅС‚ СЂРµР°Р»СЊРЅРѕ РІС‹РїРѕР»РЅРёР» СЃС†РµРЅР°СЂРёР№;
-- ownership gap вЂ” СЌС‚Рѕ Р°СЂС…РёС‚РµРєС‚СѓСЂРЅС‹Р№ С„Р°РєС‚, Р° РЅРµ С‚РµРєСЃС‚РѕРІР°СЏ РѕСЃРѕР±РµРЅРЅРѕСЃС‚СЊ РѕС‚РІРµС‚Р°.
+- fallback не должен выглядеть как будто агент реально выполнил сценарий;
+- ownership gap — это архитектурный факт, а не текстовая особенность ответа.
 
-Р”Р»СЏ future/template roles:
+Для future/template roles:
 
 - `legal_advisor`
 - `strategist`
@@ -895,52 +895,52 @@ owner РґРѕР»Р¶РµРЅ СѓС…РѕРґРёС‚СЊ РёР· `monitori
 - `marketer`
 - `personal_assistant`
 
-РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂ РЅРµ РґРѕР»Р¶РµРЅ РЅР°Р·РЅР°С‡Р°С‚СЊ РёС… primary owner-agent РґР»СЏ production scenario РґРѕ РѕС‚РґРµР»СЊРЅРѕРіРѕ canonical enablement.
+оркестратор не должен назначать их primary owner-agent для production scenario до отдельного canonical enablement.
 
 ---
 
-## 12. Р§С‚Рѕ РѕР±РЅРѕРІР»СЏС‚СЊ РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё РЅРѕРІРѕРіРѕ intent РёР»Рё Р°РіРµРЅС‚Р°
+## 12. Что обновлять при добавлении нового intent или агента
 
-РџСЂРё РєР°Р¶РґРѕРј РёР·РјРµРЅРµРЅРёРё routing-Р»РѕРіРёРєРё РЅСѓР¶РЅРѕ РѕР±РЅРѕРІР»СЏС‚СЊ РјРёРЅРёРјСѓРј:
+При каждом изменении routing-логики нужно обновлять минимум:
 
-1. СЌС‚РѕС‚ РґРѕРєСѓРјРµРЅС‚ РєР°Рє routing canon;
+1. этот документ как routing canon;
 2. [INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md](./INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md);
 3. [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](../00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md);
-4. РїСЂРѕС„РёР»СЊ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ Р°РіРµРЅС‚Р°;
+4. профиль конкретного агента;
 5. `agent-interaction-contracts.ts`;
-6. РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё `agent-registry.service.ts` Рё `tool-call.planner.ts`.
+6. при необходимости `agent-registry.service.ts` и `tool-call.planner.ts`.
 
-Р‘РµР· СЌС‚РѕРіРѕ РЅРѕРІС‹Р№ routing СЃС‡РёС‚Р°РµС‚СЃСЏ РЅРµРєР°РЅРѕРЅРёС‡РЅС‹Рј.
-
----
-
-## 13. РљСЂРёС‚РёС‡РµСЃРєРёРµ РѕС€РёР±РєРё Рё Р·Р°РїСЂРµС‚С‹
-
-- Р—Р°РїСЂРµС‰РµРЅРѕ РѕРїРёСЃС‹РІР°С‚СЊ РїР»Р°С‚С„РѕСЂРјСѓ РєР°Рє СЃРІРѕР±РѕРґРЅСѓСЋ `all-to-all` agent mesh.
-- Р—Р°РїСЂРµС‰РµРЅРѕ РІС‹Р±РёСЂР°С‚СЊ owner-agent РїРѕ route РІРјРµСЃС‚Рѕ intent ownership.
-- Р—Р°РїСЂРµС‰РµРЅРѕ СЃС‡РёС‚Р°С‚СЊ template/future role production owner-agent.
-- Р—Р°РїСЂРµС‰РµРЅРѕ СЃРјРµС€РёРІР°С‚СЊ `read authority` СЃ `write authority`.
-- Р—Р°РїСЂРµС‰РµРЅРѕ СЃРєСЂС‹РІР°С‚СЊ ownership gap РїРѕРґ fallback-РѕС‚РІРµС‚РѕРј.
-- Р—Р°РїСЂРµС‰РµРЅРѕ РґСѓР±Р»РёСЂРѕРІР°С‚СЊ owner РѕРґРЅРѕРіРѕ Рё С‚РѕРіРѕ Р¶Рµ intent-Р° РјРµР¶РґСѓ Р°РіРµРЅС‚Р°РјРё Р±РµР· СЏРІРЅРѕРіРѕ primary owner.
-- Р—Р°РїСЂРµС‰РµРЅРѕ СЂР°Р·РјС‹РІР°С‚СЊ `contracts_agent` РІ generic `commerce_agent`.
+Без этого новый routing считается неканоничным.
 
 ---
 
-## 14. РџСЂРѕРІРµСЂРєР° РіРѕС‚РѕРІРЅРѕСЃС‚Рё
+## 13. Критические ошибки и запреты
 
-Р”РѕРєСѓРјРµРЅС‚ СЃС‡РёС‚Р°РµС‚СЃСЏ РѕС„РѕСЂРјР»РµРЅРЅС‹Рј РїСЂР°РІРёР»СЊРЅРѕ, РµСЃР»Рё:
-
-- РґР»СЏ РєР°Р¶РґРѕРіРѕ РїРѕРґС‚РІРµСЂР¶РґС‘РЅРЅРѕРіРѕ РґРѕРјРµРЅР° СѓРєР°Р·Р°РЅ primary owner-agent;
-- РґР»СЏ РєРѕРЅС„Р»РёРєС‚РЅС‹С… Р·РѕРЅ СѓРєР°Р·Р°РЅС‹ РїСЂР°РІРёР»Р° РІС‹Р±РѕСЂР° owner;
-- handoff-path СЂР°Р·РґРµР»С‘РЅ РЅР° `allowed`, `future`, `forbidden`;
-- authority model РѕС‚РґРµР»РµРЅР° РѕС‚ ownership model;
-- fallback mode РѕРїРёСЃР°РЅ РєР°Рє РѕС‚РґРµР»СЊРЅРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ;
-- future/template roles СЏРІРЅРѕ РѕС‚РґРµР»РµРЅС‹ РѕС‚ РєР°РЅРѕРЅРёС‡РµСЃРєРёС… runtime-Р°РіРµРЅС‚РѕРІ;
-- РґРѕРєСѓРјРµРЅС‚ СЃРІСЏР·Р°РЅ СЃ РєР°С‚Р°Р»РѕРіРѕРј, ownership map, РїСЂРѕС„РёР»СЏРјРё Рё РєРѕРґРѕРј.
+- Запрещено описывать платформу как свободную `all-to-all` agent mesh.
+- Запрещено выбирать owner-agent по route вместо intent ownership.
+- Запрещено считать template/future role production owner-agent.
+- Запрещено смешивать `read authority` с `write authority`.
+- Запрещено скрывать ownership gap под fallback-ответом.
+- Запрещено дублировать owner одного и того же intent-а между агентами без явного primary owner.
+- Запрещено размывать `contracts_agent` в generic `commerce_agent`.
 
 ---
 
-## 15. РЎРІСЏР·Р°РЅРЅС‹Рµ С„Р°Р№Р»С‹ Рё С‚РѕС‡РєРё РєРѕРґР°
+## 14. Проверка готовности
+
+Документ считается оформленным правильно, если:
+
+- для каждого подтверждённого домена указан primary owner-agent;
+- для конфликтных зон указаны правила выбора owner;
+- handoff-path разделён на `allowed`, `future`, `forbidden`;
+- authority model отделена от ownership model;
+- fallback mode описан как отдельное состояние;
+- future/template roles явно отделены от канонических runtime-агентов;
+- документ связан с каталогом, ownership map, профилями и кодом.
+
+---
+
+## 15. Связанные файлы и точки кода
 
 - [INSTRUCTION_AGENT_PLATFORM_INTERACTION_ARCHITECTURE.md](./INSTRUCTION_AGENT_PLATFORM_INTERACTION_ARCHITECTURE.md)
 - [INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md](./INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md)

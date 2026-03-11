@@ -129,13 +129,15 @@ function localizeOwnerRole(value?: string | null) {
     case "contracts_agent":
       return "Договоры";
     case "crm_agent":
-      return "CRM";
+      return "Клиенты";
     case "agronomist":
       return "Агрономия";
     case "economist":
       return "Экономика";
     case "monitoring":
       return "Мониторинг";
+    case "manual":
+      return "Ручная обработка";
     default:
       return "Фронт-офис";
   }
@@ -144,19 +146,66 @@ function localizeOwnerRole(value?: string | null) {
 function localizeHandoffStatus(value?: string | null) {
   switch (value) {
     case "ROUTED":
-      return "Передано";
+      return "Передано в работу";
     case "PENDING_APPROVAL":
-      return "Ждёт согласования";
+      return "Ожидает согласования";
     case "MANUAL_REQUIRED":
-      return "Нужен разбор";
+      return "Нужна ручная обработка";
     case "CLAIMED":
-      return "В работе";
+      return "Принято в работу";
     case "COMPLETED":
-      return "Завершено";
+      return "Исполнено";
     case "REJECTED":
-      return "Отклонено";
+      return "Возвращено";
     default:
-      return "Без статуса";
+      return "Статус уточняется";
+  }
+}
+
+function prettifyReferenceValue(value?: string | null) {
+  if (!value || value === "-") {
+    return "не выбрано";
+  }
+
+  return value
+    .replace(/^manual-field-/, "")
+    .replace(/^manual-season-/, "")
+    .replace(/^manual-task-/, "")
+    .replace(/^field-/, "")
+    .replace(/^season-/, "")
+    .replace(/^task-/, "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function formatLinkSystemMessage(value: string) {
+  const payload = value.slice("LINK applied:".length).trim();
+  const params = new URLSearchParams(payload.replace(/\s+/g, "&"));
+  const field = prettifyReferenceValue(params.get("field"));
+  const season = prettifyReferenceValue(params.get("season"));
+  const task = prettifyReferenceValue(params.get("task"));
+
+  return [
+    "Контекст диалога обновлён.",
+    `Поле: ${field}.`,
+    `Сезон: ${season}.`,
+    `Задача: ${task}.`,
+  ].join("\n");
+}
+
+function localizeCommitKind(value?: string | null) {
+  switch (value) {
+    case "observation":
+      return "Наблюдение сохранено";
+    case "deviation":
+      return "Отклонение зафиксировано";
+    case "consultation":
+      return "Запрос на консультацию сохранён";
+    case "context_update":
+      return "Контекст обновлён";
+    default:
+      return "Изменения подтверждены";
   }
 }
 
@@ -166,7 +215,7 @@ function localizeSystemMessageText(value?: string | null) {
   }
 
   if (value.startsWith("LINK applied:")) {
-    return value.replace("LINK applied:", "Привязка обновлена:");
+    return formatLinkSystemMessage(value);
   }
 
   if (value.startsWith("HANDOFF ")) {
@@ -174,11 +223,16 @@ function localizeSystemMessageText(value?: string | null) {
     const [rawRole, rawStatus] = payload.split(":");
     const roleTitle = localizeOwnerRole(rawRole?.trim());
     const statusTitle = localizeHandoffStatus(rawStatus?.trim() || null);
-    return `Передача: ${roleTitle}. Статус: ${statusTitle}.`;
+    return [
+      `Передано в контур: ${roleTitle}.`,
+      `Состояние: ${statusTitle}.`,
+    ].join("\n");
   }
 
   if (value.startsWith("COMMIT ")) {
-    return value.replace("COMMIT ", "Подтверждено: ");
+    const payload = value.slice("COMMIT ".length);
+    const [rawKind] = payload.split(":");
+    return localizeCommitKind(rawKind?.trim() || null);
   }
 
   return value;
@@ -241,9 +295,9 @@ function sortThreads(list: FrontOfficeThreadListItemDto[]) {
 function buildTopicTitle(thread: FrontOfficeThreadListItemDto, index: number) {
   const roleTitle = localizeOwnerRole(thread.currentOwnerRole);
   if (thread.currentHandoffStatus) {
-    return `${roleTitle} · тема ${index + 1}`;
+    return `${roleTitle} · диалог ${index + 1}`;
   }
-  return `Тема ${index + 1}`;
+  return `Диалог ${index + 1}`;
 }
 
 export function TelegramWorkspaceClient() {
@@ -961,11 +1015,11 @@ export function TelegramWorkspaceClient() {
                     </p>
                   ) : null}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                   <button
                     type="button"
                     onClick={() => navigateToSection("topics")}
-                    className="inline-flex items-center gap-2 rounded-full border border-[#e2d5bc] px-4 py-2 text-sm text-[#6c5e43] xl:hidden"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[#e2d5bc] px-4 py-2 text-sm text-[#6c5e43] xl:hidden"
                   >
                     <ArrowLeft className="h-4 w-4" />К темам
                   </button>
@@ -973,7 +1027,7 @@ export function TelegramWorkspaceClient() {
                     type="button"
                     onClick={handleOpenAiForFarm}
                     disabled={!selectedFarm}
-                    className="inline-flex items-center gap-2 rounded-full border border-[#d7c8a9] bg-[#fff7e8] px-4 py-2 text-sm text-[#6d5724] transition-colors hover:border-[#b9974f] hover:text-[#3c331f] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[#d7c8a9] bg-[#fff7e8] px-4 py-2 text-sm text-[#6d5724] transition-colors hover:border-[#b9974f] hover:text-[#3c331f] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Bot className="h-4 w-4" />
                     Спросить A-RAI
@@ -982,7 +1036,7 @@ export function TelegramWorkspaceClient() {
                     type="button"
                     onClick={handleInsertAiReply}
                     disabled={!latestAssistantReply}
-                    className="inline-flex items-center gap-2 rounded-full border border-[#d8d6c7] bg-white px-4 py-2 text-sm text-[#5f594f] transition-colors hover:border-[#b7b29d] hover:text-[#1f2a1f] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[#d8d6c7] bg-white px-4 py-2 text-sm text-[#5f594f] transition-colors hover:border-[#b7b29d] hover:text-[#1f2a1f] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <ArrowRight className="h-4 w-4" />
                     Вставить ответ A-RAI
@@ -1009,7 +1063,7 @@ export function TelegramWorkspaceClient() {
                           : "rounded-bl-md bg-[#f5eee2] text-[#2f2a23]",
                       )}
                     >
-                      <div className="whitespace-pre-wrap">
+                      <div className="whitespace-pre-wrap [overflow-wrap:anywhere]">
                         {localizeSystemMessageText(message.messageText)}
                       </div>
                       <div

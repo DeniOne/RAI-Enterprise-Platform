@@ -68,6 +68,12 @@ export interface FrontOfficeDraftResponseDto {
     status: 'DRAFT_RECORDED' | 'COMMITTED';
     confirmationRequired: boolean;
     draftId: string;
+    resolutionMode?: 'AUTO_REPLY' | 'REQUEST_CLARIFICATION' | 'PROCESS_DRAFT' | 'HUMAN_HANDOFF' | null;
+    responseRisk?: 'SAFE_INFORMATIONAL' | 'RESPONSIBLE_ACTION' | 'INSUFFICIENT_CONTEXT' | 'OPERATIONAL_SIGNAL' | 'ESCALATION_SIGNAL' | null;
+    replyStatus?: 'NOT_SENT' | 'SENT' | 'SKIPPED' | 'FAILED';
+    prohibitedReason?: string | null;
+    autoReplyTraceId?: string | null;
+    managerNotified?: boolean;
     targetOwnerRole?: string | null;
     handoffId?: string | null;
     handoffStatus?: string | null;

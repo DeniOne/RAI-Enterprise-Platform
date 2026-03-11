@@ -97,6 +97,24 @@ export interface AgentMemoryContext {
     confidence?: number;
     source?: string;
   }>;
+  /** L4: Когнитивная память — энграммы (Trigger→Action→Outcome) */
+  recalledEngrams?: Array<{
+    id: string;
+    category: string;
+    content: string;
+    compositeScore: number;
+    synapticWeight: number;
+    successRate: number;
+    activationCount: number;
+    keyInsights: string[];
+  }>;
+  /** L1: Активные алерты из мониторинга */
+  activeAlerts?: Array<{
+    id: string;
+    severity: string;
+    type: string;
+    message: string;
+  }>;
 }
 
 export interface AgentExecutionRequest {

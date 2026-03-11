@@ -27,6 +27,51 @@ export type FrontOfficeHandoffStatus =
   | "COMPLETED"
   | "REJECTED";
 
+export type FrontOfficeResolutionMode =
+  | "AUTO_REPLY"
+  | "REQUEST_CLARIFICATION"
+  | "PROCESS_DRAFT"
+  | "HUMAN_HANDOFF";
+
+export type FrontOfficeResponseRisk =
+  | "SAFE_INFORMATIONAL"
+  | "RESPONSIBLE_ACTION"
+  | "INSUFFICIENT_CONTEXT"
+  | "OPERATIONAL_SIGNAL"
+  | "ESCALATION_SIGNAL";
+
+export type FrontOfficeReplyStatus =
+  | "NOT_SENT"
+  | "SENT"
+  | "SKIPPED"
+  | "FAILED";
+
+export type FrontOfficeThreadMessageKind =
+  | "client_message"
+  | "manager_reply"
+  | "auto_reply"
+  | "clarification_request"
+  | "handoff_receipt"
+  | "system_event";
+
+export type FrontOfficeThreadMessageAuthorType =
+  | "farm_representative"
+  | "back_office_operator"
+  | "rai"
+  | "system";
+
+export type FrontOfficeThreadDeliveryStatus =
+  | "RECEIVED"
+  | "SENT"
+  | "SKIPPED"
+  | "FAILED";
+
+export type FrontOfficeClientReplyMode =
+  | "disabled"
+  | "shadow"
+  | "pilot"
+  | "rollout";
+
 export interface FrontOfficeDraftAnchor {
   farmRef: string | null;
   fieldId: string | null;
@@ -105,6 +150,9 @@ export interface FrontOfficeMessageRecord {
   route: string | null;
   evidence: any[] | null;
   metadata: Record<string, any> | null;
+  kind: FrontOfficeThreadMessageKind;
+  authorType: FrontOfficeThreadMessageAuthorType;
+  deliveryStatus: FrontOfficeThreadDeliveryStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -173,6 +221,7 @@ export interface FrontOfficeThreadListItemRecord {
   currentHandoffStatus: FrontOfficeHandoffStatus | null;
   currentOwnerRole: string | null;
   unreadCount: number;
+  needsHumanAction: boolean;
 }
 
 export interface FrontOfficeManagerFarmInboxRecord {
@@ -183,4 +232,5 @@ export interface FrontOfficeManagerFarmInboxRecord {
   lastMessagePreview: string | null;
   lastMessageAt: string | null;
   lastHandoffStatus: FrontOfficeHandoffStatus | null;
+  needsHumanAction: boolean;
 }

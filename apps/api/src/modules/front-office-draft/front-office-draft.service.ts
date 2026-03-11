@@ -19,15 +19,23 @@ import {
 } from "../rai-chat/agents/front-office-agent.service";
 import { TelegramNotificationService } from "../telegram/telegram-notification.service";
 import { FrontOfficeCommunicationRepository } from "./front-office-communication.repository";
+import { FrontOfficeClientResponseOrchestrator } from "./front-office-client-response.orchestrator.service";
 import { FrontOfficeDraftRepository } from "./front-office-draft.repository";
 import { FrontOfficeHandoffOrchestrator } from "./front-office-handoff.orchestrator.service";
+import { FrontOfficeOutboundService } from "./front-office-outbound.service";
+import {
+  FrontOfficeReplyDecision,
+  FrontOfficeReplyPolicyService,
+} from "./front-office-reply-policy.service";
 import {
   BackOfficeFarmAssignmentRecord,
   FrontOfficeDraftAnchor,
   FrontOfficeDraftRecord,
+  FrontOfficeReplyStatus,
   FrontOfficeDraftStatus,
   FrontOfficeIntent,
   FrontOfficeManagerFarmInboxRecord,
+  FrontOfficeResolutionMode,
   FrontOfficeThreadListItemRecord,
   FrontOfficeThreadRecord,
 } from "./front-office-draft.types";
@@ -68,6 +76,9 @@ export class FrontOfficeDraftService {
     private readonly deviationService: DeviationService,
     private readonly frontOfficeAgent: FrontOfficeAgent,
     private readonly communicationRepository: FrontOfficeCommunicationRepository,
+    private readonly replyPolicy: FrontOfficeReplyPolicyService,
+    private readonly outboundService: FrontOfficeOutboundService,
+    private readonly clientResponseOrchestrator: FrontOfficeClientResponseOrchestrator,
     private readonly handoffOrchestrator: FrontOfficeHandoffOrchestrator,
     private readonly repository: FrontOfficeDraftRepository,
     private readonly telegramNotificationService: TelegramNotificationService,
@@ -164,7 +175,7 @@ export class FrontOfficeDraftService {
       },
     });
 
-    await this.syncInboundThreadState({
+    const synced = await this.syncInboundThreadState({
       companyId,
       draft,
       input,
@@ -175,8 +186,34 @@ export class FrontOfficeDraftService {
       targetOwnerRole: classification?.targetOwnerRole ?? null,
       evidence,
     });
+    const decision = this.replyPolicy.evaluate({
+      companyId,
+      messageText: input.messageText,
+      direction: input.direction,
+      classification: classification?.classification ?? null,
+      targetOwnerRole: classification?.targetOwnerRole ?? null,
+      confidence: classification?.confidence ?? 0,
+      anchor,
+      thread: synced.thread,
+      evidenceCount: evidence.length,
+    });
 
-    return this.presentDraft(draft, await this.repository.findCommitted(companyId, draft.id));
+    let resolvedDraft = draft;
+    let committed = await this.repository.findCommitted(companyId, draft.id);
+    if ((input.direction ?? "inbound") === "inbound") {
+      const routed = await this.handleInboundRouting({
+        companyId,
+        traceId,
+        user,
+        draft,
+        thread: synced.thread,
+        decision,
+      });
+      resolvedDraft = routed.draft;
+      committed = routed.committed;
+    }
+
+    return this.presentDraft(resolvedDraft, committed);
   }
 
   async getDraft(companyId: string, draftId: string) {
@@ -570,6 +607,7 @@ export class FrontOfficeDraftService {
         lastMessagePreview: null,
         lastMessageAt: null,
         lastHandoffStatus: null,
+        needsHumanAction: false,
       });
     }
 
@@ -584,6 +622,7 @@ export class FrontOfficeDraftService {
 
       current.unreadCount += item.unreadCount;
       current.threadCount += 1;
+      current.needsHumanAction = current.needsHumanAction || item.needsHumanAction;
       if (
         !current.lastMessageAt ||
         (item.lastMessageAt && item.lastMessageAt > current.lastMessageAt)
@@ -635,67 +674,23 @@ export class FrontOfficeDraftService {
     if (!chatId) {
       throw new NotFoundException("Telegram chat is not available for this thread");
     }
-
-    const sent = await this.telegramNotificationService.sendFrontOfficeReply(
-      chatId,
-      messageText,
-    );
-
-    await this.communicationRepository.upsertThread({
+    const outbound = await this.outboundService.sendToThread({
       companyId,
-      threadKey: thread.threadKey,
-      channel: thread.channel,
-      farmAccountId: thread.farmAccountId,
-      farmNameSnapshot: thread.farmNameSnapshot,
-      representativeUserId: thread.representativeUserId,
-      representativeTelegramId: thread.representativeTelegramId,
-      threadExternalId: thread.threadExternalId,
-      dialogExternalId: thread.dialogExternalId,
-      senderExternalId: thread.senderExternalId,
-      recipientExternalId: thread.recipientExternalId,
+      thread,
+      messageText,
+      kind: "manager_reply",
+      authorType: "back_office_operator",
       route: "/telegram/workspace/farms",
-      currentClassification: thread.currentClassification,
       currentOwnerRole: user.role ?? thread.currentOwnerRole,
       currentHandoffStatus: thread.currentHandoffStatus,
-      lastDraftId: thread.lastDraftId,
-      lastMessageDirection: "outbound",
-      lastMessagePreview: messageText.slice(0, 240),
-      lastMessageAt: new Date(),
-      messageCountIncrement: 1,
-    });
-
-    const refreshedThread = await this.communicationRepository.getThreadByKey(
-      companyId,
-      threadKey,
-    );
-    const message = await this.communicationRepository.createMessage({
-      companyId,
-      threadId: refreshedThread.id,
-      channel: refreshedThread.channel,
-      direction: "outbound",
-      messageText,
-      sourceMessageId: sent?.messageId ?? null,
-      chatId,
-      route: "/telegram/workspace/farms",
-      metadata: {
-        replyByUserId: user.id,
-        replyByRole: user.role ?? null,
-        delivery: "telegram-bot-gateway",
-      },
-    });
-
-    await this.communicationRepository.upsertParticipantState({
-      companyId,
-      threadId: refreshedThread.id,
-      userId: user.id,
-      lastReadMessageId: message.id,
-      lastReadAt: message.createdAt,
+      actorUserId: user.id,
+      actorUserRole: user.role ?? null,
     });
 
     return {
-      thread: refreshedThread,
-      message,
-      delivery: sent ?? null,
+      thread: outbound.thread,
+      message: outbound.message,
+      delivery: outbound.delivery,
     };
   }
 
@@ -778,7 +773,13 @@ export class FrontOfficeDraftService {
     classification?: string | null;
     targetOwnerRole?: string | null;
     evidence?: any[] | null;
-  }) {
+  }): Promise<{
+    thread: FrontOfficeThreadRecord;
+    message: {
+      id: string;
+      createdAt: string;
+    };
+  }> {
     const binding = await this.resolveThreadBinding(
       params.companyId,
       params.actorUserId,
@@ -809,7 +810,7 @@ export class FrontOfficeDraftService {
       messageCountIncrement: 1,
     });
 
-    await this.communicationRepository.createMessage({
+    const message = await this.communicationRepository.createMessage({
       companyId: params.companyId,
       threadId: thread.id,
       draftId: params.draft.id,
@@ -822,6 +823,9 @@ export class FrontOfficeDraftService {
       chatId: params.input.chatId ?? null,
       route: params.input.route ?? null,
       evidence: params.evidence ?? null,
+      kind: "client_message",
+      authorType: "farm_representative",
+      deliveryStatus: "RECEIVED",
       metadata: {
         classification: params.classification ?? null,
         targetOwnerRole: params.targetOwnerRole ?? null,
@@ -829,9 +833,13 @@ export class FrontOfficeDraftService {
       },
     });
 
-    if ((params.input.direction ?? "inbound") === "inbound") {
-      await this.notifyAssignedManagers(thread);
-    }
+    return {
+      thread,
+      message: {
+        id: message.id,
+        createdAt: message.createdAt,
+      },
+    };
   }
 
   private async syncSystemThreadState(
@@ -896,6 +904,9 @@ export class FrontOfficeDraftService {
       chatId: draft.payload.chatId ?? null,
       route: draft.payload.route ?? null,
       evidence: draft.evidence,
+      kind: "system_event",
+      authorType: "system",
+      deliveryStatus: "SKIPPED",
       metadata: {
         ...(params.metadata ?? {}),
         ownerResultRef: params.ownerResultRef ?? null,
@@ -1001,6 +1012,7 @@ export class FrontOfficeDraftService {
         currentHandoffStatus: thread.currentHandoffStatus,
         currentOwnerRole: thread.currentOwnerRole,
         unreadCount,
+        needsHumanAction: this.threadNeedsHumanAction(thread),
       };
     });
   }
@@ -1207,6 +1219,325 @@ export class FrontOfficeDraftService {
     }
   }
 
+  private async handleInboundRouting(params: {
+    companyId: string;
+    traceId: string;
+    user: { id?: string; role?: string };
+    draft: FrontOfficeDraftRecord;
+    thread: FrontOfficeThreadRecord;
+    decision: FrontOfficeReplyDecision;
+  }): Promise<{
+    draft: FrontOfficeDraftRecord;
+    committed: any;
+  }> {
+    const effectiveResolutionMode = this.resolveEffectiveResolutionMode(
+      params.decision,
+    );
+    const preparedDraft = await this.updateDraftDecision(
+      params.companyId,
+      params.draft,
+      params.decision,
+      effectiveResolutionMode,
+    );
+
+    switch (effectiveResolutionMode) {
+      case "PROCESS_DRAFT":
+        return {
+          draft: preparedDraft,
+          committed: await this.repository.findCommitted(
+            params.companyId,
+            preparedDraft.id,
+          ),
+        };
+      case "REQUEST_CLARIFICATION":
+        return this.handleClarificationRouting({
+          companyId: params.companyId,
+          draft: preparedDraft,
+          thread: params.thread,
+          decision: params.decision,
+        });
+      case "AUTO_REPLY":
+        return this.handleAutoReplyRouting({
+          companyId: params.companyId,
+          user: params.user,
+          draft: preparedDraft,
+          thread: params.thread,
+          decision: params.decision,
+        });
+      case "HUMAN_HANDOFF":
+      default:
+        return this.handleHumanHandoffRouting({
+          companyId: params.companyId,
+          user: params.user,
+          draft: preparedDraft,
+          thread: params.thread,
+          decision: params.decision,
+        });
+    }
+  }
+
+  private async handleClarificationRouting(params: {
+    companyId: string;
+    draft: FrontOfficeDraftRecord;
+    thread: FrontOfficeThreadRecord;
+    decision: FrontOfficeReplyDecision;
+  }) {
+    let replyStatus: FrontOfficeReplyStatus = "FAILED";
+    let clarificationText: string | null = null;
+    try {
+      const clarification =
+        await this.clientResponseOrchestrator.sendClarification({
+          companyId: params.companyId,
+          thread: params.thread,
+          draft: params.draft,
+          missingContext: params.decision.missingContext,
+          targetOwnerRole: params.decision.targetOwnerRole,
+        });
+      replyStatus = clarification.replyStatus;
+      clarificationText = clarification.text;
+    } catch {
+      replyStatus = "FAILED";
+    }
+
+    return this.commitResolvedDraft({
+      companyId: params.companyId,
+      draft: params.draft,
+      committedBy: params.draft.userId,
+      payloadPatch: {
+        resolutionMode: "REQUEST_CLARIFICATION",
+        responseRisk: params.decision.responseRisk,
+        replyStatus,
+        prohibitedReason: params.decision.prohibitedReason,
+        missingContext: params.decision.missingContext,
+        managerNotified: false,
+        commitResult: {
+          kind: "clarification_request",
+          id: params.draft.id,
+          replyStatus,
+          missingContext: params.decision.missingContext,
+          text: clarificationText,
+        },
+      },
+    });
+  }
+
+  private async handleAutoReplyRouting(params: {
+    companyId: string;
+    user: { id?: string; role?: string };
+    draft: FrontOfficeDraftRecord;
+    thread: FrontOfficeThreadRecord;
+    decision: FrontOfficeReplyDecision;
+  }) {
+    try {
+      const autoReply = await this.clientResponseOrchestrator.sendAutoReply({
+        companyId: params.companyId,
+        userId: params.user.id,
+        thread: params.thread,
+        draft: params.draft,
+        targetOwnerRole: params.decision.targetOwnerRole,
+        responseRisk: params.decision.responseRisk,
+      });
+
+      if (autoReply.replyStatus === "SENT") {
+        return this.commitResolvedDraft({
+          companyId: params.companyId,
+          draft: params.draft,
+          committedBy: params.user.id ?? params.draft.userId,
+          payloadPatch: {
+            resolutionMode: "AUTO_REPLY",
+            responseRisk: params.decision.responseRisk,
+            replyStatus: autoReply.replyStatus,
+            prohibitedReason: null,
+            autoReplyTraceId: autoReply.autoReplyTraceId,
+            managerNotified: false,
+            commitResult: {
+              kind: "auto_reply",
+              id: autoReply.messageId ?? autoReply.autoReplyTraceId ?? params.draft.id,
+              replyStatus: autoReply.replyStatus,
+              autoReplyTraceId: autoReply.autoReplyTraceId,
+              targetOwnerRole: autoReply.ownerRole ?? params.decision.targetOwnerRole,
+            },
+          },
+        });
+      }
+
+      return this.handleHumanHandoffRouting({
+        companyId: params.companyId,
+        user: params.user,
+        draft: params.draft,
+        thread: params.thread,
+        decision: {
+          ...params.decision,
+          resolutionMode: "HUMAN_HANDOFF",
+          managerShouldBeNotified: true,
+          needsHumanAction: true,
+          prohibitedReason: this.describeAutoReplyFailure(
+            autoReply.failureReason ?? autoReply.replyStatus,
+          ),
+        },
+      });
+    } catch (error) {
+      return this.handleHumanHandoffRouting({
+        companyId: params.companyId,
+        user: params.user,
+        draft: params.draft,
+        thread: params.thread,
+        decision: {
+          ...params.decision,
+          resolutionMode: "HUMAN_HANDOFF",
+          managerShouldBeNotified: true,
+          needsHumanAction: true,
+          prohibitedReason: this.describeAutoReplyFailure(
+            (error as Error).message,
+          ),
+        },
+      });
+    }
+  }
+
+  private async handleHumanHandoffRouting(params: {
+    companyId: string;
+    user: { id?: string; role?: string };
+    draft: FrontOfficeDraftRecord;
+    thread: FrontOfficeThreadRecord;
+    decision: FrontOfficeReplyDecision;
+  }) {
+    const intent = (params.draft.payload.suggestedIntent ??
+      this.mapEventTypeToIntent(params.draft.eventType)) as FrontOfficeIntent;
+    const handoff = await this.handoffOrchestrator.routeDraftHandoff({
+      companyId: params.companyId,
+      userId: params.user.id,
+      threadId: params.thread.id,
+      draftId: params.draft.id,
+      traceId: params.draft.payload.traceId,
+      targetOwnerRole: params.decision.targetOwnerRole ?? null,
+      sourceIntent: intent,
+      summary: params.decision.dialogSummary,
+      evidence: params.draft.evidence,
+    });
+
+    let replyStatus: FrontOfficeReplyStatus = "FAILED";
+    try {
+      const receipt = await this.clientResponseOrchestrator.sendHandoffReceipt({
+        companyId: params.companyId,
+        thread: params.thread,
+        draft: params.draft,
+        targetOwnerRole: handoff.targetOwnerRole,
+        handoffId: handoff.id,
+        handoffStatus: handoff.status,
+      });
+      replyStatus = receipt.replyStatus;
+    } catch {
+      replyStatus = "FAILED";
+    }
+
+    const managerNotified =
+      params.decision.managerShouldBeNotified || handoff.status !== "COMPLETED";
+    if (managerNotified) {
+      await this.notifyAssignedManagers(params.thread);
+    }
+
+    return this.commitResolvedDraft({
+      companyId: params.companyId,
+      draft: params.draft,
+      committedBy: params.user.id ?? params.draft.userId,
+      payloadPatch: {
+        resolutionMode: "HUMAN_HANDOFF",
+        responseRisk: params.decision.responseRisk,
+        replyStatus,
+        prohibitedReason: params.decision.prohibitedReason,
+        managerNotified,
+        commitResult: {
+          kind: "handoff",
+          id: handoff.id,
+          handoffId: handoff.id,
+          handoffStatus: handoff.status,
+          targetOwnerRole: handoff.targetOwnerRole,
+          ownerRoute: handoff.ownerRoute,
+          nextAction: handoff.nextAction,
+          ownerResultRef: handoff.ownerResultRef,
+          createdAt: handoff.createdAt,
+          replyStatus,
+        },
+      },
+    });
+  }
+
+  private async updateDraftDecision(
+    companyId: string,
+    draft: FrontOfficeDraftRecord,
+    decision: FrontOfficeReplyDecision,
+    resolutionMode: FrontOfficeResolutionMode,
+  ) {
+    return this.repository.updateDraft(companyId, draft.id, {
+      payload: {
+        ...draft.payload,
+        targetOwnerRole: decision.targetOwnerRole ?? draft.payload.targetOwnerRole ?? null,
+        resolutionMode,
+        responseRisk: decision.responseRisk,
+        missingContext: decision.missingContext,
+        directReplyAllowed: decision.directReplyAllowed,
+        prohibitedReason: decision.prohibitedReason,
+        dialogSummary: decision.dialogSummary,
+        managerNotified: false,
+        replyStatus: "NOT_SENT",
+      },
+    });
+  }
+
+  private async commitResolvedDraft(params: {
+    companyId: string;
+    draft: FrontOfficeDraftRecord;
+    committedBy: string;
+    payloadPatch: Record<string, any>;
+  }) {
+    const updated = await this.repository.updateDraft(
+      params.companyId,
+      params.draft.id,
+      {
+        payload: {
+          ...params.draft.payload,
+          ...params.payloadPatch,
+        },
+      },
+    );
+    const committed = await this.repository.commitDraft({
+      companyId: params.companyId,
+      draftId: updated.id,
+      committedBy: params.committedBy,
+      provenanceHash: this.buildProvenanceHash(updated),
+    });
+    return committed;
+  }
+
+  private resolveEffectiveResolutionMode(
+    decision: FrontOfficeReplyDecision,
+  ): FrontOfficeResolutionMode {
+    if (decision.resolutionMode !== "AUTO_REPLY") {
+      return decision.resolutionMode;
+    }
+    return decision.directReplyAllowed ? "AUTO_REPLY" : "HUMAN_HANDOFF";
+  }
+
+  private describeAutoReplyFailure(reason?: string | null): string {
+    if (!reason) {
+      return "Автоматический ответ недоступен, запрос передан консультанту.";
+    }
+    if (reason === "NO_EVIDENCE") {
+      return "Для безопасного ответа не хватило подтверждённых данных.";
+    }
+    if (reason === "EMPTY_RESPONSE") {
+      return "Сервис ответа не вернул содержательный результат.";
+    }
+    return `Автоматический ответ недоступен: ${reason}.`;
+  }
+
+  private threadNeedsHumanAction(thread: FrontOfficeThreadRecord): boolean {
+    return ["ROUTED", "PENDING_APPROVAL", "MANUAL_REQUIRED", "CLAIMED"].includes(
+      thread.currentHandoffStatus ?? "",
+    );
+  }
+
   private async classify(
     companyId: string,
     traceId: string,
@@ -1235,6 +1566,15 @@ export class FrontOfficeDraftService {
   private presentDraft(draft: FrontOfficeDraftRecord, committed: any) {
     const commitResult =
       draft.payload.commitResult ?? committed?.payload?.commitResult ?? null;
+    const resolutionMode =
+      draft.payload.resolutionMode ?? committed?.payload?.resolutionMode ?? null;
+    const responseRisk =
+      draft.payload.responseRisk ?? committed?.payload?.responseRisk ?? null;
+    const replyStatus =
+      draft.payload.replyStatus ??
+      committed?.payload?.replyStatus ??
+      commitResult?.replyStatus ??
+      "NOT_SENT";
     return {
       status: draft.status === "COMMITTED" ? "COMMITTED" : "DRAFT_RECORDED",
       confirmationRequired: draft.status !== "COMMITTED",
@@ -1257,6 +1597,20 @@ export class FrontOfficeDraftService {
       handoffId: commitResult?.handoffId ?? null,
       handoffStatus: commitResult?.handoffStatus ?? null,
       ownerResultRef: commitResult?.ownerResultRef ?? null,
+      resolutionMode,
+      responseRisk,
+      replyStatus,
+      prohibitedReason:
+        draft.payload.prohibitedReason ??
+        committed?.payload?.prohibitedReason ??
+        null,
+      autoReplyTraceId:
+        draft.payload.autoReplyTraceId ??
+        committed?.payload?.autoReplyTraceId ??
+        null,
+      managerNotified: Boolean(
+        draft.payload.managerNotified ?? committed?.payload?.managerNotified ?? false,
+      ),
       draft,
       committed,
       commitResult,

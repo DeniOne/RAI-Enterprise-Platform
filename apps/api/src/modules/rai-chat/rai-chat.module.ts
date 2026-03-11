@@ -23,6 +23,8 @@ import { RiskPolicyEngineService } from "./security/risk-policy-engine.service";
 import { PendingActionService } from "./security/pending-action.service";
 import { SensitiveDataFilterService } from "./security/sensitive-data-filter.service";
 import { IntentRouterService } from "./intent-router/intent-router.service";
+import { ChiefAgronomistAgent } from "./agents/chief-agronomist-agent.service";
+import { DataScientistAgent } from "./agents/data-scientist-agent.service";
 import { SatelliteModule } from "../satellite/satellite.module";
 import { ExternalSignalsService } from "./external-signals.service";
 import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
@@ -65,6 +67,7 @@ import { RuntimeGovernanceRecommendationService } from "./runtime-governance/run
 import { RuntimeGovernanceFeatureFlagsService } from "./runtime-governance/runtime-governance-feature-flags.service";
 import { RuntimeGovernanceAutomationService } from "./runtime-governance/runtime-governance-automation.service";
 import { RuntimeGovernanceOverrideService } from "./runtime-governance/runtime-governance-override.service";
+import { ExpertModule } from "./expert/expert.module";
 
 @Module({
   imports: [
@@ -79,6 +82,7 @@ import { RuntimeGovernanceOverrideService } from "./runtime-governance/runtime-g
     CrmModule,
     CommerceModule,
     AuditModule,
+    ExpertModule,
   ],
   controllers: [RaiChatController, IncidentsGovernanceController],
   providers: [
@@ -101,6 +105,8 @@ import { RuntimeGovernanceOverrideService } from "./runtime-governance/runtime-g
     CrmAgent,
     FrontOfficeAgent,
     ContractsAgent,
+    ChiefAgronomistAgent,
+    DataScientistAgent,
     MemoryCoordinatorService,
     AgentRuntimeService,
     AgentExecutionAdapterService,
@@ -139,6 +145,9 @@ import { RuntimeGovernanceOverrideService } from "./runtime-governance/runtime-g
   exports: [
     FrontOfficeToolsRegistry,
     FrontOfficeAgent,
+    ChiefAgronomistAgent,
+    DataScientistAgent,
+    RaiChatService,
     SafeReplayService,
     PerformanceMetricsService,
     QueueMetricsService,
@@ -155,4 +164,4 @@ import { RuntimeGovernanceOverrideService } from "./runtime-governance/runtime-g
     RuntimeGovernanceAutomationService,
   ],
 })
-export class RaiChatModule {}
+export class RaiChatModule { }

@@ -1,4 +1,4 @@
-﻿﻿---
+---
 id: DOC-INS-AGT-PROFILE-011
 type: Instruction
 layer: Agents
@@ -8,42 +8,42 @@ owners: [@techlead]
 last_updated: 2026-03-10
 ---
 
-# РРќРЎРўР РЈРљР¦РРЇ вЂ” РџР РћР¤РР›Р¬ РђР“Р•РќРўРђ PERSONAL_ASSISTANT
+# ИНСТРУКЦИЯ — ПРОФИЛЬ АГЕНТА PERSONAL_ASSISTANT
 
-## 1. РќР°Р·РЅР°С‡РµРЅРёРµ
+## 1. Назначение
 
-Р”РѕРєСѓРјРµРЅС‚ РѕРїРёСЃС‹РІР°РµС‚ plan/template-role `personal_assistant`.
+Документ описывает plan/template-role `personal_assistant`.
 
-## 2. РљРѕРіРґР° РїСЂРёРјРµРЅСЏС‚СЊ
+## 2. Когда применять
 
-РСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РґРѕРєСѓРјРµРЅС‚ РїСЂРё РїСЂРѕРµРєС‚РёСЂРѕРІР°РЅРёРё Р»РёС‡РЅРѕРіРѕ delegated-assistant РєРѕРЅС‚СѓСЂР° Рё РїСЂРё СЂР°Р·РІРµРґРµРЅРёРё РµРіРѕ РіСЂР°РЅРёС† СЃ business owner-agents.
+Использовать документ при проектировании личного delegated-assistant контура и при разведении его границ с business owner-agents.
 
-## 3. РЎС‚Р°С‚СѓСЃ Р°РіРµРЅС‚Р°
+## 3. Статус агента
 
-- РЎС‚Р°С‚СѓСЃ: РїР»Р°РЅРѕРІР°СЏ template/future role.
-- Runtime family: РЅРµ СЂРµР°Р»РёР·РѕРІР°РЅР°.
-- Owner domain РІ template: `personal_ops`.
+- Статус: плановая template/future role.
+- Runtime family: не реализована.
+- Owner domain в template: `personal_ops`.
 - Execution adapter: `knowledge`.
 
-## 4. РЎС‚СЂР°С‚РµРіРёС‡РµСЃРєРёР№ РѕР±СЂР°Р· Р°РіРµРЅС‚Р° РІ Stage 2
+## 4. Стратегический образ агента в Stage 2
 
-Р РѕР»СЊ РЅСѓР¶РЅР° РґР»СЏ:
+Роль нужна для:
 
 - personal tasks;
 - agenda coordination;
 - delegated summaries;
 - reminders;
-- personal productivity РІ СѓР·РєРёС… Рё privacy-safe РіСЂР°РЅРёС†Р°С… Р±РµР· РїРµСЂРµС…РІР°С‚Р° Р±РёР·РЅРµСЃ ownership.
+- personal productivity в узких и privacy-safe границах без перехвата бизнес ownership.
 
-## 5. Р¤Р°РєС‚РёС‡РµСЃРєРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ Р°РіРµРЅС‚Р° РїРѕ РєРѕРґСѓ
+## 5. Фактическое состояние агента по коду
 
-РџРѕРґС‚РІРµСЂР¶РґС‘РЅ С‚РѕР»СЊРєРѕ РєР°Рє onboarding template:
+Подтверждён только как onboarding template:
 
 - `ownerDomain: personal_ops`
 - `profileId: personal-assistant-runtime-v1`
 - `executionAdapterRole: knowledge`
 - `ProductivityToolsRegistry`
-- connector `calendar_read_model` РІ СЂРµР¶РёРјРµ `read`
+- connector `calendar_read_model` в режиме `read`
 - `personal-assistant-v1` output contract
 - `personal-assistant-memory-v1`
 - `personal-assistant-governance-v1`
@@ -52,233 +52,233 @@ last_updated: 2026-03-10
 - fallback rule `use_context_summary_if_llm_unavailable`
 - optional `personal-ops-adapter`
 
-Canonical runtime role РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚.
+Canonical runtime role отсутствует.
 
-## 6. Р”РѕРјРµРЅС‹ РѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕСЃС‚Рё
+## 6. Домены ответственности
 
 - personal tasks;
 - reminders;
 - delegated summaries;
 - agenda and lightweight coordination;
-- personal context interpretation РІ РґРµР»РµРіРёСЂРѕРІР°РЅРЅС‹С… РіСЂР°РЅРёС†Р°С…, Р° РЅРµ business execution.
+- personal context interpretation в делегированных границах, а не business execution.
 
-## 7. Р§С‚Рѕ Р°РіРµРЅС‚ РѕР±СЏР·Р°РЅ РґРµР»Р°С‚СЊ
+## 7. Что агент обязан делать
 
-- Р Р°Р±РѕС‚Р°С‚СЊ С‚РѕР»СЊРєРѕ РІ РґРµР»РµРіРёСЂРѕРІР°РЅРЅС‹С… Рё privacy-safe РїСЂРµРґРµР»Р°С….
-- РЈРІР°Р¶Р°С‚СЊ personal context Рё masking policy.
-- РћС‚РґРµР»СЏС‚СЊ summary Рё coordination РѕС‚ РІРЅРµС€РЅРµРіРѕ РґРµР№СЃС‚РІРёСЏ.
-- РќРµ СЃРѕРІРµСЂС€Р°С‚СЊ РІРЅРµС€РЅРёРµ writes Р±РµР· РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ.
+- Работать только в делегированных и privacy-safe пределах.
+- Уважать personal context и masking policy.
+- Отделять summary и coordination от внешнего действия.
+- Не совершать внешние writes без подтверждения.
 
-## 8. Р§С‚Рѕ Р°РіРµРЅС‚Сѓ Р·Р°РїСЂРµС‰РµРЅРѕ РґРµР»Р°С‚СЊ
+## 8. Что агенту запрещено делать
 
-- Р’С‹РїРѕР»РЅСЏС‚СЊ unreviewed external writes.
-- Р—Р°С…РІР°С‚С‹РІР°С‚СЊ ownership Р±РёР·РЅРµСЃ-РґРѕРјРµРЅРѕРІ.
-- РџРѕРґРјРµРЅСЏС‚СЊ `crm_agent`, `contracts_agent`, `economist`, `legal_advisor`, `front_office_agent` РёР»Рё РґСЂСѓРіРёРµ owner-Р°РіРµРЅС‚С‹.
-- РџСЂРёС‚РІРѕСЂСЏС‚СЊСЃСЏ production-ready runtime owner, РїРѕРєР° canonical personal_ops family РЅРµ РїРѕРґРЅСЏС‚Р°.
-- РСЃРїРѕР»СЊР·РѕРІР°С‚СЊ personal contour РєР°Рє РѕР±С…РѕРґ Р±РёР·РЅРµСЃ-guardrails.
+- Выполнять unreviewed external writes.
+- Захватывать ownership бизнес-доменов.
+- Подменять `crm_agent`, `contracts_agent`, `economist`, `legal_advisor`, `front_office_agent` или другие owner-агенты.
+- Притворяться production-ready runtime owner, пока canonical personal_ops family не поднята.
+- Использовать personal contour как обход бизнес-guardrails.
 
-## 9. РўРµРєСѓС‰РёР№ С„Р°РєС‚РёС‡РµСЃРєРёР№ С„СѓРЅРєС†РёРѕРЅР°Р»
+## 9. Текущий фактический функционал
 
-РџРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Р№ current state РЅР° template-СѓСЂРѕРІРЅРµ:
+Подтверждённый current state на template-уровне:
 
-- template manifest РґР»СЏ `personal_assistant`;
-- runtime defaults РґР»СЏ Р±СѓРґСѓС‰РµРіРѕ personal_ops-РєРѕРЅС‚СѓСЂР°;
-- adapter binding Рє `knowledge`;
-- `ProductivityToolsRegistry` РЅР° template-СѓСЂРѕРІРЅРµ;
-- read-only connector `calendar_read_model` СЃРѕ scope `events`, `availability`;
-- `personal-assistant-v1` output contract СЃ СЃРµРєС†РёСЏРјРё `summary`, `tasks`, `constraints`, `next_steps`;
-- memory policy `personal-assistant-memory-v1` СЃРѕ `scoped_recall`, `append_interaction` Рё `allow_masked_only`;
-- governance defaults РґР»СЏ delegated advisory-only path;
-- optional `personal-ops-adapter` РґР»СЏ deterministic formatting РєР°Р»РµРЅРґР°СЂСЏ Рё Р·Р°РґР°С‡.
+- template manifest для `personal_assistant`;
+- runtime defaults для будущего personal_ops-контура;
+- adapter binding к `knowledge`;
+- `ProductivityToolsRegistry` на template-уровне;
+- read-only connector `calendar_read_model` со scope `events`, `availability`;
+- `personal-assistant-v1` output contract с секциями `summary`, `tasks`, `constraints`, `next_steps`;
+- memory policy `personal-assistant-memory-v1` со `scoped_recall`, `append_interaction` и `allow_masked_only`;
+- governance defaults для delegated advisory-only path;
+- optional `personal-ops-adapter` для deterministic formatting календаря и задач.
 
-Р§С‚Рѕ РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ СЃРµР№С‡Р°СЃ РєР°Рє runtime-С„СѓРЅРєС†РёРѕРЅР°Р»:
+Что отсутствует сейчас как runtime-функционал:
 
 - canonical runtime family;
-- РїРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Р№ СЃР°РјРѕСЃС‚РѕСЏС‚РµР»СЊРЅС‹Р№ personal_ops intent catalog РІ `rai-chat`;
+- подтверждённый самостоятельный personal_ops intent catalog в `rai-chat`;
 - production personal-assistant tool surface;
-- direct production routing РІ `personal_assistant` РєР°Рє РІ `primary owner-agent`.
+- direct production routing в `personal_assistant` как в `primary owner-agent`.
 
-## 10. РњР°РєСЃРёРјР°Р»СЊРЅРѕ РґРѕРїСѓСЃС‚РёРјС‹Р№ С„СѓРЅРєС†РёРѕРЅР°Р»
+## 10. Максимально допустимый функционал
 
 - Calendar and task summary;
 - next-step planning;
 - delegated reminders;
-- lightweight coordination РІРЅСѓС‚СЂРё user scope;
+- lightweight coordination внутри user scope;
 - read-only follow-up preparation;
-- advisory handoff Рє РґРѕРјРµРЅРЅС‹Рј owner-Р°РіРµРЅС‚Р°Рј Р±РµР· РїРѕРґРјРµРЅС‹ РёС… ownership.
+- advisory handoff к доменным owner-агентам без подмены их ownership.
 
-Р РѕР»СЊ РЅРµ РґРѕР»Р¶РЅР° Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё СЂР°СЃС€РёСЂСЏС‚СЊСЃСЏ РґРѕ:
+Роль не должна автоматически расширяться до:
 
-- ownership РЅР°Рґ CRM, contracts, finance, legal, agronomy РёР»Рё monitoring;
-- communicator ingress ownership Сѓ `front_office_agent`;
-- retrieval ownership Сѓ `knowledge`;
-- СЃРєСЂС‹С‚РѕРіРѕ executive assistant, РєРѕС‚РѕСЂС‹Р№ РёСЃРїРѕР»РЅСЏРµС‚ business actions Р±РµР· РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ;
-- bypass-path РІРѕРєСЂСѓРі РїРѕРґС‚РІРµСЂР¶РґРµРЅРёР№ Рё privacy restrictions.
+- ownership над CRM, contracts, finance, legal, agronomy или monitoring;
+- communicator ingress ownership у `front_office_agent`;
+- retrieval ownership у `knowledge`;
+- скрытого executive assistant, который исполняет business actions без подтверждения;
+- bypass-path вокруг подтверждений и privacy restrictions.
 
-## 11. РЎРІСЏР·Рё СЃ РѕСЂРєРµСЃС‚СЂР°С‚РѕСЂРѕРј
+## 11. Связи с оркестратором
 
-- РЎРµР№С‡Р°СЃ С‚РѕР»СЊРєРѕ С‡РµСЂРµР· onboarding template.
-- Р’ canonical runtime topology РєР°Рє РѕС‚РґРµР»СЊРЅР°СЏ family РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚.
-- Р”Рѕ canonical enablement direct production routing РІ `personal_assistant` Р·Р°РїСЂРµС‰С‘РЅ.
+- Сейчас только через onboarding template.
+- В canonical runtime topology как отдельная family отсутствует.
+- До canonical enablement direct production routing в `personal_assistant` запрещён.
 
-## 12. РЎРІСЏР·Рё СЃ РґСЂСѓРіРёРјРё Р°РіРµРЅС‚Р°РјРё
+## 12. Связи с другими агентами
 
-- РЎ `knowledge`: С‚РµРєСѓС‰РµРµ template inheritance Рё retrieval support.
-- РЎ РґРѕРјРµРЅРЅС‹РјРё owner-agents: С‚РѕР»СЊРєРѕ РєР°Рє РїРѕС‚СЂРµР±РёС‚РµР»СЊ РёС… read-only СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ, Р° РЅРµ РІР»Р°РґРµР»РµС† СЃС†РµРЅР°СЂРёСЏ.
-- РЎ `front_office_agent`: Р±СѓРґСѓС‰РёР№ restricted handoff РїРѕ personal/delegated summaries, РєРѕРіРґР° Р·Р°РїСЂРѕСЃ РЅРµ СЏРІР»СЏРµС‚СЃСЏ business ingress.
+- С `knowledge`: текущее template inheritance и retrieval support.
+- С доменными owner-agents: только как потребитель их read-only результатов, а не владелец сценария.
+- С `front_office_agent`: будущий restricted handoff по personal/delegated summaries, когда запрос не является business ingress.
 
-### 12.1 РќРѕСЂРјР°С‚РёРІРЅС‹Рµ handoff-trigger Р·РѕРЅС‹
+### 12.1 Нормативные handoff-trigger зоны
 
-`personal_assistant` РјРѕР¶РµС‚ Р±С‹С‚СЊ owner С‚РѕР»СЊРєРѕ standalone delegated/personal-Р·Р°РїСЂРѕСЃР°, РєРѕРіРґР° РґРѕРјРёРЅРёСЂСѓСЋС‰РµРµ РґРµР№СЃС‚РІРёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РѕС‚РЅРѕСЃРёС‚СЃСЏ Рє personal coordination:
+`personal_assistant` может быть owner только standalone delegated/personal-запроса, когда доминирующее действие пользователя относится к personal coordination:
 
-- СЃРѕР±СЂР°С‚СЊ Р»РёС‡РЅСѓСЋ СЃРІРѕРґРєСѓ РїРѕ РєР°Р»РµРЅРґР°СЂСЋ Рё Р·Р°РґР°С‡Р°Рј;
-- РїРѕРґРіРѕС‚РѕРІРёС‚СЊ delegated reminder;
-- РѕС„РѕСЂРјРёС‚СЊ next steps РїРѕ СѓР¶Рµ РёР·РІРµСЃС‚РЅРѕРјСѓ Р»РёС‡РЅРѕРјСѓ РєРѕРЅС‚РµРєСЃС‚Сѓ;
-- РЅР°РїРѕРјРЅРёС‚СЊ РѕРіСЂР°РЅРёС‡РµРЅРёСЏ, РІСЃС‚СЂРµС‡Рё РёР»Рё availability;
-- СЃРґРµР»Р°С‚СЊ read-only personal follow-up Р±РµР· Р±РёР·РЅРµСЃ-РёСЃРїРѕР»РЅРµРЅРёСЏ.
+- собрать личную сводку по календарю и задачам;
+- подготовить delegated reminder;
+- оформить next steps по уже известному личному контексту;
+- напомнить ограничения, встречи или availability;
+- сделать read-only personal follow-up без бизнес-исполнения.
 
-Р”Р°Р¶Рµ РІ СЌС‚РёС… СЃР»СѓС‡Р°СЏС… РґРѕ canonical enablement direct production routing РІ `personal_assistant` РѕСЃС‚Р°С‘С‚СЃСЏ Р·Р°РїСЂРµС‰С‘РЅРЅС‹Рј. РћСЂРєРµСЃС‚СЂР°С‚РѕСЂ РґРѕР»Р¶РµРЅ С‚СЂР°РєС‚РѕРІР°С‚СЊ СЌС‚Рѕ РєР°Рє future delegated/personal path, Р° РЅРµ РєР°Рє СѓР¶Рµ РґРѕСЃС‚СѓРїРЅС‹Р№ runtime owner.
+Даже в этих случаях до canonical enablement direct production routing в `personal_assistant` остаётся запрещённым. Оркестратор должен трактовать это как future delegated/personal path, а не как уже доступный runtime owner.
 
-Ownership РЅРµ РґРѕР»Р¶РµРЅ РїРµСЂРµС…РѕРґРёС‚СЊ РІ `personal_assistant`, РєРѕРіРґР° РіР»Р°РІРЅРѕРµ РґРµР№СЃС‚РІРёРµ РѕСЃС‚Р°С‘С‚СЃСЏ Сѓ РґРѕРјРµРЅРЅРѕРіРѕ owner-Р°:
+Ownership не должен переходить в `personal_assistant`, когда главное действие остаётся у доменного owner-а:
 
-- РѕР±РЅРѕРІРёС‚СЊ CRM record, account, contact РёР»Рё interaction;
-- СЃРѕР·РґР°С‚СЊ РёР»Рё РёСЃРїРѕР»РЅРёС‚СЊ РґРѕРіРѕРІРѕСЂРЅС‹Р№, invoice, payment РёР»Рё AR action;
-- РІС‹РїРѕР»РЅРёС‚СЊ finance analysis, legal review, agronomy action РёР»Рё monitoring remediation;
-- РѕР±СЂР°Р±РѕС‚Р°С‚СЊ communicator ingress, thread classification РёР»Рё escalation;
-- РЅР°Р№С‚Рё РґРѕРєСѓРјРµРЅС‚, policy РёР»Рё corpus evidence РєР°Рє РѕСЃРЅРѕРІРЅРѕР№ СЂРµР·СѓР»СЊС‚Р°С‚.
+- обновить CRM record, account, contact или interaction;
+- создать или исполнить договорный, invoice, payment или AR action;
+- выполнить finance analysis, legal review, agronomy action или monitoring remediation;
+- обработать communicator ingress, thread classification или escalation;
+- найти документ, policy или corpus evidence как основной результат.
 
-Р–С‘СЃС‚РєРёРµ СЂР°Р·Р»РёС‡РёСЏ:
+Жёсткие различия:
 
-- `personal_assistant` РЅСѓР¶РµРЅ РґР»СЏ delegated summaries, reminders Рё personal coordination;
-- `front_office_agent` РІР»Р°РґРµРµС‚ communicator ingress Рё РґРёР°Р»РѕРіРѕРІС‹РјРё СЌСЃРєР°Р»Р°С†РёСЏРјРё;
-- РґРѕРјРµРЅРЅС‹Рµ owner-Р°РіРµРЅС‚С‹ РІР»Р°РґРµСЋС‚ business decisions Рё execution;
-- `knowledge` РІР»Р°РґРµРµС‚ retrieval Рё grounding;
-- `personal_assistant` РЅРµ РґРѕР»Р¶РµРЅ РїСЂРµРІСЂР°С‰Р°С‚СЊСЃСЏ РІ СѓРЅРёРІРµСЂСЃР°Р»СЊРЅС‹Р№ РѕР±С…РѕРґРЅРѕР№ Р°РіРµРЅС‚ РґР»СЏ Р»СЋР±С‹С… РїРѕСЂСѓС‡РµРЅРёР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ.
+- `personal_assistant` нужен для delegated summaries, reminders и personal coordination;
+- `front_office_agent` владеет communicator ingress и диалоговыми эскалациями;
+- доменные owner-агенты владеют business decisions и execution;
+- `knowledge` владеет retrieval и grounding;
+- `personal_assistant` не должен превращаться в универсальный обходной агент для любых поручений пользователя.
 
-Р”РѕРїСѓСЃС‚РёРјС‹Рµ governed handoff:
+Допустимые governed handoff:
 
-- РёР· Р»СЋР±РѕРіРѕ owner-agent, РєРѕРіРґР° РЅСѓР¶РµРЅ delegated summary РёР»Рё read-only follow-up РїРѕ СѓР¶Рµ Р·Р°РІРµСЂС€С‘РЅРЅРѕРјСѓ РґРѕРјРµРЅРЅРѕРјСѓ СЂРµР·СѓР»СЊС‚Р°С‚Сѓ;
-- РёР· `front_office_agent`, РєРѕРіРґР° РёР· РІС…РѕРґСЏС‰РµРіРѕ РѕР±С‰РµРЅРёСЏ РІС‹РґРµР»РµРЅ РёРјРµРЅРЅРѕ personal/delegated Р·Р°РїСЂРѕСЃ, Р° РЅРµ business escalation;
-- РёР· `knowledge`, РєРѕРіРґР° retrieval СѓР¶Рµ РЅР°Р№РґРµРЅ Рё РЅСѓР¶РµРЅ personal summary layer;
-- РІ РґРѕРјРµРЅРЅРѕРіРѕ owner-agent, РєРѕРіРґР° personal discussion РїРµСЂРµС…РѕРґРёС‚ РІ business action;
-- РІ `knowledge`, РєРѕРіРґР° personal request СѓРїРёСЂР°РµС‚СЃСЏ РІ retrieval, policy РёР»Рё corpus lookup.
+- из любого owner-agent, когда нужен delegated summary или read-only follow-up по уже завершённому доменному результату;
+- из `front_office_agent`, когда из входящего общения выделен именно personal/delegated запрос, а не business escalation;
+- из `knowledge`, когда retrieval уже найден и нужен personal summary layer;
+- в доменного owner-agent, когда personal discussion переходит в business action;
+- в `knowledge`, когда personal request упирается в retrieval, policy или corpus lookup.
 
-РђРЅС‚Рё-С‚СЂРёРіРіРµСЂС‹:
+Анти-триггеры:
 
-- РЅР°Р»РёС‡РёРµ СЃР»РѕРІ `РЅР°РїРѕРјРЅРё`, `Р·Р°РґР°С‡Р°`, `РїР»Р°РЅ`, РµСЃР»Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РїРѕ СЃСѓС‚Рё РїСЂРѕСЃРёС‚ business execution;
-- РЅР°Р»РёС‡РёРµ personal wording РІРЅСѓС‚СЂРё CRM, contracts, finance РёР»Рё legal Р·Р°РїСЂРѕСЃР°;
-- РЅР°Р»РёС‡РёРµ РєР°Р»РµРЅРґР°СЂРЅРѕРіРѕ РєРѕРЅС‚РµРєСЃС‚Р° Р±РµР· СЃР°РјРѕСЃС‚РѕСЏС‚РµР»СЊРЅРѕРіРѕ personal/delegated РІРѕРїСЂРѕСЃР°;
-- РЅР°Р»РёС‡РёРµ route `/dashboard/tasks` Р±РµР· СЃРјРµРЅС‹ РґРѕРјРёРЅРёСЂСѓСЋС‰РµРіРѕ РґРµР№СЃС‚РІРёСЏ;
-- РЅР°Р»РёС‡РёРµ summary-РІРѕРїСЂРѕСЃР°, РєРѕРіРґР° РЅСѓР¶РµРЅ owner-result РґСЂСѓРіРѕРіРѕ РґРѕРјРµРЅР°, Р° РЅРµ personal wrapper.
+- наличие слов `напомни`, `задача`, `план`, если пользователь по сути просит business execution;
+- наличие personal wording внутри CRM, contracts, finance или legal запроса;
+- наличие календарного контекста без самостоятельного personal/delegated вопроса;
+- наличие route `/dashboard/tasks` без смены доминирующего действия;
+- наличие summary-вопроса, когда нужен owner-result другого домена, а не personal wrapper.
 
-Р­С‚Рё РїСЂРёР·РЅР°РєРё РЅРµ РґРѕР»Р¶РЅС‹ РїРµСЂРµРІРѕРґРёС‚СЊ ownership РІ `personal_assistant`, РµСЃР»Рё РіР»Р°РІРЅРѕРµ РґРµР№СЃС‚РІРёРµ РѕСЃС‚Р°С‘С‚СЃСЏ Сѓ РґРѕРјРµРЅРЅРѕРіРѕ owner-Р°, `front_office_agent` РёР»Рё `knowledge`.
+Эти признаки не должны переводить ownership в `personal_assistant`, если главное действие остаётся у доменного owner-а, `front_office_agent` или `knowledge`.
 
-## 13. РЎРІСЏР·Рё СЃ РґРѕРјРµРЅРЅС‹РјРё РјРѕРґСѓР»СЏРјРё
+## 13. Связи с доменными модулями
 
 - `ProductivityToolsRegistry`
 - `calendar_read_model`
-- Р±СѓРґСѓС‰РёР№ `personal-ops-adapter`
+- будущий `personal-ops-adapter`
 
 ## 14. Required Context Contract
 
-РљР°Рє canonical runtime contract РЅРµ С„РѕСЂРјР°Р»РёР·РѕРІР°РЅ.
+Как canonical runtime contract не формализован.
 
-РќР° future/template-СѓСЂРѕРІРЅРµ РґР»СЏ personal/delegated СЂР°Р·Р±РѕСЂР° РїРѕР»РµР·РЅС‹:
+На future/template-уровне для personal/delegated разбора полезны:
 
-- user-scoped task РёР»Рё calendar context;
+- user-scoped task или calendar context;
 - availability / event summary;
 - privacy and masking constraints;
-- explicit delegated question РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ;
-- РіСЂР°РЅРёС†Р° РјРµР¶РґСѓ personal coordination Рё business action.
+- explicit delegated question пользователя;
+- граница между personal coordination и business action.
 
 ## 15. Intent Catalog
 
-### 15.1 РџРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Рµ current intent-С‹
+### 15.1 Подтверждённые current intent-ы
 
-РџРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹С… canonical runtime intent-РѕРІ СЃРµР№С‡Р°СЃ РЅРµС‚.
+Подтверждённых canonical runtime intent-ов сейчас нет.
 
-Р•СЃС‚СЊ С‚РѕР»СЊРєРѕ template-level semantics РґР»СЏ:
+Есть только template-level semantics для:
 
 - personal summary;
 - delegated reminders;
 - task and calendar overview;
 - next-step coordination.
 
-### 15.2 РњР°РєСЃРёРјР°Р»СЊРЅРѕ РґРѕРїСѓСЃС‚РёРјС‹Р№ intent-scope
+### 15.2 Максимально допустимый intent-scope
 
-Р’ РїСЂРµРґРµР»Р°С… personal_ops-domain РґРѕРїСѓСЃС‚РёРјС‹ С‚РѕР»СЊРєРѕ С‚Р°РєРёРµ Р±СѓРґСѓС‰РёРµ intent-С‹:
+В пределах personal_ops-domain допустимы только такие будущие intent-ы:
 
 - summarize_personal_context;
 - prepare_delegated_reminder;
 - review_calendar_constraints;
 - outline_next_steps;
-- governed advisory handoff support РґР»СЏ personal/delegated follow-up.
+- governed advisory handoff support для personal/delegated follow-up.
 
-Р­С‚Рё intent-С‹ РЅРµ РґРѕР»Р¶РЅС‹ РїСЂРµРІСЂР°С‰Р°С‚СЊ `personal_assistant` РІ owner РґР»СЏ CRM, contracts, finance, legal, agronomy, monitoring РёР»Рё front-office actions.
+Эти intent-ы не должны превращать `personal_assistant` в owner для CRM, contracts, finance, legal, agronomy, monitoring или front-office actions.
 
 ## 16. Tool surface
 
-### 16.1 РџРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Р№ current tool surface
+### 16.1 Подтверждённый current tool surface
 
-РќР° С‚РµРєСѓС‰РµРј СЌС‚Р°РїРµ РїРѕРґС‚РІРµСЂР¶РґС‘РЅ С‚РѕР»СЊРєРѕ template-level surface:
+На текущем этапе подтверждён только template-level surface:
 
 - `ProductivityToolsRegistry`
 
-Canonical runtime tool surface РІ `rai-chat` РїРѕРєР° РЅРµ РїРѕРґС‚РІРµСЂР¶РґС‘РЅ.
+Canonical runtime tool surface в `rai-chat` пока не подтверждён.
 
-### 16.2 РњР°РєСЃРёРјР°Р»СЊРЅРѕ РґРѕРїСѓСЃС‚РёРјС‹Р№ tool surface
+### 16.2 Максимально допустимый tool surface
 
-Р’ С†РµР»РµРІРѕР№ РјРѕРґРµР»Рё РґРѕРїСѓСЃС‚РёРјС‹ С‚РѕР»СЊРєРѕ personal/productivity-СЃРїРµС†РёС„РёС‡РЅС‹Рµ СЂР°СЃС€РёСЂРµРЅРёСЏ:
+В целевой модели допустимы только personal/productivity-специфичные расширения:
 
 - calendar summary tooling;
 - task prioritization tooling;
 - delegated reminder tooling;
 - personal context preparation tooling.
 
-Tool surface РЅРµ РґРѕР»Р¶РµРЅ СЂР°СЃС€РёСЂСЏС‚СЊСЃСЏ РІ:
+Tool surface не должен расширяться в:
 
 - CRM-owner tools;
 - contracts execution tools;
 - finance-owner tools;
 - legal-owner tools;
 - monitoring-owner tools;
-- external write tools Р±РµР· СЏРІРЅРѕРіРѕ confirmation gate.
+- external write tools без явного confirmation gate.
 
 ## 17. UI surface
 
-- РџРѕРєР° С‚РѕР»СЊРєРѕ onboarding.
-- Productized personal assistant windows РµС‰С‘ РЅРµ РїРѕРґС‚РІРµСЂР¶РґРµРЅС‹.
+- Пока только onboarding.
+- Productized personal assistant windows ещё не подтверждены.
 
 ## 18. Guardrails
 
 - `delegated_actions_require_confirmation`
 - `no_unreviewed_external_writes`
 - masked / privacy-safe sensitive data policy
-- С‚РѕР»СЊРєРѕ delegated and read-safe path
+- только delegated and read-safe path
 
-## 19. РћСЃРЅРѕРІРЅС‹Рµ СЂРёСЃРєРё Рё failure modes
+## 19. Основные риски и failure modes
 
-- РЎР»РёС€РєРѕРј С€РёСЂРѕРєРёР№ РґРѕСЃС‚СѓРї Рє Р»РёС‡РЅС‹Рј РґР°РЅРЅС‹Рј.
-- РџРѕРґРјРµРЅР° personal assistance Р±РёР·РЅРµСЃ-ownership Р·Р°РґР°С‡Р°РјРё.
-- Р›РѕР¶РЅРѕРµ РѕС‰СѓС‰РµРЅРёРµ production-ready СЃС‚Р°С‚СѓСЃР° РёР·-Р·Р° РЅР°Р»РёС‡РёСЏ template.
-- РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ personal contour РєР°Рє РѕР±С…РѕРґРЅРѕРіРѕ РїСѓС‚Рё РІРѕРєСЂСѓРі domain guardrails.
+- Слишком широкий доступ к личным данным.
+- Подмена personal assistance бизнес-ownership задачами.
+- Ложное ощущение production-ready статуса из-за наличия template.
+- Использование personal contour как обходного пути вокруг domain guardrails.
 
-## 20. РўСЂРµР±РѕРІР°РЅРёСЏ Рє С‚РµСЃС‚Р°Рј
+## 20. Требования к тестам
 
 - Template validation.
 - Governance validation.
 - Privacy and masking validation.
-- РџРѕСЃР»Рµ enablement: delegated action, confirmation Рё routing regression tests.
+- После enablement: delegated action, confirmation и routing regression tests.
 
-## 21. РљСЂРёС‚РµСЂРёРё production-ready
+## 21. Критерии production-ready
 
 - Canonical runtime family.
-- Р›РёС‡РЅС‹Р№ context contract.
+- Личный context contract.
 - Privacy-safe tool surface.
-- РџРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ РЅР° РІСЃРµ РІРЅРµС€РЅРёРµ actions.
-- Smoke-СЃС†РµРЅР°СЂРёРё РїРѕ summaries, reminders Рё delegated coordination.
+- Подтверждения на все внешние actions.
+- Smoke-сценарии по summaries, reminders и delegated coordination.
 
-## 22. РЎРІСЏР·Р°РЅРЅС‹Рµ С„Р°Р№Р»С‹ Рё С‚РѕС‡РєРё РєРѕРґР°
+## 22. Связанные файлы и точки кода
 
 - [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md](../../00_STRATEGY/STAGE%202/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md)
 - [A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md](../../00_STRATEGY/STAGE%202/A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md)

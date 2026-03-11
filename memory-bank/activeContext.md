@@ -1,8 +1,22 @@
 # Активный контекст RAI_EP
 
-## Текущая задача
+## Текущая задача (2026-03-10)
+- [x] Исправление ебучего пиздеца с кодировкой (mojibake) после `git pull`. Какая-то падла запушила файлы в кривой кодировке.
+- [x] Разрешение конфликтов — локальные изменения (stash) восстановлены, кодировка поправлена.
+- [ ] Запуск и проверка API/Web. Промзапускаем, чтобы убедиться, что ничего не отвалилось.
+- [x] Проектирование `chief_agronomist` (Цифровой Мега-Агроном) — expert-tier роль, вшитая в ядро консалтинга. Полный профиль v1.1: Dual mode (Lightweight + Full PRO), энграмный контур, проактивность через алерты, ethical guardrail D+E.
+- [x] **RAI Memory Architecture v2** — спроектирована 6-уровневая когнитивная система памяти: L1 Reactive → L2 Episodic → L3 Semantic → L4 Engrams → L5 Institutional → L6 Network. Документ: `docs/07_EXECUTION/MEMORY_SYSTEM/RAI_MEMORY_ARCHITECTURE_v2.md`.
+- [x] **Реализация когнитивной памяти + Expert Agents (ALL PHASES DONE):**
+    - Phase 1: Prisma Engram+SemanticFact, EngramService, WorkingMemoryService, ConsolidationWorker, EngramFormationWorker, MemoryFacade.
+    - Phase 2: MemoryCoordinatorService parallel recall, SupervisorAgent → AgentMemoryContext.
+    - Phase 3: ExpertInvocationEngine + ChiefAgronomistService (Lightweight tips + Full PRO expertise + Ethical guardrail).
+    - Phase 4: SeasonalLoopService (End-of-season batch, Cross-partner sharing, Trust Score).
+    - Phase 5.1-5.3: DataScientistService (Yield Prediction, Disease Risk, Cost Optimization, Seasonal Reports, Pattern Mining, Network Benchmarking, What-If Simulator).
+    - Phase 5.4: FeatureStoreService + ModelRegistryService (ML Pipeline + A/B Testing Framework).
+    - **Integration**: `ChiefAgronomistAgent` & `DataScientistAgent` registered in `AgentRegistryService` & `AgentExecutionAdapterService`.
+    - **TypeScript 0 ошибок.** Архитектура "Expert-tier" полностью вшита в рантайм.
+- [x] **Документация**: TDP BLOCK 4, чеклист, профили agentов, каталог, матрица ответственности, матрица связей обновлены.
 
-Завершено проектирование мульти-агентной AI архитектуры для RAI Enterprise Platform.
 
 ## Созданные документы
 

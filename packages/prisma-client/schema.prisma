@@ -1947,6 +1947,112 @@ model MemoryProfile {
   @@map("memory_profiles")
 }
 
+// --- Когнитивная память: Энграммы (L4 — Procedural Memory) ---
+
+model Engram {
+  id               String                       @id @default(cuid())
+
+  // Классификация
+  type             String                       // AGRO | BUSINESS | CLIENT | SYSTEM
+  category         String                       // DISEASE_TREATMENT | NUTRITION | SOWING | HARVEST | PEST_CONTROL | WEATHER_RESPONSE | DEVIATION_OUTCOME
+
+  // Ядро: Триггер → Действие → Результат
+  triggerConditions Json                         // { crop, stage, disease, weather, soil, region }
+  actionTemplate   Json                         // { type, steps, parameters, dosage }
+  expectedOutcome  Json                         // { metrics, thresholds, validation_period }
+
+  // Сжатое текстовое представление для поиска
+  content          String                       @db.Text
+  embedding        Unsupported("vector(1536)")?
+
+  // Когнитивные метрики (правило Хебба)
+  synapticWeight   Float                        @default(0.5)
+  activationCount  Int                          @default(1)
+  successRate      Float                        @default(0.5)
+  successCount     Int                          @default(0)
+  failureCount     Int                          @default(0)
+
+  // Когнитивный уровень (1=конкретный случай, 5=обобщённый принцип)
+  cognitiveLevel   Int                          @default(1)
+  generalizability Float                        @default(0.3)
+  volatility       Float                        @default(0.5)
+
+  // Синаптические связи с другими энграммами
+  associations     Json                         @default("[]") // [{engramId, strength, type: CAUSAL|CONTEXTUAL|TEMPORAL}]
+
+  // Ключевые инсайты (сжатые)
+  keyInsights      String[]                     @default([])
+
+  // Carcass: tenant isolation
+  companyId        String?                      // null = глобальная энграмма (Network Memory L6)
+
+  // Связи с доменными сущностями
+  fieldId          String?
+  cropZoneId       String?
+  seasonId         String?
+
+  // Жизненный цикл
+  isActive         Boolean                      @default(true)
+  lastActivatedAt  DateTime?
+  firstFormedAt    DateTime                     @default(now())
+
+  // Flex
+  attrs            Json                         @default("{}") // { schemaKey: "memory.engram.v1", provenance, ... }
+
+  createdAt        DateTime                     @default(now())
+  updatedAt        DateTime                     @updatedAt
+
+  @@index([companyId, type])
+  @@index([companyId, category])
+  @@index([type, category, isActive])
+  @@index([isActive, synapticWeight])
+  @@map("engrams")
+}
+
+// --- Когнитивная память: Семантические факты (L3 — Semantic Memory) ---
+
+model SemanticFact {
+  id          String                       @id @default(cuid())
+
+  // Семантическая тройка: Субъект → Предикат → Объект
+  subject     String                       // "Прозаро", "озимый_рапс", "склеротиниоз"
+  predicate   String                       // "effective_against", "develops_at", "requires"
+  object      String                       // "склеротиниоз", "влажность > 75%", "BBCH-30-32"
+
+  // Домен
+  domain      String                       // phytopathology | nutrition | agronomy | chemistry | economics
+
+  // Метрики доверия
+  confidence  Float                        @default(0.5)
+  source      String                       // research | engram | expert | marketing-feed | registration
+
+  // Условия применимости
+  conditions  Json?                        // { bbch: "30-32", soilType: "суглинок", region: "ЦФО" }
+
+  // Срок действия (для регистрации препаратов и т.п.)
+  validFrom   DateTime?
+  validUntil  DateTime?
+
+  // Поиск
+  content     String                       @db.Text   // текстовое представление для vector search
+  embedding   Unsupported("vector(1536)")?
+
+  // Carcass: tenant isolation
+  companyId   String?                      // null = глобальный факт
+
+  // Flex
+  attrs       Json                         @default("{}") // { schemaKey: "memory.semantic.v1", provenance, ... }
+
+  createdAt   DateTime                     @default(now())
+  updatedAt   DateTime                     @updatedAt
+
+  @@index([companyId, domain])
+  @@index([subject])
+  @@index([predicate])
+  @@index([domain, confidence])
+  @@map("semantic_facts")
+}
+
 // --- CRM Models ---
 
 model Deal {

@@ -44,7 +44,10 @@ function buildThreadKey(params: {
   return [
     params.companyId,
     params.channel,
-    params.threadExternalId ?? params.dialogExternalId ?? params.senderExternalId ?? "unknown",
+    params.threadExternalId ??
+      params.dialogExternalId ??
+      params.senderExternalId ??
+      "unknown",
   ].join(":");
 }
 
@@ -53,7 +56,11 @@ function detectTargetOwnerRole(text: string): string | undefined {
   if (/договор|контракт|услови[ея]|подпис/i.test(normalized)) {
     return "contracts_agent";
   }
-  if (/контрагент|crm|клиент|контакт|лид|встреч/i.test(normalized)) {
+  if (
+    /контрагент|crm|лид|реквизит|карточк|контакт(?!\s+по\s+задаче)|встреч/i.test(
+      normalized,
+    )
+  ) {
     return "crm_agent";
   }
   if (/поле|техкарт|сезон|сзр|агроном|урож/i.test(normalized)) {
@@ -72,7 +79,11 @@ function detectTargetOwnerRole(text: string): string | undefined {
 }
 
 function classifyMessage(text: string): {
-  classification: "free_chat" | "task_process" | "client_request" | "escalation_signal";
+  classification:
+    | "free_chat"
+    | "task_process"
+    | "client_request"
+    | "escalation_signal";
   confidence: number;
   reasons: string[];
   targetOwnerRole?: string;
@@ -82,7 +93,9 @@ function classifyMessage(text: string): {
   const reasons: string[] = [];
   const targetOwnerRole = detectTargetOwnerRole(text);
 
-  if (/срочно|эскалац|критич|не работает|проблем|авари|зависло/i.test(normalized)) {
+  if (
+    /срочно|эскалац|критич|не работает|проблем|авари|зависло/i.test(normalized)
+  ) {
     reasons.push("critical_signal_detected");
     return {
       classification: "escalation_signal",
@@ -104,8 +117,12 @@ function classifyMessage(text: string): {
     };
   }
 
-  if (/клиент|контрагент|договор|сч[её]т|crm|контакт|аккаунт/i.test(normalized)) {
-    reasons.push("client_request_detected");
+  if (
+    /контрагент|договор|сч[её]т|crm|контакт|реквизит|карточк|подпис/i.test(
+      normalized,
+    )
+  ) {
+    reasons.push("business_request_detected");
     return {
       classification: "client_request",
       confidence: 0.78,
@@ -138,7 +155,9 @@ export class FrontOfficeToolsRegistry implements OnModuleInit {
     this.register(
       RaiToolName.LogDialogMessage,
       Joi.object<LogDialogMessagePayload>({
-        channel: Joi.string().valid("telegram", "web_chat", "internal").required(),
+        channel: Joi.string()
+          .valid("telegram", "web_chat", "internal")
+          .required(),
         direction: Joi.string().valid("inbound", "outbound").required(),
         messageText: Joi.string().trim().min(1).max(5000).required(),
         threadExternalId: Joi.string().trim().max(256).optional(),
@@ -187,7 +206,9 @@ export class FrontOfficeToolsRegistry implements OnModuleInit {
     this.register(
       RaiToolName.ClassifyDialogThread,
       Joi.object<ClassifyDialogThreadPayload>({
-        channel: Joi.string().valid("telegram", "web_chat", "internal").required(),
+        channel: Joi.string()
+          .valid("telegram", "web_chat", "internal")
+          .required(),
         messageText: Joi.string().trim().min(1).max(5000).required(),
         threadExternalId: Joi.string().trim().max(256).optional(),
         route: Joi.string().trim().max(256).optional(),
@@ -212,10 +233,17 @@ export class FrontOfficeToolsRegistry implements OnModuleInit {
     this.register(
       RaiToolName.CreateFrontOfficeEscalation,
       Joi.object<CreateFrontOfficeEscalationPayload>({
-        channel: Joi.string().valid("telegram", "web_chat", "internal").required(),
+        channel: Joi.string()
+          .valid("telegram", "web_chat", "internal")
+          .required(),
         messageText: Joi.string().trim().min(1).max(5000).required(),
         classification: Joi.string()
-          .valid("free_chat", "task_process", "client_request", "escalation_signal")
+          .valid(
+            "free_chat",
+            "task_process",
+            "client_request",
+            "escalation_signal",
+          )
           .optional(),
         threadExternalId: Joi.string().trim().max(256).optional(),
         route: Joi.string().trim().max(256).optional(),
@@ -231,7 +259,8 @@ export class FrontOfficeToolsRegistry implements OnModuleInit {
         });
         const derived = classifyMessage(payload.messageText);
         const classification = payload.classification ?? derived.classification;
-        const targetOwnerRole = payload.targetOwnerRole ?? derived.targetOwnerRole;
+        const targetOwnerRole =
+          payload.targetOwnerRole ?? derived.targetOwnerRole;
         const summary =
           payload.summary ??
           `Эскалация из ${payload.channel}: ${payload.messageText.slice(0, 240)}`;

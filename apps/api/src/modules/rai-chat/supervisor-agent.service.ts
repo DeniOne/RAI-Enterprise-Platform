@@ -73,6 +73,24 @@ export class SupervisorAgent {
           confidence: typeof item.confidence === "number" ? item.confidence : undefined,
           source: typeof item.metadata?.source === "string" ? item.metadata.source : undefined,
         })),
+        // L4: Когнитивная память — энграммы с Trigger→Action→Outcome
+        recalledEngrams: (recallResult.engrams ?? []).map((engram) => ({
+          id: engram.id,
+          category: engram.category,
+          content: engram.content,
+          compositeScore: engram.compositeScore,
+          synapticWeight: engram.synapticWeight,
+          successRate: engram.successRate,
+          activationCount: engram.activationCount,
+          keyInsights: engram.keyInsights,
+        })),
+        // L1: Активные алерты из реактивной памяти
+        activeAlerts: (recallResult.activeAlerts ?? []).map((alert) => ({
+          id: alert.id,
+          severity: alert.severity,
+          type: alert.type,
+          message: alert.message,
+        })),
       },
       requestedTools: requestedToolCalls,
       traceId,

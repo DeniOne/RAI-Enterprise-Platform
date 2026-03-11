@@ -7,6 +7,9 @@ import {
   FrontOfficeHandoffRecord,
   FrontOfficeHandoffStatus,
   FrontOfficeIntent,
+  FrontOfficeThreadDeliveryStatus,
+  FrontOfficeThreadMessageAuthorType,
+  FrontOfficeThreadMessageKind,
   FrontOfficeMessageRecord,
   FrontOfficeThreadParticipantStateRecord,
   FrontOfficeThreadClassification,
@@ -134,7 +137,17 @@ export class FrontOfficeCommunicationRepository {
     route?: string | null;
     evidence?: any[] | null;
     metadata?: Record<string, any> | null;
+    kind?: FrontOfficeThreadMessageKind;
+    authorType?: FrontOfficeThreadMessageAuthorType;
+    deliveryStatus?: FrontOfficeThreadDeliveryStatus;
   }): Promise<FrontOfficeMessageRecord> {
+    const metadata = {
+      ...(input.metadata ?? {}),
+      kind: input.kind ?? input.metadata?.kind ?? "system_event",
+      authorType: input.authorType ?? input.metadata?.authorType ?? "system",
+      deliveryStatus:
+        input.deliveryStatus ?? input.metadata?.deliveryStatus ?? "SKIPPED",
+    };
     const created = await this.prisma.frontOfficeThreadMessage.create({
       data: {
         companyId: input.companyId,
@@ -149,7 +162,7 @@ export class FrontOfficeCommunicationRepository {
         chatId: input.chatId ?? null,
         route: input.route ?? null,
         evidenceJson: input.evidence ?? null,
-        metadataJson: input.metadata ?? null,
+        metadataJson: metadata,
       },
     });
 
@@ -533,6 +546,10 @@ export class FrontOfficeCommunicationRepository {
   }
 
   private mapMessage(row: any): FrontOfficeMessageRecord {
+    const metadata =
+      row.metadataJson && typeof row.metadataJson === "object"
+        ? row.metadataJson
+        : null;
     return {
       id: row.id,
       companyId: row.companyId,
@@ -547,10 +564,14 @@ export class FrontOfficeCommunicationRepository {
       chatId: row.chatId ?? null,
       route: row.route ?? null,
       evidence: Array.isArray(row.evidenceJson) ? row.evidenceJson : row.evidenceJson ?? null,
-      metadata:
-        row.metadataJson && typeof row.metadataJson === "object"
-          ? row.metadataJson
-          : null,
+      metadata,
+      kind: (metadata?.kind as FrontOfficeThreadMessageKind | undefined) ?? "system_event",
+      authorType:
+        (metadata?.authorType as FrontOfficeThreadMessageAuthorType | undefined) ??
+        "system",
+      deliveryStatus:
+        (metadata?.deliveryStatus as FrontOfficeThreadDeliveryStatus | undefined) ??
+        "SKIPPED",
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };

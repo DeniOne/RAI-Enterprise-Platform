@@ -6,8 +6,11 @@ import { FieldObservationModule } from "../field-observation/field-observation.m
 import { RaiChatModule } from "../rai-chat/rai-chat.module";
 import { TelegramModule } from "../telegram/telegram.module";
 import { FrontOfficeCommunicationRepository } from "./front-office-communication.repository";
+import { FrontOfficeClientResponseOrchestrator } from "./front-office-client-response.orchestrator.service";
 import { FrontOfficeDraftRepository } from "./front-office-draft.repository";
 import { FrontOfficeHandoffOrchestrator } from "./front-office-handoff.orchestrator.service";
+import { FrontOfficeOutboundService } from "./front-office-outbound.service";
+import { FrontOfficeReplyPolicyService } from "./front-office-reply-policy.service";
 import { FrontOfficeDraftService } from "./front-office-draft.service";
 
 @Module({
@@ -21,10 +24,17 @@ import { FrontOfficeDraftService } from "./front-office-draft.service";
   ],
   providers: [
     FrontOfficeCommunicationRepository,
+    FrontOfficeReplyPolicyService,
+    FrontOfficeOutboundService,
+    FrontOfficeClientResponseOrchestrator,
     FrontOfficeDraftRepository,
     FrontOfficeHandoffOrchestrator,
     FrontOfficeDraftService,
   ],
-  exports: [FrontOfficeDraftService, FrontOfficeHandoffOrchestrator],
+  exports: [
+    FrontOfficeDraftService,
+    FrontOfficeHandoffOrchestrator,
+    FrontOfficeOutboundService,
+  ],
 })
 export class FrontOfficeDraftModule {}

@@ -108,6 +108,38 @@
 
 ## 2026-03-10
 
+58. **Chief Agronomist (Мега-Агроном) — Expert-Tier Agent Design** [DONE]:
+    *   Спроектирован и документирован новый класс агента — expert-tier `chief_agronomist` (Цифровой Мега-Агроном).
+    *   Создан полный профильный паспорт: `docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_CHIEF_AGRONOMIST.md` (v1.1.0).
+    *   Архитектурное решение: Мега-Агроном находится **вне** стандартного orchestration spine, работает на PRO/Heavy моделях ИИ по запросу (on-demand).
+    *   Введён новый класс ролей — expert-tier — отличный от канонических runtime-агентов и обычных template roles.
+    *   Отношение к `agronomist`: иерархически выше, но архитектурно независим. `agronomist` — исполнитель рутины, `chief_agronomist` — стратегический эксперт.
+    *   Связи: `marketer` (информационный feed) → `chief_agronomist` (экспертиза) → `knowledge` (прецедентная база) → `consulting` (кейсы партнёров).
+    *   Определены 10 целевых intent-ов, 10 expert-tier tools, модельная стратегия и cost control.
+    *   Обновлены: `INDEX.md`, `INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md` (матрица ответственности + матрица связей).
+    *   **[v1.1]** Dual Operation Mode: Lightweight (фоновый, дешёвый, engram curator) + Full PRO (on-demand, тяжёлый).
+    *   **[v1.1]** Энграмный контур: Мега-Агроном = главный потребитель И производитель агро-энграмм (Formation→Strengthening→Recall→Feedback).
+    *   **[v1.1]** Проактивность: monitoring → alert → chief_agronomist Lightweight → мини-тип → человек → Full PRO (если нужно).
+    *   **[v1.1]** Этический guardrail COMMERCIAL_TRANSPARENCY (модель D+E): ТОП-3 альтернативы, тег [ПАРТНЁР], наука > коммерция, performance-based commission.
+    *   **[v1.1]** Кросс-партнёрские энграмы (сетевой эффект) + Engram-Backed Trust Score (для банков/страховых).
+
+59. **Memory System: Cognitive Memory Architecture v2** [DONE — ALL PHASES 1-5.4]:
+    *   Спроектирована и полностью реализована 6-уровневая когнитивная система памяти.
+    *   **Implementation**: L1 Working Memory, L2 Episodic, L4 Engrams (Vector HNSW), L6 Network Effect / Trust Score.
+    *   **Background Workers**: ConsolidationWorker, EngramFormationWorker.
+    *   **Seasonal Loop**: SeasonalLoopService (batch processing, cross-partner knowledge share).
+    *   **Expert Integration**: MemoryCoordinatorService + MemoryFacade + AgentMemoryContext.
+    *   **TypeScript 0 ошибок.** Архитектура готова к работе с PRO-моделями.
+
+60. **Expert-Tier Agents: Chief Agronomist & Data Scientist** [DONE — Phase 3-5 IMPLEMENTED]:
+    *   Реализованы сервисы и агенты: `ChiefAgronomistAgent` & `DataScientistAgent`.
+    *   **Chief Agronomist**: ExpertInvocationEngine (PRO-mode, cost control), Expert Opinion, Alert Tips, Ethical Guardrail.
+    *   **Data Scientist**: Core Analytics, Feature Store, Model Registry (ML Pipeline), Yield Prediction, Disease Risk Model, Cost Optimization, A/B Testing.
+    *   **Integration**: Полная интеграция в `AgentRegistryService` и `AgentExecutionAdapterService`.
+    *   **Memory Integration**: Агенты используют все уровни памяти (L1-L6) для экспертных выводов.
+    *   **Status**: Вшиты в рантайм, компилируются без ошибок.
+
+
 52. **GIT PUSH Stage 2 & Front Office & Runtime Governance** [DONE]:
     *   Все локальные изменения по Stage 2 Interaction Blueprint, Front Office Agent и Runtime Governance (миграции Prisma, сервисы, контроллеры) запушены в мастер.
     *   Репозиторий синхронизирован.
@@ -129,6 +161,17 @@
     *   Добавлена поддержка Telegram WebApp для управления воркспейсом менеджера.
     *   Реализован `TelegramPollingConflictGuard` для безопасной работы бота в гибридном режиме.
     *   Внедрена авторизация `telegram-webapp` в `apps/web`.
+
+56. **Application Services Startup** [DONE]:
+    *   Подняты API (порт 4000) и Web (порт 3000) серверы через `pnpm dev`.
+    *   Prisma client перегенерирован для обеспечения актуальности типов.
+
+57. **Git Pull & Encoding Fix (P1.5)** [DONE]:
+    *   Сделан `git pull origin main`. В мастере оказался лютый пиздец с кодировкой (mojibake).
+    *   Локальные изменения были заначены (`git stash`).
+    *   Конфликты разрешены в пользу сташа, кодировка восстановлена до человеческой.
+    *   Все файлы из `docs/` и `apps/` приведены в порядок.
+    *   Верификация: `grep` по "Р˜РќРЎРў" ничего не находит, русский текст читается.
 
 ## Status: Refactoring Tenant Isolation & Fixing Type Resolution
 
@@ -547,3 +590,7 @@
 - [x] Window layer поддерживает `context_*`, `structured_result`, `related_signals`, `comparison`.
 - [x] Документация и handoff синхронизированы до состояния `DONE / implemented canon`.
 - [x] Memory-bank синхронизирован перед публикацией в git.
+
+## 2026-03-11 — CI/CD & Запуск
+- [x] Запущены API/Web сервисы (через `pnpm dev` в фоне).
+- [x] Все локальные изменения закоммичены и отправлены в ремоут.

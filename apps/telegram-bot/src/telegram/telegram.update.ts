@@ -164,6 +164,17 @@ export class TelegramUpdate {
     ctx: Context,
     result: FrontOfficeDraftResponseDto,
   ): Promise<void> {
+    const shouldSuppressReply =
+      result.status === "COMMITTED" &&
+      result.replyStatus === "SENT" &&
+      (result.resolutionMode === "AUTO_REPLY" ||
+        result.resolutionMode === "REQUEST_CLARIFICATION" ||
+        result.resolutionMode === "HUMAN_HANDOFF");
+
+    if (shouldSuppressReply) {
+      return;
+    }
+
     await ctx.reply(this.formatFrontOfficeReply(result), {
       parse_mode: "HTML",
       ...(result.allowedActions?.length

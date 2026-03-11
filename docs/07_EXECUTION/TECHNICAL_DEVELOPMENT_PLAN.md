@@ -66,6 +66,21 @@ aligned_with: [principle-axioms]
     - [x] Adapter write routing (S5.4): `DefaultMemoryAdapter.appendInteraction` пишет в `MemoryInteraction` с `userId`, recursive JSON sanitization и transactional embedding update
     - [x] SupervisorAgent integration (Phase B): orchestration вынесена из `RaiChatService` в отдельный agent-layer
     - [x] Episodes/Profile integration (S5.5): `MemoryEpisode`/`MemoryProfile` подключены к runtime-path и используются в `SupervisorAgent`
+- [x] **Section 4.2: Cognitive Memory v2 (RAI Memory Architecture)** ✅
+    - [x] Архитектурный документ: `docs/07_EXECUTION/MEMORY_SYSTEM/RAI_MEMORY_ARCHITECTURE_v2.md` (6 уровней: L1 Reactive → L6 Network)
+    - [x] Prisma: `Engram` (L4) + `SemanticFact` (L3) + HNSW/GIN индексы
+    - [x] `EngramService`: Formation, Strengthening (правило Хебба), Recall (composite score), Association, Pruning, Abstraction
+    - [x] `WorkingMemoryService` (L1): Redis typed Working Memory, Alert Cache, Hot Engram Cache (L4→L1 promotion)
+    - [x] `ConsolidationWorker`: S→M background (группировка по session, суммаризация, классификация, pruning)
+    - [x] `EngramFormationWorker`: TechMap+HarvestResult → Engram (категоризация, инсайты, определение успешности)
+    - [x] `MemoryFacade`: единая точка входа, parallel fullRecall из L1+L2+L4+L5
+    - [x] `MemoryCoordinatorService` расширен: parallel recall из всех слоёв + auto L4→L1 promotion
+    - [x] `AgentMemoryContext` расширен: `recalledEngrams` + `activeAlerts` в agent pipeline
+    - [x] `SupervisorAgent`: передаёт когнитивный контекст всем агентам
+    - [ ] Миграция не применена (ожидает деплой БД)
+    - [ ] SemanticMemoryService (L3 query engine)
+    - [ ] InstitutionalKnowledgeService (L5 principles extraction)
+    - [ ] NetworkMemoryService (L6 Hive Mind + Trust Score)
 
 ### 🌐 BLOCK 4.5: FRONTEND (WEB INTERFACE)
 - [x] **Section 4.5.1: Next.js 14 Setup**

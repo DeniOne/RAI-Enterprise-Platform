@@ -172,6 +172,28 @@ function createRuntime() {
       },
     })),
   };
+  const replyPolicyMock = {
+    evaluate: jest.fn(() => ({
+      rolloutMode: "rollout",
+      resolutionMode: "PROCESS_DRAFT",
+      responseRisk: "OPERATIONAL_SIGNAL",
+      targetOwnerRole: null,
+      missingContext: [],
+      directReplyAllowed: false,
+      prohibitedReason: null,
+      dialogSummary: "summary",
+      managerShouldBeNotified: false,
+      needsHumanAction: false,
+    })),
+  };
+  const outboundServiceMock = {
+    sendToThread: jest.fn(),
+  };
+  const clientResponseOrchestratorMock = {
+    sendAutoReply: jest.fn(),
+    sendClarification: jest.fn(),
+    sendHandoffReceipt: jest.fn(),
+  };
 
   const draftRepositoryMock = {
     createDraft: jest.fn(async (payload: any) => {
@@ -382,6 +404,9 @@ function createRuntime() {
     deviationMock as unknown as DeviationService,
     agentMock as unknown as FrontOfficeAgent,
     communicationRepositoryMock as unknown as FrontOfficeCommunicationRepository,
+    replyPolicyMock as any,
+    outboundServiceMock as any,
+    clientResponseOrchestratorMock as any,
     handoffOrchestrator,
     draftRepositoryMock as unknown as FrontOfficeDraftRepository,
     telegramNotificationMock as unknown as TelegramNotificationService,

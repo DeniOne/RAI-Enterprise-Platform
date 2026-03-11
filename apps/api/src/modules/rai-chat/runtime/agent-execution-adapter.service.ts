@@ -21,6 +21,8 @@ import {
   type ContractsAgentInput,
   type ContractsAgentIntent,
 } from "../agents/contracts-agent.service";
+import { ChiefAgronomistAgent } from "../agents/chief-agronomist-agent.service";
+import { DataScientistAgent } from "../agents/data-scientist-agent.service";
 import {
   CanonicalAgentRuntimeRole,
   isAgentRuntimeRole,
@@ -44,7 +46,9 @@ export class AgentExecutionAdapterService {
     private readonly crmAgent: CrmAgent,
     private readonly frontOfficeAgent: FrontOfficeAgent,
     private readonly contractsAgent: ContractsAgent,
-  ) {}
+    private readonly chiefAgronomistAgent: ChiefAgronomistAgent,
+    private readonly dataScientistAgent: DataScientistAgent,
+  ) { }
 
   async execute(params: ExecuteAdapterParams): Promise<AgentExecutionResult> {
     const adapterRole = this.resolveAdapterRole(params.kernel, params.request.role);
@@ -71,7 +75,7 @@ export class AgentExecutionAdapterService {
           traceId: params.request.traceId,
           intent:
             params.request.message.toLowerCase().includes("отклон") ||
-            params.allowedToolCalls.some((call) => call.name === RaiToolName.ComputeDeviations)
+              params.allowedToolCalls.some((call) => call.name === RaiToolName.ComputeDeviations)
               ? "compute_deviations"
               : "generate_tech_map_draft",
           fieldRef: typeof payload.fieldRef === "string" ? payload.fieldRef : undefined,
@@ -97,8 +101,8 @@ export class AgentExecutionAdapterService {
           {
             name:
               result.toolCallsCount > 0 &&
-              (params.request.message.toLowerCase().includes("отклон") ||
-                params.allowedToolCalls.some((call) => call.name === RaiToolName.ComputeDeviations))
+                (params.request.message.toLowerCase().includes("отклон") ||
+                  params.allowedToolCalls.some((call) => call.name === RaiToolName.ComputeDeviations))
                 ? RaiToolName.ComputeDeviations
                 : RaiToolName.GenerateTechMapDraft,
             result: result.data,
@@ -205,23 +209,23 @@ export class AgentExecutionAdapterService {
           inn: typeof payload.inn === "string" ? payload.inn : undefined,
           jurisdictionCode:
             payload.jurisdictionCode === "RU" ||
-            payload.jurisdictionCode === "BY" ||
-            payload.jurisdictionCode === "KZ"
+              payload.jurisdictionCode === "BY" ||
+              payload.jurisdictionCode === "KZ"
               ? payload.jurisdictionCode
               : undefined,
           partyType:
             payload.partyType === "LEGAL_ENTITY" ||
-            payload.partyType === "IP" ||
-            payload.partyType === "KFH"
+              payload.partyType === "IP" ||
+              payload.partyType === "KFH"
               ? payload.partyType
               : undefined,
           fromPartyId: typeof payload.fromPartyId === "string" ? payload.fromPartyId : undefined,
           toPartyId: typeof payload.toPartyId === "string" ? payload.toPartyId : undefined,
           relationType:
             payload.relationType === "OWNERSHIP" ||
-            payload.relationType === "MANAGEMENT" ||
-            payload.relationType === "AFFILIATED" ||
-            payload.relationType === "AGENCY"
+              payload.relationType === "MANAGEMENT" ||
+              payload.relationType === "AFFILIATED" ||
+              payload.relationType === "AGENCY"
               ? payload.relationType
               : undefined,
           sharePct: typeof payload.sharePct === "number" ? payload.sharePct : undefined,
@@ -231,44 +235,44 @@ export class AgentExecutionAdapterService {
           accountPayload:
             intent === "create_crm_account"
               ? {
-                  name:
-                    typeof payload.name === "string"
-                      ? payload.name
-                      : params.request.workspaceContext?.selectedRowSummary?.title,
-                  inn: typeof payload.inn === "string" ? payload.inn : undefined,
-                  type: typeof payload.type === "string" ? payload.type : undefined,
-                  holdingId: typeof payload.holdingId === "string" ? payload.holdingId : undefined,
-                }
+                name:
+                  typeof payload.name === "string"
+                    ? payload.name
+                    : params.request.workspaceContext?.selectedRowSummary?.title,
+                inn: typeof payload.inn === "string" ? payload.inn : undefined,
+                type: typeof payload.type === "string" ? payload.type : undefined,
+                holdingId: typeof payload.holdingId === "string" ? payload.holdingId : undefined,
+              }
               : undefined,
           updatePayload:
             intent === "update_account_profile"
               ? {
-                  name: typeof payload.name === "string" ? payload.name : undefined,
-                  inn:
-                    typeof payload.inn === "string"
-                      ? payload.inn
-                      : payload.inn === null
-                        ? null
-                        : undefined,
-                  type: typeof payload.type === "string" ? payload.type : undefined,
-                  status: typeof payload.status === "string" ? payload.status : undefined,
-                  holdingId:
-                    typeof payload.holdingId === "string"
-                      ? payload.holdingId
-                      : payload.holdingId === null
-                        ? null
-                        : undefined,
-                  jurisdiction:
-                    typeof payload.jurisdiction === "string"
-                      ? payload.jurisdiction
-                      : payload.jurisdiction === null
-                        ? null
-                        : undefined,
-                  riskCategory:
-                    typeof payload.riskCategory === "string" ? payload.riskCategory : undefined,
-                  strategicValue:
-                    typeof payload.strategicValue === "string" ? payload.strategicValue : undefined,
-                }
+                name: typeof payload.name === "string" ? payload.name : undefined,
+                inn:
+                  typeof payload.inn === "string"
+                    ? payload.inn
+                    : payload.inn === null
+                      ? null
+                      : undefined,
+                type: typeof payload.type === "string" ? payload.type : undefined,
+                status: typeof payload.status === "string" ? payload.status : undefined,
+                holdingId:
+                  typeof payload.holdingId === "string"
+                    ? payload.holdingId
+                    : payload.holdingId === null
+                      ? null
+                      : undefined,
+                jurisdiction:
+                  typeof payload.jurisdiction === "string"
+                    ? payload.jurisdiction
+                    : payload.jurisdiction === null
+                      ? null
+                      : undefined,
+                riskCategory:
+                  typeof payload.riskCategory === "string" ? payload.riskCategory : undefined,
+                strategicValue:
+                  typeof payload.strategicValue === "string" ? payload.strategicValue : undefined,
+              }
               : undefined,
           contactId:
             typeof payload.contactId === "string"
@@ -277,91 +281,91 @@ export class AgentExecutionAdapterService {
           contactPayload:
             intent === "create_crm_contact" || intent === "update_crm_contact"
               ? {
-                  firstName: typeof payload.firstName === "string" ? payload.firstName : undefined,
-                  lastName:
-                    typeof payload.lastName === "string"
-                      ? payload.lastName
-                      : payload.lastName === null
-                        ? null
-                        : undefined,
-                  role: typeof payload.role === "string" ? payload.role : undefined,
-                  influenceLevel:
-                    typeof payload.influenceLevel === "number"
-                      ? payload.influenceLevel
-                      : payload.influenceLevel === null
-                        ? null
-                        : undefined,
-                  email:
-                    typeof payload.email === "string"
-                      ? payload.email
-                      : payload.email === null
-                        ? null
-                        : undefined,
-                  phone:
-                    typeof payload.phone === "string"
-                      ? payload.phone
-                      : payload.phone === null
-                        ? null
-                        : undefined,
-                  source:
-                    typeof payload.source === "string"
-                      ? payload.source
-                      : payload.source === null
-                        ? null
-                        : undefined,
-                }
+                firstName: typeof payload.firstName === "string" ? payload.firstName : undefined,
+                lastName:
+                  typeof payload.lastName === "string"
+                    ? payload.lastName
+                    : payload.lastName === null
+                      ? null
+                      : undefined,
+                role: typeof payload.role === "string" ? payload.role : undefined,
+                influenceLevel:
+                  typeof payload.influenceLevel === "number"
+                    ? payload.influenceLevel
+                    : payload.influenceLevel === null
+                      ? null
+                      : undefined,
+                email:
+                  typeof payload.email === "string"
+                    ? payload.email
+                    : payload.email === null
+                      ? null
+                      : undefined,
+                phone:
+                  typeof payload.phone === "string"
+                    ? payload.phone
+                    : payload.phone === null
+                      ? null
+                      : undefined,
+                source:
+                  typeof payload.source === "string"
+                    ? payload.source
+                    : payload.source === null
+                      ? null
+                      : undefined,
+              }
               : undefined,
           interactionPayload:
             intent === "log_crm_interaction" || intent === "update_crm_interaction" || intent === "delete_crm_interaction"
               ? {
-                  interactionId:
-                    typeof payload.interactionId === "string"
-                      ? payload.interactionId
-                      : this.resolveEntityId(params.request, ["interaction"]),
-                  type: typeof payload.type === "string" ? payload.type : undefined,
-                  summary:
-                    typeof payload.summary === "string"
-                      ? payload.summary
-                      : intent === "log_crm_interaction"
-                        ? this.buildInteractionSummary(params.request.message)
-                        : undefined,
-                  date: typeof payload.date === "string" ? payload.date : undefined,
-                  contactId:
-                    typeof payload.contactId === "string"
-                      ? payload.contactId
-                      : payload.contactId === null
-                        ? null
-                        : undefined,
-                  relatedEventId:
-                    typeof payload.relatedEventId === "string"
-                      ? payload.relatedEventId
-                      : payload.relatedEventId === null
-                        ? null
-                        : undefined,
-                }
+                interactionId:
+                  typeof payload.interactionId === "string"
+                    ? payload.interactionId
+                    : this.resolveEntityId(params.request, ["interaction"]),
+                type: typeof payload.type === "string" ? payload.type : undefined,
+                summary:
+                  typeof payload.summary === "string"
+                    ? payload.summary
+                    : intent === "log_crm_interaction"
+                      ? this.buildInteractionSummary(params.request.message)
+                      : undefined,
+                date: typeof payload.date === "string" ? payload.date : undefined,
+                contactId:
+                  typeof payload.contactId === "string"
+                    ? payload.contactId
+                    : payload.contactId === null
+                      ? null
+                      : undefined,
+                relatedEventId:
+                  typeof payload.relatedEventId === "string"
+                    ? payload.relatedEventId
+                    : payload.relatedEventId === null
+                      ? null
+                      : undefined,
+              }
               : undefined,
           obligationPayload:
             intent === "create_crm_obligation" || intent === "update_crm_obligation" || intent === "delete_crm_obligation"
               ? {
-                  obligationId:
-                    typeof payload.obligationId === "string"
-                      ? payload.obligationId
-                      : this.resolveEntityId(params.request, ["obligation"]),
-                  description:
-                    typeof payload.description === "string"
-                      ? payload.description
-                      : intent === "create_crm_obligation"
-                        ? this.buildObligationDescription(params.request.message)
-                        : undefined,
-                  dueDate: typeof payload.dueDate === "string" ? payload.dueDate : undefined,
-                  responsibleUserId:
-                    typeof payload.responsibleUserId === "string"
-                      ? payload.responsibleUserId
-                      : payload.responsibleUserId === null
-                        ? null
-                        : undefined,
-                  status: typeof payload.status === "string" ? payload.status : undefined,
-                }
+                obligationId:
+                  typeof payload.obligationId === "string"
+                    ? payload.obligationId
+                    : this.resolveEntityId(params.request, ["obligation"]),
+                description:
+                  typeof payload.description === "string"
+                    ? payload.description
+                    : intent === "create_crm_obligation"
+                      ? this.buildObligationDescription(params.request.message)
+                      : undefined,
+                dueDate: typeof payload.dueDate === "string" ? payload.dueDate : undefined,
+                responsibleUserId:
+                  typeof payload.responsibleUserId === "string"
+                    ? payload.responsibleUserId
+                    : payload.responsibleUserId === null
+                      ? null
+                      : undefined,
+                status: typeof payload.status === "string" ? payload.status : undefined,
+              }
               : undefined,
         },
         { kernel: params.kernel, request: params.request },
@@ -411,8 +415,8 @@ export class AgentExecutionAdapterService {
           intent,
           channel:
             payload.channel === "telegram" ||
-            payload.channel === "web_chat" ||
-            payload.channel === "internal"
+              payload.channel === "web_chat" ||
+              payload.channel === "internal"
               ? payload.channel
               : params.request.workspaceContext?.route?.toLowerCase().includes("telegram")
                 ? "telegram"
@@ -518,13 +522,13 @@ export class AgentExecutionAdapterService {
             : undefined,
         roles:
           Array.isArray(payload.roles) &&
-          payload.roles.every(
-            (item) =>
-              item &&
-              typeof item === "object" &&
-              typeof (item as { partyId?: unknown }).partyId === "string" &&
-              typeof (item as { role?: unknown }).role === "string",
-          )
+            payload.roles.every(
+              (item) =>
+                item &&
+                typeof item === "object" &&
+                typeof (item as { partyId?: unknown }).partyId === "string" &&
+                typeof (item as { role?: unknown }).role === "string",
+            )
             ? (payload.roles as ContractsAgentInput["roles"])
             : undefined,
         obligationType:
@@ -534,9 +538,9 @@ export class AgentExecutionAdapterService {
         dueDate: typeof payload.dueDate === "string" ? payload.dueDate : undefined,
         eventDomain:
           payload.eventDomain === "COMMERCIAL" ||
-          payload.eventDomain === "PRODUCTION" ||
-          payload.eventDomain === "LOGISTICS" ||
-          payload.eventDomain === "FINANCE_ADJ"
+            payload.eventDomain === "PRODUCTION" ||
+            payload.eventDomain === "LOGISTICS" ||
+            payload.eventDomain === "FINANCE_ADJ"
             ? payload.eventDomain
             : this.extractEventDomain(params.request.message),
         eventType:
@@ -558,8 +562,8 @@ export class AgentExecutionAdapterService {
             : undefined,
         supplyType:
           payload.supplyType === "GOODS" ||
-          payload.supplyType === "SERVICE" ||
-          payload.supplyType === "LEASE"
+            payload.supplyType === "SERVICE" ||
+            payload.supplyType === "LEASE"
             ? payload.supplyType
             : this.extractSupplyType(params.request.message),
         vatPayerStatus:
@@ -608,6 +612,83 @@ export class AgentExecutionAdapterService {
         ),
         runtimeBudget: params.budgetDecision,
         fallbackUsed: result.fallbackUsed,
+        outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
+        auditPayload,
+      };
+    }
+
+    if (adapterRole === "chief_agronomist") {
+      const payload = this.firstPayload(params.allowedToolCalls);
+      const result = await this.chiefAgronomistAgent.run(
+        {
+          companyId: params.actorContext.companyId,
+          traceId: params.request.traceId,
+          intent: params.request.message.toLowerCase().includes("алерт") ||
+            params.request.message.toLowerCase().includes("совет")
+            ? "alert_review"
+            : "expert_opinion",
+          query: params.request.message,
+          context: {
+            fieldId: typeof payload.fieldId === "string" ? payload.fieldId : undefined,
+            techMapId: typeof payload.techMapId === "string" ? payload.techMapId : undefined,
+            alertId: typeof payload.alertId === "string" ? payload.alertId : undefined,
+          },
+        },
+        { kernel: params.kernel, request: params.request },
+      );
+      return {
+        role: params.request.role,
+        status: result.status,
+        text: result.explain,
+        structuredOutput: { data: result.data },
+        toolCalls: [], // Expert agents mostly provide synthesis
+        connectorCalls: [],
+        evidence: result.evidence,
+        validation: this.validateOutput(
+          params.kernel,
+          result.evidence,
+          true,
+          result.status,
+          false,
+        ),
+        runtimeBudget: params.budgetDecision,
+        fallbackUsed: false,
+        outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
+        auditPayload,
+      };
+    }
+
+    if (adapterRole === "data_scientist") {
+      const payload = this.firstPayload(params.allowedToolCalls);
+      const result = await this.dataScientistAgent.run(
+        {
+          companyId: params.actorContext.companyId,
+          traceId: params.request.traceId,
+          intent: this.detectDataScientistIntent(params.request.message),
+          fieldId: typeof payload.fieldId === "string" ? payload.fieldId : undefined,
+          crop: typeof payload.crop === "string" ? payload.crop : undefined,
+          seasonId: typeof payload.seasonId === "string" ? payload.seasonId : undefined,
+          scenario: typeof payload.scenario === "object" ? payload.scenario : undefined,
+        },
+        { kernel: params.kernel, request: params.request },
+      );
+      return {
+        role: params.request.role,
+        status: result.status,
+        text: result.explain,
+        structuredOutput: { data: result.data },
+        toolCalls: [],
+        connectorCalls: [],
+        evidence: result.evidence,
+        validation: this.validateOutput(
+          params.kernel,
+          result.evidence,
+          true,
+          result.status,
+          false,
+        ),
+        runtimeBudget: params.budgetDecision,
+        fallbackUsed: false,
         outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
       };
@@ -685,6 +766,17 @@ export class AgentExecutionAdapterService {
       return false;
     }
     return typeof (data as { hits?: unknown }).hits === "number" && (data as { hits: number }).hits === 0;
+  }
+
+  private detectDataScientistIntent(message: string): any {
+    const msg = message.toLowerCase();
+    if (msg.includes("прогноз") || msg.includes("урожай")) return "yield_prediction";
+    if (msg.includes("риск") || msg.includes("болезн")) return "disease_risk";
+    if (msg.includes("оптимиз") || msg.includes("затрат") || msg.includes("экономи")) return "cost_optimization";
+    if (msg.includes("отчет") || msg.includes("итог")) return "seasonal_report";
+    if (msg.includes("паттерн") || msg.includes("закономерн")) return "pattern_mining";
+    if (msg.includes("что если") || msg.includes("сценарий")) return "what_if";
+    return "yield_prediction"; // Default
   }
 
   private firstPayload(toolCalls: RaiToolCallDto[]): Record<string, unknown> {
