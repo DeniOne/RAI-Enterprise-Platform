@@ -75,4 +75,21 @@ describe("FrontOfficeToolsRegistry", () => {
       }),
     );
   });
+
+  it("не трактует хозяйство-клиента как CRM lead по умолчанию", async () => {
+    const result = await registry.execute(
+      RaiToolName.ClassifyDialogThread,
+      {
+        channel: "telegram",
+        messageText:
+          "Есть вопрос по договору и условиям сопровождения по хозяйству South Field Farm на сезон 2026",
+        threadExternalId: "tg-11",
+      },
+      { companyId: "company-1", traceId: "trace-4" },
+    );
+
+    expect(result.classification).toBe("client_request");
+    expect(result.targetOwnerRole).toBe("contracts_agent");
+    expect(result.targetOwnerRole).not.toBe("crm_agent");
+  });
 });

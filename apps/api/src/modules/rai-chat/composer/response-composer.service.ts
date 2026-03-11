@@ -183,6 +183,7 @@ export class ResponseComposerService {
       companyId,
     } = params;
     const { recall, profile } = recallResult;
+    const clientFacing = request.audience === "client_front_office";
 
     let text = `Принял: ${request.message}`;
     if (executionResult.executedTools.length > 0) {
@@ -200,10 +201,12 @@ export class ResponseComposerService {
     if (externalSignalResult.feedbackStored) {
       text += "\nFeedback по advisory записан в память.";
     }
-    const widgets = this.widgetBuilder.build({
-      companyId,
-      workspaceContext: request.workspaceContext,
-    });
+    const widgets = clientFacing
+      ? []
+      : this.widgetBuilder.build({
+          companyId,
+          workspaceContext: request.workspaceContext,
+        });
     const clarificationPayload = this.buildClarificationPayload(
       request,
       executionResult,
@@ -234,7 +237,7 @@ export class ResponseComposerService {
       })),
       traceId,
       threadId,
-      suggestedActions: this.buildSuggestedActions(request),
+      suggestedActions: clientFacing ? [] : this.buildSuggestedActions(request),
       openUiToken: undefined,
       advisory: externalSignalResult.advisory,
       memoryUsed: this.buildMemoryUsed(profile, recall),
@@ -248,9 +251,12 @@ export class ResponseComposerService {
       validation: executionResult.agentExecution?.validation,
       outputContractVersion: executionResult.agentExecution?.outputContractVersion,
       pendingClarification: clarificationPayload?.pendingClarification,
-      workWindows: clarificationPayload?.workWindows ?? richOutputPayload?.workWindows,
-      activeWindowId:
-        clarificationPayload?.activeWindowId ?? richOutputPayload?.activeWindowId,
+      workWindows: clientFacing
+        ? undefined
+        : clarificationPayload?.workWindows ?? richOutputPayload?.workWindows,
+      activeWindowId: clientFacing
+        ? undefined
+        : clarificationPayload?.activeWindowId ?? richOutputPayload?.activeWindowId,
     };
   }
 

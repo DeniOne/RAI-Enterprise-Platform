@@ -45,7 +45,9 @@
 - фиксировать лог;
 - отделять бытовой разговор от процессного сигнала;
 - выделять задачи, поручения, клиентские запросы и эскалации;
-- передавать задачу в нужный owner-domain через оркестратор.
+- принимать решение по ingress-outcome;
+- либо передавать задачу в нужный owner-domain через оркестратор,
+- либо возвращать хозяйству governed direct reply в безопасном informational scope.
 
 Первый канал:
 
@@ -106,6 +108,21 @@
 - эскалировать доменному owner-agent;
 - не брать чужой бизнес-domain в собственное исполнение.
 
+### 3.6 Resolution outcomes
+
+Любое входящее сообщение хозяйства-клиента должно завершаться одним из 4 outcomes:
+
+1. `AUTO_REPLY`
+2. `REQUEST_CLARIFICATION`
+3. `PROCESS_DRAFT`
+4. `HUMAN_HANDOFF`
+
+Правило:
+
+- `AUTO_REPLY` допустим только для read-only, grounded, client-safe ответа;
+- `HUMAN_HANDOFF` обязателен для любого change/approval/commitment scenario;
+- менеджер не является обязательным посредником для каждого сообщения хозяйства.
+
 ---
 
 ## 4. Чего агент делать не должен
@@ -128,6 +145,7 @@
 Но не:
 
 - final domain executor.
+- source of new commitments от лица компании.
 
 ---
 
@@ -186,6 +204,8 @@ Primary owner:
 ### 6.2 Primary ownership scope
 
 - message intake;
+- client-facing ingress decision;
+- direct client-safe reply orchestration;
 - dialogue logging;
 - conversation classification;
 - process detection;
@@ -221,6 +241,12 @@ Primary owner:
 - финансовые данные;
 - юридические сущности.
 
+При этом прямой ответ хозяйству допустим только как:
+
+- informational/read-only output;
+- grounded explanation по данным самого хозяйства;
+- advisory answer без изменения обязательств, цены, договора, технологии или операции.
+
 ---
 
 ## 7. Целевой intent catalog первой волны
@@ -241,7 +267,8 @@ Primary owner:
 
 - распознаёт коммуникационный тип;
 - создаёт structured ingress event;
-- инициирует handoff.
+- инициирует handoff;
+- либо запускает governed direct reply path через owner-agent.
 
 ---
 
@@ -264,6 +291,26 @@ Primary owner:
 - `front_office_agent -> personal_assistant`
   - когда это персональный организационный контур без business ownership
 
+### 8.1.1 Direct reply paths
+
+Помимо handoff, `front_office_agent` имеет право инициировать direct reply path через оркестратор:
+
+- `front_office_agent -> agronomist`
+  - factual agronomy status, field/season context, deviations explanation
+- `front_office_agent -> economist`
+  - read-only plan/fact, budget/risk/status explanation
+- `front_office_agent -> contracts_agent`
+  - read-only contract status, сроки, документы, объяснение текущих условий
+- `front_office_agent -> monitoring`
+  - alerts, risk interpretation, monitoring summary
+- `front_office_agent -> knowledge`
+  - policy/legal explanation без binding advice
+
+Жёсткое ограничение:
+
+- этот path не даёт права на direct domain write;
+- этот path не даёт права на обещание, подтверждение или изменение от лица компании.
+
 ### 8.2 Запрещённые paths
 
 - `front_office_agent` не должен напрямую вызывать чужой агент без оркестратора.
@@ -284,8 +331,9 @@ Primary owner:
    - client request
    - escalation
 4. Выделение structured handoff summary.
-5. Создание task/escalation record в управляемом виде.
-6. Передача в owner-domain через orchestration layer.
+5. Policy-gated выбор между auto-reply, clarification, process draft и human handoff.
+6. Создание task/escalation record в управляемом виде.
+7. Передача в owner-domain через orchestration layer.
 
 ---
 

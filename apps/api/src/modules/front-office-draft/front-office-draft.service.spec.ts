@@ -5,9 +5,12 @@ import { PrismaService } from "../../shared/prisma/prisma.service";
 import { DeviationService } from "../cmr/deviation.service";
 import { FieldObservationService } from "../field-observation/field-observation.service";
 import { FrontOfficeCommunicationRepository } from "./front-office-communication.repository";
+import { FrontOfficeClientResponseOrchestrator } from "./front-office-client-response.orchestrator.service";
 import { FrontOfficeAgent } from "../rai-chat/agents/front-office-agent.service";
 import { FrontOfficeDraftRepository } from "./front-office-draft.repository";
 import { FrontOfficeHandoffOrchestrator } from "./front-office-handoff.orchestrator.service";
+import { FrontOfficeOutboundService } from "./front-office-outbound.service";
+import { FrontOfficeReplyPolicyService } from "./front-office-reply-policy.service";
 import { FrontOfficeDraftService } from "./front-office-draft.service";
 import { TelegramNotificationService } from "../telegram/telegram-notification.service";
 
@@ -44,6 +47,13 @@ describe("FrontOfficeDraftService", () => {
     resolveHandoff: jest.fn(),
     addManualNote: jest.fn(),
   };
+  const replyPolicyMock = { evaluate: jest.fn() };
+  const outboundServiceMock = { sendToThread: jest.fn() };
+  const clientResponseOrchestratorMock = {
+    sendAutoReply: jest.fn(),
+    sendClarification: jest.fn(),
+    sendHandoffReceipt: jest.fn(),
+  };
   const repositoryMock = {
     createDraft: jest.fn(),
     getDraft: jest.fn(),
@@ -68,6 +78,12 @@ describe("FrontOfficeDraftService", () => {
         { provide: DeviationService, useValue: deviationMock },
         { provide: FrontOfficeAgent, useValue: agentMock },
         { provide: FrontOfficeCommunicationRepository, useValue: communicationRepositoryMock },
+        { provide: FrontOfficeReplyPolicyService, useValue: replyPolicyMock },
+        { provide: FrontOfficeOutboundService, useValue: outboundServiceMock },
+        {
+          provide: FrontOfficeClientResponseOrchestrator,
+          useValue: clientResponseOrchestratorMock,
+        },
         { provide: FrontOfficeDraftRepository, useValue: repositoryMock },
         { provide: FrontOfficeHandoffOrchestrator, useValue: handoffOrchestratorMock },
         { provide: TelegramNotificationService, useValue: telegramNotificationMock },
@@ -94,7 +110,10 @@ describe("FrontOfficeDraftService", () => {
       currentOwnerRole: null,
       currentHandoffStatus: null,
     });
-    communicationRepositoryMock.createMessage.mockResolvedValue({ id: "msg-1" });
+    communicationRepositoryMock.createMessage.mockResolvedValue({
+      id: "msg-1",
+      createdAt: "2026-03-09T00:00:00.000Z",
+    });
     communicationRepositoryMock.listMessages.mockResolvedValue([]);
     communicationRepositoryMock.findAssignment.mockResolvedValue(null);
     communicationRepositoryMock.getThreadByKey.mockResolvedValue({
@@ -140,6 +159,45 @@ describe("FrontOfficeDraftService", () => {
       currentHandoffStatus: null,
     });
     handoffOrchestratorMock.listHandoffs.mockResolvedValue([]);
+    repositoryMock.updateDraft.mockImplementation(
+      async (_companyId: string, draftId: string, patch: any) => ({
+        id: draftId,
+        companyId: "c1",
+        userId: "u1",
+        status: patch.status ?? "READY_TO_CONFIRM",
+        eventType: "FRONT_OFFICE_OBSERVATION",
+        timestamp: "2026-03-09T00:00:00.000Z",
+        anchor: {
+          farmRef: patch.farmRef ?? null,
+          fieldId: patch.fieldId ?? null,
+          seasonId: patch.payload?.seasonId ?? null,
+          taskId: patch.taskId ?? null,
+        },
+        payload: {
+          threadKey: "c1:telegram:tg-default",
+          messageText: "default",
+          ...(patch.payload ?? {}),
+        },
+        evidence: [],
+        confidence: patch.confidence ?? 0.9,
+        mustClarifications: patch.mustClarifications ?? [],
+        createdAt: "2026-03-09T00:00:00.000Z",
+        updatedAt: "2026-03-09T00:01:00.000Z",
+        expiresAt: "2026-03-16T00:00:00.000Z",
+      }),
+    );
+    replyPolicyMock.evaluate.mockReturnValue({
+      rolloutMode: "rollout",
+      resolutionMode: "PROCESS_DRAFT",
+      responseRisk: "OPERATIONAL_SIGNAL",
+      targetOwnerRole: null,
+      missingContext: [],
+      directReplyAllowed: false,
+      prohibitedReason: null,
+      dialogSummary: "summary",
+      managerShouldBeNotified: false,
+      needsHumanAction: false,
+    });
   });
 
   it("creates ready-to-confirm draft from task-anchored task process signal", async () => {
@@ -179,6 +237,35 @@ describe("FrontOfficeDraftService", () => {
       updatedAt: "2026-03-09T00:00:00.000Z",
       expiresAt: "2026-03-16T00:00:00.000Z",
     }));
+    repositoryMock.updateDraft.mockResolvedValue({
+      id: "draft-1",
+      companyId: "c1",
+      userId: "u1",
+      status: "READY_TO_CONFIRM",
+      eventType: "FRONT_OFFICE_OBSERVATION",
+      timestamp: "2026-03-09T00:00:00.000Z",
+      anchor: {
+        farmRef: null,
+        fieldId: "field-1",
+        seasonId: "season-1",
+        taskId: "task-1",
+      },
+      payload: {
+        threadKey: "c1:telegram:tg-1",
+        messageText: "Работу начали, прикладываю подтверждение",
+        classification: "task_process",
+        suggestedIntent: "observation",
+        channel: "telegram",
+        resolutionMode: "PROCESS_DRAFT",
+        responseRisk: "OPERATIONAL_SIGNAL",
+      },
+      evidence: [{ type: "photo", url: "https://files/photo.jpg" }],
+      confidence: 0.86,
+      mustClarifications: [],
+      createdAt: "2026-03-09T00:00:00.000Z",
+      updatedAt: "2026-03-09T00:01:00.000Z",
+      expiresAt: "2026-03-16T00:00:00.000Z",
+    });
     repositoryMock.findCommitted.mockResolvedValue(null);
     auditMock.log.mockResolvedValue({ id: "audit-1", createdAt: new Date() });
 
@@ -209,7 +296,7 @@ describe("FrontOfficeDraftService", () => {
     });
   });
 
-  it("creates needs-link draft when consultation has no anchor", async () => {
+  it("requests clarification instead of leaving consultation draft in manual link state", async () => {
     agentMock.run.mockResolvedValue({
       data: {
         log: { threadKey: "c1:telegram:tg-2" },
@@ -219,6 +306,18 @@ describe("FrontOfficeDraftService", () => {
           threadKey: "c1:telegram:tg-2",
         },
       },
+    });
+    replyPolicyMock.evaluate.mockReturnValue({
+      rolloutMode: "rollout",
+      resolutionMode: "REQUEST_CLARIFICATION",
+      responseRisk: "INSUFFICIENT_CONTEXT",
+      targetOwnerRole: "agronomist",
+      missingContext: ["FIELD_CONTEXT", "SEASON_CONTEXT"],
+      directReplyAllowed: false,
+      prohibitedReason: "Недостаточно контекста для безопасного ответа.",
+      dialogSummary: "summary",
+      managerShouldBeNotified: false,
+      needsHumanAction: false,
     });
     repositoryMock.createDraft.mockImplementation(async (payload: any) => ({
       id: "draft-2",
@@ -241,6 +340,103 @@ describe("FrontOfficeDraftService", () => {
       updatedAt: "2026-03-09T00:00:00.000Z",
       expiresAt: "2026-03-16T00:00:00.000Z",
     }));
+    repositoryMock.updateDraft.mockImplementation(async (_companyId: string, _draftId: string, patch: any) => ({
+      id: "draft-2",
+      companyId: "c1",
+      userId: "u1",
+      status: "NEEDS_LINK",
+      eventType: "FRONT_OFFICE_CONSULTATION",
+      timestamp: "2026-03-09T00:00:00.000Z",
+      anchor: {
+        farmRef: null,
+        fieldId: null,
+        seasonId: null,
+        taskId: null,
+      },
+      payload: {
+        messageText: "Нужна консультация по текущей ситуации",
+        threadKey: "c1:telegram:tg-2",
+        classification: "client_request",
+        suggestedIntent: "consultation",
+        channel: "telegram",
+        ...(patch.payload ?? {}),
+      },
+      evidence: [],
+      confidence: 0.9,
+      mustClarifications: patch.mustClarifications ?? ["LINK_OBJECT"],
+      createdAt: "2026-03-09T00:00:00.000Z",
+      updatedAt: "2026-03-09T00:01:00.000Z",
+      expiresAt: "2026-03-16T00:00:00.000Z",
+    }));
+    repositoryMock.commitDraft.mockResolvedValue({
+      draft: {
+        id: "draft-2",
+        companyId: "c1",
+        userId: "u1",
+        status: "COMMITTED",
+        eventType: "FRONT_OFFICE_CONSULTATION",
+        timestamp: "2026-03-09T00:00:00.000Z",
+        anchor: {
+          farmRef: null,
+          fieldId: null,
+          seasonId: null,
+          taskId: null,
+        },
+        payload: {
+          messageText: "Нужна консультация по текущей ситуации",
+          threadKey: "c1:telegram:tg-2",
+          classification: "client_request",
+          suggestedIntent: "consultation",
+          channel: "telegram",
+          resolutionMode: "REQUEST_CLARIFICATION",
+          responseRisk: "INSUFFICIENT_CONTEXT",
+          replyStatus: "SENT",
+          commitResult: {
+            kind: "clarification_request",
+            id: "draft-2",
+            replyStatus: "SENT",
+            missingContext: ["FIELD_CONTEXT", "SEASON_CONTEXT"],
+          },
+        },
+        evidence: [],
+        confidence: 0.9,
+        mustClarifications: ["LINK_OBJECT"],
+        createdAt: "2026-03-09T00:00:00.000Z",
+        updatedAt: "2026-03-09T00:02:00.000Z",
+        expiresAt: "2026-03-16T00:00:00.000Z",
+      },
+      committed: {
+        id: "draft-2",
+        companyId: "c1",
+        eventType: "FRONT_OFFICE_CONSULTATION",
+        timestamp: "2026-03-09T00:00:00.000Z",
+        committedAt: "2026-03-09T00:02:00.000Z",
+        committedBy: "u1",
+        provenanceHash: "hash-2",
+        payload: {
+          resolutionMode: "REQUEST_CLARIFICATION",
+          responseRisk: "INSUFFICIENT_CONTEXT",
+          replyStatus: "SENT",
+          commitResult: {
+            kind: "clarification_request",
+            id: "draft-2",
+            replyStatus: "SENT",
+            missingContext: ["FIELD_CONTEXT", "SEASON_CONTEXT"],
+          },
+        },
+        evidence: [],
+        anchor: {
+          farmRef: null,
+          fieldId: null,
+          seasonId: null,
+          taskId: null,
+        },
+      },
+    });
+    clientResponseOrchestratorMock.sendClarification.mockResolvedValue({
+      replyStatus: "SENT",
+      text: "Уточните поле и сезон.",
+    });
     repositoryMock.findCommitted.mockResolvedValue(null);
     auditMock.log.mockResolvedValue({ id: "audit-2", createdAt: new Date() });
 
@@ -254,13 +450,10 @@ describe("FrontOfficeDraftService", () => {
       },
     );
 
-    expect(repositoryMock.createDraft).toHaveBeenCalledWith(
-      expect.objectContaining({
-        status: "NEEDS_LINK",
-        mustClarifications: expect.arrayContaining(["LINK_OBJECT"]),
-      }),
-    );
-    expect((result as any).mustClarifications).toContain("LINK_OBJECT");
+    expect(clientResponseOrchestratorMock.sendClarification).toHaveBeenCalled();
+    expect((result as any).status).toBe("COMMITTED");
+    expect((result as any).resolutionMode).toBe("REQUEST_CLARIFICATION");
+    expect((result as any).replyStatus).toBe("SENT");
   });
 
   it("links draft and moves it to ready-to-confirm when anchor becomes complete", async () => {
@@ -502,6 +695,174 @@ describe("FrontOfficeDraftService", () => {
     );
   });
 
+  it("auto-replies to safe informational client question through RAI path", async () => {
+    agentMock.run.mockResolvedValue({
+      data: {
+        log: { threadKey: "c1:telegram:tg-auto" },
+        classification: {
+          classification: "client_request",
+          confidence: 0.93,
+          threadKey: "c1:telegram:tg-auto",
+          targetOwnerRole: "agronomist",
+        },
+      },
+    });
+    replyPolicyMock.evaluate.mockReturnValue({
+      rolloutMode: "rollout",
+      resolutionMode: "AUTO_REPLY",
+      responseRisk: "SAFE_INFORMATIONAL",
+      targetOwnerRole: "agronomist",
+      missingContext: [],
+      directReplyAllowed: true,
+      prohibitedReason: null,
+      dialogSummary: "summary",
+      managerShouldBeNotified: false,
+      needsHumanAction: false,
+    });
+    repositoryMock.createDraft.mockImplementation(async (payload: any) => ({
+      id: "draft-auto",
+      companyId: payload.companyId,
+      userId: payload.userId,
+      status: payload.status,
+      eventType: payload.eventType,
+      timestamp: payload.timestamp,
+      anchor: {
+        farmRef: null,
+        fieldId: payload.fieldId ?? null,
+        seasonId: payload.payload.seasonId ?? null,
+        taskId: payload.taskId ?? null,
+      },
+      payload: payload.payload,
+      evidence: payload.evidence,
+      confidence: payload.confidence,
+      mustClarifications: payload.mustClarifications,
+      createdAt: "2026-03-09T00:00:00.000Z",
+      updatedAt: "2026-03-09T00:00:00.000Z",
+      expiresAt: "2026-03-16T00:00:00.000Z",
+    }));
+    repositoryMock.updateDraft.mockResolvedValue({
+      id: "draft-auto",
+      companyId: "c1",
+      userId: "u1",
+      status: "READY_TO_CONFIRM",
+      eventType: "FRONT_OFFICE_CONSULTATION",
+      timestamp: "2026-03-09T00:00:00.000Z",
+      anchor: {
+        farmRef: null,
+        fieldId: "field-auto",
+        seasonId: "season-auto",
+        taskId: null,
+      },
+      payload: {
+        messageText: "Какая сейчас стадия по полю?",
+        threadKey: "c1:telegram:tg-auto",
+        classification: "client_request",
+        suggestedIntent: "consultation",
+        channel: "telegram",
+        targetOwnerRole: "agronomist",
+        resolutionMode: "AUTO_REPLY",
+        responseRisk: "SAFE_INFORMATIONAL",
+      },
+      evidence: [],
+      confidence: 0.93,
+      mustClarifications: [],
+      createdAt: "2026-03-09T00:00:00.000Z",
+      updatedAt: "2026-03-09T00:01:00.000Z",
+      expiresAt: "2026-03-16T00:00:00.000Z",
+    });
+    repositoryMock.commitDraft.mockResolvedValue({
+      draft: {
+        id: "draft-auto",
+        companyId: "c1",
+        userId: "u1",
+        status: "COMMITTED",
+        eventType: "FRONT_OFFICE_CONSULTATION",
+        timestamp: "2026-03-09T00:00:00.000Z",
+        anchor: {
+          farmRef: null,
+          fieldId: "field-auto",
+          seasonId: "season-auto",
+          taskId: null,
+        },
+        payload: {
+          resolutionMode: "AUTO_REPLY",
+          responseRisk: "SAFE_INFORMATIONAL",
+          replyStatus: "SENT",
+          autoReplyTraceId: "tr-auto",
+          commitResult: {
+            kind: "auto_reply",
+            id: "msg-auto",
+            replyStatus: "SENT",
+            autoReplyTraceId: "tr-auto",
+            targetOwnerRole: "agronomist",
+          },
+        },
+        evidence: [],
+        confidence: 0.93,
+        mustClarifications: [],
+        createdAt: "2026-03-09T00:00:00.000Z",
+        updatedAt: "2026-03-09T00:02:00.000Z",
+        expiresAt: "2026-03-16T00:00:00.000Z",
+      },
+      committed: {
+        id: "draft-auto",
+        companyId: "c1",
+        eventType: "FRONT_OFFICE_CONSULTATION",
+        timestamp: "2026-03-09T00:00:00.000Z",
+        committedAt: "2026-03-09T00:02:00.000Z",
+        committedBy: "u1",
+        provenanceHash: "hash-auto",
+        payload: {
+          resolutionMode: "AUTO_REPLY",
+          responseRisk: "SAFE_INFORMATIONAL",
+          replyStatus: "SENT",
+          autoReplyTraceId: "tr-auto",
+          commitResult: {
+            kind: "auto_reply",
+            id: "msg-auto",
+            replyStatus: "SENT",
+            autoReplyTraceId: "tr-auto",
+            targetOwnerRole: "agronomist",
+          },
+        },
+        evidence: [],
+        anchor: {
+          farmRef: null,
+          fieldId: "field-auto",
+          seasonId: "season-auto",
+          taskId: null,
+        },
+      },
+    });
+    repositoryMock.findCommitted.mockResolvedValue(null);
+    auditMock.log.mockResolvedValue({ id: "audit-auto", createdAt: new Date() });
+    clientResponseOrchestratorMock.sendAutoReply.mockResolvedValue({
+      replyStatus: "SENT",
+      autoReplyTraceId: "tr-auto",
+      ownerRole: "agronomist",
+      messageId: "msg-auto",
+      deliveredText: "Сейчас стадия развития зафиксирована в журнале поля.",
+    });
+
+    const result = await service.intakeMessage(
+      "c1",
+      "trace-auto",
+      { id: "u1", role: "USER" },
+      {
+        channel: "telegram",
+        messageText: "Какая сейчас стадия по полю?",
+        fieldId: "field-auto",
+        seasonId: "season-auto",
+      },
+    );
+
+    expect(clientResponseOrchestratorMock.sendAutoReply).toHaveBeenCalled();
+    expect((result as any).status).toBe("COMMITTED");
+    expect((result as any).resolutionMode).toBe("AUTO_REPLY");
+    expect((result as any).replyStatus).toBe("SENT");
+    expect((result as any).autoReplyTraceId).toBe("tr-auto");
+  });
+
   it("blocks manager from reading unassigned farm thread messages", async () => {
     communicationRepositoryMock.getThreadByKey.mockResolvedValue({
       id: "thread-10",
@@ -532,6 +893,67 @@ describe("FrontOfficeDraftService", () => {
         "c1:telegram:tg-10",
       ),
     ).rejects.toThrow("User manager-1 is not assigned to farm farm-10");
+  });
+
+  it("routes manager reply through unified outbound pipeline", async () => {
+    communicationRepositoryMock.getThreadByKey.mockResolvedValue({
+      id: "thread-r1",
+      threadKey: "c1:telegram:tg-reply",
+      companyId: "c1",
+      channel: "telegram",
+      farmAccountId: "farm-r1",
+      farmNameSnapshot: "Farm R1",
+      representativeUserId: "rep-r1",
+      representativeTelegramId: "999001",
+      threadExternalId: "999001",
+      dialogExternalId: null,
+      senderExternalId: "999001",
+      recipientExternalId: null,
+      route: null,
+      lastDraftId: null,
+      lastMessageDirection: "inbound",
+      lastMessagePreview: "Нужен ответ",
+      lastMessageAt: "2026-03-09T00:00:00.000Z",
+      currentOwnerRole: "contracts_agent",
+      currentHandoffStatus: "ROUTED",
+    });
+    communicationRepositoryMock.findAssignment.mockResolvedValue({
+      id: "assign-1",
+      companyId: "c1",
+      userId: "manager-1",
+      farmAccountId: "farm-r1",
+      status: "ACTIVE",
+      priority: 1,
+      farmName: "Farm R1",
+      userEmail: "manager@example.com",
+      createdAt: "2026-03-09T00:00:00.000Z",
+      updatedAt: "2026-03-09T00:00:00.000Z",
+    });
+    outboundServiceMock.sendToThread.mockResolvedValue({
+      thread: { threadKey: "c1:telegram:tg-reply" },
+      message: {
+        id: "msg-reply",
+        createdAt: "2026-03-09T00:10:00.000Z",
+      },
+      delivery: { messageId: "166" },
+    });
+
+    const result = await service.replyToThread(
+      "c1",
+      { id: "manager-1", role: "MANAGER" },
+      "c1:telegram:tg-reply",
+      "Принято, возвращаюсь с ответом.",
+    );
+
+    expect(outboundServiceMock.sendToThread).toHaveBeenCalledWith(
+      expect.objectContaining({
+        companyId: "c1",
+        messageText: "Принято, возвращаюсь с ответом.",
+        kind: "manager_reply",
+        authorType: "back_office_operator",
+      }),
+    );
+    expect((result as any).message.id).toBe("msg-reply");
   });
 
   it("confirms consultation draft into governed handoff instead of audit-only commit", async () => {

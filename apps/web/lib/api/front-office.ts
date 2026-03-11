@@ -40,6 +40,15 @@ export interface FrontOfficeThreadMessageDto {
   direction: "inbound" | "outbound";
   messageText: string;
   createdAt: string;
+  kind?:
+    | "client_message"
+    | "manager_reply"
+    | "auto_reply"
+    | "clarification_request"
+    | "handoff_receipt"
+    | "system_event";
+  authorType?: "farm_representative" | "back_office_operator" | "rai" | "system";
+  deliveryStatus?: "RECEIVED" | "SENT" | "SKIPPED" | "FAILED";
   sourceMessageId?: string | null;
   chatId?: string | null;
   metadata?: Record<string, unknown> | null;
@@ -58,6 +67,7 @@ export interface FrontOfficeThreadListItemDto {
   currentHandoffStatus?: string | null;
   currentOwnerRole?: string | null;
   unreadCount: number;
+  needsHumanAction: boolean;
 }
 
 export interface FrontOfficeManagerFarmInboxDto {
@@ -68,6 +78,7 @@ export interface FrontOfficeManagerFarmInboxDto {
   lastMessagePreview?: string | null;
   lastMessageAt?: string | null;
   lastHandoffStatus?: string | null;
+  needsHumanAction: boolean;
 }
 
 export interface ManagerFarmAssignmentDto {

@@ -12,7 +12,9 @@ export type CanonicalAgentRuntimeRole =
   | "monitoring"
   | "crm_agent"
   | "front_office_agent"
-  | "contracts_agent";
+  | "contracts_agent"
+  | "chief_agronomist"
+  | "data_scientist";
 
 export type AgentRuntimeRole = string;
 
@@ -119,6 +121,24 @@ const AGENT_DEFINITIONS: Record<CanonicalAgentRuntimeRole, AgentDefinition> = {
     defaultMaxTokens: 10000,
     defaultCapabilities: ["ContractsToolsRegistry"],
   },
+  chief_agronomist: {
+    role: "chief_agronomist",
+    name: "ChiefAgronomistAgent",
+    businessRole: "Глубокая агрономическая экспертиза, разбор аномалий и экспертные заключения (Expert-tier)",
+    ownerDomain: "agro_expert",
+    defaultModel: "google/gemini-2.0-pro-exp-02-05",
+    defaultMaxTokens: 32000,
+    defaultCapabilities: ["ExpertModule"],
+  },
+  data_scientist: {
+    role: "data_scientist",
+    name: "DataScientistAgent",
+    businessRole: "Прогнозная аналитика, майнинг паттернов и статистические исследования (Expert-tier)",
+    ownerDomain: "data_science",
+    defaultModel: "google/gemini-2.0-flash-001",
+    defaultMaxTokens: 32000,
+    defaultCapabilities: ["ExpertModule"],
+  },
 };
 
 const AGENT_ROLES = Object.keys(AGENT_DEFINITIONS) as CanonicalAgentRuntimeRole[];
@@ -197,6 +217,8 @@ export const DEFAULT_TOOL_BINDINGS: Record<CanonicalAgentRuntimeRole, RaiToolNam
     RaiToolName.AllocatePayment,
     RaiToolName.GetArBalance,
   ],
+  chief_agronomist: [],
+  data_scientist: [],
 };
 
 export function isAgentRuntimeRole(value: string): value is CanonicalAgentRuntimeRole {
@@ -246,7 +268,7 @@ function indexByRole(rows: AgentConfiguration[]): Map<CanonicalAgentRuntimeRole,
 
 @Injectable()
 export class AgentRegistryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async getRegistry(companyId: string): Promise<EffectiveAgentRegistryEntry[]> {
     const [
@@ -563,11 +585,11 @@ export class AgentRegistryService {
           ? "DENIED"
           : tenantRow
             ? tenantRow.isActive
-            ? "OVERRIDE"
-            : "DENIED"
-          : isBootstrapOnly
-            ? "INHERITED"
-            : "INHERITED",
+              ? "OVERRIDE"
+              : "DENIED"
+            : isBootstrapOnly
+              ? "INHERITED"
+              : "INHERITED",
         isActive,
         source: lifecycleOverride || tenantRow ? "tenant" : "global",
       },

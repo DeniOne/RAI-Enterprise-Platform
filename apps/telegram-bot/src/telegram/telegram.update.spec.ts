@@ -105,6 +105,35 @@ describe("TelegramUpdate front-office flow", () => {
     );
   });
 
+  it("не дублирует auto-reply, если backend уже ответил в thread", async () => {
+    const apiClient = buildApiClient();
+    const sessionService = buildSessionService();
+    sessionService.getSession.mockResolvedValue({
+      token: "token-1",
+      lastActive: Date.now(),
+    });
+    apiClient.createFrontOfficeDraft.mockResolvedValue({
+      status: "COMMITTED",
+      draftId: "draft-auto",
+      resolutionMode: "AUTO_REPLY",
+      replyStatus: "SENT",
+      confirmationRequired: false,
+      allowedActions: [],
+    });
+
+    const update = new TelegramUpdate(
+      progressService as any,
+      apiClient as any,
+      sessionService as any,
+    );
+    const ctx = buildTextContext("какая стадия по полю");
+
+    await update.onText(ctx);
+
+    expect(apiClient.createFrontOfficeDraft).toHaveBeenCalled();
+    expect(ctx.reply).not.toHaveBeenCalled();
+  });
+
   it("не маршрутизирует raw text менеджера в front-office intake", async () => {
     const apiClient = buildApiClient();
     apiClient.getUser.mockResolvedValue({

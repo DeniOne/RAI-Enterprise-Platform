@@ -607,6 +607,11 @@ export class RaiChatRequestDto {
   @MaxLength(128)
   clientTraceId?: string;
 
+  @IsString()
+  @IsOptional()
+  @MaxLength(32)
+  audience?: "internal" | "client_front_office";
+
   @IsArray()
   @IsOptional()
   @ValidateNested({ each: true })

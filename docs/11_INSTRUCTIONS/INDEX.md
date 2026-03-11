@@ -3,9 +3,9 @@ id: DOC-INS-GEN-001
 type: InstructionIndex
 layer: Instructions
 status: Active
-version: 1.0.0
+version: 1.1.0
 owners: [@techlead]
-last_updated: 2026-03-08
+last_updated: 2026-03-10
 ---
 
 # ИНСТРУКЦИИ — УКАЗАТЕЛЬ И СТАНДАРТ ОФОРМЛЕНИЯ
@@ -170,6 +170,9 @@ last_updated: 2026-03-08
 
 - [INSTRUCTION_FRONT_OFFICE_AGENT_ENABLEMENT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_FRONT_OFFICE_AGENT_ENABLEMENT.md)
   Практическая инструкция по включению `front_office_agent`: communicator ingress, dialogue log, process detection, escalation и handoff в owner-domains.
+
+- [INSTRUCTION_FRONT_OFFICE_BACK_OFFICE_COMMUNICATION_ROUTING.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_FRONT_OFFICE_BACK_OFFICE_COMMUNICATION_ROUTING.md)
+  Практическая инструкция по рабочей схеме общения Front Office ↔ Back Office: Telegram-first ingress, direct reply от `RAI`, governed handoff менеджеру и границы роли `A-RAI`.
 
 - [INSTRUCTION_CONTRACTS_AGENT_ENABLEMENT.md](/root/RAI_EP/docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_CONTRACTS_AGENT_ENABLEMENT.md)
   Практическая инструкция по включению `contracts_agent`: договоры, обязательства, fulfillment, счета, оплаты и governed commerce execution path.
