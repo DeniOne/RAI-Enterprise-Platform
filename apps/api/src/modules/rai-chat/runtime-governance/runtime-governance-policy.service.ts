@@ -194,6 +194,48 @@ const DEFAULT_POLICY: RuntimeGovernancePolicy = {
       },
       budget: { degradePct: 75, denyPct: 100 },
     },
+    chief_agronomist: {
+      role: "chief_agronomist",
+      fallbackModeByReason: buildFallbackModes({
+        NO_INTENT_OWNER: "ROUTE_FALLBACK",
+        NEEDS_MORE_DATA: "MANUAL_HUMAN_REQUIRED",
+      }),
+      thresholds: {
+        bsReviewThresholdPct: 30,
+        bsQuarantineThresholdPct: 45,
+        evidenceCoverageMinPct: 70,
+        budgetDeniedRateThresholdPct: 15,
+        queueSaturationThreshold: "PRESSURED",
+        toolFailureRateThresholdPct: 10,
+      },
+      concurrency: {
+        maxParallelToolCalls: 4,
+        maxParallelGroups: 3,
+        deadlineMs: 30_000,
+      },
+      budget: { degradePct: 80, denyPct: 100 },
+    },
+    data_scientist: {
+      role: "data_scientist",
+      fallbackModeByReason: buildFallbackModes({
+        NO_INTENT_OWNER: "ROUTE_FALLBACK",
+        NEEDS_MORE_DATA: "MANUAL_HUMAN_REQUIRED",
+      }),
+      thresholds: {
+        bsReviewThresholdPct: 30,
+        bsQuarantineThresholdPct: 45,
+        evidenceCoverageMinPct: 70,
+        budgetDeniedRateThresholdPct: 15,
+        queueSaturationThreshold: "PRESSURED",
+        toolFailureRateThresholdPct: 10,
+      },
+      concurrency: {
+        maxParallelToolCalls: 4,
+        maxParallelGroups: 3,
+        deadlineMs: 30_000,
+      },
+      budget: { degradePct: 80, denyPct: 100 },
+    },
   },
 };
 

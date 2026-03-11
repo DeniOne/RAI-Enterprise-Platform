@@ -61,18 +61,18 @@ export class SeasonalLoopService {
         let fieldsProcessed = 0;
 
         // Загружаем все техкарты сезона с результатами
-        const techMaps = await this.prisma.techMap.findMany({
+        const techMaps = (await this.prisma.techMap.findMany({
             where: {
                 companyId,
                 seasonId,
-                status: { in: ['COMPLETED', 'ARCHIVED'] },
+                status: { in: ['ACTIVE' as any, 'ARCHIVED' as any] },
             },
             include: {
                 stages: { include: { operations: true } },
                 cropZone: true,
                 field: true,
             },
-        });
+        })) as any[];
 
         for (const techMap of techMaps) {
             try {
@@ -104,12 +104,14 @@ export class SeasonalLoopService {
                             await this.engramService.strengthenEngram(engram.id, {
                                 wasSuccessful: true,
                                 description: `Сезон ${seasonId}: урожайность ${actualYield} ц/га (${(yieldRatio * 100).toFixed(0)}% от плана)`,
+                                source: 'seasonal_loop',
                             });
                             strengthened++;
                         } else {
-                            await this.engramService.weakenEngram(engram.id, {
+                            await this.engramService.strengthenEngram(engram.id, {
                                 wasSuccessful: false,
                                 description: `Сезон ${seasonId}: недобор — ${actualYield} ц/га (${(yieldRatio * 100).toFixed(0)}% от плана)`,
+                                source: 'seasonal_loop',
                             });
                             weakened++;
                         }

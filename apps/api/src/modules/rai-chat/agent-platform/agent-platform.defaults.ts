@@ -73,6 +73,22 @@ const OUTPUT_CONTRACTS: Record<CanonicalAgentRuntimeRole, AgentOutputContract> =
     requiresDeterministicValidation: true,
     fallbackMode: "deterministic_summary",
   },
+  chief_agronomist: {
+    contractId: "expert-v1",
+    responseSchemaVersion: "v1",
+    sections: ["expertise", "evidence"],
+    requiresEvidence: true,
+    requiresDeterministicValidation: false,
+    fallbackMode: "deterministic_summary",
+  },
+  data_scientist: {
+    contractId: "expert-v1",
+    responseSchemaVersion: "v1",
+    sections: ["analysis", "evidence"],
+    requiresEvidence: true,
+    requiresDeterministicValidation: false,
+    fallbackMode: "deterministic_summary",
+  },
 };
 
 const MEMORY_POLICIES: Record<CanonicalAgentRuntimeRole, AgentMemoryPolicy> = {
@@ -121,6 +137,20 @@ const MEMORY_POLICIES: Record<CanonicalAgentRuntimeRole, AgentMemoryPolicy> = {
   contracts_agent: {
     policyId: "contracts-agent-memory-v1",
     allowedScopes: ["tenant", "domain", "user", "task_workflow", "sensitive_compliance"],
+    retrievalPolicy: "scoped_recall",
+    writePolicy: "append_summary",
+    sensitiveDataPolicy: "mask",
+  },
+  chief_agronomist: {
+    policyId: "expert-memory-v1",
+    allowedScopes: ["tenant", "domain"],
+    retrievalPolicy: "scoped_recall",
+    writePolicy: "append_summary",
+    sensitiveDataPolicy: "mask",
+  },
+  data_scientist: {
+    policyId: "expert-memory-v1",
+    allowedScopes: ["tenant", "domain"],
     retrievalPolicy: "scoped_recall",
     writePolicy: "append_summary",
     sensitiveDataPolicy: "mask",
@@ -184,6 +214,22 @@ const GOVERNANCE_POLICIES: Record<CanonicalAgentRuntimeRole, AgentGovernancePoli
     auditRequirements: ["trace", "evidence", "validation", "gate_status"],
     fallbackRules: ["use_contracts_summary_if_llm_unavailable"],
   },
+  chief_agronomist: {
+    policyId: "expert-governance-v1",
+    allowedAutonomyModes: ["advisory"],
+    humanGateRules: ["write_actions_require_governed_gate"],
+    criticalActionRules: ["no_critical_actions"],
+    auditRequirements: ["trace", "evidence"],
+    fallbackRules: ["use_deterministic_summary_if_llm_unavailable"],
+  },
+  data_scientist: {
+    policyId: "expert-governance-v1",
+    allowedAutonomyModes: ["advisory"],
+    humanGateRules: ["write_actions_require_governed_gate"],
+    criticalActionRules: ["no_critical_actions"],
+    auditRequirements: ["trace", "evidence"],
+    fallbackRules: ["use_deterministic_summary_if_llm_unavailable"],
+  },
 };
 
 const CAPABILITY_POLICIES: Record<CanonicalAgentRuntimeRole, AgentCapabilityPolicy> = {
@@ -222,6 +268,16 @@ const CAPABILITY_POLICIES: Record<CanonicalAgentRuntimeRole, AgentCapabilityPoli
     toolAccessMode: "allowlist",
     connectorAccessMode: "allowlist",
   },
+  chief_agronomist: {
+    capabilities: ["ExpertModule"],
+    toolAccessMode: "allowlist",
+    connectorAccessMode: "allowlist",
+  },
+  data_scientist: {
+    capabilities: ["ExpertModule"],
+    toolAccessMode: "allowlist",
+    connectorAccessMode: "allowlist",
+  },
 };
 
 const CONNECTOR_BINDINGS: Record<CanonicalAgentRuntimeRole, AgentConnectorBinding[]> = {
@@ -255,6 +311,8 @@ const CONNECTOR_BINDINGS: Record<CanonicalAgentRuntimeRole, AgentConnectorBindin
       scopes: ["contracts", "obligations", "fulfillment", "invoices", "payments", "allocations"],
     },
   ],
+  chief_agronomist: [],
+  data_scientist: [],
 };
 
 export function buildDefaultRuntimeProfile(

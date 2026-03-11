@@ -175,7 +175,7 @@ export class ExpertInvocationEngine {
         };
 
         if (request.context?.crop) {
-            recallCtx.type = 'AGRO';
+            recallCtx.filters = { ...recallCtx.filters, type: 'AGRO' };
         }
 
         return this.engramService.recallEngrams(recallCtx).catch((err) => {

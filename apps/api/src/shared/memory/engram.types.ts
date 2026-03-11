@@ -42,7 +42,7 @@ export interface EngramTriggerConditions {
 
 export interface EngramActionTemplate {
   /** Тип действия */
-  type: 'TREATMENT' | 'APPLICATION' | 'ADJUSTMENT' | 'ALERT' | 'RECOMMENDATION';
+  type: 'TREATMENT' | 'APPLICATION' | 'ADJUSTMENT' | 'ALERT' | 'RECOMMENDATION' | 'SEASONAL_RESULT';
   /** Шаги */
   steps?: string[];
   /** Параметры (препарат, дозировка и т.п.) */

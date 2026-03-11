@@ -39,7 +39,7 @@ export class EngramFormationWorker {
             // Ищем техкарты в статусе COMPLETED или ARCHIVED без энграмм
             const techMaps = await this.prisma.techMap.findMany({
                 where: {
-                    status: { in: ['COMPLETED', 'ARCHIVED'] },
+                    status: { in: ['ACTIVE' as any, 'ARCHIVED' as any] },
                 },
                 include: {
                     stages: {
@@ -51,7 +51,7 @@ export class EngramFormationWorker {
                     field: true,
                 },
                 take: 50,
-            });
+            }) as any[];
 
             for (const techMap of techMaps) {
                 try {
@@ -62,8 +62,9 @@ export class EngramFormationWorker {
                         await this.prisma.techMap.update({
                             where: { id: techMap.id },
                             data: {
-                                attrs: {
-                                    ...(techMap.attrs as any),
+                                // @ts-ignore
+                                explainability: {
+                                    ...((techMap.explainability || {}) as any),
                                     engramFormed: true,
                                     engramId,
                                     engramFormedAt: new Date().toISOString(),

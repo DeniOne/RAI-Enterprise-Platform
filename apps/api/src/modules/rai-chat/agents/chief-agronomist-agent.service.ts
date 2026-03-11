@@ -72,12 +72,12 @@ export class ChiefAgronomistAgent {
                     input.query,
                     input.traceId,
                     input.context,
-                    options?.request?.userId,
+                    (options?.request as any)?.userId,
                 );
 
                 const evidence: EvidenceReference[] = result.evidence.map(e => ({
                     claim: e.content,
-                    sourceType: "MEMORY_ENGRAM",
+                    sourceType: "DB",
                     sourceId: e.source,
                     confidenceScore: result.confidence,
                 }));
@@ -118,7 +118,7 @@ export class ChiefAgronomistAgent {
                     traceId: input.traceId,
                     evidence: tips.map(t => ({
                         claim: t.message,
-                        sourceType: "MEMORY_ENGRAM",
+                        sourceType: "DB",
                         sourceId: t.engramId || 'alert',
                         confidenceScore: t.confidence,
                     })),

@@ -190,7 +190,7 @@ export class DataScientistService {
                 companyId,
                 embedding: buildTextEmbedding(`урожайность ${crop} поле ${fieldId}`),
                 limit: 15,
-                type: 'AGRO',
+                filters: { type: 'AGRO' },
             }).catch(() => [] as RankedEngram[])
             : [];
 
@@ -309,8 +309,7 @@ export class DataScientistService {
                 companyId,
                 embedding: buildTextEmbedding(`болезни ${crop} фитопатология защита растений`),
                 limit: 20,
-                type: 'AGRO',
-                category: 'DISEASE_TREATMENT',
+                filters: { type: 'AGRO', category: 'DISEASE_TREATMENT' },
             }).catch(() => [] as RankedEngram[])
             : [];
 
@@ -419,7 +418,7 @@ export class DataScientistService {
                 companyId,
                 embedding: buildTextEmbedding('оптимизация затрат экономия себестоимость'),
                 limit: 10,
-                type: 'AGRO',
+                filters: { type: 'AGRO' },
             }).catch(() => [] as RankedEngram[])
             : [];
 
@@ -580,7 +579,7 @@ export class DataScientistService {
                 centroidContent: members[0].content.slice(0, 200),
                 avgSuccessRate: avgSuccess,
                 avgSynapticWeight: avgWeight,
-                categories,
+                categories: categories as string[],
                 keyPattern: `${key}: ${members.length} энграмм, avg success ${(avgSuccess * 100).toFixed(0)}%`,
                 engramIds: members.map((m) => m.id),
             });

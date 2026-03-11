@@ -120,7 +120,7 @@ export class ChiefAgronomistService {
                 embedding,
                 limit: 3,
                 minSimilarity: 0.55,
-                type: 'AGRO',
+                filters: { type: 'AGRO' },
             })
             .catch(() => [] as RankedEngram[]);
 
@@ -160,7 +160,7 @@ export class ChiefAgronomistService {
                 embedding,
                 limit: 10,
                 minSimilarity: 0.5,
-                type: 'AGRO',
+                filters: { type: 'AGRO' },
             })
             .catch(() => []);
     }
