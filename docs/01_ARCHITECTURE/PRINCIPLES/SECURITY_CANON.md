@@ -1,22 +1,12 @@
 ---
-id: DOC-ARC-GEN-054
-type: Standards
+id: DOC-ARC-PRINCIPLES-SECURITY-CANON-1FQM
 layer: Architecture
-status: Draft
+type: Standards
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: principle-security-canon
-type: principle
-status: approved
-owners: [architects, security-officers, techleads]
-aligned_with: [principle-canon, principle-axioms, principle-ai-governance-canon]
-tags: [security, governance, mandatory]
----
-
 # SECURITY CANON
 
 ## 0. Статус документа

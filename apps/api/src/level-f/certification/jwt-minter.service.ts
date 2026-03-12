@@ -3,6 +3,7 @@ import { RatingResult } from "./rating-engine.service";
 import { SnapshotPayload } from "../snapshot/snapshot.service";
 import { randomUUID } from "crypto";
 import { HsmService } from "../crypto/hsm.service";
+import { CertAuditService } from "../../shared/audit/cert-audit/cert-audit.service";
 
 export interface LevelFCertificatePayload {
   jti: string; // Уникальный ID Сертификата (защита от replay/idempotency)
@@ -20,7 +21,10 @@ export interface LevelFCertificatePayload {
 export class JwtMinterService {
   private readonly logger = new Logger(JwtMinterService.name);
 
-  constructor(private readonly hsmService: HsmService) {}
+  constructor(
+    private readonly hsmService: HsmService,
+    private readonly certAuditService: CertAuditService,
+  ) {}
 
   /**
    * Выпуск финального Institutional-Grade JWT
@@ -34,6 +38,8 @@ export class JwtMinterService {
     this.logger.log(
       `Minting Ed25519 JWT Certificate for Company ${snapshot.companyId} via Vault Enclave`,
     );
+
+    const keyReference = await this.hsmService.getActiveKeyReference();
 
     const payload: LevelFCertificatePayload = {
       jti: randomUUID(),
@@ -49,7 +55,7 @@ export class JwtMinterService {
     };
 
     // Header для JWT EdDSA
-    const header = { alg: "EdDSA", typ: "JWT" };
+    const header = { alg: "EdDSA", typ: "JWT", kid: keyReference.kid };
 
     const encodedHeader = Buffer.from(JSON.stringify(header)).toString(
       "base64url",
@@ -59,12 +65,36 @@ export class JwtMinterService {
     );
     const dataToSign = `${encodedHeader}.${encodedPayload}`;
 
-    // Отправка в HSM (Анклавное подписание, RAM не видит Private Key)
-    const signature = await this.hsmService.signEd25519(dataToSign);
+    await this.certAuditService.logSignatureIntent({
+      companyId: snapshot.companyId,
+      initiatorProcess: "JwtMinterService",
+      snapshotHash,
+      kidUsed: keyReference.kid,
+    });
 
-    const signedToken = `${dataToSign}.${signature}`;
+    try {
+      // Отправка в HSM (Анклавное подписание, RAM не видит Private Key)
+      const signature = await this.hsmService.signEd25519(dataToSign, keyReference);
+      const signedToken = `${dataToSign}.${signature}`;
 
-    this.logger.log(`Certificate Minted via HSM: ${payload.jti}`);
-    return signedToken;
+      await this.certAuditService.logSignatureCompleted({
+        companyId: snapshot.companyId,
+        initiatorProcess: "JwtMinterService",
+        snapshotHash,
+        kidUsed: keyReference.kid,
+      });
+
+      this.logger.log(`Certificate Minted via HSM: ${payload.jti}`);
+      return signedToken;
+    } catch (error: any) {
+      await this.certAuditService.logSignatureError({
+        companyId: snapshot.companyId,
+        initiatorProcess: "JwtMinterService",
+        snapshotHash,
+        kidUsed: keyReference.kid,
+        errorReason: error?.message || "HSM signing failed",
+      });
+      throw error;
+    }
   }
 }

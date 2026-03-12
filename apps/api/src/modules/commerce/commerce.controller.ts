@@ -1,5 +1,4 @@
-﻿import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
-import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
+﻿import { Body, Controller, Get, Param, Post, UseInterceptors } from "@nestjs/common";
 import { BillingService } from "./services/billing.service";
 import { CommerceContractService } from "./services/commerce-contract.service";
 import { FulfillmentService } from "./services/fulfillment.service";
@@ -8,9 +7,15 @@ import { CreateCommerceObligationDto } from "./dto/create-commerce-obligation.dt
 import { CreateFulfillmentEventDto } from "./dto/create-fulfillment-event.dto";
 import { CreateInvoiceFromFulfillmentDto } from "./dto/create-invoice-from-fulfillment.dto";
 import { CreatePaymentAllocationDto, CreatePaymentDto } from "./dto/create-payment.dto";
+import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
+import { Authorized } from "../../shared/auth/authorized.decorator";
+import {
+  COMMERCE_READ_ROLES,
+  COMMERCE_WRITE_ROLES,
+  FINANCE_ROLES,
+} from "../../shared/auth/rbac.constants";
 
 @Controller("commerce")
-@UseGuards(JwtAuthGuard)
 export class CommerceController {
   constructor(
     private readonly contractService: CommerceContractService,
@@ -19,16 +24,21 @@ export class CommerceController {
   ) { }
 
   @Post("contracts")
+  @Authorized(...COMMERCE_WRITE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   createContract(@Body() dto: CreateCommerceContractDto) {
     return this.contractService.createContract(dto);
   }
 
   @Get("contracts")
+  @Authorized(...COMMERCE_READ_ROLES)
   listContracts() {
     return this.contractService.listContracts();
   }
 
   @Post("obligations")
+  @Authorized(...COMMERCE_WRITE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   createObligation(@Body() dto: CreateCommerceObligationDto) {
     return this.contractService.createObligation(
       dto.contractId,
@@ -38,16 +48,21 @@ export class CommerceController {
   }
 
   @Post("fulfillment-events")
+  @Authorized(...COMMERCE_WRITE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   createFulfillment(@Body() dto: CreateFulfillmentEventDto) {
     return this.fulfillmentService.createEvent(dto);
   }
 
   @Get("fulfillment")
+  @Authorized(...COMMERCE_READ_ROLES)
   listFulfillment() {
     return this.fulfillmentService.listEvents();
   }
 
   @Post("invoices/from-fulfillment")
+  @Authorized(...FINANCE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   createInvoiceFromFulfillment(@Body() dto: CreateInvoiceFromFulfillmentDto) {
     return this.billingService.createInvoiceFromFulfillment(
       dto.fulfillmentEventId,
@@ -63,16 +78,21 @@ export class CommerceController {
   }
 
   @Get("invoices")
+  @Authorized(...FINANCE_ROLES)
   listInvoices() {
     return this.billingService.listInvoices();
   }
 
   @Post("invoices/:id/post")
+  @Authorized(...FINANCE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   postInvoice(@Param("id") invoiceId: string) {
     return this.billingService.postInvoice(invoiceId);
   }
 
   @Post("payments")
+  @Authorized(...FINANCE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   createPayment(@Body() dto: CreatePaymentDto) {
     return this.billingService.createPayment({
       payerPartyId: dto.payerPartyId,
@@ -85,16 +105,21 @@ export class CommerceController {
   }
 
   @Get("payments")
+  @Authorized(...FINANCE_ROLES)
   listPayments() {
     return this.billingService.listPayments();
   }
 
   @Post("payments/:id/confirm")
+  @Authorized(...FINANCE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   confirmPayment(@Param("id") paymentId: string) {
     return this.billingService.confirmPayment(paymentId);
   }
 
   @Post("payment-allocations")
+  @Authorized(...FINANCE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   allocatePayment(@Body() dto: CreatePaymentAllocationDto) {
     return this.billingService.allocatePayment(
       dto.paymentId,
@@ -104,6 +129,7 @@ export class CommerceController {
   }
 
   @Get("invoices/:id/ar-balance")
+  @Authorized(...FINANCE_ROLES)
   getArBalance(@Param("id") invoiceId: string) {
     return this.billingService.getArBalance(invoiceId);
   }

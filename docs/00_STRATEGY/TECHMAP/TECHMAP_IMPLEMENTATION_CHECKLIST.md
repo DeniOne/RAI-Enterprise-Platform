@@ -1,3 +1,10 @@
+---
+id: DOC-STR-TECHMAP-TECHMAP-IMPLEMENTATION-CHECKLIST-GAZV
+layer: Strategy
+type: Roadmap
+status: draft
+version: 0.1.0
+---
 # TECHMAP IMPLEMENTATION — Мастер-Чеклист
 
 > **Базис**: [GRAND_SYNTHESIS.md](file:///root/RAI_EP/docs/00_STRATEGY/TECHMAP/GRAND_SYNTHESIS.md)

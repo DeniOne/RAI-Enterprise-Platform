@@ -1,3 +1,10 @@
+---
+id: DOC-STR-00-STRATEGY-EVOLUTION-ARCHITECTURE-MASTER--1PYC
+layer: Strategy
+type: Vision
+status: draft
+version: 0.1.0
+---
 # A–F Cognitive Evolution Framework
 
 ## 0. Назначение документа

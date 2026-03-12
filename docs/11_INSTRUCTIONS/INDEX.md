@@ -1,13 +1,12 @@
 ---
-id: DOC-INS-GEN-001
-type: InstructionIndex
+id: DOC-INS-11-INSTRUCTIONS-INDEX-W7KU
 layer: Instructions
-status: Active
+type: InstructionIndex
+status: approved
 version: 1.1.0
 owners: [@techlead]
 last_updated: 2026-03-10
 ---
-
 # ИНСТРУКЦИИ — УКАЗАТЕЛЬ И СТАНДАРТ ОФОРМЛЕНИЯ
 
 ## 1. Назначение раздела

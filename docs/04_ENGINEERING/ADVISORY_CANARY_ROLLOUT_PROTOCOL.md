@@ -1,14 +1,13 @@
 ---
-id: DOC-ENG-GEN-100
-type: Service Spec
+id: DOC-ENG-04-ENGINEERING-ADVISORY-CANARY-ROLLOUT-PRO-D5ND
 layer: Engineering
-status: Draft
+type: Service Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿# Advisory Canary Rollout Protocol (Sprint 6)
+# Advisory Canary Rollout Protocol (Sprint 6)
 
 ## 1. Scope
 - Service scope: advisory API + Web dashboard advisory panel + Telegram advisory commands.

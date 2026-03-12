@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GOV-002
-type: Specification
-layer: Governance
-status: Approved
+id: DOC-ARC-LEVEL-E-LEVEL-E-GOVERNANCE-EXTENSION-1DP3
+layer: Architecture
+type: Standards
+status: approved
 version: 1.3.0
 owners: [@techlead]
 last_updated: 2026-02-19
 ---
-
 # LEVEL E: GOVERNANCE FSM EXTENSION
 
 ## 1. Введение

@@ -1,13 +1,12 @@
 ---
-id: DOC-DOM-LD-001
-type: Domain
+id: DOC-DOM-RAI-DOMAIN-DOMAIN-MODEL-VERSION-1LHB
 layer: Domain
-status: Accepted
+type: Domain Spec
+status: approved
 version: 2.0.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # RAI DOMAIN — MODEL VERSION (D6 Hardened)
 ## Доменная модель версии ML-модели
 

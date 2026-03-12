@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-GRAND-STRATEGIC-SYNTHESIS-1IIS
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 Ниже — единый стратегический синтез двух переданных исследований по конкурентному рынку RAI в России. 
 Основание синтеза: загруженные документы `COMET.md` и `Исследование конкурентного рынка для RAI в России ChatGPT.md`.  
 

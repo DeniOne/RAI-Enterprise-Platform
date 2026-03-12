@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-09-ARCHIVE-INSTITUTIONAL-UI-AUDIT-FINAL-CO-V7O3
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 # RAI Enterprise Platform
 ## Institutional UI Audit — Final Consolidated Report
 

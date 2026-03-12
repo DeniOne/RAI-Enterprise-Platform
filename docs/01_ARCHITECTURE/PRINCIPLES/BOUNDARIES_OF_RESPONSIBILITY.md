@@ -1,11 +1,10 @@
 ---
-id: DOC-ARC-GEN-046
-type: Standards
+id: DOC-ARC-PRINCIPLES-BOUNDARIES-OF-RESPONSIBILITY-7AOG
 layer: Architecture
-status: Draft
+type: HLD
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # ГРАНИЦЫ ОТВЕТСТВЕННОСТИ

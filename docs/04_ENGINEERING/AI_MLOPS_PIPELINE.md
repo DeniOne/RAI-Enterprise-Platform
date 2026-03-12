@@ -1,21 +1,12 @@
 ---
-id: DOC-ENG-GEN-119
-type: Service Spec
+id: DOC-ENG-04-ENGINEERING-AI-MLOPS-PIPELINE-412Y
 layer: Engineering
-status: Draft
+type: Service Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿---
-id: guideline-ai-mlops-pipeline
-type: guideline
-status: review
-owners: [techleads, mlops]
-aligned_with: [principle-ai-governance-canon]
----
-
 # AI MLOps Pipeline
 
 ## ????

@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-ARCHIVE-PROJECT-EXECUTION-CHECKLIST-1AST
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 # RAI_EP — Чеклист доведения “недоделок” до дееспособного состояния (приоритетный)
 Дата: 2026-03-01  
 Назначение: превратить “LAW/планы/моки” в работающий тонкий срез Agent OS + Agro runtime.

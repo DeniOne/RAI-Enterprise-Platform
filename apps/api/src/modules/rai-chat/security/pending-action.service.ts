@@ -18,6 +18,27 @@ export interface CreatePendingActionInput {
 export class PendingActionService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async list(
+    companyId: string,
+    params?: {
+      status?: PendingActionStatus;
+      limit?: number;
+      traceId?: string;
+    },
+  ) {
+    await this.syncExpired(companyId);
+    const take = Math.min(100, Math.max(1, params?.limit ?? 20));
+    return this.prisma.pendingAction.findMany({
+      where: {
+        companyId,
+        ...(params?.status ? { status: params.status } : {}),
+        ...(params?.traceId ? { traceId: params.traceId } : {}),
+      },
+      orderBy: { createdAt: "desc" },
+      take,
+    });
+  }
+
   async create(input: CreatePendingActionInput) {
     const expiresAt = new Date(Date.now() + EXPIRY_HOURS * 60 * 60 * 1000);
     return this.prisma.pendingAction.create({
@@ -77,6 +98,22 @@ export class PendingActionService {
     if (new Date() <= action.expiresAt) return action;
     return this.prisma.pendingAction.update({
       where: { id: actionId },
+      data: { status: PendingActionStatus.EXPIRED },
+    });
+  }
+
+  async syncExpired(companyId: string) {
+    return this.prisma.pendingAction.updateMany({
+      where: {
+        companyId,
+        status: {
+          in: [
+            PendingActionStatus.PENDING,
+            PendingActionStatus.APPROVED_FIRST,
+          ],
+        },
+        expiresAt: { lt: new Date() },
+      },
       data: { status: PendingActionStatus.EXPIRED },
     });
   }

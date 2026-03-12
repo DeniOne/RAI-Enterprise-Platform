@@ -5,18 +5,25 @@ import {
   Get,
   Param,
   Patch,
-  UseGuards,
   Query,
+  UseInterceptors,
 } from "@nestjs/common";
 import { PaginationDto } from "../../shared/dto/pagination.dto";
 import { DeviationService } from "./deviation.service";
 import { RiskService } from "./risk.service";
 import { DecisionService } from "./decision.service";
-import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
+import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
+import { Authorized } from "../../shared/auth/authorized.decorator";
+import { Roles } from "../../shared/auth/roles.decorator";
+import {
+  EXECUTION_ROLES,
+  PLANNING_READ_ROLES,
+  PLANNING_WRITE_ROLES,
+} from "../../shared/auth/rbac.constants";
 
 @Controller("cmr")
-@UseGuards(JwtAuthGuard)
+@Authorized(...PLANNING_READ_ROLES)
 export class CmrController {
   constructor(
     private readonly deviationService: DeviationService,
@@ -25,6 +32,8 @@ export class CmrController {
   ) {}
 
   @Post("reviews")
+  @Roles(...EXECUTION_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async createReview(@Body() data: any, @CurrentUser() user: any) {
     return this.deviationService.createReview({
       ...data,
@@ -51,6 +60,8 @@ export class CmrController {
   }
 
   @Patch("reviews/:id/transition")
+  @Roles(...PLANNING_WRITE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async transitionReview(
     @Param("id") id: string,
     @Body("status") status: any,

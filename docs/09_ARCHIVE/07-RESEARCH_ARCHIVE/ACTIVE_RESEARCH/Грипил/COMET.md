@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-COMET-WIIH
+layer: Archive
+type: Legacy
+status: archived
+version: 0.1.0
+---
 # Склеиватели стручков рапса (pod sealants) для России, Беларуси и Казахстана
 
 ## Executive Summary

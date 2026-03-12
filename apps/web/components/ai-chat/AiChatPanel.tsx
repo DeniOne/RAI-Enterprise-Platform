@@ -1,11 +1,18 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  api,
+  type ChiefAgronomistReviewRequest,
+  type ChiefAgronomistReviewResponse,
+} from "@/lib/api";
 import {
   useAiChatStore,
   PanelMode,
   RiskLevel,
 } from "@/lib/stores/ai-chat-store";
+import { webFeatureFlags } from "@/lib/feature-flags";
 import { useWorkspaceContextStore } from "@/lib/stores/workspace-context-store";
 import {
   Send,
@@ -74,6 +81,9 @@ function getSpeechRecognitionCtor(): SpeechRecognitionCtor | null {
 }
 
 export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
+  const router = useRouter();
+  const memoryHintsEnabled = webFeatureFlags.memoryHints;
+  const chiefAgronomistPanelEnabled = webFeatureFlags.chiefAgronomistPanel;
   const { messages, isLoading, sendMessage, dispatch, fsmState, panelMode } =
     useAiChatStore();
   const context = useWorkspaceContextStore((s) => s.context);
@@ -84,6 +94,14 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
   const [selectedRecognitionLanguage, setSelectedRecognitionLanguage] =
     useState("auto");
   const [voiceStatusText, setVoiceStatusText] = useState("");
+  const [expandedMemoryMessageIds, setExpandedMemoryMessageIds] = useState<
+    string[]
+  >([]);
+  const [expertReviewLoading, setExpertReviewLoading] = useState(false);
+  const [expertReviewError, setExpertReviewError] = useState<string | null>(null);
+  const [expertReview, setExpertReview] =
+    useState<ChiefAgronomistReviewResponse | null>(null);
+  const [expertOutcomeLoading, setExpertOutcomeLoading] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
@@ -91,7 +109,145 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
 
   const getDisplayMemoryItems = (
     items: NonNullable<(typeof messages)[number]["memoryUsed"]>,
-  ) => items.filter((item) => item.kind !== "profile");
+  ) => items;
+
+  const toggleMemoryDetails = (messageId: string) => {
+    setExpandedMemoryMessageIds((current) =>
+      current.includes(messageId)
+        ? current.filter((id) => id !== messageId)
+        : [...current, messageId],
+    );
+  };
+
+  const buildFallbackMemoryHint = (
+    items: NonNullable<(typeof messages)[number]["memoryUsed"]> | undefined,
+  ) => {
+    if (!items?.length) return null;
+    const first = items.find((item) => item.kind !== "profile") ?? items[0];
+    if (!first) return null;
+    if (first.kind === "profile") {
+      return "Учтены предпочтения и политика компании";
+    }
+    if (first.kind === "active_alert") {
+      return "Учтены активные отклонения и сигналы риска";
+    }
+    return "Учтён похожий кейс прошлого сезона";
+  };
+
+  const getVisibleSuggestedActions = (
+    actions:
+      | NonNullable<(typeof messages)[number]["suggestedActions"]>
+      | undefined,
+  ) => {
+    if (!Array.isArray(actions)) {
+      return [];
+    }
+
+    return actions.filter((action) => {
+      if (action.kind === "expert_review") {
+        return chiefAgronomistPanelEnabled;
+      }
+      return true;
+    });
+  };
+
+  const handleSuggestedAction = async (
+    action: NonNullable<(typeof messages)[number]["suggestedActions"]>[number],
+  ) => {
+    if (action.kind === "expert_review") {
+      if (!chiefAgronomistPanelEnabled) {
+        setExpertReview(null);
+        setExpertReviewError(
+          "Экспертная эскалация сейчас недоступна: выключен release gate или feature flag.",
+        );
+        return;
+      }
+      try {
+        setExpertReviewError(null);
+        setExpertReviewLoading(true);
+        const derivedContext = deriveExpertReviewContext(context);
+        const actionPayload = (action.payload ?? {}) as Partial<ChiefAgronomistReviewRequest>;
+        const payload: ChiefAgronomistReviewRequest = {
+          ...derivedContext,
+          ...actionPayload,
+          entityType: actionPayload.entityType ?? derivedContext.entityType,
+          entityId: actionPayload.entityId ?? derivedContext.entityId,
+          reason:
+            actionPayload.reason ??
+            "Контекстная экспертная проверка по текущей рабочей сущности",
+          ...(actionPayload.fieldId ?? derivedContext.fieldId
+            ? { fieldId: actionPayload.fieldId ?? derivedContext.fieldId }
+            : {}),
+          ...(actionPayload.seasonId ?? derivedContext.seasonId
+            ? { seasonId: actionPayload.seasonId ?? derivedContext.seasonId }
+            : {}),
+          ...(actionPayload.planId ?? derivedContext.planId
+            ? { planId: actionPayload.planId ?? derivedContext.planId }
+            : {}),
+          ...(actionPayload.workspaceRoute ?? derivedContext.workspaceRoute
+            ? {
+                workspaceRoute:
+                  actionPayload.workspaceRoute ?? derivedContext.workspaceRoute,
+              }
+            : {}),
+          ...(actionPayload.traceParentId
+            ? { traceParentId: actionPayload.traceParentId }
+            : {}),
+        };
+        const response = await api.experts.chiefAgronomistReview(payload);
+        setExpertReview(response.data);
+      } catch (error) {
+        setExpertReviewError(
+          (error as Error).message ?? "Не удалось получить экспертное заключение",
+        );
+      } finally {
+        setExpertReviewLoading(false);
+      }
+      return;
+    }
+
+    if (action.kind === "route" && action.href) {
+      router.push(action.href);
+      return;
+    }
+
+    if (action.kind === "tool" && action.toolName === "echo_message") {
+      const message = typeof action.payload?.message === "string"
+        ? action.payload.message
+        : "";
+      if (message) {
+        setInputText(message);
+      }
+      return;
+    }
+
+    if (action.kind === "tool" && action.toolName === "workspace_snapshot") {
+      await sendMessage("Сними срез рабочего контекста");
+      return;
+    }
+  };
+
+  const handleExpertOutcome = async (
+    action: "accept" | "hand_off" | "create_task",
+  ) => {
+    if (!expertReview) return;
+    const note = window.prompt("Комментарий к решению (опционально)", "") ?? "";
+    try {
+      setExpertReviewError(null);
+      setExpertOutcomeLoading(action);
+      const response = await api.experts.applyReviewOutcome(expertReview.reviewId, {
+        action,
+        ...(note.trim() ? { note: note.trim() } : {}),
+      });
+      setExpertReview(response.data);
+    } catch (error) {
+      setExpertReviewError(
+        (error as Error).message ?? "Не удалось применить outcome по expert review",
+      );
+    } finally {
+      setExpertOutcomeLoading(null);
+    }
+  };
 
   // Прокрутка вниз при загрузке и новом сообщении
   const scrollToBottom = () => {
@@ -348,26 +504,72 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
 
                       <p className="whitespace-pre-wrap">{m.content}</p>
 
-                      {m.role === "assistant" &&
-                        authority.canApprove &&
-                        m.memoryUsed &&
-                        getDisplayMemoryItems(m.memoryUsed).length > 0 && (
+                      {memoryHintsEnabled &&
+                        m.role === "assistant" &&
+                        (m.memorySummary?.primaryHint ||
+                          buildFallbackMemoryHint(m.memoryUsed)) && (
                           <div className="mt-2 rounded-xl border border-black/10 bg-white/70 p-3 text-xs text-gray-700">
-                            <div className="mb-2 text-[10px] uppercase tracking-[0.16em] text-gray-400">
-                              Использованная память
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="text-[10px] uppercase tracking-[0.16em] text-gray-400">
+                                  Почему этот ответ?
+                                </div>
+                                <div className="mt-1 text-[12px] leading-5 text-gray-700">
+                                  {m.memorySummary?.primaryHint ??
+                                    buildFallbackMemoryHint(m.memoryUsed)}
+                                </div>
+                              </div>
+                              {authority.canApprove &&
+                              m.memorySummary?.detailsAvailable &&
+                              m.memoryUsed?.length ? (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleMemoryDetails(m.id)}
+                                  className="shrink-0 rounded-lg border border-black/10 bg-white px-2 py-1 text-[10px] uppercase tracking-[0.14em] text-gray-500 transition-colors hover:bg-black/5 hover:text-gray-900"
+                                >
+                                  {expandedMemoryMessageIds.includes(m.id)
+                                    ? "Скрыть"
+                                    : "Детали"}
+                                </button>
+                              ) : null}
                             </div>
-                            <div className="space-y-1.5">
-                              {getDisplayMemoryItems(m.memoryUsed).map(
-                                (item, index) => (
-                                  <div
-                                    key={`${m.id}-memory-${index}`}
-                                    className="flex flex-wrap items-center gap-2"
-                                  >
-                                    <span>{item.label}</span>
-                                  </div>
-                                ),
-                              )}
-                            </div>
+                            {authority.canApprove &&
+                            expandedMemoryMessageIds.includes(m.id) &&
+                            m.memoryUsed?.length ? (
+                              <div className="mt-3 space-y-1.5 border-t border-black/10 pt-3">
+                                {getDisplayMemoryItems(m.memoryUsed).map(
+                                  (item, index) => (
+                                    <div
+                                      key={`${m.id}-memory-${index}`}
+                                      className="flex flex-wrap items-center gap-2"
+                                    >
+                                      <span className="rounded-full border border-black/10 bg-white px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-gray-500">
+                                        {item.kind}
+                                      </span>
+                                      <span>{item.label}</span>
+                                    </div>
+                                  ),
+                                )}
+                              </div>
+                            ) : null}
+                          </div>
+                        )}
+
+                      {m.role === "assistant" &&
+                        getVisibleSuggestedActions(m.suggestedActions).length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {getVisibleSuggestedActions(m.suggestedActions)
+                              .slice(0, 3)
+                              .map((action, index) => (
+                              <button
+                                key={`${m.id}-action-${index}`}
+                                type="button"
+                                onClick={() => void handleSuggestedAction(action)}
+                                className="rounded-lg border border-black/10 bg-white px-2.5 py-1.5 text-[11px] font-medium text-gray-700 transition-colors hover:bg-black/5 hover:text-gray-950"
+                              >
+                                {action.title}
+                              </button>
+                            ))}
                           </div>
                         )}
                     </div>
@@ -493,6 +695,213 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
           </div>
         </div>
       </div>
+      {chiefAgronomistPanelEnabled &&
+      (expertReview || expertReviewLoading || expertReviewError) && (
+        <div className="absolute inset-0 z-20 flex justify-end bg-black/20 backdrop-blur-[1px]">
+          <div className="h-full w-full max-w-md border-l border-black/10 bg-white p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-widest text-gray-400">
+                  Chief Agronomist Review
+                </p>
+                <h3 className="mt-1 text-lg font-medium text-[#030213]">
+                  Экспертное заключение
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setExpertReview(null);
+                  setExpertReviewError(null);
+                }}
+                className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-black"
+              >
+                <PanelRightClose className="h-4 w-4" />
+              </button>
+            </div>
+
+            {expertReviewLoading && (
+              <div className="mt-6 rounded-2xl border border-black/10 bg-slate-50 px-4 py-5 text-[13px] text-[#717182]">
+                Выполняется экспертная эскалация по текущему контексту...
+              </div>
+            )}
+
+            {expertReviewError && (
+              <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-5 text-[13px] text-red-700">
+                {expertReviewError}
+              </div>
+            )}
+
+            {expertReview && (
+              <div className="mt-6 space-y-4 overflow-y-auto pb-8">
+                <div className="rounded-2xl border border-black/10 bg-slate-50 px-4 py-4">
+                  <p className="text-[11px] font-medium uppercase tracking-widest text-[#717182]">
+                    Verdict
+                  </p>
+                  <p className="mt-2 text-[14px] leading-relaxed text-[#030213]">
+                    {expertReview.verdict}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <CompactReviewCard label="Status" value={expertReview.status} />
+                  <CompactReviewCard label="Risk tier" value={expertReview.riskTier} />
+                </div>
+                {(expertReview.outcomeAction || expertReview.resolvedAt) && (
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+                    <p className="text-[11px] font-medium uppercase tracking-widest text-emerald-800">
+                      Outcome
+                    </p>
+                    <p className="mt-2 text-[13px] text-emerald-900">
+                      {expertReview.outcomeAction ?? "resolved"}
+                      {expertReview.resolvedAt ? ` • ${new Date(expertReview.resolvedAt).toLocaleString("ru-RU")}` : ""}
+                    </p>
+                    {expertReview.outcomeNote && (
+                      <p className="mt-2 text-[13px] text-emerald-900">
+                        {expertReview.outcomeNote}
+                      </p>
+                    )}
+                    {expertReview.createdTaskId && (
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <p className="text-[13px] text-emerald-900">
+                          Task ID: {expertReview.createdTaskId}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            router.push(
+                              `/front-office/tasks/${expertReview.createdTaskId}`,
+                            )
+                          }
+                          className="rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-[11px] font-medium text-emerald-800 transition hover:bg-emerald-100"
+                        >
+                          Открыть задачу
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <ReviewList
+                  title="Что делать сейчас"
+                  items={expertReview.actionsNow}
+                  emptyLabel="Пока нет прямых действий."
+                />
+                <ReviewList
+                  title="Альтернативы"
+                  items={expertReview.alternatives}
+                  emptyLabel="Альтернативы не предложены."
+                />
+                <ReviewList
+                  title="На чём основано"
+                  items={expertReview.basedOn}
+                  emptyLabel="Основания не указаны."
+                />
+                <ReviewList
+                  title="Чего не хватает"
+                  items={expertReview.missingContext ?? []}
+                  emptyLabel="Дополнительный контекст не требуется."
+                />
+                <div className="grid grid-cols-1 gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => void handleExpertOutcome("accept")}
+                    disabled={expertOutcomeLoading !== null}
+                    className="rounded-xl bg-[#030213] px-4 py-3 text-[13px] font-medium text-white transition hover:bg-black disabled:opacity-50"
+                  >
+                    {expertOutcomeLoading === "accept" ? "Применение..." : "Принять"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleExpertOutcome("hand_off")}
+                    disabled={expertOutcomeLoading !== null}
+                    className="rounded-xl border border-black/10 bg-white px-4 py-3 text-[13px] font-medium text-[#030213] transition hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    {expertOutcomeLoading === "hand_off" ? "Передача..." : "Передать человеку"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleExpertOutcome("create_task")}
+                    disabled={expertOutcomeLoading !== null}
+                    className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-[13px] font-medium text-blue-700 transition hover:bg-blue-100 disabled:opacity-50"
+                  >
+                    {expertOutcomeLoading === "create_task" ? "Создание..." : "Создать задачу"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function deriveExpertReviewContext(
+  context: ReturnType<typeof useWorkspaceContextStore.getState>["context"],
+): Omit<ChiefAgronomistReviewRequest, "reason" | "traceParentId"> {
+  const fieldRef = context.activeEntityRefs?.find((ref) => ref.kind === "field");
+  const techMapRef = context.activeEntityRefs?.find((ref) => ref.kind === "techmap");
+  const selected = context.selectedRowSummary;
+  return {
+    entityType:
+      techMapRef || selected?.kind === "techmap"
+        ? "techmap"
+        : fieldRef || selected?.kind === "field"
+          ? "field"
+          : context.route.includes("/deviations")
+            ? "deviation"
+            : "field",
+    entityId: selected?.id ?? techMapRef?.id ?? fieldRef?.id ?? context.route,
+    fieldId: fieldRef?.id ?? (selected?.kind === "field" ? selected.id : undefined),
+    seasonId:
+      typeof context.filters?.seasonId === "string"
+        ? context.filters.seasonId
+        : typeof context.filters?.seasonId === "number"
+          ? String(context.filters.seasonId)
+          : undefined,
+    planId:
+      typeof context.filters?.planId === "string"
+        ? context.filters.planId
+        : typeof context.filters?.planId === "number"
+          ? String(context.filters.planId)
+          : undefined,
+    workspaceRoute: context.route,
+  };
+}
+
+function CompactReviewCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-black/10 bg-slate-50 px-4 py-3">
+      <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182]">{label}</p>
+      <p className="mt-2 text-[13px] font-medium text-[#030213]">{value}</p>
+    </div>
+  );
+}
+
+function ReviewList({
+  title,
+  items,
+  emptyLabel,
+}: {
+  title: string;
+  items: string[];
+  emptyLabel: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-black/10 bg-white px-4 py-4">
+      <p className="text-[11px] font-medium uppercase tracking-widest text-[#717182]">{title}</p>
+      {items.length > 0 ? (
+        <div className="mt-3 space-y-2">
+          {items.map((item) => (
+            <div key={`${title}:${item}`} className="rounded-xl bg-slate-50 px-3 py-2 text-[13px] text-[#030213]">
+              {item}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 text-[13px] text-[#717182]">{emptyLabel}</p>
+      )}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { api } from '@/lib/api';
+import { api, type TraceForensicsMemoryLaneDto } from '@/lib/api';
 import { Play, Activity, Clock, FileSearch, ShieldCheck, Box } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -35,6 +35,7 @@ interface ForensicsData {
   summary: { traceId: string; totalDurationMs?: number };
   timeline: Array<{ phase: string; label?: string; durationMs?: number; evidenceRefs?: unknown[] }>;
   qualityAlerts: unknown[];
+  memoryLane?: TraceForensicsMemoryLaneDto | null;
 }
 
 export default function TraceForensicsPage() {
@@ -243,6 +244,20 @@ export default function TraceForensicsPage() {
 
         {activeTab === 'forensics' && (
           <div className="bg-white border border-black/10 rounded-2xl overflow-hidden shadow-sm shadow-black/[0.02]">
+            {forensics?.memoryLane && (
+              <div className="border-b border-black/5 bg-slate-50 px-6 py-5">
+                <div className="grid gap-4 lg:grid-cols-3">
+                  <MemoryLaneColumn title="Recalled" items={forensics.memoryLane.recalled.map((item) => ({ ...item, meta: `${Math.round(item.confidence * 100)}%` }))} />
+                  <MemoryLaneColumn title="Used" items={forensics.memoryLane.used.map((item) => ({ ...item, meta: `${Math.round(item.confidence * 100)}%` }))} />
+                  <MemoryLaneColumn title="Dropped" items={forensics.memoryLane.dropped.map((item) => ({ kind: item.kind, label: item.label, meta: item.reason }))} />
+                </div>
+                {forensics.memoryLane.escalationReason && (
+                  <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[12px] text-amber-900">
+                    Escalation reason: {forensics.memoryLane.escalationReason}
+                  </div>
+                )}
+              </div>
+            )}
             <div className="p-6 border-b border-black/5 bg-slate-50 flex items-center justify-between">
               <h2 className="text-[14px] font-medium text-[#030213] flex items-center gap-2">
                 <Clock size={16} className="text-[#717182]" />
@@ -364,6 +379,33 @@ export default function TraceForensicsPage() {
               )}
             </div>
           </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MemoryLaneColumn({
+  title,
+  items,
+}: {
+  title: string;
+  items: Array<{ kind: string; label: string; meta: string }>;
+}) {
+  return (
+    <div className="rounded-2xl border border-black/10 bg-white p-4">
+      <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182]">{title}</p>
+      <div className="mt-3 space-y-2">
+        {items.length > 0 ? items.map((item) => (
+          <div key={`${title}:${item.kind}:${item.label}`} className="rounded-xl border border-black/5 bg-slate-50 px-3 py-2">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[11px] font-mono uppercase tracking-wide text-[#717182]">{item.kind}</span>
+              <span className="text-[11px] font-mono text-[#717182]">{item.meta}</span>
+            </div>
+            <p className="mt-1 text-[12px] text-[#030213]">{item.label}</p>
+          </div>
+        )) : (
+          <p className="text-[12px] text-[#717182]">Нет элементов.</p>
         )}
       </div>
     </div>

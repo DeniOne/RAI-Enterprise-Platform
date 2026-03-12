@@ -1,13 +1,12 @@
 ---
-id: DOC-STR-GEN-011
-type: Vision
+id: DOC-STR-00-STRATEGY-RAI-EP-1Q5D
 layer: Strategy
-status: Draft
+type: Vision
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 RAI Enterprise Platform — это брендовое название системы, которое имеет несколько слоёв смысла:
 
 Расшифровка RAI: 

@@ -4,11 +4,16 @@ import {
   OnModuleDestroy,
   OnModuleInit,
 } from "@nestjs/common";
-import { PrismaClient } from "@rai/prisma-client";
+import { Prisma, PrismaClient } from "@rai/prisma-client";
 import { InvariantMetrics } from "../invariants/invariant-metrics";
 import { TenantContextService } from "../tenant-context/tenant-context.service";
 
 type TenantMode = "off" | "shadow" | "enforce";
+
+type RawSqlExecutor = {
+  $executeRaw: (query: Prisma.Sql) => Promise<unknown>;
+  $queryRaw?: <T = unknown>(query: Prisma.Sql) => Promise<T>;
+};
 
 @Injectable()
 export class PrismaService
@@ -85,6 +90,7 @@ export class PrismaService
     "TenantState",
     "EventConsumption",
     "AuditLog",
+    "AuditNotarizationRecord",
     "GovernanceConfig",
     "BusinessRule",
     "MemoryEntry",
@@ -124,6 +130,19 @@ export class PrismaService
     "QualityAlert",
     "AgentReputation",
     "UserCredibilityProfile",
+    "ExpertReview",
+    "IncidentRunbookExecution",
+    "AutonomyOverride",
+    "AgentLifecycleOverride",
+    "RuntimeGovernanceEvent",
+    "PerformanceMetric",
+    "PendingAction",
+    "AgentConfigChangeRequest",
+    "EvalRun",
+    "MemoryInteraction",
+    "MemoryEpisode",
+    "MemoryProfile",
+    "CounterpartyUserBinding",
   ]);
 
   // Explicit non-tenant/system models. Any model outside both sets is treated as unknown.
@@ -196,126 +215,160 @@ export class PrismaService
   }
 
   // Mandatory 10/10 Isolation Extension
-  readonly tenantClient = this.$extends({
-    query: {
-      $allModels: {
-        async $allOperations({ model, operation, args, query }) {
-          // 1. Skip if not a tenant-scoped model
-          const isScoped = (this as any).tenantScopedModels.has(model);
-          if (!isScoped) {
-            return query(args);
-          }
+  readonly tenantClient = (() => {
+    const tenantScopedModels = this.tenantScopedModels;
+    const logger = this.logger;
+    const getTenantContext = () => this.getTenantContext();
 
-          // 2. Check for System-Wide Operation Bypass
-          const context = (this as any).getTenantContext();
-          if (context?.isSystem) {
-            (this as any).logger.debug(
-              `[TENANT_BYPASS] System-wide operation for ${model}.${operation}`,
-            );
-            return query(args);
-          }
-
-          // 3. Enforce Tenant ID
-          const tenantId = context?.companyId;
-          if (!tenantId) {
-            (this as any).logger.error(
-              `[TENANT_VIOLATION] Attempted ${operation} on ${model} without tenant context!`,
-            );
-            InvariantMetrics.incrementTenantViolation("MISSING_CONTEXT", model);
-            throw new Error(
-              `TENANT_CONTEXT_MISSING: Operation ${operation} on ${model} requires active tenant context.`,
-            );
-          }
-
-          // 4. Inject companyId into filters
-          // For reads/updates/deletes: inject into 'where'
-          if (
-            [
-              "findUnique",
-              "findUniqueOrThrow",
-              "findFirst",
-              "findFirstOrThrow",
-              "findMany",
-              "update",
-              "updateMany",
-              "delete",
-              "deleteMany",
-              "count",
-              "aggregate",
-              "groupBy",
-            ].includes(operation)
-          ) {
-            const typedArgs = args as { where?: any };
-            typedArgs.where = {
-              ...(typedArgs.where || {}),
-              companyId: tenantId,
-            };
-          }
-
-          // For creates: inject into 'data'
-          if (operation === "create") {
-            const typedArgs = args as { data?: any };
-            typedArgs.data = {
-              ...(typedArgs.data || {}),
-              companyId: tenantId,
-            };
-          }
-
-          // For createMany/upsert: handle nested data
-          if (operation === "createMany") {
-            const typedArgs = args as { data?: any | any[] };
-            if (Array.isArray(typedArgs.data)) {
-              typedArgs.data = typedArgs.data.map((item) => ({
-                ...item,
-                companyId: tenantId,
-              }));
-            } else {
-              typedArgs.data = { ...typedArgs.data, companyId: tenantId };
+    return this.$extends({
+      query: {
+        $allModels: {
+          async $allOperations({ model, operation, args, query }) {
+            const isScoped = tenantScopedModels.has(model);
+            if (!isScoped) {
+              return query(args);
             }
-          }
 
-          if (operation === "upsert") {
-            const typedArgs = args as { create?: any; where?: any };
-            typedArgs.create = {
-              ...(typedArgs.create || {}),
-              companyId: tenantId,
-            };
-            typedArgs.where = {
-              ...(typedArgs.where || {}),
-              companyId: tenantId,
-            };
-          }
+            const context = getTenantContext();
+            if (context?.isSystem) {
+              logger.debug(
+                `[TENANT_BYPASS] System-wide operation for ${model}.${operation}`,
+              );
+              return query(args);
+            }
 
-          return query(args);
+            const tenantId = context?.companyId;
+            if (!tenantId) {
+              logger.error(
+                `[TENANT_VIOLATION] Attempted ${operation} on ${model} without tenant context!`,
+              );
+              InvariantMetrics.incrementTenantViolation("MISSING_CONTEXT", model);
+              throw new Error(
+                `TENANT_CONTEXT_MISSING: Operation ${operation} on ${model} requires active tenant context.`,
+              );
+            }
+
+            if (
+              [
+                "findUnique",
+                "findUniqueOrThrow",
+                "findFirst",
+                "findFirstOrThrow",
+                "findMany",
+                "update",
+                "updateMany",
+                "delete",
+                "deleteMany",
+                "count",
+                "aggregate",
+                "groupBy",
+              ].includes(operation)
+            ) {
+              const typedArgs = args as { where?: any };
+              typedArgs.where = {
+                ...(typedArgs.where || {}),
+                companyId: tenantId,
+              };
+            }
+
+            if (operation === "create") {
+              const typedArgs = args as { data?: any };
+              typedArgs.data = {
+                ...(typedArgs.data || {}),
+                companyId: tenantId,
+              };
+            }
+
+            if (operation === "createMany") {
+              const typedArgs = args as { data?: any | any[] };
+              if (Array.isArray(typedArgs.data)) {
+                typedArgs.data = typedArgs.data.map((item) => ({
+                  ...item,
+                  companyId: tenantId,
+                }));
+              } else {
+                typedArgs.data = { ...typedArgs.data, companyId: tenantId };
+              }
+            }
+
+            if (operation === "upsert") {
+              const typedArgs = args as { create?: any; where?: any };
+              typedArgs.create = {
+                ...(typedArgs.create || {}),
+                companyId: tenantId,
+              };
+              typedArgs.where = {
+                ...(typedArgs.where || {}),
+                companyId: tenantId,
+              };
+            }
+
+            return query(args);
+          },
         },
       },
-    },
-  });
+    });
+  })();
 
   // System/Non-tenant models (explicitly excluded from isolation if needed, but proxied automatically)
   // No more manual getters needed!
 
+  async $transaction(arg: any, options?: any): Promise<any> {
+    if (typeof arg !== "function") {
+      return (super.$transaction as any)(arg, options);
+    }
+
+    return (super.$transaction as any)(async (tx: any) => {
+      await this.applyTenantSessionContext(tx);
+      return arg(tx);
+    }, options);
+  }
+
   /**
    * Safe wrapper for raw queries that ensures session context is set.
    */
-  async safeQueryRaw<T = any>(query: any, ...values: any[]): Promise<T> {
-    const tenantId = this.getTenantContext()?.companyId;
-    if (!tenantId && !this.getTenantContext()?.isSystem) {
-      throw new Error("RAW_SQL_FORBIDDEN: Missing tenant context.");
+  async safeQueryRaw<T = any>(
+    query: Prisma.Sql,
+    executor?: RawSqlExecutor,
+  ): Promise<T> {
+    if (executor) {
+      if (!executor.$queryRaw) {
+        throw new Error("SAFE_QUERY_RAW_EXECUTOR_MISSING_QUERY_METHOD");
+      }
+      await this.applyTenantSessionContext(executor);
+      return executor.$queryRaw<T>(query);
     }
 
-    return this.$transaction(async (tx) => {
-      if (tenantId) {
-        await tx.$executeRawUnsafe(
-          `SELECT set_config('app.current_company_id', '${tenantId}', true)`,
-        );
-      }
-      return (tx as any).$queryRaw(query, ...values);
-    });
+    return this.$transaction(async (tx) => tx.$queryRaw(query));
+  }
+
+  async safeExecuteRaw(
+    query: Prisma.Sql,
+    executor?: RawSqlExecutor,
+  ): Promise<number> {
+    if (executor) {
+      await this.applyTenantSessionContext(executor);
+      return executor.$executeRaw(query) as Promise<number>;
+    }
+
+    return this.$transaction(async (tx) => tx.$executeRaw(query));
   }
 
   private getTenantContext() {
     return this.tenantContext.getStore();
+  }
+
+  private async applyTenantSessionContext(tx: {
+    $executeRaw: (query: Prisma.Sql) => Promise<unknown>;
+  }): Promise<void> {
+    const context = this.getTenantContext();
+    if (!context?.companyId || context.isSystem) {
+      return;
+    }
+
+    await tx.$executeRaw(
+      Prisma.sql`SELECT set_config('app.current_company_id', ${context.companyId}, true)`,
+    );
   }
 
   async onModuleDestroy() {

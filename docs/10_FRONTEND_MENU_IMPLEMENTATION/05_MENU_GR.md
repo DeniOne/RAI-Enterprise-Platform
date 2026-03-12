@@ -1,4 +1,11 @@
-﻿# Меню 5: GR
+---
+id: DOC-FRN-10-FRONTEND-MENU-IMPLEMENTATION-05-MENU-GR-1BH6
+layer: Frontend
+type: Menu Map
+status: draft
+version: 0.1.0
+---
+# Меню 5: GR
 
 ## 1. Бизнес-роль
 

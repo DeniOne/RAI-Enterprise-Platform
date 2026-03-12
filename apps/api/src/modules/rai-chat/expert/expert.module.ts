@@ -8,6 +8,7 @@ import { ModelRegistryService } from './model-registry.service';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { EngramService } from '../../../shared/memory/engram.service';
 import { WorkingMemoryService } from '../../../shared/memory/working-memory.service';
+import { NvidiaGatewayService } from '../agent-platform/nvidia-gateway.service';
 
 /**
  * ExpertModule — NestJS module для expert-tier агентов.
@@ -37,6 +38,7 @@ import { WorkingMemoryService } from '../../../shared/memory/working-memory.serv
         // Phase 5.4: ML Pipeline
         FeatureStoreService,
         ModelRegistryService,
+        NvidiaGatewayService,
     ],
     exports: [
         ExpertInvocationEngine,

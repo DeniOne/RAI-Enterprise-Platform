@@ -1,13 +1,12 @@
 ---
-id: DOC-ENG-LD-001
-type: Engineering
+id: DOC-ENG-04-ENGINEERING-LEVEL-D-IMPLEMENTATION-PLAN-CG6Y
 layer: Engineering
-status: Accepted
+type: Implementation Plan
+status: approved
 version: 2.1.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # LEVEL D — IMPLEMENTATION PLAN (D6+ Industrial)
 ## План реализации: Controlled Evolution System
 

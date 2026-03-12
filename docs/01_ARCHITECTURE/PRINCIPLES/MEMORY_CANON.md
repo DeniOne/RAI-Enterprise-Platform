@@ -1,22 +1,12 @@
 ---
-id: DOC-ARC-GEN-060
-type: Standards
+id: DOC-ARC-PRINCIPLES-MEMORY-CANON-Q0EI
 layer: Architecture
-status: Draft
+type: Standards
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-03-03
 ---
-
----
-id: principle-memory-canon
-type: principle
-status: approved
-owners: [architects, techleads]
-aligned_with: [principle-canon, principle-security-canon]
-tags: [architecture, memory, data-storage, mandatory]
----
-
 # MEMORY STORAGE CANON (S5.2)
 
 ## 0. Статус документа

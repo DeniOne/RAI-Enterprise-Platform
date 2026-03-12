@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-01-ARCHITECTURE-ADAPTIVE-INTELLIGENCE-LAYE-1KI4
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 Adaptive Intelligence Layer (AIL)
 
 Он живёт параллельно Execution Layer.

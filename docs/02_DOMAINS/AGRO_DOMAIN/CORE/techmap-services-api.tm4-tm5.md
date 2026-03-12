@@ -1,3 +1,10 @@
+---
+id: DOC-DOM-CORE-TECHMAP-SERVICES-API-TM4-TM5-174K
+layer: Domain
+type: Domain Spec
+status: draft
+version: 0.1.0
+---
 # TechMap API Surface (TM-4 + TM-5)
 
 ## TM-4 Adaptive Rules

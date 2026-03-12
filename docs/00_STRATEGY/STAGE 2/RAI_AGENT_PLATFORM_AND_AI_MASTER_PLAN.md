@@ -1,3 +1,10 @@
+---
+id: DOC-STR-STAGE-2-RAI-AGENT-PLATFORM-AND-AI-MASTER-P-O3MU
+layer: Strategy
+type: Roadmap
+status: draft
+version: 0.1.0
+---
 # RAI Agent Platform & AI — Master Plan
 
 > Версия: 1.0  

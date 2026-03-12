@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-LVLF-012
-type: Specification
+id: DOC-ARC-LEVEL-F-LEVEL-F-PRIVACY-POLICY-OYKD
 layer: Architecture
-status: Enforced
+type: Standards
+status: approved
 version: 2.0.0
 owners: [@techlead, @dpo]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: ИНСТИТУЦИОНАЛЬНАЯ ПОЛИТИКА ПРИВАТНОСТИ (LEVEL_F_PRIVACY_POLICY)
 
 ## 0. Область Применения (Scope & Binding)

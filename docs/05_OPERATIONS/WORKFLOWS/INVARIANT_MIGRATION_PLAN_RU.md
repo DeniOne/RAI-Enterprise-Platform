@@ -1,11 +1,10 @@
 ---
-id: DOC-OPS-MIG-003
+id: DOC-OPS-WORKFLOWS-INVARIANT-MIGRATION-PLAN-RU-1PNB
 layer: Operations
-type: Runbook
+type: Report
 status: draft
 version: 1.0.0
 ---
-
 # Invariant Migration Plan (RU)
 
 ## Цель

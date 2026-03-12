@@ -1,13 +1,12 @@
 ---
-id: DOC-EXE-GEN-149
-type: Phase Plan
+id: DOC-EXE-PHASE-GAMMA-SPRINT-4-CHECKLIST-778T
 layer: Execution
-status: Draft
+type: Checklist
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Чек-лист Sprint 4 (Phase Gamma)
 
 **Название:** «Движок объяснений и UX-интеграция»  

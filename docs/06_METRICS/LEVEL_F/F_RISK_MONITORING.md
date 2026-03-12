@@ -1,13 +1,12 @@
 ---
-id: DOC-MTR-LVLF-002
-type: Metrics Specification
-layer: Metrics (Observation)
-status: Enforced
+id: DOC-MET-LEVEL-F-F-RISK-MONITORING-ZPFX
+layer: Metrics
+type: KPI Spec
+status: approved
 version: 2.0.0
 owners: [@techlead, @ciso, @chief_quant]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: ПРОТОКОЛ МОНИТОРИНГА РИСКОВ (F_RISK_MONITORING)
 
 ## 0. Аксиома Изоляции Риска (Risk Isolation Protocol)

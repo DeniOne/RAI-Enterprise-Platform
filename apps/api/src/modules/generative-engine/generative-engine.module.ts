@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { PrismaModule } from "../../shared/prisma/prisma.module";
+import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
 
 // Domain Layer
 import { EntropyController } from "./domain/entropy-controller";
@@ -90,7 +91,7 @@ const LEVEL_C_PROVIDERS = [
  * Decision-ID: LEVEL-B-GEN-001, LEVEL-C-GEN-001
  */
 @Module({
-  imports: [PrismaModule, ExplainabilityModule, YieldModule, ProbabilityModule],
+  imports: [PrismaModule, ExplainabilityModule, YieldModule, ProbabilityModule, IdempotencyModule],
   controllers: [ConflictController],
   providers: [...LEVEL_B_PROVIDERS, ...LEVEL_C_PROVIDERS],
   exports: [

@@ -22,7 +22,19 @@ export const BankAccountSchema = z.object({
     isPrimary: z.boolean().default(false),
 });
 
+const FrontOfficeAccessSchema = z.object({
+    status: z.enum(['INVITED', 'ACTIVE', 'REVOKED']).optional(),
+    telegramId: z.string().optional(),
+    invitationId: z.string().optional(),
+    bindingId: z.string().optional(),
+    userId: z.string().optional(),
+    proposedLogin: z.string().optional(),
+    invitedAt: z.string().optional(),
+    activatedAt: z.string().optional(),
+});
+
 export const ContactSchema = z.object({
+    id: z.string().optional(),
     fullName: z.string().min(1, 'ФИО обязательно'),
     position: z.enum(['SIGNATORY', 'CEO', 'CHIEF_AGRONOMIST', 'AGRONOMIST', 'CHIEF_ACCOUNTANT', 'OTHER'], {
         errorMap: () => ({ message: 'Выберите должность' }),
@@ -32,6 +44,8 @@ export const ContactSchema = z.object({
         .email('Некорректный email')
         .optional()
         .or(z.literal('')),
+    telegramId: z.string().optional(),
+    frontOfficeAccess: FrontOfficeAccessSchema.optional(),
     isPrimary: z.boolean().default(false),
     validFrom: z.string().optional(),
     validTo: z.string().optional(),

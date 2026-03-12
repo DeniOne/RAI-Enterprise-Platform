@@ -1,3 +1,10 @@
+---
+id: DOC-EXE-07-EXECUTION-AGRO-TELEGRAM-INTAKE-CHECKLIS-TIIE
+layer: Execution
+type: Checklist
+status: draft
+version: 0.1.0
+---
 # Чек-лист: AGRO_DOMAIN Telegram Intake Storage & Actions (Institutional MVP)
 
 ## 1. Хлебало Prisma (Persistence)

@@ -3,11 +3,12 @@ import { DeviationService } from "./deviation.service";
 import { RiskService } from "./risk.service";
 import { DecisionService } from "./decision.service";
 import { PrismaModule } from "../../shared/prisma/prisma.module";
+import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
 
 import { CmrController } from "./cmr.controller";
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, IdempotencyModule],
   controllers: [CmrController],
   providers: [DeviationService, RiskService, DecisionService],
   exports: [DeviationService, RiskService, DecisionService],

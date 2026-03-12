@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-COMET-OZQW
+layer: Archive
+type: Legacy
+status: archived
+version: 0.1.0
+---
 # Конкурентная среда агроконсалтинга и цифровых агросервисов в России для компании RAI (2026)
 
 ## 1. Исполнительное резюме

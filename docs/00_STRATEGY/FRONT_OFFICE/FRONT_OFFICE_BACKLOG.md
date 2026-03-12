@@ -1,13 +1,12 @@
 ---
-id: DOC-STR-FO-006
-type: Backlog
+id: DOC-STR-FRONT-OFFICE-FRONT-OFFICE-BACKLOG-1IIN
 layer: Strategy
-status: Draft
+type: Roadmap
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-03-09
 ---
-
 # FRONT_OFFICE_BACKLOG
 
 ## 1. Назначение документа

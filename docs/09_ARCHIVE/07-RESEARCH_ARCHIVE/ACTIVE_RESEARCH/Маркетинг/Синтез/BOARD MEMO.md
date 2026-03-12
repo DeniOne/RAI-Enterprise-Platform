@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-BOARD-MEMO-1SFE
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 Ниже — **board memo для инвесторов / совета**, собранный из двух исследований и уже сжатый до управленческого формата.
 
 ---

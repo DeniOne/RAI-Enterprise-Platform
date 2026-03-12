@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-LVLF-007
-type: Specification
-layer: Architecture
-status: Proposed
+id: DOC-PRD-03-PRODUCT-LEVEL-F-API-SPEC-18ZM
+layer: Product
+type: UI Spec
+status: approved
 version: 1.1.1
 owners: [@techlead]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: ИНСТИТУЦИОНАЛЬНАЯ API СПЕЦИФИКАЦИЯ (LEVEL_F_API_SPEC)
 
 ## 0. Статус Документа

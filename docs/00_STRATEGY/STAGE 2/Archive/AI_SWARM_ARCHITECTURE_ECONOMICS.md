@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-ARCHIVE-AI-SWARM-ARCHITECTURE-ECONOMICS-1FI3
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 # Обоснование и Архитектура Мультиагентной Системы RAI (AI Swarm)
 
 **Статус:** Draft (Концепт для обсуждения)

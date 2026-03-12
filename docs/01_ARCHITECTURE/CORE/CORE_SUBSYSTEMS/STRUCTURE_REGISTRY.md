@@ -1,21 +1,12 @@
 ---
-id: DOC-ARC-GEN-024
-type: HLD
+id: DOC-ARC-CORE-SUBSYSTEMS-STRUCTURE-REGISTRY-YFRO
 layer: Architecture
-status: Draft
+type: HLD
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: service-structure-registry
-type: service
-status: review
-owners: [architects]
-aligned_with: [principle-axioms]
----
-
 # Subsystem: Structure & Registry 🏢
 
 > **Статус:** Канон | **Версия:** 1.0 | **Расположение:** Business Core

@@ -9,8 +9,10 @@ import { K8sJobService } from "./services/k8s-job.service";
 import { KeyRegistryService } from "./services/key-registry.service";
 import { GovernanceService } from "./services/governance.service";
 import { AdaptiveLearningController } from "./adaptive-learning.controller";
+import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
 
 @Module({
+  imports: [IdempotencyModule],
   controllers: [AdaptiveLearningController],
   providers: [
     LearningEventService,

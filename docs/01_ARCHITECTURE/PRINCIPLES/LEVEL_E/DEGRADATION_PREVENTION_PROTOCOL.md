@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GOV-003
-type: Specification
-layer: Governance
-status: Approved
+id: DOC-ARC-LEVEL-E-DEGRADATION-PREVENTION-PROTOCOL-E9ZF
+layer: Architecture
+type: Standards
+status: approved
 version: 1.4.0
 owners: [@techlead]
 last_updated: 2026-02-19
 ---
-
 # LEVEL E: DEGRADATION PREVENTION PROTOCOL
 
 ## 1. Введение

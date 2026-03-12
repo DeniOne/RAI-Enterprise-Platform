@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-PROMPT-RAI-1N37
+layer: Archive
+type: Legacy
+status: archived
+version: 0.1.0
+---
 PROMPT — Исследование конкурентного рынка RAI (Россия)
 РОЛЬ
 

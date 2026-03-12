@@ -1,11 +1,10 @@
 ---
-id: DOC-OPS-GOV-141
+id: DOC-OPS-DEVELOPMENT-GUIDELINES-FINANCE-INGEST-COMP-7CS3
 layer: Operations
-type: Runbook
+type: Policy
 status: approved
 version: 1.0.0
 ---
-
 # FINANCE INGEST COMPATIBILITY POLICY (RU)
 
 Дата: 2026-02-16  

@@ -1,13 +1,12 @@
 ---
-id: DOC-ENG-LVLF-004
-type: Architecture Specification
-layer: Engineering (External Gateway)
-status: Enforced
+id: DOC-ENG-LEVEL-F-F-INSURANCE-API-ARCH-167X
+layer: Engineering
+type: API Contract
+status: approved
 version: 2.0.0
 owners: [@techlead, @secops_lead]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: АРХИТЕКТУРА API ИНСТИТУЦИОНАЛЬНОГО ШЛЮЗА (F_INSURANCE_API_ARCH)
 
 ## 0. Аксиома Изоляции (Boundary Axiom)

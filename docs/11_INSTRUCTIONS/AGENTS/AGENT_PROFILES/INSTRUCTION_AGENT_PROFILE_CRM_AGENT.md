@@ -1,13 +1,12 @@
 ---
-id: DOC-INS-AGT-PROFILE-005
+id: DOC-INS-AGENT-PROFILES-INSTRUCTION-AGENT-PROFILE-C-H6WG
+layer: Instructions
 type: Instruction
-layer: Agents
-status: Active
+status: approved
 version: 1.1.0
 owners: [@techlead]
 last_updated: 2026-03-10
 ---
-
 # ИНСТРУКЦИЯ — ПРОФИЛЬ АГЕНТА CRM_AGENT
 
 ## 1. Назначение

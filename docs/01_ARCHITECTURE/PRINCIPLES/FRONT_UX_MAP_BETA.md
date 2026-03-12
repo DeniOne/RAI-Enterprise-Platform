@@ -1,13 +1,12 @@
 ---
-id: DOC-ARC-GEN-053
-type: Standards
+id: DOC-ARC-PRINCIPLES-FRONT-UX-MAP-BETA-G0A5
 layer: Architecture
-status: Draft
+type: Topology
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Front UX Map (Beta / F0) 🔒 Normative / Binding
 
 **Статус:** 🔒 Normative / Binding  

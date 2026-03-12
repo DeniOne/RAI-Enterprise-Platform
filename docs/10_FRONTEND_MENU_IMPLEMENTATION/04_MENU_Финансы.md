@@ -1,4 +1,11 @@
-﻿# Меню 4: Финансы
+---
+id: DOC-FRN-10-FRONTEND-MENU-IMPLEMENTATION-04-MENU-1T66
+layer: Frontend
+type: Menu Map
+status: draft
+version: 0.1.0
+---
+# Меню 4: Финансы
 
 ## 1. Бизнес-роль
 

@@ -6,6 +6,7 @@ import {
   Body,
   UseGuards,
   Query,
+  UseInterceptors,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -15,14 +16,19 @@ import {
   ApiQuery,
 } from "@nestjs/swagger";
 import { TaskService } from "./task.service";
-import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
 import { User, Task, TaskStatus } from "@rai/prisma-client";
 import { PrismaService } from "../../shared/prisma/prisma.service";
+import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
 import {
   PaginationDto,
   PaginatedResult,
 } from "../../shared/dto/pagination.dto";
+import { Authorized } from "../../shared/auth/authorized.decorator";
+import {
+  EXECUTION_ROLES,
+  PLANNING_READ_ROLES,
+} from "../../shared/auth/rbac.constants";
 
 /**
  * REST API для задач — Integration API для Telegram Bot и внешних систем.
@@ -31,7 +37,6 @@ import {
 @ApiTags("Tasks")
 @ApiBearerAuth()
 @Controller("tasks")
-@UseGuards(JwtAuthGuard)
 export class TaskController {
   constructor(
     private readonly taskService: TaskService,
@@ -42,6 +47,7 @@ export class TaskController {
    * GET /tasks/my — Задачи текущего пользователя
    */
   @Get("my")
+  @Authorized(...EXECUTION_ROLES)
   @ApiOperation({ summary: "Получить мои задачи" })
   @ApiQuery({
     name: "status",
@@ -97,6 +103,7 @@ export class TaskController {
    * GET /tasks/:id — Детали задачи
    */
   @Get(":id")
+  @Authorized(...PLANNING_READ_ROLES)
   @ApiOperation({ summary: "Получить детали задачи" })
   @ApiResponse({ status: 200, description: "Детали задачи" })
   @ApiResponse({ status: 404, description: "Задача не найдена" })
@@ -118,6 +125,8 @@ export class TaskController {
    * POST /tasks/:id/start — Начать выполнение задачи
    */
   @Post(":id/start")
+  @Authorized(...EXECUTION_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: "Начать выполнение задачи" })
   @ApiResponse({ status: 200, description: "Задача начата" })
   @ApiResponse({ status: 400, description: "Невалидный переход статуса" })
@@ -132,6 +141,8 @@ export class TaskController {
    * POST /tasks/:id/complete — Завершить задачу
    */
   @Post(":id/complete")
+  @Authorized(...EXECUTION_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: "Завершить задачу" })
   @ApiResponse({ status: 200, description: "Задача завершена" })
   @ApiResponse({ status: 400, description: "Невалидный переход статуса" })
@@ -152,6 +163,8 @@ export class TaskController {
    * POST /tasks/:id/cancel — Отменить задачу
    */
   @Post(":id/cancel")
+  @Authorized(...EXECUTION_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: "Отменить задачу" })
   @ApiResponse({ status: 200, description: "Задача отменена" })
   async cancelTask(

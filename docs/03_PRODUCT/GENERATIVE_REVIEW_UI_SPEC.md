@@ -1,3 +1,10 @@
+---
+id: DOC-PRD-03-PRODUCT-GENERATIVE-REVIEW-UI-SPEC-PW85
+layer: Product
+type: UI Spec
+status: draft
+version: 0.1.0
+---
 # GENERATIVE_REVIEW_UI_SPEC.md
 
 ## 0. Статус документа

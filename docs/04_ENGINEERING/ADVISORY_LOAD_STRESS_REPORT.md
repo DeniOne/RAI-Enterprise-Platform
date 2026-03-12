@@ -1,13 +1,12 @@
 ---
-id: DOC-ENG-GEN-106
-type: Service Spec
+id: DOC-ENG-04-ENGINEERING-ADVISORY-LOAD-STRESS-REPORT-18Z4
 layer: Engineering
-status: Draft
+type: Report
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Advisory Load/Stress Report (Sprint 6)
 
 ## Test Metadata

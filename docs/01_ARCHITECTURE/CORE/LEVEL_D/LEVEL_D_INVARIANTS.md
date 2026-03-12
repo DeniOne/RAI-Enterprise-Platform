@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-CORE-LD-002
-type: Architecture
-layer: Core
-status: Draft
+id: DOC-ARC-LEVEL-D-LEVEL-D-INVARIANTS-1OQD
+layer: Architecture
+type: Standards
+status: draft
 version: 1.0.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # LEVEL D — INVARIANTS SPECIFICATION
 ## Формальная спецификация инвариантов D1–D5
 

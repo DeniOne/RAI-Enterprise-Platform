@@ -1,12 +1,12 @@
 ---
-id: DOC-ARH-LVLF-ANC
-type: Core Architecture
-layer: Level F
-status: Enforced
+id: DOC-ARC-LEVEL-F-F-EXTERNAL-ANCHORING-STRATEGY-125H
+layer: Architecture
+type: HLD
+status: approved
+version: 1.0.0
 owners: [@techlead]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: СТРАТЕГИЯ ВНЕШНЕГО ЯКОРЕНИЯ (EXTERNAL ANCHORING)
 
 Отсутствие якорения (Anchoring) во внешний, публично верифицируемый источник превращает Систему Институционального Оракула (Level F) в простую частную базу данных. Для гарантии неизменяемости задним числом (preventing retroactive modifications), система публикует криптографические доказательства наружу.

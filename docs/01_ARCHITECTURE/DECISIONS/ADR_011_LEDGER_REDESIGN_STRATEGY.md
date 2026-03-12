@@ -1,11 +1,10 @@
 ---
-id: DOC-ARC-ADR-011
+id: DOC-ARC-DECISIONS-ADR-011-LEDGER-REDESIGN-STRATEGY-I49O
 layer: Architecture
 type: ADR
-status: Draft
+status: draft
 version: 1.0.0
 ---
-
 # ADR 011: Ledger Safety Requires Architectural Redesign
 
 ## Контекст

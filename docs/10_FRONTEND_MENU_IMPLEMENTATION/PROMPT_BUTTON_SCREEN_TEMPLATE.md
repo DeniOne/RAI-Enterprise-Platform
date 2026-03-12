@@ -1,3 +1,10 @@
+---
+id: DOC-FRN-10-FRONTEND-MENU-IMPLEMENTATION-PROMPT-BUT-OQMM
+layer: Frontend
+type: Template
+status: draft
+version: 0.1.0
+---
 Работаем по кнопке/экрану в формате “док + сразу реализация”.
 
 Контекст:

@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-175
-type: Canon
-layer: Execution
-status: Active
+id: DOC-ARV-ARCHIVE-CURSOR-SOFTWARE-FACTORY-STARTER-PR-1UO9
+layer: Archive
+type: Legacy
+status: archived
 version: 0.3.0
 owners: [@techlead]
 last_updated: 2026-03-04
 ---
-
 # SOFTWARE FACTORY (TECHLEAD)
 ## INTEGRATED STARTER & REVIEW PROMPT — ОТ СТАРТА ДО ФИНАЛИЗАЦИИ
 

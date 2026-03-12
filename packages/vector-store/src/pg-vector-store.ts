@@ -19,19 +19,31 @@ export class PgVectorStore implements IVectorStore {
         // Once MemoryEntry is created, we can attempt to use Prisma for standard fields, 
         // but for safety with pgvector, we use raw SQL for the whole insert when embedding is present.
 
-        const result = await this.prisma.$queryRawUnsafe(
-            `INSERT INTO memory_entries (id, content, embedding, metadata, "companyId", "memoryType", source, "expiresAt", "createdAt")
-             VALUES ($1, $2, $3::vector, $4::jsonb, $5, $6, $7, $8, NOW())
-             RETURNING id`,
-            options.id || `mem_${Math.random().toString(36).substr(2, 9)}`,
-            options.content,
-            vectorStr,
-            JSON.stringify(options.metadata || {}),
-            options.companyId,
-            options.memoryType,
-            options.source,
-            options.expiresAt || null
-        ) as { id: string }[];
+        const result = await this.prisma.$queryRaw`
+            INSERT INTO memory_entries (
+                id,
+                content,
+                embedding,
+                metadata,
+                "companyId",
+                "memoryType",
+                source,
+                "expiresAt",
+                "createdAt"
+            )
+            VALUES (
+                ${options.id || `mem_${Math.random().toString(36).slice(2, 11)}`},
+                ${options.content},
+                ${vectorStr}::vector,
+                ${JSON.stringify(options.metadata || {})}::jsonb,
+                ${options.companyId},
+                ${options.memoryType},
+                ${options.source},
+                ${options.expiresAt || null},
+                NOW()
+            )
+            RETURNING id
+        ` as { id: string }[];
 
         return result[0].id;
     }
@@ -44,22 +56,26 @@ export class PgVectorStore implements IVectorStore {
         const minSimilarity = options.minSimilarity || 0.7;
 
         // Cosine similarity in pgvector: 1 - (embedding <=> $1)
-        const entries = await this.prisma.$queryRawUnsafe(
-            `SELECT id, content, metadata, 1 - (embedding <=> $1::vector) as similarity
-             FROM memory_entries
-             WHERE "companyId" = $2
-             ${options.memoryType ? 'AND "memoryType" = $3' : ''}
-             AND 1 - (embedding <=> $1::vector) >= $4
-             ORDER BY similarity DESC
-             LIMIT $5`,
-            vectorStr,
-            options.companyId,
-            options.memoryType,
-            minSimilarity,
-            limit
-        ) as any[];
+        const entries = options.memoryType
+            ? await this.prisma.$queryRaw`
+                SELECT id, content, metadata, 1 - (embedding <=> ${vectorStr}::vector) as similarity
+                FROM memory_entries
+                WHERE "companyId" = ${options.companyId}
+                AND "memoryType" = ${options.memoryType}
+                AND 1 - (embedding <=> ${vectorStr}::vector) >= ${minSimilarity}
+                ORDER BY similarity DESC
+                LIMIT ${limit}
+            `
+            : await this.prisma.$queryRaw`
+                SELECT id, content, metadata, 1 - (embedding <=> ${vectorStr}::vector) as similarity
+                FROM memory_entries
+                WHERE "companyId" = ${options.companyId}
+                AND 1 - (embedding <=> ${vectorStr}::vector) >= ${minSimilarity}
+                ORDER BY similarity DESC
+                LIMIT ${limit}
+            `;
 
-        return entries.map(e => ({
+        return (entries as Array<{ id: string; content: string; metadata: unknown; similarity: number | string }>).map((e) => ({
             id: e.id,
             content: e.content,
             metadata: e.metadata,
@@ -68,9 +84,6 @@ export class PgVectorStore implements IVectorStore {
     }
 
     async delete(id: string): Promise<void> {
-        await this.prisma.$executeRawUnsafe(
-            `DELETE FROM memory_entries WHERE id = $1`,
-            id
-        );
+        await this.prisma.$executeRaw`DELETE FROM memory_entries WHERE id = ${id}`;
     }
 }

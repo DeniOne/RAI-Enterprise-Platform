@@ -1,19 +1,10 @@
 ---
-id: DOC-ARC-GEN-021
-type: HLD
+id: DOC-ARC-CORE-SUBSYSTEMS-FSM-ENGINE-1BTW
 layer: Architecture
-status: Draft
+type: HLD
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: service-fsm-engine
-type: service
-status: review
-owners: [architects, techleads]
-aligned_with: [principle-axioms]
----
-
 # КОНТУР FSM

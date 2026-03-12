@@ -1,22 +1,12 @@
 ---
-id: DOC-ARC-GEN-018
-type: HLD
+id: DOC-ARC-CORE-SUBSYSTEMS-ADMISSION-POLICY-E5R2
 layer: Architecture
-status: Draft
+type: Standards
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: control-admission-policy
-type: control
-status: approved
-owners: [architects, security-officers]
-implements: [principle-canon]
-measured_by: [metric-time-to-value]
----
-
 # ADMISSION × DECISIONS POLICY
 
 ## Статус документа

@@ -1,11 +1,10 @@
-﻿---
-id: DOC-OPS-RUN-001
-layer: Operations
-type: Runbook
+---
+id: DOC-EXE-FOUNDATION-STABILIZATION-CHECKLIST-RU-R5UM
+layer: Execution
+type: Checklist
 status: approved
 version: 1.0.0
 ---
-
 # FOUNDATION STABILIZATION CHECKLIST (RU)
 
 Дата старта: 2026-02-15
@@ -157,8 +156,10 @@ version: 1.0.0
 - [x] Добавить dedupe в обработчиках (Outbox relay dedupe по `type+aggregateId`)
 - [x] Ввести retry policy + DLQ policy (outbox: attempts/nextRetryAt/deadLetterAt + exponential backoff)
 - [x] Ввести порядок обработки per aggregate/tenant (stream-ordering guard + defer/retry)
+- [x] Включить bootstrap/scheduler wiring для outbox relay (`OUTBOX_RELAY_ENABLED`, `OUTBOX_RELAY_SCHEDULE_ENABLED`, `OUTBOX_RELAY_BOOTSTRAP_DRAIN_ENABLED` в `apps/api/src/shared/outbox/outbox.relay.ts`)
 - [x] Настроить health/SLO для outbox relay (`/api/invariants/metrics` outbox snapshot + Prometheus alerts)
 - [x] Убрать критическую зависимость от in-process-only доставки (`OUTBOX_DELIVERY_MODE=local_only|broker_only|dual`, `OUTBOX_BROKER_ENDPOINT`)
+- [x] Ввести broker-native outbox transport layer (`OUTBOX_BROKER_TRANSPORT=http|redis_streams`, `OUTBOX_BROKER_REDIS_STREAM_KEY`, `OUTBOX_BROKER_REDIS_STREAM_MAXLEN`, `OUTBOX_BROKER_REDIS_TENANT_PARTITIONING` в `apps/api/src/shared/outbox/outbox-broker.publisher.ts`)
 - [x] Добавить replay-safe runbook (`docs/05_OPERATIONS/WORKFLOWS/OUTBOX_REPLAY_SAFE_RUNBOOK.md`)
 
 Комментарий: этап нужен для устойчивости к дублям, потерям и рассинхрону событий.
@@ -166,11 +167,14 @@ version: 1.0.0
 ## Этап 5. Security Hardening (P0/P1)
 - [x] Провести threat modeling (STRIDE) для критичных контуров (`docs/04_ENGINEERING/SECURITY_THREAT_MODEL_STRIDE_RU.md`)
 - [x] Внедрить strict authz (least privilege) (`apps/api/src/shared/auth/roles.guard.ts`)
+- [x] Вынести внешний front-office portal в отдельный route-space (`apps/api/src/modules/front-office/front-office-external.controller.ts`, `apps/web/app/(app)/portal/front-office/page.tsx`, `apps/web/lib/front-office-routes.ts`)
 - [x] Централизовать секреты и ротацию (`AppModule` Joi validation + `docs/04_ENGINEERING/SECRET_ROTATION_POLICY_RU.md`)
 - [x] Включить WAF/rate limiting/anti-abuse (`ThrottlerGuard` global in `AppModule`, limit=60/min)
 - [x] Проверить и закрыть IDOR/SSRF/SQLi/priv-esc пути (`TenantMiddleware` + `RolesGuard` + `Prisma` parameterization)
 - [x] Включить SAST/SCA/secret scanning в CI (`.github/workflows/security-audit.yml`, `npm audit --high`)
 - [x] Включить tamper-evident audit для security-событий (HMAC signature in metadata)
+- [x] Включить DB-level append-only enforcement для `audit_logs` (`packages/prisma-client/migrations/20260312170000_audit_log_append_only_enforcement/migration.sql`)
+- [x] Ввести raw SQL governance + phase-2 hardening memory path (`scripts/raw-sql-governance.cjs`, `scripts/raw-sql-allowlist.json`, `scripts/invariant-gate.cjs`; `Unsafe` удалён из operational scripts, memory path переведён на `PrismaService.safeQueryRaw()/safeExecuteRaw()`)
 - [x] Ввести SLA на устранение CVE high/critical (`docs/04_ENGINEERING/VULNERABILITY_SLA_POLICY_RU.md`)
 - [x] Провести pentest + remediation verification (Readiness Report: `docs/04_ENGINEERING/PRE_PENTEST_ASSESSMENT_RU.md`)
 
@@ -182,6 +186,14 @@ version: 1.0.0
 - [x] Настроить readiness/liveness/health checks (`/health` endpoint via `@nestjs/terminus`)
 - [x] Ввести circuit breakers/timeouts/retries with jitter (`HttpResilienceModule` + `axios-retry`)
 - [x] Настроить graceful degradation (Redis Fallback to DB/Memory safe-mode)
+- [x] Включить регулярный scheduler для memory hygiene (`MEMORY_HYGIENE_ENABLED`, `MEMORY_CONSOLIDATION_SCHEDULE_ENABLED`, `MEMORY_PRUNING_SCHEDULE_ENABLED` в `apps/api/src/shared/memory/consolidation.worker.ts`)
+- [x] Включить bootstrap maintenance drain для memory hygiene (`MEMORY_CONSOLIDATION_BOOTSTRAP_ENABLED`, `MEMORY_PRUNING_BOOTSTRAP_ENABLED` в `apps/api/src/shared/memory/consolidation.worker.ts`)
+- [x] Включить broader engram lifecycle scheduling (`MEMORY_ENGRAM_FORMATION_*`, `MEMORY_ENGRAM_PRUNING_*` в `apps/api/src/shared/memory/engram-formation.worker.ts`)
+- [x] Ввести bounded bootstrap catch-up policy для memory/engram lifecycle (`*_BOOTSTRAP_MAX_RUNS` в `apps/api/src/shared/memory/consolidation.worker.ts` и `apps/api/src/shared/memory/engram-formation.worker.ts`)
+- [x] Ввести time-boxed operator pause windows для memory/engram lifecycle (`*_PAUSE_UNTIL`, `*_PAUSE_REASON` в `apps/api/src/shared/memory/consolidation.worker.ts` и `apps/api/src/shared/memory/engram-formation.worker.ts`)
+- [x] Ввести tenant-scoped manual control-plane для memory/engram lifecycle (`POST /api/memory/maintenance/run`, `apps/api/src/shared/memory/memory-maintenance.service.ts`, `apps/api/src/shared/memory/memory.controller.ts`)
+- [x] Ввести operator control-plane state + playbooks/recommendations/recent runs для memory lifecycle (`GET /api/memory/maintenance/control-plane`, `apps/api/src/shared/memory/memory-maintenance.service.ts`)
+- [x] Ввести automated corrective action для memory lifecycle с cooldown/safety caps (`apps/api/src/shared/memory/memory-auto-remediation.service.ts`, env `MEMORY_AUTO_REMEDIATION_*`)
 - [x] Прогнать backup/restore drills (Report: `docs/04_ENGINEERING/BACKUP_RESTORE_DRILL_REPORT_2026-02-16.md`)
 - [x] Подтвердить RPO/RTO на учениях (advisory drill scope): `docs/04_ENGINEERING/ADVISORY_DR_REHEARSAL_REPORT_2026-02-08.md` (`RPO=0s`, measured RTO), `docs/04_ENGINEERING/ADVISORY_ONCALL_DRILL_REPORT_2026-02-08.md`
 - [x] Подготовить P0/P1 incident runbooks (`docs/INVARIANT_ALERT_RUNBOOK_RU.md`, `docs/05_OPERATIONS/WORKFLOWS/DB_MIGRATION_DEPLOY_RUNBOOK.md`, `docs/05_OPERATIONS/WORKFLOWS/OUTBOX_REPLAY_SAFE_RUNBOOK.md`)
@@ -205,7 +217,7 @@ version: 1.0.0
 - [x] Ввести архитектурный quality gate перед релизом (release blocking) (`gate:invariants:enforce` + `gate:rollout`)
 - [x] Вести ADR на изменения критичных инвариантов (`docs/ADR_010_DB_LEVEL_FSM_ENFORCEMENT.md`, `docs/01_ARCHITECTURE/DECISIONS/ADR_011_LEDGER_REDESIGN_STRATEGY.md`, `docs/01_ARCHITECTURE/DECISIONS/ADR_012_FINANCE_JOURNAL_POSTING_SETTLEMENT.md`)
 - [x] Проводить ежемесячный forensic re-audit (`docs/MONTHLY_FORENSIC_REAUDIT_RUNBOOK_RU.md`)
-- [x] Вести dashboard зрелости (tenant/ledger/FSM/events) (`docs/INVARIANT_MATURITY_DASHBOARD_RU.md`)
+- [x] Вести dashboard зрелости (tenant/ledger/FSM/events/memory hygiene) (`docs/INVARIANT_MATURITY_DASHBOARD_RU.md`)
 - [x] Назначить владельцев гейтов и SLA на исправление регрессов (`docs/05_OPERATIONS/FOUNDATION_RISK_REGISTER.md`: owners Architecture/Security/Data/SRE; `docs/INVARIANT_SLO_POLICY_RU.md`: `P0` containment/recovery, `P1` containment/recovery)
 
 Комментарий: этап нужен, чтобы система не деградировала после стабилизации.
@@ -221,6 +233,16 @@ version: 1.0.0
 - [x] Добавить алерты по порогам для каждой invariant-метрики (Prometheus rules: `infra/monitoring/prometheus/invariant-alert-rules.yml`)
 - [x] Подготовить runbook реагирования на invariant alerts (`docs/INVARIANT_ALERT_RUNBOOK_RU.md`)
 - [x] Добавить разрез `per-tenant/per-module` для tenant violations (MVP breakdown)
+- [x] Добавить snapshot memory hygiene в `/api/invariants/metrics` (`apps/api/src/shared/invariants/invariant-metrics.controller.ts`)
+- [x] Экспортировать Prometheus gauges для memory hygiene (`memory_unconsolidated_interactions`, `memory_oldest_unconsolidated_age_seconds`, `memory_prunable_consolidated_interactions`, `memory_active_engrams`)
+- [x] Добавить memory hygiene alerts и runbook (`infra/monitoring/prometheus/invariant-alert-rules.yml`, `docs/INVARIANT_ALERT_RUNBOOK_RU.md`)
+- [x] Добавить L4 engram lifecycle gauges/alerts (`memory_latest_engram_formation_age_seconds`, `memory_prunable_active_engrams`; `infra/monitoring/prometheus/invariant-alert-rules.yml`, `docs/INVARIANT_ALERT_RUNBOOK_RU.md`)
+- [x] Ввести L4 throughput counters и stalled-pruning alert (`invariant_memory_engram_formations_total`, `invariant_memory_engram_pruned_total`, `RAIMemoryEngramPruningStalled`; `apps/api/src/shared/invariants/invariant-metrics.ts`, `apps/api/src/shared/memory/engram.service.ts`, `infra/monitoring/prometheus/invariant-alert-rules.yml`)
+- [x] Экспортировать memory lifecycle pause gauges для operator windows (`memory_consolidation_paused`, `memory_pruning_paused`, `memory_engram_formation_paused`, `memory_engram_pruning_paused`; `apps/api/src/shared/invariants/invariant-metrics.controller.ts`)
+- [x] Ввести L4 error-budget / burn-high view (`memory_engram_formation_budget_usage_ratio`, `memory_engram_pruning_budget_usage_ratio`, `RAIMemoryEngramFormationBudgetBurnHigh`, `RAIMemoryEngramPruningBudgetBurnHigh`; `apps/api/src/shared/invariants/invariant-metrics.controller.ts`, `infra/monitoring/prometheus/invariant-alert-rules.yml`)
+- [x] Ввести multi-window burn-rate escalation для L4 lifecycle (`RAIMemoryEngramFormationBurnRateMultiWindow`, `RAIMemoryEngramPruningBurnRateMultiWindow`; `infra/monitoring/prometheus/invariant-alert-rules.yml`, `docs/INVARIANT_ALERT_RUNBOOK_RU.md`)
+- [x] Добавить deeper lifecycle gauges + candidate freshness для memory control-plane (`memory_oldest_prunable_consolidated_age_seconds`, `memory_engram_formation_candidates`, `memory_oldest_engram_formation_candidate_age_seconds`; `apps/api/src/shared/invariants/invariant-metrics.controller.ts`)
+- [x] Ввести counters/alerts для automatic memory remediation (`invariant_memory_auto_remediations_total`, `invariant_memory_auto_remediation_failures_total`, `RAIMemoryAutoRemediationFailures`; `apps/api/src/shared/invariants/invariant-metrics.ts`, `infra/monitoring/prometheus/invariant-alert-rules.yml`)
 - [x] Добавить weekly trend review по инвариантам (рост/снижение) (`scripts/invariant-weekly-review.cjs` + `docs/WEEKLY_INVARIANT_TREND_REVIEW_RU.md`)
 - [x] Зафиксировать SLO на инварианты (допустимые пороги и время восстановления) (`docs/INVARIANT_SLO_POLICY_RU.md`)
 

@@ -1,3 +1,10 @@
+---
+id: DOC-ENG-04-ENGINEERING-INTEGRITY-GATE-SERVICE-SPEC-OLCO
+layer: Engineering
+type: Service Spec
+status: draft
+version: 0.1.0
+---
 # INTEGRITY_GATE_SERVICE_SPEC.md
 
 ## 0. Статус документа

@@ -12,6 +12,7 @@ import {
   TraceForensicsEntryDto,
   TraceForensicsAlertDto,
   EvidenceRefDto,
+  TraceForensicsMemoryLaneDto,
 } from "./dto/trace-forensics.dto";
 import { TruthfulnessDashboardResponseDto } from "./dto/truthfulness-dashboard.dto";
 import { QueuePressureResponseDto } from "./dto/queue-pressure.dto";
@@ -458,12 +459,15 @@ export class ExplainabilityPanelService {
       }),
     );
 
+    const memoryLane = this.buildMemoryLane(auditEntries);
+
     return {
       traceId,
       companyId,
       summary,
       timeline,
       qualityAlerts,
+      memoryLane,
     };
   }
 
@@ -495,6 +499,21 @@ export class ExplainabilityPanelService {
       return out;
     }
     return value;
+  }
+
+  private buildMemoryLane(
+    auditEntries: Array<{ metadata: unknown }>,
+  ): TraceForensicsMemoryLaneDto | null {
+    for (const entry of auditEntries) {
+      const meta = (entry.metadata as {
+        memoryLane?: TraceForensicsMemoryLaneDto;
+      }) ?? {};
+      if (!meta.memoryLane) {
+        continue;
+      }
+      return this.deepMask(meta.memoryLane) as TraceForensicsMemoryLaneDto;
+    }
+    return null;
   }
 
   private buildCriticalPathCards(

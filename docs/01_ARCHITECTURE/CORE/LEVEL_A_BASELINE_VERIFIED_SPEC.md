@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-CORE-LEVEL-A-BASELINE-VERIFIED-SPEC-1JUP
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # 0. Статус документа
 
 - **Система:** RAI_Enterprise_Platform

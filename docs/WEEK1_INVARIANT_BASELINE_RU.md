@@ -1,11 +1,10 @@
-﻿---
-id: DOC-OPS-REP-002
+---
+id: DOC-OPS-WEEK1-INVARIANT-BASELINE-RU-1KMN
 layer: Operations
 type: Report
 status: approved
 version: 1.0.0
 ---
-
 # WEEK 1 INVARIANT BASELINE (RU)
 
 Р”Р°С‚Р°: 2026-02-15  

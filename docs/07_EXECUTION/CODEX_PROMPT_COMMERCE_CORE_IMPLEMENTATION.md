@@ -1,3 +1,10 @@
+---
+id: DOC-EXE-07-EXECUTION-CODEX-PROMPT-COMMERCE-CORE-IM-1U6J
+layer: Execution
+type: Prompt
+status: draft
+version: 0.1.0
+---
 # CODEX PROMPT: INSTITUTIONAL COMMERCE & PARTY CORE IMPLEMENTATION (RAI ENTERPRISE)
 
 ## ВВЕДЕНИЕ ДЛЯ АССИСТЕНТА (CODEX)

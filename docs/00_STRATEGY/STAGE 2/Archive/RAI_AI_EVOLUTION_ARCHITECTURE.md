@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-ARCHIVE-RAI-AI-EVOLUTION-ARCHITECTURE-18FH
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 # RAI AI Evolution Architecture
 Версия: 1.0  
 Назначение: Самоулучшающаяся AI-система (A-RAI)

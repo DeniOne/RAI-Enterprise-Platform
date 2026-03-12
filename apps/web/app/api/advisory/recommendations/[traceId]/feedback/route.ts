@@ -12,6 +12,14 @@ export async function POST(
     }
 
     const body = await request.json().catch(() => ({}));
+    const reason =
+      typeof body?.reason === "string" && body.reason.trim().length > 0
+        ? body.reason.trim()
+        : null;
+    const outcome =
+      typeof body?.outcome === "string" && body.outcome.trim().length > 0
+        ? body.outcome.trim()
+        : null;
 
     const response = await fetch(
       `http://localhost:4000/api/advisory/recommendations/${params.traceId}/feedback`,
@@ -20,6 +28,13 @@ export async function POST(
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "Idempotency-Key": `advisory-feedback:${params.traceId}:${(reason ?? "no-reason")
+            .replace(/\s+/g, "-")
+            .replace(/[^a-zA-Z0-9:_-]+/g, "-")
+            .slice(0, 80)}:${(outcome ?? "no-outcome")
+            .replace(/\s+/g, "-")
+            .replace(/[^a-zA-Z0-9:_-]+/g, "-")
+            .slice(0, 80)}`,
         },
         body: JSON.stringify(body),
       },

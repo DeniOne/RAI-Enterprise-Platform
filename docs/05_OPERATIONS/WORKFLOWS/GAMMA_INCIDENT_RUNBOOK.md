@@ -1,21 +1,12 @@
 ---
-id: DOC-OPS-GEN-129
-type: Runbook
+id: DOC-OPS-WORKFLOWS-GAMMA-INCIDENT-RUNBOOK-1IPX
 layer: Operations
-status: Draft
+type: Incident Report
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿---
-id: process-gamma-incident-runbook
-type: process
-status: review
-owners: [ops, security-officers]
-implements: [principle-ai-governance-canon]
----
-
 # Gamma: Incident Runbook
 
 ## Сценарии

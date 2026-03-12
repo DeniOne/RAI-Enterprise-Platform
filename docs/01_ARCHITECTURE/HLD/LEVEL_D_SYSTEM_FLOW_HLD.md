@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-HLD-LD-001
-type: HLD
+id: DOC-ARC-HLD-LEVEL-D-SYSTEM-FLOW-HLD-1XY6
 layer: Architecture
-status: Accepted
+type: HLD
+status: approved
 version: 2.1.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # LEVEL D — SYSTEM FLOW HLD (D6 Tuning)
 ## Схемы потоков данных и управления
 

@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-ARCHIVE-RAI-EP-AGENT-FIRST-SPRINT-1-SPEC-V-1N1Q
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 # RAI_EP — Agent-First Sprint 1 Spec (v1)
 
 **Дата:** 2026-03-03  

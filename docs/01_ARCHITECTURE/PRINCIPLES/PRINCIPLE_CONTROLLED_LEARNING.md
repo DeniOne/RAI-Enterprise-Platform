@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-PNC-LD-001
-type: Principle
+id: DOC-ARC-PRINCIPLES-PRINCIPLE-CONTROLLED-LEARNING-13ZL
 layer: Architecture
-status: Accepted
+type: Standards
+status: approved
 version: 2.2.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # ПРИНЦИП: Контролируемое обучение (Controlled Learning D6+++)
 
 ---

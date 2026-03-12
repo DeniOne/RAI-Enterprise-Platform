@@ -1,14 +1,13 @@
 ---
-id: DOC-INS-AGT-002
-type: Instruction
+id: DOC-INS-AGENTS-INSTRUCTION-CRM-AGENT-INTERACTION-D-UBXK
 layer: Instructions
-domain: Agents
-status: Active
+type: Instruction
+status: approved
 version: 1.1.0
+domain: Agents
 owners: [@techlead]
 last_updated: 2026-03-10
 ---
-
 # ДИАГНОСТИКА СБОЕВ И ПРОБЛЕМАТИКА ВЗАИМОДЕЙСТВИЯ CRM-АГЕНТА
 
 ## 1. Назначение

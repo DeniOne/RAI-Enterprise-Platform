@@ -125,7 +125,90 @@ describe("ResponseComposerService", () => {
       expect.objectContaining({
         kind: "episode",
       }),
+      expect.objectContaining({
+        kind: "profile",
+      }),
     ]);
+    expect(response.memorySummary).toEqual({
+      primaryHint: "Учтён похожий кейс прошлого сезона",
+      primaryKind: "episode",
+      detailsAvailable: true,
+    });
+  });
+
+  it("собирает память из episode, engram, hot engram и active alert", async () => {
+    const response = await service.buildResponse({
+      request: {
+        message: "что по рискам",
+        threadId: "th-4",
+        workspaceContext: { route: "/consulting/deviations" },
+      },
+      executionResult: {
+        executedTools: [],
+      } as any,
+      recallResult: {
+        recall: {
+          items: [
+            {
+              content: "В прошлом сезоне похожий кейс закончился корректировкой плана",
+              confidence: 0.87,
+              metadata: { source: "episode" },
+            },
+          ],
+        },
+        profile: {
+          lastRoute: "/consulting/deviations",
+          confidence: 0.72,
+        },
+        engrams: [
+          {
+            id: "eng-1",
+            category: "DEVIATION_OUTCOME",
+            content: "Негативный паттерн по отклонениям",
+            compositeScore: 0.91,
+            similarity: 0.85,
+          },
+        ],
+        hotEngrams: [
+          {
+            engramId: "hot-1",
+            compositeScore: 0.94,
+            category: "DEVIATION_OUTCOME",
+            contentPreview: "Горячий кейс по отклонениям",
+            activationCount: 3,
+            promotedAt: "2026-03-11T00:00:00.000Z",
+          },
+        ],
+        activeAlerts: [
+          {
+            id: "alert-1",
+            severity: "HIGH",
+            type: "deviation",
+            message: "Критическое отклонение по полю",
+            timestamp: "2026-03-11T00:00:00.000Z",
+          },
+        ],
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-4",
+      threadId: "th-4",
+      companyId: "company-1",
+    });
+
+    expect(response.memoryUsed).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: "active_alert" }),
+        expect.objectContaining({ kind: "hot_engram" }),
+        expect.objectContaining({ kind: "engram" }),
+        expect.objectContaining({ kind: "episode" }),
+        expect.objectContaining({ kind: "profile" }),
+      ]),
+    );
+    expect(response.memorySummary).toEqual({
+      primaryHint: "Учтены активные отклонения и сигналы риска",
+      primaryKind: "active_alert",
+      detailsAvailable: true,
+    });
   });
 
   it("строит rich output для contracts_agent без fallback backlog", async () => {

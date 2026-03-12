@@ -112,6 +112,18 @@ const BASE_URL =
     ? process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"
     : "/api";
 
+function buildIdempotencyKey(prefix: string, parts: Array<string | null | undefined>) {
+  const normalized = parts
+    .map((part) => (typeof part === "string" ? part.trim() : ""))
+    .filter(Boolean)
+    .join(":")
+    .replace(/\s+/g, "-")
+    .replace(/[^a-zA-Z0-9:_-]+/g, "-")
+    .slice(0, 160);
+
+  return `${prefix}:${normalized || "request"}`.slice(0, 200);
+}
+
 async function fetchWithAuth(
   path: string,
   token?: string,
@@ -147,7 +159,12 @@ export const frontOfficeApi = {
   getMyTasks: (token: string) => fetchWithAuth("/tasks/my", token),
   getTask: (id: string, token: string) => fetchWithAuth(`/tasks/${id}`, token),
   updateTaskStatus: (id: string, status: string, token: string) =>
-    fetchWithAuth(`/tasks/${id}/${status}`, token, { method: "POST" }),
+    fetchWithAuth(`/tasks/${id}/${status}`, token, {
+      method: "POST",
+      headers: {
+        "Idempotency-Key": buildIdempotencyKey("task-transition", [id, status]),
+      },
+    }),
 
   // Tech Maps
   getTechMaps: (token: string) => fetchWithAuth("/tech-map", token),
@@ -158,6 +175,9 @@ export const frontOfficeApi = {
   transitionTechMap: (id: string, status: string, token: string) =>
     fetchWithAuth(`/tech-map/${id}/transition`, token, {
       method: "PATCH",
+      headers: {
+        "Idempotency-Key": buildIdempotencyKey("techmap-transition", [id, status]),
+      },
       body: JSON.stringify({ status }),
     }),
 
@@ -172,6 +192,12 @@ export const frontOfficeApi = {
   triggerTransition: (seasonId: string, transition: string, token: string) =>
     fetchWithAuth(`/orchestrator/seasons/${seasonId}/transition`, token, {
       method: "POST",
+      headers: {
+        "Idempotency-Key": buildIdempotencyKey("season-transition", [
+          seasonId,
+          transition,
+        ]),
+      },
       body: JSON.stringify({ targetStage: transition }),
     }),
   getDeviations: (token: string) =>
@@ -191,6 +217,72 @@ export const frontOfficeApi = {
       `/front-office/threads/${encodeURIComponent(threadKey)}/messages`,
       token,
     ),
+  getDraft: (id: string, token?: string) =>
+    fetchWithAuth(`/front-office/drafts/${encodeURIComponent(id)}`, token),
+  fixDraft: (
+    id: string,
+    payload: {
+      channel?: "telegram" | "web_chat" | "internal";
+      messageText?: string;
+      direction?: "inbound" | "outbound";
+      threadExternalId?: string;
+      dialogExternalId?: string;
+      senderExternalId?: string;
+      recipientExternalId?: string;
+      route?: string;
+      targetOwnerRole?: string;
+      taskId?: string;
+      fieldId?: string;
+      seasonId?: string;
+      sourceMessageId?: string;
+      chatId?: string;
+      photoUrl?: string;
+      voiceUrl?: string;
+      coordinates?: unknown;
+      telemetryJson?: unknown;
+      traceId?: string;
+    },
+    token?: string,
+  ) =>
+    fetchWithAuth(`/front-office/drafts/${encodeURIComponent(id)}/fix`, token, {
+      method: "POST",
+      headers: {
+        "Idempotency-Key": buildIdempotencyKey("fo-draft-fix", [
+          id,
+          payload.traceId ?? null,
+          payload.fieldId ?? null,
+          payload.seasonId ?? null,
+          payload.taskId ?? null,
+          payload.messageText ?? null,
+        ]),
+      },
+      body: JSON.stringify(payload),
+    }),
+  linkDraft: (
+    id: string,
+    payload: { taskId?: string; fieldId?: string; seasonId?: string; farmRef?: string },
+    token?: string,
+  ) =>
+    fetchWithAuth(`/front-office/drafts/${encodeURIComponent(id)}/link`, token, {
+      method: "POST",
+      headers: {
+        "Idempotency-Key": buildIdempotencyKey("fo-draft-link", [
+          id,
+          payload.taskId ?? null,
+          payload.fieldId ?? null,
+          payload.seasonId ?? null,
+          payload.farmRef ?? null,
+        ]),
+      },
+      body: JSON.stringify(payload),
+    }),
+  confirmDraft: (id: string, token?: string) =>
+    fetchWithAuth(`/front-office/drafts/${encodeURIComponent(id)}/confirm`, token, {
+      method: "POST",
+      headers: {
+        "Idempotency-Key": buildIdempotencyKey("fo-draft-confirm", [id]),
+      },
+    }),
   getHandoffs: (token?: string) =>
     fetchWithAuth("/front-office/handoffs", token),
   getHandoff: (id: string, token: string) =>
@@ -198,10 +290,16 @@ export const frontOfficeApi = {
   claimHandoff: (id: string, token: string) =>
     fetchWithAuth(`/front-office/handoffs/${id}/claim`, token, {
       method: "POST",
+      headers: {
+        "Idempotency-Key": buildIdempotencyKey("handoff-claim", [id]),
+      },
     }),
   rejectHandoff: (id: string, reason: string, token: string) =>
     fetchWithAuth(`/front-office/handoffs/${id}/reject`, token, {
       method: "POST",
+      headers: {
+        "Idempotency-Key": buildIdempotencyKey("handoff-reject", [id, reason]),
+      },
       body: JSON.stringify({ reason }),
     }),
   resolveHandoff: (
@@ -211,11 +309,21 @@ export const frontOfficeApi = {
   ) =>
     fetchWithAuth(`/front-office/handoffs/${id}/resolve`, token, {
       method: "POST",
+      headers: {
+        "Idempotency-Key": buildIdempotencyKey("handoff-resolve", [
+          id,
+          payload.ownerResultRef ?? null,
+          payload.note ?? null,
+        ]),
+      },
       body: JSON.stringify(payload),
     }),
   addHandoffNote: (id: string, note: string, token: string) =>
     fetchWithAuth(`/front-office/handoffs/${id}/manual-note`, token, {
       method: "POST",
+      headers: {
+        "Idempotency-Key": buildIdempotencyKey("handoff-manual-note", [id, note]),
+      },
       body: JSON.stringify({ note }),
     }),
   getManagerBootstrap: (token?: string) =>
@@ -233,6 +341,12 @@ export const frontOfficeApi = {
       token,
       {
         method: "POST",
+        headers: {
+          "Idempotency-Key": buildIdempotencyKey("fo-thread-reply", [
+            threadKey,
+            messageText,
+          ]),
+        },
         body: JSON.stringify({ messageText }),
       },
     ),
@@ -242,6 +356,12 @@ export const frontOfficeApi = {
       token,
       {
         method: "POST",
+        headers: {
+          "Idempotency-Key": buildIdempotencyKey("fo-thread-read", [
+            threadKey,
+            lastMessageId ?? null,
+          ]),
+        },
         body: JSON.stringify({ lastMessageId }),
       },
     ),
@@ -258,6 +378,14 @@ export const frontOfficeApi = {
   ) =>
     fetchWithAuth("/front-office/assignments", token, {
       method: "POST",
+      headers: {
+        "Idempotency-Key": buildIdempotencyKey("fo-assignment-create", [
+          payload.userId,
+          payload.farmAccountId,
+          payload.status ?? null,
+          payload.priority != null ? String(payload.priority) : null,
+        ]),
+      },
       body: JSON.stringify(payload),
     }),
   deleteAssignment: (id: string, token?: string) =>

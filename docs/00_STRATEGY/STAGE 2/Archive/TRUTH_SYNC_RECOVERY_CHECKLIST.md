@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-ARCHIVE-TRUTH-SYNC-RECOVERY-CHECKLIST-N9W2
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 # STAGE 2 — Truth Sync Recovery Checklist
 
 Дата: 2026-03-05  

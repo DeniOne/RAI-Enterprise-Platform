@@ -1,13 +1,12 @@
 ---
-id: DOC-INS-AGT-007
+id: DOC-INS-AGENTS-INSTRUCTION-ORCHESTRATOR-ROUTING-AN-1V4S
+layer: Instructions
 type: Instruction
-layer: Agents
-status: Active
+status: approved
 version: 1.1.0
 owners: [@techlead]
 last_updated: 2026-03-10
 ---
-
 # ИНСТРУКЦИЯ — ОРКЕСТРАТОР: ROUTING И ВЫБОР АГЕНТА
 
 ## 1. Назначение

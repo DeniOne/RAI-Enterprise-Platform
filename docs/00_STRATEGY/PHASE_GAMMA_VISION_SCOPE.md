@@ -1,22 +1,12 @@
 ---
-id: DOC-STR-GEN-006
-type: Vision
+id: DOC-STR-00-STRATEGY-PHASE-GAMMA-VISION-SCOPE-1WM4
 layer: Strategy
-status: Draft
+type: Roadmap
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿---
-id: principle-gamma-vision-scope
-type: principle
-status: review
-owners: [product-owner, architects]
-aligned_with: [principle-vision]
-tags: [governance-gap]
----
-
 # Phase Gamma: Видение и Масштаб
 
 ## Цель фазы

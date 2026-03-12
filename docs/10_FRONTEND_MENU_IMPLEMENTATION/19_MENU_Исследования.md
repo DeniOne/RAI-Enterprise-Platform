@@ -1,3 +1,10 @@
+---
+id: DOC-FRN-10-FRONTEND-MENU-IMPLEMENTATION-19-MENU-1PSL
+layer: Frontend
+type: Menu Map
+status: draft
+version: 0.1.0
+---
 # 19_MENU_Исследования.md
 
 ## 0. Статус производства кнопки/экрана

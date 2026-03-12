@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-CORE-LC-001
-type: Architecture
-layer: Core
-status: Draft
+id: DOC-ARC-LEVEL-C-LEVEL-C-ARCHITECTURE-EQUD
+layer: Architecture
+type: HLD
+status: draft
 version: 1.2.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # LEVEL C — CONTRADICTION-RESILIENT INTELLIGENCE
 ## Архитектурная спецификация
 

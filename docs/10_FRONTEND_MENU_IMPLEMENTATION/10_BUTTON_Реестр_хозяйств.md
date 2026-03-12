@@ -1,4 +1,11 @@
-﻿# Экран: Реестр и Карта Хозяйства (`/consulting/crm/farms`)
+---
+id: DOC-FRN-10-FRONTEND-MENU-IMPLEMENTATION-10-BUTTON-KDCR
+layer: Frontend
+type: Screen Spec
+status: draft
+version: 0.1.0
+---
+# Экран: Реестр и Карта Хозяйства (`/consulting/crm/farms`)
 
 ## 0. Статус и Версия
 

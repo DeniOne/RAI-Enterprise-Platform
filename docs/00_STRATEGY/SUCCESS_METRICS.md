@@ -1,21 +1,12 @@
 ---
-id: DOC-STR-GEN-008
-type: Vision
+id: DOC-STR-00-STRATEGY-SUCCESS-METRICS-9IAY
 layer: Strategy
-status: Draft
+type: Economics
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: guideline-success-metrics
-type: guideline
-status: draft
-owners: [stakeholders]
-relations: []
----
-
 # Метрики успеха и KPI 📊
 
 Как мы измеряем эффективность внедрения RAI Enterprise Platform.

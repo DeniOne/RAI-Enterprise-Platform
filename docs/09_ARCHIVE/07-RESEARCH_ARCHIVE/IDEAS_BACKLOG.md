@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-171
-type: Legacy
+id: DOC-ARV-07-RESEARCH-ARCHIVE-IDEAS-BACKLOG-1JOU
 layer: Archive
-status: Draft
+type: Research
+status: archived
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # **RAI Enterprise Platform: Полная система управления агробизнесом с когнитивной памятью**
 
 ## **1. ФИЛОСОФИЯ СИСТЕМЫ**

@@ -1,3 +1,10 @@
+---
+id: DOC-STR-STAGE-2-RAI-FARM-OPERATING-SYSTEM-ARCHITEC-LJ31
+layer: Strategy
+type: Vision
+status: draft
+version: 0.1.0
+---
 # A_RAI — Операционная система консалтингового бизнеса RAI
 
 > **Версия:** 2.0 | **Дата:** 2026-03-04  

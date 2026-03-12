@@ -1,21 +1,12 @@
 ---
-id: DOC-PRD-GEN-096
-type: UI Spec
+id: DOC-PRD-UI-UX-BRAND-BOOK-KR34
 layer: Product
-status: Draft
+type: UI Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: guideline-design-brand-book
-type: guideline
-status: approved
-owners: [brand-manager]
-aligned_with: [principle-vision]
----
-
 # Brand Canon RAI
 
 ## 1. Название бренда

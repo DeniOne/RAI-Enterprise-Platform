@@ -1,14 +1,13 @@
 ---
-id: DOC-ENG-GEN-105
-type: Service Spec
+id: DOC-ENG-04-ENGINEERING-ADVISORY-INCIDENT-TABLETOP--UMGE
 layer: Engineering
-status: Draft
+type: Service Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿# Advisory Incident Tabletop Protocol (Sprint 5)
+# Advisory Incident Tabletop Protocol (Sprint 5)
 
 ## Session Metadata
 

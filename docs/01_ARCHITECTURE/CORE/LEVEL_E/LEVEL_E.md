@@ -1,20 +1,16 @@
 ---
+id: DOC-ARC-LEVEL-E-LEVEL-E-5OC1
+layer: Architecture
+type: HLD
+status: approved
+version: 2.0.0
 level: E
 name: Regenerative Optimization
-status: Production
-version: 2.0.0
 supersedes: Legacy Regenerative Spec (v1.x)
 governance_model: Contract-Driven
 extends: Level D
 depends_on:
-  - Genesis Lock
-  - NSGA-II Solver
-  - Stochastic Engine (Monte Carlo)
-  - Integrity Gate
-  - Governance Service
-  - Immutable Audit
 ---
-
 # 0. Назначение уровня
 
 Level E (Regenerative Optimization) переводит систему от мониторинга и прогнозирования (Level D) к активной оптимизации устойчивого производства. 

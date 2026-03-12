@@ -290,6 +290,97 @@ export class TaskService {
     return updated;
   }
 
+  async createExpertReviewTask(input: {
+    companyId: string;
+    userId?: string | null;
+    reviewId: string;
+    traceId: string;
+    entityType: string;
+    entityId: string;
+    reason: string;
+    verdict: string;
+    seasonId: string;
+    fieldId: string;
+  }): Promise<Task> {
+    const season = await this.prisma.season.findFirst({
+      where: { id: input.seasonId, companyId: input.companyId },
+      select: { id: true, fieldId: true, isLocked: true, status: true },
+    });
+
+    if (!season) {
+      throw new NotFoundException(
+        `Season ${input.seasonId} not found or access denied`,
+      );
+    }
+    if (season.isLocked || season.status === SeasonStatus.COMPLETED) {
+      throw new BadRequestException(
+        `Cannot create task for a locked or completed season`,
+      );
+    }
+
+    const field = await this.prisma.field.findFirst({
+      where: { id: input.fieldId, companyId: input.companyId },
+      select: { id: true, name: true },
+    });
+    if (!field) {
+      throw new NotFoundException(
+        `Field ${input.fieldId} not found or access denied`,
+      );
+    }
+
+    const title = `Экспертный follow-up: ${input.entityType} ${input.entityId}`;
+    const description = input.verdict.slice(0, 240);
+
+    return this.prisma.$transaction(async (tx) => {
+      const task = await tx.task.create({
+        data: {
+          name: title,
+          status: TaskStatus.PENDING,
+          seasonId: input.seasonId,
+          fieldId: input.fieldId,
+          companyId: input.companyId,
+          responsibleId: input.userId ?? null,
+          plannedDate: new Date(),
+          slaExpiration: new Date(Date.now() + 72 * 60 * 60 * 1000),
+        },
+      });
+
+      await tx.outboxMessage.create({
+        data: this.outbox.createEvent(task.id, "Task", "task.created", {
+          companyId: input.companyId,
+          taskId: task.id,
+          seasonId: input.seasonId,
+          fieldId: input.fieldId,
+          reviewId: input.reviewId,
+          traceId: input.traceId,
+          entityType: input.entityType,
+          entityId: input.entityId,
+          title,
+          description,
+          occurredAt: new Date().toISOString(),
+        }),
+      });
+
+      return task;
+    }).then(async (task) => {
+      await this.auditService.log({
+        action: "TASK_CREATED_FROM_EXPERT_REVIEW",
+        companyId: input.companyId,
+        userId: input.userId ?? "SYSTEM",
+        metadata: {
+          taskId: task.id,
+          reviewId: input.reviewId,
+          traceId: input.traceId,
+          seasonId: input.seasonId,
+          fieldId: input.fieldId,
+          entityType: input.entityType,
+          entityId: input.entityId,
+        },
+      });
+      return task;
+    });
+  }
+
   // --- Helpers ---
 
   private async _validateTaskAccess(

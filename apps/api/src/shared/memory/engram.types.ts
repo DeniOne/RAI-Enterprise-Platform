@@ -138,4 +138,6 @@ export interface PruneThreshold {
   minWeight: number;
   /** Максимальное время без активации (дни) */
   maxInactiveDays: number;
+  /** Необязательный tenant-scope для controlled pruning */
+  companyId?: string;
 }

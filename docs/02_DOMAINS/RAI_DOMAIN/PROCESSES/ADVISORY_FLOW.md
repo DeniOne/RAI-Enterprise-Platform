@@ -1,22 +1,12 @@
 ---
-id: DOC-DOM-GEN-078
-type: Domain Spec
+id: DOC-DOM-PROCESSES-ADVISORY-FLOW-64L9
 layer: Domain
-status: Draft
+type: Domain Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿---
-id: process-rai-advisory-flow
-type: process
-status: review
-owners: [product-owner, domain-experts]
-implements: [principle-ai-governance-canon]
-depends_on: [control-rai-advisory-policy]
----
-
 # ???????: Advisory Flow
 
 ## ?????

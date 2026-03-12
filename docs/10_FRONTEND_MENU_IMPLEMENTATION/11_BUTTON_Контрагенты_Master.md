@@ -1,3 +1,10 @@
+---
+id: DOC-FRN-10-FRONTEND-MENU-IMPLEMENTATION-11-BUTTON--QP13
+layer: Frontend
+type: Screen Spec
+status: draft
+version: 0.1.0
+---
 # Экран: Реестр и Карточка Контрагента (`/consulting/crm/counterparties`)
 
 ## 0. Статус и Версия

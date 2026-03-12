@@ -58,15 +58,21 @@ describe("PrismaService tenant isolation ($extends)", () => {
   });
 
   it("allows system bypass", async () => {
-    const { client } = await bootstrap("enforce", "SYSTEM", true);
+    const { service, mockTenantContext } = await bootstrap("enforce", "SYSTEM", true);
 
-    // This shouldn't throw even without a regular companyId because isSystem: true
-    // We mock the base call to avoid DB connection
-    (client as any).$queryRaw = jest.fn().mockResolvedValue([]);
+    expect(mockTenantContext.getStore()).toEqual({ companyId: "SYSTEM", isSystem: true });
+    expect((service as any).tenantScopedModels.has("Task")).toBe(true);
+  });
 
-    // If it doesn't throw TENANT_CONTEXT_MISSING, it works
-    await expect(
-      client.task.findMany({ where: { status: "PENDING" } as any }),
-    ).resolves.toBeDefined();
+  it("marks memory and governance models as tenant-scoped", async () => {
+    const { service } = await bootstrap("shadow", "c1");
+    const scopedModels = (service as any).tenantScopedModels as Set<string>;
+
+    expect(scopedModels.has("MemoryInteraction")).toBe(true);
+    expect(scopedModels.has("MemoryEpisode")).toBe(true);
+    expect(scopedModels.has("MemoryProfile")).toBe(true);
+    expect(scopedModels.has("ExpertReview")).toBe(true);
+    expect(scopedModels.has("PendingAction")).toBe(true);
+    expect(scopedModels.has("AgentConfigChangeRequest")).toBe(true);
   });
 });

@@ -1,22 +1,12 @@
 ---
-id: DOC-ARC-GEN-048
-type: Standards
+id: DOC-ARC-PRINCIPLES-FORBIDDEN-67AF
 layer: Architecture
-status: Draft
+type: Standards
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: control-forbidden-rules
-type: control
-status: approved
-owners: [architects, techleads]
-implements: [principle-canon, principle-axioms]
-tags: [multi-principle-control]
----
-
 # FORBIDDEN RULES
 
 ## Статус документа

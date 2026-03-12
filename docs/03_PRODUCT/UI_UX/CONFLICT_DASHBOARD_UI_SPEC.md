@@ -1,13 +1,12 @@
 ---
-id: DOC-PROD-UI-LC-001
-type: Product Specification
-layer: UI/UX
-status: Draft
+id: DOC-PRD-UI-UX-CONFLICT-DASHBOARD-UI-SPEC-V5Y5
+layer: Product
+type: UI Spec
+status: draft
 version: 1.3.0
 owners: [@product, @techlead]
 last_updated: 2026-02-18
 ---
-
 # CONFLICT DASHBOARD — UI SPECIFICATION
 ## Интерфейс визуализации конфликтов Level C (Hardened)
 

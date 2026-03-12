@@ -1,13 +1,12 @@
 ---
-id: DOC-ARC-ADR-LD-003
+id: DOC-ARC-DECISIONS-ADR-LD-003-NO-RETROACTIVE-MUTATI-13LV
 layer: Architecture
 type: ADR
-status: Accepted
+status: approved
 version: 2.0.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # ADR-LD-003: No Retroactive Mutation (Запрет ретроактивных изменений)
 
 ## Контекст

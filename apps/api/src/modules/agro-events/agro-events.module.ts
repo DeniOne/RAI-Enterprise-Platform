@@ -6,9 +6,10 @@ import { AgroEventsOrchestratorService } from "./agro-events.orchestrator.servic
 import { AgroEventsRepository } from "./agro-events.repository";
 import { AgroEventsService } from "./agro-events.service";
 import { AgroEventsMustValidator } from "./agro-events.validator";
+import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, IdempotencyModule],
   providers: [
     AgroEscalationLoopService,
     AgroEventsRepository,

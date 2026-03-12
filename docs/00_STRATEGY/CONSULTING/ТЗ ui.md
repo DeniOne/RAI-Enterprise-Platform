@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-187
-type: Legacy
-layer: Archive
-status: Draft
+id: DOC-STR-CONSULTING-UI-7G63
+layer: Strategy
+type: Vision
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 🧭 TASK: UI Structural Reflection Sprint (Consulting Core v2)
 🎯 Цель
 

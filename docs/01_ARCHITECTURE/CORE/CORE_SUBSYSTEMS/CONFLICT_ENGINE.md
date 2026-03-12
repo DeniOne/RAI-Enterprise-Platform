@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-CORE-SYS-001
-type: Architecture
-layer: Core Subsystems
-status: Draft
+id: DOC-ARC-CORE-SUBSYSTEMS-CONFLICT-ENGINE-11BR
+layer: Architecture
+type: HLD
+status: draft
 version: 1.5.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # CONFLICT ENGINE
 ## Подсистема разрешения и анализа конфликтов (Level C)
 

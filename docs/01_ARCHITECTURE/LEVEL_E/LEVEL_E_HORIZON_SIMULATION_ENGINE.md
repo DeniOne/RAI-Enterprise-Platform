@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-SIM-001
-type: Specification
-layer: Core Engine
-status: Approved
+id: DOC-ARC-LEVEL-E-LEVEL-E-HORIZON-SIMULATION-ENGINE-1OJH
+layer: Architecture
+type: HLD
+status: approved
 version: 1.1.0
 owners: [@techlead]
 last_updated: 2026-02-19
 ---
-
 # LEVEL E: HORIZON SIMULATION ENGINE
 
 ## 1. Введение

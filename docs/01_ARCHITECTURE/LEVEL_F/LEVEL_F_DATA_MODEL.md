@@ -1,14 +1,16 @@
 ---
-title: LEVEL_F_DATA_MODEL
+id: DOC-ARC-LEVEL-F-LEVEL-F-DATA-MODEL-10EO
+layer: Architecture
+type: HLD
+status: approved
 version: 1.0.0
+title: LEVEL_F_DATA_MODEL
 level: F
-status: PRODUCTION_READY
 schema_evolution_policy: STRICT_VERSIONED
 governance_binding: REQUIRED
 economic_binding: REQUIRED
 cryptographic_integrity: MANDATORY
 ---
-
 # 1. Архитектурная цель модели
 Модель данных Level F является окончательным "якорем" институционального доверия. Она обеспечивает детерминированный переход от агрономической телеметрии к финансово-обязательным сигналам.
 

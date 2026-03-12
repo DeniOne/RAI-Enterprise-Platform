@@ -1,13 +1,12 @@
 ---
-id: DOC-STR-FO-009
-type: Refactor Plan
+id: DOC-STR-FRONT-OFFICE-FRONT-OFFICE-REFACTOR-PLAN-V25U
 layer: Strategy
-status: Draft
+type: Roadmap
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-03-09
 ---
-
 # FRONT_OFFICE_REFACTOR_PLAN
 
 ## 1. Назначение документа

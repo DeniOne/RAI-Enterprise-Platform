@@ -1,4 +1,11 @@
-﻿# 17. Кнопка/Экран: Коммерция
+---
+id: DOC-FRN-10-FRONTEND-MENU-IMPLEMENTATION-17-BUTTON-1E4Y
+layer: Frontend
+type: Screen Spec
+status: draft
+version: 0.1.0
+---
+# 17. Кнопка/Экран: Коммерция
 
 ## 0. Статус производства кнопки/экрана
 - Stage: `DONE`

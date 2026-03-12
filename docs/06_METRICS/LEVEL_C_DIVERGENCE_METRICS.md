@@ -1,13 +1,12 @@
 ---
-id: DOC-MET-LC-002
-type: Metrics Specification
-layer: Metrics (Level C)
-status: Draft
+id: DOC-MET-06-METRICS-LEVEL-C-DIVERGENCE-METRICS-ZNVI
+layer: Metrics
+type: KPI Spec
+status: draft
 version: 1.3.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # LEVEL C DIVERGENCE METRICS
 ## Метрики семантического и структурного расхождения (D5 Hardened)
 

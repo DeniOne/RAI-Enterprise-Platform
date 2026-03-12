@@ -1214,11 +1214,16 @@ export class AdvisoryService {
       normalized = String(actor?.role ?? "").toUpperCase();
     }
 
-    if (normalized === "ADMIN" || normalized === "MANAGER") {
+    if (
+      normalized === "ADMIN" ||
+      normalized === "CLIENT_ADMIN" ||
+      normalized === "CEO" ||
+      normalized === "MANAGER"
+    ) {
       return;
     }
     throw new ForbiddenException(
-      "pilot management requires ADMIN or MANAGER role",
+      "pilot management requires ADMIN, CLIENT_ADMIN, CEO or MANAGER role",
     );
   }
 

@@ -1,14 +1,13 @@
 ---
-id: DOC-ENG-GEN-108
-type: Service Spec
+id: DOC-ENG-04-ENGINEERING-ADVISORY-PILOT-ROLLOUT-POLI-19LP
 layer: Engineering
-status: Draft
+type: Policy
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿# Advisory Pilot Rollout Policy (Sprint 5)
+# Advisory Pilot Rollout Policy (Sprint 5)
 
 ## Purpose
 

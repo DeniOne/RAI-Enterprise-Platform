@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 
 async function main() {
     console.log('Dropping redundant trigger trg_double_entry_symmetry...');
-    await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS trg_double_entry_symmetry ON "ledger_entries";`);
+    await prisma.$executeRaw`DROP TRIGGER IF EXISTS trg_double_entry_symmetry ON "ledger_entries";`;
 
     console.log('Verifying validate_double_entry_deferred_v6 source...');
 

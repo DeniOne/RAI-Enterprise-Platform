@@ -3,6 +3,7 @@ import {
   RaiChatRequestDto,
   RaiChatResponseDto,
   RaiMemoryUsedDto,
+  RaiMemorySummaryDto,
   ExternalAdvisoryDto,
   EvidenceReference,
   PendingClarificationDto,
@@ -47,6 +48,7 @@ import { RaiChatWidgetBuilder } from "../rai-chat-widget-builder";
 import { SensitiveDataFilterService } from "../security/sensitive-data-filter.service";
 import { RecallResult } from "../memory/memory-coordinator.service";
 import { EpisodicRetrievalResponse } from "../../../shared/memory/episodic-retrieval.service";
+import { isFoundationGatedFeatureEnabled } from "../../../shared/feature-flags/foundation-release-flags";
 import { ExecutionResult } from "../runtime/agent-runtime.service";
 import { RaiChatWidget } from "../widgets/rai-chat-widgets.types";
 import {
@@ -224,6 +226,12 @@ export class ResponseComposerService {
     text = this.sensitiveDataFilter.mask(text);
 
     const evidence = executionResult.agentExecution?.evidence ?? this.collectEvidence(executionResult);
+    const runtimeGovernance =
+      executionResult.agentExecution?.runtimeGovernance ??
+      executionResult.runtimeGovernance;
+    const suggestedActions = clientFacing
+      ? []
+      : this.buildSuggestedActions(request, runtimeGovernance, traceId);
 
     return {
       text,
@@ -237,15 +245,26 @@ export class ResponseComposerService {
       })),
       traceId,
       threadId,
-      suggestedActions: clientFacing ? [] : this.buildSuggestedActions(request),
+      suggestedActions,
       openUiToken: undefined,
       advisory: externalSignalResult.advisory,
-      memoryUsed: this.buildMemoryUsed(profile, recall),
+      memoryUsed: this.buildMemoryUsed(
+        profile,
+        recall,
+        recallResult.engrams,
+        recallResult.hotEngrams,
+        recallResult.activeAlerts,
+      ),
+      memorySummary: this.buildMemorySummary(
+        profile,
+        recall,
+        recallResult.engrams,
+        recallResult.hotEngrams,
+        recallResult.activeAlerts,
+      ),
       evidence: evidence.length > 0 ? evidence : undefined,
       runtimeBudget: executionResult.runtimeBudget,
-      runtimeGovernance:
-        executionResult.agentExecution?.runtimeGovernance ??
-        executionResult.runtimeGovernance,
+      runtimeGovernance,
       agentRole: executionResult.agentExecution?.role,
       fallbackUsed: executionResult.agentExecution?.fallbackUsed,
       validation: executionResult.agentExecution?.validation,
@@ -2345,7 +2364,11 @@ export class ResponseComposerService {
     }
   }
 
-  buildSuggestedActions(request: RaiChatRequestDto): RaiSuggestedAction[] {
+  buildSuggestedActions(
+    request: RaiChatRequestDto,
+    runtimeGovernance?: RaiChatResponseDto["runtimeGovernance"],
+    traceId?: string,
+  ): RaiSuggestedAction[] {
     const actions: RaiSuggestedAction[] = [
       {
         kind: "tool",
@@ -2354,7 +2377,20 @@ export class ResponseComposerService {
         payload: { message: request.message },
       },
     ];
+    const expertReviewAction = this.buildExpertReviewAction(
+      request,
+      runtimeGovernance,
+      traceId,
+    );
+    if (expertReviewAction) {
+      actions.unshift(expertReviewAction);
+    }
     if (request.workspaceContext?.route) {
+      actions.push({
+        kind: "route",
+        title: "Открыть текущий раздел",
+        href: request.workspaceContext.route,
+      });
       actions.push({
         kind: "tool",
         toolName: RaiToolName.WorkspaceSnapshot,
@@ -2365,7 +2401,79 @@ export class ResponseComposerService {
         },
       });
     }
-    return actions;
+    return actions.slice(0, 3);
+  }
+
+  private buildExpertReviewAction(
+    request: RaiChatRequestDto,
+    runtimeGovernance?: RaiChatResponseDto["runtimeGovernance"],
+    traceId?: string,
+  ): RaiSuggestedAction | null {
+    const route = request.workspaceContext?.route ?? "";
+    const selected = request.workspaceContext?.selectedRowSummary;
+    const refs = request.workspaceContext?.activeEntityRefs ?? [];
+    const entityType =
+      selected?.kind === "techmap" || refs.some((ref) => ref.kind === "techmap")
+        ? "techmap"
+        : selected?.kind === "field" || refs.some((ref) => ref.kind === "field")
+          ? "field"
+          : route.includes("/deviations")
+            ? "deviation"
+            : null;
+    const entityId =
+      selected?.id ??
+      refs.find((ref) => ref.kind === "techmap" || ref.kind === "field")?.id ??
+      null;
+    const fieldId =
+      refs.find((ref) => ref.kind === "field")?.id ??
+      (selected?.kind === "field" ? selected.id : undefined) ??
+      this.readWorkspaceFilterAsString(request.workspaceContext?.filters?.fieldId);
+    const seasonId = this.readWorkspaceFilterAsString(
+      request.workspaceContext?.filters?.seasonId,
+    );
+    const planId = this.readWorkspaceFilterAsString(
+      request.workspaceContext?.filters?.planId,
+    );
+
+    const shouldSuggest =
+      runtimeGovernance?.degraded ||
+      route.includes("/deviations") ||
+      route.includes("/techmap");
+
+    if (!shouldSuggest || !entityType || !entityId) {
+      return null;
+    }
+
+    return {
+      kind: "expert_review",
+      title: "Эскалировать к Мега-Агроному",
+      expertRole: "chief_agronomist",
+      payload: {
+        entityType,
+        entityId,
+        reason:
+          runtimeGovernance?.degraded
+            ? runtimeGovernance.fallbackReason
+            : "Контекстная экспертная проверка по рабочей сущности",
+        ...(fieldId ? { fieldId } : {}),
+        ...(seasonId ? { seasonId } : {}),
+        ...(planId ? { planId } : {}),
+        ...(route ? { workspaceRoute: route } : {}),
+        ...(traceId ? { traceParentId: traceId } : {}),
+      },
+    };
+  }
+
+  private readWorkspaceFilterAsString(
+    value: string | number | boolean | null | undefined,
+  ): string | undefined {
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value.trim();
+    }
+    if (typeof value === "number") {
+      return String(value);
+    }
+    return undefined;
   }
 
   private extractProfileSummary(profile: Record<string, unknown>): string | null {
@@ -2386,10 +2494,40 @@ export class ResponseComposerService {
   }
 
   private buildMemoryUsed(
-    _profile: Record<string, unknown>,
+    profile: Record<string, unknown>,
     recall: EpisodicRetrievalResponse,
+    engrams: RecallResult["engrams"] | undefined,
+    hotEngrams: RecallResult["hotEngrams"] | undefined,
+    activeAlerts: RecallResult["activeAlerts"] | undefined,
   ): RaiMemoryUsedDto[] {
     const items: RaiMemoryUsedDto[] = [];
+    const topAlert = activeAlerts?.[0];
+    if (topAlert?.message) {
+      items.push({
+        kind: "active_alert",
+        label: topAlert.message.slice(0, 80),
+        confidence: this.normalizeConfidence(topAlert.severity),
+        source: topAlert.type,
+      });
+    }
+    const topHotEngram = hotEngrams?.[0];
+    if (topHotEngram?.contentPreview) {
+      items.push({
+        kind: "hot_engram",
+        label: topHotEngram.contentPreview.slice(0, 80),
+        confidence: Number(topHotEngram.compositeScore ?? 0),
+        source: topHotEngram.category,
+      });
+    }
+    const topEngram = engrams?.[0];
+    if (topEngram?.content) {
+      items.push({
+        kind: "engram",
+        label: topEngram.content.slice(0, 80),
+        confidence: Number(topEngram.compositeScore ?? topEngram.similarity ?? 0),
+        source: topEngram.category,
+      });
+    }
     const top = recall.items[0];
     if (top?.content) {
       items.push({
@@ -2399,7 +2537,92 @@ export class ResponseComposerService {
         source: typeof top.metadata?.source === "string" ? top.metadata.source : "episode",
       });
     }
-    return items;
+    const profileSummary = this.extractProfileSummary(profile);
+    if (profileSummary) {
+      items.push({
+        kind: "profile",
+        label: profileSummary,
+        confidence: this.extractProfileConfidence(profile),
+        source: "profile",
+      });
+    }
+    return items.slice(0, 5);
+  }
+
+  private buildMemorySummary(
+    profile: Record<string, unknown>,
+    recall: EpisodicRetrievalResponse,
+    engrams: RecallResult["engrams"] | undefined,
+    hotEngrams: RecallResult["hotEngrams"] | undefined,
+    activeAlerts: RecallResult["activeAlerts"] | undefined,
+  ): RaiMemorySummaryDto | undefined {
+    if (!isFoundationGatedFeatureEnabled("RAI_MEMORY_HINTS_ENABLED")) {
+      return undefined;
+    }
+
+    const items = this.buildMemoryUsed(
+      profile,
+      recall,
+      engrams,
+      hotEngrams,
+      activeAlerts,
+    );
+    if (items.length === 0) {
+      return undefined;
+    }
+
+    const priority: RaiMemoryUsedDto["kind"][] = [
+      "active_alert",
+      "hot_engram",
+      "engram",
+      "episode",
+      "profile",
+    ];
+    const primary =
+      priority
+        .map((kind) => items.find((item) => item.kind === kind))
+        .find(Boolean) ?? items[0];
+
+    return {
+      primaryHint: this.formatPrimaryMemoryHint(primary),
+      primaryKind: primary.kind,
+      detailsAvailable: items.length > 0,
+    };
+  }
+
+  private formatPrimaryMemoryHint(item: RaiMemoryUsedDto): string {
+    switch (item.kind) {
+      case "active_alert":
+        return "Учтены активные отклонения и сигналы риска";
+      case "hot_engram":
+      case "engram":
+      case "episode":
+        return "Учтён похожий кейс прошлого сезона";
+      case "profile":
+        return "Учтены предпочтения и политика компании";
+      default:
+        return "Учтён накопленный контекст";
+    }
+  }
+
+  private extractProfileConfidence(profile: Record<string, unknown>): number {
+    const raw = profile.confidence;
+    return typeof raw === "number" && Number.isFinite(raw) ? raw : 0.5;
+  }
+
+  private normalizeConfidence(severity: string | undefined): number {
+    switch (severity) {
+      case "CRITICAL":
+        return 1;
+      case "HIGH":
+        return 0.9;
+      case "MEDIUM":
+        return 0.75;
+      case "LOW":
+        return 0.6;
+      default:
+        return 0.5;
+    }
   }
 
   private summarizeExecutedTools(

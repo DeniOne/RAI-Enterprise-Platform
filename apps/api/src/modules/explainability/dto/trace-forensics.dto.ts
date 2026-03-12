@@ -52,10 +52,30 @@ export interface TraceForensicsAlertDto {
   createdAt: string;
 }
 
+export interface TraceForensicsMemoryLaneItemDto {
+  kind: string;
+  label: string;
+  confidence: number;
+}
+
+export interface TraceForensicsMemoryLaneDroppedItemDto {
+  kind: string;
+  label: string;
+  reason: string;
+}
+
+export interface TraceForensicsMemoryLaneDto {
+  recalled: TraceForensicsMemoryLaneItemDto[];
+  used: TraceForensicsMemoryLaneItemDto[];
+  dropped: TraceForensicsMemoryLaneDroppedItemDto[];
+  escalationReason?: string;
+}
+
 export interface TraceForensicsResponseDto {
   traceId: string;
   companyId: string;
   summary: TraceForensicsSummaryDto | null;
   timeline: TraceForensicsEntryDto[];
   qualityAlerts: TraceForensicsAlertDto[];
+  memoryLane?: TraceForensicsMemoryLaneDto | null;
 }

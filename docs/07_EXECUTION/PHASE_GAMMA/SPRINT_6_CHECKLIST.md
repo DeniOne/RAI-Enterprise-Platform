@@ -1,14 +1,13 @@
 ---
-id: DOC-EXE-GEN-151
-type: Phase Plan
+id: DOC-EXE-PHASE-GAMMA-SPRINT-6-CHECKLIST-1PID
 layer: Execution
-status: Draft
+type: Checklist
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿# Чек-лист Sprint 6 (Phase Gamma)
+# Чек-лист Sprint 6 (Phase Gamma)
 
 **Название:** «Hardening и Controlled Go-Live»  
 **Срок:** 2 недели  

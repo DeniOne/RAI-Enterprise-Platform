@@ -1,4 +1,11 @@
-﻿# RAI BUSINESS ARCHITECTURE v2.0 (LLM Structured)
+---
+id: DOC-STR-BUSINESS-RAI-BUSINESS-ARCHITECTURE-V2-0-FO-MEEI
+layer: Strategy
+type: Vision
+status: draft
+version: 0.1.0
+---
+# RAI BUSINESS ARCHITECTURE v2.0 (LLM Structured)
 
 Статус: структурированная версия для внешних LLM
 Источник: фактическая реализация `RAI_EP` (код + структура)

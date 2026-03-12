@@ -6,9 +6,14 @@ import {
   PrismaHealthIndicator,
   MemoryHealthIndicator,
   DiskHealthIndicator,
+  HealthIndicatorResult,
 } from "@nestjs/terminus";
 import { PrismaService } from "../../shared/prisma/prisma.service";
+import { HsmService } from "../../level-f/crypto/hsm.service";
+import { PublicHealthBoundary } from "../../shared/auth/auth-boundary.decorator";
+import { AuditNotarizationService } from "../../shared/audit/audit-notarization.service";
 
+@PublicHealthBoundary()
 @Controller("health")
 export class HealthController {
   constructor(
@@ -18,6 +23,8 @@ export class HealthController {
     private memory: MemoryHealthIndicator, // Heap verification
     private disk: DiskHealthIndicator, // Disk space verification
     private prisma: PrismaService, // Inject Prisma for custom check if needed
+    private hsm: HsmService,
+    private auditNotarization: AuditNotarizationService,
   ) {}
 
   @Get()
@@ -34,8 +41,29 @@ export class HealthController {
       () =>
         this.disk.checkStorage("storage", { thresholdPercent: 0.9, path: "/" }),
 
+      () => this.hsmCheck(),
+      () => this.auditNotarizationCheck(),
+
       // External Dependency Check (Example: CRM or Satellite)
       // () => this.http.pingCheck('crm_service', 'https://crm.internal.local'),
     ]);
+  }
+
+  private async hsmCheck(): Promise<HealthIndicatorResult> {
+    const status = await this.hsm.checkReadiness();
+    return {
+      hsm: {
+        status: "up" as const,
+        provider: status.provider,
+        kid: status.kid,
+      },
+    };
+  }
+
+  private async auditNotarizationCheck(): Promise<HealthIndicatorResult> {
+    const status = await this.auditNotarization.checkReadiness();
+    return {
+      audit_notarization: status,
+    };
   }
 }

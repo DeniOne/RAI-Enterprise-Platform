@@ -1,4 +1,11 @@
-﻿# Меню 1: Управление Урожаем
+---
+id: DOC-FRN-10-FRONTEND-MENU-IMPLEMENTATION-01-MENU-JLLC
+layer: Frontend
+type: Menu Map
+status: draft
+version: 0.1.0
+---
+# Меню 1: Управление Урожаем
 
 ## 0. Статус производства кнопки/экрана
 

@@ -1,3 +1,10 @@
+---
+id: DOC-ENG-04-ENGINEERING-LEVEL-E-PROMPT-1U2S
+layer: Engineering
+type: Service Spec
+status: draft
+version: 0.1.0
+---
 PROMPT ДЛЯ ПЕРЕЗАПИСИ LEVEL_E.md
 Переписать раздел LEVEL_E.md полностью.
 

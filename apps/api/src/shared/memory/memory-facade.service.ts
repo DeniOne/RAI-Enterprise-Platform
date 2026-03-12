@@ -248,14 +248,35 @@ export class MemoryFacade {
     async getMemoryHealth(): Promise<Record<string, unknown>> {
         try {
             // Быстрые counts для health check
-            const [engramCount, episodeCount, interactionCount] = await Promise.all([
+            const [
+                engramCount,
+                episodeCount,
+                interactionCount,
+                latestEpisode,
+                latestEngram,
+            ] = await Promise.all([
                 this.engramService['prisma'].engram.count({ where: { isActive: true } }),
                 this.engramService['prisma'].memoryEpisode.count(),
                 this.engramService['prisma'].memoryInteraction.count(),
+                this.engramService['prisma'].memoryEpisode.findFirst({
+                    orderBy: { updatedAt: 'desc' },
+                    select: { updatedAt: true },
+                }),
+                this.engramService['prisma'].engram.findFirst({
+                    where: { isActive: true },
+                    orderBy: { updatedAt: 'desc' },
+                    select: { updatedAt: true },
+                }),
             ]);
+
+            const freshestTouch = latestEngram?.updatedAt ?? latestEpisode?.updatedAt ?? null;
+            const freshnessMinutes = freshestTouch
+                ? Math.max(0, Math.round((Date.now() - freshestTouch.getTime()) / 60000))
+                : null;
 
             return {
                 status: 'ok',
+                degraded: false,
                 layers: {
                     L1_reactive: 'active',
                     L2_episodic: { episodes: episodeCount, interactions: interactionCount },
@@ -264,12 +285,27 @@ export class MemoryFacade {
                     L5_institutional: 'basic',
                     L6_network: 'planned',
                 },
+                recallLatencyMs: null,
+                episodeCount,
+                engramCount,
+                hotAlertCount: null,
+                consolidationFreshness: freshnessMinutes,
+                pruningStatus: engramCount > 50000 ? 'attention' : 'nominal',
+                trustScore: freshnessMinutes === null ? null : Math.max(0.5, Math.min(0.98, 0.98 - freshnessMinutes / 10000)),
                 timestamp: new Date().toISOString(),
             };
         } catch (err) {
             return {
                 status: 'degraded',
+                degraded: true,
                 error: String(err),
+                recallLatencyMs: null,
+                episodeCount: null,
+                engramCount: null,
+                hotAlertCount: null,
+                consolidationFreshness: null,
+                pruningStatus: 'unknown',
+                trustScore: null,
                 timestamp: new Date().toISOString(),
             };
         }

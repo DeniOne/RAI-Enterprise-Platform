@@ -1,3 +1,10 @@
+---
+id: DOC-STR-00-STRATEGY-MASTER-FRONTEND-ARCHITECTURE-16AF
+layer: Strategy
+type: Vision
+status: draft
+version: 0.1.0
+---
 # Master Frontend Architecture (Institutional Grade 10/10)
 ## RAI-FE-MASTER-ARCH-v1.0
 

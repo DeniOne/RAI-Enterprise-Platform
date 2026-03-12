@@ -1,14 +1,13 @@
 ---
-id: DOC-STR-GEN-001
-type: Vision
+id: DOC-STR-00-STRATEGY-BETA-EXIT-CRITERIA-166D
 layer: Strategy
-status: Draft
+type: Vision
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿# Beta Exit Criteria & Decision Canon ⚖️
+# Beta Exit Criteria & Decision Canon ⚖️
 
 ## 1. Automated Risk Thresholds (Critical Gates)
 The following events are physically blocked by the Risk Engine without human override in the current implementation:

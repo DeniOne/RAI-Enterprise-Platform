@@ -1,21 +1,12 @@
 ---
-id: DOC-OPS-GEN-127
-type: Runbook
+id: DOC-OPS-DEVELOPMENT-GUIDELINES-RAI-CANON-1TP3
 layer: Operations
-status: Draft
+type: Report
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: principle-rai-domain-canon
-type: principle
-status: approved
-owners: [architects]
-aligned_with: [principle-vision]
----
-
 # CANON: RAI DOMAIN DEVELOPMENT
 
 ### Ключевое правило

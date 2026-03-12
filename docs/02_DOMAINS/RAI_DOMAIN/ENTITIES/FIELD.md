@@ -1,21 +1,12 @@
 ---
-id: DOC-DOM-GEN-069
-type: Domain Spec
+id: DOC-DOM-ENTITIES-FIELD-1P5L
 layer: Domain
-status: Draft
+type: Domain Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-rai-entity-field
-type: component
-status: review
-owners: [domain-experts]
-aligned_with: [principle-vision]
----
-
 # Entity: Field (Поле) 🗺️
 
 > **Статус:** Канон | **Версия:** 1.0 | **Слой:** RAI/Entities

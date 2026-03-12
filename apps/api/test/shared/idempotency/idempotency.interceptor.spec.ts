@@ -93,6 +93,28 @@ describe('IdempotencyInterceptor', () => {
         expect(redisServiceMock.set).toHaveBeenCalledWith('idempotency:new-key', expect.stringContaining('COMPLETED'), 86400);
     });
 
+    it('should scope cache key by tenant, user and route when available', async () => {
+        (contextMock.switchToHttp().getRequest as jest.Mock).mockReturnValue({
+            method: 'POST',
+            url: '/rai/explainability/runtime-governance/autonomy/override',
+            headers: { 'idempotency-key': 'scoped-key' },
+            user: { companyId: 'company-1', userId: 'user-7' },
+        });
+
+        redisServiceMock.get.mockResolvedValueOnce(null);
+        redisServiceMock.setNX.mockResolvedValueOnce(true);
+        callHandlerMock.handle.mockReturnValue(of({ ok: true }));
+
+        const result = await lastValueFrom(await interceptor.intercept(contextMock, callHandlerMock));
+        expect(result).toEqual({ ok: true });
+
+        expect(redisServiceMock.setNX).toHaveBeenCalledWith(
+            'idempotency:company-1:user-7:POST:/rai/explainability/runtime-governance/autonomy/override:scoped-key',
+            expect.stringContaining('IN_PROGRESS'),
+            120,
+        );
+    });
+
     it('should throw CONFLICT if setNX fails (race condition)', async () => {
         (contextMock.switchToHttp().getRequest as jest.Mock).mockReturnValue({
             method: 'POST',

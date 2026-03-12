@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-PRINCIPLES-ARCHITECTURAL-TEST-PROTOCOL-WUNH
+layer: Architecture
+type: Standards
+status: draft
+version: 0.1.0
+---
 RAI_Enterprise_Platform
 ARCHITECTURAL_TEST_PROTOCOL.md
 (Platform-Wide Formal Verification Standard)

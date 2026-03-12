@@ -48,6 +48,7 @@ import { AgentReputationService } from "./agent-reputation.service";
 import { FeedbackCredibilityService } from "./feedback-credibility.service";
 import { IncidentOpsService } from "./incident-ops.service";
 import { IncidentsGovernanceController } from "./incidents-governance.controller";
+import { PendingActionsController } from "./pending-actions.controller";
 import { PerformanceMetricsService } from "./performance/performance-metrics.service";
 import { QueueMetricsService } from "./performance/queue-metrics.service";
 import { SafeReplayService } from "./safe-replay.service";
@@ -55,6 +56,7 @@ import { AgentRuntimeConfigService } from "./agent-runtime-config.service";
 import { AgentRegistryService } from "./agent-registry.service";
 import { MemoryModule } from "../../shared/memory/memory.module";
 import { OpenRouterGatewayService } from "./agent-platform/openrouter-gateway.service";
+import { NvidiaGatewayService } from "./agent-platform/nvidia-gateway.service";
 import { AgentPromptAssemblyService } from "./agent-platform/agent-prompt-assembly.service";
 import { AgentExecutionAdapterService } from "./runtime/agent-execution-adapter.service";
 import { CrmModule } from "../crm/crm.module";
@@ -68,6 +70,12 @@ import { RuntimeGovernanceFeatureFlagsService } from "./runtime-governance/runti
 import { RuntimeGovernanceAutomationService } from "./runtime-governance/runtime-governance-automation.service";
 import { RuntimeGovernanceOverrideService } from "./runtime-governance/runtime-governance-override.service";
 import { ExpertModule } from "./expert/expert.module";
+import { ExpertReviewController } from "./expert-review.controller";
+import { ExpertReviewService } from "./expert-review.service";
+import { TaskModule } from "../task/task.module";
+import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
+import { ConfigModule } from "@nestjs/config";
+import { SecretsModule } from "../../shared/config/secrets.module";
 
 @Module({
   imports: [
@@ -83,8 +91,12 @@ import { ExpertModule } from "./expert/expert.module";
     CommerceModule,
     AuditModule,
     ExpertModule,
+    TaskModule,
+    IdempotencyModule,
+    ConfigModule,
+    SecretsModule,
   ],
-  controllers: [RaiChatController, IncidentsGovernanceController],
+  controllers: [RaiChatController, IncidentsGovernanceController, ExpertReviewController, PendingActionsController],
   providers: [
     IntentRouterService,
     AgroDeterministicEngineFacade,
@@ -133,6 +145,7 @@ import { ExpertModule } from "./expert/expert.module";
     AgentRegistryService,
     AgentRuntimeConfigService,
     OpenRouterGatewayService,
+    NvidiaGatewayService,
     AgentPromptAssemblyService,
     RuntimeGovernancePolicyService,
     RuntimeGovernanceFeatureFlagsService,
@@ -141,6 +154,7 @@ import { ExpertModule } from "./expert/expert.module";
     AgentReliabilityService,
     RuntimeGovernanceRecommendationService,
     RuntimeGovernanceAutomationService,
+    ExpertReviewService,
   ],
   exports: [
     FrontOfficeToolsRegistry,

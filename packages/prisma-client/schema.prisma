@@ -21,6 +21,7 @@ model Company {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   invitations Invitation[]
+  counterpartyUserBindings CounterpartyUserBinding[]
 
   roleDefinitions   RoleDefinition[]
   employeeProfiles  EmployeeProfile[]
@@ -69,6 +70,8 @@ model Company {
   budgets           Budget[]
   budgetLines       BudgetLine[]
   budgetItems       BudgetItem[]
+  strategyForecastScenarios StrategyForecastScenario[]
+  strategyForecastRuns StrategyForecastRun[]
   // Legal & GR relations
   legalDocuments    LegalDocument[]
   legalRequirements LegalRequirement[]
@@ -141,7 +144,9 @@ model Company {
   governanceLocks         GovernanceLock[]
   overrideRequests        OverrideRequest[]
   auditLogs               AuditLog[]
+  auditNotarizations      AuditNotarizationRecord[]
   aiAuditEntries          AiAuditEntry[]
+  expertReviews           ExpertReview[]
   pendingActions          PendingAction[]
   traceSummaries          TraceSummary[]
   qualityAlerts           QualityAlert[]
@@ -226,6 +231,7 @@ model Account {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   invitations Invitation[]
+  counterpartyUserBindings CounterpartyUserBinding[]
 
   // Asset Registries
   machinery  Machinery[]
@@ -510,10 +516,12 @@ enum StockTransactionType {
 model User {
   id         String   @id @default(cuid())
   email      String   @unique
+  username   String?  @unique
   name       String?
   role       UserRole @default(USER)
   phone      String?
   telegramId String?  @unique
+  passwordHash String?
 
   emailVerified              Boolean   @default(false)
   emailVerificationToken     String?   @unique
@@ -535,6 +543,7 @@ model User {
   // Связи
   invitations     Invitation[] @relation("Invitee")
   sentInvitations Invitation[] @relation("Inviter")
+  counterpartyUserBindings CounterpartyUserBinding[]
 
   // Business Core интеграция
   coreUserId   String? @unique
@@ -609,6 +618,13 @@ model Invitation {
   company   Company  @relation(fields: [companyId], references: [id])
   clientId  String? // В какое хозяйство (опционально)
   client    Account? @relation(fields: [clientId], references: [id])
+  partyId   String?
+  party     Party?   @relation(fields: [companyId, partyId], references: [companyId, id])
+  partyContactId String?
+  proposedLogin String?
+  contactSnapshotJson Json?
+  metadataJson Json?
+  counterpartyBindings CounterpartyUserBinding[]
 
   // Статус и сроки
   status              InvitationStatus @default(PENDING)
@@ -626,6 +642,8 @@ model Invitation {
   @@index([status])
   @@index([expiresAt])
   @@index([inviterId])
+  @@index([companyId, partyId])
+  @@index([companyId, clientId, status])
   @@map("invitations")
 }
 
@@ -1089,6 +1107,7 @@ enum UserRole {
   FIELD_WORKER
   CFO
   CLIENT_ADMIN
+  FRONT_OFFICE_USER
   USER
 }
 
@@ -1257,6 +1276,12 @@ enum InvitationStatus {
   REVOKED
 }
 
+enum CounterpartyUserBindingStatus {
+  ACTIVE
+  SUSPENDED
+  REVOKED
+}
+
 // --- Identity Registry Models ---
 
 model EmployeeProfile {
@@ -1377,12 +1402,42 @@ model AuditLog {
   userAgent String?
   metadata  Json? // Дополнительные детали
   createdAt DateTime @default(now())
+  notarization AuditNotarizationRecord?
 
   @@index([action])
   @@index([userId])
   @@index([companyId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+model AuditNotarizationRecord {
+  id               String   @id @default(cuid())
+  auditLogId       String   @unique
+  auditLog         AuditLog @relation(fields: [auditLogId], references: [id])
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id])
+  entryHash        String
+  prevChainHash    String?
+  chainHash        String   @unique
+  wormProvider     String
+  wormObjectKey    String
+  wormUri          String
+  wormContentHash  String
+  retentionMode    String   @default("COMPLIANCE")
+  retentionUntil   DateTime
+  hsmKid           String
+  hsmSignature     String
+  anchorProvider   String
+  anchorReceiptId  String
+  anchoredAt       DateTime
+  metadata         Json?
+  createdAt        DateTime @default(now())
+
+  @@index([companyId])
+  @@index([createdAt])
+  @@index([anchoredAt])
+  @@map("audit_notarization_records")
 }
 
 model AiAuditEntry {
@@ -1401,6 +1456,87 @@ model AiAuditEntry {
   @@index([traceId])
   @@index([createdAt])
   @@map("ai_audit_entries")
+}
+
+model ExpertReview {
+  id                    String   @id @default(cuid())
+  companyId             String
+  company               Company  @relation(fields: [companyId], references: [id])
+  traceId               String
+  entityType            String
+  entityId              String
+  reason                String   @db.Text
+  status                String
+  verdict               String   @db.Text
+  riskTier              String
+  requiresHumanDecision Boolean  @default(true)
+  payloadJson           Json?    @default("{}")
+  outcomeAction         String?
+  outcomeNote           String?  @db.Text
+  createdByUserId       String?
+  resolvedByUserId      String?
+  resolvedAt            DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([traceId])
+  @@index([entityType, entityId])
+  @@index([status])
+  @@map("expert_reviews")
+}
+
+model StrategyForecastScenario {
+  id              String   @id @default(cuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  name            String
+  scopeLevel      String
+  seasonId        String
+  horizonDays     Int
+  farmId          String?
+  fieldId         String?
+  crop            String?
+  domainsJson     Json     @default("[]")
+  leverValuesJson Json     @default("{}")
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([companyId, seasonId])
+  @@index([createdAt])
+  @@map("strategy_forecast_scenarios")
+}
+
+model StrategyForecastRun {
+  id              String   @id @default(cuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  traceId         String
+  scopeLevel      String
+  seasonId        String
+  horizonDays     Int
+  farmId          String?
+  fieldId         String?
+  crop            String?
+  domainsJson     Json     @default("[]")
+  requestJson     Json     @default("{}")
+  resultJson      Json     @default("{}")
+  feedbackJson    Json?
+  evaluationJson  Json?
+  degraded        Boolean  @default(false)
+  riskTier        String
+  createdByUserId String?
+  feedbackByUserId String?
+  feedbackAt      DateTime?
+  createdAt       DateTime @default(now())
+
+  @@index([companyId])
+  @@index([companyId, seasonId])
+  @@index([companyId, createdAt])
+  @@index([traceId])
+  @@map("strategy_forecast_runs")
 }
 
 model TraceSummary {
@@ -4239,6 +4375,8 @@ model OutboxMessage {
   nextRetryAt   DateTime?
   lastAttemptAt DateTime?
   deadLetterAt  DateTime?
+  localDeliveredAt  DateTime?
+  brokerDeliveredAt DateTime?
   error         String?      @db.Text
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
@@ -5343,6 +5481,8 @@ model Party {
   contractRoles    CommerceContractPartyRole[]
   outboundPayments Payment[]                   @relation("PaymentPayer")
   inboundPayments  Payment[]                   @relation("PaymentPayee")
+  invitations      Invitation[]
+  counterpartyUserBindings CounterpartyUserBinding[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -5350,6 +5490,42 @@ model Party {
   @@unique([companyId, id])
   @@index([companyId, legalName])
   @@map("commerce_parties")
+}
+
+model CounterpartyUserBinding {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  partyId String?
+  party   Party? @relation(fields: [companyId, partyId], references: [companyId, id])
+
+  invitationId String?
+  invitation   Invitation? @relation(fields: [invitationId], references: [id], onDelete: SetNull)
+
+  partyContactId String?
+  telegramId     String?
+  status         CounterpartyUserBindingStatus @default(ACTIVE)
+  isPrimary      Boolean @default(true)
+  contactSnapshotJson Json?
+  invitedBy      String?
+  invitedAt      DateTime?
+  activatedAt    DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([companyId, userId, accountId], name: "counterparty_user_binding_unique")
+  @@index([companyId, accountId, status])
+  @@index([companyId, partyId, status])
+  @@index([companyId, telegramId])
+  @@map("counterparty_user_bindings")
 }
 
 model AssetPartyRole {

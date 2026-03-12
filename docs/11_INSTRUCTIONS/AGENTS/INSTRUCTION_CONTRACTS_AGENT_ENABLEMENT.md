@@ -1,13 +1,12 @@
 ---
-id: DOC-INS-AGT-008
+id: DOC-INS-AGENTS-INSTRUCTION-CONTRACTS-AGENT-ENABLEM-CFDZ
+layer: Instructions
 type: Instruction
-layer: Agents
-status: Active
+status: approved
 version: 1.1.0
 owners: [@techlead]
 last_updated: 2026-03-10
 ---
-
 # ИНСТРУКЦИЯ — ВКЛЮЧЕНИЕ CONTRACTS_AGENT
 
 ## 1. Назначение

@@ -1,3 +1,10 @@
+---
+id: DOC-PRD-UI-UX-REGENERATIVE-EXPLAINABILITY-PROTOCOL-RVDK
+layer: Product
+type: UI Spec
+status: draft
+version: 0.1.0
+---
 # LEVEL E: Протокол Регенеративной Объяснимости
 
 ## 1. Введение

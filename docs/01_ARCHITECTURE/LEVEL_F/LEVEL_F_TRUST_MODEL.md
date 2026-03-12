@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-LVLF-002
-type: Specification
+id: DOC-ARC-LEVEL-F-LEVEL-F-TRUST-MODEL-1FJV
 layer: Architecture
-status: Proposed
+type: Standards
+status: approved
 version: 2.1.0
 owners: [@techlead]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: ФОРМАЛЬНАЯ СПЕЦИФИКАЦИЯ МОДЕЛИ ДОВЕРИЯ (LEVEL_F_TRUST_MODEL)
 
 ## 0. Статус Документа

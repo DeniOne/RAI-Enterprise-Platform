@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-LVLF-011
-type: Test Specification
-layer: Architecture
-status: Enforced
+id: DOC-TST-08-TESTING-LEVEL-F-FORMAL-TEST-SPEC-AABC
+layer: Testing
+type: Test Spec
+status: approved
 version: 1.0.0
 owners: [@techlead, @qa_lead, @ciso]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: ИНСТИТУЦИОНАЛЬНАЯ ТЕСТОВАЯ СПЕЦИФИКАЦИЯ (LEVEL_F_FORMAL_TEST_SPEC)
 
 ## 0. Манифест Верификации

@@ -1,13 +1,12 @@
 ---
-id: DOC-EXE-PHD-003
-type: Protocol
-layer: Phase Delta (Integration)
-status: Enforced
+id: DOC-EXE-PHASE-DELTA-DELTA-GOVERNANCE-APPROVAL-Q4U7
+layer: Execution
+type: Phase Plan
+status: approved
 version: 2.0.0
 owners: [@techlead, @board_of_directors]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: МАТРИЦА УПРАВЛЕНЧЕСКОГО УТВЕРЖДЕНИЯ (DELTA_GOVERNANCE_APPROVAL)
 
 ## 0. Область Применения (Scope & Binding)

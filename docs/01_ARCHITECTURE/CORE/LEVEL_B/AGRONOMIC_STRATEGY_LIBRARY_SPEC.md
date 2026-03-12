@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-LEVEL-B-AGRONOMIC-STRATEGY-LIBRARY-SPEC-HT9O
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # AGRONOMIC_STRATEGY_LIBRARY_SPEC.md
 
 ## 0. Статус документа

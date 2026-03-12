@@ -8,6 +8,7 @@ import {
   IntegrityStatus,
   ObservationIntent,
   ObservationType,
+  UserRole,
 } from "@rai/prisma-client";
 import { createHash } from "crypto";
 import { AuditService } from "../../shared/audit/audit.service";
@@ -512,8 +513,45 @@ export class FrontOfficeDraftService {
     };
   }
 
+  async getThreadForViewer(
+    companyId: string,
+    viewer: { id: string; role?: string; accountId?: string | null },
+    threadKey: string,
+  ) {
+    const thread = await this.communicationRepository.getThreadByKey(companyId, threadKey);
+    await this.assertThreadAccess(companyId, viewer, thread);
+    const messages = await this.communicationRepository.listMessages(companyId, thread.id);
+
+    return {
+      thread,
+      threadKey,
+      messages,
+      drafts: [],
+      handoffs: [],
+    };
+  }
+
   async listThreads(companyId: string) {
     return this.communicationRepository.listThreads(companyId);
+  }
+
+  async listThreadsForViewer(
+    companyId: string,
+    viewer: { id: string; role?: string; accountId?: string | null },
+  ) {
+    if (viewer.role !== UserRole.FRONT_OFFICE_USER) {
+      return this.communicationRepository.listThreads(companyId);
+    }
+
+    if (!viewer.accountId) {
+      throw new ForbiddenException("Front-office user is not bound to counterparty");
+    }
+
+    return this.communicationRepository.listThreads(companyId, {
+      farmAccountId: viewer.accountId,
+      boundOnly: true,
+      take: 200,
+    });
   }
 
   async listHandoffs(companyId: string) {
@@ -657,7 +695,7 @@ export class FrontOfficeDraftService {
 
   async replyToThread(
     companyId: string,
-    user: { id: string; role?: string },
+    user: { id: string; role?: string; accountId?: string | null },
     threadKey: string,
     messageText: string,
   ) {
@@ -665,7 +703,7 @@ export class FrontOfficeDraftService {
     if (!thread.farmAccountId) {
       throw new ForbiddenException("Thread is not bound to a farm account");
     }
-    await this.assertAssignment(companyId, user.id, thread.farmAccountId);
+    await this.assertThreadAccess(companyId, user, thread);
 
     const chatId = this.normalizeTelegramChatId(
       thread.threadExternalId ?? thread.representativeTelegramId,
@@ -696,7 +734,7 @@ export class FrontOfficeDraftService {
 
   async markThreadRead(
     companyId: string,
-    userId: string,
+    viewer: { id: string; role?: string; accountId?: string | null },
     threadKey: string,
     lastMessageId?: string,
   ) {
@@ -704,7 +742,7 @@ export class FrontOfficeDraftService {
     if (!thread.farmAccountId) {
       throw new ForbiddenException("Thread is not bound to a farm account");
     }
-    await this.assertAssignment(companyId, userId, thread.farmAccountId);
+    await this.assertThreadAccess(companyId, viewer, thread);
 
     const messages = await this.communicationRepository.listMessages(companyId, thread.id);
     const targetMessage =
@@ -715,7 +753,7 @@ export class FrontOfficeDraftService {
     return this.communicationRepository.upsertParticipantState({
       companyId,
       threadId: thread.id,
-      userId,
+      userId: viewer.id,
       lastReadMessageId: targetMessage?.id ?? null,
       lastReadAt: targetMessage?.createdAt ?? new Date().toISOString(),
     });
@@ -1046,7 +1084,11 @@ export class FrontOfficeDraftService {
       return;
     }
 
-    if (viewer.role === "ADMIN") {
+    if (
+      viewer.role === UserRole.ADMIN ||
+      viewer.role === UserRole.CLIENT_ADMIN ||
+      viewer.role === UserRole.CEO
+    ) {
       return;
     }
 

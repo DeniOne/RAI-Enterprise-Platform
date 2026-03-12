@@ -5,9 +5,8 @@ import {
   Body,
   Param,
   Patch,
-  UseGuards,
+  UseInterceptors,
   Query,
-  ForbiddenException,
 } from "@nestjs/common";
 import { ConsultingService, UserContext } from "./consulting.service";
 import { BudgetPlanService } from "./budget-plan.service";
@@ -17,9 +16,7 @@ import { UpdateDraftPlanDto } from "./dto/update-draft-plan.dto";
 import { TransitionPlanStatusDto } from "./dto/transition-plan-status.dto";
 import { TransitionBudgetStatusDto } from "./dto/transition-budget-status.dto";
 import { CompleteOperationDto } from "./dto/complete-operation.dto";
-import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
-import { UserRole } from "@rai/prisma-client";
 import { YieldService } from "./yield.service";
 import { KpiService } from "./kpi.service";
 import { SaveHarvestResultDto } from "./dto/save-harvest-result.dto";
@@ -34,9 +31,17 @@ import { ConsultingOrchestrator } from "./consulting.orchestrator";
 import { CashFlowService } from "./cash-flow.service";
 import { LiquidityRiskService } from "./liquidity-risk.service";
 import { DeviationService } from "./deviation.service";
+import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
+import { Authorized } from "../../shared/auth/authorized.decorator";
+import {
+  EXECUTION_ROLES,
+  PLANNING_READ_ROLES,
+  PLANNING_WRITE_ROLES,
+  STRATEGIC_ROLES,
+} from "../../shared/auth/rbac.constants";
+import { ConsultingAccess } from "./consulting-access.decorator";
 
 @Controller("consulting")
-@UseGuards(JwtAuthGuard)
 export class ConsultingController {
   constructor(
     private readonly consultingService: ConsultingService,
@@ -57,29 +62,13 @@ export class ConsultingController {
     private readonly kpiService: KpiService,
   ) {}
 
-  private ensureManagementAccess(role: UserRole) {
-    const allowed: UserRole[] = [UserRole.CEO, UserRole.CFO, UserRole.ADMIN];
-    if (!allowed.includes(role)) {
-      throw new ForbiddenException(
-        "Доступ разрешен только руководству (CEO/CFO)",
-      );
-    }
-  }
-
-  private ensureStrategicAccess(role: UserRole) {
-    const allowed: UserRole[] = [UserRole.CEO, UserRole.CFO, UserRole.ADMIN];
-    if (!allowed.includes(role)) {
-      throw new ForbiddenException(
-        "Доступ разрешен только стратегическому руководству (CEO/CFO/ADMIN)",
-      );
-    }
-  }
-
   // --- Strategic Goals ---
 
   @Post("goals")
+  @Authorized(...STRATEGIC_ROLES)
+  @ConsultingAccess("strategic")
+  @UseInterceptors(IdempotencyInterceptor)
   async createGoal(@Body() dto: any, @CurrentUser() user: any) {
-    this.ensureStrategicAccess(user.role);
     const context: UserContext = {
       userId: user.userId,
       role: user.role,
@@ -89,8 +78,9 @@ export class ConsultingController {
   }
 
   @Get("goals/:id/decompose")
+  @Authorized(...STRATEGIC_ROLES)
+  @ConsultingAccess("strategic")
   async decomposeGoal(@Param("id") id: string, @CurrentUser() user: any) {
-    this.ensureStrategicAccess(user.role);
     const context: UserContext = {
       userId: user.userId,
       role: user.role,
@@ -102,12 +92,14 @@ export class ConsultingController {
   // --- Scenario & Advisory ---
 
   @Post("simulations/season/:id")
+  @Authorized(...STRATEGIC_ROLES)
+  @ConsultingAccess("strategic")
+  @UseInterceptors(IdempotencyInterceptor)
   async simulate(
     @Param("id") id: string,
     @Body() dto: any,
     @CurrentUser() user: any,
   ) {
-    this.ensureStrategicAccess(user.role);
     const context: UserContext = {
       userId: user.userId,
       role: user.role,
@@ -117,11 +109,12 @@ export class ConsultingController {
   }
 
   @Get("advisory/:seasonId")
+  @Authorized(...STRATEGIC_ROLES)
+  @ConsultingAccess("strategic")
   async getAdvisory(
     @Param("seasonId") seasonId: string,
     @CurrentUser() user: any,
   ) {
-    this.ensureStrategicAccess(user.role);
     const context: UserContext = {
       userId: user.userId,
       role: user.role,
@@ -133,11 +126,12 @@ export class ConsultingController {
   // --- Cash Flow & Liquidity Risk ---
 
   @Get("cashflow/current")
+  @Authorized(...STRATEGIC_ROLES)
+  @ConsultingAccess("strategic")
   async getCashPosition(
     @Query("asOfDate") asOfDate: string,
     @CurrentUser() user: any,
   ) {
-    this.ensureStrategicAccess(user.role);
     const context: UserContext = {
       userId: user.userId,
       role: user.role,
@@ -148,12 +142,13 @@ export class ConsultingController {
   }
 
   @Get("cashflow/projection")
+  @Authorized(...STRATEGIC_ROLES)
+  @ConsultingAccess("strategic")
   async getCashProjection(
     @Query("startDate") start: string,
     @Query("endDate") end: string,
     @CurrentUser() user: any,
   ) {
-    this.ensureStrategicAccess(user.role);
     const context: UserContext = {
       userId: user.userId,
       role: user.role,
@@ -171,11 +166,12 @@ export class ConsultingController {
   }
 
   @Get("cashflow/liquidity-risk/:seasonId")
+  @Authorized(...STRATEGIC_ROLES)
+  @ConsultingAccess("strategic")
   async getLiquidityRisk(
     @Param("seasonId") seasonId: string,
     @CurrentUser() user: any,
   ) {
-    this.ensureStrategicAccess(user.role);
     const context: UserContext = {
       userId: user.userId,
       role: user.role,
@@ -186,6 +182,7 @@ export class ConsultingController {
 
   // Deviation & Decisions
   @Get("deviations")
+  @Authorized(...PLANNING_READ_ROLES)
   async getDeviations(@CurrentUser() user: any) {
     const context: UserContext = {
       userId: user.userId,
@@ -196,8 +193,10 @@ export class ConsultingController {
   }
 
   @Post("decisions/confirm/:id")
+  @Authorized(...STRATEGIC_ROLES)
+  @ConsultingAccess("management")
+  @UseInterceptors(IdempotencyInterceptor)
   async confirmDecision(@Param("id") id: string, @CurrentUser() user: any) {
-    this.ensureManagementAccess(user.role);
     const context: UserContext = {
       userId: user.userId,
       role: user.role,
@@ -207,12 +206,14 @@ export class ConsultingController {
   }
 
   @Post("decisions/:id/supersede")
+  @Authorized(...STRATEGIC_ROLES)
+  @ConsultingAccess("management")
+  @UseInterceptors(IdempotencyInterceptor)
   async supersedeDecision(
     @Param("id") id: string,
     @Body() dto: any,
     @CurrentUser() user: any,
   ) {
-    this.ensureManagementAccess(user.role);
     const context: UserContext = {
       userId: user.userId,
       role: user.role,
@@ -227,8 +228,9 @@ export class ConsultingController {
   }
 
   @Get("decisions/:id/history")
+  @Authorized(...STRATEGIC_ROLES)
+  @ConsultingAccess("management")
   async getDecisionHistory(@Param("id") id: string, @CurrentUser() user: any) {
-    this.ensureManagementAccess(user.role);
     const context: UserContext = {
       userId: user.userId,
       role: user.role,
@@ -240,6 +242,8 @@ export class ConsultingController {
   // ... (plans, budgets, execution methods)
 
   @Post("plans")
+  @Authorized(...PLANNING_WRITE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async create(@Body() dto: CreateHarvestPlanDto, @CurrentUser() user: any) {
     const context: UserContext = {
       userId: user.userId,
@@ -250,6 +254,7 @@ export class ConsultingController {
   }
 
   @Get("plans")
+  @Authorized(...PLANNING_READ_ROLES)
   async findAll(@CurrentUser() user: any) {
     const context: UserContext = {
       userId: user.userId,
@@ -260,6 +265,7 @@ export class ConsultingController {
   }
 
   @Get("plans/:id")
+  @Authorized(...PLANNING_READ_ROLES)
   async findOne(@Param("id") id: string, @CurrentUser() user: any) {
     const context: UserContext = {
       userId: user.userId,
@@ -270,6 +276,8 @@ export class ConsultingController {
   }
 
   @Patch("plans/:id/draft")
+  @Authorized(...PLANNING_WRITE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async updateDraft(
     @Param("id") id: string,
     @Body() dto: UpdateDraftPlanDto,
@@ -284,6 +292,8 @@ export class ConsultingController {
   }
 
   @Post("plans/:id/transitions")
+  @Authorized(...PLANNING_WRITE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async transition(
     @Param("id") id: string,
     @Body() dto: TransitionPlanStatusDto,
@@ -298,6 +308,8 @@ export class ConsultingController {
   }
 
   @Post("plans/:id/budget")
+  @Authorized(...PLANNING_WRITE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async createBudget(@Param("id") id: string, @CurrentUser() user: any) {
     const context: UserContext = {
       userId: user.userId,
@@ -308,6 +320,8 @@ export class ConsultingController {
   }
 
   @Post("budgets/:id/transitions")
+  @Authorized(...STRATEGIC_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async transitionBudget(
     @Param("id") id: string,
     @Body() dto: TransitionBudgetStatusDto,
@@ -322,6 +336,8 @@ export class ConsultingController {
   }
 
   @Post("budgets/:id/sync")
+  @Authorized(...STRATEGIC_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async syncActuals(@Param("id") id: string, @CurrentUser() user: any) {
     const context: UserContext = {
       userId: user.userId,
@@ -332,6 +348,8 @@ export class ConsultingController {
   }
 
   @Post("execution/:operationId/start")
+  @Authorized(...EXECUTION_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async startOperation(
     @Param("operationId") operationId: string,
     @CurrentUser() user: any,
@@ -343,6 +361,8 @@ export class ConsultingController {
   }
 
   @Post("execution/complete")
+  @Authorized(...EXECUTION_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async completeOperation(
     @Body() dto: CompleteOperationDto,
     @CurrentUser() user: any,
@@ -354,6 +374,7 @@ export class ConsultingController {
   }
 
   @Get("execution/operations")
+  @Authorized(...EXECUTION_ROLES)
   async getActiveOperations(@CurrentUser() user: any) {
     return this.executionService.getActiveOperations({
       userId: user.userId,
@@ -362,6 +383,8 @@ export class ConsultingController {
   }
 
   @Post("yield")
+  @Authorized(...EXECUTION_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async saveYield(@Body() dto: SaveHarvestResultDto, @CurrentUser() user: any) {
     const context: UserContext = {
       userId: user.userId,
@@ -372,6 +395,7 @@ export class ConsultingController {
   }
 
   @Get("yield/plan/:id")
+  @Authorized(...PLANNING_READ_ROLES)
   async getYieldByPlan(@Param("id") id: string, @CurrentUser() user: any) {
     const context: UserContext = {
       userId: user.userId,
@@ -382,6 +406,7 @@ export class ConsultingController {
   }
 
   @Get("kpi/plan/:id")
+  @Authorized(...PLANNING_READ_ROLES)
   async getPlanKPI(@Param("id") id: string, @CurrentUser() user: any) {
     const context: UserContext = {
       userId: user.userId,
@@ -392,6 +417,7 @@ export class ConsultingController {
   }
 
   @Get("kpi/company/:seasonId")
+  @Authorized(...STRATEGIC_ROLES)
   async getCompanyKPI(
     @Param("seasonId") seasonId: string,
     @CurrentUser() user: any,
@@ -407,11 +433,12 @@ export class ConsultingController {
   // --- PHASE 3: STRATEGIC & MANAGEMENT ENDPOINTS (PROTECTED RBAC) ---
 
   @Get("strategic/dashboard/:seasonId")
+  @Authorized(...STRATEGIC_ROLES)
+  @ConsultingAccess("management")
   async getStrategicDashboard(
     @Param("seasonId") seasonId: string,
     @CurrentUser() user: any,
   ) {
-    this.ensureManagementAccess(user.role);
     const context: UserContext = {
       userId: user.userId,
       role: user.role,
@@ -421,8 +448,10 @@ export class ConsultingController {
   }
 
   @Post("decisions/draft")
+  @Authorized(...STRATEGIC_ROLES)
+  @ConsultingAccess("management")
+  @UseInterceptors(IdempotencyInterceptor)
   async createDecisionDraft(@Body() dto: any, @CurrentUser() user: any) {
-    this.ensureManagementAccess(user.role);
     const context: UserContext = {
       userId: user.userId,
       role: user.role,

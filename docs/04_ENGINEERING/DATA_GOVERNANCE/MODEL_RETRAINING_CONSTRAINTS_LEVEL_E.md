@@ -1,18 +1,14 @@
 ---
-id: DOC-ENG-GOV-004
-type: Standard
-layer: Data Governance
-status: Approved
+id: DOC-ENG-DATA-GOVERNANCE-MODEL-RETRAINING-CONSTRAIN-1EF3
+layer: Engineering
+type: Database Spec
+status: approved
 version: 1.3.0
 owners: [@techlead, @ml_ops]
 enforcement_mode: strict
 related_documents:
-  - I38_DATA_PROVENANCE_STANDARD
-  - MODEL_REGISTRY_POLICY
-  - LEVEL_E_ARCHITECTURE
 last_updated: 2026-02-19
 ---
-
 # MODEL RETRAINING CONSTRAINTS: LEVEL E (REGENERATIVE)
 
 ## 1. Введение

@@ -1,3 +1,10 @@
+---
+id: DOC-ENG-04-ENGINEERING-SECRET-ROTATION-POLICY-RU-14XX
+layer: Engineering
+type: Policy
+status: draft
+version: 0.1.0
+---
 # Политика управления секретами и ротации (Secret Management Policy)
 
 **ID:** DOC-SEC-POL-001

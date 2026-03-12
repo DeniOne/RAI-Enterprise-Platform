@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-RAI-CHATGPT-10XB
+layer: Archive
+type: Legacy
+status: archived
+version: 0.1.0
+---
 # Исследование конкурентного рынка для RAI в России
 
 ## Контекст, рамка анализа и методология

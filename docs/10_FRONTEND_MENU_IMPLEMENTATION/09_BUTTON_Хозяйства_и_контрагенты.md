@@ -1,4 +1,11 @@
-﻿# Кнопка/экран: Хозяйства и контрагенты (`/consulting/crm`)
+---
+id: DOC-FRN-10-FRONTEND-MENU-IMPLEMENTATION-09-BUTTON-1Y3A
+layer: Frontend
+type: Screen Spec
+status: draft
+version: 0.1.0
+---
+# Кнопка/экран: Хозяйства и контрагенты (`/consulting/crm`)
 
 ## 0. Статус производства кнопки/экрана
 

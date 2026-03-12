@@ -1,3 +1,10 @@
+---
+id: DOC-STR-00-STRATEGY-LEVEL-A-TO-B-TRANSITION-ROADMA-K41C
+layer: Strategy
+type: Roadmap
+status: draft
+version: 0.1.0
+---
 RAI_Enterprise_Platform
 Evolution Architecture Roadmap (A → F)
 1. Current State Assessment

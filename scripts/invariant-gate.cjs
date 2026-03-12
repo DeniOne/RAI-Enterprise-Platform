@@ -50,29 +50,58 @@ function checkControllersGuard() {
   for (const file of files) {
     const txt = fs.readFileSync(file, "utf-8");
     if (!txt.includes("@Controller(")) continue;
-    if (!txt.includes("@UseGuards(")) noGuard.push(rel(file));
+    const hasNestGuard = txt.includes("@UseGuards(");
+    const hasAuthorizedDecorator =
+      txt.includes("@Authorized(") || txt.includes("@AuthorizedGql(");
+    const hasMtlsRequirement = txt.includes("@RequireMtls()");
+    const isHealthController = file.endsWith(path.join("modules", "health", "health.controller.ts"));
+    if (
+      !hasNestGuard &&
+      !hasAuthorizedDecorator &&
+      !hasMtlsRequirement &&
+      !isHealthController
+    ) {
+      noGuard.push(rel(file));
+    }
   }
   return noGuard;
 }
 
-function checkRawSqlPaths() {
-  const files = walk(path.join(ROOT, "apps", "api", "src")).filter((p) =>
-    p.endsWith(".ts"),
+function checkRawSqlGovernance() {
+  const cmd = process.platform === "win32" ? "node.exe" : "node";
+  const res = spawnSync(
+    cmd,
+    [path.join("scripts", "raw-sql-governance.cjs"), `--mode=${MODE}`],
+    {
+      cwd: ROOT,
+      stdio: "pipe",
+      encoding: "utf-8",
+    },
   );
-  const hits = [];
-  const pattern = /\$queryRaw|\$executeRaw|\$queryRawUnsafe|\$executeRawUnsafe/;
-  for (const file of files) {
-    const txt = fs.readFileSync(file, "utf-8");
-    if (pattern.test(txt)) hits.push(rel(file));
-  }
-  return hits;
+  const out = `${res.stdout || ""}\n${res.stderr || ""}`.trim();
+  const reviewRequired = Number(
+    out.match(/raw_sql_review_required=(\d+)/)?.[1] || 0,
+  );
+  const unsafe = Number(out.match(/raw_sql_unsafe=(\d+)/)?.[1] || 0);
+  return {
+    reviewRequired,
+    unsafe,
+    raw: out,
+    status: res.status,
+  };
 }
 
 function checkTenantMiddlewarePresence() {
   const file = path.join(ROOT, "apps", "api", "src", "shared", "prisma", "prisma.service.ts");
   if (!fs.existsSync(file)) return false;
   const txt = fs.readFileSync(file, "utf-8");
-  return txt.includes("TENANT_MIDDLEWARE_MODE") && txt.includes("this.$use(");
+  const hasLegacyMiddleware =
+    txt.includes("TENANT_MIDDLEWARE_MODE") && txt.includes("this.$use(");
+  const hasExtensionMiddleware =
+    txt.includes("TENANT_MIDDLEWARE_MODE") &&
+    txt.includes("tenantClient") &&
+    txt.includes("this.$extends(");
+  return hasLegacyMiddleware || hasExtensionMiddleware;
 }
 
 function checkTenantContextLint() {
@@ -126,11 +155,18 @@ function main() {
   for (const f of noGuard) console.log(`- ${f}`);
   if (noGuard.length > 0) violations.push("controllers_without_guards");
 
-  const rawSql = checkRawSqlPaths();
-  printSection("Raw SQL Paths");
-  console.log(`raw_sql_paths=${rawSql.length}`);
-  for (const f of rawSql) console.log(`- ${f}`);
-  // Raw SQL is tracked as risk, not hard violation yet.
+  const rawSqlGovernance = checkRawSqlGovernance();
+  printSection("Raw SQL Governance");
+  if (rawSqlGovernance.raw) {
+    const preview = rawSqlGovernance.raw.split("\n").slice(0, 80).join("\n");
+    console.log(preview);
+  }
+  if (rawSqlGovernance.unsafe > 0) {
+    violations.push("raw_sql_unsafe_usage");
+  }
+  if (ENFORCE && rawSqlGovernance.reviewRequired > 0) {
+    violations.push("raw_sql_unapproved_paths");
+  }
 
   const hasTenantMw = checkTenantMiddlewarePresence();
   printSection("Tenant Middleware");

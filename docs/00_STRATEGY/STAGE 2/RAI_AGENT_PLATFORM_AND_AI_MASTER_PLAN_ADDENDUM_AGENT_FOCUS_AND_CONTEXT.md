@@ -1,3 +1,10 @@
+---
+id: DOC-STR-STAGE-2-RAI-AGENT-PLATFORM-AND-AI-MASTER-P-LU3B
+layer: Strategy
+type: Roadmap
+status: draft
+version: 0.1.0
+---
 # RAI Agent Platform & AI — Addendum: Agent Focus, Intent и Context Contracts
 
 > Версия: 1.0  

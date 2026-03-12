@@ -7,6 +7,7 @@ import {
   Post,
   Query,
   UseGuards,
+  UseInterceptors,
 } from "@nestjs/common";
 import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { RolesGuard } from "../../shared/auth/roles.guard";
@@ -43,6 +44,7 @@ import {
   ClearAgentLifecycleOverrideDtoSchema,
   SetAgentLifecycleOverrideDtoSchema,
 } from "./dto/agent-lifecycle-control.dto";
+import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
 
 function toManualOverrideDto(
   manualOverride:
@@ -226,6 +228,7 @@ export class ExplainabilityPanelController {
   @Post("lifecycle/override")
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.CEO, UserRole.CLIENT_ADMIN)
+  @UseInterceptors(IdempotencyInterceptor)
   async setLifecycleOverride(
     @Body() body: unknown,
     @CurrentUser() user: { userId?: string },
@@ -251,6 +254,7 @@ export class ExplainabilityPanelController {
   @Post("lifecycle/override/clear")
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.CEO, UserRole.CLIENT_ADMIN)
+  @UseInterceptors(IdempotencyInterceptor)
   async clearLifecycleOverride(
     @Body() body: unknown,
     @CurrentUser() user: { userId?: string },
@@ -291,6 +295,7 @@ export class ExplainabilityPanelController {
   @Post("runtime-governance/autonomy/override")
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.CEO, UserRole.CLIENT_ADMIN)
+  @UseInterceptors(IdempotencyInterceptor)
   async setRuntimeAutonomyOverride(
     @Body() body: unknown,
     @CurrentUser() user: { userId?: string },
@@ -323,6 +328,7 @@ export class ExplainabilityPanelController {
   @Post("runtime-governance/autonomy/override/clear")
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.CEO, UserRole.CLIENT_ADMIN)
+  @UseInterceptors(IdempotencyInterceptor)
   async clearRuntimeAutonomyOverride(
     @CurrentUser() user: { userId?: string },
   ): Promise<AutonomyStatusDto> {
@@ -381,6 +387,7 @@ export class ExplainabilityPanelController {
   @Post("trace/:traceId/replay")
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
+  @UseInterceptors(IdempotencyInterceptor)
   async replayTrace(
     @Param("traceId") traceId: string,
     @CurrentUser() user: { userId?: string },

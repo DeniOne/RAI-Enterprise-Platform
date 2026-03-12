@@ -1,3 +1,10 @@
+---
+id: DOC-DOM-SOIL-DOMAIN-BIODIVERSITY-PRESSURE-SCORE-SP-12SO
+layer: Domain
+type: Domain Spec
+status: draft
+version: 0.1.0
+---
 # LEVEL E: Оценка Давления на Биоразнообразие (BPS)
 
 ## 1. Введение

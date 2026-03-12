@@ -4,10 +4,11 @@ import { OutboxRelay } from "./outbox.relay";
 import { ConsumerIdempotencyService } from "./consumer-idempotency.service";
 import { OutboxBrokerPublisher } from "./outbox-broker.publisher";
 import { PrismaModule } from "../prisma/prisma.module";
-import { ScheduleModule } from "@nestjs/schedule";
+import { RedisModule } from "../redis/redis.module";
+import { SecretsModule } from "../config/secrets.module";
 
 @Module({
-  imports: [PrismaModule, ScheduleModule.forRoot()],
+  imports: [PrismaModule, RedisModule, SecretsModule],
   providers: [
     OutboxService,
     OutboxRelay,

@@ -1,5 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, Request } from "@nestjs/common";
-import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, UseInterceptors } from "@nestjs/common";
 import { PartyService } from "./services/party.service";
 import { CreatePartyDto, UpdatePartyDto, CreatePartyRelationDto, UpdatePartyRelationDto } from "./dto/create-party.dto";
 import { CreateJurisdictionDto, UpdateJurisdictionDto } from "./dto/create-jurisdiction.dto";
@@ -8,6 +7,13 @@ import {
     UpdateRegulatoryProfileDto,
     ListRegulatoryProfilesQueryDto,
 } from "./dto/create-regulatory-profile.dto";
+import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
+import { Authorized } from "../../shared/auth/authorized.decorator";
+import {
+    COMMERCE_READ_ROLES,
+    COMMERCE_WRITE_ROLES,
+    REGULATORY_ROLES,
+} from "../../shared/auth/rbac.constants";
 
 @Controller("commerce")
 export class PartyController {
@@ -22,20 +28,22 @@ export class PartyController {
 
     // ─── Jurisdictions ──────────────────────────────────────────
 
-    @UseGuards(JwtAuthGuard)
     @Get("jurisdictions")
+    @Authorized(...REGULATORY_ROLES)
     listJurisdictions(@Request() req: any) {
         return this.partyService.listJurisdictions(req.user.companyId);
     }
 
-    @UseGuards(JwtAuthGuard)
     @Post("jurisdictions")
+    @Authorized(...REGULATORY_ROLES)
+    @UseInterceptors(IdempotencyInterceptor)
     createJurisdiction(@Request() req: any, @Body() dto: CreateJurisdictionDto) {
         return this.partyService.createJurisdiction(req.user.companyId, dto);
     }
 
-    @UseGuards(JwtAuthGuard)
     @Patch("jurisdictions/:id")
+    @Authorized(...REGULATORY_ROLES)
+    @UseInterceptors(IdempotencyInterceptor)
     updateJurisdiction(
         @Request() req: any,
         @Param("id") jurisdictionId: string,
@@ -44,16 +52,16 @@ export class PartyController {
         return this.partyService.updateJurisdiction(req.user.companyId, jurisdictionId, dto);
     }
 
-    @UseGuards(JwtAuthGuard)
     @Delete("jurisdictions/:id")
+    @Authorized(...REGULATORY_ROLES)
     deleteJurisdiction(@Request() req: any, @Param("id") jurisdictionId: string) {
         return this.partyService.deleteJurisdiction(req.user.companyId, jurisdictionId);
     }
 
     // ─── Regulatory Profiles ────────────────────────────────────
 
-    @UseGuards(JwtAuthGuard)
     @Get("regulatory-profiles")
+    @Authorized(...REGULATORY_ROLES)
     listRegulatoryProfiles(
         @Request() req: any,
         @Query() query: ListRegulatoryProfilesQueryDto,
@@ -68,14 +76,16 @@ export class PartyController {
         return this.partyService.listRegulatoryProfiles(req.user.companyId, normalized);
     }
 
-    @UseGuards(JwtAuthGuard)
     @Post("regulatory-profiles")
+    @Authorized(...REGULATORY_ROLES)
+    @UseInterceptors(IdempotencyInterceptor)
     createRegulatoryProfile(@Request() req: any, @Body() dto: CreateRegulatoryProfileDto) {
         return this.partyService.createRegulatoryProfile(req.user.companyId, dto);
     }
 
-    @UseGuards(JwtAuthGuard)
     @Patch("regulatory-profiles/:id")
+    @Authorized(...REGULATORY_ROLES)
+    @UseInterceptors(IdempotencyInterceptor)
     updateRegulatoryProfile(
         @Request() req: any,
         @Param("id") profileId: string,
@@ -84,34 +94,36 @@ export class PartyController {
         return this.partyService.updateRegulatoryProfile(req.user.companyId, profileId, dto);
     }
 
-    @UseGuards(JwtAuthGuard)
     @Delete("regulatory-profiles/:id")
+    @Authorized(...REGULATORY_ROLES)
     deleteRegulatoryProfile(@Request() req: any, @Param("id") profileId: string) {
         return this.partyService.deleteRegulatoryProfile(req.user.companyId, profileId);
     }
 
     // ─── Parties ────────────────────────────────────────────────
 
-    @UseGuards(JwtAuthGuard)
     @Get("parties")
+    @Authorized(...COMMERCE_READ_ROLES)
     listParties(@Request() req: any) {
         return this.partyService.listParties(req.user.companyId);
     }
 
-    @UseGuards(JwtAuthGuard)
     @Get("parties/:id")
+    @Authorized(...COMMERCE_READ_ROLES)
     getParty(@Request() req: any, @Param("id") partyId: string) {
         return this.partyService.getParty(req.user.companyId, partyId);
     }
 
-    @UseGuards(JwtAuthGuard)
     @Post("parties")
+    @Authorized(...COMMERCE_WRITE_ROLES)
+    @UseInterceptors(IdempotencyInterceptor)
     createParty(@Request() req: any, @Body() dto: CreatePartyDto) {
         return this.partyService.createParty(req.user.companyId, dto);
     }
 
-    @UseGuards(JwtAuthGuard)
     @Patch("parties/:id")
+    @Authorized(...COMMERCE_WRITE_ROLES)
+    @UseInterceptors(IdempotencyInterceptor)
     updateParty(
         @Request() req: any,
         @Param("id") partyId: string,
@@ -122,8 +134,8 @@ export class PartyController {
 
     // ─── Party Relations ────────────────────────────────────────
 
-    @UseGuards(JwtAuthGuard)
     @Get("parties/:id/relations")
+    @Authorized(...COMMERCE_READ_ROLES)
     listPartyRelations(
         @Request() req: any,
         @Param("id") partyId: string,
@@ -131,14 +143,16 @@ export class PartyController {
         return this.partyService.listPartyRelations(req.user.companyId, partyId);
     }
 
-    @UseGuards(JwtAuthGuard)
     @Post("party-relations")
+    @Authorized(...COMMERCE_WRITE_ROLES)
+    @UseInterceptors(IdempotencyInterceptor)
     createPartyRelation(@Request() req: any, @Body() dto: CreatePartyRelationDto) {
         return this.partyService.createPartyRelation(req.user.companyId, dto);
     }
 
-    @UseGuards(JwtAuthGuard)
     @Patch("party-relations/:id")
+    @Authorized(...COMMERCE_WRITE_ROLES)
+    @UseInterceptors(IdempotencyInterceptor)
     updatePartyRelation(
         @Request() req: any,
         @Param("id") relationId: string,
@@ -147,8 +161,8 @@ export class PartyController {
         return this.partyService.updatePartyRelation(req.user.companyId, relationId, dto);
     }
 
-    @UseGuards(JwtAuthGuard)
     @Delete("party-relations/:id")
+    @Authorized(...COMMERCE_WRITE_ROLES)
     deletePartyRelation(@Request() req: any, @Param("id") relationId: string) {
         return this.partyService.deletePartyRelation(req.user.companyId, relationId);
     }

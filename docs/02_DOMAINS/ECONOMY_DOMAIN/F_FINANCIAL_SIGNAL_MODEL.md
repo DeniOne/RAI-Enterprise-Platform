@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-LVLF-006
-type: Specification
-layer: Architecture
-status: Proposed
+id: DOC-DOM-ECONOMY-DOMAIN-F-FINANCIAL-SIGNAL-MODEL-3PWC
+layer: Domain
+type: Domain Spec
+status: approved
 version: 1.1.1
 owners: [@techlead]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: ИНСТИТУЦИОНАЛЬНАЯ МОДЕЛЬ ФИНАНСОВЫХ СИГНАЛОВ (F_FINANCIAL_SIGNAL_MODEL)
 
 ## 0. Статус Документа и Версионирование

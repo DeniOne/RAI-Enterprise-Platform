@@ -1,13 +1,12 @@
 ---
-id: DOC-ARC-GEN-100
-type: HLD
+id: DOC-ARC-HLD-AGENT-RAI-SUPERBASE-CONCEPT-1UV1
 layer: Architecture
-status: Concept
+type: HLD
+status: approved
 version: 1.0.0
 owners: [@techlead]
 last_updated: 2026-02-28
 ---
-
 # Концепция: Agent-First Architecture & Superbase (Agent_RAI) 🤖🏛️
 
 ## 1. Введение

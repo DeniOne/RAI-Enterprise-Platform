@@ -1,13 +1,12 @@
 ---
-id: DOC-ARC-ADR-LD-002
+id: DOC-ARC-DECISIONS-ADR-LD-002-IMMUTABLE-MODEL-LINEA-1ILL
 layer: Architecture
 type: ADR
-status: Accepted
+status: approved
 version: 2.0.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # ADR-LD-002: Immutable Model Lineage (Иммутабельная линейность)
 
 ## Контекст

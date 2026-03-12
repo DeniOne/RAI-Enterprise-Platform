@@ -2,18 +2,23 @@ import { Resolver, Query, Mutation, Args } from "@nestjs/graphql";
 import { TechnologyCardService } from "./technology-card.service";
 import { TechnologyCard } from "./dto/technology-card.type";
 import { CreateTechnologyCardInput } from "./dto/create-technology-card.input";
-import { UseGuards } from "@nestjs/common";
-import { GqlAuthGuard } from "../../shared/auth/auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
 import { User } from "@rai/prisma-client";
 import { Season } from "../season/dto/season.type";
+import { AuthorizedGql } from "../../shared/auth/authorized-gql.decorator";
+import { Roles } from "../../shared/auth/roles.decorator";
+import {
+  PLANNING_READ_ROLES,
+  PLANNING_WRITE_ROLES,
+} from "../../shared/auth/rbac.constants";
 
 @Resolver(() => TechnologyCard)
-@UseGuards(GqlAuthGuard)
+@AuthorizedGql(...PLANNING_READ_ROLES)
 export class TechnologyCardResolver {
   constructor(private readonly techCardService: TechnologyCardService) {}
 
   @Mutation(() => TechnologyCard)
+  @Roles(...PLANNING_WRITE_ROLES)
   async createTechnologyCard(
     @Args("input") input: CreateTechnologyCardInput,
     @CurrentUser() user: User,
@@ -35,6 +40,7 @@ export class TechnologyCardResolver {
   }
 
   @Mutation(() => Season)
+  @Roles(...PLANNING_WRITE_ROLES)
   async applyTechnologyCardToSeason(
     @Args("seasonId") seasonId: string,
     @Args("cardId") cardId: string,

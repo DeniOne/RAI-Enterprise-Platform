@@ -10,12 +10,24 @@ export interface PartyAddressRecord {
 }
 
 export interface PartyContactRecord {
+  id?: string;
   roleType: 'SIGNATORY' | 'OPERATIONAL';
   fullName: string;
   position?: string;
   basisOfAuthority?: string;
   phones?: string;
   email?: string;
+  telegramId?: string;
+  frontOfficeAccess?: {
+    status?: 'INVITED' | 'ACTIVE' | 'REVOKED';
+    telegramId?: string;
+    invitationId?: string;
+    bindingId?: string;
+    userId?: string;
+    proposedLogin?: string;
+    invitedAt?: string;
+    activatedAt?: string;
+  };
 }
 
 export interface PartyBankRecord {

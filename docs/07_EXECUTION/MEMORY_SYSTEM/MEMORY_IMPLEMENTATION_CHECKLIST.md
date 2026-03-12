@@ -1,3 +1,10 @@
+---
+id: DOC-EXE-MEMORY-SYSTEM-MEMORY-IMPLEMENTATION-CHECKL-5366
+layer: Execution
+type: Checklist
+status: draft
+version: 0.1.0
+---
 # 🧠 Память + Мега-Агроном: Аудит, Приоритеты, Чеклист
 
 ## Статус памяти — честный аудит

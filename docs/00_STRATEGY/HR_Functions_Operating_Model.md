@@ -1,21 +1,12 @@
 ---
-id: DOC-STR-GEN-003
-type: Vision
+id: DOC-STR-00-STRATEGY-HR-FUNCTIONS-OPERATING-MODEL-12KN
 layer: Strategy
-status: Draft
+type: Vision
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: process-hr-ops
-type: process
-status: approved
-owners: [hr-department]
-depends_on: [principle-vision]
----
-
 # HR_Functions_Operating_Model
 
 > Canonical operating model for HR functions in RAI_EP.

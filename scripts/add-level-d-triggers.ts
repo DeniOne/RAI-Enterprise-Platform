@@ -7,7 +7,7 @@ async function main() {
 
     try {
         // 1. FSM Status Transition Guard
-        await prisma.$executeRawUnsafe(`
+        await prisma.$executeRaw`
       CREATE OR REPLACE FUNCTION validate_model_status_transition()
       RETURNS TRIGGER AS $$
       BEGIN
@@ -35,17 +35,17 @@ async function main() {
           RAISE EXCEPTION 'Invalid model status transition from % to %', OLD.status, NEW.status;
       END;
       $$ LANGUAGE plpgsql;
-    `);
+    `;
 
-        await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS trigger_validate_model_status ON "rai_model_versions";`);
-        await prisma.$executeRawUnsafe(`
+        await prisma.$executeRaw`DROP TRIGGER IF EXISTS trigger_validate_model_status ON "rai_model_versions";`;
+        await prisma.$executeRaw`
       CREATE TRIGGER trigger_validate_model_status
       BEFORE UPDATE ON "rai_model_versions"
       FOR EACH ROW EXECUTE FUNCTION validate_model_status_transition();
-    `);
+    `;
 
         // 2. Lineage Integrity Constraint
-        await prisma.$executeRawUnsafe(`
+        await prisma.$executeRaw`
       CREATE OR REPLACE FUNCTION enforce_lineage_integrity()
       RETURNS TRIGGER AS $$
       BEGIN
@@ -70,17 +70,17 @@ async function main() {
           RETURN NEW;
       END;
       $$ LANGUAGE plpgsql;
-    `);
+    `;
 
-        await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS trigger_enforce_lineage ON "rai_model_versions";`);
-        await prisma.$executeRawUnsafe(`
+        await prisma.$executeRaw`DROP TRIGGER IF EXISTS trigger_enforce_lineage ON "rai_model_versions";`;
+        await prisma.$executeRaw`
       CREATE TRIGGER trigger_enforce_lineage
       BEFORE INSERT ON "rai_model_versions"
       FOR EACH ROW EXECUTE FUNCTION enforce_lineage_integrity();
-    `);
+    `;
 
         // 3. Immutability for Core Fields (Tampering Proof)
-        await prisma.$executeRawUnsafe(`
+        await prisma.$executeRaw`
       CREATE OR REPLACE FUNCTION prevent_model_tampering()
       RETURNS TRIGGER AS $$
       BEGIN
@@ -90,31 +90,31 @@ async function main() {
           RETURN NEW;
       END;
       $$ LANGUAGE plpgsql;
-    `);
+    `;
 
-        await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS trigger_prevent_model_tampering ON "rai_model_versions";`);
-        await prisma.$executeRawUnsafe(`
+        await prisma.$executeRaw`DROP TRIGGER IF EXISTS trigger_prevent_model_tampering ON "rai_model_versions";`;
+        await prisma.$executeRaw`
       CREATE TRIGGER trigger_prevent_model_tampering
       BEFORE UPDATE ON "rai_model_versions"
       FOR EACH ROW EXECUTE FUNCTION prevent_model_tampering();
-    `);
+    `;
 
         // 4. Drift Report Immutability
-        await prisma.$executeRawUnsafe(`
+        await prisma.$executeRaw`
       CREATE OR REPLACE FUNCTION prevent_drift_report_change()
       RETURNS TRIGGER AS $$
       BEGIN
           RAISE EXCEPTION 'Drift reports are immutable.';
       END;
       $$ LANGUAGE plpgsql;
-    `);
+    `;
 
-        await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS trigger_prevent_drift_report_change ON "rai_drift_reports";`);
-        await prisma.$executeRawUnsafe(`
+        await prisma.$executeRaw`DROP TRIGGER IF EXISTS trigger_prevent_drift_report_change ON "rai_drift_reports";`;
+        await prisma.$executeRaw`
       CREATE TRIGGER trigger_prevent_drift_report_change
       BEFORE UPDATE OR DELETE ON "rai_drift_reports"
       FOR EACH ROW EXECUTE FUNCTION prevent_drift_report_change();
-    `);
+    `;
 
         console.log('✅ Level D SQL Hardening Triggers applied successfully.');
 

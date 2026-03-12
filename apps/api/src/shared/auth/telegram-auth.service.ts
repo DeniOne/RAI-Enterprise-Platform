@@ -7,6 +7,7 @@ import { UserRole, UserAccessLevel } from "@rai/prisma-client";
 // Removed: InjectBot, Telegraf - bot is now a separate microservice
 import { createHmac, randomUUID, timingSafeEqual } from "crypto";
 import { resolveTelegramTunnel } from "./telegram-tunnel.resolver";
+import { SecretsService } from "../config/secrets.service";
 
 export interface TelegramLoginSession {
   sessionId: string;
@@ -32,6 +33,7 @@ export class TelegramAuthService {
     private jwtService: JwtService,
     private prisma: PrismaService,
     private configService: ConfigService,
+    private readonly secretsService: SecretsService,
   ) {}
 
   async initiateLogin(
@@ -111,13 +113,16 @@ export class TelegramAuthService {
 
     // Notify bot microservice to send Telegram push notification
     try {
+      const botUrl = this.configService.get<string>("BOT_URL") || "http://localhost:4002";
+      const internalApiKey =
+        this.secretsService.getOptionalSecret("INTERNAL_API_KEY") || "";
       await fetch(
-        `${process.env.BOT_URL || "http://localhost:4002"}/internal/notify-login`,
+        `${botUrl}/internal/notify-login`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Internal-API-Key": process.env.INTERNAL_API_KEY || "",
+            "X-Internal-API-Key": internalApiKey,
           },
           body: JSON.stringify({
             telegramId,
@@ -172,22 +177,39 @@ export class TelegramAuthService {
       throw new Error("User not found");
     }
 
-    return { accessToken: this.generateTokenForUser(user) };
+    return { accessToken: await this.generateTokenForUser(user) };
   }
 
-  private generateTokenForUser(user: {
+  private async generateTokenForUser(user: {
     id: string;
     email: string;
     companyId: string;
     role: UserRole | string;
     accountId?: string | null;
-  }): string {
+    username?: string | null;
+  }): Promise<string> {
+    const isExternalFrontOffice = user.role === UserRole.FRONT_OFFICE_USER;
+    const binding = isExternalFrontOffice
+      ? await this.prisma.counterpartyUserBinding.findFirst({
+          where: {
+            companyId: user.companyId,
+            userId: user.id,
+            status: "ACTIVE",
+          },
+          orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+          select: { id: true },
+        })
+      : null;
+
     const payload = {
       sub: user.id,
       email: user.email,
+      username: user.username ?? null,
       companyId: user.companyId,
       role: user.role,
       accountId: user.accountId ?? null,
+      subjectClass: isExternalFrontOffice ? "external" : "internal",
+      bindingId: binding?.id ?? null,
     };
 
     return this.jwtService.sign(payload);
@@ -356,7 +378,7 @@ export class TelegramAuthService {
     }
 
     return {
-      accessToken: this.generateTokenForUser(user),
+      accessToken: await this.generateTokenForUser(user),
       user: {
         id: user.id,
         email: user.email,

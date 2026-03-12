@@ -3,15 +3,17 @@ import {
   Get,
   Post,
   Body,
-  UseGuards,
   Request,
+  UseInterceptors,
 } from "@nestjs/common";
 import { RdService } from "../services/RdService";
-import { JwtAuthGuard } from "../../../shared/auth/jwt-auth.guard";
 import { ProgramStatus } from "@rai/prisma-client";
+import { IdempotencyInterceptor } from "../../../shared/idempotency/idempotency.interceptor";
+import { Authorized } from "../../../shared/auth/authorized.decorator";
+import { RND_ROLES } from "../../../shared/auth/rbac.constants";
 
 @Controller("rd/programs")
-@UseGuards(JwtAuthGuard)
+@Authorized(...RND_ROLES)
 export class ProgramController {
   constructor(private rdService: RdService) {}
 
@@ -23,6 +25,7 @@ export class ProgramController {
   }
 
   @Post()
+  @UseInterceptors(IdempotencyInterceptor)
   async create(@Body() data: any, @Request() req: any) {
     return (this.rdService as any).prisma.researchProgram.create({
       data: {

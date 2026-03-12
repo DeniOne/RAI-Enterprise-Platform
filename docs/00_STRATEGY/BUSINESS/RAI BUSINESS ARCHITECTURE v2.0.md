@@ -1,4 +1,11 @@
-﻿О# RAI BUSINESS ARCHITECTURE v2.0
+---
+id: DOC-STR-BUSINESS-RAI-BUSINESS-ARCHITECTURE-V2-0-1BHJ
+layer: Strategy
+type: Vision
+status: draft
+version: 0.1.0
+---
+О# RAI BUSINESS ARCHITECTURE v2.0
 
 Статус: рабочая версия на основе фактической реализации в коде `RAI_EP`
 Метод: анализ кода и структуры проекта (без опоры на документацию)

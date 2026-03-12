@@ -1,3 +1,10 @@
+---
+id: DOC-STR-STAGE-2-A-RAI-AGENT-INTERACTION-BLUEPRINT-H4KJ
+layer: Strategy
+type: Vision
+status: draft
+version: 0.1.0
+---
 # A_RAI — Blueprint интерактивного общения пользователя и агента
 
 Дата: 2026-03-07  

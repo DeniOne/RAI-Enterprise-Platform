@@ -1,21 +1,12 @@
 ---
-id: DOC-PRD-GEN-088
-type: UI Spec
+id: DOC-PRD-03-PRODUCT-TECH-MAP-UI-1D9T
 layer: Product
-status: Draft
+type: UI Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: guideline-design-techmap-ui
-type: guideline
-status: review
-owners: [designers, architects]
-aligned_with: [principle-vision]
----
-
 # UI Design: Agro-Tech Map Builder (АТК)
 
 > **Модуль:** Технологическая карта (АТК)  

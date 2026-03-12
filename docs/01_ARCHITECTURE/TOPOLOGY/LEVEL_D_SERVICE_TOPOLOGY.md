@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-TPL-LD-001
-type: Topology
+id: DOC-ARC-TOPOLOGY-LEVEL-D-SERVICE-TOPOLOGY-C0YL
 layer: Architecture
-status: Accepted
+type: Topology
+status: approved
 version: 2.1.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # LEVEL D — SERVICE TOPOLOGY (D6+ Hardened)
 ## Топология сервисов и связей
 

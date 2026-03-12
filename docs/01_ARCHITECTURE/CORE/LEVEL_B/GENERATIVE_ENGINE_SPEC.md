@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-LEVEL-B-GENERATIVE-ENGINE-SPEC-QY7X
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # GENERATIVE_ENGINE_SPEC.md
 
 ## 0. Статус документа

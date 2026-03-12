@@ -1,13 +1,12 @@
-﻿---
-id: guideline-ai-model-governance
-type: Runbook
+---
+id: DOC-OPS-DEVELOPMENT-GUIDELINES-AI-MODEL-GOVERNANCE-1LT3
 layer: Operations
-status: review
+type: Report
+status: approved
 version: 1.0.0
 owners: [techleads, mlops]
 aligned_with: [principle-ai-governance-canon]
 ---
-
 # Governance: ?????? ? ??????
 
 ## ???????

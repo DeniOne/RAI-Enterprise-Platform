@@ -1,3 +1,10 @@
+---
+id: DOC-EXE-PHASE-DISIGN-INSTITUTIONAL-CORE-SPEC-16MU
+layer: Execution
+type: Phase Plan
+status: draft
+version: 0.1.0
+---
 # Institutional Core Specification (Phase 4)
 
 ## 1. Каноническое Хеширование (Invariant-4.3)

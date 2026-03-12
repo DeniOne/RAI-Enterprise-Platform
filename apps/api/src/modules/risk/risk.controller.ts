@@ -1,10 +1,11 @@
-import { Controller, Get, Param, UseGuards, Request } from "@nestjs/common";
+import { Controller, Get, Param, Request } from "@nestjs/common";
 import { RiskService } from "./risk.service";
-import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { RiskTargetType } from "@rai/prisma-client";
+import { Authorized } from "../../shared/auth/authorized.decorator";
+import { PLANNING_READ_ROLES } from "../../shared/auth/rbac.constants";
 
 @Controller("risk")
-@UseGuards(JwtAuthGuard)
+@Authorized(...PLANNING_READ_ROLES)
 export class RiskController {
   constructor(private readonly riskService: RiskService) {}
 

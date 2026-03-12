@@ -1,12 +1,12 @@
 ---
-id: DOC-ARH-LVLF-SNP
-type: Core Architecture
-layer: Level F
-status: Enforced
+id: DOC-ARC-LEVEL-F-F-SNAPSHOT-INVARIANTS-15L6
+layer: Architecture
+type: Standards
+status: approved
+version: 1.0.0
 owners: [@techlead]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: ИНВАРИАНТЫ СНИМКА (SNAPSHOT INVARIANTS)
 
 Данный документ формализует процесс снятия `Read-Only` снимков состояния из Level E, которые будут служить криптографическим сырьем (raw input) для `Rating Engine` Level F.

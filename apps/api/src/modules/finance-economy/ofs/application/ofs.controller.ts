@@ -1,11 +1,11 @@
-import { Controller, Get, Req, UseGuards, Logger } from "@nestjs/common";
+import { Controller, Get, Req, Logger } from "@nestjs/common";
 import { FinanceService } from "../../finance/application/finance.service";
 import { BudgetService } from "../../finance/application/budget.service";
 import { LiquidityForecastService } from "../../finance/application/liquidity-forecast.service";
-import { JwtAuthGuard } from "../../../../shared/auth/jwt-auth.guard";
+import { Authorized } from "../../../../shared/auth/authorized.decorator";
+import { FINANCE_ROLES } from "../../../../shared/auth/rbac.constants";
 
 @Controller("ofs/finance")
-@UseGuards(JwtAuthGuard)
 export class OfsController {
   private readonly logger = new Logger(OfsController.name);
 
@@ -16,6 +16,7 @@ export class OfsController {
   ) {}
 
   @Get("dashboard")
+  @Authorized(...FINANCE_ROLES)
   async getDashboard(@Req() req: any) {
     const companyId = req.user.companyId;
     this.logger.log(`Fetching CFO dashboard for company ${companyId}`);

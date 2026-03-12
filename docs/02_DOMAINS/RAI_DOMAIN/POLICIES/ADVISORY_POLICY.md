@@ -1,22 +1,12 @@
 ---
-id: DOC-DOM-GEN-074
-type: Domain Spec
+id: DOC-DOM-POLICIES-ADVISORY-POLICY-E6KM
 layer: Domain
-status: Draft
+type: Policy
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿---
-id: control-rai-advisory-policy
-type: control
-status: review
-owners: [product-owner, architects]
-aligned_with: [principle-ai-governance-canon]
-measured_by: [metric-gamma-quality-gates]
----
-
 # ???????? ????????????
 
 ## ????????

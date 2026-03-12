@@ -1,21 +1,12 @@
 ---
-id: DOC-ARC-GEN-033
-type: HLD
+id: DOC-ARC-HLD-AGRO-PROCESS-LAYER-1SOG
 layer: Architecture
-status: Draft
+type: HLD
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-apl
-type: component
-status: review
-owners: [architects, product-owner]
-aligned_with: [principle-vision]
----
-
 # HLD: Agro Process Layer (APL)
 
 > **Статус:** Draft | **Слой:** Architecture | **Тип:** Technical Spec

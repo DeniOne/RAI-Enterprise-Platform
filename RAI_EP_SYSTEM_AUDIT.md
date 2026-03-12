@@ -4,6 +4,8 @@
 **СТАТУС АУДИТА:** ЗАВЕРШЕН  
 **АУДИТОР:** Principal Systems Auditor / Staff Software Architect  
 
+> UPDATE 2026-03-12: этот файл нужно читать как baseline snapshot на 2026-03-11. Актуальный remediation-статус ведётся в `RAI_EP_SYSTEM_AUDIT_DELTA_2026-03-12.md`. После baseline уже закрыты/снижены, в том числе, `tenant isolation foundation`, `ledger/fsm/outbox hardening`, `outbox scheduler/bootstrap wiring`, `broker-native outbox transport`, `audit log DB append-only`, `raw SQL governance phase 1`, `raw SQL hardening phase 2 (memory path)`, `memory hygiene scheduling`, `memory hygiene observability`, `memory hygiene bootstrap maintenance`, `engram lifecycle scheduling`, `engram lifecycle observability`, `engram lifecycle throughput visibility`, `memory lifecycle operator pause windows`, `memory lifecycle error-budget view`, `memory lifecycle multi-window burn-rate`, `controlled memory backfill policy`, `tenant-scoped memory manual control plane`, `production-grade operational control for memory lifecycle`, `external front-office route-space separation`.
+
 ---
 
 ## 1. ОБЩАЯ ОЦЕНКА СИСТЕМЫ

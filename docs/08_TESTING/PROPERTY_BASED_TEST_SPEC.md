@@ -1,3 +1,10 @@
+---
+id: DOC-TST-08-TESTING-PROPERTY-BASED-TEST-SPEC-8ZRR
+layer: Testing
+type: Test Spec
+status: draft
+version: 0.1.0
+---
 # PROPERTY_BASED_TEST_SPEC.md
 
 ## 0. Статус документа

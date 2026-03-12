@@ -1,13 +1,12 @@
 ---
-id: DOC-MTR-LVLF-001
-type: Metrics Specification
-layer: Metrics (Observation)
-status: Enforced
+id: DOC-MET-LEVEL-F-F-SUCCESS-METRICS-1W6B
+layer: Metrics
+type: KPI Spec
+status: approved
 version: 2.0.0
 owners: [@techlead, @chief_quant]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: ИНСТИТУЦИОНАЛЬНЫЕ МЕТРИКИ УСПЕХА (F_SUCCESS_METRICS)
 
 ## 0. Философия Измерений (Measurement Protocol Axiom)

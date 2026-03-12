@@ -1,22 +1,12 @@
 ---
-id: DOC-ARC-GEN-043
-type: Standards
+id: DOC-ARC-PRINCIPLES-AI-GOVERNANCE-CANON-XFXE
 layer: Architecture
-status: Draft
+type: Standards
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿---
-id: principle-ai-governance-canon
-type: principle
-status: review
-owners: [architects, security-officers]
-aligned_with: [principle-canon]
-tags: [governance-gap]
----
-
 # Canon: Governance ??? AI
 
 ## ???????????????? ???????

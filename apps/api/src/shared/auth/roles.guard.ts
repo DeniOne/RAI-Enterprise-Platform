@@ -1,5 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
+import { GqlExecutionContext } from "@nestjs/graphql";
 import { UserRole } from "@rai/prisma-client";
 import { ROLES_KEY } from "./roles.decorator";
 
@@ -17,7 +18,12 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const { user, headers } = context.switchToHttp().getRequest();
+    const request =
+      context.getType<string>() === "graphql"
+        ? GqlExecutionContext.create(context).getContext().req
+        : context.switchToHttp().getRequest();
+
+    const { user, headers } = request ?? {};
 
     // Если пользователя нет в запросе (например, публичный эндпоинт без AuthGuard)
     if (!user) {

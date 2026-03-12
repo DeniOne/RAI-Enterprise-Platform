@@ -15,6 +15,26 @@ apiClient.interceptors.response.use(
     }
 )
 
+export function buildIdempotencyKey(prefix: string, parts: Array<string | null | undefined>): string {
+    const normalized = parts
+        .map((part) => (typeof part === 'string' ? part.trim() : ''))
+        .filter(Boolean)
+        .join(':')
+        .replace(/\s+/g, '-')
+        .replace(/[^a-zA-Z0-9:_-]+/g, '-')
+        .slice(0, 160);
+
+    return `${prefix}:${normalized || 'request'}`.slice(0, 200);
+}
+
+export function serializeIdempotencyPayload(value: unknown): string {
+    try {
+        return JSON.stringify(value) ?? '';
+    } catch {
+        return '';
+    }
+}
+
 // Typed client endpoints.
 export const api = {
     users: {
@@ -30,22 +50,60 @@ export const api = {
     },
     consulting: {
         plans: () => apiClient.get('/consulting/plans'),
-        createPlan: (data: unknown) => apiClient.post('/consulting/plans', data),
+        createPlan: (data: unknown) =>
+            apiClient.post('/consulting/plans', data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('consulting-create-plan', [
+                        serializeIdempotencyPayload(data),
+                    ]),
+                },
+            }),
         transitionPlan: (planId: string, status: string) =>
-            apiClient.post(`/consulting/plans/${planId}/transitions`, { status }),
+            apiClient.post(`/consulting/plans/${planId}/transitions`, { status }, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('consulting-plan-transition', [planId, status]),
+                },
+            }),
         techmaps: {
             list: () => apiClient.get('/tech-map'),
             transition: (id: string, status: string) =>
-                apiClient.patch(`/tech-map/${id}/transition`, { status }),
+                apiClient.patch(
+                    `/tech-map/${id}/transition`,
+                    { status },
+                    {
+                        headers: {
+                            'Idempotency-Key': buildIdempotencyKey('techmap-transition', [id, status]),
+                        },
+                    },
+                ),
         },
         execution: {
             list: () => apiClient.get('/consulting/execution/operations'),
             active: () => apiClient.get('/consulting/execution/active'),
-            start: (operationId: string) => apiClient.post(`/consulting/execution/start/${operationId}`),
-            complete: (data: unknown) => apiClient.post('/consulting/execution/complete', data),
+            start: (operationId: string) =>
+                apiClient.post(`/consulting/execution/start/${operationId}`, undefined, {
+                    headers: {
+                        'Idempotency-Key': buildIdempotencyKey('consulting-execution-start', [operationId]),
+                    },
+                }),
+            complete: (data: unknown) =>
+                apiClient.post('/consulting/execution/complete', data, {
+                    headers: {
+                        'Idempotency-Key': buildIdempotencyKey('consulting-execution-complete', [
+                            serializeIdempotencyPayload(data),
+                        ]),
+                    },
+                }),
         },
         yield: {
-            save: (data: unknown) => apiClient.post('/consulting/yield', data),
+            save: (data: unknown) =>
+                apiClient.post('/consulting/yield', data, {
+                    headers: {
+                        'Idempotency-Key': buildIdempotencyKey('consulting-yield-save', [
+                            serializeIdempotencyPayload(data),
+                        ]),
+                    },
+                }),
             getByPlan: (planId: string) => apiClient.get(`/consulting/yield/plan/${planId}`),
         },
         kpi: {
@@ -61,9 +119,23 @@ export const api = {
         jurisdictions: () =>
             apiClient.get('/commerce/jurisdictions'),
         createJurisdiction: (data: { code: string; name: string }) =>
-            apiClient.post('/commerce/jurisdictions', data),
+            apiClient.post('/commerce/jurisdictions', data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('commerce-jurisdiction-create', [
+                        data.code,
+                        data.name,
+                    ]),
+                },
+            }),
         updateJurisdiction: (jurisdictionId: string, data: { code?: string; name?: string }) =>
-            apiClient.patch(`/commerce/jurisdictions/${encodeURIComponent(jurisdictionId)}`, data),
+            apiClient.patch(`/commerce/jurisdictions/${encodeURIComponent(jurisdictionId)}`, data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('commerce-jurisdiction-update', [
+                        jurisdictionId,
+                        serializeIdempotencyPayload(data),
+                    ]),
+                },
+            }),
         deleteJurisdiction: (jurisdictionId: string) =>
             apiClient.delete(`/commerce/jurisdictions/${encodeURIComponent(jurisdictionId)}`),
 
@@ -77,7 +149,15 @@ export const api = {
                 crossBorderVatRate: number; vatPayerStatus: string; supplyType: string;
                 currencyCode: string; effectiveFrom: string; effectiveTo?: string; notes?: string;
             };
-        }) => apiClient.post('/commerce/regulatory-profiles', data),
+        }) => apiClient.post('/commerce/regulatory-profiles', data, {
+            headers: {
+                'Idempotency-Key': buildIdempotencyKey('commerce-reg-profile-create', [
+                    data.code,
+                    data.jurisdictionId,
+                    serializeIdempotencyPayload(data.rulesJson ?? {}),
+                ]),
+            },
+        }),
         updateRegulatoryProfile: (profileId: string, data: {
             name?: string; code?: string; jurisdictionId?: string;
             rulesJson?: {
@@ -85,7 +165,14 @@ export const api = {
                 crossBorderVatRate?: number; vatPayerStatus?: string; supplyType?: string;
                 currencyCode?: string; effectiveFrom?: string; effectiveTo?: string; notes?: string;
             };
-        }) => apiClient.patch(`/commerce/regulatory-profiles/${encodeURIComponent(profileId)}`, data),
+        }) => apiClient.patch(`/commerce/regulatory-profiles/${encodeURIComponent(profileId)}`, data, {
+            headers: {
+                'Idempotency-Key': buildIdempotencyKey('commerce-reg-profile-update', [
+                    profileId,
+                    serializeIdempotencyPayload(data),
+                ]),
+            },
+        }),
         deleteRegulatoryProfile: (profileId: string) =>
             apiClient.delete(`/commerce/regulatory-profiles/${encodeURIComponent(profileId)}`),
 
@@ -96,9 +183,24 @@ export const api = {
         partyDetails: (partyId: string) =>
             apiClient.get(`/commerce/parties/${encodeURIComponent(partyId)}`),
         createParty: (data: { legalName: string; jurisdictionId: string; regulatoryProfileId?: string; registrationData?: any }) =>
-            apiClient.post('/commerce/parties', data),
+            apiClient.post('/commerce/parties', data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('commerce-party-create', [
+                        data.legalName,
+                        data.jurisdictionId,
+                        serializeIdempotencyPayload(data.registrationData ?? {}),
+                    ]),
+                },
+            }),
         updateParty: (partyId: string, data: { legalName?: string; jurisdictionId?: string; regulatoryProfileId?: string; registrationData?: any }) =>
-            apiClient.patch(`/commerce/parties/${encodeURIComponent(partyId)}`, data),
+            apiClient.patch(`/commerce/parties/${encodeURIComponent(partyId)}`, data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('commerce-party-update', [
+                        partyId,
+                        serializeIdempotencyPayload(data),
+                    ]),
+                },
+            }),
         deleteParty: (partyId: string) =>
             apiClient.delete(`/commerce/parties/${encodeURIComponent(partyId)}`),
 
@@ -106,7 +208,16 @@ export const api = {
         partyRelations: (partyId: string, companyId: string) =>
             apiClient.get(`/commerce/parties/${encodeURIComponent(partyId)}/relations`, { params: { companyId } }),
         createPartyRelation: (data: { sourcePartyId: string; targetPartyId: string; relationType: string; validFrom: string; validTo?: string; companyId: string }) =>
-            apiClient.post('/commerce/party-relations', data),
+            apiClient.post('/commerce/party-relations', data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('commerce-party-relation-create', [
+                        data.sourcePartyId,
+                        data.targetPartyId,
+                        data.relationType,
+                        data.validFrom,
+                    ]),
+                },
+            }),
     },
     partyAssets: {
         identificationSchema: (jurisdictionId: string, partyType: string) =>
@@ -170,6 +281,14 @@ export const api = {
             status: data.status,
             comment: data.comment,
             registrationData: data.registrationData,
+        }, {
+            headers: {
+                'Idempotency-Key': buildIdempotencyKey('party-assets-party-create', [
+                    data.type,
+                    data.legalName,
+                    data.jurisdictionId,
+                ]),
+            },
         }),
         createPartyRelation: (data: {
             fromPartyId: string;
@@ -187,6 +306,15 @@ export const api = {
             validFrom: data.validFrom,
             validTo: data.validTo,
             basisDocId: data.basisDocId,
+        }, {
+            headers: {
+                'Idempotency-Key': buildIdempotencyKey('party-assets-relation-create', [
+                    data.fromPartyId,
+                    data.toPartyId,
+                    data.relationType,
+                    data.validFrom,
+                ]),
+            },
         }),
         farms: (params?: { q?: string; holdingId?: string; operatorId?: string; hasLease?: boolean }) =>
             apiClient.get('/assets/farms', { params }),
@@ -195,7 +323,15 @@ export const api = {
         farmFields: (farmId: string) =>
             apiClient.get(`/assets/farms/${encodeURIComponent(farmId)}/fields`),
         createFarm: (data: { name: string; regionCode?: string; status?: 'ACTIVE' | 'ARCHIVED' }) =>
-            apiClient.post('/assets/farms', data),
+            apiClient.post('/assets/farms', data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('party-assets-farm-create', [
+                        data.name,
+                        data.regionCode ?? null,
+                        data.status ?? null,
+                    ]),
+                },
+            }),
         assetRoles: (assetId: string) =>
             apiClient.get(`/assets/${encodeURIComponent(assetId)}/roles`),
         assignAssetRole: (data: {
@@ -204,7 +340,16 @@ export const api = {
             role: 'OWNER' | 'OPERATOR' | 'LESSEE' | 'MANAGER' | 'BENEFICIARY';
             validFrom: string;
             validTo?: string;
-        }) => apiClient.post(`/assets/${encodeURIComponent(data.assetId)}/roles`, data),
+        }) => apiClient.post(`/assets/${encodeURIComponent(data.assetId)}/roles`, data, {
+            headers: {
+                'Idempotency-Key': buildIdempotencyKey('party-assets-role-create', [
+                    data.assetId,
+                    data.partyId,
+                    data.role,
+                    data.validFrom,
+                ]),
+            },
+        }),
         fields: () => apiClient.get('/api/assets/fields'),
         objects: () => apiClient.get('/api/assets/objects'),
     },
@@ -218,79 +363,272 @@ export const api = {
             number: string; type: string; validFrom: string; validTo?: string;
             jurisdictionId: string; regulatoryProfileId?: string;
             roles: Array<{ partyId: string; role: string; isPrimary?: boolean }>;
-        }) => apiClient.post('/commerce/contracts', data),
+        }) => apiClient.post('/commerce/contracts', data, {
+            headers: {
+                'Idempotency-Key': buildIdempotencyKey('commerce-contract-create', [
+                    data.number,
+                    data.type,
+                    data.validFrom,
+                    serializeIdempotencyPayload(data.roles),
+                ]),
+            },
+        }),
         createObligation: (data: { contractId: string; type: 'DELIVER' | 'PAY' | 'PERFORM'; dueDate?: string }) =>
-            apiClient.post('/commerce/obligations', data),
+            apiClient.post('/commerce/obligations', data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('commerce-obligation-create', [
+                        data.contractId,
+                        data.type,
+                        data.dueDate ?? null,
+                    ]),
+                },
+            }),
         createFulfillment: (data: {
             obligationId: string; eventDomain: string; eventType: string; eventDate: string;
             batchId?: string; itemId?: string; uom?: string; qty?: number;
-        }) => apiClient.post('/commerce/fulfillment-events', data),
+        }) => apiClient.post('/commerce/fulfillment-events', data, {
+            headers: {
+                'Idempotency-Key': buildIdempotencyKey('commerce-fulfillment-create', [
+                    data.obligationId,
+                    data.eventDomain,
+                    data.eventType,
+                    data.eventDate,
+                    data.batchId ?? null,
+                    data.itemId ?? null,
+                ]),
+            },
+        }),
         createInvoice: (data: {
             fulfillmentEventId: string; sellerJurisdiction: string; buyerJurisdiction: string;
             supplyType: string; vatPayerStatus: string; subtotal: number; productTaxCode?: string;
-        }) => apiClient.post('/commerce/invoices/from-fulfillment', data),
-        postInvoice: (invoiceId: string) => apiClient.post(`/commerce/invoices/${encodeURIComponent(invoiceId)}/post`),
+        }) => apiClient.post('/commerce/invoices/from-fulfillment', data, {
+            headers: {
+                'Idempotency-Key': buildIdempotencyKey('commerce-invoice-create', [
+                    data.fulfillmentEventId,
+                    data.sellerJurisdiction,
+                    data.buyerJurisdiction,
+                    data.supplyType,
+                    `${data.subtotal}`,
+                ]),
+            },
+        }),
+        postInvoice: (invoiceId: string) => apiClient.post(`/commerce/invoices/${encodeURIComponent(invoiceId)}/post`, undefined, {
+            headers: {
+                'Idempotency-Key': buildIdempotencyKey('commerce-invoice-post', [invoiceId]),
+            },
+        }),
         createPayment: (data: {
             payerPartyId: string; payeePartyId: string; amount: number;
             currency: string; paymentMethod: string; paidAt?: string;
-        }) => apiClient.post('/commerce/payments', data),
-        confirmPayment: (paymentId: string) => apiClient.post(`/commerce/payments/${encodeURIComponent(paymentId)}/confirm`),
+        }) => apiClient.post('/commerce/payments', data, {
+            headers: {
+                'Idempotency-Key': buildIdempotencyKey('commerce-payment-create', [
+                    data.payerPartyId,
+                    data.payeePartyId,
+                    `${data.amount}`,
+                    data.currency,
+                    data.paymentMethod,
+                    data.paidAt ?? null,
+                ]),
+            },
+        }),
+        confirmPayment: (paymentId: string) => apiClient.post(`/commerce/payments/${encodeURIComponent(paymentId)}/confirm`, undefined, {
+            headers: {
+                'Idempotency-Key': buildIdempotencyKey('commerce-payment-confirm', [paymentId]),
+            },
+        }),
         allocatePayment: (data: { paymentId: string; invoiceId: string; allocatedAmount: number }) =>
-            apiClient.post('/commerce/payment-allocations', data),
+            apiClient.post('/commerce/payment-allocations', data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('commerce-payment-allocation', [
+                        data.paymentId,
+                        data.invoiceId,
+                        `${data.allocatedAmount}`,
+                    ]),
+                },
+            }),
         arBalance: (invoiceId: string) => apiClient.get(`/commerce/invoices/${encodeURIComponent(invoiceId)}/ar-balance`),
     },
     exploration: {
         showcase: (params?: { mode?: 'SEU' | 'CDU'; status?: string; page?: number; pageSize?: number }) =>
             apiClient.get('/exploration/showcase', { params }),
         createSignal: (data: { source?: 'MARKET' | 'CLIENT' | 'AI' | 'INTERNAL'; rawPayload: Record<string, unknown>; confidenceScore?: number; initiatorId?: string }) =>
-            apiClient.post('/exploration/signals', data),
+            apiClient.post('/exploration/signals', data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('exploration-signal-create', [
+                        serializeIdempotencyPayload(data),
+                    ]),
+                },
+            }),
         triageFromSignal: (signalId: string, data?: { initiatorId?: string; explorationMode?: 'SEU' | 'CDU'; type?: 'PROBLEM' | 'IDEA' | 'RESEARCH' | 'REGULATORY' | 'OPPORTUNITY'; triageConfig?: Record<string, unknown>; ownerId?: string; timeboxDeadline?: string; riskScore?: number }) =>
-            apiClient.post(`/exploration/cases/from-signal/${encodeURIComponent(signalId)}`, data ?? {}),
+            apiClient.post(`/exploration/cases/from-signal/${encodeURIComponent(signalId)}`, data ?? {}, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('exploration-triage', [
+                        signalId,
+                        serializeIdempotencyPayload(data ?? {}),
+                    ]),
+                },
+            }),
         transitionCase: (caseId: string, data: { targetStatus: string; role?: string }) =>
-            apiClient.post(`/exploration/cases/${encodeURIComponent(caseId)}/transition`, data),
+            apiClient.post(`/exploration/cases/${encodeURIComponent(caseId)}/transition`, data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('exploration-transition', [
+                        caseId,
+                        data.targetStatus,
+                        data.role,
+                    ]),
+                },
+            }),
         openWarRoom: (caseId: string, data: { facilitatorId: string; deadline: string; participants: Array<{ userId: string; role: string }> }) =>
-            apiClient.post(`/exploration/cases/${encodeURIComponent(caseId)}/war-room/open`, data),
+            apiClient.post(`/exploration/cases/${encodeURIComponent(caseId)}/war-room/open`, data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('exploration-war-room-open', [
+                        caseId,
+                        data.facilitatorId,
+                        data.deadline,
+                        serializeIdempotencyPayload(data.participants),
+                    ]),
+                },
+            }),
         appendWarRoomEvent: (sessionId: string, data: { participantId: string; decisionData: Record<string, unknown>; signatureHash: string }) =>
-            apiClient.post(`/exploration/war-room/${encodeURIComponent(sessionId)}/events`, data),
+            apiClient.post(`/exploration/war-room/${encodeURIComponent(sessionId)}/events`, data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('exploration-war-room-event', [
+                        sessionId,
+                        data.participantId,
+                        data.signatureHash,
+                    ]),
+                },
+            }),
         closeWarRoom: (sessionId: string, data: { resolutionLog: Record<string, unknown>; status?: 'ACTIVE' | 'RESOLVED_WITH_DECISION' | 'TIMEOUT' }) =>
-            apiClient.post(`/exploration/war-room/${encodeURIComponent(sessionId)}/close`, data),
+            apiClient.post(`/exploration/war-room/${encodeURIComponent(sessionId)}/close`, data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('exploration-war-room-close', [
+                        sessionId,
+                        data.status,
+                        serializeIdempotencyPayload(data.resolutionLog),
+                    ]),
+                },
+            }),
     },
     crm: {
         holdings: (companyId: string) => apiClient.get(`/crm/holdings/${companyId}`),
         createHolding: (data: { name: string; description?: string; companyId: string }) =>
-            apiClient.post('/crm/holdings', data),
+            apiClient.post('/crm/holdings', data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('crm-holding-create', [
+                        data.companyId,
+                        data.name,
+                    ]),
+                },
+            }),
         fields: () => apiClient.get('/registry/fields'),
         plans: () => apiClient.get('/consulting/plans'),
         accounts: (companyId: string, params?: { search?: string; type?: string; status?: string; riskCategory?: string; responsibleId?: string }) =>
             apiClient.get(`/crm/accounts/${companyId}`, { params }),
         createAccount: (data: { name: string; inn?: string; type?: string; holdingId?: string; companyId: string }) =>
-            apiClient.post('/crm/accounts', data),
+            apiClient.post('/crm/accounts', data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('crm-account-create', [
+                        data.companyId,
+                        data.name,
+                        data.inn ?? null,
+                    ]),
+                },
+            }),
         accountDetails: (accountId: string, companyId: string) =>
             apiClient.get(`/crm/accounts/${encodeURIComponent(accountId)}/details/${companyId}`),
         accountWorkspace: (accountId: string, companyId: string) =>
             apiClient.get(`/crm/accounts/${encodeURIComponent(accountId)}/workspace`, { params: { companyId } }),
         updateAccount: (accountId: string, data: { companyId: string; name?: string; inn?: string | null; type?: string; status?: string; holdingId?: string | null; jurisdiction?: string | null; riskCategory?: string; strategicValue?: string }) =>
-            apiClient.patch(`/crm/accounts/${encodeURIComponent(accountId)}`, data),
+            apiClient.patch(`/crm/accounts/${encodeURIComponent(accountId)}`, data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('crm-account-update', [
+                        accountId,
+                        data.companyId,
+                        serializeIdempotencyPayload(data),
+                    ]),
+                },
+            }),
         createContact: (accountId: string, data: { companyId: string; firstName: string; lastName?: string; role?: string; influenceLevel?: number; email?: string; phone?: string; source?: string }) =>
-            apiClient.post(`/crm/accounts/${encodeURIComponent(accountId)}/contacts`, data),
+            apiClient.post(`/crm/accounts/${encodeURIComponent(accountId)}/contacts`, data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('crm-contact-create', [
+                        accountId,
+                        data.companyId,
+                        data.firstName,
+                        data.lastName ?? null,
+                    ]),
+                },
+            }),
         updateContact: (contactId: string, data: { companyId: string; firstName?: string; lastName?: string | null; role?: string; influenceLevel?: number | null; email?: string | null; phone?: string | null; source?: string | null }) =>
-            apiClient.patch(`/crm/contacts/${encodeURIComponent(contactId)}`, data),
+            apiClient.patch(`/crm/contacts/${encodeURIComponent(contactId)}`, data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('crm-contact-update', [
+                        contactId,
+                        data.companyId,
+                        serializeIdempotencyPayload(data),
+                    ]),
+                },
+            }),
         deleteContact: (contactId: string, companyId: string) =>
             apiClient.delete(`/crm/contacts/${encodeURIComponent(contactId)}`, { params: { companyId } }),
         createInteraction: (accountId: string, data: { companyId: string; type: string; summary: string; date?: string; contactId?: string | null; relatedEventId?: string | null }) =>
-            apiClient.post(`/crm/accounts/${encodeURIComponent(accountId)}/interactions`, data),
+            apiClient.post(`/crm/accounts/${encodeURIComponent(accountId)}/interactions`, data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('crm-interaction-create', [
+                        accountId,
+                        data.companyId,
+                        data.type,
+                        data.summary,
+                    ]),
+                },
+            }),
         updateInteraction: (interactionId: string, data: { companyId: string; type?: string; summary?: string; date?: string; contactId?: string | null; relatedEventId?: string | null }) =>
-            apiClient.patch(`/crm/interactions/${encodeURIComponent(interactionId)}`, data),
+            apiClient.patch(`/crm/interactions/${encodeURIComponent(interactionId)}`, data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('crm-interaction-update', [
+                        interactionId,
+                        data.companyId,
+                        serializeIdempotencyPayload(data),
+                    ]),
+                },
+            }),
         deleteInteraction: (interactionId: string, companyId: string) =>
             apiClient.delete(`/crm/interactions/${encodeURIComponent(interactionId)}`, { params: { companyId } }),
         createObligation: (accountId: string, data: { companyId: string; description: string; dueDate: string; responsibleUserId?: string | null; status?: string }) =>
-            apiClient.post(`/crm/accounts/${encodeURIComponent(accountId)}/obligations`, data),
+            apiClient.post(`/crm/accounts/${encodeURIComponent(accountId)}/obligations`, data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('crm-obligation-create', [
+                        accountId,
+                        data.companyId,
+                        data.description,
+                        data.dueDate,
+                    ]),
+                },
+            }),
         updateObligation: (obligationId: string, data: { companyId: string; description?: string; dueDate?: string; responsibleUserId?: string | null; status?: string }) =>
-            apiClient.patch(`/crm/obligations/${encodeURIComponent(obligationId)}`, data),
+            apiClient.patch(`/crm/obligations/${encodeURIComponent(obligationId)}`, data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('crm-obligation-update', [
+                        obligationId,
+                        data.companyId,
+                        serializeIdempotencyPayload(data),
+                    ]),
+                },
+            }),
         deleteObligation: (obligationId: string, companyId: string) =>
             apiClient.delete(`/crm/obligations/${encodeURIComponent(obligationId)}`, { params: { companyId } }),
         updateAccountHolding: (accountId: string, data: { holdingId: string | null; companyId: string }) =>
-            apiClient.put(`/crm/accounts/${encodeURIComponent(accountId)}/holding`, data),
+            apiClient.put(`/crm/accounts/${encodeURIComponent(accountId)}/holding`, data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('crm-account-holding-update', [
+                        accountId,
+                        data.companyId,
+                        data.holdingId ?? 'detached',
+                    ]),
+                },
+            }),
         farmsRegistry: (companyId: string, params?: { search?: string; severity?: string; sort?: string; onlyRisk?: boolean; page?: number; pageSize?: number }) =>
             apiClient.get(`/crm/farms/registry/${companyId}`, { params }),
         farmMap: (farmId: string, companyId: string) =>
@@ -316,9 +654,21 @@ export const api = {
         lifecycleHistory: (params?: { limit?: number }) =>
             apiClient.get<AgentLifecycleHistoryItemDto[]>('/rai/explainability/lifecycle/history', { params: params ?? {} }),
         setLifecycleOverride: (data: { role: string; state: 'FROZEN' | 'RETIRED'; reason: string }) =>
-            apiClient.post<AgentLifecycleItemDto[]>('/rai/explainability/lifecycle/override', data),
+            apiClient.post<AgentLifecycleItemDto[]>('/rai/explainability/lifecycle/override', data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('lifecycle-override', [
+                        data.role,
+                        data.state,
+                        data.reason,
+                    ]),
+                },
+            }),
         clearLifecycleOverride: (data: { role: string }) =>
-            apiClient.post<AgentLifecycleItemDto[]>('/rai/explainability/lifecycle/override/clear', data),
+            apiClient.post<AgentLifecycleItemDto[]>('/rai/explainability/lifecycle/override/clear', data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('lifecycle-override-clear', [data.role]),
+                },
+            }),
         costHotspots: (params?: { timeWindowMs?: number; limit?: number }) =>
             apiClient.get('/rai/explainability/cost-hotspots', { params: params ?? {} }),
         traceTimeline: (traceId: string) =>
@@ -328,7 +678,106 @@ export const api = {
         traceTopology: (traceId: string) =>
             apiClient.get(`/rai/explainability/trace/${encodeURIComponent(traceId)}/topology`),
         replayTrace: (traceId: string) =>
-            apiClient.post(`/rai/explainability/trace/${encodeURIComponent(traceId)}/replay`),
+            apiClient.post(`/rai/explainability/trace/${encodeURIComponent(traceId)}/replay`, undefined, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('trace-replay', [traceId]),
+                },
+            }),
+    },
+    memory: {
+        health: () => apiClient.get<MemoryHealthDto>('/memory/health'),
+    },
+    ofs: {
+        financeDashboard: () => apiClient.get('/ofs/finance/dashboard'),
+        strategyForecasts: {
+            run: (data: StrategyForecastRunRequest) =>
+                apiClient.post<StrategyForecastRunResponse>('/ofs/strategy/forecasts/run', data, {
+                    headers: {
+                        'Idempotency-Key': buildIdempotencyKey('strategy-forecast-run', [
+                            data.scopeLevel,
+                            data.seasonId,
+                            `${data.horizonDays}`,
+                            data.farmId ?? null,
+                            data.fieldId ?? null,
+                            data.crop ?? null,
+                            serializeIdempotencyPayload(data.domains),
+                            serializeIdempotencyPayload(data.scenario ?? {}),
+                        ]),
+                    },
+                }),
+            history: () =>
+                apiClient.get<StrategyForecastRunHistoryItem[]>('/ofs/strategy/forecasts/history'),
+            submitFeedback: (runId: string, data: StrategyForecastRunFeedbackRequest) =>
+                apiClient.post<StrategyForecastRunHistoryItem>(
+                    `/ofs/strategy/forecasts/history/${encodeURIComponent(runId)}/feedback`,
+                    data,
+                    {
+                        headers: {
+                            'Idempotency-Key': buildIdempotencyKey('strategy-forecast-feedback', [
+                                runId,
+                                serializeIdempotencyPayload(data),
+                            ]),
+                        },
+                    },
+                ),
+            listScenarios: () =>
+                apiClient.get<StrategyForecastScenarioRecord[]>('/ofs/strategy/forecasts/scenarios'),
+            saveScenario: (data: StrategyForecastScenarioSaveRequest) =>
+                apiClient.post<StrategyForecastScenarioRecord>('/ofs/strategy/forecasts/scenarios', data, {
+                    headers: {
+                        'Idempotency-Key': buildIdempotencyKey('strategy-forecast-scenario-save', [
+                            data.name,
+                            data.scopeLevel,
+                            data.seasonId,
+                            `${data.horizonDays}`,
+                            data.farmId ?? null,
+                            data.fieldId ?? null,
+                            data.crop ?? null,
+                            serializeIdempotencyPayload(data.domains),
+                            serializeIdempotencyPayload(data.leverValues),
+                        ]),
+                    },
+                }),
+            deleteScenario: (scenarioId: string) =>
+                apiClient.delete<{ ok: true }>(`/ofs/strategy/forecasts/scenarios/${encodeURIComponent(scenarioId)}`, {
+                    headers: {
+                        'Idempotency-Key': buildIdempotencyKey('strategy-forecast-scenario-delete', [scenarioId]),
+                    },
+                }),
+        },
+    },
+    experts: {
+        chiefAgronomistReview: (data: ChiefAgronomistReviewRequest) =>
+            apiClient.post<ChiefAgronomistReviewResponse>('/rai-chat/expert/chief-agronomist/review', data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('chief-agronomist-review', [
+                        data.entityType,
+                        data.entityId,
+                        data.fieldId ?? null,
+                        data.seasonId ?? null,
+                        data.planId ?? null,
+                        data.traceParentId ?? null,
+                        data.reason,
+                    ]),
+                },
+            }),
+        applyReviewOutcome: (reviewId: string, data: ExpertReviewOutcomeRequest) =>
+            apiClient.post<ChiefAgronomistReviewResponse>(
+                `/rai-chat/expert/reviews/${encodeURIComponent(reviewId)}/outcome`,
+                data,
+                {
+                    headers: {
+                        'Idempotency-Key': buildIdempotencyKey('expert-review-outcome', [
+                            reviewId,
+                            data.action,
+                            data.note ?? null,
+                        ]),
+                    },
+                },
+            ),
+    },
+    seasons: {
+        list: () => apiClient.get<SeasonListItem[]>('/seasons'),
     },
     agents: {
         getConfig: () => apiClient.get<AgentConfigsResponse>('/rai/agents/config'),
@@ -336,29 +785,104 @@ export const api = {
         validateOnboardingManifest: (data: FutureAgentManifestBody) =>
             apiClient.post<FutureAgentManifestValidation>('/rai/agents/onboarding/validate', data),
         createChangeRequest: (data: UpsertAgentConfigBody, scope: 'tenant' | 'global') =>
-            apiClient.post('/rai/agents/config/change-requests', data, { params: { scope } }),
+            apiClient.post('/rai/agents/config/change-requests', data, {
+                params: { scope },
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('agent-change-request', [
+                        scope,
+                        data.role,
+                        data.llmModel,
+                        serializeIdempotencyPayload(data),
+                    ]),
+                },
+            }),
         startCanary: (changeId: string) =>
-            apiClient.post<AgentConfigChangeRequestDto>(`/rai/agents/config/change-requests/${encodeURIComponent(changeId)}/canary/start`),
+            apiClient.post<AgentConfigChangeRequestDto>(`/rai/agents/config/change-requests/${encodeURIComponent(changeId)}/canary/start`, undefined, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('agent-canary-start', [changeId]),
+                },
+            }),
         reviewCanary: (changeId: string, data: { baselineRejectionRate: number; canaryRejectionRate: number; sampleSize: number }) =>
-            apiClient.post<AgentConfigChangeRequestDto>(`/rai/agents/config/change-requests/${encodeURIComponent(changeId)}/canary/review`, data),
+            apiClient.post<AgentConfigChangeRequestDto>(`/rai/agents/config/change-requests/${encodeURIComponent(changeId)}/canary/review`, data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('agent-canary-review', [
+                        changeId,
+                        `${data.baselineRejectionRate}`,
+                        `${data.canaryRejectionRate}`,
+                        `${data.sampleSize}`,
+                    ]),
+                },
+            }),
         promoteChange: (changeId: string) =>
-            apiClient.post<AgentConfigChangeRequestDto>(`/rai/agents/config/change-requests/${encodeURIComponent(changeId)}/promote`),
+            apiClient.post<AgentConfigChangeRequestDto>(`/rai/agents/config/change-requests/${encodeURIComponent(changeId)}/promote`, undefined, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('agent-promote', [changeId]),
+                },
+            }),
         rollbackChange: (changeId: string, reason: string) =>
-            apiClient.post<AgentConfigChangeRequestDto>(`/rai/agents/config/change-requests/${encodeURIComponent(changeId)}/rollback`, { reason }),
+            apiClient.post<AgentConfigChangeRequestDto>(`/rai/agents/config/change-requests/${encodeURIComponent(changeId)}/rollback`, { reason }, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('agent-rollback', [changeId, reason]),
+                },
+            }),
     },
     governance: {
         incidentsFeed: (params?: { limit?: number; offset?: number }) =>
             apiClient.get<IncidentFeedItem[]>('/rai/incidents/feed', { params: params ?? {} }),
         resolveIncident: (id: string, comment: string) =>
-            apiClient.post(`/rai/incidents/${encodeURIComponent(id)}/resolve`, { comment }),
+            apiClient.post(`/rai/incidents/${encodeURIComponent(id)}/resolve`, { comment }, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('incident-resolve', [id, comment]),
+                },
+            }),
+        executeRunbook: (id: string, data: { action: 'REQUIRE_HUMAN_REVIEW' | 'ROLLBACK_CHANGE_REQUEST'; comment?: string }) =>
+            apiClient.post(`/rai/incidents/${encodeURIComponent(id)}/runbook`, data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('incident-runbook', [
+                        id,
+                        data.action,
+                        data.comment ?? null,
+                    ]),
+                },
+            }),
         counters: () => apiClient.get<GovernanceCountersDto>('/rai/governance/counters'),
+    },
+    pendingActions: {
+        list: (params?: { status?: PendingActionStatusDto; limit?: number; traceId?: string }) =>
+            apiClient.get<PendingActionDto[]>('/rai/pending-actions', { params: params ?? {} }),
+        approveFirst: (id: string) =>
+            apiClient.post<PendingActionDto>(`/rai/pending-actions/${encodeURIComponent(id)}/approve-first`, undefined, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('pending-action-approve-first', [id]),
+                },
+            }),
+        approveFinal: (id: string) =>
+            apiClient.post<PendingActionDto>(`/rai/pending-actions/${encodeURIComponent(id)}/approve-final`, undefined, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('pending-action-approve-final', [id]),
+                },
+            }),
+        reject: (id: string, reason?: string) =>
+            apiClient.post<PendingActionDto>(`/rai/pending-actions/${encodeURIComponent(id)}/reject`, { reason }, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('pending-action-reject', [id, reason ?? null]),
+                },
+            }),
     },
     autonomy: {
         status: () => apiClient.get<AutonomyStatusDto>('/rai/explainability/autonomy-status'),
         setOverride: (data: { level: 'TOOL_FIRST' | 'QUARANTINE'; reason: string }) =>
-            apiClient.post<AutonomyStatusDto>('/rai/explainability/runtime-governance/autonomy/override', data),
+            apiClient.post<AutonomyStatusDto>('/rai/explainability/runtime-governance/autonomy/override', data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('autonomy-override', [data.level, data.reason]),
+                },
+            }),
         clearOverride: () =>
-            apiClient.post<AutonomyStatusDto>('/rai/explainability/runtime-governance/autonomy/override/clear'),
+            apiClient.post<AutonomyStatusDto>('/rai/explainability/runtime-governance/autonomy/override/clear', undefined, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('autonomy-override-clear', ['default']),
+                },
+            }),
     },
 }
 
@@ -384,6 +908,27 @@ export interface GovernanceCountersDto {
     resolvedIncidents: number;
     runbookExecutedIncidents: number;
     byType: Record<string, number>;
+}
+
+export type PendingActionStatusDto =
+    | 'PENDING'
+    | 'APPROVED_FIRST'
+    | 'APPROVED_FINAL'
+    | 'EXPIRED'
+    | 'REJECTED';
+
+export interface PendingActionDto {
+    id: string;
+    traceId: string;
+    toolName: string;
+    riskLevel: string;
+    status: PendingActionStatusDto;
+    requestedByUserId: string | null;
+    approvedFirstBy: string | null;
+    approvedFinalBy: string | null;
+    createdAt: string;
+    expiresAt: string;
+    payloadPreview: string;
 }
 
 export interface AutonomyStatusDto {
@@ -684,6 +1229,9 @@ export interface AgentConfiguratorItem {
     ownerDomain: string;
     runtime: AgentRegistryRuntimeItem;
     tenantAccess: AgentTenantAccessItem;
+    memoryPolicy?: Record<string, unknown>;
+    outputContract?: Record<string, unknown>;
+    governancePolicy?: Record<string, unknown>;
     kernel?: {
         runtimeProfile: {
             profileId: string;
@@ -698,6 +1246,233 @@ export interface AgentConfiguratorItem {
             supportsStreaming: boolean;
         };
     };
+}
+
+export interface TraceForensicsMemoryLaneItemDto {
+    kind: string;
+    label: string;
+    confidence: number;
+}
+
+export interface TraceForensicsMemoryLaneDroppedItemDto {
+    kind: string;
+    label: string;
+    reason: string;
+}
+
+export interface TraceForensicsMemoryLaneDto {
+    recalled: TraceForensicsMemoryLaneItemDto[];
+    used: TraceForensicsMemoryLaneItemDto[];
+    dropped: TraceForensicsMemoryLaneDroppedItemDto[];
+    escalationReason?: string;
+}
+
+export interface MemoryHealthDto {
+    status: 'ok' | 'degraded';
+    degraded: boolean;
+    layers: Record<string, unknown>;
+    recallLatencyMs: number | null;
+    episodeCount: number | null;
+    engramCount: number | null;
+    hotAlertCount: number | null;
+    consolidationFreshness: number | null;
+    pruningStatus: string;
+    trustScore: number | null;
+    timestamp: string;
+    error?: string;
+}
+
+export interface StrategyForecastRunRequest {
+    scopeLevel: 'company' | 'farm' | 'field';
+    seasonId: string;
+    horizonDays: 30 | 90 | 180 | 365;
+    farmId?: string;
+    fieldId?: string;
+    crop?: string;
+    domains: Array<'agro' | 'economics' | 'finance' | 'risk'>;
+    scenario?: {
+        name: string;
+        adjustments: Array<{
+            lever:
+                | 'yield_pct'
+                | 'sales_price_pct'
+                | 'input_cost_pct'
+                | 'opex_pct'
+                | 'working_capital_days'
+                | 'disease_risk_pct';
+            operator: 'delta';
+            value: number;
+        }>;
+    };
+}
+
+export interface StrategyForecastScenarioRecord {
+    id: string;
+    name: string;
+    scopeLevel: 'company' | 'farm' | 'field';
+    seasonId: string;
+    horizonDays: 30 | 90 | 180 | 365;
+    farmId: string;
+    fieldId: string;
+    crop: string;
+    domains: Array<'agro' | 'economics' | 'finance' | 'risk'>;
+    leverValues: Record<
+        | 'yield_pct'
+        | 'sales_price_pct'
+        | 'input_cost_pct'
+        | 'opex_pct'
+        | 'working_capital_days'
+        | 'disease_risk_pct',
+        string
+    >;
+    createdByUserId?: string | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface StrategyForecastScenarioSaveRequest {
+    name: string;
+    scopeLevel: 'company' | 'farm' | 'field';
+    seasonId: string;
+    horizonDays: 30 | 90 | 180 | 365;
+    farmId?: string;
+    fieldId?: string;
+    crop?: string;
+    domains: Array<'agro' | 'economics' | 'finance' | 'risk'>;
+    leverValues: Partial<Record<
+        | 'yield_pct'
+        | 'sales_price_pct'
+        | 'input_cost_pct'
+        | 'opex_pct'
+        | 'working_capital_days'
+        | 'disease_risk_pct',
+        string
+    >>;
+}
+
+export interface StrategyForecastRunResponse {
+    traceId: string;
+    degraded: boolean;
+    degradationReasons: string[];
+    lineage: Array<{
+        source: string;
+        status: 'ok' | 'degraded' | 'not_requested' | 'missing';
+        detail: string;
+    }>;
+    baseline: {
+        revenue: number;
+        margin: number;
+        cashFlow: number;
+        yield?: number;
+        riskScore: number;
+    };
+    range: {
+        revenue: { p10: number; p50: number; p90: number };
+        margin: { p10: number; p50: number; p90: number };
+        cashFlow: { p10: number; p50: number; p90: number };
+        yield?: { p10: number; p50: number; p90: number };
+    };
+    scenarioDelta?: {
+        revenue: number;
+        margin: number;
+        cashFlow: number;
+        yield?: number;
+        riskScore: number;
+    };
+    drivers: Array<{ name: string; direction: 'up' | 'down'; strength: number }>;
+    recommendedAction: string;
+    tradeoff: string;
+    limitations: string[];
+    evidence: string[];
+    riskTier: 'low' | 'medium' | 'high';
+    optimizationPreview: {
+        objective: string;
+        planningHorizon: string;
+        constraints: string[];
+        recommendations: Array<{
+            action: string;
+            expectedImpact: string;
+            confidence: 'high' | 'medium' | 'low';
+        }>;
+    };
+}
+
+export interface StrategyForecastRunHistoryItem {
+    id: string;
+    traceId: string;
+    scopeLevel: 'company' | 'farm' | 'field';
+    seasonId: string;
+    horizonDays: 30 | 90 | 180 | 365;
+    domains: Array<'agro' | 'economics' | 'finance' | 'risk'>;
+    degraded: boolean;
+    riskTier: 'low' | 'medium' | 'high';
+    recommendedAction: string;
+    scenarioName?: string | null;
+    createdByUserId?: string | null;
+    createdAt: string;
+    evaluation: {
+        status: 'pending' | 'feedback_recorded';
+        revenueErrorPct?: number | null;
+        marginErrorPct?: number | null;
+        cashFlowErrorPct?: number | null;
+        yieldErrorPct?: number | null;
+        note?: string | null;
+        feedbackAt?: string | null;
+    };
+}
+
+export interface StrategyForecastRunFeedbackRequest {
+    actualRevenue?: number;
+    actualMargin?: number;
+    actualCashFlow?: number;
+    actualYield?: number;
+    note?: string;
+}
+
+export interface SeasonListItem {
+    id: string;
+    year: number;
+    status: string;
+    fieldId?: string | null;
+}
+
+export interface ChiefAgronomistReviewRequest {
+    entityType: 'techmap' | 'deviation' | 'field';
+    entityId: string;
+    reason: string;
+    fieldId?: string;
+    seasonId?: string;
+    planId?: string;
+    workspaceRoute?: string;
+    traceParentId?: string;
+}
+
+export interface ChiefAgronomistReviewResponse {
+    reviewId: string;
+    traceId: string;
+    verdict: string;
+    actionsNow: string[];
+    alternatives: string[];
+    basedOn: string[];
+    evidence: Array<{
+        claim: string;
+        sourceType: 'TOOL_RESULT' | 'DB' | 'DOC';
+        sourceId: string;
+        confidenceScore: number;
+    }>;
+    riskTier: 'low' | 'medium' | 'high';
+    requiresHumanDecision: boolean;
+    status: 'completed' | 'needs_more_context' | 'degraded';
+    missingContext?: string[];
+    outcomeAction?: 'accept' | 'hand_off' | 'create_task';
+    outcomeNote?: string | null;
+    resolvedAt?: string | null;
+    createdTaskId?: string;
+}
+
+export interface ExpertReviewOutcomeRequest {
+    action: 'accept' | 'hand_off' | 'create_task';
+    note?: string;
 }
 
 export interface AgentConfigsResponse {
@@ -717,7 +1492,7 @@ export interface UpsertAgentConfigBody {
     };
     responsibilityBinding?: {
         role: string;
-        inheritsFromRole: 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent' | 'front_office_agent' | 'contracts_agent';
+        inheritsFromRole: 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent' | 'front_office_agent' | 'contracts_agent' | 'chief_agronomist' | 'data_scientist';
         overrides?: {
             title?: string;
             allowedIntents?: string[];
@@ -752,7 +1527,7 @@ export interface FutureAgentManifestBody {
     };
     responsibilityBinding?: {
         role: string;
-        inheritsFromRole: 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent' | 'front_office_agent' | 'contracts_agent';
+        inheritsFromRole: 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent' | 'front_office_agent' | 'contracts_agent' | 'chief_agronomist' | 'data_scientist';
         overrides?: {
             title?: string;
             allowedIntents?: string[];

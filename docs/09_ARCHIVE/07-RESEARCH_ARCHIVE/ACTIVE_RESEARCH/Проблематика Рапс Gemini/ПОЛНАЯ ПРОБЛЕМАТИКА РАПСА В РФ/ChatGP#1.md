@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-CHATGP-1-18G5
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 Ты прав — прошлый ответ дал только рамку. Ниже — сам отчёт в Markdown.
 
 ---

@@ -1,7 +1,9 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { Card } from '@/components/ui';
 import { frontOfficeServerApi } from '@/lib/api/front-office-server';
+import { getUserData } from '@/lib/api/auth-server';
+import { getExternalFrontOfficeThreadPath } from '@/lib/front-office-routes';
 
 export default async function FrontOfficeThreadPage({
     params,
@@ -10,6 +12,14 @@ export default async function FrontOfficeThreadPage({
 }) {
     const { threadKey } = await params;
     const decodedThreadKey = decodeURIComponent(threadKey);
+    const user = await getUserData();
+    const { role: viewerRole } = user ?? {};
+    const isExternalFrontOffice = viewerRole === 'FRONT_OFFICE_USER';
+
+    if (isExternalFrontOffice) {
+        redirect(getExternalFrontOfficeThreadPath(decodedThreadKey));
+    }
+
     const data = await frontOfficeServerApi.thread(decodedThreadKey).catch(() => null);
 
     if (!data?.thread) {
@@ -28,10 +38,10 @@ export default async function FrontOfficeThreadPage({
                     <p className="text-xs uppercase tracking-[0.18em] text-gray-400">Thread</p>
                     <h1 className="mt-2 text-2xl font-medium text-gray-900">{thread.threadKey}</h1>
                     <p className="mt-2 text-sm text-gray-500">
-                        {thread.channel} • owner {thread.currentOwnerRole ?? 'not assigned'} • {thread.currentHandoffStatus ?? thread.currentClassification ?? 'OPEN'}
+                        {thread.channel} • ответственный {thread.currentOwnerRole ?? 'не назначен'} • {thread.currentHandoffStatus ?? thread.currentClassification ?? 'ОТКРЫТ'}
                     </p>
                 </div>
-                <Link href="/front-office" className="text-sm text-gray-500 hover:text-gray-900">Назад в workspace</Link>
+                <Link href="/front-office" className="text-sm text-gray-500 hover:text-gray-900">Назад к списку</Link>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
@@ -51,14 +61,14 @@ export default async function FrontOfficeThreadPage({
                                 </div>
                             ))}
                         </div>
-                    )}
+                        )}
                 </Card>
 
                 <div className="space-y-6">
                     <Card>
-                        <h2 className="mb-4 text-lg font-medium text-gray-900">Drafts</h2>
+                        <h2 className="mb-4 text-lg font-medium text-gray-900">Черновики</h2>
                         {drafts.length === 0 ? (
-                            <p className="text-sm text-gray-500">Drafts не найдены.</p>
+                            <p className="text-sm text-gray-500">Черновики не найдены.</p>
                         ) : (
                             <div className="space-y-3">
                                 {drafts.map((draft: any) => (
@@ -72,9 +82,9 @@ export default async function FrontOfficeThreadPage({
                     </Card>
 
                     <Card>
-                        <h2 className="mb-4 text-lg font-medium text-gray-900">Handoffs</h2>
+                        <h2 className="mb-4 text-lg font-medium text-gray-900">Передачи</h2>
                         {handoffs.length === 0 ? (
-                            <p className="text-sm text-gray-500">Handoff по thread нет.</p>
+                            <p className="text-sm text-gray-500">Передач по диалогу нет.</p>
                         ) : (
                             <div className="space-y-3">
                                 {handoffs.map((handoff: any) => (

@@ -1,3 +1,10 @@
+---
+id: DOC-FRN-10-FRONTEND-MENU-IMPLEMENTATION-99-TECH-DE-CF0U
+layer: Frontend
+type: Checklist
+status: draft
+version: 0.1.0
+---
 # Единый Реестр Технического Долга По Кнопкам
 
 ## Правило заполнения

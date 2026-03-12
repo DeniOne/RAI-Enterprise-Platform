@@ -1,30 +1,37 @@
-import { Module, Global } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
-import { ContextService } from "../cache/context.service";
-import { MemoryManager } from "./memory-manager.service";
-import { EpisodicRetrievalService } from "./episodic-retrieval.service";
-import { DefaultMemoryAdapter } from "./default-memory-adapter.service";
-import { ShadowAdvisoryService } from "./shadow-advisory.service";
-import { AuditService } from "../audit/audit.service";
-import { AuditModule } from "../audit/audit.module";
-import { ShadowAdvisoryMetricsService } from "./shadow-advisory-metrics.service";
-import { EngramService } from "./engram.service";
-import { WorkingMemoryService } from "./working-memory.service";
-import { ConsolidationWorker } from "./consolidation.worker";
-import { EngramFormationWorker } from "./engram-formation.worker";
-import { MemoryFacade } from "./memory-facade.service";
+import { Module, Global } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { ContextService } from '../cache/context.service';
+import { MemoryManager } from './memory-manager.service';
+import { EpisodicRetrievalService } from './episodic-retrieval.service';
+import { DefaultMemoryAdapter } from './default-memory-adapter.service';
+import { ShadowAdvisoryService } from './shadow-advisory.service';
+import { AuditService } from '../audit/audit.service';
+import { AuditModule } from '../audit/audit.module';
+import { ShadowAdvisoryMetricsService } from './shadow-advisory-metrics.service';
+import { EngramService } from './engram.service';
+import { WorkingMemoryService } from './working-memory.service';
+import { ConsolidationWorker } from './consolidation.worker';
+import { EngramFormationWorker } from './engram-formation.worker';
+import { MemoryFacade } from './memory-facade.service';
+import { MemoryController } from './memory.controller';
+import { MemoryMaintenanceService } from './memory-maintenance.service';
+import { AuthModule } from '../auth/auth.module';
+import { TenantContextModule } from '../tenant-context/tenant-context.module';
+import { MemoryLifecycleObservabilityService } from './memory-lifecycle-observability.service';
+import { MemoryAutoRemediationService } from './memory-auto-remediation.service';
 
 @Global()
 @Module({
-  imports: [ConfigModule, AuditModule],
+  imports: [ConfigModule, AuditModule, AuthModule, TenantContextModule],
+  controllers: [MemoryController],
   providers: [
     // Базовая инфраструктура
     ContextService,
     MemoryManager,
-    { provide: "MEMORY_MANAGER", useExisting: MemoryManager },
-    { provide: "EPISODIC_RETRIEVAL", useExisting: EpisodicRetrievalService },
-    { provide: "MEMORY_ADAPTER", useClass: DefaultMemoryAdapter },
-    { provide: "AUDIT_SERVICE", useExisting: AuditService },
+    { provide: 'MEMORY_MANAGER', useExisting: MemoryManager },
+    { provide: 'EPISODIC_RETRIEVAL', useExisting: EpisodicRetrievalService },
+    { provide: 'MEMORY_ADAPTER', useClass: DefaultMemoryAdapter },
+    { provide: 'AUDIT_SERVICE', useExisting: AuditService },
     EpisodicRetrievalService,
     DefaultMemoryAdapter,
     ShadowAdvisoryService,
@@ -37,6 +44,9 @@ import { MemoryFacade } from "./memory-facade.service";
     // Background Workers: Consolidation + Engram Formation
     ConsolidationWorker,
     EngramFormationWorker,
+    MemoryLifecycleObservabilityService,
+    MemoryMaintenanceService,
+    MemoryAutoRemediationService,
 
     // Единая точка входа (Facade)
     MemoryFacade,
@@ -45,7 +55,7 @@ import { MemoryFacade } from "./memory-facade.service";
     // Базовые
     ContextService,
     MemoryManager,
-    "MEMORY_ADAPTER",
+    'MEMORY_ADAPTER',
     EpisodicRetrievalService,
     ShadowAdvisoryService,
     ShadowAdvisoryMetricsService,
@@ -55,6 +65,9 @@ import { MemoryFacade } from "./memory-facade.service";
     WorkingMemoryService,
     ConsolidationWorker,
     EngramFormationWorker,
+    MemoryLifecycleObservabilityService,
+    MemoryMaintenanceService,
+    MemoryAutoRemediationService,
 
     // Facade — ОСНОВНОЙ ЭКСПОРТ для агентов
     MemoryFacade,

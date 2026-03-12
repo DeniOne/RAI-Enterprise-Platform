@@ -1,9 +1,9 @@
-import { Body, Controller, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Post } from "@nestjs/common";
 import { TelegramAuthService } from "./telegram-auth.service";
-import { InternalApiKeyGuard } from "./internal-api-key.guard";
+import { RequireInternalApiKey } from "./auth-boundary.decorator";
 
 @Controller("internal/telegram")
-@UseGuards(InternalApiKeyGuard)
+@RequireInternalApiKey("Telegram bot service-to-service callback boundary")
 export class TelegramAuthInternalController {
   constructor(private telegramAuthService: TelegramAuthService) {}
 

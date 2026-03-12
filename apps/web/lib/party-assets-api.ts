@@ -1,4 +1,4 @@
-import { apiClient } from '@/lib/api';
+import { apiClient, buildIdempotencyKey, serializeIdempotencyPayload } from '@/lib/api';
 import {
   AssetDto,
   AssetPartyRoleDto,
@@ -58,6 +58,56 @@ export interface FarmsQuery {
   holdingId?: string;
   operatorId?: string;
   hasLease?: boolean;
+}
+
+export interface CreateFrontOfficeInvitationPayload {
+  partyId: string;
+  accountId?: string;
+  partyContactId?: string;
+  telegramId: string;
+  proposedLogin?: string;
+  fullName?: string;
+  position?: string;
+  phone?: string;
+  email?: string;
+}
+
+export interface FrontOfficeInvitationResponse {
+  invitation: {
+    id: string;
+    token: string;
+    shortCode: string;
+    status: string;
+    expiresAt: string;
+    telegramId: string;
+    partyId: string;
+    accountId: string;
+    partyContactId?: string | null;
+    proposedLogin?: string | null;
+  };
+  counterparty: {
+    id: string;
+    name: string;
+  };
+  account: {
+    id: string;
+    name: string;
+  };
+  contact: {
+    partyContactId?: string | null;
+    fullName?: string | null;
+    position?: string | null;
+    phone?: string | null;
+    email?: string | null;
+  };
+  links: {
+    activationUrl: string;
+    botStartLink?: string | null;
+  };
+  delivery: {
+    delivered: boolean;
+    reason?: string;
+  };
 }
 
 export const partyAssetsApi = {
@@ -125,6 +175,14 @@ export const partyAssetsApi = {
       status: data.status,
       comment: data.comment,
       registrationData: data.registrationData,
+    }, {
+      headers: {
+        'Idempotency-Key': buildIdempotencyKey('party-assets-party-create', [
+          data.type,
+          data.legalName,
+          data.jurisdictionId,
+        ]),
+      },
     });
     return normalizePartyDto(response.data);
   },
@@ -145,8 +203,36 @@ export const partyAssetsApi = {
       comment: data.comment,
       regulatoryProfileId: data.regulatoryProfileId,
       registrationData: data.registrationData,
+    }, {
+      headers: {
+        'Idempotency-Key': buildIdempotencyKey('party-assets-party-update', [
+          partyId,
+          serializeIdempotencyPayload(data),
+        ]),
+      },
     });
     return normalizePartyDto(response.data);
+  },
+
+  createFrontOfficeInvitation: async (
+    data: CreateFrontOfficeInvitationPayload,
+  ): Promise<FrontOfficeInvitationResponse> => {
+    const response = await apiClient.post<FrontOfficeInvitationResponse>(
+      '/auth/front-office/invitations',
+      data,
+      {
+        headers: {
+          'Idempotency-Key': buildIdempotencyKey('party-front-office-invite', [
+            data.partyId,
+            data.partyContactId ?? null,
+            data.telegramId,
+            data.proposedLogin ?? null,
+          ]),
+        },
+      },
+    );
+
+    return response.data;
   },
 
   createPartyRelation: async (data: Omit<PartyRelationDto, 'id'>): Promise<PartyRelationDto> => {
@@ -158,6 +244,15 @@ export const partyAssetsApi = {
       validFrom: data.validFrom,
       validTo: data.validTo,
       basisDocId: data.basisDocId,
+    }, {
+      headers: {
+        'Idempotency-Key': buildIdempotencyKey('party-assets-relation-create', [
+          data.fromPartyId,
+          data.toPartyId,
+          data.relationType,
+          data.validFrom,
+        ]),
+      },
     });
     return {
       id: String((response.data as any)?.id ?? ''),
@@ -174,7 +269,14 @@ export const partyAssetsApi = {
   },
 
   updatePartyRelation: async (relationId: string, data: Partial<Omit<PartyRelationDto, 'id'>>): Promise<PartyRelationDto> => {
-    const response = await apiClient.patch(`/party-relations/${encodeURIComponent(relationId)}`, data);
+    const response = await apiClient.patch(`/party-relations/${encodeURIComponent(relationId)}`, data, {
+      headers: {
+        'Idempotency-Key': buildIdempotencyKey('party-assets-relation-update', [
+          relationId,
+          serializeIdempotencyPayload(data),
+        ]),
+      },
+    });
     return {
       id: String((response.data as any)?.id ?? relationId),
       fromPartyId: String((response.data as any)?.fromPartyId ?? (response.data as any)?.sourcePartyId ?? data.fromPartyId ?? ''),
@@ -209,7 +311,15 @@ export const partyAssetsApi = {
   },
 
   createFarm: async (data: { name: string; regionCode?: string; status?: 'ACTIVE' | 'ARCHIVED' }): Promise<FarmDto> => {
-    const response = await apiClient.post<FarmDto>('/assets/farms', data);
+    const response = await apiClient.post<FarmDto>('/assets/farms', data, {
+      headers: {
+        'Idempotency-Key': buildIdempotencyKey('party-assets-farm-create', [
+          data.name,
+          data.regionCode ?? null,
+          data.status ?? null,
+        ]),
+      },
+    });
     return response.data;
   },
 
@@ -219,7 +329,16 @@ export const partyAssetsApi = {
   },
 
   assignAssetRole: async (data: Omit<AssetPartyRoleDto, 'id'>): Promise<AssetPartyRoleDto> => {
-    const response = await apiClient.post<AssetPartyRoleDto>(`/assets/${encodeURIComponent(data.assetId)}/roles`, data);
+    const response = await apiClient.post<AssetPartyRoleDto>(`/assets/${encodeURIComponent(data.assetId)}/roles`, data, {
+      headers: {
+        'Idempotency-Key': buildIdempotencyKey('party-assets-role-create', [
+          data.assetId,
+          data.partyId,
+          data.role,
+          data.validFrom,
+        ]),
+      },
+    });
     return response.data;
   },
 
@@ -231,6 +350,15 @@ export const partyAssetsApi = {
     const response = await apiClient.patch<AssetPartyRoleDto>(
       `/assets/${encodeURIComponent(assetId)}/roles/${encodeURIComponent(roleId)}`,
       data,
+      {
+        headers: {
+          'Idempotency-Key': buildIdempotencyKey('party-assets-role-update', [
+            assetId,
+            roleId,
+            serializeIdempotencyPayload(data),
+          ]),
+        },
+      },
     );
     return response.data;
   },

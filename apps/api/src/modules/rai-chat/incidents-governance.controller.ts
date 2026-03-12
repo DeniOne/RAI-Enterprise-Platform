@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Param, Post, Query, UseGuards } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Param, Post, Query, UseGuards, UseInterceptors } from "@nestjs/common";
 import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { RolesGuard } from "../../shared/auth/roles.guard";
 import { Roles } from "../../shared/auth/roles.decorator";
@@ -9,6 +9,7 @@ import {
   type GovernanceCountersDto,
   type IncidentFeedItem,
 } from "./incident-ops.service";
+import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
 
 @Controller("rai")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -32,6 +33,7 @@ export class IncidentsGovernanceController {
   }
 
   @Post("incidents/:id/resolve")
+  @UseInterceptors(IdempotencyInterceptor)
   async resolveIncident(
     @Param("id") id: string,
     @Body() body: { comment?: string },
@@ -43,6 +45,7 @@ export class IncidentsGovernanceController {
   }
 
   @Post("incidents/:id/runbook")
+  @UseInterceptors(IdempotencyInterceptor)
   async executeRunbook(
     @Param("id") id: string,
     @Body() body: { action?: IncidentRunbookAction; comment?: string },

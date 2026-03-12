@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Query } from "@nestjs/common";
+import { Controller, Get, Post, Body, UseGuards, Query, UseInterceptors } from "@nestjs/common";
 import { AgroAuditService } from "./agro-audit.service";
 import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { RolesGuard } from "../../shared/auth/roles.guard";
@@ -6,6 +6,7 @@ import { Roles } from "../../shared/auth/roles.decorator";
 import { UserRole, User } from "@rai/prisma-client";
 import { AgriculturalAuditEvent } from "./enums/audit-events.enum";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
+import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
 
 @Controller("agro-audit")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -19,6 +20,7 @@ export class AgroAuditController {
     UserRole.AGRONOMIST,
     UserRole.FIELD_WORKER,
   )
+  @UseInterceptors(IdempotencyInterceptor)
   async logEvent(
     @CurrentUser() user: User,
     @Body() body: { event: string; metadata: any },

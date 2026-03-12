@@ -1,4 +1,11 @@
-﻿# Меню 7: Знания
+---
+id: DOC-FRN-10-FRONTEND-MENU-IMPLEMENTATION-07-MENU-1KNO
+layer: Frontend
+type: Menu Map
+status: draft
+version: 0.1.0
+---
+# Меню 7: Знания
 
 ## 1. Бизнес-роль
 

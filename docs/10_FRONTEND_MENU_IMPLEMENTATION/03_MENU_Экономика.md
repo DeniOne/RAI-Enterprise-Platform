@@ -1,4 +1,11 @@
-﻿# Меню 3: Экономика
+---
+id: DOC-FRN-10-FRONTEND-MENU-IMPLEMENTATION-03-MENU-M94Q
+layer: Frontend
+type: Menu Map
+status: draft
+version: 0.1.0
+---
+# Меню 3: Экономика
 
 ## 1. Бизнес-роль
 

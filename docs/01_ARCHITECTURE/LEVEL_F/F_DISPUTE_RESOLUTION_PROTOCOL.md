@@ -1,12 +1,12 @@
 ---
-id: DOC-ARH-LVLF-DSP
-type: Core Architecture
-layer: Level F
-status: Enforced
+id: DOC-ARC-LEVEL-F-F-DISPUTE-RESOLUTION-PROTOCOL-9F7P
+layer: Architecture
+type: Standards
+status: approved
+version: 1.0.0
 owners: [@techlead]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: ИНФРАСТРУКТУРА РАЗРЕШЕНИЯ СПОРОВ (DISPUTE RESOLUTION PROTOCOL)
 
 Институциональный Оракул (Level F) не имеет права принимать решения в одностороннем порядке без возможности их оспаривания. Ошибки моделей, сенсоров или человеческого фактора (в Level C) требуют формального "Dispute Lifecycle" (Жизненного цикла спора).

@@ -4,9 +4,10 @@ import { AgroOrchestratorController } from "./agro-orchestrator.controller";
 import { PrismaModule } from "../../shared/prisma/prisma.module";
 import { AuditModule } from "../../shared/audit/audit.module";
 import { RiskModule } from "../risk/risk.module";
+import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
 
 @Module({
-  imports: [PrismaModule, AuditModule, RiskModule],
+  imports: [PrismaModule, AuditModule, RiskModule, IdempotencyModule],
   controllers: [AgroOrchestratorController],
   providers: [AgroOrchestratorService],
   exports: [AgroOrchestratorService],

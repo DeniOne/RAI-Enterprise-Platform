@@ -1,13 +1,12 @@
 ---
-id: DOC-DOM-GEN-082
-type: Domain Spec
+id: DOC-DOM-02-DOMAINS-RD-ENGINE-197T
 layer: Domain
-status: Draft
+type: Domain Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Domain Module: R&D Engine (Research & Development) 🔬
 
 ## Назначение

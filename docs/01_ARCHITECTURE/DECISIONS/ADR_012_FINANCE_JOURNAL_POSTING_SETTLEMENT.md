@@ -1,11 +1,10 @@
 ---
-id: DOC-ARC-ADR-012
+id: DOC-ARC-DECISIONS-ADR-012-FINANCE-JOURNAL-POSTING--1O6X
 layer: Architecture
 type: ADR
 status: approved
 version: 1.0.0
 ---
-
 # ADR-012: Finance Domain Redesign (Journal/Posting/Settlement)
 
 Дата: 2026-02-16

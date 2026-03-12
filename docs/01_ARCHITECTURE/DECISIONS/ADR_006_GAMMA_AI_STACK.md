@@ -1,21 +1,12 @@
 ---
-id: DOC-ARC-GEN-031
-type: HLD
+id: DOC-ARC-DECISIONS-ADR-006-GAMMA-AI-STACK-1EGH
 layer: Architecture
-status: Draft
+type: ADR
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿---
-id: decision-adr-006-gamma-ai-stack
-type: decision
-status: review
-owners: [architects]
-aligned_with: [principle-ai-governance-canon]
----
-
 # ADR 006: Стек Gamma для AI и MLOps
 
 ## Контекст

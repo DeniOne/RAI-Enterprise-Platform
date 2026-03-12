@@ -1,13 +1,12 @@
 ---
-id: DOC-DOM-SOIL-003
-type: Model Specification
-layer: Domain Logic
-status: Approved
+id: DOC-DOM-SOIL-DOMAIN-LONG-TERM-PRODUCTIVITY-CURVE-M-05N0
+layer: Domain
+type: Domain Spec
+status: approved
 version: 1.4.0
 owners: [@techlead, @economist]
 last_updated: 2026-02-19
 ---
-
 # LONG-TERM PRODUCTIVITY CURVE MODEL (LPC)
 
 ## 1. Введение

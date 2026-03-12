@@ -1,13 +1,12 @@
 ---
-id: DOC-INS-AGT-005
+id: DOC-INS-AGENTS-INSTRUCTION-AGENT-DOMAIN-GAPS-AND-U-HQXF
+layer: Instructions
 type: Instruction
-layer: Agents
-status: Active
+status: approved
 version: 1.1.0
 owners: [@techlead]
 last_updated: 2026-03-10
 ---
-
 # ИНСТРУКЦИЯ — ДОМЕННЫЕ РАЗРЫВЫ И МОДУЛИ БЕЗ АГЕНТНОГО ВЛАДЕЛЬЦА
 
 ## 1. Назначение
@@ -88,7 +87,7 @@ last_updated: 2026-03-10
 - [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md](../00_STRATEGY/STAGE%202/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md)
 - [A_RAI_AGENT_INTERACTION_BLUEPRINT.md](../00_STRATEGY/STAGE%202/A_RAI_AGENT_INTERACTION_BLUEPRINT.md)
 - [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](../00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md)
-- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](./INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
+- `INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md` (routing canon)
 
 ---
 
@@ -172,7 +171,7 @@ last_updated: 2026-03-10
 - растёт риск хаотического `all-to-all` мышления вместо hub-and-spoke модели.
 
 Для маршрутизации такие разрывы должны трактоваться по правилам
-[INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](./INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md),
+`INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md`,
 а не закрываться prose-fallback.
 
 ---
@@ -222,10 +221,9 @@ last_updated: 2026-03-10
 - [A_RAI_AGENT_INTERACTION_BLUEPRINT.md](../00_STRATEGY/STAGE%202/A_RAI_AGENT_INTERACTION_BLUEPRINT.md)
 - [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](../00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md)
 - [INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md](./INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md)
-- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](./INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
+- `INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md` (routing canon)
 - [RAI_CONTRACTS_AGENT_CANON.md](../00_STRATEGY/STAGE%202/RAI_CONTRACTS_AGENT_CANON.md)
 - [commerce.controller.ts](../../apps/api/src/modules/commerce/commerce.controller.ts)
 - [commerce-contract.service.ts](../../apps/api/src/modules/commerce/services/commerce-contract.service.ts)
 - [agent-interaction-contracts.ts](../../apps/api/src/modules/rai-chat/agent-contracts/agent-interaction-contracts.ts)
 - [agent-management.service.ts](../../apps/api/src/modules/explainability/agent-management.service.ts)
-

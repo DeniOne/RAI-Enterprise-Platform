@@ -1,23 +1,23 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
-const { PrismaClient } = require('../packages/prisma-client/generated-client');
+const { PrismaClient, Prisma } = require('../packages/prisma-client/generated-client');
 
 const prisma = new PrismaClient();
 
-async function queryOne(sql) {
-  const rows = await prisma.$queryRawUnsafe(sql);
+async function queryOne(query) {
+  const rows = await prisma.$queryRaw(query);
   return rows?.[0] || {};
 }
 
 async function main() {
-  const policyTable = await queryOne(`
+  const policyTable = await queryOne(Prisma.sql`
     SELECT EXISTS (
       SELECT 1
       FROM information_schema.tables
       WHERE table_schema='public' AND table_name='fsm_allowed_transitions'
     ) AS present
   `);
-  const trigger = await queryOne(`
+  const trigger = await queryOne(Prisma.sql`
     SELECT EXISTS (
       SELECT 1
       FROM pg_trigger t
@@ -27,7 +27,7 @@ async function main() {
         AND NOT t.tgisinternal
     ) AS present
   `);
-  const fn = await queryOne(`
+  const fn = await queryOne(Prisma.sql`
     SELECT EXISTS (
       SELECT 1
       FROM pg_proc
@@ -35,7 +35,7 @@ async function main() {
     ) AS present
   `);
 
-  const policySeed = await queryOne(`
+  const policySeed = await queryOne(Prisma.sql`
     SELECT COUNT(*)::int AS cnt
     FROM fsm_allowed_transitions
     WHERE entity_type = 'Task' AND is_enabled = TRUE
@@ -64,4 +64,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-

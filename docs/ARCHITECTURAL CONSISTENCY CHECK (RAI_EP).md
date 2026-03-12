@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-174
-type: Legacy
-layer: Archive
-status: Draft
+id: DOC-ARC-ARCHITECTURAL-CONSISTENCY-CHECK-RAI-EP-TKXJ
+layer: Architecture
+type: Report
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # ROLE
 Ты выступаешь как **Chief System Architect и Architecture Auditor** проекта RAI Enterprise Platform (RAI_EP).
 

@@ -1,11 +1,10 @@
-﻿---
-id: DOC-OPS-REP-001
+---
+id: DOC-OPS-FORENSIC-TECHNICAL-AUDIT-RU-CIK7
 layer: Operations
-type: Report
+type: Incident Report
 status: approved
 version: 1.0.0
 ---
-
 # FORENSIC TECHNICAL AUDIT (Кодовая База)
 Дата: 2026-02-15 16:59:00
 Основание: анализ только исполняемого исходного кода и фактической структуры репозитория.

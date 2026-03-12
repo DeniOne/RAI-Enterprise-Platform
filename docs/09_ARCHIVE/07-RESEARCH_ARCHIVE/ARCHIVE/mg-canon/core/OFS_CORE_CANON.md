@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-165
-type: Legacy
+id: DOC-ARV-CORE-OFS-CORE-CANON-1XTH
 layer: Archive
-status: Draft
+type: Research
+status: archived
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # OFS CORE CANON (Organizational & Functional Structure)
 
 > [!WARNING]

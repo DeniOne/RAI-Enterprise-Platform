@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-ARCHIVE-PROMPT-CHANGE-RFC-1V64
+layer: Archive
+type: Legacy
+status: archived
+version: 0.1.0
+---
 # PromptChange RFC — процесс изменения промтов A_RAI
 
 **Статус:** Обязательный процесс для всех изменений промтов агентов.  

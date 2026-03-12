@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-ARCHIVE-RAI-AGRONOMIC-DIGITAL-TWIN-ARCHITE-5JL4
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 # RAI Agronomic Digital Twin Architecture
 
 Версия: 1.0

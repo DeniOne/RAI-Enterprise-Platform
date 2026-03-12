@@ -1,11 +1,10 @@
 ---
-id: DOC-ARC-ADR-010
+id: DOC-ARC-ADR-010-DB-LEVEL-FSM-ENFORCEMENT-1G7B
 layer: Architecture
 type: ADR
 status: approved
 version: 1.0.0
 ---
-
 # ADR 010: DB-level FSM Enforcement Strategy
 
 ## Decision Update (2026-02-16)

@@ -1,22 +1,12 @@
 ---
-id: DOC-ARC-GEN-040
-type: HLD
+id: DOC-ARC-HLD-GAMMA-UNIFIED-MEMORY-V1-APZX
 layer: Architecture
-status: Draft
+type: HLD
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿---
-id: component-gamma-unified-memory-v1
-type: component
-status: review
-owners: [architects, techleads]
-depends_on: [component-uma]
-aligned_with: [principle-gamma-vision-scope]
----
-
 # HLD: Unified Memory v1
 
 ## ??????????

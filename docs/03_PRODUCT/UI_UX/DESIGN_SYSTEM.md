@@ -1,13 +1,12 @@
 ---
-id: DOC-PRD-DS-001
-type: Standard
-layer: Strategy / Product
-status: Active
+id: DOC-PRD-UI-UX-DESIGN-SYSTEM-MIYP
+layer: Product
+type: UI Spec
+status: approved
 version: 2.0.1
 owners: [@techlead, @design-team]
 last_updated: 2026-03-07
 ---
-
 # Мастер-стандарт Дизайн-системы: RAI Enterprise Platform
 ## Institutional Grade 10/10+ | Control Plane Canon
 

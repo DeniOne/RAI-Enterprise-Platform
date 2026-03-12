@@ -1,11 +1,10 @@
 ---
-id: DOC-OPS-REP-003
+id: DOC-OPS-WEEK2-PROGRESS-RU-10AZ
 layer: Operations
 type: Report
 status: draft
 version: 0.1.0
 ---
-
 # WEEK 2 PROGRESS (RU)
 
 Дата: 2026-02-15

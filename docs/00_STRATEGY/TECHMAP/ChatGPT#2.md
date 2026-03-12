@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-TECHMAP-CHATGPT-2-1B5E
+layer: Archive
+type: Legacy
+status: archived
+version: 0.1.0
+---
 # Техкарта рапса в модели RAI_EP для России
 
 ## Источники и нормативная рамка

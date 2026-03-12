@@ -1,14 +1,13 @@
 ---
-id: DOC-ARCH-GOV-002
-type: Analysis & Protocol
-layer: Governance (Level E)
-status: Approved
+id: DOC-ARC-LEVEL-E-SUSTAINABILITY-OVERRIDE-ANALYSIS-17PT
+layer: Architecture
+type: HLD
+status: approved
 version: 1.4.0
 owners: [@techlead, @risk_officer]
 sri_spec_ref: "DOC-DOM-SOIL-001"
 last_updated: 2026-02-19
 ---
-
 # SUSTAINABILITY OVERRIDE ANALYSIS (SOA)
 
 ## 1. Введение

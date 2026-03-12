@@ -1,14 +1,13 @@
 ---
-id: DOC-ENG-GEN-114
-type: Service Spec
+id: DOC-ENG-04-ENGINEERING-ADVISORY-S4-GATE-PACKET-TEM-BD43
 layer: Engineering
-status: Draft
+type: Service Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿# Advisory S4 (100%) Gate Packet Template
+# Advisory S4 (100%) Gate Packet Template
 
 ## 1. Target Decision
 - Stage transition: `S3 (50%) -> S4 (100%)`

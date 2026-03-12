@@ -1,14 +1,13 @@
 ---
-id: DOC-EXE-GEN-146
-type: Phase Plan
+id: DOC-EXE-PHASE-GAMMA-SPRINT-1-PLAN-1S6L
 layer: Execution
-status: Draft
+type: Phase Plan
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿# План Спринта 1 (Phase Gamma): Data & Infrastructure Readiness
+# План Спринта 1 (Phase Gamma): Data & Infrastructure Readiness
 
 **Срок:** 2 недели
 **Цель:** Подготовка инфраструктуры, протоколов данных и наблюдаемости для подключения AI-солверов или финальных AI-моделей.

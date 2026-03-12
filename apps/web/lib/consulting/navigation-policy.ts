@@ -1,5 +1,6 @@
 import { UserRole } from '../config/role-config';
 import { CapabilityFlags, capabilitiesFromRole } from './capability-policy';
+import { webFeatureFlags } from '../feature-flags';
 
 /**
  * Контракт Контекста UI Домена
@@ -193,6 +194,7 @@ export const CONSULTING_NAVIGATION: NavItem[] = [
         roles: ['ADMIN', 'CEO', 'DIRECTOR_OFS', 'SYSTEM_ADMIN', 'FOUNDER'],
         subItems: [
             { id: 'strat_overview', label: 'Стратегический обзор', path: '/strategy/overview', domain: 'strategy', roles: ['ADMIN', 'CEO', 'DIRECTOR_OFS', 'SYSTEM_ADMIN', 'FOUNDER'] },
+            { id: 'strat_forecasts', label: 'Прогнозы', path: '/strategy/forecasts', domain: 'strategy', roles: ['ADMIN', 'CEO', 'DIRECTOR_OFS', 'SYSTEM_ADMIN', 'FOUNDER'] },
             { id: 'strat_portfolio', label: 'Портфель планов урожая', path: '/strategy/portfolio', domain: 'strategy', roles: ['ADMIN', 'CEO', 'DIRECTOR_OFS', 'SYSTEM_ADMIN', 'FOUNDER'] },
             { id: 'strat_risks', label: 'Карта рисков', path: '/strategy/risks', domain: 'strategy', roles: ['ADMIN', 'CEO', 'DIRECTOR_OFS', 'SYSTEM_ADMIN', 'FOUNDER'] },
             { id: 'strat_scenarios', label: 'Сценарное моделирование', path: '/strategy/scenarios', domain: 'strategy', roles: ['ADMIN', 'CEO', 'DIRECTOR_OFS', 'SYSTEM_ADMIN', 'FOUNDER'] },
@@ -338,6 +340,10 @@ export function getVisibleNavigation(
             // Keep role lists as compatibility matrix, but gate sensitive areas by capabilities.
             const hasRole = role ? item.roles.includes(role) : true;
             if (!hasRole) return acc;
+
+            if (item.id === 'strat_forecasts' && !webFeatureFlags.strategyForecasts) {
+                return acc;
+            }
 
             const canAccessGovernance = capabilities.canSign || capabilities.canOverride || capabilities.canEscalate;
             if (!canAccessGovernance && (item.id === 'decisions' || item.domain === 'gr' || item.id === 'advisory')) {

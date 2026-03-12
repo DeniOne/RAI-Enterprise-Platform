@@ -1,12 +1,12 @@
 ---
-id: DOC-EXE-LVLF-CHK
-type: Checklist
+id: DOC-EXE-PHASE-DELTA-LEVEL-F-IMPLEMENTATION-CHECKLI-SM1J
 layer: Execution
-status: Enforced
+type: Checklist
+status: approved
+version: 1.0.0
 owners: [@techlead, @program_manager]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: ИНСТИТУЦИОНАЛЬНЫЙ ЧЕК-ЛИСТ ИМПЛЕМЕНТАЦИИ (LEVEL_F_IMPLEMENTATION_CHECKLIST)
 
 Данный документ является строгим трекером (Hard-Gated Tracker) для сборки архитектуры Level F (Institutional Oracle Standard). Закрытие задачи (Checkbox) допускается **ТОЛЬКО** при наличии покрывающего теста и пройденного Security-Review.

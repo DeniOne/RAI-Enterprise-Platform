@@ -1,13 +1,12 @@
 ---
-id: DOC-INS-AGT-004
+id: DOC-INS-AGENTS-INSTRUCTION-AGENT-CATALOG-AND-RESPO-1M0T
+layer: Instructions
 type: Instruction
-layer: Agents
-status: Active
+status: approved
 version: 1.1.0
 owners: [@techlead]
 last_updated: 2026-03-10
 ---
-
 # ИНСТРУКЦИЯ — КАТАЛОГ АГЕНТОВ И КАРТА ОТВЕТСТВЕННОСТИ
 
 ## 1. Назначение
@@ -44,7 +43,7 @@ last_updated: 2026-03-10
 - [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md](../00_STRATEGY/STAGE%202/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md)
 - [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](../00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md)
 - [TRUTH_SYNC_STAGE_2_CLAIMS.md](../00_STRATEGY/STAGE%202/TRUTH_SYNC_STAGE_2_CLAIMS.md)
-- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](./INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
+- `INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md` (routing canon)
 - [agent-registry.service.ts](../../apps/api/src/modules/rai-chat/agent-registry.service.ts)
 - [agent-management.service.ts](../../apps/api/src/modules/explainability/agent-management.service.ts)
 - [agent-interaction-contracts.ts](../../apps/api/src/modules/rai-chat/agent-contracts/agent-interaction-contracts.ts)
@@ -181,7 +180,7 @@ last_updated: 2026-03-10
 
 - наличие profile, template manifest или adapter binding не даёт права production-routing в такую роль как в `primary owner-agent`;
 - direct routing в template/future role запрещён до появления canonical runtime family, intent contract и подтверждённого execution path;
-- source of truth для production-routing находится в [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](./INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md).
+- source of truth для production-routing находится в `INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md`.
 
 К 2026-03-10 весь пакет подробных профилей приведён к формату `current / max allowed / handoff boundaries`, поэтому каталог нужно читать вместе с профильным паспортом, а не вместо него.
 
@@ -329,9 +328,8 @@ Expert-tier роли:
 - [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md](../00_STRATEGY/STAGE%202/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md)
 - [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](../00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md)
 - [TRUTH_SYNC_STAGE_2_CLAIMS.md](../00_STRATEGY/STAGE%202/TRUTH_SYNC_STAGE_2_CLAIMS.md)
-- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](./INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
+- `INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md` (routing canon)
 - [agent-registry.service.ts](../../apps/api/src/modules/rai-chat/agent-registry.service.ts)
 - [agent-management.service.ts](../../apps/api/src/modules/explainability/agent-management.service.ts)
 - [agent-interaction-contracts.ts](../../apps/api/src/modules/rai-chat/agent-contracts/agent-interaction-contracts.ts)
 - [tool-call.planner.ts](../../apps/api/src/modules/rai-chat/runtime/tool-call.planner.ts)
-

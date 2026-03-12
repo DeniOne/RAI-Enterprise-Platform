@@ -1,14 +1,13 @@
 ---
-id: DOC-ENG-GEN-118
-type: Service Spec
+id: DOC-ENG-04-ENGINEERING-ADVISORY-TUNING-POLICY-M999
 layer: Engineering
-status: Draft
+type: Policy
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿# Advisory Tuning Policy (Sprint 5)
+# Advisory Tuning Policy (Sprint 5)
 
 ## Purpose
 

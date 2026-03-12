@@ -3,17 +3,17 @@ import {
   Get,
   HttpException,
   HttpStatus,
-  UseGuards,
 } from "@nestjs/common";
 import { KnowledgeService } from "./knowledge.service";
-import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
+import { Authorized } from "../../shared/auth/authorized.decorator";
+import { PLANNING_READ_ROLES } from "../../shared/auth/rbac.constants";
 
 @Controller("knowledge")
-@UseGuards(JwtAuthGuard)
 export class KnowledgeController {
   constructor(private readonly knowledgeService: KnowledgeService) {}
 
   @Get("graph")
+  @Authorized(...PLANNING_READ_ROLES)
   async getGraph() {
     try {
       return await this.knowledgeService.getGraphSnapshot();

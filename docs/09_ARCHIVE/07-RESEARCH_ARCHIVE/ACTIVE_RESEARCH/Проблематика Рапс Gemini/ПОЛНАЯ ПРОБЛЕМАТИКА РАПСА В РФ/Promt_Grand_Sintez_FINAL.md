@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-PROMT-GRAND-SINTEZ-FINAL-1TY3
+layer: Archive
+type: Legacy
+status: archived
+version: 0.1.0
+---
 # ПРОМТ: ГРАНД-СИНТЕЗ ПЯТИ AI-ИССЛЕДОВАНИЙ ПО ПРОБЛЕМАТИКЕ РАПСА В РФ
 
 ---

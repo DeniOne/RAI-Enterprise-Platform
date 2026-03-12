@@ -1,21 +1,12 @@
 ---
-id: DOC-EXE-GEN-136
-type: Phase Plan
+id: DOC-EXE-07-EXECUTION-FULL-PROJECT-WBS-1OTE
 layer: Execution
-status: Draft
+type: WBS
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿---
-id: component-implementation-wbs
-type: component
-status: review
-owners: [techleads, architects]
-aligned_with: [principle-vision]
----
-
 # Project Master Plan: RAI Enterprise Platform (Full WBS) 🚀
 
 > **Цель:** Создание полной операционной системы агробизнеса (Back Office + Front Office + AI).

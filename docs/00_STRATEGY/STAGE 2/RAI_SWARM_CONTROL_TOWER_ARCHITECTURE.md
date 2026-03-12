@@ -1,13 +1,12 @@
 ---
-id: DOC-S2-SWARM-CONTROL-TOWER
-type: Canon
-layer: Stage 2
-status: Active Canon
+id: DOC-STR-STAGE-2-RAI-SWARM-CONTROL-TOWER-ARCHITECTU-1ALP
+layer: Strategy
+type: Vision
+status: approved
 version: 1.0.0
 owners: [@techlead]
 last_updated: 2026-03-09
 ---
-
 # RAI SWARM CONTROL TOWER ARCHITECTURE
 
 ## 1. Назначение документа

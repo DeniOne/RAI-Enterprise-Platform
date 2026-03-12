@@ -1113,4 +1113,124 @@ describe("FrontOfficeDraftService", () => {
     expect((result as any).handoffStatus).toBe("ROUTED");
     expect((result as any).targetOwnerRole).toBe("crm_agent");
   });
+
+  it("returns only bound threads for external front-office user", async () => {
+    communicationRepositoryMock.listThreads.mockResolvedValue([
+      {
+        id: "thread-1",
+        threadKey: "c1:telegram:tg-1",
+        farmAccountId: "farm-1",
+      },
+    ]);
+
+    const result = await service.listThreadsForViewer("c1", {
+      id: "user-1",
+      role: "FRONT_OFFICE_USER",
+      accountId: "farm-1",
+    });
+
+    expect(communicationRepositoryMock.listThreads).toHaveBeenCalledWith("c1", {
+      farmAccountId: "farm-1",
+      boundOnly: true,
+      take: 200,
+    });
+    expect(result).toHaveLength(1);
+  });
+
+  it("hides drafts and handoffs for external thread view", async () => {
+    communicationRepositoryMock.getThreadByKey.mockResolvedValue({
+      id: "thread-1",
+      threadKey: "c1:telegram:tg-1",
+      channel: "telegram",
+      companyId: "c1",
+      farmAccountId: "farm-1",
+      farmNameSnapshot: "Ферма 1",
+      representativeUserId: "rep-1",
+      representativeTelegramId: "telegram:1001",
+      threadExternalId: "telegram:1001",
+      dialogExternalId: null,
+      senderExternalId: null,
+      recipientExternalId: null,
+      route: null,
+      lastDraftId: null,
+      lastMessageDirection: "inbound",
+      lastMessagePreview: "Привет",
+      lastMessageAt: "2026-03-09T00:00:00.000Z",
+      currentOwnerRole: null,
+      currentHandoffStatus: null,
+    });
+    communicationRepositoryMock.listMessages.mockResolvedValue([
+      {
+        id: "msg-1",
+        threadId: "thread-1",
+        companyId: "c1",
+        messageText: "Привет",
+      },
+    ]);
+
+    const result = await service.getThreadForViewer(
+      "c1",
+      {
+        id: "user-1",
+        role: "FRONT_OFFICE_USER",
+        accountId: "farm-1",
+      },
+      "c1:telegram:tg-1",
+    );
+
+    expect(result.thread.threadKey).toBe("c1:telegram:tg-1");
+    expect(result.messages).toHaveLength(1);
+    expect(result.drafts).toEqual([]);
+    expect(result.handoffs).toEqual([]);
+  });
+
+  it("allows external user to reply inside own thread", async () => {
+    communicationRepositoryMock.getThreadByKey.mockResolvedValue({
+      id: "thread-1",
+      threadKey: "c1:telegram:tg-1",
+      channel: "telegram",
+      companyId: "c1",
+      farmAccountId: "farm-1",
+      farmNameSnapshot: "Ферма 1",
+      representativeUserId: "rep-1",
+      representativeTelegramId: "telegram:1001",
+      threadExternalId: "telegram:1001",
+      dialogExternalId: null,
+      senderExternalId: null,
+      recipientExternalId: null,
+      route: null,
+      lastDraftId: null,
+      lastMessageDirection: "inbound",
+      lastMessagePreview: "Привет",
+      lastMessageAt: "2026-03-09T00:00:00.000Z",
+      currentOwnerRole: "manager",
+      currentHandoffStatus: null,
+    });
+    outboundServiceMock.sendToThread.mockResolvedValue({
+      thread: { id: "thread-1" },
+      message: { id: "msg-2" },
+      delivery: { ok: true },
+    });
+
+    const result = await service.replyToThread(
+      "c1",
+      {
+        id: "user-1",
+        role: "FRONT_OFFICE_USER",
+        accountId: "farm-1",
+      },
+      "c1:telegram:tg-1",
+      "Подтверждаю данные",
+    );
+
+    expect(outboundServiceMock.sendToThread).toHaveBeenCalledWith(
+      expect.objectContaining({
+        companyId: "c1",
+        messageText: "Подтверждаю данные",
+        actorUserId: "user-1",
+        actorUserRole: "FRONT_OFFICE_USER",
+      }),
+    );
+    expect(result.delivery).toEqual({ ok: true });
+  });
 });

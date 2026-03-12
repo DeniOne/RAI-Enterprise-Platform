@@ -1,13 +1,12 @@
 ---
-id: DOC-ARC-GEN-050
-type: Standards
+id: DOC-ARC-PRINCIPLES-FRONT-OFFICE-FUNCTION-ADMISSION-1FGC
 layer: Architecture
-status: Draft
+type: Standards
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Front-Office Function Admission Rules
 
 RAI_EP · Phase Beta · Canonical

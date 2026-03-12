@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-191
-type: Legacy
+id: DOC-ARV-LEGACY-ENGRAMS-UYDM
 layer: Archive
-status: Draft
+type: Research
+status: archived
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 Концепция энграмм (engrams) как технологической памяти — это мощный паттерн для создания самообучающейся системы. Давайте интегрируем её в архитектуру RAI Enterprise Platform.
 
 Концепция энграмм в RAI: Когнитивная память системы

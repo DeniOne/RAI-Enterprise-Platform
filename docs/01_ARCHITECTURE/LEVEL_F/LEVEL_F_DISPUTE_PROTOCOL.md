@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-LVLF-010
-type: Protocol
+id: DOC-ARC-LEVEL-F-LEVEL-F-DISPUTE-PROTOCOL-1KJJ
 layer: Architecture
-status: Enforced
+type: Standards
+status: approved
 version: 2.0.0
 owners: [@techlead, @chief_legal_officer]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: ИНСТИТУЦИОНАЛЬНЫЙ ПРОТОКОЛ РАЗРЕШЕНИЯ СПОРОВ (LEVEL_F_DISPUTE_PROTOCOL)
 
 ## 0. Scope & Jurisdiction (Область Применения)

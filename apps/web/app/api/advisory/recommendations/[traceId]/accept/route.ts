@@ -17,6 +17,7 @@ export async function POST(
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
+          "Idempotency-Key": `advisory-accept:${params.traceId}`,
         },
       },
     );

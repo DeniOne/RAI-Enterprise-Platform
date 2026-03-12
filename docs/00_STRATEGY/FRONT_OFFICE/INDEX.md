@@ -1,13 +1,12 @@
 ---
-id: DOC-STR-FO-001
-type: Index
+id: DOC-STR-FRONT-OFFICE-INDEX-KKJ2
 layer: Strategy
-status: Draft
+type: Navigation
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-03-09
 ---
-
 # FRONT_OFFICE — Canon Index
 
 > Стратегическая точка входа для блока `Front-Office` в `RAI_EP`.

@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-CORE-LD-005
-type: Architecture
-layer: Core
-status: Draft
+id: DOC-ARC-LEVEL-D-DRIFT-DETECTION-ARCHITECTURE-1T8W
+layer: Architecture
+type: HLD
+status: draft
 version: 1.0.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # DRIFT DETECTION ARCHITECTURE
 ## Архитектура обнаружения смещения данных и деградации моделей
 

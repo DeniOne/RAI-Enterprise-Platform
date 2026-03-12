@@ -1,21 +1,12 @@
 ---
-id: DOC-DOM-GEN-073
-type: Domain Spec
+id: DOC-DOM-MEMORY-UNIFIED-MEMORY-DOMAIN-MODEL-13ZL
 layer: Domain
-status: Draft
+type: Domain Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿---
-id: component-domain-unified-memory-model
-type: component
-status: review
-owners: [architects, domain-experts]
-aligned_with: [principle-gamma-vision-scope]
----
-
 # Unified Memory: ???????? ??????
 
 ## ????????

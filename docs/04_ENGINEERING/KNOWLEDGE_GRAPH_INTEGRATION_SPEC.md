@@ -1,3 +1,10 @@
+---
+id: DOC-ENG-04-ENGINEERING-KNOWLEDGE-GRAPH-INTEGRATION-4M5V
+layer: Engineering
+type: Service Spec
+status: draft
+version: 0.1.0
+---
 # KNOWLEDGE_GRAPH_INTEGRATION_SPEC.md
 
 ## 0. Статус документа

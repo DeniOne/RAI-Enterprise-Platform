@@ -1,21 +1,12 @@
 ---
-id: DOC-ARC-GEN-022
-type: HLD
+id: DOC-ARC-CORE-SUBSYSTEMS-IDENTITY-ACCESS-RNWJ
 layer: Architecture
-status: Draft
+type: HLD
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: service-iam
-type: service
-status: review
-owners: [architects, security-officers]
-aligned_with: [principle-axioms]
----
-
 # Subsystem: Identity & Access Management (IAM) 🔐
 
 > **Статус:** Канон | **Версия:** 1.0 | **Расположение:** Business Core

@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-161
-type: Legacy
+id: DOC-ARV-ADAPTERS-ADAPTER-LAYER-ARCHITECTURE-1N3F
 layer: Archive
-status: Draft
+type: Research
+status: archived
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # ADAPTER LAYER ARCHITECTURE
 
 > [!TIP]

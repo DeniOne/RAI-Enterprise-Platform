@@ -1,3 +1,10 @@
+---
+id: DOC-STR-00-STRATEGY-LEVEL-F-INDUSTRY-COGNITIVE-STA-190N
+layer: Strategy
+type: Vision
+status: draft
+version: 0.1.0
+---
 # LEVEL F — INDUSTRY COGNITIVE STANDARD
 
 **Архитектурный документ (Production-Ready)**  

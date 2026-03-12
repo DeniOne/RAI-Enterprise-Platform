@@ -1,3 +1,10 @@
+---
+id: DOC-EXE-07-EXECUTION-PROMPT-EXPLORATION-MODULE-1VMV
+layer: Execution
+type: Prompt
+status: draft
+version: 0.1.0
+---
 # CODEX PROMPT: Institutional Exploration Module (IEM) по шаблону "док + сразу реализация"
 
 Работаем по модулю в формате "док + сразу реализация".

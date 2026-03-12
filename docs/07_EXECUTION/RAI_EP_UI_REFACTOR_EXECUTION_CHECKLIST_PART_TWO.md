@@ -1,3 +1,10 @@
+---
+id: DOC-EXE-07-EXECUTION-RAI-EP-UI-REFACTOR-EXECUTION--9DBF
+layer: Execution
+type: Checklist
+status: draft
+version: 0.1.0
+---
 # PROMPT 2 — INTERACTION CORE (TASK B + TASK E + TASK F)
 # RAI_EP_UI_REFACTOR__P2_EDITMODE.md
 

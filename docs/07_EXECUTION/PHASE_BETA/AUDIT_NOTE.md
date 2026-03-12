@@ -1,13 +1,12 @@
 ---
-id: DOC-EXE-GEN-138
-type: Phase Plan
+id: DOC-EXE-PHASE-BETA-AUDIT-NOTE-FZ1A
 layer: Execution
-status: Draft
+type: Phase Plan
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # AUDIT_NOTE: Причины системного сбоя Phase Beta
 
 **Дата:** 2026-02-07  

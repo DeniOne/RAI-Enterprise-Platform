@@ -3,7 +3,6 @@ import {
   Get,
   Param,
   Query,
-  UseGuards,
   NotFoundException,
 } from "@nestjs/common";
 import {
@@ -18,9 +17,10 @@ import {
   AuditLogFilter,
   PaginationOptions,
 } from "./audit.service";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { CurrentUser } from "../auth/current-user.decorator";
 import { AuditLog } from "@rai/prisma-client";
+import { Authorized } from "../auth/authorized.decorator";
+import { AUDIT_READ_ROLES } from "../auth/rbac.constants";
 
 /**
  * REST API для просмотра аудит-логов.
@@ -29,7 +29,6 @@ import { AuditLog } from "@rai/prisma-client";
 @ApiTags("Audit")
 @ApiBearerAuth()
 @Controller("audit")
-@UseGuards(JwtAuthGuard)
 export class AuditController {
   constructor(private readonly auditService: AuditService) {}
 
@@ -37,6 +36,7 @@ export class AuditController {
    * GET /audit/logs — Список аудит-событий с фильтрацией и пагинацией
    */
   @Get("logs")
+  @Authorized(...AUDIT_READ_ROLES)
   @ApiOperation({ summary: "Получить список аудит-событий" })
   @ApiQuery({
     name: "action",
@@ -98,6 +98,7 @@ export class AuditController {
    * GET /audit/logs/:id — Детали аудит-события
    */
   @Get("logs/:id")
+  @Authorized(...AUDIT_READ_ROLES)
   @ApiOperation({ summary: "Получить детали аудит-события" })
   @ApiResponse({ status: 200, description: "Детали события" })
   @ApiResponse({ status: 404, description: "Событие не найдено" })
@@ -107,5 +108,19 @@ export class AuditController {
       throw new NotFoundException(`Audit log ${id} not found`);
     }
     return log;
+  }
+
+  @Get("logs/:id/proof")
+  @Authorized(...AUDIT_READ_ROLES)
+  @ApiOperation({ summary: "Получить proof нотариализации аудит-события" })
+  @ApiResponse({ status: 200, description: "Детали notarization/WORM proof" })
+  @ApiResponse({ status: 404, description: "Proof не найден" })
+  async getLogProof(@Param("id") id: string) {
+    const proof = await this.auditService.findProofById(id);
+    if (!proof) {
+      throw new NotFoundException(`Audit notarization proof for ${id} not found`);
+    }
+
+    return proof;
   }
 }

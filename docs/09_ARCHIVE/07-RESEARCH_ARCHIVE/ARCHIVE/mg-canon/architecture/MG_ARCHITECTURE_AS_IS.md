@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-162
-type: Legacy
+id: DOC-ARV-ARCHITECTURE-MG-ARCHITECTURE-AS-IS-140Q
 layer: Archive
-status: Draft
+type: Research
+status: archived
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # MatrixGin Architecture (AS-IS)
 
 > [!NOTE]

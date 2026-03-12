@@ -1,13 +1,12 @@
 ---
-id: DOC-ENG-LVLF-002
-type: Architecture Specification
-layer: Engineering (Computation)
-status: Enforced
+id: DOC-ENG-LEVEL-F-F-RATING-ENGINE-ARCH-1EOO
+layer: Engineering
+type: Service Spec
+status: approved
 version: 2.0.0
 owners: [@techlead, @algorithm_engineer]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: АРХИТЕКТУРА РЕЙТИНГОВОГО ДВИЖКА (F_RATING_ENGINE_ARCH)
 
 ## 0. Аксиома Чистой Функции (Pure Function Axiom)

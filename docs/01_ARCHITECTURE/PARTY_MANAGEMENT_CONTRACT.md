@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-01-ARCHITECTURE-PARTY-MANAGEMENT-CONTRACT-1O2R
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # PARTY MANAGEMENT CONTRACT (INSTITUTIONAL GRADE)
 
 ## 0. СТАТУС ДОКУМЕНТА

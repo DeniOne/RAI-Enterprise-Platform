@@ -1,3 +1,10 @@
+---
+id: DOC-EXE-07-EXECUTION-RAI-EP-UI-REFACTOR-EXECUTION--4TYK
+layer: Execution
+type: Checklist
+status: draft
+version: 0.1.0
+---
 # PROMPT 1 — FOUNDATION (TASK A + TASK D + TASK H)
 # RAI_EP_UI_REFACTOR__P1_FOUNDATION.md
 

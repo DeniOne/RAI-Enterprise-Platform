@@ -5,6 +5,10 @@ type CounterKey =
   | "financial_invariant_failures_total"
   | "event_duplicates_prevented_total"
   | "reconciliation_alerts_total"
+  | "memory_engram_formations_total"
+  | "memory_engram_pruned_total"
+  | "memory_auto_remediations_total"
+  | "memory_auto_remediation_failures_total"
   | "retraining_sessions_triggered_total"
   | "model_deployments_total"
   | "critical_drift_alerts_total"
@@ -18,6 +22,10 @@ class InvariantMetricsRegistry {
     financial_invariant_failures_total: 0,
     event_duplicates_prevented_total: 0,
     reconciliation_alerts_total: 0,
+    memory_engram_formations_total: 0,
+    memory_engram_pruned_total: 0,
+    memory_auto_remediations_total: 0,
+    memory_auto_remediation_failures_total: 0,
     retraining_sessions_triggered_total: 0,
     model_deployments_total: 0,
     critical_drift_alerts_total: 0,
@@ -65,6 +73,14 @@ class InvariantMetricsRegistry {
       return false;
     }
     return this.counters.financial_invariant_failures_total >= threshold;
+  }
+
+  resetForTests(): void {
+    for (const key of Object.keys(this.counters) as CounterKey[]) {
+      this.counters[key] = 0;
+    }
+    this.tenantViolationByTenant.clear();
+    this.tenantViolationByModule.clear();
   }
 }
 

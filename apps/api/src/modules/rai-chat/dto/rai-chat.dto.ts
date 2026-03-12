@@ -382,10 +382,16 @@ export interface ExternalAdvisoryDto {
 }
 
 export interface RaiMemoryUsedDto {
-  kind: "episode" | "profile";
+  kind: "episode" | "profile" | "engram" | "active_alert" | "hot_engram";
   label: string;
   confidence: number;
   source?: string;
+}
+
+export interface RaiMemorySummaryDto {
+  primaryHint: string;
+  primaryKind: RaiMemoryUsedDto["kind"];
+  detailsAvailable: boolean;
 }
 
 export interface EvidenceReference {
@@ -681,6 +687,9 @@ export class RaiChatResponseDto {
 
   @IsOptional()
   memoryUsed?: RaiMemoryUsedDto[];
+
+  @IsOptional()
+  memorySummary?: RaiMemorySummaryDto;
 
   @IsOptional()
   evidence?: EvidenceReference[];

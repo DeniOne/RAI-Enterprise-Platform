@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-175
-type: Legacy
-layer: Archive
-status: Draft
+id: DOC-STR-CONSULTING-CONSULTING-CORE-RAI-EP-1JYB
+layer: Strategy
+type: Vision
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # CONSULTING CORE — Каноническая модель консалтинга RAI_EP
 
 > **Статус:** CANONICAL / FOUNDATIONAL

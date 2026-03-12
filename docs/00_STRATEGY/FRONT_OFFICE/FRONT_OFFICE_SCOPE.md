@@ -1,13 +1,12 @@
 ---
-id: DOC-STR-FO-002
-type: Scope
+id: DOC-STR-FRONT-OFFICE-FRONT-OFFICE-SCOPE-1GMJ
 layer: Strategy
-status: Draft
+type: Vision
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-03-09
 ---
-
 # FRONT_OFFICE_SCOPE
 
 ## 1. Назначение блока

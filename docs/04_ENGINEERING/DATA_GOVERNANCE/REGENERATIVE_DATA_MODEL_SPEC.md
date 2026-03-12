@@ -1,3 +1,10 @@
+---
+id: DOC-ENG-DATA-GOVERNANCE-REGENERATIVE-DATA-MODEL-SP-18RY
+layer: Engineering
+type: Database Spec
+status: draft
+version: 0.1.0
+---
 # LEVEL E: Спецификация Регенеративной Модели Данных
 
 ## 1. Введение

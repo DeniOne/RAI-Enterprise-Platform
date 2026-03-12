@@ -1,3 +1,10 @@
+---
+id: DOC-DOM-AGRO-DOMAIN-AGRONOMIC-STRATEGY-LIBRARY-SPE-4NXC
+layer: Domain
+type: Domain Spec
+status: draft
+version: 0.1.0
+---
 # AGRONOMIC_STRATEGY_LIBRARY_SPEC.md
 
 ## 0. Статус документа

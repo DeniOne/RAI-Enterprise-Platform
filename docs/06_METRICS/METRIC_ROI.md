@@ -1,24 +1,12 @@
 ---
-id: DOC-MET-GEN-133
-type: KPI Spec
+id: DOC-MET-06-METRICS-METRIC-ROI-1EAL
 layer: Metrics
-status: Draft
+type: KPI Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: metric-total-roi
-type: metric
-status: review
-owners: [finance-leads]
-relations:
-  measures: [principle-vision]
-  depends_on: [control-audit-system]
-tags: [business-kpi, aggregate, lagging-indicator, derived]
----
-
 # Метрика: Total ROI (Return on Investment)
 
 ## Описание

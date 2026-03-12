@@ -1,13 +1,12 @@
 ---
-id: DOC-ENG-GEN-110
-type: Service Spec
+id: DOC-ENG-04-ENGINEERING-ADVISORY-S3-MONITORING-SNAP-1U3V
 layer: Engineering
-status: Draft
+type: Service Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Advisory S3 Monitoring Snapshot (2026-02-08)
 
 ## Source

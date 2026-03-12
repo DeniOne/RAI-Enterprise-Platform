@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Param, Post, Query, UseGuards } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Param, Post, Query, UseGuards, UseInterceptors } from "@nestjs/common";
 import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { RolesGuard } from "../../shared/auth/roles.guard";
 import { Roles } from "../../shared/auth/roles.decorator";
@@ -16,6 +16,7 @@ import {
   UpsertAgentConfigDtoSchema,
   type AgentConfigChangeRequestDto,
 } from "./dto/agent-config.dto";
+import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
 
 @Controller("rai/agents")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -55,6 +56,7 @@ export class AgentsConfigController {
   }
 
   @Post("config/change-requests")
+  @UseInterceptors(IdempotencyInterceptor)
   async createChangeRequest(
     @Body() body: unknown,
     @Query("scope") scope?: string,
@@ -75,6 +77,7 @@ export class AgentsConfigController {
   }
 
   @Post("config/change-requests/:changeId/canary/start")
+  @UseInterceptors(IdempotencyInterceptor)
   async startCanary(
     @Param("changeId") changeId: string,
   ): Promise<AgentConfigChangeRequestDto> {
@@ -86,6 +89,7 @@ export class AgentsConfigController {
   }
 
   @Post("config/change-requests/:changeId/canary/review")
+  @UseInterceptors(IdempotencyInterceptor)
   async reviewCanary(
     @Param("changeId") changeId: string,
     @Body() body: unknown,
@@ -102,6 +106,7 @@ export class AgentsConfigController {
   }
 
   @Post("config/change-requests/:changeId/promote")
+  @UseInterceptors(IdempotencyInterceptor)
   async promoteChange(
     @Param("changeId") changeId: string,
   ): Promise<AgentConfigChangeRequestDto> {
@@ -113,6 +118,7 @@ export class AgentsConfigController {
   }
 
   @Post("config/change-requests/:changeId/rollback")
+  @UseInterceptors(IdempotencyInterceptor)
   async rollbackChange(
     @Param("changeId") changeId: string,
     @Body() body: unknown,

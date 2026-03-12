@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-01-ARCHITECTURE-PRISMA-CLIENT-CONTRACT-P9CC
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # PRISMA_CLIENT_CONTRACT
 
 ## Rules for Prisma Client Management

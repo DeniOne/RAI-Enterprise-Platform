@@ -1,21 +1,12 @@
 ---
-id: DOC-ARC-GEN-042
-type: HLD
+id: DOC-ARC-HLD-UNIFIED-MEMORY-ARCHITECTURE-1YES
 layer: Architecture
-status: Draft
+type: HLD
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-uma
-type: component
-status: review
-owners: [architects]
-aligned_with: [principle-axioms]
----
-
 # HLD: Unified Memory Architecture (The RAI Brain) 🧠
 
 > **Статус:** Концепт | **Фаза:** Gamma/Delta | **Слой:** Архитектура / HLD

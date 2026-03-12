@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-190
-type: Legacy
+id: DOC-ARV-ONTOLOGY-KNOWLEDGE-TYPOLOGY-1S5I
 layer: Archive
-status: Draft
+type: Research
+status: archived
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Knowledge Typology & Markup Standard
 
 This document defines the canonical ontology for the RAI Enterprise Platform.

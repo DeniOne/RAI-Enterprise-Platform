@@ -64,6 +64,34 @@ export class RedisService {
     return result === 1;
   }
 
+  isReady(): boolean {
+    return this.client.status === "ready";
+  }
+
+  async xadd(
+    streamKey: string,
+    fields: Record<string, string>,
+    options?: { maxLen?: number },
+  ): Promise<string> {
+    if (!this.isReady()) {
+      throw new Error(
+        `[Redis] Not ready, cannot XADD to stream: ${streamKey}`,
+      );
+    }
+
+    const args: string[] = [streamKey];
+    if (options?.maxLen && options.maxLen > 0) {
+      args.push("MAXLEN", "~", String(options.maxLen));
+    }
+    args.push("*");
+
+    for (const [key, value] of Object.entries(fields)) {
+      args.push(key, value);
+    }
+
+    return (await this.client.call("XADD", ...args)) as string;
+  }
+
   getClient(): Redis {
     return this.client;
   }

@@ -545,7 +545,6 @@ export class DataScientistService {
                 content: true,
                 successRate: true,
                 synapticWeight: true,
-                embedding: true,
             },
         });
 

@@ -1,13 +1,12 @@
 ---
-id: DOC-STR-FO-007
-type: Master Plan
+id: DOC-STR-FRONT-OFFICE-FRONT-OFFICE-MASTER-PLAN-1SQY
 layer: Strategy
-status: Active Canon
+type: Roadmap
+status: approved
 version: 1.0.0
 owners: [@techlead]
 last_updated: 2026-03-09
 ---
-
 # FRONT_OFFICE_MASTER_PLAN
 
 > Главный активный канон блока `Front-Office` в `RAI_EP`.

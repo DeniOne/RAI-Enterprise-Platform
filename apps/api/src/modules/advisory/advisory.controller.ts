@@ -6,11 +6,17 @@
   ParseIntPipe,
   Post,
   Query,
-  UseGuards,
+  UseInterceptors,
 } from "@nestjs/common";
-import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
 import { AdvisoryService } from "./advisory.service";
+import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
+import { Authorized } from "../../shared/auth/authorized.decorator";
+import { Roles } from "../../shared/auth/roles.decorator";
+import {
+  INTERNAL_USER_ROLES,
+  MANAGEMENT_ROLES,
+} from "../../shared/auth/rbac.constants";
 
 interface AdvisoryActor {
   id: string;
@@ -20,7 +26,7 @@ interface AdvisoryActor {
 }
 
 @Controller("advisory")
-@UseGuards(JwtAuthGuard)
+@Authorized(...INTERNAL_USER_ROLES)
 export class AdvisoryController {
   constructor(private readonly advisoryService: AdvisoryService) {}
 
@@ -49,11 +55,14 @@ export class AdvisoryController {
   }
 
   @Get("pilot/cohort")
+  @Roles(...MANAGEMENT_ROLES)
   async getPilotCohort(@CurrentUser() user: AdvisoryActor) {
     return this.advisoryService.getPilotCohort(user.companyId);
   }
 
   @Post("pilot/enable")
+  @Roles(...MANAGEMENT_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async enablePilot(
     @CurrentUser() user: AdvisoryActor,
     @Body() body: { traceId: string; targetUserId?: string },
@@ -68,6 +77,8 @@ export class AdvisoryController {
   }
 
   @Post("pilot/disable")
+  @Roles(...MANAGEMENT_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async disablePilot(
     @CurrentUser() user: AdvisoryActor,
     @Body() body: { traceId: string; targetUserId?: string },
@@ -82,6 +93,8 @@ export class AdvisoryController {
   }
 
   @Post("pilot/cohort/add")
+  @Roles(...MANAGEMENT_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async addPilotUser(
     @CurrentUser() user: AdvisoryActor,
     @Body() body: { traceId: string; targetUserId: string },
@@ -96,6 +109,8 @@ export class AdvisoryController {
   }
 
   @Post("pilot/cohort/remove")
+  @Roles(...MANAGEMENT_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async removePilotUser(
     @CurrentUser() user: AdvisoryActor,
     @Body() body: { traceId: string; targetUserId: string },
@@ -110,11 +125,14 @@ export class AdvisoryController {
   }
 
   @Get("tuning/thresholds")
+  @Roles(...MANAGEMENT_ROLES)
   async getTuningThresholds(@CurrentUser() user: AdvisoryActor) {
     return this.advisoryService.getTuningThresholds(user.companyId);
   }
 
   @Post("tuning/thresholds")
+  @Roles(...MANAGEMENT_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async updateTuningThresholds(
     @CurrentUser() user: AdvisoryActor,
     @Body()
@@ -137,6 +155,7 @@ export class AdvisoryController {
   }
 
   @Get("ops/metrics")
+  @Roles(...MANAGEMENT_ROLES)
   async getOpsMetrics(
     @CurrentUser() user: AdvisoryActor,
     @Query("windowHours", new ParseIntPipe({ optional: true }))
@@ -149,16 +168,20 @@ export class AdvisoryController {
   }
 
   @Get("incident/kill-switch")
+  @Roles(...MANAGEMENT_ROLES)
   async getKillSwitchStatus(@CurrentUser() user: AdvisoryActor) {
     return this.advisoryService.getKillSwitchStatus(user.companyId);
   }
 
   @Get("rollout/status")
+  @Roles(...MANAGEMENT_ROLES)
   async getRolloutStatus(@CurrentUser() user: AdvisoryActor) {
     return this.advisoryService.getRolloutStatus(user.companyId);
   }
 
   @Post("rollout/config")
+  @Roles(...MANAGEMENT_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async configureRollout(
     @CurrentUser() user: AdvisoryActor,
     @Body()
@@ -179,6 +202,8 @@ export class AdvisoryController {
   }
 
   @Post("rollout/gate/evaluate")
+  @Roles(...MANAGEMENT_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async evaluateRolloutGate(
     @CurrentUser() user: AdvisoryActor,
     @Body()
@@ -203,6 +228,8 @@ export class AdvisoryController {
   }
 
   @Post("rollout/stage/promote")
+  @Roles(...MANAGEMENT_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async promoteRolloutStage(
     @CurrentUser() user: AdvisoryActor,
     @Body()
@@ -218,6 +245,8 @@ export class AdvisoryController {
   }
 
   @Post("rollout/stage/rollback")
+  @Roles(...MANAGEMENT_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async rollbackRolloutStage(
     @CurrentUser() user: AdvisoryActor,
     @Body()
@@ -238,6 +267,8 @@ export class AdvisoryController {
   }
 
   @Post("incident/kill-switch/enable")
+  @Roles(...MANAGEMENT_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async enableKillSwitch(
     @CurrentUser() user: AdvisoryActor,
     @Body() body: { traceId: string; reason?: string },
@@ -252,6 +283,8 @@ export class AdvisoryController {
   }
 
   @Post("incident/kill-switch/disable")
+  @Roles(...MANAGEMENT_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async disableKillSwitch(
     @CurrentUser() user: AdvisoryActor,
     @Body() body: { traceId: string },
@@ -265,6 +298,7 @@ export class AdvisoryController {
   }
 
   @Post("recommendations/:traceId/accept")
+  @UseInterceptors(IdempotencyInterceptor)
   async acceptRecommendation(
     @CurrentUser() user: AdvisoryActor,
     @Param("traceId") traceId: string,
@@ -277,6 +311,7 @@ export class AdvisoryController {
   }
 
   @Post("recommendations/:traceId/reject")
+  @UseInterceptors(IdempotencyInterceptor)
   async rejectRecommendation(
     @CurrentUser() user: AdvisoryActor,
     @Param("traceId") traceId: string,
@@ -291,6 +326,7 @@ export class AdvisoryController {
   }
 
   @Post("recommendations/:traceId/feedback")
+  @UseInterceptors(IdempotencyInterceptor)
   async recordFeedback(
     @CurrentUser() user: AdvisoryActor,
     @Param("traceId") traceId: string,

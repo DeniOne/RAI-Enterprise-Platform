@@ -1,13 +1,12 @@
 ---
-id: DOC-ARC-GEN-045
-type: Standards
+id: DOC-ARC-PRINCIPLES-BETA-INTEGRITY-LAYER-R6F7
 layer: Architecture
-status: Draft
+type: HLD
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Канон: BETA_INTEGRITY_LAYER.md
 
 **Статус:** Архитектурный закон. Обязателен. Блокирующий.  

@@ -1,13 +1,12 @@
 ---
-id: DOC-INS-AGT-003
+id: DOC-INS-AGENTS-INSTRUCTION-AGENT-PLATFORM-INTERACT-HOSO
+layer: Instructions
 type: Instruction
-layer: Agents
-status: Active
+status: approved
 version: 1.1.0
 owners: [@techlead]
 last_updated: 2026-03-10
 ---
-
 # ИНСТРУКЦИЯ — АРХИТЕКТУРА ВЗАИМОДЕЙСТВИЯ АГЕНТНОЙ ПЛАТФОРМЫ
 
 ## 1. Назначение
@@ -52,7 +51,7 @@ last_updated: 2026-03-10
 - [RAI_SWARM_CONTROL_TOWER_ARCHITECTURE.md](../00_STRATEGY/STAGE%202/RAI_SWARM_CONTROL_TOWER_ARCHITECTURE.md)
 - [A_RAI_AGENT_INTERACTION_BLUEPRINT.md](../00_STRATEGY/STAGE%202/A_RAI_AGENT_INTERACTION_BLUEPRINT.md)
 - [A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md](../00_STRATEGY/STAGE%202/A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md)
-- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](./INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
+- `INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md` (routing canon)
 - [agent-registry.service.ts](../../apps/api/src/modules/rai-chat/agent-registry.service.ts)
 - [supervisor-agent.service.ts](../../apps/api/src/modules/rai-chat/supervisor-agent.service.ts)
 - [agent-execution-adapter.service.ts](../../apps/api/src/modules/rai-chat/runtime/agent-execution-adapter.service.ts)
@@ -61,7 +60,7 @@ last_updated: 2026-03-10
 
 Нормативное разделение source of truth:
 
-- trigger-level routing, primary owner и handoff rules фиксируются в [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](./INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md);
+- trigger-level routing, primary owner и handoff rules фиксируются в `INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md`;
 - границы конкретного агента, его `current / max allowed / handoff boundaries` фиксируются в соответствующем профильном паспорте в `AGENT_PROFILES`.
 
 ---
@@ -419,7 +418,7 @@ UI / AI Dock
 - [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](../00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md)
 - [A_RAI_AGENT_INTERACTION_BLUEPRINT.md](../00_STRATEGY/STAGE%202/A_RAI_AGENT_INTERACTION_BLUEPRINT.md)
 - [A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md](../00_STRATEGY/STAGE%202/A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md)
-- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](./INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
+- `INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md` (routing canon)
 - [rai-chat.module.ts](../../apps/api/src/modules/rai-chat/rai-chat.module.ts)
 - [supervisor-agent.service.ts](../../apps/api/src/modules/rai-chat/supervisor-agent.service.ts)
 - [agent-runtime.service.ts](../../apps/api/src/modules/rai-chat/runtime/agent-runtime.service.ts)
@@ -428,4 +427,3 @@ UI / AI Dock
 - [agent-registry.service.ts](../../apps/api/src/modules/rai-chat/agent-registry.service.ts)
 - [agent-interaction-contracts.ts](../../apps/api/src/modules/rai-chat/agent-contracts/agent-interaction-contracts.ts)
 - [response-composer.service.ts](../../apps/api/src/modules/rai-chat/composer/response-composer.service.ts)
-

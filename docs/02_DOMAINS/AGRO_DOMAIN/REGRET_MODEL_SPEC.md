@@ -1,13 +1,12 @@
 ---
-id: DOC-DOM-AGRO-LC-002
-type: Domain Specification
-layer: Agro Domain
-status: Draft
+id: DOC-DOM-AGRO-DOMAIN-REGRET-MODEL-SPEC-13OW
+layer: Domain
+type: Domain Spec
+status: draft
 version: 1.2.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # REGRET MODEL — AGRO DOMAIN
 ## Модель сожаления для Level C (Математическая спецификация)
 

@@ -1,3 +1,10 @@
+---
+id: DOC-EXE-07-EXECUTION-PARTY-FARM-MIGRATION-TODO-1QT2
+layer: Execution
+type: Checklist
+status: draft
+version: 0.1.0
+---
 # TODO: Migration compat layer (Party → Farm split)
 
 Место внедрения: `apps/api/src/modules/commerce` (read-models + migration service).

@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-COMET-XNP5
+layer: Archive
+type: Legacy
+status: archived
+version: 0.1.0
+---
 # 0. TL;DR
 
 ## Executive insights по всей теме

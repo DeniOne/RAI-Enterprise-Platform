@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-01-ARCHITECTURE-DOCFLOW-AND-BILLING-CONTRA-LTOW
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # CONTRACTS & INVOICING ARCHITECTURE (RAI HOLDING)
 
 ## ВВЕДЕНИЕ

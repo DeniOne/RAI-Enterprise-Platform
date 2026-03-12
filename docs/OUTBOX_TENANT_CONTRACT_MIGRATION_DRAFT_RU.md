@@ -1,11 +1,10 @@
-﻿---
-id: DOC-OPS-RUN-002
-layer: Operations
-type: Runbook
+---
+id: DOC-ENG-OUTBOX-TENANT-CONTRACT-MIGRATION-DRAFT-RU-0E6D
+layer: Engineering
+type: Implementation Plan
 status: draft
 version: 0.1.0
 ---
-
 # Outbox Tenant Contract Migration Draft
 
 Р”Р°С‚Р°: 2026-02-15

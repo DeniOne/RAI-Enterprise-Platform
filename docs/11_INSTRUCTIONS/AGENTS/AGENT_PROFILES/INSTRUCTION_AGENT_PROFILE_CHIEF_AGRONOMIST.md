@@ -1,13 +1,12 @@
 ---
-id: DOC-INS-AGT-PROFILE-015
+id: DOC-INS-AGENT-PROFILES-INSTRUCTION-AGENT-PROFILE-C-7E5P
+layer: Instructions
 type: Instruction
-layer: Agents
-status: Active
+status: approved
 version: 1.1.0
 owners: [@techlead]
 last_updated: 2026-03-10
 ---
-
 # ИНСТРУКЦИЯ — ПРОФИЛЬ АГЕНТА CHIEF_AGRONOMIST (МЕГА-АГРОНОМ)
 
 ## 1. Назначение

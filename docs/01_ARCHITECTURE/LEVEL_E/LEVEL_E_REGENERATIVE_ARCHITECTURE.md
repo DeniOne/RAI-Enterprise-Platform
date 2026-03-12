@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-LEVEL-E-LEVEL-E-REGENERATIVE-ARCHITECTURE-19EP
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # LEVEL E: Регенеративная Архитектура
 
 ## 1. Архитектурный Сдвиг

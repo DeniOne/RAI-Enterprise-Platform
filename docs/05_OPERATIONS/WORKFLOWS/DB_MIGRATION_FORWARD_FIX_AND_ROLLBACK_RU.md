@@ -1,11 +1,10 @@
 ---
-id: DOC-OPS-RUN-135
+id: DOC-OPS-WORKFLOWS-DB-MIGRATION-FORWARD-FIX-AND-ROL-1QH9
 layer: Operations
-type: Runbook
+type: Report
 status: draft
 version: 1.0.0
 ---
-
 # DB Migration Forward-Fix And Rollback (RU)
 
 ## 1. Принцип

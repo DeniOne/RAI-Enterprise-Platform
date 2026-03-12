@@ -1,13 +1,12 @@
 ---
-id: DOC-PRD-LVLF-001
-type: Product Specification
-layer: Product Definition
-status: Enforced
+id: DOC-PRD-03-PRODUCT-LEVEL-F-PRODUCT-OVERVIEW-1GP1
+layer: Product
+type: UI Spec
+status: approved
 version: 2.0.0
 owners: [@techlead, @product_lead]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: ИНСТИТУЦИОНАЛЬНАЯ СПЕЦИФИКАЦИЯ ПРОДУКТА (LEVEL_F_PRODUCT_OVERVIEW)
 
 ## 0. Аксиома Ценности (Value Proposition Axiom)

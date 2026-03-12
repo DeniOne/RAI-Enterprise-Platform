@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-BIO-001
-type: Specification
-layer: Domain Core
-status: Approved
+id: DOC-ARC-LEVEL-E-LEVEL-E-BIODIVERSITY-MODEL-5F0I
+layer: Architecture
+type: HLD
+status: approved
 version: 1.0.0
 owners: [@techlead]
 last_updated: 2026-02-19
 ---
-
 # LEVEL E: BIODIVERSITY MODEL SPECIFICATION
 
 ## 1. Введение

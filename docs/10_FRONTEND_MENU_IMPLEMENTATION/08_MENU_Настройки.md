@@ -1,4 +1,11 @@
-﻿# Меню 8: Настройки
+---
+id: DOC-FRN-10-FRONTEND-MENU-IMPLEMENTATION-08-MENU-1NN1
+layer: Frontend
+type: Menu Map
+status: draft
+version: 0.1.0
+---
+# Меню 8: Настройки
 
 ## 1. Бизнес-роль
 

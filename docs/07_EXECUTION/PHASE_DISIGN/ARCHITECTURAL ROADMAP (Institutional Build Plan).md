@@ -1,13 +1,12 @@
 ---
-id: DOC-EXE-PLN-001
-type: Strategy
+id: DOC-EXE-PHASE-DISIGN-ARCHITECTURAL-ROADMAP-INSTITU-1393
 layer: Execution
-status: Active
+type: Phase Plan
+status: approved
 version: 1.0.2
 owners: [@techlead]
 last_updated: 2026-02-21
 ---
-
 # Архитектурный Роадмап: Institutional Build Plan
 ## Стратегия реализации RAI Enterprise Platform
 

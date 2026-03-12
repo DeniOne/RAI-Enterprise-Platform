@@ -1,21 +1,12 @@
 ---
-id: DOC-OPS-GEN-125
-type: Runbook
+id: DOC-OPS-DEVELOPMENT-GUIDELINES-BUSINESS-CORE-CANON-F6JF
 layer: Operations
-status: Draft
+type: Report
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: principle-business-core-canon
-type: principle
-status: approved
-owners: [architects]
-aligned_with: [principle-vision]
----
-
 # CANON: BUSINESS CORE DEVELOPMENT
 
 Статус: CANON

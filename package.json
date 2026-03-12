@@ -24,6 +24,7 @@
         "report:invariants:weekly": "node scripts/invariant-weekly-review.cjs",
         "lint:docs:matrix": "node scripts/doc-lint-matrix.cjs --fail-on-mismatch",
         "lint:docs:matrix:strict": "node scripts/doc-lint-matrix.cjs --fail-on-mismatch --strict-version",
+        "docs:normalize:governance": "node scripts/normalize-docs-governance.cjs",
         "backfill:outbox-companyid": "node scripts/backfill-outbox-companyid.cjs",
         "rollback:tenant-middleware": "node scripts/tenant-middleware-rollback.cjs --mode=shadow",
         "test": "turbo test",

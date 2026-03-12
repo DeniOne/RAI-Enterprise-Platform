@@ -1,3 +1,10 @@
+---
+id: DOC-PRD-03-PRODUCT-PRODUCT-ROADMAP-0KD9
+layer: Product
+type: Roadmap
+status: draft
+version: 0.1.0
+---
 # RAI ENTERPRISE — PRODUCT DEVELOPMENT ROADMAP
 
 ## ФАЗА 1 — ОПЕРАЦИОННОЕ ЯДРО (Consulting Product)

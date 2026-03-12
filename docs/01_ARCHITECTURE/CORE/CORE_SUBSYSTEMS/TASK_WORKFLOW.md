@@ -1,21 +1,12 @@
 ---
-id: DOC-ARC-GEN-025
-type: HLD
+id: DOC-ARC-CORE-SUBSYSTEMS-TASK-WORKFLOW-NEUM
 layer: Architecture
-status: Draft
+type: HLD
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: service-task-workflow
-type: service
-status: review
-owners: [architects, techleads]
-aligned_with: [principle-axioms]
----
-
 # Subsystem: Task & Workflow Engine ⚙️
 
 > **Статус:** Канон | **Версия:** 1.0 | **Расположение:** Business Core

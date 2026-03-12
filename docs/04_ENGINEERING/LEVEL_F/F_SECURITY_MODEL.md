@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-LVLF-009
-type: Specification
-layer: Architecture
-status: Proposed
+id: DOC-ENG-LEVEL-F-F-SECURITY-MODEL-1GQE
+layer: Engineering
+type: Database Spec
+status: approved
 version: 2.1.0
 owners: [@techlead, @ciso]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: ИНСТИТУЦИОНАЛЬНАЯ МОДЕЛЬ БЕЗОПАСНОСТИ (F_SECURITY_MODEL)
 
 ## 0. Scope & Trust Boundaries (Границы Доверия)

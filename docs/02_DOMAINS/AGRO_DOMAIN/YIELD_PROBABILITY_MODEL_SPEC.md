@@ -1,3 +1,10 @@
+---
+id: DOC-DOM-AGRO-DOMAIN-YIELD-PROBABILITY-MODEL-SPEC-S43X
+layer: Domain
+type: Domain Spec
+status: draft
+version: 0.1.0
+---
 # YIELD_PROBABILITY_MODEL_SPEC.md
 
 ## 0. Статус документа

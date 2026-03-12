@@ -1,14 +1,13 @@
 ---
-id: DOC-ENG-SIM-001
-type: Engine Specification
-layer: Level E (Simulation)
-status: Approved
+id: DOC-ENG-SIMULATION-SUSTAINABLE-COUNTERFACTUAL-ENGI-18QA
+layer: Engineering
+type: Service Spec
+status: approved
 version: 1.4.0
 owners: [@techlead, @economist]
 dependencies: ["DOC-DOM-SOIL-003", "DOC-ARCH-GOV-002"]
 last_updated: 2026-02-19
 ---
-
 # SUSTAINABLE COUNTERFACTUAL ENGINE (SCE)
 
 ## 1. Введение

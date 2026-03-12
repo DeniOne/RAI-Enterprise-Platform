@@ -1,21 +1,12 @@
 ---
-id: DOC-DOM-GEN-061
-type: Domain Spec
+id: DOC-DOM-ENTERPRISE-DOMAIN-FINANCE-U6NE
 layer: Domain
-status: Draft
+type: Domain Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-enterprise-finance
-type: component
-status: review
-owners: [finance, architects]
-aligned_with: [principle-vision]
----
-
 # Domain: Finance & Economy
 
 > **Contour:** 1 (Enterprise Back-Office) | **Module:** Finance

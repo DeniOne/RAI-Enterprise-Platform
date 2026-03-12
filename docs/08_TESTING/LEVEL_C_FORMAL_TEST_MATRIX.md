@@ -1,13 +1,12 @@
 ---
-id: DOC-TEST-LC-001
-type: Testing Specification
+id: DOC-TST-08-TESTING-LEVEL-C-FORMAL-TEST-MATRIX-1V1J
 layer: Testing
-status: Draft
+type: Test Spec
+status: draft
 version: 1.4.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # LEVEL C FORMAL TEST MATRIX
 ## Матрица тестов для инвариантов I29-I33 (Industrial Grade)
 

@@ -1,3 +1,10 @@
+---
+id: DOC-ENG-04-ENGINEERING-GENERATIVE-ENGINE-IMPLEMENT-6L4D
+layer: Engineering
+type: Implementation Plan
+status: draft
+version: 0.1.0
+---
 GENERATIVE_ENGINE_IMPLEMENTATION_PLAN.md
 0. Статус документа
 

@@ -1,13 +1,12 @@
 ---
-id: DOC-OPS-GEN-126
-type: Runbook
+id: DOC-OPS-DEVELOPMENT-GUIDELINES-CORE-EXTRACTION-102A
 layer: Operations
-status: Draft
+type: Report
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # BUSINESS_CORE_EXTRACTION_GUIDE
 
 ## Статус документа

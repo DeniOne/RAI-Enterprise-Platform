@@ -1,13 +1,12 @@
 ---
-id: DOC-EXE-GEN-141
-type: Phase Plan
+id: DOC-EXE-PHASE-BETA-FRONT-OFFICE-FRONTEND-DEVELOPME-1QAU
 layer: Execution
-status: Draft
+type: Phase Plan
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Front-Office Frontend Development Plan (Beta Closure)
 
 ## 1) Цель

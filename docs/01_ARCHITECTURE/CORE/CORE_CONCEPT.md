@@ -1,21 +1,12 @@
 ---
-id: DOC-ARC-GEN-013
-type: HLD
+id: DOC-ARC-CORE-CORE-CONCEPT-NHG4
 layer: Architecture
-status: Draft
+type: HLD
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-core-concept
-type: component
-status: review
-owners: [architects, backend-leads]
-aligned_with: [principle-axioms]
----
-
 # Business Core Concept: Философия и Назначение 🏗️
 
 > **Статус:** Канон | **Версия:** 1.0 | **Область:** Фундамент

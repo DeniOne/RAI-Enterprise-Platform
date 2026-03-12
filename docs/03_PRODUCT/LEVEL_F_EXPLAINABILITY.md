@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-LVLF-008
-type: Specification
-layer: Architecture
-status: Proposed
+id: DOC-PRD-03-PRODUCT-LEVEL-F-EXPLAINABILITY-K8I5
+layer: Product
+type: UI Spec
+status: approved
 version: 1.1.1
 owners: [@techlead]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: ИНСТИТУЦИОНАЛЬНЫЙ ПРОТОКОЛ ОБЪЯСНИМОСТИ (LEVEL_F_EXPLAINABILITY)
 
 ## 0. Статус Документа

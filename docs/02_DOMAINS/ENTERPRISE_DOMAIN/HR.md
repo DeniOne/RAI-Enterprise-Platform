@@ -1,21 +1,12 @@
 ---
-id: DOC-DOM-GEN-062
-type: Domain Spec
+id: DOC-DOM-ENTERPRISE-DOMAIN-HR-1B6D
 layer: Domain
-status: Draft
+type: Domain Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-enterprise-hr
-type: component
-status: review
-owners: [hr, architects]
-aligned_with: [principle-vision]
----
-
 # Domain: HR (Human Capital)
 
 > **Contour:** 1 (Enterprise Back-Office) | **Module:** HR

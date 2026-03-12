@@ -1,13 +1,12 @@
 ---
-id: DOC-S2-CT-LIFECYCLE-GAP
-type: Analysis
-layer: Stage 2
-status: Active Analysis
+id: DOC-STR-STAGE-2-RAI-CONTROL-TOWER-LIFECYCLE-BOARD--NXQ3
+layer: Strategy
+type: Vision
+status: approved
 version: 1.0.0
 owners: [@techlead]
 last_updated: 2026-03-10
 ---
-
 # RAI CONTROL TOWER LIFECYCLE BOARD GAP ANALYSIS
 
 ## 1. Назначение документа

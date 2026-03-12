@@ -1,13 +1,12 @@
 ---
-id: DOC-ARC-ADR-LD-004
+id: DOC-ARC-DECISIONS-ADR-LD-004-DRIFT-MANDATORY-ENFOR-16XX
 layer: Architecture
 type: ADR
-status: Accepted
+status: approved
 version: 2.0.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # ADR-LD-004: Drift Detection — Mandatory Enforcement
 
 ## Контекст

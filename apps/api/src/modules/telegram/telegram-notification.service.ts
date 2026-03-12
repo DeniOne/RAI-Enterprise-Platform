@@ -1,12 +1,17 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectBot } from "nestjs-telegraf";
 import { Telegraf, Context, Markup } from "telegraf";
+import { ConfigService } from "@nestjs/config";
+import { SecretsService } from "../../shared/config/secrets.service";
 
 @Injectable()
 export class TelegramNotificationService {
   private readonly logger = new Logger(TelegramNotificationService.name);
 
-  constructor() {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly secretsService: SecretsService,
+  ) {}
 
   async sendAssetProposal(
     telegramId: string,
@@ -18,13 +23,14 @@ export class TelegramNotificationService {
       : "";
 
     try {
+      const botUrl = this.configService.get<string>("BOT_URL") || "http://localhost:4002";
       await fetch(
-        `${process.env.BOT_URL || "http://localhost:4002"}/internal/notify-asset`,
+        `${botUrl}/internal/notify-asset`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Internal-API-Key": process.env.INTERNAL_API_KEY || "",
+            "X-Internal-API-Key": this.getInternalApiKey(),
           },
           body: JSON.stringify({
             telegramId,
@@ -46,13 +52,14 @@ export class TelegramNotificationService {
 
   async sendToGroup(message: string, groupId: string) {
     try {
+      const botUrl = this.configService.get<string>("BOT_URL") || "http://localhost:4002";
       await fetch(
-        `${process.env.BOT_URL || "http://localhost:4002"}/internal/notify-group`,
+        `${botUrl}/internal/notify-group`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Internal-API-Key": process.env.INTERNAL_API_KEY || "",
+            "X-Internal-API-Key": this.getInternalApiKey(),
           },
           body: JSON.stringify({
             groupId,
@@ -69,13 +76,14 @@ export class TelegramNotificationService {
 
   async sendFrontOfficeReply(chatId: string, messageText: string) {
     try {
+      const botUrl = this.configService.get<string>("BOT_URL") || "http://localhost:4002";
       const response = await fetch(
-        `${process.env.BOT_URL || "http://localhost:4002"}/internal/front-office/send-message`,
+        `${botUrl}/internal/front-office/send-message`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Internal-API-Key": process.env.INTERNAL_API_KEY || "",
+            "X-Internal-API-Key": this.getInternalApiKey(),
           },
           body: JSON.stringify({
             chatId,
@@ -112,13 +120,15 @@ export class TelegramNotificationService {
     await Promise.all(
       params.telegramIds.map(async (telegramId) => {
         try {
+          const botUrl =
+            this.configService.get<string>("BOT_URL") || "http://localhost:4002";
           await fetch(
-            `${process.env.BOT_URL || "http://localhost:4002"}/internal/front-office/notify-thread`,
+            `${botUrl}/internal/front-office/notify-thread`,
             {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "X-Internal-API-Key": process.env.INTERNAL_API_KEY || "",
+                "X-Internal-API-Key": this.getInternalApiKey(),
               },
               body: JSON.stringify({
                 telegramId,
@@ -136,5 +146,9 @@ export class TelegramNotificationService {
         }
       }),
     );
+  }
+
+  private getInternalApiKey(): string {
+    return this.secretsService.getOptionalSecret("INTERNAL_API_KEY") || "";
   }
 }

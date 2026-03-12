@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-175
-type: Canon
-layer: Execution
-status: Draft
+id: DOC-ARV-ANTIGRAVITY-SOFTWARE-FACTORY-REVIEW-PACKET-1DI4
+layer: Archive
+type: Legacy
+status: archived
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-03-01
 ---
-
 # ANTIGRAVITY SOFTWARE FACTORY  
 ## REVIEW PACKET PROMPT (CANONICAL) — СОБРАТЬ ПАКЕТ ДЛЯ РЕВЬЮ
 

@@ -1,6 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditLog, Prisma } from "@rai/prisma-client";
+import { SecretsService } from "../config/secrets.service";
+import { randomUUID } from "crypto";
+import { AuditNotarizationService } from "./audit-notarization.service";
 
 export interface AuditLogInput {
   action: string;
@@ -25,12 +28,19 @@ export interface PaginationOptions {
 
 @Injectable()
 export class AuditService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly secretsService: SecretsService,
+    private readonly auditNotarizationService: AuditNotarizationService,
+  ) {}
 
   /**
    * Log an audit event.
    */
   async log(data: AuditLogInput): Promise<AuditLog> {
+    const auditId = randomUUID();
+    const createdAt = new Date();
+
     // Tamper-Evident: Calculate HMAC signature of critical fields
     const signature = this.signLogEntry(data);
 
@@ -48,24 +58,30 @@ export class AuditService {
       `[AUDIT] ${data.action} | User: ${data.userId || "GUEST"} | Sig: ${signature.substring(0, 8)}...`,
     );
 
-    return this.prisma.auditLog.create({
-      data: {
+    await this.prisma.$transaction(async (tx) => {
+      await this.auditNotarizationService.persistAuditedEvent(tx as any, {
+        id: auditId,
         action: data.action,
         companyId: data.companyId,
-        userId: data.userId,
-        ip: data.ip,
-        userAgent: data.userAgent,
+        userId: data.userId ?? null,
+        ip: data.ip ?? null,
+        userAgent: data.userAgent ?? null,
         metadata: metadataWithProof,
-      },
+        createdAt,
+      });
+    });
+
+    return this.prisma.auditLog.findUniqueOrThrow({
+      where: { id: auditId },
     });
   }
 
   private signLogEntry(data: AuditLogInput): string {
     const crypto = require("crypto");
     const secret =
-      process.env.AUDIT_SECRET ||
-      process.env.JWT_SECRET ||
-      "fallback-secret-DO-NOT-USE-IN-PROD";
+      this.secretsService.getOptionalSecret("AUDIT_SECRET", {
+        fallbackKeys: ["JWT_SECRET"],
+      }) || "fallback-secret-DO-NOT-USE-IN-PROD";
 
     // Canonical string representation
     const payload = JSON.stringify({
@@ -130,5 +146,9 @@ export class AuditService {
     return this.prisma.auditLog.findUnique({
       where: { id },
     });
+  }
+
+  async findProofById(id: string) {
+    return this.auditNotarizationService.findProofByAuditLogId(id);
   }
 }

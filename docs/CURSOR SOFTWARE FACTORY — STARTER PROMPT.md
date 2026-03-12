@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-175
-type: Canon
-layer: Execution
-status: Draft
+id: DOC-ARV-CURSOR-SOFTWARE-FACTORY-STARTER-PROMPT-1TIN
+layer: Archive
+type: Legacy
+status: archived
 version: 0.2.0
 owners: [@techlead]
 last_updated: 2026-03-04
 ---
-
 # CURSOR SOFTWARE FACTORY (TECHLEAD)
 ## INTEGRATED STARTER & REVIEW PROMPT — ОТ СТАРТА ДО ФИНАЛИЗАЦИИ
 

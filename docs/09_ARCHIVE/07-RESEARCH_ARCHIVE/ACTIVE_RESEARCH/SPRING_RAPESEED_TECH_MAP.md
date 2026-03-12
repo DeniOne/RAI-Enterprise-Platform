@@ -1,13 +1,12 @@
 ---
-id: DOC-DOM-AGRO-RP-002
-type: Research
+id: DOC-ARV-ACTIVE-RESEARCH-SPRING-RAPESEED-TECH-MAP-1KTI
 layer: Archive
-status: Draft
+type: Research
+status: archived
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Технологическая карта возделывания ярового рапса (Spring Rapeseed TechMap)
 
 > **Цель:** Получение урожайности 3.0-3.5 т/га.

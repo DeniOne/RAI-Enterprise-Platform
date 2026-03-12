@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-173
-type: Canon
-layer: Execution
-status: Active
+id: DOC-ARV-ARCHIVE-ANTIGRAVITY-SOFTWARE-FACTORY-ORCHE-1JFC
+layer: Archive
+type: Legacy
+status: archived
 version: 0.3.0
 owners: [@techlead]
 last_updated: 2026-03-05
 ---
-
 # SOFTWARE FACTORY
 ## ORCHESTRATOR PROMPT — ИНСТРУКЦИИ ДЛЯ КОДЕРА
 

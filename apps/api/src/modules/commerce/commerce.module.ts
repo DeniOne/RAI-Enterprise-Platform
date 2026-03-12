@@ -16,9 +16,10 @@ import { ByKzStubLookupProvider } from "./services/providers/by-kz-stub.provider
 import { IdentificationSchemaService } from "./services/identification-schema.service";
 
 import { AuthModule } from "../../shared/auth/auth.module";
+import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, IdempotencyModule],
   controllers: [CommerceController, PartyController, PartyAssetsController, PartyLookupController, IdentificationSchemaController],
   providers: [
     CommerceContractService,

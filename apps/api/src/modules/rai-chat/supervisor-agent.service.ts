@@ -13,6 +13,7 @@ import { TraceSummaryService } from "./trace-summary.service";
 import { TruthfulnessEngineService } from "./truthfulness-engine.service";
 import { AgentExecutionRequest } from "./agent-platform/agent-platform.types";
 import { RaiToolName } from "./tools/rai-tools.types";
+import { RecallResult } from "./memory/memory-coordinator.service";
 import {
   buildResumeExecutionPlan,
 } from "./agent-contracts/agent-interaction-contracts";
@@ -160,6 +161,7 @@ export class SupervisorAgent {
         fallbackUsed: executionResult.agentExecution?.fallbackUsed,
         validation: executionResult.agentExecution?.validation,
         runtimeGovernance: response.runtimeGovernance,
+        memoryLane: this.buildMemoryLane(recallResult, response),
         phases: [
           { name: "router", timestamp: new Date(tRouter).toISOString(), durationMs: tExecStart - tRouter },
           { name: "tools", timestamp: new Date(tExecStart).toISOString(), durationMs: tExternalSignals - tExecStart },
@@ -288,6 +290,12 @@ export class SupervisorAgent {
     fallbackUsed?: boolean;
     validation?: RaiChatResponseDto["validation"];
     runtimeGovernance?: RaiChatResponseDto["runtimeGovernance"];
+    memoryLane?: {
+      recalled: Array<{ kind: string; label: string; confidence: number }>;
+      used: Array<{ kind: string; label: string; confidence: number }>;
+      dropped: Array<{ kind: string; label: string; reason: string }>;
+      escalationReason?: string;
+    };
     phases?: Array<{ name: string; timestamp: string; durationMs: number }>;
   }): Promise<string | null> {
     const metadataObj: Record<string, unknown> = {};
@@ -314,6 +322,9 @@ export class SupervisorAgent {
     }
     if (params.runtimeGovernance) {
       metadataObj.runtimeGovernance = params.runtimeGovernance;
+    }
+    if (params.memoryLane) {
+      metadataObj.memoryLane = params.memoryLane;
     }
     if (params.phases && params.phases.length > 0) {
       metadataObj.phases = params.phases;
@@ -365,5 +376,78 @@ export class SupervisorAgent {
         metadata: JSON.parse(JSON.stringify(metadata)) as Prisma.InputJsonValue,
       },
     });
+  }
+
+  private buildMemoryLane(
+    recallResult: RecallResult,
+    response: RaiChatResponseDto,
+  ): {
+    recalled: Array<{ kind: string; label: string; confidence: number }>;
+    used: Array<{ kind: string; label: string; confidence: number }>;
+    dropped: Array<{ kind: string; label: string; reason: string }>;
+    escalationReason?: string;
+  } {
+    const recalled = [
+      ...(recallResult.activeAlerts ?? []).map((alert) => ({
+        kind: "active_alert",
+        label: alert.message.slice(0, 80),
+        confidence: this.normalizeMemoryConfidence(alert.severity),
+      })),
+      ...(recallResult.hotEngrams ?? []).map((engram) => ({
+        kind: "hot_engram",
+        label: engram.contentPreview.slice(0, 80),
+        confidence: Number(engram.compositeScore ?? 0),
+      })),
+      ...(recallResult.engrams ?? []).map((engram) => ({
+        kind: "engram",
+        label: engram.content.slice(0, 80),
+        confidence: Number(engram.compositeScore ?? 0),
+      })),
+      ...recallResult.recall.items.map((episode) => ({
+        kind: "episode",
+        label: episode.content.slice(0, 80),
+        confidence: Number(episode.similarity ?? episode.confidence ?? 0),
+      })),
+    ];
+    if (Object.keys(recallResult.profile ?? {}).length > 0) {
+      recalled.push({
+        kind: "profile",
+        label: "Предпочтения и недавний контекст клиента",
+        confidence: 0.65,
+      });
+    }
+
+    const used = (response.memoryUsed ?? []).map((item) => ({
+      kind: item.kind,
+      label: item.label,
+      confidence: Number(item.confidence ?? 0),
+    }));
+
+    const usedKeys = new Set(used.map((item) => `${item.kind}:${item.label}`));
+    const dropped = recalled
+      .filter((item) => !usedKeys.has(`${item.kind}:${item.label}`))
+      .map((item) => ({
+        kind: item.kind,
+        label: item.label,
+        reason: "available_but_not_promoted_to_response",
+      }));
+
+    return {
+      recalled,
+      used,
+      dropped,
+      escalationReason:
+        response.runtimeGovernance?.degraded
+          ? response.runtimeGovernance.fallbackReason
+          : undefined,
+    };
+  }
+
+  private normalizeMemoryConfidence(value: string): number {
+    const severity = value.toUpperCase();
+    if (severity === "CRITICAL") return 0.98;
+    if (severity === "HIGH") return 0.9;
+    if (severity === "MEDIUM") return 0.75;
+    return 0.55;
   }
 }

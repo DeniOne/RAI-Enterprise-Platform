@@ -1,13 +1,12 @@
 ---
-id: DOC-ARC-GEN-051
-type: Standards
+id: DOC-ARC-PRINCIPLES-FRONT-ARCHITECTURE-BETA-LGET
 layer: Architecture
-status: Draft
+type: HLD
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Front Architecture (Beta) 🔒 Normative / Binding
 
 **Контекст:** Phase Beta (Front Enablement)  

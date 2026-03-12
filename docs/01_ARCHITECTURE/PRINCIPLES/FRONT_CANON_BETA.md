@@ -1,13 +1,12 @@
 ---
-id: DOC-ARC-GEN-052
-type: Standards
+id: DOC-ARC-PRINCIPLES-FRONT-CANON-BETA-1VUB
 layer: Architecture
-status: Draft
+type: Standards
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Front Canon (Beta) 🔒 Normative / Binding
 
 **Область:** Front-end Phase Beta  

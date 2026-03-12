@@ -1,10 +1,12 @@
-import { Controller, Get, Post, Body, Req, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Body, Req, UseInterceptors } from "@nestjs/common";
 import { PulseService } from "./pulse.service";
 import { HrOrchestratorService } from "../hr-orchestrator.service";
-import { JwtAuthGuard } from "../../../shared/auth/jwt-auth.guard";
+import { IdempotencyInterceptor } from "../../../shared/idempotency/idempotency.interceptor";
+import { Authorized } from "../../../shared/auth/authorized.decorator";
+import { INTERNAL_USER_ROLES } from "../../../shared/auth/rbac.constants";
 
 @Controller("hr/pulse")
-@UseGuards(JwtAuthGuard)
+@Authorized(...INTERNAL_USER_ROLES)
 export class PulseController {
   constructor(
     private readonly pulseService: PulseService,
@@ -18,6 +20,7 @@ export class PulseController {
   }
 
   @Post("submit")
+  @UseInterceptors(IdempotencyInterceptor)
   async submitResponse(
     @Body()
     body: {

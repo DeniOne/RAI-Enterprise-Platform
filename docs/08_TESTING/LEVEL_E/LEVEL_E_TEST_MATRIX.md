@@ -1,13 +1,12 @@
 ---
-id: TEST-LEVEL-E-001
-type: Validation Matrix
-layer: Level E (Optimization)
-status: Constitutional
+id: DOC-TST-LEVEL-E-LEVEL-E-TEST-MATRIX-EIQF
+layer: Testing
+type: Test Spec
+status: approved
 version: 1.5.0
 owners: [@qa_lead, @architect]
 last_updated: 2026-02-19
 ---
-
 # LEVEL E: TEST MATRIX & VERIFICATION PROTOCOL
 
 ## 1. Введение

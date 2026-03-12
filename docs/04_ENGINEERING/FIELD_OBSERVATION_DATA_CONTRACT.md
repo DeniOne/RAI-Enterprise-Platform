@@ -1,13 +1,12 @@
 ---
-id: DOC-ENG-GEN-121
-type: Service Spec
+id: DOC-ENG-04-ENGINEERING-FIELD-OBSERVATION-DATA-CONT-13JR
 layer: Engineering
-status: Draft
+type: API Contract
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Field Observation � Data Contract (Telegram Ingestion)
 
 **Purpose**

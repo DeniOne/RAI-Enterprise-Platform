@@ -1,13 +1,12 @@
 ---
-id: DOC-MET-LC-001
-type: Metrics Specification
-layer: Metrics (Level C)
-status: Draft
+id: DOC-MET-06-METRICS-LEVEL-C-REGRET-METRICS-L2M3
+layer: Metrics
+type: KPI Spec
+status: draft
 version: 1.2.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # LEVEL C REGRET METRICS
 ## Метрики калибровки и реализованного сожаления (D5 Hardened)
 

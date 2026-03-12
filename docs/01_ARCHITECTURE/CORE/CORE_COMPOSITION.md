@@ -1,19 +1,10 @@
 ---
-id: DOC-ARC-GEN-012
-type: HLD
+id: DOC-ARC-CORE-CORE-COMPOSITION-7XJ7
 layer: Architecture
-status: Draft
+type: Topology
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-core-composition
-type: component
-status: review
-owners: [architects]
-aligned_with: [principle-axioms]
----
-
 # СОСТАВ ЯДРА

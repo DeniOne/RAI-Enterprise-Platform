@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-LEVEL-F-LEVEL-F-COMPOSITION-1BNA
+layer: Architecture
+type: Topology
+status: draft
+version: 0.1.0
+---
 # LEVEL_F_COMPOSITION.md
 
 ## 1. Цель

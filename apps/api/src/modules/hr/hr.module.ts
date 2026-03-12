@@ -4,9 +4,10 @@ import { IncentiveModule } from "./incentive/incentive.module";
 import { DevelopmentModule } from "./development/development.module";
 import { HrOrchestratorService } from "./hr-orchestrator.service";
 import { PulseController } from "./development/pulse.controller";
+import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
 
 @Module({
-  imports: [FoundationModule, IncentiveModule, DevelopmentModule],
+  imports: [FoundationModule, IncentiveModule, DevelopmentModule, IdempotencyModule],
   providers: [HrOrchestratorService],
   controllers: [PulseController],
   exports: [

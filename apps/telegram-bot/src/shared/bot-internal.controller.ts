@@ -35,6 +35,15 @@ interface NotifyFrontOfficeThreadDto {
     workspaceUrl: string;
 }
 
+interface SendFrontOfficeInviteDto {
+    telegramId: string;
+    companyName: string;
+    counterpartyName: string;
+    activationUrl: string;
+    botStartLink?: string | null;
+    contactName?: string | null;
+}
+
 @Controller('internal')
 export class BotInternalController {
     private readonly logger = new Logger(BotInternalController.name);
@@ -194,6 +203,37 @@ export class BotInternalController {
             {
                 parse_mode: 'HTML',
                 ...(keyboard ?? {}),
+            },
+        );
+
+        return { success: true };
+    }
+
+    @Post('front-office/send-invite')
+    async sendFrontOfficeInvite(
+        @Headers('x-internal-api-key') apiKey: string,
+        @Body() dto: SendFrontOfficeInviteDto,
+    ) {
+        this.validateApiKey(apiKey);
+
+        const buttons = [
+            [Markup.button.url('Открыть регистрацию', dto.activationUrl)],
+        ];
+
+        if (dto.botStartLink) {
+            buttons.push([Markup.button.url('Открыть бота', dto.botStartLink)]);
+        }
+
+        const contactLine = dto.contactName
+            ? `\nКонтакт: <b>${dto.contactName}</b>`
+            : '';
+
+        await this.bot.telegram.sendMessage(
+            dto.telegramId,
+            `🔐 <b>Приглашение в RAI_EP</b>\n\nВас пригласили в систему как представителя контрагента <b>${dto.counterpartyName}</b> в компании <b>${dto.companyName}</b>.${contactLine}\n\nНажмите кнопку ниже, чтобы завершить активацию доступа.`,
+            {
+                parse_mode: 'HTML',
+                ...Markup.inlineKeyboard(buttons),
             },
         );
 

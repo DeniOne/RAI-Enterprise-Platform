@@ -1,3 +1,10 @@
+---
+id: DOC-DOM-AGRO-DOMAIN-TECHMAP-USER-GUIDE-2UVL
+layer: Domain
+type: Guide
+status: draft
+version: 0.1.0
+---
 # User Guide: Использование Техкарт (TechMap)
 
 Бля, мы это сделали. Вот как теперь работать с техкартами в RAI EP.

@@ -1,3 +1,10 @@
+---
+id: DOC-EXE-PHASE-DISIGN-PHASE-1-7-HARDENING-AUDIT-9UH8
+layer: Execution
+type: Phase Plan
+status: draft
+version: 0.1.0
+---
 # Phase 1-7 Hardening Audit (Execution Baseline)
 Date: 2026-02-22
 Status: Phase 1-7 Execution Complete

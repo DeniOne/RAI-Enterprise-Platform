@@ -6,11 +6,17 @@ import { EMBEDDING_DIM } from './types';
 describe('PgVectorStore', () => {
     let store: PgVectorStore;
     let mockPrisma: any;
+    const sqlText = (query: unknown): string => {
+        if (query && typeof query === 'object' && 'strings' in (query as any)) {
+            return ((query as any).strings as readonly string[]).join('?');
+        }
+        return String(query);
+    };
 
     beforeEach(() => {
         mockPrisma = {
-            $queryRawUnsafe: jest.fn(),
-            $executeRawUnsafe: jest.fn(),
+            $queryRaw: jest.fn(),
+            $executeRaw: jest.fn(),
         };
         store = new PgVectorStore(mockPrisma as unknown as PrismaClient);
     });
@@ -27,7 +33,7 @@ describe('PgVectorStore', () => {
 
     it('should add embedding successfully', async () => {
         const embedding = new Array(EMBEDDING_DIM).fill(0.1);
-        mockPrisma.$queryRawUnsafe.mockResolvedValue([{ id: 'mock-id' }]);
+        mockPrisma.$queryRaw.mockResolvedValue([{ id: 'mock-id' }]);
 
         const id = await store.add({
             content: 'test',
@@ -38,12 +44,12 @@ describe('PgVectorStore', () => {
         });
 
         expect(id).toBe('mock-id');
-        expect(mockPrisma.$queryRawUnsafe).toHaveBeenCalled();
+        expect(sqlText(mockPrisma.$queryRaw.mock.calls[0][0])).toContain('INSERT INTO memory_entries');
     });
 
     it('should query successfully', async () => {
         const embedding = new Array(EMBEDDING_DIM).fill(0.1);
-        mockPrisma.$queryRawUnsafe.mockResolvedValue([
+        mockPrisma.$queryRaw.mockResolvedValue([
             { id: 'mock-id', content: 'test', metadata: {}, similarity: 0.95 }
         ]);
 
@@ -55,13 +61,13 @@ describe('PgVectorStore', () => {
         expect(results).toHaveLength(1);
         expect(results[0].id).toBe('mock-id');
         expect(results[0].similarity).toBe(0.95);
+        expect(sqlText(mockPrisma.$queryRaw.mock.calls[0][0])).toContain('FROM memory_entries');
     });
 
     it('should delete successfully', async () => {
         await store.delete('mock-id');
-        expect(mockPrisma.$executeRawUnsafe).toHaveBeenCalledWith(
-            expect.any(String),
-            'mock-id'
+        expect(sqlText(mockPrisma.$executeRaw.mock.calls[0][0])).toContain(
+            'DELETE FROM memory_entries WHERE id =',
         );
     });
 });

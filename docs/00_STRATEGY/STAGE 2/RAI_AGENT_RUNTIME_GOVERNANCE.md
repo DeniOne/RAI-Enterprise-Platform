@@ -1,3 +1,10 @@
+---
+id: DOC-STR-STAGE-2-RAI-AGENT-RUNTIME-GOVERNANCE-1WLC
+layer: Strategy
+type: Vision
+status: draft
+version: 0.1.0
+---
 # RAI Agent Runtime Governance
 
 > Версия: 1.0  

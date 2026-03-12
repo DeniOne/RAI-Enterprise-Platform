@@ -1,13 +1,12 @@
 ---
-id: DOC-ENG-GEN-112
-type: Service Spec
+id: DOC-ENG-04-ENGINEERING-ADVISORY-S4-GATE-DECISION-I-1QI6
 layer: Engineering
-status: Draft
+type: Service Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Advisory S4 Gate Decision Input
 
 - Generated at (UTC): 2026-02-08T23:21:58.984Z

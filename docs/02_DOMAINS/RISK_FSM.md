@@ -1,13 +1,12 @@
 ---
-id: DOC-DOM-GEN-083
-type: Domain Spec
+id: DOC-DOM-02-DOMAINS-RISK-FSM-18A7
 layer: Domain
-status: Draft
+type: Domain Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Risk FSM — Evolution of Risk Over Time
 
 **Контур:** B6 — Unified Risk Engine

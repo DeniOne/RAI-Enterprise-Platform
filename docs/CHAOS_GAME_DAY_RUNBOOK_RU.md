@@ -1,11 +1,10 @@
 ---
-id: DOC-OPS-RUN-137
+id: DOC-OPS-CHAOS-GAME-DAY-RUNBOOK-RU-FMHK
 layer: Operations
 type: Runbook
 status: approved
 version: 1.0.0
 ---
-
 # CHAOS / GAME DAY RUNBOOK (RU)
 
 Дата: 2026-02-16  

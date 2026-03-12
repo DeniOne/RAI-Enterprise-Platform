@@ -1,13 +1,12 @@
 ---
-id: DOC-ENG-LC-001
-type: Engineering Checklist
-layer: Execution (Level C)
-status: VERIFIED ✅
+id: DOC-ENG-04-ENGINEERING-LEVEL-C-IMPLEMENTATION-CHEC-FXIA
+layer: Engineering
+type: Checklist
+status: approved
 version: 2.0.0
 owner: [@techlead]
 verified_at: 2026-02-18
 ---
-
 # LEVEL C — IMPLEMENTATION CHECKLIST
 ## Атомный чек-лист реализации Contradiction-Resilient Intelligence
 ## Статус: **Industrial-Grade — VERIFIED** ✅ (40/40 тестов PASS)

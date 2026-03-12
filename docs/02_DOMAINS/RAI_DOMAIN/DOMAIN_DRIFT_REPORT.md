@@ -1,13 +1,12 @@
 ---
-id: DOC-DOM-LD-003
-type: Domain
+id: DOC-DOM-RAI-DOMAIN-DOMAIN-DRIFT-REPORT-10XT
 layer: Domain
-status: Accepted
+type: Domain Spec
+status: approved
 version: 2.0.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # RAI DOMAIN — DRIFT REPORT (D6 Hardened)
 ## Доменная модель отчёта о дрейфе
 

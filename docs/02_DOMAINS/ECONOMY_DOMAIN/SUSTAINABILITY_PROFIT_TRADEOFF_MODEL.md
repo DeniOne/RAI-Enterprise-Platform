@@ -1,3 +1,10 @@
+---
+id: DOC-DOM-ECONOMY-DOMAIN-SUSTAINABILITY-PROFIT-TRADE-3X56
+layer: Domain
+type: Domain Spec
+status: draft
+version: 0.1.0
+---
 # LEVEL E: Модель Компромисса Прибыли и Устойчивости
 
 ## 1. Введение

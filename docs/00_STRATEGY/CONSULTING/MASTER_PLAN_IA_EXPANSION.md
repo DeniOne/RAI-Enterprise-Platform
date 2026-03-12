@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-182
-type: Legacy
-layer: Archive
-status: Draft
+id: DOC-STR-CONSULTING-MASTER-PLAN-IA-EXPANSION-F1PM
+layer: Strategy
+type: Roadmap
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # 🧭 MASTER PLAN — RAI Consulting IA Expansion
 
 ## Текущий статус (Baseline)

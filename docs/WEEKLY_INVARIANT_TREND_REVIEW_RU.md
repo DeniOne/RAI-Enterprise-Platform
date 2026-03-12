@@ -1,11 +1,10 @@
 ---
-id: DOC-OPS-REP-131
+id: DOC-OPS-WEEKLY-INVARIANT-TREND-REVIEW-RU-8JW9
 layer: Operations
 type: Report
 status: approved
 version: 1.0.0
 ---
-
 # WEEKLY INVARIANT TREND REVIEW (RU)
 
 Неделя: 2026-W07

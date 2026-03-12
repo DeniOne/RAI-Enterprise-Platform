@@ -1,3 +1,10 @@
+---
+id: DOC-FRN-10-FRONTEND-MENU-IMPLEMENTATION-18-ARCHITE-JY2P
+layer: Frontend
+type: Screen Spec
+status: draft
+version: 0.1.0
+---
 # THE COMMERCE & PARTY INTEGRATION MATRIX
 *(Матрица влияния нового коммерческого движка на глобальную архитектуру RAI Enterprise)*
 

@@ -1,21 +1,12 @@
 ---
-id: DOC-ARC-GEN-035
-type: HLD
+id: DOC-ARC-HLD-CONTAINERS-C4-L2-1SG5
 layer: Architecture
-status: Draft
+type: Topology
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-containers-c4
-type: component
-status: review
-owners: [architects]
-aligned_with: [principle-axioms]
----
-
 # Архитектура: Контейнеры (C4 Model Level 2)
 
 > **Статус:** Черновик | **Версия:** 0.1 | **Обновлено:** 2026.02.02  

@@ -1,13 +1,12 @@
 ---
-id: DOC-STR-FO-008
-type: Demo Flows
+id: DOC-STR-FRONT-OFFICE-FRONT-OFFICE-DEMO-FLOWS-14E9
 layer: Strategy
-status: Draft
+type: Vision
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-03-09
 ---
-
 # FRONT_OFFICE_DEMO_FLOWS
 
 ## 1. Назначение документа

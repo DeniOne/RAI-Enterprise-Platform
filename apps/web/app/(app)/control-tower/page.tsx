@@ -8,10 +8,13 @@ import {
   type AgentLifecycleItemDto,
   type AgentLifecycleSummaryDto,
   type AutonomyStatusDto,
+  type MemoryHealthDto,
+  type PendingActionDto,
   type RuntimeGovernanceAgentDto,
   type RuntimeGovernanceDrilldownsDto,
   type RuntimeGovernanceSummaryDto,
 } from '@/lib/api';
+import { webFeatureFlags } from '@/lib/feature-flags';
 import { Monitor, ShieldCheck, Zap, Activity, DollarSign, TerminalSquare, AlertCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -62,10 +65,12 @@ interface QueuePressureData {
 }
 
 export default function ControlTowerPage() {
+  const memoryEnabled = webFeatureFlags.controlTowerMemory;
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [performance, setPerformance] = useState<PerformanceData | null>(null);
   const [cost, setCost] = useState<CostData | null>(null);
   const [queuePressure, setQueuePressure] = useState<QueuePressureData | null>(null);
+  const [memoryHealth, setMemoryHealth] = useState<MemoryHealthDto | null>(null);
   const [autonomy, setAutonomy] = useState<AutonomyStatusDto | null>(null);
   const [runtimeGovernanceSummary, setRuntimeGovernanceSummary] = useState<RuntimeGovernanceSummaryDto | null>(null);
   const [runtimeGovernanceAgents, setRuntimeGovernanceAgents] = useState<RuntimeGovernanceAgentDto[]>([]);
@@ -73,8 +78,10 @@ export default function ControlTowerPage() {
   const [lifecycleSummary, setLifecycleSummary] = useState<AgentLifecycleSummaryDto | null>(null);
   const [lifecycleAgents, setLifecycleAgents] = useState<AgentLifecycleItemDto[]>([]);
   const [lifecycleHistory, setLifecycleHistory] = useState<AgentLifecycleHistoryItemDto[]>([]);
+  const [pendingActions, setPendingActions] = useState<PendingActionDto[]>([]);
   const [governanceActionLoading, setGovernanceActionLoading] = useState<string | null>(null);
   const [lifecycleActionLoading, setLifecycleActionLoading] = useState<string | null>(null);
+  const [pendingActionLoading, setPendingActionLoading] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,7 +89,7 @@ export default function ControlTowerPage() {
     let cancelled = false;
     (async () => {
       try {
-        const [dRes, pRes, cRes, qRes, aRes, rgSummaryRes, rgAgentsRes, rgDrilldownsRes, lifecycleSummaryRes, lifecycleAgentsRes, lifecycleHistoryRes] = await Promise.all([
+        const [dRes, pRes, cRes, qRes, aRes, rgSummaryRes, rgAgentsRes, rgDrilldownsRes, lifecycleSummaryRes, lifecycleAgentsRes, lifecycleHistoryRes, memoryRes, pendingActionsRes] = await Promise.all([
           api.explainability.dashboard({ hours: 24 }),
           api.explainability.performance({ timeWindowMs: 3600000 }),
           api.explainability.costHotspots({ timeWindowMs: 86400000, limit: 10 }),
@@ -94,12 +101,15 @@ export default function ControlTowerPage() {
           api.explainability.lifecycleSummary(),
           api.explainability.lifecycleAgents(),
           api.explainability.lifecycleHistory({ limit: 12 }),
+          memoryEnabled ? api.memory.health() : Promise.resolve({ data: null }),
+          api.pendingActions.list({ limit: 12 }),
         ]);
         if (cancelled) return;
         setDashboard(dRes.data);
         setPerformance(pRes.data);
         setCost(cRes.data);
         setQueuePressure(qRes.data);
+        setMemoryHealth(memoryRes.data);
         setAutonomy(aRes.data);
         setRuntimeGovernanceSummary(rgSummaryRes.data);
         setRuntimeGovernanceAgents(rgAgentsRes.data);
@@ -107,6 +117,7 @@ export default function ControlTowerPage() {
         setLifecycleSummary(lifecycleSummaryRes.data);
         setLifecycleAgents(lifecycleAgentsRes.data);
         setLifecycleHistory(lifecycleHistoryRes.data);
+        setPendingActions(pendingActionsRes.data);
       } catch (e) {
         if (!cancelled) setError((e as Error).message ?? 'Сбой получения телеметрии');
       } finally {
@@ -142,6 +153,51 @@ export default function ControlTowerPage() {
 
   async function reloadLifecycleAndGovernance() {
     await Promise.all([reloadLifecycleBoard(), reloadRuntimeGovernance()]);
+  }
+
+  async function reloadPendingActions() {
+    const pendingActionsRes = await api.pendingActions.list({ limit: 12 });
+    setPendingActions(pendingActionsRes.data);
+  }
+
+  async function handleApproveFirstPendingAction(id: string) {
+    try {
+      setPendingActionLoading(`approve-first:${id}`);
+      await api.pendingActions.approveFirst(id);
+      await reloadPendingActions();
+    } catch (e) {
+      window.alert((e as Error).message ?? 'Не удалось выполнить первое подтверждение');
+    } finally {
+      setPendingActionLoading(null);
+    }
+  }
+
+  async function handleApproveFinalPendingAction(id: string) {
+    try {
+      setPendingActionLoading(`approve-final:${id}`);
+      await api.pendingActions.approveFinal(id);
+      await reloadPendingActions();
+    } catch (e) {
+      window.alert((e as Error).message ?? 'Не удалось выполнить финальное подтверждение');
+    } finally {
+      setPendingActionLoading(null);
+    }
+  }
+
+  async function handleRejectPendingAction(id: string) {
+    const reason = window.prompt('Укажи причину отклонения', '');
+    if (reason !== null && reason.trim().length === 0) {
+      return;
+    }
+    try {
+      setPendingActionLoading(`reject:${id}`);
+      await api.pendingActions.reject(id, reason?.trim() || undefined);
+      await reloadPendingActions();
+    } catch (e) {
+      window.alert((e as Error).message ?? 'Не удалось отклонить PendingAction');
+    } finally {
+      setPendingActionLoading(null);
+    }
   }
 
   async function handleSetAutonomyOverride(level: 'TOOL_FIRST' | 'QUARANTINE') {
@@ -419,6 +475,67 @@ export default function ControlTowerPage() {
             </div>
           </UnitCard>
 
+          {memoryEnabled ? (
+            <UnitCard title="Memory Fabric" icon={<Zap size={20} />} subtitle="Cognitive Layers">
+              <div className="space-y-1">
+                {memoryHealth ? (
+                  <>
+                    <DataRow
+                      label="Memory status"
+                      value={memoryHealth.status}
+                      status={memoryHealth.degraded ? 'warning' : 'success'}
+                    />
+                    <DataRow
+                      label="Episodes"
+                      value={memoryHealth.episodeCount === null ? 'n/a' : `${memoryHealth.episodeCount}`}
+                    />
+                    <DataRow
+                      label="Engrams"
+                      value={memoryHealth.engramCount === null ? 'n/a' : `${memoryHealth.engramCount}`}
+                    />
+                    <DataRow
+                      label="Trust score"
+                      value={memoryHealth.trustScore === null ? 'n/a' : `${(memoryHealth.trustScore * 100).toFixed(1)}%`}
+                      status={
+                        memoryHealth.trustScore === null
+                          ? 'warning'
+                          : memoryHealth.trustScore >= 0.85
+                            ? 'success'
+                            : memoryHealth.trustScore >= 0.7
+                              ? 'warning'
+                              : 'error'
+                      }
+                    />
+                    <DataRow
+                      label="Consolidation freshness"
+                      value={
+                        memoryHealth.consolidationFreshness === null
+                          ? 'n/a'
+                          : `${memoryHealth.consolidationFreshness} min`
+                      }
+                    />
+                    <DataRow
+                      label="Pruning status"
+                      value={memoryHealth.pruningStatus}
+                      status={memoryHealth.pruningStatus === 'nominal' ? 'success' : 'warning'}
+                    />
+                    <div className="mt-6 pt-5 border-t border-black/5">
+                      <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Layers</p>
+                      <div className="space-y-2">
+                        {Object.entries(memoryHealth.layers ?? {}).map(([name, value]) => (
+                          <div key={name} className="flex items-start justify-between gap-4 text-[12px]">
+                            <span className="font-medium text-[#030213]">{name}</span>
+                            <span className="text-right font-mono text-[#717182]">{typeof value === 'string' ? value : JSON.stringify(value)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                ) : <NoData />}
+              </div>
+            </UnitCard>
+          ) : null}
+
           {/* Качество и Валидация */}
           <UnitCard title="Качество и Валидация" icon={<ShieldCheck size={20} />} subtitle="Model Integrity">
             <div className="space-y-1">
@@ -549,6 +666,119 @@ export default function ControlTowerPage() {
             </div>
           </UnitCard>
 
+        </div>
+
+        <div className="mt-12">
+          <div className="flex items-center gap-3 mb-6">
+            <ShieldCheck size={20} className="text-[#030213]" />
+            <h2 className="text-xl font-medium text-[#030213] tracking-tight">Human Review Queue</h2>
+          </div>
+          <div className="rounded-3xl border border-black/10 bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
+            <div className="px-6 py-5 border-b border-black/5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182]">Pending Actions</p>
+                <p className="text-[13px] text-[#717182] mt-1">
+                  Governance-state для действий, заблокированных RiskPolicy или AutonomyPolicy. Approve меняет статус очереди, но не выполняет авто-resume без отдельного controlled replay.
+                </p>
+              </div>
+              <div className="text-[12px] text-[#717182]">
+                Open: <span className="font-mono text-[#030213]">{pendingActions.filter((item) => item.status === 'PENDING' || item.status === 'APPROVED_FIRST').length}</span>
+              </div>
+            </div>
+            {pendingActions.length === 0 ? (
+              <div className="px-6 py-8 text-[13px] text-[#717182]">Очередь пуста.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[980px]">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Tool</th>
+                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Trace</th>
+                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Risk</th>
+                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Status</th>
+                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Payload</th>
+                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Expires</th>
+                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingActions.map((item) => (
+                      <tr key={item.id} className="border-t border-black/[0.04] align-top">
+                        <td className="px-6 py-4">
+                          <div className="text-[13px] font-medium text-[#030213]">{item.toolName}</div>
+                          <div className="text-[11px] text-[#717182] font-mono">{item.id}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <Link href={`/control-tower/trace/${item.traceId}`} className="text-[12px] font-mono text-blue-600 hover:underline">
+                            {item.traceId.slice(0, 18)}...
+                          </Link>
+                        </td>
+                        <td className="px-6 py-4">
+                          <RiskBadge level={pendingActionRiskLevel(item.riskLevel)} />
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={clsx(
+                            'inline-flex px-2.5 py-1 rounded text-[10px] font-medium uppercase tracking-widest border',
+                            item.status === 'APPROVED_FINAL'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : item.status === 'APPROVED_FIRST'
+                                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                : item.status === 'REJECTED' || item.status === 'EXPIRED'
+                                  ? 'bg-red-50 text-red-700 border-red-200'
+                                  : 'bg-blue-50 text-blue-700 border-blue-200',
+                          )}>
+                            {formatGovernanceKey(item.status)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="max-w-[260px] text-[11px] leading-relaxed text-[#717182] font-mono break-all">
+                            {item.payloadPreview}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-[12px] text-[#030213]">{new Date(item.expiresAt).toLocaleString()}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-wrap gap-2">
+                            {item.status === 'PENDING' && (
+                              <button
+                                type="button"
+                                onClick={() => handleApproveFirstPendingAction(item.id)}
+                                disabled={pendingActionLoading !== null}
+                                className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {pendingActionLoading === `approve-first:${item.id}` ? 'Approving...' : 'Approve 1'}
+                              </button>
+                            )}
+                            {item.status === 'APPROVED_FIRST' && (
+                              <button
+                                type="button"
+                                onClick={() => handleApproveFinalPendingAction(item.id)}
+                                disabled={pendingActionLoading !== null}
+                                className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[12px] font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {pendingActionLoading === `approve-final:${item.id}` ? 'Finalizing...' : 'Approve final'}
+                              </button>
+                            )}
+                            {(item.status === 'PENDING' || item.status === 'APPROVED_FIRST') && (
+                              <button
+                                type="button"
+                                onClick={() => handleRejectPendingAction(item.id)}
+                                disabled={pendingActionLoading !== null}
+                                className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {pendingActionLoading === `reject:${item.id}` ? 'Rejecting...' : 'Reject'}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
 
         {lifecycleSummary && (
@@ -1573,6 +1803,19 @@ function RiskBadge({ level }: { level: 'R1' | 'R2' | 'R3' | 'R4' | 'Success' }) 
       {level === 'Success' ? 'Verified' : level}
     </span>
   );
+}
+
+function pendingActionRiskLevel(level: string): 'R1' | 'R2' | 'R3' | 'R4' | 'Success' {
+  switch (level.toUpperCase()) {
+    case 'CRITICAL':
+      return 'R4';
+    case 'WRITE':
+      return 'R3';
+    case 'READ':
+      return 'R1';
+    default:
+      return 'R2';
+  }
 }
 
 function NoData() {

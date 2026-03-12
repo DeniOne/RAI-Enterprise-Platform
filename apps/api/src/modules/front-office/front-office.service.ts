@@ -194,6 +194,18 @@ export class FrontOfficeService {
     return this.frontOfficeDraftService.getThread(companyId, threadKey);
   }
 
+  async getThreadForViewer(
+    companyId: string,
+    viewer: { id: string; role?: string; accountId?: string | null },
+    threadKey: string,
+  ) {
+    return this.frontOfficeDraftService.getThreadForViewer(
+      companyId,
+      viewer,
+      threadKey,
+    );
+  }
+
   async listMessages(companyId: string, threadKey: string) {
     return this.frontOfficeDraftService.listMessages(companyId, threadKey);
   }
@@ -212,6 +224,13 @@ export class FrontOfficeService {
 
   async listThreads(companyId: string) {
     return this.frontOfficeDraftService.listThreads(companyId);
+  }
+
+  async listThreadsForViewer(
+    companyId: string,
+    viewer: { id: string; role?: string; accountId?: string | null },
+  ) {
+    return this.frontOfficeDraftService.listThreadsForViewer(companyId, viewer);
   }
 
   async getTelegramWorkspaceBootstrap(companyId: string, userId: string) {
@@ -273,7 +292,7 @@ export class FrontOfficeService {
 
   async replyToThread(
     companyId: string,
-    user: { id: string; role?: string },
+    user: { id: string; role?: string; accountId?: string | null },
     threadKey: string,
     messageText: string,
   ) {
@@ -287,13 +306,13 @@ export class FrontOfficeService {
 
   async markThreadRead(
     companyId: string,
-    userId: string,
+    viewer: { id: string; role?: string; accountId?: string | null },
     threadKey: string,
     lastMessageId?: string,
   ) {
     return this.frontOfficeDraftService.markThreadRead(
       companyId,
-      userId,
+      viewer,
       threadKey,
       lastMessageId,
     );

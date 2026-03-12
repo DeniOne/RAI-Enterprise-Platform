@@ -1,6 +1,5 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Query, UseInterceptors } from "@nestjs/common";
 import { FieldObservationService } from "./field-observation.service";
-import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
 import { PaginationDto } from "../../shared/dto/pagination.dto";
 import {
@@ -9,13 +8,20 @@ import {
   ObservationType,
   User,
 } from "@rai/prisma-client";
+import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
+import { Authorized } from "../../shared/auth/authorized.decorator";
+import {
+  EXECUTION_ROLES,
+  PLANNING_READ_ROLES,
+} from "../../shared/auth/rbac.constants";
 
 @Controller("field-observation")
-@UseGuards(JwtAuthGuard)
 export class FieldObservationController {
   constructor(private readonly observationService: FieldObservationService) {}
 
   @Post()
+  @Authorized(...EXECUTION_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async create(
     @CurrentUser() user: User,
     @Body()
@@ -41,6 +47,7 @@ export class FieldObservationController {
   }
 
   @Get()
+  @Authorized(...PLANNING_READ_ROLES)
   async findAll(@CurrentUser() user: any, @Query() pagination: PaginationDto) {
     return this.observationService.findAll(user.companyId, {
       skip: ((pagination.page || 1) - 1) * (pagination.limit || 20),
@@ -50,6 +57,7 @@ export class FieldObservationController {
   }
 
   @Get("task/:taskId")
+  @Authorized(...PLANNING_READ_ROLES)
   async getByTask(
     @Param("taskId") taskId: string,
     @CurrentUser() user: any,
@@ -63,6 +71,7 @@ export class FieldObservationController {
   }
 
   @Get("season/:seasonId")
+  @Authorized(...PLANNING_READ_ROLES)
   async getBySeason(
     @Param("seasonId") seasonId: string,
     @CurrentUser() user: any,

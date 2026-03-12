@@ -1,21 +1,12 @@
 ---
-id: DOC-DOM-GEN-068
-type: Domain Spec
+id: DOC-DOM-ENTITIES-ENTITY-MAP-1XMG
 layer: Domain
-status: Draft
+type: Domain Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-rai-entity-map
-type: component
-status: review
-owners: [domain-experts]
-aligned_with: [principle-vision]
----
-
 # RAI: СУЩНОСТИ
 
 ## 1. Field (Поле)

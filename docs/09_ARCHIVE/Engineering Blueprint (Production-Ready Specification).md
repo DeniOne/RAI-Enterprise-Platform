@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-09-ARCHIVE-ENGINEERING-BLUEPRINT-PRODUCTIO-1EJF
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 # RAI Enterprise — Frontend Control Plane
 ## Engineering Blueprint (Production-Ready Specification)
 

@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-ARCHIVE-RAI-AGRONOMIC-NERVOUS-SYSTEM-ARCHI-1KKB
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 # RAI Agronomic Nervous System Architecture
 
 Версия: 1.0

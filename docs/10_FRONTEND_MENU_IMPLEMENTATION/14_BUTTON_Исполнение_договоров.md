@@ -1,3 +1,10 @@
+---
+id: DOC-FRN-10-FRONTEND-MENU-IMPLEMENTATION-14-BUTTON-EGBD
+layer: Frontend
+type: Screen Spec
+status: draft
+version: 0.1.0
+---
 # FULFILLMENT UX ARCHITECTURE (ИСПОЛНЕНИЕ ДОГОВОРОВ / ЛЕНТА СОБЫТИЙ)
 
 ## ВВЕДЕНИЕ

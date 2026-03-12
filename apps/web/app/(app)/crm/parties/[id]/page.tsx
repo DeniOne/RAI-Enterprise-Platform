@@ -103,6 +103,75 @@ function normalizeDay(value?: string) {
     return value ? value.slice(0, 10) : '';
 }
 
+function buildContactLocalId(
+    contact: {
+        id?: string | null;
+        fullName?: string | null;
+        position?: string | null;
+        phone?: string | null;
+        email?: string | null;
+    },
+    fallbackKey?: string,
+) {
+    const existingId = typeof contact.id === 'string' ? contact.id.trim() : '';
+    if (existingId) {
+        return existingId;
+    }
+
+    const normalized = [
+        contact.fullName,
+        contact.position,
+        contact.phone,
+        contact.email,
+        fallbackKey,
+    ]
+        .map((value) => String(value || '').trim().toLowerCase())
+        .filter(Boolean)
+        .join('_')
+        .replace(/[^a-z0-9а-яё_-]+/gi, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_|_$/g, '')
+        .slice(0, 96);
+
+    return `contact_${normalized || fallbackKey || 'item'}`;
+}
+
+function findExistingRegistrationContact(existingContacts: unknown, contact: {
+    id?: string;
+    fullName: string;
+    phone?: string;
+    email?: string;
+}) {
+    if (!Array.isArray(existingContacts)) {
+        return null;
+    }
+
+    const byId = contact.id
+        ? existingContacts.find((item: any) => typeof item?.id === 'string' && item.id === contact.id)
+        : null;
+    if (byId) {
+        return byId as Record<string, unknown>;
+    }
+
+    const normalizedFullName = contact.fullName.trim().toLowerCase();
+    const normalizedEmail = (contact.email || '').trim().toLowerCase();
+    const normalizedPhone = (contact.phone || '').trim();
+
+    return (
+        existingContacts.find((item: any) => {
+            const itemFullName = String(item?.fullName || '').trim().toLowerCase();
+            const itemEmail = String(item?.email || '').trim().toLowerCase();
+            const itemPhone = String(item?.phones || '').trim();
+
+            return (
+                itemFullName === normalizedFullName &&
+                itemEmail === normalizedEmail &&
+                itemPhone === normalizedPhone
+            );
+        }) as Record<string, unknown> | undefined
+    ) ?? null;
+}
+
 function areArraysEqual(left: unknown, right: unknown) {
     return JSON.stringify(left) === JSON.stringify(right);
 }
@@ -142,11 +211,35 @@ function buildFormValuesFromPartyData(
             isPrimary: Boolean(b.isPrimary),
         })),
         contacts: (reg?.contacts || []).map((c: any) => ({
+            id: buildContactLocalId(
+                {
+                    id: c.id,
+                    fullName: c.fullName,
+                    position: c.position || (c.roleType === 'SIGNATORY' ? 'SIGNATORY' : 'OTHER'),
+                    phone: c.phones,
+                    email: c.email,
+                },
+                `${partyId}_${c.fullName || 'contact'}`,
+            ),
             fullName: c.fullName,
             position: (c.position || (c.roleType === 'SIGNATORY' ? 'SIGNATORY' : 'OTHER')) as any,
             phone: c.phones || '',
             email: c.email || '',
-            isPrimary: false,
+            telegramId: c.telegramId || c.frontOfficeAccess?.telegramId || '',
+            frontOfficeAccess:
+                c.frontOfficeAccess && typeof c.frontOfficeAccess === 'object'
+                    ? {
+                        status: c.frontOfficeAccess.status,
+                        telegramId: c.frontOfficeAccess.telegramId,
+                        invitationId: c.frontOfficeAccess.invitationId,
+                        bindingId: c.frontOfficeAccess.bindingId,
+                        userId: c.frontOfficeAccess.userId,
+                        proposedLogin: c.frontOfficeAccess.proposedLogin,
+                        invitedAt: c.frontOfficeAccess.invitedAt,
+                        activatedAt: c.frontOfficeAccess.activatedAt,
+                    }
+                    : undefined,
+            isPrimary: Boolean(c.isPrimary),
             validFrom: c.validFrom || '',
             validTo: c.validTo || '',
         })),
@@ -179,11 +272,13 @@ function buildFormValuesFromPartyData(
 }
 
 function PartyHubContent({
+    partyId,
     isSaving,
     onSubmit,
     onInvalid,
     saveNotice,
 }: {
+    partyId: string,
     isSaving: boolean,
     onSubmit: (v: PartyFullProfileValues) => Promise<boolean>,
     onInvalid: () => void,
@@ -239,7 +334,7 @@ function PartyHubContent({
                     <PartyBankAccountsTab />
                 </TabsContent>
                 <TabsContent value="contacts">
-                    <PartyContactsTab />
+                    <PartyContactsTab partyId={partyId} />
                 </TabsContent>
                 <TabsContent value="structure">
                     <PartyStructureTab />
@@ -317,7 +412,13 @@ export default function PartyEntityHubPage() {
         setIsSaving(true);
         setSaveNotice(null);
         try {
-            const existingRegistrationData = originalPartyRef.current?.registrationData ?? {};
+            const latestParty =
+                (await partyAssetsApi.getParty(partyId).catch(() => originalPartyRef.current)) ??
+                originalPartyRef.current;
+            const existingRegistrationData = latestParty?.registrationData ?? {};
+            const existingContacts = Array.isArray(existingRegistrationData?.contacts)
+                ? existingRegistrationData.contacts
+                : [];
             const savedParty = await partyAssetsApi.updateParty(partyId, {
                 legalName: values.legalName.trim(),
                 shortName: values.shortName?.trim() || undefined,
@@ -336,14 +437,40 @@ export default function PartyEntityHubPage() {
                             .filter((part) => typeof part === 'string' && part.trim().length > 0)
                             .join(', '),
                     })),
-                    contacts: values.contacts.map((contact) => ({
-                        roleType: mapPositionToRoleType(contact.position),
-                        fullName: contact.fullName.trim(),
-                        position: contact.position,
-                        basisOfAuthority: existingRegistrationData?.contacts?.find((item: any) => item.fullName === contact.fullName)?.basisOfAuthority,
-                        phones: contact.phone?.trim() || undefined,
-                        email: contact.email?.trim() || undefined,
-                    })),
+                    contacts: values.contacts.map((contact) => {
+                        const contactId = buildContactLocalId(
+                            {
+                                id: contact.id,
+                                fullName: contact.fullName,
+                                position: contact.position,
+                                phone: contact.phone,
+                                email: contact.email,
+                            },
+                            `${partyId}_${contact.fullName || 'contact'}`,
+                        );
+                        const existingContact =
+                            findExistingRegistrationContact(existingContacts, {
+                                id: contactId,
+                                fullName: contact.fullName,
+                                phone: contact.phone,
+                                email: contact.email,
+                            }) ?? {};
+
+                        return {
+                            ...existingContact,
+                            id: contactId,
+                            roleType: mapPositionToRoleType(contact.position),
+                            fullName: contact.fullName.trim(),
+                            position: contact.position,
+                            basisOfAuthority:
+                                typeof existingContact.basisOfAuthority === 'string'
+                                    ? existingContact.basisOfAuthority
+                                    : undefined,
+                            phones: contact.phone?.trim() || undefined,
+                            email: contact.email?.trim() || undefined,
+                            isPrimary: Boolean(contact.isPrimary),
+                        };
+                    }),
                     banks: values.bankAccounts.map((bank) => ({
                         bankName: bank.bankName.trim(),
                         accountNumber: bank.accountNumber.trim(),
@@ -483,6 +610,7 @@ export default function PartyEntityHubPage() {
         <FormProvider {...methods}>
             <EditModeProvider>
                 <PartyHubContent
+                    partyId={partyId}
                     isSaving={isSaving}
                     onSubmit={onSubmit}
                     onInvalid={onInvalid}

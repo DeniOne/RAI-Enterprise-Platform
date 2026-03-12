@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-CORE-LC-002
-type: Architecture
-layer: Core
-status: Draft
+id: DOC-ARC-LEVEL-C-LEVEL-C-INVARIANTS-F7Q0
+layer: Architecture
+type: Standards
+status: draft
 version: 1.0.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # LEVEL C — INVARIANTS SPECIFICATION
 ## Формальная спецификация инвариантов I29–I33
 

@@ -1,14 +1,13 @@
 ---
-id: DOC-EXE-GEN-148
-type: Phase Plan
+id: DOC-EXE-PHASE-GAMMA-SPRINT-3-CHECKLIST-FK8O
 layer: Execution
-status: Draft
+type: Checklist
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿# Чек-лист Sprint 3 (Phase Gamma)
+# Чек-лист Sprint 3 (Phase Gamma)
 
 **Название:** «Когнитивная память (Уроки прошлого)»
 **Срок:** 2 недели

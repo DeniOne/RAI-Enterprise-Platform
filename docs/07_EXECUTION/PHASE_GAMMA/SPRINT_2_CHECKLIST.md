@@ -1,14 +1,13 @@
 ---
-id: DOC-EXE-GEN-147
-type: Phase Plan
+id: DOC-EXE-PHASE-GAMMA-SPRINT-2-CHECKLIST-NX8K
 layer: Execution
-status: Draft
+type: Checklist
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿# Чек-лист Sprint 2 (Phase Gamma)
+# Чек-лист Sprint 2 (Phase Gamma)
 
 **Цель:** базовая готовность сигналов и baseline-источников (без рекомендаций).
 **Статус:** завершен (08.02.2026)

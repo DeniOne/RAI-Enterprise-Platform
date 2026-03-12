@@ -25,9 +25,11 @@ import { CashFlowService } from "./cash-flow.service";
 import { LiquidityRiskService } from "./liquidity-risk.service";
 import { OutboxModule } from "../../shared/outbox/outbox.module";
 import { TechMapModule } from "../tech-map/tech-map.module";
+import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
+import { ConsultingAccessGuard } from "./consulting-access.guard";
 
 @Module({
-  imports: [PrismaModule, CmrModule, EconomyModule, OutboxModule, forwardRef(() => TechMapModule)],
+  imports: [PrismaModule, CmrModule, EconomyModule, OutboxModule, IdempotencyModule, forwardRef(() => TechMapModule)],
   controllers: [ConsultingController],
   providers: [
     ConsultingService,
@@ -49,6 +51,7 @@ import { TechMapModule } from "../tech-map/tech-map.module";
     StrategicAdvisoryService,
     CashFlowService,
     LiquidityRiskService,
+    ConsultingAccessGuard,
   ],
   exports: [
     ConsultingService,

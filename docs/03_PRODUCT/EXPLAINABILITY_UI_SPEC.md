@@ -1,3 +1,10 @@
+---
+id: DOC-PRD-03-PRODUCT-EXPLAINABILITY-UI-SPEC-1BNM
+layer: Product
+type: UI Spec
+status: draft
+version: 0.1.0
+---
 # EXPLAINABILITY_UI_SPEC.md
 
 ## 0. Статус документа

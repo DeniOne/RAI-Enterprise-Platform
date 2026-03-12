@@ -1,8 +1,8 @@
 ---
-id: DOC-DOM-SOIL-001
-type: Specification
-layer: Domain Logic
-status: Approved
+id: DOC-DOM-SOIL-DOMAIN-SOIL-REGENERATION-INDEX-SPEC-8HFL
+layer: Domain
+type: Domain Spec
+status: approved
 version: 1.4.0
 owners: [@techlead, @agronomist]
 calibration_dataset: "CAL-2025-Q4"
@@ -10,7 +10,6 @@ soil_profile_version: "2026-Q1"
 formula_hash: "SHA256:..."
 last_updated: 2026-02-19
 ---
-
 # SOIL REGENERATION INDEX (SRI) SPECIFICATION
 
 ## 1. Введение

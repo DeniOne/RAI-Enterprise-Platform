@@ -70,10 +70,9 @@ export class DefaultMemoryAdapter implements MemoryAdapter {
                         throw new Error("Invalid embedding vector: contains non-finite numbers");
                     }
                     const vectorStr = `[${embedding.join(',')}]`;
-                    await tx.$executeRawUnsafe(
-                        `UPDATE memory_interactions SET embedding = $1::vector WHERE id = $2`,
-                        vectorStr,
-                        created.id
+                    await this.prisma.safeExecuteRaw(
+                        Prisma.sql`UPDATE memory_interactions SET embedding = CAST(${vectorStr} AS vector) WHERE id = ${created.id}`,
+                        tx as any,
                     );
                 }
 

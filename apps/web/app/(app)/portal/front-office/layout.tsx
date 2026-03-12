@@ -1,0 +1,55 @@
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { getUserData } from "@/lib/api/auth-server";
+import { EXTERNAL_FRONT_OFFICE_BASE_PATH } from "@/lib/front-office-routes";
+
+const NAV_ITEMS = [{ href: EXTERNAL_FRONT_OFFICE_BASE_PATH, label: "Диалоги" }];
+
+export default async function ExternalFrontOfficeLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const user = await getUserData();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  if (user.role !== "FRONT_OFFICE_USER") {
+    redirect("/front-office");
+  }
+
+  return (
+    <div className="space-y-8">
+      <div className="rounded-[28px] border border-black/10 bg-white px-6 py-5 shadow-sm">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-gray-400">
+              Counterparty Portal
+            </p>
+            <h1 className="mt-2 text-2xl font-medium text-gray-900">
+              Портал контрагента
+            </h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Просмотр привязанных диалогов и обмен сообщениями с командой
+              платформы в отдельном внешнем контуре.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {NAV_ITEMS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-full border border-black/10 px-4 py-2 text-xs font-medium text-gray-600 transition hover:border-black/20 hover:text-gray-900"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}

@@ -1,21 +1,12 @@
 ---
-id: DOC-PRD-GEN-084
-type: UI Spec
+id: DOC-PRD-03-PRODUCT-CMR-UI-UX-OHGV
 layer: Product
-status: Draft
+type: UI Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: guideline-design-cmr-ui
-type: guideline
-status: review
-owners: [designers, architects]
-aligned_with: [principle-vision]
----
-
 # CMR UI/UX DESIGN (Consulting Control Plane)
 
 > **Версия:** v0.1  

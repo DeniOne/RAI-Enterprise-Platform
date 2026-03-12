@@ -50,7 +50,19 @@ export class IdempotencyInterceptor implements NestInterceptor {
       );
     }
 
-    const cacheKey = `idempotency:${idempotencyKey}`;
+    const routeScope =
+      (request.route?.path as string | undefined) ||
+      (request.url as string | undefined) ||
+      null;
+    const scopeParts = [
+      request.user?.companyId as string | undefined,
+      request.user?.userId as string | undefined,
+      routeScope ? (request.method as string | undefined) : undefined,
+      routeScope ?? undefined,
+    ].filter((part): part is string => typeof part === "string" && part.trim().length > 0);
+    const cacheKey = scopeParts.length > 0
+      ? `idempotency:${scopeParts.join(":")}:${idempotencyKey}`
+      : `idempotency:${idempotencyKey}`;
 
     // Проверяем статус в Redis
     const cachedState = await this.redisService.get(cacheKey);

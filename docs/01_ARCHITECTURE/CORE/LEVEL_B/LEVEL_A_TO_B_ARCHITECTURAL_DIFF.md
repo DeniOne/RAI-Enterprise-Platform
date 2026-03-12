@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-LEVEL-B-LEVEL-A-TO-B-ARCHITECTURAL-DIFF-U6NP
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # LEVEL_A_TO_B_ARCHITECTURAL_DIFF.md
 
 ## 0. Статус документа

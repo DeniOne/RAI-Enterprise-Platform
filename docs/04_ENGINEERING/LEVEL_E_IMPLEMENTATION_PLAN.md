@@ -1,3 +1,10 @@
+---
+id: DOC-ENG-04-ENGINEERING-LEVEL-E-IMPLEMENTATION-PLAN-BCAS
+layer: Engineering
+type: Implementation Plan
+status: draft
+version: 0.1.0
+---
 # Engineering Plan: Level E - Regenerative Optimization
 
 ## 1. Introduction

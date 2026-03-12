@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Prisma } from '@rai/prisma-client';
 import { PrismaService } from '../prisma/prisma.service';
+import { InvariantMetrics } from '../invariants/invariant-metrics';
 import {
     EngramCaseStudy,
     EngramRecallContext,
@@ -75,16 +77,15 @@ export class EngramService {
         // Записываем embedding через raw SQL (Prisma не поддерживает vector напрямую)
         if (embedding.length > 0) {
             const vectorStr = `[${embedding.join(',')}]`;
-            await this.prisma.$executeRawUnsafe(
-                `UPDATE engrams SET embedding = $1::vector WHERE id = $2`,
-                vectorStr,
-                engram.id,
+            await this.prisma.safeExecuteRaw(
+                Prisma.sql`UPDATE engrams SET embedding = CAST(${vectorStr} AS vector) WHERE id = ${engram.id}`,
             );
         }
 
         this.logger.log(
             `engram_formed id=${engram.id} type=${caseStudy.type} category=${caseStudy.category} weight=${initialWeight} success=${caseStudy.wasSuccessful}`,
         );
+        InvariantMetrics.increment('memory_engram_formations_total');
 
         return engram.id;
     }
@@ -149,24 +150,21 @@ export class EngramService {
         const limit = context.limit ?? 5;
         const minSimilarity = context.minSimilarity ?? 0.65;
 
-        // Построение WHERE-условий
-        const whereConditions: string[] = ['e."isActive" = true'];
-
-        // Tenant isolation: свои + глобальные
-        whereConditions.push(`(e."companyId" = $2 OR e."companyId" IS NULL)`);
+        const vectorStr = `[${context.embedding.join(',')}]`;
+        const whereConditions: Prisma.Sql[] = [
+            Prisma.sql`e."isActive" = true`,
+            Prisma.sql`(e."companyId" = ${context.companyId} OR e."companyId" IS NULL)`,
+        ];
 
         if (context.filters?.type) {
-            whereConditions.push(`e.type = '${context.filters.type}'`);
+            whereConditions.push(Prisma.sql`e.type = ${context.filters.type}`);
         }
         if (context.filters?.category) {
-            whereConditions.push(`e.category = '${context.filters.category}'`);
+            whereConditions.push(Prisma.sql`e.category = ${context.filters.category}`);
         }
 
-        const whereClause = whereConditions.join(' AND ');
-        const vectorStr = `[${context.embedding.join(',')}]`;
-
         // Vector search с фильтрами
-        const results = await this.prisma.$queryRawUnsafe<Array<{
+        const results = await this.prisma.safeQueryRaw<Array<{
             id: string;
             type: string;
             category: string;
@@ -180,8 +178,8 @@ export class EngramService {
             activationCount: number;
             cognitiveLevel: number;
             similarity: number;
-        }>>(
-            `SELECT
+        }>>(Prisma.sql`
+      SELECT
         e.id,
         e.type,
         e.category,
@@ -194,22 +192,17 @@ export class EngramService {
         e."successRate",
         e."activationCount",
         e."cognitiveLevel",
-        1 - (e.embedding <=> $1::vector) AS similarity
+        1 - (e.embedding <=> CAST(${vectorStr} AS vector)) AS similarity
       FROM engrams e
-      WHERE ${whereClause}
+      WHERE ${Prisma.join(whereConditions, " AND ")}
         AND e.embedding IS NOT NULL
-        AND 1 - (e.embedding <=> $1::vector) >= $3
+        AND 1 - (e.embedding <=> CAST(${vectorStr} AS vector)) >= ${minSimilarity}
       ORDER BY (
         e."synapticWeight" * 0.4 +
         e."successRate" * 0.3 +
-        (1 - (e.embedding <=> $1::vector)) * 0.3
+        (1 - (e.embedding <=> CAST(${vectorStr} AS vector))) * 0.3
       ) DESC
-      LIMIT $4`,
-            vectorStr,
-            context.companyId,
-            minSimilarity,
-            limit,
-        );
+      LIMIT ${limit}`);
 
         const ranked: RankedEngram[] = results.map((r) => ({
             id: r.id,
@@ -302,6 +295,9 @@ export class EngramService {
         const result = await this.prisma.engram.updateMany({
             where: {
                 isActive: true,
+                ...(threshold.companyId
+                    ? { companyId: threshold.companyId }
+                    : {}),
                 OR: [
                     { synapticWeight: { lt: threshold.minWeight } },
                     { lastActivatedAt: { lt: cutoffDate } },
@@ -312,8 +308,11 @@ export class EngramService {
         });
 
         this.logger.log(
-            `engram_pruned count=${result.count} minWeight=${threshold.minWeight} maxInactiveDays=${threshold.maxInactiveDays}`,
+            `engram_pruned companyId=${threshold.companyId ?? 'ALL'} count=${result.count} minWeight=${threshold.minWeight} maxInactiveDays=${threshold.maxInactiveDays}`,
         );
+        if (result.count > 0) {
+            InvariantMetrics.increment('memory_engram_pruned_total', result.count);
+        }
 
         return result.count;
     }

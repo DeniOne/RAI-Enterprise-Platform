@@ -1,13 +1,12 @@
 ---
-id: DOC-INS-AGT-PROFILE-016
+id: DOC-INS-AGENT-PROFILES-INSTRUCTION-AGENT-PROFILE-D-DK1Q
+layer: Instructions
 type: Instruction
-layer: Agents
-status: Active
+status: approved
 version: 1.0.0
 owners: [@techlead]
 last_updated: 2026-03-10
 ---
-
 # ИНСТРУКЦИЯ — ПРОФИЛЬ АГЕНТА DATA_SCIENTIST (АНАЛИТИК-ПРОГНОЗИСТ)
 
 ## 1. Назначение

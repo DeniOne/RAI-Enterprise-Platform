@@ -1,13 +1,12 @@
 ---
-id: DOC-STR-FO-005
-type: API Contracts
+id: DOC-STR-FRONT-OFFICE-FRONT-OFFICE-API-CONTRACTS-1JJN
 layer: Strategy
-status: Draft
+type: Vision
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-03-09
 ---
-
 # FRONT_OFFICE_API_CONTRACTS
 
 ## 1. Назначение документа

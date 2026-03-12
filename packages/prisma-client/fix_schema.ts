@@ -11,14 +11,14 @@ async function main() {
     console.log('Connecting to DB...');
     try {
         console.log('Ensuring pgcrypto extension...');
-        await prisma.$executeRawUnsafe(`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`);
+        await prisma.$executeRaw`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`;
 
         console.log('Ensuring ledger_entries schema compliance...');
-        await prisma.$executeRawUnsafe(`ALTER TABLE "ledger_entries" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT NOW();`);
+        await prisma.$executeRaw`ALTER TABLE "ledger_entries" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT NOW();`;
 
 
         console.log('Updating validate_double_entry_deferred_v6 (fixing advisory lock signature)...');
-        await prisma.$executeRawUnsafe(`
+        await prisma.$executeRaw`
           CREATE OR REPLACE FUNCTION validate_double_entry_deferred_v6()
           RETURNS TRIGGER AS $$
           DECLARE
@@ -84,10 +84,10 @@ async function main() {
               RETURN NULL;
           END;
           $$ LANGUAGE plpgsql;
-        `);
+        `;
 
         console.log('Updating create_ledger_entry_v1 function...');
-        await prisma.$executeRawUnsafe(`
+        await prisma.$executeRaw`
           CREATE OR REPLACE FUNCTION create_ledger_entry_v1(
               p_companyId TEXT,
               p_eventId TEXT,
@@ -105,7 +105,7 @@ async function main() {
               );
           END;
           $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
-        `);
+        `;
         console.log('Successfully updated function.');
     } catch (e) {
         console.error('Error updating function:', e);

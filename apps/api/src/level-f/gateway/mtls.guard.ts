@@ -8,6 +8,10 @@ import {
 import { Reflector } from "@nestjs/core";
 import { Request } from "express";
 import { REQUIRE_MTLS_KEY } from "./mtls.decorator";
+import {
+  AUTH_BOUNDARY_KEY,
+  AuthBoundaryMetadata,
+} from "../../shared/auth/auth-boundary.decorator";
 
 @Injectable()
 export class MtlsGuard implements CanActivate {
@@ -26,6 +30,17 @@ export class MtlsGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<Request>();
+    const boundary = this.reflector.getAllAndOverride<AuthBoundaryMetadata>(
+      AUTH_BOUNDARY_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    if (boundary?.kind !== "mtls") {
+      throw new ForbiddenException({
+        message: "mTLS boundary metadata missing",
+        code: "MTLS_BOUNDARY_MISCONFIGURED",
+      });
+    }
 
     // NGINX sets these headers when ssl_verify_client is 'optional' or 'on'
     const verifyStatus = request.headers["x-client-verify"];
@@ -43,6 +58,7 @@ export class MtlsGuard implements CanActivate {
 
     // Pass the DN to the request payload for further processing if needed
     (request as any).clientDn = clientDn;
+    (request as any).authBoundary = boundary.kind;
 
     this.logger.debug(`mTLS verification passed for DN: ${clientDn}`);
     return true;

@@ -1,13 +1,12 @@
 ---
-id: DOC-PRD-LD-001
-type: Product
+id: DOC-PRD-03-PRODUCT-OFS-LEVEL-D-FEATURES-WZHS
 layer: Product
-status: Accepted
+type: UI Spec
+status: approved
 version: 2.1.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # OFS — LEVEL D FEATURES (D6+ Hardened)
 ## Функции продукта OFS: Стратегия, Капитализация и Управление
 

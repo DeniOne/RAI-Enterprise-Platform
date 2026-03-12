@@ -1,4 +1,11 @@
-﻿# CODEX PROMPT: INSTITUTIONAL COMMERCE UI IMPLEMENTATION (Frontend)
+---
+id: DOC-EXE-07-EXECUTION-CODEX-PROMPT-COMMERCE-UI-IMPL-RL01
+layer: Execution
+type: Prompt
+status: draft
+version: 0.1.0
+---
+# CODEX PROMPT: INSTITUTIONAL COMMERCE UI IMPLEMENTATION (Frontend)
 
 ## ВВЕДЕНИЕ ДЛЯ АССИСТЕНТА (CODEX)
 Ты выступаешь в роли Senior Frontend Engineer / UI Architect (роль: CODER).

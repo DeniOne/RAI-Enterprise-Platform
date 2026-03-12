@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-ARCHIVE-A-RAI-IMPLEMENTATION-CHECKLIST-H3EU
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 # A_RAI — Чек-лист имплементации (Phase 2-4)
 
 > **Статус:** `ACTIVE` | **Дата:** 2026-03-04

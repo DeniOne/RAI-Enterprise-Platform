@@ -10,6 +10,26 @@ import {
 } from '@/components/ai-chat/ai-work-window-types';
 import { mapLegacyWidgetsToWorkWindows } from '@/components/ai-chat/legacy-widget-window-mapper';
 
+function buildIdempotencyKey(prefix: string, parts: Array<string | null | undefined>) {
+    const normalized = parts
+        .map((part) => (typeof part === 'string' ? part.trim() : ''))
+        .filter(Boolean)
+        .join(':')
+        .replace(/\s+/g, '-')
+        .replace(/[^a-zA-Z0-9:_-]+/g, '-')
+        .slice(0, 160);
+
+    return `${prefix}:${normalized || 'request'}`.slice(0, 200);
+}
+
+function serializeIdempotencyPayload(value: unknown): string {
+    try {
+        return JSON.stringify(value) ?? '';
+    } catch {
+        return '';
+    }
+}
+
 export type RiskLevel = 'R0' | 'R1' | 'R2' | 'R3' | 'R4';
 export type PanelMode = 'dock' | 'focus';
 
@@ -21,10 +41,23 @@ export interface ChatMessage {
     riskLevel?: RiskLevel;
     widgets?: RaiChatWidget[];
     memoryUsed?: Array<{
-        kind: 'episode' | 'profile';
+        kind: 'episode' | 'profile' | 'engram' | 'active_alert' | 'hot_engram';
         label: string;
         confidence: number;
         source?: string;
+    }>;
+    memorySummary?: {
+        primaryHint: string;
+        primaryKind: 'episode' | 'profile' | 'engram' | 'active_alert' | 'hot_engram';
+        detailsAvailable: boolean;
+    };
+    suggestedActions?: Array<{
+        kind: 'tool' | 'route' | 'expert_review';
+        title: string;
+        toolName?: string;
+        payload?: Record<string, unknown>;
+        href?: string;
+        expertRole?: string;
     }>;
     workWindows?: AiWorkWindow[];
 }
@@ -597,9 +630,18 @@ export const useAiChatStore = create<AiChatStore>()(
                 clarificationResume,
             }) => {
                 const workspaceContext = useWorkspaceContextStore.getState().context;
+                const idempotencyKey = buildIdempotencyKey('rai-chat-submit', [
+                    threadId ?? null,
+                    message,
+                    clarificationResume?.windowId ?? null,
+                    serializeIdempotencyPayload(workspaceContext ?? {}),
+                ]);
                 const response = await fetch('/api/rai/chat', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Idempotency-Key': idempotencyKey,
+                    },
                     body: JSON.stringify({
                         threadId,
                         message,
@@ -650,6 +692,12 @@ export const useAiChatStore = create<AiChatStore>()(
                         riskLevel: data.riskLevel || 'R1',
                         widgets: Array.isArray(data.widgets) ? data.widgets : [],
                         memoryUsed: Array.isArray(data.memoryUsed) ? data.memoryUsed : [],
+                        memorySummary: data.memorySummary && typeof data.memorySummary === 'object'
+                            ? data.memorySummary
+                            : undefined,
+                        suggestedActions: Array.isArray(data.suggestedActions)
+                            ? data.suggestedActions.slice(0, 3)
+                            : [],
                         workWindows: nextWorkWindows ?? [],
                     };
 
@@ -734,6 +782,12 @@ export const useAiChatStore = create<AiChatStore>()(
                         riskLevel: data.riskLevel || 'R1',
                         widgets: Array.isArray(data.widgets) ? data.widgets : [],
                         memoryUsed: Array.isArray(data.memoryUsed) ? data.memoryUsed : [],
+                        memorySummary: data.memorySummary && typeof data.memorySummary === 'object'
+                            ? data.memorySummary
+                            : undefined,
+                        suggestedActions: Array.isArray(data.suggestedActions)
+                            ? data.suggestedActions.slice(0, 3)
+                            : [],
                         workWindows: nextWorkWindows ?? [],
                     };
 

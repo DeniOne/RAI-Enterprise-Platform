@@ -1,13 +1,12 @@
 ---
-id: DOC-EXE-PHD-001
-type: Execution Plan
-layer: Phase Delta (Integration)
-status: Enforced
+id: DOC-EXE-PHASE-DELTA-DELTA-ROADMAP-VZ89
+layer: Execution
+type: Phase Plan
+status: approved
 version: 2.0.0
 owners: [@techlead, @program_manager]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: ФОРМАЛЬНАЯ ДОРОЖНАЯ КАРТА ВНЕДРЕНИЯ (DELTA_ROADMAP)
 
 ## 0. Область Применения (Scope)

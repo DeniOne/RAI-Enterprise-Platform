@@ -1,3 +1,10 @@
+---
+id: DOC-TST-08-TESTING-LEVEL-B-FORMAL-TEST-MATRIX-1AGF
+layer: Testing
+type: Test Spec
+status: draft
+version: 0.1.0
+---
 # LEVEL_B_FORMAL_TEST_MATRIX.md
 
 ## 0. Статус документа

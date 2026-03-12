@@ -7,22 +7,30 @@ import {
   Delete,
   Put,
   Patch,
-  UseGuards,
   Query,
+  UseInterceptors,
 } from "@nestjs/common";
 import { CrmService } from "./crm.service";
-import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
+import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
+import { Authorized } from "../../shared/auth/authorized.decorator";
+import { Roles } from "../../shared/auth/roles.decorator";
+import {
+  COMMERCE_READ_ROLES,
+  COMMERCE_WRITE_ROLES,
+} from "../../shared/auth/rbac.constants";
 // Assuming internal tenant/user extraction from req. user decorator is standard in this project
 // For now using simple placeholders for companyId or waiting for JwtAuthGuard if standard
 
 @Controller("crm")
-@UseGuards(JwtAuthGuard)
+@Authorized(...COMMERCE_READ_ROLES)
 export class CrmController {
   constructor(private readonly crmService: CrmService) {}
 
   // --- Holdings ---
 
   @Post("holdings")
+  @Roles(...COMMERCE_WRITE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async createHolding(
     @Body() body: { name: string; description?: string; companyId: string },
   ) {
@@ -44,6 +52,7 @@ export class CrmController {
   }
 
   @Delete("holdings/:id/:companyId")
+  @Roles(...COMMERCE_WRITE_ROLES)
   async deleteHolding(
     @Param("id") id: string,
     @Param("companyId") companyId: string,
@@ -54,6 +63,8 @@ export class CrmController {
   // --- Accounts ---
 
   @Post("accounts")
+  @Roles(...COMMERCE_WRITE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async createAccount(
     @Body()
     body: {
@@ -68,6 +79,8 @@ export class CrmController {
   }
 
   @Put("accounts/:id/holding")
+  @Roles(...COMMERCE_WRITE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async linkToHolding(
     @Param("id") id: string,
     @Body() body: { holdingId: string | null; companyId: string },
@@ -114,6 +127,8 @@ export class CrmController {
   }
 
   @Patch("accounts/:id")
+  @Roles(...COMMERCE_WRITE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async updateAccount(
     @Param("id") id: string,
     @Body()
@@ -133,6 +148,8 @@ export class CrmController {
   }
 
   @Post("accounts/:id/contacts")
+  @Roles(...COMMERCE_WRITE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async createContact(
     @Param("id") accountId: string,
     @Body()
@@ -151,6 +168,8 @@ export class CrmController {
   }
 
   @Patch("contacts/:contactId")
+  @Roles(...COMMERCE_WRITE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async updateContact(
     @Param("contactId") contactId: string,
     @Body()
@@ -169,6 +188,7 @@ export class CrmController {
   }
 
   @Delete("contacts/:contactId")
+  @Roles(...COMMERCE_WRITE_ROLES)
   async deleteContact(
     @Param("contactId") contactId: string,
     @Query("companyId") companyId: string,
@@ -177,6 +197,8 @@ export class CrmController {
   }
 
   @Post("accounts/:id/interactions")
+  @Roles(...COMMERCE_WRITE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async createInteraction(
     @Param("id") accountId: string,
     @Body()
@@ -193,6 +215,8 @@ export class CrmController {
   }
 
   @Patch("interactions/:interactionId")
+  @Roles(...COMMERCE_WRITE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async updateInteraction(
     @Param("interactionId") interactionId: string,
     @Body()
@@ -213,6 +237,7 @@ export class CrmController {
   }
 
   @Delete("interactions/:interactionId")
+  @Roles(...COMMERCE_WRITE_ROLES)
   async deleteInteraction(
     @Param("interactionId") interactionId: string,
     @Query("companyId") companyId: string,
@@ -221,6 +246,8 @@ export class CrmController {
   }
 
   @Post("accounts/:id/obligations")
+  @Roles(...COMMERCE_WRITE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async createObligation(
     @Param("id") accountId: string,
     @Body()
@@ -236,6 +263,8 @@ export class CrmController {
   }
 
   @Patch("obligations/:obligationId")
+  @Roles(...COMMERCE_WRITE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async updateObligation(
     @Param("obligationId") obligationId: string,
     @Body()
@@ -251,6 +280,7 @@ export class CrmController {
   }
 
   @Delete("obligations/:obligationId")
+  @Roles(...COMMERCE_WRITE_ROLES)
   async deleteObligation(
     @Param("obligationId") obligationId: string,
     @Query("companyId") companyId: string,

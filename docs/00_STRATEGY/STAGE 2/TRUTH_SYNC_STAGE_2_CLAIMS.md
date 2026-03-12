@@ -1,3 +1,10 @@
+---
+id: DOC-STR-STAGE-2-TRUTH-SYNC-STAGE-2-CLAIMS-1YWB
+layer: Strategy
+type: Vision
+status: draft
+version: 0.1.0
+---
 # STAGE 2 — Truth Sync по ключевым claims
 
 Дата: 2026-03-05  

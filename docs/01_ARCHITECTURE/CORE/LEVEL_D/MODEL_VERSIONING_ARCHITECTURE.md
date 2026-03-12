@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-CORE-LD-003
-type: Architecture
-layer: Core
-status: Draft
+id: DOC-ARC-LEVEL-D-MODEL-VERSIONING-ARCHITECTURE-15YG
+layer: Architecture
+type: HLD
+status: draft
 version: 1.0.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # MODEL VERSIONING ARCHITECTURE
 ## Архитектура версионирования и линейности моделей
 

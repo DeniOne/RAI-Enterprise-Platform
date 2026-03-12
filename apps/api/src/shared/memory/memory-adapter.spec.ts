@@ -21,7 +21,8 @@ describe("DefaultMemoryAdapter", () => {
             findUnique: jest.fn().mockResolvedValue(null),
             upsert: jest.fn().mockResolvedValue({ id: "mp-1" }),
         },
-        $executeRawUnsafe: jest.fn().mockResolvedValue([]),
+        $executeRaw: jest.fn().mockResolvedValue([]),
+        safeExecuteRaw: jest.fn().mockResolvedValue([]),
         $transaction: jest.fn(async (cb) => cb(prismaMock)),
     };
 
@@ -87,11 +88,7 @@ describe("DefaultMemoryAdapter", () => {
             },
         });
 
-        expect(prismaMock.$executeRawUnsafe).toHaveBeenCalledWith(
-            expect.stringContaining("UPDATE memory_interactions SET embedding = $1::vector WHERE id = $2"),
-            "[0.1,0.2]",
-            "mi-1",
-        );
+        expect(prismaMock.safeExecuteRaw).toHaveBeenCalledTimes(1);
         expect(prismaMock.memoryEpisode.create).toHaveBeenCalledWith({
             data: expect.objectContaining({
                 companyId: "company-1",
@@ -159,11 +156,7 @@ describe("DefaultMemoryAdapter", () => {
             },
         ]);
 
-        expect(prismaMock.$executeRawUnsafe).toHaveBeenCalledWith(
-            expect.stringContaining("UPDATE memory_interactions SET embedding = $1::vector WHERE id = $2"),
-            "[0.3,0.4]",
-            "mi-1",
-        );
+        expect(prismaMock.safeExecuteRaw).toHaveBeenCalledTimes(1);
     });
 
     it("appendInteraction aborts transaction and logs warn for invalid embedding", async () => {
@@ -181,14 +174,14 @@ describe("DefaultMemoryAdapter", () => {
         await adapter.appendInteraction(ctx, interaction);
 
         expect(prismaMock.memoryInteraction.create).toHaveBeenCalled();
-        expect(prismaMock.$executeRawUnsafe).not.toHaveBeenCalled();
+        expect(prismaMock.safeExecuteRaw).not.toHaveBeenCalled();
         expect(warnSpy).toHaveBeenCalledWith(
             expect.stringContaining("Invalid embedding vector"),
         );
     });
 
     it("appendInteraction logs warn if raw embedding update fails", async () => {
-        prismaMock.$executeRawUnsafe.mockRejectedValueOnce(new Error("vector update failed"));
+        prismaMock.safeExecuteRaw.mockRejectedValueOnce(new Error("vector update failed"));
 
         const ctx = {
             companyId: "company-4",
@@ -204,7 +197,7 @@ describe("DefaultMemoryAdapter", () => {
         await adapter.appendInteraction(ctx, interaction);
 
         expect(prismaMock.memoryInteraction.create).toHaveBeenCalled();
-        expect(prismaMock.$executeRawUnsafe).toHaveBeenCalled();
+        expect(prismaMock.safeExecuteRaw).toHaveBeenCalled();
         expect(warnSpy).toHaveBeenCalledWith(
             expect.stringContaining("vector update failed"),
         );

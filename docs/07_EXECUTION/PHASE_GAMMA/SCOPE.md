@@ -1,21 +1,12 @@
 ---
-id: DOC-EXE-GEN-145
-type: Phase Plan
+id: DOC-EXE-PHASE-GAMMA-SCOPE-0513
 layer: Execution
-status: Draft
+type: Phase Plan
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿---
-id: component-impl-gamma-scope
-type: component
-status: review
-owners: [techleads, product-owner]
-aligned_with: [principle-gamma-vision-scope]
----
-
 # Phase Gamma: Scope
 
 ## Включено

@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-GRAND-SINTEZ-RAPS-RF-1R88
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 # ГРАНД-СИНТЕЗ 5 AI-ИССЛЕДОВАНИЙ ПО ПРОБЛЕМАТИКЕ РАПСА В РФ
 
 **Основание:** синтез только по 5 входным исследованиям (`CEMINI#1`, `GEMINI#2`, `ChatGP#1`, `ChatGPT#2`, `COMET`), без добавления внешних фактов.  

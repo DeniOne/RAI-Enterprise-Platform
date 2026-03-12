@@ -1,21 +1,12 @@
 ---
-id: DOC-STR-GEN-007
-type: Vision
+id: DOC-STR-00-STRATEGY-ROADMAP-PHASES-1HGW
 layer: Strategy
-status: Draft
+type: Roadmap
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿---
-id: process-roadmap
-type: process
-status: approved
-owners: [product-owner]
-depends_on: [principle-vision, principle-axioms]
----
-
 # Roadmap: Фазы развития RAI Enterprise Platform 🚀
 
 > **Версия:** 1.1 (Architecture Update)

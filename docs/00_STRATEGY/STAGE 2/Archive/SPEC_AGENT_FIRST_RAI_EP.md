@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-ARCHIVE-SPEC-AGENT-FIRST-RAI-EP-1FZG
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 # RAI_EP — Agent-First / Chat-First Spec (v1)
 Дата: 2026-02-28  
 Статус: LAW (исполняется как контракт разработки)

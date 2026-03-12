@@ -7,9 +7,10 @@ import { AuditModule } from "../../shared/audit/audit.module";
 import { IntegrationsModule } from "../finance-economy/integrations/integrations.module";
 
 import { OutboxModule } from "../../shared/outbox/outbox.module";
+import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
 
 @Module({
-  imports: [PrismaModule, AuditModule, IntegrationsModule, OutboxModule],
+  imports: [PrismaModule, AuditModule, IntegrationsModule, OutboxModule, IdempotencyModule],
   controllers: [TaskController],
   providers: [TaskService, TaskResolver],
   exports: [TaskService],

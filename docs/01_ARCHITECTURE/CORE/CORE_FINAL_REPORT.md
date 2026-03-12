@@ -1,21 +1,12 @@
 ---
-id: DOC-ARC-GEN-014
-type: HLD
+id: DOC-ARC-CORE-CORE-FINAL-REPORT-1XP0
 layer: Architecture
-status: Draft
+type: Report
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-core-final-report
-type: component
-status: review
-owners: [architects]
-aligned_with: [principle-axioms]
----
-
 # BUSINESS_CORE_FINAL
 
 ## Статус документа

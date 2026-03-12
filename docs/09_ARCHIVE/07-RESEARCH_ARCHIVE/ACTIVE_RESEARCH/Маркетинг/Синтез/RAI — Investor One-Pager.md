@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-RAI-INVESTOR-ONE-PAGER-1R1X
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 Вот **investor one-pager** в жёстком питч-формате.
 
 # RAI — Investor One-Pager

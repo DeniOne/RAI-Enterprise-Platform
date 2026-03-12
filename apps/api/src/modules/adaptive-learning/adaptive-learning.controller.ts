@@ -6,7 +6,10 @@ import {
   BadRequestException,
   Logger,
   Param,
+  UseInterceptors,
 } from "@nestjs/common";
+import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
+import { RequireInternalApiKey } from "../../shared/auth/auth-boundary.decorator";
 import { LearningEventService } from "./services/learning-event.service";
 import { KeyRegistryService } from "./services/key-registry.service";
 import { ModelRegistryService } from "./services/model-registry.service";
@@ -16,6 +19,7 @@ import {
 } from "./services/governance.service";
 import { CanaryService } from "./services/canary.service";
 
+@RequireInternalApiKey("Adaptive learning pipeline callback boundary")
 @Controller("adaptive-learning")
 export class AdaptiveLearningController {
   private readonly logger = new Logger(AdaptiveLearningController.name);
@@ -82,6 +86,7 @@ export class AdaptiveLearningController {
    * Подача модели на рассмотрение комитета.
    */
   @Post("models/:id/submit-approval")
+  @UseInterceptors(IdempotencyInterceptor)
   async submitForApproval(
     @Param("id") modelId: string,
     @Body() body: { userId: string; notes: string },
@@ -93,6 +98,7 @@ export class AdaptiveLearningController {
    * Решение комитета (Human-in-the-loop).
    */
   @Post("governance/review/:requestId")
+  @UseInterceptors(IdempotencyInterceptor)
   async reviewModel(
     @Param("requestId") requestId: string,
     @Body() body: { userId: string; action: ApprovalAction; comment: string },
@@ -109,6 +115,7 @@ export class AdaptiveLearningController {
    * Проверка Canary-метрик и возможный откат.
    */
   @Post("models/:id/canary-check")
+  @UseInterceptors(IdempotencyInterceptor)
   async canaryCheck(
     @Param("id") id: string,
     @Body()

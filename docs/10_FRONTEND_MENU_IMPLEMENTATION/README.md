@@ -1,4 +1,11 @@
-﻿# Карта Фронта и Меню (RAI_EP)
+---
+id: DOC-FRN-10-FRONTEND-MENU-IMPLEMENTATION-README-VI1E
+layer: Frontend
+type: Navigation
+status: draft
+version: 0.1.0
+---
+# Карта Фронта и Меню (RAI_EP)
 
 Цель папки: перевести фронт и UX/UI в функциональное состояние по бизнес-логике `RAI STRATEGY v3.0` и фактически реализованному backend.
 

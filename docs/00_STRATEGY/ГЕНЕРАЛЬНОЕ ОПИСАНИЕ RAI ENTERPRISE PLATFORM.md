@@ -1,13 +1,12 @@
 ---
-id: DOC-STR-GEN-010
-type: Vision
+id: DOC-STR-00-STRATEGY-RAI-ENTERPRISE-PLATFORM-12YZ
 layer: Strategy
-status: Draft
+type: Vision
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 1: ГЕНЕРАЛЬНОЕ ОПИСАНИЕ RAI ENTERPRISE PLATFORM
 markdown
 # RAI ENTERPRISE PLATFORM: Полное описание системы

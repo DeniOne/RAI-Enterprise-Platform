@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-ARCHIVE-PROJECT-REALITY-MAP-JUUB
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 # RAI_EP — Реальная карта проекта (контракт → факт)  
 Дата: 2026-03-01  
 Статус: рабочий документ для планирования следующего “тонкого среза”

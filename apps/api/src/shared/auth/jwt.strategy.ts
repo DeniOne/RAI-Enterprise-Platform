@@ -1,12 +1,12 @@
 import { Injectable } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { ExtractJwt, Strategy } from "passport-jwt";
-import { ConfigService } from "@nestjs/config";
+import { SecretsService } from "../config/secrets.service";
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private configService: ConfigService) {
-    const secret = configService.get<string>("JWT_SECRET");
+  constructor(secretsService: SecretsService) {
+    const secret = secretsService.getRequiredSecret("JWT_SECRET");
     const cookieExtractor = (req: any): string | null => {
       const cookieHeader = req?.headers?.cookie as string | undefined;
       if (!cookieHeader) return null;
@@ -27,7 +27,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         ExtractJwt.fromAuthHeaderAsBearerToken(),
       ]),
       ignoreExpiration: false,
-      secretOrKey: secret || "your-secret-key-change-in-production",
+      secretOrKey: secret,
     });
   }
 
@@ -35,9 +35,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     return {
       userId: payload.sub,
       email: payload.email,
+      username: payload.username ?? null,
       companyId: payload.companyId,
       role: payload.role,
       accountId: payload.accountId ?? null,
+      subjectClass: payload.subjectClass ?? "internal",
+      bindingId: payload.bindingId ?? null,
     };
   }
 }

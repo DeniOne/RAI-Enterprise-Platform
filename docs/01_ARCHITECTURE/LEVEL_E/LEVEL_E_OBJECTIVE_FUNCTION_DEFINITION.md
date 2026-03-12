@@ -1,14 +1,13 @@
 ---
-id: DOC-ARH-MOS-001
-type: Specification
-layer: Level E (Optimization)
-status: Constitutional
+id: DOC-ARC-LEVEL-E-LEVEL-E-OBJECTIVE-FUNCTION-DEFINIT-YMFT
+layer: Architecture
+type: HLD
+status: approved
 version: 1.4.0
 owners: [@architect, @economist]
 dependencies: ["DOC-ARH-SOIL-001", "DOC-ENG-SIM-001"]
 last_updated: 2026-02-19
 ---
-
 # LEVEL E: OBJECTIVE FUNCTION DEFINITION (MOS)
 
 ## 1. Введение

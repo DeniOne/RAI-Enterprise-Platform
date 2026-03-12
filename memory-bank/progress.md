@@ -1,5 +1,144 @@
 # Progress Report - Prisma, Agro Domain & RAI Chat Integration
 
+## 2026-03-12
+
+78. **Foundation Remediation — Audit Log Notarization / WORM** [DONE]:
+    *   `AuditService` переведён на create-only путь через `AuditNotarizationService`: каждая audit-запись теперь получает `entryHash`, company-scoped `chainHash`, HSM-подпись и отдельную proof-запись в `audit_notarization_records`.
+    *   Введён `WormStorageService` / `WormModule` с внешним immutable storage вне основной БД: поддерживаются `filesystem`, `s3_compatible` и `dual`, а default path больше не зависит от `cwd` процесса и стабильно разрешается от корня workspace.
+    *   Добавлены `GET /api/audit/logs/:id/proof` и `health`-readiness по `audit_notarization`; readiness теперь проверяет не только БД-запись proof, но и доступность последнего WORM object.
+    *   `delta audit` синхронизирован: блок `Audit log notarization / WORM` переведён в логически закрытый по коду. Остаток теперь инфраструктурный: для production-retention уровня compliance нужно включить `AUDIT_WORM_PROVIDER=s3_compatible|dual` и object-lock bucket.
+    *   Верификация: `pnpm -C apps/api build` PASS; `pnpm -C apps/api test -- --runInBand --silent src/shared/audit/audit.service.spec.ts src/shared/audit/audit-notarization.service.spec.ts src/level-f/worm/worm-storage.service.spec.ts src/level-f/crypto/hsm.service.spec.ts` PASS; `curl -s http://127.0.0.1:4000/api/health` -> `audit_notarization.status=up`; живой self-test создал внешний WORM object `/root/RAI_EP/var/audit-worm/audit-logs/default-rai-company/2026-03-12/2026-03-12T20:08:58.992Z_337c2c81-2627-4a77-aaaf-88595e20d83e_903f72c49b9f2f8d.json`.
+
+77. **Foundation Remediation — External Front-Office Route-Space Separation** [DONE]:
+    *   Введён отдельный viewer-only API namespace `portal/front-office` через `src/modules/front-office/front-office-external.controller.ts`; внешний контур больше не живёт только внутри общего `front-office.controller.ts`.
+    *   Canonical web portal вынесен в `/portal/front-office` и `/portal/front-office/threads/[threadKey]`, а onboarding/success redirects и activation links переведены на новый route-space.
+    *   Legacy `/front-office` root/thread paths для `FRONT_OFFICE_USER` сохранены как compatibility alias через redirects, чтобы не ломать текущие ссылки и сессии.
+    *   Обновлены baseline audit, delta audit, stabilization checklist и memory-bank: блок `External front-office auth boundary` переведён из `частично закрыто` в `существенно закрыто / с legacy alias`.
+    *   Верификация: `pnpm --filter api exec jest --runInBand src/modules/front-office/front-office-external.controller.spec.ts src/shared/auth/front-office-auth.service.spec.ts` PASS; `pnpm --filter api exec tsc --noEmit --pretty false` PASS; `pnpm --filter web exec tsc --noEmit --pretty false` PASS.
+
+76. **Foundation Remediation — Broader Secrets Centralization** [DONE]:
+    *   Введён глобальный `SecretsService` / `SecretsModule` как единый provider-layer поверх `resolveSecretValue()` и `*_FILE` secret mounts.
+    *   На централизованный secret-read переведены `JWT`, `MinIO`, `INTERNAL_API_KEY`, `CORE_API_KEY`, `OUTBOX_BROKER_AUTH_TOKEN`, `NVIDIA_API_KEY`, `OPENROUTER_API_KEY`, а также `AuditService` и `HsmService`.
+    *   `JwtModule`, `JwtStrategy`, `S3Service`, `InternalApiKeyGuard`, `CustomThrottlerGuard`, `OutboxBrokerPublisher`, `TelegramAuthService`, `FrontOfficeAuthService`, `ProgressService`, `TelegramNotificationService`, `NvidiaGatewayService` и `OpenRouterGatewayService` больше не читают runtime-secrets напрямую из разрозненного `process.env`.
+    *   `delta audit` синхронизирован: блок `Broader secrets centralization` переведён в логически закрытый, а остаток теперь трактуется как обычный config/env debt, а не как открытый audit-gap.
+    *   Верификация: `pnpm -C apps/api build` PASS; `pnpm -C apps/api test -- --runInBand --silent src/shared/config/secrets.service.spec.ts src/shared/auth/internal-api-key.guard.spec.ts src/shared/outbox/outbox-broker.publisher.spec.ts src/shared/audit/audit.service.spec.ts src/level-f/crypto/hsm.service.spec.ts src/shared/auth/front-office-auth.service.spec.ts` PASS; `curl -s http://127.0.0.1:4000/api/health` -> `status=ok`; `curl -s http://127.0.0.1:4000/api/invariants/metrics` -> валидный `JSON`.
+
+75. **Foundation Remediation — Broker-Native Outbox Transport** [DONE]:
+    *   `OutboxBrokerPublisher` переведён на transport abstraction `http | redis_streams` вместо единственного generic HTTP webhook path.
+    *   Введён broker-native Redis Streams publish path через `XADD`, safety env-configs `OUTBOX_BROKER_TRANSPORT`, `OUTBOX_BROKER_REDIS_STREAM_KEY`, `OUTBOX_BROKER_REDIS_STREAM_MAXLEN`, `OUTBOX_BROKER_REDIS_TENANT_PARTITIONING` и rudimentary tenant partitioning по stream key.
+    *   `OutboxRelay` теперь transport-aware по broker config hint; legacy HTTP path сохранён как backward-compatible fallback.
+    *   Обновлены baseline audit, delta audit, stabilization checklist, outbox replay runbook и memory-bank: тезис про "generic HTTP-only broker publisher" переведён в устаревший.
+    *   Верификация: `pnpm --filter api exec jest --runInBand src/shared/outbox/outbox.relay.spec.ts src/shared/outbox/outbox-broker.publisher.spec.ts` PASS; `pnpm --filter api exec tsc --noEmit --pretty false` PASS.
+
+74. **Foundation Remediation — Production-Grade Operational Control for Memory Lifecycle** [DONE]:
+    *   `MemoryMaintenanceService` доведён до production-grade control-plane: playbook catalog, tenant-scoped recommendations, audit-backed recent runs и `GET /api/memory/maintenance/control-plane`.
+    *   Введён `MemoryAutoRemediationService` с scheduled automatic corrective action, cooldown policy, auto-eligible playbooks only и safety caps `MEMORY_AUTO_REMEDIATION_*`.
+    *   `InvariantMetricsController` и Prometheus export расширены deeper lifecycle signals и automation counters: `memory_oldest_prunable_consolidated_age_seconds`, `memory_engram_formation_candidates`, `memory_oldest_engram_formation_candidate_age_seconds`, `invariant_memory_auto_remediations_total`, `invariant_memory_auto_remediation_failures_total`, `memory_auto_remediation_enabled`.
+    *   `EngramFormationWorker` переведён на тот же candidate contour, что и observability/control-plane: уже помеченные `generationMetadata.memoryLifecycle.engramFormed=true` техкарты исключаются из formation path.
+    *   Обновлены baseline audit, delta audit, stabilization checklist, alert runbook, maturity dashboard, SLO policy и memory-bank: блок `production-grade operational control for memory lifecycle` переведён в closed.
+    *   Верификация: `pnpm --filter api exec jest --runInBand src/shared/memory/memory-maintenance.service.spec.ts src/shared/memory/memory.controller.spec.ts src/shared/memory/memory-lifecycle-observability.service.spec.ts src/shared/memory/memory-auto-remediation.service.spec.ts src/shared/memory/engram-formation.worker.spec.ts src/shared/invariants/invariant-metrics.controller.spec.ts` PASS; `pnpm --filter api exec tsc --noEmit --pretty false` PASS.
+
+73. **Foundation Remediation — Special Internal Boundaries + Consulting Policy Guard** [DONE]:
+    *   Специальные внутренние boundary формализованы через явные decorators/metadata: `RequireMtls`, `RequireInternalApiKey`, `PublicHealthBoundary`.
+    *   `InternalApiKeyGuard` переведён в fail-closed режим по boundary metadata и использует timing-safe compare; `adaptive-learning` и `telegram-auth-internal` переведены на единый decorator вместо разрозненного `UseGuards`.
+    *   Ручные `ensureStrategicAccess()` / `ensureManagementAccess()` удалены из `ConsultingController` и заменены на `ConsultingAccessGuard` как централизованный policy-layer для strategic/management действий.
+    *   `delta audit` и runtime-проверка синхронизированы: локальный `start:prod` успешен, `/api/health` отвечает `ok`.
+    *   Верификация: `pnpm --filter api test -- --runInBand --silent src/shared/auth/auth-boundary.decorator.spec.ts src/shared/auth/internal-api-key.guard.spec.ts src/modules/consulting/consulting-access.guard.spec.ts` PASS, `pnpm -C apps/api build` PASS.
+
+72. **Foundation Remediation — Tenant-Scoped Memory Manual Control Plane** [DONE]:
+    *   Введён guarded endpoint `POST /api/memory/maintenance/run` и отдельный `MemoryMaintenanceService` для controlled corrective action по `consolidation`, `pruning`, `engram formation`, `engram pruning`.
+    *   Manual path сделан tenant-safe: `ConsolidationWorker`, `EngramFormationWorker` и `EngramService.pruneEngrams()` теперь поддерживают company-scoped runs без изменения глобального scheduler/bootstrap contour.
+    *   Добавлен audit trail `MEMORY_MAINTENANCE_RUN_COMPLETED` / `MEMORY_MAINTENANCE_RUN_FAILED`, а runbook/checklist/audit delta синхронизированы с новым operator control-plane.
+    *   Верификация: `pnpm --filter api exec jest --runInBand src/shared/memory/memory-maintenance.service.spec.ts src/shared/memory/memory.controller.spec.ts src/shared/memory/consolidation.worker.spec.ts src/shared/memory/engram-formation.worker.spec.ts src/shared/memory/engram.service.spec.ts` PASS. `pnpm --filter api exec tsc --noEmit` остаётся заблокирован уже существующей несвязанной ошибкой в `src/modules/health/health.controller.ts`.
+
+71. **Foundation Remediation — Memory Lifecycle Multi-Window Burn-Rate Escalation** [DONE]:
+    *   В Prometheus alert-rules добавлены `RAIMemoryEngramFormationBurnRateMultiWindow` и `RAIMemoryEngramPruningBurnRateMultiWindow` как sustained degradation contour по `6h/24h` окнам.
+    *   Runbook и SLO policy расширены: теперь есть явное разделение между `burn-high`, `multi-window burn-rate` и `hard breach`.
+    *   Обновлены baseline audit, delta audit, stabilization checklist, maturity dashboard и memory-bank, чтобы новый escalation layer был отражён как текущий remediation-state.
+    *   Верификация: `python3` + `PyYAML` load для `infra/monitoring/prometheus/invariant-alert-rules.yml` PASS, `node scripts/invariant-gate.cjs --mode=warn` PASS.
+
+70. **Foundation Remediation — Memory Lifecycle Error Budget View** [DONE]:
+    *   В `InvariantMetricsController` добавлены derived gauges `memory_engram_formation_budget_usage_ratio` и `memory_engram_pruning_budget_usage_ratio` поверх текущих L4 thresholds.
+    *   В Prometheus alert-rules добавлены ранние burn-high сигналы `RAIMemoryEngramFormationBudgetBurnHigh` и `RAIMemoryEngramPruningBudgetBurnHigh`, а runbook/SLO/dashboard расширены под early-warning contour.
+    *   Обновлены baseline audit, delta audit, stabilization checklist и memory-bank, чтобы error-budget view был отражён как текущий remediation-state, а не оставался открытым пунктом.
+    *   Верификация: `pnpm --filter api exec jest --runInBand src/shared/invariants/invariant-metrics.controller.spec.ts` PASS.
+
+69. **Foundation Remediation — Memory Lifecycle Operator Pause Windows** [DONE]:
+    *   В `ConsolidationWorker` и `EngramFormationWorker` добавлены time-boxed operator pause windows `*_PAUSE_UNTIL` / `*_PAUSE_REASON` для scheduler/bootstrap path.
+    *   Manual maintenance path сохранён доступным, а `/api/invariants/metrics` и Prometheus export расширены pause flags и remaining-seconds gauges для всех четырёх lifecycle paths.
+    *   Обновлены baseline audit, delta audit, stabilization checklist, maturity dashboard, SLO policy, alert runbook и memory-bank, чтобы operator control был отражён как текущий remediation-state.
+    *   Верификация: `pnpm --filter api exec jest --runInBand src/shared/memory/consolidation.worker.spec.ts src/shared/memory/engram-formation.worker.spec.ts src/shared/invariants/invariant-metrics.controller.spec.ts` PASS.
+
+68. **Foundation Remediation — Engram Lifecycle Throughput Visibility** [DONE]:
+    *   В `InvariantMetrics` и `EngramService` добавлены L4 throughput counters `memory_engram_formations_total` и `memory_engram_pruned_total`.
+    *   Prometheus export расширен метриками `invariant_memory_engram_formations_total` и `invariant_memory_engram_pruned_total`, а в alert-rules добавлен `RAIMemoryEngramPruningStalled`.
+    *   Обновлены baseline audit, delta audit, stabilization checklist, maturity dashboard, SLO policy и memory-bank, чтобы throughput visibility был отражён как текущий remediation-state.
+    *   Верификация: `pnpm --filter api exec jest --runInBand src/shared/invariants/invariant-metrics.controller.spec.ts src/shared/memory/engram.service.spec.ts` PASS.
+
+67. **Foundation Remediation — Controlled Memory Backfill Policy** [DONE]:
+    *   В `ConsolidationWorker` и `EngramFormationWorker` добавлены bounded bootstrap catch-up loops для controlled recovery после простоя.
+    *   Введены env-config caps `MEMORY_CONSOLIDATION_BOOTSTRAP_MAX_RUNS`, `MEMORY_PRUNING_BOOTSTRAP_MAX_RUNS`, `MEMORY_ENGRAM_FORMATION_BOOTSTRAP_MAX_RUNS`, `MEMORY_ENGRAM_PRUNING_BOOTSTRAP_MAX_RUNS`.
+    *   Targeted specs расширены на stop-on-drain и respect-max-runs поведение.
+    *   Верификация: `pnpm --filter api exec jest --runInBand src/shared/memory/consolidation.worker.spec.ts src/shared/memory/engram-formation.worker.spec.ts` PASS.
+
+66. **Foundation Remediation — Engram Lifecycle Observability** [DONE]:
+    *   `InvariantMetricsController` расширен L4 metrics/alerts для `latestEngramFormationAgeSeconds` и `prunableActiveEngramCount`.
+    *   Добавлены Prometheus alerts `RAIMemoryEngramFormationStale` и `RAIMemoryPrunableActiveEngramsHigh`, а также runbook-процедуры для их triage.
+    *   Обновлены baseline audit, delta audit, stabilization checklist, maturity dashboard, SLO policy и memory-bank, чтобы engram lifecycle observability был отражён как текущий remediation-state.
+    *   Верификация: `pnpm --filter api exec jest --runInBand src/shared/invariants/invariant-metrics.controller.spec.ts` PASS.
+
+65. **Foundation Remediation — Broader Engram Lifecycle Scheduling** [DONE]:
+    *   `EngramFormationWorker` переведён в background lifecycle worker с bootstrap/scheduler wiring для L4 engram formation и pruning.
+    *   Добавлены env-config flags `MEMORY_ENGRAM_FORMATION_*`, `MEMORY_ENGRAM_PRUNING_*`, а также pruning thresholds `MEMORY_ENGRAM_PRUNING_MIN_WEIGHT` и `MEMORY_ENGRAM_PRUNING_MAX_INACTIVE_DAYS`.
+    *   Добавлен targeted spec `apps/api/src/shared/memory/engram-formation.worker.spec.ts` на bootstrap/scheduler contract и pruning thresholds.
+    *   Верификация: `pnpm --filter api exec jest --runInBand src/shared/memory/engram-formation.worker.spec.ts` PASS.
+
+64. **Foundation Remediation — Raw SQL Hardening Phase 2 (Memory Path)** [DONE]:
+    *   `PrismaService.safeQueryRaw()/safeExecuteRaw()` расширены executor-aware режимом для transaction client.
+    *   `ConsolidationWorker` и `DefaultMemoryAdapter` переведены с прямого raw SQL на safe wrappers.
+    *   `scripts/raw-sql-allowlist.json` сужен: memory path больше не требует отдельного approved raw SQL entry.
+    *   Верификация: `pnpm --filter api exec jest --runInBand src/shared/memory/consolidation.worker.spec.ts src/shared/memory/memory-adapter.spec.ts` PASS, `node scripts/raw-sql-governance.cjs --mode=enforce` PASS.
+
+63. **Foundation Remediation — Memory Hygiene Bootstrap Maintenance** [DONE]:
+    *   В `ConsolidationWorker` добавлены startup maintenance paths для consolidation/pruning через `MEMORY_CONSOLIDATION_BOOTSTRAP_ENABLED` и `MEMORY_PRUNING_BOOTSTRAP_ENABLED`.
+    *   S-tier memory hygiene теперь не зависит только от первого cron после рестарта: при старте приложения возможен controlled bootstrap drain.
+    *   Обновлены baseline audit, delta audit, stabilization checklist и memory-bank, чтобы bootstrap closeout был отражён как текущий статус remediation.
+    *   Верификация: `pnpm --filter api exec jest --runInBand src/shared/memory/consolidation.worker.spec.ts` PASS.
+
+62. **Foundation Remediation — Memory Hygiene Observability** [DONE]:
+    *   В `InvariantMetricsController` добавлен memory hygiene snapshot в `/api/invariants/metrics` и Prometheus gauges для backlog/freshness/active engrams.
+    *   Контур alerting/runbook отражён в `infra/monitoring/prometheus/invariant-alert-rules.yml` и `docs/INVARIANT_ALERT_RUNBOOK_RU.md`.
+    *   Обновлены baseline audit, delta audit, stabilization checklist, maturity dashboard, SLO policy и memory-bank, чтобы observability closeout был виден как текущий статус, а не скрывался в коде.
+    *   Верификация: `pnpm --filter api exec jest --runInBand src/shared/invariants/invariant-metrics.controller.spec.ts` PASS.
+
+61. **Foundation Remediation — Memory Hygiene Scheduling** [DONE]:
+    *   В `ConsolidationWorker` включены cron-based scheduler paths для регулярной консолидации и prune S-tier memory.
+    *   Добавлены feature flags `MEMORY_HYGIENE_ENABLED`, `MEMORY_CONSOLIDATION_SCHEDULE_ENABLED`, `MEMORY_PRUNING_SCHEDULE_ENABLED`, а также cron overrides для безопасного rollout.
+    *   Добавлен targeted spec `apps/api/src/shared/memory/consolidation.worker.spec.ts` на scheduler contract.
+    *   Baseline audit, delta audit, stabilization checklist и memory-bank синхронизированы с новым статусом partial closeout по memory hygiene.
+    *   Верификация: `pnpm --filter api exec jest --runInBand src/shared/memory/consolidation.worker.spec.ts` PASS.
+
+60. **Foundation Remediation — Outbox Productionization (Scheduler Wiring)** [DONE]:
+    *   В `OutboxRelay` включены bootstrap drain и cron-based scheduler wiring через `OUTBOX_RELAY_ENABLED`, `OUTBOX_RELAY_SCHEDULE_ENABLED`, `OUTBOX_RELAY_BOOTSTRAP_DRAIN_ENABLED`.
+    *   Manual `processOutbox()` path сохранён, но теперь relay больше не зависит от неявного внешнего вызова для базового фонового запуска.
+    *   Добавлены targeted tests на bootstrap/scheduler contract в `apps/api/src/shared/outbox/outbox.relay.spec.ts`.
+    *   Baseline audit, delta audit, stabilization checklist и memory-bank синхронизированы с новым статусом partial closeout по outbox productionization.
+    *   Верификация: `pnpm --filter api exec jest --runInBand src/shared/outbox/outbox.relay.spec.ts` PASS.
+
+59. **Foundation Remediation — Raw SQL Governance Phase 1** [DONE]:
+    *   Добавлены `scripts/raw-sql-governance.cjs` и `scripts/raw-sql-allowlist.json` для inventory/allowlist approved raw SQL paths.
+    *   `scripts/invariant-gate.cjs` теперь включает raw SQL governance section и умеет работать в `warn/enforce` режиме без декоративного bypass.
+    *   Удалены `Prisma.$queryRawUnsafe/$executeRawUnsafe` из `scripts/backfill-outbox-companyid.cjs` и `scripts/verify-task-fsm-db.cjs`.
+    *   Baseline audit, delta audit, stabilization checklist и memory-bank синхронизированы с новым статусом remediation.
+    *   Верификация: `node scripts/raw-sql-governance.cjs --mode=enforce` PASS, `node scripts/invariant-gate.cjs --mode=warn` PASS.
+
+58. **Foundation Remediation — Audit Log Immutability** [DONE]:
+    *   Введён DB-level append-only enforcement для `audit_logs` через миграцию `20260312170000_audit_log_append_only_enforcement`.
+    *   Триггер `trg_audit_logs_append_only` жёстко блокирует `UPDATE/DELETE`, переводя audit trail из "tamper-evident only" в "tamper-evident + append-only at DB layer".
+    *   Добавлен `apps/api/src/shared/audit/audit.service.spec.ts`, который фиксирует create-only path и наличие `_tamperEvident` metadata.
+    *   Обновлены текущие статусные документы: `RAI_EP_SYSTEM_AUDIT_DELTA_2026-03-12.md`, `docs/FOUNDATION_STABILIZATION_CHECKLIST_RU.md`, `memory-bank/activeContext.md`, `memory-bank/TRACELOG.md`.
+    *   Верификация: targeted jest для `AuditService`.
+
 ## 2026-03-07
 
 51. **A_RAI S23 — Live API Smoke** [APPROVED]:
@@ -108,6 +247,9 @@
 
 ## 2026-03-10
 
+61. **Service Startup Verification (API/WEB/TG)** [DONE]:
+    *   API (порт 4000), Web (порт 3000) и Telegram (порт 4002) подтверждены как запущенные.
+    *   Процессы висят, порты слушаются, `pnpm dev` не требуется, так как всё уже и так пиздато работает.
 58. **Chief Agronomist (Мега-Агроном) — Expert-Tier Agent Design** [DONE]:
     *   Спроектирован и документирован новый класс агента — expert-tier `chief_agronomist` (Цифровой Мега-Агроном).
     *   Создан полный профильный паспорт: `docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_CHIEF_AGRONOMIST.md` (v1.1.0).
@@ -595,3 +737,4 @@
 - [x] Запущены API/Web сервисы (через `pnpm dev` в фоне).
 - [x] Создан файл полного системного аудита `RAI_EP_SYSTEM_AUDIT.md`.
 - [x] Все локальные изменения закоммичены и отправлены в ремоут.
+2026-03-12: Интеграция Nvidia Qwen LLM адаптера для Expert-tier агентов в режиме full_pro.

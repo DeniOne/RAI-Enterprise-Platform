@@ -1,3 +1,10 @@
+---
+id: DOC-ENG-04-ENGINEERING-SECURITY-THREAT-MODEL-STRID-10G2
+layer: Engineering
+type: Database Spec
+status: draft
+version: 0.1.0
+---
 # Моделирование угроз (STRIDE) - Critical Paths
 
 **Дата:** 2026-02-16

@@ -1,19 +1,10 @@
 ---
-id: DOC-ARC-GEN-037
-type: HLD
+id: DOC-ARC-HLD-EVENT-DRIVEN-ARCH-1NO4
 layer: Architecture
-status: Draft
+type: HLD
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-event-driven-arch
-type: component
-status: review
-owners: [architects]
-aligned_with: [principle-axioms]
----
-
 # СОБЫТИЙНАЯ МОДЕЛЬ

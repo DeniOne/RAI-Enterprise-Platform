@@ -1,3 +1,10 @@
+---
+id: DOC-STR-STAGE-2-RAI-FRONT-OFFICE-AGENT-CANON-1QLG
+layer: Strategy
+type: Vision
+status: draft
+version: 0.1.0
+---
 # RAI Front Office Agent Canon
 
 > Версия: 1.0  

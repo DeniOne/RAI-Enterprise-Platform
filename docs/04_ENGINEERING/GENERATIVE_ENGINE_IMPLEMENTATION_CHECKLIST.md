@@ -1,3 +1,10 @@
+---
+id: DOC-ENG-04-ENGINEERING-GENERATIVE-ENGINE-IMPLEMENT-1E45
+layer: Engineering
+type: Checklist
+status: draft
+version: 0.1.0
+---
 # GENERATIVE_ENGINE_IMPLEMENTATION_CHECKLIST.md
 
 ## 0. Метаинформация

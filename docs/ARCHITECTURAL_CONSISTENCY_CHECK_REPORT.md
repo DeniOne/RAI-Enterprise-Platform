@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-ARCHITECTURAL-CONSISTENCY-CHECK-REPORT-1YWU
+layer: Architecture
+type: Report
+status: draft
+version: 0.1.0
+---
 # ARCHITECTURAL CONSISTENCY CHECK REPORT (RAI_EP)
 
 **Date:** 2026-02-22

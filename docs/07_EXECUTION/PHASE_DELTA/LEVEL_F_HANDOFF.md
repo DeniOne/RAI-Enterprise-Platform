@@ -1,9 +1,11 @@
 ---
-id: LEVEL-F-HANDOFF
-type: Internal Coordination
+id: DOC-EXE-PHASE-DELTA-LEVEL-F-HANDOFF-1VS2
+layer: Execution
+type: Phase Plan
+status: approved
+version: 1.0.0
 last_updated: 2026-02-20
 ---
-
 # 🚀 HANDOFF: СТАТУС РЕАЛИЗАЦИИ LEVEL F (INSTITUTIONAL ORACLE)
 
 **Братан, ебать мы тут работы провернули! Передаю тебе контекст на следующий спринт.** 

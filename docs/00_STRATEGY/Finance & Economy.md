@@ -1,22 +1,12 @@
 ---
-id: DOC-STR-GEN-002
-type: Vision
+id: DOC-STR-00-STRATEGY-FINANCE-ECONOMY-1D43
 layer: Strategy
-status: Draft
+type: Economics
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-finance-economy
-type: component
-status: draft
-owners: [executives]
-implements: [principle-vision]
-tags: [vision-aligned]
----
-
 Модуль: Finance & Economy
 
 Назначение: Economic Truth + CFO Control Plane

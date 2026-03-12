@@ -1,13 +1,12 @@
 ---
-id: DOC-EXE-GEN-152
-type: Phase Plan
+id: DOC-EXE-PHASE-GAMMA-SPRINT-7-CHECKLIST-1H5D
 layer: Execution
-status: Draft
+type: Checklist
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Чек-лист Sprint 7 (Phase Gamma)
 
 **Название:** «S4 Stabilization, Adoption и Gamma Exit Prep»  

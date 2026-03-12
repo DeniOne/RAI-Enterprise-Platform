@@ -1,3 +1,10 @@
+---
+id: DOC-STR-STAGE-2-INDEX-1HGQ
+layer: Strategy
+type: Navigation
+status: draft
+version: 0.1.0
+---
 # STAGE 2 — Canon Index
 
 > RAI Enterprise Platform | Agent Platform & AI Canon

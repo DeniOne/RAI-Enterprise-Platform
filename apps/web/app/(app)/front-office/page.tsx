@@ -1,8 +1,19 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { Card } from '@/components/ui';
 import { frontOfficeServerApi } from '@/lib/api/front-office-server';
+import { getUserData } from '@/lib/api/auth-server';
+import { EXTERNAL_FRONT_OFFICE_BASE_PATH } from '@/lib/front-office-routes';
 
 export default async function FrontOfficePage() {
+    const user = await getUserData();
+    const { role: viewerRole } = user ?? {};
+    const isExternalFrontOffice = viewerRole === 'FRONT_OFFICE_USER';
+
+    if (isExternalFrontOffice) {
+        redirect(EXTERNAL_FRONT_OFFICE_BASE_PATH);
+    }
+
     const overview = await frontOfficeServerApi.overview().catch(() => null);
     const queues = await frontOfficeServerApi.queues().catch(() => null);
     const threads = await frontOfficeServerApi.threads().catch(() => []);
@@ -36,23 +47,23 @@ export default async function FrontOfficePage() {
 
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
                 <Card>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">New ingress</p>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">Новый вход</p>
                     <p className="mt-2 text-2xl font-medium">{queueCounts.newIngress}</p>
                 </Card>
                 <Card>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">Need link</p>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">Нужна привязка</p>
                     <p className="mt-2 text-2xl font-medium">{queueCounts.needsLink}</p>
                 </Card>
                 <Card>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">Need clarify</p>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">Нужно уточнение</p>
                     <p className="mt-2 text-2xl font-medium">{queueCounts.needsClarification}</p>
                 </Card>
                 <Card>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">Ready confirm</p>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">Готово к подтверждению</p>
                     <p className="mt-2 text-2xl font-medium">{queueCounts.readyToConfirm}</p>
                 </Card>
                 <Card>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">Open handoffs</p>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">Открытые handoff</p>
                     <p className="mt-2 text-2xl font-medium">{queueCounts.openHandoffs}</p>
                 </Card>
             </div>
@@ -77,7 +88,7 @@ export default async function FrontOfficePage() {
                                         <div>
                                             <p className="text-sm font-medium text-gray-900">{task.name}</p>
                                             <p className="mt-1 text-xs text-gray-500">
-                                                {task.field?.name ?? 'Поле не указано'} • сезон {task.season?.year ?? 'n/a'}
+                                                {task.field?.name ?? 'Поле не указано'} • сезон {task.season?.year ?? 'н/д'}
                                             </p>
                                         </div>
                                         <span className="rounded-full bg-black px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-white">
@@ -143,7 +154,7 @@ export default async function FrontOfficePage() {
                             <span className="text-sm text-gray-500">{threads.length}</span>
                         </div>
                         {threads.length === 0 ? (
-                            <p className="text-sm text-gray-500">Нет активных thread.</p>
+                            <p className="text-sm text-gray-500">Нет активных диалогов.</p>
                         ) : (
                             <div className="space-y-3">
                                 {threads.slice(0, 6).map((thread: any) => (
@@ -154,10 +165,10 @@ export default async function FrontOfficePage() {
                                     >
                                         <div className="flex items-center justify-between gap-3">
                                             <p className="text-xs font-medium uppercase tracking-[0.16em] text-gray-400">{thread.channel}</p>
-                                            <span className="text-xs text-gray-500">{thread.currentHandoffStatus ?? thread.currentClassification ?? 'OPEN'}</span>
+                                            <span className="text-xs text-gray-500">{thread.currentHandoffStatus ?? thread.currentClassification ?? 'ОТКРЫТ'}</span>
                                         </div>
                                         <p className="mt-2 text-sm text-gray-800">{thread.lastMessagePreview ?? 'Без текста'}</p>
-                                        <p className="mt-2 text-xs text-gray-500">{thread.currentOwnerRole ?? 'owner not assigned'}</p>
+                                        <p className="mt-2 text-xs text-gray-500">{thread.currentOwnerRole ?? 'Ответственный не назначен'}</p>
                                     </Link>
                                 ))}
                             </div>

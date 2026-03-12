@@ -128,6 +128,19 @@ describe('AiChatStore UX modes', () => {
                     { kind: 'episode', label: 'deviation PANy 2d ago', confidence: 0.82, source: 'episode' },
                     { kind: 'profile', label: 'prefers dashboard summary', confidence: 0.8, source: 'profile' },
                 ],
+                memorySummary: {
+                    primaryHint: 'Учтён похожий кейс прошлого сезона',
+                    primaryKind: 'episode',
+                    detailsAvailable: true,
+                },
+                suggestedActions: [
+                    {
+                        kind: 'tool',
+                        title: 'Повторить сообщение',
+                        toolName: 'echo_message',
+                        payload: { message: 'Покажи контекст' },
+                    },
+                ],
                 workWindows: [],
                 threadId: 'thread-1',
             }),
@@ -153,7 +166,10 @@ describe('AiChatStore UX modes', () => {
             '/api/rai/chat',
             expect.objectContaining({
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: expect.objectContaining({
+                    'Content-Type': 'application/json',
+                    'Idempotency-Key': expect.stringContaining('rai-chat-submit:'),
+                }),
                 body: JSON.stringify({
                     threadId: 'thread-0',
                     message: 'Покажи контекст',
@@ -169,6 +185,19 @@ describe('AiChatStore UX modes', () => {
         expect(useAiChatStore.getState().messages.at(-1)?.memoryUsed).toEqual([
             { kind: 'episode', label: 'deviation PANy 2d ago', confidence: 0.82, source: 'episode' },
             { kind: 'profile', label: 'prefers dashboard summary', confidence: 0.8, source: 'profile' },
+        ]);
+        expect(useAiChatStore.getState().messages.at(-1)?.memorySummary).toEqual({
+            primaryHint: 'Учтён похожий кейс прошлого сезона',
+            primaryKind: 'episode',
+            detailsAvailable: true,
+        });
+        expect(useAiChatStore.getState().messages.at(-1)?.suggestedActions).toEqual([
+            {
+                kind: 'tool',
+                title: 'Повторить сообщение',
+                toolName: 'echo_message',
+                payload: { message: 'Покажи контекст' },
+            },
         ]);
         expect(useAiChatStore.getState().sessions[0].threadId).toBe('thread-1');
     });

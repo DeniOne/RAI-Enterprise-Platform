@@ -1,11 +1,10 @@
 ---
-id: DOC-OPS-RUN-133
+id: DOC-OPS-WORKFLOWS-OUTBOX-REPLAY-SAFE-RUNBOOK-11GG
 layer: Operations
 type: Runbook
 status: approved
 version: 1.0.0
 ---
-
 # OUTBOX REPLAY SAFE RUNBOOK (RU)
 
 Дата: 2026-02-16
@@ -18,6 +17,9 @@ version: 1.0.0
 
 ## 2. Preconditions (обязательные)
 - `OUTBOX_DELIVERY_MODE` зафиксирован для выбранной стратегии (`broker_only` или `dual`).
+- `OUTBOX_BROKER_TRANSPORT` зафиксирован для выбранной broker strategy (`http` или `redis_streams`).
+- Если используется `redis_streams`, зафиксированы `OUTBOX_BROKER_REDIS_STREAM_KEY` и, при необходимости, `OUTBOX_BROKER_REDIS_TENANT_PARTITIONING`.
+- Если в production временно используется `local_only`, должен быть явно включён `OUTBOX_ALLOW_LOCAL_ONLY_IN_PRODUCTION=true` и зафиксировано окно аварийного отклонения.
 - Consumer idempotency store работает (`event_consumptions` write/read OK).
 - Нет активного `financial panic mode`.
 - Есть свежий backup и назначен ответственный on-call.
@@ -27,7 +29,7 @@ version: 1.0.0
 2. Подсчитать объём `FAILED` и `PENDING` сообщений.
 3. Проверить долю потенциальных дублей:
 - пересечение с `event_consumptions` по `(consumer,eventId)`;
-- события с одинаковым `type+aggregateId`.
+- события с одинаковыми явными dedupe-ключами (`replayKey`, `idempotencyKey`, `eventId`), если они предусмотрены контрактом конкретного события.
 4. Если найден tenant-contract breach, replay запрещён до фикса.
 
 ## 4. Controlled replay
@@ -37,6 +39,7 @@ version: 1.0.0
 - `outbox_failed_messages`;
 - `outbox_oldest_pending_age_seconds`;
 - `invariant_event_duplicates_prevented_total`;
+- broker transport health (`HTTP broker` или Redis stream ingest/consumer path);
 - tenant leakage counters.
 4. При росте критичных инвариантов -> немедленный stop.
 
@@ -48,7 +51,7 @@ version: 1.0.0
 
 ## 6. Recovery после stop
 1. Остановить replay.
-2. Вернуть поток в безопасный режим (`local_only` или pause producer path).
+2. Вернуть поток в безопасный режим (`dual`, `broker_only` или, только по аварийному исключению, `local_only` с `OUTBOX_ALLOW_LOCAL_ONLY_IN_PRODUCTION=true`), либо поставить pause producer path.
 3. Зафиксировать failing sample set и root cause.
 4. Подготовить fix + regression test.
 5. Повторный replay только после Go/No-Go апрува.
@@ -58,4 +61,3 @@ version: 1.0.0
 - Нет роста critical invariant alerts в течение 30 минут.
 - Обновлён weekly invariant trend report.
 - Постмортем создан для каждого P0/P1 отклонения.
-

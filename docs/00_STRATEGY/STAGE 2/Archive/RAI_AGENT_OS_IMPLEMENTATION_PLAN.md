@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-ARCHIVE-RAI-AGENT-OS-IMPLEMENTATION-PLAN-1TOR
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 # RAI_EP — Agent OS Shell + Persistent Memory (Plan/Checklist)
 Статус: EXECUTION CHECKLIST
 Основание: Agent-First / Chat-First Spec (LAW)

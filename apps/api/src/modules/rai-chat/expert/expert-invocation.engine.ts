@@ -5,6 +5,7 @@ import { MemoryFacade, AgentMemoryContext, FullRecallResult } from '../../../sha
 import { WorkingMemoryService } from '../../../shared/memory/working-memory.service';
 import { buildTextEmbedding } from '../../../shared/memory/signal-embedding.util';
 import { RankedEngram, EngramRecallContext } from '../../../shared/memory/engram.types';
+import { NvidiaGatewayService } from '../agent-platform/nvidia-gateway.service';
 
 /**
  * ExpertInvocationEngine — Phase 3.1
@@ -98,6 +99,7 @@ export class ExpertInvocationEngine {
 
     constructor(
         private readonly prisma: PrismaService,
+        private readonly nvidiaGateway: NvidiaGatewayService,
         @Optional() private readonly engramService?: EngramService,
         @Optional() private readonly workingMemoryService?: WorkingMemoryService,
     ) { }
@@ -139,7 +141,9 @@ export class ExpertInvocationEngine {
             }
 
             // Формирование экспертного ответа
-            const result = await this.executeExpertLogic(request, engrams);
+            const result = request.mode === 'full_pro' 
+                ? await this.executeExpertLogicWithLLM(request, engrams)
+                : await this.executeExpertLogic(request, engrams);
 
             // Логирование в audit trail
             await this.logInvocation(request, result);
@@ -256,6 +260,71 @@ export class ExpertInvocationEngine {
             confidence: avgScore,
             evidence,
             recommendations,
+            durationMs: Date.now() - startedAt,
+        };
+    }
+
+    /**
+     * Логика эксперта через ебучую мощную LLM (Nvidia Qwen).
+     */
+    private async executeExpertLogicWithLLM(
+        request: ExpertInvocationRequest,
+        engrams: RankedEngram[],
+    ): Promise<ExpertInvocationResult> {
+        const startedAt = Date.now();
+
+        const contextStr = engrams.map(e => `[${e.category}] ${e.content}`).join('\n');
+        
+        const systemPrompt = `Ты — ведущий эксперт RAI_EP в роли ${request.role}.
+Твоя задача: проанализировать запрос и предоставленные энграммы памяти, чтобы дать глубокое экспертное заключение.
+
+ПРАВИЛА:
+1. Пиши СТРОГО на русском языке.
+2. Используй профессиональную терминологию.
+3. Обосновывай рекомендации на основе предоставленных фактов (энграмм).
+4. Если данных мало — прямо скажи об этом.
+5. Формат ответа должен быть структурированным (Markdown).
+
+КОНТЕКСТ ПАМЯТИ:
+${contextStr}
+
+ЗАПРОС ПОЛЬЗОВАТЕЛЯ:
+${request.query}`;
+
+        const result = await this.nvidiaGateway.generate({
+            model: 'qwen/qwen3.5-397b-a17b', // Пизже модель — больше 397B параметров, сука
+            query: request.query,
+            systemPrompt,
+            top_k: 20,
+            presence_penalty: 0,
+            repetition_penalty: 1,
+        });
+
+        // Временный маппинг структурированных данных из ответа (MVP)
+        return {
+            role: request.role,
+            mode: request.mode,
+            status: 'COMPLETED',
+            traceId: request.traceId,
+            response: result.outputText,
+            structuredOutput: {
+                engramCount: engrams.length,
+                llmPowered: true,
+                totalTokens: result.usage.totalTokens,
+            },
+            engramsUsed: engrams.slice(0, 10).map((e) => ({
+                id: e.id,
+                category: e.category,
+                compositeScore: e.compositeScore,
+                content: e.content.slice(0, 200),
+            })),
+            confidence: 0.9,
+            evidence: engrams.slice(0, 5).map(e => ({
+                type: 'engram',
+                source: e.id,
+                content: e.content
+            })),
+            recommendations: [], 
             durationMs: Date.now() - startedAt,
         };
     }

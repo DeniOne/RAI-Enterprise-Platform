@@ -1,22 +1,12 @@
 ---
-id: DOC-DOM-GEN-065
-type: Domain Spec
+id: DOC-DOM-RAI-DOMAIN-DOMAIN-OVERVIEW-W27C
 layer: Domain
-status: Draft
+type: Domain Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-rai-domain
-type: component
-status: review
-owners: [domain-experts, architects]
-aligned_with: [principle-vision]
-tags: [conceptual, domain-definition]
----
-
 # RAI Domain Overview: Агрономическая логика 🌾
 
 > **Статус:** Канон | **Версия:** 1.0 | **Слой:** Прикладной Домен (RAI)

@@ -67,3 +67,118 @@
 - Реализованы расширения Front Office: `MASTER_PLAN`, `BACKLOG`, `USER_FLOWS` и контракты API.
 - Обновлены тесты `SupervisorAgent`, `AgentRuntime` и реестра инструментов для поддержки новых сущностей.
 - Запушен `RAI_AGENT_RUNTIME_GOVERNANCE.md` как основной канон управления жизненным циклом агентов.
+
+[2026-03-11] Подъем API и Web
+- Ебанул команду `pnpm --filter api --filter web dev` для локальной разработки.
+- Процессы api и web хуярят в фоне (заметил пару TS ошибок в API из-за типизации Prisma, но хуйня, крутятся).
+
+[2026-03-11] Подъем API, Web и Telegram Bot
+- По просьбе юзера запустил заново `api` и `web` (после фиксов) вместе с `telegram-bot`.
+- `pnpm --filter api --filter web run dev` и `pnpm --filter telegram-bot run start:dev` крутятся в фоне.
+
+[2026-03-12 17:00Z] Audit Log Append-Only Hardening
+- Добавлена миграция `20260312170000_audit_log_append_only_enforcement` для DB-level block на `UPDATE/DELETE` в `audit_logs`.
+- Добавлен `AuditService` spec, который фиксирует create-only path и наличие tamper-evident metadata.
+- Обновлены текущий delta-аудит, главный stabilization checklist и memory-bank, чтобы закрытие remediation не осталось только в коде.
+
+[2026-03-12 18:10Z] Raw SQL Governance Phase 1
+- Добавлены `scripts/raw-sql-governance.cjs` и `scripts/raw-sql-allowlist.json` для централизованного inventory/allowlist approved raw SQL paths.
+- `scripts/invariant-gate.cjs` теперь печатает и проверяет raw SQL governance section в `warn/enforce`.
+- Из operational scripts убраны `Prisma.$queryRawUnsafe/$executeRawUnsafe`: обновлены `scripts/backfill-outbox-companyid.cjs` и `scripts/verify-task-fsm-db.cjs`.
+- Обновлены baseline audit, delta audit, stabilization checklist и memory-bank по текущему статусу remediation.
+
+[2026-03-12 21:43Z] Outbox Productionization — Scheduler Wiring
+- В `apps/api/src/shared/outbox/outbox.relay.ts` включены bootstrap drain и cron scheduler wiring с env flags `OUTBOX_RELAY_ENABLED`, `OUTBOX_RELAY_SCHEDULE_ENABLED`, `OUTBOX_RELAY_BOOTSTRAP_DRAIN_ENABLED`.
+- Добавлены targeted tests на bootstrap/scheduler contract в `apps/api/src/shared/outbox/outbox.relay.spec.ts`.
+- Обновлены baseline audit, delta audit, stabilization checklist и memory-bank, чтобы partial closeout по outbox productionization был виден как текущее состояние, а не скрывался в коде.
+
+[2026-03-12 22:18Z] Memory Hygiene Scheduling
+- В `apps/api/src/shared/memory/consolidation.worker.ts` включены cron scheduler paths для consolidation/pruning с env flags `MEMORY_HYGIENE_ENABLED`, `MEMORY_CONSOLIDATION_SCHEDULE_ENABLED`, `MEMORY_PRUNING_SCHEDULE_ENABLED`.
+- Добавлен targeted spec `apps/api/src/shared/memory/consolidation.worker.spec.ts` на scheduler contract.
+- Обновлены baseline audit, delta audit, stabilization checklist и memory-bank, чтобы partial closeout по memory hygiene был отражён как текущее состояние системы.
+
+[2026-03-12 22:52Z] Memory Hygiene Observability
+- Проверен и подтверждён memory hygiene snapshot в `apps/api/src/shared/invariants/invariant-metrics.controller.ts`.
+- Подтверждён targeted spec `apps/api/src/shared/invariants/invariant-metrics.controller.spec.ts` (PASS), который фиксирует memory snapshot/alerts и Prometheus export.
+- Синхронизированы baseline audit, delta audit, stabilization checklist, maturity dashboard, SLO policy и memory-bank, чтобы partial closeout по memory hygiene observability был отражён как source of truth.
+
+[2026-03-12 23:07Z] Memory Hygiene Bootstrap Maintenance
+- В `apps/api/src/shared/memory/consolidation.worker.ts` добавлены startup maintenance paths через `MEMORY_CONSOLIDATION_BOOTSTRAP_ENABLED` и `MEMORY_PRUNING_BOOTSTRAP_ENABLED`.
+- `apps/api/src/shared/memory/consolidation.worker.spec.ts` расширен bootstrap contract tests; targeted jest PASS.
+- Синхронизированы baseline audit, delta audit, stabilization checklist и memory-bank, чтобы bootstrap maintenance по memory hygiene не оставался только в коде.
+
+[2026-03-12 23:39Z] Raw SQL Hardening Phase 2 — Memory Path
+- `PrismaService.safeQueryRaw()/safeExecuteRaw()` расширены executor-aware режимом для transaction client.
+- `apps/api/src/shared/memory/consolidation.worker.ts` и `apps/api/src/shared/memory/default-memory-adapter.service.ts` переведены с прямого raw SQL на safe wrappers.
+- `scripts/raw-sql-allowlist.json` сужен: memory path удалён из approved direct raw SQL paths.
+- Подтверждены `node scripts/raw-sql-governance.cjs --mode=enforce` и targeted jest для `consolidation.worker` + `memory-adapter`.
+
+[2026-03-12 23:51Z] Broader Engram Lifecycle Scheduling
+- `apps/api/src/shared/memory/engram-formation.worker.ts` переведён в bootstrap/scheduler lifecycle worker для engram formation и pruning.
+- Добавлены env-config flags `MEMORY_ENGRAM_FORMATION_*`, `MEMORY_ENGRAM_PRUNING_*` и pruning thresholds `MEMORY_ENGRAM_PRUNING_MIN_WEIGHT`, `MEMORY_ENGRAM_PRUNING_MAX_INACTIVE_DAYS`.
+- Добавлен targeted spec `apps/api/src/shared/memory/engram-formation.worker.spec.ts`; bootstrap/scheduler wiring и pruning thresholds подтверждены.
+- Синхронизированы baseline audit, delta audit, stabilization checklist и memory-bank, чтобы broader engram lifecycle closeout был отражён как текущий статус remediation.
+
+[2026-03-12 23:59Z] Engram Lifecycle Observability
+- `apps/api/src/shared/invariants/invariant-metrics.controller.ts` расширен L4 metrics/alerts для `latestEngramFormationAgeSeconds` и `prunableActiveEngramCount`.
+- В `infra/monitoring/prometheus/invariant-alert-rules.yml` добавлены `RAIMemoryEngramFormationStale` и `RAIMemoryPrunableActiveEngramsHigh`.
+- `docs/INVARIANT_ALERT_RUNBOOK_RU.md`, `docs/INVARIANT_MATURITY_DASHBOARD_RU.md` и `docs/INVARIANT_SLO_POLICY_RU.md` синхронизированы с новым L4 observability contour.
+- Подтверждён targeted spec `apps/api/src/shared/invariants/invariant-metrics.controller.spec.ts` (PASS).
+
+[2026-03-12 12:02Z] Controlled Memory Backfill Policy
+- В `apps/api/src/shared/memory/consolidation.worker.ts` и `apps/api/src/shared/memory/engram-formation.worker.ts` добавлены bounded bootstrap catch-up loops с `*_BOOTSTRAP_MAX_RUNS`.
+- Targeted specs расширены на drain-until-empty и respect-max-runs поведение для S-tier и L4 lifecycle workers.
+- `docs/INVARIANT_ALERT_RUNBOOK_RU.md` уточнён: triage memory alerts теперь включает проверку bootstrap backfill caps.
+- Синхронизированы baseline audit, delta audit, stabilization checklist и memory-bank, чтобы controlled backfill policy не оставался только в коде.
+
+[2026-03-12 12:19Z] Engram Lifecycle Throughput Visibility
+- В `apps/api/src/shared/invariants/invariant-metrics.ts` добавлены counters `memory_engram_formations_total` и `memory_engram_pruned_total`, а `resetForTests()` обнуляет их между spec runs.
+- `apps/api/src/shared/memory/engram.service.ts` теперь инкрементирует formation/pruning throughput counters; Prometheus export в `apps/api/src/shared/invariants/invariant-metrics.controller.ts` расширен метриками `invariant_memory_engram_formations_total` и `invariant_memory_engram_pruned_total`.
+- В `infra/monitoring/prometheus/invariant-alert-rules.yml` добавлен alert `RAIMemoryEngramPruningStalled`, `docs/INVARIANT_ALERT_RUNBOOK_RU.md` синхронизирован с triage steps по stalled pruning.
+- Подтверждены `pnpm --filter api exec jest --runInBand src/shared/invariants/invariant-metrics.controller.spec.ts src/shared/memory/engram.service.spec.ts`; статусные документы синхронизированы с новым L4 throughput contour.
+
+[2026-03-12 12:39Z] Memory Lifecycle Operator Pause Windows
+- В `apps/api/src/shared/memory/memory-lifecycle-control.util.ts` добавлен utility для time-boxed pause windows, а `ConsolidationWorker` и `EngramFormationWorker` теперь уважают `*_PAUSE_UNTIL` / `*_PAUSE_REASON` на scheduler/bootstrap path.
+- Manual maintenance path оставлен доступным; scheduled/bootstrap skip логируется отдельно для `consolidation`, `pruning`, `engram formation`, `engram pruning`.
+- `apps/api/src/shared/invariants/invariant-metrics.controller.ts` расширен pause flags и remaining-seconds gauges для всех четырёх lifecycle paths; `docs/INVARIANT_ALERT_RUNBOOK_RU.md`, `docs/INVARIANT_MATURITY_DASHBOARD_RU.md` и `docs/INVARIANT_SLO_POLICY_RU.md` синхронизированы с новым operator-control contour.
+- Подтверждены `pnpm --filter api exec jest --runInBand src/shared/memory/consolidation.worker.spec.ts src/shared/memory/engram-formation.worker.spec.ts src/shared/invariants/invariant-metrics.controller.spec.ts`; статусные документы обновлены.
+
+[2026-03-12 12:58Z] Memory Lifecycle Error Budget View
+- В `apps/api/src/shared/invariants/invariant-metrics.controller.ts` добавлены derived gauges `memory_engram_formation_budget_usage_ratio` и `memory_engram_pruning_budget_usage_ratio` как ранний L4 budget-usage contour.
+- В `infra/monitoring/prometheus/invariant-alert-rules.yml` добавлены burn-high alerts `RAIMemoryEngramFormationBudgetBurnHigh` и `RAIMemoryEngramPruningBudgetBurnHigh` с исключением pause-state.
+- `docs/INVARIANT_ALERT_RUNBOOK_RU.md`, `docs/INVARIANT_MATURITY_DASHBOARD_RU.md`, `docs/INVARIANT_SLO_POLICY_RU.md`, baseline audit и checklist синхронизированы с новым early-warning contour.
+- Подтверждён `pnpm --filter api exec jest --runInBand src/shared/invariants/invariant-metrics.controller.spec.ts`; remediation-state обновлён в memory-bank.
+
+[2026-03-12 13:12Z] Memory Lifecycle Multi-Window Burn-Rate Escalation
+- В `infra/monitoring/prometheus/invariant-alert-rules.yml` добавлены `RAIMemoryEngramFormationBurnRateMultiWindow` и `RAIMemoryEngramPruningBurnRateMultiWindow` как sustained degradation contour по `6h/24h` окнам.
+- `docs/INVARIANT_ALERT_RUNBOOK_RU.md` расширен процедурами для multi-window burn-rate escalation; `docs/INVARIANT_SLO_POLICY_RU.md` теперь отделяет `burn-high`, `multi-window burn-rate` и `hard breach`.
+- Baseline audit, delta audit, checklist, maturity dashboard и memory-bank синхронизированы с новым escalation layer.
+- YAML alert-rules validated, `invariant-gate` повторно пройден.
+
+[2026-03-12 18:30Z] Tenant-Scoped Memory Manual Control Plane
+- Добавлены `apps/api/src/shared/memory/memory-maintenance.service.ts`, `apps/api/src/shared/memory/dto/run-memory-maintenance.dto.ts` и guarded endpoint `POST /api/memory/maintenance/run` в `apps/api/src/shared/memory/memory.controller.ts`.
+- Manual corrective action по `consolidation`, `pruning`, `engram formation`, `engram pruning` теперь выполняется только в tenant-scoped path; `ConsolidationWorker`, `EngramFormationWorker` и `EngramService.pruneEngrams()` поддерживают company-scoped runs.
+- Введён audit trail `MEMORY_MAINTENANCE_RUN_COMPLETED` / `MEMORY_MAINTENANCE_RUN_FAILED`; runbook, checklist, baseline audit, delta audit и memory-bank синхронизированы с новым operator control-plane.
+- Targeted jest по `memory-maintenance.service`, `memory.controller`, `consolidation.worker`, `engram-formation.worker`, `engram.service` подтверждён; полный `apps/api` `tsc --noEmit` остаётся заблокирован уже существующей ошибкой в `src/modules/health/health.controller.ts`.
+
+[2026-03-12 19:05Z] Production-Grade Operational Control for Memory Lifecycle
+- `MemoryMaintenanceService` доведён до полноценного tenant-scoped control-plane: playbook catalog, recommendations, audit-backed recent runs и endpoint `GET /api/memory/maintenance/control-plane`.
+- Введён `MemoryAutoRemediationService`: scheduled automatic corrective action, cooldown policy, auto-eligible playbooks only и safety caps `MEMORY_AUTO_REMEDIATION_*`.
+- `InvariantMetricsController` и Prometheus export расширены deeper lifecycle signals и automation counters: `memory_oldest_prunable_consolidated_age_seconds`, `memory_engram_formation_candidates`, `memory_oldest_engram_formation_candidate_age_seconds`, `invariant_memory_auto_remediations_total`, `invariant_memory_auto_remediation_failures_total`, `memory_auto_remediation_enabled`.
+- `EngramFormationWorker` приведён к тому же candidate contour, что и observability/control-plane: техкарты с `generationMetadata.memoryLifecycle.engramFormed=true` больше не попадают в formation path.
+- Обновлены baseline audit, delta audit, stabilization checklist, alert runbook, maturity dashboard, SLO policy и memory-bank, чтобы блок `production-grade operational control for memory lifecycle` был отмечен как закрытый.
+- Подтверждены targeted jest для control-plane/automation/observability и `pnpm --filter api exec tsc --noEmit --pretty false`.
+
+[2026-03-12 19:32Z] Broker-Native Outbox Transport
+- `apps/api/src/shared/outbox/outbox-broker.publisher.ts` переведён на transport abstraction `http | redis_streams`; generic HTTP path больше не является единственным broker delivery path.
+- Добавлен broker-native Redis Streams publish через `XADD` с env-configs `OUTBOX_BROKER_TRANSPORT`, `OUTBOX_BROKER_REDIS_STREAM_KEY`, `OUTBOX_BROKER_REDIS_STREAM_MAXLEN`, `OUTBOX_BROKER_REDIS_TENANT_PARTITIONING`.
+- `apps/api/src/shared/outbox/outbox.relay.ts` теперь transport-aware по broker config hint; relay корректно валидирует transport-specific configuration before bootstrap.
+- Обновлены baseline audit, delta audit, stabilization checklist, outbox replay runbook и memory-bank, чтобы тезис "outbox broker publisher всё ещё generic HTTP-only" был снят как устаревший.
+- Подтверждены `pnpm --filter api exec jest --runInBand src/shared/outbox/outbox.relay.spec.ts src/shared/outbox/outbox-broker.publisher.spec.ts` и `pnpm --filter api exec tsc --noEmit --pretty false`.
+
+[2026-03-12 20:00Z] External Front-Office Route-Space Separation
+- В API введён отдельный viewer-only namespace `apps/api/src/modules/front-office/front-office-external.controller.ts` с canonical path `/api/portal/front-office/*`; legacy internal operations остаются в `front-office.controller.ts`.
+- В web введён canonical внешний portal route-space `/portal/front-office` и `/portal/front-office/threads/[threadKey]`; для `FRONT_OFFICE_USER` старые `/front-office` root/thread paths теперь работают как compatibility redirects.
+- Onboarding переведён на новый внешний contour: `apps/api/src/shared/auth/front-office-auth.service.ts` теперь генерирует activation links на `/portal/front-office/activate`, а login/activate success redirects используют `apps/web/lib/front-office-routes.ts`.
+- Обновлены baseline audit, delta audit, stabilization checklist и memory-bank, чтобы route-space debt по external front-office считался существенно сниженным, а остаток трактовался как legacy alias debt.
+- Подтверждены `pnpm --filter api exec jest --runInBand src/modules/front-office/front-office-external.controller.spec.ts src/shared/auth/front-office-auth.service.spec.ts`, `pnpm --filter api exec tsc --noEmit --pretty false` и `pnpm --filter web exec tsc --noEmit --pretty false`.

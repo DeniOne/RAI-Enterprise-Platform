@@ -1,14 +1,13 @@
 ---
-id: DOC-EXE-GEN-150
-type: Phase Plan
+id: DOC-EXE-PHASE-GAMMA-SPRINT-5-CHECKLIST-1XVC
 layer: Execution
-status: Draft
+type: Checklist
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿# Чек-лист Sprint 5 (Phase Gamma)
+# Чек-лист Sprint 5 (Phase Gamma)
 
 **Название:** «Живой пилот и тюнинг»  
 **Срок:** 2 недели  

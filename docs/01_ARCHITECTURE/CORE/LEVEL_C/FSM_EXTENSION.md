@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-CORE-LC-003
-type: Architecture
-layer: Core
-status: Draft
+id: DOC-ARC-LEVEL-C-FSM-EXTENSION-H051
+layer: Architecture
+type: HLD
+status: draft
 version: 1.6.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # LEVEL C — FSM EXTENSION
 ## Расширение конечного автомата для поддержки конфликтов
 

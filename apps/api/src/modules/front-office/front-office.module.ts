@@ -7,7 +7,9 @@ import { RaiChatModule } from "../rai-chat/rai-chat.module";
 import { AgroOrchestratorModule } from "../agro-orchestrator/agro-orchestrator.module";
 import { FrontOfficeDraftModule } from "../front-office-draft/front-office-draft.module";
 import { FrontOfficeController } from "./front-office.controller";
+import { FrontOfficeExternalController } from "./front-office-external.controller";
 import { FrontOfficeService } from "./front-office.service";
+import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
 
 @Module({
   imports: [
@@ -18,9 +20,10 @@ import { FrontOfficeService } from "./front-office.service";
     RaiChatModule,
     AgroOrchestratorModule,
     FrontOfficeDraftModule,
+    IdempotencyModule,
   ],
   providers: [FrontOfficeService],
-  controllers: [FrontOfficeController],
+  controllers: [FrontOfficeController, FrontOfficeExternalController],
   exports: [FrontOfficeService],
 })
 export class FrontOfficeModule {}

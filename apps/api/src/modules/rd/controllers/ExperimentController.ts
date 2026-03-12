@@ -1,22 +1,24 @@
 import {
   Controller,
-  Get,
   Post,
   Body,
   Param,
-  UseGuards,
   Request,
+  UseInterceptors,
 } from "@nestjs/common";
 import { RdService } from "../services/RdService";
-import { JwtAuthGuard } from "../../../shared/auth/jwt-auth.guard";
 import { ExperimentState } from "@rai/prisma-client";
+import { IdempotencyInterceptor } from "../../../shared/idempotency/idempotency.interceptor";
+import { Authorized } from "../../../shared/auth/authorized.decorator";
+import { RND_ROLES } from "../../../shared/auth/rbac.constants";
 
 @Controller("rd/experiments")
-@UseGuards(JwtAuthGuard)
+@Authorized(...RND_ROLES)
 export class ExperimentController {
   constructor(private rdService: RdService) {}
 
   @Post(":id/transition")
+  @UseInterceptors(IdempotencyInterceptor)
   async transition(
     @Param("id") id: string,
     @Body("state") state: ExperimentState,
@@ -26,6 +28,7 @@ export class ExperimentController {
   }
 
   @Post("protocols/:id/approve")
+  @UseInterceptors(IdempotencyInterceptor)
   async approveProtocol(@Param("id") id: string, @Request() req: any) {
     return this.rdService.orchestrator.approveProtocol(id, req.user.id);
   }

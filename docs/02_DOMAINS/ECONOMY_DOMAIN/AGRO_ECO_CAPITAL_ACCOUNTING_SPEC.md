@@ -1,3 +1,10 @@
+---
+id: DOC-DOM-ECONOMY-DOMAIN-AGRO-ECO-CAPITAL-ACCOUNTING-GKAV
+layer: Domain
+type: Domain Spec
+status: draft
+version: 0.1.0
+---
 # LEVEL E: Спецификация Агро-Эко Капитального Учета
 
 ## 1. Введение

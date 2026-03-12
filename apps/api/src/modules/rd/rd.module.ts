@@ -4,9 +4,10 @@ import { ProgramController } from "./controllers/ProgramController";
 import { TrialController } from "./controllers/TrialController";
 import { RdService } from "./services/RdService";
 import { PrismaModule } from "../../shared/prisma/prisma.module";
+import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, IdempotencyModule],
   controllers: [ProgramController, ExperimentController, TrialController],
   providers: [RdService],
   exports: [RdService],

@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-TECHMAP-CHATGPT-1SY1
+layer: Archive
+type: Legacy
+status: archived
+version: 0.1.0
+---
 # TRIAGE — Карта неизвестного (Input Map)
 
 ## 1️⃣ Обязательные входные данные (без них техкарта не формируется)

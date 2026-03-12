@@ -1,22 +1,12 @@
 ---
-id: DOC-STR-GEN-004
-type: Vision
+id: DOC-STR-00-STRATEGY-PHASE-GAMMA-RISK-POLICY-21HG
 layer: Strategy
-status: Draft
+type: Roadmap
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿---
-id: control-gamma-risk-policy
-type: control
-status: review
-owners: [security-officers, architects]
-aligned_with: [principle-gamma-vision-scope]
-measured_by: [metric-gamma-quality-gates, metric-gamma-business-impact]
----
-
 # Phase Gamma: Политика рисков
 
 ## Фокус

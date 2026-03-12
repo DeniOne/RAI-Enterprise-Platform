@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-OPT-001
-type: Specification
-layer: Core Engine
-status: Approved
+id: DOC-ARC-LEVEL-E-LEVEL-E-MULTI-OBJECTIVE-OPTIMIZATI-5FXA
+layer: Architecture
+type: HLD
+status: approved
 version: 1.3.0
 owners: [@techlead]
 last_updated: 2026-02-19
 ---
-
 # LEVEL E: Спецификация Многоцелевой Оптимизации
 
 ## 1. Вектор Оптимизации (Five-Dimensional)

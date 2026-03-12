@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-178
-type: Legacy
-layer: Archive
-status: Draft
+id: DOC-STR-CONSULTING-CONSULTING-SCHEMA-17T5
+layer: Strategy
+type: Vision
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 Consulting Domain Schema
 RAI Enterprise Platform
 

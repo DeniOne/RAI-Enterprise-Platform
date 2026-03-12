@@ -1,21 +1,12 @@
 ---
-id: DOC-EXE-GEN-155
-type: Phase Plan
+id: DOC-EXE-07-EXECUTION-SPRINT-B7-SCOPE-T94F
 layer: Execution
-status: Draft
+type: Phase Plan
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: sprint-b7-scope
-type: sprint
-status: planning
-owners: [techleads]
-aligned_with: [beta-integrity-layer]
----
-
 # Sprint B7: Advanced Agro AI (Vision Service) 👁️
 
 > **Timeline:** ASAP

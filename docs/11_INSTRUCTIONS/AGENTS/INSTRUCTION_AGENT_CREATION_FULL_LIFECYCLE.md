@@ -1,14 +1,13 @@
 ---
-id: DOC-INS-AGT-001
-type: Instruction
+id: DOC-INS-AGENTS-INSTRUCTION-AGENT-CREATION-FULL-LIF-1GC6
 layer: Instructions
-domain: Agents
-status: Active
+type: Instruction
+status: approved
 version: 1.1.0
+domain: Agents
 owners: [@techlead]
 last_updated: 2026-03-10
 ---
-
 # ПОЛНАЯ ИНСТРУКЦИЯ ПО СОЗДАНИЮ НОВОГО АГЕНТА
 
 ## 1. Назначение

@@ -1,11 +1,10 @@
 ---
-id: DOC-OPS-POL-136
+id: DOC-OPS-API-OUTBOX-FINANCE-SLO-SLI-ERROR-BUDGET-PO-1K62
 layer: Operations
 type: Policy
 status: approved
 version: 1.0.0
 ---
-
 # API / OUTBOX / FINANCE SLO-SLI + ERROR BUDGET POLICY (RU)
 
 Дата: 2026-02-16  

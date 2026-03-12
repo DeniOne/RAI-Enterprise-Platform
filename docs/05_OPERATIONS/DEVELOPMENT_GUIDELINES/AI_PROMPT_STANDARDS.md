@@ -1,21 +1,12 @@
 ---
-id: DOC-OPS-GEN-124
-type: Runbook
+id: DOC-OPS-DEVELOPMENT-GUIDELINES-AI-PROMPT-STANDARDS-1RJ5
 layer: Operations
-status: Draft
+type: Report
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: guideline-engineering-ai-prompts
-type: guideline
-status: approved
-owners: [techleads]
-aligned_with: [principle-axioms]
----
-
 # AI Prompt Standards (Стандарты промптов) 📝
 
 > **Статус:** Инженерный стандарт | **Версия:** 1.0 | **Слой:** Engineering / Guidelines

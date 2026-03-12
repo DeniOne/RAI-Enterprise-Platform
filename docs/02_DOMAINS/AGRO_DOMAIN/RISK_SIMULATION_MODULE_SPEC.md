@@ -1,3 +1,10 @@
+---
+id: DOC-DOM-AGRO-DOMAIN-RISK-SIMULATION-MODULE-SPEC-1L89
+layer: Domain
+type: Domain Spec
+status: draft
+version: 0.1.0
+---
 # RISK_SIMULATION_MODULE_SPEC.md
 
 ## 0. Статус документа

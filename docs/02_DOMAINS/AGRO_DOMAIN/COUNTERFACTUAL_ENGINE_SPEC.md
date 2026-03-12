@@ -1,13 +1,12 @@
 ---
-id: DOC-SPEC-AGRO-001
-type: Domain Specification
-layer: Agro Domain
-status: Draft
+id: DOC-DOM-AGRO-DOMAIN-COUNTERFACTUAL-ENGINE-SPEC-P2GJ
+layer: Domain
+type: Domain Spec
+status: draft
 version: 1.4.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # COUNTERFACTUAL ENGINE — AGRO DOMAIN
 ## Агрономическая реализация контрфактуального моделирования (Level C)
 

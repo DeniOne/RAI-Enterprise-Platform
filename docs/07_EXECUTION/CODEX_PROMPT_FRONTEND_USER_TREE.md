@@ -1,3 +1,10 @@
+---
+id: DOC-EXE-07-EXECUTION-CODEX-PROMPT-FRONTEND-USER-TR-OEPY
+layer: Execution
+type: Prompt
+status: draft
+version: 0.1.0
+---
 # CODEX PROMPT: ПОЛНОЕ ПОЛЬЗОВАТЕЛЬСКОЕ ДЕРЕВО ФРОНТА (RAI ENTERPRISE)
 
 ## ВВЕДЕНИЕ ДЛЯ АССИСТЕНТА (CODEX)

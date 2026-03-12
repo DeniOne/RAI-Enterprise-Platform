@@ -1,19 +1,10 @@
 ---
-id: DOC-ARC-GEN-041
-type: HLD
+id: DOC-ARC-HLD-SYSTEM-CONTEXT-C4-L1-1RXB
 layer: Architecture
-status: Draft
+type: Topology
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-system-context-c4
-type: component
-status: review
-owners: [architects]
-aligned_with: [principle-axioms]
----
-
 # ОБЩАЯ АРХИТЕКТУРА

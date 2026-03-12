@@ -1,13 +1,12 @@
 ---
-id: DOC-ENG-LC-001
-type: Engineering Specification
+id: DOC-ENG-LEVEL-C-CONFLICT-API-SPEC-YBNQ
 layer: Engineering
-status: Draft
+type: API Contract
+status: draft
 version: 1.3.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # CONFLICT API — Level C
 ## REST API спецификация для Conflict Engine (Hardened)
 

@@ -1,13 +1,12 @@
 ---
-id: DOC-ENG-GEN-101
-type: Service Spec
+id: DOC-ENG-04-ENGINEERING-ADVISORY-DR-REHEARSAL-REPOR-J804
 layer: Engineering
-status: Draft
+type: Report
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Advisory DR/Rollback Rehearsal Report (Sprint 6)
 
 ## Session Metadata

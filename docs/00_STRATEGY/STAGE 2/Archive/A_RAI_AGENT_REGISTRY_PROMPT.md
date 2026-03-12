@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-ARCHIVE-A-RAI-AGENT-REGISTRY-PROMPT-P9O4
+layer: Archive
+type: Legacy
+status: archived
+version: 0.1.0
+---
 # A_RAI Agent Registry & Management UI (Phase 4.6)
 ## Спецификация для кодера (Исполняемый Промпт)
 

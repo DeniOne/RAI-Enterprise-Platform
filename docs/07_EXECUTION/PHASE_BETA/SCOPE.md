@@ -1,21 +1,12 @@
 ---
-id: DOC-EXE-GEN-142
-type: Phase Plan
+id: DOC-EXE-PHASE-BETA-SCOPE-1CLT
 layer: Execution
-status: Draft
+type: Phase Plan
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-implementation-beta-scope
-type: component
-status: review
-owners: [techleads]
-aligned_with: [principle-vision]
----
-
 # Phase Beta Scope: Operations & Enterprise 💎
 
 > **Версия:** 1.2 | **Статус:** **COMPLETED** | **Завершен:** 08.02.2026

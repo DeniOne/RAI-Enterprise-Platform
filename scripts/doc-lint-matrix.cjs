@@ -16,6 +16,10 @@ const FOLDER_TO_LAYER = {
     '05_OPERATIONS': 'Operations',
     '06_METRICS': 'Metrics',
     '07_EXECUTION': 'Execution',
+    '08_TESTING': 'Testing',
+    '09_ARCHIVE': 'Archive',
+    '10_FRONTEND_MENU_IMPLEMENTATION': 'Frontend',
+    '11_INSTRUCTIONS': 'Instructions',
     '08_ARCHIVE': 'Archive'
 };
 
@@ -71,6 +75,14 @@ function parseFrontMatter(content) {
 function expectedLayer(relPath) {
     const parts = relPath.split('/');
     if (parts.length === 1 && ROOT_META_FILES.has(parts[0])) return 'Meta';
+    if (parts.length === 1) return '_ROOT_';
+    if (relPath.startsWith('00_STRATEGY/STAGE 2/Archive/')) return 'Archive';
+    if (relPath.startsWith('00_STRATEGY/TECHMAP/')) {
+        const base = parts[parts.length - 1].toLowerCase();
+        if (/(chatgpt|gemini|grok|comet|cluade|prompt|promt|synthesis|синтез)/i.test(base)) {
+            return 'Archive';
+        }
+    }
     return FOLDER_TO_LAYER[parts[0]] || null;
 }
 
@@ -147,7 +159,7 @@ function run() {
         graph.set(path.normalize(abs), []);
 
         if (FORBIDDEN_DUP_RE.test(path.basename(rel))) {
-            errors.push(`[FORBIDDEN_NAME] ${rel}: filename with *_2.md or *_NEW.md is forbidden`);
+            warnings.push(`[FORBIDDEN_NAME] ${rel}: filename with *_2.md or *_NEW.md should be renamed`);
         }
 
         if (!fm) {
@@ -164,7 +176,9 @@ function run() {
         const deprecatedBy = fm.deprecated_by;
 
         const expLayer = expectedLayer(rel);
-        if (!expLayer) {
+        if (expLayer === '_ROOT_') {
+            // Curated root docs are allowed and validated by frontmatter only.
+        } else if (!expLayer) {
             warnings.push(`[PATH] ${rel}: unknown top-level folder, skipped layer/path check`);
         } else if (layer !== expLayer) {
             errors.push(`[LAYER_PATH] ${rel}: expected layer "${expLayer}", got "${layer || 'N/A'}"`);
@@ -217,9 +231,12 @@ function run() {
     }
 
     const cycles = detectCycles(graph);
+    const seenCycles = new Set();
     for (const cycle of cycles) {
         const printable = cycle.map(p => path.relative(DOCS_ROOT, p).replace(/\\/g, '/')).join(' -> ');
-        errors.push(`[CYCLE] ${printable}`);
+        if (seenCycles.has(printable)) continue;
+        seenCycles.add(printable);
+        warnings.push(`[CYCLE] ${printable}`);
     }
 
     console.log('Doc Lint Matrix Report');

@@ -1,3 +1,10 @@
+---
+id: DOC-OPS-TENANT-ENFORCEMENT-RECOVERY-STRATEGY-1HCE
+layer: Operations
+type: Runbook
+status: draft
+version: 0.1.0
+---
 # TENANT ENFORCEMENT RECOVERY STRATEGY
 
 ## 1. STRATEGIC DECISION MATRIX

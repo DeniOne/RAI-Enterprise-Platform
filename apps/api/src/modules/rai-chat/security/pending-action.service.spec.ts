@@ -14,6 +14,8 @@ describe("PendingActionService", () => {
   const mockCreate = jest.fn();
   const mockFindFirst = jest.fn();
   const mockUpdate = jest.fn();
+  const mockUpdateMany = jest.fn();
+  const mockFindMany = jest.fn();
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -27,6 +29,8 @@ describe("PendingActionService", () => {
               create: mockCreate,
               findFirst: mockFindFirst,
               update: mockUpdate,
+              updateMany: mockUpdateMany,
+              findMany: mockFindMany,
             },
           },
         },
@@ -125,5 +129,43 @@ describe("PendingActionService", () => {
     expect(service.requiresConfirmation("ALLOWED")).toBe(false);
     expect(service.requiresConfirmation("REQUIRES_USER_CONFIRMATION")).toBe(true);
     expect(service.requiresConfirmation("REQUIRES_TWO_PERSON_APPROVAL")).toBe(true);
+  });
+
+  it("list syncs expired actions before reading queue", async () => {
+    const nowAction = {
+      id: "pa-2",
+      createdAt: new Date("2026-03-11T10:00:00.000Z"),
+      expiresAt: new Date("2026-03-11T11:00:00.000Z"),
+      traceId,
+      companyId,
+      toolName: "generate_tech_map_draft",
+      payload: {},
+      riskLevel: "WRITE",
+      status: PendingActionStatus.PENDING,
+      requestedByUserId: "u1",
+      approvedFirstBy: null,
+      approvedFinalBy: null,
+    };
+    mockUpdateMany.mockResolvedValue({ count: 1 });
+    mockFindMany.mockResolvedValue([nowAction]);
+
+    const result = await service.list(companyId, { limit: 10 });
+
+    expect(mockUpdateMany).toHaveBeenCalledWith({
+      where: {
+        companyId,
+        status: {
+          in: [PendingActionStatus.PENDING, PendingActionStatus.APPROVED_FIRST],
+        },
+        expiresAt: { lt: expect.any(Date) },
+      },
+      data: { status: PendingActionStatus.EXPIRED },
+    });
+    expect(mockFindMany).toHaveBeenCalledWith({
+      where: { companyId },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    });
+    expect(result).toEqual([nowAction]);
   });
 });

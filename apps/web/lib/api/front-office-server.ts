@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { EXTERNAL_FRONT_OFFICE_API_BASE_PATH } from "@/lib/front-office-routes";
 
 const BASE_URL = "http://localhost:4000/api";
 
@@ -63,4 +64,32 @@ export const frontOfficeServerApi = {
       body: JSON.stringify({ lastMessageId }),
     }),
   assignments: () => fetchFrontOffice("/front-office/assignments"),
+};
+
+export const externalFrontOfficeServerApi = {
+  threads: () => fetchFrontOffice(`${EXTERNAL_FRONT_OFFICE_API_BASE_PATH}/threads`),
+  thread: (threadKey: string) =>
+    fetchFrontOffice(
+      `${EXTERNAL_FRONT_OFFICE_API_BASE_PATH}/threads/${encodeURIComponent(threadKey)}`,
+    ),
+  threadMessages: (threadKey: string) =>
+    fetchFrontOffice(
+      `${EXTERNAL_FRONT_OFFICE_API_BASE_PATH}/threads/${encodeURIComponent(threadKey)}/messages`,
+    ),
+  replyToThread: (threadKey: string, messageText: string) =>
+    fetchFrontOffice(
+      `${EXTERNAL_FRONT_OFFICE_API_BASE_PATH}/threads/${encodeURIComponent(threadKey)}/reply`,
+      {
+        method: "POST",
+        body: JSON.stringify({ messageText }),
+      },
+    ),
+  markThreadRead: (threadKey: string, lastMessageId?: string) =>
+    fetchFrontOffice(
+      `${EXTERNAL_FRONT_OFFICE_API_BASE_PATH}/threads/${encodeURIComponent(threadKey)}/read`,
+      {
+        method: "POST",
+        body: JSON.stringify({ lastMessageId }),
+      },
+    ),
 };

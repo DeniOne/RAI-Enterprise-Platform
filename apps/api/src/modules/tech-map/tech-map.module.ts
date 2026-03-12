@@ -18,9 +18,10 @@ import { ContractCoreService } from "./economics/contract-core.service";
 import { RecalculationEngine } from "./economics/recalculation.engine";
 import { TechMapValidator } from "./tech-map.validator";
 import { UnitNormalizationService } from "./unit-normalization.service";
+import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
 
 @Module({
-  imports: [PrismaModule, IntegrityModule],
+  imports: [PrismaModule, IntegrityModule, IdempotencyModule],
   controllers: [TechMapController],
   providers: [
     TechMapService,

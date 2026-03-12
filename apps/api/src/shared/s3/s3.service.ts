@@ -4,6 +4,7 @@ import { Cron, CronExpression } from "@nestjs/schedule";
 import * as Minio from "minio";
 import { RedisService } from "../redis/redis.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { SecretsService } from "../config/secrets.service";
 
 export enum MLJobStatus {
   PENDING = "PENDING",
@@ -24,13 +25,16 @@ export class S3Service implements OnModuleInit {
     private configService: ConfigService,
     private redis: RedisService,
     private prisma: PrismaService,
+    private readonly secretsService: SecretsService,
   ) {
     const accessKey =
-      this.configService.get<string>("MINIO_ACCESS_KEY") ??
-      this.configService.get<string>("MINIO_ROOT_USER", "minio");
+      this.secretsService.getOptionalSecret("MINIO_ACCESS_KEY", {
+        fallbackKeys: ["MINIO_ROOT_USER"],
+      }) || "minio";
     const secretKey =
-      this.configService.get<string>("MINIO_SECRET_KEY") ??
-      this.configService.get<string>("MINIO_ROOT_PASSWORD", "minio123");
+      this.secretsService.getOptionalSecret("MINIO_SECRET_KEY", {
+        fallbackKeys: ["MINIO_ROOT_PASSWORD"],
+      }) || "minio123";
 
     this.client = new Minio.Client({
       endPoint: this.configService.get<string>("MINIO_ENDPOINT", "localhost"),

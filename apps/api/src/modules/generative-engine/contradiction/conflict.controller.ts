@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   BadRequestException,
+  UseInterceptors,
 } from "@nestjs/common";
 import { DivergenceTrackerService } from "./divergence-tracker.service";
 import { CounterfactualEngine } from "./counterfactual-engine";
@@ -16,6 +17,13 @@ import { ConflictMatrixService, DISWeights } from "./conflict-matrix.service";
 import { OverrideRiskAnalyzer } from "../risk/override-risk-analyzer";
 import { ConfirmOverrideDto, OverrideResultDto } from "./conflict.dto";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
+import { IdempotencyInterceptor } from "../../../shared/idempotency/idempotency.interceptor";
+import { Authorized } from "../../../shared/auth/authorized.decorator";
+import { Roles } from "../../../shared/auth/roles.decorator";
+import {
+  PLANNING_READ_ROLES,
+  PLANNING_WRITE_ROLES,
+} from "../../../shared/auth/rbac.constants";
 
 /**
  * ConflictController — API Level C: Contradiction-Resilient Intelligence.
@@ -28,6 +36,7 @@ import { PrismaService } from "../../../shared/prisma/prisma.service";
  * Идемпотентность: Idempotency-Key header или автоматический SHA256.
  */
 @Controller("api/v1/generative-engine/contradiction")
+@Authorized(...PLANNING_READ_ROLES)
 export class ConflictController {
   private readonly logger = new Logger(ConflictController.name);
 
@@ -51,7 +60,9 @@ export class ConflictController {
    * 6. DivergenceTracker.recordDivergence()
    */
   @Post("confirm-override")
+  @Roles(...PLANNING_WRITE_ROLES)
   @HttpCode(HttpStatus.OK)
+  @UseInterceptors(IdempotencyInterceptor)
   async confirmOverride(
     @Body() dto: ConfirmOverrideDto,
     @Headers("Idempotency-Key") idempotencyKey?: string,

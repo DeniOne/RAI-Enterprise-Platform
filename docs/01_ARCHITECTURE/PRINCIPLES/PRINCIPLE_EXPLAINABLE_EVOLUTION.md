@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-PNC-LD-002
-type: Principle
+id: DOC-ARC-PRINCIPLES-PRINCIPLE-EXPLAINABLE-EVOLUTION-QAV1
 layer: Architecture
-status: Accepted
+type: Standards
+status: approved
 version: 2.3.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # ПРИНЦИП: Объяснимая эволюция (Explainable Evolution D6+++)
 
 ---

@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-LEVEL-D-ARCHITECTURE-12H5
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 RAI_Enterprise_Platform — Level D: Адаптивное самообучение
 
 0. Назначение документа

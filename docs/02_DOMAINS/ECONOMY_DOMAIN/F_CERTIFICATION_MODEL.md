@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-LVLF-003
-type: Specification
-layer: Architecture
-status: Proposed
+id: DOC-DOM-ECONOMY-DOMAIN-F-CERTIFICATION-MODEL-KKPW
+layer: Domain
+type: Domain Spec
+status: approved
 version: 1.2.0
 owners: [@techlead]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: ИНСТИТУЦИОНАЛЬНАЯ МОДЕЛЬ СЕРТИФИКАЦИИ (F_CERTIFICATION_MODEL)
 
 ## 0. Статус Документа

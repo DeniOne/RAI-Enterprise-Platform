@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-185
-type: Legacy
-layer: Archive
-status: Draft
+id: DOC-STR-CONSULTING-UI-SPRINT-TASK-15K6
+layer: Strategy
+type: Vision
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # 🧭 UI_SPRINT_TASK.md
 ## RAI Enterprise — UI Structural Reflection Sprint
 ### Consulting Core v2 Visualization

@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-174
-type: Canon
-layer: Execution
-status: Draft
+id: DOC-ARV-ANTIGRAVITY-SOFTWARE-FACTORY-FINALIZATION--16TM
+layer: Archive
+type: Legacy
+status: archived
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-03-01
 ---
-
 # ANTIGRAVITY SOFTWARE FACTORY  
 ## FINALIZATION PROMPT (CANONICAL) — ПОСЛЕ КАЖДОЙ ЗАДАЧИ
 

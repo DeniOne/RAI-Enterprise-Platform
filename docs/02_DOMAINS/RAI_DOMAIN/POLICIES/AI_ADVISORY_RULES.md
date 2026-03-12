@@ -1,20 +1,11 @@
 ---
-id: DOC-DOM-GEN-076
-type: Domain Spec
+id: DOC-DOM-POLICIES-AI-ADVISORY-RULES-10M2
 layer: Domain
-status: Draft
+type: Domain Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: guideline-rai-ai-rules
-type: guideline
-status: review
-owners: [domain-experts]
-aligned_with: [principle-vision]
----
-
 # Telegram AI Advisory Rules
 ...

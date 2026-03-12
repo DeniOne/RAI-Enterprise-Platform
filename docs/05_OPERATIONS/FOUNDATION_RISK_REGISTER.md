@@ -1,11 +1,10 @@
 ---
-id: DOC-OPS-RISK-001
+id: DOC-OPS-05-OPERATIONS-FOUNDATION-RISK-REGISTER-WJJP
 layer: Operations
 type: Report
 status: approved
 version: 1.0.0
 ---
-
 # FOUNDATION RISK REGISTER (RU)
 
 Дата: 2026-02-15

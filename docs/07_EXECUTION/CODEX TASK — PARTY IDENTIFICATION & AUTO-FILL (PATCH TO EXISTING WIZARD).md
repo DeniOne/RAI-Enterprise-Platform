@@ -1,3 +1,10 @@
+---
+id: DOC-EXE-07-EXECUTION-CODEX-TASK-PARTY-IDENTIFICATI-VOFF
+layer: Execution
+type: Phase Plan
+status: draft
+version: 0.1.0
+---
 0. ВАЖНО
 
 Все новые слова и фразы должны быть на русском языке.

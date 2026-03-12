@@ -1,13 +1,12 @@
 ---
-id: DOC-ENG-GEN-107
-type: Service Spec
+id: DOC-ENG-04-ENGINEERING-ADVISORY-ONCALL-DRILL-REPOR-L4TP
 layer: Engineering
-status: Draft
+type: Report
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Advisory On-call Drill Report (Sprint 6)
 
 ## Session Metadata

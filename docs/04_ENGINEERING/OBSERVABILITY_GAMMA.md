@@ -1,21 +1,12 @@
 ---
-id: DOC-ENG-GEN-122
-type: Service Spec
+id: DOC-ENG-04-ENGINEERING-OBSERVABILITY-GAMMA-1F5W
 layer: Engineering
-status: Draft
+type: Service Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿---
-id: guideline-observability-gamma
-type: guideline
-status: review
-owners: [techleads, ops]
-aligned_with: [principle-ai-governance-canon]
----
-
 # Observability для Gamma
 
 ## Фокус

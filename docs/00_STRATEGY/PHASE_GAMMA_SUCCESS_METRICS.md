@@ -1,21 +1,12 @@
 ---
-id: DOC-STR-GEN-005
-type: Vision
+id: DOC-STR-00-STRATEGY-PHASE-GAMMA-SUCCESS-METRICS-11ET
 layer: Strategy
-status: Draft
+type: Roadmap
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿---
-id: metric-gamma-success
-type: metric
-status: review
-owners: [product-owner, stakeholders]
-measures: [principle-gamma-vision-scope]
----
-
 # Phase Gamma: Метрики успеха
 
 ## Продуктовые

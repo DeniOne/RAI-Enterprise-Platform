@@ -1,13 +1,12 @@
 ---
-id: DOC-S2-AGENT-LIFECYCLE
-type: Canon
-layer: Stage 2
-status: Active Canon
+id: DOC-STR-STAGE-2-RAI-AGENT-EVOLUTION-AND-LIFECYCLE-OQB6
+layer: Strategy
+type: Vision
+status: approved
 version: 1.0.0
 owners: [@techlead]
 last_updated: 2026-03-10
 ---
-
 # RAI AGENT EVOLUTION AND LIFECYCLE
 
 ## 1. Назначение документа

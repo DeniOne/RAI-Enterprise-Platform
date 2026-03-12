@@ -1,4 +1,4 @@
-import { PrismaClient } from '../packages/prisma-client/generated-client';
+import { Prisma, PrismaClient } from '../packages/prisma-client/generated-client';
 
 const prisma = new PrismaClient();
 
@@ -15,22 +15,31 @@ async function main() {
     try {
         for (const table of tables) {
             console.log(`🔹 Enabling RLS for ${table}...`);
+            const tableRef = Prisma.raw(`"${table}"`);
 
             // 1. Enable RLS
-            await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ENABLE ROW LEVEL SECURITY;`);
+            await prisma.$executeRaw(
+                Prisma.sql`ALTER TABLE ${tableRef} ENABLE ROW LEVEL SECURITY;`,
+            );
 
             // 2. Drop existing policy if any
-            await prisma.$executeRawUnsafe(`DROP POLICY IF EXISTS tenant_isolation ON "${table}";`);
+            await prisma.$executeRaw(
+                Prisma.sql`DROP POLICY IF EXISTS tenant_isolation ON ${tableRef};`,
+            );
 
             // 3. Create Policy (Isolation based on app.current_company_id)
-            await prisma.$executeRawUnsafe(`
-        CREATE POLICY tenant_isolation ON "${table}"
-        FOR ALL
-        USING ("companyId" = current_setting('app.current_company_id', true));
-      `);
+            await prisma.$executeRaw(
+                Prisma.sql`
+                    CREATE POLICY tenant_isolation ON ${tableRef}
+                    FOR ALL
+                    USING ("companyId" = current_setting('app.current_company_id', true));
+                `,
+            );
 
             // 4. Force RLS for table owner (important for rai_admin if it's the owner)
-            await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" FORCE ROW LEVEL SECURITY;`);
+            await prisma.$executeRaw(
+                Prisma.sql`ALTER TABLE ${tableRef} FORCE ROW LEVEL SECURITY;`,
+            );
         }
 
         console.log('✅ Level D RLS Policies applied successfully.');

@@ -1,13 +1,12 @@
 ---
-id: DOC-ARC-GEN-055
-type: Standards
+id: DOC-ARC-PRINCIPLES-UI-DESIGN-CANON-H7MO
 layer: Architecture
-status: Draft
+type: Standards
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # UI DESIGN CANON
 
 ## Статус документа

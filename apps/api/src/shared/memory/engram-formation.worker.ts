@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { EngramService } from './engram.service';
 import {
@@ -6,6 +7,11 @@ import {
     EngramCategory,
     EngramType,
 } from './engram.types';
+import { resolveMemoryLifecyclePause } from './memory-lifecycle-control.util';
+
+interface EngramLifecycleRunOptions {
+    companyId?: string;
+}
 
 /**
  * EngramFormationWorker — формирует энграммы из закрытых TechMap + HarvestResult.
@@ -19,18 +25,209 @@ import {
  *   4. Создаёт ассоциации между энграммами одного поля/сезона.
  */
 @Injectable()
-export class EngramFormationWorker {
+export class EngramFormationWorker implements OnApplicationBootstrap {
     private readonly logger = new Logger(EngramFormationWorker.name);
+    private readonly memoryHygieneEnabled =
+        (process.env.MEMORY_HYGIENE_ENABLED || 'true').toLowerCase() !== 'false';
+    private readonly formationBootstrapEnabled =
+        (process.env.MEMORY_ENGRAM_FORMATION_BOOTSTRAP_ENABLED || 'true').toLowerCase() !== 'false';
+    private readonly formationScheduleEnabled =
+        (process.env.MEMORY_ENGRAM_FORMATION_SCHEDULE_ENABLED || 'true').toLowerCase() !== 'false';
+    private readonly pruningBootstrapEnabled =
+        (process.env.MEMORY_ENGRAM_PRUNING_BOOTSTRAP_ENABLED || 'true').toLowerCase() !== 'false';
+    private readonly pruningScheduleEnabled =
+        (process.env.MEMORY_ENGRAM_PRUNING_SCHEDULE_ENABLED || 'true').toLowerCase() !== 'false';
+    private readonly formationBootstrapMaxRuns = Math.max(
+        1,
+        Number(process.env.MEMORY_ENGRAM_FORMATION_BOOTSTRAP_MAX_RUNS || 3),
+    );
+    private readonly pruningBootstrapMaxRuns = Math.max(
+        1,
+        Number(process.env.MEMORY_ENGRAM_PRUNING_BOOTSTRAP_MAX_RUNS || 3),
+    );
+    private readonly formationCron =
+        process.env.MEMORY_ENGRAM_FORMATION_CRON || '30 */4 * * *';
+    private readonly pruningCron =
+        process.env.MEMORY_ENGRAM_PRUNING_CRON || '0 4 * * *';
+    private readonly pruningMinWeight = Number(
+        process.env.MEMORY_ENGRAM_PRUNING_MIN_WEIGHT || 0.15,
+    );
+    private readonly pruningMaxInactiveDays = Number(
+        process.env.MEMORY_ENGRAM_PRUNING_MAX_INACTIVE_DAYS || 45,
+    );
+    private readonly formationPauseUntil =
+        process.env.MEMORY_ENGRAM_FORMATION_PAUSE_UNTIL;
+    private readonly formationPauseReason =
+        process.env.MEMORY_ENGRAM_FORMATION_PAUSE_REASON;
+    private readonly pruningPauseUntil =
+        process.env.MEMORY_ENGRAM_PRUNING_PAUSE_UNTIL;
+    private readonly pruningPauseReason =
+        process.env.MEMORY_ENGRAM_PRUNING_PAUSE_REASON;
 
     constructor(
         private readonly prisma: PrismaService,
         private readonly engramService: EngramService,
     ) { }
 
+    onApplicationBootstrap() {
+        const formationPause = this.getFormationPauseState();
+        const pruningPause = this.getPruningPauseState();
+        this.logger.log(
+            `engram_lifecycle_initialized enabled=${this.memoryHygieneEnabled} formationBootstrapEnabled=${this.formationBootstrapEnabled} formationScheduleEnabled=${this.formationScheduleEnabled} pruningBootstrapEnabled=${this.pruningBootstrapEnabled} pruningScheduleEnabled=${this.pruningScheduleEnabled} formationBootstrapMaxRuns=${this.formationBootstrapMaxRuns} pruningBootstrapMaxRuns=${this.pruningBootstrapMaxRuns} formationCron="${this.formationCron}" pruningCron="${this.pruningCron}" pruningMinWeight=${this.pruningMinWeight} pruningMaxInactiveDays=${this.pruningMaxInactiveDays} formationPaused=${formationPause.paused} pruningPaused=${pruningPause.paused}`,
+        );
+
+        if (!this.memoryHygieneEnabled) {
+            return;
+        }
+
+        if (!this.formationBootstrapEnabled && !this.pruningBootstrapEnabled) {
+            return;
+        }
+
+        void this.runBootstrapLifecycleMaintenance();
+    }
+
+    @Cron(process.env.MEMORY_ENGRAM_FORMATION_CRON || '30 */4 * * *')
+    async handleScheduledFormation(): Promise<void> {
+        if (!this.memoryHygieneEnabled || !this.formationScheduleEnabled) {
+            return;
+        }
+
+        const pause = this.getFormationPauseState();
+        if (pause.paused) {
+            this.logger.log(
+                `memory_engram_formation_paused_skip mode=schedule until=${pause.until} reason=${pause.reason ?? 'n/a'} remainingSeconds=${pause.remainingSeconds}`,
+            );
+            return;
+        }
+
+        await this.processCompletedTechMaps();
+    }
+
+    @Cron(process.env.MEMORY_ENGRAM_PRUNING_CRON || '0 4 * * *')
+    async handleScheduledPruning(): Promise<void> {
+        if (!this.memoryHygieneEnabled || !this.pruningScheduleEnabled) {
+            return;
+        }
+
+        const pause = this.getPruningPauseState();
+        if (pause.paused) {
+            this.logger.log(
+                `memory_engram_pruning_paused_skip mode=schedule until=${pause.until} reason=${pause.reason ?? 'n/a'} remainingSeconds=${pause.remainingSeconds}`,
+            );
+            return;
+        }
+
+        await this.pruneInactiveEngrams();
+    }
+
+    async pruneInactiveEngrams(
+        options: EngramLifecycleRunOptions = {},
+    ): Promise<number> {
+        return this.engramService.pruneEngrams({
+            minWeight: this.pruningMinWeight,
+            maxInactiveDays: this.pruningMaxInactiveDays,
+            companyId: options.companyId,
+        });
+    }
+
+    private async runBootstrapLifecycleMaintenance(): Promise<void> {
+        try {
+            let formationRuns = 0;
+            let formationCreated = 0;
+            let pruningRuns = 0;
+            let pruningDeactivated = 0;
+            const formationPause = this.getFormationPauseState();
+            const pruningPause = this.getPruningPauseState();
+
+            if (this.formationBootstrapEnabled && !formationPause.paused) {
+                const formationSummary = await this.runFormationBootstrapCatchup();
+                formationRuns = formationSummary.runs;
+                formationCreated = formationSummary.formed;
+            } else if (formationPause.paused) {
+                this.logger.log(
+                    `memory_engram_formation_paused_skip mode=bootstrap until=${formationPause.until} reason=${formationPause.reason ?? 'n/a'} remainingSeconds=${formationPause.remainingSeconds}`,
+                );
+            }
+
+            if (this.pruningBootstrapEnabled && !pruningPause.paused) {
+                const pruningSummary = await this.runPruningBootstrapCatchup();
+                pruningRuns = pruningSummary.runs;
+                pruningDeactivated = pruningSummary.pruned;
+            } else if (pruningPause.paused) {
+                this.logger.log(
+                    `memory_engram_pruning_paused_skip mode=bootstrap until=${pruningPause.until} reason=${pruningPause.reason ?? 'n/a'} remainingSeconds=${pruningPause.remainingSeconds}`,
+                );
+            }
+
+            this.logger.log(
+                `engram_lifecycle_bootstrap_complete formationRuns=${formationRuns} formationCreated=${formationCreated} pruningRuns=${pruningRuns} pruningDeactivated=${pruningDeactivated}`,
+            );
+        } catch (err) {
+            this.logger.error(`engram_lifecycle_bootstrap_error error=${String(err)}`);
+        }
+    }
+
+    private getFormationPauseState() {
+        return resolveMemoryLifecyclePause(
+            this.formationPauseUntil,
+            this.formationPauseReason,
+        );
+    }
+
+    private getPruningPauseState() {
+        return resolveMemoryLifecyclePause(
+            this.pruningPauseUntil,
+            this.pruningPauseReason,
+        );
+    }
+
+    private async runFormationBootstrapCatchup(): Promise<{
+        runs: number;
+        formed: number;
+    }> {
+        let runs = 0;
+        let formed = 0;
+
+        while (runs < this.formationBootstrapMaxRuns) {
+            runs += 1;
+            const result = await this.processCompletedTechMaps();
+            formed += result.formed;
+
+            if (result.formed === 0) {
+                break;
+            }
+        }
+
+        return { runs, formed };
+    }
+
+    private async runPruningBootstrapCatchup(): Promise<{
+        runs: number;
+        pruned: number;
+    }> {
+        let runs = 0;
+        let pruned = 0;
+
+        while (runs < this.pruningBootstrapMaxRuns) {
+            runs += 1;
+            const result = await this.pruneInactiveEngrams();
+            pruned += result;
+
+            if (result === 0) {
+                break;
+            }
+        }
+
+        return { runs, pruned };
+    }
+
     /**
      * Основной метод: обрабатывает незакрытые техкарты.
      */
-    async processCompletedTechMaps(): Promise<{ formed: number; skipped: number }> {
+    async processCompletedTechMaps(
+        options: EngramLifecycleRunOptions = {},
+    ): Promise<{ formed: number; skipped: number }> {
         const startedAt = Date.now();
         let formed = 0;
         let skipped = 0;
@@ -40,6 +237,15 @@ export class EngramFormationWorker {
             const techMaps = await this.prisma.techMap.findMany({
                 where: {
                     status: { in: ['ACTIVE' as any, 'ARCHIVED' as any] },
+                    NOT: {
+                        generationMetadata: {
+                            path: ['memoryLifecycle', 'engramFormed'],
+                            equals: true,
+                        },
+                    },
+                    ...(options.companyId
+                        ? { companyId: options.companyId }
+                        : {}),
                 },
                 include: {
                     stages: {
@@ -58,16 +264,27 @@ export class EngramFormationWorker {
                     const engramId = await this.formEngramFromTechMap(techMap);
                     if (engramId) {
                         formed++;
+                        const existingGenerationMetadata =
+                            ((techMap.generationMetadata || {}) as any);
+                        const existingMemoryLifecycle =
+                            ((existingGenerationMetadata.memoryLifecycle || {}) as any);
                         // Помечаем техкарту
-                        await this.prisma.techMap.update({
-                            where: { id: techMap.id },
+                        await this.prisma.techMap.updateMany({
+                            where: {
+                                id: techMap.id,
+                                ...(options.companyId
+                                    ? { companyId: options.companyId }
+                                    : {}),
+                            },
                             data: {
-                                // @ts-ignore
-                                explainability: {
-                                    ...((techMap.explainability || {}) as any),
-                                    engramFormed: true,
-                                    engramId,
-                                    engramFormedAt: new Date().toISOString(),
+                                generationMetadata: {
+                                    ...existingGenerationMetadata,
+                                    memoryLifecycle: {
+                                        ...existingMemoryLifecycle,
+                                        engramFormed: true,
+                                        engramId,
+                                        engramFormedAt: new Date().toISOString(),
+                                    },
                                 },
                             },
                         });
@@ -84,7 +301,7 @@ export class EngramFormationWorker {
 
             const durationMs = Date.now() - startedAt;
             this.logger.log(
-                `engram_formation_complete formed=${formed} skipped=${skipped} ms=${durationMs}`,
+                `engram_formation_complete companyId=${options.companyId ?? 'ALL'} formed=${formed} skipped=${skipped} ms=${durationMs}`,
             );
         } catch (err) {
             this.logger.error(`engram_formation_batch_error error=${String(err)}`);

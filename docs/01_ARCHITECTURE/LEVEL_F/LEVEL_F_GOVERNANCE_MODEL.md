@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-LVLF-013
-type: Specification
+id: DOC-ARC-LEVEL-F-LEVEL-F-GOVERNANCE-MODEL-1V7O
 layer: Architecture
-status: Enforced
+type: Standards
+status: approved
 version: 2.0.0
 owners: [@techlead, @board_of_directors]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: ИНСТИТУЦИОНАЛЬНАЯ МОДЕЛЬ УПРАВЛЕНИЯ (LEVEL_F_GOVERNANCE_MODEL)
 
 ## 0. Манифест Управления (Governance Axiom)

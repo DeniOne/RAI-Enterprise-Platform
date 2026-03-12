@@ -1,13 +1,12 @@
 ---
-id: DOC-ENG-LD-002
-type: Engineering
+id: DOC-ENG-04-ENGINEERING-MODEL-REGISTRY-SCHEMA-ZNYB
 layer: Engineering
-status: Accepted
+type: Database Spec
+status: approved
 version: 3.0.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # MODEL REGISTRY — DATABASE SCHEMA (D7 Perfection)
 ## Схема базы данных для Industrial Registry
 

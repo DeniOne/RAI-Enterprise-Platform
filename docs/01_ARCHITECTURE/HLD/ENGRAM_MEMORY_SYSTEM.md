@@ -1,21 +1,12 @@
 ---
-id: DOC-ARC-GEN-036
-type: HLD
+id: DOC-ARC-HLD-ENGRAM-MEMORY-SYSTEM-1Y2E
 layer: Architecture
-status: Draft
+type: HLD
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-engram-memory
-type: component
-status: review
-owners: [architects]
-aligned_with: [principle-axioms]
----
-
 # HLD: Engram Memory System (Когнитивная память) 🧠
 
 > **Статус:** Проектирование | **Фаза реализации:** Gamma (2026) | **Слой:** Архитектура / HLD

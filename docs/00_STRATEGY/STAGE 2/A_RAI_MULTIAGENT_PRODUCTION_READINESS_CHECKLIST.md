@@ -1,3 +1,10 @@
+---
+id: DOC-STR-STAGE-2-A-RAI-MULTIAGENT-PRODUCTION-READIN-1E13
+layer: Strategy
+type: Roadmap
+status: draft
+version: 0.1.0
+---
 # A_RAI — Multi-Agent Production Readiness Checklist
 
 Дата: 2026-03-05  

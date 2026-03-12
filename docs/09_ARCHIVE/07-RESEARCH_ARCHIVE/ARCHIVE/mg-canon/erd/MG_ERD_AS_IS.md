@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-168
-type: Legacy
+id: DOC-ARV-ERD-MG-ERD-AS-IS-1B5B
 layer: Archive
-status: Draft
+type: Research
+status: archived
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # MatrixGin ERD (AS-IS)
 
 > [!NOTE]

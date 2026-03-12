@@ -1,22 +1,12 @@
 ---
-id: DOC-STR-GEN-009
-type: Vision
+id: DOC-STR-00-STRATEGY-VISION-SCOPE-YBFT
 layer: Strategy
-status: Draft
+type: Vision
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿---
-id: principle-vision
-type: principle
-status: approved
-owners: [architects, business-owners]
-measured_by: [metric-total-roi, metric-techmap-completion]
-tags: [vision-aligned]
----
-
 # Vision & Scope: RAI Enterprise Platform
 
 > **Статус:** Живой документ | **Версия:** 2.0 (Enterprise Definition) | **Обновлено:** 2026.02.03

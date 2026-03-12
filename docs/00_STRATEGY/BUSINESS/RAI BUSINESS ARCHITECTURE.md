@@ -1,4 +1,11 @@
-﻿# Версия 1.0 — Целостная модель бизнеса и системы
+---
+id: DOC-STR-BUSINESS-RAI-BUSINESS-ARCHITECTURE-J2W5
+layer: Strategy
+type: Vision
+status: draft
+version: 0.1.0
+---
+# Версия 1.0 — Целостная модель бизнеса и системы
 
 ## ЧАСТЬ I — СТРАТЕГИЧЕСКАЯ МОДЕЛЬ
 

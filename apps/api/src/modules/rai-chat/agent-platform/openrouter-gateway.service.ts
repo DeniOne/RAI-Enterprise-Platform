@@ -1,6 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { AgentRuntimeRole } from "../agent-registry.service";
 import { PromptMessage } from "./agent-prompt-assembly.service";
+import { SecretsService } from "../../../shared/config/secrets.service";
 
 export interface LlmGenerationRequest {
   traceId: string;
@@ -30,25 +32,31 @@ export interface LlmGenerationResult {
 export class OpenRouterGatewayService {
   private readonly logger = new Logger(OpenRouterGatewayService.name);
 
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly secretsService: SecretsService,
+  ) {}
+
   async generate(input: LlmGenerationRequest): Promise<LlmGenerationResult> {
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const apiKey = this.secretsService.getOptionalSecret("OPENROUTER_API_KEY");
     if (!apiKey) {
       throw new Error("OPENROUTER_API_KEY_MISSING");
     }
 
     const timeout = AbortSignal.timeout(input.timeoutMs);
     const response = await fetch(
-      process.env.OPENROUTER_API_URL ?? "https://openrouter.ai/api/v1/chat/completions",
+      this.configService.get<string>("OPENROUTER_API_URL") ??
+        "https://openrouter.ai/api/v1/chat/completions",
       {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
-          ...(process.env.OPENROUTER_HTTP_REFERER
-            ? { "HTTP-Referer": process.env.OPENROUTER_HTTP_REFERER }
+          ...(this.configService.get<string>("OPENROUTER_HTTP_REFERER")
+            ? { "HTTP-Referer": this.configService.get<string>("OPENROUTER_HTTP_REFERER") }
             : {}),
-          ...(process.env.OPENROUTER_APP_TITLE
-            ? { "X-Title": process.env.OPENROUTER_APP_TITLE }
+          ...(this.configService.get<string>("OPENROUTER_APP_TITLE")
+            ? { "X-Title": this.configService.get<string>("OPENROUTER_APP_TITLE") }
             : {}),
         },
         body: JSON.stringify({

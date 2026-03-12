@@ -1,13 +1,12 @@
 ---
-id: DOC-ENG-LVLF-003
-type: Architecture Specification
-layer: Engineering (Certification)
-status: Enforced
+id: DOC-ENG-LEVEL-F-F-CERT-ENGINE-ARCH-1QWH
+layer: Engineering
+type: Service Spec
+status: approved
 version: 2.0.0
 owners: [@techlead, @ciso]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: АРХИТЕКТУРА ДВИЖКА СЕРТИФИКАЦИИ (F_CERT_ENGINE_ARCH)
 
 ## 0. Аксиома Подписи (Cryptographic Axiom)

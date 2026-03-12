@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-INV-002
-type: Specification
-layer: Governance
-status: Approved
+id: DOC-ARC-LEVEL-E-LEVEL-E-INVARIANTS-EXTENSION-HXAX
+layer: Architecture
+type: Standards
+status: approved
 version: 1.3.0
 owners: [@techlead]
 last_updated: 2026-02-19
 ---
-
 # LEVEL E: INVARIANTS EXTENSION (REGENERATIVE CONSTITUTION)
 
 ## 1. Введение

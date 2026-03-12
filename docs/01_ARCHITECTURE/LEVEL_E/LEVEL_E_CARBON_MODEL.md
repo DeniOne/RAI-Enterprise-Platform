@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-CARB-001
-type: Specification
-layer: Domain Core
-status: Draft
+id: DOC-ARC-LEVEL-E-LEVEL-E-CARBON-MODEL-A74Y
+layer: Architecture
+type: HLD
+status: draft
 version: 1.0.0
 owners: [@techlead]
 last_updated: 2026-02-19
 ---
-
 # LEVEL E: CARBON ACCOUNTING MODEL
 
 ## 1. Введение

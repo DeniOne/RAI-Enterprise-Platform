@@ -110,3 +110,124 @@ groups:
           summary: "Outbox oldest pending age is high"
           description: "Oldest pending outbox message age exceeds 5 minutes."
           runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#outbox-oldest-pending-age-high"
+
+      - alert: RAIMemoryOldestUnconsolidatedAgeHigh
+        expr: memory_oldest_unconsolidated_age_seconds > 21600
+        for: 15m
+        labels:
+          severity: warning
+          domain: memory
+        annotations:
+          summary: "Memory consolidation is lagging"
+          description: "Oldest unconsolidated memory interaction age exceeds 6 hours."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#memory-oldest-unconsolidated-age-high"
+
+      - alert: RAIMemoryPruningBacklogHigh
+        expr: memory_prunable_consolidated_interactions > 1000
+        for: 15m
+        labels:
+          severity: warning
+          domain: memory
+        annotations:
+          summary: "Memory pruning backlog is high"
+          description: "Consolidated interactions older than retention exceed threshold."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#memory-pruning-backlog-high"
+
+      - alert: RAIMemoryEngramFormationStale
+        expr: memory_latest_engram_formation_age_seconds > 604800
+        for: 30m
+        labels:
+          severity: warning
+          domain: memory
+        annotations:
+          summary: "Engram formation freshness is stale"
+          description: "No recent engram formation observed within the expected freshness window."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#memory-engram-formation-stale"
+
+      - alert: RAIMemoryEngramFormationCandidatesStale
+        expr: memory_engram_formation_candidates > 0 and memory_oldest_engram_formation_candidate_age_seconds > 604800 and memory_engram_formation_paused == 0
+        for: 30m
+        labels:
+          severity: warning
+          domain: memory
+        annotations:
+          summary: "Engram formation candidates are stale"
+          description: "TechMaps awaiting engram formation exceeded the expected age budget while the formation path is not paused."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#memory-engram-formation-candidates-stale"
+
+      - alert: RAIMemoryEngramFormationBudgetBurnHigh
+        expr: memory_engram_formation_budget_usage_ratio > 0.8 and memory_engram_formation_budget_usage_ratio <= 1 and memory_engram_formation_paused == 0
+        for: 30m
+        labels:
+          severity: warning
+          domain: memory
+        annotations:
+          summary: "Engram formation freshness budget is burning fast"
+          description: "Engram formation consumed more than 80% of its freshness budget and is approaching a stale breach."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#memory-engram-formation-budget-burn-high"
+
+      - alert: RAIMemoryEngramFormationBurnRateMultiWindow
+        expr: memory_engram_formation_budget_usage_ratio > 0.6 and delta(memory_engram_formation_budget_usage_ratio[6h]) > 0.03 and delta(memory_engram_formation_budget_usage_ratio[24h]) > 0.12 and memory_engram_formation_paused == 0
+        for: 30m
+        labels:
+          severity: high
+          domain: memory
+        annotations:
+          summary: "Engram formation budget burn is sustained across short and long windows"
+          description: "Engram formation budget usage keeps rising across both 6h and 24h windows, indicating sustained freshness degradation."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#memory-engram-formation-burn-rate-multi-window"
+
+      - alert: RAIMemoryPrunableActiveEngramsHigh
+        expr: memory_prunable_active_engrams > 500
+        for: 30m
+        labels:
+          severity: warning
+          domain: memory
+        annotations:
+          summary: "Too many active engrams are prune candidates"
+          description: "Active engrams matching pruning criteria exceeded the warning threshold."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#memory-prunable-active-engrams-high"
+
+      - alert: RAIMemoryEngramPruningBudgetBurnHigh
+        expr: memory_engram_pruning_budget_usage_ratio > 0.8 and memory_engram_pruning_budget_usage_ratio <= 1 and memory_engram_pruning_paused == 0
+        for: 30m
+        labels:
+          severity: warning
+          domain: memory
+        annotations:
+          summary: "Engram pruning budget is burning fast"
+          description: "Active engram pruning consumed more than 80% of its candidate budget and is approaching a threshold breach."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#memory-engram-pruning-budget-burn-high"
+
+      - alert: RAIMemoryEngramPruningBurnRateMultiWindow
+        expr: memory_engram_pruning_budget_usage_ratio > 0.6 and delta(memory_engram_pruning_budget_usage_ratio[6h]) > 0.1 and delta(memory_engram_pruning_budget_usage_ratio[24h]) > 0.2 and memory_engram_pruning_paused == 0
+        for: 30m
+        labels:
+          severity: high
+          domain: memory
+        annotations:
+          summary: "Engram pruning budget burn is sustained across short and long windows"
+          description: "Engram pruning budget usage keeps rising across both 6h and 24h windows, indicating sustained backlog growth."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#memory-engram-pruning-burn-rate-multi-window"
+
+      - alert: RAIMemoryEngramPruningStalled
+        expr: memory_prunable_active_engrams > 0 and increase(invariant_memory_engram_pruned_total[24h]) == 0
+        for: 30m
+        labels:
+          severity: warning
+          domain: memory
+        annotations:
+          summary: "Engram pruning throughput is stalled"
+          description: "Prunable active engrams exist, but no pruning throughput was recorded in the last 24 hours."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#memory-engram-pruning-stalled"
+
+      - alert: RAIMemoryAutoRemediationFailures
+        expr: memory_auto_remediation_enabled == 1 and increase(invariant_memory_auto_remediation_failures_total[1h]) > 0
+        for: 15m
+        labels:
+          severity: warning
+          domain: memory
+        annotations:
+          summary: "Automatic memory remediation recorded failures"
+          description: "Automatic memory remediation attempts failed in the last hour. Review cooldowns, playbooks and worker logs."
+          runbook: "docs/INVARIANT_ALERT_RUNBOOK_RU.md#memory-auto-remediation-failures"

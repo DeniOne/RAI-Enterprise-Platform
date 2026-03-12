@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-TECHMAP-GRAND-SYNTHESIS-1PCP
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 # ГРАНД-СИНТЕЗ: Технологическая Карта как Вычислительное Ядро FMS
 
 > **Документ**: Технический синтез 6 независимых AI-исследований

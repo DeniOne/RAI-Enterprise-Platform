@@ -1,13 +1,12 @@
 ---
-id: DOC-INS-AGT-PROFILE-000
+id: DOC-INS-AGENT-PROFILES-INDEX-2REV
+layer: Instructions
 type: InstructionIndex
-layer: Agents
-status: Active
+status: approved
 version: 1.1.0
 owners: [@techlead]
 last_updated: 2026-03-10
 ---
-
 # ПРОФИЛИ АГЕНТОВ — УКАЗАТЕЛЬ
 
 ## 1. Назначение

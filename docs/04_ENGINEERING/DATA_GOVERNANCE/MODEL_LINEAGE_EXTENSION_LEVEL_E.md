@@ -1,3 +1,10 @@
+---
+id: DOC-ENG-DATA-GOVERNANCE-MODEL-LINEAGE-EXTENSION-LE-1158
+layer: Engineering
+type: Database Spec
+status: draft
+version: 0.1.0
+---
 # LEVEL E: Model Lineage & Governance Traceability
 
 ## 1. Введение

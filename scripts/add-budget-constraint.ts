@@ -6,7 +6,7 @@ async function main() {
 
     try {
         // Constraint 1: totalActualAmount >= 0
-        await prisma.$executeRawUnsafe(`
+        await prisma.$executeRaw`
       DO $$
       BEGIN
         IF NOT EXISTS (
@@ -21,10 +21,10 @@ async function main() {
         END IF;
       END
       $$;
-    `);
+    `;
 
         // Constraint 2: totalPlannedAmount >= 0
-        await prisma.$executeRawUnsafe(`
+        await prisma.$executeRaw`
       DO $$
       BEGIN
         IF NOT EXISTS (
@@ -39,7 +39,7 @@ async function main() {
         END IF;
       END
       $$;
-    `);
+    `;
 
         console.log('Constraints check completed.');
     } catch (e) {

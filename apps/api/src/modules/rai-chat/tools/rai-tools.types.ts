@@ -898,9 +898,27 @@ export interface RaiToolCall<TName extends RaiToolName = RaiToolName> {
   payload: RaiToolPayloadMap[TName];
 }
 
-export interface RaiSuggestedAction {
+export interface RaiToolSuggestedAction {
   kind: "tool";
   toolName: RaiToolName;
   title: string;
   payload: RaiToolPayloadMap[RaiToolName];
 }
+
+export interface RaiRouteSuggestedAction {
+  kind: "route";
+  title: string;
+  href: string;
+}
+
+export interface RaiExpertReviewSuggestedAction {
+  kind: "expert_review";
+  title: string;
+  expertRole: "chief_agronomist";
+  payload: Record<string, unknown>;
+}
+
+export type RaiSuggestedAction =
+  | RaiToolSuggestedAction
+  | RaiRouteSuggestedAction
+  | RaiExpertReviewSuggestedAction;

@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-176
-type: Legacy
-layer: Archive
-status: Draft
+id: DOC-STR-CONSULTING-CONSULTING-IA-1AUK
+layer: Strategy
+type: Vision
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 Consulting Information Architecture (IA)
 RAI Enterprise Platform
 

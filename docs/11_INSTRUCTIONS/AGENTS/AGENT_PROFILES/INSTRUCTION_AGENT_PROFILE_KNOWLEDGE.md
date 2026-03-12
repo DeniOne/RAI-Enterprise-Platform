@@ -1,13 +1,12 @@
 ---
-id: DOC-INS-AGT-PROFILE-003
+id: DOC-INS-AGENT-PROFILES-INSTRUCTION-AGENT-PROFILE-K-XLY8
+layer: Instructions
 type: Instruction
-layer: Agents
-status: Active
+status: approved
 version: 1.1.0
 owners: [@techlead]
 last_updated: 2026-03-10
 ---
-
 # ИНСТРУКЦИЯ — ПРОФИЛЬ АГЕНТА KNOWLEDGE
 
 ## 1. Назначение

@@ -1,17 +1,27 @@
 import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { OutboxStatus } from "@rai/prisma-client";
+import { OutboxStatus, Prisma } from "@rai/prisma-client";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { InvariantMetrics } from "../invariants/invariant-metrics";
-import { ConsumerIdempotencyService } from "./consumer-idempotency.service";
 import { OutboxBrokerPublisher } from "./outbox-broker.publisher";
 import { isEventVersionAllowed } from "./event-contracts";
+
+type DeliveryMode = "local_only" | "broker_only" | "dual";
 
 @Injectable()
 export class OutboxRelay implements OnApplicationBootstrap {
   private readonly logger = new Logger(OutboxRelay.name);
   private isProcessing = false;
+  private readonly relayEnabled =
+    (process.env.OUTBOX_RELAY_ENABLED || "true").toLowerCase() !== "false";
+  private readonly scheduleEnabled =
+    (process.env.OUTBOX_RELAY_SCHEDULE_ENABLED || "true").toLowerCase() !==
+    "false";
+  private readonly bootstrapDrainEnabled =
+    (process.env.OUTBOX_RELAY_BOOTSTRAP_DRAIN_ENABLED || "true")
+      .toLowerCase() !== "false";
+  private readonly batchSize = Number(process.env.OUTBOX_RELAY_BATCH_SIZE || 50);
   private readonly maxRetries = Number(process.env.OUTBOX_MAX_RETRIES || 5);
   private readonly retryBaseDelayMs = Number(
     process.env.OUTBOX_RETRY_BASE_DELAY_MS || 1000,
@@ -19,36 +29,59 @@ export class OutboxRelay implements OnApplicationBootstrap {
   private readonly orderingDeferMs = Number(
     process.env.OUTBOX_ORDERING_DEFER_MS || 1000,
   );
-  private readonly deliveryMode = (
-    process.env.OUTBOX_DELIVERY_MODE || "local_only"
-  ).toLowerCase();
+  private readonly processingStaleAfterMs = Number(
+    process.env.OUTBOX_PROCESSING_STALE_AFTER_MS || 60000,
+  );
+  private readonly allowLocalOnlyInProduction =
+    (process.env.OUTBOX_ALLOW_LOCAL_ONLY_IN_PRODUCTION || "false")
+      .toLowerCase() === "true";
+  private readonly deliveryMode = this.resolveDeliveryMode();
   private readonly enforceEventContract =
     (process.env.OUTBOX_EVENT_CONTRACT_ENFORCE || "true").toLowerCase() !==
     "false";
+  private readonly nodeEnv = (process.env.NODE_ENV || "development")
+    .toLowerCase()
+    .trim();
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
-    private readonly consumerIdempotency: ConsumerIdempotencyService,
     private readonly brokerPublisher: OutboxBrokerPublisher,
   ) {}
 
   onApplicationBootstrap() {
+    this.validateRuntimeConfig();
     this.logger.log(
-      `Outbox Relay initialized. deliveryMode=${this.deliveryMode}, broker=${this.brokerPublisher.describeConfig()}`,
+      `Outbox Relay initialized. enabled=${this.relayEnabled}, scheduleEnabled=${this.scheduleEnabled}, bootstrapDrainEnabled=${this.bootstrapDrainEnabled}, batchSize=${this.batchSize}, processingStaleAfterMs=${this.processingStaleAfterMs}, deliveryMode=${this.deliveryMode}, broker=${this.brokerPublisher.describeConfig()}`,
     );
+
+    if (!this.relayEnabled || !this.bootstrapDrainEnabled) {
+      return;
+    }
+
+    void this.processOutbox();
   }
 
-  // @Cron(CronExpression.EVERY_SECOND) // Aggressive polling for Phase 1
+  @Cron(CronExpression.EVERY_SECOND)
+  async handleScheduledRelay() {
+    if (!this.relayEnabled || !this.scheduleEnabled) {
+      return;
+    }
+    await this.processOutbox();
+  }
+
   async processOutbox() {
+    if (!this.relayEnabled) {
+      return;
+    }
     if (this.isProcessing) return;
     this.isProcessing = true;
 
     try {
-      const messages = await this.claimPendingMessages(50);
+      await this.recoverStaleProcessingMessages();
+      const messages = await this.claimPendingMessages(this.batchSize);
 
       if (messages.length === 0) {
-        this.isProcessing = false;
         return;
       }
 
@@ -56,51 +89,6 @@ export class OutboxRelay implements OnApplicationBootstrap {
 
       for (const msg of messages) {
         try {
-          await (this.prisma as any).outboxMessage.update({
-            where: { id: msg.id },
-            data: {
-              attempts: { increment: 1 },
-              lastAttemptAt: new Date(),
-              nextRetryAt: null,
-            },
-          });
-
-          if (await this.isDuplicateProcessedEvent(msg)) {
-            InvariantMetrics.increment("event_duplicates_prevented_total");
-            await this.prisma.outboxMessage.update({
-              where: { id: msg.id },
-              data: {
-                status: OutboxStatus.PROCESSED,
-                error: null,
-                nextRetryAt: null,
-                deadLetterAt: null,
-              },
-            });
-            continue;
-          }
-
-          const companyId = this.extractCompanyId(msg);
-          const reserved = await this.consumerIdempotency.reserve({
-            consumer: "local-event-emitter",
-            eventId: msg.id,
-            eventType: msg.type,
-            aggregateId: msg.aggregateId,
-            companyId,
-          });
-          if (!reserved) {
-            InvariantMetrics.increment("event_duplicates_prevented_total");
-            await this.prisma.outboxMessage.update({
-              where: { id: msg.id },
-              data: {
-                status: OutboxStatus.PROCESSED,
-                error: null,
-                nextRetryAt: null,
-                deadLetterAt: null,
-              },
-            });
-            continue;
-          }
-
           if (await this.hasEarlierInFlightForStream(msg)) {
             const nextRetryAt = new Date(Date.now() + this.orderingDeferMs);
             this.logger.warn(
@@ -147,30 +135,9 @@ export class OutboxRelay implements OnApplicationBootstrap {
             this.logger.warn(err);
           }
 
-          // Already marked as PROCESSING by the raw query above
-          // await this.prisma.outboxMessage.update({ ... });
-
-          if (this.shouldDeliverLocal()) {
-            this.logger.debug(
-              `Relaying event ${msg.type} to local EventEmitter`,
-            );
-            this.eventEmitter.emit(msg.type, msg.payload);
-          }
-
-          if (this.shouldDeliverBroker()) {
-            await this.publishToBroker(msg);
-          }
-
-          // Mark as PROCESSED
-          await this.prisma.outboxMessage.update({
-            where: { id: msg.id },
-            data: {
-              status: OutboxStatus.PROCESSED,
-              error: null,
-              nextRetryAt: null,
-              deadLetterAt: null,
-            },
-          });
+          await this.deliverBrokerIfNeeded(msg);
+          await this.deliverLocalIfNeeded(msg);
+          await this.finalizeProcessedMessage(msg);
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : "Unknown error";
@@ -217,6 +184,74 @@ export class OutboxRelay implements OnApplicationBootstrap {
     }
   }
 
+  private validateRuntimeConfig(): void {
+    if (!this.relayEnabled) {
+      return;
+    }
+
+    if (
+      this.nodeEnv === "production" &&
+      this.deliveryMode === "local_only" &&
+      !this.allowLocalOnlyInProduction
+    ) {
+      throw new Error(
+        "OUTBOX_DELIVERY_MODE=local_only is forbidden in production without OUTBOX_ALLOW_LOCAL_ONLY_IN_PRODUCTION=true",
+      );
+    }
+
+    if (this.shouldDeliverBroker() && !this.brokerPublisher.isConfigured()) {
+      throw new Error(
+        `OUTBOX_DELIVERY_MODE=${this.deliveryMode} requires ${this.brokerPublisher.requiredConfigHint()}`,
+      );
+    }
+  }
+
+  private resolveDeliveryMode(): DeliveryMode {
+    const configured = (process.env.OUTBOX_DELIVERY_MODE || "")
+      .toLowerCase()
+      .trim();
+
+    if (
+      configured === "local_only" ||
+      configured === "broker_only" ||
+      configured === "dual"
+    ) {
+      return configured;
+    }
+
+    return (process.env.NODE_ENV || "development").toLowerCase() ===
+      "production"
+      ? "dual"
+      : "local_only";
+  }
+
+  private async recoverStaleProcessingMessages(): Promise<void> {
+    const cutoff = new Date(Date.now() - this.processingStaleAfterMs);
+    const result = await (this.prisma as any).outboxMessage.updateMany({
+      where: {
+        status: OutboxStatus.PROCESSING,
+        OR: [
+          { lastAttemptAt: { lt: cutoff } },
+          {
+            lastAttemptAt: null,
+            updatedAt: { lt: cutoff },
+          },
+        ],
+      },
+      data: {
+        status: OutboxStatus.PENDING,
+        nextRetryAt: null,
+        error: `Recovered stale PROCESSING lease after ${this.processingStaleAfterMs}ms`,
+      },
+    });
+
+    if (result.count > 0) {
+      this.logger.warn(
+        `Recovered ${result.count} stale outbox messages from PROCESSING back to PENDING`,
+      );
+    }
+  }
+
   private async publishToBroker(msg: any) {
     await this.brokerPublisher.publish({
       id: msg.id,
@@ -229,6 +264,70 @@ export class OutboxRelay implements OnApplicationBootstrap {
     this.logger.log(
       `[Broker] Published: ${msg.type} (Agg: ${msg.aggregateId || "N/A"})`,
     );
+  }
+
+  private async deliverBrokerIfNeeded(msg: any): Promise<void> {
+    if (!this.shouldDeliverBroker() || msg.brokerDeliveredAt) {
+      return;
+    }
+
+    await this.publishToBroker(msg);
+    const deliveredAt = new Date();
+    await this.prisma.outboxMessage.update({
+      where: { id: msg.id },
+      data: {
+        brokerDeliveredAt: deliveredAt,
+        error: null,
+      },
+    });
+    msg.brokerDeliveredAt = deliveredAt;
+  }
+
+  private async deliverLocalIfNeeded(msg: any): Promise<void> {
+    if (!this.shouldDeliverLocal() || msg.localDeliveredAt) {
+      return;
+    }
+
+    this.logger.debug(`Relaying event ${msg.type} to local EventEmitter`);
+    await this.emitLocal(msg.type, msg.payload);
+
+    const deliveredAt = new Date();
+    await this.prisma.outboxMessage.update({
+      where: { id: msg.id },
+      data: {
+        localDeliveredAt: deliveredAt,
+        error: null,
+      },
+    });
+    msg.localDeliveredAt = deliveredAt;
+  }
+
+  private async emitLocal(type: string, payload: unknown): Promise<void> {
+    const emitter = this.eventEmitter as any;
+    if (typeof emitter.emitAsync === "function") {
+      await emitter.emitAsync(type, payload);
+      return;
+    }
+    emitter.emit(type, payload);
+  }
+
+  private async finalizeProcessedMessage(msg: any): Promise<void> {
+    if (this.shouldDeliverBroker() && !msg.brokerDeliveredAt) {
+      return;
+    }
+    if (this.shouldDeliverLocal() && !msg.localDeliveredAt) {
+      return;
+    }
+
+    await this.prisma.outboxMessage.update({
+      where: { id: msg.id },
+      data: {
+        status: OutboxStatus.PROCESSED,
+        error: null,
+        nextRetryAt: null,
+        deadLetterAt: null,
+      },
+    });
   }
 
   private hasTenantContract(msg: any): boolean {
@@ -264,57 +363,37 @@ export class OutboxRelay implements OnApplicationBootstrap {
     return null;
   }
 
-  private async isDuplicateProcessedEvent(msg: any): Promise<boolean> {
-    // Events without aggregateId cannot be deduplicated deterministically.
-    if (!msg?.aggregateId || typeof msg.aggregateId !== "string") {
-      return false;
-    }
-
-    const duplicate = await this.prisma.outboxMessage.findFirst({
-      where: {
-        id: { not: msg.id },
-        status: OutboxStatus.PROCESSED,
-        type: msg.type,
-        aggregateId: msg.aggregateId,
-      },
-      select: { id: true },
-    });
-
-    return Boolean(duplicate);
-  }
-
   private async claimPendingMessages(limit: number) {
     const now = new Date();
     return this.prisma.$transaction(async (tx) => {
-      const candidates = await (tx as any).outboxMessage.findMany({
-        where: {
-          status: "PENDING", // Force string literal to avoid enum casting issues
-          OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
-        },
-        orderBy: { createdAt: "asc" },
-        take: limit,
-      });
-
-      if (candidates.length === 0) {
-        return [];
-      }
-
-      const ids = candidates.map((m) => m.id);
-      await tx.outboxMessage.updateMany({
-        where: {
-          id: { in: ids },
-          status: OutboxStatus.PENDING,
-        },
-        data: { status: OutboxStatus.PROCESSING },
-      });
-
-      return tx.outboxMessage.findMany({
-        where: {
-          id: { in: ids },
-          status: OutboxStatus.PROCESSING,
-        },
-        orderBy: { createdAt: "asc" },
-      });
+      return (tx as any).$queryRaw(
+        Prisma.sql`
+          WITH claimed AS (
+            SELECT id, "createdAt"
+            FROM outbox_messages
+            WHERE status = 'PENDING'
+              AND ("nextRetryAt" IS NULL OR "nextRetryAt" <= ${now})
+            ORDER BY "createdAt" ASC
+            FOR UPDATE SKIP LOCKED
+            LIMIT ${limit}
+          ),
+          updated AS (
+            UPDATE outbox_messages AS target
+            SET status = 'PROCESSING',
+                attempts = target.attempts + 1,
+                "lastAttemptAt" = NOW(),
+                "nextRetryAt" = NULL,
+                "updatedAt" = NOW()
+            FROM claimed
+            WHERE target.id = claimed.id
+            RETURNING target.*
+          )
+          SELECT updated.*
+          FROM updated
+          INNER JOIN claimed ON claimed.id = updated.id
+          ORDER BY claimed."createdAt" ASC
+        `,
+      );
     });
   }
 

@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-09-ARCHIVE-FRONTEND-CONTROL-PLANE-STRATEGY-T8Z6
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 # RAI Enterprise — Frontend Control Plane Strategy
 
 > [!WARNING]

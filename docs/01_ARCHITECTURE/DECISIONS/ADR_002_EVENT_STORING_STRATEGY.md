@@ -1,21 +1,12 @@
 ---
-id: DOC-ARC-GEN-027
-type: HLD
+id: DOC-ARC-DECISIONS-ADR-002-EVENT-STORING-STRATEGY-1PZR
 layer: Architecture
-status: Draft
+type: ADR
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: decision-adr-002
-type: decision
-status: approved
-owners: [architects]
-aligned_with: [principle-axioms]
----
-
 # ADR 002: Стратегия хранения событий — Hybrid CRUD + Audit Log
 
 ## Статус

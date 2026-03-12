@@ -1,13 +1,12 @@
 ---
-id: DOC-STR-UI-001
-type: Standard
-layer: Strategy
-status: Active
+id: DOC-ARV-09-ARCHIVE-MASTER-DESIGN-SYSTEM-V1-0-LEGAC-1SAQ
+layer: Archive
+type: Legacy
+status: archived
 version: 1.0.2
 owners: [@techlead]
 last_updated: 2026-02-20
 ---
-
 # Мастер-стандарт Дизайн-системы (Institutional Grade 10/10+)
 ## RAI-DS-MASTER-v1.0.2
 

@@ -1,13 +1,12 @@
 ---
-id: DOC-STR-FO-004
-type: User Flows
+id: DOC-STR-FRONT-OFFICE-FRONT-OFFICE-USER-FLOWS-2P3K
 layer: Strategy
-status: Draft
+type: Vision
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-03-09
 ---
-
 # FRONT_OFFICE_USER_FLOWS
 
 ## 1. Назначение документа

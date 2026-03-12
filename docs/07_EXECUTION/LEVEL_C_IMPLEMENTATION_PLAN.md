@@ -1,13 +1,12 @@
 ---
-id: DOC-EXEC-LC-001
-type: Implementation Plan
+id: DOC-EXE-07-EXECUTION-LEVEL-C-IMPLEMENTATION-PLAN-I3AF
 layer: Execution
-status: VERIFIED ✅
+type: Phase Plan
+status: approved
 version: 2.0.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # LEVEL C IMPLEMENTATION PLAN
 ## Поэтапный план реализации Contradiction-Resilient Intelligence
 

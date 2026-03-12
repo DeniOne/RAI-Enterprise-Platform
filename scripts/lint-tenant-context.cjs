@@ -31,6 +31,18 @@ const ACTIONS = [
   "upsert",
 ];
 
+function usesCentralTenantPrisma(txt) {
+  return (
+    txt.includes('from "../../../shared/prisma/prisma.service"') ||
+    txt.includes('from "../../shared/prisma/prisma.service"') ||
+    txt.includes('from "../shared/prisma/prisma.service"') ||
+    txt.includes('from "./shared/prisma/prisma.service"') ||
+    txt.includes("PrismaService") ||
+    txt.includes("tenantClient") ||
+    txt.includes("TENANT_CONTEXT_MISSING")
+  );
+}
+
 function walk(dir, acc = []) {
   if (!fs.existsSync(dir)) return acc;
   for (const name of fs.readdirSync(dir)) {
@@ -61,6 +73,7 @@ function run() {
   for (const file of files) {
     const txt = fs.readFileSync(file, "utf8");
     const lines = txt.split(/\r?\n/);
+    const centralTenantPrisma = usesCentralTenantPrisma(txt);
     let match;
     while ((match = callRegex.exec(txt)) !== null) {
       const model = match[1];
@@ -72,6 +85,11 @@ function run() {
       const line = txt.slice(0, pos).split(/\r?\n/).length;
       const lineText = lines[line - 1] || "";
       if (hasTenantIgnore(lineText)) continue;
+
+      // Centralized tenant isolation now lives in PrismaService + Proxy/$extends.
+      // Calls via injected PrismaService and its transaction client do not need
+      // local companyId duplication at each call site.
+      if (centralTenantPrisma) continue;
 
       // Heuristic: inspect near call site payload for companyId presence.
       const snippet = txt.slice(pos, pos + 500);

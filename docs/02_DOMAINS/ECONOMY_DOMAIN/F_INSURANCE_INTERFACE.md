@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-LVLF-005
-type: Specification
-layer: Architecture
-status: Proposed
+id: DOC-DOM-ECONOMY-DOMAIN-F-INSURANCE-INTERFACE-OLLO
+layer: Domain
+type: Domain Spec
+status: approved
 version: 1.1.1
 owners: [@techlead]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: ИНСТИТУЦИОНАЛЬНЫЙ СТРАХОВОЙ ИНТЕРФЕЙС (F_INSURANCE_INTERFACE)
 
 ## 0. Статус Документа

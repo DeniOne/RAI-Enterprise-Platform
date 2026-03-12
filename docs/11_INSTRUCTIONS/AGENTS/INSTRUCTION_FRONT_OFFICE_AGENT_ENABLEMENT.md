@@ -1,13 +1,12 @@
 ---
-id: DOC-INS-AGT-009
+id: DOC-INS-AGENTS-INSTRUCTION-FRONT-OFFICE-AGENT-ENAB-1NZ4
+layer: Instructions
 type: Instruction
-layer: Agents
-status: Active
+status: approved
 version: 1.1.0
 owners: [@techlead]
 last_updated: 2026-03-10
 ---
-
 # ИНСТРУКЦИЯ — ВКЛЮЧЕНИЕ FRONT_OFFICE_AGENT
 
 ## 1. Назначение

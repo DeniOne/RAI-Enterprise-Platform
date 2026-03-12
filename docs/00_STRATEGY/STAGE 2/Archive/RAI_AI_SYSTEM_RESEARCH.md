@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-ARCHIVE-RAI-AI-SYSTEM-RESEARCH-1XEP
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 # RAI AI System — Исследование архитектуры платформы
 
 > **Версия:** 2.0 | **Дата:** 2026-03-04  

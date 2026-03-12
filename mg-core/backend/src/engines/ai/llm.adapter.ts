@@ -14,6 +14,7 @@
 
 import OpenAI from 'openai';
 import { ILLMAdapter } from '../../types/core/ai.types';
+import { NvidiaLLMAdapter } from './nvidia-llm.adapter';
 
 // =============================================================================
 // LLM ADAPTER ERROR
@@ -105,5 +106,10 @@ export class OpenAILLMAdapter implements ILLMAdapter {
  * По умолчанию использует OpenAI.
  */
 export function createLLMAdapter(apiKey?: string, model?: string): ILLMAdapter {
+    if (model?.toLowerCase().includes('qwen') || model?.toLowerCase().includes('nvidia')) {
+        return new NvidiaLLMAdapter(apiKey, model);
+    }
     return new OpenAILLMAdapter(apiKey, model);
 }
+
+export { NvidiaLLMAdapter };

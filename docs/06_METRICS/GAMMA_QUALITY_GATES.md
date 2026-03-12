@@ -1,21 +1,12 @@
 ---
-id: DOC-MET-GEN-131
-type: KPI Spec
+id: DOC-MET-06-METRICS-GAMMA-QUALITY-GATES-LZDZ
 layer: Metrics
-status: Draft
+type: KPI Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿---
-id: metric-gamma-quality-gates
-type: metric
-status: review
-owners: [techleads, product-owner]
-measures: [control-gamma-risk-policy]
----
-
 # Gamma: Quality Gates
 
 ## Этапы

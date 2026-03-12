@@ -1,13 +1,12 @@
 ---
-id: DOC-INS-AGT-PROFILE-006
+id: DOC-INS-AGENT-PROFILES-INSTRUCTION-AGENT-PROFILE-M-9IKI
+layer: Instructions
 type: Instruction
-layer: Agents
-status: Active
+status: approved
 version: 1.1.0
 owners: [@techlead]
 last_updated: 2026-03-10
 ---
-
 # ИНСТРУКЦИЯ — ПРОФИЛЬ АГЕНТА MARKETER
 
 ## 1. Назначение
@@ -289,7 +288,6 @@ Tool surface не должен расширяться в:
 - [RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md](../../00_STRATEGY/STAGE%202/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md)
 - [A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md](../../00_STRATEGY/STAGE%202/A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md)
 - [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](../../00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md)
-- [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](../INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
+- `INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md` (routing canon)
 - [agent-management.service.ts](../../../apps/api/src/modules/explainability/agent-management.service.ts)
 - [page.tsx](../../../apps/web/app/(app)/control-tower/agents/page.tsx)
-

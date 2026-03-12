@@ -1,3 +1,10 @@
+---
+id: DOC-STR-STAGE-2-RAI-AI-SYSTEM-ARCHITECTURE-CVRM
+layer: Strategy
+type: Vision
+status: draft
+version: 0.1.0
+---
 # RAI AI System — Архитектура мульти-агентной AI системы
 
 > **Версия:** 2.0 | **Дата:** 2026-03-04  

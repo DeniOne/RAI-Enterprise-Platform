@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
-const { PrismaClient } = require('../packages/prisma-client/generated-client');
+const { PrismaClient, Prisma } = require('../packages/prisma-client/generated-client');
 
 const APPLY_FLAG = '--apply';
 const apply = process.argv.includes(APPLY_FLAG);
@@ -8,41 +8,40 @@ const apply = process.argv.includes(APPLY_FLAG);
 const prisma = new PrismaClient();
 
 async function countMissing() {
-  const rows = await prisma.$queryRawUnsafe(`
+  const rows = await prisma.$queryRaw`
     SELECT COUNT(*)::int AS cnt
     FROM outbox_messages o
     WHERE NULLIF(TRIM(o.payload::jsonb->>'companyId'), '') IS NULL
-  `);
+  `;
   return Number(rows?.[0]?.cnt || 0);
 }
 
 async function countMissingByAggregateType() {
-  return prisma.$queryRawUnsafe(`
+  return prisma.$queryRaw`
     SELECT COALESCE(o."aggregateType", 'NULL') AS aggregate_type, COUNT(*)::int AS cnt
     FROM outbox_messages o
     WHERE NULLIF(TRIM(o.payload::jsonb->>'companyId'), '') IS NULL
     GROUP BY COALESCE(o."aggregateType", 'NULL')
     ORDER BY cnt DESC
-  `);
+  `;
 }
 
 async function tableExists(tableName) {
-  const rows = await prisma.$queryRawUnsafe(
-    `
+  const rows = await prisma.$queryRaw(
+    Prisma.sql`
       SELECT EXISTS (
         SELECT 1
         FROM information_schema.tables
         WHERE table_schema = 'public'
-          AND table_name = $1
+          AND table_name = ${tableName}
       ) AS present
     `,
-    tableName,
   );
   return Boolean(rows?.[0]?.present);
 }
 
 async function updateFromEconomicEvent() {
-  return prisma.$executeRawUnsafe(`
+  return prisma.$executeRaw`
     UPDATE outbox_messages o
     SET
       payload = jsonb_set(o.payload::jsonb, '{companyId}', to_jsonb(e."companyId"), true),
@@ -52,11 +51,11 @@ async function updateFromEconomicEvent() {
       AND o."aggregateType" = 'EconomicEvent'
       AND NULLIF(TRIM(o.payload::jsonb->>'companyId'), '') IS NULL
       AND e."companyId" IS NOT NULL
-  `);
+  `;
 }
 
 async function updateFromExecutionRecord() {
-  return prisma.$executeRawUnsafe(`
+  return prisma.$executeRaw`
     UPDATE outbox_messages o
     SET
       payload = jsonb_set(o.payload::jsonb, '{companyId}', to_jsonb(e."companyId"), true),
@@ -66,11 +65,11 @@ async function updateFromExecutionRecord() {
       AND o."aggregateType" = 'ExecutionRecord'
       AND NULLIF(TRIM(o.payload::jsonb->>'companyId'), '') IS NULL
       AND e."companyId" IS NOT NULL
-  `);
+  `;
 }
 
 async function updateFromTask() {
-  return prisma.$executeRawUnsafe(`
+  return prisma.$executeRaw`
     UPDATE outbox_messages o
     SET
       payload = jsonb_set(o.payload::jsonb, '{companyId}', to_jsonb(t."companyId"), true),
@@ -80,7 +79,7 @@ async function updateFromTask() {
       AND o."aggregateType" = 'Task'
       AND NULLIF(TRIM(o.payload::jsonb->>'companyId'), '') IS NULL
       AND t."companyId" IS NOT NULL
-  `);
+  `;
 }
 
 async function main() {

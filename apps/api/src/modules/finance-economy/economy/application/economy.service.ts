@@ -97,9 +97,9 @@ export class EconomyService {
           Prisma.sql`SELECT set_config('app.current_company_id', ${dto.companyId}, true)`,
         );
         // Check if session actually set
-        const sessionTenant = await (tx as any).$queryRawUnsafe(
-          `SELECT current_setting('app.current_company_id') as tenant`,
-        );
+        const sessionTenant = (await (tx as any).$queryRaw(
+          Prisma.sql`SELECT current_setting('app.current_company_id') as tenant`,
+        )) as Array<{ tenant: string }>;
         if (sessionTenant[0]?.tenant !== dto.companyId) {
           throw new ServiceUnavailableException(
             "Security guard: Сбой инъекции контекста тенанта в сессию.",

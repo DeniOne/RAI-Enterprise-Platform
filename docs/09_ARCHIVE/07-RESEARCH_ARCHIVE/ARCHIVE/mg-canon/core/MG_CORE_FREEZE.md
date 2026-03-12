@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-164
-type: Legacy
+id: DOC-ARV-CORE-MG-CORE-FREEZE-19B9
 layer: Archive
-status: Draft
+type: Research
+status: archived
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # MG CORE FREEZE MANIFESTO
 
 > [!CAUTION]

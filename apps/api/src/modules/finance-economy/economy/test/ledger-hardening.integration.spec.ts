@@ -2,6 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { EconomyService } from "../application/economy.service";
 import { PrismaService } from "../../../../shared/prisma/prisma.service";
 import { OutboxService } from "../../../../shared/outbox/outbox.service";
+import { FinanceConfigService } from "../../finance/config/finance-config.service";
 import {
   BadRequestException,
   ServiceUnavailableException,
@@ -9,8 +10,16 @@ import {
 import { EconomicEventType, Prisma } from "@rai/prisma-client";
 
 describe("Ledger Architectural Hardening (G1-G4 Verification)", () => {
+  const sqlText = (query: unknown): string => {
+    if (query && typeof query === "object" && "strings" in (query as any)) {
+      return ((query as any).strings as readonly string[]).join("?");
+    }
+    return String(query);
+  };
+
   let service: EconomyService;
   let prisma: PrismaService;
+  let currentSessionTenant = "";
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -20,16 +29,52 @@ describe("Ledger Architectural Hardening (G1-G4 Verification)", () => {
           provide: PrismaService,
           useValue: {
             $transaction: jest.fn(),
-            $executeRawUnsafe: jest.fn(),
-            tenantState: { findUnique: jest.fn(), upsert: jest.fn() },
+            $executeRaw: jest.fn(async (sql: unknown) => {
+              const text = sqlText(sql);
+              if (text.includes("set_config('app.current_company_id'")) {
+                const values =
+                  sql && typeof sql === "object" && "values" in (sql as any)
+                    ? ((sql as any).values as unknown[])
+                    : [];
+                currentSessionTenant =
+                  typeof values[0] === "string"
+                    ? values[0]
+                    : currentSessionTenant;
+              }
+              return 1;
+            }),
+            $queryRaw: jest.fn(async (sql: unknown) => {
+              if (sqlText(sql).includes("current_setting('app.current_company_id')")) {
+                return [{ tenant: currentSessionTenant }];
+              }
+              return [];
+            }),
+            tenantState: {
+              findUnique: jest.fn(),
+              updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+            },
             economicEvent: { create: jest.fn(), findFirst: jest.fn() },
-            ledgerEntry: { createMany: jest.fn() },
+            ledgerEntry: { createMany: jest.fn(), count: jest.fn().mockResolvedValue(2) },
+            currencyPrecision: { findUnique: jest.fn().mockResolvedValue({ scale: 2 }) },
             outboxMessage: { create: jest.fn() },
           },
         },
         {
           provide: OutboxService,
           useValue: { createEvent: jest.fn() },
+        },
+        {
+          provide: FinanceConfigService,
+          useValue: {
+            get: jest.fn((key: string) => {
+              if (key === "panicThreshold") return 5;
+              if (key === "requireIdempotency") return true;
+              if (key === "contractCompatibilityMode") return "strict";
+              if (key === "defaultCurrency") return "RUB";
+              if (key === "defaultScale") return 2;
+              return null;
+            }),
+          },
         },
       ],
     }).compile();
@@ -40,6 +85,10 @@ describe("Ledger Architectural Hardening (G1-G4 Verification)", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    currentSessionTenant = "";
+    ((prisma as any).tenantState.updateMany as jest.Mock).mockResolvedValue({
+      count: 1,
+    });
   });
 
   it("G3: Enforces mandatory idempotency (Fail Fast)", async () => {
@@ -73,9 +122,10 @@ describe("Ledger Architectural Hardening (G1-G4 Verification)", () => {
       metadata: { idempotencyKey: "idem_123" },
     });
 
-    expect(prisma.$executeRawUnsafe).toHaveBeenCalledWith(
-      expect.stringContaining("SET LOCAL app.current_company_id = 'tenant-1'"),
-    );
+    const rawCalls = ((prisma as any).$executeRaw as jest.Mock).mock.calls;
+    expect(rawCalls.some((call) =>
+      sqlText(call[0]).includes("set_config('app.current_company_id'")
+    )).toBe(true);
   });
 
   it("G2: Triggers Autonomous Panic (READ_ONLY) when Integrity Violation occurs", async () => {
@@ -102,10 +152,10 @@ describe("Ledger Architectural Hardening (G1-G4 Verification)", () => {
       }),
     ).rejects.toThrow(ServiceUnavailableException);
 
-    expect((prisma as any).tenantState.upsert).toHaveBeenCalledWith(
+    expect((prisma as any).tenantState.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { companyId: "tenant-violation" },
-        update: { mode: "READ_ONLY" },
+        where: expect.objectContaining({ companyId: "tenant-violation" }),
+        data: { mode: "READ_ONLY" },
       }),
     );
   });
@@ -125,7 +175,7 @@ describe("Ledger Architectural Hardening (G1-G4 Verification)", () => {
         companyId: "tenant-halted",
         metadata: { idempotencyKey: "idem_halt" },
       }),
-    ).rejects.toThrow(/is HALTED/);
+    ).rejects.toThrow(/ОСТАНОВЛЕНА/);
   });
 
   it("G3: Handles Replay/Duplicate with target check (P2002 replayKey)", async () => {
@@ -139,6 +189,7 @@ describe("Ledger Architectural Hardening (G1-G4 Verification)", () => {
     ((prisma as any).economicEvent.findFirst as jest.Mock).mockResolvedValue({
       id: "existing_evt",
     });
+    ((prisma as any).ledgerEntry.count as jest.Mock).mockResolvedValue(2);
 
     const result = await service.ingestEvent({
       type: EconomicEventType.COST_INCURRED,

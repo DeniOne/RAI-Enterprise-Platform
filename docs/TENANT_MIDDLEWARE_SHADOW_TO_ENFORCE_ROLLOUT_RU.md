@@ -1,11 +1,10 @@
-﻿---
-id: DOC-OPS-RUN-003
-layer: Operations
-type: Runbook
+---
+id: DOC-EXE-TENANT-MIDDLEWARE-SHADOW-TO-ENFORCE-ROLLOU-1YGP
+layer: Execution
+type: Phase Plan
 status: draft
 version: 0.1.0
 ---
-
 # Tenant Middleware Rollout Plan (Shadow -> Enforce)
 
 Р”Р°С‚Р°: 2026-02-15  

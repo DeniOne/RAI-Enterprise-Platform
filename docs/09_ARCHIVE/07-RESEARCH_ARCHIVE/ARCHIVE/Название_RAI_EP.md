@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-170
-type: Legacy
+id: DOC-ARV-ARCHIVE-RAI-EP-10G7
 layer: Archive
-status: Draft
+type: Research
+status: archived
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 RAI Enterprise Platform — это брендовое название системы, которое имеет несколько слоёв смысла:
 
 Расшифровка RAI:

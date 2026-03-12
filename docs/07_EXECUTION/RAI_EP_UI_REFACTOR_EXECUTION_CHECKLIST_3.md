@@ -1,3 +1,10 @@
+---
+id: DOC-EXE-07-EXECUTION-RAI-EP-UI-REFACTOR-EXECUTION--RHGH
+layer: Execution
+type: Checklist
+status: draft
+version: 0.1.0
+---
 # PROMPT 3 — LIST TABS + GRAPH (TASK C + TASK G)
 # RAI_EP_UI_REFACTOR__P3_TABLES.md
 

@@ -18,6 +18,7 @@ import { RuntimeGovernanceControlService } from "./runtime-governance-control.se
 import { RuntimeGovernanceDrilldownService } from "./runtime-governance-drilldown.service";
 import { AgentLifecycleReadModelService } from "./agent-lifecycle-read-model.service";
 import { AgentLifecycleControlService } from "./agent-lifecycle-control.service";
+import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AgentLifecycleControlService } from "./agent-lifecycle-control.service"
     PrismaModule,
     RaiChatModule,
     AdaptiveLearningModule,
+    IdempotencyModule,
   ],
   controllers: [ExplainabilityPanelController, AgentsConfigController],
   providers: [

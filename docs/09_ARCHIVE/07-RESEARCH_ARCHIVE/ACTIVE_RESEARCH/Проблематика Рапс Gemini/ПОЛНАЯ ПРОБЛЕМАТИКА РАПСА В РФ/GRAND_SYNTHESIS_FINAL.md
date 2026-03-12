@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-GRAND-SYNTHESIS-FINAL-07NR
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 # ГРАНД-СИНТЕЗ: ПОЛНАЯ ПРОБЛЕМАТИКА РАПСА В РФ
 
 **Статус:** Финальный синтез 5 независимых AI-исследований

@@ -21,6 +21,8 @@ import {
   ApiBearerAuth,
 } from "@nestjs/swagger";
 import { Throttle } from "@nestjs/throttler";
+import { Authorized } from "./authorized.decorator";
+import { TENANT_ADMIN_ROLES } from "./rbac.constants";
 
 @ApiTags("Authentication")
 @Controller("auth")
@@ -130,8 +132,7 @@ export class UsersController {
   }
 
   @Get("company/:companyId")
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @Authorized(...TENANT_ADMIN_ROLES)
   @ApiOperation({ summary: "Get users by company" })
   @ApiResponse({ status: 200, description: "Returns users list" })
   async getCompanyUsers(@Param("companyId") companyId: string) {

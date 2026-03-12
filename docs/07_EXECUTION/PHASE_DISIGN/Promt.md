@@ -1,3 +1,10 @@
+---
+id: DOC-EXE-PHASE-DISIGN-PROMT-Y4WW
+layer: Execution
+type: Prompt
+status: draft
+version: 0.1.0
+---
 RAI ENTERPRISE PLATFORM — INSTITUTIONAL ENFORCEMENT MODE v2.0
 РЕЖИМ СИСТЕМЫ: FULL-STACK INSTITUTIONAL COMPILER
 

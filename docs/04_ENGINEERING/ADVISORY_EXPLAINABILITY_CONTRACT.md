@@ -1,14 +1,13 @@
 ---
-id: DOC-ENG-GEN-102
-type: Service Spec
+id: DOC-ENG-04-ENGINEERING-ADVISORY-EXPLAINABILITY-CON-1M13
 layer: Engineering
-status: Draft
+type: API Contract
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿# Advisory Explainability Contract (Sprint 4)
+# Advisory Explainability Contract (Sprint 4)
 
 ## Статус
 

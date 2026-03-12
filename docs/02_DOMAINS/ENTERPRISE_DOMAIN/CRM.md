@@ -1,21 +1,12 @@
 ---
-id: DOC-DOM-GEN-060
-type: Domain Spec
+id: DOC-DOM-ENTERPRISE-DOMAIN-CRM-13J3
 layer: Domain
-status: Draft
+type: Domain Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-enterprise-crm
-type: component
-status: review
-owners: [sales, architects]
-aligned_with: [principle-vision]
----
-
 # Domain: CRM (Customer Relationship Management)
 
 > **Contour:** 1 (Enterprise Back-Office) | **Module:** CRM

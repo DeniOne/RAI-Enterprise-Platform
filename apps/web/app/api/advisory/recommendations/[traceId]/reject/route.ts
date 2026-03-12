@@ -12,6 +12,10 @@ export async function POST(
     }
 
     const body = await request.json().catch(() => ({}));
+    const reason =
+      typeof body?.reason === "string" && body.reason.trim().length > 0
+        ? body.reason.trim()
+        : null;
 
     const response = await fetch(
       `http://localhost:4000/api/advisory/recommendations/${params.traceId}/reject`,
@@ -20,6 +24,10 @@ export async function POST(
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "Idempotency-Key": `advisory-reject:${params.traceId}:${(reason ?? "no-reason")
+            .replace(/\s+/g, "-")
+            .replace(/[^a-zA-Z0-9:_-]+/g, "-")
+            .slice(0, 120)}`,
         },
         body: JSON.stringify(body),
       },

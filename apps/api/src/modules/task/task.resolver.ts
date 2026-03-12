@@ -3,17 +3,22 @@ import { TaskService } from "./task.service";
 import { Task } from "./types/task.type";
 import { CreateTasksFromSeasonInput } from "./dto/create-tasks.input";
 import { TaskResourceActualInput } from "./dto/task-resource.input";
-import { UseGuards } from "@nestjs/common";
-import { GqlAuthGuard } from "../../shared/auth/auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
 import { User } from "@rai/prisma-client";
+import { AuthorizedGql } from "../../shared/auth/authorized-gql.decorator";
+import { Roles } from "../../shared/auth/roles.decorator";
+import {
+  EXECUTION_ROLES,
+  PLANNING_WRITE_ROLES,
+} from "../../shared/auth/rbac.constants";
 
 @Resolver(() => Task)
-@UseGuards(GqlAuthGuard)
+@AuthorizedGql(...EXECUTION_ROLES)
 export class TaskResolver {
   constructor(private readonly taskService: TaskService) {}
 
   @Mutation(() => [Task])
+  @Roles(...PLANNING_WRITE_ROLES)
   async createTasksFromSeason(
     @Args("input") input: CreateTasksFromSeasonInput,
     @CurrentUser() user: User,
@@ -25,6 +30,7 @@ export class TaskResolver {
   }
 
   @Mutation(() => Task)
+  @Roles(...PLANNING_WRITE_ROLES)
   async assignTask(
     @Args("taskId") taskId: string,
     @Args("assigneeId") assigneeId: string,

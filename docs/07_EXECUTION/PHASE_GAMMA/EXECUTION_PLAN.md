@@ -1,14 +1,13 @@
 ---
-id: DOC-EXE-GEN-143
-type: Phase Plan
+id: DOC-EXE-PHASE-GAMMA-EXECUTION-PLAN-K6OE
 layer: Execution
-status: Draft
+type: Phase Plan
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿# Phase Gamma — Execution Plan
+# Phase Gamma — Execution Plan
 
 > Старт фазы: **Gamma (Cognitive Intelligence)**  
 > Цель: превратить накопленные данные в операционную экспертизу и проактивные рекомендации.

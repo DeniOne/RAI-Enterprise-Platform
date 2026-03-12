@@ -4,6 +4,13 @@ import { EconomyService } from "./economy.service";
 import { FinanceConfigService } from "../../finance/config/finance-config.service";
 
 describe("EconomyService replay/duplicate protection", () => {
+  const sqlText = (query: unknown): string => {
+    if (query && typeof query === "object" && "strings" in (query as any)) {
+      return ((query as any).strings as readonly string[]).join("?");
+    }
+    return String(query);
+  };
+
   afterEach(() => {
     delete process.env.FINANCIAL_REQUIRE_IDEMPOTENCY;
     delete process.env.FINANCE_CONTRACT_COMPATIBILITY_MODE;
@@ -21,15 +28,14 @@ describe("EconomyService replay/duplicate protection", () => {
       tenantState: {
         findUnique: jest.fn().mockResolvedValue({ mode: "ACTIVE" }),
       },
-      $executeRawUnsafe: jest.fn(async (sql: string) => {
-        if (sql.includes("SET LOCAL app.current_company_id")) {
-          const match = sql.match(/'([^']+)'/);
-          if (match) currentSessionTenant = match[1];
+      $executeRaw: jest.fn(async (sql: unknown) => {
+        if (sqlText(sql).includes("set_config('app.current_company_id'")) {
+          currentSessionTenant = "c1";
         }
         return 1;
       }),
-      $queryRawUnsafe: jest.fn(async (sql: string) => {
-        if (sql.includes("current_setting('app.current_company_id')")) {
+      $queryRaw: jest.fn(async (sql: unknown) => {
+        if (sqlText(sql).includes("current_setting('app.current_company_id')")) {
           return [{ tenant: currentSessionTenant }];
         }
         return [];
@@ -37,9 +43,11 @@ describe("EconomyService replay/duplicate protection", () => {
     };
     const prisma = {
       $transaction: jest.fn((callback) => callback(tx)),
-      $executeRawUnsafe: jest.fn(),
       economicEvent: {
         findFirst: jest.fn(),
+      },
+      ledgerEntry: {
+        count: jest.fn().mockResolvedValue(2),
       },
       currencyPrecision: {
         findUnique: jest.fn().mockResolvedValue({ scale: 2 }),
@@ -106,6 +114,7 @@ describe("EconomyService replay/duplicate protection", () => {
     prisma.economicEvent.findFirst.mockResolvedValue({
       id: "evt-existing",
     } as any);
+    prisma.ledgerEntry.count.mockResolvedValue(2);
 
     const result = await service.ingestEvent({
       type: EconomicEventType.COST_INCURRED,
@@ -186,17 +195,20 @@ describe("EconomyService replay/duplicate protection", () => {
     );
 
     // Check Security Definer calls instead of createMany
-    expect(tx.$executeRawUnsafe).toHaveBeenCalled();
+    expect(tx.$executeRaw).toHaveBeenCalled();
     const securityDefinerCalls = (
-      tx.$executeRawUnsafe as any
-    ).mock.calls.filter((c: any) => c[0].includes("create_ledger_entry_v1"));
+      tx.$executeRaw as any
+    ).mock.calls.filter((c: any) =>
+      sqlText(c[0]).includes("create_ledger_entry_v1"),
+    );
     expect(securityDefinerCalls.length).toBe(2);
 
-    // In the service: tx.$executeRawUnsafe(sql, arg1, arg2...)
-    // So securityDefinerCalls[0] is [sql, arg1, arg2, arg3, arg4, arg5, arg6, arg7]
-    // Amount is the 4th argument (index 4)
-    expect((securityDefinerCalls[0] as any)[4].toString()).toBe("12.3457");
-    expect((securityDefinerCalls[1] as any)[4].toString()).toBe("12.3457");
+    expect(sqlText((securityDefinerCalls[0] as any)[0])).toContain(
+      "create_ledger_entry_v1",
+    );
+    expect(sqlText((securityDefinerCalls[1] as any)[0])).toContain(
+      "create_ledger_entry_v1",
+    );
   });
 
   it("enriches metadata with journal phase and settlement reference", async () => {

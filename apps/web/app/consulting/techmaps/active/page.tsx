@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import clsx from 'clsx';
 import { includesFocus, useEntityFocus } from '@/shared/hooks/useEntityFocus';
 import { useWorkspaceContextStore } from '@/lib/stores/workspace-context-store';
+import { ChiefAgronomistReviewDrawer } from '@/components/experts/ChiefAgronomistReviewDrawer';
 
 type TechMapItem = {
     id: string;
@@ -38,6 +39,7 @@ function MapTable({ rows, isFocused }: { rows: RowItem[]; isFocused: (row: RowIt
                         <th className='py-2 pr-4'>Культура</th>
                         <th className='py-2 pr-4'>Статус</th>
                         <th className='py-2'>Обновлено</th>
+                        <th className='py-2 text-right'>Эксперт</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -50,6 +52,23 @@ function MapTable({ rows, isFocused }: { rows: RowItem[]; isFocused: (row: RowIt
                                 <td className='py-2 pr-4'>{row.item.crop || '-'}</td>
                                 <td className='py-2 pr-4'>{row.item.status || 'UNKNOWN'}</td>
                                 <td className='py-2'>{row.item.updatedAt ? new Date(row.item.updatedAt).toLocaleDateString('ru-RU') : '-'}</td>
+                                <td className='py-2 text-right'>
+                                    <ChiefAgronomistReviewDrawer
+                                        title={`Техкарта ${row.code}`}
+                                        subtitle={row.item.crop ? `${row.item.crop} • ${row.item.status || 'UNKNOWN'}` : row.item.status || 'UNKNOWN'}
+                                        triggerLabel='Экспертное заключение'
+                                        triggerClassName='px-3 py-1.5'
+                                        request={{
+                                            entityType: 'techmap',
+                                            entityId: row.item.id,
+                                            reason: `Контекстная экспертная проверка техкарты ${row.code}`,
+                                            ...(row.item.fieldId ? { fieldId: row.item.fieldId } : {}),
+                                            ...(row.item.seasonId ? { seasonId: row.item.seasonId } : {}),
+                                            ...(row.item.harvestPlanId ? { planId: row.item.harvestPlanId } : {}),
+                                            workspaceRoute: '/consulting/techmaps/active',
+                                        }}
+                                    />
+                                </td>
                             </tr>
                         );
                     })}

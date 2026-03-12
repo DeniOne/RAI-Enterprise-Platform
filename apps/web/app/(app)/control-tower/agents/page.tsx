@@ -33,8 +33,8 @@ const CAPABILITY_OPTIONS = [
   'ProductivityToolsRegistry',
   'MarketingToolsRegistry',
 ];
-const KNOWN_ROLES = ['agronomist', 'economist', 'knowledge', 'monitoring', 'crm_agent', 'front_office_agent', 'contracts_agent'];
-const ADAPTER_ROLES = ['agronomist', 'economist', 'knowledge', 'monitoring', 'crm_agent', 'front_office_agent', 'contracts_agent'];
+const KNOWN_ROLES = ['agronomist', 'economist', 'knowledge', 'monitoring', 'crm_agent', 'front_office_agent', 'contracts_agent', 'chief_agronomist', 'data_scientist'];
+const ADAPTER_ROLES = ['agronomist', 'economist', 'knowledge', 'monitoring', 'crm_agent', 'front_office_agent', 'contracts_agent', 'chief_agronomist', 'data_scientist'];
 const TEMPLATE_OPTIONS = ['marketer', 'strategist', 'finance_advisor', 'legal_advisor', 'crm_agent', 'front_office_agent', 'contracts_agent', 'controller', 'personal_assistant'] as const;
 const KIND_OPTIONS = ['domain_advisor', 'worker_hybrid', 'personal_delegated'] as const;
 const AUTONOMY_OPTIONS = ['advisory', 'hybrid', 'autonomous'] as const;
@@ -76,7 +76,7 @@ const RESPONSIBILITY_INTENT_OPTIONS = [
   'classify_dialog_thread',
   'create_front_office_escalation',
 ] as const;
-type CanonicalAdapterRole = 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent' | 'front_office_agent' | 'contracts_agent';
+type CanonicalAdapterRole = 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent' | 'front_office_agent' | 'contracts_agent' | 'chief_agronomist' | 'data_scientist';
 
 function roleOptionLabel(role: string) {
   const labels: Record<string, string> = {
@@ -87,6 +87,8 @@ function roleOptionLabel(role: string) {
     crm_agent: 'crm_agent / CRM-агент',
     front_office_agent: 'front_office_agent / Фронт-офис агент',
     contracts_agent: 'contracts_agent / Contracts-агент',
+    chief_agronomist: 'chief_agronomist / Мега-Агроном',
+    data_scientist: 'data_scientist / Data Scientist',
   };
   return labels[role] ?? role;
 }
@@ -145,6 +147,8 @@ function displayAgentName(role: string, fallbackName: string) {
     crm_agent: 'CRM-А',
     front_office_agent: 'ФронтОфис-А',
     contracts_agent: 'Контракты-А',
+    chief_agronomist: 'Мега-Агроном-А',
+    data_scientist: 'DataScientist-А',
     controller: 'Контролёр-А',
     personal_assistant: 'Ассистент-А',
   };
@@ -377,8 +381,8 @@ export default function AgentsPage() {
                 </th>
                 <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182]">
                   <HeaderWithHint
-                    label="Возможности / Инструменты"
-                    hint="Здесь перечислены подключённые наборы возможностей и конкретные инструменты, которыми агент может пользоваться."
+                    label="Возможности / Контракты"
+                    hint="Здесь перечислены capability packs, инструменты и runtime-контракты: memory, output и governance."
                   />
                 </th>
                 <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182] text-right">Управляемое действие</th>
@@ -446,6 +450,11 @@ export default function AgentsPage() {
                             <Tag key={tool} label={tool} mono />
                           ))}
                         </div>
+                      </div>
+                      <div className="space-y-2">
+                        <PolicyDisclosure title="Memory Policy" payload={agent.memoryPolicy} />
+                        <PolicyDisclosure title="Output Contract" payload={agent.outputContract} />
+                        <PolicyDisclosure title="Governance Policy" payload={agent.governancePolicy} />
                       </div>
                     </div>
                   </td>
@@ -703,7 +712,7 @@ function AgentEditor({
     const responsibilityBinding = bindingInheritsFrom.trim()
       ? {
           role: bindingRole.trim() || effectiveRole.trim(),
-          inheritsFromRole: bindingInheritsFrom.trim() as 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent' | 'front_office_agent',
+          inheritsFromRole: bindingInheritsFrom.trim() as CanonicalAdapterRole,
           overrides: {
             ...(bindingTitle.trim() ? { title: bindingTitle.trim() } : {}),
             ...(allowedIntents.length > 0 ? { allowedIntents } : {}),
@@ -1147,5 +1156,26 @@ function Tag({ label, mono = false }: { label: string; mono?: boolean }) {
     <span className={`px-2 py-1 rounded-md border border-black/10 bg-slate-50 text-[11px] text-[#030213] ${mono ? 'font-mono' : ''}`}>
       {label}
     </span>
+  );
+}
+
+function PolicyDisclosure({ title, payload }: { title: string; payload?: Record<string, unknown> }) {
+  if (!payload || Object.keys(payload).length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed border-black/10 bg-slate-50 px-3 py-2 text-[11px] text-[#717182]">
+        {title}: нет runtime-данных
+      </div>
+    );
+  }
+
+  return (
+    <details className="rounded-xl border border-black/10 bg-slate-50 px-3 py-2">
+      <summary className="cursor-pointer list-none text-[11px] font-medium uppercase tracking-widest text-[#717182]">
+        {title}
+      </summary>
+      <pre className="mt-3 overflow-x-auto rounded-lg bg-white p-3 text-[11px] leading-relaxed text-[#030213]">
+        {JSON.stringify(payload, null, 2)}
+      </pre>
+    </details>
   );
 }

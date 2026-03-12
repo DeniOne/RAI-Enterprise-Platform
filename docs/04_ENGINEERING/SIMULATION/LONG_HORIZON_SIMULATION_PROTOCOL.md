@@ -1,3 +1,10 @@
+---
+id: DOC-ENG-SIMULATION-LONG-HORIZON-SIMULATION-PROTOCO-CUSK
+layer: Engineering
+type: Service Spec
+status: draft
+version: 0.1.0
+---
 # LEVEL E: Протокол Долгосрочной Симуляции
 
 ## 1. Введение

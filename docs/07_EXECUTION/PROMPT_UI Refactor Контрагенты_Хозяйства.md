@@ -1,3 +1,10 @@
+---
+id: DOC-EXE-07-EXECUTION-PROMPT-UI-REFACTOR-CU81
+layer: Execution
+type: Prompt
+status: draft
+version: 0.1.0
+---
 # TASK: REFACORING CRM "PARTIES" (КОНТРАГЕНТЫ) - ENTERPRISE ENTITY HUB
 Ты — Senior Frontend / React Engineer. Твоя задача — полностью переработать UI/UX создания и редактирования сущности "Контрагент" (Party) в ERP системе (стек: Next.js App Router, React, TypeScript, Tailwind CSS, Ant Design, React Hook Form + Zod).
 

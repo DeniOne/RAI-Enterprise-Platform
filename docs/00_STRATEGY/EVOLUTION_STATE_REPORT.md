@@ -1,13 +1,12 @@
 ---
-id: DOC-STR-GEN-AF-REPORT
-type: Governance Report
-layer: Meta
-status: Approved
+id: DOC-STR-00-STRATEGY-EVOLUTION-STATE-REPORT-1C9T
+layer: Strategy
+type: Vision
+status: approved
 version: 1.0.0
 owners: [@techlead]
 last_updated: 2026-02-20
 ---
-
 # EVOLUTION STATE REPORT: ФИНАЛЬНЫЙ АУДИТ LEVEL A–F 🚀
 
 > **Статус Эволюции:** **INSTITUTIONAL READY (10/10)**

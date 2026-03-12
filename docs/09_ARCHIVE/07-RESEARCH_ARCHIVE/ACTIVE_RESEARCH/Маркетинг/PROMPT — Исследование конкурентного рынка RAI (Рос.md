@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-PROMPT-RAI-18QP
+layer: Archive
+type: Legacy
+status: archived
+version: 0.1.0
+---
 <img src="https://r2cdn.perplexity.ai/pplx-full-logo-primary-dark%402x.png" style="height:64px;margin-right:32px"/>
 
 # PROMPT — Исследование конкурентного рынка RAI (Россия)

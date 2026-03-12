@@ -1,3 +1,10 @@
+---
+id: DOC-ENG-04-ENGINEERING-LEVEL-D-SLA-ALERTS-20MF
+layer: Engineering
+type: Policy
+status: draft
+version: 0.1.0
+---
 # Level D — Alerting & SLA Policy
 
 ## Критичность: P1 (Блокирующий инцидент)

@@ -1,21 +1,12 @@
 ---
-id: DOC-DOM-GEN-079
-type: Domain Spec
+id: DOC-DOM-PROCESSES-PROCESS-MAP-174J
 layer: Domain
-status: Draft
+type: Domain Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-rai-process-map
-type: component
-status: review
-owners: [domain-experts]
-aligned_with: [principle-vision]
----
-
 # RAI: ПРОЦЕССЫ
 
 ## 1. Планирование сезона

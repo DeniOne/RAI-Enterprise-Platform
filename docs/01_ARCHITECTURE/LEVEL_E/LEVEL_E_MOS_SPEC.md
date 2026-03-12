@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-MOS-001
-type: Specification
-layer: Core Engine
-status: Approved
+id: DOC-ARC-LEVEL-E-LEVEL-E-MOS-SPEC-PKFO
+layer: Architecture
+type: HLD
+status: approved
 version: 1.2.0
 owners: [@techlead]
 last_updated: 2026-02-19
 ---
-
 # LEVEL E: MULTI-OBJECTIVE SOLVER (MOS) SPECIFICATION
 
 ## 1. Введение

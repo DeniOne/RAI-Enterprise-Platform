@@ -1,13 +1,12 @@
 ---
-id: DOC-ENG-LVLF-001
-type: Architecture Specification
-layer: Engineering (Data Ingestion)
-status: Enforced
+id: DOC-ENG-LEVEL-F-F-SNAPSHOTTER-ARCH-1PGE
+layer: Engineering
+type: Service Spec
+status: approved
 version: 2.0.0
 owners: [@techlead, @data_architect]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: АРХИТЕКТУРА ИНСТИТУЦИОНАЛЬНОГО СНАПШОТТЕРА (F_SNAPSHOTTER_ARCH)
 
 ## 0. Аксиома Неизменяемости (Immutability Axiom)

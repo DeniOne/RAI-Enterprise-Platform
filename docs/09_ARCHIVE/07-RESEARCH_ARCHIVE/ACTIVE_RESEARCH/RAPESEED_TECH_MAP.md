@@ -1,13 +1,12 @@
 ---
-id: DOC-DOM-AGRO-RP-001
-type: Research
+id: DOC-ARV-ACTIVE-RESEARCH-RAPESEED-TECH-MAP-1PKH
 layer: Archive
-status: Draft
+type: Research
+status: archived
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Технологическая карта возделывания озимого рапса (Winter Rapeseed TechMap)
 
 > **Цель:** Получение урожайности 4.0-5.0 т/га (интенсивная технология).

@@ -1,3 +1,10 @@
+---
+id: DOC-STR-STAGE-2-RAI-AGENT-DOMAIN-OWNERSHIP-MAP-1OP9
+layer: Strategy
+type: Vision
+status: draft
+version: 0.1.0
+---
 # RAI Agent Domain Ownership Map
 
 > Версия: 1.1  

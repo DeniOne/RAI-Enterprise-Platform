@@ -1,21 +1,12 @@
 ---
-id: DOC-ARC-GEN-028
-type: HLD
+id: DOC-ARC-DECISIONS-ADR-003-DATABASE-STRATEGY-VJKM
 layer: Architecture
-status: Draft
+type: ADR
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: decision-adr-003
-type: decision
-status: approved
-owners: [architects]
-aligned_with: [principle-axioms]
----
-
 # ADR 003: Стратегия баз данных - Единая PostgreSQL с разделением схем
 
 ## Статус

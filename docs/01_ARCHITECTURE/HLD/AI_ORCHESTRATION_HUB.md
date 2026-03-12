@@ -1,21 +1,12 @@
 ---
-id: DOC-ARC-GEN-034
-type: HLD
+id: DOC-ARC-HLD-AI-ORCHESTRATION-HUB-VL1Q
 layer: Architecture
-status: Draft
+type: HLD
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-ai-hub
-type: component
-status: review
-owners: [architects, techleads]
-aligned_with: [principle-axioms]
----
-
 # HLD: AI Orchestration Hub (ИИ-Оркестратор) 🤖
 
 > **Статус:** Проектирование | **Фаза реализации:** Beta/Gamma | **Слой:** Архитектура / HLD

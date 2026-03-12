@@ -1,13 +1,12 @@
 ---
-id: DOC-EXE-LD-001
-type: Execution
-layer: Operations
-status: Accepted
+id: DOC-EXE-07-EXECUTION-LEVEL-D-ROLLOUT-PLAN-K59M
+layer: Execution
+type: Phase Plan
+status: approved
 version: 2.0.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # LEVEL D — ROLLOUT PLAN (D6+ Industrial)
 ## План развёртывания Adaptive Self-Learning
 

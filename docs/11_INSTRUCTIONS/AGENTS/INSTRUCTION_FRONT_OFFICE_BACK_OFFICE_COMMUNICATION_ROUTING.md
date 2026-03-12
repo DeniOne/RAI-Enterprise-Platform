@@ -1,13 +1,12 @@
 ---
-id: DOC-INS-AGT-007
+id: DOC-INS-AGENTS-INSTRUCTION-FRONT-OFFICE-BACK-OFFIC-4WYM
+layer: Instructions
 type: Instruction
-layer: Agents
-status: Active
+status: approved
 version: 1.0.0
 owners: [@techlead]
 last_updated: 2026-03-10
 ---
-
 # ИНСТРУКЦИЯ — МАРШРУТИЗАЦИЯ КОММУНИКАЦИИ FRONT OFFICE ↔ BACK OFFICE
 
 ## 1. Назначение

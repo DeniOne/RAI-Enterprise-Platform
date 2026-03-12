@@ -5,6 +5,7 @@ import { SystemStatusBar } from '@/components/consulting/SystemStatusBar';
 import { DomainUiContext } from '@/lib/consulting/navigation-policy';
 import { AIRecommendationBlock, AIExplainabilityDto } from '@/shared/components/AIRecommendationBlock';
 import { includesFocus, useEntityFocus } from '@/shared/hooks/useEntityFocus';
+import { ChiefAgronomistReviewDrawer } from '@/components/experts/ChiefAgronomistReviewDrawer';
 import clsx from 'clsx';
 import { useAuthority } from '@/core/governance/AuthorityContext';
 
@@ -124,13 +125,30 @@ function DecisionsPageInner() {
                                             <span className='text-sm text-gray-700 font-normal'>{dec.title}</span>
                                             <div className='text-[10px] text-gray-400 uppercase mt-1 mb-3'>Автор: {dec.author}</div>
                                             {dec.author === 'AI_AGENT' && (
-                                                <AIRecommendationBlock
-                                                    explainability={MOCK_EXPLAINABILITY[dec.id]}
-                                                    traceId={MOCK_EXPLAINABILITY[dec.id]?.forensic?.ledgerTraceId}
-                                                    traceStatus={MOCK_EXPLAINABILITY[dec.id]?.forensic?.ledgerTraceId ? 'AVAILABLE' : 'PENDING'}
-                                                    authority={authority}
-                                                    className='text-left'
-                                                />
+                                                <div className='space-y-3'>
+                                                    <AIRecommendationBlock
+                                                        explainability={MOCK_EXPLAINABILITY[dec.id]}
+                                                        traceId={MOCK_EXPLAINABILITY[dec.id]?.forensic?.ledgerTraceId}
+                                                        traceStatus={MOCK_EXPLAINABILITY[dec.id]?.forensic?.ledgerTraceId ? 'AVAILABLE' : 'PENDING'}
+                                                        authority={authority}
+                                                        className='text-left'
+                                                    />
+                                                    <ChiefAgronomistReviewDrawer
+                                                        title={`Отклонение ${dec.deviationId}`}
+                                                        subtitle={dec.title}
+                                                        triggerLabel='Эскалировать к Мега-Агроному'
+                                                        triggerClassName='px-3 py-1.5'
+                                                        request={{
+                                                            entityType: 'deviation',
+                                                            entityId: dec.deviationId,
+                                                            reason: `Экспертная проверка решения ${dec.id} по отклонению ${dec.deviationId}`,
+                                                            workspaceRoute: '/consulting/deviations/decisions',
+                                                            ...(MOCK_EXPLAINABILITY[dec.id]?.forensic?.ledgerTraceId
+                                                                ? { traceParentId: MOCK_EXPLAINABILITY[dec.id]?.forensic?.ledgerTraceId }
+                                                                : {}),
+                                                        }}
+                                                    />
+                                                </div>
                                             )}
                                         </td>
                                         <td className='px-6 py-4 align-top'>

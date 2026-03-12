@@ -1,23 +1,12 @@
 ---
-id: DOC-MET-GEN-132
-type: KPI Spec
+id: DOC-MET-06-METRICS-METRIC-COMPLETION-N8KB
 layer: Metrics
-status: Draft
+type: KPI Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: metric-techmap-completion
-type: metric
-status: approved
-owners: [agronomy-leads]
-relations:
-  measures: [principle-vision, control-audit-system]
-tags: [operational, execution-quality]
----
-
 # Метрика: Techmap Completion Rate
 
 ## Описание

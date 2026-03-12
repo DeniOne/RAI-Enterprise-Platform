@@ -1,3 +1,10 @@
+---
+id: DOC-STR-STAGE-2-RAI-AI-ANTIHALLUCINATION-ARCHITECT-1BGY
+layer: Strategy
+type: Vision
+status: draft
+version: 0.1.0
+---
 # RAI AI Anti-Hallucination Architecture
 Версия: 1.0  
 Статус: Architectural Standard  

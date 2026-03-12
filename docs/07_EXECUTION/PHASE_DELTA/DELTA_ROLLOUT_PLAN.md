@@ -1,13 +1,12 @@
 ---
-id: DOC-EXE-PHD-002
-type: Deployment Plan
-layer: Phase Delta (Integration)
-status: Enforced
+id: DOC-EXE-PHASE-DELTA-DELTA-ROLLOUT-PLAN-NS81
+layer: Execution
+type: Phase Plan
+status: approved
 version: 2.0.0
 owners: [@techlead, @sre_lead]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: МАТЕМАТИЧЕСКИЙ ПЛАН РАЗВЕРТЫВАНИЯ (DELTA_ROLLOUT_PLAN)
 
 ## 0. Манифест Развертывания

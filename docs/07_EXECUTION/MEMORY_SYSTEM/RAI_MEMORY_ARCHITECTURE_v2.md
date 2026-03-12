@@ -1,8 +1,8 @@
 ---
-id: DOC-ARC-MEM-001
-type: Architecture
-layer: Memory
-status: Draft
+id: DOC-EXE-MEMORY-SYSTEM-RAI-MEMORY-ARCHITECTURE-V2-1XQV
+layer: Execution
+type: Phase Plan
+status: draft
 version: 2.0.0
 owners: [@techlead]
 last_updated: 2026-03-10
@@ -10,7 +10,6 @@ supersedes: MEMORY_CANON.md (S5.2)
 aligned_with: [principle-canon, principle-security-canon, MEMORY_CANON]
 tags: [architecture, memory, engrams, cognitive, strategic, mandatory]
 ---
-
 # 🧠 RAI MEMORY ARCHITECTURE v2 — Когнитивная Система Памяти
 
 > **«РАИ — консалтинговая компания, которая помнит каждое посеянное зерно,

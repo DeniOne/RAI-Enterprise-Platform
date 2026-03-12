@@ -1,13 +1,12 @@
 ---
-id: DOC-INS-AGT-PROFILE-001
+id: DOC-INS-AGENT-PROFILES-INSTRUCTION-AGENT-PROFILE-A-OGNC
+layer: Instructions
 type: Instruction
-layer: Agents
-status: Active
+status: approved
 version: 1.1.0
 owners: [@techlead]
 last_updated: 2026-03-10
 ---
-
 # ИНСТРУКЦИЯ — ПРОФИЛЬ АГЕНТА AGRONOMIST
 
 ## 1. Назначение

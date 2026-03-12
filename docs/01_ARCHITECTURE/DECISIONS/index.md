@@ -1,13 +1,12 @@
 ---
-id: DOC-ARC-GEN-002
-type: HLD
+id: DOC-ARC-DECISIONS-INDEX-1X1E
 layer: Architecture
-status: Draft
+type: ADR
+status: draft
 version: 0.1.0
 owners: [@techlead]
-last_updated: 2026-02-15
+last_updated: 2026-03-12
 ---
-
 # Архитектурные решения (ADR)
 
 Хронологический список всех принятых архитектурных решений.
@@ -23,6 +22,7 @@ last_updated: 2026-02-15
 | ADR 003 | Стратегия баз данных | ✅ Принято | 2026.02.02 | [📄](./ADR_003_DATABASE_STRATEGY.md) |
 | ADR 004 | API Gateway Pattern | ✅ Принято | 2026.02.02 | [📄](./ADR_004_API_GATEWAY_PATTERN.md) |
 | ADR 005 | Аутентификация и авторизация | ✅ Принято | 2026.02.02 | [📄](./ADR_005_Аутентификация%20и%20авторизация.md) |
+| ADR 013 | External Front-Office Access for Counterparty Representatives | 🟡 Proposed | 2026.03.12 | [📄](./ADR_013_EXTERNAL_FRONT_OFFICE_ACCESS.md) |
 
 ---
 
@@ -38,6 +38,7 @@ last_updated: 2026-02-15
 
 ### **Безопасность**
 - [ADR 005: Аутентификация и авторизация — JWT + Multi-tenancy](./ADR_005_Аутентификация%20и%20авторизация.md)
+- [ADR 013: External Front-Office Access for Counterparty Representatives](./ADR_013_EXTERNAL_FRONT_OFFICE_ACCESS.md)
 
 ---
 
@@ -61,4 +62,4 @@ last_updated: 2026-02-15
 
 ---
 
-*Последнее обновление: 2026.02.02*.
+*Последнее обновление: 2026.03.12*.

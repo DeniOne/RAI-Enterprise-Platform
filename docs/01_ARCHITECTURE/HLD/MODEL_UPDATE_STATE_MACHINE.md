@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-HLD-LD-002
-type: HLD
+id: DOC-ARC-HLD-MODEL-UPDATE-STATE-MACHINE-1PKT
 layer: Architecture
-status: Accepted
+type: HLD
+status: approved
 version: 2.3.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # MODEL UPDATE STATE MACHINE (D6++ Precision)
 ## FSM жизненного цикла модели (Registry Lifecycle)
 

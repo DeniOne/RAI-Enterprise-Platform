@@ -1,3 +1,10 @@
+---
+id: DOC-TST-08-TESTING-LEVEL-E-FORMAL-TEST-MATRIX-116M
+layer: Testing
+type: Test Spec
+status: draft
+version: 0.1.0
+---
 # LEVEL E: Formal Test Matrix (Hardcore Sustainability Verification)
 
 ## 1. Metric Accuracy & Stability (L1-L3)

@@ -1,23 +1,12 @@
 ---
-id: DOC-MET-GEN-134
-type: KPI Spec
+id: DOC-MET-06-METRICS-METRIC-TTV-1FBO
 layer: Metrics
-status: Draft
+type: KPI Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: metric-time-to-value
-type: metric
-status: approved
-owners: [techleads]
-relations:
-  measures: [principle-axioms, control-admission-policy]
-tags: [performance, agility, operational]
----
-
 # Метрика: Time to Value (TTV)
 
 ## Описание

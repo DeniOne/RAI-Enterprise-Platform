@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "path": "apps/api/deep_diagnose.ts",
+      "methods": ["queryRaw"],
+      "scope": "tooling",
+      "reason": "Diagnostic-only DB introspection helper"
+    },
+    {
+      "path": "apps/api/list_tables.ts",
+      "methods": ["queryRaw"],
+      "scope": "tooling",
+      "reason": "Diagnostic-only schema inspection helper"
+    },
+    {
+      "path": "apps/api/src/modules/finance-economy/economy/application/economy.service.ts",
+      "methods": ["queryRaw", "executeRaw"],
+      "scope": "production",
+      "reason": "Transaction-bound RLS session injection, advisory locks, and security-definer ledger path"
+    },
+    {
+      "path": "apps/api/src/shared/outbox/outbox.relay.ts",
+      "methods": ["queryRaw"],
+      "scope": "production",
+      "reason": "Atomic SKIP LOCKED claim/update pattern inside interactive transaction"
+    },
+    {
+      "path": "apps/api/src/shared/prisma/prisma.service.ts",
+      "methods": ["queryRaw", "executeRaw"],
+      "scope": "production",
+      "reason": "Central safe raw SQL wrappers and tenant session context injection"
+    },
+    {
+      "path": "packages/prisma-client/fix_schema.ts",
+      "methods": ["executeRaw"],
+      "scope": "tooling",
+      "reason": "One-off schema repair helper"
+    },
+    {
+      "path": "packages/prisma-client/verify_schema.ts",
+      "methods": ["queryRaw", "executeRaw"],
+      "scope": "tooling",
+      "reason": "Schema verification helper for invariant migrations"
+    },
+    {
+      "path": "packages/vector-store/src/pg-vector-store.ts",
+      "methods": ["queryRaw", "executeRaw"],
+      "scope": "production",
+      "reason": "pgvector insert/query/delete path requires SQL beyond Prisma native support"
+    },
+    {
+      "path": "scripts/add-budget-constraint.ts",
+      "methods": ["executeRaw"],
+      "scope": "tooling",
+      "reason": "Manual migration-assist script"
+    },
+    {
+      "path": "scripts/add-ledger-trigger.ts",
+      "methods": ["executeRaw"],
+      "scope": "tooling",
+      "reason": "Manual migration-assist script"
+    },
+    {
+      "path": "scripts/add-level-d-rls.ts",
+      "methods": ["executeRaw"],
+      "scope": "tooling",
+      "reason": "Manual RLS hardening script"
+    },
+    {
+      "path": "scripts/add-level-d-triggers.ts",
+      "methods": ["executeRaw"],
+      "scope": "tooling",
+      "reason": "Manual trigger hardening script"
+    },
+    {
+      "path": "scripts/backfill-outbox-companyid.cjs",
+      "methods": ["queryRaw", "executeRaw"],
+      "scope": "tooling",
+      "reason": "Operational backfill for legacy outbox tenant contract remediation"
+    },
+    {
+      "path": "scripts/verify-task-fsm-db.cjs",
+      "methods": ["queryRaw"],
+      "scope": "tooling",
+      "reason": "Operational verification of DB-level Task FSM objects"
+    }
+  ]
+}

@@ -1,13 +1,12 @@
 ---
-id: DOC-ENG-GEN-123
-type: Service Spec
+id: DOC-ENG-04-ENGINEERING-SHADOW-ADVISORY-CONTRACT-IVHU
 layer: Engineering
-status: Draft
+type: API Contract
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Shadow Advisory Contract (Sprint 3)
 
 ## Статус

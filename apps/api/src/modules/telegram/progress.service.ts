@@ -1,8 +1,10 @@
 import { Injectable, OnModuleInit, Logger } from "@nestjs/common";
 import { InjectBot } from "nestjs-telegraf";
 import { Context, Telegraf } from "telegraf";
+import { ConfigService } from "@nestjs/config";
 import * as fs from "fs";
 import * as path from "path";
+import { SecretsService } from "../../shared/config/secrets.service";
 
 @Injectable()
 export class ProgressService implements OnModuleInit {
@@ -10,7 +12,10 @@ export class ProgressService implements OnModuleInit {
   private lastStatsHash: string = "";
   private isWatching = false;
 
-  constructor() {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly secretsService: SecretsService,
+  ) {}
 
   onModuleInit() {
     this.watchProgress();
@@ -105,14 +110,17 @@ export class ProgressService implements OnModuleInit {
 
   private async broadcastProgress(stats: any) {
     const report = this.formatReport(stats);
+    const botUrl = this.configService.get<string>("BOT_URL") || "http://localhost:4002";
+    const internalApiKey =
+      this.secretsService.getOptionalSecret("INTERNAL_API_KEY") || "";
     try {
       await fetch(
-        `${process.env.BOT_URL || "http://localhost:4002"}/internal/push-progress`,
+        `${botUrl}/internal/push-progress`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Internal-API-Key": process.env.INTERNAL_API_KEY || "",
+            "X-Internal-API-Key": internalApiKey,
           },
           body: JSON.stringify({
             report,

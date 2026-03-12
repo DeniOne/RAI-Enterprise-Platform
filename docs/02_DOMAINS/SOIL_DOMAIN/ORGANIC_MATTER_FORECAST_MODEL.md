@@ -1,13 +1,12 @@
 ---
-id: DOC-DOM-SOIL-002
-type: Model Specification
-layer: Domain Logic
-status: Approved
+id: DOC-DOM-SOIL-DOMAIN-ORGANIC-MATTER-FORECAST-MODEL-1DI4
+layer: Domain
+type: Domain Spec
+status: approved
 version: 1.3.0
 owners: [@techlead, @agronomist]
 last_updated: 2026-02-19
 ---
-
 # ORGANIC MATTER FORECAST MODEL (OMFM)
 
 ## 1. Введение

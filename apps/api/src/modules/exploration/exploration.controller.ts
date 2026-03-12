@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseInterceptors,
+} from "@nestjs/common";
 import {
   ExplorationCaseStatus,
   ExplorationMode,
@@ -15,14 +23,16 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
 import { ExplorationService } from "./exploration.service";
+import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
+import { Authorized } from "../../shared/auth/authorized.decorator";
+import { EXPLORATION_ROLES } from "../../shared/auth/rbac.constants";
 
 @ApiTags("Исследования")
 @ApiBearerAuth()
 @Controller("exploration")
-@UseGuards(JwtAuthGuard)
+@Authorized(...EXPLORATION_ROLES)
 export class ExplorationController {
   constructor(private readonly explorationService: ExplorationService) {}
 
@@ -41,6 +51,7 @@ export class ExplorationController {
     },
   })
   @ApiResponse({ status: 201, description: "Сигнал создан" })
+  @UseInterceptors(IdempotencyInterceptor)
   async createSignal(
     @CurrentUser() user: { companyId: string },
     @Body()
@@ -78,6 +89,7 @@ export class ExplorationController {
   })
   @ApiResponse({ status: 201, description: "Кейс исследования создан из сигнала" })
   @ApiResponse({ status: 404, description: "Сигнал не найден" })
+  @UseInterceptors(IdempotencyInterceptor)
   async triageFromSignal(
     @CurrentUser() user: { companyId: string },
     @Param("signalId") signalId: string,
@@ -137,6 +149,7 @@ export class ExplorationController {
   @ApiResponse({ status: 200, description: "Статус кейса обновлен" })
   @ApiResponse({ status: 403, description: "Недопустимый переход или запрет по RBAC" })
   @ApiResponse({ status: 404, description: "Кейс не найден" })
+  @UseInterceptors(IdempotencyInterceptor)
   async transitionCase(
     @CurrentUser() user: { companyId: string },
     @Param("id") caseId: string,
@@ -165,6 +178,7 @@ export class ExplorationController {
   })
   @ApiResponse({ status: 201, description: "Событие решения комнаты решений создано" })
   @ApiResponse({ status: 404, description: "Сессия комнаты решений или участник не найдены" })
+  @UseInterceptors(IdempotencyInterceptor)
   async appendWarRoomEvent(
     @CurrentUser() user: { companyId: string },
     @Param("id") warRoomSessionId: string,
@@ -208,6 +222,7 @@ export class ExplorationController {
   })
   @ApiResponse({ status: 201, description: "Сессия комнаты решений открыта" })
   @ApiResponse({ status: 404, description: "Кейс исследования или пользователи не найдены" })
+  @UseInterceptors(IdempotencyInterceptor)
   async openWarRoom(
     @CurrentUser() user: { companyId: string },
     @Param("id") explorationCaseId: string,
@@ -244,6 +259,7 @@ export class ExplorationController {
     description:
       "Отсутствует resolutionLog или неполное голосование DECISION_MAKER",
   })
+  @UseInterceptors(IdempotencyInterceptor)
   async closeWarRoom(
     @CurrentUser() user: { companyId: string },
     @Param("id") warRoomSessionId: string,

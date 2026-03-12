@@ -1,11 +1,12 @@
-import { Controller, Get, Param, UseGuards } from "@nestjs/common";
+import { Controller, Get, Param } from "@nestjs/common";
 import { StrategicService } from "./strategic.service";
 import { AdvisoryService } from "./advisory.service";
-import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
+import { Authorized } from "../../shared/auth/authorized.decorator";
+import { STRATEGIC_ROLES } from "../../shared/auth/rbac.constants";
 
 @Controller("strategic")
-@UseGuards(JwtAuthGuard)
+@Authorized(...STRATEGIC_ROLES)
 export class StrategicController {
   constructor(
     private readonly strategicService: StrategicService,

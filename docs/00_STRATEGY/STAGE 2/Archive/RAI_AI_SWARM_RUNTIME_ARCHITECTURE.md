@@ -1,3 +1,10 @@
+---
+id: DOC-ARV-ARCHIVE-RAI-AI-SWARM-RUNTIME-ARCHITECTURE-28A5
+layer: Archive
+type: Research
+status: archived
+version: 0.1.0
+---
 ```md
 # RAI_AI_SWARM_RUNTIME_ARCHITECTURE.md
 

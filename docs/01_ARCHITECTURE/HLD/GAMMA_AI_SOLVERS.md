@@ -1,21 +1,12 @@
 ---
-id: DOC-ARC-GEN-038
-type: HLD
+id: DOC-ARC-HLD-GAMMA-AI-SOLVERS-7L4J
 layer: Architecture
-status: Draft
+type: HLD
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿---
-id: component-gamma-ai-solvers
-type: component
-status: review
-owners: [architects, techleads]
-aligned_with: [principle-gamma-vision-scope]
----
-
 # HLD: AI Solvers (Gamma)
 
 ## Назначение

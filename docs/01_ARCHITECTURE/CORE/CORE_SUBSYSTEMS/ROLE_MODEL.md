@@ -1,13 +1,12 @@
 ---
-id: control-role-model
-type: HLD
+id: DOC-ARC-CORE-SUBSYSTEMS-ROLE-MODEL-17GP
 layer: Architecture
+type: HLD
 status: approved
 version: 1.0.0
 owners: [architects, product-owner]
 depends_on: [control-admission-policy]
 ---
-
 # Subsystem: Role Model (RBAC) 🎭
 
 > **Статус:** Канон | **Версия:** 1.0 | **Расположение:** Business Core

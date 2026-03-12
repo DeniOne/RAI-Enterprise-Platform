@@ -1,3 +1,10 @@
+---
+id: DOC-TST-LEVEL-E-SUSTAINABILITY-BIAS-AUDIT-1TQL
+layer: Testing
+type: Audit
+status: draft
+version: 0.1.0
+---
 # LEVEL E: Аудит Предвзятости Устойчивости
 
 ## 1. Введение

@@ -1,21 +1,12 @@
 ---
-id: DOC-ARC-GEN-044
-type: Standards
+id: DOC-ARC-PRINCIPLES-ARCHITECTURAL-AXIOMS-1SME
 layer: Architecture
-status: Draft
+type: Standards
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: principle-axioms
-type: principle
-status: approved
-owners: [architects]
-measured_by: [metric-time-to-value]
----
-
 # ARCHITECTURAL AXIOMS
 
 ## Статус документа

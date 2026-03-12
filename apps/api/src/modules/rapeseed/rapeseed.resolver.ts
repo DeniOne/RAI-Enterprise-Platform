@@ -1,19 +1,24 @@
 import { Resolver, Query, Mutation, Args, Float } from "@nestjs/graphql";
-import { UseGuards } from "@nestjs/common";
-import { GqlAuthGuard } from "../../shared/auth/auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
 import { User } from "@rai/prisma-client";
 import { RapeseedService } from "./rapeseed.service";
 import { Rapeseed } from "./dto/rapeseed.type";
 import { CreateRapeseedInput } from "./dto/create-rapeseed.input";
 import { UpdateRapeseedInput } from "./dto/update-rapeseed.input";
+import { AuthorizedGql } from "../../shared/auth/authorized-gql.decorator";
+import { Roles } from "../../shared/auth/roles.decorator";
+import {
+  PLANNING_READ_ROLES,
+  PLANNING_WRITE_ROLES,
+} from "../../shared/auth/rbac.constants";
 
 @Resolver(() => Rapeseed)
-@UseGuards(GqlAuthGuard)
+@AuthorizedGql(...PLANNING_READ_ROLES)
 export class RapeseedResolver {
   constructor(private readonly rapeseedService: RapeseedService) {}
 
   @Mutation(() => Rapeseed)
+  @Roles(...PLANNING_WRITE_ROLES)
   async createRapeseed(
     @Args("input") input: CreateRapeseedInput,
     @CurrentUser() user: User,
@@ -26,6 +31,7 @@ export class RapeseedResolver {
   }
 
   @Mutation(() => Rapeseed)
+  @Roles(...PLANNING_WRITE_ROLES)
   async updateRapeseed(
     @Args("input") input: UpdateRapeseedInput,
     @CurrentUser() user: User,

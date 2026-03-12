@@ -1,13 +1,12 @@
 ---
-id: DOC-MET-LD-001
-type: Metrics
-layer: Monitoring
-status: Accepted
+id: DOC-MET-06-METRICS-LEVEL-D-METRICS-1RLA
+layer: Metrics
+type: KPI Spec
+status: approved
 version: 2.0.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # LEVEL D — METRICS SPECIFICATION (D6 Industrial)
 ## Спецификация метрик самообучения и контроля качества
 

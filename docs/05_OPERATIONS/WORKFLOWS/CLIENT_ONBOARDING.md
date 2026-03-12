@@ -1,13 +1,12 @@
 ---
-id: DOC-OPS-GEN-128
-type: Runbook
+id: DOC-OPS-WORKFLOWS-CLIENT-ONBOARDING-1A72
 layer: Operations
-status: Draft
+type: Report
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Process: Client Onboarding (Создание Клиента) 🚀
 
 > **Статус:** Драфт | **Приоритет:** Высокий | **Слой:** Processes / Workflows

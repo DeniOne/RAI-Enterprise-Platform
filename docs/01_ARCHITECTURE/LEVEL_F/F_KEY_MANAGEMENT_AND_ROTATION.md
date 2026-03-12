@@ -1,12 +1,12 @@
 ---
-id: DOC-ARH-LVLF-KMR
-type: Core Architecture
-layer: Level F
-status: Enforced
+id: DOC-ARC-LEVEL-F-F-KEY-MANAGEMENT-AND-ROTATION-1XDG
+layer: Architecture
+type: HLD
+status: approved
+version: 1.0.0
 owners: [@techlead]
 last_updated: 2026-02-20
 ---
-
 # УРОВЕНЬ F: УПРАВЛЕНИЕ КЛЮЧАМИ И РОТАЦИЯ (KEY MANAGEMENT & ROTATION)
 
 Данный документ описывает институциональный стандарт управления криптографическими ключами, описывающий жизненный цикл `Ed25519` подписей для сертификатов Level F. Подчиняется `LEVEL_F_SECURITY_MODEL.md`.

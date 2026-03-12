@@ -5,16 +5,19 @@ import {
   Get,
   Param,
   Post,
-  Query,
-  UseGuards,
+  UseInterceptors,
 } from "@nestjs/common";
-import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
 import { User, UserRole } from "@rai/prisma-client";
 import { FrontOfficeService } from "./front-office.service";
 import { AgroOrchestratorService } from "../agro-orchestrator/agro-orchestrator.service";
-import { Roles } from "../../shared/auth/roles.decorator";
-import { RolesGuard } from "../../shared/auth/roles.guard";
+import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
+import { Authorized } from "../../shared/auth/authorized.decorator";
+import {
+  FRONT_OFFICE_INTERNAL_ROLES,
+  FRONT_OFFICE_MANAGER_ROLES,
+  FRONT_OFFICE_THREAD_ROLES,
+} from "../../shared/auth/rbac.constants";
 
 type AuthenticatedUser = Partial<User> & {
   userId?: string;
@@ -24,7 +27,6 @@ type AuthenticatedUser = Partial<User> & {
 };
 
 @Controller("front-office")
-@UseGuards(JwtAuthGuard)
 export class FrontOfficeController {
   constructor(
     private readonly frontOfficeService: FrontOfficeService,
@@ -39,7 +41,16 @@ export class FrontOfficeController {
     return String(user.userId ?? user.id ?? "");
   }
 
+  private getViewer(user: AuthenticatedUser) {
+    return {
+      id: this.getUserId(user),
+      role: user.role,
+      accountId: user.accountId ?? null,
+    };
+  }
+
   @Get("overview")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
   async getOverview(@CurrentUser() user: AuthenticatedUser) {
     return this.frontOfficeService.getOverview(
       this.getCompanyId(user),
@@ -48,11 +59,14 @@ export class FrontOfficeController {
   }
 
   @Get("deviations")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
   async listDeviations(@CurrentUser() user: AuthenticatedUser) {
     return this.frontOfficeService.listDeviations(this.getCompanyId(user));
   }
 
   @Post("deviations")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async createDeviation(
     @CurrentUser() user: AuthenticatedUser,
     @Body()
@@ -78,11 +92,14 @@ export class FrontOfficeController {
   }
 
   @Get("consultations")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
   async listConsultations(@CurrentUser() user: AuthenticatedUser) {
     return this.frontOfficeService.listConsultations(this.getCompanyId(user));
   }
 
   @Post("consultations")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async createConsultation(
     @CurrentUser() user: AuthenticatedUser,
     @Body()
@@ -108,11 +125,14 @@ export class FrontOfficeController {
   }
 
   @Get("context-updates")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
   async listContextUpdates(@CurrentUser() user: AuthenticatedUser) {
     return this.frontOfficeService.listContextUpdates(this.getCompanyId(user));
   }
 
   @Post("context-updates")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async createContextUpdate(
     @CurrentUser() user: AuthenticatedUser,
     @Body()
@@ -139,6 +159,8 @@ export class FrontOfficeController {
   }
 
   @Post("intake/classify")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async classify(
     @CurrentUser() user: AuthenticatedUser,
     @Body()
@@ -167,6 +189,8 @@ export class FrontOfficeController {
   }
 
   @Post("intake/message")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async intake(
     @CurrentUser() user: AuthenticatedUser,
     @Body()
@@ -201,11 +225,13 @@ export class FrontOfficeController {
   }
 
   @Get("queues")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
   async getQueues(@CurrentUser() user: AuthenticatedUser) {
     return this.frontOfficeService.getQueues(this.getCompanyId(user));
   }
 
   @Get("manager/bootstrap")
+  @Authorized(...FRONT_OFFICE_MANAGER_ROLES)
   async getManagerBootstrap(@CurrentUser() user: AuthenticatedUser) {
     return this.frontOfficeService.getTelegramWorkspaceBootstrap(
       this.getCompanyId(user),
@@ -214,6 +240,7 @@ export class FrontOfficeController {
   }
 
   @Get("manager/farms")
+  @Authorized(...FRONT_OFFICE_MANAGER_ROLES)
   async listManagerFarms(@CurrentUser() user: AuthenticatedUser) {
     return this.frontOfficeService.listManagerFarms(
       this.getCompanyId(user),
@@ -222,6 +249,7 @@ export class FrontOfficeController {
   }
 
   @Get("manager/farms/:farmId/threads")
+  @Authorized(...FRONT_OFFICE_MANAGER_ROLES)
   async listManagerFarmThreads(
     @CurrentUser() user: AuthenticatedUser,
     @Param("farmId") farmId: string,
@@ -234,32 +262,40 @@ export class FrontOfficeController {
   }
 
   @Get("threads")
+  @Authorized(...FRONT_OFFICE_THREAD_ROLES)
   async listThreads(@CurrentUser() user: AuthenticatedUser) {
+    if (user.role === UserRole.FRONT_OFFICE_USER) {
+      return this.frontOfficeService.listThreadsForViewer(
+        this.getCompanyId(user),
+        this.getViewer(user),
+      );
+    }
+
     return this.frontOfficeService.listThreads(this.getCompanyId(user));
   }
 
   @Get("threads/:threadKey/messages")
+  @Authorized(...FRONT_OFFICE_THREAD_ROLES)
   async listMessages(
     @CurrentUser() user: AuthenticatedUser,
     @Param("threadKey") threadKey: string,
   ) {
     return this.frontOfficeService.listMessagesForViewer(
       this.getCompanyId(user),
-      {
-        id: this.getUserId(user),
-        role: user.role,
-        accountId: user.accountId ?? null,
-      },
+      this.getViewer(user),
       threadKey,
     );
   }
 
   @Get("drafts/:id")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
   async getDraft(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.frontOfficeService.getDraft(this.getCompanyId(user), id);
   }
 
   @Post("drafts/:id/fix")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async fixDraft(
     @CurrentUser() user: AuthenticatedUser,
     @Param("id") id: string,
@@ -296,6 +332,8 @@ export class FrontOfficeController {
   }
 
   @Post("drafts/:id/link")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async linkDraft(
     @CurrentUser() user: AuthenticatedUser,
     @Param("id") id: string,
@@ -311,6 +349,8 @@ export class FrontOfficeController {
   }
 
   @Post("drafts/:id/confirm")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async confirmDraft(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.frontOfficeService.confirmDraft(
       this.getCompanyId(user),
@@ -320,11 +360,22 @@ export class FrontOfficeController {
   }
 
   @Get("threads/:threadKey")
+  @Authorized(...FRONT_OFFICE_THREAD_ROLES)
   async getThread(@CurrentUser() user: AuthenticatedUser, @Param("threadKey") threadKey: string) {
+    if (user.role === UserRole.FRONT_OFFICE_USER) {
+      return this.frontOfficeService.getThreadForViewer(
+        this.getCompanyId(user),
+        this.getViewer(user),
+        threadKey,
+      );
+    }
+
     return this.frontOfficeService.getThread(this.getCompanyId(user), threadKey);
   }
 
   @Post("threads/:threadKey/reply")
+  @Authorized(...FRONT_OFFICE_THREAD_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async replyToThread(
     @CurrentUser() user: AuthenticatedUser,
     @Param("threadKey") threadKey: string,
@@ -332,13 +383,15 @@ export class FrontOfficeController {
   ) {
     return this.frontOfficeService.replyToThread(
       this.getCompanyId(user),
-      { id: this.getUserId(user), role: user.role },
+      this.getViewer(user),
       threadKey,
       body.messageText,
     );
   }
 
   @Post("threads/:threadKey/read")
+  @Authorized(...FRONT_OFFICE_THREAD_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async markThreadRead(
     @CurrentUser() user: AuthenticatedUser,
     @Param("threadKey") threadKey: string,
@@ -346,22 +399,21 @@ export class FrontOfficeController {
   ) {
     return this.frontOfficeService.markThreadRead(
       this.getCompanyId(user),
-      this.getUserId(user),
+      this.getViewer(user),
       threadKey,
       body.lastMessageId,
     );
   }
 
   @Get("assignments")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Authorized(UserRole.ADMIN)
   async listAssignments(@CurrentUser() user: AuthenticatedUser) {
     return this.frontOfficeService.listAssignments(this.getCompanyId(user));
   }
 
   @Post("assignments")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Authorized(UserRole.ADMIN)
+  @UseInterceptors(IdempotencyInterceptor)
   async createAssignment(
     @CurrentUser() user: AuthenticatedUser,
     @Body()
@@ -371,23 +423,26 @@ export class FrontOfficeController {
   }
 
   @Delete("assignments/:id")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Authorized(UserRole.ADMIN)
   async deleteAssignment(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.frontOfficeService.deleteAssignment(this.getCompanyId(user), id);
   }
 
   @Get("handoffs")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
   async listHandoffs(@CurrentUser() user: AuthenticatedUser) {
     return this.frontOfficeService.listHandoffs(this.getCompanyId(user));
   }
 
   @Get("handoffs/:id")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
   async getHandoff(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.frontOfficeService.getHandoff(this.getCompanyId(user), id);
   }
 
   @Post("handoffs/:id/claim")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async claimHandoff(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.frontOfficeService.claimHandoff(
       this.getCompanyId(user),
@@ -397,6 +452,8 @@ export class FrontOfficeController {
   }
 
   @Post("handoffs/:id/reject")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async rejectHandoff(
     @CurrentUser() user: AuthenticatedUser,
     @Param("id") id: string,
@@ -411,6 +468,8 @@ export class FrontOfficeController {
   }
 
   @Post("handoffs/:id/resolve")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async resolveHandoff(
     @CurrentUser() user: AuthenticatedUser,
     @Param("id") id: string,
@@ -426,6 +485,8 @@ export class FrontOfficeController {
   }
 
   @Post("handoffs/:id/manual-note")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
   async addManualNote(
     @CurrentUser() user: AuthenticatedUser,
     @Param("id") id: string,
@@ -440,6 +501,7 @@ export class FrontOfficeController {
   }
 
   @Get("seasons/:id/history")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
   async getSeasonHistory(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.orchestratorService.getStageHistory(id, this.getCompanyId(user));
   }

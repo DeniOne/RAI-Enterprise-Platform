@@ -1,21 +1,12 @@
 ---
-id: DOC-ARH-GEN-188
-type: Legacy
+id: DOC-ARV-LEGACY-PROJECT-MAP-OLD-I5Z0
 layer: Archive
-status: Draft
+type: Legacy
+status: archived
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿---
-id: index-project-map
-type: concept
-status: approved
-owners: [architects]
-aligned_with: [principle-vision]
----
-
 # Project Map — RAI Enterprise Platform 🗺️
 
 # 🗺️ Карта проекта RAI Enterprise Platform

@@ -3,17 +3,22 @@ import { SeasonService } from "./season.service";
 import { Season } from "./dto/season.type";
 import { CreateSeasonInput } from "./dto/create-season.input";
 import { UpdateSeasonInput } from "./dto/update-season.input";
-import { UseGuards } from "@nestjs/common";
-import { GqlAuthGuard } from "../../shared/auth/auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
 import { User } from "@rai/prisma-client";
+import { AuthorizedGql } from "../../shared/auth/authorized-gql.decorator";
+import { Roles } from "../../shared/auth/roles.decorator";
+import {
+  PLANNING_READ_ROLES,
+  PLANNING_WRITE_ROLES,
+} from "../../shared/auth/rbac.constants";
 
 @Resolver(() => Season)
-@UseGuards(GqlAuthGuard)
+@AuthorizedGql(...PLANNING_READ_ROLES)
 export class SeasonResolver {
   constructor(private readonly seasonService: SeasonService) {}
 
   @Mutation(() => Season)
+  @Roles(...PLANNING_WRITE_ROLES)
   async createSeason(
     @Args("input") input: CreateSeasonInput,
     @CurrentUser() user: User,
@@ -22,6 +27,7 @@ export class SeasonResolver {
   }
 
   @Mutation(() => Season)
+  @Roles(...PLANNING_WRITE_ROLES)
   async updateSeason(
     @Args("input") input: UpdateSeasonInput,
     @CurrentUser() user: User,
@@ -30,6 +36,7 @@ export class SeasonResolver {
   }
 
   @Mutation(() => Season)
+  @Roles(...PLANNING_WRITE_ROLES)
   async completeSeason(
     @Args("id") id: string,
     @Args("actualYield") actualYield: number,
@@ -57,6 +64,7 @@ export class SeasonResolver {
   }
 
   @Mutation(() => Season)
+  @Roles(...PLANNING_WRITE_ROLES)
   async transitionSeasonStage(
     @Args("seasonId") seasonId: string,
     @Args("targetStageId") targetStageId: string,

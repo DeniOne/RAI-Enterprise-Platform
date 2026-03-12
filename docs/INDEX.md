@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-007
-type: Navigation
+id: DOC-META-INDEX-ESXJ
 layer: Meta
-status: Approved
+type: Navigation
+status: approved
 version: 2.1.0
 owners: [@techlead]
 last_updated: 2026-02-19
 ---
-
 # УКАЗАТЕЛЬ ДОКУМЕНТАЦИИ (RAI_EP)
 
 > **Версия Управления**: 2.0 (Enterprise Topology)

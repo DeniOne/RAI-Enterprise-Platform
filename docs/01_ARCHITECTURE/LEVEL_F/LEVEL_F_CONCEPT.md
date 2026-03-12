@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-LEVEL-F-LEVEL-F-CONCEPT-163V
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # LEVEL_F_CONCEPT.md
 
 ## 1. Стратегическое Позиционирование

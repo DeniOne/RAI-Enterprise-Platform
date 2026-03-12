@@ -1,13 +1,12 @@
 ---
-id: DOC-EXE-GEN-135
-type: Phase Plan
+id: DOC-EXE-07-EXECUTION-CONSULTING-CORE-EXECUTION-PLA-Z2M2
 layer: Execution
-status: Draft
+type: Phase Plan
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 # Consulting Core Implementation: Execution Plan
 Status: READY FOR EXECUTION
 Context: Phase Beta (Harvest Management & Consulting Core)

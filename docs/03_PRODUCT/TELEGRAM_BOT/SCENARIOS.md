@@ -1,19 +1,10 @@
 ---
-id: DOC-PRD-GEN-093
-type: UI Spec
+id: DOC-PRD-TELEGRAM-BOT-SCENARIOS-5I3O
 layer: Product
-status: Draft
+type: UI Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: guideline-design-bot-scenarios
-type: guideline
-status: approved
-owners: [designers]
-aligned_with: [principle-axioms]
----
-
 # TELEGRAM СЦЕНАРИИ

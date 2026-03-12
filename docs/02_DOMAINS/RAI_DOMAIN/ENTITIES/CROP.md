@@ -1,21 +1,12 @@
 ---
-id: DOC-DOM-GEN-067
-type: Domain Spec
+id: DOC-DOM-ENTITIES-CROP-ZOE4
 layer: Domain
-status: Draft
+type: Domain Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-rai-entity-crop
-type: component
-status: review
-owners: [domain-experts]
-aligned_with: [principle-vision]
----
-
 # Entity: Crop (Культура) 🌱
 
 > **Статус:** Канон | **Версия:** 1.0 | **Слой:** RAI/Entities

@@ -1,4 +1,11 @@
-﻿# MASTER MENU MAP (Факт -> План реализации)
+---
+id: DOC-FRN-10-FRONTEND-MENU-IMPLEMENTATION-00-MASTER--183J
+layer: Frontend
+type: Menu Map
+status: draft
+version: 0.1.0
+---
+# MASTER MENU MAP (Факт -> План реализации)
 
 ## Легенда статусов
 

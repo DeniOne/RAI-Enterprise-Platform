@@ -1,3 +1,10 @@
+---
+id: DOC-PRD-UI-UX-LEVEL-E-UI-SPEC-QMEO
+layer: Product
+type: UI Spec
+status: draft
+version: 0.1.0
+---
 # LEVEL E: Спецификация UI Устойчивости
 
 ## 1. Введение

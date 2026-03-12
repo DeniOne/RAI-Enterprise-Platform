@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-LEVEL-B-INVARIANT-EXTENSION-FOR-LEVEL-B-9XIU
+layer: Architecture
+type: Standards
+status: draft
+version: 0.1.0
+---
 # INVARIANT_EXTENSION_FOR_LEVEL_B.md
 
 ## 0. Статус документа

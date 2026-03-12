@@ -1,21 +1,12 @@
 ---
-id: DOC-EXE-GEN-140
-type: Phase Plan
+id: DOC-EXE-PHASE-BETA-CMR-ROADMAP-1FPB
 layer: Execution
-status: Draft
+type: Phase Plan
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-implementation-cmr-roadmap
-type: component
-status: review
-owners: [techleads, consultants]
-aligned_with: [principle-vision]
----
-
 # CMR Implementation Roadmap (Phase Beta)
 
 > **Статус:** **COMPLETED** | **Завершен:** 08.02.2026

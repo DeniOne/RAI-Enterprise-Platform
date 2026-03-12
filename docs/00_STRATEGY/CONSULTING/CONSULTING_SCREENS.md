@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-179
-type: Legacy
-layer: Archive
-status: Draft
+id: DOC-STR-CONSULTING-CONSULTING-SCREENS-9279
+layer: Strategy
+type: Vision
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
 1. Управление Урожаем — ЯДРО
 1.1 Обзор (Dashboard)
 

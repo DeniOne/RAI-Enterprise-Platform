@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-GEN-173
-type: Legacy
+id: DOC-ARV-ANTIGRAVITY-SOFTWARE-FACTORY-ORCHESTRATOR--1EOJ
 layer: Archive
-status: Draft
+type: Legacy
+status: archived
 version: 0.2.0
 owners: [@techlead]
 last_updated: 2026-03-04
 ---
-
 # ANTIGRAVITY SOFTWARE FACTORY
 ## ORCHESTRATOR PROMPT — ИНСТРУКЦИИ ДЛЯ КОДЕРА
 

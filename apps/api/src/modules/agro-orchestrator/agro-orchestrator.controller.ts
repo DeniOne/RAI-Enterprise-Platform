@@ -4,8 +4,8 @@ import {
   Post,
   Param,
   Body,
-  UseGuards,
   BadRequestException,
+  UseInterceptors,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -14,7 +14,6 @@ import {
   ApiBearerAuth,
 } from "@nestjs/swagger";
 import { AgroOrchestratorService } from "./agro-orchestrator.service";
-import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
 import { User } from "@rai/prisma-client";
 import {
@@ -23,6 +22,13 @@ import {
   AplEvent,
   APL_STATE_METADATA,
 } from "../../shared/state-machine";
+import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
+import { Authorized } from "../../shared/auth/authorized.decorator";
+import { Roles } from "../../shared/auth/roles.decorator";
+import {
+  PLANNING_READ_ROLES,
+  PLANNING_WRITE_ROLES,
+} from "../../shared/auth/rbac.constants";
 
 class TransitionDto {
   targetStage?: string; // @deprecated
@@ -37,7 +43,7 @@ class TransitionDto {
 @ApiTags("APL Orchestrator")
 @ApiBearerAuth()
 @Controller("orchestrator")
-@UseGuards(JwtAuthGuard)
+@Authorized(...PLANNING_READ_ROLES)
 export class AgroOrchestratorController {
   constructor(private readonly orchestratorService: AgroOrchestratorService) {}
 
@@ -74,8 +80,10 @@ export class AgroOrchestratorController {
    * POST /orchestrator/seasons/:id/initialize — Initialize season with first stage
    */
   @Post("seasons/:id/initialize")
+  @Roles(...PLANNING_WRITE_ROLES)
   @ApiOperation({ summary: "Инициализировать сезон (первый этап)" })
   @ApiResponse({ status: 200, description: "Сезон инициализирован" })
+  @UseInterceptors(IdempotencyInterceptor)
   async initializeSeason(
     @Param("id") seasonId: string,
     @CurrentUser() user: User,
@@ -91,7 +99,9 @@ export class AgroOrchestratorController {
    * POST /orchestrator/seasons/:id/transition — Transition to next stage (Compatibility)
    */
   @Post("seasons/:id/transition")
+  @Roles(...PLANNING_WRITE_ROLES)
   @ApiOperation({ summary: "Перейти к следующему этапу (Совместимость)" })
+  @UseInterceptors(IdempotencyInterceptor)
   async transitionToStage(
     @Param("id") seasonId: string,
     @Body() dto: TransitionDto,
@@ -119,7 +129,9 @@ export class AgroOrchestratorController {
    * POST /orchestrator/seasons/:id/event — Apply event to lifecycle
    */
   @Post("seasons/:id/event")
+  @Roles(...PLANNING_WRITE_ROLES)
   @ApiOperation({ summary: "Применить событие к жизненному циклу" })
+  @UseInterceptors(IdempotencyInterceptor)
   async applyEvent(
     @Param("id") seasonId: string,
     @Body() dto: TransitionDto,

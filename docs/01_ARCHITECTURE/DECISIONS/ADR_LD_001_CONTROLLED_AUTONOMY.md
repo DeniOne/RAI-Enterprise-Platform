@@ -1,13 +1,12 @@
 ---
-id: DOC-ARC-ADR-LD-001
+id: DOC-ARC-DECISIONS-ADR-LD-001-CONTROLLED-AUTONOMY-HXF6
 layer: Architecture
 type: ADR
-status: Accepted
+status: approved
 version: 2.0.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # ADR-LD-001: Controlled Autonomy (Контролируемая автономия)
 
 ## Контекст

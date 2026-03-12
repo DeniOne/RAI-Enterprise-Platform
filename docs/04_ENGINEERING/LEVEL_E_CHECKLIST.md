@@ -1,3 +1,10 @@
+---
+id: DOC-ENG-04-ENGINEERING-LEVEL-E-CHECKLIST-3MP3
+layer: Engineering
+type: Checklist
+status: draft
+version: 0.1.0
+---
 # LEVEL E Checklist: Regenerative Optimization (Contract-Driven)
 **Status**: Constitutional (v2.0.0)
 **Ref**: `LEVEL_E.md` (v2.0.0), `LEVEL_E_IMPLEMENTATION_PLAN.md`

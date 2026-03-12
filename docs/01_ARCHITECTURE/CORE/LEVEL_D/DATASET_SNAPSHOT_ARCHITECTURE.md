@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-CORE-LD-004
-type: Architecture
-layer: Core
-status: Draft
+id: DOC-ARC-LEVEL-D-DATASET-SNAPSHOT-ARCHITECTURE-DX5A
+layer: Architecture
+type: HLD
+status: draft
 version: 1.0.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # DATASET SNAPSHOT ARCHITECTURE
 ## Архитектура иммутабельных снимков данных для обучения
 

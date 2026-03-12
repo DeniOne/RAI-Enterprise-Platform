@@ -1,22 +1,12 @@
 ---
-id: DOC-ARC-GEN-047
-type: Standards
+id: DOC-ARC-PRINCIPLES-CANON-5Q4K
 layer: Architecture
-status: Draft
+type: Standards
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: principle-canon
-type: principle
-status: review
-owners: [architects]
-implements: [principle-axioms]
-tags: [highest-normative-act, needs-metrics, governance-gap]
----
-
 # PROJECT CANON
 
 ## 0. Статус документа

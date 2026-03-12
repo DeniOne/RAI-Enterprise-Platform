@@ -1,3 +1,10 @@
+---
+id: DOC-DOM-EVENTS-OBSERVATION-CATALOG-1FM2
+layer: Domain
+type: Domain Spec
+status: draft
+version: 0.1.0
+---
 # Observation Catalog (MVP) — RAI_EP
 Старт: RU/BY/KZ • Культуры: Рапс, Подсолнечник
 Назначение: стандартизировать полевая речь/медиа → EventDraft.payload

@@ -1,3 +1,10 @@
+---
+id: DOC-STR-STAGE-2-RAI-CONTRACTS-AGENT-CANON-8R6O
+layer: Strategy
+type: Vision
+status: draft
+version: 0.1.0
+---
 # RAI Contracts Agent Canon
 
 > Версия: 1.0  

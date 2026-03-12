@@ -1,14 +1,13 @@
 ---
-id: DOC-EXE-GEN-153
-type: Phase Plan
+id: DOC-EXE-PHASE-GAMMA-SPRINT-CHECKLIST-JKBV
 layer: Execution
-status: Draft
+type: Checklist
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿# Подробный чек-лист фазы Gamma (12 недель)
+# Подробный чек-лист фазы Gamma (12 недель)
 
 Этот документ разжевывает каждый спринт «на пальцах», чтобы даже твоя бабушка (или очень занятой босс) поняла, за что мы платим деньги и че там за магия происходит.
 

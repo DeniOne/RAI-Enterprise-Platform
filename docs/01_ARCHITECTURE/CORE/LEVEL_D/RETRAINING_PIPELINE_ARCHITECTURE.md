@@ -1,13 +1,12 @@
 ---
-id: DOC-ARH-CORE-LD-006
-type: Architecture
-layer: Core
-status: Accepted
+id: DOC-ARC-LEVEL-D-RETRAINING-PIPELINE-ARCHITECTURE-1YKB
+layer: Architecture
+type: HLD
+status: approved
 version: 3.0.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # RETRAINING PIPELINE ARCHITECTURE (The Magnum Opus)
 ## Архитектура Оркестратора Управляемой Эволюции (D6 Industrial)
 

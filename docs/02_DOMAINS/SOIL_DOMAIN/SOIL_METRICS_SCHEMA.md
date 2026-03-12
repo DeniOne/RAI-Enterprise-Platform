@@ -1,3 +1,10 @@
+---
+id: DOC-DOM-SOIL-DOMAIN-SOIL-METRICS-SCHEMA-7OQP
+layer: Domain
+type: Domain Spec
+status: draft
+version: 0.1.0
+---
 # Domain Expansion: Soil Metrics & Sustainability Layer
 
 ## 1. Data Entities (Prisma Proposals)

@@ -1,21 +1,12 @@
 ---
-id: DOC-DOM-GEN-063
-type: Domain Spec
+id: DOC-DOM-ENTERPRISE-DOMAIN-LEGAL-1GX4
 layer: Domain
-status: Draft
+type: Domain Spec
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
----
-id: component-enterprise-legal
-type: component
-status: review
-owners: [legal, architects]
-aligned_with: [principle-vision]
----
-
 # Domain: Legal & GR
 
 > **Contour:** 1 (Enterprise Back-Office) | **Module:** Legal

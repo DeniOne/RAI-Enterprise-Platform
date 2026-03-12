@@ -1,3 +1,10 @@
+---
+id: DOC-ENG-04-ENGINEERING-LEVEL-D-CHECKLIST-BZOY
+layer: Engineering
+type: Checklist
+status: draft
+version: 0.1.0
+---
 # LEVEL D — IMPLEMENTATION CHECKLIST (Phase 1: Foundation)
 ## Оперативный трекер разработки (D6+ Production Ready)
 

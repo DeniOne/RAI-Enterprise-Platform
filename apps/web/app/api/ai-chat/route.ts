@@ -20,7 +20,8 @@ export async function POST(req: NextRequest) {
                 'Content-Type': 'application/json',
                 // Forward original headers if needed (auth tokens, etc.)
                 'Authorization': req.headers.get('Authorization') || '',
-                'Cookie': req.headers.get('Cookie') || ''
+                'Cookie': req.headers.get('Cookie') || '',
+                'Idempotency-Key': req.headers.get('Idempotency-Key') || '',
             },
             body: JSON.stringify({
                 message: body.message,

@@ -1,13 +1,12 @@
 ---
-id: DOC-TST-LD-001
-type: Testing
-layer: Verification
-status: Accepted
+id: DOC-TST-08-TESTING-LEVEL-D-FORMAL-TEST-MATRIX-GLIP
+layer: Testing
+type: Test Spec
+status: approved
 version: 2.1.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # LEVEL D — FORMAL TEST MATRIX (D7 Final)
 ## Матрица формального тестирования Level D
 

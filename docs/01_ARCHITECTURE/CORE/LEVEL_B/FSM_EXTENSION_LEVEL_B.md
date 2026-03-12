@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-LEVEL-B-FSM-EXTENSION-LEVEL-B-10C6
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # FSM_EXTENSION_LEVEL_B.md
 
 ## 0. Статус документа

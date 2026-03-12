@@ -1,13 +1,12 @@
 ---
-id: DOC-DOM-AGRO-LC-003
-type: Domain Specification
-layer: Agro Domain (Business Layer)
-status: Draft
+id: DOC-DOM-AGRO-DOMAIN-DIVERGENCE-SCORE-SPEC-9IYW
+layer: Domain
+type: Domain Spec
+status: draft
 version: 1.6.0
 owners: [@techlead]
 last_updated: 2026-02-18
 ---
-
 # DIVERGENCE IMPACT SCORE
 ## Бизнес-метрика аномальности переопределений (Level C)
 

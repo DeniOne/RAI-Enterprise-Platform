@@ -1,21 +1,12 @@
 ---
-id: DOC-EXE-GEN-144
-type: Phase Plan
+id: DOC-EXE-PHASE-GAMMA-RISK-REGISTER-NY0J
 layer: Execution
-status: Draft
+type: Phase Plan
+status: draft
 version: 0.1.0
 owners: [@techlead]
 last_updated: 2026-02-15
 ---
-
-﻿---
-id: risk-impl-gamma-register
-type: risk
-status: review
-owners: [architects, security-officers]
-aligned_with: [principle-gamma-vision-scope]
----
-
 # Phase Gamma: Реестр рисков
 
 ## Риски и Отказы (Failure Modes)

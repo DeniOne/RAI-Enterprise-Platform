@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-LEVEL-F-LEVEL-F-INVARIANTS-1H8U
+layer: Architecture
+type: Standards
+status: draft
+version: 0.1.0
+---
 # LEVEL_F_INVARIANTS.md — Oracle Industrial Standard (Certified 10/10)
 
 ## 1. Введение
