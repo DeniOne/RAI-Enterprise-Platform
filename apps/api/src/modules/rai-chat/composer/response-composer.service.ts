@@ -60,7 +60,7 @@ import {
   detectClarificationContract,
   resolveContextValues,
   resolveMissingContextKeys,
-} from "../agent-contracts/agent-interaction-contracts";
+} from "../../../shared/rai-chat/agent-interaction-contracts";
 
 export interface BuildResponseParams {
   request: RaiChatRequestDto;

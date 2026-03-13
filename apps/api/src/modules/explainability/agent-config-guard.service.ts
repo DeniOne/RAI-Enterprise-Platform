@@ -13,7 +13,7 @@ import {
 import {
   buildResponsibilityBinding,
   validateResponsibilityProfileCompatibility,
-} from "../rai-chat/agent-contracts/agent-interaction-contracts";
+} from "../../shared/rai-chat/agent-interaction-contracts";
 
 const ROLE_TO_AGENT_NAME: Record<CanonicalAgentRuntimeRole, string> = {
   agronomist: "AgronomAgent",

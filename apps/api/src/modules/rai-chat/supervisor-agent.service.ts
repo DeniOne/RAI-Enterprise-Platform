@@ -16,7 +16,7 @@ import { RaiToolName } from "./tools/rai-tools.types";
 import { RecallResult } from "./memory/memory-coordinator.service";
 import {
   buildResumeExecutionPlan,
-} from "./agent-contracts/agent-interaction-contracts";
+} from "../../shared/rai-chat/agent-interaction-contracts";
 
 @Injectable()
 export class SupervisorAgent {

@@ -72,6 +72,27 @@ export type FrontOfficeClientReplyMode =
   | "pilot"
   | "rollout";
 
+export interface FrontOfficeIntakeInput {
+  channel: "telegram" | "web_chat" | "internal";
+  messageText: string;
+  direction?: "inbound" | "outbound";
+  threadExternalId?: string;
+  dialogExternalId?: string;
+  senderExternalId?: string;
+  recipientExternalId?: string;
+  route?: string;
+  targetOwnerRole?: string;
+  taskId?: string;
+  fieldId?: string;
+  seasonId?: string;
+  sourceMessageId?: string;
+  chatId?: string;
+  photoUrl?: string;
+  voiceUrl?: string;
+  coordinates?: any;
+  telemetryJson?: any;
+}
+
 export interface FrontOfficeDraftAnchor {
   farmRef: string | null;
   fieldId: string | null;

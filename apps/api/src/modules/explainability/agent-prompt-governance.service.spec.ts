@@ -11,7 +11,7 @@ import { AgentManagementService } from "./agent-management.service";
 import { AgentConfigGuardService } from "./agent-config-guard.service";
 import { AgentPromptGovernanceService } from "./agent-prompt-governance.service";
 import { IncidentOpsService } from "../rai-chat/incident-ops.service";
-import { RaiToolName } from "../rai-chat/tools/rai-tools.types";
+import { RaiToolName } from "../../shared/rai-chat/rai-tools.types";
 
 describe("AgentPromptGovernanceService", () => {
   let service: AgentPromptGovernanceService;

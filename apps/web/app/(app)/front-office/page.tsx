@@ -2,13 +2,12 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Card } from '@/components/ui';
 import { frontOfficeServerApi } from '@/lib/api/front-office-server';
-import { getUserData } from '@/lib/api/auth-server';
+import { getUserData, isExternalFrontOfficeUser } from '@/lib/api/auth-server';
 import { EXTERNAL_FRONT_OFFICE_BASE_PATH } from '@/lib/front-office-routes';
 
 export default async function FrontOfficePage() {
     const user = await getUserData();
-    const { role: viewerRole } = user ?? {};
-    const isExternalFrontOffice = viewerRole === 'FRONT_OFFICE_USER';
+    const isExternalFrontOffice = isExternalFrontOfficeUser(user);
 
     if (isExternalFrontOffice) {
         redirect(EXTERNAL_FRONT_OFFICE_BASE_PATH);

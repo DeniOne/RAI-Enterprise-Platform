@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getUserData } from '@/lib/api/auth-server';
+import { getUserData, isExternalFrontOfficeUser } from '@/lib/api/auth-server';
 import Link from 'next/link';
 import { EXTERNAL_FRONT_OFFICE_BASE_PATH } from '@/lib/front-office-routes';
 
@@ -24,8 +24,7 @@ export default async function FrontOfficeLayout({
         redirect('/login')
     }
 
-    const { role: viewerRole } = user ?? {};
-    if (viewerRole === 'FRONT_OFFICE_USER') {
+    if (isExternalFrontOfficeUser(user)) {
         redirect(EXTERNAL_FRONT_OFFICE_BASE_PATH);
     }
 

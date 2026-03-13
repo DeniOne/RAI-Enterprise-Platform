@@ -8,6 +8,7 @@ import {
 } from "../shared/api-client/api-client.service";
 import {
   SessionService,
+  UserSession,
 } from "../shared/session/session.service";
 
 const FRONT_OFFICE_CALLBACK_PREFIX = "fo";

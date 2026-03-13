@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import { TelegramNotificationService } from "../../modules/telegram/telegram-notification.service";
 import {
   FrontOfficeHandoffStatus,
   FrontOfficeReplyStatus,
   FrontOfficeThreadMessageAuthorType,
   FrontOfficeThreadMessageKind,
   FrontOfficeThreadRecord,
-} from "./front-office-draft.types";
+} from "../../modules/front-office-draft/front-office-draft.types";
 import { FrontOfficeCommunicationRepository } from "./front-office-communication.repository";
-import { TelegramNotificationService } from "../telegram/telegram-notification.service";
 
 @Injectable()
 export class FrontOfficeOutboundService {

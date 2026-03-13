@@ -4,7 +4,7 @@ import { PrismaService } from "../../shared/prisma/prisma.service";
 import { AgentManagementService } from "./agent-management.service";
 import { AgentConfigGuardService } from "./agent-config-guard.service";
 import { AgentRegistryService } from "../rai-chat/agent-registry.service";
-import { RaiToolName } from "../rai-chat/tools/rai-tools.types";
+import { RaiToolName } from "../../shared/rai-chat/rai-tools.types";
 
 describe("AgentManagementService", () => {
   let service: AgentManagementService;

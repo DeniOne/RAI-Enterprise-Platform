@@ -1,9 +1,10 @@
 import { TaskStatus } from "@rai/prisma-client";
 import { AuditService } from "../../shared/audit/audit.service";
+import { FrontOfficeCommunicationRepository } from "../../shared/front-office/front-office-communication.repository";
+import { FrontOfficeThreadingService } from "../../shared/front-office/front-office-threading.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { DeviationService } from "../cmr/deviation.service";
 import { FieldObservationService } from "../field-observation/field-observation.service";
-import { FrontOfficeCommunicationRepository } from "../front-office-draft/front-office-communication.repository";
 import { FrontOfficeDraftRepository } from "../front-office-draft/front-office-draft.repository";
 import { FrontOfficeHandoffOrchestrator } from "../front-office-draft/front-office-handoff.orchestrator.service";
 import { FrontOfficeDraftService } from "../front-office-draft/front-office-draft.service";
@@ -396,6 +397,12 @@ function createRuntime() {
     auditMock as unknown as AuditService,
     communicationRepositoryMock as unknown as FrontOfficeCommunicationRepository,
   );
+  const threadingService = new FrontOfficeThreadingService(
+    prismaMock as unknown as PrismaService,
+    communicationRepositoryMock as unknown as FrontOfficeCommunicationRepository,
+    outboundServiceMock as any,
+    telegramNotificationMock as unknown as TelegramNotificationService,
+  );
 
   const draftService = new FrontOfficeDraftService(
     prismaMock as unknown as PrismaService,
@@ -404,12 +411,11 @@ function createRuntime() {
     deviationMock as unknown as DeviationService,
     agentMock as unknown as FrontOfficeAgent,
     communicationRepositoryMock as unknown as FrontOfficeCommunicationRepository,
+    threadingService,
     replyPolicyMock as any,
-    outboundServiceMock as any,
     clientResponseOrchestratorMock as any,
     handoffOrchestrator,
     draftRepositoryMock as unknown as FrontOfficeDraftRepository,
-    telegramNotificationMock as unknown as TelegramNotificationService,
   );
 
   const service = new FrontOfficeService(

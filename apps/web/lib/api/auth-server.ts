@@ -22,3 +22,9 @@ export async function getUserData() {
         return null;
     }
 }
+
+export function isExternalFrontOfficeUser(
+    principal: { role?: string } | null | undefined,
+): boolean {
+    return principal?.role === 'FRONT_OFFICE_USER';
+}

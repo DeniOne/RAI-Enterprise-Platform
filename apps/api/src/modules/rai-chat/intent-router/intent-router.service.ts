@@ -10,7 +10,7 @@ import {
 import {
   buildAutoToolCallFromContracts,
   classifyByAgentContracts,
-} from "../agent-contracts/agent-interaction-contracts";
+} from "../../../shared/rai-chat/agent-interaction-contracts";
 
 @Injectable()
 export class IntentRouterService {

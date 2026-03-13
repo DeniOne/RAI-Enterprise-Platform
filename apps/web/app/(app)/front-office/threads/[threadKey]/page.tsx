@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { Card } from '@/components/ui';
 import { frontOfficeServerApi } from '@/lib/api/front-office-server';
-import { getUserData } from '@/lib/api/auth-server';
+import { getUserData, isExternalFrontOfficeUser } from '@/lib/api/auth-server';
 import { getExternalFrontOfficeThreadPath } from '@/lib/front-office-routes';
 
 export default async function FrontOfficeThreadPage({
@@ -13,8 +13,7 @@ export default async function FrontOfficeThreadPage({
     const { threadKey } = await params;
     const decodedThreadKey = decodeURIComponent(threadKey);
     const user = await getUserData();
-    const { role: viewerRole } = user ?? {};
-    const isExternalFrontOffice = viewerRole === 'FRONT_OFFICE_USER';
+    const isExternalFrontOffice = isExternalFrontOfficeUser(user);
 
     if (isExternalFrontOffice) {
         redirect(getExternalFrontOfficeThreadPath(decodedThreadKey));

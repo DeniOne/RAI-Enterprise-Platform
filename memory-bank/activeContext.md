@@ -2,6 +2,14 @@
 
 ## Текущая задача (2026-03-12)
 - [x] Введён `Architecture Growth Governance` как следующий слой после foundation remediation.
+- [x] Выполнен первый практический boundary-refactor после ввода growth-governance: thread/transport/binding слой `front-office` вынесен в `apps/api/src/shared/front-office`.
+- [x] Добавлены `FrontOfficeSharedModule`, `FrontOfficeThreadingService`, `FrontOfficeCommunicationRepository`, `FrontOfficeOutboundService`; `FrontOfficeDraftService` сокращён до domain orchestration.
+- [x] `front-office-draft` уменьшен до `8` файлов и `4246` строк по `architecture-budget-gate` (было `10` файлов и `5684` строк).
+- [x] Выполнен второй практический boundary-refactor: `rai-chat` interaction contracts вынесены в `apps/api/src/shared/rai-chat/agent-interaction-contracts.ts`.
+- [x] В `apps/api/src/modules/rai-chat/agent-contracts/agent-interaction-contracts.ts` оставлен re-export bridge; прямые импорты `supervisor/intent-router/response-composer/explainability` переведены на shared-path.
+- [x] Выполнен третий практический boundary-refactor: `rai-chat.dto`, `rai-tools.types` и `rai-chat-widgets.types` вынесены в `apps/api/src/shared/rai-chat` с re-export bridge в старых путях.
+- [x] Canonical imports для DTO/tool contracts переведены на shared-path в `shared/rai-chat`, `front-office-draft` и `explainability`.
+- [x] Размер `rai-chat` по `architecture-budget-gate` поэтапно снижен с `34256` до `31316`, затем до `29605` строк.
 - [x] Добавлены `scripts/architecture-budget-gate.cjs` и `scripts/architecture-budgets.json`: теперь контролируются размер `schema.prisma`, число top-level модулей и watch-list тяжёлых hotspots.
 - [x] В `package.json` добавлены `pnpm gate:architecture` и `pnpm gate:architecture:enforce`; guideline зафиксирован в `docs/05_OPERATIONS/DEVELOPMENT_GUIDELINES/ARCHITECTURE_GROWTH_GUARDRAILS.md`.
 - [x] `RAI_EP_SYSTEM_AUDIT_DELTA_2026-03-12.md` и `memory-bank/progress.md` синхронизированы: module complexity переведён в `частично закрыто / growth-governance введён`.

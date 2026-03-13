@@ -3,14 +3,14 @@ import {
   RaiChatRequestDto,
   WorkspaceEntityKind,
   WorkspaceContextDto,
-} from "../rai-chat/dto/rai-chat.dto";
+} from "../../shared/rai-chat/rai-chat.dto";
 import { RaiChatService } from "../rai-chat/rai-chat.service";
 import {
   FrontOfficeDraftRecord,
   FrontOfficeReplyStatus,
   FrontOfficeThreadRecord,
 } from "./front-office-draft.types";
-import { FrontOfficeOutboundService } from "./front-office-outbound.service";
+import { FrontOfficeOutboundService } from "../../shared/front-office/front-office-outbound.service";
 
 @Injectable()
 export class FrontOfficeClientResponseOrchestrator {

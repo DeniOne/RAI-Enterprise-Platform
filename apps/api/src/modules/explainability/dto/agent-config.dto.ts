@@ -2,7 +2,7 @@ import { z } from "zod";
 import {
   isAgentRuntimeRole,
 } from "../../rai-chat/agent-registry.service";
-import { RaiToolName } from "../../rai-chat/tools/rai-tools.types";
+import { RaiToolName } from "../../../shared/rai-chat/rai-tools.types";
 import { AgentAutonomyMode, AgentMemoryScope } from "../../rai-chat/agent-platform/agent-platform.types";
 import {
   FALLBACK_MODES,

@@ -1,6 +1,28 @@
 # Progress Report - Prisma, Agro Domain & RAI Chat Integration
 
+## 2026-03-13
+
+84. **Architecture Simplification — RAI Chat DTO/Tools/Widgets Contract Extraction** [DONE]:
+    *   Выполнен третий практический boundary-refactor в `rai-chat`: `dto/rai-chat.dto.ts`, `tools/rai-tools.types.ts` и `widgets/rai-chat-widgets.types.ts` вынесены из `apps/api/src/modules/rai-chat` в `apps/api/src/shared/rai-chat`.
+    *   В старых путях оставлены тонкие re-export bridge файлы: `apps/api/src/modules/rai-chat/dto/rai-chat.dto.ts`, `apps/api/src/modules/rai-chat/tools/rai-tools.types.ts`, `apps/api/src/modules/rai-chat/widgets/rai-chat-widgets.types.ts`.
+    *   Canonical imports переведены на shared-path для `agent-interaction-contracts`, `front-office-client-response.orchestrator`, `agent-management`, `agent-config-guard.spec`, `agent-prompt-governance.spec`, `agent-management.spec`, `agent-config.dto`.
+    *   По `architecture-budget-gate` размер `rai-chat` дополнительно снижен с `31316` до `29605` строк при сохранении `139` файлов.
+    *   Верификация: `pnpm -C apps/api build` PASS; `pnpm -C apps/api test -- --runInBand --silent src/modules/rai-chat/agent-contracts/agent-interaction-contracts.spec.ts src/modules/explainability/agent-config-guard.service.spec.ts src/modules/explainability/agent-management.service.spec.ts src/modules/explainability/agent-prompt-governance.service.spec.ts src/modules/front-office-draft/front-office-draft.service.spec.ts` PASS; `node scripts/architecture-budget-gate.cjs` PASS.
+
 ## 2026-03-12
+
+83. **Architecture Simplification — RAI Chat Contract Layer Extraction** [DONE]:
+    *   Выполнен второй практический boundary-refactor после `front-office`: `agent-interaction-contracts` вынесен из `apps/api/src/modules/rai-chat/agent-contracts` в `apps/api/src/shared/rai-chat/agent-interaction-contracts.ts`.
+    *   В `modules/rai-chat/agent-contracts/agent-interaction-contracts.ts` оставлен тонкий re-export bridge для совместимости и безопасного перехода.
+    *   Переподключены прямые импортирующие контуры `rai-chat` и `explainability` на shared-path: `supervisor`, `intent-router`, `response-composer`, `agent-config-guard`, `agent-management`.
+    *   По `architecture-budget-gate` размер `rai-chat` снижен с `34256` до `31316` строк при сохранении `139` файлов.
+    *   Верификация: `pnpm -C apps/api build` PASS; `pnpm -C apps/api test -- --runInBand src/modules/rai-chat/agent-contracts/agent-interaction-contracts.spec.ts src/modules/explainability/agent-config-guard.service.spec.ts src/modules/explainability/agent-management.service.spec.ts` PASS; `node scripts/architecture-budget-gate.cjs` PASS.
+
+82. **Architecture Simplification — Front-Office Shared Boundary Extraction** [DONE]:
+    *   Выполнен первый практический boundary-refactor после ввода growth-governance: из `apps/api/src/modules/front-office-draft` вынесены thread/transport/binding компоненты в `apps/api/src/shared/front-office`.
+    *   Введены `FrontOfficeSharedModule`, `FrontOfficeThreadingService`, `FrontOfficeCommunicationRepository`, `FrontOfficeOutboundService`; `FrontOfficeDraftService` сокращён до domain orchestration (intake/decision/commit/handoff).
+    *   Модуль `front-office-draft` уменьшен с `10` до `8` файлов; по `architecture-budget-gate` размер снизился с `5684` до `4246` строк.
+    *   Верификация: `pnpm -C apps/api build` PASS; `pnpm -C apps/api test -- --runInBand src/modules/front-office-draft/front-office-draft.service.spec.ts src/modules/front-office/front-office.e2e.spec.ts` PASS; `node scripts/architecture-budget-gate.cjs` PASS.
 
 81. **Architecture Growth Governance** [DONE]:
     *   Введён `scripts/architecture-budget-gate.cjs` как отдельный control-layer для роста архитектурной сложности.

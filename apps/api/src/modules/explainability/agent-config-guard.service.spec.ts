@@ -3,7 +3,7 @@ import { BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { AgentConfigGuardService } from "./agent-config-guard.service";
 import { GoldenTestRunnerService } from "../rai-chat/eval/golden-test-runner.service";
-import { RaiToolName } from "../rai-chat/tools/rai-tools.types";
+import { RaiToolName } from "../../shared/rai-chat/rai-tools.types";
 
 describe("AgentConfigGuardService", () => {
   let service: AgentConfigGuardService;

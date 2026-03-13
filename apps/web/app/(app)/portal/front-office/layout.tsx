@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getUserData } from "@/lib/api/auth-server";
+import { getUserData, isExternalFrontOfficeUser } from "@/lib/api/auth-server";
 import { EXTERNAL_FRONT_OFFICE_BASE_PATH } from "@/lib/front-office-routes";
 
 const NAV_ITEMS = [{ href: EXTERNAL_FRONT_OFFICE_BASE_PATH, label: "Диалоги" }];
@@ -16,7 +16,7 @@ export default async function ExternalFrontOfficeLayout({
     redirect("/login");
   }
 
-  if (user.role !== "FRONT_OFFICE_USER") {
+  if (!isExternalFrontOfficeUser(user)) {
     redirect("/front-office");
   }
 

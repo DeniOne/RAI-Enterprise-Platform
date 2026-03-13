@@ -39,8 +39,8 @@
 | Audit logs immutability | Нет immutable storage для audit logs | **Логически закрыто / compliance-grade S3 path введён** | `apps/api/src/shared/audit/audit.service.ts`, `apps/api/src/shared/audit/audit-notarization.service.ts`, `apps/api/src/level-f/worm/worm-storage.service.ts`, `apps/api/src/shared/audit/audit.controller.ts`, `apps/api/src/modules/health/health.controller.ts`, `packages/prisma-client/migrations/20260312170000_audit_log_append_only_enforcement/migration.sql`, `packages/prisma-client/migrations/20260312201500_audit_notarization_worm_layer/migration.sql`, `apps/api/src/shared/audit/audit.service.spec.ts`, `apps/api/src/shared/audit/audit-notarization.service.spec.ts`, `apps/api/src/level-f/worm/worm-storage.service.spec.ts`, `scripts/setup-minio.ts`, `docs/05_OPERATIONS/WORKFLOWS/WORM_S3_COMPLIANCE_ROLLOUT.md` | `audit_logs` и `audit_notarization_records` уже append-only, proof вынесен во внешний WORM object, есть HSM-подписанный hash-chain, proof endpoint, health-readiness, fail-closed `production`-политика для `filesystem` и проверка `Object Lock`/default retention для `s3_compatible|dual`; фактический rollout в конкретное production-окружение теперь сводится к конфигурации и запуску bootstrap/runbook, а не к недостающему engineering-блоку |
 | Raw SQL bypass | `$queryRaw` обходит типизацию и контур безопасности | **Логически закрыто / с одобренными исключениями** | `scripts/raw-sql-governance.cjs`, `scripts/raw-sql-allowlist.json`, `scripts/invariant-gate.cjs`, `apps/api/src/shared/prisma/prisma.service.ts`, `apps/api/src/shared/memory/consolidation.worker.ts`, `apps/api/src/shared/memory/default-memory-adapter.service.ts`, `scripts/backfill-outbox-companyid.cjs`, `scripts/verify-task-fsm-db.cjs` | Policy layer введён, `Unsafe`-варианты убраны, memory path переведён на safe wrappers; approved production raw SQL остаётся только в finance/outbox/vector-store и считается контролируемым исключением, а не незакрытой дырой |
 | Engram pruning | Без регулярного прунинга память деградирует | **Логически закрыто / production-grade control-plane введён** | `apps/api/src/shared/memory/engram.service.ts`, `apps/api/src/shared/memory/engram.service.spec.ts`, `apps/api/src/shared/memory/engram-formation.worker.ts`, `apps/api/src/shared/memory/engram-formation.worker.spec.ts`, `apps/api/src/shared/memory/consolidation.worker.ts`, `apps/api/src/shared/memory/consolidation.worker.spec.ts`, `apps/api/src/shared/memory/memory-lifecycle-control.util.ts`, `apps/api/src/shared/memory/memory-maintenance.service.ts`, `apps/api/src/shared/memory/memory-auto-remediation.service.ts`, `apps/api/src/shared/invariants/invariant-metrics.ts`, `apps/api/src/shared/invariants/invariant-metrics.controller.ts`, `apps/api/src/shared/invariants/invariant-metrics.controller.spec.ts`, `infra/monitoring/prometheus/invariant-alert-rules.yml`, `docs/INVARIANT_ALERT_RUNBOOK_RU.md` | Scheduler, bootstrap recovery, observability, pause windows, error-budget, burn-rate escalation, tenant-scoped manual control-plane и auto-remediation уже введены; дальше возможен только следующий UX/operational layer, а не незакрытый foundation-gap |
-| Prisma schema size | Схема почти 6000 строк | **Актуально** | `packages/prisma-client/schema.prisma` = 5958 строк | Высокая стоимость миграций, генерации клиента и ревью |
-| Module complexity | 38+ модулей, высокий coupling | **Частично закрыто / growth-governance введён** | `apps/api/src/modules/` содержит 38 top-level доменных директорий, `packages/prisma-client/schema.prisma`, `scripts/architecture-budget-gate.cjs`, `scripts/architecture-budgets.json`, `docs/05_OPERATIONS/DEVELOPMENT_GUIDELINES/ARCHITECTURE_GROWTH_GUARDRAILS.md` | Сложность никуда не делась, но теперь есть явный budget-gate для `schema.prisma`, количества top-level модулей и тяжёлых hotspots; следующий шаг — уже реальный boundary refactor, а не слепой рост |
+| Prisma schema size | Схема почти 6000 строк | **Актуально** | `packages/prisma-client/schema.prisma` = 6107 строк | Высокая стоимость миграций, генерации клиента и ревью |
+| Module complexity | 38+ модулей, высокий coupling | **Частично закрыто / growth-governance + последовательные boundary-refactor срезы введены** | `apps/api/src/modules/` содержит 38 top-level доменных директорий, `packages/prisma-client/schema.prisma`, `scripts/architecture-budget-gate.cjs`, `scripts/architecture-budgets.json`, `docs/05_OPERATIONS/DEVELOPMENT_GUIDELINES/ARCHITECTURE_GROWTH_GUARDRAILS.md`, `apps/api/src/shared/front-office/front-office-threading.service.ts`, `apps/api/src/shared/front-office/front-office-communication.repository.ts`, `apps/api/src/shared/front-office/front-office-outbound.service.ts`, `apps/api/src/shared/rai-chat/agent-interaction-contracts.ts`, `apps/api/src/shared/rai-chat/rai-chat.dto.ts`, `apps/api/src/shared/rai-chat/rai-tools.types.ts`, `apps/api/src/shared/rai-chat/rai-chat-widgets.types.ts` | Сложность остаётся высокой, но growth-gate уже работает, а уже выполнены три практических разреза: thread/transport/binding слой вынесен из `front-office-draft`, затем в shared вынесены `rai-chat` interaction contracts и общий contracts/DTO/widgets слой (`rai-chat.dto`, `rai-tools.types`, `rai-chat-widgets.types`); следующий шаг — глубокий разрез `rai-chat` по execution/governance slices, затем `tech-map`/`consulting`/`finance-economy` |
 
 ---
 
@@ -492,13 +492,16 @@
 - бюджеты зафиксированы в `scripts/architecture-budgets.json`;
 - контролируются `schema.prisma` line-count, число top-level модулей и watch-list тяжёлых hotspots;
 - для новых больших модулей появился не декоративный, а явный сигнал о том, что boundary уже вышел в опасную зону;
-- developer-guideline зафиксирован в `docs/05_OPERATIONS/DEVELOPMENT_GUIDELINES/ARCHITECTURE_GROWTH_GUARDRAILS.md`.
+- developer-guideline зафиксирован в `docs/05_OPERATIONS/DEVELOPMENT_GUIDELINES/ARCHITECTURE_GROWTH_GUARDRAILS.md`;
+- выполнен первый практический boundary-refactor: thread/transport/binding слой `front-office` вынесен из `apps/api/src/modules/front-office-draft` в `apps/api/src/shared/front-office`, при этом `front-office-draft` сокращён до domain orchestration.
+- выполнен второй практический boundary-refactor: `rai-chat` contract-layer (`agent-interaction-contracts`) вынесен из `apps/api/src/modules/rai-chat` в `apps/api/src/shared/rai-chat`; размер `rai-chat` по `architecture-gate` снижен с `34256` до `31316` строк;
+- выполнен третий практический boundary-refactor: общий `rai-chat` contracts/DTO/widgets слой (`rai-chat.dto`, `rai-tools.types`, `rai-chat-widgets.types`) вынесен из `apps/api/src/modules/rai-chat` в `apps/api/src/shared/rai-chat`; размер `rai-chat` по `architecture-gate` дополнительно снижен с `31316` до `29605` строк.
 
 Практический вывод:
 
 - архитектурная сложность всё ещё остаётся реальной проблемой;
 - но теперь рост этой сложности хотя бы инструментирован и не должен дальше происходить бесконтрольно;
-- следующий инженерный шаг здесь — не ещё один guard-script, а целевой refactor самых тяжёлых boundary: прежде всего `rai-chat`, затем `tech-map` / `front-office-draft` / `consulting` / `finance-economy`.
+- следующий инженерный шаг здесь — не ещё один guard-script, а целевой deep-refactor самых тяжёлых boundary: прежде всего следующий срез `rai-chat` (execution/governance), затем `tech-map` / `consulting` / `finance-economy`.
 
 ## 5. ПРИОРИТЕТ УСТРАНЕНИЯ ОСТАВШИХСЯ РИСКОВ
 
@@ -506,8 +509,8 @@
 
 1. **Архитектурное упрощение схемы и модулей**
    - технический фундамент уже сильно усилен;
-   - growth-governance для схемы и модулей уже введён;
-   - следующий крупный выигрыш теперь лежит в реальном boundary-refactor самых тяжёлых модулей, а не в закрытии оставшихся foundation-gaps.
+   - growth-governance для схемы и модулей уже введён, и уже сделаны три boundary-refactor среза (`front-office-draft`, `rai-chat interaction contracts`, `rai-chat contracts/DTO/widgets`);
+   - следующий крупный выигрыш теперь лежит в глубоком boundary-refactor самых тяжёлых модулей (`rai-chat` execution/governance в первую очередь), а не в закрытии оставшихся foundation-gaps.
 
 2. **Эволюционное сопровождение частично закрытых foundation-блоков**
    - `multi-tenancy`, `RLS`, `FSM`, `agent hard-stop` уже имеют фундамент, но требуют дисциплины при каждом новом модуле и migration path;
@@ -550,6 +553,10 @@
 - `src/shared/outbox/outbox-wakeup.service.spec.ts`
 - `src/modules/finance-economy/economy/test/ledger-hardening.integration.spec.ts`
 - `src/modules/front-office-draft/front-office-draft.service.spec.ts`
+- `src/modules/front-office/front-office.e2e.spec.ts`
+- `src/modules/rai-chat/agent-contracts/agent-interaction-contracts.spec.ts`
+- `src/modules/explainability/agent-config-guard.service.spec.ts`
+- `src/modules/explainability/agent-management.service.spec.ts`
 - `src/shared/auth/front-office-auth.service.spec.ts`
 - `src/modules/front-office/front-office-external.controller.spec.ts`
 - `pnpm --filter web exec tsc --noEmit --pretty false`
@@ -589,4 +596,7 @@ Baseline-аудит от 2026-03-11 больше нельзя использов
 - блок `Secrets / HSM / broader secret centralization` логически закрыт: `Vault Transit` path, `kid` propagation, `*_FILE` secret loading и platform-wide `SecretsService` введены;
 - блок `Audit log notarization / WORM` тоже логически закрыт как runtime/bootstrap слой: compliance-grade `s3_compatible` contour, `Object Lock` verification и fail-closed production-policy введены;
 - архитектурная сложность теперь хотя бы поставлена под growth-control, но не устранена;
-- главный следующий фокус уже логичнее смещать в сторону реального boundary-refactor тяжёлых модулей и постоянного discipline-control над частично закрытыми foundation-блоками.
+- первый реальный boundary-refactor уже выполнен на `front-office-draft`;
+- второй boundary-refactor уже выполнен на `rai-chat` interaction contract-layer с измеримым снижением размера модуля;
+- третий boundary-refactor выполнен на `rai-chat` contracts/DTO/widgets слое (ещё один измеримый шаг снижения размера модуля);
+- главный следующий фокус логично смещать в сторону deep-среза `rai-chat` execution/governance и остальных тяжёлых модулей, плюс постоянный discipline-control над частично закрытыми foundation-блоками.

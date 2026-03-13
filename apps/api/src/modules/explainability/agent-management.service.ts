@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { Prisma, type AgentConfiguration } from "@rai/prisma-client";
-import { RaiToolName } from "../rai-chat/tools/rai-tools.types";
+import { RaiToolName } from "../../shared/rai-chat/rai-tools.types";
 import type {
   AgentConfigItemDto,
   AgentConfigsResponseDto,
@@ -23,7 +23,7 @@ import { EffectiveAgentKernelEntry } from "../rai-chat/agent-platform/agent-plat
 import {
   buildResponsibilityBinding,
   validateResponsibilityProfileCompatibility,
-} from "../rai-chat/agent-contracts/agent-interaction-contracts";
+} from "../../shared/rai-chat/agent-interaction-contracts";
 
 const FUTURE_AGENT_TEMPLATES: FutureAgentTemplateDto[] = [
   {

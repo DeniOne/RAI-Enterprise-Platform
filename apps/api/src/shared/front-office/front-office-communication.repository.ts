@@ -1,20 +1,20 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@rai/prisma-client";
-import { PrismaService } from "../../shared/prisma/prisma.service";
+import { PrismaService } from "../prisma/prisma.service";
 import {
   BackOfficeFarmAssignmentRecord,
   FrontOfficeChannel,
   FrontOfficeHandoffRecord,
   FrontOfficeHandoffStatus,
   FrontOfficeIntent,
+  FrontOfficeThreadClassification,
   FrontOfficeThreadDeliveryStatus,
+  FrontOfficeMessageRecord,
   FrontOfficeThreadMessageAuthorType,
   FrontOfficeThreadMessageKind,
-  FrontOfficeMessageRecord,
   FrontOfficeThreadParticipantStateRecord,
-  FrontOfficeThreadClassification,
   FrontOfficeThreadRecord,
-} from "./front-office-draft.types";
+} from "../../modules/front-office-draft/front-office-draft.types";
 
 @Injectable()
 export class FrontOfficeCommunicationRepository {
@@ -267,25 +267,13 @@ export class FrontOfficeCommunicationRepository {
     return this.mapHandoff(handoff);
   }
 
-  async listHandoffs(
-    companyId: string,
-    params?: {
-      status?: FrontOfficeHandoffStatus;
-      targetOwnerRole?: string;
-      take?: number;
-    },
-  ): Promise<FrontOfficeHandoffRecord[]> {
-    const rows = await this.prisma.frontOfficeHandoffRecord.findMany({
-      where: {
-        companyId,
-        ...(params?.status ? { status: params.status } : {}),
-        ...(params?.targetOwnerRole ? { targetOwnerRole: params.targetOwnerRole } : {}),
-      },
-      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
-      take: params?.take ?? 100,
+  async listHandoffs(companyId: string): Promise<FrontOfficeHandoffRecord[]> {
+    const items = await this.prisma.frontOfficeHandoffRecord.findMany({
+      where: { companyId },
+      orderBy: [{ createdAt: "desc" }],
+      take: 100,
     });
-
-    return rows.map((row) => this.mapHandoff(row));
+    return items.map((item) => this.mapHandoff(item));
   }
 
   async getThreadByKey(companyId: string, threadKey: string): Promise<FrontOfficeThreadRecord> {
@@ -314,41 +302,39 @@ export class FrontOfficeCommunicationRepository {
 
   async listThreads(
     companyId: string,
-    params?: {
-      currentHandoffStatus?: FrontOfficeHandoffStatus;
+    options?: {
+      take?: number;
       farmAccountId?: string;
       farmAccountIds?: string[];
       boundOnly?: boolean;
-      take?: number;
     },
   ): Promise<FrontOfficeThreadRecord[]> {
-    const rows = await this.prisma.frontOfficeThread.findMany({
+    const threads = await this.prisma.frontOfficeThread.findMany({
       where: {
         companyId,
-        ...(params?.currentHandoffStatus
-          ? { currentHandoffStatus: params.currentHandoffStatus }
+        ...(options?.boundOnly ? { farmAccountId: { not: null } } : {}),
+        ...(options?.farmAccountId ? { farmAccountId: options.farmAccountId } : {}),
+        ...(options?.farmAccountIds?.length
+          ? { farmAccountId: { in: options.farmAccountIds } }
           : {}),
-        ...(params?.farmAccountId ? { farmAccountId: params.farmAccountId } : {}),
-        ...(params?.farmAccountIds?.length
-          ? { farmAccountId: { in: params.farmAccountIds } }
-          : {}),
-        ...(params?.boundOnly ? { farmAccountId: { not: null } } : {}),
       },
-      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
-      take: params?.take ?? 100,
+      orderBy: [{ lastMessageAt: "desc" }, { updatedAt: "desc" }],
+      take: options?.take ?? 100,
     });
 
-    return rows.map((row) => this.mapThread(row));
+    return threads.map((thread) => this.mapThread(thread));
   }
 
-  async listMessages(companyId: string, threadId: string): Promise<FrontOfficeMessageRecord[]> {
-    const rows = await this.prisma.frontOfficeThreadMessage.findMany({
+  async listMessages(
+    companyId: string,
+    threadId: string,
+  ): Promise<FrontOfficeMessageRecord[]> {
+    const messages = await this.prisma.frontOfficeThreadMessage.findMany({
       where: { companyId, threadId },
-      orderBy: { createdAt: "asc" },
-      take: 500,
+      orderBy: [{ createdAt: "asc" }],
+      take: 300,
     });
-
-    return rows.map((row) => this.mapMessage(row));
+    return messages.map((message) => this.mapMessage(message));
   }
 
   async listMessagesForThreads(
@@ -359,38 +345,78 @@ export class FrontOfficeCommunicationRepository {
       return [];
     }
 
-    const rows = await this.prisma.frontOfficeThreadMessage.findMany({
-      where: { companyId, threadId: { in: threadIds } },
-      orderBy: [{ threadId: "asc" }, { createdAt: "asc" }],
-      take: 2000,
-    });
-
-    return rows.map((row) => this.mapMessage(row));
-  }
-
-  async listAssignments(
-    companyId: string,
-    params?: { userId?: string; status?: string; take?: number },
-  ): Promise<BackOfficeFarmAssignmentRecord[]> {
-    const rows = await this.prisma.backOfficeFarmAssignment.findMany({
+    const messages = await this.prisma.frontOfficeThreadMessage.findMany({
       where: {
         companyId,
-        ...(params?.userId ? { userId: params.userId } : {}),
-        ...(params?.status ? { status: params.status } : {}),
+        threadId: { in: threadIds },
       },
-      include: {
-        farmAccount: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+      orderBy: [{ createdAt: "asc" }],
+    });
+    return messages.map((message) => this.mapMessage(message));
+  }
+
+  async upsertParticipantState(input: {
+    companyId: string;
+    threadId: string;
+    userId: string;
+    lastReadMessageId?: string | null;
+    lastReadAt?: string | Date | null;
+  }): Promise<FrontOfficeThreadParticipantStateRecord> {
+    const existing = await this.prisma.frontOfficeThreadParticipantState.findFirst({
+      where: {
+        companyId: input.companyId,
+        threadId: input.threadId,
+        userId: input.userId,
       },
-      orderBy: [{ priority: "desc" }, { updatedAt: "desc" }],
-      take: params?.take ?? 200,
     });
 
-    return rows.map((row) => this.mapAssignment(row));
+    if (!existing) {
+      const created = await this.prisma.frontOfficeThreadParticipantState.create({
+        data: {
+          companyId: input.companyId,
+          threadId: input.threadId,
+          userId: input.userId,
+          lastReadMessageId: input.lastReadMessageId ?? null,
+          lastReadAt: input.lastReadAt ? new Date(input.lastReadAt) : null,
+        },
+      });
+      return this.mapParticipantState(created);
+    }
+
+    const updated = await this.prisma.frontOfficeThreadParticipantState.update({
+      where: { id: existing.id },
+      data: {
+        lastReadMessageId:
+          input.lastReadMessageId !== undefined ? input.lastReadMessageId : undefined,
+        lastReadAt:
+          input.lastReadAt !== undefined
+            ? input.lastReadAt
+              ? new Date(input.lastReadAt)
+              : null
+            : undefined,
+      },
+    });
+
+    return this.mapParticipantState(updated);
+  }
+
+  async listParticipantStates(
+    companyId: string,
+    userId: string,
+    threadIds: string[],
+  ): Promise<FrontOfficeThreadParticipantStateRecord[]> {
+    if (threadIds.length === 0) {
+      return [];
+    }
+
+    const states = await this.prisma.frontOfficeThreadParticipantState.findMany({
+      where: {
+        companyId,
+        userId,
+        threadId: { in: threadIds },
+      },
+    });
+    return states.map((item) => this.mapParticipantState(item));
   }
 
   async createAssignment(input: {
@@ -400,29 +426,44 @@ export class FrontOfficeCommunicationRepository {
     status?: string;
     priority?: number;
   }): Promise<BackOfficeFarmAssignmentRecord> {
-    const created = await this.prisma.backOfficeFarmAssignment.upsert({
+    const existing = await this.prisma.backOfficeFarmAssignment.findFirst({
       where: {
-        back_office_farm_assignment_unique: {
-          companyId: input.companyId,
-          userId: input.userId,
-          farmAccountId: input.farmAccountId,
-        },
+        companyId: input.companyId,
+        userId: input.userId,
+        farmAccountId: input.farmAccountId,
       },
-      create: {
+    });
+
+    if (existing) {
+      const updated = await this.prisma.backOfficeFarmAssignment.update({
+        where: { id: existing.id },
+        data: {
+          status: input.status ?? existing.status,
+          priority: input.priority ?? existing.priority,
+        },
+        include: {
+          farmAccount: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      });
+
+      return this.mapAssignment(updated);
+    }
+
+    const created = await this.prisma.backOfficeFarmAssignment.create({
+      data: {
         companyId: input.companyId,
         userId: input.userId,
         farmAccountId: input.farmAccountId,
         status: input.status ?? "ACTIVE",
-        priority: input.priority ?? 0,
-      },
-      update: {
-        status: input.status ?? "ACTIVE",
-        priority: input.priority ?? 0,
+        priority: input.priority ?? 100,
       },
       include: {
         farmAccount: {
           select: {
-            id: true,
             name: true,
           },
         },
@@ -436,9 +477,8 @@ export class FrontOfficeCommunicationRepository {
     const deleted = await this.prisma.backOfficeFarmAssignment.deleteMany({
       where: { id: assignmentId, companyId },
     });
-
     if (deleted.count !== 1) {
-      throw new NotFoundException("Back-office farm assignment not found");
+      throw new NotFoundException("Front-office assignment not found");
     }
   }
 
@@ -447,74 +487,51 @@ export class FrontOfficeCommunicationRepository {
     userId: string,
     farmAccountId: string,
   ): Promise<BackOfficeFarmAssignmentRecord | null> {
-    const row = await this.prisma.backOfficeFarmAssignment.findFirst({
-      where: { companyId, userId, farmAccountId, status: "ACTIVE" },
+    const assignment = await this.prisma.backOfficeFarmAssignment.findFirst({
+      where: {
+        companyId,
+        userId,
+        farmAccountId,
+        status: "ACTIVE",
+      },
       include: {
         farmAccount: {
           select: {
-            id: true,
             name: true,
           },
         },
       },
     });
 
-    return row ? this.mapAssignment(row) : null;
+    return assignment ? this.mapAssignment(assignment) : null;
   }
 
-  async upsertParticipantState(input: {
-    companyId: string;
-    threadId: string;
-    userId: string;
-    lastReadMessageId?: string | null;
-    lastReadAt?: string | Date | null;
-  }): Promise<FrontOfficeThreadParticipantStateRecord> {
-    const row = await this.prisma.frontOfficeThreadParticipantState.upsert({
-      where: {
-        front_office_participant_state_unique: {
-          companyId: input.companyId,
-          threadId: input.threadId,
-          userId: input.userId,
-        },
-      },
-      create: {
-        companyId: input.companyId,
-        threadId: input.threadId,
-        userId: input.userId,
-        lastReadMessageId: input.lastReadMessageId ?? null,
-        lastReadAt: input.lastReadAt ? new Date(input.lastReadAt) : null,
-      },
-      update: {
-        lastReadMessageId:
-          input.lastReadMessageId !== undefined
-            ? input.lastReadMessageId
-            : undefined,
-        lastReadAt:
-          input.lastReadAt !== undefined
-            ? input.lastReadAt
-              ? new Date(input.lastReadAt)
-              : null
-            : undefined,
-      },
-    });
-
-    return this.mapParticipantState(row);
-  }
-
-  async listParticipantStates(
+  async listAssignments(
     companyId: string,
-    userId: string,
-    threadIds?: string[],
-  ): Promise<FrontOfficeThreadParticipantStateRecord[]> {
-    const rows = await this.prisma.frontOfficeThreadParticipantState.findMany({
+    options?: {
+      userId?: string;
+      farmAccountId?: string;
+      status?: string;
+    },
+  ): Promise<BackOfficeFarmAssignmentRecord[]> {
+    const items = await this.prisma.backOfficeFarmAssignment.findMany({
       where: {
         companyId,
-        userId,
-        ...(threadIds?.length ? { threadId: { in: threadIds } } : {}),
+        userId: options?.userId,
+        farmAccountId: options?.farmAccountId,
+        status: options?.status,
+      },
+      orderBy: [{ priority: "asc" }, { createdAt: "asc" }],
+      include: {
+        farmAccount: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
 
-    return rows.map((row) => this.mapParticipantState(row));
+    return items.map((item) => this.mapAssignment(item));
   }
 
   private mapThread(row: any): FrontOfficeThreadRecord {
@@ -522,7 +539,7 @@ export class FrontOfficeCommunicationRepository {
       id: row.id,
       companyId: row.companyId,
       threadKey: row.threadKey,
-      channel: row.channel,
+      channel: row.channel as FrontOfficeChannel,
       farmAccountId: row.farmAccountId ?? null,
       farmNameSnapshot: row.farmNameSnapshot ?? null,
       representativeUserId: row.representativeUserId ?? null,
@@ -537,8 +554,8 @@ export class FrontOfficeCommunicationRepository {
       currentHandoffStatus: row.currentHandoffStatus ?? null,
       lastDraftId: row.lastDraftId ?? null,
       lastMessageDirection: row.lastMessageDirection ?? null,
-      lastMessageAt: row.lastMessageAt ? row.lastMessageAt.toISOString() : null,
       lastMessagePreview: row.lastMessagePreview ?? null,
+      lastMessageAt: row.lastMessageAt?.toISOString?.() ?? null,
       messageCount: row.messageCount ?? 0,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
@@ -546,10 +563,6 @@ export class FrontOfficeCommunicationRepository {
   }
 
   private mapMessage(row: any): FrontOfficeMessageRecord {
-    const metadata =
-      row.metadataJson && typeof row.metadataJson === "object"
-        ? row.metadataJson
-        : null;
     return {
       id: row.id,
       companyId: row.companyId,
@@ -557,21 +570,17 @@ export class FrontOfficeCommunicationRepository {
       draftId: row.draftId ?? null,
       auditLogId: row.auditLogId ?? null,
       traceId: row.traceId ?? null,
-      channel: row.channel,
+      channel: row.channel as FrontOfficeChannel,
       direction: row.direction,
       messageText: row.messageText,
       sourceMessageId: row.sourceMessageId ?? null,
       chatId: row.chatId ?? null,
       route: row.route ?? null,
-      evidence: Array.isArray(row.evidenceJson) ? row.evidenceJson : row.evidenceJson ?? null,
-      metadata,
-      kind: (metadata?.kind as FrontOfficeThreadMessageKind | undefined) ?? "system_event",
-      authorType:
-        (metadata?.authorType as FrontOfficeThreadMessageAuthorType | undefined) ??
-        "system",
-      deliveryStatus:
-        (metadata?.deliveryStatus as FrontOfficeThreadDeliveryStatus | undefined) ??
-        "SKIPPED",
+      evidence: Array.isArray(row.evidenceJson) ? row.evidenceJson : [],
+      kind: row.metadataJson?.kind ?? "system_event",
+      authorType: row.metadataJson?.authorType ?? "system",
+      deliveryStatus: row.metadataJson?.deliveryStatus ?? "SKIPPED",
+      metadata: row.metadataJson ?? {},
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };
@@ -585,21 +594,32 @@ export class FrontOfficeCommunicationRepository {
       draftId: row.draftId ?? null,
       traceId: row.traceId ?? null,
       targetOwnerRole: row.targetOwnerRole ?? null,
-      sourceIntent: row.sourceIntent,
-      status: row.status,
+      sourceIntent: row.sourceIntent as FrontOfficeIntent,
+      status: row.status as FrontOfficeHandoffStatus,
       summary: row.summary,
       ownerRoute: row.ownerRoute ?? null,
       nextAction: row.nextAction ?? null,
       ownerResultRef: row.ownerResultRef ?? null,
       rejectionReason: row.rejectionReason ?? null,
       claimedBy: row.claimedBy ?? null,
-      claimedAt: row.claimedAt ? row.claimedAt.toISOString() : null,
+      claimedAt: row.claimedAt?.toISOString?.() ?? null,
       resolvedBy: row.resolvedBy ?? null,
-      resolvedAt: row.resolvedAt ? row.resolvedAt.toISOString() : null,
-      evidence: Array.isArray(row.evidenceJson) ? row.evidenceJson : row.evidenceJson ?? null,
-      operatorNotes: Array.isArray(row.operatorNotesJson)
-        ? row.operatorNotesJson
-        : null,
+      resolvedAt: row.resolvedAt?.toISOString?.() ?? null,
+      evidence: Array.isArray(row.evidenceJson) ? row.evidenceJson : [],
+      operatorNotes: Array.isArray(row.operatorNotesJson) ? row.operatorNotesJson : [],
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    };
+  }
+
+  private mapParticipantState(row: any): FrontOfficeThreadParticipantStateRecord {
+    return {
+      id: row.id,
+      companyId: row.companyId,
+      threadId: row.threadId,
+      userId: row.userId,
+      lastReadMessageId: row.lastReadMessageId ?? null,
+      lastReadAt: row.lastReadAt?.toISOString?.() ?? null,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };
@@ -613,20 +633,7 @@ export class FrontOfficeCommunicationRepository {
       farmAccountId: row.farmAccountId,
       farmName: row.farmAccount?.name ?? null,
       status: row.status,
-      priority: row.priority ?? 0,
-      createdAt: row.createdAt.toISOString(),
-      updatedAt: row.updatedAt.toISOString(),
-    };
-  }
-
-  private mapParticipantState(row: any): FrontOfficeThreadParticipantStateRecord {
-    return {
-      id: row.id,
-      companyId: row.companyId,
-      threadId: row.threadId,
-      userId: row.userId,
-      lastReadMessageId: row.lastReadMessageId ?? null,
-      lastReadAt: row.lastReadAt ? row.lastReadAt.toISOString() : null,
+      priority: row.priority ?? 100,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };

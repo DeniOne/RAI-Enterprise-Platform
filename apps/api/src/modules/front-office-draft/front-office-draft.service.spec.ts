@@ -1,15 +1,16 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { IntegrityStatus, ObservationIntent, ObservationType } from "@rai/prisma-client";
 import { AuditService } from "../../shared/audit/audit.service";
+import { FrontOfficeCommunicationRepository } from "../../shared/front-office/front-office-communication.repository";
+import { FrontOfficeOutboundService } from "../../shared/front-office/front-office-outbound.service";
+import { FrontOfficeThreadingService } from "../../shared/front-office/front-office-threading.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { DeviationService } from "../cmr/deviation.service";
 import { FieldObservationService } from "../field-observation/field-observation.service";
-import { FrontOfficeCommunicationRepository } from "./front-office-communication.repository";
 import { FrontOfficeClientResponseOrchestrator } from "./front-office-client-response.orchestrator.service";
 import { FrontOfficeAgent } from "../rai-chat/agents/front-office-agent.service";
 import { FrontOfficeDraftRepository } from "./front-office-draft.repository";
 import { FrontOfficeHandoffOrchestrator } from "./front-office-handoff.orchestrator.service";
-import { FrontOfficeOutboundService } from "./front-office-outbound.service";
 import { FrontOfficeReplyPolicyService } from "./front-office-reply-policy.service";
 import { FrontOfficeDraftService } from "./front-office-draft.service";
 import { TelegramNotificationService } from "../telegram/telegram-notification.service";
@@ -78,6 +79,7 @@ describe("FrontOfficeDraftService", () => {
         { provide: DeviationService, useValue: deviationMock },
         { provide: FrontOfficeAgent, useValue: agentMock },
         { provide: FrontOfficeCommunicationRepository, useValue: communicationRepositoryMock },
+        FrontOfficeThreadingService,
         { provide: FrontOfficeReplyPolicyService, useValue: replyPolicyMock },
         { provide: FrontOfficeOutboundService, useValue: outboundServiceMock },
         {

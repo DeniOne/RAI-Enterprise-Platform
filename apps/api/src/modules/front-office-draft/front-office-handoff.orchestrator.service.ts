@@ -5,7 +5,7 @@ import {
   FrontOfficeHandoffStatus,
   FrontOfficeIntent,
 } from "./front-office-draft.types";
-import { FrontOfficeCommunicationRepository } from "./front-office-communication.repository";
+import { FrontOfficeCommunicationRepository } from "../../shared/front-office/front-office-communication.repository";
 
 const CANONICAL_OWNER_ROLES = new Set([
   "crm_agent",
