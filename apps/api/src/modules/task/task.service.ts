@@ -232,22 +232,21 @@ export class TaskService {
         }
       }
 
-      await tx.outboxMessage.create({
-        data: this.outbox.createEvent(
+      await this.outbox.persistEvent(
+        tx as any,
+        taskId,
+        "Task",
+        "task.status.transitioned",
+        {
+          companyId,
           taskId,
-          "Task",
-          "task.status.transitioned",
-          {
-            companyId,
-            taskId,
-            fromStatus: task.status,
-            toStatus: result.status,
-            event: TaskEvent.COMPLETE,
-            actorId: user.id,
-            occurredAt: new Date().toISOString(),
-          },
-        ),
-      });
+          fromStatus: task.status,
+          toStatus: result.status,
+          event: TaskEvent.COMPLETE,
+          actorId: user.id,
+          occurredAt: new Date().toISOString(),
+        },
+      );
 
       return completed;
     });
@@ -345,8 +344,12 @@ export class TaskService {
         },
       });
 
-      await tx.outboxMessage.create({
-        data: this.outbox.createEvent(task.id, "Task", "task.created", {
+      await this.outbox.persistEvent(
+        tx as any,
+        task.id,
+        "Task",
+        "task.created",
+        {
           companyId: input.companyId,
           taskId: task.id,
           seasonId: input.seasonId,
@@ -358,8 +361,8 @@ export class TaskService {
           title,
           description,
           occurredAt: new Date().toISOString(),
-        }),
-      });
+        },
+      );
 
       return task;
     }).then(async (task) => {
@@ -439,22 +442,21 @@ export class TaskService {
         );
       }
 
-      await tx.outboxMessage.create({
-        data: this.outbox.createEvent(
+      await this.outbox.persistEvent(
+        tx as any,
+        taskId,
+        "Task",
+        "task.status.transitioned",
+        {
+          companyId,
           taskId,
-          "Task",
-          "task.status.transitioned",
-          {
-            companyId,
-            taskId,
-            fromStatus: currentStatus,
-            toStatus: targetStatus,
-            event: transitionMeta.event,
-            actorId: transitionMeta.actorId || null,
-            occurredAt: new Date().toISOString(),
-          },
-        ),
-      });
+          fromStatus: currentStatus,
+          toStatus: targetStatus,
+          event: transitionMeta.event,
+          actorId: transitionMeta.actorId || null,
+          occurredAt: new Date().toISOString(),
+        },
+      );
 
       return updated as Task;
     });

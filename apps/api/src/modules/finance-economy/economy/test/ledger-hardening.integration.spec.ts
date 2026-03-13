@@ -61,7 +61,10 @@ describe("Ledger Architectural Hardening (G1-G4 Verification)", () => {
         },
         {
           provide: OutboxService,
-          useValue: { createEvent: jest.fn() },
+          useValue: {
+            createEvent: jest.fn(),
+            persistEvent: jest.fn().mockResolvedValue(undefined),
+          },
         },
         {
           provide: FinanceConfigService,

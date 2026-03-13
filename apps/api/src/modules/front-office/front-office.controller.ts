@@ -16,7 +16,6 @@ import { Authorized } from "../../shared/auth/authorized.decorator";
 import {
   FRONT_OFFICE_INTERNAL_ROLES,
   FRONT_OFFICE_MANAGER_ROLES,
-  FRONT_OFFICE_THREAD_ROLES,
 } from "../../shared/auth/rbac.constants";
 
 type AuthenticatedUser = Partial<User> & {
@@ -262,29 +261,18 @@ export class FrontOfficeController {
   }
 
   @Get("threads")
-  @Authorized(...FRONT_OFFICE_THREAD_ROLES)
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
   async listThreads(@CurrentUser() user: AuthenticatedUser) {
-    if (user.role === UserRole.FRONT_OFFICE_USER) {
-      return this.frontOfficeService.listThreadsForViewer(
-        this.getCompanyId(user),
-        this.getViewer(user),
-      );
-    }
-
     return this.frontOfficeService.listThreads(this.getCompanyId(user));
   }
 
   @Get("threads/:threadKey/messages")
-  @Authorized(...FRONT_OFFICE_THREAD_ROLES)
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
   async listMessages(
     @CurrentUser() user: AuthenticatedUser,
     @Param("threadKey") threadKey: string,
   ) {
-    return this.frontOfficeService.listMessagesForViewer(
-      this.getCompanyId(user),
-      this.getViewer(user),
-      threadKey,
-    );
+    return this.frontOfficeService.listMessages(this.getCompanyId(user), threadKey);
   }
 
   @Get("drafts/:id")
@@ -360,21 +348,13 @@ export class FrontOfficeController {
   }
 
   @Get("threads/:threadKey")
-  @Authorized(...FRONT_OFFICE_THREAD_ROLES)
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
   async getThread(@CurrentUser() user: AuthenticatedUser, @Param("threadKey") threadKey: string) {
-    if (user.role === UserRole.FRONT_OFFICE_USER) {
-      return this.frontOfficeService.getThreadForViewer(
-        this.getCompanyId(user),
-        this.getViewer(user),
-        threadKey,
-      );
-    }
-
     return this.frontOfficeService.getThread(this.getCompanyId(user), threadKey);
   }
 
   @Post("threads/:threadKey/reply")
-  @Authorized(...FRONT_OFFICE_THREAD_ROLES)
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
   @UseInterceptors(IdempotencyInterceptor)
   async replyToThread(
     @CurrentUser() user: AuthenticatedUser,
@@ -390,7 +370,7 @@ export class FrontOfficeController {
   }
 
   @Post("threads/:threadKey/read")
-  @Authorized(...FRONT_OFFICE_THREAD_ROLES)
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
   @UseInterceptors(IdempotencyInterceptor)
   async markThreadRead(
     @CurrentUser() user: AuthenticatedUser,

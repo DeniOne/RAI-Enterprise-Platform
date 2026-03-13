@@ -8,15 +8,16 @@ import {
 } from "../shared/api-client/api-client.service";
 import {
   SessionService,
-  UserSession,
 } from "../shared/session/session.service";
 
-const ADMIN_TG_ID = "441610858";
 const FRONT_OFFICE_CALLBACK_PREFIX = "fo";
 const FRONT_OFFICE_CALLBACK_MAX_LENGTH = 64;
 
 type FrontOfficeActionCode = "c" | "f" | "l";
 type TelegramTunnel = "front_office_rep" | "back_office_operator";
+type FrontOfficeTextCommand =
+  | { type: "fix"; draftId: string; messageText: string }
+  | { type: "link"; draftId: string; rawRefs: string };
 
 interface FrontOfficeLinkPatch {
   farmRef?: string;
@@ -183,21 +184,6 @@ export class TelegramUpdate {
     });
   }
 
-  private async saveSessionWithPatch(
-    telegramUserId: number,
-    session: UserSession | null,
-    patch: Partial<UserSession>,
-  ): Promise<void> {
-    if (!session) {
-      return;
-    }
-
-    await this.session.saveSession(telegramUserId, {
-      ...session,
-      ...patch,
-    });
-  }
-
   private parseLinkPatch(message: string): FrontOfficeLinkPatch | null {
     const patch: FrontOfficeLinkPatch = {};
     const patterns: Array<[keyof FrontOfficeLinkPatch, RegExp]> = [
@@ -215,6 +201,32 @@ export class TelegramUpdate {
     }
 
     return Object.keys(patch).length > 0 ? patch : null;
+  }
+
+  private parseFrontOfficeCommand(message: string): FrontOfficeTextCommand | null {
+    const fixMatch = message.match(
+      /^\/fofix(?:@\w+)?\s+([A-Za-z0-9-]+)\s+([\s\S]+)$/i,
+    );
+    if (fixMatch) {
+      return {
+        type: "fix",
+        draftId: fixMatch[1],
+        messageText: fixMatch[2].trim(),
+      };
+    }
+
+    const linkMatch = message.match(
+      /^\/folink(?:@\w+)?\s+([A-Za-z0-9-]+)\s+([\s\S]+)$/i,
+    );
+    if (linkMatch) {
+      return {
+        type: "link",
+        draftId: linkMatch[1],
+        rawRefs: linkMatch[2].trim(),
+      };
+    }
+
+    return null;
   }
 
   private async createFrontOfficeDraftFromText(
@@ -307,13 +319,8 @@ export class TelegramUpdate {
         ? `@${ctx.from.username}`
         : "Mystery Guest";
       await ctx.reply(
-        `⛔ <b>Доступ ограничен</b>\n\nПривет, ${username}! Твой Telegram ID (${ctx.from?.id}) не зарегистрирован в системе RAI_EP.\n\nЕсли ты коллега — нажми кнопку ниже, чтобы запросить доступ.`,
-        {
-          parse_mode: "HTML",
-          ...Markup.inlineKeyboard([
-            [Markup.button.callback("📝 Запросить доступ", "request_access")],
-          ]),
-        },
+        `⛔ <b>Доступ не настроен</b>\n\nПривет, ${username}! Telegram ID <code>${ctx.from?.id}</code> не привязан к пользователю RAI_EP.\n\nВнешний front-office доступ работает только по приглашению. Попросите менеджера или администратора отправить вам инвайт и активируйте его по ссылке.`,
+        { parse_mode: "HTML" },
       );
       return;
     }
@@ -348,92 +355,28 @@ export class TelegramUpdate {
 
   @Action("request_access")
   async onRequestAccess(@Ctx() ctx: Context): Promise<void> {
-    if (!ctx.from) return;
-    const tgId = ctx.from.id.toString();
-    const username = ctx.from.username
-      ? `@${ctx.from.username}`
-      : "No Username";
-    const name =
-      `${ctx.from.first_name || ""} ${ctx.from.last_name || ""}`.trim();
-
-    await ctx.answerCbQuery("Запрос отправлен админу 🚀");
+    await ctx.answerCbQuery("Доступ выдается только по приглашению");
     await ctx.editMessageText(
-      "✅ <b>Запрос отправлен!</b>\nЯ сообщу тебе, когда админ выдаст доступ.",
+      "⚠️ <b>Self-service заявка отключена</b>\n\nС 12 марта 2026 доступ в front-office выдается только через приглашение из CRM/контактной карточки. Обратитесь к менеджеру или администратору.",
       { parse_mode: "HTML" },
-    );
-
-    // Notify Admin
-    await ctx.telegram.sendMessage(
-      ADMIN_TG_ID,
-      `🔔 <b>НОВЫЙ ЗАПРОС ДОСТУПА</b>\n\n👤 Имя: ${name}\n🌐 Юзер: ${username}\n🆔 TG ID: <code>${tgId}</code>`,
-      {
-        parse_mode: "HTML",
-        ...Markup.inlineKeyboard([
-          [
-            Markup.button.callback("✅ Одобрить", `approve_user:${tgId}`),
-            Markup.button.callback("❌ Отклонить", `decline_user:${tgId}`),
-          ],
-        ]),
-      },
     );
   }
 
   @Action(/approve_user:(.+)/)
   async onApproveUser(@Ctx() ctx: Context): Promise<void> {
-    if (!("match" in ctx && ctx.match)) return;
-    const tgId = ctx.match[1];
-
-    // 1. Get default company via API
-    try {
-      const company = await this.apiClient.getFirstCompany();
-      if (!company) {
-        await ctx.reply("вќЊ РћС€РёР±РєР°: РљРѕРјРїР°РЅРёСЏ РЅРµ РЅР°Р№РґРµРЅР° РЅР° Р±СЌРєРµРЅРґРµ.");
-        return;
-      }
-
-      const email = `tg_${tgId}@rai.local`;
-
-      // 2. Upsert User via API
-      await this.apiClient.upsertUser({
-        telegramId: tgId,
-        email,
-        role: "USER",
-        accessLevel: "ACTIVE",
-        companyId: company.id,
-      });
-
-
-      await ctx.answerCbQuery("Пользователь одобрен! ✅");
-      await ctx.editMessageText(`✅ Юзер с ID <code>${tgId}</code> теперь в системе!`, {
-        parse_mode: "HTML",
-      });
-
-      // 4. Notify User
-      await ctx.telegram.sendMessage(
-        tgId,
-        "🎉 <b>Твой доступ одобрен!</b>\nВведи /start, чтобы открыть меню.",
-        { parse_mode: "HTML" },
-      );
-    } catch (e) {
-      console.error(e);
-      await ctx.reply(`вќЊ РћС€РёР±РєР° Р°РїСЂСѓРІР°: ${e.message}`);
-    }
+    await ctx.answerCbQuery("Ручной approve через бота отключен");
+    await ctx.editMessageText(
+      "⚠️ <b>Ручная выдача доступа через Telegram отключена</b>\n\nИспользуйте canonical invite flow из CRM/party contacts. Бот больше не создает пользователей напрямую.",
+      { parse_mode: "HTML" },
+    );
   }
 
   @Action(/decline_user:(.+)/)
   async onDeclineUser(@Ctx() ctx: Context): Promise<void> {
-    if (!("match" in ctx && ctx.match)) return;
-    const tgId = ctx.match[1];
-
-    await ctx.answerCbQuery("Запрос отклонен ❌");
-    await ctx.editMessageText(`❌ Запрос от <code>${tgId}</code> отклонен.`, {
-      parse_mode: "HTML",
-    });
-
-    // Notify User
-    await ctx.telegram.sendMessage(
-      tgId,
-      "😔 Извини, твой запрос на доступ был отклонен админом.",
+    await ctx.answerCbQuery("Legacy-flow отключен");
+    await ctx.editMessageText(
+      "⚠️ <b>Legacy-flow отключен</b>\n\nЕсли доступ не нужен, просто не отправляйте инвайт. Отказы через Telegram approve queue больше не используются.",
+      { parse_mode: "HTML" },
     );
   }
 
@@ -588,17 +531,12 @@ export class TelegramUpdate {
       return;
     }
 
-    const session = await this.session.getSession(ctx.from.id);
-
     try {
       if (action === "c") {
         const result = await this.apiClient.confirmFrontOfficeDraft(
           draftId,
           accessToken,
         );
-        await this.saveSessionWithPatch(ctx.from.id, session, {
-          pendingFrontOfficeAction: undefined,
-        });
         await ctx.answerCbQuery("Confirm отправлен");
         await ctx.reply(this.formatFrontOfficeReply(result), {
           parse_mode: "HTML",
@@ -609,21 +547,13 @@ export class TelegramUpdate {
         return;
       }
 
-      const pendingAction = action === "f" ? "fix" : "link";
-      await this.saveSessionWithPatch(ctx.from.id, session, {
-        pendingFrontOfficeAction: {
-          action: pendingAction,
-          draftId,
-        },
-      });
-
       await ctx.answerCbQuery(
-        pendingAction === "fix" ? "Жду правку" : "Жду refs",
+        action === "f" ? "Отправьте команду /fofix" : "Отправьте команду /folink",
       );
       await ctx.reply(
-        pendingAction === "fix"
-          ? `Отправьте правку для draft <code>${draftId}</code>.`
-          : `Отправьте refs для draft <code>${draftId}</code> в формате field=... season=... task=...`,
+        action === "f"
+          ? `Для правки отправьте:\n<code>/fofix ${draftId} новый текст сигнала</code>`
+          : `Для привязки отправьте:\n<code>/folink ${draftId} field=... season=... task=...</code>`,
         { parse_mode: "HTML" },
       );
     } catch (e) {
@@ -982,9 +912,6 @@ export class TelegramUpdate {
     if (!ctx.message || !("text" in ctx.message) || !ctx.from) return;
     const message = (ctx.message as any).text;
 
-    // Ignore commands
-    if (message.startsWith("/")) return;
-
     const user = await this.getUser(ctx);
     if (!user) return;
 
@@ -1000,6 +927,7 @@ export class TelegramUpdate {
     if (!accessToken) return;
 
     try {
+      const frontOfficeCommand = this.parseFrontOfficeCommand(message);
       const session = await this.session.getSession(ctx.from.id);
       const pendingFeedbackTraceId = session?.pendingAdvisoryFeedbackTraceId;
       if (pendingFeedbackTraceId) {
@@ -1018,47 +946,41 @@ export class TelegramUpdate {
         return;
       }
 
-      const pendingFrontOfficeAction = session?.pendingFrontOfficeAction;
-
-      if (pendingFrontOfficeAction?.action === "fix") {
+      if (frontOfficeCommand?.type === "fix") {
         const result = await this.apiClient.fixFrontOfficeDraft(
-          pendingFrontOfficeAction.draftId,
+          frontOfficeCommand.draftId,
           {
-            messageText: message,
+            messageText: frontOfficeCommand.messageText,
             taskId: session?.activeTaskId,
             coordinates: session?.currentCoordinates,
           },
           accessToken,
         );
 
-        await this.saveSessionWithPatch(ctx.from.id, session, {
-          pendingFrontOfficeAction: undefined,
-        });
         await this.replyWithFrontOfficeDraft(ctx, result);
         return;
       }
 
-      if (pendingFrontOfficeAction?.action === "link") {
-        const patch = this.parseLinkPatch(message);
+      if (frontOfficeCommand?.type === "link") {
+        const patch = this.parseLinkPatch(frontOfficeCommand.rawRefs);
         if (!patch) {
           await ctx.reply(
-            "Нужен формат refs: field=... season=... task=...",
+            "Нужен формат: /folink <draftId> field=... season=... task=...",
           );
           return;
         }
 
         const result = await this.apiClient.linkFrontOfficeDraft(
-          pendingFrontOfficeAction.draftId,
+          frontOfficeCommand.draftId,
           patch,
           accessToken,
         );
 
-        await this.saveSessionWithPatch(ctx.from.id, session, {
-          pendingFrontOfficeAction: undefined,
-        });
         await this.replyWithFrontOfficeDraft(ctx, result);
         return;
       }
+
+      if (message.startsWith("/")) return;
 
       await this.createFrontOfficeDraftFromText(ctx, accessToken, message);
     } catch (e) {

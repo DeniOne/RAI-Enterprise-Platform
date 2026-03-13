@@ -8,7 +8,10 @@ import { ConfigModule } from '@nestjs/config';
 
 // Mock Deviation and Outbox to focus on Budget Locking
 const mockDeviationService = { createReview: jest.fn() };
-const mockOutboxService = { createEvent: jest.fn() };
+const mockOutboxService = {
+    createEvent: jest.fn(),
+    persistEvent: jest.fn(),
+};
 
 describe('BudgetPlanService Integration Concurrency', () => {
     let service: BudgetPlanService;

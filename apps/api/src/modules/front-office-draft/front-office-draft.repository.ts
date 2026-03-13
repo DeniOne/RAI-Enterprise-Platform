@@ -16,6 +16,14 @@ const DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 export class FrontOfficeDraftRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  private get draftModel() {
+    return (this.prisma as any).frontOfficeDraft;
+  }
+
+  private get committedModel() {
+    return (this.prisma as any).frontOfficeCommittedEvent;
+  }
+
   async createDraft(data: {
     companyId: string;
     userId: string;
@@ -30,15 +38,17 @@ export class FrontOfficeDraftRepository {
     confidence: number;
     mustClarifications: string[];
   }): Promise<FrontOfficeDraftRecord> {
-    const created = await this.prisma.agroEventDraft.create({
+    const created = await this.draftModel.create({
       data: {
         companyId: data.companyId,
         userId: data.userId,
         status: data.status,
         eventType: data.eventType,
         timestamp: new Date(data.timestamp),
+        threadKey: this.normalizeOptional(data.payload.threadKey),
         farmRef: data.farmRef ?? null,
         fieldRef: data.fieldId ?? null,
+        seasonRef: this.normalizeOptional(data.payload.seasonId),
         taskRef: data.taskId ?? null,
         payloadJson: data.payload as any,
         evidenceJson: data.evidence as any,
@@ -52,7 +62,7 @@ export class FrontOfficeDraftRepository {
   }
 
   async getDraft(companyId: string, draftId: string): Promise<FrontOfficeDraftRecord> {
-    const draft = await this.prisma.agroEventDraft.findFirst({
+    const draft = await this.draftModel.findFirst({
       where: { id: draftId, companyId },
     });
 
@@ -78,13 +88,21 @@ export class FrontOfficeDraftRepository {
       mustClarifications?: string[];
     },
   ): Promise<FrontOfficeDraftRecord> {
-    const result = await this.prisma.agroEventDraft.updateMany({
+    const result = await this.draftModel.updateMany({
       where: { id: draftId, companyId },
       data: {
         status: patch.status,
         timestamp: patch.timestamp ? new Date(patch.timestamp) : undefined,
+        threadKey:
+          patch.payload !== undefined
+            ? this.normalizeOptional(patch.payload?.threadKey)
+            : undefined,
         farmRef: patch.farmRef !== undefined ? (patch.farmRef ?? null) : undefined,
         fieldRef: patch.fieldId !== undefined ? (patch.fieldId ?? null) : undefined,
+        seasonRef:
+          patch.payload !== undefined
+            ? this.normalizeOptional(patch.payload?.seasonId)
+            : undefined,
         taskRef: patch.taskId !== undefined ? (patch.taskId ?? null) : undefined,
         payloadJson: patch.payload as any,
         evidenceJson: patch.evidence as any,
@@ -102,7 +120,7 @@ export class FrontOfficeDraftRepository {
   }
 
   async listDrafts(companyId: string, params?: { statuses?: FrontOfficeDraftStatus[]; take?: number }) {
-    const drafts = await this.prisma.agroEventDraft.findMany({
+    const drafts = await this.draftModel.findMany({
       where: {
         companyId,
         ...(params?.statuses?.length ? { status: { in: params.statuses } } : {}),
@@ -115,7 +133,7 @@ export class FrontOfficeDraftRepository {
   }
 
   async listCommitted(companyId: string, take = 25) {
-    const committed = await this.prisma.agroEventCommitted.findMany({
+    const committed = await this.committedModel.findMany({
       where: { companyId },
       orderBy: { committedAt: "desc" },
       take,
@@ -128,7 +146,7 @@ export class FrontOfficeDraftRepository {
     companyId: string,
     draftId: string,
   ): Promise<FrontOfficeCommittedRecord | null> {
-    const committed = await this.prisma.agroEventCommitted.findFirst({
+    const committed = await this.committedModel.findFirst({
       where: { id: draftId, companyId },
     });
 
@@ -145,7 +163,9 @@ export class FrontOfficeDraftRepository {
     committed: FrontOfficeCommittedRecord;
   }> {
     return this.prisma.$transaction(async (tx) => {
-      const draft = await tx.agroEventDraft.findFirst({
+      const draftModel = (tx as any).frontOfficeDraft;
+      const committedModel = (tx as any).frontOfficeCommittedEvent;
+      const draft = await draftModel.findFirst({
         where: { id: data.draftId, companyId: data.companyId },
       });
 
@@ -153,18 +173,20 @@ export class FrontOfficeDraftRepository {
         throw new NotFoundException("Front-office draft not found");
       }
 
-      const existingCommitted = await tx.agroEventCommitted.findFirst({
+      const existingCommitted = await committedModel.findFirst({
         where: { id: data.draftId, companyId: data.companyId },
       });
 
       let committed = existingCommitted;
       if (!committed) {
-        committed = await tx.agroEventCommitted.create({
+        committed = await committedModel.create({
           data: {
             id: draft.id,
             companyId: data.companyId,
+            threadKey: draft.threadKey ?? null,
             farmRef: draft.farmRef,
             fieldRef: draft.fieldRef,
+            seasonRef: draft.seasonRef ?? null,
             taskRef: draft.taskRef,
             eventType: draft.eventType,
             payloadJson: draft.payloadJson as any,
@@ -176,7 +198,7 @@ export class FrontOfficeDraftRepository {
         });
       }
 
-      const draftUpdate = await tx.agroEventDraft.updateMany({
+      const draftUpdate = await draftModel.updateMany({
         where: { id: data.draftId, companyId: data.companyId },
         data: {
           status: "COMMITTED",
@@ -189,7 +211,7 @@ export class FrontOfficeDraftRepository {
         throw new ConflictException("Failed to update front-office draft status");
       }
 
-      const finalDraft = await tx.agroEventDraft.findFirst({
+      const finalDraft = await draftModel.findFirst({
         where: { id: data.draftId, companyId: data.companyId },
       });
 
@@ -220,7 +242,7 @@ export class FrontOfficeDraftRepository {
       anchor: {
         farmRef: db.farmRef ?? null,
         fieldId: db.fieldRef ?? null,
-        seasonId: payload.seasonId ?? null,
+        seasonId: db.seasonRef ?? payload.seasonId ?? null,
         taskId: db.taskRef ?? null,
       },
       payload,
@@ -248,9 +270,17 @@ export class FrontOfficeDraftRepository {
       anchor: {
         farmRef: db.farmRef ?? null,
         fieldId: db.fieldRef ?? null,
-        seasonId: payload.seasonId ?? null,
+        seasonId: db.seasonRef ?? payload.seasonId ?? null,
         taskId: db.taskRef ?? null,
       },
     };
+  }
+
+  private normalizeOptional(value: unknown): string | null {
+    if (typeof value !== "string") {
+      return null;
+    }
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : null;
   }
 }

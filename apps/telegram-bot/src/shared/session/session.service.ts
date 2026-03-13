@@ -14,10 +14,6 @@ export interface UserSession {
         answers: Record<string, any>;
     };
     pendingAdvisoryFeedbackTraceId?: string;
-    pendingFrontOfficeAction?: {
-        action: 'fix' | 'link';
-        draftId: string;
-    };
 }
 
 @Injectable()

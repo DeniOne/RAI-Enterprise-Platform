@@ -78,6 +78,106 @@ function detectTargetOwnerRole(text: string): string | undefined {
   return undefined;
 }
 
+function collectMatches(text: string, pattern: RegExp): string[] {
+  const values = new Set<string>();
+  for (const match of text.matchAll(pattern)) {
+    const value = match[1]?.trim();
+    if (value) {
+      values.add(value);
+    }
+  }
+  return Array.from(values);
+}
+
+function detectAnchorCandidates(text: string) {
+  return {
+    farmRefs: collectMatches(
+      text,
+      /(?:farm|farmRef|хозяйств(?:о|а)?|клиент)\s*[:=]?\s*([A-Za-z0-9_-]+)/gi,
+    ),
+    fieldIds: collectMatches(
+      text,
+      /(?:field|fieldId|поле)\s*[:=]?\s*([A-Za-z0-9_-]+)/gi,
+    ),
+    seasonIds: collectMatches(
+      text,
+      /(?:season|seasonId|сезон)\s*[:=]?\s*([A-Za-z0-9_-]+)/gi,
+    ),
+    taskIds: collectMatches(
+      text,
+      /(?:task|taskId|задач[аеи])\s*[:=]?\s*([A-Za-z0-9_-]+)/gi,
+    ),
+  };
+}
+
+function suggestMustClarifications(input: {
+  classification: "free_chat" | "task_process" | "client_request" | "escalation_signal";
+  confidence: number;
+  anchorCandidates: ReturnType<typeof detectAnchorCandidates>;
+}) {
+  const mustClarifications = new Set<string>();
+  if (input.confidence < 0.72) {
+    mustClarifications.add("CONFIRM_INTENT");
+  }
+
+  if (input.classification === "task_process") {
+    if (
+      input.anchorCandidates.fieldIds.length === 0 &&
+      input.anchorCandidates.taskIds.length === 0
+    ) {
+      mustClarifications.add("LINK_FIELD_OR_TASK");
+    }
+    if (input.anchorCandidates.seasonIds.length === 0) {
+      mustClarifications.add("LINK_SEASON");
+    }
+  }
+
+  if (
+    input.classification === "client_request" &&
+    input.anchorCandidates.fieldIds.length === 0 &&
+    input.anchorCandidates.taskIds.length === 0 &&
+    input.anchorCandidates.seasonIds.length === 0 &&
+    input.anchorCandidates.farmRefs.length === 0
+  ) {
+    mustClarifications.add("LINK_OBJECT");
+  }
+
+  return Array.from(mustClarifications);
+}
+
+function buildHandoffSummary(params: {
+  messageText: string;
+  classification: "free_chat" | "task_process" | "client_request" | "escalation_signal";
+  targetOwnerRole?: string;
+  anchorCandidates: ReturnType<typeof detectAnchorCandidates>;
+}) {
+  const anchorSummary = [
+    params.anchorCandidates.farmRefs[0]
+      ? `farm=${params.anchorCandidates.farmRefs[0]}`
+      : null,
+    params.anchorCandidates.fieldIds[0]
+      ? `field=${params.anchorCandidates.fieldIds[0]}`
+      : null,
+    params.anchorCandidates.seasonIds[0]
+      ? `season=${params.anchorCandidates.seasonIds[0]}`
+      : null,
+    params.anchorCandidates.taskIds[0]
+      ? `task=${params.anchorCandidates.taskIds[0]}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const messagePreview = params.messageText.trim().slice(0, 240);
+  return [
+    `classification=${params.classification}`,
+    params.targetOwnerRole ? `owner=${params.targetOwnerRole}` : null,
+    anchorSummary || null,
+    messagePreview,
+  ]
+    .filter(Boolean)
+    .join(" | ");
+}
+
 function classifyMessage(text: string): {
   classification:
     | "free_chat"
@@ -88,33 +188,61 @@ function classifyMessage(text: string): {
   reasons: string[];
   targetOwnerRole?: string;
   needsEscalation: boolean;
+  anchorCandidates: ReturnType<typeof detectAnchorCandidates>;
+  mustClarifications: string[];
+  handoffSummary: string;
 } {
   const normalized = text.toLowerCase();
   const reasons: string[] = [];
   const targetOwnerRole = detectTargetOwnerRole(text);
+  const anchorCandidates = detectAnchorCandidates(text);
+
+  const buildResult = (params: {
+    classification:
+      | "free_chat"
+      | "task_process"
+      | "client_request"
+      | "escalation_signal";
+    confidence: number;
+    needsEscalation: boolean;
+    targetOwnerRole?: string;
+  }) => ({
+    ...params,
+    reasons,
+    anchorCandidates,
+    mustClarifications: suggestMustClarifications({
+      classification: params.classification,
+      confidence: params.confidence,
+      anchorCandidates,
+    }),
+    handoffSummary: buildHandoffSummary({
+      messageText: text,
+      classification: params.classification,
+      targetOwnerRole: params.targetOwnerRole,
+      anchorCandidates,
+    }),
+  });
 
   if (
     /срочно|эскалац|критич|не работает|проблем|авари|зависло/i.test(normalized)
   ) {
     reasons.push("critical_signal_detected");
-    return {
+    return buildResult({
       classification: "escalation_signal",
       confidence: 0.88,
-      reasons,
       targetOwnerRole: targetOwnerRole ?? "monitoring",
       needsEscalation: true,
-    };
+    });
   }
 
   if (/нужно|сделай|создай|поставь|поруч|в работу|заведи/i.test(normalized)) {
     reasons.push("task_language_detected");
-    return {
+    return buildResult({
       classification: "task_process",
       confidence: 0.82,
-      reasons,
       targetOwnerRole,
       needsEscalation: Boolean(targetOwnerRole),
-    };
+    });
   }
 
   if (
@@ -123,23 +251,21 @@ function classifyMessage(text: string): {
     )
   ) {
     reasons.push("business_request_detected");
-    return {
+    return buildResult({
       classification: "client_request",
       confidence: 0.78,
-      reasons,
       targetOwnerRole: targetOwnerRole ?? "crm_agent",
       needsEscalation: true,
-    };
+    });
   }
 
   reasons.push("no_process_signal_detected");
-  return {
+  return buildResult({
     classification: "free_chat",
     confidence: 0.65,
-    reasons,
     targetOwnerRole,
     needsEscalation: false,
-  };
+  });
 }
 
 @Injectable()

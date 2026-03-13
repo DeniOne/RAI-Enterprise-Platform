@@ -4,7 +4,7 @@ import { PrismaModule } from "../../shared/prisma/prisma.module";
 import { CmrModule } from "../cmr/cmr.module";
 import { FieldObservationModule } from "../field-observation/field-observation.module";
 import { RaiChatModule } from "../rai-chat/rai-chat.module";
-import { TelegramModule } from "../telegram/telegram.module";
+import { TelegramNotificationModule } from "../telegram/telegram-notification.module";
 import { FrontOfficeCommunicationRepository } from "./front-office-communication.repository";
 import { FrontOfficeClientResponseOrchestrator } from "./front-office-client-response.orchestrator.service";
 import { FrontOfficeDraftRepository } from "./front-office-draft.repository";
@@ -20,7 +20,7 @@ import { FrontOfficeDraftService } from "./front-office-draft.service";
     FieldObservationModule,
     CmrModule,
     RaiChatModule,
-    TelegramModule,
+    TelegramNotificationModule,
   ],
   providers: [
     FrontOfficeCommunicationRepository,

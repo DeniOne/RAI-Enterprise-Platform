@@ -1,9 +1,9 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import Redis from "ioredis";
 
 @Injectable()
-export class RedisService {
+export class RedisService implements OnModuleDestroy {
   private readonly client: Redis;
 
   constructor(private configService: ConfigService) {
@@ -92,7 +92,76 @@ export class RedisService {
     return (await this.client.call("XADD", ...args)) as string;
   }
 
+  async publish(channel: string, message: string): Promise<number> {
+    if (!this.isReady()) {
+      throw new Error(
+        `[Redis] Not ready, cannot PUBLISH to channel: ${channel}`,
+      );
+    }
+
+    return this.client.publish(channel, message);
+  }
+
+  async subscribe(
+    channel: string,
+    handler: (message: string, channel: string) => void | Promise<void>,
+  ): Promise<() => Promise<void>> {
+    const subscriber = this.client.duplicate();
+    const listener = (receivedChannel: string, message: string) => {
+      if (receivedChannel !== channel) {
+        return;
+      }
+      void handler(message, receivedChannel);
+    };
+
+    subscriber.on("message", listener);
+    await subscriber.subscribe(channel);
+
+    return async () => {
+      subscriber.off("message", listener);
+      try {
+        await subscriber.unsubscribe(channel);
+      } finally {
+        subscriber.disconnect();
+      }
+    };
+  }
+
+  async ensureConsumerGroup(
+    streamKey: string,
+    groupName: string,
+    startId: string = "$",
+  ): Promise<void> {
+    if (!this.isReady()) {
+      throw new Error(
+        `[Redis] Not ready, cannot ensure consumer group for stream: ${streamKey}`,
+      );
+    }
+
+    try {
+      await this.client.call(
+        "XGROUP",
+        "CREATE",
+        streamKey,
+        groupName,
+        startId,
+        "MKSTREAM",
+      );
+    } catch (error: any) {
+      const message =
+        error instanceof Error ? error.message : String(error ?? "");
+      if (message.includes("BUSYGROUP")) {
+        return;
+      }
+      throw error;
+    }
+  }
+
   getClient(): Redis {
     return this.client;
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    this.client.disconnect();
   }
 }

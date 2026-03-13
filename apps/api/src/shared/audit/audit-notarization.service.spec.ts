@@ -44,6 +44,10 @@ describe("AuditNotarizationService", () => {
           mirroredUri: null,
         }),
         describeConfig: jest.fn().mockReturnValue("provider=filesystem"),
+        getReadinessDetails: jest.fn().mockReturnValue({
+          provider: "filesystem",
+          ready: true,
+        }),
       } as any,
       {
         anchorHash: jest.fn().mockResolvedValue({
@@ -102,6 +106,10 @@ describe("AuditNotarizationService", () => {
         describeConfig: jest
           .fn()
           .mockReturnValue("provider=filesystem,path=/root/RAI_EP/var/audit-worm"),
+        getReadinessDetails: jest.fn().mockReturnValue({
+          provider: "filesystem",
+          ready: true,
+        }),
       } as any,
       {} as any,
     );

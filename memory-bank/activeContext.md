@@ -1,6 +1,14 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-12)
+- [x] Введён `Architecture Growth Governance` как следующий слой после foundation remediation.
+- [x] Добавлены `scripts/architecture-budget-gate.cjs` и `scripts/architecture-budgets.json`: теперь контролируются размер `schema.prisma`, число top-level модулей и watch-list тяжёлых hotspots.
+- [x] В `package.json` добавлены `pnpm gate:architecture` и `pnpm gate:architecture:enforce`; guideline зафиксирован в `docs/05_OPERATIONS/DEVELOPMENT_GUIDELINES/ARCHITECTURE_GROWTH_GUARDRAILS.md`.
+- [x] `RAI_EP_SYSTEM_AUDIT_DELTA_2026-03-12.md` и `memory-bank/progress.md` синхронизированы: module complexity переведён в `частично закрыто / growth-governance введён`.
+- [x] Закрыт `Compliance-Grade WORM S3 Rollout` без возврата к auth/outbox потокам.
+- [x] `apps/api/src/level-f/worm/worm-storage.service.ts` переведён в fail-closed режим для `s3_compatible|dual`: startup теперь проверяет `Versioning=Enabled`, `Object Lock=Enabled`, default retention `COMPLIANCE / Years / 7` и запрещает `filesystem` в `production` без явного override.
+- [x] `scripts/setup-minio.ts` теперь поднимает `rai-audit-worm` bucket с `Object Lock` и default retention, а `pnpm storage:minio:setup` стал canonical bootstrap командой.
+- [x] `RAI_EP_SYSTEM_AUDIT_DELTA_2026-03-12.md`, `memory-bank/progress.md` и `docs/05_OPERATIONS/WORKFLOWS/WORM_S3_COMPLIANCE_ROLLOUT.md` синхронизированы с новым состоянием WORM/S3 контура.
 - [x] Закрыт отдельный remediation-поток `Audit Log Immutability` без пересечения с текущим auth rollout.
 - [x] Добавлена DB-level append-only защита для `audit_logs` через миграцию `packages/prisma-client/migrations/20260312170000_audit_log_append_only_enforcement/migration.sql`.
 - [x] Добавлен `apps/api/src/shared/audit/audit.service.spec.ts` для фиксации create-only контракта и tamper-evident metadata на уровне сервиса.
@@ -19,10 +27,10 @@
 - [x] `apps/api/src/shared/outbox/outbox-broker.publisher.ts` переведён на transport abstraction `http | redis_streams`; добавлены env-configs `OUTBOX_BROKER_TRANSPORT`, `OUTBOX_BROKER_REDIS_STREAM_KEY`, `OUTBOX_BROKER_REDIS_STREAM_MAXLEN`, `OUTBOX_BROKER_REDIS_TENANT_PARTITIONING`.
 - [x] Введён broker-native Redis Streams publish path через `XADD` и optional tenant-partitioned stream keys; legacy HTTP path сохранён как backward-compatible fallback.
 - [x] `apps/api/src/shared/outbox/outbox.relay.ts` теперь transport-aware по broker config hint, а targeted specs `apps/api/src/shared/outbox/outbox.relay.spec.ts` и `apps/api/src/shared/outbox/outbox-broker.publisher.spec.ts` проходят.
-- [x] Существенно закрыт `External Front-Office Route-Space Debt` без изменения core auth rollout.
+- [x] Закрыт `External Front-Office Route-Space Debt`.
 - [x] В API введён viewer-only namespace `apps/api/src/modules/front-office/front-office-external.controller.ts` с canonical path `/api/portal/front-office/*`.
 - [x] В web введён canonical внешний portal route-space `/portal/front-office` + `/portal/front-office/threads/[threadKey]`; onboarding и success redirects переведены на него через `apps/web/lib/front-office-routes.ts`.
-- [x] Legacy `/front-office` root/thread paths для `FRONT_OFFICE_USER` оставлены как compatibility redirects, а activation URLs в `apps/api/src/shared/auth/front-office-auth.service.ts` теперь ведут на `/portal/front-office/activate`.
+- [x] Старые `/front-office/login|activate` переведены в redirect-only alias, а внутренний `apps/api/src/modules/front-office/front-office.controller.ts` больше не обслуживает `FRONT_OFFICE_USER`.
 - [x] Частично закрыт `Memory Hygiene Scheduling` без захода в auth rollout.
 - [x] В `apps/api/src/shared/memory/consolidation.worker.ts` включены cron scheduler paths для consolidation/pruning через `MEMORY_HYGIENE_ENABLED`, `MEMORY_CONSOLIDATION_SCHEDULE_ENABLED`, `MEMORY_PRUNING_SCHEDULE_ENABLED`.
 - [x] Добавлены targeted tests на scheduler contract в `apps/api/src/shared/memory/consolidation.worker.spec.ts`.
@@ -144,4 +152,5 @@
 - Stage 2 Interaction Blueprint: **Confirmed**.
 - Front Office Threads: **Implemented**.
 - Agent Lifecycle Control: **Active**.
-- Git Status: **Synced ✅ (2026-03-10 16:00)**
+- Master Plan: **Updated**.
+- Git Status: **Synced ✅ (2026-03-13 08:55)**

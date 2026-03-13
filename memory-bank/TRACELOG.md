@@ -182,3 +182,9 @@
 - Onboarding переведён на новый внешний contour: `apps/api/src/shared/auth/front-office-auth.service.ts` теперь генерирует activation links на `/portal/front-office/activate`, а login/activate success redirects используют `apps/web/lib/front-office-routes.ts`.
 - Обновлены baseline audit, delta audit, stabilization checklist и memory-bank, чтобы route-space debt по external front-office считался существенно сниженным, а остаток трактовался как legacy alias debt.
 - Подтверждены `pnpm --filter api exec jest --runInBand src/modules/front-office/front-office-external.controller.spec.ts src/shared/auth/front-office-auth.service.spec.ts`, `pnpm --filter api exec tsc --noEmit --pretty false` и `pnpm --filter web exec tsc --noEmit --pretty false`.
+- После финального добивания separation старые `/front-office/login|activate` переведены в redirect-only alias, а внутренний `apps/api/src/modules/front-office/front-office.controller.ts` больше не допускает `FRONT_OFFICE_USER` в `/api/front-office/*`; блок считается закрытым.
+
+[2026-03-13 08:55Z] Massive Sync & Push
+- Собираю в кучу все наработки за последние дни: Nvidia Qwen LLM integration, WORM S3 Compliance, Architecture Growth Governance, Outbox Evolution, Memory Lifecycle Control Plane и прочую годноту.
+- Выполняю `git add .`, коммичу с матом и пушу в ремоут, как просил юзер.
+- Репозиторий теперь в актуальном состоянии, всё пиздато.

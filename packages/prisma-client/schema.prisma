@@ -185,6 +185,8 @@ model Company {
   agroEventDrafts     AgroEventDraft[]
   agroEventCommitted  AgroEventCommitted[]
   agroEscalations     AgroEscalation[]
+  frontOfficeDrafts   FrontOfficeDraft[]
+  frontOfficeCommittedEvents FrontOfficeCommittedEvent[]
   backOfficeFarmAssignments BackOfficeFarmAssignment[]
   frontOfficeThreads  FrontOfficeThread[]
   frontOfficeMessages FrontOfficeThreadMessage[]
@@ -5919,6 +5921,57 @@ model AgroEscalation {
   
   @@index([companyId, status])
   @@map("agro_escalations")
+}
+
+model FrontOfficeDraft {
+  id           String   @id @default(cuid())
+  companyId    String
+  company      Company  @relation(fields: [companyId], references: [id])
+  userId       String
+  status       String
+  eventType    String
+  timestamp    DateTime
+  threadKey    String?
+  farmRef      String?
+  fieldRef     String?
+  seasonRef    String?
+  taskRef      String?
+  payloadJson  Json
+  evidenceJson Json
+  confidence   Float
+  missingMust  String[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  expiresAt    DateTime
+
+  @@index([companyId, userId])
+  @@index([companyId, status, createdAt])
+  @@index([companyId, threadKey])
+  @@index([expiresAt])
+  @@map("rai_front_office_drafts")
+}
+
+model FrontOfficeCommittedEvent {
+  id             String   @id
+  companyId      String
+  company        Company  @relation(fields: [companyId], references: [id])
+  threadKey      String?
+  farmRef        String?
+  fieldRef       String?
+  seasonRef      String?
+  taskRef        String?
+  eventType      String
+  payloadJson    Json
+  evidenceJson   Json
+  timestamp      DateTime
+  committedAt    DateTime @default(now())
+  committedBy    String
+  provenanceHash String
+
+  @@index([companyId, eventType])
+  @@index([companyId, committedAt])
+  @@index([companyId, threadKey])
+  @@map("rai_front_office_committed")
 }
 
 model FrontOfficeThread {

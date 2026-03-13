@@ -16,6 +16,10 @@ describe('Front-Office smoke contract', () => {
         expect(layout).toContain('/front-office/context');
 
         expect(page).toContain('Операционные задачи');
+        expect(page).toContain('Новый ingress');
+        expect(page).toContain('Требует привязки');
+        expect(page).toContain('Требует уточнения');
+        expect(page).toContain('Готово к подтверждению');
         expect(page).toContain('Отклонения');
         expect(page).toContain('Последние сигналы');
 

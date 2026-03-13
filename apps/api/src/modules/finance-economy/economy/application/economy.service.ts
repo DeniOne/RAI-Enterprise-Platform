@@ -135,14 +135,13 @@ export class EconomyService {
         await this.generateLedgerEntries(event, normalizedAmount, tx, scale);
 
         // 4. Outbox Event for External Consumers
-        await tx.outboxMessage.create({
-          data: this.outbox.createEvent(
-            event.id,
-            "EconomicEvent",
-            "finance.economic_event.created",
-            { ...event, amount: normalizedAmount },
-          ),
-        });
+        await this.outbox.persistEvent(
+          tx as any,
+          event.id,
+          "EconomicEvent",
+          "finance.economic_event.created",
+          { ...event, amount: normalizedAmount },
+        );
 
         return event;
       });

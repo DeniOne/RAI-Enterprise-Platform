@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getUserData } from '@/lib/api/auth-server';
 import Link from 'next/link';
+import { EXTERNAL_FRONT_OFFICE_BASE_PATH } from '@/lib/front-office-routes';
 
 const NAV_ITEMS = [
     { href: '/front-office', label: 'Операционный центр' },
@@ -10,10 +11,6 @@ const NAV_ITEMS = [
     { href: '/front-office/tasks', label: 'Задачи' },
     { href: '/front-office/deviations', label: 'Отклонения' },
     { href: '/front-office/context', label: 'Контекст' },
-];
-
-const EXTERNAL_NAV_ITEMS = [
-    { href: '/front-office', label: 'Диалоги' },
 ];
 
 export default async function FrontOfficeLayout({
@@ -28,8 +25,9 @@ export default async function FrontOfficeLayout({
     }
 
     const { role: viewerRole } = user ?? {};
-    const isExternalFrontOffice = viewerRole === 'FRONT_OFFICE_USER';
-    const navItems = isExternalFrontOffice ? EXTERNAL_NAV_ITEMS : NAV_ITEMS;
+    if (viewerRole === 'FRONT_OFFICE_USER') {
+        redirect(EXTERNAL_FRONT_OFFICE_BASE_PATH);
+    }
 
     return (
         <div className="space-y-8">
@@ -38,16 +36,14 @@ export default async function FrontOfficeLayout({
                     <div>
                         <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-gray-400">Front-Office</p>
                         <h1 className="mt-2 text-2xl font-medium text-gray-900">
-                            {isExternalFrontOffice ? 'Коммуникации с хозяйством' : 'Контур хозяйства'}
+                            Контур хозяйства
                         </h1>
                         <p className="mt-1 text-sm text-gray-500">
-                            {isExternalFrontOffice
-                                ? 'Просмотр своих диалогов и обмен сообщениями с командой платформы.'
-                                : 'Telegram-first исполнение, evidence и навигация по полям, сезонам, техкартам и задачам.'}
+                            Telegram-first исполнение, evidence и навигация по полям, сезонам, техкартам и задачам.
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        {navItems.map((item) => (
+                        {NAV_ITEMS.map((item) => (
                             <Link
                                 key={item.href}
                                 href={item.href}

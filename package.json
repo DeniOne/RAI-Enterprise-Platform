@@ -25,6 +25,8 @@
         "lint:docs:matrix": "node scripts/doc-lint-matrix.cjs --fail-on-mismatch",
         "lint:docs:matrix:strict": "node scripts/doc-lint-matrix.cjs --fail-on-mismatch --strict-version",
         "docs:normalize:governance": "node scripts/normalize-docs-governance.cjs",
+        "gate:architecture": "node scripts/architecture-budget-gate.cjs --mode=warn",
+        "gate:architecture:enforce": "node scripts/architecture-budget-gate.cjs --mode=enforce",
         "backfill:outbox-companyid": "node scripts/backfill-outbox-companyid.cjs",
         "rollback:tenant-middleware": "node scripts/tenant-middleware-rollback.cjs --mode=shadow",
         "test": "turbo test",
@@ -37,6 +39,7 @@
         "db:migrate": "turbo db:migrate",
         "db:migrate:prod": "turbo db:migrate",
         "db:seed": "turbo db:seed",
+        "storage:minio:setup": "tsx scripts/setup-minio.ts",
         "docker:up": "docker-compose up -d",
         "docker:down": "docker-compose down"
     },

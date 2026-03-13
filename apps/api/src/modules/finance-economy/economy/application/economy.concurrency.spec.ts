@@ -41,6 +41,7 @@ const mockOutboxService = {
       type: type,
       payload: payload,
     })),
+  persistEvent: jest.fn().mockResolvedValue(undefined),
 };
 
 describe("EconomyService Final Stress Simulation", () => {

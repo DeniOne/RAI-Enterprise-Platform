@@ -392,35 +392,6 @@ export class TelegramAuthService {
     };
   }
 
-  async upsertUserFromTelegram(data: {
-    telegramId: string;
-    email: string;
-    role: string;
-    accessLevel: string;
-    companyId: string;
-  }) {
-    return this.prisma.user.upsert({
-      where: { telegramId: data.telegramId },
-      update: {
-        accessLevel: data.accessLevel as UserAccessLevel,
-        company: { connect: { id: data.companyId } },
-      },
-      create: {
-        telegramId: data.telegramId,
-        email: data.email,
-        role: data.role as UserRole,
-        accessLevel: data.accessLevel as UserAccessLevel,
-        // companyId: data.companyId, // Redundant with connect for standard CreateInput
-        company: { connect: { id: data.companyId } },
-        emailVerified: true,
-      },
-    });
-  }
-
-  async getFirstCompany() {
-    return this.prisma.company.findFirst();
-  }
-
   async getActiveUsers(companyId?: string) {
     return this.prisma.user.findMany({
       where: {

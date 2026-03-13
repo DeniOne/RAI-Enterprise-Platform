@@ -18,7 +18,8 @@ version: 1.0.0
 ## 2. Preconditions (обязательные)
 - `OUTBOX_DELIVERY_MODE` зафиксирован для выбранной стратегии (`broker_only` или `dual`).
 - `OUTBOX_BROKER_TRANSPORT` зафиксирован для выбранной broker strategy (`http` или `redis_streams`).
-- Если используется `redis_streams`, зафиксированы `OUTBOX_BROKER_REDIS_STREAM_KEY` и, при необходимости, `OUTBOX_BROKER_REDIS_TENANT_PARTITIONING`.
+- Если используется `redis_streams`, зафиксированы `OUTBOX_BROKER_REDIS_STREAM_KEY`, при необходимости `OUTBOX_BROKER_REDIS_TENANT_PARTITIONING`, а также список `OUTBOX_BROKER_REDIS_CONSUMER_GROUPS`, если consumer groups управляются платформой.
+- Зафиксирован wakeup contour relay: `OUTBOX_RELAY_WAKEUP_ENABLED`, `OUTBOX_RELAY_WAKEUP_CHANNEL`, `OUTBOX_RELAY_WAKEUP_DEBOUNCE_MS`.
 - Если в production временно используется `local_only`, должен быть явно включён `OUTBOX_ALLOW_LOCAL_ONLY_IN_PRODUCTION=true` и зафиксировано окно аварийного отклонения.
 - Consumer idempotency store работает (`event_consumptions` write/read OK).
 - Нет активного `financial panic mode`.
@@ -40,6 +41,8 @@ version: 1.0.0
 - `outbox_oldest_pending_age_seconds`;
 - `invariant_event_duplicates_prevented_total`;
 - broker transport health (`HTTP broker` или Redis stream ingest/consumer path);
+- если используется `redis_streams`, дополнительно проверить stream lag / pending у configured consumer groups;
+- wakeup contour (`Redis Pub/Sub`) не деградировал и relay не откатился в cron-only поведение;
 - tenant leakage counters.
 4. При росте критичных инвариантов -> немедленный stop.
 

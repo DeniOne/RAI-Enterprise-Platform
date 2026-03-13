@@ -111,6 +111,7 @@ const BASE_URL =
   typeof window === "undefined"
     ? process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"
     : "/api";
+const EXTERNAL_FRONT_OFFICE_API_BASE_PATH = "/portal/front-office";
 
 function buildIdempotencyKey(prefix: string, parts: Array<string | null | undefined>) {
   const normalized = parts
@@ -394,6 +395,39 @@ export const frontOfficeApi = {
       token,
       {
         method: "DELETE",
+      },
+    ),
+};
+
+export const externalFrontOfficeApi = {
+  replyToThread: (threadKey: string, messageText: string, token?: string) =>
+    fetchWithAuth(
+      `${EXTERNAL_FRONT_OFFICE_API_BASE_PATH}/threads/${encodeURIComponent(threadKey)}/reply`,
+      token,
+      {
+        method: "POST",
+        headers: {
+          "Idempotency-Key": buildIdempotencyKey("fo-external-thread-reply", [
+            threadKey,
+            messageText,
+          ]),
+        },
+        body: JSON.stringify({ messageText }),
+      },
+    ),
+  markThreadRead: (threadKey: string, lastMessageId?: string, token?: string) =>
+    fetchWithAuth(
+      `${EXTERNAL_FRONT_OFFICE_API_BASE_PATH}/threads/${encodeURIComponent(threadKey)}/read`,
+      token,
+      {
+        method: "POST",
+        headers: {
+          "Idempotency-Key": buildIdempotencyKey("fo-external-thread-read", [
+            threadKey,
+            lastMessageId ?? null,
+          ]),
+        },
+        body: JSON.stringify({ lastMessageId }),
       },
     ),
 };

@@ -73,8 +73,26 @@ export default async function FrontOfficeThreadPage({
                             <div className="space-y-3">
                                 {drafts.map((draft: any) => (
                                     <div key={draft.id} className="rounded-2xl border border-black/5 p-4">
-                                        <p className="text-sm font-medium text-gray-900">{draft.eventType}</p>
-                                        <p className="mt-1 text-xs text-gray-500">{draft.status}</p>
+                                        <div className="flex items-center justify-between gap-3">
+                                            <p className="text-sm font-medium text-gray-900">
+                                                {draft.payload?.suggestedIntent ?? draft.eventType}
+                                            </p>
+                                            <p className="text-xs text-gray-500">{draft.status}</p>
+                                        </div>
+                                        <p className="mt-2 text-sm text-gray-700">{draft.payload?.messageText ?? 'Без текста'}</p>
+                                        <p className="mt-2 text-xs text-gray-500">
+                                            Anchor: field {draft.anchor?.fieldId ?? '-'} • season {draft.anchor?.seasonId ?? '-'} • task {draft.anchor?.taskId ?? '-'}
+                                        </p>
+                                        {Array.isArray(draft.mustClarifications) && draft.mustClarifications.length > 0 ? (
+                                            <p className="mt-2 text-xs text-amber-700">
+                                                MUST: {draft.mustClarifications.join(', ')}
+                                            </p>
+                                        ) : null}
+                                        {draft.payload?.commitResult ? (
+                                            <p className="mt-2 text-xs text-emerald-700">
+                                                Commit: {draft.payload.commitResult.kind ?? 'result'} #{draft.payload.commitResult.id ?? '-'}
+                                            </p>
+                                        ) : null}
                                     </div>
                                 ))}
                             </div>

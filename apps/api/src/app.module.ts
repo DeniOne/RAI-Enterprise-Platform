@@ -82,6 +82,7 @@ import { SecretsModule } from "./shared/config/secrets.module";
         AUDIT_SECRET_FILE: Joi.string().optional(),
         MINIO_ENDPOINT: Joi.string().default("localhost"),
         MINIO_PORT: Joi.number().default(9000),
+        MINIO_USE_SSL: Joi.string().valid("true", "false").optional(),
         MINIO_ACCESS_KEY: Joi.string().optional(),
         MINIO_ACCESS_KEY_FILE: Joi.string().optional(),
         MINIO_SECRET_KEY: Joi.string().optional(),
@@ -101,6 +102,14 @@ import { SecretsModule } from "./shared/config/secrets.module";
           .valid("true", "false")
           .optional(),
         OUTBOX_RELAY_BATCH_SIZE: Joi.number().integer().min(1).max(500).optional(),
+        OUTBOX_RELAY_WAKEUP_ENABLED: Joi.string()
+          .valid("true", "false")
+          .optional(),
+        OUTBOX_RELAY_WAKEUP_CHANNEL: Joi.string().optional(),
+        OUTBOX_RELAY_WAKEUP_DEBOUNCE_MS: Joi.number()
+          .integer()
+          .min(1)
+          .optional(),
         OUTBOX_MAX_RETRIES: Joi.number().integer().min(1).max(50).optional(),
         OUTBOX_RETRY_BASE_DELAY_MS: Joi.number().integer().min(1).optional(),
         OUTBOX_ORDERING_DEFER_MS: Joi.number().integer().min(1).optional(),
@@ -132,6 +141,7 @@ import { SecretsModule } from "./shared/config/secrets.module";
           .integer()
           .min(1)
           .optional(),
+        OUTBOX_BROKER_REDIS_CONSUMER_GROUPS: Joi.string().optional(),
         OUTBOX_BROKER_REDIS_TENANT_PARTITIONING: Joi.string()
           .valid("true", "false")
           .optional(),
@@ -167,9 +177,26 @@ import { SecretsModule } from "./shared/config/secrets.module";
         AUDIT_WORM_PROVIDER: Joi.string()
           .valid("filesystem", "s3_compatible", "dual")
           .optional(),
+        AUDIT_WORM_ALLOW_FILESYSTEM_IN_PRODUCTION: Joi.string()
+          .valid("true", "false")
+          .optional(),
         AUDIT_WORM_BASE_PATH: Joi.string().optional(),
         WORM_S3_BUCKET: Joi.string().allow("").optional(),
         WORM_S3_PREFIX: Joi.string().optional(),
+        WORM_S3_REGION: Joi.string().optional(),
+        WORM_S3_OBJECT_LOCK_REQUIRED: Joi.string()
+          .valid("true", "false")
+          .optional(),
+        WORM_S3_AUTO_CREATE_BUCKET: Joi.string()
+          .valid("true", "false")
+          .optional(),
+        WORM_S3_AUTO_CONFIGURE_DEFAULT_RETENTION: Joi.string()
+          .valid("true", "false")
+          .optional(),
+        WORM_S3_RETENTION_MODE: Joi.string()
+          .valid("COMPLIANCE", "GOVERNANCE")
+          .optional(),
+        WORM_S3_RETENTION_YEARS: Joi.number().integer().min(1).max(100).optional(),
       })
         .or("JWT_SECRET", "JWT_SECRET_FILE")
         .or(

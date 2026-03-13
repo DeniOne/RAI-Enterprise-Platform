@@ -1,18 +1,29 @@
-import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  OnApplicationBootstrap,
+  OnModuleDestroy,
+  Optional,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { OutboxStatus, Prisma } from "@rai/prisma-client";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { InvariantMetrics } from "../invariants/invariant-metrics";
 import { OutboxBrokerPublisher } from "./outbox-broker.publisher";
+import { OutboxWakeupService } from "./outbox-wakeup.service";
 import { isEventVersionAllowed } from "./event-contracts";
 
 type DeliveryMode = "local_only" | "broker_only" | "dual";
 
 @Injectable()
-export class OutboxRelay implements OnApplicationBootstrap {
+export class OutboxRelay
+  implements OnApplicationBootstrap, OnModuleDestroy
+{
   private readonly logger = new Logger(OutboxRelay.name);
   private isProcessing = false;
+  private wakeupUnsubscribe: (() => Promise<void>) | null = null;
+  private wakeupTimer: NodeJS.Timeout | null = null;
   private readonly relayEnabled =
     (process.env.OUTBOX_RELAY_ENABLED || "true").toLowerCase() !== "false";
   private readonly scheduleEnabled =
@@ -32,6 +43,9 @@ export class OutboxRelay implements OnApplicationBootstrap {
   private readonly processingStaleAfterMs = Number(
     process.env.OUTBOX_PROCESSING_STALE_AFTER_MS || 60000,
   );
+  private readonly wakeupDebounceMs = Number(
+    process.env.OUTBOX_RELAY_WAKEUP_DEBOUNCE_MS || 100,
+  );
   private readonly allowLocalOnlyInProduction =
     (process.env.OUTBOX_ALLOW_LOCAL_ONLY_IN_PRODUCTION || "false")
       .toLowerCase() === "true";
@@ -47,19 +61,33 @@ export class OutboxRelay implements OnApplicationBootstrap {
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
     private readonly brokerPublisher: OutboxBrokerPublisher,
+    @Optional() private readonly wakeupService?: OutboxWakeupService,
   ) {}
 
   onApplicationBootstrap() {
     this.validateRuntimeConfig();
     this.logger.log(
-      `Outbox Relay initialized. enabled=${this.relayEnabled}, scheduleEnabled=${this.scheduleEnabled}, bootstrapDrainEnabled=${this.bootstrapDrainEnabled}, batchSize=${this.batchSize}, processingStaleAfterMs=${this.processingStaleAfterMs}, deliveryMode=${this.deliveryMode}, broker=${this.brokerPublisher.describeConfig()}`,
+      `Outbox Relay initialized. enabled=${this.relayEnabled}, scheduleEnabled=${this.scheduleEnabled}, bootstrapDrainEnabled=${this.bootstrapDrainEnabled}, batchSize=${this.batchSize}, processingStaleAfterMs=${this.processingStaleAfterMs}, deliveryMode=${this.deliveryMode}, broker=${this.brokerPublisher.describeConfig()}, wakeup=${this.wakeupService?.describeConfig?.() || "disabled"}`,
     );
+
+    void this.startWakeupListener();
 
     if (!this.relayEnabled || !this.bootstrapDrainEnabled) {
       return;
     }
 
     void this.processOutbox();
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    if (this.wakeupTimer) {
+      clearTimeout(this.wakeupTimer);
+      this.wakeupTimer = null;
+    }
+    if (this.wakeupUnsubscribe) {
+      await this.wakeupUnsubscribe();
+      this.wakeupUnsubscribe = null;
+    }
   }
 
   @Cron(CronExpression.EVERY_SECOND)
@@ -76,6 +104,7 @@ export class OutboxRelay implements OnApplicationBootstrap {
     }
     if (this.isProcessing) return;
     this.isProcessing = true;
+    let shouldContinueDrain = false;
 
     try {
       await this.recoverStaleProcessingMessages();
@@ -84,6 +113,8 @@ export class OutboxRelay implements OnApplicationBootstrap {
       if (messages.length === 0) {
         return;
       }
+
+      shouldContinueDrain = messages.length === this.batchSize;
 
       this.logger.debug(`Processing ${messages.length} outbox messages...`);
 
@@ -182,6 +213,10 @@ export class OutboxRelay implements OnApplicationBootstrap {
     } finally {
       this.isProcessing = false;
     }
+
+    if (shouldContinueDrain) {
+      this.scheduleWakeupDrain("batch_drain_continuation");
+    }
   }
 
   private validateRuntimeConfig(): void {
@@ -253,7 +288,7 @@ export class OutboxRelay implements OnApplicationBootstrap {
   }
 
   private async publishToBroker(msg: any) {
-    await this.brokerPublisher.publish({
+    const receipt = await this.brokerPublisher.publish({
       id: msg.id,
       type: msg.type,
       aggregateId: msg.aggregateId,
@@ -262,7 +297,7 @@ export class OutboxRelay implements OnApplicationBootstrap {
       createdAt: msg.createdAt,
     });
     this.logger.log(
-      `[Broker] Published: ${msg.type} (Agg: ${msg.aggregateId || "N/A"})`,
+      `[Broker] Published: ${msg.type} (Agg: ${msg.aggregateId || "N/A"}, target=${receipt.target}, receipt=${receipt.receiptId || "n/a"})`,
     );
   }
 
@@ -449,5 +484,38 @@ export class OutboxRelay implements OnApplicationBootstrap {
     }
     const companyId = this.extractCompanyId(msg) || "NO_TENANT";
     return `${companyId}:${msg.aggregateType}:${msg.aggregateId}:${msg.type}`;
+  }
+
+  private async startWakeupListener(): Promise<void> {
+    if (!this.relayEnabled || !this.wakeupService?.isAvailable()) {
+      return;
+    }
+
+    this.wakeupUnsubscribe = await this.wakeupService.subscribe((hint) => {
+      this.logger.debug(
+        `Received outbox wakeup hint: reason=${hint.reason}, eventType=${hint.eventType || "-"}, companyId=${hint.companyId || "-"}, count=${hint.count ?? "-"}`,
+      );
+      this.scheduleWakeupDrain(`redis_pubsub:${hint.reason}`);
+    });
+  }
+
+  private scheduleWakeupDrain(reason: string): void {
+    if (!this.relayEnabled) {
+      return;
+    }
+
+    if (this.wakeupTimer) {
+      return;
+    }
+
+    this.wakeupTimer = setTimeout(() => {
+      this.wakeupTimer = null;
+      if (this.isProcessing) {
+        this.scheduleWakeupDrain(`${reason}:rescheduled`);
+        return;
+      }
+      this.logger.debug(`Running outbox wakeup drain (${reason})`);
+      void this.processOutbox();
+    }, this.wakeupDebounceMs);
   }
 }

@@ -9,6 +9,16 @@ const minioClient = new Minio.Client({
     secretKey: process.env.MINIO_ROOT_PASSWORD || 'rai_secret_password',
 });
 
+const auditWormBucket = process.env.WORM_S3_BUCKET || 'rai-audit-worm';
+const auditWormRetentionYears = Math.max(
+    parseInt(process.env.WORM_S3_RETENTION_YEARS || '7', 10),
+    1,
+);
+const auditWormRetentionMode =
+    (process.env.WORM_S3_RETENTION_MODE || 'COMPLIANCE').toUpperCase() === 'GOVERNANCE'
+        ? 'GOVERNANCE'
+        : 'COMPLIANCE';
+
 const BUCKETS = [
     {
         name: 'rai-model-registry',
@@ -39,6 +49,16 @@ const BUCKETS = [
             ],
         },
     },
+    {
+        name: auditWormBucket,
+        versioning: true,
+        objectLock: true,
+        defaultRetention: {
+            mode: auditWormRetentionMode,
+            unit: 'Years',
+            validity: auditWormRetentionYears,
+        },
+    },
 ];
 
 async function setupMinio() {
@@ -61,6 +81,31 @@ async function setupMinio() {
         if (bucket.versioning) {
             console.log(`🔄 Enabling versioning for ${bucket.name}...`);
             await minioClient.setBucketVersioning(bucket.name, { Status: 'Enabled' });
+        }
+
+        if (bucket.objectLock) {
+            console.log(`🧷 Verifying Object Lock for ${bucket.name}...`);
+            const currentLock = await minioClient.getObjectLockConfig(bucket.name).catch(() => ({}));
+
+            if (!currentLock || currentLock.objectLockEnabled !== 'Enabled') {
+                throw new Error(
+                    `Bucket ${bucket.name} does not have Object Lock enabled. Recreate it with ObjectLocking=true.`,
+                );
+            }
+
+            if (
+                bucket.defaultRetention &&
+                (
+                    currentLock.mode !== bucket.defaultRetention.mode ||
+                    currentLock.unit !== bucket.defaultRetention.unit ||
+                    currentLock.validity !== bucket.defaultRetention.validity
+                )
+            ) {
+                console.log(
+                    `🛡️ Setting default Object Lock retention for ${bucket.name}: ${bucket.defaultRetention.mode}/${bucket.defaultRetention.unit}/${bucket.defaultRetention.validity}...`,
+                );
+                await minioClient.setObjectLockConfig(bucket.name, bucket.defaultRetention);
+            }
         }
 
         // Lifecycle

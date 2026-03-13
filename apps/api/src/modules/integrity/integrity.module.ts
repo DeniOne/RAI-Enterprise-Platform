@@ -3,7 +3,7 @@ import { IntegrityGateService } from "./integrity-gate.service";
 import { RegistryAgentService } from "./registry-agent.service";
 import { PrismaModule } from "../../shared/prisma/prisma.module";
 import { CmrModule } from "../cmr/cmr.module";
-import { TelegramModule } from "../telegram/telegram.module";
+import { TelegramNotificationModule } from "../telegram/telegram-notification.module";
 import { ScheduleModule } from "@nestjs/schedule";
 import { ConsultingModule } from "../consulting/consulting.module";
 
@@ -19,7 +19,7 @@ import { QuorumService } from "./quorum.service";
   imports: [
     PrismaModule,
     CmrModule,
-    TelegramModule,
+    TelegramNotificationModule,
     ConsultingModule,
     GenerativeEngineModule,
     ScheduleModule.forRoot(),

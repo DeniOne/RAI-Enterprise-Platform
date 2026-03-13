@@ -131,6 +131,10 @@ export class FrontOfficeDraftService {
       recipientExternalId: input.recipientExternalId ?? null,
       route: input.route ?? null,
       targetOwnerRole: classification?.targetOwnerRole ?? null,
+      classificationReasons: classification?.reasons ?? [],
+      anchorCandidates: classification?.anchorCandidates ?? null,
+      agentMustClarifications: classification?.mustClarifications ?? [],
+      handoffSummary: classification?.handoffSummary ?? null,
       seasonId: anchor.seasonId,
       photoUrl: input.photoUrl ?? null,
       voiceUrl: input.voiceUrl ?? null,
@@ -298,6 +302,16 @@ export class FrontOfficeDraftService {
         seasonId: anchor.seasonId,
         targetOwnerRole:
           classification?.targetOwnerRole ?? current.payload.targetOwnerRole ?? null,
+        classificationReasons:
+          classification?.reasons ?? current.payload.classificationReasons ?? [],
+        anchorCandidates:
+          classification?.anchorCandidates ?? current.payload.anchorCandidates ?? null,
+        agentMustClarifications:
+          classification?.mustClarifications ??
+          current.payload.agentMustClarifications ??
+          [],
+        handoffSummary:
+          classification?.handoffSummary ?? current.payload.handoffSummary ?? null,
       },
       evidence: this.buildEvidence(merged),
       confidence: classification?.confidence ?? current.confidence,
@@ -1831,6 +1845,10 @@ export class FrontOfficeDraftService {
   }
 
   private buildHandoffSummary(draft: FrontOfficeDraftRecord, intent: FrontOfficeIntent) {
+    if (typeof draft.payload.handoffSummary === "string" && draft.payload.handoffSummary.trim()) {
+      return draft.payload.handoffSummary.trim();
+    }
+
     const anchor = [
       draft.anchor.fieldId ? `field=${draft.anchor.fieldId}` : null,
       draft.anchor.seasonId ? `season=${draft.anchor.seasonId}` : null,

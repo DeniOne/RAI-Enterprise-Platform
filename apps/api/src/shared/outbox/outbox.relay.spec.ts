@@ -56,7 +56,11 @@ describe("OutboxRelay", () => {
       emitAsync: jest.fn().mockResolvedValue([]),
     };
     const brokerPublisher = {
-      publish: jest.fn().mockResolvedValue(undefined),
+      publish: jest.fn().mockResolvedValue({
+        transport: "redis_streams",
+        target: "rai:outbox:c1",
+        receiptId: "1710240000000-0",
+      }),
       describeConfig: jest.fn().mockReturnValue("test-broker"),
       isConfigured: jest.fn().mockReturnValue(true),
       requiredConfigHint: jest.fn().mockReturnValue("OUTBOX_BROKER_ENDPOINT"),
@@ -299,5 +303,24 @@ describe("OutboxRelay", () => {
     expect(() => relay.onApplicationBootstrap()).toThrow(
       /requires OUTBOX_BROKER_REDIS_STREAM_KEY/i,
     );
+  });
+
+  it("continues draining immediately when a full batch was claimed", async () => {
+    jest.useFakeTimers();
+    const { relay, queryRaw } = createRelay({
+      OUTBOX_DELIVERY_MODE: "local_only",
+      OUTBOX_RELAY_BATCH_SIZE: "1",
+      OUTBOX_RELAY_WAKEUP_DEBOUNCE_MS: "1",
+    });
+    queryRaw
+      .mockResolvedValueOnce([createMessage()])
+      .mockResolvedValueOnce([]);
+    const processSpy = jest.spyOn(relay, "processOutbox");
+
+    await relay.processOutbox();
+    jest.runOnlyPendingTimers();
+
+    expect(processSpy).toHaveBeenCalledTimes(2);
+    jest.useRealTimers();
   });
 });

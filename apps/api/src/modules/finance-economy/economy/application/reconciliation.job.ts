@@ -89,9 +89,7 @@ export class ReconciliationJob {
       this.logger.warn(
         `[RECON] Flushing ${alertPayloads.length} alerts to Outbox`,
       );
-      await this.prisma.outboxMessage.createMany({
-        data: alertPayloads,
-      });
+      await this.outbox.persistPreparedEvents(this.prisma as any, alertPayloads);
     }
   }
 

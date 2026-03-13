@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui";
+import { ExternalFrontOfficeThreadClient } from "@/components/front-office/ExternalFrontOfficeThreadClient";
 import { externalFrontOfficeServerApi } from "@/lib/api/front-office-server";
 import { EXTERNAL_FRONT_OFFICE_BASE_PATH } from "@/lib/front-office-routes";
 
@@ -48,25 +49,10 @@ export default async function ExternalFrontOfficeThreadPage({
 
       <Card>
         <h2 className="mb-4 text-lg font-medium text-gray-900">Сообщения</h2>
-        {messages.length === 0 ? (
-          <p className="text-sm text-gray-500">Сообщений пока нет.</p>
-        ) : (
-          <div className="space-y-3">
-            {messages.map((message: any) => (
-              <div key={message.id} className="rounded-2xl border border-black/5 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs uppercase tracking-[0.16em] text-gray-400">
-                    {message.direction}
-                  </p>
-                  <p className="text-xs text-gray-500">{message.channel}</p>
-                </div>
-                <p className="mt-2 text-sm text-gray-800">
-                  {message.messageText}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
+        <ExternalFrontOfficeThreadClient
+          threadKey={decodedThreadKey}
+          initialMessages={messages}
+        />
       </Card>
     </div>
   );

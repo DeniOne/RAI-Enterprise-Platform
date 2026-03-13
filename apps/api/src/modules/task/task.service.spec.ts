@@ -60,6 +60,7 @@ describe("TaskService", () => {
       payload: { companyId: "company-1" },
       status: "PENDING",
     }),
+    persistEvent: jest.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -158,7 +159,7 @@ describe("TaskService", () => {
       const result = await service.startTask("task-1", mockUser, "company-1");
 
       expect(result.status).toBe(TaskStatus.IN_PROGRESS);
-      expect(prismaMock.outboxMessage.create).toHaveBeenCalled();
+      expect(outboxMock.persistEvent).toHaveBeenCalled();
       expect(auditMock.log).toHaveBeenCalledWith(
         expect.objectContaining({
           action: "TASK_STARTED",
@@ -203,7 +204,7 @@ describe("TaskService", () => {
           expect.objectContaining({ name: "Diesel", amount: 50 }),
         ]),
       });
-      expect(prismaMock.outboxMessage.create).toHaveBeenCalled();
+      expect(outboxMock.persistEvent).toHaveBeenCalled();
     });
 
     it("should enforce tenant isolation", async () => {

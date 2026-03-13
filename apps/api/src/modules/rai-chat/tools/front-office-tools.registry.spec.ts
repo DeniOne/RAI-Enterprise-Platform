@@ -51,6 +51,8 @@ describe("FrontOfficeToolsRegistry", () => {
     expect(result.classification).toBe("task_process");
     expect(result.targetOwnerRole).toBe("crm_agent");
     expect(result.needsEscalation).toBe(true);
+    expect(result.mustClarifications).toContain("LINK_FIELD_OR_TASK");
+    expect(result.handoffSummary).toContain("classification=task_process");
   });
 
   it("create_front_office_escalation сохраняет escalation в audit", async () => {
@@ -91,5 +93,6 @@ describe("FrontOfficeToolsRegistry", () => {
     expect(result.classification).toBe("client_request");
     expect(result.targetOwnerRole).toBe("contracts_agent");
     expect(result.targetOwnerRole).not.toBe("crm_agent");
+    expect(result.handoffSummary).toContain("owner=contracts_agent");
   });
 });

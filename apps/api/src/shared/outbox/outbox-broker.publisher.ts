@@ -16,6 +16,12 @@ interface OutboxBrokerMessage {
   createdAt: Date;
 }
 
+interface OutboxBrokerPublishReceipt {
+  transport: OutboxBrokerTransport;
+  target: string;
+  receiptId?: string | null;
+}
+
 @Injectable()
 export class OutboxBrokerPublisher {
   private readonly logger = new Logger(OutboxBrokerPublisher.name);
@@ -33,6 +39,13 @@ export class OutboxBrokerPublisher {
     (process.env.OUTBOX_BROKER_REDIS_TENANT_PARTITIONING || 'false')
       .toLowerCase()
       .trim() === 'true';
+  private readonly redisConsumerGroups = String(
+    process.env.OUTBOX_BROKER_REDIS_CONSUMER_GROUPS || '',
+  )
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+  private readonly ensuredConsumerGroups = new Set<string>();
 
   constructor(
     private readonly redisService: RedisService,
@@ -60,18 +73,16 @@ export class OutboxBrokerPublisher {
     return this.transport;
   }
 
-  async publish(message: OutboxBrokerMessage): Promise<void> {
+  async publish(message: OutboxBrokerMessage): Promise<OutboxBrokerPublishReceipt> {
     if (!this.isConfigured()) {
       throw new Error(`${this.requiredConfigHint()} is not configured`);
     }
 
     switch (this.transport) {
       case 'http':
-        await this.publishHttp(message);
-        return;
+        return this.publishHttp(message);
       case 'redis_streams':
-        await this.publishRedisStreams(message);
-        return;
+        return this.publishRedisStreams(message);
       default: {
         const exhaustiveCheck: never = this.transport;
         throw new Error(`Unsupported outbox broker transport: ${exhaustiveCheck}`);
@@ -90,6 +101,7 @@ export class OutboxBrokerPublisher {
         `stream=${this.redisStreamKey}`,
         `tenantPartitioning=${this.redisTenantPartitioning}`,
         `maxLen=${this.redisStreamMaxLen > 0 ? this.redisStreamMaxLen : 'off'}`,
+        `consumerGroups=${this.redisConsumerGroups.length}`,
       ].join(',');
     }
 
@@ -110,7 +122,9 @@ export class OutboxBrokerPublisher {
     return value === 'redis_streams' ? 'redis_streams' : 'http';
   }
 
-  private async publishHttp(message: OutboxBrokerMessage): Promise<void> {
+  private async publishHttp(
+    message: OutboxBrokerMessage,
+  ): Promise<OutboxBrokerPublishReceipt> {
     const body = JSON.stringify({
       id: message.id,
       type: message.type,
@@ -174,15 +188,21 @@ export class OutboxBrokerPublisher {
       req.write(body);
       req.end();
     });
+
+    return {
+      transport: 'http',
+      target: this.endpoint,
+      receiptId: message.id,
+    };
   }
 
   private async publishRedisStreams(
     message: OutboxBrokerMessage,
-  ): Promise<void> {
+  ): Promise<OutboxBrokerPublishReceipt> {
     const companyId = this.extractCompanyId(message.payload);
     const streamKey = this.resolveRedisStreamKey(companyId);
 
-    await this.redisService.xadd(
+    const streamEntryId = await this.redisService.xadd(
       streamKey,
       {
         eventId: message.id,
@@ -197,6 +217,14 @@ export class OutboxBrokerPublisher {
         maxLen: this.redisStreamMaxLen > 0 ? this.redisStreamMaxLen : undefined,
       },
     );
+
+    await this.ensureConsumerGroups(streamKey);
+
+    return {
+      transport: 'redis_streams',
+      target: streamKey,
+      receiptId: streamEntryId,
+    };
   }
 
   private resolveRedisStreamKey(companyId: string | null): string {
@@ -219,5 +247,21 @@ export class OutboxBrokerPublisher {
 
   private getAuthToken(): string {
     return this.secretsService.getOptionalSecret('OUTBOX_BROKER_AUTH_TOKEN') || '';
+  }
+
+  private async ensureConsumerGroups(streamKey: string): Promise<void> {
+    if (this.redisConsumerGroups.length === 0) {
+      return;
+    }
+
+    for (const groupName of this.redisConsumerGroups) {
+      const key = `${streamKey}::${groupName}`;
+      if (this.ensuredConsumerGroups.has(key)) {
+        continue;
+      }
+
+      await this.redisService.ensureConsumerGroup(streamKey, groupName);
+      this.ensuredConsumerGroups.add(key);
+    }
   }
 }

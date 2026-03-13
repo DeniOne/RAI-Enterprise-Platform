@@ -201,14 +201,13 @@ export class ExecutionService {
         companyId: context.companyId,
       };
 
-      await tx.outboxMessage.create({
-        data: this.outbox.createEvent(
-          updatedExecution.id,
-          "ExecutionRecord",
-          "consulting.operation.completed",
-          payload,
-        ),
-      });
+      await this.outbox.persistEvent(
+        tx as any,
+        updatedExecution.id,
+        "ExecutionRecord",
+        "consulting.operation.completed",
+        payload,
+      );
 
       return { updatedExecution, stockTransactions };
     });

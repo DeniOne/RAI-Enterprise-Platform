@@ -3,9 +3,9 @@ id: DOC-STR-FRONT-OFFICE-FRONT-OFFICE-REFACTOR-PLAN-V25U
 layer: Strategy
 type: Roadmap
 status: draft
-version: 0.1.0
+version: 0.2.0
 owners: [@techlead]
-last_updated: 2026-03-09
+last_updated: 2026-03-12
 ---
 # FRONT_OFFICE_REFACTOR_PLAN
 
@@ -28,7 +28,10 @@ last_updated: 2026-03-09
 - убран `pendingFrontOfficeAction`-подход;
 - intake в API больше не создаёт domain object “сразу по сообщению”;
 - `Front-Office` intake теперь работает как ingress draft с `classification`, `anchor`, `allowedActions`;
-- `Web` уже можно использовать как control plane для структурированных объектов.
+- `Web` уже можно использовать как control plane для draft/thread queue и structured objects;
+- введён first-class storage `rai_front_office_drafts` и `rai_front_office_committed`;
+- внешний portal thread теперь поддерживает reply/read поверх отдельного `/portal/front-office` API namespace;
+- API-side legacy Telegram ingress больше не участвует в front-office product path: в API оставлен notifier-layer, а канонический ingress живёт в `apps/telegram-bot`.
 
 Это уже лучше прежнего состояния, но это ещё не канонический финал.
 
@@ -36,62 +39,58 @@ last_updated: 2026-03-09
 
 ## 3. Что сейчас ещё неправильно
 
-### 3.1. Нет first-class draft storage
+### 3.1. First-class draft storage введён, но lifecycle ещё можно расширять
 
-Сейчас ingress draft фактически сидит на audit-backed записи.  
-Это временное решение, но не каноническая модель.
+Сейчас ingress draft уже вынесен в отдельные таблицы `rai_front_office_drafts` и
+`rai_front_office_committed`, а repository больше не опирается на generic
+`agro_event_drafts` как primary storage.
 
-Проблема:
+Остаток:
 
-- draft нельзя полноценно вести как отдельную сущность;
-- нет ясного lifecycle draft-объекта;
-- сложно хранить исправления, link history и confirmation state;
-- audit log начинает выполнять не свою основную роль.
+- lifecycle пока остаётся минимальным и ещё может быть расширен history/state слоем;
+- `fix/link/clarification/confirmation` история пока не выделена в отдельные first-class записи;
+- возможна следующая фаза с draft timeline / mutation log.
 
-### 3.2. Нет first-class thread / conversation contour
+### 3.2. Thread / conversation contour введён, но ещё можно углублять thread intelligence
 
-Сейчас нет полноценного `Front-Office Thread`, который хранил бы:
+Сейчас уже есть `FrontOfficeThread`, `FrontOfficeThreadMessage`,
+`FrontOfficeHandoffRecord` и participant state.
 
-- входящие сообщения;
-- их связи между собой;
-- промежуточные agent conclusions;
-- handoff между агентом и доменным владельцем;
-- историю уточнений и подтверждений.
+Остаток:
 
-Без этого свободный вход есть, а управляемого dialog contour пока нет.
+- richer thread intelligence для summary/history;
+- отдельный mutation log для operator actions;
+- более плотная thread-centric analytics/read model.
 
-### 3.3. Нет явного confirm-commit layer
+### 3.3. Confirm-commit layer есть, но фасад всё ещё можно упростить
 
-Сейчас intake уже не создаёт final object сразу, но следующий канонический шаг ещё не выделен как самостоятельный слой.
+Сейчас intake не создаёт final object сразу, а `confirm` ведёт в commit path.
 
-Нужно разделить:
+Остаток:
 
-- `intake / draft`;
-- `fix / link / clarify`;
-- `confirm`;
-- `commit into domain object`.
+- `front-office.service.ts` ещё можно облегчить дальше;
+- часть legacy object-centric surface всё ещё живёт рядом с modern draft/thread contour.
 
-Иначе система всё ещё архитектурно “слишком плоская”.
+### 3.4. Front-Office agent усилен, но ещё не является полным mediated-intake owner
 
-### 3.4. Front-Office agent пока слишком тонкий
-
-Сейчас agent ближе к ingress logger / classifier, чем к реальному owner of mediated intake.
+Сейчас agent уже возвращает не только classification, но и `handoffSummary`,
+`anchorCandidates`, `mustClarifications`.
 
 Ему ещё не хватает:
 
 - controlled clarification loop;
-- handoff summary;
 - явного отделения `suggestion` от `decision`;
 - устойчивой работы с thread context.
 
-### 3.5. Web пока больше показывает объекты, чем управляет очередью draft/thread
+### 3.5. Web mediation surfaces введены, но operator UX ещё можно доводить
 
-`Web` уже уместен как control plane, но ему не хватает канонических operator surfaces:
+`Web` уже показывает queue-first front-office picture.
 
-- queue новых ingress draft;
-- queue требуемых подтверждений;
-- queue объектов без якоря;
-- queue handoff / escalation.
+Остаток:
+
+- richer inline actions поверх draft/thread;
+- более плотный manager/operator workflow;
+- более подробный trace/history UI по draft lifecycle.
 
 ---
 

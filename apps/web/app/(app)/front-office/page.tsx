@@ -23,6 +23,10 @@ export default async function FrontOfficePage() {
     const deviations = overview?.deviations ?? [];
     const recentSignals = overview?.recentSignals ?? [];
     const queueCounts = queues?.counts ?? { newIngress: 0, needsLink: 0, needsClarification: 0, readyToConfirm: 0, openHandoffs: 0 };
+    const newIngress = queues?.newIngress ?? [];
+    const needsLink = queues?.needsLink ?? [];
+    const needsClarification = queues?.needsClarification ?? [];
+    const readyToConfirm = queues?.readyToConfirm ?? [];
 
     return (
         <div className="space-y-6">
@@ -102,6 +106,93 @@ export default async function FrontOfficePage() {
                 </Card>
 
                 <div className="space-y-6">
+                    <Card>
+                        <div className="mb-4 flex items-center justify-between">
+                            <h2 className="text-lg font-medium text-gray-900">Новый ingress</h2>
+                            <span className="text-sm text-gray-500">{newIngress.length}</span>
+                        </div>
+                        {newIngress.length === 0 ? (
+                            <p className="text-sm text-gray-500">Новых draft нет.</p>
+                        ) : (
+                            <div className="space-y-3">
+                                {newIngress.slice(0, 5).map((draft: any) => (
+                                    <Link
+                                        key={draft.id}
+                                        href={draft.payload?.threadKey ? `/front-office/threads/${encodeURIComponent(draft.payload.threadKey)}` : '/front-office'}
+                                        className="block rounded-2xl border border-black/5 p-4 transition hover:border-black/10 hover:bg-gray-50"
+                                    >
+                                        <div className="flex items-center justify-between gap-3">
+                                            <p className="text-sm font-medium text-gray-900">
+                                                {draft.payload?.suggestedIntent ?? draft.eventType}
+                                            </p>
+                                            <span className="text-xs text-gray-500">{draft.status}</span>
+                                        </div>
+                                        <p className="mt-2 text-sm text-gray-700">
+                                            {draft.payload?.messageText ?? 'Без текста'}
+                                        </p>
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </Card>
+
+                    <Card>
+                        <div className="mb-4 flex items-center justify-between">
+                            <h2 className="text-lg font-medium text-gray-900">Требует привязки</h2>
+                            <span className="text-sm text-gray-500">{needsLink.length}</span>
+                        </div>
+                        {needsLink.length === 0 ? (
+                            <p className="text-sm text-gray-500">Нет draft без якоря.</p>
+                        ) : (
+                            <div className="space-y-3">
+                                {needsLink.slice(0, 5).map((draft: any) => (
+                                    <div key={draft.id} className="rounded-2xl border border-amber-100 bg-amber-50/50 p-4">
+                                        <p className="text-sm font-medium text-gray-900">{draft.payload?.messageText ?? 'Без текста'}</p>
+                                        <p className="mt-2 text-xs text-gray-500">{(draft.mustClarifications ?? []).join(', ') || 'Нужна привязка'}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </Card>
+
+                    <Card>
+                        <div className="mb-4 flex items-center justify-between">
+                            <h2 className="text-lg font-medium text-gray-900">Требует уточнения</h2>
+                            <span className="text-sm text-gray-500">{needsClarification.length}</span>
+                        </div>
+                        {needsClarification.length === 0 ? (
+                            <p className="text-sm text-gray-500">Нет draft с MUST-уточнениями.</p>
+                        ) : (
+                            <div className="space-y-3">
+                                {needsClarification.slice(0, 5).map((draft: any) => (
+                                    <div key={draft.id} className="rounded-2xl border border-black/5 p-4">
+                                        <p className="text-sm font-medium text-gray-900">{draft.payload?.messageText ?? 'Без текста'}</p>
+                                        <p className="mt-2 text-xs text-gray-500">{(draft.mustClarifications ?? []).join(', ') || 'Требуется уточнение'}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </Card>
+
+                    <Card>
+                        <div className="mb-4 flex items-center justify-between">
+                            <h2 className="text-lg font-medium text-gray-900">Готово к подтверждению</h2>
+                            <span className="text-sm text-gray-500">{readyToConfirm.length}</span>
+                        </div>
+                        {readyToConfirm.length === 0 ? (
+                            <p className="text-sm text-gray-500">Нет draft, готовых к confirm.</p>
+                        ) : (
+                            <div className="space-y-3">
+                                {readyToConfirm.slice(0, 5).map((draft: any) => (
+                                    <div key={draft.id} className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
+                                        <p className="text-sm font-medium text-gray-900">{draft.payload?.messageText ?? 'Без текста'}</p>
+                                        <p className="mt-2 text-xs text-gray-500">{draft.payload?.threadKey ?? draft.id}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </Card>
+
                     <Card>
                         <div className="mb-4 flex items-center justify-between">
                             <h2 className="text-lg font-medium text-gray-900">Открытые handoff</h2>

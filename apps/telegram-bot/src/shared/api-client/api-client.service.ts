@@ -241,22 +241,6 @@ export class ApiClientService {
         });
     }
 
-    async upsertUser(data: any): Promise<any> {
-        const idempotencyKey = this._generateIdempotencyKey('upsertUser', data);
-        return this.request('/api/internal/telegram/user/upsert', {
-            method: 'POST',
-            headers: this.getHeaders(undefined, idempotencyKey),
-            body: JSON.stringify(data),
-        });
-    }
-
-    async getFirstCompany(): Promise<any> {
-        return this.request('/api/internal/telegram/company/first', {
-            method: 'POST',
-            headers: this.getHeaders(),
-        });
-    }
-
     async getActiveUsers(): Promise<any[]> {
         return this.request('/api/internal/telegram/users/active', {
             method: 'POST',

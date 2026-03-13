@@ -55,6 +55,7 @@ describe("EconomyService replay/duplicate protection", () => {
     } as any;
     const outbox = {
       createEvent: jest.fn().mockReturnValue({}),
+      persistEvent: jest.fn().mockResolvedValue(undefined),
     } as any;
     const config = {
       get: jest.fn((key) => {

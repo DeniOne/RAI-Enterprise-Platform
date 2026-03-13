@@ -29,18 +29,18 @@
 | PostgreSQL RLS | RLS отсутствует | **Устарело / частично закрыто** | `packages/prisma-client/migrations/20260223000000_zero_trust_rls_hardening/migration.sql`, `packages/prisma-client/migrations/20260311173000_rls_memory_governance_hardening/migration.sql` | RLS есть, но нужно подтверждать покрытие новых таблиц при каждой миграции |
 | Ledger DB constraints | Нет double-entry enforcement | **Устарело / закрыто по фундаменту** | `packages/prisma-client/migrations/20260215201500_ledger_db_enforcement_poc/migration.sql`, `packages/prisma-client/migrations/20260215213000_double_entry_symmetry_poc/migration.sql`, `apps/api/src/modules/finance-economy/economy/application/economy.service.ts` | Нужно удерживать контракт при новых финансовых сценариях |
 | FSM на уровне БД | FSM зависит только от бизнес-логики | **Устарело / частично закрыто** | `packages/prisma-client/migrations/20260215193000_task_fsm_db_enforcement_poc/migration.sql`, `packages/prisma-client/migrations/20260311190000_fsm_lifecycle_db_guards/migration.sql` | DB-level graph есть не для всех жизненных циклов системы |
-| Outbox idempotency | Слабая идемпотентность, нет защиты от дублей | **Устарело / существенно закрыто** | `apps/api/src/shared/outbox/outbox.relay.ts`, `apps/api/src/shared/outbox/outbox-broker.publisher.ts`, `apps/api/src/shared/outbox/outbox.relay.spec.ts`, `apps/api/src/shared/outbox/outbox-broker.publisher.spec.ts`, `packages/prisma-client/migrations/20260215235500_event_consumption_idempotency_store/migration.sql`, `packages/prisma-client/migrations/20260312193000_outbox_delivery_checkpoints/migration.sql` | Per-destination checkpointing, partial-delivery resume, production delivery guard и broker-native Redis Streams transport уже есть; открытым остаётся CDC / consumer-group semantics |
-| Outbox polling / scaling | Нужно `SKIP LOCKED`, сейчас polling every second | **Существенно закрыто / частично открыто** | `apps/api/src/shared/outbox/outbox.relay.ts`, `apps/api/src/shared/outbox/outbox.relay.spec.ts`, `apps/api/src/shared/outbox/outbox-broker.publisher.ts` | `FOR UPDATE SKIP LOCKED`, batch-size control, stale-`PROCESSING` recovery и broker-native publish уже есть; открытым остаётся CDC / event-stream-native wakeup и сам polling-модельный характер каждые 1s |
+| Outbox idempotency | Слабая идемпотентность, нет защиты от дублей | **Логически закрыто / event-stream-native relay введён** | `apps/api/src/shared/outbox/outbox.relay.ts`, `apps/api/src/shared/outbox/outbox-broker.publisher.ts`, `apps/api/src/shared/outbox/outbox-wakeup.service.ts`, `apps/api/src/shared/outbox/outbox.service.ts`, `apps/api/src/shared/outbox/outbox.relay.spec.ts`, `apps/api/src/shared/outbox/outbox-broker.publisher.spec.ts`, `apps/api/src/shared/outbox/outbox.service.spec.ts`, `apps/api/src/shared/outbox/outbox-wakeup.service.spec.ts`, `packages/prisma-client/migrations/20260215235500_event_consumption_idempotency_store/migration.sql`, `packages/prisma-client/migrations/20260312193000_outbox_delivery_checkpoints/migration.sql` | Per-destination checkpointing, partial-delivery resume, Redis Streams transport, consumer-group provisioning, Redis Pub/Sub wakeup и producer-path wakeup hints уже введены; если позже понадобится Debezium/Kafka-class внешний CDC, это уже следующий infra-layer, а не незакрытый foundation-gap |
+| Outbox polling / scaling | Нужно `SKIP LOCKED`, сейчас polling every second | **Логически закрыто / cron переведён в safety fallback** | `apps/api/src/shared/outbox/outbox.relay.ts`, `apps/api/src/shared/outbox/outbox-broker.publisher.ts`, `apps/api/src/shared/outbox/outbox-wakeup.service.ts`, `apps/api/src/shared/outbox/outbox.relay.spec.ts`, `apps/api/src/shared/outbox/outbox-broker.publisher.spec.ts` | `FOR UPDATE SKIP LOCKED`, batch-size control, stale-`PROCESSING` recovery, full-batch auto-drain continuation и Redis Pub/Sub wakeup уже убрали зависимость от cron-only polling; 1-second schedule остаётся как safety fallback, а не как единственный production-механизм |
 | Rate limiting | Нет rate limiting для API/GraphQL | **Устарело / закрыто по базовому слою** | `apps/api/src/app.module.ts`, `apps/api/src/shared/guards/throttler.guard.ts` | Базовый rate limiting есть, но fine-grained policy можно усилить |
 | Agent hard-stop | Нет hard-stop кроме текстового confirmation | **Устарело / частично закрыто** | `apps/api/src/modules/rai-chat/tools/rai-tools.registry.ts`, `apps/api/src/modules/rai-chat/security/pending-action.service.ts`, `apps/api/src/modules/rai-chat/pending-actions.controller.ts` | Не все write-paths системы обязаны проходить через один governance gateway |
 | Secrets / KMS / Vault | Нет реальной интеграции с Vault/KMS | **Логически закрыто / с единым secret-provider слоем** | `apps/api/src/level-f/crypto/hsm.service.ts`, `apps/api/src/shared/config/secrets.service.ts`, `apps/api/src/shared/config/secrets.module.ts`, `apps/api/src/shared/auth/auth.module.ts`, `apps/api/src/shared/auth/jwt.strategy.ts`, `apps/api/src/shared/s3/s3.service.ts`, `apps/api/src/shared/outbox/outbox-broker.publisher.ts`, `apps/api/src/modules/rai-chat/agent-platform/openrouter-gateway.service.ts`, `apps/api/src/modules/rai-chat/agent-platform/nvidia-gateway.service.ts`, `apps/api/src/modules/health/health.controller.ts` | `Vault Transit`, `kid` propagation, `*_FILE` loading и platform-wide `SecretsService` для `JWT`, `MinIO`, `INTERNAL_API_KEY`, `CORE_API_KEY`, broker/LLM токенов уже введены; остаток — это обычный config/env debt и будущие новые интеграции, а не незакрытый secret-gap |
 | RBAC / ABAC middleware | Проверки выполняются вручную и неполно | **Логически закрыто / с точечными policy-долгами** | `apps/api/src/shared/auth/roles.guard.ts`, `apps/api/src/shared/auth/authorized.decorator.ts`, `apps/api/src/shared/auth/authorized-gql.decorator.ts`, `apps/api/src/shared/auth/rbac.constants.ts`, `apps/api/src/shared/auth/auth-boundary.decorator.ts`, `apps/api/src/shared/auth/internal-api-key.guard.ts`, `apps/api/src/modules/consulting/consulting-access.guard.ts`, `apps/api/src/modules/consulting/consulting.controller.ts`, `apps/api/src/modules/front-office/front-office.controller.ts`, `apps/api/src/modules/task/task.resolver.ts` | Ordinary tenant-user surface закрыт role-gate, специальные internal boundary формализованы через явные decorators/metadata, manual role-check в `consulting` вынесен в policy-guard; отдельные более глубокие domain-ABAC policy при желании можно усиливать дальше, но это уже не базовый audit-gap |
-| External front-office auth boundary | Внешние пользователи контрагентов не отделены от обычных tenant users | **Существенно закрыто / с legacy alias** | `apps/api/src/shared/auth/front-office-auth.controller.ts`, `apps/api/src/shared/auth/front-office-auth.service.ts`, `apps/api/src/modules/front-office/front-office.controller.ts`, `apps/api/src/modules/front-office/front-office-external.controller.ts`, `apps/api/src/modules/front-office-draft/front-office-draft.service.ts`, `apps/web/app/(app)/portal/front-office/page.tsx`, `apps/web/app/(app)/portal/front-office/threads/[threadKey]/page.tsx`, `apps/web/app/(auth)/portal/front-office/login/page.tsx`, `apps/web/lib/front-office-routes.ts`, `apps/web/components/party-assets/parties/hub/tabs/PartyContactsTab.tsx` | Canonical внешний портал и viewer API вынесены в `/portal/front-office` и `/api/portal/front-office`; legacy `/front-office` оставлен как compatibility alias на время миграции |
-| Audit logs immutability | Нет immutable storage для audit logs | **Логически закрыто по коду / production-retention зависит от WORM provider** | `apps/api/src/shared/audit/audit.service.ts`, `apps/api/src/shared/audit/audit-notarization.service.ts`, `apps/api/src/level-f/worm/worm-storage.service.ts`, `apps/api/src/shared/audit/audit.controller.ts`, `apps/api/src/modules/health/health.controller.ts`, `packages/prisma-client/migrations/20260312170000_audit_log_append_only_enforcement/migration.sql`, `packages/prisma-client/migrations/20260312201500_audit_notarization_worm_layer/migration.sql`, `apps/api/src/shared/audit/audit.service.spec.ts`, `apps/api/src/shared/audit/audit-notarization.service.spec.ts`, `apps/api/src/level-f/worm/worm-storage.service.spec.ts` | `audit_logs` и `audit_notarization_records` уже append-only, proof вынесен во внешний WORM object, есть HSM-подписанный hash-chain, proof endpoint и health-readiness; для регуляторного retention в production остаётся включить `s3_compatible|dual` c object-lock bucket вместо локального filesystem provider |
+| External front-office auth boundary | Внешние пользователи контрагентов не отделены от обычных tenant users | **Закрыто** | `apps/api/src/shared/auth/front-office-auth.controller.ts`, `apps/api/src/shared/auth/front-office-auth.service.ts`, `apps/api/src/modules/front-office/front-office.controller.ts`, `apps/api/src/modules/front-office/front-office-external.controller.ts`, `apps/api/src/modules/front-office-draft/front-office-draft.service.ts`, `apps/web/app/(app)/portal/front-office/page.tsx`, `apps/web/app/(app)/portal/front-office/threads/[threadKey]/page.tsx`, `apps/web/app/(auth)/portal/front-office/login/page.tsx`, `apps/web/lib/front-office-routes.ts`, `apps/web/components/party-assets/parties/hub/tabs/PartyContactsTab.tsx` | Внешний пользователь вынесен в отдельные `/portal/front-office` и `/api/portal/front-office`; старые `/front-office/login|activate` стали redirect-only alias, а внутренний `/api/front-office/*` больше не обслуживает `FRONT_OFFICE_USER` |
+| Audit logs immutability | Нет immutable storage для audit logs | **Логически закрыто / compliance-grade S3 path введён** | `apps/api/src/shared/audit/audit.service.ts`, `apps/api/src/shared/audit/audit-notarization.service.ts`, `apps/api/src/level-f/worm/worm-storage.service.ts`, `apps/api/src/shared/audit/audit.controller.ts`, `apps/api/src/modules/health/health.controller.ts`, `packages/prisma-client/migrations/20260312170000_audit_log_append_only_enforcement/migration.sql`, `packages/prisma-client/migrations/20260312201500_audit_notarization_worm_layer/migration.sql`, `apps/api/src/shared/audit/audit.service.spec.ts`, `apps/api/src/shared/audit/audit-notarization.service.spec.ts`, `apps/api/src/level-f/worm/worm-storage.service.spec.ts`, `scripts/setup-minio.ts`, `docs/05_OPERATIONS/WORKFLOWS/WORM_S3_COMPLIANCE_ROLLOUT.md` | `audit_logs` и `audit_notarization_records` уже append-only, proof вынесен во внешний WORM object, есть HSM-подписанный hash-chain, proof endpoint, health-readiness, fail-closed `production`-политика для `filesystem` и проверка `Object Lock`/default retention для `s3_compatible|dual`; фактический rollout в конкретное production-окружение теперь сводится к конфигурации и запуску bootstrap/runbook, а не к недостающему engineering-блоку |
 | Raw SQL bypass | `$queryRaw` обходит типизацию и контур безопасности | **Логически закрыто / с одобренными исключениями** | `scripts/raw-sql-governance.cjs`, `scripts/raw-sql-allowlist.json`, `scripts/invariant-gate.cjs`, `apps/api/src/shared/prisma/prisma.service.ts`, `apps/api/src/shared/memory/consolidation.worker.ts`, `apps/api/src/shared/memory/default-memory-adapter.service.ts`, `scripts/backfill-outbox-companyid.cjs`, `scripts/verify-task-fsm-db.cjs` | Policy layer введён, `Unsafe`-варианты убраны, memory path переведён на safe wrappers; approved production raw SQL остаётся только в finance/outbox/vector-store и считается контролируемым исключением, а не незакрытой дырой |
 | Engram pruning | Без регулярного прунинга память деградирует | **Логически закрыто / production-grade control-plane введён** | `apps/api/src/shared/memory/engram.service.ts`, `apps/api/src/shared/memory/engram.service.spec.ts`, `apps/api/src/shared/memory/engram-formation.worker.ts`, `apps/api/src/shared/memory/engram-formation.worker.spec.ts`, `apps/api/src/shared/memory/consolidation.worker.ts`, `apps/api/src/shared/memory/consolidation.worker.spec.ts`, `apps/api/src/shared/memory/memory-lifecycle-control.util.ts`, `apps/api/src/shared/memory/memory-maintenance.service.ts`, `apps/api/src/shared/memory/memory-auto-remediation.service.ts`, `apps/api/src/shared/invariants/invariant-metrics.ts`, `apps/api/src/shared/invariants/invariant-metrics.controller.ts`, `apps/api/src/shared/invariants/invariant-metrics.controller.spec.ts`, `infra/monitoring/prometheus/invariant-alert-rules.yml`, `docs/INVARIANT_ALERT_RUNBOOK_RU.md` | Scheduler, bootstrap recovery, observability, pause windows, error-budget, burn-rate escalation, tenant-scoped manual control-plane и auto-remediation уже введены; дальше возможен только следующий UX/operational layer, а не незакрытый foundation-gap |
 | Prisma schema size | Схема почти 6000 строк | **Актуально** | `packages/prisma-client/schema.prisma` = 5958 строк | Высокая стоимость миграций, генерации клиента и ревью |
-| Module complexity | 38+ модулей, высокий coupling | **Актуально** | `apps/api/src/modules/` содержит 38 top-level доменных директорий | Риск регрессий и роста cognitive load остаётся |
+| Module complexity | 38+ модулей, высокий coupling | **Частично закрыто / growth-governance введён** | `apps/api/src/modules/` содержит 38 top-level доменных директорий, `packages/prisma-client/schema.prisma`, `scripts/architecture-budget-gate.cjs`, `scripts/architecture-budgets.json`, `docs/05_OPERATIONS/DEVELOPMENT_GUIDELINES/ARCHITECTURE_GROWTH_GUARDRAILS.md` | Сложность никуда не делась, но теперь есть явный budget-gate для `schema.prisma`, количества top-level модулей и тяжёлых hotspots; следующий шаг — уже реальный boundary refactor, а не слепой рост |
 
 ---
 
@@ -93,8 +93,12 @@
 - broker-first delivery order для `dual`-режима;
 - recovery зависших `PROCESSING` сообщений обратно в `PENDING`;
 - production guard: в `production` дефолтный delivery mode теперь не `local_only`, а broker-required режим, и `local_only` требует явного override.
+- broker-native Redis Streams publish path с optional consumer-group provisioning через `OUTBOX_BROKER_REDIS_CONSUMER_GROUPS`;
+- Redis Pub/Sub wakeup-контур для relay через `OutboxWakeupService`, чтобы новые outbox-записи не ждали только следующую секунду cron;
+- producer-path больше не пишет outbox-события разрозненно: `OutboxService.persistEvent()/persistPreparedEvents()` публикуют wakeup hint централизованно;
+- relay теперь умеет продолжать drain немедленно, если был взят полный batch, вместо жёсткого ожидания следующего cron-тика.
 
-Вывод: event-layer уже сильнее, чем описано в baseline-аудите.
+Вывод: event-layer уже не является просто polling-based relay из baseline-аудита. В проекте теперь есть event-stream-native wakeup и broker-native stream topology; cron остаётся safety fallback, а не единственным механизмом движения очереди.
 
 ### 3.5 Agent Governance
 
@@ -270,7 +274,7 @@
 - появился rudimentary broker-native partitioning layer: optional tenant-partitioned Redis stream keys;
 - legacy HTTP broker path сохранён как backward-compatible fallback, а targeted specs покрывают и relay-side validation, и broker publisher transport contract.
 
-Вывод: тезис "broker publisher всё ещё только generic HTTP-based" уже не соответствует текущему коду. Broker-native transport введён, но CDC / consumer-group semantics / event-stream-native wakeup всё ещё остаются следующим слоем.
+Вывод: тезис "broker publisher всё ещё только generic HTTP-based" уже не соответствует текущему коду. Broker-native transport, consumer-group provisioning и event-stream-native wakeup уже введены; если позже понадобится Debezium/Kafka-class внешний CDC, это будет уже следующим infra-layer, а не незакрытым foundation-gap.
 
 ### 3.19 Production-Grade Operational Control for Memory Lifecycle
 
@@ -293,14 +297,26 @@
 - внешний viewer-контур вынесен в отдельный API namespace `portal/front-office` через `FrontOfficeExternalController`;
 - canonical web portal вынесен в `/portal/front-office` и `/portal/front-office/threads/[threadKey]`, вместо жизни внутри общего `/front-office`;
 - onboarding переведён на новый canonical path: activation links теперь указывают на `/portal/front-office/activate`, а login/success redirects ведут в новый portal route-space;
-- legacy `/front-office` root/thread path сохранён как compatibility alias: для `FRONT_OFFICE_USER` он редиректит в новый portal, а внутренний route-space продолжает обслуживать internal front-office operations;
-- viewer API отделён от internal API не только ролями, но и namespace-контуром: `/api/portal/front-office/*` против общего `/api/front-office/*`.
+- старые `/front-office/login|activate` переведены в redirect-only alias на новый portal route-space;
+- viewer API отделён от internal API не только namespace-контуром, но и policy-фактом: `/api/front-office/*` больше не обслуживает `FRONT_OFFICE_USER`.
 
-Вывод: тезис "внешний портал всё ещё живёт внутри общего `/front-office` route-space" уже устарел как описание canonical архитектуры. Остаточный долг теперь сводится к поддержке legacy alias на время миграции, а не к отсутствию отдельного внешнего route-space.
+Вывод: задача `External Front-Office Route-Space Debt` закрыта. Внешний contour вынесен из общего `front-office` route-space и больше не живёт во внутреннем API namespace.
+
+### 3.21 Front-Office Draft Storage And Telegram Runtime Cleanup
+
+Дополнительно в этом проходе закрыт ещё ряд front-office техдолгов:
+
+- first-class draft storage введён в `packages/prisma-client/schema.prisma` через таблицы `rai_front_office_drafts` и `rai_front_office_committed`, а `FrontOfficeDraftRepository` переключён с generic `agro_event_*` storage на dedicated front-office persistence;
+- API-side legacy Telegram ingress больше не участвует в product path front-office: `FrontOfficeDraftModule` и `IntegrityModule` переведены на `TelegramNotificationModule`, то есть в API остался notifier-layer, а не второй живой ingress runtime;
+- self-service `request_access -> approve_user` flow в Telegram отключён; канонический доступ теперь снова строго invite-only через `front-office-auth` и CRM contact invite flow;
+- `pendingFrontOfficeAction` удалён из bot session state; `Fix/Link` переведены на stateless команды `/fofix <draftId> ...` и `/folink <draftId> ...`;
+- внешний portal thread page теперь использует reply/read contracts, а не остаётся статичной viewer-only витриной.
+
+Вывод: блок `Front-Office runtime split + draft storage debt` существенно снижен и по основным пунктам закрыт. Остаток теперь уже не в foundation-gap, а в эволюции richer lifecycle/history и operator UX.
 
 ---
 
-## 4. ЧТО ОСТАЁТСЯ ОТКРЫТЫМ
+## 4. ОСТАТОЧНЫЕ ФОКУСЫ И ЭКСПЛУАТАЦИОННЫЙ СЛОЙ
 
 ### 4.1 Покрытие авторизации
 
@@ -371,26 +387,26 @@
 
 - baseline-risk про "внешний пользователь как обычный аутентифицированный пользователь" уже существенно снижен;
 - viewer-scoped thread access, reply и read-path теперь принудительно ограничены привязкой к контрагенту;
-- внешний портал больше не живёт canonically внутри общего `/front-office` route-space: он вынесен в `/portal/front-office`, а legacy path оставлен как compatibility alias;
-- это не закрывает более широкий разрыв по `RBAC coverage` во внутреннем API-контуре, но сам route-space debt здесь уже существенно снижен.
+- внешний портал больше не живёт внутри общего `/front-office` route-space: он вынесен в `/portal/front-office`, а внутренний `/api/front-office/*` больше не обслуживает `FRONT_OFFICE_USER`;
+- сам route-space debt здесь закрыт; отдельно остаётся только более широкий `RBAC coverage` по внутреннему API-контуру.
 
 ### 4.2 Outbox Productionization
 
-Основной productionization-блок по outbox уже существенно продвинут:
+Блок больше не является открытым foundation-gap и логически закрыт.
 
-- relay уже поставлен на явный bootstrap/scheduler wiring;
-- broker delivery теперь идёт раньше local delivery в `dual`-режиме;
-- partial delivery теперь переживает retry за счёт checkpoint-полей в `outbox_messages`;
-- зависшие `PROCESSING` сообщения автоматически возвращаются в `PENDING`;
-- в `production` больше нельзя случайно остаться на `local_only` без явного override.
+Что теперь реально есть:
 
-Открытым остаётся уже не базовая надёжность relay и уже не отсутствие broker-native transport, а следующий, более узкий слой:
+- relay всё ещё сохраняет `cron` как safety fallback, но больше не зависит от него как от единственного механизма wakeup;
+- новые записи в outbox публикуют `Redis Pub/Sub` wakeup hint через централизованный producer-path `OutboxService.persistEvent()/persistPreparedEvents()`;
+- relay поднимает wakeup-listener и запускает drain почти сразу после появления новой записи;
+- при полном batch relay сам продолжает drain без обязательного ожидания следующей секунды;
+- broker-native `redis_streams` path теперь не просто пишет в stream, но и поднимает configured consumer groups;
+- live self-test показал, что при `OUTBOX_RELAY_SCHEDULE_ENABLED=false` и `OUTBOX_RELAY_BOOTSTRAP_DRAIN_ENABLED=false` сообщение ушло в `PROCESSED` примерно за `170ms`, то есть только за счёт wakeup-контура.
 
-- полноценный CDC / broker-native consumer-group semantics не внедрены;
-- текущий broker-native path ограничен transport-level publish в Redis Streams, а не complete broker-native processing topology;
-- модель всё ещё остаётся polling-based (`EVERY_SECOND`), а не event-stream native wakeup / CDC-driven.
+Остаток теперь уже не remediation-долг, а эволюционный выбор инфраструктуры:
 
-То есть это уже production-usable relay, но ещё не финальная enterprise messaging architecture.
+- если позже понадобится Debezium/Kafka-class внешний CDC, это будет следующим уровнем platform architecture;
+- текущий Redis Streams + Pub/Sub contour уже делает outbox event-driven и production-usable внутри текущего стека.
 
 ### 4.3 Raw SQL Governance
 
@@ -436,7 +452,7 @@
 
 ### 4.5 Внешняя нотариализация audit log / WORM
 
-Блок больше не является открытым audit-gap и логически закрыт по коду.
+Блок больше не является открытым audit-gap и логически закрыт не только по коду, но и по production-bootstrap слою.
 
 Что теперь реально есть в системе:
 
@@ -447,33 +463,55 @@
 - notarization proof сериализуется во внешний WORM object вне основной БД;
 - `AnchorService.anchorHash(...)` выдаёт anchor receipt, который попадает и в proof-таблицу, и в WORM object;
 - `GET /api/audit/logs/:id/proof` отдаёт доказательство нотариализации;
-- `/api/health` теперь валидирует не только БД, но и `audit_notarization`, включая доступность последнего WORM object.
+- `/api/health` теперь валидирует не только БД, но и `audit_notarization`, включая доступность последнего WORM object;
+- `WormStorageService` для `s3_compatible|dual` теперь fail-closed проверяет `Versioning=Enabled`, `Object Lock=Enabled` и default retention `COMPLIANCE/Years/7` на bucket;
+- `production` больше не может тихо остаться на `AUDIT_WORM_PROVIDER=filesystem` без явного `AUDIT_WORM_ALLOW_FILESYSTEM_IN_PRODUCTION=true`;
+- `scripts/setup-minio.ts` теперь поднимает `rai-audit-worm` bucket с `Object Lock` и default retention, а rollout-процедура зафиксирована в `docs/05_OPERATIONS/WORKFLOWS/WORM_S3_COMPLIANCE_ROLLOUT.md`.
 
 Локально контур подтверждён живым self-test:
 
 - запись `SYSTEM_AUDIT_NOTARIZATION_SELFTEST_STABLE_PATH` успешно создана;
 - WORM object записан по пути `/root/RAI_EP/var/audit-worm/audit-logs/default-rai-company/2026-03-12/2026-03-12T20:08:58.992Z_337c2c81-2627-4a77-aaaf-88595e20d83e_903f72c49b9f2f8d.json`;
-- `health` сейчас отвечает `audit_notarization.status=up`.
+- `health` сейчас отвечает `audit_notarization.status=up`;
+- live self-test `WormStorageService` на локальном `MinIO` подтвердил `provider=s3_compatible`, `objectLock=enabled`, `versioning=enabled`, `defaultRetention=COMPLIANCE:Years:7`, запись доступна по `s3://rai-audit-worm/...`.
 
-Остаток теперь уже не кодовый gap, а инфраструктурный выбор production-провайдера:
+Итог:
 
-- локальный `filesystem` provider подходит для dev/self-test и внешнего доказательства вне БД;
-- для регуляторного retention класса `SEC 17a-4` в production нужно использовать `AUDIT_WORM_PROVIDER=s3_compatible|dual` c object-lock bucket;
-- если потребуется жёсткая привязка к конкретному внешнему `L1/DLT`, это уже следующий слой compliance-эволюции, а не незакрытый базовый remediation.
+- локальный `filesystem` provider остаётся допустимым только для dev/self-test;
+- compliance-grade S3 contour уже введён и проверяется на старте;
+- фактический rollout в конкретное production-окружение теперь является обычной эксплуатационной процедурой по runbook, а не незакрытым engineering-gap;
+- если потребуется жёсткая привязка к конкретному внешнему `L1/DLT`, это уже следующий слой compliance-эволюции, а не незавершённый foundation remediation.
+
+### 4.6 Архитектурный рост схемы и модулей
+
+Блок полного архитектурного упрощения ещё не закрыт, но больше не является “слепой зоной”.
+
+Что теперь реально есть:
+
+- введён отдельный growth-gate `scripts/architecture-budget-gate.cjs`;
+- бюджеты зафиксированы в `scripts/architecture-budgets.json`;
+- контролируются `schema.prisma` line-count, число top-level модулей и watch-list тяжёлых hotspots;
+- для новых больших модулей появился не декоративный, а явный сигнал о том, что boundary уже вышел в опасную зону;
+- developer-guideline зафиксирован в `docs/05_OPERATIONS/DEVELOPMENT_GUIDELINES/ARCHITECTURE_GROWTH_GUARDRAILS.md`.
+
+Практический вывод:
+
+- архитектурная сложность всё ещё остаётся реальной проблемой;
+- но теперь рост этой сложности хотя бы инструментирован и не должен дальше происходить бесконтрольно;
+- следующий инженерный шаг здесь — не ещё один guard-script, а целевой refactor самых тяжёлых boundary: прежде всего `rai-chat`, затем `tech-map` / `front-office-draft` / `consulting` / `finance-economy`.
 
 ## 5. ПРИОРИТЕТ УСТРАНЕНИЯ ОСТАВШИХСЯ РИСКОВ
 
 Рекомендуемый порядок дальнейшей работы:
 
-1. **CDC / Event-Stream-Native Outbox Evolution**
-   - базовый production relay уже доведён;
-   - broker-native transport layer уже введён через `redis_streams`;
-   - следующий шаг: уйти от transport-only broker publish к CDC / consumer-group semantics / event-stream-native wakeup вместо 1-second polling.
+1. **Архитектурное упрощение схемы и модулей**
+   - технический фундамент уже сильно усилен;
+   - growth-governance для схемы и модулей уже введён;
+   - следующий крупный выигрыш теперь лежит в реальном boundary-refactor самых тяжёлых модулей, а не в закрытии оставшихся foundation-gaps.
 
-2. **Production rollout для compliance-grade WORM provider**
-   - кодовый слой нотариализации уже введён;
-   - при production-вводе выбрать `s3_compatible|dual` и bucket с object-lock / retention-policy вместо локального `filesystem`;
-   - это уже не разработка missing feature, а эксплуатационное решение окружения.
+2. **Эволюционное сопровождение частично закрытых foundation-блоков**
+   - `multi-tenancy`, `RLS`, `FSM`, `agent hard-stop` уже имеют фундамент, но требуют дисциплины при каждом новом модуле и migration path;
+   - это уже не emergency-remediation, а постоянный engineering control-layer.
 
 ---
 
@@ -487,10 +525,15 @@
 - `pnpm prisma:build-client`
 - `pnpm -C apps/api build`
 - `pnpm -C apps/web build`
+- `pnpm gate:architecture` -> growth-report показывает `schema.prisma=6107`, `top-level modules=38` и текущие hotspots `rai-chat`, `explainability`, `generative-engine`, `tech-map`, `front-office-draft`, `consulting`, `finance-economy`, `commerce`
+- `pnpm gate:architecture:enforce` -> текущий budget проходит, но guard удерживает дальнейший рост выше согласованных лимитов
+- `pnpm exec tsx scripts/setup-minio.ts` -> локально созданы/проверены `rai-model-registry`, `rai-datasets`, `rai-audit-worm`; для `rai-audit-worm` выставлен `Object Lock` default retention `COMPLIANCE/Years/7`
 - `pnpm -C apps/api start:prod` -> локальный backend успешно поднялся на `http://0.0.0.0:4000/api`
 - `curl -sS http://127.0.0.1:4000/api/health` -> `status=ok`, `database=up`, `memory_heap=up`, `storage=up`, `hsm=up`, `audit_notarization=up`
 - `curl -sS http://127.0.0.1:4000/api/invariants/metrics` -> endpoint отвечает валидным `JSON` snapshot без немедленных критических сбоев bootstrap-пути
+- outbox self-test с `OUTBOX_RELAY_SCHEDULE_ENABLED=false` и `OUTBOX_RELAY_BOOTSTRAP_DRAIN_ENABLED=false` -> сообщение `finance.reconciliation.alert` перешло в `PROCESSED` через wakeup-контур без участия cron
 - локальный self-test `AuditService.log({ action: "SYSTEM_AUDIT_NOTARIZATION_SELFTEST_STABLE_PATH", ... })` успешно создал внешний WORM object по пути `/root/RAI_EP/var/audit-worm/audit-logs/default-rai-company/2026-03-12/2026-03-12T20:08:58.992Z_337c2c81-2627-4a77-aaaf-88595e20d83e_903f72c49b9f2f8d.json`
+- live self-test `WormStorageService` с `AUDIT_WORM_PROVIDER=s3_compatible` -> `provider=s3_compatible,bucket=rai-audit-worm,prefix=audit-worm,objectLock=enabled,versioning=enabled,defaultRetention=COMPLIANCE:Years:7`, запись `s3://rai-audit-worm/audit-worm/audit-logs/default-rai-company/selftest/...` доступна в локальном `MinIO`
 - `src/shared/auth/auth-boundary.decorator.spec.ts`
 - `src/shared/auth/internal-api-key.guard.spec.ts`
 - `src/shared/config/secrets.service.spec.ts`
@@ -504,11 +547,11 @@
 - `src/shared/outbox/outbox.relay.spec.ts`
 - `src/shared/outbox/outbox-broker.publisher.spec.ts`
 - `src/shared/outbox/outbox.service.spec.ts`
+- `src/shared/outbox/outbox-wakeup.service.spec.ts`
 - `src/modules/finance-economy/economy/test/ledger-hardening.integration.spec.ts`
 - `src/modules/front-office-draft/front-office-draft.service.spec.ts`
 - `src/shared/auth/front-office-auth.service.spec.ts`
 - `src/modules/front-office/front-office-external.controller.spec.ts`
-- `src/shared/audit/audit.service.spec.ts`
 - `pnpm --filter web exec tsc --noEmit --pretty false`
 - `node scripts/raw-sql-governance.cjs --mode=enforce`
 - `node scripts/invariant-gate.cjs --mode=warn`
@@ -542,6 +585,8 @@ Baseline-аудит от 2026-03-11 больше нельзя использов
 
 - основной tenant-user `RBAC` rollout практически доведён;
 - специальные internal boundary и базовый policy/`ABAC` layer уже логически закрыты;
-- outbox relay уже доведён до production-usable состояния с checkpoint delivery, stale-`PROCESSING` recovery и production delivery guard;
+- outbox relay уже логически закрыт как event-stream-native контур: checkpoint delivery, stale-`PROCESSING` recovery, Redis Streams, consumer-group provisioning, Redis Pub/Sub wakeup и cron-only dependency убраны;
 - блок `Secrets / HSM / broader secret centralization` логически закрыт: `Vault Transit` path, `kid` propagation, `*_FILE` secret loading и platform-wide `SecretsService` введены;
-- главный следующий фокус уже логичнее смещать в сторону `CDC / Event-Stream-Native Outbox Evolution`, production rollout для compliance-grade `WORM` provider и более долгосрочного архитектурного упрощения схемы/модулей.
+- блок `Audit log notarization / WORM` тоже логически закрыт как runtime/bootstrap слой: compliance-grade `s3_compatible` contour, `Object Lock` verification и fail-closed production-policy введены;
+- архитектурная сложность теперь хотя бы поставлена под growth-control, но не устранена;
+- главный следующий фокус уже логичнее смещать в сторону реального boundary-refactor тяжёлых модулей и постоянного discipline-control над частично закрытыми foundation-блоками.

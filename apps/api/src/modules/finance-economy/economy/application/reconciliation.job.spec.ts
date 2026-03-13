@@ -7,14 +7,12 @@ describe("ReconciliationJob alert path", () => {
       economicEvent: {
         findMany: jest.fn(),
       },
-      outboxMessage: {
-        create: jest.fn(),
-      },
     } as any;
     const outbox = {
       createEvent: jest
         .fn()
         .mockReturnValue({ type: "finance.reconciliation.alert", payload: {} }),
+      persistPreparedEvents: jest.fn().mockResolvedValue(undefined),
     } as any;
     const job = new ReconciliationJob(prisma, outbox);
     return { job, prisma, outbox };
@@ -47,7 +45,11 @@ describe("ReconciliationJob alert path", () => {
         anomalyType: "MISSING_LEDGER_ENTRIES",
       }),
     );
-    expect(prisma.outboxMessage.create).toHaveBeenCalledTimes(1);
+    expect(outbox.persistPreparedEvents).toHaveBeenCalledTimes(1);
+    expect(outbox.persistPreparedEvents).toHaveBeenCalledWith(
+      prisma,
+      [expect.objectContaining({ type: "finance.reconciliation.alert" })],
+    );
   });
 
   it("creates outbox alert when debit/credit mismatch is detected", async () => {
@@ -76,6 +78,6 @@ describe("ReconciliationJob alert path", () => {
         anomalyType: "DOUBLE_ENTRY_MISMATCH",
       }),
     );
-    expect(prisma.outboxMessage.create).toHaveBeenCalledTimes(1);
+    expect(outbox.persistPreparedEvents).toHaveBeenCalledTimes(1);
   });
 });

@@ -18,22 +18,12 @@ export class TelegramAuthInternalController {
     return { success: true };
   }
 
-  @Post("user/upsert")
-  async upsertUser(@Body() body: any) {
-    return this.telegramAuthService.upsertUserFromTelegram(body);
-  }
-
   @Post("user/get") // Using POST for convenience with body or just query
   async getUser(@Body() body: { telegramId: string; companyId?: string }) {
     return this.telegramAuthService.getUserByTelegramId(
       body.telegramId,
       body.companyId,
     );
-  }
-
-  @Post("company/first")
-  async getFirstCompany() {
-    return this.telegramAuthService.getFirstCompany();
   }
 
   @Post("users/active")

@@ -156,6 +156,7 @@ export class AuditNotarizationService {
     status: "up";
     provider: string;
     latestAnchoredAt: string | null;
+    storage: ReturnType<WormStorageService["getReadinessDetails"]>;
   }> {
     if (!this.wormStorageService.isReady()) {
       throw new Error("WORM storage is not ready");
@@ -179,6 +180,7 @@ export class AuditNotarizationService {
       status: "up",
       provider: this.wormStorageService.describeConfig(),
       latestAnchoredAt: latest?.anchoredAt?.toISOString() ?? null,
+      storage: this.wormStorageService.getReadinessDetails(),
     };
   }
 

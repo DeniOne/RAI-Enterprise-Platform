@@ -205,10 +205,6 @@ describe("TelegramUpdate front-office flow", () => {
     sessionService.getSession.mockResolvedValue({
       token: "token-1",
       lastActive: Date.now(),
-      pendingFrontOfficeAction: {
-        action: "link",
-        draftId: "draft-2",
-      },
     });
 
     const update = new TelegramUpdate(
@@ -216,13 +212,13 @@ describe("TelegramUpdate front-office flow", () => {
       apiClient as any,
       sessionService as any,
     );
-    const ctx = buildTextContext("просто текст без refs");
+    const ctx = buildTextContext("/folink draft-2 просто текст без refs");
 
     await update.onText(ctx);
 
     expect(apiClient.linkFrontOfficeDraft).not.toHaveBeenCalled();
     expect(ctx.reply).toHaveBeenCalledWith(
-      "Нужен формат refs: field=... season=... task=...",
+      "Нужен формат: /folink <draftId> field=... season=... task=...",
     );
   });
 
@@ -270,16 +266,12 @@ describe("TelegramUpdate front-office flow", () => {
     );
   });
 
-  it("выполняет link по text refs для pending front-office action", async () => {
+  it("выполняет link по stateless команде /folink", async () => {
     const apiClient = buildApiClient();
     const sessionService = buildSessionService();
     sessionService.getSession.mockResolvedValue({
       token: "token-1",
       lastActive: Date.now(),
-      pendingFrontOfficeAction: {
-        action: "link",
-        draftId: "draft-2",
-      },
     });
     apiClient.linkFrontOfficeDraft.mockResolvedValue({
       status: "DRAFT_RECORDED",
@@ -295,7 +287,7 @@ describe("TelegramUpdate front-office flow", () => {
       apiClient as any,
       sessionService as any,
     );
-    const ctx = buildTextContext("field=field-2 season=season-4 task=task-3");
+    const ctx = buildTextContext("/folink draft-2 field=field-2 season=season-4 task=task-3");
 
     await update.onText(ctx);
 
@@ -308,7 +300,7 @@ describe("TelegramUpdate front-office flow", () => {
       },
       "token-1",
     );
-    expect(sessionService.saveSession).toHaveBeenCalled();
+    expect(sessionService.saveSession).not.toHaveBeenCalled();
   });
 
   it("по confirm-кнопке вызывает confirm front-office API", async () => {
@@ -344,6 +336,73 @@ describe("TelegramUpdate front-office flow", () => {
     expect(ctx.answerCbQuery).toHaveBeenCalledWith("Confirm отправлен");
     expect(ctx.reply).toHaveBeenCalledWith(
       expect.stringContaining("obs-1"),
+      expect.objectContaining({ parse_mode: "HTML" }),
+    );
+  });
+
+  it("по fix-кнопке подсказывает stateless команду /fofix", async () => {
+    const apiClient = buildApiClient();
+    const sessionService = buildSessionService();
+    sessionService.getSession.mockResolvedValue({
+      token: "token-1",
+      lastActive: Date.now(),
+    });
+
+    const update = new TelegramUpdate(
+      progressService as any,
+      apiClient as any,
+      sessionService as any,
+    );
+    const ctx = buildActionContext("fo:f:draft-9", ["fo:f:draft-9", "f", "draft-9"]);
+
+    await update.onFrontOfficeAction(ctx);
+
+    expect(ctx.answerCbQuery).toHaveBeenCalledWith("Отправьте команду /fofix");
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.stringContaining("/fofix draft-9"),
+      expect.objectContaining({ parse_mode: "HTML" }),
+    );
+    expect(sessionService.saveSession).not.toHaveBeenCalled();
+  });
+
+  it("выполняет fix по stateless команде /fofix", async () => {
+    const apiClient = buildApiClient();
+    const sessionService = buildSessionService();
+    sessionService.getSession.mockResolvedValue({
+      token: "token-1",
+      lastActive: Date.now(),
+      activeTaskId: "task-7",
+      currentCoordinates: { lat: 50.1, lng: 36.2 },
+    });
+    apiClient.fixFrontOfficeDraft.mockResolvedValue({
+      status: "DRAFT_RECORDED",
+      draftId: "draft-7",
+      suggestedIntent: "observation",
+      mustClarifications: [],
+      allowedActions: ["CONFIRM", "FIX", "LINK"],
+      draft: { id: "draft-7", status: "READY_TO_CONFIRM" },
+    });
+
+    const update = new TelegramUpdate(
+      progressService as any,
+      apiClient as any,
+      sessionService as any,
+    );
+    const ctx = buildTextContext("/fofix draft-7 текст после уточнения");
+
+    await update.onText(ctx);
+
+    expect(apiClient.fixFrontOfficeDraft).toHaveBeenCalledWith(
+      "draft-7",
+      {
+        messageText: "текст после уточнения",
+        taskId: "task-7",
+        coordinates: { lat: 50.1, lng: 36.2 },
+      },
+      "token-1",
+    );
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.stringContaining("draft-7"),
       expect.objectContaining({ parse_mode: "HTML" }),
     );
   });

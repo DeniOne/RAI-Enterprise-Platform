@@ -495,6 +495,14 @@ export interface ClassifyDialogThreadResult {
   targetOwnerRole?: string;
   needsEscalation: boolean;
   threadKey: string;
+  anchorCandidates: {
+    farmRefs: string[];
+    fieldIds: string[];
+    seasonIds: string[];
+    taskIds: string[];
+  };
+  mustClarifications: string[];
+  handoffSummary: string;
 }
 
 export interface CreateFrontOfficeEscalationResult {

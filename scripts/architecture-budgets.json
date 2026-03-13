@@ -1,0 +1,74 @@
+{
+  "schemaPrisma": {
+    "path": "packages/prisma-client/schema.prisma",
+    "warnLines": 6000,
+    "maxLines": 6300
+  },
+  "topLevelModules": {
+    "path": "apps/api/src/modules",
+    "warnCount": 38,
+    "maxCount": 40
+  },
+  "defaultHotspot": {
+    "warnLines": 2000,
+    "warnFiles": 25
+  },
+  "watchModules": {
+    "rai-chat": {
+      "owner": "ai-platform",
+      "warnLines": 34000,
+      "maxLines": 36000,
+      "warnFiles": 135,
+      "maxFiles": 145
+    },
+    "explainability": {
+      "owner": "governance",
+      "warnLines": 8500,
+      "maxLines": 9500,
+      "warnFiles": 42,
+      "maxFiles": 50
+    },
+    "generative-engine": {
+      "owner": "agronomy-ai",
+      "warnLines": 7000,
+      "maxLines": 8000,
+      "warnFiles": 70,
+      "maxFiles": 80
+    },
+    "tech-map": {
+      "owner": "agronomy-core",
+      "warnLines": 6000,
+      "maxLines": 6500,
+      "warnFiles": 60,
+      "maxFiles": 65
+    },
+    "front-office-draft": {
+      "owner": "front-office",
+      "warnLines": 5500,
+      "maxLines": 6000,
+      "warnFiles": 10,
+      "maxFiles": 12
+    },
+    "consulting": {
+      "owner": "consulting",
+      "warnLines": 4800,
+      "maxLines": 5200,
+      "warnFiles": 38,
+      "maxFiles": 44
+    },
+    "finance-economy": {
+      "owner": "finance",
+      "warnLines": 4500,
+      "maxLines": 5000,
+      "warnFiles": 38,
+      "maxFiles": 44
+    },
+    "commerce": {
+      "owner": "commerce",
+      "warnLines": 3600,
+      "maxLines": 4300,
+      "warnFiles": 32,
+      "maxFiles": 38
+    }
+  }
+}

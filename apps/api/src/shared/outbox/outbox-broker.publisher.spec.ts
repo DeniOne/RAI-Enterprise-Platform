@@ -18,6 +18,7 @@ describe('OutboxBrokerPublisher', () => {
 
     const redisService = {
       xadd: jest.fn().mockResolvedValue('1710240000000-0'),
+      ensureConsumerGroup: jest.fn().mockResolvedValue(undefined),
     };
 
     return {
@@ -54,9 +55,10 @@ describe('OutboxBrokerPublisher', () => {
       OUTBOX_BROKER_REDIS_STREAM_KEY: 'rai:outbox',
       OUTBOX_BROKER_REDIS_STREAM_MAXLEN: '5000',
       OUTBOX_BROKER_REDIS_TENANT_PARTITIONING: 'true',
+      OUTBOX_BROKER_REDIS_CONSUMER_GROUPS: 'rai-default,analytics',
     });
 
-    await publisher.publish(sampleMessage);
+    const receipt = await publisher.publish(sampleMessage);
 
     expect(redisService.xadd).toHaveBeenCalledWith(
       'rai:outbox:company-1',
@@ -68,8 +70,22 @@ describe('OutboxBrokerPublisher', () => {
       }),
       { maxLen: 5000 },
     );
+    expect(redisService.ensureConsumerGroup).toHaveBeenCalledWith(
+      'rai:outbox:company-1',
+      'rai-default',
+    );
+    expect(redisService.ensureConsumerGroup).toHaveBeenCalledWith(
+      'rai:outbox:company-1',
+      'analytics',
+    );
+    expect(receipt).toEqual({
+      transport: 'redis_streams',
+      target: 'rai:outbox:company-1',
+      receiptId: '1710240000000-0',
+    });
     expect(publisher.describeConfig()).toContain('transport=redis_streams');
     expect(publisher.describeConfig()).toContain('tenantPartitioning=true');
+    expect(publisher.describeConfig()).toContain('consumerGroups=2');
   });
 
   it('returns transport-specific config hint when Redis Streams are selected', () => {

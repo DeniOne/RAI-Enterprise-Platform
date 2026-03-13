@@ -2,6 +2,27 @@
 
 ## 2026-03-12
 
+81. **Architecture Growth Governance** [DONE]:
+    *   Введён `scripts/architecture-budget-gate.cjs` как отдельный control-layer для роста архитектурной сложности.
+    *   Бюджеты зафиксированы в `scripts/architecture-budgets.json`: отдельно контролируются `schema.prisma`, количество top-level модулей и watch-list тяжёлых hotspots (`rai-chat`, `explainability`, `generative-engine`, `tech-map`, `front-office-draft`, `consulting`, `finance-economy`, `commerce`).
+    *   В корневой `package.json` добавлены команды `pnpm gate:architecture` и `pnpm gate:architecture:enforce`.
+    *   Добавлен guideline `docs/05_OPERATIONS/DEVELOPMENT_GUIDELINES/ARCHITECTURE_GROWTH_GUARDRAILS.md`; `delta audit` синхронизирован: блок module complexity переведён из “просто актуально” в “частично закрыто / growth-governance введён”.
+    *   Верификация: `pnpm gate:architecture` PASS; `pnpm gate:architecture:enforce` PASS; текущий отчёт фиксирует `schema.prisma=6107`, `top-level modules=38` и основные hotspots.
+
+80. **Foundation Remediation — Compliance-Grade WORM S3 Rollout** [DONE]:
+    *   `WormStorageService` переведён в fail-closed режим для `s3_compatible|dual`: на старте теперь проверяются `Versioning=Enabled`, `Object Lock=Enabled` и default retention `COMPLIANCE / Years / 7`, а `filesystem` в `production` запрещён без явного override.
+    *   `WORM` upload path усилен до фактической retention verification: объект пишется в `S3-compatible` storage, затем retention читается и подтверждается; если контур не подтвердился, запись считается неуспешной.
+    *   `scripts/setup-minio.ts` теперь поднимает `rai-audit-worm` bucket с `Object Lock` и default retention, а в корневой `package.json` добавлен запуск `pnpm storage:minio:setup`.
+    *   `delta audit` и новый runbook `docs/05_OPERATIONS/WORKFLOWS/WORM_S3_COMPLIANCE_ROLLOUT.md` синхронизированы: WORM-блок переведён из “остался production rollout” в логически закрытый runtime/bootstrap слой.
+    *   Верификация: `pnpm -C apps/api build` PASS; `pnpm -C apps/api test -- --runInBand --silent src/level-f/worm/worm-storage.service.spec.ts src/shared/audit/audit-notarization.service.spec.ts src/shared/audit/audit.service.spec.ts` PASS; `pnpm exec tsx scripts/setup-minio.ts` PASS; live self-test `WormStorageService` подтвердил `provider=s3_compatible`, `objectLock=enabled`, `versioning=enabled`, `defaultRetention=COMPLIANCE:Years:7`, `accessible=true`.
+
+79. **Foundation Remediation — Event-Stream-Native Outbox Evolution** [DONE]:
+    *   `OutboxRelay` перестал быть cron-only контуром: введён `Redis Pub/Sub` wakeup через `OutboxWakeupService`, а scheduler теперь играет роль safety fallback, а не единственного production-механизма движения очереди.
+    *   Producer-path централизован через `OutboxService.persistEvent()` / `persistPreparedEvents()`: `task`, `consulting`, `economy`, `reconciliation` теперь после записи outbox публикуют wakeup hint без разрозненного прямого `outboxMessage.create/createMany`.
+    *   `redis_streams` transport усилен до broker-native topology: `OutboxBrokerPublisher` теперь не только пишет в stream, но и поднимает configured consumer groups через `OUTBOX_BROKER_REDIS_CONSUMER_GROUPS`; relay логирует broker receipt и продолжает drain немедленно при полном batch.
+    *   `delta audit` синхронизирован: outbox-блок переведён в логически закрытый как event-stream-native relay; если позже понадобится Debezium/Kafka-class внешний CDC, это уже следующий infra-layer, а не незакрытый foundation-gap.
+    *   Верификация: `pnpm -C apps/api build` PASS; `pnpm -C apps/api test -- --runInBand --silent src/shared/outbox/outbox.service.spec.ts src/shared/outbox/outbox-wakeup.service.spec.ts src/shared/outbox/outbox-broker.publisher.spec.ts src/shared/outbox/outbox.relay.spec.ts` PASS; live self-test с `OUTBOX_RELAY_SCHEDULE_ENABLED=false` и `OUTBOX_RELAY_BOOTSTRAP_DRAIN_ENABLED=false` перевёл outbox-сообщение в `PROCESSED` только через wakeup-контур.
+
 78. **Foundation Remediation — Audit Log Notarization / WORM** [DONE]:
     *   `AuditService` переведён на create-only путь через `AuditNotarizationService`: каждая audit-запись теперь получает `entryHash`, company-scoped `chainHash`, HSM-подпись и отдельную proof-запись в `audit_notarization_records`.
     *   Введён `WormStorageService` / `WormModule` с внешним immutable storage вне основной БД: поддерживаются `filesystem`, `s3_compatible` и `dual`, а default path больше не зависит от `cwd` процесса и стабильно разрешается от корня workspace.
@@ -12,8 +33,8 @@
 77. **Foundation Remediation — External Front-Office Route-Space Separation** [DONE]:
     *   Введён отдельный viewer-only API namespace `portal/front-office` через `src/modules/front-office/front-office-external.controller.ts`; внешний контур больше не живёт только внутри общего `front-office.controller.ts`.
     *   Canonical web portal вынесен в `/portal/front-office` и `/portal/front-office/threads/[threadKey]`, а onboarding/success redirects и activation links переведены на новый route-space.
-    *   Legacy `/front-office` root/thread paths для `FRONT_OFFICE_USER` сохранены как compatibility alias через redirects, чтобы не ломать текущие ссылки и сессии.
-    *   Обновлены baseline audit, delta audit, stabilization checklist и memory-bank: блок `External front-office auth boundary` переведён из `частично закрыто` в `существенно закрыто / с legacy alias`.
+    *   Старые `/front-office/login|activate` переведены в redirect-only alias, а внутренний `/api/front-office/*` больше не обслуживает `FRONT_OFFICE_USER`.
+    *   Обновлены baseline audit, delta audit, stabilization checklist и memory-bank: блок `External front-office auth boundary` переведён из `частично закрыто` в `закрыто`.
     *   Верификация: `pnpm --filter api exec jest --runInBand src/modules/front-office/front-office-external.controller.spec.ts src/shared/auth/front-office-auth.service.spec.ts` PASS; `pnpm --filter api exec tsc --noEmit --pretty false` PASS; `pnpm --filter web exec tsc --noEmit --pretty false` PASS.
 
 76. **Foundation Remediation — Broader Secrets Centralization** [DONE]:
