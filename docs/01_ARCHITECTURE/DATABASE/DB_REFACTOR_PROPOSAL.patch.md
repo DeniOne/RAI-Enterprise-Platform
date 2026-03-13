@@ -1,42 +1,126 @@
 # DB_REFACTOR_PROPOSAL.patch.md
 
-Этот файл описывает безопасную первую волну изменений.
-Это design-only proposal. Это не команда автоматически переписать репозиторий.
+Это design-only proposal для первого реального tranche.
+Этот tranche ограничен `Phase 0 + Phase 1`.
+
+Никаких destructive schema rewrites, никакого physical split, никакого dual-write с `MG-Core`.
 
 ## Hard boundary
 
-В первой волне нельзя делать:
-- destructive rename `companyId -> tenantId`;
-- физический split базы;
-- массовые переименования моделей по всему репо;
-- dual-write с MG-Core;
-- тотальный перевод всех query paths на projections за один проход.
+В первой реализации запрещено:
+- переименовывать `companyId -> tenantId`;
+- трогать destructively `Season`, `TechMap`, `HarvestPlan`, `Task`, `EconomicEvent`, `LedgerEntry`, `Party`, `CommerceContract`;
+- автоматически root-ить новые модели в `Company`;
+- добавлять новые cross-domain relations без ADR;
+- использовать `companyId = NULL` как universal global scope;
+- использовать `JSONB` как замену отсутствующей модели;
+- делать read models источником истины;
+- использовать `MG-Core` как active runtime fallback.
 
-Первая волна должна быть:
-- additive;
-- обратимой;
-- совместимой с текущим Prisma Client и API;
-- направленной на изменение архитектурного вектора, а не на демонстративный перепил.
+## Scope of first tranche
+
+Первый tranche делает только следующее:
+- governance package;
+- manifests;
+- CI rules;
+- additive `Tenant` и `TenantCompanyBinding`;
+- nullable `tenantId` только в control-plane contour;
+- dual-key runtime policy;
+- mismatch logging.
 
 ## Safe first changes
 
-### 1. Добавить architecture governance
-Создать документы:
+### 1. Создать governance artifacts
+Добавить:
 - `docs/01_ARCHITECTURE/DECISIONS/ADR_DB_001_TENANT_VS_COMPANY_BOUNDARY.md`
 - `docs/01_ARCHITECTURE/DECISIONS/ADR_DB_002_SCHEMA_FRAGMENTATION_AND_OWNERSHIP.md`
 - `docs/01_ARCHITECTURE/DECISIONS/ADR_DB_003_ENUM_GOVERNANCE.md`
 - `docs/01_ARCHITECTURE/DECISIONS/ADR_DB_004_READ_MODELS_AND_PROJECTIONS.md`
 - `docs/01_ARCHITECTURE/DECISIONS/ADR_DB_005_INDEX_AND_QUERY_GOVERNANCE.md`
 
-Задача этих ADR:
-- зафиксировать, что `Company` больше не является platform-root;
-- закрепить target-state с отдельным `Tenant`;
-- зафиксировать ownership по schema fragments;
-- запретить uncontrolled enum growth;
-- ввести policy для projections и hot-path indexes.
+### 2. Создать manifest layer
+Добавить:
+- `docs/01_ARCHITECTURE/DATABASE/MODEL_SCOPE_MANIFEST.md`
+- `docs/01_ARCHITECTURE/DATABASE/DOMAIN_OWNERSHIP_MANIFEST.md`
+- `docs/01_ARCHITECTURE/DATABASE/READ_MODEL_POLICY.md`
+- `docs/01_ARCHITECTURE/DATABASE/DB_SUCCESS_METRICS.md`
 
-### 2. Добавить структуру logical schema fragments без изменения model semantics
-Создать layout:
+### 3. Добавить CI / governance checks
+Добавить проверки на:
+- model scope consistency;
+- domain ownership consistency;
+- forbidden cross-domain relations;
+- enum growth budget;
+- duplicate/weak indexes;
+- heavy Prisma include trees;
+- consistency между manifest и `PrismaService`.
+
+### 4. Ввести `Tenant` как additive primitive
+Добавить только:
+- `Tenant`
+- `TenantCompanyBinding`
+
+### 5. Добавить `tenantId` только в control-plane contour
+Первые target models:
+- `TenantState`
+- `AgentConfiguration`
+- `AgentCapabilityBinding`
+- `AgentToolBinding`
+- `AgentConnectorBinding`
+- `AgentConfigChangeRequest`
+- `RuntimeGovernanceEvent`
+- `SystemIncident`
+- `IncidentRunbookExecution`
+- `PendingAction`
+- `PerformanceMetric`
+- `EvalRun`
+- `EventConsumption`
+- `MemoryInteraction`
+- `MemoryEpisode`
+- `MemoryProfile`
+
+## Proposed model scope manifest contract
+
+Каждая модель в manifest должна получить поля:
+- `scope_type`: `tenant` / `business` / `global` / `preset` / `system` / `mixed-transition`
+- `owner_domain`
+- `authoritative_key`
+- `company_id_policy`
+- `tenant_id_policy`
+- `global_row_allowed`
+- `preset_row_allowed`
+- `migration_phase`
+- `notes`
+
+Жесткое правило:
+- модель без manifest-строки не может участвовать в tenancy migration.
+
+## Proposed domain ownership manifest contract
+
+В первой итерации фиксируются только 8 верхнеуровневых доменов:
+- `platform_core`
+- `org_legal`
+- `agri_planning`
+- `agri_execution`
+- `finance`
+- `crm_commerce`
+- `ai_runtime`
+- `integration_reliability`
+
+Подконтуры:
+- `ai_runtime/knowledge_memory`
+- `ai_runtime/risk_governance`
+- `quarantine_sandbox/research_rd`
+- `legacy_bridge`
+
+Почему так:
+- это снижает риск over-modularization;
+- ownership становится яснее;
+- вы управляете boundary, а не папками.
+
+## Proposed schema fragment layout
+
+Первый layout должен быть укрупнённым:
 - `packages/prisma-client/prisma/00_base.prisma`
 - `packages/prisma-client/prisma/01_platform_core.prisma`
 - `packages/prisma-client/prisma/02_org_legal.prisma`
@@ -46,156 +130,17 @@
 - `packages/prisma-client/prisma/06_crm_commerce.prisma`
 - `packages/prisma-client/prisma/07_ai_runtime.prisma`
 - `packages/prisma-client/prisma/08_integration_reliability.prisma`
-- `packages/prisma-client/prisma/09_knowledge_memory.prisma`
-- `packages/prisma-client/prisma/10_risk_governance.prisma`
-- `packages/prisma-client/prisma/11_research_rd.prisma`
-- `packages/prisma-client/prisma/12_legacy_bridge.prisma`
+- `packages/prisma-client/prisma/09_quarantine_sandbox.prisma`
+- `packages/prisma-client/prisma/10_legacy_bridge.prisma`
 - `packages/prisma-client/prisma/schema.compose.ts`
 
 Правило:
-- финальный `schema.prisma` по-прежнему собирается как единый build artifact;
-- Prisma generation не должна замечать, что исходники теперь фрагментированы;
-- semantic refactor нельзя маскировать под файловую декомпозицию.
-
-### 3. Зафиксировать tenancy governance до добавления `tenantId`
-Нужно сделать до любой реальной миграции:
-- исправить противоречие классификации `EventConsumption` в `apps/api/src/shared/prisma/prisma.service.ts`;
-- создать manifest классификации моделей;
-- проверить соответствие schema semantics и runtime tenant enforcement в CI.
-
-### 4. Добавить `Tenant` как additive primitive
-Новые сущности должны появиться без разрушения текущего контракта:
-- `Tenant`
-- `TenantCompanyBinding`
-
-Нельзя:
-- удалять `companyId`;
-- делать hard switch всех сервисов на `tenantId`;
-- объявлять `Company` deprecated до появления миграционного моста.
-
-## Proposed schema fragment ownership
-
-### `00_base.prisma`
-Владеет:
-- `generator`
-- `datasource`
-- общими scalar conventions
-- техническими cross-domain enum, если они действительно closed и стабильны
-
-### `01_platform_core.prisma`
-Владеет:
-- `User`
-- `Invitation`
-- `RoleDefinition`
-- `EmployeeProfile`
-- `TenantState`
-- `AuditLog`
-- `AuditNotarizationRecord`
-- `ApiUsage`
-- будущими `Tenant`, `TenantCompanyBinding`
-
-### `02_org_legal.prisma`
-Владеет:
-- `Company`
-- legal/compliance/regulatory блоком
-- `Jurisdiction`, `RegulatoryProfile` и связанными legal ownership моделями
-
-### `03_agri_planning.prisma`
-Владеет:
-- `Field`
-- `Rapeseed`
-- `CropVariety`
-- `Season`
-- `TechMap`
-- planning rules
-- catalogs/evidence planning уровня
-
-### `04_agri_execution.prisma`
-Владеет:
-- `Task`
-- `HarvestPlan`
-- `DeviationReview`
-- `CmrDecision`
-- `CmrRisk`
-- `HarvestResult`
-- `FieldObservation`
-- execution facts и execution seam models
-
-### `05_finance.prisma`
-Владеет:
-- `EconomicEvent`
-- `LedgerEntry`
-- `AccountBalance`
-- `CashAccount`
-- `Budget`
-- `BudgetItem`
-- `BudgetPlan`
-- finance projections и finance-specific scenarios
-
-### `06_crm_commerce.prisma`
-Владеет:
-- `Deal`
-- `Contract`
-- `Party`
-- `PartyRelation`
-- `CommerceContract`
-- `CommerceObligation`
-- `Invoice`
-- `Payment`
-- front-office business workspace master records
-
-### `07_ai_runtime.prisma`
-Владеет:
-- `AgentConfiguration`
-- `AgentCapabilityBinding`
-- `AgentToolBinding`
-- `AgentConnectorBinding`
-- `AgentConfigChangeRequest`
-- `RuntimeGovernanceEvent`
-- `SystemIncident`
-- `PendingAction`
-- `EvalRun`
-- model ops и runtime reliability surfaces
-
-### `08_integration_reliability.prisma`
-Владеет:
-- `OutboxMessage`
-- `EventConsumption`
-- ingestion/delivery-control models
-- replay/idempotency/integration reliability artifacts
-
-### `09_knowledge_memory.prisma`
-Владеет:
-- `MemoryEntry`
-- `MemoryInteraction`
-- `MemoryEpisode`
-- `MemoryProfile`
-- `Engram`
-- `SemanticFact`
-- `KnowledgeNode`
-- `KnowledgeEdge`
-
-### `10_risk_governance.prisma`
-Владеет:
-- risk engine models
-- governance lock/override/approval surfaces
-- часть cross-domain decision records, если они именно governance, а не business execution
-
-### `11_research_rd.prisma`
-Владеет:
-- research и experimentation models
-- war-room / exploration / institutional analytics artifacts
-- sustainability / biodiversity / advanced analytical surfaces
-
-### `12_legacy_bridge.prisma`
-Владеет:
-- migration-only scaffolding;
-- bridge models и mapping tables;
-- потенциальными read-only ссылками на MG-Core, если когда-либо понадобится archive adapter.
+- `knowledge_memory` и `risk_governance` пока не раскладывать в отдельные top-level fragments;
+- `research_rd` держать в quarantine/sandbox fragment до отдельного доказательства.
 
 ## Proposed tenancy additions
 
-### Новые target models
+### New target models
 
 ```prisma
 model Tenant {
@@ -221,43 +166,16 @@ model TenantCompanyBinding {
 }
 ```
 
-### Первые кандидаты на `tenantId`
-Добавлять nullable `tenantId` сначала сюда:
-- `TenantState`
-- `AgentConfiguration`
-- `AgentCapabilityBinding`
-- `AgentToolBinding`
-- `AgentConnectorBinding`
-- `AgentConfigChangeRequest`
-- `RuntimeGovernanceEvent`
-- `SystemIncident`
-- `IncidentRunbookExecution`
-- `PendingAction`
-- `PerformanceMetric`
-- `EvalRun`
-- `EventConsumption`
-- `MemoryInteraction`
-- `MemoryEpisode`
-- `MemoryProfile`
+### Dual-key policy
+На переходный период:
+- `tenantId` = platform isolation;
+- `companyId` = business/legal association и compatibility key;
+- `companyId` не удаляется;
+- новый runtime context обязан хранить оба ключа.
 
-Это правильно, потому что эти модели уже сейчас ближе к platform/control-plane semantics, чем к business-entity semantics.
+## Proposed transition runtime policy
 
-### Что нельзя трогать destructively в первой волне
-- `Season`
-- `TechMap`
-- `HarvestPlan`
-- `Task`
-- `EconomicEvent`
-- `LedgerEntry`
-- `Party`
-- `CommerceContract`
-
-Это operational core. Сначала нужен migration seam, потом structural move.
-
-## Proposed compatibility layer
-
-### Runtime compatibility
-Расширить tenant context до явной формы:
+Минимальный контракт:
 
 ```ts
 interface TenantRuntimeContext {
@@ -267,188 +185,58 @@ interface TenantRuntimeContext {
 }
 ```
 
-Правило:
-- `tenantId` отвечает за platform isolation;
-- `companyId` отвечает за business/legal association и transitional compatibility;
-- system/global сценарии должны определяться явно, а не через магическое отсутствие `companyId`.
+Обязательные правила:
+- scope приходит только из runtime context;
+- payload не может быть authoritative source для tenant scope;
+- `tenantId` paths сначала включаются в shadow mode;
+- mismatch между `tenantId` и `companyId -> tenant` mapping логируется;
+- fallback на `companyId`-only path остаётся feature-flagged.
 
-### Prisma compatibility
-На переходный период:
-- существующие сервисы продолжают писать `companyId`, как сейчас;
-- новые поля `tenantId` пишутся shadow-write там, где они уже добавлены;
-- чтение по `tenantId` включается сначала в debug/shadow mode;
-- расхождения между `companyId -> tenantId` mapping и реальными данными логируются.
+## Proposed read model policy
 
-### API/JWT compatibility
-Переходная форма payload:
+Projection/read model можно создавать только если выполняется хотя бы одно условие:
+- есть тяжёлое cross-domain чтение;
+- есть стабильный UI/workspace use-case;
+- есть повторяющийся аналитический или операционный view.
 
-```json
-{
-  "sub": "user-id",
-  "tenantId": "tenant-id",
-  "companyId": "company-id",
-  "role": "ADMIN"
-}
-```
+Для каждой projection обязательно фиксировать:
+- владельца;
+- source of truth;
+- SLA обновления;
+- способ обновления;
+- можно ли пересобрать детерминированно;
+- срок хранения и потребителей.
 
-Правило:
-- не убирать `companyId` из токена до тех пор, пока весь runtime isolation path не подтверждён на `tenantId`.
+Жесткое правило:
+- projection не может становиться системой записи.
 
-## Proposed read model / projection first steps
+## Proposed enum taxonomy contract
 
-### 1. Planning workspace projection
-Собрать явную projection-модель для:
-- `HarvestPlan`
-- latest `TechMap`
-- `BudgetPlan`
-- summary по `DeviationReview`
-- `HarvestResult`
+Каждый enum обязан попасть ровно в один класс:
+- `technical closed enum`
+- `FSM/status invariant enum`
+- `business evolving vocabulary`
+- `jurisdiction-sensitive vocabulary`
+- `tenant-customizable vocabulary`
+- `suspicious duplicate enum family`
 
-Задача:
-- перестать собирать planning workspace из ad hoc include chains.
+Обязательные overlap matrices:
+- `risk-*`
+- `status-*`
+- `source-*`
+- `type-*`
+- `mode-*`
 
-### 2. Party workspace projection
-Собрать projection для:
-- `Party`
-- `Jurisdiction`
-- `RegulatoryProfile`
-- `PartyRelation`
-- contract role summary
-- financial exposure summary
+## Proposed success metrics
 
-### 3. Front-office operator projection
-Собрать projection для:
-- `FrontOfficeThread`
-- latest message preview
-- unread counts
-- current handoff status
-- farm/account owner summary
-
-### 4. Runtime governance projection
-Собрать tenant-scoped projection для:
-- recent `RuntimeGovernanceEvent`
-- `SystemIncident`
-- `PendingAction`
-- agent reliability aggregates
-
-Правило для всех четырёх случаев:
-- это read model layer;
-- эти projection-таблицы/представления не должны становиться новыми system-of-record.
-
-## Proposed enum governance patch set
-
-### Immediate cleanup
-Сделать в первую волну:
-- канонизировать family `RiskCategory` / `RiskLevel` / `ImpactLevel` / `RiskSeverity`;
-- разрешить конфликт `LiabilityMode` vs `ResponsibilityMode`;
-- схлопнуть `KnowledgeNodeSource` и `KnowledgeEdgeSource`, если различие не несёт отдельной доменной семантики;
-- исправить `BudgetCategory` (`FERTILIZER` vs `FERTILIZERS`).
-
-### First dictionary extraction
-В reference/config tables перевести:
-- crop catalog;
-- soil catalog;
-- climate catalog;
-- input catalog taxonomy;
-- operation taxonomy;
-- observation/evidence taxonomy;
-- selected CRM/commerce vocabularies;
-- часть research vocabularies, если они реально эволюционируют.
-
-## Proposed index patch set
-
-### High-priority additive indexes
-Добавить в первую целевую волну:
-- `Season(companyId, createdAt)`
-- `Task(seasonId, operationId, fieldId)`
-- `Task(companyId, assigneeId, status)`
-- `HarvestPlan(companyId, seasonId)`
-- `HarvestPlan(companyId, status)`
-- `HarvestPlan(companyId, createdAt)`
-- `DeviationReview(companyId, seasonId)`
-- `DeviationReview(companyId, status, createdAt)`
-- `DeviationReview(companyId, telegramThreadId)`
-- `CmrRisk(companyId, seasonId)`
-- `CmrRisk(companyId, status)`
-- `EconomicEvent(companyId, createdAt)`
-- `EconomicEvent(companyId, type, createdAt)`
-- `LedgerEntry(companyId, createdAt)`
-- `LedgerEntry(companyId, accountCode, createdAt)`
-- `Party(companyId, createdAt)`
-- `Party(companyId, status, createdAt)`
-- `RegulatoryProfile(companyId, jurisdictionId, isSystemPreset, code)`
-
-### Outbox normalization patch set
-Добавить в `OutboxMessage` явные scope columns:
-- `companyId String?`
-- позже `tenantId String?`
-
-После этого добавить:
-- `OutboxMessage(status, type, aggregateType, aggregateId, createdAt)`
-- при необходимости `OutboxMessage(companyId, status, type, aggregateType, aggregateId, createdAt)`
-
-Жёсткое правило:
-- не пытаться лечить outbox JSON-path индексами до нормализации колонок scope.
-
-## Proposed CI / governance checks
-
-Добавить проверки:
-- budget на размер схемы и размер fragment-файлов;
-- duplicate index detector;
-- validation ownership manifest по доменам;
-- forbidden cross-domain relation detector;
-- enum growth budget;
-- nullable-scope governance check;
-- tenant classification consistency check между manifest и `PrismaService`;
-- warning/check на heavy Prisma include trees.
-
-Возможные скрипты:
-- `scripts/check-schema-fragments.cjs`
-- `scripts/check-domain-ownership.cjs`
-- `scripts/check-enum-growth.cjs`
-- `scripts/check-duplicate-indexes.cjs`
-- `scripts/check-tenant-classification.cjs`
-- `scripts/check-heavy-prisma-includes.cjs`
-
-## MG-Core reuse proposal
-
-Базовая позиция:
-- не строить active dual-write bridge;
-- не делать runtime fallback на MG-Core;
-- не держать второй active Prisma source of truth.
-
-Рационально допустимые варианты:
-- `read-only archive adapter`
-- `migration rehearsal sandbox`
-- `reference contour diff tooling`
-
-Возможные артефакты:
-- `docs/MG_CORE_REUSE_DECISION.md`
-- `scripts/diff-current-vs-mgcore-models.cjs`
-- `scripts/validate-migration-mapping.cjs`
-
-## Explicitly deferred changes
-
-В первой волне запрещено:
-- физически разделять БД;
-- выносить домены в микросервисы;
-- массово переименовывать existing models;
-- переписывать все текущие queries на projections в один проход;
-- дублировать все company-индексы tenant-индексами без миграционного плана;
-- затаскивать MG-Core в production path.
-
-## Suggested implementation order
-
-1. ADR и governance docs.
-2. Fragment composition scaffolding для Prisma schema.
-3. Tenant classification manifest и исправление `EventConsumption` policy contradiction.
-4. Additive `Tenant` и `TenantCompanyBinding`.
-5. Additive `tenantId` на control-plane модели.
-6. Shadow-mode runtime support.
-7. Targeted read models/projections.
-8. Targeted composite index additions.
-9. Enum cleanup и dictionary extraction.
-10. Только потом миграция части operational core на новую tenancy semantics.
+Следить минимум за этими показателями:
+- число прямых relations у `Company`;
+- число моделей с неясным scope;
+- число enum без taxonomy;
+- число cross-domain relations без ADR;
+- число hot queries без workload-confirmed indexes;
+- медианная сложность Prisma include-графов;
+- число новых моделей, добавленных без cross-domain правок.
 
 ## Pseudo-patch sketch
 
@@ -458,6 +246,10 @@ interface TenantRuntimeContext {
 *** Add File: docs/01_ARCHITECTURE/DECISIONS/ADR_DB_003_ENUM_GOVERNANCE.md
 *** Add File: docs/01_ARCHITECTURE/DECISIONS/ADR_DB_004_READ_MODELS_AND_PROJECTIONS.md
 *** Add File: docs/01_ARCHITECTURE/DECISIONS/ADR_DB_005_INDEX_AND_QUERY_GOVERNANCE.md
+*** Add File: docs/01_ARCHITECTURE/DATABASE/MODEL_SCOPE_MANIFEST.md
+*** Add File: docs/01_ARCHITECTURE/DATABASE/DOMAIN_OWNERSHIP_MANIFEST.md
+*** Add File: docs/01_ARCHITECTURE/DATABASE/READ_MODEL_POLICY.md
+*** Add File: docs/01_ARCHITECTURE/DATABASE/DB_SUCCESS_METRICS.md
 *** Add File: packages/prisma-client/prisma/schema.compose.ts
 *** Add File: packages/prisma-client/prisma/01_platform_core.prisma
 *** Add File: packages/prisma-client/prisma/02_org_legal.prisma
@@ -467,26 +259,44 @@ interface TenantRuntimeContext {
 *** Add File: packages/prisma-client/prisma/06_crm_commerce.prisma
 *** Add File: packages/prisma-client/prisma/07_ai_runtime.prisma
 *** Add File: packages/prisma-client/prisma/08_integration_reliability.prisma
-*** Add File: packages/prisma-client/prisma/09_knowledge_memory.prisma
-*** Add File: packages/prisma-client/prisma/10_risk_governance.prisma
-*** Add File: packages/prisma-client/prisma/11_research_rd.prisma
-*** Add File: packages/prisma-client/prisma/12_legacy_bridge.prisma
+*** Add File: packages/prisma-client/prisma/09_quarantine_sandbox.prisma
+*** Add File: packages/prisma-client/prisma/10_legacy_bridge.prisma
 *** Update File: apps/api/src/shared/prisma/prisma.service.ts
 *** Update File: packages/prisma-client/schema.prisma
 + model Tenant { ... }
 + model TenantCompanyBinding { ... }
-+ // nullable tenantId fields on control-plane models
-+ // additive indexes on hot-path aggregates
++ // nullable tenantId only on control-plane contour
 ```
+
+## Explicitly deferred changes
+
+В первый tranche не входят:
+- `Company` de-rooting в operational core;
+- массовый projection rollout;
+- enum migration wave;
+- индексный cleanup wave;
+- physical split;
+- `MG-Core` reuse beyond archive/sandbox/reference.
+
+## Suggested implementation order
+
+1. ADR package.
+2. `MODEL_SCOPE_MANIFEST.md`.
+3. `DOMAIN_OWNERSHIP_MANIFEST.md`.
+4. `READ_MODEL_POLICY.md`.
+5. `DB_SUCCESS_METRICS.md`.
+6. CI rules.
+7. fix `EventConsumption` policy contradiction.
+8. additive `Tenant` and `TenantCompanyBinding`.
+9. nullable `tenantId` on control-plane contour.
+10. shadow-mode runtime support and mismatch logging.
 
 ## Final position
 
-Самый безопасный первый патч — не тот, который зрелищно переписывает модели.
-Самый безопасный первый патч — это:
-- governance;
-- additive tenancy primitives;
-- schema ownership scaffolding;
-- точечные hot-path indexes;
-- projection seams там, где relation graph уже мешает эволюции.
+Первый безопасный патч должен менять не весь мир, а только архитектурное направление.
 
-Это меняет направление архитектуры сразу, не создавая production explosion.
+Правильный first tranche:
+- останавливает дальнейший рост долга;
+- добавляет platform boundary;
+- не ломает business core;
+- создаёт условия, при которых следующий домен можно добавить без повторного превращения схемы в монолитный граф.

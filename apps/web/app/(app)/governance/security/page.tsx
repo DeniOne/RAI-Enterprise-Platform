@@ -95,17 +95,19 @@ export default function GovernanceSecurityPage() {
               <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center border border-black/5">
                 <ShieldAlert size={16} className="text-[#030213]" />
               </div>
-              <span className="text-[11px] font-medium uppercase tracking-widest text-[#717182]">Governance & Sentinel</span>
+              <span className="text-[11px] font-medium uppercase tracking-widest text-[#717182]">Контур безопасности</span>
             </div>
             <h1 className="text-3xl font-medium text-[#030213] tracking-tight">Безопасность и Доверие</h1>
-            <p className="text-sm text-[#717182] max-w-2xl leading-relaxed">
-              Среда управления рисками (Risk-first priority). Здесь сходятся security-инциденты Sentinel и quality-driven инциденты AI-контура.
-            </p>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-[#4a4a5a]">Риски</span>
+              <span className="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-[#4a4a5a]">Инциденты</span>
+              <span className="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-[#4a4a5a]">Контроль AI</span>
+            </div>
           </div>
           <div className="flex">
             <div className="flex items-center gap-2 px-4 py-2 border border-emerald-200 bg-emerald-50 rounded-lg">
               <div className="w-2 h-2 bg-emerald-500 rounded-full" />
-              <span className="text-[11px] font-medium text-emerald-700 uppercase tracking-widest">Active Audit</span>
+              <span className="text-[11px] font-medium text-emerald-700 uppercase tracking-widest">Аудит активен</span>
             </div>
           </div>
         </div>

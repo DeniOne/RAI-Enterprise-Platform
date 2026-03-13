@@ -3,20 +3,20 @@
 ## Область аудита и источники
 
 Аудит опирается на реальные артефакты репозитория:
-- `packages/prisma-client/schema.prisma`: `6107` строк, `193` модели, `148` enum, `343` индекса, `58` compound unique.
-- `packages/prisma-client/migrations`: `59` миграций.
+- `packages/prisma-client/schema.prisma`: `6185` строк, `195` моделей, `149` enum, `368` индексов, `59` compound unique.
+- `packages/prisma-client/migrations`: `60` миграций.
 - `apps/api/src/**`: текущий production-like runtime contour на `@rai/prisma-client`.
 - `mg-core/backend/prisma/schema.prisma`: `2148` строк, `102` модели, `52` enum, `66` индексов, `14` compound unique.
 - `mg-core/backend/prisma/migrations`: `35` миграций.
 - `mg-core/backend/src/**`: legacy/adjacent contour.
 
 Подтвержденные факты:
-- `tenantId` в текущей схеме отсутствует.
-- `companyId` есть в `151/193` моделях current contour.
+- `tenantId` введен additive-first в Phase 1 control-plane/runtime моделях.
+- `companyId` есть в `152/195` моделях current contour.
 - `Company` в current contour - relation god-root с примерно `139-143` исходящими связями.
 - При этом в `apps/api` `prisma.company` читается редко: в bootstrap/default-tenant flow и в одном Level-F snapshot path.
 - `PrismaService` уже форсирует tenant isolation через allowlist tenant-scoped моделей.
-- В `PrismaService` уже есть явный policy-debt: `EventConsumption` попал одновременно в `tenantScopedModels` и `systemNonTenantModels`.
+- В `PrismaService` убран явный policy-debt по `EventConsumption` (исключено конфликтное dual-classification).
 - `mg-core` не содержит ни `companyId`, ни `tenantId`, ни модели `Company`.
 
 ## Жесткий вывод
@@ -55,7 +55,7 @@
 
 | Домен | Модели |
 | --- | --- |
-| `platform_core` | `User`, `Invitation`, `RoleDefinition`, `EmployeeProfile`, `TenantState`, `AuditLog`, `AuditNotarizationRecord`, `ApiUsage` |
+| `platform_core` | `User`, `Invitation`, `RoleDefinition`, `EmployeeProfile`, `Tenant`, `TenantCompanyBinding`, `TenantState`, `AuditLog`, `AuditNotarizationRecord`, `ApiUsage` |
 | `org_legal` | `Company`, `RegulatoryBody`, `LegalDocument`, `LegalNorm`, `LegalRequirement`, `LegalObligation`, `Sanction`, `ComplianceCheck`, `GrInteraction`, `PolicySignal`, `ExternalLegalFeed`, `Jurisdiction`, `RegulatoryProfile`, `RegulatoryArtifact` |
 | `crm_commerce` | `Account`, `Contact`, `Interaction`, `Obligation`, `Holding`, `Deal`, `ScoreCard`, `Contract`, `Machinery`, `StockItem`, `StockTransaction`, `Party`, `PartyRelation`, `CounterpartyUserBinding`, `AssetPartyRole`, `CommerceContract`, `CommerceContractPartyRole`, `CommerceObligation`, `BudgetReservation`, `PaymentSchedule`, `CommerceFulfillmentEvent`, `StockMove`, `RevenueRecognitionEvent`, `Invoice`, `Payment`, `PaymentAllocation` |
 | `agri_planning` | `Field`, `Rapeseed`, `RapeseedHistory`, `CropVariety`, `CropVarietyHistory`, `Season`, `SeasonSnapshot`, `AuditFailure`, `SeasonStageProgress`, `SeasonHistory`, `BusinessRule`, `TechnologyCard`, `TechnologyCardOperation`, `TechnologyCardResource`, `HarvestPlan`, `PerformanceContract`, `TechMap`, `MapStage`, `MapOperation`, `MapResource`, `SoilProfile`, `RegionProfile`, `InputCatalog`, `AdaptiveRule`, `CropZone`, `HybridPhenologyModel`, `Evidence`, `ChangeOrder`, `Approval`, `BudgetPlan`, `BudgetLine`, `StrategicGoal` |

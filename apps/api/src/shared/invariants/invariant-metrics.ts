@@ -1,6 +1,8 @@
 type CounterKey =
   | "tenant_violation_rate"
   | "cross_tenant_access_attempts_total"
+  | "tenant_scope_mismatch_total"
+  | "tenant_company_drift_alerts_total"
   | "illegal_transition_attempts_total"
   | "financial_invariant_failures_total"
   | "event_duplicates_prevented_total"
@@ -26,6 +28,8 @@ class InvariantMetricsRegistry {
   private readonly counters: Record<CounterKey, number> = {
     tenant_violation_rate: 0,
     cross_tenant_access_attempts_total: 0,
+    tenant_scope_mismatch_total: 0,
+    tenant_company_drift_alerts_total: 0,
     illegal_transition_attempts_total: 0,
     financial_invariant_failures_total: 0,
     event_duplicates_prevented_total: 0,

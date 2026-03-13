@@ -35,6 +35,7 @@ export class AuthService {
       email: user.email,
       sub: user.id,
       companyId: user.companyId, // ARCH-DEBT-001: from user.companyId (NOT NULL)
+      tenantId: user.companyId,
       role: user.role,
       accountId: user.accountId ?? null,
     };
@@ -46,6 +47,7 @@ export class AuthService {
         email: user.email,
         name: user.name || user.email.split("@")[0],
         role: user.role,
+        tenantId: user.companyId,
         accountId: user.accountId ?? null,
       },
     };

@@ -7,8 +7,8 @@ import {
   HttpStatus,
   Logger,
 } from "@nestjs/common";
-import { Observable, of, throwError } from "rxjs";
-import { tap, catchError } from "rxjs/operators";
+import { Observable, from, of, throwError } from "rxjs";
+import { tap, catchError, mergeMap } from "rxjs/operators";
 import { RedisService } from "../redis/redis.service";
 
 /**
@@ -68,27 +68,42 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const cachedState = await this.redisService.get(cacheKey);
 
     if (cachedState) {
-      const stateObj = JSON.parse(cachedState);
+      let stateObj: any;
+      try {
+        stateObj = JSON.parse(cachedState);
+      } catch {
+        // Битое кэш-состояние не должно блокировать мутацию.
+        await this.redisService.del(cacheKey);
+        stateObj = null;
+      }
 
-      if (stateObj.status === "IN_PROGRESS") {
+      if (stateObj?.status === "IN_PROGRESS") {
         throw new HttpException(
           "Request is already in progress",
           HttpStatus.CONFLICT,
         );
       }
 
-      if (stateObj.status === "COMPLETED") {
+      if (stateObj?.status === "COMPLETED") {
         this.logger.debug(
           `Returning cached response for idempotency key: ${idempotencyKey}`,
         );
         return of(stateObj.response);
       }
 
-      if (stateObj.status === "ERROR") {
-        throw new HttpException(
-          stateObj.error.message,
-          stateObj.error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-        );
+      if (stateObj?.status === "ERROR") {
+        const status = Number(stateObj?.error?.status) || HttpStatus.INTERNAL_SERVER_ERROR;
+        const message =
+          typeof stateObj?.error?.message === "string" && stateObj.error.message.trim().length > 0
+            ? stateObj.error.message
+            : "Internal Error";
+
+        // 5xx ошибки считаем временными: очищаем ключ и разрешаем повтор.
+        if (status >= 500) {
+          await this.redisService.del(cacheKey);
+        } else {
+          throw new HttpException(message, status);
+        }
       }
     }
 
@@ -116,27 +131,28 @@ export class IdempotencyInterceptor implements NestInterceptor {
           86400, // 24 hours
         );
       }),
-      catchError(async (err) => {
-        // Ошибка: сохраняем ошибку, чтобы повторные запросы тоже падали, либо удаляем (зависит от бизнес лоджики).
-        // В классическом REST мы кэшируем и ошибку
+      catchError((err) => {
+        // 4xx кэшируем дольше, 5xx — коротко, чтобы не фиксировать временный сбой.
         const httpError =
           err instanceof HttpException
             ? err
             : new HttpException("Internal Error", 500);
+        const status = httpError.getStatus();
+        const errorTtlSeconds = status >= 500 ? 60 : 86400;
 
-        await this.redisService.set(
-          cacheKey,
-          JSON.stringify({
-            status: "ERROR",
-            error: {
-              message: httpError.message,
-              status: httpError.getStatus(),
-            },
-          }),
-          86400, // 24 hours
-        );
-
-        return throwError(() => err);
+        return from(
+          this.redisService.set(
+            cacheKey,
+            JSON.stringify({
+              status: "ERROR",
+              error: {
+                message: httpError.message,
+                status,
+              },
+            }),
+            errorTtlSeconds,
+          ),
+        ).pipe(mergeMap(() => throwError(() => err)));
       }),
     );
   }

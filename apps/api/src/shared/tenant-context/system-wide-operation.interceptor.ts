@@ -26,11 +26,12 @@ export class SystemWideOperationInterceptor implements NestInterceptor {
     if (isSystemWide) {
       const currentStore = this.tenantContext.getStore();
       const companyId = currentStore?.companyId || "SYSTEM";
+      const tenantId = currentStore?.tenantId || companyId;
 
       return new Observable((subscriber) => {
         this.tenantContext.run(
           {
-            scope: new TenantScope(companyId, true),
+            scope: new TenantScope(companyId, true, tenantId),
           },
           () => {
             next.handle().subscribe(subscriber);

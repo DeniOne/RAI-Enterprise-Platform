@@ -26,7 +26,11 @@ export class TenantContextInterceptor implements NestInterceptor {
     }
 
     return new Observable((subscriber) => {
-      const scope = new TenantScope(user.companyId);
+      const scope = new TenantScope(
+        String(user.companyId),
+        false,
+        String(user.tenantId ?? user.companyId),
+      );
       this.tenantContext.run({ scope }, () => {
         next.handle().subscribe(subscriber);
       });

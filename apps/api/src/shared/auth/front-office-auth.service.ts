@@ -928,6 +928,7 @@ export class FrontOfficeAuthService {
       email: input.email,
       username: input.username ?? null,
       companyId: input.companyId,
+      tenantId: input.companyId,
       role: input.role,
       accountId: input.accountId ?? null,
       subjectClass:

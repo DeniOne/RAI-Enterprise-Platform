@@ -6,6 +6,12 @@ const nextConfig = {
     transpilePackages: process.env.NODE_ENV === 'production'
         ? ['react-force-graph-2d', 'three', 'd3-force']
         : [],
+    // Reduce dev-only chunk eviction to avoid transient ChunkLoadError
+    // when a tab stays idle and then requests stale on-demand entries.
+    onDemandEntries: {
+        maxInactiveAge: 1000 * 60 * 60, // 1 hour
+        pagesBufferLength: 10,
+    },
     async rewrites() {
         return [
             {

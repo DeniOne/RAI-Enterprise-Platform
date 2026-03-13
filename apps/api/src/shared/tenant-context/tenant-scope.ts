@@ -4,13 +4,22 @@
  */
 export class TenantScope {
   public readonly companyId: string;
+  public readonly tenantId: string;
   public readonly isSystem: boolean;
 
-  constructor(companyId: string, isSystem: boolean = false) {
+  constructor(
+    companyId: string,
+    isSystem: boolean = false,
+    tenantId?: string,
+  ) {
     if (!companyId || companyId.trim() === "") {
       throw new Error("TENANT_SCOPE_ERROR: companyId cannot be empty.");
     }
     this.companyId = companyId;
+    this.tenantId = (tenantId || companyId).trim();
+    if (!this.tenantId) {
+      throw new Error("TENANT_SCOPE_ERROR: tenantId cannot be empty.");
+    }
     this.isSystem = isSystem;
     Object.freeze(this);
   }
@@ -33,6 +42,7 @@ export class TenantScope {
   public toJSON() {
     return {
       companyId: this.companyId,
+      tenantId: this.tenantId,
       isSystem: this.isSystem,
     };
   }

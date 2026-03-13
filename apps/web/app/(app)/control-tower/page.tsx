@@ -504,9 +504,11 @@ export default function ControlTowerPage() {
               <span className="text-[11px] font-medium uppercase tracking-widest text-[#717182]">Контроль и надёжность</span>
             </div>
             <h1 className="text-3xl font-medium text-[#030213] tracking-tight">Центральный пульт</h1>
-            <p className="text-sm text-[#717182] max-w-xl leading-relaxed">
-              Институциональный интерфейс для управления надежностью (SLO), аудита стоимости и детекции аномалий в поведении роя агентов.
-            </p>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-[#4a4a5a]">SLO</span>
+              <span className="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-[#4a4a5a]">Стоимость</span>
+              <span className="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-[#4a4a5a]">Аномалии</span>
+            </div>
           </div>
           <div>
             <Link
@@ -640,7 +642,12 @@ export default function ControlTowerPage() {
           ) : null}
 
           {/* Качество и Валидация */}
-          <UnitCard title="Качество и валидация" icon={<ShieldCheck size={20} />} subtitle="Целостность модели">
+          <UnitCard
+            title="Качество и валидация"
+            icon={<ShieldCheck size={20} />}
+            subtitle="Целостность модели"
+            hint="Метрики строятся по данным арендатора. Если доказательства или обратная связь не накоплены, показывается статус «ожидание». Режим автономности зависит от окна BS% и активных сигналов качества."
+          >
             <div className="space-y-1">
               {dashboard ? (
                 <>
@@ -706,18 +713,19 @@ export default function ControlTowerPage() {
                     }
                   />
 
-                  <div className="mt-8 p-4 bg-slate-50 border border-black/5 rounded-xl">
-                    <p className="text-[12px] text-[#717182] leading-relaxed">
-                      Доля принятия считается по рекомендациям в рамках арендатора. Доля корректировок считается по сохранённой обратной связи с исходом `corrected` и дедупликацией по `traceId`; если база решений ещё не накоплена, показатель остаётся в статусе «ожидание». Метрики качества без сохранённых доказательств также отображаются как «ожидание», а не как искусственные `0/100`. Режим автономности зависит от фактического окна BS% и активных сигналов дрейфа качества.
-                    </p>
-                    <p className="text-[12px] text-[#717182] leading-relaxed mt-3">
-                      Готовые трассы качества: <span className="font-mono text-[#030213]">{dashboard.qualityKnownTraceCount}</span>, трассы в ожидании: <span className="font-mono text-[#030213]">{dashboard.qualityPendingTraceCount}</span>.
-                    </p>
+                  <div className="mt-6 pt-5 border-t border-black/5">
+                    <DataRow label="Готовые трассы качества" value={`${dashboard.qualityKnownTraceCount}`} status="success" />
+                    <DataRow
+                      label="Трассы в ожидании"
+                      value={`${dashboard.qualityPendingTraceCount}`}
+                      status={dashboard.qualityPendingTraceCount > 0 ? 'warning' : 'success'}
+                    />
                     {autonomy && (
-                      <p className="text-[12px] text-[#717182] leading-relaxed mt-3">
-                        Фактор автономности: <span className="font-mono text-[#030213]">{autonomy.driver}</span>
-                        {autonomy.activeQualityAlert ? ' (активный сигнал качества)' : ''}.
-                      </p>
+                      <DataRow
+                        label="Фактор автономности"
+                        value={`${autonomy.driver}${autonomy.activeQualityAlert ? ' • сигнал качества' : ''}`}
+                        status={autonomy.activeQualityAlert ? 'warning' : 'success'}
+                      />
                     )}
                   </div>
                 </>
@@ -774,15 +782,15 @@ export default function ControlTowerPage() {
         <div className="mt-12">
           <div className="flex items-center gap-3 mb-6">
             <ShieldCheck size={20} className="text-[#030213]" />
-            <h2 className="text-xl font-medium text-[#030213] tracking-tight">Очередь ручной проверки</h2>
+            <h2 className="text-xl font-medium text-[#030213] tracking-tight">
+              Очередь ручной проверки
+            </h2>
+            <InfoHint hint="Здесь фиксируются действия, которые остановлены политикой риска или автономности и требуют ручного решения." />
           </div>
           <div className="rounded-3xl border border-black/10 bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
             <div className="px-6 py-5 border-b border-black/5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182]">Ожидающие действия</p>
-                <p className="text-[13px] text-[#717182] mt-1">
-                  Это состояние действий, заблокированных политикой риска или автономности. Подтверждение меняет статус очереди, но не выполняет автоматическое возобновление без отдельного контролируемого повтора.
-                </p>
               </div>
               <div className="text-[12px] text-[#717182]">
                 Открыто: <span className="font-mono text-[#030213]">{pendingActions.filter((item) => item.status === 'PENDING' || item.status === 'APPROVED_FIRST').length}</span>
@@ -1730,13 +1738,28 @@ export default function ControlTowerPage() {
 
 // Утилитные компоненты центрального пульта
 
-function UnitCard({ title, icon, subtitle, children }: { title: string; icon: React.ReactNode; subtitle: string; children: React.ReactNode }) {
+function UnitCard({
+  title,
+  icon,
+  subtitle,
+  children,
+  hint,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  subtitle: string;
+  children: React.ReactNode;
+  hint?: string;
+}) {
   return (
     <div className="bg-white border border-black/10 rounded-3xl p-8 flex flex-col h-full">
       <div className="flex items-center justify-between mb-8">
         <div>
           <span className="text-[10px] font-medium uppercase tracking-widest text-[#717182] block mb-1">{subtitle}</span>
-          <h3 className="text-lg font-medium text-[#030213] tracking-tight">{title}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-medium text-[#030213] tracking-tight">{title}</h3>
+            {hint ? <InfoHint hint={hint} /> : null}
+          </div>
         </div>
         <div className="text-[#030213]/40">
           {icon}
@@ -1763,6 +1786,18 @@ function DataRow({ label, value, status }: { label: string; value: string; statu
         {value}
       </span>
     </div>
+  );
+}
+
+function InfoHint({ hint }: { hint: string }) {
+  return (
+    <span
+      className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-black/15 bg-white text-[10px] font-medium text-[#717182] cursor-help"
+      title={hint}
+      aria-label={hint}
+    >
+      i
+    </span>
   );
 }
 

@@ -19,7 +19,7 @@
   - `apps/api/src/shared/outbox/outbox.relay.ts`
 
 Подтвержденные числа:
-- current contour: `343` индекса, `58` compound unique, `1` compound primary key;
+- current contour: `368` индексов, `59` compound unique, `1` compound primary key;
 - MG-Core contour: `66` индексов, `14` compound unique.
 
 Жесткий вывод:
@@ -32,7 +32,7 @@
 ## Current index inventory
 
 Доминирующие формы в current contour:
-- `companyId` alone: `83` моделей;
+- `companyId` alone: `82` моделей;
 - `companyId, id`: `18`;
 - `status`: `10`;
 - `seasonId`: `10`;

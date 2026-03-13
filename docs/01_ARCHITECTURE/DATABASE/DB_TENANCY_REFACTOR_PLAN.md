@@ -16,13 +16,14 @@
 ## Текущее состояние
 
 Подтверждено по репозиторию:
-- в active schema `151/193` моделей имеют `companyId`;
-- `tenantId` отсутствует;
-- `PrismaService` использует `companyId` как tenant context key;
-- `TenantState` keyed by `companyId`;
+- в active schema `152/195` моделей имеют `companyId`;
+- в active schema добавлен `Tenant` boundary + bridge `TenantCompanyBinding`;
+- `tenantId` добавлен additive-first в Phase 1 control-plane/runtime модели;
+- `PrismaService` работает в dual-key режиме (`companyId` compatibility + `tenantId` shadow/enforce policy);
+- `TenantState` все еще keyed by `companyId`, но уже имеет additive `tenantId`;
 - `13` моделей имеют nullable `companyId`, то есть один и тот же столбец уже кодирует tenant-local и global/shared scope;
-- `42` моделей не имеют `companyId` вообще;
-- `EventConsumption` одновременно считается tenant-scoped и non-tenant в runtime policy.
+- `43` модели не имеют `companyId` вообще;
+- `EventConsumption` runtime-classification conflict устранен.
 
 ## Корневой дефект
 
@@ -33,6 +34,28 @@
 - global/shared preset fallback через `NULL`.
 
 Это не naming issue. Это сломанная scope-модель.
+
+## Обязательные governance-артефакты до миграций
+
+До любого реального добавления `tenantId` должны существовать:
+- `MODEL_SCOPE_MANIFEST.md`
+- `DOMAIN_OWNERSHIP_MANIFEST.md`
+- CI-check на соответствие manifest и runtime policy
+- явный список архитектурных запретов
+
+Минимальные поля manifest для каждой модели:
+- `scope_type`: `tenant` / `business` / `global` / `preset` / `system` / `mixed-transition`
+- `owner_domain`
+- `authoritative_key`
+- допускается ли `companyId`
+- должен ли появиться `tenantId`
+- nullable/non-nullable policy
+- допустим ли `global row`
+- допустим ли `preset row`
+- migration phase
+
+Жесткое правило:
+- если модель не описана в manifest, её нельзя переводить на новую scope-модель.
 
 ## Целевая taxonomy моделей
 
@@ -272,6 +295,21 @@ Rollback:
 
 Rollback:
 - feature-flagged fallback на `companyId`-only path.
+
+## Переходная runtime policy
+
+На период миграции должны быть зафиксированы четыре правила:
+- `tenantId` = platform isolation key;
+- `companyId` = business/legal association key и временный compatibility key;
+- source of scope берётся только из runtime context, а не из payload;
+- mismatch между `tenantId` и `companyId -> tenant` mapping логируется как инвариантное нарушение.
+
+Обязательные механики:
+- shadow-read для новых `tenantId` paths;
+- shadow-write там, где `tenantId` уже добавлен;
+- mismatch counters и alerts;
+- feature-flagged fallback на старый `companyId` path;
+- запрет на silent switch любой модели из `companyId`-only в `tenantId`-only без отдельного rollout gate.
 
 ## Волна 4. Нормализовать global/shared presets
 

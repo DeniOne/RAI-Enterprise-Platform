@@ -9,6 +9,7 @@ import { InvariantMetrics } from "../invariants/invariant-metrics";
 import { TenantContextService } from "../tenant-context/tenant-context.service";
 
 type TenantMode = "off" | "shadow" | "enforce";
+type DualKeyMode = "off" | "shadow" | "enforce";
 
 type RawSqlExecutor = {
   $executeRaw: (query: Prisma.Sql) => Promise<unknown>;
@@ -24,6 +25,10 @@ export class PrismaService
   private readonly tenantContext: TenantContextService;
   private readonly tenantMode: TenantMode;
   private readonly enforceCohort: Set<string>;
+  private readonly dualKeyMode: DualKeyMode;
+  private readonly dualKeyCompanyFallback: boolean;
+  private readonly tenantDriftAlertThreshold: number;
+  private tenantDriftDetections = 0;
   private tenantViolations = 0;
   private readonly failOnUnknownModel =
     (process.env.TENANT_FAIL_ON_UNKNOWN_MODEL || "true").toLowerCase() !==
@@ -145,11 +150,31 @@ export class PrismaService
     "CounterpartyUserBinding",
   ]);
 
+  private readonly dualKeyScopedModels = new Set<string>([
+    "TenantState",
+    "AgentConfiguration",
+    "AgentCapabilityBinding",
+    "AgentToolBinding",
+    "AgentConnectorBinding",
+    "AgentConfigChangeRequest",
+    "RuntimeGovernanceEvent",
+    "SystemIncident",
+    "IncidentRunbookExecution",
+    "PendingAction",
+    "PerformanceMetric",
+    "EvalRun",
+    "EventConsumption",
+    "MemoryInteraction",
+    "MemoryEpisode",
+    "MemoryProfile",
+  ]);
+
   // Explicit non-tenant/system models. Any model outside both sets is treated as unknown.
   private readonly systemNonTenantModels = new Set<string>([
     "Company",
+    "Tenant",
+    "TenantCompanyBinding",
     "OutboxMessage",
-    "EventConsumption",
     "Rapeseed",
     "RapeseedHistory",
   ]);
@@ -168,6 +193,19 @@ export class PrismaService
         .split(",")
         .map((v) => v.trim())
         .filter(Boolean),
+    );
+    const dualMode = (process.env.TENANT_DUAL_KEY_MODE || "shadow")
+      .trim()
+      .toLowerCase();
+    this.dualKeyMode =
+      dualMode === "off" || dualMode === "enforce" ? dualMode : "shadow";
+    this.dualKeyCompanyFallback =
+      String(process.env.TENANT_DUAL_KEY_COMPANY_FALLBACK || "true")
+        .trim()
+        .toLowerCase() !== "false";
+    this.tenantDriftAlertThreshold = Math.max(
+      1,
+      Number(process.env.TENANT_DRIFT_ALERT_THRESHOLD || 50),
     );
 
     // Return a Proxy to make the service "transparent" for all Prisma models
@@ -217,8 +255,58 @@ export class PrismaService
   // Mandatory 10/10 Isolation Extension
   readonly tenantClient = (() => {
     const tenantScopedModels = this.tenantScopedModels;
+    const dualKeyScopedModels = this.dualKeyScopedModels;
     const logger = this.logger;
     const getTenantContext = () => this.getTenantContext();
+    const resolveTenantKey = () => this.resolveTenantKey(getTenantContext());
+    const shouldUseTenantGuard = () => this.shouldUseTenantGuard();
+    const applyShadowTenantWrite = (
+      payload: Record<string, unknown>,
+      tenantId: string,
+    ) => this.applyShadowTenantWrite(payload, tenantId);
+    const applyShadowTenantWriteMany = (
+      payload: Record<string, unknown>[] | Record<string, unknown>,
+      tenantId: string,
+    ) => this.applyShadowTenantWriteMany(payload, tenantId);
+    const applyTenantWhereGuard = (
+      where: Record<string, unknown> | undefined,
+      tenantId: string,
+      operation: string,
+    ) => this.applyTenantWhereGuard(where, tenantId, operation);
+    const detectTenantDrift = (params: {
+      model: string;
+      operation: string;
+      result: unknown;
+      tenantId: string;
+      companyId: string;
+    }) => this.detectTenantDrift(params);
+    const isReadOperation = (operation: string) =>
+      [
+        "findUnique",
+        "findUniqueOrThrow",
+        "findFirst",
+        "findFirstOrThrow",
+        "findMany",
+        "count",
+        "aggregate",
+        "groupBy",
+      ].includes(operation);
+    const isWhereOperation = (operation: string) =>
+      [
+        "findUnique",
+        "findUniqueOrThrow",
+        "findFirst",
+        "findFirstOrThrow",
+        "findMany",
+        "update",
+        "updateMany",
+        "delete",
+        "deleteMany",
+        "count",
+        "aggregate",
+        "groupBy",
+        "upsert",
+      ].includes(operation);
 
     return this.$extends({
       query: {
@@ -237,8 +325,8 @@ export class PrismaService
               return query(args);
             }
 
-            const tenantId = context?.companyId;
-            if (!tenantId) {
+            const companyId = context?.companyId;
+            if (!companyId) {
               logger.error(
                 `[TENANT_VIOLATION] Attempted ${operation} on ${model} without tenant context!`,
               );
@@ -247,63 +335,103 @@ export class PrismaService
                 `TENANT_CONTEXT_MISSING: Operation ${operation} on ${model} requires active tenant context.`,
               );
             }
+            const tenantId = resolveTenantKey();
+            const isDualKeyModel = dualKeyScopedModels.has(model);
+            const shouldGuardByTenant =
+              isDualKeyModel && shouldUseTenantGuard() && !!tenantId;
 
-            if (
-              [
-                "findUnique",
-                "findUniqueOrThrow",
-                "findFirst",
-                "findFirstOrThrow",
-                "findMany",
-                "update",
-                "updateMany",
-                "delete",
-                "deleteMany",
-                "count",
-                "aggregate",
-                "groupBy",
-              ].includes(operation)
-            ) {
-              const typedArgs = args as { where?: any };
+            let typedArgs: any = args;
+            if (!typedArgs) {
+              typedArgs = {};
+            }
+
+            if (isWhereOperation(operation)) {
               typedArgs.where = {
                 ...(typedArgs.where || {}),
-                companyId: tenantId,
+                companyId,
               };
+              if (shouldGuardByTenant) {
+                typedArgs.where = applyTenantWhereGuard(
+                  typedArgs.where,
+                  tenantId,
+                  operation,
+                );
+              }
             }
 
             if (operation === "create") {
-              const typedArgs = args as { data?: any };
               typedArgs.data = {
                 ...(typedArgs.data || {}),
-                companyId: tenantId,
+                companyId,
               };
+              if (isDualKeyModel && tenantId) {
+                typedArgs.data = applyShadowTenantWrite(typedArgs.data, tenantId);
+              }
             }
 
             if (operation === "createMany") {
-              const typedArgs = args as { data?: any | any[] };
               if (Array.isArray(typedArgs.data)) {
                 typedArgs.data = typedArgs.data.map((item) => ({
                   ...item,
-                  companyId: tenantId,
+                  companyId,
                 }));
               } else {
-                typedArgs.data = { ...typedArgs.data, companyId: tenantId };
+                typedArgs.data = { ...typedArgs.data, companyId };
+              }
+              if (isDualKeyModel && tenantId && typedArgs.data) {
+                typedArgs.data = applyShadowTenantWriteMany(
+                  typedArgs.data,
+                  tenantId,
+                );
               }
             }
 
             if (operation === "upsert") {
-              const typedArgs = args as { create?: any; where?: any };
               typedArgs.create = {
                 ...(typedArgs.create || {}),
-                companyId: tenantId,
+                companyId,
               };
               typedArgs.where = {
                 ...(typedArgs.where || {}),
-                companyId: tenantId,
+                companyId,
               };
+              if (isDualKeyModel && tenantId) {
+                typedArgs.create = applyShadowTenantWrite(
+                  typedArgs.create,
+                  tenantId,
+                );
+                if (shouldGuardByTenant) {
+                  typedArgs.where = applyTenantWhereGuard(
+                    typedArgs.where,
+                    tenantId,
+                    operation,
+                  );
+                }
+              }
             }
 
-            return query(args);
+            if (operation === "update" || operation === "updateMany") {
+              typedArgs.data = {
+                ...(typedArgs.data || {}),
+              };
+              if (isDualKeyModel && tenantId) {
+                typedArgs.data = applyShadowTenantWrite(typedArgs.data, tenantId);
+              }
+            }
+
+            const result = await query(args);
+
+            if (isDualKeyModel && tenantId && isReadOperation(operation)) {
+              detectTenantDrift({
+                model,
+                operation,
+                result,
+                tenantId,
+                companyId,
+              });
+            }
+
+            return result;
           },
         },
       },
@@ -358,6 +486,140 @@ export class PrismaService
     return this.tenantContext.getStore();
   }
 
+  private resolveTenantKey(
+    context: ReturnType<PrismaService["getTenantContext"]>,
+  ): string | null {
+    if (!context) {
+      return null;
+    }
+
+    if (typeof context.tenantId === "string" && context.tenantId.trim()) {
+      return context.tenantId.trim();
+    }
+
+    if (this.dualKeyCompanyFallback && context.companyId?.trim()) {
+      return context.companyId.trim();
+    }
+
+    return null;
+  }
+
+  private shouldUseTenantGuard(): boolean {
+    return this.dualKeyMode === "enforce";
+  }
+
+  private applyTenantWhereGuard(
+    where: Record<string, unknown> | undefined,
+    tenantId: string,
+    operation: string,
+  ): Record<string, unknown> {
+    const current = { ...(where || {}) };
+
+    // For unique reads we keep company-only guard to avoid breaking legacy unique selectors.
+    if (["findUnique", "findUniqueOrThrow"].includes(operation)) {
+      return current;
+    }
+
+    current.tenantId = tenantId;
+    return current;
+  }
+
+  private applyShadowTenantWrite(
+    payload: Record<string, unknown>,
+    tenantId: string,
+  ): Record<string, unknown> {
+    if (!payload || typeof payload !== "object") {
+      return payload;
+    }
+
+    const candidate = payload.tenantId;
+    if (typeof candidate === "string" && candidate.trim()) {
+      return payload;
+    }
+
+    return {
+      ...payload,
+      tenantId,
+    };
+  }
+
+  private applyShadowTenantWriteMany(
+    payload: Record<string, unknown>[] | Record<string, unknown>,
+    tenantId: string,
+  ): Record<string, unknown>[] | Record<string, unknown> {
+    if (Array.isArray(payload)) {
+      return payload.map((entry) => this.applyShadowTenantWrite(entry, tenantId));
+    }
+
+    return this.applyShadowTenantWrite(payload, tenantId);
+  }
+
+  private detectTenantDrift(params: {
+    model: string;
+    operation: string;
+    result: unknown;
+    tenantId: string;
+    companyId: string;
+  }): void {
+    const rows = this.collectRows(params.result);
+    if (rows.length === 0) {
+      return;
+    }
+
+    for (const row of rows) {
+      const rowCompanyId = row.companyId;
+      const rowTenantId = row.tenantId;
+      if (
+        typeof rowCompanyId !== "string" ||
+        rowCompanyId.trim() !== params.companyId
+      ) {
+        continue;
+      }
+
+      if (rowTenantId == null) {
+        continue;
+      }
+
+      if (typeof rowTenantId === "string" && rowTenantId.trim() === params.tenantId) {
+        continue;
+      }
+
+      this.tenantDriftDetections += 1;
+      InvariantMetrics.increment("tenant_scope_mismatch_total");
+      this.logger.warn(
+        `[TENANT_DRIFT] ${params.model}.${params.operation} returned tenantId=${String(
+          rowTenantId,
+        )} under tenant=${params.tenantId} company=${params.companyId}`,
+      );
+
+      if (this.tenantDriftDetections % this.tenantDriftAlertThreshold === 0) {
+        InvariantMetrics.increment("tenant_company_drift_alerts_total");
+        this.logger.error(
+          `[TENANT_DRIFT_ALERT] drift detections reached ${this.tenantDriftDetections}`,
+        );
+      }
+    }
+  }
+
+  private collectRows(value: unknown): Array<Record<string, unknown>> {
+    if (!value) {
+      return [];
+    }
+
+    if (Array.isArray(value)) {
+      return value.filter(
+        (entry): entry is Record<string, unknown> =>
+          !!entry && typeof entry === "object",
+      );
+    }
+
+    if (typeof value === "object") {
+      return [value as Record<string, unknown>];
+    }
+
+    return [];
+  }
+
   private async applyTenantSessionContext(tx: {
     $executeRaw: (query: Prisma.Sql) => Promise<unknown>;
   }): Promise<void> {
@@ -365,9 +627,13 @@ export class PrismaService
     if (!context?.companyId || context.isSystem) {
       return;
     }
+    const tenantId = this.resolveTenantKey(context) || context.companyId;
 
     await tx.$executeRaw(
       Prisma.sql`SELECT set_config('app.current_company_id', ${context.companyId}, true)`,
+    );
+    await tx.$executeRaw(
+      Prisma.sql`SELECT set_config('app.current_tenant_id', ${tenantId}, true)`,
     );
   }
 

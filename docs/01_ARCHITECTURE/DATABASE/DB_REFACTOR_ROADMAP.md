@@ -2,297 +2,283 @@
 
 ## Hard position
 
-Правильный порядок важнее скорости.
+Цель этого roadmap не в том, чтобы красиво перепилить `schema.prisma`.
+Цель в том, чтобы новая сущность, новый домен или новый AI/runtime contour могли добавляться без перепрошивки существующего ядра.
 
 Нельзя:
-- сначала пилить физическую БД;
+- сначала делить физическую БД;
 - сначала переименовывать `companyId` в `tenantId`;
-- сначала дробить `schema.prisma` на файлы, не зафиксировав ownership и границы;
-- сначала тащить MG-Core в active contour как резервный рантайм.
+- сначала дробить schema на мелкие папки без governance;
+- сначала плодить projections на каждый экран;
+- сначала делать enum-cleanup по ощущениям;
+- сначала тащить `MG-Core` в active runtime как резервный контур.
 
-Нужно идти так:
-1. зафиксировать реальную архитектурную картину;
-2. остановить дальнейший schema drift;
-3. развести platform tenancy и business/legal identity;
-4. только потом делать логическую модульность;
-5. затем чистить enum и workload/index layer;
-6. и только после этого обсуждать physical split.
+Нужно идти от governance к данным, а не наоборот.
 
-## Phase 1: audit-only
+## Execution status (2026-03-13)
 
-### Goal
-Получить зафиксированную, repo-backed картину текущей БД и снять архитектурную неопределённость.
+- `Phase 0`: выполнен (governance artifacts + CI gates + manifest coverage).
+- `Phase 1`: выполнен (additive `Tenant` boundary + dual-key runtime/auth + shadow mode).
+- Следующий активный слой: `Phase 2` (`Company` de-rooting).
 
-### Concrete changes
-- подготовить пакет документов:
-  - `DB_ARCH_AUDIT.md`
-  - `DB_TENANCY_REFACTOR_PLAN.md`
-  - `DB_DOMAIN_MAP.md`
-  - `DB_ENUM_RATIONALIZATION.md`
-  - `DB_INDEX_AUDIT.md`
-  - `DB_REFACTOR_ROADMAP.md`
-  - `DB_REFACTOR_PROPOSAL.patch.md`
-- классифицировать все модели current contour и MG-Core contour;
-- зафиксировать hard facts:
-  - `Company` = god-root;
-  - `companyId` перегружен и смешивает tenancy с бизнес-связью;
-  - `tenantId` отсутствует;
-  - есть enum sprawl;
-  - hot paths сосредоточены в `Season`, `TechMap`, `HarvestPlan`, `DeviationReview`, `Task`, `Party`, `AgentConfiguration`, `OutboxMessage`, `RuntimeGovernanceEvent`.
+## Архитектурные запреты
 
-### Risks
-- технический риск низкий;
-- главный риск: сделать слишком общий аудит и получить ложное ощущение контроля.
+Эти запреты должны действовать до первой миграции:
+- новые модели нельзя автоматически root-ить в `Company`;
+- новые cross-domain relations запрещены без ADR;
+- `companyId = NULL` нельзя использовать как universal global scope;
+- `JSONB` нельзя использовать как замену отсутствующей модели;
+- read models не могут быть источником истины;
+- `MG-Core` не может быть вторым active source of truth.
 
-### Expected effect
-- прекращается спонтанный рефакторинг на ощущениях;
-- появляется единая архитектурная база для следующих фаз;
-- дальнейшие решения перестают спорить с реальным workload.
-
-### Rollback considerations
-- rollback не нужен: это documentation-only phase.
-
-## Phase 2: conventions and ownership
+## Phase 0: governance before schema
 
 ### Goal
-Остановить дальнейшее разрастание схемы до начала structural refactor.
+Остановить архитектурный дрейф до изменения схемы и данных.
 
 ### Concrete changes
-- создать ADR-пакет:
+- выпустить ADR-пакет:
   - `ADR_DB_001_TENANT_VS_COMPANY_BOUNDARY.md`
   - `ADR_DB_002_SCHEMA_FRAGMENTATION_AND_OWNERSHIP.md`
   - `ADR_DB_003_ENUM_GOVERNANCE.md`
   - `ADR_DB_004_READ_MODELS_AND_PROJECTIONS.md`
   - `ADR_DB_005_INDEX_AND_QUERY_GOVERNANCE.md`
-- зафиксировать ownership по bounded contexts;
-- ввести taxonomy для всех моделей:
-  - `tenant-scoped operational`
-  - `tenant-scoped control-plane`
-  - `business-scoped`
-  - `global/shared`
-  - `integration/control-plane`
-  - `inherited-scope child`
-- описать allowed inbound/outbound dependencies;
-- зафиксировать список запрещённых прямых cross-domain relation paths;
-- устранить policy contradiction в tenant enforcement, в первую очередь вокруг `EventConsumption` в `PrismaService`.
+- зафиксировать `MODEL_SCOPE_MANIFEST.md`;
+- зафиксировать `DOMAIN_OWNERSHIP_MANIFEST.md`;
+- зафиксировать `READ_MODEL_POLICY.md`;
+- зафиксировать `DB_SUCCESS_METRICS.md`;
+- включить CI-checks на scope, ownership и forbidden relations;
+- исправить contradiction вокруг `EventConsumption` в tenant policy.
 
 ### Risks
 - технический риск низкий;
-- организационный риск средний: команды могут продолжить работать по старой mental model.
+- организационный риск средний: команды могут продолжить жить по старой mental model.
 
 ### Expected effect
 - прекращается uncontrolled schema growth;
-- новые модели перестают автоматически root-иться в `Company`;
-- следующая фаза tenancy refactor становится уже не хаотичной, а управляемой.
+- tenancy semantics перестаёт быть неформальной;
+- следующие миграции становятся воспроизводимыми, а не импульсивными.
 
 ### Rollback considerations
-- откатывать смысла нет;
-- если правило оказалось неверным, его меняют через ADR, а не тихим нарушением.
+- rollback не нужен;
+- если правило оказалось неверным, оно меняется через ADR и manifest, а не через молчаливое исключение.
 
-## Phase 3: tenancy refactor
+## Phase 1: additive tenancy in control-plane
 
 ### Goal
-Развести platform tenant boundary и business/legal organization identity без большого взрыва.
+Добавить настоящий platform boundary без удара по core business flows.
 
 ### Concrete changes
 - добавить `Tenant` и `TenantCompanyBinding`;
-- для существующих компаний сделать one-tenant-per-company backfill как transitional mapping;
-- ввести `tenantId` сначала в control-plane и platform tables:
-  - `TenantState`
-  - `AgentConfiguration`
-  - `AgentCapabilityBinding`
-  - `AgentToolBinding`
-  - `AgentConnectorBinding`
-  - `AgentConfigChangeRequest`
-  - `RuntimeGovernanceEvent`
-  - `SystemIncident`
-  - `IncidentRunbookExecution`
-  - `PendingAction`
-  - `PerformanceMetric`
-  - `EvalRun`
-  - `EventConsumption`
-  - `MemoryInteraction`
-  - `MemoryEpisode`
-  - `MemoryProfile`
-- обновить `TenantContextService` и auth/runtime context так, чтобы он держал отдельно `tenantId` и `companyId`;
-- `companyId` оставить как compatibility key и business relation;
-- привести global/shared preset модели к явной политике, а не к неформальному `companyId = null`.
+- ввести dual-key policy: `tenantId` + `companyId`;
+- добавить nullable `tenantId` только в control-plane / runtime / governance / memory модели;
+- обновить runtime context до явного вида `tenantId + companyId + isSystem`;
+- включить mismatch logging и shadow mode;
+- зафиксировать source-of-scope policy: scope берётся только из runtime context.
+
+### First target models
+- `TenantState`
+- `AgentConfiguration`
+- `AgentCapabilityBinding`
+- `AgentToolBinding`
+- `AgentConnectorBinding`
+- `AgentConfigChangeRequest`
+- `RuntimeGovernanceEvent`
+- `SystemIncident`
+- `IncidentRunbookExecution`
+- `PendingAction`
+- `PerformanceMetric`
+- `EvalRun`
+- `EventConsumption`
+- `MemoryInteraction`
+- `MemoryEpisode`
+- `MemoryProfile`
 
 ### Risks
-- это самая опасная фаза всей программы;
-- изменятся Prisma types и часть service contracts;
-- возможны ошибки tenant isolation;
-- без shadow mode легко словить разрыв между runtime semantics и schema semantics.
+- высокий риск семантического рассинхрона между runtime и schema;
+- высокий риск сломать tenant isolation, если отказаться от shadow mode;
+- средний риск затронуть Prisma types и сервисные контракты.
 
 ### Expected effect
-- снимается главный structural defect схемы;
-- AI/runtime/integration модели перестают насиловать `Company` как platform-root;
-- система становится пригодной для multi-org, control-plane и platform-first роста.
+- появляется настоящий platform boundary;
+- control-plane перестаёт насиловать `Company` как tenant root;
+- migration seam становится реальным, а не теоретическим.
 
 ### Rollback considerations
-- `companyId` остаётся authoritative до завершения shadow-validation;
-- чтение по `tenantId` включать сначала в shadow/debug mode;
-- держать feature-flagged fallback на `companyId`-only isolation;
-- никакие destructive renames на этой фазе не делать.
+- `companyId` остаётся authoritative compatibility key;
+- `tenantId` сначала additive и shadowed;
+- feature-flagged fallback на `companyId`-only path обязателен.
 
-## Phase 4: domain modularization
+## Phase 2: Company de-rooting
 
 ### Goal
-Разбить schema monolith логически, не разделяя физическую БД.
+Убрать `Company` из роли глобального relation hub.
 
 ### Concrete changes
-- разложить schema source на fragment-файлы под `packages/prisma-client/prisma/`;
-- оставить единый build-артефакт `schema.prisma` для Prisma generation;
-- закрепить ownership каждого fragment-файла за конкретным bounded context;
-- вынести cross-domain read paths в явные projections/read models;
-- сократить relation graph у `Company` до минимального business-core;
-- запретить новые cross-domain relations без ADR и ownership review.
+- сократить direct relations у `Company` до business/legal core;
+- убрать root-роль из AI/runtime/integration контуров;
+- перевести часть тяжёлых чтений на approved projections;
+- перестать использовать `Company` как transit root для доступа к unrelated aggregates.
 
 ### Risks
-- средний риск tooling drift между fragments и сгенерированным `schema.prisma`;
-- риск ложной модульности, если relation graph не будет реально резаться;
-- возможен соблазн объявить победу после файловой декомпозиции, не изменив семантику.
+- высокий риск, если делать раньше Phase 0-1;
+- риск случайно порезать implicit query paths в сервисах.
 
 ### Expected effect
-- схема перестаёт быть нечитаемым монолитом на 6000+ строк;
-- уменьшается blast radius миграций;
-- review и ownership становятся реальными, а не номинальными.
+- исчезает главный god-object active schema;
+- новые домены перестают автоматически привязываться к `Company`.
 
 ### Rollback considerations
-- фрагментация должна быть tool-driven и обратимой;
-- на первом шаге не трогать names моделей и таблиц;
-- при необходимости fragments можно временно снова собрать в один источник без потери смысла.
+- relation pruning должна идти через staged deprecation;
+- сначала read-path redirection, потом structural cleanup.
 
-## Phase 5: enum cleanup
+## Phase 3: domain fragmentation
 
 ### Goal
-Сократить enum sprawl и убрать evolving business vocabulary из hardcoded schema evolution path.
+Разбить schema monolith логически, но не превратить это в папочный театр.
 
 ### Concrete changes
-- нормализовать дублирующиеся и конфликтующие enum families;
-- ввести каноническую severity taxonomy для risk/governance surface;
-- исправить literal defects, например `FERTILIZER` vs `FERTILIZERS`;
-- вынести evolving vocabularies в reference/config tables:
-  - агрономические справочники;
-  - observation/evidence vocabularies;
-  - часть commerce/CRM vocabularies;
-  - часть research/knowledge taxonomies;
-- сохранить технические FSM/status enums как enum, если они реально кодируют инварианты и поведение.
+- фрагментировать schema по 8 верхнеуровневым доменам:
+  - `platform_core`
+  - `org_legal`
+  - `agri_planning`
+  - `agri_execution`
+  - `finance`
+  - `crm_commerce`
+  - `ai_runtime`
+  - `integration_reliability`
+- `knowledge_memory` и `risk_governance` держать как подконтуры `ai_runtime`;
+- `research_rd` держать как `quarantine/sandbox contour`;
+- закрепить ownership на уровне fragment files и manifests;
+- запретить новые cross-domain relations без ADR.
 
 ### Risks
-- средний риск совместимости generated types;
-- риск поломки validation/admin tooling;
-- риск спутать FSM enum и бизнес-словарь, если делать cleanup без domain ownership.
+- риск over-modularization, если дробить глубже раньше времени;
+- риск ложной победы, если поменяются файлы, но не границы.
 
 ### Expected effect
-- снижается миграционный шум;
-- новые юрисдикции, модули и продуктовые словари перестают требовать schema surgery;
-- Prisma Client становится предсказуемее.
+- схема становится обозримой;
+- ownership становится жёстким;
+- новые сущности добавляются без перепрошивки всего графа.
 
 ### Rollback considerations
-- сначала additive reference tables;
-- на переходный период можно держать enum и reference table параллельно;
+- fragment layout должен быть обратимым;
+- при необходимости schema может временно собираться обратно в единый source без semantic drift.
+
+## Phase 4: enum taxonomy cleanup
+
+### Goal
+Убрать enum-sprawl системно, а не косметически.
+
+### Concrete changes
+- классифицировать каждый enum в один из классов:
+  - `technical closed enum`
+  - `FSM/status invariant enum`
+  - `business evolving vocabulary`
+  - `jurisdiction-sensitive vocabulary`
+  - `tenant-customizable vocabulary`
+  - `suspicious duplicate enum family`
+- собрать overlap matrix по кластерам:
+  - `risk-*`
+  - `status-*`
+  - `source-*`
+  - `type-*`
+  - `mode-*`
+- оставить первые два класса как enum;
+- остальные переводить в reference/config tables или нормализовать.
+
+### Risks
+- средний риск generated-type churn;
+- риск спутать FSM и vocabulary без domain ownership.
+
+### Expected effect
+- уменьшается migration noise;
+- платформа легче переносит новые юрисдикции, tenants и продуктовые словари.
+
+### Rollback considerations
+- reference tables вводить additive-first;
 - enum dependency убирать только после стабилизации read/write paths.
 
-## Phase 6: index/query tuning
+## Phase 5: workload-driven index tuning
 
 ### Goal
-Привести индексный слой к реальному workload и перестать платить write-cost за placeholder indexes.
+Ускорять реальные запросы, а не коллекционировать placeholder indexes.
 
 ### Concrete changes
-- добавить high-value composite indexes из `DB_INDEX_AUDIT.md`;
-- убрать зеркальные и слабополезные индексы, если query evidence не подтверждает их необходимость;
-- нормализовать scope columns в `OutboxMessage`, чтобы tenant/company ordering не зависел от JSON payload;
-- ввести query governance для hot delegates;
-- добавить CI/diagnostics для duplicate indexes и weak tenant indexes.
+- добавлять индексы только под подтверждённые hot query paths;
+- удалять шаблонные и зеркальные индексы только после проверки query statistics;
+- разделить append-heavy и read-heavy tables;
+- отдельно нормализовать outbox scope columns до индексного тюнинга `OutboxMessage`.
 
 ### Risks
 - низкий или средний риск;
-- риск write bloat, если бездумно добавить все индексы сразу;
-- риск удалить seemingly-redundant index, который всё же нужен под редкий, но дорогой path.
+- write-bloat, если пытаться компенсировать плохую query architecture количеством индексов.
 
 ### Expected effect
-- уменьшается latency на реальных operational queries;
-- снижается блокировка queue-like paths;
-- индексный слой начинает отражать actual workload, а не общую идею multi-tenancy.
+- реальные operational flows ускоряются;
+- write-heavy surfaces не зарастают бессмысленными индексами.
 
 ### Rollback considerations
-- добавлять индексы конкурентно, где это возможно;
-- удалять индексы только после проверки production query statistics;
-- не делать массовый delete-wave до появления реальных метрик.
+- create indexes concurrently where possible;
+- remove indexes only with production evidence.
 
-## Phase 7: optional physical separation / schemas / archives
+## Phase 6: only then decide physical split
 
 ### Goal
-Решить, нужна ли вообще физическая декомпозиция после того, как логическая архитектура уже очищена.
+Доказать необходимость physical split, а не предполагать её.
 
 ### Concrete changes
-Сравнить три варианта.
-
-#### Option A. Оставить одну физическую БД
-Использовать, если:
-- логическая декомпозиция уже убрала основную связанность;
-- operational simplicity важнее infra-сложности;
-- нет доказанного bottleneck, который требует физического split.
-
-#### Option B. Одна БД, несколько Postgres schemas / namespaces
-Использовать, если:
-- ownership и privilege boundaries нужно усилить;
-- физическое разделение по отдельным инстансам пока преждевременно;
-- нужны более чистые namespace-границы для `platform_core`, `finance`, `ai_runtime`, `integration_reliability`.
-
-#### Option C. Selective storage contours
-Использовать только при доказанном давлении по объёму, write-rate или retention.
-
-Потенциальные кандидаты:
-- event/outbox/history archive;
-- AI telemetry / eval / audit history;
-- knowledge/vector-heavy storage;
-- long-term archive для некоторых legacy/MG-Core data sets.
+Сравнить три варианта:
+- одна физическая БД;
+- одна БД с несколькими Postgres schemas / namespaces;
+- selective storage contours для history / AI telemetry / archive.
 
 ### Risks
-- premature physical split создаёт dual-truth, ops tax и migration tax;
-- cross-schema/cross-store joins могут сделать всё хуже, если доменные границы всё ещё грязные;
-- высок риск перенести проблему из логики в инфраструктуру и получить дорогой legacy следующего поколения.
+- premature split создаёт dual-truth и ops tax;
+- инфраструктура может зацементировать неочищенные логические границы.
 
 ### Expected effect
-- полезно только после успешного завершения предыдущих фаз;
-- может улучшить retention, archival, security isolation и отдельные operational SLO;
-- не является обязательной целью.
+- physical split становится осознанным выбором, а не панической реакцией на большой `schema.prisma`.
 
 ### Rollback considerations
-- physical split должен быть опциональным;
-- переходить к нему можно только после появления одного конкретного доказанного bottleneck;
-- если bottleneck не доказан, Phase 7 должна завершаться решением оставить одну БД.
+- если bottleneck не доказан, Phase 6 должна закончиться решением оставить одну физическую БД.
 
-## MG-Core handling across phases
+## Transition runtime policy
+
+На весь переходный период должны быть зафиксированы четыре инварианта:
+- `tenantId` = platform isolation key;
+- `companyId` = business/legal association key и compatibility key;
+- scope приходит только из runtime context;
+- mismatch cases между `tenantId` и `companyId -> tenant` mapping логируются и считаются архитектурным инцидентом.
+
+## Success metrics
+
+Измеримые метрики должны жить отдельно в `DB_SUCCESS_METRICS.md`, но минимумом для roadmap являются:
+- число прямых relations у `Company`;
+- число моделей с неясным scope;
+- число enum без taxonomy;
+- число cross-domain relations без ADR;
+- число hot queries без workload-confirmed indexes;
+- медианная сложность Prisma include-графов;
+- число новых моделей, добавленных без cross-domain правок.
+
+## MG-Core handling
 
 Рекомендуемая позиция:
-- Phases 1-3: `MG-Core` использовать только как legacy/adjacent reference contour;
-- Phases 4-5: использовать для domain comparison и migration-risk analysis;
-- Phases 6-7: принять решение, нужен ли узкий `read-only archive` или `migration sandbox`.
+- до конца Phase 3 `MG-Core` = только legacy/adjacent reference contour;
+- допустимые роли: `read-only archive`, `migration sandbox`, `reference diff tooling`;
+- запрещённые роли: active dual-write, runtime fallback, второй source of truth.
 
-Что запрещено:
-- dual-write между active contour и MG-Core;
-- runtime fallback на MG-Core schema;
-- попытка держать два равноправных Prisma source of truth.
+## First implementation tranche
 
-Рациональный outcome по умолчанию:
-- `MG-Core` либо остаётся legacy reference;
-- либо превращается в read-only archive/sandbox;
-- но не становится вторым активным operational contour.
+Первый реальный tranche должен ограничиваться только `Phase 0 + Phase 1`.
 
-## End-state target
+Это означает:
+- governance package;
+- manifests;
+- CI checks;
+- `Tenant` / `TenantCompanyBinding`;
+- `tenantId` только для control-plane contour;
+- без массового refactor operational core.
 
-Если roadmap выполнен правильно, итоговая архитектура должна выглядеть так:
-- одна физическая Postgres БД как основной operational contour;
-- логически разрезанная schema с ownership по bounded contexts;
-- `Tenant` как platform boundary;
-- `Company` как business/legal entity, а не system root;
-- новые AI/runtime/integration модели сидят на `tenantId`;
-- тяжелые cross-domain use-cases читаются через projections/read models;
-- enum layer очищен от business vocabulary overflow;
-- index layer соответствует реальному workload;
-- MG-Core не создаёт operational ambiguity.
-
-Это и есть современное, эволюционируемое состояние без premature microservices и без нового скрытого потолка роста.
+Именно это даёт первый настоящий архитектурный шов без production explosion.

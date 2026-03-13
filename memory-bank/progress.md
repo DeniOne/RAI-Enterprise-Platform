@@ -2,6 +2,18 @@
 
 ## 2026-03-13
 
+107. **DB Refactor Program — Phase 1 Additive Tenancy Closure** [DONE]:
+    *   Закрыт Phase 1 execution slice: в `packages/prisma-client/schema.prisma` добавлены `Tenant` и `TenantCompanyBinding`, а в control-plane/runtime модели добавлены additive `tenantId` поля без destructive изменений core business aggregates.
+    *   Добавлен migration wave `packages/prisma-client/migrations/20260313103000_phase1_additive_tenant_boundary/migration.sql` (new tenant tables + additive tenant columns/indexes для Phase 1 model set).
+    *   Runtime dual-key policy внедрен в `apps/api/src/shared/prisma/prisma.service.ts`: legacy `companyId` guard сохранен, включены `tenantId` shadow-write/shadow-read drift detection, feature-flag fallback (`TENANT_DUAL_KEY_COMPANY_FALLBACK`) и optional enforce mode (`TENANT_DUAL_KEY_MODE=enforce`).
+    *   Auth/context contract обновлен: `TenantScope` несет `tenantId + companyId + isSystem`, `TenantContextService` получил `getTenantId()`, JWT strategy возвращает `tenantId`, auth token payload включает compatibility `tenantId`.
+    *   Добавлены governance artifacts `docs/01_ARCHITECTURE/DATABASE/DB_DUAL_KEY_POLICY.md` и `DB_TENANCY_TRANSITION_RUNTIME_POLICY.md`; manifests/checklists/status синхронизированы, `MODEL_SCOPE_MANIFEST` обновлен до `195/195`.
+
+106. **DB Refactor Program — Phase 0 Closure Discipline** [DONE]:
+    *   Зафиксирована обязательная операционная дисциплина: после каждого логически завершенного блока синхронизируются `DB_REFACTOR_CHECKLIST`, phase-status файл, зависимые ADR/manifest/policy/CI артефакты и оба memory-bank файла.
+    *   `Phase 0` доведен до engineering-finish: `gate:db:phase0:enforce` проходит, `MODEL_SCOPE_MANIFEST` покрывает `195/195` моделей, конфликт `EventConsumption` в tenant/system policy устранен.
+    *   Остаток `Phase 0` — только formal sign-off владельцев доменов по ADR/policy пакету; технические phase-gates закрыты.
+
 105. **AI Copilot Closeout — Telemetry + Go/No-Go Packet** [DONE]:
     *   Закрыт rollout telemetry block: в invariant metrics добавлены `ai_memory_hint_shown_total`, `expert_review_requested_total`, `expert_review_completed_total`, `strategy_forecast_run_total`, `strategy_forecast_degraded_total`, `strategy_forecast_latency_ms`, `memory_lane_populated_total`.
     *   Instrumentation добавлен в runtime path: `ResponseComposerService` (memory hints), `ExpertReviewService` (request/outcome), `DecisionIntelligenceService` (run/degraded/latency), `SupervisorForensicsService` (memory lane population).

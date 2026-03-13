@@ -1,6 +1,10 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-13)
+- [x] Логически закрыт `DB Refactor Phase 1`: добавлены `Tenant` + `TenantCompanyBinding`, выпущен migration wave `20260313103000_phase1_additive_tenant_boundary`, и в Phase 1 control-plane/runtime set добавлен additive `tenantId`.
+- [x] Runtime/auth переведены на dual-key transition contract: `TenantScope` и JWT теперь несут `tenantId`, `companyId`, `isSystem`; `PrismaService` включает shadow-write/shadow-read, drift logging, drift metrics и feature-flagged fallback.
+- [x] Запущен и инженерно закрыт `DB Refactor Phase 0`: создан DB-ADR пакет, включены governance gates, `MODEL_SCOPE_MANIFEST` синхронизирован на `195/195` моделей, `gate:db:phase0:enforce` проходит.
+- [x] Введена обязательная sync discipline: после каждой логически завершенной задачи обновляются checklists, зависимые артефакты и memory-bank (`activeContext` + `progress`).
 - [x] Выполнен bridge `data_scientist -> DecisionIntelligenceService`: добавлен новый intent `strategy_forecast` в `DataScientistAgent`.
 - [x] `DataScientistAgent` теперь использует deterministic forecast-run (`DecisionIntelligenceService.runStrategyForecast`) как источник чисел; LLM остаётся только слоем интерпретации.
 - [x] В runtime-контуре `AgentExecutionAdapterService` расширен payload mapping для `scopeLevel/horizonDays/domains/farmId/fieldId/crop/seasonId/scenario`.

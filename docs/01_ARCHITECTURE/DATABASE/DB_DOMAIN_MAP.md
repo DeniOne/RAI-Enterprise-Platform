@@ -4,6 +4,22 @@
 
 Это логическая карта bounded contexts для active platform. Это не план физического split.
 
+Первая итерация карты намеренно укрупнена.
+На верхнем уровне фиксируются только:
+- `platform_core`
+- `org_legal`
+- `agri_planning`
+- `agri_execution`
+- `finance`
+- `crm_commerce`
+- `ai_runtime`
+- `integration_reliability`
+
+Подконтуры первой итерации:
+- `knowledge_memory` = подконтур внутри `ai_runtime`;
+- `risk_governance` = подконтур внутри `ai_runtime`;
+- `research_rd` = временный `quarantine/sandbox contour`, а не полноценный верхнеуровневый домен.
+
 Легенда:
 - `authoritative`: домен владеет write model и инвариантами.
 - `supporting`: домен хранит производные или вспомогательные данные.
@@ -23,10 +39,10 @@
 - `agri_execution` зависит от `agri_planning` и `platform_core`.
 - `finance` потребляет факты и projections из других доменов, а не их внутренние relation-графы.
 - `ai_runtime` потребляет projections/read models всех доменов и не владеет их business state.
-- `knowledge_memory` работает через governed adapters.
-- `risk_governance` reason-ит поверх фактов и событий, а не владеет чужими lifecycle.
+- `ai_runtime/knowledge_memory` работает только через governed adapters.
+- `ai_runtime/risk_governance` reason-ит поверх фактов и событий, а не владеет чужими lifecycle.
 - `integration_reliability` обслуживает transport/control only.
-- `research_rd` потребляет projections и хранит собственные эксперименты/анализ.
+- `research_rd` живет как quarantine/sandbox contour и потребляет projections, а не live operational graphs.
 
 Запрещенные паттерны:
 - `finance` читает agronomy через глубокие planning graph traversal.
@@ -45,7 +61,7 @@
 | Anti-corruption boundary | identity, auth, tenant context, audit contracts |
 
 Current contour models:
-- `User`, `Invitation`, `RoleDefinition`, `EmployeeProfile`, `TenantState`, `AuditLog`, `AuditNotarizationRecord`, `ApiUsage`
+- `User`, `Invitation`, `RoleDefinition`, `EmployeeProfile`, `Tenant`, `TenantCompanyBinding`, `TenantState`, `AuditLog`, `AuditNotarizationRecord`, `ApiUsage`
 
 MG-Core analogs:
 - `Role`, `RoleContract`, `QualificationLevel`, `User`, `Employee`, `Department`, `EmployeeRole`, `AuthSession`, `Location`, `Position`
@@ -57,6 +73,7 @@ MG-Core analogs:
 Что нельзя тянуть прямыми relations:
 - `User` как универсальный join hub для domain workspace reads.
 - `TenantState` как surrogate business organization table.
+- `TenantCompanyBinding` как скрытый second source of truth для business ownership.
 
 ## `org_legal`
 
@@ -202,7 +219,7 @@ MG-Core analogs:
 - AI/runtime владеет `Season`, `Task`, `Party`, `EconomicEvent` через прямые связи.
 - global presets через nullable `companyId` навсегда.
 
-## `knowledge_memory`
+### `ai_runtime / knowledge_memory` subcontour
 
 | Атрибут | Значение |
 | --- | --- |
@@ -225,7 +242,7 @@ MG-Core analogs:
 - `Engram` и `SemanticFact` как master data вместо governed knowledge layer.
 - global knowledge scope только через `companyId = NULL`.
 
-## `risk_governance`
+### `ai_runtime / risk_governance` subcontour
 
 | Атрибут | Значение |
 | --- | --- |
@@ -247,13 +264,13 @@ MG-Core analogs:
 Что нельзя тянуть прямыми relations:
 - direct risk writes в agronomy/finance tables без event или command boundary.
 
-## `research_rd`
+## `quarantine_sandbox / research_rd`
 
 | Атрибут | Значение |
 | --- | --- |
 | Ownership | R&D, experimentation, institutional exploration |
-| Ownership type | authoritative |
-| Allowed inbound | `agri_planning`, `agri_execution`, `ai_runtime`, `knowledge_memory` через projections |
+| Ownership type | quarantine / sandbox |
+| Allowed inbound | `agri_planning`, `agri_execution`, `ai_runtime`, `ai_runtime/knowledge_memory` через projections |
 | Allowed outbound | только governed recommendations и derived findings |
 | Anti-corruption boundary | research artifacts не должны мутировать operational aggregates напрямую |
 
@@ -311,7 +328,7 @@ MG-Core analogs:
 - нужен workspace projection.
 - запрещен UI rebuilt из nested relation graph.
 
-5. `knowledge_memory <- all domains`
+5. `ai_runtime/knowledge_memory <- all domains`
 - только governed formation/retrieval adapters.
 - запрещено silent parallel source-of-truth behavior.
 
@@ -322,4 +339,6 @@ MG-Core analogs:
 3. `BudgetPlan` - это `agri_planning` artifact с finance seam, а не finance core table.
 4. `FrontOfficeThread` family семантически ближе к `crm_commerce` workspace, а доставка и idempotency - к `integration_reliability`.
 5. `AgentConfiguration` и runtime governance tables принадлежат `ai_runtime`.
-6. `MG-Core` нельзя использовать как parallel domain owner для current contour.
+6. `knowledge_memory` и `risk_governance` не должны разрастаться в отдельные верхнеуровневые домены до завершения `Company` de-rooting и tenancy cleanup.
+7. `research_rd` до отдельного доказательства остается quarantine/sandbox contour.
+8. `MG-Core` нельзя использовать как parallel domain owner для current contour.

@@ -22,6 +22,10 @@ export class TenantContextService {
     return this.getStore()?.companyId;
   }
 
+  getTenantId(): string | undefined {
+    return this.getStore()?.tenantId;
+  }
+
   isSystemOperation(): boolean {
     return !!this.getStore()?.isSystem;
   }
