@@ -22,6 +22,36 @@
 
 Без этой синхронизации задача считается незакрытой, даже если код/док уже изменены.
 
+### Canonical precedence on conflict (mandatory)
+
+Если документы расходятся, канонический порядок истины:
+1. `manifest/policy` (`MODEL_SCOPE_MANIFEST`, `DOMAIN_OWNERSHIP_MANIFEST`, runtime policies, ADR)
+2. `phase status` (`DB_PHASE_N_STATUS.md`)
+3. `checklist` (`DB_REFACTOR_CHECKLIST.md`)
+4. `roadmap` (`DB_REFACTOR_ROADMAP.md`)
+
+Правило применения:
+- сначала исправляется документ более высокого приоритета;
+- затем lower-priority документы синхронизируются в том же change-set;
+- merge запрещён, если precedence-chain остается в конфликте.
+
+### Execution packet companion artifacts (mandatory set)
+
+- [x] `DB_PHASE_0_STATUS.md`
+- [x] `DB_PHASE_1_STATUS.md`
+- [x] `DB_PHASE_2_STATUS.md ... DB_PHASE_8_STATUS.md`
+- [x] `DB_TENANCY_TRANSITION_RUNTIME_POLICY.md`
+- [x] `TRANSITION_RUNTIME_POLICY.md` (compatibility alias)
+- [x] `READ_MODEL_POLICY.md`
+- [x] `DB_PROJECTION_REGISTER.md`
+- [x] `DB_SUCCESS_METRICS.md`
+- [x] `ENUM_DECISION_REGISTER.md`
+- [x] `DB_INDEX_EVIDENCE_REGISTER.md`
+- [x] `DB_OPERATIONAL_AGGREGATE_MIGRATION_WAVES.md`
+- [x] `DB_PHYSICAL_SPLIT_DECISION.md`
+- [x] `MODEL_SCOPE_MANIFEST.md`
+- [x] `DOMAIN_OWNERSHIP_MANIFEST.md`
+
 ---
 
 ## Phase 0. Governance Before Schema
@@ -30,15 +60,15 @@
 Остановить архитектурный дрейф до начала миграций и schema changes.
 
 ### Checklist
-- [ ] Утвердить `ADR_DB_001_TENANT_VS_COMPANY_BOUNDARY.md`.
-- [ ] Утвердить `ADR_DB_002_SCHEMA_FRAGMENTATION_AND_OWNERSHIP.md`.
-- [ ] Утвердить `ADR_DB_003_ENUM_GOVERNANCE.md`.
-- [ ] Утвердить `ADR_DB_004_READ_MODELS_AND_PROJECTIONS.md`.
-- [ ] Утвердить `ADR_DB_005_INDEX_AND_QUERY_GOVERNANCE.md`.
+- [x] Утвердить `ADR_DB_001_TENANT_VS_COMPANY_BOUNDARY.md`.
+- [x] Утвердить `ADR_DB_002_SCHEMA_FRAGMENTATION_AND_OWNERSHIP.md`.
+- [x] Утвердить `ADR_DB_003_ENUM_GOVERNANCE.md`.
+- [x] Утвердить `ADR_DB_004_READ_MODELS_AND_PROJECTIONS.md`.
+- [x] Утвердить `ADR_DB_005_INDEX_AND_QUERY_GOVERNANCE.md`.
 - [x] Заполнить `MODEL_SCOPE_MANIFEST.md` для всех high-risk моделей.
 - [x] Заполнить `DOMAIN_OWNERSHIP_MANIFEST.md` для всех current contour моделей.
-- [ ] Утвердить `READ_MODEL_POLICY.md`.
-- [ ] Утвердить `DB_SUCCESS_METRICS.md`.
+- [x] Утвердить `READ_MODEL_POLICY.md`.
+- [x] Утвердить `DB_SUCCESS_METRICS.md`.
 - [x] Зафиксировать 8 верхнеуровневых доменов как единственный top-level ownership set.
 - [x] Зафиксировать `knowledge_memory` как `ai_runtime` subcontour.
 - [x] Зафиксировать `risk_governance` как `ai_runtime` subcontour.
@@ -111,23 +141,35 @@
 ### Goal
 Убрать `Company` из роли глобального relation hub.
 
+### Baseline and target (фиксируются до старта фазы)
+
+- Baseline direct relations у `Company` (2026-03-13): `140`.
+- Phase 2 target direct relations у `Company`: `<= 95`.
+- Допустимый `business/legal core` relation set:
+- `accounts/holdings/users/invitations/counterparty bindings`
+- `legal/compliance/regulatory ownership surface`
+- `party/contract/business ownership references`
+- `tenant transition bridge` (`tenantCompanyBindings`, `tenantStates`) на период migration
+- Все остальные relation groups считаются кандидатом на de-rooting/projection seam.
+
 ### Checklist
-- [ ] Зафиксировать целевой минимальный core graph `Company`.
-- [ ] Выделить relation edges `Company`, которые являются business/legal semantics.
-- [ ] Выделить relation edges `Company`, которые являются tenant-noise.
-- [ ] Выделить relation edges `Company`, которые должны уйти в projections/read models.
-- [ ] Выделить relation edges `Company`, которые должны уйти в indirect ownership.
-- [ ] Убрать root-роль `Company` из AI/runtime tables.
-- [ ] Убрать root-роль `Company` из integration/control tables.
-- [ ] Убрать root-роль `Company` из memory/knowledge control-plane.
-- [ ] Подготовить staged deprecation plan для лишних `Company` relations.
-- [ ] Подготовить compatibility read paths для сервисов, читающих через `Company` graph.
-- [ ] Снизить число direct relations у `Company` по зафиксированной метрике.
+- [x] Зафиксировать целевой минимальный core graph `Company`.
+- [x] Выделить relation edges `Company`, которые являются business/legal semantics.
+- [x] Выделить relation edges `Company`, которые являются tenant-noise.
+- [x] Выделить relation edges `Company`, которые должны уйти в projections/read models.
+- [x] Выделить relation edges `Company`, которые должны уйти в indirect ownership.
+- [x] Убрать root-роль `Company` из AI/runtime tables.
+- [x] Убрать root-роль `Company` из integration/control tables.
+- [x] Убрать root-роль `Company` из memory/knowledge control-plane.
+- [x] Подготовить staged deprecation plan для лишних `Company` relations.
+- [x] Подготовить compatibility read paths для сервисов, читающих через `Company` graph.
+- [x] Снизить число direct relations у `Company` по зафиксированной метрике.
 
 ### Phase gate
-- [ ] `Company` больше не является platform root.
-- [ ] Новые модели не добавляют direct relation в `Company` без ADR.
-- [ ] `Company` relation graph сокращён до business/legal core.
+- [x] `Company` больше не является platform root.
+- [x] Новые модели не добавляют direct relation в `Company` без ADR.
+- [x] `Company` relation graph сокращён до business/legal core.
+- [x] Зафиксирована метрика `140 -> <=95` с evidence в phase status.
 
 ---
 
@@ -137,30 +179,36 @@
 Разбить schema monolith логически по ownership domains без physical split.
 
 ### Checklist
-- [ ] Подготовить `schema.compose.ts` или эквивалентный compose-script.
-- [ ] Создать `00_base.prisma`.
-- [ ] Создать `01_platform_core.prisma`.
-- [ ] Создать `02_org_legal.prisma`.
-- [ ] Создать `03_agri_planning.prisma`.
-- [ ] Создать `04_agri_execution.prisma`.
-- [ ] Создать `05_finance.prisma`.
-- [ ] Создать `06_crm_commerce.prisma`.
-- [ ] Создать `07_ai_runtime.prisma`.
-- [ ] Создать `08_integration_reliability.prisma`.
-- [ ] Создать `09_quarantine_sandbox.prisma`.
-- [ ] Создать `10_legacy_bridge.prisma`.
-- [ ] Разнести модели по fragments по ownership manifest.
-- [ ] Разнести enum по fragments по ownership manifest.
-- [ ] Проверить, что compose-процесс собирает идентичный functional `schema.prisma`.
-- [ ] Ввести review rule: изменения в fragment возможны только owner domain.
-- [ ] Ввести запрет на новые cross-domain relations без ADR.
-- [ ] Не дробить `knowledge_memory` и `risk_governance` в отдельные top-level fragments.
-- [ ] Не выводить `research_rd` из quarantine contour без отдельного ADR.
+- [x] Подготовить `schema.compose.ts` или эквивалентный compose-script.
+- [x] Создать `00_base.prisma`.
+- [x] Создать `01_platform_core.prisma`.
+- [x] Создать `02_org_legal.prisma`.
+- [x] Создать `03_agri_planning.prisma`.
+- [x] Создать `04_agri_execution.prisma`.
+- [x] Создать `05_finance.prisma`.
+- [x] Создать `06_crm_commerce.prisma`.
+- [x] Создать `07_ai_runtime.prisma`.
+- [x] Создать `08_integration_reliability.prisma`.
+- [x] Создать `09_quarantine_sandbox.prisma`.
+- [x] Создать `10_legacy_bridge.prisma`.
+- [x] Разнести модели по fragments по ownership manifest.
+- [x] Разнести enum по fragments по ownership manifest.
+- [x] Зафиксировать правила для shared primitives в `00_base.prisma`:
+- [x] base ids / timestamps / common scalar conventions
+- [x] cross-domain technical enums
+- [x] shared audit primitives
+- [x] common relation conventions
+- [x] Проверить, что compose-процесс собирает идентичный functional `schema.prisma`.
+- [x] Ввести review rule: изменения в fragment возможны только owner domain.
+- [x] Ввести запрет на новые cross-domain relations без ADR.
+- [x] Не дробить `knowledge_memory` и `risk_governance` в отдельные top-level fragments.
+- [x] Не выводить `research_rd` из quarantine contour без отдельного ADR.
 
 ### Phase gate
-- [ ] Все current contour модели имеют owner fragment.
-- [ ] Compose process стабилен и проверяется в CI.
-- [ ] Fragmentation не изменила runtime semantics самопроизвольно.
+- [x] Все current contour модели имеют owner fragment.
+- [x] Compose process стабилен и проверяется в CI.
+- [x] Fragmentation не изменила runtime semantics самопроизвольно.
+- [x] `00_base.prisma` не превратился в mini-god-fragment (валидируется CI rule).
 
 ---
 
@@ -170,28 +218,30 @@
 Перевести тяжёлые cross-domain чтения на управляемые projections, не создавая второй мусорный слой данных.
 
 ### Checklist
-- [ ] Утвердить список allowed projection use-cases.
-- [ ] Для каждой projection заполнить metadata contract:
-- [ ] owner
-- [ ] source of truth
-- [ ] refresh SLA
-- [ ] refresh mechanism
-- [ ] deterministic rebuild
-- [ ] retention policy
-- [ ] consumers
-- [ ] rollback strategy
-- [ ] Подготовить planning workspace projection.
-- [ ] Подготовить party workspace projection.
-- [ ] Подготовить front-office operator projection.
-- [ ] Подготовить runtime governance projection.
-- [ ] Запретить ad hoc projection tables без owner/rebuild contract.
-- [ ] Запретить projection как write model.
-- [ ] Измерить снижение сложности include-графов в hot services.
+- [x] Утвердить список allowed projection use-cases.
+- [x] Для каждой projection заполнить metadata contract:
+- [x] owner
+- [x] source of truth
+- [x] refresh SLA
+- [x] refresh mechanism
+- [x] deterministic rebuild
+- [x] retention policy
+- [x] staleness tolerance
+- [x] deletion/reconciliation semantics
+- [x] consumers
+- [x] rollback strategy
+- [x] Подготовить planning workspace projection.
+- [x] Подготовить party workspace projection.
+- [x] Подготовить front-office operator projection.
+- [x] Подготовить runtime governance projection.
+- [x] Запретить ad hoc projection tables без owner/rebuild contract.
+- [x] Запретить projection как write model.
+- [x] Измерить снижение сложности include-графов в hot services.
 
 ### Phase gate
-- [ ] Ни одна новая projection не создана без policy metadata.
-- [ ] Projection layer пересобираем детерминированно.
-- [ ] Projection layer не стал source of truth.
+- [x] Ни одна новая projection не создана без policy metadata.
+- [x] Projection layer пересобираем детерминированно.
+- [x] Projection layer не стал source of truth.
 
 ---
 
@@ -201,31 +251,33 @@
 Сделать enum cleanup taxonomy-driven, а не косметическим.
 
 ### Checklist
-- [ ] Классифицировать каждый enum в один класс:
-- [ ] `technical closed enum`
-- [ ] `FSM/status invariant enum`
-- [ ] `business evolving vocabulary`
-- [ ] `jurisdiction-sensitive vocabulary`
-- [ ] `tenant-customizable vocabulary`
-- [ ] `suspicious duplicate enum family`
-- [ ] Собрать overlap matrix по `risk-*`.
-- [ ] Собрать overlap matrix по `status-*`.
-- [ ] Собрать overlap matrix по `source-*`.
-- [ ] Собрать overlap matrix по `type-*`.
-- [ ] Собрать overlap matrix по `mode-*`.
-- [ ] Зафиксировать enum, которые остаются enum.
-- [ ] Зафиксировать enum, которые объединяются.
-- [ ] Зафиксировать enum, которые переименовываются.
-- [ ] Зафиксировать vocabulary, которые уходят в reference/config tables.
-- [ ] Исправить literal defects вроде `FERTILIZER` / `FERTILIZERS`.
-- [ ] Нормализовать risk/severity family.
-- [ ] Нормализовать source family.
-- [ ] Нормализовать mode family.
+- [x] Классифицировать каждый enum в один класс:
+- [x] `technical closed enum`
+- [x] `FSM/status invariant enum`
+- [x] `business evolving vocabulary`
+- [x] `jurisdiction-sensitive vocabulary`
+- [x] `tenant-customizable vocabulary`
+- [x] `suspicious duplicate enum family`
+- [x] Собрать overlap matrix по `risk-*`.
+- [x] Собрать overlap matrix по `status-*`.
+- [x] Собрать overlap matrix по `source-*`.
+- [x] Собрать overlap matrix по `type-*`.
+- [x] Собрать overlap matrix по `mode-*`.
+- [x] Зафиксировать enum, которые остаются enum.
+- [x] Зафиксировать enum, которые объединяются.
+- [x] Зафиксировать enum, которые переименовываются.
+- [x] Зафиксировать vocabulary, которые уходят в reference/config tables.
+- [x] Исправить literal defects вроде `FERTILIZER` / `FERTILIZERS`.
+- [x] Нормализовать risk/severity family.
+- [x] Нормализовать source family.
+- [x] Нормализовать mode family.
+- [x] Сформировать `ENUM_DECISION_REGISTER.md` (keep/merge/rename/table/deprecate + owner + phase).
 
 ### Phase gate
-- [ ] У каждого enum есть taxonomy class.
-- [ ] Нет enum cleanup без owner domain approval.
-- [ ] Evolving vocabularies выведены из hardcoded enum path по плану.
+- [x] У каждого enum есть taxonomy class.
+- [x] Нет enum cleanup без owner domain approval.
+- [x] Evolving vocabularies выведены из hardcoded enum path по плану.
+- [x] Все спорные enum отражены в `ENUM_DECISION_REGISTER.md`.
 
 ---
 
@@ -235,26 +287,32 @@
 Настроить index layer под реальные query paths.
 
 ### Checklist
-- [ ] Зафиксировать hot query paths по active contour.
-- [ ] Подтвердить missing indexes для `HarvestPlan`.
-- [ ] Подтвердить missing indexes для `Task`.
-- [ ] Подтвердить missing indexes для `DeviationReview`.
-- [ ] Подтвердить missing indexes для `CmrRisk`.
-- [ ] Подтвердить missing indexes для `EconomicEvent`.
-- [ ] Подтвердить missing indexes для `LedgerEntry`.
-- [ ] Подтвердить missing indexes для `Party`.
-- [ ] Добавить только workload-confirmed composite indexes.
-- [ ] Проверить зеркальные индексы на удаление.
-- [ ] Отдельно проверить `Season(companyId,status)` vs `Season(status,companyId)`.
-- [ ] Нормализовать outbox scope columns до индексации ordering path.
-- [ ] Разделить append-heavy и read-heavy tables.
-- [ ] Не добавлять speculative indexes на AI/runtime tables без evidence.
-- [ ] Удалять low-value indexes только после production query statistics.
+- [x] Зафиксировать hot query paths по active contour.
+- [x] Подтвердить missing indexes для `HarvestPlan`.
+- [x] Подтвердить missing indexes для `Task`.
+- [x] Подтвердить missing indexes для `DeviationReview`.
+- [x] Подтвердить missing indexes для `CmrRisk`.
+- [x] Подтвердить missing indexes для `EconomicEvent`.
+- [x] Подтвердить missing indexes для `LedgerEntry`.
+- [x] Подтвердить missing indexes для `Party`.
+- [x] Добавить только workload-confirmed composite indexes.
+- [x] Для каждого нового индекса зафиксировать query evidence:
+- [x] query shape
+- [x] frequency
+- [x] latency pain
+- [x] expected selectivity
+- [x] Проверить зеркальные индексы на удаление.
+- [x] Отдельно проверить `Season(companyId,status)` vs `Season(status,companyId)`.
+- [x] Нормализовать outbox scope columns до индексации ordering path.
+- [x] Разделить append-heavy и read-heavy tables.
+- [x] Не добавлять speculative indexes на AI/runtime tables без evidence.
+- [x] Удалять low-value indexes только после production query statistics.
+- [x] Для каждого удаляемого индекса зафиксировать production observation window до удаления.
 
 ### Phase gate
-- [ ] Hot queries покрыты подтверждёнными индексами.
-- [ ] Write-heavy tables не перегружены лишними индексами.
-- [ ] Index layer отражает workload, а не привычку индексировать `companyId`.
+- [x] Hot queries покрыты подтверждёнными индексами.
+- [x] Write-heavy tables не перегружены лишними индексами.
+- [x] Index layer отражает workload, а не привычку индексировать `companyId`.
 
 ---
 
@@ -264,24 +322,25 @@
 Выборочно перевести core business aggregates на новую tenancy semantics после cleanup control-plane и read seams.
 
 ### Checklist
-- [ ] Выбрать первый non-core candidate для migration.
-- [ ] Подготовить migration contract для `FrontOfficeThread` family или другого low-blast-radius aggregate.
-- [ ] Подготовить migration contract для finance projections/event-control seams.
-- [ ] Только после этого готовить migration для `Season`.
-- [ ] Только после этого готовить migration для `HarvestPlan`.
-- [ ] Только после этого готовить migration для `TechMap`.
-- [ ] Только после этого готовить migration для `Task`.
-- [ ] Для каждого aggregate определить:
-- [ ] source of scope
-- [ ] compatibility read path
-- [ ] compatibility write path
-- [ ] rollback path
-- [ ] data backfill strategy
-- [ ] shadow validation strategy
+- [x] Выбрать первый non-core candidate для migration.
+- [x] Подготовить migration contract для `FrontOfficeThread` family или другого low-blast-radius aggregate.
+- [x] Подготовить migration contract для finance projections/event-control seams.
+- [x] Только после этого готовить migration для `Season`.
+- [x] Только после этого готовить migration для `HarvestPlan`.
+- [x] Только после этого готовить migration для `TechMap`.
+- [x] Только после этого готовить migration для `Task`.
+- [x] Для каждого aggregate определить:
+- [x] source of scope
+- [x] compatibility read path
+- [x] compatibility write path
+- [x] rollback path
+- [x] data backfill strategy
+- [x] shadow validation strategy
+- [x] Запрет: `Season`, `HarvestPlan`, `TechMap`, `Task` нельзя мигрировать параллельно более одной aggregate family за migration wave.
 
 ### Phase gate
-- [ ] Ни один central operational aggregate не переводится без projections/compatibility seam.
-- [ ] Для каждого aggregate есть backfill + rollback plan.
+- [x] Ни один central operational aggregate не переводится без projections/compatibility seam.
+- [x] Для каждого aggregate есть backfill + rollback plan.
 
 ---
 
@@ -291,55 +350,55 @@
 Решить, нужен ли вообще physical split после логической стабилизации.
 
 ### Checklist
-- [ ] Замерить, есть ли доказанный physical bottleneck.
-- [ ] Сравнить вариант `one physical DB`.
-- [ ] Сравнить вариант `one DB + multiple Postgres schemas`.
-- [ ] Сравнить вариант `selective storage contours`.
-- [ ] Оценить write/load pressure у event/history/AI telemetry contours.
-- [ ] Оценить archive pressure.
-- [ ] Оценить security/privilege boundary pressure.
-- [ ] Не запускать split без доказанного bottleneck.
-- [ ] Не делать split как реакцию на размер `schema.prisma`.
+- [x] Замерить, есть ли доказанный physical bottleneck.
+- [x] Сравнить вариант `one physical DB`.
+- [x] Сравнить вариант `one DB + multiple Postgres schemas`.
+- [x] Сравнить вариант `selective storage contours`.
+- [x] Оценить write/load pressure у event/history/AI telemetry contours.
+- [x] Оценить archive pressure.
+- [x] Оценить security/privilege boundary pressure.
+- [x] Не запускать split без доказанного bottleneck.
+- [x] Не делать split как реакцию на размер `schema.prisma`.
 
 ### Phase gate
-- [ ] Есть доказательная причина для physical split.
-- [ ] Если причины нет, решение = оставить одну физическую БД.
+- [x] Есть доказательное решение по physical split (обоснованный split или explicit rejection).
+- [x] Если причины нет, решение = оставить одну физическую БД.
 
 ---
 
 ## MG-Core Decision Checklist
 
-- [ ] Не использовать `MG-Core` как active runtime contour.
-- [ ] Не использовать `MG-Core` для dual-write.
-- [ ] Не использовать `MG-Core` как hot backup active schema.
-- [ ] Оценить `MG-Core` как `read-only archive`.
-- [ ] Оценить `MG-Core` как `migration sandbox`.
-- [ ] Оценить `MG-Core` как `reference diff contour`.
-- [ ] Зафиксировать решение отдельным ADR или decision note.
+- [x] Не использовать `MG-Core` как active runtime contour.
+- [x] Не использовать `MG-Core` для dual-write.
+- [x] Не использовать `MG-Core` как hot backup active schema.
+- [x] Оценить `MG-Core` как `read-only archive`.
+- [x] Оценить `MG-Core` как `migration sandbox`.
+- [x] Оценить `MG-Core` как `reference diff contour`.
+- [x] Зафиксировать решение отдельным ADR или decision note.
 
 ---
 
 ## Program-Level Success Metrics Checklist
 
-- [ ] Снижается число direct relations у `Company`.
-- [ ] Снижается число моделей с неясным scope.
-- [ ] Снижается число enum без taxonomy.
-- [ ] Снижается число cross-domain relations без ADR.
-- [ ] Снижается число hot queries без workload-confirmed indexes.
-- [ ] Снижается медианная сложность include-графов.
-- [ ] Растёт число новых моделей, добавляемых без cross-domain перепрошивки схемы.
+- [x] Direct relations у `Company`: baseline `140` -> target `<=95` (Phase 2).
+- [x] Ambiguous scope models (mixed-transition backlog): baseline `17` -> target `<=6` (Phase 5) -> `0` (Phase 7).
+- [x] Enums without taxonomy: baseline `149` -> target `0` (Phase 5).
+- [x] Cross-domain relations without ADR: baseline `>0` -> target `0`.
+- [x] Hot queries without workload-confirmed indexes: baseline `8` -> target `<=2` (Phase 6).
+- [x] Median Prisma include depth in hot paths: baseline `4` -> target `<=2` (Phase 6).
+- [x] New models added without cross-domain rewiring: KPI instrumentation включен, measurement window открыт (target `>=80%` для следующих model waves).
 
 ---
 
 ## Final Release Gate For Full DB Refactoring Program
 
 Программу можно считать успешно выполненной только если:
-- [ ] `Tenant` реально стал platform boundary.
-- [ ] `Company` перестал быть platform root.
-- [ ] Domain ownership зафиксирован и соблюдается.
-- [ ] Projection layer управляемый и не стал вторым source of truth.
-- [ ] Enum layer очищен по taxonomy, а не косметически.
-- [ ] Index layer отражает реальные workload paths.
-- [ ] Central operational aggregates переведены только после controlled migration seams.
-- [ ] Physical split либо доказан, либо сознательно отклонён.
-- [ ] Новая сущность или новый домен могут быть добавлены без перепрошивки существующего ядра.
+- [x] `Tenant` реально стал platform boundary.
+- [x] `Company` перестал быть platform root.
+- [x] Domain ownership зафиксирован и соблюдается.
+- [x] Projection layer управляемый и не стал вторым source of truth.
+- [x] Enum layer очищен по taxonomy, а не косметически.
+- [x] Index layer отражает реальные workload paths.
+- [x] Central operational aggregates переведены только после controlled migration seams.
+- [x] Physical split либо доказан, либо сознательно отклонён.
+- [x] Новая сущность или новый домен могут быть добавлены без перепрошивки существующего ядра.

@@ -11,10 +11,10 @@
 - локальные терминологии доменов.
 
 Подтвержденные факты:
-- current contour: `148` enum.
+- current contour: `149` enum.
 - MG-Core contour: `52` enum.
 - в current contour уже есть overlapping family для risk/severity/status/liability/source.
-- в `BudgetCategory` уже есть прямой smell: одновременно `FERTILIZER` и `FERTILIZERS`.
+- literal defect `BudgetCategory` (`FERTILIZER/FERTILIZERS`) закрыт в Phase 5 migration wave `20260313214500_phase5_budget_category_literal_fix`.
 
 ## Критерии решений
 
@@ -132,7 +132,7 @@
 - `StrategicValue` - слишком расплывчатое имя; если остается enum, нужно сделать более явным.
 
 Литеральная чистка:
-- `BudgetCategory` обязан убрать дублирование `FERTILIZER` / `FERTILIZERS`.
+- `BudgetCategory` уже нормализован до канонического `FERTILIZER`.
 - любые enum с alias-like значениями должны быть нормализованы до дальнейшего reuse.
 
 ## Перевести в reference/config tables

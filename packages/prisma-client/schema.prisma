@@ -82,24 +82,6 @@ model Company {
   policySignals             PolicySignal[]
   researchPrograms          ResearchProgram[]
 
-  // High-Level Risk Models
-  riskSignals      RiskSignal[]
-  riskAssessments  RiskAssessment[]
-  riskStateHistory RiskStateHistory[]
-  decisionRecords  DecisionRecord[]
-
-  // Knowledge Graph (Sprint 2)
-  knowledgeNodes KnowledgeNode[]
-  knowledgeEdges KnowledgeEdge[]
-
-  // Vision AI Baseline (Sprint 2)
-  visionObservations VisionObservation[]
-
-  executionRecords ExecutionRecord[]
-
-  // Satellite Ingestion (Sprint 2)
-  satelliteObservations SatelliteObservation[]
-
   // Asset Registries
   machinery                 Machinery[]
   stockItems                StockItem[]
@@ -122,66 +104,6 @@ model Company {
   paymentAllocations        PaymentAllocation[]
   regulatoryArtifacts       RegulatoryArtifact[]
 
-  // Phase 4: Strategic OS
-  strategicGoals StrategicGoal[]
-
-  // Level B: Generative Engine
-  agronomicStrategies AgronomicStrategy[]
-  generationRecords   GenerationRecord[]
-
-  // Level C: Contradiction-Resilient Intelligence
-  governanceConfigs GovernanceConfig[]
-  divergenceRecords DivergenceRecord[]
-  // Level D: Adaptive Self-Learning
-  modelVersions     ModelVersion[]
-  trainingRuns      TrainingRun[]
-  driftReports      DriftReport[]
-  learningEvents    LearningEvent[]
-
-  // Level E: Regenerative Optimization
-  soilMetrics               SoilMetric[]
-  sustainabilityBaselines   SustainabilityBaseline[]
-  biodiversityMetrics       BiodiversityMetric[]
-  governanceLocks           GovernanceLock[]
-  overrideRequests          OverrideRequest[]
-  auditLogs                 AuditLog[]
-  auditNotarizations        AuditNotarizationRecord[]
-  aiAuditEntries            AiAuditEntry[]
-  expertReviews             ExpertReview[]
-  pendingActions            PendingAction[]
-  traceSummaries            TraceSummary[]
-  qualityAlerts             QualityAlert[]
-  autonomyOverrides         AutonomyOverride[]
-  agentLifecycleOverrides   AgentLifecycleOverride[]
-  agentReputations          AgentReputation[]
-  userCredibilityProfiles   UserCredibilityProfile[]
-  systemIncidents           SystemIncident[]
-  incidentRunbookExecutions IncidentRunbookExecution[]
-  runtimeGovernanceEvents   RuntimeGovernanceEvent[]
-  performanceMetrics        PerformanceMetric[]
-  agentConfigurations       AgentConfiguration[]
-  agentConfigChanges        AgentConfigChangeRequest[]
-  agentCapabilityBindings   AgentCapabilityBinding[]
-  agentToolBindings         AgentToolBinding[]
-  agentConnectorBindings    AgentConnectorBinding[]
-  evalRuns                  EvalRun[]
-
-  // Level F: Institutional Oracle Standard
-  levelFCertAudits     LevelFCertAudit[]
-  governanceCommittees GovernanceCommittee[]
-  quorumProcesses      QuorumProcess[]
-
-  // Institutional Exploration Module (IEM)
-  strategicSignals      StrategicSignal[]
-  explorationCases      ExplorationCase[]
-  warRoomSessions       WarRoomSession[]
-  warRoomDecisionEvents WarRoomDecisionEvent[]
-  impactAuditRecords    ImpactAuditRecord[]
-  rewardRecords         RewardRecord[]
-  labCapacityConfigs    LabCapacityConfig[]
-  externalSourceEntries ExternalSourceAllowlist[]
-  aiScanRunLogs         AIScanRunLog[]
-
   // Agro Domain
   agroEventDrafts                    AgroEventDraft[]
   agroEventCommitted                 AgroEventCommitted[]
@@ -193,6 +115,10 @@ model Company {
   frontOfficeMessages                FrontOfficeThreadMessage[]
   frontOfficeHandoffs                FrontOfficeHandoffRecord[]
   frontOfficeThreadParticipantStates FrontOfficeThreadParticipantState[]
+  auditLogs                          AuditLog[]
+  auditNotarizationRecords           AuditNotarizationRecord[]
+
+  strategicGoals StrategicGoal[]
 
   @@map("companies")
 }
@@ -1073,6 +999,8 @@ model Task {
   @@index([companyId])
   @@index([assigneeId])
   @@index([fieldId])
+  @@index([companyId, seasonId])
+  @@index([companyId, status, createdAt])
   @@map("tasks")
 }
 
@@ -1447,7 +1375,6 @@ model AiAuditEntry {
   id           String   @id @default(cuid())
   traceId      String
   companyId    String
-  company      Company  @relation(fields: [companyId], references: [id])
   toolNames    String[] // executed tool names
   model        String   @default("deterministic")
   intentMethod String? // regex | llm
@@ -1464,7 +1391,6 @@ model AiAuditEntry {
 model ExpertReview {
   id                    String    @id @default(cuid())
   companyId             String
-  company               Company   @relation(fields: [companyId], references: [id])
   traceId               String
   entityType            String
   entityId              String
@@ -1543,10 +1469,9 @@ model StrategyForecastRun {
 }
 
 model TraceSummary {
-  id        String  @id @default(cuid())
+  id        String @id @default(cuid())
   traceId   String
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   totalTokens      Int
   promptTokens     Int
@@ -1574,9 +1499,8 @@ enum QualityAlertType {
 }
 
 model QualityAlert {
-  id        String  @id @default(cuid())
+  id        String @id @default(cuid())
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   alertType QualityAlertType
   severity  RiskSeverity
@@ -1599,7 +1523,6 @@ enum ReputationLevel {
 model AgentReputation {
   id              String          @id @default(cuid())
   companyId       String
-  company         Company         @relation(fields: [companyId], references: [id])
   agentRole       String
   points          Int             @default(0)
   reputationLevel ReputationLevel @default(STABLE)
@@ -1614,7 +1537,6 @@ model UserCredibilityProfile {
   id                   String   @id @default(cuid())
   userId               String
   companyId            String
-  company              Company  @relation(fields: [companyId], references: [id])
   credibilityScore     Float    @default(100)
   totalFeedbacks       Int      @default(0)
   invalidatedFeedbacks Int      @default(0)
@@ -1656,7 +1578,6 @@ model SystemIncident {
   id                String                     @id @default(cuid())
   companyId         String?
   tenantId          String?
-  company           Company?                   @relation(fields: [companyId], references: [id])
   traceId           String?
   incidentType      SystemIncidentType
   status            SystemIncidentStatus       @default(OPEN)
@@ -1687,8 +1608,6 @@ model AutonomyOverride {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
   @@index([companyId, isActive, createdAt])
   @@map("rai_autonomy_overrides")
 }
@@ -1706,8 +1625,6 @@ model AgentLifecycleOverride {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
   @@index([companyId, role, isActive, createdAt])
   @@index([companyId, state, isActive, createdAt])
   @@map("rai_agent_lifecycle_overrides")
@@ -1719,7 +1636,6 @@ model IncidentRunbookExecution {
   incident   SystemIncident                 @relation(fields: [incidentId], references: [id])
   companyId  String
   tenantId   String?
-  company    Company                        @relation(fields: [companyId], references: [id])
   action     IncidentRunbookAction
   status     IncidentRunbookExecutionStatus
   comment    String?                        @db.Text
@@ -1757,7 +1673,6 @@ model RuntimeGovernanceEvent {
   id                 String                     @id @default(cuid())
   companyId          String
   tenantId           String?
-  company            Company                    @relation(fields: [companyId], references: [id])
   traceId            String?
   agentRole          String?
   toolName           String?
@@ -1783,7 +1698,6 @@ model PerformanceMetric {
   id         String                @id @default(cuid())
   companyId  String
   tenantId   String?
-  company    Company               @relation(fields: [companyId], references: [id])
   metricType PerformanceMetricType
   agentRole  String?
   toolName   String?
@@ -1813,7 +1727,6 @@ model PendingAction {
   traceId           String
   companyId         String
   tenantId          String?
-  company           Company             @relation(fields: [companyId], references: [id])
   toolName          String
   payload           Json
   riskLevel         String // READ | WRITE | CRITICAL
@@ -1846,7 +1759,6 @@ model AgentConfiguration {
   governancePolicy Json     @default("{}")
   companyId        String?
   tenantId         String?
-  company          Company? @relation(fields: [companyId], references: [id])
   capabilities     Json     @default("[]") // ["AgroToolsRegistry", "SearchWeb"] or tool names
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -1864,7 +1776,6 @@ model AgentCapabilityBinding {
   isEnabled  Boolean  @default(true)
   companyId  String?
   tenantId   String?
-  company    Company? @relation(fields: [companyId], references: [id])
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -1881,7 +1792,6 @@ model AgentToolBinding {
   isEnabled Boolean  @default(true)
   companyId String?
   tenantId  String?
-  company   Company? @relation(fields: [companyId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1900,7 +1810,6 @@ model AgentConnectorBinding {
   isEnabled     Boolean  @default(true)
   companyId     String?
   tenantId      String?
-  company       Company? @relation(fields: [companyId], references: [id])
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -1947,7 +1856,6 @@ model AgentConfigChangeRequest {
   id                 String                  @id @default(cuid())
   companyId          String
   tenantId           String?
-  company            Company                 @relation(fields: [companyId], references: [id])
   role               String
   scope              AgentConfigChangeScope
   targetVersion      String
@@ -1983,7 +1891,6 @@ model EvalRun {
   id               String                    @id @default(cuid())
   companyId        String
   tenantId         String?
-  company          Company                   @relation(fields: [companyId], references: [id])
   changeRequestId  String?
   changeRequest    AgentConfigChangeRequest? @relation("EvalRunChangeRequest", fields: [changeRequestId], references: [id])
   currentForChange AgentConfigChangeRequest? @relation("CurrentEvalRun")
@@ -2370,6 +2277,8 @@ model HarvestPlan {
 
   @@index([companyId])
   @@index([accountId])
+  @@index([companyId, seasonId])
+  @@index([companyId, status, createdAt])
   @@map("harvest_plans")
 }
 
@@ -2791,7 +2700,6 @@ model AgronomicStrategy {
   archivedAt     DateTime? // Soft-archive timestamp
   explainability Json?
   companyId      String
-  company        Company        @relation(fields: [companyId], references: [id])
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
@@ -2818,7 +2726,6 @@ model GenerationRecord {
   explainability       Json?
   limitationsDisclosed Boolean  @default(true)
   companyId            String
-  company              Company  @relation(fields: [companyId], references: [id])
   createdAt            DateTime @default(now())
 
   @@index([companyId])
@@ -2834,7 +2741,6 @@ model GenerationRecord {
 model GovernanceConfig {
   id          String   @id @default(cuid())
   companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
   versionId   String   @unique // Уникальный ID версии конфига
   weights     Json // {w1, w2, w3, w4} — веса DIS
   description String?
@@ -2852,7 +2758,6 @@ model GovernanceConfig {
 model DivergenceRecord {
   id               String           @id @default(cuid())
   companyId        String
-  company          Company          @relation(fields: [companyId], references: [id])
   draftId          String
   draftVersion     Int
   disVersion       String // FK → GovernanceConfig.versionId
@@ -2907,7 +2812,6 @@ model ExecutionRecord {
   stockTransactions StockTransaction[]
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   ledgerEntries LedgerEntry[]
 
@@ -3021,6 +2925,7 @@ model DeviationReview {
   @@index([budgetPlanId])
   @@index([companyId])
   @@index([status])
+  @@index([companyId, status, createdAt])
   @@map("cmr_deviation_reviews")
 }
 
@@ -3102,6 +3007,8 @@ model CmrRisk {
   @@index([observationId])
   @@index([responsibleId])
   @@index([insuranceId])
+  @@index([companyId, status, createdAt])
+  @@index([companyId, type, createdAt])
   @@map("cmr_risks")
 }
 
@@ -3545,6 +3452,8 @@ model EconomicEvent {
   @@index([seasonId])
   @@index([fieldId])
   @@index([employeeId])
+  @@index([companyId, type, createdAt])
+  @@index([companyId, seasonId, createdAt])
   @@map("economic_events")
 }
 
@@ -3584,6 +3493,7 @@ model LedgerEntry {
   @@index([accountCode])
   @@index([cashAccountId])
   @@index([executionId])
+  @@index([companyId, createdAt])
   @@map("ledger_entries")
 }
 
@@ -4129,7 +4039,6 @@ model KnowledgeNode {
   source KnowledgeNodeSource
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   createdAt DateTime @default(now())
 
@@ -4150,7 +4059,6 @@ model KnowledgeEdge {
   source     KnowledgeEdgeSource
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   fromNode KnowledgeNode @relation("KnowledgeEdgeFrom", fields: [fromNodeId], references: [id])
   toNode   KnowledgeNode @relation("KnowledgeEdgeTo", fields: [toNodeId], references: [id])
@@ -4203,7 +4111,6 @@ model VisionObservation {
   confidence  Float
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   createdAt DateTime @default(now())
 
@@ -4241,7 +4148,6 @@ model SatelliteObservation {
   confidence    Float
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   createdAt DateTime @default(now())
 
@@ -4277,7 +4183,6 @@ model RiskSignal {
   referenceId   String
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   createdAt DateTime @default(now())
 
@@ -4296,7 +4201,6 @@ model RiskAssessment {
   explanation Json
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   assessedAt DateTime @default(now())
 
@@ -4315,7 +4219,6 @@ model RiskStateHistory {
   reason    String?      @db.Text
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   createdAt DateTime @default(now())
 
@@ -4336,7 +4239,6 @@ model DecisionRecord {
   traceId String? // Correlation ID
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   decidedAt DateTime @default(now())
 
@@ -4554,7 +4456,6 @@ enum DecisionStatus {
 enum BudgetCategory {
   SEEDS
   FERTILIZER
-  FERTILIZERS
   PESTICIDES
   FUEL
   LABOR
@@ -4659,7 +4560,6 @@ model ModelVersion {
   artifactPath String // S3 URI
 
   companyId     String
-  company       Company      @relation(fields: [companyId], references: [id])
   trainingRunId String?
   trainingRun   TrainingRun? @relation(fields: [trainingRunId], references: [id])
 
@@ -4686,7 +4586,6 @@ model TrainingRun {
   models ModelVersion[]
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   startedAt   DateTime?
   completedAt DateTime?
@@ -4711,7 +4610,6 @@ model DriftReport {
   payload Json
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   createdAt DateTime @default(now())
 
@@ -4731,7 +4629,6 @@ model LearningEvent {
   createdAt   DateTime  @default(now())
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   @@index([companyId])
   @@index([featureId])
@@ -4785,9 +4682,8 @@ model SoilMetric {
   verificationStatus VerificationStatus @default(PENDING)
   verifiedAt         DateTime?
 
-  field   Field   @relation(fields: [fieldId], references: [id], onDelete: Cascade)
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  author  User    @relation(fields: [authorId], references: [id])
+  field  Field @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  author User  @relation(fields: [authorId], references: [id])
 
   @@index([companyId, fieldId, timestamp])
   @@map("rai_soil_metrics")
@@ -4808,8 +4704,7 @@ model SustainabilityBaseline {
   genesisHash   String // Link to Genesis Ledger
   trustSnapshot Json // Snapshot of trust context at creation
 
-  field   Field   @relation(fields: [fieldId], references: [id], onDelete: Cascade)
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  field Field @relation(fields: [fieldId], references: [id], onDelete: Cascade)
 
   @@unique([companyId, fieldId, version])
   @@map("rai_sustainability_baselines")
@@ -4824,8 +4719,7 @@ model BiodiversityMetric {
   shannonIndex Float
   monoPenalty  Float
 
-  season  Season  @relation(fields: [seasonId], references: [id], onDelete: Cascade)
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  season Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 
   @@index([companyId, seasonId])
   @@map("rai_biodiversity_metrics")
@@ -4841,8 +4735,7 @@ model GovernanceLock {
 
   recoverySeasons Int @default(0)
 
-  field   Field   @relation(fields: [fieldId], references: [id], onDelete: Cascade)
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  field Field @relation(fields: [fieldId], references: [id], onDelete: Cascade)
 
   @@index([companyId, fieldId])
   @@map("rai_governance_locks")
@@ -4865,10 +4758,9 @@ model OverrideRequest {
   // Financial Link
   transactionId String? // ID of the economic event / ledger entry
 
-  field    Field   @relation(fields: [fieldId], references: [id], onDelete: Cascade)
-  company  Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  author   User    @relation(fields: [authorId], references: [id])
-  approver User?   @relation("OverrideApprover", fields: [approverId], references: [id])
+  field    Field @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  author   User  @relation(fields: [authorId], references: [id])
+  approver User? @relation("OverrideApprover", fields: [approverId], references: [id])
 
   @@index([companyId, fieldId, createdAt])
   @@map("rai_override_requests")
@@ -4935,7 +4827,6 @@ model LevelFCertAudit {
   status           CertAuditStatus @default(SIGNATURE_INTENT)
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@index([companyId, snapshotHash])
   @@index([timestamp])
@@ -4952,7 +4843,6 @@ model GovernanceCommittee {
   quorumThreshold Float  @default(0.66)
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   quorumProcesses QuorumProcess[]
 
@@ -4976,7 +4866,6 @@ model QuorumProcess {
   decisionRecordId String?
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -5022,7 +4911,6 @@ model StrategicSignal {
   id String @id @default(cuid())
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   initiatorId String?
   initiator   User?   @relation("StrategicSignalInitiator", fields: [initiatorId], references: [id])
@@ -5052,7 +4940,6 @@ model ExplorationCase {
   id String @id @default(cuid())
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   signalId String?
   signal   StrategicSignal? @relation(fields: [signalId], references: [id])
@@ -5097,7 +4984,6 @@ model WarRoomSession {
   id String @id @default(cuid())
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   explorationCaseId String
   explorationCase   ExplorationCase @relation(fields: [explorationCaseId], references: [id])
@@ -5126,7 +5012,6 @@ model WarRoomDecisionEvent {
   id String @id @default(cuid())
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   warRoomSessionId String
   warRoomSession   WarRoomSession @relation(fields: [warRoomSessionId], references: [id])
@@ -5149,7 +5034,6 @@ model ImpactAuditRecord {
   id String @id @default(cuid())
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   explorationCaseId String
   explorationCase   ExplorationCase @relation(fields: [explorationCaseId], references: [id])
@@ -5176,7 +5060,6 @@ model RewardRecord {
   id String @id @default(cuid())
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   explorationCaseId String
   explorationCase   ExplorationCase @relation(fields: [explorationCaseId], references: [id])
@@ -5209,7 +5092,6 @@ model LabCapacityConfig {
   id String @id @default(cuid())
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   maxActiveSEU     Int @default(5)
   maxActiveCDU     Int @default(10)
@@ -5226,7 +5108,6 @@ model ExternalSourceAllowlist {
   id String @id @default(cuid())
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   sourceName      String
   baseUrl         String?
@@ -5248,7 +5129,6 @@ model AIScanRunLog {
   id String @id @default(cuid())
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
 
   sourceAllowlistId String?
   sourceAllowlist   ExternalSourceAllowlist? @relation(fields: [sourceAllowlistId], references: [id])
@@ -5569,6 +5449,7 @@ model Party {
 
   @@unique([companyId, id])
   @@index([companyId, legalName])
+  @@index([companyId, status, createdAt])
   @@map("commerce_parties")
 }
 

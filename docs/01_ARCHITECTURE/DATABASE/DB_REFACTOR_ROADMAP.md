@@ -19,7 +19,13 @@
 
 - `Phase 0`: выполнен (governance artifacts + CI gates + manifest coverage).
 - `Phase 1`: выполнен (additive `Tenant` boundary + dual-key runtime/auth + shadow mode).
-- Следующий активный слой: `Phase 2` (`Company` de-rooting).
+- `Phase 2`: выполнен (фактическое relation reduction `Company` закрыто: `140 -> 87`, target `<=95` достигнут).
+- `Phase 3`: выполнен (schema fragmentation toolchain + fragments + CI gate).
+- `Phase 4`: policy/register layer выполнен (projection governance packet), runtime projection jobs остаются отдельной delivery-wave.
+- `Phase 5`: taxonomy/register layer выполнен (`ENUM_DECISION_REGISTER` + overlap matrix + literal defect fix `FERTILIZER/FERTILIZERS`), крупные convert-to-table миграции отложены.
+- `Phase 6`: wave 1 выполнен (workload-confirmed composite indexes + evidence register + gates).
+- `Phase 7`: planning/governance layer выполнен (operational wave policy + hard guard), actual aggregate migrations отложены.
+- `Phase 8`: decision выполнен (single physical DB retained; split only on proven bottleneck).
 
 ## Архитектурные запреты
 

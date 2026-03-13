@@ -26,14 +26,14 @@
 | `Account` | `crm_commerce` | `business` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
 | `AccountBalance` | `finance` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
 | `AdaptiveRule` | `agri_planning` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
-| `AgentCapabilityBinding` | `ai_runtime` | `mixed-transition` | `tenantId + agentConfigId` | `temporary optional` | `phase_1` | `yes` | `yes` | `phase_1` | `control-plane` |
-| `AgentConfigChangeRequest` | `ai_runtime` | `mixed-transition` | `tenantId + id` | `temporary optional` | `phase_1` | `no` | `no` | `phase_1` | `control-plane` |
-| `AgentConfiguration` | `ai_runtime` | `mixed-transition` | `tenantId + role` | `temporary optional` | `phase_1` | `yes` | `yes` | `phase_1` | `companyId = NULL` |
-| `AgentConnectorBinding` | `ai_runtime` | `mixed-transition` | `tenantId + agentConfigId` | `temporary optional` | `phase_1` | `yes` | `yes` | `phase_1` | `control-plane` |
+| `AgentCapabilityBinding` | `ai_runtime` | `tenant` | `tenantId + agentConfigId` | `temporary optional` | `phase_1` | `yes` | `yes` | `phase_1` | `control-plane` |
+| `AgentConfigChangeRequest` | `ai_runtime` | `tenant` | `tenantId + id` | `temporary optional` | `phase_1` | `no` | `no` | `phase_1` | `control-plane` |
+| `AgentConfiguration` | `ai_runtime` | `tenant` | `tenantId + role` | `temporary optional` | `phase_1` | `yes` | `yes` | `phase_1` | `companyId = NULL` |
+| `AgentConnectorBinding` | `ai_runtime` | `tenant` | `tenantId + agentConfigId` | `temporary optional` | `phase_1` | `yes` | `yes` | `phase_1` | `control-plane` |
 | `AgentLifecycleOverride` | `ai_runtime` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
 | `AgentReputation` | `ai_runtime` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
 | `AgentScoreCard` | `ai_runtime` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
-| `AgentToolBinding` | `ai_runtime` | `mixed-transition` | `tenantId + agentConfigId` | `temporary optional` | `phase_1` | `yes` | `yes` | `phase_1` | `control-plane` |
+| `AgentToolBinding` | `ai_runtime` | `tenant` | `tenantId + agentConfigId` | `temporary optional` | `phase_1` | `yes` | `yes` | `phase_1` | `control-plane` |
 | `AgroEscalation` | `agri_execution` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
 | `AgroEventCommitted` | `agri_execution` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
 | `AgroEventDraft` | `agri_execution` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
@@ -80,7 +80,7 @@
 | `EconomicEvent` | `finance` | `tenant` | `id` | `required now` | `deferred` | `no` | `no` | `phase_3_plus` | `high-write finance core` |
 | `EmployeeProfile` | `platform_core` | `system` | `id` | `optional` | `forbidden` | `yes` | `no` | `phase_2` |  |
 | `Engram` | `ai_runtime/knowledge_memory` | `preset` | `id` | `optional during transition` | `deferred until explicit scope model` | `yes` | `yes` | `phase_2` | `explicit knowledge scope нужен раньше structural move` |
-| `EvalRun` | `ai_runtime` | `mixed-transition` | `tenantId + id` | `temporary optional` | `phase_1` | `no` | `no` | `phase_1` | `control-plane eval` |
+| `EvalRun` | `ai_runtime` | `tenant` | `tenantId + id` | `temporary optional` | `phase_1` | `no` | `no` | `phase_1` | `control-plane eval` |
 | `EventConsumption` | `integration_reliability` | `mixed-transition` | `consumer + eventId` | `temporary optional` | `phase_1` | `yes if system-consumer` | `no` | `phase_1` | `current runtime classification conflict must be fixed first` |
 | `Evidence` | `agri_planning` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
 | `ExecutionOrchestrationLog` | `agri_execution` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
@@ -117,7 +117,7 @@
 | `HumanAssessmentSnapshot` | `platform_core` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` | `needs explicit owner review` |
 | `HybridPhenologyModel` | `agri_planning` | `preset` | `id` | `optional during transition` | `deferred` | `yes` | `yes` | `phase_2` | `preset/reference semantics` |
 | `ImpactAuditRecord` | `quarantine_sandbox/research_rd` | `preset` | `id` | `optional` | `deferred` | `yes` | `yes` | `phase_2` | `explicit preset/global scope required` |
-| `IncidentRunbookExecution` | `ai_runtime` | `mixed-transition` | `tenantId + id` | `temporary derived` | `phase_1` | `no` | `no` | `phase_1` | `control-plane child` |
+| `IncidentRunbookExecution` | `ai_runtime` | `tenant` | `tenantId + id` | `temporary derived` | `phase_1` | `no` | `no` | `phase_1` | `control-plane child` |
 | `InputCatalog` | `agri_planning` | `preset` | `id` | `optional during transition` | `deferred` | `yes` | `yes` | `phase_2` | `catalog semantics` |
 | `InsuranceCoverage` | `agri_execution` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
 | `Interaction` | `crm_commerce` | `business` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
@@ -142,9 +142,9 @@
 | `MapStage` | `agri_planning` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
 | `Measurement` | `quarantine_sandbox/research_rd` | `preset` | `id` | `optional` | `deferred` | `yes` | `yes` | `phase_2` | `explicit preset/global scope required` |
 | `MemoryEntry` | `ai_runtime/knowledge_memory` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
-| `MemoryEpisode` | `ai_runtime/knowledge_memory` | `mixed-transition` | `tenantId + id` | `temporary optional` | `phase_1` | `no` | `no` | `phase_1` | `memory control-plane` |
-| `MemoryInteraction` | `ai_runtime/knowledge_memory` | `mixed-transition` | `tenantId + id` | `temporary optional` | `phase_1` | `no` | `no` | `phase_1` | `memory control-plane` |
-| `MemoryProfile` | `ai_runtime/knowledge_memory` | `mixed-transition` | `tenantId + id` | `temporary optional` | `phase_1` | `no` | `no` | `phase_1` | `memory control-plane` |
+| `MemoryEpisode` | `ai_runtime/knowledge_memory` | `tenant` | `tenantId + id` | `temporary optional` | `phase_1` | `no` | `no` | `phase_1` | `memory control-plane` |
+| `MemoryInteraction` | `ai_runtime/knowledge_memory` | `tenant` | `tenantId + id` | `temporary optional` | `phase_1` | `no` | `no` | `phase_1` | `memory control-plane` |
+| `MemoryProfile` | `ai_runtime/knowledge_memory` | `tenant` | `tenantId + id` | `temporary optional` | `phase_1` | `no` | `no` | `phase_1` | `memory control-plane` |
 | `ModelVersion` | `ai_runtime` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
 | `Objective` | `platform_core` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` | `needs explicit owner review` |
 | `Obligation` | `crm_commerce` | `business` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
@@ -156,9 +156,9 @@
 | `Payment` | `finance` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
 | `PaymentAllocation` | `finance` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
 | `PaymentSchedule` | `finance` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
-| `PendingAction` | `ai_runtime` | `mixed-transition` | `tenantId + id` | `temporary optional` | `phase_1` | `no` | `no` | `phase_1` | `control-plane` |
+| `PendingAction` | `ai_runtime` | `tenant` | `tenantId + id` | `temporary optional` | `phase_1` | `no` | `no` | `phase_1` | `control-plane` |
 | `PerformanceContract` | `agri_planning` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
-| `PerformanceMetric` | `ai_runtime` | `mixed-transition` | `tenantId + id` | `temporary optional` | `phase_1` | `no` | `no` | `phase_1` | `control-plane telemetry` |
+| `PerformanceMetric` | `ai_runtime` | `tenant` | `tenantId + id` | `temporary optional` | `phase_1` | `no` | `no` | `phase_1` | `control-plane telemetry` |
 | `PersonalCompetencyState` | `platform_core` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` | `needs explicit owner review` |
 | `PolicySignal` | `org_legal` | `business` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
 | `Protocol` | `quarantine_sandbox/research_rd` | `preset` | `id` | `optional` | `deferred` | `yes` | `yes` | `phase_2` | `explicit preset/global scope required` |
@@ -180,7 +180,7 @@
 | `RiskSignal` | `ai_runtime/risk_governance` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
 | `RiskStateHistory` | `ai_runtime/risk_governance` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
 | `RoleDefinition` | `platform_core` | `system` | `id` | `optional` | `forbidden` | `yes` | `no` | `phase_2` |  |
-| `RuntimeGovernanceEvent` | `ai_runtime` | `mixed-transition` | `tenantId + id` | `temporary optional` | `phase_1` | `no` | `no` | `phase_1` | `event/control-plane` |
+| `RuntimeGovernanceEvent` | `ai_runtime` | `tenant` | `tenantId + id` | `temporary optional` | `phase_1` | `no` | `no` | `phase_1` | `event/control-plane` |
 | `Sanction` | `org_legal` | `business` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
 | `SatelliteObservation` | `integration_reliability` | `system` | `id` | `optional` | `forbidden` | `yes` | `no` | `phase_2` |  |
 | `ScoreCard` | `crm_commerce` | `business` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |

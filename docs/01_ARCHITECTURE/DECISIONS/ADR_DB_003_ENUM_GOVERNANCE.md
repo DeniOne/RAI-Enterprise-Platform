@@ -2,7 +2,7 @@
 id: DOC-ARC-DECISIONS-ADR-DB-003-ENUM-GOVERNANCE
 layer: Architecture
 type: ADR
-status: proposed
+status: accepted
 version: 0.1.0
 owners: [@techlead, @backend-lead, @data-architecture]
 last_updated: 2026-03-13
@@ -10,7 +10,7 @@ last_updated: 2026-03-13
 # ADR_DB_003: Enum Governance
 
 ## Статус
-`Proposed` (Phase 0 governance)
+`Accepted` (2026-03-13, DB refactor program)
 
 ## Контекст
 

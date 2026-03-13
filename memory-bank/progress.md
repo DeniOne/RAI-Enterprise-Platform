@@ -2,6 +2,47 @@
 
 ## 2026-03-13
 
+111. **DB Refactor Program — Migration Deploy + EXPLAIN Evidence Run** [DONE]:
+    *   Выполнен `prisma migrate deploy` на БД из `.env`; обнаруженный migration-defect в `20260313214500_phase5_budget_category_literal_fix` (таблица `budget_items`) исправлен на `consulting_budget_items`.
+    *   Выполнено recovery без разрушения history: `prisma migrate resolve --rolled-back 20260313214500_phase5_budget_category_literal_fix` + повторный `migrate deploy` (успешно).
+    *   Добавлен автоматизированный evidence-script `scripts/db/explain-hot-paths.cjs` и команда `pnpm db:explain:hot`.
+    *   Сформирован отчет `docs/01_ARCHITECTURE/DATABASE/DB_EXPLAIN_ANALYZE_2026-03-13.md` с `EXPLAIN ANALYZE` для hot-path `Season/Task/HarvestPlan/Party`.
+    *   Синхронизированы зависимые артефакты: `DB_PHASE_6_STATUS.md`, `DB_INDEX_AUDIT.md`, memory-bank.
+
+112. **DB Refactor Program — Index Observation Window + Growth KPI Automation** [DONE]:
+    *   Запущен `14-day` observation window для removal-candidate индексов, сформирован snapshot `docs/01_ARCHITECTURE/DATABASE/DB_INDEX_OBSERVATION_WINDOW_2026-03-13.md` на основе `pg_stat_user_indexes`/`pg_stat_user_tables`.
+    *   `DB_INDEX_EVIDENCE_REGISTER.md` обновлен фактическими candidate-индексами и стартовыми usage-метриками (`idx_scan` snapshot).
+    *   Внедрен growth KPI контур: `scripts/db/init-model-growth-baseline.cjs`, `scripts/db/measure-model-growth-kpi.cjs`, baseline `DB_MODEL_GROWTH_BASELINE.json`, отчет `DB_MODEL_GROWTH_KPI.md`.
+    *   Добавлены команды: `pnpm db:index:observe`, `pnpm db:kpi:growth:baseline`, `pnpm db:kpi:growth`, `pnpm gate:db:growth-kpi:enforce`.
+    *   CI workflow обновлен шагом `DB growth KPI gate (hard fail)`; локальные прогоны новых команд и gate — PASS.
+
+110. **DB Refactor Program — Continuous Phase 2-8 Execution (Wave 2)** [DONE]:
+    *   Phase 2 de-root wave-1 выполнен в `packages/prisma-client/schema.prisma`: удалены direct `Company` relations из control-plane/runtime/memory набора (`SystemIncident`, `IncidentRunbookExecution`, `RuntimeGovernanceEvent`, `PerformanceMetric`, `PendingAction`, `AgentConfiguration`, `AgentCapabilityBinding`, `AgentToolBinding`, `AgentConnectorBinding`, `AgentConfigChangeRequest`, `EvalRun`, `KnowledgeNode`, `KnowledgeEdge`) при сохранении совместимого `companyId` scalar path.
+    *   Метрика `Company` direct relations снижена `140 -> 87`; выпущен staged deprecation и compatibility plan `docs/01_ARCHITECTURE/DATABASE/DB_COMPANY_DEROOT_DEPRECATION_PLAN.md`.
+    *   Governance residual закрыт: `ADR_DB_001..005` переведены в `accepted`, добавлен owner-review guard `.github/CODEOWNERS`, `READ_MODEL_POLICY.md` и `DB_SUCCESS_METRICS.md` помечены как approved.
+    *   Execution artifacts дополнены: `DB_INCLUDE_DEPTH_METRICS.md` (+ скрипт `scripts/measure-prisma-include-depth.cjs`), `DB_ENUM_OVERLAP_MATRIX.md`, `DB_OPERATIONAL_AGGREGATE_MIGRATION_CONTRACTS.md`, `DB_MG_CORE_DECISION_NOTE.md`.
+    *   Чеклист/phase-status/memory-bank синхронизированы; `DB_REFACTOR_CHECKLIST` закрыт полностью, KPI window по growth-safety переведен в active measurement mode.
+
+109. **DB Refactor Program — Autonomous Phase 2-8 Execution Wave** [DONE]:
+    *   Phase 2: зафиксированы baseline/target и core-map для `Company de-rooting`; фактический relation reduction остается residual и вынесен в `DB_PHASE_2_STATUS.md`.
+    *   Phase 3: добавлен schema fragmentation toolchain (`split/compose/check`), созданы `00..10` fragment-файлы в `packages/prisma-client/schema-fragments`, добавлен CI gate `gate:db:phase3:enforce` и workflow wiring.
+    *   Phase 4: создан `DB_PROJECTION_REGISTER.md`, READ_MODEL policy дополнен `staleness_tolerance` и `deletion_reconciliation_semantics`, добавлен gate `gate:db:projections:enforce`.
+    *   Phase 5: `ENUM_DECISION_REGISTER.md` синхронизирован на полный инвентарь `149` enum, добавлен gate `gate:db:enum-register:enforce`.
+    *   Phase 6: выполнен workload index wave `20260313113000_phase6_workload_index_tuning` + schema updates + `DB_INDEX_EVIDENCE_REGISTER.md`, добавлен gate `gate:db:index-evidence:enforce`.
+    *   Phase 7: зафиксирован operational migration policy `DB_OPERATIONAL_AGGREGATE_MIGRATION_WAVES.md` с hard guard «одна core family за волну».
+    *   Phase 8: выпущен decision record `DB_PHYSICAL_SPLIT_DECISION.md` (single physical DB retained, split only on proven bottleneck).
+    *   Сформирован status-packet `DB_PHASE_2_STATUS.md ... DB_PHASE_8_STATUS.md`; checklist/roadmap/metrics/memory-bank синхронизированы.
+
+108. **DB Refactor Program — Checklist Hardening to Execution Packet** [DONE]:
+    *   `DB_REFACTOR_CHECKLIST` усилен по governance: добавлена каноническая precedence-цепочка при конфликте (`manifest/policy > phase status > checklist > roadmap`) и merge-правило синхронизации lower-priority документов.
+    *   В `Phase 2` зафиксирован измеримый baseline/target для `Company` de-rooting (`direct relations: 140 -> <=95`) и явный допустимый business/legal core.
+    *   `Phase 3` расширен rule-set для shared primitives (`ids/timestamps`, technical enums, audit primitives, relation conventions), чтобы `00_base.prisma` не стал mini-god-fragment.
+    *   `Phase 4` metadata contract дополнен `staleness tolerance` и `deletion/reconciliation semantics`.
+    *   `Phase 5` добавлен обязательный deliverable `ENUM_DECISION_REGISTER.md`; реестр создан в `docs/01_ARCHITECTURE/DATABASE/ENUM_DECISION_REGISTER.md`.
+    *   `Phase 6` формализован через обязательный index evidence contract и обязательное production observation window перед удалением индексов.
+    *   `Phase 7` добавлен жесткий wave-limit: `Season/HarvestPlan/TechMap/Task` нельзя мигрировать параллельно более одной aggregate family за волну.
+    *   Program-level metrics переведены в числовой вид в checklist и `DB_SUCCESS_METRICS.md` (baseline/target для company relations, scope ambiguity backlog, enum taxonomy, hot query index debt, include depth, growth safety KPI).
+
 107. **DB Refactor Program — Phase 1 Additive Tenancy Closure** [DONE]:
     *   Закрыт Phase 1 execution slice: в `packages/prisma-client/schema.prisma` добавлены `Tenant` и `TenantCompanyBinding`, а в control-plane/runtime модели добавлены additive `tenantId` поля без destructive изменений core business aggregates.
     *   Добавлен migration wave `packages/prisma-client/migrations/20260313103000_phase1_additive_tenant_boundary/migration.sql` (new tenant tables + additive tenant columns/indexes для Phase 1 model set).
@@ -933,3 +974,4 @@
 - [x] Создан файл полного системного аудита `RAI_EP_SYSTEM_AUDIT.md`.
 - [x] Все локальные изменения закоммичены и отправлены в ремоут.
 2026-03-12: Интеграция Nvidia Qwen LLM адаптера для Expert-tier агентов в режиме full_pro.
+2026-03-13: Закоммитил и пушнул изменения по базе данных, ёпта, всё на месте.

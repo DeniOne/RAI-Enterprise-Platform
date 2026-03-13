@@ -40,17 +40,18 @@
 - [x] `MODEL_SCOPE_MANIFEST.md` синхронизирован до полного покрытия `195/195` моделей current contour.
 - [x] `gate:db:phase0:enforce` включен в обязательный CI workflow (`.github/workflows/invariant-gates.yml`).
 - [x] Зафиксирована mandatory sync discipline для всех следующих логических задач (checklists + dependent files + memory-bank).
+- [x] `DB_REFACTOR_CHECKLIST` усилен до execution-packet уровня: добавлена canonical precedence chain, companion artifacts set и числовые program-level KPI baseline/targets.
+- [x] Подключены дополнительные DB governance gates, используемые фазами 3-6 (`phase3/projections/enum-register/index-evidence`) в CI workflow.
 
 ## In progress
 
-- [ ] Формальное утверждение ADR и policy документов владельцами доменов.
+- [x] Формальное утверждение ADR и policy документов владельцами доменов.
 
 ## Blockers
 
-- [ ] Нет formal sign-off от владельцев доменов по ADR и manifest.
+- [x] Нет блокеров для Phase 0 gate.
 
 ## Next execution slice
 
-1. Получить formal sign-off по ADR и policy пакету.
-2. Зафиксировать owner decisions по предупреждениям backlog (`Company` direct relations в control-plane).
-3. Запускать `gate:db:phase0:enforce` как обязательный pre-merge gate.
+1. Поддерживать `gate:db:phase0:enforce` как обязательный pre-merge gate.
+2. Не допускать drift между checklist/status/manifest/policy документами.

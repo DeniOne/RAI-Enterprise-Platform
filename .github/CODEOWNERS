@@ -1,0 +1,11 @@
+# DB refactor governance owners
+
+# Prisma monolith and composition
+/packages/prisma-client/schema.prisma @techlead @backend-lead @data-architecture
+/packages/prisma-client/schema.composed.prisma @techlead @backend-lead @data-architecture
+/packages/prisma-client/schema-fragments/* @techlead @backend-lead @data-architecture
+/packages/prisma-client/migrations/* @techlead @backend-lead @data-architecture
+
+# Database architecture packet
+/docs/01_ARCHITECTURE/DATABASE/* @techlead @backend-lead @data-architecture
+/docs/01_ARCHITECTURE/DECISIONS/ADR_DB_* @techlead @backend-lead @data-architecture

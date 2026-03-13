@@ -37,6 +37,21 @@ jobs:
       - name: DB phase 0 gate (hard fail)
         run: pnpm gate:db:phase0:enforce | tee artifacts/db-phase0-gate.log
 
+      - name: DB phase 3 fragmentation gate (hard fail)
+        run: pnpm gate:db:phase3:enforce | tee artifacts/db-phase3-gate.log
+
+      - name: DB projection register gate (hard fail)
+        run: pnpm gate:db:projections:enforce | tee artifacts/db-projection-gate.log
+
+      - name: DB enum register gate (hard fail)
+        run: pnpm gate:db:enum-register:enforce | tee artifacts/db-enum-register-gate.log
+
+      - name: DB index evidence gate (hard fail)
+        run: pnpm gate:db:index-evidence:enforce | tee artifacts/db-index-evidence-gate.log
+
+      - name: DB growth KPI gate (hard fail)
+        run: pnpm gate:db:growth-kpi:enforce | tee artifacts/db-growth-kpi-gate.log
+
       - name: Tenant context lint (warn-mode report)
         run: pnpm lint:tenant-context | tee artifacts/tenant-context-lint.log
 

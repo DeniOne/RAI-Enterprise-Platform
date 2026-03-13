@@ -19,8 +19,12 @@
   - `apps/api/src/shared/outbox/outbox.relay.ts`
 
 Подтвержденные числа:
-- current contour: `368` индексов, `59` compound unique, `1` compound primary key;
+- current contour: `379` индексов, `59` compound unique, `1` compound primary key;
 - MG-Core contour: `66` индексов, `14` compound unique.
+
+Post-migration query evidence:
+- выполнен runtime `EXPLAIN ANALYZE` пакет: `docs/01_ARCHITECTURE/DATABASE/DB_EXPLAIN_ANALYZE_2026-03-13.md`;
+- проверены hot-path формы для `Season`, `Task`, `HarvestPlan`, `Party` после Phase 6 index wave.
 
 Жесткий вывод:
 - active schema не страдает от полного отсутствия индексов;

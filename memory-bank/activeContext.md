@@ -1,6 +1,15 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-13)
+- [x] Продолжен непрерывный execution Phase 2-8: в `schema.prisma` выполнены de-root волны и достигнута метрика `Company` direct relations `140 -> 87` при сохранении совместимого `companyId` scalar path; `DB_REFACTOR_CHECKLIST` закрыт без открытых checkbox residual.
+- [x] Выполнен operational follow-up: миграции применены на рабочей БД из `.env` (включая enum-fix wave после rollback+reapply), собран `EXPLAIN ANALYZE` пакет `DB_EXPLAIN_ANALYZE_2026-03-13.md` по `Season/Task/HarvestPlan/Party`.
+- [x] Запущен operational контур по оставшимся пунктам: стартован `14-day` index observation window (`DB_INDEX_OBSERVATION_WINDOW_2026-03-13.md`) и включен автоматический growth KPI контур (`DB_MODEL_GROWTH_BASELINE.json` + `DB_MODEL_GROWTH_KPI.md` + `gate:db:growth-kpi:enforce`).
+- [x] Закрыт governance residual: DB ADR 001-005 переведены в `accepted`, добавлен owner-review guard `.github/CODEOWNERS`, выпущен `DB_COMPANY_DEROOT_DEPRECATION_PLAN.md`, обновлены phase status файлы и checklist.
+- [x] Закрыт execution-packet хвост: добавлены `DB_INCLUDE_DEPTH_METRICS.md`, `DB_ENUM_OVERLAP_MATRIX.md`, `DB_OPERATIONAL_AGGREGATE_MIGRATION_CONTRACTS.md`, `DB_MG_CORE_DECISION_NOTE.md`; синхронизированы `DB_SUCCESS_METRICS.md`, `READ_MODEL_POLICY.md`, `DB_INDEX_EVIDENCE_REGISTER.md`.
+- [x] Выполнен автономный execution wave по Phase 2-8: добавлены fragmentation toolchain + CI gates (`phase3`), projection governance register + gate (`phase4`), full enum decision register (`149`) + gate (`phase5`), workload-driven index wave migration + evidence register + gate (`phase6`), operational aggregate wave-policy (`phase7`) и physical split decision record (`phase8`).
+- [x] Добавлен phase status packet `DB_PHASE_2_STATUS.md ... DB_PHASE_8_STATUS.md`; `DB_REFACTOR_CHECKLIST`, roadmap, metrics и memory-bank синхронизированы.
+- [x] `DB_REFACTOR_CHECKLIST` усилен до execution-packet уровня: добавлена canonical precedence (`manifest/policy > phase status > checklist > roadmap`), числовые baselines/targets, strict rules для shared primitives/projections/index evidence и wave-limit для migration central aggregates.
+- [x] Добит companion-doc слой для governance: добавлены `ENUM_DECISION_REGISTER.md` и compatibility alias `TRANSITION_RUNTIME_POLICY.md`; `DB_SUCCESS_METRICS.md` переведен на числовые baseline/target KPI.
 - [x] Логически закрыт `DB Refactor Phase 1`: добавлены `Tenant` + `TenantCompanyBinding`, выпущен migration wave `20260313103000_phase1_additive_tenant_boundary`, и в Phase 1 control-plane/runtime set добавлен additive `tenantId`.
 - [x] Runtime/auth переведены на dual-key transition contract: `TenantScope` и JWT теперь несут `tenantId`, `companyId`, `isSystem`; `PrismaService` включает shadow-write/shadow-read, drift logging, drift metrics и feature-flagged fallback.
 - [x] Запущен и инженерно закрыт `DB Refactor Phase 0`: создан DB-ADR пакет, включены governance gates, `MODEL_SCOPE_MANIFEST` синхронизирован на `195/195` моделей, `gate:db:phase0:enforce` проходит.

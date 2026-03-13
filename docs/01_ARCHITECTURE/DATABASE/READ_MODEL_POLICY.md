@@ -1,5 +1,9 @@
 # READ_MODEL_POLICY
 
+## Status
+
+`Approved` (`2026-03-13`, DB refactor program).
+
 ## Purpose
 
 Read-model layer нужен для ускорения устойчивых чтений.
@@ -27,7 +31,9 @@ Read model не может:
 - `source_of_truth`
 - `refresh_sla`
 - `refresh_mechanism`
+- `staleness_tolerance`
 - `deterministic_rebuild`
+- `deletion_reconciliation_semantics`
 - `retention_policy`
 - `consumers`
 - `rollback_strategy`
