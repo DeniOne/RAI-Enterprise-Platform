@@ -2,6 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { IntegrityStatus, ObservationIntent, ObservationType } from "@rai/prisma-client";
 import { AuditService } from "../../shared/audit/audit.service";
 import { FrontOfficeCommunicationRepository } from "../../shared/front-office/front-office-communication.repository";
+import { FrontOfficeMetricsService } from "../../shared/front-office/front-office-metrics.service";
 import { FrontOfficeOutboundService } from "../../shared/front-office/front-office-outbound.service";
 import { FrontOfficeThreadingService } from "../../shared/front-office/front-office-threading.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
@@ -38,6 +39,16 @@ describe("FrontOfficeDraftService", () => {
     listThreads: jest.fn(),
     listMessages: jest.fn(),
     findAssignment: jest.fn(),
+  };
+  const metricsMock = {
+    recordRoutingOutcome: jest.fn(),
+    recordReplyStatus: jest.fn(),
+    recordClarificationRequest: jest.fn(),
+    recordHandoffCreated: jest.fn(),
+    recordHandoffResolved: jest.fn(),
+    recordHandoffClosed: jest.fn(),
+    snapshot: jest.fn(),
+    prometheus: jest.fn(),
   };
   const handoffOrchestratorMock = {
     routeDraftHandoff: jest.fn(),
@@ -79,6 +90,7 @@ describe("FrontOfficeDraftService", () => {
         { provide: DeviationService, useValue: deviationMock },
         { provide: FrontOfficeAgent, useValue: agentMock },
         { provide: FrontOfficeCommunicationRepository, useValue: communicationRepositoryMock },
+        { provide: FrontOfficeMetricsService, useValue: metricsMock },
         FrontOfficeThreadingService,
         { provide: FrontOfficeReplyPolicyService, useValue: replyPolicyMock },
         { provide: FrontOfficeOutboundService, useValue: outboundServiceMock },

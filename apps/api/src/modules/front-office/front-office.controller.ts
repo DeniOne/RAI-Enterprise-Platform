@@ -5,8 +5,10 @@ import {
   Get,
   Param,
   Post,
+  Res,
   UseInterceptors,
 } from "@nestjs/common";
+import { Response } from "express";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
 import { User, UserRole } from "@rai/prisma-client";
 import { FrontOfficeService } from "./front-office.service";
@@ -227,6 +229,25 @@ export class FrontOfficeController {
   @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
   async getQueues(@CurrentUser() user: AuthenticatedUser) {
     return this.frontOfficeService.getQueues(this.getCompanyId(user));
+  }
+
+  @Get("metrics")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
+  async getMetrics(@CurrentUser() user: AuthenticatedUser) {
+    return this.frontOfficeService.getMetrics(this.getCompanyId(user));
+  }
+
+  @Get("metrics/prometheus")
+  @Authorized(...FRONT_OFFICE_INTERNAL_ROLES)
+  async getMetricsPrometheus(
+    @CurrentUser() user: AuthenticatedUser,
+    @Res() res: Response,
+  ) {
+    const payload = await this.frontOfficeService.getMetricsPrometheus(
+      this.getCompanyId(user),
+    );
+    res.setHeader("Content-Type", "text/plain; version=0.0.4");
+    res.send(payload);
   }
 
   @Get("manager/bootstrap")

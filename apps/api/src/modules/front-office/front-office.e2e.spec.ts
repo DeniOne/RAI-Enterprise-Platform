@@ -1,6 +1,7 @@
 import { TaskStatus } from "@rai/prisma-client";
 import { AuditService } from "../../shared/audit/audit.service";
 import { FrontOfficeCommunicationRepository } from "../../shared/front-office/front-office-communication.repository";
+import { FrontOfficeMetricsService } from "../../shared/front-office/front-office-metrics.service";
 import { FrontOfficeThreadingService } from "../../shared/front-office/front-office-threading.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { DeviationService } from "../cmr/deviation.service";
@@ -392,10 +393,12 @@ function createRuntime() {
     sendFrontOfficeReply: jest.fn(async () => ({ success: true, messageId: "m-1" })),
     notifyFrontOfficeThread: jest.fn(async () => ({ success: true })),
   };
+  const metrics = new FrontOfficeMetricsService();
 
   const handoffOrchestrator = new FrontOfficeHandoffOrchestrator(
     auditMock as unknown as AuditService,
     communicationRepositoryMock as unknown as FrontOfficeCommunicationRepository,
+    metrics,
   );
   const threadingService = new FrontOfficeThreadingService(
     prismaMock as unknown as PrismaService,
@@ -411,6 +414,7 @@ function createRuntime() {
     deviationMock as unknown as DeviationService,
     agentMock as unknown as FrontOfficeAgent,
     communicationRepositoryMock as unknown as FrontOfficeCommunicationRepository,
+    metrics,
     threadingService,
     replyPolicyMock as any,
     clientResponseOrchestratorMock as any,

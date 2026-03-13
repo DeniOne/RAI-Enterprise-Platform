@@ -6,6 +6,7 @@ import {
   FrontOfficeIntent,
 } from "./front-office-draft.types";
 import { FrontOfficeCommunicationRepository } from "../../shared/front-office/front-office-communication.repository";
+import { FrontOfficeMetricsService } from "../../shared/front-office/front-office-metrics.service";
 
 const CANONICAL_OWNER_ROLES = new Set([
   "crm_agent",
@@ -37,6 +38,7 @@ export class FrontOfficeHandoffOrchestrator {
   constructor(
     private readonly audit: AuditService,
     private readonly communicationRepository: FrontOfficeCommunicationRepository,
+    private readonly metrics: FrontOfficeMetricsService,
   ) {}
 
   async routeDraftHandoff(input: {
@@ -104,6 +106,7 @@ export class FrontOfficeHandoffOrchestrator {
       },
     });
 
+    this.metrics.recordHandoffCreated(input.companyId, handoff.id, handoff.createdAt);
     return handoff;
   }
 
@@ -141,6 +144,7 @@ export class FrontOfficeHandoffOrchestrator {
       nextAction: "Нужно повторно классифицировать thread и переназначить owner.",
     });
 
+    this.metrics.recordHandoffClosed(companyId, handoffId);
     await this.touchThreadFromHandoff(companyId, updated);
     return updated;
   }
@@ -168,6 +172,7 @@ export class FrontOfficeHandoffOrchestrator {
       nextAction: "Thread можно считать закрытым или ожидать следующий сигнал.",
     });
 
+    this.metrics.recordHandoffResolved(companyId, handoffId, updated.resolvedAt);
     await this.touchThreadFromHandoff(companyId, updated);
     return updated;
   }

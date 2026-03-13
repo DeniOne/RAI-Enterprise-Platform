@@ -190,6 +190,14 @@ export class FrontOfficeService {
     return this.frontOfficeDraftService.getQueues(companyId);
   }
 
+  async getMetrics(companyId: string) {
+    return this.frontOfficeDraftService.getMetrics(companyId);
+  }
+
+  async getMetricsPrometheus(companyId: string) {
+    return this.frontOfficeDraftService.getMetricsPrometheus(companyId);
+  }
+
   async getThread(companyId: string, threadKey: string) {
     return this.frontOfficeDraftService.getThread(companyId, threadKey);
   }

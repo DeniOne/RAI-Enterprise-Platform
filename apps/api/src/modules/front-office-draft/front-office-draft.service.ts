@@ -8,6 +8,7 @@ import {
 import { createHash } from "crypto";
 import { AuditService } from "../../shared/audit/audit.service";
 import { FrontOfficeCommunicationRepository } from "../../shared/front-office/front-office-communication.repository";
+import { FrontOfficeMetricsService } from "../../shared/front-office/front-office-metrics.service";
 import { FrontOfficeThreadingService } from "../../shared/front-office/front-office-threading.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { DeviationService } from "../cmr/deviation.service";
@@ -46,6 +47,7 @@ export class FrontOfficeDraftService {
     private readonly deviationService: DeviationService,
     private readonly frontOfficeAgent: FrontOfficeAgent,
     private readonly communicationRepository: FrontOfficeCommunicationRepository,
+    private readonly metrics: FrontOfficeMetricsService,
     private readonly threadingService: FrontOfficeThreadingService,
     private readonly replyPolicy: FrontOfficeReplyPolicyService,
     private readonly clientResponseOrchestrator: FrontOfficeClientResponseOrchestrator,
@@ -615,6 +617,14 @@ export class FrontOfficeDraftService {
     return this.threadingService.listAssignments(companyId);
   }
 
+  async getMetrics(companyId: string) {
+    return this.metrics.snapshot(companyId);
+  }
+
+  async getMetricsPrometheus(companyId: string) {
+    return this.metrics.prometheus(companyId);
+  }
+
   async createAssignment(
     companyId: string,
     input: {
@@ -654,6 +664,7 @@ export class FrontOfficeDraftService {
 
     switch (effectiveResolutionMode) {
       case "PROCESS_DRAFT":
+        this.metrics.recordRoutingOutcome(params.companyId, "PROCESS_DRAFT");
         return {
           draft: preparedDraft,
           committed: await this.repository.findCommitted(
@@ -711,7 +722,7 @@ export class FrontOfficeDraftService {
       replyStatus = "FAILED";
     }
 
-    return this.commitResolvedDraft({
+    const committed = await this.commitResolvedDraft({
       companyId: params.companyId,
       draft: params.draft,
       committedBy: params.draft.userId,
@@ -731,6 +742,10 @@ export class FrontOfficeDraftService {
         },
       },
     });
+    this.metrics.recordRoutingOutcome(params.companyId, "REQUEST_CLARIFICATION");
+    this.metrics.recordClarificationRequest(params.companyId, params.thread.threadKey);
+    this.metrics.recordReplyStatus(params.companyId, replyStatus);
+    return committed;
   }
 
   private async handleAutoReplyRouting(params: {
@@ -751,6 +766,8 @@ export class FrontOfficeDraftService {
       });
 
       if (autoReply.replyStatus === "SENT") {
+        this.metrics.recordRoutingOutcome(params.companyId, "AUTO_REPLY");
+        this.metrics.recordReplyStatus(params.companyId, autoReply.replyStatus);
         return this.commitResolvedDraft({
           companyId: params.companyId,
           draft: params.draft,
@@ -773,6 +790,7 @@ export class FrontOfficeDraftService {
         });
       }
 
+      this.metrics.recordReplyStatus(params.companyId, autoReply.replyStatus);
       return this.handleHumanHandoffRouting({
         companyId: params.companyId,
         user: params.user,
@@ -789,6 +807,7 @@ export class FrontOfficeDraftService {
         },
       });
     } catch (error) {
+      this.metrics.recordReplyStatus(params.companyId, "FAILED");
       return this.handleHumanHandoffRouting({
         companyId: params.companyId,
         user: params.user,
@@ -848,6 +867,9 @@ export class FrontOfficeDraftService {
     if (managerNotified) {
       await this.threadingService.notifyAssignedManagers(params.thread);
     }
+
+    this.metrics.recordRoutingOutcome(params.companyId, "HUMAN_HANDOFF");
+    this.metrics.recordReplyStatus(params.companyId, replyStatus);
 
     return this.commitResolvedDraft({
       companyId: params.companyId,
