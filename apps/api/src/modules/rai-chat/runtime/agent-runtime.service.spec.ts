@@ -4,7 +4,7 @@ import { RaiToolsRegistry } from "../tools/rai-tools.registry";
 import { RaiToolName } from "../tools/rai-tools.types";
 import { PerformanceMetricsService } from "../performance/performance-metrics.service";
 import { QueueMetricsService } from "../performance/queue-metrics.service";
-import { AgentConfigBlockedError } from "../security/agent-config-blocked.error";
+import { AgentConfigBlockedError } from "../../../shared/rai-chat/security/agent-config-blocked.error";
 import { BudgetControllerService } from "../security/budget-controller.service";
 import { IncidentOpsService } from "../incident-ops.service";
 import { AgentRuntimeConfigService } from "../agent-runtime-config.service";
@@ -13,8 +13,12 @@ import { EconomistAgent } from "../agents/economist-agent.service";
 import { KnowledgeAgent } from "../agents/knowledge-agent.service";
 import { MonitoringAgent } from "../agents/monitoring-agent.service";
 import { AgentExecutionAdapterService } from "./agent-execution-adapter.service";
+import { RuntimeGovernanceControlService } from "./runtime-governance-control.service";
 import { CrmAgent } from "../agents/crm-agent.service";
 import { FrontOfficeAgent } from "../agents/front-office-agent.service";
+import { ContractsAgent } from "../agents/contracts-agent.service";
+import { ChiefAgronomistAgent } from "../agents/chief-agronomist-agent.service";
+import { DataScientistAgent } from "../agents/data-scientist-agent.service";
 import { RuntimeGovernanceEventService } from "../runtime-governance/runtime-governance-event.service";
 import { RuntimeGovernancePolicyService } from "../runtime-governance/runtime-governance-policy.service";
 
@@ -103,6 +107,9 @@ describe("AgentRuntimeService", () => {
   const monitoringAgentMock = { run: jest.fn() };
   const crmAgentMock = { run: jest.fn() };
   const frontOfficeAgentMock = { run: jest.fn() };
+  const contractsAgentMock = { run: jest.fn() };
+  const chiefAgronomistAgentMock = { run: jest.fn() };
+  const dataScientistAgentMock = { run: jest.fn() };
   const runtimeGovernanceEventsMock = {
     record: jest.fn().mockResolvedValue(undefined),
   };
@@ -133,12 +140,16 @@ describe("AgentRuntimeService", () => {
         { provide: IncidentOpsService, useValue: incidentOpsMock },
         { provide: AgentRuntimeConfigService, useValue: agentRuntimeConfigMock },
         AgentExecutionAdapterService,
+        RuntimeGovernanceControlService,
         { provide: AgronomAgent, useValue: agronomAgentMock },
         { provide: EconomistAgent, useValue: economistAgentMock },
         { provide: KnowledgeAgent, useValue: knowledgeAgentMock },
         { provide: MonitoringAgent, useValue: monitoringAgentMock },
         { provide: CrmAgent, useValue: crmAgentMock },
         { provide: FrontOfficeAgent, useValue: frontOfficeAgentMock },
+        { provide: ContractsAgent, useValue: contractsAgentMock },
+        { provide: ChiefAgronomistAgent, useValue: chiefAgronomistAgentMock },
+        { provide: DataScientistAgent, useValue: dataScientistAgentMock },
         { provide: RuntimeGovernanceEventService, useValue: runtimeGovernanceEventsMock },
         { provide: RuntimeGovernancePolicyService, useValue: runtimeGovernancePolicyMock },
       ],

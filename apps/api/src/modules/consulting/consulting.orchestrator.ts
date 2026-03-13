@@ -9,7 +9,7 @@ import {
   EconomicEventType,
 } from "@rai/prisma-client";
 import { EconomyService } from "../finance-economy/economy/application/economy.service";
-import { buildFinanceIngestEvent } from "../finance-economy/contracts/finance-ingest.contract";
+import { buildFinanceIngestEvent } from "../../shared/finance-economy/contracts/finance-ingest.contract";
 
 @Injectable()
 export class ConsultingOrchestrator {

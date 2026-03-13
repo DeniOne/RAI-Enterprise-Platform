@@ -41,7 +41,10 @@
         "db:seed": "turbo db:seed",
         "storage:minio:setup": "tsx scripts/setup-minio.ts",
         "docker:up": "docker-compose up -d",
-        "docker:down": "docker-compose down"
+        "docker:down": "docker-compose down",
+        "pm2:up": "bash ./scripts/pm2-up.sh",
+        "pm2:restart": "pm2 startOrRestart ecosystem.config.cjs --update-env",
+        "pm2:status": "pm2 list"
     },
     "devDependencies": {
         "@types/jest": "^30.0.0",

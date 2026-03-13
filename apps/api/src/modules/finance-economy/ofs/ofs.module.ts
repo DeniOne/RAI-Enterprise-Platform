@@ -26,5 +26,6 @@ import { DecisionEvaluationService } from "./application/decision-evaluation.ser
     StrategyForecastOptimizationService,
     DecisionEvaluationService,
   ],
+  exports: [DecisionIntelligenceService],
 })
 export class OfsModule {}

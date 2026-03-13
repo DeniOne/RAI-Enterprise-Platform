@@ -12,7 +12,7 @@ interface AuthSimulationStore {
 }
 
 export const useAuthSimulationStore = create<AuthSimulationStore>((set) => ({
-    currentRole: 'CEO',
+    currentRole: 'ADMIN',
     setRole: (role) => set({ currentRole: role }),
 }));
 

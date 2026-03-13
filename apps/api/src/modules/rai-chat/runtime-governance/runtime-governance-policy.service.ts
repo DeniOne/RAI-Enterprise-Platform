@@ -6,7 +6,7 @@ import {
   RuntimeGovernanceOverrides,
   RuntimeGovernancePolicy,
   RuntimeGovernanceRolePolicy,
-} from "./runtime-governance-policy.types";
+} from "../../../shared/rai-chat/runtime-governance-policy.types";
 
 function buildFallbackModes(
   overrides: Partial<Record<FallbackReason, RuntimeGovernanceRolePolicy["fallbackModeByReason"][FallbackReason]>> = {},

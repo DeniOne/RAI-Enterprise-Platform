@@ -164,6 +164,62 @@ export class InvariantMetricsController {
     );
 
     lines.push(
+      '# HELP ai_memory_hint_shown_total Total AI responses where memory hint was shown.',
+    );
+    lines.push('# TYPE ai_memory_hint_shown_total counter');
+    lines.push(
+      `ai_memory_hint_shown_total ${metrics.ai_memory_hint_shown_total}`,
+    );
+
+    lines.push(
+      '# HELP expert_review_requested_total Total expert review requests submitted.',
+    );
+    lines.push('# TYPE expert_review_requested_total counter');
+    lines.push(
+      `expert_review_requested_total ${metrics.expert_review_requested_total}`,
+    );
+
+    lines.push(
+      '# HELP expert_review_completed_total Total expert reviews completed with outcome action.',
+    );
+    lines.push('# TYPE expert_review_completed_total counter');
+    lines.push(
+      `expert_review_completed_total ${metrics.expert_review_completed_total}`,
+    );
+
+    lines.push(
+      '# HELP strategy_forecast_run_total Total strategy forecast runs.',
+    );
+    lines.push('# TYPE strategy_forecast_run_total counter');
+    lines.push(
+      `strategy_forecast_run_total ${metrics.strategy_forecast_run_total}`,
+    );
+
+    lines.push(
+      '# HELP strategy_forecast_degraded_total Total strategy forecast runs completed in degraded mode.',
+    );
+    lines.push('# TYPE strategy_forecast_degraded_total counter');
+    lines.push(
+      `strategy_forecast_degraded_total ${metrics.strategy_forecast_degraded_total}`,
+    );
+
+    lines.push(
+      '# HELP strategy_forecast_latency_ms Last observed latency for strategy forecast run, in milliseconds.',
+    );
+    lines.push('# TYPE strategy_forecast_latency_ms gauge');
+    lines.push(
+      `strategy_forecast_latency_ms ${metrics.strategy_forecast_latency_ms}`,
+    );
+
+    lines.push(
+      '# HELP memory_lane_populated_total Total traces where memory lane was populated.',
+    );
+    lines.push('# TYPE memory_lane_populated_total counter');
+    lines.push(
+      `memory_lane_populated_total ${metrics.memory_lane_populated_total}`,
+    );
+
+    lines.push(
       '# HELP invariant_memory_engram_formations_total Total engrams formed by the memory lifecycle.',
     );
     lines.push('# TYPE invariant_memory_engram_formations_total counter');

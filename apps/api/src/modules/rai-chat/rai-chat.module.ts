@@ -29,6 +29,7 @@ import { SatelliteModule } from "../satellite/satellite.module";
 import { ExternalSignalsService } from "./external-signals.service";
 import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
 import { SupervisorAgent } from "./supervisor-agent.service";
+import { SupervisorForensicsService } from "./supervisor-forensics.service";
 import { MemoryCoordinatorService } from "./memory/memory-coordinator.service";
 import { AgentRuntimeService } from "./runtime/agent-runtime.service";
 import { ResponseComposerService } from "./composer/response-composer.service";
@@ -59,6 +60,7 @@ import { OpenRouterGatewayService } from "./agent-platform/openrouter-gateway.se
 import { NvidiaGatewayService } from "./agent-platform/nvidia-gateway.service";
 import { AgentPromptAssemblyService } from "./agent-platform/agent-prompt-assembly.service";
 import { AgentExecutionAdapterService } from "./runtime/agent-execution-adapter.service";
+import { RuntimeGovernanceControlService } from "./runtime/runtime-governance-control.service";
 import { CrmModule } from "../crm/crm.module";
 import { CommerceModule } from "../commerce/commerce.module";
 import { AuditModule } from "../../shared/audit/audit.module";
@@ -73,6 +75,7 @@ import { ExpertModule } from "./expert/expert.module";
 import { ExpertReviewController } from "./expert-review.controller";
 import { ExpertReviewService } from "./expert-review.service";
 import { TaskModule } from "../task/task.module";
+import { OfsModule } from "../finance-economy/ofs/ofs.module";
 import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
 import { ConfigModule } from "@nestjs/config";
 import { SecretsModule } from "../../shared/config/secrets.module";
@@ -92,6 +95,7 @@ import { SecretsModule } from "../../shared/config/secrets.module";
     AuditModule,
     ExpertModule,
     TaskModule,
+    OfsModule,
     IdempotencyModule,
     ConfigModule,
     SecretsModule,
@@ -122,6 +126,7 @@ import { SecretsModule } from "../../shared/config/secrets.module";
     MemoryCoordinatorService,
     AgentRuntimeService,
     AgentExecutionAdapterService,
+    SupervisorForensicsService,
     ResponseComposerService,
     RaiChatService,
     SupervisorAgent,
@@ -147,6 +152,7 @@ import { SecretsModule } from "../../shared/config/secrets.module";
     OpenRouterGatewayService,
     NvidiaGatewayService,
     AgentPromptAssemblyService,
+    RuntimeGovernanceControlService,
     RuntimeGovernancePolicyService,
     RuntimeGovernanceFeatureFlagsService,
     RuntimeGovernanceEventService,

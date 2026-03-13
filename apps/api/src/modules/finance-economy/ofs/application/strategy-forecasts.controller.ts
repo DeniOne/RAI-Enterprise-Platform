@@ -6,6 +6,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   Req,
   UseInterceptors,
 } from "@nestjs/common";
@@ -15,6 +16,8 @@ import { IdempotencyInterceptor } from "../../../../shared/idempotency/idempoten
 import {
   DecisionIntelligenceService,
   StrategyForecastRunFeedbackRequest,
+  StrategyForecastRunHistoryQueryDto,
+  StrategyForecastRunHistoryResponseDto,
   StrategyForecastRunHistoryItemDto,
   StrategyForecastRunRequest,
   StrategyForecastRunResponse,
@@ -93,7 +96,8 @@ export class StrategyForecastsController {
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   async listHistory(
     @Req() req: any,
-  ): Promise<StrategyForecastRunHistoryItemDto[]> {
+    @Query() query: Record<string, string | undefined>,
+  ): Promise<StrategyForecastRunHistoryResponseDto> {
     const companyId = req.user?.companyId;
     if (!companyId) {
       throw new BadRequestException("Security Context: companyId is missing");
@@ -101,7 +105,8 @@ export class StrategyForecastsController {
     if (!isFoundationGatedFeatureEnabled("RAI_STRATEGY_FORECASTS_ENABLED")) {
       throw new BadRequestException("RAI_STRATEGY_FORECASTS_DISABLED");
     }
-    return this.decisionIntelligence.listRecentRuns(companyId, 12);
+    const historyQuery = this.parseHistoryQuery(query);
+    return this.decisionIntelligence.listRecentRuns(companyId, historyQuery);
   }
 
   @Post("history/:runId/feedback")
@@ -126,6 +131,59 @@ export class StrategyForecastsController {
       body,
       req.user?.id ?? req.user?.sub ?? null,
     );
+  }
+
+  private parseHistoryQuery(
+    query: Record<string, string | undefined>,
+  ): StrategyForecastRunHistoryQueryDto {
+    const limitRaw = query.limit;
+    const offsetRaw = query.offset;
+    const riskTierRaw = query.riskTier;
+    const degradedRaw = query.degraded;
+    const seasonIdRaw = query.seasonId;
+
+    const parsedLimit =
+      typeof limitRaw === "string" && limitRaw.trim().length > 0
+        ? Number(limitRaw)
+        : undefined;
+    const parsedOffset =
+      typeof offsetRaw === "string" && offsetRaw.trim().length > 0
+        ? Number(offsetRaw)
+        : undefined;
+
+    if (parsedLimit !== undefined && (!Number.isInteger(parsedLimit) || parsedLimit < 1)) {
+      throw new BadRequestException("history limit must be a positive integer");
+    }
+    if (parsedOffset !== undefined && (!Number.isInteger(parsedOffset) || parsedOffset < 0)) {
+      throw new BadRequestException("history offset must be a non-negative integer");
+    }
+
+    const riskTier =
+      riskTierRaw === "low" || riskTierRaw === "medium" || riskTierRaw === "high"
+        ? riskTierRaw
+        : undefined;
+    if (riskTierRaw && !riskTier) {
+      throw new BadRequestException("history riskTier is invalid");
+    }
+
+    let degraded: boolean | undefined;
+    if (degradedRaw !== undefined) {
+      if (degradedRaw === "true" || degradedRaw === "1") {
+        degraded = true;
+      } else if (degradedRaw === "false" || degradedRaw === "0") {
+        degraded = false;
+      } else {
+        throw new BadRequestException("history degraded must be boolean");
+      }
+    }
+
+    return {
+      ...(parsedLimit !== undefined ? { limit: parsedLimit } : {}),
+      ...(parsedOffset !== undefined ? { offset: parsedOffset } : {}),
+      ...(riskTier ? { riskTier } : {}),
+      ...(typeof degraded === "boolean" ? { degraded } : {}),
+      ...(seasonIdRaw?.trim() ? { seasonId: seasonIdRaw.trim() } : {}),
+    };
   }
 
   @Delete("scenarios/:scenarioId")

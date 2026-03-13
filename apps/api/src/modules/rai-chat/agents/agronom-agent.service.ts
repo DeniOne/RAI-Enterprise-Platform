@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { RaiToolName, RaiToolActorContext } from "../tools/rai-tools.types";
 import { AgroToolsRegistry } from "../tools/agro-tools.registry";
-import type { ExplainableResult } from "../deterministic/explainable-result.types";
+import type { ExplainableResult } from "../../../shared/rai-chat/explainable-result.types";
 import { AgroDeterministicEngineFacade } from "../deterministic/agro-deterministic.facade";
 import type { EvidenceReference } from "../dto/rai-chat.dto";
 import { OpenRouterGatewayService } from "../agent-platform/openrouter-gateway.service";

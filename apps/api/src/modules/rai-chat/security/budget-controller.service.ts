@@ -8,9 +8,9 @@ import {
   RaiToolName,
   TOOL_RISK_MAP,
 } from "../tools/rai-tools.types";
-import { BudgetExceededError } from "./budget-exceeded.error";
+import { BudgetExceededError } from "../../../shared/rai-chat/security/budget-exceeded.error";
 import { AgentRegistryService, AgentRuntimeRole } from "../agent-registry.service";
-import { FallbackMode, FallbackReason } from "../runtime-governance/runtime-governance-policy.types";
+import { FallbackMode, FallbackReason } from "../../../shared/rai-chat/runtime-governance-policy.types";
 
 export type RuntimeBudgetOutcome = "ALLOW" | "DEGRADE" | "DENY";
 

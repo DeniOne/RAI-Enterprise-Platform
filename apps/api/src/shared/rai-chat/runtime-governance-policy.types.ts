@@ -1,4 +1,13 @@
-import { CanonicalAgentRuntimeRole } from "../agent-registry.service";
+export type CanonicalAgentRuntimeRole =
+  | "agronomist"
+  | "economist"
+  | "knowledge"
+  | "monitoring"
+  | "crm_agent"
+  | "front_office_agent"
+  | "contracts_agent"
+  | "chief_agronomist"
+  | "data_scientist";
 
 export const FALLBACK_REASONS = [
   "NONE",

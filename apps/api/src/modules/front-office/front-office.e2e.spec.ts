@@ -13,7 +13,9 @@ import { FrontOfficeAgent } from "../rai-chat/agents/front-office-agent.service"
 import { TelegramNotificationService } from "../telegram/telegram-notification.service";
 import { FrontOfficeService } from "./front-office.service";
 
-function createRuntime() {
+function createRuntime(options?: {
+  decisionSequence?: Array<Record<string, any>>;
+}) {
   const state = {
     fields: [{ id: "field-1", companyId: "c1", name: "Поле 1" }],
     seasons: [{ id: "season-1", companyId: "c1", year: 2026 }],
@@ -174,27 +176,40 @@ function createRuntime() {
       },
     })),
   };
+  const decisionQueue = [...(options?.decisionSequence ?? [])];
+  const defaultDecision = {
+    rolloutMode: "rollout",
+    resolutionMode: "PROCESS_DRAFT",
+    responseRisk: "OPERATIONAL_SIGNAL",
+    targetOwnerRole: null,
+    missingContext: [],
+    directReplyAllowed: false,
+    prohibitedReason: null,
+    dialogSummary: "summary",
+    managerShouldBeNotified: false,
+    needsHumanAction: false,
+  };
   const replyPolicyMock = {
-    evaluate: jest.fn(() => ({
-      rolloutMode: "rollout",
-      resolutionMode: "PROCESS_DRAFT",
-      responseRisk: "OPERATIONAL_SIGNAL",
-      targetOwnerRole: null,
-      missingContext: [],
-      directReplyAllowed: false,
-      prohibitedReason: null,
-      dialogSummary: "summary",
-      managerShouldBeNotified: false,
-      needsHumanAction: false,
-    })),
+    evaluate: jest.fn(() => decisionQueue.shift() ?? defaultDecision),
   };
   const outboundServiceMock = {
     sendToThread: jest.fn(),
   };
   const clientResponseOrchestratorMock = {
-    sendAutoReply: jest.fn(),
-    sendClarification: jest.fn(),
-    sendHandoffReceipt: jest.fn(),
+    sendAutoReply: jest.fn().mockResolvedValue({
+      replyStatus: "SENT",
+      messageId: "auto-1",
+      autoReplyTraceId: "auto-trace-1",
+      ownerRole: "monitoring",
+    }),
+    sendClarification: jest.fn().mockResolvedValue({
+      replyStatus: "SENT",
+      text: "Уточните поле, сезон и задачу.",
+    }),
+    sendHandoffReceipt: jest.fn().mockResolvedValue({
+      replyStatus: "SENT",
+      messageId: "receipt-1",
+    }),
   };
 
   const draftRepositoryMock = {
@@ -431,7 +446,7 @@ function createRuntime() {
     draftService,
   );
 
-  return { service, state };
+  return { service, state, metrics };
 }
 
 describe("FrontOffice runtime e2e flow", () => {
@@ -481,5 +496,113 @@ describe("FrontOffice runtime e2e flow", () => {
 
     const thread = await service.getThread("c1", "c1:telegram:tg-1");
     expect(thread.drafts).toHaveLength(1);
+  });
+
+  it("runs telegram ingress -> clarification -> fix/link -> confirm -> handoff", async () => {
+    const { service, state, metrics } = createRuntime({
+      decisionSequence: [
+        {
+          rolloutMode: "rollout",
+          resolutionMode: "REQUEST_CLARIFICATION",
+          responseRisk: "INSUFFICIENT_CONTEXT",
+          targetOwnerRole: "crm_agent",
+          missingContext: ["LINK_OBJECT"],
+          directReplyAllowed: false,
+          prohibitedReason: "Недостаточно контекста.",
+          dialogSummary: "Нужна привязка объекта",
+          managerShouldBeNotified: false,
+          needsHumanAction: false,
+        },
+        {
+          rolloutMode: "rollout",
+          resolutionMode: "PROCESS_DRAFT",
+          responseRisk: "RESPONSIBLE_ACTION",
+          targetOwnerRole: "crm_agent",
+          missingContext: ["LINK_OBJECT"],
+          directReplyAllowed: false,
+          prohibitedReason: null,
+          dialogSummary: "Запрос на консультацию после уточнения",
+          managerShouldBeNotified: false,
+          needsHumanAction: false,
+        },
+      ],
+    });
+
+    const firstIngress = await service.intakeMessage(
+      "c1",
+      "trace-clarify-1",
+      { id: "u-fo-1", role: "FRONT_OFFICE_USER" },
+      {
+        channel: "telegram",
+        threadExternalId: "tg-clarify",
+        messageText: "Подскажите, нужна консультация",
+      },
+    );
+
+    expect((firstIngress as any).resolutionMode).toBe("REQUEST_CLARIFICATION");
+    expect((firstIngress as any).replyStatus).toBe("SENT");
+    expect((firstIngress as any).commitResult).toEqual(
+      expect.objectContaining({ kind: "clarification_request" }),
+    );
+
+    const secondIngress = await service.intakeMessage(
+      "c1",
+      "trace-clarify-2",
+      { id: "u-fo-1", role: "FRONT_OFFICE_USER" },
+      {
+        channel: "telegram",
+        threadExternalId: "tg-clarify",
+        messageText: "Нужна консультация по контрагенту и договору",
+      },
+    );
+
+    expect((secondIngress as any).status).toBe("DRAFT_RECORDED");
+    expect((secondIngress as any).mustClarifications).toContain("LINK_OBJECT");
+
+    const fixed = await service.fixDraft(
+      "c1",
+      "trace-fix-1",
+      { id: "u-fo-1", role: "FRONT_OFFICE_USER" },
+      (secondIngress as any).draftId,
+      {
+        messageText: "Нужна консультация по договору и реквизитам",
+      },
+    );
+    expect((fixed as any).status).toBe("DRAFT_RECORDED");
+
+    const linked = await service.linkDraft(
+      "c1",
+      "u-fo-1",
+      (secondIngress as any).draftId,
+      {
+        fieldId: "field-1",
+        seasonId: "season-1",
+        taskId: "task-1",
+      },
+    );
+    expect((linked as any).anchor.fieldId).toBe("field-1");
+
+    const confirmed = await service.confirmDraft(
+      "c1",
+      { id: "u-fo-1", role: "FRONT_OFFICE_USER" },
+      (secondIngress as any).draftId,
+    );
+
+    expect((confirmed as any).status).toBe("COMMITTED");
+    expect((confirmed as any).commitResult).toEqual(
+      expect.objectContaining({
+        kind: "handoff",
+        handoffStatus: "ROUTED",
+      }),
+    );
+    expect(state.handoffs).toHaveLength(1);
+
+    const metricsSnapshot = await service.getMetrics("c1");
+    expect(metricsSnapshot.outcomes.REQUEST_CLARIFICATION).toBe(1);
+    expect(metricsSnapshot.outcomes.PROCESS_DRAFT).toBe(1);
+    expect(metricsSnapshot.clarification.maxDepth).toBe(1);
+    expect(metricsSnapshot.handoff.createdTotal).toBe(1);
+    expect(metricsSnapshot.delivery.repliesSentTotal).toBeGreaterThanOrEqual(1);
+    expect(metrics.snapshot("c1").alerts).toBeDefined();
   });
 });

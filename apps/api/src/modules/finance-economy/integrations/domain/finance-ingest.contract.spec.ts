@@ -2,7 +2,7 @@ import { EconomicEventType } from "@rai/prisma-client";
 import {
   buildFinanceIngestEvent,
   FINANCE_INGEST_CONTRACT_VERSION,
-} from "../../contracts/finance-ingest.contract";
+} from "../../../../shared/finance-economy/contracts/finance-ingest.contract";
 
 describe("finance-ingest.contract", () => {
   it("builds versioned metadata envelope with deterministic idempotency key", () => {

@@ -7,6 +7,8 @@
 'use client';
 
 import React, { createContext, useContext, useMemo } from 'react';
+import type { UserRole } from '@/lib/config/role-config';
+import { capabilitiesFromRole } from '@/lib/consulting/capability-policy';
 
 export interface AuthorityContextType {
     canOverride: boolean;  // Право форсированного перехода FSM (Level C)
@@ -16,15 +18,7 @@ export interface AuthorityContextType {
     canApprove: boolean;   // Право окончательного подтверждения (Finality)
 }
 
-export type UserRole = 'CEO' | 'DIRECTOR' | 'MANAGER' | 'AGRONOMIST' | 'GUEST';
-
-export const ROLE_CAPABILITIES: Record<UserRole, AuthorityContextType> = {
-    CEO: { canOverride: true, canSign: true, canEscalate: true, canEdit: true, canApprove: true },
-    DIRECTOR: { canOverride: false, canSign: true, canEscalate: true, canEdit: true, canApprove: true },
-    MANAGER: { canOverride: false, canSign: false, canEscalate: true, canEdit: true, canApprove: false },
-    AGRONOMIST: { canOverride: false, canSign: false, canEscalate: false, canEdit: true, canApprove: false },
-    GUEST: { canOverride: false, canSign: false, canEscalate: false, canEdit: false, canApprove: false },
-};
+export type { UserRole };
 
 const AuthorityContext = createContext<AuthorityContextType | null>(null);
 
@@ -37,7 +31,7 @@ export const AuthorityProvider: React.FC<{
     role: UserRole;
     children: React.ReactNode
 }> = ({ role, children }) => {
-    const capabilities = useMemo(() => ROLE_CAPABILITIES[role], [role]);
+    const capabilities = useMemo(() => capabilitiesFromRole(role), [role]);
 
     return (
         <AuthorityContext.Provider value={capabilities}>

@@ -11,15 +11,15 @@ import {
 import { ConsultingService, UserContext } from "./consulting.service";
 import { BudgetPlanService } from "./budget-plan.service";
 import { ExecutionService } from "./execution.service";
-import { CreateHarvestPlanDto } from "./dto/create-harvest-plan.dto";
-import { UpdateDraftPlanDto } from "./dto/update-draft-plan.dto";
-import { TransitionPlanStatusDto } from "./dto/transition-plan-status.dto";
+import { CreateHarvestPlanDto } from "../../shared/consulting/dto/create-harvest-plan.dto";
+import { UpdateDraftPlanDto } from "../../shared/consulting/dto/update-draft-plan.dto";
+import { TransitionPlanStatusDto } from "../../shared/consulting/dto/transition-plan-status.dto";
 import { TransitionBudgetStatusDto } from "./dto/transition-budget-status.dto";
-import { CompleteOperationDto } from "./dto/complete-operation.dto";
+import { CompleteOperationDto } from "../../shared/consulting/dto/complete-operation.dto";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
 import { YieldService } from "./yield.service";
 import { KpiService } from "./kpi.service";
-import { SaveHarvestResultDto } from "./dto/save-harvest-result.dto";
+import { SaveHarvestResultDto } from "../../shared/consulting/dto/save-harvest-result.dto";
 import { YieldOrchestrator } from "./yield.orchestrator";
 import { ManagementDecisionService } from "./management-decision.service";
 import { StrategicViewService } from "./strategic-view.service";
@@ -62,6 +62,21 @@ export class ConsultingController {
     private readonly kpiService: KpiService,
   ) {}
 
+  private toUserContext(user: any): UserContext {
+    return {
+      userId: user.userId,
+      role: user.role,
+      companyId: user.companyId,
+    };
+  }
+
+  private toExecutionContext(user: any): { userId: string; companyId: string } {
+    return {
+      userId: user.userId,
+      companyId: user.companyId,
+    };
+  }
+
   // --- Strategic Goals ---
 
   @Post("goals")
@@ -69,24 +84,14 @@ export class ConsultingController {
   @ConsultingAccess("strategic")
   @UseInterceptors(IdempotencyInterceptor)
   async createGoal(@Body() dto: any, @CurrentUser() user: any) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.goalService.createDraft(dto, context);
+    return this.goalService.createDraft(dto, this.toUserContext(user));
   }
 
   @Get("goals/:id/decompose")
   @Authorized(...STRATEGIC_ROLES)
   @ConsultingAccess("strategic")
   async decomposeGoal(@Param("id") id: string, @CurrentUser() user: any) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.decompositionService.decomposeGoal(id, context);
+    return this.decompositionService.decomposeGoal(id, this.toUserContext(user));
   }
 
   // --- Scenario & Advisory ---
@@ -100,12 +105,7 @@ export class ConsultingController {
     @Body() dto: any,
     @CurrentUser() user: any,
   ) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.simulationService.simulateSeason(id, dto, context);
+    return this.simulationService.simulateSeason(id, dto, this.toUserContext(user));
   }
 
   @Get("advisory/:seasonId")
@@ -115,12 +115,7 @@ export class ConsultingController {
     @Param("seasonId") seasonId: string,
     @CurrentUser() user: any,
   ) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.advisoryService.getAdvisory(seasonId, context);
+    return this.advisoryService.getAdvisory(seasonId, this.toUserContext(user));
   }
 
   // --- Cash Flow & Liquidity Risk ---
@@ -132,13 +127,8 @@ export class ConsultingController {
     @Query("asOfDate") asOfDate: string,
     @CurrentUser() user: any,
   ) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
     const date = asOfDate ? new Date(asOfDate) : new Date();
-    return this.cashFlowService.getCashPosition(context, date);
+    return this.cashFlowService.getCashPosition(this.toUserContext(user), date);
   }
 
   @Get("cashflow/projection")
@@ -149,17 +139,12 @@ export class ConsultingController {
     @Query("endDate") end: string,
     @CurrentUser() user: any,
   ) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
     const startDate = start ? new Date(start) : new Date();
     const endDate = end ? new Date(end) : new Date();
     if (!end) endDate.setMonth(endDate.getMonth() + 3);
 
     return this.cashFlowService.getProjectedCashFlow(
-      context,
+      this.toUserContext(user),
       startDate,
       endDate,
     );
@@ -172,24 +157,17 @@ export class ConsultingController {
     @Param("seasonId") seasonId: string,
     @CurrentUser() user: any,
   ) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.liquidityRiskService.analyzeLiquidityRisk(context, seasonId);
+    return this.liquidityRiskService.analyzeLiquidityRisk(
+      this.toUserContext(user),
+      seasonId,
+    );
   }
 
   // Deviation & Decisions
   @Get("deviations")
   @Authorized(...PLANNING_READ_ROLES)
   async getDeviations(@CurrentUser() user: any) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.deviationService.getActiveDeviations(context);
+    return this.deviationService.getActiveDeviations(this.toUserContext(user));
   }
 
   @Post("decisions/confirm/:id")
@@ -197,12 +175,7 @@ export class ConsultingController {
   @ConsultingAccess("management")
   @UseInterceptors(IdempotencyInterceptor)
   async confirmDecision(@Param("id") id: string, @CurrentUser() user: any) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.decisionService.confirm(id, context);
+    return this.decisionService.confirm(id, this.toUserContext(user));
   }
 
   @Post("decisions/:id/supersede")
@@ -214,16 +187,11 @@ export class ConsultingController {
     @Body() dto: any,
     @CurrentUser() user: any,
   ) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
     return this.decisionService.supersede(
       id,
       dto.description,
       dto.expectedEffect,
-      context,
+      this.toUserContext(user),
     );
   }
 
@@ -231,12 +199,7 @@ export class ConsultingController {
   @Authorized(...STRATEGIC_ROLES)
   @ConsultingAccess("management")
   async getDecisionHistory(@Param("id") id: string, @CurrentUser() user: any) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.decisionService.getDecisionHistory(id, context);
+    return this.decisionService.getDecisionHistory(id, this.toUserContext(user));
   }
 
   // ... (plans, budgets, execution methods)
@@ -245,34 +208,19 @@ export class ConsultingController {
   @Authorized(...PLANNING_WRITE_ROLES)
   @UseInterceptors(IdempotencyInterceptor)
   async create(@Body() dto: CreateHarvestPlanDto, @CurrentUser() user: any) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.consultingService.createPlan(dto, context);
+    return this.consultingService.createPlan(dto, this.toUserContext(user));
   }
 
   @Get("plans")
   @Authorized(...PLANNING_READ_ROLES)
   async findAll(@CurrentUser() user: any) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.consultingService.findAll(context);
+    return this.consultingService.findAll(this.toUserContext(user));
   }
 
   @Get("plans/:id")
   @Authorized(...PLANNING_READ_ROLES)
   async findOne(@Param("id") id: string, @CurrentUser() user: any) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.consultingService.findOne(id, context);
+    return this.consultingService.findOne(id, this.toUserContext(user));
   }
 
   @Patch("plans/:id/draft")
@@ -283,12 +231,7 @@ export class ConsultingController {
     @Body() dto: UpdateDraftPlanDto,
     @CurrentUser() user: any,
   ) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.consultingService.updateDraftPlan(id, dto, context);
+    return this.consultingService.updateDraftPlan(id, dto, this.toUserContext(user));
   }
 
   @Post("plans/:id/transitions")
@@ -299,24 +242,18 @@ export class ConsultingController {
     @Body() dto: TransitionPlanStatusDto,
     @CurrentUser() user: any,
   ) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.consultingService.transitionPlanStatus(id, dto.status, context);
+    return this.consultingService.transitionPlanStatus(
+      id,
+      dto.status,
+      this.toUserContext(user),
+    );
   }
 
   @Post("plans/:id/budget")
   @Authorized(...PLANNING_WRITE_ROLES)
   @UseInterceptors(IdempotencyInterceptor)
   async createBudget(@Param("id") id: string, @CurrentUser() user: any) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.budgetService.createBudget(id, context);
+    return this.budgetService.createBudget(id, this.toUserContext(user));
   }
 
   @Post("budgets/:id/transitions")
@@ -327,24 +264,14 @@ export class ConsultingController {
     @Body() dto: TransitionBudgetStatusDto,
     @CurrentUser() user: any,
   ) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.budgetService.transitionStatus(id, dto.event, context);
+    return this.budgetService.transitionStatus(id, dto.event, this.toUserContext(user));
   }
 
   @Post("budgets/:id/sync")
   @Authorized(...STRATEGIC_ROLES)
   @UseInterceptors(IdempotencyInterceptor)
   async syncActuals(@Param("id") id: string, @CurrentUser() user: any) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.budgetService.syncActuals(id, context);
+    return this.budgetService.syncActuals(id, this.toUserContext(user));
   }
 
   @Post("execution/:operationId/start")
@@ -354,10 +281,10 @@ export class ConsultingController {
     @Param("operationId") operationId: string,
     @CurrentUser() user: any,
   ) {
-    return this.executionService.startOperation(operationId, {
-      userId: user.userId,
-      companyId: user.companyId,
-    });
+    return this.executionService.startOperation(
+      operationId,
+      this.toExecutionContext(user),
+    );
   }
 
   @Post("execution/complete")
@@ -367,53 +294,35 @@ export class ConsultingController {
     @Body() dto: CompleteOperationDto,
     @CurrentUser() user: any,
   ) {
-    return this.executionService.completeOperation(dto, {
-      userId: user.userId,
-      companyId: user.companyId,
-    });
+    return this.executionService.completeOperation(
+      dto,
+      this.toExecutionContext(user),
+    );
   }
 
   @Get("execution/operations")
   @Authorized(...EXECUTION_ROLES)
   async getActiveOperations(@CurrentUser() user: any) {
-    return this.executionService.getActiveOperations({
-      userId: user.userId,
-      companyId: user.companyId,
-    });
+    return this.executionService.getActiveOperations(this.toExecutionContext(user));
   }
 
   @Post("yield")
   @Authorized(...EXECUTION_ROLES)
   @UseInterceptors(IdempotencyInterceptor)
   async saveYield(@Body() dto: SaveHarvestResultDto, @CurrentUser() user: any) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.yieldOrchestrator.recordHarvest(dto, context);
+    return this.yieldOrchestrator.recordHarvest(dto, this.toUserContext(user));
   }
 
   @Get("yield/plan/:id")
   @Authorized(...PLANNING_READ_ROLES)
   async getYieldByPlan(@Param("id") id: string, @CurrentUser() user: any) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.yieldService.getHarvestResultByPlan(id, context);
+    return this.yieldService.getHarvestResultByPlan(id, this.toUserContext(user));
   }
 
   @Get("kpi/plan/:id")
   @Authorized(...PLANNING_READ_ROLES)
   async getPlanKPI(@Param("id") id: string, @CurrentUser() user: any) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.kpiService.calculatePlanKPI(id, context);
+    return this.kpiService.calculatePlanKPI(id, this.toUserContext(user));
   }
 
   @Get("kpi/company/:seasonId")
@@ -422,12 +331,10 @@ export class ConsultingController {
     @Param("seasonId") seasonId: string,
     @CurrentUser() user: any,
   ) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.kpiService.calculateStrategicKPIs(seasonId, context);
+    return this.kpiService.calculateStrategicKPIs(
+      seasonId,
+      this.toUserContext(user),
+    );
   }
 
   // --- PHASE 3: STRATEGIC & MANAGEMENT ENDPOINTS (PROTECTED RBAC) ---
@@ -439,12 +346,10 @@ export class ConsultingController {
     @Param("seasonId") seasonId: string,
     @CurrentUser() user: any,
   ) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
-    return this.strategicService.getStrategicDashboard(seasonId, context);
+    return this.strategicService.getStrategicDashboard(
+      seasonId,
+      this.toUserContext(user),
+    );
   }
 
   @Post("decisions/draft")
@@ -452,16 +357,11 @@ export class ConsultingController {
   @ConsultingAccess("management")
   @UseInterceptors(IdempotencyInterceptor)
   async createDecisionDraft(@Body() dto: any, @CurrentUser() user: any) {
-    const context: UserContext = {
-      userId: user.userId,
-      role: user.role,
-      companyId: user.companyId,
-    };
     return this.decisionService.createDraft(
       dto.deviationId,
       dto.description,
       dto.expectedEffect,
-      context,
+      this.toUserContext(user),
     );
   }
 }

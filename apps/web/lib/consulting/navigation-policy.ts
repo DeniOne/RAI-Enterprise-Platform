@@ -316,7 +316,7 @@ export const CONSULTING_NAVIGATION: NavItem[] = [
         domain: 'trust',
         roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'],
         subItems: [
-            { id: 'sec_dashboard', label: 'Security Control', path: '/governance/security', domain: 'trust', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
+            { id: 'sec_dashboard', label: 'Пульт безопасности', path: '/governance/security', domain: 'trust', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
             { id: 'sec_monitoring', label: 'Мониторинг инцидентов', path: '/governance/security#incidents', domain: 'trust', roles: ['ADMIN', 'CEO', 'MANAGER', 'SYSTEM_ADMIN', 'FOUNDER'] },
         ]
     }

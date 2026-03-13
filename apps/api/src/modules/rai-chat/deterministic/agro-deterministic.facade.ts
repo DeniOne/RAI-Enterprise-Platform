@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import type { ExplainableResult } from "./explainable-result.types";
+import type { ExplainableResult } from "../../../shared/rai-chat/explainable-result.types";
 import { calculateSeedingRate } from "../../tech-map/calculators/seeding-rate.calculator";
 import { calculateNitrogenDose } from "../../tech-map/calculators/fertilizer-dose.calculator";
 import {

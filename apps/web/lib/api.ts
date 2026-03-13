@@ -705,8 +705,10 @@ export const api = {
                         ]),
                     },
                 }),
-            history: () =>
-                apiClient.get<StrategyForecastRunHistoryItem[]>('/ofs/strategy/forecasts/history'),
+            history: (params?: StrategyForecastRunHistoryQuery) =>
+                apiClient.get<StrategyForecastRunHistoryResponse>('/ofs/strategy/forecasts/history', {
+                    params: params ?? {},
+                }),
             submitFeedback: (runId: string, data: StrategyForecastRunFeedbackRequest) =>
                 apiClient.post<StrategyForecastRunHistoryItem>(
                     `/ofs/strategy/forecasts/history/${encodeURIComponent(runId)}/feedback`,
@@ -1419,6 +1421,22 @@ export interface StrategyForecastRunHistoryItem {
         note?: string | null;
         feedbackAt?: string | null;
     };
+}
+
+export interface StrategyForecastRunHistoryQuery {
+    limit?: number;
+    offset?: number;
+    seasonId?: string;
+    riskTier?: 'low' | 'medium' | 'high';
+    degraded?: boolean;
+}
+
+export interface StrategyForecastRunHistoryResponse {
+    items: StrategyForecastRunHistoryItem[];
+    total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
 }
 
 export interface StrategyForecastRunFeedbackRequest {

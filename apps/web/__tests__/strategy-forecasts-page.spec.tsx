@@ -9,6 +9,7 @@ const historyStrategyForecastMock = jest.fn();
 const listStrategyScenariosMock = jest.fn();
 const saveStrategyScenarioMock = jest.fn();
 const deleteStrategyScenarioMock = jest.fn();
+const submitFeedbackStrategyForecastMock = jest.fn();
 
 jest.mock('@/lib/feature-flags', () => ({
     webFeatureFlags: {
@@ -28,6 +29,7 @@ jest.mock('@/lib/api', () => ({
                 listScenarios: (...args: unknown[]) => listStrategyScenariosMock(...args),
                 saveScenario: (...args: unknown[]) => saveStrategyScenarioMock(...args),
                 deleteScenario: (...args: unknown[]) => deleteStrategyScenarioMock(...args),
+                submitFeedback: (...args: unknown[]) => submitFeedbackStrategyForecastMock(...args),
             },
         },
     },
@@ -41,6 +43,7 @@ describe('StrategyForecastsPage', () => {
         listStrategyScenariosMock.mockReset();
         saveStrategyScenarioMock.mockReset();
         deleteStrategyScenarioMock.mockReset();
+        submitFeedbackStrategyForecastMock.mockReset();
         window.localStorage.clear();
         listSeasonsMock.mockResolvedValue({
             data: [
@@ -51,9 +54,37 @@ describe('StrategyForecastsPage', () => {
                 },
             ],
         });
-        historyStrategyForecastMock.mockResolvedValue({ data: [] });
+        historyStrategyForecastMock.mockResolvedValue({
+            data: {
+                items: [],
+                total: 0,
+                limit: 6,
+                offset: 0,
+                hasMore: false,
+            },
+        });
         listStrategyScenariosMock.mockResolvedValue({ data: [] });
         deleteStrategyScenarioMock.mockResolvedValue({ data: { ok: true } });
+        submitFeedbackStrategyForecastMock.mockResolvedValue({
+            data: {
+                id: 'run-1',
+                traceId: 'di_1',
+                scopeLevel: 'company',
+                seasonId: 'season-1',
+                horizonDays: 90,
+                domains: ['finance'],
+                degraded: false,
+                riskTier: 'medium',
+                recommendedAction: 'Сохранять базовый план',
+                scenarioName: null,
+                createdByUserId: null,
+                createdAt: '2026-03-12T10:00:00.000Z',
+                evaluation: {
+                    status: 'feedback_recorded',
+                    revenueErrorPct: 2.1,
+                },
+            },
+        });
     });
 
     it('saves and restores a persisted scenario snapshot', async () => {
@@ -157,25 +188,31 @@ describe('StrategyForecastsPage', () => {
             },
         });
         historyStrategyForecastMock.mockResolvedValue({
-            data: [
-                {
-                    id: 'run-1',
-                    traceId: 'di_123',
-                    scopeLevel: 'company',
-                    seasonId: 'season-1',
-                    horizonDays: 90,
-                    domains: ['agro', 'economics', 'finance', 'risk'],
-                    degraded: false,
-                    riskTier: 'medium',
-                    recommendedAction: 'Сценарий можно брать в shortlist.',
-                    scenarioName: 'Рабочий сценарий',
-                    createdAt: '2026-03-12T10:00:00.000Z',
-                    createdByUserId: null,
-                    evaluation: {
-                        status: 'pending',
+            data: {
+                items: [
+                    {
+                        id: 'run-1',
+                        traceId: 'di_123',
+                        scopeLevel: 'company',
+                        seasonId: 'season-1',
+                        horizonDays: 90,
+                        domains: ['agro', 'economics', 'finance', 'risk'],
+                        degraded: false,
+                        riskTier: 'medium',
+                        recommendedAction: 'Сценарий можно брать в shortlist.',
+                        scenarioName: 'Рабочий сценарий',
+                        createdAt: '2026-03-12T10:00:00.000Z',
+                        createdByUserId: null,
+                        evaluation: {
+                            status: 'pending',
+                        },
                     },
-                },
-            ],
+                ],
+                total: 1,
+                limit: 6,
+                offset: 0,
+                hasMore: false,
+            },
         });
 
         render(<StrategyForecastsPage />);
@@ -194,5 +231,203 @@ describe('StrategyForecastsPage', () => {
         expect((await screen.findAllByText(/Максимизировать маржу и cash flow/i)).length).toBeGreaterThan(0);
         expect(screen.getByText(/shortlist для исполнения/i)).toBeInTheDocument();
         expect(screen.getByText(/Baseline run|Рабочий сценарий/i)).toBeInTheDocument();
+    });
+
+    it('submits realized feedback from recent runs panel', async () => {
+        const user = userEvent.setup();
+
+        historyStrategyForecastMock.mockResolvedValue({
+            data: {
+                items: [
+                    {
+                        id: 'run-1',
+                        traceId: 'di_1',
+                        scopeLevel: 'company',
+                        seasonId: 'season-1',
+                        horizonDays: 90,
+                        domains: ['finance'],
+                        degraded: false,
+                        riskTier: 'medium',
+                        recommendedAction: 'Сохранять базовый план',
+                        scenarioName: null,
+                        createdByUserId: null,
+                        createdAt: '2026-03-12T10:00:00.000Z',
+                        evaluation: {
+                            status: 'pending',
+                        },
+                    },
+                ],
+                total: 1,
+                limit: 6,
+                offset: 0,
+                hasMore: false,
+            },
+        });
+
+        const promptSpy = jest
+            .spyOn(window, 'prompt')
+            .mockReturnValueOnce('1000000')
+            .mockReturnValueOnce('280000')
+            .mockReturnValueOnce('190000')
+            .mockReturnValueOnce('4.3')
+            .mockReturnValueOnce('Факт по закрытию периода');
+
+        render(<StrategyForecastsPage />);
+
+        await waitFor(() => {
+            expect(historyStrategyForecastMock).toHaveBeenCalled();
+        });
+
+        await user.click(await screen.findByRole('button', { name: 'Записать факт' }));
+
+        await waitFor(() => {
+            expect(submitFeedbackStrategyForecastMock).toHaveBeenCalledWith('run-1', {
+                actualRevenue: 1000000,
+                actualMargin: 280000,
+                actualCashFlow: 190000,
+                actualYield: 4.3,
+                note: 'Факт по закрытию периода',
+            });
+        });
+
+        expect(await screen.findByText(/Feedback: revenue \+2.1%/i)).toBeInTheDocument();
+        promptSpy.mockRestore();
+    });
+
+    it('applies history filters and paginates recent runs', async () => {
+        const user = userEvent.setup();
+
+        historyStrategyForecastMock.mockImplementation(
+            async (query: {
+                limit?: number;
+                offset?: number;
+                seasonId?: string;
+                riskTier?: 'low' | 'medium' | 'high';
+                degraded?: boolean;
+            } = {}) => {
+                const limit = query.limit ?? 6;
+                const offset = query.offset ?? 0;
+
+                if (query.riskTier === 'high') {
+                    return {
+                        data: {
+                            items: [
+                                {
+                                    id: 'run-high',
+                                    traceId: 'di_high',
+                                    scopeLevel: 'company',
+                                    seasonId: 'season-1',
+                                    horizonDays: 90,
+                                    domains: ['risk'],
+                                    degraded: false,
+                                    riskTier: 'high',
+                                    recommendedAction: 'Усилить risk-контур',
+                                    scenarioName: null,
+                                    createdByUserId: null,
+                                    createdAt: '2026-03-12T12:00:00.000Z',
+                                    evaluation: { status: 'pending' },
+                                },
+                            ],
+                            total: 1,
+                            limit,
+                            offset,
+                            hasMore: false,
+                        },
+                    };
+                }
+
+                if (query.seasonId === 'season-1' && offset === 0) {
+                    return {
+                        data: {
+                            items: [
+                                {
+                                    id: 'run-1',
+                                    traceId: 'di_1',
+                                    scopeLevel: 'company',
+                                    seasonId: 'season-1',
+                                    horizonDays: 90,
+                                    domains: ['finance'],
+                                    degraded: false,
+                                    riskTier: 'medium',
+                                    recommendedAction: 'Базовая стратегия',
+                                    scenarioName: null,
+                                    createdByUserId: null,
+                                    createdAt: '2026-03-12T10:00:00.000Z',
+                                    evaluation: { status: 'pending' },
+                                },
+                            ],
+                            total: 2,
+                            limit,
+                            offset,
+                            hasMore: true,
+                        },
+                    };
+                }
+
+                if (query.seasonId === 'season-1' && offset === 1) {
+                    return {
+                        data: {
+                            items: [
+                                {
+                                    id: 'run-2',
+                                    traceId: 'di_2',
+                                    scopeLevel: 'company',
+                                    seasonId: 'season-1',
+                                    horizonDays: 90,
+                                    domains: ['economics'],
+                                    degraded: false,
+                                    riskTier: 'low',
+                                    recommendedAction: 'Расширить программу роста',
+                                    scenarioName: null,
+                                    createdByUserId: null,
+                                    createdAt: '2026-03-12T11:00:00.000Z',
+                                    evaluation: { status: 'pending' },
+                                },
+                            ],
+                            total: 2,
+                            limit,
+                            offset,
+                            hasMore: false,
+                        },
+                    };
+                }
+
+                return {
+                    data: {
+                        items: [],
+                        total: 0,
+                        limit,
+                        offset,
+                        hasMore: false,
+                    },
+                };
+            },
+        );
+
+        render(<StrategyForecastsPage />);
+
+        expect(await screen.findByText('Базовая стратегия')).toBeInTheDocument();
+        expect(screen.getByText(/Показано 1 из 2/i)).toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Показать ещё' }));
+
+        expect(await screen.findByText('Расширить программу роста')).toBeInTheDocument();
+        expect(screen.getByText(/Показано 2 из 2/i)).toBeInTheDocument();
+        expect(historyStrategyForecastMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                seasonId: 'season-1',
+                offset: 1,
+            }),
+        );
+
+        await user.selectOptions(screen.getByLabelText('History risk filter'), 'high');
+
+        expect(await screen.findByText('Усилить risk-контур')).toBeInTheDocument();
+        expect(historyStrategyForecastMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                seasonId: 'season-1',
+                riskTier: 'high',
+            }),
+        );
     });
 });

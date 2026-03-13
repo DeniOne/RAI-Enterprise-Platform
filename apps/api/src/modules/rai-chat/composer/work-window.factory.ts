@@ -1,5 +1,5 @@
 import { RaiWorkWindowDto } from "../dto/rai-chat.dto";
-import { RaiChatWidget } from "../widgets/rai-chat-widgets.types";
+import { RaiChatWidget } from "../../../shared/rai-chat/rai-chat-widgets.types";
 import { mapLegacyWidgetsToWorkWindows } from "./legacy-widget-window.mapper";
 
 const modeWeight: Record<RaiWorkWindowDto["mode"], number> = {

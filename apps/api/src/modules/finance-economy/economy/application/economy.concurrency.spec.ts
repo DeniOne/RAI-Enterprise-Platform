@@ -2,7 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { EconomyService } from "./economy.service";
 import { PrismaService } from "../../../../shared/prisma/prisma.service";
 import { OutboxService } from "../../../../shared/outbox/outbox.service";
-import { FinanceConfigService } from "../../finance/config/finance-config.service";
+import { FinanceConfigService } from "../../../../shared/finance-economy/config/finance-config.service";
 import { CostAttributionRules } from "../domain/rules/cost-attribution.rules";
 import { EconomicEventType, Prisma } from "@rai/prisma-client";
 import { randomUUID } from "crypto";

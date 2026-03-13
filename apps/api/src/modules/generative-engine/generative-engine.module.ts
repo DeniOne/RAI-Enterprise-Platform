@@ -35,14 +35,14 @@ import { ProbabilityModule } from "./probability/probability.module";
 
 // --- Level C: Contradiction-Resilient Intelligence ---
 import { DivergenceTrackerService } from "./contradiction/divergence-tracker.service";
-import { CounterfactualEngine } from "./contradiction/counterfactual-engine";
+import { CounterfactualEngine } from "../../shared/generative-engine/contradiction/counterfactual-engine";
 import { ConflictMatrixService } from "./contradiction/conflict-matrix.service";
 import { SpearmanCorrelationService } from "./contradiction/spearman-correlation.service";
-import { ConflictExplainabilityBuilder } from "./contradiction/conflict-explainability-builder";
+import { ConflictExplainabilityBuilder } from "../../shared/generative-engine/contradiction/conflict-explainability-builder";
 import { ConflictController } from "./contradiction/conflict.controller";
 
 // Level C: Risk Analysis
-import { RiskMetricCalculator } from "./risk/risk-metric-calculator";
+import { RiskMetricCalculator } from "../../shared/generative-engine/risk/risk-metric-calculator";
 import { OverrideRiskAnalyzer } from "./risk/override-risk-analyzer";
 
 const LEVEL_B_PROVIDERS = [

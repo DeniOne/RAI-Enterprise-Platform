@@ -4,6 +4,7 @@ import { SupervisorAgent } from "../supervisor-agent.service";
 import { IntentRouterService } from "../intent-router/intent-router.service";
 import { MemoryCoordinatorService } from "../memory/memory-coordinator.service";
 import { AgentRuntimeService } from "./agent-runtime.service";
+import { SupervisorForensicsService } from "../supervisor-forensics.service";
 import { ResponseComposerService } from "../composer/response-composer.service";
 import { ExternalSignalsService } from "../external-signals.service";
 import { RaiChatWidgetBuilder } from "../rai-chat-widget-builder";
@@ -15,6 +16,9 @@ import { AgroToolsRegistry } from "../tools/agro-tools.registry";
 import { FinanceToolsRegistry } from "../tools/finance-tools.registry";
 import { RiskToolsRegistry } from "../tools/risk-tools.registry";
 import { KnowledgeToolsRegistry } from "../tools/knowledge-tools.registry";
+import { CrmToolsRegistry } from "../tools/crm-tools.registry";
+import { FrontOfficeToolsRegistry } from "../tools/front-office-tools.registry";
+import { ContractsToolsRegistry } from "../tools/contracts-tools.registry";
 import { RiskPolicyEngineService } from "../security/risk-policy-engine.service";
 import { PendingActionService } from "../security/pending-action.service";
 import { AutonomyPolicyService } from "../autonomy-policy.service";
@@ -35,9 +39,18 @@ import { AgronomAgent } from "../agents/agronom-agent.service";
 import { EconomistAgent } from "../agents/economist-agent.service";
 import { KnowledgeAgent } from "../agents/knowledge-agent.service";
 import { MonitoringAgent } from "../agents/monitoring-agent.service";
+import { CrmAgent } from "../agents/crm-agent.service";
+import { FrontOfficeAgent } from "../agents/front-office-agent.service";
+import { ContractsAgent } from "../agents/contracts-agent.service";
+import { ChiefAgronomistAgent } from "../agents/chief-agronomist-agent.service";
+import { DataScientistAgent } from "../agents/data-scientist-agent.service";
 import { OpenRouterGatewayService } from "../agent-platform/openrouter-gateway.service";
 import { AgentPromptAssemblyService } from "../agent-platform/agent-prompt-assembly.service";
 import { AgentExecutionAdapterService } from "./agent-execution-adapter.service";
+import { RuntimeGovernanceControlService } from "./runtime-governance-control.service";
+import { RuntimeGovernanceEventService } from "../runtime-governance/runtime-governance-event.service";
+import { RuntimeGovernancePolicyService } from "../runtime-governance/runtime-governance-policy.service";
+import { RuntimeGovernanceFeatureFlagsService } from "../runtime-governance/runtime-governance-feature-flags.service";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -362,6 +375,7 @@ describe("Runtime spine integration", () => {
   const queueMetricsMock = {
     beginRuntimeExecution: jest.fn(),
     endRuntimeExecution: jest.fn(),
+    getQueuePressure: jest.fn(),
   };
   const techMapBudgetMock = {
     calculateBudget: jest.fn(),
@@ -371,6 +385,39 @@ describe("Runtime spine integration", () => {
   };
   const agentPromptAssemblyMock = {
     buildMessages: jest.fn().mockReturnValue([]),
+  };
+  const crmAgentMock = { run: jest.fn() };
+  const frontOfficeAgentMock = { run: jest.fn() };
+  const contractsAgentMock = { run: jest.fn() };
+  const chiefAgronomistAgentMock = { run: jest.fn() };
+  const dataScientistAgentMock = { run: jest.fn() };
+  const runtimeGovernanceEventsMock = {
+    record: jest.fn().mockResolvedValue(undefined),
+  };
+  const runtimeGovernancePolicyMock = {
+    getRolePolicy: jest.fn().mockReturnValue({
+      concurrency: {
+        maxParallelToolCalls: 8,
+        maxParallelGroups: 6,
+        deadlineMs: 30_000,
+      },
+      thresholds: {
+        queueSaturationThreshold: "SATURATED",
+      },
+    }),
+    resolveFallbackMode: jest.fn().mockReturnValue("READ_ONLY_SUPPORT"),
+  };
+  const disabledToolsRegistryMock = {
+    has: jest.fn().mockReturnValue(false),
+    execute: jest.fn(),
+  };
+  const runtimeGovernanceFeatureFlagsMock = {
+    getFlags: jest.fn().mockReturnValue({
+      enforcementEnabled: true,
+      queueFallbackEnabled: true,
+      queueFallbackShadowMode: false,
+      emergencyKillSwitch: false,
+    }),
   };
 
   const buildModule = async () => {
@@ -433,6 +480,13 @@ describe("Runtime spine integration", () => {
     performanceMetricsMock.recordError.mockResolvedValue(undefined);
     queueMetricsMock.beginRuntimeExecution.mockResolvedValue(undefined);
     queueMetricsMock.endRuntimeExecution.mockResolvedValue(undefined);
+    queueMetricsMock.getQueuePressure.mockResolvedValue({
+      pressureState: "STABLE",
+      signalFresh: true,
+      totalBacklog: 1,
+      hottestQueue: "runtime_active_tool_calls",
+      observedQueues: [],
+    });
     techMapBudgetMock.calculateBudget.mockResolvedValue({
       totalActual: 0,
       totalPlanned: 0,
@@ -444,7 +498,9 @@ describe("Runtime spine integration", () => {
         IntentRouterService,
         MemoryCoordinatorService,
         AgentRuntimeService,
+        SupervisorForensicsService,
         AgentExecutionAdapterService,
+        RuntimeGovernanceControlService,
         ResponseComposerService,
         RaiChatWidgetBuilder,
         TraceSummaryService,
@@ -454,10 +510,18 @@ describe("Runtime spine integration", () => {
         FinanceToolsRegistry,
         RiskToolsRegistry,
         KnowledgeToolsRegistry,
+        { provide: CrmToolsRegistry, useValue: disabledToolsRegistryMock },
+        { provide: FrontOfficeToolsRegistry, useValue: disabledToolsRegistryMock },
+        { provide: ContractsToolsRegistry, useValue: disabledToolsRegistryMock },
         AgronomAgent,
         EconomistAgent,
         KnowledgeAgent,
         MonitoringAgent,
+        { provide: CrmAgent, useValue: crmAgentMock },
+        { provide: FrontOfficeAgent, useValue: frontOfficeAgentMock },
+        { provide: ContractsAgent, useValue: contractsAgentMock },
+        { provide: ChiefAgronomistAgent, useValue: chiefAgronomistAgentMock },
+        { provide: DataScientistAgent, useValue: dataScientistAgentMock },
         RiskPolicyEngineService,
         PendingActionService,
         AutonomyPolicyService,
@@ -478,6 +542,9 @@ describe("Runtime spine integration", () => {
         { provide: TechMapBudgetService, useValue: techMapBudgetMock },
         { provide: OpenRouterGatewayService, useValue: openRouterGatewayMock },
         { provide: AgentPromptAssemblyService, useValue: agentPromptAssemblyMock },
+        { provide: RuntimeGovernanceEventService, useValue: runtimeGovernanceEventsMock },
+        { provide: RuntimeGovernancePolicyService, useValue: runtimeGovernancePolicyMock },
+        { provide: RuntimeGovernanceFeatureFlagsService, useValue: runtimeGovernanceFeatureFlagsMock },
       ],
     }).compile();
 

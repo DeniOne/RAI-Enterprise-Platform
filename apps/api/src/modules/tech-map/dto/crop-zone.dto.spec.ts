@@ -1,7 +1,7 @@
 import {
   CropZoneCreateDtoSchema,
   CropZoneResponseDtoSchema,
-} from "./crop-zone.dto";
+} from "../../../shared/tech-map/dto/crop-zone.dto";
 
 describe("CropZone DTO", () => {
   it("принимает валидный payload", () => {

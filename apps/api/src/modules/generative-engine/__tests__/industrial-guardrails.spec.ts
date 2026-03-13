@@ -1,7 +1,7 @@
 import {
   CounterfactualEngine,
   CounterfactualInput,
-} from "../contradiction/counterfactual-engine";
+} from "../../../shared/generative-engine/contradiction/counterfactual-engine";
 import {
   OverrideRiskAnalyzer,
   OverrideAnalysisInput,
@@ -10,7 +10,7 @@ import {
   ConflictMatrixService,
   ConflictMatrixInput,
 } from "../contradiction/conflict-matrix.service";
-import { RiskMetricCalculator } from "../risk/risk-metric-calculator";
+import { RiskMetricCalculator } from "../../../shared/generative-engine/risk/risk-metric-calculator";
 import { CanonicalSorter } from "../deterministic/canonical-sorter";
 import { StableHasher } from "../deterministic/stable-hasher";
 

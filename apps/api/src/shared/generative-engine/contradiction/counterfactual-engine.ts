@@ -1,10 +1,10 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { CanonicalSorter } from "../deterministic/canonical-sorter";
-import { StableHasher } from "../deterministic/stable-hasher";
+import { CanonicalSorter } from "../../../modules/generative-engine/deterministic/canonical-sorter";
+import { StableHasher } from "../../../modules/generative-engine/deterministic/stable-hasher";
 import {
   roundHalfToEven,
   roundAllNumbers,
-} from "../deterministic/round-half-to-even";
+} from "../../../modules/generative-engine/deterministic/round-half-to-even";
 
 /**
  * CounterfactualEngine — Детерминированная симуляция альтернативных траекторий.

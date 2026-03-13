@@ -11,7 +11,7 @@ import {
   ToolRiskLevel,
 } from "./rai-tools.types";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
-import { SecurityViolationError } from "../security/security-violation.error";
+import { SecurityViolationError } from "../../../shared/rai-chat/security/security-violation.error";
 
 const RISK_TOOL_NAMES: RaiToolName[] = [
   RaiToolName.EmitAlerts,

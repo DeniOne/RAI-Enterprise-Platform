@@ -1,7 +1,7 @@
 import {
   CounterfactualEngine,
   CounterfactualInput,
-} from "./counterfactual-engine";
+} from "../../../shared/generative-engine/contradiction/counterfactual-engine";
 import { CanonicalSorter } from "../deterministic/canonical-sorter";
 import { StableHasher } from "../deterministic/stable-hasher";
 

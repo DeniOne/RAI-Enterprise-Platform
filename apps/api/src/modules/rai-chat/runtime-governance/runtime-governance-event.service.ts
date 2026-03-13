@@ -5,7 +5,7 @@ import {
   FallbackMode,
   FallbackReason,
   GovernanceRecommendationType,
-} from "./runtime-governance-policy.types";
+} from "../../../shared/rai-chat/runtime-governance-policy.types";
 
 export interface RecordRuntimeGovernanceEventParams {
   companyId: string;

@@ -3,7 +3,7 @@ import {
   RiskMetricCalculator,
   RiskInput,
   RiskOutput,
-} from "./risk-metric-calculator";
+} from "../../../shared/generative-engine/risk/risk-metric-calculator";
 import { CanonicalSorter } from "../deterministic/canonical-sorter";
 import { StableHasher } from "../deterministic/stable-hasher";
 import { roundHalfToEven } from "../deterministic/round-half-to-even";

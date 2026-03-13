@@ -4,7 +4,7 @@ import {
   planByToolCalls,
   planByIntents,
 } from "./tool-call.planner";
-import type { IntentClassification } from "../intent-router/intent-router.types";
+import type { IntentClassification } from "../../../shared/rai-chat/intent-router.types";
 
 describe("ToolCallPlanner", () => {
   describe("planByToolCalls", () => {

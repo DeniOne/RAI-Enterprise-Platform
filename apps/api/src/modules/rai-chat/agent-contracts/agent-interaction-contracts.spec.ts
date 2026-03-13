@@ -11,7 +11,7 @@ import {
   resolveContextValues,
   resolveMissingContextKeys,
   validateResponsibilityProfileCompatibility,
-} from "./agent-interaction-contracts";
+} from "../../../shared/rai-chat/agent-interaction-contracts";
 
 describe("agent interaction contracts", () => {
   it("классифицирует техкарту через единый contract source", () => {

@@ -18,6 +18,7 @@ export const GovernanceBar: React.FC = () => {
     const { canOverride, canApprove } = useAuthority();
     const { traceId, integrityStatus } = useSessionIntegrity();
     const [isRoleMenuOpen, setIsRoleMenuOpen] = useState(false);
+    const roleOptions: UserRole[] = ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'FIELD_WORKER', 'CLIENT_ADMIN', 'USER'];
 
     return (
         <header className="h-16 border-b border-black/5 bg-white/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-50">
@@ -78,7 +79,7 @@ export const GovernanceBar: React.FC = () => {
                                     : "-translate-y-1 opacity-0",
                             )}
                         >
-                        {(['CEO', 'DIRECTOR', 'MANAGER', 'AGRONOMIST', 'GUEST'] as UserRole[]).map((role) => (
+                        {roleOptions.map((role) => (
                             <button
                                 key={role}
                                 onClick={() => {

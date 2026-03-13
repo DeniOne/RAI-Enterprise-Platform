@@ -5,7 +5,7 @@ import {
   type AgentEvalCandidate,
   type EvalRunResult,
 } from "../rai-chat/eval/golden-test-runner.service";
-import type { UpsertAgentConfigDto } from "./dto/agent-config.dto";
+import type { UpsertAgentConfigDto } from "../../shared/explainability/agent-config.dto";
 import {
   CanonicalAgentRuntimeRole,
   isAgentRuntimeRole,

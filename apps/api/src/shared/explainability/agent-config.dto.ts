@@ -1,13 +1,13 @@
 import { z } from "zod";
 import {
   isAgentRuntimeRole,
-} from "../../rai-chat/agent-registry.service";
-import { RaiToolName } from "../../../shared/rai-chat/rai-tools.types";
-import { AgentAutonomyMode, AgentMemoryScope } from "../../rai-chat/agent-platform/agent-platform.types";
+} from "../../modules/rai-chat/agent-registry.service";
+import { RaiToolName } from "../rai-chat/rai-tools.types";
+import { AgentAutonomyMode, AgentMemoryScope } from "../../modules/rai-chat/agent-platform/agent-platform.types";
 import {
   FALLBACK_MODES,
   RuntimeGovernanceOverrides,
-} from "../../rai-chat/runtime-governance/runtime-governance-policy.types";
+} from "../rai-chat/runtime-governance-policy.types";
 
 export const AgentRuntimeRoleSchema = z
   .string()

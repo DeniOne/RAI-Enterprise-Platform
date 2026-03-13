@@ -8,6 +8,10 @@ import { ROLES_KEY } from "./roles.decorator";
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) { }
 
+  private isKnownRole(role: string): role is UserRole {
+    return (Object.values(UserRole) as string[]).includes(role);
+  }
+
   canActivate(context: ExecutionContext): boolean {
     const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
       ROLES_KEY,
@@ -30,8 +34,15 @@ export class RolesGuard implements CanActivate {
       return false;
     }
 
-    const simulatedRole = headers['x-simulated-role'];
-    const effectiveRole = simulatedRole ? simulatedRole : user.role;
+    const simulatedRoleHeader = headers?.["x-simulated-role"];
+    const normalizedSimulatedRole =
+      typeof simulatedRoleHeader === "string"
+        ? simulatedRoleHeader.trim().toUpperCase()
+        : null;
+    const effectiveRole =
+      normalizedSimulatedRole && this.isKnownRole(normalizedSimulatedRole)
+        ? normalizedSimulatedRole
+        : user.role;
 
     // ADMIN имеет доступ ко всему
     if (effectiveRole === UserRole.ADMIN) {

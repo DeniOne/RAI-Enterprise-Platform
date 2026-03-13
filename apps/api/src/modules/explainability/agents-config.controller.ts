@@ -15,7 +15,7 @@ import {
   RollbackChangeDtoSchema,
   UpsertAgentConfigDtoSchema,
   type AgentConfigChangeRequestDto,
-} from "./dto/agent-config.dto";
+} from "../../shared/explainability/agent-config.dto";
 import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
 
 @Controller("rai/agents")

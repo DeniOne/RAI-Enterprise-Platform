@@ -3,7 +3,7 @@ import { AutonomyPolicyService } from "../autonomy-policy.service";
 import {
   GovernanceRecommendationRecord,
   GovernanceRecommendationType,
-} from "./runtime-governance-policy.types";
+} from "../../../shared/rai-chat/runtime-governance-policy.types";
 import { RuntimeGovernanceFeatureFlagsService } from "./runtime-governance-feature-flags.service";
 import { RuntimeGovernanceOverrideService } from "./runtime-governance-override.service";
 

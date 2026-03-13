@@ -5,7 +5,7 @@ import {
 import {
   CounterfactualEngine,
   CounterfactualInput,
-} from "../contradiction/counterfactual-engine";
+} from "../../../shared/generative-engine/contradiction/counterfactual-engine";
 import {
   ConflictMatrixService,
   ConflictMatrixInput,
@@ -14,8 +14,8 @@ import {
   OverrideRiskAnalyzer,
   OverrideAnalysisInput,
 } from "../risk/override-risk-analyzer";
-import { ConflictExplainabilityBuilder } from "../contradiction/conflict-explainability-builder";
-import { RiskMetricCalculator } from "../risk/risk-metric-calculator";
+import { ConflictExplainabilityBuilder } from "../../../shared/generative-engine/contradiction/conflict-explainability-builder";
+import { RiskMetricCalculator } from "../../../shared/generative-engine/risk/risk-metric-calculator";
 import { CanonicalSorter } from "../deterministic/canonical-sorter";
 import { StableHasher } from "../deterministic/stable-hasher";
 import { TechMapStatus, UserRole } from "@rai/prisma-client";

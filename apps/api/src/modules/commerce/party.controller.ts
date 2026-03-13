@@ -1,12 +1,12 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, UseInterceptors } from "@nestjs/common";
 import { PartyService } from "./services/party.service";
-import { CreatePartyDto, UpdatePartyDto, CreatePartyRelationDto, UpdatePartyRelationDto } from "./dto/create-party.dto";
-import { CreateJurisdictionDto, UpdateJurisdictionDto } from "./dto/create-jurisdiction.dto";
+import { CreatePartyDto, UpdatePartyDto, CreatePartyRelationDto, UpdatePartyRelationDto } from "../../shared/commerce/dto/create-party.dto";
+import { CreateJurisdictionDto, UpdateJurisdictionDto } from "../../shared/commerce/dto/create-jurisdiction.dto";
 import {
     CreateRegulatoryProfileDto,
     UpdateRegulatoryProfileDto,
     ListRegulatoryProfilesQueryDto,
-} from "./dto/create-regulatory-profile.dto";
+} from "../../shared/commerce/dto/create-regulatory-profile.dto";
 import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
 import { Authorized } from "../../shared/auth/authorized.decorator";
 import {

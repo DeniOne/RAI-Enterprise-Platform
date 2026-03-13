@@ -1,6 +1,6 @@
 import { RaiToolName } from "../tools/rai-tools.types";
-import { IntentClassification } from "../intent-router/intent-router.types";
-import { RuntimeConcurrencyEnvelope } from "../runtime-governance/runtime-governance-policy.types";
+import { IntentClassification } from "../../../shared/rai-chat/intent-router.types";
+import { RuntimeConcurrencyEnvelope } from "../../../shared/rai-chat/runtime-governance-policy.types";
 
 const AGRONOM_TOOLS: RaiToolName[] = [
   RaiToolName.GenerateTechMapDraft,

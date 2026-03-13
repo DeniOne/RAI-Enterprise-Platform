@@ -1,7 +1,7 @@
 import {
   ApprovalCreateDtoSchema,
   ApprovalDecisionDtoSchema,
-} from "./approval.dto";
+} from "../../../shared/tech-map/dto/approval.dto";
 
 describe("Approval DTO", () => {
   it("принимает валидный payload", () => {

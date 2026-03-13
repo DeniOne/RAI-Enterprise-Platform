@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { TenantContextService } from '../tenant-context/tenant-context.service';
 import { MemoryController } from './memory.controller';
 import { MemoryFacade } from './memory-facade.service';
@@ -50,6 +50,7 @@ describe('MemoryController', () => {
     await controller.getControlPlaneState({
       userId: 'user-1',
       companyId: 'company-1',
+      role: 'ADMIN',
     });
 
     expect(memoryMaintenanceService.getControlPlaneState).toHaveBeenCalledWith(
@@ -61,7 +62,7 @@ describe('MemoryController', () => {
     const { controller, memoryMaintenanceService } = createController('company-1');
 
     await controller.runMaintenance(
-      { userId: 'user-1', companyId: 'company-1' },
+      { userId: 'user-1', companyId: 'company-1', role: 'ADMIN' },
       {
         playbookId: MemoryMaintenancePlaybookId.S_TIER_BACKLOG_RECOVERY,
         actions: [MemoryMaintenanceAction.CONSOLIDATION],
@@ -78,5 +79,29 @@ describe('MemoryController', () => {
       maxRuns: 2,
       reason: 'manual_recovery_window',
     });
+  });
+
+  it('forwards tenant-scoped memory health request', async () => {
+    const { controller, memoryFacade } = createController('company-1');
+
+    await controller.getHealth({
+      userId: 'user-1',
+      companyId: 'company-1',
+      role: 'ADMIN',
+    });
+
+    expect(memoryFacade.getMemoryHealth).toHaveBeenCalledWith('company-1');
+  });
+
+  it('rejects non-privileged role for memory endpoints', async () => {
+    const { controller } = createController('company-1');
+
+    await expect(
+      controller.getHealth({
+        userId: 'user-1',
+        companyId: 'company-1',
+        role: 'MANAGER',
+      }),
+    ).rejects.toThrow(ForbiddenException);
   });
 });

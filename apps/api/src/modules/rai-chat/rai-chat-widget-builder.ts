@@ -4,7 +4,7 @@ import {
   RAI_CHAT_WIDGETS_SCHEMA_VERSION,
   RaiChatWidget,
   RaiChatWidgetType,
-} from "./widgets/rai-chat-widgets.types";
+} from "../../shared/rai-chat/rai-chat-widgets.types";
 
 @Injectable()
 export class RaiChatWidgetBuilder {

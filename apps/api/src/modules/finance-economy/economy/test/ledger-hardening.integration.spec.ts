@@ -2,7 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { EconomyService } from "../application/economy.service";
 import { PrismaService } from "../../../../shared/prisma/prisma.service";
 import { OutboxService } from "../../../../shared/outbox/outbox.service";
-import { FinanceConfigService } from "../../finance/config/finance-config.service";
+import { FinanceConfigService } from "../../../../shared/finance-economy/config/finance-config.service";
 import {
   BadRequestException,
   ServiceUnavailableException,

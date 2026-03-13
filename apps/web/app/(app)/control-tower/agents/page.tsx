@@ -80,15 +80,15 @@ type CanonicalAdapterRole = 'agronomist' | 'economist' | 'knowledge' | 'monitori
 
 function roleOptionLabel(role: string) {
   const labels: Record<string, string> = {
-    agronomist: 'agronomist / Агроном',
-    economist: 'economist / Экономист',
-    knowledge: 'knowledge / Знание',
-    monitoring: 'monitoring / Мониторинг',
-    crm_agent: 'crm_agent / CRM-агент',
-    front_office_agent: 'front_office_agent / Фронт-офис агент',
-    contracts_agent: 'contracts_agent / Contracts-агент',
-    chief_agronomist: 'chief_agronomist / Мега-Агроном',
-    data_scientist: 'data_scientist / Data Scientist',
+    agronomist: 'Агроном (agronomist)',
+    economist: 'Экономист (economist)',
+    knowledge: 'Знание (knowledge)',
+    monitoring: 'Мониторинг (monitoring)',
+    crm_agent: 'CRM-агент (crm_agent)',
+    front_office_agent: 'Фронт-офис агент (front_office_agent)',
+    contracts_agent: 'Контрактный агент (contracts_agent)',
+    chief_agronomist: 'Мега-Агроном (chief_agronomist)',
+    data_scientist: 'Дата-сайентист (data_scientist)',
   };
   return labels[role] ?? role;
 }
@@ -148,7 +148,7 @@ function displayAgentName(role: string, fallbackName: string) {
     front_office_agent: 'ФронтОфис-А',
     contracts_agent: 'Контракты-А',
     chief_agronomist: 'Мега-Агроном-А',
-    data_scientist: 'DataScientist-А',
+    data_scientist: 'Дата-Сайентист-А',
     controller: 'Контролёр-А',
     personal_assistant: 'Ассистент-А',
   };
@@ -243,7 +243,7 @@ function buildDefaultManifest(params: {
     domainAdapter: {
       adapterId: `${params.role}-domain-adapter`,
       status: 'optional',
-      notes: 'Optional deterministic adapter for domain-specific enrichments.',
+      notes: 'Опциональный детерминированный адаптер для доменных обогащений.',
     },
   };
 }
@@ -382,7 +382,7 @@ export default function AgentsPage() {
                 <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182]">
                   <HeaderWithHint
                     label="Возможности / Контракты"
-                    hint="Здесь перечислены capability packs, инструменты и runtime-контракты: memory, output и governance."
+                    hint="Здесь перечислены наборы возможностей, инструменты и контракты исполнения: память, ответ и управление."
                   />
                 </th>
                 <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182] text-right">Управляемое действие</th>
@@ -452,9 +452,9 @@ export default function AgentsPage() {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <PolicyDisclosure title="Memory Policy" payload={agent.memoryPolicy} />
-                        <PolicyDisclosure title="Output Contract" payload={agent.outputContract} />
-                        <PolicyDisclosure title="Governance Policy" payload={agent.governancePolicy} />
+                        <PolicyDisclosure title="Политика памяти" payload={agent.memoryPolicy} />
+                        <PolicyDisclosure title="Контракт ответа" payload={agent.outputContract} />
+                        <PolicyDisclosure title="Политика управления" payload={agent.governancePolicy} />
                       </div>
                     </div>
                   </td>
@@ -658,7 +658,7 @@ function AgentEditor({
           name: name.trim(),
           kind,
           ownerDomain: ownerDomain.trim() || 'custom_domain',
-          description: description.trim() || 'Governed future agent.',
+          description: description.trim() || 'Управляемый будущий агент.',
           defaultAutonomyMode,
           llmModel,
           maxTokens,
@@ -694,14 +694,14 @@ function AgentEditor({
     const effectiveRole = createMode ? role : agent?.role ?? role;
     if (!effectiveRole?.trim()) { setErr('Укажите роль'); return; }
     if (!name?.trim()) { setErr('Укажите название'); return; }
-    if (createMode && !ownerDomain.trim()) { setErr('Укажите owner domain'); return; }
+    if (createMode && !ownerDomain.trim()) { setErr('Укажите домен-владелец'); return; }
     if (createMode && !description.trim()) { setErr('Укажите описание агента'); return; }
     setErr(null);
 
     if (createMode) {
       const manifestValidation = await validateManifest();
       if (!manifestValidation?.valid) {
-        setErr('Манифест не прошёл validation. Исправьте ошибки ниже.');
+        setErr('Манифест не прошёл валидацию. Исправьте ошибки ниже.');
         return;
       }
     }
@@ -791,7 +791,7 @@ function AgentEditor({
                 ))}
               </select>
               <p className="mt-2 text-[11px] text-[#717182] leading-relaxed">
-                Шаблон подставляет стандартные настройки runtime и governance. Для `crm_agent`, `front_office_agent` и `contracts_agent` backend-шаблоны уже существуют.
+                Шаблон подставляет стандартные настройки исполнения и управления. Для `crm_agent`, `front_office_agent` и `contracts_agent` серверные шаблоны уже существуют.
               </p>
             </div>
           )}
@@ -930,7 +930,7 @@ function AgentEditor({
               <div>
                 <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182] mb-3">Связка ответственности</p>
                 <p className="text-[12px] text-[#717182] leading-relaxed">
-                  Здесь задаётся, от какого канонического профиля ответственности наследуется новый агент и какие intent-ы ему разрешены.
+                  Здесь задаётся, от какого канонического профиля ответственности наследуется новый агент и какие интенты ему разрешены.
                 </p>
               </div>
 
@@ -970,7 +970,7 @@ function AgentEditor({
               </div>
 
               <div>
-                <label className="mb-2 block text-[13px] font-medium text-[#717182]">Разрешённые intent-ы</label>
+                <label className="mb-2 block text-[13px] font-medium text-[#717182]">Разрешённые интенты</label>
                 <input
                   value={allowedIntentsInput}
                   onChange={(e) => setAllowedIntentsInput(e.target.value)}
@@ -981,18 +981,18 @@ function AgentEditor({
               </div>
 
               <div>
-                <label className="mb-2 block text-[13px] font-medium text-[#717182]">Запрещённые intent-ы</label>
+                <label className="mb-2 block text-[13px] font-medium text-[#717182]">Запрещённые интенты</label>
                 <input
                   value={forbiddenIntentsInput}
                   onChange={(e) => setForbiddenIntentsInput(e.target.value)}
                   className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] font-mono focus:border-black/30 outline-none"
-                  placeholder="intent1, intent2"
+                  placeholder="интент_1, интент_2"
                   list="responsibility-intents"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-[13px] font-medium text-[#717182]">Дополнительные UI-действия</label>
+                <label className="mb-2 block text-[13px] font-medium text-[#717182]">Дополнительные действия интерфейса</label>
                 <input
                   value={extraUiActionsInput}
                   onChange={(e) => setExtraUiActionsInput(e.target.value)}
@@ -1063,9 +1063,9 @@ function AgentEditor({
             <div className="rounded-2xl border border-black/10 bg-white p-4 space-y-3">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                      <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182]">Onboarding validation</p>
+                      <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182]">Проверка манифеста</p>
                       <p className="text-[12px] text-[#717182] leading-relaxed">
-                    Перед отправкой манифест проверяется backend-валидатором на совместимость runtime, governance и responsibility.
+                    Перед отправкой манифест проверяется серверным валидатором на совместимость исполнения, управления и ответственности.
                   </p>
                 </div>
                 <button
@@ -1087,7 +1087,7 @@ function AgentEditor({
                   }`}>
                     {validation.valid
                       ? `Манифест валиден. Нормализованная роль: ${validation.normalizedRole}.`
-                      : 'Манифест невалиден. Исправьте missing requirements перед отправкой.'}
+                      : 'Манифест невалиден. Исправьте обязательные требования перед отправкой.'}
                   </div>
                   {validation.missingRequirements.length > 0 && (
                     <div>
@@ -1128,7 +1128,7 @@ function AgentEditor({
             onClick={save}
             className="px-5 py-2.5 rounded-lg text-[13px] font-medium bg-[#030213] text-white hover:bg-black transition-colors"
           >
-            Отправить в governance
+            Отправить на согласование
           </button>
         </div>
       </div>
@@ -1163,7 +1163,7 @@ function PolicyDisclosure({ title, payload }: { title: string; payload?: Record<
   if (!payload || Object.keys(payload).length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-black/10 bg-slate-50 px-3 py-2 text-[11px] text-[#717182]">
-        {title}: нет runtime-данных
+        {title}: нет данных исполнения
       </div>
     );
   }

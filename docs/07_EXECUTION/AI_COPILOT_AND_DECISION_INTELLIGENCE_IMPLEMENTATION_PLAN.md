@@ -2,14 +2,26 @@
 id: DOC-EXE-07-EXECUTION-AI-COPILOT-AND-DECISION-INTEL-KSO0
 layer: Execution
 type: Phase Plan
-status: draft
+status: in_progress
 version: 0.1.0
 owners: [@techlead]
-last_updated: 2026-03-11
+last_updated: 2026-03-13
 ---
 # AI Copilot and Decision Intelligence: Implementation Plan
 
-Status: READY FOR PLANNING / NOT READY FOR FEATURE RUSH
+Status: IN EXECUTION / FOUNDATION-GATED ROLLOUT ONLY
+
+## Execution Snapshot (2026-03-13)
+
+- WS0: foundation hardening контур реализуется и остаётся обязательным release-gate для всех user-facing AI surfaces.
+- WS1/WS2: memory summary contract, AI Dock hints/suggested actions и degrade/escalation поведение внедрены в runtime/frontend слоях.
+- WS3: contextual `chief_agronomist` review flow (`POST /rai-chat/expert/chief-agronomist/review` + outcome actions) реализован.
+- WS4: `Стратегия -> Прогнозы` MVP реализован как отдельный OFS endpoint + strategy screen (`baseline/range/scenario delta/risk/recommendation`).
+- WS5 (current slice): `data_scientist` runtime получил deterministic bridge к `DecisionIntelligenceService` через intent `strategy_forecast`; LLM остаётся интерпретационным слоем, а не источником чисел.
+- WS6: `Control Tower` memory visibility и `forensics.memoryLane` surface реализованы с role-based gating.
+
+Execution closeout packet:
+- `docs/07_EXECUTION/AI_COPILOT_RELEASE_GO_NO_GO_2026-03-13.md`
 
 ## 0. Executive Rule
 

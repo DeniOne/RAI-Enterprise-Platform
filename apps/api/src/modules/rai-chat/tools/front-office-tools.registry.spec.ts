@@ -95,4 +95,22 @@ describe("FrontOfficeToolsRegistry", () => {
     expect(result.targetOwnerRole).not.toBe("crm_agent");
     expect(result.handoffSummary).toContain("owner=contracts_agent");
   });
+
+  it("маршрутизирует финансовый запрос на economist через policy", async () => {
+    const result = await registry.execute(
+      RaiToolName.ClassifyDialogThread,
+      {
+        channel: "web_chat",
+        messageText: "Нужно посчитать маржинальность и план-факт по бюджету",
+        threadExternalId: "web-42",
+      },
+      { companyId: "company-1", traceId: "trace-5" },
+    );
+
+    expect(result.classification).toBe("task_process");
+    expect(result.targetOwnerRole).toBe("economist");
+    expect(result.reasons).toEqual(
+      expect.arrayContaining(["owner:economy", "classification:task_language_detected"]),
+    );
+  });
 });

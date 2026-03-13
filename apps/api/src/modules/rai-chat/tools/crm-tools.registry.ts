@@ -1,40 +1,48 @@
 import { BadRequestException, Injectable, OnModuleInit } from "@nestjs/common";
-import * as Joi from "joi";
 import { ObjectSchema } from "joi";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
 import { PartyService } from "../../commerce/services/party.service";
 import { PartyLookupService } from "../../commerce/services/party-lookup.service";
 import { CrmService } from "../../crm/crm.service";
 import {
-  CreateCounterpartyRelationPayload,
   CreateCounterpartyRelationResult,
-  CreateCrmAccountPayload,
   CreateCrmAccountResult,
-  CreateCrmContactPayload,
   CreateCrmContactResult,
-  CreateCrmInteractionPayload,
-  CreateCrmObligationPayload,
-  DeleteCrmContactPayload,
   DeleteCrmContactResult,
-  DeleteCrmInteractionPayload,
   DeleteCrmInteractionResult,
-  DeleteCrmObligationPayload,
   DeleteCrmObligationResult,
-  GetCrmAccountWorkspacePayload,
-  LookupCounterpartyByInnPayload,
   RaiToolActorContext,
   RaiToolName,
   RaiToolPayloadMap,
   RaiToolResultMap,
-  RegisterCounterpartyPayload,
-  UpdateCrmAccountPayload,
-  UpdateCrmContactPayload,
   UpdateCrmContactResult,
-  UpdateCrmInteractionPayload,
   UpdateCrmInteractionResult,
-  UpdateCrmObligationPayload,
   UpdateCrmObligationResult,
 } from "./rai-tools.types";
+import {
+  createCounterpartyRelationSchema,
+  createCrmAccountSchema,
+  createCrmContactSchema,
+  createCrmInteractionSchema,
+  createCrmObligationSchema,
+  deleteCrmContactSchema,
+  deleteCrmInteractionSchema,
+  deleteCrmObligationSchema,
+  getCrmAccountWorkspaceSchema,
+  lookupCounterpartyByInnSchema,
+  registerCounterpartySchema,
+  updateCrmAccountSchema,
+  updateCrmContactSchema,
+  updateCrmInteractionSchema,
+  updateCrmObligationSchema,
+} from "../../../shared/rai-chat/crm-tool-schemas";
+import {
+  buildRegistrationData,
+  extractJurisdictionCode,
+  hasPartyInn,
+  mapLookupTypeToPartyType,
+  resolveLookupPartyType,
+} from "../../../shared/rai-chat/crm-tool-helpers";
 
 const CRM_TOOL_NAMES: RaiToolName[] = [
   RaiToolName.LookupCounterpartyByInn,
@@ -96,14 +104,10 @@ export class CrmToolsRegistry implements OnModuleInit {
   onModuleInit() {
     this.register(
       RaiToolName.LookupCounterpartyByInn,
-      Joi.object<LookupCounterpartyByInnPayload>({
-        inn: Joi.string().trim().pattern(/^\d{10}(\d{2})?$/).required(),
-        jurisdictionCode: Joi.string().valid("RU", "BY", "KZ").default("RU"),
-        partyType: Joi.string().valid("LEGAL_ENTITY", "IP", "KFH").optional(),
-      }),
+      lookupCounterpartyByInnSchema,
       async (payload, actorContext) => {
         const normalizedInn = payload.inn.trim();
-        const partyType = this.resolveLookupPartyType(normalizedInn, payload.partyType);
+        const partyType = resolveLookupPartyType(normalizedInn, payload.partyType);
         const lookup = await this.partyLookupService.lookup({
           companyId: actorContext.companyId,
           userId: actorContext.userId,
@@ -144,17 +148,10 @@ export class CrmToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.RegisterCounterparty,
-      Joi.object<RegisterCounterpartyPayload>({
-        inn: Joi.string().trim().pattern(/^\d{10}(\d{2})?$/).required(),
-        jurisdictionCode: Joi.string().valid("RU", "BY", "KZ").default("RU"),
-        partyType: Joi.string().valid("LEGAL_ENTITY", "IP", "KFH").optional(),
-        legalName: Joi.string().trim().max(255).optional(),
-        shortName: Joi.string().trim().max(255).optional(),
-        comment: Joi.string().trim().max(500).optional(),
-      }),
+      registerCounterpartySchema,
       async (payload, actorContext) => {
         const normalizedInn = payload.inn.trim();
-        const partyType = this.resolveLookupPartyType(normalizedInn, payload.partyType);
+        const partyType = resolveLookupPartyType(normalizedInn, payload.partyType);
         const existing = await this.findExistingPartyByInn(
           actorContext.companyId,
           normalizedInn,
@@ -167,7 +164,7 @@ export class CrmToolsRegistry implements OnModuleInit {
             legalName: existing.legalName,
             shortName: existing.shortName,
             inn: normalizedInn,
-            jurisdictionCode: this.extractJurisdictionCode(existing),
+            jurisdictionCode: extractJurisdictionCode(existing),
             lookupStatus: "FOUND" as const,
             alreadyExisted: true,
           };
@@ -196,9 +193,9 @@ export class CrmToolsRegistry implements OnModuleInit {
           );
         }
 
-        const registrationData = this.buildRegistrationData(normalizedInn, lookup);
+        const registrationData = buildRegistrationData(normalizedInn, lookup);
         const created = await this.partyService.createParty(actorContext.companyId, {
-          type: this.mapLookupTypeToPartyType(partyType),
+          type: mapLookupTypeToPartyType(partyType),
           legalName,
           shortName: lookup.result?.shortName?.trim() || payload.shortName?.trim() || undefined,
           jurisdictionId: jurisdiction.id,
@@ -222,16 +219,7 @@ export class CrmToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.CreateCounterpartyRelation,
-      Joi.object<CreateCounterpartyRelationPayload>({
-        fromPartyId: Joi.string().trim().max(128).required(),
-        toPartyId: Joi.string().trim().max(128).required(),
-        relationType: Joi.string()
-          .valid("OWNERSHIP", "MANAGEMENT", "AFFILIATED", "AGENCY")
-          .required(),
-        sharePct: Joi.number().min(0).max(100).optional(),
-        validFrom: Joi.string().trim().required(),
-        validTo: Joi.string().trim().optional(),
-      }),
+      createCounterpartyRelationSchema,
       async (payload, actorContext) => {
         const relation = await this.partyService.createPartyRelation(
           actorContext.companyId,
@@ -258,12 +246,7 @@ export class CrmToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.CreateCrmAccount,
-      Joi.object<CreateCrmAccountPayload>({
-        name: Joi.string().trim().max(255).required(),
-        inn: Joi.string().trim().pattern(/^\d{10}(\d{2})?$/).optional(),
-        type: Joi.string().trim().max(64).optional(),
-        holdingId: Joi.string().trim().max(128).optional(),
-      }),
+      createCrmAccountSchema,
       async (payload, actorContext) => {
         const account = await this.crmService.createAccount(
           {
@@ -288,26 +271,14 @@ export class CrmToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.GetCrmAccountWorkspace,
-      Joi.object<GetCrmAccountWorkspacePayload>({
-        accountId: Joi.string().trim().max(128).required(),
-      }),
+      getCrmAccountWorkspaceSchema,
       async (payload, actorContext) =>
         this.crmService.getAccountWorkspace(payload.accountId, actorContext.companyId),
     );
 
     this.register(
       RaiToolName.UpdateCrmAccount,
-      Joi.object<UpdateCrmAccountPayload>({
-        accountId: Joi.string().trim().max(128).required(),
-        name: Joi.string().trim().max(255).optional(),
-        inn: Joi.string().trim().allow(null).optional(),
-        type: Joi.string().trim().max(64).optional(),
-        status: Joi.string().trim().max(64).optional(),
-        holdingId: Joi.string().trim().allow(null).optional(),
-        jurisdiction: Joi.string().trim().allow(null).optional(),
-        riskCategory: Joi.string().trim().max(64).optional(),
-        strategicValue: Joi.string().trim().max(64).optional(),
-      }),
+      updateCrmAccountSchema,
       async (payload, actorContext) => {
         const updated = await this.crmService.updateAccountProfile(payload.accountId, actorContext.companyId, {
           name: payload.name,
@@ -334,16 +305,7 @@ export class CrmToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.CreateCrmContact,
-      Joi.object<CreateCrmContactPayload>({
-        accountId: Joi.string().trim().max(128).required(),
-        firstName: Joi.string().trim().max(120).required(),
-        lastName: Joi.string().trim().max(120).optional(),
-        role: Joi.string().trim().max(64).optional(),
-        influenceLevel: Joi.number().min(0).max(10).optional(),
-        email: Joi.string().trim().max(160).optional(),
-        phone: Joi.string().trim().max(64).optional(),
-        source: Joi.string().trim().max(160).optional(),
-      }),
+      createCrmContactSchema,
       async (payload, actorContext) => {
         const contact = await this.crmService.createContact(
           payload.accountId,
@@ -373,16 +335,7 @@ export class CrmToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.UpdateCrmContact,
-      Joi.object<UpdateCrmContactPayload>({
-        contactId: Joi.string().trim().max(128).required(),
-        firstName: Joi.string().trim().max(120).optional(),
-        lastName: Joi.string().trim().allow(null).max(120).optional(),
-        role: Joi.string().trim().max(64).optional(),
-        influenceLevel: Joi.number().min(0).max(10).allow(null).optional(),
-        email: Joi.string().trim().allow(null).max(160).optional(),
-        phone: Joi.string().trim().allow(null).max(64).optional(),
-        source: Joi.string().trim().allow(null).max(160).optional(),
-      }),
+      updateCrmContactSchema,
       async (payload, actorContext) => {
         const contact = await this.crmService.updateContact(
           payload.contactId,
@@ -411,9 +364,7 @@ export class CrmToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.DeleteCrmContact,
-      Joi.object<DeleteCrmContactPayload>({
-        contactId: Joi.string().trim().max(128).required(),
-      }),
+      deleteCrmContactSchema,
       async (payload, actorContext) => {
         const contact = await this.crmService.deleteContact(
           payload.contactId,
@@ -428,14 +379,7 @@ export class CrmToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.CreateCrmInteraction,
-      Joi.object<CreateCrmInteractionPayload>({
-        accountId: Joi.string().trim().max(128).required(),
-        type: Joi.string().trim().max(64).required(),
-        summary: Joi.string().trim().max(1000).required(),
-        date: Joi.string().trim().optional(),
-        contactId: Joi.string().trim().allow(null).optional(),
-        relatedEventId: Joi.string().trim().allow(null).optional(),
-      }),
+      createCrmInteractionSchema,
       async (payload, actorContext) => {
         const interaction = await this.crmService.createInteraction(payload.accountId, actorContext.companyId, {
           type: payload.type,
@@ -457,14 +401,7 @@ export class CrmToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.UpdateCrmInteraction,
-      Joi.object<UpdateCrmInteractionPayload>({
-        interactionId: Joi.string().trim().max(128).required(),
-        type: Joi.string().trim().max(64).optional(),
-        summary: Joi.string().trim().max(1000).optional(),
-        date: Joi.string().trim().optional(),
-        contactId: Joi.string().trim().allow(null).optional(),
-        relatedEventId: Joi.string().trim().allow(null).optional(),
-      }),
+      updateCrmInteractionSchema,
       async (payload, actorContext) => {
         const interaction = await this.crmService.updateInteraction(
           payload.interactionId,
@@ -490,9 +427,7 @@ export class CrmToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.DeleteCrmInteraction,
-      Joi.object<DeleteCrmInteractionPayload>({
-        interactionId: Joi.string().trim().max(128).required(),
-      }),
+      deleteCrmInteractionSchema,
       async (payload, actorContext) => {
         const interaction = await this.crmService.deleteInteraction(
           payload.interactionId,
@@ -507,13 +442,7 @@ export class CrmToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.CreateCrmObligation,
-      Joi.object<CreateCrmObligationPayload>({
-        accountId: Joi.string().trim().max(128).required(),
-        description: Joi.string().trim().max(1000).required(),
-        dueDate: Joi.string().trim().required(),
-        responsibleUserId: Joi.string().trim().allow(null).optional(),
-        status: Joi.string().trim().max(64).optional(),
-      }),
+      createCrmObligationSchema,
       async (payload, actorContext) => {
         const obligation = await this.crmService.createObligation(payload.accountId, actorContext.companyId, {
           description: payload.description,
@@ -534,13 +463,7 @@ export class CrmToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.UpdateCrmObligation,
-      Joi.object<UpdateCrmObligationPayload>({
-        obligationId: Joi.string().trim().max(128).required(),
-        description: Joi.string().trim().max(1000).optional(),
-        dueDate: Joi.string().trim().optional(),
-        responsibleUserId: Joi.string().trim().allow(null).optional(),
-        status: Joi.string().trim().max(64).optional(),
-      }),
+      updateCrmObligationSchema,
       async (payload, actorContext) => {
         const obligation = await this.crmService.updateObligation(
           payload.obligationId,
@@ -565,9 +488,7 @@ export class CrmToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.DeleteCrmObligation,
-      Joi.object<DeleteCrmObligationPayload>({
-        obligationId: Joi.string().trim().max(128).required(),
-      }),
+      deleteCrmObligationSchema,
       async (payload, actorContext) => {
         const obligation = await this.crmService.deleteObligation(
           payload.obligationId,
@@ -639,74 +560,6 @@ export class CrmToolsRegistry implements OnModuleInit {
 
   private async findExistingPartyByInn(companyId: string, inn: string) {
     const parties = await this.partyService.listParties(companyId);
-    return (
-      parties.find((party) => {
-        const registrationData =
-          party.registrationData && typeof party.registrationData === "object"
-            ? (party.registrationData as Record<string, unknown>)
-            : {};
-        const requisites =
-          registrationData.requisites &&
-          typeof registrationData.requisites === "object"
-            ? (registrationData.requisites as Record<string, unknown>)
-            : {};
-        return (
-          registrationData.inn === inn ||
-          requisites.inn === inn
-        );
-      }) ?? null
-    );
-  }
-
-  private resolveLookupPartyType(
-    inn: string,
-    explicitType?: "LEGAL_ENTITY" | "IP" | "KFH",
-  ): "LEGAL_ENTITY" | "IP" | "KFH" {
-    if (explicitType) {
-      return explicitType;
-    }
-    if (inn.length === 10) {
-      return "LEGAL_ENTITY";
-    }
-    return "IP";
-  }
-
-  private mapLookupTypeToPartyType(partyType: "LEGAL_ENTITY" | "IP" | "KFH") {
-    if (partyType === "IP") {
-      return "IP" as const;
-    }
-    if (partyType === "KFH") {
-      return "KFH" as const;
-    }
-    return "LEGAL_ENTITY" as const;
-  }
-
-  private buildRegistrationData(
-    inn: string,
-    lookup: {
-      status: string;
-      result?: {
-        requisites?: Record<string, unknown>;
-        addresses?: Array<{ type: string; full: string }>;
-        meta?: Record<string, unknown>;
-      };
-    },
-  ) {
-    return {
-      inn,
-      requisites: {
-        ...(lookup.result?.requisites ?? {}),
-        inn,
-      },
-      addresses: lookup.result?.addresses ?? [],
-      meta: lookup.result?.meta ?? {},
-      lookupStatus: lookup.status,
-    };
-  }
-
-  private extractJurisdictionCode(
-    party: { jurisdiction?: { code?: string | null } | null },
-  ): string {
-    return party.jurisdiction?.code ?? "RU";
+    return parties.find((party) => hasPartyInn(party, inn)) ?? null;
   }
 }

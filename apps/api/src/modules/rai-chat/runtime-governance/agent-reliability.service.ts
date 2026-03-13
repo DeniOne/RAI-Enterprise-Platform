@@ -3,7 +3,7 @@ import { PerformanceMetricType, RuntimeGovernanceEventType } from "@rai/prisma-c
 import { PrismaService } from "../../../shared/prisma/prisma.service";
 import {
   GovernanceRecommendationType,
-} from "./runtime-governance-policy.types";
+} from "../../../shared/rai-chat/runtime-governance-policy.types";
 
 export interface AgentReliabilitySummary {
   agentRole: string;

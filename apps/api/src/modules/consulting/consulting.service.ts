@@ -8,8 +8,8 @@
 } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { HarvestPlanStatus, UserRole } from "@rai/prisma-client";
-import { CreateHarvestPlanDto } from "./dto/create-harvest-plan.dto";
-import { UpdateDraftPlanDto } from "./dto/update-draft-plan.dto";
+import { CreateHarvestPlanDto } from "../../shared/consulting/dto/create-harvest-plan.dto";
+import { UpdateDraftPlanDto } from "../../shared/consulting/dto/update-draft-plan.dto";
 import { ConsultingDomainRules } from "./domain-rules/consulting.domain-rules.service";
 import { DecisionService } from "../cmr/decision.service";
 

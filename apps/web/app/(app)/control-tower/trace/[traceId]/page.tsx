@@ -85,10 +85,10 @@ export default function TraceForensicsPage() {
       if (data?.replayTraceId) {
         router.push(`/control-tower/trace/${data.replayTraceId}`);
       } else {
-        setReplayError('Replay выполнен успешно, но инстанцировать новый traceId не удалось.');
+        setReplayError('Повтор выполнен успешно, но создать новый traceId не удалось.');
       }
     } catch (e) {
-      setReplayError((e as Error).message ?? 'Replay отклонен Sentinel (требуется клиренс ADMIN)');
+      setReplayError((e as Error).message ?? 'Повтор отклонён Sentinel (требуется доступ ADMIN)');
     } finally {
       setReplayBusy(false);
     }
@@ -156,7 +156,7 @@ export default function TraceForensicsPage() {
             <ShieldCheck size={24} />
           </div>
           <div>
-            <h1 className="text-xl font-medium text-[#030213]">Отказ в расшифровке Trace ID</h1>
+            <h1 className="text-xl font-medium text-[#030213]">Отказ в расшифровке идентификатора трассы</h1>
             <p className="mt-2 text-[#717182] leading-relaxed text-[13px]">
               <span className="font-mono text-red-600 block mb-1">ERR_TRACE_NOT_FOUND:</span> {error}
             </p>
@@ -179,10 +179,10 @@ export default function TraceForensicsPage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-2 mb-4">
             <Link href="/control-tower" className="text-[11px] font-medium uppercase tracking-widest text-[#717182] hover:text-[#030213] transition-colors">
-              Control & Reliability
+              Контроль и надёжность
             </Link>
             <span className="text-[11px] font-medium text-[#717182]">/</span>
-            <span className="text-[11px] font-medium uppercase tracking-widest text-[#030213]">Forensic Trace</span>
+            <span className="text-[11px] font-medium uppercase tracking-widest text-[#030213]">Форензика трассы</span>
           </div>
 
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-8">
@@ -192,13 +192,13 @@ export default function TraceForensicsPage() {
                   <FileSearch size={20} className="text-[#030213]" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-medium text-[#030213] tracking-tight">Trace Inspection</h1>
+                  <h1 className="text-2xl font-medium text-[#030213] tracking-tight">Разбор трассы</h1>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[12px] font-mono text-[#717182] bg-slate-100 px-2 py-0.5 rounded border border-black/5">
                       {traceId}
                     </span>
                     <span className="px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      Verified
+                      Проверено
                     </span>
                   </div>
                 </div>
@@ -212,7 +212,7 @@ export default function TraceForensicsPage() {
                 className="px-6 py-2.5 bg-white border border-black/10 text-[#030213] hover:bg-slate-50 text-[13px] font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
               >
                 <Play size={16} className={replayBusy ? "animate-pulse text-amber-500" : "text-[#030213]"} />
-                {replayBusy ? 'Симуляция...' : 'Replay Trace (Sandbox)'}
+                {replayBusy ? 'Симуляция...' : 'Повтор трассы (песочница)'}
               </button>
               {replayError && <p className="text-[11px] font-mono text-red-600 max-w-[250px] text-right">{replayError}</p>}
             </div>
@@ -229,7 +229,7 @@ export default function TraceForensicsPage() {
               activeTab === 'forensics' ? "border-[#030213] text-[#030213]" : "border-transparent text-[#717182] hover:text-[#030213]"
             )}
           >
-            Timeline & Evidence
+            Хронология и доказательства
           </button>
           <button
             onClick={() => setActiveTab('topology')}
@@ -238,7 +238,7 @@ export default function TraceForensicsPage() {
               activeTab === 'topology' ? "border-[#030213] text-[#030213]" : "border-transparent text-[#717182] hover:text-[#030213]"
             )}
           >
-            Topology Directed Graph (DAG)
+            Граф топологии (DAG)
           </button>
         </div>
 
@@ -247,13 +247,13 @@ export default function TraceForensicsPage() {
             {forensics?.memoryLane && (
               <div className="border-b border-black/5 bg-slate-50 px-6 py-5">
                 <div className="grid gap-4 lg:grid-cols-3">
-                  <MemoryLaneColumn title="Recalled" items={forensics.memoryLane.recalled.map((item) => ({ ...item, meta: `${Math.round(item.confidence * 100)}%` }))} />
-                  <MemoryLaneColumn title="Used" items={forensics.memoryLane.used.map((item) => ({ ...item, meta: `${Math.round(item.confidence * 100)}%` }))} />
-                  <MemoryLaneColumn title="Dropped" items={forensics.memoryLane.dropped.map((item) => ({ kind: item.kind, label: item.label, meta: item.reason }))} />
+                  <MemoryLaneColumn title="Вспомнено" items={forensics.memoryLane.recalled.map((item) => ({ ...item, meta: `${Math.round(item.confidence * 100)}%` }))} />
+                  <MemoryLaneColumn title="Использовано" items={forensics.memoryLane.used.map((item) => ({ ...item, meta: `${Math.round(item.confidence * 100)}%` }))} />
+                  <MemoryLaneColumn title="Отброшено" items={forensics.memoryLane.dropped.map((item) => ({ kind: item.kind, label: item.label, meta: item.reason }))} />
                 </div>
                 {forensics.memoryLane.escalationReason && (
                   <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[12px] text-amber-900">
-                    Escalation reason: {forensics.memoryLane.escalationReason}
+                    Причина эскалации: {forensics.memoryLane.escalationReason}
                   </div>
                 )}
               </div>
@@ -271,7 +271,7 @@ export default function TraceForensicsPage() {
                     <tr className="bg-white border-b border-black/5">
                       <th className="px-6 py-3 text-[10px] font-medium uppercase tracking-widest text-[#717182] w-[30%]">Фаза / Функция</th>
                       <th className="px-6 py-3 text-[10px] font-medium uppercase tracking-widest text-[#717182] w-[20%]">Длительность</th>
-                      <th className="px-6 py-3 text-[10px] font-medium uppercase tracking-widest text-[#717182] w-[50%]">Доказательства (Evidence Refs)</th>
+                      <th className="px-6 py-3 text-[10px] font-medium uppercase tracking-widest text-[#717182] w-[50%]">Доказательства (ссылки)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-black/5">
@@ -305,7 +305,7 @@ export default function TraceForensicsPage() {
                   </tbody>
                 </table>
               ) : (
-                <div className="p-6 text-center text-[13px] text-[#717182]">Журнал изоляции (Timeline) пуст или недоступен.</div>
+                <div className="p-6 text-center text-[13px] text-[#717182]">Журнал изоляции пуст или недоступен.</div>
               )}
             </div>
           </div>
@@ -320,7 +320,7 @@ export default function TraceForensicsPage() {
               </h2>
               {topology && (
                 <p className="text-[12px] text-[#717182] font-mono">
-                  Узлы: {topology.nodes.length} | Latency: <span className="font-medium text-[#030213]">{topology.totalDurationMs} ms</span>
+                  Узлы: {topology.nodes.length} | Задержка: <span className="font-medium text-[#030213]">{topology.totalDurationMs} ms</span>
                 </p>
               )}
             </div>
@@ -332,7 +332,7 @@ export default function TraceForensicsPage() {
                   height={graphSize.h}
                   nodeLabel={(n) => {
                     const o = n as { name?: string; kind?: string; durationMs?: number; critical?: boolean };
-                    return `${o.name ?? ''} (${o.kind ?? ''}) ${o.durationMs ?? 0}ms${o.critical ? ' [CRITICAL_PATH]' : ''}`;
+                    return `${o.name ?? ''} (${o.kind ?? ''}) ${o.durationMs ?? 0}ms${o.critical ? ' [КРИТИЧЕСКИЙ_ПУТЬ]' : ''}`;
                   }}
                   nodeColor={(n) => ((n as { critical?: boolean }).critical ? '#dc2626' : '#030213')} // Red-600 or Ink Black
                   nodeCanvasObject={(node, ctx, globalScale) => {

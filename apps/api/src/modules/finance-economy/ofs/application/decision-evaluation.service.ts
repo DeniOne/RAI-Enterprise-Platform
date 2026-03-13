@@ -3,6 +3,8 @@ import { Prisma } from "@rai/prisma-client";
 import { PrismaService } from "../../../../shared/prisma/prisma.service";
 import type {
   StrategyForecastRunFeedbackRequest,
+  StrategyForecastRunHistoryQueryDto,
+  StrategyForecastRunHistoryResponseDto,
   StrategyForecastRunHistoryItemDto,
   StrategyForecastRunRequest,
   StrategyForecastRunResponse,
@@ -46,15 +48,32 @@ export class DecisionEvaluationService {
 
   async listRecentRuns(
     companyId: string,
-    limit = 12,
-  ): Promise<StrategyForecastRunHistoryItemDto[]> {
-    const rows = await this.prisma.strategyForecastRun.findMany({
-      where: { companyId },
-      orderBy: { createdAt: "desc" },
-      take: Math.max(1, Math.min(limit, 30)),
-    });
+    query: StrategyForecastRunHistoryQueryDto = {},
+  ): Promise<StrategyForecastRunHistoryResponseDto> {
+    const limit = Math.max(1, Math.min(query.limit ?? 12, 50));
+    const offset = Math.max(0, query.offset ?? 0);
+    const where: Prisma.StrategyForecastRunWhereInput = {
+      companyId,
+      ...(query.seasonId?.trim() ? { seasonId: query.seasonId.trim() } : {}),
+      ...(query.riskTier ? { riskTier: query.riskTier } : {}),
+      ...(typeof query.degraded === "boolean" ? { degraded: query.degraded } : {}),
+    };
 
-    return rows.map((row) => this.mapHistoryRow(row));
+    const rows = await this.prisma.strategyForecastRun.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: offset,
+      take: limit,
+    });
+    const total = await this.prisma.strategyForecastRun.count({ where });
+
+    return {
+      items: rows.map((row) => this.mapHistoryRow(row)),
+      total,
+      limit,
+      offset,
+      hasMore: offset + rows.length < total,
+    };
   }
 
   async recordOutcomeFeedback(params: {

@@ -16,7 +16,7 @@ import type {
   AgentConfigChangeRequestDto,
   CanaryReviewDto,
   UpsertAgentConfigDto,
-} from "./dto/agent-config.dto";
+} from "../../shared/explainability/agent-config.dto";
 import { AgentConfigGuardService } from "./agent-config-guard.service";
 import { IncidentOpsService } from "../rai-chat/incident-ops.service";
 import { SystemIncidentType } from "@rai/prisma-client";

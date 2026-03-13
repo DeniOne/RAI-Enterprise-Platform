@@ -3,6 +3,7 @@ import { ResponseComposerService } from "./response-composer.service";
 import { RaiChatWidgetBuilder } from "../rai-chat-widget-builder";
 import { SensitiveDataFilterService } from "../security/sensitive-data-filter.service";
 import { RaiToolName } from "../tools/rai-tools.types";
+import { InvariantMetrics } from "../../../shared/invariants/invariant-metrics";
 
 describe("ResponseComposerService", () => {
   let service: ResponseComposerService;
@@ -11,6 +12,7 @@ describe("ResponseComposerService", () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    InvariantMetrics.resetForTests();
     sensitiveDataFilterMock.mask.mockImplementation((s: string) => s);
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -32,7 +34,12 @@ describe("ResponseComposerService", () => {
       workspaceContext: { route: "/dashboard" },
     });
     expect(actions.length).toBeGreaterThanOrEqual(1);
-    expect(actions[0].toolName).toBe("echo_message");
+    const first = actions[0];
+    if ("toolName" in first) {
+      expect(first.toolName).toBe("echo_message");
+      return;
+    }
+    expect(first.kind).toBe("route");
   });
 
   it("не показывает ложный успех CRM, если действие заблокировано RiskPolicy", async () => {
@@ -134,6 +141,7 @@ describe("ResponseComposerService", () => {
       primaryKind: "episode",
       detailsAvailable: true,
     });
+    expect(InvariantMetrics.snapshot().ai_memory_hint_shown_total).toBe(1);
   });
 
   it("собирает память из episode, engram, hot engram и active alert", async () => {
@@ -209,6 +217,7 @@ describe("ResponseComposerService", () => {
       primaryKind: "active_alert",
       detailsAvailable: true,
     });
+    expect(InvariantMetrics.snapshot().ai_memory_hint_shown_total).toBe(1);
   });
 
   it("строит rich output для contracts_agent без fallback backlog", async () => {

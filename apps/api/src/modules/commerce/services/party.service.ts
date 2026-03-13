@@ -1,46 +1,14 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@rai/prisma-client";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
-import { CreatePartyDto, UpdatePartyDto, CreatePartyRelationDto, UpdatePartyRelationDto } from "../dto/create-party.dto";
-import { CreateJurisdictionDto, UpdateJurisdictionDto } from "../dto/create-jurisdiction.dto";
-import {
-    CreateRegulatoryProfileDto,
-    UpdateRegulatoryProfileDto,
-    ListRegulatoryProfilesQueryDto,
-    normalizeVatRate,
-    RegulatoryRulesJson,
-} from "../dto/create-regulatory-profile.dto";
+import { CreatePartyDto, UpdatePartyDto, CreatePartyRelationDto, UpdatePartyRelationDto } from "../../../shared/commerce/dto/create-party.dto";
+import { CreateJurisdictionDto, UpdateJurisdictionDto } from "../../../shared/commerce/dto/create-jurisdiction.dto";
+import { CreateRegulatoryProfileDto, UpdateRegulatoryProfileDto, ListRegulatoryProfilesQueryDto } from "../../../shared/commerce/dto/create-regulatory-profile.dto";
+import { assertOwnershipShareIfProvided, assertOwnershipShareRequired, assertRelationPeriod, mapPartyRelationResponse, mapRelationTypeFromDb, mapRelationTypeToDb, normalizeRulesJson } from "../../../shared/commerce/party.helpers";
 
 @Injectable()
 export class PartyService {
     constructor(private readonly prisma: PrismaService) { }
-
-    private mapRelationTypeToDb(value: CreatePartyRelationDto["relationType"]): "OWNERSHIP" | "COMMERCIAL" | "AFFILIATION" {
-        switch (value) {
-            case "OWNERSHIP":
-                return "OWNERSHIP";
-            case "MANAGEMENT":
-            case "AGENCY":
-                return "COMMERCIAL";
-            case "AFFILIATED":
-            default:
-                return "AFFILIATION";
-        }
-    }
-
-    private mapRelationTypeFromDb(value: string): "OWNERSHIP" | "MANAGEMENT" | "AFFILIATED" | "AGENCY" {
-        switch (value) {
-            case "OWNERSHIP":
-                return "OWNERSHIP";
-            case "COMMERCIAL":
-                return "MANAGEMENT";
-            case "AFFILIATION":
-            default:
-                return "AFFILIATED";
-        }
-    }
-
-    // ─── Tenant Discovery (no JWT required) ──────────────────────
 
     async getDefaultTenant() {
         const company = await this.prisma.company.findFirst({
@@ -57,7 +25,6 @@ export class PartyService {
         return company;
     }
 
-    // ─── Jurisdictions ──────────────────────────────────────────
 
     async listJurisdictions(companyId: string) {
         return this.prisma.jurisdiction.findMany({
@@ -138,7 +105,6 @@ export class PartyService {
         return { ok: true };
     }
 
-    // ─── Regulatory Profiles ────────────────────────────────────
 
     async listRegulatoryProfiles(companyId: string, query?: ListRegulatoryProfilesQueryDto) {
         const where: Record<string, unknown> = { companyId };
@@ -157,17 +123,6 @@ export class PartyService {
         });
     }
 
-    private normalizeRulesJson(raw: CreateRegulatoryProfileDto["rulesJson"]): RegulatoryRulesJson | undefined {
-        if (!raw) return undefined;
-        return {
-            ...raw,
-            vatRate: normalizeVatRate(raw.vatRate),
-            vatRateReduced: raw.vatRateReduced !== undefined ? normalizeVatRate(raw.vatRateReduced) : undefined,
-            vatRateZero: raw.vatRateZero !== undefined ? normalizeVatRate(raw.vatRateZero) : undefined,
-            crossBorderVatRate: normalizeVatRate(raw.crossBorderVatRate),
-        };
-    }
-
     async createRegulatoryProfile(companyId: string, dto: CreateRegulatoryProfileDto) {
         const jurisdiction = await this.prisma.jurisdiction.findFirst({
             where: { companyId, id: dto.jurisdictionId },
@@ -183,7 +138,7 @@ export class PartyService {
             throw new BadRequestException(`Regulatory profile with code "${dto.code}" already exists`);
         }
 
-        const normalizedRules = this.normalizeRulesJson(dto.rulesJson);
+        const normalizedRules = normalizeRulesJson(dto.rulesJson);
 
         return this.prisma.regulatoryProfile.create({
             data: {
@@ -232,7 +187,7 @@ export class PartyService {
             if (!jur) throw new BadRequestException("Jurisdiction not found");
         }
 
-        const normalizedRules = dto.rulesJson ? this.normalizeRulesJson(dto.rulesJson) : undefined;
+        const normalizedRules = dto.rulesJson ? normalizeRulesJson(dto.rulesJson) : undefined;
 
         return this.prisma.regulatoryProfile.update({
             where: { id: profileId },
@@ -274,7 +229,6 @@ export class PartyService {
         return { ok: true };
     }
 
-    // ─── Parties ────────────────────────────────────────────────
 
     async listParties(companyId: string) {
         return this.prisma.party.findMany({
@@ -401,7 +355,6 @@ export class PartyService {
         });
     }
 
-    // ─── Party Relations ────────────────────────────────────────
 
     async createPartyRelation(companyId: string, dto: CreatePartyRelationDto) {
         const [source, target] = await Promise.all([
@@ -414,22 +367,20 @@ export class PartyService {
         if (dto.fromPartyId === dto.toPartyId) {
             throw new BadRequestException("Cannot create relation with self");
         }
-        if (dto.relationType === "OWNERSHIP" && !(Number(dto.sharePct) > 0 && Number(dto.sharePct) <= 100)) {
-            throw new BadRequestException("OWNERSHIP relation requires sharePct in range (0, 100]");
-        }
-        if (dto.validTo && new Date(dto.validFrom).getTime() >= new Date(dto.validTo).getTime()) {
-            throw new BadRequestException("validFrom must be earlier than validTo");
-        }
+        const validFrom = new Date(dto.validFrom);
+        const validTo = dto.validTo ? new Date(dto.validTo) : null;
+        assertOwnershipShareRequired(dto.relationType, dto.sharePct);
+        assertRelationPeriod(validFrom, validTo);
 
         return this.prisma.partyRelation.create({
             data: {
                 companyId,
                 sourcePartyId: dto.fromPartyId,
                 targetPartyId: dto.toPartyId,
-                relationType: this.mapRelationTypeToDb(dto.relationType) as any,
+                relationType: mapRelationTypeToDb(dto.relationType) as any,
                 sharePct: dto.sharePct ?? null,
-                validFrom: new Date(dto.validFrom),
-                validTo: dto.validTo ? new Date(dto.validTo) : null,
+                validFrom,
+                validTo,
                 basisDocId: dto.basisDocId ?? null,
             },
             include: {
@@ -449,7 +400,7 @@ export class PartyService {
 
         const nextFromPartyId = dto.fromPartyId ?? existing.sourcePartyId;
         const nextToPartyId = dto.toPartyId ?? existing.targetPartyId;
-        const nextRelationType = dto.relationType ?? this.mapRelationTypeFromDb(String(existing.relationType));
+        const nextRelationType = dto.relationType ?? mapRelationTypeFromDb(String(existing.relationType));
         const nextSharePct = dto.sharePct === undefined ? existing.sharePct : dto.sharePct;
         const nextValidFrom = dto.validFrom ? new Date(dto.validFrom) : existing.validFrom;
         const nextValidTo =
@@ -469,30 +420,15 @@ export class PartyService {
         if (nextFromPartyId === nextToPartyId) {
             throw new BadRequestException("Cannot create relation with self");
         }
-        if (
-            nextRelationType === "OWNERSHIP" &&
-            nextSharePct !== null &&
-            nextSharePct !== undefined &&
-            !(Number(nextSharePct) > 0 && Number(nextSharePct) <= 100)
-        ) {
-            throw new BadRequestException("OWNERSHIP relation requires sharePct in range (0, 100]");
-        }
-        if (Number.isNaN(nextValidFrom.getTime())) {
-            throw new BadRequestException("validFrom is invalid");
-        }
-        if (nextValidTo && Number.isNaN(nextValidTo.getTime())) {
-            throw new BadRequestException("validTo is invalid");
-        }
-        if (nextValidTo && nextValidFrom.getTime() >= nextValidTo.getTime()) {
-            throw new BadRequestException("validFrom must be earlier than validTo");
-        }
+        assertOwnershipShareIfProvided(nextRelationType, nextSharePct);
+        assertRelationPeriod(nextValidFrom, nextValidTo);
 
         return this.prisma.partyRelation.update({
             where: { id: relationId },
             data: {
                 sourcePartyId: nextFromPartyId,
                 targetPartyId: nextToPartyId,
-                relationType: this.mapRelationTypeToDb(nextRelationType) as any,
+                relationType: mapRelationTypeToDb(nextRelationType) as any,
                 sharePct: nextSharePct ?? null,
                 validFrom: nextValidFrom,
                 validTo: nextValidTo,
@@ -536,13 +472,6 @@ export class PartyService {
             },
         });
 
-        return rows.map((item) => ({
-            ...item,
-            fromPartyId: item.sourcePartyId,
-            toPartyId: item.targetPartyId,
-            relationType: this.mapRelationTypeFromDb(String(item.relationType)),
-            sharePct: item.sharePct ?? undefined,
-            basisDocId: item.basisDocId ?? undefined,
-        }));
+        return rows.map(mapPartyRelationResponse);
     }
 }

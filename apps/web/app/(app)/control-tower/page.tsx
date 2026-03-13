@@ -20,6 +20,8 @@ import { clsx } from 'clsx';
 
 const THRESHOLD_LATENCY_P95_MS = 5000;
 const THRESHOLD_SUCCESS_RATE_PCT = 95;
+const CONTROL_TOWER_REQUEST_TIMEOUT_MS = 8000;
+const MEMORY_FABRIC_ALLOWED_ROLES = new Set(['ADMIN', 'SYSTEM_ADMIN', 'FOUNDER']);
 
 interface DashboardData {
   companyId: string;
@@ -64,8 +66,41 @@ interface QueuePressureData {
   }>;
 }
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = window.setTimeout(() => {
+      reject(new Error(`control_tower_${label}_timeout`));
+    }, timeoutMs);
+
+    promise
+      .then((value) => {
+        window.clearTimeout(timeoutId);
+        resolve(value);
+      })
+      .catch((error) => {
+        window.clearTimeout(timeoutId);
+        reject(error);
+      });
+  });
+}
+
+async function safeRequest<T>(
+  label: string,
+  request: Promise<T>,
+  fallback: T,
+  timeoutMs: number = CONTROL_TOWER_REQUEST_TIMEOUT_MS,
+): Promise<T> {
+  try {
+    return await withTimeout(request, timeoutMs, label);
+  } catch (error) {
+    console.warn(`[ControlTower] ${label} unavailable`, error);
+    return fallback;
+  }
+}
+
 export default function ControlTowerPage() {
   const memoryEnabled = webFeatureFlags.controlTowerMemory;
+  const [canViewMemoryFabric, setCanViewMemoryFabric] = useState(false);
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [performance, setPerformance] = useState<PerformanceData | null>(null);
   const [cost, setCost] = useState<CostData | null>(null);
@@ -89,35 +124,103 @@ export default function ControlTowerPage() {
     let cancelled = false;
     (async () => {
       try {
-        const [dRes, pRes, cRes, qRes, aRes, rgSummaryRes, rgAgentsRes, rgDrilldownsRes, lifecycleSummaryRes, lifecycleAgentsRes, lifecycleHistoryRes, memoryRes, pendingActionsRes] = await Promise.all([
-          api.explainability.dashboard({ hours: 24 }),
-          api.explainability.performance({ timeWindowMs: 3600000 }),
-          api.explainability.costHotspots({ timeWindowMs: 86400000, limit: 10 }),
-          api.explainability.queuePressure({ timeWindowMs: 3600000 }),
-          api.autonomy.status(),
-          api.explainability.runtimeGovernanceSummary({ timeWindowMs: 3600000 }),
-          api.explainability.runtimeGovernanceAgents({ timeWindowMs: 3600000 }),
-          api.explainability.runtimeGovernanceDrilldowns({ timeWindowMs: 3600000 }),
-          api.explainability.lifecycleSummary(),
-          api.explainability.lifecycleAgents(),
-          api.explainability.lifecycleHistory({ limit: 12 }),
-          memoryEnabled ? api.memory.health() : Promise.resolve({ data: null }),
-          api.pendingActions.list({ limit: 12 }),
+        const meData = await safeRequest<{ role?: string } | null>(
+          'users_me',
+          api.users.me().then((res) => res.data),
+          null,
+        );
+        const roleRaw = meData?.role;
+        const normalizedRole = typeof roleRaw === 'string' ? roleRaw.toUpperCase() : '';
+        const allowMemoryFabric =
+          memoryEnabled && MEMORY_FABRIC_ALLOWED_ROLES.has(normalizedRole);
+        if (cancelled) return;
+        setCanViewMemoryFabric(allowMemoryFabric);
+
+        const memoryHealthPromise = allowMemoryFabric
+          ? safeRequest<MemoryHealthDto | null>(
+            'memory_health',
+            api.memory.health().then((res) => res.data),
+            null,
+          )
+          : Promise.resolve(null);
+
+        const [dashboardData, performanceData, costData, queuePressureData, autonomyData, runtimeGovernanceSummaryData, runtimeGovernanceAgentsData, runtimeGovernanceDrilldownsData, lifecycleSummaryData, lifecycleAgentsData, lifecycleHistoryData, memoryData, pendingActionsData] = await Promise.all([
+          safeRequest<DashboardData | null>(
+            'dashboard',
+            api.explainability.dashboard({ hours: 24 }).then((res) => res.data),
+            null,
+          ),
+          safeRequest<PerformanceData | null>(
+            'performance',
+            api.explainability.performance({ timeWindowMs: 3600000 }).then((res) => res.data),
+            null,
+          ),
+          safeRequest<CostData | null>(
+            'cost_hotspots',
+            api.explainability.costHotspots({ timeWindowMs: 86400000, limit: 10 }).then((res) => res.data),
+            null,
+          ),
+          safeRequest<QueuePressureData | null>(
+            'queue_pressure',
+            api.explainability.queuePressure({ timeWindowMs: 3600000 }).then((res) => res.data),
+            null,
+          ),
+          safeRequest<AutonomyStatusDto | null>(
+            'autonomy_status',
+            api.autonomy.status().then((res) => res.data),
+            null,
+          ),
+          safeRequest<RuntimeGovernanceSummaryDto | null>(
+            'runtime_governance_summary',
+            api.explainability.runtimeGovernanceSummary({ timeWindowMs: 3600000 }).then((res) => res.data),
+            null,
+          ),
+          safeRequest<RuntimeGovernanceAgentDto[]>(
+            'runtime_governance_agents',
+            api.explainability.runtimeGovernanceAgents({ timeWindowMs: 3600000 }).then((res) => res.data),
+            [],
+          ),
+          safeRequest<RuntimeGovernanceDrilldownsDto | null>(
+            'runtime_governance_drilldowns',
+            api.explainability.runtimeGovernanceDrilldowns({ timeWindowMs: 3600000 }).then((res) => res.data),
+            null,
+          ),
+          safeRequest<AgentLifecycleSummaryDto | null>(
+            'lifecycle_summary',
+            api.explainability.lifecycleSummary().then((res) => res.data),
+            null,
+          ),
+          safeRequest<AgentLifecycleItemDto[]>(
+            'lifecycle_agents',
+            api.explainability.lifecycleAgents().then((res) => res.data),
+            [],
+          ),
+          safeRequest<AgentLifecycleHistoryItemDto[]>(
+            'lifecycle_history',
+            api.explainability.lifecycleHistory({ limit: 12 }).then((res) => res.data),
+            [],
+          ),
+          memoryHealthPromise,
+          safeRequest<PendingActionDto[]>(
+            'pending_actions',
+            api.pendingActions.list({ limit: 12 }).then((res) => res.data),
+            [],
+          ),
         ]);
         if (cancelled) return;
-        setDashboard(dRes.data);
-        setPerformance(pRes.data);
-        setCost(cRes.data);
-        setQueuePressure(qRes.data);
-        setMemoryHealth(memoryRes.data);
-        setAutonomy(aRes.data);
-        setRuntimeGovernanceSummary(rgSummaryRes.data);
-        setRuntimeGovernanceAgents(rgAgentsRes.data);
-        setRuntimeGovernanceDrilldowns(rgDrilldownsRes.data);
-        setLifecycleSummary(lifecycleSummaryRes.data);
-        setLifecycleAgents(lifecycleAgentsRes.data);
-        setLifecycleHistory(lifecycleHistoryRes.data);
-        setPendingActions(pendingActionsRes.data);
+        setDashboard(dashboardData);
+        setPerformance(performanceData);
+        setCost(costData);
+        setQueuePressure(queuePressureData);
+        setMemoryHealth(memoryData);
+        setAutonomy(autonomyData);
+        setRuntimeGovernanceSummary(runtimeGovernanceSummaryData);
+        setRuntimeGovernanceAgents(runtimeGovernanceAgentsData);
+        setRuntimeGovernanceDrilldowns(runtimeGovernanceDrilldownsData);
+        setLifecycleSummary(lifecycleSummaryData);
+        setLifecycleAgents(lifecycleAgentsData);
+        setLifecycleHistory(lifecycleHistoryData);
+        setPendingActions(pendingActionsData);
       } catch (e) {
         if (!cancelled) setError((e as Error).message ?? 'Сбой получения телеметрии');
       } finally {
@@ -194,7 +297,7 @@ export default function ControlTowerPage() {
       await api.pendingActions.reject(id, reason?.trim() || undefined);
       await reloadPendingActions();
     } catch (e) {
-      window.alert((e as Error).message ?? 'Не удалось отклонить PendingAction');
+      window.alert((e as Error).message ?? 'Не удалось отклонить действие в очереди');
     } finally {
       setPendingActionLoading(null);
     }
@@ -203,8 +306,8 @@ export default function ControlTowerPage() {
   async function handleSetAutonomyOverride(level: 'TOOL_FIRST' | 'QUARANTINE') {
     const reason = window.prompt(
       level === 'QUARANTINE'
-        ? 'Укажи причину для manual quarantine'
-        : 'Укажи причину для manual tool-first',
+        ? 'Укажите причину для ручного карантина'
+        : 'Укажите причину для ручного режима "сначала инструменты"',
       '',
     );
     if (!reason || reason.trim().length < 3) {
@@ -216,7 +319,7 @@ export default function ControlTowerPage() {
       await api.autonomy.setOverride({ level, reason: reason.trim() });
       await reloadRuntimeGovernance();
     } catch (e) {
-      window.alert((e as Error).message ?? 'Не удалось применить override');
+      window.alert((e as Error).message ?? 'Не удалось применить переопределение');
     } finally {
       setGovernanceActionLoading(null);
     }
@@ -228,7 +331,7 @@ export default function ControlTowerPage() {
       await api.autonomy.clearOverride();
       await reloadRuntimeGovernance();
     } catch (e) {
-      window.alert((e as Error).message ?? 'Не удалось снять override');
+      window.alert((e as Error).message ?? 'Не удалось снять переопределение');
     } finally {
       setGovernanceActionLoading(null);
     }
@@ -240,16 +343,16 @@ export default function ControlTowerPage() {
       await api.agents.startCanary(changeId);
       await reloadLifecycleAndGovernance();
     } catch (e) {
-      window.alert((e as Error).message ?? 'Не удалось запустить canary');
+      window.alert((e as Error).message ?? 'Не удалось запустить канареечный релиз');
     } finally {
       setLifecycleActionLoading(null);
     }
   }
 
   async function handleReviewCanary(changeId: string) {
-    const baseline = window.prompt('Baseline rejection rate (0..1)', '0.05');
-    const canary = window.prompt('Canary rejection rate (0..1)', '0.05');
-    const sampleSize = window.prompt('Sample size', '100');
+    const baseline = window.prompt('Базовая доля отклонений (0..1)', '0.05');
+    const canary = window.prompt('Доля отклонений в канареечном релизе (0..1)', '0.05');
+    const sampleSize = window.prompt('Размер выборки', '100');
     const baselineValue = Number(baseline);
     const canaryValue = Number(canary);
     const sampleSizeValue = Number(sampleSize);
@@ -275,7 +378,7 @@ export default function ControlTowerPage() {
       });
       await reloadLifecycleAndGovernance();
     } catch (e) {
-      window.alert((e as Error).message ?? 'Не удалось завершить review canary');
+      window.alert((e as Error).message ?? 'Не удалось завершить проверку канареечного релиза');
     } finally {
       setLifecycleActionLoading(null);
     }
@@ -287,14 +390,14 @@ export default function ControlTowerPage() {
       await api.agents.promoteChange(changeId);
       await reloadLifecycleAndGovernance();
     } catch (e) {
-      window.alert((e as Error).message ?? 'Не удалось выполнить promote');
+      window.alert((e as Error).message ?? 'Не удалось выполнить продвижение в продакшен');
     } finally {
       setLifecycleActionLoading(null);
     }
   }
 
   async function handleRollbackChange(changeId: string) {
-    const reason = window.prompt('Укажи причину rollback', '');
+    const reason = window.prompt('Укажите причину отката', '');
     if (!reason || reason.trim().length < 3) {
       return;
     }
@@ -304,7 +407,7 @@ export default function ControlTowerPage() {
       await api.agents.rollbackChange(changeId, reason.trim());
       await reloadLifecycleAndGovernance();
     } catch (e) {
-      window.alert((e as Error).message ?? 'Не удалось выполнить rollback');
+      window.alert((e as Error).message ?? 'Не удалось выполнить откат');
     } finally {
       setLifecycleActionLoading(null);
     }
@@ -313,8 +416,8 @@ export default function ControlTowerPage() {
   async function handleSetLifecycleOverride(role: string, state: 'FROZEN' | 'RETIRED') {
     const reason = window.prompt(
       state === 'RETIRED'
-        ? `Укажи причину retirement для ${role}`
-        : `Укажи причину freeze для ${role}`,
+        ? `Укажите причину вывода роли ${role}`
+        : `Укажите причину заморозки роли ${role}`,
       '',
     );
     if (!reason || reason.trim().length < 3) {
@@ -330,7 +433,7 @@ export default function ControlTowerPage() {
       });
       await reloadLifecycleBoard();
     } catch (e) {
-      window.alert((e as Error).message ?? 'Не удалось применить lifecycle override');
+      window.alert((e as Error).message ?? 'Не удалось применить переопределение жизненного цикла');
     } finally {
       setLifecycleActionLoading(null);
     }
@@ -342,7 +445,7 @@ export default function ControlTowerPage() {
       await api.explainability.clearLifecycleOverride({ role });
       await reloadLifecycleBoard();
     } catch (e) {
-      window.alert((e as Error).message ?? 'Не удалось снять lifecycle override');
+      window.alert((e as Error).message ?? 'Не удалось снять переопределение жизненного цикла');
     } finally {
       setLifecycleActionLoading(null);
     }
@@ -353,7 +456,7 @@ export default function ControlTowerPage() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center font-sans tracking-tight">
         <div className="flex flex-col items-center gap-4">
           <div className="w-8 h-8 border-[3px] border-black/10 border-t-[#030213] rounded-full animate-spin" />
-          <p className="text-[#717182] font-medium text-sm">Инициализация Control Plane...</p>
+          <p className="text-[#717182] font-medium text-sm">Инициализация центрального пульта...</p>
         </div>
       </div>
     );
@@ -398,7 +501,7 @@ export default function ControlTowerPage() {
               <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center border border-black/5">
                 <Monitor size={16} className="text-[#030213]" />
               </div>
-              <span className="text-[11px] font-medium uppercase tracking-widest text-[#717182]">Control & Reliability</span>
+              <span className="text-[11px] font-medium uppercase tracking-widest text-[#717182]">Контроль и надёжность</span>
             </div>
             <h1 className="text-3xl font-medium text-[#030213] tracking-tight">Центральный пульт</h1>
             <p className="text-sm text-[#717182] max-w-xl leading-relaxed">
@@ -421,7 +524,7 @@ export default function ControlTowerPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* SLO & Надежность */}
-          <UnitCard title="SLO и Производительность" icon={<Activity size={20} />} subtitle="Infrastructure">
+          <UnitCard title="SLO и производительность" icon={<Activity size={20} />} subtitle="Инфраструктура">
             <div className="space-y-1">
               {performance ? (
                 <>
@@ -429,18 +532,18 @@ export default function ControlTowerPage() {
                   <DataRow label="Средний отклик" value={`${performance.avgLatencyMs.toFixed(0)} ms`} />
                   <DataRow label="Успешность (SLO)" value={`${performance.successRatePct.toFixed(1)}%`} status={successRateOk ? 'success' : 'error'} />
                   <DataRow
-                    label="Runtime pressure"
+                    label="Давление очередей"
                     value={formatQueuePressureState(queuePressure?.pressureState)}
                     status={queuePressureStatus(queuePressure)}
                   />
                   <DataRow
-                    label="Backlog depth"
-                    value={queuePressure?.totalBacklog === null || queuePressure?.totalBacklog === undefined ? 'pending' : `${queuePressure.totalBacklog}`}
+                    label="Глубина очереди"
+                    value={queuePressure?.totalBacklog === null || queuePressure?.totalBacklog === undefined ? 'ожидание' : `${queuePressure.totalBacklog}`}
                     status={queuePressureStatus(queuePressure)}
                   />
                   <DataRow
-                    label="Queue signal"
-                    value={queuePressure ? (queuePressure.signalFresh ? 'live' : 'stale') : 'pending'}
+                    label="Сигнал очередей"
+                    value={queuePressure ? (queuePressure.signalFresh ? 'свежий' : 'устаревший') : 'ожидание'}
                     status={queuePressure?.signalFresh ? 'success' : 'warning'}
                   />
 
@@ -459,12 +562,12 @@ export default function ControlTowerPage() {
                   )}
                   {queuePressure && queuePressure.observedQueues.length > 0 && (
                     <div className="mt-6 pt-5 border-t border-black/5">
-                      <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Queue contour</p>
+                      <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Контур очередей</p>
                       <div className="space-y-0.5">
                         {queuePressure.observedQueues.slice(0, 3).map(queue => (
                           <div key={queue.queueName} className="flex items-center justify-between py-1.5">
                             <span className="text-[12px] font-medium text-[#030213]">{queue.queueName}</span>
-                            <span className="text-[12px] font-mono text-[#717182]">last {queue.lastSize} / peak {queue.peakSize}</span>
+                            <span className="text-[12px] font-mono text-[#717182]">посл. {queue.lastSize} / пик {queue.peakSize}</span>
                           </div>
                         ))}
                       </div>
@@ -475,27 +578,27 @@ export default function ControlTowerPage() {
             </div>
           </UnitCard>
 
-          {memoryEnabled ? (
-            <UnitCard title="Memory Fabric" icon={<Zap size={20} />} subtitle="Cognitive Layers">
+          {canViewMemoryFabric ? (
+            <UnitCard title="Контур памяти" icon={<Zap size={20} />} subtitle="Когнитивные слои">
               <div className="space-y-1">
                 {memoryHealth ? (
                   <>
                     <DataRow
-                      label="Memory status"
+                      label="Статус памяти"
                       value={memoryHealth.status}
                       status={memoryHealth.degraded ? 'warning' : 'success'}
                     />
                     <DataRow
-                      label="Episodes"
-                      value={memoryHealth.episodeCount === null ? 'n/a' : `${memoryHealth.episodeCount}`}
+                      label="Эпизоды"
+                      value={memoryHealth.episodeCount === null ? 'н/д' : `${memoryHealth.episodeCount}`}
                     />
                     <DataRow
-                      label="Engrams"
-                      value={memoryHealth.engramCount === null ? 'n/a' : `${memoryHealth.engramCount}`}
+                      label="Энграммы"
+                      value={memoryHealth.engramCount === null ? 'н/д' : `${memoryHealth.engramCount}`}
                     />
                     <DataRow
-                      label="Trust score"
-                      value={memoryHealth.trustScore === null ? 'n/a' : `${(memoryHealth.trustScore * 100).toFixed(1)}%`}
+                      label="Индекс доверия"
+                      value={memoryHealth.trustScore === null ? 'н/д' : `${(memoryHealth.trustScore * 100).toFixed(1)}%`}
                       status={
                         memoryHealth.trustScore === null
                           ? 'warning'
@@ -507,20 +610,20 @@ export default function ControlTowerPage() {
                       }
                     />
                     <DataRow
-                      label="Consolidation freshness"
+                      label="Свежесть консолидации"
                       value={
                         memoryHealth.consolidationFreshness === null
-                          ? 'n/a'
-                          : `${memoryHealth.consolidationFreshness} min`
+                          ? 'н/д'
+                          : `${memoryHealth.consolidationFreshness} мин`
                       }
                     />
                     <DataRow
-                      label="Pruning status"
+                      label="Статус очистки"
                       value={memoryHealth.pruningStatus}
                       status={memoryHealth.pruningStatus === 'nominal' ? 'success' : 'warning'}
                     />
                     <div className="mt-6 pt-5 border-t border-black/5">
-                      <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Layers</p>
+                      <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Слои</p>
                       <div className="space-y-2">
                         {Object.entries(memoryHealth.layers ?? {}).map(([name, value]) => (
                           <div key={name} className="flex items-start justify-between gap-4 text-[12px]">
@@ -537,7 +640,7 @@ export default function ControlTowerPage() {
           ) : null}
 
           {/* Качество и Валидация */}
-          <UnitCard title="Качество и Валидация" icon={<ShieldCheck size={20} />} subtitle="Model Integrity">
+          <UnitCard title="Качество и валидация" icon={<ShieldCheck size={20} />} subtitle="Целостность модели">
             <div className="space-y-1">
               {dashboard ? (
                 <>
@@ -551,7 +654,7 @@ export default function ControlTowerPage() {
                     }
                   />
                   <DataRow
-                    label="P95 BS% Score"
+                    label="P95 BS%"
                     value={formatPctOrPending(dashboard.p95BsScore)}
                   />
                   <DataRow
@@ -564,7 +667,7 @@ export default function ControlTowerPage() {
                     }
                   />
                   <DataRow
-                    label="Acceptance Rate (advisory)"
+                    label="Доля принятия рекомендаций"
                     value={formatPctOrPending(dashboard.acceptanceRate)}
                     status={
                       dashboard.acceptanceRate === null
@@ -577,7 +680,7 @@ export default function ControlTowerPage() {
                     }
                   />
                   <DataRow
-                    label="Correction Rate"
+                    label="Доля корректировок"
                     value={formatPctOrPending(dashboard.correctionRate)}
                     status={
                       dashboard.correctionRate === null
@@ -590,8 +693,8 @@ export default function ControlTowerPage() {
                     }
                   />
                   <DataRow
-                    label="Autonomy Mode"
-                    value={autonomy ? formatAutonomyLevel(autonomy.level) : 'pending'}
+                    label="Режим автономности"
+                    value={autonomy ? formatAutonomyLevel(autonomy.level) : 'ожидание'}
                     status={
                       autonomy?.level === 'AUTONOMOUS'
                         ? 'success'
@@ -605,15 +708,15 @@ export default function ControlTowerPage() {
 
                   <div className="mt-8 p-4 bg-slate-50 border border-black/5 rounded-xl">
                     <p className="text-[12px] text-[#717182] leading-relaxed">
-                      `Acceptance Rate` строится по tenant-scoped advisory decisions. `Correction Rate` строится по decision-scoped persisted advisory feedback с `outcome=corrected` и дедупликацией по `traceId`; при отсутствии decision base он остаётся `pending`. Quality-метрики без persisted evidence показываются как `pending`, а не как synthetic `0/100`. `Autonomy Mode` зависит от реально посчитанного BS%-окна и активных quality drift alerts.
+                      Доля принятия считается по рекомендациям в рамках арендатора. Доля корректировок считается по сохранённой обратной связи с исходом `corrected` и дедупликацией по `traceId`; если база решений ещё не накоплена, показатель остаётся в статусе «ожидание». Метрики качества без сохранённых доказательств также отображаются как «ожидание», а не как искусственные `0/100`. Режим автономности зависит от фактического окна BS% и активных сигналов дрейфа качества.
                     </p>
                     <p className="text-[12px] text-[#717182] leading-relaxed mt-3">
-                      Quality ready traces: <span className="font-mono text-[#030213]">{dashboard.qualityKnownTraceCount}</span>, pending traces: <span className="font-mono text-[#030213]">{dashboard.qualityPendingTraceCount}</span>.
+                      Готовые трассы качества: <span className="font-mono text-[#030213]">{dashboard.qualityKnownTraceCount}</span>, трассы в ожидании: <span className="font-mono text-[#030213]">{dashboard.qualityPendingTraceCount}</span>.
                     </p>
                     {autonomy && (
                       <p className="text-[12px] text-[#717182] leading-relaxed mt-3">
-                        Autonomy driver: <span className="font-mono text-[#030213]">{autonomy.driver}</span>
-                        {autonomy.activeQualityAlert ? ' (active quality alert)' : ''}.
+                        Фактор автономности: <span className="font-mono text-[#030213]">{autonomy.driver}</span>
+                        {autonomy.activeQualityAlert ? ' (активный сигнал качества)' : ''}.
                       </p>
                     )}
                   </div>
@@ -623,7 +726,7 @@ export default function ControlTowerPage() {
           </UnitCard>
 
           {/* Стоимость и Хотспоты */}
-          <UnitCard title="Стоимость и LLM" icon={<DollarSign size={20} />} subtitle="Unit Economy">
+          <UnitCard title="Стоимость и LLM" icon={<DollarSign size={20} />} subtitle="Экономика затрат">
             <div className="space-y-1">
               {cost ? (
                 <>
@@ -646,7 +749,7 @@ export default function ControlTowerPage() {
                   </div>
 
                   <div className="mt-6 pt-5 border-t border-black/5">
-                    <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Топ сессий (Cost)</p>
+                    <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Топ сессий (стоимость)</p>
                     <div className="space-y-1">
                       {cost.topByCost.slice(0, 3).map(task => (
                         <div key={task.traceId} className="flex items-center justify-between py-1.5">
@@ -671,18 +774,18 @@ export default function ControlTowerPage() {
         <div className="mt-12">
           <div className="flex items-center gap-3 mb-6">
             <ShieldCheck size={20} className="text-[#030213]" />
-            <h2 className="text-xl font-medium text-[#030213] tracking-tight">Human Review Queue</h2>
+            <h2 className="text-xl font-medium text-[#030213] tracking-tight">Очередь ручной проверки</h2>
           </div>
           <div className="rounded-3xl border border-black/10 bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
             <div className="px-6 py-5 border-b border-black/5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182]">Pending Actions</p>
+                <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182]">Ожидающие действия</p>
                 <p className="text-[13px] text-[#717182] mt-1">
-                  Governance-state для действий, заблокированных RiskPolicy или AutonomyPolicy. Approve меняет статус очереди, но не выполняет авто-resume без отдельного controlled replay.
+                  Это состояние действий, заблокированных политикой риска или автономности. Подтверждение меняет статус очереди, но не выполняет автоматическое возобновление без отдельного контролируемого повтора.
                 </p>
               </div>
               <div className="text-[12px] text-[#717182]">
-                Open: <span className="font-mono text-[#030213]">{pendingActions.filter((item) => item.status === 'PENDING' || item.status === 'APPROVED_FIRST').length}</span>
+                Открыто: <span className="font-mono text-[#030213]">{pendingActions.filter((item) => item.status === 'PENDING' || item.status === 'APPROVED_FIRST').length}</span>
               </div>
             </div>
             {pendingActions.length === 0 ? (
@@ -692,13 +795,13 @@ export default function ControlTowerPage() {
                 <table className="w-full min-w-[980px]">
                   <thead className="bg-slate-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Tool</th>
-                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Trace</th>
-                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Risk</th>
-                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Status</th>
-                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Payload</th>
-                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Expires</th>
-                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Actions</th>
+                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Инструмент</th>
+                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Трасса</th>
+                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Риск</th>
+                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Статус</th>
+                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Нагрузка</th>
+                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Истекает</th>
+                      <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#717182]">Действия</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -747,7 +850,7 @@ export default function ControlTowerPage() {
                                 disabled={pendingActionLoading !== null}
                                 className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                               >
-                                {pendingActionLoading === `approve-first:${item.id}` ? 'Approving...' : 'Approve 1'}
+                                {pendingActionLoading === `approve-first:${item.id}` ? 'Подтверждение...' : 'Подтвердить 1/2'}
                               </button>
                             )}
                             {item.status === 'APPROVED_FIRST' && (
@@ -757,7 +860,7 @@ export default function ControlTowerPage() {
                                 disabled={pendingActionLoading !== null}
                                 className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[12px] font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
                               >
-                                {pendingActionLoading === `approve-final:${item.id}` ? 'Finalizing...' : 'Approve final'}
+                                {pendingActionLoading === `approve-final:${item.id}` ? 'Финализация...' : 'Подтвердить финально'}
                               </button>
                             )}
                             {(item.status === 'PENDING' || item.status === 'APPROVED_FIRST') && (
@@ -767,7 +870,7 @@ export default function ControlTowerPage() {
                                 disabled={pendingActionLoading !== null}
                                 className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                               >
-                                {pendingActionLoading === `reject:${item.id}` ? 'Rejecting...' : 'Reject'}
+                                {pendingActionLoading === `reject:${item.id}` ? 'Отклонение...' : 'Отклонить'}
                               </button>
                             )}
                           </div>
@@ -785,22 +888,22 @@ export default function ControlTowerPage() {
           <div className="mt-12">
             <div className="flex items-center gap-3 mb-6">
               <TerminalSquare size={20} className="text-[#030213]" />
-              <h2 className="text-xl font-medium text-[#030213] tracking-tight">Agent Lifecycle Board</h2>
+              <h2 className="text-xl font-medium text-[#030213] tracking-tight">Панель жизненного цикла агентов</h2>
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              <UnitCard title="Lifecycle Summary" icon={<TerminalSquare size={20} />} subtitle="Fleet Stages">
+              <UnitCard title="Сводка жизненного цикла" icon={<TerminalSquare size={20} />} subtitle="Стадии флота">
                 <div className="space-y-1">
-                  <DataRow label="Tracked roles" value={`${lifecycleSummary.totalTrackedRoles}`} status="success" />
-                  <DataRow label="Template catalog" value={`${lifecycleSummary.templateCatalogCount}`} status="success" />
-                  <DataRow label="Future roles" value={`${lifecycleSummary.stateCounts.FUTURE_ROLE}`} status={lifecycleSummary.stateCounts.FUTURE_ROLE > 0 ? 'warning' : 'success'} />
-                  <DataRow label="Promotion candidates" value={`${lifecycleSummary.stateCounts.PROMOTION_CANDIDATE}`} status={lifecycleSummary.stateCounts.PROMOTION_CANDIDATE > 0 ? 'warning' : 'success'} />
-                  <DataRow label="Active canaries" value={`${lifecycleSummary.stateCounts.CANARY}`} status={lifecycleSummary.stateCounts.CANARY > 0 ? 'warning' : 'success'} />
-                  <DataRow label="Rolled back" value={`${lifecycleSummary.stateCounts.ROLLED_BACK}`} status={lifecycleSummary.stateCounts.ROLLED_BACK > 0 ? 'error' : 'success'} />
+                  <DataRow label="Отслеживаемые роли" value={`${lifecycleSummary.totalTrackedRoles}`} status="success" />
+                  <DataRow label="Каталог шаблонов" value={`${lifecycleSummary.templateCatalogCount}`} status="success" />
+                  <DataRow label="Будущие роли" value={`${lifecycleSummary.stateCounts.FUTURE_ROLE}`} status={lifecycleSummary.stateCounts.FUTURE_ROLE > 0 ? 'warning' : 'success'} />
+                  <DataRow label="Кандидаты на продвижение" value={`${lifecycleSummary.stateCounts.PROMOTION_CANDIDATE}`} status={lifecycleSummary.stateCounts.PROMOTION_CANDIDATE > 0 ? 'warning' : 'success'} />
+                  <DataRow label="Активные канареечные релизы" value={`${lifecycleSummary.stateCounts.CANARY}`} status={lifecycleSummary.stateCounts.CANARY > 0 ? 'warning' : 'success'} />
+                  <DataRow label="Откаты" value={`${lifecycleSummary.stateCounts.ROLLED_BACK}`} status={lifecycleSummary.stateCounts.ROLLED_BACK > 0 ? 'error' : 'success'} />
                 </div>
               </UnitCard>
 
-              <UnitCard title="Canary Contour" icon={<Activity size={20} />} subtitle="Promotion Path">
+              <UnitCard title="Контур канареечного релиза" icon={<Activity size={20} />} subtitle="Путь продвижения">
                 <div className="space-y-0.5">
                   {lifecycleSummary.activeCanaries.length > 0 ? (
                     lifecycleSummary.activeCanaries.slice(0, 5).map((item) => (
@@ -809,7 +912,7 @@ export default function ControlTowerPage() {
                           <p className="text-[13px] font-medium text-[#030213]">{item.role}</p>
                           <p className="text-[11px] text-[#717182]">{item.targetVersion}</p>
                         </div>
-                        <span className="text-[11px] font-mono text-amber-600">active</span>
+                        <span className="text-[11px] font-mono text-amber-600">активен</span>
                       </div>
                     ))
                   ) : (
@@ -818,7 +921,7 @@ export default function ControlTowerPage() {
 
                   {lifecycleSummary.degradedCanaries.length > 0 && (
                     <div className="mt-6 pt-5 border-t border-black/5">
-                      <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Degraded canaries</p>
+                      <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Деградировавшие канарейки</p>
                       <div className="space-y-2">
                         {lifecycleSummary.degradedCanaries.slice(0, 4).map((item) => (
                           <div key={item.changeRequestId} className="rounded-xl border border-red-200 bg-red-50 px-3 py-3">
@@ -832,22 +935,22 @@ export default function ControlTowerPage() {
                 </div>
               </UnitCard>
 
-              <UnitCard title="Rollback & Freeze" icon={<ShieldCheck size={20} />} subtitle="Lifecycle Risk">
+              <UnitCard title="Откат и заморозка" icon={<ShieldCheck size={20} />} subtitle="Риски жизненного цикла">
                 <div className="space-y-1">
-                  <DataRow label="Frozen" value={`${lifecycleSummary.stateCounts.FROZEN}`} status={lifecycleSummary.stateCounts.FROZEN > 0 ? 'warning' : 'success'} />
-                  <DataRow label="Canonical active" value={`${lifecycleSummary.stateCounts.CANONICAL_ACTIVE}`} status="success" />
-                  <DataRow label="Retired" value={`${lifecycleSummary.stateCounts.RETIRED}`} status="success" />
+                  <DataRow label="Заморожено" value={`${lifecycleSummary.stateCounts.FROZEN}`} status={lifecycleSummary.stateCounts.FROZEN > 0 ? 'warning' : 'success'} />
+                  <DataRow label="Канонически активно" value={`${lifecycleSummary.stateCounts.CANONICAL_ACTIVE}`} status="success" />
+                  <DataRow label="Выведено" value={`${lifecycleSummary.stateCounts.RETIRED}`} status="success" />
                 </div>
 
                 <div className="mt-6 pt-5 border-t border-black/5">
-                  <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Rollback history</p>
+                  <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">История откатов</p>
                   {lifecycleSummary.rolledBackRoles.length > 0 ? (
                     <div className="space-y-2">
                       {lifecycleSummary.rolledBackRoles.slice(0, 4).map((item) => (
                         <div key={`${item.role}:${item.targetVersion}`} className="rounded-xl border border-black/5 bg-slate-50 px-3 py-3">
                           <p className="text-[12px] font-medium text-[#030213]">{item.role}</p>
                           <p className="mt-1 text-[11px] text-[#717182]">
-                            {item.targetVersion} • {item.rolledBackAt ? new Date(item.rolledBackAt).toLocaleString('ru') : 'time pending'}
+                            {item.targetVersion} • {item.rolledBackAt ? new Date(item.rolledBackAt).toLocaleString('ru') : 'время ожидается'}
                           </p>
                         </div>
                       ))}
@@ -858,15 +961,15 @@ export default function ControlTowerPage() {
                 </div>
               </UnitCard>
 
-              <UnitCard title="Retirement Archive" icon={<ShieldCheck size={20} />} subtitle="Version Exit">
+              <UnitCard title="Архив вывода" icon={<ShieldCheck size={20} />} subtitle="Вывод версий">
                 <div className="space-y-1">
-                  <DataRow label="Retired events" value={`${retirementArchive.length}`} status={retirementArchive.length > 0 ? 'warning' : 'success'} />
-                  <DataRow label="Active retirements" value={`${activeRetirements.length}`} status={activeRetirements.length > 0 ? 'warning' : 'success'} />
-                  <DataRow label="Archive signal" value={retirementArchive.length > 0 ? 'recorded' : 'empty'} status={retirementArchive.length > 0 ? 'success' : 'warning'} />
+                  <DataRow label="События вывода" value={`${retirementArchive.length}`} status={retirementArchive.length > 0 ? 'warning' : 'success'} />
+                  <DataRow label="Активные выводы" value={`${activeRetirements.length}`} status={activeRetirements.length > 0 ? 'warning' : 'success'} />
+                  <DataRow label="Сигнал архива" value={retirementArchive.length > 0 ? 'зафиксирован' : 'пусто'} status={retirementArchive.length > 0 ? 'success' : 'warning'} />
                 </div>
 
                 <div className="mt-6 pt-5 border-t border-black/5">
-                  <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Retired roles</p>
+                  <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Выведенные роли</p>
                   {retirementArchive.length > 0 ? (
                     <div className="space-y-2">
                       {retirementArchive.slice(0, 4).map((item) => (
@@ -879,7 +982,7 @@ export default function ControlTowerPage() {
                                 ? 'bg-red-100 text-red-700 border-red-200'
                                 : 'bg-white text-slate-700 border-slate-200',
                             )}>
-                              {item.isActive ? 'retired' : 'cleared'}
+                              {item.isActive ? 'выведен' : 'снят'}
                             </span>
                           </div>
                           <p className="mt-1 text-[11px] text-[#717182] leading-relaxed">{item.reason}</p>
@@ -900,8 +1003,8 @@ export default function ControlTowerPage() {
               <div className="px-6 py-4 border-b border-black/5 bg-slate-50">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-1">Lifecycle History</p>
-                    <h3 className="text-lg font-medium text-[#030213] tracking-tight">История freeze / retire / clear</h3>
+                    <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-1">История жизненного цикла</p>
+                    <h3 className="text-lg font-medium text-[#030213] tracking-tight">История заморозки / вывода / снятия</h3>
                   </div>
                   <div className="text-[12px] text-[#717182]">
                     {lifecycleHistory.length} событий
@@ -922,7 +1025,7 @@ export default function ControlTowerPage() {
                               ? 'bg-red-50 text-red-700 border-red-200'
                               : 'bg-amber-50 text-amber-700 border-amber-200',
                           )}>
-                            {item.state === 'RETIRED' ? 'retired' : 'frozen'}
+                            {item.state === 'RETIRED' ? 'выведен' : 'заморожен'}
                           </span>
                           <span className={clsx(
                             'inline-flex px-2.5 py-1 rounded text-[10px] font-medium uppercase tracking-widest border',
@@ -930,7 +1033,7 @@ export default function ControlTowerPage() {
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                               : 'bg-slate-100 text-slate-700 border-slate-200',
                           )}>
-                            {item.isActive ? 'active' : 'cleared'}
+                            {item.isActive ? 'активен' : 'снят'}
                           </span>
                         </div>
                         <div className="mt-1 text-[12px] text-[#717182] leading-relaxed">
@@ -939,7 +1042,7 @@ export default function ControlTowerPage() {
                       </div>
                       <div className="text-[11px] text-[#717182] font-mono lg:text-right">
                         <div>{new Date(item.createdAt).toLocaleString('ru-RU')}</div>
-                        <div>{item.clearedAt ? `cleared ${new Date(item.clearedAt).toLocaleString('ru-RU')}` : 'not cleared'}</div>
+                        <div>{item.clearedAt ? `снят ${new Date(item.clearedAt).toLocaleString('ru-RU')}` : 'не снят'}</div>
                       </div>
                     </div>
                   ))}
@@ -955,7 +1058,7 @@ export default function ControlTowerPage() {
               <div className="px-6 py-4 border-b border-black/5 bg-slate-50">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-1">Lifecycle Table</p>
+                    <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-1">Таблица жизненного цикла</p>
                     <h3 className="text-lg font-medium text-[#030213] tracking-tight">Стадии эволюции флота агентов</h3>
                   </div>
                   <div className="text-[12px] text-[#717182]">
@@ -970,15 +1073,15 @@ export default function ControlTowerPage() {
                     <thead>
                       <tr className="border-b border-black/5 bg-white">
                         <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Роль</th>
-                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Domain</th>
-                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Class</th>
-                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Lifecycle</th>
-                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Current / Candidate</th>
-                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Change</th>
-                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Canary / Rollback</th>
-                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Runtime</th>
-                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Notes</th>
-                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Actions</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Домен</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Класс</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Стадия</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Текущая / Кандидат</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Изменение</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Канарейка / Откат</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Исполнение</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Примечания</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Действия</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-black/5">
@@ -996,7 +1099,7 @@ export default function ControlTowerPage() {
                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                 : 'bg-amber-50 text-amber-700 border-amber-200',
                             )}>
-                              {agent.class === 'canonical' ? 'canonical' : 'future'}
+                              {agent.class === 'canonical' ? 'канонический' : 'будущий'}
                             </span>
                           </td>
                           <td className="px-6 py-4">
@@ -1008,11 +1111,11 @@ export default function ControlTowerPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="text-[13px] font-mono text-[#030213]">{agent.currentVersion ?? 'pending'}</div>
-                            <div className="text-[11px] text-[#717182]">stable {agent.stableVersion ?? 'pending'}</div>
-                            <div className="text-[11px] text-[#717182]">candidate {agent.candidateVersion ?? 'pending'}</div>
+                            <div className="text-[13px] font-mono text-[#030213]">{agent.currentVersion ?? 'ожидание'}</div>
+                            <div className="text-[11px] text-[#717182]">стабильная {agent.stableVersion ?? 'ожидание'}</div>
+                            <div className="text-[11px] text-[#717182]">кандидат {agent.candidateVersion ?? 'ожидание'}</div>
                             {agent.previousStableVersion && (
-                              <div className="text-[10px] text-[#9a9aa5]">prev {agent.previousStableVersion}</div>
+                              <div className="text-[10px] text-[#9a9aa5]">пред. {agent.previousStableVersion}</div>
                             )}
                             <div className="mt-2">
                               <span className={clsx(
@@ -1030,15 +1133,15 @@ export default function ControlTowerPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="text-[11px] text-[#717182]">{agent.changeRequestStatus ? formatGovernanceKey(agent.changeRequestStatus) : 'no change'}</div>
+                            <div className="text-[11px] text-[#717182]">{agent.changeRequestStatus ? formatGovernanceKey(agent.changeRequestStatus) : 'без изменений'}</div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="text-[13px] font-mono text-[#030213]">{agent.canaryStatus ? formatGovernanceKey(agent.canaryStatus) : 'pending'}</div>
-                            <div className="text-[11px] text-[#717182]">{agent.rollbackStatus ? formatGovernanceKey(agent.rollbackStatus) : 'pending'}</div>
+                            <div className="text-[13px] font-mono text-[#030213]">{agent.canaryStatus ? formatGovernanceKey(agent.canaryStatus) : 'ожидание'}</div>
+                            <div className="text-[11px] text-[#717182]">{agent.rollbackStatus ? formatGovernanceKey(agent.rollbackStatus) : 'ожидание'}</div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="text-[13px] font-mono text-[#030213]">{agent.runtimeActive ? 'active' : 'inactive'}</div>
-                            <div className="text-[11px] text-[#717182]">{agent.tenantAccessMode.toLowerCase()}</div>
+                            <div className="text-[13px] font-mono text-[#030213]">{agent.runtimeActive ? 'активно' : 'неактивно'}</div>
+                            <div className="text-[11px] text-[#717182]">{formatTenantAccessMode(agent.tenantAccessMode)}</div>
                           </td>
                           <td className="px-6 py-4">
                             {agent.notes.length > 0 ? (
@@ -1050,12 +1153,12 @@ export default function ControlTowerPage() {
                                 ))}
                               </div>
                             ) : (
-                              <span className="text-[12px] text-[#717182]">no notes</span>
+                              <span className="text-[12px] text-[#717182]">нет заметок</span>
                             )}
                             {agent.lifecycleOverride && (
                               <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
                                 <div className="text-[10px] font-medium uppercase tracking-widest text-amber-700">
-                                  {agent.lifecycleOverride.state === 'RETIRED' ? 'retired override' : 'frozen override'}
+                                  {agent.lifecycleOverride.state === 'RETIRED' ? 'переопределение вывода' : 'переопределение заморозки'}
                                 </div>
                                 <div className="mt-1 text-[11px] text-amber-800 leading-relaxed">
                                   {agent.lifecycleOverride.reason}
@@ -1081,7 +1184,7 @@ export default function ControlTowerPage() {
                                   disabled={lifecycleActionLoading !== null}
                                   className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[12px] font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                  {lifecycleActionLoading === `clear-lifecycle:${agent.role}` ? 'Снятие...' : 'Clear lifecycle state'}
+                                  {lifecycleActionLoading === `clear-lifecycle:${agent.role}` ? 'Снятие...' : 'Снять состояние цикла'}
                                 </button>
                               ) : (
                                 <>
@@ -1092,7 +1195,7 @@ export default function ControlTowerPage() {
                                       disabled={lifecycleActionLoading !== null}
                                       className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
-                                      {lifecycleActionLoading === `frozen:${agent.role}` ? 'Freeze...' : 'Freeze'}
+                                      {lifecycleActionLoading === `frozen:${agent.role}` ? 'Заморозка...' : 'Заморозить'}
                                     </button>
                                   )}
                                   <button
@@ -1101,7 +1204,7 @@ export default function ControlTowerPage() {
                                     disabled={lifecycleActionLoading !== null}
                                     className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                                   >
-                                    {lifecycleActionLoading === `retired:${agent.role}` ? 'Retiring...' : 'Retire'}
+                                    {lifecycleActionLoading === `retired:${agent.role}` ? 'Вывод...' : 'Вывести'}
                                   </button>
                                 </>
                               )}
@@ -1114,7 +1217,7 @@ export default function ControlTowerPage() {
                                     disabled={lifecycleActionLoading !== null}
                                     className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-[12px] font-medium text-blue-700 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
                                   >
-                                    {lifecycleActionLoading === `start:${agent.latestChangeRequestId}` ? 'Запуск...' : 'Start canary'}
+                                    {lifecycleActionLoading === `start:${agent.latestChangeRequestId}` ? 'Запуск...' : 'Запустить канарейку'}
                                   </button>
                                 )}
                                 {agent.canaryStatus === 'ACTIVE' && (
@@ -1124,7 +1227,7 @@ export default function ControlTowerPage() {
                                     disabled={lifecycleActionLoading !== null}
                                     className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                                   >
-                                    {lifecycleActionLoading === `review:${agent.latestChangeRequestId}` ? 'Review...' : 'Review canary'}
+                                    {lifecycleActionLoading === `review:${agent.latestChangeRequestId}` ? 'Проверка...' : 'Проверить канарейку'}
                                   </button>
                                 )}
                                 {agent.changeRequestStatus === 'APPROVED_FOR_PRODUCTION' && (
@@ -1134,7 +1237,7 @@ export default function ControlTowerPage() {
                                     disabled={lifecycleActionLoading !== null}
                                     className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[12px] font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
                                   >
-                                    {lifecycleActionLoading === `promote:${agent.latestChangeRequestId}` ? 'Promote...' : 'Promote'}
+                                    {lifecycleActionLoading === `promote:${agent.latestChangeRequestId}` ? 'Продвижение...' : 'Продвинуть'}
                                   </button>
                                 )}
                                 {(agent.changeRequestStatus === 'PROMOTED' || agent.changeRequestStatus === 'APPROVED_FOR_PRODUCTION') && (
@@ -1144,13 +1247,13 @@ export default function ControlTowerPage() {
                                     disabled={lifecycleActionLoading !== null}
                                     className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                                   >
-                                    {lifecycleActionLoading === `rollback:${agent.latestChangeRequestId}` ? 'Rollback...' : 'Rollback'}
+                                    {lifecycleActionLoading === `rollback:${agent.latestChangeRequestId}` ? 'Откат...' : 'Откатить'}
                                   </button>
                                 )}
                                 </>
                               ) : null}
                               {!agent.latestChangeRequestId && !agent.lifecycleOverride && (
-                                <span className="text-[12px] text-[#717182]">no change actions</span>
+                                <span className="text-[12px] text-[#717182]">действия недоступны</span>
                               )}
                             </div>
                           </td>
@@ -1172,14 +1275,14 @@ export default function ControlTowerPage() {
           <div className="mt-12">
             <div className="flex items-center gap-3 mb-6">
               <ShieldCheck size={20} className="text-[#030213]" />
-              <h2 className="text-xl font-medium text-[#030213] tracking-tight">Runtime Governance</h2>
+              <h2 className="text-xl font-medium text-[#030213] tracking-tight">Управление исполнением</h2>
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               <UnitCard
-                title="Governance Signals"
+                title="Сигналы управления"
                 icon={<ShieldCheck size={20} />}
-                subtitle="Runtime Control"
+                subtitle="Контроль исполнения"
               >
                 <div className="space-y-1">
                   <DataRow
@@ -1188,17 +1291,17 @@ export default function ControlTowerPage() {
                     status={runtimeGovernanceSummary.activeRecommendations.length > 0 ? 'warning' : 'success'}
                   />
                   <DataRow
-                    label="Quality alerts"
+                    label="Сигналы качества"
                     value={`${runtimeGovernanceSummary.quality.qualityAlertCount}`}
                     status={runtimeGovernanceSummary.quality.qualityAlertCount > 0 ? 'warning' : 'success'}
                   />
                   <DataRow
-                    label="Queue pressure"
+                    label="Давление очередей"
                     value={formatQueuePressureState(runtimeGovernanceSummary.queuePressure.pressureState)}
                     status={queuePressureStatus(runtimeGovernanceSummary.queuePressure)}
                   />
                   <DataRow
-                    label="Autonomy"
+                    label="Автономность"
                     value={formatAutonomyLevel(runtimeGovernanceSummary.autonomy.level as AutonomyStatusDto['level'])}
                     status={
                       runtimeGovernanceSummary.autonomy.level === 'AUTONOMOUS'
@@ -1222,17 +1325,17 @@ export default function ControlTowerPage() {
                     }
                   />
                   <DataRow
-                    label="Auto quarantine"
-                    value={runtimeGovernanceSummary.flags.autoQuarantineEnabled ? 'enabled' : 'disabled'}
+                    label="Авто-карантин"
+                    value={runtimeGovernanceSummary.flags.autoQuarantineEnabled ? 'включен' : 'выключен'}
                     status={runtimeGovernanceSummary.flags.autoQuarantineEnabled ? 'warning' : 'success'}
                   />
                 </div>
                 <div className="mt-6 pt-5 border-t border-black/5">
-                  <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Manual autonomy override</p>
+                  <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Ручное переопределение автономности</p>
                   {runtimeGovernanceSummary.autonomy.manualOverride ? (
                     <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
                       <p className="text-[12px] font-medium text-[#030213]">
-                        Активен override: {formatAutonomyLevel(runtimeGovernanceSummary.autonomy.manualOverride.level as AutonomyStatusDto['level'])}
+                        Активно переопределение: {formatAutonomyLevel(runtimeGovernanceSummary.autonomy.manualOverride.level as AutonomyStatusDto['level'])}
                       </p>
                       <p className="mt-2 text-[12px] text-[#717182] leading-relaxed">
                         Причина: {runtimeGovernanceSummary.autonomy.manualOverride.reason}
@@ -1242,7 +1345,7 @@ export default function ControlTowerPage() {
                       </p>
                     </div>
                   ) : (
-                    <p className="mb-4 text-[12px] text-[#717182]">Активный manual override отсутствует.</p>
+                    <p className="mb-4 text-[12px] text-[#717182]">Ручное переопределение отсутствует.</p>
                   )}
                   <div className="flex flex-wrap gap-2">
                     <button
@@ -1251,7 +1354,7 @@ export default function ControlTowerPage() {
                       disabled={governanceActionLoading !== null || !runtimeGovernanceSummary.flags.enforcementEnabled}
                       className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {governanceActionLoading === 'TOOL_FIRST' ? 'Применение...' : 'Перевести в TOOL-FIRST'}
+                      {governanceActionLoading === 'TOOL_FIRST' ? 'Применение...' : 'Режим "сначала инструменты"'}
                     </button>
                     <button
                       type="button"
@@ -1259,7 +1362,7 @@ export default function ControlTowerPage() {
                       disabled={governanceActionLoading !== null || !runtimeGovernanceSummary.flags.enforcementEnabled}
                       className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {governanceActionLoading === 'QUARANTINE' ? 'Применение...' : 'Включить QUARANTINE'}
+                      {governanceActionLoading === 'QUARANTINE' ? 'Применение...' : 'Включить карантин'}
                     </button>
                     <button
                       type="button"
@@ -1267,16 +1370,16 @@ export default function ControlTowerPage() {
                       disabled={governanceActionLoading !== null || !runtimeGovernanceSummary.autonomy.manualOverride || !runtimeGovernanceSummary.flags.enforcementEnabled}
                       className="rounded-lg border border-black/10 bg-white px-3 py-2 text-[12px] font-medium text-[#030213] transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {governanceActionLoading === 'CLEAR' ? 'Снятие...' : 'Снять override'}
+                      {governanceActionLoading === 'CLEAR' ? 'Снятие...' : 'Снять переопределение'}
                     </button>
                   </div>
                 </div>
               </UnitCard>
 
               <UnitCard
-                title="Fallback Contour"
+                title="Контур резервирования"
                 icon={<Zap size={20} />}
-                subtitle="Routing & Recovery"
+                subtitle="Маршрутизация и восстановление"
               >
                 <div className="space-y-0.5">
                   {runtimeGovernanceSummary.topFallbackReasons.length > 0 ? (
@@ -1299,7 +1402,7 @@ export default function ControlTowerPage() {
                             <div className="min-w-0">
                               <p className="text-[12px] font-medium text-[#030213] truncate">{incident.incidentType}</p>
                               <p className="text-[11px] text-[#717182] truncate">
-                                {incident.traceId ?? 'без trace'} • {new Date(incident.createdAt).toLocaleString('ru')}
+                                {incident.traceId ?? 'без трассы'} • {new Date(incident.createdAt).toLocaleString('ru')}
                               </p>
                             </div>
                             <RiskBadge level={severityToRiskLevel(incident.severity)} />
@@ -1312,9 +1415,9 @@ export default function ControlTowerPage() {
               </UnitCard>
 
               <UnitCard
-                title="Hottest Agents"
+                title="Наиболее проблемные агенты"
                 icon={<Activity size={20} />}
-                subtitle="Reliability Ranking"
+                subtitle="Рейтинг надёжности"
               >
                 <div className="space-y-0.5">
                   {runtimeGovernanceSummary.hottestAgents.length > 0 ? (
@@ -1323,10 +1426,10 @@ export default function ControlTowerPage() {
                         <div>
                           <p className="text-[13px] font-medium text-[#030213]">{agent.agentRole}</p>
                           <p className="text-[11px] text-[#717182]">
-                            fallback {formatPctOrPending(agent.fallbackRatePct)} • BS {formatPctOrPending(agent.avgBsScorePct)}
+                            резерв {formatPctOrPending(agent.fallbackRatePct)} • BS {formatPctOrPending(agent.avgBsScorePct)}
                           </p>
                         </div>
-                        <span className="text-[12px] font-mono text-[#717182]">{agent.incidentCount} inc</span>
+                        <span className="text-[12px] font-mono text-[#717182]">{agent.incidentCount} инц.</span>
                       </div>
                     ))
                   ) : (
@@ -1340,7 +1443,7 @@ export default function ControlTowerPage() {
               <div className="px-6 py-4 border-b border-black/5 bg-slate-50">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-1">Agent Reliability Table</p>
+                    <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-1">Таблица надёжности агентов</p>
                     <h3 className="text-lg font-medium text-[#030213] tracking-tight">Нездоровые роли ранжированы первыми</h3>
                   </div>
                   <div className="text-[12px] text-[#717182]">
@@ -1355,13 +1458,13 @@ export default function ControlTowerPage() {
                     <thead>
                       <tr className="border-b border-black/5 bg-white">
                         <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Роль</th>
-                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Success</th>
-                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Fallback</th>
-                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Budget deny</th>
-                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Tool fail</th>
-                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">P95 latency</th>
-                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">BS / Evidence</th>
-                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Recommendation</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Успех</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Резерв</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Отказ по бюджету</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Сбой инструмента</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">P95 задержка</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">BS / Доказательства</th>
+                        <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Рекомендация</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-black/5">
@@ -1369,14 +1472,14 @@ export default function ControlTowerPage() {
                         <tr key={agent.agentRole} className="hover:bg-slate-50/50 transition-colors">
                           <td className="px-6 py-4">
                             <div className="text-[13px] font-medium text-[#030213]">{agent.agentRole}</div>
-                            <div className="text-[11px] text-[#717182]">{agent.executionCount} runs • {agent.incidentCount} incidents</div>
+                            <div className="text-[11px] text-[#717182]">{agent.executionCount} запусков • {agent.incidentCount} инцидентов</div>
                           </td>
                           <td className="px-6 py-4 text-[13px] font-mono text-[#030213]">{formatPctOrPending(agent.successRatePct)}</td>
                           <td className="px-6 py-4 text-[13px] font-mono text-amber-600">{formatPctOrPending(agent.fallbackRatePct)}</td>
                           <td className="px-6 py-4 text-[13px] font-mono text-[#030213]">{formatPctOrPending(agent.budgetDeniedRatePct)}</td>
                           <td className="px-6 py-4 text-[13px] font-mono text-[#030213]">{formatPctOrPending(agent.toolFailureRatePct)}</td>
                           <td className="px-6 py-4 text-[13px] font-mono text-[#030213]">
-                            {agent.p95LatencyMs === null ? 'pending' : `${agent.p95LatencyMs.toFixed(0)} ms`}
+                            {agent.p95LatencyMs === null ? 'ожидание' : `${agent.p95LatencyMs.toFixed(0)} ms`}
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-[13px] font-mono text-[#030213]">{formatPctOrPending(agent.avgBsScorePct)}</div>
@@ -1405,9 +1508,9 @@ export default function ControlTowerPage() {
             {runtimeGovernanceDrilldowns && (
               <div className="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-6">
                 <UnitCard
-                  title="Fallback History"
+                  title="История резервирования"
                   icon={<Zap size={20} />}
-                  subtitle="Drilldown"
+                  subtitle="Детализация"
                 >
                   <div className="space-y-0.5">
                     {runtimeGovernanceDrilldowns.fallbackHistory.length > 0 ? (
@@ -1430,9 +1533,9 @@ export default function ControlTowerPage() {
                 </UnitCard>
 
                 <UnitCard
-                  title="Budget Hotspots"
+                  title="Горячие точки бюджета"
                   icon={<DollarSign size={20} />}
-                  subtitle="Drilldown"
+                  subtitle="Детализация"
                 >
                   <div className="space-y-0.5">
                     {runtimeGovernanceDrilldowns.budgetHotspots.length > 0 ? (
@@ -1440,10 +1543,10 @@ export default function ControlTowerPage() {
                         <div key={`${item.agentRole ?? 'unknown'}:${item.toolName}`} className="flex items-center justify-between py-2 border-b border-black/[0.03] last:border-0">
                           <div>
                             <p className="text-[13px] font-medium text-[#030213]">{item.toolName}</p>
-                            <p className="text-[11px] text-[#717182]">{item.agentRole ?? 'unknown'}</p>
+                            <p className="text-[11px] text-[#717182]">{item.agentRole ?? 'неизвестно'}</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-[13px] font-mono text-[#030213]">deny {item.deniedCount} / degrade {item.degradedCount}</p>
+                            <p className="text-[13px] font-mono text-[#030213]">отказ {item.deniedCount} / деградация {item.degradedCount}</p>
                             <p className="text-[11px] text-[#717182]">{new Date(item.lastSeenAt).toLocaleString('ru')}</p>
                           </div>
                         </div>
@@ -1455,23 +1558,23 @@ export default function ControlTowerPage() {
                 </UnitCard>
 
                 <UnitCard
-                  title="Quality Drift History"
+                  title="История дрейфа качества"
                   icon={<ShieldCheck size={20} />}
-                  subtitle="Drilldown"
+                  subtitle="Детализация"
                 >
                   <div className="space-y-0.5">
                     {runtimeGovernanceDrilldowns.qualityDriftHistory.length > 0 ? (
                       runtimeGovernanceDrilldowns.qualityDriftHistory.slice(0, 8).map((item, index) => (
                         <div key={`${item.traceId ?? 'trace'}:${index}`} className="flex items-center justify-between py-2 border-b border-black/[0.03] last:border-0">
                           <div className="min-w-0">
-                            <p className="text-[13px] font-medium text-[#030213] truncate">{item.agentRole ?? 'unknown'}</p>
+                            <p className="text-[13px] font-medium text-[#030213] truncate">{item.agentRole ?? 'неизвестно'}</p>
                             <p className="text-[11px] text-[#717182] truncate">
-                              {item.traceId ?? 'без trace'} • rec {formatGovernanceKey(item.recommendationType ?? 'NONE')}
+                              {item.traceId ?? 'без трассы'} • рек. {formatGovernanceKey(item.recommendationType ?? 'NONE')}
                             </p>
                           </div>
                           <div className="text-right">
                             <p className="text-[13px] font-mono text-[#030213]">{formatPctOrPending(item.recentAvgBsPct)}</p>
-                            <p className="text-[11px] text-[#717182]">base {formatPctOrPending(item.baselineAvgBsPct)}</p>
+                            <p className="text-[11px] text-[#717182]">база {formatPctOrPending(item.baselineAvgBsPct)}</p>
                           </div>
                         </div>
                       ))
@@ -1482,9 +1585,9 @@ export default function ControlTowerPage() {
                 </UnitCard>
 
                 <UnitCard
-                  title="Queue & Correlation"
+                  title="Очереди и корреляция"
                   icon={<Activity size={20} />}
-                  subtitle="Drilldown"
+                  subtitle="Детализация"
                 >
                   <div className="space-y-0.5">
                     {runtimeGovernanceDrilldowns.queueSaturationTimeline.length > 0 ? (
@@ -1492,7 +1595,7 @@ export default function ControlTowerPage() {
                         <div key={item.observedAt} className="flex items-center justify-between py-2 border-b border-black/[0.03] last:border-0">
                           <div>
                             <p className="text-[13px] font-medium text-[#030213]">{formatQueuePressureState(item.pressureState)}</p>
-                            <p className="text-[11px] text-[#717182]">{item.hottestQueue ?? 'runtime'} • {new Date(item.observedAt).toLocaleString('ru')}</p>
+                            <p className="text-[11px] text-[#717182]">{item.hottestQueue ?? 'исполнение'} • {new Date(item.observedAt).toLocaleString('ru')}</p>
                           </div>
                           <p className="text-[13px] font-mono text-[#030213]">{item.totalBacklog}</p>
                         </div>
@@ -1503,18 +1606,18 @@ export default function ControlTowerPage() {
 
                     {runtimeGovernanceDrilldowns.correlation.length > 0 && (
                       <div className="mt-6 pt-5 border-t border-black/5">
-                        <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Correlation</p>
+                        <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Корреляция</p>
                         <div className="space-y-2">
                           {runtimeGovernanceDrilldowns.correlation.slice(0, 4).map((item, index) => (
                             <div key={`${item.traceId ?? 'trace'}:${index}`} className="rounded-xl border border-black/5 bg-slate-50 px-3 py-3">
                               <p className="text-[12px] font-medium text-[#030213]">
-                                {item.agentRole ?? 'unknown'} • {formatGovernanceKey(item.fallbackReason ?? 'NONE')}
+                                {item.agentRole ?? 'неизвестно'} • {formatGovernanceKey(item.fallbackReason ?? 'NONE')}
                               </p>
                               <p className="mt-1 text-[11px] text-[#717182]">
-                                rec {formatGovernanceKey(item.recommendationType ?? 'NONE')} • incident {item.incidentType ?? 'none'}
+                                рек. {formatGovernanceKey(item.recommendationType ?? 'NONE')} • инцидент {item.incidentType ?? 'нет'}
                               </p>
                               <p className="mt-1 text-[11px] text-[#717182]">
-                                {item.traceId ?? 'без trace'} • {new Date(item.createdAt).toLocaleString('ru')}
+                                {item.traceId ?? 'без трассы'} • {new Date(item.createdAt).toLocaleString('ru')}
                               </p>
                             </div>
                           ))}
@@ -1540,9 +1643,9 @@ export default function ControlTowerPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-black/5 bg-slate-50">
-                    <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Событие / Trace ID</th>
-                    <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">BS% Score</th>
-                    <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Evidence Base</th>
+                    <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Событие / идентификатор трассы</th>
+                    <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">BS%</th>
+                    <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Доказательная база</th>
                     <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182] text-right">Статус риска</th>
                   </tr>
                 </thead>
@@ -1563,12 +1666,12 @@ export default function ControlTowerPage() {
                         </td>
                         <td className="px-6 py-4">
                           <span className={clsx("text-[13px] font-mono font-medium", isR4 ? 'text-red-600' : 'text-amber-600')}>
-                            {bsScore === null ? 'pending' : `${bsScore.toFixed(0)}%`}
+                            {bsScore === null ? 'ожидание' : `${bsScore.toFixed(0)}%`}
                           </span>
                         </td>
                         <td className="px-6 py-4">
                           <span className="text-[13px] font-mono text-[#030213]">
-                            {evidenceCoverage === null ? 'pending' : `${evidenceCoverage.toFixed(0)}%`}
+                            {evidenceCoverage === null ? 'ожидание' : `${evidenceCoverage.toFixed(0)}%`}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -1587,17 +1690,17 @@ export default function ControlTowerPage() {
           <div className="mt-12">
             <div className="flex items-center gap-3 mb-6">
               <Activity size={20} className="text-[#030213]" />
-              <h2 className="text-xl font-medium text-[#030213] tracking-tight">Critical Path Visibility</h2>
+              <h2 className="text-xl font-medium text-[#030213] tracking-tight">Видимость критического пути</h2>
             </div>
 
             <div className="bg-white border border-black/10 rounded-2xl overflow-hidden">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-black/5 bg-slate-50">
-                    <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Trace</th>
-                    <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Bottleneck phase</th>
-                    <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Phase duration</th>
-                    <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Total trace</th>
+                    <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Трасса</th>
+                    <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Узкое место</th>
+                    <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Длительность фазы</th>
+                    <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[#717182]">Длительность трассы</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-black/5">
@@ -1611,7 +1714,7 @@ export default function ControlTowerPage() {
                       <td className="px-6 py-4 text-[13px] font-medium text-[#030213]">{item.phase}</td>
                       <td className="px-6 py-4 text-[13px] font-mono text-[#030213]">{item.durationMs.toFixed(0)} ms</td>
                       <td className="px-6 py-4 text-[13px] font-mono text-[#717182]">
-                        {item.totalDurationMs === null ? 'pending' : `${item.totalDurationMs.toFixed(0)} ms`}
+                        {item.totalDurationMs === null ? 'ожидание' : `${item.totalDurationMs.toFixed(0)} ms`}
                       </td>
                     </tr>
                   ))}
@@ -1625,7 +1728,7 @@ export default function ControlTowerPage() {
   );
 }
 
-// Утилитные компоненты Control Plane
+// Утилитные компоненты центрального пульта
 
 function UnitCard({ title, icon, subtitle, children }: { title: string; icon: React.ReactNode; subtitle: string; children: React.ReactNode }) {
   return (
@@ -1664,34 +1767,34 @@ function DataRow({ label, value, status }: { label: string; value: string; statu
 }
 
 function formatPctOrPending(value: number | null) {
-  return value === null ? 'pending' : `${value.toFixed(1)}%`;
+  return value === null ? 'ожидание' : `${value.toFixed(1)}%`;
 }
 
 function formatAutonomyLevel(level: AutonomyStatusDto['level']) {
   switch (level) {
     case 'AUTONOMOUS':
-      return 'autonomous';
+      return 'автономный';
     case 'TOOL_FIRST':
-      return 'tool-first';
+      return 'сначала инструменты';
     case 'QUARANTINE':
-      return 'quarantine';
+      return 'карантин';
     default:
-      return 'pending';
+      return 'ожидание';
   }
 }
 
 function formatQueuePressureState(state: QueuePressureData['pressureState'] | undefined) {
   switch (state) {
     case 'IDLE':
-      return 'idle';
+      return 'нет нагрузки';
     case 'STABLE':
-      return 'stable';
+      return 'стабильно';
     case 'PRESSURED':
-      return 'pressured';
+      return 'под нагрузкой';
     case 'SATURATED':
-      return 'saturated';
+      return 'перегружено';
     default:
-      return 'pending';
+      return 'ожидание';
   }
 }
 
@@ -1713,30 +1816,63 @@ function queuePressureStatus(
 }
 
 function formatGovernanceKey(value: string) {
-  return value
-    .toLowerCase()
-    .replaceAll('_', ' ');
+  const dictionary: Record<string, string> = {
+    NONE: 'нет',
+    PENDING: 'ожидание',
+    APPROVED_FIRST: 'подтверждено 1/2',
+    APPROVED_FINAL: 'подтверждено финально',
+    REJECTED: 'отклонено',
+    EXPIRED: 'истекло',
+    AHEAD_OF_STABLE: 'выше стабильной версии',
+    ROLLED_BACK_TO_STABLE: 'откат к стабильной версии',
+    MATCHES_STABLE: 'совпадает со стабильной версией',
+    READY_FOR_CANARY: 'готово к канарейке',
+    CANARY_ACTIVE: 'канарейка активна',
+    APPROVED_FOR_PRODUCTION: 'подтверждено для продакшена',
+    PROMOTED: 'продвинуто в продакшен',
+    ROLLBACK_RECOMMENDED: 'рекомендован откат',
+    QUARANTINE_RECOMMENDED: 'рекомендован карантин',
+    REVIEW_REQUIRED: 'требуется проверка',
+    CONCURRENCY_TUNING_RECOMMENDED: 'рекомендована настройка параллельности',
+    BUDGET_TUNING_RECOMMENDED: 'рекомендована настройка бюджета',
+    ACTIVE: 'активно',
+    INACTIVE: 'неактивно',
+  };
+
+  const normalized = value.toUpperCase();
+  if (dictionary[normalized]) {
+    return dictionary[normalized];
+  }
+  return normalized.toLowerCase().replaceAll('_', ' ');
 }
 
 function formatLifecycleState(state: AgentLifecycleItemDto['lifecycleState']) {
   switch (state) {
     case 'CANARY':
-      return 'canary';
+      return 'канарейка';
     case 'PROMOTION_CANDIDATE':
-      return 'promotion';
+      return 'кандидат на продвижение';
     case 'FROZEN':
-      return 'frozen';
+      return 'заморожен';
     case 'ROLLED_BACK':
-      return 'rolled back';
+      return 'откачен';
     case 'FUTURE_ROLE':
-      return 'future role';
+      return 'будущая роль';
     case 'RETIRED':
-      return 'retired';
+      return 'выведен';
     case 'CANONICAL_ACTIVE':
-      return 'active';
+      return 'активен';
     default:
-      return 'pending';
+      return 'ожидание';
   }
+}
+
+function formatTenantAccessMode(mode: string | null | undefined) {
+  const normalized = (mode ?? '').toUpperCase();
+  if (normalized === 'INHERITED') return 'наследуется';
+  if (normalized === 'OVERRIDE') return 'переопределено';
+  if (normalized === 'DENIED') return 'запрещено';
+  return mode ? mode.toLowerCase().replaceAll('_', ' ') : 'ожидание';
 }
 
 function lifecycleBadgeClass(state: AgentLifecycleItemDto['lifecycleState']) {
@@ -1800,7 +1936,7 @@ function RiskBadge({ level }: { level: 'R1' | 'R2' | 'R3' | 'R4' | 'Success' }) 
 
   return (
     <span className={clsx("px-2.5 py-1 rounded text-[10px] font-medium uppercase tracking-widest border", styles[level])}>
-      {level === 'Success' ? 'Verified' : level}
+      {level === 'Success' ? 'Проверено' : level}
     </span>
   );
 }

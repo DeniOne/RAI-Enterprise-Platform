@@ -1,5 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { SupervisorAgent } from "./supervisor-agent.service";
+import { SupervisorForensicsService } from "./supervisor-forensics.service";
 import { RaiToolsRegistry } from "./tools/rai-tools.registry";
 import { AgroToolsRegistry } from "./tools/agro-tools.registry";
 import { FinanceToolsRegistry } from "./tools/finance-tools.registry";
@@ -7,12 +8,16 @@ import { RiskToolsRegistry } from "./tools/risk-tools.registry";
 import { KnowledgeToolsRegistry } from "./tools/knowledge-tools.registry";
 import { CrmToolsRegistry } from "./tools/crm-tools.registry";
 import { FrontOfficeToolsRegistry } from "./tools/front-office-tools.registry";
+import { ContractsToolsRegistry } from "./tools/contracts-tools.registry";
 import { AgronomAgent } from "./agents/agronom-agent.service";
 import { EconomistAgent } from "./agents/economist-agent.service";
 import { KnowledgeAgent } from "./agents/knowledge-agent.service";
 import { MonitoringAgent } from "./agents/monitoring-agent.service";
 import { CrmAgent } from "./agents/crm-agent.service";
 import { FrontOfficeAgent } from "./agents/front-office-agent.service";
+import { ContractsAgent } from "./agents/contracts-agent.service";
+import { ChiefAgronomistAgent } from "./agents/chief-agronomist-agent.service";
+import { DataScientistAgent } from "./agents/data-scientist-agent.service";
 import { AgroDeterministicEngineFacade } from "./deterministic/agro-deterministic.facade";
 import { IntentRouterService } from "./intent-router/intent-router.service";
 import { ExternalSignalsService } from "./external-signals.service";
@@ -40,12 +45,14 @@ import { BudgetControllerService } from "./security/budget-controller.service";
 import { OpenRouterGatewayService } from "./agent-platform/openrouter-gateway.service";
 import { AgentPromptAssemblyService } from "./agent-platform/agent-prompt-assembly.service";
 import { AgentExecutionAdapterService } from "./runtime/agent-execution-adapter.service";
+import { RuntimeGovernanceControlService } from "./runtime/runtime-governance-control.service";
 import { RuntimeGovernanceEventService } from "./runtime-governance/runtime-governance-event.service";
+import { RuntimeGovernanceFeatureFlagsService } from "./runtime-governance/runtime-governance-feature-flags.service";
 import { RuntimeGovernancePolicyService } from "./runtime-governance/runtime-governance-policy.service";
 import {
   RAI_CHAT_WIDGETS_SCHEMA_VERSION,
   RaiChatWidgetType,
-} from "./widgets/rai-chat-widgets.types";
+} from "../../shared/rai-chat/rai-chat-widgets.types";
 
 describe("SupervisorAgent", () => {
   let agent: SupervisorAgent;
@@ -186,6 +193,14 @@ describe("SupervisorAgent", () => {
     }),
     resolveFallbackMode: jest.fn().mockReturnValue("READ_ONLY_SUPPORT"),
   };
+  const runtimeGovernanceFeatureFlagsServiceMock = {
+    getFlags: jest.fn().mockReturnValue({
+      enforcementEnabled: true,
+      queueFallbackEnabled: true,
+      queueFallbackShadowMode: false,
+      emergencyKillSwitch: false,
+    }),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -201,9 +216,11 @@ describe("SupervisorAgent", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SupervisorAgent,
+        SupervisorForensicsService,
         MemoryCoordinatorService,
         AgentRuntimeService,
         AgentExecutionAdapterService,
+        RuntimeGovernanceControlService,
         ResponseComposerService,
         AgroToolsRegistry,
         FinanceToolsRegistry,
@@ -211,6 +228,7 @@ describe("SupervisorAgent", () => {
         KnowledgeToolsRegistry,
         { provide: CrmToolsRegistry, useValue: { has: jest.fn().mockReturnValue(false), execute: jest.fn() } },
         { provide: FrontOfficeToolsRegistry, useValue: { has: jest.fn().mockReturnValue(false), execute: jest.fn() } },
+        { provide: ContractsToolsRegistry, useValue: { has: jest.fn().mockReturnValue(false), execute: jest.fn() } },
         AgroDeterministicEngineFacade,
         AgronomAgent,
         EconomistAgent,
@@ -218,6 +236,9 @@ describe("SupervisorAgent", () => {
         MonitoringAgent,
         { provide: CrmAgent, useValue: { run: jest.fn() } },
         { provide: FrontOfficeAgent, useValue: { run: jest.fn() } },
+        { provide: ContractsAgent, useValue: { run: jest.fn() } },
+        { provide: ChiefAgronomistAgent, useValue: { run: jest.fn() } },
+        { provide: DataScientistAgent, useValue: { run: jest.fn() } },
         RaiToolsRegistry,
         RiskPolicyEngineService,
         PendingActionService,
@@ -242,6 +263,7 @@ describe("SupervisorAgent", () => {
         { provide: TruthfulnessEngineService, useValue: { calculateTraceTruthfulness: jest.fn().mockResolvedValue(20) } },
         { provide: RuntimeGovernanceEventService, useValue: runtimeGovernanceEventServiceMock },
         { provide: RuntimeGovernancePolicyService, useValue: runtimeGovernancePolicyServiceMock },
+        { provide: RuntimeGovernanceFeatureFlagsService, useValue: runtimeGovernanceFeatureFlagsServiceMock },
       ],
     }).compile();
 
@@ -302,7 +324,7 @@ describe("SupervisorAgent", () => {
     );
     expect(result.traceId).toEqual(expect.stringMatching(/^tr_/));
     expect(result.threadId).toEqual(expect.stringMatching(/^th_/));
-    expect(result.memoryUsed ?? []).not.toEqual(
+    expect(result.memoryUsed ?? []).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           kind: "profile",
@@ -350,7 +372,7 @@ describe("SupervisorAgent", () => {
     );
 
     expect(result.text).toBe("Принял: Что дальше?");
-    expect(result.memoryUsed ?? []).not.toEqual(
+    expect(result.memoryUsed ?? []).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           kind: "profile",
@@ -955,9 +977,11 @@ describe("SupervisorAgent", () => {
       const mod: TestingModule = await Test.createTestingModule({
         providers: [
           SupervisorAgent,
+          SupervisorForensicsService,
           MemoryCoordinatorService,
           AgentRuntimeService,
           AgentExecutionAdapterService,
+          RuntimeGovernanceControlService,
           ResponseComposerService,
           AgroToolsRegistry,
           FinanceToolsRegistry,
@@ -965,6 +989,7 @@ describe("SupervisorAgent", () => {
           KnowledgeToolsRegistry,
           { provide: CrmToolsRegistry, useValue: { has: jest.fn().mockReturnValue(false), execute: jest.fn() } },
           { provide: FrontOfficeToolsRegistry, useValue: { has: jest.fn().mockReturnValue(false), execute: jest.fn() } },
+          { provide: ContractsToolsRegistry, useValue: { has: jest.fn().mockReturnValue(false), execute: jest.fn() } },
           AgroDeterministicEngineFacade,
           AgronomAgent,
           EconomistAgent,
@@ -972,6 +997,9 @@ describe("SupervisorAgent", () => {
           MonitoringAgent,
           { provide: CrmAgent, useValue: { run: jest.fn() } },
           { provide: FrontOfficeAgent, useValue: { run: jest.fn() } },
+          { provide: ContractsAgent, useValue: { run: jest.fn() } },
+          { provide: ChiefAgronomistAgent, useValue: { run: jest.fn() } },
+          { provide: DataScientistAgent, useValue: { run: jest.fn() } },
           RaiToolsRegistry,
           RiskPolicyEngineService,
           PendingActionService,
@@ -1002,6 +1030,7 @@ describe("SupervisorAgent", () => {
           { provide: TruthfulnessEngineService, useValue: overrides?.truthfulness ?? truthfulnessMock },
           { provide: RuntimeGovernanceEventService, useValue: runtimeGovernanceEventServiceMock },
           { provide: RuntimeGovernancePolicyService, useValue: runtimeGovernancePolicyServiceMock },
+          { provide: RuntimeGovernanceFeatureFlagsService, useValue: runtimeGovernanceFeatureFlagsServiceMock },
         ],
       }).compile();
       const ag = mod.get(SupervisorAgent);

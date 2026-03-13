@@ -20,6 +20,14 @@ interface FrontOfficeCompanyMetricsState {
   handoffLatencyMsSamples: number[];
 }
 
+interface FrontOfficeSloThresholds {
+  handoffLatencyP95Ms: number;
+  deliveryFailureRateMax: number;
+  clarificationMaxDepth: number;
+  humanHandoffShareMax: number;
+  openHandoffsMax: number;
+}
+
 function createDefaultState(): FrontOfficeCompanyMetricsState {
   return {
     outcomes: {
@@ -124,15 +132,45 @@ export class FrontOfficeMetricsService {
 
   snapshot(companyId: string) {
     const state = this.getState(companyId);
+    const thresholds = this.resolveThresholds();
     const latencies = [...state.handoffLatencyMsSamples].sort((a, b) => a - b);
     const latencyCount = latencies.length;
     const latencySum = latencies.reduce((sum, value) => sum + value, 0);
     const p95Index =
       latencyCount > 0 ? Math.max(0, Math.ceil(latencyCount * 0.95) - 1) : -1;
 
+    const outcomes = { ...state.outcomes };
+    const outcomesTotal = Object.values(outcomes).reduce((sum, value) => sum + value, 0);
+    const deliveryAttempts = state.repliesSentTotal + state.deliveryFailuresTotal;
+    const deliveryFailureRate =
+      deliveryAttempts > 0 ? state.deliveryFailuresTotal / deliveryAttempts : 0;
+    const humanHandoffShare =
+      outcomesTotal > 0 ? outcomes.HUMAN_HANDOFF / outcomesTotal : 0;
+    const handoffLatencyP95 = p95Index >= 0 ? latencies[p95Index] : 0;
+
+    const alerts = {
+      handoffLatencyP95Breached: handoffLatencyP95 > thresholds.handoffLatencyP95Ms,
+      deliveryFailureRateBreached:
+        deliveryFailureRate > thresholds.deliveryFailureRateMax,
+      clarificationDepthBreached:
+        state.maxClarificationDepth > thresholds.clarificationMaxDepth,
+      humanHandoffShareBreached:
+        humanHandoffShare > thresholds.humanHandoffShareMax,
+      openHandoffsBreached: state.handoffInFlight.size > thresholds.openHandoffsMax,
+    };
+
     return {
       timestamp: new Date().toISOString(),
-      outcomes: { ...state.outcomes },
+      thresholds,
+      outcomes,
+      derived: {
+        outcomesTotal,
+        deliveryAttempts,
+        deliveryFailureRate,
+        humanHandoffShare,
+      },
+      alerts,
+      healthStatus: Object.values(alerts).some(Boolean) ? "degraded" : "healthy",
       delivery: {
         repliesSentTotal: state.repliesSentTotal,
         deliveryFailuresTotal: state.deliveryFailuresTotal,
@@ -151,7 +189,7 @@ export class FrontOfficeMetricsService {
           avg: latencyCount > 0 ? Math.round(latencySum / latencyCount) : 0,
           min: latencyCount > 0 ? latencies[0] : 0,
           max: latencyCount > 0 ? latencies[latencyCount - 1] : 0,
-          p95: p95Index >= 0 ? latencies[p95Index] : 0,
+          p95: handoffLatencyP95,
         },
       },
     };
@@ -196,6 +234,42 @@ export class FrontOfficeMetricsService {
     lines.push("# TYPE front_office_handoff_latency_ms_p95 gauge");
     lines.push(`${prefix}_handoff_latency_ms_p95 ${snapshot.handoff.latencyMs.p95}`);
 
+    lines.push("# HELP front_office_slo_handoff_latency_p95_ms_threshold SLO threshold.");
+    lines.push("# TYPE front_office_slo_handoff_latency_p95_ms_threshold gauge");
+    lines.push(
+      `${prefix}_slo_handoff_latency_p95_ms_threshold ${snapshot.thresholds.handoffLatencyP95Ms}`,
+    );
+
+    lines.push("# HELP front_office_slo_delivery_failure_rate_threshold SLO threshold.");
+    lines.push("# TYPE front_office_slo_delivery_failure_rate_threshold gauge");
+    lines.push(
+      `${prefix}_slo_delivery_failure_rate_threshold ${snapshot.thresholds.deliveryFailureRateMax}`,
+    );
+
+    lines.push("# HELP front_office_slo_clarification_max_depth_threshold SLO threshold.");
+    lines.push("# TYPE front_office_slo_clarification_max_depth_threshold gauge");
+    lines.push(
+      `${prefix}_slo_clarification_max_depth_threshold ${snapshot.thresholds.clarificationMaxDepth}`,
+    );
+
+    lines.push("# HELP front_office_alerts Alert states as gauges (0/1).");
+    lines.push("# TYPE front_office_alerts gauge");
+    lines.push(
+      `${prefix}_alerts{name="handoff_latency_p95"} ${snapshot.alerts.handoffLatencyP95Breached ? 1 : 0}`,
+    );
+    lines.push(
+      `${prefix}_alerts{name="delivery_failure_rate"} ${snapshot.alerts.deliveryFailureRateBreached ? 1 : 0}`,
+    );
+    lines.push(
+      `${prefix}_alerts{name="clarification_depth"} ${snapshot.alerts.clarificationDepthBreached ? 1 : 0}`,
+    );
+    lines.push(
+      `${prefix}_alerts{name="human_handoff_share"} ${snapshot.alerts.humanHandoffShareBreached ? 1 : 0}`,
+    );
+    lines.push(
+      `${prefix}_alerts{name="open_handoffs"} ${snapshot.alerts.openHandoffsBreached ? 1 : 0}`,
+    );
+
     return `${lines.join("\n")}\n`;
   }
 
@@ -213,5 +287,35 @@ export class FrontOfficeMetricsService {
     this.stateByCompany.set(key, created);
     return created;
   }
-}
 
+  private resolveThresholds(): FrontOfficeSloThresholds {
+    return {
+      handoffLatencyP95Ms: this.numberFromEnv(
+        "FRONT_OFFICE_SLO_HANDOFF_P95_MS",
+        30 * 60 * 1000,
+      ),
+      deliveryFailureRateMax: this.numberFromEnv(
+        "FRONT_OFFICE_SLO_DELIVERY_FAILURE_RATE_MAX",
+        0.1,
+      ),
+      clarificationMaxDepth: this.numberFromEnv(
+        "FRONT_OFFICE_SLO_CLARIFICATION_MAX_DEPTH",
+        3,
+      ),
+      humanHandoffShareMax: this.numberFromEnv(
+        "FRONT_OFFICE_SLO_HUMAN_HANDOFF_SHARE_MAX",
+        0.7,
+      ),
+      openHandoffsMax: this.numberFromEnv("FRONT_OFFICE_SLO_OPEN_HANDOFFS_MAX", 50),
+    };
+  }
+
+  private numberFromEnv(key: string, fallback: number): number {
+    const raw = process.env[key];
+    if (!raw) {
+      return fallback;
+    }
+    const value = Number(raw);
+    return Number.isFinite(value) ? value : fallback;
+  }
+}

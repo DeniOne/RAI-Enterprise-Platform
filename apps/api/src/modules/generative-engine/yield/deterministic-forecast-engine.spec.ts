@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { DeterministicForecastEngine } from "./deterministic-forecast-engine";
-import { InputDataSnapshot } from "./input-data-snapshot";
+import { InputDataSnapshot } from "../../../shared/generative-engine/yield/input-data-snapshot";
 
 describe("DeterministicForecastEngine", () => {
   let engine: DeterministicForecastEngine;

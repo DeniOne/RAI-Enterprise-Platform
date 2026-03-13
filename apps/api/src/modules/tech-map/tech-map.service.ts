@@ -19,17 +19,25 @@ import { TechMapActiveConflictError } from "./tech-map.errors";
 import {
   TechMapValidationEngine,
   ValidationReport,
-  ValidationInput,
-  OperationWithResources,
 } from "./validation/techmap-validation.engine";
 import {
   DAGValidationService,
   ValidationResult,
-  OperationNode,
-  OperationDependency,
 } from "./validation/dag-validation.service";
 import { TechMapValidator } from "./tech-map.validator";
 import { UnitNormalizationService } from "./unit-normalization.service";
+import {
+  buildDagNodesFromTechMap,
+  buildOperationsSnapshot,
+  buildResourceNormsSnapshot,
+  buildValidationInputFromTechMap,
+} from "../../shared/tech-map/tech-map-mapping.helpers";
+import {
+  TECH_MAP_DAG_INCLUDE,
+  TECH_MAP_STAGES_WITH_RESOURCES_INCLUDE,
+  TECH_MAP_STAGES_WITH_RESOURCES_NO_ORDER_INCLUDE,
+  TECH_MAP_VALIDATION_INCLUDE,
+} from "../../shared/tech-map/tech-map-prisma-includes";
 
 @Injectable()
 export class TechMapService {
@@ -202,17 +210,7 @@ export class TechMapService {
     return this.prisma.$transaction(async (tx) => {
       const map = await tx.techMap.findFirst({
         where: { id, companyId },
-        include: {
-          stages: {
-            include: {
-              operations: {
-                include: {
-                  resources: true,
-                },
-              },
-            },
-          },
-        },
+        include: TECH_MAP_STAGES_WITH_RESOURCES_NO_ORDER_INCLUDE,
       });
 
       if (!map) {
@@ -315,18 +313,7 @@ export class TechMapService {
   async findAll(companyId: string) {
     return this.prisma.techMap.findMany({
       where: { companyId },
-      include: {
-        stages: {
-          orderBy: { sequence: "asc" },
-          include: {
-            operations: {
-              include: {
-                resources: true,
-              },
-            },
-          },
-        },
-      },
+      include: TECH_MAP_STAGES_WITH_RESOURCES_INCLUDE,
       orderBy: { version: "desc" },
     });
   }
@@ -338,18 +325,7 @@ export class TechMapService {
         id,
         companyId,
       },
-      include: {
-        stages: {
-          orderBy: { sequence: "asc" },
-          include: {
-            operations: {
-              include: {
-                resources: true,
-              },
-            },
-          },
-        },
-      },
+      include: TECH_MAP_STAGES_WITH_RESOURCES_INCLUDE,
     });
 
     if (!map) {
@@ -365,18 +341,7 @@ export class TechMapService {
         seasonId,
         companyId,
       },
-      include: {
-        stages: {
-          orderBy: { sequence: "asc" },
-          include: {
-            operations: {
-              include: {
-                resources: true,
-              },
-            },
-          },
-        },
-      },
+      include: TECH_MAP_STAGES_WITH_RESOURCES_INCLUDE,
     });
 
     if (!map) {
@@ -403,67 +368,16 @@ export class TechMapService {
 
     const map = await this.prisma.techMap.findFirst({
       where: { id: techMapId, companyId },
-      include: {
-        field: true,
-        stages: {
-          include: {
-            operations: {
-              include: {
-                resources: {
-                  include: {
-                    inputCatalog: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        cropZone: true,
-      },
+      include: TECH_MAP_VALIDATION_INCLUDE,
     });
 
     if (!map) {
       throw new NotFoundException("TechMap not found");
     }
 
-    const allOps: OperationWithResources[] = map.stages.flatMap((stage) =>
-      stage.operations.map((op) => ({
-        id: op.id,
-        operationType: (op as any).operationType ?? null,
-        bbchWindowFrom: (op as any).bbchWindowFrom ?? null,
-        bbchWindowTo: (op as any).bbchWindowTo ?? null,
-        isCritical: (op as any).isCritical ?? false,
-        actualStartDate: (op as any).actualStartDate ?? null,
-        plannedStartDate: (op as any).plannedStartDate ?? null,
-        plannedDurationHours: (op as any).plannedDurationHours ?? 8,
-        dependencies: (() => {
-          const raw = (op as any).dependencies;
-          if (!Array.isArray(raw)) return [];
-          return raw as OperationDependency[];
-        })(),
-        resources: op.resources.map((res) => ({
-          id: res.id,
-          plannedRate: (res as any).plannedRate ?? null,
-          maxRate: (res as any).maxRate ?? null,
-          inputCatalogId: (res as any).inputCatalogId ?? null,
-          tankMixGroupId: (res as any).tankMixGroupId ?? null,
-          inputCatalog: (res as any).inputCatalog ?? null,
-        })),
-      })),
+    return this.validationEngine.validate(
+      buildValidationInputFromTechMap(map, currentBBCH),
     );
-
-    const input: ValidationInput = {
-      operations: allOps,
-      field: {
-        protectedZoneFlags: (map.field as any)?.protectedZoneFlags ?? null,
-      },
-      cropZone: {
-        targetYieldTHa: (map.cropZone as any)?.targetYieldTHa ?? 0,
-      },
-      currentBBCH,
-    };
-
-    return this.validationEngine.validate(input);
   }
 
   /**
@@ -477,33 +391,14 @@ export class TechMapService {
 
     const map = await this.prisma.techMap.findFirst({
       where: { id: techMapId, companyId },
-      include: {
-        stages: {
-          include: {
-            operations: true,
-          },
-        },
-      },
+      include: TECH_MAP_DAG_INCLUDE,
     });
 
     if (!map) {
       throw new NotFoundException("TechMap not found");
     }
 
-    const nodes: OperationNode[] = map.stages.flatMap((stage) =>
-      stage.operations.map((op) => {
-        const raw = (op as any).dependencies;
-        const deps: OperationDependency[] = Array.isArray(raw) ? raw : [];
-        return {
-          id: op.id,
-          plannedDurationHours: (op as any).plannedDurationHours ?? 8,
-          isCritical: (op as any).isCritical ?? false,
-          dependencies: deps,
-        };
-      }),
-    );
-
-    return this.dagValidation.validateAcyclicity(nodes);
+    return this.dagValidation.validateAcyclicity(buildDagNodesFromTechMap(map));
   }
 
   /**
@@ -546,17 +441,7 @@ export class TechMapService {
   async activate(id: string, userId: string, companyId?: string) {
     const techMap = await this.prisma.techMap.findUnique({
       where: { id },
-      include: {
-        stages: {
-          include: {
-            operations: {
-              include: {
-                resources: true,
-              },
-            },
-          },
-        },
-      },
+      include: TECH_MAP_STAGES_WITH_RESOURCES_NO_ORDER_INCLUDE,
     });
 
     if (!techMap) throw new NotFoundException("TechMap not found");
@@ -570,8 +455,11 @@ export class TechMapService {
     this.validator.validateForActivation(techMap);
 
     // 2. Capture Snapshots (Asset Integrity)
-    const operationsSnapshot = this.serializeOperations(techMap);
-    const resourceNormsSnapshot = this.serializeResources(techMap);
+    const operationsSnapshot = buildOperationsSnapshot(techMap);
+    const resourceNormsSnapshot = buildResourceNormsSnapshot(
+      techMap,
+      (value, unit) => this.unitService.normalize(value, unit),
+    );
 
     // 3. Transactional Activation
     return this.prisma.$transaction(async (tx) => {
@@ -606,17 +494,7 @@ export class TechMapService {
   async createNextVersion(sourceId: string, userId: string) {
     const source = await this.prisma.techMap.findUnique({
       where: { id: sourceId },
-      include: {
-        stages: {
-          include: {
-            operations: {
-              include: {
-                resources: true,
-              },
-            },
-          },
-        },
-      },
+      include: TECH_MAP_STAGES_WITH_RESOURCES_NO_ORDER_INCLUDE,
     });
     if (!source) throw new NotFoundException("Source TechMap not found");
 
@@ -682,28 +560,4 @@ export class TechMapService {
     });
   }
 
-  private serializeOperations(map: any) {
-    return map.stages.map((s) => ({
-      stage: s.name,
-      ops: s.operations.map((o) => ({
-        id: o.id,
-        name: o.name,
-        machinery: o.requiredMachineryType,
-      })),
-    }));
-  }
-
-  private serializeResources(map: any) {
-    return map.stages.flatMap((s) =>
-      s.operations.flatMap((o) =>
-        o.resources.map((r) => ({
-          resourceId: r.id,
-          name: r.name,
-          originalAmount: r.amount,
-          originalUnit: r.unit,
-          normalized: this.unitService.normalize(r.amount, r.unit),
-        })),
-      ),
-    );
-  }
 }

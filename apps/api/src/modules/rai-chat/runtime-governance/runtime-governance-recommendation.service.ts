@@ -7,7 +7,7 @@ import { RuntimeGovernanceEventService } from "./runtime-governance-event.servic
 import {
   GovernanceRecommendationRecord,
   GovernanceRecommendationType,
-} from "./runtime-governance-policy.types";
+} from "../../../shared/rai-chat/runtime-governance-policy.types";
 import { RuntimeGovernancePolicyService } from "./runtime-governance-policy.service";
 
 @Injectable()

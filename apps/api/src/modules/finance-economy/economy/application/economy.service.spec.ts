@@ -1,7 +1,7 @@
 import { BadRequestException } from "@nestjs/common";
 import { Prisma, EconomicEventType } from "@rai/prisma-client";
 import { EconomyService } from "./economy.service";
-import { FinanceConfigService } from "../../finance/config/finance-config.service";
+import { FinanceConfigService } from "../../../../shared/finance-economy/config/finance-config.service";
 
 describe("EconomyService replay/duplicate protection", () => {
   const sqlText = (query: unknown): string => {

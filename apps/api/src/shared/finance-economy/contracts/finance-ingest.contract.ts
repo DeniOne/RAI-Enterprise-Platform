@@ -1,6 +1,6 @@
 import { createHash } from "crypto";
 import { EconomicEventType } from "@rai/prisma-client";
-import { IngestEconomicEventDto } from "../economy/application/economy.service";
+import { IngestEconomicEventDto } from "../economy-ingest.helpers";
 
 export const FINANCE_INGEST_CONTRACT_VERSION = "1.0.0";
 export const FINANCE_INGEST_SUPPORTED_VERSIONS = [

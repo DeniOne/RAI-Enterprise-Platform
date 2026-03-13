@@ -1,5 +1,5 @@
 import { QueuePressureSummary } from "../../rai-chat/performance/queue-metrics.service";
-import { GovernanceRecommendationRecord } from "../../rai-chat/runtime-governance/runtime-governance-policy.types";
+import { GovernanceRecommendationRecord } from "../../../shared/rai-chat/runtime-governance-policy.types";
 
 export interface RuntimeGovernanceSummaryDto {
   companyId: string;

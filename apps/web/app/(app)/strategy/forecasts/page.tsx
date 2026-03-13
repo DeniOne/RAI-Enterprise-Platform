@@ -39,6 +39,7 @@ const LEVER_OPTIONS: Array<{ value: ScenarioLever; label: string; placeholder: s
 
 const TABS = ['Прогноз', 'Факторы', 'Сценарии', 'Оптимизация', 'Риски'] as const;
 const SAVED_SCENARIOS_STORAGE_KEY = 'rai.strategy.forecasts.saved-scenarios.v1';
+const HISTORY_PAGE_SIZE = 6;
 const EMPTY_LEVER_VALUES: Record<ScenarioLever, string> = {
   yield_pct: '',
   sales_price_pct: '',
@@ -64,6 +65,12 @@ export default function StrategyForecastsPage() {
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>('Прогноз');
   const [savedScenarios, setSavedScenarios] = useState<StrategyForecastScenarioRecord[]>([]);
   const [recentRuns, setRecentRuns] = useState<StrategyForecastRunHistoryItem[]>([]);
+  const [recentRunsTotal, setRecentRunsTotal] = useState(0);
+  const [recentRunsHasMore, setRecentRunsHasMore] = useState(false);
+  const [historyRiskTierFilter, setHistoryRiskTierFilter] = useState<'all' | 'low' | 'medium' | 'high'>('all');
+  const [historyOnlyDegraded, setHistoryOnlyDegraded] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [feedbackSubmittingRunId, setFeedbackSubmittingRunId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingSeasons, setLoadingSeasons] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -112,25 +119,81 @@ export default function StrategyForecastsPage() {
         setSavedScenarios(localShadow);
       });
 
-    api.ofs.strategyForecasts
-      .history()
-      .then((response) => {
-        if (!cancelled) {
-          setRecentRuns(response.data);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setRecentRuns([]);
-        }
-      });
-
     return () => {
       cancelled = true;
     };
   }, []);
 
   const selectedSeason = seasons.find((season) => season.id === seasonId) ?? null;
+
+  async function loadRecentRuns(options?: { append?: boolean }) {
+    const append = options?.append === true;
+    const offset = append ? recentRuns.length : 0;
+
+    try {
+      setHistoryLoading(true);
+      const response = await api.ofs.strategyForecasts.history({
+        limit: HISTORY_PAGE_SIZE,
+        offset,
+        ...(seasonId ? { seasonId } : {}),
+        ...(historyRiskTierFilter !== 'all'
+          ? { riskTier: historyRiskTierFilter }
+          : {}),
+        ...(historyOnlyDegraded ? { degraded: true } : {}),
+      });
+
+      setRecentRuns((current) =>
+        append ? [...current, ...response.data.items] : response.data.items,
+      );
+      setRecentRunsTotal(response.data.total);
+      setRecentRunsHasMore(response.data.hasMore);
+    } catch {
+      if (!append) {
+        setRecentRuns([]);
+        setRecentRunsTotal(0);
+      }
+      setRecentRunsHasMore(false);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      const offset = 0;
+      try {
+        setHistoryLoading(true);
+        const response = await api.ofs.strategyForecasts.history({
+          limit: HISTORY_PAGE_SIZE,
+          offset,
+          ...(seasonId ? { seasonId } : {}),
+          ...(historyRiskTierFilter !== 'all'
+            ? { riskTier: historyRiskTierFilter }
+            : {}),
+          ...(historyOnlyDegraded ? { degraded: true } : {}),
+        });
+        if (cancelled) return;
+        setRecentRuns(response.data.items);
+        setRecentRunsTotal(response.data.total);
+        setRecentRunsHasMore(response.data.hasMore);
+      } catch {
+        if (cancelled) return;
+        setRecentRuns([]);
+        setRecentRunsTotal(0);
+        setRecentRunsHasMore(false);
+      } finally {
+        if (!cancelled) {
+          setHistoryLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [seasonId, historyRiskTierFilter, historyOnlyDegraded]);
 
   async function runForecast() {
     if (!seasonId) {
@@ -166,8 +229,7 @@ export default function StrategyForecastsPage() {
       });
       setResult(response.data);
       try {
-        const historyResponse = await api.ofs.strategyForecasts.history();
-        setRecentRuns(historyResponse.data);
+        await loadRecentRuns({ append: false });
       } catch {
         // History is secondary and should not break the forecast flow.
       }
@@ -245,6 +307,51 @@ export default function StrategyForecastsPage() {
       );
     } catch (e) {
       setError((e as Error).message ?? 'Не удалось удалить сценарий');
+    }
+  }
+
+  async function submitRunFeedback(run: StrategyForecastRunHistoryItem) {
+    const actualRevenueRaw = window.prompt('Факт revenue (RUB), можно пусто', '');
+    if (actualRevenueRaw === null) return;
+    const actualMarginRaw = window.prompt('Факт margin (RUB), можно пусто', '');
+    if (actualMarginRaw === null) return;
+    const actualCashFlowRaw = window.prompt('Факт cash flow (RUB), можно пусто', '');
+    if (actualCashFlowRaw === null) return;
+    const actualYieldRaw = window.prompt('Факт yield, можно пусто', '');
+    if (actualYieldRaw === null) return;
+    const noteRaw = window.prompt('Комментарий, можно пусто', '');
+    if (noteRaw === null) return;
+
+    const payload = {
+      actualRevenue: parseOptionalNumber(actualRevenueRaw),
+      actualMargin: parseOptionalNumber(actualMarginRaw),
+      actualCashFlow: parseOptionalNumber(actualCashFlowRaw),
+      actualYield: parseOptionalNumber(actualYieldRaw),
+      note: noteRaw.trim() || undefined,
+    };
+
+    if (
+      payload.actualRevenue === undefined &&
+      payload.actualMargin === undefined &&
+      payload.actualCashFlow === undefined &&
+      payload.actualYield === undefined &&
+      !payload.note
+    ) {
+      setError('Нужно указать хотя бы один факт или комментарий.');
+      return;
+    }
+
+    try {
+      setError(null);
+      setFeedbackSubmittingRunId(run.id);
+      const response = await api.ofs.strategyForecasts.submitFeedback(run.id, payload);
+      setRecentRuns((current) =>
+        current.map((item) => (item.id === response.data.id ? response.data : item)),
+      );
+    } catch (e) {
+      setError((e as Error).message ?? 'Не удалось записать фактический результат');
+    } finally {
+      setFeedbackSubmittingRunId(null);
     }
   }
 
@@ -693,6 +800,36 @@ export default function StrategyForecastsPage() {
 
             <section className="rounded-3xl border border-black/10 bg-white p-6 shadow-sm shadow-black/[0.03]">
               <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182]">Recent runs</p>
+              <div className="mt-3 grid gap-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    aria-label="History risk filter"
+                    value={historyRiskTierFilter}
+                    onChange={(event) =>
+                      setHistoryRiskTierFilter(
+                        event.target.value as 'all' | 'low' | 'medium' | 'high',
+                      )
+                    }
+                    className="rounded-xl border border-black/10 bg-white px-3 py-2 text-[12px] text-[#030213]"
+                  >
+                    <option value="all">Все risk tiers</option>
+                    <option value="low">low</option>
+                    <option value="medium">medium</option>
+                    <option value="high">high</option>
+                  </select>
+                  <label className="inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white px-3 py-2 text-[12px] text-[#030213]">
+                    <input
+                      type="checkbox"
+                      checked={historyOnlyDegraded}
+                      onChange={(event) => setHistoryOnlyDegraded(event.target.checked)}
+                    />
+                    Только degraded
+                  </label>
+                </div>
+                <p className="text-[11px] text-[#717182]">
+                  Показано {recentRuns.length} из {recentRunsTotal}
+                </p>
+              </div>
               <div className="mt-4 space-y-3">
                 {recentRuns.length > 0 ? (
                   recentRuns.map((run) => (
@@ -714,10 +851,34 @@ export default function StrategyForecastsPage() {
                       <p className="mt-2 text-[12px] text-[#717182]">
                         {formatRunEvaluation(run)}
                       </p>
+                      <div className="mt-3">
+                        <button
+                          type="button"
+                          onClick={() => void submitRunFeedback(run)}
+                          disabled={feedbackSubmittingRunId === run.id}
+                          className="rounded-xl border border-black/10 bg-white px-3 py-2 text-[12px] font-medium text-[#030213] transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {feedbackSubmittingRunId === run.id
+                            ? 'Сохранение...'
+                            : run.evaluation.status === 'pending'
+                              ? 'Записать факт'
+                              : 'Обновить факт'}
+                        </button>
+                      </div>
                     </div>
                   ))
                 ) : (
-                  <EmptyState text="После первых запусков здесь появится история расчётов и рекомендаций." />
+                  <EmptyState text={historyLoading ? 'Загрузка истории...' : 'После первых запусков здесь появится история расчётов и рекомендаций.'} />
+                )}
+                {recentRunsHasMore && (
+                  <button
+                    type="button"
+                    onClick={() => void loadRecentRuns({ append: true })}
+                    disabled={historyLoading}
+                    className="w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-[12px] font-medium text-[#030213] transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {historyLoading ? 'Загрузка...' : 'Показать ещё'}
+                  </button>
                 )}
               </div>
             </section>
@@ -917,6 +1078,15 @@ function formatRunEvaluation(run: StrategyForecastRunHistoryItem): string {
   }
 
   return `Feedback: ${deltas.join(', ')}`;
+}
+
+function parseOptionalNumber(value: string): number | undefined {
+  const normalized = value.trim();
+  if (!normalized) {
+    return undefined;
+  }
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : undefined;
 }
 
 function persistSavedScenarios(

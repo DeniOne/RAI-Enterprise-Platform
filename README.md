@@ -387,6 +387,8 @@ pnpm dev
 | `pnpm lint:tenant-context` | Проверка tenant isolation в коде |
 | `pnpm lint:fsm-status-updates` | Проверка корректности FSM-переходов |
 | `pnpm docker:up` / `docker:down` | Управление Docker контейнерами |
+| `pnpm pm2:up` | Надёжный запуск через PM2 (очистка 3000/4000, startOrRestart, save) |
+| `pnpm pm2:status` | Статус процессов PM2 |
 
 > Источники: `package.json` (корневой), `docker-compose.yml`, `.env.example`
 

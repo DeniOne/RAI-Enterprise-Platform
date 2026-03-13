@@ -21,7 +21,7 @@ import { TraceTopologyService } from "./trace-topology.service";
 import { SafeReplayService, ReplayResultDto } from "../rai-chat/safe-replay.service";
 import { PerformanceMetricsService, AggregatedMetrics } from "../rai-chat/performance/performance-metrics.service";
 import { AutonomyPolicyService } from "../rai-chat/autonomy-policy.service";
-import { AutonomyStatusDto } from "./dto/autonomy-status.dto";
+import { AutonomyStatusDto } from "../../shared/explainability/dto/autonomy-status.dto";
 import { CostHotspotsQueryDto } from "./dto/cost-hotspots.dto";
 import { ExplainabilityTimelineResponseDto } from "./dto/explainability-timeline.dto";
 import { QueuePressureResponseDto } from "./dto/queue-pressure.dto";

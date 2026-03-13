@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { DeterministicForecastEngine } from "./deterministic-forecast-engine";
 import type { GeneratedDraft } from "../domain/draft-factory";
-import type { InputDataSnapshot } from "./input-data-snapshot";
+import type { InputDataSnapshot } from "../../../shared/generative-engine/yield/input-data-snapshot";
 
 /**
  * YieldForecastService — Оркестратор прогнозирования.

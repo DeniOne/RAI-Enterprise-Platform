@@ -2,6 +2,7 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 import { MemoryAdapter, MemoryContext, MemoryInteraction, MemoryRetrieveOptions } from './memory-adapter.interface';
 import { EpisodicRetrievalResponse } from './episodic-retrieval.service';
 import { EngramService } from './engram.service';
+import { PrismaService } from '../prisma/prisma.service';
 import {
     WorkingMemoryService,
     WorkingMemorySlot,
@@ -62,6 +63,7 @@ export class MemoryFacade {
         private readonly memoryAdapter: MemoryAdapter,
         private readonly engramService: EngramService,
         private readonly workingMemoryService: WorkingMemoryService,
+        private readonly prisma: PrismaService,
     ) { }
 
     // ========================================================================
@@ -245,34 +247,46 @@ export class MemoryFacade {
     // HEALTH: общий статус когнитивной памяти
     // ========================================================================
 
-    async getMemoryHealth(): Promise<Record<string, unknown>> {
+    async getMemoryHealth(companyId: string): Promise<Record<string, unknown>> {
+        const startedAt = Date.now();
+
         try {
-            // Быстрые counts для health check
+            const engramWhere = {
+                isActive: true,
+                OR: [{ companyId }, { companyId: null }],
+            };
+
             const [
                 engramCount,
                 episodeCount,
                 interactionCount,
                 latestEpisode,
                 latestEngram,
+                hotAlertCount,
             ] = await Promise.all([
-                this.engramService['prisma'].engram.count({ where: { isActive: true } }),
-                this.engramService['prisma'].memoryEpisode.count(),
-                this.engramService['prisma'].memoryInteraction.count(),
-                this.engramService['prisma'].memoryEpisode.findFirst({
+                this.prisma.engram.count({ where: engramWhere }),
+                this.prisma.memoryEpisode.count({ where: { companyId } }),
+                this.prisma.memoryInteraction.count({ where: { companyId } }),
+                this.prisma.memoryEpisode.findFirst({
+                    where: { companyId },
                     orderBy: { updatedAt: 'desc' },
                     select: { updatedAt: true },
                 }),
-                this.engramService['prisma'].engram.findFirst({
-                    where: { isActive: true },
+                this.prisma.engram.findFirst({
+                    where: engramWhere,
                     orderBy: { updatedAt: 'desc' },
                     select: { updatedAt: true },
                 }),
+                this.workingMemoryService
+                    .getActiveAlerts(companyId)
+                    .then((alerts) => alerts.length),
             ]);
 
             const freshestTouch = latestEngram?.updatedAt ?? latestEpisode?.updatedAt ?? null;
             const freshnessMinutes = freshestTouch
                 ? Math.max(0, Math.round((Date.now() - freshestTouch.getTime()) / 60000))
                 : null;
+            const recallLatencyMs = Date.now() - startedAt;
 
             return {
                 status: 'ok',
@@ -285,21 +299,22 @@ export class MemoryFacade {
                     L5_institutional: 'basic',
                     L6_network: 'planned',
                 },
-                recallLatencyMs: null,
+                recallLatencyMs,
                 episodeCount,
                 engramCount,
-                hotAlertCount: null,
+                hotAlertCount,
                 consolidationFreshness: freshnessMinutes,
                 pruningStatus: engramCount > 50000 ? 'attention' : 'nominal',
                 trustScore: freshnessMinutes === null ? null : Math.max(0.5, Math.min(0.98, 0.98 - freshnessMinutes / 10000)),
                 timestamp: new Date().toISOString(),
             };
         } catch (err) {
+            const recallLatencyMs = Date.now() - startedAt;
             return {
                 status: 'degraded',
                 degraded: true,
                 error: String(err),
-                recallLatencyMs: null,
+                recallLatencyMs,
                 episodeCount: null,
                 engramCount: null,
                 hotAlertCount: null,

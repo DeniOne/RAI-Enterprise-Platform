@@ -12,6 +12,7 @@ import { RiskComposerService } from "./risk-composer.service";
 import { DecisionRecommendationComposerService } from "./decision-recommendation-composer.service";
 import { StrategyForecastOptimizationService } from "./strategy-forecast-optimization.service";
 import { DecisionEvaluationService } from "./decision-evaluation.service";
+import { InvariantMetrics } from "../../../../shared/invariants/invariant-metrics";
 
 describe("DecisionIntelligenceService", () => {
   let service: DecisionIntelligenceService;
@@ -32,6 +33,7 @@ describe("DecisionIntelligenceService", () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    InvariantMetrics.resetForTests();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DecisionIntelligenceService,
@@ -160,6 +162,10 @@ describe("DecisionIntelligenceService", () => {
         }),
       }),
     );
+    const metrics = InvariantMetrics.snapshot();
+    expect(metrics.strategy_forecast_run_total).toBe(1);
+    expect(metrics.strategy_forecast_degraded_total).toBe(1);
+    expect(metrics.strategy_forecast_latency_ms).toBeGreaterThanOrEqual(0);
   });
 
   it("saves and lists persisted forecast scenarios", async () => {
@@ -229,28 +235,35 @@ describe("DecisionIntelligenceService", () => {
   });
 
   it("returns recent forecast run history", async () => {
-    mockListRecentRuns.mockResolvedValue([
-      {
-        id: "run-1",
-        traceId: "di_1",
-        scopeLevel: "company",
-        seasonId: "season-1",
-        horizonDays: 90,
-        domains: ["finance"],
-        degraded: false,
-        riskTier: "medium",
-        recommendedAction: "Сохранять базовый план",
-        scenarioName: null,
-        createdAt: "2026-03-12T10:00:00.000Z",
-        evaluation: {
-          status: "pending",
+    mockListRecentRuns.mockResolvedValue({
+      items: [
+        {
+          id: "run-1",
+          traceId: "di_1",
+          scopeLevel: "company",
+          seasonId: "season-1",
+          horizonDays: 90,
+          domains: ["finance"],
+          degraded: false,
+          riskTier: "medium",
+          recommendedAction: "Сохранять базовый план",
+          scenarioName: null,
+          createdAt: "2026-03-12T10:00:00.000Z",
+          evaluation: {
+            status: "pending",
+          },
         },
-      },
-    ]);
+      ],
+      total: 1,
+      limit: 5,
+      offset: 0,
+      hasMore: false,
+    });
 
-    const history = await service.listRecentRuns("company-1", 5);
-    expect(history).toHaveLength(1);
-    expect(mockListRecentRuns).toHaveBeenCalledWith("company-1", 5);
+    const history = await service.listRecentRuns("company-1", { limit: 5 });
+    expect(history.items).toHaveLength(1);
+    expect(history.total).toBe(1);
+    expect(mockListRecentRuns).toHaveBeenCalledWith("company-1", { limit: 5 });
   });
 
   it("records realized outcome feedback", async () => {

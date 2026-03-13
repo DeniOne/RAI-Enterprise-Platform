@@ -1,7 +1,7 @@
 import * as Joi from "joi";
 import { RiskToolsRegistry } from "./risk-tools.registry";
 import { RaiToolName } from "./rai-tools.types";
-import { SecurityViolationError } from "../security/security-violation.error";
+import { SecurityViolationError } from "../../../shared/rai-chat/security/security-violation.error";
 
 describe("RiskToolsRegistry", () => {
   const actorContext = { companyId: "company-1", traceId: "trace-1" };

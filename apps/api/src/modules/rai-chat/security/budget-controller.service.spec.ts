@@ -2,7 +2,7 @@ import { NotFoundException } from "@nestjs/common";
 import { BudgetControllerService } from "./budget-controller.service";
 import { TechMapBudgetService } from "../../tech-map/economics/tech-map-budget.service";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
-import { BudgetExceededError } from "./budget-exceeded.error";
+import { BudgetExceededError } from "../../../shared/rai-chat/security/budget-exceeded.error";
 import { RaiToolActorContext } from "../tools/rai-tools.types";
 import { AgentRegistryService } from "../agent-registry.service";
 import { RaiToolName } from "../tools/rai-tools.types";

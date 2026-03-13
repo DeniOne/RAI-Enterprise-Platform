@@ -4,17 +4,14 @@ import {
   Logger,
   OnModuleInit,
 } from "@nestjs/common";
-import * as Joi from "joi";
 import { ObjectSchema } from "joi";
 import { UserRole } from "@rai/prisma-client";
 import {
-  EchoMessagePayload,
   RaiToolActorContext,
   RaiToolName,
   RaiToolPayloadMap,
   RaiToolResultMap,
   TOOL_RISK_MAP,
-  WorkspaceSnapshotPayload,
 } from "./rai-tools.types";
 import { DeviationService } from "../../consulting/deviation.service";
 import { TechMapService } from "../../tech-map/tech-map.service";
@@ -27,19 +24,26 @@ import { FrontOfficeToolsRegistry } from "./front-office-tools.registry";
 import { ContractsToolsRegistry } from "./contracts-tools.registry";
 import { RiskPolicyEngineService } from "../security/risk-policy-engine.service";
 import { PendingActionService } from "../security/pending-action.service";
-import { RiskPolicyBlockedError } from "../security/risk-policy-blocked.error";
+import { RiskPolicyBlockedError } from "../../../shared/rai-chat/security/risk-policy-blocked.error";
 import {
   AutonomyLevel,
   AutonomyPolicyService,
 } from "../autonomy-policy.service";
 import { AgentRuntimeConfigService } from "../agent-runtime-config.service";
-import { AgentConfigBlockedError } from "../security/agent-config-blocked.error";
+import { AgentConfigBlockedError } from "../../../shared/rai-chat/security/agent-config-blocked.error";
 import { IncidentOpsService } from "../incident-ops.service";
 import { SystemIncidentType } from "@rai/prisma-client";
 import { RuntimeGovernanceEventType } from "@rai/prisma-client";
 import { RuntimeGovernanceEventService } from "../runtime-governance/runtime-governance-event.service";
 import { RuntimeGovernancePolicyService } from "../runtime-governance/runtime-governance-policy.service";
 import { RuntimeGovernanceFeatureFlagsService } from "../runtime-governance/runtime-governance-feature-flags.service";
+import {
+  echoMessageSchema,
+  handleEchoMessage,
+  handleWorkspaceSnapshot,
+  workspaceSnapshotSchema,
+} from "../../../shared/rai-chat/rai-tools-builtins";
+import { buildToolCallLogPayload } from "../../../shared/rai-chat/rai-tools-log-helpers";
 
 type ToolHandler<TName extends RaiToolName> = (
   payload: RaiToolPayloadMap[TName],
@@ -275,28 +279,47 @@ export class RaiToolsRegistry implements OnModuleInit {
 
     if (this.agroToolsRegistry.has(name)) {
       return this.agroToolsRegistry.execute(
-        name as TName & (RaiToolName.ComputeDeviations | RaiToolName.GenerateTechMapDraft),
+        name as TName &
+          (RaiToolName.ComputeDeviations | RaiToolName.GenerateTechMapDraft),
         payload,
         actorContext,
       );
     }
     if (this.financeToolsRegistry.has(name)) {
-      return this.financeToolsRegistry.execute(name as never, payload, actorContext) as Promise<RaiToolResultMap[TName]>;
+      return this.financeToolsRegistry.execute(name as never, payload, actorContext) as Promise<
+        RaiToolResultMap[TName]
+      >;
     }
     if (this.riskToolsRegistry.has(name)) {
-      return this.riskToolsRegistry.execute(name as never, payload, actorContext) as Promise<RaiToolResultMap[TName]>;
+      return this.riskToolsRegistry.execute(name as never, payload, actorContext) as Promise<
+        RaiToolResultMap[TName]
+      >;
     }
     if (this.knowledgeToolsRegistry.has(name)) {
-      return this.knowledgeToolsRegistry.execute(name as never, payload, actorContext) as Promise<RaiToolResultMap[TName]>;
+      return this.knowledgeToolsRegistry.execute(
+        name as never,
+        payload,
+        actorContext,
+      ) as Promise<RaiToolResultMap[TName]>;
     }
     if (this.crmToolsRegistry.has(name)) {
-      return this.crmToolsRegistry.execute(name as never, payload, actorContext) as Promise<RaiToolResultMap[TName]>;
+      return this.crmToolsRegistry.execute(name as never, payload, actorContext) as Promise<
+        RaiToolResultMap[TName]
+      >;
     }
     if (this.frontOfficeToolsRegistry.has(name)) {
-      return this.frontOfficeToolsRegistry.execute(name as never, payload, actorContext) as Promise<RaiToolResultMap[TName]>;
+      return this.frontOfficeToolsRegistry.execute(
+        name as never,
+        payload,
+        actorContext,
+      ) as Promise<RaiToolResultMap[TName]>;
     }
     if (this.contractsToolsRegistry.has(name)) {
-      return this.contractsToolsRegistry.execute(name as never, payload, actorContext) as Promise<RaiToolResultMap[TName]>;
+      return this.contractsToolsRegistry.execute(
+        name as never,
+        payload,
+        actorContext,
+      ) as Promise<RaiToolResultMap[TName]>;
     }
 
     const tool = this.tools.get(name) as RegisteredTool<TName> | undefined;
@@ -352,26 +375,14 @@ export class RaiToolsRegistry implements OnModuleInit {
   private registerBuiltInTools() {
     this.register(
       RaiToolName.EchoMessage,
-      Joi.object<EchoMessagePayload>({
-        message: Joi.string().trim().max(1000).required(),
-      }),
-      async (payload, actorContext) => ({
-        echoedMessage: payload.message,
-        companyId: actorContext.companyId,
-      }),
+      echoMessageSchema,
+      async (payload, actorContext) => handleEchoMessage(payload, actorContext),
     );
 
     this.register(
       RaiToolName.WorkspaceSnapshot,
-      Joi.object<WorkspaceSnapshotPayload>({
-        route: Joi.string().trim().max(256).required(),
-        lastUserAction: Joi.string().trim().max(200).optional(),
-      }),
-      async (payload) => ({
-        route: payload.route,
-        hasSelection: Boolean(payload.lastUserAction),
-        lastUserAction: payload.lastUserAction,
-      }),
+      workspaceSnapshotSchema,
+      async (payload) => handleWorkspaceSnapshot(payload),
     );
   }
 
@@ -382,12 +393,12 @@ export class RaiToolsRegistry implements OnModuleInit {
     payload: unknown,
     reason?: string,
   ) {
-    const logPayload = JSON.stringify({
+    const logPayload = buildToolCallLogPayload({
       toolName,
       companyId: actorContext.companyId,
       traceId: actorContext.traceId,
-      status: success ? "success" : "fail",
-      payload: this.serializePayload(payload),
+      success,
+      payload,
       reason,
     });
 
@@ -397,17 +408,5 @@ export class RaiToolsRegistry implements OnModuleInit {
     }
 
     this.logger.warn(logPayload);
-  }
-
-  private serializePayload(payload: unknown): unknown {
-    if (payload === undefined) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(JSON.stringify(payload));
-    } catch {
-      return "[unserializable_payload]";
-    }
   }
 }

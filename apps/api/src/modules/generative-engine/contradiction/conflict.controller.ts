@@ -12,7 +12,7 @@ import {
   UseInterceptors,
 } from "@nestjs/common";
 import { DivergenceTrackerService } from "./divergence-tracker.service";
-import { CounterfactualEngine } from "./counterfactual-engine";
+import { CounterfactualEngine } from "../../../shared/generative-engine/contradiction/counterfactual-engine";
 import { ConflictMatrixService, DISWeights } from "./conflict-matrix.service";
 import { OverrideRiskAnalyzer } from "../risk/override-risk-analyzer";
 import { ConfirmOverrideDto, OverrideResultDto } from "./conflict.dto";

@@ -12,7 +12,7 @@ import type {
   FutureAgentManifestValidationDto,
   FutureAgentTemplateDto,
   UpsertAgentConfigDto,
-} from "./dto/agent-config.dto";
+} from "../../shared/explainability/agent-config.dto";
 import { AgentConfigGuardService } from "./agent-config-guard.service";
 import {
   AgentRegistryService,

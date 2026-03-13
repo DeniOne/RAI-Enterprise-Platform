@@ -1,10 +1,43 @@
 import { TelegramUpdate } from "./telegram.update";
 
 describe("TelegramUpdate front-office flow", () => {
+  let originalTelegramMiniAppUrl: string | undefined;
+  let originalWebAppUrl: string | undefined;
+  let originalFrontendUrl: string | undefined;
+
   const progressService = {
     getProgressStats: jest.fn(),
     formatReport: jest.fn(),
   };
+
+  beforeEach(() => {
+    originalTelegramMiniAppUrl = process.env.TELEGRAM_MINIAPP_URL;
+    originalWebAppUrl = process.env.WEBAPP_URL;
+    originalFrontendUrl = process.env.FRONTEND_URL;
+    delete process.env.TELEGRAM_MINIAPP_URL;
+    delete process.env.WEBAPP_URL;
+    delete process.env.FRONTEND_URL;
+  });
+
+  afterEach(() => {
+    if (originalTelegramMiniAppUrl === undefined) {
+      delete process.env.TELEGRAM_MINIAPP_URL;
+    } else {
+      process.env.TELEGRAM_MINIAPP_URL = originalTelegramMiniAppUrl;
+    }
+
+    if (originalWebAppUrl === undefined) {
+      delete process.env.WEBAPP_URL;
+    } else {
+      process.env.WEBAPP_URL = originalWebAppUrl;
+    }
+
+    if (originalFrontendUrl === undefined) {
+      delete process.env.FRONTEND_URL;
+    } else {
+      process.env.FRONTEND_URL = originalFrontendUrl;
+    }
+  });
 
   const buildApiClient = () => ({
     getUser: jest.fn().mockResolvedValue({ id: "user-1", email: "worker@rai.local" }),
@@ -156,6 +189,102 @@ describe("TelegramUpdate front-office flow", () => {
     expect(ctx.reply).toHaveBeenCalledWith(
       expect.stringContaining("Рабочее место бэкофиса"),
       expect.objectContaining({ parse_mode: "HTML" }),
+    );
+  });
+
+  it("для локального http URL показывает обычную кнопку открытия рабочего места", async () => {
+    process.env.TELEGRAM_MINIAPP_URL = "http://localhost:3000/telegram/workspace";
+
+    const apiClient = buildApiClient();
+    apiClient.getUser.mockResolvedValue({
+      id: "manager-1",
+      email: "manager@rai.local",
+      role: "MANAGER",
+      telegramTunnel: "back_office_operator",
+    });
+    const sessionService = buildSessionService();
+    const update = new TelegramUpdate(
+      progressService as any,
+      apiClient as any,
+      sessionService as any,
+    );
+    const ctx = buildTextContext("напиши клиенту, что я на связи");
+
+    await update.onText(ctx);
+
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.stringContaining("Рабочее место бэкофиса"),
+      expect.objectContaining({
+        parse_mode: "HTML",
+        reply_markup: expect.objectContaining({
+          inline_keyboard: expect.arrayContaining([
+            expect.arrayContaining([
+              expect.objectContaining({
+                text: "Открыть рабочее место",
+                callback_data: "backoffice_open_workspace",
+              }),
+            ]),
+          ]),
+        }),
+      }),
+    );
+  });
+
+  it("по callback backoffice_open_workspace присылает ссылку на рабочее место", async () => {
+    process.env.TELEGRAM_MINIAPP_URL = "http://localhost:3000/telegram/workspace";
+
+    const apiClient = buildApiClient();
+    const sessionService = buildSessionService();
+    const update = new TelegramUpdate(
+      progressService as any,
+      apiClient as any,
+      sessionService as any,
+    );
+    const ctx = buildActionContext("backoffice_open_workspace", []);
+
+    await update.onBackOfficeOpenWorkspace(ctx);
+
+    expect(ctx.answerCbQuery).toHaveBeenCalled();
+    expect(ctx.reply).toHaveBeenCalledWith(
+      "Откройте рабочее место: http://localhost:3000/telegram/workspace",
+    );
+  });
+
+  it("для https URL показывает кнопку Mini App (web_app)", async () => {
+    process.env.TELEGRAM_MINIAPP_URL = "https://example.com/telegram/workspace";
+
+    const apiClient = buildApiClient();
+    apiClient.getUser.mockResolvedValue({
+      id: "manager-1",
+      email: "manager@rai.local",
+      role: "MANAGER",
+      telegramTunnel: "back_office_operator",
+    });
+    const sessionService = buildSessionService();
+    const update = new TelegramUpdate(
+      progressService as any,
+      apiClient as any,
+      sessionService as any,
+    );
+    const ctx = buildTextContext("напиши клиенту, что я на связи");
+
+    await update.onText(ctx);
+
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.stringContaining("Рабочее место бэкофиса"),
+      expect.objectContaining({
+        parse_mode: "HTML",
+        reply_markup: expect.objectContaining({
+          inline_keyboard: expect.arrayContaining([
+            expect.arrayContaining([
+              expect.objectContaining({
+                text: "Открыть рабочее место",
+                web_app: { url: "https://example.com/telegram/workspace" },
+              }),
+            ]),
+          ]),
+        }),
+      }),
     );
   });
 
@@ -461,5 +590,76 @@ describe("TelegramUpdate front-office flow", () => {
 
     expect(apiClient.completeTask).toHaveBeenCalledWith("task-42", "token-1");
     expect(ctx.answerCbQuery).toHaveBeenCalledWith("Задача завершена! ✅");
+  });
+
+  it("проходит telegram journey: ingress -> fix -> link -> confirm", async () => {
+    const apiClient = buildApiClient();
+    const sessionService = buildSessionService();
+    sessionService.getSession.mockResolvedValue({
+      token: "token-1",
+      lastActive: Date.now(),
+      activeTaskId: "task-journey",
+      currentCoordinates: { lat: 51.1, lng: 37.2 },
+    });
+
+    apiClient.createFrontOfficeDraft.mockResolvedValue({
+      status: "DRAFT_RECORDED",
+      draftId: "draft-journey",
+      suggestedIntent: "consultation",
+      mustClarifications: ["LINK_OBJECT"],
+      allowedActions: ["CONFIRM", "FIX", "LINK"],
+      draft: { id: "draft-journey", status: "NEEDS_LINK" },
+    });
+    apiClient.fixFrontOfficeDraft.mockResolvedValue({
+      status: "DRAFT_RECORDED",
+      draftId: "draft-journey",
+      suggestedIntent: "consultation",
+      mustClarifications: ["LINK_OBJECT"],
+      allowedActions: ["CONFIRM", "FIX", "LINK"],
+      draft: { id: "draft-journey", status: "NEEDS_LINK" },
+    });
+    apiClient.linkFrontOfficeDraft.mockResolvedValue({
+      status: "DRAFT_RECORDED",
+      draftId: "draft-journey",
+      suggestedIntent: "consultation",
+      mustClarifications: [],
+      allowedActions: ["CONFIRM", "FIX", "LINK"],
+      draft: { id: "draft-journey", status: "READY_TO_CONFIRM" },
+    });
+    apiClient.confirmFrontOfficeDraft.mockResolvedValue({
+      status: "COMMITTED",
+      confirmationRequired: false,
+      draftId: "draft-journey",
+      suggestedIntent: "consultation",
+      allowedActions: [],
+      draft: { id: "draft-journey", status: "COMMITTED" },
+      commitResult: { kind: "handoff", handoffId: "handoff-7" },
+    });
+
+    const update = new TelegramUpdate(
+      progressService as any,
+      apiClient as any,
+      sessionService as any,
+    );
+
+    await update.onText(buildTextContext("Нужна консультация по договору"));
+    await update.onText(buildTextContext("/fofix draft-journey уточнение после вопроса"));
+    await update.onText(
+      buildTextContext(
+        "/folink draft-journey field=field-1 season=season-1 task=task-journey",
+      ),
+    );
+    await update.onFrontOfficeAction(
+      buildActionContext("fo:c:draft-journey", [
+        "fo:c:draft-journey",
+        "c",
+        "draft-journey",
+      ]),
+    );
+
+    expect(apiClient.createFrontOfficeDraft).toHaveBeenCalledTimes(1);
+    expect(apiClient.fixFrontOfficeDraft).toHaveBeenCalledTimes(1);
+    expect(apiClient.linkFrontOfficeDraft).toHaveBeenCalledTimes(1);
+    expect(apiClient.confirmFrontOfficeDraft).toHaveBeenCalledTimes(1);
   });
 });

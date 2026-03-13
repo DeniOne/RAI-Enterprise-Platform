@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, UseInterceptors } from "@nestjs/common";
-import { CreatePartyDto, CreatePartyRelationDto, UpdatePartyRelationDto } from "./dto/create-party.dto";
+import { CreatePartyDto, CreatePartyRelationDto, UpdatePartyRelationDto } from "../../shared/commerce/dto/create-party.dto";
 import { CreateAssetRoleDto, CreateFarmDto, UpdateAssetRoleDto } from "./dto/asset-role.dto";
 import { PartyService } from "./services/party.service";
 import { AssetRoleService } from "./services/asset-role.service";

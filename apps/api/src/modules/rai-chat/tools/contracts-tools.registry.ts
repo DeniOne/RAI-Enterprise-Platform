@@ -1,41 +1,45 @@
 import { BadRequestException, Injectable, OnModuleInit } from "@nestjs/common";
-import * as Joi from "joi";
 import { ObjectSchema } from "joi";
-import type { Prisma } from "@rai/prisma-client";
 import { BillingService } from "../../commerce/services/billing.service";
 import { CommerceContractService } from "../../commerce/services/commerce-contract.service";
 import { FulfillmentService } from "../../commerce/services/fulfillment.service";
 import {
-  AllocatePaymentPayload,
-  ConfirmPaymentPayload,
-  CreateCommerceContractPayload,
-  CreateCommerceContractResult,
-  CreateCommerceObligationPayload,
+  mapContractSummary,
+  mapCreatedContract,
+  normalizeJsonObject,
+} from "../../../shared/rai-chat/contracts-tool-helpers";
+import {
+  allocatePaymentSchema,
+  confirmPaymentSchema,
+  createCommerceContractSchema,
+  createCommerceObligationSchema,
+  createFulfillmentEventSchema,
+  createInvoiceFromFulfillmentSchema,
+  createPaymentSchema,
+  getArBalanceSchema,
+  getCommerceContractSchema,
+  listCommerceContractsSchema,
+  listFulfillmentEventsSchema,
+  listInvoicesSchema,
+  postInvoiceSchema,
+} from "../../../shared/rai-chat/contracts-tool-schemas";
+import {
+  AllocatePaymentResult,
+  ConfirmPaymentResult,
   CreateCommerceObligationResult,
-  CreateFulfillmentEventPayload,
   CreateFulfillmentEventResult,
-  CreateInvoiceFromFulfillmentPayload,
   CreateInvoiceFromFulfillmentResult,
-  CreatePaymentPayload,
   CreatePaymentResult,
-  GetArBalancePayload,
   GetArBalanceResult,
-  GetCommerceContractPayload,
   GetCommerceContractResult,
-  ListCommerceContractsPayload,
   ListCommerceContractsResult,
-  ListFulfillmentEventsPayload,
   ListFulfillmentEventsResult,
-  ListInvoicesPayload,
   ListInvoicesResult,
-  PostInvoicePayload,
   PostInvoiceResult,
   RaiToolActorContext,
   RaiToolName,
   RaiToolPayloadMap,
   RaiToolResultMap,
-  AllocatePaymentResult,
-  ConfirmPaymentResult,
 } from "./rai-tools.types";
 
 const CONTRACTS_TOOL_NAMES: RaiToolName[] = [
@@ -96,51 +100,21 @@ export class ContractsToolsRegistry implements OnModuleInit {
   onModuleInit() {
     this.register(
       RaiToolName.CreateCommerceContract,
-      Joi.object<CreateCommerceContractPayload>({
-        number: Joi.string().trim().min(1).max(128).required(),
-        type: Joi.string().trim().min(1).max(64).required(),
-        validFrom: Joi.string().trim().required(),
-        validTo: Joi.string().trim().optional(),
-        jurisdictionId: Joi.string().trim().required(),
-        regulatoryProfileId: Joi.string().trim().optional(),
-        roles: Joi.array()
-          .items(
-            Joi.object({
-              partyId: Joi.string().trim().required(),
-              role: Joi.string()
-                .valid(
-                  "SELLER",
-                  "BUYER",
-                  "LESSOR",
-                  "LESSEE",
-                  "AGENT",
-                  "PRINCIPAL",
-                  "PAYER",
-                  "BENEFICIARY",
-                )
-                .required(),
-              isPrimary: Joi.boolean().optional(),
-            }),
-          )
-          .min(1)
-          .required(),
-      }),
+      createCommerceContractSchema,
       async (payload) => {
         const created = await this.contractService.createContract(payload);
-        return this.mapCreatedContract(created);
+        return mapCreatedContract(created);
       },
     );
 
     this.register(
       RaiToolName.ListCommerceContracts,
-      Joi.object<ListCommerceContractsPayload>({
-        limit: Joi.number().integer().positive().max(100).optional(),
-      }),
+      listCommerceContractsSchema,
       async (payload) => {
         const items = await this.contractService.listContracts();
         return {
           items: (typeof payload.limit === "number" ? items.slice(0, payload.limit) : items).map(
-            (item) => this.mapContractSummary(item),
+            (item) => mapContractSummary(item),
           ),
         } satisfies ListCommerceContractsResult;
       },
@@ -148,26 +122,20 @@ export class ContractsToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.GetCommerceContract,
-      Joi.object<GetCommerceContractPayload>({
-        contractId: Joi.string().trim().required(),
-      }),
+      getCommerceContractSchema,
       async (payload) => {
         const items = await this.contractService.listContracts();
         const contract = items.find((item) => item.id === payload.contractId);
         if (!contract) {
           throw new BadRequestException("Contract not found");
         }
-        return this.mapContractSummary(contract) satisfies GetCommerceContractResult;
+        return mapContractSummary(contract) satisfies GetCommerceContractResult;
       },
     );
 
     this.register(
       RaiToolName.CreateCommerceObligation,
-      Joi.object<CreateCommerceObligationPayload>({
-        contractId: Joi.string().trim().required(),
-        type: Joi.string().valid("DELIVER", "PAY", "PERFORM").required(),
-        dueDate: Joi.string().trim().optional(),
-      }),
+      createCommerceObligationSchema,
       async (payload) => {
         const created = await this.contractService.createObligation(
           payload.contractId,
@@ -187,28 +155,7 @@ export class ContractsToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.CreateFulfillmentEvent,
-      Joi.object<CreateFulfillmentEventPayload>({
-        obligationId: Joi.string().trim().required(),
-        eventDomain: Joi.string()
-          .valid("COMMERCIAL", "PRODUCTION", "LOGISTICS", "FINANCE_ADJ")
-          .required(),
-        eventType: Joi.string()
-          .valid(
-            "GOODS_SHIPMENT",
-            "SERVICE_ACT",
-            "LEASE_USAGE",
-            "MATERIAL_CONSUMPTION",
-            "HARVEST",
-            "INTERNAL_TRANSFER",
-            "WRITE_OFF",
-          )
-          .required(),
-        eventDate: Joi.string().trim().required(),
-        batchId: Joi.string().trim().optional(),
-        itemId: Joi.string().trim().optional(),
-        uom: Joi.string().trim().optional(),
-        qty: Joi.number().optional(),
-      }),
+      createFulfillmentEventSchema,
       async (payload) => {
         const created = await this.fulfillmentService.createEvent(payload);
         return {
@@ -228,10 +175,7 @@ export class ContractsToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.ListFulfillmentEvents,
-      Joi.object<ListFulfillmentEventsPayload>({
-        contractId: Joi.string().trim().optional(),
-        obligationId: Joi.string().trim().optional(),
-      }),
+      listFulfillmentEventsSchema,
       async (payload) => {
         const items = await this.fulfillmentService.listEvents();
         return {
@@ -250,7 +194,7 @@ export class ContractsToolsRegistry implements OnModuleInit {
             eventType: item.eventType,
             eventDate: item.eventDate.toISOString(),
             contract: item.contract,
-            payloadJson: this.normalizeJsonObject(item.payloadJson),
+            payloadJson: normalizeJsonObject(item.payloadJson),
             createdAt: item.createdAt.toISOString(),
           })),
         } satisfies ListFulfillmentEventsResult;
@@ -259,15 +203,7 @@ export class ContractsToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.CreateInvoiceFromFulfillment,
-      Joi.object<CreateInvoiceFromFulfillmentPayload>({
-        fulfillmentEventId: Joi.string().trim().required(),
-        sellerJurisdiction: Joi.string().trim().required(),
-        buyerJurisdiction: Joi.string().trim().required(),
-        supplyType: Joi.string().valid("GOODS", "SERVICE", "LEASE").required(),
-        vatPayerStatus: Joi.string().valid("PAYER", "NON_PAYER").required(),
-        subtotal: Joi.number().positive().required(),
-        productTaxCode: Joi.string().trim().optional(),
-      }),
+      createInvoiceFromFulfillmentSchema,
       async (payload) => {
         const created = await this.billingService.createInvoiceFromFulfillment(
           payload.fulfillmentEventId,
@@ -296,9 +232,7 @@ export class ContractsToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.PostInvoice,
-      Joi.object<PostInvoicePayload>({
-        invoiceId: Joi.string().trim().required(),
-      }),
+      postInvoiceSchema,
       async (payload) => {
         const posted = await this.billingService.postInvoice(payload.invoiceId);
         return {
@@ -311,9 +245,7 @@ export class ContractsToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.ListInvoices,
-      Joi.object<ListInvoicesPayload>({
-        contractId: Joi.string().trim().optional(),
-      }),
+      listInvoicesSchema,
       async (payload) => {
         const items = await this.billingService.listInvoices();
         return {
@@ -337,14 +269,7 @@ export class ContractsToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.CreatePayment,
-      Joi.object<CreatePaymentPayload>({
-        payerPartyId: Joi.string().trim().required(),
-        payeePartyId: Joi.string().trim().required(),
-        amount: Joi.number().positive().required(),
-        currency: Joi.string().trim().required(),
-        paymentMethod: Joi.string().trim().required(),
-        paidAt: Joi.string().trim().optional(),
-      }),
+      createPaymentSchema,
       async (payload) => {
         const created = await this.billingService.createPayment({
           payerPartyId: payload.payerPartyId,
@@ -369,9 +294,7 @@ export class ContractsToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.ConfirmPayment,
-      Joi.object<ConfirmPaymentPayload>({
-        paymentId: Joi.string().trim().required(),
-      }),
+      confirmPaymentSchema,
       async (payload) => {
         const confirmed = await this.billingService.confirmPayment(payload.paymentId);
         return {
@@ -384,11 +307,7 @@ export class ContractsToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.AllocatePayment,
-      Joi.object<AllocatePaymentPayload>({
-        paymentId: Joi.string().trim().required(),
-        invoiceId: Joi.string().trim().required(),
-        allocatedAmount: Joi.number().positive().required(),
-      }),
+      allocatePaymentSchema,
       async (payload) => {
         const allocation = await this.billingService.allocatePayment(
           payload.paymentId,
@@ -406,9 +325,7 @@ export class ContractsToolsRegistry implements OnModuleInit {
 
     this.register(
       RaiToolName.GetArBalance,
-      Joi.object<GetArBalancePayload>({
-        invoiceId: Joi.string().trim().required(),
-      }),
+      getArBalanceSchema,
       async (payload) => ({
         invoiceId: payload.invoiceId,
         balance: await this.billingService.getArBalance(payload.invoiceId),
@@ -462,85 +379,5 @@ export class ContractsToolsRegistry implements OnModuleInit {
       schema,
       handler,
     } as RegisteredContractsTool<ContractsToolName>);
-  }
-
-  private mapCreatedContract(
-    created: {
-      id: string;
-      number: string;
-      type: string;
-      status: string;
-      validFrom: Date;
-      validTo: Date | null;
-      jurisdictionId: string;
-      regulatoryProfileId: string | null;
-      roles: Array<{
-        id: string;
-        partyId: string;
-        role: string;
-        isPrimary: boolean;
-      }>;
-    },
-  ): CreateCommerceContractResult {
-    return {
-      id: created.id,
-      number: created.number,
-      type: created.type,
-      status: created.status,
-      validFrom: created.validFrom.toISOString(),
-      validTo: created.validTo?.toISOString() ?? null,
-      jurisdictionId: created.jurisdictionId,
-      regulatoryProfileId: created.regulatoryProfileId,
-      roles: created.roles.map((role) => ({
-        id: role.id,
-        partyId: role.partyId,
-        role: role.role,
-        isPrimary: role.isPrimary,
-      })),
-    };
-  }
-
-  private mapContractSummary(
-    contract: {
-      id: string;
-      number: string;
-      type: string;
-      status: string;
-      validFrom: Date;
-      validTo: Date | null;
-      createdAt: Date;
-      roles: Array<{
-        id: string;
-        role: string;
-        isPrimary: boolean;
-        party: {
-          id: string;
-          legalName: string;
-        };
-      }>;
-    },
-  ): GetCommerceContractResult {
-    return {
-      id: contract.id,
-      number: contract.number,
-      type: contract.type,
-      status: contract.status,
-      validFrom: contract.validFrom.toISOString(),
-      validTo: contract.validTo?.toISOString() ?? null,
-      createdAt: contract.createdAt.toISOString(),
-      roles: contract.roles.map((role) => ({
-        id: role.id,
-        role: role.role,
-        isPrimary: role.isPrimary,
-        party: role.party,
-      })),
-    };
-  }
-
-  private normalizeJsonObject(value: Prisma.JsonValue): Record<string, unknown> {
-    if (value && typeof value === "object" && !Array.isArray(value)) {
-      return value as Record<string, unknown>;
-    }
-    return {};
   }
 }

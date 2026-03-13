@@ -5,6 +5,12 @@ type CounterKey =
   | "financial_invariant_failures_total"
   | "event_duplicates_prevented_total"
   | "reconciliation_alerts_total"
+  | "ai_memory_hint_shown_total"
+  | "expert_review_requested_total"
+  | "expert_review_completed_total"
+  | "strategy_forecast_run_total"
+  | "strategy_forecast_degraded_total"
+  | "memory_lane_populated_total"
   | "memory_engram_formations_total"
   | "memory_engram_pruned_total"
   | "memory_auto_remediations_total"
@@ -14,6 +20,8 @@ type CounterKey =
   | "critical_drift_alerts_total"
   | "k8s_job_failures_total";
 
+type GaugeKey = "strategy_forecast_latency_ms";
+
 class InvariantMetricsRegistry {
   private readonly counters: Record<CounterKey, number> = {
     tenant_violation_rate: 0,
@@ -22,6 +30,12 @@ class InvariantMetricsRegistry {
     financial_invariant_failures_total: 0,
     event_duplicates_prevented_total: 0,
     reconciliation_alerts_total: 0,
+    ai_memory_hint_shown_total: 0,
+    expert_review_requested_total: 0,
+    expert_review_completed_total: 0,
+    strategy_forecast_run_total: 0,
+    strategy_forecast_degraded_total: 0,
+    memory_lane_populated_total: 0,
     memory_engram_formations_total: 0,
     memory_engram_pruned_total: 0,
     memory_auto_remediations_total: 0,
@@ -30,6 +44,9 @@ class InvariantMetricsRegistry {
     model_deployments_total: 0,
     critical_drift_alerts_total: 0,
     k8s_job_failures_total: 0,
+  };
+  private readonly gauges: Record<GaugeKey, number> = {
+    strategy_forecast_latency_ms: 0,
   };
   private readonly tenantViolationByTenant = new Map<string, number>();
   private readonly tenantViolationByModule = new Map<string, number>();
@@ -51,8 +68,16 @@ class InvariantMetricsRegistry {
     );
   }
 
-  snapshot(): Record<CounterKey, number> {
-    return { ...this.counters };
+  setGauge(key: GaugeKey, value: number): void {
+    this.gauges[key] =
+      Number.isFinite(value) && value >= 0 ? Math.round(value * 100) / 100 : 0;
+  }
+
+  snapshot(): Record<CounterKey | GaugeKey, number> {
+    return {
+      ...this.counters,
+      ...this.gauges,
+    };
   }
 
   breakdown() {
@@ -78,6 +103,9 @@ class InvariantMetricsRegistry {
   resetForTests(): void {
     for (const key of Object.keys(this.counters) as CounterKey[]) {
       this.counters[key] = 0;
+    }
+    for (const key of Object.keys(this.gauges) as GaugeKey[]) {
+      this.gauges[key] = 0;
     }
     this.tenantViolationByTenant.clear();
     this.tenantViolationByModule.clear();

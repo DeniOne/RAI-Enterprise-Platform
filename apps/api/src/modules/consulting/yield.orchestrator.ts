@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { YieldService } from "./yield.service";
 import { KpiService } from "./kpi.service";
 import { DecisionService } from "../cmr/decision.service";
-import { SaveHarvestResultDto } from "./dto/save-harvest-result.dto";
+import { SaveHarvestResultDto } from "../../shared/consulting/dto/save-harvest-result.dto";
 import { UserContext } from "./consulting.service";
 import { ConsultingDomainRules } from "./domain-rules/consulting.domain-rules.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";

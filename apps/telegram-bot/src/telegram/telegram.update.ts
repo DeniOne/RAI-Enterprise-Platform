@@ -83,15 +83,27 @@ export class TelegramUpdate {
     return /^https:\/\//i.test(url);
   }
 
+  private isHttpUrl(url: string): boolean {
+    return /^https?:\/\//i.test(url);
+  }
+
   private getBackOfficeLauncherKeyboard() {
     const miniAppUrl = this.getMiniAppUrl();
-    if (!this.isTelegramMiniAppUrl(miniAppUrl)) {
+    if (this.isTelegramMiniAppUrl(miniAppUrl)) {
       return Markup.inlineKeyboard([
+        [Markup.button.webApp("Открыть рабочее место", miniAppUrl)],
         [Markup.button.callback("Помощь", "backoffice_help")],
       ]);
     }
+
+    if (this.isHttpUrl(miniAppUrl)) {
+      return Markup.inlineKeyboard([
+        [Markup.button.callback("Открыть рабочее место", "backoffice_open_workspace")],
+        [Markup.button.callback("Помощь", "backoffice_help")],
+      ]);
+    }
+
     return Markup.inlineKeyboard([
-      [Markup.button.webApp("Открыть рабочее место", miniAppUrl)],
       [Markup.button.callback("Помощь", "backoffice_help")],
     ]);
   }
@@ -101,6 +113,14 @@ export class TelegramUpdate {
     message = "Работа с хозяйствами и A-RAI вынесена в Telegram Mini App.",
   ) {
     const miniAppUrl = this.getMiniAppUrl();
+    const launcherMode = this.isTelegramMiniAppUrl(miniAppUrl)
+      ? "web_app"
+      : this.isHttpUrl(miniAppUrl)
+        ? "url_button"
+        : "help_only";
+    this.logger.log(
+      `backoffice_launcher mode=${launcherMode} miniAppUrl=${miniAppUrl}`,
+    );
     await ctx.reply(
       this.isTelegramMiniAppUrl(miniAppUrl)
         ? `🧭 <b>Рабочее место бэкофиса</b>\n\n${message}\n\nВ общем чате бот больше не принимает свободный текст от менеджера.`
@@ -351,6 +371,15 @@ export class TelegramUpdate {
     await this.replyWithWorkspaceLauncher(
       ctx,
       "Сценарий v1 такой: хозяйство пишет сюда, менеджер открывает Mini App, выбирает назначенное хозяйство и отвечает оттуда.",
+    );
+  }
+
+  @Action("backoffice_open_workspace")
+  async onBackOfficeOpenWorkspace(@Ctx() ctx: Context): Promise<void> {
+    await ctx.answerCbQuery();
+    const miniAppUrl = this.getMiniAppUrl();
+    await ctx.reply(
+      `Откройте рабочее место: ${miniAppUrl}`,
     );
   }
 

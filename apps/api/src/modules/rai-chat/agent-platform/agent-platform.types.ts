@@ -5,7 +5,7 @@ import {
   WorkspaceContextDto,
 } from "../dto/rai-chat.dto";
 import { RaiToolCallDto } from "../dto/rai-chat.dto";
-import { RuntimeGovernanceOverrides } from "../runtime-governance/runtime-governance-policy.types";
+import { RuntimeGovernanceOverrides } from "../../../shared/rai-chat/runtime-governance-policy.types";
 
 export type AgentKind = "domain_advisor" | "worker_hybrid" | "personal_delegated";
 export type AgentAutonomyMode = "advisory" | "hybrid" | "autonomous";

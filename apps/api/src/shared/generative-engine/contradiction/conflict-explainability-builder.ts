@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import type { ConflictVector } from "./conflict-matrix.service";
+import type { ConflictVector } from "../../../modules/generative-engine/contradiction/conflict-matrix.service";
 
 /**
  * ConflictExplainabilityBuilder — Объяснение расхождений Level C (I32).

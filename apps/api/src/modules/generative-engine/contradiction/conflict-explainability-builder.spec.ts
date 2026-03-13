@@ -1,7 +1,7 @@
 import {
   ConflictExplainabilityBuilder,
   ConflictExplainInput,
-} from "./conflict-explainability-builder";
+} from "../../../shared/generative-engine/contradiction/conflict-explainability-builder";
 
 /**
  * Тесты ConflictExplainabilityBuilder — I32: explanation ≠ empty.

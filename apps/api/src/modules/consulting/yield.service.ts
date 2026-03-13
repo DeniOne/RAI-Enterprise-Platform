@@ -9,7 +9,7 @@ import { HarvestResultRepository } from "./repositories/harvest-result.repositor
 import { HarvestResult, Prisma } from "@rai/prisma-client";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { AuditService } from "../../shared/audit/audit.service";
-import { SaveHarvestResultDto } from "./dto/save-harvest-result.dto";
+import { SaveHarvestResultDto } from "../../shared/consulting/dto/save-harvest-result.dto";
 
 @Injectable()
 export class YieldService {

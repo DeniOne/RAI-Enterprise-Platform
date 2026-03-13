@@ -6,7 +6,7 @@ import {
 import {
   IntentClassification,
   WorkspaceContextForIntent,
-} from "../../modules/rai-chat/intent-router/intent-router.types";
+} from "./intent-router.types";
 import { ExecutionResult } from "../../modules/rai-chat/runtime/agent-runtime.service";
 import { RaiToolCall, RaiToolName } from "./rai-tools.types";
 

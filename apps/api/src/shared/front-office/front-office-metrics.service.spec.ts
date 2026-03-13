@@ -19,9 +19,12 @@ describe("FrontOfficeMetricsService", () => {
     const snapshot = service.snapshot("c1");
     expect(snapshot.outcomes.PROCESS_DRAFT).toBe(1);
     expect(snapshot.outcomes.REQUEST_CLARIFICATION).toBe(1);
+    expect(snapshot.derived.outcomesTotal).toBe(2);
     expect(snapshot.clarification.maxDepth).toBe(2);
     expect(snapshot.delivery.deliveryFailuresTotal).toBe(1);
     expect(snapshot.delivery.repliesSentTotal).toBe(1);
+    expect(snapshot.derived.deliveryFailureRate).toBe(0.5);
+    expect(snapshot.healthStatus).toBe("degraded");
   });
 
   it("tracks handoff latency on completion and exports prometheus format", () => {
@@ -37,10 +40,12 @@ describe("FrontOfficeMetricsService", () => {
     expect(snapshot.handoff.latencyMs.count).toBe(2);
     expect(snapshot.handoff.latencyMs.avg).toBe(45000);
     expect(snapshot.handoff.latencyMs.p95).toBe(60000);
+    expect(snapshot.alerts.handoffLatencyP95Breached).toBe(false);
 
     const prometheus = service.prometheus("c1");
     expect(prometheus).toContain('front_office_intake_outcomes_total{mode="AUTO_REPLY"}');
     expect(prometheus).toContain("front_office_handoff_latency_ms_p95 60000");
+    expect(prometheus).toContain("front_office_slo_handoff_latency_p95_ms_threshold");
+    expect(prometheus).toContain('front_office_alerts{name="delivery_failure_rate"}');
   });
 });
-

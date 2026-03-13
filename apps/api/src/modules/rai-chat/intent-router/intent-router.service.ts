@@ -6,7 +6,7 @@ import {
 import {
   IntentClassification,
   WorkspaceContextForIntent,
-} from "./intent-router.types";
+} from "../../../shared/rai-chat/intent-router.types";
 import {
   buildAutoToolCallFromContracts,
   classifyByAgentContracts,

@@ -3,6 +3,7 @@ import { ExpertReviewService } from "./expert-review.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { ChiefAgronomistService } from "./expert/chief-agronomist.service";
 import { TaskService } from "../task/task.service";
+import { InvariantMetrics } from "../../shared/invariants/invariant-metrics";
 
 describe("ExpertReviewService", () => {
   let service: ExpertReviewService;
@@ -12,6 +13,7 @@ describe("ExpertReviewService", () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    InvariantMetrics.resetForTests();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ExpertReviewService,
@@ -72,5 +74,6 @@ describe("ExpertReviewService", () => {
         userId: "user-1",
       }),
     });
+    expect(InvariantMetrics.snapshot().expert_review_requested_total).toBe(1);
   });
 });

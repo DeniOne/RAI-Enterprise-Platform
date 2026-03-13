@@ -5,7 +5,7 @@ import {
 import {
   RAI_CHAT_WIDGETS_SCHEMA_VERSION,
   RaiChatWidgetType,
-} from "../widgets/rai-chat-widgets.types";
+} from "../../../shared/rai-chat/rai-chat-widgets.types";
 
 describe("work-window.factory", () => {
   it("resolves active window by priority and mode", () => {

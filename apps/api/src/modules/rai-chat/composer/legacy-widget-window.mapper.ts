@@ -1,4 +1,4 @@
-import { RaiChatWidget, RaiChatWidgetType } from "../widgets/rai-chat-widgets.types";
+import { RaiChatWidget, RaiChatWidgetType } from "../../../shared/rai-chat/rai-chat-widgets.types";
 import { RaiWorkWindowDto } from "../dto/rai-chat.dto";
 
 interface MapLegacyWidgetsParams {

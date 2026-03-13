@@ -7,7 +7,7 @@ import {
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { ExecutionStatus, TechMapStatus } from "@rai/prisma-client";
 import { EventEmitter2 } from "@nestjs/event-emitter";
-import { CompleteOperationDto } from "./dto/complete-operation.dto";
+import { CompleteOperationDto } from "../../shared/consulting/dto/complete-operation.dto";
 import { ConsultingOperationCompletedEvent } from "./events/consulting-operation-completed.event";
 import { OutboxService } from "../../shared/outbox/outbox.service";
 

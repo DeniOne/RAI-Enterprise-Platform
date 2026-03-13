@@ -1,7 +1,6 @@
 ﻿import { BillingService } from "./billing.service";
 import { CommerceContractService } from "./commerce-contract.service";
 import { FulfillmentService } from "./fulfillment.service";
-
 function createPrismaMock() {
   const state = {
     parties: [
@@ -20,6 +19,9 @@ function createPrismaMock() {
 
   return {
     party: {
+      findUnique: jest.fn(async (args: any) =>
+        state.parties.find((p) => p.id === args?.where?.id) ?? null,
+      ),
       findMany: jest.fn(async (args: any) => {
         const ids = args?.where?.id?.in ?? [];
         return state.parties.filter((p) => ids.includes(p.id));
@@ -42,6 +44,9 @@ function createPrismaMock() {
       }),
     },
     commerceObligation: {
+      findUnique: jest.fn(async (args: any) =>
+        state.obligations.find((o) => o.id === args.where.id) ?? null,
+      ),
       create: jest.fn(async (args: any) => {
         const row = { id: `co-${state.obligations.length + 1}`, status: "OPEN", ...args.data };
         state.obligations.push(row);

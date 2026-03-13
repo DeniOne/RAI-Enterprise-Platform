@@ -2,7 +2,7 @@ import {
   OverrideRiskAnalyzer,
   OverrideAnalysisInput,
 } from "./override-risk-analyzer";
-import { RiskMetricCalculator } from "./risk-metric-calculator";
+import { RiskMetricCalculator } from "../../../shared/generative-engine/risk/risk-metric-calculator";
 import { CanonicalSorter } from "../deterministic/canonical-sorter";
 import { StableHasher } from "../deterministic/stable-hasher";
 

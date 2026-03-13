@@ -11,13 +11,13 @@ import { ContractsToolsRegistry } from "./contracts-tools.registry";
 import { RaiToolName } from "./rai-tools.types";
 import { RiskPolicyEngineService } from "../security/risk-policy-engine.service";
 import { PendingActionService } from "../security/pending-action.service";
-import { RiskPolicyBlockedError } from "../security/risk-policy-blocked.error";
+import { RiskPolicyBlockedError } from "../../../shared/rai-chat/security/risk-policy-blocked.error";
 import {
   AutonomyLevel,
   AutonomyPolicyService,
 } from "../autonomy-policy.service";
 import { AgentRuntimeConfigService } from "../agent-runtime-config.service";
-import { AgentConfigBlockedError } from "../security/agent-config-blocked.error";
+import { AgentConfigBlockedError } from "../../../shared/rai-chat/security/agent-config-blocked.error";
 import { IncidentOpsService } from "../incident-ops.service";
 import { SystemIncidentType } from "@rai/prisma-client";
 import { RuntimeGovernanceEventService } from "../runtime-governance/runtime-governance-event.service";

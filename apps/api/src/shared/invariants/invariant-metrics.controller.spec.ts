@@ -145,6 +145,13 @@ describe('InvariantMetricsController', () => {
 
   it('exports deeper memory lifecycle gauges and automation counters in prometheus format', async () => {
     process.env.MEMORY_AUTO_REMEDIATION_ENABLED = 'true';
+    InvariantMetrics.increment('ai_memory_hint_shown_total', 5);
+    InvariantMetrics.increment('expert_review_requested_total', 4);
+    InvariantMetrics.increment('expert_review_completed_total', 3);
+    InvariantMetrics.increment('strategy_forecast_run_total', 6);
+    InvariantMetrics.increment('strategy_forecast_degraded_total', 2);
+    InvariantMetrics.increment('memory_lane_populated_total', 7);
+    InvariantMetrics.setGauge('strategy_forecast_latency_ms', 184.5);
     InvariantMetrics.increment('memory_engram_formations_total', 4);
     InvariantMetrics.increment('memory_engram_pruned_total', 3);
     InvariantMetrics.increment('memory_auto_remediations_total', 2);
@@ -180,6 +187,13 @@ describe('InvariantMetricsController', () => {
     );
     expect(payload).toContain('memory_engram_formation_budget_usage_ratio');
     expect(payload).toContain('memory_engram_pruning_budget_usage_ratio');
+    expect(payload).toContain('ai_memory_hint_shown_total 5');
+    expect(payload).toContain('expert_review_requested_total 4');
+    expect(payload).toContain('expert_review_completed_total 3');
+    expect(payload).toContain('strategy_forecast_run_total 6');
+    expect(payload).toContain('strategy_forecast_degraded_total 2');
+    expect(payload).toContain('strategy_forecast_latency_ms 184.5');
+    expect(payload).toContain('memory_lane_populated_total 7');
     expect(payload).toContain('memory_auto_remediation_enabled 1');
     expect(payload).toContain('memory_consolidation_paused 1');
     expect(payload).toContain('memory_pruning_paused 0');

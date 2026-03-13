@@ -4,6 +4,7 @@ import { PrismaService } from "../../shared/prisma/prisma.service";
 import { ChiefAgronomistService } from "./expert/chief-agronomist.service";
 import { EvidenceReference } from "./dto/rai-chat.dto";
 import { TaskService } from "../task/task.service";
+import { InvariantMetrics } from "../../shared/invariants/invariant-metrics";
 
 export interface ChiefAgronomistReviewRequest {
   entityType: "techmap" | "deviation" | "field";
@@ -52,6 +53,8 @@ export class ExpertReviewService {
     userId: string | null | undefined,
     request: ChiefAgronomistReviewRequest,
   ): Promise<ChiefAgronomistReviewResponse> {
+    InvariantMetrics.increment("expert_review_requested_total");
+
     if (!request.entityId?.trim()) {
       throw new BadRequestException("entityId is required");
     }
@@ -237,6 +240,7 @@ export class ExpertReviewService {
       outcomeAction: request.action,
       outcomeNote: request.note ?? null,
     });
+    InvariantMetrics.increment("expert_review_completed_total");
 
     return this.mapStoredReview(updated);
   }

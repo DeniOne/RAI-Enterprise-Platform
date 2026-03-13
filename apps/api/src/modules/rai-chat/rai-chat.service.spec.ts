@@ -1,22 +1,31 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { RaiChatService } from "./rai-chat.service";
 import { SupervisorAgent } from "./supervisor-agent.service";
+import { SupervisorForensicsService } from "./supervisor-forensics.service";
 import { RaiToolsRegistry } from "./tools/rai-tools.registry";
 import { AgroToolsRegistry } from "./tools/agro-tools.registry";
 import { FinanceToolsRegistry } from "./tools/finance-tools.registry";
 import { RiskToolsRegistry } from "./tools/risk-tools.registry";
 import { KnowledgeToolsRegistry } from "./tools/knowledge-tools.registry";
+import { CrmToolsRegistry } from "./tools/crm-tools.registry";
+import { FrontOfficeToolsRegistry } from "./tools/front-office-tools.registry";
+import { ContractsToolsRegistry } from "./tools/contracts-tools.registry";
 import { AgronomAgent } from "./agents/agronom-agent.service";
 import { EconomistAgent } from "./agents/economist-agent.service";
 import { KnowledgeAgent } from "./agents/knowledge-agent.service";
 import { MonitoringAgent } from "./agents/monitoring-agent.service";
+import { CrmAgent } from "./agents/crm-agent.service";
+import { FrontOfficeAgent } from "./agents/front-office-agent.service";
+import { ContractsAgent } from "./agents/contracts-agent.service";
+import { ChiefAgronomistAgent } from "./agents/chief-agronomist-agent.service";
+import { DataScientistAgent } from "./agents/data-scientist-agent.service";
 import { AgroDeterministicEngineFacade } from "./deterministic/agro-deterministic.facade";
 import { IntentRouterService } from "./intent-router/intent-router.service";
 import { RaiToolName } from "./tools/rai-tools.types";
 import {
   RAI_CHAT_WIDGETS_SCHEMA_VERSION,
   RaiChatWidgetType,
-} from "./widgets/rai-chat-widgets.types";
+} from "../../shared/rai-chat/rai-chat-widgets.types";
 import { ExternalSignalsService } from "./external-signals.service";
 import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
 import { MemoryCoordinatorService } from "./memory/memory-coordinator.service";
@@ -41,6 +50,10 @@ import { AgentRegistryService } from "./agent-registry.service";
 import { AgentRuntimeConfigService } from "./agent-runtime-config.service";
 import { OpenRouterGatewayService } from "./agent-platform/openrouter-gateway.service";
 import { AgentPromptAssemblyService } from "./agent-platform/agent-prompt-assembly.service";
+import { RuntimeGovernanceControlService } from "./runtime/runtime-governance-control.service";
+import { RuntimeGovernanceEventService } from "./runtime-governance/runtime-governance-event.service";
+import { RuntimeGovernancePolicyService } from "./runtime-governance/runtime-governance-policy.service";
+import { RuntimeGovernanceFeatureFlagsService } from "./runtime-governance/runtime-governance-feature-flags.service";
 
 describe("RaiChatService", () => {
   let service: RaiChatService;
@@ -63,6 +76,30 @@ describe("RaiChatService", () => {
       .fn()
       .mockResolvedValue({ advisory: undefined, feedbackStored: false }),
   };
+  const runtimeGovernanceEventServiceMock = {
+    record: jest.fn().mockResolvedValue(undefined),
+  };
+  const runtimeGovernancePolicyServiceMock = {
+    getRolePolicy: jest.fn().mockReturnValue({
+      concurrency: {
+        maxParallelToolCalls: 8,
+        maxParallelGroups: 6,
+        deadlineMs: 30_000,
+      },
+      thresholds: {
+        queueSaturationThreshold: "SATURATED",
+      },
+    }),
+    resolveFallbackMode: jest.fn().mockReturnValue("READ_ONLY_SUPPORT"),
+  };
+  const runtimeGovernanceFeatureFlagsServiceMock = {
+    getFlags: jest.fn().mockReturnValue({
+      enforcementEnabled: true,
+      queueFallbackEnabled: true,
+      queueFallbackShadowMode: false,
+      emergencyKillSwitch: false,
+    }),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -75,19 +112,29 @@ describe("RaiChatService", () => {
       providers: [
         RaiChatService,
         SupervisorAgent,
+        SupervisorForensicsService,
         MemoryCoordinatorService,
         AgentRuntimeService,
         AgentExecutionAdapterService,
+        RuntimeGovernanceControlService,
         ResponseComposerService,
         AgroToolsRegistry,
         FinanceToolsRegistry,
         RiskToolsRegistry,
         KnowledgeToolsRegistry,
+        { provide: CrmToolsRegistry, useValue: { has: jest.fn().mockReturnValue(false), execute: jest.fn() } },
+        { provide: FrontOfficeToolsRegistry, useValue: { has: jest.fn().mockReturnValue(false), execute: jest.fn() } },
+        { provide: ContractsToolsRegistry, useValue: { has: jest.fn().mockReturnValue(false), execute: jest.fn() } },
         AgroDeterministicEngineFacade,
         AgronomAgent,
         EconomistAgent,
         KnowledgeAgent,
         MonitoringAgent,
+        { provide: CrmAgent, useValue: { run: jest.fn() } },
+        { provide: FrontOfficeAgent, useValue: { run: jest.fn() } },
+        { provide: ContractsAgent, useValue: { run: jest.fn() } },
+        { provide: ChiefAgronomistAgent, useValue: { run: jest.fn() } },
+        { provide: DataScientistAgent, useValue: { run: jest.fn() } },
         IntentRouterService,
         RaiToolsRegistry,
         RaiChatWidgetBuilder,
@@ -101,7 +148,20 @@ describe("RaiChatService", () => {
         PendingActionService,
         { provide: SensitiveDataFilterService, useValue: { mask: (s: string) => s } },
         { provide: PerformanceMetricsService, useValue: { recordLatency: jest.fn().mockResolvedValue(undefined), recordError: jest.fn().mockResolvedValue(undefined) } },
-        { provide: QueueMetricsService, useValue: { beginRuntimeExecution: jest.fn().mockResolvedValue(undefined), endRuntimeExecution: jest.fn().mockResolvedValue(undefined) } },
+        {
+          provide: QueueMetricsService,
+          useValue: {
+            beginRuntimeExecution: jest.fn().mockResolvedValue(undefined),
+            endRuntimeExecution: jest.fn().mockResolvedValue(undefined),
+            getQueuePressure: jest.fn().mockResolvedValue({
+              pressureState: "STABLE",
+              signalFresh: true,
+              totalBacklog: 1,
+              hottestQueue: "runtime_active_tool_calls",
+              observedQueues: [],
+            }),
+          },
+        },
         { provide: BudgetControllerService, useValue: { evaluateRuntimeBudget: jest.fn().mockResolvedValue({ outcome: "ALLOW", reason: "WITHIN_BUDGET", source: "agent_registry_max_tokens", estimatedTokens: 0, budgetLimit: null, allowedToolNames: [], droppedToolNames: [], ownerRoles: [] }) } },
         { provide: IncidentOpsService, useValue: { logIncident: jest.fn() } },
         { provide: TraceSummaryService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
@@ -130,6 +190,9 @@ describe("RaiChatService", () => {
         AgentRuntimeConfigService,
         { provide: OpenRouterGatewayService, useValue: { generate: jest.fn().mockRejectedValue(new Error("OPENROUTER_API_KEY_MISSING")) } },
         AgentPromptAssemblyService,
+        { provide: RuntimeGovernanceEventService, useValue: runtimeGovernanceEventServiceMock },
+        { provide: RuntimeGovernancePolicyService, useValue: runtimeGovernancePolicyServiceMock },
+        { provide: RuntimeGovernanceFeatureFlagsService, useValue: runtimeGovernanceFeatureFlagsServiceMock },
       ],
     }).compile();
 
@@ -259,7 +322,7 @@ describe("RaiChatService", () => {
 
     // Проверяем, что контекст попал в текст ответа
     expect(result.text).toContain(
-      '(Контекст из памяти: "Вчера мы обсуждали урожай редьки...", sim: 0.88)',
+      "Учтён предыдущий контекст: Вчера мы обсуждали урожай редьки",
     );
   });
 

@@ -1,5 +1,14 @@
 # Активный контекст RAI_EP
 
+## Текущая задача (2026-03-13)
+- [x] Выполнен bridge `data_scientist -> DecisionIntelligenceService`: добавлен новый intent `strategy_forecast` в `DataScientistAgent`.
+- [x] `DataScientistAgent` теперь использует deterministic forecast-run (`DecisionIntelligenceService.runStrategyForecast`) как источник чисел; LLM остаётся только слоем интерпретации.
+- [x] В runtime-контуре `AgentExecutionAdapterService` расширен payload mapping для `scopeLevel/horizonDays/domains/farmId/fieldId/crop/seasonId/scenario`.
+- [x] В intent-heuristics стратегические запросы маршрутизируются в `strategy_forecast`; `what_if` и доменные intents сохранены.
+- [x] Добавлен unit suite `apps/api/src/modules/rai-chat/agents/data-scientist-agent.service.spec.ts`; вместе с runtime-specs контур проходит (`tsc` + targeted jest PASS).
+- [x] Закрыт telemetry-хвост rollout: добавлены counters/gauge `ai_memory_hint_shown_total`, `expert_review_requested_total`, `expert_review_completed_total`, `strategy_forecast_run_total`, `strategy_forecast_degraded_total`, `strategy_forecast_latency_ms`, `memory_lane_populated_total`.
+- [x] Сформирован release closeout packet `docs/07_EXECUTION/AI_COPILOT_RELEASE_GO_NO_GO_2026-03-13.md` (gate verdict + rollout order + go/no-go criteria).
+
 ## Текущая задача (2026-03-12)
 - [x] Введён `Architecture Growth Governance` как следующий слой после foundation remediation.
 - [x] Выполнен первый практический boundary-refactor после ввода growth-governance: thread/transport/binding слой `front-office` вынесен в `apps/api/src/shared/front-office`.
@@ -9,7 +18,45 @@
 - [x] В `apps/api/src/modules/rai-chat/agent-contracts/agent-interaction-contracts.ts` оставлен re-export bridge; прямые импорты `supervisor/intent-router/response-composer/explainability` переведены на shared-path.
 - [x] Выполнен третий практический boundary-refactor: `rai-chat.dto`, `rai-tools.types` и `rai-chat-widgets.types` вынесены в `apps/api/src/shared/rai-chat` с re-export bridge в старых путях.
 - [x] Canonical imports для DTO/tool contracts переведены на shared-path в `shared/rai-chat`, `front-office-draft` и `explainability`.
-- [x] Размер `rai-chat` по `architecture-budget-gate` поэтапно снижен с `34256` до `31316`, затем до `29605` строк.
+- [x] Выполнен четвёртый практический boundary-refactor: CRM/Commerce presenter-layer `response-composer` вынесен в `apps/api/src/shared/rai-chat/response-composer-presenters.ts`.
+- [x] `ResponseComposerService` сокращён до orchestration-слоя; отображение `tool display`, CRM/Commerce title/summary/sections/actions/next-step вынесено в shared helper-функции.
+- [x] Выполнен пятый практический boundary-refactor: execution heuristics/mapping из `agent-execution-adapter.service.ts` вынесен в `apps/api/src/shared/rai-chat/execution-adapter-heuristics.ts`.
+- [x] `AgentExecutionAdapterService` сокращён до execution orchestration + validation, детекторы intent/tool и parsing payload/context вынесены в shared helper-функции.
+- [x] Выполнен следующий deep-slice `rai-chat` по `runtime-governance event/control`: в `apps/api/src/modules/rai-chat/runtime/runtime-governance-control.service.ts` вынесены queue envelope degradation, fallback meta и governance event recording.
+- [x] `AgentRuntimeService` сокращён с `659` до `498` строк; runtime orchestration отделён от governance control-layer.
+- [x] Выполнен следующий deep-slice `rai-chat` по `supervisor orchestration`: forensic/audit post-processing вынесен из `supervisor-agent.service.ts` в `supervisor-forensics.service.ts`.
+- [x] `SupervisorAgent` сокращён до orchestration/coordination слоя; `AiAuditEntry` + forensic phases + memory lane собираются отдельным сервисом.
+- [x] Выполнен следующий deep-slice `rai-chat` по `tool registries (CRM)`: payload schemas и party helper-логика вынесены из `crm-tools.registry.ts` в `apps/api/src/shared/rai-chat/crm-tool-schemas.ts` и `apps/api/src/shared/rai-chat/crm-tool-helpers.ts`.
+- [x] Выполнен следующий deep-slice `rai-chat` по `tool registries (Front Office)`: routing policy + classification/helpers + payload schemas вынесены в `apps/api/src/shared/rai-chat/front-office-routing.policy.ts`, `front-office-tool-helpers.ts`, `front-office-tool-schemas.ts`; в `modules/rai-chat/tools/front-office-routing.policy.ts` оставлен re-export bridge.
+- [x] Выполнен следующий deep-slice `rai-chat` по `tool registries (Contracts)`: payload schemas + contract/json mapping helper-слой вынесены из `contracts-tools.registry.ts` в `apps/api/src/shared/rai-chat/contracts-tool-schemas.ts` и `apps/api/src/shared/rai-chat/contracts-tool-helpers.ts`.
+- [x] Выполнен следующий deep-slice `rai-chat` по `tool orchestration`: из `rai-tools.registry.ts` вынесены built-in schemas/handlers и log payload serialization в `apps/api/src/shared/rai-chat/rai-tools-builtins.ts` и `apps/api/src/shared/rai-chat/rai-tools-log-helpers.ts`.
+- [x] Логически закрыт подблок `rai-chat tool registries + orchestration boundaries`; следующий фокус — тяжёлые модули `tech-map` / `consulting` / `finance-economy`.
+- [x] Размер `rai-chat` по `architecture-budget-gate` поэтапно снижен с `34256` до `31316`, затем до `29605`, затем до `28777`, затем до `28410`, затем до `28286`, затем до `28123`, затем до `28122` строк; текущий snapshot после deep-slices по registry/runtime/supervisor/orchestration — `28122` строк.
+- [x] Выполнен первый deep-slice `tech-map`: mapping/snapshot логика вынесена из `apps/api/src/modules/tech-map/tech-map.service.ts` в `apps/api/src/shared/tech-map/tech-map-mapping.helpers.ts`.
+- [x] `TechMapService` сокращён: сборка `ValidationInput`, DAG nodes и activation snapshots (`operations/resource norms`) отделена от orchestration-layer; добавлен targeted spec `apps/api/src/shared/tech-map/tech-map-mapping.helpers.spec.ts`.
+- [x] Выполнен второй deep-slice `tech-map`: повторяющиеся Prisma include-деревья вынесены из `tech-map.service.ts` в `apps/api/src/shared/tech-map/tech-map-prisma-includes.ts`.
+- [x] Размер `tech-map` по `architecture-budget-gate` поэтапно снижен с `6087` до `6020`, затем до `5941` строк; модуль вышел ниже warn-порога по строкам (`<6000`), следующий фокус — economics-подмодули и оставшиеся orchestration-boundaries.
+- [x] Выполнен deep-slice `consulting controller context`: в `apps/api/src/modules/consulting/consulting.controller.ts` повторяющаяся сборка `UserContext`/execution context сведена к `toUserContext()` и `toExecutionContext()`, controller сокращён с `467` до `367` строк.
+- [x] Выполнен deep-slice `finance-economy OFS decision intelligence helpers`: в `apps/api/src/modules/finance-economy/ofs/application/decision-intelligence.service.ts` валидация request/scenario, driver composition, reason/rounding, lever normalization и scenario mapping вынесены в `apps/api/src/shared/finance-economy/decision-intelligence.helpers.ts`.
+- [x] Выполнен дополнительный deep-slice `finance-economy economy ingest helpers`: в `apps/api/src/modules/finance-economy/economy/application/economy.service.ts` сигнатура ingest DTO и replay/integrity helper-слой вынесены в `apps/api/src/shared/finance-economy/economy-ingest.helpers.ts`.
+- [x] Выполнен дополнительный deep-slice `finance-economy decision-intelligence types`: типы run/scenario/history вынесены из `apps/api/src/modules/finance-economy/ofs/application/decision-intelligence.service.ts` в `apps/api/src/shared/finance-economy/decision-intelligence.types.ts`.
+- [x] Выполнен дополнительный deep-slice `commerce party/asset helpers`: relation/rules helper-слой вынесен в `apps/api/src/shared/commerce/party.helpers.ts`, а asset-role mapping/overlap/type-detection helper-слой — в `apps/api/src/shared/commerce/asset-role.helpers.ts`.
+- [x] Размер `consulting` по `architecture-budget-gate` снижен с `4863` до `4763` строк (ниже warn-порога `4800`).
+- [x] Размер `finance-economy` по `architecture-budget-gate` снижен с `4557` до `4417` строк (ниже warn-порога `4500`, остаётся file-count debt).
+- [x] Размер `commerce` по `architecture-budget-gate` снижен с `3726` до `3599` строк (ниже warn-порога `3600`, остаётся file-count debt).
+- [x] Текущий tranche блока `Module complexity` по приоритетным модулям `rai-chat + tech-map + consulting + finance-economy + commerce` логически закрыт по строковым budget-warning; остаточный риск — file-count pressure (`consulting/finance-economy/commerce`).
+- [x] Повторный `pnpm gate:architecture` (2026-03-13) подтвердил snapshot: `rai-chat=28122`, `tech-map=5888`, `consulting=4763`, `finance-economy=4417`, `commerce=3599`; следующий слой — structural debt по file-count и лимиты `schema.prisma/top-level modules`.
+- [x] Выполнен deep-slice `explainability file-count`: `agent-config.dto` и `autonomy-status.dto` вынесены в `apps/api/src/shared/explainability`, module-bridge удалён, runtime импорты переведены на shared-path.
+- [x] Выполнен deep-slice `generative-engine file-count`: удалены bridge-файлы `contradiction/counterfactual-engine.ts` и `contradiction/conflict-explainability-builder.ts`; `risk-metric-calculator.ts` и `yield/input-data-snapshot.ts` вынесены в `apps/api/src/shared/generative-engine/*`.
+- [x] `pnpm gate:architecture` после среза: `explainability=8089 lines / 41 files`, `generative-engine=6743 lines / 69 files`; file-count warnings для этих двух модулей сняты.
+- [x] Выполнен deep-slice `tech-map file-count`: `approval.dto.ts` и `crop-zone.dto.ts` вынесены в `apps/api/src/shared/tech-map/dto`; `tech-map` снизился до `5888 lines / 59 files`, file-count warning снят.
+- [x] Выполнен deep-slice `consulting file-count`: DTO `complete-operation/create-harvest-plan/save-harvest-result/transition-plan-status/update-draft-plan` вынесены в `apps/api/src/shared/consulting/dto`; `consulting` снижен до `4613 lines / 35 files`, file-count warning снят.
+- [x] Выполнен deep-slice `commerce file-count`: DTO `create-party/create-jurisdiction/create-regulatory-profile` вынесены в `apps/api/src/shared/commerce/dto`; `commerce` снижен до `3324 lines / 31 files`, file-count warning снят.
+- [x] Выполнен deep-slice `finance-economy file-count`: `finance-ingest.contract` и `finance-config module/service` вынесены в `apps/api/src/shared/finance-economy/*`, bridge `integrations/domain/finance-ingest.contract.ts` удалён; `finance-economy` снижен до `4303 lines / 37 files`, file-count warning снят.
+- [x] Выполнен deep-slice `rai-chat file-count`: удалены bridge-файлы `agent-contracts/agent-interaction-contracts.ts`, `tools/front-office-routing.policy.ts`, `widgets/rai-chat-widgets.types.ts`; типы `intent-router`, `runtime-governance-policy`, `explainable-result` и security errors вынесены в `apps/api/src/shared/rai-chat/*`.
+- [x] `pnpm gate:architecture` (2026-03-13) после среза: `rai-chat` снижен до `28260 lines / 134 files`, file-count warning снят; по watch-модулям предупреждений больше нет.
+- [x] Текущий structural debt в growth-gate: `schema.prisma=6107` и `top-level modules=38`; также остаются non-budgeted hotspots (`advisory/front-office/integrity`).
+- [x] Runtime test-контур после extraction-срезов стабилизирован: `src/modules/rai-chat/runtime/agent-runtime.service.spec.ts` и `src/modules/rai-chat/runtime/runtime-spine.integration.spec.ts` проходят, DI-долг тестового стенда закрыт.
 - [x] Добавлены `scripts/architecture-budget-gate.cjs` и `scripts/architecture-budgets.json`: теперь контролируются размер `schema.prisma`, число top-level модулей и watch-list тяжёлых hotspots.
 - [x] В `package.json` добавлены `pnpm gate:architecture` и `pnpm gate:architecture:enforce`; guideline зафиксирован в `docs/05_OPERATIONS/DEVELOPMENT_GUIDELINES/ARCHITECTURE_GROWTH_GUARDRAILS.md`.
 - [x] `RAI_EP_SYSTEM_AUDIT_DELTA_2026-03-12.md` и `memory-bank/progress.md` синхронизированы: module complexity переведён в `частично закрыто / growth-governance введён`.

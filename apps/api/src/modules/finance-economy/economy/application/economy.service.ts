@@ -7,27 +7,19 @@ import {
 import { PrismaService } from "../../../../shared/prisma/prisma.service";
 import { EconomicEventType, EconomicEvent, Prisma } from "@rai/prisma-client";
 import { CostAttributionRules } from "../domain/rules/cost-attribution.rules";
-import {
-  assertBalancedPostings,
-  resolveJournalPhase,
-  resolveSettlementRef,
-} from "../domain/journal-policy";
+import { assertBalancedPostings, resolveJournalPhase } from "../domain/journal-policy";
 import { InvariantMetrics } from "../../../../shared/invariants/invariant-metrics";
-import { createHash } from "crypto";
-import { FINANCE_INGEST_SUPPORTED_VERSIONS } from "../../contracts/finance-ingest.contract";
+import { FINANCE_INGEST_SUPPORTED_VERSIONS } from "../../../../shared/finance-economy/contracts/finance-ingest.contract";
 import { OutboxService } from "../../../../shared/outbox/outbox.service";
-import { FinanceConfigService } from "../../finance/config/finance-config.service";
-
-export interface IngestEconomicEventDto {
-  type: EconomicEventType;
-  amount: number | Prisma.Decimal;
-  currency?: string;
-  metadata?: any;
-  fieldId?: string;
-  seasonId?: string;
-  employeeId?: string;
-  companyId: string;
-}
+import { FinanceConfigService } from "../../../../shared/finance-economy/config/finance-config.service";
+import {
+  IngestEconomicEventDto,
+  enrichFinancialMetadata,
+  extractIdempotencyKey,
+  extractReplayKey as buildReplayKey,
+  isIntegrityViolation,
+  isUniqueConflict,
+} from "../../../../shared/finance-economy/economy-ingest.helpers";
 
 @Injectable()
 export class EconomyService {
@@ -54,7 +46,7 @@ export class EconomyService {
       );
     }
 
-    const idempotencyKey = this.extractIdempotencyKey(dto.metadata);
+    const idempotencyKey = extractIdempotencyKey(dto.metadata);
 
     // Idempotency is MANDATORY FOR FINTECH (G3: Atomicity)
     if (!idempotencyKey && this.config.get("requireIdempotency")) {
@@ -74,10 +66,7 @@ export class EconomyService {
       amount.toFixed(scale, Prisma.Decimal.ROUND_HALF_UP),
     );
 
-    const enrichedMetadata = this.enrichFinancialMetadata(
-      dto.type,
-      dto.metadata,
-    );
+    const enrichedMetadata = enrichFinancialMetadata(dto.type, dto.metadata);
     this.validateContractCompatibility(enrichedMetadata, dto.companyId);
     const replayKey = this.extractReplayKey(
       dto,
@@ -146,7 +135,7 @@ export class EconomyService {
         return event;
       });
     } catch (error) {
-      if (this.isUniqueConflict(error, "replayKey")) {
+      if (isUniqueConflict(error, "replayKey")) {
         this.logger.warn(
           `Дубликат финансового инжеста (company=${dto.companyId}, idempotencyKey=${idempotencyKey || "n/a"}, replayKey=${replayKey || "n/a"}). Проверка целостности проекций...`,
         );
@@ -186,7 +175,7 @@ export class EconomyService {
       }
 
       // Handle DB-level Integrity Violations (Mathematical Invariants)
-      if (this.isIntegrityViolation(error)) {
+      if (isIntegrityViolation(error)) {
         (this.logger as any).error(
           `НАРУШЕНИЕ ФИНАНСОВОЙ ЦЕЛОСТНОСТИ для компании ${dto.companyId}: ${error.message}`,
         );
@@ -204,32 +193,6 @@ export class EconomyService {
 
       throw error;
     }
-  }
-
-  private isIntegrityViolation(error: any): boolean {
-    // Handle Postgres custom exceptions (P0001..P0004) and generic constraint violations (P2004)
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      const sqlState = (error.meta as any)?.db_error_code || "";
-      if (
-        ["P0001", "P0002", "P0003", "P0004", "P2004"].includes(
-          sqlState || error.code,
-        )
-      ) {
-        return true;
-      }
-    }
-
-    // Check message text for any error type (Known or Unknown)
-    // This handles explicit RAISE EXCEPTION from triggers
-    const msg = error?.message || "";
-    return (
-      msg.includes("IMBALANCED_ENTRY") ||
-      msg.includes("INCOMPLETE_ENTRY") ||
-      msg.includes("P0004") || // READ_ONLY code in message
-      msg.includes("READ_ONLY") || // explicit text
-      msg.includes("check constraint") || // Generic constraint violation
-      msg.includes("constraint")
-    ); // Broadest check
   }
 
   private async triggerTenantPanic(companyId: string, reason: string) {
@@ -390,76 +353,12 @@ export class EconomyService {
     }
   }
 
-  private extractIdempotencyKey(metadata: any): string | null {
-    const key = metadata?.idempotencyKey;
-    if (typeof key === "string" && key.trim().length > 0) {
-      return key.trim();
-    }
-    return null;
-  }
-
   private extractReplayKey(
     dto: IngestEconomicEventDto,
     normalizedAmount: Prisma.Decimal,
     idempotencyKey: string | null,
   ): string | null {
-    const explicitReplayKey = dto.metadata?.replayKey;
-    if (
-      typeof explicitReplayKey === "string" &&
-      explicitReplayKey.trim().length > 0
-    ) {
-      return explicitReplayKey.trim();
-    }
-
-    const sourceEventId =
-      dto.metadata?.sourceEventId ||
-      dto.metadata?.externalEventId ||
-      dto.metadata?.eventId;
-    if (typeof sourceEventId === "string" && sourceEventId.trim().length > 0) {
-      return `src:${sourceEventId.trim()}`;
-    }
-
-    if (idempotencyKey) {
-      return `idem:${idempotencyKey}`;
-    }
-
-    const traceId = dto.metadata?.traceId;
-    const source = dto.metadata?.source;
-    if (
-      typeof traceId === "string" &&
-      traceId.trim().length > 0 &&
-      typeof source === "string" &&
-      source.trim().length > 0
-    ) {
-      const fingerprint = {
-        companyId: dto.companyId,
-        type: dto.type,
-        amount: normalizedAmount.toString(), // Use string representation for stability
-        currency: dto.currency || "RUB",
-        source: source.trim(),
-        traceId: traceId.trim(),
-        fieldId: dto.fieldId || null,
-        seasonId: dto.seasonId || null,
-        employeeId: dto.employeeId || null,
-        metadata: this.sortObjectKeys(dto.metadata || {}), // Deterministic metadata hashing
-      };
-      const digest = createHash("sha256")
-        .update(JSON.stringify(fingerprint))
-        .digest("hex");
-      return `fp:${digest}`;
-    }
-
-    return null;
-  }
-
-  private sortObjectKeys(obj: any): any {
-    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return obj;
-    return Object.keys(obj)
-      .sort()
-      .reduce((acc, key) => {
-        acc[key] = this.sortObjectKeys(obj[key]);
-        return acc;
-      }, {} as any);
+    return buildReplayKey(dto, normalizedAmount, idempotencyKey);
   }
 
   private async findExistingDuplicate(
@@ -487,19 +386,6 @@ export class EconomyService {
       });
     }
     return null;
-  }
-
-  private isUniqueConflict(error: unknown, targetField?: string): boolean {
-    const isP2002 =
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002";
-    if (!isP2002 || !targetField) return isP2002;
-
-    const target = (error.meta as any)?.target;
-    if (Array.isArray(target)) {
-      return target.includes(targetField);
-    }
-    return target === targetField;
   }
 
   private validateContractCompatibility(
@@ -541,16 +427,4 @@ export class EconomyService {
     this.logger.warn(msg);
   }
 
-  private enrichFinancialMetadata(
-    type: EconomicEventType,
-    metadata: any,
-  ): Record<string, unknown> {
-    const input = metadata && typeof metadata === "object" ? metadata : {};
-    const base = input as Record<string, unknown>;
-    return {
-      ...base,
-      journalPhase: resolveJournalPhase(type),
-      settlementRef: resolveSettlementRef(type, base),
-    };
-  }
 }

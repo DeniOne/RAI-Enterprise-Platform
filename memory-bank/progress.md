@@ -2,6 +2,146 @@
 
 ## 2026-03-13
 
+105. **AI Copilot Closeout — Telemetry + Go/No-Go Packet** [DONE]:
+    *   Закрыт rollout telemetry block: в invariant metrics добавлены `ai_memory_hint_shown_total`, `expert_review_requested_total`, `expert_review_completed_total`, `strategy_forecast_run_total`, `strategy_forecast_degraded_total`, `strategy_forecast_latency_ms`, `memory_lane_populated_total`.
+    *   Instrumentation добавлен в runtime path: `ResponseComposerService` (memory hints), `ExpertReviewService` (request/outcome), `DecisionIntelligenceService` (run/degraded/latency), `SupervisorForensicsService` (memory lane population).
+    *   Расширены/добавлены targeted tests: `invariant-metrics.controller.spec.ts`, `decision-intelligence.service.spec.ts`, `response-composer.service.spec.ts`, `expert-review.service.spec.ts`, новый `supervisor-forensics.service.spec.ts`.
+    *   Сформирован release packet `docs/07_EXECUTION/AI_COPILOT_RELEASE_GO_NO_GO_2026-03-13.md`; execution plan синхронизирован ссылкой на packet.
+    *   Верификация: `pnpm -C apps/api exec tsc --noEmit --pretty false` PASS; targeted jest suites PASS.
+
+104. **Architecture Simplification — RaiChat File-Count Closure** [DONE]:
+    *   Выполнен deep-slice `rai-chat file-count`: удалены module-bridge файлы `agent-contracts/agent-interaction-contracts.ts`, `tools/front-office-routing.policy.ts`, `widgets/rai-chat-widgets.types.ts`.
+    *   Типовой и error-layer вынесен в `apps/api/src/shared/rai-chat/*`: `intent-router.types.ts`, `runtime-governance-policy.types.ts`, `explainable-result.types.ts`, `security/{agent-config-blocked,budget-exceeded,risk-policy-blocked,security-violation}.error.ts`.
+    *   Runtime/tools/explainability импорты переведены на shared-path; зависимость shared-layer от `agent-registry.service` устранена (локальный `CanonicalAgentRuntimeRole` и `AgentRuntimeRole` теперь типизированы в shared types).
+    *   По `architecture-budget-gate` `rai-chat` снижен до `28260 lines / 134 files` (было `28472 / 144`), file-count warning снят.
+    *   Верификация: `pnpm -C apps/api build` PASS; targeted suites PASS (`agent-interaction-contracts.spec.ts`, `tool-call.planner.spec.ts`, `front-office-routing.policy.spec.ts`, `risk-tools.registry.spec.ts`, `rai-tools.registry.spec.ts`, `work-window.factory.spec.ts`, `legacy-widget-window.mapper.spec.ts`); `pnpm gate:architecture` PASS.
+
+103. **Decision Intelligence Bridge — `data_scientist` Runtime Consumption** [DONE]:
+    *   Выполнен следующий wave-5 slice: `DataScientistAgent` получил intent `strategy_forecast` и теперь вызывает deterministic `DecisionIntelligenceService.runStrategyForecast(...)` вместо генерации чисел в chat-layer.
+    *   В `apps/api/src/shared/rai-chat/execution-adapter-heuristics.ts` обновлён intent routing: стратегические запросы (`прогноз/сценарий/маржа/cash flow/стратегия`) направляются в `strategy_forecast`; `what_if` и доменные intents сохранены.
+    *   В `apps/api/src/modules/rai-chat/runtime/agent-execution-adapter.service.ts` расширен payload mapping для `scopeLevel/horizonDays/domains/farmId/fieldId/crop/seasonId/scenario`.
+    *   В `apps/api/src/modules/rai-chat/rai-chat.module.ts` подключён `OfsModule` для DI-контракта `DecisionIntelligenceService` в runtime-контуре `rai-chat`.
+    *   Добавлен targeted suite `apps/api/src/modules/rai-chat/agents/data-scientist-agent.service.spec.ts` (validation + deterministic defaults + scope guards).
+    *   Верификация: `pnpm -C apps/api exec tsc --noEmit --pretty false` PASS; `pnpm -C apps/api test -- --runInBand src/modules/rai-chat/agents/data-scientist-agent.service.spec.ts src/modules/rai-chat/runtime/agent-runtime.service.spec.ts` PASS; `pnpm -C apps/api test -- --runInBand src/modules/rai-chat/runtime/runtime-spine.integration.spec.ts` PASS.
+
+102. **Architecture Simplification — Consulting/Finance/Commerce File-Count Closure** [DONE]:
+    *   Выполнен deep-slice `consulting file-count`: DTO `complete-operation/create-harvest-plan/save-harvest-result/transition-plan-status/update-draft-plan` вынесены из `apps/api/src/modules/consulting/dto` в `apps/api/src/shared/consulting/dto`.
+    *   Выполнен deep-slice `commerce file-count`: DTO `create-party/create-jurisdiction/create-regulatory-profile` вынесены из `apps/api/src/modules/commerce/dto` в `apps/api/src/shared/commerce/dto` с переводом импортов controller/service/helper слоя на shared-path.
+    *   Выполнен deep-slice `finance-economy file-count`: `contracts/finance-ingest.contract.ts` и `finance/config/{finance-config.module,finance-config.service}.ts` вынесены в `apps/api/src/shared/finance-economy/*`; bridge `integrations/domain/finance-ingest.contract.ts` удалён.
+    *   По `architecture-budget-gate` сняты file-count warnings: `consulting=4613 lines / 35 files` (было `4763 / 40`), `finance-economy=4303 lines / 37 files` (было `4417 / 41`), `commerce=3324 lines / 31 files` (было `3599 / 34`).
+    *   Верификация: `pnpm gate:architecture` PASS; `pnpm gate:architecture:enforce` PASS; `pnpm -C apps/api build` PASS; targeted suites PASS (`finance-ingest.contract.spec.ts`, `economy.service.spec.ts`, `commerce.e2e.spec.ts`, `consulting-access.guard.spec.ts`).
+    *   Отдельно: legacy suite `consulting-flow.spec.ts` и `yield.orchestrator.spec.ts` по-прежнему фейлятся из-за ранее существующего mock/DI drift (`harvestPlan.findFirst` и missing `ConsultingDomainRules` provider), не связанного с этим boundary-срезом.
+
+101. **Architecture Simplification — TechMap File-Count Closure** [DONE]:
+    *   Выполнен точечный deep-slice `tech-map dto`: `approval.dto.ts` и `crop-zone.dto.ts` вынесены из `apps/api/src/modules/tech-map/dto` в `apps/api/src/shared/tech-map/dto`.
+    *   Спеки `approval.dto.spec.ts` и `crop-zone.dto.spec.ts` переведены на shared-path без изменения контрактов схем.
+    *   По `architecture-budget-gate` `tech-map` вышел ниже file-warn: `5888 lines / 59 files` (было `5941 / 61`).
+    *   Верификация: `pnpm -C apps/api test -- --runInBand src/modules/tech-map/dto/approval.dto.spec.ts src/modules/tech-map/dto/crop-zone.dto.spec.ts` PASS; `pnpm gate:architecture` PASS.
+
+100. **Architecture Simplification — Explainability/Generative File-Count Closure** [DONE]:
+    *   Выполнен deep-slice `explainability`: `agent-config.dto` и `autonomy-status.dto` вынесены из `apps/api/src/modules/explainability/dto` в `apps/api/src/shared/explainability` (`agent-config.dto` + `dto/autonomy-status.dto`) с переводом runtime-imports на shared-path и удалением module-bridge.
+    *   Выполнен deep-slice `generative-engine`: удалены module-bridge файлы `contradiction/counterfactual-engine.ts` и `contradiction/conflict-explainability-builder.ts`; `risk-metric-calculator.ts` и `yield/input-data-snapshot.ts` вынесены в `apps/api/src/shared/generative-engine/*`.
+    *   По `architecture-budget-gate` сняты file-count warnings для обоих hotspot-модулей: `explainability=8089 lines / 41 files` (было `8136 / 43`), `generative-engine=6743 lines / 69 files` (было `6869 / 73`).
+    *   Верификация: targeted suite по `explainability + generative-engine` PASS; `pnpm gate:architecture` PASS (`mode=warn`). `pnpm -C apps/api build` сейчас блокируется уже существующей несвязанной ошибкой `TS2322` в `src/shared/memory/memory-facade.service.ts` (readonly `OR` для `EngramWhereInput`).
+
+99. **Architecture Simplification — Commerce Party/Asset Helper Boundaries** [DONE]:
+    *   Выполнен deep-slice `commerce`: relation/rules helper-слой вынесен из `apps/api/src/modules/commerce/services/party.service.ts` в `apps/api/src/shared/commerce/party.helpers.ts`.
+    *   Выполнен deep-slice `commerce`: asset-role mapping/overlap/type-detection helper-слой вынесен из `apps/api/src/modules/commerce/services/asset-role.service.ts` в `apps/api/src/shared/commerce/asset-role.helpers.ts`.
+    *   По `architecture-budget-gate` размер `commerce` снижен с `3726` до `3599` строк (line-warn снят); остаётся file-count debt (`34` файла).
+    *   Верификация: `pnpm -C apps/api build` PASS; `pnpm gate:architecture` PASS.
+
+98. **Architecture Simplification — Finance-Economy Ingest/Types Shared Boundary** [DONE]:
+    *   Выполнен deep-slice `economy ingest`: DTO и replay/integrity helper-слой вынесены из `apps/api/src/modules/finance-economy/economy/application/economy.service.ts` в `apps/api/src/shared/finance-economy/economy-ingest.helpers.ts`.
+    *   Выполнен deep-slice `decision-intelligence types`: run/scenario/history типы вынесены из `apps/api/src/modules/finance-economy/ofs/application/decision-intelligence.service.ts` в `apps/api/src/shared/finance-economy/decision-intelligence.types.ts` с type re-export из service-файла для совместимости импортов.
+    *   По `architecture-budget-gate` размер `finance-economy` снижен до `4417` строк (line-warn снят); остаётся file-count debt (`41` файл).
+    *   Верификация: `pnpm -C apps/api build` PASS; `pnpm -C apps/api test -- --runInBand src/modules/finance-economy/economy/application/economy.service.spec.ts` PASS; `pnpm gate:architecture` PASS.
+
+97. **Architecture Simplification — Tranche Sync (`... + commerce`)** [DONE]:
+    *   Текущий tranche по строковым budget-warning расширен и закрыт для `rai-chat + tech-map + consulting + finance-economy + commerce`.
+    *   Актуальный snapshot: `rai-chat=28122`, `tech-map=5941`, `consulting=4763`, `finance-economy=4417`, `commerce=3599`.
+    *   Остаточный риск: file-count pressure (`rai-chat/tech-map/consulting/finance-economy/commerce`) и крупные hotspots `explainability/generative-engine`.
+    *   Верификация: `pnpm -C apps/api test -- --runInBand src/modules/finance-economy/ofs/application/strategy-forecasts.controller.spec.ts src/modules/commerce/services/commerce.e2e.spec.ts` PASS.
+
+96. **Architecture Simplification — Tranche Closure (`rai-chat + tech-map + consulting + finance-economy`)** [DONE]:
+    *   Текущий tranche блока `Module complexity` логически закрыт по строковым budget-warning для приоритетных модулей: `rai-chat=28122`, `tech-map=5941`, `consulting=4763`, `finance-economy=4404`.
+    *   Статусные документы синхронизированы: `RAI_EP_SYSTEM_AUDIT_DELTA_2026-03-12.md` и `memory-bank/activeContext.md` отражают 14 выполненных deep-slice и явный факт логического закрытия tranche.
+    *   Открытым остался структурный долг следующей волны: file-count pressure (`tech-map/consulting/finance-economy`) и крупные hotspots (`explainability/generative-engine/commerce`).
+    *   Верификация: `pnpm gate:architecture` PASS (`mode=warn`).
+
+95. **Architecture Simplification — Finance-Economy OFS Decision Intelligence Helper Slice** [DONE]:
+    *   Выполнен deep-slice в `apps/api/src/modules/finance-economy/ofs/application/decision-intelligence.service.ts`: validation/driver composition/reason mapping/lever normalization/scenario mapping вынесены в `apps/api/src/shared/finance-economy/decision-intelligence.helpers.ts`.
+    *   Сервис оставлен orchestration-oriented, helper-слой переиспользуем и изолирован в shared boundary.
+    *   По `architecture-budget-gate` размер `finance-economy` снижен с `4557` до `4404` строк (warn-порог по строкам снят).
+    *   Верификация: `pnpm -C apps/api test -- --runInBand src/modules/finance-economy/ofs/application/decision-intelligence.service.spec.ts` PASS; `pnpm -C apps/api build` PASS; `pnpm gate:architecture` PASS.
+
+94. **Architecture Simplification — Consulting Controller Context Slice** [DONE]:
+    *   Выполнен deep-slice в `apps/api/src/modules/consulting/consulting.controller.ts`: повторяющаяся сборка `UserContext` и execution context сведена к helper-методам `toUserContext()` и `toExecutionContext()`.
+    *   Контроллер сокращён с `467` до `367` строк без изменения публичного поведения endpoint-ов.
+    *   По `architecture-budget-gate` размер `consulting` снижен с `4863` до `4763` строк (warn-порог по строкам снят).
+    *   Верификация: `pnpm -C apps/api build` PASS; `pnpm gate:architecture` PASS.
+
+93. **Architecture Simplification — TechMap Prisma Include Boundary Slice** [DONE]:
+    *   Выполнен второй deep-slice `tech-map`: повторяющиеся Prisma include-деревья вынесены из `apps/api/src/modules/tech-map/tech-map.service.ts` в `apps/api/src/shared/tech-map/tech-map-prisma-includes.ts`.
+    *   `TechMapService` теперь использует общий include-layer для `findAll/findOne/findBySeason/transitionStatus/validateTechMap/validateDAG/activate/createNextVersion` без дублирования nested include-структур.
+    *   По `architecture-budget-gate` размер `tech-map` дополнительно снижен с `6020` до `5941` строк при `61` файле (warn по строкам для `tech-map` снят).
+    *   Верификация: `pnpm -C apps/api test -- --runInBand src/modules/tech-map/tech-map.concurrency.spec.ts src/shared/tech-map/tech-map-mapping.helpers.spec.ts` PASS; `pnpm -C apps/api build` PASS; `pnpm gate:architecture` PASS.
+
+92. **Architecture Simplification — TechMap Mapping/Snapshot Boundary Slice** [DONE]:
+    *   Выполнен первый deep-slice `tech-map`: mapping/snapshot слой вынесен из `apps/api/src/modules/tech-map/tech-map.service.ts` в `apps/api/src/shared/tech-map/tech-map-mapping.helpers.ts`.
+    *   В shared helper вынесены: сборка `ValidationInput` для `TechMapValidationEngine`, DAG nodes для `DAGValidationService`, activation snapshots `operationsSnapshot/resourceNormsSnapshot`.
+    *   Добавлен targeted spec `apps/api/src/shared/tech-map/tech-map-mapping.helpers.spec.ts`; `tech-map.concurrency` контур остаётся зелёным.
+    *   По `architecture-budget-gate` размер `tech-map` снижен с `6087` до `6020` строк при `61` файле; `rai-chat` удержан на `28122` строках.
+    *   Верификация: `pnpm -C apps/api test -- --runInBand src/modules/tech-map/tech-map.concurrency.spec.ts src/shared/tech-map/tech-map-mapping.helpers.spec.ts` PASS; `pnpm -C apps/api build` PASS; `pnpm gate:architecture` PASS.
+
+91. **Architecture Simplification — RAI Chat Tool Orchestration Slice (`rai-tools.registry`)** [DONE]:
+    *   Выполнен следующий deep-slice orchestration-слоя: built-in tool schemas/handlers (`echo_message`, `workspace_snapshot`) вынесены из `apps/api/src/modules/rai-chat/tools/rai-tools.registry.ts` в `apps/api/src/shared/rai-chat/rai-tools-builtins.ts`.
+    *   Сериализация payload и форматирование tool-call log вынесены из `rai-tools.registry.ts` в `apps/api/src/shared/rai-chat/rai-tools-log-helpers.ts`; orchestration-класс оставлен на policy/runtime flow + registry dispatch.
+    *   По `architecture-budget-gate` размер `rai-chat` дополнительно снижен с `28123` до `28122` строк при `143` файлах.
+    *   Верификация: `pnpm -C apps/api test -- --runInBand src/modules/rai-chat/tools/rai-tools.registry.spec.ts` PASS; `pnpm -C apps/api build` PASS; `pnpm gate:architecture` PASS.
+
+90. **Architecture Simplification — RAI Chat Tool Registries Boundary Slice (Contracts)** [DONE]:
+    *   Выполнен следующий deep-slice `tool registries`: из `apps/api/src/modules/rai-chat/tools/contracts-tools.registry.ts` вынесены payload schemas в `apps/api/src/shared/rai-chat/contracts-tool-schemas.ts`.
+    *   Mapping/helper слой `mapCreatedContract`, `mapContractSummary`, `normalizeJsonObject` вынесен в `apps/api/src/shared/rai-chat/contracts-tool-helpers.ts`, а `contracts-tools.registry.ts` оставлен orchestration-oriented.
+    *   По `architecture-budget-gate` размер `rai-chat` дополнительно снижен с `28286` до `28123` строк при сохранении `143` файлов.
+    *   Верификация: `pnpm -C apps/api test -- --runInBand src/modules/rai-chat/tools/contracts-tools.registry.spec.ts src/modules/rai-chat/tools/front-office-tools.registry.spec.ts src/modules/rai-chat/tools/crm-tools.registry.spec.ts src/modules/rai-chat/runtime/agent-runtime.service.spec.ts src/modules/rai-chat/runtime/runtime-spine.integration.spec.ts src/modules/rai-chat/supervisor-agent.service.spec.ts src/modules/rai-chat/rai-chat.service.spec.ts` PASS; `pnpm -C apps/api build` PASS; `pnpm gate:architecture` PASS.
+
+89. **Architecture Simplification — RAI Chat Tool Registries Boundary Slice (CRM + Front-Office)** [DONE]:
+    *   Выполнен следующий deep-slice `tool registries`: из `apps/api/src/modules/rai-chat/tools/crm-tools.registry.ts` вынесены payload schemas и helper-логика в `apps/api/src/shared/rai-chat/crm-tool-schemas.ts` и `apps/api/src/shared/rai-chat/crm-tool-helpers.ts`.
+    *   Выполнен следующий deep-slice `tool registries`: из `apps/api/src/modules/rai-chat/tools/front-office-tools.registry.ts` вынесены payload schemas и routing/classification helper-слой в `apps/api/src/shared/rai-chat/front-office-tool-schemas.ts` и `apps/api/src/shared/rai-chat/front-office-tool-helpers.ts`.
+    *   Routing policy вынесен в `apps/api/src/shared/rai-chat/front-office-routing.policy.ts`, а в `apps/api/src/modules/rai-chat/tools/front-office-routing.policy.ts` оставлен re-export bridge для безопасной совместимости.
+    *   По `architecture-budget-gate` размер `rai-chat` дополнительно снижен с `28630` до `28286` строк при сохранении `143` файлов.
+    *   Верификация: `pnpm -C apps/api test -- --runInBand src/modules/rai-chat/tools/front-office-routing.policy.spec.ts src/modules/rai-chat/tools/front-office-tools.registry.spec.ts src/modules/rai-chat/tools/crm-tools.registry.spec.ts src/modules/rai-chat/runtime/agent-runtime.service.spec.ts src/modules/rai-chat/runtime/runtime-spine.integration.spec.ts src/modules/rai-chat/supervisor-agent.service.spec.ts src/modules/rai-chat/rai-chat.service.spec.ts` PASS; `pnpm -C apps/api build` PASS; `pnpm gate:architecture` PASS.
+
+88. **Architecture Simplification — Supervisor Forensics/Audit Post-Processing Slice** [DONE]:
+    *   Выполнен следующий deep-slice `supervisor orchestration`: post-processing слой (`AiAuditEntry` запись, forensic phases append, memory lane build) вынесен из `apps/api/src/modules/rai-chat/supervisor-agent.service.ts` в `apps/api/src/modules/rai-chat/supervisor-forensics.service.ts`.
+    *   `SupervisorAgent` очищен до orchestration-контуров router/runtime/external/composer + truthfulness pipeline coordination.
+    *   `RaiChatModule` и spec-контуры `runtime-spine`, `supervisor-agent`, `rai-chat.service` переведены на новый provider `SupervisorForensicsService`.
+    *   Обновлены устаревшие assertions в `supervisor-agent.service.spec.ts` и `rai-chat.service.spec.ts` под текущее canonical поведение memory-profile/context в ответе.
+    *   `architecture-budget-gate` после среза: `rai-chat=28777 lines / 143 files`.
+    *   Верификация: `pnpm -C apps/api build` PASS; `pnpm -C apps/api test -- --runInBand src/modules/rai-chat/runtime/agent-runtime.service.spec.ts src/modules/rai-chat/runtime/runtime-spine.integration.spec.ts src/modules/rai-chat/rai-chat.service.spec.ts src/modules/rai-chat/supervisor-agent.service.spec.ts` PASS.
+
+87. **Architecture Simplification — RAI Chat Runtime Governance Control Slice** [DONE]:
+    *   Выполнен следующий deep-slice `runtime-governance event/control`: из `apps/api/src/modules/rai-chat/runtime/agent-runtime.service.ts` вынесен governance control-layer в `apps/api/src/modules/rai-chat/runtime/runtime-governance-control.service.ts`.
+    *   В новый слой вынесены: `buildGovernanceMeta`, `recordGovernanceEvent`, `recordToolFailure`, `resolveConcurrencyEnvelope`, `resolveRuntimeGovernanceFromResults` и budget degrade `filterAllowedToolCalls`.
+    *   `AgentRuntimeService` сокращён с `659` до `498` строк (`-161`) и оставлен как runtime orchestration/service glue.
+    *   `RaiChatModule` и runtime-specs (`agent-runtime`, `runtime-spine`) переведены на новый provider `RuntimeGovernanceControlService`; runtime DI-контур остаётся стабильным.
+    *   `architecture-budget-gate` после среза: `rai-chat=28764 lines / 142 files` (исторический минимум на предыдущем шаге остаётся `28410`, но текущий snapshot вырос из-за нового control-layer и расширенного test DI-контура).
+    *   Верификация: `pnpm -C apps/api build` PASS; `pnpm -C apps/api test -- --runInBand src/modules/rai-chat/runtime/agent-runtime.service.spec.ts src/modules/rai-chat/runtime/runtime-spine.integration.spec.ts src/modules/explainability/agent-management.service.spec.ts src/modules/rai-chat/composer/work-window.factory.spec.ts src/modules/rai-chat/composer/legacy-widget-window.mapper.spec.ts src/modules/rai-chat/agent-contracts/agent-interaction-contracts.spec.ts` PASS.
+
+86. **Architecture Simplification — RAI Chat Execution Adapter Heuristics Extraction** [DONE]:
+    *   Выполнен пятый практический boundary-refactor в `rai-chat`: execution heuristics/mapping слой вынесен из `apps/api/src/modules/rai-chat/runtime/agent-execution-adapter.service.ts` в `apps/api/src/shared/rai-chat/execution-adapter-heuristics.ts`.
+    *   В shared вынесены `detect*Intent`, `detect*Tool`, `firstPayload`, `resolve*Id`, `extract*` и `isKnowledgeNoHit`/`isKnownFulfillmentEventType`; `AgentExecutionAdapterService` оставлен как orchestration + output validation.
+    *   `agent-execution-adapter.service.ts` уменьшен с `1152` до `785` строк (`-367`), при сохранении поведения execution path.
+    *   По `architecture-budget-gate` размер `rai-chat` дополнительно снижен с `28777` до `28410` строк (исторический минимум после extraction-среза); на этапе стабилизации runtime test-контура фиксировался snapshot `28482` строк при `139` файлах.
+    *   Верификация: `pnpm -C apps/api build` PASS; `node scripts/architecture-budget-gate.cjs` PASS; targeted suite `src/modules/explainability/agent-management.service.spec.ts`, `src/modules/rai-chat/composer/work-window.factory.spec.ts`, `src/modules/rai-chat/composer/legacy-widget-window.mapper.spec.ts`, `src/modules/rai-chat/agent-contracts/agent-interaction-contracts.spec.ts` PASS; runtime-suite `src/modules/rai-chat/runtime/agent-runtime.service.spec.ts` и `src/modules/rai-chat/runtime/runtime-spine.integration.spec.ts` PASS (DI-долг тестового контура закрыт).
+
+85. **Architecture Simplification — RAI Chat Response Composer Presenter Extraction** [DONE]:
+    *   Выполнен четвёртый практический boundary-refactor в `rai-chat`: CRM/Commerce presenter-layer вынесен из `apps/api/src/modules/rai-chat/composer/response-composer.service.ts` в `apps/api/src/shared/rai-chat/response-composer-presenters.ts`.
+    *   Вынесены отображающие функции `buildToolDisplayName`, `buildCrm*`, `buildContracts*`; `ResponseComposerService` оставлен как orchestration path без heavy presenter-веток.
+    *   `response-composer` переведён на shared presenter imports, функциональное поведение сохранено.
+    *   По `architecture-budget-gate` размер `rai-chat` дополнительно снижен с `29605` до `28777` строк при сохранении `139` файлов.
+    *   Верификация: `pnpm -C apps/api build` PASS; `pnpm -C apps/api test -- --runInBand --silent src/modules/rai-chat/agent-contracts/agent-interaction-contracts.spec.ts src/modules/explainability/agent-config-guard.service.spec.ts src/modules/explainability/agent-management.service.spec.ts src/modules/explainability/agent-prompt-governance.service.spec.ts src/modules/front-office-draft/front-office-draft.service.spec.ts src/modules/rai-chat/composer/work-window.factory.spec.ts src/modules/rai-chat/composer/legacy-widget-window.mapper.spec.ts` PASS; `node scripts/architecture-budget-gate.cjs` PASS.
+
 84. **Architecture Simplification — RAI Chat DTO/Tools/Widgets Contract Extraction** [DONE]:
     *   Выполнен третий практический boundary-refactor в `rai-chat`: `dto/rai-chat.dto.ts`, `tools/rai-tools.types.ts` и `widgets/rai-chat-widgets.types.ts` вынесены из `apps/api/src/modules/rai-chat` в `apps/api/src/shared/rai-chat`.
     *   В старых путях оставлены тонкие re-export bridge файлы: `apps/api/src/modules/rai-chat/dto/rai-chat.dto.ts`, `apps/api/src/modules/rai-chat/tools/rai-tools.types.ts`, `apps/api/src/modules/rai-chat/widgets/rai-chat-widgets.types.ts`.

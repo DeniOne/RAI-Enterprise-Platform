@@ -223,4 +223,116 @@ describe("FrontOfficeAuthService", () => {
     expect(result.binding.id).toBe("binding-22");
     expect(result.user.username).toBe("lopr_login");
   });
+
+  it("проходит journey invite -> activate для внешнего front-office пользователя", async () => {
+    const { service, prisma } = createService();
+    jest.spyOn(global, "fetch" as any).mockResolvedValue({ ok: true } as any);
+
+    prisma.party.findFirst.mockResolvedValue({
+      id: "party-journey",
+      legalName: "ООО Партнер",
+      shortName: "Партнер",
+      registrationData: { inn: "7709991111" },
+    });
+    prisma.account.findFirst.mockResolvedValue({
+      id: "acc-journey",
+      name: "Хозяйство Journey",
+      inn: "7709991111",
+    });
+    prisma.counterpartyUserBinding.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null);
+    prisma.user.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null);
+    prisma.invitation.updateMany.mockResolvedValue({ count: 0 });
+    prisma.invitation.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: "inv-journey",
+        token: "token-journey",
+        role: UserRole.FRONT_OFFICE_USER,
+        status: "PENDING",
+        expiresAt: new Date("2026-03-20T00:00:00.000Z"),
+        telegramId: "700001",
+        companyId: "cmp-journey",
+        clientId: "acc-journey",
+        partyId: "party-journey",
+        partyContactId: "contact-journey",
+        proposedLogin: "journey_user",
+        email: null,
+        inviterId: "u-admin",
+        createdAt: new Date("2026-03-13T10:00:00.000Z"),
+        contactSnapshotJson: {
+          fullName: "Ирина Journey",
+          phone: "+79997770000",
+        },
+        party: {
+          id: "party-journey",
+          legalName: "ООО Партнер",
+          shortName: "Партнер",
+          registrationData: { contacts: [] },
+        },
+        client: {
+          id: "acc-journey",
+          name: "Хозяйство Journey",
+        },
+      });
+    prisma.invitation.create.mockResolvedValue({
+      id: "inv-journey",
+      token: "token-journey",
+      shortCode: "112233",
+      status: "PENDING",
+      expiresAt: new Date("2026-03-20T00:00:00.000Z"),
+      createdAt: new Date("2026-03-13T09:00:00.000Z"),
+      telegramId: "700001",
+      partyId: "party-journey",
+      clientId: "acc-journey",
+      partyContactId: "contact-journey",
+      proposedLogin: "journey_user",
+      company: { id: "cmp-journey", name: "RAI Demo" },
+    });
+    prisma.user.create.mockResolvedValue({
+      id: "u-journey",
+      email: "fo+journey@rai.local",
+      username: "journey_user",
+      name: "Ирина Journey",
+      role: UserRole.FRONT_OFFICE_USER,
+      companyId: "cmp-journey",
+      accountId: "acc-journey",
+    });
+    prisma.counterpartyUserBinding.upsert.mockResolvedValue({
+      id: "binding-journey",
+      accountId: "acc-journey",
+      partyId: "party-journey",
+      partyContactId: "contact-journey",
+      status: "ACTIVE",
+    });
+    prisma.invitation.update.mockResolvedValue({ id: "inv-journey" });
+
+    const invitation = await service.createInvitation(
+      { userId: "u-admin", companyId: "cmp-journey" },
+      {
+        partyId: "party-journey",
+        accountId: "acc-journey",
+        partyContactId: "contact-journey",
+        telegramId: "700001",
+        proposedLogin: "journey_user",
+        fullName: "Ирина Journey",
+        position: "Руководитель",
+      },
+    );
+    expect(invitation.invitation.id).toBe("inv-journey");
+
+    const activation = await service.activateInvitation({
+      token: "token-journey",
+      telegramId: "700001",
+      username: "journey_user",
+      password: "StrongPass123",
+    });
+    expect(activation.user.id).toBe("u-journey");
+    expect(activation.binding.id).toBe("binding-journey");
+    expect(activation.accessToken).toBe("jwt-token");
+  });
 });

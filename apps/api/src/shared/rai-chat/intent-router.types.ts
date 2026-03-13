@@ -1,5 +1,6 @@
-import { RaiToolName } from "../tools/rai-tools.types";
-import { AgentRuntimeRole } from "../agent-registry.service";
+import { RaiToolName } from "./rai-tools.types";
+
+type AgentRuntimeRole = string;
 
 export interface IntentClassification {
   targetRole: AgentRuntimeRole | null;

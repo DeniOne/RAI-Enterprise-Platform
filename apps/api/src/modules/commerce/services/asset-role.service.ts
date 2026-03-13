@@ -1,49 +1,25 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { AccountType } from "@rai/prisma-client";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
-
-type CanonicalAssetType = "FARM" | "FIELD" | "OBJECT";
-type CanonicalAssetRole = "OWNER" | "OPERATOR" | "LESSEE" | "MANAGER" | "BENEFICIARY";
-
-type FarmListFilters = {
-  q?: string;
-  holdingId?: string;
-  operatorId?: string;
-  hasLease?: boolean;
-};
+import {
+  CanonicalAssetRole,
+  CanonicalAssetType,
+  CreateAssetRoleInput,
+  detectAssetType,
+  FarmListFilters,
+  mapAssetRoleRow,
+  mapAssetStatus,
+  mapFarmAssetRow,
+  mapFieldAssetRow,
+  mapObjectAssetRow,
+  rangesOverlap,
+  UpdateAssetRoleInput,
+} from "../../../shared/commerce/asset-role.helpers";
 
 @Injectable()
 export class AssetRoleService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private rangesOverlap(
-    leftFrom: Date,
-    leftTo: Date | null,
-    rightFrom: Date,
-    rightTo: Date | null,
-  ): boolean {
-    const leftEnd = leftTo ?? new Date("9999-12-31T00:00:00.000Z");
-    const rightEnd = rightTo ?? new Date("9999-12-31T00:00:00.000Z");
-    return leftFrom < rightEnd && rightFrom < leftEnd;
-  }
-
-  private async detectAssetType(companyId: string, assetId: string): Promise<CanonicalAssetType> {
-    const [farm, field, machinery, stockItem] = await Promise.all([
-      this.prisma.account.findFirst({ where: { companyId, id: assetId, type: AccountType.CLIENT }, select: { id: true } }),
-      this.prisma.field.findFirst({ where: { companyId, id: assetId }, select: { id: true } }),
-      this.prisma.machinery.findFirst({ where: { companyId, id: assetId }, select: { id: true } }),
-      this.prisma.stockItem.findFirst({ where: { companyId, id: assetId }, select: { id: true } }),
-    ]);
-
-    if (farm) return "FARM";
-    if (field) return "FIELD";
-    if (machinery || stockItem) return "OBJECT";
-    throw new NotFoundException("Asset not found");
-  }
-
-  private mapAssetStatus(value: string | null | undefined): "ACTIVE" | "ARCHIVED" {
-    return value === "ARCHIVED" ? "ARCHIVED" : "ACTIVE";
-  }
 
   async listFarms(companyId: string, filters?: FarmListFilters) {
     const q = String(filters?.q || "").trim();
@@ -101,7 +77,7 @@ export class AssetRoleService {
           type: "FARM",
           name: account.name,
           regionCode: account.jurisdiction ?? undefined,
-          status: this.mapAssetStatus(String(account.status)),
+          status: mapAssetStatus(String(account.status)),
           holdingDerivedName: account.holding?.name ?? undefined,
           operatorParty: operator ? { id: operator.party.id, name: operator.party.legalName } : undefined,
           ownerParty: owner ? { id: owner.party.id, name: owner.party.legalName } : undefined,
@@ -130,11 +106,12 @@ export class AssetRoleService {
     }
 
     return {
-      id: farm.id,
-      type: "FARM",
-      name: farm.name,
-      regionCode: farm.jurisdiction ?? undefined,
-      status: this.mapAssetStatus(String(farm.status)),
+      ...mapFarmAssetRow({
+        id: farm.id,
+        name: farm.name,
+        jurisdiction: farm.jurisdiction,
+        status: String(farm.status),
+      }),
       holdingDerivedName: farm.holding?.name ?? undefined,
     };
   }
@@ -170,12 +147,13 @@ export class AssetRoleService {
       },
     });
 
-    return fields.map((field) => ({
-      id: field.id,
-      type: "FIELD",
-      name: field.name,
-      status: this.mapAssetStatus(String(field.status)),
-    }));
+    return fields.map((field) =>
+      mapFieldAssetRow({
+        id: field.id,
+        name: field.name,
+        status: String(field.status),
+      }),
+    );
   }
 
   async listFields(companyId: string) {
@@ -189,12 +167,13 @@ export class AssetRoleService {
       },
     });
 
-    return fields.map((field) => ({
-      id: field.id,
-      type: "FIELD",
-      name: field.name,
-      status: this.mapAssetStatus(String(field.status)),
-    }));
+    return fields.map((field) =>
+      mapFieldAssetRow({
+        id: field.id,
+        name: field.name,
+        status: String(field.status),
+      }),
+    );
   }
 
   async listObjects(companyId: string) {
@@ -211,12 +190,13 @@ export class AssetRoleService {
       }),
     ]);
 
-    return [...machinery, ...stockItems].map((item) => ({
-      id: item.id,
-      type: "OBJECT",
-      name: item.name,
-      status: this.mapAssetStatus(String(item.status)),
-    }));
+    return [...machinery, ...stockItems].map((item) =>
+      mapObjectAssetRow({
+        id: item.id,
+        name: item.name,
+        status: String(item.status),
+      }),
+    );
   }
 
   async listAssetRoles(companyId: string, assetId: string) {
@@ -225,28 +205,13 @@ export class AssetRoleService {
       orderBy: [{ validFrom: "desc" }, { createdAt: "desc" }],
     });
 
-    return rows.map((item) => ({
-      id: item.id,
-      assetId: item.assetId,
-      partyId: item.partyId,
-      role: item.role as CanonicalAssetRole,
-      validFrom: item.validFrom.toISOString().slice(0, 10),
-      validTo: item.validTo ? item.validTo.toISOString().slice(0, 10) : undefined,
-      basisDoc: item.basisDoc ?? undefined,
-    }));
+    return rows.map(mapAssetRoleRow);
   }
 
   async createAssetRole(
     companyId: string,
     assetId: string,
-    input: {
-      partyId: string;
-      role: CanonicalAssetRole;
-      validFrom: string;
-      validTo?: string;
-      assetType?: CanonicalAssetType;
-      basisDoc?: string;
-    },
+    input: CreateAssetRoleInput,
   ) {
     const party = await this.prisma.party.findFirst({
       where: { companyId, id: input.partyId },
@@ -257,7 +222,7 @@ export class AssetRoleService {
       throw new NotFoundException("Party not found");
     }
 
-    const assetType = input.assetType ?? (await this.detectAssetType(companyId, assetId));
+    const assetType = input.assetType ?? (await detectAssetType(this.prisma, companyId, assetId));
     const validFrom = new Date(input.validFrom);
     const validTo = input.validTo ? new Date(input.validTo) : null;
 
@@ -283,7 +248,7 @@ export class AssetRoleService {
 
     if (
       duplicates.some((item) =>
-        this.rangesOverlap(validFrom, validTo, item.validFrom, item.validTo),
+        rangesOverlap(validFrom, validTo, item.validFrom, item.validTo),
       )
     ) {
       throw new BadRequestException("Duplicate asset role with overlapping dates is forbidden");
@@ -302,28 +267,14 @@ export class AssetRoleService {
       },
     });
 
-    return {
-      id: created.id,
-      assetId: created.assetId,
-      partyId: created.partyId,
-      role: created.role as CanonicalAssetRole,
-      validFrom: created.validFrom.toISOString().slice(0, 10),
-      validTo: created.validTo ? created.validTo.toISOString().slice(0, 10) : undefined,
-      basisDoc: created.basisDoc ?? undefined,
-    };
+    return mapAssetRoleRow(created);
   }
 
   async updateAssetRole(
     companyId: string,
     assetId: string,
     roleId: string,
-    input: {
-      role?: CanonicalAssetRole;
-      validFrom?: string;
-      validTo?: string | null;
-      assetType?: CanonicalAssetType;
-      basisDoc?: string | null;
-    },
+    input: UpdateAssetRoleInput,
   ) {
     const existing = await this.prisma.assetPartyRole.findFirst({
       where: { companyId, id: roleId, assetId },
@@ -366,7 +317,7 @@ export class AssetRoleService {
 
     if (
       duplicates.some((item) =>
-        this.rangesOverlap(nextValidFrom, nextValidTo, item.validFrom, item.validTo),
+        rangesOverlap(nextValidFrom, nextValidTo, item.validFrom, item.validTo),
       )
     ) {
       throw new BadRequestException("Duplicate asset role with overlapping dates is forbidden");
@@ -386,15 +337,7 @@ export class AssetRoleService {
       },
     });
 
-    return {
-      id: updated.id,
-      assetId: updated.assetId,
-      partyId: updated.partyId,
-      role: updated.role as CanonicalAssetRole,
-      validFrom: updated.validFrom.toISOString().slice(0, 10),
-      validTo: updated.validTo ? updated.validTo.toISOString().slice(0, 10) : undefined,
-      basisDoc: updated.basisDoc ?? undefined,
-    };
+    return mapAssetRoleRow(updated);
   }
 
   async deleteAssetRole(companyId: string, assetId: string, roleId: string) {
@@ -452,42 +395,38 @@ export class AssetRoleService {
     ]);
 
     const assets = [
-      ...farms.map((item) => ({
-        id: item.id,
-        type: "FARM" as const,
-        name: item.name,
-        regionCode: item.jurisdiction ?? undefined,
-        status: this.mapAssetStatus(String(item.status)),
-      })),
-      ...fields.map((item) => ({
-        id: item.id,
-        type: "FIELD" as const,
-        name: item.name,
-        status: this.mapAssetStatus(String(item.status)),
-      })),
-      ...machinery.map((item) => ({
-        id: item.id,
-        type: "OBJECT" as const,
-        name: item.name,
-        status: this.mapAssetStatus(String(item.status)),
-      })),
-      ...stockItems.map((item) => ({
-        id: item.id,
-        type: "OBJECT" as const,
-        name: item.name,
-        status: this.mapAssetStatus(String(item.status)),
-      })),
+      ...farms.map((item) =>
+        mapFarmAssetRow({
+          id: item.id,
+          name: item.name,
+          jurisdiction: item.jurisdiction,
+          status: String(item.status),
+        }),
+      ),
+      ...fields.map((item) =>
+        mapFieldAssetRow({
+          id: item.id,
+          name: item.name,
+          status: String(item.status),
+        }),
+      ),
+      ...machinery.map((item) =>
+        mapObjectAssetRow({
+          id: item.id,
+          name: item.name,
+          status: String(item.status),
+        }),
+      ),
+      ...stockItems.map((item) =>
+        mapObjectAssetRow({
+          id: item.id,
+          name: item.name,
+          status: String(item.status),
+        }),
+      ),
     ];
 
-    const roles = rows.map((item) => ({
-      id: item.id,
-      assetId: item.assetId,
-      partyId: item.partyId,
-      role: item.role as CanonicalAssetRole,
-      validFrom: item.validFrom.toISOString().slice(0, 10),
-      validTo: item.validTo ? item.validTo.toISOString().slice(0, 10) : undefined,
-      basisDoc: item.basisDoc ?? undefined,
-    }));
+    const roles = rows.map(mapAssetRoleRow);
 
     return { assets, roles };
   }
