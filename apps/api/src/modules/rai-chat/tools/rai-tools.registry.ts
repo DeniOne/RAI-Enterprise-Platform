@@ -216,7 +216,10 @@ export class RaiToolsRegistry implements OnModuleInit {
         enforcementEnabled &&
         autonomyLevel === AutonomyLevel.TOOL_FIRST &&
         riskInfo.riskLevel !== "READ";
-      if (requiresByRisk || requiresByAutonomy) {
+      const isApprovedPendingActionExecution = Boolean(
+        actorContext.approvedPendingActionId,
+      );
+      if ((requiresByRisk || requiresByAutonomy) && !isApprovedPendingActionExecution) {
         const action = await this.pendingActionService.create({
           companyId: actorContext.companyId,
           traceId: actorContext.traceId,

@@ -24,6 +24,60 @@ type OutcomeAction = 'accept' | 'hand_off' | 'create_task';
 const DEFAULT_TRIGGER_CLASS_NAME =
     'rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-medium text-[#030213] transition hover:bg-slate-50';
 
+function formatUiError(error: unknown, fallback: string) {
+    const payload = (error as { response?: { data?: unknown; status?: number } })?.response?.data;
+    const status = (error as { response?: { status?: number } })?.response?.status;
+
+    if (Array.isArray((payload as { message?: unknown })?.message)) {
+        const message = ((payload as { message?: string[] }).message ?? [])
+            .map((item) => String(item))
+            .filter(Boolean)
+            .join('; ');
+        if (message) return message;
+    }
+
+    if (typeof (payload as { message?: unknown })?.message === 'string') {
+        return (payload as { message: string }).message;
+    }
+
+    if (typeof payload === 'string' && payload.trim().length > 0) {
+        return payload;
+    }
+
+    if (status === 500) {
+        return 'Сервис временно недоступен. Повторите действие.';
+    }
+
+    return fallback;
+}
+
+function reviewStatusLabel(status: string) {
+    const map: Record<string, string> = {
+        completed: 'завершено',
+        needs_more_context: 'нужно больше контекста',
+        degraded: 'ограниченный режим',
+    };
+    return map[status] ?? status;
+}
+
+function riskTierLabel(tier: string) {
+    const map: Record<string, string> = {
+        low: 'низкий',
+        medium: 'средний',
+        high: 'высокий',
+    };
+    return map[tier] ?? tier;
+}
+
+function outcomeActionLabel(action: string) {
+    const map: Record<string, string> = {
+        accept: 'принято',
+        hand_off: 'передано человеку',
+        create_task: 'создана задача',
+    };
+    return map[action] ?? action;
+}
+
 export function ChiefAgronomistReviewDrawer({
     request,
     title,
@@ -38,11 +92,12 @@ export function ChiefAgronomistReviewDrawer({
     const [error, setError] = useState<string | null>(null);
     const [review, setReview] = useState<ChiefAgronomistReviewResponse | null>(null);
     const [outcomeLoading, setOutcomeLoading] = useState<OutcomeAction | null>(null);
+    const [outcomeNote, setOutcomeNote] = useState('');
 
     async function openAndLoad() {
         setIsOpen(true);
         if (!enabled) {
-            setError('Экспертная эскалация сейчас недоступна: выключен release gate или feature flag.');
+            setError('Экспертная эскалация сейчас недоступна: функция отключена в настройках релиза.');
             return;
         }
 
@@ -56,7 +111,7 @@ export function ChiefAgronomistReviewDrawer({
             const response = await api.experts.chiefAgronomistReview(request);
             setReview(response.data);
         } catch (nextError) {
-            setError((nextError as Error).message ?? 'Не удалось получить экспертное заключение');
+            setError(formatUiError(nextError, 'Не удалось получить экспертное заключение'));
         } finally {
             setLoading(false);
         }
@@ -67,18 +122,17 @@ export function ChiefAgronomistReviewDrawer({
             return;
         }
 
-        const note = window.prompt('Комментарий к решению (опционально)', '') ?? '';
-
         try {
             setOutcomeLoading(action);
             setError(null);
             const response = await api.experts.applyReviewOutcome(review.reviewId, {
                 action,
-                ...(note.trim() ? { note: note.trim() } : {}),
+                ...(outcomeNote.trim() ? { note: outcomeNote.trim() } : {}),
             });
             setReview(response.data);
+            setOutcomeNote('');
         } catch (nextError) {
-            setError((nextError as Error).message ?? 'Не удалось применить outcome по expert review');
+            setError(formatUiError(nextError, 'Не удалось применить итоговое действие'));
         } finally {
             setOutcomeLoading(null);
         }
@@ -112,9 +166,9 @@ export function ChiefAgronomistReviewDrawer({
                         <div className="mt-3 space-y-1 text-[13px] text-[#030213]">
                             <p>Сущность: {request.entityType} / {request.entityId}</p>
                             <p>Причина: {request.reason}</p>
-                            {request.fieldId && <p>Field: {request.fieldId}</p>}
-                            {request.seasonId && <p>Season: {request.seasonId}</p>}
-                            {request.planId && <p>Plan: {request.planId}</p>}
+                            {request.fieldId && <p>Поле: {request.fieldId}</p>}
+                            {request.seasonId && <p>Сезон: {request.seasonId}</p>}
+                            {request.planId && <p>План: {request.planId}</p>}
                         </div>
                     </div>
 
@@ -134,7 +188,7 @@ export function ChiefAgronomistReviewDrawer({
                         <>
                             <div className="rounded-2xl border border-black/10 bg-white px-4 py-4">
                                 <p className="text-[11px] font-medium uppercase tracking-widest text-[#717182]">
-                                    Verdict
+                                    Вердикт
                                 </p>
                                 <p className="mt-2 text-[15px] leading-relaxed text-[#030213]">
                                     {review.verdict}
@@ -142,17 +196,17 @@ export function ChiefAgronomistReviewDrawer({
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
-                                <CompactCard label="Status" value={review.status} />
-                                <CompactCard label="Risk tier" value={review.riskTier} />
+                                <CompactCard label="Статус" value={reviewStatusLabel(review.status)} />
+                                <CompactCard label="Уровень риска" value={riskTierLabel(review.riskTier)} />
                             </div>
 
                             {(review.outcomeAction || review.resolvedAt) && (
                                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
                                     <p className="text-[11px] font-medium uppercase tracking-widest text-emerald-800">
-                                        Outcome
+                                        Итог
                                     </p>
                                     <p className="mt-2 text-[13px] text-emerald-900">
-                                        {review.outcomeAction ?? 'resolved'}
+                                        {review.outcomeAction ? outcomeActionLabel(review.outcomeAction) : 'решено'}
                                         {review.resolvedAt ? ` • ${new Date(review.resolvedAt).toLocaleString('ru-RU')}` : ''}
                                     </p>
                                     {review.outcomeNote && (
@@ -161,7 +215,7 @@ export function ChiefAgronomistReviewDrawer({
                                     {review.createdTaskId && (
                                         <div className="mt-3 flex flex-wrap items-center gap-2">
                                             <p className="text-[13px] text-emerald-900">
-                                                Task ID: {review.createdTaskId}
+                                                ID задачи: {review.createdTaskId}
                                             </p>
                                             <button
                                                 type="button"
@@ -201,7 +255,7 @@ export function ChiefAgronomistReviewDrawer({
 
                             <div className="rounded-2xl border border-black/10 bg-white px-4 py-4">
                                 <p className="text-[11px] font-medium uppercase tracking-widest text-[#717182]">
-                                    Evidence
+                                    Доказательства
                                 </p>
                                 <div className="mt-3 space-y-2">
                                     {review.evidence.length > 0 ? (
@@ -217,7 +271,7 @@ export function ChiefAgronomistReviewDrawer({
                                             </div>
                                         ))
                                     ) : (
-                                        <p className="text-[13px] text-[#717182]">Evidence не найдено.</p>
+                                        <p className="text-[13px] text-[#717182]">Доказательства не найдены.</p>
                                     )}
                                 </div>
                             </div>
@@ -225,8 +279,14 @@ export function ChiefAgronomistReviewDrawer({
                             {canResolve && (
                                 <div className="rounded-2xl border border-black/10 bg-white px-4 py-4">
                                     <p className="text-[11px] font-medium uppercase tracking-widest text-[#717182]">
-                                        Outcome actions
+                                        Действия по итогу
                                     </p>
+                                    <textarea
+                                        value={outcomeNote}
+                                        onChange={(event) => setOutcomeNote(event.target.value)}
+                                        className="mt-3 min-h-[72px] w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-[13px] text-[#030213] outline-none transition focus:border-black/30"
+                                        placeholder="Комментарий к решению (опционально)"
+                                    />
                                     <div className="mt-3 flex flex-wrap gap-2">
                                         {showFullOutcomeSet && (
                                             <>

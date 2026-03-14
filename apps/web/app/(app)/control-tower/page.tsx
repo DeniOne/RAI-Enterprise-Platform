@@ -89,11 +89,13 @@ async function safeRequest<T>(
   request: Promise<T>,
   fallback: T,
   timeoutMs: number = CONTROL_TOWER_REQUEST_TIMEOUT_MS,
+  onError?: (error: unknown) => void,
 ): Promise<T> {
   try {
     return await withTimeout(request, timeoutMs, label);
   } catch (error) {
     console.warn(`[ControlTower] ${label} unavailable`, error);
+    onError?.(error);
     return fallback;
   }
 }
@@ -119,6 +121,19 @@ export default function ControlTowerPage() {
   const [pendingActionLoading, setPendingActionLoading] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [rejectDialog, setRejectDialog] = useState<{ id: string } | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [autonomyDialog, setAutonomyDialog] = useState<{ level: 'TOOL_FIRST' | 'QUARANTINE' } | null>(null);
+  const [autonomyReason, setAutonomyReason] = useState('');
+  const [canaryDialog, setCanaryDialog] = useState<{ changeId: string } | null>(null);
+  const [canaryBaseline, setCanaryBaseline] = useState('0.05');
+  const [canaryCurrent, setCanaryCurrent] = useState('0.05');
+  const [canarySampleSize, setCanarySampleSize] = useState('100');
+  const [rollbackDialog, setRollbackDialog] = useState<{ changeId: string } | null>(null);
+  const [rollbackReason, setRollbackReason] = useState('');
+  const [lifecycleDialog, setLifecycleDialog] = useState<{ role: string; state: 'FROZEN' | 'RETIRED' } | null>(null);
+  const [lifecycleReason, setLifecycleReason] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -205,6 +220,8 @@ export default function ControlTowerPage() {
             'pending_actions',
             api.pendingActions.list({ limit: 12 }).then((res) => res.data),
             [],
+            CONTROL_TOWER_REQUEST_TIMEOUT_MS,
+            () => setActionError('Источник очереди ручной проверки временно недоступен. Обновите страницу и проверьте доступ к API.'),
           ),
         ]);
         if (cancelled) return;
@@ -265,11 +282,12 @@ export default function ControlTowerPage() {
 
   async function handleApproveFirstPendingAction(id: string) {
     try {
+      setActionError(null);
       setPendingActionLoading(`approve-first:${id}`);
       await api.pendingActions.approveFirst(id);
       await reloadPendingActions();
     } catch (e) {
-      window.alert((e as Error).message ?? 'Не удалось выполнить первое подтверждение');
+      setActionError((e as Error).message ?? 'Не удалось выполнить первое подтверждение');
     } finally {
       setPendingActionLoading(null);
     }
@@ -277,49 +295,56 @@ export default function ControlTowerPage() {
 
   async function handleApproveFinalPendingAction(id: string) {
     try {
+      setActionError(null);
       setPendingActionLoading(`approve-final:${id}`);
       await api.pendingActions.approveFinal(id);
       await reloadPendingActions();
     } catch (e) {
-      window.alert((e as Error).message ?? 'Не удалось выполнить финальное подтверждение');
+      setActionError((e as Error).message ?? 'Не удалось выполнить финальное подтверждение');
     } finally {
       setPendingActionLoading(null);
     }
   }
 
-  async function handleRejectPendingAction(id: string) {
-    const reason = window.prompt('Укажи причину отклонения', '');
-    if (reason !== null && reason.trim().length === 0) {
-      return;
-    }
+  async function handleExecuteApprovedPendingAction(id: string) {
     try {
+      setActionError(null);
+      setPendingActionLoading(`execute:${id}`);
+      await api.pendingActions.execute(id);
+      await reloadPendingActions();
+    } catch (e) {
+      setActionError((e as Error).message ?? 'Не удалось исполнить подтвержденное действие');
+    } finally {
+      setPendingActionLoading(null);
+    }
+  }
+
+  async function handleRejectPendingAction(id: string, reason?: string) {
+    try {
+      setActionError(null);
       setPendingActionLoading(`reject:${id}`);
       await api.pendingActions.reject(id, reason?.trim() || undefined);
       await reloadPendingActions();
+      setRejectDialog(null);
+      setRejectReason('');
     } catch (e) {
-      window.alert((e as Error).message ?? 'Не удалось отклонить действие в очереди');
+      setActionError((e as Error).message ?? 'Не удалось отклонить действие в очереди');
     } finally {
       setPendingActionLoading(null);
     }
   }
 
-  async function handleSetAutonomyOverride(level: 'TOOL_FIRST' | 'QUARANTINE') {
-    const reason = window.prompt(
-      level === 'QUARANTINE'
-        ? 'Укажите причину для ручного карантина'
-        : 'Укажите причину для ручного режима "сначала инструменты"',
-      '',
-    );
-    if (!reason || reason.trim().length < 3) {
-      return;
-    }
-
+  async function handleSetAutonomyOverride(level: 'TOOL_FIRST' | 'QUARANTINE', reason: string) {
+    if (reason.trim().length < 3) return;
     try {
+      setActionError(null);
       setGovernanceActionLoading(level);
       await api.autonomy.setOverride({ level, reason: reason.trim() });
       await reloadRuntimeGovernance();
+      setAutonomyDialog(null);
+      setAutonomyReason('');
     } catch (e) {
-      window.alert((e as Error).message ?? 'Не удалось применить переопределение');
+      setActionError((e as Error).message ?? 'Не удалось применить переопределение');
     } finally {
       setGovernanceActionLoading(null);
     }
@@ -327,11 +352,12 @@ export default function ControlTowerPage() {
 
   async function handleClearAutonomyOverride() {
     try {
+      setActionError(null);
       setGovernanceActionLoading('CLEAR');
       await api.autonomy.clearOverride();
       await reloadRuntimeGovernance();
     } catch (e) {
-      window.alert((e as Error).message ?? 'Не удалось снять переопределение');
+      setActionError((e as Error).message ?? 'Не удалось снять переопределение');
     } finally {
       setGovernanceActionLoading(null);
     }
@@ -339,20 +365,18 @@ export default function ControlTowerPage() {
 
   async function handleStartCanary(changeId: string) {
     try {
+      setActionError(null);
       setLifecycleActionLoading(`start:${changeId}`);
       await api.agents.startCanary(changeId);
       await reloadLifecycleAndGovernance();
     } catch (e) {
-      window.alert((e as Error).message ?? 'Не удалось запустить канареечный релиз');
+      setActionError((e as Error).message ?? 'Не удалось запустить канареечный релиз');
     } finally {
       setLifecycleActionLoading(null);
     }
   }
 
-  async function handleReviewCanary(changeId: string) {
-    const baseline = window.prompt('Базовая доля отклонений (0..1)', '0.05');
-    const canary = window.prompt('Доля отклонений в канареечном релизе (0..1)', '0.05');
-    const sampleSize = window.prompt('Размер выборки', '100');
+  async function handleReviewCanary(changeId: string, baseline: string, canary: string, sampleSize: string) {
     const baselineValue = Number(baseline);
     const canaryValue = Number(canary);
     const sampleSizeValue = Number(sampleSize);
@@ -370,6 +394,7 @@ export default function ControlTowerPage() {
     }
 
     try {
+      setActionError(null);
       setLifecycleActionLoading(`review:${changeId}`);
       await api.agents.reviewCanary(changeId, {
         baselineRejectionRate: baselineValue,
@@ -377,8 +402,12 @@ export default function ControlTowerPage() {
         sampleSize: Math.trunc(sampleSizeValue),
       });
       await reloadLifecycleAndGovernance();
+      setCanaryDialog(null);
+      setCanaryBaseline('0.05');
+      setCanaryCurrent('0.05');
+      setCanarySampleSize('100');
     } catch (e) {
-      window.alert((e as Error).message ?? 'Не удалось завершить проверку канареечного релиза');
+      setActionError((e as Error).message ?? 'Не удалось завершить проверку канареечного релиза');
     } finally {
       setLifecycleActionLoading(null);
     }
@@ -386,45 +415,37 @@ export default function ControlTowerPage() {
 
   async function handlePromoteChange(changeId: string) {
     try {
+      setActionError(null);
       setLifecycleActionLoading(`promote:${changeId}`);
       await api.agents.promoteChange(changeId);
       await reloadLifecycleAndGovernance();
     } catch (e) {
-      window.alert((e as Error).message ?? 'Не удалось выполнить продвижение в продакшен');
+      setActionError((e as Error).message ?? 'Не удалось выполнить продвижение в продакшен');
     } finally {
       setLifecycleActionLoading(null);
     }
   }
 
-  async function handleRollbackChange(changeId: string) {
-    const reason = window.prompt('Укажите причину отката', '');
-    if (!reason || reason.trim().length < 3) {
-      return;
-    }
-
+  async function handleRollbackChange(changeId: string, reason: string) {
+    if (reason.trim().length < 3) return;
     try {
+      setActionError(null);
       setLifecycleActionLoading(`rollback:${changeId}`);
       await api.agents.rollbackChange(changeId, reason.trim());
       await reloadLifecycleAndGovernance();
+      setRollbackDialog(null);
+      setRollbackReason('');
     } catch (e) {
-      window.alert((e as Error).message ?? 'Не удалось выполнить откат');
+      setActionError((e as Error).message ?? 'Не удалось выполнить откат');
     } finally {
       setLifecycleActionLoading(null);
     }
   }
 
-  async function handleSetLifecycleOverride(role: string, state: 'FROZEN' | 'RETIRED') {
-    const reason = window.prompt(
-      state === 'RETIRED'
-        ? `Укажите причину вывода роли ${role}`
-        : `Укажите причину заморозки роли ${role}`,
-      '',
-    );
-    if (!reason || reason.trim().length < 3) {
-      return;
-    }
-
+  async function handleSetLifecycleOverride(role: string, state: 'FROZEN' | 'RETIRED', reason: string) {
+    if (reason.trim().length < 3) return;
     try {
+      setActionError(null);
       setLifecycleActionLoading(`${state.toLowerCase()}:${role}`);
       await api.explainability.setLifecycleOverride({
         role,
@@ -432,8 +453,10 @@ export default function ControlTowerPage() {
         reason: reason.trim(),
       });
       await reloadLifecycleBoard();
+      setLifecycleDialog(null);
+      setLifecycleReason('');
     } catch (e) {
-      window.alert((e as Error).message ?? 'Не удалось применить переопределение жизненного цикла');
+      setActionError((e as Error).message ?? 'Не удалось применить переопределение жизненного цикла');
     } finally {
       setLifecycleActionLoading(null);
     }
@@ -441,11 +464,12 @@ export default function ControlTowerPage() {
 
   async function handleClearLifecycleOverride(role: string) {
     try {
+      setActionError(null);
       setLifecycleActionLoading(`clear-lifecycle:${role}`);
       await api.explainability.clearLifecycleOverride({ role });
       await reloadLifecycleBoard();
     } catch (e) {
-      window.alert((e as Error).message ?? 'Не удалось снять переопределение жизненного цикла');
+      setActionError((e as Error).message ?? 'Не удалось снять переопределение жизненного цикла');
     } finally {
       setLifecycleActionLoading(null);
     }
@@ -523,6 +547,18 @@ export default function ControlTowerPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-10 mt-10">
+        {actionError && (
+          <div className="mb-6 flex items-start justify-between gap-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700">
+            <span>{actionError}</span>
+            <button
+              type="button"
+              onClick={() => setActionError(null)}
+              className="rounded-md border border-red-200 bg-white px-2 py-1 text-[11px] font-medium text-red-700 transition hover:bg-red-100"
+            >
+              Закрыть
+            </button>
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* SLO & Надежность */}
@@ -871,10 +907,23 @@ export default function ControlTowerPage() {
                                 {pendingActionLoading === `approve-final:${item.id}` ? 'Финализация...' : 'Подтвердить финально'}
                               </button>
                             )}
+                            {item.status === 'APPROVED_FINAL' && (
+                              <button
+                                type="button"
+                                onClick={() => handleExecuteApprovedPendingAction(item.id)}
+                                disabled={pendingActionLoading !== null}
+                                className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-[12px] font-medium text-blue-700 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {pendingActionLoading === `execute:${item.id}` ? 'Исполнение...' : 'Исполнить'}
+                              </button>
+                            )}
                             {(item.status === 'PENDING' || item.status === 'APPROVED_FIRST') && (
                               <button
                                 type="button"
-                                onClick={() => handleRejectPendingAction(item.id)}
+                                onClick={() => {
+                                  setRejectDialog({ id: item.id });
+                                  setRejectReason('');
+                                }}
                                 disabled={pendingActionLoading !== null}
                                 className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                               >
@@ -1199,7 +1248,10 @@ export default function ControlTowerPage() {
                                   {agent.lifecycleState !== 'RETIRED' && (
                                     <button
                                       type="button"
-                                      onClick={() => handleSetLifecycleOverride(agent.role, 'FROZEN')}
+                                      onClick={() => {
+                                        setLifecycleDialog({ role: agent.role, state: 'FROZEN' });
+                                        setLifecycleReason('');
+                                      }}
                                       disabled={lifecycleActionLoading !== null}
                                       className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
@@ -1208,7 +1260,10 @@ export default function ControlTowerPage() {
                                   )}
                                   <button
                                     type="button"
-                                    onClick={() => handleSetLifecycleOverride(agent.role, 'RETIRED')}
+                                    onClick={() => {
+                                      setLifecycleDialog({ role: agent.role, state: 'RETIRED' });
+                                      setLifecycleReason('');
+                                    }}
                                     disabled={lifecycleActionLoading !== null}
                                     className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                                   >
@@ -1231,7 +1286,12 @@ export default function ControlTowerPage() {
                                 {agent.canaryStatus === 'ACTIVE' && (
                                   <button
                                     type="button"
-                                    onClick={() => handleReviewCanary(agent.latestChangeRequestId as string)}
+                                    onClick={() => {
+                                      setCanaryDialog({ changeId: agent.latestChangeRequestId as string });
+                                      setCanaryBaseline('0.05');
+                                      setCanaryCurrent('0.05');
+                                      setCanarySampleSize('100');
+                                    }}
                                     disabled={lifecycleActionLoading !== null}
                                     className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                                   >
@@ -1251,7 +1311,10 @@ export default function ControlTowerPage() {
                                 {(agent.changeRequestStatus === 'PROMOTED' || agent.changeRequestStatus === 'APPROVED_FOR_PRODUCTION') && (
                                   <button
                                     type="button"
-                                    onClick={() => handleRollbackChange(agent.latestChangeRequestId as string)}
+                                    onClick={() => {
+                                      setRollbackDialog({ changeId: agent.latestChangeRequestId as string });
+                                      setRollbackReason('');
+                                    }}
                                     disabled={lifecycleActionLoading !== null}
                                     className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                                   >
@@ -1358,7 +1421,10 @@ export default function ControlTowerPage() {
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      onClick={() => handleSetAutonomyOverride('TOOL_FIRST')}
+                      onClick={() => {
+                        setAutonomyDialog({ level: 'TOOL_FIRST' });
+                        setAutonomyReason('');
+                      }}
                       disabled={governanceActionLoading !== null || !runtimeGovernanceSummary.flags.enforcementEnabled}
                       className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                     >
@@ -1366,7 +1432,10 @@ export default function ControlTowerPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleSetAutonomyOverride('QUARANTINE')}
+                      onClick={() => {
+                        setAutonomyDialog({ level: 'QUARANTINE' });
+                        setAutonomyReason('');
+                      }}
                       disabled={governanceActionLoading !== null || !runtimeGovernanceSummary.flags.enforcementEnabled}
                       className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                     >
@@ -1731,6 +1800,127 @@ export default function ControlTowerPage() {
             </div>
           </div>
         )}
+
+        {rejectDialog && (
+          <ActionDialog
+            title="Отклонить действие"
+            description="Укажите причину отклонения (опционально)."
+            onClose={() => setRejectDialog(null)}
+            onConfirm={() => void handleRejectPendingAction(rejectDialog.id, rejectReason)}
+            confirmLabel={pendingActionLoading === `reject:${rejectDialog.id}` ? 'Отклонение...' : 'Отклонить'}
+            confirmDisabled={pendingActionLoading !== null}
+          >
+            <textarea
+              value={rejectReason}
+              onChange={(event) => setRejectReason(event.target.value)}
+              className="min-h-[84px] w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-[13px] text-[#030213] outline-none transition focus:border-black/30"
+              placeholder="Причина (опционально)"
+            />
+          </ActionDialog>
+        )}
+
+        {autonomyDialog && (
+          <ActionDialog
+            title={autonomyDialog.level === 'QUARANTINE' ? 'Включить ручной карантин' : 'Режим «сначала инструменты»'}
+            description="Укажите причину, чтобы зафиксировать управленческое решение."
+            onClose={() => setAutonomyDialog(null)}
+            onConfirm={() => void handleSetAutonomyOverride(autonomyDialog.level, autonomyReason)}
+            confirmLabel={governanceActionLoading === autonomyDialog.level ? 'Применение...' : 'Применить'}
+            confirmDisabled={governanceActionLoading !== null || autonomyReason.trim().length < 3}
+          >
+            <textarea
+              value={autonomyReason}
+              onChange={(event) => setAutonomyReason(event.target.value)}
+              className="min-h-[84px] w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-[13px] text-[#030213] outline-none transition focus:border-black/30"
+              placeholder="Причина (минимум 3 символа)"
+            />
+          </ActionDialog>
+        )}
+
+        {canaryDialog && (
+          <ActionDialog
+            title="Проверить канареечный релиз"
+            description="Укажите параметры сравнения базовой и канареечной выборки."
+            onClose={() => setCanaryDialog(null)}
+            onConfirm={() => void handleReviewCanary(canaryDialog.changeId, canaryBaseline, canaryCurrent, canarySampleSize)}
+            confirmLabel={lifecycleActionLoading === `review:${canaryDialog.changeId}` ? 'Проверка...' : 'Запустить проверку'}
+            confirmDisabled={lifecycleActionLoading !== null}
+          >
+            <div className="grid grid-cols-1 gap-3">
+              <label className="text-[12px] text-[#717182]">
+                Базовая доля отклонений (0..1)
+                <input
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={canaryBaseline}
+                  onChange={(event) => setCanaryBaseline(event.target.value)}
+                  className="mt-1 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-[13px] text-[#030213] outline-none transition focus:border-black/30"
+                />
+              </label>
+              <label className="text-[12px] text-[#717182]">
+                Канареечная доля отклонений (0..1)
+                <input
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={canaryCurrent}
+                  onChange={(event) => setCanaryCurrent(event.target.value)}
+                  className="mt-1 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-[13px] text-[#030213] outline-none transition focus:border-black/30"
+                />
+              </label>
+              <label className="text-[12px] text-[#717182]">
+                Размер выборки
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={canarySampleSize}
+                  onChange={(event) => setCanarySampleSize(event.target.value)}
+                  className="mt-1 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-[13px] text-[#030213] outline-none transition focus:border-black/30"
+                />
+              </label>
+            </div>
+          </ActionDialog>
+        )}
+
+        {rollbackDialog && (
+          <ActionDialog
+            title="Откатить изменение"
+            description="Укажите причину отката для аудита и трассировки."
+            onClose={() => setRollbackDialog(null)}
+            onConfirm={() => void handleRollbackChange(rollbackDialog.changeId, rollbackReason)}
+            confirmLabel={lifecycleActionLoading === `rollback:${rollbackDialog.changeId}` ? 'Откат...' : 'Откатить'}
+            confirmDisabled={lifecycleActionLoading !== null || rollbackReason.trim().length < 3}
+          >
+            <textarea
+              value={rollbackReason}
+              onChange={(event) => setRollbackReason(event.target.value)}
+              className="min-h-[84px] w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-[13px] text-[#030213] outline-none transition focus:border-black/30"
+              placeholder="Причина отката (минимум 3 символа)"
+            />
+          </ActionDialog>
+        )}
+
+        {lifecycleDialog && (
+          <ActionDialog
+            title={lifecycleDialog.state === 'RETIRED' ? 'Вывести роль из цикла' : 'Заморозить роль'}
+            description={`Роль: ${lifecycleDialog.role}. Укажите причину изменения состояния.`}
+            onClose={() => setLifecycleDialog(null)}
+            onConfirm={() => void handleSetLifecycleOverride(lifecycleDialog.role, lifecycleDialog.state, lifecycleReason)}
+            confirmLabel={lifecycleActionLoading === `${lifecycleDialog.state.toLowerCase()}:${lifecycleDialog.role}` ? 'Применение...' : 'Применить'}
+            confirmDisabled={lifecycleActionLoading !== null || lifecycleReason.trim().length < 3}
+          >
+            <textarea
+              value={lifecycleReason}
+              onChange={(event) => setLifecycleReason(event.target.value)}
+              className="min-h-[84px] w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-[13px] text-[#030213] outline-none transition focus:border-black/30"
+              placeholder="Причина (минимум 3 символа)"
+            />
+          </ActionDialog>
+        )}
       </div>
     </div>
   );
@@ -1798,6 +1988,51 @@ function InfoHint({ hint }: { hint: string }) {
     >
       i
     </span>
+  );
+}
+
+function ActionDialog({
+  title,
+  description,
+  children,
+  onClose,
+  onConfirm,
+  confirmLabel,
+  confirmDisabled,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+  onClose: () => void;
+  onConfirm: () => void;
+  confirmLabel: string;
+  confirmDisabled?: boolean;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+      <div className="w-full max-w-lg rounded-2xl border border-black/10 bg-white p-5 shadow-2xl">
+        <h3 className="text-[16px] font-medium text-[#030213]">{title}</h3>
+        <p className="mt-1 text-[13px] text-[#717182]">{description}</p>
+        <div className="mt-4">{children}</div>
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-black/10 bg-white px-3 py-2 text-[12px] font-medium text-[#030213] transition hover:bg-slate-50"
+          >
+            Отмена
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={confirmDisabled}
+            className="rounded-lg bg-[#030213] px-3 py-2 text-[12px] font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

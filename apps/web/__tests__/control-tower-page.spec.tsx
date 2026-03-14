@@ -163,17 +163,17 @@ describe('ControlTowerPage queue visibility', () => {
     render(<ControlTowerPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Runtime pressure')).toBeInTheDocument();
+      expect(screen.getByText('Давление очередей')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('pressured')).toBeInTheDocument();
-    expect(screen.getByText('Backlog depth')).toBeInTheDocument();
+    expect(screen.getByText('под нагрузкой')).toBeInTheDocument();
+    expect(screen.getByText('Глубина очереди')).toBeInTheDocument();
     expect(screen.getByText('6')).toBeInTheDocument();
-    expect(screen.getByText('Queue signal')).toBeInTheDocument();
-    expect(screen.getByText('live')).toBeInTheDocument();
+    expect(screen.getByText('Сигнал очередей')).toBeInTheDocument();
+    expect(screen.getByText('свежий')).toBeInTheDocument();
     expect(screen.getByText('runtime_active_tool_calls')).toBeInTheDocument();
-    expect(screen.getByText(/last 6 \/ peak 7/)).toBeInTheDocument();
-    expect(screen.getByText('Memory Fabric')).toBeInTheDocument();
+    expect(screen.getByText(/посл\. 6 \/ пик 7/)).toBeInTheDocument();
+    expect(screen.getByText('Контур памяти')).toBeInTheDocument();
     expect(memoryHealthMock).toHaveBeenCalled();
   });
 
@@ -183,10 +183,10 @@ describe('ControlTowerPage queue visibility', () => {
     render(<ControlTowerPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Runtime pressure')).toBeInTheDocument();
+      expect(screen.getByText('Давление очередей')).toBeInTheDocument();
     });
 
-    expect(screen.queryByText('Memory Fabric')).not.toBeInTheDocument();
+    expect(screen.queryByText('Контур памяти')).not.toBeInTheDocument();
     expect(memoryHealthMock).not.toHaveBeenCalled();
   });
 });

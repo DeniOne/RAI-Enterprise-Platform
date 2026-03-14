@@ -31,9 +31,9 @@ const DOMAIN_OPTIONS: Array<{ value: ForecastDomain; label: string }> = [
 const LEVER_OPTIONS: Array<{ value: ScenarioLever; label: string; placeholder: string }> = [
   { value: 'yield_pct', label: 'Урожайность, %', placeholder: '0' },
   { value: 'sales_price_pct', label: 'Цена реализации, %', placeholder: '0' },
-  { value: 'input_cost_pct', label: 'Стоимость inputs, %', placeholder: '0' },
-  { value: 'opex_pct', label: 'OPEX, %', placeholder: '0' },
-  { value: 'working_capital_days', label: 'Working capital, дни', placeholder: '0' },
+  { value: 'input_cost_pct', label: 'Себестоимость ресурсов, %', placeholder: '0' },
+  { value: 'opex_pct', label: 'Операционные расходы, %', placeholder: '0' },
+  { value: 'working_capital_days', label: 'Оборотный капитал, дни', placeholder: '0' },
   { value: 'disease_risk_pct', label: 'Риск болезней, %', placeholder: '0' },
 ];
 
@@ -71,6 +71,12 @@ export default function StrategyForecastsPage() {
   const [historyOnlyDegraded, setHistoryOnlyDegraded] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [feedbackSubmittingRunId, setFeedbackSubmittingRunId] = useState<string | null>(null);
+  const [feedbackDialogRun, setFeedbackDialogRun] = useState<StrategyForecastRunHistoryItem | null>(null);
+  const [feedbackRevenueInput, setFeedbackRevenueInput] = useState('');
+  const [feedbackMarginInput, setFeedbackMarginInput] = useState('');
+  const [feedbackCashFlowInput, setFeedbackCashFlowInput] = useState('');
+  const [feedbackYieldInput, setFeedbackYieldInput] = useState('');
+  const [feedbackNoteInput, setFeedbackNoteInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingSeasons, setLoadingSeasons] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -311,23 +317,12 @@ export default function StrategyForecastsPage() {
   }
 
   async function submitRunFeedback(run: StrategyForecastRunHistoryItem) {
-    const actualRevenueRaw = window.prompt('Факт revenue (RUB), можно пусто', '');
-    if (actualRevenueRaw === null) return;
-    const actualMarginRaw = window.prompt('Факт margin (RUB), можно пусто', '');
-    if (actualMarginRaw === null) return;
-    const actualCashFlowRaw = window.prompt('Факт cash flow (RUB), можно пусто', '');
-    if (actualCashFlowRaw === null) return;
-    const actualYieldRaw = window.prompt('Факт yield, можно пусто', '');
-    if (actualYieldRaw === null) return;
-    const noteRaw = window.prompt('Комментарий, можно пусто', '');
-    if (noteRaw === null) return;
-
     const payload = {
-      actualRevenue: parseOptionalNumber(actualRevenueRaw),
-      actualMargin: parseOptionalNumber(actualMarginRaw),
-      actualCashFlow: parseOptionalNumber(actualCashFlowRaw),
-      actualYield: parseOptionalNumber(actualYieldRaw),
-      note: noteRaw.trim() || undefined,
+      actualRevenue: parseOptionalNumber(feedbackRevenueInput),
+      actualMargin: parseOptionalNumber(feedbackMarginInput),
+      actualCashFlow: parseOptionalNumber(feedbackCashFlowInput),
+      actualYield: parseOptionalNumber(feedbackYieldInput),
+      note: feedbackNoteInput.trim() || undefined,
     };
 
     if (
@@ -348,11 +343,26 @@ export default function StrategyForecastsPage() {
       setRecentRuns((current) =>
         current.map((item) => (item.id === response.data.id ? response.data : item)),
       );
+      setFeedbackDialogRun(null);
+      setFeedbackRevenueInput('');
+      setFeedbackMarginInput('');
+      setFeedbackCashFlowInput('');
+      setFeedbackYieldInput('');
+      setFeedbackNoteInput('');
     } catch (e) {
       setError((e as Error).message ?? 'Не удалось записать фактический результат');
     } finally {
       setFeedbackSubmittingRunId(null);
     }
+  }
+
+  function openFeedbackDialog(run: StrategyForecastRunHistoryItem) {
+    setFeedbackDialogRun(run);
+    setFeedbackRevenueInput('');
+    setFeedbackMarginInput('');
+    setFeedbackCashFlowInput('');
+    setFeedbackYieldInput('');
+    setFeedbackNoteInput(run.evaluation.note ?? '');
   }
 
   const hasScenarioAdjustments = LEVER_OPTIONS.some(
@@ -373,10 +383,13 @@ export default function StrategyForecastsPage() {
                 Стратегия / Прогнозы
               </div>
               <div>
-                <h1 className="text-3xl font-medium tracking-tight text-[#030213]">Decision Forecasts</h1>
-                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#717182]">
-                  Детерминированный слой для прогноза baseline, диапазона неопределённости, сценарного delta и рекомендованного действия по бизнесу.
-                </p>
+                <h1 className="text-3xl font-medium tracking-tight text-[#030213]">Прогнозы решений</h1>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="rounded-md border border-black/10 bg-slate-50 px-2 py-1 text-[11px] font-medium text-[#717182]">База</span>
+                  <span className="rounded-md border border-black/10 bg-slate-50 px-2 py-1 text-[11px] font-medium text-[#717182]">Диапазон</span>
+                  <span className="rounded-md border border-black/10 bg-slate-50 px-2 py-1 text-[11px] font-medium text-[#717182]">Сценарий</span>
+                  <span className="rounded-md border border-black/10 bg-slate-50 px-2 py-1 text-[11px] font-medium text-[#717182]">Риски</span>
+                </div>
               </div>
             </div>
             <button
@@ -400,12 +413,12 @@ export default function StrategyForecastsPage() {
               Сохранить сценарий
             </button>
             <p className="text-[13px] text-[#717182]">
-              Сохраняются текущие параметры формы и рычаги сценария. Источник истины теперь серверный, локальный shadow-cache используется только как fallback.
+              Сохраняются текущие параметры и рычаги сценария. Приоритетный источник данных: сервер.
             </p>
           </div>
           {!enabled && (
             <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-800">
-              Функция недоступна: выключен release gate или feature flag прогнозов.
+              Функция недоступна: отключена в настройках релиза.
             </div>
           )}
         </div>
@@ -422,16 +435,16 @@ export default function StrategyForecastsPage() {
               </div>
 
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <Field label="Scope">
-                  <select aria-label="Scope" value={scopeLevel} onChange={(e) => setScopeLevel(e.target.value as ScopeLevel)} className={inputClassName}>
+                <Field label="Уровень">
+                  <select aria-label="Уровень" value={scopeLevel} onChange={(e) => setScopeLevel(e.target.value as ScopeLevel)} className={inputClassName}>
                     <option value="company">Компания</option>
                     <option value="farm">Хозяйство</option>
                     <option value="field">Поле</option>
                   </select>
                 </Field>
-                <Field label="Season">
+                <Field label="Сезон">
                   <select
-                    aria-label="Season"
+                    aria-label="Сезон"
                     value={seasonId}
                     onChange={(e) => setSeasonId(e.target.value)}
                     className={inputClassName}
@@ -445,22 +458,22 @@ export default function StrategyForecastsPage() {
                     ))}
                   </select>
                 </Field>
-                <Field label="Horizon">
-                  <select aria-label="Horizon" value={String(horizonDays)} onChange={(e) => setHorizonDays(Number(e.target.value) as 30 | 90 | 180 | 365)} className={inputClassName}>
+                <Field label="Горизонт">
+                  <select aria-label="Горизонт" value={String(horizonDays)} onChange={(e) => setHorizonDays(Number(e.target.value) as 30 | 90 | 180 | 365)} className={inputClassName}>
                     <option value="30">30 дней</option>
                     <option value="90">90 дней</option>
                     <option value="180">180 дней</option>
                     <option value="365">365 дней</option>
                   </select>
                 </Field>
-                <Field label="Farm ID">
-                  <input aria-label="Farm ID" value={farmId} onChange={(e) => setFarmId(e.target.value)} className={inputClassName} placeholder="опционально" />
+                <Field label="ID хозяйства">
+                  <input aria-label="ID хозяйства" value={farmId} onChange={(e) => setFarmId(e.target.value)} className={inputClassName} placeholder="опционально" />
                 </Field>
-                <Field label="Field ID">
-                  <input aria-label="Field ID" value={fieldId} onChange={(e) => setFieldId(e.target.value)} className={inputClassName} placeholder={scopeLevel === 'field' ? 'обязательно' : 'опционально'} />
+                <Field label="ID поля">
+                  <input aria-label="ID поля" value={fieldId} onChange={(e) => setFieldId(e.target.value)} className={inputClassName} placeholder={scopeLevel === 'field' ? 'обязательно' : 'опционально'} />
                 </Field>
-                <Field label="Crop">
-                  <input aria-label="Crop" value={crop} onChange={(e) => setCrop(e.target.value)} className={inputClassName} placeholder="например, рапс" />
+                <Field label="Культура">
+                  <input aria-label="Культура" value={crop} onChange={(e) => setCrop(e.target.value)} className={inputClassName} placeholder="например, рапс" />
                 </Field>
               </div>
 
@@ -487,7 +500,7 @@ export default function StrategyForecastsPage() {
                 <div className="mb-4 flex items-center justify-between gap-4">
                   <div>
                     <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182]">Сценарий</p>
-                    <p className="text-[13px] text-[#717182]">Измените рычаги, чтобы получить delta к baseline.</p>
+                    <p className="text-[13px] text-[#717182]">Измените рычаги, чтобы увидеть отклонение от базового сценария.</p>
                   </div>
                   <input
                     aria-label="Название сценария"
@@ -521,34 +534,34 @@ export default function StrategyForecastsPage() {
 
             <section className="grid gap-4 lg:grid-cols-3">
               <MetricCard
-                title="Baseline"
+                title="Базовый сценарий"
                 accent="slate"
                 values={[
-                  { label: 'Revenue', value: formatMoney(result?.baseline.revenue) },
-                  { label: 'Margin', value: formatMoney(result?.baseline.margin) },
-                  { label: 'Cash flow', value: formatMoney(result?.baseline.cashFlow) },
-                  { label: 'Risk score', value: result ? `${result.baseline.riskScore.toFixed(1)}` : '—' },
-                  { label: 'Yield', value: result?.baseline.yield !== undefined ? `${result.baseline.yield.toFixed(1)}` : '—' },
+                  { label: 'Выручка', value: formatMoney(result?.baseline.revenue) },
+                  { label: 'Маржа', value: formatMoney(result?.baseline.margin) },
+                  { label: 'Денежный поток', value: formatMoney(result?.baseline.cashFlow) },
+                  { label: 'Индекс риска', value: result ? `${result.baseline.riskScore.toFixed(1)}` : '—' },
+                  { label: 'Урожайность', value: result?.baseline.yield !== undefined ? `${result.baseline.yield.toFixed(1)}` : '—' },
                 ]}
               />
               <MetricCard
-                title="Scenario Delta"
+                title="Изменение сценария"
                 accent="blue"
                 values={[
-                  { label: 'Revenue', value: formatSignedMoney(result?.scenarioDelta?.revenue) },
-                  { label: 'Margin', value: formatSignedMoney(result?.scenarioDelta?.margin) },
-                  { label: 'Cash flow', value: formatSignedMoney(result?.scenarioDelta?.cashFlow) },
-                  { label: 'Risk delta', value: result?.scenarioDelta ? `${prefixNumber(result.scenarioDelta.riskScore.toFixed(1))}` : '—' },
-                  { label: 'Yield delta', value: result?.scenarioDelta?.yield !== undefined ? prefixNumber(result.scenarioDelta.yield.toFixed(1)) : '—' },
+                  { label: 'Выручка', value: formatSignedMoney(result?.scenarioDelta?.revenue) },
+                  { label: 'Маржа', value: formatSignedMoney(result?.scenarioDelta?.margin) },
+                  { label: 'Денежный поток', value: formatSignedMoney(result?.scenarioDelta?.cashFlow) },
+                  { label: 'Сдвиг риска', value: result?.scenarioDelta ? `${prefixNumber(result.scenarioDelta.riskScore.toFixed(1))}` : '—' },
+                  { label: 'Сдвиг урожайности', value: result?.scenarioDelta?.yield !== undefined ? prefixNumber(result.scenarioDelta.yield.toFixed(1)) : '—' },
                 ]}
               />
               <MetricCard
-                title="Recommendation"
+                title="Рекомендация"
                 accent="emerald"
                 values={[
-                  { label: 'Risk tier', value: result ? result.riskTier.toUpperCase() : '—' },
-                  { label: 'Tradeoff', value: result?.tradeoff ?? '—' },
-                  { label: 'Trace', value: result?.traceId ?? '—' },
+                  { label: 'Уровень риска', value: result ? riskTierLabel(result.riskTier) : '—' },
+                  { label: 'Компромисс', value: result?.tradeoff ?? '—' },
+                  { label: 'Трасса', value: result?.traceId ?? '—' },
                 ]}
                 body={result?.recommendedAction ?? 'После расчёта здесь появится рекомендованное действие.'}
               />
@@ -570,10 +583,10 @@ export default function StrategyForecastsPage() {
 
               {activeTab === 'Прогноз' && (
                 <div className="grid gap-4 md:grid-cols-2">
-                  <RangeCard title="Revenue" range={result?.range.revenue} />
-                  <RangeCard title="Margin" range={result?.range.margin} />
-                  <RangeCard title="Cash flow" range={result?.range.cashFlow} />
-                  <RangeCard title="Yield" range={result?.range.yield} metric />
+                  <RangeCard title="Выручка" range={result?.range.revenue} />
+                  <RangeCard title="Маржа" range={result?.range.margin} />
+                  <RangeCard title="Денежный поток" range={result?.range.cashFlow} />
+                  <RangeCard title="Урожайность" range={result?.range.yield} metric />
                 </div>
               )}
 
@@ -584,7 +597,7 @@ export default function StrategyForecastsPage() {
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <p className="text-[14px] font-medium text-[#030213]">{driver.name}</p>
-                          <p className="text-[12px] text-[#717182]">Direction: {driver.direction === 'up' ? 'positive' : 'pressure'}</p>
+                          <p className="text-[12px] text-[#717182]">Направление: {driver.direction === 'up' ? 'рост' : 'давление'}</p>
                         </div>
                         <span className="rounded-full border border-black/10 bg-white px-2.5 py-1 text-[12px] font-mono text-[#030213]">
                           {(driver.strength * 100).toFixed(0)}%
@@ -600,7 +613,7 @@ export default function StrategyForecastsPage() {
                 <div className="space-y-3">
                   <div className="rounded-2xl border border-black/10 bg-slate-50 px-4 py-4">
                     <p className="text-[11px] font-medium uppercase tracking-widest text-[#717182]">
-                      Scenario outlook
+                      Сценарная оценка
                     </p>
                     <p className="mt-2 text-[14px] leading-relaxed text-[#030213]">
                       {scenarioSummary}
@@ -675,7 +688,7 @@ export default function StrategyForecastsPage() {
                 <div className="space-y-4">
                   <div className="rounded-2xl border border-black/10 bg-slate-50 px-4 py-4">
                     <p className="text-[11px] font-medium uppercase tracking-widest text-[#717182]">
-                      Optimization objective
+                      Цель оптимизации
                     </p>
                     <p className="mt-2 text-[15px] font-medium text-[#030213]">
                       {result?.optimizationPreview.objective ?? 'После расчёта здесь появится целевая функция оптимизации.'}
@@ -725,7 +738,7 @@ export default function StrategyForecastsPage() {
                           </div>
                         ))}
                         {!result && (
-                          <EmptyState text="После расчёта здесь появятся оптимизационные рекомендации по бюджету, риску и cash flow." />
+                          <EmptyState text="После расчёта здесь появятся оптимизационные рекомендации по бюджету, риску и денежному потоку." />
                         )}
                       </div>
                     </div>
@@ -740,7 +753,7 @@ export default function StrategyForecastsPage() {
                       <div className="flex items-start gap-3">
                         <AlertCircle size={16} className="mt-0.5 shrink-0" />
                         <div>
-                          <p className="font-medium">Расчёт выполнен в degraded mode</p>
+                          <p className="font-medium">Расчёт выполнен в ограниченном режиме</p>
                           <ul className="mt-2 space-y-1 text-[12px] text-amber-800">
                             {result.degradationReasons.map((reason) => (
                               <li key={reason}>{reason}</li>
@@ -766,44 +779,44 @@ export default function StrategyForecastsPage() {
 
           <aside className="space-y-6">
             <section className="rounded-3xl border border-black/10 bg-white p-6 shadow-sm shadow-black/[0.03]">
-              <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182]">Structured insights</p>
+              <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182]">Структурные выводы</p>
               <div className="mt-4 space-y-4">
-                <Insight title="Recommended action" body={result?.recommendedAction ?? 'Сначала выполните расчёт.'} />
-                <Insight title="Tradeoff" body={result?.tradeoff ?? 'После расчёта здесь появится ключевой компромисс.'} />
-                <Insight title="Scenario outlook" body={scenarioSummary} />
+                <Insight title="Рекомендованное действие" body={result?.recommendedAction ?? 'Сначала выполните расчёт.'} />
+                <Insight title="Компромисс" body={result?.tradeoff ?? 'После расчёта здесь появится ключевой компромисс.'} />
+                <Insight title="Сценарная оценка" body={scenarioSummary} />
                 <Insight
-                  title="Optimization objective"
+                  title="Цель оптимизации"
                   body={result?.optimizationPreview.objective ?? 'После расчёта здесь появится цель оптимизации.'}
                 />
-                <Insight title="Evidence" body={(result?.evidence ?? []).join(', ') || 'Источники будут перечислены после расчёта.'} />
+                <Insight title="Доказательства" body={(result?.evidence ?? []).join(', ') || 'Источники будут перечислены после расчёта.'} />
                 <Insight
-                  title="Lineage"
+                  title="Происхождение данных"
                   body={
                     (result?.lineage ?? [])
-                      .map((item) => `${item.source} [${item.status}]`)
+                      .map((item) => `${item.source} [${lineageStatusLabel(item.status)}]`)
                       .join(', ') || 'После расчёта здесь появится происхождение доменных сигналов.'
                   }
                 />
-                <Insight title="Season context" body={selectedSeason ? `${selectedSeason.year} • ${selectedSeason.status}` : 'Сезон не выбран'} />
+                <Insight title="Контекст сезона" body={selectedSeason ? `${selectedSeason.year} • ${selectedSeason.status}` : 'Сезон не выбран'} />
               </div>
             </section>
 
             <section className="rounded-3xl border border-black/10 bg-white p-6 shadow-sm shadow-black/[0.03]">
-              <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182]">Status</p>
+              <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182]">Статус</p>
               <div className="mt-4 space-y-3">
-                <StatusRow label="Forecast mode" value={result?.degraded ? 'degraded' : result ? 'nominal' : 'idle'} />
-                <StatusRow label="Domains" value={domains.join(', ')} />
-                <StatusRow label="Horizon" value={`${horizonDays} days`} />
-                <StatusRow label="Season" value={selectedSeason ? `${selectedSeason.year}` : '—'} />
+                <StatusRow label="Режим расчёта" value={result?.degraded ? 'ограниченный' : result ? 'штатный' : 'ожидание'} />
+                <StatusRow label="Домены" value={formatDomainList(domains)} />
+                <StatusRow label="Горизонт" value={`${horizonDays} дней`} />
+                <StatusRow label="Сезон" value={selectedSeason ? `${selectedSeason.year}` : '—'} />
               </div>
             </section>
 
             <section className="rounded-3xl border border-black/10 bg-white p-6 shadow-sm shadow-black/[0.03]">
-              <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182]">Recent runs</p>
+              <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182]">Последние запуски</p>
               <div className="mt-3 grid gap-2">
                 <div className="grid grid-cols-2 gap-2">
                   <select
-                    aria-label="History risk filter"
+                    aria-label="Фильтр уровня риска в истории"
                     value={historyRiskTierFilter}
                     onChange={(event) =>
                       setHistoryRiskTierFilter(
@@ -812,10 +825,10 @@ export default function StrategyForecastsPage() {
                     }
                     className="rounded-xl border border-black/10 bg-white px-3 py-2 text-[12px] text-[#030213]"
                   >
-                    <option value="all">Все risk tiers</option>
-                    <option value="low">low</option>
-                    <option value="medium">medium</option>
-                    <option value="high">high</option>
+                    <option value="all">Все уровни риска</option>
+                    <option value="low">низкий</option>
+                    <option value="medium">средний</option>
+                    <option value="high">высокий</option>
                   </select>
                   <label className="inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white px-3 py-2 text-[12px] text-[#030213]">
                     <input
@@ -823,7 +836,7 @@ export default function StrategyForecastsPage() {
                       checked={historyOnlyDegraded}
                       onChange={(event) => setHistoryOnlyDegraded(event.target.checked)}
                     />
-                    Только degraded
+                    Только ограниченный режим
                   </label>
                 </div>
                 <p className="text-[11px] text-[#717182]">
@@ -836,10 +849,10 @@ export default function StrategyForecastsPage() {
                     <div key={run.id} className="rounded-2xl border border-black/10 bg-slate-50 p-4">
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-[13px] font-medium text-[#030213]">
-                          {run.scenarioName || 'Baseline run'}
+                          {run.scenarioName || 'Базовый запуск'}
                         </p>
                         <span className="rounded-full border border-black/10 bg-white px-2.5 py-1 text-[11px] uppercase tracking-wide text-[#717182]">
-                          {run.riskTier}
+                          {riskTierLabel(run.riskTier)}
                         </span>
                       </div>
                       <p className="mt-2 text-[12px] text-[#717182]">
@@ -854,7 +867,7 @@ export default function StrategyForecastsPage() {
                       <div className="mt-3">
                         <button
                           type="button"
-                          onClick={() => void submitRunFeedback(run)}
+                          onClick={() => openFeedbackDialog(run)}
                           disabled={feedbackSubmittingRunId === run.id}
                           className="rounded-xl border border-black/10 bg-white px-3 py-2 text-[12px] font-medium text-[#030213] transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
                         >
@@ -882,6 +895,54 @@ export default function StrategyForecastsPage() {
                 )}
               </div>
             </section>
+
+            {feedbackDialogRun && (
+              <ActionDialog
+                title={feedbackDialogRun.evaluation.status === 'pending' ? 'Записать фактический результат' : 'Обновить фактический результат'}
+                description="Укажите фактические значения. Достаточно заполнить хотя бы одно поле или комментарий."
+                onClose={() => setFeedbackDialogRun(null)}
+                onConfirm={() => void submitRunFeedback(feedbackDialogRun)}
+                confirmLabel={feedbackSubmittingRunId === feedbackDialogRun.id ? 'Сохранение...' : 'Сохранить'}
+                confirmDisabled={feedbackSubmittingRunId === feedbackDialogRun.id}
+              >
+                <div className="grid grid-cols-1 gap-3">
+                  <input
+                    value={feedbackRevenueInput}
+                    onChange={(event) => setFeedbackRevenueInput(event.target.value)}
+                    type="number"
+                    className={inputClassName}
+                    placeholder="Фактическая выручка (RUB)"
+                  />
+                  <input
+                    value={feedbackMarginInput}
+                    onChange={(event) => setFeedbackMarginInput(event.target.value)}
+                    type="number"
+                    className={inputClassName}
+                    placeholder="Фактическая маржа (RUB)"
+                  />
+                  <input
+                    value={feedbackCashFlowInput}
+                    onChange={(event) => setFeedbackCashFlowInput(event.target.value)}
+                    type="number"
+                    className={inputClassName}
+                    placeholder="Фактический денежный поток (RUB)"
+                  />
+                  <input
+                    value={feedbackYieldInput}
+                    onChange={(event) => setFeedbackYieldInput(event.target.value)}
+                    type="number"
+                    className={inputClassName}
+                    placeholder="Фактическая урожайность"
+                  />
+                  <textarea
+                    value={feedbackNoteInput}
+                    onChange={(event) => setFeedbackNoteInput(event.target.value)}
+                    className="min-h-[84px] w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-[14px] text-[#030213] outline-none transition focus:border-black/30"
+                    placeholder="Комментарий (опционально)"
+                  />
+                </div>
+              </ActionDialog>
+            )}
 
             {error && (
               <section className="rounded-3xl border border-red-200 bg-red-50 p-5 text-[13px] text-red-700">
@@ -988,6 +1049,51 @@ function EmptyState({ text }: { text: string }) {
   );
 }
 
+function ActionDialog({
+  title,
+  description,
+  children,
+  onClose,
+  onConfirm,
+  confirmLabel,
+  confirmDisabled,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+  onClose: () => void;
+  onConfirm: () => void;
+  confirmLabel: string;
+  confirmDisabled?: boolean;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+      <div className="w-full max-w-lg rounded-2xl border border-black/10 bg-white p-5 shadow-2xl">
+        <h3 className="text-[16px] font-medium text-[#030213]">{title}</h3>
+        <p className="mt-1 text-[13px] text-[#717182]">{description}</p>
+        <div className="mt-4">{children}</div>
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-black/10 bg-white px-3 py-2 text-[12px] font-medium text-[#030213] transition hover:bg-slate-50"
+          >
+            Отмена
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={confirmDisabled}
+            className="rounded-lg bg-[#030213] px-3 py-2 text-[12px] font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function formatMoney(value?: number) {
   if (value === undefined || value === null || Number.isNaN(value)) return '—';
   return new Intl.NumberFormat('ru-RU', {
@@ -1006,6 +1112,35 @@ function prefixNumber(value: string) {
   return value.startsWith('-') || value === '0.0' || value === '0' ? value : `+${value}`;
 }
 
+function riskTierLabel(value: string) {
+  const map: Record<string, string> = {
+    low: 'низкий',
+    medium: 'средний',
+    high: 'высокий',
+  };
+  return map[value] ?? value;
+}
+
+function lineageStatusLabel(value: 'ok' | 'degraded' | 'not_requested' | 'missing') {
+  const map: Record<'ok' | 'degraded' | 'not_requested' | 'missing', string> = {
+    ok: 'штатно',
+    degraded: 'ограниченно',
+    not_requested: 'не запрашивалось',
+    missing: 'нет данных',
+  };
+  return map[value] ?? value;
+}
+
+function formatDomainList(domains: ForecastDomain[]) {
+  const map: Record<ForecastDomain, string> = {
+    agro: 'агро',
+    economics: 'экономика',
+    finance: 'финансы',
+    risk: 'риски',
+  };
+  return domains.map((domain) => map[domain] ?? domain).join(', ');
+}
+
 function buildScenarioSummary(result: StrategyForecastRunResponse): string {
   if (!result.scenarioDelta) {
     return 'Сценарий пока не рассчитан.';
@@ -1014,27 +1149,32 @@ function buildScenarioSummary(result: StrategyForecastRunResponse): string {
   const strongestDirection =
     Math.abs(result.scenarioDelta.margin) >= Math.abs(result.scenarioDelta.cashFlow)
       ? `маржа ${formatSignedMoney(result.scenarioDelta.margin)}`
-      : `cash flow ${formatSignedMoney(result.scenarioDelta.cashFlow)}`;
+      : `денежный поток ${formatSignedMoney(result.scenarioDelta.cashFlow)}`;
   const riskFragment =
     result.scenarioDelta.riskScore === 0
       ? 'без сдвига по риску'
       : `риск ${prefixNumber(result.scenarioDelta.riskScore.toFixed(1))}`;
 
-  return `Сценарий даёт ${strongestDirection}, revenue ${formatSignedMoney(result.scenarioDelta.revenue)} и ${riskFragment}. ${result.tradeoff}`;
+  return `Сценарий даёт ${strongestDirection}, выручка ${formatSignedMoney(result.scenarioDelta.revenue)} и ${riskFragment}. ${result.tradeoff}`;
 }
 
 function formatScenarioMeta(
   scenario: StrategyForecastScenarioRecord,
   seasons: SeasonListItem[],
 ): string {
+  const scopeLabelMap: Record<ScopeLevel, string> = {
+    company: 'компания',
+    farm: 'хозяйство',
+    field: 'поле',
+  };
   const season = seasons.find((item) => item.id === scenario.seasonId);
   const seasonLabel = season ? `${season.year}` : scenario.seasonId;
   return [
-    `${scenario.scopeLevel}`,
-    `season ${seasonLabel}`,
-    `${scenario.horizonDays}d`,
-    `${scenario.domains.length} domains`,
-    `saved ${new Date(scenario.updatedAt).toLocaleString('ru-RU')}`,
+    scopeLabelMap[scenario.scopeLevel] ?? scenario.scopeLevel,
+    `сезон ${seasonLabel}`,
+    `${scenario.horizonDays} дн.`,
+    `${scenario.domains.length} доменов`,
+    `сохранено ${new Date(scenario.updatedAt).toLocaleString('ru-RU')}`,
   ].join(' • ');
 }
 
@@ -1042,42 +1182,47 @@ function formatRunMeta(
   run: StrategyForecastRunHistoryItem,
   seasons: SeasonListItem[],
 ): string {
+  const scopeLabelMap: Record<ScopeLevel, string> = {
+    company: 'компания',
+    farm: 'хозяйство',
+    field: 'поле',
+  };
   const season = seasons.find((item) => item.id === run.seasonId);
   const seasonLabel = season ? `${season.year}` : run.seasonId;
   return [
-    run.scopeLevel,
-    `season ${seasonLabel}`,
-    `${run.horizonDays}d`,
-    run.degraded ? 'degraded' : 'nominal',
+    scopeLabelMap[run.scopeLevel] ?? run.scopeLevel,
+    `сезон ${seasonLabel}`,
+    `${run.horizonDays} дн.`,
+    run.degraded ? 'ограниченный' : 'штатный',
     new Date(run.createdAt).toLocaleString('ru-RU'),
   ].join(' • ');
 }
 
 function formatRunEvaluation(run: StrategyForecastRunHistoryItem): string {
   if (run.evaluation.status === 'pending') {
-    return 'Feedback pending';
+    return 'Ожидается обратная связь';
   }
 
   const deltas = [
     run.evaluation.revenueErrorPct !== null && run.evaluation.revenueErrorPct !== undefined
-      ? `revenue ${prefixNumber(run.evaluation.revenueErrorPct.toFixed(1))}%`
+      ? `выручка ${prefixNumber(run.evaluation.revenueErrorPct.toFixed(1))}%`
       : null,
     run.evaluation.marginErrorPct !== null && run.evaluation.marginErrorPct !== undefined
-      ? `margin ${prefixNumber(run.evaluation.marginErrorPct.toFixed(1))}%`
+      ? `маржа ${prefixNumber(run.evaluation.marginErrorPct.toFixed(1))}%`
       : null,
     run.evaluation.cashFlowErrorPct !== null && run.evaluation.cashFlowErrorPct !== undefined
-      ? `cash flow ${prefixNumber(run.evaluation.cashFlowErrorPct.toFixed(1))}%`
+      ? `денежный поток ${prefixNumber(run.evaluation.cashFlowErrorPct.toFixed(1))}%`
       : null,
     run.evaluation.yieldErrorPct !== null && run.evaluation.yieldErrorPct !== undefined
-      ? `yield ${prefixNumber(run.evaluation.yieldErrorPct.toFixed(1))}%`
+      ? `урожайность ${prefixNumber(run.evaluation.yieldErrorPct.toFixed(1))}%`
       : null,
   ].filter(Boolean);
 
   if (deltas.length === 0) {
-    return 'Feedback recorded';
+    return 'Обратная связь записана';
   }
 
-  return `Feedback: ${deltas.join(', ')}`;
+  return `Отклонение факта: ${deltas.join(', ')}`;
 }
 
 function parseOptionalNumber(value: string): number | undefined {

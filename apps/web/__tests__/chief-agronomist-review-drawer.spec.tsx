@@ -138,7 +138,6 @@ describe('ChiefAgronomistReviewDrawer', () => {
                 resolvedAt: '2026-03-12T09:00:00.000Z',
             },
         });
-        const promptSpy = jest.spyOn(window, 'prompt').mockReturnValue('');
 
         render(
             <ChiefAgronomistReviewDrawer
@@ -161,7 +160,6 @@ describe('ChiefAgronomistReviewDrawer', () => {
             expect(applyReviewOutcomeMock).toHaveBeenCalledWith('rev-2', { action: 'hand_off' });
         });
 
-        expect(await screen.findByText(/Outcome/i)).toBeInTheDocument();
-        promptSpy.mockRestore();
+        expect(await screen.findByText(/Итог/i)).toBeInTheDocument();
     });
 });

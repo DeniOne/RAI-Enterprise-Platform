@@ -80,6 +80,60 @@ function getSpeechRecognitionCtor(): SpeechRecognitionCtor | null {
   );
 }
 
+function formatUiError(error: unknown, fallback: string) {
+  const payload = (error as { response?: { data?: unknown; status?: number } })?.response?.data;
+  const status = (error as { response?: { status?: number } })?.response?.status;
+
+  if (Array.isArray((payload as { message?: unknown })?.message)) {
+    const message = ((payload as { message?: string[] }).message ?? [])
+      .map((item) => String(item))
+      .filter(Boolean)
+      .join("; ");
+    if (message) return message;
+  }
+
+  if (typeof (payload as { message?: unknown })?.message === "string") {
+    return (payload as { message: string }).message;
+  }
+
+  if (typeof payload === "string" && payload.trim().length > 0) {
+    return payload;
+  }
+
+  if (status === 500) {
+    return "Сервис временно недоступен. Повторите действие.";
+  }
+
+  return fallback;
+}
+
+function reviewStatusLabel(status: string) {
+  const map: Record<string, string> = {
+    completed: "завершено",
+    needs_more_context: "нужно больше контекста",
+    degraded: "ограниченный режим",
+  };
+  return map[status] ?? status;
+}
+
+function riskTierLabel(tier: string) {
+  const map: Record<string, string> = {
+    low: "низкий",
+    medium: "средний",
+    high: "высокий",
+  };
+  return map[tier] ?? tier;
+}
+
+function outcomeActionLabel(action: string) {
+  const map: Record<string, string> = {
+    accept: "принято",
+    hand_off: "передано человеку",
+    create_task: "создана задача",
+  };
+  return map[action] ?? action;
+}
+
 export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
   const router = useRouter();
   const memoryHintsEnabled = webFeatureFlags.memoryHints;
@@ -102,6 +156,7 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
   const [expertReview, setExpertReview] =
     useState<ChiefAgronomistReviewResponse | null>(null);
   const [expertOutcomeLoading, setExpertOutcomeLoading] = useState<string | null>(null);
+  const [expertOutcomeNote, setExpertOutcomeNote] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
@@ -158,7 +213,7 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
       if (!chiefAgronomistPanelEnabled) {
         setExpertReview(null);
         setExpertReviewError(
-          "Экспертная эскалация сейчас недоступна: выключен release gate или feature flag.",
+          "Экспертная эскалация сейчас недоступна: функция отключена в настройках релиза.",
         );
         return;
       }
@@ -197,9 +252,7 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
         const response = await api.experts.chiefAgronomistReview(payload);
         setExpertReview(response.data);
       } catch (error) {
-        setExpertReviewError(
-          (error as Error).message ?? "Не удалось получить экспертное заключение",
-        );
+        setExpertReviewError(formatUiError(error, "Не удалось получить экспертное заключение"));
       } finally {
         setExpertReviewLoading(false);
       }
@@ -231,19 +284,17 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
     action: "accept" | "hand_off" | "create_task",
   ) => {
     if (!expertReview) return;
-    const note = window.prompt("Комментарий к решению (опционально)", "") ?? "";
     try {
       setExpertReviewError(null);
       setExpertOutcomeLoading(action);
       const response = await api.experts.applyReviewOutcome(expertReview.reviewId, {
         action,
-        ...(note.trim() ? { note: note.trim() } : {}),
+        ...(expertOutcomeNote.trim() ? { note: expertOutcomeNote.trim() } : {}),
       });
       setExpertReview(response.data);
+      setExpertOutcomeNote("");
     } catch (error) {
-      setExpertReviewError(
-        (error as Error).message ?? "Не удалось применить outcome по expert review",
-      );
+      setExpertReviewError(formatUiError(error, "Не удалось применить итоговое действие"));
     } finally {
       setExpertOutcomeLoading(null);
     }
@@ -702,7 +753,7 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[11px] font-medium uppercase tracking-widest text-gray-400">
-                  Chief Agronomist Review
+                  Экспертная эскалация
                 </p>
                 <h3 className="mt-1 text-lg font-medium text-[#030213]">
                   Экспертное заключение
@@ -736,7 +787,7 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
               <div className="mt-6 space-y-4 overflow-y-auto pb-8">
                 <div className="rounded-2xl border border-black/10 bg-slate-50 px-4 py-4">
                   <p className="text-[11px] font-medium uppercase tracking-widest text-[#717182]">
-                    Verdict
+                    Вердикт
                   </p>
                   <p className="mt-2 text-[14px] leading-relaxed text-[#030213]">
                     {expertReview.verdict}
@@ -744,16 +795,18 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <CompactReviewCard label="Status" value={expertReview.status} />
-                  <CompactReviewCard label="Risk tier" value={expertReview.riskTier} />
+                  <CompactReviewCard label="Статус" value={reviewStatusLabel(expertReview.status)} />
+                  <CompactReviewCard label="Уровень риска" value={riskTierLabel(expertReview.riskTier)} />
                 </div>
                 {(expertReview.outcomeAction || expertReview.resolvedAt) && (
                   <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
                     <p className="text-[11px] font-medium uppercase tracking-widest text-emerald-800">
-                      Outcome
+                      Итог
                     </p>
                     <p className="mt-2 text-[13px] text-emerald-900">
-                      {expertReview.outcomeAction ?? "resolved"}
+                      {expertReview.outcomeAction
+                        ? outcomeActionLabel(expertReview.outcomeAction)
+                        : "решено"}
                       {expertReview.resolvedAt ? ` • ${new Date(expertReview.resolvedAt).toLocaleString("ru-RU")}` : ""}
                     </p>
                     {expertReview.outcomeNote && (
@@ -764,7 +817,7 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
                     {expertReview.createdTaskId && (
                       <div className="mt-3 flex flex-wrap items-center gap-2">
                         <p className="text-[13px] text-emerald-900">
-                          Task ID: {expertReview.createdTaskId}
+                          ID задачи: {expertReview.createdTaskId}
                         </p>
                         <button
                           type="button"
@@ -801,6 +854,12 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
                   title="Чего не хватает"
                   items={expertReview.missingContext ?? []}
                   emptyLabel="Дополнительный контекст не требуется."
+                />
+                <textarea
+                  value={expertOutcomeNote}
+                  onChange={(event) => setExpertOutcomeNote(event.target.value)}
+                  className="w-full min-h-[72px] rounded-xl border border-black/10 bg-white px-3 py-2 text-[13px] text-[#030213] outline-none transition focus:border-black/30"
+                  placeholder="Комментарий к решению (опционально)"
                 />
                 <div className="grid grid-cols-1 gap-2 pt-2">
                   <button

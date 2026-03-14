@@ -110,7 +110,7 @@ describe('StrategyForecastsPage', () => {
         await user.clear(screen.getByLabelText('Название сценария'));
         await user.type(screen.getByLabelText('Название сценария'), 'Сценарий роста');
         await user.type(screen.getByLabelText('Цена реализации, %'), '12');
-        await user.type(screen.getByLabelText('OPEX, %'), '-4');
+        await user.type(screen.getByLabelText('Операционные расходы, %'), '-4');
 
         await user.click(screen.getByRole('button', { name: /Сохранить сценарий/i }));
         await user.click(screen.getByRole('button', { name: 'Сценарии' }));
@@ -124,19 +124,19 @@ describe('StrategyForecastsPage', () => {
             );
         });
         expect((await screen.findAllByText('Сценарий роста')).length).toBeGreaterThan(1);
-        expect(screen.getByText(/saved/)).toBeInTheDocument();
+        expect(screen.getByText(/сохранено/i)).toBeInTheDocument();
 
         await user.clear(screen.getByLabelText('Название сценария'));
         await user.type(screen.getByLabelText('Название сценария'), 'Черновик');
         await user.clear(screen.getByLabelText('Цена реализации, %'));
-        await user.clear(screen.getByLabelText('OPEX, %'));
+        await user.clear(screen.getByLabelText('Операционные расходы, %'));
 
         const loadButtons = screen.getAllByRole('button', { name: /Загрузить/i });
         await user.click(loadButtons[0]);
 
         expect(screen.getByLabelText('Название сценария')).toHaveValue('Сценарий роста');
         expect(screen.getByLabelText('Цена реализации, %')).toHaveValue(12);
-        expect(screen.getByLabelText('OPEX, %')).toHaveValue(-4);
+        expect(screen.getByLabelText('Операционные расходы, %')).toHaveValue(-4);
     });
 
     it('renders optimization preview after forecast run', async () => {
@@ -264,14 +264,6 @@ describe('StrategyForecastsPage', () => {
             },
         });
 
-        const promptSpy = jest
-            .spyOn(window, 'prompt')
-            .mockReturnValueOnce('1000000')
-            .mockReturnValueOnce('280000')
-            .mockReturnValueOnce('190000')
-            .mockReturnValueOnce('4.3')
-            .mockReturnValueOnce('Факт по закрытию периода');
-
         render(<StrategyForecastsPage />);
 
         await waitFor(() => {
@@ -279,6 +271,12 @@ describe('StrategyForecastsPage', () => {
         });
 
         await user.click(await screen.findByRole('button', { name: 'Записать факт' }));
+        await user.type(screen.getByPlaceholderText('Фактическая выручка (RUB)'), '1000000');
+        await user.type(screen.getByPlaceholderText('Фактическая маржа (RUB)'), '280000');
+        await user.type(screen.getByPlaceholderText('Фактический денежный поток (RUB)'), '190000');
+        await user.type(screen.getByPlaceholderText('Фактическая урожайность'), '4.3');
+        await user.type(screen.getByPlaceholderText('Комментарий (опционально)'), 'Факт по закрытию периода');
+        await user.click(screen.getByRole('button', { name: 'Сохранить' }));
 
         await waitFor(() => {
             expect(submitFeedbackStrategyForecastMock).toHaveBeenCalledWith('run-1', {
@@ -290,8 +288,7 @@ describe('StrategyForecastsPage', () => {
             });
         });
 
-        expect(await screen.findByText(/Feedback: revenue \+2.1%/i)).toBeInTheDocument();
-        promptSpy.mockRestore();
+        expect(await screen.findByText(/Отклонение факта: выручка \+2.1%/i)).toBeInTheDocument();
     });
 
     it('applies history filters and paginates recent runs', async () => {
@@ -420,7 +417,7 @@ describe('StrategyForecastsPage', () => {
             }),
         );
 
-        await user.selectOptions(screen.getByLabelText('History risk filter'), 'high');
+        await user.selectOptions(screen.getByLabelText('Фильтр уровня риска в истории'), 'high');
 
         expect(await screen.findByText('Усилить risk-контур')).toBeInTheDocument();
         expect(historyStrategyForecastMock).toHaveBeenCalledWith(

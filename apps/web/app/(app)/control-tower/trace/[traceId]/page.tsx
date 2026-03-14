@@ -132,7 +132,7 @@ export default function TraceForensicsPage() {
   if (!traceId) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center font-sans tracking-tight">
-        <p className="text-[#717182] font-medium text-[13px]">MISSING_TRACE_ID: идентификатор отсутствует.</p>
+        <p className="text-[#717182] font-medium text-[13px]">TRACE_ID отсутствует.</p>
       </div>
     );
   }
@@ -292,7 +292,7 @@ export default function TraceForensicsPage() {
                             <div className="flex flex-wrap gap-2">
                               {entry.evidenceRefs.map((ref: any, idx: number) => (
                                 <span key={idx} className="text-[10px] font-mono text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
-                                  REF_{idx + 1}
+                                  ДОК_{idx + 1}
                                 </span>
                               ))}
                             </div>

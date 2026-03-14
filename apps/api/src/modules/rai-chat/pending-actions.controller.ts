@@ -4,6 +4,7 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  Logger,
   Param,
   Post,
   Query,
@@ -18,6 +19,8 @@ import { CurrentUser } from "../../shared/auth/current-user.decorator";
 import { TenantContextService } from "../../shared/tenant-context/tenant-context.service";
 import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
 import { PendingActionService } from "./security/pending-action.service";
+import { RaiToolsRegistry } from "./tools/rai-tools.registry";
+import { RaiToolName } from "../../shared/rai-chat/rai-tools.types";
 
 interface CurrentActor {
   id?: string;
@@ -44,9 +47,12 @@ export interface PendingActionDto {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN, UserRole.CEO, UserRole.MANAGER)
 export class PendingActionsController {
+  private readonly logger = new Logger(PendingActionsController.name);
+
   constructor(
     private readonly tenantContext: TenantContextService,
     private readonly pendingActionService: PendingActionService,
+    private readonly raiToolsRegistry: RaiToolsRegistry,
   ) {}
 
   @Get()
@@ -121,6 +127,7 @@ export class PendingActionsController {
       userId,
       role,
     );
+    await this.executeApprovedAction(updated, userId, role);
     return this.toDto(updated);
   }
 
@@ -136,6 +143,31 @@ export class PendingActionsController {
     }
     const updated = await this.pendingActionService.reject(id, companyId);
     return this.toDto(updated);
+  }
+
+  @Post(":id/execute")
+  @UseInterceptors(IdempotencyInterceptor)
+  async execute(
+    @Param("id") id: string,
+    @CurrentUser() user: CurrentActor,
+  ): Promise<PendingActionDto> {
+    const companyId = this.tenantContext.getCompanyId();
+    const userId = String(user.userId ?? user.id ?? "");
+    const role = (user.role as UserRole) ?? UserRole.MANAGER;
+    if (!companyId || !userId) {
+      throw new BadRequestException("Security Context is incomplete");
+    }
+    if (role !== UserRole.ADMIN && role !== UserRole.CEO) {
+      throw new ForbiddenException("EXECUTION_REQUIRES_ADMIN_OR_CEO");
+    }
+    const action = await this.pendingActionService.get(id, companyId);
+    if (action.status !== PendingActionStatus.APPROVED_FINAL) {
+      throw new BadRequestException(
+        `PENDING_ACTION_INVALID_STATE: expected APPROVED_FINAL, got ${action.status}`,
+      );
+    }
+    await this.executeApprovedAction(action, userId, role);
+    return this.toDto(action);
   }
 
   private toDto(row: {
@@ -173,5 +205,49 @@ export class PendingActionsController {
     } catch {
       return "[unserializable]";
     }
+  }
+
+  private async executeApprovedAction(
+    action: {
+      id: string;
+      companyId: string;
+      traceId: string;
+      toolName: string;
+      payload: unknown;
+    },
+    userId: string,
+    role: UserRole,
+  ): Promise<void> {
+    const toolName = this.parseToolName(action.toolName);
+    const payload =
+      action.payload && typeof action.payload === "object"
+        ? (action.payload as Record<string, unknown>)
+        : {};
+    try {
+      await this.raiToolsRegistry.execute(toolName, payload, {
+        companyId: action.companyId,
+        traceId: action.traceId,
+        userId,
+        userRole: role,
+        userConfirmed: true,
+        approvedPendingActionId: action.id,
+        agentRole: "governance_executor",
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "unknown_error";
+      this.logger.error(
+        `PENDING_ACTION_EXECUTION_FAILED actionId=${action.id} tool=${action.toolName} traceId=${action.traceId} reason=${message}`,
+      );
+      throw new BadRequestException(
+        `PENDING_ACTION_EXECUTION_FAILED: ${message}`,
+      );
+    }
+  }
+
+  private parseToolName(toolName: string): RaiToolName {
+    if ((Object.values(RaiToolName) as string[]).includes(toolName)) {
+      return toolName as RaiToolName;
+    }
+    throw new BadRequestException(`UNKNOWN_PENDING_ACTION_TOOL: ${toolName}`);
   }
 }

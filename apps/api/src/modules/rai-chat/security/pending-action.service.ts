@@ -79,6 +79,10 @@ export class PendingActionService {
     });
   }
 
+  async get(actionId: string, companyId: string) {
+    return this.getByIdAndCompany(actionId, companyId);
+  }
+
   async reject(actionId: string, companyId: string) {
     const action = await this.getByIdAndCompany(actionId, companyId);
     if (action.status !== PendingActionStatus.PENDING && action.status !== PendingActionStatus.APPROVED_FIRST) {

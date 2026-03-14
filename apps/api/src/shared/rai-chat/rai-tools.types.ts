@@ -66,6 +66,11 @@ export interface RaiToolActorContext {
   userRole?: string;
   /** Прямое пользовательское действие в живом UX считается явным подтверждением на уровне запроса. */
   userConfirmed?: boolean;
+  /**
+   * Выполнение ранее утвержденного PendingAction.
+   * Используется только после human-approval, чтобы не зациклиться в TOOL_FIRST/RiskPolicy блокировках.
+   */
+  approvedPendingActionId?: string;
 }
 
 /** Маппинг инструмент → riskLevel и domain для RiskPolicyEngine. */

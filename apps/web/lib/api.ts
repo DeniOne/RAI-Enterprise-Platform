@@ -864,6 +864,12 @@ export const api = {
                     'Idempotency-Key': buildIdempotencyKey('pending-action-approve-final', [id]),
                 },
             }),
+        execute: (id: string) =>
+            apiClient.post<PendingActionDto>(`/rai/pending-actions/${encodeURIComponent(id)}/execute`, undefined, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('pending-action-execute', [id]),
+                },
+            }),
         reject: (id: string, reason?: string) =>
             apiClient.post<PendingActionDto>(`/rai/pending-actions/${encodeURIComponent(id)}/reject`, { reason }, {
                 headers: {

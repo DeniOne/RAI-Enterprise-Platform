@@ -10,7 +10,7 @@ import {
   type FutureAgentManifestValidation,
   type FutureAgentTemplateItem,
 } from '@/lib/api';
-import { Settings2, UserCog, Bot, ShieldCheck } from 'lucide-react';
+import { Settings2, UserCog, Bot } from 'lucide-react';
 
 const LLM_MODELS = [
   { label: 'Gemini 3.1 Flash Lite', value: 'google/gemini-3.1-flash-lite-preview' },
@@ -166,6 +166,33 @@ function stringifyDelimitedList(value: string[] | undefined) {
   return (value ?? []).join(', ');
 }
 
+function formatUiError(error: unknown, fallback: string) {
+  const payload = (error as { response?: { data?: unknown; status?: number } })?.response?.data;
+  const status = (error as { response?: { status?: number } })?.response?.status;
+
+  if (Array.isArray((payload as { message?: unknown })?.message)) {
+    const message = ((payload as { message?: string[] }).message ?? [])
+      .map((item) => String(item))
+      .filter(Boolean)
+      .join('; ');
+    if (message) return message;
+  }
+
+  if (typeof (payload as { message?: unknown })?.message === 'string') {
+    return (payload as { message: string }).message;
+  }
+
+  if (typeof payload === 'string' && payload.trim().length > 0) {
+    return payload;
+  }
+
+  if (status === 500) {
+    return 'Сервис временно недоступен. Повторите действие.';
+  }
+
+  return fallback;
+}
+
 function buildDefaultManifest(params: {
   role: string;
   name: string;
@@ -254,7 +281,7 @@ function HeaderWithHint({ label, hint }: { label: string; hint?: string }) {
       <span>{label}</span>
       {hint ? (
         <span
-          className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-black/15 bg-white text-[10px] font-semibold normal-case tracking-normal text-[#717182] cursor-help"
+          className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-black/15 bg-white text-[10px] font-medium normal-case tracking-normal text-[#717182] cursor-help"
           title={hint}
           aria-label={hint}
         >
@@ -277,7 +304,7 @@ export default function AgentsPage() {
     api.agents
       .getConfig()
       .then((r) => setConfigs(r.data))
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(formatUiError(e, 'Не удалось загрузить реестр агентов')))
       .finally(() => setLoading(false));
   };
 
@@ -516,7 +543,7 @@ function AgentEditor({
   agent,
   onClose,
   onSaved,
-  setSaving,
+  setSaving: setParentSaving,
   createMode = false,
 }: {
   agent: AgentConfiguratorItem | null;
@@ -525,6 +552,7 @@ function AgentEditor({
   setSaving: (v: boolean) => void;
   createMode?: boolean;
 }) {
+  const [saving, setSaving] = useState(false);
   const [templates, setTemplates] = useState<FutureAgentTemplateItem[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(createMode);
   const [selectedTemplateId, setSelectedTemplateId] = useState<FutureAgentTemplateItem['templateId'] | ''>('');
@@ -559,7 +587,7 @@ function AgentEditor({
     api.agents
       .getOnboardingTemplates()
       .then((response) => setTemplates(response.data.templates))
-      .catch((error) => setErr((error as Error).message))
+      .catch((error) => setErr(formatUiError(error, 'Не удалось загрузить шаблоны онбординга')))
       .finally(() => setTemplatesLoading(false));
   }, [createMode]);
 
@@ -681,7 +709,7 @@ function AgentEditor({
       setValidation(response.data);
       return response.data;
     } catch (error) {
-      const message = (error as Error).message;
+      const message = formatUiError(error, 'Не удалось проверить манифест');
       setErr(message);
       setValidation(null);
       return null;
@@ -723,6 +751,7 @@ function AgentEditor({
       : undefined;
 
     setSaving(true);
+    setParentSaving(true);
     api.agents
       .createChangeRequest({
         name: name.trim(),
@@ -737,8 +766,11 @@ function AgentEditor({
         responsibilityBinding,
       }, scope)
       .then(() => onSaved())
-      .catch((e) => setErr((e as Error).message))
-      .finally(() => setSaving(false));
+      .catch((e) => setErr(formatUiError(e, 'Не удалось создать запрос на изменение')))
+      .finally(() => {
+        setSaving(false);
+        setParentSaving(false);
+      });
   };
 
   return (
@@ -749,22 +781,22 @@ function AgentEditor({
             <p className="text-[11px] font-medium uppercase tracking-widest text-[#717182] mb-1">
               {createMode ? 'Новый запрос на изменение' : 'Запрос на обновление'}
             </p>
-            <h2 className="text-2xl font-medium text-[#030213] tracking-tight">
-              {createMode ? 'Создать запрос на изменение' : `Запрос на изменение: ${agent?.agentName}`}
-            </h2>
+            <div className="inline-flex items-center gap-2">
+              <h2 className="text-2xl font-medium text-[#030213] tracking-tight">
+                {createMode ? 'Черновик запроса на изменение' : `Запрос на изменение: ${agent?.agentName}`}
+              </h2>
+              <span
+                className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-black/15 bg-white text-[11px] font-medium text-[#717182] cursor-help"
+                title="Изменения применяются только после согласования и публикации."
+                aria-label="Изменения применяются только после согласования и публикации."
+              >
+                i
+              </span>
+            </div>
           </div>
           <button type="button" onClick={onClose} className="text-[#717182] hover:text-[#030213] transition-colors p-2 -mr-2">
             ✕
           </button>
-        </div>
-
-        <div className="mb-5 p-4 bg-slate-50 border border-black/5 rounded-xl">
-          <div className="flex items-start gap-3">
-            <ShieldCheck size={18} className="text-[#030213] mt-0.5" />
-            <p className="text-[12px] text-[#717182] leading-relaxed">
-              Эта форма не меняет настройки сразу. Сначала создаётся запрос, затем он проходит проверку и только после этого может быть утверждён.
-            </p>
-          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto pr-4 -mr-4 space-y-6">
@@ -790,9 +822,6 @@ function AgentEditor({
                   </option>
                 ))}
               </select>
-              <p className="mt-2 text-[11px] text-[#717182] leading-relaxed">
-                Шаблон подставляет стандартные настройки исполнения и управления. Для `crm_agent`, `front_office_agent` и `contracts_agent` серверные шаблоны уже существуют.
-              </p>
             </div>
           )}
 
@@ -909,7 +938,12 @@ function AgentEditor({
           </div>
 
           <div>
-              <label className="mb-2 block text-[13px] font-medium text-[#717182]">Базовый агент</label>
+            <label className="mb-2 block text-[13px] font-medium text-[#717182]">
+              <HeaderWithHint
+                label="Базовый агент"
+                hint="Для новой роли это источник исполнения и набора контрактов по умолчанию."
+              />
+            </label>
             <select
               value={executionAdapterRole}
               onChange={(e) => setExecutionAdapterRole(e.target.value)}
@@ -920,17 +954,16 @@ function AgentEditor({
                 <option key={adapterRole} value={adapterRole}>{roleOptionLabel(adapterRole)}</option>
               ))}
             </select>
-            <p className="mt-2 text-[11px] text-[#717182] leading-relaxed">
-              Для новых ролей здесь выбирается, какой базовый агент будет выполнять запросы.
-            </p>
           </div>
 
           {createMode && (
             <div className="space-y-4 rounded-2xl border border-black/10 bg-slate-50 p-4">
               <div>
-                <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182] mb-3">Связка ответственности</p>
-                <p className="text-[12px] text-[#717182] leading-relaxed">
-                  Здесь задаётся, от какого канонического профиля ответственности наследуется новый агент и какие интенты ему разрешены.
+                <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182] mb-3">
+                  <HeaderWithHint
+                    label="Связка ответственности"
+                    hint="Определяет профиль наследования и допустимые интенты для новой роли."
+                  />
                 </p>
               </div>
 
@@ -1063,9 +1096,11 @@ function AgentEditor({
             <div className="rounded-2xl border border-black/10 bg-white p-4 space-y-3">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                      <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182]">Проверка манифеста</p>
-                      <p className="text-[12px] text-[#717182] leading-relaxed">
-                    Перед отправкой манифест проверяется серверным валидатором на совместимость исполнения, управления и ответственности.
+                  <p className="text-[12px] font-medium uppercase tracking-widest text-[#717182]">
+                    <HeaderWithHint
+                      label="Проверка манифеста"
+                      hint="Проверяется совместимость исполнения, управления и профиля ответственности."
+                    />
                   </p>
                 </div>
                 <button
@@ -1119,6 +1154,7 @@ function AgentEditor({
           <button
             type="button"
             onClick={onClose}
+            disabled={saving}
             className="px-5 py-2.5 rounded-lg text-[13px] font-medium border border-black/10 hover:bg-slate-50 transition-colors"
           >
             Отмена
@@ -1126,9 +1162,10 @@ function AgentEditor({
           <button
             type="button"
             onClick={save}
+            disabled={saving}
             className="px-5 py-2.5 rounded-lg text-[13px] font-medium bg-[#030213] text-white hover:bg-black transition-colors"
           >
-            Отправить на согласование
+            {saving ? 'Отправка...' : 'Отправить на согласование'}
           </button>
         </div>
       </div>
