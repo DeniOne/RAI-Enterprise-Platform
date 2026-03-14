@@ -1,0 +1,2068 @@
+Project Tree: F:\Matrix_Gin
+=========================================
+├── .agent
+│   ├── rules
+│   │   └── matrixgin.md
+│   └── workflows
+│       └── matrixgin.md
+├── .github
+│   └── workflows
+│       ├── ci.yml
+│       └── personnel-tests.yml
+├── .gitignore
+├── ANTIGRAVITY SOFTWARE FACTORY — ORCHESTRATOR PROMPT.md
+├── backend
+│   ├── .dockerignore
+│   ├── .env
+│   ├── .env.example
+│   ├── .eslintrc.js
+│   ├── .prettierrc
+│   ├── check-purchases.ts
+│   ├── check-user.ts
+│   ├── check_users.sql
+│   ├── cleanup.sql
+│   ├── compilation_errors.txt
+│   ├── create_superuser.sql
+│   ├── diagnose-auth.ts
+│   ├── Dockerfile
+│   ├── implementation_plan.md
+│   ├── jest.config.js
+│   ├── logs
+│   │   ├── combined.log
+│   │   └── error.log
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── patch.sql
+│   ├── prisma
+│   │   ├── desktop.ini
+│   │   ├── migrations
+│   │   │   ├── 20240129153000_manual_foundation_fix
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20251121191152_init
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20251121192118_create_employees_departments
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20251121192346_update_employees_departments_schema
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20251121194230_create_tasks_schema
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20251121200043_create_economy_schema
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20251121211213_add_telegram_support
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20251121222215_create_daily_stats_view
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20251121222550_create_audit_log_table
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20251121222857_add_consent_fields
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20251121224343_add_store_models
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20251122090000_add_gamification
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20251124065616_corporate_university
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20251124211544_add_gamification_features
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260109213631_add_core_domain_models_phase_0_1
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260112171431_init_registry
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260112173002_registry_relationships
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260112194559_add_registry_projections
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260118110633_store_purchase_core_phase0
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260118232329_add_ai_feedback_table
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260120154429_add_participation_status_and_ranks
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260120234728_add_course_photocompany_fields
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260121001702_add_photocompany_result_event
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260121103331_add_anti_fraud_signals
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260121171754_add_created_by_to_course
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260122012936_create_personnel_hr_module
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260122102346_create_personnel_file_number_seq
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260122161055_library_archive_module
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260123170210_canon_v2_foundation_layer
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260123190144_canon_v2_2_foundation
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260126194931_add_video_required_to_material
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260126230713_add_must_reset_password_flag
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260127200730_add_registration_requests
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260127202621_rename_enums_to_lowercase
+│   │   │   │   └── migration.sql
+│   │   │   ├── 20260128172535_add_foundation_fsm_fields
+│   │   │   │   └── migration.sql
+│   │   │   ├── add_course_photocompany_fields.md
+│   │   │   ├── COMPONENT_1_SELF_REVIEW.md
+│   │   │   ├── desktop.ini
+│   │   │   └── migration_lock.toml
+│   │   ├── prisma.config.ts
+│   │   ├── schema.prisma
+│   │   ├── seed.ts
+│   │   └── seeds
+│   │       ├── departments-structure.sql
+│   │       └── desktop.ini
+│   ├── query.sql
+│   ├── reset-admin.ts
+│   ├── schema_dump.prisma
+│   ├── schema_dump_utf8.prisma
+│   ├── scripts
+│   │   ├── add-labels-to-entities.ts
+│   │   ├── apply-translation.ts
+│   │   ├── backfill-foundation.ts
+│   │   ├── cleanup-db.ts
+│   │   ├── cleanup_users.ts
+│   │   ├── debug-check-requests.ts
+│   │   ├── final-replace-labels.ts
+│   │   ├── generate-translation-registry.ts
+│   │   ├── list-untranslated.ts
+│   │   ├── load-additional-entity-types.ts
+│   │   ├── load-all-entities.ts
+│   │   ├── replace-all-labels.ts
+│   │   ├── replace-labels.ts
+│   │   ├── seed-foundation-gate.ts
+│   │   └── translate-registry.ts
+│   ├── services
+│   │   └── university
+│   │       └── src
+│   ├── src
+│   │   ├── access
+│   │   │   └── mg-chat-acl
+│   │   │       ├── acl.middleware.ts
+│   │   │       ├── acl.policy.ts
+│   │   │       ├── acl.resolver.ts
+│   │   │       ├── acl.test.ts
+│   │   │       ├── acl.types.ts
+│   │   │       ├── index.ts
+│   │   │       └── README.md
+│   │   ├── ai-ops
+│   │   │   ├── ai-feedback.service.ts
+│   │   │   ├── ai-ops.controller.ts
+│   │   │   ├── ai-ops.guard.ts
+│   │   │   ├── ai-ops.routes.ts
+│   │   │   ├── ai-ops.service.ts
+│   │   │   ├── ai-ops.types.ts
+│   │   │   ├── ai-sandbox.adapter.ts
+│   │   │   ├── dto
+│   │   │   │   ├── feedback-analytics.dto.ts
+│   │   │   │   ├── feedback-response.dto.ts
+│   │   │   │   └── submit-feedback.dto.ts
+│   │   │   └── feedback-ethics.guard.ts
+│   │   ├── config
+│   │   │   ├── ai
+│   │   │   │   ├── agent_card.json
+│   │   │   │   ├── config.loader.ts
+│   │   │   │   ├── constitution.md
+│   │   │   │   ├── README.md
+│   │   │   │   └── system_prompt.md
+│   │   │   ├── cache.ts
+│   │   │   ├── database.ts
+│   │   │   ├── desktop.ini
+│   │   │   ├── foundation.constants.ts
+│   │   │   ├── logger.ts
+│   │   │   ├── mvp-learning-contour.config.ts
+│   │   │   ├── passport.ts
+│   │   │   ├── prisma.ts
+│   │   │   └── swagger.ts
+│   │   ├── controllers
+│   │   │   ├── adaptation.controller.ts
+│   │   │   ├── analytics.controller.ts
+│   │   │   ├── auth.controller.ts
+│   │   │   ├── department.controller.ts
+│   │   │   ├── desktop.ini
+│   │   │   ├── economy.controller.ts
+│   │   │   ├── employee-registration.controller.ts
+│   │   │   ├── employee.controller.ts
+│   │   │   ├── enrollment.controller.ts
+│   │   │   ├── foundation.controller.ts
+│   │   │   ├── gamification.controller.ts
+│   │   │   ├── growth-matrix.controller.ts
+│   │   │   ├── manager-tools.controller.ts
+│   │   │   ├── ofs.controller.ts
+│   │   │   ├── production.controller.ts
+│   │   │   ├── status.controller.ts
+│   │   │   ├── task.controller.ts
+│   │   │   ├── telegram.controller.ts
+│   │   │   └── university.controller.ts
+│   │   ├── core
+│   │   │   └── canon
+│   │   │       ├── canonicalCheckResult.ts
+│   │   │       ├── canonicalViolation.ts
+│   │   │       ├── CanonicalViolationError.ts
+│   │   │       ├── canonicalViolationLogger.ts
+│   │   │       ├── gmcCanonicalGuard.ts
+│   │   │       ├── index.ts
+│   │   │       ├── mcCanonicalGuard.ts
+│   │   │       └── registry
+│   │   │           ├── canonicalGuardRegistry.ts
+│   │   │           └── index.ts
+│   │   ├── cron
+│   │   ├── desktop.ini
+│   │   ├── diagnose_foundation.ts
+│   │   ├── dto
+│   │   │   ├── aggregate
+│   │   │   │   ├── aggregate.schema.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── auth
+│   │   │   │   ├── auth.dto.ts
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── index.ts
+│   │   │   ├── cabinet
+│   │   │   │   ├── cabinet.dto.ts
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── index.ts
+│   │   │   ├── common
+│   │   │   │   ├── common.enums.ts
+│   │   │   │   ├── common.types.ts
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── index.ts
+│   │   │   ├── content
+│   │   │   │   ├── content.dto.ts
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── index.ts
+│   │   │   ├── departments
+│   │   │   │   ├── department.dto.ts
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── index.ts
+│   │   │   ├── desktop.ini
+│   │   │   ├── economy
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── economy.dto.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── education
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── education.dto.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── emotional
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── emotional.dto.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── employees
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── employee.dto.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── ethics
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── ethics.dto.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── event
+│   │   │   │   ├── event.schema.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── executive
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── executive.dto.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── feedback
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── feedback.dto.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── gamification
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── gamification.dto.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── hr-analytics
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── hr-analytics.dto.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── index.ts
+│   │   │   ├── kaizen
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── index.ts
+│   │   │   │   └── kaizen.dto.ts
+│   │   │   ├── knowledge
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── index.ts
+│   │   │   │   └── knowledge.dto.ts
+│   │   │   ├── legal
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── index.ts
+│   │   │   │   └── legal.dto.ts
+│   │   │   ├── package-lock.json
+│   │   │   ├── package.json
+│   │   │   ├── production
+│   │   │   │   └── production-session.dto.ts
+│   │   │   ├── QUICK_REFERENCE.md
+│   │   │   ├── rank
+│   │   │   ├── README.md
+│   │   │   ├── role-contract
+│   │   │   │   ├── index.ts
+│   │   │   │   └── role-contract.schema.ts
+│   │   │   ├── social
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── index.ts
+│   │   │   │   └── social.dto.ts
+│   │   │   ├── status
+│   │   │   │   ├── assign-status.dto.ts
+│   │   │   │   └── status-response.dto.ts
+│   │   │   ├── strategy
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── index.ts
+│   │   │   │   └── strategy.dto.ts
+│   │   │   ├── tasks
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── index.ts
+│   │   │   │   └── task.dto.ts
+│   │   │   ├── tsconfig.json
+│   │   │   └── university
+│   │   │       ├── academy.dto.ts
+│   │   │       ├── course.dto.ts
+│   │   │       ├── desktop.ini
+│   │   │       ├── enrollment.dto.ts
+│   │   │       ├── index.ts
+│   │   │       ├── material.dto.ts
+│   │   │       ├── skill.dto.ts
+│   │   │       └── trainer.dto.ts
+│   │   ├── engines
+│   │   │   ├── ai
+│   │   │   │   ├── ai-guardrails.ts
+│   │   │   │   ├── analyst
+│   │   │   │   │   ├── ai-analyst.ts
+│   │   │   │   │   ├── analyst.types.ts
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── auditor
+│   │   │   │   │   ├── ai-auditor.ts
+│   │   │   │   │   ├── auditor.types.ts
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── coach
+│   │   │   │   │   ├── ai-coach.ts
+│   │   │   │   │   ├── coach.types.ts
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── llm.adapter.ts
+│   │   │   │   ├── ops-advisor
+│   │   │   │   │   ├── ai-ops-advisor.ts
+│   │   │   │   │   ├── index.ts
+│   │   │   │   │   └── ops-advisor.types.ts
+│   │   │   │   └── orchestrator
+│   │   │   │       ├── ai-orchestrator.ts
+│   │   │   │       ├── index.ts
+│   │   │   │       └── orchestrator.types.ts
+│   │   │   ├── anti-fraud.engine.ts
+│   │   │   ├── kpi
+│   │   │   │   ├── formulas
+│   │   │   │   │   ├── index.ts
+│   │   │   │   │   ├── nps.formula.ts
+│   │   │   │   │   ├── revenue.formula.ts
+│   │   │   │   │   └── sessions.formula.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── kpi-engine.ts
+│   │   │   │   └── kpi-recorder.ts
+│   │   │   ├── qualification
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── qualification-engine.ts
+│   │   │   │   ├── qualification-recorder.ts
+│   │   │   │   └── rules
+│   │   │   │       ├── downgrade.rule.ts
+│   │   │   │       ├── index.ts
+│   │   │   │       └── upgrade.rule.ts
+│   │   │   └── reward
+│   │   │       ├── index.ts
+│   │   │       ├── reward-engine.ts
+│   │   │       ├── reward-recorder.ts
+│   │   │       └── rules
+│   │   │           ├── feedback.rule.ts
+│   │   │           ├── index.ts
+│   │   │           ├── shift.rule.ts
+│   │   │           └── training.rule.ts
+│   │   ├── entities
+│   │   │   ├── desktop.ini
+│   │   │   └── user.entity.ts
+│   │   ├── entity-cards
+│   │   │   ├── __tests__
+│   │   │   │   └── entity-card.test.ts
+│   │   │   ├── entity-card.builder.ts
+│   │   │   ├── entity-card.cache.ts
+│   │   │   ├── entity-card.controller.ts
+│   │   │   ├── entity-card.guard.ts
+│   │   │   ├── entity-card.service.ts
+│   │   │   ├── entity-card.types.ts
+│   │   │   └── index.ts
+│   │   ├── events
+│   │   │   ├── university
+│   │   │   │   ├── course-completed.handler.ts
+│   │   │   │   ├── notification.handler.ts
+│   │   │   │   └── photocompany-result.handler.ts
+│   │   │   └── university-event.dispatcher.ts
+│   │   ├── exceptions
+│   │   │   └── index.ts
+│   │   ├── graph
+│   │   │   ├── graph.controller.ts
+│   │   │   ├── graph.guard.ts
+│   │   │   ├── graph.routes.ts
+│   │   │   └── graph.service.ts
+│   │   ├── guards
+│   │   │   ├── foundation.guard.ts
+│   │   │   └── mvp-learning-contour.guard.ts
+│   │   ├── impact
+│   │   │   ├── impact.controller.ts
+│   │   │   ├── impact.guard.ts
+│   │   │   ├── impact.routes.ts
+│   │   │   └── impact.service.ts
+│   │   ├── index.ts
+│   │   ├── matrixcoin-economy
+│   │   │   ├── controllers
+│   │   │   │   ├── analytics.controller.ts
+│   │   │   │   ├── economy.controller.ts
+│   │   │   │   └── store.controller.ts
+│   │   │   ├── core
+│   │   │   │   ├── auction.logic.ts
+│   │   │   │   ├── auction.types.ts
+│   │   │   │   ├── audit.types.ts
+│   │   │   │   ├── economy.constants.ts
+│   │   │   │   ├── economy.enums.ts
+│   │   │   │   ├── gmc-recognition.logic.ts
+│   │   │   │   ├── gmc-recognition.types.ts
+│   │   │   │   ├── gmc.types.ts
+│   │   │   │   ├── governance.logic.ts
+│   │   │   │   ├── governance.types.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── mc.state-machine.ts
+│   │   │   │   ├── mc.types.ts
+│   │   │   │   ├── purchase.types.ts
+│   │   │   │   ├── store-eligibility.logic.ts
+│   │   │   │   └── store.types.ts
+│   │   │   ├── dto
+│   │   │   │   ├── analytics.dto.ts
+│   │   │   │   ├── auction.dto.ts
+│   │   │   │   ├── economy-api.dto.ts
+│   │   │   │   ├── gmc.dto.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── mc.dto.ts
+│   │   │   │   └── store.dto.ts
+│   │   │   ├── ERROR_REGISTRY.md
+│   │   │   ├── guards
+│   │   │   │   ├── ai.guard.ts
+│   │   │   │   ├── auction.guards.ts
+│   │   │   │   ├── automation.guard.ts
+│   │   │   │   ├── gmc-recognition.guards.ts
+│   │   │   │   ├── gmc.guard.ts
+│   │   │   │   ├── gmc.invariant-guards.ts
+│   │   │   │   ├── governance.guards.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── mc.guard.ts
+│   │   │   │   ├── mc.invariant-guards.ts
+│   │   │   │   └── store-eligibility.guards.ts
+│   │   │   ├── index.ts
+│   │   │   ├── integration
+│   │   │   │   ├── contracts.ts
+│   │   │   │   ├── guards.ts
+│   │   │   │   ├── matrix.ts
+│   │   │   │   └── services.ts
+│   │   │   ├── matrixcoin-economy.module.ts
+│   │   │   └── services
+│   │   │       ├── ai-adapter.interface.ts
+│   │   │       ├── analytics.service.ts
+│   │   │       ├── auction.service.interface.ts
+│   │   │       ├── auction.service.ts
+│   │   │       ├── audit-event.repository.ts
+│   │   │       ├── economy.adapters.ts
+│   │   │       ├── gmc-recognition.service.ts
+│   │   │       ├── gmc.service.interface.ts
+│   │   │       ├── gmc.service.ts
+│   │   │       ├── governance.service.ts
+│   │   │       ├── index.ts
+│   │   │       ├── mc.service.interface.ts
+│   │   │       ├── mc.service.ts
+│   │   │       ├── persistence.repositories.ts
+│   │   │       ├── store-eligibility.adapter.ts
+│   │   │       ├── store-eligibility.service.ts
+│   │   │       ├── store-purchase.service.ts
+│   │   │       └── store.service.interface.ts
+│   │   ├── mes
+│   │   │   ├── config
+│   │   │   │   └── mes-rates.ts
+│   │   │   ├── controllers
+│   │   │   │   └── mes.controller.ts
+│   │   │   ├── dto
+│   │   │   │   └── mes.dto.ts
+│   │   │   ├── mes.routes.ts
+│   │   │   ├── services
+│   │   │   │   ├── defect.service.ts
+│   │   │   │   ├── mes.service.ts
+│   │   │   │   ├── production-order.service.ts
+│   │   │   │   ├── quality.service.ts
+│   │   │   │   └── work-order.service.ts
+│   │   │   └── verify-sprint-10.ts
+│   │   ├── mg-chat
+│   │   │   ├── .env
+│   │   │   ├── contracts
+│   │   │   │   ├── contract-loader.ts
+│   │   │   │   ├── contract-validator.ts
+│   │   │   │   ├── contract.types.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── cron
+│   │   │   │   └── morning-greeting.cron.ts
+│   │   │   ├── delete-webhook.js
+│   │   │   ├── dispatcher
+│   │   │   │   ├── action-dispatcher.ts
+│   │   │   │   ├── dispatcher.types.ts
+│   │   │   │   ├── examples.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   └── README.md
+│   │   │   ├── errors
+│   │   │   │   ├── error-detector.ts
+│   │   │   │   ├── error-router.ts
+│   │   │   │   ├── error.types.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── mg-chat-error.ts
+│   │   │   │   └── README.md
+│   │   │   ├── example.handler.ts
+│   │   │   ├── examples
+│   │   │   │   └── mg_intent_map_namespaces.json
+│   │   │   ├── get-ngrok-url.js
+│   │   │   ├── index.ts
+│   │   │   ├── integration
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── README.md
+│   │   │   │   ├── telegram.adapter.acl.test.ts
+│   │   │   │   ├── telegram.adapter.ts
+│   │   │   │   ├── telegram.normalizer.ts
+│   │   │   │   ├── telegram.sender.ts
+│   │   │   │   ├── telegram.types.ts
+│   │   │   │   └── telegram.webhook.ts
+│   │   │   ├── intent
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── intent-matcher.ts
+│   │   │   │   ├── intent-resolver.ts
+│   │   │   │   ├── intent.types.ts
+│   │   │   │   └── README.md
+│   │   │   ├── INTENT_MAP_V2_CHANGELOG.md
+│   │   │   ├── INTENT_NAMESPACES.md
+│   │   │   ├── lint
+│   │   │   │   └── contract-linter.js
+│   │   │   ├── logs
+│   │   │   │   ├── combined.log
+│   │   │   │   └── error.log
+│   │   │   ├── MG_CHAT_V2_STATUS.md
+│   │   │   ├── NGROK_ALTERNATIVES.md
+│   │   │   ├── NGROK_SETUP.md
+│   │   │   ├── package-lock.json
+│   │   │   ├── package.json
+│   │   │   ├── PRODUCTION.md
+│   │   │   ├── PROGRESS.md
+│   │   │   ├── README.md
+│   │   │   ├── scenarios
+│   │   │   │   ├── employee.scenario.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── manager.scenario.ts
+│   │   │   │   ├── scenario-router.ts
+│   │   │   │   └── scenario.types.ts
+│   │   │   ├── server.ts
+│   │   │   ├── setup-webhook.js
+│   │   │   ├── start-bot.bat
+│   │   │   ├── start-production.bat
+│   │   │   ├── telegram
+│   │   │   │   ├── examples.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── keyboard-renderer.ts
+│   │   │   │   ├── README.md
+│   │   │   │   ├── telegram-renderer.ts
+│   │   │   │   └── telegram.types.ts
+│   │   │   ├── test-local.js
+│   │   │   ├── TESTING.md
+│   │   │   └── verify-sprint-11.ts
+│   │   ├── middleware
+│   │   │   ├── audit-log.middleware.ts
+│   │   │   ├── auth.middleware.ts
+│   │   │   ├── desktop.ini
+│   │   │   ├── error.middleware.ts
+│   │   │   ├── foundation.middleware.ts
+│   │   │   ├── mvp-learning-contour.middleware.ts
+│   │   │   ├── roles.middleware.ts
+│   │   │   └── validation.middleware.ts
+│   │   ├── migrations
+│   │   │   └── desktop.ini
+│   │   ├── modules
+│   │   │   ├── library
+│   │   │   │   ├── controllers
+│   │   │   │   │   └── library.controller.ts
+│   │   │   │   ├── dto
+│   │   │   │   │   ├── archive-document.dto.ts
+│   │   │   │   │   ├── create-document.dto.ts
+│   │   │   │   │   ├── create-version.dto.ts
+│   │   │   │   │   └── destroy-document.dto.ts
+│   │   │   │   ├── events
+│   │   │   │   │   └── library-audit.events.ts
+│   │   │   │   ├── guards
+│   │   │   │   │   └── legal-only.guard.ts
+│   │   │   │   ├── library.module.ts
+│   │   │   │   ├── listeners
+│   │   │   │   │   └── personnel-archiving.listener.ts
+│   │   │   │   ├── services
+│   │   │   │   │   ├── document.service.ts
+│   │   │   │   │   ├── link.service.ts
+│   │   │   │   │   ├── storage.service.ts
+│   │   │   │   │   └── version.service.ts
+│   │   │   │   └── tests
+│   │   │   │       └── document.service.spec.ts
+│   │   │   └── personnel
+│   │   │       ├── __tests__
+│   │   │       │   ├── hr-event-validator.test.ts
+│   │   │       │   ├── hr-status-fsm.test.ts
+│   │   │       │   ├── integration
+│   │   │       │   │   ├── ai-contour-denial.test.ts
+│   │   │       │   │   ├── automation-prevention.test.ts
+│   │   │       │   │   ├── employee-onboarding.test.ts
+│   │   │       │   │   ├── event-causality.test.ts
+│   │   │       │   │   ├── event-emission.test.ts
+│   │   │       │   │   ├── event-immutability.test.ts
+│   │   │       │   │   ├── event-negative.test.ts
+│   │   │       │   │   └── rbac.test.ts
+│   │   │       │   ├── labor-contract.service.test.ts
+│   │   │       │   ├── personnel-document.service.test.ts
+│   │   │       │   └── personnel-order.service.test.ts
+│   │   │       ├── controllers
+│   │   │       │   ├── index.ts
+│   │   │       │   ├── labor-contracts.controller.ts
+│   │   │       │   ├── personnel-documents.controller.ts
+│   │   │       │   ├── personnel-files.controller.ts
+│   │   │       │   └── personnel-orders.controller.ts
+│   │   │       ├── domain
+│   │   │       │   ├── hr-event-validator.ts
+│   │   │       │   └── hr-status-fsm.ts
+│   │   │       ├── dto
+│   │   │       │   ├── request
+│   │   │       │   │   ├── cancel-order.dto.ts
+│   │   │       │   │   ├── create-amendment.dto.ts
+│   │   │       │   │   ├── create-contract.dto.ts
+│   │   │       │   │   ├── create-order.dto.ts
+│   │   │       │   │   ├── create-personal-file.dto.ts
+│   │   │       │   │   ├── index.ts
+│   │   │       │   │   ├── sign-order.dto.ts
+│   │   │       │   │   ├── terminate-contract.dto.ts
+│   │   │       │   │   ├── update-status.dto.ts
+│   │   │       │   │   └── upload-document.dto.ts
+│   │   │       │   └── response
+│   │   │       │       ├── contract-response.dto.ts
+│   │   │       │       ├── document-response.dto.ts
+│   │   │       │       ├── index.ts
+│   │   │       │       ├── order-response.dto.ts
+│   │   │       │       └── personal-file-response.dto.ts
+│   │   │       ├── guards
+│   │   │       │   ├── index.ts
+│   │   │       │   ├── personnel-access.guard.ts
+│   │   │       │   └── require-director.guard.ts
+│   │   │       ├── listeners
+│   │   │       │   ├── employee-before-delete.listener.ts
+│   │   │       │   ├── employee-onboarded.listener.ts
+│   │   │       │   ├── index.ts
+│   │   │       │   ├── legal-decision.listener.ts
+│   │   │       │   ├── library-archiving-completed.listener.ts
+│   │   │       │   └── library-archiving-failed.listener.ts
+│   │   │       ├── personnel.module.ts
+│   │   │       └── services
+│   │   │           ├── archive-integration.service.ts
+│   │   │           ├── document-deletion.service.ts
+│   │   │           ├── hr-domain-event.service.ts
+│   │   │           ├── index.ts
+│   │   │           ├── labor-contract.service.ts
+│   │   │           ├── personal-file.service.ts
+│   │   │           ├── personnel-document.service.ts
+│   │   │           └── personnel-order.service.ts
+│   │   ├── psee
+│   │   │   ├── event-consumer.ts
+│   │   │   ├── index.ts
+│   │   │   ├── psee-db.ts
+│   │   │   ├── psee.service.ts
+│   │   │   └── read-model.ts
+│   │   ├── registry
+│   │   │   ├── bootstrap
+│   │   │   │   ├── 00_meta
+│   │   │   │   │   ├── 01_entity_type.entity.json
+│   │   │   │   │   ├── 02_attribute_definition.entity.json
+│   │   │   │   │   ├── 03_relationship_definition.entity.json
+│   │   │   │   │   └── 04_fsm_definition.entity.json
+│   │   │   │   ├── 01-fsm-default-registry-lifecycle.json
+│   │   │   │   ├── 01_security
+│   │   │   │   │   ├── 01_user_account.entity.json
+│   │   │   │   │   ├── 02_role.entity.json
+│   │   │   │   │   ├── 03_permission.entity.json
+│   │   │   │   │   ├── 04_role_permission.entity.json
+│   │   │   │   │   ├── 05_access_scope.entity.json
+│   │   │   │   │   ├── 06_policy_rule.entity.json
+│   │   │   │   │   └── 07_retention_policy.entity.json
+│   │   │   │   ├── 02-entity-type-entity_type.json
+│   │   │   │   ├── 02_human
+│   │   │   │   │   ├── 01_person.entity.json
+│   │   │   │   │   ├── 02_employee.entity.json
+│   │   │   │   │   ├── 03_external_actor.entity.json
+│   │   │   │   │   ├── 04_ai_agent.entity.json
+│   │   │   │   │   └── 05_expert.entity.json
+│   │   │   │   ├── 03-entity-type-attribute_definition.json
+│   │   │   │   ├── 03_structure
+│   │   │   │   │   ├── 01_organization.entity.json
+│   │   │   │   │   ├── 02_org_unit_type.entity.json
+│   │   │   │   │   ├── 03_org_unit.entity.json
+│   │   │   │   │   ├── 04_org_relation.entity.json
+│   │   │   │   │   ├── 05_structural_role.entity.json
+│   │   │   │   │   └── 06_position.entity.json
+│   │   │   │   ├── 04-entity-type-fsm_definition.json
+│   │   │   │   ├── 04_functional
+│   │   │   │   │   ├── 01_function_group.entity.json
+│   │   │   │   │   └── 02_function.entity.json
+│   │   │   │   ├── 05-attributes-entity_type.json
+│   │   │   │   ├── 05_hierarchy
+│   │   │   │   │   ├── 01_status.entity.json
+│   │   │   │   │   ├── 02_status_rule.entity.json
+│   │   │   │   │   ├── 03_qualification.entity.json
+│   │   │   │   │   ├── 04_qualification_level.entity.json
+│   │   │   │   │   └── 05_appointment.entity.json
+│   │   │   │   ├── 06-attributes-attribute_definition.json
+│   │   │   │   ├── 06_value
+│   │   │   │   │   ├── 01_cpk.entity.json
+│   │   │   │   │   ├── 02_cpk_hierarchy.entity.json
+│   │   │   │   │   └── 03_cpk_owner.entity.json
+│   │   │   │   ├── 07-attributes-fsm_definition.json
+│   │   │   │   ├── 07_process
+│   │   │   │   │   ├── 01_task_type.entity.json
+│   │   │   │   │   ├── 02_task_state.entity.json
+│   │   │   │   │   └── 03_workflow.entity.json
+│   │   │   │   ├── 08-entity-type-relationship_definition.json
+│   │   │   │   ├── 08_economy
+│   │   │   │   │   ├── 01_value_token.entity.json
+│   │   │   │   │   ├── 02_reward_rule.entity.json
+│   │   │   │   │   └── 03_penalty_rule.entity.json
+│   │   │   │   ├── 09-attributes-relationship_definition.json
+│   │   │   │   ├── 09_knowledge
+│   │   │   │   │   ├── 01_faculty.entity.json
+│   │   │   │   │   ├── 02_program.entity.json
+│   │   │   │   │   ├── 03_course.entity.json
+│   │   │   │   │   ├── 04_knowledge_unit.entity.json
+│   │   │   │   │   ├── 05_methodology.entity.json
+│   │   │   │   │   ├── 06_research_artifact.entity.json
+│   │   │   │   │   ├── 07_content_item.entity.json
+│   │   │   │   │   └── 08_tag.entity.json
+│   │   │   │   ├── 10_legal
+│   │   │   │   │   ├── 01_legal_entity.entity.json
+│   │   │   │   │   └── 02_document.entity.json
+│   │   │   │   └── 11_integration
+│   │   │   │       ├── 01_integration.entity.json
+│   │   │   │       ├── 02_webhook.entity.json
+│   │   │   │       └── 03_data_import.entity.json
+│   │   │   ├── controllers
+│   │   │   │   ├── registry-bootstrap.controller.ts
+│   │   │   │   ├── registry-bulk.controller.ts
+│   │   │   │   ├── registry-entity.controller.ts
+│   │   │   │   ├── registry-form.controller.ts
+│   │   │   │   ├── registry-governance.controller.ts
+│   │   │   │   ├── registry-graph.controller.ts
+│   │   │   │   ├── registry-history.controller.ts
+│   │   │   │   ├── registry-impact.controller.ts
+│   │   │   │   ├── registry-relationship.controller.ts
+│   │   │   │   ├── registry-schema.controller.ts
+│   │   │   │   └── registry-simulation.controller.ts
+│   │   │   ├── core
+│   │   │   │   ├── __tests__
+│   │   │   │   │   └── registry.test.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── registry-access.engine.ts
+│   │   │   │   ├── registry-constraint.engine.ts
+│   │   │   │   ├── registry-error.factory.ts
+│   │   │   │   ├── registry-impact.engine.ts
+│   │   │   │   ├── registry-rule.validator.ts
+│   │   │   │   ├── registry-visibility.rules.ts
+│   │   │   │   ├── registry.graph.ts
+│   │   │   │   ├── registry.loader.ts
+│   │   │   │   ├── registry.singleton.ts
+│   │   │   │   ├── registry.types.ts
+│   │   │   │   └── registry.validator.ts
+│   │   │   ├── dto
+│   │   │   │   ├── entity-schema.dto.ts
+│   │   │   │   ├── impact.types.ts
+│   │   │   │   └── registry-form.dto.ts
+│   │   │   ├── registry.routes.ts
+│   │   │   └── services
+│   │   │       ├── registry-bootstrap.service.ts
+│   │   │       ├── registry-form.service.ts
+│   │   │       ├── registry-mutation.service.ts
+│   │   │       ├── registry-projection.service.ts
+│   │   │       ├── registry-relationship.service.ts
+│   │   │       ├── registry-schema.service.ts
+│   │   │       └── registry-simulation.service.ts
+│   │   ├── routes
+│   │   │   ├── adaptation.routes.ts
+│   │   │   ├── analytics.routes.ts
+│   │   │   ├── auth.routes.ts
+│   │   │   ├── department.routes.ts
+│   │   │   ├── desktop.ini
+│   │   │   ├── economy.routes.ts
+│   │   │   ├── employee-registration.routes.ts
+│   │   │   ├── employee.routes.ts
+│   │   │   ├── foundation.routes.ts
+│   │   │   ├── gamification.routes.ts
+│   │   │   ├── manager-tools.routes.ts
+│   │   │   ├── ofs.routes.ts
+│   │   │   ├── production.routes.ts
+│   │   │   ├── status.routes.ts
+│   │   │   ├── task.routes.ts
+│   │   │   ├── telegram.routes.ts
+│   │   │   └── university.routes.ts
+│   │   ├── scripts
+│   │   │   ├── check-reg-conflicts.ts
+│   │   │   ├── debug-approve.ts
+│   │   │   ├── debug-registrations.ts
+│   │   │   ├── debug-schema.ts
+│   │   │   ├── fix-admin-foundation.ts
+│   │   │   ├── fix-legacy-data.ts
+│   │   │   ├── fix-registry-security.ts
+│   │   │   ├── force-accept-foundation.ts
+│   │   │   ├── list-departments.ts
+│   │   │   ├── list-hierarchy.ts
+│   │   │   ├── resend-notifications.ts
+│   │   │   ├── seed-ofs.ts
+│   │   │   ├── seed-open-reg-data.ts
+│   │   │   ├── simulate-invite.ts
+│   │   │   ├── test-prisma.ts
+│   │   │   ├── verify-event-flow.ts
+│   │   │   └── verify-registration-logic.ts
+│   │   ├── services
+│   │   │   ├── adaptation.service.ts
+│   │   │   ├── analytics-registry.bridge.ts
+│   │   │   ├── anti-fraud-detector.service.ts
+│   │   │   ├── anti-fraud-signal-writer.service.ts
+│   │   │   ├── audit-log.service.ts
+│   │   │   ├── auth.service.ts
+│   │   │   ├── COMPONENT_2_SELF_REVIEW.md
+│   │   │   ├── COMPONENT_3_SELF_REVIEW.md
+│   │   │   ├── department.service.ts
+│   │   │   ├── desktop.ini
+│   │   │   ├── economy-registry.bridge.ts
+│   │   │   ├── email.service.ts
+│   │   │   ├── employee-acl.service.ts
+│   │   │   ├── employee-registration.service.ts
+│   │   │   ├── employee.service.ts
+│   │   │   ├── enrollment.service.ts
+│   │   │   ├── foundation-audit.service.ts
+│   │   │   ├── foundation.service.ts
+│   │   │   ├── gamification.cron.ts
+│   │   │   ├── gamification.service.ts
+│   │   │   ├── growth-matrix.service.ts
+│   │   │   ├── integrity-action.service.ts
+│   │   │   ├── kpi.service.ts
+│   │   │   ├── manager-tools.service.ts
+│   │   │   ├── notification.service.ts
+│   │   │   ├── ofs-acl.service.ts
+│   │   │   ├── ofs.service.ts
+│   │   │   ├── org-chart.service.ts
+│   │   │   ├── photo-optimization.service.ts
+│   │   │   ├── qualification.service.ts
+│   │   │   ├── quiz.service.ts
+│   │   │   ├── registry-bridge.service.ts
+│   │   │   ├── reward.service.ts
+│   │   │   ├── role-matrix.service.ts
+│   │   │   ├── status-assignment.service.ts
+│   │   │   ├── status-audit.service.ts
+│   │   │   ├── task.service.ts
+│   │   │   ├── telegram.service.ts
+│   │   │   ├── trainer.service.ts
+│   │   │   ├── transaction.service.ts
+│   │   │   ├── university-onboarding.listener.ts
+│   │   │   ├── university.service.ts
+│   │   │   └── wallet.service.ts
+│   │   └── types
+│   │       ├── anti-fraud.types.ts
+│   │       └── core
+│   │           ├── aggregate.types.ts
+│   │           ├── ai.types.ts
+│   │           ├── event.types.ts
+│   │           ├── kpi.types.ts
+│   │           ├── projection.types.ts
+│   │           ├── qualification.types.ts
+│   │           ├── reward.types.ts
+│   │           └── role.types.ts
+│   ├── task.md
+│   ├── test-prisma.ts
+│   ├── tests
+│   │   ├── services
+│   │   │   └── auth.service.test.ts
+│   │   └── setup.ts
+│   ├── tsconfig.json
+│   ├── uploads
+│   │   └── registration
+│   │       ├── passports
+│   │       │   ├── 0aaf735b-66c3-497f-831e-485a1a879db5.webp
+│   │       │   ├── 2c66ee48-37fa-4d21-b979-b9269a1d869b.webp
+│   │       │   └── 91bdd397-6a32-4568-93aa-a650750914c7.webp
+│   │       └── photos
+│   │           ├── 6d4af03a-4ef9-42a8-94ba-c006440193a7.webp
+│   │           ├── c85ed746-0e8e-4235-a3e7-eb5e5a9ef43d.webp
+│   │           ├── dd9ae143-860e-4a46-88c5-aef0700fae8d.webp
+│   │           └── f3c71450-579e-42c4-abf7-57e88c9bcd24.webp
+│   ├── verify-api.sh
+│   └── verify-purchase-flow.ts
+├── cleanup_fonts.py
+├── content
+│   └── videos
+│       ├── foundation
+│       │   ├── block-01.mp4
+│       │   ├── block-02.mp4
+│       │   ├── block-03.mp4
+│       │   ├── block-04.mp4
+│       │   └── block-05.mp4
+│       └── university
+├── database
+│   ├── desktop.ini
+│   ├── migrate.ps1
+│   ├── migrate.sh
+│   ├── migrations
+│   │   ├── 20250121000001_init_extensions.sql
+│   │   ├── 20250121000002_create_roles_table.sql
+│   │   ├── 20250121000003_create_departments_table.sql
+│   │   ├── 20250121000004_create_users_table.sql
+│   │   ├── 20250121000005_create_permissions_tables.sql
+│   │   ├── 20250121000006_create_refresh_tokens_table.sql
+│   │   ├── 20250121000007_create_employees_table.sql
+│   │   ├── 20250121000008_create_employee_documents_table.sql
+│   │   ├── 20250121000009_create_tasks_tables.sql
+│   │   ├── 20250121000010_create_kpi_tables.sql
+│   │   ├── 20250121000011_create_economy_tables.sql
+│   │   ├── 20250121000012_create_compliance_tables.sql
+│   │   ├── 20250121000013_create_emotional_analytics_table.sql
+│   │   ├── 20250121000014_create_utility_functions.sql
+│   │   ├── desktop.ini
+│   │   ├── registry_audit_migration.sql
+│   │   ├── registry_guardrails_migration.sql
+│   │   └── system_registry_migration.sql
+│   ├── MIGRATIONS_OVERVIEW.md
+│   ├── README.md
+│   └── seeds
+│       ├── 01_seed_roles_and_permissions.sql
+│       ├── 02_seed_departments.sql
+│       ├── 03_seed_test_users.sql
+│       ├── 04_seed_test_data.sql
+│       └── desktop.ini
+├── deep_cleanup.py
+├── desktop.ini
+├── docker-compose.yml
+├── documentation
+│   ├── 00-strategic
+│   │   ├── _Золотой_Стандарт_Безопасности.md
+│   │   ├── ADMISSION_FLOW.md
+│   │   ├── desktop.ini
+│   │   ├── FOUNDATION_FLOW.md
+│   │   ├── Matrix360_HR_Аналитика_Проект.md
+│   │   ├── MatrixGin-Architecture-v2.md
+│   │   ├── MatrixGin_Full_Implementation_Plan.docx
+│   │   ├── MatrixGin_Full_Implementation_Plan.pdf
+│   │   ├── matrixgin_motivational_organism.md
+│   │   ├── motivational_architecture_final3.0.md
+│   │   ├── REGISTRATION_AND_FOUNDATION_FLOW.md
+│   │   ├── STATUS-RANKS-CANON.md
+│   │   ├── strategic_anchors_supplement.md
+│   │   ├── University Docs
+│   │   │   └── OLD
+│   │   │       ├── Корпоративный_Университет_Фотоматрица.md
+│   │   │       ├── Система_KPI_Фотоматрица_Реформа.md
+│   │   │       ├── Система_KPI_Фотоматрица_РеформаV3.0.docx
+│   │   │       ├── Система_KPI_Фотоматрица_РеформаV3.0.md
+│   │   │       ├── Факультет Корпоративной культуры и этики
+│   │   │       │   ├── desktop.ini
+│   │   │       │   ├── ЗСФ
+│   │   │       │   │   ├── desktop.ini
+│   │   │       │   │   ├── Дисциплина_Корпоративные_стандарты.docx
+│   │   │       │   │   └── Дисциплина_Корпоративные_стандарты.md
+│   │   │       │   └── Оргполитика
+│   │   │       │       ├── desktop.ini
+│   │   │       │       ├── NotebookLM Mind Map (4).png
+│   │   │       │       ├── Дисциплина_Миссия_ценности_принципы_Фотоматрицы.docx
+│   │   │       │       ├── Дисциплина_Миссия_ценности_принципы_Фотоматрицы.md
+│   │   │       │       ├── Дисциплина_Оргполитика_Фотоматрицы.docx
+│   │   │       │       ├── Дисциплина_Оргполитика_Фотоматрицы.md
+│   │   │       │       ├── 🏆_СЕРТИФИКАТ_Внутренняя_Конституция.docx
+│   │   │       │       ├── 🏆_СЕРТИФИКАТ_Внутренняя_Конституция.md
+│   │   │       │       ├── 📋_ТЕСТЫ_И_ЗАДАНИЯ_Внутренняя_Конституция.docx
+│   │   │       │       ├── 📋_ТЕСТЫ_И_ЗАДАНИЯ_Внутренняя_Конституция.md
+│   │   │       │       ├── 📖_УРОК_Внутренняя_Конституция_Фотоматрица.docx
+│   │   │       │       └── 📖_УРОК_Внутренняя_Конституция_Фотоматрица.md
+│   │   │       ├── Факультет Менеджмента
+│   │   │       │   ├── desktop.ini
+│   │   │       │   ├── ~$культет_Менеджмента_Карта_Тем.docx
+│   │   │       │   ├── Факультет_Менеджмента_Карта_Тем.docx
+│   │   │       │   ├── Факультет_Менеджмента_Карта_Тем.md
+│   │   │       │   ├── Факультет_Менеджмента_Структура.docx
+│   │   │       │   └── Факультет_Менеджмента_Структура.md
+│   │   │       ├── 📋_РЕГЛАМЕНТ_НАПИСАНИЯ_УРОКОВ_И_ОБУЧАЮЩИХ_МАТЕРИАЛОВ.docx
+│   │   │       └── 📋_РЕГЛАМЕНТ_НАПИСАНИЯ_УРОКОВ_И_ОБУЧАЮЩИХ_МАТЕРИАЛОВ.md
+│   │   ├── ~$trixGin_Full_Implementation_Plan.docx
+│   │   ├── Внутренняя_Конституция_Фотоматрица_v3.md
+│   │   ├── КОДЕКС_ФОТОМАТРИЦЫ.md
+│   │   ├── Корпоративный_Университет_Фотоматрица.md
+│   │   ├── Общее_описание_Матрицы_Должностной_Роли.md
+│   │   ├── Роль_Учредителя_в_Системе_Управления.md
+│   │   ├── Система Коинов V8 — Канонический Регламент.md
+│   │   ├── Система_Статусов_Фотоматрица.md
+│   │   ├── Соглашение_о_конфиденциальности_и_интеллектуальной_собственности_Фотоматрицы.md
+│   │   ├── 🏆_Золотой_Стандарт_Бесперебойная_Техника.md
+│   │   ├── 🏆_Золотой_Стандарт_Найм_и_Адаптация_Проект.md
+│   │   ├── 🏆_Золотой_Стандарт_Продаж_Фотоматрица_Проект.md
+│   │   ├── 🏆_Золотой_Стандарт_Управления_v1.0.md
+│   │   ├── 🏆_Золотой_Стандарт_Фотоматрицы_v3.md
+│   │   ├── 🏆_Золотой_Стандарт_Фотосессии_v1.2.md
+│   │   ├── 📈_Внешний_Маркетинг_и_Ценность_для_Клиента.md
+│   │   ├── 📈_Внутренний_Маркетинг_и_Мотивация.md
+│   │   ├── 📈_Основы_Маркетинговой_Стратегии.md
+│   │   ├── 📋_Описание_Бизнеса_Фотоматрицы.md
+│   │   ├── 📋_Реальный_Регламент_Мотивация_и_Антифрод.md
+│   │   ├── 📋_РЕГЛАМЕНТ_НАПИСАНИЯ_УРОКОВ_И_ОБУЧАЮЩИХ_МАТЕРИАЛОВ.md
+│   │   ├── 📖_Информационный_Пакет_Кандидата_Фотоматрица.md
+│   │   └── 🔧_Бизнеслогика_Фотоматрицы.md
+│   ├── 01-modules
+│   │   ├── 01-Authentication-Authorization
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   ├── IMPLEMENTATION-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 02-Employee-Management
+│   │   │   ├── AUDIT-REMEDIATION.md
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   ├── IMPLEMENTATION-CHECKLIST.md
+│   │   │   ├── MODULE-SPEC.md
+│   │   │   └── USER-MANUAL-REGISTRATION.md
+│   │   ├── 03-Task-Management
+│   │   │   ├── AUDIT-REPORT.md
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   ├── IMPLEMENTATION-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 04-OFS-Organizational-Structure
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   ├── IMPLEMENTATION-CHECKLIST.md
+│   │   │   ├── MODULE-SPEC.md
+│   │   │   └── 📘OFS-IMPLEMENTATION PLAN.md
+│   │   ├── 05-PhotoSession-Economic-Engine-PSEE
+│   │   │   ├── API + Event Contract.md
+│   │   │   ├── Boundary Contract.md
+│   │   │   ├── ROADMAP - Integration.md
+│   │   │   └── Архитектура PSEE v1.md
+│   │   ├── 06-Production-MES-Quality
+│   │   │   ├── AUDIT-REMEDIATION.md
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   ├── IMPLEMENTATION-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 07-Telegram-Bot
+│   │   │   ├── AUDIT-REPORT.md
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   ├── Emotional Analytics.md
+│   │   │   ├── EMPLOYEE PROFILE v1.md
+│   │   │   ├── EMPLOYEE PROFILE ↔ DOCUMENTS.md
+│   │   │   ├── error_ux_map.json
+│   │   │   ├── Function Map v1.md
+│   │   │   ├── IMPLEMENTATION-CHECKLIST.md
+│   │   │   ├── LEGAL & COMPLIANCE.md
+│   │   │   ├── Management Contours for MG Chat.md
+│   │   │   ├── MATRIXGIN CHAT.md
+│   │   │   ├── mg_intent_map.json
+│   │   │   ├── mg_ux_components_map.json
+│   │   │   ├── MODULE 07 — TELEGRAM INTERFACE.md
+│   │   │   ├── MODULE-SPEC.md
+│   │   │   ├── ONBOARDING v1.md
+│   │   │   ├── REGISTRATION IN MATRIXGIN v2 (Deep Design).md
+│   │   │   ├── REGISTRATION IN MATRIXGIN.md
+│   │   │   ├── TASKS.md
+│   │   │   ├── Tone of Voice MatrixGin (MG).md
+│   │   │   ├── ВЕРХНЕУРОВНЕВАЯ ФУНКЦИОНАЛЬНАЯ КАРТА (CANONICAL MAP).md
+│   │   │   ├── ДОКУМЕНТЫ.md
+│   │   │   ├── ЗАДАЧИ — UI-UX.md
+│   │   │   ├── Задачи ↔ Telegram Bot.md
+│   │   │   ├── Задачи ↔ Улучшения (Kaizen).md
+│   │   │   ├── Как ассистент (MG) работает со сменами.md
+│   │   │   ├── КВЕСТЫ И МОТИВАЦИЯ (MC-GMC).md
+│   │   │   ├── ЛИЧНЫЙ КАБИНЕТ СОТРУДНИКА.md
+│   │   │   ├── Связь «СМЕНА ↔ ЗАДАЧИ».md
+│   │   │   └── ⏱️ SHIFTS v1.md
+│   │   ├── 08-MatrixCoin-Economy
+│   │   │   ├── 00-CANON
+│   │   │   │   ├── 01-meaning-and-borders.md
+│   │   │   │   ├── 02-user-human.md
+│   │   │   │   ├── 03-operational.md
+│   │   │   │   ├── 04-governance.md
+│   │   │   │   ├── 05-controls-and-safeguards.md
+│   │   │   │   ├── 06-data-registry.md
+│   │   │   │   ├── 07-security-ethics.md
+│   │   │   │   ├── 08-glossary.md
+│   │   │   │   ├── 09-final-canon.md
+│   │   │   │   ├── 10-tech-integration.md
+│   │   │   │   ├── MODULE-08-CANON.md
+│   │   │   │   ├── MODULE-08-DOMAIN-LOCK.md
+│   │   │   │   └── README.md
+│   │   │   ├── 01-REGULATIONS
+│   │   │   │   ├── 01-auction-mechanics.md
+│   │   │   │   ├── 02-mc-lifecycle.md
+│   │   │   │   ├── 03-gmc-lifecycle.md
+│   │   │   │   ├── 04-charging-and-spending.md
+│   │   │   │   ├── 05-edge-cases.md
+│   │   │   │   ├── Кодекс_начисления_коинов.md
+│   │   │   │   ├── Протокол_начисления_MC.md
+│   │   │   │   ├── Регламент_GMC.md
+│   │   │   │   └── Регламент_MC.md
+│   │   │   ├── 02-SNAPSHOTS
+│   │   │   │   ├── STEP-2-STATE-LIFECYCLE.md
+│   │   │   │   ├── STEP-3-CANONICAL-SNAPSHOT.md
+│   │   │   │   ├── STEP-3-STORE-AUCTION.md
+│   │   │   │   └── STEP-4-CANONICAL-SNAPSHOT.md
+│   │   │   ├── 03-RESEARCH
+│   │   │   │   ├── Исследование.md
+│   │   │   │   ├── Исследование_2.0.md
+│   │   │   │   ├── Ответы_на_вопросы.md
+│   │   │   │   └── Ответы_на_вопросы_2.0.md
+│   │   │   ├── 04-DEV-BOUNDARIES
+│   │   │   │   ├── INTEGRATION-BOUNDARY.md
+│   │   │   │   ├── MODULE-08-HANDOVER.md
+│   │   │   │   └── PRE-CODE-ARCHITECTURE-GATE.md
+│   │   │   ├── 05-CHECKLISTS
+│   │   │   │   ├── 01-how-to-run-auction.md
+│   │   │   │   ├── 02-how-to-launch-mc.md
+│   │   │   │   ├── 03-incident-response.md
+│   │   │   │   ├── 04-before-production.md
+│   │   │   │   ├── 05-rollback.md
+│   │   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   │   └── IMPLEMENTATION-CHECKLIST.md
+│   │   │   ├── 06-IMPLEMENTATION
+│   │   │   │   ├── REGISTRY-NOTES.md
+│   │   │   │   ├── STORE-API.md
+│   │   │   │   ├── STORE-FLOW.md
+│   │   │   │   ├── STORE-PURCHASE-PRIORITY-1.md
+│   │   │   │   ├── STORE-TECH.md
+│   │   │   │   └── STORE-UX.md
+│   │   │   ├── 99-ARCHIVE
+│   │   │   │   ├── MODULE-SPEC.md
+│   │   │   │   ├── КАНОНИЧЕСКИЙ ДОКУМЕНТ MC-GMC.md
+│   │   │   │   ├── Реестр условий MC (v8).md
+│   │   │   │   ├── Система Коинов V8 — Канонический Регламент.md
+│   │   │   │   └── ФОНД ГЕРОЕВ GMC.md
+│   │   │   ├── desktop.ini
+│   │   │   ├── MatrixCoin-IMPLEMENTATION CHECKLIST.md
+│   │   │   ├── Mc Store — Регламент Ассортимента И Ограничений V8.md
+│   │   │   └── МЕХАНИКИ MC → GMC.md
+│   │   ├── 09-Participation-Status-Ranks
+│   │   │   ├── 00-CANON
+│   │   │   │   └── STATUS-RANKS-CANON.md
+│   │   │   ├── 01-ARCHITECTURE
+│   │   │   │   └── STATUS-RANKS-ARCHITECTURE.md
+│   │   │   ├── 02-REGULATIONS
+│   │   │   │   └── STATUS-RANKS-REGULATIONS.md
+│   │   │   ├── 03-IMPLEMENTATION
+│   │   │   │   └── IMPLEMENTATION_PLAN.md
+│   │   │   └── README.md
+│   │   ├── 10-KPI-Analytics
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 11-Advanced-Gamification
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 12-Emotional-Analytics
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 13-Corporate-University
+│   │   │   ├── 06-Corporate-University(BLOCKED).md
+│   │   │   ├── Acceptance Enforcement Checklist.md
+│   │   │   ├── BACKEND-GUARDS-SPEC.md
+│   │   │   ├── Corporate University Canon (v2).md
+│   │   │   ├── deep_research_corporate_university.md
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   ├── FOUNDATIONAL IMMERSION — UX Flow.md
+│   │   │   ├── FOUNDATIONAL IMMERSION.md
+│   │   │   ├── Frontend Immersion UI Spec.md
+│   │   │   ├── MODULE-SPEC.md
+│   │   │   ├── MVP Implementation Checklist.md
+│   │   │   ├── research
+│   │   │   │   ├── FOUNDATION_ACCEPTANCE_RESEARCH.md
+│   │   │   │   ├── FOUNDATION_ACCEPTANCE_RESEARCH1.md
+│   │   │   │   └── METHODOLOGY_REPORT.md
+│   │   │   ├── TECHNICAL_RESEARCH_UNIVERSITY.md
+│   │   │   ├── Trainee RoleContract Specification.md
+│   │   │   ├── University Module Refactor.md
+│   │   │   ├── University structure
+│   │   │   │   ├── EMPLOYEE-QUALIFICATION-GRADES-PHOTOMATRIX.md
+│   │   │   │   ├── FACULTY-COMMERCIAL-CONTOUR-PHOTOMATRIX.md
+│   │   │   │   ├── FOUNDATIONAL
+│   │   │   │   │   ├── BLOCK_01_INTERNAL_CONSTITUTION_PHOTOMATRIX.md
+│   │   │   │   │   ├── BLOCK_01_INTERNAL_CONSTITUTION_PHOTOMATRIX_OLD.mp4
+│   │   │   │   │   ├── BLOCK_02_CODE_OF_CONDUCT_ANTIFRAUD_PHOTOMATRIX.md
+│   │   │   │   │   ├── BLOCK_03_GOLDEN_STANDARD_PHOTOMATRIX.md
+│   │   │   │   │   ├── BLOCK_04_ROLE_MODEL_RESPONSIBILITY_PHOTOMATRIX.md
+│   │   │   │   │   ├── BLOCK_05_MOTIVATION_AND_CONSEQUENCES_PHOTOMATRIX.md
+│   │   │   │   │   ├── FOUNDATION_ACCEPTANCE_PRINCIPLES.md
+│   │   │   │   │   └── README.md
+│   │   │   │   ├── MatrixGin Learning Methodology v1.md
+│   │   │   │   └── UNIVERSITY-STRUCTURE-PHOTOMATRIX.md
+│   │   │   ├── Промт для технического исследования.md
+│   │   │   └── чёткий, готовый к передаче фронтенд-кома.md
+│   │   ├── 14-Kaizen-Continuous-Improvement
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 15-Branch-Feedback-System
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 16-Emotional-Passport
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 17-State-of-Being-Engine
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 18-Joy-Value-Converter
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 19-Interest-Gravity-Engine
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 20-Meaningful-Events-Layer
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 21-Human-Dialogue-Support
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 22-Dialogue-Capture-Consent
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 23-Legal-Compliance
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 24-Warehouse-WMS
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 25-Procurement
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 26-Budgeting-Planning
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 27-Fixed-Assets-Management
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 28-HR-Analytics-Matrix360
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 29-Library-Archive
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   ├── IMPLEMENTATION-CHECKLIST.md
+│   │   │   ├── MODULE-SPEC.md
+│   │   │   ├── RESEARCH-Library-Archive-Organization.md
+│   │   │   └── Оценка исследования.md
+│   │   ├── 30-Content-Factory
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 31-Psychological-Support
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 32-RAG-Knowledge-Base
+│   │   │   ├── desktop.ini
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   └── MODULE-SPEC.md
+│   │   ├── 33-Personnel-HR-Records
+│   │   │   ├── DEVELOPMENT-CHECKLIST.md
+│   │   │   ├── IMPLEMENTATION-CHECKLIST.md
+│   │   │   ├── MODULE-SPEC.md
+│   │   │   └── UX-FLOWS.md
+│   │   ├── desktop.ini
+│   │   └── MODULES-INDEX.md
+│   ├── 02-technical-specs
+│   │   ├── 00-PHASE-0-COMPLETE.md
+│   │   ├── API-Endpoints-Catalog.md
+│   │   ├── API-Specification-OpenAPI-FULL.yaml
+│   │   ├── API-Specification-OpenAPI.yaml
+│   │   ├── Authentication-Flow.md
+│   │   ├── Data-Models-DTOs.md
+│   │   ├── Database-ERD-Schema.md
+│   │   ├── desktop.ini
+│   │   ├── FOUNDATION-ENTITIES.md
+│   │   ├── MATRIXGIN — SECURITY DOCTRINE v1.0.md
+│   │   ├── MatrixGin — Контурная архитектура.md
+│   │   ├── OFS-DATA-AGGREGATION-SIGNALS.md
+│   │   ├── OFS-EXECUTIVE-SNAPSHOT.md
+│   │   ├── OFS-FRONTEND-VERIFICATION.md
+│   │   ├── OFS-GRAPH-VIEW.md
+│   │   ├── OFS-REGISTRY-INTEGRATION.md
+│   │   ├── OpenAPI-Usage-Guide.md
+│   │   ├── REGISTRY-API-CONTRACT.md
+│   │   ├── REGISTRY-BOOTSTRAP-STRATEGY.md
+│   │   ├── REGISTRY-FRONTEND-TASKLIST.md
+│   │   ├── REGISTRY-ONTOLOGY-V1.md
+│   │   ├── REGISTRY-READ-ADAPTER.md
+│   │   ├── SECURITY-ARCHITECTURE.md
+│   │   ├── SYSTEM-REGISTRY-ACCESS-MODEL.md
+│   │   ├── SYSTEM-REGISTRY-SERVICE.md
+│   │   ├── SYSTEM-REGISTRY-UI-SPEC.md
+│   │   └── UI
+│   │       ├── SYSTEM PROMPT redesign#2.md
+│   │       └── SYSTEM PROMPT redesign.md
+│   ├── 03-ai
+│   │   ├── Ai Core Implementation Execution Plan V1.md
+│   │   ├── AI_GOVERNANCE_AND_MEMORY_MODEL.md
+│   │   ├── Matrix Gin Ai Role & Motivation Integration.md
+│   │   ├── Matrix Gin Rules Dsl V1 Specification.md
+│   │   ├── MatrixGin AI Role & Motivation Integration.md
+│   │   └── 🧠 MatrixGin AI Memory Architecture (Vis.md
+│   ├── 04-core-docs
+│   │   ├── 01-MatrixGin-Learning-Methodology-v1-CANONICAL.md
+│   │   ├── Ai Impact Analyst — Prompt & Guardrails V1.md
+│   │   ├── Canon — Пирамида И Треугольник Взаимозависимости V1.md
+│   │   ├── Core Domain Schemas V1 (matrix Gin).md
+│   │   ├── Erp + Ai Roadmap V1 (matrix Gin).md
+│   │   ├── MATRIXGIN — ОСНОВОПОЛАГАЮЩИЙ ДОКУМЕНТ (L0).md
+│   │   ├── OFS_CANONICAL_MODEL.md
+│   │   ├── system_prompt.md
+│   │   ├── Итоговый отчёт по Roadmap.txt
+│   │   └── 🤖 MATRIXGIN — AGENT CARD v1.0.md
+│   ├── 05-testing
+│   │   ├── 01-strategic-checks
+│   │   │   └── core-system-invariants.md
+│   │   ├── 02-architecture-checks
+│   │   │   └── module-boundary-rules.md
+│   │   ├── 03-contract-tests
+│   │   │   ├── acl-contracts.md
+│   │   │   ├── api-contracts.md
+│   │   │   ├── README.md
+│   │   │   └── registry-contracts.md
+│   │   ├── 04-functional-tests
+│   │   │   ├── core-use-cases.md
+│   │   │   ├── negative-scenarios.md
+│   │   │   ├── README.md
+│   │   │   └── regression-rules.md
+│   │   ├── 05-unit-tests
+│   │   │   ├── coverage-policy.md
+│   │   │   ├── forbidden-test-patterns.md
+│   │   │   ├── README.md
+│   │   │   └── test-quality-rules.md
+│   │   ├── 06-gatekeeping
+│   │   │   ├── merge-gates.md
+│   │   │   ├── outsource-gates.md
+│   │   │   ├── README.md
+│   │   │   ├── release-gates.md
+│   │   │   └── violation-handling.md
+│   │   ├── 07-outsource-package
+│   │   │   ├── acceptance-criteria.md
+│   │   │   ├── forbidden-zones.md
+│   │   │   ├── handoff-checklist.md
+│   │   │   ├── outsource-package-structure.md
+│   │   │   ├── README.md
+│   │   │   └── validation-responsibility.md
+│   │   ├── 08-architect-checkup
+│   │   │   ├── README.md
+│   │   │   ├── red-flags.md
+│   │   │   ├── sprint-checklist.md
+│   │   │   └── weekly-checklist.md
+│   │   ├── 09-governance-summary
+│   │   │   └── SYSTEM_GOVERNANCE_SUMMARY.md
+│   │   ├── desktop.ini
+│   │   ├── MatrixGin — Testing Canon (STEP 16–20).md
+│   │   └── README.md
+│   ├── 06-MVP-LEARNING-CONTOUR
+│   │   ├── 00-README.md
+│   │   ├── 01-MVP_SCOPE_v1.md
+│   │   ├── 02-MODULES-IN-SCOPE.md
+│   │   ├── 03-MODULES-OUT-OF-SCOPE.md
+│   │   ├── 04-ARCHITECTURE-MVP.md
+│   │   ├── 05-MATRIXCOIN-RULES-MVP.md
+│   │   ├── 06-TELEGRAM-FLOW.md
+│   │   ├── 07-CORPORATE-UNIVERSITY-MVP.md
+│   │   ├── 08-ROLL-OUT-PLAN.md
+│   │   ├── 09-MVP-GUIDE-RU.md
+│   │   └── disciplines
+│   │       └── org-policy
+│   │           ├── ASSESSMENT_CONSTITUTION.md
+│   │           ├── DISCIPLINE_MANIFEST.json
+│   │           ├── LESSON_1_PHILOSOPHY.md
+│   │           ├── LESSON_2_OPERATIONAL_ENGINE.md
+│   │           ├── LESSON_3_CONDITIONS_OF_EXISTENCE.md
+│   │           ├── LESSON_4_FINISHED_STAFF_WORK.md
+│   │           └── LESSON_5_MOTIVATION_AND_STATUSES.md
+│   ├── 07-FOUNDATION
+│   │   ├── ADMISSION_DECISION_POLICY.md
+│   │   ├── ADMISSION_RULES.md
+│   │   ├── ARCHITECTURAL_AXIOMS.md
+│   │   ├── CANON.md
+│   │   ├── DECISIONS.log
+│   │   └── FORBIDDEN.md
+│   ├── ai
+│   │   └── mg-chat
+│   │       ├── error_ux_map.json
+│   │       ├── lint
+│   │       │   ├── mg-chat.lint.js
+│   │       │   ├── package.json
+│   │       │   └── rules.md
+│   │       ├── mg_intent_map.json
+│   │       ├── mg_ux_components_map.json
+│   │       ├── README.md
+│   │       └── schemas
+│   │           ├── error_ux.schema.json
+│   │           ├── intent.schema.json
+│   │           └── ux_components.schema.json
+│   ├── ARCHITECTURE.md
+│   ├── desktop.ini
+│   ├── EMPLOYEE-ONBOARDED-EVENT.md
+│   ├── EMPLOYEE-REGISTRATION-PROCESS.md
+│   ├── ERROR_REGISTRY_entity_form.md
+│   ├── MASTER_CHECKLIST.md
+│   ├── MASTER_PLAN.md
+│   ├── MODULES-IMPLEMENTATION-STATUS.md
+│   ├── PHASE-R0-AUDIT-REMEDIATION.md
+│   ├── README 2.0.md
+│   └── README.md
+├── EXPLANATORY PROMPT — How to use AI Impact Analyst (Immutable).md
+├── frontend
+│   ├── desktop.ini
+│   ├── errors.txt
+│   ├── errors_final.txt
+│   ├── errors_final_10.txt
+│   ├── errors_final_11.txt
+│   ├── errors_final_12.txt
+│   ├── errors_final_13.txt
+│   ├── errors_final_14.txt
+│   ├── errors_final_15.txt
+│   ├── errors_final_16.txt
+│   ├── errors_final_17.txt
+│   ├── errors_final_2.txt
+│   ├── errors_final_3.txt
+│   ├── errors_final_4.txt
+│   ├── errors_final_5.txt
+│   ├── errors_final_6.txt
+│   ├── errors_final_7.txt
+│   ├── errors_final_8.txt
+│   ├── errors_final_9.txt
+│   ├── errors_utf8.txt
+│   ├── errors_v2.txt
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── postcss.config.cjs
+│   ├── src
+│   │   ├── ai-ops
+│   │   │   ├── index.ts
+│   │   │   └── RegistryAIOpsViewer.tsx
+│   │   ├── api
+│   │   │   ├── apiClient.ts
+│   │   │   ├── economy.types.ts
+│   │   │   ├── entity.api.ts
+│   │   │   ├── mes.api.ts
+│   │   │   ├── personnelApi.ts
+│   │   │   ├── rankApi.ts
+│   │   │   ├── statusApi.ts
+│   │   │   └── types.ts
+│   │   ├── app
+│   │   │   ├── api.ts
+│   │   │   ├── desktop.ini
+│   │   │   ├── hooks.ts
+│   │   │   └── store.ts
+│   │   ├── App.tsx
+│   │   ├── components
+│   │   │   ├── ai
+│   │   │   │   ├── AIAdvisoryBanner.tsx
+│   │   │   │   ├── AISnapshotViewer.tsx
+│   │   │   │   ├── RecommendationDetailsDrawer.tsx
+│   │   │   │   └── RecommendationFeedbackPanel.tsx
+│   │   │   ├── auth
+│   │   │   │   ├── AuthInitializer.tsx
+│   │   │   │   ├── FoundationGuard.tsx
+│   │   │   │   └── RequireAuth.tsx
+│   │   │   ├── common
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── ErrorBoundary.tsx
+│   │   │   │   ├── ProtectedRoute.tsx
+│   │   │   │   └── RoleRoute.tsx
+│   │   │   ├── dash
+│   │   │   │   ├── AdaptationWidget.tsx
+│   │   │   │   ├── FoundationWidget.tsx
+│   │   │   │   ├── GrowthRadarChart.tsx
+│   │   │   │   └── LearningWidget.tsx
+│   │   │   ├── desktop.ini
+│   │   │   ├── dev
+│   │   │   │   └── RoleEmulator.tsx
+│   │   │   ├── economy
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── StoreItemCard.tsx
+│   │   │   │   ├── TransactionHistoryModal.tsx
+│   │   │   │   └── WalletWidget.tsx
+│   │   │   ├── gamification
+│   │   │   │   ├── AchievementsGallery.css
+│   │   │   │   ├── AchievementsGallery.tsx
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── QuestTracker.css
+│   │   │   │   ├── QuestTracker.tsx
+│   │   │   │   ├── StatusBadge.tsx
+│   │   │   │   ├── StatusProgressCard.css
+│   │   │   │   └── StatusProgressCard.tsx
+│   │   │   ├── layout
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── FoundationStatusBadge.tsx
+│   │   │   │   ├── Header.tsx
+│   │   │   │   ├── MainLayout.tsx
+│   │   │   │   ├── REGISTRY-ARCHITECTURE-v3.md
+│   │   │   │   └── Sidebar.tsx
+│   │   │   ├── personnel
+│   │   │   │   ├── ContractCard.tsx
+│   │   │   │   ├── ContractForm.tsx
+│   │   │   │   ├── DocumentUploader.tsx
+│   │   │   │   ├── HistoryTab.tsx
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── OrderCard.tsx
+│   │   │   │   ├── OrderForm.tsx
+│   │   │   │   ├── PersonalFileCard.tsx
+│   │   │   │   └── PersonalFileStatusBadge.tsx
+│   │   │   ├── status
+│   │   │   │   ├── AssignStatusModal.tsx
+│   │   │   │   ├── RankBadge.tsx
+│   │   │   │   ├── StatusBadge.tsx
+│   │   │   │   └── StatusHistory.tsx
+│   │   │   ├── tasks
+│   │   │   │   ├── CreateTaskModal.tsx
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── TaskCard.tsx
+│   │   │   └── video
+│   │   │       └── UniversalVideoPlayer.tsx
+│   │   ├── config
+│   │   │   └── menuConfig.ts
+│   │   ├── desktop.ini
+│   │   ├── entity-form
+│   │   │   ├── __tests__
+│   │   │   ├── api
+│   │   │   │   └── entity-card.api.ts
+│   │   │   ├── core
+│   │   │   │   ├── EntityForm.tsx
+│   │   │   │   ├── FieldFactory.tsx
+│   │   │   │   ├── FieldRenderer.tsx
+│   │   │   │   ├── FormContext.tsx
+│   │   │   │   ├── FormRenderer.tsx
+│   │   │   │   ├── FormViewRenderer.tsx
+│   │   │   │   └── RegistryForm.tsx
+│   │   │   ├── fields
+│   │   │   │   ├── BooleanField.tsx
+│   │   │   │   ├── DateField.tsx
+│   │   │   │   ├── DateTimeField.tsx
+│   │   │   │   ├── DecimalField.tsx
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── JsonField.tsx
+│   │   │   │   ├── NumberField.tsx
+│   │   │   │   ├── RelationField.tsx
+│   │   │   │   ├── SelectField.tsx
+│   │   │   │   ├── TextareaField.tsx
+│   │   │   │   └── TextField.tsx
+│   │   │   ├── hooks
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── useEntityCard.ts
+│   │   │   │   ├── useEntityLifecycle.ts
+│   │   │   │   └── useEntityPermissions.ts
+│   │   │   ├── index.ts
+│   │   │   ├── types
+│   │   │   │   └── entity-card.types.ts
+│   │   │   └── validation
+│   │   │       └── registryValidator.ts
+│   │   ├── entity-graph
+│   │   │   ├── core
+│   │   │   │   └── RegistryGraph.tsx
+│   │   │   └── index.ts
+│   │   ├── entity-impact
+│   │   │   ├── index.ts
+│   │   │   └── RegistryImpactViewer.tsx
+│   │   ├── entity-table
+│   │   │   ├── api
+│   │   │   │   └── table.api.ts
+│   │   │   ├── cells
+│   │   │   │   └── index.tsx
+│   │   │   ├── core
+│   │   │   │   ├── ColumnFactory.tsx
+│   │   │   │   ├── RegistryTable.tsx
+│   │   │   │   ├── TableContext.tsx
+│   │   │   │   └── TableRenderer.tsx
+│   │   │   ├── hooks
+│   │   │   │   └── useEntityTable.ts
+│   │   │   ├── index.ts
+│   │   │   └── types
+│   │   │       └── index.ts
+│   │   ├── features
+│   │   │   ├── ai
+│   │   │   │   └── aiApi.ts
+│   │   │   ├── analytics
+│   │   │   │   └── analyticsApi.ts
+│   │   │   ├── auth
+│   │   │   │   ├── authApi.ts
+│   │   │   │   ├── authSlice.ts
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── roleTranslations.ts
+│   │   │   │   └── useAuth.ts
+│   │   │   ├── desktop.ini
+│   │   │   ├── economy
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── economyApi.ts
+│   │   │   ├── foundation
+│   │   │   │   ├── api
+│   │   │   │   │   └── foundation.api.ts
+│   │   │   │   ├── data
+│   │   │   │   │   └── foundation.content.ts
+│   │   │   │   └── types
+│   │   │   │       └── foundation.types.ts
+│   │   │   ├── gamification
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── gamificationApi.ts
+│   │   │   │   └── growthApi.ts
+│   │   │   ├── mes
+│   │   │   │   └── mesApi.ts
+│   │   │   ├── motivation
+│   │   │   │   └── StartGrowthWeb3D.tsx
+│   │   │   ├── ofs
+│   │   │   │   ├── api
+│   │   │   │   │   ├── desktop.ini
+│   │   │   │   │   ├── ofsApi.ts
+│   │   │   │   │   └── registrationApi.ts
+│   │   │   │   ├── components
+│   │   │   │   │   ├── ApproveRegistrationModal.tsx
+│   │   │   │   │   ├── CreateDepartmentModal.tsx
+│   │   │   │   │   ├── DepartmentList.tsx
+│   │   │   │   │   ├── desktop.ini
+│   │   │   │   │   ├── EditDepartmentModal.tsx
+│   │   │   │   │   ├── executive
+│   │   │   │   │   │   ├── CPKOverlay.tsx
+│   │   │   │   │   │   ├── FunctionsOverlay.tsx
+│   │   │   │   │   │   ├── OFSMap.tsx
+│   │   │   │   │   │   ├── OFSOverlayController.tsx
+│   │   │   │   │   │   ├── OFSSystemSnapshot.tsx
+│   │   │   │   │   │   ├── ScenarioMode.tsx
+│   │   │   │   │   │   └── StatusQualificationOverlay.tsx
+│   │   │   │   │   ├── graph
+│   │   │   │   │   │   ├── edges
+│   │   │   │   │   │   │   └── ScenarioEdge.tsx
+│   │   │   │   │   │   ├── GraphToolbar.tsx
+│   │   │   │   │   │   ├── hooks
+│   │   │   │   │   │   │   ├── useGraphData.ts
+│   │   │   │   │   │   │   └── useLayout.ts
+│   │   │   │   │   │   ├── nodes
+│   │   │   │   │   │   │   └── OFSNode.tsx
+│   │   │   │   │   │   ├── OFSGraphView.tsx
+│   │   │   │   │   │   ├── types.ts
+│   │   │   │   │   │   └── utils
+│   │   │   │   │   │       └── transformers.ts
+│   │   │   │   │   ├── HierarchyView.tsx
+│   │   │   │   │   ├── IdeaChannels.tsx
+│   │   │   │   │   ├── OrgChart.tsx
+│   │   │   │   │   ├── PyramidView.tsx
+│   │   │   │   │   ├── RegistrationDetailModal.tsx
+│   │   │   │   │   ├── RegistrationList.tsx
+│   │   │   │   │   ├── RoleMatrixView.tsx
+│   │   │   │   │   ├── SendInvitationModal.tsx
+│   │   │   │   │   ├── SignalBlock.tsx
+│   │   │   │   │   └── TriangleView.tsx
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── ExecutiveSnapshotScreen.tsx
+│   │   │   │   ├── README.md
+│   │   │   │   └── types.ts
+│   │   │   ├── participation
+│   │   │   │   └── participationApi.ts
+│   │   │   ├── production
+│   │   │   │   └── productionApi.ts
+│   │   │   ├── simulation
+│   │   │   │   └── ForecastSimulator.tsx
+│   │   │   ├── tasks
+│   │   │   │   ├── desktop.ini
+│   │   │   │   └── tasksApi.ts
+│   │   │   └── university
+│   │   │       ├── api
+│   │   │       │   ├── desktop.ini
+│   │   │       │   └── universityApi.ts
+│   │   │       ├── components
+│   │   │       │   ├── AcademyCard.tsx
+│   │   │       │   ├── BadgeCard.tsx
+│   │   │       │   ├── CourseCard.tsx
+│   │   │       │   ├── desktop.ini
+│   │   │       │   ├── FilterPanel.tsx
+│   │   │       │   ├── MyCoursesList.tsx
+│   │   │       │   ├── QuizEngine.tsx
+│   │   │       │   └── TrainerApplicationModal.tsx
+│   │   │       ├── desktop.ini
+│   │   │       └── hooks
+│   │   │           ├── desktop.ini
+│   │   │           └── useAcademyId.ts
+│   │   ├── hooks
+│   │   │   ├── desktop.ini
+│   │   │   └── useStorePurchase.ts
+│   │   ├── index.css
+│   │   ├── layouts
+│   │   │   └── FoundationLayout.tsx
+│   │   ├── main.tsx
+│   │   ├── mes
+│   │   │   └── pages
+│   │   │       ├── ProductionOrderDetailPage.tsx
+│   │   │       └── ProductionOrdersPage.tsx
+│   │   ├── pages
+│   │   │   ├── admin
+│   │   │   │   └── StatusManagement.tsx
+│   │   │   ├── ai
+│   │   │   │   ├── AIFeedbackAnalyticsPage.tsx
+│   │   │   │   ├── ExecutiveAIRecommendationsPage.tsx
+│   │   │   │   └── PersonalAIRecommendationsPage.tsx
+│   │   │   ├── analytics
+│   │   │   │   ├── ExecutiveAnalyticsPage.tsx
+│   │   │   │   └── PersonalAnalyticsPage.tsx
+│   │   │   ├── ChangePasswordPage.tsx
+│   │   │   ├── common
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── ForbiddenPage.tsx
+│   │   │   │   └── PlaceholderPage.tsx
+│   │   │   ├── culture
+│   │   │   │   ├── CultureCompliancePage.tsx
+│   │   │   │   ├── CultureGuidesPage.tsx
+│   │   │   │   ├── CultureImpactPage.tsx
+│   │   │   │   ├── CultureStoriesPage.tsx
+│   │   │   │   ├── CultureSurveysPage.tsx
+│   │   │   │   ├── CultureValuesPage.tsx
+│   │   │   │   ├── CultureWelcomePage.tsx
+│   │   │   │   ├── CultureWorkshopsPage.tsx
+│   │   │   │   └── desktop.ini
+│   │   │   ├── DashboardPage.tsx
+│   │   │   ├── desktop.ini
+│   │   │   ├── economy
+│   │   │   │   ├── EconomyDashboard.tsx
+│   │   │   │   ├── StorePage.tsx
+│   │   │   │   ├── TransactionsPage.tsx
+│   │   │   │   └── WalletPage.tsx
+│   │   │   ├── EmployeeProfilePage.tsx
+│   │   │   ├── EmployeesPage.tsx
+│   │   │   ├── foundation
+│   │   │   │   ├── BlockPage.tsx
+│   │   │   │   ├── DecisionPage.tsx
+│   │   │   │   ├── ResultPage.tsx
+│   │   │   │   └── StartPage.tsx
+│   │   │   ├── gamification
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── LeaderboardPage.css
+│   │   │   │   └── LeaderboardPage.tsx
+│   │   │   ├── LoginPage.tsx
+│   │   │   ├── ManagerDashboard.tsx
+│   │   │   ├── mgmt
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── MgmtChangePage.tsx
+│   │   │   │   ├── MgmtCoachingPage.tsx
+│   │   │   │   ├── MgmtFinancePage.tsx
+│   │   │   │   ├── MgmtKPIPage.tsx
+│   │   │   │   ├── MgmtLeadershipPage.tsx
+│   │   │   │   ├── MgmtPeoplePage.tsx
+│   │   │   │   └── MgmtTalentPage.tsx
+│   │   │   ├── MyCoursesPage.tsx
+│   │   │   ├── ofs
+│   │   │   │   └── ExecutiveOFSPage.tsx
+│   │   │   ├── OFSPage.tsx
+│   │   │   ├── personnel
+│   │   │   │   ├── ContractsListPage.tsx
+│   │   │   │   ├── HRDashboardPage.tsx
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── OrdersListPage.tsx
+│   │   │   │   ├── PersonalFileDetailPage.tsx
+│   │   │   │   ├── PersonnelFilesListPage.tsx
+│   │   │   │   ├── PersonnelLayout.tsx
+│   │   │   │   └── RegistrationRequestsPage.tsx
+│   │   │   ├── photocraft
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── PhotoCertificatesPage.tsx
+│   │   │   │   ├── PhotoCommunityPage.tsx
+│   │   │   │   ├── PhotoCourseListPage.tsx
+│   │   │   │   ├── PhotoCoursePage.tsx
+│   │   │   │   ├── PhotoDashboardPage.tsx
+│   │   │   │   ├── PhotoDiagnosticsPage.tsx
+│   │   │   │   ├── PhotoLibraryPage.tsx
+│   │   │   │   ├── PhotoShiftsPage.tsx
+│   │   │   │   ├── PhotoSimulatorsPage.tsx
+│   │   │   │   └── PhotoTrainerDirectoryPage.tsx
+│   │   │   ├── production
+│   │   │   │   └── ProductionSessionsPage.tsx
+│   │   │   ├── sales
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── SalesCourseListPage.tsx
+│   │   │   │   ├── SalesDashboardPage.tsx
+│   │   │   │   ├── SalesLeaderboardPage.tsx
+│   │   │   │   ├── SalesPlaybookPage.tsx
+│   │   │   │   └── SalesRoleplayPage.tsx
+│   │   │   ├── soft
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── SoftAssessmentPage.tsx
+│   │   │   │   ├── SoftBadgesPage.tsx
+│   │   │   │   ├── SoftCoachingPage.tsx
+│   │   │   │   ├── SoftDashboardPage.tsx
+│   │   │   │   ├── SoftEventsPage.tsx
+│   │   │   │   ├── SoftIDPPage.tsx
+│   │   │   │   ├── SoftLibraryPage.tsx
+│   │   │   │   ├── SoftPathsPage.tsx
+│   │   │   │   └── SoftPracticesPage.tsx
+│   │   │   ├── TaskDetailsPage.tsx
+│   │   │   ├── TasksPage.tsx
+│   │   │   ├── tech
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── TechAnalyticsPage.tsx
+│   │   │   │   ├── TechCatalogPage.tsx
+│   │   │   │   ├── TechCertsPage.tsx
+│   │   │   │   ├── TechLabsPage.tsx
+│   │   │   │   ├── TechMaintenancePage.tsx
+│   │   │   │   ├── TechSecurityPage.tsx
+│   │   │   │   ├── TechSoftwarePage.tsx
+│   │   │   │   └── TechTroubleshootPage.tsx
+│   │   │   ├── trainers
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── TrainersAccreditPage.tsx
+│   │   │   │   ├── TrainersAssignPage.tsx
+│   │   │   │   ├── TrainersAuthorPage.tsx
+│   │   │   │   ├── TrainersCalendarPage.tsx
+│   │   │   │   ├── TrainersHomePage.tsx
+│   │   │   │   ├── TrainersMetricsPage.tsx
+│   │   │   │   ├── TrainersQAPage.tsx
+│   │   │   │   ├── TrainersResourcesPage.tsx
+│   │   │   │   └── TrainersRewardsPage.tsx
+│   │   │   ├── university
+│   │   │   │   ├── CourseReaderPage.tsx
+│   │   │   │   ├── desktop.ini
+│   │   │   │   ├── TrainerDashboardPage.tsx
+│   │   │   │   ├── UniversityAnalyticsDashboard.tsx
+│   │   │   │   ├── UniversityDashboardPage.tsx
+│   │   │   │   └── UniversitySecurityDashboard.tsx
+│   │   │   └── UniversityPage.tsx
+│   │   ├── registry
+│   │   │   ├── api
+│   │   │   │   ├── registryApi.ts
+│   │   │   │   └── schema.api.ts
+│   │   │   ├── components
+│   │   │   │   ├── AuditLog.tsx
+│   │   │   │   ├── BulkImpactPreview.tsx
+│   │   │   │   ├── BulkOperationModal.tsx
+│   │   │   │   ├── EntityCardRenderer.tsx
+│   │   │   │   ├── EntityGraphViewer.tsx
+│   │   │   │   ├── FieldRenderer.tsx
+│   │   │   │   ├── FsmBar.tsx
+│   │   │   │   ├── GovernanceDashboard.tsx
+│   │   │   │   ├── HistoryTimeline.tsx
+│   │   │   │   ├── ImpactPreviewPanel.tsx
+│   │   │   │   ├── LifecycleBadge.tsx
+│   │   │   │   ├── LifecyclePanel.tsx
+│   │   │   │   ├── ReadOnlyEntityCard.tsx
+│   │   │   │   ├── RegistryForm.tsx
+│   │   │   │   ├── RegistryTable.tsx
+│   │   │   │   ├── RelationshipBlock.tsx
+│   │   │   │   ├── RelationshipSelector.tsx
+│   │   │   │   └── UniversalEntityForm.tsx
+│   │   │   ├── config
+│   │   │   │   ├── registryEntities.ts
+│   │   │   │   └── registryLabels.ru.ts
+│   │   │   ├── hooks
+│   │   │   │   ├── useEntitySchema.ts
+│   │   │   │   └── useRegistryImpact.ts
+│   │   │   ├── layout
+│   │   │   │   └── RegistryLayout.tsx
+│   │   │   ├── pages
+│   │   │   │   ├── EntityPage.tsx
+│   │   │   │   ├── RegistryEntityCreatePage.tsx
+│   │   │   │   ├── RegistryEntityDetailPage.tsx
+│   │   │   │   ├── RegistryEntityListPage.tsx
+│   │   │   │   └── RegistryHomePage.tsx
+│   │   │   ├── types
+│   │   │   │   └── schema.ts
+│   │   │   ├── types.ts
+│   │   │   └── utils
+│   │   │       └── translations.ts
+│   │   ├── theme
+│   │   │   └── matrixGinTheme.ts
+│   │   ├── types
+│   │   │   ├── desktop.ini
+│   │   │   ├── participation.ts
+│   │   │   └── personnel.types.ts
+│   │   ├── utils
+│   │   │   └── desktop.ini
+│   │   └── vite-env.d.ts
+│   ├── tailwind.config.cjs
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   └── vite.config.ts
+├── FUNCTIONAL_REGISTRY.md
+├── generate_project_tree.py
+├── LANGUAGE_MIGRATION_REGISTRY.md
+├── link_telegram_superuser.sql
+├── MATRIXGIN_WORK_PROMPT.md
+├── memory-bank
+│   ├── activeContext.md
+│   ├── LANGUAGE_POLICY.md
+│   ├── MEMORY-2026-01-23-employee-registration-complete.md
+│   ├── MEMORY-2026-01-23-mvp-learning-contour-ready.md
+│   ├── MEMORY-2026-01-23-phase-2-enrollment-start.md
+│   ├── MEMORY-2026-01-26-foundation-admission-gate-seeded.md
+│   ├── MEMORY-2026-01-28-foundation-gate-methodology-fix.md
+│   ├── MEMORY-2026-01-28-registration-validation-complete.md
+│   ├── MEMORY-2026-01-29-admission-gate-canonized.md
+│   ├── MEMORY-2026-01-29-foundation-loop-and-canon.md
+│   ├── MEMORY-2026-01-29-stabilization-complete.md
+│   ├── MEMORY-2026-01-30-3-phase-registration-canon.md
+│   ├── MEMORY-2026-01-30-foundation-display-hotfix.md
+│   ├── module-13-corporate-university-implementation.md
+│   ├── MODULE_29_Library_Archive.md
+│   ├── PHASE_4.5_AI_FEEDBACK_LOOP.md
+│   ├── progress.md
+│   ├── projectbrief.md
+│   ├── systemPatterns.md
+│   ├── techContext.md
+│   └── UI_DESIGN_CANON.md
+├── MENU_ARCHITECTURE.md
+├── package-lock.json
+├── package.json
+├── photo-session-economic-engine
+│   ├── analytics
+│   │   ├── BottleneckDetector.ts
+│   │   ├── FlowMetrics.ts
+│   │   ├── index.ts
+│   │   ├── SLACalculator.ts
+│   │   └── types.ts
+│   ├── api
+│   │   ├── controllers
+│   │   │   ├── completeStageController.ts
+│   │   │   ├── confirmStageController.ts
+│   │   │   ├── createSessionController.ts
+│   │   │   ├── getSessionController.ts
+│   │   │   ├── handoffStageController.ts
+│   │   │   ├── index.ts
+│   │   │   ├── listSessionsController.ts
+│   │   │   └── rejectStageController.ts
+│   │   ├── dto
+│   │   │   └── index.ts
+│   │   ├── errors
+│   │   │   └── index.ts
+│   │   ├── index.ts
+│   │   ├── repositories.ts
+│   │   └── routes
+│   │       └── index.ts
+│   ├── application
+│   │   ├── completeStage.ts
+│   │   ├── confirmStage.ts
+│   │   ├── createSession.ts
+│   │   ├── events.ts
+│   │   ├── handoffStage.ts
+│   │   ├── index.ts
+│   │   └── rejectStage.ts
+│   ├── Dockerfile
+│   ├── domain
+│   │   ├── Assignment.ts
+│   │   ├── ClientSnapshot.ts
+│   │   ├── ClientSource.ts
+│   │   ├── index.ts
+│   │   ├── Role.ts
+│   │   ├── Session.ts
+│   │   ├── SessionStatus.ts
+│   │   └── StageHistory.ts
+│   ├── infra
+│   │   ├── db
+│   │   │   ├── connection.ts
+│   │   │   ├── schema.sql
+│   │   │   └── schema.ts
+│   │   ├── index.ts
+│   │   └── repositories
+│   │       ├── AssignmentRepository.pg.ts
+│   │       ├── EventStore.pg.ts
+│   │       ├── index.ts
+│   │       ├── SessionRepository.pg.ts
+│   │       └── StageHistoryRepository.pg.ts
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── server.ts
+│   └── tsconfig.json
+├── push_error.txt
+├── scripts
+│   ├── check-users.ts
+│   ├── desktop.ini
+│   ├── link-telegram.ts
+│   └── verify_admission_gate.ts
+├── SECURITY ENFORCEMENT — MATRIXGIN.md
+├── services
+│   └── system-registry
+│       ├── .env
+│       ├── .env.example
+│       ├── jest.config.js
+│       ├── package-lock.json
+│       ├── package.json
+│       ├── seeds
+│       │   ├── 00_system_base.json
+│       │   └── 99_test_seed.json
+│       ├── src
+│       │   ├── __tests__
+│       │   │   └── registry.test.ts
+│       │   ├── bootstrap
+│       │   │   └── index.ts
+│       │   ├── controllers
+│       │   │   └── registry.controller.ts
+│       │   ├── dto
+│       │   │   ├── domain.ts
+│       │   │   └── registry.dto.ts
+│       │   ├── index.ts
+│       │   ├── middleware
+│       │   ├── repositories
+│       │   │   └── registry.repository.ts
+│       │   ├── routes
+│       │   │   └── index.ts
+│       │   ├── services
+│       │   │   ├── audit.service.ts
+│       │   │   ├── db.ts
+│       │   │   └── entity.service.ts
+│       │   └── utils
+│       │       └── logger.ts
+│       └── tsconfig.json
+├── start-dev.bat
+├── TELEGRAM_BOT_SETUP.md
+├── АНАЛИЗ MG
+│   ├── adapters
+│   │   └── ADAPTER_LAYER_ARCHITECTURE.md
+│   ├── api
+│   │   └── openapi-as-is.yaml
+│   ├── architecture
+│   │   └── MG_ARCHITECTURE_AS_IS.md
+│   ├── core
+│   │   ├── AUTH_CORE_CANON.md
+│   │   ├── MG_CORE_FREEZE.md
+│   │   ├── OFS_CORE_CANON.md
+│   │   ├── PSEE_CORE_CANON.md
+│   │   └── TASK_ENGINE_CANON.md
+│   ├── erd
+│   │   └── MG_ERD_AS_IS.md
+│   ├── PLAN.md
+│   └── PROJECT_STRUCTURE.txt
+├── Рабочая
+│   ├── gap_analysis_audit.md
+│   ├── implementation_plan.md
+│   └── log.md
+└── Финальный промт проверки модулей.md

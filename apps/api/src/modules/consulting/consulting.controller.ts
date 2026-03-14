@@ -306,6 +306,12 @@ export class ConsultingController {
     return this.executionService.getActiveOperations(this.toExecutionContext(user));
   }
 
+  @Get("execution/active")
+  @Authorized(...EXECUTION_ROLES)
+  async getActiveOperationsAlias(@CurrentUser() user: any) {
+    return this.executionService.getActiveOperations(this.toExecutionContext(user));
+  }
+
   @Post("yield")
   @Authorized(...EXECUTION_ROLES)
   @UseInterceptors(IdempotencyInterceptor)

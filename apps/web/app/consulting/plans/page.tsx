@@ -2,6 +2,7 @@
 
 import React, { Suspense, useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import SystemStatusBar from '@/components/consulting/SystemStatusBar';
 import { PlansList } from '@/components/consulting/PlansList';
 import { DomainUiContext } from '@/lib/consulting/navigation-policy';
@@ -22,9 +23,17 @@ function PlansPageInner() {
     const [isLoading, setIsLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
     const [accounts, setAccounts] = useState<Array<{ id: string; name?: string | null }>>([]);
+    const [seasons, setSeasons] = useState<Array<{
+        id: string;
+        year?: number;
+        fieldId?: string | null;
+        startDate?: string;
+    }>>([]);
     const [accountsLoading, setAccountsLoading] = useState(false);
+    const [seasonsLoading, setSeasonsLoading] = useState(false);
     const [createForm, setCreateForm] = useState({
         accountId: '',
+        seasonId: '',
         targetMetric: 'YIELD_QPH',
         period: '',
     });
@@ -68,6 +77,24 @@ function PlansPageInner() {
             }
         };
         fetchAccounts();
+    }, []);
+
+    useEffect(() => {
+        const fetchSeasons = async () => {
+            setSeasonsLoading(true);
+            try {
+                const response = await api.seasons.list();
+                const data = Array.isArray(response.data) ? response.data : [];
+                setSeasons(data);
+            } catch (error) {
+                console.error('Failed to fetch seasons:', error);
+                setSeasons([]);
+            } finally {
+                setSeasonsLoading(false);
+            }
+        };
+
+        fetchSeasons();
     }, []);
 
     const domainContext = useMemo<DomainUiContext>(() => {
@@ -128,6 +155,7 @@ function PlansPageInner() {
         try {
             await api.consulting.createPlan({
                 accountId: createForm.accountId.trim(),
+                seasonId: createForm.seasonId.trim() || undefined,
                 targetMetric: createForm.targetMetric.trim() || 'YIELD_QPH',
                 period: createForm.period.trim() || undefined,
             });
@@ -145,12 +173,19 @@ function PlansPageInner() {
         <div className="p-8 max-w-7xl mx-auto font-geist">
             {/* Header Area */}
             <div className="mb-8">
-                <h1 className="text-xl font-medium text-gray-900 tracking-tight mb-1">
-                    Планы Урожая
-                </h1>
-                <p className="text-sm text-gray-500 font-normal">
-                    Операционная панель управления жизненным циклом сельскохозяйственных планов
-                </p>
+                <div className="flex items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-xl font-medium text-gray-900 tracking-tight mb-1">
+                            Планы Урожая
+                        </h1>
+                        <p className="text-sm text-gray-500 font-normal">
+                            Операционная панель управления жизненным циклом сельскохозяйственных планов
+                        </p>
+                    </div>
+                    <Link href='/consulting/techmaps/demo' className='text-sm text-blue-600 hover:underline'>
+                        Открыть demo flow
+                    </Link>
+                </div>
             </div>
 
             {/* INTEGRITY LAYER: System Status Bar (Operational Gate visualization) */}
@@ -175,6 +210,20 @@ function PlansPageInner() {
                             {accountOptions.map((a) => (
                                 <option key={a.id} value={a.id}>
                                     {a.name}
+                                </option>
+                            ))}
+                        </select>
+                        <select
+                            value={createForm.seasonId}
+                            onChange={(e) => setCreateForm((prev) => ({ ...prev, seasonId: e.target.value }))}
+                            className="px-3 py-2 border border-black/10 rounded-xl text-sm w-64 bg-white"
+                        >
+                            <option value="">
+                                {seasonsLoading ? 'Загрузка сезонов...' : 'Сезон (опционально)'}
+                            </option>
+                            {seasons.map((season) => (
+                                <option key={season.id} value={season.id}>
+                                    {`Сезон ${season.year ?? '-'} • ${season.fieldId ?? 'без поля'}`}
                                 </option>
                             ))}
                         </select>
@@ -240,4 +289,3 @@ function PlansPageInner() {
         </div>
     );
 }
-

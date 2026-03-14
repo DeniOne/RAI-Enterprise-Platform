@@ -234,7 +234,7 @@ export default function GovernanceSecurityPage() {
                                 <p className="text-[13px] text-[#717182] leading-relaxed italic">
                                   {isQualityDrift
                                     ? 'Quality drift detected. Нужен разбор trace, BS%-контекста и причин деградации.'
-                                    : 'Requires immediate quorum validation. Escalated to Security Ops.'}
+                                    : 'Требуется решение Техсовета. Инцидент эскалирован в Security Ops.'}
                                 </p>
                               )}
                               {isQualityDrift && details && (

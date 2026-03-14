@@ -133,6 +133,7 @@ export interface FrontOfficeCommittedRecord {
 export interface FrontOfficeThreadRecord {
   id: string;
   companyId: string;
+  tenantId?: string | null;
   threadKey: string;
   channel: FrontOfficeChannel;
   farmAccountId: string | null;
@@ -159,6 +160,7 @@ export interface FrontOfficeThreadRecord {
 export interface FrontOfficeMessageRecord {
   id: string;
   companyId: string;
+  tenantId?: string | null;
   threadId: string;
   draftId: string | null;
   auditLogId: string | null;
@@ -181,6 +183,7 @@ export interface FrontOfficeMessageRecord {
 export interface FrontOfficeHandoffRecord {
   id: string;
   companyId: string;
+  tenantId?: string | null;
   threadId: string;
   draftId: string | null;
   traceId: string | null;
@@ -222,6 +225,7 @@ export interface BackOfficeFarmAssignmentRecord {
 export interface FrontOfficeThreadParticipantStateRecord {
   id: string;
   companyId: string;
+  tenantId?: string | null;
   threadId: string;
   userId: string;
   lastReadMessageId: string | null;

@@ -1,6 +1,19 @@
 # Progress Report - Prisma, Agro Domain & RAI Chat Integration
 
-## 2026-03-13
+## 2026-03-14
+
+114. **Docs Consolidation — `ALL_DOCS` Creation** [DONE]:
+    *   Создана директория `/root/RAI_EP/ALL_DOCS` для плоского хранения всех документов проекта.
+    *   Все файлы из `/root/RAI_EP/docs` и её поддиректорий скопированы в `/root/RAI_EP/ALL_DOCS`.
+    *   Использована стратегия `--backup=numbered` для предотвращения потери данных при совпадении имен файлов (создано 628 файлов, из них 24 с суффиксами бэкапа).
+    *   Структура папок в `ALL_DOCS` отсутствует, все файлы лежат в корне директории.
+
+113. **DB Refactor Program — Phase 7 FrontOfficeThread Wave Bootstrap** [DONE]:
+    *   Для `default-rai-company` отсутствовал весь platform boundary слой (`tenants`, `tenant_company_bindings`, `tenant_states` были пустыми), из-за чего wave-1 оставалась schema-ready, но не backfilled.
+    *   Добавлен повторяемый bootstrap/backfill script `scripts/db/bootstrap-front-office-tenant-wave.cjs` и команда `pnpm db:front-office-wave:bootstrap`; скрипт создает `Tenant`, primary `TenantCompanyBinding`, `TenantState` и повторно backfill-ит `FrontOfficeThread` family.
+    *   После bootstrap null-backlog схлопнут `1/6/1/1 -> 0/0/0/0` для `threads/messages/handoffs/participant_states`.
+    *   Повторный shadow-validation сформировал `docs/01_ARCHITECTURE/DATABASE/DB_FRONT_OFFICE_TENANT_WAVE_VALIDATION.md` с `0` mismatch и `0` null rows.
+    *   Синхронизированы `DB_PHASE_7_STATUS.md`, `DB_OPERATIONAL_AGGREGATE_MIGRATION_WAVES.md`, `DB_OPERATIONAL_AGGREGATE_MIGRATION_CONTRACTS.md`, `DB_FRONT_OFFICE_TENANT_WAVE_1.md`, checklist и memory-bank.
 
 111. **DB Refactor Program — Migration Deploy + EXPLAIN Evidence Run** [DONE]:
     *   Выполнен `prisma migrate deploy` на БД из `.env`; обнаруженный migration-defect в `20260313214500_phase5_budget_category_literal_fix` (таблица `budget_items`) исправлен на `consulting_budget_items`.

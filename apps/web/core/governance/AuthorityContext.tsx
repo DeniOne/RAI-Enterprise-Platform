@@ -12,7 +12,7 @@ import { capabilitiesFromRole } from '@/lib/consulting/capability-policy';
 
 export interface AuthorityContextType {
     canOverride: boolean;  // Право форсированного перехода FSM (Level C)
-    canSign: boolean;      // Право участия в кворуме (Level F)
+    canSign: boolean;      // Право участия в Техсовете (Level F)
     canEscalate: boolean;  // Право ручного триггера эскалации
     canEdit: boolean;      // Право модификации полей в текущем состоянии
     canApprove: boolean;   // Право окончательного подтверждения (Finality)

@@ -1,0 +1,55 @@
+{
+    "title": "RAI - Level D Industrial Monitor",
+    "panels": [
+        {
+            "title": "Drift Detection (PSI/MAE)",
+            "type": "timeseries",
+            "targets": [
+                {
+                    "expr": "rai_drift_psi_value",
+                    "legendFormat": "{{companyId}} - {{featureId}}"
+                }
+            ]
+        },
+        {
+            "title": "Training Pipeline Status",
+            "type": "state-timeline",
+            "targets": [
+                {
+                    "expr": "rai_pipeline_status",
+                    "legendFormat": "{{status}}"
+                }
+            ]
+        },
+        {
+            "title": "Active K8s Jobs (Global Quota)",
+            "type": "gauge",
+            "targets": [
+                {
+                    "expr": "rai_retrain_cooldown_active"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "max": 3,
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "value": 0,
+                                "color": "green"
+                            },
+                            {
+                                "value": 2,
+                                "color": "yellow"
+                            },
+                            {
+                                "value": 3,
+                                "color": "red"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}

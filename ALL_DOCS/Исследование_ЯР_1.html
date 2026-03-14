@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartAgro: Адаптивная технология возделывания рапса</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Chart Container Styling Rules */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        
+        @media (max-width: 640px) {
+            .chart-container {
+                height: 250px;
+            }
+        }
+
+        /* Custom Scrollbar for side panels */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Field Grid Animation */
+        .field-cell {
+            transition: all 0.3s ease;
+        }
+        .field-cell:hover {
+            transform: scale(1.1);
+            z-index: 10;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid white;
+        }
+        
+        .nav-item.active {
+            background-color: #f0fdf4; /* emerald-50 */
+            border-left: 4px solid #059669; /* emerald-600 */
+            color: #059669;
+        }
+    </style>
+    <!-- Chosen Palette: Emerald (Nature/Agro) + Amber (Rapeseed) + Slate (Tech) -->
+    <!-- Application Structure Plan: 
+         1. Dashboard Layout: Sidebar for navigation, Main area for content.
+         2. Overview Section: Introduction to the paradigm shift (Traditional vs Data-Driven).
+         3. Agrotechnology Cycle (Interactive Timeline): The core flow. Users click stages (Analysis, Sowing, Care, Harvest) to see specific AI interventions.
+         4. Field Simulator (The 'Wow' Factor): A 10x10 grid representing a field. Users toggle layers (NDVI, Yield Potential, VRA Maps) to visualize 'Zoning' and 'Variable Rate Application' concepts.
+         5. Data-Link Table: A structured view of the "Data -> AI -> Action" logic.
+         6. Economics: ROI visualization comparing CAPEX/OPEX. 
+         Rationale: This structure breaks complex agronomic text into a logical workflow (The Cycle) and provides a visual playground (The Simulator) to understand the abstract concept of "Management Zones".
+    -->
+    <!-- Visualization & Content Choices:
+         - Field Simulator: Goal: Organize/Relationships. Grid of divs. Interaction: Toggle layers. Justification: Best way to show spatial heterogeneity without GIS software.
+         - Cycle Timeline: Goal: Inform/Change. Interactive list updates a detail pane. Justification: Rapeseed cultivation is a time-bound process.
+         - Economic Chart: Goal: Compare. Stacked Bar Chart. Justification: Clearly shows where money is saved (Inputs) vs where it is spent (Tech).
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used (FontAwesome font icons only). NO Mermaid JS used. -->
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased h-screen flex overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-white border-r border-slate-200 flex-col hidden md:flex z-20 shadow-sm">
+        <div class="p-6 border-b border-slate-100">
+            <h1 class="text-2xl font-bold text-emerald-700 flex items-center gap-2">
+                <i class="fa-solid fa-leaf"></i> SmartAgro
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">Рапс: Технология 4.0</p>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4">
+            <button onclick="navigateTo('overview')" class="nav-item w-full text-left px-6 py-3 text-slate-600 hover:bg-slate-50 transition-colors active" id="nav-overview">
+                <i class="fa-solid fa-chart-pie w-6"></i> Обзор Парадигмы
+            </button>
+            <button onclick="navigateTo('cycle')" class="nav-item w-full text-left px-6 py-3 text-slate-600 hover:bg-slate-50 transition-colors" id="nav-cycle">
+                <i class="fa-solid fa-seedling w-6"></i> Цикл Возделывания
+            </button>
+            <button onclick="navigateTo('simulator')" class="nav-item w-full text-left px-6 py-3 text-slate-600 hover:bg-slate-50 transition-colors" id="nav-simulator">
+                <i class="fa-solid fa-map w-6"></i> Симулятор Поля (VRA)
+            </button>
+            <button onclick="navigateTo('datalink')" class="nav-item w-full text-left px-6 py-3 text-slate-600 hover:bg-slate-50 transition-colors" id="nav-datalink">
+                <i class="fa-solid fa-database w-6"></i> Data-Agronomy Link
+            </button>
+            <button onclick="navigateTo('economics')" class="nav-item w-full text-left px-6 py-3 text-slate-600 hover:bg-slate-50 transition-colors" id="nav-economics">
+                <i class="fa-solid fa-coins w-6"></i> Экономика
+            </button>
+        </nav>
+        <div class="p-4 bg-slate-50 border-t border-slate-200 text-xs text-slate-400">
+            Based on Research: Data-Driven Rapeseed Cultivation
+        </div>
+    </aside>
+
+    <!-- Mobile Header -->
+    <div class="md:hidden fixed top-0 w-full bg-white border-b border-slate-200 z-30 px-4 py-3 flex justify-between items-center shadow-sm">
+        <span class="font-bold text-emerald-700"><i class="fa-solid fa-leaf"></i> SmartAgro</span>
+        <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="text-slate-600">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+    </div>
+    <div id="mobile-menu" class="hidden fixed top-12 left-0 w-full bg-white z-20 border-b border-slate-200 shadow-lg md:hidden">
+        <button onclick="navigateTo('overview'); toggleMobile()" class="block w-full text-left px-4 py-3 border-b border-slate-100">Обзор</button>
+        <button onclick="navigateTo('cycle'); toggleMobile()" class="block w-full text-left px-4 py-3 border-b border-slate-100">Цикл</button>
+        <button onclick="navigateTo('simulator'); toggleMobile()" class="block w-full text-left px-4 py-3 border-b border-slate-100">Симулятор</button>
+        <button onclick="navigateTo('datalink'); toggleMobile()" class="block w-full text-left px-4 py-3 border-b border-slate-100">Данные</button>
+        <button onclick="navigateTo('economics'); toggleMobile()" class="block w-full text-left px-4 py-3">Экономика</button>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto relative pt-14 md:pt-0 bg-slate-50" id="main-content">
+        
+        <!-- SECTION: OVERVIEW -->
+        <section id="overview" class="p-6 md:p-10 max-w-6xl mx-auto space-y-8 animate-fade-in">
+            <div class="bg-white rounded-xl p-8 shadow-sm border border-slate-100">
+                <h2 class="text-3xl font-bold text-slate-800 mb-4">Новая парадигма: Data-Driven Agriculture</h2>
+                <p class="text-slate-600 mb-6 leading-relaxed">
+                    Данный раздел вводит в контекст исследования. Традиционное земледелие рассматривает поле как единое целое, применяя усредненные нормы. 
+                    Предлагаемая технология возделывания ярового рапса базируется на управлении неоднородностью. Искусственный интеллект здесь выступает в двойной роли: 
+                    как <strong>аналитик</strong> (DSS) для прогнозирования рисков и как <strong>оператор</strong> для дифференцированного внесения ресурсов.
+                </p>
+
+                <div class="grid md:grid-cols-2 gap-6 mt-8">
+                    <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                        <h3 class="font-bold text-slate-700 mb-3 border-b pb-2 border-slate-200">Традиционный подход</h3>
+                        <ul class="space-y-3 text-sm text-slate-600">
+                            <li class="flex gap-2"><i class="fa-solid fa-xmark text-red-400 mt-1"></i> Поле — единая единица управления</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-xmark text-red-400 mt-1"></i> Календарные сроки сева</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-xmark text-red-400 mt-1"></i> Одна норма высева на все поле</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-xmark text-red-400 mt-1"></i> Плановые обработки "на всякий случай"</li>
+                        </ul>
+                    </div>
+                    <div class="bg-emerald-50 p-6 rounded-lg border border-emerald-100">
+                        <h3 class="font-bold text-emerald-800 mb-3 border-b pb-2 border-emerald-200">Адаптивная технология (ИИ)</h3>
+                        <ul class="space-y-3 text-sm text-emerald-700">
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-500 mt-1"></i> Управление зонами (Management Zones)</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-500 mt-1"></i> Агроклиматические окна сева</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-500 mt-1"></i> Дифференцированный посев (VRA)</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-500 mt-1"></i> Обработка только по очагам (Spot-spraying)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Tools Summary -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white p-4 rounded-lg shadow-sm text-center border border-slate-100 hover:shadow-md transition">
+                    <div class="text-amber-500 text-3xl mb-2"><i class="fa-solid fa-satellite"></i></div>
+                    <h4 class="font-bold text-sm">ДДЗ & ГИС</h4>
+                    <p class="text-xs text-slate-500 mt-1">Спутниковые снимки, карты NDVI, рельеф</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm text-center border border-slate-100 hover:shadow-md transition">
+                    <div class="text-emerald-500 text-3xl mb-2"><i class="fa-solid fa-microchip"></i></div>
+                    <h4 class="font-bold text-sm">IoT & Датчики</h4>
+                    <p class="text-xs text-slate-500 mt-1">Метеостанции, влажность почвы</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm text-center border border-slate-100 hover:shadow-md transition">
+                    <div class="text-blue-500 text-3xl mb-2"><i class="fa-solid fa-brain"></i></div>
+                    <h4 class="font-bold text-sm">ML Алгоритмы</h4>
+                    <p class="text-xs text-slate-500 mt-1">Кластеризация зон, предиктивные модели</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm text-center border border-slate-100 hover:shadow-md transition">
+                    <div class="text-slate-700 text-3xl mb-2"><i class="fa-solid fa-tractor"></i></div>
+                    <h4 class="font-bold text-sm">VRA Техника</h4>
+                    <p class="text-xs text-slate-500 mt-1">Дифференцированное внесение</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: CYCLE -->
+        <section id="cycle" class="p-6 md:p-10 max-w-6xl mx-auto hidden space-y-6">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-slate-800">Интеллектуальный цикл возделывания</h2>
+                <p class="text-slate-600 mt-2">
+                    В этом разделе представлена пошаговая агротехнология. Выберите этап ниже, чтобы увидеть, как ИИ оптимизирует процессы на каждой стадии, от анализа почвы до уборки.
+                </p>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-6 h-[600px]">
+                <!-- Interactive Timeline/List -->
+                <div class="w-full lg:w-1/3 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                    <div class="p-4 bg-slate-50 border-b border-slate-200 font-bold text-slate-700">Этапы технологии</div>
+                    <div class="overflow-y-auto custom-scrollbar flex-1" id="cycle-list">
+                        <!-- Items injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Detail Panel -->
+                <div class="w-full lg:w-2/3 bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col relative overflow-hidden">
+                    <div id="cycle-content" class="flex-1 overflow-y-auto custom-scrollbar">
+                        <!-- Content injected by JS -->
+                        <div class="flex flex-col items-center justify-center h-full text-slate-400">
+                            <i class="fa-solid fa-arrow-left text-4xl mb-4 lg:hidden"></i>
+                            <i class="fa-solid fa-arrow-left text-4xl mb-4 hidden lg:block"></i>
+                            <p>Выберите этап для просмотра деталей оптимизации</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: SIMULATOR -->
+        <section id="simulator" class="p-6 md:p-10 max-w-6xl mx-auto hidden">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-slate-800">Симулятор управления зонами (VRA)</h2>
+                <p class="text-slate-600 mt-2 max-w-3xl">
+                    Здесь вы можете визуализировать ключевой принцип технологии: сегментацию поля. ИИ анализирует исторические данные (NDVI, рельеф) и создает "зоны управления". 
+                    Переключайте слои карты, чтобы увидеть, как меняются агрономические решения (нормы высева, удобрения) в зависимости от потенциала зоны.
+                </p>
+            </div>
+
+            <div class="flex flex-col xl:flex-row gap-8">
+                <!-- Controls -->
+                <div class="w-full xl:w-1/4 space-y-4">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                        <h3 class="font-bold text-slate-700 mb-4">Слои карты</h3>
+                        <div class="space-y-2">
+                            <button onclick="setLayer('soil')" class="layer-btn w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-amber-100 text-amber-800 border border-amber-200" id="btn-soil">
+                                <i class="fa-solid fa-layer-group mr-2"></i> Потенциал Почвы
+                            </button>
+                            <button onclick="setLayer('ndvi')" class="layer-btn w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-slate-50 text-slate-600" id="btn-ndvi">
+                                <i class="fa-solid fa-leaf mr-2"></i> Индекс NDVI (Вегетация)
+                            </button>
+                            <button onclick="setLayer('seed')" class="layer-btn w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-slate-50 text-slate-600" id="btn-seed">
+                                <i class="fa-solid fa-seedling mr-2"></i> Карта VRA: Посев
+                            </button>
+                            <button onclick="setLayer('nitrogen')" class="layer-btn w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-slate-50 text-slate-600" id="btn-nitrogen">
+                                <i class="fa-solid fa-flask mr-2"></i> Карта VRA: Азот
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                        <h3 class="font-bold text-slate-700 mb-2">Легенда</h3>
+                        <div id="legend-content" class="space-y-2 text-sm">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Field Grid -->
+                <div class="w-full xl:w-2/4">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 aspect-square relative">
+                        <!-- 10x10 Grid -->
+                        <div id="field-grid" class="grid grid-cols-10 grid-rows-10 gap-1 w-full h-full">
+                            <!-- Cells injected by JS -->
+                        </div>
+                        <div class="absolute bottom-2 right-2 bg-white/90 px-2 py-1 text-xs rounded shadow backdrop-blur-sm">
+                            Поле №4 (50 га)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Panel -->
+                <div class="w-full xl:w-1/4 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-slate-800 mb-4 border-b pb-2">Детали зоны</h3>
+                    <div id="zone-details" class="text-sm text-slate-600 space-y-4">
+                        <p class="italic text-slate-400">Наведите курсор на клетку поля для получения информации.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: DATA LINK -->
+        <section id="datalink" class="p-6 md:p-10 max-w-6xl mx-auto hidden space-y-6">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-slate-800">Матрица "Data-Agronomy Link"</h2>
+                <p class="text-slate-600 mt-2">
+                    Сводная таблица, демонстрирующая прямую связь между собираемыми данными, алгоритмами ИИ и конечными агрономическими действиями. Это "нервная система" технологии.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm text-left">
+                        <thead class="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-4">Этап</th>
+                                <th class="px-6 py-4">Данные (Вход)</th>
+                                <th class="px-6 py-4">ИИ / Алгоритм</th>
+                                <th class="px-6 py-4">Действие (Выход)</th>
+                                <th class="px-6 py-4">Эффект</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="px-6 py-4 font-medium text-emerald-700">1. Планирование</td>
+                                <td class="px-6 py-4">Спутник (3-5 лет), ЦМР, Агрохимия</td>
+                                <td class="px-6 py-4"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">K-means кластеризация</span></td>
+                                <td class="px-6 py-4">Создание зон управления (Management Zones)</td>
+                                <td class="px-6 py-4">Экономия P/K до 15%</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="px-6 py-4 font-medium text-emerald-700">2. Посев</td>
+                                <td class="px-6 py-4">Прогноз погоды, T почвы, Влага</td>
+                                <td class="px-6 py-4"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">Регрессионная модель</span></td>
+                                <td class="px-6 py-4">Расчет даты старта и нормы VRA</td>
+                                <td class="px-6 py-4">Равномерные всходы</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="px-6 py-4 font-medium text-emerald-700">3. Защита</td>
+                                <td class="px-6 py-4">БПЛА (RGB/Multi), Фото ловушек</td>
+                                <td class="px-6 py-4"><span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">Computer Vision</span></td>
+                                <td class="px-6 py-4">Точечное опрыскивание (Spot-spray)</td>
+                                <td class="px-6 py-4">Снижение СЗР на 30%</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="px-6 py-4 font-medium text-emerald-700">4. Питание</td>
+                                <td class="px-6 py-4">NDVI (спутник/дрон), Листовая диагностика</td>
+                                <td class="px-6 py-4"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">Балансовая модель</span></td>
+                                <td class="px-6 py-4">Корректировка дозы Азота в реальном времени</td>
+                                <td class="px-6 py-4">Максимизация урожая</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="px-6 py-4 font-medium text-emerald-700">5. Уборка</td>
+                                <td class="px-6 py-4">Индекс GNDVI (спелость), Влажность</td>
+                                <td class="px-6 py-4"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">Классификация зон</span></td>
+                                <td class="px-6 py-4">Очередность уборки, десикация</td>
+                                <td class="px-6 py-4">Снижение потерь</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: ECONOMICS -->
+        <section id="economics" class="p-6 md:p-10 max-w-6xl mx-auto hidden space-y-8">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-slate-800">Экономическая эффективность</h2>
+                <p class="text-slate-600 mt-2">
+                    Сравнение затрат (CAPEX на технологии) и выгод (OPEX экономия + Прирост урожая). Интерактивный график показывает структуру изменений.
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Chart Area -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-slate-700 mb-4">Структура затрат и выручки (на 1 га)</h3>
+                    <div class="chart-container">
+                        <canvas id="economicsChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Text Analysis -->
+                <div class="space-y-6">
+                    <div class="bg-emerald-50 p-6 rounded-xl border border-emerald-100">
+                        <h3 class="font-bold text-emerald-800 mb-2">Ключевые показатели</h3>
+                        <ul class="space-y-3">
+                            <li class="flex justify-between items-center border-b border-emerald-200 pb-2">
+                                <span class="text-emerald-700">Экономия семян и удобрений</span>
+                                <span class="font-bold text-emerald-900">-10% ... -15%</span>
+                            </li>
+                            <li class="flex justify-between items-center border-b border-emerald-200 pb-2">
+                                <span class="text-emerald-700">Экономия СЗР (гербициды/инсектициды)</span>
+                                <span class="font-bold text-emerald-900">-20% ... -30%</span>
+                            </li>
+                            <li class="flex justify-between items-center border-b border-emerald-200 pb-2">
+                                <span class="text-emerald-700">Прирост урожайности (за счет качества)</span>
+                                <span class="font-bold text-emerald-900">+10% ... +15%</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl border border-slate-200">
+                        <h3 class="font-bold text-slate-700 mb-2">Дорожная карта внедрения</h3>
+                        <div class="relative pl-6 border-l-2 border-slate-200 space-y-6 mt-4">
+                            <div class="relative">
+                                <div class="absolute -left-[31px] bg-slate-200 w-4 h-4 rounded-full border-2 border-white"></div>
+                                <h4 class="font-bold text-sm text-slate-800">Год 1: Фундамент</h4>
+                                <p class="text-xs text-slate-500 mt-1">Агрохим. обследование, оцифровка полей, базовый мониторинг (спутник), VRA по фосфору/калию.</p>
+                            </div>
+                            <div class="relative">
+                                <div class="absolute -left-[31px] bg-amber-400 w-4 h-4 rounded-full border-2 border-white"></div>
+                                <h4 class="font-bold text-sm text-slate-800">Год 2: Динамика</h4>
+                                <p class="text-xs text-slate-500 mt-1">VRA посев, азотные подкормки по снимкам, внедрение скаутинга с мобильным приложением.</p>
+                            </div>
+                            <div class="relative">
+                                <div class="absolute -left-[31px] bg-emerald-500 w-4 h-4 rounded-full border-2 border-white"></div>
+                                <h4 class="font-bold text-sm text-slate-800">Год 3: Полный цикл AI</h4>
+                                <p class="text-xs text-slate-500 mt-1">Предиктивные модели болезней, Spot-spraying дронами, интеграция комбайнов с картами урожайности.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- NAVIGATION LOGIC ---
+        function navigateTo(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
+            // Show target section
+            document.getElementById(sectionId).classList.remove('hidden');
+            
+            // Update Sidebar Active State
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active', 'bg-emerald-50', 'text-emerald-600', 'border-l-4', 'border-emerald-600');
+                el.classList.add('text-slate-600');
+            });
+            const activeBtn = document.getElementById(`nav-${sectionId}`);
+            if (activeBtn) {
+                activeBtn.classList.add('active', 'bg-emerald-50', 'text-emerald-600', 'border-l-4', 'border-emerald-600');
+                activeBtn.classList.remove('text-slate-600');
+            }
+
+            // Trigger specific inits
+            if (sectionId === 'economics') initEconomicsChart();
+        }
+        
+        function toggleMobile() {
+            document.getElementById('mobile-menu').classList.add('hidden');
+        }
+
+        // --- CYCLE DATA & LOGIC ---
+        const cycleData = [
+            {
+                id: 'prep',
+                title: '1. Пред-посев: Анализ',
+                icon: 'fa-map',
+                color: 'text-slate-600',
+                content: `
+                    <h3 class="text-xl font-bold text-emerald-800 mb-4">Сегментация и Зонирование</h3>
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+                        <strong>Задача ИИ:</strong> Разделить пестрое поле на однородные зоны управления (Management Zones) для точного воздействия.
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex gap-4 items-start">
+                            <div class="bg-white p-2 rounded shadow-sm text-emerald-600"><i class="fa-solid fa-layer-group"></i></div>
+                            <div>
+                                <h4 class="font-bold text-slate-700">Входные данные</h4>
+                                <p class="text-sm text-slate-600">Архив спутниковых снимков (3-5 лет), карты электропроводности почвы, рельеф (ЦМР), агрохимия.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 items-start">
+                            <div class="bg-white p-2 rounded shadow-sm text-emerald-600"><i class="fa-solid fa-laptop-code"></i></div>
+                            <div>
+                                <h4 class="font-bold text-slate-700">Алгоритм</h4>
+                                <p class="text-sm text-slate-600">Кластеризация (k-means) для выделения 3-5 зон потенциала урожайности.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 items-start">
+                            <div class="bg-white p-2 rounded shadow-sm text-emerald-600"><i class="fa-solid fa-file-export"></i></div>
+                            <div>
+                                <h4 class="font-bold text-slate-700">Результат (VRA)</h4>
+                                <p class="text-sm text-slate-600">Прескриптивные карты для внесения фосфора, калия и мелиорантов. Удобрения вносятся туда, где они дадут отдачу, а не "в болото".</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'sowing',
+                title: '2. Посев: Предиктивность',
+                icon: 'fa-seedling',
+                color: 'text-emerald-600',
+                content: `
+                    <h3 class="text-xl font-bold text-emerald-800 mb-4">Предиктивный посев и VRA</h3>
+                    <div class="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6">
+                        <strong>Задача ИИ:</strong> Поймать идеальное "окно" и подобрать норму высева под каждую зону поля.
+                    </div>
+                    <p class="text-sm text-slate-600 mb-4">Яровой рапс критичен к срокам и густоте. Ошибка в сроках на 5 дней может стоить 10-15% урожая.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="border border-slate-200 rounded p-4">
+                            <h4 class="font-bold text-slate-700 mb-2">Прогноз даты посева</h4>
+                            <p class="text-xs text-slate-500">Регрессионная модель анализирует прогрев почвы (нужно 6-8°С) и запасы влаги. ИИ предсказывает дату за 1-2 недели.</p>
+                        </div>
+                        <div class="border border-slate-200 rounded p-4">
+                            <h4 class="font-bold text-slate-700 mb-2">Дифференцированная норма</h4>
+                            <p class="text-xs text-slate-500"><strong>Слабая зона:</strong> +10-15% семян (страховка от гибели).<br><strong>Сильная зона:</strong> Базовая норма (для максимального ветвления).</p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'care',
+                title: '3. Уход: Мониторинг',
+                icon: 'fa-eye',
+                color: 'text-blue-600',
+                content: `
+                    <h3 class="text-xl font-bold text-emerald-800 mb-4">Адаптивная защита в реальном времени</h3>
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+                        <strong>Задача ИИ:</strong> Увидеть проблему раньше агронома и обработать только очаг (Spot Application).
+                    </div>
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="font-bold text-slate-700 flex items-center gap-2"><i class="fa-solid fa-bug text-red-500"></i> Вредители (Цветоед, Блошка)</h4>
+                            <p class="text-sm text-slate-600 mt-1">Компьютерное зрение подсчитывает вредителей на фотоловушках. Модель суммы температур прогнозирует вспышку численности.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-700 flex items-center gap-2"><i class="fa-solid fa-skull-crossbones text-yellow-500"></i> Сорняки и Болезни</h4>
+                            <p class="text-sm text-slate-600 mt-1">БПЛА с мультиспектральной камерой находит очаги сорняков. Опрыскиватель включается только над ними (экономия до 30% гербицида).</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-700 flex items-center gap-2"><i class="fa-solid fa-utensils text-green-500"></i> Азотное питание</h4>
+                            <p class="text-sm text-slate-600 mt-1">Снимки NDVI в фазу стеблевания -> Расчет биомассы -> Карта подкормки. Добавляем азот туда, где есть потенциал роста.</p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'harvest',
+                title: '4. Уборка: Точность',
+                icon: 'fa-tractor',
+                color: 'text-amber-600',
+                content: `
+                    <h3 class="text-xl font-bold text-emerald-800 mb-4">Предиктивная уборка</h3>
+                    <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 mb-6">
+                        <strong>Задача ИИ:</strong> Минимизировать потери от растрескивания стручков, выбрав точное время.
+                    </div>
+                    <ul class="list-disc list-inside space-y-3 text-slate-700 text-sm">
+                        <li><strong>Мониторинг спелости:</strong> Индекс GNDVI (хлорофилл) показывает реальное усыхание растения лучше, чем визуальный осмотр края поля.</li>
+                        <li><strong>Зонирование уборки:</strong> Если поле созревает неравномерно, ИИ строит логистику: какие участки убирать первыми, где нужна десикация.</li>
+                        <li><strong>Картирование урожайности:</strong> Комбайн фиксирует фактический намолот в каждой точке. Эти данные замыкают цикл, обучая модель для следующего года.</li>
+                    </ul>
+                `
+            }
+        ];
+
+        function initCycle() {
+            const listContainer = document.getElementById('cycle-list');
+            listContainer.innerHTML = '';
+            
+            cycleData.forEach((item, index) => {
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left px-4 py-4 border-b border-slate-100 hover:bg-slate-50 transition flex items-center gap-3 ${index === 0 ? 'bg-slate-50 border-l-4 border-l-emerald-500' : ''}`;
+                btn.innerHTML = `<i class="fa-solid ${item.icon} ${item.color} w-6 text-center"></i> <span class="font-medium text-slate-700">${item.title}</span>`;
+                btn.onclick = () => loadCycleContent(index, btn);
+                listContainer.appendChild(btn);
+            });
+
+            // Load first item
+            loadCycleContent(0, listContainer.firstElementChild);
+        }
+
+        function loadCycleContent(index, btnElement) {
+            // Update buttons style
+            document.querySelectorAll('#cycle-list button').forEach(b => {
+                b.classList.remove('bg-slate-50', 'border-l-4', 'border-l-emerald-500');
+            });
+            btnElement.classList.add('bg-slate-50', 'border-l-4', 'border-l-emerald-500');
+
+            // Update content with Fade effect
+            const contentDiv = document.getElementById('cycle-content');
+            contentDiv.style.opacity = 0;
+            setTimeout(() => {
+                contentDiv.innerHTML = cycleData[index].content;
+                contentDiv.style.opacity = 1;
+            }, 200);
+        }
+
+        // --- SIMULATOR LOGIC ---
+        const rows = 10;
+        const cols = 10;
+        let fieldData = [];
+        let currentLayer = 'soil';
+
+        function initSimulator() {
+            const grid = document.getElementById('field-grid');
+            grid.innerHTML = '';
+            fieldData = [];
+
+            // Generate "Perlin-like" noise for zones simply using distance from corners
+            // Top-Right: High Potential (Zone A), Bottom-Left: Low Potential (Zone C), Middle: Zone B
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const score = (r * 2) + (cols - c * 2) + (Math.random() * 5); // Simple gradient + noise
+                    let zone = 'B'; // Medium
+                    if (score < 5) zone = 'A'; // High (inverted logic in visualization usually, lets stick to High=Green)
+                    else if (score > 15) zone = 'C'; // Low
+                    
+                    // Actually let's map score: High Score = Zone A
+                    if (r < 4 && c > 5) zone = 'A'; // Top Rightish
+                    else if (r > 6 && c < 4) zone = 'C'; // Bottom Leftish
+                    else if (Math.random() > 0.8) zone = (Math.random() > 0.5 ? 'A' : 'C'); // Random noise
+                    
+                    fieldData.push({ r, c, zone });
+                    
+                    const cell = document.createElement('div');
+                    cell.className = 'field-cell w-full h-full rounded-sm cursor-pointer relative';
+                    cell.dataset.index = fieldData.length - 1;
+                    cell.onmouseenter = (e) => showCellInfo(e.target.dataset.index);
+                    grid.appendChild(cell);
+                }
+            }
+            setLayer('soil');
+        }
+
+        function setLayer(layer) {
+            currentLayer = layer;
+            
+            // Update Buttons
+            document.querySelectorAll('.layer-btn').forEach(btn => {
+                btn.classList.remove('bg-amber-100', 'text-amber-800', 'border-amber-200');
+                btn.classList.add('text-slate-600', 'hover:bg-slate-50');
+            });
+            const activeBtn = document.getElementById(`btn-${layer}`);
+            activeBtn.classList.remove('text-slate-600', 'hover:bg-slate-50');
+            activeBtn.classList.add('bg-amber-100', 'text-amber-800', 'border-amber-200');
+
+            // Update Legend
+            const legend = document.getElementById('legend-content');
+            if (layer === 'soil') {
+                legend.innerHTML = `
+                    <div class="flex items-center gap-2"><div class="w-4 h-4 bg-emerald-600 rounded"></div> Высокий потенциал (Гумус > 3.5%)</div>
+                    <div class="flex items-center gap-2"><div class="w-4 h-4 bg-emerald-400 rounded"></div> Средний потенциал</div>
+                    <div class="flex items-center gap-2"><div class="w-4 h-4 bg-amber-200 rounded"></div> Низкий потенциал (Песок/Смыв)</div>
+                `;
+            } else if (layer === 'ndvi') {
+                legend.innerHTML = `
+                    <div class="flex items-center gap-2"><div class="w-4 h-4 bg-green-700 rounded"></div> NDVI > 0.7 (Густой травостой)</div>
+                    <div class="flex items-center gap-2"><div class="w-4 h-4 bg-green-500 rounded"></div> NDVI 0.5-0.7</div>
+                    <div class="flex items-center gap-2"><div class="w-4 h-4 bg-yellow-300 rounded"></div> NDVI < 0.4 (Стресс/Проплешины)</div>
+                `;
+            } else if (layer === 'seed') {
+                legend.innerHTML = `
+                    <div class="flex items-center gap-2"><div class="w-4 h-4 bg-blue-300 rounded"></div> Норма: Базовая (50 шт/м²)</div>
+                    <div class="flex items-center gap-2"><div class="w-4 h-4 bg-blue-500 rounded"></div> Норма: Повышенная (+10%)</div>
+                    <div class="flex items-center gap-2"><div class="w-4 h-4 bg-blue-700 rounded"></div> Норма: Высокая (+20% для страховки)</div>
+                `;
+            } else if (layer === 'nitrogen') {
+                legend.innerHTML = `
+                    <div class="flex items-center gap-2"><div class="w-4 h-4 bg-red-500 rounded"></div> Доза: Высокая (Макс. отдача)</div>
+                    <div class="flex items-center gap-2"><div class="w-4 h-4 bg-red-300 rounded"></div> Доза: Средняя</div>
+                    <div class="flex items-center gap-2"><div class="w-4 h-4 bg-red-100 rounded"></div> Доза: Минимальная (Экономия)</div>
+                `;
+            }
+
+            // Render Grid Colors
+            const cells = document.querySelectorAll('.field-cell');
+            cells.forEach((cell, idx) => {
+                const zone = fieldData[idx].zone;
+                let colorClass = '';
+
+                if (layer === 'soil') {
+                    if (zone === 'A') colorClass = 'bg-emerald-600';
+                    else if (zone === 'B') colorClass = 'bg-emerald-400';
+                    else colorClass = 'bg-amber-200';
+                } else if (layer === 'ndvi') {
+                    // Introduce some randomness to simulate real life divergence from soil potential
+                    const rand = Math.random();
+                    if (zone === 'A') colorClass = rand > 0.2 ? 'bg-green-700' : 'bg-green-500';
+                    else if (zone === 'B') colorClass = 'bg-green-500';
+                    else colorClass = rand > 0.3 ? 'bg-yellow-300' : 'bg-green-400';
+                } else if (layer === 'seed') {
+                    // Inverse logic: Poor soil needs MORE seeds to guarantee stand
+                    if (zone === 'A') colorClass = 'bg-blue-300'; // Good soil -> Normal rate
+                    else if (zone === 'B') colorClass = 'bg-blue-500';
+                    else colorClass = 'bg-blue-700'; // Bad soil -> High rate
+                } else if (layer === 'nitrogen') {
+                    // Direct logic: Good soil responds best to N, Bad soil wastes it
+                    if (zone === 'A') colorClass = 'bg-red-500'; // Feed the best
+                    else if (zone === 'B') colorClass = 'bg-red-300';
+                    else colorClass = 'bg-red-100'; // Don't feed the swamp
+                }
+
+                cell.className = `field-cell w-full h-full rounded-sm cursor-pointer relative ${colorClass}`;
+            });
+        }
+
+        function showCellInfo(idx) {
+            const data = fieldData[idx];
+            const panel = document.getElementById('zone-details');
+            
+            let zoneName = data.zone === 'A' ? 'Зона А (Высокий потенциал)' : (data.zone === 'B' ? 'Зона B (Средний потенциал)' : 'Зона C (Низкий потенциал/Риск)');
+            
+            let recs = '';
+            if (currentLayer === 'soil' || currentLayer === 'ndvi') {
+                recs = `
+                    <div class="mt-2">
+                        <strong>Характеристика:</strong> ${data.zone === 'A' ? 'Оптимальный уровень гумуса и влаги.' : (data.zone === 'C' ? 'Лимитирующие факторы: песок или смыв.' : 'Стандартные условия.')}
+                    </div>
+                `;
+            } else if (currentLayer === 'seed') {
+                let rate = data.zone === 'A' ? '50 шт/м² (База)' : (data.zone === 'B' ? '55 шт/м² (+10%)' : '60 шт/м² (+20%)');
+                recs = `
+                    <div class="mt-2 text-blue-700 bg-blue-50 p-2 rounded">
+                        <strong>Рекомендация VR-посева:</strong><br>
+                        Норма: ${rate}<br>
+                        <em>${data.zone === 'C' ? 'Увеличиваем норму, так как полевая всхожесть здесь ниже.' : 'Оптимальная норма для максимального ветвления.'}</em>
+                    </div>
+                `;
+            } else if (currentLayer === 'nitrogen') {
+                let dose = data.zone === 'A' ? '100% (Максимум)' : (data.zone === 'B' ? '80%' : '50%');
+                recs = `
+                    <div class="mt-2 text-red-700 bg-red-50 p-2 rounded">
+                        <strong>Рекомендация VR-азота:</strong><br>
+                        Доза: ${dose}<br>
+                        <em>${data.zone === 'A' ? 'Инвестируем удобрения туда, где получим максимальную отдачу.' : 'Снижаем дозу, почва не сможет "переварить" избыток.'}</em>
+                    </div>
+                `;
+            }
+
+            panel.innerHTML = `
+                <div class="text-lg font-bold text-slate-700 mb-1">${zoneName}</div>
+                <div class="text-xs text-slate-400 mb-2">Координаты сетки: [${data.r}, ${data.c}]</div>
+                ${recs}
+            `;
+        }
+
+        // --- CHART LOGIC ---
+        let economicsChart = null;
+        function initEconomicsChart() {
+            const ctx = document.getElementById('economicsChart').getContext('2d');
+            if (economicsChart) economicsChart.destroy();
+
+            economicsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Традиционная технология', 'SmartAgro (с ИИ)'],
+                    datasets: [
+                        {
+                            label: 'Затраты: Семена и Удобрения',
+                            data: [350, 300], // Savings on VRA
+                            backgroundColor: '#fbbf24', // Amber 400
+                        },
+                        {
+                            label: 'Затраты: Защита (СЗР)',
+                            data: [200, 140], // Big savings on spot spray
+                            backgroundColor: '#f87171', // Red 400
+                        },
+                        {
+                            label: 'Затраты: Техника и IT (CAPEX аморт.)',
+                            data: [100, 180], // Higher tech cost
+                            backgroundColor: '#94a3b8', // Slate 400
+                        },
+                        {
+                            label: 'Прибыль (Маржа)',
+                            data: [250, 450], // Higher yield + savings
+                            backgroundColor: '#10b981', // Emerald 500
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, title: { display: true, text: 'У.Е. на гектар' } }
+                    },
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- INITIALIZATION ---
+        window.addEventListener('DOMContentLoaded', () => {
+            initCycle();
+            initSimulator();
+            
+            // Simple fade in animation for main content
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('opacity-100');
+                        entry.target.classList.remove('opacity-0');
+                    }
+                });
+            });
+        });
+
+    </script>
+</body>
+</html>

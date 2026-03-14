@@ -1,0 +1,36 @@
+---
+id: DOC-FRN-10-FRONTEND-MENU-IMPLEMENTATION-07-MENU-1KNO
+layer: Frontend
+type: Menu Map
+status: draft
+version: 0.1.0
+---
+# Меню 7: Знания
+
+## 1. Бизнес-роль
+
+Контур накопления и повторного использования опыта: база знаний, кейсы, паттерны, эволюция техкарт.
+
+## 2. Целевое дерево страниц
+
+- `/knowledge`
+- `/knowledge/base`
+- `/knowledge/cases`
+- `/knowledge/patterns`
+- `/knowledge/evolution`
+
+## 3. Фактический статус
+
+- Есть `/knowledge` как базовый экран.
+- Подроуты отсутствуют.
+
+## 4. API-связки
+
+- `/api/knowledge*`
+- `/api/knowledge-graph*`
+- источники из `consulting` (кейсы, отклонения, решения)
+
+## 5. Критерий готовности MVP
+
+- Пользователь может найти кейс по культуре/условию и увидеть связанное решение + эффект.
+

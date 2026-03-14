@@ -62,6 +62,8 @@
     "db:schema:split": "node scripts/split-prisma-schema-by-domain.cjs",
     "db:schema:compose": "node scripts/compose-prisma-schema.cjs",
     "db:explain:hot": "node scripts/db/explain-hot-paths.cjs",
+    "db:front-office-wave:bootstrap": "node scripts/db/bootstrap-front-office-tenant-wave.cjs",
+    "db:front-office-wave:validate": "node scripts/db/validate-front-office-tenant-wave.cjs",
     "gate:db:fragments": "node scripts/check-prisma-fragments.cjs",
     "gate:db:phase3": "node scripts/check-db-phase3-gate.cjs --mode=warn",
     "gate:db:phase3:enforce": "node scripts/check-db-phase3-gate.cjs --mode=enforce",

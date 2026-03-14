@@ -538,6 +538,7 @@ export class FrontOfficeCommunicationRepository {
     return {
       id: row.id,
       companyId: row.companyId,
+      tenantId: row.tenantId ?? null,
       threadKey: row.threadKey,
       channel: row.channel as FrontOfficeChannel,
       farmAccountId: row.farmAccountId ?? null,
@@ -566,6 +567,7 @@ export class FrontOfficeCommunicationRepository {
     return {
       id: row.id,
       companyId: row.companyId,
+      tenantId: row.tenantId ?? null,
       threadId: row.threadId,
       draftId: row.draftId ?? null,
       auditLogId: row.auditLogId ?? null,
@@ -590,6 +592,7 @@ export class FrontOfficeCommunicationRepository {
     return {
       id: row.id,
       companyId: row.companyId,
+      tenantId: row.tenantId ?? null,
       threadId: row.threadId,
       draftId: row.draftId ?? null,
       traceId: row.traceId ?? null,
@@ -616,6 +619,7 @@ export class FrontOfficeCommunicationRepository {
     return {
       id: row.id,
       companyId: row.companyId,
+      tenantId: row.tenantId ?? null,
       threadId: row.threadId,
       userId: row.userId,
       lastReadMessageId: row.lastReadMessageId ?? null,

@@ -12,6 +12,7 @@ import {
   UserRole,
   TechMap,
   Prisma,
+  CropType,
 } from "@rai/prisma-client";
 import { IntegrityGateService } from "../integrity/integrity-gate.service";
 import { TechMapStateMachine } from "./fsm/tech-map.fsm";
@@ -38,6 +39,11 @@ import {
   TECH_MAP_STAGES_WITH_RESOURCES_NO_ORDER_INCLUDE,
   TECH_MAP_VALIDATION_INCLUDE,
 } from "../../shared/tech-map/tech-map-prisma-includes";
+import {
+  buildTechMapBlueprint,
+  resolveBlueprintBaseDate,
+  resolveOperationWindow,
+} from "./tech-map-blueprint";
 
 @Injectable()
 export class TechMapService {
@@ -71,20 +77,29 @@ export class TechMapService {
     if (season.companyId !== plan.companyId) {
       throw new BadRequestException("Harvest Plan and Season tenant mismatch");
     }
-
-    // Get max version for this context
-    const cropZone = await (this.prisma as any).cropZone.findFirst({
-      where: {
-        seasonId,
-        companyId: plan.companyId,
-      },
-      orderBy: { createdAt: "asc" },
-    });
-    if (!cropZone) {
-      throw new NotFoundException("CropZone not found for season/company");
+    if (plan.seasonId && plan.seasonId !== seasonId) {
+      throw new BadRequestException("Harvest Plan is linked to another season");
+    }
+    if (!season.fieldId) {
+      throw new BadRequestException(
+        "Season must be linked to a field before TechMap generation",
+      );
     }
 
-    const crop = String(cropZone.cropType ?? "RAPESEED").toLowerCase();
+    const cropZone = await this.ensureCropZone({
+      companyId: plan.companyId,
+      seasonId,
+      fieldId: season.fieldId,
+      cropVarietyId: (season as any).cropVarietyId ?? null,
+      targetYieldTHa:
+        season.expectedYield ??
+        plan.optValue ??
+        plan.baselineValue ??
+        plan.maxValue ??
+        null,
+    });
+
+    const crop = String(cropZone.cropType ?? CropType.RAPESEED).toLowerCase();
 
     const lastMap = await this.prisma.techMap.findFirst({
       where: {
@@ -98,17 +113,106 @@ export class TechMapService {
 
     const nextVersion = lastMap ? lastMap.version + 1 : 1;
 
-    return this.prisma.techMap.create({
-      data: {
-        seasonId,
-        cropZoneId: cropZone.id,
-        harvestPlanId: plan.id,
-        companyId: plan.companyId,
-        fieldId: cropZone.fieldId,
-        crop,
-        status: TechMapStatus.DRAFT,
-        version: nextVersion,
-      },
+    const blueprintInput = {
+      crop,
+      seasonYear: season.year,
+      seasonStartDate: season.startDate,
+      targetYieldTHa: cropZone.targetYieldTHa,
+    };
+    const blueprint = buildTechMapBlueprint(blueprintInput);
+    const seasonBaseDate = resolveBlueprintBaseDate(blueprintInput);
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.techMap.updateMany({
+        where: {
+          fieldId: cropZone.fieldId,
+          crop,
+          seasonId,
+          companyId: plan.companyId,
+        },
+        data: {
+          isLatest: false,
+        },
+      });
+
+      if (!plan.seasonId) {
+        await tx.harvestPlan.updateMany({
+          where: {
+            id: plan.id,
+            companyId: plan.companyId,
+          },
+          data: {
+            seasonId,
+          },
+        });
+      }
+
+      const techMap = await tx.techMap.create({
+        data: {
+          seasonId,
+          cropZoneId: cropZone.id,
+          harvestPlanId: plan.id,
+          companyId: plan.companyId,
+          fieldId: cropZone.fieldId,
+          crop: blueprint.crop,
+          status: TechMapStatus.DRAFT,
+          version: nextVersion,
+          isLatest: true,
+          generationMetadata: blueprint.generationMetadata as Prisma.InputJsonValue,
+        },
+      });
+
+      for (const stage of blueprint.stages) {
+        const createdStage = await tx.mapStage.create({
+          data: {
+            techMapId: techMap.id,
+            name: stage.name,
+            sequence: stage.sequence,
+            aplStageId: stage.aplStageId,
+          },
+        });
+
+        for (const operation of stage.operations) {
+          const { plannedStartTime, plannedEndTime } = resolveOperationWindow(
+            seasonBaseDate,
+            operation.startOffsetDays,
+            operation.durationHours,
+          );
+
+          const createdOperation = await tx.mapOperation.create({
+            data: {
+              mapStageId: createdStage.id,
+              name: operation.name,
+              description: operation.description,
+              plannedStartTime,
+              plannedEndTime,
+              durationHours: operation.durationHours,
+              isCritical: operation.isCritical ?? false,
+            },
+          });
+
+          if (operation.resources.length > 0) {
+            await tx.mapResource.createMany({
+              data: operation.resources.map((resource) => ({
+                mapOperationId: createdOperation.id,
+                type: resource.type,
+                name: resource.name,
+                amount: resource.amount,
+                unit: resource.unit,
+                costPerUnit: resource.costPerUnit,
+              })),
+            });
+          }
+        }
+      }
+
+      return tx.techMap.findFirstOrThrow({
+        where: {
+          id: techMap.id,
+          companyId: plan.companyId,
+        },
+        include: TECH_MAP_STAGES_WITH_RESOURCES_INCLUDE,
+      });
     });
   }
 
@@ -557,6 +661,41 @@ export class TechMapService {
       }
 
       return newMap;
+    });
+  }
+
+  private async ensureCropZone(params: {
+    companyId: string;
+    seasonId: string;
+    fieldId: string;
+    cropVarietyId?: string | null;
+    targetYieldTHa?: number | null;
+  }) {
+    const existingCropZone = await (this.prisma as any).cropZone.findFirst({
+      where: {
+        seasonId: params.seasonId,
+        fieldId: params.fieldId,
+        companyId: params.companyId,
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    if (existingCropZone) {
+      return existingCropZone;
+    }
+
+    return (this.prisma as any).cropZone.create({
+      data: {
+        seasonId: params.seasonId,
+        fieldId: params.fieldId,
+        companyId: params.companyId,
+        cropType: CropType.RAPESEED,
+        cropVarietyId: params.cropVarietyId ?? null,
+        targetYieldTHa: params.targetYieldTHa ?? null,
+        varietyHybrid: null,
+      },
     });
   }
 

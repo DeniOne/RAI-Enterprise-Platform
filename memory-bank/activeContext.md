@@ -1,9 +1,15 @@
 # Активный контекст RAI_EP
 
+## Текущая задача (2026-03-14)
+- [x] Создана папка `ALL_DOCS` в корне проекта.
+- [x] Выгружены все файлы из папки `docs` и всех подпапок в `ALL_DOCS` без сохранения структуры папок (плоский список).
+- [x] Дубликаты имен файлов обработаны через нумерованные бэкапы (`--backup=numbered`). Всего обработано 628 файлов.
+
 ## Текущая задача (2026-03-13)
 - [x] Продолжен непрерывный execution Phase 2-8: в `schema.prisma` выполнены de-root волны и достигнута метрика `Company` direct relations `140 -> 87` при сохранении совместимого `companyId` scalar path; `DB_REFACTOR_CHECKLIST` закрыт без открытых checkbox residual.
 - [x] Выполнен operational follow-up: миграции применены на рабочей БД из `.env` (включая enum-fix wave после rollback+reapply), собран `EXPLAIN ANALYZE` пакет `DB_EXPLAIN_ANALYZE_2026-03-13.md` по `Season/Task/HarvestPlan/Party`.
 - [x] Запущен operational контур по оставшимся пунктам: стартован `14-day` index observation window (`DB_INDEX_OBSERVATION_WINDOW_2026-03-13.md`) и включен автоматический growth KPI контур (`DB_MODEL_GROWTH_BASELINE.json` + `DB_MODEL_GROWTH_KPI.md` + `gate:db:growth-kpi:enforce`).
+- [x] Продвинут `Phase 7` operational wave: для `FrontOfficeThread` family выполнен bootstrap первого tenant boundary (`Tenant + TenantCompanyBinding + TenantState`) под `default-rai-company`, после чего null-backlog по family обнулен и `DB_FRONT_OFFICE_TENANT_WAVE_VALIDATION.md` подтверждает `0` mismatch.
 - [x] Закрыт governance residual: DB ADR 001-005 переведены в `accepted`, добавлен owner-review guard `.github/CODEOWNERS`, выпущен `DB_COMPANY_DEROOT_DEPRECATION_PLAN.md`, обновлены phase status файлы и checklist.
 - [x] Закрыт execution-packet хвост: добавлены `DB_INCLUDE_DEPTH_METRICS.md`, `DB_ENUM_OVERLAP_MATRIX.md`, `DB_OPERATIONAL_AGGREGATE_MIGRATION_CONTRACTS.md`, `DB_MG_CORE_DECISION_NOTE.md`; синхронизированы `DB_SUCCESS_METRICS.md`, `READ_MODEL_POLICY.md`, `DB_INDEX_EVIDENCE_REGISTER.md`.
 - [x] Выполнен автономный execution wave по Phase 2-8: добавлены fragmentation toolchain + CI gates (`phase3`), projection governance register + gate (`phase4`), full enum decision register (`149`) + gate (`phase5`), workload-driven index wave migration + evidence register + gate (`phase6`), operational aggregate wave-policy (`phase7`) и physical split decision record (`phase8`).

@@ -6,6 +6,10 @@ export class CreateHarvestPlanDto {
 
   @IsString()
   @IsOptional()
+  seasonId?: string;
+
+  @IsString()
+  @IsOptional()
   targetMetric?: string;
 
   @IsString()

@@ -132,6 +132,7 @@ export class PrismaService
     "FrontOfficeThread",
     "FrontOfficeThreadMessage",
     "FrontOfficeHandoffRecord",
+    "FrontOfficeThreadParticipantState",
     "QualityAlert",
     "AgentReputation",
     "UserCredibilityProfile",
@@ -167,6 +168,10 @@ export class PrismaService
     "MemoryInteraction",
     "MemoryEpisode",
     "MemoryProfile",
+    "FrontOfficeThread",
+    "FrontOfficeThreadMessage",
+    "FrontOfficeHandoffRecord",
+    "FrontOfficeThreadParticipantState",
   ]);
 
   // Explicit non-tenant/system models. Any model outside both sets is treated as unknown.

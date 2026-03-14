@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 /**
- * Отражает структуру процесса кворума из Prisma.
+ * Отражает структуру процесса Техсовета из Prisma/legacy quorum service.
  */
 interface QuorumProcess {
     traceId: string;
@@ -25,8 +25,8 @@ interface GovernanceState {
 }
 
 /**
- * useGovernanceStore — Глобальное состояние институционального контроля.
- * Используется для синхронизации EscalationBanner, QuorumVisualizer и WorkSurface blocking.
+ * useGovernanceStore — Глобальное состояние Техсовета и эскалации.
+ * Используется для синхронизации EscalationBanner, QuorumVisualizer и блокировки WorkSurface.
  */
 export const useGovernanceStore = create<GovernanceState>((set) => ({
     activeEscalation: null,

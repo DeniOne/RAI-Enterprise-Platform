@@ -1,0 +1,66 @@
+---
+id: DOC-OPS-WORKFLOWS-OUTBOX-REPLAY-SAFE-RUNBOOK-11GG
+layer: Operations
+type: Runbook
+status: approved
+version: 1.0.0
+---
+# OUTBOX REPLAY SAFE RUNBOOK (RU)
+
+Дата: 2026-02-16
+Область: безопасный replay событий из outbox/DLQ.
+
+## 1. Когда запускать replay
+- После устранения причины падения consumer/broker.
+- После исправления contract/schema ошибки.
+- После подтверждения, что idempotency store активен.
+
+## 2. Preconditions (обязательные)
+- `OUTBOX_DELIVERY_MODE` зафиксирован для выбранной стратегии (`broker_only` или `dual`).
+- `OUTBOX_BROKER_TRANSPORT` зафиксирован для выбранной broker strategy (`http` или `redis_streams`).
+- Если используется `redis_streams`, зафиксированы `OUTBOX_BROKER_REDIS_STREAM_KEY`, при необходимости `OUTBOX_BROKER_REDIS_TENANT_PARTITIONING`, а также список `OUTBOX_BROKER_REDIS_CONSUMER_GROUPS`, если consumer groups управляются платформой.
+- Зафиксирован wakeup contour relay: `OUTBOX_RELAY_WAKEUP_ENABLED`, `OUTBOX_RELAY_WAKEUP_CHANNEL`, `OUTBOX_RELAY_WAKEUP_DEBOUNCE_MS`.
+- Если в production временно используется `local_only`, должен быть явно включён `OUTBOX_ALLOW_LOCAL_ONLY_IN_PRODUCTION=true` и зафиксировано окно аварийного отклонения.
+- Consumer idempotency store работает (`event_consumptions` write/read OK).
+- Нет активного `financial panic mode`.
+- Есть свежий backup и назначен ответственный on-call.
+
+## 3. Dry-run (без фактической доставки)
+1. Выбрать окно replay (`createdAt`/`type`/tenant scope).
+2. Подсчитать объём `FAILED` и `PENDING` сообщений.
+3. Проверить долю потенциальных дублей:
+- пересечение с `event_consumptions` по `(consumer,eventId)`;
+- события с одинаковыми явными dedupe-ключами (`replayKey`, `idempotencyKey`, `eventId`), если они предусмотрены контрактом конкретного события.
+4. Если найден tenant-contract breach, replay запрещён до фикса.
+
+## 4. Controlled replay
+1. Запускать батчами (например, 50-200 сообщений).
+2. Сначала canary tenant/cohort, потом расширение.
+3. После каждого батча проверять:
+- `outbox_failed_messages`;
+- `outbox_oldest_pending_age_seconds`;
+- `invariant_event_duplicates_prevented_total`;
+- broker transport health (`HTTP broker` или Redis stream ingest/consumer path);
+- если используется `redis_streams`, дополнительно проверить stream lag / pending у configured consumer groups;
+- wakeup contour (`Redis Pub/Sub`) не деградировал и relay не откатился в cron-only поведение;
+- tenant leakage counters.
+4. При росте критичных инвариантов -> немедленный stop.
+
+## 5. Stop criteria (авто/ручной стоп)
+- Любой cross-tenant инцидент.
+- Рост `financial_invariant_failures_total`.
+- Рост DLQ после replay-батча.
+- Повторяемые contract ошибки на одном типе события.
+
+## 6. Recovery после stop
+1. Остановить replay.
+2. Вернуть поток в безопасный режим (`dual`, `broker_only` или, только по аварийному исключению, `local_only` с `OUTBOX_ALLOW_LOCAL_ONLY_IN_PRODUCTION=true`), либо поставить pause producer path.
+3. Зафиксировать failing sample set и root cause.
+4. Подготовить fix + regression test.
+5. Повторный replay только после Go/No-Go апрува.
+
+## 7. Post-check и завершение
+- Все replay-сообщения перешли в `PROCESSED` или обоснованный `FAILED`.
+- Нет роста critical invariant alerts в течение 30 минут.
+- Обновлён weekly invariant trend report.
+- Постмортем создан для каждого P0/P1 отклонения.

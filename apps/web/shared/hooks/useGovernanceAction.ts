@@ -46,7 +46,7 @@ export function useGovernanceAction(operationName: string) {
             setActiveEscalation({
                 traceId: context.traceId || traceId || 'TRC-UNK-0000',
                 level: context.riskLevel as 'R3' | 'R4',
-                description: `Требуется институциональное подтверждение для: ${operationName}`,
+                description: `Требуется решение Техсовета для: ${operationName}`,
                 status: value === 'quorum_met' ? 'MET' : 'COLLECTING',
                 threshold: 0.6,
                 members: [
@@ -125,7 +125,7 @@ export function useGovernanceAction(operationName: string) {
     };
 
     const markQuorumMet = () => {
-        console.log(`[FSM-ACTION] Simulating Quorum Met`);
+        console.log(`[FSM-ACTION] Simulating TechCouncil decision`);
         send({ type: 'QUORUM_MET' });
     };
 

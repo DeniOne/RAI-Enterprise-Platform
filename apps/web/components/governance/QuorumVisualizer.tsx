@@ -18,7 +18,7 @@ interface QuorumVisualizerProps {
 }
 
 /**
- * QuorumVisualizer — Институциональный визуализатор кворума.
+ * QuorumVisualizer — UI-визуализатор процесса Техсовета.
  */
 export const QuorumVisualizer: React.FC<QuorumVisualizerProps> = ({
     threshold,
@@ -43,8 +43,8 @@ export const QuorumVisualizer: React.FC<QuorumVisualizerProps> = ({
                             <Shield size={20} />
                         </div>
                         <div>
-                            <h3 className="font-black text-slate-800 text-lg leading-none">Institutional Quorum</h3>
-                            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mt-1 block">Level F Governance Standard</span>
+                            <h3 className="font-black text-slate-800 text-lg leading-none">Техсовет</h3>
+                            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mt-1 block">Протокол экспертной эскалации</span>
                         </div>
                     </div>
                     <div className="text-right">
@@ -100,10 +100,10 @@ export const QuorumVisualizer: React.FC<QuorumVisualizerProps> = ({
             <div className="p-6 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-slate-400">
                     <Fingerprint size={14} />
-                    <span className="text-[9px] font-bold uppercase tracking-widest italic">Cryptographic Chain Binding: ACTIVE</span>
+                    <span className="text-[9px] font-bold uppercase tracking-widest italic">Протокол решения: ACTIVE</span>
                 </div>
                 <div className="px-3 py-1 bg-white border border-slate-200 rounded-lg shadow-sm">
-                    <span className="text-[9px] text-slate-500 font-mono">HASH: {payloadHash?.substring(0, 16) || '8f92-c1a3-de04'}...</span>
+                    <span className="text-[9px] text-slate-500 font-mono">COUNCIL_ID: {payloadHash?.substring(0, 16) || '8f92-c1a3-de04'}...</span>
                 </div>
             </div>
         </div>

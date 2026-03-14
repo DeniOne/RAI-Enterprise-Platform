@@ -50,6 +50,7 @@ export const api = {
     },
     consulting: {
         plans: () => apiClient.get('/consulting/plans'),
+        plan: (planId: string) => apiClient.get(`/consulting/plans/${encodeURIComponent(planId)}`),
         createPlan: (data: unknown) =>
             apiClient.post('/consulting/plans', data, {
                 headers: {
@@ -66,6 +67,16 @@ export const api = {
             }),
         techmaps: {
             list: () => apiClient.get('/tech-map'),
+            get: (id: string) => apiClient.get(`/tech-map/${encodeURIComponent(id)}`),
+            generate: (data: { harvestPlanId: string; seasonId: string }) =>
+                apiClient.post('/tech-map/generate', data, {
+                    headers: {
+                        'Idempotency-Key': buildIdempotencyKey('techmap-generate', [
+                            data.harvestPlanId,
+                            data.seasonId,
+                        ]),
+                    },
+                }),
             transition: (id: string, status: string) =>
                 apiClient.patch(
                     `/tech-map/${id}/transition`,
@@ -79,7 +90,7 @@ export const api = {
         },
         execution: {
             list: () => apiClient.get('/consulting/execution/operations'),
-            active: () => apiClient.get('/consulting/execution/active'),
+            active: () => apiClient.get('/consulting/execution/operations'),
             start: (operationId: string) =>
                 apiClient.post(`/consulting/execution/start/${operationId}`, undefined, {
                     headers: {
@@ -523,6 +534,24 @@ export const api = {
                 },
             }),
         fields: () => apiClient.get('/registry/fields'),
+        createField: (data: {
+            cadastreNumber: string;
+            name?: string;
+            area: number;
+            coordinates: unknown;
+            soilType: string;
+            accountId: string;
+            companyId: string;
+        }) =>
+            apiClient.post('/registry/fields', data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('registry-field-create', [
+                        data.companyId,
+                        data.accountId,
+                        data.cadastreNumber,
+                    ]),
+                },
+            }),
         plans: () => apiClient.get('/consulting/plans'),
         accounts: (companyId: string, params?: { search?: string; type?: string; status?: string; riskCategory?: string; responsibleId?: string }) =>
             apiClient.get(`/crm/accounts/${companyId}`, { params }),
@@ -780,6 +809,24 @@ export const api = {
     },
     seasons: {
         list: () => apiClient.get<SeasonListItem[]>('/seasons'),
+        create: (data: {
+            year: number;
+            fieldId?: string;
+            cropVarietyId?: string;
+            expectedYield?: number;
+            startDate?: string;
+            endDate?: string;
+            status?: string;
+        }) =>
+            apiClient.post('/seasons', data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('season-create', [
+                        String(data.year),
+                        data.fieldId ?? null,
+                        data.startDate ?? null,
+                    ]),
+                },
+            }),
     },
     agents: {
         getConfig: () => apiClient.get<AgentConfigsResponse>('/rai/agents/config'),

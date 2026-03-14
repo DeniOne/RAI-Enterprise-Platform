@@ -13,7 +13,7 @@ interface EscalationBannerProps {
 }
 
 /**
- * EscalationBanner — Институциональный баннер для отображения состояния эскалации.
+ * EscalationBanner — баннер состояния эскалации в Техсовет.
  * Появляется в верхней части WorkSurface при обнаружении рисков R3/R4.
  * 
  * DESIGN_CANON: 
@@ -60,8 +60,8 @@ export const EscalationBanner: React.FC<EscalationBannerProps> = ({
                     </div>
                     <h4 className="text-sm font-bold text-slate-900 mt-1 flex items-center">
                         {isMet
-                            ? "Решение Валидировано Комитетом"
-                            : isR4 ? "КРИТИЧЕСКАЯ БЛОКИРОВКА (Hard Lock)" : "ТРЕБУЕТСЯ КВОРУМ (Escalated)"
+                            ? "Решение подтверждено Техсоветом"
+                            : isR4 ? "КРИТИЧЕСКАЯ БЛОКИРОВКА (Hard Lock)" : "ТРЕБУЕТСЯ ТЕХСОВЕТ"
                         }
                     </h4>
                     <p className="text-xs text-slate-600 mt-0.5 max-w-lg leading-relaxed">{description}</p>
@@ -92,7 +92,7 @@ export const EscalationBanner: React.FC<EscalationBannerProps> = ({
                     )}
                 >
                     <Signature size={16} />
-                    <span>{isMet ? "Архив Подписей" : "Управление Кворумом"}</span>
+                    <span>{isMet ? "Протокол Техсовета" : "Открыть Техсовет"}</span>
                     <ArrowRight size={14} />
                 </button>
             </div>

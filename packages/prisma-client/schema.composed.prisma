@@ -3957,6 +3957,7 @@ model FrontOfficeCommittedEvent {
 model FrontOfficeThread {
   id                       String    @id @default(cuid())
   companyId                String
+  tenantId                 String?
   company                  Company   @relation(fields: [companyId], references: [id])
   threadKey                String
   channel                  String
@@ -3987,8 +3988,12 @@ model FrontOfficeThread {
 
   @@unique([companyId, threadKey])
   @@index([companyId, updatedAt])
+  @@index([tenantId, updatedAt])
   @@index([companyId, currentHandoffStatus])
+  @@index([tenantId, currentHandoffStatus])
   @@index([companyId, farmAccountId, updatedAt])
+  @@index([tenantId, farmAccountId, updatedAt])
+  @@index([tenantId, threadKey])
   @@map("rai_front_office_threads")
 }
 
@@ -4014,6 +4019,7 @@ model BackOfficeFarmAssignment {
 model FrontOfficeThreadMessage {
   id              String            @id @default(cuid())
   companyId       String
+  tenantId        String?
   company         Company           @relation(fields: [companyId], references: [id])
   threadId        String
   thread          FrontOfficeThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
@@ -4032,13 +4038,16 @@ model FrontOfficeThreadMessage {
   updatedAt       DateTime          @updatedAt
 
   @@index([companyId, threadId, createdAt])
+  @@index([tenantId, threadId, createdAt])
   @@index([companyId, draftId])
+  @@index([tenantId, draftId])
   @@map("rai_front_office_thread_messages")
 }
 
 model FrontOfficeHandoffRecord {
   id                String            @id @default(cuid())
   companyId         String
+  tenantId          String?
   company           Company           @relation(fields: [companyId], references: [id])
   threadId          String
   thread            FrontOfficeThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
@@ -4062,14 +4071,18 @@ model FrontOfficeHandoffRecord {
   updatedAt         DateTime          @updatedAt
 
   @@index([companyId, status, createdAt])
+  @@index([tenantId, status, createdAt])
   @@index([companyId, targetOwnerRole, status])
+  @@index([tenantId, targetOwnerRole, status])
   @@index([companyId, draftId])
+  @@index([tenantId, draftId])
   @@map("rai_front_office_handoffs")
 }
 
 model FrontOfficeThreadParticipantState {
   id                String            @id @default(cuid())
   companyId         String
+  tenantId          String?
   company           Company           @relation(fields: [companyId], references: [id])
   threadId          String
   thread            FrontOfficeThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
@@ -4081,8 +4094,11 @@ model FrontOfficeThreadParticipantState {
   updatedAt         DateTime          @updatedAt
 
   @@unique([companyId, threadId, userId], name: "front_office_participant_state_unique")
+  @@unique([tenantId, threadId, userId], name: "front_office_participant_state_tenant_unique")
   @@index([companyId, userId, updatedAt])
+  @@index([tenantId, userId, updatedAt])
   @@index([companyId, threadId])
+  @@index([tenantId, threadId])
   @@map("rai_front_office_thread_participant_states")
 }
 

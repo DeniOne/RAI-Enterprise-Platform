@@ -116,8 +116,8 @@ export default function ExecutionHub() {
                     </div>
                     <div className="h-8 w-px bg-slate-200" />
                     <div className="text-right">
-                        <p className="text-[10px] uppercase font-bold text-slate-400 leading-none">Quorum</p>
-                        <p className="text-xs font-bold text-slate-900 leading-none mt-1">Institutional</p>
+                        <p className="text-[10px] uppercase font-bold text-slate-400 leading-none">Техсовет</p>
+                        <p className="text-xs font-bold text-slate-900 leading-none mt-1">Эскалация</p>
                     </div>
                 </div>
             </div>

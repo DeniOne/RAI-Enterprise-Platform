@@ -22,7 +22,7 @@ export const WorkSurface: React.FC<{ children: React.ReactNode }> = ({ children 
     return (
         <main className="relative min-h-0 flex-1 overflow-y-auto bg-[#FDFDFD] p-8">
             <div className="w-full space-y-6">
-                {/* Institutional Escalation Banner (Phase 3) */}
+                {/* TechCouncil escalation banner (Phase 3) */}
                 {activeEscalation && (
                     <EscalationBanner
                         level={activeEscalation.level}
@@ -65,7 +65,7 @@ export const WorkSurface: React.FC<{ children: React.ReactNode }> = ({ children 
                 </div>
             )}
 
-            {/* Quorum Modal (Institutional Overlay) */}
+            {/* TechCouncil modal overlay */}
             {isQuorumModalOpen && activeEscalation && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="relative w-full max-w-2xl transform transition-all animate-in zoom-in-95 duration-300">

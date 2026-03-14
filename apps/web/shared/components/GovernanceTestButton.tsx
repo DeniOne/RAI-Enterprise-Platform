@@ -186,13 +186,13 @@ export const GovernanceTestButton: React.FC = () => {
                 </StepItem>
 
                 <StepItem
-                    title="Шаг 3. Подписание"
-                    desc="Сбор кворума и криптографических подписей"
+                    title="Шаг 3. Техсовет"
+                    desc="Сбор подтверждений и фиксация решения техсовета"
                     active={state === 'collecting_signatures'}
                     completed={state === 'quorum_met' || state === 'approved' || state === 'executed'}
                     icon={<Users size={18} />}
                 >
-                    <button onClick={markQuorumMet} className={getBtnStyle(state === 'collecting_signatures')}>Собрать подписи</button>
+                    <button onClick={markQuorumMet} className={getBtnStyle(state === 'collecting_signatures')}>Подтвердить техсовет</button>
                 </StepItem>
 
                 <StepItem

@@ -1,5 +1,6 @@
 ﻿'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
@@ -66,9 +67,14 @@ export default function TechMapsPage() {
 
     return (
         <div className='space-y-6'>
-            <div>
-                <h1 className='text-xl font-medium text-gray-900 tracking-tight mb-1'>Технологические карты</h1>
-                <p className='text-sm font-normal text-gray-500'>Рабочий реестр техкарт с реальными статусными переходами.</p>
+            <div className='flex items-center justify-between gap-4'>
+                <div>
+                    <h1 className='text-xl font-medium text-gray-900 tracking-tight mb-1'>Технологические карты</h1>
+                    <p className='text-sm font-normal text-gray-500'>Рабочий реестр техкарт с реальными статусными переходами.</p>
+                </div>
+                <Link href='/consulting/techmaps/demo' className='text-sm text-blue-600 hover:underline'>
+                    Открыть демо-поток
+                </Link>
             </div>
 
             <div className='grid grid-cols-2 md:grid-cols-5 gap-3'>
@@ -99,6 +105,12 @@ export default function TechMapsPage() {
                                         </p>
                                     </div>
                                     <div className='flex gap-2 flex-wrap'>
+                                        <Link
+                                            href={`/consulting/techmaps/${map.id}`}
+                                            className='px-4 py-2 border border-black/10 rounded-xl text-xs font-medium hover:bg-gray-50'
+                                        >
+                                            Открыть
+                                        </Link>
                                         {nextStatuses(map.status).map((status) => (
                                             <button
                                                 key={status}

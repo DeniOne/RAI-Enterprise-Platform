@@ -1,0 +1,38 @@
+---
+id: DOC-FRN-10-FRONTEND-MENU-IMPLEMENTATION-03-MENU-M94Q
+layer: Frontend
+type: Menu Map
+status: draft
+version: 0.1.0
+---
+# Меню 3: Экономика
+
+## 1. Бизнес-роль
+
+Показывает экономический эффект операционного контура: вклад урожая, агрегаты портфеля, unit-экономику и прогнозы.
+
+## 2. Целевое дерево страниц
+
+- `/economy`
+- `/economy/crop`
+- `/economy/aggregation`
+- `/economy/unit`
+- `/economy/safety`
+- `/economy/forecast`
+
+## 3. Фактический статус
+
+- Есть только `/economy` (заглушка).
+- Подроуты отсутствуют.
+
+## 4. API-связки
+
+- `/api/ofs/finance/dashboard`
+- `/api/consulting/kpi/*`
+- `/api/consulting/yield/*`
+- `/api/finance-economy/*` (агрегаты при наличии эндпойнтов)
+
+## 5. Критерий готовности MVP
+
+- Экран показывает минимум: план/факт эффекта, экономику портфеля, тренд за период и сигнал риска.
+

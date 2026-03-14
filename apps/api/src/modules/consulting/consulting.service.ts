@@ -30,6 +30,30 @@ export class ConsultingService {
   ) {}
 
   async createPlan(dto: CreateHarvestPlanDto, context: UserContext) {
+    const account = await this.prisma.account.findFirst({
+      where: {
+        id: dto.accountId,
+        companyId: context.companyId,
+      },
+    });
+
+    if (!account) {
+      throw new NotFoundException("Хозяйство не найдено");
+    }
+
+    if (dto.seasonId) {
+      const season = await this.prisma.season.findFirst({
+        where: {
+          id: dto.seasonId,
+          companyId: context.companyId,
+        },
+      });
+
+      if (!season) {
+        throw new NotFoundException("Сезон не найден");
+      }
+    }
+
     return this.prisma.harvestPlan.create({
       data: {
         ...dto,
