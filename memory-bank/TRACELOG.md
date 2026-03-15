@@ -1,3 +1,11 @@
+[2026-03-15 08:40Z] Git Pull / Manual Repo Sync
+- Запуск `git pull` для синхронизации локальной копии с `origin/main`.
+
+[2026-03-15 09:15Z] RAI_EP SWOT Analysis
+- Проведен SWOT-анализ системы RAI_EP на основе рыночного исследования (РФ/СНГ).
+- Создан документ `RAI_EP_SWOT_ANALYSIS.md`.
+- Зафиксированы ключевые преимущества (мультиагентность, детерминизм) и рыночные ниши (CFO-layer).
+
 [2026-03-05 23:59Z] R3 Truthfulness Runtime Trigger
 - Решена гонка `writeAiAuditEntry` vs `calculateTraceTruthfulness` (добавлен await).
 - Удален фальшивый fallback `bsScorePct ?? 0` (заменен на честные 100).

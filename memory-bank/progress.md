@@ -1,5 +1,15 @@
 # Progress Report - Prisma, Agro Domain & RAI Chat Integration
 
+## 2026-03-15
+
+115. **Git Pull / Manual Repo Sync** [DONE]:
+    *   Успешно выполнена синхронизация с удаленным репозиторием (`git pull origin main`).
+    *   Локальная копия обновлена, конфликтов не обнаружено.
+116. **RAI_EP SWOT Analysis via Market Research** [DONE]:
+    *   Проведен конкурентный SWOT-анализ системы RAI_EP на основе свежих исследований рынка РФ/СНГ.
+    *   Сформирован файл `RAI_EP_SWOT_ANALYSIS.md` в папке активных исследований.
+    *   Выявлены стратегические окна: Decision Support для ТОПов и интеграционный хаб поверх 1С/телематики.
+
 ## 2026-03-14
 
 114. **Docs Consolidation — `ALL_DOCS` Creation** [DONE]:
@@ -757,6 +767,14 @@
     *   В web chat добавлена debug-плашка `Memory Used` для привилегированного режима.
     *   Верификация: `apps/api` tsc PASS, `apps/api` targeted jest PASS, `apps/web` store test PASS.
 
+## [2026-03-15 08:40Z] Git Pull / Manual Repo Sync
+- Запуск `git pull` для синхронизации локальной копии с `origin/main`.
+
+[2026-03-15 09:15Z] RAI_EP SWOT Analysis
+- Проведен SWOT-анализ системы RAI_EP на основе рыночного исследования (РФ/СНГ).
+- Создан документ `RAI_EP_SWOT_ANALYSIS.md`.
+- Зафиксированы ключевые преимущества (мультиагентность, детерминизм) и рыночные ниши (CFO-layer).
+
 35. **Agent-First Sprint 1 P1 — Tools Registry Domain Bridge (2026-03-03)** ✅:
     *   `RaiToolsRegistry` расширен 4 боевыми инструментами: `compute_deviations`, `compute_plan_fact`, `emit_alerts`, `generate_tech_map_draft`.
     *   Typed payload/result контракты добавлены в `rai-tools.types.ts`; `companyId` только из `RaiToolActorContext`, никогда из payload.
@@ -931,6 +949,9 @@
 - `SupervisorAgent`: 2-шаговая запись TraceSummary — initial record (exe metadata) + updateQuality (quality после TruthfulnessEngine)
 - Live поля: `toolsVersion` = список выполненных tools, `policyId` = classification.method, `bsScorePct` + `evidenceCoveragePct` из runtime
 - tsc PASS | trace-summary.spec 4/4 | truthfulness-engine.spec 5/5 | supervisor-agent.spec 6/6
+
+## [2026-03-15 08:40Z] Git Pull / Manual Repo Sync
+- Запуск `git pull` для синхронизации локальной копии с `origin/main`.
 
 ## 2026-03-05 — R3 Truthfulness Runtime Trigger (READY_FOR_REVIEW)
 - Гонка устранена: `writeAiAuditEntry` дожидается выполнения перед `calculateTraceTruthfulness`.
