@@ -167,6 +167,13 @@ describe('AiChatStore UX modes', () => {
             await useAiChatStore.getState().sendMessage('Покажи контекст');
         });
 
+        const userMessageId = useAiChatStore.getState().messages.find((message) => message.role === 'user')?.id;
+        const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit | undefined;
+        const idempotencyKey =
+            requestInit && requestInit.headers && !Array.isArray(requestInit.headers)
+                ? (requestInit.headers as Record<string, string>)['Idempotency-Key']
+                : undefined;
+
         expect(fetchMock).toHaveBeenCalledWith(
             '/api/rai/chat',
             expect.objectContaining({
@@ -187,6 +194,8 @@ describe('AiChatStore UX modes', () => {
                 signal: expect.any(AbortSignal),
             }),
         );
+        expect(userMessageId).toBeTruthy();
+        expect(idempotencyKey).toContain(userMessageId as string);
         expect(useAiChatStore.getState().messages.at(-1)?.memoryUsed).toEqual([
             { kind: 'episode', label: 'deviation PANy 2d ago', confidence: 0.82, source: 'episode' },
             { kind: 'profile', label: 'prefers dashboard summary', confidence: 0.8, source: 'profile' },

@@ -17,6 +17,17 @@ import {
   InteractionType,
   ObligationStatus,
 } from "@rai/prisma-client";
+import {
+  buildProjectedPartyContacts,
+  buildPartySyncSourcePrefix,
+  extractJurisdictionLabel,
+  extractPartyInn,
+  extractPartyManagerName,
+  mapPartyStatusToAccountStatus,
+  mapPartyTypeToAccountType,
+  normalizeWorkspaceSearchValue,
+  resolveProjectedAccountName,
+} from "../../shared/commerce/party-account-projection";
 
 type FarmSeverity = "ok" | "warning" | "critical";
 
@@ -80,7 +91,13 @@ export class CrmService {
   // --- Accounts (ex-Clients / Farm Registry) ---
 
   async createAccount(
-    data: { name: string; inn?: string; type?: string; holdingId?: string },
+    data: {
+      name: string;
+      inn?: string;
+      type?: string;
+      holdingId?: string;
+      partyId?: string;
+    },
     companyId: string,
   ): Promise<Account> {
     if (data.holdingId) {
@@ -94,15 +111,75 @@ export class CrmService {
       }
     }
 
-    return this.prisma.account.create({
-      data: {
-        name: data.name,
-        inn: data.inn,
-        type: this.normalizeAccountType(data.type),
-        holdingId: data.holdingId,
-        companyId,
-      },
+    const linkedParty = await this.resolvePartyForAccountInput(companyId, data);
+    const accountName =
+      this.normalizeOptional(data.name) ??
+      (linkedParty ? resolveProjectedAccountName(linkedParty) : undefined);
+    if (!accountName) {
+      throw new BadRequestException("Для CRM-аккаунта требуется name");
+    }
+
+    const accountInn =
+      this.normalizeOptional(data.inn) ??
+      (linkedParty ? extractPartyInn(linkedParty.registrationData) : undefined) ??
+      null;
+    const accountType =
+      this.normalizeAccountType(data.type) ??
+      (linkedParty ? mapPartyTypeToAccountType(linkedParty.type) : undefined);
+    const accountStatus = linkedParty
+      ? mapPartyStatusToAccountStatus(linkedParty.status)
+      : undefined;
+    const accountJurisdiction = linkedParty
+      ? extractJurisdictionLabel(linkedParty.jurisdiction ?? null) ?? null
+      : null;
+
+    const existingAccount = await this.resolveExistingAccountForCreate(companyId, {
+      partyId: linkedParty?.id,
+      inn: accountInn,
+      name: accountName,
     });
+
+    const account = existingAccount
+      ? await this.prisma.account.update({
+          where: { id: existingAccount.id },
+          data: {
+            name: accountName,
+            ...(accountInn !== null ? { inn: accountInn } : {}),
+            ...(accountType ? { type: accountType } : {}),
+            ...(accountStatus ? { status: accountStatus } : {}),
+            ...(accountJurisdiction !== null
+              ? { jurisdiction: accountJurisdiction }
+              : {}),
+            ...(typeof data.holdingId === "string"
+              ? { holdingId: data.holdingId }
+              : {}),
+            ...(linkedParty ? { partyId: linkedParty.id } : {}),
+          },
+        })
+      : await this.prisma.account.create({
+          data: {
+            name: accountName,
+            ...(accountInn !== null ? { inn: accountInn } : {}),
+            ...(accountType ? { type: accountType } : {}),
+            ...(accountStatus ? { status: accountStatus } : {}),
+            ...(accountJurisdiction !== null
+              ? { jurisdiction: accountJurisdiction }
+              : {}),
+            holdingId: data.holdingId,
+            companyId,
+            partyId: linkedParty?.id,
+          },
+        });
+
+    if (linkedParty) {
+      await this.syncProjectedContactsToAccount(
+        account.id,
+        linkedParty.id,
+        linkedParty.registrationData,
+      );
+    }
+
+    return account;
   }
 
   async updateAccountHolding(
@@ -295,9 +372,9 @@ export class CrmService {
       return this.resolveWorkspaceAccountIdFromParty(query, companyId);
     }
 
-    const normalizedQuery = this.normalizeWorkspaceSearchValue(query);
+    const normalizedQuery = normalizeWorkspaceSearchValue(query);
     const exactMatch = matches.find((account) =>
-      this.normalizeWorkspaceSearchValue(account.name) === normalizedQuery ||
+      normalizeWorkspaceSearchValue(account.name) === normalizedQuery ||
       String(account.inn || "").trim() === query,
     );
     if (exactMatch) {
@@ -310,7 +387,7 @@ export class CrmService {
 
     const startsWithMatches = matches.filter(
       (account) =>
-        this.normalizeWorkspaceSearchValue(account.name).startsWith(normalizedQuery),
+        normalizeWorkspaceSearchValue(account.name).startsWith(normalizedQuery),
     );
     if (startsWithMatches.length === 1) {
       return startsWithMatches[0].id;
@@ -341,6 +418,7 @@ export class CrmService {
         id: true,
         name: true,
         inn: true,
+        partyId: true,
         type: true,
         status: true,
         riskCategory: true,
@@ -543,9 +621,39 @@ export class CrmService {
   }
 
   private async findLinkedPartyForAccount(
-    account: { id: string; name: string; inn?: string | null },
+    account: { id: string; name: string; inn?: string | null; partyId?: string | null },
     companyId: string,
-  ): Promise<{ id: string; legalName: string; shortName?: string | null; inn?: string } | null> {
+  ): Promise<{
+    id: string;
+    legalName: string;
+    shortName?: string | null;
+    inn?: string;
+    managerName?: string | null;
+  } | null> {
+    if (account.partyId) {
+      const linkedParty = await this.prisma.party.findFirst({
+        where: {
+          companyId,
+          id: account.partyId,
+        },
+        select: {
+          id: true,
+          legalName: true,
+          shortName: true,
+          registrationData: true,
+        },
+      });
+      if (linkedParty) {
+        return {
+          id: linkedParty.id,
+          legalName: linkedParty.legalName,
+          shortName: linkedParty.shortName,
+          inn: extractPartyInn(linkedParty.registrationData),
+          managerName: extractPartyManagerName(linkedParty.registrationData),
+        };
+      }
+    }
+
     const accountName = String(account.name || "").trim();
     if (!accountName) {
       return null;
@@ -574,14 +682,14 @@ export class CrmService {
 
     const accountInn = typeof account.inn === "string" ? account.inn.trim() : "";
     const matchByInn = accountInn
-      ? partyMatches.find((party) => this.extractPartyInn(party.registrationData) === accountInn)
+      ? partyMatches.find((party) => extractPartyInn(party.registrationData) === accountInn)
       : undefined;
 
-    const normalizedName = this.normalizeWorkspaceSearchValue(accountName);
+    const normalizedName = normalizeWorkspaceSearchValue(accountName);
     const matchByName = partyMatches.find(
       (party) =>
-        this.normalizeWorkspaceSearchValue(party.legalName) === normalizedName ||
-        this.normalizeWorkspaceSearchValue(party.shortName ?? "") === normalizedName,
+        normalizeWorkspaceSearchValue(party.legalName) === normalizedName ||
+        normalizeWorkspaceSearchValue(party.shortName ?? "") === normalizedName,
     );
 
     const selected = matchByInn ?? matchByName ?? (partyMatches.length === 1 ? partyMatches[0] : null);
@@ -593,16 +701,9 @@ export class CrmService {
       id: selected.id,
       legalName: selected.legalName,
       shortName: selected.shortName,
-      inn: this.extractPartyInn(selected.registrationData),
+      inn: extractPartyInn(selected.registrationData),
+      managerName: extractPartyManagerName(selected.registrationData),
     };
-  }
-
-  private normalizeWorkspaceSearchValue(value: string): string {
-    return value
-      .trim()
-      .replace(/["«»']/g, "")
-      .replace(/\s+/g, " ")
-      .toLowerCase();
   }
 
   private async resolveWorkspaceAccountIdFromParty(
@@ -621,7 +722,15 @@ export class CrmService {
         id: true,
         legalName: true,
         shortName: true,
+        type: true,
+        status: true,
         registrationData: true,
+        jurisdiction: {
+          select: {
+            code: true,
+            name: true,
+          },
+        },
       },
       take: 25,
     });
@@ -632,11 +741,11 @@ export class CrmService {
       );
     }
 
-    const normalizedQuery = this.normalizeWorkspaceSearchValue(query);
+    const normalizedQuery = normalizeWorkspaceSearchValue(query);
     const exactPartyMatch = partyMatches.find(
       (party) =>
-        this.normalizeWorkspaceSearchValue(party.legalName) === normalizedQuery ||
-        this.normalizeWorkspaceSearchValue(party.shortName ?? "") === normalizedQuery,
+        normalizeWorkspaceSearchValue(party.legalName) === normalizedQuery ||
+        normalizeWorkspaceSearchValue(party.shortName ?? "") === normalizedQuery,
     );
     const selectedParty = exactPartyMatch ?? (partyMatches.length === 1 ? partyMatches[0] : null);
 
@@ -646,7 +755,24 @@ export class CrmService {
       );
     }
 
-    const partyInn = this.extractPartyInn(selectedParty.registrationData);
+    const linkedAccount = await this.prisma.account.findFirst({
+      where: {
+        companyId,
+        partyId: selectedParty.id,
+      },
+      select: { id: true },
+      orderBy: { updatedAt: "desc" },
+    });
+    if (linkedAccount) {
+      await this.syncProjectedContactsToAccount(
+        linkedAccount.id,
+        selectedParty.id,
+        selectedParty.registrationData,
+      );
+      return linkedAccount.id;
+    }
+
+    const partyInn = extractPartyInn(selectedParty.registrationData);
     if (partyInn) {
       const existingByInn = await this.prisma.account.findFirst({
         where: {
@@ -656,12 +782,27 @@ export class CrmService {
         select: { id: true },
       });
       if (existingByInn) {
+        await this.prisma.account.update({
+          where: { id: existingByInn.id },
+          data: {
+            partyId: selectedParty.id,
+            jurisdiction:
+              extractJurisdictionLabel(selectedParty.jurisdiction ?? null) ?? null,
+            type: mapPartyTypeToAccountType(selectedParty.type),
+            status: mapPartyStatusToAccountStatus(selectedParty.status),
+          },
+        });
+        await this.syncProjectedContactsToAccount(
+          existingByInn.id,
+          selectedParty.id,
+          selectedParty.registrationData,
+        );
         return existingByInn.id;
       }
     }
 
-    const accountName = String(selectedParty.shortName || selectedParty.legalName).trim();
-    const existingByName = await this.prisma.account.findFirst({
+    const accountName = resolveProjectedAccountName(selectedParty);
+    const existingByNameMatches = await this.prisma.account.findMany({
       where: {
         companyId,
         name: {
@@ -670,9 +811,27 @@ export class CrmService {
         },
       },
       select: { id: true },
+      take: 2,
+      orderBy: { updatedAt: "desc" },
     });
-    if (existingByName) {
-      return existingByName.id;
+    if (existingByNameMatches.length === 1) {
+      await this.prisma.account.update({
+        where: { id: existingByNameMatches[0].id },
+        data: {
+          partyId: selectedParty.id,
+          inn: partyInn ?? null,
+          jurisdiction:
+            extractJurisdictionLabel(selectedParty.jurisdiction ?? null) ?? null,
+          type: mapPartyTypeToAccountType(selectedParty.type),
+          status: mapPartyStatusToAccountStatus(selectedParty.status),
+        },
+      });
+      await this.syncProjectedContactsToAccount(
+        existingByNameMatches[0].id,
+        selectedParty.id,
+        selectedParty.registrationData,
+      );
+      return existingByNameMatches[0].id;
     }
 
     const created = await this.createAccount(
@@ -680,29 +839,11 @@ export class CrmService {
         name: accountName,
         inn: partyInn,
         type: "CLIENT",
+        partyId: selectedParty.id,
       },
       companyId,
     );
     return created.id;
-  }
-
-  private extractPartyInn(registrationData: unknown): string | undefined {
-    if (!registrationData || typeof registrationData !== "object") {
-      return undefined;
-    }
-
-    const data = registrationData as Record<string, unknown>;
-    const directInn = typeof data.inn === "string" ? data.inn.trim() : "";
-    if (directInn.length > 0) {
-      return directInn;
-    }
-
-    const requisites =
-      data.requisites && typeof data.requisites === "object"
-        ? (data.requisites as Record<string, unknown>)
-        : null;
-    const reqInn = requisites && typeof requisites.inn === "string" ? requisites.inn.trim() : "";
-    return reqInn.length > 0 ? reqInn : undefined;
   }
 
   async updateAccountProfile(
@@ -721,7 +862,12 @@ export class CrmService {
   ) {
     const account = await this.prisma.account.findFirst({
       where: { id: accountId, companyId },
-      select: { id: true, holdingId: true, status: true },
+      select: {
+        id: true,
+        holdingId: true,
+        status: true,
+        partyId: true,
+      },
     });
     if (!account) {
       throw new NotFoundException(`Account ${accountId} not found`);
@@ -755,7 +901,7 @@ export class CrmService {
       }
     }
 
-    return this.prisma.account.update({
+    const updated = await this.prisma.account.update({
       where: { id: accountId },
       data: {
         ...(typeof data.name === "string" && data.name.trim()
@@ -786,6 +932,333 @@ export class CrmService {
           : {}),
       },
     });
+
+    if (
+      account.partyId &&
+      (typeof data.name === "string" ||
+        typeof data.inn === "string" ||
+        data.inn === null ||
+        typeof data.jurisdiction === "string")
+    ) {
+      await this.syncLinkedPartyMasterFromAccount(companyId, account.partyId, data);
+    }
+
+    return updated;
+  }
+
+  private async resolvePartyForAccountInput(
+    companyId: string,
+    data: {
+      name: string;
+      inn?: string;
+      partyId?: string;
+    },
+  ) {
+    const explicitPartyId = this.normalizeOptional(data.partyId);
+    if (explicitPartyId) {
+      const party = await this.prisma.party.findFirst({
+        where: {
+          companyId,
+          id: explicitPartyId,
+        },
+        select: {
+          id: true,
+          legalName: true,
+          shortName: true,
+          type: true,
+          status: true,
+          registrationData: true,
+          jurisdiction: {
+            select: {
+              code: true,
+              name: true,
+            },
+          },
+        },
+      });
+      if (!party) {
+        throw new NotFoundException(`Party ${explicitPartyId} not found`);
+      }
+      return party;
+    }
+
+    const inn = this.normalizeOptional(data.inn);
+    if (inn) {
+      const byInn = await this.prisma.party.findFirst({
+        where: {
+          companyId,
+          OR: [
+            { registrationData: { path: ["inn"], equals: inn } },
+            { registrationData: { path: ["requisites", "inn"], equals: inn } },
+          ],
+        },
+        select: {
+          id: true,
+          legalName: true,
+          shortName: true,
+          type: true,
+          status: true,
+          registrationData: true,
+          jurisdiction: {
+            select: {
+              code: true,
+              name: true,
+            },
+          },
+        },
+      });
+      if (byInn) {
+        return byInn;
+      }
+    }
+
+    const name = this.normalizeOptional(data.name);
+    if (!name) {
+      return null;
+    }
+
+    const exactByName = await this.prisma.party.findMany({
+      where: {
+        companyId,
+        OR: [
+          { legalName: { equals: name, mode: "insensitive" } },
+          { shortName: { equals: name, mode: "insensitive" } },
+        ],
+      },
+      select: {
+        id: true,
+        legalName: true,
+        shortName: true,
+        type: true,
+        status: true,
+        registrationData: true,
+        jurisdiction: {
+          select: {
+            code: true,
+            name: true,
+          },
+        },
+      },
+      take: 2,
+      orderBy: { updatedAt: "desc" },
+    });
+    return exactByName.length === 1 ? exactByName[0] : null;
+  }
+
+  private async resolveExistingAccountForCreate(
+    companyId: string,
+    input: {
+      partyId?: string;
+      inn?: string | null;
+      name: string;
+    },
+  ) {
+    if (input.partyId) {
+      const existingByParty = await this.prisma.account.findFirst({
+        where: {
+          companyId,
+          partyId: input.partyId,
+        },
+      });
+      if (existingByParty) {
+        return existingByParty;
+      }
+    }
+
+    if (input.inn) {
+      const existingByInn = await this.prisma.account.findFirst({
+        where: {
+          companyId,
+          inn: input.inn,
+        },
+      });
+      if (existingByInn) {
+        return existingByInn;
+      }
+    }
+
+    const exactNameMatches = await this.prisma.account.findMany({
+      where: {
+        companyId,
+        name: {
+          equals: input.name,
+          mode: "insensitive",
+        },
+      },
+      take: 2,
+      orderBy: { updatedAt: "desc" },
+    });
+    return exactNameMatches.length === 1 ? exactNameMatches[0] : null;
+  }
+
+  private async syncProjectedContactsToAccount(
+    accountId: string,
+    partyId: string,
+    registrationData: unknown,
+  ) {
+    const projectedContacts = buildProjectedPartyContacts(
+      partyId,
+      registrationData,
+    );
+    const sourcePrefix = buildPartySyncSourcePrefix(partyId);
+    const existingContacts = await this.prisma.contact.findMany({
+      where: {
+        accountId,
+        source: {
+          startsWith: sourcePrefix,
+        },
+      },
+      select: {
+        id: true,
+        source: true,
+      },
+    });
+
+    const projectedBySource = new Map(
+      projectedContacts.map((contact) => [contact.source, contact]),
+    );
+
+    for (const existing of existingContacts) {
+      if (!existing.source || projectedBySource.has(existing.source)) {
+        continue;
+      }
+
+      await this.prisma.contact.delete({
+        where: { id: existing.id },
+      });
+    }
+
+    for (const contact of projectedContacts) {
+      const existing = existingContacts.find(
+        (item) => item.source === contact.source,
+      );
+      if (existing) {
+        await this.prisma.contact.update({
+          where: { id: existing.id },
+          data: {
+            firstName: contact.firstName,
+            lastName: contact.lastName,
+            role: contact.role,
+            email: contact.email ?? null,
+            phone: contact.phone ?? null,
+            source: contact.source,
+          },
+        });
+        continue;
+      }
+
+      await this.prisma.contact.create({
+        data: {
+          accountId,
+          firstName: contact.firstName,
+          lastName: contact.lastName,
+          role: contact.role,
+          email: contact.email ?? null,
+          phone: contact.phone ?? null,
+          source: contact.source,
+        },
+      });
+    }
+  }
+
+  private async syncLinkedPartyMasterFromAccount(
+    companyId: string,
+    partyId: string,
+    data: {
+      name?: string;
+      inn?: string | null;
+      jurisdiction?: string | null;
+    },
+  ) {
+    const party = await this.prisma.party.findFirst({
+      where: {
+        companyId,
+        id: partyId,
+      },
+      select: {
+        id: true,
+        shortName: true,
+        jurisdictionId: true,
+        registrationData: true,
+      },
+    });
+    if (!party) {
+      return;
+    }
+
+    const nextRegistrationData = this.mergePartyRegistrationDataFromAccount(
+      party.registrationData,
+      data,
+    );
+
+    const nextJurisdictionLabel = this.normalizeOptional(data.jurisdiction);
+    let jurisdictionId: string | undefined;
+    if (typeof nextJurisdictionLabel === "string") {
+      const jurisdiction = await this.prisma.jurisdiction.findFirst({
+        where: {
+          companyId,
+          OR: [
+            { code: { equals: nextJurisdictionLabel.toUpperCase() } },
+            { name: { equals: nextJurisdictionLabel, mode: "insensitive" } },
+          ],
+        },
+        select: { id: true },
+      });
+      if (jurisdiction) {
+        jurisdictionId = jurisdiction.id;
+      }
+    }
+
+    await this.prisma.party.update({
+      where: { id: partyId },
+      data: {
+        ...(typeof data.name === "string" && data.name.trim()
+          ? { shortName: data.name.trim() }
+          : {}),
+        registrationData: nextRegistrationData as any,
+        ...(jurisdictionId ? { jurisdictionId } : {}),
+      },
+    });
+  }
+
+  private mergePartyRegistrationDataFromAccount(
+    registrationData: unknown,
+    data: {
+      inn?: string | null;
+      name?: string;
+    },
+  ) {
+    const nextData =
+      registrationData && typeof registrationData === "object"
+        ? { ...(registrationData as Record<string, unknown>) }
+        : {};
+    const nextRequisites =
+      nextData.requisites && typeof nextData.requisites === "object"
+        ? { ...(nextData.requisites as Record<string, unknown>) }
+        : {};
+
+    if (data.inn === null) {
+      delete nextData.inn;
+      delete nextRequisites.inn;
+    } else if (typeof data.inn === "string" && data.inn.trim()) {
+      nextData.inn = data.inn.trim();
+      nextRequisites.inn = data.inn.trim();
+    }
+
+    if (typeof data.name === "string" && data.name.trim()) {
+      nextData.shortName = data.name.trim();
+    }
+
+    nextData.requisites = nextRequisites;
+    return nextData;
+  }
+
+  private normalizeOptional(value?: string | null): string | undefined {
+    if (typeof value !== "string") {
+      return undefined;
+    }
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : undefined;
   }
 
   async createContact(

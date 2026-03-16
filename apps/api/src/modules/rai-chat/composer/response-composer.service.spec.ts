@@ -434,4 +434,98 @@ describe("ResponseComposerService", () => {
     expect(signalRouteAction?.targetRoute).toBe("/parties/party-1");
     expect(signalRouteAction?.label).toBe("Открыть карточку контрагента");
   });
+
+  it("для вопроса про директора отвечает прямо в чате и показывает директора в окне результата", async () => {
+    const response = await service.buildResponse({
+      request: {
+        message: "Как зовут директора Сысои?",
+        threadId: "th-crm-director-1",
+        workspaceContext: { route: "/consulting/crm" },
+      },
+      executionResult: {
+        executedTools: [
+          {
+            name: RaiToolName.GetCrmAccountWorkspace,
+            result: {
+              account: {
+                id: "acc-1",
+                name: 'ООО "СЫСОИ"',
+                inn: "6217003600",
+              },
+              linkedParty: {
+                id: "party-1",
+                legalName: 'ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ "СЫСОИ"',
+                shortName: 'ООО "СЫСОИ"',
+                inn: "6217003600",
+                managerName: "Евдокушин Петр Михайлович",
+              },
+              contacts: [
+                {
+                  id: "contact-1",
+                  firstName: "Евдокушин Петр Михайлович",
+                  lastName: null,
+                  role: "DECISION_MAKER",
+                  email: "director@sysoi.ru",
+                  phone: "+7 900 123-45-67",
+                  source: "PARTY_SYNC:party-1:meta_manager",
+                },
+              ],
+              interactions: [],
+              obligations: [],
+              risks: [],
+              documents: [],
+              legalEntities: [],
+            },
+          },
+        ],
+      } as any,
+      recallResult: {
+        recall: { items: [] },
+        profile: {},
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-crm-director-1",
+      threadId: "th-crm-director-1",
+      companyId: "company-1",
+    });
+
+    expect(response.text).toContain('Директор ООО "СЫСОИ" — Евдокушин Петр Михайлович.');
+    expect(response.text).not.toContain("В CRM-контактах этот человек пока не заведен.");
+
+    const structuredWindow = response.workWindows?.find((window) => window.type === "structured_result");
+    expect(structuredWindow?.payload.summary).toContain("Евдокушин Петр Михайлович");
+    expect(structuredWindow?.payload.sections).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "crm_workspace_director_identity",
+          items: expect.arrayContaining([
+            expect.objectContaining({
+              label: "ФИО",
+              value: "Евдокушин Петр Михайлович",
+            }),
+          ]),
+        }),
+        expect.objectContaining({
+          id: "crm_workspace_director_contacts",
+          items: expect.arrayContaining([
+            expect.objectContaining({
+              label: "Телефон",
+              value: "+7 900 123-45-67",
+            }),
+            expect.objectContaining({
+              label: "Email",
+              value: "director@sysoi.ru",
+            }),
+          ]),
+        }),
+      ]),
+    );
+    expect(structuredWindow?.payload.sections?.flatMap((section) => section.items)).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "ИНН",
+        }),
+      ]),
+    );
+  });
 });

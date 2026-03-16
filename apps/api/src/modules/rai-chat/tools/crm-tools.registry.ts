@@ -259,6 +259,7 @@ export class CrmToolsRegistry implements OnModuleInit {
             inn: payload.inn,
             type: payload.type,
             holdingId: payload.holdingId,
+            partyId: payload.partyId,
           },
           actorContext.companyId,
         );
@@ -270,6 +271,7 @@ export class CrmToolsRegistry implements OnModuleInit {
           type: account.type,
           holdingId: account.holdingId,
           status: account.status,
+          partyId: account.partyId ?? null,
         } as CreateCrmAccountResult;
       },
     );

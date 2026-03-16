@@ -5,6 +5,15 @@ import { CreatePartyDto, UpdatePartyDto, CreatePartyRelationDto, UpdatePartyRela
 import { CreateJurisdictionDto, UpdateJurisdictionDto } from "../../../shared/commerce/dto/create-jurisdiction.dto";
 import { CreateRegulatoryProfileDto, UpdateRegulatoryProfileDto, ListRegulatoryProfilesQueryDto } from "../../../shared/commerce/dto/create-regulatory-profile.dto";
 import { assertOwnershipShareIfProvided, assertOwnershipShareRequired, assertRelationPeriod, mapPartyRelationResponse, mapRelationTypeFromDb, mapRelationTypeToDb, normalizeRulesJson } from "../../../shared/commerce/party.helpers";
+import {
+    buildProjectedPartyContacts,
+    buildPartySyncSourcePrefix,
+    extractJurisdictionLabel,
+    extractPartyInn,
+    mapPartyStatusToAccountStatus,
+    mapPartyTypeToAccountType,
+    resolveProjectedAccountName,
+} from "../../../shared/commerce/party-account-projection";
 
 @Injectable()
 export class PartyService {
@@ -231,7 +240,7 @@ export class PartyService {
 
 
     async listParties(companyId: string) {
-        return this.prisma.party.findMany({
+        const parties = await this.prisma.party.findMany({
             where: { companyId },
             include: {
                 jurisdiction: true,
@@ -239,6 +248,8 @@ export class PartyService {
             },
             orderBy: { createdAt: "desc" },
         });
+
+        return this.attachLinkedAccounts(companyId, parties);
     }
 
     async getParty(companyId: string, partyId: string) {
@@ -276,7 +287,7 @@ export class PartyService {
             throw new NotFoundException("Party not found");
         }
 
-        return party;
+        return this.attachLinkedAccount(companyId, party);
     }
 
     async createParty(companyId: string, dto: CreatePartyDto) {
@@ -296,7 +307,7 @@ export class PartyService {
             }
         }
 
-        return this.prisma.party.create({
+        const created = await this.prisma.party.create({
             data: {
                 companyId,
                 type: (dto.type ?? "LEGAL_ENTITY") as any,
@@ -313,11 +324,18 @@ export class PartyService {
                 regulatoryProfile: true,
             },
         });
+
+        await this.syncAccountProjectionForPartyRecord(companyId, created);
+        return this.attachLinkedAccount(companyId, created);
     }
 
     async updateParty(companyId: string, partyId: string, dto: UpdatePartyDto) {
         const party = await this.prisma.party.findFirst({
             where: { companyId, id: partyId },
+            include: {
+                jurisdiction: true,
+                regulatoryProfile: true,
+            },
         });
         if (!party) {
             throw new NotFoundException("Party not found");
@@ -332,7 +350,7 @@ export class PartyService {
             }
         }
 
-        return this.prisma.party.update({
+        const updated = await this.prisma.party.update({
             where: { id: partyId },
             data: {
                 ...(dto.type !== undefined && { type: dto.type as any }),
@@ -353,6 +371,9 @@ export class PartyService {
                 regulatoryProfile: true,
             },
         });
+
+        await this.syncAccountProjectionForPartyRecord(companyId, updated, party);
+        return this.attachLinkedAccount(companyId, updated);
     }
 
 
@@ -473,5 +494,258 @@ export class PartyService {
         });
 
         return rows.map(mapPartyRelationResponse);
+    }
+
+    private async attachLinkedAccounts<T extends { id: string } & Record<string, unknown>>(
+        companyId: string,
+        parties: T[],
+    ) {
+        if (parties.length === 0) {
+            return parties;
+        }
+
+        const partyIds = parties.map((party) => party.id);
+        const accounts = await this.prisma.account.findMany({
+            where: {
+                companyId,
+                partyId: { in: partyIds },
+            },
+            select: {
+                id: true,
+                name: true,
+                inn: true,
+                status: true,
+                partyId: true,
+                updatedAt: true,
+            },
+            orderBy: { updatedAt: "desc" },
+        });
+        const accountMap = new Map<string, (typeof accounts)[number]>();
+        for (const account of accounts) {
+            if (account.partyId && !accountMap.has(account.partyId)) {
+                accountMap.set(account.partyId, account);
+            }
+        }
+
+        return parties.map((party) => ({
+            ...party,
+            linkedAccount: accountMap.get(party.id) ?? null,
+        }));
+    }
+
+    private async attachLinkedAccount<T extends { id: string } & Record<string, unknown>>(
+        companyId: string,
+        party: T,
+    ) {
+        const [result] = await this.attachLinkedAccounts(companyId, [party]);
+        return result;
+    }
+
+    private async syncAccountProjectionForPartyRecord(
+        companyId: string,
+        party: {
+            id: string;
+            legalName: string;
+            shortName: string | null;
+            type: string;
+            status: string;
+            registrationData: unknown;
+            jurisdiction?: { code?: string | null; name?: string | null } | null;
+        },
+        previousParty?: {
+            legalName: string;
+            shortName: string | null;
+        } | null,
+    ) {
+        const projectedName = resolveProjectedAccountName(party);
+        const projectedInn = extractPartyInn(party.registrationData) ?? null;
+        const projectedJurisdiction =
+            extractJurisdictionLabel(party.jurisdiction ?? null) ?? null;
+        const accountType = mapPartyTypeToAccountType(party.type);
+        const accountStatus = mapPartyStatusToAccountStatus(party.status);
+        const previousProjectedName = previousParty
+            ? resolveProjectedAccountName(previousParty)
+            : null;
+
+        const linkedAccount = await this.resolveProjectedAccount(companyId, {
+            partyId: party.id,
+            accountName: projectedName,
+            inn: projectedInn,
+        });
+
+        const shouldRefreshName =
+            !linkedAccount ||
+            !String(linkedAccount.name || "").trim() ||
+            (previousProjectedName !== null &&
+                String(linkedAccount.name || "").trim() === previousProjectedName);
+
+        const account = linkedAccount
+            ? await this.prisma.account.update({
+                where: { id: linkedAccount.id },
+                data: {
+                    partyId: party.id,
+                    ...(shouldRefreshName ? { name: projectedName } : {}),
+                    inn: projectedInn,
+                    jurisdiction: projectedJurisdiction,
+                    type: accountType,
+                    status: accountStatus,
+                },
+                select: {
+                    id: true,
+                    name: true,
+                },
+            })
+            : await this.prisma.account.create({
+                data: {
+                    companyId,
+                    partyId: party.id,
+                    name: projectedName,
+                    inn: projectedInn,
+                    jurisdiction: projectedJurisdiction,
+                    type: accountType,
+                    status: accountStatus,
+                },
+                select: {
+                    id: true,
+                    name: true,
+                },
+            });
+
+        await this.syncProjectedContactsToAccount(
+            account.id,
+            party.id,
+            party.registrationData,
+        );
+    }
+
+    private async resolveProjectedAccount(
+        companyId: string,
+        input: {
+            partyId: string;
+            accountName: string;
+            inn?: string | null;
+        },
+    ) {
+        const existingByParty = await this.prisma.account.findFirst({
+            where: {
+                companyId,
+                partyId: input.partyId,
+            },
+            select: {
+                id: true,
+                name: true,
+            },
+            orderBy: { updatedAt: "desc" },
+        });
+        if (existingByParty) {
+            return existingByParty;
+        }
+
+        if (input.inn) {
+            const existingByInn = await this.prisma.account.findFirst({
+                where: {
+                    companyId,
+                    inn: input.inn,
+                },
+                select: {
+                    id: true,
+                    name: true,
+                },
+            });
+            if (existingByInn) {
+                return existingByInn;
+            }
+        }
+
+        const exactNameMatches = await this.prisma.account.findMany({
+            where: {
+                companyId,
+                name: {
+                    equals: input.accountName,
+                    mode: "insensitive",
+                },
+            },
+            select: {
+                id: true,
+                name: true,
+            },
+            take: 2,
+            orderBy: { updatedAt: "desc" },
+        });
+        if (exactNameMatches.length === 1) {
+            return exactNameMatches[0];
+        }
+
+        return null;
+    }
+
+    private async syncProjectedContactsToAccount(
+        accountId: string,
+        partyId: string,
+        registrationData: unknown,
+    ) {
+        const projectedContacts = buildProjectedPartyContacts(
+            partyId,
+            registrationData,
+        );
+        const sourcePrefix = buildPartySyncSourcePrefix(partyId);
+        const existingContacts = await this.prisma.contact.findMany({
+            where: {
+                accountId,
+                source: {
+                    startsWith: sourcePrefix,
+                },
+            },
+            select: {
+                id: true,
+                source: true,
+            },
+        });
+
+        const projectedBySource = new Map(
+            projectedContacts.map((contact) => [contact.source, contact]),
+        );
+
+        for (const existing of existingContacts) {
+            if (!existing.source || projectedBySource.has(existing.source)) {
+                continue;
+            }
+
+            await this.prisma.contact.delete({
+                where: { id: existing.id },
+            });
+        }
+
+        for (const contact of projectedContacts) {
+            const existing = existingContacts.find(
+                (item) => item.source === contact.source,
+            );
+            if (existing) {
+                await this.prisma.contact.update({
+                    where: { id: existing.id },
+                    data: {
+                        firstName: contact.firstName,
+                        lastName: contact.lastName,
+                        role: contact.role,
+                        email: contact.email ?? null,
+                        phone: contact.phone ?? null,
+                        source: contact.source,
+                    },
+                });
+                continue;
+            }
+
+            await this.prisma.contact.create({
+                data: {
+                    accountId,
+                    firstName: contact.firstName,
+                    lastName: contact.lastName,
+                    role: contact.role,
+                    email: contact.email ?? null,
+                    phone: contact.phone ?? null,
+                    source: contact.source,
+                },
+            });
+        }
     }
 }

@@ -2,6 +2,20 @@
 
 ## 2026-03-16
 
+122. **A-RAI Director Answer Window UX** [DONE]:
+    *   `review_account_workspace` для вопроса `Как зовут директора <контрагент>?` переведён на отдельный compact-presenter: в structured result больше не выводится `ИНН`, вместо этого показываются `ФИО`, `телефон`, `email`.
+    *   `StructuredResultWindow` получил адаптивный compact shell для коротких факт-ответов: ширина больше не раздувается до full-screen, а высота ограничена с внутренним scroll только при длинном контенте.
+    *   Таргетированные проверки: `apps/api response-composer.service.spec.ts` PASS, `apps/web structured-result-window.spec.tsx` PASS.
+    *   `rai-api` и `rai-web` перезапущены, чтобы новый UX сразу пошёл в live runtime.
+
+121. **Party/Account Projection Spine** [DONE]:
+    *   Закрыт системный drift между `Party` и CRM `Account` без ввода hard Prisma relation: в `accounts` добавлен soft-link `partyId` и индекс `[companyId, partyId]`.
+    *   `PartyService` теперь автоматически проецирует `Party -> Account` и `Party -> CRM Contact` при создании/обновлении контрагента; директор из `registrationData.meta.managerName` попадает в CRM как `DECISION_MAKER`.
+    *   `CrmService` переведён на прямой `partyId`-резолвинг в workspace/create-flow, а `updateAccountProfile` пишет master-поля обратно в `Party` (`shortName/inn/jurisdiction`).
+    *   `FrontOfficeAuthService.resolveAccount()` теперь сначала ищет аккаунт по `partyId`, а не по эвристике имени/ИНН.
+    *   Применён manual migration `packages/prisma-client/migrations/20260316100000_account_party_projection_soft_link/migration.sql`, затем выполнен backfill `scripts/db/backfill-account-party-projection.ts` с итогом `parties=5 / createdAccounts=1 / updatedAccounts=4 / syncedContacts=2`.
+    *   Live smoke через `POST /api/rai/chat` подтверждает новое поведение: `Как зовут директора Сысои?` -> `Директор ООО "СЫСОИ" — Евдокушин Петр Михайлович.`
+
 120. **Git Push / Manual Repo Sync** [DONE]:
     *   Успешно выполнена синхронизация с удаленным репозиторием (`git push origin main`).
     *   Запушены изменения по Front Office, Agent Runtime UI и планам интеграции (PWA, Telegram).

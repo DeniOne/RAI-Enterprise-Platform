@@ -140,7 +140,13 @@ describe("CrmToolsRegistry", () => {
     expect(result.accountId).toBe("acc-1");
     expect(result.name).toBe("ООО Ромашка");
     expect(crmServiceMock.createAccount).toHaveBeenCalledWith(
-      { name: "ООО Ромашка", inn: "2610000615", type: undefined, holdingId: undefined },
+      {
+        name: "ООО Ромашка",
+        inn: "2610000615",
+        type: undefined,
+        holdingId: undefined,
+        partyId: undefined,
+      },
       "company-1",
     );
   });
@@ -224,6 +230,7 @@ describe("CrmToolsRegistry", () => {
         name: 'ООО "СЫСОИ"',
         inn: "6217003600",
         type: "CLIENT",
+        partyId: undefined,
       },
       "company-1",
     );

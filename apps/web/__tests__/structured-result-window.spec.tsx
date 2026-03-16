@@ -63,4 +63,62 @@ describe('StructuredResultWindow', () => {
         expect(onAction).toHaveBeenCalled();
         expect(onSetMode).toHaveBeenCalledWith('takeover');
     });
+
+    it('uses compact sizing for short fact answers', () => {
+        render(
+            <StructuredResultWindow
+                window={{
+                    windowId: 'win-director',
+                    originMessageId: null,
+                    agentRole: 'crm_agent',
+                    type: 'structured_result',
+                    category: 'result',
+                    priority: 76,
+                    mode: 'panel',
+                    title: 'Рабочее пространство аккаунта',
+                    status: 'completed',
+                    payload: {
+                        intentId: 'compute_plan_fact',
+                        summary: 'Директор ООО "СЫСОИ" — Евдокушин Петр Михайлович.',
+                        missingKeys: [],
+                        sections: [
+                            {
+                                id: 'director-identity',
+                                title: 'Директор',
+                                items: [{ label: 'ФИО', value: 'Евдокушин Петр Михайлович' }],
+                            },
+                            {
+                                id: 'director-contacts',
+                                title: 'Контакты',
+                                items: [
+                                    { label: 'Телефон', value: '+7 900 123-45-67' },
+                                    { label: 'Email', value: 'director@sysoi.ru' },
+                                ],
+                            },
+                        ],
+                    },
+                    actions: [
+                        {
+                            id: 'open-party-card',
+                            kind: 'open_route',
+                            label: 'Открыть карточку контрагента',
+                            enabled: true,
+                            targetRoute: '/parties/party-1',
+                        },
+                    ],
+                    isPinned: false,
+                }}
+                onAction={() => {}}
+                onCollapse={() => {}}
+                onClose={() => {}}
+                onSetMode={() => {}}
+            />,
+        );
+
+        const windowShell = screen.getByTestId('structured-result-window');
+        expect(windowShell.className).toContain('inline-flex');
+        expect(windowShell.className).toContain('max-w-[min(720px,calc(100vw-32px))]');
+        expect(windowShell.className).toContain('max-h-[calc(100vh-72px)]');
+        expect(screen.queryByText('ИНН')).not.toBeInTheDocument();
+    });
 });

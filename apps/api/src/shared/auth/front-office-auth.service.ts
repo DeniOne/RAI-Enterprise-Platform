@@ -22,6 +22,7 @@ import {
   FrontOfficePasswordLoginDto,
   SetFrontOfficePasswordDto,
 } from "./front-office-auth.dto";
+import { extractPartyInn } from "../commerce/party-account-projection";
 
 interface ActorContext {
   userId: string;
@@ -632,8 +633,19 @@ export class FrontOfficeAuthService {
       return account;
     }
 
-    const registrationData = (party.registrationData ?? {}) as Record<string, unknown>;
-    const inn = this.normalizeOptional(String(registrationData.inn ?? ""));
+    const linkedByParty = await this.prisma.account.findFirst({
+      where: {
+        companyId,
+        partyId: party.id,
+      },
+      select: { id: true, name: true, inn: true },
+      orderBy: { updatedAt: "desc" },
+    });
+    if (linkedByParty) {
+      return linkedByParty;
+    }
+
+    const inn = extractPartyInn(party.registrationData);
     if (inn) {
       const byInn = await this.prisma.account.findMany({
         where: { companyId, inn },
@@ -663,6 +675,10 @@ export class FrontOfficeAuthService {
     });
 
     if (candidates.length === 1) {
+      await this.prisma.account.update({
+        where: { id: candidates[0].id },
+        data: { partyId: party.id },
+      });
       return candidates[0];
     }
 

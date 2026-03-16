@@ -3,6 +3,9 @@
 ## Текущая задача (2026-03-16)
 - [x] Выполнен пуш всех локальных изменений в репозиторий (`git push origin main`).
 - [x] Синхронизированы артефакты по Front Office, Agent Runtime UI и планам миграции с Telegram.
+- [x] Разорван старый drift между `Party` и `Account`: добавлен soft-link `accounts.partyId`, включена runtime projection `Party -> Account -> CRM Contact`, включён write-through `CRM -> Party`.
+- [x] Применён manual migration `20260316100000_account_party_projection_soft_link` и выполнен backfill `scripts/db/backfill-account-party-projection.ts` (`parties=5`, `createdAccounts=1`, `updatedAccounts=4`, `syncedContacts=2`).
+- [x] Live-проверка `POST /api/rai/chat` по вопросу `Как зовут директора Сысои?` теперь возвращает прямой ответ и workspace с `contacts=1`.
 
 ## Текущая задача (2026-03-14)
 - [x] Создана папка `ALL_DOCS` в корне проекта.

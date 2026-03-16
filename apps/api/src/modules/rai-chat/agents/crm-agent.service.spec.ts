@@ -109,6 +109,7 @@ describe("CrmAgent", () => {
         inn: "2610000615",
         type: undefined,
         holdingId: undefined,
+        partyId: undefined,
       },
       {
         companyId: "company-1",

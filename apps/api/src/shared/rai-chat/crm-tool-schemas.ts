@@ -53,6 +53,7 @@ export const createCrmAccountSchema: ObjectSchema<CreateCrmAccountPayload> =
     inn: Joi.string().trim().pattern(/^\d{10}(\d{2})?$/).optional(),
     type: Joi.string().trim().max(64).optional(),
     holdingId: Joi.string().trim().max(128).optional(),
+    partyId: Joi.string().trim().max(128).optional(),
   });
 
 export const getCrmAccountWorkspaceSchema: ObjectSchema<GetCrmAccountWorkspacePayload> =

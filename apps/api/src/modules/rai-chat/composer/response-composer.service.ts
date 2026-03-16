@@ -72,6 +72,7 @@ import {
   buildCrmSections,
   buildCrmSummary,
   buildCrmTitle,
+  buildWorkspaceDirectorAnswer,
   resolveCounterpartyRouteFromWorkspaceData,
   buildToolDisplayName,
 } from "../../../shared/rai-chat/response-composer-presenters";
@@ -155,9 +156,16 @@ export class ResponseComposerService {
     const { recall, profile } = recallResult;
     const clientFacing = request.audience === "client_front_office";
 
-    let text = `Принял: ${request.message}`;
-    if (executionResult.executedTools.length > 0) {
-      const toolSummary = this.summarizeExecutedTools(executionResult.executedTools);
+    const directAnswer = this.buildDirectAnswerForRequest(
+      request.message,
+      executionResult.executedTools,
+    );
+    let text = directAnswer ?? `Принял: ${request.message}`;
+    if (!directAnswer && executionResult.executedTools.length > 0) {
+      const toolSummary = this.summarizeExecutedTools(
+        executionResult.executedTools,
+        request.message,
+      );
       if (toolSummary) text += `\n${toolSummary}`;
     }
     if (recall.items.length > 0) {
@@ -971,8 +979,13 @@ export class ResponseComposerService {
       return null;
     }
 
-    const sections = buildCrmSections(intent, data);
-    const summary = buildCrmSummary(intent, data, agentExecution?.text ?? "CRM-операция выполнена.");
+    const sections = buildCrmSections(intent, data, request.message);
+    const summary = buildCrmSummary(
+      intent,
+      data,
+      agentExecution?.text ?? "CRM-операция выполнена.",
+      request.message,
+    );
     const reviewWorkspaceRoute =
       intent === "review_account_workspace"
         ? resolveCounterpartyRouteFromWorkspaceData(data)
@@ -1825,8 +1838,34 @@ export class ResponseComposerService {
     }
   }
 
+  private buildDirectAnswerForRequest(
+    requestMessage: string,
+    executedTools: Array<{ name: RaiToolName; result: unknown }>,
+  ): string | null {
+    for (const tool of executedTools) {
+      if (tool.name !== RaiToolName.GetCrmAccountWorkspace) {
+        continue;
+      }
+      if (
+        this.isRiskPolicyBlockedResult(tool.result) ||
+        this.isAgentConfigBlockedResult(tool.result) ||
+        this.isToolExecutionErrorResult(tool.result)
+      ) {
+        continue;
+      }
+
+      return buildWorkspaceDirectorAnswer(
+        tool.result as GetCrmAccountWorkspaceResult,
+        requestMessage,
+      );
+    }
+
+    return null;
+  }
+
   private summarizeExecutedTools(
     executedTools: Array<{ name: RaiToolName; result: unknown }>,
+    requestMessage?: string,
   ): string | null {
     const parts = executedTools
       .map((tool) => {
@@ -1878,7 +1917,10 @@ export class ResponseComposerService {
         }
         if (tool.name === RaiToolName.GetCrmAccountWorkspace) {
           const r = tool.result as GetCrmAccountWorkspaceResult;
-          return `CRM-карточка: контактов ${r.contacts.length}, обязательств ${r.obligations.length}`;
+          return (
+            buildWorkspaceDirectorAnswer(r, requestMessage) ??
+            `CRM-карточка: контактов ${r.contacts.length}, обязательств ${r.obligations.length}`
+          );
         }
         if (tool.name === RaiToolName.CreateCrmContact) {
           const r = tool.result as CreateCrmContactResult;

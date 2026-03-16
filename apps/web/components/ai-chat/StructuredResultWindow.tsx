@@ -29,9 +29,40 @@ export function StructuredResultWindow({
         { id: 'panel', label: 'Панель' },
         { id: 'takeover', label: 'Фокус' },
     ];
+    const sections = window.payload.sections ?? [];
+    const totalItems = sections.reduce((sum, section) => sum + section.items.length, 0);
+    const totalContentLength =
+        (window.payload.summary?.length ?? 0) +
+        sections.reduce(
+            (sum, section) =>
+                sum +
+                section.title.length +
+                section.items.reduce((sectionSum, item) => sectionSum + item.label.length + item.value.length, 0),
+            0,
+        ) +
+        window.actions.reduce((sum, action) => sum + action.label.length, 0);
+    const isCompactPanel =
+        window.mode !== 'takeover' &&
+        sections.length <= 2 &&
+        totalItems <= 4 &&
+        totalContentLength <= 360 &&
+        window.actions.length <= 2;
+    const shellClassName =
+        window.mode === 'takeover'
+            ? 'flex w-full max-w-[min(1320px,calc(100vw-32px))] max-h-[calc(100vh-32px)] flex-col'
+            : isCompactPanel
+              ? 'inline-flex w-fit min-w-[360px] max-w-[min(720px,calc(100vw-32px))] max-h-[calc(100vh-72px)] flex-col'
+              : 'flex w-full max-w-[min(980px,calc(100vw-32px))] max-h-[calc(100vh-72px)] flex-col';
+    const bodyClassName =
+        window.mode === 'takeover'
+            ? 'min-h-0 flex-1 space-y-6 overflow-y-auto p-6'
+            : 'min-h-0 space-y-6 overflow-y-auto p-6';
 
     return (
-        <div className="overflow-hidden rounded-[1.75rem] border border-black/10 bg-[rgba(255,255,255,0.98)] shadow-[0_24px_70px_rgba(17,17,17,0.14)] backdrop-blur-md">
+        <div
+            data-testid="structured-result-window"
+            className={`${shellClassName} overflow-hidden rounded-[1.75rem] border border-black/10 bg-[rgba(255,255,255,0.98)] shadow-[0_24px_70px_rgba(17,17,17,0.14)] backdrop-blur-md`}
+        >
             <div className="border-b border-black/10 bg-[#FCFBF8] px-6 py-5">
                 <div className="flex items-start justify-between gap-4">
                     <div>
@@ -88,11 +119,11 @@ export function StructuredResultWindow({
                 </div>
             </div>
 
-            <div className="space-y-6 p-6">
-                {(window.payload.sections ?? []).map((section) => (
+            <div className={bodyClassName}>
+                {sections.map((section) => (
                     <section key={section.id}>
                         <h3 className="text-xs uppercase tracking-[0.16em] text-neutral-400">{section.title}</h3>
-                        <div className="mt-3 grid gap-3">
+                        <div className={`mt-3 grid gap-3 ${isCompactPanel ? 'sm:grid-cols-2' : ''}`}>
                             {section.items.map((item) => (
                                 <div key={`${section.id}-${item.label}`} className="rounded-3xl border border-black/10 bg-white p-4">
                                     <div className="text-sm font-medium text-gray-950">{item.label}</div>

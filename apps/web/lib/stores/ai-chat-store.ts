@@ -794,6 +794,7 @@ export const useAiChatStore = create<AiChatStore>()(
                 const idempotencyKey = buildIdempotencyKey('rai-chat-submit', [
                     threadId ?? null,
                     message,
+                    originMessageId ?? null,
                     clarificationResume?.windowId ?? null,
                     serializeIdempotencyPayload(workspaceContext ?? {}),
                 ]);

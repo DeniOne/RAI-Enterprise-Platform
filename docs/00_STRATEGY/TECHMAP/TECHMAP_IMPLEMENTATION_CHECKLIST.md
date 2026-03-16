@@ -28,6 +28,18 @@ version: 0.1.0
 
 ---
 
+## Cross-Cut Prerequisite — Counterparty Master Data Spine
+
+- [x] `Party` зафиксирован как master для юридических реквизитов и ключевых лиц.
+- [x] `Account` переведён в роль operational projection с soft-link `accounts.partyId`.
+- [x] Включена автоматическая проекция `Party -> Account -> CRM Contact`.
+- [x] Включён write-through `CRM Account -> Party` для master-полей `shortName/inn/jurisdiction`.
+- [x] Выполнен backfill существующих контрагентов и аккаунтов (`scripts/db/backfill-account-party-projection.ts`).
+
+Ожидаемый эффект: путь `контрагент -> CRM -> поле -> сезон -> план -> техкарта` больше не рвётся на этапе резолвинга клиента и не зависит от совпадения строк по названию.
+
+---
+
 ## Sprint TM-1 — Data Foundation (Фундамент данных)
 
 **Цель**: Привести Prisma-схему в соответствие с GRAND_SYNTHESIS ER-моделью. Добавить недостающие сущности и расширить существующие.

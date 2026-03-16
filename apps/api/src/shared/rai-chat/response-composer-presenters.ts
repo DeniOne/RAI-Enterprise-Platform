@@ -1,4 +1,4 @@
-import { RaiWorkWindowDto } from "./rai-chat.dto";
+import { RaiWorkWindowActionDto, RaiWorkWindowDto } from "./rai-chat.dto";
 import {
   AllocatePaymentResult,
   ConfirmPaymentResult,
@@ -62,6 +62,168 @@ export type ContractsWindowIntent = Extract<
 >;
 
 type WindowSection = NonNullable<RaiWorkWindowDto["payload"]["sections"]>;
+
+function isDirectorLookupMessage(message?: string | null): boolean {
+  if (typeof message !== "string") {
+    return false;
+  }
+  return /(?:как\s+зовут|кто)\s+(?:у\s+)?(?:генеральн(?:ый|ого)\s+)?(?:директор|директора|гендир|гендиректора|руководитель|руководителя)/iu.test(
+    message.trim(),
+  );
+}
+
+function extractWorkspaceAccountRecord(
+  data: unknown,
+): Record<string, unknown> | null {
+  const workspace = data as GetCrmAccountWorkspaceResult;
+  return workspace?.account && typeof workspace.account === "object"
+    ? (workspace.account as Record<string, unknown>)
+    : null;
+}
+
+function extractWorkspaceLinkedPartyRecord(
+  data: unknown,
+): Record<string, unknown> | null {
+  const workspace = data as GetCrmAccountWorkspaceResult;
+  return workspace?.linkedParty && typeof workspace.linkedParty === "object"
+    ? (workspace.linkedParty as Record<string, unknown>)
+    : null;
+}
+
+export function resolveWorkspaceAccountLabel(data: unknown): string {
+  const linkedParty = extractWorkspaceLinkedPartyRecord(data);
+  const linkedPartyShortName =
+    linkedParty && typeof linkedParty.shortName === "string"
+      ? linkedParty.shortName.trim()
+      : "";
+  if (linkedPartyShortName) {
+    return linkedPartyShortName;
+  }
+
+  const linkedPartyLegalName =
+    linkedParty && typeof linkedParty.legalName === "string"
+      ? linkedParty.legalName.trim()
+      : "";
+  if (linkedPartyLegalName) {
+    return linkedPartyLegalName;
+  }
+
+  const account = extractWorkspaceAccountRecord(data);
+  const accountName =
+    account && typeof account.name === "string" ? account.name.trim() : "";
+  if (accountName) {
+    return accountName;
+  }
+
+  const accountId = account && typeof account.id === "string" ? account.id.trim() : "";
+  return accountId || "контрагента";
+}
+
+function extractWorkspaceDirectorFromContacts(data: unknown): string | null {
+  const workspace = data as GetCrmAccountWorkspaceResult;
+  if (!Array.isArray(workspace?.contacts)) {
+    return null;
+  }
+
+  const directorContact = findWorkspaceDirectorContact(workspace.contacts);
+
+  if (!directorContact) {
+    return null;
+  }
+
+  const firstName =
+    typeof directorContact.firstName === "string" ? directorContact.firstName.trim() : "";
+  const lastName =
+    typeof directorContact.lastName === "string" ? directorContact.lastName.trim() : "";
+  const fullName = `${firstName} ${lastName}`.trim();
+  return fullName || null;
+}
+
+function isWorkspaceDirectorContact(contact: Record<string, unknown>): boolean {
+  const roleValue =
+    typeof contact.role === "string" ? String(contact.role).trim() : "";
+  const sourceValue =
+    typeof contact.source === "string" ? String(contact.source).trim() : "";
+
+  return (
+    /CEO|DIRECTOR|ГЕНЕРАЛЬН|ДИРЕКТОР|РУКОВОДИТЕЛ/iu.test(roleValue) ||
+    roleValue === "DECISION_MAKER" ||
+    /meta_manager|manager/iu.test(sourceValue)
+  );
+}
+
+function findWorkspaceDirectorContact(
+  contacts: Array<Record<string, unknown>>,
+): Record<string, unknown> | null {
+  const directorContact = contacts.find((contact) => {
+    if (!contact || typeof contact !== "object") {
+      return false;
+    }
+    return isWorkspaceDirectorContact(contact as Record<string, unknown>);
+  }) as Record<string, unknown> | undefined;
+
+  return directorContact ?? null;
+}
+
+function resolveWorkspaceDirectorContactField(
+  data: unknown,
+  field: "phone" | "email",
+): string | null {
+  const workspace = data as GetCrmAccountWorkspaceResult;
+  if (!Array.isArray(workspace?.contacts)) {
+    return null;
+  }
+
+  const directorContact = findWorkspaceDirectorContact(
+    workspace.contacts as Array<Record<string, unknown>>,
+  );
+  if (!directorContact) {
+    return null;
+  }
+
+  const value =
+    typeof directorContact[field] === "string"
+      ? directorContact[field].trim()
+      : "";
+  return value || null;
+}
+
+export function resolveWorkspaceDirectorName(data: unknown): string | null {
+  const linkedParty = extractWorkspaceLinkedPartyRecord(data);
+  const managerName =
+    linkedParty && typeof linkedParty.managerName === "string"
+      ? linkedParty.managerName.trim()
+      : "";
+  if (managerName) {
+    return managerName;
+  }
+
+  return extractWorkspaceDirectorFromContacts(data);
+}
+
+export function buildWorkspaceDirectorAnswer(
+  data: unknown,
+  message?: string | null,
+): string | null {
+  if (!isDirectorLookupMessage(message)) {
+    return null;
+  }
+
+  const accountLabel = resolveWorkspaceAccountLabel(data);
+  const directorName = resolveWorkspaceDirectorName(data);
+  const workspace = data as GetCrmAccountWorkspaceResult;
+  const crmContactsCount = Array.isArray(workspace?.contacts) ? workspace.contacts.length : 0;
+
+  if (directorName) {
+    return crmContactsCount > 0
+      ? `Директор ${accountLabel} — ${directorName}.`
+      : `Директор ${accountLabel} — ${directorName}. В CRM-контактах этот человек пока не заведен.`;
+  }
+
+  return crmContactsCount > 0
+    ? `В карточке ${accountLabel} директор не выделен отдельно. Проверьте контакты клиента в CRM.`
+    : `В карточке ${accountLabel} директор не указан и CRM-контакты ещё не заведены.`;
+}
 
 export function buildToolDisplayName(toolName: RaiToolName): string {
   switch (toolName) {
@@ -159,6 +321,7 @@ export function buildCrmSummary(
   intent: CrmWindowIntent,
   data: unknown,
   fallbackText: string,
+  requestMessage?: string,
 ): string {
   if (intent === "register_counterparty") {
     const result = data as RegisterCounterpartyResult;
@@ -172,12 +335,15 @@ export function buildCrmSummary(
   }
   if (intent === "create_crm_account") {
     const result = data as CreateCrmAccountResult;
-    return `Создан CRM-аккаунт ${result.name}.`;
+    return result.partyId
+      ? `Создан CRM-аккаунт ${result.name} и привязан к карточке контрагента.`
+      : `Создан CRM-аккаунт ${result.name}.`;
   }
   if (intent === "review_account_workspace") {
-    const result = data as GetCrmAccountWorkspaceResult;
-    const account = result.account as Record<string, unknown>;
-    return `Карточка ${String(account?.name ?? account?.id ?? "клиента")} загружена.`;
+    return (
+      buildWorkspaceDirectorAnswer(data, requestMessage) ??
+      `Карточка ${resolveWorkspaceAccountLabel(data)} загружена.`
+    );
   }
   if (intent === "update_account_profile") {
     const result = data as UpdateCrmAccountResult;
@@ -222,7 +388,11 @@ export function buildCrmSummary(
   return fallbackText;
 }
 
-export function buildCrmSections(intent: CrmWindowIntent, data: unknown): WindowSection {
+export function buildCrmSections(
+  intent: CrmWindowIntent,
+  data: unknown,
+  requestMessage?: string | null,
+): WindowSection {
   if (intent === "register_counterparty") {
     const result = data as RegisterCounterpartyResult;
     return [
@@ -264,13 +434,81 @@ export function buildCrmSections(intent: CrmWindowIntent, data: unknown): Window
           { label: "ID", value: result.accountId, tone: "neutral" },
           { label: "ИНН", value: result.inn ?? "не указан", tone: "neutral" },
           { label: "Статус", value: result.status ?? "не указан", tone: "neutral" },
+          {
+            label: "Контрагент",
+            value: result.partyId ?? "не привязан",
+            tone: result.partyId ? "positive" : "warning",
+          },
         ],
       },
     ];
   }
   if (intent === "review_account_workspace") {
     const result = data as GetCrmAccountWorkspaceResult;
+    if (isDirectorLookupMessage(requestMessage)) {
+      const directorName = resolveWorkspaceDirectorName(result);
+      const directorPhone = resolveWorkspaceDirectorContactField(result, "phone");
+      const directorEmail = resolveWorkspaceDirectorContactField(result, "email");
+
+      return [
+        {
+          id: "crm_workspace_director_identity",
+          title: "Директор",
+          items: [
+            {
+              label: "ФИО",
+              value: directorName ?? "не указан",
+              tone: directorName ? "positive" : "warning",
+            },
+          ],
+        },
+        {
+          id: "crm_workspace_director_contacts",
+          title: "Контакты",
+          items: [
+            {
+              label: "Телефон",
+              value: directorPhone ?? "не указан",
+              tone: directorPhone ? "positive" : "warning",
+            },
+            {
+              label: "Email",
+              value: directorEmail ?? "не указан",
+              tone: directorEmail ? "positive" : "warning",
+            },
+          ],
+        },
+      ];
+    }
+
     return [
+      {
+        id: "crm_workspace_counterparty",
+        title: "Контрагент",
+        items: [
+          {
+            label: "Карточка",
+            value: resolveWorkspaceAccountLabel(result),
+            tone: "positive",
+          },
+          {
+            label: "Директор",
+            value: resolveWorkspaceDirectorName(result) ?? "не указан",
+            tone: resolveWorkspaceDirectorName(result) ? "positive" : "warning",
+          },
+          {
+            label: "ИНН",
+            value:
+              ((result.linkedParty && typeof result.linkedParty === "object" && typeof result.linkedParty.inn === "string")
+                ? result.linkedParty.inn
+                : undefined) ||
+              (typeof (result.account as Record<string, unknown>)?.inn === "string"
+                ? String((result.account as Record<string, unknown>).inn)
+                : "не указан"),
+            tone: "neutral",
+          },
+        ],
+      },
       {
         id: "crm_workspace_summary",
         title: "Сводка",
@@ -498,7 +736,7 @@ export function buildCrmActions(
 
   if (intent === "create_crm_account") {
     const result = data as CreateCrmAccountResult;
-    return [
+    const actions: RaiWorkWindowActionDto[] = [
       {
         id: "open_created_account",
         kind: "focus_window",
@@ -512,6 +750,17 @@ export function buildCrmActions(
         label: "Открыть карточку клиента",
       },
     ];
+
+    if (result.partyId) {
+      actions.push({
+        ...openPartiesAction,
+        id: "open_linked_party_from_created_account",
+        targetRoute: `/parties/${encodeURIComponent(result.partyId)}`,
+        label: "Открыть карточку контрагента",
+      });
+    }
+
+    return actions;
   }
 
   if (intent === "review_account_workspace") {

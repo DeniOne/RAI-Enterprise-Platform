@@ -244,6 +244,7 @@ export interface CreateCrmAccountPayload {
   inn?: string;
   type?: string;
   holdingId?: string;
+  partyId?: string;
 }
 
 export interface GetCrmAccountWorkspacePayload {
@@ -639,6 +640,7 @@ export interface CreateCrmAccountResult {
   type?: string | null;
   holdingId?: string | null;
   status?: string | null;
+  partyId?: string | null;
 }
 
 export interface GetCrmAccountWorkspaceResult {
@@ -648,6 +650,7 @@ export interface GetCrmAccountWorkspaceResult {
     legalName?: string | null;
     shortName?: string | null;
     inn?: string | null;
+    managerName?: string | null;
   } | null;
   legalEntities: Array<Record<string, unknown>>;
   contacts: Array<Record<string, unknown>>;

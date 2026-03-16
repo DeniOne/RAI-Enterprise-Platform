@@ -72,6 +72,7 @@ export class CrmController {
       inn?: string;
       type?: string;
       holdingId?: string;
+      partyId?: string;
       companyId: string;
     },
   ) {

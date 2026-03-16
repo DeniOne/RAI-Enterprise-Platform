@@ -11,6 +11,7 @@ describe("FrontOfficeAuthService", () => {
     account: {
       findFirst: jest.fn(),
       findMany: jest.fn(),
+      update: jest.fn(),
     },
     user: {
       findFirst: jest.fn(),
@@ -90,7 +91,7 @@ describe("FrontOfficeAuthService", () => {
       token: "token-1",
       shortCode: "123456",
       status: "PENDING",
-      expiresAt: new Date("2026-03-15T00:00:00.000Z"),
+      expiresAt: new Date("2026-03-25T00:00:00.000Z"),
       createdAt: new Date("2026-03-12T09:00:00.000Z"),
       telegramId: "777001",
       partyId: "party-1",
@@ -128,7 +129,7 @@ describe("FrontOfficeAuthService", () => {
       token: "token-2",
       role: UserRole.FRONT_OFFICE_USER,
       status: "PENDING",
-      expiresAt: new Date("2026-03-15T00:00:00.000Z"),
+      expiresAt: new Date("2026-03-25T00:00:00.000Z"),
       telegramId: "777002",
       companyId: "cmp-1",
       clientId: "acc-2",
@@ -254,7 +255,7 @@ describe("FrontOfficeAuthService", () => {
         token: "token-journey",
         role: UserRole.FRONT_OFFICE_USER,
         status: "PENDING",
-        expiresAt: new Date("2026-03-20T00:00:00.000Z"),
+        expiresAt: new Date("2026-03-25T00:00:00.000Z"),
         telegramId: "700001",
         companyId: "cmp-journey",
         clientId: "acc-journey",
@@ -284,7 +285,7 @@ describe("FrontOfficeAuthService", () => {
       token: "token-journey",
       shortCode: "112233",
       status: "PENDING",
-      expiresAt: new Date("2026-03-20T00:00:00.000Z"),
+      expiresAt: new Date("2026-03-25T00:00:00.000Z"),
       createdAt: new Date("2026-03-13T09:00:00.000Z"),
       telegramId: "700001",
       partyId: "party-journey",
@@ -334,5 +335,56 @@ describe("FrontOfficeAuthService", () => {
     expect(activation.user.id).toBe("u-journey");
     expect(activation.binding.id).toBe("binding-journey");
     expect(activation.accessToken).toBe("jwt-token");
+  });
+
+  it("резолвит аккаунт контрагента по прямому partyId, без эвристики по имени", async () => {
+    const { service, prisma } = createService();
+    jest.spyOn(global, "fetch" as any).mockResolvedValue({ ok: true } as any);
+
+    prisma.party.findFirst.mockResolvedValue({
+      id: "party-linked",
+      legalName: "ООО Сысои",
+      shortName: "Сысои",
+      registrationData: { inn: "6217003600" },
+    });
+    prisma.account.findFirst
+      .mockResolvedValueOnce({
+        id: "acc-linked",
+        name: "ООО Сысои",
+        inn: "6217003600",
+      })
+      .mockResolvedValueOnce(null);
+    prisma.counterpartyUserBinding.findFirst.mockResolvedValue(null);
+    prisma.user.findFirst.mockResolvedValue(null);
+    prisma.invitation.updateMany.mockResolvedValue({ count: 0 });
+    prisma.invitation.findFirst.mockResolvedValue(null);
+    prisma.invitation.create.mockResolvedValue({
+      id: "inv-linked",
+      token: "token-linked",
+      shortCode: "654321",
+      status: "PENDING",
+      expiresAt: new Date("2026-03-18T00:00:00.000Z"),
+      createdAt: new Date("2026-03-16T10:00:00.000Z"),
+      telegramId: "777100",
+      partyId: "party-linked",
+      clientId: "acc-linked",
+      partyContactId: "contact-linked",
+      proposedLogin: "linked_user",
+      company: { id: "cmp-1", name: "RAI Demo" },
+    });
+
+    const result = await service.createInvitation(
+      { userId: "u-admin", companyId: "cmp-1" },
+      {
+        partyId: "party-linked",
+        partyContactId: "contact-linked",
+        telegramId: "777100",
+        proposedLogin: "linked_user",
+        fullName: "Иван Связанный",
+      },
+    );
+
+    expect(result.account.id).toBe("acc-linked");
+    expect(prisma.account.findMany).not.toHaveBeenCalled();
   });
 });

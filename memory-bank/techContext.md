@@ -34,3 +34,8 @@
 - **Client Generation**:
   - Каноническая генерация клиента: `pnpm db:client` из корня.
   - Все модели автоматически типизированы и доступны через `this.prisma.<modelName>`.
+- **Party/Account Canon (2026-03-16)**:
+  - `Party` = master data для контрагента (`registrationData`, директор, банковские реквизиты, структура).
+  - `Account` = operational CRM/agro projection.
+  - Жёсткий Prisma FK не вводится; вместо него используется soft-link `accounts.partyId` + runtime projection/write-through.
+  - `Party -> CRM Contact` projection обязательна для директора и ключевых лиц, иначе A-RAI и CRM дают ложную пустоту по карточке.
