@@ -10,6 +10,7 @@ import { PartyAssetsController } from "./party-assets.controller";
 import { PartyLookupController } from "./party-lookup.controller";
 import { IdentificationSchemaController } from "./identification-schema.controller";
 import { PartyLookupService } from "./services/party-lookup.service";
+import { BankLookupService } from "./services/bank-lookup.service";
 import { AssetRoleService } from "./services/asset-role.service";
 import { DaDataProvider } from "./services/providers/dadata.provider";
 import { ByKzStubLookupProvider } from "./services/providers/by-kz-stub.provider";
@@ -29,6 +30,7 @@ import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
     PartyService,
     AssetRoleService,
     PartyLookupService,
+    BankLookupService,
     IdentificationSchemaService,
     DaDataProvider,
     ByKzStubLookupProvider,
@@ -41,6 +43,7 @@ import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
     PartyService,
     AssetRoleService,
     PartyLookupService,
+    BankLookupService,
     IdentificationSchemaService,
   ],
 })

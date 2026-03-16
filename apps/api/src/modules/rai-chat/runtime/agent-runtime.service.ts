@@ -348,7 +348,11 @@ export class AgentRuntimeService {
             toolName: call.name,
             message: String((err as Error)?.message ?? err),
           });
-          throw err;
+          return toEntry(call.name, {
+            toolExecutionError: true,
+            code: (err as { name?: string })?.name ?? "TOOL_EXECUTION_ERROR",
+            message: String((err as Error)?.message ?? err),
+          });
         });
     };
 

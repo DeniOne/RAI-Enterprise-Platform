@@ -1,4 +1,4 @@
-import { PrismaClient, BudgetCategory, DealStage, HarvestPlanStatus, IntegrityStatus, ObservationIntent, ObservationType, SeasonStatus, SoilType, TaskStatus, UserAccessLevel, UserRole, MachineryType, AssetStatus, StockItemType, BudgetStatus, BudgetType, TechMapStatus } from './generated-client/index.js';
+import { PrismaClient, BudgetCategory, CropType, DealStage, HarvestPlanStatus, IntegrityStatus, ObservationIntent, ObservationType, SeasonStatus, SoilType, TaskStatus, UserAccessLevel, UserRole, MachineryType, AssetStatus, StockItemType, BudgetStatus, BudgetType, TechMapStatus } from './generated-client/index.js';
 
 const prisma = new PrismaClient();
 
@@ -21,22 +21,22 @@ async function main() {
 
   const holdingSouth = await prisma.holding.upsert({
     where: { id: 'demo-holding-south' },
-    update: { name: 'Южный агрохолдинг', description: 'Краснодарский и Ростовский кластер', companyId: company.id },
+    update: { name: 'Р®Р¶РЅС‹Р№ Р°РіСЂРѕС…РѕР»РґРёРЅРі', description: 'РљСЂР°СЃРЅРѕРґР°СЂСЃРєРёР№ Рё Р РѕСЃС‚РѕРІСЃРєРёР№ РєР»Р°СЃС‚РµСЂ', companyId: company.id },
     create: {
       id: 'demo-holding-south',
-      name: 'Южный агрохолдинг',
-      description: 'Краснодарский и Ростовский кластер',
+      name: 'Р®Р¶РЅС‹Р№ Р°РіСЂРѕС…РѕР»РґРёРЅРі',
+      description: 'РљСЂР°СЃРЅРѕРґР°СЂСЃРєРёР№ Рё Р РѕСЃС‚РѕРІСЃРєРёР№ РєР»Р°СЃС‚РµСЂ',
       companyId: company.id,
     },
   });
 
   const holdingVolga = await prisma.holding.upsert({
     where: { id: 'demo-holding-volga' },
-    update: { name: 'Поволжский агрохолдинг', description: 'Саратовско-Волгоградский контур', companyId: company.id },
+    update: { name: 'РџРѕРІРѕР»Р¶СЃРєРёР№ Р°РіСЂРѕС…РѕР»РґРёРЅРі', description: 'РЎР°СЂР°С‚РѕРІСЃРєРѕ-Р’РѕР»РіРѕРіСЂР°РґСЃРєРёР№ РєРѕРЅС‚СѓСЂ', companyId: company.id },
     create: {
       id: 'demo-holding-volga',
-      name: 'Поволжский агрохолдинг',
-      description: 'Саратовско-Волгоградский контур',
+      name: 'РџРѕРІРѕР»Р¶СЃРєРёР№ Р°РіСЂРѕС…РѕР»РґРёРЅРі',
+      description: 'РЎР°СЂР°С‚РѕРІСЃРєРѕ-Р’РѕР»РіРѕРіСЂР°РґСЃРєРёР№ РєРѕРЅС‚СѓСЂ',
       companyId: company.id,
     },
   });
@@ -44,11 +44,11 @@ async function main() {
   const accKuban = await prisma.account.upsert({
     where: { id: 'demo-account-kuban' },
     update: {
-      name: 'ООО Кубань Рапс',
+      name: 'РћРћРћ РљСѓР±Р°РЅСЊ Р Р°РїСЃ',
       inn: '2312998877',
       type: 'CLIENT',
       status: 'ACTIVE',
-      jurisdiction: 'Краснодарский край',
+      jurisdiction: 'РљСЂР°СЃРЅРѕРґР°СЂСЃРєРёР№ РєСЂР°Р№',
       riskCategory: 'LOW',
       strategicValue: 'A',
       companyId: company.id,
@@ -56,11 +56,11 @@ async function main() {
     },
     create: {
       id: 'demo-account-kuban',
-      name: 'ООО Кубань Рапс',
+      name: 'РћРћРћ РљСѓР±Р°РЅСЊ Р Р°РїСЃ',
       inn: '2312998877',
       type: 'CLIENT',
       status: 'ACTIVE',
-      jurisdiction: 'Краснодарский край',
+      jurisdiction: 'РљСЂР°СЃРЅРѕРґР°СЂСЃРєРёР№ РєСЂР°Р№',
       riskCategory: 'LOW',
       strategicValue: 'A',
       companyId: company.id,
@@ -71,11 +71,11 @@ async function main() {
   const accDon = await prisma.account.upsert({
     where: { id: 'demo-account-don' },
     update: {
-      name: 'АО Донские Поля',
+      name: 'РђРћ Р”РѕРЅСЃРєРёРµ РџРѕР»СЏ',
       inn: '6165884412',
       type: 'CLIENT',
       status: 'ACTIVE',
-      jurisdiction: 'Ростовская область',
+      jurisdiction: 'Р РѕСЃС‚РѕРІСЃРєР°СЏ РѕР±Р»Р°СЃС‚СЊ',
       riskCategory: 'MEDIUM',
       strategicValue: 'B',
       companyId: company.id,
@@ -83,11 +83,11 @@ async function main() {
     },
     create: {
       id: 'demo-account-don',
-      name: 'АО Донские Поля',
+      name: 'РђРћ Р”РѕРЅСЃРєРёРµ РџРѕР»СЏ',
       inn: '6165884412',
       type: 'CLIENT',
       status: 'ACTIVE',
-      jurisdiction: 'Ростовская область',
+      jurisdiction: 'Р РѕСЃС‚РѕРІСЃРєР°СЏ РѕР±Р»Р°СЃС‚СЊ',
       riskCategory: 'MEDIUM',
       strategicValue: 'B',
       companyId: company.id,
@@ -98,11 +98,11 @@ async function main() {
   const accVolga = await prisma.account.upsert({
     where: { id: 'demo-account-volga' },
     update: {
-      name: 'ООО Волга Агро',
+      name: 'РћРћРћ Р’РѕР»РіР° РђРіСЂРѕ',
       inn: '6454123401',
       type: 'CLIENT',
       status: 'ACTIVE',
-      jurisdiction: 'Саратовская область',
+      jurisdiction: 'РЎР°СЂР°С‚РѕРІСЃРєР°СЏ РѕР±Р»Р°СЃС‚СЊ',
       riskCategory: 'LOW',
       strategicValue: 'A',
       companyId: company.id,
@@ -110,11 +110,11 @@ async function main() {
     },
     create: {
       id: 'demo-account-volga',
-      name: 'ООО Волга Агро',
+      name: 'РћРћРћ Р’РѕР»РіР° РђРіСЂРѕ',
       inn: '6454123401',
       type: 'CLIENT',
       status: 'ACTIVE',
-      jurisdiction: 'Саратовская область',
+      jurisdiction: 'РЎР°СЂР°С‚РѕРІСЃРєР°СЏ РѕР±Р»Р°СЃС‚СЊ',
       riskCategory: 'LOW',
       strategicValue: 'A',
       companyId: company.id,
@@ -125,28 +125,28 @@ async function main() {
   const users = await Promise.all([
     prisma.user.upsert({
       where: { email: 'ceo@rai.local' },
-      update: { name: 'Алексей Генеральный', role: UserRole.CEO, accessLevel: UserAccessLevel.ACTIVE, companyId: company.id, accountId: accKuban.id, phone: '+79000000001', telegramId: 'demo_ceo', emailVerified: true },
-      create: { email: 'ceo@rai.local', name: 'Алексей Генеральный', role: UserRole.CEO, accessLevel: UserAccessLevel.ACTIVE, companyId: company.id, accountId: accKuban.id, phone: '+79000000001', telegramId: 'demo_ceo', emailVerified: true },
+      update: { name: 'РђР»РµРєСЃРµР№ Р“РµРЅРµСЂР°Р»СЊРЅС‹Р№', role: UserRole.CEO, accessLevel: UserAccessLevel.ACTIVE, companyId: company.id, accountId: accKuban.id, phone: '+79000000001', telegramId: 'demo_ceo', emailVerified: true },
+      create: { email: 'ceo@rai.local', name: 'РђР»РµРєСЃРµР№ Р“РµРЅРµСЂР°Р»СЊРЅС‹Р№', role: UserRole.CEO, accessLevel: UserAccessLevel.ACTIVE, companyId: company.id, accountId: accKuban.id, phone: '+79000000001', telegramId: 'demo_ceo', emailVerified: true },
     }),
     prisma.user.upsert({
       where: { email: 'manager1@rai.local' },
-      update: { name: 'Ирина Менеджер', role: UserRole.MANAGER, accessLevel: UserAccessLevel.ACTIVE, companyId: company.id, accountId: accKuban.id, phone: '+79000000002', telegramId: 'demo_manager_1', emailVerified: true },
-      create: { email: 'manager1@rai.local', name: 'Ирина Менеджер', role: UserRole.MANAGER, accessLevel: UserAccessLevel.ACTIVE, companyId: company.id, accountId: accKuban.id, phone: '+79000000002', telegramId: 'demo_manager_1', emailVerified: true },
+      update: { name: 'РСЂРёРЅР° РњРµРЅРµРґР¶РµСЂ', role: UserRole.MANAGER, accessLevel: UserAccessLevel.ACTIVE, companyId: company.id, accountId: accKuban.id, phone: '+79000000002', telegramId: 'demo_manager_1', emailVerified: true },
+      create: { email: 'manager1@rai.local', name: 'РСЂРёРЅР° РњРµРЅРµРґР¶РµСЂ', role: UserRole.MANAGER, accessLevel: UserAccessLevel.ACTIVE, companyId: company.id, accountId: accKuban.id, phone: '+79000000002', telegramId: 'demo_manager_1', emailVerified: true },
     }),
     prisma.user.upsert({
       where: { email: 'manager2@rai.local' },
-      update: { name: 'Николай Менеджер', role: UserRole.MANAGER, accessLevel: UserAccessLevel.ACTIVE, companyId: company.id, accountId: accDon.id, phone: '+79000000003', telegramId: 'demo_manager_2', emailVerified: true },
-      create: { email: 'manager2@rai.local', name: 'Николай Менеджер', role: UserRole.MANAGER, accessLevel: UserAccessLevel.ACTIVE, companyId: company.id, accountId: accDon.id, phone: '+79000000003', telegramId: 'demo_manager_2', emailVerified: true },
+      update: { name: 'РќРёРєРѕР»Р°Р№ РњРµРЅРµРґР¶РµСЂ', role: UserRole.MANAGER, accessLevel: UserAccessLevel.ACTIVE, companyId: company.id, accountId: accDon.id, phone: '+79000000003', telegramId: 'demo_manager_2', emailVerified: true },
+      create: { email: 'manager2@rai.local', name: 'РќРёРєРѕР»Р°Р№ РњРµРЅРµРґР¶РµСЂ', role: UserRole.MANAGER, accessLevel: UserAccessLevel.ACTIVE, companyId: company.id, accountId: accDon.id, phone: '+79000000003', telegramId: 'demo_manager_2', emailVerified: true },
     }),
     prisma.user.upsert({
       where: { email: 'agronom1@rai.local' },
-      update: { name: 'Мария Агроном', role: UserRole.AGRONOMIST, accessLevel: UserAccessLevel.ACTIVE, companyId: company.id, accountId: accKuban.id, phone: '+79000000004', telegramId: 'demo_agronom_1', emailVerified: true },
-      create: { email: 'agronom1@rai.local', name: 'Мария Агроном', role: UserRole.AGRONOMIST, accessLevel: UserAccessLevel.ACTIVE, companyId: company.id, accountId: accKuban.id, phone: '+79000000004', telegramId: 'demo_agronom_1', emailVerified: true },
+      update: { name: 'РњР°СЂРёСЏ РђРіСЂРѕРЅРѕРј', role: UserRole.AGRONOMIST, accessLevel: UserAccessLevel.ACTIVE, companyId: company.id, accountId: accKuban.id, phone: '+79000000004', telegramId: 'demo_agronom_1', emailVerified: true },
+      create: { email: 'agronom1@rai.local', name: 'РњР°СЂРёСЏ РђРіСЂРѕРЅРѕРј', role: UserRole.AGRONOMIST, accessLevel: UserAccessLevel.ACTIVE, companyId: company.id, accountId: accKuban.id, phone: '+79000000004', telegramId: 'demo_agronom_1', emailVerified: true },
     }),
     prisma.user.upsert({
       where: { email: 'agronom2@rai.local' },
-      update: { name: 'Денис Агроном', role: UserRole.AGRONOMIST, accessLevel: UserAccessLevel.ACTIVE, companyId: company.id, accountId: accVolga.id, phone: '+79000000005', telegramId: 'demo_agronom_2', emailVerified: true },
-      create: { email: 'agronom2@rai.local', name: 'Денис Агроном', role: UserRole.AGRONOMIST, accessLevel: UserAccessLevel.ACTIVE, companyId: company.id, accountId: accVolga.id, phone: '+79000000005', telegramId: 'demo_agronom_2', emailVerified: true },
+      update: { name: 'Р”РµРЅРёСЃ РђРіСЂРѕРЅРѕРј', role: UserRole.AGRONOMIST, accessLevel: UserAccessLevel.ACTIVE, companyId: company.id, accountId: accVolga.id, phone: '+79000000005', telegramId: 'demo_agronom_2', emailVerified: true },
+      create: { email: 'agronom2@rai.local', name: 'Р”РµРЅРёСЃ РђРіСЂРѕРЅРѕРј', role: UserRole.AGRONOMIST, accessLevel: UserAccessLevel.ACTIVE, companyId: company.id, accountId: accVolga.id, phone: '+79000000005', telegramId: 'demo_agronom_2', emailVerified: true },
     }),
   ]);
 
@@ -155,9 +155,9 @@ async function main() {
   const rapeseed = await prisma.rapeseed.upsert({
     where: { id: 'demo-rapeseed-winter-v1' },
     update: {
-      name: 'Рапс озимый',
-      variety: 'Северин',
-      reproduction: 'РС1',
+      name: 'Р Р°РїСЃ РѕР·РёРјС‹Р№',
+      variety: 'РЎРµРІРµСЂРёРЅ',
+      reproduction: 'Р РЎ1',
       type: 'WINTER',
       oilContent: 44.1,
       erucicAcid: 0.2,
@@ -173,9 +173,9 @@ async function main() {
     },
     create: {
       id: 'demo-rapeseed-winter-v1',
-      name: 'Рапс озимый',
-      variety: 'Северин',
-      reproduction: 'РС1',
+      name: 'Р Р°РїСЃ РѕР·РёРјС‹Р№',
+      variety: 'РЎРµРІРµСЂРёРЅ',
+      reproduction: 'Р РЎ1',
       type: 'WINTER',
       oilContent: 44.1,
       erucicAcid: 0.2,
@@ -195,7 +195,7 @@ async function main() {
     {
       id: 'demo-field-kuban-1',
       cadastreNumber: '23:45:1001001:101',
-      name: 'Поле Кубань-1',
+      name: 'РџРѕР»Рµ РљСѓР±Р°РЅСЊ-1',
       area: 145.5,
       soilType: SoilType.CHERNOZEM,
       accountId: accKuban.id,
@@ -205,7 +205,7 @@ async function main() {
     {
       id: 'demo-field-kuban-2',
       cadastreNumber: '23:45:1001001:102',
-      name: 'Поле Кубань-2',
+      name: 'РџРѕР»Рµ РљСѓР±Р°РЅСЊ-2',
       area: 210.7,
       soilType: SoilType.LOAM,
       accountId: accKuban.id,
@@ -215,7 +215,7 @@ async function main() {
     {
       id: 'demo-field-don-1',
       cadastreNumber: '61:12:2002002:201',
-      name: 'Поле Дон-1',
+      name: 'РџРѕР»Рµ Р”РѕРЅ-1',
       area: 188.3,
       soilType: SoilType.CHESTNUT,
       accountId: accDon.id,
@@ -225,7 +225,7 @@ async function main() {
     {
       id: 'demo-field-volga-1',
       cadastreNumber: '64:33:3003003:301',
-      name: 'Поле Волга-1',
+      name: 'РџРѕР»Рµ Р’РѕР»РіР°-1',
       area: 164.9,
       soilType: SoilType.GRAY_FOREST,
       accountId: accVolga.id,
@@ -304,14 +304,14 @@ async function main() {
       seasonId: season.id,
       stageId: '04_SOWING',
       completedAt: new Date('2025-09-05T00:00:00.000Z'),
-      metadata: { moisture: 21.3, sowingRate: 4.2, notes: 'Посев в технологическое окно' },
+      metadata: { moisture: 21.3, sowingRate: 4.2, notes: 'РџРѕСЃРµРІ РІ С‚РµС…РЅРѕР»РѕРіРёС‡РµСЃРєРѕРµ РѕРєРЅРѕ' },
     },
     create: {
       id: 'demo-season-stage-1',
       seasonId: season.id,
       stageId: '04_SOWING',
       completedAt: new Date('2025-09-05T00:00:00.000Z'),
-      metadata: { moisture: 21.3, sowingRate: 4.2, notes: 'Посев в технологическое окно' },
+      metadata: { moisture: 21.3, sowingRate: 4.2, notes: 'РџРѕСЃРµРІ РІ С‚РµС…РЅРѕР»РѕРіРёС‡РµСЃРєРѕРµ РѕРєРЅРѕ' },
     },
   });
 
@@ -346,43 +346,72 @@ async function main() {
     },
   });
 
+  const cropZone = await prisma.cropZone.upsert({
+    where: { id: 'demo-crop-zone-kuban-2026' },
+    update: {
+      fieldId: 'demo-field-kuban-1',
+      seasonId: season.id,
+      cropType: CropType.RAPESEED,
+      varietyHybrid: rapeseed.variety,
+      predecessorCrop: 'РџС€РµРЅРёС†Р° РѕР·РёРјР°СЏ',
+      targetYieldTHa: 3.8,
+      assumptions: { moisture: 21.3, scenario: 'base' },
+      constraints: { sowingWindow: '2025-09-01..2025-09-10' },
+      confidence: 0.82,
+      companyId: company.id,
+    },
+    create: {
+      id: 'demo-crop-zone-kuban-2026',
+      fieldId: 'demo-field-kuban-1',
+      seasonId: season.id,
+      cropType: CropType.RAPESEED,
+      varietyHybrid: rapeseed.variety,
+      predecessorCrop: 'РџС€РµРЅРёС†Р° РѕР·РёРјР°СЏ',
+      targetYieldTHa: 3.8,
+      assumptions: { moisture: 21.3, scenario: 'base' },
+      constraints: { sowingWindow: '2025-09-01..2025-09-10' },
+      confidence: 0.82,
+      companyId: company.id,
+    },
+  });
+
   const techCard = await prisma.technologyCard.upsert({
     where: { id: 'demo-tech-card-rapeseed-2026' },
     update: {
-      name: 'Технологическая карта озимого рапса 2026',
-      description: 'Базовый производственный регламент с адаптацией под юг РФ',
+      name: 'РўРµС…РЅРѕР»РѕРіРёС‡РµСЃРєР°СЏ РєР°СЂС‚Р° РѕР·РёРјРѕРіРѕ СЂР°РїСЃР° 2026',
+      description: 'Р‘Р°Р·РѕРІС‹Р№ РїСЂРѕРёР·РІРѕРґСЃС‚РІРµРЅРЅС‹Р№ СЂРµРіР»Р°РјРµРЅС‚ СЃ Р°РґР°РїС‚Р°С†РёРµР№ РїРѕРґ СЋРі Р Р¤',
       companyId: company.id,
     },
     create: {
       id: 'demo-tech-card-rapeseed-2026',
-      name: 'Технологическая карта озимого рапса 2026',
-      description: 'Базовый производственный регламент с адаптацией под юг РФ',
+      name: 'РўРµС…РЅРѕР»РѕРіРёС‡РµСЃРєР°СЏ РєР°СЂС‚Р° РѕР·РёРјРѕРіРѕ СЂР°РїСЃР° 2026',
+      description: 'Р‘Р°Р·РѕРІС‹Р№ РїСЂРѕРёР·РІРѕРґСЃС‚РІРµРЅРЅС‹Р№ СЂРµРіР»Р°РјРµРЅС‚ СЃ Р°РґР°РїС‚Р°С†РёРµР№ РїРѕРґ СЋРі Р Р¤',
       companyId: company.id,
     },
   });
 
   const cardOp1 = await prisma.technologyCardOperation.upsert({
     where: { id: 'demo-tech-card-op-1' },
-    update: { name: 'Подготовка почвы', sequence: 1, technologyCardId: techCard.id, stageId: '03_SOIL_PREP', description: 'Глубокорыхление и выравнивание' },
-    create: { id: 'demo-tech-card-op-1', name: 'Подготовка почвы', sequence: 1, technologyCardId: techCard.id, stageId: '03_SOIL_PREP', description: 'Глубокорыхление и выравнивание' },
+    update: { name: 'РџРѕРґРіРѕС‚РѕРІРєР° РїРѕС‡РІС‹', sequence: 1, technologyCardId: techCard.id, stageId: '03_SOIL_PREP', description: 'Р“Р»СѓР±РѕРєРѕСЂС‹С…Р»РµРЅРёРµ Рё РІС‹СЂР°РІРЅРёРІР°РЅРёРµ' },
+    create: { id: 'demo-tech-card-op-1', name: 'РџРѕРґРіРѕС‚РѕРІРєР° РїРѕС‡РІС‹', sequence: 1, technologyCardId: techCard.id, stageId: '03_SOIL_PREP', description: 'Р“Р»СѓР±РѕРєРѕСЂС‹С…Р»РµРЅРёРµ Рё РІС‹СЂР°РІРЅРёРІР°РЅРёРµ' },
   });
 
   const cardOp2 = await prisma.technologyCardOperation.upsert({
     where: { id: 'demo-tech-card-op-2' },
-    update: { name: 'Посев рапса', sequence: 2, technologyCardId: techCard.id, stageId: '04_SOWING', description: 'Сеялка с контролем нормы и глубины' },
-    create: { id: 'demo-tech-card-op-2', name: 'Посев рапса', sequence: 2, technologyCardId: techCard.id, stageId: '04_SOWING', description: 'Сеялка с контролем нормы и глубины' },
+    update: { name: 'РџРѕСЃРµРІ СЂР°РїСЃР°', sequence: 2, technologyCardId: techCard.id, stageId: '04_SOWING', description: 'РЎРµСЏР»РєР° СЃ РєРѕРЅС‚СЂРѕР»РµРј РЅРѕСЂРјС‹ Рё РіР»СѓР±РёРЅС‹' },
+    create: { id: 'demo-tech-card-op-2', name: 'РџРѕСЃРµРІ СЂР°РїСЃР°', sequence: 2, technologyCardId: techCard.id, stageId: '04_SOWING', description: 'РЎРµСЏР»РєР° СЃ РєРѕРЅС‚СЂРѕР»РµРј РЅРѕСЂРјС‹ Рё РіР»СѓР±РёРЅС‹' },
   });
 
   await prisma.technologyCardResource.upsert({
     where: { id: 'demo-tech-card-resource-1' },
-    update: { operationId: cardOp2.id, type: 'SEED', name: 'Семена рапса Северин', dosage: 4.2, unit: 'кг/га' },
-    create: { id: 'demo-tech-card-resource-1', operationId: cardOp2.id, type: 'SEED', name: 'Семена рапса Северин', dosage: 4.2, unit: 'кг/га' },
+    update: { operationId: cardOp2.id, type: 'SEED', name: 'РЎРµРјРµРЅР° СЂР°РїСЃР° РЎРµРІРµСЂРёРЅ', dosage: 4.2, unit: 'РєРі/РіР°' },
+    create: { id: 'demo-tech-card-resource-1', operationId: cardOp2.id, type: 'SEED', name: 'РЎРµРјРµРЅР° СЂР°РїСЃР° РЎРµРІРµСЂРёРЅ', dosage: 4.2, unit: 'РєРі/РіР°' },
   });
 
   const task1 = await prisma.task.upsert({
     where: { id: 'demo-task-1' },
     update: {
-      name: 'Провести посев Поле Кубань-1',
+      name: 'РџСЂРѕРІРµСЃС‚Рё РїРѕСЃРµРІ РџРѕР»Рµ РљСѓР±Р°РЅСЊ-1',
       status: TaskStatus.IN_PROGRESS,
       seasonId: season.id,
       operationId: cardOp2.id,
@@ -395,7 +424,7 @@ async function main() {
     },
     create: {
       id: 'demo-task-1',
-      name: 'Провести посев Поле Кубань-1',
+      name: 'РџСЂРѕРІРµСЃС‚Рё РїРѕСЃРµРІ РџРѕР»Рµ РљСѓР±Р°РЅСЊ-1',
       status: TaskStatus.IN_PROGRESS,
       seasonId: season.id,
       operationId: cardOp2.id,
@@ -411,7 +440,7 @@ async function main() {
   const task2 = await prisma.task.upsert({
     where: { id: 'demo-task-2' },
     update: {
-      name: 'Внесение азотных удобрений Поле Кубань-1',
+      name: 'Р’РЅРµСЃРµРЅРёРµ Р°Р·РѕС‚РЅС‹С… СѓРґРѕР±СЂРµРЅРёР№ РџРѕР»Рµ РљСѓР±Р°РЅСЊ-1',
       status: TaskStatus.PENDING,
       seasonId: season.id,
       operationId: cardOp1.id,
@@ -424,7 +453,7 @@ async function main() {
     },
     create: {
       id: 'demo-task-2',
-      name: 'Внесение азотных удобрений Поле Кубань-1',
+      name: 'Р’РЅРµСЃРµРЅРёРµ Р°Р·РѕС‚РЅС‹С… СѓРґРѕР±СЂРµРЅРёР№ РџРѕР»Рµ РљСѓР±Р°РЅСЊ-1',
       status: TaskStatus.PENDING,
       seasonId: season.id,
       operationId: cardOp1.id,
@@ -442,51 +471,53 @@ async function main() {
     update: {
       harvestPlanId: harvestPlan.id,
       seasonId: season.id,
-      crop: 'Рапс озимый',
+      cropZoneId: cropZone.id,
+      crop: 'Р Р°РїСЃ РѕР·РёРјС‹Р№',
       soilType: SoilType.CHERNOZEM,
       moisture: 21.3,
-      precursor: 'Пшеница озимая',
+      precursor: 'РџС€РµРЅРёС†Р° РѕР·РёРјР°СЏ',
       status: TechMapStatus.ACTIVE,
       version: 1,
       isLatest: true,
       fieldId: 'demo-field-kuban-1',
       companyId: company.id,
       approvedAt: new Date('2025-08-15T00:00:00.000Z'),
-      operationsSnapshot: [{ op: 'Посев', date: '2025-09-05' }, { op: 'Подкормка', date: '2025-10-01' }],
-      resourceNormsSnapshot: [{ name: 'Семена', amount: 4.2, unit: 'кг/га' }, { name: 'КАС-32', amount: 120, unit: 'л/га' }],
+      operationsSnapshot: [{ op: 'РџРѕСЃРµРІ', date: '2025-09-05' }, { op: 'РџРѕРґРєРѕСЂРјРєР°', date: '2025-10-01' }],
+      resourceNormsSnapshot: [{ name: 'РЎРµРјРµРЅР°', amount: 4.2, unit: 'РєРі/РіР°' }, { name: 'РљРђРЎ-32', amount: 120, unit: 'Р»/РіР°' }],
       generationMetadata: { modelId: 'det-v1', modelVersion: '1.0.0', seed: 42, hash: 'demo-hash' },
     },
     create: {
       id: 'demo-tech-map-2026-kuban-1-v1',
-      harvestPlanId: harvestPlan.id,
-      seasonId: season.id,
-      crop: 'Рапс озимый',
+      harvestPlan: { connect: { id: harvestPlan.id } },
+      cropZone: { connect: { id: cropZone.id } },
+      company: { connect: { id: company.id } },
+      season: { connect: { id: season.id } },
+      field: { connect: { id: 'demo-field-kuban-1' } },
+      crop: 'Р Р°РїСЃ РѕР·РёРјС‹Р№',
       soilType: SoilType.CHERNOZEM,
       moisture: 21.3,
-      precursor: 'Пшеница озимая',
+      precursor: 'РџС€РµРЅРёС†Р° РѕР·РёРјР°СЏ',
       status: TechMapStatus.ACTIVE,
       version: 1,
       isLatest: true,
-      fieldId: 'demo-field-kuban-1',
-      companyId: company.id,
       approvedAt: new Date('2025-08-15T00:00:00.000Z'),
-      operationsSnapshot: [{ op: 'Посев', date: '2025-09-05' }, { op: 'Подкормка', date: '2025-10-01' }],
-      resourceNormsSnapshot: [{ name: 'Семена', amount: 4.2, unit: 'кг/га' }, { name: 'КАС-32', amount: 120, unit: 'л/га' }],
+      operationsSnapshot: [{ op: 'РџРѕСЃРµРІ', date: '2025-09-05' }, { op: 'РџРѕРґРєРѕСЂРјРєР°', date: '2025-10-01' }],
+      resourceNormsSnapshot: [{ name: 'РЎРµРјРµРЅР°', amount: 4.2, unit: 'РєРі/РіР°' }, { name: 'РљРђРЎ-32', amount: 120, unit: 'Р»/РіР°' }],
       generationMetadata: { modelId: 'det-v1', modelVersion: '1.0.0', seed: 42, hash: 'demo-hash' },
     },
   });
 
   const mapStage = await prisma.mapStage.upsert({
     where: { id: 'demo-map-stage-1' },
-    update: { name: 'Посевная кампания', sequence: 1, techMapId: techMap.id, aplStageId: '04_SOWING' },
-    create: { id: 'demo-map-stage-1', name: 'Посевная кампания', sequence: 1, techMapId: techMap.id, aplStageId: '04_SOWING' },
+    update: { name: 'РџРѕСЃРµРІРЅР°СЏ РєР°РјРїР°РЅРёСЏ', sequence: 1, techMapId: techMap.id, aplStageId: '04_SOWING' },
+    create: { id: 'demo-map-stage-1', name: 'РџРѕСЃРµРІРЅР°СЏ РєР°РјРїР°РЅРёСЏ', sequence: 1, techMapId: techMap.id, aplStageId: '04_SOWING' },
   });
 
   const mapOperation = await prisma.mapOperation.upsert({
     where: { id: 'demo-map-operation-1' },
     update: {
-      name: 'Посев рапса СЗ-5.4',
-      description: 'Контроль нормы высева и глубины',
+      name: 'РџРѕСЃРµРІ СЂР°РїСЃР° РЎР—-5.4',
+      description: 'РљРѕРЅС‚СЂРѕР»СЊ РЅРѕСЂРјС‹ РІС‹СЃРµРІР° Рё РіР»СѓР±РёРЅС‹',
       mapStageId: mapStage.id,
       plannedStartTime: new Date('2025-09-05T05:00:00.000Z'),
       plannedEndTime: new Date('2025-09-05T14:00:00.000Z'),
@@ -495,8 +526,8 @@ async function main() {
     },
     create: {
       id: 'demo-map-operation-1',
-      name: 'Посев рапса СЗ-5.4',
-      description: 'Контроль нормы высева и глубины',
+      name: 'РџРѕСЃРµРІ СЂР°РїСЃР° РЎР—-5.4',
+      description: 'РљРѕРЅС‚СЂРѕР»СЊ РЅРѕСЂРјС‹ РІС‹СЃРµРІР° Рё РіР»СѓР±РёРЅС‹',
       mapStageId: mapStage.id,
       plannedStartTime: new Date('2025-09-05T05:00:00.000Z'),
       plannedEndTime: new Date('2025-09-05T14:00:00.000Z'),
@@ -507,8 +538,8 @@ async function main() {
 
   await prisma.mapResource.upsert({
     where: { id: 'demo-map-resource-1' },
-    update: { mapOperationId: mapOperation.id, type: 'SEED', name: 'Семена Северин', amount: 4.2, unit: 'кг/га', costPerUnit: 380 },
-    create: { id: 'demo-map-resource-1', mapOperationId: mapOperation.id, type: 'SEED', name: 'Семена Северин', amount: 4.2, unit: 'кг/га', costPerUnit: 380 },
+    update: { mapOperationId: mapOperation.id, type: 'SEED', name: 'РЎРµРјРµРЅР° РЎРµРІРµСЂРёРЅ', amount: 4.2, unit: 'РєРі/РіР°', costPerUnit: 380 },
+    create: { id: 'demo-map-resource-1', mapOperationId: mapOperation.id, type: 'SEED', name: 'РЎРµРјРµРЅР° РЎРµРІРµСЂРёРЅ', amount: 4.2, unit: 'РєРі/РіР°', costPerUnit: 380 },
   });
 
   const budgetPlan = await prisma.budgetPlan.upsert({
@@ -600,7 +631,7 @@ async function main() {
       type: ObservationType.MEASUREMENT,
       intent: ObservationIntent.MONITORING,
       integrityStatus: IntegrityStatus.STRONG_EVIDENCE,
-      content: 'Фаза 4 листа, густота 58 растений/м2, влажность 20.8%',
+      content: 'Р¤Р°Р·Р° 4 Р»РёСЃС‚Р°, РіСѓСЃС‚РѕС‚Р° 58 СЂР°СЃС‚РµРЅРёР№/Рј2, РІР»Р°Р¶РЅРѕСЃС‚СЊ 20.8%',
       photoUrl: 'https://example.local/demo/field-kuban-1-photo.jpg',
       telemetryJson: { speed: 4.1, trackLengthKm: 2.7 },
       coordinates: { type: 'Point', coordinates: [39.125, 45.035] },
@@ -616,7 +647,7 @@ async function main() {
       type: ObservationType.MEASUREMENT,
       intent: ObservationIntent.MONITORING,
       integrityStatus: IntegrityStatus.STRONG_EVIDENCE,
-      content: 'Фаза 4 листа, густота 58 растений/м2, влажность 20.8%',
+      content: 'Р¤Р°Р·Р° 4 Р»РёСЃС‚Р°, РіСѓСЃС‚РѕС‚Р° 58 СЂР°СЃС‚РµРЅРёР№/Рј2, РІР»Р°Р¶РЅРѕСЃС‚СЊ 20.8%',
       photoUrl: 'https://example.local/demo/field-kuban-1-photo.jpg',
       telemetryJson: { speed: 4.1, trackLengthKm: 2.7 },
       coordinates: { type: 'Point', coordinates: [39.125, 45.035] },
@@ -632,7 +663,7 @@ async function main() {
   await prisma.deal.upsert({
     where: { id: 'demo-deal-1' },
     update: {
-      name: 'Расширение сопровождения: ООО Кубань Рапс',
+      name: 'Р Р°СЃС€РёСЂРµРЅРёРµ СЃРѕРїСЂРѕРІРѕР¶РґРµРЅРёСЏ: РћРћРћ РљСѓР±Р°РЅСЊ Р Р°РїСЃ',
       stage: DealStage.OFFER,
       amount: 2850000,
       probability: 0.72,
@@ -642,7 +673,7 @@ async function main() {
     },
     create: {
       id: 'demo-deal-1',
-      name: 'Расширение сопровождения: ООО Кубань Рапс',
+      name: 'Р Р°СЃС€РёСЂРµРЅРёРµ СЃРѕРїСЂРѕРІРѕР¶РґРµРЅРёСЏ: РћРћРћ РљСѓР±Р°РЅСЊ Р Р°РїСЃ',
       stage: DealStage.OFFER,
       amount: 2850000,
       probability: 0.72,
@@ -680,7 +711,7 @@ async function main() {
   await prisma.cashAccount.upsert({
     where: { id: 'demo-cash-main' },
     update: {
-      name: 'Основной расчётный счёт',
+      name: 'РћСЃРЅРѕРІРЅРѕР№ СЂР°СЃС‡С‘С‚РЅС‹Р№ СЃС‡С‘С‚',
       balance: '12450000.0000',
       version: 3,
       currency: 'RUB',
@@ -689,7 +720,7 @@ async function main() {
     },
     create: {
       id: 'demo-cash-main',
-      name: 'Основной расчётный счёт',
+      name: 'РћСЃРЅРѕРІРЅРѕР№ СЂР°СЃС‡С‘С‚РЅС‹Р№ СЃС‡С‘С‚',
       balance: '12450000.0000',
       version: 3,
       currency: 'RUB',
@@ -701,7 +732,7 @@ async function main() {
   await prisma.machinery.upsert({
     where: { id: 'demo-machine-1' },
     update: {
-      name: 'Трактор John Deere 8R',
+      name: 'РўСЂР°РєС‚РѕСЂ John Deere 8R',
       brand: 'John Deere',
       serialNumber: 'JD8R-DEMO-001',
       type: MachineryType.TRACTOR,
@@ -714,7 +745,7 @@ async function main() {
     },
     create: {
       id: 'demo-machine-1',
-      name: 'Трактор John Deere 8R',
+      name: 'РўСЂР°РєС‚РѕСЂ John Deere 8R',
       brand: 'John Deere',
       serialNumber: 'JD8R-DEMO-001',
       type: MachineryType.TRACTOR,
@@ -730,11 +761,11 @@ async function main() {
   await prisma.stockItem.upsert({
     where: { id: 'demo-stock-seed-1' },
     update: {
-      name: 'Семена рапса Северин',
+      name: 'РЎРµРјРµРЅР° СЂР°РїСЃР° РЎРµРІРµСЂРёРЅ',
       type: StockItemType.SEED,
       status: AssetStatus.ACTIVE,
       quantity: 14200,
-      unit: 'кг',
+      unit: 'РєРі',
       idempotencyKey: 'stock-demo-seed-1',
       companyId: company.id,
       accountId: accKuban.id,
@@ -743,11 +774,11 @@ async function main() {
     },
     create: {
       id: 'demo-stock-seed-1',
-      name: 'Семена рапса Северин',
+      name: 'РЎРµРјРµРЅР° СЂР°РїСЃР° РЎРµРІРµСЂРёРЅ',
       type: StockItemType.SEED,
       status: AssetStatus.ACTIVE,
       quantity: 14200,
-      unit: 'кг',
+      unit: 'РєРі',
       idempotencyKey: 'stock-demo-seed-1',
       companyId: company.id,
       accountId: accKuban.id,
@@ -759,7 +790,7 @@ async function main() {
   await prisma.budget.upsert({
     where: { id: 'demo-budget-1' },
     update: {
-      name: 'Операционный бюджет 2026',
+      name: 'РћРїРµСЂР°С†РёРѕРЅРЅС‹Р№ Р±СЋРґР¶РµС‚ 2026',
       limit: '8000000.0000',
       consumed: '2100000.0000',
       remaining: '5900000.0000',
@@ -770,7 +801,7 @@ async function main() {
     },
     create: {
       id: 'demo-budget-1',
-      name: 'Операционный бюджет 2026',
+      name: 'РћРїРµСЂР°С†РёРѕРЅРЅС‹Р№ Р±СЋРґР¶РµС‚ 2026',
       limit: '8000000.0000',
       consumed: '2100000.0000',
       remaining: '5900000.0000',
@@ -805,7 +836,7 @@ async function main() {
       seasonId: season.id,
       companyId: company.id,
       fieldId: 'demo-field-kuban-1',
-      crop: 'Рапс озимый',
+      crop: 'Р Р°РїСЃ РѕР·РёРјС‹Р№',
       plannedYield: '38.0000',
       actualYield: '34.2000',
       harvestedArea: '140.2000',
@@ -814,7 +845,7 @@ async function main() {
       costSnapshot: '1610000.0000',
       budgetPlanId: budgetPlan.id,
       budgetVersion: 1,
-      qualityClass: '1 класс',
+      qualityClass: '1 РєР»Р°СЃСЃ',
       harvestDate: new Date('2026-07-20T00:00:00.000Z'),
     },
     create: {
@@ -823,7 +854,7 @@ async function main() {
       seasonId: season.id,
       companyId: company.id,
       fieldId: 'demo-field-kuban-1',
-      crop: 'Рапс озимый',
+      crop: 'Р Р°РїСЃ РѕР·РёРјС‹Р№',
       plannedYield: '38.0000',
       actualYield: '34.2000',
       harvestedArea: '140.2000',
@@ -832,7 +863,7 @@ async function main() {
       costSnapshot: '1610000.0000',
       budgetPlanId: budgetPlan.id,
       budgetVersion: 1,
-      qualityClass: '1 класс',
+      qualityClass: '1 РєР»Р°СЃСЃ',
       harvestDate: new Date('2026-07-20T00:00:00.000Z'),
     },
   });
@@ -840,13 +871,13 @@ async function main() {
   await prisma.agronomicStrategy.upsert({
     where: { id: 'demo-strategy-rapeseed-south-v1' },
     update: {
-      name: 'Стратегия рапса Юг РФ',
-      description: 'План операций с учетом влаги и температурного окна',
+      name: 'РЎС‚СЂР°С‚РµРіРёСЏ СЂР°РїСЃР° Р®Рі Р Р¤',
+      description: 'РџР»Р°РЅ РѕРїРµСЂР°С†РёР№ СЃ СѓС‡РµС‚РѕРј РІР»Р°РіРё Рё С‚РµРјРїРµСЂР°С‚СѓСЂРЅРѕРіРѕ РѕРєРЅР°',
       cropId: rapeseed.id,
       regionId: 'RU-SOUTH',
       operations: [
-        { stage: 'SOIL_PREP', op: 'Глубокорыхление', window: '2025-08-15..2025-08-30' },
-        { stage: 'SOWING', op: 'Посев', window: '2025-09-01..2025-09-10' },
+        { stage: 'SOIL_PREP', op: 'Р“Р»СѓР±РѕРєРѕСЂС‹С…Р»РµРЅРёРµ', window: '2025-08-15..2025-08-30' },
+        { stage: 'SOWING', op: 'РџРѕСЃРµРІ', window: '2025-09-01..2025-09-10' },
       ],
       constraints: [
         { key: 'soil_moisture_min', value: 18 },
@@ -856,18 +887,18 @@ async function main() {
       version: 1,
       hash: 'demo-strategy-hash-v1',
       publishedAt: new Date('2025-08-10T00:00:00.000Z'),
-      explainability: { rationale: 'Снижение климатического риска и перерасхода ресурсов' },
+      explainability: { rationale: 'РЎРЅРёР¶РµРЅРёРµ РєР»РёРјР°С‚РёС‡РµСЃРєРѕРіРѕ СЂРёСЃРєР° Рё РїРµСЂРµСЂР°СЃС…РѕРґР° СЂРµСЃСѓСЂСЃРѕРІ' },
       companyId: company.id,
     },
     create: {
       id: 'demo-strategy-rapeseed-south-v1',
-      name: 'Стратегия рапса Юг РФ',
-      description: 'План операций с учетом влаги и температурного окна',
+      name: 'РЎС‚СЂР°С‚РµРіРёСЏ СЂР°РїСЃР° Р®Рі Р Р¤',
+      description: 'РџР»Р°РЅ РѕРїРµСЂР°С†РёР№ СЃ СѓС‡РµС‚РѕРј РІР»Р°РіРё Рё С‚РµРјРїРµСЂР°С‚СѓСЂРЅРѕРіРѕ РѕРєРЅР°',
       cropId: rapeseed.id,
       regionId: 'RU-SOUTH',
       operations: [
-        { stage: 'SOIL_PREP', op: 'Глубокорыхление', window: '2025-08-15..2025-08-30' },
-        { stage: 'SOWING', op: 'Посев', window: '2025-09-01..2025-09-10' },
+        { stage: 'SOIL_PREP', op: 'Р“Р»СѓР±РѕРєРѕСЂС‹С…Р»РµРЅРёРµ', window: '2025-08-15..2025-08-30' },
+        { stage: 'SOWING', op: 'РџРѕСЃРµРІ', window: '2025-09-01..2025-09-10' },
       ],
       constraints: [
         { key: 'soil_moisture_min', value: 18 },
@@ -877,7 +908,7 @@ async function main() {
       version: 1,
       hash: 'demo-strategy-hash-v1',
       publishedAt: new Date('2025-08-10T00:00:00.000Z'),
-      explainability: { rationale: 'Снижение климатического риска и перерасхода ресурсов' },
+      explainability: { rationale: 'РЎРЅРёР¶РµРЅРёРµ РєР»РёРјР°С‚РёС‡РµСЃРєРѕРіРѕ СЂРёСЃРєР° Рё РїРµСЂРµСЂР°СЃС…РѕРґР° СЂРµСЃСѓСЂСЃРѕРІ' },
       companyId: company.id,
     },
   });

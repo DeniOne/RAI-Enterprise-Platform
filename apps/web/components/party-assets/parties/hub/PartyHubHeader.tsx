@@ -11,9 +11,10 @@ import { cn } from '@/lib/utils';
 
 interface Props {
     isSaving: boolean;
+    onNavigateToMissing?: (label: string) => void;
 }
 
-export function PartyHubHeader({ isSaving }: Props) {
+export function PartyHubHeader({ isSaving, onNavigateToMissing }: Props) {
     const router = useRouter();
     const { watch, reset, formState: { isDirty } } = useFormContext<PartyFullProfileValues>();
     const { isEdit, setEdit } = useEditMode();
@@ -42,9 +43,28 @@ export function PartyHubHeader({ isSaving }: Props) {
                         </div>
                         <div className="space-y-1">
                             <h3 className="text-sm font-semibold text-red-900 leading-none">Карточка заполнена не полностью ({completeness.score} из {completeness.total})</h3>
-                            <p className="text-xs text-red-700/80 font-medium">
-                                <span className="text-red-800">Осталось заполнить:</span> {completeness.missingLabels.join(', ')}
-                            </p>
+                            <div className="space-y-2">
+                                <p className="text-xs text-red-700/80 font-medium">
+                                    <span className="text-red-800">Осталось заполнить:</span>
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                    {completeness.missingLabels.map((label) => (
+                                        <button
+                                            key={label}
+                                            type="button"
+                                            onClick={() => {
+                                                if (!isEdit) {
+                                                    setEdit(true);
+                                                }
+                                                onNavigateToMissing?.(label);
+                                            }}
+                                            className="rounded-full border border-red-200 bg-white px-3 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-100"
+                                        >
+                                            {label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

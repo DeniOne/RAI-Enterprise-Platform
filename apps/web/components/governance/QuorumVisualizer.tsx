@@ -15,6 +15,8 @@ interface QuorumVisualizerProps {
     threshold: number; // e.g., 0.6
     members: Member[];
     payloadHash?: string;
+    onConfirmDecision?: () => void;
+    canConfirmDecision?: boolean;
 }
 
 /**
@@ -23,7 +25,9 @@ interface QuorumVisualizerProps {
 export const QuorumVisualizer: React.FC<QuorumVisualizerProps> = ({
     threshold,
     members,
-    payloadHash
+    payloadHash,
+    onConfirmDecision,
+    canConfirmDecision = true
 }) => {
     const totalWeight = members.reduce((sum, m) => sum + m.weight, 0);
     const signedWeight = members.filter(m => m.signed).reduce((sum, m) => sum + m.weight, 0);
@@ -102,8 +106,25 @@ export const QuorumVisualizer: React.FC<QuorumVisualizerProps> = ({
                     <Fingerprint size={14} />
                     <span className="text-[9px] font-bold uppercase tracking-widest italic">Протокол решения: ACTIVE</span>
                 </div>
-                <div className="px-3 py-1 bg-white border border-slate-200 rounded-lg shadow-sm">
-                    <span className="text-[9px] text-slate-500 font-mono">COUNCIL_ID: {payloadHash?.substring(0, 16) || '8f92-c1a3-de04'}...</span>
+                <div className="flex items-center gap-3">
+                    {!isMet && onConfirmDecision && (
+                        <button
+                            type="button"
+                            onClick={onConfirmDecision}
+                            disabled={!canConfirmDecision}
+                            className={clsx(
+                                "rounded-lg px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors",
+                                canConfirmDecision
+                                    ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                                    : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                            )}
+                        >
+                            Подтвердить решение
+                        </button>
+                    )}
+                    <div className="px-3 py-1 bg-white border border-slate-200 rounded-lg shadow-sm">
+                        <span className="text-[9px] text-slate-500 font-mono">COUNCIL_ID: {payloadHash?.substring(0, 16) || '8f92-c1a3-de04'}...</span>
+                    </div>
                 </div>
             </div>
         </div>

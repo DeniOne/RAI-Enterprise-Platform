@@ -6,6 +6,9 @@ describe("CrmToolsRegistry", () => {
     jurisdiction: {
       findFirst: jest.fn(),
     },
+    account: {
+      findFirst: jest.fn(),
+    },
   };
   const partyServiceMock = {
     listParties: jest.fn(),
@@ -17,6 +20,7 @@ describe("CrmToolsRegistry", () => {
   };
   const crmServiceMock = {
     createAccount: jest.fn(),
+    resolveWorkspaceAccountId: jest.fn(),
     getAccountWorkspace: jest.fn(),
     updateAccountProfile: jest.fn(),
     createContact: jest.fn(),
@@ -139,6 +143,95 @@ describe("CrmToolsRegistry", () => {
       { name: "ООО Ромашка", inn: "2610000615", type: undefined, holdingId: undefined },
       "company-1",
     );
+  });
+
+  it("get_crm_account_workspace находит карточку по query из сообщения", async () => {
+    crmServiceMock.resolveWorkspaceAccountId.mockResolvedValue("acc-77");
+    crmServiceMock.getAccountWorkspace.mockResolvedValue({
+      account: { id: "acc-77", name: "ООО СЫСОИ" },
+      contacts: [],
+      interactions: [],
+      obligations: [],
+      risks: [],
+      tasks: [],
+      documents: [],
+      fields: [],
+      legalEntities: [],
+    });
+
+    const result = await registry.execute(
+      RaiToolName.GetCrmAccountWorkspace,
+      { query: "Сысои" },
+      { companyId: "company-1", traceId: "trace-workspace-1" },
+    );
+
+    expect(crmServiceMock.resolveWorkspaceAccountId).toHaveBeenCalledWith(
+      { query: "Сысои" },
+      "company-1",
+    );
+    expect(crmServiceMock.getAccountWorkspace).toHaveBeenCalledWith(
+      "acc-77",
+      "company-1",
+    );
+    expect(result.account.name).toBe("ООО СЫСОИ");
+  });
+
+  it("get_crm_account_workspace создаёт CRM-аккаунт из Party-реестра, если CRM пуст", async () => {
+    crmServiceMock.resolveWorkspaceAccountId.mockRejectedValue(
+      Object.assign(new Error("ACCOUNT_AND_PARTY_NOT_FOUND:Сысои"), {
+        name: "NotFoundException",
+      }),
+    );
+    partyServiceMock.listParties.mockResolvedValue([
+      {
+        id: "party-1",
+        legalName: 'ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ "СЫСОИ"',
+        shortName: 'ООО "СЫСОИ"',
+        registrationData: {
+          inn: "6217003600",
+        },
+      },
+    ]);
+    prismaMock.account.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
+    crmServiceMock.createAccount.mockResolvedValue({
+      id: "acc-from-party",
+      name: 'ООО "СЫСОИ"',
+      inn: "6217003600",
+      type: "CLIENT",
+      holdingId: null,
+      status: "ACTIVE",
+    });
+    crmServiceMock.getAccountWorkspace.mockResolvedValue({
+      account: { id: "acc-from-party", name: 'ООО "СЫСОИ"' },
+      contacts: [],
+      interactions: [],
+      obligations: [],
+      risks: [],
+      tasks: [],
+      documents: [],
+      fields: [],
+      legalEntities: [],
+    });
+
+    const result = await registry.execute(
+      RaiToolName.GetCrmAccountWorkspace,
+      { query: "Сысои" },
+      { companyId: "company-1", traceId: "trace-workspace-2" },
+    );
+
+    expect(crmServiceMock.createAccount).toHaveBeenCalledWith(
+      {
+        name: 'ООО "СЫСОИ"',
+        inn: "6217003600",
+        type: "CLIENT",
+      },
+      "company-1",
+    );
+    expect(crmServiceMock.getAccountWorkspace).toHaveBeenCalledWith(
+      "acc-from-party",
+      "company-1",
+    );
+    expect(result.account.id).toBe("acc-from-party");
   });
 
   it("update_crm_contact обновляет контакт клиента", async () => {

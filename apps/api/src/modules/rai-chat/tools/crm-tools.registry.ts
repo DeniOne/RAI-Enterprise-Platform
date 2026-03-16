@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, OnModuleInit } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  OnModuleInit,
+} from "@nestjs/common";
 import { ObjectSchema } from "joi";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
 import { PartyService } from "../../commerce/services/party.service";
@@ -272,8 +277,29 @@ export class CrmToolsRegistry implements OnModuleInit {
     this.register(
       RaiToolName.GetCrmAccountWorkspace,
       getCrmAccountWorkspaceSchema,
-      async (payload, actorContext) =>
-        this.crmService.getAccountWorkspace(payload.accountId, actorContext.companyId),
+      async (payload, actorContext) => {
+        let accountId: string;
+        try {
+          accountId = await this.crmService.resolveWorkspaceAccountId(
+            payload,
+            actorContext.companyId,
+          );
+        } catch (error) {
+          if (
+            typeof payload.query === "string" &&
+            payload.query.trim().length > 0 &&
+            this.isCrmWorkspaceNotFoundError(error)
+          ) {
+            accountId = await this.resolveWorkspaceAccountIdFromPartyRegistry(
+              payload.query,
+              actorContext.companyId,
+            );
+          } else {
+            throw error;
+          }
+        }
+        return this.crmService.getAccountWorkspace(accountId, actorContext.companyId);
+      },
     );
 
     this.register(
@@ -561,5 +587,118 @@ export class CrmToolsRegistry implements OnModuleInit {
   private async findExistingPartyByInn(companyId: string, inn: string) {
     const parties = await this.partyService.listParties(companyId);
     return parties.find((party) => hasPartyInn(party, inn)) ?? null;
+  }
+
+  private isCrmWorkspaceNotFoundError(error: unknown): boolean {
+    if (!error || typeof error !== "object") {
+      return false;
+    }
+    const name = String((error as { name?: unknown }).name ?? "");
+    return name === "NotFoundException";
+  }
+
+  private normalizeWorkspaceSearchValue(value: string): string {
+    return value
+      .trim()
+      .replace(/["«»']/g, "")
+      .replace(/\s+/g, " ")
+      .toLowerCase();
+  }
+
+  private extractInnFromRegistrationData(registrationData: unknown): string | undefined {
+    if (!registrationData || typeof registrationData !== "object") {
+      return undefined;
+    }
+
+    const data = registrationData as Record<string, unknown>;
+    const directInn = typeof data.inn === "string" ? data.inn.trim() : "";
+    if (directInn.length > 0) {
+      return directInn;
+    }
+
+    const requisites =
+      data.requisites && typeof data.requisites === "object"
+        ? (data.requisites as Record<string, unknown>)
+        : null;
+    const reqInn = requisites && typeof requisites.inn === "string" ? requisites.inn.trim() : "";
+    return reqInn.length > 0 ? reqInn : undefined;
+  }
+
+  private async resolveWorkspaceAccountIdFromPartyRegistry(
+    query: string,
+    companyId: string,
+  ): Promise<string> {
+    const needle = this.normalizeWorkspaceSearchValue(query);
+    if (!needle) {
+      throw new NotFoundException(`ACCOUNT_AND_PARTY_NOT_FOUND:${query}`);
+    }
+
+    const parties = await this.partyService.listParties(companyId);
+    const matches = parties.filter((party) => {
+      const legalName = this.normalizeWorkspaceSearchValue(String(party.legalName ?? ""));
+      const shortName = this.normalizeWorkspaceSearchValue(String(party.shortName ?? ""));
+      return (
+        legalName.includes(needle) ||
+        shortName.includes(needle) ||
+        needle.includes(legalName) ||
+        needle.includes(shortName)
+      );
+    });
+
+    if (matches.length === 0) {
+      throw new NotFoundException(`ACCOUNT_AND_PARTY_NOT_FOUND:${query}`);
+    }
+
+    const exact = matches.find((party) => {
+      const legalName = this.normalizeWorkspaceSearchValue(String(party.legalName ?? ""));
+      const shortName = this.normalizeWorkspaceSearchValue(String(party.shortName ?? ""));
+      return legalName === needle || shortName === needle;
+    });
+
+    const selected = exact ?? (matches.length === 1 ? matches[0] : null);
+    if (!selected) {
+      throw new BadRequestException(
+        `Найдено несколько контрагентов по запросу "${query}". Уточните название или выберите карточку в реестре.`,
+      );
+    }
+
+    const partyInn = this.extractInnFromRegistrationData(selected.registrationData);
+    if (partyInn) {
+      const existingByInn = await this.prisma.account.findFirst({
+        where: {
+          companyId,
+          inn: partyInn,
+        },
+        select: { id: true },
+      });
+      if (existingByInn) {
+        return existingByInn.id;
+      }
+    }
+
+    const accountName = String(selected.shortName || selected.legalName || query).trim();
+    const existingByName = await this.prisma.account.findFirst({
+      where: {
+        companyId,
+        name: {
+          equals: accountName,
+          mode: "insensitive",
+        },
+      },
+      select: { id: true },
+    });
+    if (existingByName) {
+      return existingByName.id;
+    }
+
+    const created = await this.crmService.createAccount(
+      {
+        name: accountName,
+        inn: partyInn,
+        type: "CLIENT",
+      },
+      companyId,
+    );
+    return created.id;
   }
 }

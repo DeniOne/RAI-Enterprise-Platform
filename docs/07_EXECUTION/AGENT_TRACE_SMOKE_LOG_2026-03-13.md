@@ -15,13 +15,13 @@ last_updated: 2026-03-13
 
 ## Результаты прогона
 
-| Агент | Экран вызова | Endpoint | Trace ID | Forensics check | Статус | Комментарий |
-|---|---|---|---|---|---|---|
-| `agronomist` | AI Dock | `POST /api/rai/chat` | `PENDING` | `PENDING` | `PENDING` |  |
-| `economist` | AI Dock | `POST /api/rai/chat` | `PENDING` | `PENDING` | `PENDING` |  |
-| `knowledge` | AI Dock | `POST /api/rai/chat` | `PENDING` | `PENDING` | `PENDING` |  |
-| `monitoring` | AI Dock | `POST /api/rai/chat` | `PENDING` | `PENDING` | `PENDING` |  |
-| `crm_agent` | AI Dock / Front Office | `POST /api/rai/chat` | `PENDING` | `PENDING` | `PENDING` |  |
+| Агент               | Экран вызова        | Endpoint             | Trace ID | Forensics check | Статус | Комментарий |
+|---               |---                  |---                  |---      |---              |---       |---        |
+| `agronomist`     | AI Dock             | `POST /api/rai/chat` | `PENDING` | `PENDING` | `PENDING` |  |
+| `economist`      | AI Dock             | `POST /api/rai/chat` | `PENDING` | `PENDING` | `PENDING` |  |
+| `knowledge`      | AI Dock             | `POST /api/rai/chat` | `PENDING` | `PENDING` | `PENDING` |  |
+| `monitoring`     | AI Dock             | `POST /api/rai/chat` | `PENDING` | `PENDING` | `PENDING` |  |
+| `crm_agent`       | AI Dock / Front Office | `POST /api/rai/chat` | `PENDING` | `PENDING` | `PENDING` |  |
 | `front_office_agent` | AI Dock / Front Office | `POST /api/rai/chat` | `PENDING` | `PENDING` | `PENDING` |  |
 | `contracts_agent` | AI Dock | `POST /api/rai/chat` | `PENDING` | `PENDING` | `PENDING` |  |
 | `chief_agronomist` | CTA из сущности + AI Dock action | `POST /rai-chat/expert/chief-agronomist/review` | `PENDING` | `PENDING` | `PENDING` |  |

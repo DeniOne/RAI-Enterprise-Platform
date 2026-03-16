@@ -40,7 +40,12 @@ export function PartyProfileTab() {
                                     <textarea
                                         {...field}
                                         rows={3}
-                                        className="w-full bg-white border border-black/10 rounded-xl px-3 py-2 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-black/5 transition-all resize-none leading-normal"
+                                        className={cn(
+                                            'w-full rounded-xl border bg-white px-3 py-2 text-sm font-normal leading-normal transition-all resize-none focus:outline-none focus:ring-2',
+                                            errors.legalName
+                                                ? 'border-red-300 focus:ring-red-100'
+                                                : 'border-black/10 focus:ring-black/5',
+                                        )}
                                         placeholder="Введите юридическое название..."
                                     />
                                     {errors.legalName && <p className="text-[10px] text-red-500 mt-1">{errors.legalName.message}</p>}
@@ -198,7 +203,12 @@ export function PartyProfileTab() {
                                         control={control}
                                         render={({ field: inputField }) => (
                                             <DataField label="Регион / Город" value={inputField.value}>
-                                                <Input {...inputField} placeholder="г. Москва" className="h-9 bg-white border-black/10 rounded-lg text-sm" />
+                                                <Input
+                                                    {...inputField}
+                                                    placeholder="г. Москва"
+                                                    className="h-9 bg-white border-black/10 rounded-lg text-sm"
+                                                    error={errors.addresses?.[index]?.city?.message}
+                                                />
                                             </DataField>
                                         )}
                                     />
@@ -207,7 +217,12 @@ export function PartyProfileTab() {
                                         control={control}
                                         render={({ field: inputField }) => (
                                             <DataField label="Улица, дом, офис" value={inputField.value}>
-                                                <Input {...inputField} placeholder="ул. Ленина, д. 1" className="h-9 bg-white border-black/10 rounded-lg text-sm" />
+                                                <Input
+                                                    {...inputField}
+                                                    placeholder="ул. Ленина, д. 1"
+                                                    className="h-9 bg-white border-black/10 rounded-lg text-sm"
+                                                    error={errors.addresses?.[index]?.street?.message}
+                                                />
                                             </DataField>
                                         )}
                                     />

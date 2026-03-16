@@ -325,6 +325,10 @@
 - [x] Выбрать первый non-core candidate для migration.
 - [x] Подготовить migration contract для `FrontOfficeThread` family или другого low-blast-radius aggregate.
 - [x] Выполнить tenant bootstrap и закрыть null-backlog для первой `FrontOfficeThread` wave.
+- [x] Выпустить cutover runbook для первой `FrontOfficeThread` wave.
+- [x] Прогнать shadow-read compare для первой `FrontOfficeThread` wave.
+- [x] Подтвердить partial read cutover под feature flag для первой `FrontOfficeThread` wave.
+- [x] Провести rollback drill и зафиксировать `rollback verified` для первой `FrontOfficeThread` wave.
 - [x] Подготовить migration contract для finance projections/event-control seams.
 - [x] Только после этого готовить migration для `Season`.
 - [x] Только после этого готовить migration для `HarvestPlan`.

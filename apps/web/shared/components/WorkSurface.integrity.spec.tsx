@@ -6,7 +6,9 @@ jest.mock('../store/governance.store', () => ({
     useGovernanceStore: () => ({
         activeEscalation: null,
         isQuorumModalOpen: false,
+        quorumDecisionHandler: null,
         setQuorumModalOpen: jest.fn(),
+        confirmTechCouncilDecision: jest.fn().mockReturnValue(false),
     }),
 }));
 
@@ -32,4 +34,3 @@ describe('WorkSurface integrity freeze', () => {
         expect(replayLink).toHaveAttribute('href', '/forensics/replay?traceId=TX-TEST-1');
     });
 });
-

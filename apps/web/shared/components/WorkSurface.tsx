@@ -15,7 +15,13 @@ import { useSessionIntegrity } from '../hooks/useSessionIntegrity';
  */
 
 export const WorkSurface: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { activeEscalation, isQuorumModalOpen, setQuorumModalOpen } = useGovernanceStore();
+    const {
+        activeEscalation,
+        isQuorumModalOpen,
+        setQuorumModalOpen,
+        confirmTechCouncilDecision,
+        quorumDecisionHandler,
+    } = useGovernanceStore();
     const { integrityStatus, mismatch, traceId } = useSessionIntegrity();
     const isFrozenByIntegrity = integrityStatus === 'MISMATCH';
 
@@ -78,6 +84,13 @@ export const WorkSurface: React.FC<{ children: React.ReactNode }> = ({ children 
                         <QuorumVisualizer
                             threshold={activeEscalation.threshold}
                             members={activeEscalation.members}
+                            canConfirmDecision={Boolean(quorumDecisionHandler)}
+                            onConfirmDecision={() => {
+                                const confirmed = confirmTechCouncilDecision();
+                                if (confirmed) {
+                                    setQuorumModalOpen(false);
+                                }
+                            }}
                         />
                     </div>
                 </div>

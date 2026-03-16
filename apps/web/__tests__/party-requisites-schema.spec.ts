@@ -1,4 +1,4 @@
-import { getPartyRequisiteFields } from '@/shared/lib/party-requisites-schema';
+import { getPartyRequisiteFields, getPartyRequisiteValue } from '@/shared/lib/party-requisites-schema';
 
 describe('party requisites schema', () => {
   it('для RU LEGAL_ENTITY не показывает УНП и БИН', () => {
@@ -30,5 +30,18 @@ describe('party requisites schema', () => {
       'bin',
       'legalAddress',
     ]);
+  });
+
+  it('читает реквизит из nested requisites, если плоское поле пустое', () => {
+    expect(
+      getPartyRequisiteValue(
+        {
+          requisites: {
+            ogrn: '1056216000170',
+          },
+        },
+        'ogrn',
+      ),
+    ).toBe('1056216000170');
   });
 });

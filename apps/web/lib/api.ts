@@ -92,7 +92,7 @@ export const api = {
             list: () => apiClient.get('/consulting/execution/operations'),
             active: () => apiClient.get('/consulting/execution/operations'),
             start: (operationId: string) =>
-                apiClient.post(`/consulting/execution/start/${operationId}`, undefined, {
+                apiClient.post(`/consulting/execution/${operationId}/start`, undefined, {
                     headers: {
                         'Idempotency-Key': buildIdempotencyKey('consulting-execution-start', [operationId]),
                     },

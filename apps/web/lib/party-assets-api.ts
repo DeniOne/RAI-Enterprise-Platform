@@ -10,7 +10,7 @@ import {
   PartyRegistrationData,
   PartyRelationDto,
 } from '@/shared/types/party-assets';
-import { PartyIdentificationSchema, PartyLookupRequest, PartyLookupResponse } from '@/shared/types/party-lookup';
+import { BankLookupResponse, PartyIdentificationSchema, PartyLookupRequest, PartyLookupResponse } from '@/shared/types/party-lookup';
 import { normalizePartyDto, normalizePartyListItem } from '@/shared/lib/party-normalizers';
 
 function normalizeRelationType(value: unknown): PartyRelationDto['relationType'] {
@@ -121,6 +121,11 @@ export const partyAssetsApi = {
 
   lookupParty: async (data: PartyLookupRequest): Promise<PartyLookupResponse> => {
     const response = await apiClient.post<PartyLookupResponse>('/party-lookup', data);
+    return response.data;
+  },
+
+  lookupBankByBic: async (bic: string): Promise<BankLookupResponse> => {
+    const response = await apiClient.post<BankLookupResponse>('/bank-lookup', { bic });
     return response.data;
   },
 

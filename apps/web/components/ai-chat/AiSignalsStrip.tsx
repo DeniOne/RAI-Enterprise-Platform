@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { useAiChatStore } from '@/lib/stores/ai-chat-store';
 import { AiSignalItem } from './ai-work-window-types';
+import { pushRouteWithHardFallback } from './navigation-fallback';
 
 const toneClass: Record<'critical' | 'warning' | 'info', string> = {
     critical: 'border-red-200 bg-red-50 text-red-700',
@@ -91,7 +92,7 @@ export function AiSignalsStrip() {
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        router.push(signal.targetRoute!);
+                                        pushRouteWithHardFallback(router, signal.targetRoute);
                                         markSignalRead(signal.id);
                                     }}
                                     className="inline-flex items-center gap-1 rounded-xl border border-current/20 bg-white/70 px-2 py-1 text-[11px]"

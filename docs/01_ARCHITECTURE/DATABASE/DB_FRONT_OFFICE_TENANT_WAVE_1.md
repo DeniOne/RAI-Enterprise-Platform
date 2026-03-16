@@ -33,6 +33,10 @@ Family:
 - активный `TenantCompanyBinding` создан;
 - `TenantState` создан и привязан к tenant;
 - `FrontOfficeThread` family backfill завершен с `0` null rows и `0` parent-child mismatch.
+- shadow compare между legacy и dual-key path проходит без расхождений.
+- runtime cutover + rollback smoke подтвержден через feature-flag cohort только для family.
+- открыт canonical live-window log `DB_FRONT_OFFICE_OBSERVATION_24H.md`.
+- следующий operational шаг: закрыть `24h` observation window финальным статусом `PASS | PASS WITH NOTES | FAIL`.
 
 ## Rollback
 

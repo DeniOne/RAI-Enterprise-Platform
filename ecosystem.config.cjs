@@ -26,7 +26,7 @@ module.exports = {
       ...common,
       name: 'rai-web',
       script: 'node_modules/next/dist/bin/next',
-      args: 'dev -p 3000 -H 0.0.0.0',
+      args: 'dev -p 3000 -H 127.0.0.1',
       cwd: './apps/web',
       interpreter: 'node',
       env: {

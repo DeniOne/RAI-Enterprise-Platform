@@ -26,6 +26,7 @@ export class PrismaService
   private readonly tenantMode: TenantMode;
   private readonly enforceCohort: Set<string>;
   private readonly dualKeyMode: DualKeyMode;
+  private readonly dualKeyEnforceModels: Set<string>;
   private readonly dualKeyCompanyFallback: boolean;
   private readonly tenantDriftAlertThreshold: number;
   private tenantDriftDetections = 0;
@@ -204,6 +205,12 @@ export class PrismaService
       .toLowerCase();
     this.dualKeyMode =
       dualMode === "off" || dualMode === "enforce" ? dualMode : "shadow";
+    this.dualKeyEnforceModels = new Set(
+      String(process.env.TENANT_DUAL_KEY_ENFORCE_MODELS || "")
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean),
+    );
     this.dualKeyCompanyFallback =
       String(process.env.TENANT_DUAL_KEY_COMPANY_FALLBACK || "true")
         .trim()
@@ -264,7 +271,8 @@ export class PrismaService
     const logger = this.logger;
     const getTenantContext = () => this.getTenantContext();
     const resolveTenantKey = () => this.resolveTenantKey(getTenantContext());
-    const shouldUseTenantGuard = () => this.shouldUseTenantGuard();
+    const shouldUseTenantGuard = (model: string) =>
+      this.shouldUseTenantGuardForModel(model);
     const applyShadowTenantWrite = (
       payload: Record<string, unknown>,
       tenantId: string,
@@ -343,7 +351,7 @@ export class PrismaService
             const tenantId = resolveTenantKey();
             const isDualKeyModel = dualKeyScopedModels.has(model);
             const shouldGuardByTenant =
-              isDualKeyModel && shouldUseTenantGuard() && !!tenantId;
+              isDualKeyModel && shouldUseTenantGuard(model) && !!tenantId;
 
             let typedArgs: any = args;
             if (!typedArgs) {
@@ -509,8 +517,16 @@ export class PrismaService
     return null;
   }
 
-  private shouldUseTenantGuard(): boolean {
-    return this.dualKeyMode === "enforce";
+  private shouldUseTenantGuardForModel(model: string): boolean {
+    if (this.dualKeyMode === "enforce") {
+      return true;
+    }
+
+    if (this.dualKeyMode !== "shadow") {
+      return false;
+    }
+
+    return this.dualKeyEnforceModels.has(model);
   }
 
   private applyTenantWhereGuard(

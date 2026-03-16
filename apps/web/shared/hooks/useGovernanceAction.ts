@@ -4,7 +4,7 @@ import { useMachine } from '@xstate/react';
 import { governanceMachine, RiskLevel } from '@/core/governance/governanceMachine';
 import { useSessionIntegrity } from './useSessionIntegrity';
 import { useAuthority } from '@/core/governance/AuthorityContext';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useGovernanceStore } from '../store/governance.store';
 import { useUiStore } from '@/core/state/uiStore';
 import { InstitutionalGraph } from '@/core/governance/InstitutionalGraph';
@@ -24,8 +24,14 @@ export function useGovernanceAction(operationName: string) {
     // UI Stores (Projection Layers)
     const setGlobalLock = useUiStore((state) => state.setLocked);
     const setActiveEscalation = useGovernanceStore((state) => state.setActiveEscalation);
+    const setQuorumDecisionHandler = useGovernanceStore((state) => state.setQuorumDecisionHandler);
 
     const [state, send] = useMachine(governanceMachine);
+
+    const markQuorumMet = useCallback(() => {
+        console.log(`[FSM-ACTION] Simulating TechCouncil decision`);
+        send({ type: 'QUORUM_MET' });
+    }, [send]);
 
     // ЭФФЕКТ: Автоматический запуск анализа при переходе в initiated (в т.ч. после резолвинга конфликта)
     useEffect(() => {
@@ -59,6 +65,13 @@ export function useGovernanceAction(operationName: string) {
             setActiveEscalation(null);
         }
     }, [state.value, state.context, traceId, operationName, setGlobalLock, setActiveEscalation]);
+
+    useEffect(() => {
+        setQuorumDecisionHandler(() => markQuorumMet);
+        return () => {
+            setQuorumDecisionHandler(null);
+        };
+    }, [markQuorumMet, setQuorumDecisionHandler]);
 
     const initiate = (risk: RiskLevel = 'R1') => {
         const finalTrace = traceId || `TRC-LOG-${Date.now().toString().slice(-4)}`;
@@ -122,11 +135,6 @@ export function useGovernanceAction(operationName: string) {
     const escalate = () => {
         console.log(`[FSM-ACTION] Explicit Escalation Triggered`);
         send({ type: 'ESCALATE' });
-    };
-
-    const markQuorumMet = () => {
-        console.log(`[FSM-ACTION] Simulating TechCouncil decision`);
-        send({ type: 'QUORUM_MET' });
     };
 
     const approve = () => {

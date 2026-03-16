@@ -247,7 +247,8 @@ export interface CreateCrmAccountPayload {
 }
 
 export interface GetCrmAccountWorkspacePayload {
-  accountId: string;
+  accountId?: string;
+  query?: string;
 }
 
 export interface UpdateCrmAccountPayload {
@@ -642,6 +643,12 @@ export interface CreateCrmAccountResult {
 
 export interface GetCrmAccountWorkspaceResult {
   account: Record<string, unknown>;
+  linkedParty?: {
+    id: string;
+    legalName?: string | null;
+    shortName?: string | null;
+    inn?: string | null;
+  } | null;
   legalEntities: Array<Record<string, unknown>>;
   contacts: Array<Record<string, unknown>>;
   interactions: Array<Record<string, unknown>>;

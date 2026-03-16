@@ -31,10 +31,21 @@ export interface PartyContactRecord {
 }
 
 export interface PartyBankRecord {
+  accountName?: string;
   bankName: string;
   accountNumber: string;
   bic?: string;
+  swift?: string;
   corrAccount?: string;
+  inn?: string;
+  kpp?: string;
+  address?: string;
+  status?: string;
+  lookupSource?: string;
+  lookupReferenceBankName?: string;
+  lookupReferenceCorrAccount?: string;
+  lookupReferenceInn?: string;
+  lookupReferenceKpp?: string;
   currency?: string;
   isPrimary?: boolean;
 }
@@ -54,6 +65,7 @@ export interface PartyRegistrationData {
   addresses?: PartyAddressRecord[];
   contacts?: PartyContactRecord[];
   banks?: PartyBankRecord[];
+  requisites?: Partial<Pick<PartyRegistrationData, 'inn' | 'kpp' | 'ogrn' | 'ogrnip' | 'unp' | 'bin'>>;
   dataProvenance?: {
     lookupSource: string;
     fetchedAt: string;

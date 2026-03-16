@@ -2,6 +2,7 @@ import { act } from '@testing-library/react';
 import { RaiChatWidgetType } from '@/lib/ai-chat-widgets';
 import { useAiChatStore } from '@/lib/stores/ai-chat-store';
 import { useWorkspaceContextStore } from '@/lib/stores/workspace-context-store';
+import { useGovernanceStore } from '@/shared/store/governance.store';
 
 const fetchMock = jest.fn();
 
@@ -48,6 +49,10 @@ describe('AiChatStore UX modes', () => {
         });
         useWorkspaceContextStore.setState({
             context: { route: '/' },
+        });
+        useGovernanceStore.setState({
+            activeEscalation: null,
+            isQuorumModalOpen: false,
         });
     });
 
@@ -200,6 +205,37 @@ describe('AiChatStore UX modes', () => {
             },
         ]);
         expect(useAiChatStore.getState().sessions[0].threadId).toBe('thread-1');
+    });
+
+    it('opens TechCouncil modal locally for the "открой техсовет" command without API call', async () => {
+        useAiChatStore.setState({
+            fsmState: 'open',
+            threadId: 'thread-techcouncil',
+        });
+        useGovernanceStore.setState({
+            activeEscalation: {
+                traceId: 'TRC-123',
+                level: 'R3',
+                description: 'Требуется решение Техсовета для: AGRO_EXECUTION',
+                status: 'COLLECTING',
+                threshold: 0.6,
+                members: [],
+            },
+            isQuorumModalOpen: false,
+        });
+
+        await act(async () => {
+            await useAiChatStore.getState().sendMessage('открой техсовет');
+        });
+
+        expect(fetchMock).not.toHaveBeenCalled();
+        expect(useGovernanceStore.getState().isQuorumModalOpen).toBe(true);
+        expect(useAiChatStore.getState().messages.at(-1)).toEqual(
+            expect.objectContaining({
+                role: 'assistant',
+                content: 'Открываю Техсовет по активной эскалации.',
+            }),
+        );
     });
 
     it('creates a new local chat session and switches active session', () => {
@@ -408,6 +444,76 @@ describe('AiChatStore UX modes', () => {
             expect.arrayContaining([
                 expect.objectContaining({
                     text: expect.stringContaining('Проверить отклонение'),
+                }),
+            ]),
+        );
+    });
+
+    it('clears stale unpinned work windows when a new response has no structured windows', async () => {
+        useAiChatStore.setState({
+            fsmState: 'open',
+            workWindows: [
+                {
+                    windowId: 'legacy-route-window',
+                    originMessageId: null,
+                    agentRole: 'knowledge',
+                    type: 'related_signals',
+                    category: 'analysis',
+                    priority: 40,
+                    mode: 'panel',
+                    title: 'Отклонения по маршруту consulting / execution',
+                    status: 'completed',
+                    payload: {
+                        summary: 'Старый route-based сигнал',
+                        signalItems: [
+                            {
+                                id: 'legacy-signal-1',
+                                tone: 'warning',
+                                text: 'Проверить старое отклонение',
+                            },
+                        ],
+                    },
+                    actions: [],
+                    isPinned: false,
+                },
+            ],
+            activeWindowId: 'legacy-route-window',
+            signals: [
+                {
+                    id: 'legacy-signal-1',
+                    tone: 'warning',
+                    text: 'Проверить старое отклонение',
+                },
+            ],
+        });
+
+        fetchMock.mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                text: 'Карточка контрагента открыта.',
+                widgets: [],
+                memoryUsed: [],
+                threadId: 'thread-fresh',
+            }),
+        });
+
+        await act(async () => {
+            await useAiChatStore.getState().sendMessage('Открой карточку контрагента');
+        });
+
+        expect(useAiChatStore.getState().workWindows).toEqual([]);
+        expect(useAiChatStore.getState().activeWindowId).toBeNull();
+        expect(useAiChatStore.getState().signals).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    text: expect.stringContaining('Карточка контрагента открыта'),
+                }),
+            ]),
+        );
+        expect(useAiChatStore.getState().signals).not.toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    text: expect.stringContaining('старое отклонение'),
                 }),
             ]),
         );

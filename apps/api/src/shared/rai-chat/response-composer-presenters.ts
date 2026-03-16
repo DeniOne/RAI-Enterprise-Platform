@@ -514,6 +514,26 @@ export function buildCrmActions(
     ];
   }
 
+  if (intent === "review_account_workspace") {
+    const { route, label } = resolveCounterpartyRouteFromWorkspaceData(data);
+    return [
+      {
+        id: "focus_crm_workspace_result",
+        kind: "focus_window",
+        label: "Открыть результат",
+        enabled: true,
+        targetWindowId: windowId,
+      },
+      {
+        id: "open_counterparty_from_workspace",
+        kind: "open_route",
+        label,
+        enabled: true,
+        targetRoute: route,
+      },
+    ];
+  }
+
   return [
     {
       id: "focus_crm_window",
@@ -524,6 +544,42 @@ export function buildCrmActions(
     },
     intent === "create_counterparty_relation" ? openPartiesAction : openCrmAction,
   ];
+}
+
+export function resolveCounterpartyRouteFromWorkspaceData(
+  data: unknown,
+): { route: string; label: string } {
+  const workspace = data as GetCrmAccountWorkspaceResult;
+  const linkedParty =
+    workspace?.linkedParty && typeof workspace.linkedParty === "object"
+      ? (workspace.linkedParty as Record<string, unknown>)
+      : null;
+  const linkedPartyId =
+    linkedParty && typeof linkedParty.id === "string" ? linkedParty.id.trim() : "";
+  if (linkedPartyId) {
+    return {
+      route: `/parties/${encodeURIComponent(linkedPartyId)}`,
+      label: "Открыть карточку контрагента",
+    };
+  }
+
+  const account =
+    workspace?.account && typeof workspace.account === "object"
+      ? (workspace.account as Record<string, unknown>)
+      : null;
+  const accountName =
+    account && typeof account.name === "string" ? account.name.trim() : "";
+  if (accountName) {
+    return {
+      route: `/parties?entity=${encodeURIComponent(accountName)}`,
+      label: "Найти контрагента в реестре",
+    };
+  }
+
+  return {
+    route: "/parties",
+    label: "Открыть реестр контрагентов",
+  };
 }
 
 export function buildCrmNextStepSummary(intent: CrmWindowIntent): string {

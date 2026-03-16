@@ -182,8 +182,8 @@ function PlansPageInner() {
                             Операционная панель управления жизненным циклом сельскохозяйственных планов
                         </p>
                     </div>
-                    <Link href='/consulting/techmaps/demo' className='text-sm text-blue-600 hover:underline'>
-                        Открыть demo flow
+                    <Link href='/consulting/techmaps/new' className='text-sm text-blue-600 hover:underline'>
+                        Подготовить техкарту
                     </Link>
                 </div>
             </div>

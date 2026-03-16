@@ -72,8 +72,8 @@ export default function TechMapsPage() {
                     <h1 className='text-xl font-medium text-gray-900 tracking-tight mb-1'>Технологические карты</h1>
                     <p className='text-sm font-normal text-gray-500'>Рабочий реестр техкарт с реальными статусными переходами.</p>
                 </div>
-                <Link href='/consulting/techmaps/demo' className='text-sm text-blue-600 hover:underline'>
-                    Открыть демо-поток
+                <Link href='/consulting/techmaps/new' className='text-sm text-blue-600 hover:underline'>
+                    Подготовить техкарту
                 </Link>
             </div>
 

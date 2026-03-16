@@ -1,4 +1,10 @@
 import { z } from 'zod';
+import {
+    digitsOnly,
+    getBankLookupReferenceMismatches,
+    isValidRussianCorrespondentAccount,
+    isValidRussianSettlementAccount,
+} from './party-bank-validation';
 
 // --- Вспомогательные схемы для массивов ---
 
@@ -14,12 +20,53 @@ export const AddressSchema = z.object({
 
 export const BankAccountSchema = z.object({
     accountName: z.string().min(1, 'Название (напр. Основной)'),
-    accountNumber: z.string().min(20, 'Р/с должен быть 20 знаков'),
-    bic: z.string().min(9, 'БИК должен быть 9 знаков'),
+    accountNumber: z.string().regex(/^\d{20}$/, 'Р/с должен содержать 20 цифр'),
+    bic: z.string().regex(/^\d{9}$/, 'БИК должен содержать 9 цифр'),
     bankName: z.string().min(1, 'Название банка'),
-    corrAccount: z.string().optional(),
+    swift: z.string().optional(),
+    corrAccount: z.string().optional().refine(
+        (value) => !value || /^\d{20}$/.test(value),
+        'Корр. счет должен содержать 20 цифр',
+    ),
+    inn: z.string().optional(),
+    kpp: z.string().optional(),
+    address: z.string().optional(),
+    status: z.string().optional(),
+    lookupSource: z.string().optional(),
+    lookupReferenceBankName: z.string().optional(),
+    lookupReferenceCorrAccount: z.string().optional(),
+    lookupReferenceInn: z.string().optional(),
+    lookupReferenceKpp: z.string().optional(),
     currency: z.string().default('RUB'),
     isPrimary: z.boolean().default(false),
+}).superRefine((value, ctx) => {
+    const bic = digitsOnly(value.bic);
+    const accountNumber = digitsOnly(value.accountNumber);
+    const corrAccount = digitsOnly(value.corrAccount);
+
+    if (bic.length === 9 && accountNumber.length === 20 && !isValidRussianSettlementAccount(accountNumber, bic)) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['accountNumber'],
+            message: 'Р/с не проходит контрольную проверку для указанного БИК',
+        });
+    }
+
+    if (corrAccount && bic.length === 9 && corrAccount.length === 20 && !isValidRussianCorrespondentAccount(corrAccount, bic)) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['corrAccount'],
+            message: 'Корр. счет не проходит контрольную проверку для указанного БИК',
+        });
+    }
+
+    for (const mismatch of getBankLookupReferenceMismatches(value)) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [mismatch.field],
+            message: mismatch.message,
+        });
+    }
 });
 
 const FrontOfficeAccessSchema = z.object({

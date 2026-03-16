@@ -72,6 +72,7 @@ import {
   buildCrmSections,
   buildCrmSummary,
   buildCrmTitle,
+  resolveCounterpartyRouteFromWorkspaceData,
   buildToolDisplayName,
 } from "../../../shared/rai-chat/response-composer-presenters";
 import { InvariantMetrics } from "../../../shared/invariants/invariant-metrics";
@@ -110,6 +111,16 @@ export class ResponseComposerService {
       result &&
         typeof result === "object" &&
         (result as { agentConfigBlocked?: boolean }).agentConfigBlocked === true,
+    );
+  }
+
+  private isToolExecutionErrorResult(
+    result: unknown,
+  ): result is { toolExecutionError: true; code?: string; message?: string } {
+    return Boolean(
+      result &&
+        typeof result === "object" &&
+        (result as { toolExecutionError?: boolean }).toolExecutionError === true,
     );
   }
 
@@ -160,16 +171,23 @@ export class ResponseComposerService {
     if (externalSignalResult.feedbackStored) {
       text += "\nFeedback по advisory записан в память.";
     }
-    const widgets = clientFacing
-      ? []
-      : this.widgetBuilder.build({
-          companyId,
-          workspaceContext: request.workspaceContext,
-        });
     const clarificationPayload = this.buildClarificationPayload(
       request,
       executionResult,
     );
+    const hasRenderableLegacySource = executionResult.executedTools.some(
+      (tool) =>
+        !this.isRiskPolicyBlockedResult(tool.result) &&
+        !this.isAgentConfigBlockedResult(tool.result) &&
+        !this.isToolExecutionErrorResult(tool.result),
+    );
+    const widgets =
+      clientFacing || executionResult.agentExecution || !hasRenderableLegacySource
+        ? []
+        : this.widgetBuilder.build({
+            companyId,
+            workspaceContext: request.workspaceContext,
+          });
     const richOutputPayload = clarificationPayload
       ? null
       : this.buildRichOutputPayload(request, executionResult, widgets);
@@ -945,12 +963,20 @@ export class ResponseComposerService {
       };
     }
 
+    if (explicitCrmTool && this.isToolExecutionErrorResult(data)) {
+      return null;
+    }
+
     if (agentExecution && agentExecution.status !== "COMPLETED") {
       return null;
     }
 
     const sections = buildCrmSections(intent, data);
     const summary = buildCrmSummary(intent, data, agentExecution?.text ?? "CRM-операция выполнена.");
+    const reviewWorkspaceRoute =
+      intent === "review_account_workspace"
+        ? resolveCounterpartyRouteFromWorkspaceData(data)
+        : null;
 
     const workWindows: RaiWorkWindowDto[] = [
       {
@@ -1010,9 +1036,9 @@ export class ResponseComposerService {
           {
             id: "go_crm_route",
             kind: "open_route",
-            label: "Перейти в CRM",
+            label: reviewWorkspaceRoute?.label ?? "Перейти в CRM",
             enabled: true,
-            targetRoute: "/consulting/crm",
+            targetRoute: reviewWorkspaceRoute?.route ?? "/consulting/crm",
           },
         ],
         isPinned: false,
@@ -1807,6 +1833,17 @@ export class ResponseComposerService {
         const blockedSummary = this.summarizeBlockedToolResult(tool);
         if (blockedSummary) {
           return blockedSummary;
+        }
+        if (this.isToolExecutionErrorResult(tool.result)) {
+          const rawMessage = tool.result.message?.trim() || "Неизвестная ошибка выполнения инструмента.";
+          if (
+            tool.name === RaiToolName.GetCrmAccountWorkspace &&
+            (/account_and_party_not_found/i.test(rawMessage) ||
+              /not found|не найден/i.test(rawMessage))
+          ) {
+            return "В текущем контуре не найден операционный аккаунт и не найден контрагент по этому запросу. Проверьте ИНН/название в реестре контрагентов и затем откройте или создайте CRM-аккаунт.";
+          }
+          return `Действие "${buildToolDisplayName(tool.name)}" не выполнено: ${rawMessage}`;
         }
         if (tool.name === RaiToolName.ComputeDeviations) {
           const r = tool.result as ComputeDeviationsResult & { explain?: string; agentName?: string };

@@ -56,9 +56,12 @@
 
 ### FrontOfficeThread family
 
-- status: `phase_7_wave_1_backfilled_shadow_validated`
+- status: `phase_7_wave_1_cutover_runbook_ready_rollback_verified`
 - packet: `DB_FRONT_OFFICE_TENANT_WAVE_1.md`
 - backfill: migration `20260314001000_phase7_front_office_tenant_wave1`
 - bootstrap: `scripts/db/bootstrap-front-office-tenant-wave.cjs`
 - validation: `DB_FRONT_OFFICE_TENANT_WAVE_VALIDATION.md`
+- shadow compare: `DB_FRONT_OFFICE_SHADOW_COMPARE.md`
+- cutover runbook: `DB_FRONT_OFFICE_TENANT_WAVE_CUTOVER.md`
+- runtime drill: `DB_FRONT_OFFICE_CUTOVER_DRILL.md`
 - rollback: `companyId` compatibility path remains canonical fallback until enforce-mode.

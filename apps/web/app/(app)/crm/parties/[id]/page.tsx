@@ -2,11 +2,20 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useForm, FormProvider, useFormContext } from 'react-hook-form';
+import { useForm, FormProvider, useFormContext, type FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { partyAssetsApi } from '@/lib/party-assets-api';
 import { PartyFullProfileSchema, PartyFullProfileValues } from '@/shared/lib/party-schemas';
+import { getPartyRequisiteValue } from '@/shared/lib/party-requisites-schema';
+import {
+    PARTY_TAB_LABELS,
+    collectPartyValidationIssues,
+    getPartyCompletenessTarget,
+    type PartyFormTabKey,
+    type PartyValidationIssue,
+    type PartyValidationTarget,
+} from '@/shared/lib/party-form-validation';
 import { PartyHubHeader } from '@/components/party-assets/parties/hub/PartyHubHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EditModeProvider, useEditMode } from '@/components/party-assets/common/DataField';
@@ -20,6 +29,34 @@ import { PartyStructureTab } from '@/components/party-assets/parties/hub/tabs/Pa
 type SaveNotice =
     | { type: 'success' | 'error' | 'warning'; title: string; message: string }
     | null;
+
+function escapeSelectorValue(value: string) {
+    return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+function scrollToValidationTarget(target: PartyValidationTarget) {
+    if (typeof document === 'undefined') {
+        return;
+    }
+
+    const fieldNode = target.targetName
+        ? (document.querySelector(`[name="${escapeSelectorValue(target.targetName)}"]`) as HTMLElement | null)
+        : null;
+    const anchorNode = document.querySelector(`[data-validation-anchor="${escapeSelectorValue(target.anchorId)}"]`) as HTMLElement | null;
+    const targetNode = fieldNode ?? anchorNode;
+
+    if (!targetNode) {
+        return;
+    }
+
+    targetNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    if (fieldNode && typeof (fieldNode as HTMLInputElement).focus === 'function') {
+        window.setTimeout(() => {
+            (fieldNode as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).focus({ preventScroll: true });
+        }, 80);
+    }
+}
 
 function mapPositionToRoleType(position?: string): 'SIGNATORY' | 'OPERATIONAL' {
     return position === 'SIGNATORY' ? 'SIGNATORY' : 'OPERATIONAL';
@@ -187,9 +224,13 @@ function buildFormValuesFromPartyData(
     return {
         legalName: data.legalName,
         shortName: data.shortName || '',
-        inn: reg?.inn || '',
-        kpp: reg?.kpp || '',
-        ogrn: reg?.ogrn || reg?.ogrnip || '',
+        inn: getPartyRequisiteValue(reg, 'inn') !== '—' ? getPartyRequisiteValue(reg, 'inn') : '',
+        kpp: getPartyRequisiteValue(reg, 'kpp') !== '—' ? getPartyRequisiteValue(reg, 'kpp') : '',
+        ogrn: getPartyRequisiteValue(reg, 'ogrn') !== '—'
+            ? getPartyRequisiteValue(reg, 'ogrn')
+            : getPartyRequisiteValue(reg, 'ogrnip') !== '—'
+                ? getPartyRequisiteValue(reg, 'ogrnip')
+                : '',
         jurisdictionId: data.jurisdictionId,
         type: data.type,
         addresses: (reg?.addresses || []).map((addr: any) => ({
@@ -206,7 +247,17 @@ function buildFormValuesFromPartyData(
             accountNumber: b.accountNumber,
             bic: b.bic || '',
             bankName: b.bankName,
+            swift: b.swift || '',
             corrAccount: b.corrAccount || '',
+            inn: b.inn || '',
+            kpp: b.kpp || '',
+            address: b.address || '',
+            status: b.status || '',
+            lookupSource: b.lookupSource || '',
+            lookupReferenceBankName: b.lookupReferenceBankName || '',
+            lookupReferenceCorrAccount: b.lookupReferenceCorrAccount || '',
+            lookupReferenceInn: b.lookupReferenceInn || '',
+            lookupReferenceKpp: b.lookupReferenceKpp || '',
             currency: b.currency || 'RUB',
             isPrimary: Boolean(b.isPrimary),
         })),
@@ -277,14 +328,35 @@ function PartyHubContent({
     onSubmit,
     onInvalid,
     saveNotice,
+    validationIssues,
+    activeTab,
+    onTabChange,
+    onFocusIssue,
+    onNavigateToMissing,
 }: {
     partyId: string,
     isSaving: boolean,
     onSubmit: (v: PartyFullProfileValues) => Promise<boolean>,
-    onInvalid: () => void,
+    onInvalid: (errors: FieldErrors<PartyFullProfileValues>) => void,
     saveNotice: SaveNotice,
+    validationIssues: PartyValidationIssue[],
+    activeTab: PartyFormTabKey,
+    onTabChange: (tab: PartyFormTabKey) => void,
+    onFocusIssue: (issue: PartyValidationIssue | PartyValidationTarget) => void,
+    onNavigateToMissing: (label: string) => void,
 }) {
     const { setEdit } = useEditMode();
+    const tabIssues = useMemo(
+        () => validationIssues.reduce<Record<PartyFormTabKey, PartyValidationIssue[]>>(
+            (acc, issue) => {
+                acc[issue.tab].push(issue);
+                return acc;
+            },
+            { profile: [], bank: [], contacts: [], structure: [] },
+        ),
+        [validationIssues],
+    );
+    const activeTabIssues = tabIssues[activeTab];
 
     const handleSubmit = async (values: PartyFullProfileValues) => {
         const saved = await onSubmit(values);
@@ -317,27 +389,98 @@ function PartyHubContent({
                     </div>
                 </div>
             ) : null}
-            <PartyHubHeader isSaving={isSaving} />
+            <PartyHubHeader
+                isSaving={isSaving}
+                onNavigateToMissing={onNavigateToMissing}
+            />
 
-            <Tabs defaultValue="profile" className="w-full">
+            <Tabs value={activeTab} onValueChange={(value) => onTabChange(value as PartyFormTabKey)} className="w-full">
                 <TabsList className="mb-6">
-                    <TabsTrigger value="profile">Основное и Реквизиты</TabsTrigger>
-                    <TabsTrigger value="bank">Банковские счета</TabsTrigger>
-                    <TabsTrigger value="contacts">Ключевые лица / ЛОПР</TabsTrigger>
-                    <TabsTrigger value="structure">Связанные активы</TabsTrigger>
+                    {(['profile', 'bank', 'contacts', 'structure'] as PartyFormTabKey[]).map((tab) => (
+                        <TabsTrigger
+                            key={tab}
+                            value={tab}
+                            className={cn(
+                                'gap-2',
+                                tabIssues[tab].length > 0 && 'border border-red-200 bg-red-50 text-red-700 data-[state=active]:border-red-300 data-[state=active]:bg-red-100',
+                            )}
+                        >
+                            <span>{PARTY_TAB_LABELS[tab]}</span>
+                            {tabIssues[tab].length > 0 ? (
+                                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-100 px-1.5 text-[10px] font-semibold text-red-700">
+                                    {tabIssues[tab].length}
+                                </span>
+                            ) : null}
+                        </TabsTrigger>
+                    ))}
                 </TabsList>
 
+                {activeTabIssues.length > 0 ? (
+                    <div
+                        data-validation-anchor={`party-tab-${activeTab}`}
+                        className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-4"
+                    >
+                        <div className="flex items-start gap-3">
+                            <AlertCircle className="mt-0.5 h-4 w-4 text-red-600" />
+                            <div className="min-w-0 space-y-3">
+                                <div>
+                                    <div className="text-sm font-semibold text-red-900">
+                                        Что исправить во вкладке «{PARTY_TAB_LABELS[activeTab]}»
+                                    </div>
+                                    <div className="text-xs leading-relaxed text-red-700">
+                                        Карточка не сохранится, пока эти поля не будут заполнены корректно.
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    {activeTabIssues.map((issue) => (
+                                        <button
+                                            key={`${issue.path}:${issue.message}`}
+                                            type="button"
+                                            onClick={() => onFocusIssue(issue)}
+                                            className="block w-full rounded-xl border border-red-200 bg-white px-3 py-3 text-left transition-colors hover:bg-red-50"
+                                        >
+                                            <div className="text-sm font-medium text-red-900">{issue.label}</div>
+                                            <div className="text-xs text-red-700">{issue.message}</div>
+                                            <div className="mt-1 text-[11px] leading-relaxed text-red-600">{issue.hint}</div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : null}
+
                 <TabsContent value="profile">
-                    <PartyProfileTab />
+                    <div
+                        data-validation-anchor="party-tab-profile"
+                        className={cn(activeTab === 'profile' && activeTabIssues.length > 0 && 'rounded-2xl ring-2 ring-red-100')}
+                    >
+                        <PartyProfileTab />
+                    </div>
                 </TabsContent>
                 <TabsContent value="bank">
-                    <PartyBankAccountsTab />
+                    <div
+                        data-validation-anchor="party-tab-bank"
+                        className={cn(activeTab === 'bank' && activeTabIssues.length > 0 && 'rounded-2xl ring-2 ring-red-100')}
+                    >
+                        <PartyBankAccountsTab />
+                    </div>
                 </TabsContent>
                 <TabsContent value="contacts">
-                    <PartyContactsTab partyId={partyId} />
+                    <div
+                        data-validation-anchor="party-tab-contacts"
+                        className={cn(activeTab === 'contacts' && activeTabIssues.length > 0 && 'rounded-2xl ring-2 ring-red-100')}
+                    >
+                        <PartyContactsTab partyId={partyId} />
+                    </div>
                 </TabsContent>
                 <TabsContent value="structure">
-                    <PartyStructureTab />
+                    <div
+                        data-validation-anchor="party-tab-structure"
+                        className={cn(activeTab === 'structure' && activeTabIssues.length > 0 && 'rounded-2xl ring-2 ring-red-100')}
+                    >
+                        <PartyStructureTab />
+                    </div>
                 </TabsContent>
             </Tabs>
         </form>
@@ -350,8 +493,11 @@ export default function PartyEntityHubPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [saveNotice, setSaveNotice] = useState<SaveNotice>(null);
+    const [activeTab, setActiveTab] = useState<PartyFormTabKey>('profile');
+    const [validationIssues, setValidationIssues] = useState<PartyValidationIssue[]>([]);
     const initialStructureRef = useRef<Pick<PartyFullProfileValues, 'relations' | 'assetRelations'> | null>(null);
     const originalPartyRef = useRef<any>(null);
+    const pendingFocusTargetRef = useRef<PartyValidationTarget | null>(null);
 
     const methods = useForm<PartyFullProfileValues>({
         resolver: zodResolver(PartyFullProfileSchema),
@@ -408,14 +554,52 @@ export default function PartyEntityHubPage() {
         load();
     }, [partyId, methods]);
 
+    useEffect(() => {
+        if (!pendingFocusTargetRef.current || pendingFocusTargetRef.current.tab !== activeTab) {
+            return;
+        }
+
+        const target = pendingFocusTargetRef.current;
+        const timer = window.setTimeout(() => {
+            scrollToValidationTarget(target);
+            pendingFocusTargetRef.current = null;
+        }, 120);
+
+        return () => window.clearTimeout(timer);
+    }, [activeTab, validationIssues]);
+
+    const focusValidationTarget = (target: PartyValidationTarget) => {
+        pendingFocusTargetRef.current = target;
+        setActiveTab(target.tab);
+    };
+
+    const handleNavigateToMissing = (label: string) => {
+        const target = getPartyCompletenessTarget(label);
+        if (!target) {
+            return;
+        }
+
+        setSaveNotice({
+            type: 'warning',
+            title: `Нужно заполнить: ${target.label}`,
+            message: target.hint,
+        });
+        focusValidationTarget(target);
+    };
+
     const onSubmit = async (values: PartyFullProfileValues) => {
         setIsSaving(true);
         setSaveNotice(null);
+        setValidationIssues([]);
         try {
             const latestParty =
                 (await partyAssetsApi.getParty(partyId).catch(() => originalPartyRef.current)) ??
                 originalPartyRef.current;
             const existingRegistrationData = latestParty?.registrationData ?? {};
+            const existingRequisites =
+                existingRegistrationData?.requisites && typeof existingRegistrationData.requisites === 'object'
+                    ? existingRegistrationData.requisites
+                    : {};
             const existingContacts = Array.isArray(existingRegistrationData?.contacts)
                 ? existingRegistrationData.contacts
                 : [];
@@ -431,6 +615,12 @@ export default function PartyEntityHubPage() {
                     kpp: values.kpp?.trim() || undefined,
                     ogrn: values.ogrn?.trim() || undefined,
                     shortName: values.shortName?.trim() || undefined,
+                    requisites: {
+                        ...existingRequisites,
+                        inn: values.inn?.trim() || undefined,
+                        kpp: values.kpp?.trim() || undefined,
+                        ogrn: values.ogrn?.trim() || undefined,
+                    },
                     addresses: values.addresses.map((address) => ({
                         type: address.type,
                         address: [address.index, address.region, address.city, address.street]
@@ -472,10 +662,21 @@ export default function PartyEntityHubPage() {
                         };
                     }),
                     banks: values.bankAccounts.map((bank) => ({
+                        accountName: bank.accountName.trim(),
                         bankName: bank.bankName.trim(),
                         accountNumber: bank.accountNumber.trim(),
                         bic: bank.bic?.trim() || undefined,
+                        swift: bank.swift?.trim() || undefined,
                         corrAccount: bank.corrAccount?.trim() || undefined,
+                        inn: bank.inn?.trim() || undefined,
+                        kpp: bank.kpp?.trim() || undefined,
+                        address: bank.address?.trim() || undefined,
+                        status: bank.status?.trim() || undefined,
+                        lookupSource: bank.lookupSource?.trim() || undefined,
+                        lookupReferenceBankName: bank.lookupReferenceBankName?.trim() || undefined,
+                        lookupReferenceCorrAccount: bank.lookupReferenceCorrAccount?.trim() || undefined,
+                        lookupReferenceInn: bank.lookupReferenceInn?.trim() || undefined,
+                        lookupReferenceKpp: bank.lookupReferenceKpp?.trim() || undefined,
                         currency: bank.currency,
                         isPrimary: Boolean(bank.isPrimary),
                     })),
@@ -590,11 +791,21 @@ export default function PartyEntityHubPage() {
         }
     };
 
-    const onInvalid = () => {
+    const onInvalid = (formErrors: FieldErrors<PartyFullProfileValues>) => {
+        const issues = collectPartyValidationIssues(formErrors);
+        setValidationIssues(issues);
+
+        const firstIssue = issues[0];
+        if (firstIssue) {
+            focusValidationTarget(firstIssue);
+        }
+
         setSaveNotice({
             type: 'error',
             title: 'Форма не сохранена',
-            message: 'В карточке есть невалидные поля. Проверьте обязательные поля на вкладках "Основное", "Банковские счета", "Ключевые лица" и "Связанные активы".',
+            message: firstIssue
+                ? `Переходим во вкладку «${firstIssue.tabLabel}». Сначала исправьте поле «${firstIssue.label}». ${firstIssue.hint}`
+                : 'В карточке есть невалидные поля. Проверьте обязательные поля на вкладках "Основное", "Банковские счета", "Ключевые лица" и "Связанные активы".',
         });
     };
 
@@ -615,6 +826,11 @@ export default function PartyEntityHubPage() {
                     onSubmit={onSubmit}
                     onInvalid={onInvalid}
                     saveNotice={saveNotice}
+                    validationIssues={validationIssues}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    onFocusIssue={focusValidationTarget}
+                    onNavigateToMissing={handleNavigateToMissing}
                 />
             </EditModeProvider>
         </FormProvider>

@@ -16,6 +16,9 @@ export function PartyBankAccountsTab({ party }: { party: PartyDto }) {
             <Field label="Расчётный счёт / IBAN" value={bank.accountNumber || '—'} />
             <Field label="БИК / SWIFT" value={bank.bic || '—'} />
             <Field label="Корреспондентский счёт" value={bank.corrAccount || '—'} />
+            <Field label="ИНН / КПП банка" value={[bank.inn ? `ИНН ${bank.inn}` : '', bank.kpp ? `КПП ${bank.kpp}` : ''].filter(Boolean).join(' • ') || '—'} />
+            <Field label="Статус банка" value={bank.status || '—'} />
+            <Field label="Адрес банка" value={bank.address || '—'} />
             <Field label="Валюта" value={bank.currency || '—'} />
             <Field label="Основной" value={bank.isPrimary ? 'Да' : 'Нет'} />
           </div>

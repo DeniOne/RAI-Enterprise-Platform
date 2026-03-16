@@ -15,9 +15,13 @@
 ### Wave A (low blast radius)
 - `FrontOfficeThread` family (`FrontOfficeThread`, `FrontOfficeThreadMessage`, `FrontOfficeHandoffRecord`, `FrontOfficeThreadParticipantState`)
 - цель: проверить migration discipline на non-core aggregate family.
-- status: `backfilled_shadow_validated`
+- status: `cutover_runbook_ready_rollback_verified`
 - packet: `DB_FRONT_OFFICE_TENANT_WAVE_1.md`
 - result: `default-rai-company` bootstrap completed, null backlog `0`, mismatch budget `0`
+- cutover: `DB_FRONT_OFFICE_TENANT_WAVE_CUTOVER.md`
+- drill: `DB_FRONT_OFFICE_CUTOVER_DRILL.md`
+- live_window: `DB_FRONT_OFFICE_OBSERVATION_24H.md`
+- closeout: `DB_FRONT_OFFICE_WAVE_CLOSEOUT.md`
 
 ### Wave B (finance projection seams)
 - `EconomicEvent` projection seams

@@ -56,6 +56,12 @@ interface RegisteredTool<TName extends RaiToolName> {
   handler: ToolHandler<TName>;
 }
 
+function parseBooleanEnv(name: string, fallback: boolean): boolean {
+  const raw = process.env[name]?.trim().toLowerCase();
+  if (!raw) return fallback;
+  return ["1", "true", "yes", "on"].includes(raw);
+}
+
 @Injectable()
 export class RaiToolsRegistry implements OnModuleInit {
   private readonly logger = new Logger(RaiToolsRegistry.name);
@@ -151,6 +157,10 @@ export class RaiToolsRegistry implements OnModuleInit {
     }
     const enforcementEnabled =
       this.runtimeGovernanceFlags.getFlags().enforcementEnabled;
+    const humanConfirmationEnabled = parseBooleanEnv(
+      "RAI_HUMAN_CONFIRMATION_ENABLED",
+      true,
+    );
     let autonomyLevel: AutonomyLevel | null = null;
     if (enforcementEnabled && riskInfo && riskInfo.riskLevel !== "READ") {
       autonomyLevel = await this.autonomyPolicy.getCompanyAutonomyLevel(
@@ -210,9 +220,11 @@ export class RaiToolsRegistry implements OnModuleInit {
         !actorContext.isAutonomous &&
         !actorContext.replayMode;
       const requiresByRisk =
+        humanConfirmationEnabled &&
         this.pendingActionService.requiresConfirmation(verdict) &&
         !directCrmUserWrite;
       const requiresByAutonomy =
+        humanConfirmationEnabled &&
         enforcementEnabled &&
         autonomyLevel === AutonomyLevel.TOOL_FIRST &&
         riskInfo.riskLevel !== "READ";

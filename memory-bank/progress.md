@@ -2,6 +2,25 @@
 
 ## 2026-03-15
 
+119. **DB Refactor Program — FrontOffice Wave Closeout Packet** [DONE]:
+    *   Подготовлен финальный closeout-док `docs/01_ARCHITECTURE/DATABASE/DB_FRONT_OFFICE_WAVE_CLOSEOUT.md`.
+    *   В документ заранее открыты 5 обязательных секций: `final observation verdict`, `incidents / regressions summary`, `rollback usage summary`, `lessons learned`, `reusable pattern for next wave`.
+    *   `DB_PHASE_7_STATUS.md`, `DB_OPERATIONAL_AGGREGATE_MIGRATION_WAVES.md`, `DB_FRONT_OFFICE_OBSERVATION_24H.md` и memory-bank синхронизированы на статус: `Phase 7 Wave 1: end-to-end packet complete, awaiting formal closeout after 24h live observation.`
+
+118. **DB Refactor Program — FrontOffice 24H Observation Packet** [DONE]:
+    *   Выпущен отсутствовавший канонический cutover runbook `docs/01_ARCHITECTURE/DATABASE/DB_FRONT_OFFICE_TENANT_WAVE_CUTOVER.md`; теперь Phase 7 пакет на диске консистентен со status-файлами.
+    *   Добавлен отдельный live-window артефакт `docs/01_ARCHITECTURE/DATABASE/DB_FRONT_OFFICE_OBSERVATION_24H.md`.
+    *   В observation-doc зафиксированы: точное время старта окна, состояние флагов, API restart marker, журнал ошибок/исключений по front-office маршрутам, mismatch/drift counters, rollback triggers и финальный статусный слот `PASS | PASS WITH NOTES | FAIL`.
+    *   `DB_PHASE_7_STATUS.md`, `DB_FRONT_OFFICE_TENANT_WAVE_1.md`, `DB_OPERATIONAL_AGGREGATE_MIGRATION_WAVES.md` и memory-bank синхронизированы на статус: `FrontOfficeThread wave: cutover and rollback proven; pending final 24h live observation confirmation.`
+
+117. **DB Refactor Program — Phase 7 FrontOfficeThread Cutover Packet** [DONE]:
+    *   Выпущен cutover runbook `docs/01_ARCHITECTURE/DATABASE/DB_FRONT_OFFICE_TENANT_WAVE_CUTOVER.md` с `prechecks`, `freeze conditions`, `flag strategy`, `shadow-read compare rules`, `mismatch thresholds`, `rollback trigger` и `post-cutover observation window`.
+    *   Добавлен `TenantIdentityResolverService`: auth boundary теперь резолвит реальный `tenantId` через `TenantCompanyBinding/TenantState`, а не слепо тащит `companyId` как surrogate tenant key.
+    *   `PrismaService` получил selective read cutover cohort через `TENANT_DUAL_KEY_ENFORCE_MODELS`, что позволяет переводить в enforce не все dual-key модели сразу, а только `FrontOfficeThread` family.
+    *   Добавлен compare-script `scripts/db/front-office-shadow-read-compare.cjs`; `docs/01_ARCHITECTURE/DATABASE/DB_FRONT_OFFICE_SHADOW_COMPARE.md` подтверждает parity `threads/messages/handoffs/participant_states` между legacy и dual-key path (`0` mismatch).
+    *   Добавлен runtime smoke drill `scripts/db/front-office-cutover-drill.ts`; `docs/01_ARCHITECTURE/DATABASE/DB_FRONT_OFFICE_CUTOVER_DRILL.md` подтверждает `cutover snapshot parity = PASS` и `rollback verification status = VERIFIED`.
+    *   Таргетированные проверки: `pnpm --dir apps/api exec jest --runInBand --silent src/shared/prisma/prisma-tenant-middleware.spec.ts src/shared/tenant-context/tenant-identity-resolver.service.spec.ts` PASS; `pnpm --dir apps/api exec tsc --noEmit --pretty false` PASS.
+
 115. **Git Pull / Manual Repo Sync** [DONE]:
     *   Успешно выполнена синхронизация с удаленным репозиторием (`git pull origin main`).
     *   Локальная копия обновлена, конфликтов не обнаружено.

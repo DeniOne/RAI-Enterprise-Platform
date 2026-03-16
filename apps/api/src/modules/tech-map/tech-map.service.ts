@@ -232,6 +232,16 @@ export class TechMapService {
     if (!season) {
       throw new NotFoundException("Season not found for field/company scope");
     }
+    if (!season.fieldId) {
+      throw new BadRequestException(
+        "Season must be linked to a field before TechMap generation",
+      );
+    }
+    if (season.fieldId !== params.fieldRef) {
+      throw new BadRequestException(
+        "Field context does not match the selected season",
+      );
+    }
 
     const plan = await this.prisma.harvestPlan.findFirst({
       where: {
@@ -247,6 +257,7 @@ export class TechMapService {
       throw new NotFoundException("Harvest Plan not found for season/company");
     }
 
+    const cropType = params.crop.toUpperCase();
     let cropZone = await (this.prisma as any).cropZone.findFirst({
       where: {
         fieldId: params.fieldRef,
@@ -260,45 +271,32 @@ export class TechMapService {
           fieldId: params.fieldRef,
           seasonId: params.seasonRef,
           companyId: params.companyId,
-          cropType: params.crop.toUpperCase(),
+          cropType,
           varietyHybrid: null,
+        },
+      });
+    } else if (cropZone.cropType !== cropType) {
+      cropZone = await (this.prisma as any).cropZone.update({
+        where: { id: cropZone.id },
+        data: {
+          cropType,
         },
       });
     }
 
-    const lastMap = await this.prisma.techMap.findFirst({
-      where: {
-        fieldId: cropZone.fieldId,
-        crop: params.crop,
-        seasonId: params.seasonRef,
-        companyId: params.companyId,
-      },
-      orderBy: { version: "desc" },
-    });
-
-    const nextVersion = lastMap ? lastMap.version + 1 : 1;
-
-    // TODO: Sprint TechMap Intake - полноценная генерация.
-    const draft = await this.prisma.techMap.create({
-      data: {
-        harvestPlanId: plan.id,
-        seasonId: params.seasonRef,
-        cropZoneId: cropZone.id,
-        companyId: params.companyId,
-        fieldId: cropZone.fieldId,
-        crop: params.crop,
-        status: TechMapStatus.DRAFT,
-        version: nextVersion,
-      },
-    });
+    const draft = await this.generateMap(plan.id, params.seasonRef);
+    const crop: "rapeseed" | "sunflower" =
+      String(draft.crop ?? params.crop).toLowerCase() === "sunflower"
+        ? "sunflower"
+        : "rapeseed";
 
     return {
       draftId: draft.id,
       status: "DRAFT" as const,
       fieldRef: params.fieldRef,
       seasonRef: params.seasonRef,
-      crop: params.crop,
-      missingMust: ["soilType", "moisture", "precursor", "stages"],
+      crop,
+      missingMust: [],
       tasks: [] as [],
       assumptions: [] as [],
     };

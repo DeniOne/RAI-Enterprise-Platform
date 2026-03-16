@@ -152,6 +152,64 @@ describe("agent interaction contracts", () => {
     expect(result.toolName).toBe(RaiToolName.CreateCrmContact);
   });
 
+  it("строит auto tool call для открытия CRM-карточки по имени из сообщения", () => {
+    const classification = classifyByAgentContracts(
+      "открой карточку Сысои",
+      {
+        route: "/consulting/dashboard",
+      },
+    );
+
+    const toolCall = buildAutoToolCallFromContracts(
+      {
+        message: "открой карточку Сысои",
+        workspaceContext: {
+          route: "/consulting/dashboard",
+        },
+      },
+      classification,
+    );
+
+    expect(classification.targetRole).toBe("crm_agent");
+    expect(classification.intent).toBe("review_account_workspace");
+    expect(toolCall).toEqual({
+      name: RaiToolName.GetCrmAccountWorkspace,
+      payload: {
+        accountId: undefined,
+        query: "Сысои",
+      },
+    });
+  });
+
+  it("классифицирует вопрос про директора как CRM workspace review и извлекает название контрагента", () => {
+    const classification = classifyByAgentContracts(
+      "Как зовут директора Сысои?",
+      {
+        route: "/consulting/dashboard",
+      },
+    );
+
+    const toolCall = buildAutoToolCallFromContracts(
+      {
+        message: "Как зовут директора Сысои?",
+        workspaceContext: {
+          route: "/consulting/dashboard",
+        },
+      },
+      classification,
+    );
+
+    expect(classification.targetRole).toBe("crm_agent");
+    expect(classification.intent).toBe("review_account_workspace");
+    expect(toolCall).toEqual({
+      name: RaiToolName.GetCrmAccountWorkspace,
+      payload: {
+        accountId: undefined,
+        query: "Сысои",
+      },
+    });
+  });
+
   it("классифицирует front-office разбор диалога", () => {
     const result = classifyByAgentContracts(
       "Определи, это задача или просто общение",

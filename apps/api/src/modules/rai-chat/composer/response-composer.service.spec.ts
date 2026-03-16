@@ -287,5 +287,151 @@ describe("ResponseComposerService", () => {
         summary: expect.stringContaining("DOG-001"),
       }),
     );
+    expect(response.widgets).toEqual([]);
+  });
+
+  it("не подмешивает route-based widgets в обычный ответ агента", async () => {
+    widgetBuilderMock.build.mockReturnValueOnce([
+      {
+        schemaVersion: "1.0",
+        type: "DeviationList",
+        version: 1,
+        payload: {
+          title: "Отклонения по маршруту consulting / execution",
+          items: [],
+        },
+      },
+    ]);
+
+    const response = await service.buildResponse({
+      request: {
+        message: "открой карточку Сысои",
+        threadId: "th-crm-1",
+        workspaceContext: { route: "/consulting/techmaps/new" },
+      },
+      executionResult: {
+        executedTools: [],
+        agentExecution: {
+          role: "crm_agent",
+          text: "Открываю карточку контрагента ООО \"СЫСОИ\".",
+          fallbackUsed: false,
+          validation: { actionAllowed: true, explain: "" },
+          outputContractVersion: "v1",
+          toolCalls: [],
+          confidence: 0.91,
+          evidence: [],
+          structuredOutput: null,
+          status: "COMPLETED",
+        },
+      } as any,
+      recallResult: {
+        recall: { items: [] },
+        profile: {},
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-crm-1",
+      threadId: "th-crm-1",
+      companyId: "company-1",
+    });
+
+    expect(widgetBuilderMock.build).not.toHaveBeenCalled();
+    expect(response.widgets).toEqual([]);
+    expect(response.text).toContain("Открываю карточку");
+  });
+
+  it("не рисует route fallback widgets, когда инструмент завершился ошибкой", async () => {
+    widgetBuilderMock.build.mockReturnValueOnce([
+      {
+        schemaVersion: "1.0",
+        type: "DeviationList",
+        version: 1,
+        payload: {
+          title: "Отклонения по маршруту consulting / dashboard",
+          items: [],
+        },
+      },
+    ]);
+
+    const response = await service.buildResponse({
+      request: {
+        message: "открой карточку Сысои",
+        threadId: "th-crm-err-1",
+        workspaceContext: { route: "/consulting/dashboard" },
+      },
+      executionResult: {
+        executedTools: [
+              {
+                name: RaiToolName.GetCrmAccountWorkspace,
+                result: {
+                  toolExecutionError: true,
+                  code: "NotFoundException",
+                  message: "ACCOUNT_AND_PARTY_NOT_FOUND:Сысои",
+                },
+              },
+            ],
+      } as any,
+      recallResult: {
+        recall: { items: [] },
+        profile: {},
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-crm-err-1",
+      threadId: "th-crm-err-1",
+      companyId: "company-1",
+    });
+
+    expect(response.widgets).toEqual([]);
+    expect(response.text).toContain("не найден операционный аккаунт");
+  });
+
+  it("для review_account_workspace ведет в карточку контрагента, а не в общий CRM-дашборд", async () => {
+    const response = await service.buildResponse({
+      request: {
+        message: "открой карточку Сысои",
+        threadId: "th-crm-route-1",
+        workspaceContext: { route: "/consulting/dashboard" },
+      },
+      executionResult: {
+        executedTools: [
+          {
+            name: RaiToolName.GetCrmAccountWorkspace,
+            result: {
+              account: {
+                id: "acc-1",
+                name: 'ООО "СЫСОИ"',
+              },
+              linkedParty: {
+                id: "party-1",
+                legalName: 'ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ "СЫСОИ"',
+              },
+              contacts: [],
+              interactions: [],
+              obligations: [],
+              risks: [],
+              documents: [],
+              legalEntities: [],
+            },
+          },
+        ],
+      } as any,
+      recallResult: {
+        recall: { items: [] },
+        profile: {},
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-crm-route-1",
+      threadId: "th-crm-route-1",
+      companyId: "company-1",
+    });
+
+    const structuredWindow = response.workWindows?.find((window) => window.type === "structured_result");
+    const structuredRouteAction = structuredWindow?.actions?.find((action) => action.kind === "open_route");
+    expect(structuredRouteAction?.targetRoute).toBe("/parties/party-1");
+    expect(structuredRouteAction?.label).toBe("Открыть карточку контрагента");
+
+    const signalWindow = response.workWindows?.find((window) => window.type === "related_signals");
+    const signalRouteAction = signalWindow?.actions?.find((action) => action.kind === "open_route");
+    expect(signalRouteAction?.targetRoute).toBe("/parties/party-1");
+    expect(signalRouteAction?.label).toBe("Открыть карточку контрагента");
   });
 });

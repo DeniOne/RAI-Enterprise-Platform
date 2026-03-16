@@ -155,8 +155,8 @@ export default function PlanDetailsPage({ params }: { params: { id: string } }) 
                     <p className='text-sm text-gray-500'>План, связанный с подготовкой и исполнением техкарты.</p>
                 </div>
                 <div className='flex items-center gap-3'>
-                    <Link href='/consulting/techmaps/demo' className='text-sm text-blue-600 hover:underline'>
-                        Демо-поток
+                    <Link href='/consulting/techmaps/new' className='text-sm text-blue-600 hover:underline'>
+                        Мастер техкарты
                     </Link>
                     <Link href='/consulting/plans' className='text-sm text-blue-600 hover:underline'>
                         {'<- Назад к планам'}

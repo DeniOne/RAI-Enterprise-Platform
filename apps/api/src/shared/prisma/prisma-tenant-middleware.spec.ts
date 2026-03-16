@@ -3,10 +3,14 @@ import { PrismaService } from "./prisma.service";
 describe("PrismaService tenant isolation ($extends)", () => {
   const originalMode = process.env.TENANT_MIDDLEWARE_MODE;
   const originalCohort = process.env.TENANT_ENFORCE_COHORT;
+  const originalDualKeyMode = process.env.TENANT_DUAL_KEY_MODE;
+  const originalDualKeyEnforceModels = process.env.TENANT_DUAL_KEY_ENFORCE_MODELS;
 
   afterEach(() => {
     process.env.TENANT_MIDDLEWARE_MODE = originalMode;
     process.env.TENANT_ENFORCE_COHORT = originalCohort;
+    process.env.TENANT_DUAL_KEY_MODE = originalDualKeyMode;
+    process.env.TENANT_DUAL_KEY_ENFORCE_MODELS = originalDualKeyEnforceModels;
     jest.restoreAllMocks();
   });
 
@@ -74,5 +78,23 @@ describe("PrismaService tenant isolation ($extends)", () => {
     expect(scopedModels.has("ExpertReview")).toBe(true);
     expect(scopedModels.has("PendingAction")).toBe(true);
     expect(scopedModels.has("AgentConfigChangeRequest")).toBe(true);
+  });
+
+  it("enforces only configured dual-key models in shadow mode", async () => {
+    process.env.TENANT_DUAL_KEY_MODE = "shadow";
+    process.env.TENANT_DUAL_KEY_ENFORCE_MODELS =
+      "FrontOfficeThread,FrontOfficeThreadMessage,FrontOfficeHandoffRecord,FrontOfficeThreadParticipantState";
+
+    const { service } = await bootstrap("shadow", "c1");
+
+    expect(
+      (service as any).shouldUseTenantGuardForModel("FrontOfficeThread"),
+    ).toBe(true);
+    expect(
+      (service as any).shouldUseTenantGuardForModel("FrontOfficeThreadMessage"),
+    ).toBe(true);
+    expect(
+      (service as any).shouldUseTenantGuardForModel("RuntimeGovernanceEvent"),
+    ).toBe(false);
   });
 });

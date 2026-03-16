@@ -13,6 +13,7 @@ import { ContextAcquisitionWindow } from './ContextAcquisitionWindow';
 import { ContextHintWindow } from './ContextHintWindow';
 import { RelatedSignalsWindow } from './RelatedSignalsWindow';
 import { StructuredResultWindow } from './StructuredResultWindow';
+import { pushRouteWithHardFallback } from './navigation-fallback';
 
 export function RaiOutputOverlay() {
     const router = useRouter();
@@ -90,9 +91,7 @@ export function RaiOutputOverlay() {
                 return;
             case 'go_to_techmap':
             case 'open_route':
-                if (action.targetRoute) {
-                    router.push(action.targetRoute);
-                }
+                pushRouteWithHardFallback(router, action.targetRoute);
                 return;
             case 'open_entity':
                 if (action.entityType === 'field' && action.entityId) {

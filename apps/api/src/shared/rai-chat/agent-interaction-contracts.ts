@@ -900,13 +900,23 @@ const CANONICAL_RESPONSIBILITY_PROFILES: Record<AgentContractRole, AgentResponsi
         role: "crm_agent",
         description: "Показать рабочее пространство аккаунта: контакты, взаимодействия, риски и обязательства.",
         taskFamily: "crm_workspace_review",
-        triggerHints: ["карточк", "workspace", "профиль клиента", "crm карточк", "контакты"],
+        triggerHints: [
+          "карточк",
+          "workspace",
+          "профиль клиента",
+          "crm карточк",
+          "контакты",
+          "директор",
+          "руководитель",
+          "как зовут директора",
+        ],
         toolName: RaiToolName.GetCrmAccountWorkspace,
         outputMode: "analysis",
         requiredContextKeys: [],
         optionalContextKeys: [],
         allowedWithoutContext: true,
-        keywordsPattern: /карточк|workspace|профил|контакты|обязательств|истор/i,
+        keywordsPattern:
+          /карточк|workspace|профил|контакты|обязательств|истор|директор|гендир|руководител|как\s+зовут|кто\s+(?:директор|гендир|руководител)/i,
         routeHints: { includesAny: ["crm", "account", "parties"] },
         classificationReason: "responsibility:crm:review_account_workspace",
         classificationConfidence: 0.68,
@@ -2052,6 +2062,41 @@ function extractQuotedFragment(message: string): string | undefined {
   return match?.[1]?.trim() || undefined;
 }
 
+function extractCrmWorkspaceQuery(message: string): string | undefined {
+  const explicit = extractQuotedFragment(message);
+  if (explicit) {
+    return explicit;
+  }
+
+  const directorQuestionMatch = message.match(
+    /^(?:кто|как\s+зовут)\s+(?:у\s+)?(?:генеральн(?:ый|ого)\s+)?(?:директор(?:а|у|ом)?|гендир(?:ектор)?(?:а|у|ом)?|руководител(?:я|ь))\s+(.+?)\??$/iu,
+  );
+  if (directorQuestionMatch?.[1]) {
+    const companyQuery = directorQuestionMatch[1]
+      .replace(/^(?:в|у|для)\s+/iu, "")
+      .replace(/[«»"]/g, "")
+      .trim();
+    if (companyQuery.length >= 2) {
+      return companyQuery;
+    }
+  }
+
+  const cleaned = message
+    .replace(/^(открой|открыть|покажи|показать)\s+/i, "")
+    .replace(
+      /^(?:кто|как\s+зовут)\s+(?:у\s+)?(?:генеральн(?:ый|ого)\s+)?(?:директор(?:а|у|ом)?|гендир(?:ектор)?(?:а|у|ом)?|руководител(?:я|ь))\s+/iu,
+      "",
+    )
+    .replace(/(?:^|\s)(card|workspace)(?=\s|$)/gi, " ")
+    .replace(/(?:^|\s)(crm|карточк(?:у|а|и|е|ой)?|контрагента|контрагент|клиента|клиент|аккаунта|аккаунт|профиль)(?=\s|$)/gi, " ")
+    .replace(/[«»"]/g, "")
+    .replace(/[?.!]+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return cleaned.length >= 2 ? cleaned : undefined;
+}
+
 function extractCrmPersonName(message: string): { firstName?: string; lastName?: string } {
   const explicit = extractQuotedFragment(message);
   if (explicit) {
@@ -2282,16 +2327,21 @@ export function buildAutoToolCallFromContracts(
           inn: innMatch?.[0],
         },
       };
-    case "review_account_workspace":
-      if (!selectedRowId) {
+    case "review_account_workspace": {
+      const workspaceQuery = selectedRowId
+        ? undefined
+        : extractCrmWorkspaceQuery(request.message);
+      if (!selectedRowId && !workspaceQuery) {
         return null;
       }
       return {
         name: intentContract.toolName,
         payload: {
           accountId: selectedRowId,
+          query: workspaceQuery,
         },
       };
+    }
     case "update_account_profile":
       if (!selectedRowId) {
         return null;

@@ -21,8 +21,15 @@
 - [x] создан первичный `Tenant` + `TenantCompanyBinding` + `TenantState`;
 - [x] null-backlog по `FrontOfficeThread` family обнулен;
 - [x] shadow-validation подтвержден с `0` mismatch и `0` null rows.
+- [x] Выпущен cutover runbook `DB_FRONT_OFFICE_TENANT_WAVE_CUTOVER.md`.
+- [x] Прогнан shadow-read compare: `DB_FRONT_OFFICE_SHADOW_COMPARE.md = PASS`.
+- [x] В `PrismaService` добавлен partial read cutover через `TENANT_DUAL_KEY_ENFORCE_MODELS`.
+- [x] Auth boundary теперь резолвит фактический `tenantId` через `TenantIdentityResolverService`.
+- [x] Выполнен runtime cutover + rollback smoke drill: `DB_FRONT_OFFICE_CUTOVER_DRILL.md = VERIFIED`.
+- [x] Выпущен журнал live-window: `DB_FRONT_OFFICE_OBSERVATION_24H.md`.
+- [x] Подготовлен final closeout artifact: `DB_FRONT_OFFICE_WAVE_CLOSEOUT.md`.
 
 ## Residual
 
-- [ ] Enforce cutover для `FrontOfficeThread` family еще не включен.
+- [ ] `Phase 7 Wave 1: end-to-end packet complete, awaiting formal closeout after 24h live observation.`
 - [ ] Core aggregates (`Season|HarvestPlan|TechMap|Task`) по-прежнему не мигрировались.

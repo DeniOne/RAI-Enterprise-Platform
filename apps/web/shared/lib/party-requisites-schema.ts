@@ -57,5 +57,15 @@ export function getPartyRequisiteValue(
     );
   }
 
-  return registrationData?.[key] || '—';
+  const directValue = registrationData?.[key];
+  if (typeof directValue === 'string' && directValue.trim().length > 0) {
+    return directValue;
+  }
+
+  const nestedValue = registrationData?.requisites?.[key as keyof NonNullable<PartyRegistrationData['requisites']>];
+  if (typeof nestedValue === 'string' && nestedValue.trim().length > 0) {
+    return nestedValue;
+  }
+
+  return '—';
 }

@@ -61,7 +61,7 @@ export function FarmDetailsPage({ farmId }: { farmId: string }) {
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-      <PageHeader title={farm.name} description="Карточка хозяйства" />
+      <PageHeader title={farm.name} description="Карточка хозяйства" action={{ label: '+ Новое поле', href: '/assets/fields/new' }} />
       <EntityCard title="Данные хозяйства">
         <Tabs defaultValue="profile">
           <TabsList>

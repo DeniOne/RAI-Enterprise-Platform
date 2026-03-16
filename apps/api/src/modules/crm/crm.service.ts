@@ -276,6 +276,51 @@ export class CrmService {
     });
   }
 
+  async resolveWorkspaceAccountId(
+    payload: { accountId?: string; query?: string },
+    companyId: string,
+  ): Promise<string> {
+    const explicitAccountId = String(payload.accountId || "").trim();
+    if (explicitAccountId) {
+      return explicitAccountId;
+    }
+
+    const query = String(payload.query || "").trim();
+    if (!query) {
+      throw new BadRequestException("accountId or query is required");
+    }
+
+    const matches = await this.getAccounts(companyId, { search: query });
+    if (matches.length === 0) {
+      return this.resolveWorkspaceAccountIdFromParty(query, companyId);
+    }
+
+    const normalizedQuery = this.normalizeWorkspaceSearchValue(query);
+    const exactMatch = matches.find((account) =>
+      this.normalizeWorkspaceSearchValue(account.name) === normalizedQuery ||
+      String(account.inn || "").trim() === query,
+    );
+    if (exactMatch) {
+      return exactMatch.id;
+    }
+
+    if (matches.length === 1) {
+      return matches[0].id;
+    }
+
+    const startsWithMatches = matches.filter(
+      (account) =>
+        this.normalizeWorkspaceSearchValue(account.name).startsWith(normalizedQuery),
+    );
+    if (startsWithMatches.length === 1) {
+      return startsWithMatches[0].id;
+    }
+
+    throw new BadRequestException(
+      `Найдено несколько CRM-аккаунтов по запросу "${query}". Уточните название или откройте карточку из реестра.`,
+    );
+  }
+
   async getAccountDetails(accountId: string, companyId: string) {
     const account = await this.prisma.account.findFirst({
       where: { id: accountId, companyId },
@@ -308,6 +353,8 @@ export class CrmService {
     if (!account) {
       throw new NotFoundException(`Account ${accountId} not found`);
     }
+
+    const linkedParty = await this.findLinkedPartyForAccount(account, companyId);
 
     const legalEntities = account.holdingId
       ? await this.prisma.account.findMany({
@@ -468,6 +515,7 @@ export class CrmService {
 
     return {
       account,
+      linkedParty,
       legalEntities,
       contacts,
       interactions,
@@ -492,6 +540,169 @@ export class CrmService {
         ndviState: "NO_DATA",
       },
     };
+  }
+
+  private async findLinkedPartyForAccount(
+    account: { id: string; name: string; inn?: string | null },
+    companyId: string,
+  ): Promise<{ id: string; legalName: string; shortName?: string | null; inn?: string } | null> {
+    const accountName = String(account.name || "").trim();
+    if (!accountName) {
+      return null;
+    }
+
+    const partyMatches = await this.prisma.party.findMany({
+      where: {
+        companyId,
+        OR: [
+          { legalName: { contains: accountName, mode: "insensitive" } },
+          { shortName: { contains: accountName, mode: "insensitive" } },
+        ],
+      },
+      select: {
+        id: true,
+        legalName: true,
+        shortName: true,
+        registrationData: true,
+      },
+      take: 25,
+    });
+
+    if (partyMatches.length === 0) {
+      return null;
+    }
+
+    const accountInn = typeof account.inn === "string" ? account.inn.trim() : "";
+    const matchByInn = accountInn
+      ? partyMatches.find((party) => this.extractPartyInn(party.registrationData) === accountInn)
+      : undefined;
+
+    const normalizedName = this.normalizeWorkspaceSearchValue(accountName);
+    const matchByName = partyMatches.find(
+      (party) =>
+        this.normalizeWorkspaceSearchValue(party.legalName) === normalizedName ||
+        this.normalizeWorkspaceSearchValue(party.shortName ?? "") === normalizedName,
+    );
+
+    const selected = matchByInn ?? matchByName ?? (partyMatches.length === 1 ? partyMatches[0] : null);
+    if (!selected) {
+      return null;
+    }
+
+    return {
+      id: selected.id,
+      legalName: selected.legalName,
+      shortName: selected.shortName,
+      inn: this.extractPartyInn(selected.registrationData),
+    };
+  }
+
+  private normalizeWorkspaceSearchValue(value: string): string {
+    return value
+      .trim()
+      .replace(/["«»']/g, "")
+      .replace(/\s+/g, " ")
+      .toLowerCase();
+  }
+
+  private async resolveWorkspaceAccountIdFromParty(
+    query: string,
+    companyId: string,
+  ): Promise<string> {
+    const partyMatches = await this.prisma.party.findMany({
+      where: {
+        companyId,
+        OR: [
+          { legalName: { contains: query, mode: "insensitive" } },
+          { shortName: { contains: query, mode: "insensitive" } },
+        ],
+      },
+      select: {
+        id: true,
+        legalName: true,
+        shortName: true,
+        registrationData: true,
+      },
+      take: 25,
+    });
+
+    if (partyMatches.length === 0) {
+      throw new NotFoundException(
+        `ACCOUNT_AND_PARTY_NOT_FOUND:${query}`,
+      );
+    }
+
+    const normalizedQuery = this.normalizeWorkspaceSearchValue(query);
+    const exactPartyMatch = partyMatches.find(
+      (party) =>
+        this.normalizeWorkspaceSearchValue(party.legalName) === normalizedQuery ||
+        this.normalizeWorkspaceSearchValue(party.shortName ?? "") === normalizedQuery,
+    );
+    const selectedParty = exactPartyMatch ?? (partyMatches.length === 1 ? partyMatches[0] : null);
+
+    if (!selectedParty) {
+      throw new BadRequestException(
+        `Найдено несколько контрагентов по запросу "${query}". Уточните название или выберите карточку в реестре.`,
+      );
+    }
+
+    const partyInn = this.extractPartyInn(selectedParty.registrationData);
+    if (partyInn) {
+      const existingByInn = await this.prisma.account.findFirst({
+        where: {
+          companyId,
+          inn: partyInn,
+        },
+        select: { id: true },
+      });
+      if (existingByInn) {
+        return existingByInn.id;
+      }
+    }
+
+    const accountName = String(selectedParty.shortName || selectedParty.legalName).trim();
+    const existingByName = await this.prisma.account.findFirst({
+      where: {
+        companyId,
+        name: {
+          equals: accountName,
+          mode: "insensitive",
+        },
+      },
+      select: { id: true },
+    });
+    if (existingByName) {
+      return existingByName.id;
+    }
+
+    const created = await this.createAccount(
+      {
+        name: accountName,
+        inn: partyInn,
+        type: "CLIENT",
+      },
+      companyId,
+    );
+    return created.id;
+  }
+
+  private extractPartyInn(registrationData: unknown): string | undefined {
+    if (!registrationData || typeof registrationData !== "object") {
+      return undefined;
+    }
+
+    const data = registrationData as Record<string, unknown>;
+    const directInn = typeof data.inn === "string" ? data.inn.trim() : "";
+    if (directInn.length > 0) {
+      return directInn;
+    }
+
+    const requisites =
+      data.requisites && typeof data.requisites === "object"
+        ? (data.requisites as Record<string, unknown>)
+        : null;
+    const reqInn = requisites && typeof requisites.inn === "string" ? requisites.inn.trim() : "";
+    return reqInn.length > 0 ? reqInn : undefined;
   }
 
   async updateAccountProfile(

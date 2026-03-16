@@ -75,3 +75,29 @@ export interface PartyDataProvenance {
   fetchedAt: string;
   requestKey: string;
 }
+
+export interface BankLookupResult {
+  bic: string;
+  swift?: string;
+  corrAccount?: string;
+  bankName: string;
+  shortName?: string;
+  paymentName?: string;
+  inn?: string;
+  kpp?: string;
+  address?: string;
+  status?: string;
+  registrationDate?: string;
+  liquidationDate?: string;
+  opfType?: string;
+  type?: string;
+}
+
+export interface BankLookupResponse {
+  status: PartyLookupStatus;
+  source: 'DADATA' | 'STUB' | 'UNKNOWN';
+  fetchedAt: string;
+  requestKey: string;
+  result?: BankLookupResult;
+  error?: string;
+}

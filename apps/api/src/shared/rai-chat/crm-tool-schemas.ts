@@ -57,8 +57,9 @@ export const createCrmAccountSchema: ObjectSchema<CreateCrmAccountPayload> =
 
 export const getCrmAccountWorkspaceSchema: ObjectSchema<GetCrmAccountWorkspacePayload> =
   Joi.object<GetCrmAccountWorkspacePayload>({
-    accountId: Joi.string().trim().max(128).required(),
-  });
+    accountId: Joi.string().trim().max(128).optional(),
+    query: Joi.string().trim().max(255).optional(),
+  }).or("accountId", "query");
 
 export const updateCrmAccountSchema: ObjectSchema<UpdateCrmAccountPayload> =
   Joi.object<UpdateCrmAccountPayload>({
