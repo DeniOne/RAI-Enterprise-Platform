@@ -1,5 +1,10 @@
 # Task: RAI_EP
 
+## Git Sync & Documentation Update (2026-03-16) ✅
+- [x] Выполнен пуш всех накопленных изменений в `main`.
+- [x] Актуализированы планы по Front Office и Agent Runtime.
+- [x] Обновлен Memory Bank (`progress.md`, `activeContext.md`).
+
 ## A_RAI S23 — Live API Smoke (APPROVED)
 - [x] Поднять live HTTP smoke harness для `apps/api`
 - [x] Подтвердить ключевые Stage 2 маршруты через реальные API-вызовы
