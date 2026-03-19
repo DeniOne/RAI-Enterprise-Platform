@@ -41,6 +41,15 @@ describe("IntentRouterService", () => {
     expect(r.confidence).toBe(0.7);
   });
 
+  it("does not classify read-only techmap request as draft intent", () => {
+    const r = service.classify("покажи все техкарты", {
+      route: "/consulting/techmaps",
+    });
+    expect(r.toolName).toBeNull();
+    expect(r.intent).toBeNull();
+    expect(r.reason).toBe("no_match");
+  });
+
   it("returns null intent for unknown message", () => {
     const r = service.classify("какая погода завтра?");
     expect(r.toolName).toBeNull();

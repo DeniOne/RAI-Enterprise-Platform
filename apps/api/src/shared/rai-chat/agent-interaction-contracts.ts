@@ -217,13 +217,22 @@ const CANONICAL_RESPONSIBILITY_PROFILES: Record<AgentContractRole, AgentResponsi
         role: "agronomist",
         description: "Prepare a draft technology map for the selected field and season.",
         taskFamily: "tech_map_draft",
-        triggerHints: ["техкарт", "techmap", "сделай карту"],
+        triggerHints: [
+          "создай техкарту",
+          "сделай техкарту",
+          "составь техкарту",
+          "подготовь техкарту",
+          "черновик техкарты",
+          "create techmap",
+          "draft techmap",
+        ],
         toolName: RaiToolName.GenerateTechMapDraft,
         outputMode: "clarification",
         requiredContextKeys: ["fieldRef", "seasonRef"],
         optionalContextKeys: [],
         allowedWithoutContext: false,
-        keywordsPattern: /техкарт|techmap|сделай карту/i,
+        keywordsPattern:
+          /((созд(ай|ать)|сдела(й|ть)|состав(ь|ить)|подготов(ь|ить)|сгенерируй|черновик).{0,40}(техкарт|techmap))|((техкарт|techmap).{0,40}(созд(ай|ать)|сдела(й|ть)|состав(ь|ить)|подготов(ь|ить)|draft))/i,
         routeHints: { includesAny: ["techmaps", "field"] },
         classificationReason: "responsibility:agronomy:tech_map_draft",
         classificationConfidence: 0.7,
@@ -1809,11 +1818,35 @@ function scoreIntentMatch(
   normalized: string,
   route: string,
 ): number {
+  const keywordMatched = Boolean(contract.keywordsPattern?.test(normalized));
+  const hintMatches = contract.triggerHints.filter((hint) =>
+    normalized.includes(hint.toLowerCase()),
+  ).length;
+
+  // Route/context hints cannot classify intent without lexical signal.
+  if (!keywordMatched && hintMatches === 0) {
+    return 0;
+  }
+
+  if (contract.id === "tech_map_draft") {
+    const mentionsTechMap = /(техкарт|techmap)/i.test(normalized);
+    const hasCreateSignal =
+      /(созд(ай|ать)|сдела(й|ть)|состав(ь|ить)|подготов(ь|ить)|сгенерируй|черновик|draft)/i.test(
+        normalized,
+      );
+    const hasReadSignal =
+      /(покаж|спис|все|какие|посмотр|найд|открой|где|выведи)/i.test(
+        normalized,
+      );
+    if (mentionsTechMap && hasReadSignal && !hasCreateSignal) {
+      return 0;
+    }
+  }
+
   let score = 0;
-  if (contract.keywordsPattern?.test(normalized)) {
+  if (keywordMatched) {
     score += 10;
   }
-  const hintMatches = contract.triggerHints.filter((hint) => normalized.includes(hint.toLowerCase())).length;
   score += hintMatches * 2;
   if (contract.routeHints?.includesAny?.some((hint) => route.includes(hint.toLowerCase()))) {
     score += 3;
