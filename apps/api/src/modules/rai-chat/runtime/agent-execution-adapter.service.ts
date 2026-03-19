@@ -57,6 +57,9 @@ interface ExecuteAdapterParams {
   budgetDecision: RuntimeBudgetDecision;
 }
 
+type ExecutionPath = "tool_call_primary" | "heuristic_fallback";
+type AgronomIntent = "compute_deviations" | "generate_tech_map_draft";
+
 @Injectable()
 export class AgentExecutionAdapterService {
   constructor(
@@ -90,15 +93,44 @@ export class AgentExecutionAdapterService {
 
     if (adapterRole === "agronomist") {
       const payload = firstPayload(params.allowedToolCalls);
+      const routing = this.resolveAgronomIntent(
+        params.allowedToolCalls,
+        params.request.message,
+      );
+
+      if (!routing.intent) {
+        return {
+          role: params.request.role,
+          status: "NEEDS_MORE_DATA",
+          executionPath: "heuristic_fallback",
+          text: "Уточните действие: показать отклонения или подготовить черновик техкарты.",
+          structuredOutput: {
+            data: {},
+            missingContext: ["intent"],
+            routingReason: "no_safe_agronom_intent",
+          },
+          toolCalls: [],
+          connectorCalls: [],
+          evidence: [],
+          validation: this.validateOutput(
+            params.kernel,
+            [],
+            true,
+            "NEEDS_MORE_DATA",
+            true,
+          ),
+          runtimeBudget: params.budgetDecision,
+          fallbackUsed: true,
+          outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
+          auditPayload,
+        };
+      }
+
       const result = await this.agronomAgent.run(
         {
           companyId: params.actorContext.companyId,
           traceId: params.request.traceId,
-          intent:
-            params.request.message.toLowerCase().includes("отклон") ||
-              params.allowedToolCalls.some((call) => call.name === RaiToolName.ComputeDeviations)
-              ? "compute_deviations"
-              : "generate_tech_map_draft",
+          intent: routing.intent,
           fieldRef: typeof payload.fieldRef === "string" ? payload.fieldRef : undefined,
           seasonRef: typeof payload.seasonRef === "string" ? payload.seasonRef : undefined,
           crop: payload.crop === "sunflower" ? "sunflower" : "rapeseed",
@@ -112,23 +144,26 @@ export class AgentExecutionAdapterService {
       return {
         role: params.request.role,
         status: result.status,
+        executionPath: routing.executionPath,
         text: result.explain,
         structuredOutput: {
           data: result.data,
           missingContext: result.missingContext,
           mathBasis: result.mathBasis ?? [],
+          intent: routing.intent,
         },
-        toolCalls: [
-          {
-            name:
-              result.toolCallsCount > 0 &&
-                (params.request.message.toLowerCase().includes("отклон") ||
-                  params.allowedToolCalls.some((call) => call.name === RaiToolName.ComputeDeviations))
-                ? RaiToolName.ComputeDeviations
-                : RaiToolName.GenerateTechMapDraft,
-            result: result.data,
-          },
-        ],
+        toolCalls:
+          result.toolCallsCount > 0
+            ? [
+                {
+                  name:
+                    routing.intent === "compute_deviations"
+                      ? RaiToolName.ComputeDeviations
+                      : RaiToolName.GenerateTechMapDraft,
+                  result: result.data,
+                },
+              ]
+            : [],
         connectorCalls: [],
         evidence: result.evidence,
         validation: this.validateOutput(
@@ -139,7 +174,8 @@ export class AgentExecutionAdapterService {
           result.status === "NEEDS_MORE_DATA",
         ),
         runtimeBudget: params.budgetDecision,
-        fallbackUsed: result.fallbackUsed,
+        fallbackUsed:
+          result.fallbackUsed || routing.executionPath === "heuristic_fallback",
         outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
       };
@@ -147,6 +183,7 @@ export class AgentExecutionAdapterService {
 
     if (adapterRole === "economist") {
       const payload = firstPayload(params.allowedToolCalls);
+      const executionPath = this.resolveExecutionPath(params.allowedToolCalls);
       const result = await this.economistAgent.run(
         {
           companyId: params.actorContext.companyId,
@@ -166,9 +203,13 @@ export class AgentExecutionAdapterService {
       return {
         role: params.request.role,
         status: result.status,
+        executionPath,
         text: result.explain,
         structuredOutput: { data: result.data, missingContext: result.missingContext },
-        toolCalls: [{ name: detectEconomistTool(params.allowedToolCalls), result: result.data }],
+        toolCalls:
+          result.toolCallsCount > 0
+            ? [{ name: detectEconomistTool(params.allowedToolCalls), result: result.data }]
+            : [],
         connectorCalls: [],
         evidence: result.evidence,
         validation: this.validateOutput(
@@ -179,13 +220,15 @@ export class AgentExecutionAdapterService {
           result.status === "NEEDS_MORE_DATA",
         ),
         runtimeBudget: params.budgetDecision,
-        fallbackUsed: result.fallbackUsed,
+        fallbackUsed:
+          result.fallbackUsed || executionPath === "heuristic_fallback",
         outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
       };
     }
 
     if (adapterRole === "knowledge") {
+      const executionPath = this.resolveExecutionPath(params.allowedToolCalls);
       const result = await this.knowledgeAgent.run(
         {
           companyId: params.actorContext.companyId,
@@ -197,9 +240,13 @@ export class AgentExecutionAdapterService {
       return {
         role: params.request.role,
         status: result.status,
+        executionPath,
         text: result.explain,
         structuredOutput: { data: result.data },
-        toolCalls: [{ name: RaiToolName.QueryKnowledge, result: result.data }],
+        toolCalls:
+          result.toolCallsCount > 0
+            ? [{ name: RaiToolName.QueryKnowledge, result: result.data }]
+            : [],
         connectorCalls: [],
         evidence: result.evidence,
         validation: this.validateOutput(
@@ -210,7 +257,8 @@ export class AgentExecutionAdapterService {
           isKnowledgeNoHit(result.data),
         ),
         runtimeBudget: params.budgetDecision,
-        fallbackUsed: result.fallbackUsed,
+        fallbackUsed:
+          result.fallbackUsed || executionPath === "heuristic_fallback",
         outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
       };
@@ -218,6 +266,7 @@ export class AgentExecutionAdapterService {
 
     if (adapterRole === "crm_agent") {
       const payload = firstPayload(params.allowedToolCalls);
+      const executionPath = this.resolveExecutionPath(params.allowedToolCalls);
       const intent = detectCrmIntent(params.allowedToolCalls, params.request.message);
       const result = await this.crmAgent.run(
         {
@@ -395,18 +444,22 @@ export class AgentExecutionAdapterService {
       return {
         role: params.request.role,
         status: result.status,
+        executionPath,
         text: result.explain,
         structuredOutput: {
           data: result.data,
           missingContext: result.missingContext,
           intent,
         },
-        toolCalls: [
-          {
-            name: detectCrmTool(params.allowedToolCalls, intent),
-            result: result.data,
-          },
-        ],
+        toolCalls:
+          result.toolCallsCount > 0
+            ? [
+                {
+                  name: detectCrmTool(params.allowedToolCalls, intent),
+                  result: result.data,
+                },
+              ]
+            : [],
         connectorCalls: [],
         evidence: result.evidence,
         validation: this.validateOutput(
@@ -417,7 +470,8 @@ export class AgentExecutionAdapterService {
           result.status === "NEEDS_MORE_DATA",
         ),
         runtimeBudget: params.budgetDecision,
-        fallbackUsed: result.fallbackUsed,
+        fallbackUsed:
+          result.fallbackUsed || executionPath === "heuristic_fallback",
         outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
       };
@@ -425,6 +479,7 @@ export class AgentExecutionAdapterService {
 
     if (adapterRole === "front_office_agent") {
       const payload = firstPayload(params.allowedToolCalls);
+      const executionPath = this.resolveExecutionPath(params.allowedToolCalls);
       const intent = detectFrontOfficeIntent(params.allowedToolCalls);
       const result = await this.frontOfficeAgent.run(
         {
@@ -470,17 +525,21 @@ export class AgentExecutionAdapterService {
       return {
         role: params.request.role,
         status: result.status,
+        executionPath,
         text: result.explain,
         structuredOutput: {
           data: result.data,
           intent,
         },
-        toolCalls: [
-          {
-            name: detectFrontOfficeTool(params.allowedToolCalls, intent),
-            result: result.data,
-          },
-        ],
+        toolCalls:
+          result.toolCallsCount > 0
+            ? [
+                {
+                  name: detectFrontOfficeTool(params.allowedToolCalls, intent),
+                  result: result.data,
+                },
+              ]
+            : [],
         connectorCalls: [],
         evidence: result.evidence,
         validation: this.validateOutput(
@@ -491,7 +550,8 @@ export class AgentExecutionAdapterService {
           false,
         ),
         runtimeBudget: params.budgetDecision,
-        fallbackUsed: result.fallbackUsed,
+        fallbackUsed:
+          result.fallbackUsed || executionPath === "heuristic_fallback",
         outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
       };
@@ -499,6 +559,7 @@ export class AgentExecutionAdapterService {
 
     if (adapterRole === "contracts_agent") {
       const payload = firstPayload(params.allowedToolCalls);
+      const executionPath = this.resolveExecutionPath(params.allowedToolCalls);
       const intent = detectContractsIntent(params.allowedToolCalls, params.request.message);
       const result = await this.contractsAgent.run({
         companyId: params.actorContext.companyId,
@@ -610,18 +671,22 @@ export class AgentExecutionAdapterService {
       return {
         role: params.request.role,
         status: result.status,
+        executionPath,
         text: result.explain,
         structuredOutput: {
           data: result.data,
           missingContext: result.missingContext,
           intent,
         },
-        toolCalls: [
-          {
-            name: detectContractsTool(params.allowedToolCalls, intent),
-            result: result.data,
-          },
-        ],
+        toolCalls:
+          result.toolCallsCount > 0
+            ? [
+                {
+                  name: detectContractsTool(params.allowedToolCalls, intent),
+                  result: result.data,
+                },
+              ]
+            : [],
         connectorCalls: [],
         evidence: result.evidence,
         validation: this.validateOutput(
@@ -632,7 +697,8 @@ export class AgentExecutionAdapterService {
           result.status === "NEEDS_MORE_DATA",
         ),
         runtimeBudget: params.budgetDecision,
-        fallbackUsed: result.fallbackUsed,
+        fallbackUsed:
+          result.fallbackUsed || executionPath === "heuristic_fallback",
         outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
       };
@@ -640,6 +706,7 @@ export class AgentExecutionAdapterService {
 
     if (adapterRole === "chief_agronomist") {
       const payload = firstPayload(params.allowedToolCalls);
+      const executionPath = this.resolveExecutionPath(params.allowedToolCalls);
       const result = await this.chiefAgronomistAgent.run(
         {
           companyId: params.actorContext.companyId,
@@ -660,6 +727,7 @@ export class AgentExecutionAdapterService {
       return {
         role: params.request.role,
         status: result.status,
+        executionPath,
         text: result.explain,
         structuredOutput: { data: result.data },
         toolCalls: [], // Expert agents mostly provide synthesis
@@ -673,7 +741,7 @@ export class AgentExecutionAdapterService {
           false,
         ),
         runtimeBudget: params.budgetDecision,
-        fallbackUsed: false,
+        fallbackUsed: executionPath === "heuristic_fallback",
         outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
       };
@@ -681,6 +749,7 @@ export class AgentExecutionAdapterService {
 
     if (adapterRole === "data_scientist") {
       const payload = firstPayload(params.allowedToolCalls);
+      const executionPath = this.resolveExecutionPath(params.allowedToolCalls);
       const domains = Array.isArray(payload.domains)
         ? payload.domains.filter(
             (value): value is "agro" | "economics" | "finance" | "risk" =>
@@ -720,6 +789,7 @@ export class AgentExecutionAdapterService {
       return {
         role: params.request.role,
         status: result.status,
+        executionPath,
         text: result.explain,
         structuredOutput: { data: result.data },
         toolCalls: [],
@@ -733,12 +803,13 @@ export class AgentExecutionAdapterService {
           false,
         ),
         runtimeBudget: params.budgetDecision,
-        fallbackUsed: false,
+        fallbackUsed: executionPath === "heuristic_fallback",
         outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
       };
     }
 
+    const executionPath = this.resolveExecutionPath(params.allowedToolCalls);
     const result = await this.monitoringAgent.run(
       {
         companyId: params.actorContext.companyId,
@@ -749,12 +820,16 @@ export class AgentExecutionAdapterService {
     return {
       role: params.request.role,
       status: result.status,
+      executionPath,
       text: result.explain,
       structuredOutput: {
         alertsEmitted: result.alertsEmitted,
         signalsSnapshot: result.signalsSnapshot ?? {},
       },
-      toolCalls: [{ name: RaiToolName.EmitAlerts, result: result.signalsSnapshot ?? {} }],
+      toolCalls:
+        result.status === "RATE_LIMITED"
+          ? []
+          : [{ name: RaiToolName.EmitAlerts, result: result.signalsSnapshot ?? {} }],
       connectorCalls: [],
       evidence: result.evidence,
       validation: this.validateOutput(
@@ -765,9 +840,59 @@ export class AgentExecutionAdapterService {
         result.status === "RATE_LIMITED" || result.alertsEmitted === 0,
       ),
       runtimeBudget: params.budgetDecision,
-      fallbackUsed: result.fallbackUsed,
+      fallbackUsed: result.fallbackUsed || executionPath === "heuristic_fallback",
       outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
       auditPayload,
+    };
+  }
+
+  private resolveExecutionPath(allowedToolCalls: RaiToolCallDto[]): ExecutionPath {
+    return allowedToolCalls.length > 0
+      ? "tool_call_primary"
+      : "heuristic_fallback";
+  }
+
+  private resolveAgronomIntent(
+    allowedToolCalls: RaiToolCallDto[],
+    message: string,
+  ): { intent: AgronomIntent | null; executionPath: ExecutionPath } {
+    if (allowedToolCalls.some((call) => call.name === RaiToolName.ComputeDeviations)) {
+      return {
+        intent: "compute_deviations",
+        executionPath: "tool_call_primary",
+      };
+    }
+
+    if (allowedToolCalls.some((call) => call.name === RaiToolName.GenerateTechMapDraft)) {
+      return {
+        intent: "generate_tech_map_draft",
+        executionPath: "tool_call_primary",
+      };
+    }
+
+    const normalizedMessage = message.toLowerCase();
+    if (/отклон|deviation/i.test(normalizedMessage)) {
+      return {
+        intent: "compute_deviations",
+        executionPath: "heuristic_fallback",
+      };
+    }
+
+    const mentionsTechMap = /(техкарт|techmap)/i.test(normalizedMessage);
+    const hasCreateSignal =
+      /(созд(ай|ать)|сдела(й|ть)|состав(ь|ить)|подготов(ь|ить)|сгенерируй|черновик|draft)/i.test(
+        normalizedMessage,
+      );
+    if (mentionsTechMap && hasCreateSignal) {
+      return {
+        intent: "generate_tech_map_draft",
+        executionPath: "heuristic_fallback",
+      };
+    }
+
+    return {
+      intent: null,
+      executionPath: "heuristic_fallback",
     };
   }
 

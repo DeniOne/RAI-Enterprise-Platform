@@ -9,6 +9,11 @@ import {
   ContractsAgentIntent,
 } from "../../modules/rai-chat/agents/contracts-agent.service";
 
+const CREATE_ACTION_SIGNAL =
+  /созд(ай|ать)|сдела(й|ть)|добав(ь|ить)|зарегистр|оформ(и|ить)|заключ(и|ить)|сформир|зафиксир|постав(ь|ить)/i;
+const UPDATE_ACTION_SIGNAL = /обнови|измени|правь|перенеси|скорректир/i;
+const DELETE_ACTION_SIGNAL = /удали|убери|снеси|сними/i;
+
 export function isKnowledgeNoHit(data: unknown): boolean {
   if (!data || typeof data !== "object" || Array.isArray(data)) {
     return false;
@@ -48,7 +53,7 @@ export function detectDataScientistIntent(
   ) {
     return "strategy_forecast";
   }
-  return "strategy_forecast";
+  return "seasonal_report";
 }
 
 export function firstPayload(
@@ -118,30 +123,40 @@ export function detectCrmIntent(
 
   const normalized = message.toLowerCase();
   if (/контакт/i.test(normalized)) {
-    return /удали|убери|снеси/i.test(normalized)
+    return DELETE_ACTION_SIGNAL.test(normalized)
       ? "delete_crm_contact"
-      : /обнови|измени|правь/i.test(normalized)
+      : UPDATE_ACTION_SIGNAL.test(normalized)
         ? "update_crm_contact"
-        : "create_crm_contact";
+        : CREATE_ACTION_SIGNAL.test(normalized)
+          ? "create_crm_contact"
+          : "review_account_workspace";
   }
   if (/взаимодейств|звон|встреч|созвон/i.test(normalized)) {
-    return /удали|убери/i.test(normalized)
+    return DELETE_ACTION_SIGNAL.test(normalized)
       ? "delete_crm_interaction"
-      : /обнови|измени|правь/i.test(normalized)
+      : UPDATE_ACTION_SIGNAL.test(normalized)
         ? "update_crm_interaction"
-        : "log_crm_interaction";
+        : CREATE_ACTION_SIGNAL.test(normalized)
+          ? "log_crm_interaction"
+          : "review_account_workspace";
   }
   if (/обязательств|follow up|дедлайн|напомин/i.test(normalized)) {
-    return /удали|убери|сними/i.test(normalized)
+    return DELETE_ACTION_SIGNAL.test(normalized)
       ? "delete_crm_obligation"
-      : /обнови|измени|перенеси/i.test(normalized)
+      : UPDATE_ACTION_SIGNAL.test(normalized)
         ? "update_crm_obligation"
-        : "create_crm_obligation";
+        : CREATE_ACTION_SIGNAL.test(normalized)
+          ? "create_crm_obligation"
+          : "review_account_workspace";
   }
   if (/созд(ай|ать).*(аккаунт|клиент|карточк)|заведи.*аккаунт/i.test(normalized)) {
     return "create_crm_account";
   }
-  if (/инн|контрагент|контрагента|зарегистр/i.test(normalized)) {
+  if (
+    (/инн|контрагент|контрагента|зарегистр/i.test(normalized) &&
+      CREATE_ACTION_SIGNAL.test(normalized)) ||
+    /зарегистр/i.test(normalized)
+  ) {
     return "register_counterparty";
   }
   return "review_account_workspace";
@@ -255,7 +270,7 @@ export function detectContractsIntent(
   if (/подтверд.*оплат/i.test(normalized)) {
     return "confirm_payment";
   }
-  if (/созд(ай|ать).*(платеж|оплат)/i.test(normalized)) {
+  if (CREATE_ACTION_SIGNAL.test(normalized) && /(платеж|оплат)/i.test(normalized)) {
     return "create_payment";
   }
   if (/провед.*счет|опубликуй.*счет|post invoice/i.test(normalized)) {
@@ -264,10 +279,13 @@ export function detectContractsIntent(
   if (/сформир.*счет|созд(ай|ать).*(счет|инвойс)/i.test(normalized)) {
     return "create_invoice_from_fulfillment";
   }
-  if (/зафиксир.*исполн|исполнени|отгрузк|shipment/i.test(normalized)) {
+  if (
+    CREATE_ACTION_SIGNAL.test(normalized) &&
+    /исполнени|отгрузк|shipment/i.test(normalized)
+  ) {
     return "create_fulfillment_event";
   }
-  if (/обязательств/i.test(normalized)) {
+  if (CREATE_ACTION_SIGNAL.test(normalized) && /обязательств/i.test(normalized)) {
     return "create_contract_obligation";
   }
   if (/реестр.*договор|список.*договор|покажи.*договор/i.test(normalized)) {
@@ -276,7 +294,13 @@ export function detectContractsIntent(
   if (/карточк.*договор|договор .*покажи|review contract/i.test(normalized)) {
     return "review_commerce_contract";
   }
-  return "create_commerce_contract";
+  if (
+    CREATE_ACTION_SIGNAL.test(normalized) &&
+    /(договор|контракт)/i.test(normalized)
+  ) {
+    return "create_commerce_contract";
+  }
+  return "list_commerce_contracts";
 }
 
 export function detectContractsTool(
@@ -311,7 +335,7 @@ export function detectContractsTool(
     case "review_ar_balance":
       return RaiToolName.GetArBalance;
     default:
-      return RaiToolName.CreateCommerceContract;
+      return RaiToolName.ListCommerceContracts;
   }
 }
 

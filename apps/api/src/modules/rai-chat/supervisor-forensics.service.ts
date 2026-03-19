@@ -30,6 +30,9 @@ export class SupervisorForensicsService {
       escalationReason?: string;
     };
     phases?: Array<{ name: string; timestamp: string; durationMs: number }>;
+    tokensUsed?: number;
+    structuredOutputs?: Record<string, unknown>[];
+    delegationChain?: Array<Record<string, unknown>>;
   }): Promise<string | null> {
     const metadataObj: Record<string, unknown> = {};
     if (params.replayInput) {
@@ -62,6 +65,12 @@ export class SupervisorForensicsService {
     if (params.phases && params.phases.length > 0) {
       metadataObj.phases = params.phases;
     }
+    if (params.structuredOutputs && params.structuredOutputs.length > 0) {
+      metadataObj.structuredOutputs = params.structuredOutputs;
+    }
+    if (params.delegationChain && params.delegationChain.length > 0) {
+      metadataObj.delegationChain = params.delegationChain;
+    }
 
     const metadata: Prisma.InputJsonValue | undefined =
       Object.keys(metadataObj).length > 0
@@ -75,7 +84,11 @@ export class SupervisorForensicsService {
           toolNames: params.toolNames,
           model: "deterministic",
           intentMethod: params.intentMethod,
-          tokensUsed: 0,
+          tokensUsed:
+            typeof params.tokensUsed === "number" &&
+            Number.isFinite(params.tokensUsed)
+              ? Math.max(0, Math.round(params.tokensUsed))
+              : 0,
           metadata,
         },
       })

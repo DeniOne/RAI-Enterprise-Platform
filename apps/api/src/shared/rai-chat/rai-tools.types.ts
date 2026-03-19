@@ -57,6 +57,7 @@ export interface RaiToolActorContext {
   companyId: string;
   traceId: string;
   agentRole?: string;
+  parentSpanId?: string;
   /** В автономном контексте (MonitoringAgent) запрещены WRITE/CRITICAL инструменты. */
   isAutonomous?: boolean;
   /** Safe Replay: WRITE/CRITICAL не выполняются, возвращается mock success. */
@@ -71,6 +72,24 @@ export interface RaiToolActorContext {
    * Используется только после human-approval, чтобы не зациклиться в TOOL_FIRST/RiskPolicy блокировках.
    */
   approvedPendingActionId?: string;
+}
+
+export interface TokenUsage {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+}
+
+export interface DelegationChainStep {
+  fromRole: string;
+  toRole: string;
+  toolName: string;
+  traceId: string;
+  spanId: string;
+  parentSpanId?: string;
+  usage?: TokenUsage;
+  confidence?: number;
+  evidence?: string[];
 }
 
 /** Маппинг инструмент → riskLevel и domain для RiskPolicyEngine. */

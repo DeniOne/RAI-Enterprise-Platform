@@ -473,6 +473,25 @@ export class SupervisorAgent {
       };
     }
 
+    const explicitToolCalls = [...(request.toolCalls ?? [])];
+    const explicitPrimaryTool = explicitToolCalls[0];
+    const explicitContract = explicitPrimaryTool
+      ? getIntentContractByToolName(explicitPrimaryTool.name)
+      : null;
+    if (explicitPrimaryTool && explicitContract) {
+      return {
+        classification: {
+          targetRole: explicitContract.role,
+          intent: explicitContract.id,
+          toolName: explicitPrimaryTool.name,
+          confidence: 1,
+          method: "tool_call_primary",
+          reason: `explicit_tool_call:${explicitPrimaryTool.name}`,
+        },
+        requestedToolCalls: explicitToolCalls,
+      };
+    }
+
     const classification = this.intentRouter.classify(
       request.message,
       request.workspaceContext,
@@ -482,7 +501,7 @@ export class SupervisorAgent {
       request,
       classification,
     );
-    const requestedToolCalls = [...(request.toolCalls ?? [])];
+    const requestedToolCalls = [...explicitToolCalls];
     if (
       autoToolCall &&
       !requestedToolCalls.some((t) => t.name === autoToolCall.name)

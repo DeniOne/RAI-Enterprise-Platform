@@ -653,6 +653,65 @@ export class RaiToolCallDto {
   payload: Record<string, unknown>;
 }
 
+export class RaiIntermediateStepDto {
+  @IsString()
+  @MaxLength(64)
+  executionPath: "tool_call_primary" | "heuristic_fallback";
+
+  @IsString()
+  @MaxLength(128)
+  toolName: string;
+
+  @IsString()
+  @MaxLength(64)
+  status: "COMPLETED" | "FAILED" | "NEEDS_MORE_DATA" | "RATE_LIMITED";
+
+  @Type(() => Number)
+  @IsOptional()
+  @IsNumber()
+  confidence?: number;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(64)
+  fromRole?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(64)
+  toRole?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  traceId?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  spanId?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  parentSpanId?: string;
+
+  @Type(() => Number)
+  @IsOptional()
+  @IsNumber()
+  promptTokens?: number;
+
+  @Type(() => Number)
+  @IsOptional()
+  @IsNumber()
+  completionTokens?: number;
+
+  @Type(() => Number)
+  @IsOptional()
+  @IsNumber()
+  totalTokens?: number;
+}
+
 export class RaiChatResponseDto {
   @IsString()
   text: string;
@@ -729,4 +788,10 @@ export class RaiChatResponseDto {
   @IsOptional()
   @MaxLength(128)
   activeWindowId?: string | null;
+
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => RaiIntermediateStepDto)
+  intermediateSteps?: RaiIntermediateStepDto[];
 }

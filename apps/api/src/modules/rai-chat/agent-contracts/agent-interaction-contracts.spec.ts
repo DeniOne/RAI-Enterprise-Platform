@@ -50,6 +50,36 @@ describe("agent interaction contracts", () => {
     expect(result.toolName).toBe(RaiToolName.CreateCommerceContract);
   });
 
+  it("не классифицирует write-contract intent без action-сигнала", () => {
+    const result = classifyByAgentContracts("контракт поставки", {
+      route: "/commerce/contracts",
+    });
+
+    expect(result.intent).toBeNull();
+    expect(result.toolName).toBeNull();
+  });
+
+  it("не строит auto tool call для write-intent без action-сигнала", () => {
+    const toolCall = buildAutoToolCallFromContracts(
+      {
+        message: "контракт поставки",
+        workspaceContext: {
+          route: "/commerce/contracts",
+        },
+      },
+      {
+        targetRole: "contracts_agent",
+        intent: "create_commerce_contract",
+        toolName: RaiToolName.CreateCommerceContract,
+        confidence: 0.6,
+        method: "regex",
+        reason: "write_without_action",
+      },
+    );
+
+    expect(toolCall).toBeNull();
+  });
+
   it("строит auto tool call для просмотра дебиторки по invoice", () => {
     const classification = classifyByAgentContracts("покажи дебиторку по счету", {
       route: "/commerce/invoices",

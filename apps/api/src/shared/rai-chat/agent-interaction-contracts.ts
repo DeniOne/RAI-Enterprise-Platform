@@ -8,7 +8,7 @@ import {
   WorkspaceContextForIntent,
 } from "./intent-router.types";
 import { ExecutionResult } from "../../modules/rai-chat/runtime/agent-runtime.service";
-import { RaiToolCall, RaiToolName } from "./rai-tools.types";
+import { RaiToolCall, RaiToolName, TOOL_RISK_MAP } from "./rai-tools.types";
 
 export type AgentContractRole =
   | "agronomist"
@@ -1843,6 +1843,10 @@ function scoreIntentMatch(
     }
   }
 
+  if (isWriteIntent(contract) && !hasWriteActionSignal(normalized)) {
+    return 0;
+  }
+
   let score = 0;
   if (keywordMatched) {
     score += 10;
@@ -1859,6 +1863,20 @@ function scoreIntentMatch(
     score -= 4;
   }
   return score;
+}
+
+function isWriteIntent(contract: AgentIntentContract): boolean {
+  if (!contract.toolName) {
+    return false;
+  }
+  const riskLevel = TOOL_RISK_MAP[contract.toolName]?.riskLevel;
+  return riskLevel === "WRITE" || riskLevel === "CRITICAL";
+}
+
+function hasWriteActionSignal(message: string): boolean {
+  return /(созд(ай|ать)|сдела(й|ть)|состав(ь|ить)|подготов(ь|ить)|сгенерир|черновик|draft|добав(ь|ить)|обнови|измени|правь|удали|убери|снеси|сними|зарегистр|заключи|оформи|зафиксир|сформир|проведи|опубликуй|подтверди|разнеси|поставь|перенеси|эскалир|эскалац|алерт|alert|передай в работу|нужно в работу|срочно)/i.test(
+    message,
+  );
 }
 
 function inferRoleFromWorkspace(workspaceContext?: WorkspaceContextForIntent): AgentContractRole | null {
@@ -2198,6 +2216,10 @@ export function buildAutoToolCallFromContracts(
 ): RaiToolCall | null {
   const intentContract = getIntentContract(classification.intent);
   if (!intentContract?.toolName) {
+    return null;
+  }
+
+  if (isWriteIntent(intentContract) && !hasWriteActionSignal(request.message.toLowerCase())) {
     return null;
   }
 

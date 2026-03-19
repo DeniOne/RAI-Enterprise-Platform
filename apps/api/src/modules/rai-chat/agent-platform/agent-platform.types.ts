@@ -5,6 +5,11 @@ import {
   WorkspaceContextDto,
 } from "../dto/rai-chat.dto";
 import { RaiToolCallDto } from "../dto/rai-chat.dto";
+import {
+  DelegationChainStep,
+  RaiSuggestedAction,
+  TokenUsage,
+} from "../../../shared/rai-chat/rai-tools.types";
 import { RuntimeGovernanceOverrides } from "../../../shared/rai-chat/runtime-governance-policy.types";
 
 export type AgentKind = "domain_advisor" | "worker_hybrid" | "personal_delegated";
@@ -147,8 +152,12 @@ export interface AgentExecutionAuditPayload {
 export interface AgentExecutionResult {
   role: string;
   status: "COMPLETED" | "FAILED" | "NEEDS_MORE_DATA" | "RATE_LIMITED";
+  executionPath?: "tool_call_primary" | "heuristic_fallback";
   text: string;
   structuredOutput: Record<string, unknown>;
+  structuredOutputs?: Record<string, unknown>[];
+  delegationChain?: DelegationChainStep[];
+  usage?: TokenUsage;
   toolCalls: Array<{ name: string; result: unknown }>;
   connectorCalls: Array<{ name: string; result: unknown }>;
   evidence: EvidenceReference[];
@@ -158,6 +167,7 @@ export interface AgentExecutionResult {
   fallbackUsed: boolean;
   outputContractVersion: string;
   auditPayload: AgentExecutionAuditPayload;
+  suggestedActions?: RaiSuggestedAction[];
 }
 
 export interface EffectiveAgentKernelEntry {
