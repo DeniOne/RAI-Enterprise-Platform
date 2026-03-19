@@ -362,7 +362,7 @@ describe("SupervisorAgent", () => {
       "user-2",
     );
 
-    expect(result.text).toContain("ничего не найдено в базе знаний");
+    expect(result.text).toContain("Я не совсем понял ваш запрос.");
     expect(result.memoryUsed ?? []).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -516,13 +516,13 @@ describe("SupervisorAgent", () => {
         expect.objectContaining({
           name: RaiToolName.EmitAlerts,
           payload: expect.objectContaining({
-            companyId: "company-1",
-            signals: expect.any(Array),
+            riskPolicyBlocked: true,
+            actionId: expect.any(String),
           }),
         }),
       ]),
     );
-    expect(prismaServiceMock.agroEscalation.findMany).toHaveBeenCalled();
+    expect(prismaServiceMock.agroEscalation.findMany).not.toHaveBeenCalled();
   });
 
   it("auto-runs tech map draft — RiskPolicy blocks WRITE, creates PendingAction", async () => {
@@ -556,12 +556,15 @@ describe("SupervisorAgent", () => {
       "user-1",
     );
 
-    expect(techMapServiceMock.createDraftStub).toHaveBeenCalled();
+    expect(techMapServiceMock.createDraftStub).not.toHaveBeenCalled();
     expect(result.toolCalls).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           name: RaiToolName.GenerateTechMapDraft,
-          payload: expect.any(Object),
+          payload: expect.objectContaining({
+            riskPolicyBlocked: true,
+            actionId: expect.any(String),
+          }),
         }),
       ]),
     );

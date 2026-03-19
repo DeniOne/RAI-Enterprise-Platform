@@ -171,13 +171,17 @@ export class ResponseComposerService {
       request.message,
       executionResult.executedTools,
     );
-    let text = directAnswer ?? "Я не совсем понял ваш запрос. Пожалуйста, уточните: вас интересует агрономия (технологические карты, поля), финансы или необходимо выполнить поиск в базе знаний?";
+    const fallbackText =
+      "Я не совсем понял ваш запрос. Пожалуйста, уточните: вас интересует агрономия (технологические карты, поля), финансы или необходимо выполнить поиск в базе знаний?";
+    let text = directAnswer ?? fallbackText;
     if (!directAnswer && executionResult.executedTools.length > 0) {
       const toolSummary = this.summarizeExecutedTools(
         executionResult.executedTools,
         request.message,
       );
-      if (toolSummary) text += `\n${toolSummary}`;
+      if (toolSummary) {
+        text = toolSummary;
+      }
     }
     if (recall.items.length > 0) {
       const top = recall.items[0];
@@ -203,6 +207,7 @@ export class ResponseComposerService {
     const widgets =
       clientFacing ||
       executionResult.agentExecution ||
+      (request.toolCalls?.length ?? 0) > 0 ||
       !hasRenderableLegacySource
         ? []
         : this.widgetBuilder.build({
@@ -2108,7 +2113,7 @@ export class ResponseComposerService {
             agentName?: string;
           };
           if (r?.agentName === "AgronomAgent" && r.explain) return r.explain;
-          return `Отклонений найдено: ${(r as ComputeDeviationsResult)?.count ?? 0}`;
+          return `Отклонения получены: ${(r as ComputeDeviationsResult)?.count ?? 0}`;
         }
         if (tool.name === RaiToolName.ComputePlanFact) {
           const r = tool.result as
@@ -2116,7 +2121,7 @@ export class ResponseComposerService {
             | { data?: ComputePlanFactResult; agentName?: string };
           const data =
             "data" in r && r.data ? r.data : (r as ComputePlanFactResult);
-          return `План-факт по плану ${data.planId}: ROI ${data.roi}, EBITDA ${data.ebitda}`;
+          return `План ${data.planId}: ROI ${data.roi}, EBITDA ${data.ebitda}`;
         }
         if (tool.name === RaiToolName.EmitAlerts) {
           const r = tool.result as EmitAlertsResult;
