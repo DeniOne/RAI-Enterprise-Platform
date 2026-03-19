@@ -403,7 +403,12 @@ function resolveResponseWorkWindows(
         return incomingWindows;
     }
 
-    return currentWindows.filter((window) => window.isPinned);
+    return currentWindows.filter(
+        (window) =>
+            window.isPinned &&
+            window.type !== 'context_acquisition' &&
+            window.type !== 'context_hint',
+    );
 }
 
 function resolveResponseActiveWindowId(

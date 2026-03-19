@@ -373,6 +373,46 @@ describe("agent interaction contracts", () => {
     ]);
   });
 
+  it("игнорирует stale clarification resume для read-only запроса по техкартам", () => {
+    const request = {
+      message: "покажи все техкарты",
+      threadId: "thread-1",
+      clarificationResume: {
+        windowId: "win-techmap-thread-1",
+        intentId: "tech_map_draft" as const,
+        agentRole: "agronomist" as const,
+        collectedContext: {},
+      },
+      workspaceContext: {
+        route: "/consulting/techmaps/active",
+      },
+    };
+
+    const plan = buildResumeExecutionPlan(request as any);
+    const contract = detectClarificationContract(
+      request as any,
+      {
+        executedTools: [],
+        runtimeBudget: null,
+        agentExecution: {
+          role: "agronomist",
+          text: "need context",
+          fallbackUsed: false,
+          validation: { actionAllowed: true, explain: "" },
+          outputContractVersion: "v1",
+          toolCalls: [{ name: RaiToolName.GenerateTechMapDraft, result: {} }],
+          confidence: 0,
+          evidence: [],
+          structuredOutput: undefined,
+          status: "NEEDS_MORE_DATA",
+        },
+      } as never,
+    );
+
+    expect(plan).toBeNull();
+    expect(contract).toBeNull();
+  });
+
   it("экспортирует focus contract и intent catalog для canonical role", () => {
     const focus = getFocusContract("economist");
     const catalog = getIntentCatalog("economist");

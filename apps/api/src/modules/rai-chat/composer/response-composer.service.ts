@@ -369,6 +369,13 @@ export class ResponseComposerService {
     if (!agentExecution) {
       return null;
     }
+    if (
+      agentExecution.status === "NEEDS_MORE_DATA" &&
+      typeof agentExecution.structuredOutput?.routingReason === "string" &&
+      agentExecution.structuredOutput.routingReason === "no_safe_agronom_intent"
+    ) {
+      return null;
+    }
 
     const contract = detectClarificationContract(request, executionResult);
     if (!contract?.clarification) {

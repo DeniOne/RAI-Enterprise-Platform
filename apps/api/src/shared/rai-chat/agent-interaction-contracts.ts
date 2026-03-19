@@ -1829,16 +1829,7 @@ function scoreIntentMatch(
   }
 
   if (contract.id === "tech_map_draft") {
-    const mentionsTechMap = /(техкарт|techmap)/i.test(normalized);
-    const hasCreateSignal =
-      /(созд(ай|ать)|сдела(й|ть)|состав(ь|ить)|подготов(ь|ить)|сгенерируй|черновик|draft)/i.test(
-        normalized,
-      );
-    const hasReadSignal =
-      /(покаж|спис|все|какие|посмотр|найд|открой|где|выведи)/i.test(
-        normalized,
-      );
-    if (mentionsTechMap && hasReadSignal && !hasCreateSignal) {
+    if (isReadOnlyTechMapQuery(normalized)) {
       return 0;
     }
   }
@@ -1877,6 +1868,22 @@ function hasWriteActionSignal(message: string): boolean {
   return /(созд(ай|ать)|сдела(й|ть)|состав(ь|ить)|подготов(ь|ить)|сгенерир|черновик|draft|добав(ь|ить)|обнови|измени|правь|удали|убери|снеси|сними|зарегистр|заключи|оформи|зафиксир|сформир|проведи|опубликуй|подтверди|разнеси|поставь|перенеси|эскалир|эскалац|алерт|alert|передай в работу|нужно в работу|срочно)/i.test(
     message,
   );
+}
+
+function isReadOnlyTechMapQuery(message: string): boolean {
+  const normalized = message.toLowerCase();
+  const mentionsTechMap = /(техкарт|techmap)/i.test(normalized);
+  if (!mentionsTechMap) {
+    return false;
+  }
+
+  const hasCreateSignal =
+    /(созд(ай|ать)|сдела(й|ть)|состав(ь|ить)|подготов(ь|ить)|сгенерируй|черновик|draft)/i.test(
+      normalized,
+    );
+  const hasReadSignal =
+    /(покаж|спис|все|какие|посмотр|найд|открой|где|выведи)/i.test(normalized);
+  return hasReadSignal && !hasCreateSignal;
 }
 
 function inferRoleFromWorkspace(workspaceContext?: WorkspaceContextForIntent): AgentContractRole | null {
@@ -2759,6 +2766,9 @@ export function buildResumeExecutionPlan(request: RaiChatRequestDto): {
   if (!contract?.toolName) {
     return null;
   }
+  if (contract.id === "tech_map_draft" && isReadOnlyTechMapQuery(request.message)) {
+    return null;
+  }
 
   const context = resolveContextValues(request);
   if (contract.id === "compute_plan_fact") {
@@ -2959,28 +2969,47 @@ export function detectClarificationContract(
 
   if (request.clarificationResume?.intentId) {
     const contract = getIntentContract(request.clarificationResume.intentId);
-    if (contract?.role === agentExecution.role && contract.clarification) {
+    if (
+      contract?.role === agentExecution.role &&
+      contract.clarification &&
+      !(contract.id === "tech_map_draft" && isReadOnlyTechMapQuery(request.message))
+    ) {
       return contract;
     }
   }
 
   for (const tool of executionResult.executedTools) {
     const contract = getIntentContractByToolName(tool.name);
-    if (contract?.role === agentExecution.role && contract.clarification) {
+    if (
+      contract?.role === agentExecution.role &&
+      contract.clarification &&
+      !(contract.id === "tech_map_draft" && isReadOnlyTechMapQuery(request.message))
+    ) {
       return contract;
     }
   }
 
   for (const tool of agentExecution.toolCalls) {
     const contract = getIntentContractByToolName(tool.name as RaiToolName);
-    if (contract?.role === agentExecution.role && contract.clarification) {
+    if (
+      contract?.role === agentExecution.role &&
+      contract.clarification &&
+      !(contract.id === "tech_map_draft" && isReadOnlyTechMapQuery(request.message))
+    ) {
       return contract;
     }
   }
 
   const classified = classifyByAgentContracts(request.message, request.workspaceContext);
   const contract = getIntentContract(classified.intent);
-  return contract?.role === agentExecution.role && contract.clarification ? contract : null;
+  if (
+    contract?.role === agentExecution.role &&
+    contract.clarification &&
+    !(contract.id === "tech_map_draft" && isReadOnlyTechMapQuery(request.message))
+  ) {
+    return contract;
+  }
+  return null;
 }
 
 export function resolveContextValues(request: RaiChatRequestDto): Record<ContextKey, string | undefined> {
