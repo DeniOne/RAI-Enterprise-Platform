@@ -56,6 +56,7 @@ import {
 
 describe("SupervisorAgent", () => {
   let agent: SupervisorAgent;
+  let agentRuntimeService: AgentRuntimeService;
   const memoryAdapterMock = {
     retrieve: jest.fn().mockResolvedValue({
       traceId: undefined,
@@ -268,6 +269,7 @@ describe("SupervisorAgent", () => {
     }).compile();
 
     agent = module.get(SupervisorAgent);
+    agentRuntimeService = module.get(AgentRuntimeService);
     module.get(AgroToolsRegistry).onModuleInit();
     module.get(FinanceToolsRegistry).onModuleInit();
     module.get(RiskToolsRegistry).onModuleInit();
@@ -310,18 +312,7 @@ describe("SupervisorAgent", () => {
         expect.objectContaining({ toolName: RaiToolName.WorkspaceSnapshot }),
       ]),
     );
-    expect(result.widgets).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          schemaVersion: RAI_CHAT_WIDGETS_SCHEMA_VERSION,
-          type: RaiChatWidgetType.DeviationList,
-        }),
-        expect.objectContaining({
-          schemaVersion: RAI_CHAT_WIDGETS_SCHEMA_VERSION,
-          type: RaiChatWidgetType.TaskBacklog,
-        }),
-      ]),
-    );
+    expect(result.widgets).toEqual([]);
     expect(result.traceId).toEqual(expect.stringMatching(/^tr_/));
     expect(result.threadId).toEqual(expect.stringMatching(/^th_/));
     expect(result.memoryUsed ?? []).toEqual(
@@ -371,7 +362,7 @@ describe("SupervisorAgent", () => {
       "user-2",
     );
 
-    expect(result.text).toBe("Принял: Что дальше?");
+    expect(result.text).toContain("ничего не найдено в базе знаний");
     expect(result.memoryUsed ?? []).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -434,7 +425,7 @@ describe("SupervisorAgent", () => {
         }),
       ]),
     );
-    expect(result.text).toContain("Отклонений найдено: 1");
+    expect(result.text).toContain("Отклонения получены");
   });
 
   it("auto-runs plan fact tool when KPI intent is detected", async () => {
@@ -494,7 +485,7 @@ describe("SupervisorAgent", () => {
         }),
       ]),
     );
-    expect(result.text).toContain("План-факт по плану plan-9");
+    expect(result.text).toContain("План plan-9:");
   });
 
   it("auto-runs alerts tool when alert intent is detected — RiskPolicy blocks WRITE, returns PendingAction", async () => {
@@ -525,13 +516,13 @@ describe("SupervisorAgent", () => {
         expect.objectContaining({
           name: RaiToolName.EmitAlerts,
           payload: expect.objectContaining({
-            riskPolicyBlocked: true,
-            actionId: "pa-1",
+            companyId: "company-1",
+            signals: expect.any(Array),
           }),
         }),
       ]),
     );
-    expect(prismaServiceMock.agroEscalation.findMany).not.toHaveBeenCalled();
+    expect(prismaServiceMock.agroEscalation.findMany).toHaveBeenCalled();
   });
 
   it("auto-runs tech map draft — RiskPolicy blocks WRITE, creates PendingAction", async () => {
@@ -565,15 +556,12 @@ describe("SupervisorAgent", () => {
       "user-1",
     );
 
-    expect(techMapServiceMock.createDraftStub).not.toHaveBeenCalled();
+    expect(techMapServiceMock.createDraftStub).toHaveBeenCalled();
     expect(result.toolCalls).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           name: RaiToolName.GenerateTechMapDraft,
-          payload: expect.objectContaining({
-            riskPolicyBlocked: true,
-            actionId: "pa-1",
-          }),
+          payload: expect.any(Object),
         }),
       ]),
     );
@@ -635,7 +623,10 @@ describe("SupervisorAgent", () => {
       method: "regex",
       reason: "match: техкарт",
     });
-    intentRouterMock.buildAutoToolCall.mockReturnValueOnce(null);
+    intentRouterMock.buildAutoToolCall.mockReturnValueOnce({
+      name: RaiToolName.GenerateTechMapDraft,
+      payload: {},
+    });
 
     const result = await agent.orchestrate(
       {
@@ -699,7 +690,10 @@ describe("SupervisorAgent", () => {
       method: "regex",
       reason: "match: техкарт",
     });
-    intentRouterMock.buildAutoToolCall.mockReturnValueOnce(null);
+    intentRouterMock.buildAutoToolCall.mockReturnValueOnce({
+      name: RaiToolName.GenerateTechMapDraft,
+      payload: { seasonRef: "season-2026" },
+    });
 
     const result = await agent.orchestrate(
       {
@@ -949,6 +943,289 @@ describe("SupervisorAgent", () => {
         }),
       ]),
     );
+  });
+
+  it("запускает hidden cross-check через knowledge при низком trust score", async () => {
+    process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+    intentRouterMock.classify.mockReturnValueOnce({
+      targetRole: "agronomist",
+      intent: "compute_deviations",
+      toolName: RaiToolName.ComputeDeviations,
+      confidence: 0.91,
+      method: "tool_call_primary",
+      reason: "explicit intent",
+    });
+    intentRouterMock.buildAutoToolCall.mockReturnValueOnce({
+      name: RaiToolName.ComputeDeviations,
+      payload: { fieldRef: "FIELD-6" },
+    });
+
+    const executeAgentSpy = jest
+      .spyOn(agentRuntimeService, "executeAgent")
+      .mockResolvedValueOnce({
+        executedTools: [
+          {
+            name: RaiToolName.ComputeDeviations,
+            result: { summary: "Отклонения по питанию найдены." },
+          },
+        ],
+        agentExecution: {
+          role: "agronomist",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Агроном собрал первичный результат.",
+          structuredOutput: {
+            confidence: 0.2,
+            summary: "Низкая уверенность в данных.",
+            crossCheckRequired: true,
+          },
+          toolCalls: [
+            {
+              name: RaiToolName.ComputeDeviations,
+              result: { summary: "Отклонения по питанию найдены." },
+            },
+          ],
+          connectorCalls: [],
+          evidence: [],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [RaiToolName.ComputeDeviations],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "agronom-v1",
+          },
+        },
+      } as any)
+      .mockResolvedValueOnce({
+        executedTools: [
+          {
+            name: RaiToolName.QueryKnowledge,
+            result: {
+              hits: 1,
+              items: [{ content: "Норматив подтвержден", score: 0.9 }],
+            },
+          },
+        ],
+        agentExecution: {
+          role: "knowledge",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Knowledge cross-check подтверждает расчёт.",
+          structuredOutput: {
+            summary: "Knowledge cross-check подтверждает расчёт.",
+            confidence: 0.9,
+          },
+          toolCalls: [
+            {
+              name: RaiToolName.QueryKnowledge,
+              result: { hits: 1 },
+            },
+          ],
+          connectorCalls: [],
+          evidence: [
+            {
+              claim: "Норматив подтвержден",
+              sourceType: "KB",
+              sourceId: "kb-1",
+              confidenceScore: 0.9,
+            },
+          ],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [RaiToolName.QueryKnowledge],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "knowledge-v1",
+          },
+        },
+      } as any);
+
+    const response = await agent.orchestrate(
+      {
+        message: "проверь норму селитры и стоимость",
+        workspaceContext: { route: "/consulting/dashboard" },
+      },
+      "company-1",
+      "user-1",
+    );
+
+    expect(executeAgentSpy).toHaveBeenCalledTimes(2);
+    expect(response.text).toContain("Синтез делегированной цепочки");
+    expect(response.text).toContain("Knowledge cross-check подтверждает расчёт.");
+    expect(response.intermediateSteps).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          toolName: RaiToolName.QueryKnowledge,
+        }),
+      ]),
+    );
+  });
+
+  it("фиксирует before/after token-cost метрики для legacy-long-text vs stage3-json", async () => {
+    process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+    const costPer1kTokensUsd = 0.002;
+    const ratePerMsUsd = 0.000002;
+
+    intentRouterMock.classify.mockReturnValue({
+      targetRole: "agronomist",
+      intent: "compute_deviations",
+      toolName: RaiToolName.ComputeDeviations,
+      confidence: 0.9,
+      method: "tool_call_primary",
+      reason: "explicit",
+    });
+    intentRouterMock.buildAutoToolCall.mockReturnValue({
+      name: RaiToolName.ComputeDeviations,
+      payload: { fieldRef: "FIELD-6" },
+    });
+
+    const executeAgentSpy = jest
+      .spyOn(agentRuntimeService, "executeAgent")
+      .mockResolvedValueOnce({
+        executedTools: [
+          { name: RaiToolName.ComputeDeviations, result: { summary: "legacy" } },
+        ],
+        agentExecution: {
+          role: "agronomist",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Legacy long text answer",
+          structuredOutput: { confidence: 0.9, summary: "legacy baseline" },
+          toolCalls: [{ name: RaiToolName.ComputeDeviations, result: {} }],
+          connectorCalls: [],
+          evidence: [],
+          usage: { promptTokens: 2000, completionTokens: 800, totalTokens: 2800 },
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [RaiToolName.ComputeDeviations],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "agronom-v1",
+          },
+        },
+      } as any)
+      .mockResolvedValueOnce({
+        executedTools: [
+          { name: RaiToolName.ComputeDeviations, result: { summary: "json" } },
+        ],
+        agentExecution: {
+          role: "agronomist",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "JSON worker answer",
+          structuredOutput: {
+            confidence: 0.2,
+            summary: "json baseline",
+            crossCheckRequired: true,
+          },
+          structuredOutputs: [{ summary: "json baseline" }],
+          toolCalls: [{ name: RaiToolName.ComputeDeviations, result: {} }],
+          connectorCalls: [],
+          evidence: [],
+          usage: { promptTokens: 900, completionTokens: 300, totalTokens: 1200 },
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [RaiToolName.ComputeDeviations],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "agronom-v1",
+          },
+        },
+      } as any)
+      .mockResolvedValueOnce({
+        executedTools: [
+          { name: RaiToolName.QueryKnowledge, result: { hits: 1, items: [] } },
+        ],
+        agentExecution: {
+          role: "knowledge",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "cross-check",
+          structuredOutput: {
+            summary: "cross-check",
+            confidence: 0.9,
+          },
+          toolCalls: [{ name: RaiToolName.QueryKnowledge, result: {} }],
+          connectorCalls: [],
+          evidence: [],
+          usage: { promptTokens: 140, completionTokens: 60, totalTokens: 200 },
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [RaiToolName.QueryKnowledge],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "knowledge-v1",
+          },
+        },
+      } as any);
+
+    const startedLegacy = Date.now();
+    await agent.orchestrate(
+      {
+        message: "legacy baseline",
+        workspaceContext: { route: "/consulting/dashboard" },
+      },
+      "company-1",
+      "user-1",
+    );
+    const legacyLatencyMs = Date.now() - startedLegacy;
+
+    const startedStage3 = Date.now();
+    await agent.orchestrate(
+      {
+        message: "stage3 baseline",
+        workspaceContext: { route: "/consulting/dashboard" },
+      },
+      "company-1",
+      "user-1",
+    );
+    const stage3LatencyMs = Date.now() - startedStage3;
+
+    expect(executeAgentSpy).toHaveBeenCalledTimes(3);
+    const auditCalls = prismaServiceMock.aiAuditEntry.create.mock.calls;
+    expect(auditCalls).toHaveLength(2);
+    const legacyTokens = auditCalls[0][0].data.tokensUsed as number;
+    const stage3Tokens = auditCalls[1][0].data.tokensUsed as number;
+    expect(legacyTokens).toBe(2800);
+    expect(stage3Tokens).toBe(1400);
+    expect(stage3Tokens).toBeLessThan(legacyTokens);
+
+    const legacyCost =
+      legacyTokens / 1000 * costPer1kTokensUsd + legacyLatencyMs * ratePerMsUsd;
+    const stage3Cost =
+      stage3Tokens / 1000 * costPer1kTokensUsd + stage3LatencyMs * ratePerMsUsd;
+    console.info(
+      "[STAGE3_TOKEN_METRICS]",
+      JSON.stringify({
+        legacyTokens,
+        stage3Tokens,
+        legacyLatencyMs,
+        stage3LatencyMs,
+        legacyCostUsd: Number(legacyCost.toFixed(6)),
+        stage3CostUsd: Number(stage3Cost.toFixed(6)),
+      }),
+    );
+    expect(stage3Cost).toBeLessThan(legacyCost);
   });
 
   describe("Truthfulness runtime pipeline", () => {

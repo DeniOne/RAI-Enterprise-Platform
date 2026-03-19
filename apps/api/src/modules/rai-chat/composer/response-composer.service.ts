@@ -82,7 +82,10 @@ export interface BuildResponseParams {
   request: RaiChatRequestDto;
   executionResult: ExecutionResult;
   recallResult: RecallResult;
-  externalSignalResult: { advisory?: ExternalAdvisoryDto; feedbackStored: boolean };
+  externalSignalResult: {
+    advisory?: ExternalAdvisoryDto;
+    feedbackStored: boolean;
+  };
   traceId: string;
   threadId: string;
   companyId: string;
@@ -95,23 +98,27 @@ export class ResponseComposerService {
     private readonly sensitiveDataFilter: SensitiveDataFilterService,
   ) {}
 
-  private isRiskPolicyBlockedResult(
-    result: unknown,
-  ): result is { riskPolicyBlocked: true; actionId?: string; message?: string } {
+  private isRiskPolicyBlockedResult(result: unknown): result is {
+    riskPolicyBlocked: true;
+    actionId?: string;
+    message?: string;
+  } {
     return Boolean(
       result &&
-        typeof result === "object" &&
-        (result as { riskPolicyBlocked?: boolean }).riskPolicyBlocked === true,
+      typeof result === "object" &&
+      (result as { riskPolicyBlocked?: boolean }).riskPolicyBlocked === true,
     );
   }
 
-  private isAgentConfigBlockedResult(
-    result: unknown,
-  ): result is { agentConfigBlocked: true; reasonCode?: string; message?: string } {
+  private isAgentConfigBlockedResult(result: unknown): result is {
+    agentConfigBlocked: true;
+    reasonCode?: string;
+    message?: string;
+  } {
     return Boolean(
       result &&
-        typeof result === "object" &&
-        (result as { agentConfigBlocked?: boolean }).agentConfigBlocked === true,
+      typeof result === "object" &&
+      (result as { agentConfigBlocked?: boolean }).agentConfigBlocked === true,
     );
   }
 
@@ -120,17 +127,19 @@ export class ResponseComposerService {
   ): result is { toolExecutionError: true; code?: string; message?: string } {
     return Boolean(
       result &&
-        typeof result === "object" &&
-        (result as { toolExecutionError?: boolean }).toolExecutionError === true,
+      typeof result === "object" &&
+      (result as { toolExecutionError?: boolean }).toolExecutionError === true,
     );
   }
 
-  private summarizeBlockedToolResult(
-    tool: { name: RaiToolName; result: unknown },
-  ): string | null {
+  private summarizeBlockedToolResult(tool: {
+    name: RaiToolName;
+    result: unknown;
+  }): string | null {
     if (this.isRiskPolicyBlockedResult(tool.result)) {
       const actionId =
-        typeof tool.result.actionId === "string" && tool.result.actionId.length > 0
+        typeof tool.result.actionId === "string" &&
+        tool.result.actionId.length > 0
           ? ` PendingAction #${tool.result.actionId}.`
           : "";
       return `Действие "${buildToolDisplayName(tool.name)}" ожидает подтверждения.${actionId}`;
@@ -143,7 +152,9 @@ export class ResponseComposerService {
     return null;
   }
 
-  async buildResponse(params: BuildResponseParams): Promise<RaiChatResponseDto> {
+  async buildResponse(
+    params: BuildResponseParams,
+  ): Promise<RaiChatResponseDto> {
     const {
       request,
       executionResult,
@@ -160,7 +171,7 @@ export class ResponseComposerService {
       request.message,
       executionResult.executedTools,
     );
-    let text = directAnswer ?? `Принял: ${request.message}`;
+    let text = directAnswer ?? "Я не совсем понял ваш запрос. Пожалуйста, уточните: вас интересует агрономия (технологические карты, поля), финансы или необходимо выполнить поиск в базе знаний?";
     if (!directAnswer && executionResult.executedTools.length > 0) {
       const toolSummary = this.summarizeExecutedTools(
         executionResult.executedTools,
@@ -190,7 +201,9 @@ export class ResponseComposerService {
         !this.isToolExecutionErrorResult(tool.result),
     );
     const widgets =
-      clientFacing || executionResult.agentExecution || !hasRenderableLegacySource
+      clientFacing ||
+      executionResult.agentExecution ||
+      !hasRenderableLegacySource
         ? []
         : this.widgetBuilder.build({
             companyId,
@@ -206,15 +219,37 @@ export class ResponseComposerService {
     if (clarificationPayload) {
       text = clarificationPayload.text;
     }
+    const structuredOutputsSynthesis = this.buildStructuredOutputsSynthesis(
+      executionResult,
+    );
+    if (structuredOutputsSynthesis) {
+      text = `${text}\n${structuredOutputsSynthesis}`;
+    }
     text = this.sensitiveDataFilter.mask(text);
 
-    const evidence = executionResult.agentExecution?.evidence ?? this.collectEvidence(executionResult);
+    const evidence =
+      executionResult.agentExecution?.evidence ??
+      this.collectEvidence(executionResult);
     const runtimeGovernance =
       executionResult.agentExecution?.runtimeGovernance ??
       executionResult.runtimeGovernance;
     const suggestedActions = clientFacing
       ? []
       : this.buildSuggestedActions(request, runtimeGovernance, traceId);
+
+    if (executionResult.agentExecution?.suggestedActions?.length) {
+      suggestedActions.unshift(...executionResult.agentExecution.suggestedActions);
+    }
+    
+    if (executionResult.agentExecution?.structuredOutput?.suggested_actions && Array.isArray(executionResult.agentExecution.structuredOutput.suggested_actions)) {
+      const llmActions = executionResult.agentExecution.structuredOutput.suggested_actions.map(a => ({
+        kind: "route" as const,
+        title: a.title,
+        href: a.href || a.route,
+      })).filter(a => a.href && a.title);
+      suggestedActions.unshift(...llmActions);
+    }
+    const intermediateSteps = this.buildIntermediateSteps(executionResult);
 
     return {
       text,
@@ -251,15 +286,69 @@ export class ResponseComposerService {
       agentRole: executionResult.agentExecution?.role,
       fallbackUsed: executionResult.agentExecution?.fallbackUsed,
       validation: executionResult.agentExecution?.validation,
-      outputContractVersion: executionResult.agentExecution?.outputContractVersion,
+      outputContractVersion:
+        executionResult.agentExecution?.outputContractVersion,
       pendingClarification: clarificationPayload?.pendingClarification,
       workWindows: clientFacing
         ? undefined
-        : clarificationPayload?.workWindows ?? richOutputPayload?.workWindows,
+        : (clarificationPayload?.workWindows ?? richOutputPayload?.workWindows),
       activeWindowId: clientFacing
         ? undefined
-        : clarificationPayload?.activeWindowId ?? richOutputPayload?.activeWindowId,
+        : (clarificationPayload?.activeWindowId ??
+          richOutputPayload?.activeWindowId),
+      intermediateSteps:
+        intermediateSteps.length > 0 ? intermediateSteps : undefined,
     };
+  }
+
+  private buildIntermediateSteps(
+    executionResult: ExecutionResult,
+  ): RaiChatResponseDto["intermediateSteps"] {
+    if (executionResult.agentExecution) {
+      const executionPath =
+        executionResult.agentExecution.executionPath ?? "heuristic_fallback";
+      const confidence =
+        executionResult.agentExecution.structuredOutput &&
+        typeof executionResult.agentExecution.structuredOutput === "object" &&
+        typeof (executionResult.agentExecution.structuredOutput as { confidence?: unknown }).confidence === "number"
+          ? Number(
+              (executionResult.agentExecution.structuredOutput as {
+                confidence: number;
+              }).confidence,
+            )
+          : undefined;
+      const delegated =
+        executionResult.agentExecution.delegationChain?.map((step) => ({
+          executionPath,
+          toolName: step.toolName,
+          status: executionResult.agentExecution?.status ?? "FAILED",
+          confidence:
+            typeof step.confidence === "number" ? step.confidence : confidence,
+          fromRole: step.fromRole,
+          toRole: step.toRole,
+          traceId: step.traceId,
+          spanId: step.spanId,
+          parentSpanId: step.parentSpanId,
+          promptTokens: step.usage?.promptTokens,
+          completionTokens: step.usage?.completionTokens,
+          totalTokens: step.usage?.totalTokens,
+        })) ?? [];
+      const direct = (executionResult.agentExecution.toolCalls ?? []).map(
+        (call) => ({
+          executionPath,
+          toolName: call.name,
+          status: executionResult.agentExecution?.status ?? "FAILED",
+          confidence,
+        }),
+      );
+      return [...delegated, ...direct];
+    }
+
+    return executionResult.executedTools.map((tool) => ({
+      executionPath: "heuristic_fallback",
+      toolName: tool.name,
+      status: "COMPLETED",
+    }));
   }
 
   private buildClarificationPayload(
@@ -282,7 +371,9 @@ export class ResponseComposerService {
     }
     const clarificationContract = contract.clarification;
     const context = resolveContextValues(request);
-    const windowId = request.clarificationResume?.windowId ?? `${clarificationContract.windowIdPrefix}-${request.threadId ?? "new"}`;
+    const windowId =
+      request.clarificationResume?.windowId ??
+      `${clarificationContract.windowIdPrefix}-${request.threadId ?? "new"}`;
     const missingKeys = resolveMissingContextKeys(contract, context);
     const clarificationMode = this.resolveClarificationWindowMode({
       status: agentExecution.status,
@@ -295,7 +386,10 @@ export class ResponseComposerService {
       const pendingClarification: PendingClarificationDto = {
         kind: "missing_context",
         agentRole: contract.role,
-        intentId: contract.intentId === "tech_map_draft" ? "tech_map_draft" : "compute_plan_fact",
+        intentId:
+          contract.intentId === "tech_map_draft"
+            ? "tech_map_draft"
+            : "compute_plan_fact",
         summary: clarificationContract.pendingSummary,
         autoResume: true,
         items: buildPendingClarificationItems(contract, context),
@@ -318,7 +412,10 @@ export class ResponseComposerService {
             title: clarificationContract.title,
             status: "needs_user_input",
             payload: {
-              intentId: contract.intentId === "tech_map_draft" ? "tech_map_draft" : "compute_plan_fact",
+              intentId:
+                contract.intentId === "tech_map_draft"
+                  ? "tech_map_draft"
+                  : "compute_plan_fact",
               summary: pendingClarification.summary,
               fieldRef: context.fieldRef,
               seasonRef: context.seasonRef,
@@ -342,7 +439,10 @@ export class ResponseComposerService {
             title: clarificationContract.hintTitle,
             status: "needs_user_input",
             payload: {
-              intentId: contract.intentId === "tech_map_draft" ? "tech_map_draft" : "compute_plan_fact",
+              intentId:
+                contract.intentId === "tech_map_draft"
+                  ? "tech_map_draft"
+                  : "compute_plan_fact",
               summary: clarificationContract.hintSummary(missingKeys),
               fieldRef: context.fieldRef,
               seasonRef: context.seasonRef,
@@ -377,7 +477,10 @@ export class ResponseComposerService {
             title: clarificationContract.resultTitle,
             status: "completed",
             payload: {
-              intentId: contract.intentId === "tech_map_draft" ? "tech_map_draft" : "compute_plan_fact",
+              intentId:
+                contract.intentId === "tech_map_draft"
+                  ? "tech_map_draft"
+                  : "compute_plan_fact",
               summary: clarificationContract.resultSummary,
               fieldRef: context.fieldRef,
               seasonRef: context.seasonRef,
@@ -402,7 +505,10 @@ export class ResponseComposerService {
             title: "Что делать дальше",
             status: "completed",
             payload: {
-              intentId: contract.intentId === "tech_map_draft" ? "tech_map_draft" : "compute_plan_fact",
+              intentId:
+                contract.intentId === "tech_map_draft"
+                  ? "tech_map_draft"
+                  : "compute_plan_fact",
               summary: clarificationContract.resultHintSummary,
               fieldRef: context.fieldRef,
               seasonRef: context.seasonRef,
@@ -411,7 +517,10 @@ export class ResponseComposerService {
               missingKeys: [],
               resultText: agentExecution.text,
             },
-            actions: clarificationContract.buildResultHintActions(windowId, context),
+            actions: clarificationContract.buildResultHintActions(
+              windowId,
+              context,
+            ),
             isPinned: false,
           },
         ],
@@ -419,6 +528,51 @@ export class ResponseComposerService {
       };
     }
 
+    return null;
+  }
+
+  private buildStructuredOutputsSynthesis(
+    executionResult: ExecutionResult,
+  ): string | null {
+    const outputs = executionResult.agentExecution?.structuredOutputs;
+    if (!outputs || outputs.length < 2) {
+      return null;
+    }
+
+    const bullets = outputs
+      .map((output, index) => {
+        const summary = this.extractStructuredSummary(output);
+        if (!summary) {
+          return null;
+        }
+        return `${index + 1}. ${summary}`;
+      })
+      .filter((item): item is string => Boolean(item));
+    if (bullets.length === 0) {
+      return null;
+    }
+    return `Синтез делегированной цепочки:\n${bullets.join("\n")}`;
+  }
+
+  private extractStructuredSummary(output: Record<string, unknown>): string | null {
+    const summaryFields = [
+      output.summary,
+      output.explanation,
+      output.recommendation,
+      output.status,
+    ];
+    for (const value of summaryFields) {
+      if (typeof value === "string" && value.trim().length > 0) {
+        return value.trim();
+      }
+    }
+    const data = output.data;
+    if (data && typeof data === "object" && !Array.isArray(data)) {
+      const maybeSummary = (data as Record<string, unknown>).summary;
+      if (typeof maybeSummary === "string" && maybeSummary.trim().length > 0) {
+        return maybeSummary.trim();
+      }
+    }
     return null;
   }
 
@@ -454,10 +608,7 @@ export class ResponseComposerService {
       return monitoringPayload;
     }
 
-    const crmPayload = this.buildCrmRichOutputPayload(
-      request,
-      executionResult,
-    );
+    const crmPayload = this.buildCrmRichOutputPayload(request, executionResult);
     if (crmPayload) {
       return crmPayload;
     }
@@ -540,7 +691,8 @@ export class ResponseComposerService {
                 : [
                     {
                       label: "Рекомендация",
-                      value: "Уточните формулировку запроса или перейдите в базу знаний для ручного поиска.",
+                      value:
+                        "Уточните формулировку запроса или перейдите в базу знаний для ручного поиска.",
                       tone: "warning",
                     },
                   ],
@@ -629,7 +781,8 @@ export class ResponseComposerService {
     if (
       !agentExecution ||
       agentExecution.role !== "monitoring" ||
-      (agentExecution.status !== "COMPLETED" && agentExecution.status !== "RATE_LIMITED")
+      (agentExecution.status !== "COMPLETED" &&
+        agentExecution.status !== "RATE_LIMITED")
     ) {
       return null;
     }
@@ -640,10 +793,15 @@ export class ResponseComposerService {
       alertsEmitted?: number;
       signalsSnapshot?: { signals?: Array<{ type?: string }> };
     };
-    const alertCount = typeof structured.alertsEmitted === "number" ? structured.alertsEmitted : 0;
+    const alertCount =
+      typeof structured.alertsEmitted === "number"
+        ? structured.alertsEmitted
+        : 0;
     const signalTypes = (structured.signalsSnapshot?.signals ?? [])
       .map((item) => item?.type)
-      .filter((item): item is string => typeof item === "string" && item.length > 0);
+      .filter(
+        (item): item is string => typeof item === "string" && item.length > 0,
+      );
 
     const workWindows: RaiWorkWindowDto[] = [
       {
@@ -656,7 +814,10 @@ export class ResponseComposerService {
         category: "signals",
         priority: agentExecution.status === "RATE_LIMITED" ? 92 : 82,
         mode: alertCount > 0 ? "panel" : "inline",
-        title: agentExecution.status === "RATE_LIMITED" ? "Мониторинг временно ограничен" : "Сигналы мониторинга",
+        title:
+          agentExecution.status === "RATE_LIMITED"
+            ? "Мониторинг временно ограничен"
+            : "Сигналы мониторинга",
         status: "informational",
         payload: {
           intentId: "emit_alerts",
@@ -678,7 +839,10 @@ export class ResponseComposerService {
               : [
                   {
                     id: "monitoring-status",
-                    tone: agentExecution.status === "RATE_LIMITED" ? "warning" : "info",
+                    tone:
+                      agentExecution.status === "RATE_LIMITED"
+                        ? "warning"
+                        : "info",
                     text:
                       agentExecution.status === "RATE_LIMITED"
                         ? "Автоматический мониторинг временно ограничен."
@@ -728,8 +892,14 @@ export class ResponseComposerService {
               items: [
                 {
                   label: "Статус",
-                  value: agentExecution.status === "RATE_LIMITED" ? "Ограничено по лимиту" : "Завершено",
-                  tone: agentExecution.status === "RATE_LIMITED" ? "warning" : "positive",
+                  value:
+                    agentExecution.status === "RATE_LIMITED"
+                      ? "Ограничено по лимиту"
+                      : "Завершено",
+                  tone:
+                    agentExecution.status === "RATE_LIMITED"
+                      ? "warning"
+                      : "positive",
                 },
                 {
                   label: "Открытых алертов",
@@ -738,7 +908,10 @@ export class ResponseComposerService {
                 },
                 {
                   label: "Типы сигналов",
-                  value: signalTypes.length > 0 ? signalTypes.join(", ") : "Нет отдельных сигналов в snapshot",
+                  value:
+                    signalTypes.length > 0
+                      ? signalTypes.join(", ")
+                      : "Нет отдельных сигналов в snapshot",
                   tone: "neutral",
                 },
               ],
@@ -803,10 +976,10 @@ export class ResponseComposerService {
       return null;
     }
 
-    const structured = ((agentExecution?.structuredOutput ?? {}) as {
+    const structured = (agentExecution?.structuredOutput ?? {}) as {
       data?: unknown;
       intent?: string;
-    });
+    };
     const toolIntentMap: Partial<Record<RaiToolName, string>> = {
       [RaiToolName.RegisterCounterparty]: "register_counterparty",
       [RaiToolName.CreateCounterpartyRelation]: "create_counterparty_relation",
@@ -823,7 +996,9 @@ export class ResponseComposerService {
       [RaiToolName.UpdateCrmObligation]: "update_crm_obligation",
       [RaiToolName.DeleteCrmObligation]: "delete_crm_obligation",
     };
-    const intent = structured.intent ?? (explicitCrmTool ? toolIntentMap[explicitCrmTool.name] : undefined);
+    const intent =
+      structured.intent ??
+      (explicitCrmTool ? toolIntentMap[explicitCrmTool.name] : undefined);
     if (
       intent !== "register_counterparty" &&
       intent !== "create_counterparty_relation" &&
@@ -849,7 +1024,8 @@ export class ResponseComposerService {
 
     if (
       explicitCrmTool &&
-      (this.isRiskPolicyBlockedResult(data) || this.isAgentConfigBlockedResult(data))
+      (this.isRiskPolicyBlockedResult(data) ||
+        this.isAgentConfigBlockedResult(data))
     ) {
       const actionId =
         this.isRiskPolicyBlockedResult(data) &&
@@ -877,7 +1053,9 @@ export class ResponseComposerService {
           title: this.isAgentConfigBlockedResult(data)
             ? "Выполнение заблокировано"
             : "Требуется подтверждение",
-          status: this.isAgentConfigBlockedResult(data) ? "informational" : "needs_user_input",
+          status: this.isAgentConfigBlockedResult(data)
+            ? "informational"
+            : "needs_user_input",
           payload: {
             intentId: intent,
             summary: blockedSummary,
@@ -897,13 +1075,17 @@ export class ResponseComposerService {
                     value: this.isAgentConfigBlockedResult(data)
                       ? "Заблокировано конфигурацией"
                       : "Ожидает подтверждения",
-                    tone: this.isAgentConfigBlockedResult(data) ? "critical" : "warning",
+                    tone: this.isAgentConfigBlockedResult(data)
+                      ? "critical"
+                      : "warning",
                   },
                   {
-                    label: this.isAgentConfigBlockedResult(data) ? "Причина" : "PendingAction",
+                    label: this.isAgentConfigBlockedResult(data)
+                      ? "Причина"
+                      : "PendingAction",
                     value: this.isAgentConfigBlockedResult(data)
-                      ? data.reasonCode ?? "не указана"
-                      : actionId ?? "не указан",
+                      ? (data.reasonCode ?? "не указана")
+                      : (actionId ?? "не указан"),
                     tone: "neutral",
                   },
                 ],
@@ -942,7 +1124,9 @@ export class ResponseComposerService {
             signalItems: [
               {
                 id: `${nextStepWindowId}-signal`,
-                tone: this.isAgentConfigBlockedResult(data) ? "critical" : "warning",
+                tone: this.isAgentConfigBlockedResult(data)
+                  ? "critical"
+                  : "warning",
                 text: this.isAgentConfigBlockedResult(data)
                   ? "Нужна корректировка конфигурации агента."
                   : actionId
@@ -1102,7 +1286,11 @@ export class ResponseComposerService {
       ].includes(tool.name),
     );
 
-    if (agentExecution && agentExecution.role !== "contracts_agent" && !explicitContractsTool) {
+    if (
+      agentExecution &&
+      agentExecution.role !== "contracts_agent" &&
+      !explicitContractsTool
+    ) {
       return null;
     }
     if (!agentExecution && !explicitContractsTool) {
@@ -1120,16 +1308,18 @@ export class ResponseComposerService {
       [RaiToolName.GetCommerceContract]: "review_commerce_contract",
       [RaiToolName.CreateCommerceObligation]: "create_contract_obligation",
       [RaiToolName.CreateFulfillmentEvent]: "create_fulfillment_event",
-      [RaiToolName.CreateInvoiceFromFulfillment]: "create_invoice_from_fulfillment",
+      [RaiToolName.CreateInvoiceFromFulfillment]:
+        "create_invoice_from_fulfillment",
       [RaiToolName.PostInvoice]: "post_invoice",
       [RaiToolName.CreatePayment]: "create_payment",
       [RaiToolName.ConfirmPayment]: "confirm_payment",
       [RaiToolName.AllocatePayment]: "allocate_payment",
       [RaiToolName.GetArBalance]: "review_ar_balance",
     };
-    const intent = (structured.intent ?? (explicitContractsTool ? toolIntentMap[explicitContractsTool.name] : undefined)) as
-      | ContractsWindowIntent
-      | undefined;
+    const intent = (structured.intent ??
+      (explicitContractsTool
+        ? toolIntentMap[explicitContractsTool.name]
+        : undefined)) as ContractsWindowIntent | undefined;
     if (
       intent !== "create_commerce_contract" &&
       intent !== "list_commerce_contracts" &&
@@ -1152,7 +1342,8 @@ export class ResponseComposerService {
 
     if (
       explicitContractsTool &&
-      (this.isRiskPolicyBlockedResult(data) || this.isAgentConfigBlockedResult(data))
+      (this.isRiskPolicyBlockedResult(data) ||
+        this.isAgentConfigBlockedResult(data))
     ) {
       const blockedSummary =
         typeof data.message === "string" && data.message.length > 0
@@ -1174,7 +1365,9 @@ export class ResponseComposerService {
           title: this.isAgentConfigBlockedResult(data)
             ? "Commerce-выполнение заблокировано"
             : "Требуется подтверждение",
-          status: this.isAgentConfigBlockedResult(data) ? "informational" : "needs_user_input",
+          status: this.isAgentConfigBlockedResult(data)
+            ? "informational"
+            : "needs_user_input",
           payload: {
             intentId: intent,
             summary: blockedSummary,
@@ -1194,7 +1387,9 @@ export class ResponseComposerService {
                     value: this.isAgentConfigBlockedResult(data)
                       ? "Заблокировано конфигурацией"
                       : "Ожидает подтверждения",
-                    tone: this.isAgentConfigBlockedResult(data) ? "critical" : "warning",
+                    tone: this.isAgentConfigBlockedResult(data)
+                      ? "critical"
+                      : "warning",
                   },
                 ],
               },
@@ -1225,7 +1420,8 @@ export class ResponseComposerService {
           status: "informational",
           payload: {
             intentId: intent,
-            summary: "Подтвердите commerce-действие в governance-контуре и повторите команду.",
+            summary:
+              "Подтвердите commerce-действие в governance-контуре и повторите команду.",
             missingKeys: [],
             signalItems: [
               {
@@ -1256,9 +1452,11 @@ export class ResponseComposerService {
     }
 
     if (agentExecution?.status === "NEEDS_MORE_DATA") {
-      const missingContext = (Array.isArray(structured.missingContext)
-        ? structured.missingContext
-        : []) as RaiWorkWindowDto["payload"]["missingKeys"];
+      const missingContext = (
+        Array.isArray(structured.missingContext)
+          ? structured.missingContext
+          : []
+      ) as RaiWorkWindowDto["payload"]["missingKeys"];
       const workWindows: RaiWorkWindowDto[] = [
         {
           windowId: contractsWindowId,
@@ -1356,7 +1554,11 @@ export class ResponseComposerService {
         status: "completed",
         payload: {
           intentId: intent,
-          summary: buildContractsSummary(intent, data, agentExecution?.text ?? "Commerce-операция выполнена."),
+          summary: buildContractsSummary(
+            intent,
+            data,
+            agentExecution?.text ?? "Commerce-операция выполнена.",
+          ),
           missingKeys: [],
           sections: buildContractsSections(intent, data),
         },
@@ -1463,7 +1665,8 @@ export class ResponseComposerService {
         status: "completed",
         payload: {
           intentId: "compute_plan_fact",
-          summary: "Экономист подготовил сравнение ключевых показателей сценария.",
+          summary:
+            "Экономист подготовил сравнение ключевых показателей сценария.",
           missingKeys: [],
           columns: ["Текущий сценарий", "Комментарий"],
           rows: [
@@ -1471,7 +1674,9 @@ export class ResponseComposerService {
               id: "roi",
               label: "ROI",
               values: [
-                scenarioResult ? `${(scenarioResult.roi * 100).toFixed(1)}%` : "—",
+                scenarioResult
+                  ? `${(scenarioResult.roi * 100).toFixed(1)}%`
+                  : "—",
                 "Ключевой показатель окупаемости сценария.",
               ],
               emphasis: "best",
@@ -1490,7 +1695,10 @@ export class ResponseComposerService {
             {
               id: "source",
               label: "Источник",
-              values: [scenarioResult?.source ?? "deterministic", "Основа расчёта."],
+              values: [
+                scenarioResult?.source ?? "deterministic",
+                "Основа расчёта.",
+              ],
               emphasis: "neutral",
             },
           ],
@@ -1639,7 +1847,9 @@ export class ResponseComposerService {
     const fieldId =
       refs.find((ref) => ref.kind === "field")?.id ??
       (selected?.kind === "field" ? selected.id : undefined) ??
-      this.readWorkspaceFilterAsString(request.workspaceContext?.filters?.fieldId);
+      this.readWorkspaceFilterAsString(
+        request.workspaceContext?.filters?.fieldId,
+      );
     const seasonId = this.readWorkspaceFilterAsString(
       request.workspaceContext?.filters?.seasonId,
     );
@@ -1663,10 +1873,9 @@ export class ResponseComposerService {
       payload: {
         entityType,
         entityId,
-        reason:
-          runtimeGovernance?.degraded
-            ? runtimeGovernance.fallbackReason
-            : "Контекстная экспертная проверка по рабочей сущности",
+        reason: runtimeGovernance?.degraded
+          ? runtimeGovernance.fallbackReason
+          : "Контекстная экспертная проверка по рабочей сущности",
         ...(fieldId ? { fieldId } : {}),
         ...(seasonId ? { seasonId } : {}),
         ...(planId ? { planId } : {}),
@@ -1688,7 +1897,9 @@ export class ResponseComposerService {
     return undefined;
   }
 
-  private extractProfileSummary(profile: Record<string, unknown>): string | null {
+  private extractProfileSummary(
+    profile: Record<string, unknown>,
+  ): string | null {
     const lastRoute =
       typeof profile.lastRoute === "string" && profile.lastRoute.length > 0
         ? profile.lastRoute
@@ -1736,7 +1947,9 @@ export class ResponseComposerService {
       items.push({
         kind: "engram",
         label: topEngram.content.slice(0, 80),
-        confidence: Number(topEngram.compositeScore ?? topEngram.similarity ?? 0),
+        confidence: Number(
+          topEngram.compositeScore ?? topEngram.similarity ?? 0,
+        ),
         source: topEngram.category,
       });
     }
@@ -1746,7 +1959,10 @@ export class ResponseComposerService {
         kind: "episode",
         label: top.content.slice(0, 80),
         confidence: Number(top.confidence ?? 0),
-        source: typeof top.metadata?.source === "string" ? top.metadata.source : "episode",
+        source:
+          typeof top.metadata?.source === "string"
+            ? top.metadata.source
+            : "episode",
       });
     }
     const profileSummary = this.extractProfileSummary(profile);
@@ -1874,7 +2090,9 @@ export class ResponseComposerService {
           return blockedSummary;
         }
         if (this.isToolExecutionErrorResult(tool.result)) {
-          const rawMessage = tool.result.message?.trim() || "Неизвестная ошибка выполнения инструмента.";
+          const rawMessage =
+            tool.result.message?.trim() ||
+            "Неизвестная ошибка выполнения инструмента.";
           if (
             tool.name === RaiToolName.GetCrmAccountWorkspace &&
             (/account_and_party_not_found/i.test(rawMessage) ||
@@ -1885,13 +2103,19 @@ export class ResponseComposerService {
           return `Действие "${buildToolDisplayName(tool.name)}" не выполнено: ${rawMessage}`;
         }
         if (tool.name === RaiToolName.ComputeDeviations) {
-          const r = tool.result as ComputeDeviationsResult & { explain?: string; agentName?: string };
+          const r = tool.result as ComputeDeviationsResult & {
+            explain?: string;
+            agentName?: string;
+          };
           if (r?.agentName === "AgronomAgent" && r.explain) return r.explain;
           return `Отклонений найдено: ${(r as ComputeDeviationsResult)?.count ?? 0}`;
         }
         if (tool.name === RaiToolName.ComputePlanFact) {
-          const r = tool.result as ComputePlanFactResult | { data?: ComputePlanFactResult; agentName?: string };
-          const data = "data" in r && r.data ? r.data : (r as ComputePlanFactResult);
+          const r = tool.result as
+            | ComputePlanFactResult
+            | { data?: ComputePlanFactResult; agentName?: string };
+          const data =
+            "data" in r && r.data ? r.data : (r as ComputePlanFactResult);
           return `План-факт по плану ${data.planId}: ROI ${data.roi}, EBITDA ${data.ebitda}`;
         }
         if (tool.name === RaiToolName.EmitAlerts) {
@@ -1899,7 +2123,10 @@ export class ResponseComposerService {
           return `Открытых эскалаций ${r.severity}+ : ${r.count}`;
         }
         if (tool.name === RaiToolName.GenerateTechMapDraft) {
-          const r = tool.result as GenerateTechMapDraftResult & { explain?: string; agentName?: string };
+          const r = tool.result as GenerateTechMapDraftResult & {
+            explain?: string;
+            agentName?: string;
+          };
           if (r?.agentName === "AgronomAgent" && r.explain) return r.explain;
           return `Черновик техкарты создан: ${(r as GenerateTechMapDraftResult)?.draftId}`;
         }

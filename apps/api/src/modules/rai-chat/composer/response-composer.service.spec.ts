@@ -123,7 +123,7 @@ describe("ResponseComposerService", () => {
       companyId: "company-1",
     });
 
-    expect(response.text).toContain("Принял: покажи статус");
+    expect(response.text).toContain("Контрагент: ООО Ромашка, карточка party-1");
     expect(response.text).toContain("Учтён предыдущий контекст");
     expect(response.text).not.toContain("route:");
     expect(response.text).not.toContain("Инструментов выполнено");
@@ -526,6 +526,60 @@ describe("ResponseComposerService", () => {
           label: "ИНН",
         }),
       ]),
+    );
+  });
+
+  it("добавляет синтез по structuredOutputs при multi-agent делегации", async () => {
+    const response = await service.buildResponse({
+      request: {
+        message: "сверь агро и экономику",
+        threadId: "th-synth",
+        workspaceContext: { route: "/consulting/dashboard" },
+      },
+      executionResult: {
+        executedTools: [],
+        agentExecution: {
+          role: "agronomist",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Первичный ответ агронома.",
+          structuredOutput: {
+            summary: "Агрономическая оценка собрана.",
+          },
+          structuredOutputs: [
+            { summary: "Агрономическая оценка собрана." },
+            { summary: "Экономический cross-check подтверждает расчёт." },
+          ],
+          toolCalls: [],
+          connectorCalls: [],
+          evidence: [],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "agronom-v1",
+          },
+        },
+      } as any,
+      recallResult: {
+        recall: { items: [] },
+        profile: {},
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-synth",
+      threadId: "th-synth",
+      companyId: "company-1",
+    });
+
+    expect(response.text).toContain("Синтез делегированной цепочки:");
+    expect(response.text).toContain("1. Агрономическая оценка собрана.");
+    expect(response.text).toContain(
+      "2. Экономический cross-check подтверждает расчёт.",
     );
   });
 });
