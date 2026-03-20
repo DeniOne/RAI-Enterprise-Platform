@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-PHASE-5-STATUS-Q8P0
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_PHASE_5_STATUS
 
 ## Scope

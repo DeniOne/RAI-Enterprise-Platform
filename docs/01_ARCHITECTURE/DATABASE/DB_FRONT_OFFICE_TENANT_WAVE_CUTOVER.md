@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-FRONT-OFFICE-TENANT-WAVE-CUTOV-J5G4
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_FRONT_OFFICE_TENANT_WAVE_CUTOVER
 
 ## Scope

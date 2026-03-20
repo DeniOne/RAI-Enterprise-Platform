@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-READ-MODEL-POLICY-1BSB
+layer: Architecture
+type: Standards
+status: draft
+version: 0.1.0
+---
 # READ_MODEL_POLICY
 
 ## Status

@@ -1,8 +1,8 @@
 ---
-id: DOC-ARC-DECISIONS-ADR-DB-005-INDEX-QUERY-GOVERNANCE
+id: DOC-ARC-DECISIONS-ADR-DB-005-INDEX-AND-QUERY-GOVER-1UH9
 layer: Architecture
 type: ADR
-status: accepted
+status: approved
 version: 0.1.0
 owners: [@techlead, @backend-lead, @data-architecture]
 last_updated: 2026-03-13

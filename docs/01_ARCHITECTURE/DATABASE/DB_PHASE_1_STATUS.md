@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-PHASE-1-STATUS-31WI
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_PHASE_1_STATUS
 
 ## Scope

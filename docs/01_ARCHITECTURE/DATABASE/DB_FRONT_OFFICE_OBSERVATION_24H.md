@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-FRONT-OFFICE-OBSERVATION-24H-1DFB
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_FRONT_OFFICE_OBSERVATION_24H
 
 ## Window

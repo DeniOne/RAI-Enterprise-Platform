@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-FRONT-OFFICE-CUTOVER-DRILL-1SNB
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_FRONT_OFFICE_CUTOVER_DRILL
 
 - Generated at: `2026-03-15T19:44:31.787Z`

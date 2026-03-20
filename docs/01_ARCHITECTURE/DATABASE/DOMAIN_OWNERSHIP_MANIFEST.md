@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DOMAIN-OWNERSHIP-MANIFEST-ZVPM
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DOMAIN_OWNERSHIP_MANIFEST
 
 ## Purpose

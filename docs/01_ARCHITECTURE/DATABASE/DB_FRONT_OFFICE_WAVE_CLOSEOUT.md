@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-FRONT-OFFICE-WAVE-CLOSEOUT-10S9
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_FRONT_OFFICE_WAVE_CLOSEOUT
 
 ## Scope

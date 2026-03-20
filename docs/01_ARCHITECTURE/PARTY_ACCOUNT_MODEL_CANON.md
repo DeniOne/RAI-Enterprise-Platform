@@ -1,12 +1,11 @@
 ---
-id: DOC-ARC-01-ARCHITECTURE-PARTY-ACCOUNT-MODEL-CANON-2026
+id: DOC-ARC-01-ARCHITECTURE-PARTY-ACCOUNT-MODEL-CANON-K8IQ
 layer: Architecture
-type: Contract
-status: active
+type: Standards
+status: approved
 version: 1.1.0
 updated: 2026-03-16
 ---
-
 # Канон модели Party vs Account
 
 ## 1. Назначение

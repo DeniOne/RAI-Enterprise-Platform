@@ -61,6 +61,12 @@ jobs:
       - name: Rollout guard (hard fail)
         run: pnpm gate:rollout -- --input artifacts/rollout-guard-input.json | tee artifacts/rollout-gate.log
 
+      - name: Routing primary slices + case memory gate (hard fail)
+        run: pnpm gate:routing:primary-slices | tee artifacts/routing-primary-slices-eval.log
+
+      - name: Docs lint gate (hard fail)
+        run: pnpm lint:docs | tee artifacts/docs-lint-gate.log
+
       - name: Upload gate artifacts
         if: always()
         uses: actions/upload-artifact@v4

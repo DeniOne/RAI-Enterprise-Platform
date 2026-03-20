@@ -1,3 +1,10 @@
+---
+id: DOC-OPS-DEVELOPMENT-GUIDELINES-ARCHITECTURE-GROWTH-1NOJ
+layer: Operations
+type: Report
+status: draft
+version: 0.1.0
+---
 # Architecture Growth Guardrails
 
 ## Зачем это введено

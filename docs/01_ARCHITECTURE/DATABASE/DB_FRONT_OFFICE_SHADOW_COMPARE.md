@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-FRONT-OFFICE-SHADOW-COMPARE-0BOX
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_FRONT_OFFICE_SHADOW_COMPARE
 
 - Generated at: `2026-03-15T19:44:29.668Z`

@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-PHASE-7-STATUS-11U3
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_PHASE_7_STATUS
 
 ## Scope

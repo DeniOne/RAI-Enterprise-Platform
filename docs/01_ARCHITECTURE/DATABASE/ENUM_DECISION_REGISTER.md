@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-ENUM-DECISION-REGISTER-1IUQ
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # ENUM_DECISION_REGISTER
 
 ## Purpose

@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-ENUM-RATIONALIZATION-1L4I
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # Рационализация enum
 
 ## Жесткий вывод

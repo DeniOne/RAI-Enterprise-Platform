@@ -1,8 +1,8 @@
 ---
-id: DOC-ARC-DECISIONS-ADR-DB-004-READ-MODELS-PROJECTIONS
+id: DOC-ARC-DECISIONS-ADR-DB-004-READ-MODELS-AND-PROJE-1AYL
 layer: Architecture
 type: ADR
-status: accepted
+status: approved
 version: 0.1.0
 owners: [@techlead, @backend-lead, @data-architecture]
 last_updated: 2026-03-13

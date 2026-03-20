@@ -1,8 +1,8 @@
 ---
-id: DOC-ARC-DECISIONS-ADR-DB-002-SCHEMA-FRAGMENTATION-OWNERSHIP
+id: DOC-ARC-DECISIONS-ADR-DB-002-SCHEMA-FRAGMENTATION--13IB
 layer: Architecture
 type: ADR
-status: accepted
+status: approved
 version: 0.1.0
 owners: [@techlead, @backend-lead, @data-architecture]
 last_updated: 2026-03-13

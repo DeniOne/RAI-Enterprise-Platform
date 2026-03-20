@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-MG-CORE-DECISION-NOTE-CDZ9
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_MG_CORE_DECISION_NOTE
 
 ## Decision date

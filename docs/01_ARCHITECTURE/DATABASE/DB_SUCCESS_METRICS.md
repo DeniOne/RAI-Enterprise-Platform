@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-SUCCESS-METRICS-10YC
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_SUCCESS_METRICS
 
 ## Status

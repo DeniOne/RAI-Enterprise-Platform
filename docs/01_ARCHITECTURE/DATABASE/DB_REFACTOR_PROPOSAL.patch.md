@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-REFACTOR-PROPOSAL-PATCH-14ZV
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_REFACTOR_PROPOSAL.patch.md
 
 Это design-only proposal для первого реального tranche.

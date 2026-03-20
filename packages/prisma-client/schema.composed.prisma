@@ -3377,6 +3377,7 @@ model Account {
   // Ownership & Structure
   companyId String
   company   Company  @relation(fields: [companyId], references: [id])
+  partyId   String?
   holdingId String?
   holding   Holding? @relation(fields: [holdingId], references: [id])
 
@@ -3404,6 +3405,7 @@ model Account {
   machinery  Machinery[]
   stockItems StockItem[]
 
+  @@index([companyId, partyId])
   @@map("accounts")
 }
 

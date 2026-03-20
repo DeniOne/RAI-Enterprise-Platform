@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-FRONT-OFFICE-TENANT-WAVE-VALID-ZUQS
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_FRONT_OFFICE_TENANT_WAVE_VALIDATION
 
 - Generated at: `2026-03-14T09:21:59.504Z`

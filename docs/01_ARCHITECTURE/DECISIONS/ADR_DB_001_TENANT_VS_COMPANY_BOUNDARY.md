@@ -1,8 +1,8 @@
 ---
-id: DOC-ARC-DECISIONS-ADR-DB-001-TENANT-COMPANY-BOUNDARY
+id: DOC-ARC-DECISIONS-ADR-DB-001-TENANT-VS-COMPANY-BOU-1CYG
 layer: Architecture
 type: ADR
-status: accepted
+status: approved
 version: 0.1.0
 owners: [@techlead, @backend-lead, @data-architecture]
 last_updated: 2026-03-13

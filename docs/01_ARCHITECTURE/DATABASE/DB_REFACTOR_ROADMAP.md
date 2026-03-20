@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-REFACTOR-ROADMAP-S10I
+layer: Architecture
+type: Topology
+status: draft
+version: 0.1.0
+---
 # DB_REFACTOR_ROADMAP
 
 ## Hard position

@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-TENANCY-TRANSITION-RUNTIME-POL-YE00
+layer: Architecture
+type: Standards
+status: draft
+version: 0.1.0
+---
 # DB_TENANCY_TRANSITION_RUNTIME_POLICY
 
 ## Purpose

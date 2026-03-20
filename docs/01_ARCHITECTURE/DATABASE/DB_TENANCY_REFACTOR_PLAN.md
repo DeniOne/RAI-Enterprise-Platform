@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-TENANCY-REFACTOR-PLAN-0JBG
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # План рефакторинга tenancy
 
 ## Позиция

@@ -8,10 +8,14 @@ const STRICT_VERSION = process.argv.includes('--strict-version');
 
 const ROOT_META_FILES = new Set(['README.md', 'INDEX.md']);
 const FOLDER_TO_LAYER = {
+    '00_CORE': 'Architecture',
     '00_STRATEGY': 'Strategy',
     '01_ARCHITECTURE': 'Architecture',
+    '02_PRODUCT': 'Product',
     '02_DOMAINS': 'Domain',
+    '03_ENGINEERING': 'Engineering',
     '03_PRODUCT': 'Product',
+    '04_AI_SYSTEM': 'Engineering',
     '04_ENGINEERING': 'Engineering',
     '05_OPERATIONS': 'Operations',
     '06_METRICS': 'Metrics',
@@ -76,6 +80,8 @@ function expectedLayer(relPath) {
     const parts = relPath.split('/');
     if (parts.length === 1 && ROOT_META_FILES.has(parts[0])) return 'Meta';
     if (parts.length === 1) return '_ROOT_';
+    if (relPath.startsWith('06_ARCHIVE/')) return '_ARCHIVE_LOOSE_';
+    if (relPath.startsWith('_audit/')) return '_ARCHIVE_LOOSE_';
     if (relPath.startsWith('00_STRATEGY/STAGE 2/Archive/')) return 'Archive';
     if (relPath.startsWith('00_STRATEGY/TECHMAP/')) {
         const base = parts[parts.length - 1].toLowerCase();
@@ -176,7 +182,7 @@ function run() {
         const deprecatedBy = fm.deprecated_by;
 
         const expLayer = expectedLayer(rel);
-        if (expLayer === '_ROOT_') {
+        if (expLayer === '_ROOT_' || expLayer === '_ARCHIVE_LOOSE_') {
             // Curated root docs are allowed and validated by frontmatter only.
         } else if (!expLayer) {
             warnings.push(`[PATH] ${rel}: unknown top-level folder, skipped layer/path check`);

@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-INDEX-OBSERVATION-WINDOW-2026--219G
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_INDEX_OBSERVATION_WINDOW_2026-03-13
 
 - Snapshot at: `2026-03-13T22:02:49.626Z`

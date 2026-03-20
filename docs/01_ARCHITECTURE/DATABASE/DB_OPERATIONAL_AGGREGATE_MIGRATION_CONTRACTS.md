@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-OPERATIONAL-AGGREGATE-MIGRATIO-1Q0T
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_OPERATIONAL_AGGREGATE_MIGRATION_CONTRACTS
 
 ## Purpose

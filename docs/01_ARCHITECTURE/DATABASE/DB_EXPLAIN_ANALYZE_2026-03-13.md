@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-EXPLAIN-ANALYZE-2026-03-13-1R6Y
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_EXPLAIN_ANALYZE_2026-03-13
 
 - Generated at: `2026-03-13T21:55:51.835Z`

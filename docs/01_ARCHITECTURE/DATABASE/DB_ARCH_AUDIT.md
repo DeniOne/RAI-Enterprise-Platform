@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-ARCH-AUDIT-1T01
+layer: Architecture
+type: Report
+status: draft
+version: 0.1.0
+---
 # Аудит архитектуры БД
 
 ## Область аудита и источники

@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-COMPANY-DEROOT-DEPRECATION-PLA-14LH
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_COMPANY_DEROOT_DEPRECATION_PLAN
 
 ## Scope

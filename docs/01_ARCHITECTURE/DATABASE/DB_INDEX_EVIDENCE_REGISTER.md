@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-INDEX-EVIDENCE-REGISTER-1UEE
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_INDEX_EVIDENCE_REGISTER
 
 ## Purpose

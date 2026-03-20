@@ -24,6 +24,8 @@
     "report:invariants:weekly": "node scripts/invariant-weekly-review.cjs",
     "lint:docs:matrix": "node scripts/doc-lint-matrix.cjs --fail-on-mismatch",
     "lint:docs:matrix:strict": "node scripts/doc-lint-matrix.cjs --fail-on-mismatch --strict-version",
+    "docs:audit:reset": "node scripts/docs-reset-audit.cjs",
+    "lint:docs": "node scripts/lint-docs.cjs",
     "docs:normalize:governance": "node scripts/normalize-docs-governance.cjs",
     "gate:db:scope": "node scripts/check-model-scope-manifest.cjs --mode=warn",
     "gate:db:scope:enforce": "node scripts/check-model-scope-manifest.cjs --mode=enforce",

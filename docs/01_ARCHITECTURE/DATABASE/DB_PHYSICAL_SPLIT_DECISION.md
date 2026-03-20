@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-PHYSICAL-SPLIT-DECISION-3P4D
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_PHYSICAL_SPLIT_DECISION
 
 ## Decision (2026-03-13)

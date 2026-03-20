@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-ENUM-OVERLAP-MATRIX-1D4E
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_ENUM_OVERLAP_MATRIX
 
 ## Purpose

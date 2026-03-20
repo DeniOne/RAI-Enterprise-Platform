@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-MODEL-SCOPE-MANIFEST-1W53
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # MODEL_SCOPE_MANIFEST
 
 ## Purpose

@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-PHASE-2-STATUS-18D5
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_PHASE_2_STATUS
 
 ## Scope

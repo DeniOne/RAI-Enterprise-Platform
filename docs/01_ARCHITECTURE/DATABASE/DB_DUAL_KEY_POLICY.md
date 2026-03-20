@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-DUAL-KEY-POLICY-I052
+layer: Architecture
+type: Standards
+status: draft
+version: 0.1.0
+---
 # DB_DUAL_KEY_POLICY
 
 ## Purpose

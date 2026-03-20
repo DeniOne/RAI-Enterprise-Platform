@@ -1,8 +1,8 @@
 ---
-id: DOC-ARC-DECISIONS-ADR-DB-003-ENUM-GOVERNANCE
+id: DOC-ARC-DECISIONS-ADR-DB-003-ENUM-GOVERNANCE-IW3J
 layer: Architecture
 type: ADR
-status: accepted
+status: approved
 version: 0.1.0
 owners: [@techlead, @backend-lead, @data-architecture]
 last_updated: 2026-03-13

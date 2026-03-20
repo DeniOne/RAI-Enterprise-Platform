@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-REFACTOR-CHECKLIST-O6U4
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_REFACTOR_CHECKLIST
 
 ## Purpose

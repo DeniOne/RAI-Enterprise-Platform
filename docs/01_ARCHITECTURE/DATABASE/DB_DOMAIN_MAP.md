@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-DOMAIN-MAP-TFV2
+layer: Architecture
+type: Topology
+status: draft
+version: 0.1.0
+---
 # Карта доменов БД
 
 ## Правила карты

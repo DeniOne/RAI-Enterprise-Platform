@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-INDEX-AUDIT-30QJ
+layer: Architecture
+type: Report
+status: draft
+version: 0.1.0
+---
 # DB_INDEX_AUDIT
 
 ## Scope and evidence

@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-INCLUDE-DEPTH-METRICS-13NI
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_INCLUDE_DEPTH_METRICS
 
 ## Scope

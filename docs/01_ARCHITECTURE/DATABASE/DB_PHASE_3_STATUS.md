@@ -1,3 +1,10 @@
+---
+id: DOC-ARC-DATABASE-DB-PHASE-3-STATUS-ENAR
+layer: Architecture
+type: HLD
+status: draft
+version: 0.1.0
+---
 # DB_PHASE_3_STATUS
 
 ## Scope

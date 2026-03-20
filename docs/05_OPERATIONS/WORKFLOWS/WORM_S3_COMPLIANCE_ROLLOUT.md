@@ -1,3 +1,10 @@
+---
+id: DOC-OPS-WORKFLOWS-WORM-S3-COMPLIANCE-ROLLOUT-E5YW
+layer: Operations
+type: Report
+status: draft
+version: 0.1.0
+---
 # WORM S3 Compliance Rollout
 
 ## Цель
