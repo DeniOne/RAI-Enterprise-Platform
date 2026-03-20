@@ -14,6 +14,11 @@ const CREATE_ACTION_SIGNAL =
 const UPDATE_ACTION_SIGNAL = /обнови|измени|правь|перенеси|скорректир/i;
 const DELETE_ACTION_SIGNAL = /удали|убери|снеси|сними/i;
 
+function extractQuotedFragment(message: string): string | undefined {
+  const match = message.match(/[«"]([^"»]+)[»"]/u);
+  return match?.[1]?.trim() || undefined;
+}
+
 export function isKnowledgeNoHit(data: unknown): boolean {
   if (!data || typeof data !== "object" || Array.isArray(data)) {
     return false;
@@ -76,6 +81,9 @@ export function detectCrmIntent(
   toolCalls: RaiToolCallDto[],
   message: string,
 ): CrmAgentIntent {
+  if (toolCalls.some((call) => call.name === RaiToolName.LookupCounterpartyByInn)) {
+    return "lookup_counterparty_by_inn";
+  }
   if (toolCalls.some((call) => call.name === RaiToolName.RegisterCounterparty)) {
     return "register_counterparty";
   }
@@ -159,6 +167,9 @@ export function detectCrmIntent(
   ) {
     return "register_counterparty";
   }
+  if (extractInnFromMessage(message)) {
+    return "lookup_counterparty_by_inn";
+  }
   return "review_account_workspace";
 }
 
@@ -171,6 +182,8 @@ export function detectCrmTool(
     return explicit;
   }
   switch (intent) {
+    case "lookup_counterparty_by_inn":
+      return RaiToolName.LookupCounterpartyByInn;
     case "register_counterparty":
       return RaiToolName.RegisterCounterparty;
     case "create_counterparty_relation":
@@ -202,6 +215,49 @@ export function detectCrmTool(
     default:
       return RaiToolName.GetCrmAccountWorkspace;
   }
+}
+
+export function extractInnFromMessage(message: string): string | undefined {
+  const match = message.replace(/\s+/g, "").match(/\b\d{10}(?:\d{2})?\b/);
+  return match?.[0];
+}
+
+export function extractCrmWorkspaceQuery(message: string): string | undefined {
+  const explicit = extractQuotedFragment(message);
+  if (explicit) {
+    return explicit;
+  }
+
+  const directorQuestionMatch = message.match(
+    /^(?:кто|как\s+зовут)\s+(?:у\s+)?(?:генеральн(?:ый|ого)\s+)?(?:директор(?:а|у|ом)?|гендир(?:ектор)?(?:а|у|ом)?|руководител(?:я|ь))\s+(.+?)\??$/iu,
+  );
+  if (directorQuestionMatch?.[1]) {
+    const companyQuery = directorQuestionMatch[1]
+      .replace(/^(?:в|у|для)\s+/iu, "")
+      .replace(/[«»"]/g, "")
+      .trim();
+    if (companyQuery.length >= 2) {
+      return companyQuery;
+    }
+  }
+
+  const cleaned = message
+    .replace(/^(открой|открыть|покажи|показать)\s+/i, "")
+    .replace(
+      /^(?:кто|как\s+зовут)\s+(?:у\s+)?(?:генеральн(?:ый|ого)\s+)?(?:директор(?:а|у|ом)?|гендир(?:ектор)?(?:а|у|ом)?|руководител(?:я|ь))\s+/iu,
+      "",
+    )
+    .replace(/(?:^|\s)(card|workspace)(?=\s|$)/gi, " ")
+    .replace(
+      /(?:^|\s)(crm|карточк(?:у|а|и|е|ой)?|контрагента|контрагент|клиента|клиент|аккаунта|аккаунт|профиль)(?=\s|$)/gi,
+      " ",
+    )
+    .replace(/[«»"]/g, "")
+    .replace(/[?.!]+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return cleaned.length >= 2 ? cleaned : undefined;
 }
 
 export function detectFrontOfficeIntent(
@@ -288,11 +344,11 @@ export function detectContractsIntent(
   if (CREATE_ACTION_SIGNAL.test(normalized) && /обязательств/i.test(normalized)) {
     return "create_contract_obligation";
   }
-  if (/реестр.*договор|список.*договор|покажи.*договор/i.test(normalized)) {
-    return "list_commerce_contracts";
-  }
-  if (/карточк.*договор|договор .*покажи|review contract/i.test(normalized)) {
+  if (isContractsReviewQuery(normalized)) {
     return "review_commerce_contract";
+  }
+  if (isContractsListQuery(normalized)) {
+    return "list_commerce_contracts";
   }
   if (
     CREATE_ACTION_SIGNAL.test(normalized) &&
@@ -405,6 +461,61 @@ export function buildObligationDescription(message: string): string {
 export function extractContractNumber(message: string): string | undefined {
   const match = message.match(/\b([A-ZА-Я]{1,4}-?\d{2,4}-?\d{1,6})\b/u);
   return match?.[1];
+}
+
+export function extractContractReviewQuery(message: string): string | undefined {
+  const explicit = extractQuotedFragment(message);
+  if (explicit) {
+    return explicit;
+  }
+
+  const contractNumber = extractContractNumber(message);
+  if (contractNumber) {
+    return contractNumber;
+  }
+
+  const descriptorMatch = message.match(
+    /(?:договор|контракт)\s+№?\s*([A-ZА-Я0-9-]{3,})/iu,
+  );
+  const candidate = descriptorMatch?.[1]?.trim();
+  if (candidate && !/^(все|реестр|список)$/iu.test(candidate)) {
+    return candidate;
+  }
+
+  return undefined;
+}
+
+function hasContractsWriteSignal(message: string): boolean {
+  return (
+    CREATE_ACTION_SIGNAL.test(message) ||
+    UPDATE_ACTION_SIGNAL.test(message) ||
+    DELETE_ACTION_SIGNAL.test(message) ||
+    /счет|инвойс|invoice|оплат|платеж|разнес|аллокац|обязательств|исполнени|отгрузк|shipment/i.test(
+      message,
+    )
+  );
+}
+
+function isContractsListQuery(message: string): boolean {
+  return (
+    /(договор|контракт)/i.test(message) &&
+    /(реестр|список|перечень|все\s+(?:договор|контракт)|договоры|контракты|какие\s+(?:договоры|контракты))/i.test(
+      message,
+    )
+  );
+}
+
+function isContractsReviewQuery(message: string): boolean {
+  if (!/(договор|контракт)/i.test(message)) {
+    return false;
+  }
+  if (hasContractsWriteSignal(message)) {
+    return false;
+  }
+  return (
+    /(карточк|открой|подробн|детал|номер|№)/i.test(message) ||
+    Boolean(extractContractReviewQuery(message))
+  );
 }
 
 export function extractContractType(message: string): string | undefined {

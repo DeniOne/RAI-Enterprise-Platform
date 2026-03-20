@@ -58,6 +58,10 @@ const CONTRACTS_TOOL_NAMES: RaiToolName[] = [
   RaiToolName.GetArBalance,
 ];
 
+function normalizeContractLookup(value: string): string {
+  return value.replace(/[«»"]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
 type ContractsToolName =
   | RaiToolName.CreateCommerceContract
   | RaiToolName.ListCommerceContracts
@@ -125,7 +129,41 @@ export class ContractsToolsRegistry implements OnModuleInit {
       getCommerceContractSchema,
       async (payload) => {
         const items = await this.contractService.listContracts();
-        const contract = items.find((item) => item.id === payload.contractId);
+        const normalizedQuery =
+          typeof payload.query === "string" && payload.query.trim().length > 0
+            ? normalizeContractLookup(payload.query)
+            : null;
+        const exactMatch =
+          (typeof payload.contractId === "string"
+            ? items.find((item) => item.id === payload.contractId)
+            : undefined) ??
+          (normalizedQuery
+            ? items.find(
+                (item) =>
+                  normalizeContractLookup(item.id) === normalizedQuery ||
+                  normalizeContractLookup(item.number) === normalizedQuery ||
+                  item.roles.some(
+                    (role) =>
+                      normalizeContractLookup(role.party.legalName) ===
+                      normalizedQuery,
+                  ),
+              )
+            : undefined);
+        const partialMatch =
+          exactMatch ??
+          (normalizedQuery
+            ? items.find(
+                (item) =>
+                  normalizeContractLookup(item.number).includes(normalizedQuery) ||
+                  normalizeContractLookup(item.type).includes(normalizedQuery) ||
+                  item.roles.some((role) =>
+                    normalizeContractLookup(role.party.legalName).includes(
+                      normalizedQuery,
+                    ),
+                  ),
+              )
+            : undefined);
+        const contract = exactMatch ?? partialMatch;
         if (!contract) {
           throw new BadRequestException("Contract not found");
         }

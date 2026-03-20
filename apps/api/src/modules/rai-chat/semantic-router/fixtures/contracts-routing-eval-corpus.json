@@ -1,0 +1,190 @@
+[
+  {
+    "id": "contracts-primary-list-registry",
+    "request": {
+      "message": "покажи все договоры",
+      "workspaceContext": {
+        "route": "/commerce/contracts"
+      },
+      "legacyClassification": {
+        "targetRole": "contracts_agent",
+        "intent": "create_commerce_contract",
+        "toolName": "create_commerce_contract",
+        "confidence": 0.62,
+        "method": "regex",
+        "reason": "legacy:contracts"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "contracts.registry-review",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "list_commerce_contracts",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["list_commerce_contracts"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "list_commerce_contracts",
+          "payloadSubset": {
+            "limit": 20
+          }
+        }
+      ],
+      "mismatchKinds": ["tool_name"]
+    }
+  },
+  {
+    "id": "contracts-primary-review-by-selected-contract",
+    "request": {
+      "message": "открой карточку договора",
+      "workspaceContext": {
+        "route": "/commerce/contracts",
+        "selectedRowSummary": {
+          "kind": "contract",
+          "id": "contract-77",
+          "title": "DOG-077"
+        }
+      },
+      "legacyClassification": {
+        "targetRole": "contracts_agent",
+        "intent": "review_commerce_contract",
+        "toolName": "get_commerce_contract",
+        "confidence": 0.71,
+        "method": "regex",
+        "reason": "legacy:contracts"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "contracts.registry-review",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "review_commerce_contract",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["get_commerce_contract"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "get_commerce_contract",
+          "payloadSubset": {
+            "contractId": "contract-77"
+          }
+        }
+      ],
+      "filtersSubset": {
+        "contractId": "contract-77"
+      }
+    }
+  },
+  {
+    "id": "contracts-primary-review-by-number-query",
+    "request": {
+      "message": "покажи договор DOG-077",
+      "workspaceContext": {
+        "route": "/commerce/contracts"
+      },
+      "legacyClassification": {
+        "targetRole": "contracts_agent",
+        "intent": "list_commerce_contracts",
+        "toolName": "list_commerce_contracts",
+        "confidence": 0.66,
+        "method": "regex",
+        "reason": "legacy:contracts"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "contracts.registry-review",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "review_commerce_contract",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["get_commerce_contract"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "get_commerce_contract",
+          "payloadSubset": {
+            "query": "DOG-077"
+          }
+        }
+      ],
+      "filtersSubset": {
+        "query": "DOG-077"
+      }
+    }
+  },
+  {
+    "id": "contracts-primary-review-clarify-without-target",
+    "request": {
+      "message": "открой договор",
+      "workspaceContext": {
+        "route": "/commerce/contracts"
+      },
+      "legacyClassification": {
+        "targetRole": "contracts_agent",
+        "intent": "review_commerce_contract",
+        "toolName": "get_commerce_contract",
+        "confidence": 0.63,
+        "method": "regex",
+        "reason": "legacy:contracts"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "contracts.registry-review",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "review_commerce_contract",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "clarify",
+      "recommendedExecutionMode": "ask_clarification",
+      "eligibleTools": ["get_commerce_contract"],
+      "requiredContextMissing": ["contractId"],
+      "requestedToolCalls": []
+    }
+  },
+  {
+    "id": "contracts-shadow-outside-bounded-slice",
+    "request": {
+      "message": "покажи все договоры",
+      "workspaceContext": {
+        "route": "/consulting/dashboard"
+      },
+      "legacyClassification": {
+        "targetRole": "contracts_agent",
+        "intent": "list_commerce_contracts",
+        "toolName": "list_commerce_contracts",
+        "confidence": 0.64,
+        "method": "regex",
+        "reason": "legacy:contracts"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": null,
+      "promotedPrimary": false,
+      "executionPath": "semantic_router_shadow",
+      "classificationIntent": "list_commerce_contracts",
+      "classificationMethod": "semantic_router_shadow",
+      "decisionType": "abstain",
+      "recommendedExecutionMode": "no_op",
+      "eligibleTools": [],
+      "requiredContextMissing": [],
+      "requestedToolCalls": []
+    }
+  }
+]

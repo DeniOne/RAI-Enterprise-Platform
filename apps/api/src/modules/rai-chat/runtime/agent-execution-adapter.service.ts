@@ -1,5 +1,8 @@
 import { Injectable } from "@nestjs/common";
-import { RaiToolActorContext, RaiToolName } from "../../../shared/rai-chat/rai-tools.types";
+import {
+  RaiToolActorContext,
+  RaiToolName,
+} from "../../../shared/rai-chat/rai-tools.types";
 import { RaiToolCallDto } from "../../../shared/rai-chat/rai-chat.dto";
 import {
   AgentExecutionRequest,
@@ -11,10 +14,8 @@ import { AgronomAgent } from "../agents/agronom-agent.service";
 import { EconomistAgent } from "../agents/economist-agent.service";
 import { KnowledgeAgent } from "../agents/knowledge-agent.service";
 import { MonitoringAgent } from "../agents/monitoring-agent.service";
-import { CrmAgent } from "../agents/crm-agent.service";
-import {
-  FrontOfficeAgent,
-} from "../agents/front-office-agent.service";
+import { CrmAgent, type CrmAgentIntent } from "../agents/crm-agent.service";
+import { FrontOfficeAgent } from "../agents/front-office-agent.service";
 import {
   ContractsAgent,
   type ContractsAgentInput,
@@ -32,8 +33,11 @@ import {
   detectContractsTool,
   detectCrmIntent,
   detectCrmTool,
+  extractInnFromMessage,
   detectDataScientistIntent,
   detectEconomistTool,
+  extractContractReviewQuery,
+  extractCrmWorkspaceQuery,
   detectFrontOfficeIntent,
   detectFrontOfficeTool,
   extractContractNumber,
@@ -57,8 +61,15 @@ interface ExecuteAdapterParams {
   budgetDecision: RuntimeBudgetDecision;
 }
 
-type ExecutionPath = "tool_call_primary" | "heuristic_fallback";
+type ExecutionPath =
+  | "tool_call_primary"
+  | "heuristic_fallback"
+  | "semantic_router_primary";
 type AgronomIntent = "compute_deviations" | "generate_tech_map_draft";
+type EconomistIntent =
+  | "compute_plan_fact"
+  | "simulate_scenario"
+  | "compute_risk_assessment";
 
 @Injectable()
 export class AgentExecutionAdapterService {
@@ -72,10 +83,13 @@ export class AgentExecutionAdapterService {
     private readonly contractsAgent: ContractsAgent,
     private readonly chiefAgronomistAgent: ChiefAgronomistAgent,
     private readonly dataScientistAgent: DataScientistAgent,
-  ) { }
+  ) {}
 
   async execute(params: ExecuteAdapterParams): Promise<AgentExecutionResult> {
-    const adapterRole = this.resolveAdapterRole(params.kernel, params.request.role);
+    const adapterRole = this.resolveAdapterRole(
+      params.kernel,
+      params.request.role,
+    );
     const auditPayload = {
       runtimeMode: "agent-first-hybrid" as const,
       model: params.kernel.runtimeProfile.model,
@@ -87,7 +101,9 @@ export class AgentExecutionAdapterService {
       blockedToolNames: params.kernel.toolBindings
         .filter((binding) => !binding.isEnabled)
         .map((binding) => binding.toolName),
-      connectorNames: params.kernel.connectorBindings.map((binding) => binding.connectorName),
+      connectorNames: params.kernel.connectorBindings.map(
+        (binding) => binding.connectorName,
+      ),
       outputContractId: params.kernel.outputContract.contractId,
     };
 
@@ -96,7 +112,49 @@ export class AgentExecutionAdapterService {
       const routing = this.resolveAgronomIntent(
         params.allowedToolCalls,
         params.request.message,
+        params.request.semanticRouting?.source,
       );
+      const readOnlyTechMapQuery = this.isReadOnlyTechMapQuery(
+        params.request.message,
+      );
+
+      if (!routing.intent && readOnlyTechMapQuery) {
+        return {
+          role: params.request.role,
+          status: "COMPLETED",
+          executionPath: "heuristic_fallback",
+          text: "Понял запрос по техкартам. Откройте реестр техкарт по кнопке ниже.",
+          structuredOutput: {
+            data: {
+              targetRoute: "/consulting/techmaps/active",
+            },
+            intent: "open_techmaps_registry",
+            routingReason: "read_only_techmaps_query",
+          },
+          toolCalls: [],
+          connectorCalls: [],
+          evidence: [],
+          validation: this.validateOutput(
+            params.kernel,
+            [],
+            true,
+            "COMPLETED",
+            true,
+          ),
+          runtimeBudget: params.budgetDecision,
+          fallbackUsed: true,
+          outputContractVersion:
+            params.kernel.outputContract.responseSchemaVersion,
+          auditPayload,
+          suggestedActions: [
+            {
+              kind: "route",
+              title: "Открыть реестр техкарт",
+              href: "/consulting/techmaps/active",
+            },
+          ],
+        };
+      }
 
       if (!routing.intent) {
         return {
@@ -121,7 +179,8 @@ export class AgentExecutionAdapterService {
           ),
           runtimeBudget: params.budgetDecision,
           fallbackUsed: true,
-          outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
+          outputContractVersion:
+            params.kernel.outputContract.responseSchemaVersion,
           auditPayload,
         };
       }
@@ -131,8 +190,12 @@ export class AgentExecutionAdapterService {
           companyId: params.actorContext.companyId,
           traceId: params.request.traceId,
           intent: routing.intent,
-          fieldRef: typeof payload.fieldRef === "string" ? payload.fieldRef : undefined,
-          seasonRef: typeof payload.seasonRef === "string" ? payload.seasonRef : undefined,
+          fieldRef:
+            typeof payload.fieldRef === "string" ? payload.fieldRef : undefined,
+          seasonRef:
+            typeof payload.seasonRef === "string"
+              ? payload.seasonRef
+              : undefined,
           crop: payload.crop === "sunflower" ? "sunflower" : "rapeseed",
           scope:
             typeof payload.scope === "object"
@@ -169,30 +232,36 @@ export class AgentExecutionAdapterService {
         validation: this.validateOutput(
           params.kernel,
           result.evidence,
-          Boolean(result.mathBasis?.length || result.status === "NEEDS_MORE_DATA"),
+          Boolean(
+            result.mathBasis?.length || result.status === "NEEDS_MORE_DATA",
+          ),
           result.status,
           result.status === "NEEDS_MORE_DATA",
         ),
         runtimeBudget: params.budgetDecision,
         fallbackUsed:
           result.fallbackUsed || routing.executionPath === "heuristic_fallback",
-        outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
+        outputContractVersion:
+          params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
       };
     }
 
     if (adapterRole === "economist") {
       const payload = firstPayload(params.allowedToolCalls);
-      const executionPath = this.resolveExecutionPath(params.allowedToolCalls);
+      const executionPath = this.resolveExecutionPath(
+        params.allowedToolCalls,
+        params.request,
+      );
+      const intent = this.resolveEconomistIntent(
+        params.allowedToolCalls,
+        params.request,
+      );
       const result = await this.economistAgent.run(
         {
           companyId: params.actorContext.companyId,
           traceId: params.request.traceId,
-          intent: params.allowedToolCalls.some((call) => call.name === RaiToolName.ComputeRiskAssessment)
-            ? "compute_risk_assessment"
-            : params.allowedToolCalls.some((call) => call.name === RaiToolName.SimulateScenario)
-              ? "simulate_scenario"
-              : "compute_plan_fact",
+          intent,
           scope:
             typeof payload.scope === "object"
               ? (payload.scope as { planId?: string; seasonId?: string })
@@ -205,10 +274,21 @@ export class AgentExecutionAdapterService {
         status: result.status,
         executionPath,
         text: result.explain,
-        structuredOutput: { data: result.data, missingContext: result.missingContext },
+        structuredOutput: {
+          data: result.data,
+          missingContext: result.missingContext,
+        },
         toolCalls:
           result.toolCallsCount > 0
-            ? [{ name: detectEconomistTool(params.allowedToolCalls), result: result.data }]
+            ? [
+                {
+                  name: this.resolveEconomistToolName(
+                    intent,
+                    params.allowedToolCalls,
+                  ),
+                  result: result.data,
+                },
+              ]
             : [],
         connectorCalls: [],
         evidence: result.evidence,
@@ -222,13 +302,17 @@ export class AgentExecutionAdapterService {
         runtimeBudget: params.budgetDecision,
         fallbackUsed:
           result.fallbackUsed || executionPath === "heuristic_fallback",
-        outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
+        outputContractVersion:
+          params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
       };
     }
 
     if (adapterRole === "knowledge") {
-      const executionPath = this.resolveExecutionPath(params.allowedToolCalls);
+      const executionPath = this.resolveExecutionPath(
+        params.allowedToolCalls,
+        params.request,
+      );
       const result = await this.knowledgeAgent.run(
         {
           companyId: params.actorContext.companyId,
@@ -259,15 +343,22 @@ export class AgentExecutionAdapterService {
         runtimeBudget: params.budgetDecision,
         fallbackUsed:
           result.fallbackUsed || executionPath === "heuristic_fallback",
-        outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
+        outputContractVersion:
+          params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
       };
     }
 
     if (adapterRole === "crm_agent") {
       const payload = firstPayload(params.allowedToolCalls);
-      const executionPath = this.resolveExecutionPath(params.allowedToolCalls);
-      const intent = detectCrmIntent(params.allowedToolCalls, params.request.message);
+      const executionPath = this.resolveExecutionPath(
+        params.allowedToolCalls,
+        params.request,
+      );
+      const intent = this.resolveCrmIntent(
+        params.allowedToolCalls,
+        params.request,
+      );
       const result = await this.crmAgent.run(
         {
           companyId: params.actorContext.companyId,
@@ -276,73 +367,113 @@ export class AgentExecutionAdapterService {
           userRole: params.actorContext.userRole,
           userConfirmed: params.actorContext.userConfirmed,
           intent,
-          inn: typeof payload.inn === "string" ? payload.inn : undefined,
+          inn:
+            typeof payload.inn === "string"
+              ? payload.inn
+              : intent === "lookup_counterparty_by_inn"
+                ? extractInnFromMessage(params.request.message)
+                : undefined,
           jurisdictionCode:
             payload.jurisdictionCode === "RU" ||
-              payload.jurisdictionCode === "BY" ||
-              payload.jurisdictionCode === "KZ"
+            payload.jurisdictionCode === "BY" ||
+            payload.jurisdictionCode === "KZ"
               ? payload.jurisdictionCode
               : undefined,
           partyType:
             payload.partyType === "LEGAL_ENTITY" ||
-              payload.partyType === "IP" ||
-              payload.partyType === "KFH"
+            payload.partyType === "IP" ||
+            payload.partyType === "KFH"
               ? payload.partyType
               : undefined,
-          fromPartyId: typeof payload.fromPartyId === "string" ? payload.fromPartyId : undefined,
-          toPartyId: typeof payload.toPartyId === "string" ? payload.toPartyId : undefined,
+          fromPartyId:
+            typeof payload.fromPartyId === "string"
+              ? payload.fromPartyId
+              : undefined,
+          toPartyId:
+            typeof payload.toPartyId === "string"
+              ? payload.toPartyId
+              : undefined,
           relationType:
             payload.relationType === "OWNERSHIP" ||
-              payload.relationType === "MANAGEMENT" ||
-              payload.relationType === "AFFILIATED" ||
-              payload.relationType === "AGENCY"
+            payload.relationType === "MANAGEMENT" ||
+            payload.relationType === "AFFILIATED" ||
+            payload.relationType === "AGENCY"
               ? payload.relationType
               : undefined,
-          sharePct: typeof payload.sharePct === "number" ? payload.sharePct : undefined,
-          validFrom: typeof payload.validFrom === "string" ? payload.validFrom : undefined,
-          validTo: typeof payload.validTo === "string" ? payload.validTo : undefined,
-          accountId: typeof payload.accountId === "string" ? payload.accountId : resolveAccountId(params.request),
+          sharePct:
+            typeof payload.sharePct === "number" ? payload.sharePct : undefined,
+          validFrom:
+            typeof payload.validFrom === "string"
+              ? payload.validFrom
+              : undefined,
+          validTo:
+            typeof payload.validTo === "string" ? payload.validTo : undefined,
+          accountId:
+            typeof payload.accountId === "string"
+              ? payload.accountId
+              : resolveAccountId(params.request),
+          query:
+            intent === "review_account_workspace"
+              ? typeof payload.query === "string"
+                ? payload.query
+                : extractCrmWorkspaceQuery(params.request.message)
+              : undefined,
           accountPayload:
             intent === "create_crm_account"
               ? {
-                name:
-                  typeof payload.name === "string"
-                    ? payload.name
-                    : params.request.workspaceContext?.selectedRowSummary?.title,
-                inn: typeof payload.inn === "string" ? payload.inn : undefined,
-                type: typeof payload.type === "string" ? payload.type : undefined,
-                holdingId: typeof payload.holdingId === "string" ? payload.holdingId : undefined,
-              }
+                  name:
+                    typeof payload.name === "string"
+                      ? payload.name
+                      : params.request.workspaceContext?.selectedRowSummary
+                          ?.title,
+                  inn:
+                    typeof payload.inn === "string" ? payload.inn : undefined,
+                  type:
+                    typeof payload.type === "string" ? payload.type : undefined,
+                  holdingId:
+                    typeof payload.holdingId === "string"
+                      ? payload.holdingId
+                      : undefined,
+                }
               : undefined,
           updatePayload:
             intent === "update_account_profile"
               ? {
-                name: typeof payload.name === "string" ? payload.name : undefined,
-                inn:
-                  typeof payload.inn === "string"
-                    ? payload.inn
-                    : payload.inn === null
-                      ? null
+                  name:
+                    typeof payload.name === "string" ? payload.name : undefined,
+                  inn:
+                    typeof payload.inn === "string"
+                      ? payload.inn
+                      : payload.inn === null
+                        ? null
+                        : undefined,
+                  type:
+                    typeof payload.type === "string" ? payload.type : undefined,
+                  status:
+                    typeof payload.status === "string"
+                      ? payload.status
                       : undefined,
-                type: typeof payload.type === "string" ? payload.type : undefined,
-                status: typeof payload.status === "string" ? payload.status : undefined,
-                holdingId:
-                  typeof payload.holdingId === "string"
-                    ? payload.holdingId
-                    : payload.holdingId === null
-                      ? null
+                  holdingId:
+                    typeof payload.holdingId === "string"
+                      ? payload.holdingId
+                      : payload.holdingId === null
+                        ? null
+                        : undefined,
+                  jurisdiction:
+                    typeof payload.jurisdiction === "string"
+                      ? payload.jurisdiction
+                      : payload.jurisdiction === null
+                        ? null
+                        : undefined,
+                  riskCategory:
+                    typeof payload.riskCategory === "string"
+                      ? payload.riskCategory
                       : undefined,
-                jurisdiction:
-                  typeof payload.jurisdiction === "string"
-                    ? payload.jurisdiction
-                    : payload.jurisdiction === null
-                      ? null
+                  strategicValue:
+                    typeof payload.strategicValue === "string"
+                      ? payload.strategicValue
                       : undefined,
-                riskCategory:
-                  typeof payload.riskCategory === "string" ? payload.riskCategory : undefined,
-                strategicValue:
-                  typeof payload.strategicValue === "string" ? payload.strategicValue : undefined,
-              }
+                }
               : undefined,
           contactId:
             typeof payload.contactId === "string"
@@ -351,91 +482,107 @@ export class AgentExecutionAdapterService {
           contactPayload:
             intent === "create_crm_contact" || intent === "update_crm_contact"
               ? {
-                firstName: typeof payload.firstName === "string" ? payload.firstName : undefined,
-                lastName:
-                  typeof payload.lastName === "string"
-                    ? payload.lastName
-                    : payload.lastName === null
-                      ? null
+                  firstName:
+                    typeof payload.firstName === "string"
+                      ? payload.firstName
                       : undefined,
-                role: typeof payload.role === "string" ? payload.role : undefined,
-                influenceLevel:
-                  typeof payload.influenceLevel === "number"
-                    ? payload.influenceLevel
-                    : payload.influenceLevel === null
-                      ? null
-                      : undefined,
-                email:
-                  typeof payload.email === "string"
-                    ? payload.email
-                    : payload.email === null
-                      ? null
-                      : undefined,
-                phone:
-                  typeof payload.phone === "string"
-                    ? payload.phone
-                    : payload.phone === null
-                      ? null
-                      : undefined,
-                source:
-                  typeof payload.source === "string"
-                    ? payload.source
-                    : payload.source === null
-                      ? null
-                      : undefined,
-              }
+                  lastName:
+                    typeof payload.lastName === "string"
+                      ? payload.lastName
+                      : payload.lastName === null
+                        ? null
+                        : undefined,
+                  role:
+                    typeof payload.role === "string" ? payload.role : undefined,
+                  influenceLevel:
+                    typeof payload.influenceLevel === "number"
+                      ? payload.influenceLevel
+                      : payload.influenceLevel === null
+                        ? null
+                        : undefined,
+                  email:
+                    typeof payload.email === "string"
+                      ? payload.email
+                      : payload.email === null
+                        ? null
+                        : undefined,
+                  phone:
+                    typeof payload.phone === "string"
+                      ? payload.phone
+                      : payload.phone === null
+                        ? null
+                        : undefined,
+                  source:
+                    typeof payload.source === "string"
+                      ? payload.source
+                      : payload.source === null
+                        ? null
+                        : undefined,
+                }
               : undefined,
           interactionPayload:
-            intent === "log_crm_interaction" || intent === "update_crm_interaction" || intent === "delete_crm_interaction"
+            intent === "log_crm_interaction" ||
+            intent === "update_crm_interaction" ||
+            intent === "delete_crm_interaction"
               ? {
-                interactionId:
-                  typeof payload.interactionId === "string"
-                    ? payload.interactionId
-                    : resolveEntityId(params.request, ["interaction"]),
-                type: typeof payload.type === "string" ? payload.type : undefined,
-                summary:
-                  typeof payload.summary === "string"
-                    ? payload.summary
-                    : intent === "log_crm_interaction"
-                      ? buildInteractionSummary(params.request.message)
-                      : undefined,
-                date: typeof payload.date === "string" ? payload.date : undefined,
-                contactId:
-                  typeof payload.contactId === "string"
-                    ? payload.contactId
-                    : payload.contactId === null
-                      ? null
-                      : undefined,
-                relatedEventId:
-                  typeof payload.relatedEventId === "string"
-                    ? payload.relatedEventId
-                    : payload.relatedEventId === null
-                      ? null
-                      : undefined,
-              }
+                  interactionId:
+                    typeof payload.interactionId === "string"
+                      ? payload.interactionId
+                      : resolveEntityId(params.request, ["interaction"]),
+                  type:
+                    typeof payload.type === "string" ? payload.type : undefined,
+                  summary:
+                    typeof payload.summary === "string"
+                      ? payload.summary
+                      : intent === "log_crm_interaction"
+                        ? buildInteractionSummary(params.request.message)
+                        : undefined,
+                  date:
+                    typeof payload.date === "string" ? payload.date : undefined,
+                  contactId:
+                    typeof payload.contactId === "string"
+                      ? payload.contactId
+                      : payload.contactId === null
+                        ? null
+                        : undefined,
+                  relatedEventId:
+                    typeof payload.relatedEventId === "string"
+                      ? payload.relatedEventId
+                      : payload.relatedEventId === null
+                        ? null
+                        : undefined,
+                }
               : undefined,
           obligationPayload:
-            intent === "create_crm_obligation" || intent === "update_crm_obligation" || intent === "delete_crm_obligation"
+            intent === "create_crm_obligation" ||
+            intent === "update_crm_obligation" ||
+            intent === "delete_crm_obligation"
               ? {
-                obligationId:
-                  typeof payload.obligationId === "string"
-                    ? payload.obligationId
-                    : resolveEntityId(params.request, ["obligation"]),
-                description:
-                  typeof payload.description === "string"
-                    ? payload.description
-                    : intent === "create_crm_obligation"
-                      ? buildObligationDescription(params.request.message)
+                  obligationId:
+                    typeof payload.obligationId === "string"
+                      ? payload.obligationId
+                      : resolveEntityId(params.request, ["obligation"]),
+                  description:
+                    typeof payload.description === "string"
+                      ? payload.description
+                      : intent === "create_crm_obligation"
+                        ? buildObligationDescription(params.request.message)
+                        : undefined,
+                  dueDate:
+                    typeof payload.dueDate === "string"
+                      ? payload.dueDate
                       : undefined,
-                dueDate: typeof payload.dueDate === "string" ? payload.dueDate : undefined,
-                responsibleUserId:
-                  typeof payload.responsibleUserId === "string"
-                    ? payload.responsibleUserId
-                    : payload.responsibleUserId === null
-                      ? null
+                  responsibleUserId:
+                    typeof payload.responsibleUserId === "string"
+                      ? payload.responsibleUserId
+                      : payload.responsibleUserId === null
+                        ? null
+                        : undefined,
+                  status:
+                    typeof payload.status === "string"
+                      ? payload.status
                       : undefined,
-                status: typeof payload.status === "string" ? payload.status : undefined,
-              }
+                }
               : undefined,
         },
         { kernel: params.kernel, request: params.request },
@@ -472,14 +619,18 @@ export class AgentExecutionAdapterService {
         runtimeBudget: params.budgetDecision,
         fallbackUsed:
           result.fallbackUsed || executionPath === "heuristic_fallback",
-        outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
+        outputContractVersion:
+          params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
       };
     }
 
     if (adapterRole === "front_office_agent") {
       const payload = firstPayload(params.allowedToolCalls);
-      const executionPath = this.resolveExecutionPath(params.allowedToolCalls);
+      const executionPath = this.resolveExecutionPath(
+        params.allowedToolCalls,
+        params.request,
+      );
       const intent = detectFrontOfficeIntent(params.allowedToolCalls);
       const result = await this.frontOfficeAgent.run(
         {
@@ -491,14 +642,18 @@ export class AgentExecutionAdapterService {
           intent,
           channel:
             payload.channel === "telegram" ||
-              payload.channel === "web_chat" ||
-              payload.channel === "internal"
+            payload.channel === "web_chat" ||
+            payload.channel === "internal"
               ? payload.channel
-              : params.request.workspaceContext?.route?.toLowerCase().includes("telegram")
+              : params.request.workspaceContext?.route
+                    ?.toLowerCase()
+                    .includes("telegram")
                 ? "telegram"
                 : "web_chat",
           messageText:
-            typeof payload.messageText === "string" ? payload.messageText : params.request.message,
+            typeof payload.messageText === "string"
+              ? payload.messageText
+              : params.request.message,
           direction:
             payload.direction === "inbound" || payload.direction === "outbound"
               ? payload.direction
@@ -508,16 +663,22 @@ export class AgentExecutionAdapterService {
               ? payload.threadExternalId
               : params.request.threadId,
           dialogExternalId:
-            typeof payload.dialogExternalId === "string" ? payload.dialogExternalId : undefined,
+            typeof payload.dialogExternalId === "string"
+              ? payload.dialogExternalId
+              : undefined,
           senderExternalId:
-            typeof payload.senderExternalId === "string" ? payload.senderExternalId : undefined,
+            typeof payload.senderExternalId === "string"
+              ? payload.senderExternalId
+              : undefined,
           recipientExternalId:
             typeof payload.recipientExternalId === "string"
               ? payload.recipientExternalId
               : undefined,
           route: params.request.workspaceContext?.route,
           targetOwnerRole:
-            typeof payload.targetOwnerRole === "string" ? payload.targetOwnerRole : undefined,
+            typeof payload.targetOwnerRole === "string"
+              ? payload.targetOwnerRole
+              : undefined,
         },
         { kernel: params.kernel, request: params.request },
       );
@@ -552,15 +713,22 @@ export class AgentExecutionAdapterService {
         runtimeBudget: params.budgetDecision,
         fallbackUsed:
           result.fallbackUsed || executionPath === "heuristic_fallback",
-        outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
+        outputContractVersion:
+          params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
       };
     }
 
     if (adapterRole === "contracts_agent") {
       const payload = firstPayload(params.allowedToolCalls);
-      const executionPath = this.resolveExecutionPath(params.allowedToolCalls);
-      const intent = detectContractsIntent(params.allowedToolCalls, params.request.message);
+      const executionPath = this.resolveExecutionPath(
+        params.allowedToolCalls,
+        params.request,
+      );
+      const intent = this.resolveContractsIntent(
+        params.allowedToolCalls,
+        params.request,
+      );
       const result = await this.contractsAgent.run({
         companyId: params.actorContext.companyId,
         traceId: params.request.traceId,
@@ -572,6 +740,12 @@ export class AgentExecutionAdapterService {
           typeof payload.contractId === "string"
             ? payload.contractId
             : resolveEntityId(params.request, ["contract"]),
+        query:
+          intent === "review_commerce_contract"
+            ? typeof payload.query === "string"
+              ? payload.query
+              : extractContractReviewQuery(params.request.message)
+            : undefined,
         obligationId:
           typeof payload.obligationId === "string"
             ? payload.obligationId
@@ -587,50 +761,63 @@ export class AgentExecutionAdapterService {
         fulfillmentEventId:
           typeof payload.fulfillmentEventId === "string"
             ? payload.fulfillmentEventId
-            : resolveEntityId(params.request, ["fulfillment_event", "fulfillment"]),
+            : resolveEntityId(params.request, [
+                "fulfillment_event",
+                "fulfillment",
+              ]),
         number:
           typeof payload.number === "string"
             ? payload.number
             : extractContractNumber(params.request.message),
         type:
-          typeof payload.type === "string" ? payload.type : extractContractType(params.request.message),
-        validFrom: typeof payload.validFrom === "string" ? payload.validFrom : undefined,
-        validTo: typeof payload.validTo === "string" ? payload.validTo : undefined,
+          typeof payload.type === "string"
+            ? payload.type
+            : extractContractType(params.request.message),
+        validFrom:
+          typeof payload.validFrom === "string" ? payload.validFrom : undefined,
+        validTo:
+          typeof payload.validTo === "string" ? payload.validTo : undefined,
         jurisdictionId:
-          typeof payload.jurisdictionId === "string" ? payload.jurisdictionId : undefined,
+          typeof payload.jurisdictionId === "string"
+            ? payload.jurisdictionId
+            : undefined,
         regulatoryProfileId:
           typeof payload.regulatoryProfileId === "string"
             ? payload.regulatoryProfileId
             : undefined,
         roles:
           Array.isArray(payload.roles) &&
-            payload.roles.every(
-              (item) =>
-                item &&
-                typeof item === "object" &&
-                typeof (item as { partyId?: unknown }).partyId === "string" &&
-                typeof (item as { role?: unknown }).role === "string",
-            )
+          payload.roles.every(
+            (item) =>
+              item &&
+              typeof item === "object" &&
+              typeof (item as { partyId?: unknown }).partyId === "string" &&
+              typeof (item as { role?: unknown }).role === "string",
+          )
             ? (payload.roles as ContractsAgentInput["roles"])
             : undefined,
         obligationType:
-          payload.type === "DELIVER" || payload.type === "PAY" || payload.type === "PERFORM"
+          payload.type === "DELIVER" ||
+          payload.type === "PAY" ||
+          payload.type === "PERFORM"
             ? payload.type
             : extractObligationType(params.request.message),
-        dueDate: typeof payload.dueDate === "string" ? payload.dueDate : undefined,
+        dueDate:
+          typeof payload.dueDate === "string" ? payload.dueDate : undefined,
         eventDomain:
           payload.eventDomain === "COMMERCIAL" ||
-            payload.eventDomain === "PRODUCTION" ||
-            payload.eventDomain === "LOGISTICS" ||
-            payload.eventDomain === "FINANCE_ADJ"
+          payload.eventDomain === "PRODUCTION" ||
+          payload.eventDomain === "LOGISTICS" ||
+          payload.eventDomain === "FINANCE_ADJ"
             ? payload.eventDomain
             : extractEventDomain(params.request.message),
-        eventType:
-          isKnownFulfillmentEventType(payload.eventType)
-            ? payload.eventType
-            : extractEventType(params.request.message),
-        eventDate: typeof payload.eventDate === "string" ? payload.eventDate : undefined,
-        batchId: typeof payload.batchId === "string" ? payload.batchId : undefined,
+        eventType: isKnownFulfillmentEventType(payload.eventType)
+          ? payload.eventType
+          : extractEventType(params.request.message),
+        eventDate:
+          typeof payload.eventDate === "string" ? payload.eventDate : undefined,
+        batchId:
+          typeof payload.batchId === "string" ? payload.batchId : undefined,
         itemId: typeof payload.itemId === "string" ? payload.itemId : undefined,
         uom: typeof payload.uom === "string" ? payload.uom : undefined,
         qty: typeof payload.qty === "number" ? payload.qty : undefined,
@@ -644,28 +831,41 @@ export class AgentExecutionAdapterService {
             : undefined,
         supplyType:
           payload.supplyType === "GOODS" ||
-            payload.supplyType === "SERVICE" ||
-            payload.supplyType === "LEASE"
+          payload.supplyType === "SERVICE" ||
+          payload.supplyType === "LEASE"
             ? payload.supplyType
             : extractSupplyType(params.request.message),
         vatPayerStatus:
-          payload.vatPayerStatus === "PAYER" || payload.vatPayerStatus === "NON_PAYER"
+          payload.vatPayerStatus === "PAYER" ||
+          payload.vatPayerStatus === "NON_PAYER"
             ? payload.vatPayerStatus
             : undefined,
-        subtotal: typeof payload.subtotal === "number" ? payload.subtotal : undefined,
+        subtotal:
+          typeof payload.subtotal === "number" ? payload.subtotal : undefined,
         productTaxCode:
-          typeof payload.productTaxCode === "string" ? payload.productTaxCode : undefined,
+          typeof payload.productTaxCode === "string"
+            ? payload.productTaxCode
+            : undefined,
         payerPartyId:
-          typeof payload.payerPartyId === "string" ? payload.payerPartyId : undefined,
+          typeof payload.payerPartyId === "string"
+            ? payload.payerPartyId
+            : undefined,
         payeePartyId:
-          typeof payload.payeePartyId === "string" ? payload.payeePartyId : undefined,
+          typeof payload.payeePartyId === "string"
+            ? payload.payeePartyId
+            : undefined,
         amount: typeof payload.amount === "number" ? payload.amount : undefined,
-        currency: typeof payload.currency === "string" ? payload.currency : undefined,
+        currency:
+          typeof payload.currency === "string" ? payload.currency : undefined,
         paymentMethod:
-          typeof payload.paymentMethod === "string" ? payload.paymentMethod : undefined,
+          typeof payload.paymentMethod === "string"
+            ? payload.paymentMethod
+            : undefined,
         paidAt: typeof payload.paidAt === "string" ? payload.paidAt : undefined,
         allocatedAmount:
-          typeof payload.allocatedAmount === "number" ? payload.allocatedAmount : undefined,
+          typeof payload.allocatedAmount === "number"
+            ? payload.allocatedAmount
+            : undefined,
       });
 
       return {
@@ -699,27 +899,37 @@ export class AgentExecutionAdapterService {
         runtimeBudget: params.budgetDecision,
         fallbackUsed:
           result.fallbackUsed || executionPath === "heuristic_fallback",
-        outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
+        outputContractVersion:
+          params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
       };
     }
 
     if (adapterRole === "chief_agronomist") {
       const payload = firstPayload(params.allowedToolCalls);
-      const executionPath = this.resolveExecutionPath(params.allowedToolCalls);
+      const executionPath = this.resolveExecutionPath(
+        params.allowedToolCalls,
+        params.request,
+      );
       const result = await this.chiefAgronomistAgent.run(
         {
           companyId: params.actorContext.companyId,
           traceId: params.request.traceId,
-          intent: params.request.message.toLowerCase().includes("алерт") ||
+          intent:
+            params.request.message.toLowerCase().includes("алерт") ||
             params.request.message.toLowerCase().includes("совет")
-            ? "alert_review"
-            : "expert_opinion",
+              ? "alert_review"
+              : "expert_opinion",
           query: params.request.message,
           context: {
-            fieldId: typeof payload.fieldId === "string" ? payload.fieldId : undefined,
-            techMapId: typeof payload.techMapId === "string" ? payload.techMapId : undefined,
-            alertId: typeof payload.alertId === "string" ? payload.alertId : undefined,
+            fieldId:
+              typeof payload.fieldId === "string" ? payload.fieldId : undefined,
+            techMapId:
+              typeof payload.techMapId === "string"
+                ? payload.techMapId
+                : undefined,
+            alertId:
+              typeof payload.alertId === "string" ? payload.alertId : undefined,
           },
         },
         { kernel: params.kernel, request: params.request },
@@ -742,14 +952,18 @@ export class AgentExecutionAdapterService {
         ),
         runtimeBudget: params.budgetDecision,
         fallbackUsed: executionPath === "heuristic_fallback",
-        outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
+        outputContractVersion:
+          params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
       };
     }
 
     if (adapterRole === "data_scientist") {
       const payload = firstPayload(params.allowedToolCalls);
-      const executionPath = this.resolveExecutionPath(params.allowedToolCalls);
+      const executionPath = this.resolveExecutionPath(
+        params.allowedToolCalls,
+        params.request,
+      );
       const domains = Array.isArray(payload.domains)
         ? payload.domains.filter(
             (value): value is "agro" | "economics" | "finance" | "risk" =>
@@ -778,11 +992,15 @@ export class AgentExecutionAdapterService {
           scopeLevel,
           horizonDays,
           domains,
-          fieldId: typeof payload.fieldId === "string" ? payload.fieldId : undefined,
-          farmId: typeof payload.farmId === "string" ? payload.farmId : undefined,
+          fieldId:
+            typeof payload.fieldId === "string" ? payload.fieldId : undefined,
+          farmId:
+            typeof payload.farmId === "string" ? payload.farmId : undefined,
           crop: typeof payload.crop === "string" ? payload.crop : undefined,
-          seasonId: typeof payload.seasonId === "string" ? payload.seasonId : undefined,
-          scenario: typeof payload.scenario === "object" ? payload.scenario : undefined,
+          seasonId:
+            typeof payload.seasonId === "string" ? payload.seasonId : undefined,
+          scenario:
+            typeof payload.scenario === "object" ? payload.scenario : undefined,
         },
         { kernel: params.kernel, request: params.request },
       );
@@ -804,12 +1022,16 @@ export class AgentExecutionAdapterService {
         ),
         runtimeBudget: params.budgetDecision,
         fallbackUsed: executionPath === "heuristic_fallback",
-        outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
+        outputContractVersion:
+          params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
       };
     }
 
-    const executionPath = this.resolveExecutionPath(params.allowedToolCalls);
+    const executionPath = this.resolveExecutionPath(
+      params.allowedToolCalls,
+      params.request,
+    );
     const result = await this.monitoringAgent.run(
       {
         companyId: params.actorContext.companyId,
@@ -829,7 +1051,12 @@ export class AgentExecutionAdapterService {
       toolCalls:
         result.status === "RATE_LIMITED"
           ? []
-          : [{ name: RaiToolName.EmitAlerts, result: result.signalsSnapshot ?? {} }],
+          : [
+              {
+                name: RaiToolName.EmitAlerts,
+                result: result.signalsSnapshot ?? {},
+              },
+            ],
       connectorCalls: [],
       evidence: result.evidence,
       validation: this.validateOutput(
@@ -840,13 +1067,20 @@ export class AgentExecutionAdapterService {
         result.status === "RATE_LIMITED" || result.alertsEmitted === 0,
       ),
       runtimeBudget: params.budgetDecision,
-      fallbackUsed: result.fallbackUsed || executionPath === "heuristic_fallback",
+      fallbackUsed:
+        result.fallbackUsed || executionPath === "heuristic_fallback",
       outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
       auditPayload,
     };
   }
 
-  private resolveExecutionPath(allowedToolCalls: RaiToolCallDto[]): ExecutionPath {
+  private resolveExecutionPath(
+    allowedToolCalls: RaiToolCallDto[],
+    request: AgentExecutionRequest,
+  ): ExecutionPath {
+    if (request.semanticRouting?.source === "primary") {
+      return "semantic_router_primary";
+    }
     return allowedToolCalls.length > 0
       ? "tool_call_primary"
       : "heuristic_fallback";
@@ -855,18 +1089,32 @@ export class AgentExecutionAdapterService {
   private resolveAgronomIntent(
     allowedToolCalls: RaiToolCallDto[],
     message: string,
+    semanticRoutingSource?: "shadow" | "primary",
   ): { intent: AgronomIntent | null; executionPath: ExecutionPath } {
-    if (allowedToolCalls.some((call) => call.name === RaiToolName.ComputeDeviations)) {
+    const primaryExecutionPath =
+      semanticRoutingSource === "primary"
+        ? "semantic_router_primary"
+        : "tool_call_primary";
+
+    if (
+      allowedToolCalls.some(
+        (call) => call.name === RaiToolName.ComputeDeviations,
+      )
+    ) {
       return {
         intent: "compute_deviations",
-        executionPath: "tool_call_primary",
+        executionPath: primaryExecutionPath,
       };
     }
 
-    if (allowedToolCalls.some((call) => call.name === RaiToolName.GenerateTechMapDraft)) {
+    if (
+      allowedToolCalls.some(
+        (call) => call.name === RaiToolName.GenerateTechMapDraft,
+      )
+    ) {
       return {
         intent: "generate_tech_map_draft",
-        executionPath: "tool_call_primary",
+        executionPath: primaryExecutionPath,
       };
     }
 
@@ -896,13 +1144,132 @@ export class AgentExecutionAdapterService {
     };
   }
 
+  private resolveEconomistIntent(
+    allowedToolCalls: RaiToolCallDto[],
+    request: AgentExecutionRequest,
+  ): EconomistIntent {
+    if (
+      allowedToolCalls.some(
+        (call) => call.name === RaiToolName.ComputeRiskAssessment,
+      )
+    ) {
+      return "compute_risk_assessment";
+    }
+
+    if (
+      allowedToolCalls.some((call) => call.name === RaiToolName.SimulateScenario)
+    ) {
+      return "simulate_scenario";
+    }
+
+    if (
+      allowedToolCalls.some((call) => call.name === RaiToolName.ComputePlanFact)
+    ) {
+      return "compute_plan_fact";
+    }
+
+    const semanticEligibleTool =
+      request.semanticRouting?.routeDecision?.eligibleTools?.[0] ?? null;
+    if (semanticEligibleTool === RaiToolName.ComputeRiskAssessment) {
+      return "compute_risk_assessment";
+    }
+    if (semanticEligibleTool === RaiToolName.SimulateScenario) {
+      return "simulate_scenario";
+    }
+    if (semanticEligibleTool === RaiToolName.ComputePlanFact) {
+      return "compute_plan_fact";
+    }
+
+    const sliceId = request.semanticRouting?.sliceId ?? null;
+    if (sliceId === "finance.risk.analysis") {
+      return "compute_risk_assessment";
+    }
+    if (sliceId === "finance.scenario.analysis") {
+      return "simulate_scenario";
+    }
+
+    const normalizedMessage = request.message.toLowerCase();
+    if (/(сценар|scenario|what if|что если)/i.test(normalizedMessage)) {
+      return "simulate_scenario";
+    }
+    if (/(риск|risk)/i.test(normalizedMessage)) {
+      return "compute_risk_assessment";
+    }
+    return "compute_plan_fact";
+  }
+
+  private resolveEconomistToolName(
+    intent: EconomistIntent,
+    allowedToolCalls: RaiToolCallDto[],
+  ): RaiToolName {
+    const explicitTool = detectEconomistTool(allowedToolCalls);
+    if (allowedToolCalls.length > 0) {
+      return explicitTool;
+    }
+    switch (intent) {
+      case "simulate_scenario":
+        return RaiToolName.SimulateScenario;
+      case "compute_risk_assessment":
+        return RaiToolName.ComputeRiskAssessment;
+      default:
+        return RaiToolName.ComputePlanFact;
+    }
+  }
+
+  private resolveCrmIntent(
+    allowedToolCalls: RaiToolCallDto[],
+    request: AgentExecutionRequest,
+  ): CrmAgentIntent {
+    if (allowedToolCalls.length > 0) {
+      return detectCrmIntent(allowedToolCalls, request.message);
+    }
+
+    const semanticTools = request.semanticRouting?.routeDecision?.eligibleTools ?? [];
+    if (semanticTools.includes(RaiToolName.LookupCounterpartyByInn)) {
+      return "lookup_counterparty_by_inn";
+    }
+    if (semanticTools.includes(RaiToolName.GetCrmAccountWorkspace)) {
+      return "review_account_workspace";
+    }
+    if (semanticTools.includes(RaiToolName.RegisterCounterparty)) {
+      return "register_counterparty";
+    }
+
+    const sliceId = request.semanticRouting?.sliceId ?? null;
+    if (sliceId === "crm.counterparty.lookup") {
+      return "lookup_counterparty_by_inn";
+    }
+
+    return detectCrmIntent(allowedToolCalls, request.message);
+  }
+
+  private isReadOnlyTechMapQuery(message: string): boolean {
+    const normalized = message.toLowerCase();
+    const mentionsTechMap = /(техкарт|techmap)/i.test(normalized);
+    if (!mentionsTechMap) {
+      return false;
+    }
+
+    const hasCreateSignal =
+      /(созд(ай|ать)|сдела(й|ть)|состав(ь|ить)|подготов(ь|ить)|сгенерируй|черновик|draft)/i.test(
+        normalized,
+      );
+    const hasReadSignal =
+      /(покаж|спис|все|какие|посмотр|найд|открой|где|выведи|реестр|активн|архив|заморож)/i.test(
+        normalized,
+      );
+    return hasReadSignal && !hasCreateSignal;
+  }
+
   private resolveAdapterRole(
     kernel: EffectiveAgentKernelEntry,
     fallbackRole: string,
   ): CanonicalAgentRuntimeRole {
-    const adapterRole = (kernel.runtimeProfile as typeof kernel.runtimeProfile & {
-      executionAdapterRole?: string;
-    }).executionAdapterRole;
+    const adapterRole = (
+      kernel.runtimeProfile as typeof kernel.runtimeProfile & {
+        executionAdapterRole?: string;
+      }
+    ).executionAdapterRole;
     if (adapterRole && isAgentRuntimeRole(adapterRole)) {
       return adapterRole;
     }
@@ -925,10 +1292,39 @@ export class AgentExecutionAdapterService {
     ) {
       reasons.push("evidence_required");
     }
-    if (kernel.outputContract.requiresDeterministicValidation && !deterministicBasisPresent) {
+    if (
+      kernel.outputContract.requiresDeterministicValidation &&
+      !deterministicBasisPresent
+    ) {
       reasons.push("deterministic_basis_required");
     }
     return { passed: reasons.length === 0, reasons };
   }
 
+  private resolveContractsIntent(
+    allowedToolCalls: RaiToolCallDto[],
+    request: AgentExecutionRequest,
+  ): ContractsAgentInput["intent"] {
+    if (allowedToolCalls.length > 0) {
+      return detectContractsIntent(allowedToolCalls, request.message);
+    }
+
+    const semanticTools = request.semanticRouting?.routeDecision?.eligibleTools ?? [];
+    if (semanticTools.includes(RaiToolName.GetArBalance)) {
+      return "review_ar_balance";
+    }
+    if (semanticTools.includes(RaiToolName.GetCommerceContract)) {
+      return "review_commerce_contract";
+    }
+    if (semanticTools.includes(RaiToolName.ListCommerceContracts)) {
+      return "list_commerce_contracts";
+    }
+
+    const sliceId = request.semanticRouting?.sliceId ?? null;
+    if (sliceId === "contracts.ar-balance.review") {
+      return "review_ar_balance";
+    }
+
+    return detectContractsIntent(allowedToolCalls, request.message);
+  }
 }

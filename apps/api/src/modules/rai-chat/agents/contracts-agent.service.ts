@@ -40,6 +40,7 @@ export interface ContractsAgentInput {
   userConfirmed?: boolean;
   intent: ContractsAgentIntent;
   contractId?: string;
+  query?: string;
   obligationId?: string;
   invoiceId?: string;
   paymentId?: string;
@@ -213,7 +214,8 @@ export class ContractsAgent {
         return this.contractsToolsRegistry.execute(
           toolName,
           {
-            contractId: input.contractId,
+            ...(input.contractId ? { contractId: input.contractId } : {}),
+            ...(input.query ? { query: input.query } : {}),
           },
           actorContext,
         );
@@ -314,7 +316,7 @@ export class ContractsAgent {
         return missing;
       }
       case "review_commerce_contract":
-        return input.contractId ? [] : ["contractId"];
+        return input.contractId || input.query ? [] : ["contractId"];
       case "create_contract_obligation": {
         const missing: string[] = [];
         if (!input.contractId) missing.push("contractId");

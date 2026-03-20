@@ -1,0 +1,134 @@
+[
+  {
+    "id": "risk-primary-with-selected-plan",
+    "request": {
+      "message": "оцени риск по выбранному плану",
+      "workspaceContext": {
+        "route": "/finance",
+        "selectedRowSummary": {
+          "kind": "yield",
+          "id": "plan-risk-1",
+          "title": "План риска"
+        }
+      },
+      "legacyClassification": {
+        "targetRole": "economist",
+        "intent": "compute_risk_assessment",
+        "toolName": "compute_risk_assessment",
+        "confidence": 0.72,
+        "method": "regex",
+        "reason": "legacy:risk"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "finance.risk.analysis",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "compute_risk_assessment",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["compute_risk_assessment"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "compute_risk_assessment",
+          "payloadSubset": {
+            "scope": {
+              "planId": "plan-risk-1"
+            }
+          }
+        }
+      ],
+      "filtersSubset": {
+        "planId": "plan-risk-1"
+      }
+    }
+  },
+  {
+    "id": "risk-primary-with-season-filter",
+    "request": {
+      "message": "покажи финансовый риск по сезону",
+      "workspaceContext": {
+        "route": "/consulting/yield",
+        "filters": {
+          "seasonId": "season-risk-1"
+        }
+      },
+      "legacyClassification": {
+        "targetRole": "economist",
+        "intent": "compute_risk_assessment",
+        "toolName": "compute_risk_assessment",
+        "confidence": 0.71,
+        "method": "regex",
+        "reason": "legacy:risk"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "finance.risk.analysis",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "compute_risk_assessment",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["compute_risk_assessment"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "compute_risk_assessment",
+          "payloadSubset": {
+            "scope": {
+              "seasonId": "season-risk-1"
+            }
+          }
+        }
+      ],
+      "filtersSubset": {
+        "seasonId": "season-risk-1"
+      }
+    }
+  },
+  {
+    "id": "risk-shadow-outside-bounded-slice",
+    "request": {
+      "message": "оцени финансовый риск по плану",
+      "workspaceContext": {
+        "route": "/consulting/dashboard"
+      },
+      "legacyClassification": {
+        "targetRole": "economist",
+        "intent": "compute_risk_assessment",
+        "toolName": "compute_risk_assessment",
+        "confidence": 0.68,
+        "method": "regex",
+        "reason": "legacy:risk"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": null,
+      "promotedPrimary": false,
+      "executionPath": "semantic_router_shadow",
+      "classificationIntent": "compute_risk_assessment",
+      "classificationMethod": "semantic_router_shadow",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["compute_risk_assessment"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "compute_risk_assessment",
+          "payloadSubset": {
+            "scope": {}
+          }
+        }
+      ]
+    }
+  }
+]

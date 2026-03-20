@@ -670,6 +670,19 @@ export const api = {
             apiClient.get('/rai/explainability/performance', { params: params?.timeWindowMs != null ? { timeWindowMs: params.timeWindowMs } : {} }),
         queuePressure: (params?: { timeWindowMs?: number }) =>
             apiClient.get('/rai/explainability/queue-pressure', { params: params?.timeWindowMs != null ? { timeWindowMs: params.timeWindowMs } : {} }),
+        routingDivergence: (params?: { windowHours?: number; slice?: string; decisionType?: string; targetRole?: string; onlyMismatches?: boolean }) =>
+            apiClient.get('/rai/explainability/routing/divergence', { params: params ?? {} }),
+        captureRoutingCaseMemoryCandidate: (data: { key: string; windowHours?: number; slice?: string; targetRole?: string; note?: string }) =>
+            apiClient.post('/rai/explainability/routing/case-memory-candidates/capture', data, {
+                headers: {
+                    'Idempotency-Key': buildIdempotencyKey('routing-case-memory-candidate-capture', [
+                        data.key,
+                        data.slice ?? 'all',
+                        data.targetRole ?? 'all',
+                        `${data.windowHours ?? 24}`,
+                    ]),
+                },
+            }),
         runtimeGovernanceSummary: (params?: { timeWindowMs?: number }) =>
             apiClient.get<RuntimeGovernanceSummaryDto>('/rai/explainability/runtime-governance/summary', { params: params?.timeWindowMs != null ? { timeWindowMs: params.timeWindowMs } : {} }),
         runtimeGovernanceAgents: (params?: { timeWindowMs?: number }) =>

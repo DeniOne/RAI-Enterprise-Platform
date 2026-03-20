@@ -4,6 +4,8 @@ import { PrismaService } from "../../shared/prisma/prisma.service";
 import { EvidenceReference, RaiChatResponseDto } from "./dto/rai-chat.dto";
 import { RecallResult } from "./memory/memory-coordinator.service";
 import { InvariantMetrics } from "../../shared/invariants/invariant-metrics";
+import { RoutingTelemetryEvent } from "../../shared/rai-chat/semantic-routing.types";
+import { sanitizeRoutingTelemetry } from "../../shared/rai-chat/routing-telemetry-redaction";
 
 @Injectable()
 export class SupervisorForensicsService {
@@ -33,6 +35,7 @@ export class SupervisorForensicsService {
     tokensUsed?: number;
     structuredOutputs?: Record<string, unknown>[];
     delegationChain?: Array<Record<string, unknown>>;
+    routingTelemetry?: RoutingTelemetryEvent;
   }): Promise<string | null> {
     const metadataObj: Record<string, unknown> = {};
     if (params.replayInput) {
@@ -70,6 +73,11 @@ export class SupervisorForensicsService {
     }
     if (params.delegationChain && params.delegationChain.length > 0) {
       metadataObj.delegationChain = params.delegationChain;
+    }
+    if (params.routingTelemetry) {
+      metadataObj.routingTelemetry = sanitizeRoutingTelemetry(
+        params.routingTelemetry,
+      );
     }
 
     const metadata: Prisma.InputJsonValue | undefined =

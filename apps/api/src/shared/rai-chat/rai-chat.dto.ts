@@ -656,7 +656,10 @@ export class RaiToolCallDto {
 export class RaiIntermediateStepDto {
   @IsString()
   @MaxLength(64)
-  executionPath: "tool_call_primary" | "heuristic_fallback";
+  executionPath:
+    | "tool_call_primary"
+    | "heuristic_fallback"
+    | "semantic_router_primary";
 
   @IsString()
   @MaxLength(128)

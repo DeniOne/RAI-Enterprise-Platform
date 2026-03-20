@@ -1,0 +1,108 @@
+[
+  {
+    "id": "crm-inn-lookup-primary-execute",
+    "request": {
+      "message": "проверь контрагента по ИНН 2610000615",
+      "workspaceContext": {
+        "route": "/parties"
+      },
+      "legacyClassification": {
+        "targetRole": "crm_agent",
+        "intent": "register_counterparty",
+        "toolName": "register_counterparty",
+        "confidence": 0.61,
+        "method": "regex",
+        "reason": "legacy:crm-register"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "crm.counterparty.lookup",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "lookup_counterparty_by_inn",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["lookup_counterparty_by_inn"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "lookup_counterparty_by_inn",
+          "payloadSubset": {
+            "inn": "2610000615"
+          }
+        }
+      ],
+      "filtersSubset": {
+        "inn": "2610000615"
+      },
+      "mismatchKinds": ["tool_name"]
+    }
+  },
+  {
+    "id": "crm-inn-lookup-primary-clarify-without-inn",
+    "request": {
+      "message": "проверь контрагента по ИНН",
+      "workspaceContext": {
+        "route": "/parties"
+      },
+      "legacyClassification": {
+        "targetRole": "crm_agent",
+        "intent": "register_counterparty",
+        "toolName": "register_counterparty",
+        "confidence": 0.58,
+        "method": "regex",
+        "reason": "legacy:crm-register"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "crm.counterparty.lookup",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "lookup_counterparty_by_inn",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "clarify",
+      "recommendedExecutionMode": "ask_clarification",
+      "eligibleTools": ["lookup_counterparty_by_inn"],
+      "requiredContextMissing": ["inn"],
+      "requestedToolCalls": [],
+      "mismatchKinds": ["tool_name"]
+    }
+  },
+  {
+    "id": "crm-inn-lookup-shadow-outside-bounded-slice",
+    "request": {
+      "message": "проверь контрагента по ИНН 2610000615",
+      "workspaceContext": {
+        "route": "/consulting/dashboard"
+      },
+      "legacyClassification": {
+        "targetRole": "crm_agent",
+        "intent": "register_counterparty",
+        "toolName": "register_counterparty",
+        "confidence": 0.57,
+        "method": "regex",
+        "reason": "legacy:crm-register"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": null,
+      "promotedPrimary": false,
+      "executionPath": "semantic_router_shadow",
+      "classificationIntent": "register_counterparty",
+      "classificationMethod": "semantic_router_shadow",
+      "decisionType": "abstain",
+      "recommendedExecutionMode": "no_op",
+      "eligibleTools": [],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [],
+      "mismatchKinds": ["abstain_vs_execute"]
+    }
+  }
+]

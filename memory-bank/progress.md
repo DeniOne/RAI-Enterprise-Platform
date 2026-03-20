@@ -1,5 +1,121 @@
 # Progress Report - Prisma, Agro Domain & RAI Chat Integration
 
+## 2026-03-20
+
+123. **Routing Learning Layer — Foundation + Techmaps Cutover** [DONE]:
+    *   Введён canonical routing слой: `SemanticIntent`, `RouteDecision`, `RoutingTelemetryEvent`, `SemanticRoutingContext`.
+    *   Реализованы `routing-versioning.ts` и `routing-telemetry-redaction.ts`; persisted routing events теперь получают `routerVersion`, `promptVersion`, `toolsetVersion`, `workspaceStateDigest`.
+    *   `SemanticRouterService` встроен в `SupervisorAgent` как `shadow-first` слой; для slice `agro.techmaps.list-open-create` включён `semantic_router_primary`.
+    *   В `AgentRuntimeService` добавлен coarse capability gating по `semanticRouting.routeDecision.eligibleTools`.
+    *   `SupervisorForensicsService` теперь пишет sanitized `routingTelemetry` в `AiAuditEntry.metadata`.
+    *   В explainability добавлен divergence read-model и endpoint `GET /api/rai/explainability/routing/divergence`.
+    *   В `apps/web/app/(app)/control-tower/page.tsx` добавлена панель расхождений legacy vs semantic routing.
+    *   Собран fixture-driven eval corpus `techmaps-routing-eval-corpus.json`; добавлен spec `semantic-router.eval.spec.ts` с кейсами `navigate/execute/clarify/abstain`.
+    *   Добавлен отдельный gate `pnpm gate:routing:techmaps`; он заведён в `.github/workflows/invariant-gates.yml` как hard-fail шаг.
+    *   `routing/divergence` расширен до agent-level drilldown: backend теперь отдаёт `agentBreakdown`, а `Control Tower` показывает самый шумный `targetRole`, его divergence rate, decision breakdown и top mismatch kinds.
+    *   `routing/divergence` дополнительно расширен `failureClusters`: read-model группирует `targetRole + decisionType + mismatchKinds`, считает `semanticPrimaryCount`, `lastSeenAt` и `caseMemoryReadiness`.
+    *   В `Control Tower` добавлен triage-блок повторяющихся кластеров с ready-state `наблюдение / нужно больше сигналов / готово к памяти кейсов`.
+    *   `routing/divergence` дополнительно расширен `caseMemoryCandidates`: read-model теперь режет кандидатов по версиям `routerVersion / promptVersion / toolsetVersion`, считает `traceCount`, `firstSeenAt`, `lastSeenAt`, `ttlExpiresAt`.
+    *   В `Control Tower` добавлен блок `Кандидаты в память кейсов`, чтобы оператор видел version-aware кандидатов без отдельной БД и ручной сборки.
+    *   Подтверждены дополнительные проверки: `explainability-panel.service.spec.ts`, `explainability-panel.controller.spec.ts`, `control-tower-page.spec.tsx`.
+    *   Подтверждены новые проверки: `pnpm gate:routing:techmaps`, `semantic-router.eval.spec.ts`, `semantic-router.service.spec.ts`.
+    *   Подтверждены targeted проверки: `pnpm --filter api exec tsc --noEmit --pretty false`, `semantic-router.service.spec.ts`, `supervisor-agent.service.spec.ts`, `explainability-panel.service.spec.ts`, `control-tower-page.spec.tsx`.
+    *   `pnpm --filter web exec tsc --noEmit --pretty false` остаётся красным из-за уже существующих ошибок в `ai-chat-store` и `lib/stores/ai-chat-store.ts`, не связанных с текущим routing-пакетом.
+
+124. **Routing Case Memory Capture Path** [DONE]:
+    *   В `apps/api/src/modules/explainability/dto/routing-divergence.dto.ts` добавлены capture-контракты: `CaptureRoutingCaseMemoryCandidateDtoSchema` и `RoutingCaseMemoryCandidateCaptureResponseDto`.
+    *   `ExplainabilityPanelService` теперь умеет фиксировать `ready_for_case_memory` кандидата через `AuditLog` action `ROUTING_CASE_MEMORY_CANDIDATE_CAPTURED` и возвращает `captureStatus / capturedAt / captureAuditLogId` в divergence read-model.
+    *   Добавлен guarded endpoint `POST /api/rai/explainability/routing/case-memory-candidates/capture`; `apps/web/lib/api.ts` получил клиентский метод с `Idempotency-Key`.
+    *   `Control Tower` показывает capture-status по кандидату и даёт операторскую кнопку `зафиксировать` для готовых кейсов.
+    *   Подтверждены targeted проверки: `pnpm --filter api exec tsc --noEmit --pretty false`, `pnpm --filter api exec jest --runInBand src/modules/explainability/explainability-panel.service.spec.ts src/modules/explainability/explainability-panel.controller.spec.ts`, `pnpm --filter web exec jest --runInBand __tests__/control-tower-page.spec.tsx`.
+
+125. **Routing Case Memory Retrieval & Lifecycle** [DONE]:
+    *   Добавлен `apps/api/src/modules/rai-chat/semantic-router/routing-case-memory.service.ts`: сервис читает captured cases из `AuditLog`, фильтрует по `TTL`, считает relevance-score и переводит кейс в lifecycle `active` через action `ROUTING_CASE_MEMORY_CASE_ACTIVATED`.
+    *   `SemanticRouterService` теперь принимает `companyId`, подтягивает `retrievedCaseMemory[]` и использует их как bounded retrieval слой до `LLM refine`.
+    *   Введён safe override только для low-risk routing: если deterministic path ушёл в `abstain`, а active case memory уверенно указывает на `safe_read navigate/clarify`, роутер может восстановить правильный read-only маршрут без write escalation.
+    *   Explainability read-model теперь различает `not_captured / captured / active`, а `caseMemoryCandidates` несут `semanticIntent`, `routeDecision`, `activatedAt`, `activationAuditLogId`.
+    *   `Control Tower` показывает lifecycle кандидата (`не зафиксирован / зафиксирован / активен в маршрутизации`) и timestamps захвата/активации.
+    *   Подтверждены targeted проверки: `pnpm --filter api exec tsc --noEmit --pretty false`, `routing-case-memory.service.spec.ts`, `semantic-router.service.spec.ts`, `semantic-router.eval.spec.ts`, `explainability-panel.service.spec.ts`, `explainability-panel.controller.spec.ts`, `control-tower-page.spec.tsx`.
+
+126. **Routing Case Memory Gate Hardening** [DONE]:
+    *   `apps/api/package.json` script `test:routing:techmaps` расширен: теперь он прогоняет не только `semantic-router.eval.spec.ts`, но и `semantic-router.service.spec.ts` + `routing-case-memory.service.spec.ts`.
+    *   В `semantic-router.service.spec.ts` добавлен negative guard: case memory не имеет права поднимать `write`-маршрут из `abstain` даже при высоком similarity.
+    *   `.github/workflows/invariant-gates.yml` обновлён: hard-fail шаг теперь честно проверяет `Routing techmaps + case memory gate`.
+    *   Подтверждены `pnpm gate:routing:techmaps` и `pnpm --filter api exec tsc --noEmit --pretty false`.
+
+127. **Routing Learning Layer — Second Slice `agro.deviations.review`** [DONE]:
+    *   В `SemanticRouterService` введён отдельный `sliceId` `agro.deviations.review`; primary promotion разрешается только внутри `deviations`-контура и больше не перехватывается `techmaps` через общий `field`-сигнал.
+    *   `collectToolIdentifiers()` теперь учитывает `ComputeDeviations`, а `RoutingCaseMemoryService.inferSliceId()` понимает `/consulting/deviations`, поэтому versioning и retrieval не смешивают `techmaps` и `deviations`.
+    *   `AgentExecutionAdapterService` исправлен: при `request.semanticRouting.source === primary` agronomist-путь больше не затирает `executionPath` в `tool_call_primary`; теперь для `compute_deviations` честно возвращается `semantic_router_primary`.
+    *   Fixture-driven eval corpus расширен файлом `deviations-routing-eval-corpus.json` с позитивными primary-кейсами и негативным кейсом вне bounded slice.
+    *   Введён канонический gate `pnpm gate:routing:agro-slices`; старый `pnpm gate:routing:techmaps` сохранён как compatibility alias. CI-шаг в `.github/workflows/invariant-gates.yml` переведён на новый gate.
+    *   Подтверждены `pnpm gate:routing:agro-slices` и `pnpm --filter api exec tsc --noEmit --pretty false`.
+
+128. **Routing Learning Layer — Third Slice `finance.plan-fact.read`** [DONE]:
+    *   `RoutingEntity` расширен значением `plan_fact`, а `SemanticRouterService` получил отдельный bounded slice `finance.plan-fact.read`.
+    *   Primary promotion для `compute_plan_fact` ограничен `workspaceRoute` вида `/consulting/yield` и `/finance`; вне этого контура запросы остаются только в `shadow`.
+    *   В `yield`-контуре `selectedRowSummary.kind = yield` теперь маппится в `planId`, поэтому `compute_plan_fact` может идти в `execute` без искусственного добора контекста.
+    *   Если нет ни `planId`, ни `seasonId`, semantic-router честно отдаёт `clarify` и `requiredContextMissing = [seasonId]` вместо silent fallback.
+    *   Fixture-driven eval corpus расширен файлом `plan-fact-routing-eval-corpus.json`; общий gate переименован в `pnpm gate:routing:primary-slices`, а старые `pnpm gate:routing:agro-slices` и `pnpm gate:routing:techmaps` сохранены как алиасы.
+    *   Подтверждены `pnpm gate:routing:primary-slices`, `pnpm gate:routing:techmaps` и `pnpm --filter api exec tsc --noEmit --pretty false`.
+
+129. **Routing Learning Layer — Fourth Slice `finance.scenario.analysis` + `finance.risk.analysis`** [DONE]:
+    *   `RoutingEntity` расширен значениями `scenario` и `risk_assessment`; `SemanticRouterService` теперь различает `simulate_scenario`, `compute_risk_assessment` и `compute_plan_fact` как разные finance-сущности.
+    *   В `SemanticRouterService` добавлены отдельные bounded slice `finance.scenario.analysis` и `finance.risk.analysis`: primary promotion разрешён только в `yield/finance`-контуре, а вне него сохранён `shadow` по явным finance-сигналам.
+    *   `RoutingCaseMemoryService.inferSliceId()` теперь понимает `scenario/risk` сигналы на `yield/finance`-маршрутах, поэтому retrieval не смешивает новые finance-slice с `plan-fact`.
+    *   `AgentExecutionAdapterService` получил явный `resolveEconomistIntent()`: primary semantic-routing больше не затирается в `compute_plan_fact`, если выбран `simulate_scenario` или `compute_risk_assessment`.
+    *   Fixture-driven eval corpus расширен файлами `scenario-routing-eval-corpus.json` и `risk-routing-eval-corpus.json`; `semantic-router.service.spec.ts` и `agent-execution-adapter.service.spec.ts` усилены primary-кейсами для обоих новых slice.
+    *   Подтверждены `pnpm --filter api exec tsc --noEmit --pretty false`, `pnpm --filter api exec jest --runInBand src/modules/rai-chat/semantic-router/semantic-router.service.spec.ts src/modules/rai-chat/runtime/agent-execution-adapter.service.spec.ts` и `pnpm gate:routing:primary-slices`.
+
+130. **Routing Learning Layer — CRM Slice `crm.account.workspace-review`** [DONE]:
+    *   `RoutingEntity` расширен значением `account`; `SemanticRouterService` получил новый bounded read-only slice `crm.account.workspace-review`.
+    *   Slice активируется как `primary` только на `route-space` `/parties | /consulting/crm | /crm`, но при явном сильном CRM-сигнале остаётся `shadow` и вне bounded route-space.
+    *   В `semantic-router` реализован честный контракт `accountId/query -> execute`, а при пустом таргете `review_account_workspace` уходит в `clarify`, а не в silent fallback.
+    *   Закрыт runtime-gap: `CrmAgentInput` получил `query`, `CrmAgent` перестал требовать только `accountId` для `review_account_workspace`, а `AgentExecutionAdapterService` начал извлекать и прокидывать `query` через `extractCrmWorkspaceQuery(...)`.
+    *   `RoutingCaseMemoryService.inferSliceId()` теперь различает CRM workspace slice на `route-space` `/parties | /consulting/crm | /crm` и не смешивает его с finance/agro memory retrieval.
+    *   Fixture-driven eval corpus расширен файлом `crm-workspace-routing-eval-corpus.json`; `semantic-router.service.spec.ts`, `agent-execution-adapter.service.spec.ts` и `crm-agent.service.spec.ts` усилены кейсами `selected account`, `director question`, `clarify`.
+    *   Подтверждены `pnpm --filter api exec tsc --noEmit --pretty false`, `pnpm --filter api exec jest --runInBand src/modules/rai-chat/agents/crm-agent.service.spec.ts src/modules/rai-chat/semantic-router/semantic-router.service.spec.ts src/modules/rai-chat/runtime/agent-execution-adapter.service.spec.ts` и `pnpm gate:routing:primary-slices`.
+
+131. **Routing Learning Layer — Contracts Slice `contracts.registry-review`** [DONE]:
+    *   В `SemanticRouterService` добавлен новый bounded read-only slice `contracts.registry-review`; primary promotion ограничен route-space `/commerce/contracts`.
+    *   Внутри slice semantic-router теперь различает `list_commerce_contracts` и `review_commerce_contract`, а generic singular-запрос без таргета честно уходит в `clarify`.
+    *   `ContractsAgentInput` расширен полем `query`; read-only контур `GetCommerceContract` и его Joi-schema теперь принимают `contractId` или `query`.
+    *   `ContractsToolsRegistry` получил safe lookup по `contractId / number / quoted query / party name`, не затрагивая write-path и не вводя новый store.
+    *   `AgentExecutionAdapterService` теперь берет contracts-intent сначала из primary semantic-routing и реально прокидывает `query` для review-запросов по номеру договора.
+    *   Исправлена эвристическая коллизия: `detectContractsIntent()` больше не валит фразы вида `покажи договор DOG-001` в `list_commerce_contracts`.
+    *   Закрыт междоменный конфликт `CRM vs Contracts`: `isCrmWorkspaceReviewQuery()` больше не активируется на generic `карточка договора` вне CRM-route, поэтому `contracts`-slice не перехватывается CRM read-only веткой.
+    *   Fixture-driven eval corpus расширен файлом `contracts-routing-eval-corpus.json`; общий `pnpm gate:routing:primary-slices` теперь подтверждает уже семь bounded slice.
+    *   Подтверждены `pnpm --filter api exec tsc --noEmit --pretty false`, `pnpm --filter api exec jest --runInBand src/shared/rai-chat/execution-adapter-heuristics.spec.ts src/modules/rai-chat/agents/contracts-agent.service.spec.ts`, `pnpm --filter api exec jest --runInBand src/modules/rai-chat/semantic-router/semantic-router.service.spec.ts src/modules/rai-chat/runtime/agent-execution-adapter.service.spec.ts` и `pnpm gate:routing:primary-slices`.
+
+132. **Routing Learning Layer — Knowledge Slice `knowledge.base.query`** [DONE]:
+    *   В `SemanticRouterService` добавлен новый bounded read-only slice `knowledge.base.query`; primary promotion разрешён только внутри route-space `/knowledge*`.
+    *   В knowledge-контуре semantic-router трактует пользовательскую реплику как безопасный `query_knowledge`, не создавая отдельный write-path и не расширяя tool-surface beyond `QueryKnowledge`.
+    *   Route-priority закреплён выше phrase-bound эвристик: внутри `/knowledge/base` запрос `как составить техкарту по рапсу` уходит в `query_knowledge`, а не в `tech_map_draft`.
+    *   Вне `/knowledge*` semantic-router не перехватывает knowledge-запросы в `primary`; сохраняется безопасный `shadow`, что не даёт knowledge-срезу расползтись в междоменный шум.
+    *   `collectToolIdentifiers()`, `buildDialogState()`, `resolveIntentFromCaseMemory()` и `resolveCaseMemoryCandidateLabel()` расширены knowledge-семантикой; `RoutingCaseMemoryService.inferSliceId()` теперь различает `/knowledge`.
+    *   Fixture-driven eval corpus расширен файлом `knowledge-routing-eval-corpus.json`; `semantic-router.service.spec.ts` и `agent-execution-adapter.service.spec.ts` усилены primary-кейсами для `query_knowledge`.
+    *   Подтверждены `pnpm --filter api exec tsc --noEmit --pretty false`, `pnpm --filter api exec jest --runInBand src/modules/rai-chat/semantic-router/semantic-router.service.spec.ts src/modules/rai-chat/runtime/agent-execution-adapter.service.spec.ts` и `pnpm gate:routing:primary-slices`.
+
+133. **Routing Learning Layer — CRM INN Lookup Slice `crm.counterparty.lookup`** [DONE]:
+    *   Добавлен новый bounded read-only slice `crm.counterparty.lookup` для интента `lookup_counterparty_by_inn` с primary promotion только в CRM route-space (`/parties | /consulting/crm | /crm`).
+    *   `SemanticRouterService` теперь различает два CRM read-only контура: `crm.account.workspace-review` и `crm.counterparty.lookup`, включая deterministic `clarify` при фразе `по ИНН` без номера.
+    *   `execution-adapter-heuristics.ts` расширен mapping-логикой: `LookupCounterpartyByInn -> lookup_counterparty_by_inn`, fallback-извлечение ИНН и tool mapping на `RaiToolName.LookupCounterpartyByInn`.
+    *   `AgentExecutionAdapterService` получил приоритетный `resolveCrmIntent()` с порядком `explicit tool call -> semantic eligible tools -> semantic slice -> fallback`, а также fallback-добор `inn` из текста запроса.
+    *   `CrmAgent` расширен новым intent `lookup_counterparty_by_inn` с обязательным `inn`, вызовом registry tool `lookup_counterparty_by_inn` и отдельным explain/evidence path.
+    *   `RoutingCaseMemoryService.inferSliceId()` умеет выделять `crm.counterparty.lookup`, не смешивая его с `crm.account.workspace-review`.
+    *   Fixture-driven eval corpus расширен файлом `crm-inn-lookup-routing-eval-corpus.json`; добавлены/обновлены unit-tests в `semantic-router.service.spec.ts`, `agent-execution-adapter.service.spec.ts`, `crm-agent.service.spec.ts`, `execution-adapter-heuristics.spec.ts`.
+    *   Подтверждены `pnpm --filter api exec tsc --noEmit --pretty false`, `pnpm --filter api exec jest --runInBand src/shared/rai-chat/execution-adapter-heuristics.spec.ts src/modules/rai-chat/agents/crm-agent.service.spec.ts src/modules/rai-chat/semantic-router/semantic-router.service.spec.ts src/modules/rai-chat/runtime/agent-execution-adapter.service.spec.ts src/modules/rai-chat/semantic-router/semantic-router.eval.spec.ts` и `pnpm gate:routing:primary-slices`.
+
+134. **Routing Learning Layer — Contracts AR Slice `contracts.ar-balance.review`** [DONE]:
+    *   Добавлен новый bounded read-only slice `contracts.ar-balance.review` для интента `review_ar_balance` с primary promotion только в contracts route-space (`/commerce/contracts`).
+    *   `SemanticRouterService` теперь разделяет контуры `contracts.registry-review` и `contracts.ar-balance.review`, чтобы запросы по дебиторке не смешивались с реестром/карточкой договора.
+    *   Для `review_ar_balance` введён deterministic контракт: `execute` при наличии `invoiceId`, `clarify` с `requiredContextMissing = [invoiceId]` при его отсутствии.
+    *   Добавлен `invoiceId` resolver для workspace/context path (`selectedRowSummary`, `activeEntityRefs`, `filters`) и bounded message-parse (`INV/INVOICE` шаблон) без write-эскалации.
+    *   `RoutingCaseMemoryService.inferSliceId()` расширен новым slice, чтобы case-memory retrieval не смешивал AR-кейсы с `contracts.registry-review`.
+    *   `AgentExecutionAdapterService.resolveContractsIntent()` теперь приоритетно учитывает `semanticRouting.routeDecision.eligibleTools` и `sliceId` для `GetArBalance -> review_ar_balance`.
+    *   Fixture-driven eval corpus расширен файлом `contracts-ar-balance-routing-eval-corpus.json`; обновлены unit-tests в `semantic-router.service.spec.ts` и `agent-execution-adapter.service.spec.ts`.
+    *   Подтверждены `pnpm --filter api exec tsc --noEmit --pretty false`, `pnpm --filter api exec jest --runInBand src/modules/rai-chat/semantic-router/semantic-router.service.spec.ts src/modules/rai-chat/runtime/agent-execution-adapter.service.spec.ts src/modules/rai-chat/semantic-router/semantic-router.eval.spec.ts` и `pnpm gate:routing:primary-slices`.
+
 ## 2026-03-16
 
 122. **A-RAI Director Answer Window UX** [DONE]:

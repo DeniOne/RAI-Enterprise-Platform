@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   api,
@@ -22,6 +22,7 @@ const THRESHOLD_LATENCY_P95_MS = 5000;
 const THRESHOLD_SUCCESS_RATE_PCT = 95;
 const CONTROL_TOWER_REQUEST_TIMEOUT_MS = 8000;
 const MEMORY_FABRIC_ALLOWED_ROLES = new Set(['ADMIN', 'SYSTEM_ADMIN', 'FOUNDER']);
+const ROUTING_DIVERGENCE_SLICE = 'agro.techmaps.list-open-create';
 
 interface DashboardData {
   companyId: string;
@@ -66,6 +67,113 @@ interface QueuePressureData {
   }>;
 }
 
+interface RoutingDivergenceData {
+  companyId: string;
+  windowHours: number;
+  totalEvents: number;
+  mismatchedEvents: number;
+  divergenceRatePct: number;
+  semanticPrimaryCount: number;
+  caseMemoryCandidates: Array<{
+    key: string;
+    sliceId: string | null;
+    targetRole: string;
+    decisionType: string;
+    mismatchKinds: string[];
+    routerVersion: string;
+    promptVersion: string;
+    toolsetVersion: string;
+    traceCount: number;
+    semanticPrimaryCount: number;
+    caseMemoryReadiness: 'observe' | 'needs_more_evidence' | 'ready_for_case_memory';
+    firstSeenAt: string;
+    lastSeenAt: string;
+    ttlExpiresAt: string;
+    sampleTraceId: string | null;
+    sampleQuery: string | null;
+    captureStatus: 'not_captured' | 'captured' | 'active';
+    capturedAt: string | null;
+    captureAuditLogId: string | null;
+    activatedAt: string | null;
+    activationAuditLogId: string | null;
+  }>;
+  failureClusters: Array<{
+    key: string;
+    targetRole: string;
+    decisionType: string;
+    mismatchKinds: string[];
+    count: number;
+    semanticPrimaryCount: number;
+    caseMemoryReadiness: 'observe' | 'needs_more_evidence' | 'ready_for_case_memory';
+    lastSeenAt: string;
+    sampleTraceId: string | null;
+    sampleQuery: string | null;
+  }>;
+  agentBreakdown: Array<{
+    targetRole: string;
+    totalEvents: number;
+    mismatchedEvents: number;
+    divergenceRatePct: number;
+    semanticPrimaryCount: number;
+    decisionBreakdown: Array<{
+      decisionType: string;
+      count: number;
+    }>;
+    topMismatchKinds: Array<{
+      kind: string;
+      count: number;
+    }>;
+    sampleTraceId: string | null;
+    sampleQuery: string | null;
+  }>;
+  topClusters: Array<{
+    key: string;
+    label: string;
+    count: number;
+    mismatchKinds: string[];
+    sampleTraceId: string | null;
+    sampleQuery: string | null;
+  }>;
+  decisionBreakdown: Array<{
+    decisionType: string;
+    count: number;
+  }>;
+  collisionMatrix: Array<{
+    legacyRouteKey: string;
+    semanticRouteKey: string;
+    count: number;
+  }>;
+  recentMismatches: Array<{
+    traceId: string;
+    createdAt: string;
+    summary: string;
+    sampleQuery: string | null;
+    targetRole: string;
+    decisionType: string;
+    promotedPrimary: boolean;
+  }>;
+}
+
+function formatCaseMemoryReadiness(readiness: RoutingDivergenceData['failureClusters'][number]['caseMemoryReadiness']): string {
+  if (readiness === 'ready_for_case_memory') {
+    return 'готово к памяти кейсов';
+  }
+  if (readiness === 'needs_more_evidence') {
+    return 'нужно больше сигналов';
+  }
+  return 'наблюдение';
+}
+
+function caseMemoryReadinessTone(readiness: RoutingDivergenceData['failureClusters'][number]['caseMemoryReadiness']): 'success' | 'warning' | 'neutral' {
+  if (readiness === 'ready_for_case_memory') {
+    return 'success';
+  }
+  if (readiness === 'needs_more_evidence') {
+    return 'warning';
+  }
+  return 'neutral';
+}
+
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const timeoutId = window.setTimeout(() => {
@@ -107,6 +215,7 @@ export default function ControlTowerPage() {
   const [performance, setPerformance] = useState<PerformanceData | null>(null);
   const [cost, setCost] = useState<CostData | null>(null);
   const [queuePressure, setQueuePressure] = useState<QueuePressureData | null>(null);
+  const [routingDivergence, setRoutingDivergence] = useState<RoutingDivergenceData | null>(null);
   const [memoryHealth, setMemoryHealth] = useState<MemoryHealthDto | null>(null);
   const [autonomy, setAutonomy] = useState<AutonomyStatusDto | null>(null);
   const [runtimeGovernanceSummary, setRuntimeGovernanceSummary] = useState<RuntimeGovernanceSummaryDto | null>(null);
@@ -119,6 +228,7 @@ export default function ControlTowerPage() {
   const [governanceActionLoading, setGovernanceActionLoading] = useState<string | null>(null);
   const [lifecycleActionLoading, setLifecycleActionLoading] = useState<string | null>(null);
   const [pendingActionLoading, setPendingActionLoading] = useState<string | null>(null);
+  const [caseMemoryCaptureLoading, setCaseMemoryCaptureLoading] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -134,6 +244,42 @@ export default function ControlTowerPage() {
   const [rollbackReason, setRollbackReason] = useState('');
   const [lifecycleDialog, setLifecycleDialog] = useState<{ role: string; state: 'FROZEN' | 'RETIRED' } | null>(null);
   const [lifecycleReason, setLifecycleReason] = useState('');
+
+  const loadRoutingDivergence = useCallback(() => (
+    safeRequest<RoutingDivergenceData | null>(
+      'routing_divergence',
+      api.explainability.routingDivergence({
+        windowHours: 24,
+        slice: ROUTING_DIVERGENCE_SLICE,
+      }).then((res) => res.data),
+      null,
+    )
+  ), []);
+
+  const reloadRoutingDivergence = useCallback(async () => {
+    const data = await loadRoutingDivergence();
+    setRoutingDivergence(data);
+    return data;
+  }, [loadRoutingDivergence]);
+
+  const handleCaptureCaseMemoryCandidate = useCallback(async (key: string, targetRole: string) => {
+    setCaseMemoryCaptureLoading(key);
+    setActionError(null);
+    try {
+      await api.explainability.captureRoutingCaseMemoryCandidate({
+        key,
+        windowHours: 24,
+        slice: ROUTING_DIVERGENCE_SLICE,
+        targetRole,
+      });
+      await reloadRoutingDivergence();
+    } catch (captureError) {
+      console.warn('[ControlTower] routing_case_memory_capture_failed', captureError);
+      setActionError('Не удалось зафиксировать кандидат в память кейсов. Обновите панель и проверьте доступ к explainability API.');
+    } finally {
+      setCaseMemoryCaptureLoading(null);
+    }
+  }, [reloadRoutingDivergence]);
 
   useEffect(() => {
     let cancelled = false;
@@ -159,7 +305,7 @@ export default function ControlTowerPage() {
           )
           : Promise.resolve(null);
 
-        const [dashboardData, performanceData, costData, queuePressureData, autonomyData, runtimeGovernanceSummaryData, runtimeGovernanceAgentsData, runtimeGovernanceDrilldownsData, lifecycleSummaryData, lifecycleAgentsData, lifecycleHistoryData, memoryData, pendingActionsData] = await Promise.all([
+        const [dashboardData, performanceData, costData, queuePressureData, routingDivergenceData, autonomyData, runtimeGovernanceSummaryData, runtimeGovernanceAgentsData, runtimeGovernanceDrilldownsData, lifecycleSummaryData, lifecycleAgentsData, lifecycleHistoryData, memoryData, pendingActionsData] = await Promise.all([
           safeRequest<DashboardData | null>(
             'dashboard',
             api.explainability.dashboard({ hours: 24 }).then((res) => res.data),
@@ -180,6 +326,7 @@ export default function ControlTowerPage() {
             api.explainability.queuePressure({ timeWindowMs: 3600000 }).then((res) => res.data),
             null,
           ),
+          loadRoutingDivergence(),
           safeRequest<AutonomyStatusDto | null>(
             'autonomy_status',
             api.autonomy.status().then((res) => res.data),
@@ -229,6 +376,7 @@ export default function ControlTowerPage() {
         setPerformance(performanceData);
         setCost(costData);
         setQueuePressure(queuePressureData);
+        setRoutingDivergence(routingDivergenceData);
         setMemoryHealth(memoryData);
         setAutonomy(autonomyData);
         setRuntimeGovernanceSummary(runtimeGovernanceSummaryData);
@@ -245,7 +393,7 @@ export default function ControlTowerPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [loadRoutingDivergence, memoryEnabled]);
 
   async function reloadRuntimeGovernance() {
     const [autonomyRes, summaryRes, agentsRes, drilldownsRes] = await Promise.all([
@@ -1342,14 +1490,16 @@ export default function ControlTowerPage() {
           </div>
         )}
 
-        {runtimeGovernanceSummary && runtimeGovernanceSummary.flags.uiEnabled && (
+        {(routingDivergence || (runtimeGovernanceSummary && runtimeGovernanceSummary.flags.uiEnabled)) && (
           <div className="mt-12">
-            <div className="flex items-center gap-3 mb-6">
-              <ShieldCheck size={20} className="text-[#030213]" />
-              <h2 className="text-xl font-medium text-[#030213] tracking-tight">Управление исполнением</h2>
-            </div>
+            {runtimeGovernanceSummary && runtimeGovernanceSummary.flags.uiEnabled && (
+              <>
+                <div className="flex items-center gap-3 mb-6">
+                  <ShieldCheck size={20} className="text-[#030213]" />
+                  <h2 className="text-xl font-medium text-[#030213] tracking-tight">Управление исполнением</h2>
+                </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               <UnitCard
                 title="Сигналы управления"
                 icon={<ShieldCheck size={20} />}
@@ -1514,9 +1664,279 @@ export default function ControlTowerPage() {
                   )}
                 </div>
               </UnitCard>
-            </div>
+                </div>
+              </>
+            )}
 
             <div className="mt-6 bg-white border border-black/10 rounded-2xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-black/5 bg-slate-50">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-1">Расхождения роутинга</p>
+                    <h3 className="text-lg font-medium text-[#030213] tracking-tight">Текущие расхождения legacy и semantic routing</h3>
+                  </div>
+                  <div className="text-[12px] text-[#717182]">
+                    {routingDivergence ? `${routingDivergence.totalEvents} событий / ${routingDivergence.windowHours} ч` : 'нет данных'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 px-6 py-6 border-b border-black/5">
+                <DataStat
+                  label="Расхождение"
+                  value={routingDivergence ? `${routingDivergence.divergenceRatePct.toFixed(1)}%` : '—'}
+                  status={
+                    !routingDivergence
+                      ? 'neutral'
+                      : routingDivergence.divergenceRatePct <= 10
+                        ? 'success'
+                        : routingDivergence.divergenceRatePct <= 30
+                          ? 'warning'
+                          : 'error'
+                  }
+                />
+                <DataStat
+                  label="Сбоев"
+                  value={routingDivergence ? `${routingDivergence.mismatchedEvents}` : '—'}
+                  status={!routingDivergence || routingDivergence.mismatchedEvents === 0 ? 'success' : 'warning'}
+                />
+                <DataStat
+                  label="Primary-путь"
+                  value={routingDivergence ? `${routingDivergence.semanticPrimaryCount}` : '—'}
+                  status={routingDivergence && routingDivergence.semanticPrimaryCount > 0 ? 'success' : 'neutral'}
+                />
+                <DataStat
+                  label="Самый шумный агент"
+                  value={routingDivergence?.agentBreakdown[0]?.targetRole ?? '—'}
+                  status={routingDivergence?.agentBreakdown.length ? 'warning' : 'neutral'}
+                />
+                <DataStat
+                  label="Главный кластер"
+                  value={routingDivergence?.topClusters[0]?.label ?? '—'}
+                  status={routingDivergence?.topClusters.length ? 'warning' : 'neutral'}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 px-6 py-6">
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Где шумит сильнее всего</p>
+                  <div className="space-y-3">
+                    {routingDivergence?.agentBreakdown.length ? routingDivergence.agentBreakdown.slice(0, 5).map((agent) => (
+                      <div key={agent.targetRole} className="rounded-xl border border-black/5 bg-slate-50 px-4 py-3">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="text-[13px] font-medium text-[#030213] truncate">{agent.targetRole}</p>
+                            <p className="text-[11px] text-[#717182] truncate">
+                              сбоев {agent.mismatchedEvents}/{agent.totalEvents} • основной путь {agent.semanticPrimaryCount}
+                            </p>
+                          </div>
+                          <span className="text-[13px] font-mono text-[#030213]">{agent.divergenceRatePct.toFixed(1)}%</span>
+                        </div>
+                        <p className="mt-2 text-[11px] text-[#717182]">
+                          {agent.decisionBreakdown[0]
+                            ? `${agent.decisionBreakdown[0].decisionType} • ${agent.decisionBreakdown[0].count}`
+                            : 'нет разбивки по решениям'}
+                        </p>
+                        <p className="mt-1 text-[11px] text-[#717182]">
+                          {agent.topMismatchKinds.length
+                            ? agent.topMismatchKinds.map((item) => `${item.kind} (${item.count})`).join(', ')
+                            : 'match'}
+                        </p>
+                        {agent.sampleTraceId && (
+                          <div className="mt-2 text-[11px] text-[#717182]">
+                            <Link href={`/control-tower/trace/${agent.sampleTraceId}`} className="text-blue-600 hover:underline">
+                              {agent.sampleTraceId}
+                            </Link>
+                            {agent.sampleQuery ? ` • ${agent.sampleQuery}` : ''}
+                          </div>
+                        )}
+                      </div>
+                    )) : <NoData />}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Кластеры расхождений</p>
+                  <div className="space-y-3">
+                    {routingDivergence?.topClusters.length ? routingDivergence.topClusters.slice(0, 5).map((cluster) => (
+                      <div key={cluster.key} className="rounded-xl border border-black/5 bg-slate-50 px-4 py-3">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="text-[13px] font-medium text-[#030213] truncate">{cluster.label}</p>
+                            <p className="text-[11px] text-[#717182] truncate">
+                              {cluster.mismatchKinds.length ? cluster.mismatchKinds.join(', ') : 'match'}
+                            </p>
+                          </div>
+                          <span className="text-[13px] font-mono text-[#030213]">{cluster.count}</span>
+                        </div>
+                        {cluster.sampleTraceId && (
+                          <div className="mt-2 text-[11px] text-[#717182]">
+                            <Link href={`/control-tower/trace/${cluster.sampleTraceId}`} className="text-blue-600 hover:underline">
+                              {cluster.sampleTraceId}
+                            </Link>
+                            {cluster.sampleQuery ? ` • ${cluster.sampleQuery}` : ''}
+                          </div>
+                        )}
+                      </div>
+                    )) : <NoData />}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Последние конфликтные trace</p>
+                  <div className="space-y-3">
+                    {routingDivergence?.recentMismatches.length ? routingDivergence.recentMismatches.slice(0, 5).map((item) => (
+                      <div key={`${item.traceId}:${item.createdAt}`} className="rounded-xl border border-black/5 bg-white px-4 py-3">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="min-w-0">
+                            <Link href={`/control-tower/trace/${item.traceId}`} className="text-[13px] font-medium text-blue-600 hover:underline">
+                              {item.traceId}
+                            </Link>
+                            <p className="text-[11px] text-[#717182]">
+                              {new Date(item.createdAt).toLocaleString('ru')} • {item.targetRole} • {item.summary}
+                            </p>
+                          </div>
+                          <span className={clsx(
+                            'rounded-full px-2 py-1 text-[10px] font-medium uppercase tracking-wide',
+                            item.promotedPrimary ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700',
+                          )}>
+                            {item.promotedPrimary ? 'primary' : 'shadow'}
+                          </span>
+                        </div>
+                        {item.sampleQuery && (
+                          <p className="mt-2 text-[12px] text-[#030213] leading-relaxed">{item.sampleQuery}</p>
+                        )}
+                      </div>
+                    )) : <NoData />}
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-black/5 px-6 py-6">
+                <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Повторяющиеся кластеры сбоев</p>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                  {routingDivergence?.failureClusters.length ? routingDivergence.failureClusters.slice(0, 6).map((cluster) => (
+                    <div key={cluster.key} className="rounded-xl border border-black/5 bg-slate-50 px-4 py-3">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="text-[13px] font-medium text-[#030213] truncate">{cluster.targetRole}</p>
+                          <p className="text-[11px] text-[#717182] truncate">
+                            {cluster.decisionType} • {cluster.mismatchKinds.join(', ')}
+                          </p>
+                        </div>
+                        <span className={clsx(
+                          'rounded-full px-2 py-1 text-[10px] font-medium uppercase tracking-wide',
+                          caseMemoryReadinessTone(cluster.caseMemoryReadiness) === 'success'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : caseMemoryReadinessTone(cluster.caseMemoryReadiness) === 'warning'
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-slate-200 text-slate-700',
+                        )}>
+                          {formatCaseMemoryReadiness(cluster.caseMemoryReadiness)}
+                        </span>
+                      </div>
+                      <div className="mt-2 flex items-center justify-between gap-4 text-[11px] text-[#717182]">
+                        <span>повторов {cluster.count}</span>
+                        <span>primary {cluster.semanticPrimaryCount}</span>
+                        <span>{new Date(cluster.lastSeenAt).toLocaleString('ru')}</span>
+                      </div>
+                      {cluster.sampleTraceId && (
+                        <div className="mt-2 text-[11px] text-[#717182]">
+                          <Link href={`/control-tower/trace/${cluster.sampleTraceId}`} className="text-blue-600 hover:underline">
+                            {cluster.sampleTraceId}
+                          </Link>
+                          {cluster.sampleQuery ? ` • ${cluster.sampleQuery}` : ''}
+                        </div>
+                      )}
+                    </div>
+                  )) : <NoData />}
+                </div>
+              </div>
+
+              <div className="border-t border-black/5 px-6 py-6">
+                <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Кандидаты в память кейсов</p>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                  {routingDivergence?.caseMemoryCandidates.length ? routingDivergence.caseMemoryCandidates.slice(0, 6).map((candidate) => (
+                    <div key={candidate.key} className="rounded-xl border border-black/5 bg-white px-4 py-3">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="text-[13px] font-medium text-[#030213] truncate">{candidate.targetRole}</p>
+                          <p className="text-[11px] text-[#717182] truncate">
+                            {candidate.decisionType} • {candidate.mismatchKinds.join(', ')}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className={clsx(
+                            'rounded-full px-2 py-1 text-[10px] font-medium uppercase tracking-wide',
+                            caseMemoryReadinessTone(candidate.caseMemoryReadiness) === 'success'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : caseMemoryReadinessTone(candidate.caseMemoryReadiness) === 'warning'
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-slate-200 text-slate-700',
+                          )}>
+                            {formatCaseMemoryReadiness(candidate.caseMemoryReadiness)}
+                          </span>
+                          <span className={clsx(
+                            'rounded-full px-2 py-1 text-[10px] font-medium uppercase tracking-wide',
+                            candidate.captureStatus === 'active'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : candidate.captureStatus === 'captured'
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-slate-100 text-slate-600',
+                          )}>
+                            {candidate.captureStatus === 'active'
+                              ? 'активен в маршрутизации'
+                              : candidate.captureStatus === 'captured'
+                                ? 'зафиксирован'
+                                : 'не зафиксирован'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px] text-[#717182]">
+                        <span>версия router {candidate.routerVersion}</span>
+                        <span>версия prompt {candidate.promptVersion}</span>
+                        <span>версия toolset {candidate.toolsetVersion}</span>
+                        <span>повторов {candidate.traceCount}</span>
+                        <span>TTL до {new Date(candidate.ttlExpiresAt).toLocaleString('ru')}</span>
+                        <span>последний сигнал {new Date(candidate.lastSeenAt).toLocaleString('ru')}</span>
+                        {candidate.capturedAt && <span>зафиксирован {new Date(candidate.capturedAt).toLocaleString('ru')}</span>}
+                        {candidate.captureAuditLogId && <span>лог {candidate.captureAuditLogId}</span>}
+                        {candidate.activatedAt && <span>активирован {new Date(candidate.activatedAt).toLocaleString('ru')}</span>}
+                        {candidate.activationAuditLogId && <span>лог активации {candidate.activationAuditLogId}</span>}
+                      </div>
+                      {candidate.sampleTraceId && (
+                        <div className="mt-2 text-[11px] text-[#717182]">
+                          <Link href={`/control-tower/trace/${candidate.sampleTraceId}`} className="text-blue-600 hover:underline">
+                            {candidate.sampleTraceId}
+                          </Link>
+                          {candidate.sampleQuery ? ` • ${candidate.sampleQuery}` : ''}
+                        </div>
+                      )}
+                      {candidate.caseMemoryReadiness === 'ready_for_case_memory' && candidate.captureStatus === 'not_captured' && (
+                        <div className="mt-3 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => void handleCaptureCaseMemoryCandidate(candidate.key, candidate.targetRole)}
+                            disabled={caseMemoryCaptureLoading === candidate.key}
+                            className={clsx(
+                              'rounded-lg border px-3 py-2 text-[12px] font-medium transition',
+                              caseMemoryCaptureLoading === candidate.key
+                                ? 'cursor-wait border-slate-200 bg-slate-100 text-slate-500'
+                                : 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100',
+                            )}
+                          >
+                            {caseMemoryCaptureLoading === candidate.key ? 'фиксируем...' : 'зафиксировать'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )) : <NoData />}
+                </div>
+              </div>
+            </div>
+
+            {runtimeGovernanceSummary && runtimeGovernanceSummary.flags.uiEnabled && (
+              <div className="mt-6 bg-white border border-black/10 rounded-2xl overflow-hidden">
               <div className="px-6 py-4 border-b border-black/5 bg-slate-50">
                 <div className="flex items-center justify-between gap-4">
                   <div>
@@ -1580,7 +2000,8 @@ export default function ControlTowerPage() {
                   <NoData />
                 </div>
               )}
-            </div>
+              </div>
+            )}
 
             {runtimeGovernanceDrilldowns && (
               <div className="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -1975,6 +2396,36 @@ function DataRow({ label, value, status }: { label: string; value: string; statu
       )}>
         {value}
       </span>
+    </div>
+  );
+}
+
+function DataStat({
+  label,
+  value,
+  status,
+}: {
+  label: string;
+  value: string;
+  status?: 'success' | 'warning' | 'error' | 'neutral';
+}) {
+  return (
+    <div className="rounded-2xl border border-black/5 bg-slate-50 px-4 py-4">
+      <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182]">{label}</p>
+      <p
+        className={clsx(
+          'mt-2 text-[20px] font-medium tracking-tight',
+          status === 'success'
+            ? 'text-emerald-700'
+            : status === 'warning'
+              ? 'text-amber-700'
+              : status === 'error'
+                ? 'text-red-700'
+                : 'text-[#030213]',
+        )}
+      >
+        {value}
+      </p>
     </div>
   );
 }

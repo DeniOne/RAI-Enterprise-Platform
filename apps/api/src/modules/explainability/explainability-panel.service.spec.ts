@@ -18,6 +18,7 @@ describe("ExplainabilityPanelService", () => {
   const mockTraceSummaryFindFirst = jest.fn();
   const mockQualityAlertFindMany = jest.fn();
   const mockAuditLogFindMany = jest.fn();
+  const mockAuditLogCreate = jest.fn();
   const queueMetricsMock = {
     getQueuePressure: jest.fn(),
   };
@@ -53,6 +54,7 @@ describe("ExplainabilityPanelService", () => {
             },
             auditLog: {
               findMany: mockAuditLogFindMany,
+              create: mockAuditLogCreate,
             },
             qualityAlert: {
               findMany: mockQualityAlertFindMany,
@@ -64,6 +66,7 @@ describe("ExplainabilityPanelService", () => {
 
     service = module.get(ExplainabilityPanelService);
     prisma = module.get(PrismaService);
+    mockAuditLogFindMany.mockResolvedValue([]);
   });
 
   it("returns tenant-scoped queue pressure from live queue metrics source", async () => {
@@ -93,6 +96,407 @@ describe("ExplainabilityPanelService", () => {
       signalFresh: true,
       totalBacklog: 7,
       hottestQueue: "runtime_active_tool_calls",
+    });
+  });
+
+  it("агрегирует routing divergence из audit metadata", async () => {
+    mockAiAuditFindMany.mockResolvedValue([
+      {
+        traceId: "tr-1",
+        createdAt: new Date("2026-03-20T10:00:00Z"),
+        metadata: {
+          routingTelemetry: {
+            traceId: "tr-1",
+            threadId: "th-1",
+            routerVersion: "semantic-router-v1",
+            promptVersion: "semantic-router-prompt-v1",
+            toolsetVersion: "toolset",
+            workspaceRoute: "/consulting/techmaps",
+            workspaceStateDigest: "digest",
+            activeFlow: null,
+            userQueryRedacted: "покажи все созданные техкарты",
+            legacyClassification: {
+              targetRole: "agronomist",
+              intent: "tech_map_draft",
+              toolName: "generate_tech_map_draft",
+              confidence: 0.7,
+              method: "regex",
+              reason: "legacy",
+            },
+            semanticIntent: {
+              domain: "agro",
+              entity: "techmap",
+              action: "list",
+              interactionMode: "navigation",
+              mutationRisk: "safe_read",
+              filters: {},
+              requiredContext: [],
+              focusObject: null,
+              dialogState: { activeFlow: null, pendingClarificationKeys: [], lastUserAction: null },
+              resolvability: "partial",
+              ambiguityType: "none",
+              confidenceBand: "high",
+              reason: "semantic",
+            },
+            routeDecision: {
+              decisionType: "navigate",
+              recommendedExecutionMode: "open_route",
+              eligibleTools: [],
+              eligibleFlows: ["techmaps_registry"],
+              requiredContextMissing: [],
+              policyChecksRequired: [],
+              needsConfirmation: false,
+              needsClarification: false,
+              abstainReason: null,
+              policyBlockReason: null,
+            },
+            candidateRoutes: [],
+            divergence: {
+              isMismatch: true,
+              mismatchKinds: ["legacy_write_vs_semantic_read"],
+              summary: "legacy_write_vs_semantic_read",
+              legacyRouteKey: "agronomist:tech_map_draft:generate_tech_map_draft",
+              semanticRouteKey: "agro:techmap:list:navigate:none",
+            },
+            executionPath: "semantic_router_primary",
+            fallbackReason: null,
+            abstainReason: null,
+            policyBlockReason: null,
+            requiredContextMissing: [],
+            finalOutcome: "completed",
+            userCorrection: null,
+            latencyMs: 12,
+            sliceId: "agro.techmaps.list-open-create",
+            promotedPrimary: true,
+          },
+        },
+      },
+    ]);
+
+    const result = await service.getRoutingDivergence({
+      companyId: "c1",
+      windowHours: 24,
+      slice: "agro.techmaps.list-open-create",
+      onlyMismatches: true,
+    });
+
+    expect(result.totalEvents).toBe(1);
+    expect(result.mismatchedEvents).toBe(1);
+    expect(result.divergenceRatePct).toBe(100);
+    expect(result.semanticPrimaryCount).toBe(1);
+    expect(result.topClusters[0]).toMatchObject({
+      key: "legacy_write_vs_semantic_read",
+      count: 1,
+    });
+    expect(result.agentBreakdown[0]).toMatchObject({
+      targetRole: "agronomist",
+      totalEvents: 1,
+      mismatchedEvents: 1,
+      divergenceRatePct: 100,
+      semanticPrimaryCount: 1,
+      decisionBreakdown: [{ decisionType: "navigate", count: 1 }],
+      topMismatchKinds: [{ kind: "legacy_write_vs_semantic_read", count: 1 }],
+    });
+    expect(result.recentMismatches[0]).toMatchObject({
+      targetRole: "agronomist",
+    });
+    expect(result.failureClusters[0]).toMatchObject({
+      targetRole: "agronomist",
+      decisionType: "navigate",
+      count: 1,
+      caseMemoryReadiness: "observe",
+    });
+    expect(result.caseMemoryCandidates[0]).toMatchObject({
+      sliceId: "agro.techmaps.list-open-create",
+      targetRole: "agronomist",
+      decisionType: "navigate",
+      routerVersion: "semantic-router-v1",
+      promptVersion: "semantic-router-prompt-v1",
+      toolsetVersion: "toolset",
+      traceCount: 1,
+      semanticPrimaryCount: 1,
+      caseMemoryReadiness: "observe",
+      captureStatus: "not_captured",
+      capturedAt: null,
+      captureAuditLogId: null,
+    });
+    expect(result.caseMemoryCandidates[0].ttlExpiresAt).toBeTruthy();
+  });
+
+  it("поднимает повторяющийся failure cluster до ready_for_case_memory", async () => {
+    const baseTelemetry = {
+      threadId: "th-1",
+      routerVersion: "semantic-router-v1",
+      promptVersion: "semantic-router-prompt-v1",
+      toolsetVersion: "toolset",
+      workspaceRoute: "/consulting/techmaps",
+      workspaceStateDigest: "digest",
+      activeFlow: null,
+      legacyClassification: {
+        targetRole: "agronomist",
+        intent: "tech_map_draft",
+        toolName: "generate_tech_map_draft",
+        confidence: 0.7,
+        method: "regex",
+        reason: "legacy",
+      },
+      semanticIntent: {
+        domain: "agro",
+        entity: "techmap",
+        action: "list",
+        interactionMode: "navigation",
+        mutationRisk: "safe_read",
+        filters: {},
+        requiredContext: [],
+        focusObject: null,
+        dialogState: { activeFlow: null, pendingClarificationKeys: [], lastUserAction: null },
+        resolvability: "partial",
+        ambiguityType: "none",
+        confidenceBand: "high",
+        reason: "semantic",
+      },
+      routeDecision: {
+        decisionType: "navigate",
+        recommendedExecutionMode: "open_route",
+        eligibleTools: [],
+        eligibleFlows: ["techmaps_registry"],
+        requiredContextMissing: [],
+        policyChecksRequired: [],
+        needsConfirmation: false,
+        needsClarification: false,
+        abstainReason: null,
+        policyBlockReason: null,
+      },
+      candidateRoutes: [],
+      divergence: {
+        isMismatch: true,
+        mismatchKinds: ["legacy_write_vs_semantic_read"],
+        summary: "legacy_write_vs_semantic_read",
+        legacyRouteKey: "agronomist:tech_map_draft:generate_tech_map_draft",
+        semanticRouteKey: "agro:techmap:list:navigate:none",
+      },
+      executionPath: "semantic_router_primary",
+      fallbackReason: null,
+      abstainReason: null,
+      policyBlockReason: null,
+      requiredContextMissing: [],
+      finalOutcome: "completed",
+      userCorrection: null,
+      latencyMs: 12,
+      sliceId: "agro.techmaps.list-open-create",
+    };
+
+    mockAiAuditFindMany.mockResolvedValue([
+      {
+        traceId: "tr-1",
+        createdAt: new Date("2026-03-20T10:00:00Z"),
+        metadata: {
+          routingTelemetry: {
+            ...baseTelemetry,
+            traceId: "tr-1",
+            userQueryRedacted: "покажи все созданные техкарты",
+            promotedPrimary: true,
+          },
+        },
+      },
+      {
+        traceId: "tr-2",
+        createdAt: new Date("2026-03-20T10:05:00Z"),
+        metadata: {
+          routingTelemetry: {
+            ...baseTelemetry,
+            traceId: "tr-2",
+            userQueryRedacted: "где техкарты",
+            promotedPrimary: true,
+          },
+        },
+      },
+      {
+        traceId: "tr-3",
+        createdAt: new Date("2026-03-20T10:10:00Z"),
+        metadata: {
+          routingTelemetry: {
+            ...baseTelemetry,
+            traceId: "tr-3",
+            userQueryRedacted: "выведи активные техкарты",
+            promotedPrimary: false,
+          },
+        },
+      },
+    ]);
+
+    const result = await service.getRoutingDivergence({
+      companyId: "c1",
+      windowHours: 24,
+      slice: "agro.techmaps.list-open-create",
+      onlyMismatches: true,
+    });
+
+    expect(result.failureClusters[0]).toMatchObject({
+      targetRole: "agronomist",
+      decisionType: "navigate",
+      mismatchKinds: ["legacy_write_vs_semantic_read"],
+      count: 3,
+      semanticPrimaryCount: 2,
+      caseMemoryReadiness: "ready_for_case_memory",
+    });
+    expect(result.caseMemoryCandidates[0]).toMatchObject({
+      sliceId: "agro.techmaps.list-open-create",
+      targetRole: "agronomist",
+      decisionType: "navigate",
+      mismatchKinds: ["legacy_write_vs_semantic_read"],
+      routerVersion: "semantic-router-v1",
+      promptVersion: "semantic-router-prompt-v1",
+      toolsetVersion: "toolset",
+      traceCount: 3,
+      semanticPrimaryCount: 2,
+      caseMemoryReadiness: "ready_for_case_memory",
+      captureStatus: "not_captured",
+      capturedAt: null,
+      captureAuditLogId: null,
+    });
+  });
+
+  it("фиксирует ready candidate в audit log и возвращает capture result", async () => {
+    const baseTelemetry = {
+      threadId: "th-1",
+      routerVersion: "semantic-router-v1",
+      promptVersion: "semantic-router-prompt-v1",
+      toolsetVersion: "toolset",
+      workspaceRoute: "/consulting/techmaps",
+      workspaceStateDigest: "digest",
+      activeFlow: null,
+      legacyClassification: {
+        targetRole: "agronomist",
+        intent: "tech_map_draft",
+        toolName: "generate_tech_map_draft",
+        confidence: 0.7,
+        method: "regex",
+        reason: "legacy",
+      },
+      semanticIntent: {
+        domain: "agro",
+        entity: "techmap",
+        action: "list",
+        interactionMode: "navigation",
+        mutationRisk: "safe_read",
+        filters: {},
+        requiredContext: [],
+        focusObject: null,
+        dialogState: { activeFlow: null, pendingClarificationKeys: [], lastUserAction: null },
+        resolvability: "partial",
+        ambiguityType: "none",
+        confidenceBand: "high",
+        reason: "semantic",
+      },
+      routeDecision: {
+        decisionType: "navigate",
+        recommendedExecutionMode: "open_route",
+        eligibleTools: [],
+        eligibleFlows: ["techmaps_registry"],
+        requiredContextMissing: [],
+        policyChecksRequired: [],
+        needsConfirmation: false,
+        needsClarification: false,
+        abstainReason: null,
+        policyBlockReason: null,
+      },
+      candidateRoutes: [],
+      divergence: {
+        isMismatch: true,
+        mismatchKinds: ["legacy_write_vs_semantic_read"],
+        summary: "legacy_write_vs_semantic_read",
+        legacyRouteKey: "agronomist:tech_map_draft:generate_tech_map_draft",
+        semanticRouteKey: "agro:techmap:list:navigate:none",
+      },
+      executionPath: "semantic_router_primary",
+      fallbackReason: null,
+      abstainReason: null,
+      policyBlockReason: null,
+      requiredContextMissing: [],
+      finalOutcome: "completed",
+      userCorrection: null,
+      latencyMs: 12,
+      sliceId: "agro.techmaps.list-open-create",
+      promotedPrimary: true,
+    };
+
+    mockAiAuditFindMany.mockResolvedValue([
+      {
+        traceId: "tr-1",
+        createdAt: new Date("2026-03-20T10:00:00Z"),
+        metadata: {
+          routingTelemetry: {
+            ...baseTelemetry,
+            traceId: "tr-1",
+            userQueryRedacted: "покажи все созданные техкарты",
+          },
+        },
+      },
+      {
+        traceId: "tr-2",
+        createdAt: new Date("2026-03-20T10:05:00Z"),
+        metadata: {
+          routingTelemetry: {
+            ...baseTelemetry,
+            traceId: "tr-2",
+            userQueryRedacted: "где техкарты",
+          },
+        },
+      },
+      {
+        traceId: "tr-3",
+        createdAt: new Date("2026-03-20T10:10:00Z"),
+        metadata: {
+          routingTelemetry: {
+            ...baseTelemetry,
+            traceId: "tr-3",
+            userQueryRedacted: "выведи активные техкарты",
+          },
+        },
+      },
+    ]);
+    mockAuditLogFindMany.mockResolvedValue([]);
+    mockAuditLogCreate.mockResolvedValue({ id: "audit-1" });
+
+    const divergence = await service.getRoutingDivergence({
+      companyId: "c1",
+      windowHours: 24,
+      slice: "agro.techmaps.list-open-create",
+      onlyMismatches: true,
+    });
+
+    const result = await service.captureRoutingCaseMemoryCandidate({
+      companyId: "c1",
+      userId: "u1",
+      key: divergence.caseMemoryCandidates[0].key,
+      windowHours: 24,
+      slice: "agro.techmaps.list-open-create",
+      targetRole: "agronomist",
+      note: "операторский захват",
+    });
+
+    expect(mockAuditLogCreate).toHaveBeenCalledTimes(1);
+    expect(mockAuditLogCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "ROUTING_CASE_MEMORY_CANDIDATE_CAPTURED",
+        companyId: "c1",
+        userId: "u1",
+        metadata: expect.objectContaining({
+          candidateKey: divergence.caseMemoryCandidates[0].key,
+          targetRole: "agronomist",
+          decisionType: "navigate",
+          note: "операторский захват",
+        }),
+      }),
+      select: {
+        id: true,
+      },
+    });
+    expect(result).toMatchObject({
+      status: "captured",
+      candidateKey: divergence.caseMemoryCandidates[0].key,
+      auditLogId: "audit-1",
     });
   });
 

@@ -1,5 +1,53 @@
 # Активный контекст RAI_EP
 
+## Текущая задача (2026-03-20)
+- [x] В backend введены новые артефакты routing-слоя: `semantic-routing.types.ts`, `routing-versioning.ts`, `routing-telemetry-redaction.ts`, `semantic-router.service.ts`.
+- [x] `SupervisorAgent.planExecution()` теперь считает semantic-route параллельно legacy-route и пишет детальный routing trace в `AiAuditEntry.metadata.routingTelemetry`.
+- [x] Для `techmaps` slice `read/list/create` включён `semantic_router_primary`; runtime получил coarse capability gating по `eligibleTools`.
+- [x] Explainability получил divergence read-model и endpoint `GET /api/rai/explainability/routing/divergence`.
+- [x] `apps/web/app/(app)/control-tower/page.tsx` теперь показывает routing divergence panel по slice `agro.techmaps.list-open-create`.
+- [x] Добавлен fixture-driven `techmaps` routing corpus: `apps/api/src/modules/rai-chat/semantic-router/fixtures/techmaps-routing-eval-corpus.json`.
+- [x] Добавлен отдельный gate `pnpm gate:routing:techmaps`; он прогоняет `semantic-router.eval.spec.ts` и включён в `.github/workflows/invariant-gates.yml`.
+- [x] `routing/divergence` теперь возвращает `agentBreakdown`; `Control Tower` показывает, какой `targetRole` даёт основной mismatch-шум и какими типами расхождений.
+- [x] `routing/divergence` теперь возвращает `failureClusters` с `caseMemoryReadiness`; `Control Tower` показывает повторяющиеся mismatch-группы и их готовность к памяти кейсов.
+- [x] `routing/divergence` теперь возвращает `caseMemoryCandidates`; они version-aware по `sliceId / targetRole / decisionType / mismatchKinds / routerVersion / promptVersion / toolsetVersion` и имеют `TTL`.
+- [x] Для `caseMemoryCandidates` добавлен controlled capture path: `POST /api/rai/explainability/routing/case-memory-candidates/capture`, persisted запись в `AuditLog`, capture-status в divergence read-model и кнопка `зафиксировать` в `Control Tower`.
+- [x] Добавлен `RoutingCaseMemoryService`: он читает captured cases из `AuditLog`, активирует релевантные кейсы (`captured -> active`) и подаёт их в `SemanticRouterService` как bounded retrieval слой.
+- [x] `SemanticRouterService` теперь использует retrieved case memory для safe read override только в low-risk сценариях; write-path по case memory не автозапускается.
+- [x] CI gate `pnpm gate:routing:techmaps` теперь включает `semantic-router.eval.spec.ts`, `semantic-router.service.spec.ts` и `routing-case-memory.service.spec.ts`, то есть фиксирует и safe override, и запрет write override.
+- [x] Все новые текстовые артефакты и записи memory-bank ведутся с учётом `LANGUAGE_POLICY.md`.
+- [x] Второй controlled migration slice `agro.deviations.review` включён: semantic-router выделяет его отдельно, primary promotion ограничен `deviations`-контуром, а вне него `compute_deviations` остаётся только `shadow`.
+- [x] `AgentExecutionAdapterService` теперь честно сохраняет `executionPath = semantic_router_primary` для `agronomist`, если `compute_deviations` или `generate_tech_map_draft` пришли из первичного semantic-routing, а не маскирует путь под `tool_call_primary`.
+- [x] Fixture-driven eval corpus расширен третьим набором `plan-fact-routing-eval-corpus.json`; канонический gate теперь `pnpm gate:routing:primary-slices`, а `pnpm gate:routing:agro-slices` и `pnpm gate:routing:techmaps` оставлены как алиасы совместимости.
+- [x] Третий controlled migration slice `finance.plan-fact.read` включён: semantic-router выделяет его только внутри `yield/finance`-контура, а вне него `compute_plan_fact` остаётся в `shadow`.
+- [x] Для `plan-fact` добавлен честный `clarify` при пустом контексте: без `planId` и `seasonId` semantic-router не падает в `abstain`, а отдаёт `DecisionType.Clarify`.
+- [x] Четвёртый controlled migration slice закрыт сразу двумя bounded finance-подсрезами: `finance.scenario.analysis` и `finance.risk.analysis`.
+- [x] `SemanticRouterService` теперь различает `scenario`, `risk_assessment` и `plan_fact` как разные finance-entity, а не как один размытый экономический intent.
+- [x] Для `scenario/risk` primary promotion ограничен `yield/finance`-контуром, но вне него остаётся `shadow`-классификация по явным finance-сигналам в тексте.
+- [x] `AgentExecutionAdapterService` больше не сваливается по умолчанию в `compute_plan_fact`, если primary semantic-routing уже выбрал `simulate_scenario` или `compute_risk_assessment`.
+- [x] Fixture-driven eval corpus расширен файлами `scenario-routing-eval-corpus.json` и `risk-routing-eval-corpus.json`; общий `pnpm gate:routing:primary-slices` подтверждает уже пять bounded slice.
+- [x] Следующий non-finance bounded slice включён: `crm.account.workspace-review`.
+- [x] `SemanticRouterService` теперь выделяет CRM read-only workspace review как отдельный slice с `accountId/query -> execute` и bounded `clarify` при пустом таргете.
+- [x] Закрыт runtime-gap в CRM: `CrmAgent` и `AgentExecutionAdapterService` теперь реально прокидывают `query` для `review_account_workspace`, а не требуют только `accountId`.
+- [x] Fixture-driven eval corpus расширен `crm-workspace-routing-eval-corpus.json`; `pnpm gate:routing:primary-slices` теперь подтверждает уже шесть bounded slice.
+- [x] Следующий bounded read-only slice вне `agro/finance/crm` закрыт как `contracts.registry-review`.
+- [x] `SemanticRouterService` теперь различает `list_commerce_contracts` и `review_commerce_contract` внутри `/commerce/contracts`, а primary promotion ограничен только этим route-space.
+- [x] `ContractsAgent` и `GetCommerceContract` read-only контур теперь поддерживают `query` помимо `contractId`, поэтому review по номеру/цитате не проваливается в ложный `list` или `NEEDS_MORE_DATA`.
+- [x] Закрыт междоменный коллизионный баг `CRM vs Contracts`: generic `карточка` больше не тянет `crm.account.workspace-review` поверх `contracts`-контура без CRM-route или сильного CRM-сигнала.
+- [x] Fixture-driven eval corpus расширен `contracts-routing-eval-corpus.json`; `pnpm gate:routing:primary-slices` теперь подтверждает уже семь bounded slice.
+- [x] Следующий bounded read-only slice после `contracts` закрыт как `knowledge.base.query`.
+- [x] `SemanticRouterService` теперь выделяет `query_knowledge` как отдельный bounded slice только внутри route-space `/knowledge*`, поэтому knowledge-поиск не смешивается с `techmaps`, `finance`, `crm` и `contracts`.
+- [x] В knowledge-контуре route-priority важнее phrase-match: запрос `как составить техкарту по рапсу` внутри `/knowledge/base` уходит в `query_knowledge`, а не в `tech_map_draft`.
+- [x] Вне `/knowledge*` semantic-router не перехватывает knowledge-вопросы в `primary`; для этого контура сохраняется безопасный `shadow` без междоменного захвата.
+- [x] Fixture-driven eval corpus расширен `knowledge-routing-eval-corpus.json`; `pnpm gate:routing:primary-slices` теперь подтверждает уже восемь bounded slice.
+- [x] Следующий bounded read-only slice после `knowledge` закрыт как `crm.counterparty.lookup`.
+- [x] В `crm.counterparty.lookup` semantic-router теперь приоритизирует read-only lookup по ИНН над legacy `register_counterparty`, включая `clarify` при фразе `по ИНН` без номера.
+- [x] Fixture-driven eval corpus расширен `crm-inn-lookup-routing-eval-corpus.json`; `pnpm gate:routing:primary-slices` теперь подтверждает уже девять bounded slice.
+- [x] Следующий bounded read-only slice после `crm.counterparty.lookup` закрыт как `contracts.ar-balance.review`.
+- [x] `SemanticRouterService` теперь выделяет read-only AR-контур (`review_ar_balance`) отдельно от `contracts.registry-review`, с `execute` при наличии `invoiceId` и `clarify` при его отсутствии.
+- [x] Fixture-driven eval corpus расширен `contracts-ar-balance-routing-eval-corpus.json`; `pnpm gate:routing:primary-slices` подтверждает уже десять bounded slice.
+- [x] Текущий этап controlled migration по плану `Routing Learning Layer` закрыт: все запланированные bounded read-only slice на эту волну реализованы и подтверждены gate.
+
 ## Текущая задача (2026-03-16)
 - [x] Выполнен пуш всех локальных изменений в репозиторий (`git push origin main`).
 - [x] Синхронизированы артефакты по Front Office, Agent Runtime UI и планам миграции с Telegram.

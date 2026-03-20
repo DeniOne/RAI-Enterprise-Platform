@@ -1,0 +1,136 @@
+[
+  {
+    "id": "plan-fact-primary-with-selected-plan",
+    "request": {
+      "message": "покажи план-факт по выбранному плану",
+      "workspaceContext": {
+        "route": "/consulting/yield",
+        "selectedRowSummary": {
+          "kind": "yield",
+          "id": "plan-7",
+          "title": "План уборки plan-7"
+        },
+        "activeEntityRefs": [
+          { "kind": "techmap", "id": "tm-7" },
+          { "kind": "field", "id": "field-7" }
+        ],
+        "filters": {
+          "domain": "yield",
+          "hasSelectedPlan": true
+        }
+      },
+      "legacyClassification": {
+        "targetRole": "economist",
+        "intent": "compute_plan_fact",
+        "toolName": "compute_plan_fact",
+        "confidence": 0.76,
+        "method": "regex",
+        "reason": "legacy:plan-fact"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "finance.plan-fact.read",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "compute_plan_fact",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["compute_plan_fact"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "compute_plan_fact",
+          "payloadSubset": {
+            "scope": {
+              "planId": "plan-7"
+            }
+          }
+        }
+      ],
+      "filtersSubset": {
+        "planId": "plan-7"
+      }
+    }
+  },
+  {
+    "id": "plan-fact-primary-clarify-on-empty-context",
+    "request": {
+      "message": "покажи план-факт",
+      "workspaceContext": {
+        "route": "/consulting/yield",
+        "filters": {
+          "domain": "yield",
+          "hasSelectedPlan": false
+        }
+      },
+      "legacyClassification": {
+        "targetRole": "economist",
+        "intent": "compute_plan_fact",
+        "toolName": "compute_plan_fact",
+        "confidence": 0.72,
+        "method": "regex",
+        "reason": "legacy:plan-fact"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "finance.plan-fact.read",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "compute_plan_fact",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "clarify",
+      "recommendedExecutionMode": "ask_clarification",
+      "eligibleTools": ["compute_plan_fact"],
+      "requiredContextMissing": ["seasonId"],
+      "requestedToolCalls": []
+    }
+  },
+  {
+    "id": "plan-fact-shadow-outside-slice",
+    "request": {
+      "message": "покажи plan fact по сезону",
+      "workspaceContext": {
+        "route": "/consulting/dashboard",
+        "filters": {
+          "seasonId": "season-2026"
+        }
+      },
+      "legacyClassification": {
+        "targetRole": "economist",
+        "intent": "compute_plan_fact",
+        "toolName": "compute_plan_fact",
+        "confidence": 0.74,
+        "method": "regex",
+        "reason": "legacy:plan-fact"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": null,
+      "promotedPrimary": false,
+      "executionPath": "semantic_router_shadow",
+      "classificationIntent": "compute_plan_fact",
+      "classificationMethod": "semantic_router_shadow",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["compute_plan_fact"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "compute_plan_fact",
+          "payloadSubset": {
+            "scope": {
+              "seasonId": "season-2026"
+            }
+          }
+        }
+      ]
+    }
+  }
+]

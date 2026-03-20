@@ -1,0 +1,338 @@
+[
+  {
+    "id": "tm-read-created-registry",
+    "request": {
+      "message": "покажи все созданные техкарты",
+      "workspaceContext": {
+        "route": "/consulting/techmaps"
+      },
+      "legacyClassification": {
+        "targetRole": "agronomist",
+        "intent": "tech_map_draft",
+        "toolName": "generate_tech_map_draft",
+        "confidence": 0.72,
+        "method": "regex",
+        "reason": "legacy_read_create_collision"
+      },
+      "requestedToolCalls": [
+        {
+          "name": "generate_tech_map_draft",
+          "payload": {}
+        }
+      ],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "agro.techmaps.list-open-create",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "open_techmaps_registry",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "navigate",
+      "recommendedExecutionMode": "open_route",
+      "eligibleTools": [],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [],
+      "filtersSubset": {
+        "status": "created"
+      },
+      "mismatchKinds": [
+        "legacy_write_vs_semantic_read"
+      ]
+    }
+  },
+  {
+    "id": "tm-read-colloquial-where",
+    "request": {
+      "message": "где техкарты плиз",
+      "workspaceContext": {
+        "route": "/consulting/techmaps/active"
+      },
+      "legacyClassification": {
+        "targetRole": "agronomist",
+        "intent": "tech_map_draft",
+        "toolName": "generate_tech_map_draft",
+        "confidence": 0.66,
+        "method": "regex",
+        "reason": "legacy_read_create_collision"
+      },
+      "requestedToolCalls": [
+        {
+          "name": "generate_tech_map_draft",
+          "payload": {}
+        }
+      ],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "agro.techmaps.list-open-create",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "open_techmaps_registry",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "navigate",
+      "recommendedExecutionMode": "open_route",
+      "eligibleTools": [],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [],
+      "filtersSubset": {}
+    }
+  },
+  {
+    "id": "tm-read-active-list",
+    "request": {
+      "message": "выведи активные техкарты",
+      "workspaceContext": {
+        "route": "/consulting/techmaps"
+      },
+      "legacyClassification": {
+        "targetRole": "agronomist",
+        "intent": "tech_map_draft",
+        "toolName": "generate_tech_map_draft",
+        "confidence": 0.63,
+        "method": "regex",
+        "reason": "legacy_read_create_collision"
+      },
+      "requestedToolCalls": [
+        {
+          "name": "generate_tech_map_draft",
+          "payload": {}
+        }
+      ],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "agro.techmaps.list-open-create",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "open_techmaps_registry",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "navigate",
+      "recommendedExecutionMode": "open_route",
+      "eligibleTools": [],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [],
+      "filtersSubset": {
+        "status": "active"
+      }
+    }
+  },
+  {
+    "id": "tm-create-rapeseed-with-context",
+    "request": {
+      "message": "составь техкарту по озимому рапсу",
+      "workspaceContext": {
+        "route": "/consulting/techmaps",
+        "activeEntityRefs": [
+          {
+            "kind": "field",
+            "id": "field-1"
+          }
+        ],
+        "filters": {
+          "seasonId": "season-1"
+        }
+      },
+      "legacyClassification": {
+        "targetRole": "agronomist",
+        "intent": "tech_map_draft",
+        "toolName": "generate_tech_map_draft",
+        "confidence": 0.84,
+        "method": "regex",
+        "reason": "legacy_create"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "agro.techmaps.list-open-create",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "tech_map_draft",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": [
+        "generate_tech_map_draft"
+      ],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "generate_tech_map_draft",
+          "payloadSubset": {
+            "fieldRef": "field-1",
+            "seasonRef": "season-1",
+            "crop": "rapeseed"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "tm-create-sunflower-with-selected-field",
+    "request": {
+      "message": "сделай техкарту по подсолнечнику",
+      "workspaceContext": {
+        "route": "/consulting/techmaps",
+        "selectedRowSummary": {
+          "kind": "field",
+          "id": "field-22"
+        },
+        "filters": {
+          "seasonRef": "season-2026"
+        }
+      },
+      "legacyClassification": {
+        "targetRole": "agronomist",
+        "intent": "tech_map_draft",
+        "toolName": "generate_tech_map_draft",
+        "confidence": 0.84,
+        "method": "regex",
+        "reason": "legacy_create"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "agro.techmaps.list-open-create",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "tech_map_draft",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": [
+        "generate_tech_map_draft"
+      ],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "generate_tech_map_draft",
+          "payloadSubset": {
+            "fieldRef": "field-22",
+            "seasonRef": "season-2026",
+            "crop": "sunflower"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "tm-create-missing-season",
+    "request": {
+      "message": "создай техкарту по этому полю",
+      "workspaceContext": {
+        "route": "/consulting/techmaps",
+        "selectedRowSummary": {
+          "kind": "field",
+          "id": "field-77"
+        }
+      },
+      "legacyClassification": {
+        "targetRole": "agronomist",
+        "intent": "tech_map_draft",
+        "toolName": "generate_tech_map_draft",
+        "confidence": 0.81,
+        "method": "regex",
+        "reason": "legacy_create"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "agro.techmaps.list-open-create",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "tech_map_draft",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "clarify",
+      "recommendedExecutionMode": "ask_clarification",
+      "eligibleTools": [
+        "generate_tech_map_draft"
+      ],
+      "requiredContextMissing": [
+        "seasonRef"
+      ],
+      "requestedToolCalls": []
+    }
+  },
+  {
+    "id": "tm-create-missing-both",
+    "request": {
+      "message": "сгенерируй техкарту",
+      "workspaceContext": {
+        "route": "/consulting/techmaps"
+      },
+      "legacyClassification": {
+        "targetRole": "agronomist",
+        "intent": "tech_map_draft",
+        "toolName": "generate_tech_map_draft",
+        "confidence": 0.8,
+        "method": "regex",
+        "reason": "legacy_create"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "agro.techmaps.list-open-create",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "tech_map_draft",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "clarify",
+      "recommendedExecutionMode": "ask_clarification",
+      "eligibleTools": [
+        "generate_tech_map_draft"
+      ],
+      "requiredContextMissing": [
+        "fieldRef",
+        "seasonRef"
+      ],
+      "requestedToolCalls": []
+    }
+  },
+  {
+    "id": "tm-unmatched-query-stays-shadow-abstain",
+    "request": {
+      "message": "покажи контрагентов",
+      "workspaceContext": {
+        "route": "/consulting/techmaps"
+      },
+      "legacyClassification": {
+        "targetRole": "crm_agent",
+        "intent": "review_account_workspace",
+        "toolName": "get_crm_account_workspace",
+        "confidence": 0.62,
+        "method": "regex",
+        "reason": "legacy_crm_read"
+      },
+      "requestedToolCalls": [
+        {
+          "name": "get_crm_account_workspace",
+          "payload": {}
+        }
+      ],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "agro.techmaps.list-open-create",
+      "promotedPrimary": false,
+      "executionPath": "semantic_router_shadow",
+      "classificationIntent": "review_account_workspace",
+      "classificationMethod": "semantic_router_shadow",
+      "decisionType": "abstain",
+      "recommendedExecutionMode": "no_op",
+      "eligibleTools": [],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "get_crm_account_workspace"
+        }
+      ],
+      "mismatchKinds": [
+        "abstain_vs_execute"
+      ]
+    }
+  }
+]

@@ -7,7 +7,13 @@ export interface IntentClassification {
   intent: string | null;
   toolName: RaiToolName | null;
   confidence: number;
-  method: "regex" | "llm";
+  method:
+    | "regex"
+    | "llm"
+    | "tool_call_primary"
+    | "clarification_resume"
+    | "semantic_router_shadow"
+    | "semantic_router_primary";
   reason: string;
 }
 

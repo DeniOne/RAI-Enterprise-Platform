@@ -16,6 +16,8 @@ import { RuntimeGovernanceControlService } from "./runtime-governance-control.se
 import { RuntimeGovernanceDrilldownService } from "./runtime-governance-drilldown.service";
 import { AgentLifecycleReadModelService } from "./agent-lifecycle-read-model.service";
 import { AgentLifecycleControlService } from "./agent-lifecycle-control.service";
+import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
+import { RedisService } from "../../shared/redis/redis.service";
 
 class TestJwtAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
@@ -40,6 +42,8 @@ describe("ExplainabilityPanelController (HTTP)", () => {
   const explainabilityPanel = {
     getTruthfulnessDashboard: jest.fn(),
     getQueuePressure: jest.fn(),
+    getRoutingDivergence: jest.fn(),
+    captureRoutingCaseMemoryCandidate: jest.fn(),
     getTraceTimeline: jest.fn(),
     getTraceForensics: jest.fn(),
   };
@@ -78,6 +82,17 @@ describe("ExplainabilityPanelController (HTTP)", () => {
     setOverride: jest.fn(),
     clearOverride: jest.fn(),
   };
+  const idempotencyInterceptor = {
+    intercept: jest.fn((_: ExecutionContext, next: { handle: () => unknown }) =>
+      next.handle(),
+    ),
+  };
+  const redisService = {
+    get: jest.fn(),
+    del: jest.fn(),
+    setNX: jest.fn(),
+    set: jest.fn(),
+  };
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -110,12 +125,18 @@ describe("ExplainabilityPanelController (HTTP)", () => {
           provide: AgentLifecycleControlService,
           useValue: agentLifecycleControl,
         },
+        {
+          provide: RedisService,
+          useValue: redisService,
+        },
       ],
     })
       .overrideGuard(JwtAuthGuard)
       .useClass(TestJwtAuthGuard)
       .overrideGuard(RolesGuard)
       .useClass(TestRolesGuard)
+      .overrideInterceptor(IdempotencyInterceptor)
+      .useValue(idempotencyInterceptor)
       .compile();
 
     app = moduleRef.createNestApplication();
@@ -125,6 +146,79 @@ describe("ExplainabilityPanelController (HTTP)", () => {
 
   afterAll(async () => {
     await app.close();
+  });
+
+  it("отдаёт routing divergence по tenant-scoped endpoint", async () => {
+    explainabilityPanel.getRoutingDivergence.mockResolvedValue({
+      companyId: "company-a",
+      windowHours: 24,
+      totalEvents: 5,
+      mismatchedEvents: 2,
+      divergenceRatePct: 40,
+      semanticPrimaryCount: 1,
+      topClusters: [],
+      decisionBreakdown: [],
+      collisionMatrix: [],
+      agentBreakdown: [],
+      failureClusters: [],
+      caseMemoryCandidates: [],
+      recentMismatches: [],
+    });
+
+    const response = await request(app.getHttpServer())
+      .get("/api/rai/explainability/routing/divergence")
+      .query({ windowHours: 24, slice: "agro.techmaps.list-open-create" })
+      .expect(200);
+
+    expect(explainabilityPanel.getRoutingDivergence).toHaveBeenCalledWith({
+      companyId: "company-a",
+      windowHours: 24,
+      slice: "agro.techmaps.list-open-create",
+      decisionType: undefined,
+      targetRole: undefined,
+      onlyMismatches: false,
+    });
+    expect(response.body).toMatchObject({
+      companyId: "company-a",
+      totalEvents: 5,
+      mismatchedEvents: 2,
+    });
+  });
+
+  it("POST /api/rai/explainability/routing/case-memory-candidates/capture фиксирует candidate", async () => {
+    explainabilityPanel.captureRoutingCaseMemoryCandidate.mockResolvedValue({
+      status: "captured",
+      candidateKey:
+        "agro.techmaps.list-open-create::agronomist::navigate::legacy_write_vs_semantic_read::semantic-router-v1::semantic-router-prompt-v1::toolset",
+      auditLogId: "audit-1",
+      capturedAt: "2026-03-20T12:00:00.000Z",
+    });
+
+    const response = await request(app.getHttpServer())
+      .post("/api/rai/explainability/routing/case-memory-candidates/capture")
+      .set("Idempotency-Key", "routing-case-memory-candidate-capture:test")
+      .send({
+        key: "agro.techmaps.list-open-create::agronomist::navigate::legacy_write_vs_semantic_read::semantic-router-v1::semantic-router-prompt-v1::toolset",
+        windowHours: 24,
+        slice: "agro.techmaps.list-open-create",
+        targetRole: "agronomist",
+        note: "операторский захват",
+      })
+      .expect(201);
+
+    expect(explainabilityPanel.captureRoutingCaseMemoryCandidate).toHaveBeenCalledWith({
+      companyId: "company-a",
+      userId: "u-test",
+      key: "agro.techmaps.list-open-create::agronomist::navigate::legacy_write_vs_semantic_read::semantic-router-v1::semantic-router-prompt-v1::toolset",
+      windowHours: 24,
+      slice: "agro.techmaps.list-open-create",
+      targetRole: "agronomist",
+      note: "операторский захват",
+    });
+    expect(response.body).toMatchObject({
+      status: "captured",
+      auditLogId: "audit-1",
+    });
   });
 
   beforeEach(() => {

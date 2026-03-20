@@ -1,3 +1,99 @@
+[2026-03-20] Routing Learning Layer — controlled migration стартован
+- Принято решение не вводить отдельный routing-сервис и новый Prisma-store на первой волне.
+- Источник правды для routing telemetry: `AiAuditEntry.metadata.routingTelemetry`.
+- Основной migration pattern: `shadow-first`, затем selective primary cutover.
+- Первый production slice для primary-cutover: `agro.techmaps.list-open-create`.
+- Runtime enforcement на этой волне ограничен coarse capability gating; dynamic gating и case memory отложены.
+
+[2026-03-20] Techmaps routing eval gate включён
+- Для `SemanticRouterService` добавлен fixture-driven корпус `techmaps-routing-eval-corpus.json`.
+- Введён отдельный quality gate `pnpm gate:routing:techmaps`, который выполняет `semantic-router.eval.spec.ts`.
+- Gate добавлен в `.github/workflows/invariant-gates.yml` как hard-fail шаг, чтобы коллизии `read/open/create` ловились до релиза.
+
+[2026-03-20] Agent-level routing divergence drilldown включён
+- Endpoint `/api/rai/explainability/routing/divergence` расширен полем `agentBreakdown`.
+- Aggregation теперь группирует routing telemetry по `targetRole` и считает `divergenceRatePct`, `semanticPrimaryCount`, `decisionBreakdown`, `topMismatchKinds`.
+- `Control Tower` показывает самый шумный агентный контур и его mismatch-профиль без доступа к raw payload.
+
+[2026-03-20] Failure-cluster triage включён
+- Endpoint `/api/rai/explainability/routing/divergence` расширен полем `failureClusters`.
+- Read-model теперь группирует повторяющиеся mismatch-группы по `targetRole + decisionType + mismatchKinds` и считает `caseMemoryReadiness`.
+- `Control Tower` показывает повторяющиеся кластеры сбоев и их готовность к памяти кейсов, чтобы следующий шаг по `case memory` опирался на production-повторы.
+
+[2026-03-20] Versioned case memory candidates включены
+- Endpoint `/api/rai/explainability/routing/divergence` расширен полем `caseMemoryCandidates`.
+- Read-model теперь группирует version-aware кандидатов по `sliceId + targetRole + decisionType + mismatchKinds + routerVersion + promptVersion + toolsetVersion`.
+- Для каждого кандидата считаются `traceCount`, `firstSeenAt`, `lastSeenAt`, `ttlExpiresAt` и readiness; `Control Tower` показывает их без отдельной таблицы и отдельного ingestion-store.
+
+[2026-03-20] Routing case memory capture path включён
+- Добавлен operator endpoint `POST /api/rai/explainability/routing/case-memory-candidates/capture` с `Idempotency-Key` и `RolesGuard`.
+- Persisted capture path построен на append-only `AuditLog` action `ROUTING_CASE_MEMORY_CANDIDATE_CAPTURED`; отдельный Prisma-store по-прежнему не вводился.
+- Read-model `routing/divergence` теперь возвращает `captureStatus / capturedAt / captureAuditLogId`, а `Control Tower` даёт кнопку `зафиксировать` только для `ready_for_case_memory` кандидатов.
+
+[2026-03-20] Routing case memory retrieval и lifecycle включены
+- Добавлен `RoutingCaseMemoryService`, который читает captured cases из `AuditLog`, фильтрует их по `TTL`, считает relevance-score и активирует релевантные кейсы через action `ROUTING_CASE_MEMORY_CASE_ACTIVATED`.
+- `SemanticRouterService` теперь получает `retrievedCaseMemory[]` до `LLM refine` и может выполнить safe override только для low-risk read-only сценариев.
+- Explainability и `Control Tower` различают lifecycle `not_captured / captured / active`, поэтому память кейсов перестала быть пассивной аналитикой и стала runtime-входом для маршрутизации.
+
+[2026-03-20] Case memory gate ужесточён
+- `pnpm gate:routing:techmaps` теперь включает `semantic-router.eval.spec.ts`, `semantic-router.service.spec.ts` и `routing-case-memory.service.spec.ts`.
+- В gate добавлен negative write-guard: case memory не может перевести `abstain` в `write execute`, даже если similarity у captured case высокий.
+
+[2026-03-20] Второй bounded slice `agro.deviations.review` включён
+- `SemanticRouterService` получил отдельный `sliceId` для `deviations`; primary promotion включается только внутри `/consulting/deviations*`, а вне этого route-space `compute_deviations` остаётся в `shadow`.
+- Исправлен приоритет slice-resolver: явный `deviations`-контур теперь побеждает раньше общего `techmaps/field` сигнала, поэтому поле в контексте страницы отклонений больше не уводит routing в `agro.techmaps.list-open-create`.
+- `AgentExecutionAdapterService` теперь честно отдаёт `executionPath = semantic_router_primary` для agronomist-интентов, если они пришли из первичного semantic-routing.
+- Eval/gate расширены до уровня `agro-slices`: добавлен `deviations-routing-eval-corpus.json`, введён канонический `pnpm gate:routing:agro-slices`, старый `pnpm gate:routing:techmaps` сохранён как compatibility alias.
+
+[2026-03-20] Третий bounded slice `finance.plan-fact.read` включён
+- `SemanticRouterService` получил entity `plan_fact` и отдельный bounded slice `finance.plan-fact.read`.
+- Primary promotion для `compute_plan_fact` ограничен `yield/finance`-контуром; вне него semantic-router считает маршрут, но не перехватывает production-primary path.
+- `selectedRowSummary.kind = yield` теперь используется как источник `planId`, поэтому в `yield`-контуре `compute_plan_fact` может уходить в `execute`, а при пустом контексте — в честный `clarify`.
+- Канонический gate переименован в `pnpm gate:routing:primary-slices`; старые `pnpm gate:routing:agro-slices` и `pnpm gate:routing:techmaps` сохранены как совместимые алиасы.
+
+[2026-03-20] Четвёртый bounded finance-wave `scenario + risk` включён
+- `SemanticRouterService` получил ещё два finance-slice: `finance.scenario.analysis` и `finance.risk.analysis`.
+- `RoutingEntity` расширен значениями `scenario` и `risk_assessment`; LLM-prompt и case-memory intent mapping синхронизированы с новыми сущностями.
+- Primary promotion для `simulate_scenario` и `compute_risk_assessment` ограничен `yield/finance`-контуром, а вне него сохранён `shadow` по явным finance-сигналам.
+- `AgentExecutionAdapterService` теперь явно резолвит economist-intent из `semanticRouting.routeDecision.eligibleTools/sliceId`, поэтому primary semantic-routing больше не деградирует обратно в `compute_plan_fact`.
+- Общий gate `pnpm gate:routing:primary-slices` подтверждает все текущие bounded slice: `techmaps`, `deviations`, `plan-fact`, `scenario`, `risk`.
+
+[2026-03-20] Пятый bounded slice `crm.account.workspace-review` включён
+- `SemanticRouterService` получил новый bounded read-only slice `crm.account.workspace-review` для `review_account_workspace`.
+- `RoutingEntity` расширен значением `account`; primary promotion для CRM-карточки ограничен route-space `/parties | /consulting/crm | /crm`.
+- Закрыт runtime-gap между chat-routing и CRM runtime: `CrmAgent` и `AgentExecutionAdapterService` теперь реально поддерживают `query` для `review_account_workspace`, а не только `accountId`.
+- `RoutingCaseMemoryService.inferSliceId()` расширен CRM-slice логикой, поэтому будущая case-memory retrieval не смешает карточку контрагента с finance/agro маршрутами.
+- Общий gate `pnpm gate:routing:primary-slices` теперь подтверждает шесть bounded slice, включая `crm-workspace`.
+
+[2026-03-20] Шестой bounded slice `contracts.registry-review` включён
+- `SemanticRouterService` получил новый bounded read-only slice `contracts.registry-review` для `list_commerce_contracts` и `review_commerce_contract`; primary promotion ограничен route-space `/commerce/contracts`.
+- `ContractsAgentInput`, `GetCommerceContractPayload` и `getCommerceContractSchema` расширены read-only полем `query`; review договора теперь возможен по `contractId` или `query`.
+- `ContractsToolsRegistry` реализует safe lookup по `contractId / number / quoted query / party legalName`, не расширяя write-surface и не вводя новый store.
+- `AgentExecutionAdapterService` теперь резолвит contracts-intent из `semanticRouting.routeDecision.eligibleTools` и прокидывает `query` в `ContractsAgent`.
+- `detectContractsIntent()` больше не валит `покажи договор DOG-001` в `list_commerce_contracts`.
+- Одновременно закрыт междоменный конфликт `CRM vs Contracts`: generic `карточка` не может активировать CRM read-only контур поверх `/commerce/contracts`.
+- `contracts-routing-eval-corpus.json` добавлен в общий `pnpm gate:routing:primary-slices`; gate подтверждает уже семь bounded slice.
+
+[2026-03-20] Седьмой bounded slice `knowledge.base.query` включён
+- `SemanticRouterService` получил новый bounded read-only slice `knowledge.base.query`; primary promotion ограничен route-space `/knowledge*`.
+- Для knowledge-контуров принят route-priority подход: внутри `/knowledge/base` запросы по техкартам и другим доменам трактуются как `QueryKnowledge`, а не как cross-domain execution.
+- Вне `/knowledge*` semantic-router не перехватывает knowledge-запросы в `primary`; сохраняется безопасный `shadow`, чтобы knowledge не расползался по междоменному routing.
+- `collectToolIdentifiers()`, `buildDialogState()`, `resolveIntentFromCaseMemory()` и `RoutingCaseMemoryService.inferSliceId()` синхронизированы с новым slice.
+- `knowledge-routing-eval-corpus.json` добавлен в общий `pnpm gate:routing:primary-slices`; gate подтверждает уже восемь bounded slice.
+
+[2026-03-20] Восьмой bounded slice `crm.counterparty.lookup` включён
+- `SemanticRouterService` получил новый bounded read-only slice `crm.counterparty.lookup` для `lookup_counterparty_by_inn`; primary promotion ограничен CRM route-space `/parties | /consulting/crm | /crm`.
+- Закрыт баг смешения с CRM workspace-review: фразы `по ИНН` без цифр больше не утекают в `crm.account.workspace-review`, а идут в `crm.counterparty.lookup` с `clarify` по `inn`.
+- `execution-adapter-heuristics.ts`, `AgentExecutionAdapterService` и `CrmAgent` синхронизированы под новый intent/tool (`LookupCounterpartyByInn`) с приоритетом semantic routing и fallback-добором `inn` из текста.
+- Добавлен eval-corpus `crm-inn-lookup-routing-eval-corpus.json`; `pnpm gate:routing:primary-slices` подтверждает новый slice вместе с существующими девятью bounded read-only маршрутами.
+
+[2026-03-20] Девятый bounded slice `contracts.ar-balance.review` включён
+- `SemanticRouterService` получил новый bounded read-only slice `contracts.ar-balance.review` для `review_ar_balance`; primary promotion ограничен route-space `/commerce/contracts`.
+- AR-контур выделен отдельно от `contracts.registry-review`: запросы по дебиторке больше не смешиваются с `list/review_commerce_contract`.
+- Для нового slice включён deterministic `execute|clarify`: при наличии `invoiceId` идёт `GetArBalance`, при отсутствии — `clarify` с `requiredContextMissing = [invoiceId]`.
+- `RoutingCaseMemoryService.inferSliceId()` и `AgentExecutionAdapterService.resolveContractsIntent()` синхронизированы под `contracts.ar-balance.review` и semantic-priority route.
+- Добавлен eval-corpus `contracts-ar-balance-routing-eval-corpus.json`; `pnpm gate:routing:primary-slices` подтверждает уже десять bounded read-only slice.
+
 [2026-03-15 08:40Z] Git Pull / Manual Repo Sync
 - Запуск `git pull` для синхронизации локальной копии с `origin/main`.
 

@@ -48,6 +48,12 @@ describe("detectContractsIntent", () => {
     );
   });
 
+  it("различает review по номеру договора и не валится в list", () => {
+    expect(detectContractsIntent([], "покажи договор DOG-001")).toBe(
+      "review_commerce_contract",
+    );
+  });
+
   it("сохраняет tool_call приоритет над эвристикой", () => {
     expect(
       detectContractsIntent(
@@ -69,5 +75,11 @@ describe("detectCrmIntent", () => {
     expect(detectCrmIntent([], "добавь контакт Иван Петров")).toBe(
       "create_crm_contact",
     );
+  });
+
+  it("выбирает lookup_counterparty_by_inn при явном запросе проверки по ИНН", () => {
+    expect(
+      detectCrmIntent([], "проверь контрагента по ИНН 2610000615"),
+    ).toBe("lookup_counterparty_by_inn");
   });
 });

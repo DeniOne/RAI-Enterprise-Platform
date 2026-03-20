@@ -1,5 +1,28 @@
 # Task: RAI_EP
 
+## Routing Learning Layer — Foundation + Techmaps Cutover (2026-03-20) 🚧
+- [x] Введён канонический semantic routing contract: `SemanticIntent`, `RouteDecision`, `RoutingTelemetryEvent`, versioning и redaction.
+- [x] `SemanticRouterService` встроен в `SupervisorAgent` как `shadow-first` слой с persisted `routingTelemetry` в `AiAuditEntry.metadata`.
+- [x] Для slice `agro / techmaps / list-open-create` включён `semantic_router_primary` с coarse capability gating.
+- [x] Explainability расширен новым endpoint `/api/rai/explainability/routing/divergence`.
+- [x] В `Control Tower` добавлена панель расхождений legacy и semantic routing.
+- [x] Memory-bank синхронизирован как часть `Definition of Done`.
+- [x] Собран полноценный CI eval harness для `techmaps` routing-корпуса.
+- [x] Explainability расширен до agent-level divergence drilldown по `targetRole / decisionType / mismatchKinds`.
+- [x] Расширен divergence read-model до `failureClusters` и `caseMemoryReadiness` по повторяющимся mismatch-группам.
+- [x] Введены `versioned case memory candidates` с `routerVersion / promptVersion / toolsetVersion / TTL` без нового Prisma-store.
+- [x] Введён controlled capture/persistence path для `caseMemoryCandidates` через `AuditLog` + операторский endpoint + `Control Tower` action.
+- [x] Capture связан с runtime retrieval: `SemanticRouterService` читает активные кейсы из `AuditLog`, пишет lifecycle `captured -> active` и использует low-risk case memory для routing.
+- [x] `case_memory_safe_override` и negative write-guard включены в официальный `gate:routing:techmaps`.
+- [x] Подготовить и включить следующий controlled migration slice после `techmaps`: `agro.deviations.review`.
+- [x] Подготовить и включить третий controlled migration slice: `finance.plan-fact.read`.
+- [x] Подготовить четвёртый controlled migration slice после `techmaps`, `deviations` и `plan-fact`: `finance.scenario.analysis` + `finance.risk.analysis`.
+- [x] Подготовить следующий controlled migration slice вне текущего finance-контура и повторить паттерн `slice -> eval -> gate -> primary`: `crm.account.workspace-review`.
+- [x] Подготовить следующий bounded read-only slice вне `agro/finance/crm` и повторить тот же rollout-паттерн: `contracts.registry-review`.
+- [x] Подготовить следующий bounded read-only slice после `contracts` и повторить тот же rollout-паттерн на ещё одном не-write контуре: `knowledge.base.query`.
+- [x] Подготовить следующий bounded read-only slice после `knowledge` и повторить тот же rollout-паттерн на следующем безопасном не-write контуре: `crm.counterparty.lookup`.
+- [x] Подготовить следующий bounded read-only slice после `crm.counterparty.lookup` и повторить тот же rollout-паттерн на следующем безопасном не-write контуре: `contracts.ar-balance.review`.
+
 ## Git Sync & Documentation Update (2026-03-16) ✅
 - [x] Выполнен пуш всех накопленных изменений в `main`.
 - [x] Актуализированы планы по Front Office и Agent Runtime.

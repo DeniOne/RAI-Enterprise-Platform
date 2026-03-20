@@ -11,6 +11,7 @@ import {
   TokenUsage,
 } from "../../../shared/rai-chat/rai-tools.types";
 import { RuntimeGovernanceOverrides } from "../../../shared/rai-chat/runtime-governance-policy.types";
+import { SemanticRoutingContext } from "../../../shared/rai-chat/semantic-routing.types";
 
 export type AgentKind = "domain_advisor" | "worker_hybrid" | "personal_delegated";
 export type AgentAutonomyMode = "advisory" | "hybrid" | "autonomous";
@@ -129,6 +130,7 @@ export interface AgentExecutionRequest {
   memoryContext: AgentMemoryContext;
   requestedTools?: RaiToolCallDto[];
   requestedConnectors?: string[];
+  semanticRouting?: SemanticRoutingContext;
   traceId: string;
   threadId: string;
 }
@@ -152,7 +154,10 @@ export interface AgentExecutionAuditPayload {
 export interface AgentExecutionResult {
   role: string;
   status: "COMPLETED" | "FAILED" | "NEEDS_MORE_DATA" | "RATE_LIMITED";
-  executionPath?: "tool_call_primary" | "heuristic_fallback";
+  executionPath?:
+    | "tool_call_primary"
+    | "heuristic_fallback"
+    | "semantic_router_primary";
   text: string;
   structuredOutput: Record<string, unknown>;
   structuredOutputs?: Record<string, unknown>[];

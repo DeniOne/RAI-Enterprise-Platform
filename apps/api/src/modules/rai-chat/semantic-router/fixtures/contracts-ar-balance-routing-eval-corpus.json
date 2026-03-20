@@ -1,0 +1,112 @@
+[
+  {
+    "id": "contracts-ar-balance-primary-with-selected-invoice",
+    "request": {
+      "message": "покажи дебиторский остаток по счету",
+      "workspaceContext": {
+        "route": "/commerce/contracts",
+        "selectedRowSummary": {
+          "kind": "invoice",
+          "id": "invoice-77",
+          "title": "Счёт INV-77"
+        }
+      },
+      "legacyClassification": {
+        "targetRole": "contracts_agent",
+        "intent": "list_commerce_contracts",
+        "toolName": "list_commerce_contracts",
+        "confidence": 0.66,
+        "method": "regex",
+        "reason": "legacy:contracts-list"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "contracts.ar-balance.review",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "review_ar_balance",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["get_ar_balance"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "get_ar_balance",
+          "payloadSubset": {
+            "invoiceId": "invoice-77"
+          }
+        }
+      ],
+      "filtersSubset": {
+        "invoiceId": "invoice-77"
+      },
+      "mismatchKinds": ["tool_name"]
+    }
+  },
+  {
+    "id": "contracts-ar-balance-primary-clarify-without-invoice",
+    "request": {
+      "message": "покажи дебиторский остаток",
+      "workspaceContext": {
+        "route": "/commerce/contracts"
+      },
+      "legacyClassification": {
+        "targetRole": "contracts_agent",
+        "intent": "review_ar_balance",
+        "toolName": "get_ar_balance",
+        "confidence": 0.64,
+        "method": "regex",
+        "reason": "legacy:ar-balance"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "contracts.ar-balance.review",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "review_ar_balance",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "clarify",
+      "recommendedExecutionMode": "ask_clarification",
+      "eligibleTools": ["get_ar_balance"],
+      "requiredContextMissing": ["invoiceId"],
+      "requestedToolCalls": []
+    }
+  },
+  {
+    "id": "contracts-ar-balance-shadow-outside-bounded-slice",
+    "request": {
+      "message": "покажи дебиторский остаток по счету invoice-77",
+      "workspaceContext": {
+        "route": "/consulting/dashboard"
+      },
+      "legacyClassification": {
+        "targetRole": "contracts_agent",
+        "intent": "review_ar_balance",
+        "toolName": "get_ar_balance",
+        "confidence": 0.62,
+        "method": "regex",
+        "reason": "legacy:ar-balance"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": null,
+      "promotedPrimary": false,
+      "executionPath": "semantic_router_shadow",
+      "classificationIntent": "review_ar_balance",
+      "classificationMethod": "semantic_router_shadow",
+      "decisionType": "abstain",
+      "recommendedExecutionMode": "no_op",
+      "eligibleTools": [],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [],
+      "mismatchKinds": ["abstain_vs_execute"]
+    }
+  }
+]

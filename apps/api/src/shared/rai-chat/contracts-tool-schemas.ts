@@ -54,8 +54,9 @@ export const listCommerceContractsSchema: ObjectSchema<ListCommerceContractsPayl
 
 export const getCommerceContractSchema: ObjectSchema<GetCommerceContractPayload> =
   Joi.object<GetCommerceContractPayload>({
-    contractId: Joi.string().trim().required(),
-  });
+    contractId: Joi.string().trim().optional(),
+    query: Joi.string().trim().min(2).max(256).optional(),
+  }).or("contractId", "query");
 
 export const createCommerceObligationSchema: ObjectSchema<CreateCommerceObligationPayload> =
   Joi.object<CreateCommerceObligationPayload>({

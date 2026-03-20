@@ -68,6 +68,55 @@ describe("CrmAgent", () => {
     );
   });
 
+  it("lookup_counterparty_by_inn вызывает lookup tool и возвращает COMPLETED", async () => {
+    (crmToolsRegistryMock.execute as jest.Mock).mockResolvedValue({
+      found: true,
+      source: "DADATA",
+      counterparty: {
+        inn: "2610000615",
+        legalName: "ООО Ромашка",
+      },
+    });
+
+    const result = await agent.run({
+      companyId: "company-1",
+      traceId: "trace-lookup-1",
+      userId: "user-1",
+      userConfirmed: true,
+      intent: "lookup_counterparty_by_inn",
+      inn: "2610000615",
+    });
+
+    expect(result.status).toBe("COMPLETED");
+    expect(result.toolCallsCount).toBe(1);
+    expect(crmToolsRegistryMock.execute).toHaveBeenCalledWith(
+      "lookup_counterparty_by_inn",
+      {
+        inn: "2610000615",
+        jurisdictionCode: undefined,
+        partyType: undefined,
+      },
+      {
+        companyId: "company-1",
+        traceId: "trace-lookup-1",
+        userId: "user-1",
+        userConfirmed: true,
+        userRole: undefined,
+      },
+    );
+  });
+
+  it("lookup_counterparty_by_inn без inn возвращает NEEDS_MORE_DATA", async () => {
+    const result = await agent.run({
+      companyId: "company-1",
+      traceId: "trace-lookup-2",
+      intent: "lookup_counterparty_by_inn",
+    });
+
+    expect(result.status).toBe("NEEDS_MORE_DATA");
+    expect(result.missingContext).toContain("inn");
+  });
+
   it("create_counterparty_relation без обязательного контекста возвращает NEEDS_MORE_DATA", async () => {
     const result = await agent.run({
       companyId: "company-1",
@@ -130,5 +179,41 @@ describe("CrmAgent", () => {
 
     expect(result.status).toBe("NEEDS_MORE_DATA");
     expect(result.missingContext).toContain("obligationId");
+  });
+
+  it("review_account_workspace допускает query без accountId", async () => {
+    (crmToolsRegistryMock.execute as jest.Mock).mockResolvedValue({
+      account: { id: "acc-77", name: "ООО СЫСОИ" },
+      contacts: [],
+      interactions: [],
+      obligations: [],
+      risks: [],
+      tasks: [],
+      documents: [],
+      fields: [],
+      legalEntities: [],
+    });
+
+    const result = await agent.run({
+      companyId: "company-1",
+      traceId: "trace-5",
+      intent: "review_account_workspace",
+      query: "Сысои",
+    });
+
+    expect(result.status).toBe("COMPLETED");
+    expect(crmToolsRegistryMock.execute).toHaveBeenCalledWith(
+      "get_crm_account_workspace",
+      {
+        query: "Сысои",
+      },
+      {
+        companyId: "company-1",
+        traceId: "trace-5",
+        userId: undefined,
+        userConfirmed: undefined,
+        userRole: undefined,
+      },
+    );
   });
 });

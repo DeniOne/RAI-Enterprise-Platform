@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import {
+  LookupCounterpartyByInnResult,
   CreateCounterpartyRelationResult,
   CreateCrmAccountResult,
   CreateCrmContactResult,
@@ -27,6 +28,7 @@ import {
 } from "../agent-platform/agent-platform.types";
 
 export type CrmAgentIntent =
+  | "lookup_counterparty_by_inn"
   | "register_counterparty"
   | "create_counterparty_relation"
   | "create_crm_account"
@@ -59,6 +61,7 @@ export interface CrmAgentInput {
   validFrom?: string;
   validTo?: string;
   accountId?: string;
+  query?: string;
   accountPayload?: {
     name?: string;
     inn?: string;
@@ -116,6 +119,7 @@ export interface CrmAgentResult {
 }
 
 const INTENT_TOOL: Record<CrmAgentIntent, RaiToolName> = {
+  lookup_counterparty_by_inn: RaiToolName.LookupCounterpartyByInn,
   register_counterparty: RaiToolName.RegisterCounterparty,
   create_counterparty_relation: RaiToolName.CreateCounterpartyRelation,
   create_crm_account: RaiToolName.CreateCrmAccount,
@@ -141,6 +145,17 @@ function explainLookupRegistration(data: RegisterCounterpartyResult): string {
     return `Контрагент уже зарегистрирован: ${data.legalName} (${data.partyId}). Дубликат не создан.`;
   }
   return `Контрагент ${data.legalName} зарегистрирован в реестре. ИНН: ${data.inn ?? "не указан"}, карточка: ${data.partyId}.`;
+}
+
+function explainLookupByInn(data: LookupCounterpartyByInnResult): string {
+  if (data.status === "NOT_FOUND") {
+    return "Контрагент по этому ИНН не найден в источниках и реестре.";
+  }
+  const legalName = data.result?.legalName ?? data.existingPartyName ?? "контрагент";
+  if (data.existingPartyId) {
+    return `Контрагент найден: ${legalName}. Уже есть в реестре: ${data.existingPartyId}.`;
+  }
+  return `Контрагент найден: ${legalName}. Можно зарегистрировать его в реестре.`;
 }
 
 function explainRelation(data: CreateCounterpartyRelationResult): string {
@@ -277,6 +292,8 @@ export class CrmAgent {
 
   private resolveMissingContext(input: CrmAgentInput): string[] {
     switch (input.intent) {
+      case "lookup_counterparty_by_inn":
+        return input.inn ? [] : ["inn"];
       case "register_counterparty":
         return input.inn ? [] : ["inn"];
       case "create_counterparty_relation": {
@@ -314,7 +331,15 @@ export class CrmAgent {
       case "update_account_profile":
       case "log_crm_interaction": {
         const missing: string[] = [];
-        if (!input.accountId) missing.push("accountId");
+        if (
+          input.intent === "review_account_workspace" &&
+          !input.accountId &&
+          !input.query
+        ) {
+          missing.push("accountId");
+        } else if (input.intent !== "review_account_workspace" && !input.accountId) {
+          missing.push("accountId");
+        }
         if (input.intent === "log_crm_interaction" && !input.interactionPayload?.summary) {
           missing.push("interactionSummary");
         }
@@ -363,6 +388,16 @@ export class CrmAgent {
     actorContext: RaiToolActorContext,
   ) {
     switch (toolName) {
+      case RaiToolName.LookupCounterpartyByInn:
+        return this.crmToolsRegistry.execute(
+          toolName,
+          {
+            inn: input.inn!,
+            jurisdictionCode: input.jurisdictionCode,
+            partyType: input.partyType,
+          },
+          actorContext,
+        );
       case RaiToolName.RegisterCounterparty:
         return this.crmToolsRegistry.execute(
           toolName,
@@ -400,7 +435,10 @@ export class CrmAgent {
       case RaiToolName.GetCrmAccountWorkspace:
         return this.crmToolsRegistry.execute(
           toolName,
-          { accountId: input.accountId! },
+          {
+            ...(input.accountId ? { accountId: input.accountId } : {}),
+            ...(input.query ? { query: input.query } : {}),
+          },
           actorContext,
         );
       case RaiToolName.UpdateCrmAccount:
@@ -555,6 +593,8 @@ export class CrmAgent {
 
   private buildFallbackExplain(intent: CrmAgentIntent, data: unknown): string {
     switch (intent) {
+      case "lookup_counterparty_by_inn":
+        return explainLookupByInn(data as LookupCounterpartyByInnResult);
       case "register_counterparty":
         return explainLookupRegistration(data as RegisterCounterpartyResult);
       case "create_counterparty_relation":
@@ -594,7 +634,9 @@ export class CrmAgent {
     data: unknown,
   ): EvidenceReference[] {
     const claim =
-      intent === "register_counterparty"
+      intent === "lookup_counterparty_by_inn"
+        ? `Поиск контрагента по ИНН подтвержден результатом ${toolName}.`
+      : intent === "register_counterparty"
         ? `Регистрация контрагента подтверждена результатом ${toolName}.`
         : intent === "create_counterparty_relation"
           ? `Связь контрагентов подтверждена результатом ${toolName}.`

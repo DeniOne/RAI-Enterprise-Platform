@@ -378,7 +378,8 @@ export interface ListCommerceContractsPayload {
 }
 
 export interface GetCommerceContractPayload {
-  contractId: string;
+  contractId?: string;
+  query?: string;
 }
 
 export interface CreateCommerceObligationPayload {

@@ -1,0 +1,161 @@
+[
+  {
+    "id": "crm-workspace-primary-with-selected-party",
+    "request": {
+      "message": "открой карточку контрагента",
+      "workspaceContext": {
+        "route": "/parties",
+        "selectedRowSummary": {
+          "kind": "party",
+          "id": "party-77",
+          "title": "ООО СЫСОИ"
+        }
+      },
+      "legacyClassification": {
+        "targetRole": "crm_agent",
+        "intent": "review_account_workspace",
+        "toolName": "get_crm_account_workspace",
+        "confidence": 0.68,
+        "method": "regex",
+        "reason": "legacy:crm-workspace"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "crm.account.workspace-review",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "review_account_workspace",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["get_crm_account_workspace"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "get_crm_account_workspace",
+          "payloadSubset": {
+            "accountId": "party-77"
+          }
+        }
+      ],
+      "filtersSubset": {
+        "accountId": "party-77"
+      }
+    }
+  },
+  {
+    "id": "crm-workspace-primary-with-director-question",
+    "request": {
+      "message": "как зовут директора Сысои",
+      "workspaceContext": {
+        "route": "/parties"
+      },
+      "legacyClassification": {
+        "targetRole": "crm_agent",
+        "intent": "review_account_workspace",
+        "toolName": "get_crm_account_workspace",
+        "confidence": 0.67,
+        "method": "regex",
+        "reason": "legacy:crm-workspace"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "crm.account.workspace-review",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "review_account_workspace",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["get_crm_account_workspace"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "get_crm_account_workspace",
+          "payloadSubset": {
+            "query": "Сысои"
+          }
+        }
+      ],
+      "filtersSubset": {
+        "query": "Сысои"
+      }
+    }
+  },
+  {
+    "id": "crm-workspace-shadow-outside-bounded-slice",
+    "request": {
+      "message": "как зовут директора Сысои",
+      "workspaceContext": {
+        "route": "/consulting/dashboard"
+      },
+      "legacyClassification": {
+        "targetRole": "crm_agent",
+        "intent": "review_account_workspace",
+        "toolName": "get_crm_account_workspace",
+        "confidence": 0.66,
+        "method": "regex",
+        "reason": "legacy:crm-workspace"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": null,
+      "promotedPrimary": false,
+      "executionPath": "semantic_router_shadow",
+      "classificationIntent": "review_account_workspace",
+      "classificationMethod": "semantic_router_shadow",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["get_crm_account_workspace"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "get_crm_account_workspace",
+          "payloadSubset": {
+            "query": "Сысои"
+          }
+        }
+      ],
+      "filtersSubset": {
+        "query": "Сысои"
+      }
+    }
+  },
+  {
+    "id": "crm-workspace-primary-clarify-generic-card-request",
+    "request": {
+      "message": "покажи карточку",
+      "workspaceContext": {
+        "route": "/parties"
+      },
+      "legacyClassification": {
+        "targetRole": "crm_agent",
+        "intent": "review_account_workspace",
+        "toolName": "get_crm_account_workspace",
+        "confidence": 0.62,
+        "method": "regex",
+        "reason": "legacy:crm-workspace"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "crm.account.workspace-review",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "review_account_workspace",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "clarify",
+      "recommendedExecutionMode": "ask_clarification",
+      "eligibleTools": ["get_crm_account_workspace"],
+      "requiredContextMissing": ["accountId"],
+      "requestedToolCalls": []
+    }
+  }
+]

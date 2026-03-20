@@ -49,6 +49,7 @@ import { RuntimeGovernanceControlService } from "./runtime/runtime-governance-co
 import { RuntimeGovernanceEventService } from "./runtime-governance/runtime-governance-event.service";
 import { RuntimeGovernanceFeatureFlagsService } from "./runtime-governance/runtime-governance-feature-flags.service";
 import { RuntimeGovernancePolicyService } from "./runtime-governance/runtime-governance-policy.service";
+import { SemanticRouterService } from "./semantic-router/semantic-router.service";
 import {
   RAI_CHAT_WIDGETS_SCHEMA_VERSION,
   RaiChatWidgetType,
@@ -202,6 +203,93 @@ describe("SupervisorAgent", () => {
       emergencyKillSwitch: false,
     }),
   };
+  const semanticRouterMock = {
+    evaluate: jest.fn().mockImplementation(async (input: any) => ({
+      semanticIntent: {
+        domain: "unknown",
+        entity: "unknown",
+        action: "unknown",
+        interactionMode: "unknown",
+        mutationRisk: "unknown",
+        filters: {},
+        requiredContext: [],
+        focusObject: null,
+        dialogState: { activeFlow: null, pendingClarificationKeys: [], lastUserAction: null },
+        resolvability: "missing",
+        ambiguityType: "no_matching_route",
+        confidenceBand: "low",
+        reason: "mock",
+      },
+      routeDecision: {
+        decisionType: "abstain",
+        recommendedExecutionMode: "no_op",
+        eligibleTools: [],
+        eligibleFlows: [],
+        requiredContextMissing: [],
+        policyChecksRequired: [],
+        needsConfirmation: false,
+        needsClarification: true,
+        abstainReason: "mock",
+        policyBlockReason: null,
+      },
+      candidateRoutes: [],
+      divergence: {
+        isMismatch: false,
+        mismatchKinds: [],
+        summary: "match",
+        legacyRouteKey: "legacy",
+        semanticRouteKey: "semantic",
+      },
+      versionInfo: {
+        routerVersion: "semantic-router-v1",
+        promptVersion: "semantic-router-prompt-v1",
+        toolsetVersion: "toolset",
+        workspaceStateDigest: "digest",
+      },
+      latencyMs: 5,
+      sliceId: null,
+      promotedPrimary: false,
+      executionPath: "semantic_router_shadow",
+      requestedToolCalls: input.requestedToolCalls ?? [],
+      classification: input.legacyClassification,
+      routingContext: {
+        source: "shadow",
+        promotedPrimary: false,
+        enforceCapabilityGating: false,
+        sliceId: null,
+        semanticIntent: {
+          domain: "unknown",
+          entity: "unknown",
+          action: "unknown",
+          interactionMode: "unknown",
+          mutationRisk: "unknown",
+          filters: {},
+          requiredContext: [],
+          focusObject: null,
+          dialogState: { activeFlow: null, pendingClarificationKeys: [], lastUserAction: null },
+          resolvability: "missing",
+          ambiguityType: "no_matching_route",
+          confidenceBand: "low",
+          reason: "mock",
+        },
+        routeDecision: {
+          decisionType: "abstain",
+          recommendedExecutionMode: "no_op",
+          eligibleTools: [],
+          eligibleFlows: [],
+          requiredContextMissing: [],
+          policyChecksRequired: [],
+          needsConfirmation: false,
+          needsClarification: true,
+          abstainReason: "mock",
+          policyBlockReason: null,
+        },
+        candidateRoutes: [],
+      },
+      llmUsed: false,
+      llmError: null,
+    })),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -258,6 +346,7 @@ describe("SupervisorAgent", () => {
         { provide: IncidentOpsService, useValue: incidentOpsServiceMock },
         { provide: BudgetControllerService, useValue: budgetControllerServiceMock },
         { provide: OpenRouterGatewayService, useValue: openRouterGatewayMock },
+        { provide: SemanticRouterService, useValue: semanticRouterMock },
         { provide: AgentPromptAssemblyService, useValue: agentPromptAssemblyMock },
         { provide: TraceSummaryService, useValue: { record: jest.fn().mockResolvedValue(undefined), updateQuality: jest.fn().mockResolvedValue(undefined) } },
         { provide: AutonomyPolicyService, useValue: { getCompanyAutonomyLevel: jest.fn().mockResolvedValue("AUTONOMOUS") } },
@@ -1304,6 +1393,7 @@ describe("SupervisorAgent", () => {
           { provide: IncidentOpsService, useValue: incidentOpsServiceMock },
           { provide: BudgetControllerService, useValue: budgetControllerServiceMock },
           { provide: OpenRouterGatewayService, useValue: openRouterGatewayMock },
+          { provide: SemanticRouterService, useValue: semanticRouterMock },
           { provide: AgentPromptAssemblyService, useValue: agentPromptAssemblyMock },
           { provide: TraceSummaryService, useValue: overrides?.traceSummary ?? traceSummaryMock },
           { provide: AutonomyPolicyService, useValue: { getCompanyAutonomyLevel: jest.fn().mockResolvedValue("AUTONOMOUS") } },

@@ -28,6 +28,12 @@ import { QueuePressureResponseDto } from "./dto/queue-pressure.dto";
 import { TraceForensicsResponseDto } from "./dto/trace-forensics.dto";
 import { TraceTopologyResponseDto } from "./dto/trace-topology.dto";
 import { TruthfulnessDashboardResponseDto } from "./dto/truthfulness-dashboard.dto";
+import {
+  CaptureRoutingCaseMemoryCandidateDtoSchema,
+  RoutingDivergenceQueryDto,
+  RoutingCaseMemoryCandidateCaptureResponseDto,
+  RoutingDivergenceResponseDto,
+} from "./dto/routing-divergence.dto";
 import { RuntimeGovernanceSummaryDto } from "./dto/runtime-governance-summary.dto";
 import { RuntimeGovernanceAgentDto } from "./dto/runtime-governance-agent.dto";
 import { RuntimeGovernanceReadModelService } from "./runtime-governance-read-model.service";
@@ -141,6 +147,62 @@ export class ExplainabilityPanelController {
       throw new BadRequestException("Invalid timeWindowMs");
     }
     return this.explainabilityPanel.getQueuePressure(companyId, windowMs);
+  }
+
+  @Get("routing/divergence")
+  async getRoutingDivergence(
+    @Query() query: RoutingDivergenceQueryDto,
+  ): Promise<RoutingDivergenceResponseDto> {
+    const companyId = this.tenantContext.getCompanyId();
+    if (!companyId) {
+      throw new BadRequestException("Security Context: companyId is missing");
+    }
+    const windowHours =
+      query.windowHours !== undefined ? Number(query.windowHours) : 24;
+    if (!Number.isFinite(windowHours) || windowHours <= 0) {
+      throw new BadRequestException("Invalid windowHours");
+    }
+    const onlyMismatches =
+      query.onlyMismatches === true ||
+      (typeof query.onlyMismatches === "string" &&
+        query.onlyMismatches === "true");
+    return this.explainabilityPanel.getRoutingDivergence({
+      companyId,
+      windowHours,
+      slice: query.slice,
+      decisionType: query.decisionType,
+      targetRole: query.targetRole,
+      onlyMismatches,
+    });
+  }
+
+  @Post("routing/case-memory-candidates/capture")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.CEO, UserRole.CLIENT_ADMIN)
+  @UseInterceptors(IdempotencyInterceptor)
+  async captureRoutingCaseMemoryCandidate(
+    @Body() body: unknown,
+    @CurrentUser() user: { userId?: string; id?: string },
+  ): Promise<RoutingCaseMemoryCandidateCaptureResponseDto> {
+    const companyId = this.tenantContext.getCompanyId();
+    if (!companyId) {
+      throw new BadRequestException("Security Context: companyId is missing");
+    }
+
+    const parsed = CaptureRoutingCaseMemoryCandidateDtoSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten().fieldErrors);
+    }
+
+    return this.explainabilityPanel.captureRoutingCaseMemoryCandidate({
+      companyId,
+      userId: user?.userId ?? user?.id ?? null,
+      key: parsed.data.key,
+      windowHours: parsed.data.windowHours,
+      slice: parsed.data.slice,
+      targetRole: parsed.data.targetRole,
+      note: parsed.data.note,
+    });
   }
 
   @Get("autonomy-status")

@@ -16,6 +16,13 @@ import {
   getIntentContractByToolName,
 } from "../../shared/rai-chat/agent-interaction-contracts";
 import { SupervisorForensicsService } from "./supervisor-forensics.service";
+import { SemanticRouterService } from "./semantic-router/semantic-router.service";
+import {
+  RoutingOutcomeType,
+  RoutingTelemetryEvent,
+  SemanticRoutingContext,
+} from "../../shared/rai-chat/semantic-routing.types";
+import { IntentClassification } from "../../shared/rai-chat/intent-router.types";
 
 @Injectable()
 export class SupervisorAgent {
@@ -29,6 +36,7 @@ export class SupervisorAgent {
     private readonly responseComposer: ResponseComposerService,
     private readonly externalSignalsService: ExternalSignalsService,
     private readonly supervisorForensics: SupervisorForensicsService,
+    private readonly semanticRouter: SemanticRouterService,
     @Inject(TraceSummaryService)
     private readonly traceSummaryService: TraceSummaryService,
     private readonly truthfulnessEngine: TruthfulnessEngineService,
@@ -58,8 +66,18 @@ export class SupervisorAgent {
     );
 
     const tRouter = Date.now();
-    const plannedExecution = this.planExecution(request);
-    const { classification, requestedToolCalls } = plannedExecution;
+    const plannedExecution = await this.planExecution(
+      request,
+      companyId,
+      traceId,
+      threadId,
+    );
+    const {
+      classification,
+      requestedToolCalls,
+      semanticRouting,
+      routingTelemetry,
+    } = plannedExecution;
 
     const tExecStart = Date.now();
     const executionRequest: AgentExecutionRequest = {
@@ -98,6 +116,7 @@ export class SupervisorAgent {
         })),
       },
       requestedTools: requestedToolCalls,
+      semanticRouting,
       traceId,
       threadId,
     };
@@ -181,6 +200,14 @@ export class SupervisorAgent {
         delegationChain: executionResult.agentExecution?.delegationChain?.map(
           (step) => ({ ...step }) as Record<string, unknown>,
         ),
+        routingTelemetry: routingTelemetry
+          ? this.finalizeRoutingTelemetry(
+              routingTelemetry,
+              request,
+              executionResult,
+              response.runtimeGovernance?.fallbackReason ?? null,
+            )
+          : undefined,
         memoryLane: this.supervisorForensics.buildMemoryLane(
           recallResult,
           response,
@@ -447,7 +474,12 @@ export class SupervisorAgent {
     };
   }
 
-  private planExecution(request: RaiChatRequestDto): {
+  private async planExecution(
+    request: RaiChatRequestDto,
+    companyId: string,
+    traceId: string,
+    threadId: string,
+  ): Promise<{
     classification: {
       targetRole: string | null;
       intent: string | null;
@@ -457,75 +489,189 @@ export class SupervisorAgent {
       reason: string;
     };
     requestedToolCalls: RaiChatRequestDto["toolCalls"];
-  } {
+    semanticRouting?: SemanticRoutingContext;
+    routingTelemetry?: RoutingTelemetryEvent;
+  }> {
     const resumePlan = buildResumeExecutionPlan(request);
-    if (resumePlan) {
-      return {
-        classification: {
-          targetRole: resumePlan.classification.targetRole ?? null,
-          intent: resumePlan.classification.intent ?? null,
-          toolName: resumePlan.classification.toolName ?? null,
-          confidence: resumePlan.classification.confidence,
-          method: "clarification_resume",
-          reason: resumePlan.classification.reason,
-        },
-        requestedToolCalls: resumePlan.requestedToolCalls,
-      };
-    }
-
     const explicitToolCalls = [...(request.toolCalls ?? [])];
     const explicitPrimaryTool = explicitToolCalls[0];
     const explicitContract = explicitPrimaryTool
       ? getIntentContractByToolName(explicitPrimaryTool.name)
       : null;
-    if (explicitPrimaryTool && explicitContract) {
+    const legacyPlan: {
+      classification: IntentClassification;
+      requestedToolCalls: RaiChatRequestDto["toolCalls"];
+      semanticPrimaryAllowed: boolean;
+    } = (() => {
+      if (resumePlan) {
+        return {
+          classification: {
+            targetRole: resumePlan.classification.targetRole ?? null,
+            intent: resumePlan.classification.intent ?? null,
+            toolName: resumePlan.classification.toolName ?? null,
+            confidence: resumePlan.classification.confidence,
+            method: "clarification_resume",
+            reason: resumePlan.classification.reason,
+          },
+          requestedToolCalls: resumePlan.requestedToolCalls,
+          semanticPrimaryAllowed: false,
+        };
+      }
+
+      if (explicitPrimaryTool && explicitContract) {
+        return {
+          classification: {
+            targetRole: explicitContract.role,
+            intent: explicitContract.id,
+            toolName: explicitPrimaryTool.name,
+            confidence: 1,
+            method: "tool_call_primary",
+            reason: `explicit_tool_call:${explicitPrimaryTool.name}`,
+          },
+          requestedToolCalls: explicitToolCalls,
+          semanticPrimaryAllowed: false,
+        };
+      }
+
+      const classification = this.intentRouter.classify(
+        request.message,
+        request.workspaceContext,
+      );
+      const autoToolCall = this.intentRouter.buildAutoToolCall(
+        request.message,
+        request,
+        classification,
+      );
+      const requestedToolCalls = [...explicitToolCalls];
+      if (
+        autoToolCall &&
+        !requestedToolCalls.some((t) => t.name === autoToolCall.name)
+      ) {
+        requestedToolCalls.unshift({
+          name: autoToolCall.name,
+          payload: autoToolCall.payload as Record<string, unknown>,
+        });
+      }
+
+      const inferredContract = classification.toolName
+        ? getIntentContractByToolName(classification.toolName)
+        : null;
       return {
         classification: {
-          targetRole: explicitContract.role,
-          intent: explicitContract.id,
-          toolName: explicitPrimaryTool.name,
-          confidence: 1,
-          method: "tool_call_primary",
-          reason: `explicit_tool_call:${explicitPrimaryTool.name}`,
+          targetRole:
+            classification.targetRole ?? inferredContract?.role ?? null,
+          intent: classification.intent ?? inferredContract?.id ?? null,
+          toolName: classification.toolName ?? null,
+          confidence: classification.confidence,
+          method: classification.method,
+          reason: classification.reason,
         },
-        requestedToolCalls: explicitToolCalls,
+        requestedToolCalls,
+        semanticPrimaryAllowed: true,
       };
-    }
+    })();
 
-    const classification = this.intentRouter.classify(
-      request.message,
-      request.workspaceContext,
-    );
-    const autoToolCall = this.intentRouter.buildAutoToolCall(
-      request.message,
-      request,
-      classification,
-    );
-    const requestedToolCalls = [...explicitToolCalls];
-    if (
-      autoToolCall &&
-      !requestedToolCalls.some((t) => t.name === autoToolCall.name)
-    ) {
-      requestedToolCalls.unshift({
-        name: autoToolCall.name,
-        payload: autoToolCall.payload as Record<string, unknown>,
-      });
-    }
+    const semanticEvaluation = await this.semanticRouter.evaluate({
+      companyId,
+      message: request.message,
+      workspaceContext: request.workspaceContext,
+      traceId,
+      threadId,
+      legacyClassification: legacyPlan.classification,
+      requestedToolCalls: legacyPlan.requestedToolCalls,
+      allowPrimaryPromotion: legacyPlan.semanticPrimaryAllowed,
+    });
 
-    const inferredContract = classification.toolName
-      ? getIntentContractByToolName(classification.toolName)
-      : null;
+    const classification = semanticEvaluation.promotedPrimary
+      ? semanticEvaluation.classification
+      : legacyPlan.classification;
+    const requestedToolCalls = semanticEvaluation.promotedPrimary
+      ? semanticEvaluation.requestedToolCalls
+      : legacyPlan.requestedToolCalls;
+
     return {
-      classification: {
-        targetRole:
-          classification.targetRole ?? inferredContract?.role ?? null,
-        intent: classification.intent ?? inferredContract?.id ?? null,
-        toolName: classification.toolName ?? null,
-        confidence: classification.confidence,
-        method: classification.method,
-        reason: classification.reason,
-      },
+      classification,
       requestedToolCalls,
+      semanticRouting: semanticEvaluation.promotedPrimary
+        ? semanticEvaluation.routingContext
+        : undefined,
+      routingTelemetry: {
+        traceId,
+        threadId,
+        routerVersion: semanticEvaluation.versionInfo.routerVersion,
+        promptVersion: semanticEvaluation.versionInfo.promptVersion,
+        toolsetVersion: semanticEvaluation.versionInfo.toolsetVersion,
+        workspaceRoute: request.workspaceContext?.route ?? null,
+        workspaceStateDigest:
+          semanticEvaluation.versionInfo.workspaceStateDigest,
+        activeFlow:
+          semanticEvaluation.semanticIntent.dialogState.activeFlow ?? null,
+        userQueryRedacted: request.message,
+        legacyClassification: legacyPlan.classification,
+        semanticIntent: semanticEvaluation.semanticIntent,
+        routeDecision: semanticEvaluation.routeDecision,
+        candidateRoutes: semanticEvaluation.candidateRoutes,
+        divergence: semanticEvaluation.divergence,
+        executionPath: semanticEvaluation.executionPath,
+        fallbackReason: null,
+        abstainReason:
+          semanticEvaluation.routeDecision.abstainReason ?? null,
+        policyBlockReason:
+          semanticEvaluation.routeDecision.policyBlockReason ?? null,
+        requiredContextMissing:
+          semanticEvaluation.routeDecision.requiredContextMissing,
+        finalOutcome: RoutingOutcomeType.Unknown,
+        userCorrection: request.advisoryFeedback
+          ? {
+              decision: request.advisoryFeedback.decision,
+              reason: request.advisoryFeedback.reason ?? null,
+            }
+          : null,
+        latencyMs: semanticEvaluation.latencyMs,
+        sliceId: semanticEvaluation.sliceId ?? null,
+        promotedPrimary: semanticEvaluation.promotedPrimary,
+        retrievedCaseMemory: semanticEvaluation.retrievedCaseMemory,
+      },
     };
+  }
+
+  private finalizeRoutingTelemetry(
+    routingTelemetry: RoutingTelemetryEvent,
+    request: RaiChatRequestDto,
+    executionResult: Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>,
+    fallbackReason: string | null,
+  ): RoutingTelemetryEvent {
+    const status = executionResult.agentExecution?.status;
+    return {
+      ...routingTelemetry,
+      executionPath:
+        executionResult.agentExecution?.executionPath ??
+        routingTelemetry.executionPath,
+      fallbackReason,
+      finalOutcome: this.mapRoutingOutcome(status),
+      userQueryRedacted: request.message,
+    };
+  }
+
+  private mapRoutingOutcome(
+    status: Awaited<
+      ReturnType<AgentRuntimeService["executeAgent"]>
+    >["agentExecution"] extends { status: infer T }
+      ? T
+      : never,
+  ): RoutingOutcomeType {
+    if (status === "COMPLETED") {
+      return RoutingOutcomeType.Completed;
+    }
+    if (status === "NEEDS_MORE_DATA") {
+      return RoutingOutcomeType.NeedsMoreData;
+    }
+    if (status === "FAILED") {
+      return RoutingOutcomeType.Failed;
+    }
+    if (status === "RATE_LIMITED") {
+      return RoutingOutcomeType.RateLimited;
+    }
+    return RoutingOutcomeType.Unknown;
   }
 }

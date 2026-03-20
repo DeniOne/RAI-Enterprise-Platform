@@ -17,6 +17,19 @@ import {
 import { TruthfulnessDashboardResponseDto } from "./dto/truthfulness-dashboard.dto";
 import { QueuePressureResponseDto } from "./dto/queue-pressure.dto";
 import { QueueMetricsService } from "../rai-chat/performance/queue-metrics.service";
+import {
+  RoutingCaseMemoryCandidateCaptureResponseDto,
+  RoutingDivergenceResponseDto,
+} from "./dto/routing-divergence.dto";
+import {
+  RoutingCaseMemoryLifecycleStatus,
+  RoutingTelemetryEvent,
+} from "../../shared/rai-chat/semantic-routing.types";
+import {
+  ROUTING_CASE_MEMORY_ACTIVATION_ACTION,
+  ROUTING_CASE_MEMORY_CAPTURE_ACTION,
+  ROUTING_CASE_MEMORY_TTL_HOURS,
+} from "../../shared/rai-chat/routing-case-memory.constants";
 
 @Injectable()
 export class ExplainabilityPanelService {
@@ -327,6 +340,691 @@ export class ExplainabilityPanelService {
       companyId: baseCompanyId,
       nodes,
     };
+  }
+
+  async getRoutingDivergence(params: {
+    companyId: string;
+    windowHours: number;
+    slice?: string;
+    decisionType?: string;
+    targetRole?: string;
+    onlyMismatches?: boolean;
+  }): Promise<RoutingDivergenceResponseDto> {
+    const from = new Date(Date.now() - params.windowHours * 60 * 60 * 1000);
+    const lifecycleState =
+      await this.loadRoutingCaseMemoryLifecycleState(params.companyId);
+    const auditEntries = await this.prisma.aiAuditEntry.findMany({
+      where: {
+        companyId: params.companyId,
+        createdAt: {
+          gte: from,
+        },
+      },
+      select: {
+        traceId: true,
+        createdAt: true,
+        metadata: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 500,
+    });
+
+    const events = auditEntries
+      .map((entry) => {
+        const metadata =
+          entry.metadata && typeof entry.metadata === "object"
+            ? (entry.metadata as Record<string, unknown>)
+            : null;
+        const telemetry =
+          metadata?.routingTelemetry &&
+          typeof metadata.routingTelemetry === "object"
+            ? (metadata.routingTelemetry as RoutingTelemetryEvent)
+            : null;
+        if (!telemetry) {
+          return null;
+        }
+        return {
+          traceId: entry.traceId,
+          createdAt: entry.createdAt,
+          telemetry,
+        };
+      })
+      .filter(
+        (
+          item,
+        ): item is {
+          traceId: string;
+          createdAt: Date;
+          telemetry: RoutingTelemetryEvent;
+        } => item !== null,
+      )
+      .filter((item) =>
+        params.slice ? item.telemetry.sliceId === params.slice : true,
+      )
+      .filter((item) =>
+        params.decisionType
+          ? item.telemetry.routeDecision.decisionType === params.decisionType
+          : true,
+      )
+      .filter((item) =>
+        params.targetRole
+          ? (item.telemetry.legacyClassification.targetRole ?? "unknown") ===
+            params.targetRole
+          : true,
+      )
+      .filter((item) =>
+        params.onlyMismatches ? item.telemetry.divergence.isMismatch : true,
+      );
+
+    const totalEvents = events.length;
+    const mismatched = events.filter((item) => item.telemetry.divergence.isMismatch);
+    const mismatchedEvents = mismatched.length;
+    const divergenceRatePct =
+      totalEvents > 0
+        ? Number(((mismatchedEvents / totalEvents) * 100).toFixed(1))
+        : 0;
+    const semanticPrimaryCount = events.filter(
+      (item) => item.telemetry.promotedPrimary,
+    ).length;
+
+    const clusterMap = new Map<
+      string,
+      {
+        label: string;
+        count: number;
+        mismatchKinds: Set<string>;
+        sampleTraceId: string | null;
+        sampleQuery: string | null;
+      }
+    >();
+    const decisionMap = new Map<string, number>();
+    const collisionMap = new Map<string, number>();
+    const failureClusterMap = new Map<
+      string,
+      {
+        targetRole: string;
+        decisionType: string;
+        mismatchKinds: string[];
+        count: number;
+        semanticPrimaryCount: number;
+        lastSeenAt: Date;
+        sampleTraceId: string | null;
+        sampleQuery: string | null;
+      }
+    >();
+    const caseMemoryCandidateMap = new Map<
+      string,
+      {
+        sliceId: string | null;
+        targetRole: string;
+        decisionType: string;
+        mismatchKinds: string[];
+        routerVersion: string;
+        promptVersion: string;
+        toolsetVersion: string;
+        traceCount: number;
+        semanticPrimaryCount: number;
+        firstSeenAt: Date;
+        lastSeenAt: Date;
+        sampleTraceId: string | null;
+        sampleQuery: string | null;
+        semanticIntent: RoutingTelemetryEvent["semanticIntent"];
+        routeDecision: RoutingTelemetryEvent["routeDecision"];
+      }
+    >();
+    const agentMap = new Map<
+      string,
+      {
+        totalEvents: number;
+        mismatchedEvents: number;
+        semanticPrimaryCount: number;
+        decisionMap: Map<string, number>;
+        mismatchMap: Map<string, number>;
+        sampleTraceId: string | null;
+        sampleQuery: string | null;
+      }
+    >();
+
+    for (const item of events) {
+      const targetRole = item.telemetry.legacyClassification.targetRole ?? "unknown";
+      const clusterKey = item.telemetry.divergence.summary;
+      const cluster = clusterMap.get(clusterKey) ?? {
+        label: clusterKey,
+        count: 0,
+        mismatchKinds: new Set<string>(),
+        sampleTraceId: null,
+        sampleQuery: null,
+      };
+      cluster.count += 1;
+      item.telemetry.divergence.mismatchKinds.forEach((kind) =>
+        cluster.mismatchKinds.add(kind),
+      );
+      if (!cluster.sampleTraceId) {
+        cluster.sampleTraceId = item.traceId;
+        cluster.sampleQuery = item.telemetry.userQueryRedacted;
+      }
+      clusterMap.set(clusterKey, cluster);
+
+      const decisionType = item.telemetry.routeDecision.decisionType;
+      decisionMap.set(decisionType, (decisionMap.get(decisionType) ?? 0) + 1);
+
+      const collisionKey = [
+        item.telemetry.divergence.legacyRouteKey,
+        item.telemetry.divergence.semanticRouteKey,
+      ].join(" -> ");
+      collisionMap.set(collisionKey, (collisionMap.get(collisionKey) ?? 0) + 1);
+
+      if (item.telemetry.divergence.isMismatch) {
+        const mismatchKinds = [...item.telemetry.divergence.mismatchKinds].sort();
+        const failureClusterKey = [
+          targetRole,
+          decisionType,
+          mismatchKinds.join("|") || "match",
+        ].join("::");
+        const failureCluster = failureClusterMap.get(failureClusterKey) ?? {
+          targetRole,
+          decisionType,
+          mismatchKinds,
+          count: 0,
+          semanticPrimaryCount: 0,
+          lastSeenAt: item.createdAt,
+          sampleTraceId: null,
+          sampleQuery: null,
+        };
+        failureCluster.count += 1;
+        if (item.telemetry.promotedPrimary) {
+          failureCluster.semanticPrimaryCount += 1;
+        }
+        if (item.createdAt > failureCluster.lastSeenAt) {
+          failureCluster.lastSeenAt = item.createdAt;
+        }
+        if (!failureCluster.sampleTraceId) {
+          failureCluster.sampleTraceId = item.traceId;
+          failureCluster.sampleQuery = item.telemetry.userQueryRedacted;
+        }
+        failureClusterMap.set(failureClusterKey, failureCluster);
+
+        const caseMemoryCandidateKey = [
+          item.telemetry.sliceId ?? "no_slice",
+          targetRole,
+          decisionType,
+          mismatchKinds.join("|") || "match",
+          item.telemetry.routerVersion,
+          item.telemetry.promptVersion,
+          item.telemetry.toolsetVersion,
+        ].join("::");
+        const caseMemoryCandidate = caseMemoryCandidateMap.get(
+          caseMemoryCandidateKey,
+        ) ?? {
+          sliceId: item.telemetry.sliceId ?? null,
+          targetRole,
+          decisionType,
+          mismatchKinds,
+          routerVersion: item.telemetry.routerVersion,
+          promptVersion: item.telemetry.promptVersion,
+          toolsetVersion: item.telemetry.toolsetVersion,
+          traceCount: 0,
+          semanticPrimaryCount: 0,
+          firstSeenAt: item.createdAt,
+          lastSeenAt: item.createdAt,
+          sampleTraceId: null,
+          sampleQuery: null,
+          semanticIntent: item.telemetry.semanticIntent,
+          routeDecision: item.telemetry.routeDecision,
+        };
+        caseMemoryCandidate.traceCount += 1;
+        if (item.telemetry.promotedPrimary) {
+          caseMemoryCandidate.semanticPrimaryCount += 1;
+        }
+        if (item.createdAt < caseMemoryCandidate.firstSeenAt) {
+          caseMemoryCandidate.firstSeenAt = item.createdAt;
+        }
+        if (item.createdAt > caseMemoryCandidate.lastSeenAt) {
+          caseMemoryCandidate.lastSeenAt = item.createdAt;
+        }
+        if (!caseMemoryCandidate.sampleTraceId) {
+          caseMemoryCandidate.sampleTraceId = item.traceId;
+          caseMemoryCandidate.sampleQuery = item.telemetry.userQueryRedacted;
+        }
+        caseMemoryCandidateMap.set(
+          caseMemoryCandidateKey,
+          caseMemoryCandidate,
+        );
+      }
+
+      const agent = agentMap.get(targetRole) ?? {
+        totalEvents: 0,
+        mismatchedEvents: 0,
+        semanticPrimaryCount: 0,
+        decisionMap: new Map<string, number>(),
+        mismatchMap: new Map<string, number>(),
+        sampleTraceId: null,
+        sampleQuery: null,
+      };
+      agent.totalEvents += 1;
+      if (item.telemetry.divergence.isMismatch) {
+        agent.mismatchedEvents += 1;
+        item.telemetry.divergence.mismatchKinds.forEach((kind) =>
+          agent.mismatchMap.set(kind, (agent.mismatchMap.get(kind) ?? 0) + 1),
+        );
+      }
+      if (item.telemetry.promotedPrimary) {
+        agent.semanticPrimaryCount += 1;
+      }
+      agent.decisionMap.set(
+        decisionType,
+        (agent.decisionMap.get(decisionType) ?? 0) + 1,
+      );
+      if (!agent.sampleTraceId) {
+        agent.sampleTraceId = item.traceId;
+        agent.sampleQuery = item.telemetry.userQueryRedacted;
+      }
+      agentMap.set(targetRole, agent);
+    }
+
+    return {
+      companyId: params.companyId,
+      windowHours: params.windowHours,
+      totalEvents,
+      mismatchedEvents,
+      divergenceRatePct,
+      semanticPrimaryCount,
+      topClusters: [...clusterMap.entries()]
+        .sort((left, right) => right[1].count - left[1].count)
+        .slice(0, 10)
+        .map(([key, value]) => ({
+          key,
+          label: value.label,
+          count: value.count,
+          mismatchKinds: [...value.mismatchKinds],
+          sampleTraceId: value.sampleTraceId,
+          sampleQuery: value.sampleQuery
+            ? (this.deepMask(value.sampleQuery) as string)
+            : null,
+        })),
+      decisionBreakdown: [...decisionMap.entries()]
+        .sort((left, right) => right[1] - left[1])
+        .map(([decisionType, count]) => ({
+          decisionType,
+          count,
+        })),
+      collisionMatrix: [...collisionMap.entries()]
+        .sort((left, right) => right[1] - left[1])
+        .slice(0, 10)
+        .map(([key, count]) => {
+          const [legacyRouteKey, semanticRouteKey] = key.split(" -> ");
+          return {
+            legacyRouteKey,
+            semanticRouteKey,
+            count,
+          };
+        }),
+      agentBreakdown: [...agentMap.entries()]
+        .sort((left, right) => {
+          if (right[1].mismatchedEvents !== left[1].mismatchedEvents) {
+            return right[1].mismatchedEvents - left[1].mismatchedEvents;
+          }
+          return right[1].totalEvents - left[1].totalEvents;
+        })
+        .slice(0, 10)
+        .map(([targetRole, value]) => ({
+          targetRole,
+          totalEvents: value.totalEvents,
+          mismatchedEvents: value.mismatchedEvents,
+          divergenceRatePct:
+            value.totalEvents > 0
+              ? Number(
+                  ((value.mismatchedEvents / value.totalEvents) * 100).toFixed(1),
+                )
+              : 0,
+          semanticPrimaryCount: value.semanticPrimaryCount,
+          decisionBreakdown: [...value.decisionMap.entries()]
+            .sort((left, right) => right[1] - left[1])
+            .map(([decisionType, count]) => ({
+              decisionType,
+              count,
+            })),
+          topMismatchKinds: [...value.mismatchMap.entries()]
+            .sort((left, right) => right[1] - left[1])
+            .slice(0, 5)
+            .map(([kind, count]) => ({
+              kind,
+              count,
+            })),
+          sampleTraceId: value.sampleTraceId,
+          sampleQuery: value.sampleQuery
+            ? (this.deepMask(value.sampleQuery) as string)
+            : null,
+        })),
+      failureClusters: [...failureClusterMap.entries()]
+        .sort((left, right) => {
+          if (right[1].count !== left[1].count) {
+            return right[1].count - left[1].count;
+          }
+          return right[1].lastSeenAt.getTime() - left[1].lastSeenAt.getTime();
+        })
+        .slice(0, 10)
+        .map(([key, value]) => ({
+          key,
+          targetRole: value.targetRole,
+          decisionType: value.decisionType,
+          mismatchKinds: value.mismatchKinds,
+          count: value.count,
+          semanticPrimaryCount: value.semanticPrimaryCount,
+          caseMemoryReadiness:
+            value.count >= 3
+              ? "ready_for_case_memory"
+              : value.count === 2
+                ? "needs_more_evidence"
+                : "observe",
+          lastSeenAt: value.lastSeenAt.toISOString(),
+          sampleTraceId: value.sampleTraceId,
+          sampleQuery: value.sampleQuery
+            ? (this.deepMask(value.sampleQuery) as string)
+            : null,
+        })),
+      caseMemoryCandidates: [...caseMemoryCandidateMap.entries()]
+        .sort((left, right) => {
+          const leftReadiness = this.caseMemoryReadinessRank(
+            this.resolveCaseMemoryReadiness(left[1].traceCount),
+          );
+          const rightReadiness = this.caseMemoryReadinessRank(
+            this.resolveCaseMemoryReadiness(right[1].traceCount),
+          );
+          if (rightReadiness !== leftReadiness) {
+            return rightReadiness - leftReadiness;
+          }
+          if (right[1].traceCount !== left[1].traceCount) {
+            return right[1].traceCount - left[1].traceCount;
+          }
+          return right[1].lastSeenAt.getTime() - left[1].lastSeenAt.getTime();
+        })
+        .slice(0, 10)
+        .map(([key, value]) => {
+          const caseMemoryReadiness = this.resolveCaseMemoryReadiness(
+            value.traceCount,
+          );
+          const lifecycle = lifecycleState.get(key) ?? null;
+          const captureStatus =
+            lifecycle?.status === RoutingCaseMemoryLifecycleStatus.Active
+              ? "active"
+              : lifecycle?.status === RoutingCaseMemoryLifecycleStatus.Captured
+                ? "captured"
+                : "not_captured";
+          return {
+            key,
+            sliceId: value.sliceId,
+            targetRole: value.targetRole,
+            decisionType: value.decisionType,
+            mismatchKinds: value.mismatchKinds,
+            routerVersion: value.routerVersion,
+            promptVersion: value.promptVersion,
+            toolsetVersion: value.toolsetVersion,
+            traceCount: value.traceCount,
+            semanticPrimaryCount: value.semanticPrimaryCount,
+            caseMemoryReadiness,
+            firstSeenAt: value.firstSeenAt.toISOString(),
+            lastSeenAt: value.lastSeenAt.toISOString(),
+            ttlExpiresAt: new Date(
+              value.lastSeenAt.getTime() +
+                ROUTING_CASE_MEMORY_TTL_HOURS * 60 * 60 * 1000,
+            ).toISOString(),
+            sampleTraceId: value.sampleTraceId,
+            sampleQuery: value.sampleQuery
+              ? (this.deepMask(value.sampleQuery) as string)
+              : null,
+            semanticIntent: value.semanticIntent,
+            routeDecision: value.routeDecision,
+            captureStatus,
+            capturedAt: lifecycle?.capturedAt ?? null,
+            captureAuditLogId: lifecycle?.captureAuditLogId ?? null,
+            activatedAt: lifecycle?.activatedAt ?? null,
+            activationAuditLogId: lifecycle?.activationAuditLogId ?? null,
+          };
+        }),
+      recentMismatches: mismatched.slice(0, 10).map((item) => ({
+        traceId: item.traceId,
+        createdAt: item.createdAt.toISOString(),
+        summary: item.telemetry.divergence.summary,
+        sampleQuery: this.deepMask(item.telemetry.userQueryRedacted) as string,
+        targetRole: item.telemetry.legacyClassification.targetRole ?? "unknown",
+        decisionType: item.telemetry.routeDecision.decisionType,
+        promotedPrimary: item.telemetry.promotedPrimary,
+      })),
+    };
+  }
+
+  async captureRoutingCaseMemoryCandidate(params: {
+    companyId: string;
+    userId?: string | null;
+    key: string;
+    windowHours?: number;
+    slice?: string;
+    targetRole?: string;
+    note?: string;
+  }): Promise<RoutingCaseMemoryCandidateCaptureResponseDto> {
+    const divergence = await this.getRoutingDivergence({
+      companyId: params.companyId,
+      windowHours: params.windowHours ?? 24,
+      slice: params.slice,
+      targetRole: params.targetRole,
+      onlyMismatches: true,
+    });
+
+    const candidate = divergence.caseMemoryCandidates.find(
+      (item) => item.key === params.key,
+    );
+
+    if (!candidate) {
+      throw new NotFoundException("ROUTING_CASE_MEMORY_CANDIDATE_NOT_FOUND");
+    }
+
+    if (candidate.caseMemoryReadiness !== "ready_for_case_memory") {
+      throw new ForbiddenException(
+        "ROUTING_CASE_MEMORY_CANDIDATE_NOT_READY",
+      );
+    }
+
+    if (
+      candidate.captureStatus !== "not_captured" &&
+      candidate.captureAuditLogId &&
+      candidate.capturedAt
+    ) {
+      return {
+        status: "already_captured",
+        candidateKey: candidate.key,
+        auditLogId: candidate.captureAuditLogId,
+        capturedAt: candidate.capturedAt,
+      };
+    }
+
+    const createdAt = new Date();
+    const auditLog = await this.prisma.auditLog.create({
+      data: {
+        action: ROUTING_CASE_MEMORY_CAPTURE_ACTION,
+        companyId: params.companyId,
+        userId: params.userId ?? null,
+        metadata: {
+          domain: "routing_case_memory_candidate",
+          candidateKey: candidate.key,
+          sliceId: candidate.sliceId,
+          targetRole: candidate.targetRole,
+          decisionType: candidate.decisionType,
+          mismatchKinds: candidate.mismatchKinds,
+          routerVersion: candidate.routerVersion,
+          promptVersion: candidate.promptVersion,
+          toolsetVersion: candidate.toolsetVersion,
+          traceCount: candidate.traceCount,
+          semanticPrimaryCount: candidate.semanticPrimaryCount,
+          caseMemoryReadiness: candidate.caseMemoryReadiness,
+          firstSeenAt: candidate.firstSeenAt,
+          lastSeenAt: candidate.lastSeenAt,
+          ttlExpiresAt: candidate.ttlExpiresAt,
+          sampleTraceId: candidate.sampleTraceId,
+          sampleQueryRedacted: candidate.sampleQuery,
+          semanticIntent: candidate.semanticIntent,
+          routeDecision: candidate.routeDecision,
+          note: params.note ?? null,
+          sourceWindowHours: params.windowHours ?? 24,
+          capturedAt: createdAt.toISOString(),
+        } as unknown as object,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return {
+      status: "captured",
+      candidateKey: candidate.key,
+      auditLogId: auditLog.id,
+      capturedAt: createdAt.toISOString(),
+    };
+  }
+
+  private resolveCaseMemoryReadiness(
+    traceCount: number,
+  ): "observe" | "needs_more_evidence" | "ready_for_case_memory" {
+    if (traceCount >= 3) {
+      return "ready_for_case_memory";
+    }
+    if (traceCount === 2) {
+      return "needs_more_evidence";
+    }
+    return "observe";
+  }
+
+  private caseMemoryReadinessRank(
+    readiness: "observe" | "needs_more_evidence" | "ready_for_case_memory",
+  ): number {
+    if (readiness === "ready_for_case_memory") {
+      return 3;
+    }
+    if (readiness === "needs_more_evidence") {
+      return 2;
+    }
+    return 1;
+  }
+
+  private async loadRoutingCaseMemoryLifecycleState(
+    companyId: string,
+  ): Promise<
+    Map<
+      string,
+      {
+        status: RoutingCaseMemoryLifecycleStatus;
+        capturedAt: string | null;
+        captureAuditLogId: string | null;
+        activatedAt: string | null;
+        activationAuditLogId: string | null;
+      }
+    >
+  > {
+    const [captureLogs, activationLogs] = await Promise.all([
+      this.prisma.auditLog.findMany({
+        where: {
+          companyId,
+          action: ROUTING_CASE_MEMORY_CAPTURE_ACTION,
+        },
+        select: {
+          id: true,
+          createdAt: true,
+          metadata: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 200,
+      }),
+      this.prisma.auditLog.findMany({
+        where: {
+          companyId,
+          action: ROUTING_CASE_MEMORY_ACTIVATION_ACTION,
+        },
+        select: {
+          id: true,
+          createdAt: true,
+          metadata: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 200,
+      }),
+    ]);
+
+    const result = new Map<
+      string,
+      {
+        status: RoutingCaseMemoryLifecycleStatus;
+        capturedAt: string | null;
+        captureAuditLogId: string | null;
+        activatedAt: string | null;
+        activationAuditLogId: string | null;
+      }
+    >();
+
+    for (const entry of captureLogs) {
+      const metadata =
+        entry.metadata && typeof entry.metadata === "object"
+          ? (entry.metadata as Record<string, unknown>)
+          : null;
+      const candidateKey =
+        typeof metadata?.candidateKey === "string"
+          ? metadata.candidateKey
+          : null;
+      if (!candidateKey || result.has(candidateKey)) {
+        continue;
+      }
+      const ttlExpiresAt =
+        typeof metadata?.ttlExpiresAt === "string"
+          ? Date.parse(metadata.ttlExpiresAt)
+          : NaN;
+      if (Number.isFinite(ttlExpiresAt) && ttlExpiresAt < Date.now()) {
+        continue;
+      }
+      result.set(candidateKey, {
+        status: RoutingCaseMemoryLifecycleStatus.Captured,
+        captureAuditLogId: entry.id,
+        capturedAt:
+          typeof metadata?.capturedAt === "string"
+            ? metadata.capturedAt
+            : entry.createdAt.toISOString(),
+        activatedAt: null,
+        activationAuditLogId: null,
+      });
+    }
+
+    for (const entry of activationLogs) {
+      const metadata =
+        entry.metadata && typeof entry.metadata === "object"
+          ? (entry.metadata as Record<string, unknown>)
+          : null;
+      const candidateKey =
+        typeof metadata?.candidateKey === "string"
+          ? metadata.candidateKey
+          : null;
+      if (!candidateKey) {
+        continue;
+      }
+      const current = result.get(candidateKey);
+      if (!current) {
+        continue;
+      }
+      result.set(candidateKey, {
+        ...current,
+        status: RoutingCaseMemoryLifecycleStatus.Active,
+        activatedAt:
+          typeof metadata?.activatedAt === "string"
+            ? metadata.activatedAt
+            : entry.createdAt.toISOString(),
+        activationAuditLogId: entry.id,
+      });
+    }
+
+    return result;
   }
 
   async getQueuePressure(

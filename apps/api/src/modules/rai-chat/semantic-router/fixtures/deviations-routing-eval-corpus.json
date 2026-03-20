@@ -1,0 +1,131 @@
+[
+  {
+    "id": "deviations-primary-with-scope",
+    "request": {
+      "message": "покажи отклонения по этому полю",
+      "workspaceContext": {
+        "route": "/consulting/deviations/detected",
+        "activeEntityRefs": [
+          { "kind": "field", "id": "field-77" }
+        ],
+        "filters": {
+          "seasonId": "season-2026"
+        }
+      },
+      "legacyClassification": {
+        "targetRole": "agronomist",
+        "intent": "compute_deviations",
+        "toolName": "compute_deviations",
+        "confidence": 0.74,
+        "method": "regex",
+        "reason": "legacy:deviations"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "agro.deviations.review",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "compute_deviations",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["compute_deviations"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "compute_deviations",
+          "payloadSubset": {
+            "scope": {
+              "fieldId": "field-77",
+              "seasonId": "season-2026"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "deviations-primary-from-route-only",
+    "request": {
+      "message": "разбери отклонения",
+      "workspaceContext": {
+        "route": "/consulting/deviations/analysis"
+      },
+      "legacyClassification": {
+        "targetRole": "knowledge",
+        "intent": null,
+        "toolName": null,
+        "confidence": 0.18,
+        "method": "regex",
+        "reason": "legacy:none"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "agro.deviations.review",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "compute_deviations",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["compute_deviations"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "compute_deviations",
+          "payloadSubset": {
+            "scope": {}
+          }
+        }
+      ],
+      "mismatchKinds": ["target_role", "legacy_missing_tool"]
+    }
+  },
+  {
+    "id": "deviations-shadow-outside-slice",
+    "request": {
+      "message": "покажи отклонения по полю",
+      "workspaceContext": {
+        "route": "/consulting/dashboard",
+        "filters": {
+          "seasonId": "season-2026"
+        }
+      },
+      "legacyClassification": {
+        "targetRole": "agronomist",
+        "intent": "compute_deviations",
+        "toolName": "compute_deviations",
+        "confidence": 0.72,
+        "method": "regex",
+        "reason": "legacy:deviations"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": null,
+      "promotedPrimary": false,
+      "executionPath": "semantic_router_shadow",
+      "classificationIntent": "compute_deviations",
+      "classificationMethod": "semantic_router_shadow",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["compute_deviations"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "compute_deviations",
+          "payloadSubset": {
+            "scope": {
+              "seasonId": "season-2026"
+            }
+          }
+        }
+      ]
+    }
+  }
+]

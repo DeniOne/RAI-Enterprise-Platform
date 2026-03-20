@@ -79,6 +79,8 @@ import { OfsModule } from "../finance-economy/ofs/ofs.module";
 import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
 import { ConfigModule } from "@nestjs/config";
 import { SecretsModule } from "../../shared/config/secrets.module";
+import { SemanticRouterService } from "./semantic-router/semantic-router.service";
+import { RoutingCaseMemoryService } from "./semantic-router/routing-case-memory.service";
 
 @Module({
   imports: [
@@ -128,6 +130,8 @@ import { SecretsModule } from "../../shared/config/secrets.module";
     AgentExecutionAdapterService,
     SupervisorForensicsService,
     ResponseComposerService,
+    SemanticRouterService,
+    RoutingCaseMemoryService,
     RaiChatService,
     SupervisorAgent,
     RaiToolsRegistry,

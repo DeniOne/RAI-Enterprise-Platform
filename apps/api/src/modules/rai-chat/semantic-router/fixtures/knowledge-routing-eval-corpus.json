@@ -1,0 +1,117 @@
+[
+  {
+    "id": "knowledge-primary-base-query",
+    "request": {
+      "message": "что известно про озимый рапс",
+      "workspaceContext": {
+        "route": "/knowledge/base"
+      },
+      "legacyClassification": {
+        "targetRole": "knowledge",
+        "intent": "query_knowledge",
+        "toolName": "query_knowledge",
+        "confidence": 0.74,
+        "method": "regex",
+        "reason": "legacy:knowledge"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "knowledge.base.query",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "query_knowledge",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["query_knowledge"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "query_knowledge",
+          "payloadSubset": {
+            "query": "что известно про озимый рапс"
+          }
+        }
+      ],
+      "filtersSubset": {
+        "query": "что известно про озимый рапс"
+      }
+    }
+  },
+  {
+    "id": "knowledge-primary-priority-over-techmaps",
+    "request": {
+      "message": "как составить техкарту по рапсу",
+      "workspaceContext": {
+        "route": "/knowledge/base"
+      },
+      "legacyClassification": {
+        "targetRole": "agronomist",
+        "intent": "tech_map_draft",
+        "toolName": "generate_tech_map_draft",
+        "confidence": 0.71,
+        "method": "regex",
+        "reason": "legacy:techmaps"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "knowledge.base.query",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "query_knowledge",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["query_knowledge"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "query_knowledge",
+          "payloadSubset": {
+            "query": "как составить техкарту по рапсу"
+          }
+        }
+      ],
+      "filtersSubset": {
+        "query": "как составить техкарту по рапсу"
+      },
+      "mismatchKinds": ["domain", "tool_name"]
+    }
+  },
+  {
+    "id": "knowledge-shadow-outside-bounded-slice",
+    "request": {
+      "message": "что известно про озимый рапс",
+      "workspaceContext": {
+        "route": "/consulting/dashboard"
+      },
+      "legacyClassification": {
+        "targetRole": "knowledge",
+        "intent": "query_knowledge",
+        "toolName": "query_knowledge",
+        "confidence": 0.68,
+        "method": "regex",
+        "reason": "legacy:knowledge"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": null,
+      "promotedPrimary": false,
+      "executionPath": "semantic_router_shadow",
+      "classificationIntent": "query_knowledge",
+      "classificationMethod": "semantic_router_shadow",
+      "decisionType": "abstain",
+      "recommendedExecutionMode": "no_op",
+      "eligibleTools": [],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [],
+      "mismatchKinds": ["abstain_vs_execute"]
+    }
+  }
+]

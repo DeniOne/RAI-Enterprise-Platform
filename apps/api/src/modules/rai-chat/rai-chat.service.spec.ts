@@ -54,6 +54,7 @@ import { RuntimeGovernanceControlService } from "./runtime/runtime-governance-co
 import { RuntimeGovernanceEventService } from "./runtime-governance/runtime-governance-event.service";
 import { RuntimeGovernancePolicyService } from "./runtime-governance/runtime-governance-policy.service";
 import { RuntimeGovernanceFeatureFlagsService } from "./runtime-governance/runtime-governance-feature-flags.service";
+import { SemanticRouterService } from "./semantic-router/semantic-router.service";
 
 describe("RaiChatService", () => {
   let service: RaiChatService;
@@ -98,6 +99,100 @@ describe("RaiChatService", () => {
       queueFallbackEnabled: true,
       queueFallbackShadowMode: false,
       emergencyKillSwitch: false,
+    }),
+  };
+  const semanticRouterServiceMock = {
+    evaluate: jest.fn().mockResolvedValue({
+      semanticIntent: {
+        domain: "unknown",
+        entity: "unknown",
+        action: "unknown",
+        interactionMode: "unknown",
+        mutationRisk: "unknown",
+        filters: {},
+        requiredContext: [],
+        focusObject: null,
+        dialogState: { activeFlow: null, pendingClarificationKeys: [], lastUserAction: null },
+        resolvability: "missing",
+        ambiguityType: "no_matching_route",
+        confidenceBand: "low",
+        reason: "mock",
+      },
+      routeDecision: {
+        decisionType: "abstain",
+        recommendedExecutionMode: "no_op",
+        eligibleTools: [],
+        eligibleFlows: [],
+        requiredContextMissing: [],
+        policyChecksRequired: [],
+        needsConfirmation: false,
+        needsClarification: true,
+        abstainReason: "mock",
+        policyBlockReason: null,
+      },
+      candidateRoutes: [],
+      divergence: {
+        isMismatch: false,
+        mismatchKinds: [],
+        summary: "match",
+        legacyRouteKey: "legacy",
+        semanticRouteKey: "semantic",
+      },
+      versionInfo: {
+        routerVersion: "semantic-router-v1",
+        promptVersion: "semantic-router-prompt-v1",
+        toolsetVersion: "toolset",
+        workspaceStateDigest: "digest",
+      },
+      latencyMs: 1,
+      sliceId: null,
+      promotedPrimary: false,
+      executionPath: "semantic_router_shadow",
+      requestedToolCalls: [],
+      classification: {
+        targetRole: null,
+        intent: null,
+        toolName: null,
+        confidence: 0,
+        method: "semantic_router_shadow",
+        reason: "mock",
+      },
+      routingContext: {
+        source: "shadow",
+        promotedPrimary: false,
+        enforceCapabilityGating: false,
+        sliceId: null,
+        semanticIntent: {
+          domain: "unknown",
+          entity: "unknown",
+          action: "unknown",
+          interactionMode: "unknown",
+          mutationRisk: "unknown",
+          filters: {},
+          requiredContext: [],
+          focusObject: null,
+          dialogState: { activeFlow: null, pendingClarificationKeys: [], lastUserAction: null },
+          resolvability: "missing",
+          ambiguityType: "no_matching_route",
+          confidenceBand: "low",
+          reason: "mock",
+        },
+        routeDecision: {
+          decisionType: "abstain",
+          recommendedExecutionMode: "no_op",
+          eligibleTools: [],
+          eligibleFlows: [],
+          requiredContextMissing: [],
+          policyChecksRequired: [],
+          needsConfirmation: false,
+          needsClarification: true,
+          abstainReason: "mock",
+          policyBlockReason: null,
+        },
+        candidateRoutes: [],
+      },
+      llmUsed: false,
+      llmError: null,
     }),
   };
 
@@ -193,6 +288,7 @@ describe("RaiChatService", () => {
         { provide: RuntimeGovernanceEventService, useValue: runtimeGovernanceEventServiceMock },
         { provide: RuntimeGovernancePolicyService, useValue: runtimeGovernancePolicyServiceMock },
         { provide: RuntimeGovernanceFeatureFlagsService, useValue: runtimeGovernanceFeatureFlagsServiceMock },
+        { provide: SemanticRouterService, useValue: semanticRouterServiceMock },
       ],
     }).compile();
 

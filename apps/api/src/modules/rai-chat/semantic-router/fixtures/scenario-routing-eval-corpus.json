@@ -1,0 +1,137 @@
+[
+  {
+    "id": "scenario-primary-with-selected-plan",
+    "request": {
+      "message": "смоделируй сценарий по выбранному плану",
+      "workspaceContext": {
+        "route": "/finance",
+        "selectedRowSummary": {
+          "kind": "yield",
+          "id": "plan-8",
+          "title": "План plan-8"
+        },
+        "filters": {
+          "domain": "finance"
+        }
+      },
+      "legacyClassification": {
+        "targetRole": "economist",
+        "intent": "simulate_scenario",
+        "toolName": "simulate_scenario",
+        "confidence": 0.73,
+        "method": "regex",
+        "reason": "legacy:scenario"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "finance.scenario.analysis",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "simulate_scenario",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["simulate_scenario"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "simulate_scenario",
+          "payloadSubset": {
+            "scope": {
+              "planId": "plan-8"
+            }
+          }
+        }
+      ],
+      "filtersSubset": {
+        "planId": "plan-8"
+      }
+    }
+  },
+  {
+    "id": "scenario-primary-with-season-filter",
+    "request": {
+      "message": "что если по сезону просчитать финансовый сценарий",
+      "workspaceContext": {
+        "route": "/consulting/yield",
+        "filters": {
+          "seasonId": "season-scenario-1"
+        }
+      },
+      "legacyClassification": {
+        "targetRole": "economist",
+        "intent": "simulate_scenario",
+        "toolName": "simulate_scenario",
+        "confidence": 0.7,
+        "method": "regex",
+        "reason": "legacy:scenario"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": "finance.scenario.analysis",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
+      "classificationIntent": "simulate_scenario",
+      "classificationMethod": "semantic_router_primary",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["simulate_scenario"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "simulate_scenario",
+          "payloadSubset": {
+            "scope": {
+              "seasonId": "season-scenario-1"
+            }
+          }
+        }
+      ],
+      "filtersSubset": {
+        "seasonId": "season-scenario-1"
+      }
+    }
+  },
+  {
+    "id": "scenario-shadow-outside-bounded-slice",
+    "request": {
+      "message": "смоделируй финансовый сценарий по плану",
+      "workspaceContext": {
+        "route": "/consulting/dashboard"
+      },
+      "legacyClassification": {
+        "targetRole": "economist",
+        "intent": "simulate_scenario",
+        "toolName": "simulate_scenario",
+        "confidence": 0.69,
+        "method": "regex",
+        "reason": "legacy:scenario"
+      },
+      "requestedToolCalls": [],
+      "allowPrimaryPromotion": true
+    },
+    "expected": {
+      "sliceId": null,
+      "promotedPrimary": false,
+      "executionPath": "semantic_router_shadow",
+      "classificationIntent": "simulate_scenario",
+      "classificationMethod": "semantic_router_shadow",
+      "decisionType": "execute",
+      "recommendedExecutionMode": "direct_execute",
+      "eligibleTools": ["simulate_scenario"],
+      "requiredContextMissing": [],
+      "requestedToolCalls": [
+        {
+          "name": "simulate_scenario",
+          "payloadSubset": {
+            "scope": {}
+          }
+        }
+      ]
+    }
+  }
+]

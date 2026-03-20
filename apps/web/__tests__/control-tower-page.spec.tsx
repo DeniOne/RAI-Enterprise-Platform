@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import ControlTowerPage from '../app/(app)/control-tower/page';
 
 const usersMeMock = jest.fn();
@@ -7,6 +7,8 @@ const dashboardMock = jest.fn();
 const performanceMock = jest.fn();
 const costHotspotsMock = jest.fn();
 const queuePressureMock = jest.fn();
+const routingDivergenceMock = jest.fn();
+const captureRoutingCaseMemoryCandidateMock = jest.fn();
 const runtimeGovernanceSummaryMock = jest.fn();
 const runtimeGovernanceAgentsMock = jest.fn();
 const runtimeGovernanceDrilldownsMock = jest.fn();
@@ -39,6 +41,8 @@ jest.mock('@/lib/api', () => ({
       performance: (...args: unknown[]) => performanceMock(...args),
       costHotspots: (...args: unknown[]) => costHotspotsMock(...args),
       queuePressure: (...args: unknown[]) => queuePressureMock(...args),
+      routingDivergence: (...args: unknown[]) => routingDivergenceMock(...args),
+      captureRoutingCaseMemoryCandidate: (...args: unknown[]) => captureRoutingCaseMemoryCandidateMock(...args),
       runtimeGovernanceSummary: (...args: unknown[]) => runtimeGovernanceSummaryMock(...args),
       runtimeGovernanceAgents: (...args: unknown[]) => runtimeGovernanceAgentsMock(...args),
       runtimeGovernanceDrilldowns: (...args: unknown[]) => runtimeGovernanceDrilldownsMock(...args),
@@ -65,6 +69,8 @@ describe('ControlTowerPage queue visibility', () => {
     performanceMock.mockReset();
     costHotspotsMock.mockReset();
     queuePressureMock.mockReset();
+    routingDivergenceMock.mockReset();
+    captureRoutingCaseMemoryCandidateMock.mockReset();
     runtimeGovernanceSummaryMock.mockReset();
     runtimeGovernanceAgentsMock.mockReset();
     runtimeGovernanceDrilldownsMock.mockReset();
@@ -125,6 +131,91 @@ describe('ControlTowerPage queue visibility', () => {
         ],
       },
     });
+    routingDivergenceMock.mockResolvedValue({
+      data: {
+        companyId: 'c1',
+        windowHours: 24,
+        totalEvents: 12,
+        mismatchedEvents: 3,
+        divergenceRatePct: 25,
+        semanticPrimaryCount: 4,
+        caseMemoryCandidates: [
+          {
+            key: 'agro.techmaps.list-open-create::agronomist::navigate::legacy_write_vs_semantic_read::semantic-router-v1::semantic-router-prompt-v1::toolset',
+            sliceId: 'agro.techmaps.list-open-create',
+            targetRole: 'agronomist',
+            decisionType: 'navigate',
+            mismatchKinds: ['legacy_write_vs_semantic_read'],
+            routerVersion: 'semantic-router-v1',
+            promptVersion: 'semantic-router-prompt-v1',
+            toolsetVersion: 'toolset',
+            traceCount: 3,
+            semanticPrimaryCount: 2,
+            caseMemoryReadiness: 'ready_for_case_memory',
+            firstSeenAt: '2026-03-20T09:00:00.000Z',
+            lastSeenAt: '2026-03-20T10:00:00.000Z',
+            ttlExpiresAt: '2026-03-27T10:00:00.000Z',
+            sampleTraceId: 'tr-1',
+            sampleQuery: 'покажи все созданные техкарты',
+            captureStatus: 'not_captured',
+            capturedAt: null,
+            captureAuditLogId: null,
+            activatedAt: null,
+            activationAuditLogId: null,
+          },
+        ],
+        failureClusters: [
+          {
+            key: 'agronomist::navigate::legacy_write_vs_semantic_read',
+            targetRole: 'agronomist',
+            decisionType: 'navigate',
+            mismatchKinds: ['legacy_write_vs_semantic_read'],
+            count: 3,
+            semanticPrimaryCount: 2,
+            caseMemoryReadiness: 'ready_for_case_memory',
+            lastSeenAt: '2026-03-20T10:00:00.000Z',
+            sampleTraceId: 'tr-1',
+            sampleQuery: 'покажи все созданные техкарты',
+          },
+        ],
+        agentBreakdown: [
+          {
+            targetRole: 'agronomist',
+            totalEvents: 12,
+            mismatchedEvents: 3,
+            divergenceRatePct: 25,
+            semanticPrimaryCount: 4,
+            decisionBreakdown: [{ decisionType: 'navigate', count: 6 }],
+            topMismatchKinds: [{ kind: 'legacy_write_vs_semantic_read', count: 3 }],
+            sampleTraceId: 'tr-1',
+            sampleQuery: 'покажи все созданные техкарты',
+          },
+        ],
+        topClusters: [
+          {
+            key: 'legacy_write_vs_semantic_read',
+            label: 'legacy_write_vs_semantic_read',
+            count: 3,
+            mismatchKinds: ['legacy_write_vs_semantic_read'],
+            sampleTraceId: 'tr-1',
+            sampleQuery: 'покажи все созданные техкарты',
+          },
+        ],
+        decisionBreakdown: [{ decisionType: 'navigate', count: 6 }],
+        collisionMatrix: [],
+        recentMismatches: [
+          {
+            traceId: 'tr-1',
+            createdAt: '2026-03-20T10:00:00.000Z',
+            summary: 'legacy_write_vs_semantic_read',
+            sampleQuery: 'покажи все созданные техкарты',
+            targetRole: 'agronomist',
+            decisionType: 'navigate',
+            promotedPrimary: true,
+          },
+        ],
+      },
+    });
     runtimeGovernanceSummaryMock.mockResolvedValue({ data: null });
     runtimeGovernanceAgentsMock.mockResolvedValue({ data: [] });
     runtimeGovernanceDrilldownsMock.mockResolvedValue({ data: null });
@@ -157,6 +248,14 @@ describe('ControlTowerPage queue visibility', () => {
       },
     });
     pendingActionsListMock.mockResolvedValue({ data: [] });
+    captureRoutingCaseMemoryCandidateMock.mockResolvedValue({
+      data: {
+        status: 'captured',
+        candidateKey: 'agro.techmaps.list-open-create::agronomist::navigate::legacy_write_vs_semantic_read::semantic-router-v1::semantic-router-prompt-v1::toolset',
+        auditLogId: 'audit-1',
+        capturedAt: '2026-03-20T12:00:00.000Z',
+      },
+    });
   });
 
   it('показывает live queue/backpressure state в control tower', async () => {
@@ -173,8 +272,36 @@ describe('ControlTowerPage queue visibility', () => {
     expect(screen.getByText('свежий')).toBeInTheDocument();
     expect(screen.getByText('runtime_active_tool_calls')).toBeInTheDocument();
     expect(screen.getByText(/посл\. 6 \/ пик 7/)).toBeInTheDocument();
+    expect(screen.getByText('Текущие расхождения legacy и semantic routing')).toBeInTheDocument();
+    expect(screen.getByText('Где шумит сильнее всего')).toBeInTheDocument();
+    expect(screen.getByText('Повторяющиеся кластеры сбоев')).toBeInTheDocument();
+    expect(screen.getByText('Кандидаты в память кейсов')).toBeInTheDocument();
+    expect(screen.getAllByText('готово к памяти кейсов').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'зафиксировать' })).toBeInTheDocument();
+    expect(screen.getByText(/версия router semantic-router-v1/)).toBeInTheDocument();
+    expect(screen.getAllByText('agronomist').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('legacy_write_vs_semantic_read').length).toBeGreaterThan(0);
     expect(screen.getByText('Контур памяти')).toBeInTheDocument();
     expect(memoryHealthMock).toHaveBeenCalled();
+  });
+
+  it('фиксирует готовый candidate в память кейсов', async () => {
+    render(<ControlTowerPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'зафиксировать' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'зафиксировать' }));
+
+    await waitFor(() => {
+      expect(captureRoutingCaseMemoryCandidateMock).toHaveBeenCalledWith({
+        key: 'agro.techmaps.list-open-create::agronomist::navigate::legacy_write_vs_semantic_read::semantic-router-v1::semantic-router-prompt-v1::toolset',
+        windowHours: 24,
+        slice: 'agro.techmaps.list-open-create',
+        targetRole: 'agronomist',
+      });
+    });
   });
 
   it('скрывает Memory Fabric для непривилегированной роли', async () => {

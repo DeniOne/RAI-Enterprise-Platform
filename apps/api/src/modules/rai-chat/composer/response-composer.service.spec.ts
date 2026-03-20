@@ -42,6 +42,39 @@ describe("ResponseComposerService", () => {
     expect(first.kind).toBe("route");
   });
 
+  it("для read-only запроса по техкартам предлагает открыть реестр и не отдаёт общий fallback", async () => {
+    const response = await service.buildResponse({
+      request: {
+        message: "покажи все созданные техкарты",
+        threadId: "th-techmaps-ro",
+        workspaceContext: { route: "/parties" },
+      },
+      executionResult: {
+        executedTools: [],
+      } as any,
+      recallResult: {
+        recall: { items: [] },
+        profile: {},
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-techmaps-ro",
+      threadId: "th-techmaps-ro",
+      companyId: "company-1",
+    });
+
+    expect(response.text).toContain("Понял запрос: показать список техкарт");
+    expect(response.text).not.toContain("Я не совсем понял ваш запрос");
+    expect(response.suggestedActions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "route",
+          title: "Открыть реестр техкарт",
+          href: "/consulting/techmaps/active",
+        }),
+      ]),
+    );
+  });
+
   it("не показывает ложный успех CRM, если действие заблокировано RiskPolicy", async () => {
     const response = await service.buildResponse({
       request: {

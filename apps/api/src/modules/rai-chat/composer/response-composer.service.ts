@@ -166,6 +166,7 @@ export class ResponseComposerService {
     } = params;
     const { recall, profile } = recallResult;
     const clientFacing = request.audience === "client_front_office";
+    const readOnlyTechMapQuery = this.isReadOnlyTechMapQuery(request.message);
 
     const directAnswer = this.buildDirectAnswerForRequest(
       request.message,
@@ -173,7 +174,9 @@ export class ResponseComposerService {
     );
     const fallbackText =
       "Я не совсем понял ваш запрос. Пожалуйста, уточните: вас интересует агрономия (технологические карты, поля), финансы или необходимо выполнить поиск в базе знаний?";
-    let text = directAnswer ?? fallbackText;
+    const techMapReadOnlyText =
+      "Понял запрос: показать список техкарт. Откройте реестр техкарт по кнопке ниже.";
+    let text = directAnswer ?? (readOnlyTechMapQuery ? techMapReadOnlyText : fallbackText);
     if (!directAnswer && executionResult.executedTools.length > 0) {
       const toolSummary = this.summarizeExecutedTools(
         executionResult.executedTools,
@@ -220,6 +223,12 @@ export class ResponseComposerService {
 
     if (executionResult.agentExecution) {
       text = executionResult.agentExecution.text;
+      if (
+        readOnlyTechMapQuery &&
+        executionResult.agentExecution.status === "NEEDS_MORE_DATA"
+      ) {
+        text = techMapReadOnlyText;
+      }
     }
     if (clarificationPayload) {
       text = clarificationPayload.text;
@@ -1809,6 +1818,13 @@ export class ResponseComposerService {
         payload: { message: request.message },
       },
     ];
+    if (this.isReadOnlyTechMapQuery(request.message)) {
+      actions.unshift({
+        kind: "route",
+        title: "Открыть реестр техкарт",
+        href: "/consulting/techmaps/active",
+      });
+    }
     const expertReviewAction = this.buildExpertReviewAction(
       request,
       runtimeGovernance,
@@ -2089,6 +2105,24 @@ export class ResponseComposerService {
     }
 
     return null;
+  }
+
+  private isReadOnlyTechMapQuery(message: string): boolean {
+    const normalized = message.toLowerCase();
+    const mentionsTechMap = /(техкарт|techmap)/i.test(normalized);
+    if (!mentionsTechMap) {
+      return false;
+    }
+
+    const hasCreateSignal =
+      /(созд(ай|ать)|сдела(й|ть)|состав(ь|ить)|подготов(ь|ить)|сгенерируй|черновик|draft)/i.test(
+        normalized,
+      );
+    const hasReadSignal =
+      /(покаж|спис|все|какие|посмотр|найд|открой|где|выведи|реестр|активн|архив|заморож)/i.test(
+        normalized,
+      );
+    return hasReadSignal && !hasCreateSignal;
   }
 
   private summarizeExecutedTools(

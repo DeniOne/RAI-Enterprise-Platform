@@ -21,6 +21,7 @@ import {
 } from "../agent-platform/agent-platform.types";
 import { AgentExecutionAdapterService } from "./agent-execution-adapter.service";
 import { RuntimeGovernanceControlService } from "./runtime-governance-control.service";
+import { RaiToolName as SharedRaiToolName } from "../../../shared/rai-chat/rai-tools.types";
 
 export interface ExecutionResult {
   executedTools: Array<{ name: RaiToolName; result: unknown }>;
@@ -88,9 +89,9 @@ export class AgentRuntimeService {
       };
     }
 
-    const requestedToolCalls = this.filterRequestedToolsByKernel(
-      request.requestedTools ?? [],
-      kernel,
+    const requestedToolCalls = this.filterRequestedToolsBySemanticRoute(
+      this.filterRequestedToolsByKernel(request.requestedTools ?? [], kernel),
+      request,
     );
     const runtimeOverrides = kernel.governancePolicy?.runtimeGovernanceOverrides;
     const budgetDecision = await this.budgetController.evaluateRuntimeBudget(
@@ -497,6 +498,21 @@ export class AgentRuntimeService {
         .filter((binding) => binding.isEnabled)
         .map((binding) => binding.toolName),
     );
+    return requestedToolCalls.filter((call) => allowed.has(call.name));
+  }
+
+  private filterRequestedToolsBySemanticRoute(
+    requestedToolCalls: RaiToolCallDto[],
+    request: AgentExecutionRequest,
+  ): RaiToolCallDto[] {
+    if (!request.semanticRouting?.enforceCapabilityGating) {
+      return requestedToolCalls;
+    }
+    const eligibleTools = request.semanticRouting.routeDecision.eligibleTools;
+    if (eligibleTools.length === 0) {
+      return [];
+    }
+    const allowed = new Set<SharedRaiToolName>(eligibleTools);
     return requestedToolCalls.filter((call) => allowed.has(call.name));
   }
 }

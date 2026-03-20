@@ -96,4 +96,34 @@ describe("ContractsAgent", () => {
       }),
     );
   });
+
+  it("review_commerce_contract принимает query без contractId", async () => {
+    (contractsToolsRegistryMock.execute as jest.Mock).mockResolvedValue({
+      id: "contract-77",
+      number: "DOG-077",
+      type: "SUPPLY",
+      status: "ACTIVE",
+      validFrom: "2026-03-09T00:00:00.000Z",
+      validTo: null,
+      createdAt: "2026-03-09T00:00:00.000Z",
+      roles: [],
+    });
+
+    const result = await agent.run({
+      companyId: "company-1",
+      traceId: "trace-4",
+      intent: "review_commerce_contract",
+      query: "DOG-077",
+    });
+
+    expect(result.status).toBe("COMPLETED");
+    expect(contractsToolsRegistryMock.execute).toHaveBeenCalledWith(
+      "get_commerce_contract",
+      { query: "DOG-077" },
+      expect.objectContaining({
+        companyId: "company-1",
+        traceId: "trace-4",
+      }),
+    );
+  });
 });
