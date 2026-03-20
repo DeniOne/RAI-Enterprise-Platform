@@ -56,3 +56,5 @@ brain/
 
 # Runtime data
 var/
+# Legacy flattened docs dump (deprecated)
+ALL_DOCS/
