@@ -46,3 +46,6 @@ last_verified: 2026-03-20
 
 ## Freshness
 SLA правила в `docs/05_OPERATIONS/DOC_FRESHNESS_SLA.md`.
+
+## Codex IDE Rule Source
+Repo-level поведение Codex для этого проекта дополнительно зафиксировано в `/AGENTS.md`.
