@@ -137,7 +137,10 @@ export class FrontOfficeAgent {
             classification,
           },
           confidence: classification.confidence,
-          explain: this.explainClassification(classification),
+          explain:
+            classification.classification === "free_chat"
+              ? this.explainFreeChat(input.messageText)
+              : this.explainClassification(classification),
           toolCallsCount: 2,
           traceId: input.traceId,
           evidence: this.buildEvidence(classification, input.intent),
@@ -196,6 +199,10 @@ export class FrontOfficeAgent {
   private explainClassification(data: ClassifyDialogThreadResult): string {
     const owner = data.targetOwnerRole ? ` Владелец для handoff: ${data.targetOwnerRole}.` : "";
     return `Диалог классифицирован как ${data.classification}. Уверенность: ${data.confidence.toFixed(2)}.${owner}`;
+  }
+
+  private explainFreeChat(messageText: string): string {
+    return `Принял: ${messageText.trim()}`;
   }
 
   private explainEscalation(data: CreateFrontOfficeEscalationResult): string {

@@ -1489,7 +1489,7 @@ export interface RaiChatResponseDto {
 
 export interface RaiChatClarificationResumeDto {
     windowId: string;
-    intentId: 'tech_map_draft' | 'compute_plan_fact';
+    intentId: 'tech_map_draft' | 'compute_plan_fact' | 'multi_source_aggregation';
     agentRole: 'agronomist' | 'economist';
     collectedContext: {
         fieldRef?: string;
@@ -1709,6 +1709,27 @@ export interface TraceForensicsSemanticIngressEntityDto {
     source: 'semantic' | 'workspace' | 'message' | 'tool_payload';
 }
 
+export interface TraceForensicsCompositeWorkflowStageDto {
+    stageId: string;
+    order: number;
+    agentRole: string;
+    intent: string;
+    toolName: string;
+    label: string;
+    dependsOn: string[];
+    status: 'planned' | 'completed' | 'failed' | 'blocked';
+    summary?: string;
+}
+
+export interface TraceForensicsCompositeWorkflowPlanDto {
+    planId: string;
+    workflowId: string;
+    leadOwnerAgent: string;
+    executionStrategy: 'sequential' | 'parallel' | 'blocking';
+    summary: string;
+    stages: TraceForensicsCompositeWorkflowStageDto[];
+}
+
 export interface TraceForensicsSemanticIngressFrameDto {
     version: 'v1';
     interactionMode: 'free_chat' | 'information_request' | 'task_request' | 'workflow_resume';
@@ -1730,6 +1751,7 @@ export interface TraceForensicsSemanticIngressFrameDto {
     confidenceBand: 'high' | 'medium' | 'low';
     explanation: string;
     proofSliceId?: string | null;
+    compositePlan?: TraceForensicsCompositeWorkflowPlanDto | null;
 }
 
 export interface TraceForensicsResponseDto {

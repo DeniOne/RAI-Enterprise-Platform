@@ -230,7 +230,10 @@ export class PendingActionsController {
         userId,
         userRole: role,
         userConfirmed: true,
-        userIntentSource: "workflow_resume",
+        writePolicy: {
+          decision: "execute",
+          reason: "workflow_resume_approved_pending_action",
+        },
         approvedPendingActionId: action.id,
         agentRole: "governance_executor",
       });

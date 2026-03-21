@@ -218,6 +218,49 @@ describe("SemanticRouterService", () => {
     expect(result.requestedToolCalls).toEqual([]);
   });
 
+  it("понижает route до prior для plan-fact даже без route в workspaceContext", async () => {
+    const result = await service.evaluate({
+      companyId: "c1",
+      message: "покажи план-факт по выбранному плану",
+      workspaceContext: {
+        selectedRowSummary: {
+          kind: "yield",
+          id: "plan-7",
+          title: "План уборки plan-7",
+        },
+        activeEntityRefs: [{ kind: "field", id: "field-7" }],
+      } as any,
+      traceId: "tr-planfact-1b",
+      threadId: "th-planfact-1b",
+      legacyClassification: {
+        targetRole: "economist",
+        intent: "compute_plan_fact",
+        toolName: RaiToolName.ComputePlanFact,
+        confidence: 0.76,
+        method: "regex",
+        reason: "legacy",
+      },
+      requestedToolCalls: [],
+      allowPrimaryPromotion: true,
+    });
+
+    expect(result.sliceId).toBe("finance.plan-fact.read");
+    expect(result.promotedPrimary).toBe(true);
+    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.classification.method).toBe("semantic_router_primary");
+    expect(result.routeDecision.decisionType).toBe("execute");
+    expect(result.requestedToolCalls).toEqual([
+      {
+        name: RaiToolName.ComputePlanFact,
+        payload: {
+          scope: {
+            planId: "plan-7",
+          },
+        },
+      },
+    ]);
+  });
+
   it("переводит scenario slice в primary и выдаёт simulate_scenario по выбранному плану", async () => {
     const result = await service.evaluate({
       companyId: "c1",
@@ -407,6 +450,40 @@ describe("SemanticRouterService", () => {
     expect(result.requestedToolCalls).toEqual([]);
   });
 
+  it("понижает route до prior для crm workspace review даже без route в workspaceContext", async () => {
+    const result = await service.evaluate({
+      companyId: "c1",
+      message: "как зовут директора Сысои",
+      workspaceContext: {} as any,
+      traceId: "tr-crm-2b",
+      threadId: "th-crm-2b",
+      legacyClassification: {
+        targetRole: "crm_agent",
+        intent: "review_account_workspace",
+        toolName: RaiToolName.GetCrmAccountWorkspace,
+        confidence: 0.67,
+        method: "regex",
+        reason: "legacy",
+      },
+      requestedToolCalls: [],
+      allowPrimaryPromotion: true,
+    });
+
+    expect(result.sliceId).toBe("crm.account.workspace-review");
+    expect(result.promotedPrimary).toBe(true);
+    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.classification.intent).toBe("review_account_workspace");
+    expect(result.routeDecision.decisionType).toBe("execute");
+    expect(result.requestedToolCalls).toEqual([
+      {
+        name: RaiToolName.GetCrmAccountWorkspace,
+        payload: {
+          query: "Сысои",
+        },
+      },
+    ]);
+  });
+
   it("переводит crm counterparty lookup slice в primary и извлекает ИНН из запроса", async () => {
     const result = await service.evaluate({
       companyId: "c1",
@@ -471,6 +548,34 @@ describe("SemanticRouterService", () => {
     expect(result.routeDecision.decisionType).toBe("clarify");
     expect(result.routeDecision.requiredContextMissing).toEqual(["inn"]);
     expect(result.requestedToolCalls).toEqual([]);
+  });
+
+  it("понижает route до prior для deviations slice даже без route в workspaceContext", async () => {
+    const result = await service.evaluate({
+      companyId: "c1",
+      message: "покажи отклонения по этому полю",
+      workspaceContext: {
+        activeEntityRefs: [{ kind: "field", id: "field-1" }],
+      } as any,
+      traceId: "tr-dev-2",
+      threadId: "th-dev-2",
+      legacyClassification: {
+        targetRole: "agronomist",
+        intent: "compute_deviations",
+        toolName: RaiToolName.ComputeDeviations,
+        confidence: 0.68,
+        method: "regex",
+        reason: "legacy",
+      },
+      requestedToolCalls: [],
+      allowPrimaryPromotion: true,
+    });
+
+    expect(result.sliceId).toBe("agro.deviations.review");
+    expect(result.promotedPrimary).toBe(true);
+    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.classification.intent).toBe("compute_deviations");
+    expect(result.routeDecision.decisionType).toBe("execute");
   });
 
   it("не переводит разговорный write-запрос по контрагенту в read-only lookup slice", async () => {

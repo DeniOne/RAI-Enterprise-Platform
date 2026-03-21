@@ -22,10 +22,6 @@ import { DataScientistAgent } from "./agents/data-scientist-agent.service";
 import { AgroDeterministicEngineFacade } from "./deterministic/agro-deterministic.facade";
 import { IntentRouterService } from "./intent-router/intent-router.service";
 import { RaiToolName } from "./tools/rai-tools.types";
-import {
-  RAI_CHAT_WIDGETS_SCHEMA_VERSION,
-  RaiChatWidgetType,
-} from "../../shared/rai-chat/rai-chat-widgets.types";
 import { ExternalSignalsService } from "./external-signals.service";
 import { RaiChatWidgetBuilder } from "./rai-chat-widget-builder";
 import { MemoryCoordinatorService } from "./memory/memory-coordinator.service";
@@ -219,7 +215,59 @@ describe("RaiChatService", () => {
         RiskToolsRegistry,
         KnowledgeToolsRegistry,
         { provide: CrmToolsRegistry, useValue: { has: jest.fn().mockReturnValue(false), execute: jest.fn() } },
-        { provide: FrontOfficeToolsRegistry, useValue: { has: jest.fn().mockReturnValue(false), execute: jest.fn() } },
+        {
+          provide: FrontOfficeToolsRegistry,
+          useValue: {
+            has: jest.fn((toolName: RaiToolName) =>
+              [
+                RaiToolName.LogDialogMessage,
+                RaiToolName.ClassifyDialogThread,
+                RaiToolName.CreateFrontOfficeEscalation,
+              ].includes(toolName),
+            ),
+            execute: jest.fn(async (toolName: RaiToolName, payload: any) => {
+              if (toolName === RaiToolName.LogDialogMessage) {
+                return {
+                  logged: true,
+                  auditLogId: "audit-front-office-log",
+                  threadKey: payload.threadExternalId ?? "thread-1",
+                  channel: payload.channel,
+                  direction: payload.direction,
+                };
+              }
+              if (toolName === RaiToolName.ClassifyDialogThread) {
+                return {
+                  classification: /срочно|проблем/i.test(String(payload.messageText))
+                    ? "escalation_signal"
+                    : /нужно|сделай|заведи|передай/i.test(String(payload.messageText))
+                      ? "task_process"
+                      : "free_chat",
+                  confidence: 0.65,
+                  reasons: ["front-office-mock"],
+                  targetOwnerRole: undefined,
+                  needsEscalation: false,
+                  threadKey: payload.threadExternalId ?? "thread-1",
+                  anchorCandidates: {
+                    farmRefs: [],
+                    fieldIds: [],
+                    seasonIds: [],
+                    taskIds: [],
+                  },
+                  mustClarifications: [],
+                  handoffSummary: `classification=free_chat | ${payload.messageText}`,
+                };
+              }
+              return {
+                created: true,
+                auditLogId: "audit-front-office-escalation",
+                classification: "escalation_signal",
+                targetOwnerRole: "monitoring",
+                summary: "handoff",
+                threadKey: payload.threadExternalId ?? "thread-1",
+              };
+            }),
+          },
+        },
         { provide: ContractsToolsRegistry, useValue: { has: jest.fn().mockReturnValue(false), execute: jest.fn() } },
         AgroDeterministicEngineFacade,
         AgronomAgent,
@@ -302,7 +350,7 @@ describe("RaiChatService", () => {
     module.get(RaiToolsRegistry).onModuleInit();
   });
 
-  it("returns typed suggested actions and canonical widgets", async () => {
+  it("returns typed suggested actions and suppresses legacy widgets in agentExecution path", async () => {
     const result = await service.handleChat(
       {
         message: "Покажи контекст",
@@ -334,32 +382,7 @@ describe("RaiChatService", () => {
       ]),
     );
 
-    expect(result.widgets).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          schemaVersion: RAI_CHAT_WIDGETS_SCHEMA_VERSION,
-          type: RaiChatWidgetType.DeviationList,
-        }),
-        expect.objectContaining({
-          schemaVersion: RAI_CHAT_WIDGETS_SCHEMA_VERSION,
-          type: RaiChatWidgetType.TaskBacklog,
-        }),
-      ]),
-    );
-    expect(result.widgets).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          payload: expect.objectContaining({
-            title: "Отклонения по маршруту registry / fields",
-          }),
-        }),
-        expect.objectContaining({
-          payload: expect.objectContaining({
-            title: "Бэклог NY-1 для registry / fields",
-          }),
-        }),
-      ]),
-    );
+    expect(result.widgets).toEqual([]);
 
     expect(result.toolCalls).toEqual([
       {
@@ -543,7 +566,7 @@ describe("RaiChatService", () => {
     expect(result.text).toContain("Feedback по advisory записан в память.");
   });
 
-  it("динамически меняет виджеты при смене route и companyId", async () => {
+  it("не поднимает legacy widgets при смене route и companyId в agentExecution path", async () => {
     const executionResult = await service.handleChat(
       {
         message: "Проверь исполнение",
@@ -570,33 +593,7 @@ describe("RaiChatService", () => {
       "company-ZX99",
     );
 
-    expect(executionResult.widgets[0]).toEqual(
-      expect.objectContaining({
-        payload: expect.objectContaining({
-          title: "Отклонения по маршруту consulting / execution / manager",
-          items: expect.arrayContaining([
-            expect.objectContaining({
-              id: expect.stringContaining("AB12-manager"),
-              severity: "high",
-              fieldLabel: "Контекст: Опрыскивание 12",
-            }),
-          ]),
-        }),
-      }),
-    );
-
-    expect(dashboardResult.widgets[1]).toEqual(
-      expect.objectContaining({
-        payload: expect.objectContaining({
-          title: "Бэклог ZX99 для consulting / dashboard",
-          items: expect.arrayContaining([
-            expect.objectContaining({
-              id: expect.stringContaining("ZX99-dashboard"),
-              ownerLabel: "Компания ZX99",
-            }),
-          ]),
-        }),
-      }),
-    );
+    expect(executionResult.widgets).toEqual([]);
+    expect(dashboardResult.widgets).toEqual([]);
   });
 });

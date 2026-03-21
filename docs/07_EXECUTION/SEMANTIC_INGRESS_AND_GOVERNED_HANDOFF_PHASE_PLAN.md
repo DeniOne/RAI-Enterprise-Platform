@@ -3,7 +3,7 @@ id: DOC-EXE-SEMANTIC-INGRESS-GOVERNED-HANDOFF-20260321
 layer: Execution
 type: Phase Plan
 status: draft
-version: 0.1.20
+version: 0.1.22
 owners: [@techlead]
 last_updated: 2026-03-21
 claim_id: CLAIM-EXE-SEMANTIC-INGRESS-GOVERNED-HANDOFF-20260321
@@ -882,6 +882,27 @@ Checklist:
 - governed write-boundary теперь различает прямую пользовательскую команду и delegated/autonomous write-path типизированно, а не по косвенному `userId`;
 - свободные CRM register-перефразы закреплены отдельным regression gate поверх `IntentRouter -> SemanticRouter -> SemanticIngressFrame`.
 
+### Статус следующего пакета на 2026-03-21
+
+Пакет:
+
+- `crm composite flow: register_counterparty -> create_account -> open_workspace`
+
+Checklist:
+
+- [x] `Semantic Ingress Frame` расширен `compositePlan` для CRM follow-up flow
+- [x] `SupervisorAgent` исполняет staged composite flow последовательно и собирает merged orchestration result
+- [x] `ResponseComposer` отдаёт отдельный `crm_composite_flow` work window с owner/strategy/stage status
+- [x] `Trace Forensics` показывает `Composite workflow` block в `Semantic Ingress Frame`
+- [x] web DTO и UI синхронизированы по `crm_composite_flow` и composite ingress payload
+- [x] targeted specs по `semantic-ingress`, `supervisor-agent`, `response-composer` и `Control Tower` проходят
+
+Текущий эффект:
+
+- платформа уже умеет проводить короткий governed CRM composite сценарий как один lead-owner workflow;
+- staged execution больше не теряется в разрозненных CRM write/read переходах;
+- operator UI и trace forensics видят составной план явно, без чтения сырого orchestration trace.
+
 Следующий пакет после него:
 
 - `crm composite flow: register_counterparty -> create_account -> open_workspace`
@@ -908,6 +929,22 @@ Checklist:
 - ответ про объём операции и её стоимость будет проходить не только через multi-source orchestration, но и через branch-level verification;
 - конфликт между `agro` и `finance` источниками будет раскрываться честно, а не маскироваться синтетическим текстом;
 - latency и accuracy tradeoff станет измеримым и управляемым.
+
+### Статус аналитического trust-пакета на 2026-03-21
+
+Checklist:
+
+- [x] `Semantic Ingress Frame` нормализует `agro execution fact -> finance cost aggregation` в аналитический composite workflow
+- [x] `SupervisorAgent` исполняет staged analytical workflow по `agronomist -> economist`
+- [x] `ResponseComposer` отдаёт отдельный `multi_source_aggregation` work window для аналитического composite-flow
+- [x] `Branch trust` corpus покрывает verified multi-source branches для agro/finance composite-case
+- [x] targeted specs по `semantic-ingress`, `supervisor-agent`, `response-composer` и `branch-trust.eval` проходят
+
+Текущий эффект:
+
+- multi-source аналитический вопрос проходит через one-owner staged execution и branch-level trust verification;
+- `agro` и `finance` branch payload теперь видны как подтверждённые факты, а не как разрозненный текст;
+- trust/eval контур уже знает этот slice как отдельный regression case.
 
 ### 7.1 File-level backlog для `Branch Trust Gate`
 
@@ -1245,6 +1282,15 @@ Checklist:
 - следующий незакрытый tranche уже выходит за границы текущего trust rollout:
   - ввести first-class `Semantic Ingress Frame`
   - поднять `front_office_agent` как ingress-owner
-  - перевести `SupervisorAgent` в `semantic-first`
-  - вынуть повторный routing из execution path
-  - отделить write-policy от lexical signal
+  - no-route процессные и safe free-chat сообщения уже проходят через `front_office_agent` ingress-layer; greeting acknowledge сохранён, а fail-open path не сломан
+  - `SupervisorAgent` уже выбирает runtime owner role из `SemanticIngressFrame` первым, а legacy classification оставляет fallback-слоем
+  - `AgentExecutionAdapter` уже берёт intent из `SemanticIngressFrame` первым для migrated roles, а phrase heuristics оставляет только compatibility fallback; `chief_agronomist` и `data_scientist` тоже gated в primary semantic routing
+  - `agronomist` primary semantic routing тоже переведён на safe draft default `generate_tech_map_draft`, чтобы adapter не возвращался к phrase guessing на agronomist path
+  - `SemanticIngressFrame` уже несёт typed `writePolicy`, отделяя confirm/execute/clarify/block от lexical signal
+  - `writePolicy` уже отдельным полем возвращается в trace forensics response, чтобы policy decision был видим в наблюдаемом API
+  - `RaiToolActorContext.writePolicy` уже используется в CRM direct-write gating, чтобы прямой write-path решался по typed policy, а не по `userIntentSource`
+  - approved pending-action execution тоже уже несёт typed `writePolicy`, а строковый `workflow_resume` там больше не выступает source of truth
+  - approved pending-action execution прикрыт unit-spec, который фиксирует typed policy contract
+  - CRM и contracts primary routing теперь тоже закрыты safe read defaults вместо text-based intent guessing, чтобы adapter не пересобирал intent по фразе там, где upstream semantic plan уже обязан был прийти
+  - `front_office_agent` в primary routing тоже уже использует `classify_dialog_thread` как safe default вместо message-based fallback
+  - `route` и `workspaceContext` в semantic-router уже работают как contextual prior для ключевых owner-intents, а не как обязательный gate понимания запроса

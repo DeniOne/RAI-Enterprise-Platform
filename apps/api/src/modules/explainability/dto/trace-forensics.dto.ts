@@ -4,7 +4,10 @@ import {
   BranchTrustAssessment,
   UserFacingBranchCompositionPayload,
 } from "../../../shared/rai-chat/branch-trust.types";
-import { SemanticIngressFrame } from "../../../shared/rai-chat/semantic-ingress.types";
+import {
+  SemanticIngressFrame,
+  SemanticIngressWritePolicy,
+} from "../../../shared/rai-chat/semantic-ingress.types";
 
 /**
  * DTO для Explainability Explorer (Forensics): обогащённый таймлайн трейса с evidence и алертами.
@@ -101,4 +104,5 @@ export interface TraceForensicsResponseDto {
   memoryLane?: TraceForensicsMemoryLaneDto | null;
   branchTrust?: TraceForensicsBranchTrustDto | null;
   semanticIngressFrame?: SemanticIngressFrame | null;
+  writePolicy?: SemanticIngressWritePolicy | null;
 }

@@ -117,8 +117,10 @@ export class AgentExecutionAdapterService {
       const readOnlyTechMapQuery = this.isReadOnlyTechMapQuery(
         params.request.message,
       );
+      const primarySemanticRouting =
+        params.request.semanticRouting?.source === "primary";
 
-      if (!routing.intent && readOnlyTechMapQuery) {
+      if (readOnlyTechMapQuery && (!routing.intent || primarySemanticRouting)) {
         return {
           role: params.request.role,
           status: "COMPLETED",
@@ -631,7 +633,13 @@ export class AgentExecutionAdapterService {
         params.allowedToolCalls,
         params.request,
       );
-      const intent = detectFrontOfficeIntent(params.allowedToolCalls);
+      const intent =
+        this.resolveSemanticIngressIntent<
+          ReturnType<typeof detectFrontOfficeIntent>
+        >(params.request, "front_office_agent") ??
+        (params.request.semanticRouting?.source === "primary"
+          ? "classify_dialog_thread"
+          : detectFrontOfficeIntent(params.allowedToolCalls));
       const result = await this.frontOfficeAgent.run(
         {
           companyId: params.actorContext.companyId,
@@ -911,15 +919,12 @@ export class AgentExecutionAdapterService {
         params.allowedToolCalls,
         params.request,
       );
+      const intent = this.resolveChiefAgronomistIntent(params.request);
       const result = await this.chiefAgronomistAgent.run(
         {
           companyId: params.actorContext.companyId,
           traceId: params.request.traceId,
-          intent:
-            params.request.message.toLowerCase().includes("алерт") ||
-            params.request.message.toLowerCase().includes("совет")
-              ? "alert_review"
-              : "expert_opinion",
+          intent,
           query: params.request.message,
           context: {
             fieldId:
@@ -964,6 +969,7 @@ export class AgentExecutionAdapterService {
         params.allowedToolCalls,
         params.request,
       );
+      const intent = this.resolveDataScientistIntent(params.request);
       const domains = Array.isArray(payload.domains)
         ? payload.domains.filter(
             (value): value is "agro" | "economics" | "finance" | "risk" =>
@@ -988,7 +994,7 @@ export class AgentExecutionAdapterService {
         {
           companyId: params.actorContext.companyId,
           traceId: params.request.traceId,
-          intent: detectDataScientistIntent(params.request.message),
+          intent,
           scopeLevel,
           horizonDays,
           domains,
@@ -1118,6 +1124,13 @@ export class AgentExecutionAdapterService {
       };
     }
 
+    if (semanticRoutingSource === "primary") {
+      return {
+        intent: "generate_tech_map_draft",
+        executionPath: "semantic_router_primary",
+      };
+    }
+
     const normalizedMessage = message.toLowerCase();
     if (/отклон|deviation/i.test(normalizedMessage)) {
       return {
@@ -1148,6 +1161,13 @@ export class AgentExecutionAdapterService {
     allowedToolCalls: RaiToolCallDto[],
     request: AgentExecutionRequest,
   ): EconomistIntent {
+    const semanticIngressIntent = this.resolveSemanticIngressIntent<
+      EconomistIntent
+    >(request, "economist");
+    if (semanticIngressIntent) {
+      return semanticIngressIntent;
+    }
+
     if (
       allowedToolCalls.some(
         (call) => call.name === RaiToolName.ComputeRiskAssessment,
@@ -1188,6 +1208,10 @@ export class AgentExecutionAdapterService {
       return "simulate_scenario";
     }
 
+    if (request.semanticRouting?.source === "primary") {
+      return "compute_plan_fact";
+    }
+
     const normalizedMessage = request.message.toLowerCase();
     if (/(сценар|scenario|what if|что если)/i.test(normalizedMessage)) {
       return "simulate_scenario";
@@ -1220,10 +1244,10 @@ export class AgentExecutionAdapterService {
     allowedToolCalls: RaiToolCallDto[],
     request: AgentExecutionRequest,
   ): CrmAgentIntent {
-    const ingressIntent =
-      request.semanticIngressFrame?.requestedOperation.ownerRole === "crm_agent"
-        ? request.semanticIngressFrame.requestedOperation.intent
-        : null;
+    const ingressIntent = this.resolveSemanticIngressIntent<CrmAgentIntent>(
+      request,
+      "crm_agent",
+    );
     if (ingressIntent === "lookup_counterparty_by_inn") {
       return "lookup_counterparty_by_inn";
     }
@@ -1254,7 +1278,11 @@ export class AgentExecutionAdapterService {
       return "lookup_counterparty_by_inn";
     }
 
-    return detectCrmIntent(allowedToolCalls, request.message);
+    if (request.semanticRouting?.source === "primary") {
+      return "review_account_workspace";
+    }
+
+    return "review_account_workspace";
   }
 
   private isReadOnlyTechMapQuery(message: string): boolean {
@@ -1319,6 +1347,15 @@ export class AgentExecutionAdapterService {
     allowedToolCalls: RaiToolCallDto[],
     request: AgentExecutionRequest,
   ): ContractsAgentInput["intent"] {
+    const semanticIngressIntent =
+      this.resolveSemanticIngressIntent<ContractsAgentInput["intent"]>(
+        request,
+        "contracts_agent",
+      );
+    if (semanticIngressIntent) {
+      return semanticIngressIntent;
+    }
+
     if (allowedToolCalls.length > 0) {
       return detectContractsIntent(allowedToolCalls, request.message);
     }
@@ -1339,6 +1376,60 @@ export class AgentExecutionAdapterService {
       return "review_ar_balance";
     }
 
-    return detectContractsIntent(allowedToolCalls, request.message);
+    if (request.semanticRouting?.source === "primary") {
+      return "review_commerce_contract";
+    }
+
+    return "review_commerce_contract";
+  }
+
+  private resolveChiefAgronomistIntent(
+    request: AgentExecutionRequest,
+  ): "expert_opinion" | "alert_review" | "tech_map_review" {
+    if (request.semanticRouting?.source === "primary") {
+      return "expert_opinion";
+    }
+
+    const normalized = request.message.toLowerCase();
+    if (normalized.includes("алерт") || normalized.includes("совет")) {
+      return "alert_review";
+    }
+    return "expert_opinion";
+  }
+
+  private resolveDataScientistIntent(
+    request: AgentExecutionRequest,
+  ): Parameters<typeof detectDataScientistIntent>[0] extends string
+    ? ReturnType<typeof detectDataScientistIntent>
+    : never {
+    if (request.semanticRouting?.source === "primary") {
+      const sliceId = request.semanticRouting?.sliceId ?? null;
+      if (sliceId === "finance.scenario.analysis") {
+        return "what_if";
+      }
+      if (sliceId === "finance.risk.analysis") {
+        return "strategy_forecast";
+      }
+      if (sliceId === "finance.plan-fact.read") {
+        return "seasonal_report";
+      }
+      return "strategy_forecast";
+    }
+
+    return detectDataScientistIntent(request.message);
+  }
+
+  private resolveSemanticIngressIntent<T extends string>(
+    request: AgentExecutionRequest,
+    expectedRole: string,
+  ): T | null {
+    const semanticIngressIntent = request.semanticIngressFrame?.requestedOperation;
+    if (
+      semanticIngressIntent?.ownerRole !== expectedRole ||
+      !semanticIngressIntent.intent
+    ) {
+      return null;
+    }
+    return semanticIngressIntent.intent as T;
   }
 }

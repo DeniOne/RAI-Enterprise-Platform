@@ -347,6 +347,7 @@ export class ClarificationResumeDto {
   intentId:
     | "tech_map_draft"
     | "compute_plan_fact"
+    | "multi_source_aggregation"
     | "create_commerce_contract"
     | "create_contract_obligation"
     | "create_fulfillment_event"
@@ -481,6 +482,7 @@ export interface PendingClarificationDto {
   intentId:
     | "tech_map_draft"
     | "compute_plan_fact"
+    | "multi_source_aggregation"
     | "query_knowledge"
     | "emit_alerts"
     | "create_commerce_contract"
@@ -545,6 +547,7 @@ export interface RaiWorkWindowDto {
       | "query_knowledge"
       | "emit_alerts"
       | "branch_trust_summary"
+      | "multi_source_aggregation"
       | "create_commerce_contract"
       | "list_commerce_contracts"
       | "review_commerce_contract"
@@ -563,6 +566,7 @@ export interface RaiWorkWindowDto {
       | "create_counterparty_relation"
       | "create_crm_account"
       | "review_account_workspace"
+      | "crm_composite_flow"
       | "update_account_profile"
       | "create_crm_contact"
       | "update_crm_contact"

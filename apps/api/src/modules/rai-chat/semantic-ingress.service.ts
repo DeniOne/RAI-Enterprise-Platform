@@ -18,7 +18,12 @@ import {
   SemanticIngressOperationAuthority,
   SemanticIngressRequestShape,
   SemanticIngressRiskClass,
+  SemanticIngressWritePolicy,
 } from "../../shared/rai-chat/semantic-ingress.types";
+import {
+  CompositeWorkflowPlan,
+  CompositeWorkflowStageContract,
+} from "../../shared/rai-chat/composite-orchestration.types";
 import { extractInnFromMessage } from "../../shared/rai-chat/execution-adapter-heuristics";
 import { RaiToolName } from "../../shared/rai-chat/rai-tools.types";
 
@@ -52,6 +57,12 @@ export class SemanticIngressService {
       ),
       source,
     } satisfies SemanticIngressFrame["requestedOperation"];
+    const compositePlan = this.resolveCompositePlan({
+      request: params.request,
+      requestedOperation,
+      semanticEvaluation: params.semanticEvaluation,
+      finalClassification: params.finalClassification,
+    });
     const proofSliceId = this.resolveProofSliceId(
       requestedOperation.intent,
       requestedOperation.toolName,
@@ -65,6 +76,14 @@ export class SemanticIngressService {
       semanticEvaluation: params.semanticEvaluation,
       requestedOperation,
       proofSliceId,
+      compositePlan,
+    });
+    const writePolicy = this.resolveWritePolicy({
+      operationAuthority,
+      riskClass,
+      requestedOperation,
+      semanticEvaluation: params.semanticEvaluation,
+      proofSliceId,
     });
 
     return {
@@ -77,6 +96,7 @@ export class SemanticIngressService {
       requestShape: this.resolveRequestShape(
         params.request,
         params.finalRequestedToolCalls,
+        compositePlan,
       ),
       domainCandidates: this.resolveDomainCandidates(
         params.legacyClassification,
@@ -84,6 +104,7 @@ export class SemanticIngressService {
         params.semanticEvaluation,
       ),
       goal:
+        compositePlan?.summary ??
         params.finalClassification.intent ??
         params.semanticEvaluation.sliceId ??
         null,
@@ -98,7 +119,7 @@ export class SemanticIngressService {
         semanticEvaluation: params.semanticEvaluation,
         proofSliceId,
         riskClass,
-        operationAuthority,
+        writePolicy,
       }),
       confidenceBand: this.resolveConfidenceBand(
         params.finalClassification,
@@ -109,8 +130,12 @@ export class SemanticIngressService {
         operationAuthority,
         proofSliceId,
         params.semanticEvaluation,
+        compositePlan,
+        writePolicy,
       ),
+      writePolicy,
       proofSliceId,
+      compositePlan,
     };
   }
 
@@ -177,9 +202,13 @@ export class SemanticIngressService {
   private resolveRequestShape(
     request: RaiChatRequestDto,
     finalRequestedToolCalls: RaiChatRequestDto["toolCalls"],
+    compositePlan: CompositeWorkflowPlan | null,
   ): SemanticIngressRequestShape {
     if (request.clarificationResume) {
       return "clarification_resume";
+    }
+    if (compositePlan) {
+      return "composite";
     }
     if ((finalRequestedToolCalls?.length ?? 0) > 1) {
       return "composite";
@@ -336,13 +365,27 @@ export class SemanticIngressService {
     operationAuthority: SemanticIngressOperationAuthority,
     proofSliceId: string | null,
     semanticEvaluation: SemanticRoutingEvaluation,
+    compositePlan: CompositeWorkflowPlan | null,
+    writePolicy: SemanticIngressWritePolicy,
   ): string {
+    if (compositePlan) {
+      if (compositePlan.workflowId.startsWith("crm.")) {
+        return `Составной CRM-сценарий нормализован в workflow: ${compositePlan.summary}.`;
+      }
+      return `Составной аналитический сценарий нормализован в workflow: ${compositePlan.summary}.`;
+    }
     if (proofSliceId === "crm.register_counterparty") {
-      if (operationAuthority === "direct_user_command") {
+      if (writePolicy.decision === "execute") {
         return "Свободная фраза нормализована в CRM-регистрацию контрагента по ИНН как прямое действие пользователя.";
       }
-      if (operationAuthority === "delegated_or_autonomous") {
+      if (writePolicy.decision === "confirm") {
         return "CRM-регистрация контрагента распознана как write-path без прямой пользовательской команды и требует governed confirmation.";
+      }
+      if (writePolicy.decision === "clarify") {
+        return "CRM-регистрация контрагента требует уточнения входных данных перед выполнением.";
+      }
+      if (writePolicy.decision === "block") {
+        return "CRM-регистрация контрагента заблокирована policy-слоем.";
       }
       return "Свободная фраза нормализована в CRM-регистрацию контрагента по ИНН.";
     }
@@ -378,6 +421,7 @@ export class SemanticIngressService {
     semanticEvaluation: SemanticRoutingEvaluation;
     requestedOperation: SemanticIngressFrame["requestedOperation"];
     proofSliceId: string | null;
+    compositePlan: CompositeWorkflowPlan | null;
   }): SemanticIngressOperationAuthority {
     if (params.request.clarificationResume) {
       return "workflow_resume";
@@ -388,6 +432,14 @@ export class SemanticIngressService {
     }
 
     if (
+      params.compositePlan &&
+      params.proofSliceId === "crm.register_counterparty" &&
+      params.requestedOperation.toolName === RaiToolName.RegisterCounterparty
+    ) {
+      return "delegated_or_autonomous";
+    }
+
+    if (
       params.proofSliceId === "crm.register_counterparty" &&
       params.requestedOperation.toolName === RaiToolName.RegisterCounterparty
     ) {
@@ -395,6 +447,143 @@ export class SemanticIngressService {
     }
 
     return "unknown";
+  }
+
+  private resolveCompositePlan(params: {
+    request: RaiChatRequestDto;
+    requestedOperation: SemanticIngressFrame["requestedOperation"];
+    semanticEvaluation: SemanticRoutingEvaluation;
+    finalClassification: IntentClassification;
+  }): CompositeWorkflowPlan | null {
+    const normalized = params.request.message.toLowerCase();
+    const isCrmSemanticSlice = params.semanticEvaluation.semanticIntent.domain === "crm";
+    const isRegisterFlow =
+      params.finalClassification.intent === "register_counterparty" ||
+      params.requestedOperation.intent === "register_counterparty" ||
+      params.requestedOperation.toolName === RaiToolName.RegisterCounterparty ||
+      /контрагент|контрагента|зарег|зареп|завед/i.test(normalized);
+    const hasFollowUpSignal =
+      /(?:^|\s)(и|затем|потом|после)(?:\s|$)/iu.test(normalized) &&
+      /(аккаунт|карточк|workspace|карточку|карточке|карточкой)/iu.test(
+        normalized,
+      );
+
+    if (isCrmSemanticSlice && isRegisterFlow && hasFollowUpSignal) {
+      const workflowId = "crm.register_counterparty.create_account.open_workspace";
+      const stages: CompositeWorkflowStageContract[] = [
+        {
+          stageId: "register_counterparty",
+          order: 1,
+          agentRole: "crm_agent",
+          intent: "register_counterparty",
+          toolName: RaiToolName.RegisterCounterparty,
+          label: "Регистрация контрагента",
+          dependsOn: [],
+          status: "planned",
+        },
+        {
+          stageId: "create_crm_account",
+          order: 2,
+          agentRole: "crm_agent",
+          intent: "create_crm_account",
+          toolName: RaiToolName.CreateCrmAccount,
+          label: "Создание CRM-аккаунта",
+          dependsOn: ["register_counterparty"],
+          status: "planned",
+        },
+        {
+          stageId: "review_account_workspace",
+          order: 3,
+          agentRole: "crm_agent",
+          intent: "review_account_workspace",
+          toolName: RaiToolName.GetCrmAccountWorkspace,
+          label: "Открытие карточки/рабочего пространства",
+          dependsOn: ["create_crm_account"],
+          status: "planned",
+        },
+      ];
+
+      return {
+        planId: `${workflowId}:${params.request.threadId ?? params.request.clientTraceId ?? "new"}`,
+        workflowId,
+        leadOwnerAgent: "crm_agent",
+        executionStrategy: "sequential",
+        summary: "регистрация контрагента, создание CRM-аккаунта и открытие карточки",
+        stages,
+      };
+    }
+
+    const analyticalPlan = this.resolveAnalyticalCompositePlan({
+      request: params.request,
+      requestedOperation: params.requestedOperation,
+      semanticEvaluation: params.semanticEvaluation,
+      finalClassification: params.finalClassification,
+    }, normalized);
+    if (analyticalPlan) {
+      return analyticalPlan;
+    }
+
+    return null;
+  }
+
+  private resolveAnalyticalCompositePlan(
+    params: {
+      request: RaiChatRequestDto;
+      requestedOperation: SemanticIngressFrame["requestedOperation"];
+      semanticEvaluation: SemanticRoutingEvaluation;
+      finalClassification: IntentClassification;
+    },
+    normalized: string,
+  ): CompositeWorkflowPlan | null {
+    const hasAgroSignal =
+      /(agro|агро|execution fact|факт исполнения|факт выполнения|отклонен|отклон)/iu.test(
+        normalized,
+      ) || params.semanticEvaluation.semanticIntent.domain === "agro";
+    const hasFinanceSignal =
+      /(finance|финанс|cost|costs|затрат|стоимост|стоило|aggregat|агрегац)/iu.test(
+        normalized,
+      ) || params.semanticEvaluation.semanticIntent.domain === "finance";
+    const hasCompositeSignal =
+      /(?:->|→|⇒|и|затем|потом|после)/iu.test(normalized) ||
+      normalized.includes("aggregation") ||
+      normalized.includes("агрегац");
+
+    if (!hasAgroSignal || !hasFinanceSignal || !hasCompositeSignal) {
+      return null;
+    }
+
+    const workflowId = "agro.execution_fact.finance.cost_aggregation";
+    const stages: CompositeWorkflowStageContract[] = [
+      {
+        stageId: "agro_execution_fact",
+        order: 1,
+        agentRole: "agronomist",
+        intent: "compute_deviations",
+        toolName: RaiToolName.ComputeDeviations,
+        label: "Факт исполнения по агро-контексту",
+        dependsOn: [],
+        status: "planned",
+      },
+      {
+        stageId: "finance_cost_aggregation",
+        order: 2,
+        agentRole: "economist",
+        intent: "compute_plan_fact",
+        toolName: RaiToolName.ComputePlanFact,
+        label: "Агрегация финансовых затрат",
+        dependsOn: ["agro_execution_fact"],
+        status: "planned",
+      },
+    ];
+
+    return {
+      planId: `${workflowId}:${params.request.threadId ?? params.request.clientTraceId ?? "new"}`,
+      workflowId,
+      leadOwnerAgent: "agronomist",
+      executionStrategy: "sequential",
+      summary: "агро-факт исполнения и агрегация финансовых затрат",
+      stages,
+    };
   }
 
   private isDirectRegisterUserCommand(params: {
@@ -422,19 +611,76 @@ export class SemanticIngressService {
     semanticEvaluation: SemanticRoutingEvaluation;
     proofSliceId: string | null;
     riskClass: SemanticIngressRiskClass;
-    operationAuthority: SemanticIngressOperationAuthority;
+    writePolicy: SemanticIngressWritePolicy;
   }): boolean {
-    if (
-      params.proofSliceId === "crm.register_counterparty" &&
-      params.operationAuthority !== "direct_user_command"
-    ) {
-      return true;
-    }
-
     return (
+      params.writePolicy.decision !== "execute" ||
       params.semanticEvaluation.routeDecision.needsConfirmation ||
       params.riskClass === "high_risk_write"
     );
+  }
+
+  private resolveWritePolicy(params: {
+    operationAuthority: SemanticIngressOperationAuthority;
+    riskClass: SemanticIngressRiskClass;
+    requestedOperation: SemanticIngressFrame["requestedOperation"];
+    semanticEvaluation: SemanticRoutingEvaluation;
+    proofSliceId: string | null;
+  }): SemanticIngressWritePolicy {
+    if (params.semanticEvaluation.routeDecision.decisionType === "block") {
+      return {
+        decision: "block",
+        reason: params.semanticEvaluation.routeDecision.policyBlockReason ?? "policy_block",
+      };
+    }
+
+    if (
+      params.semanticEvaluation.routeDecision.needsClarification ||
+      params.semanticEvaluation.semanticIntent.resolvability === "missing"
+    ) {
+      return {
+        decision: "clarify",
+        reason: "needs_clarification",
+      };
+    }
+
+    if (
+      params.riskClass === "high_risk_write" ||
+      params.semanticEvaluation.routeDecision.needsConfirmation
+    ) {
+      return {
+        decision: "confirm",
+        reason: "high_risk_or_confirmation_required",
+      };
+    }
+
+    if (params.operationAuthority === "workflow_resume") {
+      return {
+        decision: "execute",
+        reason: "workflow_resume",
+      };
+    }
+
+    if (
+      params.proofSliceId === "crm.register_counterparty" &&
+      params.requestedOperation.toolName === RaiToolName.RegisterCounterparty
+    ) {
+      return {
+        decision:
+          params.operationAuthority === "direct_user_command"
+            ? "execute"
+            : "confirm",
+        reason:
+          params.operationAuthority === "direct_user_command"
+            ? "direct_user_command"
+            : "governed_write_path",
+      };
+    }
+
+    return {
+      decision: "execute",
+      reason: "semantic_default_execute",
+    };
   }
 
   private normalizeScore(value: number): number {

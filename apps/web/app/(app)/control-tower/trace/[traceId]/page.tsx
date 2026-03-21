@@ -705,6 +705,44 @@ function IngressFrameCard({
           value={formatConfidenceBand(frame.confidenceBand)}
         />
       </div>
+      {frame.compositePlan && (
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-4">
+          <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182]">
+            Composite workflow
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px] text-[#030213]">
+            <span className="rounded-full border border-black/10 bg-slate-50 px-2.5 py-1">
+              Владелец: {frame.compositePlan.leadOwnerAgent}
+            </span>
+            <span className="rounded-full border border-black/10 bg-slate-50 px-2.5 py-1">
+              Стратегия: {frame.compositePlan.executionStrategy}
+            </span>
+            <span className="rounded-full border border-black/10 bg-slate-50 px-2.5 py-1">
+              Стадий: {frame.compositePlan.stages.length}
+            </span>
+          </div>
+          <div className="mt-3 space-y-2">
+            {frame.compositePlan.stages.map((stage) => (
+              <div
+                key={stage.stageId}
+                className="rounded-xl border border-black/5 bg-slate-50 px-3 py-2"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[12px] font-medium text-[#030213]">
+                    {stage.order}. {stage.label}
+                  </span>
+                  <span className="text-[11px] font-mono text-[#717182]">
+                    {stage.status}
+                  </span>
+                </div>
+                <p className="mt-1 text-[11px] text-[#717182]">
+                  {stage.intent} · {stage.toolName}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="mt-4">
         <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182]">
           Извлечённые сущности

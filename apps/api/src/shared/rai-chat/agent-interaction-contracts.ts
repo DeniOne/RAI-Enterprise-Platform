@@ -3,6 +3,7 @@ import {
   RaiChatRequestDto,
   RaiWorkWindowActionDto,
 } from "./rai-chat.dto";
+import { classifyFrontOfficeMessageByPolicy } from "./front-office-routing.policy";
 import {
   IntentClassification,
   WorkspaceContextForIntent,
@@ -2105,8 +2106,25 @@ export function classifyByAgentContracts(
     };
   }
 
+  const frontOfficeClassification = !workspaceContext?.route
+    ? classifyFrontOfficeMessageByPolicy(message)
+    : null;
+  if (frontOfficeClassification) {
+    return {
+      targetRole: "front_office_agent",
+      intent: "classify_dialog_thread",
+      toolName: RaiToolName.ClassifyDialogThread,
+      confidence:
+        frontOfficeClassification.classification === "free_chat" ? 0.35 : 0.55,
+      method: "regex",
+      reason: "no_match_front_office_ingress",
+    };
+  }
+
+  const inferredRole = inferRoleFromWorkspace(workspaceContext);
+
   return {
-    targetRole: inferRoleFromWorkspace(workspaceContext),
+    targetRole: inferredRole,
     intent: null,
     toolName: null,
     confidence: 0,

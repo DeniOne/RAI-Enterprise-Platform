@@ -112,4 +112,17 @@ describe("AgentRuntimeConfigService", () => {
       allowed: true,
     });
   });
+
+  it("resolveToolAccess не блокирует front-office classify tool без registry owner", async () => {
+    agentRegistry.getRegistry.mockResolvedValue([]);
+
+    const result = await service.resolveToolAccess(
+      "company-1",
+      RaiToolName.ClassifyDialogThread,
+    );
+
+    expect(result).toEqual({
+      allowed: true,
+    });
+  });
 });

@@ -30,6 +30,11 @@ import {
   BranchVerdict,
   UserFacingBranchCompositionPayload,
 } from "../../shared/rai-chat/branch-trust.types";
+import {
+  CompositeWorkflowPlan,
+  CompositeWorkflowStageContract,
+  CompositeWorkflowStageStatus,
+} from "../../shared/rai-chat/composite-orchestration.types";
 import { BranchTrustInputs } from "./truthfulness-engine.service";
 import { RuntimeTrustLatencyProfile } from "../../shared/rai-chat/runtime-governance-policy.types";
 import { SemanticIngressService } from "./semantic-ingress.service";
@@ -94,14 +99,20 @@ export class SupervisorAgent {
       semanticIngressFrame,
     } = plannedExecution;
     actorContext.userIntentSource = semanticIngressFrame.operationAuthority;
+    actorContext.writePolicy = semanticIngressFrame.writePolicy;
     actorContext.userConfirmed =
+      semanticIngressFrame.writePolicy.decision === "execute" &&
       this.isDirectUserCommand(semanticIngressFrame) &&
       Boolean(userId) &&
       !options?.replayMode;
+    const executionRole = this.resolveExecutionRole({
+      semanticIngressFrame,
+      classification,
+    });
 
     const tExecStart = Date.now();
     const executionRequest: AgentExecutionRequest = {
-      role: classification.targetRole ?? "knowledge",
+      role: executionRole,
       message: request.message,
       workspaceContext: request.workspaceContext,
       memoryContext: {
@@ -146,6 +157,13 @@ export class SupervisorAgent {
       executionRequest,
       actorContext,
     );
+    executionResult = await this.applyCompositeWorkflowStage({
+      request,
+      actorContext,
+      executionRequest,
+      executionResult,
+      compositePlan: semanticIngressFrame.compositePlan ?? null,
+    });
     const tTrustStart = Date.now();
     executionResult = await this.applyBranchTrustStage({
       request,
@@ -500,6 +518,517 @@ export class SupervisorAgent {
     };
 
     return executionResult;
+  }
+
+  private async applyCompositeWorkflowStage(params: {
+    request: RaiChatRequestDto;
+    actorContext: RaiToolActorContext;
+    executionRequest: AgentExecutionRequest;
+    executionResult: Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>;
+    compositePlan: CompositeWorkflowPlan | null;
+  }): Promise<Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>> {
+    const { request, actorContext, executionRequest, compositePlan } = params;
+    const primaryExecution = params.executionResult.agentExecution;
+    if (
+      !compositePlan ||
+      !primaryExecution ||
+      primaryExecution.status !== "COMPLETED" ||
+      primaryExecution.role !== compositePlan.leadOwnerAgent ||
+      compositePlan.stages.length < 2
+    ) {
+      return params.executionResult;
+    }
+
+    if (compositePlan.workflowId.startsWith("agro.execution_fact")) {
+      return this.applyAnalyticalAggregationCompositeStage(params);
+    }
+
+    type CompositeStageSnapshot = {
+      stageId: string;
+      order: number;
+      agentRole: string;
+      intent: string;
+      toolName: RaiToolName;
+      status: CompositeWorkflowStageStatus;
+      summary: string;
+    };
+
+    const stageSnapshots: CompositeStageSnapshot[] = [
+      {
+        stageId: compositePlan.stages[0].stageId,
+        order: compositePlan.stages[0].order,
+        agentRole: primaryExecution.role,
+        intent: String(
+          primaryExecution.structuredOutput?.intent ?? "register_counterparty",
+        ),
+        toolName: RaiToolName.RegisterCounterparty,
+        status: "completed",
+        summary: primaryExecution.text,
+      },
+    ];
+
+    const registerData = this.pickRecord(
+      primaryExecution.structuredOutput ?? {},
+      "data",
+    ) as Record<string, unknown> | undefined;
+    const createStage = compositePlan.stages[1];
+    const createResult = await this.agentRuntime.executeAgent(
+      {
+        role: primaryExecution.role,
+        message: `${request.message}\nComposite stage: ${createStage.label}.`,
+        workspaceContext: request.workspaceContext,
+        memoryContext: executionRequest.memoryContext,
+        requestedTools: [
+          {
+            name: RaiToolName.CreateCrmAccount,
+            payload: {
+              name: this.resolveCompositeAccountName(registerData),
+              inn:
+                typeof registerData?.inn === "string"
+                  ? registerData.inn
+                  : undefined,
+              partyId:
+                typeof registerData?.partyId === "string"
+                  ? registerData.partyId
+                  : undefined,
+            },
+          },
+        ],
+        semanticRouting: executionRequest.semanticRouting,
+        semanticIngressFrame: executionRequest.semanticIngressFrame,
+        traceId: executionRequest.traceId,
+        threadId: executionRequest.threadId,
+      },
+      actorContext,
+    );
+    const createExecution = createResult.agentExecution;
+    if (!createExecution) {
+      stageSnapshots.push({
+        stageId: createStage.stageId,
+        order: createStage.order,
+        agentRole: primaryExecution.role,
+        intent: createStage.intent,
+        toolName: createStage.toolName,
+        status: "failed",
+        summary: "Composite stage did not return an execution result.",
+      });
+      stageSnapshots.push({
+        stageId: compositePlan.stages[2].stageId,
+        order: compositePlan.stages[2].order,
+        agentRole: primaryExecution.role,
+        intent: compositePlan.stages[2].intent,
+        toolName: RaiToolName.GetCrmAccountWorkspace,
+        status: "blocked",
+        summary:
+          "CRM-аккаунт не был создан, поэтому открытие workspace остановлено.",
+      });
+      return this.finalizeCompositeExecution({
+        compositePlan,
+        executionResult: params.executionResult,
+        stageSnapshots,
+        createResult,
+        reviewResult: null,
+      });
+    }
+
+    stageSnapshots.push({
+      stageId: createStage.stageId,
+      order: createStage.order,
+      agentRole: createExecution.role,
+      intent: String(createExecution.structuredOutput?.intent ?? createStage.intent),
+      toolName: RaiToolName.CreateCrmAccount,
+      status: createExecution.status === "COMPLETED" ? "completed" : "failed",
+      summary: createExecution.text,
+    });
+
+    const createData = this.pickRecord(
+      createExecution.structuredOutput ?? {},
+      "data",
+    ) as Record<string, unknown> | undefined;
+    const createAccountId =
+      typeof createData?.accountId === "string" ? createData.accountId : undefined;
+    let reviewResult:
+      | Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>
+      | null = null;
+
+    if (createExecution.status === "COMPLETED" && createAccountId) {
+      const reviewStage = compositePlan.stages[2];
+      reviewResult = await this.agentRuntime.executeAgent(
+        {
+          role: primaryExecution.role,
+          message: `${request.message}\nComposite stage: ${reviewStage.label}.`,
+          workspaceContext: request.workspaceContext,
+          memoryContext: executionRequest.memoryContext,
+          requestedTools: [
+            {
+              name: RaiToolName.GetCrmAccountWorkspace,
+              payload: {
+                accountId: createAccountId,
+                query: this.resolveCompositeAccountName(registerData),
+              },
+            },
+          ],
+          semanticRouting: executionRequest.semanticRouting,
+          semanticIngressFrame: executionRequest.semanticIngressFrame,
+          traceId: executionRequest.traceId,
+          threadId: executionRequest.threadId,
+        },
+        actorContext,
+      );
+      const reviewExecution = reviewResult.agentExecution;
+      if (reviewExecution) {
+        stageSnapshots.push({
+          stageId: reviewStage.stageId,
+          order: reviewStage.order,
+          agentRole: reviewExecution.role,
+          intent: String(
+            reviewExecution.structuredOutput?.intent ?? reviewStage.intent,
+          ),
+          toolName: RaiToolName.GetCrmAccountWorkspace,
+          status: reviewExecution.status === "COMPLETED" ? "completed" : "failed",
+          summary: reviewExecution.text,
+        });
+      } else {
+        stageSnapshots.push({
+          stageId: reviewStage.stageId,
+          order: reviewStage.order,
+          agentRole: primaryExecution.role,
+          intent: reviewStage.intent,
+          toolName: RaiToolName.GetCrmAccountWorkspace,
+          status: "failed",
+          summary: "Composite stage did not return an execution result.",
+        });
+      }
+    } else {
+      stageSnapshots.push({
+        stageId: compositePlan.stages[2].stageId,
+        order: compositePlan.stages[2].order,
+        agentRole: primaryExecution.role,
+        intent: compositePlan.stages[2].intent,
+        toolName: RaiToolName.GetCrmAccountWorkspace,
+        status: "blocked",
+        summary:
+          "CRM-аккаунт не был создан, поэтому открытие workspace остановлено.",
+      });
+    }
+
+    return this.finalizeCompositeExecution({
+      compositePlan,
+      executionResult: params.executionResult,
+      stageSnapshots,
+      createResult,
+      reviewResult,
+    });
+  }
+
+  private finalizeCompositeExecution(params: {
+    compositePlan: CompositeWorkflowPlan;
+    executionResult: Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>;
+    stageSnapshots: Array<{
+      stageId: string;
+      order: number;
+      agentRole: string;
+      intent: string;
+      toolName: RaiToolName;
+      status: CompositeWorkflowStageStatus;
+      summary: string;
+    }>;
+    createResult: Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>;
+    reviewResult: Awaited<ReturnType<AgentRuntimeService["executeAgent"]>> | null;
+  }): Awaited<ReturnType<AgentRuntimeService["executeAgent"]>> {
+    const { compositePlan, executionResult, stageSnapshots, createResult, reviewResult } = params;
+    const createExecution = createResult.agentExecution;
+    const reviewExecution = reviewResult?.agentExecution ?? null;
+    const structuredOutputs = [
+      ...(executionResult.agentExecution?.structuredOutputs ?? []),
+      createExecution?.structuredOutput,
+      reviewExecution?.structuredOutput,
+    ].filter((item): item is Record<string, unknown> => Boolean(item));
+    const delegationChain = [
+      ...(executionResult.agentExecution?.delegationChain ?? []),
+      ...(createExecution?.delegationChain ?? []),
+      ...(reviewExecution?.delegationChain ?? []),
+    ];
+    const evidence = [
+      ...(executionResult.agentExecution?.evidence ?? []),
+      ...(createExecution?.evidence ?? []),
+      ...(reviewExecution?.evidence ?? []),
+    ];
+    const toolCalls = [
+      ...(executionResult.agentExecution?.toolCalls ?? []),
+      ...(createExecution?.toolCalls ?? []),
+      ...(reviewExecution?.toolCalls ?? []),
+    ];
+
+    executionResult.executedTools = [
+      ...executionResult.executedTools,
+      ...createResult.executedTools,
+      ...(reviewResult?.executedTools ?? []),
+    ];
+
+    const completedStages = stageSnapshots.every(
+      (stage) => stage.status === "completed",
+    );
+    executionResult.agentExecution = {
+      ...executionResult.agentExecution,
+      status: completedStages ? "COMPLETED" : "NEEDS_MORE_DATA",
+      text: this.buildCompositeExecutionText(compositePlan, stageSnapshots),
+      evidence,
+      toolCalls,
+      structuredOutputs,
+      delegationChain:
+        delegationChain.length > 0 ? delegationChain : undefined,
+      structuredOutput: {
+        ...executionResult.agentExecution.structuredOutput,
+        compositePlan: this.markCompositePlanProgress(compositePlan, stageSnapshots),
+        compositeStages: stageSnapshots,
+        compositeWorkflowId: compositePlan.workflowId,
+        compositeLeadOwner: compositePlan.leadOwnerAgent,
+        compositeExecutionStrategy: compositePlan.executionStrategy,
+      },
+    };
+
+    return executionResult;
+  }
+
+  private markCompositePlanProgress(
+    compositePlan: CompositeWorkflowPlan,
+    stageSnapshots: Array<{
+      stageId: string;
+      order: number;
+      agentRole: string;
+      intent: string;
+      toolName: RaiToolName;
+      status: CompositeWorkflowStageStatus;
+      summary: string;
+    }>,
+  ): CompositeWorkflowPlan {
+    const stageStatus = new Map(
+      stageSnapshots.map((stage) => [stage.stageId, stage.status] as const),
+    );
+    return {
+      ...compositePlan,
+      stages: compositePlan.stages.map((stage) => ({
+        ...stage,
+        status: stageStatus.get(stage.stageId) ?? stage.status,
+      })),
+    };
+  }
+
+  private buildCompositeExecutionText(
+    compositePlan: CompositeWorkflowPlan,
+    stageSnapshots: Array<{
+      stageId: string;
+      order: number;
+      agentRole: string;
+      intent: string;
+      toolName: RaiToolName;
+      status: CompositeWorkflowStageStatus;
+      summary: string;
+    }>,
+  ): string {
+    const allStagesCompleted = stageSnapshots.every(
+      (stage) => stage.status === "completed",
+    );
+    const completedStages = stageSnapshots
+      .filter((stage) => stage.status === "completed")
+      .sort((left, right) => left.order - right.order)
+      .map((stage) => stage.summary)
+      .filter(Boolean);
+    const failedStages = stageSnapshots.filter(
+      (stage) => stage.status === "failed" || stage.status === "blocked",
+    );
+    const isCrmWorkflow = compositePlan.workflowId.startsWith("crm.");
+    const prefix = allStagesCompleted
+      ? isCrmWorkflow
+        ? `Составной CRM-сценарий выполнен по плану "${compositePlan.summary}".`
+        : `Составной аналитический сценарий выполнен по плану "${compositePlan.summary}".`
+      : isCrmWorkflow
+        ? `Составной CRM-сценарий "${compositePlan.summary}" не удалось завершить.`
+        : `Составной аналитический сценарий "${compositePlan.summary}" не удалось завершить.`;
+    const failedSuffix =
+      failedStages.length > 0
+        ? ` Нештатные стадии: ${failedStages
+            .map((stage) => stage.stageId)
+            .join(", ")}.`
+        : "";
+    const stageSummary = completedStages.length > 0
+      ? ` Итог по стадиям: ${completedStages.join(" ")}`
+      : "";
+    return `${prefix}${failedSuffix}${stageSummary}`.trim();
+  }
+
+  private resolveCompositeAccountName(
+    registerData?: Record<string, unknown> | null,
+  ): string {
+    const legalName =
+      typeof registerData?.legalName === "string"
+        ? registerData.legalName.trim()
+        : "";
+    if (legalName) {
+      return legalName;
+    }
+    const shortName =
+      typeof registerData?.shortName === "string"
+        ? registerData.shortName.trim()
+        : "";
+    if (shortName) {
+      return shortName;
+    }
+    const partyId =
+      typeof registerData?.partyId === "string"
+        ? registerData.partyId.trim()
+        : "";
+    return partyId || "контрагент";
+  }
+
+  private async applyAnalyticalAggregationCompositeStage(params: {
+    request: RaiChatRequestDto;
+    actorContext: RaiToolActorContext;
+    executionRequest: AgentExecutionRequest;
+    executionResult: Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>;
+    compositePlan: CompositeWorkflowPlan | null;
+  }): Promise<Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>> {
+    const { request, actorContext, executionRequest, compositePlan } = params;
+    const primaryExecution = params.executionResult.agentExecution;
+    if (
+      !compositePlan ||
+      !primaryExecution ||
+      primaryExecution.status !== "COMPLETED" ||
+      primaryExecution.role !== compositePlan.leadOwnerAgent ||
+      compositePlan.stages.length < 2
+    ) {
+      return params.executionResult;
+    }
+
+    type CompositeStageSnapshot = {
+      stageId: string;
+      order: number;
+      agentRole: string;
+      intent: string;
+      toolName: RaiToolName;
+      status: CompositeWorkflowStageStatus;
+      summary: string;
+    };
+
+    const stageSnapshots: CompositeStageSnapshot[] = [
+      {
+        stageId: compositePlan.stages[0].stageId,
+        order: compositePlan.stages[0].order,
+        agentRole: primaryExecution.role,
+        intent: String(
+          primaryExecution.structuredOutput?.intent ??
+            compositePlan.stages[0].intent,
+        ),
+        toolName: compositePlan.stages[0].toolName,
+        status: primaryExecution.status === "COMPLETED" ? "completed" : "failed",
+        summary: primaryExecution.text,
+      },
+    ];
+
+    const analyticScope = this.resolveAnalyticalCompositeScope(request);
+    const financeStage = compositePlan.stages[1];
+    const financeResult = await this.agentRuntime.executeAgent(
+      {
+        role: financeStage.agentRole,
+        message: `${request.message}\nComposite stage: ${financeStage.label}.`,
+        workspaceContext: request.workspaceContext,
+        memoryContext: executionRequest.memoryContext,
+        requestedTools: [
+          {
+            name: financeStage.toolName,
+            payload:
+              financeStage.toolName === RaiToolName.ComputePlanFact
+                ? {
+                    scope: {
+                      planId: analyticScope.planId,
+                      seasonId: analyticScope.seasonId,
+                    },
+                  }
+                : {
+                    scope: {
+                      seasonId: analyticScope.seasonId,
+                      fieldId: analyticScope.fieldId,
+                    },
+                  },
+          },
+        ],
+        semanticRouting: executionRequest.semanticRouting,
+        semanticIngressFrame: executionRequest.semanticIngressFrame,
+        traceId: executionRequest.traceId,
+        threadId: executionRequest.threadId,
+      },
+      actorContext,
+    );
+    const financeExecution = financeResult.agentExecution;
+    if (financeExecution) {
+      stageSnapshots.push({
+        stageId: financeStage.stageId,
+        order: financeStage.order,
+        agentRole: financeExecution.role,
+        intent: String(
+          financeExecution.structuredOutput?.intent ?? financeStage.intent,
+        ),
+        toolName: financeStage.toolName,
+        status: financeExecution.status === "COMPLETED" ? "completed" : "failed",
+        summary: financeExecution.text,
+      });
+    } else {
+      stageSnapshots.push({
+        stageId: financeStage.stageId,
+        order: financeStage.order,
+        agentRole: financeStage.agentRole,
+        intent: financeStage.intent,
+        toolName: financeStage.toolName,
+        status: "failed",
+        summary: "Финансовый branch не вернул execution result.",
+      });
+    }
+
+    return this.finalizeCompositeExecution({
+      compositePlan,
+      executionResult: params.executionResult,
+      stageSnapshots,
+      createResult: financeResult,
+      reviewResult: null,
+    });
+  }
+
+  private resolveAnalyticalCompositeScope(request: RaiChatRequestDto): {
+    planId?: string;
+    seasonId?: string;
+    fieldId?: string;
+  } {
+    const selected = request.workspaceContext?.selectedRowSummary;
+    const refs = request.workspaceContext?.activeEntityRefs ?? [];
+    const seasonId = this.readWorkspaceFilterAsString(
+      request.workspaceContext?.filters?.seasonId,
+    );
+    const planId = this.readWorkspaceFilterAsString(
+      request.workspaceContext?.filters?.planId,
+    );
+    const fieldId =
+      this.readWorkspaceFilterAsString(request.workspaceContext?.filters?.fieldId) ??
+      refs.find((item) => item.kind === "field")?.id ??
+      (selected?.kind?.toLowerCase() === "field" ? selected.id : undefined);
+    return {
+      planId:
+        planId ?? (selected?.kind?.toLowerCase() === "plan" ? selected.id : undefined),
+      seasonId,
+      fieldId,
+    };
+  }
+
+  private readWorkspaceFilterAsString(
+    value: string | number | boolean | null | undefined,
+  ): string | undefined {
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value.trim();
+    }
+    if (typeof value === "number") {
+      return String(value);
+    }
+    return undefined;
   }
 
   private buildTrustAssessment(execution: {
@@ -1146,6 +1675,19 @@ export class SupervisorAgent {
 
   private isDirectUserCommand(semanticIngressFrame: SemanticIngressFrame): boolean {
     return semanticIngressFrame.operationAuthority === "direct_user_command";
+  }
+
+  private resolveExecutionRole(params: {
+    semanticIngressFrame: SemanticIngressFrame;
+    classification: {
+      targetRole: string | null;
+    };
+  }): string {
+    const semanticOwnerRole = params.semanticIngressFrame.requestedOperation.ownerRole;
+    if (semanticOwnerRole) {
+      return semanticOwnerRole;
+    }
+    return params.classification.targetRole ?? "knowledge";
   }
 
   private mapRoutingOutcome(

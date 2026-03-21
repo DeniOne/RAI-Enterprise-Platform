@@ -215,7 +215,7 @@ export class RaiToolsRegistry implements OnModuleInit {
       const directCrmUserWrite =
         riskInfo.domain === "crm" &&
         riskInfo.riskLevel === "WRITE" &&
-        actorContext.userIntentSource === "direct_user_command" &&
+        actorContext.writePolicy?.decision === "execute" &&
         actorContext.userConfirmed === true &&
         Boolean(actorContext.userId) &&
         !actorContext.isAutonomous &&

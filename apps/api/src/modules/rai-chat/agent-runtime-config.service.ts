@@ -143,7 +143,6 @@ export class AgentRuntimeConfigService {
       "knowledge",
       "monitoring",
       "crm_agent",
-      "front_office_agent",
     ] as const)
       .flatMap((role) => getDefaultToolsForRole(role))
       .includes(toolName);

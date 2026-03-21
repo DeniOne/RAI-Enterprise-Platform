@@ -62,6 +62,7 @@ import {
   UserFacingBranchCompositionPayload,
   UserFacingTrustSummary,
 } from "../../../shared/rai-chat/branch-trust.types";
+import { CompositeWorkflowPlan } from "../../../shared/rai-chat/composite-orchestration.types";
 import {
   buildPendingClarificationItems,
   detectClarificationContract,
@@ -195,11 +196,15 @@ export class ResponseComposerService {
       request.message,
       executionResult.executedTools,
     );
+    const greetingAnswer = this.buildGreetingAnswerForRequest(request.message);
     const fallbackText =
       "Я не совсем понял ваш запрос. Пожалуйста, уточните: вас интересует агрономия (технологические карты, поля), финансы или необходимо выполнить поиск в базе знаний?";
     const techMapReadOnlyText =
       "Понял запрос: показать список техкарт. Откройте реестр техкарт по кнопке ниже.";
-    let text = directAnswer ?? (readOnlyTechMapQuery ? techMapReadOnlyText : fallbackText);
+    let text =
+      directAnswer ??
+      greetingAnswer ??
+      (readOnlyTechMapQuery ? techMapReadOnlyText : fallbackText);
     if (!directAnswer && executionResult.executedTools.length > 0) {
       const toolSummary = this.summarizeExecutedTools(
         executionResult.executedTools,
@@ -220,6 +225,10 @@ export class ResponseComposerService {
     if (externalSignalResult.feedbackStored) {
       text += "\nFeedback по advisory записан в память.";
     }
+    const compositePayload = this.buildCrmCompositeWorkflowPayload(
+      request,
+      executionResult,
+    );
     const clarificationPayload = this.buildClarificationPayload(
       request,
       executionResult,
@@ -240,9 +249,19 @@ export class ResponseComposerService {
             companyId,
             workspaceContext: request.workspaceContext,
           });
-    const richOutputPayload = clarificationPayload
-      ? null
-      : this.buildRichOutputPayload(request, executionResult, widgets);
+    let richOutputPayload: {
+      workWindows: RaiWorkWindowDto[];
+      activeWindowId: string | null;
+    } | null = null;
+    if (compositePayload) {
+      richOutputPayload = compositePayload;
+    } else if (!clarificationPayload) {
+      richOutputPayload = this.buildRichOutputPayload(
+        request,
+        executionResult,
+        widgets,
+      );
+    }
 
     if (executionResult.agentExecution) {
       text = executionResult.agentExecution.text;
@@ -300,7 +319,9 @@ export class ResponseComposerService {
 
     const workWindowPayload = clientFacing
       ? null
-      : clarificationPayload
+      : compositePayload
+        ? compositePayload
+        : clarificationPayload
         ? {
             workWindows: clarificationPayload.workWindows,
             activeWindowId: clarificationPayload.activeWindowId,
@@ -1674,6 +1695,186 @@ export class ResponseComposerService {
     };
   }
 
+  private buildCrmCompositeWorkflowPayload(
+    request: RaiChatRequestDto,
+    executionResult: ExecutionResult,
+  ): {
+    workWindows: RaiWorkWindowDto[];
+    activeWindowId: string | null;
+  } | null {
+    const agentExecution = executionResult.agentExecution;
+    if (
+      !agentExecution ||
+      agentExecution.status !== "COMPLETED"
+    ) {
+      return null;
+    }
+
+    const structured = (agentExecution.structuredOutput ?? {}) as {
+      compositePlan?: CompositeWorkflowPlan;
+      compositeStages?: Array<{
+        stageId: string;
+        order: number;
+        agentRole: string;
+        intent: string;
+        toolName: RaiToolName;
+        status: "planned" | "completed" | "failed" | "blocked";
+        summary: string;
+      }>;
+    };
+    const compositePlan = structured.compositePlan;
+    const compositeStages = structured.compositeStages ?? [];
+    if (!compositePlan || compositeStages.length === 0) {
+      return null;
+    }
+
+    const isCrmWorkflow = compositePlan.workflowId.startsWith("crm.");
+    const compositeWindowId = isCrmWorkflow
+      ? `win-crm-composite-${request.threadId ?? "new"}`
+      : `win-analytics-composite-${request.threadId ?? "new"}`;
+    const signalsWindowId = `${compositeWindowId}-signals`;
+    const allCompleted = compositeStages.every(
+      (stage) => stage.status === "completed",
+    );
+    const blockedStage = compositeStages.find(
+      (stage) => stage.status === "blocked",
+    );
+    const failedStages = compositeStages.filter(
+      (stage) => stage.status === "failed",
+    );
+    const intentId = isCrmWorkflow
+      ? "crm_composite_flow"
+      : "multi_source_aggregation";
+    const title = isCrmWorkflow
+      ? "CRM составной сценарий"
+      : "Аналитическая агрегация";
+
+    const workWindows: RaiWorkWindowDto[] = [
+      {
+        windowId: compositeWindowId,
+        originMessageId: null,
+        agentRole: agentExecution.role,
+        type: "structured_result",
+        parentWindowId: null,
+        relatedWindowIds: [signalsWindowId],
+        category: "result",
+        priority: 88,
+        mode: allCompleted ? "panel" : "takeover",
+        title,
+        status: blockedStage || failedStages.length > 0 ? "needs_user_input" : "completed",
+        payload: {
+          intentId,
+          summary: compositePlan.summary,
+          missingKeys: [],
+          sections: [
+            {
+              id: "crm_composite_overview",
+              title: "План",
+              items: [
+                {
+                  label: "Владелец",
+                  value: compositePlan.leadOwnerAgent,
+                  tone: "neutral",
+                },
+                {
+                  label: "Стратегия",
+                  value: compositePlan.executionStrategy,
+                  tone: "neutral",
+                },
+                {
+                  label: "Стадий",
+                  value: `${compositeStages.length}`,
+                  tone: "neutral",
+                },
+              ],
+            },
+            {
+              id: "crm_composite_stages",
+              title: "Стадии",
+              items: compositeStages.map((stage, index) => ({
+                label: `${index + 1}. ${stage.summary ? stage.summary.slice(0, 48) : stage.stageId}`,
+                value: `${stage.status} · ${stage.intent}`,
+                tone:
+                  stage.status === "completed"
+                    ? ("positive" as const)
+                    : stage.status === "blocked"
+                      ? ("critical" as const)
+                      : ("warning" as const),
+              })),
+            },
+          ],
+        },
+        actions: [
+          {
+            id: isCrmWorkflow ? "focus_crm_composite" : "focus_analytics_composite",
+            kind: "focus_window",
+            label: isCrmWorkflow ? "Открыть сценарий" : "Открыть агрегацию",
+            enabled: true,
+            targetWindowId: compositeWindowId,
+          },
+          ...(isCrmWorkflow
+            ? [
+                {
+                  id: "open_crm_composite_route",
+                  kind: "open_route" as const,
+                  label: "Перейти в CRM",
+                  enabled: true,
+                  targetRoute: "/consulting/crm",
+                },
+              ]
+            : []),
+        ],
+        isPinned: false,
+      },
+      {
+        windowId: signalsWindowId,
+        originMessageId: null,
+        agentRole: agentExecution.role,
+        type: "related_signals",
+        parentWindowId: compositeWindowId,
+        relatedWindowIds: [compositeWindowId],
+        category: "signals",
+        priority: 34,
+        mode: "inline",
+        title: isCrmWorkflow ? "Сигналы сценария" : "Сигналы агрегации",
+        status: "informational",
+        payload: {
+          intentId,
+          summary: allCompleted
+            ? "Все стадии сценария завершены."
+            : "Сценарий завершён с ограничениями или требует уточнения.",
+          missingKeys: [],
+          signalItems: compositeStages.map((stage, index) => ({
+            id: `${signalsWindowId}-stage-${index + 1}`,
+            tone:
+              stage.status === "completed"
+                ? ("info" as const)
+                : stage.status === "blocked"
+                  ? ("critical" as const)
+                  : ("warning" as const),
+            text: `${stage.stageId}: ${stage.summary}`,
+            targetWindowId: compositeWindowId,
+          })),
+        },
+        actions: [
+          {
+            id: isCrmWorkflow ? "focus_crm_composite_summary" : "focus_analytics_composite_summary",
+            kind: "focus_window",
+            label: isCrmWorkflow ? "Открыть план" : "Открыть сводку",
+            enabled: true,
+            targetWindowId: compositeWindowId,
+          },
+        ],
+        isPinned: false,
+      },
+    ];
+
+    return {
+      activeWindowId: resolveActiveWorkWindowId(workWindows),
+      workWindows,
+    };
+  }
+
   private buildCrmRichOutputPayload(
     request: RaiChatRequestDto,
     executionResult: ExecutionResult,
@@ -2820,6 +3021,17 @@ export class ResponseComposerService {
       );
     }
 
+    return null;
+  }
+
+  private buildGreetingAnswerForRequest(message: string): string | null {
+    const normalized = message.trim();
+    if (!normalized) {
+      return null;
+    }
+    if (/^(привет|здравствуй|добрый\s+день|спасибо|ок|понял|угу)$/i.test(normalized)) {
+      return `Принял: ${normalized}`;
+    }
     return null;
   }
 

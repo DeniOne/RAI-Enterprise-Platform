@@ -945,6 +945,10 @@ describe("ExplainabilityPanelService", () => {
               confidenceBand: "high",
               explanation:
                 "Свободная фраза нормализована в CRM-регистрацию контрагента по ИНН как прямое действие пользователя.",
+              writePolicy: {
+                decision: "execute",
+                reason: "direct_user_command",
+              },
               proofSliceId: "crm.register_counterparty",
             },
           },
@@ -1009,6 +1013,11 @@ describe("ExplainabilityPanelService", () => {
           requestedOperation: expect.objectContaining({
             intent: "register_counterparty",
           }),
+        }),
+      );
+      expect(result.writePolicy).toEqual(
+        expect.objectContaining({
+          decision: "execute",
         }),
       );
     });

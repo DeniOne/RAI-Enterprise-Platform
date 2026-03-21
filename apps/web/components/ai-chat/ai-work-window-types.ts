@@ -9,7 +9,9 @@ export type AiWorkWindowIntentId =
     | 'compute_plan_fact'
     | 'query_knowledge'
     | 'emit_alerts'
-    | 'branch_trust_summary';
+    | 'branch_trust_summary'
+    | 'multi_source_aggregation'
+    | 'crm_composite_flow';
 
 export interface PendingClarificationItem {
     key: PendingClarificationKey;

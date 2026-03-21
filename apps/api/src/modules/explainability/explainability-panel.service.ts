@@ -1202,6 +1202,7 @@ export class ExplainabilityPanelService {
     const memoryLane = this.buildMemoryLane(auditEntries);
     const branchTrust = this.buildBranchTrust(auditEntries);
     const semanticIngressFrame = this.buildSemanticIngressFrame(auditEntries);
+    const writePolicy = semanticIngressFrame?.writePolicy ?? null;
 
     return {
       traceId,
@@ -1212,6 +1213,7 @@ export class ExplainabilityPanelService {
       memoryLane,
       branchTrust,
       semanticIngressFrame,
+      writePolicy,
     };
   }
 

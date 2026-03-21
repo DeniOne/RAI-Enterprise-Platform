@@ -87,6 +87,101 @@ describe("AgentExecutionAdapterService", () => {
     );
   });
 
+  it("в primary semantic routing выбирает safe draft default для agronomist без ingress intent", async () => {
+    agronomAgent.run.mockResolvedValueOnce({
+      status: "COMPLETED",
+      explain: "draft ok",
+      data: { draftId: "draft-1" },
+      missingContext: [],
+      mathBasis: [],
+      toolCallsCount: 1,
+      evidence: [],
+      fallbackUsed: false,
+    });
+
+    const result = await service.execute({
+      request: {
+        ...baseRequest,
+        message: "подготовь техкарту",
+        semanticRouting: {
+          source: "primary",
+          promotedPrimary: true,
+          enforceCapabilityGating: true,
+          sliceId: "agro.techmaps.draft",
+          semanticIntent: {} as any,
+          routeDecision: {
+            eligibleTools: [],
+          } as any,
+          candidateRoutes: [],
+        },
+      } as any,
+      actorContext: {
+        companyId: "company-1",
+        traceId: "tr-1",
+      },
+      kernel: baseKernel as any,
+      allowedToolCalls: [] as any,
+      budgetDecision: { outcome: "ALLOW" } as any,
+    });
+
+    expect(result.status).toBe("COMPLETED");
+    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(agronomAgent.run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        intent: "generate_tech_map_draft",
+      }),
+      expect.anything(),
+    );
+    expect(result.toolCalls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: RaiToolName.GenerateTechMapDraft,
+        }),
+      ]),
+    );
+  });
+
+  it("в primary semantic routing сохраняет read-only techmap registry path", async () => {
+    const result = await service.execute({
+      request: {
+        ...baseRequest,
+        message: "покажи все техкарты",
+        semanticRouting: {
+          source: "primary",
+          promotedPrimary: true,
+          enforceCapabilityGating: true,
+          sliceId: "agro.techmaps.list-open-create",
+          semanticIntent: {} as any,
+          routeDecision: {
+            eligibleTools: [],
+          } as any,
+          candidateRoutes: [],
+        },
+      } as any,
+      actorContext: {
+        companyId: "company-1",
+        traceId: "tr-1",
+      },
+      kernel: baseKernel as any,
+      allowedToolCalls: [] as any,
+      budgetDecision: { outcome: "ALLOW" } as any,
+    });
+
+    expect(agronomAgent.run).not.toHaveBeenCalled();
+    expect(result.status).toBe("COMPLETED");
+    expect(result.executionPath).toBe("heuristic_fallback");
+    expect(result.text).toContain("Понял запрос по техкартам");
+    expect(result.suggestedActions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "route",
+          title: "Открыть реестр техкарт",
+          href: "/consulting/techmaps/active",
+        }),
+      ]),
+    );
+  });
+
   it("использует tool_call_primary при explicit compute_deviations", async () => {
     agronomAgent.run.mockResolvedValueOnce({
       status: "COMPLETED",
@@ -540,6 +635,426 @@ describe("AgentExecutionAdapterService", () => {
     );
   });
 
+  it("в primary semantic routing выбирает safe read default для crm_agent без ingress intent", async () => {
+    crmAgent.run.mockResolvedValueOnce({
+      status: "COMPLETED",
+      explain: "workspace ok",
+      data: { accountId: "acc-1" },
+      missingContext: [],
+      toolCallsCount: 1,
+      evidence: [],
+      fallbackUsed: false,
+    });
+
+    const result = await service.execute({
+      request: {
+        ...baseRequest,
+        role: "crm_agent",
+        message: "что по клиенту",
+        semanticRouting: {
+          source: "primary",
+          promotedPrimary: true,
+          enforceCapabilityGating: true,
+          sliceId: "crm.unspecified",
+          semanticIntent: {} as any,
+          routeDecision: {
+            eligibleTools: [],
+          } as any,
+          candidateRoutes: [],
+        },
+      } as any,
+      actorContext: {
+        companyId: "company-1",
+        traceId: "tr-1",
+      },
+      kernel: {
+        ...baseKernel,
+        runtimeProfile: {
+          ...baseKernel.runtimeProfile,
+          executionAdapterRole: "crm_agent",
+        },
+      } as any,
+      allowedToolCalls: [] as any,
+      budgetDecision: { outcome: "ALLOW" } as any,
+    });
+
+    expect(result.status).toBe("COMPLETED");
+    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(crmAgent.run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        intent: "review_account_workspace",
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("берет intent для front_office_agent из semantic ingress frame", async () => {
+    frontOfficeAgent.run.mockResolvedValueOnce({
+      status: "COMPLETED",
+      explain: "Принял: привет",
+      data: { classification: "free_chat" },
+      missingContext: [],
+      toolCallsCount: 1,
+      evidence: [],
+      fallbackUsed: false,
+    });
+
+    const result = await service.execute({
+      request: {
+        ...baseRequest,
+        role: "front_office_agent",
+        message: "привет",
+        semanticIngressFrame: {
+          version: "v1",
+          interactionMode: "free_chat",
+          requestShape: "single_intent",
+          domainCandidates: [],
+          goal: "Привет",
+          entities: [],
+          requestedOperation: {
+            ownerRole: "front_office_agent",
+            intent: "classify_dialog_thread",
+            toolName: RaiToolName.ClassifyDialogThread,
+            decisionType: "execute",
+            source: "legacy_contracts",
+          },
+          operationAuthority: "unknown",
+          missingSlots: [],
+          riskClass: "safe_read",
+          requiresConfirmation: false,
+          confidenceBand: "medium",
+          explanation: "semantic-front-office",
+          proofSliceId: null,
+        },
+      } as any,
+      actorContext: {
+        companyId: "company-1",
+        traceId: "tr-1",
+      },
+      kernel: {
+        ...baseKernel,
+        runtimeProfile: {
+          ...baseKernel.runtimeProfile,
+          executionAdapterRole: "front_office_agent",
+        },
+      } as any,
+      allowedToolCalls: [] as any,
+      budgetDecision: { outcome: "ALLOW" } as any,
+    });
+
+    expect(result.status).toBe("COMPLETED");
+    expect(frontOfficeAgent.run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        intent: "classify_dialog_thread",
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("в primary semantic routing выбирает classify_dialog_thread для front_office_agent без ingress intent", async () => {
+    frontOfficeAgent.run.mockResolvedValueOnce({
+      status: "COMPLETED",
+      explain: "Принял: привет",
+      data: { classification: "free_chat" },
+      missingContext: [],
+      toolCallsCount: 1,
+      evidence: [],
+      fallbackUsed: false,
+    });
+
+    const result = await service.execute({
+      request: {
+        ...baseRequest,
+        role: "front_office_agent",
+        message: "привет",
+        semanticRouting: {
+          source: "primary",
+          promotedPrimary: true,
+          enforceCapabilityGating: true,
+          sliceId: "front_office.free_chat",
+          semanticIntent: {} as any,
+          routeDecision: {
+            eligibleTools: [],
+          } as any,
+          candidateRoutes: [],
+        },
+      } as any,
+      actorContext: {
+        companyId: "company-1",
+        traceId: "tr-1",
+      },
+      kernel: {
+        ...baseKernel,
+        runtimeProfile: {
+          ...baseKernel.runtimeProfile,
+          executionAdapterRole: "front_office_agent",
+        },
+      } as any,
+      allowedToolCalls: [] as any,
+      budgetDecision: { outcome: "ALLOW" } as any,
+    });
+
+    expect(result.status).toBe("COMPLETED");
+    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(frontOfficeAgent.run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        intent: "classify_dialog_thread",
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("в primary semantic routing выбирает classify_dialog_thread для front_office_agent без ingress intent", async () => {
+    frontOfficeAgent.run.mockResolvedValueOnce({
+      status: "COMPLETED",
+      explain: "Принял: привет",
+      data: { classification: "free_chat" },
+      missingContext: [],
+      toolCallsCount: 1,
+      evidence: [],
+      fallbackUsed: false,
+    });
+
+    const result = await service.execute({
+      request: {
+        ...baseRequest,
+        role: "front_office_agent",
+        message: "привет",
+        semanticRouting: {
+          source: "primary",
+          promotedPrimary: true,
+          enforceCapabilityGating: true,
+          sliceId: "front_office.free_chat",
+          semanticIntent: {} as any,
+          routeDecision: {
+            eligibleTools: [],
+          } as any,
+          candidateRoutes: [],
+        },
+      } as any,
+      actorContext: {
+        companyId: "company-1",
+        traceId: "tr-1",
+      },
+      kernel: {
+        ...baseKernel,
+        runtimeProfile: {
+          ...baseKernel.runtimeProfile,
+          executionAdapterRole: "front_office_agent",
+        },
+      } as any,
+      allowedToolCalls: [] as any,
+      budgetDecision: { outcome: "ALLOW" } as any,
+    });
+
+    expect(result.status).toBe("COMPLETED");
+    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(frontOfficeAgent.run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        intent: "classify_dialog_thread",
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("гейтит phrase fallback для chief_agronomist в primary semantic routing", async () => {
+    chiefAgronomistAgent.run.mockResolvedValueOnce({
+      status: "COMPLETED",
+      explain: "chief ok",
+      data: { opinion: "ok" },
+      confidence: 0.9,
+      traceId: "tr-1",
+      evidence: [],
+      recommendations: [],
+    });
+
+    const result = await service.execute({
+      request: {
+        ...baseRequest,
+        role: "chief_agronomist",
+        message: "нужен совет по полю",
+        semanticRouting: {
+          source: "primary",
+          promotedPrimary: true,
+          enforceCapabilityGating: true,
+          sliceId: "agro.techmaps.list-open-create",
+          semanticIntent: {} as any,
+          routeDecision: {} as any,
+          candidateRoutes: [],
+        },
+      } as any,
+      actorContext: {
+        companyId: "company-1",
+        traceId: "tr-1",
+      },
+      kernel: {
+        ...baseKernel,
+        runtimeProfile: {
+          ...baseKernel.runtimeProfile,
+          executionAdapterRole: "chief_agronomist",
+        },
+      } as any,
+      allowedToolCalls: [] as any,
+      budgetDecision: { outcome: "ALLOW" } as any,
+    });
+
+    expect(result.status).toBe("COMPLETED");
+    expect(chiefAgronomistAgent.run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        intent: "expert_opinion",
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("гейтит phrase fallback для chief_agronomist в alert semantic path", async () => {
+    chiefAgronomistAgent.run.mockResolvedValueOnce({
+      status: "COMPLETED",
+      explain: "chief alert ok",
+      data: { tips: [] },
+      confidence: 0.9,
+      traceId: "tr-1",
+      evidence: [],
+      recommendations: [],
+    });
+
+    const result = await service.execute({
+      request: {
+        ...baseRequest,
+        role: "chief_agronomist",
+        message: "алерт по полю",
+        semanticRouting: {
+          source: "primary",
+          promotedPrimary: true,
+          enforceCapabilityGating: true,
+          sliceId: "agro.deviations.review",
+          semanticIntent: {} as any,
+          routeDecision: {} as any,
+          candidateRoutes: [],
+        },
+      } as any,
+      actorContext: {
+        companyId: "company-1",
+        traceId: "tr-1",
+      },
+      kernel: {
+        ...baseKernel,
+        runtimeProfile: {
+          ...baseKernel.runtimeProfile,
+          executionAdapterRole: "chief_agronomist",
+        },
+      } as any,
+      allowedToolCalls: [] as any,
+      budgetDecision: { outcome: "ALLOW" } as any,
+    });
+
+    expect(result.status).toBe("COMPLETED");
+    expect(chiefAgronomistAgent.run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        intent: "expert_opinion",
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("гейтит phrase fallback для data_scientist в primary semantic routing", async () => {
+    dataScientistAgent.run.mockResolvedValueOnce({
+      status: "COMPLETED",
+      explain: "data ok",
+      data: { forecast: 1 },
+      confidence: 0.8,
+      traceId: "tr-1",
+      evidence: [],
+    });
+
+    const result = await service.execute({
+      request: {
+        ...baseRequest,
+        role: "data_scientist",
+        message: "что если снизить дозу удобрений",
+        semanticRouting: {
+          source: "primary",
+          promotedPrimary: true,
+          enforceCapabilityGating: true,
+          sliceId: "finance.scenario.analysis",
+          semanticIntent: {} as any,
+          routeDecision: {} as any,
+          candidateRoutes: [],
+        },
+      } as any,
+      actorContext: {
+        companyId: "company-1",
+        traceId: "tr-1",
+      },
+      kernel: {
+        ...baseKernel,
+        runtimeProfile: {
+          ...baseKernel.runtimeProfile,
+          executionAdapterRole: "data_scientist",
+        },
+      } as any,
+      allowedToolCalls: [] as any,
+      budgetDecision: { outcome: "ALLOW" } as any,
+    });
+
+    expect(result.status).toBe("COMPLETED");
+    expect(dataScientistAgent.run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        intent: "what_if",
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("гейтит phrase fallback для data_scientist в strategy forecast default path", async () => {
+    dataScientistAgent.run.mockResolvedValueOnce({
+      status: "COMPLETED",
+      explain: "data forecast ok",
+      data: { forecast: 1 },
+      confidence: 0.8,
+      traceId: "tr-1",
+      evidence: [],
+    });
+
+    const result = await service.execute({
+      request: {
+        ...baseRequest,
+        role: "data_scientist",
+        message: "покажи общую динамику по сезону",
+        semanticRouting: {
+          source: "primary",
+          promotedPrimary: true,
+          enforceCapabilityGating: true,
+          sliceId: "finance.plan-fact.read",
+          semanticIntent: {} as any,
+          routeDecision: {} as any,
+          candidateRoutes: [],
+        },
+      } as any,
+      actorContext: {
+        companyId: "company-1",
+        traceId: "tr-1",
+      },
+      kernel: {
+        ...baseKernel,
+        runtimeProfile: {
+          ...baseKernel.runtimeProfile,
+          executionAdapterRole: "data_scientist",
+        },
+      } as any,
+      allowedToolCalls: [] as any,
+      budgetDecision: { outcome: "ALLOW" } as any,
+    });
+
+    expect(result.status).toBe("COMPLETED");
+    expect(dataScientistAgent.run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        intent: "seasonal_report",
+      }),
+      expect.anything(),
+    );
+  });
+
   it("сохраняет semantic_router_primary для query_knowledge и прокидывает исходный запрос", async () => {
     knowledgeAgent.run.mockResolvedValueOnce({
       status: "COMPLETED",
@@ -656,6 +1171,58 @@ describe("AgentExecutionAdapterService", () => {
           name: RaiToolName.GetCommerceContract,
         }),
       ]),
+    );
+  });
+
+  it("в primary semantic routing выбирает safe read default для contracts_agent без ingress intent", async () => {
+    contractsAgent.run.mockResolvedValueOnce({
+      status: "NEEDS_MORE_DATA",
+      explain: "need contract context",
+      data: {},
+      missingContext: ["contractId"],
+      toolCallsCount: 0,
+      evidence: [],
+      fallbackUsed: false,
+    });
+
+    const result = await service.execute({
+      request: {
+        ...baseRequest,
+        role: "contracts_agent",
+        message: "что по договору",
+        semanticRouting: {
+          source: "primary",
+          promotedPrimary: true,
+          enforceCapabilityGating: true,
+          sliceId: "contracts.unspecified",
+          semanticIntent: {} as any,
+          routeDecision: {
+            eligibleTools: [],
+          } as any,
+          candidateRoutes: [],
+        },
+      } as any,
+      actorContext: {
+        companyId: "company-1",
+        traceId: "tr-1",
+      },
+      kernel: {
+        ...baseKernel,
+        runtimeProfile: {
+          ...baseKernel.runtimeProfile,
+          executionAdapterRole: "contracts_agent",
+        },
+      } as any,
+      allowedToolCalls: [] as any,
+      budgetDecision: { outcome: "ALLOW" } as any,
+    });
+
+    expect(result.status).toBe("NEEDS_MORE_DATA");
+    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(contractsAgent.run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        intent: "review_commerce_contract",
+      }),
     );
   });
 

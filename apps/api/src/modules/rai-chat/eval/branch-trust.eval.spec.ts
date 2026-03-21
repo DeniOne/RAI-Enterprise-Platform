@@ -377,4 +377,123 @@ describe("Branch trust eval corpus", () => {
       ]),
     );
   });
+
+  it("corpus: agro execution fact -> finance cost aggregation собирает verified multi-source branches", async () => {
+    const response = await composerService.buildResponse({
+      request: {
+        message: "Собери agro execution fact -> finance cost aggregation.",
+        threadId: "th-eval-analytics",
+        workspaceContext: { route: "/consulting/dashboard" },
+      },
+      executionResult: {
+        executedTools: [],
+        agentExecution: {
+          role: "agronomist",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Составной аналитический сценарий выполнен по плану.",
+          structuredOutput: {
+            summary: "agro execution fact and finance cost aggregation",
+          },
+          branchResults: [
+            {
+              branch_id: "agro:fact",
+              source_agent: "agronomist",
+              domain: "agro",
+              summary: "Агро execution fact подтвержден.",
+              scope: { domain: "agro" },
+              derived_from: [],
+              evidence_refs: [],
+              assumptions: [],
+              data_gaps: [],
+              freshness: { status: "FRESH" },
+              confidence: 0.94,
+            },
+            {
+              branch_id: "finance:aggregation",
+              source_agent: "economist",
+              domain: "finance",
+              summary: "Финансовая стоимость агрегирована.",
+              scope: { domain: "finance" },
+              derived_from: [],
+              evidence_refs: [],
+              assumptions: [],
+              data_gaps: [],
+              freshness: { status: "FRESH" },
+              confidence: 0.93,
+            },
+          ],
+          branchTrustAssessments: [
+            {
+              branch_id: "agro:fact",
+              source_agent: "agronomist",
+              verdict: "VERIFIED",
+              score: 0.94,
+              reasons: [],
+              checks: [],
+              requires_cross_check: false,
+            },
+            {
+              branch_id: "finance:aggregation",
+              source_agent: "economist",
+              verdict: "VERIFIED",
+              score: 0.93,
+              reasons: [],
+              checks: [],
+              requires_cross_check: false,
+            },
+          ],
+          branchCompositions: [
+            {
+              branch_id: "agro:fact",
+              verdict: "VERIFIED",
+              include_in_response: true,
+              summary: "Агро execution fact подтвержден.",
+              disclosure: [],
+            },
+            {
+              branch_id: "finance:aggregation",
+              verdict: "VERIFIED",
+              include_in_response: true,
+              summary: "Финансовая стоимость агрегирована.",
+              disclosure: [],
+            },
+          ],
+          toolCalls: [],
+          connectorCalls: [],
+          evidence: [],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "agronom-v1",
+          },
+        },
+      } as any,
+      recallResult: {
+        recall: { items: [] },
+        profile: {},
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-eval-analytics",
+      threadId: "th-eval-analytics",
+      companyId: "company-1",
+    });
+
+    expect(response.text).toContain("Подтверждённые факты:");
+    expect(response.text).toContain("Агро execution fact подтвержден.");
+    expect(response.text).toContain("Финансовая стоимость агрегирована.");
+    expect(response.trustSummary).toEqual(
+      expect.objectContaining({
+        verdict: "VERIFIED",
+        verifiedCount: 2,
+        branchCount: 2,
+      }),
+    );
+  });
 });

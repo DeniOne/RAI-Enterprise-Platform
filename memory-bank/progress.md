@@ -430,6 +430,115 @@
     - `pnpm --filter web exec tsc --noEmit --pretty false` — PASS
   - Эффект изменения: response window/application semantics перестали быть скрытой частью zustand-store, поэтому следующий evolution шаг можно делать через shared reducer вместо ручной сборки state transitions в UI-store.
 
+21. **CRM composite flow: register_counterparty -> create_account -> open_workspace** [DONE]:
+  - В `Semantic Ingress Frame` добавлен `compositePlan` для CRM follow-up flow.
+  - `SupervisorAgent` исполняет staged composite workflow последовательно: `register_counterparty -> create_crm_account -> review_account_workspace`.
+  - `ResponseComposer` отдаёт отдельный `crm_composite_flow` work window с owner/strategy/stage status и related signals.
+  - Trace forensics и `Control Tower` показывают `Composite workflow` block как first-class ingress artifact.
+  - `apps/web/lib/api.ts`, `apps/web/components/ai-chat/ai-work-window-types.ts` и trace page синхронизированы по `crm_composite_flow`.
+  - Тесты на `semantic-ingress`, `supervisor-agent`, `response-composer` и `Control Tower` зелёные.
+  - Эффект изменения: платформа уже умеет проводить короткий governed CRM composite сценарий как один lead-owner workflow, а не как цепочку несвязанных write/read переходов.
+
+22. **Agro execution fact -> finance cost aggregation + branch trust eval coverage** [DONE]:
+  - `Semantic Ingress Frame` теперь нормализует `agro execution fact -> finance cost aggregation` в аналитический composite workflow.
+  - `SupervisorAgent` исполняет staged analytical workflow как `agronomist -> economist`.
+  - `ResponseComposer` отдаёт отдельный `multi_source_aggregation` work window для аналитического composite-flow.
+  - `branch-trust.eval.spec.ts` получил verified multi-source regression case для agro/finance composite payload.
+  - Тесты на `semantic-ingress`, `supervisor-agent`, `response-composer` и `branch-trust.eval` зелёные.
+  - Эффект изменения: multi-source analytical question теперь проходит через one-owner staged execution и branch-level trust verification без потери честности фактов.
+
+23. **front_office_agent ingress fallback for no-route process messages** [IN PROGRESS]:
+  - `classifyByAgentContracts(...)` теперь переводит no-route process-like сообщения в `front_office_agent` с intent `classify_dialog_thread` и auto tool call `ClassifyDialogThread`.
+  - Safe greetings/free-chat no-route path сохранён на legacy fallback, чтобы не ломать `rai-chat.service.spec` fail-open путь.
+  - `agent-interaction-contracts.spec.ts` зелёный; `pnpm --filter api exec tsc --noEmit --pretty false` также зелёный.
+  - `ResponseComposerService` отдельно вернул greeting acknowledge `Принял: <message>` для простых приветствий, чтобы текущий chat fail-open path не деградировал в generic fallback.
+  - Старый widget-drift в `rai-chat.service.spec.ts` переведён на текущий контракт: legacy `widgets[]` больше не ожидаются в agentExecution path, а current truth закреплена через `workWindows`/agent response behavior.
+  - Следующий шаг: аккуратно расширить этот ingress path на безопасный free-chat слой без изменения текущего chat fallback.
+
+24. **front_office_agent ingress closure for safe free-chat no-route messages** [DONE]:
+  - `classifyByAgentContracts(...)` теперь переводит no-route free-chat сообщения в `front_office_agent` с intent `classify_dialog_thread`.
+  - `FrontOfficeAgent` для `free_chat` классификации возвращает greeting acknowledge `Принял: <message>`, чтобы fail-open chat path сохранился.
+  - `AgentRuntimeConfigService` больше не блокирует `front_office_agent` tool surface как governed-by-default without owner config.
+  - `rai-chat.service.spec.ts`, `agent-runtime-config.service.spec.ts`, `agent-contracts.spec.ts` и `front-office-agent.service.spec.ts` зелёные.
+
+25. **Semantic-first owner selection in SupervisorAgent** [DONE]:
+  - `SupervisorAgent` теперь резолвит runtime owner role из `SemanticIngressFrame.requestedOperation.ownerRole` раньше legacy classification fallback.
+  - semantic frame остаётся canonical для migrated slices, а legacy classification сохранён как compatibility path.
+  - regression coverage добавлен в `supervisor-agent.service.spec.ts`.
+  - эффект: semantic ingress теперь участвует в actual orchestration role selection, а не только в audit metadata.
+
+26. **Semantic-first intent resolution in AgentExecutionAdapter** [DONE]:
+  - `AgentExecutionAdapterService` теперь резолвит intent из `SemanticIngressFrame.requestedOperation.intent` первым для migrated roles.
+  - CRM / contracts / front-office execution paths используют semantic ingress как primary source, а legacy text heuristics остаются fallback-слоем.
+  - regression coverage добавлен в `runtime/agent-execution-adapter.service.spec.ts`.
+  - эффект: execution path перестаёт повторно угадывать intent после semantic ingress и становится предсказуемее.
+
+27. **Semantic-primary text heuristics gated in AgentExecutionAdapter** [DONE]:
+  - для primary semantic routing text heuristics больше не используются как second guess в agronomist path
+  - chief_agronomist и data_scientist также переведены на semantic-primary intent default, а text fallback оставлен только для compatibility path
+  - compatibility fallback остаётся только для немигрированных/heuristic-only requests
+  - эффект: migrated execution path теперь действительно следует semantic plan, а не пересобирает intent по фразе после routing
+
+28. **Typed writePolicy added to SemanticIngressFrame** [DONE]:
+  - `SemanticIngressFrame` теперь несёт typed `writePolicy` с decision `execute/confirm/clarify/block`
+  - policy decision отделён от lexical signal и используется как отдельный runtime gate
+  - `SupervisorAgent` теперь опирается на `writePolicy` для user-confirmed gating
+  - regression coverage добавлен в `semantic-ingress.service.spec.ts`
+
+29. **Trace forensics surfaces writePolicy** [DONE]:
+  - `writePolicy` добавлен в trace forensics response как отдельное поле
+  - policy decision теперь видим в observability API без чтения полного `semanticIngressFrame`
+  - regression coverage добавлен в `explainability-panel.service.spec.ts`
+
+30. **Tool registry direct-write gating uses typed writePolicy** [DONE]:
+  - `RaiToolActorContext` получил typed `writePolicy` после semantic ingress normalization
+  - `RaiToolsRegistry` теперь использует `writePolicy.decision === "execute"` для CRM direct-write bypass вместо одного `userIntentSource`
+  - regression coverage добавлен в `tools/rai-tools.registry.spec.ts`
+  - Эффект изменения: write-governance стал зависеть от canonical semantic policy, а не от косвенного string-источника intent.
+
+31. **PendingAction workflow execution carries typed writePolicy** [DONE]:
+  - `PendingActionsController` передаёт typed `writePolicy` в approved action execution
+  - строковый `workflow_resume` intent больше не используется в approved action execution как source of truth
+  - `approvedPendingActionId` остался отдельным bypass-маркером, не смешанным с intent source
+  - Эффект изменения: approved workflow resume path теперь несёт тот же canonical policy shape, что и остальной governed write path.
+
+32. **PendingActionsController spec locks approved write policy contract** [DONE]:
+  - unit-spec проверяет, что approved pending-action execution передаёт typed `writePolicy`
+  - unit-spec подтверждает отсутствие `workflow_resume` как source of truth в actor context
+  - Эффект изменения: approved execution contract теперь защищён регрессией, а не только кодовым соглашением.
+
+33. **Primary CRM/contracts routing uses safe read defaults** [DONE]:
+  - CRM primary routing больше не угадывает intent по message fallback, а выбирает safe read default `review_account_workspace`
+  - contracts primary routing больше не угадывает intent по message fallback, а выбирает safe read default `review_commerce_contract`
+  - regression coverage добавлен в `runtime/agent-execution-adapter.service.spec.ts`
+  - Эффект изменения: adapter перестал принимать текст за источник истины для primary CRM/contracts routing и теперь ведёт себя как semantic-first gate с безопасным read default.
+
+34. **Front-office primary routing uses classify_dialog_thread default** [DONE]:
+  - `front_office_agent` primary routing больше не угадывает intent по message fallback, а выбирает `classify_dialog_thread` как safe default
+  - regression coverage добавлен в `runtime/agent-execution-adapter.service.spec.ts`
+  - Эффект изменения: front-office primary path тоже перестал зависеть от text-based intent guessing и теперь следует semantic-first default.
+
+35. **Agronomist primary routing uses generate_tech_map_draft default** [DONE]:
+  - `agronomist` primary routing больше не пересобирает intent по phrase fallback и выбирает `generate_tech_map_draft` как safe default
+  - read-only techmap registry path остаётся отдельной heuristic веткой для browsing-сценариев
+  - regression coverage добавлен в `runtime/agent-execution-adapter.service.spec.ts`
+  - Эффект изменения: agronomist primary path тоже стал semantic-first default, а draft-вызов больше не зависит от phrase guessing в adapter layer.
+
+36. **Route downgraded from hard gate to contextual prior** [DONE]:
+  - `semantic-router.service.ts` больше не требует `route` / `workspaceContext` как обязательный gate для key owner-intents
+  - `crm`, `contracts`, `finance` и `deviation` slice detection теперь могут опираться на semantic query без route-first ветвления
+  - regression coverage добавлен в `semantic-router.service.spec.ts`
+  - Эффект изменения: route-space перестал быть скрытым production gate и стал именно prior для disambiguation, как и требовал phase plan.
+
+37. **Branch Trust Gate macro-sprint final verification** [DONE]:
+  - `pnpm lint:docs` — PASS
+  - `pnpm lint:docs:matrix:strict` — PASS
+  - `pnpm --filter api exec tsc --noEmit --pretty false` — PASS
+  - `pnpm --filter web exec tsc --noEmit --pretty false` — PASS
+  - targeted api jest suites — PASS
+  - targeted web jest suites — PASS
+  - Эффект изменения: macro-sprint закрыт не только в коде, но и в финальной runtime/docs верификации.
+
 ## 2026-03-20
 
 1. **Routing Learning Layer — Foundation + Techmaps Cutover** [DONE]:

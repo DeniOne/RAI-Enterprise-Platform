@@ -1650,7 +1650,14 @@ describe("SupervisorAgent", () => {
             },
           ],
           connectorCalls: [],
-          evidence: [],
+          evidence: [
+            {
+              claim: "Регистрация контрагента подтверждена.",
+              sourceType: "TOOL_RESULT",
+              sourceId: "register_counterparty",
+              confidenceScore: 0.95,
+            },
+          ],
           validation: { passed: true, reasons: [] },
           fallbackUsed: false,
           outputContractVersion: "v1",
@@ -1705,6 +1712,9 @@ describe("SupervisorAgent", () => {
       expect.objectContaining({
         userConfirmed: true,
         userIntentSource: "direct_user_command",
+        writePolicy: expect.objectContaining({
+          decision: "execute",
+        }),
       }),
     );
 
@@ -1720,6 +1730,98 @@ describe("SupervisorAgent", () => {
             intent: "register_counterparty",
           }),
         }),
+      }),
+    );
+  });
+
+  it("берет runtime role из semantic ingress frame раньше legacy classification", async () => {
+    process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+    intentRouterMock.classify.mockReturnValueOnce({
+      targetRole: "crm_agent",
+      intent: "register_counterparty",
+      toolName: RaiToolName.RegisterCounterparty,
+      confidence: 0.82,
+      method: "regex",
+      reason: "responsibility:crm:register_counterparty",
+    });
+    jest.spyOn((agent as any).semanticIngress, "buildFrame").mockReturnValueOnce({
+      version: "v1",
+      interactionMode: "free_chat",
+      requestShape: "single_intent",
+      domainCandidates: [],
+      goal: "Привет",
+      entities: [],
+      requestedOperation: {
+        ownerRole: "front_office_agent",
+        intent: "classify_dialog_thread",
+        toolName: RaiToolName.ClassifyDialogThread,
+        decisionType: "execute",
+        source: "legacy_contracts",
+      },
+      operationAuthority: "unknown",
+      missingSlots: [],
+      riskClass: "safe_read",
+      requiresConfirmation: false,
+      confidenceBand: "medium",
+      explanation: "semantic-front-office",
+      writePolicy: {
+        decision: "execute",
+        reason: "semantic_default_execute",
+      },
+      proofSliceId: null,
+      compositePlan: null,
+    } as any);
+
+    const executeAgentSpy = jest.spyOn(agentRuntimeService, "executeAgent").mockResolvedValueOnce({
+      executedTools: [],
+      agentExecution: {
+        role: "front_office_agent",
+        status: "COMPLETED",
+        executionPath: "tool_call_primary",
+        text: "Принял: привет",
+        structuredOutput: {
+          summary: "Принял: привет",
+          confidence: 0.35,
+        },
+        toolCalls: [],
+        connectorCalls: [],
+        evidence: [],
+        validation: { passed: true, reasons: [] },
+        fallbackUsed: false,
+        outputContractVersion: "v1",
+        auditPayload: {
+          runtimeMode: "agent-first-hybrid",
+          autonomyMode: "advisory",
+          allowedToolNames: [RaiToolName.ClassifyDialogThread],
+          blockedToolNames: [],
+          connectorNames: [],
+          outputContractId: "front-office-v1",
+        },
+      },
+    } as any);
+    jest.spyOn(responseComposerService, "buildResponse").mockResolvedValueOnce({
+      text: "Принял: привет",
+      widgets: [],
+      evidence: [],
+    } as any);
+
+    await agent.orchestrate(
+      {
+        message: "привет",
+        workspaceContext: { route: "/chat" },
+      },
+      "company-1",
+      "user-1",
+    );
+
+    expect(executeAgentSpy).toHaveBeenCalled();
+    const executionRequest = executeAgentSpy.mock.calls[0]?.[0];
+    const actorContext = executeAgentSpy.mock.calls[0]?.[1];
+    expect(executionRequest?.role).toBe("front_office_agent");
+    expect(actorContext).toEqual(
+      expect.objectContaining({
+        agentRole: "front_office_agent",
+        userIntentSource: "unknown",
       }),
     );
   });
@@ -1909,6 +2011,609 @@ describe("SupervisorAgent", () => {
         userIntentSource: "delegated_or_autonomous",
       }),
     );
+  });
+
+  it("исполняет crm composite flow register_counterparty -> create_account -> open_workspace как staged workflow", async () => {
+    process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+    semanticRouterMock.evaluate.mockResolvedValueOnce({
+      semanticIntent: {
+        domain: "crm",
+        entity: "counterparty",
+        action: "create",
+        interactionMode: "write_candidate",
+        mutationRisk: "side_effecting_write",
+        filters: {},
+        requiredContext: [],
+        focusObject: null,
+        dialogState: {
+          activeFlow: null,
+          pendingClarificationKeys: [],
+          lastUserAction: null,
+        },
+        resolvability: "resolved",
+        ambiguityType: "none",
+        confidenceBand: "high",
+        reason: "crm_write_candidate",
+      },
+      routeDecision: {
+        decisionType: "execute",
+        recommendedExecutionMode: "direct_execute",
+        eligibleTools: [],
+        eligibleFlows: [],
+        requiredContextMissing: [],
+        policyChecksRequired: [],
+        needsConfirmation: false,
+        needsClarification: false,
+        abstainReason: null,
+        policyBlockReason: null,
+      },
+      candidateRoutes: [],
+      divergence: {
+        isMismatch: false,
+        mismatchKinds: [],
+        summary: "match",
+        legacyRouteKey: "crm_agent:register_counterparty",
+        semanticRouteKey: "crm:counterparty:create",
+      },
+      versionInfo: {
+        routerVersion: "semantic-router-v1",
+        promptVersion: "semantic-router-prompt-v1",
+        toolsetVersion: "toolset",
+        workspaceStateDigest: "digest",
+      },
+      latencyMs: 3,
+      sliceId: null,
+      promotedPrimary: false,
+      executionPath: "semantic_router_shadow",
+      requestedToolCalls: [],
+      classification: {
+        targetRole: "crm_agent",
+        intent: "register_counterparty",
+        toolName: RaiToolName.RegisterCounterparty,
+        confidence: 1,
+        method: "semantic_router_shadow",
+        reason: "crm_write_candidate",
+      },
+      routingContext: {
+        source: "shadow",
+        promotedPrimary: false,
+        enforceCapabilityGating: false,
+        sliceId: null,
+        semanticIntent: {
+          domain: "crm",
+          entity: "counterparty",
+          action: "create",
+          interactionMode: "write_candidate",
+          mutationRisk: "side_effecting_write",
+          filters: {},
+          requiredContext: [],
+          focusObject: null,
+          dialogState: {
+            activeFlow: null,
+            pendingClarificationKeys: [],
+            lastUserAction: null,
+          },
+          resolvability: "resolved",
+          ambiguityType: "none",
+          confidenceBand: "high",
+          reason: "crm_write_candidate",
+        },
+        routeDecision: {
+          decisionType: "execute",
+          recommendedExecutionMode: "direct_execute",
+          eligibleTools: [],
+          eligibleFlows: [],
+          requiredContextMissing: [],
+          policyChecksRequired: [],
+          needsConfirmation: false,
+          needsClarification: false,
+          abstainReason: null,
+          policyBlockReason: null,
+        },
+        candidateRoutes: [],
+      },
+      llmUsed: false,
+      llmError: null,
+    });
+
+    const executeAgentSpy = jest
+      .spyOn(agentRuntimeService, "executeAgent")
+      .mockResolvedValueOnce({
+        executedTools: [
+          {
+            name: RaiToolName.RegisterCounterparty,
+            result: {
+              created: true,
+              source: "DADATA",
+              partyId: "party-1",
+              legalName: "ООО Ромашка",
+              inn: "2636041493",
+              jurisdictionCode: "RU",
+              lookupStatus: "FOUND",
+              alreadyExisted: false,
+            },
+          },
+        ],
+        agentExecution: {
+          role: "crm_agent",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Контрагент зарегистрирован.",
+          structuredOutput: {
+            intent: "register_counterparty",
+            data: {
+              partyId: "party-1",
+              legalName: "ООО Ромашка",
+              inn: "2636041493",
+            },
+            confidence: 0.95,
+          },
+          toolCalls: [
+            {
+              name: RaiToolName.RegisterCounterparty,
+              result: {
+                created: true,
+                source: "DADATA",
+                partyId: "party-1",
+                legalName: "ООО Ромашка",
+                inn: "2636041493",
+                jurisdictionCode: "RU",
+                lookupStatus: "FOUND",
+                alreadyExisted: false,
+              },
+            },
+          ],
+          connectorCalls: [],
+          evidence: [],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [RaiToolName.RegisterCounterparty],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "crm-v1",
+          },
+        },
+      } as any)
+      .mockResolvedValueOnce({
+        executedTools: [
+          {
+            name: RaiToolName.CreateCrmAccount,
+            result: {
+              accountId: "acc-1",
+              name: "ООО Ромашка",
+              inn: "2636041493",
+              status: "ACTIVE",
+              partyId: "party-1",
+            },
+          },
+        ],
+        agentExecution: {
+          role: "crm_agent",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "CRM-аккаунт создан.",
+          structuredOutput: {
+            intent: "create_crm_account",
+            data: {
+              accountId: "acc-1",
+              name: "ООО Ромашка",
+              inn: "2636041493",
+            },
+            confidence: 0.92,
+          },
+          toolCalls: [
+            {
+              name: RaiToolName.CreateCrmAccount,
+              result: {
+                accountId: "acc-1",
+                name: "ООО Ромашка",
+                inn: "2636041493",
+                status: "ACTIVE",
+                partyId: "party-1",
+              },
+            },
+          ],
+          connectorCalls: [],
+          evidence: [
+            {
+              claim: "CRM-аккаунт подтверждён.",
+              sourceType: "TOOL_RESULT",
+              sourceId: "create_crm_account",
+              confidenceScore: 0.93,
+            },
+          ],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [RaiToolName.CreateCrmAccount],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "crm-v1",
+          },
+        },
+      } as any)
+      .mockResolvedValueOnce({
+        executedTools: [
+          {
+            name: RaiToolName.GetCrmAccountWorkspace,
+            result: {
+              account: { id: "acc-1", name: "ООО Ромашка" },
+              linkedParty: { id: "party-1", legalName: "ООО Ромашка" },
+              legalEntities: [],
+              contacts: [],
+              interactions: [],
+              obligations: [],
+              documents: [],
+              risks: [],
+            },
+          },
+        ],
+        agentExecution: {
+          role: "crm_agent",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Карточка открыта.",
+          structuredOutput: {
+            intent: "review_account_workspace",
+            data: {
+              account: { id: "acc-1", name: "ООО Ромашка" },
+            },
+            confidence: 0.9,
+          },
+          toolCalls: [
+            {
+              name: RaiToolName.GetCrmAccountWorkspace,
+              result: {
+                account: { id: "acc-1", name: "ООО Ромашка" },
+                linkedParty: { id: "party-1", legalName: "ООО Ромашка" },
+                legalEntities: [],
+                contacts: [],
+                interactions: [],
+                obligations: [],
+                documents: [],
+                risks: [],
+              },
+            },
+          ],
+          connectorCalls: [],
+          evidence: [
+            {
+              claim: "Карточка workspace подтверждена.",
+              sourceType: "TOOL_RESULT",
+              sourceId: "get_crm_account_workspace",
+              confidenceScore: 0.9,
+            },
+          ],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [RaiToolName.GetCrmAccountWorkspace],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "crm-v1",
+          },
+        },
+      } as any);
+    jest.spyOn(responseComposerService, "buildResponse").mockResolvedValueOnce({
+      text: "CRM-композит выполнен.",
+      widgets: [],
+      evidence: [],
+    } as any);
+
+    await agent.orchestrate(
+      {
+        message:
+          "Давай зарегим контрагента, потом создай аккаунт и открой карточку.",
+        workspaceContext: { route: "/parties" },
+      },
+      "company-1",
+      "user-1",
+    );
+
+    expect(executeAgentSpy).toHaveBeenCalledTimes(3);
+
+    const firstExecutionRequest = executeAgentSpy.mock.calls[0]?.[0];
+    expect(firstExecutionRequest.semanticIngressFrame).toEqual(
+      expect.objectContaining({
+        requestShape: "composite",
+        compositePlan: expect.objectContaining({
+          leadOwnerAgent: "crm_agent",
+          executionStrategy: "sequential",
+        }),
+      }),
+    );
+
+    const secondExecutionRequest = executeAgentSpy.mock.calls[1]?.[0];
+    const thirdExecutionRequest = executeAgentSpy.mock.calls[2]?.[0];
+    expect(secondExecutionRequest.requestedTools?.[0]?.name).toBe(
+      RaiToolName.CreateCrmAccount,
+    );
+    expect(thirdExecutionRequest.requestedTools?.[0]?.name).toBe(
+      RaiToolName.GetCrmAccountWorkspace,
+    );
+
+    const auditMetadata =
+      prismaServiceMock.aiAuditEntry.create.mock.calls[
+        prismaServiceMock.aiAuditEntry.create.mock.calls.length - 1
+      ]?.[0]?.data?.metadata;
+    expect(auditMetadata).toEqual(
+      expect.objectContaining({
+        semanticIngressFrame: expect.objectContaining({
+          compositePlan: expect.objectContaining({
+            workflowId: "crm.register_counterparty.create_account.open_workspace",
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("исполняет agro execution fact -> finance cost aggregation как staged analytical workflow", async () => {
+    process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+    intentRouterMock.classify.mockReturnValue({
+      targetRole: "agronomist",
+      intent: "compute_deviations",
+      toolName: RaiToolName.ComputeDeviations,
+      confidence: 0.82,
+      method: "regex",
+      reason: "responsibility:agro:compute_deviations",
+    });
+    intentRouterMock.buildAutoToolCall.mockReturnValue(null);
+    semanticRouterMock.evaluate.mockResolvedValueOnce({
+      promotedPrimary: false,
+      sliceId: null,
+      requestedToolCalls: [],
+      classification: {
+        targetRole: "agronomist",
+        intent: "compute_deviations",
+        toolName: RaiToolName.ComputeDeviations,
+        confidence: 0.82,
+        method: "semantic_router_shadow",
+        reason: "agro_execution_fact",
+      },
+      semanticIntent: {
+        domain: "agro",
+        entity: "execution_fact",
+        action: "read",
+        interactionMode: "analysis",
+        mutationRisk: "safe_read",
+        filters: {},
+        requiredContext: [],
+        focusObject: null,
+        dialogState: {
+          activeFlow: null,
+          pendingClarificationKeys: [],
+          lastUserAction: null,
+        },
+        resolvability: "resolved",
+        ambiguityType: "none",
+        confidenceBand: "high",
+        reason: "agro_execution_fact",
+      },
+      routeDecision: {
+        decisionType: "execute",
+        recommendedExecutionMode: "direct_execute",
+        eligibleTools: [],
+        eligibleFlows: [],
+        requiredContextMissing: [],
+        policyChecksRequired: [],
+        needsConfirmation: false,
+        needsClarification: false,
+        abstainReason: null,
+        policyBlockReason: null,
+      },
+      candidateRoutes: [],
+      divergence: {
+        isMismatch: false,
+        mismatchKinds: [],
+        summary: "match",
+        legacyRouteKey: "agronomist:compute_deviations",
+        semanticRouteKey: "agro:execution_fact:read",
+      },
+      versionInfo: {
+        routerVersion: "semantic-router-v1",
+        promptVersion: "semantic-router-prompt-v1",
+        toolsetVersion: "toolset",
+        workspaceStateDigest: "digest",
+      },
+      latencyMs: 3,
+      executionPath: "semantic_router_shadow",
+      routingContext: {
+        source: "shadow",
+        promotedPrimary: false,
+        enforceCapabilityGating: false,
+        sliceId: null,
+        semanticIntent: {
+          domain: "agro",
+          entity: "execution_fact",
+          action: "read",
+          interactionMode: "analysis",
+          mutationRisk: "safe_read",
+          filters: {},
+          requiredContext: [],
+          focusObject: null,
+          dialogState: {
+            activeFlow: null,
+            pendingClarificationKeys: [],
+            lastUserAction: null,
+          },
+          resolvability: "resolved",
+          ambiguityType: "none",
+          confidenceBand: "high",
+          reason: "agro_execution_fact",
+        },
+        routeDecision: {
+          decisionType: "execute",
+          recommendedExecutionMode: "direct_execute",
+          eligibleTools: [],
+          eligibleFlows: [],
+          requiredContextMissing: [],
+          policyChecksRequired: [],
+          needsConfirmation: false,
+          needsClarification: false,
+          abstainReason: null,
+          policyBlockReason: null,
+        },
+        candidateRoutes: [],
+      },
+      llmUsed: false,
+      llmError: null,
+    } as any);
+
+    const executeAgentSpy = jest
+      .spyOn(agentRuntimeService, "executeAgent")
+      .mockResolvedValueOnce({
+        executedTools: [
+          {
+            name: RaiToolName.ComputeDeviations,
+            result: {
+              seasonId: "season-2026",
+              fieldId: "field-42",
+              planned: 120,
+              actual: 108,
+              deviation: 12,
+            },
+          },
+        ],
+        agentExecution: {
+          role: "agronomist",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Агро execution fact подтвержден.",
+          structuredOutput: {
+            intent: "compute_deviations",
+            scope: { seasonId: "season-2026", fieldId: "field-42" },
+            branchVerdict: "VERIFIED",
+            confidence: 0.95,
+          },
+          structuredOutputs: [
+            {
+              intent: "compute_deviations",
+              scope: { seasonId: "season-2026", fieldId: "field-42" },
+              branchVerdict: "VERIFIED",
+              confidence: 0.95,
+            },
+          ],
+          toolCalls: [],
+          connectorCalls: [],
+          evidence: [
+            {
+              claim: "Факт исполнения по агро-контексту подтвержден deterministic deviations.",
+              sourceType: "TOOL_RESULT",
+              sourceId: "compute_deviations",
+              confidenceScore: 0.95,
+            },
+          ],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "agronom-v1",
+          },
+        },
+      } as any)
+      .mockResolvedValueOnce({
+        executedTools: [
+          {
+            name: RaiToolName.ComputePlanFact,
+            result: {
+              planId: "plan-2026",
+              roi: 12.4,
+              ebitda: 870000,
+            },
+          },
+        ],
+        agentExecution: {
+          role: "economist",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Финансовая стоимость агрегирована.",
+          structuredOutput: {
+            intent: "compute_plan_fact",
+            scope: { planId: "plan-2026", seasonId: "season-2026" },
+            branchVerdict: "VERIFIED",
+            confidence: 0.93,
+          },
+          structuredOutputs: [
+            {
+              intent: "compute_plan_fact",
+              scope: { planId: "plan-2026", seasonId: "season-2026" },
+              branchVerdict: "VERIFIED",
+              confidence: 0.93,
+            },
+          ],
+          toolCalls: [],
+          connectorCalls: [],
+          evidence: [
+            {
+              claim: "Финансовая стоимость агрегирована deterministic plan fact.",
+              sourceType: "TOOL_RESULT",
+              sourceId: "compute_plan_fact",
+              confidenceScore: 0.93,
+            },
+          ],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "economist-v1",
+          },
+        },
+      } as any);
+    const result = await agent.orchestrate(
+      {
+        message:
+          "Собери agro execution fact -> finance cost aggregation по сезону.",
+        workspaceContext: {
+          route: "/consulting/dashboard",
+          filters: {
+            seasonId: "season-2026",
+            planId: "plan-2026",
+          },
+          activeEntityRefs: [{ kind: WorkspaceEntityKind.field, id: "field-42" }],
+        },
+      },
+      "company-1",
+      "user-1",
+    );
+
+    expect(executeAgentSpy).toHaveBeenCalledTimes(2);
+    expect(executeAgentSpy.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        role: "agronomist",
+        semanticIngressFrame: expect.objectContaining({
+          compositePlan: expect.objectContaining({
+            workflowId: "agro.execution_fact.finance.cost_aggregation",
+          }),
+        }),
+      }),
+    );
+    expect(executeAgentSpy.mock.calls[1]?.[0]).toEqual(
+      expect.objectContaining({
+        role: "economist",
+      }),
+    );
+    expect(result.text).toContain("Составной аналитический сценарий выполнен");
+    expect(result.workWindows?.some((window) => window.payload.intentId === "multi_source_aggregation")).toBe(true);
   });
 
   it("фиксирует before/after token-cost метрики для legacy-long-text vs stage3-json", async () => {

@@ -4,6 +4,7 @@ import {
   DecisionType,
   RoutingDomain,
 } from "./semantic-routing.types";
+import { CompositeWorkflowPlan } from "./composite-orchestration.types";
 
 export type SemanticIngressInteractionMode =
   | "free_chat"
@@ -35,6 +36,17 @@ export type SemanticIngressOperationAuthority =
   | "workflow_resume"
   | "delegated_or_autonomous"
   | "unknown";
+
+export type SemanticIngressWritePolicyDecision =
+  | "execute"
+  | "confirm"
+  | "clarify"
+  | "block";
+
+export interface SemanticIngressWritePolicy {
+  decision: SemanticIngressWritePolicyDecision;
+  reason: string;
+}
 
 export interface SemanticIngressDomainCandidate {
   domain: RoutingDomain | "unknown";
@@ -77,5 +89,7 @@ export interface SemanticIngressFrame {
   requiresConfirmation: boolean;
   confidenceBand: ConfidenceBand;
   explanation: string;
+  writePolicy: SemanticIngressWritePolicy;
   proofSliceId?: string | null;
+  compositePlan?: CompositeWorkflowPlan | null;
 }

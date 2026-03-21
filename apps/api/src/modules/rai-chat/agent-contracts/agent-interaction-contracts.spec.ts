@@ -59,6 +59,42 @@ describe("agent interaction contracts", () => {
     expect(result.toolName).toBeNull();
   });
 
+  it("переводит общий no-route process-text в front-office ingress", () => {
+    const classification = classifyByAgentContracts(
+      "Нужно разобрать диалог и передать в работу",
+    );
+
+    expect(classification.targetRole).toBe("front_office_agent");
+    expect(classification.intent).toBe("classify_dialog_thread");
+    expect(classification.toolName).toBe(RaiToolName.ClassifyDialogThread);
+
+    const toolCall = buildAutoToolCallFromContracts(
+      {
+        message: "Нужно разобрать диалог и передать в работу",
+      },
+      classification,
+    );
+
+    expect(toolCall).toEqual({
+      name: RaiToolName.ClassifyDialogThread,
+      payload: {
+        channel: "web_chat",
+        messageText: "Нужно разобрать диалог и передать в работу",
+        threadExternalId: undefined,
+        route: undefined,
+      },
+    });
+  });
+
+  it("переводит no-route free-chat в front-office ingress без process owner", () => {
+    const classification = classifyByAgentContracts("Привет, как дела?");
+
+    expect(classification.targetRole).toBe("front_office_agent");
+    expect(classification.intent).toBe("classify_dialog_thread");
+    expect(classification.toolName).toBe(RaiToolName.ClassifyDialogThread);
+    expect(classification.confidence).toBe(0.35);
+  });
+
   it("не строит auto tool call для write-intent без action-сигнала", () => {
     const toolCall = buildAutoToolCallFromContracts(
       {

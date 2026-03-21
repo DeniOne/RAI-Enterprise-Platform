@@ -59,6 +59,17 @@ export type RaiToolUserIntentSource =
   | "delegated_or_autonomous"
   | "unknown";
 
+export type RaiToolWritePolicyDecision =
+  | "execute"
+  | "confirm"
+  | "clarify"
+  | "block";
+
+export interface RaiToolWritePolicy {
+  decision: RaiToolWritePolicyDecision;
+  reason: string;
+}
+
 export interface RaiToolActorContext {
   companyId: string;
   traceId: string;
@@ -78,6 +89,8 @@ export interface RaiToolActorContext {
   userConfirmed?: boolean;
   /** Источник write-намерения после semantic ingress normalization. */
   userIntentSource?: RaiToolUserIntentSource;
+  /** Typed write-policy after semantic ingress normalization. */
+  writePolicy?: RaiToolWritePolicy;
   /**
    * Выполнение ранее утвержденного PendingAction.
    * Используется только после human-approval, чтобы не зациклиться в TOOL_FIRST/RiskPolicy блокировках.

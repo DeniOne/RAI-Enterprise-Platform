@@ -109,7 +109,12 @@
   - `pnpm --filter web exec tsc --noEmit --pretty false`
   - `pnpm --filter web exec jest --runInBand __tests__/control-tower-trace-page.spec.tsx __tests__/control-tower-page.spec.tsx __tests__/ai-chat-store.spec.ts __tests__/ai-signals-strip.spec.tsx __tests__/structured-result-window.spec.tsx`
 - [x] Дополнительная страховочная проверка показала residual drift вне текущего среза: `src/modules/rai-chat/rai-chat.service.spec.ts` падает на старых ожиданиях по widgets/fail-open path и не исправлялся в этом ingress-frame пакете.
-- [ ] Следующий инженерный шаг: начать пакет `crm composite flow: register_counterparty -> create_account -> open_workspace`. Эффект: после закрытия атомарного proof-slice платформа перейдёт к короткому составному governed сценарию, где один `lead owner-agent` держит staged execution вместо разрозненных CRM write/read переходов.
+- [x] Закрыт пакет `crm composite flow: register_counterparty -> create_account -> open_workspace`: составной CRM workflow уже исполняется как один lead-owner сценарий с staged execution и отдельным `crm_composite_flow` work window.
+- [x] Закрыт пакет `agro execution fact -> finance cost aggregation`: multi-source аналитический сценарий проходит как staged `agronomist -> economist` workflow с отдельным `multi_source_aggregation` work window и verified branch-trust regression case.
+- [x] Пакет `front_office_agent` как ingress-owner для общего чата закрыт на текущем шаге:
+  - process-like no-route сообщения нормализуются в `front_office_agent` через `classify_dialog_thread`
+  - safe free-chat no-route path тоже проходит через тот же ingress-layer
+  - greeting acknowledge сохранён, fail-open path не сломан
 - [x] Проверки на текущем срезе зелёные: `pnpm --filter api exec tsc --noEmit --pretty false`, `pnpm --filter api exec jest --runInBand src/modules/rai-chat/supervisor-agent.service.spec.ts`, `pnpm --filter api exec jest --runInBand src/modules/rai-chat/truthfulness-engine.service.spec.ts`, `pnpm --filter api exec jest --runInBand src/modules/rai-chat/composer/response-composer.service.spec.ts`.
 - [x] Выполнена вторая волна `claim-management` для живого strategy/frontend-канона: ключевые документы в `docs/00_STRATEGY/STAGE 2`, `docs/00_STRATEGY/BUSINESS` и `docs/10_FRONTEND_MENU_IMPLEMENTATION` переведены в `SUPPORTING` и зарегистрированы в `docs/DOCS_MATRIX.md`.
 - [x] Зафиксировано новое правило docs-governance: `claim` может подтверждать роль документа как действующего planning / navigation / governance-источника, даже если документ не описывает текущий runtime 1:1; для этого допустим `verified_by: manual`.
@@ -409,3 +414,22 @@
 - Agent Lifecycle Control: **Active**.
 - Master Plan: **Updated**.
 - Git Status: **Synced ✅ (2026-03-13 08:55)**
+
+## 2026-03-21 — Semantic-first owner selection
+
+- `SupervisorAgent` теперь резолвит runtime owner role из `SemanticIngressFrame.requestedOperation.ownerRole` раньше legacy classification fallback.
+- `SemanticIngressFrame` стал каноническим источником owner selection для мигрированных slices, а legacy classification осталась compatibility path.
+- `AgentExecutionAdapterService` уже берёт intent из `SemanticIngressFrame.requestedOperation.intent` первым для мигрированных ролей, а legacy text heuristics оставляет fallback-слоем.
+- Для primary semantic routing phrase heuristics больше не участвуют как second guess в agronomist path, а safe default для draft-пути теперь тоже идёт через semantic-primary intent.
+- `chief_agronomist` и `data_scientist` тоже переведены на semantic-primary intent default, а text fallback оставлен только как compatibility path.
+- `SemanticIngressFrame` теперь несёт typed `writePolicy`, отделяя confirm/execute/clarify/block от lexical signal.
+- `writePolicy` уже возвращается отдельным полем в trace forensics response.
+- `RaiToolActorContext.writePolicy` теперь используется в CRM write gating, чтобы direct CRM write решался по typed policy, а не по `userIntentSource` alone.
+- `PendingActionsController` теперь передаёт typed `writePolicy` в approved action execution, а строковый `workflow_resume` intent там больше не используется как source of truth.
+- `PendingActionsController` теперь прикрыт unit-spec, который проверяет typed `writePolicy` и отсутствие `workflow_resume` как source of truth.
+- CRM и contracts primary routing теперь используют safe read defaults вместо text-based intent guessing, когда upstream semantic intent не пришёл.
+- `front_office_agent` в primary semantic routing тоже уже выбирает `classify_dialog_thread` как safe default вместо text-based fallback.
+- `semantic-router` больше не требует route как обязательный gate для ключевых owner-intents; route и workspaceContext теперь работают как contextual prior.
+- `semantic-router.service.spec.ts` получил route-prior regression маяки для CRM, finance и deviations slices.
+- Финальная верификация закрыла macro-sprint: docs lint, matrix lint, api/web tsc и targeted api/web jest suites прошли.
+- Следующий шаг уже не про повторное угадывание intent, а про вынос remaining routing out of execution path.

@@ -619,6 +619,10 @@ describe("RaiToolsRegistry", () => {
         userId: "user-1",
         userConfirmed: true,
         userIntentSource: "direct_user_command",
+        writePolicy: {
+          decision: "execute",
+          reason: "semantic_default_execute",
+        },
       },
     );
 
@@ -635,6 +639,10 @@ describe("RaiToolsRegistry", () => {
         userId: "user-1",
         userConfirmed: true,
         userIntentSource: "direct_user_command",
+        writePolicy: {
+          decision: "execute",
+          reason: "semantic_default_execute",
+        },
       }),
     );
     expect(pendingActionCreateMock).not.toHaveBeenCalled();
@@ -654,6 +662,10 @@ describe("RaiToolsRegistry", () => {
           userId: "user-1",
           userConfirmed: true,
           userIntentSource: "delegated_or_autonomous",
+          writePolicy: {
+            decision: "confirm",
+            reason: "semantic_default_confirm",
+          },
         },
       ),
     ).rejects.toBeInstanceOf(RiskPolicyBlockedError);

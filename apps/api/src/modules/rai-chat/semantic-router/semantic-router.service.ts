@@ -1741,7 +1741,7 @@ export class SemanticRouterService {
     message: string,
     workspaceContext?: WorkspaceContextDto,
   ): string | null {
-    if (this.isDeviationSlice(workspaceContext)) {
+    if (this.isDeviationSlice(message, workspaceContext)) {
       return DEVIATION_SLICE_ID;
     }
     if (this.isCrmInnLookupSlice(message, workspaceContext)) {
@@ -1820,7 +1820,13 @@ export class SemanticRouterService {
     );
   }
 
-  private isDeviationSlice(workspaceContext?: WorkspaceContextDto): boolean {
+  private isDeviationSlice(
+    message: string,
+    workspaceContext?: WorkspaceContextDto,
+  ): boolean {
+    if (/отклон|deviation/i.test(message)) {
+      return true;
+    }
     const route = workspaceContext?.route?.toLowerCase() ?? "";
     if (route.includes("/consulting/deviations")) {
       return true;
@@ -1835,9 +1841,6 @@ export class SemanticRouterService {
     message: string,
     workspaceContext?: WorkspaceContextDto,
   ): boolean {
-    if (!this.isFinanceWorkspace(workspaceContext)) {
-      return false;
-    }
     return this.isPlanFactQuery(message, workspaceContext);
   }
 
@@ -1845,60 +1848,42 @@ export class SemanticRouterService {
     message: string,
     workspaceContext?: WorkspaceContextDto,
   ): boolean {
-    return (
-      this.isFinanceWorkspace(workspaceContext) &&
-      this.isScenarioQuery(message, workspaceContext)
-    );
+    return this.isScenarioQuery(message, workspaceContext);
   }
 
   private isRiskAssessmentSlice(
     message: string,
     workspaceContext?: WorkspaceContextDto,
   ): boolean {
-    return (
-      this.isFinanceWorkspace(workspaceContext) &&
-      this.isRiskAssessmentQuery(message, workspaceContext)
-    );
+    return this.isRiskAssessmentQuery(message, workspaceContext);
   }
 
   private isCrmWorkspaceSlice(
     message: string,
     workspaceContext?: WorkspaceContextDto,
   ): boolean {
-    return (
-      this.isCrmWorkspaceRoute(workspaceContext) &&
-      this.isCrmWorkspaceReviewQuery(message, workspaceContext)
-    );
+    return this.isCrmWorkspaceReviewQuery(message, workspaceContext);
   }
 
   private isCrmInnLookupSlice(
     message: string,
     workspaceContext?: WorkspaceContextDto,
   ): boolean {
-    return (
-      this.isCrmWorkspaceRoute(workspaceContext) &&
-      this.isCrmInnLookupQuery(message)
-    );
+    return this.isCrmInnLookupQuery(message);
   }
 
   private isContractsSlice(
     message: string,
     workspaceContext?: WorkspaceContextDto,
   ): boolean {
-    return (
-      this.isContractsWorkspaceRoute(workspaceContext) &&
-      this.isContractsReadOnlyQuery(message, workspaceContext)
-    );
+    return this.isContractsReadOnlyQuery(message, workspaceContext);
   }
 
   private isContractsArBalanceSlice(
     message: string,
     workspaceContext?: WorkspaceContextDto,
   ): boolean {
-    return (
-      this.isContractsWorkspaceRoute(workspaceContext) &&
-      this.isContractsArBalanceQuery(message)
-    );
+    return this.isContractsArBalanceQuery(message);
   }
 
   private isContractsReadOnlyQuery(

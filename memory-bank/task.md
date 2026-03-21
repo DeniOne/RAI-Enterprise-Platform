@@ -1,6 +1,6 @@
 # Task: RAI_EP
 
-## Branch Trust Gate Sprint — PR A-E (2026-03-21) 🚧
+## Branch Trust Gate Sprint — PR A-E (2026-03-21) ✅
 - [x] Добавить shared branch trust contract-layer в `apps/api/src/shared/rai-chat`.
 - [x] Ввести типы `BranchResultContract`, `BranchTrustAssessment`, `BranchVerdict`.
 - [x] Расширить `AgentExecutionResult` branch-артефактами без слома текущего `structuredOutput`.
@@ -29,7 +29,9 @@
 - [x] Прокинуть `Semantic Ingress Frame` через `SupervisorAgent -> AgentExecutionRequest -> AiAuditEntry.metadata -> Trace Forensics / Control Tower`, чтобы ingress normalization стала видна и runtime, и оператору.
 - [x] Отделить `direct_user_command` от autonomous write-path для proof-slice `crm.register_counterparty`, чтобы write-governance boundary перестала зависеть от phrase-routing и начала опираться на ingress-frame.
 - [x] Добавить отдельный eval corpus/gate на свободные CRM register-перефразы поверх `Semantic Ingress Frame`, чтобы proof-slice получил регрессионную защиту на уровне ingress, а не только на уровне contracts/router heuristics.
-- [ ] Начать следующий пакет `crm composite flow: register_counterparty -> create_account -> open_workspace`, чтобы после атомарного proof-slice платформа перешла к короткому составному governed сценарию с одним `lead owner-agent`.
+- [x] Начать следующий пакет `crm composite flow: register_counterparty -> create_account -> open_workspace`, чтобы после атомарного proof-slice платформа перешла к короткому составному governed сценарию с одним `lead owner-agent`.
+- [x] Начать следующий пакет `agro execution fact -> finance cost aggregation`, чтобы после CRM composite flow платформа перешла к multi-source аналитическому сценарию с typed branch payload и branch-level trust verification.
+- [x] Пакет `front_office_agent` как ingress-owner для общего чата закрыт на текущем шаге: process-like и safe free-chat no-route сообщения проходят через `front_office_agent`, greeting acknowledge сохранён, текущий chat fail-open path не сломан.
 
 ## Routing Learning Layer — Foundation + Techmaps Cutover (2026-03-20) 🚧
 - [x] Введён канонический semantic routing contract: `SemanticIntent`, `RouteDecision`, `RoutingTelemetryEvent`, versioning и redaction.
@@ -432,3 +434,59 @@
 - [x] Выполнить truth-sync в `blueprint`, `master-plan`, `addendum`, `handoff`, `closeout-report`.
 - [x] Синхронизировать memory-bank перед публикацией.
 - [ ] Следующий слой после push: future-role expansion и platform-wide non-canonical interaction contracts.
+
+## 2026-03-21 — Semantic-first owner selection
+- [x] Перевести `SupervisorAgent` на priority-выбор runtime owner role из `SemanticIngressFrame`.
+- [x] Зафиксировать fallback legacy classification только для немигрированных/compatibility path.
+- [x] Добавить regression coverage в `supervisor-agent.service.spec.ts`.
+
+## 2026-03-21 — Semantic-first adapter intent resolution
+- [x] Перевести `AgentExecutionAdapterService` на priority-выбор intent из `SemanticIngressFrame`.
+- [x] Сохранить legacy text heuristics только как fallback для немигрированных paths.
+- [x] Добавить regression coverage в `runtime/agent-execution-adapter.service.spec.ts`.
+
+## 2026-03-21 — Semantic-primary heuristics gate
+- [x] Запретить phrase-based second guess в primary semantic routing для agronomist path.
+- [x] Сохранить compatibility fallback только для немигрированных/heuristic-only requests.
+- [x] Перевести `chief_agronomist` и `data_scientist` на semantic-primary intent default.
+
+## 2026-03-21 — Typed write policy
+- [x] Добавить typed `writePolicy` в `SemanticIngressFrame`.
+- [x] Подключить `writePolicy` к `SupervisorAgent` gating.
+- [x] Добавить regression coverage в `semantic-ingress.service.spec.ts`.
+
+## 2026-03-21 — Trace forensics policy surface
+- [x] Вывести `writePolicy` в trace forensics response.
+- [x] Добавить regression coverage в `explainability-panel.service.spec.ts`.
+
+## 2026-03-21 — Tool registry write-policy gating
+- [x] Протянуть `writePolicy` в `RaiToolActorContext`.
+- [x] Перевести CRM direct-write gating в `RaiToolsRegistry` на typed `writePolicy`.
+- [x] Добавить regression coverage в `tools/rai-tools.registry.spec.ts`.
+
+## 2026-03-21 — PendingAction workflow write-policy
+- [x] Передать typed `writePolicy` в approved pending-action execution.
+- [x] Сохранить `approvedPendingActionId` как отдельный bypass-флаг, не смешивая его с intent source.
+- [x] Убрать строковый `workflow_resume` как source of truth из approved action execution.
+- [x] Добавить unit-spec для `PendingActionsController`, фиксирующий typed policy contract.
+
+## 2026-03-21 — CRM/contracts primary routing defaults
+- [x] Убрать message-based fallback из primary CRM routing.
+- [x] Убрать message-based fallback из primary contracts routing.
+- [x] Добавить regression coverage в `runtime/agent-execution-adapter.service.spec.ts`.
+
+## 2026-03-21 — Front-office primary routing default
+- [x] Перевести `front_office_agent` primary routing на `classify_dialog_thread` safe default.
+- [x] Добавить regression coverage в `runtime/agent-execution-adapter.service.spec.ts`.
+
+## 2026-03-21 — Agronomist primary draft default
+- [x] Перевести `agronomist` primary routing на safe draft default `generate_tech_map_draft`.
+- [x] Сохранить read-only techmap registry path как отдельный heuristic branch.
+- [x] Добавить regression coverage в `runtime/agent-execution-adapter.service.spec.ts`.
+
+## 2026-03-21 — Route prior downgrade
+- [x] Понизить `route` и `workspaceContext` с hard gate до contextual prior для ключевых owner-intents.
+- [x] Снять route-gate с `crm`, `contracts`, `finance` и `deviation` slice detection.
+- [x] Зафиксировать изменение в `semantic-router.service.ts` и memory-bank.
+- [x] Добавить regression coverage в `semantic-router.service.spec.ts`.
+- [x] Финальная верификация sprint closure: `pnpm lint:docs`, `pnpm lint:docs:matrix:strict`, `pnpm --filter api exec tsc --noEmit --pretty false`, `pnpm --filter web exec tsc --noEmit --pretty false`, targeted api/web jest suites.

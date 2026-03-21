@@ -464,8 +464,293 @@ describe("ResponseComposerService", () => {
 
     const signalWindow = response.workWindows?.find((window) => window.type === "related_signals");
     const signalRouteAction = signalWindow?.actions?.find((action) => action.kind === "open_route");
-    expect(signalRouteAction?.targetRoute).toBe("/parties/party-1");
-    expect(signalRouteAction?.label).toBe("Открыть карточку контрагента");
+  expect(signalRouteAction?.targetRoute).toBe("/parties/party-1");
+  expect(signalRouteAction?.label).toBe("Открыть карточку контрагента");
+  });
+
+  it("рисует отдельный work window для CRM composite flow", async () => {
+    const response = await service.buildResponse({
+      request: {
+        message:
+          "Давай зарегим контрагента, потом создай аккаунт и открой карточку.",
+        threadId: "th-crm-composite-1",
+        workspaceContext: { route: "/consulting/crm" },
+      },
+      executionResult: {
+        executedTools: [
+          {
+            name: RaiToolName.RegisterCounterparty,
+            result: {
+              created: true,
+              source: "DADATA",
+              partyId: "party-1",
+              legalName: "ООО Ромашка",
+              inn: "2636041493",
+              jurisdictionCode: "RU",
+              lookupStatus: "FOUND",
+              alreadyExisted: false,
+            },
+          },
+          {
+            name: RaiToolName.CreateCrmAccount,
+            result: {
+              accountId: "acc-1",
+              name: "ООО Ромашка",
+              inn: "2636041493",
+              status: "ACTIVE",
+              partyId: "party-1",
+            },
+          },
+          {
+            name: RaiToolName.GetCrmAccountWorkspace,
+            result: {
+              account: { id: "acc-1", name: "ООО Ромашка" },
+              linkedParty: { id: "party-1", legalName: "ООО Ромашка" },
+              legalEntities: [],
+              contacts: [],
+              interactions: [],
+              obligations: [],
+              documents: [],
+              risks: [],
+            },
+          },
+        ],
+        agentExecution: {
+          role: "crm_agent",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Составной CRM-сценарий выполнен.",
+          structuredOutput: {
+            compositePlan: {
+              planId:
+                "crm.register_counterparty.create_account.open_workspace:th-crm-composite-1",
+              workflowId: "crm.register_counterparty.create_account.open_workspace",
+              leadOwnerAgent: "crm_agent",
+              executionStrategy: "sequential",
+              summary:
+                "регистрация контрагента, создание CRM-аккаунта и открытие карточки",
+              stages: [
+                {
+                  stageId: "register_counterparty",
+                  order: 1,
+                  agentRole: "crm_agent",
+                  intent: "register_counterparty",
+                  toolName: "register_counterparty",
+                  label: "Регистрация контрагента",
+                  dependsOn: [],
+                  status: "completed",
+                  summary: "Контрагент зарегистрирован.",
+                },
+                {
+                  stageId: "create_crm_account",
+                  order: 2,
+                  agentRole: "crm_agent",
+                  intent: "create_crm_account",
+                  toolName: "create_crm_account",
+                  label: "Создание CRM-аккаунта",
+                  dependsOn: ["register_counterparty"],
+                  status: "completed",
+                  summary: "CRM-аккаунт создан.",
+                },
+                {
+                  stageId: "review_account_workspace",
+                  order: 3,
+                  agentRole: "crm_agent",
+                  intent: "review_account_workspace",
+                  toolName: "get_crm_account_workspace",
+                  label: "Открытие карточки/рабочего пространства",
+                  dependsOn: ["create_crm_account"],
+                  status: "completed",
+                  summary: "Карточка открыта.",
+                },
+              ],
+            },
+            compositeStages: [
+              {
+                stageId: "register_counterparty",
+                order: 1,
+                agentRole: "crm_agent",
+                intent: "register_counterparty",
+                toolName: "register_counterparty",
+                status: "completed",
+                summary: "Контрагент зарегистрирован.",
+              },
+              {
+                stageId: "create_crm_account",
+                order: 2,
+                agentRole: "crm_agent",
+                intent: "create_crm_account",
+                toolName: "create_crm_account",
+                status: "completed",
+                summary: "CRM-аккаунт создан.",
+              },
+              {
+                stageId: "review_account_workspace",
+                order: 3,
+                agentRole: "crm_agent",
+                intent: "review_account_workspace",
+                toolName: "get_crm_account_workspace",
+                status: "completed",
+                summary: "Карточка открыта.",
+              },
+            ],
+          },
+          toolCalls: [],
+          connectorCalls: [],
+          evidence: [],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+        },
+      } as any,
+      recallResult: {
+        recall: { items: [] },
+        profile: {},
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-crm-composite-1",
+      threadId: "th-crm-composite-1",
+      companyId: "company-1",
+    });
+
+    const compositeWindow = response.workWindows?.find(
+      (window) =>
+        window.type === "structured_result" &&
+        window.payload.intentId === "crm_composite_flow",
+    );
+    const compositeSignals = response.workWindows?.find(
+      (window) =>
+        window.type === "related_signals" &&
+        window.payload.intentId === "crm_composite_flow",
+    );
+
+    expect(compositeWindow).toEqual(
+      expect.objectContaining({
+        title: "CRM составной сценарий",
+        status: "completed",
+        payload: expect.objectContaining({
+          summary: expect.stringContaining("регистрация контрагента"),
+        }),
+      }),
+    );
+    expect(compositeSignals?.payload.signalItems).toHaveLength(3);
+  });
+
+  it("рисует отдельный work window для analytical multi-source aggregation", async () => {
+    const response = await service.buildResponse({
+      request: {
+        message: "Собери agro execution fact -> finance cost aggregation.",
+        threadId: "th-analytics-composite-1",
+        workspaceContext: { route: "/consulting/dashboard" },
+      },
+      executionResult: {
+        executedTools: [],
+        agentExecution: {
+          role: "agronomist",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Аналитический композит выполнен.",
+          structuredOutput: {
+            compositePlan: {
+              planId:
+                "agro.execution_fact.finance.cost_aggregation:th-analytics-composite-1",
+              workflowId: "agro.execution_fact.finance.cost_aggregation",
+              leadOwnerAgent: "agronomist",
+              executionStrategy: "sequential",
+              summary: "агро-факт исполнения и агрегация финансовых затрат",
+              stages: [
+                {
+                  stageId: "agro_execution_fact",
+                  order: 1,
+                  agentRole: "agronomist",
+                  intent: "compute_deviations",
+                  toolName: "compute_deviations",
+                  label: "Факт исполнения по агро-контексту",
+                  dependsOn: [],
+                  status: "completed",
+                  summary: "Агро execution fact подтвержден.",
+                },
+                {
+                  stageId: "finance_cost_aggregation",
+                  order: 2,
+                  agentRole: "economist",
+                  intent: "compute_plan_fact",
+                  toolName: "compute_plan_fact",
+                  label: "Агрегация финансовых затрат",
+                  dependsOn: ["agro_execution_fact"],
+                  status: "completed",
+                  summary: "Финансовая стоимость агрегирована.",
+                },
+              ],
+            },
+            compositeStages: [
+              {
+                stageId: "agro_execution_fact",
+                order: 1,
+                agentRole: "agronomist",
+                intent: "compute_deviations",
+                toolName: "compute_deviations",
+                status: "completed",
+                summary: "Агро execution fact подтвержден.",
+              },
+              {
+                stageId: "finance_cost_aggregation",
+                order: 2,
+                agentRole: "economist",
+                intent: "compute_plan_fact",
+                toolName: "compute_plan_fact",
+                status: "completed",
+                summary: "Финансовая стоимость агрегирована.",
+              },
+            ],
+          },
+          toolCalls: [],
+          connectorCalls: [],
+          evidence: [],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+        },
+      } as any,
+      recallResult: {
+        recall: { items: [] },
+        profile: {},
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-analytics-composite-1",
+      threadId: "th-analytics-composite-1",
+      companyId: "company-1",
+    });
+
+    const compositeWindow = response.workWindows?.find(
+      (window) =>
+        window.type === "structured_result" &&
+        window.payload.intentId === "multi_source_aggregation",
+    );
+    const compositeSignals = response.workWindows?.find(
+      (window) =>
+        window.type === "related_signals" &&
+        window.payload.intentId === "multi_source_aggregation",
+    );
+
+    expect(compositeWindow).toEqual(
+      expect.objectContaining({
+        title: "Аналитическая агрегация",
+        status: "completed",
+        payload: expect.objectContaining({
+          summary: expect.stringContaining("агро-факт исполнения"),
+        }),
+      }),
+    );
+    expect(compositeWindow?.payload.sections?.[0]?.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "Владелец",
+          value: "agronomist",
+        }),
+      ]),
+    );
+    expect(compositeSignals?.payload.signalItems).toHaveLength(2);
   });
 
   it("для вопроса про директора отвечает прямо в чате и показывает директора в окне результата", async () => {
