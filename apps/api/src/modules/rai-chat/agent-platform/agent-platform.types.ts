@@ -10,8 +10,14 @@ import {
   RaiSuggestedAction,
   TokenUsage,
 } from "../../../shared/rai-chat/rai-tools.types";
+import {
+  BranchResultContract,
+  BranchTrustAssessment,
+  UserFacingBranchCompositionPayload,
+} from "../../../shared/rai-chat/branch-trust.types";
 import { RuntimeGovernanceOverrides } from "../../../shared/rai-chat/runtime-governance-policy.types";
 import { SemanticRoutingContext } from "../../../shared/rai-chat/semantic-routing.types";
+import { SemanticIngressFrame } from "../../../shared/rai-chat/semantic-ingress.types";
 
 export type AgentKind = "domain_advisor" | "worker_hybrid" | "personal_delegated";
 export type AgentAutonomyMode = "advisory" | "hybrid" | "autonomous";
@@ -131,6 +137,7 @@ export interface AgentExecutionRequest {
   requestedTools?: RaiToolCallDto[];
   requestedConnectors?: string[];
   semanticRouting?: SemanticRoutingContext;
+  semanticIngressFrame?: SemanticIngressFrame;
   traceId: string;
   threadId: string;
 }
@@ -161,6 +168,9 @@ export interface AgentExecutionResult {
   text: string;
   structuredOutput: Record<string, unknown>;
   structuredOutputs?: Record<string, unknown>[];
+  branchResults?: BranchResultContract[];
+  branchTrustAssessments?: BranchTrustAssessment[];
+  branchCompositions?: UserFacingBranchCompositionPayload[];
   delegationChain?: DelegationChainStep[];
   usage?: TokenUsage;
   toolCalls: Array<{ name: string; result: unknown }>;

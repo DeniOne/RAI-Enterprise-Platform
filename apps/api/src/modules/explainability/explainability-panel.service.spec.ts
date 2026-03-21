@@ -648,6 +648,14 @@ describe("ExplainabilityPanelService", () => {
         bsScorePct: 10,
         evidenceCoveragePct: 80,
         invalidClaimsPct: 5,
+        verifiedBranchCount: 1,
+        partialBranchCount: 0,
+        unverifiedBranchCount: 0,
+        conflictedBranchCount: 0,
+        rejectedBranchCount: 0,
+        trustGateLatencyMs: 210,
+        trustLatencyProfile: "HAPPY_PATH",
+        trustLatencyWithinBudget: true,
         createdAt: new Date(now.getTime() - 1_000),
       },
       {
@@ -656,6 +664,14 @@ describe("ExplainabilityPanelService", () => {
         bsScorePct: 30,
         evidenceCoveragePct: 60,
         invalidClaimsPct: 10,
+        verifiedBranchCount: 1,
+        partialBranchCount: 1,
+        unverifiedBranchCount: 0,
+        conflictedBranchCount: 0,
+        rejectedBranchCount: 0,
+        trustGateLatencyMs: 930,
+        trustLatencyProfile: "CROSS_CHECK_TRIGGERED",
+        trustLatencyWithinBudget: true,
         createdAt: new Date(now.getTime() - 2_000),
       },
       {
@@ -664,6 +680,14 @@ describe("ExplainabilityPanelService", () => {
         bsScorePct: 50,
         evidenceCoveragePct: 40,
         invalidClaimsPct: 20,
+        verifiedBranchCount: 0,
+        partialBranchCount: 0,
+        unverifiedBranchCount: 1,
+        conflictedBranchCount: 1,
+        rejectedBranchCount: 0,
+        trustGateLatencyMs: 1700,
+        trustLatencyProfile: "CROSS_CHECK_TRIGGERED",
+        trustLatencyWithinBudget: false,
         createdAt: new Date(now.getTime() - 3_000),
       },
     ]);
@@ -720,6 +744,21 @@ describe("ExplainabilityPanelService", () => {
     expect(result.p95BsScore).toBeLessThanOrEqual(50);
     expect(result.qualityKnownTraceCount).toBe(3);
     expect(result.qualityPendingTraceCount).toBe(0);
+    expect(result.branchTrust).toMatchObject({
+      knownTraceCount: 3,
+      pendingTraceCount: 0,
+      verifiedBranchCount: 2,
+      partialBranchCount: 1,
+      unverifiedBranchCount: 1,
+      conflictedBranchCount: 1,
+      rejectedBranchCount: 0,
+      crossCheckTraceCount: 2,
+      withinBudgetTraceCount: 2,
+      overBudgetTraceCount: 1,
+      withinBudgetRate: 66.7,
+      p95LatencyMs: 930,
+    });
+    expect(result.branchTrust.avgLatencyMs).toBeCloseTo(946.7, 1);
     expect(result.criticalPath[0]).toMatchObject({
       traceId: "tr_2",
       phase: "truthfulness",
@@ -770,6 +809,21 @@ describe("ExplainabilityPanelService", () => {
     expect(result.worstTraces).toHaveLength(0);
     expect(result.qualityKnownTraceCount).toBe(0);
     expect(result.qualityPendingTraceCount).toBe(0);
+    expect(result.branchTrust).toEqual({
+      knownTraceCount: 0,
+      pendingTraceCount: 0,
+      verifiedBranchCount: 0,
+      partialBranchCount: 0,
+      unverifiedBranchCount: 0,
+      conflictedBranchCount: 0,
+      rejectedBranchCount: 0,
+      crossCheckTraceCount: 0,
+      withinBudgetTraceCount: 0,
+      overBudgetTraceCount: 0,
+      withinBudgetRate: null,
+      avgLatencyMs: null,
+      p95LatencyMs: null,
+    });
     expect(result.criticalPath).toHaveLength(0);
   });
 
@@ -782,6 +836,14 @@ describe("ExplainabilityPanelService", () => {
         bsScorePct: 20,
         evidenceCoveragePct: 80,
         invalidClaimsPct: 0,
+        verifiedBranchCount: 1,
+        partialBranchCount: 0,
+        unverifiedBranchCount: 0,
+        conflictedBranchCount: 0,
+        rejectedBranchCount: 0,
+        trustGateLatencyMs: 240,
+        trustLatencyProfile: "HAPPY_PATH",
+        trustLatencyWithinBudget: true,
         createdAt: new Date(),
       },
       {
@@ -802,6 +864,16 @@ describe("ExplainabilityPanelService", () => {
     expect(result.avgEvidenceCoverage).toBe(80);
     expect(result.qualityKnownTraceCount).toBe(1);
     expect(result.qualityPendingTraceCount).toBe(1);
+    expect(result.branchTrust).toMatchObject({
+      knownTraceCount: 1,
+      pendingTraceCount: 1,
+      verifiedBranchCount: 1,
+      withinBudgetTraceCount: 1,
+      overBudgetTraceCount: 0,
+      withinBudgetRate: 100,
+      avgLatencyMs: 240,
+      p95LatencyMs: 240,
+    });
   });
 
   describe("getTraceForensics", () => {
@@ -827,6 +899,54 @@ describe("ExplainabilityPanelService", () => {
                 confidenceScore: 0.9,
               },
             ],
+            branchTrustAssessments: [
+              {
+                branch_id: "primary",
+                source_agent: "agronomist",
+                verdict: "VERIFIED",
+                score: 0.94,
+                reasons: [],
+                checks: [],
+                requires_cross_check: false,
+              },
+            ],
+            semanticIngressFrame: {
+              version: "v1",
+              interactionMode: "task_request",
+              requestShape: "single_intent",
+              domainCandidates: [
+                {
+                  domain: "crm",
+                  ownerRole: "crm_agent",
+                  score: 0.82,
+                  source: "legacy",
+                  reason: "responsibility:crm:register_counterparty",
+                },
+              ],
+              goal: "register_counterparty",
+              entities: [
+                {
+                  kind: "inn",
+                  value: "2636041493",
+                  source: "message",
+                },
+              ],
+              requestedOperation: {
+                ownerRole: "crm_agent",
+                intent: "register_counterparty",
+                toolName: "register_counterparty",
+                decisionType: "execute",
+                source: "legacy_contracts",
+              },
+              operationAuthority: "direct_user_command",
+              missingSlots: [],
+              riskClass: "write_candidate",
+              requiresConfirmation: false,
+              confidenceBand: "high",
+              explanation:
+                "Свободная фраза нормализована в CRM-регистрацию контрагента по ИНН как прямое действие пользователя.",
+              proofSliceId: "crm.register_counterparty",
+            },
           },
           createdAt: new Date("2026-03-05T10:00:00.000Z"),
         },
@@ -845,6 +965,15 @@ describe("ExplainabilityPanelService", () => {
         bsScorePct: 10,
         evidenceCoveragePct: 85,
         invalidClaimsPct: 5,
+        verifiedBranchCount: 1,
+        partialBranchCount: 0,
+        unverifiedBranchCount: 0,
+        conflictedBranchCount: 0,
+        rejectedBranchCount: 0,
+        trustGateLatencyMs: 220,
+        trustLatencyProfile: "HAPPY_PATH",
+        trustLatencyBudgetMs: 300,
+        trustLatencyWithinBudget: true,
         createdAt: new Date("2026-03-05T10:00:00.000Z"),
       });
       mockQualityAlertFindMany.mockResolvedValue([
@@ -863,11 +992,25 @@ describe("ExplainabilityPanelService", () => {
       expect(result.companyId).toBe(companyId);
       expect(result.summary).not.toBeNull();
       expect(result.summary?.bsScorePct).toBe(10);
+      expect(result.summary?.verifiedBranchCount).toBe(1);
       expect(result.timeline).toHaveLength(1);
       expect(result.timeline[0].evidenceRefs).toHaveLength(1);
       expect(result.timeline[0].evidenceRefs[0].claim).toContain("отклонениям");
       expect(result.qualityAlerts).toHaveLength(1);
       expect(result.qualityAlerts[0].alertType).toBe("BS_DRIFT");
+      expect(result.branchTrust?.branchTrustAssessments).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ verdict: "VERIFIED" }),
+        ]),
+      );
+      expect(result.semanticIngressFrame).toEqual(
+        expect.objectContaining({
+          proofSliceId: "crm.register_counterparty",
+          requestedOperation: expect.objectContaining({
+            intent: "register_counterparty",
+          }),
+        }),
+      );
     });
 
     it("returns 403 Forbidden for trace of another tenant", async () => {

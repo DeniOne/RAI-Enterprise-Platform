@@ -8,6 +8,7 @@ import {
 } from "./dto/explainability-timeline.dto";
 import {
   TraceForensicsResponseDto,
+  TraceForensicsBranchTrustDto,
   TraceForensicsSummaryDto,
   TraceForensicsEntryDto,
   TraceForensicsAlertDto,
@@ -25,6 +26,7 @@ import {
   RoutingCaseMemoryLifecycleStatus,
   RoutingTelemetryEvent,
 } from "../../shared/rai-chat/semantic-routing.types";
+import { SemanticIngressFrame } from "../../shared/rai-chat/semantic-ingress.types";
 import {
   ROUTING_CASE_MEMORY_ACTIVATION_ACTION,
   ROUTING_CASE_MEMORY_CAPTURE_ACTION,
@@ -66,6 +68,7 @@ export class ExplainabilityPanelService {
         worstTraces: [],
         qualityKnownTraceCount: 0,
         qualityPendingTraceCount: 0,
+        branchTrust: this.buildBranchTrustDashboard([]),
         criticalPath: [],
       };
     }
@@ -105,6 +108,7 @@ export class ExplainabilityPanelService {
       (s) => s.bsScorePct !== null && s.evidenceCoveragePct !== null,
     ).length;
     const qualityPendingTraceCount = summaries.length - qualityKnownTraceCount;
+    const branchTrust = this.buildBranchTrustDashboard(summaries);
 
     const traceIds = summaries.map((s) => s.traceId);
     const auditEntries = await this.prisma.aiAuditEntry.findMany({
@@ -202,6 +206,7 @@ export class ExplainabilityPanelService {
       worstTraces,
       qualityKnownTraceCount,
       qualityPendingTraceCount,
+      branchTrust,
       criticalPath,
     };
   }
@@ -1084,6 +1089,7 @@ export class ExplainabilityPanelService {
       }),
     ]);
 
+    const summaryTrust = summaryRow as Record<string, unknown> | null;
     const summary: TraceForensicsSummaryDto | null = summaryRow
       ? {
         traceId: summaryRow.traceId,
@@ -1099,6 +1105,42 @@ export class ExplainabilityPanelService {
         bsScorePct: summaryRow.bsScorePct,
         evidenceCoveragePct: summaryRow.evidenceCoveragePct,
         invalidClaimsPct: summaryRow.invalidClaimsPct,
+        verifiedBranchCount: this.readNullableNumber(
+          summaryTrust ?? {},
+          "verifiedBranchCount",
+        ),
+        partialBranchCount: this.readNullableNumber(
+          summaryTrust ?? {},
+          "partialBranchCount",
+        ),
+        unverifiedBranchCount: this.readNullableNumber(
+          summaryTrust ?? {},
+          "unverifiedBranchCount",
+        ),
+        conflictedBranchCount: this.readNullableNumber(
+          summaryTrust ?? {},
+          "conflictedBranchCount",
+        ),
+        rejectedBranchCount: this.readNullableNumber(
+          summaryTrust ?? {},
+          "rejectedBranchCount",
+        ),
+        trustGateLatencyMs: this.readNullableNumber(
+          summaryTrust ?? {},
+          "trustGateLatencyMs",
+        ),
+        trustLatencyProfile: this.readNullableString(
+          summaryTrust ?? {},
+          "trustLatencyProfile",
+        ),
+        trustLatencyBudgetMs: this.readNullableNumber(
+          summaryTrust ?? {},
+          "trustLatencyBudgetMs",
+        ),
+        trustLatencyWithinBudget: this.readNullableBoolean(
+          summaryTrust ?? {},
+          "trustLatencyWithinBudget",
+        ),
         createdAt: summaryRow.createdAt.toISOString(),
       }
       : null;
@@ -1158,6 +1200,8 @@ export class ExplainabilityPanelService {
     );
 
     const memoryLane = this.buildMemoryLane(auditEntries);
+    const branchTrust = this.buildBranchTrust(auditEntries);
+    const semanticIngressFrame = this.buildSemanticIngressFrame(auditEntries);
 
     return {
       traceId,
@@ -1166,6 +1210,8 @@ export class ExplainabilityPanelService {
       timeline,
       qualityAlerts,
       memoryLane,
+      branchTrust,
+      semanticIngressFrame,
     };
   }
 
@@ -1214,6 +1260,92 @@ export class ExplainabilityPanelService {
     return null;
   }
 
+  private buildBranchTrust(
+    auditEntries: Array<{ metadata?: unknown }>,
+  ): TraceForensicsBranchTrustDto | null {
+    for (let index = auditEntries.length - 1; index >= 0; index -= 1) {
+      const metadata =
+        auditEntries[index]?.metadata &&
+        typeof auditEntries[index].metadata === "object"
+          ? (auditEntries[index].metadata as Record<string, unknown>)
+          : null;
+      if (!metadata) {
+        continue;
+      }
+
+      const branchResults = Array.isArray(metadata.branchResults)
+        ? metadata.branchResults
+        : [];
+      const branchTrustAssessments = Array.isArray(metadata.branchTrustAssessments)
+        ? metadata.branchTrustAssessments
+        : [];
+      const branchCompositions = Array.isArray(metadata.branchCompositions)
+        ? metadata.branchCompositions
+        : [];
+
+      if (
+        branchResults.length === 0 &&
+        branchTrustAssessments.length === 0 &&
+        branchCompositions.length === 0
+      ) {
+        continue;
+      }
+
+      return this.deepMask({
+        branchResults,
+        branchTrustAssessments,
+        branchCompositions,
+      }) as TraceForensicsBranchTrustDto;
+    }
+
+    return null;
+  }
+
+  private buildSemanticIngressFrame(
+    auditEntries: Array<{ metadata?: unknown }>,
+  ): SemanticIngressFrame | null {
+    for (let index = auditEntries.length - 1; index >= 0; index -= 1) {
+      const metadata =
+        auditEntries[index]?.metadata &&
+        typeof auditEntries[index].metadata === "object"
+          ? (auditEntries[index].metadata as Record<string, unknown>)
+          : null;
+      if (!metadata?.semanticIngressFrame) {
+        continue;
+      }
+
+      return this.deepMask(
+        metadata.semanticIngressFrame,
+      ) as SemanticIngressFrame;
+    }
+
+    return null;
+  }
+
+  private readNullableNumber(
+    input: Record<string, unknown>,
+    key: string,
+  ): number | null {
+    const value = input[key];
+    return typeof value === "number" && Number.isFinite(value) ? value : null;
+  }
+
+  private readNullableString(
+    input: Record<string, unknown>,
+    key: string,
+  ): string | null {
+    const value = input[key];
+    return typeof value === "string" ? value : null;
+  }
+
+  private readNullableBoolean(
+    input: Record<string, unknown>,
+    key: string,
+  ): boolean | null {
+    const value = input[key];
+    return typeof value === "boolean" ? value : null;
+  }
+
   private buildCriticalPathCards(
     auditEntries: Array<{ traceId: string; createdAt: Date; metadata: unknown }>,
     summaries: Array<{ traceId: string; durationMs: number; createdAt: Date }>,
@@ -1253,5 +1385,102 @@ export class ExplainabilityPanelService {
       }))
       .sort((a, b) => b.durationMs - a.durationMs)
       .slice(0, 5);
+  }
+
+  private buildBranchTrustDashboard(
+    summaries: Array<{
+      verifiedBranchCount?: number | null;
+      partialBranchCount?: number | null;
+      unverifiedBranchCount?: number | null;
+      conflictedBranchCount?: number | null;
+      rejectedBranchCount?: number | null;
+      trustGateLatencyMs?: number | null;
+      trustLatencyProfile?: string | null;
+      trustLatencyWithinBudget?: boolean | null;
+    }>,
+  ): TruthfulnessDashboardResponseDto["branchTrust"] {
+    const trustAwareSummaries = summaries.filter((summary) =>
+      [
+        summary.verifiedBranchCount,
+        summary.partialBranchCount,
+        summary.unverifiedBranchCount,
+        summary.conflictedBranchCount,
+        summary.rejectedBranchCount,
+      ].some((value) => typeof value === "number" && Number.isFinite(value)),
+    );
+    const knownTraceCount = trustAwareSummaries.length;
+    const pendingTraceCount = Math.max(0, summaries.length - knownTraceCount);
+
+    const latencies = trustAwareSummaries
+      .map((summary) => summary.trustGateLatencyMs)
+      .filter(
+        (value): value is number =>
+          typeof value === "number" && Number.isFinite(value),
+      )
+      .sort((a, b) => a - b);
+    const avgLatencyMs =
+      latencies.length > 0
+        ? Number(
+            (
+              latencies.reduce((sum, value) => sum + value, 0) /
+              latencies.length
+            ).toFixed(1),
+          )
+        : null;
+    const p95LatencyMs =
+      latencies.length > 0
+        ? latencies[Math.floor(0.95 * (latencies.length - 1))] ??
+          latencies[latencies.length - 1]
+        : null;
+
+    const budgetAwareSummaries = trustAwareSummaries.filter(
+      (summary) => typeof summary.trustLatencyWithinBudget === "boolean",
+    );
+    const withinBudgetTraceCount = budgetAwareSummaries.filter(
+      (summary) => summary.trustLatencyWithinBudget === true,
+    ).length;
+    const overBudgetTraceCount = budgetAwareSummaries.filter(
+      (summary) => summary.trustLatencyWithinBudget === false,
+    ).length;
+    const withinBudgetRate =
+      budgetAwareSummaries.length > 0
+        ? Number(
+            (
+              (withinBudgetTraceCount / budgetAwareSummaries.length) *
+              100
+            ).toFixed(1),
+          )
+        : null;
+
+    const sumMetric = (
+      key:
+        | "verifiedBranchCount"
+        | "partialBranchCount"
+        | "unverifiedBranchCount"
+        | "conflictedBranchCount"
+        | "rejectedBranchCount",
+    ): number =>
+      trustAwareSummaries.reduce((sum, summary) => {
+        const value = summary[key];
+        return sum + (typeof value === "number" && Number.isFinite(value) ? value : 0);
+      }, 0);
+
+    return {
+      knownTraceCount,
+      pendingTraceCount,
+      verifiedBranchCount: sumMetric("verifiedBranchCount"),
+      partialBranchCount: sumMetric("partialBranchCount"),
+      unverifiedBranchCount: sumMetric("unverifiedBranchCount"),
+      conflictedBranchCount: sumMetric("conflictedBranchCount"),
+      rejectedBranchCount: sumMetric("rejectedBranchCount"),
+      crossCheckTraceCount: trustAwareSummaries.filter(
+        (summary) => summary.trustLatencyProfile === "CROSS_CHECK_TRIGGERED",
+      ).length,
+      withinBudgetTraceCount,
+      overBudgetTraceCount,
+      withinBudgetRate,
+      avgLatencyMs,
+      p95LatencyMs,
+    };
   }
 }

@@ -13,6 +13,7 @@ describe("RuntimeGovernancePolicyService", () => {
     expect(crm.role).toBe("crm_agent");
     expect(crm.concurrency.deadlineMs).toBe(25_000);
     expect(crm.thresholds.evidenceCoverageMinPct).toBe(75);
+    expect(crm.trust.latencyBudgetMs.happyPathMs).toBe(300);
   });
 
   it("resolves fallback mode from role policy", () => {
@@ -26,6 +27,7 @@ describe("RuntimeGovernancePolicyService", () => {
 
     expect(fallback.role).toBe("knowledge");
     expect(fallback.concurrency.deadlineMs).toBe(30_000);
+    expect(fallback.trust.maxCrossCheckBranches).toBe(1);
   });
 
   it("merges governed runtime overrides into the effective role policy", () => {
@@ -48,5 +50,15 @@ describe("RuntimeGovernancePolicyService", () => {
     expect(overridden.fallbackModeByReason.TOOL_FAILURE).toBe(
       "MANUAL_HUMAN_REQUIRED",
     );
+    expect(overridden.trust.latencyBudgetMs.crossCheckTriggeredMs).toBe(1_500);
+  });
+
+  it("resolveTrustLatencyBudgetMs возвращает budget для trust path", () => {
+    expect(
+      service.resolveTrustLatencyBudgetMs("knowledge", "CROSS_CHECK_TRIGGERED"),
+    ).toBe(1_500);
+    expect(
+      service.resolveTrustLatencyBudgetMs("crm_agent", "HAPPY_PATH"),
+    ).toBe(300);
   });
 });

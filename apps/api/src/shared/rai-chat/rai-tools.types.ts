@@ -53,6 +53,12 @@ export type ToolRiskDomain =
   | "front_office"
   | "commerce";
 
+export type RaiToolUserIntentSource =
+  | "direct_user_command"
+  | "workflow_resume"
+  | "delegated_or_autonomous"
+  | "unknown";
+
 export interface RaiToolActorContext {
   companyId: string;
   traceId: string;
@@ -65,8 +71,13 @@ export interface RaiToolActorContext {
   /** Для RiskPolicy: кто инициировал (при подтверждении — кто подтвердил). */
   userId?: string;
   userRole?: string;
-  /** Прямое пользовательское действие в живом UX считается явным подтверждением на уровне запроса. */
+  /**
+   * Явное подтверждение выполнения write-path.
+   * Для чата не равно "есть userId": выставляется только после governed boundary.
+   */
   userConfirmed?: boolean;
+  /** Источник write-намерения после semantic ingress normalization. */
+  userIntentSource?: RaiToolUserIntentSource;
   /**
    * Выполнение ранее утвержденного PendingAction.
    * Используется только после human-approval, чтобы не зациклиться в TOOL_FIRST/RiskPolicy блокировках.
@@ -147,7 +158,12 @@ export function createAutonomousExecutionContext(
   companyId: string,
   traceId: string,
 ): RaiToolActorContext {
-  return { companyId, traceId, isAutonomous: true };
+  return {
+    companyId,
+    traceId,
+    isAutonomous: true,
+    userIntentSource: "delegated_or_autonomous",
+  };
 }
 
 export interface EchoMessagePayload {

@@ -1489,6 +1489,17 @@ model TraceSummary {
   invalidClaimsPct    Float?
   bsScorePct          Float?
 
+  verifiedBranchCount   Int?
+  partialBranchCount    Int?
+  unverifiedBranchCount Int?
+  conflictedBranchCount Int?
+  rejectedBranchCount   Int?
+
+  trustGateLatencyMs       Int?
+  trustLatencyProfile      String?
+  trustLatencyBudgetMs     Int?
+  trustLatencyWithinBudget Boolean?
+
   createdAt DateTime @default(now())
 
   @@unique([traceId, companyId], name: "trace_summary_trace_company_unique")

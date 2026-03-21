@@ -25,6 +25,81 @@ describe("TruthfulnessEngineService", () => {
     service = mod.get(TruthfulnessEngineService);
   });
 
+  it("classifyBranchEvidence возвращает reusable классификацию для branch-level trust", () => {
+    const classified = service.classifyBranchEvidence([
+      {
+        claim: "ROI по сценарию подтверждён.",
+        sourceType: "TOOL_RESULT",
+        sourceId: "simulate_scenario",
+        confidenceScore: 0.9,
+      },
+      {
+        claim: "Договор поставки требует уточнения.",
+        sourceType: "DOC",
+        sourceId: "contract-doc-1",
+        confidenceScore: 0.4,
+      },
+    ]);
+
+    expect(classified).toEqual([
+      expect.objectContaining({
+        taxonomy: "FINANCE",
+        status: "VERIFIED",
+        weight: 3,
+      }),
+      expect.objectContaining({
+        taxonomy: "LEGAL",
+        status: "UNVERIFIED",
+        weight: 3,
+      }),
+    ]);
+  });
+
+  it("buildBranchTrustInputs можно использовать без full trace summary", () => {
+    const inputs = service.buildBranchTrustInputs([
+      {
+        claim: "Норма высева рапса указана неверно.",
+        sourceType: "TOOL_RESULT",
+        sourceId: "compute_deviations",
+        confidenceScore: 0.1,
+      },
+      {
+        claim: "Финансовый анализ подтверждён детерминированным расчётом.",
+        sourceType: "TOOL_RESULT",
+        sourceId: "compute_plan_fact",
+        confidenceScore: 0.92,
+      },
+    ]);
+
+    expect(inputs.qualityStatus).toBe("READY");
+    expect(inputs.accounting).toEqual({
+      total: 2,
+      evidenced: 2,
+      verified: 1,
+      unverified: 0,
+      invalid: 1,
+    });
+    expect(inputs.recommendedVerdict).toBe("CONFLICTED");
+    expect(inputs.requiresCrossCheck).toBe(true);
+    expect(inputs.invalidClaimsPct).toBe(50);
+    expect(inputs.reasons).toEqual(
+      expect.arrayContaining([
+        "invalid_evidence_present",
+        "mixed_evidence_quality",
+      ]),
+    );
+  });
+
+  it("buildBranchTrustInputs без evidence возвращает pending reusable input", () => {
+    const inputs = service.buildBranchTrustInputs([]);
+
+    expect(inputs.qualityStatus).toBe("PENDING_EVIDENCE");
+    expect(inputs.recommendedVerdict).toBe("UNVERIFIED");
+    expect(inputs.requiresCrossCheck).toBe(true);
+    expect(inputs.bsScorePct).toBeNull();
+    expect(inputs.reasons).toEqual(["no_evidence"]);
+  });
+
   it("100% verified evidence → возвращает объект с BS%=0, coverage=100", async () => {
     prisma.aiAuditEntry.findMany.mockResolvedValue([
       {

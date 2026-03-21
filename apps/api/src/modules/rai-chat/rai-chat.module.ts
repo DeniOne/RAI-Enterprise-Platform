@@ -81,6 +81,7 @@ import { ConfigModule } from "@nestjs/config";
 import { SecretsModule } from "../../shared/config/secrets.module";
 import { SemanticRouterService } from "./semantic-router/semantic-router.service";
 import { RoutingCaseMemoryService } from "./semantic-router/routing-case-memory.service";
+import { SemanticIngressService } from "./semantic-ingress.service";
 
 @Module({
   imports: [
@@ -131,6 +132,7 @@ import { RoutingCaseMemoryService } from "./semantic-router/routing-case-memory.
     SupervisorForensicsService,
     ResponseComposerService,
     SemanticRouterService,
+    SemanticIngressService,
     RoutingCaseMemoryService,
     RaiChatService,
     SupervisorAgent,

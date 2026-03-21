@@ -837,13 +837,13 @@ const CANONICAL_RESPONSIBILITY_PROFILES: Record<AgentContractRole, AgentResponsi
         role: "crm_agent",
         description: "Найти контрагента по ИНН и зарегистрировать его в реестре.",
         taskFamily: "crm_counterparty_onboarding",
-        triggerHints: ["контрагент", "инн", "зарегистр", "добавь в crm", "реестр"],
+        triggerHints: ["контрагент", "инн", "зарегистр", "зарег", "зареп", "заведи контрагента", "добавь в crm", "реестр"],
         toolName: RaiToolName.RegisterCounterparty,
         outputMode: "window",
         requiredContextKeys: [],
         optionalContextKeys: [],
         allowedWithoutContext: true,
-        keywordsPattern: /контрагент|инн|зарегистр|добав[ьи].*crm|реестр/i,
+        keywordsPattern: /контрагент|инн|зарегистр|зарег|зареп|заведи.*контрагент|добав[ьи].*crm|реестр/i,
         routeHints: { includesAny: ["crm", "parties", "counterpart"] },
         classificationReason: "responsibility:crm:register_counterparty",
         classificationConfidence: 0.82,
@@ -1865,7 +1865,7 @@ function isWriteIntent(contract: AgentIntentContract): boolean {
 }
 
 function hasWriteActionSignal(message: string): boolean {
-  return /(созд(ай|ать)|сдела(й|ть)|состав(ь|ить)|подготов(ь|ить)|сгенерир|черновик|draft|добав(ь|ить)|обнови|измени|правь|удали|убери|снеси|сними|зарегистр|заключи|оформи|зафиксир|сформир|проведи|опубликуй|подтверди|разнеси|поставь|перенеси|эскалир|эскалац|алерт|alert|передай в работу|нужно в работу|срочно)/i.test(
+  return /(созд(ай|ать)|сдела(й|ть)|состав(ь|ить)|подготов(ь|ить)|сгенерир|черновик|draft|добав(ь|ить)|обнови|измени|правь|удали|убери|снеси|сними|зарегистр|заре[гп]|заведи|заключи|оформи|зафиксир|сформир|проведи|опубликуй|подтверди|разнеси|поставь|перенеси|эскалир|эскалац|алерт|alert|передай в работу|нужно в работу|срочно)/i.test(
     message,
   );
 }

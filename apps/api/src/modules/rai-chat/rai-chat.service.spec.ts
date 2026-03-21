@@ -55,6 +55,7 @@ import { RuntimeGovernanceEventService } from "./runtime-governance/runtime-gove
 import { RuntimeGovernancePolicyService } from "./runtime-governance/runtime-governance-policy.service";
 import { RuntimeGovernanceFeatureFlagsService } from "./runtime-governance/runtime-governance-feature-flags.service";
 import { SemanticRouterService } from "./semantic-router/semantic-router.service";
+import { SemanticIngressService } from "./semantic-ingress.service";
 
 describe("RaiChatService", () => {
   let service: RaiChatService;
@@ -289,6 +290,7 @@ describe("RaiChatService", () => {
         { provide: RuntimeGovernancePolicyService, useValue: runtimeGovernancePolicyServiceMock },
         { provide: RuntimeGovernanceFeatureFlagsService, useValue: runtimeGovernanceFeatureFlagsServiceMock },
         { provide: SemanticRouterService, useValue: semanticRouterServiceMock },
+        SemanticIngressService,
       ],
     }).compile();
 

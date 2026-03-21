@@ -18,6 +18,15 @@ describe("TraceSummaryDtoSchema", () => {
       evidenceCoveragePct: 80,
       invalidClaimsPct: 5,
       bsScorePct: 10,
+      verifiedBranchCount: 1,
+      partialBranchCount: 0,
+      unverifiedBranchCount: 0,
+      conflictedBranchCount: 0,
+      rejectedBranchCount: 0,
+      trustGateLatencyMs: 240,
+      trustLatencyProfile: "HAPPY_PATH",
+      trustLatencyBudgetMs: 300,
+      trustLatencyWithinBudget: true,
       createdAt: now,
     });
 
@@ -40,6 +49,15 @@ describe("TraceSummaryDtoSchema", () => {
       evidenceCoveragePct: 80,
       invalidClaimsPct: 5,
       bsScorePct: 110,
+      verifiedBranchCount: 1,
+      partialBranchCount: 0,
+      unverifiedBranchCount: 0,
+      conflictedBranchCount: 0,
+      rejectedBranchCount: 0,
+      trustGateLatencyMs: 240,
+      trustLatencyProfile: "HAPPY_PATH",
+      trustLatencyBudgetMs: 300,
+      trustLatencyWithinBudget: true,
       createdAt: new Date(),
     });
 
@@ -61,10 +79,18 @@ describe("TraceSummaryDtoSchema", () => {
       evidenceCoveragePct: 80,
       invalidClaimsPct: 5,
       bsScorePct: 10,
+      verifiedBranchCount: 1,
+      partialBranchCount: 0,
+      unverifiedBranchCount: 0,
+      conflictedBranchCount: 0,
+      rejectedBranchCount: 0,
+      trustGateLatencyMs: 240,
+      trustLatencyProfile: "HAPPY_PATH",
+      trustLatencyBudgetMs: 300,
+      trustLatencyWithinBudget: true,
       createdAt: new Date(),
     });
 
     expect(result.success).toBe(false);
   });
 });
-

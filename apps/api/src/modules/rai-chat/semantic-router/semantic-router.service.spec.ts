@@ -473,6 +473,50 @@ describe("SemanticRouterService", () => {
     expect(result.requestedToolCalls).toEqual([]);
   });
 
+  it("не переводит разговорный write-запрос по контрагенту в read-only lookup slice", async () => {
+    const result = await service.evaluate({
+      companyId: "c1",
+      message: "давай зарепим контрагента, ИНН 2636041493",
+      workspaceContext: {
+        route: "/parties",
+      } as any,
+      traceId: "tr-crm-inn-3",
+      threadId: "th-crm-inn-3",
+      legacyClassification: {
+        targetRole: "crm_agent",
+        intent: "register_counterparty",
+        toolName: RaiToolName.RegisterCounterparty,
+        confidence: 0.82,
+        method: "regex",
+        reason: "legacy:crm-register-sleng",
+      },
+      requestedToolCalls: [
+        {
+          name: RaiToolName.RegisterCounterparty,
+          payload: {
+            inn: "2636041493",
+            jurisdictionCode: "RU",
+            partyType: "LEGAL_ENTITY",
+          },
+        },
+      ],
+      allowPrimaryPromotion: true,
+    });
+
+    expect(result.sliceId).not.toBe("crm.counterparty.lookup");
+    expect(result.classification.intent).toBe("register_counterparty");
+    expect(result.requestedToolCalls).toEqual([
+      {
+        name: RaiToolName.RegisterCounterparty,
+        payload: {
+          inn: "2636041493",
+          jurisdictionCode: "RU",
+          partyType: "LEGAL_ENTITY",
+        },
+      },
+    ]);
+  });
+
   it("использует active case memory для safe read override при abstain", async () => {
     routingCaseMemoryMock.retrieveRelevantCases.mockResolvedValue([
       {

@@ -1,0 +1,53 @@
+[
+  {
+    "id": "crm-register-free-phrase-zaregim",
+    "request": {
+      "message": "Давай зарегим контрагента. ИНН 2636041493",
+      "workspaceContext": {
+        "route": "/parties"
+      }
+    },
+    "expected": {
+      "intent": "register_counterparty",
+      "toolName": "register_counterparty",
+      "proofSliceId": "crm.register_counterparty",
+      "operationAuthority": "direct_user_command",
+      "requiresConfirmation": false,
+      "inn": "2636041493"
+    }
+  },
+  {
+    "id": "crm-register-free-phrase-zarepim",
+    "request": {
+      "message": "Давай зарепим контрагента с ИНН 2610000615",
+      "workspaceContext": {
+        "route": "/dashboard"
+      }
+    },
+    "expected": {
+      "intent": "register_counterparty",
+      "toolName": "register_counterparty",
+      "proofSliceId": "crm.register_counterparty",
+      "operationAuthority": "direct_user_command",
+      "requiresConfirmation": false,
+      "inn": "2610000615"
+    }
+  },
+  {
+    "id": "crm-register-free-phrase-zavedi",
+    "request": {
+      "message": "Заведи в CRM нового контрагента по ИНН 7736207543",
+      "workspaceContext": {
+        "route": "/consulting/crm"
+      }
+    },
+    "expected": {
+      "intent": "register_counterparty",
+      "toolName": "register_counterparty",
+      "proofSliceId": "crm.register_counterparty",
+      "operationAuthority": "direct_user_command",
+      "requiresConfirmation": false,
+      "inn": "7736207543"
+    }
+  }
+]

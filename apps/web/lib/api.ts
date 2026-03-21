@@ -1,5 +1,9 @@
 import axios from 'axios'
 
+import type { AiWorkWindow } from '../components/ai-chat/ai-work-window-types'
+import type { WorkspaceContext } from '../shared/contracts/workspace-context'
+import type { RaiChatWidget } from './ai-chat-widgets'
+
 // Axios client for browser-side requests only.
 export const apiClient = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -33,6 +37,60 @@ export function serializeIdempotencyPayload(value: unknown): string {
     } catch {
         return '';
     }
+}
+
+function trimHtmlLikePayload(raw: string): string {
+    return raw
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 220);
+}
+
+async function getRaiChatHttpErrorMessage(response: Response): Promise<string> {
+    const status = response.status;
+    const contentType = response.headers?.get?.('content-type') ?? '';
+    let details = '';
+
+    try {
+        if (contentType.includes('application/json')) {
+            const payload = await response.json() as { message?: unknown; error?: unknown };
+            if (Array.isArray(payload.message)) {
+                details = payload.message.map((item) => String(item)).filter(Boolean).join('; ');
+            } else if (typeof payload.message === 'string') {
+                details = payload.message;
+            } else if (typeof payload.error === 'string') {
+                details = payload.error;
+            }
+        } else {
+            const text = await response.text();
+            if (text?.trim()) {
+                details = trimHtmlLikePayload(text);
+            }
+        }
+    } catch {
+        details = '';
+    }
+
+    const normalizedDetails = details.toLowerCase();
+
+    if (status === 404) {
+        return 'Клиент чата устарел после перезапуска. Обновите страницу Ctrl+Shift+R и повторите команду.';
+    }
+
+    if (normalizedDetails.includes('idempotency-key')) {
+        return 'Клиент отправил запрос без Idempotency-Key. Обновите страницу Ctrl+Shift+R и повторите команду.';
+    }
+
+    if (status >= 500) {
+        return 'Сервис агента временно недоступен. Повторите команду через 5-10 секунд.';
+    }
+
+    if (details) {
+        return `Ошибка агента: ${details}`;
+    }
+
+    return `Ошибка агента: HTTP ${status}`;
 }
 
 // Typed client endpoints.
@@ -665,7 +723,7 @@ export const api = {
     },
     explainability: {
         dashboard: (params?: { hours?: number }) =>
-            apiClient.get('/rai/explainability/dashboard', { params: params?.hours != null ? { hours: params.hours } : {} }),
+            apiClient.get<TruthfulnessDashboardDto>('/rai/explainability/dashboard', { params: params?.hours != null ? { hours: params.hours } : {} }),
         performance: (params?: { timeWindowMs?: number }) =>
             apiClient.get('/rai/explainability/performance', { params: params?.timeWindowMs != null ? { timeWindowMs: params.timeWindowMs } : {} }),
         queuePressure: (params?: { timeWindowMs?: number }) =>
@@ -716,7 +774,7 @@ export const api = {
         traceTimeline: (traceId: string) =>
             apiClient.get(`/rai/explainability/trace/${encodeURIComponent(traceId)}`),
         traceForensics: (traceId: string) =>
-            apiClient.get(`/rai/explainability/trace/${encodeURIComponent(traceId)}/forensics`),
+            apiClient.get<TraceForensicsResponseDto>(`/rai/explainability/trace/${encodeURIComponent(traceId)}/forensics`),
         traceTopology: (traceId: string) =>
             apiClient.get(`/rai/explainability/trace/${encodeURIComponent(traceId)}/topology`),
         replayTrace: (traceId: string) =>
@@ -1333,6 +1391,356 @@ export interface TraceForensicsMemoryLaneDto {
     used: TraceForensicsMemoryLaneItemDto[];
     dropped: TraceForensicsMemoryLaneDroppedItemDto[];
     escalationReason?: string;
+}
+
+export type BranchVerdict =
+    | 'VERIFIED'
+    | 'PARTIAL'
+    | 'UNVERIFIED'
+    | 'CONFLICTED'
+    | 'REJECTED';
+
+export type UserFacingTrustTone = 'critical' | 'warning' | 'info';
+
+export interface UserFacingTrustSummaryBranchDto {
+    branchId: string;
+    sourceAgent: string;
+    verdict: BranchVerdict;
+    label: string;
+    summary?: string;
+    disclosure: string[];
+}
+
+export interface UserFacingTrustSummaryDto {
+    verdict: BranchVerdict;
+    label: string;
+    tone: UserFacingTrustTone;
+    summary: string;
+    disclosure: string[];
+    branchCount: number;
+    verifiedCount: number;
+    partialCount: number;
+    unverifiedCount: number;
+    conflictedCount: number;
+    rejectedCount: number;
+    crossCheckCount: number;
+    branches: UserFacingTrustSummaryBranchDto[];
+}
+
+export interface RaiChatMemoryUsedDto {
+    kind: 'episode' | 'profile' | 'engram' | 'active_alert' | 'hot_engram';
+    label: string;
+    confidence: number;
+    source?: string;
+}
+
+export interface RaiChatMemorySummaryDto {
+    primaryHint: string;
+    primaryKind: 'episode' | 'profile' | 'engram' | 'active_alert' | 'hot_engram';
+    detailsAvailable: boolean;
+}
+
+export interface RaiChatSuggestedActionDto {
+    kind: 'tool' | 'route' | 'expert_review';
+    title: string;
+    toolName?: string;
+    payload?: Record<string, unknown>;
+    href?: string;
+    expertRole?: string;
+}
+
+export interface RaiChatPendingClarificationItemDto {
+    key?: string;
+    label?: string;
+    required?: boolean;
+    reason?: string;
+    sourcePriority?: Array<'workspace' | 'record' | 'user'>;
+    status?: 'missing' | 'resolved';
+    resolvedFrom?: 'workspace' | 'record' | 'user';
+    value?: string;
+}
+
+export interface RaiChatPendingClarificationDto {
+    kind?: 'missing_context';
+    agentRole?: string;
+    intentId?: string;
+    summary?: string;
+    autoResume?: boolean;
+    items?: RaiChatPendingClarificationItemDto[];
+}
+
+export interface RaiChatResponseDto {
+    text?: string;
+    threadId?: string;
+    riskLevel?: 'R0' | 'R1' | 'R2' | 'R3' | 'R4';
+    widgets?: RaiChatWidget[];
+    memoryUsed?: RaiChatMemoryUsedDto[];
+    memorySummary?: RaiChatMemorySummaryDto;
+    suggestedActions?: RaiChatSuggestedActionDto[];
+    agentRole?: string;
+    activeWindowId?: string | null;
+    pendingClarification?: RaiChatPendingClarificationDto | null;
+    workWindows?: AiWorkWindow[];
+    branchResults?: TraceForensicsBranchResultDto[];
+    branchTrustAssessments?: TraceForensicsBranchTrustAssessmentDto[];
+    branchCompositions?: TraceForensicsBranchCompositionDto[];
+    trustSummary?: UserFacingTrustSummaryDto;
+}
+
+export interface RaiChatClarificationResumeDto {
+    windowId: string;
+    intentId: 'tech_map_draft' | 'compute_plan_fact';
+    agentRole: 'agronomist' | 'economist';
+    collectedContext: {
+        fieldRef?: string;
+        seasonRef?: string;
+        seasonId?: string;
+        planId?: string;
+    };
+}
+
+export interface RaiChatSubmitRequestDto {
+    threadId: string | null;
+    message: string;
+    workspaceContext: WorkspaceContext;
+    originMessageId?: string | null;
+    clarificationResume?: RaiChatClarificationResumeDto;
+    signal?: AbortSignal;
+}
+
+export async function submitRaiChatRequest(
+    params: RaiChatSubmitRequestDto,
+): Promise<RaiChatResponseDto> {
+    const idempotencyKey = buildIdempotencyKey('rai-chat-submit', [
+        params.threadId ?? null,
+        params.message,
+        params.originMessageId ?? null,
+        params.clarificationResume?.windowId ?? null,
+        serializeIdempotencyPayload(params.workspaceContext ?? {}),
+    ]);
+
+    const response = await fetch('/api/rai/chat', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Idempotency-Key': idempotencyKey,
+        },
+        body: JSON.stringify({
+            threadId: params.threadId,
+            message: params.message,
+            workspaceContext: params.workspaceContext,
+            clarificationResume: params.clarificationResume,
+        }),
+        signal: params.signal,
+    });
+
+    if (!response.ok) {
+        throw new Error(await getRaiChatHttpErrorMessage(response));
+    }
+
+    return response.json() as Promise<RaiChatResponseDto>;
+}
+
+export interface BranchTrustDashboardDto {
+    knownTraceCount: number;
+    pendingTraceCount: number;
+    verifiedBranchCount: number;
+    partialBranchCount: number;
+    unverifiedBranchCount: number;
+    conflictedBranchCount: number;
+    rejectedBranchCount: number;
+    crossCheckTraceCount: number;
+    withinBudgetTraceCount: number;
+    overBudgetTraceCount: number;
+    withinBudgetRate: number | null;
+    avgLatencyMs: number | null;
+    p95LatencyMs: number | null;
+}
+
+export interface TruthfulnessDashboardDto {
+    companyId: string;
+    avgBsScore: number | null;
+    p95BsScore: number | null;
+    avgEvidenceCoverage: number | null;
+    acceptanceRate: number | null;
+    correctionRate: number | null;
+    worstTraces: Array<{
+        traceId: string;
+        bsScorePct: number | null;
+        evidenceCoveragePct: number | null;
+        invalidClaimsPct?: number | null;
+        createdAt: string;
+    }>;
+    qualityKnownTraceCount: number;
+    qualityPendingTraceCount: number;
+    branchTrust: BranchTrustDashboardDto;
+    criticalPath: Array<{
+        traceId: string;
+        phase: string;
+        durationMs: number;
+        totalDurationMs: number | null;
+        createdAt: string;
+    }>;
+}
+
+export interface TraceForensicsEvidenceRefDto {
+    claim: string;
+    sourceType: string;
+    sourceId: string;
+    confidenceScore: number;
+}
+
+export interface TraceForensicsSummaryDto {
+    traceId: string;
+    companyId: string;
+    totalTokens: number;
+    promptTokens: number;
+    completionTokens: number;
+    durationMs: number;
+    modelId: string;
+    promptVersion: string;
+    toolsVersion: string;
+    policyId: string;
+    bsScorePct: number | null;
+    evidenceCoveragePct: number | null;
+    invalidClaimsPct: number | null;
+    verifiedBranchCount: number | null;
+    partialBranchCount: number | null;
+    unverifiedBranchCount: number | null;
+    conflictedBranchCount: number | null;
+    rejectedBranchCount: number | null;
+    trustGateLatencyMs: number | null;
+    trustLatencyProfile: string | null;
+    trustLatencyBudgetMs: number | null;
+    trustLatencyWithinBudget: boolean | null;
+    createdAt: string;
+}
+
+export interface TraceForensicsEntryDto {
+    id: string;
+    traceId: string;
+    companyId: string;
+    toolNames: string[];
+    model: string;
+    intentMethod: string | null;
+    phase: string;
+    kind?: string;
+    label?: string;
+    durationMs?: number;
+    tokensUsed: number;
+    createdAt: string;
+    evidenceRefs: TraceForensicsEvidenceRefDto[];
+}
+
+export interface TraceForensicsAlertDto {
+    id: string;
+    alertType: string;
+    severity: string;
+    message: string;
+    createdAt: string;
+}
+
+export interface TraceForensicsBranchResultDto {
+    branch_id: string;
+    source_agent: string;
+    domain: string;
+    summary?: string;
+    scope: Record<string, unknown>;
+    facts?: Record<string, unknown>;
+    metrics?: Record<string, unknown>;
+    money?: Record<string, unknown>;
+    derived_from: Array<{
+        kind: string;
+        source_id: string;
+        label?: string;
+        field_path?: string;
+    }>;
+    evidence_refs: TraceForensicsEvidenceRefDto[];
+    assumptions: string[];
+    data_gaps: string[];
+    freshness: {
+        status: string;
+        checked_at?: string;
+        observed_at?: string;
+        expires_at?: string;
+    };
+    confidence: number;
+}
+
+export interface TraceForensicsBranchTrustAssessmentDto {
+    branch_id: string;
+    source_agent: string;
+    verdict: BranchVerdict;
+    score: number;
+    reasons: string[];
+    checks: Array<{
+        name: string;
+        status: string;
+        details?: string;
+    }>;
+    requires_cross_check: boolean;
+}
+
+export interface TraceForensicsBranchCompositionDto {
+    branch_id: string;
+    verdict: BranchVerdict;
+    include_in_response: boolean;
+    summary?: string;
+    disclosure: string[];
+}
+
+export interface TraceForensicsBranchTrustDto {
+    branchResults: TraceForensicsBranchResultDto[];
+    branchTrustAssessments: TraceForensicsBranchTrustAssessmentDto[];
+    branchCompositions: TraceForensicsBranchCompositionDto[];
+}
+
+export interface TraceForensicsSemanticIngressDomainCandidateDto {
+    domain: string;
+    ownerRole: string | null;
+    score: number;
+    source: 'legacy' | 'semantic';
+    reason: string;
+}
+
+export interface TraceForensicsSemanticIngressEntityDto {
+    kind: 'semantic_entity' | 'workspace_route' | 'workspace_selection' | 'active_entity' | 'inn';
+    value: string;
+    source: 'semantic' | 'workspace' | 'message' | 'tool_payload';
+}
+
+export interface TraceForensicsSemanticIngressFrameDto {
+    version: 'v1';
+    interactionMode: 'free_chat' | 'information_request' | 'task_request' | 'workflow_resume';
+    requestShape: 'single_intent' | 'clarification_resume' | 'composite' | 'unknown';
+    domainCandidates: TraceForensicsSemanticIngressDomainCandidateDto[];
+    goal: string | null;
+    entities: TraceForensicsSemanticIngressEntityDto[];
+    requestedOperation: {
+        ownerRole: string | null;
+        intent: string | null;
+        toolName: string | null;
+        decisionType: string;
+        source: 'clarification_resume' | 'explicit_tool_call' | 'legacy_contracts' | 'semantic_router_primary' | 'semantic_router_shadow';
+    };
+    operationAuthority: 'direct_user_command' | 'workflow_resume' | 'delegated_or_autonomous' | 'unknown';
+    missingSlots: string[];
+    riskClass: 'safe_read' | 'write_candidate' | 'high_risk_write' | 'unknown';
+    requiresConfirmation: boolean;
+    confidenceBand: 'high' | 'medium' | 'low';
+    explanation: string;
+    proofSliceId?: string | null;
+}
+
+export interface TraceForensicsResponseDto {
+    traceId: string;
+    companyId: string;
+    summary: TraceForensicsSummaryDto | null;
+    timeline: TraceForensicsEntryDto[];
+    qualityAlerts: TraceForensicsAlertDto[];
+    memoryLane?: TraceForensicsMemoryLaneDto | null;
+    branchTrust?: TraceForensicsBranchTrustDto | null;
+    semanticIngressFrame?: TraceForensicsSemanticIngressFrameDto | null;
 }
 
 export interface MemoryHealthDto {

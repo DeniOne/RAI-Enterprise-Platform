@@ -4,6 +4,13 @@ export type PendingClarificationKey =
     | 'seasonId'
     | 'planId';
 
+export type AiWorkWindowIntentId =
+    | 'tech_map_draft'
+    | 'compute_plan_fact'
+    | 'query_knowledge'
+    | 'emit_alerts'
+    | 'branch_trust_summary';
+
 export interface PendingClarificationItem {
     key: PendingClarificationKey;
     label: string;
@@ -79,7 +86,7 @@ export interface AiWorkWindowAction {
 }
 
 export interface AiWorkWindowPayload {
-    intentId: 'tech_map_draft' | 'compute_plan_fact' | 'query_knowledge' | 'emit_alerts';
+    intentId: AiWorkWindowIntentId;
     summary: string;
     fieldRef?: string;
     seasonRef?: string;

@@ -10,7 +10,7 @@ import {
 } from "../../modules/rai-chat/agents/contracts-agent.service";
 
 const CREATE_ACTION_SIGNAL =
-  /созд(ай|ать)|сдела(й|ть)|добав(ь|ить)|зарегистр|оформ(и|ить)|заключ(и|ить)|сформир|зафиксир|постав(ь|ить)/i;
+  /созд(ай|ать)|сдела(й|ть)|добав(ь|ить)|зарегистр|заре[гп]|оформ(и|ить)|заключ(и|ить)|сформир|зафиксир|постав(ь|ить)|завед(и|ите|ём|ем)/i;
 const UPDATE_ACTION_SIGNAL = /обнови|измени|правь|перенеси|скорректир/i;
 const DELETE_ACTION_SIGNAL = /удали|убери|снеси|сними/i;
 
@@ -161,9 +161,9 @@ export function detectCrmIntent(
     return "create_crm_account";
   }
   if (
-    (/инн|контрагент|контрагента|зарегистр/i.test(normalized) &&
+    (/инн|контрагент|контрагента|зарегистр|зарег|зареп/i.test(normalized) &&
       CREATE_ACTION_SIGNAL.test(normalized)) ||
-    /зарегистр/i.test(normalized)
+    /зарегистр|зарег|зареп/i.test(normalized)
   ) {
     return "register_counterparty";
   }

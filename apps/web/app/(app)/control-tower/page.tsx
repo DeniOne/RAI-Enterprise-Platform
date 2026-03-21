@@ -13,6 +13,7 @@ import {
   type RuntimeGovernanceAgentDto,
   type RuntimeGovernanceDrilldownsDto,
   type RuntimeGovernanceSummaryDto,
+  type TruthfulnessDashboardDto,
 } from '@/lib/api';
 import { webFeatureFlags } from '@/lib/feature-flags';
 import { Monitor, ShieldCheck, Zap, Activity, DollarSign, TerminalSquare, AlertCircle } from 'lucide-react';
@@ -23,19 +24,6 @@ const THRESHOLD_SUCCESS_RATE_PCT = 95;
 const CONTROL_TOWER_REQUEST_TIMEOUT_MS = 8000;
 const MEMORY_FABRIC_ALLOWED_ROLES = new Set(['ADMIN', 'SYSTEM_ADMIN', 'FOUNDER']);
 const ROUTING_DIVERGENCE_SLICE = 'agro.techmaps.list-open-create';
-
-interface DashboardData {
-  companyId: string;
-  avgBsScore: number | null;
-  p95BsScore: number | null;
-  avgEvidenceCoverage: number | null;
-  acceptanceRate: number | null;
-  correctionRate: number | null;
-  worstTraces: Array<{ traceId: string; bsScorePct: number | null; evidenceCoveragePct: number | null; createdAt: string }>;
-  qualityKnownTraceCount: number;
-  qualityPendingTraceCount: number;
-  criticalPath: Array<{ traceId: string; phase: string; durationMs: number; totalDurationMs: number | null; createdAt: string }>;
-}
 
 interface PerformanceData {
   successRatePct: number;
@@ -211,7 +199,7 @@ async function safeRequest<T>(
 export default function ControlTowerPage() {
   const memoryEnabled = webFeatureFlags.controlTowerMemory;
   const [canViewMemoryFabric, setCanViewMemoryFabric] = useState(false);
-  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [dashboard, setDashboard] = useState<TruthfulnessDashboardDto | null>(null);
   const [performance, setPerformance] = useState<PerformanceData | null>(null);
   const [cost, setCost] = useState<CostData | null>(null);
   const [queuePressure, setQueuePressure] = useState<QueuePressureData | null>(null);
@@ -306,7 +294,7 @@ export default function ControlTowerPage() {
           : Promise.resolve(null);
 
         const [dashboardData, performanceData, costData, queuePressureData, routingDivergenceData, autonomyData, runtimeGovernanceSummaryData, runtimeGovernanceAgentsData, runtimeGovernanceDrilldownsData, lifecycleSummaryData, lifecycleAgentsData, lifecycleHistoryData, memoryData, pendingActionsData] = await Promise.all([
-          safeRequest<DashboardData | null>(
+          safeRequest<TruthfulnessDashboardDto | null>(
             'dashboard',
             api.explainability.dashboard({ hours: 24 }).then((res) => res.data),
             null,
@@ -911,6 +899,75 @@ export default function ControlTowerPage() {
                         status={autonomy.activeQualityAlert ? 'warning' : 'success'}
                       />
                     )}
+                  </div>
+
+                  <div className="mt-6 pt-5 border-t border-black/5">
+                    <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">
+                      Контур доверия веток
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                      <DataStat
+                        label="Подтверждено"
+                        value={`${dashboard.branchTrust.verifiedBranchCount}`}
+                        status="success"
+                      />
+                      <DataStat
+                        label="Частично"
+                        value={`${dashboard.branchTrust.partialBranchCount}`}
+                        status={dashboard.branchTrust.partialBranchCount > 0 ? 'warning' : 'neutral'}
+                      />
+                      <DataStat
+                        label="Неподтв."
+                        value={`${dashboard.branchTrust.unverifiedBranchCount}`}
+                        status={dashboard.branchTrust.unverifiedBranchCount > 0 ? 'warning' : 'neutral'}
+                      />
+                      <DataStat
+                        label="Конфликт"
+                        value={`${dashboard.branchTrust.conflictedBranchCount}`}
+                        status={dashboard.branchTrust.conflictedBranchCount > 0 ? 'error' : 'neutral'}
+                      />
+                      <DataStat
+                        label="Отклонено"
+                        value={`${dashboard.branchTrust.rejectedBranchCount}`}
+                        status={dashboard.branchTrust.rejectedBranchCount > 0 ? 'error' : 'neutral'}
+                      />
+                      <DataStat
+                        label="Перепроверка"
+                        value={`${dashboard.branchTrust.crossCheckTraceCount}`}
+                        status={dashboard.branchTrust.crossCheckTraceCount > 0 ? 'warning' : 'success'}
+                      />
+                    </div>
+
+                    <div className="mt-4 space-y-0.5">
+                      <DataRow
+                        label="Трейсы с trust-метриками"
+                        value={`${dashboard.branchTrust.knownTraceCount}`}
+                        status={dashboard.branchTrust.knownTraceCount > 0 ? 'success' : 'warning'}
+                      />
+                      <DataRow
+                        label="Ожидание trust-метрик"
+                        value={`${dashboard.branchTrust.pendingTraceCount}`}
+                        status={dashboard.branchTrust.pendingTraceCount > 0 ? 'warning' : 'success'}
+                      />
+                      <DataRow
+                        label="Соблюдение бюджета"
+                        value={formatPctOrPending(dashboard.branchTrust.withinBudgetRate)}
+                        status={trustBudgetStatus(dashboard.branchTrust.withinBudgetRate)}
+                      />
+                      <DataRow
+                        label="Выходы за бюджет"
+                        value={`${dashboard.branchTrust.overBudgetTraceCount}`}
+                        status={dashboard.branchTrust.overBudgetTraceCount > 0 ? 'error' : 'success'}
+                      />
+                      <DataRow
+                        label="Средняя задержка trust-gate"
+                        value={formatMsOrPending(dashboard.branchTrust.avgLatencyMs)}
+                      />
+                      <DataRow
+                        label="P95 trust-gate"
+                        value={formatMsOrPending(dashboard.branchTrust.p95LatencyMs)}
+                      />
+                    </div>
                   </div>
                 </>
               ) : <NoData />}
@@ -2489,6 +2546,25 @@ function ActionDialog({
 
 function formatPctOrPending(value: number | null) {
   return value === null ? 'ожидание' : `${value.toFixed(1)}%`;
+}
+
+function formatMsOrPending(value: number | null) {
+  return value === null ? 'ожидание' : `${value.toFixed(0)} ms`;
+}
+
+function trustBudgetStatus(
+  value: number | null,
+): 'success' | 'warning' | 'error' {
+  if (value === null) {
+    return 'warning';
+  }
+  if (value >= 95) {
+    return 'success';
+  }
+  if (value >= 80) {
+    return 'warning';
+  }
+  return 'error';
 }
 
 function formatAutonomyLevel(level: AutonomyStatusDto['level']) {

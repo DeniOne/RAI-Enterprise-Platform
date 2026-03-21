@@ -11,6 +11,13 @@ import {
   IsNumber,
 } from "class-validator";
 import { Type } from "class-transformer";
+import type {
+  BranchResultContract,
+  BranchTrustAssessment,
+  BranchVerdict,
+  UserFacingBranchCompositionPayload,
+  UserFacingTrustSummary,
+} from "./branch-trust.types";
 import { RaiSuggestedAction, RaiToolName } from "./rai-tools.types";
 import { RaiChatWidget } from "./rai-chat-widgets.types";
 
@@ -401,6 +408,14 @@ export interface EvidenceReference {
   confidenceScore: number;
 }
 
+export type {
+  BranchResultContract,
+  BranchTrustAssessment,
+  BranchVerdict,
+  UserFacingBranchCompositionPayload,
+  UserFacingTrustSummary,
+};
+
 export interface RuntimeBudgetDto {
   outcome: "ALLOW" | "DEGRADE" | "DENY";
   reason: string;
@@ -529,6 +544,7 @@ export interface RaiWorkWindowDto {
       | "compute_plan_fact"
       | "query_knowledge"
       | "emit_alerts"
+      | "branch_trust_summary"
       | "create_commerce_contract"
       | "list_commerce_contracts"
       | "review_commerce_contract"
@@ -797,4 +813,16 @@ export class RaiChatResponseDto {
   @ValidateNested({ each: true })
   @Type(() => RaiIntermediateStepDto)
   intermediateSteps?: RaiIntermediateStepDto[];
+
+  @IsOptional()
+  branchResults?: BranchResultContract[];
+
+  @IsOptional()
+  branchTrustAssessments?: BranchTrustAssessment[];
+
+  @IsOptional()
+  branchCompositions?: UserFacingBranchCompositionPayload[];
+
+  @IsOptional()
+  trustSummary?: UserFacingTrustSummary;
 }

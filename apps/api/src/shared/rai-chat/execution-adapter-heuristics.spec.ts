@@ -82,4 +82,10 @@ describe("detectCrmIntent", () => {
       detectCrmIntent([], "проверь контрагента по ИНН 2610000615"),
     ).toBe("lookup_counterparty_by_inn");
   });
+
+  it("выбирает register_counterparty для разговорной формулировки", () => {
+    expect(
+      detectCrmIntent([], "давай зарепим контрагента, ИНН 2636041493"),
+    ).toBe("register_counterparty");
+  });
 });

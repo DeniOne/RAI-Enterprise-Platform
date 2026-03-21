@@ -1,4 +1,10 @@
 import { ExplainabilityTimelineNodeKind } from "./explainability-timeline.dto";
+import {
+  BranchResultContract,
+  BranchTrustAssessment,
+  UserFacingBranchCompositionPayload,
+} from "../../../shared/rai-chat/branch-trust.types";
+import { SemanticIngressFrame } from "../../../shared/rai-chat/semantic-ingress.types";
 
 /**
  * DTO для Explainability Explorer (Forensics): обогащённый таймлайн трейса с evidence и алертами.
@@ -18,6 +24,15 @@ export interface TraceForensicsSummaryDto {
   bsScorePct: number | null;
   evidenceCoveragePct: number | null;
   invalidClaimsPct: number | null;
+  verifiedBranchCount: number | null;
+  partialBranchCount: number | null;
+  unverifiedBranchCount: number | null;
+  conflictedBranchCount: number | null;
+  rejectedBranchCount: number | null;
+  trustGateLatencyMs: number | null;
+  trustLatencyProfile: string | null;
+  trustLatencyBudgetMs: number | null;
+  trustLatencyWithinBudget: boolean | null;
   createdAt: string;
 }
 
@@ -71,6 +86,12 @@ export interface TraceForensicsMemoryLaneDto {
   escalationReason?: string;
 }
 
+export interface TraceForensicsBranchTrustDto {
+  branchResults: BranchResultContract[];
+  branchTrustAssessments: BranchTrustAssessment[];
+  branchCompositions: UserFacingBranchCompositionPayload[];
+}
+
 export interface TraceForensicsResponseDto {
   traceId: string;
   companyId: string;
@@ -78,4 +99,6 @@ export interface TraceForensicsResponseDto {
   timeline: TraceForensicsEntryDto[];
   qualityAlerts: TraceForensicsAlertDto[];
   memoryLane?: TraceForensicsMemoryLaneDto | null;
+  branchTrust?: TraceForensicsBranchTrustDto | null;
+  semanticIngressFrame?: SemanticIngressFrame | null;
 }

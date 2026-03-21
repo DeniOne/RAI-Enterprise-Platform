@@ -6,6 +6,12 @@ import { RecallResult } from "./memory/memory-coordinator.service";
 import { InvariantMetrics } from "../../shared/invariants/invariant-metrics";
 import { RoutingTelemetryEvent } from "../../shared/rai-chat/semantic-routing.types";
 import { sanitizeRoutingTelemetry } from "../../shared/rai-chat/routing-telemetry-redaction";
+import {
+  BranchResultContract,
+  BranchTrustAssessment,
+  UserFacingBranchCompositionPayload,
+} from "../../shared/rai-chat/branch-trust.types";
+import { SemanticIngressFrame } from "../../shared/rai-chat/semantic-ingress.types";
 
 @Injectable()
 export class SupervisorForensicsService {
@@ -34,8 +40,12 @@ export class SupervisorForensicsService {
     phases?: Array<{ name: string; timestamp: string; durationMs: number }>;
     tokensUsed?: number;
     structuredOutputs?: Record<string, unknown>[];
+    branchResults?: BranchResultContract[];
+    branchTrustAssessments?: BranchTrustAssessment[];
+    branchCompositions?: UserFacingBranchCompositionPayload[];
     delegationChain?: Array<Record<string, unknown>>;
     routingTelemetry?: RoutingTelemetryEvent;
+    semanticIngressFrame?: SemanticIngressFrame;
   }): Promise<string | null> {
     const metadataObj: Record<string, unknown> = {};
     if (params.replayInput) {
@@ -71,6 +81,18 @@ export class SupervisorForensicsService {
     if (params.structuredOutputs && params.structuredOutputs.length > 0) {
       metadataObj.structuredOutputs = params.structuredOutputs;
     }
+    if (params.branchResults && params.branchResults.length > 0) {
+      metadataObj.branchResults = params.branchResults;
+    }
+    if (
+      params.branchTrustAssessments &&
+      params.branchTrustAssessments.length > 0
+    ) {
+      metadataObj.branchTrustAssessments = params.branchTrustAssessments;
+    }
+    if (params.branchCompositions && params.branchCompositions.length > 0) {
+      metadataObj.branchCompositions = params.branchCompositions;
+    }
     if (params.delegationChain && params.delegationChain.length > 0) {
       metadataObj.delegationChain = params.delegationChain;
     }
@@ -78,6 +100,9 @@ export class SupervisorForensicsService {
       metadataObj.routingTelemetry = sanitizeRoutingTelemetry(
         params.routingTelemetry,
       );
+    }
+    if (params.semanticIngressFrame) {
+      metadataObj.semanticIngressFrame = params.semanticIngressFrame;
     }
 
     const metadata: Prisma.InputJsonValue | undefined =

@@ -56,6 +56,13 @@ import {
   resolveActiveWorkWindowId,
 } from "./work-window.factory";
 import {
+  BranchResultContract,
+  BranchTrustAssessment,
+  BranchVerdict,
+  UserFacingBranchCompositionPayload,
+  UserFacingTrustSummary,
+} from "../../../shared/rai-chat/branch-trust.types";
+import {
   buildPendingClarificationItems,
   detectClarificationContract,
   resolveContextValues,
@@ -89,6 +96,22 @@ export interface BuildResponseParams {
   traceId: string;
   threadId: string;
   companyId: string;
+}
+
+interface BranchSynthesisEntry {
+  result?: BranchResultContract;
+  assessment: BranchTrustAssessment;
+  composition?: UserFacingBranchCompositionPayload;
+}
+
+interface BranchSynthesis {
+  text: string;
+  replaceBaseText: boolean;
+}
+
+interface WorkWindowPayloadBundle {
+  workWindows: RaiWorkWindowDto[];
+  activeWindowId: string | null;
 }
 
 @Injectable()
@@ -233,11 +256,20 @@ export class ResponseComposerService {
     if (clarificationPayload) {
       text = clarificationPayload.text;
     }
-    const structuredOutputsSynthesis = this.buildStructuredOutputsSynthesis(
+    const branchVerdictSynthesis = this.buildBranchVerdictSynthesis(
       executionResult,
     );
-    if (structuredOutputsSynthesis) {
-      text = `${text}\n${structuredOutputsSynthesis}`;
+    if (branchVerdictSynthesis) {
+      text = branchVerdictSynthesis.replaceBaseText
+        ? branchVerdictSynthesis.text
+        : `${text}\n${branchVerdictSynthesis.text}`;
+    } else {
+      const structuredOutputsSynthesis = this.buildStructuredOutputsSynthesis(
+        executionResult,
+      );
+      if (structuredOutputsSynthesis) {
+        text = `${text}\n${structuredOutputsSynthesis}`;
+      }
     }
     text = this.sensitiveDataFilter.mask(text);
 
@@ -264,6 +296,20 @@ export class ResponseComposerService {
       suggestedActions.unshift(...llmActions);
     }
     const intermediateSteps = this.buildIntermediateSteps(executionResult);
+    const trustSummary = this.buildUserFacingTrustSummary(executionResult);
+
+    const workWindowPayload = clientFacing
+      ? null
+      : clarificationPayload
+        ? {
+            workWindows: clarificationPayload.workWindows,
+            activeWindowId: clarificationPayload.activeWindowId,
+          }
+        : this.buildBranchTrustWorkWindows(
+            request,
+            executionResult,
+            richOutputPayload,
+          );
 
     return {
       text,
@@ -302,14 +348,16 @@ export class ResponseComposerService {
       validation: executionResult.agentExecution?.validation,
       outputContractVersion:
         executionResult.agentExecution?.outputContractVersion,
+      branchResults: executionResult.agentExecution?.branchResults,
+      branchTrustAssessments:
+        executionResult.agentExecution?.branchTrustAssessments,
+      branchCompositions: executionResult.agentExecution?.branchCompositions,
+      trustSummary: trustSummary ?? undefined,
       pendingClarification: clarificationPayload?.pendingClarification,
-      workWindows: clientFacing
-        ? undefined
-        : (clarificationPayload?.workWindows ?? richOutputPayload?.workWindows),
+      workWindows: clientFacing ? undefined : workWindowPayload?.workWindows,
       activeWindowId: clientFacing
         ? undefined
-        : (clarificationPayload?.activeWindowId ??
-          richOutputPayload?.activeWindowId),
+        : workWindowPayload?.activeWindowId,
       intermediateSteps:
         intermediateSteps.length > 0 ? intermediateSteps : undefined,
     };
@@ -575,6 +623,206 @@ export class ResponseComposerService {
     return `Синтез делегированной цепочки:\n${bullets.join("\n")}`;
   }
 
+  private buildBranchVerdictSynthesis(
+    executionResult: ExecutionResult,
+  ): BranchSynthesis | null {
+    const assessments =
+      executionResult.agentExecution?.branchTrustAssessments ?? [];
+    if (assessments.length === 0) {
+      return null;
+    }
+
+    const bundles = this.buildBranchSynthesisEntries(executionResult);
+    if (bundles.length === 0) {
+      return null;
+    }
+
+    const conflicted = bundles.filter(
+      (entry) => entry.assessment.verdict === "CONFLICTED",
+    );
+    if (conflicted.length > 0) {
+      return {
+        text: this.buildConflictDisclosure(conflicted),
+        replaceBaseText: true,
+      };
+    }
+
+    const verified = bundles.filter(
+      (entry) => entry.assessment.verdict === "VERIFIED",
+    );
+    const partial = bundles.filter(
+      (entry) => entry.assessment.verdict === "PARTIAL",
+    );
+    const unresolved = bundles.filter(
+      (entry) =>
+        entry.assessment.verdict === "UNVERIFIED" ||
+        entry.assessment.verdict === "REJECTED",
+    );
+
+    if (verified.length === 0 && partial.length === 0 && unresolved.length > 0) {
+      return {
+        text: this.buildInsufficientEvidenceDisclosure(unresolved),
+        replaceBaseText: true,
+      };
+    }
+
+    const sections = [
+      this.buildConfirmedFactsSection(verified),
+      this.buildPartialFactsSection(partial),
+      this.buildUnresolvedDisclaimer(unresolved),
+    ].filter((section): section is string => Boolean(section));
+
+    if (sections.length === 0) {
+      return null;
+    }
+
+    return {
+      text: sections.join("\n"),
+      replaceBaseText: false,
+    };
+  }
+
+  private buildBranchSynthesisEntries(
+    executionResult: ExecutionResult,
+  ): BranchSynthesisEntry[] {
+    const results = executionResult.agentExecution?.branchResults ?? [];
+    const assessments =
+      executionResult.agentExecution?.branchTrustAssessments ?? [];
+    const compositions =
+      executionResult.agentExecution?.branchCompositions ?? [];
+    const resultMap = new Map(results.map((result) => [result.branch_id, result]));
+    const compositionMap = new Map(
+      compositions.map((composition) => [composition.branch_id, composition]),
+    );
+
+    return assessments.map((assessment) => ({
+      assessment,
+      result: resultMap.get(assessment.branch_id),
+      composition: compositionMap.get(assessment.branch_id),
+    }));
+  }
+
+  private buildConfirmedFactsSection(
+    entries: BranchSynthesisEntry[],
+  ): string | null {
+    if (entries.length === 0) {
+      return null;
+    }
+    const bullets = entries
+      .map((entry, index) => {
+        const summary = this.extractBranchSummary(entry);
+        if (!summary) {
+          return null;
+        }
+        return `${index + 1}. ${summary}`;
+      })
+      .filter((item): item is string => Boolean(item));
+    if (bullets.length === 0) {
+      return null;
+    }
+
+    return bullets.length === 1
+      ? `Подтверждённый факт: ${bullets[0].replace(/^1\\. /, "")}`
+      : `Подтверждённые факты:\n${bullets.join("\n")}`;
+  }
+
+  private buildPartialFactsSection(
+    entries: BranchSynthesisEntry[],
+  ): string | null {
+    if (entries.length === 0) {
+      return null;
+    }
+    const bullets = entries
+      .map((entry, index) => {
+        const summary = this.extractBranchSummary(entry);
+        if (!summary) {
+          return null;
+        }
+        const limitations = this.extractBranchDisclosure(entry);
+        const suffix =
+          limitations.length > 0
+            ? ` Ограничения: ${limitations.join(", ")}.`
+            : " Ограничения: есть неполное подтверждение данных.";
+        return `${index + 1}. ${summary}.${suffix}`;
+      })
+      .filter((item): item is string => Boolean(item));
+    if (bullets.length === 0) {
+      return null;
+    }
+    return `Частично подтверждено:\n${bullets.join("\n")}`;
+  }
+
+  private buildConflictDisclosure(
+    entries: BranchSynthesisEntry[],
+  ): string {
+    const bullets = entries
+      .map((entry, index) => {
+        const summary = this.extractBranchSummary(entry);
+        const disclosure = this.extractBranchDisclosure(entry);
+        const details =
+          disclosure.length > 0 ? ` Причины: ${disclosure.join(", ")}.` : "";
+        return `${index + 1}. ${summary ?? "Есть конфликтующая ветка."}${details}`;
+      })
+      .join("\n");
+
+    return `Обнаружено расхождение между ветками. Я не буду выдавать это как подтверждённый факт.\n${bullets}`;
+  }
+
+  private buildInsufficientEvidenceDisclosure(
+    entries: BranchSynthesisEntry[],
+  ): string {
+    const disclosure = entries
+      .flatMap((entry) => this.extractBranchDisclosure(entry))
+      .filter((value, index, array) => array.indexOf(value) === index);
+    const suffix =
+      disclosure.length > 0
+        ? ` Ограничения: ${disclosure.join(", ")}.`
+        : "";
+
+    return `Недостаточно подтверждённых данных, чтобы выдать установленный факт.${suffix}`;
+  }
+
+  private buildUnresolvedDisclaimer(
+    entries: BranchSynthesisEntry[],
+  ): string | null {
+    if (entries.length === 0) {
+      return null;
+    }
+    const verdicts = entries
+      .map((entry) => entry.assessment.verdict)
+      .filter((value, index, array) => array.indexOf(value) === index);
+    return `Часть веток не включена в подтверждённые факты: ${verdicts.join(", ")}.`;
+  }
+
+  private extractBranchSummary(entry: BranchSynthesisEntry): string | null {
+    const summaryFields = [
+      entry.composition?.summary,
+      entry.result?.summary,
+    ];
+    for (const value of summaryFields) {
+      if (typeof value === "string" && value.trim().length > 0) {
+        return value.trim();
+      }
+    }
+    return null;
+  }
+
+  private extractBranchDisclosure(entry: BranchSynthesisEntry): string[] {
+    const compositionDisclosure = Array.isArray(entry.composition?.disclosure)
+      ? entry.composition.disclosure.filter(
+          (item): item is string =>
+            typeof item === "string" && item.trim().length > 0,
+        )
+      : [];
+    const assessmentReasons = Array.isArray(entry.assessment.reasons)
+      ? entry.assessment.reasons.filter(
+          (item): item is string =>
+            typeof item === "string" && item.trim().length > 0,
+        )
+      : [];
+    return [...new Set([...compositionDisclosure, ...assessmentReasons])];
+  }
+
   private extractStructuredSummary(output: Record<string, unknown>): string | null {
     const summaryFields = [
       output.summary,
@@ -601,10 +849,7 @@ export class ResponseComposerService {
     request: RaiChatRequestDto,
     executionResult: ExecutionResult,
     widgets: RaiChatWidget[],
-  ): {
-    workWindows: RaiWorkWindowDto[];
-    activeWindowId: string | null;
-  } | null {
+  ): WorkWindowPayloadBundle | null {
     const comparisonPayload = this.buildEconomistComparisonPayload(
       request,
       executionResult,
@@ -650,6 +895,477 @@ export class ResponseComposerService {
     });
 
     return mapped.workWindows.length > 0 ? mapped : null;
+  }
+
+  private buildBranchTrustWorkWindows(
+    request: RaiChatRequestDto,
+    executionResult: ExecutionResult,
+    currentPayload: WorkWindowPayloadBundle | null,
+  ): WorkWindowPayloadBundle | null {
+    const entries = this.buildBranchSynthesisEntries(executionResult);
+    if (entries.length === 0) {
+      return currentPayload;
+    }
+
+    const trustPayload = this.buildBranchTrustWindowPayload(
+      request.threadId,
+      entries,
+    );
+    if (!trustPayload) {
+      return currentPayload;
+    }
+
+    const mergedWorkWindows = [
+      ...(currentPayload?.workWindows ?? []),
+      ...trustPayload.workWindows,
+    ];
+
+    return {
+      workWindows: mergedWorkWindows,
+      activeWindowId:
+        currentPayload?.activeWindowId ??
+        resolveActiveWorkWindowId(mergedWorkWindows),
+    };
+  }
+
+  private buildUserFacingTrustSummary(
+    executionResult: ExecutionResult,
+  ): UserFacingTrustSummary | null {
+    const entries = this.buildBranchSynthesisEntries(executionResult);
+    if (entries.length === 0) {
+      return null;
+    }
+
+    const overallVerdict = this.resolveOverallBranchVerdict(entries);
+    const verifiedCount = entries.filter(
+      (entry) => entry.assessment.verdict === "VERIFIED",
+    ).length;
+    const partialCount = entries.filter(
+      (entry) => entry.assessment.verdict === "PARTIAL",
+    ).length;
+    const unverifiedCount = entries.filter(
+      (entry) => entry.assessment.verdict === "UNVERIFIED",
+    ).length;
+    const conflictedCount = entries.filter(
+      (entry) => entry.assessment.verdict === "CONFLICTED",
+    ).length;
+    const rejectedCount = entries.filter(
+      (entry) => entry.assessment.verdict === "REJECTED",
+    ).length;
+    const crossCheckCount = entries.filter(
+      (entry) => entry.assessment.requires_cross_check,
+    ).length;
+    const disclosure = this.uniqueStrings(
+      entries.flatMap((entry) => this.extractBranchDisclosure(entry)),
+    ).slice(0, 4);
+    const sortedEntries = [...entries]
+      .sort((left, right) => {
+        const verdictDiff =
+          this.branchVerdictSeverity(right.assessment.verdict) -
+          this.branchVerdictSeverity(left.assessment.verdict);
+        if (verdictDiff !== 0) {
+          return verdictDiff;
+        }
+        return right.assessment.score - left.assessment.score;
+      })
+      .slice(0, 4);
+
+    return {
+      verdict: overallVerdict,
+      label: this.branchVerdictLabel(overallVerdict),
+      tone: this.branchVerdictTone(overallVerdict),
+      summary: this.buildBranchTrustSummaryText(
+        overallVerdict,
+        entries.length,
+        verifiedCount,
+      ),
+      disclosure,
+      branchCount: entries.length,
+      verifiedCount,
+      partialCount,
+      unverifiedCount,
+      conflictedCount,
+      rejectedCount,
+      crossCheckCount,
+      branches: sortedEntries.map((entry) => ({
+        branchId: entry.assessment.branch_id,
+        sourceAgent: entry.assessment.source_agent,
+        verdict: entry.assessment.verdict,
+        label: this.branchVerdictLabel(entry.assessment.verdict),
+        summary: this.extractBranchSummary(entry) ?? undefined,
+        disclosure: this.extractBranchDisclosure(entry),
+      })),
+    };
+  }
+
+  private buildBranchTrustWindowPayload(
+    threadId: string | undefined,
+    entries: BranchSynthesisEntry[],
+  ): WorkWindowPayloadBundle | null {
+    if (entries.length === 0) {
+      return null;
+    }
+
+    const overallVerdict = this.resolveOverallBranchVerdict(entries);
+    const trustWindowId = `win-branch-trust-${threadId ?? "new"}`;
+    const signalsWindowId = `${trustWindowId}-signals`;
+    const disclosure = this.uniqueStrings(
+      entries.flatMap((entry) => this.extractBranchDisclosure(entry)),
+    ).slice(0, 4);
+    const verifiedCount = entries.filter(
+      (entry) => entry.assessment.verdict === "VERIFIED",
+    ).length;
+    const partialCount = entries.filter(
+      (entry) => entry.assessment.verdict === "PARTIAL",
+    ).length;
+    const unverifiedCount = entries.filter(
+      (entry) => entry.assessment.verdict === "UNVERIFIED",
+    ).length;
+    const conflictedCount = entries.filter(
+      (entry) => entry.assessment.verdict === "CONFLICTED",
+    ).length;
+    const rejectedCount = entries.filter(
+      (entry) => entry.assessment.verdict === "REJECTED",
+    ).length;
+    const crossCheckCount = entries.filter(
+      (entry) => entry.assessment.requires_cross_check,
+    ).length;
+    const supportedCount = verifiedCount + partialCount;
+    const unresolvedCount =
+      unverifiedCount + conflictedCount + rejectedCount;
+    const sortedEntries = [...entries]
+      .sort((left, right) => {
+        const verdictDiff =
+          this.branchVerdictSeverity(right.assessment.verdict) -
+          this.branchVerdictSeverity(left.assessment.verdict);
+        if (verdictDiff !== 0) {
+          return verdictDiff;
+        }
+        return right.assessment.score - left.assessment.score;
+      })
+      .slice(0, 4);
+    const signalItems = sortedEntries
+      .filter((entry) => entry.assessment.verdict !== "VERIFIED")
+      .slice(0, 3)
+      .map((entry, index) => ({
+        id: `${signalsWindowId}-signal-${index + 1}`,
+        tone: this.branchVerdictTone(entry.assessment.verdict),
+        text: `${entry.assessment.source_agent}: ${
+          this.extractBranchSummary(entry) ??
+          this.branchVerdictLabel(entry.assessment.verdict)
+        }${
+          this.extractBranchDisclosure(entry)[0]
+            ? ` Ограничение: ${this.extractBranchDisclosure(entry)[0]}.`
+            : ""
+        }`,
+        targetWindowId: trustWindowId,
+      }));
+
+    if (signalItems.length === 0) {
+      signalItems.push({
+        id: `${signalsWindowId}-verified`,
+        tone: "info",
+        text: `Ответ подтверждён по ${this.formatBranchCountLabel(
+          verifiedCount,
+        )}.`,
+        targetWindowId: trustWindowId,
+      });
+    }
+
+    const workWindows: RaiWorkWindowDto[] = [
+      {
+        windowId: trustWindowId,
+        originMessageId: null,
+        agentRole: "supervisor",
+        type: "structured_result",
+        parentWindowId: null,
+        relatedWindowIds: [signalsWindowId],
+        category: "analysis",
+        priority:
+          overallVerdict === "CONFLICTED" || overallVerdict === "REJECTED"
+            ? 74
+            : overallVerdict === "UNVERIFIED"
+              ? 68
+              : overallVerdict === "PARTIAL"
+                ? 52
+                : 26,
+        mode:
+          overallVerdict === "CONFLICTED" ||
+          overallVerdict === "UNVERIFIED" ||
+          overallVerdict === "REJECTED"
+            ? "panel"
+            : "inline",
+        title: "Статус подтверждения ответа",
+        status: "informational",
+        payload: {
+          intentId: "branch_trust_summary",
+          summary: this.buildBranchTrustSummaryText(
+            overallVerdict,
+            entries.length,
+            verifiedCount,
+          ),
+          missingKeys: [],
+          sections: [
+            {
+              id: "trust-overview",
+              title: "Итог проверки",
+              items: [
+                {
+                  label: "Вердикт",
+                  value: this.branchVerdictLabel(overallVerdict),
+                  tone:
+                    overallVerdict === "VERIFIED"
+                      ? "positive"
+                      : overallVerdict === "PARTIAL"
+                        ? "warning"
+                        : "critical",
+                },
+                {
+                  label: "Подтверждено",
+                  value: `${supportedCount} из ${entries.length}`,
+                  tone: supportedCount > 0 ? "positive" : "warning",
+                },
+                {
+                  label: "Селективная перепроверка",
+                  value:
+                    crossCheckCount > 0
+                      ? `${crossCheckCount}`
+                      : "не потребовалась",
+                  tone: crossCheckCount > 0 ? "warning" : "neutral",
+                },
+              ],
+            },
+            {
+              id: "trust-coverage",
+              title: "Покрытие веток",
+              items: [
+                {
+                  label: "Подтверждено",
+                  value: `${verifiedCount}`,
+                  tone: verifiedCount > 0 ? "positive" : "neutral",
+                },
+                {
+                  label: "Частично",
+                  value: `${partialCount}`,
+                  tone: partialCount > 0 ? "warning" : "neutral",
+                },
+                {
+                  label: "Неподтверждено или отклонено",
+                  value: `${unresolvedCount}`,
+                  tone: unresolvedCount > 0 ? "critical" : "neutral",
+                },
+              ],
+            },
+            ...(disclosure.length > 0
+              ? [
+                  {
+                    id: "trust-limitations",
+                    title: "Ограничения",
+                    items: disclosure.map((item, index) => ({
+                      label: `Ограничение ${index + 1}`,
+                      value: item,
+                      tone: "warning" as const,
+                    })),
+                  },
+                ]
+              : []),
+            {
+              id: "trust-branches",
+              title: "По веткам",
+              items: sortedEntries.map((entry) => {
+                const branchDisclosure = this.extractBranchDisclosure(entry);
+                return {
+                  label: `${entry.assessment.source_agent} · ${this.branchVerdictLabel(
+                    entry.assessment.verdict,
+                  )}`,
+                  value: this.extractBranchSummary(entry)
+                    ? `${this.extractBranchSummary(entry)}${
+                        branchDisclosure[0]
+                          ? ` Ограничение: ${branchDisclosure[0]}.`
+                          : ""
+                      }`
+                    : branchDisclosure[0] ?? "Сводка ветки недоступна.",
+                  tone:
+                    entry.assessment.verdict === "VERIFIED"
+                      ? ("positive" as const)
+                      : entry.assessment.verdict === "PARTIAL"
+                        ? ("warning" as const)
+                        : ("critical" as const),
+                };
+              }),
+            },
+          ],
+        },
+        actions: [],
+        isPinned: false,
+      },
+      {
+        windowId: signalsWindowId,
+        originMessageId: null,
+        agentRole: "supervisor",
+        type: "related_signals",
+        parentWindowId: trustWindowId,
+        relatedWindowIds: [trustWindowId],
+        category: "signals",
+        priority:
+          overallVerdict === "CONFLICTED" || overallVerdict === "REJECTED"
+            ? 66
+            : overallVerdict === "UNVERIFIED"
+              ? 60
+              : overallVerdict === "PARTIAL"
+                ? 44
+                : 18,
+        mode: "inline",
+        title: "Сигналы подтверждения",
+        status: "informational",
+        payload: {
+          intentId: "branch_trust_summary",
+          summary: "Что контур доверия зафиксировал в этом ответе.",
+          missingKeys: [],
+          signalItems,
+        },
+        actions: [
+          {
+            id: "focus_branch_trust_summary",
+            kind: "focus_window",
+            label: "Открыть статус подтверждения",
+            enabled: true,
+            targetWindowId: trustWindowId,
+          },
+        ],
+        isPinned: false,
+      },
+    ];
+
+    return {
+      workWindows,
+      activeWindowId: resolveActiveWorkWindowId(workWindows),
+    };
+  }
+
+  private resolveOverallBranchVerdict(
+    entries: BranchSynthesisEntry[],
+  ): BranchVerdict {
+    const counts = entries.reduce(
+      (acc, entry) => {
+        acc[entry.assessment.verdict] += 1;
+        return acc;
+      },
+      {
+        VERIFIED: 0,
+        PARTIAL: 0,
+        UNVERIFIED: 0,
+        CONFLICTED: 0,
+        REJECTED: 0,
+      } satisfies Record<BranchVerdict, number>,
+    );
+    const hasVerified = counts.VERIFIED > 0;
+    const hasMixedCoverage =
+      counts.PARTIAL + counts.UNVERIFIED + counts.REJECTED > 0;
+
+    if (counts.CONFLICTED > 0) {
+      return "CONFLICTED";
+    }
+    if (hasVerified && hasMixedCoverage) {
+      return "PARTIAL";
+    }
+    if (counts.PARTIAL > 0) {
+      return "PARTIAL";
+    }
+    if (counts.REJECTED > 0 && counts.VERIFIED === 0) {
+      return "REJECTED";
+    }
+    if (counts.UNVERIFIED > 0) {
+      return "UNVERIFIED";
+    }
+    return "VERIFIED";
+  }
+
+  private buildBranchTrustSummaryText(
+    verdict: BranchVerdict,
+    branchCount: number,
+    verifiedCount: number,
+  ): string {
+    switch (verdict) {
+      case "VERIFIED":
+        return `Ответ подтверждён по ${this.formatBranchCountLabel(
+          verifiedCount,
+        )} без неподтверждённых веток.`;
+      case "PARTIAL":
+        return "Подтверждённые ветки есть, но часть ответа требует явного указания ограничений.";
+      case "UNVERIFIED":
+        return "Недостаточно подтверждённых веток, чтобы считать ответ установленным фактом.";
+      case "CONFLICTED":
+        return "Между ветками найдено расхождение, поэтому ответ должен оставаться с честным раскрытием конфликта.";
+      case "REJECTED":
+        return "Ветки ответа отклонены проверкой и не должны выдаваться как подтверждённый факт.";
+      default:
+        return `Проверено ${this.formatBranchCountLabel(branchCount)}.`;
+    }
+  }
+
+  private branchVerdictLabel(verdict: BranchVerdict): string {
+    switch (verdict) {
+      case "VERIFIED":
+        return "Подтверждено";
+      case "PARTIAL":
+        return "Частично подтверждено";
+      case "UNVERIFIED":
+        return "Неподтверждено";
+      case "CONFLICTED":
+        return "Есть конфликт";
+      case "REJECTED":
+        return "Отклонено";
+      default:
+        return verdict;
+    }
+  }
+
+  private branchVerdictTone(
+    verdict: BranchVerdict,
+  ): "critical" | "warning" | "info" {
+    switch (verdict) {
+      case "VERIFIED":
+        return "info";
+      case "PARTIAL":
+      case "UNVERIFIED":
+        return "warning";
+      case "CONFLICTED":
+      case "REJECTED":
+        return "critical";
+      default:
+        return "info";
+    }
+  }
+
+  private branchVerdictSeverity(verdict: BranchVerdict): number {
+    switch (verdict) {
+      case "CONFLICTED":
+        return 5;
+      case "REJECTED":
+        return 4;
+      case "UNVERIFIED":
+        return 3;
+      case "PARTIAL":
+        return 2;
+      case "VERIFIED":
+      default:
+        return 1;
+    }
+  }
+
+  private formatBranchCountLabel(count: number): string {
+    if (count === 1) {
+      return "1 ветка";
+    }
+    if (count > 1 && count < 5) {
+      return `${count} ветки`;
+    }
+    return `${count} веток`;
+  }
+
+  private uniqueStrings(values: string[]): string[] {
+    return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
   }
 
   private buildKnowledgeRichOutputPayload(

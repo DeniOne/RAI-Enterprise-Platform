@@ -52,6 +52,7 @@ import { RuntimeGovernanceEventService } from "../runtime-governance/runtime-gov
 import { RuntimeGovernancePolicyService } from "../runtime-governance/runtime-governance-policy.service";
 import { RuntimeGovernanceFeatureFlagsService } from "../runtime-governance/runtime-governance-feature-flags.service";
 import { SemanticRouterService } from "../semantic-router/semantic-router.service";
+import { SemanticIngressService } from "../semantic-ingress.service";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -368,6 +369,7 @@ describe("Runtime spine integration", () => {
   };
   const truthfulnessEngineMock = {
     calculateTraceTruthfulness: jest.fn(),
+    buildBranchTrustInputs: jest.fn(),
   };
   const performanceMetricsMock = {
     recordLatency: jest.fn(),
@@ -405,7 +407,27 @@ describe("Runtime spine integration", () => {
       thresholds: {
         queueSaturationThreshold: "SATURATED",
       },
+      trust: {
+        maxTrackedBranches: 4,
+        maxCrossCheckBranches: 1,
+        latencyBudgetMs: {
+          happyPathMs: 300,
+          multiSourceReadMs: 800,
+          crossCheckTriggeredMs: 1_500,
+        },
+      },
     }),
+    resolveTrustLatencyBudgetMs: jest
+      .fn()
+      .mockImplementation((_role: string, profile: string) => {
+        if (profile === "CROSS_CHECK_TRIGGERED") {
+          return 1_500;
+        }
+        if (profile === "MULTI_SOURCE_READ") {
+          return 800;
+        }
+        return 300;
+      }),
     resolveFallbackMode: jest.fn().mockReturnValue("READ_ONLY_SUPPORT"),
   };
   const disabledToolsRegistryMock = {
@@ -571,6 +593,29 @@ describe("Runtime spine integration", () => {
       evidenceCoveragePct: 100,
       invalidClaimsPct: 0,
     });
+    truthfulnessEngineMock.buildBranchTrustInputs.mockImplementation(() => ({
+      classifiedEvidence: [],
+      accounting: {
+        total: 1,
+        evidenced: 1,
+        verified: 1,
+        unverified: 0,
+        invalid: 0,
+      },
+      totalWeight: 1,
+      weightedEvidence: {
+        verified: 1,
+        unverified: 0,
+        invalid: 0,
+      },
+      bsScorePct: 0,
+      evidenceCoveragePct: 100,
+      invalidClaimsPct: 0,
+      qualityStatus: "READY",
+      recommendedVerdict: "VERIFIED",
+      requiresCrossCheck: false,
+      reasons: [],
+    }));
     performanceMetricsMock.recordLatency.mockResolvedValue(undefined);
     performanceMetricsMock.recordError.mockResolvedValue(undefined);
     queueMetricsMock.beginRuntimeExecution.mockResolvedValue(undefined);
@@ -641,6 +686,7 @@ describe("Runtime spine integration", () => {
         { provide: RuntimeGovernancePolicyService, useValue: runtimeGovernancePolicyMock },
         { provide: RuntimeGovernanceFeatureFlagsService, useValue: runtimeGovernanceFeatureFlagsMock },
         { provide: SemanticRouterService, useValue: semanticRouterMock },
+        SemanticIngressService,
       ],
     }).compile();
 
@@ -713,6 +759,178 @@ describe("Runtime spine integration", () => {
         ((prismaState.aiAuditEntries[0].metadata as JsonRecord).phases as unknown[]),
       ),
     ).toBe(true);
+  });
+
+  it("пишет cross-check trust telemetry в trace summary при selective second-pass", async () => {
+    const executeAgentSpy = jest
+      .spyOn(moduleRef.get(AgentRuntimeService), "executeAgent")
+      .mockResolvedValueOnce({
+        executedTools: [
+          {
+            name: RaiToolName.ComputeDeviations,
+            result: { summary: "Первичный расчёт собран." },
+          },
+        ],
+        agentExecution: {
+          role: "agronomist",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Первичный агро-ответ.",
+          structuredOutput: {
+            summary: "Первичная ветка",
+            confidence: 0.2,
+          },
+          toolCalls: [
+            {
+              name: RaiToolName.ComputeDeviations,
+              result: { summary: "Первичный расчёт собран." },
+            },
+          ],
+          connectorCalls: [],
+          evidence: [],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [RaiToolName.ComputeDeviations],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "agronom-v1",
+          },
+        },
+      } as any)
+      .mockResolvedValueOnce({
+        executedTools: [
+          {
+            name: RaiToolName.QueryKnowledge,
+            result: { summary: "Knowledge cross-check подтверждает ограниченно." },
+          },
+        ],
+        agentExecution: {
+          role: "knowledge",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Knowledge cross-check подтверждает ограниченно.",
+          structuredOutput: {
+            summary: "Knowledge cross-check",
+            confidence: 0.9,
+          },
+          toolCalls: [
+            {
+              name: RaiToolName.QueryKnowledge,
+              result: { summary: "Knowledge cross-check подтверждает ограниченно." },
+            },
+          ],
+          connectorCalls: [],
+          evidence: [
+            {
+              claim: "Найден вторичный источник",
+              sourceType: "DOC",
+              sourceId: "kb-1",
+              confidenceScore: 0.9,
+            },
+          ],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [RaiToolName.QueryKnowledge],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "knowledge-v1",
+          },
+        },
+      } as any);
+    truthfulnessEngineMock.buildBranchTrustInputs
+      .mockReturnValueOnce({
+        classifiedEvidence: [],
+        accounting: {
+          total: 1,
+          evidenced: 0,
+          verified: 0,
+          unverified: 1,
+          invalid: 0,
+        },
+        totalWeight: 0,
+        weightedEvidence: {
+          verified: 0,
+          unverified: 1,
+          invalid: 0,
+        },
+        bsScorePct: null,
+        evidenceCoveragePct: null,
+        invalidClaimsPct: null,
+        qualityStatus: "PENDING_EVIDENCE",
+        recommendedVerdict: "UNVERIFIED",
+        requiresCrossCheck: true,
+        reasons: ["missing_source"],
+      })
+      .mockReturnValueOnce({
+        classifiedEvidence: [],
+        accounting: {
+          total: 1,
+          evidenced: 1,
+          verified: 1,
+          unverified: 0,
+          invalid: 0,
+        },
+        totalWeight: 1,
+        weightedEvidence: {
+          verified: 1,
+          unverified: 0,
+          invalid: 0,
+        },
+        bsScorePct: 0,
+        evidenceCoveragePct: 100,
+        invalidClaimsPct: 0,
+        qualityStatus: "READY",
+        recommendedVerdict: "VERIFIED",
+        requiresCrossCheck: false,
+        reasons: [],
+      });
+
+    await supervisor.orchestrate(
+      {
+        message: "Проверь отклонения по полю и перепроверь источник",
+        toolCalls: [
+          {
+            name: RaiToolName.ComputeDeviations,
+            payload: {
+              scope: { seasonId: "season-1", fieldId: "field-1" },
+            },
+          },
+        ],
+      },
+      "company-1",
+      "user-1",
+    );
+
+    await flushAsync();
+
+    expect(executeAgentSpy).toHaveBeenCalledTimes(2);
+    expect(prismaState.traceSummaries).toHaveLength(1);
+    expect(prismaState.traceSummaries[0]).toMatchObject({
+      verifiedBranchCount: 1,
+      partialBranchCount: 0,
+      unverifiedBranchCount: 1,
+      conflictedBranchCount: 0,
+      rejectedBranchCount: 0,
+      trustLatencyProfile: "CROSS_CHECK_TRIGGERED",
+      trustLatencyBudgetMs: 1_500,
+      trustLatencyWithinBudget: true,
+    });
+    expect(prismaState.aiAuditEntries[0]).toMatchObject({
+      metadata: expect.objectContaining({
+        branchTrustAssessments: expect.arrayContaining([
+          expect.objectContaining({ verdict: "UNVERIFIED" }),
+          expect.objectContaining({ verdict: "VERIFIED" }),
+        ]),
+      }),
+    });
   });
 
   it("останавливает runtime на budget deny, не исполняет tool и пишет incident + audit/trace", async () => {

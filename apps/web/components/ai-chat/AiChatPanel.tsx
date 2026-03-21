@@ -11,6 +11,7 @@ import {
   useAiChatStore,
   PanelMode,
   RiskLevel,
+  type ChatTrustSummary,
 } from "@/lib/stores/ai-chat-store";
 import { webFeatureFlags } from "@/lib/feature-flags";
 import { useWorkspaceContextStore } from "@/lib/stores/workspace-context-store";
@@ -132,6 +133,31 @@ function outcomeActionLabel(action: string) {
     create_task: "создана задача",
   };
   return map[action] ?? action;
+}
+
+function formatTrustBranchCount(count: number) {
+  if (count === 1) {
+    return "1 ветка";
+  }
+  if (count > 1 && count < 5) {
+    return `${count} ветки`;
+  }
+  return `${count} веток`;
+}
+
+function getTrustSummaryClass(verdict: ChatTrustSummary["verdict"]) {
+  switch (verdict) {
+    case "VERIFIED":
+      return "border-emerald-200 bg-emerald-50/90 text-emerald-900";
+    case "PARTIAL":
+    case "UNVERIFIED":
+      return "border-amber-200 bg-amber-50/90 text-amber-900";
+    case "CONFLICTED":
+    case "REJECTED":
+      return "border-red-200 bg-red-50/90 text-red-900";
+    default:
+      return "border-black/10 bg-white/80 text-gray-800";
+  }
 }
 
 export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
@@ -554,6 +580,39 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
                         )}
 
                       <p className="whitespace-pre-wrap">{m.content}</p>
+
+                      {m.role === "assistant" && m.trustSummary && (
+                        <div
+                          className={clsx(
+                            "mt-2 rounded-xl border p-3 text-xs",
+                            getTrustSummaryClass(m.trustSummary.verdict),
+                          )}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-[10px] uppercase tracking-[0.16em] opacity-70">
+                                Статус подтверждения
+                              </div>
+                              <div className="mt-1 font-medium">
+                                {m.trustSummary.label}
+                              </div>
+                            </div>
+                            <div className="shrink-0 rounded-full border border-current/15 bg-white/70 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em]">
+                              {formatTrustBranchCount(m.trustSummary.branchCount)}
+                            </div>
+                          </div>
+                          <div className="mt-2 text-[12px] leading-5">
+                            {m.trustSummary.summary}
+                          </div>
+                          {m.trustSummary.disclosure.length > 0 ? (
+                            <div className="mt-2 space-y-1.5 border-t border-current/15 pt-2 text-[11px] leading-4">
+                              {m.trustSummary.disclosure.slice(0, 2).map((item) => (
+                                <div key={`${m.id}-trust-${item}`}>{item}</div>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      )}
 
                       {memoryHintsEnabled &&
                         m.role === "assistant" &&

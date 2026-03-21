@@ -93,6 +93,30 @@ describe("TraceSummaryService", () => {
       bsScorePct: 25,
       evidenceCoveragePct: 80,
       invalidClaimsPct: 10,
+      branchTrustAssessments: [
+        {
+          branch_id: "primary",
+          source_agent: "agronomist",
+          verdict: "VERIFIED",
+          score: 0.92,
+          reasons: [],
+          checks: [],
+          requires_cross_check: false,
+        },
+        {
+          branch_id: "supporting",
+          source_agent: "knowledge",
+          verdict: "CONFLICTED",
+          score: 0.41,
+          reasons: ["conflict_detected"],
+          checks: [],
+          requires_cross_check: true,
+        },
+      ],
+      trustGateLatencyMs: 412,
+      trustLatencyProfile: "CROSS_CHECK_TRIGGERED",
+      trustLatencyBudgetMs: 1_500,
+      trustLatencyWithinBudget: true,
     });
 
     expect(prisma.traceSummary.update).toHaveBeenCalledWith({
@@ -103,6 +127,50 @@ describe("TraceSummaryService", () => {
         bsScorePct: 25,
         evidenceCoveragePct: 80,
         invalidClaimsPct: 10,
+        verifiedBranchCount: 1,
+        partialBranchCount: 0,
+        unverifiedBranchCount: 0,
+        conflictedBranchCount: 1,
+        rejectedBranchCount: 0,
+        trustGateLatencyMs: 412,
+        trustLatencyProfile: "CROSS_CHECK_TRIGGERED",
+        trustLatencyBudgetMs: 1_500,
+        trustLatencyWithinBudget: true,
+      },
+    });
+  });
+
+  it("updateQuality оставляет trust telemetry null без branch trust assessments", async () => {
+    prisma.traceSummary.update.mockResolvedValue({ id: "ts-q1b" });
+
+    await service.updateQuality({
+      traceId: "tr_q_null",
+      companyId: "c_q_null",
+      bsScorePct: null,
+      evidenceCoveragePct: null,
+      invalidClaimsPct: null,
+    });
+
+    expect(prisma.traceSummary.update).toHaveBeenCalledWith({
+      where: {
+        trace_summary_trace_company_unique: {
+          traceId: "tr_q_null",
+          companyId: "c_q_null",
+        },
+      },
+      data: {
+        bsScorePct: null,
+        evidenceCoveragePct: null,
+        invalidClaimsPct: null,
+        verifiedBranchCount: null,
+        partialBranchCount: null,
+        unverifiedBranchCount: null,
+        conflictedBranchCount: null,
+        rejectedBranchCount: null,
+        trustGateLatencyMs: null,
+        trustLatencyProfile: null,
+        trustLatencyBudgetMs: null,
+        trustLatencyWithinBudget: null,
       },
     });
   });
@@ -121,4 +189,3 @@ describe("TraceSummaryService", () => {
     expect(prisma.traceSummary.upsert).not.toHaveBeenCalled();
   });
 });
-

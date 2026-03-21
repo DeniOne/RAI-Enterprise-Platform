@@ -618,6 +618,7 @@ describe("RaiToolsRegistry", () => {
         ...actorContext,
         userId: "user-1",
         userConfirmed: true,
+        userIntentSource: "direct_user_command",
       },
     );
 
@@ -633,9 +634,38 @@ describe("RaiToolsRegistry", () => {
       expect.objectContaining({
         userId: "user-1",
         userConfirmed: true,
+        userIntentSource: "direct_user_command",
       }),
     );
     expect(pendingActionCreateMock).not.toHaveBeenCalled();
+  });
+
+  it("CRM WRITE без direct_user_command остаётся в governed PendingAction path", async () => {
+    const registry = createRegistry();
+    registry.onModuleInit();
+    pendingActionCreateMock.mockResolvedValueOnce({ id: "pa-crm-governed" });
+
+    await expect(
+      registry.execute(
+        RaiToolName.RegisterCounterparty,
+        { inn: "2610000615", jurisdictionCode: "RU" },
+        {
+          ...actorContext,
+          userId: "user-1",
+          userConfirmed: true,
+          userIntentSource: "delegated_or_autonomous",
+        },
+      ),
+    ).rejects.toBeInstanceOf(RiskPolicyBlockedError);
+
+    expect(crmToolsRegistry.execute).not.toHaveBeenCalled();
+    expect(pendingActionCreateMock).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        toolName: RaiToolName.RegisterCounterparty,
+        riskLevel: "WRITE",
+        requestedByUserId: "user-1",
+      }),
+    });
   });
 
   it("QUARANTINE level блокирует мутирующие тулзы до RiskPolicy", async () => {

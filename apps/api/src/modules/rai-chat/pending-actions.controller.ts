@@ -230,6 +230,7 @@ export class PendingActionsController {
         userId,
         userRole: role,
         userConfirmed: true,
+        userIntentSource: "workflow_resume",
         approvedPendingActionId: action.id,
         agentRole: "governance_executor",
       });

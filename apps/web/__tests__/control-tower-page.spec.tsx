@@ -93,6 +93,21 @@ describe('ControlTowerPage queue visibility', () => {
         worstTraces: [],
         qualityKnownTraceCount: 1,
         qualityPendingTraceCount: 0,
+        branchTrust: {
+          knownTraceCount: 1,
+          pendingTraceCount: 0,
+          verifiedBranchCount: 2,
+          partialBranchCount: 1,
+          unverifiedBranchCount: 0,
+          conflictedBranchCount: 0,
+          rejectedBranchCount: 0,
+          crossCheckTraceCount: 1,
+          withinBudgetTraceCount: 1,
+          overBudgetTraceCount: 0,
+          withinBudgetRate: 100,
+          avgLatencyMs: 240,
+          p95LatencyMs: 240,
+        },
         criticalPath: [],
       },
     });
@@ -282,6 +297,11 @@ describe('ControlTowerPage queue visibility', () => {
     expect(screen.getAllByText('agronomist').length).toBeGreaterThan(0);
     expect(screen.getAllByText('legacy_write_vs_semantic_read').length).toBeGreaterThan(0);
     expect(screen.getByText('Контур памяти')).toBeInTheDocument();
+    expect(screen.getByText('Контур доверия веток')).toBeInTheDocument();
+    expect(screen.getByText('Соблюдение бюджета')).toBeInTheDocument();
+    expect(screen.getByText('100.0%')).toBeInTheDocument();
+    expect(screen.getByText('P95 trust-gate')).toBeInTheDocument();
+    expect(screen.getAllByText('240 ms').length).toBeGreaterThan(0);
     expect(memoryHealthMock).toHaveBeenCalled();
   });
 

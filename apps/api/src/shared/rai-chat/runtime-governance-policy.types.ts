@@ -75,6 +75,27 @@ export interface RuntimeBudgetThresholds {
   denyPct: number;
 }
 
+export const TRUST_LATENCY_PROFILES = [
+  "HAPPY_PATH",
+  "MULTI_SOURCE_READ",
+  "CROSS_CHECK_TRIGGERED",
+] as const;
+
+export type RuntimeTrustLatencyProfile =
+  (typeof TRUST_LATENCY_PROFILES)[number];
+
+export interface RuntimeTrustLatencyBudget {
+  happyPathMs: number;
+  multiSourceReadMs: number;
+  crossCheckTriggeredMs: number;
+}
+
+export interface RuntimeTrustBudgetPolicy {
+  maxTrackedBranches: number;
+  maxCrossCheckBranches: number;
+  latencyBudgetMs: RuntimeTrustLatencyBudget;
+}
+
 export interface RuntimeTruthfulnessThresholdOverrides {
   bsReviewThresholdPct?: number;
   bsQuarantineThresholdPct?: number;
@@ -105,6 +126,7 @@ export interface RuntimeGovernanceRolePolicy {
   thresholds: RuntimeGovernanceThresholds;
   concurrency: RuntimeConcurrencyEnvelope;
   budget: RuntimeBudgetThresholds;
+  trust: RuntimeTrustBudgetPolicy;
 }
 
 export interface RuntimeGovernancePolicy {
@@ -113,6 +135,7 @@ export interface RuntimeGovernancePolicy {
     thresholds: RuntimeGovernanceThresholds;
     concurrency: RuntimeConcurrencyEnvelope;
     budget: RuntimeBudgetThresholds;
+    trust: RuntimeTrustBudgetPolicy;
   };
   roles: Record<CanonicalAgentRuntimeRole, RuntimeGovernanceRolePolicy>;
 }

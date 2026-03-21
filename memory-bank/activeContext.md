@@ -1,6 +1,116 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-21)
+- [x] Стартован `Branch Trust Gate` implementation sprint: пакеты `PR A`, `PR B`, `PR C` и `PR D` доведены до рабочего кода.
+- [x] Добавлен новый shared contract-layer `apps/api/src/shared/rai-chat/branch-trust.types.ts` с типами `BranchResultContract`, `BranchTrustAssessment`, `BranchVerdict`, `UserFacingBranchCompositionPayload`.
+- [x] `AgentExecutionResult` теперь переносит типизированные branch-артефакты через `branchResults / branchTrustAssessments / branchCompositions`, не ломая текущий `structuredOutput`.
+- [x] `TruthfulnessEngineService` теперь даёт reusable branch-level inputs через `classifyBranchEvidence / buildBranchTrustInputs / resolveEvidenceStatus`, а trace-level scoring переведён на тот же evidence-канон.
+- [x] `SupervisorAgent` теперь использует `TruthfulnessEngine.buildBranchTrustInputs(...)` как first-class trust stage и пишет `branchResults / branchTrustAssessments / branchCompositions` в forensic telemetry.
+- [x] В forensic phases появился отдельный hop `branch_trust_assessment`, а happy path больше не получает обязательный second-pass без trust signal.
+- [x] `ResponseComposer` теперь собирает финальный текст по `BranchVerdict` и перестаёт выдавать `UNVERIFIED / CONFLICTED / REJECTED` как подтверждённый факт.
+- [x] `PR E` закрыт: trust telemetry, latency accounting и eval closure встроены в runtime.
+- [x] `TraceSummary` теперь хранит persisted branch trust telemetry:
+  - `verifiedBranchCount`
+  - `partialBranchCount`
+  - `unverifiedBranchCount`
+  - `conflictedBranchCount`
+  - `rejectedBranchCount`
+  - `trustGateLatencyMs`
+  - `trustLatencyProfile`
+  - `trustLatencyBudgetMs`
+  - `trustLatencyWithinBudget`
+- [x] Для `TraceSummary` добавлен schema-срез в `packages/prisma-client/schema.prisma` и migration `20260321153000_branch_trust_trace_summary_metrics`.
+- [x] `RuntimeGovernancePolicyService` теперь хранит trust budgets как runtime authority:
+  - `happy path <= 300 ms`
+  - `multi-source read <= 800 ms`
+  - `cross-check triggered <= 1500 ms`
+- [x] `SupervisorAgent` теперь прокидывает branch trust assessments и trust latency telemetry в `traceSummary.updateQuality(...)` поверх уже существующего truthfulness pipeline.
+- [x] Explainability read-model расширен:
+  - `TraceForensicsSummaryDto` видит trust summary-поля
+  - `ExplainabilityPanelService.getTraceForensics(...)` отдаёт `branchTrust`
+- [x] Добавлен стартовый eval harness `apps/api/src/modules/rai-chat/eval/branch-trust.eval.spec.ts` для `conflict disclosure` и `selective cross-check`.
+- [x] Зафиксирован source-of-truth drift: telemetry не может игнорировать verdict `UNVERIFIED`, поэтому docs и memory-bank синхронизированы с фактическим canonical enum `BranchVerdict`.
+- [x] Закрыт пост-спринтовый слой потребления для trust-path:
+  - `dashboard` explainability read-model теперь агрегирует `branchTrust` counts, coverage, `cross-check` trace count и budget compliance
+  - `apps/web/lib/api.ts` синхронизирован по `TruthfulnessDashboardDto` и `TraceForensicsResponseDto`
+  - `Control Tower` показывает trust counts, budget compliance и latency aggregates
+  - trace forensics page показывает trust summary и branch verdict cards
+- [x] Точечная web-витрина подтверждена тестами:
+  - `apps/web/__tests__/control-tower-page.spec.tsx`
+  - `apps/web/__tests__/control-tower-trace-page.spec.tsx`
+- [x] Закрыт tenant-facing trust consumption слой в `AI chat / work windows`:
+  - `apps/web/lib/stores/ai-chat-store.ts` теперь собирает `trustSummary`, trust work windows и trust signals из `branchResults / branchTrustAssessments / branchCompositions`
+  - `apps/web/components/ai-chat/AiChatPanel.tsx` показывает verdict/disclosure прямо в assistant bubble
+  - `AiSignalsStrip` и `work windows` теперь получают trust context без нового backend roundtrip
+- [x] `ResponseComposer` теперь отдаёт canonical `branch_trust_summary` окна и trust signals прямо в chat response, а `web` оставляет только fallback-path без дублирования backend окон.
+- [x] `RaiChatResponseDto` теперь несёт first-class `trustSummary`, а `ResponseComposer` строит этот summary на backend поверх branch trust артефактов.
+- [x] `apps/web/lib/stores/ai-chat-store.ts` теперь предпочитает backend `trustSummary`; локальная агрегация branch verdict оставлена только как backward-compatible fallback для старого payload.
+- [x] `apps/web/lib/api.ts` теперь экспортирует typed `RaiChatResponseDto` и `UserFacingTrustSummaryDto`, а `ai-chat-store` использует их как compile-time контракт для trust-path.
+- [x] `normalizeTrustSummary(...)` в `ai-chat-store` принимает typed `RaiChatResponseDto['trustSummary']`, поэтому trust consumer-layer больше не начинается с `unknown`.
+- [x] transport для `/api/rai/chat` вынесен в общий helper `submitRaiChatRequest(...)` внутри `apps/web/lib/api.ts`.
+- [x] `ai-chat-store` больше не держит собственный `fetch/json/idempotency` path для chat request и использует общий client-layer.
+- [x] post-processing `/api/rai/chat` вынесен в shared adapter `apps/web/lib/rai-chat-response-adapter.ts`.
+- [x] `ai-chat-store` больше не держит inline legacy widget migration, trust-window derivation и pending-clarification hydration.
+- [x] response-state reducer вынесен в `apps/web/lib/rai-chat-response-state.ts`.
+- [x] `submitRequest(...)` в `ai-chat-store` теперь использует `resolveRaiChatResponseState(...)` вместо ручной сборки `workWindows / activeWindowId / collapsedWindowIds / signals`.
+- [x] Полный `pnpm --filter web exec tsc --noEmit --pretty false` проходит; предыдущий drift в `ai-chat-store` и его tests закрыт тем же срезом.
+- [x] Проверки нового summary-среза зелёные:
+  - `pnpm --filter api exec jest --runInBand src/modules/rai-chat/composer/response-composer.service.spec.ts`
+  - `pnpm --filter api exec tsc --noEmit --pretty false`
+  - `pnpm --filter web exec jest --runInBand __tests__/ai-chat-store.spec.ts __tests__/ai-signals-strip.spec.tsx __tests__/structured-result-window.spec.tsx`
+  - `pnpm --filter web exec tsc --noEmit --pretty false`
+- [x] Проверки typed client-contract среза зелёные:
+  - `pnpm --filter web exec jest --runInBand __tests__/ai-chat-store.spec.ts __tests__/ai-signals-strip.spec.tsx __tests__/structured-result-window.spec.tsx`
+  - `pnpm --filter web exec tsc --noEmit --pretty false`
+- [x] Проверки transport consolidation среза зелёные:
+  - `pnpm --filter web exec jest --runInBand __tests__/ai-chat-store.spec.ts __tests__/ai-signals-strip.spec.tsx __tests__/structured-result-window.spec.tsx`
+  - `pnpm --filter web exec tsc --noEmit --pretty false`
+- [x] Проверки response-adapter extraction зелёные:
+  - `pnpm --filter web exec jest --runInBand __tests__/ai-chat-store.spec.ts __tests__/ai-signals-strip.spec.tsx __tests__/structured-result-window.spec.tsx`
+  - `pnpm --filter web exec tsc --noEmit --pretty false`
+- [x] Проверки response-state reducer extraction зелёные:
+  - `pnpm --filter web exec jest --runInBand __tests__/ai-chat-store.spec.ts __tests__/ai-signals-strip.spec.tsx __tests__/structured-result-window.spec.tsx`
+  - `pnpm --filter web exec tsc --noEmit --pretty false`
+- [x] Текущее dirty tree разобрано по кластерам:
+  - основной массив — текущий `Branch Trust Gate` backend/web/docs rollout
+  - отдельный старый slice вне него — `AGENTS.md`, `agent-interaction-contracts`, `execution-adapter-heuristics`, `semantic-router`
+- [x] Отдельный bounded cleanup/closeout для старого CRM conversational write-signal + `semantic-router` slice собран и подтверждён:
+  - разговорные write-сигналы `зарегим/зарепим/заведи` синхронно проходят через `agent-interaction-contracts`, `execution-adapter-heuristics` и `semantic-router`
+  - CRM write-запрос по ИНН больше не деградирует в read-only `crm.counterparty.lookup`
+  - targeted `jest` (`agent-interaction-contracts`, `semantic-router`, `execution-adapter-heuristics`) и `pnpm --filter api exec tsc --noEmit --pretty false` зелёные
+- [x] Dirty tree теперь разделяется прозрачнее:
+  - основной незакоммиченный массив — завершённый `Branch Trust Gate` rollout и его docs/memory closeout
+  - отдельный старый CRM-routing fix-slice верифицирован и больше не выглядит как незавершённая архитектурная ветка
+  - `AGENTS.md` остаётся отдельным rules-source изменением; для гарантированного применения его новых правил нужна новая сессия
+- [x] Для proof-slice `crm.register_counterparty` введён first-class `Semantic Ingress Frame`:
+  - новый shared contract `apps/api/src/shared/rai-chat/semantic-ingress.types.ts`
+  - новый builder `apps/api/src/modules/rai-chat/semantic-ingress.service.ts`
+  - `SupervisorAgent.planExecution()` теперь строит frame из legacy classification + semantic routing signals
+  - frame прокидывается в `AgentExecutionRequest` и `AiAuditEntry.metadata`
+- [x] CRM execution path начал использовать ingress-frame как runtime authority для proof-slice:
+  - `AgentExecutionAdapterService.resolveCrmIntent(...)` сначала читает `semanticIngressFrame.requestedOperation`
+  - для `crm.register_counterparty` execution path больше не держится только на локальном `detectCrmIntent(...)`
+- [x] Explainability/read-model и operator UI синхронизированы:
+  - `TraceForensicsResponseDto` теперь несёт `semanticIngressFrame`
+  - `ExplainabilityPanelService.getTraceForensics(...)` возвращает этот артефакт
+  - `Control Tower trace page` показывает `Semantic Ingress Frame` отдельным блоком
+- [x] Для proof-slice `crm.register_counterparty` закрыта governed write-boundary:
+  - `SemanticIngressFrame` теперь несёт `operationAuthority`
+  - `SupervisorAgent` прокидывает его в `RaiToolActorContext.userIntentSource` и больше не считает любой живой запрос автоматически подтверждённым
+  - `RaiToolsRegistry` разрешает прямой CRM write bypass только для `direct_user_command`; explicit tool-call и delegated path остаются в `PendingAction`
+- [x] Добавлен отдельный regression gate на свободные CRM register-перефразы:
+  - fixture `apps/api/src/modules/rai-chat/eval/fixtures/crm-register-semantic-ingress-eval-corpus.json`
+  - spec `apps/api/src/modules/rai-chat/eval/semantic-ingress.eval.spec.ts`
+  - `agent-interaction-contracts` дополнительно покрыт разговорной формой `заведи ... контрагента`
+- [x] Проверки нового ingress-frame среза:
+  - `pnpm --filter api exec tsc --noEmit --pretty false`
+  - `pnpm --filter api exec jest --runInBand src/modules/rai-chat/semantic-ingress.service.spec.ts src/modules/rai-chat/runtime/agent-execution-adapter.service.spec.ts src/modules/rai-chat/supervisor-agent.service.spec.ts src/modules/explainability/explainability-panel.service.spec.ts src/modules/rai-chat/eval/branch-trust.eval.spec.ts`
+  - `pnpm --filter api exec jest --runInBand src/modules/rai-chat/runtime/runtime-spine.integration.spec.ts`
+  - `pnpm --filter web exec tsc --noEmit --pretty false`
+  - `pnpm --filter web exec jest --runInBand __tests__/control-tower-trace-page.spec.tsx __tests__/control-tower-page.spec.tsx __tests__/ai-chat-store.spec.ts __tests__/ai-signals-strip.spec.tsx __tests__/structured-result-window.spec.tsx`
+- [x] Дополнительная страховочная проверка показала residual drift вне текущего среза: `src/modules/rai-chat/rai-chat.service.spec.ts` падает на старых ожиданиях по widgets/fail-open path и не исправлялся в этом ingress-frame пакете.
+- [ ] Следующий инженерный шаг: начать пакет `crm composite flow: register_counterparty -> create_account -> open_workspace`. Эффект: после закрытия атомарного proof-slice платформа перейдёт к короткому составному governed сценарию, где один `lead owner-agent` держит staged execution вместо разрозненных CRM write/read переходов.
+- [x] Проверки на текущем срезе зелёные: `pnpm --filter api exec tsc --noEmit --pretty false`, `pnpm --filter api exec jest --runInBand src/modules/rai-chat/supervisor-agent.service.spec.ts`, `pnpm --filter api exec jest --runInBand src/modules/rai-chat/truthfulness-engine.service.spec.ts`, `pnpm --filter api exec jest --runInBand src/modules/rai-chat/composer/response-composer.service.spec.ts`.
 - [x] Выполнена вторая волна `claim-management` для живого strategy/frontend-канона: ключевые документы в `docs/00_STRATEGY/STAGE 2`, `docs/00_STRATEGY/BUSINESS` и `docs/10_FRONTEND_MENU_IMPLEMENTATION` переведены в `SUPPORTING` и зарегистрированы в `docs/DOCS_MATRIX.md`.
 - [x] Зафиксировано новое правило docs-governance: `claim` может подтверждать роль документа как действующего planning / navigation / governance-источника, даже если документ не описывает текущий runtime 1:1; для этого допустим `verified_by: manual`.
 - [x] Сохранено разграничение доверия: такие документы обязательны для reasoning и проектирования, но runtime-тезисы из них всё равно нужно перепроверять по `code/tests/gates`.

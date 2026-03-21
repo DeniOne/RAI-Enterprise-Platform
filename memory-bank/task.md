@@ -1,5 +1,36 @@
 # Task: RAI_EP
 
+## Branch Trust Gate Sprint — PR A-E (2026-03-21) 🚧
+- [x] Добавить shared branch trust contract-layer в `apps/api/src/shared/rai-chat`.
+- [x] Ввести типы `BranchResultContract`, `BranchTrustAssessment`, `BranchVerdict`.
+- [x] Расширить `AgentExecutionResult` branch-артефактами без слома текущего `structuredOutput`.
+- [x] Подключить typed branch artifacts к текущему `SupervisorAgent` trust path.
+- [x] Синхронизировать execution-доки и `memory-bank` по состоянию `PR A`.
+- [x] Подтвердить срез через `tsc` и targeted `SupervisorAgent` spec.
+- [x] Вынести reusable evidence classification/input layer в `TruthfulnessEngine`.
+- [x] Перевести trace-level scoring на тот же reusable evidence-канон.
+- [x] Подтвердить `TruthfulnessEngine` через targeted unit-spec.
+- [x] Встроить first-class trust stage и selective cross-check orchestration в `SupervisorAgent`.
+- [x] Передать branch verdicts и trust artifacts в forensic telemetry.
+- [x] Подтвердить `SupervisorAgent` через targeted orchestration spec.
+- [x] Перевести `ResponseComposer` на honest composition rules по `BranchVerdict`.
+- [x] Подтвердить conflict / partial / insufficient evidence composition через targeted composer spec.
+- [x] Завершить `PR E`: добавить trust telemetry, latency accounting и eval closure для branch trust path.
+- [x] Завершить пост-спринтовый срез потребления: вывести новые trust telemetry в `Control Tower` read-model и tenant-facing explainability panel.
+- [x] Начать следующий срез потребления: вывести trust verdict/disclosure в `AI chat/work windows`, чтобы подтверждённость ответа была видна прямо в рабочем диалоге.
+- [x] Перенести trust work windows из client-side derivation в `ResponseComposer`, чтобы trust surface стал каноническим backend payload и одинаково использовался всеми клиентами.
+- [x] Вынести `trustSummary` в first-class поле `RaiChatResponseDto`, чтобы assistant bubble и другие клиенты больше не агрегировали branch verdict локально.
+- [x] Поднять `trustSummary` в `apps/web/lib/api.ts` и смежные typed client contracts, чтобы убрать `unknown`-нормализацию в `ai-chat-store` и выровнять compile-time контракт между API и web.
+- [x] Вынести transport для `/api/rai/chat` в общий typed helper внутри `apps/web/lib/api.ts`, чтобы `ai-chat-store` перестал дублировать `fetch/json/idempotency` path и использовал тот же client-layer, что и остальной web.
+- [x] Вынести post-processing `/api/rai/chat` из `ai-chat-store` в shared adapter рядом с `apps/web/lib/api.ts`, чтобы store перестал быть единственным местом legacy widget migration, trust window derivation и pending-clarification hydration.
+- [x] Вынести `resolveResponseWorkWindows(...)`, `resolveResponseActiveWindowId(...)` и `resolveResponseCollapsedWindowIds(...)` в shared response-state reducer рядом с `apps/web/lib/rai-chat-response-adapter.ts`.
+- [x] Собрать отдельный bounded cleanup/closeout для старого CRM conversational write-signal + `semantic-router` slice (`agent-interaction-contracts`, `execution-adapter-heuristics`, `semantic-router`), чтобы рабочее дерево перестало смешивать trust rollout и более ранний CRM-routing срез.
+- [x] Ввести first-class `Semantic Ingress Frame` для proof-slice `crm.register_counterparty`, чтобы смысл запроса впервые жил как типизированный объект до `SupervisorAgent`, а текущий phrase-routing перестал быть единственным источником решения.
+- [x] Прокинуть `Semantic Ingress Frame` через `SupervisorAgent -> AgentExecutionRequest -> AiAuditEntry.metadata -> Trace Forensics / Control Tower`, чтобы ingress normalization стала видна и runtime, и оператору.
+- [x] Отделить `direct_user_command` от autonomous write-path для proof-slice `crm.register_counterparty`, чтобы write-governance boundary перестала зависеть от phrase-routing и начала опираться на ingress-frame.
+- [x] Добавить отдельный eval corpus/gate на свободные CRM register-перефразы поверх `Semantic Ingress Frame`, чтобы proof-slice получил регрессионную защиту на уровне ingress, а не только на уровне contracts/router heuristics.
+- [ ] Начать следующий пакет `crm composite flow: register_counterparty -> create_account -> open_workspace`, чтобы после атомарного proof-slice платформа перешла к короткому составному governed сценарию с одним `lead owner-agent`.
+
 ## Routing Learning Layer — Foundation + Techmaps Cutover (2026-03-20) 🚧
 - [x] Введён канонический semantic routing contract: `SemanticIntent`, `RouteDecision`, `RoutingTelemetryEvent`, versioning и redaction.
 - [x] `SemanticRouterService` встроен в `SupervisorAgent` как `shadow-first` слой с persisted `routingTelemetry` в `AiAuditEntry.metadata`.

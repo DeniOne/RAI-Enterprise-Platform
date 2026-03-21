@@ -50,6 +50,7 @@ import { RuntimeGovernanceEventService } from "./runtime-governance/runtime-gove
 import { RuntimeGovernanceFeatureFlagsService } from "./runtime-governance/runtime-governance-feature-flags.service";
 import { RuntimeGovernancePolicyService } from "./runtime-governance/runtime-governance-policy.service";
 import { SemanticRouterService } from "./semantic-router/semantic-router.service";
+import { SemanticIngressService } from "./semantic-ingress.service";
 import {
   RAI_CHAT_WIDGETS_SCHEMA_VERSION,
   RaiChatWidgetType,
@@ -58,6 +59,7 @@ import {
 describe("SupervisorAgent", () => {
   let agent: SupervisorAgent;
   let agentRuntimeService: AgentRuntimeService;
+  let responseComposerService: ResponseComposerService;
   const memoryAdapterMock = {
     retrieve: jest.fn().mockResolvedValue({
       traceId: undefined,
@@ -192,7 +194,27 @@ describe("SupervisorAgent", () => {
       thresholds: {
         queueSaturationThreshold: "SATURATED",
       },
+      trust: {
+        maxTrackedBranches: 4,
+        maxCrossCheckBranches: 1,
+        latencyBudgetMs: {
+          happyPathMs: 300,
+          multiSourceReadMs: 800,
+          crossCheckTriggeredMs: 1_500,
+        },
+      },
     }),
+    resolveTrustLatencyBudgetMs: jest
+      .fn()
+      .mockImplementation((_role: string, profile: string) => {
+        if (profile === "CROSS_CHECK_TRIGGERED") {
+          return 1_500;
+        }
+        if (profile === "MULTI_SOURCE_READ") {
+          return 800;
+        }
+        return 300;
+      }),
     resolveFallbackMode: jest.fn().mockReturnValue("READ_ONLY_SUPPORT"),
   };
   const runtimeGovernanceFeatureFlagsServiceMock = {
@@ -347,10 +369,52 @@ describe("SupervisorAgent", () => {
         { provide: BudgetControllerService, useValue: budgetControllerServiceMock },
         { provide: OpenRouterGatewayService, useValue: openRouterGatewayMock },
         { provide: SemanticRouterService, useValue: semanticRouterMock },
+        SemanticIngressService,
         { provide: AgentPromptAssemblyService, useValue: agentPromptAssemblyMock },
         { provide: TraceSummaryService, useValue: { record: jest.fn().mockResolvedValue(undefined), updateQuality: jest.fn().mockResolvedValue(undefined) } },
         { provide: AutonomyPolicyService, useValue: { getCompanyAutonomyLevel: jest.fn().mockResolvedValue("AUTONOMOUS") } },
-        { provide: TruthfulnessEngineService, useValue: { calculateTraceTruthfulness: jest.fn().mockResolvedValue(20) } },
+        {
+          provide: TruthfulnessEngineService,
+          useValue: {
+            calculateTraceTruthfulness: jest.fn().mockResolvedValue(20),
+            buildBranchTrustInputs: jest.fn().mockImplementation((evidence: Array<{ sourceId?: string; confidenceScore?: number }>) => {
+              const hasEvidence = Array.isArray(evidence) && evidence.length > 0;
+              const hasInvalidEvidence = hasEvidence
+                ? evidence.some((item) => (item.confidenceScore ?? 0) < 0.3)
+                : false;
+              return {
+                classifiedEvidence: [],
+                accounting: {
+                  total: hasEvidence ? evidence.length : 0,
+                  evidenced: hasEvidence
+                    ? evidence.filter((item) => typeof item.sourceId === "string" && item.sourceId.trim().length > 0).length
+                    : 0,
+                  verified:
+                    hasEvidence && !hasInvalidEvidence ? evidence.length : 0,
+                  unverified: hasEvidence ? 0 : 0,
+                  invalid: hasInvalidEvidence ? 1 : 0,
+                },
+                totalWeight: hasEvidence ? evidence.length : 0,
+                weightedEvidence: {
+                  verified: hasEvidence && !hasInvalidEvidence ? evidence.length : 0,
+                  unverified: hasEvidence ? 0 : 0,
+                  invalid: hasInvalidEvidence ? 1 : 0,
+                },
+                bsScorePct: hasEvidence ? (hasInvalidEvidence ? 100 : 0) : null,
+                evidenceCoveragePct: hasEvidence ? 100 : null,
+                invalidClaimsPct: hasEvidence ? (hasInvalidEvidence ? 100 : 0) : null,
+                qualityStatus: hasEvidence ? "READY" : "PENDING_EVIDENCE",
+                recommendedVerdict: hasEvidence
+                  ? hasInvalidEvidence
+                    ? "REJECTED"
+                    : "VERIFIED"
+                  : "UNVERIFIED",
+                requiresCrossCheck: !hasEvidence || hasInvalidEvidence,
+                reasons: hasEvidence ? [] : ["no_evidence"],
+              };
+            }),
+          },
+        },
         { provide: RuntimeGovernanceEventService, useValue: runtimeGovernanceEventServiceMock },
         { provide: RuntimeGovernancePolicyService, useValue: runtimeGovernancePolicyServiceMock },
         { provide: RuntimeGovernanceFeatureFlagsService, useValue: runtimeGovernanceFeatureFlagsServiceMock },
@@ -359,6 +423,7 @@ describe("SupervisorAgent", () => {
 
     agent = module.get(SupervisorAgent);
     agentRuntimeService = module.get(AgentRuntimeService);
+    responseComposerService = module.get(ResponseComposerService);
     module.get(AgroToolsRegistry).onModuleInit();
     module.get(FinanceToolsRegistry).onModuleInit();
     module.get(RiskToolsRegistry).onModuleInit();
@@ -1139,6 +1204,10 @@ describe("SupervisorAgent", () => {
           },
         },
       } as any);
+    const buildResponseSpy = jest.spyOn(
+      responseComposerService,
+      "buildResponse",
+    );
 
     const response = await agent.orchestrate(
       {
@@ -1150,7 +1219,7 @@ describe("SupervisorAgent", () => {
     );
 
     expect(executeAgentSpy).toHaveBeenCalledTimes(2);
-    expect(response.text).toContain("Синтез делегированной цепочки");
+    expect(response.text).toContain("Подтверждённый факт");
     expect(response.text).toContain("Knowledge cross-check подтверждает расчёт.");
     expect(response.intermediateSteps).toEqual(
       expect.arrayContaining([
@@ -1158,6 +1227,687 @@ describe("SupervisorAgent", () => {
           toolName: RaiToolName.QueryKnowledge,
         }),
       ]),
+    );
+    const composerExecution =
+      buildResponseSpy.mock.calls[buildResponseSpy.mock.calls.length - 1]?.[0]
+        ?.executionResult.agentExecution;
+    expect(composerExecution?.structuredOutput).toEqual(
+      expect.objectContaining({
+        trustAssessment: "low",
+        branchVerdict: "UNVERIFIED",
+        trustCrossCheckTriggered: true,
+        trustCrossCheckStatus: "completed",
+      }),
+    );
+    expect(composerExecution?.branchResults).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          branch_id: "agronomist:primary",
+          source_agent: "agronomist",
+          confidence: 0.2,
+          scope: expect.objectContaining({
+            domain: "agronomist",
+            route: "/consulting/dashboard",
+            company_id: "company-1",
+          }),
+        }),
+        expect.objectContaining({
+          branch_id: "knowledge:cross_check",
+          source_agent: "knowledge",
+        }),
+      ]),
+    );
+    expect(composerExecution?.branchTrustAssessments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          branch_id: "agronomist:primary",
+          verdict: "UNVERIFIED",
+          requires_cross_check: true,
+        }),
+        expect.objectContaining({
+          branch_id: "knowledge:cross_check",
+          verdict: "VERIFIED",
+          requires_cross_check: false,
+        }),
+      ]),
+    );
+  });
+
+  it("запускает selective cross-check по branch verdict UNVERIFIED даже без explicit crossCheckRequired", async () => {
+    process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+    intentRouterMock.classify.mockReturnValueOnce({
+      targetRole: "agronomist",
+      intent: "compute_deviations",
+      toolName: RaiToolName.ComputeDeviations,
+      confidence: 0.95,
+      method: "tool_call_primary",
+      reason: "explicit intent",
+    });
+    intentRouterMock.buildAutoToolCall.mockReturnValueOnce({
+      name: RaiToolName.ComputeDeviations,
+      payload: { fieldRef: "FIELD-8" },
+    });
+
+    const executeAgentSpy = jest
+      .spyOn(agentRuntimeService, "executeAgent")
+      .mockResolvedValueOnce({
+        executedTools: [
+          {
+            name: RaiToolName.ComputeDeviations,
+            result: { summary: "Первичный расчёт без evidence." },
+          },
+        ],
+        agentExecution: {
+          role: "agronomist",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Первичный расчёт без evidence.",
+          structuredOutput: {
+            confidence: 0.95,
+            summary: "Без ссылок на источники.",
+          },
+          toolCalls: [
+            {
+              name: RaiToolName.ComputeDeviations,
+              result: { summary: "Первичный расчёт без evidence." },
+            },
+          ],
+          connectorCalls: [],
+          evidence: [],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [RaiToolName.ComputeDeviations],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "agronom-v1",
+          },
+        },
+      } as any)
+      .mockResolvedValueOnce({
+        executedTools: [
+          {
+            name: RaiToolName.QueryKnowledge,
+            result: { hits: 1, items: [{ content: "Подтверждение", score: 0.9 }] },
+          },
+        ],
+        agentExecution: {
+          role: "knowledge",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Knowledge cross-check подтвердил расчёт.",
+          structuredOutput: {
+            summary: "Knowledge cross-check подтвердил расчёт.",
+            confidence: 0.9,
+          },
+          toolCalls: [
+            {
+              name: RaiToolName.QueryKnowledge,
+              result: { hits: 1 },
+            },
+          ],
+          connectorCalls: [],
+          evidence: [
+            {
+              claim: "Подтверждение",
+              sourceType: "DOC",
+              sourceId: "doc-1",
+              confidenceScore: 0.9,
+            },
+          ],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [RaiToolName.QueryKnowledge],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "knowledge-v1",
+          },
+        },
+      } as any);
+    const buildResponseSpy = jest.spyOn(
+      responseComposerService,
+      "buildResponse",
+    );
+
+    await agent.orchestrate(
+      {
+        message: "проверь расчёт без evidence",
+        workspaceContext: { route: "/consulting/dashboard" },
+      },
+      "company-1",
+      "user-1",
+    );
+
+    expect(executeAgentSpy).toHaveBeenCalledTimes(2);
+    const composerExecution =
+      buildResponseSpy.mock.calls[buildResponseSpy.mock.calls.length - 1]?.[0]
+        ?.executionResult.agentExecution;
+    expect(composerExecution?.structuredOutput).toEqual(
+      expect.objectContaining({
+        branchVerdict: "UNVERIFIED",
+        trustCrossCheckTriggered: true,
+        trustCrossCheckStatus: "completed",
+      }),
+    );
+  });
+
+  it("не запускает second-pass на happy path и пишет branch verdict в audit metadata", async () => {
+    process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+    intentRouterMock.classify.mockReturnValueOnce({
+      targetRole: "agronomist",
+      intent: "compute_deviations",
+      toolName: RaiToolName.ComputeDeviations,
+      confidence: 0.95,
+      method: "tool_call_primary",
+      reason: "explicit intent",
+    });
+    intentRouterMock.buildAutoToolCall.mockReturnValueOnce({
+      name: RaiToolName.ComputeDeviations,
+      payload: { fieldRef: "FIELD-9" },
+    });
+
+    const executeAgentSpy = jest
+      .spyOn(agentRuntimeService, "executeAgent")
+      .mockResolvedValueOnce({
+        executedTools: [
+          {
+            name: RaiToolName.ComputeDeviations,
+            result: { summary: "Подтверждённый расчёт." },
+          },
+        ],
+        agentExecution: {
+          role: "agronomist",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Подтверждённый расчёт.",
+          structuredOutput: {
+            confidence: 0.95,
+            summary: "Подтверждённый расчёт.",
+          },
+          toolCalls: [
+            {
+              name: RaiToolName.ComputeDeviations,
+              result: { summary: "Подтверждённый расчёт." },
+            },
+          ],
+          connectorCalls: [],
+          evidence: [
+            {
+              claim: "Подтверждённый расчёт.",
+              sourceType: "TOOL_RESULT",
+              sourceId: "compute_deviations",
+              confidenceScore: 0.95,
+            },
+          ],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [RaiToolName.ComputeDeviations],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "agronom-v1",
+          },
+        },
+      } as any);
+
+    await agent.orchestrate(
+      {
+        message: "подтверждённый расчёт",
+        workspaceContext: { route: "/consulting/dashboard" },
+      },
+      "company-1",
+      "user-1",
+    );
+
+    expect(executeAgentSpy).toHaveBeenCalledTimes(1);
+    const auditMetadata =
+      prismaServiceMock.aiAuditEntry.create.mock.calls[
+        prismaServiceMock.aiAuditEntry.create.mock.calls.length - 1
+      ]?.[0]?.data?.metadata;
+    expect(auditMetadata).toEqual(
+      expect.objectContaining({
+        branchResults: expect.arrayContaining([
+          expect.objectContaining({
+            branch_id: "agronomist:primary",
+          }),
+        ]),
+        branchTrustAssessments: expect.arrayContaining([
+          expect.objectContaining({
+            branch_id: "agronomist:primary",
+            verdict: "VERIFIED",
+            requires_cross_check: false,
+          }),
+        ]),
+        phases: expect.arrayContaining([
+          expect.objectContaining({
+            name: "branch_trust_assessment",
+          }),
+        ]),
+      }),
+    );
+  });
+
+  it("строит semantic ingress frame для proof-slice crm.register_counterparty и пишет его в audit metadata", async () => {
+    process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+    intentRouterMock.classify.mockReturnValueOnce({
+      targetRole: "crm_agent",
+      intent: "register_counterparty",
+      toolName: RaiToolName.RegisterCounterparty,
+      confidence: 0.82,
+      method: "regex",
+      reason: "responsibility:crm:register_counterparty",
+    });
+    intentRouterMock.buildAutoToolCall.mockReturnValueOnce({
+      name: RaiToolName.RegisterCounterparty,
+      payload: {
+        inn: "2636041493",
+        jurisdictionCode: "RU",
+        partyType: "LEGAL_ENTITY",
+      },
+    });
+    semanticRouterMock.evaluate.mockResolvedValueOnce({
+      semanticIntent: {
+        domain: "crm",
+        entity: "counterparty",
+        action: "create",
+        interactionMode: "write_candidate",
+        mutationRisk: "side_effecting_write",
+        filters: {},
+        requiredContext: [],
+        focusObject: null,
+        dialogState: {
+          activeFlow: null,
+          pendingClarificationKeys: [],
+          lastUserAction: null,
+        },
+        resolvability: "resolved",
+        ambiguityType: "none",
+        confidenceBand: "high",
+        reason: "crm_write_candidate",
+      },
+      routeDecision: {
+        decisionType: "execute",
+        recommendedExecutionMode: "direct_execute",
+        eligibleTools: [],
+        eligibleFlows: [],
+        requiredContextMissing: [],
+        policyChecksRequired: [],
+        needsConfirmation: false,
+        needsClarification: false,
+        abstainReason: null,
+        policyBlockReason: null,
+      },
+      candidateRoutes: [],
+      divergence: {
+        isMismatch: false,
+        mismatchKinds: [],
+        summary: "match",
+        legacyRouteKey: "crm_agent:register_counterparty",
+        semanticRouteKey: "crm:counterparty:create",
+      },
+      versionInfo: {
+        routerVersion: "semantic-router-v1",
+        promptVersion: "semantic-router-prompt-v1",
+        toolsetVersion: "toolset",
+        workspaceStateDigest: "digest",
+      },
+      latencyMs: 4,
+      sliceId: null,
+      promotedPrimary: false,
+      executionPath: "semantic_router_shadow",
+      requestedToolCalls: [
+        {
+          name: RaiToolName.RegisterCounterparty,
+          payload: {
+            inn: "2636041493",
+            jurisdictionCode: "RU",
+            partyType: "LEGAL_ENTITY",
+          },
+        },
+      ],
+      classification: {
+        targetRole: "crm_agent",
+        intent: "register_counterparty",
+        toolName: RaiToolName.RegisterCounterparty,
+        confidence: 0.8,
+        method: "semantic_router_shadow",
+        reason: "crm_write_candidate",
+      },
+      routingContext: {
+        source: "shadow",
+        promotedPrimary: false,
+        enforceCapabilityGating: false,
+        sliceId: null,
+        semanticIntent: {
+          domain: "crm",
+          entity: "counterparty",
+          action: "create",
+          interactionMode: "write_candidate",
+          mutationRisk: "side_effecting_write",
+          filters: {},
+          requiredContext: [],
+          focusObject: null,
+          dialogState: {
+            activeFlow: null,
+            pendingClarificationKeys: [],
+            lastUserAction: null,
+          },
+          resolvability: "resolved",
+          ambiguityType: "none",
+          confidenceBand: "high",
+          reason: "crm_write_candidate",
+        },
+        routeDecision: {
+          decisionType: "execute",
+          recommendedExecutionMode: "direct_execute",
+          eligibleTools: [],
+          eligibleFlows: [],
+          requiredContextMissing: [],
+          policyChecksRequired: [],
+          needsConfirmation: false,
+          needsClarification: false,
+          abstainReason: null,
+          policyBlockReason: null,
+        },
+        candidateRoutes: [],
+      },
+      llmUsed: false,
+      llmError: null,
+    });
+
+    const executeAgentSpy = jest
+      .spyOn(agentRuntimeService, "executeAgent")
+      .mockResolvedValueOnce({
+        executedTools: [
+          {
+            name: RaiToolName.RegisterCounterparty,
+            result: { partyId: "party-1" },
+          },
+        ],
+        agentExecution: {
+          role: "crm_agent",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Контрагент зарегистрирован.",
+          structuredOutput: {
+            summary: "Контрагент зарегистрирован.",
+            confidence: 0.82,
+          },
+          toolCalls: [
+            {
+              name: RaiToolName.RegisterCounterparty,
+              result: { partyId: "party-1" },
+            },
+          ],
+          connectorCalls: [],
+          evidence: [],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [RaiToolName.RegisterCounterparty],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "crm-v1",
+          },
+        },
+      } as any);
+    jest.spyOn(responseComposerService, "buildResponse").mockResolvedValueOnce({
+      text: "Контрагент зарегистрирован.",
+      widgets: [],
+      evidence: [],
+    } as any);
+
+    await agent.orchestrate(
+      {
+        message: "Давай зарегим контрагента. ИНН 2636041493",
+        workspaceContext: { route: "/parties" },
+      },
+      "company-1",
+      "user-1",
+    );
+
+    const executionRequest = executeAgentSpy.mock.calls[0]?.[0];
+    const actorContext = executeAgentSpy.mock.calls[0]?.[1];
+    expect(executionRequest.semanticIngressFrame).toEqual(
+      expect.objectContaining({
+        interactionMode: "task_request",
+        requestShape: "single_intent",
+        proofSliceId: "crm.register_counterparty",
+        operationAuthority: "direct_user_command",
+        requestedOperation: expect.objectContaining({
+          ownerRole: "crm_agent",
+          intent: "register_counterparty",
+          toolName: RaiToolName.RegisterCounterparty,
+          source: "legacy_contracts",
+        }),
+        entities: expect.arrayContaining([
+          expect.objectContaining({
+            kind: "inn",
+            value: "2636041493",
+          }),
+        ]),
+      }),
+    );
+    expect(actorContext).toEqual(
+      expect.objectContaining({
+        userConfirmed: true,
+        userIntentSource: "direct_user_command",
+      }),
+    );
+
+    const auditMetadata =
+      prismaServiceMock.aiAuditEntry.create.mock.calls[
+        prismaServiceMock.aiAuditEntry.create.mock.calls.length - 1
+      ]?.[0]?.data?.metadata;
+    expect(auditMetadata).toEqual(
+      expect.objectContaining({
+        semanticIngressFrame: expect.objectContaining({
+          proofSliceId: "crm.register_counterparty",
+          requestedOperation: expect.objectContaining({
+            intent: "register_counterparty",
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("не помечает explicit CRM tool-call как direct_user_command и оставляет governed confirmation boundary", async () => {
+    process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+    semanticRouterMock.evaluate.mockResolvedValueOnce({
+      semanticIntent: {
+        domain: "crm",
+        entity: "counterparty",
+        action: "create",
+        interactionMode: "write_candidate",
+        mutationRisk: "side_effecting_write",
+        filters: {},
+        requiredContext: [],
+        focusObject: null,
+        dialogState: {
+          activeFlow: null,
+          pendingClarificationKeys: [],
+          lastUserAction: null,
+        },
+        resolvability: "resolved",
+        ambiguityType: "none",
+        confidenceBand: "high",
+        reason: "crm_write_candidate",
+      },
+      routeDecision: {
+        decisionType: "execute",
+        recommendedExecutionMode: "direct_execute",
+        eligibleTools: [],
+        eligibleFlows: [],
+        requiredContextMissing: [],
+        policyChecksRequired: [],
+        needsConfirmation: false,
+        needsClarification: false,
+        abstainReason: null,
+        policyBlockReason: null,
+      },
+      candidateRoutes: [],
+      divergence: {
+        isMismatch: false,
+        mismatchKinds: [],
+        summary: "match",
+        legacyRouteKey: "crm_agent:register_counterparty",
+        semanticRouteKey: "crm:counterparty:create",
+      },
+      versionInfo: {
+        routerVersion: "semantic-router-v1",
+        promptVersion: "semantic-router-prompt-v1",
+        toolsetVersion: "toolset",
+        workspaceStateDigest: "digest",
+      },
+      latencyMs: 3,
+      sliceId: null,
+      promotedPrimary: false,
+      executionPath: "semantic_router_shadow",
+      requestedToolCalls: [],
+      classification: {
+        targetRole: "crm_agent",
+        intent: "register_counterparty",
+        toolName: RaiToolName.RegisterCounterparty,
+        confidence: 1,
+        method: "semantic_router_shadow",
+        reason: "crm_write_candidate",
+      },
+      routingContext: {
+        source: "shadow",
+        promotedPrimary: false,
+        enforceCapabilityGating: false,
+        sliceId: null,
+        semanticIntent: {
+          domain: "crm",
+          entity: "counterparty",
+          action: "create",
+          interactionMode: "write_candidate",
+          mutationRisk: "side_effecting_write",
+          filters: {},
+          requiredContext: [],
+          focusObject: null,
+          dialogState: {
+            activeFlow: null,
+            pendingClarificationKeys: [],
+            lastUserAction: null,
+          },
+          resolvability: "resolved",
+          ambiguityType: "none",
+          confidenceBand: "high",
+          reason: "crm_write_candidate",
+        },
+        routeDecision: {
+          decisionType: "execute",
+          recommendedExecutionMode: "direct_execute",
+          eligibleTools: [],
+          eligibleFlows: [],
+          requiredContextMissing: [],
+          policyChecksRequired: [],
+          needsConfirmation: false,
+          needsClarification: false,
+          abstainReason: null,
+          policyBlockReason: null,
+        },
+        candidateRoutes: [],
+      },
+      llmUsed: false,
+      llmError: null,
+    });
+
+    const executeAgentSpy = jest
+      .spyOn(agentRuntimeService, "executeAgent")
+      .mockResolvedValueOnce({
+        executedTools: [
+          {
+            name: RaiToolName.RegisterCounterparty,
+            result: { riskPolicyBlocked: true, actionId: "pa-77" },
+          },
+        ],
+        agentExecution: {
+          role: "crm_agent",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Ожидается подтверждение.",
+          structuredOutput: {
+            summary: "Создан PendingAction.",
+            confidence: 1,
+          },
+          toolCalls: [
+            {
+              name: RaiToolName.RegisterCounterparty,
+              result: { riskPolicyBlocked: true, actionId: "pa-77" },
+            },
+          ],
+          connectorCalls: [],
+          evidence: [],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [RaiToolName.RegisterCounterparty],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "crm-v1",
+          },
+        },
+      } as any);
+    jest.spyOn(responseComposerService, "buildResponse").mockResolvedValueOnce({
+      text: "Ожидается подтверждение.",
+      widgets: [],
+      evidence: [],
+    } as any);
+
+    await agent.orchestrate(
+      {
+        message: "",
+        toolCalls: [
+          {
+            name: RaiToolName.RegisterCounterparty,
+            payload: {
+              inn: "2636041493",
+              jurisdictionCode: "RU",
+              partyType: "LEGAL_ENTITY",
+            },
+          },
+        ],
+      },
+      "company-1",
+      "user-1",
+    );
+
+    const executionRequest = executeAgentSpy.mock.calls[0]?.[0];
+    const actorContext = executeAgentSpy.mock.calls[0]?.[1];
+
+    expect(executionRequest.semanticIngressFrame).toEqual(
+      expect.objectContaining({
+        proofSliceId: "crm.register_counterparty",
+        operationAuthority: "delegated_or_autonomous",
+        requiresConfirmation: true,
+        requestedOperation: expect.objectContaining({
+          source: "explicit_tool_call",
+        }),
+      }),
+    );
+    expect(actorContext).toEqual(
+      expect.objectContaining({
+        userConfirmed: false,
+        userIntentSource: "delegated_or_autonomous",
+      }),
     );
   });
 
@@ -1193,7 +1943,14 @@ describe("SupervisorAgent", () => {
           structuredOutput: { confidence: 0.9, summary: "legacy baseline" },
           toolCalls: [{ name: RaiToolName.ComputeDeviations, result: {} }],
           connectorCalls: [],
-          evidence: [],
+          evidence: [
+            {
+              claim: "legacy baseline",
+              sourceType: "TOOL_RESULT",
+              sourceId: "compute_deviations",
+              confidenceScore: 0.9,
+            },
+          ],
           usage: { promptTokens: 2000, completionTokens: 800, totalTokens: 2800 },
           validation: { passed: true, reasons: [] },
           fallbackUsed: false,
@@ -1322,7 +2079,10 @@ describe("SupervisorAgent", () => {
 
   describe("Truthfulness runtime pipeline", () => {
     let traceSummaryMock: { record: jest.Mock; updateQuality: jest.Mock };
-    let truthfulnessMock: { calculateTraceTruthfulness: jest.Mock };
+    let truthfulnessMock: {
+      calculateTraceTruthfulness: jest.Mock;
+      buildBranchTrustInputs: jest.Mock;
+    };
     let auditCreateMock: jest.Mock;
 
     beforeEach(() => {
@@ -1333,6 +2093,32 @@ describe("SupervisorAgent", () => {
           evidenceCoveragePct: 100,
           invalidClaimsPct: 0,
           accounting: { total: 1, evidenced: 1, verified: 1, unverified: 0, invalid: 0 },
+        }),
+        buildBranchTrustInputs: jest.fn().mockImplementation((evidence: Array<{ sourceId?: string; confidenceScore?: number }>) => {
+          const hasEvidence = Array.isArray(evidence) && evidence.length > 0;
+          return {
+            classifiedEvidence: [],
+            accounting: {
+              total: hasEvidence ? evidence.length : 0,
+              evidenced: hasEvidence ? evidence.length : 0,
+              verified: hasEvidence ? evidence.length : 0,
+              unverified: 0,
+              invalid: 0,
+            },
+            totalWeight: hasEvidence ? evidence.length : 0,
+            weightedEvidence: {
+              verified: hasEvidence ? evidence.length : 0,
+              unverified: 0,
+              invalid: 0,
+            },
+            bsScorePct: hasEvidence ? 0 : null,
+            evidenceCoveragePct: hasEvidence ? 100 : null,
+            invalidClaimsPct: hasEvidence ? 0 : null,
+            qualityStatus: hasEvidence ? "READY" : "PENDING_EVIDENCE",
+            recommendedVerdict: hasEvidence ? "VERIFIED" : "UNVERIFIED",
+            requiresCrossCheck: !hasEvidence,
+            reasons: hasEvidence ? [] : ["no_evidence"],
+          };
         }),
       };
       auditCreateMock = jest.fn().mockResolvedValue({});
@@ -1394,6 +2180,7 @@ describe("SupervisorAgent", () => {
           { provide: BudgetControllerService, useValue: budgetControllerServiceMock },
           { provide: OpenRouterGatewayService, useValue: openRouterGatewayMock },
           { provide: SemanticRouterService, useValue: semanticRouterMock },
+          SemanticIngressService,
           { provide: AgentPromptAssemblyService, useValue: agentPromptAssemblyMock },
           { provide: TraceSummaryService, useValue: overrides?.traceSummary ?? traceSummaryMock },
           { provide: AutonomyPolicyService, useValue: { getCompanyAutonomyLevel: jest.fn().mockResolvedValue("AUTONOMOUS") } },
@@ -1453,7 +2240,11 @@ describe("SupervisorAgent", () => {
       await new Promise((r) => setTimeout(r, 10));
 
       expect(traceSummaryMock.updateQuality).toHaveBeenCalledWith(
-        expect.objectContaining({ bsScorePct: null, evidenceCoveragePct: null, invalidClaimsPct: null }),
+        expect.objectContaining({
+          bsScorePct: null,
+          evidenceCoveragePct: null,
+          invalidClaimsPct: null,
+        }),
       );
     });
 

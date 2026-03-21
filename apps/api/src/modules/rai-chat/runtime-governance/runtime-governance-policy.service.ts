@@ -6,6 +6,8 @@ import {
   RuntimeGovernanceOverrides,
   RuntimeGovernancePolicy,
   RuntimeGovernanceRolePolicy,
+  RuntimeTrustBudgetPolicy,
+  RuntimeTrustLatencyProfile,
 } from "../../../shared/rai-chat/runtime-governance-policy.types";
 
 function buildFallbackModes(
@@ -25,6 +27,23 @@ function buildFallbackModes(
     REPLAY_MODE: "READ_ONLY_SUPPORT",
     NEEDS_MORE_DATA: "MANUAL_HUMAN_REQUIRED",
     ...overrides,
+  };
+}
+
+function buildTrustBudget(
+  overrides: Partial<RuntimeTrustBudgetPolicy> & {
+    latencyBudgetMs?: Partial<RuntimeTrustBudgetPolicy["latencyBudgetMs"]>;
+  } = {},
+): RuntimeTrustBudgetPolicy {
+  return {
+    maxTrackedBranches: overrides.maxTrackedBranches ?? 4,
+    maxCrossCheckBranches: overrides.maxCrossCheckBranches ?? 1,
+    latencyBudgetMs: {
+      happyPathMs: 300,
+      multiSourceReadMs: 800,
+      crossCheckTriggeredMs: 1_500,
+      ...(overrides.latencyBudgetMs ?? {}),
+    },
   };
 }
 
@@ -48,6 +67,7 @@ const DEFAULT_POLICY: RuntimeGovernancePolicy = {
       degradePct: 80,
       denyPct: 100,
     },
+    trust: buildTrustBudget(),
   },
   roles: {
     agronomist: {
@@ -69,6 +89,9 @@ const DEFAULT_POLICY: RuntimeGovernancePolicy = {
         deadlineMs: 30_000,
       },
       budget: { degradePct: 80, denyPct: 100 },
+      trust: buildTrustBudget({
+        maxTrackedBranches: 5,
+      }),
     },
     economist: {
       role: "economist",
@@ -89,6 +112,9 @@ const DEFAULT_POLICY: RuntimeGovernancePolicy = {
         deadlineMs: 25_000,
       },
       budget: { degradePct: 75, denyPct: 100 },
+      trust: buildTrustBudget({
+        maxTrackedBranches: 5,
+      }),
     },
     knowledge: {
       role: "knowledge",
@@ -109,6 +135,10 @@ const DEFAULT_POLICY: RuntimeGovernancePolicy = {
         deadlineMs: 20_000,
       },
       budget: { degradePct: 85, denyPct: 100 },
+      trust: buildTrustBudget({
+        maxTrackedBranches: 6,
+        maxCrossCheckBranches: 2,
+      }),
     },
     monitoring: {
       role: "monitoring",
@@ -129,6 +159,9 @@ const DEFAULT_POLICY: RuntimeGovernancePolicy = {
         deadlineMs: 20_000,
       },
       budget: { degradePct: 85, denyPct: 100 },
+      trust: buildTrustBudget({
+        maxTrackedBranches: 6,
+      }),
     },
     crm_agent: {
       role: "crm_agent",
@@ -150,6 +183,7 @@ const DEFAULT_POLICY: RuntimeGovernancePolicy = {
         deadlineMs: 25_000,
       },
       budget: { degradePct: 75, denyPct: 100 },
+      trust: buildTrustBudget(),
     },
     front_office_agent: {
       role: "front_office_agent",
@@ -171,6 +205,7 @@ const DEFAULT_POLICY: RuntimeGovernancePolicy = {
         deadlineMs: 20_000,
       },
       budget: { degradePct: 80, denyPct: 100 },
+      trust: buildTrustBudget(),
     },
     contracts_agent: {
       role: "contracts_agent",
@@ -193,6 +228,7 @@ const DEFAULT_POLICY: RuntimeGovernancePolicy = {
         deadlineMs: 25_000,
       },
       budget: { degradePct: 75, denyPct: 100 },
+      trust: buildTrustBudget(),
     },
     chief_agronomist: {
       role: "chief_agronomist",
@@ -214,6 +250,9 @@ const DEFAULT_POLICY: RuntimeGovernancePolicy = {
         deadlineMs: 30_000,
       },
       budget: { degradePct: 80, denyPct: 100 },
+      trust: buildTrustBudget({
+        maxTrackedBranches: 5,
+      }),
     },
     data_scientist: {
       role: "data_scientist",
@@ -235,6 +274,9 @@ const DEFAULT_POLICY: RuntimeGovernancePolicy = {
         deadlineMs: 30_000,
       },
       budget: { degradePct: 80, denyPct: 100 },
+      trust: buildTrustBudget({
+        maxTrackedBranches: 5,
+      }),
     },
   },
 };
@@ -259,6 +301,7 @@ export class RuntimeGovernancePolicyService {
             thresholds: policy.defaults.thresholds,
             concurrency: policy.defaults.concurrency,
             budget: policy.defaults.budget,
+            trust: policy.defaults.trust,
           };
     if (!overrides) {
       return basePolicy;
@@ -288,7 +331,26 @@ export class RuntimeGovernancePolicyService {
         ...basePolicy.budget,
         ...(overrides.budgetThresholds ?? {}),
       },
+      trust: basePolicy.trust,
     };
+  }
+
+  getTrustBudget(role?: string | null): RuntimeTrustBudgetPolicy {
+    return this.getRolePolicy(role).trust;
+  }
+
+  resolveTrustLatencyBudgetMs(
+    role: string | null | undefined,
+    profile: RuntimeTrustLatencyProfile,
+  ): number {
+    const latencyBudget = this.getTrustBudget(role).latencyBudgetMs;
+    if (profile === "CROSS_CHECK_TRIGGERED") {
+      return latencyBudget.crossCheckTriggeredMs;
+    }
+    if (profile === "MULTI_SOURCE_READ") {
+      return latencyBudget.multiSourceReadMs;
+    }
+    return latencyBudget.happyPathMs;
   }
 
   resolveFallbackMode(

@@ -1220,6 +1220,20 @@ export class AgentExecutionAdapterService {
     allowedToolCalls: RaiToolCallDto[],
     request: AgentExecutionRequest,
   ): CrmAgentIntent {
+    const ingressIntent =
+      request.semanticIngressFrame?.requestedOperation.ownerRole === "crm_agent"
+        ? request.semanticIngressFrame.requestedOperation.intent
+        : null;
+    if (ingressIntent === "lookup_counterparty_by_inn") {
+      return "lookup_counterparty_by_inn";
+    }
+    if (ingressIntent === "review_account_workspace") {
+      return "review_account_workspace";
+    }
+    if (ingressIntent === "register_counterparty") {
+      return "register_counterparty";
+    }
+
     if (allowedToolCalls.length > 0) {
       return detectCrmIntent(allowedToolCalls, request.message);
     }

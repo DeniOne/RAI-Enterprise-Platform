@@ -169,6 +169,66 @@ describe("agent interaction contracts", () => {
     });
   });
 
+  it("понимает разговорную форму регистрации контрагента по ИНН", () => {
+    const classification = classifyByAgentContracts(
+      "Давай зарегим контрагента. ИНН 2636041493",
+      {
+        route: "/dashboard",
+      },
+    );
+
+    const toolCall = buildAutoToolCallFromContracts(
+      {
+        message: "Давай зарегим контрагента. ИНН 2636041493",
+        workspaceContext: {
+          route: "/dashboard",
+        },
+      },
+      classification,
+    );
+
+    expect(classification.targetRole).toBe("crm_agent");
+    expect(classification.intent).toBe("register_counterparty");
+    expect(toolCall).toEqual({
+      name: RaiToolName.RegisterCounterparty,
+      payload: {
+        inn: "2636041493",
+        jurisdictionCode: "RU",
+        partyType: "LEGAL_ENTITY",
+      },
+    });
+  });
+
+  it("понимает свободную формулировку заведи контрагента по ИНН", () => {
+    const classification = classifyByAgentContracts(
+      "Заведи в CRM нового контрагента по ИНН 7736207543",
+      {
+        route: "/dashboard",
+      },
+    );
+
+    const toolCall = buildAutoToolCallFromContracts(
+      {
+        message: "Заведи в CRM нового контрагента по ИНН 7736207543",
+        workspaceContext: {
+          route: "/dashboard",
+        },
+      },
+      classification,
+    );
+
+    expect(classification.targetRole).toBe("crm_agent");
+    expect(classification.intent).toBe("register_counterparty");
+    expect(toolCall).toEqual({
+      name: RaiToolName.RegisterCounterparty,
+      payload: {
+        inn: "7736207543",
+        jurisdictionCode: "RU",
+        partyType: "LEGAL_ENTITY",
+      },
+    });
+  });
+
   it("классифицирует создание контакта в CRM", () => {
     const result = classifyByAgentContracts(
       'добавь контакт "Иван Петров" в карточку клиента',

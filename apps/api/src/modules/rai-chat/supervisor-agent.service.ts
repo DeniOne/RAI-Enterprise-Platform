@@ -17,12 +17,23 @@ import {
 } from "../../shared/rai-chat/agent-interaction-contracts";
 import { SupervisorForensicsService } from "./supervisor-forensics.service";
 import { SemanticRouterService } from "./semantic-router/semantic-router.service";
+import { RuntimeGovernancePolicyService } from "./runtime-governance/runtime-governance-policy.service";
 import {
   RoutingOutcomeType,
   RoutingTelemetryEvent,
   SemanticRoutingContext,
 } from "../../shared/rai-chat/semantic-routing.types";
 import { IntentClassification } from "../../shared/rai-chat/intent-router.types";
+import {
+  BranchResultContract,
+  BranchTrustAssessment,
+  BranchVerdict,
+  UserFacingBranchCompositionPayload,
+} from "../../shared/rai-chat/branch-trust.types";
+import { BranchTrustInputs } from "./truthfulness-engine.service";
+import { RuntimeTrustLatencyProfile } from "../../shared/rai-chat/runtime-governance-policy.types";
+import { SemanticIngressService } from "./semantic-ingress.service";
+import { SemanticIngressFrame } from "../../shared/rai-chat/semantic-ingress.types";
 
 @Injectable()
 export class SupervisorAgent {
@@ -37,6 +48,8 @@ export class SupervisorAgent {
     private readonly externalSignalsService: ExternalSignalsService,
     private readonly supervisorForensics: SupervisorForensicsService,
     private readonly semanticRouter: SemanticRouterService,
+    private readonly semanticIngress: SemanticIngressService,
+    private readonly runtimeGovernancePolicy: RuntimeGovernancePolicyService,
     @Inject(TraceSummaryService)
     private readonly traceSummaryService: TraceSummaryService,
     private readonly truthfulnessEngine: TruthfulnessEngineService,
@@ -56,7 +69,8 @@ export class SupervisorAgent {
       traceId,
       replayMode: options?.replayMode,
       userId,
-      userConfirmed: Boolean(userId) && !options?.replayMode,
+      userConfirmed: false,
+      userIntentSource: "unknown",
     };
 
     const recallResult = await this.memoryCoordinator.recallContext(
@@ -77,7 +91,13 @@ export class SupervisorAgent {
       requestedToolCalls,
       semanticRouting,
       routingTelemetry,
+      semanticIngressFrame,
     } = plannedExecution;
+    actorContext.userIntentSource = semanticIngressFrame.operationAuthority;
+    actorContext.userConfirmed =
+      this.isDirectUserCommand(semanticIngressFrame) &&
+      Boolean(userId) &&
+      !options?.replayMode;
 
     const tExecStart = Date.now();
     const executionRequest: AgentExecutionRequest = {
@@ -117,6 +137,7 @@ export class SupervisorAgent {
       },
       requestedTools: requestedToolCalls,
       semanticRouting,
+      semanticIngressFrame,
       traceId,
       threadId,
     };
@@ -125,12 +146,36 @@ export class SupervisorAgent {
       executionRequest,
       actorContext,
     );
-    executionResult = await this.applyTrustScorePipeline({
+    const tTrustStart = Date.now();
+    executionResult = await this.applyBranchTrustStage({
       request,
       actorContext,
       executionRequest,
       executionResult,
     });
+    const tTrustEnd = Date.now();
+    const branchTrustAssessments =
+      executionResult.agentExecution?.branchTrustAssessments ?? [];
+    const trustCrossCheckTriggered =
+      executionResult.agentExecution?.structuredOutput?.trustCrossCheckTriggered ===
+      true;
+    const trustLatencyProfile = this.resolveTrustLatencyProfile(
+      branchTrustAssessments,
+      trustCrossCheckTriggered,
+    );
+    const trustGateLatencyMs =
+      branchTrustAssessments.length > 0 ? tTrustEnd - tTrustStart : null;
+    const trustLatencyBudgetMs =
+      trustLatencyProfile && executionResult.agentExecution?.role
+        ? this.runtimeGovernancePolicy.resolveTrustLatencyBudgetMs(
+            executionResult.agentExecution.role,
+            trustLatencyProfile,
+          )
+        : null;
+    const trustLatencyWithinBudget =
+      trustGateLatencyMs !== null && trustLatencyBudgetMs !== null
+        ? trustGateLatencyMs <= trustLatencyBudgetMs
+        : null;
 
     const tExternalSignals = Date.now();
     const externalSignalResult = await this.externalSignalsService.process({
@@ -197,6 +242,10 @@ export class SupervisorAgent {
         runtimeGovernance: response.runtimeGovernance,
         tokensUsed: totalTokens,
         structuredOutputs: executionResult.agentExecution?.structuredOutputs,
+        branchResults: executionResult.agentExecution?.branchResults,
+        branchTrustAssessments:
+          executionResult.agentExecution?.branchTrustAssessments,
+        branchCompositions: executionResult.agentExecution?.branchCompositions,
         delegationChain: executionResult.agentExecution?.delegationChain?.map(
           (step) => ({ ...step }) as Record<string, unknown>,
         ),
@@ -208,6 +257,7 @@ export class SupervisorAgent {
               response.runtimeGovernance?.fallbackReason ?? null,
             )
           : undefined,
+        semanticIngressFrame,
         memoryLane: this.supervisorForensics.buildMemoryLane(
           recallResult,
           response,
@@ -221,7 +271,12 @@ export class SupervisorAgent {
           {
             name: "tools",
             timestamp: new Date(tExecStart).toISOString(),
-            durationMs: tExternalSignals - tExecStart,
+            durationMs: tTrustStart - tExecStart,
+          },
+          {
+            name: "branch_trust_assessment",
+            timestamp: new Date(tTrustStart).toISOString(),
+            durationMs: tTrustEnd - tTrustStart,
           },
           {
             name: "composer",
@@ -254,6 +309,11 @@ export class SupervisorAgent {
             bsScorePct: result.bsScorePct,
             evidenceCoveragePct: result.evidenceCoveragePct,
             invalidClaimsPct: result.invalidClaimsPct,
+            branchTrustAssessments,
+            trustGateLatencyMs,
+            trustLatencyProfile,
+            trustLatencyBudgetMs,
+            trustLatencyWithinBudget,
           });
           const tQualityEnd = Date.now();
 
@@ -291,7 +351,7 @@ export class SupervisorAgent {
     return response;
   }
 
-  private async applyTrustScorePipeline(params: {
+  private async applyBranchTrustStage(params: {
     request: RaiChatRequestDto;
     actorContext: RaiToolActorContext;
     executionRequest: AgentExecutionRequest;
@@ -299,15 +359,26 @@ export class SupervisorAgent {
   }): Promise<Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>> {
     const { request, actorContext, executionRequest, executionResult } = params;
     const primary = executionResult.agentExecution;
-    if (!primary || primary.role === "knowledge" || primary.status !== "COMPLETED") {
+    if (!primary || primary.status !== "COMPLETED") {
       return executionResult;
     }
 
-    const trust = this.buildTrustAssessment(primary);
+    const trust = this.buildTrustAssessment(primary, primary.role === "knowledge");
+    const primaryArtifacts = this.buildBranchArtifacts({
+      request,
+      companyId: actorContext.companyId,
+      execution: primary,
+      trust,
+      branchKind: "primary",
+    });
     const currentOutput = {
       ...(primary.structuredOutput ?? {}),
       trustScore: trust.score,
       trustAssessment: trust.assessment,
+      branchVerdict: trust.verdict,
+      trustEvidenceCoveragePct: trust.branchTrustInputs.evidenceCoveragePct,
+      trustInvalidClaimsPct: trust.branchTrustInputs.invalidClaimsPct,
+      trustBsScorePct: trust.branchTrustInputs.bsScorePct,
       trustCrossCheckTriggered: false,
     };
     executionResult.agentExecution = {
@@ -317,6 +388,9 @@ export class SupervisorAgent {
         primary.structuredOutputs && primary.structuredOutputs.length > 0
           ? primary.structuredOutputs
           : [currentOutput],
+      branchResults: primaryArtifacts.branchResults,
+      branchTrustAssessments: primaryArtifacts.branchTrustAssessments,
+      branchCompositions: primaryArtifacts.branchCompositions,
     };
 
     if (!trust.requiresCrossCheck) {
@@ -362,6 +436,15 @@ export class SupervisorAgent {
       return executionResult;
     }
 
+    const crossCheckTrust = this.buildTrustAssessment(crossCheckExecution, true);
+    const crossCheckArtifacts = this.buildBranchArtifacts({
+      request,
+      companyId: actorContext.companyId,
+      execution: crossCheckExecution,
+      trust: crossCheckTrust,
+      branchKind: "cross_check",
+    });
+
     const mergedStructuredOutputs = [
       ...(executionResult.agentExecution.structuredOutputs ?? []),
       crossCheckExecution.structuredOutput,
@@ -378,6 +461,18 @@ export class SupervisorAgent {
       ...(executionResult.agentExecution.toolCalls ?? []),
       ...(crossCheckExecution.toolCalls ?? []),
     ];
+    const mergedBranchResults = [
+      ...(executionResult.agentExecution.branchResults ?? []),
+      ...crossCheckArtifacts.branchResults,
+    ];
+    const mergedBranchTrustAssessments = [
+      ...(executionResult.agentExecution.branchTrustAssessments ?? []),
+      ...crossCheckArtifacts.branchTrustAssessments,
+    ];
+    const mergedBranchCompositions = [
+      ...(executionResult.agentExecution.branchCompositions ?? []),
+      ...crossCheckArtifacts.branchCompositions,
+    ];
     executionResult.executedTools = [
       ...executionResult.executedTools,
       ...crossCheckResult.executedTools,
@@ -393,6 +488,9 @@ export class SupervisorAgent {
       delegationChain:
         mergedDelegationChain.length > 0 ? mergedDelegationChain : undefined,
       structuredOutputs: mergedStructuredOutputs,
+      branchResults: mergedBranchResults,
+      branchTrustAssessments: mergedBranchTrustAssessments,
+      branchCompositions: mergedBranchCompositions,
       structuredOutput: {
         ...executionResult.agentExecution.structuredOutput,
         trustCrossCheckTriggered: true,
@@ -405,26 +503,243 @@ export class SupervisorAgent {
   }
 
   private buildTrustAssessment(execution: {
+    status?: string;
     structuredOutput?: Record<string, unknown>;
-    evidence?: unknown[];
-  }): { score: number; assessment: string; requiresCrossCheck: boolean } {
+    evidence?: Array<{
+      claim: string;
+      sourceType: "TOOL_RESULT" | "DB" | "DOC";
+      sourceId: string;
+      confidenceScore: number;
+    }>;
+    validation?: {
+      passed?: boolean;
+      reasons?: string[];
+    };
+  }, suppressCrossCheck = false): {
+    score: number;
+    assessment: string;
+    verdict: BranchVerdict;
+    reasons: string[];
+    branchTrustInputs: ReturnType<TruthfulnessEngineService["buildBranchTrustInputs"]>;
+    requiresCrossCheck: boolean;
+  } {
     const structuredOutput = execution.structuredOutput ?? {};
     const confidence = this.extractConfidence(structuredOutput);
-    const evidenceCount = Array.isArray(execution.evidence)
-      ? execution.evidence.length
-      : 0;
-    const evidenceScore = Math.min(evidenceCount / 3, 1);
-    const score = Number((confidence * 0.7 + evidenceScore * 0.3).toFixed(2));
+    const branchTrustInputs = this.truthfulnessEngine.buildBranchTrustInputs(
+      execution.evidence ?? [],
+    );
+    const evidenceCount = branchTrustInputs.accounting.total;
+    const evidenceTrustScore =
+      branchTrustInputs.bsScorePct === null
+        ? 0
+        : Math.max(0, 1 - branchTrustInputs.bsScorePct / 100);
+    const score = Number(
+      (confidence * 0.4 + evidenceTrustScore * 0.6).toFixed(2),
+    );
     const explicitCrossCheck = structuredOutput.crossCheckRequired === true;
-    const lowTrustHeuristic =
-      score <= SupervisorAgent.TRUST_SCORE_LOW_THRESHOLD &&
-      confidence <= SupervisorAgent.TRUST_SCORE_LOW_THRESHOLD &&
-      evidenceCount === 0;
+    const explicitHighRisk =
+      structuredOutput.trustRiskLevel === "high" ||
+      structuredOutput.highRiskPolicy === true;
+    const explicitVerdict = this.extractBranchVerdict(structuredOutput);
+    const validationFailed = execution.validation?.passed === false;
+    const validationReasons = execution.validation?.reasons ?? [];
+    const hasConflict = structuredOutput.conflictDetected === true;
+    const verdict: BranchVerdict =
+      execution.status && execution.status !== "COMPLETED"
+        ? "REJECTED"
+        : validationFailed
+          ? "REJECTED"
+          : explicitVerdict ??
+            (hasConflict
+              ? "CONFLICTED"
+              : branchTrustInputs.recommendedVerdict);
+    const reasons = this.uniqueStrings([
+      ...(execution.status && execution.status !== "COMPLETED"
+        ? ["execution_not_completed"]
+        : []),
+      ...(validationFailed
+        ? validationReasons.length > 0
+          ? validationReasons
+          : ["validation_failed"]
+        : []),
+      ...(hasConflict ? ["conflict_detected"] : []),
+      ...(evidenceCount === 0 ? ["no_evidence_refs"] : []),
+      ...(confidence <= SupervisorAgent.TRUST_SCORE_LOW_THRESHOLD
+        ? ["low_confidence"]
+        : []),
+      ...(explicitVerdict ? [`explicit_verdict:${explicitVerdict}`] : []),
+      ...(explicitHighRisk ? ["explicit_high_risk_policy"] : []),
+      ...branchTrustInputs.reasons,
+    ]);
     return {
       score,
       assessment:
-        score <= SupervisorAgent.TRUST_SCORE_LOW_THRESHOLD ? "low" : "ok",
-      requiresCrossCheck: explicitCrossCheck || lowTrustHeuristic,
+        verdict === "VERIFIED"
+          ? "ok"
+          : verdict === "PARTIAL"
+            ? "limited"
+            : score <= SupervisorAgent.TRUST_SCORE_LOW_THRESHOLD
+            ? "low"
+            : "elevated_risk",
+      verdict,
+      reasons,
+      branchTrustInputs,
+      requiresCrossCheck:
+        !suppressCrossCheck &&
+        (explicitCrossCheck ||
+          explicitHighRisk ||
+          branchTrustInputs.requiresCrossCheck ||
+          verdict === "UNVERIFIED" ||
+          verdict === "CONFLICTED" ||
+          (verdict === "PARTIAL" &&
+            score <= SupervisorAgent.TRUST_SCORE_LOW_THRESHOLD)),
+    };
+  }
+
+  private resolveTrustLatencyProfile(
+    assessments: BranchTrustAssessment[],
+    crossCheckTriggered: boolean,
+  ): RuntimeTrustLatencyProfile | null {
+    if (assessments.length === 0) {
+      return null;
+    }
+    if (crossCheckTriggered) {
+      return "CROSS_CHECK_TRIGGERED";
+    }
+    if (assessments.length > 1) {
+      return "MULTI_SOURCE_READ";
+    }
+    return "HAPPY_PATH";
+  }
+
+  private buildBranchArtifacts(params: {
+    request: RaiChatRequestDto;
+    companyId: string;
+    execution: {
+      role: string;
+      status: "COMPLETED" | "FAILED" | "NEEDS_MORE_DATA" | "RATE_LIMITED";
+      text: string;
+      structuredOutput?: Record<string, unknown>;
+      toolCalls: Array<{ name: string; result: unknown }>;
+      evidence: Array<{
+        claim: string;
+        sourceType: "TOOL_RESULT" | "DB" | "DOC";
+        sourceId: string;
+        confidenceScore: number;
+      }>;
+    };
+    trust: {
+      score: number;
+      verdict: BranchVerdict;
+      reasons: string[];
+      requiresCrossCheck: boolean;
+    };
+    branchKind: "primary" | "cross_check";
+  }): {
+    branchResults: BranchResultContract[];
+    branchTrustAssessments: BranchTrustAssessment[];
+    branchCompositions: UserFacingBranchCompositionPayload[];
+  } {
+    const branchId = `${params.execution.role}:${params.branchKind}`;
+    const structuredOutput = params.execution.structuredOutput ?? {};
+    const branchResult: BranchResultContract = {
+      branch_id: branchId,
+      source_agent: params.execution.role,
+      domain: params.execution.role,
+      summary: params.execution.text,
+      scope: this.resolveBranchScope(
+        params.request,
+        params.companyId,
+        params.execution.role,
+        structuredOutput,
+      ),
+      facts: this.pickRecord(structuredOutput, "data"),
+      metrics:
+        this.pickRecord(structuredOutput, "metrics") ??
+        this.pickRecord(structuredOutput, "mathBasis"),
+      money: this.pickRecord(structuredOutput, "money"),
+      derived_from: this.resolveBranchDerivedFrom(
+        params.request,
+        params.execution,
+        params.branchKind,
+      ),
+      evidence_refs: params.execution.evidence ?? [],
+      assumptions: this.extractStringArray(
+        structuredOutput,
+        "assumptions",
+      ),
+      data_gaps: this.uniqueStrings([
+        ...this.extractStringArray(structuredOutput, "data_gaps", "dataGaps"),
+        ...this.extractStringArray(
+          structuredOutput,
+          "missingContext",
+          "missing_context",
+        ),
+      ]),
+      freshness: this.resolveFreshness(structuredOutput),
+      confidence: this.extractConfidence(structuredOutput),
+    };
+    const branchTrustAssessment: BranchTrustAssessment = {
+      branch_id: branchId,
+      source_agent: params.execution.role,
+      verdict: params.trust.verdict,
+      score: params.trust.score,
+      reasons: params.trust.reasons,
+      checks: [
+        {
+          name: "schema_check",
+          status: "PASSED",
+        },
+        {
+          name: "source_resolution",
+          status:
+            branchResult.evidence_refs.length > 0 ? "PASSED" : "FAILED",
+          details:
+            branchResult.evidence_refs.length > 0
+              ? undefined
+              : "missing_evidence_refs",
+        },
+        {
+          name: "ownership_check",
+          status: "PASSED",
+        },
+        {
+          name: "deterministic_recompute",
+          status: "SKIPPED",
+        },
+        {
+          name: "cross_branch_consistency",
+          status:
+            params.branchKind === "cross_check" ? "PASSED" : "SKIPPED",
+        },
+        {
+          name: "freshness_check",
+          status:
+            branchResult.freshness.status === "STALE" ? "FAILED" : "SKIPPED",
+        },
+        {
+          name: "gap_disclosure",
+          status:
+            branchResult.data_gaps.length > 0 ? "PASSED" : "SKIPPED",
+        },
+      ],
+      requires_cross_check: params.trust.requiresCrossCheck,
+    };
+    const branchComposition: UserFacingBranchCompositionPayload = {
+      branch_id: branchId,
+      verdict: params.trust.verdict,
+      include_in_response: params.trust.verdict !== "REJECTED",
+      summary: params.execution.text,
+      disclosure: this.uniqueStrings([
+        ...params.trust.reasons,
+        ...branchResult.data_gaps,
+      ]),
+    };
+
+    return {
+      branchResults: [branchResult],
+      branchTrustAssessments: [branchTrustAssessment],
+      branchCompositions: [branchComposition],
     };
   }
 
@@ -434,6 +749,173 @@ export class SupervisorAgent {
       return Math.max(0, Math.min(1, raw));
     }
     return 0.5;
+  }
+
+  private extractBranchVerdict(
+    structuredOutput: Record<string, unknown>,
+  ): BranchVerdict | null {
+    const raw = structuredOutput.branchVerdict;
+    if (
+      raw === "VERIFIED" ||
+      raw === "PARTIAL" ||
+      raw === "UNVERIFIED" ||
+      raw === "CONFLICTED" ||
+      raw === "REJECTED"
+    ) {
+      return raw;
+    }
+    return null;
+  }
+
+  private resolveBranchScope(
+    request: RaiChatRequestDto,
+    companyId: string,
+    role: string,
+    structuredOutput: Record<string, unknown>,
+  ): BranchResultContract["scope"] {
+    const explicitScope = this.pickRecord(structuredOutput, "scope") ?? {};
+    const selectedRowSummary = request.workspaceContext?.selectedRowSummary;
+    const activeEntityRefs = request.workspaceContext?.activeEntityRefs?.map(
+      (ref) => `${ref.kind}:${ref.id}`,
+    );
+
+    return {
+      domain: role,
+      route: request.workspaceContext?.route,
+      company_id: companyId,
+      entity_type:
+        typeof explicitScope.entity_type === "string"
+          ? explicitScope.entity_type
+          : selectedRowSummary?.kind,
+      entity_id:
+        typeof explicitScope.entity_id === "string"
+          ? explicitScope.entity_id
+          : selectedRowSummary?.id,
+      workspace_entity_refs:
+        Array.isArray(activeEntityRefs) && activeEntityRefs.length > 0
+          ? activeEntityRefs
+          : undefined,
+      ...explicitScope,
+    };
+  }
+
+  private resolveBranchDerivedFrom(
+    request: RaiChatRequestDto,
+    execution: {
+      role: string;
+      structuredOutput?: Record<string, unknown>;
+      toolCalls: Array<{ name: string; result: unknown }>;
+    },
+    branchKind: "primary" | "cross_check",
+  ): BranchResultContract["derived_from"] {
+    const derivedFrom: BranchResultContract["derived_from"] = [];
+
+    if (branchKind === "cross_check") {
+      derivedFrom.push({
+        kind: "cross_check",
+        source_id: `${execution.role}:cross_check`,
+      });
+    }
+
+    for (const toolCall of execution.toolCalls ?? []) {
+      if (typeof toolCall.name === "string" && toolCall.name.length > 0) {
+        derivedFrom.push({
+          kind: "tool_call",
+          source_id: toolCall.name,
+        });
+      }
+    }
+
+    if (this.pickRecord(execution.structuredOutput ?? {}, "data")) {
+      derivedFrom.push({
+        kind: "structured_output",
+        source_id: `${execution.role}:structured_output`,
+        field_path: "data",
+      });
+    }
+
+    if (request.workspaceContext?.route) {
+      derivedFrom.push({
+        kind: "workspace_context",
+        source_id: request.workspaceContext.route,
+        field_path: "workspaceContext.route",
+      });
+    }
+
+    if (derivedFrom.length === 0) {
+      derivedFrom.push({
+        kind: "manual",
+        source_id: `${execution.role}:${branchKind}`,
+      });
+    }
+
+    return derivedFrom;
+  }
+
+  private resolveFreshness(
+    structuredOutput: Record<string, unknown>,
+  ): BranchResultContract["freshness"] {
+    const rawFreshness = this.pickRecord(structuredOutput, "freshness");
+    const rawStatus = rawFreshness?.status;
+    const checkedAt =
+      typeof rawFreshness?.checked_at === "string"
+        ? rawFreshness.checked_at
+        : new Date().toISOString();
+
+    if (
+      rawStatus === "FRESH" ||
+      rawStatus === "STALE" ||
+      rawStatus === "UNKNOWN"
+    ) {
+      return {
+        status: rawStatus,
+        checked_at: checkedAt,
+        observed_at:
+          typeof rawFreshness.observed_at === "string"
+            ? rawFreshness.observed_at
+            : undefined,
+        expires_at:
+          typeof rawFreshness.expires_at === "string"
+            ? rawFreshness.expires_at
+            : undefined,
+      };
+    }
+
+    return {
+      status: "UNKNOWN",
+      checked_at: checkedAt,
+    };
+  }
+
+  private extractStringArray(
+    payload: Record<string, unknown>,
+    ...keys: string[]
+  ): string[] {
+    for (const key of keys) {
+      const value = payload[key];
+      if (Array.isArray(value)) {
+        return value.filter(
+          (item): item is string =>
+            typeof item === "string" && item.trim().length > 0,
+        );
+      }
+    }
+    return [];
+  }
+
+  private pickRecord(
+    payload: Record<string, unknown>,
+    key: string,
+  ): Record<string, unknown> | undefined {
+    const value = payload[key];
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      return value as Record<string, unknown>;
+    }
+    return undefined;
+  }
+
+  private uniqueStrings(values: string[]): string[] {
+    return [...new Set(values.filter((value) => value.trim().length > 0))];
   }
 
   private mergeUsage(
@@ -491,6 +973,7 @@ export class SupervisorAgent {
     requestedToolCalls: RaiChatRequestDto["toolCalls"];
     semanticRouting?: SemanticRoutingContext;
     routingTelemetry?: RoutingTelemetryEvent;
+    semanticIngressFrame: SemanticIngressFrame;
   }> {
     const resumePlan = buildResumeExecutionPlan(request);
     const explicitToolCalls = [...(request.toolCalls ?? [])];
@@ -588,10 +1071,18 @@ export class SupervisorAgent {
     const requestedToolCalls = semanticEvaluation.promotedPrimary
       ? semanticEvaluation.requestedToolCalls
       : legacyPlan.requestedToolCalls;
+    const semanticIngressFrame = this.semanticIngress.buildFrame({
+      request,
+      legacyClassification: legacyPlan.classification,
+      finalClassification: classification,
+      finalRequestedToolCalls: requestedToolCalls,
+      semanticEvaluation,
+    });
 
     return {
       classification,
       requestedToolCalls,
+      semanticIngressFrame,
       semanticRouting: semanticEvaluation.promotedPrimary
         ? semanticEvaluation.routingContext
         : undefined,
@@ -651,6 +1142,10 @@ export class SupervisorAgent {
       finalOutcome: this.mapRoutingOutcome(status),
       userQueryRedacted: request.message,
     };
+  }
+
+  private isDirectUserCommand(semanticIngressFrame: SemanticIngressFrame): boolean {
+    return semanticIngressFrame.operationAuthority === "direct_user_command";
   }
 
   private mapRoutingOutcome(

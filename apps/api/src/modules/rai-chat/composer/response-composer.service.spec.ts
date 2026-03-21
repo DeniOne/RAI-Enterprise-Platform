@@ -615,4 +615,329 @@ describe("ResponseComposerService", () => {
       "2. Экономический cross-check подтверждает расчёт.",
     );
   });
+
+  it("строит conflict disclosure по branch verdict и не оставляет гладкий base text", async () => {
+    const response = await service.buildResponse({
+      request: {
+        message: "сверь агро и экономику",
+        threadId: "th-conflict",
+        workspaceContext: { route: "/consulting/dashboard" },
+      },
+      executionResult: {
+        executedTools: [],
+        agentExecution: {
+          role: "agronomist",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Гладкий ответ, который нельзя показывать как факт.",
+          structuredOutput: {
+            summary: "Агрономическая ветка",
+          },
+          branchResults: [
+            {
+              branch_id: "agro:primary",
+              source_agent: "agronomist",
+              domain: "agro",
+              summary: "Агро-ветка утверждает один результат.",
+              scope: { domain: "agro" },
+              derived_from: [],
+              evidence_refs: [],
+              assumptions: [],
+              data_gaps: [],
+              freshness: { status: "UNKNOWN" },
+              confidence: 0.8,
+            },
+          ],
+          branchTrustAssessments: [
+            {
+              branch_id: "agro:primary",
+              source_agent: "agronomist",
+              verdict: "CONFLICTED",
+              score: 0.2,
+              reasons: ["conflict_detected", "mixed_evidence_quality"],
+              checks: [],
+              requires_cross_check: true,
+            },
+          ],
+          branchCompositions: [
+            {
+              branch_id: "agro:primary",
+              verdict: "CONFLICTED",
+              include_in_response: false,
+              summary: "Агро-ветка утверждает один результат.",
+              disclosure: ["conflict_detected"],
+            },
+          ],
+          toolCalls: [],
+          connectorCalls: [],
+          evidence: [],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "agronom-v1",
+          },
+        },
+      } as any,
+      recallResult: {
+        recall: { items: [] },
+        profile: {},
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-conflict",
+      threadId: "th-conflict",
+      companyId: "company-1",
+    });
+
+    expect(response.text).toContain("Обнаружено расхождение между ветками");
+    expect(response.text).toContain("Я не буду выдавать это как подтверждённый факт");
+    expect(response.text).toContain("Агро-ветка утверждает один результат.");
+    expect(response.text).not.toContain("Гладкий ответ, который нельзя показывать как факт.");
+  });
+
+  it("для PARTIAL всегда добавляет ограничения", async () => {
+    const response = await service.buildResponse({
+      request: {
+        message: "собери частично подтверждённый ответ",
+        threadId: "th-partial",
+        workspaceContext: { route: "/consulting/dashboard" },
+      },
+      executionResult: {
+        executedTools: [],
+        agentExecution: {
+          role: "economist",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Первичный ответ экономиста.",
+          structuredOutput: {
+            summary: "Экономическая ветка.",
+          },
+          branchResults: [
+            {
+              branch_id: "finance:primary",
+              source_agent: "economist",
+              domain: "finance",
+              summary: "Стоимость подтверждена частично.",
+              scope: { domain: "finance" },
+              derived_from: [],
+              evidence_refs: [],
+              assumptions: [],
+              data_gaps: ["нет части первичных документов"],
+              freshness: { status: "UNKNOWN" },
+              confidence: 0.6,
+            },
+          ],
+          branchTrustAssessments: [
+            {
+              branch_id: "finance:primary",
+              source_agent: "economist",
+              verdict: "PARTIAL",
+              score: 0.55,
+              reasons: ["partial_evidence_coverage"],
+              checks: [],
+              requires_cross_check: false,
+            },
+          ],
+          branchCompositions: [
+            {
+              branch_id: "finance:primary",
+              verdict: "PARTIAL",
+              include_in_response: true,
+              summary: "Стоимость подтверждена частично.",
+              disclosure: ["нет части первичных документов"],
+            },
+          ],
+          toolCalls: [],
+          connectorCalls: [],
+          evidence: [],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "economist-v1",
+          },
+        },
+      } as any,
+      recallResult: {
+        recall: { items: [] },
+        profile: {},
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-partial",
+      threadId: "th-partial",
+      companyId: "company-1",
+    });
+
+    expect(response.text).toContain("Частично подтверждено:");
+    expect(response.text).toContain("Стоимость подтверждена частично.");
+    expect(response.text).toContain("Ограничения:");
+    expect(response.text).toContain("нет части первичных документов");
+  });
+
+  it("собирает подтверждённый факт только из разрешённых веток", async () => {
+    const response = await service.buildResponse({
+      request: {
+        message: "собери подтверждённый факт",
+        threadId: "th-verified-only",
+        workspaceContext: { route: "/consulting/dashboard" },
+      },
+      executionResult: {
+        executedTools: [],
+        agentExecution: {
+          role: "agronomist",
+          status: "COMPLETED",
+          executionPath: "tool_call_primary",
+          text: "Базовый текст.",
+          structuredOutput: {
+            summary: "Базовый текст.",
+          },
+          branchResults: [
+            {
+              branch_id: "agro:primary",
+              source_agent: "agronomist",
+              domain: "agro",
+              summary: "Подтверждён факт внесения 120 кг/га.",
+              scope: { domain: "agro" },
+              derived_from: [],
+              evidence_refs: [],
+              assumptions: [],
+              data_gaps: [],
+              freshness: { status: "UNKNOWN" },
+              confidence: 0.9,
+            },
+            {
+              branch_id: "finance:advisory",
+              source_agent: "economist",
+              domain: "finance",
+              summary: "Неподтверждённая стоимость 999999 руб.",
+              scope: { domain: "finance" },
+              derived_from: [],
+              evidence_refs: [],
+              assumptions: [],
+              data_gaps: [],
+              freshness: { status: "UNKNOWN" },
+              confidence: 0.2,
+            },
+          ],
+          branchTrustAssessments: [
+            {
+              branch_id: "agro:primary",
+              source_agent: "agronomist",
+              verdict: "VERIFIED",
+              score: 0.95,
+              reasons: [],
+              checks: [],
+              requires_cross_check: false,
+            },
+            {
+              branch_id: "finance:advisory",
+              source_agent: "economist",
+              verdict: "UNVERIFIED",
+              score: 0.2,
+              reasons: ["no_evidence_refs"],
+              checks: [],
+              requires_cross_check: true,
+            },
+          ],
+          branchCompositions: [
+            {
+              branch_id: "agro:primary",
+              verdict: "VERIFIED",
+              include_in_response: true,
+              summary: "Подтверждён факт внесения 120 кг/га.",
+              disclosure: [],
+            },
+            {
+              branch_id: "finance:advisory",
+              verdict: "UNVERIFIED",
+              include_in_response: false,
+              summary: "Неподтверждённая стоимость 999999 руб.",
+              disclosure: ["no_evidence_refs"],
+            },
+          ],
+          toolCalls: [],
+          connectorCalls: [],
+          evidence: [],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "agronom-v1",
+          },
+        },
+      } as any,
+      recallResult: {
+        recall: { items: [] },
+        profile: {},
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-verified-only",
+      threadId: "th-verified-only",
+      companyId: "company-1",
+    });
+
+    expect(response.text).toContain("Подтверждённый факт:");
+    expect(response.text).toContain("Подтверждён факт внесения 120 кг/га.");
+    expect(response.text).toContain("Часть веток не включена в подтверждённые факты: UNVERIFIED.");
+    expect(response.text).not.toContain("Неподтверждённая стоимость 999999 руб.");
+    expect(response.branchTrustAssessments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          branch_id: "agro:primary",
+          verdict: "VERIFIED",
+        }),
+      ]),
+    );
+    expect(response.trustSummary).toEqual(
+      expect.objectContaining({
+        verdict: "PARTIAL",
+        label: "Частично подтверждено",
+        branchCount: 2,
+        verifiedCount: 1,
+        unverifiedCount: 1,
+        crossCheckCount: 1,
+      }),
+    );
+    const trustWindow = response.workWindows?.find(
+      (window) =>
+        window.type === "structured_result" &&
+        window.payload.intentId === "branch_trust_summary",
+    );
+    const trustSignalsWindow = response.workWindows?.find(
+      (window) =>
+        window.type === "related_signals" &&
+        window.payload.intentId === "branch_trust_summary",
+    );
+    expect(trustWindow).toEqual(
+      expect.objectContaining({
+        title: "Статус подтверждения ответа",
+        payload: expect.objectContaining({
+          summary: expect.stringContaining("Подтверждённые ветки есть"),
+        }),
+      }),
+    );
+    expect(trustSignalsWindow?.payload.signalItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          text: expect.stringContaining("economist"),
+        }),
+      ]),
+    );
+    expect(response.activeWindowId).toBe(trustWindow?.windowId);
+  });
 });

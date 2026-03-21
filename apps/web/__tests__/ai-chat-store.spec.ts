@@ -216,6 +216,249 @@ describe('AiChatStore UX modes', () => {
         expect(useAiChatStore.getState().sessions[0].threadId).toBe('thread-1');
     });
 
+    it('derives trust summary, trust windows and trust signals from branch trust artifacts', async () => {
+        fetchMock.mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                text: 'Подтверждённая цена есть, но часть входных данных требует раскрытия ограничений.',
+                widgets: [],
+                memoryUsed: [],
+                threadId: 'thread-trust',
+                branchResults: [
+                    {
+                        branch_id: 'branch-economist',
+                        source_agent: 'economist',
+                        domain: 'finance',
+                        summary: 'Плановая цена подтверждена по расчёту сезона.',
+                        scope: { domain: 'finance', route: '/consulting/yield' },
+                        facts: { plannedPrice: 12500 },
+                        metrics: {},
+                        money: {},
+                        derived_from: [],
+                        evidence_refs: [],
+                        assumptions: [],
+                        data_gaps: [],
+                        freshness: { status: 'FRESH' },
+                        confidence: 0.91,
+                    },
+                    {
+                        branch_id: 'branch-knowledge',
+                        source_agent: 'knowledge',
+                        domain: 'knowledge',
+                        summary: 'Есть справочная заметка без полного подтверждения.',
+                        scope: { domain: 'knowledge', route: '/consulting/yield' },
+                        facts: {},
+                        metrics: {},
+                        money: {},
+                        derived_from: [],
+                        evidence_refs: [],
+                        assumptions: [],
+                        data_gaps: ['Нет свежего подтверждения'],
+                        freshness: { status: 'UNKNOWN' },
+                        confidence: 0.52,
+                    },
+                ],
+                branchTrustAssessments: [
+                    {
+                        branch_id: 'branch-economist',
+                        source_agent: 'economist',
+                        verdict: 'VERIFIED',
+                        score: 0.94,
+                        reasons: [],
+                        checks: [],
+                        requires_cross_check: false,
+                    },
+                    {
+                        branch_id: 'branch-knowledge',
+                        source_agent: 'knowledge',
+                        verdict: 'UNVERIFIED',
+                        score: 0.41,
+                        reasons: ['Нет подтверждения из актуального источника'],
+                        checks: [],
+                        requires_cross_check: true,
+                    },
+                ],
+                branchCompositions: [
+                    {
+                        branch_id: 'branch-economist',
+                        verdict: 'VERIFIED',
+                        include_in_response: true,
+                        summary: 'Плановая цена подтверждена по расчёту сезона.',
+                        disclosure: [],
+                    },
+                    {
+                        branch_id: 'branch-knowledge',
+                        verdict: 'UNVERIFIED',
+                        include_in_response: false,
+                        summary: 'Справочная заметка без полного подтверждения.',
+                        disclosure: ['Данных недостаточно для установленного факта'],
+                    },
+                ],
+            }),
+        });
+
+        useAiChatStore.setState({ fsmState: 'open' });
+
+        await act(async () => {
+            await useAiChatStore.getState().sendMessage('Покажи подтверждение цены');
+        });
+
+        const assistantMessage = useAiChatStore.getState().messages.at(-1);
+
+        expect(assistantMessage?.trustSummary).toEqual(
+            expect.objectContaining({
+                verdict: 'PARTIAL',
+                verifiedCount: 1,
+                unverifiedCount: 1,
+                crossCheckCount: 1,
+            }),
+        );
+        expect(useAiChatStore.getState().workWindows).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    type: 'structured_result',
+                    title: 'Статус подтверждения ответа',
+                    payload: expect.objectContaining({
+                        intentId: 'branch_trust_summary',
+                    }),
+                }),
+                expect.objectContaining({
+                    type: 'related_signals',
+                    title: 'Сигналы подтверждения',
+                    payload: expect.objectContaining({
+                        intentId: 'branch_trust_summary',
+                        signalItems: expect.arrayContaining([
+                            expect.objectContaining({
+                                text: expect.stringContaining('knowledge'),
+                            }),
+                        ]),
+                    }),
+                }),
+            ]),
+        );
+        expect(useAiChatStore.getState().signals).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    text: expect.stringContaining('Ограничение'),
+                }),
+            ]),
+        );
+    });
+
+    it('does not duplicate trust windows when backend already returns canonical branch_trust_summary windows', async () => {
+        fetchMock.mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                text: 'Ответ подтверждён с ограничениями.',
+                widgets: [],
+                memoryUsed: [],
+                threadId: 'thread-trust-canonical',
+                activeWindowId: 'win-branch-trust-thread-trust-canonical',
+                trustSummary: {
+                    verdict: 'VERIFIED',
+                    label: 'Подтверждено backend',
+                    tone: 'info',
+                    summary: 'Backend trust summary имеет приоритет.',
+                    disclosure: ['backend-summary'],
+                    branchCount: 1,
+                    verifiedCount: 1,
+                    partialCount: 0,
+                    unverifiedCount: 0,
+                    conflictedCount: 0,
+                    rejectedCount: 0,
+                    crossCheckCount: 0,
+                    branches: [
+                        {
+                            branchId: 'branch-primary',
+                            sourceAgent: 'agronomist',
+                            verdict: 'VERIFIED',
+                            label: 'Подтверждено backend',
+                            summary: 'Backend branch summary.',
+                            disclosure: [],
+                        },
+                    ],
+                },
+                branchResults: [
+                    {
+                        branch_id: 'branch-primary',
+                        source_agent: 'agronomist',
+                        domain: 'agro',
+                        summary: 'Факт подтверждён.',
+                        scope: { domain: 'agro' },
+                        facts: {},
+                        metrics: {},
+                        money: {},
+                        derived_from: [],
+                        evidence_refs: [],
+                        assumptions: [],
+                        data_gaps: [],
+                        freshness: { status: 'FRESH' },
+                        confidence: 0.91,
+                    },
+                ],
+                branchTrustAssessments: [
+                    {
+                        branch_id: 'branch-primary',
+                        source_agent: 'agronomist',
+                        verdict: 'VERIFIED',
+                        score: 0.93,
+                        reasons: [],
+                        checks: [],
+                        requires_cross_check: false,
+                    },
+                ],
+                branchCompositions: [
+                    {
+                        branch_id: 'branch-primary',
+                        verdict: 'VERIFIED',
+                        include_in_response: true,
+                        summary: 'Факт подтверждён.',
+                        disclosure: [],
+                    },
+                ],
+                workWindows: [
+                    {
+                        windowId: 'win-branch-trust-thread-trust-canonical',
+                        originMessageId: null,
+                        agentRole: 'supervisor',
+                        type: 'structured_result',
+                        category: 'analysis',
+                        priority: 26,
+                        mode: 'inline',
+                        title: 'Статус подтверждения ответа',
+                        status: 'informational',
+                        payload: {
+                            intentId: 'branch_trust_summary',
+                            summary: 'Ответ подтверждён.',
+                            missingKeys: [],
+                        },
+                        actions: [],
+                        isPinned: false,
+                    },
+                ],
+            }),
+        });
+
+        useAiChatStore.setState({ fsmState: 'open' });
+
+        await act(async () => {
+            await useAiChatStore.getState().sendMessage('Проверь подтверждение');
+        });
+
+        expect(
+            useAiChatStore.getState().workWindows.filter(
+                (window) => window.payload.intentId === 'branch_trust_summary',
+            ),
+        ).toHaveLength(1);
+        expect(useAiChatStore.getState().messages.at(-1)?.trustSummary).toEqual(
+            expect.objectContaining({
+                verdict: 'VERIFIED',
+                label: 'Подтверждено backend',
+                summary: 'Backend trust summary имеет приоритет.',
+            }),
+        );
+    });
+
     it('opens TechCouncil modal locally for the "открой техсовет" command without API call', async () => {
         useAiChatStore.setState({
             fsmState: 'open',
@@ -473,7 +716,9 @@ describe('AiChatStore UX modes', () => {
                     title: 'Отклонения по маршруту consulting / execution',
                     status: 'completed',
                     payload: {
+                        intentId: 'query_knowledge',
                         summary: 'Старый route-based сигнал',
+                        missingKeys: [],
                         signalItems: [
                             {
                                 id: 'legacy-signal-1',

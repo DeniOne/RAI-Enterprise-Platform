@@ -18,9 +18,19 @@ export const TraceSummaryDtoSchema = z.object({
   evidenceCoveragePct: z.number().min(0).max(100).nullable(),
   invalidClaimsPct: z.number().min(0).max(100).nullable(),
   bsScorePct: z.number().min(0).max(100).nullable(),
+  verifiedBranchCount: z.number().int().min(0).nullable(),
+  partialBranchCount: z.number().int().min(0).nullable(),
+  unverifiedBranchCount: z.number().int().min(0).nullable(),
+  conflictedBranchCount: z.number().int().min(0).nullable(),
+  rejectedBranchCount: z.number().int().min(0).nullable(),
+  trustGateLatencyMs: z.number().int().min(0).nullable(),
+  trustLatencyProfile: z
+    .enum(["HAPPY_PATH", "MULTI_SOURCE_READ", "CROSS_CHECK_TRIGGERED"])
+    .nullable(),
+  trustLatencyBudgetMs: z.number().int().min(0).nullable(),
+  trustLatencyWithinBudget: z.boolean().nullable(),
 
   createdAt: z.coerce.date(),
 });
 
 export type TraceSummaryDto = z.infer<typeof TraceSummaryDtoSchema>;
-

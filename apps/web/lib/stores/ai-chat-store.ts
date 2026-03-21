@@ -4,86 +4,25 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { useWorkspaceContextStore } from './workspace-context-store';
 import { useGovernanceStore } from '@/shared/store/governance.store';
 import { RaiChatWidget, RaiChatWidgetType } from '../ai-chat-widgets';
+import { submitRaiChatRequest } from '../api';
+import type {
+    RaiChatClarificationResumeDto,
+} from '../api';
 import {
     AiSignalItem,
     AiWorkWindow,
     PendingClarificationState,
 } from '@/components/ai-chat/ai-work-window-types';
-import { mapLegacyWidgetsToWorkWindows } from '@/components/ai-chat/legacy-widget-window-mapper';
-
-function buildIdempotencyKey(prefix: string, parts: Array<string | null | undefined>) {
-    const normalized = parts
-        .map((part) => (typeof part === 'string' ? part.trim() : ''))
-        .filter(Boolean)
-        .join(':')
-        .replace(/\s+/g, '-')
-        .replace(/[^a-zA-Z0-9:_-]+/g, '-')
-        .slice(0, 160);
-
-    return `${prefix}:${normalized || 'request'}`.slice(0, 200);
-}
-
-function serializeIdempotencyPayload(value: unknown): string {
-    try {
-        return JSON.stringify(value) ?? '';
-    } catch {
-        return '';
-    }
-}
-
-function trimHtmlLikePayload(raw: string): string {
-    return raw
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .slice(0, 220);
-}
-
-async function getChatHttpErrorMessage(response: Response): Promise<string> {
-    const status = response.status;
-    const contentType = response.headers?.get?.('content-type') ?? '';
-    let details = '';
-
-    try {
-        if (contentType.includes('application/json')) {
-            const payload = await response.json() as { message?: unknown; error?: unknown };
-            if (Array.isArray(payload.message)) {
-                details = payload.message.map((item) => String(item)).filter(Boolean).join('; ');
-            } else if (typeof payload.message === 'string') {
-                details = payload.message;
-            } else if (typeof payload.error === 'string') {
-                details = payload.error;
-            }
-        } else {
-            const text = await response.text();
-            if (text?.trim()) {
-                details = trimHtmlLikePayload(text);
-            }
-        }
-    } catch {
-        details = '';
-    }
-
-    const normalizedDetails = details.toLowerCase();
-
-    if (status === 404) {
-        return 'Клиент чата устарел после перезапуска. Обновите страницу Ctrl+Shift+R и повторите команду.';
-    }
-
-    if (normalizedDetails.includes('idempotency-key')) {
-        return 'Клиент отправил запрос без Idempotency-Key. Обновите страницу Ctrl+Shift+R и повторите команду.';
-    }
-
-    if (status >= 500) {
-        return 'Сервис агента временно недоступен. Повторите команду через 5-10 секунд.';
-    }
-
-    if (details) {
-        return `Ошибка агента: ${details}`;
-    }
-
-    return `Ошибка агента: HTTP ${status}`;
-}
+import {
+    adaptRaiChatResponseForStore,
+    hydratePendingClarificationState,
+} from '../rai-chat-response-adapter';
+import {
+    computeChatSignals,
+    pickPreferredWorkWindow,
+    resolveRaiChatResponseState,
+} from '../rai-chat-response-state';
+import type { ChatTrustSummary } from '../rai-chat-response-adapter';
 
 function getChatRuntimeErrorMessage(error: unknown): string {
     if (!(error instanceof Error)) {
@@ -120,6 +59,7 @@ function isOpenTechCouncilCommand(text: string): boolean {
 
 export type RiskLevel = 'R0' | 'R1' | 'R2' | 'R3' | 'R4';
 export type PanelMode = 'dock' | 'focus';
+export type { ChatTrustSummary } from '../rai-chat-response-adapter';
 
 export interface ChatMessage {
     id: string;
@@ -148,6 +88,7 @@ export interface ChatMessage {
         expertRole?: string;
     }>;
     workWindows?: AiWorkWindow[];
+    trustSummary?: ChatTrustSummary;
 }
 
 export type FsmState = 'closed' | 'animating_open' | 'open' | 'animating_close';
@@ -304,143 +245,6 @@ function syncActiveSessionRecord(
     ].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
 }
 
-function pickPreferredWorkWindow(windows: AiWorkWindow[]): AiWorkWindow | null {
-    if (windows.length === 0) {
-        return null;
-    }
-
-    return [...windows].sort((left, right) => {
-        if (right.priority !== left.priority) {
-            return right.priority - left.priority;
-        }
-
-        const modeWeight = { takeover: 3, panel: 2, inline: 1 };
-        if (modeWeight[right.mode] !== modeWeight[left.mode]) {
-            return modeWeight[right.mode] - modeWeight[left.mode];
-        }
-
-        const categoryWeight = { clarification: 4, analysis: 3, result: 2, signals: 1 };
-        return categoryWeight[right.category] - categoryWeight[left.category];
-    })[0] ?? null;
-}
-
-function deriveCollapsedWindowIds(
-    windows: AiWorkWindow[],
-    activeWindowId: string | null,
-    _previousCollapsedWindowIds: string[],
-): string[] {
-    if (windows.length === 0) {
-        return [];
-    }
-
-    return windows
-        .map((window) => window.windowId)
-        .filter((id) => id !== activeWindowId);
-}
-
-function deriveSignalsFromWorkWindows(windows: AiWorkWindow[]): AiSignalItem[] {
-    const signalWindows = windows.filter((window) => window.type === 'related_signals');
-    if (signalWindows.length > 0) {
-        return signalWindows
-            .flatMap((window) => (window.payload.signalItems ?? []).map((item) => ({
-                ...item,
-                targetWindowId: item.targetWindowId ?? window.parentWindowId ?? window.windowId,
-            })))
-            .slice(0, 3);
-    }
-
-    const hintWindows = windows.filter((window) => window.type === 'context_hint');
-    if (hintWindows.length > 0) {
-        return hintWindows.slice(0, 3).map((window) => ({
-            id: `${window.windowId}-signal`,
-            tone: window.category === 'result' ? 'info' : 'warning',
-            text: window.payload.summary,
-            targetWindowId: window.parentWindowId ?? window.windowId,
-            targetRoute: window.actions.find((action) => action.kind === 'open_route' || action.kind === 'go_to_techmap')?.targetRoute,
-        }));
-    }
-
-    return [];
-}
-
-function deriveSignalsFromMessages(messages: ChatMessage[]): AiSignalItem[] {
-    return [...messages]
-        .reverse()
-        .filter((message) => message.role === 'assistant')
-        .slice(0, 3)
-        .map((message) => ({
-            id: message.id,
-            tone:
-                message.riskLevel === 'R3' || message.riskLevel === 'R4'
-                    ? 'critical'
-                    : message.riskLevel === 'R2'
-                        ? 'warning'
-                        : 'info',
-            text: message.content.replace(/\s+/g, ' ').trim().slice(0, 88),
-        }));
-}
-
-function computeSignals(
-    windows: AiWorkWindow[],
-    messages: ChatMessage[],
-    deriveSignalsFromWindows: boolean,
-): AiSignalItem[] {
-    if (deriveSignalsFromWindows) {
-        const derivedFromWindows = deriveSignalsFromWorkWindows(windows);
-        if (derivedFromWindows.length > 0) {
-            return derivedFromWindows;
-        }
-    }
-
-    return deriveSignalsFromMessages(messages);
-}
-
-function resolveResponseWorkWindows(
-    currentWindows: AiWorkWindow[],
-    incomingWindows: AiWorkWindow[] | null,
-): AiWorkWindow[] {
-    if (incomingWindows) {
-        return incomingWindows;
-    }
-
-    return currentWindows.filter(
-        (window) =>
-            window.isPinned &&
-            window.type !== 'context_acquisition' &&
-            window.type !== 'context_hint',
-    );
-}
-
-function resolveResponseActiveWindowId(
-    nextWindows: AiWorkWindow[],
-    requestedActiveWindowId: string | null,
-    currentActiveWindowId: string | null,
-): string | null {
-    if (requestedActiveWindowId && nextWindows.some((window) => window.windowId === requestedActiveWindowId)) {
-        return requestedActiveWindowId;
-    }
-
-    if (currentActiveWindowId && nextWindows.some((window) => window.windowId === currentActiveWindowId)) {
-        return currentActiveWindowId;
-    }
-
-    return pickPreferredWorkWindow(nextWindows)?.windowId ?? null;
-}
-
-function resolveResponseCollapsedWindowIds(
-    nextWindows: AiWorkWindow[],
-    nextActiveWindowId: string | null,
-    currentCollapsedWindowIds: string[],
-    incomingWindows: AiWorkWindow[] | null,
-): string[] {
-    if (incomingWindows) {
-        return deriveCollapsedWindowIds(nextWindows, nextActiveWindowId, currentCollapsedWindowIds);
-    }
-
-    const nextWindowIds = new Set(nextWindows.map((window) => window.windowId));
-    return currentCollapsedWindowIds.filter((id) => nextWindowIds.has(id));
-}
-
 export const useAiChatStore = create<AiChatStore>()(
     persist(
         (set, get) => ({
@@ -580,7 +384,7 @@ export const useAiChatStore = create<AiChatStore>()(
                         workWindows: nextWorkWindows,
                         collapsedWindowIds: nextCollapsedWindowIds,
                         activeWindowId: nextActiveWindowId,
-                        signals: computeSignals(
+                        signals: computeChatSignals(
                             nextWorkWindows,
                             state.messages,
                             state.deriveSignalsFromWindows,
@@ -592,7 +396,7 @@ export const useAiChatStore = create<AiChatStore>()(
                             workWindows: nextWorkWindows,
                             collapsedWindowIds: nextCollapsedWindowIds,
                             activeWindowId: nextActiveWindowId,
-                            signals: computeSignals(
+                            signals: computeChatSignals(
                                 nextWorkWindows,
                                 state.messages,
                                 state.deriveSignalsFromWindows,
@@ -796,227 +600,83 @@ export const useAiChatStore = create<AiChatStore>()(
                 clarificationResume,
             }) => {
                 const workspaceContext = useWorkspaceContextStore.getState().context;
-                const idempotencyKey = buildIdempotencyKey('rai-chat-submit', [
-                    threadId ?? null,
+                const data = await submitRaiChatRequest({
+                    threadId,
                     message,
-                    originMessageId ?? null,
-                    clarificationResume?.windowId ?? null,
-                    serializeIdempotencyPayload(workspaceContext ?? {}),
-                ]);
-                const response = await fetch('/api/rai/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Idempotency-Key': idempotencyKey,
-                    },
-                    body: JSON.stringify({
-                        threadId,
-                        message,
-                        workspaceContext,
-                        clarificationResume,
-                    }),
+                    workspaceContext,
+                    originMessageId,
+                    clarificationResume: clarificationResume as RaiChatClarificationResumeDto | undefined,
                     signal,
                 });
-
-                if (!response.ok) {
-                    throw new Error(await getChatHttpErrorMessage(response));
-                }
-                const data = await response.json();
                 const fallbackOriginMessageId = clarificationResume
                     ? get().workWindows.find((currentWindow) => currentWindow.windowId === clarificationResume.windowId)?.originMessageId ?? null
                     : null;
-                const rawWorkWindows = Array.isArray(data.workWindows)
-                    ? (data.workWindows as AiWorkWindow[])
-                    : null;
-                const migratedWorkWindows =
-                    !rawWorkWindows?.length &&
-                    get().legacyWidgetMigrationEnabled &&
-                    Array.isArray(data.widgets) &&
-                    data.widgets.length > 0
-                        ? mapLegacyWidgetsToWorkWindows({
-                            widgets: data.widgets,
-                            baseWindowId: `win-legacy-${data.threadId ?? threadId ?? 'new'}`,
-                            originMessageId: originMessageId ?? fallbackOriginMessageId,
-                            agentRole: data.agentRole ?? 'knowledge',
-                            summary: data.text,
-                        })
-                        : null;
-                const nextWorkWindows = (rawWorkWindows ?? migratedWorkWindows)?.map((window) => ({
-                    ...window,
-                    originMessageId:
-                        window.originMessageId ??
-                        originMessageId ??
-                        fallbackOriginMessageId ??
-                        null,
-                })) ?? null;
-                const nextPreferredWindow = nextWorkWindows ? pickPreferredWorkWindow(nextWorkWindows) : null;
-                const nextActiveWindowId = data.activeWindowId ?? nextPreferredWindow?.windowId ?? null;
+                const adaptedResponse = adaptRaiChatResponseForStore({
+                    data,
+                    requestedThreadId: threadId,
+                    originMessageId: originMessageId ?? null,
+                    fallbackOriginMessageId,
+                    legacyWidgetMigrationEnabled: get().legacyWidgetMigrationEnabled,
+                });
 
-                if (appendAssistantMessage) {
-                    const aiMsg: ChatMessage = {
-                        id: generateId(),
-                        role: 'assistant',
-                        content: data.text || 'Ответ не получен',
-                        timestamp: new Date().toISOString(),
-                        riskLevel: data.riskLevel || 'R1',
-                        widgets: Array.isArray(data.widgets) ? data.widgets : [],
-                        memoryUsed: Array.isArray(data.memoryUsed) ? data.memoryUsed : [],
-                        memorySummary: data.memorySummary && typeof data.memorySummary === 'object'
-                            ? data.memorySummary
-                            : undefined,
-                        suggestedActions: Array.isArray(data.suggestedActions)
-                            ? data.suggestedActions.slice(0, 3)
-                            : [],
-                        workWindows: nextWorkWindows ?? [],
-                    };
+                const aiMsg: ChatMessage = {
+                    id: generateId(),
+                    role: 'assistant',
+                    content: adaptedResponse.content,
+                    timestamp: new Date().toISOString(),
+                    riskLevel: adaptedResponse.riskLevel,
+                    widgets: adaptedResponse.widgets,
+                    memoryUsed: adaptedResponse.memoryUsed,
+                    memorySummary: adaptedResponse.memorySummary,
+                    suggestedActions: adaptedResponse.suggestedActions,
+                    workWindows: adaptedResponse.nextWorkWindows ?? [],
+                    trustSummary: adaptedResponse.trustSummary,
+                };
 
-                    set((state) => {
-                        const resolvedWorkWindows = resolveResponseWorkWindows(state.workWindows, nextWorkWindows);
-                        const resolvedActiveWindowId = resolveResponseActiveWindowId(
-                            resolvedWorkWindows,
-                            nextActiveWindowId,
-                            state.activeWindowId,
-                        );
-                        const resolvedCollapsedWindowIds = resolveResponseCollapsedWindowIds(
-                            resolvedWorkWindows,
-                            resolvedActiveWindowId,
-                            state.collapsedWindowIds,
-                            nextWorkWindows,
-                        );
-                        const nextMessages = [...state.messages, aiMsg];
-                        const nextSignals = computeSignals(
-                            nextWorkWindows ?? [],
-                            nextMessages,
-                            state.deriveSignalsFromWindows,
-                        );
-                        const nextPendingClarification = data.pendingClarification
-                            ? {
-                                active: true,
-                                windowId: data.activeWindowId ?? data.workWindows?.[0]?.windowId ?? 'clarification-window',
-                                agentRole: data.pendingClarification.agentRole,
-                                intentId: data.pendingClarification.intentId,
-                                originalUserMessage: message,
-                                collectedContext: {
-                                    fieldRef: data.pendingClarification.items?.find((item: { key: string }) => item.key === 'fieldRef')?.value,
-                                    seasonRef: data.pendingClarification.items?.find((item: { key: string }) => item.key === 'seasonRef')?.value,
-                                    seasonId: data.pendingClarification.items?.find((item: { key: string }) => item.key === 'seasonId')?.value,
-                                    planId: data.pendingClarification.items?.find((item: { key: string }) => item.key === 'planId')?.value,
-                                },
-                                missingKeys: Array.isArray(data.workWindows?.[0]?.payload?.missingKeys)
-                                    ? data.workWindows[0].payload.missingKeys
-                                    : [],
-                                autoResume: true,
-                                items: Array.isArray(data.pendingClarification.items) ? data.pendingClarification.items : [],
-                            }
-                            : null;
-
-                        return {
-                            messages: nextMessages,
-                            isLoading: false,
-                            abortController: null,
-                            threadId: data.threadId || state.threadId,
-                            workWindows: resolvedWorkWindows,
-                            activeWindowId: resolvedActiveWindowId,
-                            collapsedWindowIds: resolvedCollapsedWindowIds,
-                            signals: nextSignals,
-                            pendingClarification: nextPendingClarification,
-                            resumeInFlight: false,
-                            sessions: syncActiveSessionRecord({
-                                ...state,
-                                messages: nextMessages,
-                                threadId: data.threadId || state.threadId,
-                                workWindows: resolvedWorkWindows,
-                                activeWindowId: resolvedActiveWindowId,
-                                collapsedWindowIds: resolvedCollapsedWindowIds,
-                                signals: nextSignals,
-                                pendingClarification: nextPendingClarification,
-                            }),
-                        };
+                set((state) => {
+                    const nextMessages = [...state.messages, aiMsg];
+                    const resolvedResponseState = resolveRaiChatResponseState({
+                        currentWindows: state.workWindows,
+                        incomingWindows: adaptedResponse.nextWorkWindows,
+                        requestedActiveWindowId: adaptedResponse.nextActiveWindowId,
+                        currentActiveWindowId: state.activeWindowId,
+                        currentCollapsedWindowIds: state.collapsedWindowIds,
+                        messages: nextMessages,
+                        deriveSignalsFromWindows: state.deriveSignalsFromWindows,
                     });
-                } else {
-                    const aiMsg: ChatMessage = {
-                        id: generateId(),
-                        role: 'assistant',
-                        content: data.text || 'Ответ не получен',
-                        timestamp: new Date().toISOString(),
-                        riskLevel: data.riskLevel || 'R1',
-                        widgets: Array.isArray(data.widgets) ? data.widgets : [],
-                        memoryUsed: Array.isArray(data.memoryUsed) ? data.memoryUsed : [],
-                        memorySummary: data.memorySummary && typeof data.memorySummary === 'object'
-                            ? data.memorySummary
-                            : undefined,
-                        suggestedActions: Array.isArray(data.suggestedActions)
-                            ? data.suggestedActions.slice(0, 3)
-                            : [],
-                        workWindows: nextWorkWindows ?? [],
-                    };
-
-                    set((state) => {
-                        const resolvedWorkWindows = resolveResponseWorkWindows(state.workWindows, nextWorkWindows);
-                        const resolvedActiveWindowId = resolveResponseActiveWindowId(
-                            resolvedWorkWindows,
-                            nextActiveWindowId,
-                            state.activeWindowId,
-                        );
-                        const resolvedCollapsedWindowIds = resolveResponseCollapsedWindowIds(
-                            resolvedWorkWindows,
-                            resolvedActiveWindowId,
-                            state.collapsedWindowIds,
-                            nextWorkWindows,
-                        );
-                        const nextMessages = [...state.messages, aiMsg];
-                        const nextSignals = computeSignals(
-                            nextWorkWindows ?? [],
-                            nextMessages,
-                            state.deriveSignalsFromWindows,
-                        );
-                        const nextPendingClarification = data.pendingClarification
-                            ? {
-                                active: true,
-                                windowId: data.activeWindowId ?? data.workWindows?.[0]?.windowId ?? 'clarification-window',
-                                agentRole: data.pendingClarification.agentRole,
-                                intentId: data.pendingClarification.intentId,
-                                originalUserMessage: state.pendingClarification?.originalUserMessage ?? message,
-                                collectedContext: {
-                                    fieldRef: data.pendingClarification.items?.find((item: { key: string }) => item.key === 'fieldRef')?.value,
-                                    seasonRef: data.pendingClarification.items?.find((item: { key: string }) => item.key === 'seasonRef')?.value,
-                                    seasonId: data.pendingClarification.items?.find((item: { key: string }) => item.key === 'seasonId')?.value,
-                                    planId: data.pendingClarification.items?.find((item: { key: string }) => item.key === 'planId')?.value,
-                                },
-                                missingKeys: Array.isArray(data.workWindows?.[0]?.payload?.missingKeys)
-                                    ? data.workWindows[0].payload.missingKeys
-                                    : [],
-                                autoResume: true,
-                                items: Array.isArray(data.pendingClarification.items) ? data.pendingClarification.items : [],
-                            }
-                            : null;
-
-                        return {
-                            messages: nextMessages,
-                            isLoading: false,
-                            abortController: null,
-                            threadId: data.threadId || state.threadId,
-                            workWindows: resolvedWorkWindows,
-                            activeWindowId: resolvedActiveWindowId,
-                            collapsedWindowIds: resolvedCollapsedWindowIds,
-                            signals: nextSignals,
-                            pendingClarification: nextPendingClarification,
-                            resumeInFlight: false,
-                            sessions: syncActiveSessionRecord({
-                                ...state,
-                                messages: nextMessages,
-                                threadId: data.threadId || state.threadId,
-                                workWindows: resolvedWorkWindows,
-                                activeWindowId: resolvedActiveWindowId,
-                                collapsedWindowIds: resolvedCollapsedWindowIds,
-                                signals: nextSignals,
-                                pendingClarification: nextPendingClarification,
-                            }),
-                        };
+                    const nextPendingClarification = hydratePendingClarificationState({
+                        data,
+                        fallbackOriginalUserMessage: appendAssistantMessage
+                            ? message
+                            : state.pendingClarification?.originalUserMessage ?? message,
+                        workWindows: resolvedResponseState.workWindows,
                     });
-                }
 
-                if (Array.isArray(data.workWindows) && data.workWindows.length > 0) {
+                    return {
+                        messages: nextMessages,
+                        isLoading: false,
+                        abortController: null,
+                        threadId: data.threadId || state.threadId,
+                        workWindows: resolvedResponseState.workWindows,
+                        activeWindowId: resolvedResponseState.activeWindowId,
+                        collapsedWindowIds: resolvedResponseState.collapsedWindowIds,
+                        signals: resolvedResponseState.signals,
+                        pendingClarification: nextPendingClarification,
+                        resumeInFlight: false,
+                        sessions: syncActiveSessionRecord({
+                            ...state,
+                            messages: nextMessages,
+                            threadId: data.threadId || state.threadId,
+                            workWindows: resolvedResponseState.workWindows,
+                            activeWindowId: resolvedResponseState.activeWindowId,
+                            collapsedWindowIds: resolvedResponseState.collapsedWindowIds,
+                            signals: resolvedResponseState.signals,
+                            pendingClarification: nextPendingClarification,
+                        }),
+                    };
+                });
+
+                if (adaptedResponse.nextWorkWindows?.length) {
                     set({ widgetsOpen: true });
                 }
 

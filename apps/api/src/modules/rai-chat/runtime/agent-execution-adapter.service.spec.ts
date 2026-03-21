@@ -470,6 +470,76 @@ describe("AgentExecutionAdapterService", () => {
     );
   });
 
+  it("использует semantic ingress frame как источник intent для crm.register_counterparty", async () => {
+    crmAgent.run.mockResolvedValueOnce({
+      status: "COMPLETED",
+      explain: "crm register ok",
+      data: { partyId: "party-1" },
+      missingContext: [],
+      toolCallsCount: 1,
+      evidence: [],
+      fallbackUsed: false,
+    });
+
+    const result = await service.execute({
+      request: {
+        ...baseRequest,
+        role: "crm_agent",
+        message: "помоги с контрагентом",
+        semanticIngressFrame: {
+          version: "v1",
+          interactionMode: "task_request",
+          requestShape: "single_intent",
+          domainCandidates: [],
+          goal: "register_counterparty",
+          entities: [
+            {
+              kind: "inn",
+              value: "2636041493",
+              source: "tool_payload",
+            },
+          ],
+          requestedOperation: {
+            ownerRole: "crm_agent",
+            intent: "register_counterparty",
+            toolName: RaiToolName.RegisterCounterparty,
+            decisionType: "execute",
+            source: "legacy_contracts",
+          },
+          operationAuthority: "direct_user_command",
+          missingSlots: [],
+          riskClass: "write_candidate",
+          requiresConfirmation: false,
+          confidenceBand: "high",
+          explanation:
+            "Свободная фраза нормализована в CRM-регистрацию контрагента по ИНН как прямое действие пользователя.",
+          proofSliceId: "crm.register_counterparty",
+        },
+      } as any,
+      actorContext: {
+        companyId: "company-1",
+        traceId: "tr-1",
+      },
+      kernel: {
+        ...baseKernel,
+        runtimeProfile: {
+          ...baseKernel.runtimeProfile,
+          executionAdapterRole: "crm_agent",
+        },
+      } as any,
+      allowedToolCalls: [] as any,
+      budgetDecision: { outcome: "ALLOW" } as any,
+    });
+
+    expect(result.status).toBe("COMPLETED");
+    expect(crmAgent.run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        intent: "register_counterparty",
+      }),
+      expect.anything(),
+    );
+  });
+
   it("сохраняет semantic_router_primary для query_knowledge и прокидывает исходный запрос", async () => {
     knowledgeAgent.run.mockResolvedValueOnce({
       status: "COMPLETED",
