@@ -4,8 +4,24 @@ layer: Strategy
 type: Roadmap
 status: draft
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+claim_id: CLAIM-STR-STAGE2-EVIDENCE-LEDGER
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/00_STRATEGY/STAGE 2/TRUTH_SYNC_STAGE_2_CLAIMS.md;apps/api/src/modules/rai-chat;docs/frontend-audit-2026-03-16/CHECKLIST_TRUTH_RESET_REPORT.md
 ---
 # Checklist Evidence Ledger
+
+## CLAIM
+id: CLAIM-STR-STAGE2-EVIDENCE-LEDGER
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является действующим журналом доказательств для truth-reset и readiness-checklist по агентной платформе. Его задача — связывать item-уровень с кодом, проверкой и артефактом, а не выступать самостоятельной заменой этих источников.
+
 
 Дата фиксации: 2026-03-18
 Правило done: только `код + проверка + артефакт`.

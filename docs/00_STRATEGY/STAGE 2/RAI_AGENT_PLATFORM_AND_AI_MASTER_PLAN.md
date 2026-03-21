@@ -4,8 +4,24 @@ layer: Strategy
 type: Roadmap
 status: draft
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+claim_id: CLAIM-STR-STAGE2-MASTER-PLAN
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/00_STRATEGY/STAGE 2/INDEX.md;docs/00_STRATEGY/STAGE 2/TRUTH_SYNC_STAGE_2_CLAIMS.md;apps/api/src/modules/rai-chat
 ---
 # RAI Agent Platform & AI — Master Plan
+
+## CLAIM
+id: CLAIM-STR-STAGE2-MASTER-PLAN
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является главным действующим планом `Stage 2` по агентной платформе и AI-контуру. Он фиксирует активный замысел и приоритеты развития, а утверждения о текущем поведении системы требуют отдельной сверки по `code/tests/gates`.
+
 
 > Версия: 1.0  
 > Дата: 2026-03-07  

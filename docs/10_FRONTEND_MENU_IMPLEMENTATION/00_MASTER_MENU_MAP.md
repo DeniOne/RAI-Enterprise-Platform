@@ -4,8 +4,24 @@ layer: Frontend
 type: Menu Map
 status: draft
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+claim_id: CLAIM-FRONT-MENU-MASTER-MAP
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/10_FRONTEND_MENU_IMPLEMENTATION/README.md;apps/web/lib/consulting/navigation-policy.ts;apps/web/app
 ---
 # MASTER MENU MAP (Факт -> План реализации)
+
+## CLAIM
+id: CLAIM-FRONT-MENU-MASTER-MAP
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является рабочей картой меню и статусов реализации frontend-контуров. Он нужен как основной planning-источник по навигации и разрывам, а статусы экранов требуют периодической сверки с `apps/web`.
+
 
 ## Легенда статусов
 

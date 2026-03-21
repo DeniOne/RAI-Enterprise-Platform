@@ -5,9 +5,23 @@ type: Vision
 status: approved
 version: 1.0.0
 owners: [@techlead]
-last_updated: 2026-03-10
+last_updated: 2026-03-21
+claim_id: CLAIM-STR-STAGE2-EVOLUTION-LIFECYCLE
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/00_STRATEGY/STAGE 2/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md;docs/00_STRATEGY/STAGE 2/RAI_SWARM_CONTROL_TOWER_ARCHITECTURE.md;docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_AGENT_CREATION_FULL_LIFECYCLE.md
 ---
 # RAI AGENT EVOLUTION AND LIFECYCLE
+
+## CLAIM
+id: CLAIM-STR-STAGE2-EVOLUTION-LIFECYCLE
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является действующим lifecycle-каноном агентного флота и задаёт правила onboarding, promotion, freeze, rollback и retirement. Он нужен как обязательный governance-источник, а не как автоматическое подтверждение готовности всех lifecycle-поверхностей в коде.
+
 
 ## 1. Назначение документа
 

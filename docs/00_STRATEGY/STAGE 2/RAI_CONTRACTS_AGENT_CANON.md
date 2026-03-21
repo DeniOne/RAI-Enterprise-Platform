@@ -4,8 +4,24 @@ layer: Strategy
 type: Vision
 status: draft
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+claim_id: CLAIM-STR-STAGE2-CONTRACTS-AGENT-CANON
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/00_STRATEGY/STAGE 2/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md;docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_CONTRACTS_AGENT.md;apps/api/src/modules/commerce
 ---
 # RAI Contracts Agent Canon
+
+## CLAIM
+id: CLAIM-STR-STAGE2-CONTRACTS-AGENT-CANON
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является действующим каноном `contracts_agent` как owner-агента для `commerce`-контура первой волны. Он обязателен для проектирования и маршрутизации, а конкретные runtime-возможности нужно проверять по коду и тестам.
+
 
 > Версия: 1.0  
 > Дата: 2026-03-09  

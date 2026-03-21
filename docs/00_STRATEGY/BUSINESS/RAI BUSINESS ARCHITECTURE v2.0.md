@@ -4,8 +4,23 @@ layer: Strategy
 type: Vision
 status: draft
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+claim_id: CLAIM-STR-BUSINESS-ARCHITECTURE-V2
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/00_STRATEGY/BUSINESS/RAI STRATEGY v3.0.md;docs/00_STRATEGY/STAGE 2/RAI_FARM_OPERATING_SYSTEM_ARCHITECTURE.md;apps/api/src/modules
 ---
-О# RAI BUSINESS ARCHITECTURE v2.0
+# RAI BUSINESS ARCHITECTURE v2.0
+
+## CLAIM
+id: CLAIM-STR-BUSINESS-ARCHITECTURE-V2
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является каноническим описанием бизнес-архитектуры RAI внутри активного слоя стратегии. Он объясняет логику целевой операционной модели и должен использоваться вместо устаревших дубликатов этой темы.
 
 Статус: рабочая версия на основе фактической реализации в коде `RAI_EP`
 Метод: анализ кода и структуры проекта (без опоры на документацию)

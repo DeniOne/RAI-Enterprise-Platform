@@ -4,8 +4,24 @@ layer: Frontend
 type: Checklist
 status: draft
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+claim_id: CLAIM-FRONT-TECH-DEBT-CHECKLIST
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/10_FRONTEND_MENU_IMPLEMENTATION/00_MASTER_MENU_MAP.md;apps/web/app;apps/api/src/modules
 ---
 # Единый Реестр Технического Долга По Кнопкам
+
+## CLAIM
+id: CLAIM-FRONT-TECH-DEBT-CHECKLIST
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является единым действующим реестром технического долга по frontend-кнопкам и маршрутам. Он должен использоваться как обязательный backlog-источник при развитии экранов, но не подменяет проверку фактического статуса реализации.
+
 
 ## Правило заполнения
 

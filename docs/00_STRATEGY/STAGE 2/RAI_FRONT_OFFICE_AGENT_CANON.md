@@ -4,8 +4,24 @@ layer: Strategy
 type: Vision
 status: draft
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+claim_id: CLAIM-STR-STAGE2-FRONT-OFFICE-AGENT-CANON
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/00_STRATEGY/STAGE 2/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md;docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_FRONT_OFFICE_AGENT_ENABLEMENT.md;apps/api/src/modules/rai-chat
 ---
 # RAI Front Office Agent Canon
+
+## CLAIM
+id: CLAIM-STR-STAGE2-FRONT-OFFICE-AGENT-CANON
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является действующим каноном `front_office_agent` и задаёт его целевую роль в коммуникационном ingress и handoff-контуре. Он описывает обязательный замысел слоя, а не гарантирует, что весь scope уже закрыт кодом.
+
 
 > Версия: 1.0  
 > Дата: 2026-03-09  

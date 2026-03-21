@@ -4,8 +4,24 @@ layer: Frontend
 type: Screen Spec
 status: draft
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+claim_id: CLAIM-FRONT-COMMERCE-INTEGRATION-MAP
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/10_FRONTEND_MENU_IMPLEMENTATION/00_MASTER_MENU_MAP.md;apps/web/app;apps/api/src/modules/commerce
 ---
 # THE COMMERCE & PARTY INTEGRATION MATRIX
+
+## CLAIM
+id: CLAIM-FRONT-COMMERCE-INTEGRATION-MAP
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является действующей integration-map для `commerce` и `party` контуров в frontend-пакете. Он фиксирует проектные зависимости и охват влияния, а не гарантирует полную реализацию всех интеграций.
+
 *(Матрица влияния нового коммерческого движка на глобальную архитектуру RAI Enterprise)*
 
 ## ВВЕДЕНИЕ

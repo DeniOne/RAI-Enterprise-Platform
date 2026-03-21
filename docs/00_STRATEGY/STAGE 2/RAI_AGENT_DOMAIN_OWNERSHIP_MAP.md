@@ -4,8 +4,24 @@ layer: Strategy
 type: Vision
 status: draft
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+claim_id: CLAIM-STR-STAGE2-DOMAIN-OWNERSHIP-MAP
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md;docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md;apps/api/src/modules/rai-chat
 ---
 # RAI Agent Domain Ownership Map
+
+## CLAIM
+id: CLAIM-STR-STAGE2-DOMAIN-OWNERSHIP-MAP
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является действующей картой ownership по доменам и handoff-маршрутам агентной платформы. Он обязателен для reasoning и проектирования, но не является самостоятельным доказательством того, что все handoff-правила уже реализованы в runtime.
+
 
 > Версия: 1.1  
 > Дата: 2026-03-10  

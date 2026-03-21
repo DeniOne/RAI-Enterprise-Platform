@@ -2,10 +2,16 @@
 id: DOC-STR-BUSINESS-RAI-BUSINESS-ARCHITECTURE-V2-0-FO-MEEI
 layer: Strategy
 type: Vision
-status: draft
+status: deprecated
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+deprecated_by: docs/00_STRATEGY/BUSINESS/RAI BUSINESS ARCHITECTURE v2.0.md
 ---
 # RAI BUSINESS ARCHITECTURE v2.0 (LLM Structured)
+
+> Этот файл является производным LLM-вариантом и не должен использоваться как канонический источник. Канонический активный документ: `RAI BUSINESS ARCHITECTURE v2.0.md`.
+
 
 Статус: структурированная версия для внешних LLM
 Источник: фактическая реализация `RAI_EP` (код + структура)

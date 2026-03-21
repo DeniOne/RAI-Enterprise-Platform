@@ -4,8 +4,24 @@ layer: Strategy
 type: Vision
 status: draft
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+claim_id: CLAIM-STR-STAGE2-FARM-OS-ARCHITECTURE
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/00_STRATEGY/BUSINESS/RAI STRATEGY v3.0.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md;apps/api/src/modules
 ---
 # A_RAI — Операционная система консалтингового бизнеса RAI
+
+## CLAIM
+id: CLAIM-STR-STAGE2-FARM-OS-ARCHITECTURE
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является действующим верхнеуровневым манифестом бизнес-модели `A_RAI` и её системной рамки. Он фиксирует продуктовый и организационный замысел и используется как стратегический контекст, а не как прямое доказательство runtime.
+
 
 > **Версия:** 2.0 | **Дата:** 2026-03-04  
 > **Статус:** System Manifesto — Top-Level Architecture Document  

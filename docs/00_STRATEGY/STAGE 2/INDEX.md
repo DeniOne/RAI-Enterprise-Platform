@@ -4,8 +4,24 @@ layer: Strategy
 type: Navigation
 status: draft
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+claim_id: CLAIM-STR-STAGE2-INDEX
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/00_STRATEGY/README.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md;docs/11_INSTRUCTIONS/INDEX.md
 ---
 # STAGE 2 — Canon Index
+
+## CLAIM
+id: CLAIM-STR-STAGE2-INDEX
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является действующим индексом слоя `Stage 2` и определяет обязательный порядок чтения активного канона по агентной платформе. Он управляет навигацией по живым стратегическим документам, но не подменяет проверку runtime по `code/tests/gates`.
+
 
 > RAI Enterprise Platform | Agent Platform & AI Canon
 

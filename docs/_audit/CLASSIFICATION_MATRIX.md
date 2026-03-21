@@ -698,3 +698,33 @@ last_updated: 2026-03-20
 | DOCS_MATRIX.md | CORE | Оставить | ext=md; status=archived; purpose=documentation |
 | INDEX.md | DUPLICATE | Объединить | ext=md; status=approved; purpose=documentation |
 | README.md | DUPLICATE | Объединить | ext=md; status=approved; purpose=documentation |
+
+## Wave 2 Reclassification — 2026-03-21
+
+| Документ | Класс | Решение | Комментарий |
+|---|---|---|---|
+| 00_STRATEGY/STAGE 2/INDEX.md | SUPPORTING | Оставить | действующий индекс `Stage 2`, обязателен для навигации по живому агентному канону |
+| 00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md | SUPPORTING | Оставить | главный действующий план по агентной платформе |
+| 00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md | SUPPORTING | Оставить | действующее дополнение по intent/context и зонам ответственности агентов |
+| 00_STRATEGY/STAGE 2/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md | SUPPORTING | Оставить | каноническая ownership-карта для маршрутизации и handoff |
+| 00_STRATEGY/STAGE 2/RAI_AGENT_RUNTIME_GOVERNANCE.md | SUPPORTING | Оставить | верхний governance-канон агентного runtime |
+| 00_STRATEGY/STAGE 2/RAI_AGENT_EVOLUTION_AND_LIFECYCLE.md | SUPPORTING | Оставить | lifecycle-канон агентного флота |
+| 00_STRATEGY/STAGE 2/RAI_SWARM_CONTROL_TOWER_ARCHITECTURE.md | SUPPORTING | Оставить | активный канон операторского слоя |
+| 00_STRATEGY/STAGE 2/RAI_CONTROL_TOWER_LIFECYCLE_BOARD_GAP_ANALYSIS.md | SUPPORTING | Оставить | активный анализ разрыва между кодом и целевым lifecycle board |
+| 00_STRATEGY/STAGE 2/RAI_FRONT_OFFICE_AGENT_CANON.md | SUPPORTING | Оставить | действующий канон роли `front_office_agent` |
+| 00_STRATEGY/STAGE 2/RAI_CONTRACTS_AGENT_CANON.md | SUPPORTING | Оставить | действующий канон роли `contracts_agent` |
+| 00_STRATEGY/STAGE 2/A_RAI_AGENT_INTERACTION_BLUEPRINT.md | SUPPORTING | Оставить | обязательный UX/runtime blueprint для agent interaction |
+| 00_STRATEGY/STAGE 2/A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md | SUPPORTING | Оставить | действующий readiness-gate для мультиагентного слоя |
+| 00_STRATEGY/STAGE 2/TRUTH_SYNC_STAGE_2_CLAIMS.md | SUPPORTING | Оставить | активный truth-sync реестр по `Stage 2` |
+| 00_STRATEGY/STAGE 2/CHECKLIST_EVIDENCE_LEDGER.md | SUPPORTING | Оставить | evidence-ledger для readiness и truth-reset |
+| 00_STRATEGY/STAGE 2/RAI_AI_SYSTEM_ARCHITECTURE.md | SUPPORTING | Оставить | активный архитектурный канон AI-системы `Stage 2` |
+| 00_STRATEGY/STAGE 2/RAI_AI_ANTIHALLUCINATION_ARCHITECTURE.md | SUPPORTING | Оставить | активный anti-hallucination канон |
+| 00_STRATEGY/STAGE 2/RAI_FARM_OPERATING_SYSTEM_ARCHITECTURE.md | SUPPORTING | Оставить | верхнеуровневый бизнес-манифест `A_RAI` |
+| 00_STRATEGY/BUSINESS/RAI STRATEGY v3.0.md | SUPPORTING | Оставить | действующее стратегическое видение бизнеса |
+| 00_STRATEGY/BUSINESS/RAI BUSINESS ARCHITECTURE v2.0.md | SUPPORTING | Оставить | каноническая бизнес-архитектура активного слоя стратегии |
+| 00_STRATEGY/BUSINESS/RAI BUSINESS ARCHITECTURE.md | LEGACY | Оставить как перенаправление | устаревший дубликат, заменён `RAI BUSINESS ARCHITECTURE v2.0.md` |
+| 00_STRATEGY/BUSINESS/RAI BUSINESS ARCHITECTURE v2.0_for_llm.md | LEGACY | Оставить как вспомогательный файл | производный LLM-вариант, не канон |
+| 10_FRONTEND_MENU_IMPLEMENTATION/README.md | SUPPORTING | Оставить | вход в активный пакет фронтовой декомпозиции |
+| 10_FRONTEND_MENU_IMPLEMENTATION/00_MASTER_MENU_MAP.md | SUPPORTING | Оставить | master map навигации и разрывов реализации |
+| 10_FRONTEND_MENU_IMPLEMENTATION/18_ARCHITECTURE_COMMERCE_INTEGRATION_MAP.md | SUPPORTING | Оставить | действующая карта интеграции по `commerce` и `party` |
+| 10_FRONTEND_MENU_IMPLEMENTATION/99_TECH_DEBT_CHECKLIST.md | SUPPORTING | Оставить | единый реестр фронтового технического долга |

@@ -4,8 +4,24 @@ layer: Strategy
 type: Vision
 status: draft
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+claim_id: CLAIM-STR-STAGE2-AI-SYSTEM-ARCHITECTURE
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md;apps/api/src/modules/rai-chat;apps/api/src/shared/rai-chat
 ---
 # RAI AI System — Архитектура мульти-агентной AI системы
+
+## CLAIM
+id: CLAIM-STR-STAGE2-AI-SYSTEM-ARCHITECTURE
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является действующим архитектурным каноном AI-системы `Stage 2` и задаёт проектную рамку multi-agent слоя. Он описывает целевую архитектуру и частично опирается на кодовую базу, но не равен автоматической runtime-истине.
+
 
 > **Версия:** 2.0 | **Дата:** 2026-03-04  
 > **Автор:** AI Systems Architect  

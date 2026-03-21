@@ -4,8 +4,24 @@ layer: Strategy
 type: Vision
 status: draft
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+claim_id: CLAIM-STR-STAGE2-RUNTIME-GOVERNANCE
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md;docs/00_STRATEGY/STAGE 2/RAI_SWARM_CONTROL_TOWER_ARCHITECTURE.md;apps/api/src/modules/rai-chat
 ---
 # RAI Agent Runtime Governance
+
+## CLAIM
+id: CLAIM-STR-STAGE2-RUNTIME-GOVERNANCE
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является действующим каноном по governance, budget и reliability-контролю агентного runtime. Он задаёт управленческую рамку и требования к реализации, а фактическое исполнение отдельных механизмов нужно проверять по `code/tests/gates`.
+
 
 > Версия: 1.0  
 > Дата: 2026-03-09  

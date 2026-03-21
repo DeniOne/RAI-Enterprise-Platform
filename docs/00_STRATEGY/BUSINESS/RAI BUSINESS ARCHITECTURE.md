@@ -2,10 +2,16 @@
 id: DOC-STR-BUSINESS-RAI-BUSINESS-ARCHITECTURE-J2W5
 layer: Strategy
 type: Vision
-status: draft
+status: deprecated
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+deprecated_by: docs/00_STRATEGY/BUSINESS/RAI BUSINESS ARCHITECTURE v2.0.md
 ---
 # Версия 1.0 — Целостная модель бизнеса и системы
+
+> Этот файл является устаревшим дубликатом. Канонический активный документ: `RAI BUSINESS ARCHITECTURE v2.0.md`.
+
 
 ## ЧАСТЬ I — СТРАТЕГИЧЕСКАЯ МОДЕЛЬ
 

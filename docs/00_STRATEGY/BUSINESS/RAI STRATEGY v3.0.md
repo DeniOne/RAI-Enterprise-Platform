@@ -4,8 +4,24 @@ layer: Strategy
 type: Vision
 status: draft
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+claim_id: CLAIM-STR-BUSINESS-VISION-V3
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/00_STRATEGY/README.md;docs/00_STRATEGY/BUSINESS/RAI BUSINESS ARCHITECTURE v2.0.md;docs/10_FRONTEND_MENU_IMPLEMENTATION/README.md
 ---
 # Институциональная модель агро-оператора (видение на 3–5 лет)
+
+## CLAIM
+id: CLAIM-STR-BUSINESS-VISION-V3
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является действующим стратегическим видением бизнеса RAI и задаёт долгий горизонт институционального развития. Он нужен для планирования и product reasoning и не должен читаться как описание уже реализованного состояния платформы.
+
 
 ## 0. Введение
 

@@ -4,8 +4,24 @@ layer: Strategy
 type: Vision
 status: draft
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+claim_id: CLAIM-STR-STAGE2-AGENT-INTERACTION-BLUEPRINT
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md;docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_AGENT_PLATFORM_INTERACTION_ARCHITECTURE.md;apps/web/app
 ---
 # A_RAI — Blueprint интерактивного общения пользователя и агента
+
+## CLAIM
+id: CLAIM-STR-STAGE2-AGENT-INTERACTION-BLUEPRINT
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является действующим blueprint взаимодействия пользователя с агентной платформой и задаёт UX-композицию multi-agent режима. Он фиксирует проектный контракт взаимодействия, а не завершённую реализацию каждого интерфейсного паттерна.
+
 
 Дата: 2026-03-07  
 Статус: Implemented Canon / interaction blueprint closed in code  

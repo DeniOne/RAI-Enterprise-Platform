@@ -5,9 +5,23 @@ type: Vision
 status: approved
 version: 1.0.0
 owners: [@techlead]
-last_updated: 2026-03-10
+last_updated: 2026-03-21
+claim_id: CLAIM-STR-STAGE2-CONTROL-TOWER-GAP-ANALYSIS
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/00_STRATEGY/STAGE 2/RAI_SWARM_CONTROL_TOWER_ARCHITECTURE.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_EVOLUTION_AND_LIFECYCLE.md;apps/api/src/modules/explainability
 ---
 # RAI CONTROL TOWER LIFECYCLE BOARD GAP ANALYSIS
+
+## CLAIM
+id: CLAIM-STR-STAGE2-CONTROL-TOWER-GAP-ANALYSIS
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является действующим gap-analysis по lifecycle board и показывает разрыв между текущим кодом и целевым операторским слоем. Он нужен как активный аналитический вход для планирования доработок.
+
 
 ## 1. Назначение документа
 

@@ -5,9 +5,23 @@ type: Vision
 status: approved
 version: 1.0.0
 owners: [@techlead]
-last_updated: 2026-03-09
+last_updated: 2026-03-21
+claim_id: CLAIM-STR-STAGE2-SWARM-CONTROL-TOWER
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/00_STRATEGY/STAGE 2/RAI_AGENT_RUNTIME_GOVERNANCE.md;docs/00_STRATEGY/STAGE 2/RAI_CONTROL_TOWER_LIFECYCLE_BOARD_GAP_ANALYSIS.md;apps/api/src/modules/explainability
 ---
 # RAI SWARM CONTROL TOWER ARCHITECTURE
+
+## CLAIM
+id: CLAIM-STR-STAGE2-SWARM-CONTROL-TOWER
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является действующим архитектурным каноном операторского слоя `Swarm Control Tower`. Он описывает целевую поверхность управления и наблюдаемости и не должен читаться как утверждение, что весь этот контур уже полностью реализован.
+
 
 ## 1. Назначение документа
 

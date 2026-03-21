@@ -1,3 +1,10 @@
+[2026-03-21] Wave 2 claim-management для активного strategy/frontend-канона
+- Ключевые документы в `docs/00_STRATEGY/STAGE 2`, `docs/00_STRATEGY/BUSINESS` и `docs/10_FRONTEND_MENU_IMPLEMENTATION` переведены в `claim-managed` статус как `SUPPORTING`, а не оставлены в серой зоне между активным слоем и архивом.
+- Зафиксировано новое governance-правило: `claim` может подтверждать не только runtime-факт, но и роль документа как действующего planning / navigation / governance-источника; для этого допустим `verified_by: manual`.
+- Сохранено жёсткое разграничение: такие документы обязательны для reasoning и проектирования, но любые тезисы о текущем runtime всё равно требуют отдельной сверки по `code/tests/gates`.
+- В `docs/00_STRATEGY/BUSINESS` каноническим источником закреплён `RAI BUSINESS ARCHITECTURE v2.0.md`; старый `RAI BUSINESS ARCHITECTURE.md` и производный `v2.0_for_llm` помечены как `deprecated`, чтобы агент не уезжал в дубликаты.
+- `docs/DOCS_MATRIX.md` и `docs/_audit/CLASSIFICATION_MATRIX.md` синхронизированы с новой активной семантикой; `pnpm lint:docs:matrix:strict`, `node scripts/verify-invariants.cjs` и `pnpm lint:docs` проходят без ошибок.
+
 [2026-03-21] Documentation topology redecision and active layer restore
 - Выполнен полный повторный semantic-scan дерева `docs` без привязки к старому сжатому шаблону.
 - Признано, что active knowledge system проекта шире operational canon: стратегия, домены, execution, testing, metrics и frontend-пакет являются действующими слоями знания, а не архивным мусором.

@@ -4,8 +4,24 @@ layer: Strategy
 type: Roadmap
 status: draft
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+claim_id: CLAIM-STR-STAGE2-MULTIAGENT-READINESS
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/00_STRATEGY/STAGE 2/TRUTH_SYNC_STAGE_2_CLAIMS.md;docs/00_STRATEGY/STAGE 2/CHECKLIST_EVIDENCE_LEDGER.md;apps/api/src/modules/rai-chat
 ---
 # A_RAI — Multi-Agent Production Readiness Checklist
+
+## CLAIM
+id: CLAIM-STR-STAGE2-MULTIAGENT-READINESS
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является действующим верхним чеклистом готовности мультиагентного контура к реальному внедрению. Он служит planning-gate и не должен трактоваться как автоматическое подтверждение прохождения всех пунктов без проверки приложенных доказательств.
+
 
 Дата: 2026-03-05  
 Назначение: ультимативный чеклист готовности мультиагентной системы `A_RAI` к реальному внедрению AI в продуктовый контур `RAI_EP`.

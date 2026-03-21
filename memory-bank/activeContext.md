@@ -1,6 +1,11 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-21)
+- [x] Выполнена вторая волна `claim-management` для живого strategy/frontend-канона: ключевые документы в `docs/00_STRATEGY/STAGE 2`, `docs/00_STRATEGY/BUSINESS` и `docs/10_FRONTEND_MENU_IMPLEMENTATION` переведены в `SUPPORTING` и зарегистрированы в `docs/DOCS_MATRIX.md`.
+- [x] Зафиксировано новое правило docs-governance: `claim` может подтверждать роль документа как действующего planning / navigation / governance-источника, даже если документ не описывает текущий runtime 1:1; для этого допустим `verified_by: manual`.
+- [x] Сохранено разграничение доверия: такие документы обязательны для reasoning и проектирования, но runtime-тезисы из них всё равно нужно перепроверять по `code/tests/gates`.
+- [x] В `docs/00_STRATEGY/BUSINESS` каноническим источником закреплён `RAI BUSINESS ARCHITECTURE v2.0.md`; старые дубликаты помечены как `deprecated`, чтобы агент не выбирал неверную версию.
+- [x] После wave 2 зелёные: `pnpm lint:docs:matrix:strict`, `node scripts/verify-invariants.cjs`, `pnpm lint:docs`.
 - [x] Выполнен documentation topology redecision: активная knowledge-система проекта больше не сжата до узкого operational core.
 - [x] В active tree восстановлены `docs/00_STRATEGY`, `docs/02_DOMAINS`, `docs/06_METRICS`, `docs/07_EXECUTION`, `docs/08_TESTING`, `docs/10_FRONTEND_MENU_IMPLEMENTATION`.
 - [x] Зафиксировано правило: стратегия, доменные модели, execution-пакеты, testing-матрицы, metrics и frontend implementation docs являются действующими слоями проекта, даже если они не описывают текущий runtime 1:1.

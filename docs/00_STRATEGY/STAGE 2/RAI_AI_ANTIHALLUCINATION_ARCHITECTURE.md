@@ -4,8 +4,24 @@ layer: Strategy
 type: Vision
 status: draft
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+claim_id: CLAIM-STR-STAGE2-ANTIHALLUCINATION
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/00_STRATEGY/STAGE 2/RAI_AI_SYSTEM_ARCHITECTURE.md;docs/11_INSTRUCTIONS/AGENTS;apps/api/src/modules/rai-chat
 ---
 # RAI AI Anti-Hallucination Architecture
+
+## CLAIM
+id: CLAIM-STR-STAGE2-ANTIHALLUCINATION
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является действующим архитектурным каноном по снижению галлюцинаций и evidence-дисциплине в AI-контуре. Он задаёт обязательные проектные ограничения, а не доказывает, что все антигаллюцинаторные механизмы уже полностью внедрены.
+
 Версия: 1.0  
 Статус: Architectural Standard  
 Назначение: Минимизация галлюцинаций AI-агентов в системе RAI_EP

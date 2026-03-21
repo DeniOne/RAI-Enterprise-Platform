@@ -4,8 +4,24 @@ layer: Strategy
 type: Roadmap
 status: draft
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+claim_id: CLAIM-STR-STAGE2-MASTER-PLAN-ADDENDUM
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md;docs/11_INSTRUCTIONS/AGENTS
 ---
 # RAI Agent Platform & AI — Addendum: Agent Focus, Intent и Context Contracts
+
+## CLAIM
+id: CLAIM-STR-STAGE2-MASTER-PLAN-ADDENDUM
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является действующим дополнением к главному плану `Stage 2` и фиксирует фокусные зоны ответственности, intent-каталог и required context для агентов. Он описывает рабочий контур проектирования, а не автоматически доказанный runtime.
+
 
 > Версия: 1.0  
 > Дата: 2026-03-07  

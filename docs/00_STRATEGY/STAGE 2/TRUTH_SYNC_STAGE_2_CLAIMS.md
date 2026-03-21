@@ -4,8 +4,24 @@ layer: Strategy
 type: Vision
 status: draft
 version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-03-21
+claim_id: CLAIM-STR-STAGE2-TRUTH-SYNC-CLAIMS
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+evidence_refs: docs/00_STRATEGY/STAGE 2/CHECKLIST_EVIDENCE_LEDGER.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md;apps/api/src/modules/rai-chat
 ---
 # STAGE 2 — Truth Sync по ключевым claims
+
+## CLAIM
+id: CLAIM-STR-STAGE2-TRUTH-SYNC-CLAIMS
+status: asserted
+verified_by: manual
+last_verified: 2026-03-21
+
+Этот документ является действующим реестром truth-sync утверждений для слоя `Stage 2`. Он нужен для восстановления доверия к наследованным тезисам и не подменяет прямую проверку каждого claim по коду и тестам.
+
 
 Дата: 2026-03-05  
 Назначение: свести ключевые claims из `docs/00_STRATEGY/STAGE 2` к формату `claim -> doc -> code evidence -> verdict` без самообмана.
