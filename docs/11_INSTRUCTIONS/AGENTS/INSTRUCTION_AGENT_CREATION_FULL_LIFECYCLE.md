@@ -57,7 +57,7 @@ last_updated: 2026-03-10
 
 Дополнительно обязательно учитывать lifecycle-канон:
 
-- [RAI_AGENT_EVOLUTION_AND_LIFECYCLE.md](../00_STRATEGY/STAGE%202/RAI_AGENT_EVOLUTION_AND_LIFECYCLE.md)
+- [RAI_AGENT_EVOLUTION_AND_LIFECYCLE.md](../../00_STRATEGY/STAGE%202/RAI_AGENT_EVOLUTION_AND_LIFECYCLE.md)
 
 Перед началом реализации обязательно ответить на вопросы:
 

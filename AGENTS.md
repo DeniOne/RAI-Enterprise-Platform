@@ -56,20 +56,73 @@
 Любой новый документ должен создаваться в одном из слоёв:
 
 - `docs/00_CORE/`
+- `docs/00_STRATEGY/`
 - `docs/01_ARCHITECTURE/`
+- `docs/02_DOMAINS/`
 - `docs/02_PRODUCT/`
 - `docs/03_ENGINEERING/`
 - `docs/04_AI_SYSTEM/`
 - `docs/05_OPERATIONS/`
+- `docs/06_METRICS/`
+- `docs/07_EXECUTION/`
+- `docs/08_TESTING/`
+- `docs/10_FRONTEND_MENU_IMPLEMENTATION/`
+- `docs/11_INSTRUCTIONS/`
 - `docs/06_ARCHIVE/`
 
 `docs/06_ARCHIVE/` не является источником текущей истины.
+
+## Active Layer Model
+
+Документация проекта состоит из трёх разных режимов знания.
+
+- `verified operational canon` живёт прежде всего в `00_CORE`, `01_ARCHITECTURE`, `04_AI_SYSTEM`, `05_OPERATIONS` и в claim-managed документах других слоёв
+- `active intent / design / planning` живёт в `00_STRATEGY`, `02_DOMAINS`, `02_PRODUCT`, `03_ENGINEERING`, `06_METRICS`, `07_EXECUTION`, `08_TESTING`, `10_FRONTEND_MENU_IMPLEMENTATION`, `11_INSTRUCTIONS`
+- `historical / raw context` живёт в `06_ARCHIVE`
+
+Ключевое правило:
+
+- не все активные документы обязаны быть зеркалом текущего кода
+- стратегия, доменная логика, планы, execution-пакеты и frontend-карты являются действующими знаниями проекта
+- только claim-managed документы и `code/tests/gates` можно цитировать как подтверждённую runtime truth
+
+## Archive Recovery Rule
+
+`docs/06_ARCHIVE/` не является мусором и не должен игнорироваться при поиске смысла системы.
+
+Обязательное правило:
+
+- если нужен текущий intent, сначала нужно читать активные слои `docs/00_STRATEGY/`, `docs/02_DOMAINS/`, `docs/07_EXECUTION/`, `docs/10_FRONTEND_MENU_IMPLEMENTATION/`, `docs/11_INSTRUCTIONS/`
+- если в активных слоях не хватает контекста по бизнес-логике, intended behavior, исторической архитектурной мотивации, agent logic, consulting logic или product intent, нужно искать ответ в `docs/06_ARCHIVE/`
+- внутри архива в первую очередь нужно проверять `docs/06_ARCHIVE/LEGACY_TREE_2026-03-20/`, `docs/06_ARCHIVE/ROOT_DROP_2026-03-20/`, `docs/06_ARCHIVE/LEGACY_TREE_2026-03-20/frontend-audit-2026-03-16/`
+
+Жёсткое разграничение:
+
+- архив обязателен для `historical context recovery`
+- архив запрещено выдавать за `verified operational truth` без перепроверки по коду, тестам, гейтам или без переноса утверждения в активные canonical docs
+
+Если ответ опирается на архив:
+
+- явно помечай это как `историческая логика / legacy intent`
+- отдельно указывай, подтверждено ли это текущим кодом
 
 ## How To Create Docs
 
 Перед созданием документа определи его роль:
 
-- operational truth -> целевой слой `00_CORE` ... `05_OPERATIONS`
+- foundation / cross-cutting canon -> `00_CORE`
+- strategy / business logic / consulting model / future plan -> `00_STRATEGY`
+- architecture / ADR / topology / invariants -> `01_ARCHITECTURE`
+- domain semantics / domain models / guides -> `02_DOMAINS`
+- product behavior / UX / bot scenarios -> `02_PRODUCT`
+- engineering design / implementation contract / technical spec -> `03_ENGINEERING`
+- AI runtime / agent platform / swarm governance -> `04_AI_SYSTEM`
+- runbook / ops policy / operational risk -> `05_OPERATIONS`
+- KPI / quality gates / success metrics -> `06_METRICS`
+- execution plan / WBS / delivery checklist / rollout packet -> `07_EXECUTION`
+- testing matrix / formal verification / audit -> `08_TESTING`
+- frontend menu / screen map / frontend implementation package -> `10_FRONTEND_MENU_IMPLEMENTATION`
+- действующая исполняемая инструкция / agent playbook / enablement standard -> `11_INSTRUCTIONS`
 - dated analysis / legacy / research / prompt artifact -> `06_ARCHIVE`
 
 Не создавай документ "по теме". Создавай его по роли в системе.

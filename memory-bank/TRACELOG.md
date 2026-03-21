@@ -1,3 +1,20 @@
+[2026-03-21] Documentation topology redecision and active layer restore
+- Выполнен полный повторный semantic-scan дерева `docs` без привязки к старому сжатому шаблону.
+- Признано, что active knowledge system проекта шире operational canon: стратегия, домены, execution, testing, metrics и frontend-пакет являются действующими слоями знания, а не архивным мусором.
+- Из `docs/06_ARCHIVE/LEGACY_TREE_2026-03-20/` обратно в active tree восстановлены `00_STRATEGY`, `02_DOMAINS`, `06_METRICS`, `07_EXECUTION`, `08_TESTING`, `10_FRONTEND_MENU_IMPLEMENTATION`.
+- В `AGENTS.md`, `docs/README.md`, `docs/INDEX.md`, `docs/CONTRIBUTING_DOCS.md` закреплена новая модель: `verified operational canon` отдельно от `active intent/design/planning`, архив отдельно от них.
+- В `docs/11_INSTRUCTIONS` исправлены ссылки на `00_STRATEGY/STAGE 2`, чтобы agent playbooks снова вели в живые документы, а не в пустые пути.
+
+[2026-03-21] Исправлено ложное трактование архива как "не читать"
+- Зафиксировано, что `docs/06_ARCHIVE` не является operational truth, но обязателен для recovery исторической бизнес-логики, agent intent и архитектурной мотивации.
+- Для Codex и docs governance введено явное правило: при нехватке активного контекста нужно читать архив, особенно `06_ARCHIVE/LEGACY_TREE_2026-03-20/00_STRATEGY`.
+- Одновременно закреплено ограничение: тезисы из архива нельзя выдавать как verified truth без перепроверки по `code/tests/gates` или без переноса в активные canonical docs.
+
+[2026-03-21] Исправлена ошибочная архивация слоя Instructions
+- Подтверждено, что `11_INSTRUCTIONS` был first-class слоем ещё в layer/type matrix и в линтерах, поэтому его архивирование было не следствием технического ограничения, а ошибкой интерпретации целевой структуры.
+- Пакет `11_INSTRUCTIONS` восстановлен в active tree.
+- Новое правило: действующие agent instructions и enablement playbooks живут в `docs/11_INSTRUCTIONS`, а не в `06_ARCHIVE`.
+
 [2026-03-20] Routing Learning Layer — controlled migration стартован
 - Принято решение не вводить отдельный routing-сервис и новый Prisma-store на первой волне.
 - Источник правды для routing telemetry: `AiAuditEntry.metadata.routingTelemetry`.

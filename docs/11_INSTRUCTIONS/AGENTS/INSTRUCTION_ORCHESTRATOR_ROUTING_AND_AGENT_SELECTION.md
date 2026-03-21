@@ -44,7 +44,7 @@ last_updated: 2026-03-10
 - [INSTRUCTION_AGENT_PLATFORM_INTERACTION_ARCHITECTURE.md](./INSTRUCTION_AGENT_PLATFORM_INTERACTION_ARCHITECTURE.md)
 - [INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md](./INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md)
 - [INSTRUCTION_AGENT_DOMAIN_GAPS_AND_UNOWNED_MODULES.md](./INSTRUCTION_AGENT_DOMAIN_GAPS_AND_UNOWNED_MODULES.md)
-- [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](../00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md)
+- [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](../../00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md)
 - [agent-registry.service.ts](../../apps/api/src/modules/rai-chat/agent-registry.service.ts)
 - [supervisor-agent.service.ts](../../apps/api/src/modules/rai-chat/supervisor-agent.service.ts)
 - [tool-call.planner.ts](../../apps/api/src/modules/rai-chat/runtime/tool-call.planner.ts)
@@ -904,7 +904,7 @@ owner должен уходить из `monitoring` в `agronomist` или `econ
 
 1. этот документ как routing canon;
 2. [INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md](./INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md);
-3. [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](../00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md);
+3. [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](../../00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md);
 4. профиль конкретного агента;
 5. `agent-interaction-contracts.ts`;
 6. при необходимости `agent-registry.service.ts` и `tool-call.planner.ts`.
@@ -944,7 +944,7 @@ owner должен уходить из `monitoring` в `agronomist` или `econ
 - [INSTRUCTION_AGENT_PLATFORM_INTERACTION_ARCHITECTURE.md](./INSTRUCTION_AGENT_PLATFORM_INTERACTION_ARCHITECTURE.md)
 - [INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md](./INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md)
 - [INSTRUCTION_AGENT_DOMAIN_GAPS_AND_UNOWNED_MODULES.md](./INSTRUCTION_AGENT_DOMAIN_GAPS_AND_UNOWNED_MODULES.md)
-- [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](../00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md)
+- [RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md](../../00_STRATEGY/STAGE%202/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md)
 - [agent-registry.service.ts](../../apps/api/src/modules/rai-chat/agent-registry.service.ts)
 - [supervisor-agent.service.ts](../../apps/api/src/modules/rai-chat/supervisor-agent.service.ts)
 - [agent-runtime.service.ts](../../apps/api/src/modules/rai-chat/runtime/agent-runtime.service.ts)

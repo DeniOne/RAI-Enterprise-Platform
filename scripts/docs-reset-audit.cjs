@@ -398,7 +398,7 @@ function run() {
   finalLines.push('- Введён `DOCS_MATRIX`, claim fields, unified `pnpm lint:docs`, freshness SLA.');
   finalLines.push('');
   finalLines.push('## 11. Новая архитектура документации');
-  finalLines.push('- Целевая топология создана: `00_CORE`, `04_AI_SYSTEM`, `06_ARCHIVE` (+ миграция первой волны root docs).');
+  finalLines.push('- Активная knowledge-топология должна включать: `00_CORE`, `00_STRATEGY`, `01_ARCHITECTURE`, `02_DOMAINS`, `02_PRODUCT`, `03_ENGINEERING`, `04_AI_SYSTEM`, `05_OPERATIONS`, `06_METRICS`, `07_EXECUTION`, `08_TESTING`, `10_FRONTEND_MENU_IMPLEMENTATION`, `11_INSTRUCTIONS`, `06_ARCHIVE`.');
   finalLines.push('');
   finalLines.push('## 12. Action Plan');
   finalLines.push('| Действие | Что сделать | Зачем | Эффект |');

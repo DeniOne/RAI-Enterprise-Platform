@@ -1,6 +1,14 @@
 # Активный контекст RAI_EP
 
-## Текущая задача (2026-03-20)
+## Текущая задача (2026-03-21)
+- [x] Выполнен documentation topology redecision: активная knowledge-система проекта больше не сжата до узкого operational core.
+- [x] В active tree восстановлены `docs/00_STRATEGY`, `docs/02_DOMAINS`, `docs/06_METRICS`, `docs/07_EXECUTION`, `docs/08_TESTING`, `docs/10_FRONTEND_MENU_IMPLEMENTATION`.
+- [x] Зафиксировано правило: стратегия, доменные модели, execution-пакеты, testing-матрицы, metrics и frontend implementation docs являются действующими слоями проекта, даже если они не описывают текущий runtime 1:1.
+- [x] В `AGENTS.md`, `docs/README.md`, `docs/INDEX.md`, `docs/CONTRIBUTING_DOCS.md` закреплена трёхрежимная модель документации: `verified operational canon`, `active intent/design/planning`, `historical/raw context`.
+- [x] В `docs/11_INSTRUCTIONS` исправлены ссылки на `docs/00_STRATEGY/STAGE 2/*`; agent playbooks снова ведут в активные стратегические и agent-canon документы.
+- [x] Исправлена ошибка docs-архитектуры: `11_INSTRUCTIONS` восстановлен из архива в active tree как действующий слой исполняемых инструкций.
+- [x] Зафиксировано docs-governance правило: `docs/06_ARCHIVE` нельзя трактовать как мусорную зону; архив обязателен для recovery исторической бизнес-логики, agent intent и проектной мотивации, если активные слои не дают ответа.
+- [x] Зафиксировано жёсткое разграничение: архив читается как `historical context`, но не может подаваться как `verified operational truth` без revalidation по `code/tests/gates`.
 - [x] В backend введены новые артефакты routing-слоя: `semantic-routing.types.ts`, `routing-versioning.ts`, `routing-telemetry-redaction.ts`, `semantic-router.service.ts`.
 - [x] `SupervisorAgent.planExecution()` теперь считает semantic-route параллельно legacy-route и пишет детальный routing trace в `AiAuditEntry.metadata.routingTelemetry`.
 - [x] Для `techmaps` slice `read/list/create` включён `semantic_router_primary`; runtime получил coarse capability gating по `eligibleTools`.

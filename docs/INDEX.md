@@ -3,13 +3,13 @@ id: DOC-META-INDEX-ESXJ
 layer: Meta
 type: Navigation
 status: approved
-version: 3.0.0
+version: 3.1.0
 owners: [@techlead]
-last_updated: 2026-03-20
+last_updated: 2026-03-21
 claim_id: CLAIM-CORE-INDEX
 claim_status: asserted
 verified_by: code
-last_verified: 2026-03-20
+last_verified: 2026-03-21
 evidence_refs: scripts/lint-docs.cjs;docs/_audit/DOCUMENTATION_MAP.md
 ---
 # INDEX (Canonical)
@@ -18,35 +18,47 @@ evidence_refs: scripts/lint-docs.cjs;docs/_audit/DOCUMENTATION_MAP.md
 id: CLAIM-CORE-INDEX
 status: asserted
 verified_by: code
-last_verified: 2026-03-20
+last_verified: 2026-03-21
 
 ## Core
 - `docs/README.md`
 - `docs/CONTRIBUTING_DOCS.md`
 - `docs/DOCS_MATRIX.md`
 
-## Target Topology
+## Verified Operational Canon
 - `docs/00_CORE/`
 - `docs/01_ARCHITECTURE/`
-- `docs/02_PRODUCT/`
-- `docs/03_ENGINEERING/`
 - `docs/04_AI_SYSTEM/`
 - `docs/05_OPERATIONS/`
-- `docs/06_ARCHIVE/`
 
-## Existing Operational Layers
+## Active Design And Planning Layers
 - `docs/00_STRATEGY/`
-- `docs/01_ARCHITECTURE/`
 - `docs/02_DOMAINS/`
-- `docs/03_PRODUCT/`
-- `docs/04_ENGINEERING/`
-- `docs/05_OPERATIONS/`
+- `docs/02_PRODUCT/`
+- `docs/03_ENGINEERING/`
 - `docs/06_METRICS/`
 - `docs/07_EXECUTION/`
 - `docs/08_TESTING/`
-- `docs/09_ARCHIVE/`
 - `docs/10_FRONTEND_MENU_IMPLEMENTATION/`
 - `docs/11_INSTRUCTIONS/`
+
+## Historical And Raw Context
+- `docs/06_ARCHIVE/`
+
+## Start Here By Intent
+- Бизнес-логика и стратегия: `docs/00_STRATEGY/BUSINESS/`, `docs/00_STRATEGY/CONSULTING/`, `docs/00_STRATEGY/FRONT_OFFICE/`
+- Агентная платформа и AI контур: `docs/00_STRATEGY/STAGE 2/`, `docs/04_AI_SYSTEM/`, `docs/11_INSTRUCTIONS/AGENTS/`
+- Доменные модели: `docs/02_DOMAINS/`
+- Product / UX: `docs/02_PRODUCT/`, `docs/10_FRONTEND_MENU_IMPLEMENTATION/`
+- Delivery / rollout / execution: `docs/07_EXECUTION/`
+- Testing / verification: `docs/08_TESTING/`
+- Operations / runbooks: `docs/05_OPERATIONS/`
+
+## Active Instruction Sources
+- `docs/11_INSTRUCTIONS/INDEX.md`
+- `docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md`
+- `docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_AGENT_CREATION_FULL_LIFECYCLE.md`
+- `docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md`
 
 ## Audit Artifacts
 - `docs/_audit/INVENTORY.csv`
@@ -56,3 +68,14 @@ last_verified: 2026-03-20
 - `docs/_audit/CONTRADICTIONS.md`
 - `docs/_audit/DUPLICATES_AND_JUNK.md`
 - `docs/_audit/FINAL_AUDIT_2026-03-20.md`
+- `docs/_audit/DOCUMENTATION_TOPOLOGY_REDECISION_2026-03-21.md`
+
+## Archive Recovery Sources
+- `docs/06_ARCHIVE/LEGACY_TREE_2026-03-20/09_ARCHIVE/`
+- `docs/06_ARCHIVE/ROOT_DROP_2026-03-20/`
+- `docs/06_ARCHIVE/LEGACY_TREE_2026-03-20/frontend-audit-2026-03-16/`
+
+Правило:
+- активные слои `00_STRATEGY`, `02_DOMAINS`, `07_EXECUTION`, `10_FRONTEND_MENU_IMPLEMENTATION`, `11_INSTRUCTIONS` нужно читать раньше архива
+- архив нужен для старых снимков, raw research, prompt trail и dated audit-контекста
+- эти источники нельзя использовать как verified operational truth без перепроверки
