@@ -8,10 +8,16 @@
   - required context model и уровни готовности slot-ов `S0..S5`
   - missing-context / clarify / assumption policy
   - owner-led orchestration с `agronomist` как lead owner и `SupervisorAgent` как orchestration-owner
+  - conditional `chief_agronomist` expert-review слой между governed draft и human review
   - branch architecture, typed contracts, truth/trust/evidence model
   - governance / approval / publication rules
   - explainability bundle, audit/forensics и anti-hallucination safeguards
   - 5 обязательных sequence-сценариев
+- [x] Дополнительно зафиксировано:
+  - `chief_agronomist` не становится owner сборки Техкарты
+  - `chief_agronomist` возвращает только structured expert-review verdict
+  - policy-triggered expert review включается только для спорных, рискованных или явно эскалированных кейсов
+  - если expert-tier path недоступен, workflow обязан честно логировать bypass и передавать риск в human review, а не симулировать выполненную ревизию
 - [x] Зафиксировано важное разграничение источников истины:
   - текущий raw branch verdict в runtime остаётся каноническим по коду как `VERIFIED / PARTIAL / UNVERIFIED / CONFLICTED / REJECTED`
   - для tech-map workflow поверх него введён workflow-level verdict `BLOCKED`, который агрегирует `CONFLICTED / REJECTED / policy block / blocking missing slots`

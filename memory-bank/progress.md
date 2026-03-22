@@ -25,11 +25,18 @@
     - failure modes / anti-hallucination safeguards
     - 5 обязательных sequence-сценариев
     - MVP slice и первая implementation-декомпозиция
+  - Следующим уточнением этот же spec расширен explicit expert-review слоем:
+    - `chief_agronomist` зафиксирован как conditional expert-review слой, а не как owner сборки Техкарты
+    - добавлена отдельная фаза `EXPERT_REVIEW`
+    - введён typed contract `TechMapExpertReviewResult`
+    - введена trigger-policy для вызова `chief_agronomist`
+    - зафиксирован честный bypass path в human review, если expert-tier execution path недоступен
+    - обновлены review/publication sequence, explainability и audit artifacts
   - Важное синхронизированное решение:
     - текущий код остаётся source of truth для raw branch verdict enum `VERIFIED / PARTIAL / UNVERIFIED / CONFLICTED / REJECTED`
     - на workflow-слое Техкарты введён агрегирующий verdict `BLOCKED`, чтобы не ломать текущий runtime канон и одновременно получить user/business-ориентированную governed-модель блокировки
   - Новый claim `CLAIM-ENG-TECH-MAP-GOVERNED-WORKFLOW-20260322` зарегистрирован в `docs/DOCS_MATRIX.md`.
-  - Эффект изменения: у команды появился плотный инженерный источник для дальнейшего разрезания governed workflow Техкарты на backend/runtime/policy implementation-пакеты без возврата к абстрактным обсуждениям.
+  - Эффект изменения: у команды появился плотный инженерный источник для дальнейшего разрезания governed workflow Техкарты на backend/runtime/policy implementation-пакеты, включая отдельный expert-review gate для сложных кейсов.
 
 ## 2026-03-21
 

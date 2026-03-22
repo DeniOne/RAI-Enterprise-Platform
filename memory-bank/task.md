@@ -11,6 +11,8 @@
 - [x] Ввести governance / review / approval / publication rules.
 - [x] Описать explainability, audit/forensics и anti-hallucination safeguards.
 - [x] Разобрать обязательные 5 сценариев и зафиксировать MVP slice.
+- [x] Встроить `chief_agronomist` как conditional expert-review слой без смены business-owner.
+- [x] Ввести typed contract `TechMapExpertReviewResult` и trigger-policy его вызова.
 - [x] Зарегистрировать новый claim в `docs/DOCS_MATRIX.md`.
 - [x] Синхронизировать логическое изменение в `memory-bank`.
 

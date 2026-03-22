@@ -10,7 +10,7 @@ claim_id: CLAIM-ENG-TECH-MAP-GOVERNED-WORKFLOW-20260322
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-22
-evidence_refs: docs/07_EXECUTION/SEMANTIC_INGRESS_AND_GOVERNED_HANDOFF_PHASE_PLAN.md;docs/07_EXECUTION/BRANCH_TRUST_GATE_IMPLEMENTATION_SPRINT_PLAN.md;docs/00_STRATEGY/BUSINESS/RAI BUSINESS ARCHITECTURE v2.0.md;docs/00_STRATEGY/CONSULTING/CONSULTING CORE — Каноническая модель консалтинга RAI_EP.md;docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md;apps/api/src/shared/rai-chat/semantic-ingress.types.ts;apps/api/src/modules/rai-chat/semantic-ingress.service.ts;apps/api/src/shared/rai-chat/semantic-routing.types.ts;apps/api/src/shared/rai-chat/branch-trust.types.ts;apps/api/src/modules/rai-chat/runtime-governance/runtime-governance-policy.service.ts;apps/api/src/modules/tech-map/tech-map.service.ts;apps/api/src/modules/tech-map/fsm/tech-map.fsm.ts;packages/prisma-client/schema.prisma
+evidence_refs: docs/07_EXECUTION/SEMANTIC_INGRESS_AND_GOVERNED_HANDOFF_PHASE_PLAN.md;docs/07_EXECUTION/BRANCH_TRUST_GATE_IMPLEMENTATION_SPRINT_PLAN.md;docs/00_STRATEGY/BUSINESS/RAI BUSINESS ARCHITECTURE v2.0.md;docs/00_STRATEGY/CONSULTING/CONSULTING CORE — Каноническая модель консалтинга RAI_EP.md;docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md;docs/11_INSTRUCTIONS/AGENTS/AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_CHIEF_AGRONOMIST.md;docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_AGENT_CATALOG_AND_RESPONSIBILITY_MAP.md;apps/api/src/shared/rai-chat/semantic-ingress.types.ts;apps/api/src/modules/rai-chat/semantic-ingress.service.ts;apps/api/src/shared/rai-chat/semantic-routing.types.ts;apps/api/src/shared/rai-chat/branch-trust.types.ts;apps/api/src/modules/rai-chat/runtime-governance/runtime-governance-policy.service.ts;apps/api/src/modules/tech-map/tech-map.service.ts;apps/api/src/modules/tech-map/fsm/tech-map.fsm.ts;packages/prisma-client/schema.prisma
 ---
 # TECH_MAP_GOVERNED_WORKFLOW
 
@@ -57,6 +57,7 @@ last_verified: 2026-03-22
 
 - бизнес-owner workflow Техкарты = `agronomist`
 - orchestration-owner = `SupervisorAgent`
+- `chief_agronomist` допускается только как conditional expert-review слой, а не как owner сборки
 - межветочный обмен = только typed `JSON`, не prose
 - финальная Техкарта собирается только из веток, прошедших trust-gate
 - при нехватке критичного контекста система обязана делать `clarify`, а не импутацию
@@ -417,8 +418,48 @@ Clarify-пакет обязан содержать четыре секции:
 
 Будущее расширение:
 
-- отдельный `chief_agronomist` может появиться как review-owner
-- до появления canonical runtime family он не должен использоваться как обязательный production owner
+- отдельный `chief_agronomist` должен появиться как `expert-review` слой
+- `chief_agronomist` не должен становиться primary owner сборки или прямым редактором Техкарты
+- до появления canonical expert-tier family policy-вызов `chief_agronomist` должен иметь честный bypass в human review, а не симуляцию вызова
+
+### 11.2.1 Роль `chief_agronomist` в workflow Техкарты
+
+`chief_agronomist` в этом workflow играет роль независимого экспертного ревьюера.
+
+Он:
+
+- не собирает Техкарту с нуля
+- не владеет ownership пользовательского запроса
+- не выполняет рутинную генерацию веток
+- не изменяет persisted draft напрямую
+- не подменяет человеческого агронома как final decision maker
+
+Он делает только одно:
+
+- выдаёт structured expert opinion по уже собранному governed draft
+
+### 11.2.2 Когда вызывать `chief_agronomist`
+
+`chief_agronomist` должен вызываться policy-driven, а не на каждую Техкарту подряд.
+
+Минимальные trigger-классы:
+
+- `trust_trigger`
+  - publication-critical ветка получила `PARTIAL`, `UNVERIFIED` или workflow-level `BLOCKED`
+- `assumption_trigger`
+  - есть high-impact assumptions, которые materially влияют на yield, cost или feasibility
+- `novelty_trigger`
+  - новая культура, новая зона, новый methodology profile или нетипичный технологический сценарий
+- `risk_trigger`
+  - высокий риск сезона, бюджета или agronomy/compliance конфликта
+- `human_requested`
+  - человек явно запросил экспертную ревизию
+- `dispute_trigger`
+  - есть расхождение между draft-логикой, human position или смежными review-ветками
+
+Нормативный анти-паттерн:
+
+- `chief_agronomist` не вызывается как обязательный second pass для каждой стандартной Техкарты
 
 ### 11.3 Parallel / sequential / blocking orchestration
 
@@ -446,8 +487,10 @@ Clarify-пакет обязан содержать четыре секции:
 | `TRUST_GATE` | branch results | branch assessments + workflow verdict | auto |
 | `COMPOSITION` | trusted branches | governed draft / compare / block explanation | auto |
 | `PERSIST_DRAFT` | `S3+` draft | versioned `DRAFT` | explicit command auto, otherwise confirm |
-| `REVIEW_SUBMISSION` | `S4` review packet | persisted review request | human action |
-| `APPROVAL` | review packet | approved or rejected decision | human approval |
+| `EXPERT_REVIEW` | governed draft + review trigger policy | `TechMapExpertReviewResult` или bypass reason | auto по policy trigger или explicit escalation; иначе skipped |
+| `REVIEW_SUBMISSION` | `S4` review packet + optional expert review | persisted review request | human action |
+| `HUMAN_REVIEW` | submitted review packet | human agronomist review decision | human action |
+| `APPROVAL` | human-reviewed packet | approved or rejected decision | human approval |
 | `PUBLICATION` | `S5` + approvals | publication packet / `ACTIVE` handoff | human approval only |
 
 ## 13. Branch architecture
@@ -588,7 +631,62 @@ interface TechMapGovernedComposition {
 }
 ```
 
-### 14.4 Mapping к текущему runtime enum
+### 14.4 Expert review contract
+
+```ts
+type TechMapExpertReviewVerdict =
+  | "APPROVE_WITH_NOTES"
+  | "REVISE"
+  | "BLOCK";
+
+type TechMapExpertReviewTrigger =
+  | "trust_trigger"
+  | "assumption_trigger"
+  | "novelty_trigger"
+  | "risk_trigger"
+  | "human_requested"
+  | "dispute_trigger";
+
+interface TechMapExpertReviewFinding {
+  finding_id: string;
+  severity: "note" | "warning" | "blocking";
+  area:
+    | "agronomy"
+    | "assumptions"
+    | "methodology"
+    | "feasibility"
+    | "risk"
+    | "compliance";
+  statement_ref?: string;
+  summary: string;
+  recommended_action: string;
+}
+
+interface TechMapExpertReviewResult {
+  workflow_id: string;
+  variant_id: string;
+  reviewer_role: "chief_agronomist";
+  trigger: TechMapExpertReviewTrigger;
+  verdict: TechMapExpertReviewVerdict;
+  summary: string;
+  findings: TechMapExpertReviewFinding[];
+  challenged_assumption_ids: string[];
+  required_revisions: string[];
+  alternative_requests: string[];
+  evidence_refs: string[];
+  confidence: number;
+  can_proceed_to_human_review: boolean;
+}
+```
+
+Нормативные правила:
+
+- `APPROVE_WITH_NOTES` не заменяет human review
+- `REVISE` возвращает draft в controlled revision loop
+- `BLOCK` запрещает review submission до устранения blocking findings
+- результат `chief_agronomist` всегда advisory-to-governance, а не autonomous write
+
+### 14.5 Mapping к текущему runtime enum
 
 Текущий подтверждённый кодом raw enum branch trust:
 
@@ -692,11 +790,28 @@ interface TechMapGovernedComposition {
 | branch execution для workflow draft | да | нет | нет | нет |
 | persisted `DRAFT` при explicit direct command | да | нет | нет | нет |
 | persisted `DRAFT` без explicit write-intent | нет | да | нет | нет |
+| expert review by `chief_agronomist` | да, если trigger policy сработала и expert-tier path доступен | нет | нет | нет |
 | compare variants | да | нет | нет | нет |
 | review submission | нет | нет | да | да |
 | approval to `APPROVED` | нет | нет | да | да |
 | activation/publication to `ACTIVE` | нет | нет | да | да |
 | contract publication / signature side effects | нет | нет | да | да |
+
+### 17.1.1 Policy вызова expert review
+
+`chief_agronomist` должен вызываться только если выполнено хотя бы одно условие:
+
+- есть publication-critical `PARTIAL / UNVERIFIED / BLOCKED`
+- есть high-impact assumptions
+- detected novelty case
+- detected risk/dispute trigger
+- человек явно запросил expert review
+
+Если trigger policy сработала, но expert-tier path недоступен, workflow обязан:
+
+- честно зафиксировать `expert_review_bypassed`
+- передать тот же риск в human review packet
+- не делать вид, что экспертная ревизия выполнена
 
 ### 17.2 Publication boundary
 
@@ -713,10 +828,10 @@ Workflow обязан различать:
   - не является approved execution baseline
 
 - `REVIEW_REQUIRED`
-  - пакет готов к human review
+  - пакет готов к expert review и/или human review
 
 - `APPROVAL_REQUIRED`
-  - review пройден, но нужны formal approvals
+  - expert review и human review пройдены, но нужны formal approvals
 
 - `PUBLISHABLE`
   - publication gate зелёный
@@ -740,10 +855,16 @@ Workflow обязан различать:
 
 Минимальная approval chain:
 
+- optional `chief_agronomist` expert review при policy trigger
 - agronomy review
 - finance review, если бюджет или ROI materially affected
 - legal/contracts review, если Техкарта участвует в contract/publication contour
 - strategic approval для перехода в `ACTIVE`
+
+Норматив:
+
+- `chief_agronomist` даёт экспертное заключение, но не финальное approval
+- human agronomy review остаётся обязательным authority layer
 
 ## 18. Explainability model
 
@@ -763,6 +884,11 @@ interface TechMapExplainabilityBundle {
   workflow_id: string;
   source_summary: Array<{ source: string; kind: string; freshness: string }>;
   branch_summary: Array<{ branch_id: string; verdict: string; summary: string }>;
+  expert_review?: {
+    triggered: boolean;
+    verdict?: string;
+    summary?: string;
+  };
   assumptions: TechMapAssumption[];
   gaps: TechMapGap[];
   why_this_variant: string[];
@@ -796,6 +922,7 @@ interface TechMapExplainabilityBundle {
 - `branch trust assessments`
 - `clarify packets`
 - `policy decisions`
+- `expert review request/result/bypass`
 - `approval decisions`
 - `final composition basis`
 - `publication outcome`
@@ -811,6 +938,9 @@ interface TechMapExplainabilityBundle {
 | `tech_map_branch_completed` | после каждой ветки | raw outputs |
 | `tech_map_branch_trust_assessed` | после trust gate | why included / why blocked |
 | `tech_map_composed` | после composition | basis финального артефакта |
+| `tech_map_expert_review_requested` | при policy-triggered escalation | почему понадобился `chief_agronomist` |
+| `tech_map_expert_review_completed` | после экспертной ревизии | structured expert verdict |
+| `tech_map_expert_review_bypassed` | если trigger был, но expert-tier path недоступен | честный bypass без ложной симуляции |
 | `tech_map_review_submitted` | при переходе в review | audit review chain |
 | `tech_map_approval_recorded` | при human decision | юридически значимый trail |
 | `tech_map_publication_committed` | при публикации | publication boundary |
@@ -823,6 +953,7 @@ interface TechMapExplainabilityBundle {
 - почему конкретная ветка получила `PARTIAL` или `BLOCKED`
 - из какого источника взят каждый publication-critical input
 - почему результат остался `draft only`
+- вызывался ли `chief_agronomist`, по какому trigger и с каким verdict
 - кто и на каком основании одобрил публикацию
 
 ## 20. Failure modes и anti-hallucination safeguards
@@ -838,6 +969,7 @@ interface TechMapExplainabilityBundle {
 | variant comparison идёт по разным baseline context | ложное сравнение | shared baseline hash required |
 | publication-critical branch остаётся `UNVERIFIED`, но compose всё равно “сглаживает” ответ | ложная техкарта | honest composition rules |
 | conflict между compliance и agronomic branch скрыт | нормативный риск | raw `CONFLICTED/REJECTED` -> workflow `BLOCKED` |
+| `chief_agronomist` становится скрытым owner вместо экспертного ревьюера | архитектурный drift | отдельный expert-review слой без write-authority |
 
 Дополнительные запреты:
 
@@ -966,7 +1098,7 @@ Audit
 - конфликт обязан быть показан как конфликт
 - `BLOCKED` лучше ложной завершённости
 
-### 21.5 Сценарий 5. Draft -> human review -> approval -> publication
+### 21.5 Сценарий 5. Draft -> expert review -> human review -> approval -> publication
 
 ```text
 User
@@ -974,7 +1106,13 @@ User
 SupervisorAgent
   -> GovernanceGate: validate review readiness
 GovernanceGate
-  -> HumanReview: agronomy/finance/legal approvers as required
+  -> ExpertReviewPolicy: check triggers for chief_agronomist
+ExpertReviewPolicy
+  -> ChiefAgronomist: expert review when triggered
+ChiefAgronomist
+  -> ReviewPacket: structured verdict approve_with_notes / revise / block
+ReviewPacket
+  -> HumanReview: agronomy/finance/legal reviewers as required
 HumanReview
   -> ApprovalLedger: approve or reject
 ApprovalLedger
@@ -990,6 +1128,7 @@ Audit
 Нормативный результат:
 
 - `draft` и `published` — разные truth states
+- `chief_agronomist` даёт expert-review, но не заменяет human agronomy review
 - publication требует human approval chain
 - audit trail обязан быть полным
 
@@ -1015,6 +1154,7 @@ Audit
   - `evidence_reference`
   - `execution_feasibility`
 - trust gate + honest composition
+- conditional expert-review contract и bypass semantics
 - `DRAFT -> REVIEW -> APPROVED -> ACTIVE` handoff mapping
 
 ### 22.2 Что не входит в MVP
@@ -1024,6 +1164,7 @@ Audit
 - legal digital signature
 - full `change order` loop
 - fully automated weather-driven adaptive replanning
+- обязательный policy-driven `chief_agronomist` review для каждого publish path
 
 ### 22.3 Рекомендуемая первая декомпозиция в implementation-пакеты
 
@@ -1035,6 +1176,7 @@ Audit
 | `TMW-4 Branch Contracts` | ввести typed payloads по всем веткам | межветочный обмен станет машинно проверяемым |
 | `TMW-5 Trust + Composition` | применить trust gate и final composition rules | ложная “готовая техкарта” перестанет проходить |
 | `TMW-6 Review/Publication Gate` | зафиксировать approval chain и versioning | draft/review/publication boundary станет enforceable |
+| `TMW-7 Expert Review Gate` | встроить `chief_agronomist` как policy-driven expert-review слой | сложные и спорные техкарты получат второй экспертный контур до human approval |
 
 ## 23. Future evolution
 
