@@ -20,6 +20,9 @@
 - [x] Усилить finance/compliance hard constraints и publication locks.
 - [x] Явно описать write boundaries, versioning и immutable snapshots.
 - [x] Добавить `Mermaid` diagrams для сценариев, state graph, branch dependency и approval swimlane.
+- [x] Собрать execution-док `TMW-2 Canonical Artifact Schema` в `docs/07_EXECUTION/`.
+- [x] Вынести shared-контракты `tech-map artifact/state/conflict/clarify` в `apps/api/src/shared/tech-map/`.
+- [x] Собрать execution-док `TMW-8 Persistence / Versioning Gate` как отдельный implementation-пакет.
 - [x] Зарегистрировать новый claim в `docs/DOCS_MATRIX.md`.
 - [x] Синхронизировать логическое изменение в `memory-bank`.
 

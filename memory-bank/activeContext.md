@@ -26,6 +26,10 @@
   - усилен finance/compliance слой через budget ceiling, unit economics thresholds, prohibited inputs, regulatory locks и sign-off obligations
   - явно определены write boundaries, immutable snapshot points и versioning rules
   - добавлены `Mermaid` state/sequence/branch/approval diagrams для engineering handoff
+- [x] Следующий implementation-пакет стартован и зафиксирован:
+  - добавлены execution-доки `TMW-2 Canonical Artifact Schema` и `TMW-8 Persistence / Versioning Gate`
+  - в `apps/api/src/shared/tech-map/` вынесен новый governed contract-layer для `artifact/state/conflict/clarify`
+  - текущие `FSM` и service write-guards начали использовать shared helper-слой, чтобы status/editability правила больше не жили только локально в модулях
 - [x] Зафиксировано важное разграничение источников истины:
   - текущий raw branch verdict в runtime остаётся каноническим по коду как `VERIFIED / PARTIAL / UNVERIFIED / CONFLICTED / REJECTED`
   - для tech-map workflow поверх него введён workflow-level verdict `BLOCKED`, который агрегирует `CONFLICTED / REJECTED / policy block / blocking missing slots`

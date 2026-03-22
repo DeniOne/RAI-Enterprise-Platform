@@ -39,6 +39,7 @@ import {
   TECH_MAP_STAGES_WITH_RESOURCES_NO_ORDER_INCLUDE,
   TECH_MAP_VALIDATION_INCLUDE,
 } from "../../shared/tech-map/tech-map-prisma-includes";
+import { isEditablePersistedTechMapStatus } from "../../shared/tech-map/tech-map-governed-status.helpers";
 import {
   buildTechMapBlueprint,
   resolveBlueprintBaseDate,
@@ -292,7 +293,7 @@ export class TechMapService {
 
     return {
       draftId: draft.id,
-      status: "DRAFT" as const,
+      status: TechMapStatus.DRAFT,
       fieldRef: params.fieldRef,
       seasonRef: params.seasonRef,
       crop,
@@ -397,10 +398,7 @@ export class TechMapService {
       throw new NotFoundException("TechMap not found");
     }
 
-    if (
-      map.status !== TechMapStatus.DRAFT &&
-      map.status !== TechMapStatus.REVIEW
-    ) {
+    if (!isEditablePersistedTechMapStatus(map.status)) {
       throw new ForbiddenException(
         `Cannot edit TechMap in state ${map.status}`,
       );

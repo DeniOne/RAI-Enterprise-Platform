@@ -40,6 +40,14 @@
     - усилены finance/compliance publishability-контракты: budget ceiling, unit economics thresholds, prohibited inputs, contract-linked constraints, regulatory locks, sign-off obligations
     - явно описаны write boundaries по фазам, immutable snapshots и versioning rules
     - sequence-раздел дополнен `Mermaid` diagrams: 5 сценариев, state diagram, branch dependency graph, approval swimlane
+  - Следующим execution/code пакетом сделано:
+    - добавлен shared governed contract-layer в `apps/api/src/shared/tech-map/` для `artifact/state/conflict/clarify`
+    - добавлен helper-слой persisted status mapping/editability/transitions
+    - `TechMapStateMachine` и `TechMapService.updateDraft(...)` перестали держать status/editability rules только локально и начали использовать shared source
+    - добавлены execution-доки:
+      - `docs/07_EXECUTION/TECH_MAP_TMW-2_CANONICAL_ARTIFACT_SCHEMA_IMPLEMENTATION_PLAN.md`
+      - `docs/07_EXECUTION/TECH_MAP_TMW-8_PERSISTENCE_VERSIONING_GATE_IMPLEMENTATION_PLAN.md`
+    - новые execution claims зарегистрированы в `docs/DOCS_MATRIX.md`
   - Важное синхронизированное решение:
     - текущий код остаётся source of truth для raw branch verdict enum `VERIFIED / PARTIAL / UNVERIFIED / CONFLICTED / REJECTED`
     - на workflow-слое Техкарты введён агрегирующий verdict `BLOCKED`, чтобы не ломать текущий runtime канон и одновременно получить user/business-ориентированную governed-модель блокировки

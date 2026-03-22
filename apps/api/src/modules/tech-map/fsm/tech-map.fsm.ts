@@ -1,5 +1,6 @@
 import { Injectable, ForbiddenException } from "@nestjs/common";
 import { TechMapStatus, UserRole } from "@rai/prisma-client";
+import { canPersistedTechMapTransition } from "../../../shared/tech-map/tech-map-governed-status.helpers";
 
 export interface TransitionRequest {
   currentStatus: TechMapStatus;
@@ -12,6 +13,10 @@ export interface TransitionRequest {
 export class TechMapStateMachine {
   canTransition(req: TransitionRequest): boolean {
     const { currentStatus, targetStatus, userRole } = req;
+
+    if (!canPersistedTechMapTransition(currentStatus, targetStatus)) {
+      return false;
+    }
 
     switch (currentStatus) {
       case TechMapStatus.DRAFT:
