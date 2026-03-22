@@ -26,6 +26,9 @@
 - [x] Вынести shared-контракты `slot registry`, `branch contracts`, `workflow verdict aggregation`, `conflict authority` в `apps/api/src/shared/tech-map/`.
 - [x] Собрать execution-док `TMW-6 Branch Contracts + Conflict Authority` как отдельный implementation-пакет.
 - [x] Собрать execution-док `TMW-8 Persistence / Versioning Gate` как отдельный implementation-пакет.
+- [x] Собрать недостающие execution-доки `TMW-3 Clarify Loop Engine`, `TMW-4 Semantic Frame Extension`, `TMW-5 Workflow Orchestrator`, `TMW-7 Trust + Composition`, `TMW-9 Expert Review Gate`.
+- [x] Довести `TECH_MAP_MASTER_IMPLEMENTATION_CHECKLIST` до полного набора `TMW-1..TMW-9`.
+- [x] Обновить `DOCS_MATRIX` под новые claim-и недостающих execution-доков.
 - [x] Подключить `slot registry -> readiness / clarify / workflow verdict` к runtime пути `generate_tech_map_draft`.
 - [x] Перевести `createDraftStub(...)` с пустого stub-ответа на governed intake-result с `readiness / publicationState / clarifyItems / gaps`.
 - [x] Встроить runtime-источник `methodology_profile_id` из deterministic blueprint metadata.

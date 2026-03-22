@@ -134,6 +134,8 @@ last_verified: 2026-03-22
 
 ### 5.3 `TMW-3` — Clarify Loop Engine
 
+- Пакет: [TECH_MAP_TMW-3_CLARIFY_LOOP_ENGINE_IMPLEMENTATION_PLAN.md](/root/RAI_EP/docs/07_EXECUTION/TECH_MAP_TMW-3_CLARIFY_LOOP_ENGINE_IMPLEMENTATION_PLAN.md)
+
 - [ ] Ввести persisted `clarify batch`
 - [ ] Ввести `resume token` и `resume state`
 - [ ] Ввести `ONE_SHOT / MULTI_STEP` логику
@@ -143,12 +145,16 @@ last_verified: 2026-03-22
 
 ### 5.4 `TMW-4` — Semantic Frame Extension
 
+- Пакет: [TECH_MAP_TMW-4_SEMANTIC_FRAME_EXTENSION_IMPLEMENTATION_PLAN.md](/root/RAI_EP/docs/07_EXECUTION/TECH_MAP_TMW-4_SEMANTIC_FRAME_EXTENSION_IMPLEMENTATION_PLAN.md)
+
 - [ ] Расширить semantic ingress frame для tech-map workflow
 - [ ] Развести `new_draft / rebuild / compare / revise / resume_clarify`
 - [ ] Научить ingress frame отдавать `required_actions`, `policy posture`, `workflow stage`
 - [ ] Подключить frame к owner handoff для Техкарты
 
 ### 5.5 `TMW-5` — Workflow Orchestrator
+
+- Пакет: [TECH_MAP_TMW-5_WORKFLOW_ORCHESTRATOR_IMPLEMENTATION_PLAN.md](/root/RAI_EP/docs/07_EXECUTION/TECH_MAP_TMW-5_WORKFLOW_ORCHESTRATOR_IMPLEMENTATION_PLAN.md)
 
 - [ ] Ввести first-class `TechMapWorkflowOrchestrator`
 - [ ] Собрать phase engine `INTAKE -> TRIAGE -> BRANCHING -> TRUST -> COMPOSITION`
@@ -171,6 +177,8 @@ last_verified: 2026-03-22
 
 ### 5.7 `TMW-7` — Trust + Composition
 
+- Пакет: [TECH_MAP_TMW-7_TRUST_COMPOSITION_IMPLEMENTATION_PLAN.md](/root/RAI_EP/docs/07_EXECUTION/TECH_MAP_TMW-7_TRUST_COMPOSITION_IMPLEMENTATION_PLAN.md)
+
 - [ ] Собрать tech-map specialization поверх platform `Branch Trust Gate`
 - [ ] Развести `facts / derived metrics / assumptions / recommendations / gaps`
 - [ ] Подключить composition только из разрешённых branch payloads
@@ -190,6 +198,8 @@ last_verified: 2026-03-22
 - [ ] Подготовить migration path для persistence extensions
 
 ### 5.9 `TMW-9` — Expert Review Gate
+
+- Пакет: [TECH_MAP_TMW-9_EXPERT_REVIEW_GATE_IMPLEMENTATION_PLAN.md](/root/RAI_EP/docs/07_EXECUTION/TECH_MAP_TMW-9_EXPERT_REVIEW_GATE_IMPLEMENTATION_PLAN.md)
 
 - [ ] Ввести policy-driven invocation `chief_agronomist`
 - [ ] Подключить `TechMapExpertReviewResult` в orchestrator

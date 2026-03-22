@@ -72,6 +72,13 @@
     - он фиксирует полный маршрут `TMW-0..TMW-9`
     - он показывает, какие пакеты уже сделаны, какие в работе и какие ещё не стартовали
     - он фиксирует зависимости, текущий active slice и запрет на выход из очередности
+  - Документный контур Техкарты добран до полного набора execution-пакетов:
+    - добавлены `TMW-3 Clarify Loop Engine`
+    - добавлены `TMW-4 Semantic Frame Extension`
+    - добавлены `TMW-5 Workflow Orchestrator`
+    - добавлены `TMW-7 Trust + Composition`
+    - добавлены `TMW-9 Expert Review Gate`
+    - master-checklist и `DOCS_MATRIX` синхронизированы с полным набором `TMW`
   - Важное синхронизированное решение:
     - текущий код остаётся source of truth для raw branch verdict enum `VERIFIED / PARTIAL / UNVERIFIED / CONFLICTED / REJECTED`
     - на workflow-слое Техкарты введён агрегирующий verdict `BLOCKED`, чтобы не ломать текущий runtime канон и одновременно получить user/business-ориентированную governed-модель блокировки

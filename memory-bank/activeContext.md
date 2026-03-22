@@ -56,6 +56,10 @@
   - зафиксированы зависимости между `TMW`
   - явно разведены `DONE / IN_PROGRESS / PLANNED`
   - зафиксирован текущий активный execution-срез и что запрещено делать вне очереди
+- [x] Закрыт недостающий документный контур `TMW-3 / TMW-4 / TMW-5 / TMW-7 / TMW-9`:
+  - добавлены execution-доки для clarify loop, semantic frame extension, workflow orchestrator, trust/composition и expert review gate
+  - master-checklist получил ссылки на полный набор `TMW`-пакетов
+  - `DOCS_MATRIX` обновлён новыми claim-ами для каждого недостающего execution-дока
 - [x] Зафиксировано важное разграничение источников истины:
   - текущий raw branch verdict в runtime остаётся каноническим по коду как `VERIFIED / PARTIAL / UNVERIFIED / CONFLICTED / REJECTED`
   - для tech-map workflow поверх него введён workflow-level verdict `BLOCKED`, который агрегирует `CONFLICTED / REJECTED / policy block / blocking missing slots`
