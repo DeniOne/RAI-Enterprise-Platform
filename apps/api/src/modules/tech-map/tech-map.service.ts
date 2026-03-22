@@ -39,6 +39,7 @@ import {
   TECH_MAP_STAGES_WITH_RESOURCES_NO_ORDER_INCLUDE,
   TECH_MAP_VALIDATION_INCLUDE,
 } from "../../shared/tech-map/tech-map-prisma-includes";
+import { assessTechMapGovernedDraftContext } from "../../shared/tech-map/tech-map-governed-draft.helpers";
 import { isEditablePersistedTechMapStatus } from "../../shared/tech-map/tech-map-governed-status.helpers";
 import {
   buildTechMapBlueprint,
@@ -228,6 +229,16 @@ export class TechMapService {
         id: params.seasonRef,
         companyId: params.companyId,
       },
+      include: {
+        field: {
+          select: {
+            clientId: true,
+            protectedZoneFlags: true,
+            drainageClass: true,
+            slopePercent: true,
+          },
+        },
+      },
     });
 
     if (!season) {
@@ -248,6 +259,9 @@ export class TechMapService {
       where: {
         companyId: params.companyId,
         seasonId: params.seasonRef,
+      },
+      include: {
+        performanceContract: true,
       },
       orderBy: {
         createdAt: "desc",
@@ -290,6 +304,108 @@ export class TechMapService {
       String(draft.crop ?? params.crop).toLowerCase() === "sunflower"
         ? "sunflower"
         : "rapeseed";
+    const [
+      latestSoilProfile,
+      previousTechMap,
+      harvestResultCount,
+      regionProfile,
+      inputCatalogCount,
+    ] = await Promise.all([
+      this.prisma.soilProfile.findFirst({
+        where: {
+          fieldId: params.fieldRef,
+          companyId: params.companyId,
+        },
+        orderBy: {
+          sampleDate: "desc",
+        },
+      }),
+      this.prisma.techMap.findFirst({
+        where: {
+          companyId: params.companyId,
+          fieldId: params.fieldRef,
+          id: {
+            not: draft.id,
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      }),
+      this.prisma.harvestResult.count({
+        where: {
+          companyId: params.companyId,
+          fieldId: params.fieldRef,
+        },
+      }),
+      this.prisma.regionProfile.findFirst({
+        where: {
+          OR: [
+            { companyId: params.companyId },
+            { companyId: null },
+          ],
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
+      }),
+      this.prisma.inputCatalog.count({
+        where: {
+          OR: [
+            { companyId: params.companyId },
+            { companyId: null },
+          ],
+        },
+      }),
+    ]);
+    const governedAssessment = assessTechMapGovernedDraftContext({
+      legalEntityId: params.companyId,
+      farmId: season.farmId ?? plan.accountId ?? season.field?.clientId ?? null,
+      fieldIds: season.fieldId ? [season.fieldId] : [],
+      seasonId: params.seasonRef,
+      cropCode: crop,
+      predecessorCrop: cropZone.predecessorCrop ?? null,
+      soilProfileSampleDate: latestSoilProfile?.sampleDate ?? null,
+      targetYieldProfile:
+        cropZone.targetYieldTHa ??
+        season.expectedYield ??
+        plan.optValue ??
+        plan.baselineValue ??
+        null,
+      hasFieldHistory: Boolean(previousTechMap) || harvestResultCount > 0,
+      seedOrHybrid:
+        cropZone.varietyHybrid ??
+        cropZone.cropVarietyId ??
+        season.cropVarietyId ??
+        null,
+      hasMachineryProfile: false,
+      hasLaborOrContractorProfile: false,
+      hasInputAvailability: false,
+      hasBudgetPolicy:
+        plan.minValue != null ||
+        plan.optValue != null ||
+        plan.maxValue != null ||
+        plan.baselineValue != null,
+      hasPriceBookVersion: false,
+      hasCurrencyTaxMode: false,
+      hasWeatherNormals: Boolean(regionProfile),
+      hasForecastWindow: false,
+      hasIrrigationOrWaterConstraints: Boolean(
+        season.field?.protectedZoneFlags ??
+        season.field?.drainageClass ??
+        season.field?.slopePercent,
+      ),
+      hasPreviousTechMap: Boolean(previousTechMap),
+      hasExecutionHistory: Boolean(previousTechMap) || harvestResultCount > 0,
+      hasPastOutcomes:
+        season.actualYield != null || harvestResultCount > 0,
+      methodologyProfileId: this.resolveDraftMethodologyProfileId(
+        draft.generationMetadata,
+      ),
+      hasAllowedInputCatalogVersion: inputCatalogCount > 0,
+      contractMode: plan.performanceContract?.modelType ?? null,
+      hasTargetKpiPolicy: Boolean(plan.targetMetric ?? plan.period),
+    });
 
     return {
       draftId: draft.id,
@@ -297,9 +413,17 @@ export class TechMapService {
       fieldRef: params.fieldRef,
       seasonRef: params.seasonRef,
       crop,
-      missingMust: [],
-      tasks: [] as [],
-      assumptions: [] as [],
+      readiness: governedAssessment.readiness,
+      nextReadinessTarget: governedAssessment.nextReadinessTarget,
+      workflowVerdict: governedAssessment.workflowVerdict,
+      publicationState: governedAssessment.publicationState,
+      missingMust: governedAssessment.missingMust,
+      clarifyItems: governedAssessment.clarifyItems,
+      gaps: governedAssessment.gaps,
+      tasks: governedAssessment.tasks,
+      assumptions: governedAssessment.assumptions.map(
+        (assumption) => assumption.label,
+      ),
     };
   }
 
@@ -693,6 +817,27 @@ export class TechMapService {
         varietyHybrid: null,
       },
     });
+  }
+
+  private resolveDraftMethodologyProfileId(
+    generationMetadata: Prisma.JsonValue | null | undefined,
+  ): string | null {
+    if (!generationMetadata || typeof generationMetadata !== "object") {
+      return null;
+    }
+
+    const metadata = generationMetadata as Record<string, unknown>;
+    const source = typeof metadata.source === "string" ? metadata.source : null;
+    const blueprintVersion =
+      typeof metadata.blueprintVersion === "string"
+        ? metadata.blueprintVersion
+        : null;
+
+    if (!source || !blueprintVersion) {
+      return null;
+    }
+
+    return `${source}:${blueprintVersion}`;
   }
 
 }

@@ -1,3 +1,13 @@
+import type {
+  TechMapClarifyItem,
+  TechMapGap,
+} from "../tech-map/tech-map-governed-clarify.types";
+import type {
+  TechMapContextReadiness,
+  TechMapPublicationState,
+  TechMapWorkflowVerdict,
+} from "../tech-map/tech-map-governed-state.types";
+
 export enum RaiToolName {
   EchoMessage = "echo_message",
   WorkspaceSnapshot = "workspace_snapshot",
@@ -612,9 +622,15 @@ export interface GenerateTechMapDraftResult {
   fieldRef: string;
   seasonRef: string;
   crop: "rapeseed" | "sunflower";
+  readiness: TechMapContextReadiness;
+  nextReadinessTarget?: TechMapContextReadiness;
+  workflowVerdict: TechMapWorkflowVerdict;
+  publicationState: TechMapPublicationState;
   missingMust: string[];
-  tasks: [];
-  assumptions: [];
+  clarifyItems: TechMapClarifyItem[];
+  gaps: TechMapGap[];
+  tasks: string[];
+  assumptions: string[];
 }
 
 export interface SimulateScenarioResult {

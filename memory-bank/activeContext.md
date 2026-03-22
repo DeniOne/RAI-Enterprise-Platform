@@ -30,6 +30,32 @@
   - добавлены execution-доки `TMW-2 Canonical Artifact Schema` и `TMW-8 Persistence / Versioning Gate`
   - в `apps/api/src/shared/tech-map/` вынесен новый governed contract-layer для `artifact/state/conflict/clarify`
   - текущие `FSM` и service write-guards начали использовать shared helper-слой, чтобы status/editability правила больше не жили только локально в модулях
+- [x] Следующий hardening-пакет тоже зафиксирован:
+  - основной spec усилен machine-oriented `Slot Registry` contract, workflow verdict aggregation matrix, approval trigger matrix и anti-role-inflation invariants для `chief_agronomist`
+  - добавлены execution-доки `TMW-1 Slot Registry` и `TMW-6 Branch Contracts + Conflict Authority`
+  - в shared tech-map layer добавлены:
+    - canonical `slot registry`
+    - tech-map branch contracts
+    - workflow verdict aggregation helper
+    - source authority / conflict authority helper
+- [x] Стартован первый runtime adoption slice поверх нового governed слоя:
+  - добавлен deterministic helper `tech-map-governed-draft.helpers.ts`, который собирает `slot registry -> readiness -> clarify -> workflow verdict`
+  - `TechMapService.createDraftStub(...)` больше не возвращает пустой stub; теперь он вычисляет governed intake-результат по реальному контексту `season / plan / cropZone / soil / history / catalog`
+  - `generate_tech_map_draft` теперь возвращает:
+    - `readiness`
+    - `nextReadinessTarget`
+    - `workflowVerdict`
+    - `publicationState`
+    - `clarifyItems`
+    - `gaps`
+    - `tasks`
+  - текущий runtime начал честно показывать boundary между физически созданным draft и governed-ready состоянием этого draft
+  - `methodology_profile_id` во временном runtime-path читается из deterministic blueprint metadata (`source:blueprintVersion`), чтобы governed intake опирался на реальный методологический источник, уже существующий в коде
+- [x] Добавлен верхнеуровневый execution-док [TECH_MAP_MASTER_IMPLEMENTATION_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/TECH_MAP_MASTER_IMPLEMENTATION_CHECKLIST.md) как единая точка управления программой `TMW-0..TMW-9`:
+  - зафиксированы общий порядок прохождения пакетов
+  - зафиксированы зависимости между `TMW`
+  - явно разведены `DONE / IN_PROGRESS / PLANNED`
+  - зафиксирован текущий активный execution-срез и что запрещено делать вне очереди
 - [x] Зафиксировано важное разграничение источников истины:
   - текущий raw branch verdict в runtime остаётся каноническим по коду как `VERIFIED / PARTIAL / UNVERIFIED / CONFLICTED / REJECTED`
   - для tech-map workflow поверх него введён workflow-level verdict `BLOCKED`, который агрегирует `CONFLICTED / REJECTED / policy block / blocking missing slots`

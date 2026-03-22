@@ -21,8 +21,15 @@
 - [x] Явно описать write boundaries, versioning и immutable snapshots.
 - [x] Добавить `Mermaid` diagrams для сценариев, state graph, branch dependency и approval swimlane.
 - [x] Собрать execution-док `TMW-2 Canonical Artifact Schema` в `docs/07_EXECUTION/`.
+- [x] Собрать execution-док `TMW-1 Slot Registry` в `docs/07_EXECUTION/`.
 - [x] Вынести shared-контракты `tech-map artifact/state/conflict/clarify` в `apps/api/src/shared/tech-map/`.
+- [x] Вынести shared-контракты `slot registry`, `branch contracts`, `workflow verdict aggregation`, `conflict authority` в `apps/api/src/shared/tech-map/`.
+- [x] Собрать execution-док `TMW-6 Branch Contracts + Conflict Authority` как отдельный implementation-пакет.
 - [x] Собрать execution-док `TMW-8 Persistence / Versioning Gate` как отдельный implementation-пакет.
+- [x] Подключить `slot registry -> readiness / clarify / workflow verdict` к runtime пути `generate_tech_map_draft`.
+- [x] Перевести `createDraftStub(...)` с пустого stub-ответа на governed intake-result с `readiness / publicationState / clarifyItems / gaps`.
+- [x] Встроить runtime-источник `methodology_profile_id` из deterministic blueprint metadata.
+- [x] Собрать верхнеуровневый master-checklist всей программы `TECH_MAP_GOVERNED_WORKFLOW` с маршрутной картой `TMW-0..TMW-9`.
 - [x] Зарегистрировать новый claim в `docs/DOCS_MATRIX.md`.
 - [x] Синхронизировать логическое изменение в `memory-bank`.
 

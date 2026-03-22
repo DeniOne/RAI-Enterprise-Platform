@@ -48,6 +48,30 @@
       - `docs/07_EXECUTION/TECH_MAP_TMW-2_CANONICAL_ARTIFACT_SCHEMA_IMPLEMENTATION_PLAN.md`
       - `docs/07_EXECUTION/TECH_MAP_TMW-8_PERSISTENCE_VERSIONING_GATE_IMPLEMENTATION_PLAN.md`
     - новые execution claims зарегистрированы в `docs/DOCS_MATRIX.md`
+  - Следующим hardening-пакетом сделано:
+    - основной spec усилен canonical `Slot Registry` contract, formal workflow verdict aggregation matrix и approval trigger/invalidation rules
+    - жёстче закреплены invariants против role inflation для `chief_agronomist`
+    - добавлены execution-доки:
+      - `docs/07_EXECUTION/TECH_MAP_TMW-1_SLOT_REGISTRY_IMPLEMENTATION_PLAN.md`
+      - `docs/07_EXECUTION/TECH_MAP_TMW-6_BRANCH_CONTRACTS_CONFLICT_AUTHORITY_IMPLEMENTATION_PLAN.md`
+    - в `apps/api/src/shared/tech-map/` добавлены:
+      - `tech-map-slot-registry.ts`
+      - `tech-map-governed-branch.types.ts`
+      - `tech-map-governed-verdict.helpers.ts`
+      - `tech-map-conflict-authority.helpers.ts`
+    - unit-tests добавлены для slot registry, verdict aggregation и authority precedence
+  - Следующим runtime adoption-срезом сделано:
+    - добавлен helper `tech-map-governed-draft.helpers.ts`, который детерминированно считает `readiness`, `clarify`, `gaps`, `publicationState` и `workflowVerdict`
+    - `TechMapService.createDraftStub(...)` теперь собирает governed intake по реальным данным `season / plan / cropZone / soilProfile / techMap history / harvest history / input catalog`
+    - `GenerateTechMapDraftResult` расширен governed-полями `readiness / nextReadinessTarget / workflowVerdict / publicationState / clarifyItems / gaps / tasks`
+    - `ResponseComposer` перестал отвечать по `generate_tech_map_draft` как по безусловно готовому draft и начал показывать governed boundary через readiness/verdict/clarify count
+    - `methodology_profile_id` в текущем runtime временно выводится из deterministic blueprint metadata, что даёт честный machine-readable methodology basis вместо пустого заглушечного поля
+    - добавлен unit-spec `tech-map-governed-draft.helpers.spec.ts`
+  - Для управления всей программой сверху добавлен master execution-checklist:
+    - `docs/07_EXECUTION/TECH_MAP_MASTER_IMPLEMENTATION_CHECKLIST.md`
+    - он фиксирует полный маршрут `TMW-0..TMW-9`
+    - он показывает, какие пакеты уже сделаны, какие в работе и какие ещё не стартовали
+    - он фиксирует зависимости, текущий active slice и запрет на выход из очередности
   - Важное синхронизированное решение:
     - текущий код остаётся source of truth для raw branch verdict enum `VERIFIED / PARTIAL / UNVERIFIED / CONFLICTED / REJECTED`
     - на workflow-слое Техкарты введён агрегирующий verdict `BLOCKED`, чтобы не ломать текущий runtime канон и одновременно получить user/business-ориентированную governed-модель блокировки

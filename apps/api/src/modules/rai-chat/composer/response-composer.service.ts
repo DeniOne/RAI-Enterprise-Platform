@@ -3102,7 +3102,11 @@ export class ResponseComposerService {
             agentName?: string;
           };
           if (r?.agentName === "AgronomAgent" && r.explain) return r.explain;
-          return `Черновик техкарты создан: ${(r as GenerateTechMapDraftResult)?.draftId}`;
+          const clarifySuffix =
+            r.missingMust.length > 0
+              ? ` Нужен governed clarify по ${r.missingMust.length} обязательным слотам.`
+              : "";
+          return `Черновик техкарты создан: ${r.draftId}. Готовность ${r.readiness}, verdict ${r.workflowVerdict}.${clarifySuffix}`;
         }
         if (tool.name === RaiToolName.RegisterCounterparty) {
           const r = tool.result as RegisterCounterpartyResult;

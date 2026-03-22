@@ -3,7 +3,7 @@ id: DOC-ENG-TECH-MAP-GOVERNED-WORKFLOW-20260322
 layer: Engineering
 type: Service Spec
 status: draft
-version: 0.2.0
+version: 0.3.0
 owners: [@techlead]
 last_updated: 2026-03-22
 claim_id: CLAIM-ENG-TECH-MAP-GOVERNED-WORKFLOW-20260322
@@ -338,6 +338,60 @@ interface TechMapSemanticFrame {
 
 5. `publishability invariant`
    Контекст, достаточный для `DRAFT`, не равен контексту, достаточному для `PUBLICATION`.
+
+### 9.5 Canonical slot registry contract
+
+`Slot matrix` выше является human-readable представлением.
+Каноническим runtime authority для slot-логики должен быть typed registry.
+
+```ts
+type TechMapSlotGroup =
+  | "identity_scope"
+  | "agronomic_basis"
+  | "resource_feasibility"
+  | "economic_basis"
+  | "external_basis"
+  | "history_and_evidence"
+  | "methodology_and_governance";
+
+interface TechMapSlotFreshnessPolicy {
+  mode: "NOT_REQUIRED" | "LATEST_VERIFIED" | "MAX_AGE_DAYS" | "SNAPSHOT_LOCKED";
+  max_age_days?: number;
+  stale_verdict: "ALLOW" | "PARTIAL" | "BLOCKED";
+}
+
+interface TechMapSlotAssumptionPolicy {
+  allowed: boolean;
+  allowed_kinds: Array<"USER_DECLARED" | "METHOD_DEFAULT" | "MODEL_ESTIMATE" | "TEMP_PLACEHOLDER">;
+  max_until_readiness?: TechMapContextReadiness;
+  publishable: boolean;
+}
+
+interface TechMapSlotImpactPolicy {
+  blocks_branch_execution: boolean;
+  review_impact: "BLOCKING" | "DISCLOSE" | "NONE";
+  publication_impact: "BLOCKING" | "DISCLOSE" | "NONE";
+  publication_critical: boolean;
+}
+
+interface TechMapSlotRegistryEntry {
+  slot_key: string;
+  group: TechMapSlotGroup;
+  severity: TechMapMissingSlotSeverity;
+  stage_required_from: TechMapContextReadiness;
+  allowed_sources: string[];
+  freshness_policy: TechMapSlotFreshnessPolicy;
+  assumption_policy: TechMapSlotAssumptionPolicy;
+  impact: TechMapSlotImpactPolicy;
+}
+```
+
+Нормативный статус registry:
+
+- slot должен быть зарегистрирован ровно один раз
+- readiness scoring не должен жить отдельно от registry
+- `clarify`, basis checks, freshness checks и publication gating должны вычисляться из registry
+- изменение slot-policy должно быть versioned change, а не локальный if в service
 
 ## 10. Canonical Tech Map Domain Model
 
@@ -757,6 +811,16 @@ Clarify должен выполняться пакетами, а не россы
 Нормативный анти-паттерн:
 
 - `chief_agronomist` не вызывается как обязательный second pass для каждой стандартной Техкарты
+
+### 13.2.3 Инварианты expert-review слоя
+
+`chief_agronomist` обязан подчиняться пяти жёстким инвариантам:
+
+1. expert review никогда не пишет canonical content напрямую
+2. expert review возвращает только findings, challenged assumptions и requested revisions
+3. только governed revision loop имеет право мутировать draft
+4. verdict `chief_agronomist` не может bypass-ить human agronomy authority
+5. expert review не может самостоятельно публиковать, approve-ить или активировать Техкарту
 
 ### 13.3 Parallel / sequential / blocking orchestration
 
@@ -1212,6 +1276,50 @@ interface TechMapExpertReviewResult {
 4. `MODEL_ESTIMATE` не может перейти в publication fact.
 5. Открытый blocking gap запрещает статус “готово”.
 
+### 18.5 Workflow verdict aggregation matrix
+
+Workflow verdict должен агрегироваться детерминированно, а не prose-логикой composer-а.
+
+```ts
+type TechMapAggregationArtifactKind =
+  | "workflow_draft"
+  | "comparison_report"
+  | "review_packet"
+  | "publication_packet";
+
+interface TechMapWorkflowVerdictAggregationInput {
+  requested_artifact: TechMapAggregationArtifactKind;
+  selected_variant_verdict?: TechMapWorkflowVerdict;
+  publication_critical_branch_verdicts: TechMapWorkflowVerdict[];
+  primary_artifact_branch_verdict?: TechMapWorkflowVerdict;
+  advisory_branch_verdicts: TechMapWorkflowVerdict[];
+  expert_review_verdict?: "APPROVE_WITH_NOTES" | "REVISE" | "BLOCK" | "SKIPPED";
+  unresolved_blocking_gaps: number;
+  unresolved_hard_blocks: number;
+}
+```
+
+Канонический порядок агрегации:
+
+1. если `unresolved_blocking_gaps > 0` -> `BLOCKED`
+2. если `unresolved_hard_blocks > 0` -> `BLOCKED`
+3. если `expert_review_verdict = BLOCK` -> `BLOCKED`
+4. если хотя бы один publication-critical branch = `BLOCKED` -> `BLOCKED`
+5. если `requested_artifact = comparison_report` и `primary_artifact_branch_verdict = UNVERIFIED` -> `UNVERIFIED`
+6. если `selected_variant_verdict = UNVERIFIED` или хотя бы один publication-critical branch = `UNVERIFIED` -> `UNVERIFIED`
+7. если `expert_review_verdict = REVISE` -> минимум `PARTIAL`
+8. если `requested_artifact = comparison_report` и `primary_artifact_branch_verdict = PARTIAL` -> `PARTIAL`
+9. если `selected_variant_verdict = PARTIAL` или хотя бы один publication-critical branch = `PARTIAL` -> `PARTIAL`
+10. advisory branches не понижают overall workflow verdict, если selected artifact не зависит от них как от primary basis
+11. во всех остальных случаях -> `VERIFIED`
+
+Нормативные уточнения:
+
+- для `workflow_draft` verdict selected variant и publication-critical branches всегда приоритетнее `comparison_branch`
+- для `comparison_report` comparison branch становится primary artifact branch и участвует в aggregation
+- `APPROVE_WITH_NOTES` не повышает и не понижает verdict сам по себе
+- `REVISE` не превращает `VERIFIED` в `BLOCKED`, но запрещает трактовать результат как fully ready without revision
+
 ## 19. Conflict resolution и source authority policy
 
 ### 19.1 Source authority classes
@@ -1430,6 +1538,32 @@ Workflow обязан различать:
 
 - `chief_agronomist` даёт экспертное заключение, но не финальное approval
 - human agronomy review остаётся обязательным authority layer
+
+### 22.4 Review and approval trigger matrix
+
+| Trigger | Required reviewer role | Mandatory | Blocking | SLA | Re-review condition | What invalidates prior approval |
+|---|---|---|---|---|---|---|
+| `agronomy_baseline_review` | `human_agronomist` | да | да | `2 business days` | любое изменение operations, yield basis или high-impact assumptions | изменение selected variant, operation graph, challenged assumptions |
+| `finance_threshold_review` | `finance_reviewer` | условно | да, если trigger сработал | `2 business days` | любое изменение cost model, budget policy, ROI basis | изменение `TechMapFinancialSummary`, `budget_policy`, `price_book_version` |
+| `compliance_contract_review` | `legal_or_contracts_reviewer` | условно | да, если trigger сработал | `2 business days` | любое изменение contract mode, prohibited inputs, regulatory locks | изменение contract-linked constraints, allowed catalog lock, prohibited inputs |
+| `expert_review_escalation` | `chief_agronomist` | условно по policy trigger | да только при `BLOCK`; при `REVISE` возвращает в revision loop | `1 business day` | любой material agronomy revision после expert request | изменение challenged assumptions, methodology profile, feasibility basis |
+| `strategic_publication_approval` | `strategic_approver` | да для `ACTIVE` | да | `1 business day` | любая новая version или changed approval packet | новая version, expired packet, changed approval prerequisites |
+
+### 22.5 Approval invalidation rules
+
+Предыдущее review/approval считается невалидным, если после него произошло хотя бы одно событие:
+
+- изменён `selected_variant_id`
+- изменён operation graph
+- изменён `TechMapFinancialSummary` materially above tolerance
+- изменены contract/compliance lock fields
+- изменены challenged assumptions из expert-review
+- создана новая draft version
+
+Норматив:
+
+- invalidated approval не может считаться “частично действительным”
+- post-review revision всегда должна явно пересчитать required reviews
 
 ## 23. Explainability model
 
