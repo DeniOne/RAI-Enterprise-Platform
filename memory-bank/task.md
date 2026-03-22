@@ -1,5 +1,19 @@
 # Task: RAI_EP
 
+## TECH_MAP_GOVERNED_WORKFLOW (2026-03-22) ✅
+- [x] Собрать целевой инженерный документ `docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md`.
+- [x] Зафиксировать бизнес-смысл Техкарты как governed бизнес-артефакта, а не как `LLM`-ответа.
+- [x] Описать tech-map specialization для `semantic ingress`.
+- [x] Ввести required context model, slot matrix и readiness levels.
+- [x] Описать missing-context / clarify / assumption policy.
+- [x] Зафиксировать owner-led orchestration, branch architecture и typed contracts.
+- [x] Согласовать truth/trust/evidence model с current canonical raw branch verdict enum.
+- [x] Ввести governance / review / approval / publication rules.
+- [x] Описать explainability, audit/forensics и anti-hallucination safeguards.
+- [x] Разобрать обязательные 5 сценариев и зафиксировать MVP slice.
+- [x] Зарегистрировать новый claim в `docs/DOCS_MATRIX.md`.
+- [x] Синхронизировать логическое изменение в `memory-bank`.
+
 ## Branch Trust Gate Sprint — PR A-E (2026-03-21) ✅
 - [x] Добавить shared branch trust contract-layer в `apps/api/src/shared/rai-chat`.
 - [x] Ввести типы `BranchResultContract`, `BranchTrustAssessment`, `BranchVerdict`.

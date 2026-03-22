@@ -1,5 +1,36 @@
 # Progress Report - Prisma, Agro Domain & RAI Chat Integration
 
+## 2026-03-22
+
+1. **TECH_MAP_GOVERNED_WORKFLOW инженерная спецификация** [DONE]:
+  - Добавлен новый документ `docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md`.
+  - Документ фиксирует Техкарту как governed composite workflow первого класса, а не как “сложный ответ агента”.
+  - В документе зафиксированы:
+    - бизнес-смысл Техкарты
+    - причины, почему workflow должен быть governed
+    - tech-map specialization для `semantic ingress`
+    - required context model и slot matrix
+    - readiness levels `S0_UNSCOPED -> S5_PUBLISHABLE`
+    - missing-context / clarify model
+    - assumption policy
+    - owner-agent и participating agents
+    - workflow phases
+    - branch architecture
+    - typed workflow/branch/composition contracts
+    - truth / trust / evidence model
+    - deterministic vs `LLM` responsibility split
+    - governance / approvals / publication rules
+    - explainability bundle
+    - audit / forensics model
+    - failure modes / anti-hallucination safeguards
+    - 5 обязательных sequence-сценариев
+    - MVP slice и первая implementation-декомпозиция
+  - Важное синхронизированное решение:
+    - текущий код остаётся source of truth для raw branch verdict enum `VERIFIED / PARTIAL / UNVERIFIED / CONFLICTED / REJECTED`
+    - на workflow-слое Техкарты введён агрегирующий verdict `BLOCKED`, чтобы не ломать текущий runtime канон и одновременно получить user/business-ориентированную governed-модель блокировки
+  - Новый claim `CLAIM-ENG-TECH-MAP-GOVERNED-WORKFLOW-20260322` зарегистрирован в `docs/DOCS_MATRIX.md`.
+  - Эффект изменения: у команды появился плотный инженерный источник для дальнейшего разрезания governed workflow Техкарты на backend/runtime/policy implementation-пакеты без возврата к абстрактным обсуждениям.
+
 ## 2026-03-21
 
 1. **Communication Proposal Rule added to `AGENTS.md`** [DONE]:

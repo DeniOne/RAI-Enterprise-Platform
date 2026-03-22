@@ -1,5 +1,23 @@
 # Активный контекст RAI_EP
 
+## Текущая задача (2026-03-22)
+- [x] Добавлен новый инженерный spec-документ `docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md` как каноническая модель governed workflow Техкарты.
+- [x] В документе зафиксированы:
+  - бизнес-смысл Техкарты как проекта урожая, финансовой модели и governed артефакта
+  - tech-map specialization для `semantic ingress`
+  - required context model и уровни готовности slot-ов `S0..S5`
+  - missing-context / clarify / assumption policy
+  - owner-led orchestration с `agronomist` как lead owner и `SupervisorAgent` как orchestration-owner
+  - branch architecture, typed contracts, truth/trust/evidence model
+  - governance / approval / publication rules
+  - explainability bundle, audit/forensics и anti-hallucination safeguards
+  - 5 обязательных sequence-сценариев
+- [x] Зафиксировано важное разграничение источников истины:
+  - текущий raw branch verdict в runtime остаётся каноническим по коду как `VERIFIED / PARTIAL / UNVERIFIED / CONFLICTED / REJECTED`
+  - для tech-map workflow поверх него введён workflow-level verdict `BLOCKED`, который агрегирует `CONFLICTED / REJECTED / policy block / blocking missing slots`
+- [x] Новый claim `CLAIM-ENG-TECH-MAP-GOVERNED-WORKFLOW-20260322` зарегистрирован в `docs/DOCS_MATRIX.md`.
+- [x] Логическое изменение синхронизировано в `memory-bank`, чтобы governed tech-map architecture не жила только в doc-слое и чате.
+
 ## Текущая задача (2026-03-21)
 - [x] Стартован `Branch Trust Gate` implementation sprint: пакеты `PR A`, `PR B`, `PR C` и `PR D` доведены до рабочего кода.
 - [x] Добавлен новый shared contract-layer `apps/api/src/shared/rai-chat/branch-trust.types.ts` с типами `BranchResultContract`, `BranchTrustAssessment`, `BranchVerdict`, `UserFacingBranchCompositionPayload`.
