@@ -13,6 +13,13 @@
 - [x] Разобрать обязательные 5 сценариев и зафиксировать MVP slice.
 - [x] Встроить `chief_agronomist` как conditional expert-review слой без смены business-owner.
 - [x] Ввести typed contract `TechMapExpertReviewResult` и trigger-policy его вызова.
+- [x] Добавить каноническую доменную модель persisted артефакта Техкарты.
+- [x] Развести state taxonomy: workflow/review/approval/publication/persistence.
+- [x] Оформить `clarify` как отдельный runtime subprocess с batching/resume/expiration.
+- [x] Зафиксировать `source authority` и conflict resolution policy.
+- [x] Усилить finance/compliance hard constraints и publication locks.
+- [x] Явно описать write boundaries, versioning и immutable snapshots.
+- [x] Добавить `Mermaid` diagrams для сценариев, state graph, branch dependency и approval swimlane.
 - [x] Зарегистрировать новый claim в `docs/DOCS_MATRIX.md`.
 - [x] Синхронизировать логическое изменение в `memory-bank`.
 

@@ -3,7 +3,7 @@ id: DOC-ENG-TECH-MAP-GOVERNED-WORKFLOW-20260322
 layer: Engineering
 type: Service Spec
 status: draft
-version: 0.1.0
+version: 0.2.0
 owners: [@techlead]
 last_updated: 2026-03-22
 claim_id: CLAIM-ENG-TECH-MAP-GOVERNED-WORKFLOW-20260322
@@ -320,9 +320,196 @@ interface TechMapSemanticFrame {
 - `S4` минимален для review packet
 - `S5` минимален для publication packet
 
-## 10. Missing context / clarify model
+### 9.4 Контекстные инварианты
 
-### 10.1 Классы missing slots
+Контекст Техкарты должен удовлетворять пяти обязательным инвариантам:
+
+1. `scope invariant`
+   Поле, сезон, культура и юрлицо должны находиться в одной согласованной области владения и времени.
+
+2. `methodology invariant`
+   Каждая publication-critical ветка должна знать точную `methodology_profile_id` и версию допускаемых справочников.
+
+3. `baseline invariant`
+   Все варианты внутри одного compare-workflow обязаны использовать один `baseline_context_hash`.
+
+4. `traceability invariant`
+   Каждый publication-critical slot должен иметь source lineage или честно быть раскрыт как gap/assumption.
+
+5. `publishability invariant`
+   Контекст, достаточный для `DRAFT`, не равен контексту, достаточному для `PUBLICATION`.
+
+## 10. Canonical Tech Map Domain Model
+
+### 10.1 Разделение transient composition и persisted artifact
+
+Workflow Техкарты оперирует двумя разными сущностями:
+
+- `TechMapGovernedComposition`
+  - transient runtime-результат композиции
+  - используется для explainability, compare, honest disclosure и decisioning
+  - может существовать без persisted `TechMap`
+
+- `TechMapCanonicalDraft`
+  - канонический доменный артефакт Техкарты
+  - версия, которая сохраняется, ревьюится, одобряется и публикуется
+  - служит основой для `DB`-модели, `API`-контрактов и `FSM`
+
+### 10.2 Канонические объекты артефакта
+
+| Объект | Роль | Persisted | Мутируемость |
+|---|---|---|---|
+| `TechMapCanonicalDraft` | корневой доменный артефакт версии Техкарты | да | mutable только до review submission |
+| `TechMapVariant` | один сценарный вариант в рамках draft/comparison | да | mutable вместе с draft version |
+| `TechMapOperation` | атомарная операция сезонного плана | да | mutable до review submission |
+| `TechMapInputPlan` | потребность в семенах, удобрениях, СЗР и других inputs | да | mutable до review submission |
+| `TechMapFinancialSummary` | итоговая экономическая модель варианта | да | mutable до review submission |
+| `TechMapRiskRegister` | риски, вероятности, impact и mitigation | да | mutable до review submission |
+| `TechMapEvidenceBundle` | bundle доказательной базы и provenance | да | mutable до review submission |
+| `TechMapApprovalPacket` | immutable пакет для review/approval/publication | да | immutable после создания |
+
+### 10.3 Канонические типы
+
+```ts
+interface TechMapArtifactHeader {
+  workflow_id: string;
+  tech_map_id?: string;
+  version_id?: string;
+  legal_entity_id: string;
+  farm_id: string;
+  field_ids: string[];
+  season_id: string;
+  crop_code: string;
+  methodology_profile_id: string;
+  baseline_context_hash: string;
+  source_workflow_mode: "new_draft" | "rebuild" | "comparison";
+}
+
+interface TechMapOperation {
+  operation_id: string;
+  stage_code: string;
+  operation_code: string;
+  title: string;
+  sequence_no: number;
+  planned_window: {
+    start_date?: string;
+    end_date?: string;
+    agronomic_trigger?: string;
+  };
+  dependencies: string[];
+  input_plan_refs: string[];
+  machinery_requirement_refs: string[];
+  basis_statement_refs: string[];
+  publication_critical: boolean;
+}
+
+interface TechMapInputPlan {
+  input_plan_id: string;
+  input_code: string;
+  category: "seed" | "fertilizer" | "crop_protection" | "fuel" | "service" | "other";
+  rate_per_ha?: number;
+  total_quantity?: number;
+  unit: string;
+  operation_ref: string;
+  allowed_by_catalog: boolean;
+  evidence_refs: string[];
+}
+
+interface TechMapFinancialSummary {
+  currency: string;
+  area_ha: number;
+  direct_cost_total: number;
+  indirect_cost_total?: number;
+  total_cost: number;
+  cost_per_ha: number;
+  target_yield: number;
+  break_even_yield?: number;
+  expected_revenue?: number;
+  expected_margin?: number;
+  roi_pct?: number;
+  budget_fit: "WITHIN_POLICY" | "OVERRIDE_REQUIRED" | "OUT_OF_POLICY";
+}
+
+interface TechMapRiskRegisterItem {
+  risk_id: string;
+  title: string;
+  category: "agronomic" | "weather" | "financial" | "compliance" | "execution";
+  severity: "low" | "medium" | "high" | "critical";
+  probability: "low" | "medium" | "high";
+  mitigation: string[];
+  evidence_refs: string[];
+}
+
+interface TechMapEvidenceBundle {
+  bundle_id: string;
+  source_refs: string[];
+  coverage_pct: number;
+  publication_critical_coverage_pct: number;
+  unresolved_refs: string[];
+  freshness_summary: Array<{ source_ref: string; status: "fresh" | "stale" | "unknown" }>;
+}
+
+interface TechMapApprovalPacket {
+  packet_id: string;
+  draft_version_id: string;
+  immutable_snapshot_ref: string;
+  required_reviews: Array<{
+    role: string;
+    status: "pending" | "approved" | "rejected";
+    reason?: string;
+  }>;
+  required_signoffs: Array<{
+    role: string;
+    mandatory: boolean;
+    status: "pending" | "approved" | "rejected";
+  }>;
+  locked_fields: string[];
+  publication_basis_refs: string[];
+}
+
+interface TechMapVariant {
+  variant_id: string;
+  label: string;
+  objective: "base" | "economy" | "intensive" | "risk_min" | "custom";
+  overrides: Record<string, unknown>;
+  operations: TechMapOperation[];
+  input_plan: TechMapInputPlan[];
+  financial_summary: TechMapFinancialSummary;
+  risk_register: TechMapRiskRegisterItem[];
+  evidence_bundle: TechMapEvidenceBundle;
+  overall_verdict: TechMapWorkflowVerdict;
+}
+
+interface TechMapCanonicalDraft {
+  header: TechMapArtifactHeader;
+  readiness: TechMapContextReadiness;
+  workflow_verdict: TechMapWorkflowVerdict;
+  publication_state: TechMapPublicationState;
+  review_status: TechMapReviewStatus;
+  approval_status: TechMapApprovalStatus;
+  persistence_status: TechMapPersistenceStatus;
+  slot_ledger_ref: string;
+  assumptions: TechMapAssumption[];
+  gaps: TechMapGap[];
+  conflicts: TechMapConflictRecord[];
+  variants: TechMapVariant[];
+  selected_variant_id?: string;
+  approval_packet?: TechMapApprovalPacket;
+  audit_refs: string[];
+}
+```
+
+### 10.4 Доменные инварианты persisted артефакта
+
+1. В persisted `TechMapCanonicalDraft` всегда должен существовать `header.baseline_context_hash`.
+2. `selected_variant_id` обязателен для `REVIEW_REQUIRED` и выше.
+3. `TechMapFinancialSummary` и `TechMapRiskRegister` не могут существовать без ссылки на variant.
+4. `TechMapApprovalPacket` должен создаваться как immutable snapshot, а не как mutable view.
+5. Публикуемый baseline обязан быть отдельным versioned snapshot, а не “живой” черновик.
+
+## 11. Missing context / clarify model
+
+### 11.1 Классы missing slots
 
 ```ts
 type TechMapMissingSlotSeverity =
@@ -356,7 +543,7 @@ type TechMapMissingSlotSeverity =
   - строится системой детерминированно или через trusted integration
   - должен нести `derived_from` и `evidence_refs`
 
-### 10.2 Assumption policy
+### 11.2 Assumption policy
 
 | Assumption kind | Описание | Допустимо в `DRAFT` | Допустимо в `REVIEW` | Допустимо в `PUBLICATION` |
 |---|---|---|---|---|
@@ -365,13 +552,21 @@ type TechMapMissingSlotSeverity =
 | `MODEL_ESTIMATE` | оценка модели или эвристики | да, только как hypothesis | только как advisory | нет |
 | `TEMP_PLACEHOLDER` | временное заполнение для продолжения intake | да, только до `S2` | нет | нет |
 
-### 10.3 Clarify contract
+### 11.3 Clarify contract
 
 ```ts
+type TechMapClarifyResolutionTarget =
+  | "MACHINE_RESOLVABLE"
+  | "USER_RESOLVABLE"
+  | "HUMAN_REVIEW_REQUIRED";
+
 interface TechMapClarifyItem {
   slot_key: string;
   label: string;
+  group_key: string;
+  priority: number;
   severity: TechMapMissingSlotSeverity;
+  resolution_target: TechMapClarifyResolutionTarget;
   reason: string;
   blocks_phases: Array<"branch_execution" | "composition" | "publication">;
   acceptable_sources: string[];
@@ -393,9 +588,111 @@ Clarify-пакет обязан содержать четыре секции:
 - задавать пользователю вопрос “на всякий случай”, если slot уже может быть безопасно поднят из record/integration
 - закрывать conflict красивым текстом без explicit choice
 
-## 11. Lead owner и participating agents
+## 12. Operational clarify loop как runtime subprocess
 
-### 11.1 Роли
+### 12.1 Runtime contracts
+
+```ts
+type TechMapClarifyMode = "ONE_SHOT" | "MULTI_STEP";
+
+type TechMapClarifyBatchStatus =
+  | "OPEN"
+  | "PARTIALLY_RESOLVED"
+  | "WAITING_USER"
+  | "WAITING_SYSTEM"
+  | "RESOLVED"
+  | "EXPIRED"
+  | "CANCELLED";
+
+interface TechMapClarifyBatch {
+  batch_id: string;
+  workflow_id: string;
+  mode: TechMapClarifyMode;
+  status: TechMapClarifyBatchStatus;
+  priority: number;
+  group_key: string;
+  items: TechMapClarifyItem[];
+  blocking_for_phase: TechMapWorkflowPhase;
+  resume_token: string;
+  expires_at: string;
+}
+
+interface TechMapWorkflowResumeState {
+  workflow_id: string;
+  resume_token: string;
+  resume_from_phase: TechMapWorkflowPhase;
+  pending_batch_ids: string[];
+  baseline_context_hash: string;
+  external_recheck_required: boolean;
+  expires_at: string;
+}
+```
+
+### 12.2 Правила группировки и приоритизации
+
+Clarify должен выполняться пакетами, а не россыпью вопросов.
+
+Базовый порядок приоритета:
+
+1. `scope_batch`
+   - поле, сезон, культура, owner scope
+   - без этого нельзя перейти к `S1`
+
+2. `blocking_agronomy_batch`
+   - predecessor, soil profile, target yield basis
+   - без этого нельзя запускать agronomic / soil-input ветки
+
+3. `blocking_economics_compliance_batch`
+   - budget policy, price basis, methodology profile, allowed catalog version
+   - без этого нельзя строить publishable finance/compliance basis
+
+4. `review_critical_batch`
+   - machinery, availability, contract mode, KPI policy
+   - допускает draft, но блокирует review/publication
+
+5. `enrichment_batch`
+   - historical enrichments, forecast, optional operational detail
+   - не должен тормозить draft unnecessarily
+
+### 12.3 One-shot vs multi-step clarify
+
+`ONE_SHOT` допустим, если:
+
+- все missing slots независимы друг от друга
+- нет необходимости сначала подтянуть machine-resolvable данные
+- контекст достаточно стабилен для одного ответа пользователя
+
+`MULTI_STEP` обязателен, если:
+
+- последующие вопросы зависят от ответа на scope или crop selection
+- нужно сначала добрать данные из integrations/registry, а потом спрашивать пользователя только остаток
+- compare/rebuild сценарий требует выбора baseline или variant objective
+
+Норматив:
+
+- machine-resolvable slot всегда пробуется закрыть автоматически до вопроса пользователю
+- user-resolvable slot не должен эскалироваться в human review без controlled attempt to clarify
+- human-review-required slot не превращается в интерактивный spam-loop; он фиксируется в review packet
+
+### 12.4 SLA, timeout и resume semantics
+
+| Policy key | Нормативный default | Что означает |
+|---|---|---|
+| `clarify_batch_ttl` | `72h` | batch остаётся активным и resume-capable |
+| `workflow_resume_ttl` | `30d` | paused workflow можно продолжить без полной пересборки |
+| `external_recheck_on_resume` | `24h` для weather/price data | при возобновлении старые внешние данные обязаны перепроверяться |
+| `review_gate_recheck` | `always` | перед review/publication freshness и conflicts пересчитываются заново |
+
+Если batch истёк:
+
+- workflow не теряется молча
+- batch получает статус `EXPIRED`
+- `resume_token` становится невалидным
+- пользователь получает либо controlled restart, либо rehydrate path по текущему `workflow_id`
+
+## 13. Lead owner и participating agents
+
+### 13.1 Роли
 
 | Роль | Статус в workflow | Ответственность |
 |---|---|---|
@@ -408,7 +705,7 @@ Clarify-пакет обязан содержать четыре секции:
 | `contracts_agent` | publication/compliance contributor | contract mode, approval implications, publication restrictions |
 | human reviewers | approval authority | review, approval, publication decision |
 
-### 11.2 Норматив выбора lead owner
+### 13.2 Норматив выбора lead owner
 
 Для Техкарты `lead business owner` фиксируется жёстко:
 
@@ -422,7 +719,7 @@ Clarify-пакет обязан содержать четыре секции:
 - `chief_agronomist` не должен становиться primary owner сборки или прямым редактором Техкарты
 - до появления canonical expert-tier family policy-вызов `chief_agronomist` должен иметь честный bypass в human review, а не симуляцию вызова
 
-### 11.2.1 Роль `chief_agronomist` в workflow Техкарты
+### 13.2.1 Роль `chief_agronomist` в workflow Техкарты
 
 `chief_agronomist` в этом workflow играет роль независимого экспертного ревьюера.
 
@@ -438,7 +735,7 @@ Clarify-пакет обязан содержать четыре секции:
 
 - выдаёт structured expert opinion по уже собранному governed draft
 
-### 11.2.2 Когда вызывать `chief_agronomist`
+### 13.2.2 Когда вызывать `chief_agronomist`
 
 `chief_agronomist` должен вызываться policy-driven, а не на каждую Техкарту подряд.
 
@@ -461,7 +758,7 @@ Clarify-пакет обязан содержать четыре секции:
 
 - `chief_agronomist` не вызывается как обязательный second pass для каждой стандартной Техкарты
 
-### 11.3 Parallel / sequential / blocking orchestration
+### 13.3 Parallel / sequential / blocking orchestration
 
 | Блок | Тип | Примечание |
 |---|---|---|
@@ -471,20 +768,22 @@ Clarify-пакет обязан содержать четыре секции:
 | finance branch | `dependent` | зависит от agronomic + price/budget basis |
 | risk/scenario branch | `dependent` | зависит от agronomic branch и external basis |
 | execution feasibility branch | `dependent` | зависит от operation graph и machinery profile |
-| composition | `blocking` | только после trust verdict |
+| conflict resolution | `blocking` | выполняется после trust gate и до composition |
+| composition | `blocking` | только после trust verdict и conflict policy |
 | review/publication | `blocking` | только после governance gate |
 
-## 12. Фазы workflow
+## 14. Фазы workflow
 
 | Фаза | Вход | Выход | Авто/confirm/human boundary |
 |---|---|---|---|
 | `INTAKE` | user request | raw request + workflow candidate | auto |
 | `SEMANTIC_NORMALIZATION` | message + workspace + history | `TechMapSemanticFrame` | auto |
 | `CONTEXT_ASSEMBLY` | frame | structured context snapshot | auto |
-| `MISSING_CONTEXT_TRIAGE` | context snapshot | clarify packet или `S2+ readiness` | auto |
+| `MISSING_CONTEXT_TRIAGE` | context snapshot | clarify batch(es) или `S2+ readiness` | auto |
 | `OWNER_HANDOFF` | normalized frame | owner-led branch plan | auto |
 | `BRANCH_EXECUTION` | context + branch graph | typed branch results | auto |
 | `TRUST_GATE` | branch results | branch assessments + workflow verdict | auto |
+| `CONFLICT_RESOLUTION` | trust outputs + source policy | resolved conflicts / escalations / hard block | auto или human review boundary |
 | `COMPOSITION` | trusted branches | governed draft / compare / block explanation | auto |
 | `PERSIST_DRAFT` | `S3+` draft | versioned `DRAFT` | explicit command auto, otherwise confirm |
 | `EXPERT_REVIEW` | governed draft + review trigger policy | `TechMapExpertReviewResult` или bypass reason | auto по policy trigger или explicit escalation; иначе skipped |
@@ -493,7 +792,7 @@ Clarify-пакет обязан содержать четыре секции:
 | `APPROVAL` | human-reviewed packet | approved or rejected decision | human approval |
 | `PUBLICATION` | `S5` + approvals | publication packet / `ACTIVE` handoff | human approval only |
 
-## 13. Branch architecture
+## 15. Branch architecture
 
 | Branch | Назначение | Основные входы | Основные выходы | Publication critical |
 |---|---|---|---|---|
@@ -508,7 +807,7 @@ Clarify-пакет обязан содержать четыре секции:
 | `forecast_branch` | enrich по прогнозу и погоде | weather normals, forecast provider | weather-sensitive adjustments | нет |
 | `comparison_branch` | сравнить variant outputs | results of variant A/B | diffs in yield/cost/risk/assumptions | нет, comparison-only |
 
-### 13.1 Обязательное правило branch outputs
+### 15.1 Обязательное правило branch outputs
 
 Каждая ветка обязана вернуть:
 
@@ -519,19 +818,71 @@ Clarify-пакет обязан содержать четыре секции:
 - evidence refs
 - derived_from chain
 - freshness summary
+- conflict records
 
 Без этого branch result не имеет права идти в trust gate.
 
-## 14. Typed contracts между ветками
+### 15.2 Минимальные branch dependencies
 
-### 14.1 Workflow-level types
+- `finance_branch` зависит от:
+  - `agronomic_branch`
+  - `soil_input_branch`
+  - `compliance_methodology_branch`
+
+- `execution_feasibility_branch` зависит от:
+  - `agronomic_branch`
+  - `context_intake_branch`
+
+- `risk_scenario_branch` зависит от:
+  - `agronomic_branch`
+  - `forecast_branch`
+  - `history_and_evidence` inputs
+
+- `comparison_branch` зависит от:
+  - completed variant bundles
+  - shared `baseline_context_hash`
+
+## 16. Typed contracts между ветками
+
+### 16.1 Workflow-level types
 
 ```ts
+type TechMapWorkflowPhase =
+  | "INTAKE"
+  | "SEMANTIC_NORMALIZATION"
+  | "CONTEXT_ASSEMBLY"
+  | "MISSING_CONTEXT_TRIAGE"
+  | "OWNER_HANDOFF"
+  | "BRANCH_EXECUTION"
+  | "TRUST_GATE"
+  | "CONFLICT_RESOLUTION"
+  | "COMPOSITION"
+  | "PERSIST_DRAFT"
+  | "EXPERT_REVIEW"
+  | "REVIEW_SUBMISSION"
+  | "HUMAN_REVIEW"
+  | "APPROVAL"
+  | "PUBLICATION";
+
 type TechMapWorkflowVerdict =
   | "VERIFIED"
   | "PARTIAL"
   | "UNVERIFIED"
   | "BLOCKED";
+
+type TechMapReviewStatus =
+  | "NOT_SUBMITTED"
+  | "QUEUED"
+  | "IN_REVIEW"
+  | "REVISION_REQUIRED"
+  | "REVIEW_PASSED"
+  | "REVIEW_REJECTED";
+
+type TechMapApprovalStatus =
+  | "NOT_REQUESTED"
+  | "PENDING_APPROVAL"
+  | "APPROVED"
+  | "REJECTED";
 
 type TechMapPublicationState =
   | "WORKING_DRAFT"
@@ -539,7 +890,17 @@ type TechMapPublicationState =
   | "REVIEW_REQUIRED"
   | "APPROVAL_REQUIRED"
   | "PUBLISHABLE"
-  | "PUBLISHED";
+  | "PUBLISHED"
+  | "SUPERSEDED";
+
+type TechMapPersistenceStatus =
+  | "EPHEMERAL"
+  | "WORKFLOW_RECORDED"
+  | "DRAFT_PERSISTED"
+  | "REVIEW_PACKET_PERSISTED"
+  | "APPROVAL_SNAPSHOT_PERSISTED"
+  | "PUBLICATION_SNAPSHOT_PERSISTED"
+  | "ARCHIVED";
 
 interface TechMapAssumption {
   assumption_id: string;
@@ -562,7 +923,37 @@ interface TechMapGap {
 }
 ```
 
-### 14.2 Branch envelope
+### 16.2 Conflict contract
+
+```ts
+type TechMapConflictCategory =
+  | "scope_conflict"
+  | "measurement_conflict"
+  | "freshness_conflict"
+  | "policy_conflict"
+  | "budget_conflict"
+  | "version_conflict"
+  | "user_override_conflict";
+
+type TechMapConflictResolutionClass =
+  | "AUTO_RESOLVED"
+  | "REVIEW_REQUIRED"
+  | "HARD_BLOCK";
+
+interface TechMapConflictRecord {
+  conflict_id: string;
+  category: TechMapConflictCategory;
+  slot_key?: string;
+  source_refs: string[];
+  authority_winner_ref?: string;
+  resolution_class: TechMapConflictResolutionClass;
+  status: "OPEN" | "RESOLVED" | "ESCALATED" | "BLOCKED";
+  summary: string;
+  resolution_reason?: string;
+}
+```
+
+### 16.3 Branch envelope
 
 ```ts
 interface TechMapBranchResultContract extends BranchResultContract {
@@ -582,17 +973,11 @@ interface TechMapBranchResultContract extends BranchResultContract {
   publication_critical: boolean;
   assumptions_detail: TechMapAssumption[];
   gaps_detail: TechMapGap[];
-  conflicts?: Array<{
-    conflict_id: string;
-    kind: string;
-    left_ref: string;
-    right_ref: string;
-    summary: string;
-  }>;
+  conflicts?: TechMapConflictRecord[];
 }
 ```
 
-### 14.3 Composition contract
+### 16.4 Composition contract
 
 ```ts
 interface TechMapStatement {
@@ -631,7 +1016,7 @@ interface TechMapGovernedComposition {
 }
 ```
 
-### 14.4 Expert review contract
+### 16.5 Expert review contract
 
 ```ts
 type TechMapExpertReviewVerdict =
@@ -686,7 +1071,7 @@ interface TechMapExpertReviewResult {
 - `BLOCK` запрещает review submission до устранения blocking findings
 - результат `chief_agronomist` всегда advisory-to-governance, а не autonomous write
 
-### 14.5 Mapping к текущему runtime enum
+### 16.6 Mapping к текущему runtime enum
 
 Текущий подтверждённый кодом raw enum branch trust:
 
@@ -713,9 +1098,79 @@ interface TechMapExpertReviewResult {
 - approval denial
 - deterministic recompute failure на publication-critical branch
 
-## 15. Truth / trust / evidence model
+## 17. State taxonomy и persistence boundaries
 
-### 15.1 Проверки trust gate
+### 17.1 Строгая taxonomy состояний
+
+| Taxonomy | Значения | Кто authoritative | Зачем существует |
+|---|---|---|---|
+| `workflow_phase` | `INTAKE -> PUBLICATION` | orchestrator | показывает, где workflow находится прямо сейчас |
+| `workflow_verdict` | `VERIFIED / PARTIAL / UNVERIFIED / BLOCKED` | trust gate + conflict policy | определяет factual usability результатов |
+| `draft_readiness` | `S0..S5` | slot registry | показывает полноту контекста |
+| `review_status` | `NOT_SUBMITTED .. REVIEW_REJECTED` | review service / human review ledger | отражает судьбу review-пакета |
+| `approval_status` | `NOT_REQUESTED .. REJECTED` | approval ledger | отражает formal approval status |
+| `publication_state` | `WORKING_DRAFT .. PUBLISHED / SUPERSEDED` | tech-map aggregate | отражает бизнес-состояние артефакта |
+| `persistence_status` | `EPHEMERAL .. ARCHIVED` | persistence layer | отражает, какие snapshots реально сохранены |
+
+Норматив:
+
+- `workflow_phase` нельзя использовать как `UI`-замену `publication_state`
+- `publication_state` нельзя использовать как замену `review_status`
+- `persistence_status` не должен выводиться из текста ответа; он должен устанавливаться явным write-path
+
+### 17.2 Mapping ключевых состояний
+
+| Что спрашивает интерфейс / API | Какой state читать |
+|---|---|
+| “можно ли запускать ветки?” | `draft_readiness` |
+| “можно ли считать это фактом?” | `workflow_verdict` |
+| “это уже сохранённый draft?” | `persistence_status` |
+| “готово ли к ревью?” | `review_status` + `draft_readiness` |
+| “всё ли approvals закрыты?” | `approval_status` |
+| “это опубликованная техкарта?” | `publication_state` |
+
+### 17.3 Явные write boundaries по фазам
+
+| Фаза | DB boundary | Разрешённая запись | Запрещённая запись |
+|---|---|---|---|
+| `INTAKE` | read-mostly | workflow audit event | создание published tech map |
+| `SEMANTIC_NORMALIZATION` | read-mostly | workflow record при resolved intent | persisted draft |
+| `CONTEXT_ASSEMBLY` | read-only для доменного артефакта | context snapshot / audit hash | мутировать `TechMapCanonicalDraft` |
+| `MISSING_CONTEXT_TRIAGE` | read-only для draft | clarify batch / resume state | silent patch draft fields |
+| `BRANCH_EXECUTION` | read-only для draft | branch artifacts / telemetry | persisted approval snapshot |
+| `TRUST_GATE` | read-only для draft | trust assessments | изменение publication state |
+| `CONFLICT_RESOLUTION` | read-only для draft | conflict records / escalations | скрытая замена authoritative source |
+| `COMPOSITION` | ephemeral by default | governed composition artifact | persisted publication |
+| `PERSIST_DRAFT` | first draft write boundary | создать/обновить head `DRAFT` version | in-place mutate immutable snapshot |
+| `EXPERT_REVIEW` | side-effect bounded | expert review result | direct patch published baseline |
+| `REVIEW_SUBMISSION` | immutable snapshot boundary | review packet snapshot | правка draft без новой версии |
+| `HUMAN_REVIEW` | decision write only | review decisions | переписывать content snapshot |
+| `APPROVAL` | immutable snapshot boundary | approval snapshot / status | редактировать approved content in place |
+| `PUBLICATION` | publication lock boundary | published baseline + supersede prior active | автоизменение published baseline без versioning |
+
+### 17.4 Правила versioning
+
+1. Первый persisted артефакт создаётся только на `PERSIST_DRAFT`.
+2. До `REVIEW_SUBMISSION` допускается patch только head draft version.
+3. После `REVIEW_SUBMISSION` любое содержательное изменение требует новой draft version.
+4. `Approval` и `Publication` создают immutable snapshots.
+5. Изменение `ACTIVE` Техкарты возможно только через новую версию и последующий `SUPERSEDED/ARCHIVED` path.
+
+### 17.5 Mapping к текущему `TechMapStatus`
+
+| Workflow / publication state | Persisted `TechMapStatus` |
+|---|---|
+| `WORKING_DRAFT` | ещё может не существовать persisted record |
+| `GOVERNED_DRAFT` | `DRAFT` |
+| `REVIEW_REQUIRED` | `REVIEW` |
+| `APPROVAL_REQUIRED` | `REVIEW` или `APPROVED`, в зависимости от шага |
+| `PUBLISHABLE` | `APPROVED` |
+| `PUBLISHED` | `ACTIVE` |
+| `SUPERSEDED` | `ARCHIVED` |
+
+## 18. Truth / trust / evidence model
+
+### 18.1 Проверки trust gate
 
 Для каждой ветки обязательно выполняются проверки:
 
@@ -728,7 +1183,7 @@ interface TechMapExpertReviewResult {
 7. `gap_disclosure`
 8. `policy_compliance_check`
 
-### 15.2 Правила verdict
+### 18.2 Правила verdict
 
 | Verdict | Критерий | Как можно использовать |
 |---|---|---|
@@ -737,7 +1192,7 @@ interface TechMapExpertReviewResult {
 | `UNVERIFIED` | нет достаточного основания для утверждения факта, но нет hard conflict | только advisory/explanatory use |
 | `BLOCKED` | conflict, reject, policy block или blocking gap | в factual composition не участвует |
 
-### 15.3 Truth classes финального артефакта
+### 18.3 Truth classes финального артефакта
 
 | Класс | Что это | Может ли подаваться как факт |
 |---|---|---|
@@ -749,7 +1204,7 @@ interface TechMapExpertReviewResult {
 | `risk` | риск или ограничение | да, как risk statement с basis/disclosure |
 | `gap` | пробел или ограничение | да, как честное раскрытие отсутствия данных |
 
-### 15.4 Критические truth-rules
+### 18.4 Критические truth-rules
 
 1. `target_yield` всегда трактуется как hypothesis, а не факт.
 2. `expected_cost` является `derived_metric`, а не “реальной стоимостью”.
@@ -757,15 +1212,81 @@ interface TechMapExpertReviewResult {
 4. `MODEL_ESTIMATE` не может перейти в publication fact.
 5. Открытый blocking gap запрещает статус “готово”.
 
-## 16. Deterministic vs LLM responsibilities
+## 19. Conflict resolution и source authority policy
+
+### 19.1 Source authority classes
+
+| Authority class | Примеры | Базовый ранг |
+|---|---|---|
+| `REGULATORY_OR_SIGNED` | регуляторика, подписанный контракт, legal lock | самый высокий |
+| `APPROVED_INTERNAL_MASTER` | field registry, company-approved catalog, approved methodology profile | высокий |
+| `VERIFIED_MEASUREMENT` | лабораторный анализ почвы, verified field observation | высокий |
+| `EXECUTION_FACT` | подтверждённая история исполнения и harvest facts | средний-высокий |
+| `PREVIOUS_TECH_MAP` | предыдущая версия Техкарты | средний |
+| `USER_DECLARATION` | свободный ввод пользователя | низкий-средний |
+| `MODEL_ESTIMATE` | модельная оценка или эвристика | самый низкий |
+
+### 19.2 Precedence по семействам данных
+
+| Slot family | Authority order high -> low |
+|---|---|
+| `identity_scope` | `REGULATORY_OR_SIGNED -> APPROVED_INTERNAL_MASTER -> PREVIOUS_TECH_MAP -> USER_DECLARATION -> MODEL_ESTIMATE` |
+| `agronomic_measurement` | `VERIFIED_MEASUREMENT -> EXECUTION_FACT -> PREVIOUS_TECH_MAP -> USER_DECLARATION -> MODEL_ESTIMATE` |
+| `economic_basis` | `REGULATORY_OR_SIGNED -> APPROVED_INTERNAL_MASTER -> EXECUTION_FACT -> PREVIOUS_TECH_MAP -> USER_DECLARATION -> MODEL_ESTIMATE` |
+| `methodology_and_compliance` | `REGULATORY_OR_SIGNED -> APPROVED_INTERNAL_MASTER -> PREVIOUS_TECH_MAP -> USER_DECLARATION -> MODEL_ESTIMATE` |
+
+Дополнительные правила:
+
+- внутри одного authority class выигрывает более свежий `verified_at`
+- при одинаковой свежести выигрывает более специфичный scope: `field > farm > company default`
+- `MODEL_ESTIMATE` никогда не может победить verified source
+- `PREVIOUS_TECH_MAP` никогда не может переопределить текущий approved catalog или regulatory lock
+
+### 19.3 Категории конфликтов и класс разрешения
+
+| Category | Пример | Класс разрешения по умолчанию |
+|---|---|---|
+| `scope_conflict` | CRM и field registry расходятся по полю/сезону | `REVIEW_REQUIRED` или `HARD_BLOCK` |
+| `measurement_conflict` | два soil profile дают разные значения | `AUTO_RESOLVED` или `REVIEW_REQUIRED` |
+| `freshness_conflict` | есть новый price book и старый draft basis | `AUTO_RESOLVED` |
+| `policy_conflict` | методология разрешает одно, compliance запрещает другое | `HARD_BLOCK` |
+| `budget_conflict` | cost model выходит за approved budget ceiling | `REVIEW_REQUIRED` или `HARD_BLOCK` |
+| `version_conflict` | old tech map basis vs current approved profile | `AUTO_RESOLVED` |
+| `user_override_conflict` | пользователь говорит третье значение поверх authoritative source | `REVIEW_REQUIRED` |
+
+### 19.4 Auto-resolve / review / hard-block policy
+
+`AUTO_RESOLVED` допустим, если одновременно выполнено всё:
+
+- есть явный authority winner
+- нет regulatory/contract collision
+- конфликт не меняет publication-critical basis beyond tolerance
+- resolution может быть честно записан в `TechMapConflictRecord`
+
+`REVIEW_REQUIRED` обязателен, если:
+
+- у источников разная authority, но human override policy допускает выбор
+- расхождение materially влияет на cost, yield или feasibility
+- пользовательский override допустим только после подтверждения человека
+
+`HARD_BLOCK` обязателен, если:
+
+- нет authoritative winner
+- конфликт касается scope, regulatory/compliance rule или prohibited input
+- publication-critical basis не может быть приведён к одной truth basis
+
+## 20. Deterministic vs LLM responsibilities
 
 | Задача | Deterministic / data-grounded | `LLM` |
 |---|---|---|
 | извлечение field/season/crop из record/workspace | да | только fallback normalization |
 | slot completeness scoring | да | нет |
+| clarify batching / priority order | да | только wording |
+| source authority ranking и conflict class | да | только explanation |
 | дозировки, нормы, агрегаты, суммы, unit conversion | да | нет |
 | построение operation graph по approved methodology | да | нет |
 | price/cost recompute | да | нет |
+| finance/compliance threshold checks | да | нет |
 | freshness и conflict detection | да | допускается assistive explanation |
 | semantic normalization user request | частично | да |
 | controlled clarify wording | нет | да |
@@ -779,9 +1300,65 @@ interface TechMapExpertReviewResult {
 - `LLM` не может придумывать отсутствующий blocking context
 - `LLM` не может повышать trust verdict ветки
 
-## 17. Governance, approvals и publication rules
+## 21. Finance / compliance hard constraints
 
-### 17.1 Decision matrix
+### 21.1 Канонические constraint contracts
+
+```ts
+interface TechMapBudgetConstraint {
+  approved_budget_ceiling: number;
+  currency: string;
+  variance_tolerance_pct: number;
+  override_required_above_pct: number;
+  source_ref: string;
+}
+
+interface TechMapUnitEconomicsConstraint {
+  max_cost_per_ha?: number;
+  min_margin_pct?: number;
+  min_roi_pct?: number;
+  sensitivity_dimensions: Array<"yield" | "price" | "fx" | "input_cost">;
+}
+
+interface TechMapComplianceConstraint {
+  prohibited_input_codes: string[];
+  contract_linked_constraints: Array<{
+    constraint_id: string;
+    summary: string;
+    source_ref: string;
+  }>;
+  regulatory_lock_fields: string[];
+  sign_off_requirements: Array<{
+    role: string;
+    mandatory: boolean;
+    trigger: string;
+  }>;
+}
+```
+
+### 21.2 Publication-critical constraint rules
+
+| Constraint | Нарушение | Нормативный эффект |
+|---|---|---|
+| `approved_budget_ceiling` | total cost > ceiling | `REVIEW_REQUIRED` или `BLOCKED` по policy threshold |
+| `unit economics threshold` | margin/ROI ниже допустимого | `REVIEW_REQUIRED`; если контрактно запрещено, то `BLOCKED` |
+| `prohibited_input_codes` | запрещённый input попал в plan | `HARD_BLOCK` |
+| `contract_linked_constraints` | нарушено договорное условие | `REVIEW_REQUIRED` или `HARD_BLOCK` |
+| `regulatory_lock_fields` | попытка изменить lock-поля после review submission | только через новую версию |
+| `sign_off_requirements` | отсутствует обязательный sign-off | нельзя перейти в `S5_PUBLISHABLE` |
+
+### 21.3 Нормативный баланс доменов
+
+`agronomist` остаётся business-owner workflow, но:
+
+- `finance_branch` authoritative для cost truth и budget fit
+- `compliance_methodology_branch` authoritative для publishability locks
+- агрономическая состоятельность не может переопределять legal/compliance hard blocks
+- экономическая оптимизация не может скрывать agronomic infeasibility
+
+## 22. Governance, approvals и publication rules
+
+### 22.1 Decision matrix
 
 | Действие | Auto | Confirm | Human approval | Forbidden auto-execute |
 |---|---|---|---|---|
@@ -797,7 +1374,7 @@ interface TechMapExpertReviewResult {
 | activation/publication to `ACTIVE` | нет | нет | да | да |
 | contract publication / signature side effects | нет | нет | да | да |
 
-### 17.1.1 Policy вызова expert review
+### 22.1.1 Policy вызова expert review
 
 `chief_agronomist` должен вызываться только если выполнено хотя бы одно условие:
 
@@ -813,7 +1390,7 @@ interface TechMapExpertReviewResult {
 - передать тот же риск в human review packet
 - не делать вид, что экспертная ревизия выполнена
 
-### 17.2 Publication boundary
+### 22.2 Publication boundary
 
 Workflow обязан различать:
 
@@ -839,19 +1416,7 @@ Workflow обязан различать:
 - `PUBLISHED`
   - опубликованный baseline для исполнения
 
-### 17.3 Mapping к текущему `TechMapStatus`
-
-| Workflow state | Persisted `TechMapStatus` |
-|---|---|
-| `WORKING_DRAFT` | ещё может не существовать persisted record |
-| `GOVERNED_DRAFT` | `DRAFT` |
-| `REVIEW_REQUIRED` | `REVIEW` |
-| `APPROVAL_REQUIRED` | `REVIEW` или `APPROVED`, в зависимости от шага |
-| `PUBLISHABLE` | `APPROVED` |
-| `PUBLISHED` | `ACTIVE` |
-| superseded version | `ARCHIVED` |
-
-### 17.4 Approval chain
+### 22.3 Approval chain
 
 Минимальная approval chain:
 
@@ -866,24 +1431,46 @@ Workflow обязан различать:
 - `chief_agronomist` даёт экспертное заключение, но не финальное approval
 - human agronomy review остаётся обязательным authority layer
 
-## 18. Explainability model
+## 23. Explainability model
 
-Финальный пользовательский explainability-пакет обязан отвечать на шесть вопросов:
+Финальный пользовательский explainability-пакет обязан отвечать на восемь вопросов:
 
 1. Из каких данных собрана Техкарта.
 2. Какие assumptions были использованы.
 3. Какие ограничения и policy были учтены.
 4. Какие ветки `VERIFIED / PARTIAL / UNVERIFIED / BLOCKED`.
-5. Почему предложен именно этот вариант.
-6. Что мешает публикации, если результат остаётся draft-only.
+5. Какие конфликты были auto-resolved, а какие эскалированы.
+6. В каком состоянии сейчас workflow, review и publication.
+7. Почему предложен именно этот вариант.
+8. Что мешает публикации, если результат остаётся draft-only.
 
 Минимальный explainability bundle:
 
 ```ts
 interface TechMapExplainabilityBundle {
   workflow_id: string;
+  state_summary: {
+    workflow_phase: TechMapWorkflowPhase;
+    readiness: TechMapContextReadiness;
+    review_status: TechMapReviewStatus;
+    approval_status: TechMapApprovalStatus;
+    publication_state: TechMapPublicationState;
+    persistence_status: TechMapPersistenceStatus;
+  };
   source_summary: Array<{ source: string; kind: string; freshness: string }>;
   branch_summary: Array<{ branch_id: string; verdict: string; summary: string }>;
+  clarify_summary?: {
+    open_batches: number;
+    expired_batches: number;
+    resume_available: boolean;
+  };
+  conflict_resolution_summary: Array<{
+    conflict_id: string;
+    category: string;
+    resolution_class: string;
+    authority_winner_ref?: string;
+    summary: string;
+  }>;
   expert_review?: {
     triggered: boolean;
     verdict?: string;
@@ -903,11 +1490,12 @@ interface TechMapExplainabilityBundle {
 - `что рассчитано`
 - `что предположено`
 - `где есть пробелы`
+- `какие конфликты были обнаружены`
 - `что нужно сделать дальше`
 
-## 19. Audit / forensics model
+## 24. Audit / forensics model
 
-### 19.1 Что писать в аудит
+### 24.1 Что писать в аудит
 
 Обязательные audit artifacts:
 
@@ -920,24 +1508,31 @@ interface TechMapExplainabilityBundle {
 - `tool usage`
 - `branch results`
 - `branch trust assessments`
-- `clarify packets`
+- `clarify batches / resume state`
+- `conflict records / authority decisions`
 - `policy decisions`
 - `expert review request/result/bypass`
+- `state transitions`
+- `version writes`
 - `approval decisions`
 - `final composition basis`
 - `publication outcome`
 
-### 19.2 Event model
+### 24.2 Event model
 
 | Event | Когда пишется | Зачем нужен |
 |---|---|---|
 | `tech_map_workflow_started` | после semantic normalization | реконструкция старта |
 | `tech_map_context_collected` | после intake | восстановление входных оснований |
-| `tech_map_clarify_issued` | при missing slots | объяснение, почему execution не пошёл дальше |
+| `tech_map_clarify_batch_opened` | при missing slots | why workflow paused |
+| `tech_map_clarify_batch_resolved` | после закрытия batch | trace intake loop |
+| `tech_map_clarify_batch_expired` | при timeout | честная фиксация незавершённого intake |
 | `tech_map_branch_started` | перед каждой веткой | execution trace |
 | `tech_map_branch_completed` | после каждой ветки | raw outputs |
 | `tech_map_branch_trust_assessed` | после trust gate | why included / why blocked |
+| `tech_map_conflict_resolved` | после conflict policy | why chosen source won |
 | `tech_map_composed` | после composition | basis финального артефакта |
+| `tech_map_version_persisted` | после `PERSIST_DRAFT` и последующих snapshots | versioning trail |
 | `tech_map_expert_review_requested` | при policy-triggered escalation | почему понадобился `chief_agronomist` |
 | `tech_map_expert_review_completed` | после экспертной ревизии | structured expert verdict |
 | `tech_map_expert_review_bypassed` | если trigger был, но expert-tier path недоступен | честный bypass без ложной симуляции |
@@ -945,18 +1540,19 @@ interface TechMapExplainabilityBundle {
 | `tech_map_approval_recorded` | при human decision | юридически значимый trail |
 | `tech_map_publication_committed` | при публикации | publication boundary |
 
-### 19.3 Forensics questions, которые должны решаться по логу
+### 24.3 Forensics questions, которые должны решаться по логу
 
 Аудит должен позволять без домыслов ответить:
 
 - почему система запросила `clarify`
 - почему конкретная ветка получила `PARTIAL` или `BLOCKED`
 - из какого источника взят каждый publication-critical input
+- почему именно этот source стал authoritative
 - почему результат остался `draft only`
 - вызывался ли `chief_agronomist`, по какому trigger и с каким verdict
 - кто и на каком основании одобрил публикацию
 
-## 20. Failure modes и anti-hallucination safeguards
+## 25. Failure modes и anti-hallucination safeguards
 
 | Failure mode | Риск | Guardrail |
 |---|---|---|
@@ -969,6 +1565,9 @@ interface TechMapExplainabilityBundle {
 | variant comparison идёт по разным baseline context | ложное сравнение | shared baseline hash required |
 | publication-critical branch остаётся `UNVERIFIED`, но compose всё равно “сглаживает” ответ | ложная техкарта | honest composition rules |
 | conflict между compliance и agronomic branch скрыт | нормативный риск | raw `CONFLICTED/REJECTED` -> workflow `BLOCKED` |
+| user declaration тихо переопределяет authoritative source | ложная truth basis | source authority policy + conflict record |
+| review packet редактируется in place после submission | юридический и audit drift | immutable review snapshot |
+| `workflow_phase` смешивается с `publication_state` | `UI/DB/runtime` drift | strict state taxonomy |
 | `chief_agronomist` становится скрытым owner вместо экспертного ревьюера | архитектурный drift | отдельный expert-review слой без write-authority |
 
 Дополнительные запреты:
@@ -977,92 +1576,96 @@ interface TechMapExplainabilityBundle {
 - запрет silent fallback для blocking missing slots
 - запрет auto-publication
 - запрет скрытых `default` без assumption object
+- запрет patch published baseline без новой версии
 
-## 21. Sequence diagrams ключевых сценариев
+## 26. Sequence diagrams ключевых сценариев
 
-### 21.1 Сценарий 1. Новая Техкарта с нуля, контекст неполный
+### 26.1 Сценарий 1. Новая Техкарта с нуля, контекст неполный
 
-```text
-User
-  -> SupervisorAgent: "Собери техкарту по рапсу"
-SupervisorAgent
-  -> SemanticIngress: build tech_map frame
-SemanticIngress
-  -> SupervisorAgent: intent=create_new, readiness=S0/S1
-SupervisorAgent
-  -> ContextIntakeBranch: collect company/field/season/crop context
-ContextIntakeBranch
-  -> MissingContextTriage: slot ledger
-MissingContextTriage
-  -> PolicyGate: blocking slots missing
-PolicyGate
-  -> Composer: decision=clarify, publication_state=WORKING_DRAFT
-Composer
-  -> User: missing blocking slots + assumptions forbidden + next action
-Audit
-  <- semantic frame, missing slots, clarify reason, draft boundary
+```mermaid
+sequenceDiagram
+  actor User
+  participant Supervisor as SupervisorAgent
+  participant Ingress as SemanticIngress
+  participant Intake as ContextIntakeBranch
+  participant Clarify as MissingContextTriage
+  participant Policy as PolicyGate
+  participant Composer
+  participant Audit
+  User->>Supervisor: Собери техкарту по рапсу
+  Supervisor->>Ingress: build TechMapSemanticFrame
+  Ingress-->>Supervisor: intent=create_new, readiness=S0/S1
+  Supervisor->>Intake: collect company/field/season/crop context
+  Intake-->>Clarify: slot ledger
+  Clarify->>Policy: classify missing slots
+  Policy-->>Composer: decision=clarify, state=WORKING_DRAFT
+  Composer-->>User: clarify batch + assumptions forbidden + next action
+  Composer-->>Audit: semantic frame + clarify reason + resume state
 ```
 
 Нормативный результат:
 
 - persisted `TechMap` ещё не обязателен
-- система формирует controlled clarify
+- система формирует controlled clarify batch
 - статус результата = `WORKING_DRAFT`, не “готовая техкарта”
 
-### 21.2 Сценарий 2. Пересборка по существующему полю/сезону
+### 26.2 Сценарий 2. Пересборка по существующему полю/сезону
 
-```text
-User
-  -> SupervisorAgent: "Пересобери техкарту по полю 12 на сезон 2026"
-SupervisorAgent
-  -> SemanticIngress: intent=rebuild_existing
-SupervisorAgent
-  -> ContextIntakeBranch: reuse field/season/previous tech map/history
-ContextIntakeBranch
-  -> BranchPlanner: launch agronomic + soil + compliance + evidence
-BranchPlanner
-  -> FinanceBranch: after agronomic payload
-BranchPlanner
-  -> ExecutionFeasibilityBranch: after operation graph
-AllBranches
-  -> TrustGate: assessments
-TrustGate
-  -> Composer: governed draft composition
-Composer
-  -> Persistence: new version as DRAFT
-Composer
-  -> User: draft summary + branch verdicts + disclosures
-Audit
-  <- branch results, trust verdicts, composition basis, version id
+```mermaid
+sequenceDiagram
+  actor User
+  participant Supervisor as SupervisorAgent
+  participant Ingress as SemanticIngress
+  participant Intake as ContextIntakeBranch
+  participant Planner as BranchPlanner
+  participant Trust as TrustGate
+  participant Conflict as ConflictResolution
+  participant Composer
+  participant Persistence
+  participant Audit
+  User->>Supervisor: Пересобери техкарту по полю 12 на сезон 2026
+  Supervisor->>Ingress: intent=rebuild_existing
+  Supervisor->>Intake: reuse field/season/previous tech map/history
+  Intake-->>Planner: shared context snapshot
+  Planner->>Planner: launch agronomic + soil + compliance + evidence
+  Planner->>Planner: launch finance / feasibility after dependencies
+  Planner-->>Trust: typed branch results
+  Trust-->>Conflict: branch verdicts + conflict records
+  Conflict-->>Composer: resolved sources + workflow verdict
+  Composer->>Persistence: persist new DRAFT version
+  Composer-->>User: draft summary + branch verdicts + disclosures
+  Composer-->>Audit: composition basis + version id
 ```
 
 Нормативный результат:
 
 - reuse контекста обязателен
 - новая версия создаётся только как `DRAFT`
-- финальная композиция строится после trust gate
+- финальная композиция строится после trust gate и conflict policy
 
-### 21.3 Сценарий 3. Сравнение двух вариантов Техкарты
+### 26.3 Сценарий 3. Сравнение двух вариантов Техкарты
 
-```text
-User
-  -> SupervisorAgent: "Сравни экономный и интенсивный варианты"
-SupervisorAgent
-  -> SemanticIngress: intent=compare_variants, comparison_mode=2
-SupervisorAgent
-  -> ContextIntakeBranch: build shared baseline snapshot
-SupervisorAgent
-  -> VariantA branches: execute on baseline + overrides A
-SupervisorAgent
-  -> VariantB branches: execute on baseline + overrides B
-VariantBranches
-  -> TrustGate: verdicts per variant
-TrustGate
-  -> ComparisonBranch: diff by yield/cost/risk/assumptions
-ComparisonBranch
-  -> Composer: comparison report only
-Composer
-  -> User: differences, assumptions, risks, unresolved gaps
+```mermaid
+sequenceDiagram
+  actor User
+  participant Supervisor as SupervisorAgent
+  participant Ingress as SemanticIngress
+  participant Intake as ContextIntakeBranch
+  participant VariantA as VariantA Branches
+  participant VariantB as VariantB Branches
+  participant Trust as TrustGate
+  participant Compare as ComparisonBranch
+  participant Composer
+  User->>Supervisor: Сравни экономный и интенсивный варианты
+  Supervisor->>Ingress: intent=compare_variants, comparison_mode=2
+  Supervisor->>Intake: build shared baseline snapshot
+  Intake-->>VariantA: baseline + overrides A
+  Intake-->>VariantB: baseline + overrides B
+  VariantA-->>Trust: verdicts per variant
+  VariantB-->>Trust: verdicts per variant
+  Trust-->>Compare: trusted variant bundles
+  Compare-->>Composer: diff yield/cost/risk/assumptions
+  Composer-->>User: comparison report + unresolved gaps
 ```
 
 Нормативный результат:
@@ -1071,25 +1674,24 @@ Composer
 - baseline context должен быть общим
 - пользователь видит различия по `assumptions / cost / risk / yield`
 
-### 21.4 Сценарий 4. Конфликт данных или недостаток критичного основания
+### 26.4 Сценарий 4. Конфликт данных или недостаток критичного основания
 
-```text
-User
-  -> SupervisorAgent: "Собери техкарту"
-SupervisorAgent
-  -> Branches: execute
-ComplianceBranch
-  -> TrustGate: raw verdict=CONFLICTED
-FinanceBranch
-  -> TrustGate: raw verdict=UNVERIFIED
-TrustGate
-  -> WorkflowVerdictMapper: overall=BLOCKED
-WorkflowVerdictMapper
-  -> Composer: no factual final tech map
-Composer
-  -> User: conflict disclosure + blocking gaps + exact next actions
-Audit
-  <- conflict refs, failed checks, block reason
+```mermaid
+sequenceDiagram
+  actor User
+  participant Supervisor as SupervisorAgent
+  participant Branches
+  participant Trust as TrustGate
+  participant Conflict as ConflictResolution
+  participant Composer
+  participant Audit
+  User->>Supervisor: Собери техкарту
+  Supervisor->>Branches: execute
+  Branches-->>Trust: raw verdicts + source refs
+  Trust-->>Conflict: CONFLICTED / UNVERIFIED + gaps
+  Conflict-->>Composer: overall=BLOCKED
+  Composer-->>User: conflict disclosure + blocking gaps + exact next actions
+  Composer-->>Audit: conflict refs + authority policy outcome + block reason
 ```
 
 Нормативный результат:
@@ -1098,31 +1700,31 @@ Audit
 - конфликт обязан быть показан как конфликт
 - `BLOCKED` лучше ложной завершённости
 
-### 21.5 Сценарий 5. Draft -> expert review -> human review -> approval -> publication
+### 26.5 Сценарий 5. Draft -> expert review -> human review -> approval -> publication
 
-```text
-User
-  -> SupervisorAgent: "Отправь техкарту на согласование"
-SupervisorAgent
-  -> GovernanceGate: validate review readiness
-GovernanceGate
-  -> ExpertReviewPolicy: check triggers for chief_agronomist
-ExpertReviewPolicy
-  -> ChiefAgronomist: expert review when triggered
-ChiefAgronomist
-  -> ReviewPacket: structured verdict approve_with_notes / revise / block
-ReviewPacket
-  -> HumanReview: agronomy/finance/legal reviewers as required
-HumanReview
-  -> ApprovalLedger: approve or reject
-ApprovalLedger
-  -> Persistence: TechMapStatus REVIEW -> APPROVED
-StrategicApprover
-  -> PublicationGate: approve activation
-PublicationGate
-  -> Persistence: APPROVED -> ACTIVE
-Audit
-  <- approval chain, actors, timestamps, publication basis
+```mermaid
+sequenceDiagram
+  actor User
+  participant Supervisor as SupervisorAgent
+  participant Governance as GovernanceGate
+  participant ExpertPolicy as ExpertReviewPolicy
+  participant Chief as ChiefAgronomist
+  participant Human as HumanReview
+  participant Approval as ApprovalLedger
+  participant Publish as PublicationGate
+  participant Persistence
+  participant Audit
+  User->>Supervisor: Отправь техкарту на согласование
+  Supervisor->>Governance: validate review readiness
+  Governance->>ExpertPolicy: evaluate expert review triggers
+  ExpertPolicy->>Chief: request expert review when triggered
+  Chief-->>Governance: approve_with_notes / revise / block
+  Governance->>Human: review packet
+  Human-->>Approval: approve or reject
+  Approval->>Persistence: REVIEW -> APPROVED snapshot
+  Approval->>Publish: request publication
+  Publish->>Persistence: APPROVED -> ACTIVE publication lock
+  Publish-->>Audit: approval chain + actors + timestamps + publication basis
 ```
 
 Нормативный результат:
@@ -1132,9 +1734,100 @@ Audit
 - publication требует human approval chain
 - audit trail обязан быть полным
 
-## 22. MVP slice
+### 26.6 State diagram
 
-### 22.1 Что входит в MVP
+```mermaid
+stateDiagram-v2
+  [*] --> WORKING_DRAFT
+  WORKING_DRAFT --> GOVERNED_DRAFT: persist draft / S3
+  GOVERNED_DRAFT --> REVIEW_REQUIRED: S4 + no blocking gaps
+  REVIEW_REQUIRED --> GOVERNED_DRAFT: revise
+  REVIEW_REQUIRED --> APPROVAL_REQUIRED: review passed
+  APPROVAL_REQUIRED --> GOVERNED_DRAFT: reject / revise
+  APPROVAL_REQUIRED --> PUBLISHABLE: approvals complete
+  PUBLISHABLE --> PUBLISHED: publication commit
+  PUBLISHED --> SUPERSEDED: newer active version
+  WORKING_DRAFT --> [*]: cancel / expire
+```
+
+### 26.7 Branch dependency graph
+
+```mermaid
+flowchart TD
+  A[Context Intake]
+  B[Agronomic]
+  C[Soil Input]
+  D[Compliance Methodology]
+  E[Evidence Reference]
+  F[Forecast]
+  G[Finance]
+  H[Risk Scenario]
+  I[Execution Feasibility]
+  J[Trust Gate]
+  K[Conflict Resolution]
+  L[Composition]
+  A --> B
+  A --> C
+  A --> D
+  A --> E
+  A --> F
+  B --> G
+  C --> G
+  D --> G
+  B --> H
+  F --> H
+  B --> I
+  A --> I
+  B --> J
+  C --> J
+  D --> J
+  E --> J
+  G --> J
+  H --> J
+  I --> J
+  J --> K
+  K --> L
+```
+
+### 26.8 Approval swimlane
+
+```mermaid
+flowchart LR
+  subgraph Runtime
+    A[Governed Draft]
+    B[Expert Review Policy]
+  end
+  subgraph Expert
+    C[Chief Agronomist Review]
+  end
+  subgraph Human
+    D[Human Agronomy Review]
+    E[Finance Review]
+    F[Contracts Review]
+    G[Strategic Approval]
+  end
+  subgraph Persistence
+    H[Review Snapshot]
+    I[Approval Snapshot]
+    J[Published Baseline]
+  end
+  A --> B
+  B --> C
+  B --> H
+  C --> H
+  H --> D
+  H --> E
+  H --> F
+  D --> I
+  E --> I
+  F --> I
+  I --> G
+  G --> J
+```
+
+## 27. MVP slice
+
+### 27.1 Что входит в MVP
 
 - single field
 - single season
@@ -1153,11 +1846,14 @@ Audit
   - `compliance_methodology`
   - `evidence_reference`
   - `execution_feasibility`
+- canonical `TechMapCanonicalDraft` schema
+- operational clarify loop с batch/resume semantics
+- source authority + conflict policy
 - trust gate + honest composition
 - conditional expert-review contract и bypass semantics
 - `DRAFT -> REVIEW -> APPROVED -> ACTIVE` handoff mapping
 
-### 22.2 Что не входит в MVP
+### 27.2 Что не входит в MVP
 
 - multi-field optimization
 - autonomous publication
@@ -1166,37 +1862,43 @@ Audit
 - fully automated weather-driven adaptive replanning
 - обязательный policy-driven `chief_agronomist` review для каждого publish path
 
-### 22.3 Рекомендуемая первая декомпозиция в implementation-пакеты
+### 27.3 Рекомендуемая первая декомпозиция в implementation-пакеты
 
 | Пакет | Смысл | Ожидаемый эффект |
 |---|---|---|
 | `TMW-1 Slot Registry` | ввести canonical registry контекстных slot-ов Техкарты | controlled clarify и readiness перестанут быть эвристикой |
-| `TMW-2 Semantic Frame Extension` | расширить ingress frame tech-map specialization | оркестратор начнёт видеть именно workflow Техкарты, а не общий chat intent |
-| `TMW-3 Workflow Orchestrator` | собрать owner-led phase engine Техкарты | появится first-class governed pipeline |
-| `TMW-4 Branch Contracts` | ввести typed payloads по всем веткам | межветочный обмен станет машинно проверяемым |
-| `TMW-5 Trust + Composition` | применить trust gate и final composition rules | ложная “готовая техкарта” перестанет проходить |
-| `TMW-6 Review/Publication Gate` | зафиксировать approval chain и versioning | draft/review/publication boundary станет enforceable |
-| `TMW-7 Expert Review Gate` | встроить `chief_agronomist` как policy-driven expert-review слой | сложные и спорные техкарты получат второй экспертный контур до human approval |
+| `TMW-2 Canonical Artifact Schema` | ввести `TechMapCanonicalDraft`, variants, operations, evidence и approval packet | backend и `DB` получат устойчивую доменную модель артефакта |
+| `TMW-3 Clarify Loop Engine` | реализовать batch/resume/expiration subprocess | сбор недостающего контекста станет управляемым intake loop |
+| `TMW-4 Semantic Frame Extension` | расширить ingress frame tech-map specialization | оркестратор начнёт видеть именно workflow Техкарты, а не общий chat intent |
+| `TMW-5 Workflow Orchestrator` | собрать owner-led phase engine Техкарты | появится first-class governed pipeline |
+| `TMW-6 Branch Contracts + Conflict Authority` | ввести typed payloads, conflict records и source authority policy | межветочный обмен и truth resolution станут машинно проверяемыми |
+| `TMW-7 Trust + Composition` | применить trust gate и final composition rules | ложная “готовая техкарта” перестанет проходить |
+| `TMW-8 Persistence / Versioning Gate` | зафиксировать state taxonomy, write boundaries и immutable snapshots | draft/review/publication boundary станет enforceable на `DB/FSM`-уровне |
+| `TMW-9 Expert Review Gate` | встроить `chief_agronomist` как policy-driven expert-review слой | сложные и спорные техкарты получат второй экспертный контур до human approval |
 
-## 23. Future evolution
+## 28. Future evolution
 
 Целевое развитие после MVP:
 
 - dedicated `tech_map_workflow_owner` service поверх `SupervisorAgent`
 - полноценный scenario optimizer для `min/base/max/intensive` вариантов
 - versioned methodology registry и catalog locks
+- explicit contract-signature handoff поверх `approval packet`
 - change-order governed loop после публикации
 - tighter integration с execution facts и plan/fact feedback
 - evidence-backed learning loop: `tech map -> execution -> outcome -> knowledge`
 
-## 24. Нормативный итог
+## 29. Нормативный итог
 
 Техкарта в `RAI_EP` должна существовать как governed artifact со следующими обязательными свойствами:
 
 - свободный вход
 - жёсткая semantic normalization
+- каноническая доменная модель persisted артефакта
 - owner-led orchestration
 - typed branch contracts
+- strict state taxonomy без drift между runtime/`DB`/`UI`
+- source authority policy и честное conflict resolution
 - trust verdict до composition
 - честное различение фактов, расчётов, допущений и пробелов
 - publication только после governance и approvals
@@ -1207,6 +1909,7 @@ Audit
 - строит финальный ответ раньше trust gate
 - скрывает blocking gaps
 - поднимает `LLM` до источника истины
-- не различает `draft` и `published`
+- смешивает workflow state с publication state
+- патчит published baseline без новой версии
 
 считается некорректной относительно этого документа.

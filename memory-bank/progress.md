@@ -32,11 +32,19 @@
     - введена trigger-policy для вызова `chief_agronomist`
     - зафиксирован честный bypass path в human review, если expert-tier execution path недоступен
     - обновлены review/publication sequence, explainability и audit artifacts
+  - Следующим усилительным проходом spec доведён до более канонического implementation-ready уровня:
+    - добавлен раздел `Canonical Tech Map Domain Model` с `TechMapCanonicalDraft`, variant/object graph и persisted invariants
+    - введена жёсткая state taxonomy и разведены `workflow state`, `review/approval state`, `publication state` и `persistence state`
+    - `clarify` оформлен как operational subprocess с batch grouping, `ONE_SHOT / MULTI_STEP`, `resume_token`, `TTL` и expiration semantics
+    - зафиксирована `Conflict Resolution And Source Authority Policy` с authority ranking, recency/specificity rules и классами разрешения конфликтов
+    - усилены finance/compliance publishability-контракты: budget ceiling, unit economics thresholds, prohibited inputs, contract-linked constraints, regulatory locks, sign-off obligations
+    - явно описаны write boundaries по фазам, immutable snapshots и versioning rules
+    - sequence-раздел дополнен `Mermaid` diagrams: 5 сценариев, state diagram, branch dependency graph, approval swimlane
   - Важное синхронизированное решение:
     - текущий код остаётся source of truth для raw branch verdict enum `VERIFIED / PARTIAL / UNVERIFIED / CONFLICTED / REJECTED`
     - на workflow-слое Техкарты введён агрегирующий verdict `BLOCKED`, чтобы не ломать текущий runtime канон и одновременно получить user/business-ориентированную governed-модель блокировки
   - Новый claim `CLAIM-ENG-TECH-MAP-GOVERNED-WORKFLOW-20260322` зарегистрирован в `docs/DOCS_MATRIX.md`.
-  - Эффект изменения: у команды появился плотный инженерный источник для дальнейшего разрезания governed workflow Техкарты на backend/runtime/policy implementation-пакеты, включая отдельный expert-review gate для сложных кейсов.
+  - Эффект изменения: у команды появился плотный инженерный источник для дальнейшего разрезания governed workflow Техкарты на backend/runtime/policy/schema/FSM implementation-пакеты, включая expert-review gate, source-authority policy и persistence/versioning boundaries.
 
 ## 2026-03-21
 

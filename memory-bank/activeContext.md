@@ -18,6 +18,14 @@
   - `chief_agronomist` возвращает только structured expert-review verdict
   - policy-triggered expert review включается только для спорных, рискованных или явно эскалированных кейсов
   - если expert-tier path недоступен, workflow обязан честно логировать bypass и передавать риск в human review, а не симулировать выполненную ревизию
+- [x] Спецификация усилена до более implementable уровня:
+  - добавлена каноническая доменная модель артефакта `TechMapCanonicalDraft / TechMapVariant / TechMapOperation / TechMapInputPlan / TechMapFinancialSummary / TechMapRiskRegister / TechMapEvidenceBundle / TechMapApprovalPacket`
+  - введена строгая taxonomy состояний `workflow_phase / workflow_verdict / draft_readiness / review_status / approval_status / publication_state / persistence_status`
+  - `clarify` переведён из общей логики в отдельный runtime subprocess с batch-моделью, `resume_token`, `TTL` и expiration semantics
+  - зафиксирована `source authority` и `conflict resolution` policy с `AUTO_RESOLVED / REVIEW_REQUIRED / HARD_BLOCK`
+  - усилен finance/compliance слой через budget ceiling, unit economics thresholds, prohibited inputs, regulatory locks и sign-off obligations
+  - явно определены write boundaries, immutable snapshot points и versioning rules
+  - добавлены `Mermaid` state/sequence/branch/approval diagrams для engineering handoff
 - [x] Зафиксировано важное разграничение источников истины:
   - текущий raw branch verdict в runtime остаётся каноническим по коду как `VERIFIED / PARTIAL / UNVERIFIED / CONFLICTED / REJECTED`
   - для tech-map workflow поверх него введён workflow-level verdict `BLOCKED`, который агрегирует `CONFLICTED / REJECTED / policy block / blocking missing slots`
