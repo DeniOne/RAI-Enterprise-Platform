@@ -1,5 +1,16 @@
 # Progress Report - Prisma, Agro Domain & RAI Chat Integration
 
+## 2026-03-24
+
+1. **Обновление корневого `README.md`** [DONE]:
+  - Актуализирована дата состояния репозитория: `2026-03-24`.
+  - Добавлен раздел «AI, Агентная платформа и governance» с описанием Stage 2: референсные агенты `AgronomAgent`, `EconomistAgent`, `KnowledgeAgent`, `MonitoringAgent`.
+  - Расширена структура `docs/` до полного набора из 13 слоёв, включая `00_STRATEGY`, `02_DOMAINS`, `06_METRICS`, `07_EXECUTION`, `08_TESTING`, `10_FRONTEND_MENU_IMPLEMENTATION`, `11_INSTRUCTIONS`.
+  - Таблица команд разбита на три раздела: основные, база данных, гейты и линтеры. Добавлены все критические `gate:db:*`, `gate:architecture`, `gate:rollout`.
+  - Добавлена ссылка на `docs/00_STRATEGY/ГЕНЕРАЛЬНОЕ ОПИСАНИЕ RAI ENTERPRISE PLATFORM.md` v2.0 и `docs/11_INSTRUCTIONS/`.
+  - Рефакторинг раздела «Документация»: явно обозначены три группы слоёв (verified operational canon / active design & planning / historical).
+  - `pnpm lint:docs` — PASS (0 ошибок).
+
 ## 2026-03-22
 
 1. **TECH_MAP_GOVERNED_WORKFLOW инженерная спецификация** [DONE]:
@@ -84,6 +95,81 @@
     - на workflow-слое Техкарты введён агрегирующий verdict `BLOCKED`, чтобы не ломать текущий runtime канон и одновременно получить user/business-ориентированную governed-модель блокировки
   - Новый claim `CLAIM-ENG-TECH-MAP-GOVERNED-WORKFLOW-20260322` зарегистрирован в `docs/DOCS_MATRIX.md`.
   - Эффект изменения: у команды появился плотный инженерный источник для дальнейшего разрезания governed workflow Техкарты на backend/runtime/policy/schema/FSM implementation-пакеты, включая expert-review gate, source-authority policy и persistence/versioning boundaries.
+  - Дополнительно зафиксирован текущий статус исполнения master-checklist:
+  - `TMW-1` помечен как завершённый runtime slice
+  - `TMW-4` помечен как завершённый runtime slice
+  - `TMW-2` помечен как завершённый runtime slice
+  - `TMW-3` помечен как завершённый runtime slice
+  - `TMW-5` помечен как completed runtime slice с orchestrator service, live trust feed и final composition wiring
+  - `TMW-7` помечен как completed runtime slice с trust specialization, branch-gated composition и variant comparison report
+  - `TMW-8` помечен как completed runtime slice с persistence boundary read-model, head-draft write-guard, snapshot storage tables и versioning route
+  - `TMW-9` зафиксирован как completed runtime slice с policy trigger helper, review packet contract, full audit/explainability trail и publication path
+  - `TMW-3` завершён как runtime slice с clarify batch/resume metadata, explicit resume endpoint, audit trail и supervisor intake wiring
+  - `TMW-4` закрыт кодом:
+    - semantic ingress specialization frame для техкарты
+    - typed `workflow intent / stage / policy / required actions`
+    - compare / review / publication edge-cases
+    - boundary-aware variant-count extraction
+  - следующий управляемый шаг теперь продолжать по master-checklist с ближайшего незакрытого узла, без перескакивания через чеклист
+  - `TMW-1` закрыт в коде:
+    - shared slot registry
+    - query helpers
+    - first runtime-consumer in governed draft scoring
+    - clarify/readiness/publication consumers
+    - master-checklist сдвинут так, чтобы следующий активный шаг шёл по ближайшему незакрытому узлу
+  - `TMW-2` закрыт в коде:
+    - добавлен canonical mapper `Prisma TechMap -> TechMapCanonicalDraft`
+    - добавлены invariant checks для root/variant/header clusters
+    - добавлен runtime consumer `TechMapService.getCanonicalDraft(...)`
+    - добавлен governed draft read-model route в `TechMapController`
+    - master-checklist сдвинут так, чтобы следующий активный шаг шёл по ближайшему незакрытому узлу
+  - `TMW-3` закрыт в коде:
+    - добавлен clarify batch builder
+    - добавлен workflow resume state builder
+    - добавлен explicit clarify resume endpoint
+    - добавлен clarify audit trail
+    - добавлен clarify intake wiring в supervisor
+    - `createDraftStub(...)` emits clarify lifecycle metadata
+    - `ResponseComposer` показывает batch/resume lifecycle в summary
+  - `TMW-4` закрыт в коде:
+    - добавлен semantic ingress specialization frame для техкарты
+    - добавлены typed `workflow intent / stage / policy / required actions`
+    - закрыты compare / review / publication edge-cases и variant-count extraction
+    - `SupervisorAgent` начал использовать frame как runtime metadata
+  - `TMW-5` закрыт в коде:
+    - добавлен first-class `TechMapWorkflowOrchestrator`
+    - phase engine `INTAKE -> TRIAGE -> BRANCHING -> TRUST -> COMPOSITION` подключён
+    - `TechMapService` эмитит `workflowOrchestration`
+    - `getRuntimeAdoptionSnapshot(...)` подаёт live branch trust feed в workflow trace
+    - runtime adoption snapshot теперь собирает branch-aware final composition
+    - `ResponseComposer` показывает workflow spine в summary
+    - runtime trust/composition path передан в `TMW-7`
+  - `TMW-7` закрыт в коде:
+    - добавлен tech-map-specific trust specialization поверх platform `Branch Trust Gate`
+    - final composition contract теперь фильтрует branch payloads по разрешённому trust path
+    - honest disclosure по `PARTIAL / UNVERIFIED / BLOCKED` показан в runtime summary
+    - variant comparison report wired into runtime adoption snapshot и response composer
+    - следующий шаг теперь `TMW-8`
+  - `TMW-8` завершён в коде:
+    - добавлен shared persistence boundary helper
+    - `updateDraft(...)` защищён head-draft guard и больше не патчит immutable REVIEW/APPROVED/ACTIVE snapshots
+    - добавлен read endpoint для persistence boundary snapshot
+    - добавлен `createNextVersion(...)` route для controlled revision creation
+    - добавлены immutable snapshot tables и migration-backed write-path
+  - `TMW-9` завершён в коде:
+    - добавлен policy-trigger helper для `chief_agronomist`
+    - добавлен structured expert review packet contract
+    - `TechMapWorkflowOrchestrator` и runtime adoption snapshot теперь поднимают expert review в summary
+    - `ResponseComposer` показывает expert review verdict в runtime summary
+    - expert review packet теперь несёт full audit/explainability trail и publication path
+  - `TMW-6 PR D` закрыт в коде:
+    - добавлен runtime adoption snapshot с branch results, trust assessments и authority resolutions
+    - authority helper подключён в conflict resolution stage
+    - добавлен runtime consumer `TechMapService.getRuntimeAdoptionSnapshot(...)`
+    - master-checklist сдвинут так, чтобы следующим активным шагом стал `TMW-5`, затем `TMW-7`
+  - `TMW-6` документно синхронизирован:
+    - master-checklist чекбоксы для branch contracts, verdict aggregation и authority helper переведены в `DONE`
+    - execution-plan `TMW-6` обновлён по evidence_refs и timestamps
 
 ## 2026-03-21
 
