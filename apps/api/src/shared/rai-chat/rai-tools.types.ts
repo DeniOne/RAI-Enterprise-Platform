@@ -1,12 +1,21 @@
 import type {
+  TechMapClarifyAuditEvent,
   TechMapClarifyItem,
+  TechMapClarifyBatch,
   TechMapGap,
+  TechMapWorkflowResumeState,
 } from "../tech-map/tech-map-governed-clarify.types";
 import type {
   TechMapContextReadiness,
   TechMapPublicationState,
   TechMapWorkflowVerdict,
 } from "../tech-map/tech-map-governed-state.types";
+import type { TechMapWorkflowOrchestrationTrace } from "../tech-map/tech-map-workflow-orchestrator.types";
+import type {
+  TechMapGovernedTrustSpecialization,
+  TechMapVariantComparisonReport,
+} from "../tech-map/tech-map-governed-trust.helpers";
+import type { TechMapExpertReviewResult } from "../tech-map/tech-map-governed-branch.types";
 
 export enum RaiToolName {
   EchoMessage = "echo_message",
@@ -628,6 +637,13 @@ export interface GenerateTechMapDraftResult {
   publicationState: TechMapPublicationState;
   missingMust: string[];
   clarifyItems: TechMapClarifyItem[];
+  clarifyBatch?: TechMapClarifyBatch | null;
+  workflowResumeState?: TechMapWorkflowResumeState | null;
+  clarifyAuditTrail?: TechMapClarifyAuditEvent[] | null;
+  workflowOrchestration?: TechMapWorkflowOrchestrationTrace | null;
+  expertReview?: TechMapExpertReviewResult | null;
+  trustSpecialization?: TechMapGovernedTrustSpecialization | null;
+  variantComparisonReport?: TechMapVariantComparisonReport | null;
   gaps: TechMapGap[];
   tasks: string[];
   assumptions: string[];

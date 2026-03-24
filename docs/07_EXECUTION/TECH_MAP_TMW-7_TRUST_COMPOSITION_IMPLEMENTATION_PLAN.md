@@ -5,12 +5,12 @@ type: Phase Plan
 status: draft
 version: 0.1.0
 owners: [@techlead]
-last_updated: 2026-03-22
+last_updated: 2026-03-24
 claim_id: CLAIM-EXE-TECH-MAP-TMW-7-TRUST-COMPOSITION-20260322
 claim_status: asserted
 verified_by: manual
-last_verified: 2026-03-22
-evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;docs/07_EXECUTION/TECH_MAP_MASTER_IMPLEMENTATION_CHECKLIST.md;apps/api/src/shared/rai-chat/branch-trust.types.ts;apps/api/src/shared/tech-map/tech-map-governed-artifact.types.ts;apps/api/src/shared/tech-map/tech-map-governed-branch.types.ts;apps/api/src/modules/rai-chat/composer/response-composer.service.ts
+last_verified: 2026-03-24
+evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;docs/07_EXECUTION/TECH_MAP_MASTER_IMPLEMENTATION_CHECKLIST.md;apps/api/src/shared/rai-chat/branch-trust.types.ts;apps/api/src/shared/tech-map/tech-map-governed-artifact.types.ts;apps/api/src/shared/tech-map/tech-map-governed-branch.types.ts;apps/api/src/shared/tech-map/tech-map-governed-trust.helpers.ts;apps/api/src/shared/tech-map/tech-map-runtime-adoption.helpers.ts;apps/api/src/modules/rai-chat/composer/response-composer.service.ts;apps/api/src/shared/tech-map/tech-map-governed-trust.helpers.spec.ts
 ---
 # TECH MAP TMW-7 Trust Composition Implementation Plan
 
@@ -18,7 +18,7 @@ evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;docs/07_EXECUTI
 id: CLAIM-EXE-TECH-MAP-TMW-7-TRUST-COMPOSITION-20260322
 status: asserted
 verified_by: manual
-last_verified: 2026-03-22
+last_verified: 2026-03-24
 
 ## 0. Цель пакета
 
@@ -79,9 +79,9 @@ last_verified: 2026-03-22
 
 Checklist:
 
-- [ ] ввести tech-map-specific trust checks
-- [ ] определить publication-critical branch requirements
-- [ ] связать trust с slot registry and conflict policy
+- [x] ввести tech-map-specific trust checks
+- [x] определить publication-critical branch requirements
+- [x] связать trust с slot registry and conflict policy
 
 Эффект:
 
@@ -91,9 +91,9 @@ Checklist:
 
 Checklist:
 
-- [ ] зафиксировать `facts / derived / assumptions / recommendations / gaps`
-- [ ] развести `selected variant` и `comparison report`
-- [ ] запретить composition из untrusted payloads
+- [x] зафиксировать `facts / derived / assumptions / recommendations / gaps`
+- [x] развести `selected variant` и `comparison report`
+- [x] запретить composition из untrusted payloads
 
 Эффект:
 
@@ -103,9 +103,9 @@ Checklist:
 
 Checklist:
 
-- [ ] корректно показывать `PARTIAL`, `UNVERIFIED`, `BLOCKED`
-- [ ] показать unresolved basis gaps
-- [ ] показать assumption disclosure
+- [x] корректно показывать `PARTIAL`, `UNVERIFIED`, `BLOCKED`
+- [x] показать unresolved basis gaps
+- [x] показать assumption disclosure
 
 Эффект:
 
@@ -115,9 +115,9 @@ Checklist:
 
 Checklist:
 
-- [ ] подключить tech-map trust gate к orchestrator
-- [ ] подключить composition к composer
-- [ ] подключить composition к explainability
+- [x] подключить tech-map trust gate к orchestrator
+- [x] подключить composition к composer
+- [x] подключить composition к explainability
 
 Эффект:
 
@@ -139,3 +139,5 @@ Checklist:
 - at least one runtime consumer использует trust/composition path;
 - docs и memory-bank синхронизированы;
 - api и docs проверки зелёные.
+
+Пакет `TMW-7` закрыт: trust specialization, branch-gated composition, honest disclosure и variant comparison runtime path уже собраны.

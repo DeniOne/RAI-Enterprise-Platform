@@ -59,6 +59,13 @@ export interface TechMapExpertReviewFinding {
   recommended_action: string;
 }
 
+export interface TechMapExpertReviewAuthorityStep {
+  role: "chief_agronomist" | "human_agronomist";
+  required: boolean;
+  status: "pending" | "approved" | "needs_revision" | "blocked";
+  reason: string;
+}
+
 export interface TechMapExpertReviewResult {
   workflow_id: string;
   variant_id: string;
@@ -71,6 +78,9 @@ export interface TechMapExpertReviewResult {
   required_revisions: string[];
   alternative_requests: string[];
   evidence_refs: string[];
+  audit_refs: string[];
+  publication_packet_ref: string;
+  human_authority_chain: TechMapExpertReviewAuthorityStep[];
   confidence: number;
   can_proceed_to_human_review: boolean;
 }

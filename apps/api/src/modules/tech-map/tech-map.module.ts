@@ -18,6 +18,7 @@ import { ContractCoreService } from "./economics/contract-core.service";
 import { RecalculationEngine } from "./economics/recalculation.engine";
 import { TechMapValidator } from "./tech-map.validator";
 import { UnitNormalizationService } from "./unit-normalization.service";
+import { TechMapWorkflowOrchestratorService } from "./tech-map-workflow-orchestrator.service";
 import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
 
 @Module({
@@ -40,6 +41,7 @@ import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
     RecalculationEngine,
     UnitNormalizationService,
     TechMapValidator,
+    TechMapWorkflowOrchestratorService,
   ],
   exports: [
     TechMapService,
@@ -51,6 +53,7 @@ import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
     ContractCoreService,
     UnitNormalizationService,
     TechMapValidator,
+    TechMapWorkflowOrchestratorService,
   ],
 })
 export class TechMapModule { }

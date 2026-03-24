@@ -48,6 +48,72 @@ export interface SemanticIngressWritePolicy {
   reason: string;
 }
 
+export type TechMapWorkflowIntent =
+  | "create_new"
+  | "rebuild_existing"
+  | "compare_variants"
+  | "review_draft"
+  | "approve_publish"
+  | "resume_clarify"
+  | "explain_block";
+
+export type TechMapWorkflowStageHint =
+  | "intake"
+  | "clarify"
+  | "assemble"
+  | "compare"
+  | "review"
+  | "approval"
+  | "publication";
+
+export type TechMapRequestedArtifact =
+  | "workflow_draft"
+  | "persisted_draft"
+  | "comparison_report"
+  | "review_packet"
+  | "publication_packet"
+  | "block_explanation";
+
+export type TechMapContextReadiness =
+  | "S0_UNSCOPED"
+  | "S1_SCOPED"
+  | "S2_MINIMUM_COMPUTABLE"
+  | "S3_DRAFT_READY"
+  | "S4_REVIEW_READY"
+  | "S5_PUBLISHABLE";
+
+export type TechMapPolicyPosture = "open" | "governed" | "blocked";
+
+export interface TechMapComparisonMode {
+  enabled: boolean;
+  variantCount: number;
+}
+
+export interface TechMapScope {
+  legalEntityId?: string;
+  farmId?: string;
+  fieldIds: string[];
+  seasonId?: string;
+  cropCode?: string;
+  existingTechMapId?: string;
+}
+
+export interface TechMapSemanticFrame {
+  workflowKind: "tech_map";
+  userIntent: TechMapWorkflowIntent;
+  workflowStageHint: TechMapWorkflowStageHint;
+  requestedArtifact: TechMapRequestedArtifact;
+  scope: TechMapScope;
+  contextReadiness: TechMapContextReadiness;
+  requiredActions: Array<
+    "clarify" | "execute" | "confirm" | "human_review" | "block"
+  >;
+  policyPosture: TechMapPolicyPosture;
+  policyConstraints: string[];
+  resultConstraints: string[];
+  comparisonMode?: TechMapComparisonMode;
+}
+
 export interface SemanticIngressDomainCandidate {
   domain: RoutingDomain | "unknown";
   ownerRole: string | null;
@@ -92,4 +158,5 @@ export interface SemanticIngressFrame {
   writePolicy: SemanticIngressWritePolicy;
   proofSliceId?: string | null;
   compositePlan?: CompositeWorkflowPlan | null;
+  techMapFrame?: TechMapSemanticFrame | null;
 }

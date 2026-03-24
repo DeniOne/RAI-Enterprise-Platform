@@ -65,6 +65,53 @@
   - для tech-map workflow поверх него введён workflow-level verdict `BLOCKED`, который агрегирует `CONFLICTED / REJECTED / policy block / blocking missing slots`
 - [x] Новый claim `CLAIM-ENG-TECH-MAP-GOVERNED-WORKFLOW-20260322` зарегистрирован в `docs/DOCS_MATRIX.md`.
 - [x] Логическое изменение синхронизировано в `memory-bank`, чтобы governed tech-map architecture не жила только в doc-слое и чате.
+- [x] Текущий execution-срез Техкарты дополнительно выровнен по статусам:
+  - `TMW-4` зафиксирован как завершённый runtime slice
+  - `TMW-1` зафиксирован как завершённый runtime slice
+  - `TMW-2` зафиксирован как завершённый runtime slice
+  - `TMW-3` зафиксирован как завершённый runtime slice
+  - `TMW-6` зафиксирован как завершённый runtime adoption slice
+  - `TMW-5` зафиксирован как завершённый runtime slice с orchestrator service, live trust feed и final composition wiring
+  - `TMW-7` зафиксирован как завершённый runtime slice с trust specialization, branch-gated composition и variant comparison report
+  - `TMW-8` зафиксирован как завершённый runtime slice с persistence boundary read-model, head-draft write-guard, snapshot storage tables и versioning route
+  - `TMW-9` зафиксирован как completed runtime slice с policy trigger helper, review packet contract, full audit/explainability trail и publication path
+  - следующий управляемый шаг: продолжать по master-checklist с ближайшего незакрытого узла
+- [x] `TMW-1` закрыт кодом:
+  - shared slot registry
+  - query helpers
+  - first runtime-consumer in governed draft scoring
+  - clarify/readiness/publication consumers
+  - следующий шаг сместился на ближайший незакрытый узел master-checklist
+- [x] `TMW-2` закрыт кодом:
+  - добавлен canonical mapper `Prisma TechMap -> TechMapCanonicalDraft`
+  - добавлены invariant checks для root/variant/header clusters
+  - добавлен runtime consumer `TechMapService.getCanonicalDraft(...)`
+  - добавлен governed draft read-model route в `TechMapController`
+  - следующий шаг сместился на ближайший незакрытый узел master-checklist
+- [x] `TMW-4` закрыт кодом:
+  - добавлен semantic ingress specialization frame для техкарты
+  - добавлены typed `workflow intent / stage / policy / required actions`
+  - закрыты compare / review / publication edge-cases и variant-count extraction
+  - `SupervisorAgent` начал использовать frame как runtime metadata
+  - следующий шаг сместился на ближайший незакрытый узел master-checklist
+- [x] `TMW-3` закрыт кодом:
+  - добавлен clarify batch builder
+  - добавлен workflow resume state builder
+  - добавлен explicit workflow resume endpoint
+  - добавлен clarify audit trail
+  - добавлен clarify intake wiring в supervisor
+  - `createDraftStub(...)` emits clarify lifecycle metadata
+  - `ResponseComposer` показывает batch/resume lifecycle в summary
+  - следующий шаг сместился на ближайший незакрытый узел master-checklist
+- [x] `TMW-6 PR D` закрыт кодом:
+  - добавлен runtime adoption snapshot с branch results, trust assessments и authority resolutions
+  - authority helper подключён в conflict resolution stage
+  - добавлен runtime consumer `TechMapService.getRuntimeAdoptionSnapshot(...)`
+  - runtime adoption snapshot теперь собирает branch-aware final composition
+  - следующий шаг после `TMW-2`, `TMW-3`, `TMW-4`, `TMW-5`, `TMW-6` и `TMW-7`: продолжать по master-checklist с ближайшего незакрытого узла
+- [x] `TMW-6` документно синхронизирован:
+  - master-checklist получил закрытые checkboxes для verdict aggregation, authority helper и реальных branch contracts
+  - execution-plan `TMW-6` приведён к `DONE`-aligned evidence и timestamps
 
 ## Текущая задача (2026-03-21)
 - [x] Стартован `Branch Trust Gate` implementation sprint: пакеты `PR A`, `PR B`, `PR C` и `PR D` доведены до рабочего кода.

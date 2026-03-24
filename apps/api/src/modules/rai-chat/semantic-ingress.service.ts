@@ -7,6 +7,7 @@ import {
   InteractionMode,
   MutationRisk,
   RoutingDomain,
+  RoutingEntity,
   SemanticRoutingEvaluation,
 } from "../../shared/rai-chat/semantic-routing.types";
 import {
@@ -18,6 +19,14 @@ import {
   SemanticIngressOperationAuthority,
   SemanticIngressRequestShape,
   SemanticIngressRiskClass,
+  TechMapComparisonMode,
+  TechMapContextReadiness,
+  TechMapPolicyPosture,
+  TechMapRequestedArtifact,
+  TechMapScope,
+  TechMapSemanticFrame,
+  TechMapWorkflowIntent,
+  TechMapWorkflowStageHint,
   SemanticIngressWritePolicy,
 } from "../../shared/rai-chat/semantic-ingress.types";
 import {
@@ -85,6 +94,14 @@ export class SemanticIngressService {
       semanticEvaluation: params.semanticEvaluation,
       proofSliceId,
     });
+    const techMapFrame = this.resolveTechMapFrame({
+      request: params.request,
+      finalClassification: params.finalClassification,
+      finalRequestedToolCalls: params.finalRequestedToolCalls,
+      semanticEvaluation: params.semanticEvaluation,
+      writePolicy,
+      riskClass,
+    });
 
     return {
       version: "v1",
@@ -136,6 +153,7 @@ export class SemanticIngressService {
       writePolicy,
       proofSliceId,
       compositePlan,
+      ...(techMapFrame ? { techMapFrame } : {}),
     };
   }
 
@@ -402,6 +420,515 @@ export class SemanticIngressService {
     return semanticEvaluation.semanticIntent.reason;
   }
 
+  private resolveTechMapFrame(params: {
+    request: RaiChatRequestDto;
+    finalClassification: IntentClassification;
+    finalRequestedToolCalls: RaiChatRequestDto["toolCalls"];
+    semanticEvaluation: SemanticRoutingEvaluation;
+    writePolicy: SemanticIngressWritePolicy;
+    riskClass: SemanticIngressRiskClass;
+  }): TechMapSemanticFrame | null {
+    const semanticIntent = params.semanticEvaluation.semanticIntent;
+    if (
+      semanticIntent.domain !== RoutingDomain.Agro ||
+      semanticIntent.entity !== RoutingEntity.Techmap
+    ) {
+      return null;
+    }
+
+    const normalizedMessage = params.request.message.toLowerCase();
+    const scope = this.resolveTechMapScope({
+      request: params.request,
+      finalRequestedToolCalls: params.finalRequestedToolCalls,
+      semanticEvaluation: params.semanticEvaluation,
+    });
+    const userIntent = this.resolveTechMapWorkflowIntent({
+      request: params.request,
+      finalClassification: params.finalClassification,
+      semanticEvaluation: params.semanticEvaluation,
+      scope,
+    });
+    const workflowStageHint = this.resolveTechMapWorkflowStageHint(
+      userIntent,
+      params.semanticEvaluation,
+      params.writePolicy,
+    );
+    const requestedArtifact = this.resolveTechMapRequestedArtifact(userIntent);
+    const contextReadiness = this.resolveTechMapContextReadiness({
+      userIntent,
+      scope,
+      semanticEvaluation: params.semanticEvaluation,
+      writePolicy: params.writePolicy,
+    });
+    const requiredActions = this.resolveTechMapRequiredActions({
+      userIntent,
+      contextReadiness,
+      semanticEvaluation: params.semanticEvaluation,
+      writePolicy: params.writePolicy,
+      riskClass: params.riskClass,
+    });
+    const policyPosture = this.resolveTechMapPolicyPosture({
+      userIntent,
+      semanticEvaluation: params.semanticEvaluation,
+      writePolicy: params.writePolicy,
+      riskClass: params.riskClass,
+    });
+    const policyConstraints = this.resolveTechMapPolicyConstraints({
+      userIntent,
+      workflowStageHint,
+      contextReadiness,
+      writePolicy: params.writePolicy,
+      semanticEvaluation: params.semanticEvaluation,
+    });
+    const resultConstraints = this.resolveTechMapResultConstraints({
+      userIntent,
+      requestedArtifact,
+      semanticEvaluation: params.semanticEvaluation,
+    });
+    const comparisonMode = this.resolveTechMapComparisonMode({
+      userIntent,
+      message: normalizedMessage,
+      finalRequestedToolCalls: params.finalRequestedToolCalls,
+    });
+
+    return {
+      workflowKind: "tech_map",
+      userIntent,
+      workflowStageHint,
+      requestedArtifact,
+      scope,
+      contextReadiness,
+      requiredActions,
+      policyPosture,
+      policyConstraints,
+      resultConstraints,
+      ...(comparisonMode ? { comparisonMode } : {}),
+    };
+  }
+
+  private resolveTechMapScope(params: {
+    request: RaiChatRequestDto;
+    finalRequestedToolCalls: RaiChatRequestDto["toolCalls"];
+    semanticEvaluation: SemanticRoutingEvaluation;
+  }): TechMapScope {
+    const scope: TechMapScope = {
+      fieldIds: [],
+    };
+    const workspace = params.request.workspaceContext;
+    const toolPayload = params.finalRequestedToolCalls?.[0]?.payload as
+      | Record<string, unknown>
+      | undefined;
+
+    this.collectTechMapScopeValues(
+      scope.fieldIds,
+      workspace?.activeEntityRefs?.filter((ref) => ref.kind === "field").map((ref) => ref.id) ?? [],
+    );
+    this.collectTechMapScopeValues(
+      scope.fieldIds,
+      this.extractStringList(workspace?.filters?.fieldId),
+    );
+    this.collectTechMapScopeValues(
+      scope.fieldIds,
+      this.extractStringList(workspace?.filters?.fieldIds),
+    );
+    this.collectTechMapScopeValues(
+      scope.fieldIds,
+      this.extractStringList(toolPayload?.fieldRef),
+    );
+    this.collectTechMapScopeValues(
+      scope.fieldIds,
+      this.extractStringList(toolPayload?.scope && typeof toolPayload.scope === "object"
+        ? (toolPayload.scope as Record<string, unknown>).fieldId
+        : undefined),
+    );
+
+    scope.seasonId =
+      this.firstString(
+        workspace?.filters?.seasonId,
+        toolPayload?.seasonRef,
+        toolPayload?.scope && typeof toolPayload.scope === "object"
+          ? (toolPayload.scope as Record<string, unknown>).seasonId
+          : undefined,
+      ) ?? undefined;
+    scope.cropCode =
+      this.firstString(
+        toolPayload?.crop,
+        workspace?.filters?.cropCode,
+        workspace?.filters?.crop,
+      ) ?? undefined;
+    scope.existingTechMapId =
+      this.firstString(
+        this.resolveExistingTechMapId(workspace),
+        toolPayload?.existingTechMapId,
+        toolPayload?.techMapId,
+      ) ?? undefined;
+    scope.farmId =
+      this.firstString(
+        workspace?.filters?.farmId,
+        toolPayload?.farmId,
+        this.resolveFarmIdFromWorkspace(workspace),
+      ) ?? undefined;
+    scope.legalEntityId =
+      this.firstString(
+        workspace?.filters?.legalEntityId,
+        toolPayload?.legalEntityId,
+      ) ?? undefined;
+
+    const normalizedFieldIds = [...new Set(scope.fieldIds.filter(Boolean))];
+    scope.fieldIds = normalizedFieldIds;
+
+    if (
+      scope.fieldIds.length === 0 &&
+      params.semanticEvaluation.semanticIntent.focusObject?.kind === "field" &&
+      params.semanticEvaluation.semanticIntent.focusObject.id
+    ) {
+      scope.fieldIds = [params.semanticEvaluation.semanticIntent.focusObject.id];
+    }
+
+    return scope;
+  }
+
+  private resolveTechMapWorkflowIntent(params: {
+    request: RaiChatRequestDto;
+    finalClassification: IntentClassification;
+    semanticEvaluation: SemanticRoutingEvaluation;
+    scope: TechMapScope;
+  }): TechMapWorkflowIntent {
+    const normalized = params.request.message.toLowerCase();
+    if (params.request.clarificationResume) {
+      return "resume_clarify";
+    }
+    if (this.hasTechMapCompareSignal(normalized)) {
+      return "compare_variants";
+    }
+    if (this.hasTechMapApprovalSignal(normalized)) {
+      return "approve_publish";
+    }
+    if (this.hasTechMapExplainBlockSignal(normalized)) {
+      return "explain_block";
+    }
+    if (params.semanticEvaluation.routeDecision.decisionType === DecisionType.Navigate) {
+      return "review_draft";
+    }
+    if (params.semanticEvaluation.routeDecision.decisionType === DecisionType.Block) {
+      return "explain_block";
+    }
+    if (params.semanticEvaluation.routeDecision.needsClarification) {
+      return "create_new";
+    }
+    if (this.hasTechMapRebuildSignal(normalized) || Boolean(params.scope.existingTechMapId)) {
+      return "rebuild_existing";
+    }
+    if (
+      params.finalClassification.intent === "tech_map_draft" ||
+      params.semanticEvaluation.candidateRoutes.some((route) =>
+        route.intent === "tech_map_draft",
+      )
+    ) {
+      return "create_new";
+    }
+    return "review_draft";
+  }
+
+  private resolveTechMapWorkflowStageHint(
+    userIntent: TechMapWorkflowIntent,
+    semanticEvaluation: SemanticRoutingEvaluation,
+    writePolicy: SemanticIngressWritePolicy,
+  ): TechMapWorkflowStageHint {
+    if (userIntent === "resume_clarify") {
+      return "clarify";
+    }
+    if (userIntent === "compare_variants") {
+      return "compare";
+    }
+    if (userIntent === "approve_publish") {
+      return writePolicy.decision === "block" || writePolicy.decision === "clarify"
+        ? "approval"
+        : "publication";
+    }
+    if (userIntent === "review_draft" || userIntent === "explain_block") {
+      return "review";
+    }
+    if (
+      writePolicy.decision === "clarify" ||
+      semanticEvaluation.routeDecision.needsClarification
+    ) {
+      return "clarify";
+    }
+    return "assemble";
+  }
+
+  private resolveTechMapRequestedArtifact(
+    userIntent: TechMapWorkflowIntent,
+  ): TechMapRequestedArtifact {
+    switch (userIntent) {
+      case "compare_variants":
+        return "comparison_report";
+      case "review_draft":
+        return "review_packet";
+      case "approve_publish":
+        return "publication_packet";
+      case "explain_block":
+        return "block_explanation";
+      default:
+        return "workflow_draft";
+    }
+  }
+
+  private resolveTechMapContextReadiness(params: {
+    userIntent: TechMapWorkflowIntent;
+    scope: TechMapScope;
+    semanticEvaluation: SemanticRoutingEvaluation;
+    writePolicy: SemanticIngressWritePolicy;
+  }): TechMapContextReadiness {
+    const hasScope = params.scope.fieldIds.length > 0 || Boolean(params.scope.seasonId);
+    const hasComputeBasis = Boolean(params.scope.fieldIds.length > 0 && params.scope.seasonId);
+    const hasBlockedWrite = params.writePolicy.decision === "block";
+    const missingContext = params.semanticEvaluation.routeDecision.requiredContextMissing.length > 0;
+
+    if (!hasScope) {
+      return "S0_UNSCOPED";
+    }
+    if (missingContext || params.writePolicy.decision === "clarify") {
+      return "S1_SCOPED";
+    }
+    if (params.userIntent === "review_draft" || params.userIntent === "compare_variants") {
+      return "S4_REVIEW_READY";
+    }
+    if (params.userIntent === "approve_publish") {
+      return hasBlockedWrite ? "S4_REVIEW_READY" : "S5_PUBLISHABLE";
+    }
+    if (hasComputeBasis) {
+      return "S3_DRAFT_READY";
+    }
+    return "S2_MINIMUM_COMPUTABLE";
+  }
+
+  private resolveTechMapRequiredActions(params: {
+    userIntent: TechMapWorkflowIntent;
+    contextReadiness: TechMapContextReadiness;
+    semanticEvaluation: SemanticRoutingEvaluation;
+    writePolicy: SemanticIngressWritePolicy;
+    riskClass: SemanticIngressRiskClass;
+  }): Array<"clarify" | "execute" | "confirm" | "human_review" | "block"> {
+    const actions = new Set<
+      "clarify" | "execute" | "confirm" | "human_review" | "block"
+    >();
+
+    if (
+      params.contextReadiness === "S0_UNSCOPED" ||
+      params.contextReadiness === "S1_SCOPED" ||
+      params.writePolicy.decision === "clarify" ||
+      params.semanticEvaluation.routeDecision.needsClarification
+    ) {
+      actions.add("clarify");
+    }
+
+    if (
+      params.userIntent === "review_draft" ||
+      params.userIntent === "compare_variants" ||
+      params.userIntent === "create_new" ||
+      params.userIntent === "rebuild_existing"
+    ) {
+      actions.add("execute");
+    }
+
+    if (
+      params.userIntent === "approve_publish" ||
+      params.writePolicy.decision === "confirm"
+    ) {
+      actions.add("confirm");
+      actions.add("human_review");
+    }
+
+    if (
+      params.userIntent === "review_draft" ||
+      params.userIntent === "explain_block" ||
+      params.riskClass === "high_risk_write" ||
+      params.writePolicy.decision === "block"
+    ) {
+      actions.add("human_review");
+    }
+
+    if (params.writePolicy.decision === "block") {
+      actions.add("block");
+    }
+
+    return [...actions];
+  }
+
+  private resolveTechMapPolicyPosture(params: {
+    userIntent: TechMapWorkflowIntent;
+    semanticEvaluation: SemanticRoutingEvaluation;
+    writePolicy: SemanticIngressWritePolicy;
+    riskClass: SemanticIngressRiskClass;
+  }): TechMapPolicyPosture {
+    if (
+      params.writePolicy.decision === "block" ||
+      params.riskClass === "high_risk_write" &&
+        params.semanticEvaluation.routeDecision.decisionType === DecisionType.Block
+    ) {
+      return "blocked";
+    }
+    if (params.userIntent === "approve_publish") {
+      return "governed";
+    }
+    if (
+      params.writePolicy.decision === "confirm" ||
+      params.writePolicy.decision === "clarify"
+    ) {
+      return "governed";
+    }
+    return "open";
+  }
+
+  private resolveTechMapPolicyConstraints(params: {
+    userIntent: TechMapWorkflowIntent;
+    workflowStageHint: TechMapWorkflowStageHint;
+    contextReadiness: TechMapContextReadiness;
+    writePolicy: SemanticIngressWritePolicy;
+    semanticEvaluation: SemanticRoutingEvaluation;
+  }): string[] {
+    const constraints = [
+      "tech_map.workflow_governed",
+      `tech_map.intent:${params.userIntent}`,
+      `tech_map.stage:${params.workflowStageHint}`,
+      `tech_map.readiness:${params.contextReadiness}`,
+      `tech_map.write_policy:${params.writePolicy.decision}`,
+    ];
+    if (params.semanticEvaluation.routeDecision.requiredContextMissing.length > 0) {
+      constraints.push(
+        `tech_map.missing_context:${params.semanticEvaluation.routeDecision.requiredContextMissing.join(",")}`,
+      );
+    }
+    return constraints;
+  }
+
+  private resolveTechMapResultConstraints(params: {
+    userIntent: TechMapWorkflowIntent;
+    requestedArtifact: TechMapRequestedArtifact;
+    semanticEvaluation: SemanticRoutingEvaluation;
+  }): string[] {
+    const constraints = [
+      `tech_map.result:${params.requestedArtifact}`,
+      "tech_map.honest_disclosure_required",
+    ];
+    if (params.userIntent === "compare_variants") {
+      constraints.push("tech_map.baseline_context_consistent");
+    }
+    if (
+      params.semanticEvaluation.routeDecision.requiredContextMissing.length > 0
+    ) {
+      constraints.push("tech_map.no_assumptions_without_evidence");
+    }
+    return constraints;
+  }
+
+  private resolveTechMapComparisonMode(params: {
+    userIntent: TechMapWorkflowIntent;
+    message: string;
+    finalRequestedToolCalls: RaiChatRequestDto["toolCalls"];
+  }): TechMapComparisonMode | null {
+    if (params.userIntent !== "compare_variants") {
+      return null;
+    }
+    const variantCount = this.extractComparisonVariantCount(params.message);
+    return {
+      enabled: true,
+      variantCount:
+        variantCount ??
+        (params.finalRequestedToolCalls?.length && params.finalRequestedToolCalls.length > 1
+          ? params.finalRequestedToolCalls.length
+          : 2),
+    };
+  }
+
+  private hasTechMapCompareSignal(message: string): boolean {
+    return /(сравн|compare|diff|вариант|variant)/i.test(message);
+  }
+
+  private hasTechMapRebuildSignal(message: string): boolean {
+    return /(пересобер|rebuild|перестрой|обнови техкарт|пересчитай)/i.test(message);
+  }
+
+  private hasTechMapApprovalSignal(message: string): boolean {
+    return /(согласован|отправь.*соглас|approve|publish|опубликуй|на согласование|на публикац)/i.test(
+      message,
+    );
+  }
+
+  private hasTechMapExplainBlockSignal(message: string): boolean {
+    return /(почему.*не.*выпуст|blocked|блок|не выпуст|объясн.*блок)/i.test(message);
+  }
+
+  private extractComparisonVariantCount(message: string): number | null {
+    if (/(две|\b2\b|пара|pair|two)/i.test(message)) {
+      return 2;
+    }
+    if (/(три|\b3\b|three)/i.test(message)) {
+      return 3;
+    }
+    if (/(четыре|\b4\b|four)/i.test(message)) {
+      return 4;
+    }
+    return null;
+  }
+
+  private collectTechMapScopeValues(target: string[], values: string[]): void {
+    for (const value of values) {
+      if (value.trim()) {
+        target.push(value.trim());
+      }
+    }
+  }
+
+  private extractStringList(value: unknown): string[] {
+    if (typeof value === "string") {
+      return value.trim() ? [value.trim()] : [];
+    }
+    if (Array.isArray(value)) {
+      return value
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+    return [];
+  }
+
+  private firstString(...values: unknown[]): string | null {
+    for (const value of values) {
+      if (typeof value === "string" && value.trim()) {
+        return value.trim();
+      }
+    }
+    return null;
+  }
+
+  private resolveExistingTechMapId(
+    workspaceContext?: RaiChatRequestDto["workspaceContext"],
+  ): string | null {
+    if (workspaceContext?.selectedRowSummary?.kind?.toLowerCase() === "techmap") {
+      return workspaceContext.selectedRowSummary.id;
+    }
+    const selected = workspaceContext?.activeEntityRefs?.find(
+      (ref) => ref.kind === "techmap",
+    );
+    return selected?.id ?? null;
+  }
+
+  private resolveFarmIdFromWorkspace(
+    workspaceContext?: RaiChatRequestDto["workspaceContext"],
+  ): string | null {
+    const activeFarm = workspaceContext?.activeEntityRefs?.find(
+      (ref) => ref.kind === "farm",
+    );
+    if (activeFarm) {
+      return activeFarm.id;
+    }
+    const selected = workspaceContext?.selectedRowSummary;
+    return selected?.kind?.toLowerCase() === "farm" ? selected.id : null;
+  }
+
   private resolveProofSliceId(
     intent: string | null,
     toolName: RaiToolName | null,
@@ -593,16 +1120,19 @@ export class SemanticIngressService {
     requestedOperation: SemanticIngressFrame["requestedOperation"];
     proofSliceId: string | null;
   }): boolean {
+    const hasConversationalWriteSignal = /(?:зарегистр|заре[гп]|завед|оформ|контрагент|инн)/iu.test(
+      params.request.message,
+    );
     return (
       params.proofSliceId === "crm.register_counterparty" &&
       params.requestedOperation.ownerRole === "crm_agent" &&
       params.requestedOperation.intent === "register_counterparty" &&
       params.requestedOperation.toolName === RaiToolName.RegisterCounterparty &&
       params.requestedOperation.source !== "explicit_tool_call" &&
-      (params.finalRequestedToolCalls?.some(
+      ((params.finalRequestedToolCalls?.some(
         (toolCall) => toolCall.name === RaiToolName.RegisterCounterparty,
-      ) ??
-        false) &&
+      ) ?? false) ||
+        hasConversationalWriteSignal) &&
       params.request.message.trim().length > 0
     );
   }
@@ -613,6 +1143,12 @@ export class SemanticIngressService {
     riskClass: SemanticIngressRiskClass;
     writePolicy: SemanticIngressWritePolicy;
   }): boolean {
+    if (
+      params.proofSliceId === "crm.register_counterparty" &&
+      params.writePolicy.decision === "execute"
+    ) {
+      return false;
+    }
     return (
       params.writePolicy.decision !== "execute" ||
       params.semanticEvaluation.routeDecision.needsConfirmation ||
@@ -631,6 +1167,17 @@ export class SemanticIngressService {
       return {
         decision: "block",
         reason: params.semanticEvaluation.routeDecision.policyBlockReason ?? "policy_block",
+      };
+    }
+
+    if (
+      params.proofSliceId === "crm.register_counterparty" &&
+      params.requestedOperation.toolName === RaiToolName.RegisterCounterparty &&
+      params.operationAuthority === "direct_user_command"
+    ) {
+      return {
+        decision: "execute",
+        reason: "direct_user_command",
       };
     }
 

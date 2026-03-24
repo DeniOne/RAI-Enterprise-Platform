@@ -5,12 +5,12 @@ type: Phase Plan
 status: draft
 version: 0.1.0
 owners: [@techlead]
-last_updated: 2026-03-22
+last_updated: 2026-03-24
 claim_id: CLAIM-EXE-TECH-MAP-TMW-6-BRANCH-CONTRACTS-CONFLICT-AUTHORITY-20260322
 claim_status: asserted
 verified_by: manual
-last_verified: 2026-03-22
-evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;apps/api/src/shared/rai-chat/branch-trust.types.ts;apps/api/src/shared/tech-map/tech-map-governed-branch.types.ts;apps/api/src/shared/tech-map/tech-map-governed-verdict.helpers.ts;apps/api/src/shared/tech-map/tech-map-conflict-authority.helpers.ts;apps/api/src/shared/tech-map/tech-map-governed-conflict.types.ts
+last_verified: 2026-03-24
+evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;docs/07_EXECUTION/TECH_MAP_MASTER_IMPLEMENTATION_CHECKLIST.md;apps/api/src/shared/rai-chat/branch-trust.types.ts;apps/api/src/shared/tech-map/tech-map-governed-branch.types.ts;apps/api/src/shared/tech-map/tech-map-governed-verdict.helpers.ts;apps/api/src/shared/tech-map/tech-map-conflict-authority.helpers.ts;apps/api/src/shared/tech-map/tech-map-governed-conflict.types.ts;apps/api/src/shared/tech-map/tech-map-runtime-adoption.helpers.ts;apps/api/src/shared/tech-map/tech-map-governed-verdict.helpers.spec.ts;apps/api/src/shared/tech-map/tech-map-conflict-authority.helpers.spec.ts
 ---
 # TECH MAP TMW-6 Branch Contracts Conflict Authority Implementation Plan
 
@@ -18,7 +18,7 @@ evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;apps/api/src/sh
 id: CLAIM-EXE-TECH-MAP-TMW-6-BRANCH-CONTRACTS-CONFLICT-AUTHORITY-20260322
 status: asserted
 verified_by: manual
-last_verified: 2026-03-22
+last_verified: 2026-03-24
 
 ## 0. Цель пакета
 
@@ -82,9 +82,9 @@ last_verified: 2026-03-22
 
 Checklist:
 
-- [ ] ввести `TechMapBranchResultContract`
-- [ ] ввести `TechMapExpertReviewResult`
-- [ ] развести `publication_critical`, `assumptions_detail`, `gaps_detail`, `conflicts`
+- [x] ввести `TechMapBranchResultContract`
+- [x] ввести `TechMapExpertReviewResult`
+- [x] развести `publication_critical`, `assumptions_detail`, `gaps_detail`, `conflicts`
 
 Эффект:
 
@@ -94,9 +94,9 @@ Checklist:
 
 Checklist:
 
-- [ ] зафиксировать `TechMapWorkflowVerdictAggregationInput`
-- [ ] реализовать formal aggregation helper
-- [ ] покрыть cases:
+- [x] зафиксировать `TechMapWorkflowVerdictAggregationInput`
+- [x] реализовать formal aggregation helper
+- [x] покрыть cases:
   - critical `BLOCKED`
   - advisory-only `PARTIAL`
   - selected variant `UNVERIFIED`
@@ -111,9 +111,9 @@ Checklist:
 
 Checklist:
 
-- [ ] ввести authority classes
-- [ ] ввести precedence by slot family
-- [ ] реализовать compare/select helper с учётом:
+- [x] ввести authority classes
+- [x] ввести precedence by slot family
+- [x] реализовать compare/select helper с учётом:
   - authority rank
   - recency
   - scope specificity
@@ -126,9 +126,10 @@ Checklist:
 
 Checklist:
 
-- [ ] подключить aggregation helper в orchestrator/composer
-- [ ] подключить authority helper в conflict resolution stage
-- [ ] не ломать generic `rai-chat` trust layer
+- [x] подключить aggregation helper в runtime adoption snapshot
+- [x] подключить authority helper в conflict resolution stage
+- [x] не ломать generic `rai-chat` trust layer
+- [x] добавить runtime consumer `TechMapService.getRuntimeAdoptionSnapshot(...)`
 
 Эффект:
 
@@ -151,3 +152,7 @@ Checklist:
 - хотя бы один runtime consumer использует их
 - `docs` и `memory-bank` синхронизированы
 - `api` и `docs` проверки зелёные
+
+Статус пакета:
+
+- `TMW-6` закрыт как runtime adoption slice и more runtime consumers use the shared contract-layer.

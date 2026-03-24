@@ -39,6 +39,9 @@ model Company {
 
   // Tech Map & CMR Relations
   techMaps              TechMap[]
+  techMapReviewSnapshots TechMapReviewSnapshot[]
+  techMapApprovalSnapshots TechMapApprovalSnapshot[]
+  techMapPublicationLocks TechMapPublicationLock[]
   soilProfiles          SoilProfile[]
   regionProfiles        RegionProfile[]
   inputCatalog          InputCatalog[]
@@ -2371,6 +2374,9 @@ model TechMap {
   changeOrders        ChangeOrder[]
   adaptiveRules       AdaptiveRule[]
   budgetLines         BudgetLine[]
+  reviewSnapshots     TechMapReviewSnapshot[]
+  approvalSnapshots   TechMapApprovalSnapshot[]
+  publicationLocks    TechMapPublicationLock[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2380,6 +2386,88 @@ model TechMap {
   @@index([cropZoneId])
   @@index([harvestPlanId])
   @@map("tech_maps")
+}
+
+model TechMapReviewSnapshot {
+  id String @id @default(cuid())
+
+  techMapId String
+  techMap   TechMap @relation(fields: [techMapId], references: [id])
+
+  version Int
+
+  workflowId String
+  reviewStatus String
+  publicationState String
+  persistenceBoundary Json
+  snapshotData Json
+
+  isImmutable Boolean @default(true)
+  createdBy String
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([techMapId, version])
+  @@index([techMapId, createdAt])
+  @@index([companyId, createdAt])
+  @@map("tech_map_review_snapshots")
+}
+
+model TechMapApprovalSnapshot {
+  id String @id @default(cuid())
+
+  techMapId String
+  techMap   TechMap @relation(fields: [techMapId], references: [id])
+
+  version Int
+
+  workflowId String
+  approvalStatus String
+  publicationState String
+  persistenceBoundary Json
+  snapshotData Json
+
+  isImmutable Boolean @default(true)
+  approvedBy String
+  approvedAt DateTime @default(now())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([techMapId, version])
+  @@index([techMapId, createdAt])
+  @@index([companyId, createdAt])
+  @@map("tech_map_approval_snapshots")
+}
+
+model TechMapPublicationLock {
+  id String @id @default(cuid())
+
+  techMapId String
+  techMap   TechMap @relation(fields: [techMapId], references: [id])
+
+  version Int
+
+  workflowId String
+  publicationState String
+  supersedesTechMapId String?
+  supersedesVersion Int?
+  lockReason String?
+  persistenceBoundary Json
+  snapshotData Json
+
+  isLocked Boolean @default(true)
+  lockedBy String
+  lockedAt DateTime @default(now())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([techMapId, version])
+  @@index([techMapId, createdAt])
+  @@index([companyId, createdAt])
+  @@map("tech_map_publication_locks")
 }
 
 model MapStage {

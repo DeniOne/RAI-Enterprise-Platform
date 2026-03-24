@@ -3,6 +3,205 @@ import { RaiToolName } from "../../shared/rai-chat/rai-tools.types";
 
 describe("SemanticIngressService", () => {
   const service = new SemanticIngressService();
+  const buildTechMapFrame = (params: {
+    message: string;
+    workspaceContext: any;
+    clarificationResume?: boolean;
+    semanticEvaluation?: any;
+    finalClassification?: any;
+    legacyClassification?: any;
+    finalRequestedToolCalls?: any[];
+  }) => {
+    const baseSemanticEvaluation = {
+      promotedPrimary: false,
+      sliceId: "agro.techmaps.list-open-create",
+      requestedToolCalls: [],
+      classification: {
+        targetRole: "agronomist",
+        intent: "tech_map_draft",
+        toolName: RaiToolName.GenerateTechMapDraft,
+        confidence: 0.85,
+        method: "semantic_router_shadow",
+        reason: "semantic_router:techmap_create_execute",
+      },
+      semanticIntent: {
+        domain: "agro",
+        entity: "techmap",
+        action: "create",
+        interactionMode: "write_candidate",
+        mutationRisk: "side_effecting_write",
+        filters: {},
+        requiredContext: [],
+        focusObject: {
+          kind: "techmap",
+          id: "techmap-77",
+        },
+        dialogState: {
+          activeFlow: null,
+          pendingClarificationKeys: [],
+          lastUserAction: null,
+        },
+        resolvability: "resolved",
+        ambiguityType: "none",
+        confidenceBand: "high",
+        reason: "semantic_router:techmap_create_execute",
+      },
+      routeDecision: {
+        decisionType: "execute",
+        recommendedExecutionMode: "direct_execute",
+        eligibleTools: [RaiToolName.GenerateTechMapDraft],
+        eligibleFlows: ["tech_map_draft"],
+        requiredContextMissing: [],
+        policyChecksRequired: [],
+        needsConfirmation: false,
+        needsClarification: false,
+        abstainReason: null,
+        policyBlockReason: null,
+      },
+      candidateRoutes: [],
+      divergence: {
+        isMismatch: false,
+        mismatchKinds: [],
+        summary: "match",
+        legacyRouteKey: "agronomist:tech_map_draft",
+        semanticRouteKey: "agro:techmap:create",
+      },
+      versionInfo: {
+        routerVersion: "semantic-router-v1",
+        promptVersion: "semantic-router-prompt-v1",
+        toolsetVersion: "toolset-v1",
+        workspaceStateDigest: "digest",
+      },
+      latencyMs: 5,
+      executionPath: "semantic_router_shadow",
+      routingContext: {
+        source: "shadow",
+        promotedPrimary: false,
+        enforceCapabilityGating: false,
+        sliceId: "agro.techmaps.list-open-create",
+        semanticIntent: {
+          domain: "agro",
+          entity: "techmap",
+          action: "create",
+          interactionMode: "write_candidate",
+          mutationRisk: "side_effecting_write",
+          filters: {},
+          requiredContext: [],
+          focusObject: {
+            kind: "techmap",
+            id: "techmap-77",
+          },
+          dialogState: {
+            activeFlow: null,
+            pendingClarificationKeys: [],
+            lastUserAction: null,
+          },
+          resolvability: "resolved",
+          ambiguityType: "none",
+          confidenceBand: "high",
+          reason: "semantic_router:techmap_create_execute",
+        },
+        routeDecision: {
+          decisionType: "execute",
+          recommendedExecutionMode: "direct_execute",
+          eligibleTools: [RaiToolName.GenerateTechMapDraft],
+          eligibleFlows: ["tech_map_draft"],
+          requiredContextMissing: [],
+          policyChecksRequired: [],
+          needsConfirmation: false,
+          needsClarification: false,
+          abstainReason: null,
+          policyBlockReason: null,
+        },
+        candidateRoutes: [],
+      },
+      llmUsed: false,
+      llmError: null,
+    };
+
+    const semanticEvaluation = {
+      ...baseSemanticEvaluation,
+      ...(params.semanticEvaluation ?? {}),
+      classification: {
+        ...baseSemanticEvaluation.classification,
+        ...(params.semanticEvaluation?.classification ?? {}),
+      },
+      semanticIntent: {
+        ...baseSemanticEvaluation.semanticIntent,
+        ...(params.semanticEvaluation?.semanticIntent ?? {}),
+      },
+      routeDecision: {
+        ...baseSemanticEvaluation.routeDecision,
+        ...(params.semanticEvaluation?.routeDecision ?? {}),
+      },
+      candidateRoutes:
+        params.semanticEvaluation?.candidateRoutes ?? baseSemanticEvaluation.candidateRoutes,
+      divergence: {
+        ...baseSemanticEvaluation.divergence,
+        ...(params.semanticEvaluation?.divergence ?? {}),
+      },
+      versionInfo: {
+        ...baseSemanticEvaluation.versionInfo,
+        ...(params.semanticEvaluation?.versionInfo ?? {}),
+      },
+      routingContext: {
+        ...baseSemanticEvaluation.routingContext,
+        ...(params.semanticEvaluation?.routingContext ?? {}),
+        semanticIntent: {
+          ...baseSemanticEvaluation.routingContext.semanticIntent,
+          ...(params.semanticEvaluation?.routingContext?.semanticIntent ?? {}),
+        },
+        routeDecision: {
+          ...baseSemanticEvaluation.routingContext.routeDecision,
+          ...(params.semanticEvaluation?.routingContext?.routeDecision ?? {}),
+        },
+        candidateRoutes:
+          params.semanticEvaluation?.routingContext?.candidateRoutes ??
+          baseSemanticEvaluation.routingContext.candidateRoutes,
+      },
+    };
+
+    return service.buildFrame({
+      request: {
+        message: params.message,
+        workspaceContext: params.workspaceContext,
+        ...(params.clarificationResume ? { clarificationResume: true } : {}),
+      } as any,
+      legacyClassification:
+        params.legacyClassification ??
+        ({
+          targetRole: "agronomist",
+          intent: "tech_map_draft",
+          toolName: RaiToolName.GenerateTechMapDraft,
+          confidence: 0.85,
+          method: "regex",
+          reason: "responsibility:agronomy:tech_map_draft",
+        } as any),
+      finalClassification:
+        params.finalClassification ??
+        ({
+          targetRole: "agronomist",
+          intent: "tech_map_draft",
+          toolName: RaiToolName.GenerateTechMapDraft,
+          confidence: 0.85,
+          method: "semantic_router_shadow",
+          reason: "semantic_router:techmap_create_execute",
+        } as any),
+      finalRequestedToolCalls:
+        params.finalRequestedToolCalls ??
+        [
+          {
+            name: RaiToolName.GenerateTechMapDraft,
+            payload: {
+              fieldRef: "field-12",
+              seasonRef: "season-2026",
+              crop: "rapeseed",
+            },
+          },
+        ],
+      semanticEvaluation: semanticEvaluation as any,
+    });
+  };
 
   it("строит first-class ingress frame для proof-slice crm.register_counterparty", () => {
     const frame = service.buildFrame({
@@ -180,6 +379,464 @@ describe("SemanticIngressService", () => {
           ownerRole: "crm_agent",
         }),
       ]),
+    );
+  });
+
+  it("строит tech-map specialization frame для rebuild workflow", () => {
+    const frame = service.buildFrame({
+      request: {
+        message: "Пересобери техкарту по полю 12 на сезон 2026",
+        workspaceContext: {
+          route: "/consulting/techmaps",
+          activeEntityRefs: [
+            { kind: "field", id: "field-12" },
+            { kind: "techmap", id: "techmap-77" },
+          ],
+          filters: {
+            seasonId: "season-2026",
+            cropCode: "rapeseed",
+          },
+          selectedRowSummary: {
+            kind: "techmap",
+            id: "techmap-77",
+            title: "Техкарта 77",
+            status: "draft",
+          },
+        },
+      } as any,
+      legacyClassification: {
+        targetRole: "agronomist",
+        intent: "tech_map_draft",
+        toolName: RaiToolName.GenerateTechMapDraft,
+        confidence: 0.85,
+        method: "regex",
+        reason: "responsibility:agronomy:tech_map_draft",
+      },
+      finalClassification: {
+        targetRole: "agronomist",
+        intent: "tech_map_draft",
+        toolName: RaiToolName.GenerateTechMapDraft,
+        confidence: 0.85,
+        method: "semantic_router_shadow",
+        reason: "semantic_router:techmap_create_execute",
+      },
+      finalRequestedToolCalls: [
+        {
+          name: RaiToolName.GenerateTechMapDraft,
+          payload: {
+            fieldRef: "field-12",
+            seasonRef: "season-2026",
+            crop: "rapeseed",
+          },
+        },
+      ],
+      semanticEvaluation: {
+        promotedPrimary: false,
+        sliceId: "agro.techmaps.list-open-create",
+        requestedToolCalls: [],
+        classification: {
+          targetRole: "agronomist",
+          intent: "tech_map_draft",
+          toolName: RaiToolName.GenerateTechMapDraft,
+          confidence: 0.85,
+          method: "semantic_router_shadow",
+          reason: "semantic_router:techmap_create_execute",
+        },
+        semanticIntent: {
+          domain: "agro",
+          entity: "techmap",
+          action: "create",
+          interactionMode: "write_candidate",
+          mutationRisk: "side_effecting_write",
+          filters: {},
+          requiredContext: [],
+          focusObject: {
+            kind: "techmap",
+            id: "techmap-77",
+          },
+          dialogState: {
+            activeFlow: null,
+            pendingClarificationKeys: [],
+            lastUserAction: null,
+          },
+          resolvability: "resolved",
+          ambiguityType: "none",
+          confidenceBand: "high",
+          reason: "semantic_router:techmap_create_execute",
+        },
+        routeDecision: {
+          decisionType: "execute",
+          recommendedExecutionMode: "direct_execute",
+          eligibleTools: [RaiToolName.GenerateTechMapDraft],
+          eligibleFlows: ["tech_map_draft"],
+          requiredContextMissing: [],
+          policyChecksRequired: [],
+          needsConfirmation: false,
+          needsClarification: false,
+          abstainReason: null,
+          policyBlockReason: null,
+        },
+        candidateRoutes: [],
+        divergence: {
+          isMismatch: false,
+          mismatchKinds: [],
+          summary: "match",
+          legacyRouteKey: "agronomist:tech_map_draft",
+          semanticRouteKey: "agro:techmap:create",
+        },
+        versionInfo: {
+          routerVersion: "semantic-router-v1",
+          promptVersion: "semantic-router-prompt-v1",
+          toolsetVersion: "toolset-v1",
+          workspaceStateDigest: "digest",
+        },
+        latencyMs: 5,
+        executionPath: "semantic_router_shadow",
+        routingContext: {
+          source: "shadow",
+          promotedPrimary: false,
+          enforceCapabilityGating: false,
+          sliceId: "agro.techmaps.list-open-create",
+          semanticIntent: {
+            domain: "agro",
+            entity: "techmap",
+            action: "create",
+            interactionMode: "write_candidate",
+            mutationRisk: "side_effecting_write",
+            filters: {},
+            requiredContext: [],
+            focusObject: {
+              kind: "techmap",
+              id: "techmap-77",
+            },
+            dialogState: {
+              activeFlow: null,
+              pendingClarificationKeys: [],
+              lastUserAction: null,
+            },
+            resolvability: "resolved",
+            ambiguityType: "none",
+            confidenceBand: "high",
+            reason: "semantic_router:techmap_create_execute",
+          },
+          routeDecision: {
+            decisionType: "execute",
+            recommendedExecutionMode: "direct_execute",
+            eligibleTools: [RaiToolName.GenerateTechMapDraft],
+            eligibleFlows: ["tech_map_draft"],
+            requiredContextMissing: [],
+            policyChecksRequired: [],
+            needsConfirmation: false,
+            needsClarification: false,
+            abstainReason: null,
+            policyBlockReason: null,
+          },
+          candidateRoutes: [],
+        },
+        llmUsed: false,
+        llmError: null,
+      } as any,
+    });
+
+    expect(frame).toEqual(
+      expect.objectContaining({
+        requestShape: "single_intent",
+        goal: "tech_map_draft",
+        operationAuthority: "unknown",
+        writePolicy: expect.objectContaining({
+          decision: "execute",
+        }),
+        techMapFrame: expect.objectContaining({
+          workflowKind: "tech_map",
+          userIntent: "rebuild_existing",
+          workflowStageHint: "assemble",
+          requestedArtifact: "workflow_draft",
+          contextReadiness: "S3_DRAFT_READY",
+          policyPosture: "open",
+        }),
+      }),
+    );
+    expect(frame.techMapFrame?.scope).toEqual(
+      expect.objectContaining({
+        fieldIds: ["field-12"],
+        seasonId: "season-2026",
+        cropCode: "rapeseed",
+        existingTechMapId: "techmap-77",
+      }),
+    );
+    expect(frame.techMapFrame?.requiredActions).toEqual(
+      expect.arrayContaining(["execute"]),
+    );
+  });
+
+  it("нормализует compare_variants в comparison report с variant count", () => {
+    const frame = buildTechMapFrame({
+      message: "Сравни 3 варианта техкарты по полю 12",
+      workspaceContext: {
+        route: "/consulting/techmaps",
+        activeEntityRefs: [
+          { kind: "field", id: "field-12" },
+          { kind: "techmap", id: "techmap-77" },
+        ],
+        filters: {
+          seasonId: "season-2026",
+          cropCode: "rapeseed",
+        },
+        selectedRowSummary: {
+          kind: "techmap",
+          id: "techmap-77",
+          title: "Техкарта 77",
+          status: "draft",
+        },
+      },
+      semanticEvaluation: {
+        routeDecision: {
+          decisionType: "navigate",
+          recommendedExecutionMode: "direct_execute",
+          eligibleTools: [],
+          eligibleFlows: [],
+          requiredContextMissing: [],
+          policyChecksRequired: [],
+          needsConfirmation: false,
+          needsClarification: false,
+          abstainReason: null,
+          policyBlockReason: null,
+        },
+        semanticIntent: {
+          requiredContext: ["field", "season"],
+          confidenceBand: "high",
+        },
+      },
+    });
+
+    expect(frame.techMapFrame).toEqual(
+      expect.objectContaining({
+        userIntent: "compare_variants",
+        workflowStageHint: "compare",
+        requestedArtifact: "comparison_report",
+        contextReadiness: "S4_REVIEW_READY",
+        policyPosture: "open",
+        comparisonMode: expect.objectContaining({
+          enabled: true,
+          variantCount: 3,
+        }),
+      }),
+    );
+    expect(frame.techMapFrame?.requiredActions).toEqual(
+      expect.arrayContaining(["execute"]),
+    );
+    expect(frame.techMapFrame?.resultConstraints).toEqual(
+      expect.arrayContaining(["tech_map.baseline_context_consistent"]),
+    );
+  });
+
+  it("нормализует review_draft в review packet с human_review", () => {
+    const frame = buildTechMapFrame({
+      message: "Проверь техкарту по полю 12 и объясни риски",
+      workspaceContext: {
+        route: "/consulting/techmaps",
+        activeEntityRefs: [
+          { kind: "field", id: "field-12" },
+          { kind: "techmap", id: "techmap-77" },
+        ],
+        filters: {
+          seasonId: "season-2026",
+          cropCode: "rapeseed",
+        },
+        selectedRowSummary: {
+          kind: "techmap",
+          id: "techmap-77",
+          title: "Техкарта 77",
+          status: "draft",
+        },
+      },
+      semanticEvaluation: {
+        routeDecision: {
+          decisionType: "navigate",
+          recommendedExecutionMode: "direct_execute",
+          eligibleTools: [],
+          eligibleFlows: [],
+          requiredContextMissing: [],
+          policyChecksRequired: [],
+          needsConfirmation: false,
+          needsClarification: false,
+          abstainReason: null,
+          policyBlockReason: null,
+        },
+        semanticIntent: {
+          requiredContext: ["field", "season"],
+          confidenceBand: "medium",
+        },
+      },
+    });
+
+    expect(frame.techMapFrame).toEqual(
+      expect.objectContaining({
+        userIntent: "review_draft",
+        workflowStageHint: "review",
+        requestedArtifact: "review_packet",
+        contextReadiness: "S4_REVIEW_READY",
+        policyPosture: "open",
+      }),
+    );
+    expect(frame.techMapFrame?.requiredActions).toEqual(
+      expect.arrayContaining(["execute", "human_review"]),
+    );
+  });
+
+  it("нормализует approve_publish в publication packet с governed posture", () => {
+    const frame = buildTechMapFrame({
+      message: "Отправь техкарту на публикацию",
+      workspaceContext: {
+        route: "/consulting/techmaps",
+        activeEntityRefs: [
+          { kind: "field", id: "field-12" },
+          { kind: "techmap", id: "techmap-77" },
+        ],
+        filters: {
+          seasonId: "season-2026",
+          cropCode: "rapeseed",
+        },
+        selectedRowSummary: {
+          kind: "techmap",
+          id: "techmap-77",
+          title: "Техкарта 77",
+          status: "review",
+        },
+      },
+      semanticEvaluation: {
+        routeDecision: {
+          decisionType: "execute",
+          recommendedExecutionMode: "direct_execute",
+          eligibleTools: [],
+          eligibleFlows: [],
+          requiredContextMissing: [],
+          policyChecksRequired: [],
+          needsConfirmation: false,
+          needsClarification: false,
+          abstainReason: null,
+          policyBlockReason: null,
+        },
+        semanticIntent: {
+          requiredContext: ["field", "season"],
+          confidenceBand: "high",
+        },
+      },
+    });
+
+    expect(frame.techMapFrame).toEqual(
+      expect.objectContaining({
+        userIntent: "approve_publish",
+        workflowStageHint: "publication",
+        requestedArtifact: "publication_packet",
+        contextReadiness: "S5_PUBLISHABLE",
+        policyPosture: "governed",
+      }),
+    );
+    expect(frame.techMapFrame?.requiredActions).toEqual(
+      expect.arrayContaining(["confirm", "human_review"]),
+    );
+  });
+
+  it("нормализует clarification resume и block explanation", () => {
+    const resumeFrame = buildTechMapFrame({
+      message: "Продолжай с того же места",
+      clarificationResume: true,
+      workspaceContext: {
+        route: "/consulting/techmaps",
+        activeEntityRefs: [
+          { kind: "field", id: "field-12" },
+          { kind: "techmap", id: "techmap-77" },
+        ],
+        filters: {
+          seasonId: "season-2026",
+        },
+      },
+      semanticEvaluation: {
+        routeDecision: {
+          decisionType: "execute",
+          recommendedExecutionMode: "direct_execute",
+          eligibleTools: [],
+          eligibleFlows: [],
+          requiredContextMissing: [],
+          policyChecksRequired: [],
+          needsConfirmation: false,
+          needsClarification: false,
+          abstainReason: null,
+          policyBlockReason: null,
+        },
+        semanticIntent: {
+          requiredContext: ["field"],
+          confidenceBand: "high",
+        },
+      },
+    });
+
+    expect(resumeFrame.techMapFrame).toEqual(
+      expect.objectContaining({
+        userIntent: "resume_clarify",
+        workflowStageHint: "clarify",
+        requestedArtifact: "workflow_draft",
+        policyPosture: "open",
+      }),
+    );
+    expect(resumeFrame).toEqual(
+      expect.objectContaining({
+        interactionMode: "workflow_resume",
+        requestShape: "clarification_resume",
+        operationAuthority: "workflow_resume",
+      }),
+    );
+
+    const blockFrame = buildTechMapFrame({
+      message: "Почему техкарту заблокировали?",
+      workspaceContext: {
+        route: "/consulting/techmaps",
+        activeEntityRefs: [
+          { kind: "field", id: "field-12" },
+          { kind: "techmap", id: "techmap-77" },
+        ],
+        filters: {
+          seasonId: "season-2026",
+          cropCode: "rapeseed",
+        },
+        selectedRowSummary: {
+          kind: "techmap",
+          id: "techmap-77",
+          title: "Техкарта 77",
+          status: "blocked",
+        },
+      },
+      semanticEvaluation: {
+        routeDecision: {
+          decisionType: "block",
+          recommendedExecutionMode: "ask_confirmation",
+          eligibleTools: [],
+          eligibleFlows: [],
+          requiredContextMissing: [],
+          policyChecksRequired: [],
+          needsConfirmation: false,
+          needsClarification: false,
+          abstainReason: null,
+          policyBlockReason: "policy_block",
+        },
+        semanticIntent: {
+          requiredContext: ["field", "season"],
+          confidenceBand: "medium",
+        },
+      },
+    });
+
+    expect(blockFrame.techMapFrame).toEqual(
+      expect.objectContaining({
+        userIntent: "explain_block",
+        workflowStageHint: "review",
+        requestedArtifact: "block_explanation",
+        policyPosture: "blocked",
+      }),
+    );
+    expect(blockFrame.techMapFrame?.requiredActions).toEqual(
+      expect.arrayContaining(["human_review", "block"]),
     );
   });
 

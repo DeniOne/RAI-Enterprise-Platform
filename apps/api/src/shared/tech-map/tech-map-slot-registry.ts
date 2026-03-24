@@ -523,3 +523,15 @@ export function listTechMapPublicationCriticalSlots(): string[] {
     (entry) => entry.impact.publication_critical,
   ).map((entry) => entry.slot_key);
 }
+
+export function listTechMapPublicationCriticalSlotEntries(): TechMapSlotRegistryEntry[] {
+  return TECH_MAP_SLOT_REGISTRY.filter(
+    (entry) => entry.impact.publication_critical,
+  );
+}
+
+export function listTechMapSlotsByGroup(
+  group: TechMapSlotGroup,
+): TechMapSlotRegistryEntry[] {
+  return TECH_MAP_SLOT_REGISTRY.filter((entry) => entry.group === group);
+}

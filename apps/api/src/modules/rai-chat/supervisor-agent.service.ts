@@ -157,6 +157,10 @@ export class SupervisorAgent {
       executionRequest,
       actorContext,
     );
+    executionResult = this.applyTechMapWorkflowFrame({
+      executionResult,
+      semanticIngressFrame,
+    });
     executionResult = await this.applyCompositeWorkflowStage({
       request,
       actorContext,
@@ -404,7 +408,7 @@ export class SupervisorAgent {
       structuredOutput: currentOutput,
       structuredOutputs:
         primary.structuredOutputs && primary.structuredOutputs.length > 0
-          ? primary.structuredOutputs
+          ? [currentOutput, ...primary.structuredOutputs]
           : [currentOutput],
       branchResults: primaryArtifacts.branchResults,
       branchTrustAssessments: primaryArtifacts.branchTrustAssessments,
@@ -1598,7 +1602,9 @@ export class SupervisorAgent {
       ? semanticEvaluation.classification
       : legacyPlan.classification;
     const requestedToolCalls = semanticEvaluation.promotedPrimary
-      ? semanticEvaluation.requestedToolCalls
+      ? semanticEvaluation.requestedToolCalls.length > 0
+        ? semanticEvaluation.requestedToolCalls
+        : legacyPlan.requestedToolCalls
       : legacyPlan.requestedToolCalls;
     const semanticIngressFrame = this.semanticIngress.buildFrame({
       request,
@@ -1683,11 +1689,103 @@ export class SupervisorAgent {
       targetRole: string | null;
     };
   }): string {
+    if (params.semanticIngressFrame.techMapFrame) {
+      return params.semanticIngressFrame.requestedOperation.ownerRole ?? params.classification.targetRole ?? "agronomist";
+    }
     const semanticOwnerRole = params.semanticIngressFrame.requestedOperation.ownerRole;
     if (semanticOwnerRole) {
       return semanticOwnerRole;
     }
     return params.classification.targetRole ?? "knowledge";
+  }
+
+  private applyTechMapWorkflowFrame(params: {
+    executionResult: Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>;
+    semanticIngressFrame: SemanticIngressFrame;
+  }): Awaited<ReturnType<AgentRuntimeService["executeAgent"]>> {
+    const techMapFrame = params.semanticIngressFrame.techMapFrame;
+    if (!techMapFrame || !params.executionResult.agentExecution) {
+      return params.executionResult;
+    }
+
+    const clarifyLifecycle = this.extractTechMapClarifyLifecycle(
+      params.executionResult.agentExecution.structuredOutput,
+    );
+    const structuredOutputs = [
+      ...(params.executionResult.agentExecution.structuredOutputs ?? []),
+    ];
+    if (clarifyLifecycle) {
+      structuredOutputs.push({
+        ...params.executionResult.agentExecution.structuredOutput,
+        techMapClarifyBatch: clarifyLifecycle.clarifyBatch,
+        techMapWorkflowResumeState: clarifyLifecycle.workflowResumeState,
+        techMapClarifyAuditTrail: clarifyLifecycle.clarifyAuditTrail,
+      });
+    }
+
+    params.executionResult.agentExecution = {
+      ...params.executionResult.agentExecution,
+      structuredOutput: {
+        ...params.executionResult.agentExecution.structuredOutput,
+        techMapSemanticFrame: techMapFrame,
+        ...(clarifyLifecycle
+          ? {
+              techMapClarifyBatch: clarifyLifecycle.clarifyBatch,
+              techMapWorkflowResumeState: clarifyLifecycle.workflowResumeState,
+              techMapClarifyAuditTrail: clarifyLifecycle.clarifyAuditTrail,
+            }
+          : {}),
+      },
+      structuredOutputs:
+        structuredOutputs.length > 0 ? structuredOutputs : undefined,
+    };
+
+    return params.executionResult;
+  }
+
+  private extractTechMapClarifyLifecycle(
+    structuredOutput: Record<string, unknown>,
+  ): {
+    clarifyBatch: Record<string, unknown> | null;
+    workflowResumeState: Record<string, unknown> | null;
+    clarifyAuditTrail: Record<string, unknown>[] | null;
+  } | null {
+    const data =
+      structuredOutput && typeof structuredOutput.data === "object"
+        ? (structuredOutput.data as Record<string, unknown>)
+        : null;
+    const clarifyBatch = this.extractObject(data?.clarifyBatch ?? structuredOutput.clarifyBatch);
+    const workflowResumeState = this.extractObject(
+      data?.workflowResumeState ?? structuredOutput.workflowResumeState,
+    );
+    const clarifyAuditTrail = this.extractObjectArray(
+      data?.clarifyAuditTrail ?? structuredOutput.clarifyAuditTrail,
+    );
+
+    if (!clarifyBatch && !workflowResumeState && !clarifyAuditTrail) {
+      return null;
+    }
+
+    return {
+      clarifyBatch,
+      workflowResumeState,
+      clarifyAuditTrail,
+    };
+  }
+
+  private extractObject(value: unknown): Record<string, unknown> | null {
+    return value && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : null;
+  }
+
+  private extractObjectArray(value: unknown): Record<string, unknown>[] | null {
+    return Array.isArray(value)
+      ? value.filter(
+          (item): item is Record<string, unknown> =>
+            Boolean(item) && typeof item === "object" && !Array.isArray(item),
+        )
+      : null;
   }
 
   private mapRoutingOutcome(

@@ -962,6 +962,180 @@ describe("SupervisorAgent", () => {
     );
   });
 
+  it("прокидывает tech-map clarify lifecycle в supervisor intake и forensics", async () => {
+    process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+    intentRouterMock.classify.mockReturnValueOnce({
+      targetRole: "agronomist",
+      intent: "generate_tech_map_draft",
+      toolName: RaiToolName.GenerateTechMapDraft,
+      confidence: 0.7,
+      method: "regex",
+      reason: "match: техкарт",
+    });
+    intentRouterMock.buildAutoToolCall.mockReturnValueOnce({
+      name: RaiToolName.GenerateTechMapDraft,
+      payload: {
+        fieldRef: "field-42",
+        seasonRef: "season-42",
+        crop: "rapeseed",
+      },
+    });
+
+    const executeAgentSpy = jest
+      .spyOn(agentRuntimeService, "executeAgent")
+      .mockResolvedValueOnce({
+        executedTools: [
+          {
+            name: RaiToolName.GenerateTechMapDraft,
+            result: {
+              draftId: "draft-1",
+              readiness: "S1_SCOPED",
+              workflowVerdict: "PARTIAL",
+              clarifyBatch: {
+                mode: "MULTI_STEP",
+                status: "OPEN",
+                resume_token:
+                  "resume:tech-map:draft-1:clarify:draft-1:soil_profile",
+              },
+              workflowResumeState: {
+                resume_from_phase: "MISSING_CONTEXT_TRIAGE",
+                external_recheck_required: false,
+              },
+              clarifyAuditTrail: [
+                { event_type: "clarify_batch_opened" },
+                { event_type: "workflow_resume_requested" },
+                { event_type: "workflow_resume_ready" },
+              ],
+            },
+          },
+        ],
+        agentExecution: {
+          role: "agronomist",
+          status: "COMPLETED",
+          text:
+            "Черновик техкарты создан: draft-1. Batch MULTI_STEP/OPEN. Audit 3 event(s), last workflow_resume_ready.",
+          structuredOutput: {
+            data: {
+              draftId: "draft-1",
+              clarifyBatch: {
+                mode: "MULTI_STEP",
+                status: "OPEN",
+                resume_token:
+                  "resume:tech-map:draft-1:clarify:draft-1:soil_profile",
+              },
+              workflowResumeState: {
+                resume_from_phase: "MISSING_CONTEXT_TRIAGE",
+                external_recheck_required: false,
+              },
+              clarifyAuditTrail: [
+                { event_type: "clarify_batch_opened" },
+                { event_type: "workflow_resume_requested" },
+                { event_type: "workflow_resume_ready" },
+              ],
+            },
+          },
+          structuredOutputs: [
+            {
+              data: {
+                draftId: "draft-1",
+                clarifyBatch: {
+                  mode: "MULTI_STEP",
+                  status: "OPEN",
+                  resume_token:
+                    "resume:tech-map:draft-1:clarify:draft-1:soil_profile",
+                },
+                workflowResumeState: {
+                  resume_from_phase: "MISSING_CONTEXT_TRIAGE",
+                  external_recheck_required: false,
+                },
+                clarifyAuditTrail: [
+                  { event_type: "clarify_batch_opened" },
+                  { event_type: "workflow_resume_requested" },
+                  { event_type: "workflow_resume_ready" },
+                ],
+              },
+            },
+          ],
+          branchResults: [],
+          branchTrustAssessments: [],
+          branchCompositions: [],
+          delegationChain: [],
+          usage: undefined,
+          toolCalls: [],
+          connectorCalls: [],
+          evidence: [],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "agronom-v1",
+          },
+        },
+        runtimeGovernance: undefined,
+      } as any);
+
+    const result = await agent.orchestrate(
+      {
+        message: "Составь техкарту по озимому рапсу",
+        workspaceContext: {
+          route: "/consulting/techmaps",
+          filters: {
+            seasonId: "season-42",
+          },
+        },
+      },
+      "company-1",
+      "user-1",
+    );
+
+    expect(result.toolCalls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: RaiToolName.GenerateTechMapDraft,
+          payload: expect.objectContaining({
+            clarifyBatch: expect.objectContaining({
+              resume_token:
+                "resume:tech-map:draft-1:clarify:draft-1:soil_profile",
+            }),
+            clarifyAuditTrail: expect.arrayContaining([
+              expect.objectContaining({ event_type: "workflow_resume_ready" }),
+            ]),
+          }),
+        }),
+      ]),
+    );
+    expect(prismaServiceMock.aiAuditEntry.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          metadata: expect.objectContaining({
+            structuredOutputs: expect.arrayContaining([
+              expect.objectContaining({
+                data: expect.objectContaining({
+                  clarifyBatch: expect.objectContaining({
+                    resume_token:
+                      "resume:tech-map:draft-1:clarify:draft-1:soil_profile",
+                  }),
+                  clarifyAuditTrail: expect.arrayContaining([
+                    expect.objectContaining({
+                      event_type: "workflow_resume_ready",
+                    }),
+                  ]),
+                }),
+              }),
+            ]),
+          }),
+        }),
+      }),
+    );
+
+    executeAgentSpy.mockRestore();
+  });
+
   it("превращает economist NEEDS_MORE_DATA в payload добора контекста для план-факта", async () => {
     process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
     intentRouterMock.classify.mockReturnValueOnce({

@@ -111,6 +111,29 @@ export interface TechMapWorkflowResumeState {
   expires_at: string;
 }
 
+export const TECH_MAP_CLARIFY_AUDIT_EVENT_TYPES = [
+  "clarify_batch_opened",
+  "clarify_batch_resolved",
+  "clarify_batch_expired",
+  "workflow_resume_requested",
+  "workflow_resume_ready",
+] as const;
+
+export type TechMapClarifyAuditEventType =
+  (typeof TECH_MAP_CLARIFY_AUDIT_EVENT_TYPES)[number];
+
+export interface TechMapClarifyAuditEvent {
+  event_id: string;
+  event_type: TechMapClarifyAuditEventType;
+  workflow_id: string;
+  batch_id: string | null;
+  resume_token: string | null;
+  phase: TechMapWorkflowPhase;
+  message: string;
+  occurred_at: string;
+  details?: Record<string, unknown>;
+}
+
 export const TECH_MAP_DEFAULT_CLARIFY_POLICY = {
   clarify_batch_ttl_hours: 72,
   workflow_resume_ttl_days: 30,

@@ -1,6 +1,8 @@
 import {
   getTechMapSlotRegistryEntry,
   listTechMapPublicationCriticalSlots,
+  listTechMapPublicationCriticalSlotEntries,
+  listTechMapSlotsByGroup,
   listTechMapSlotRegistryEntriesRequiredFrom,
   TECH_MAP_SLOT_REGISTRY,
 } from "./tech-map-slot-registry";
@@ -33,5 +35,14 @@ describe("tech-map-slot-registry", () => {
     const entry = getTechMapSlotRegistryEntry("price_book_version");
     expect(entry?.group).toBe("economic_basis");
     expect(entry?.freshness_policy.mode).toBe("MAX_AGE_DAYS");
+  });
+
+  it("возвращает publication-critical entry list и group filtering", () => {
+    const publicationCriticalEntries = listTechMapPublicationCriticalSlotEntries();
+    expect(publicationCriticalEntries.length).toBeGreaterThan(0);
+    expect(publicationCriticalEntries.every((entry) => entry.impact.publication_critical)).toBe(true);
+
+    const agronomicSlots = listTechMapSlotsByGroup("agronomic_basis");
+    expect(agronomicSlots.some((entry) => entry.slot_key === "soil_profile")).toBe(true);
   });
 });

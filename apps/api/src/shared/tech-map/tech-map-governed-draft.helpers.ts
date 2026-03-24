@@ -13,6 +13,8 @@ import type { TechMapWorkflowVerdictAggregationInput } from "./tech-map-governed
 import { aggregateTechMapWorkflowVerdict } from "./tech-map-governed-verdict.helpers";
 import {
   TECH_MAP_SLOT_REGISTRY,
+  listTechMapPublicationCriticalSlotEntries,
+  listTechMapSlotRegistryEntriesRequiredFrom,
   type TechMapSlotRegistryEntry,
 } from "./tech-map-slot-registry";
 
@@ -218,7 +220,7 @@ function resolveReadiness(
   let current: TechMapContextReadiness = "S0_UNSCOPED";
 
   for (const readiness of TECH_MAP_CONTEXT_READINESS_LEVELS.slice(1)) {
-    const ready = TECH_MAP_SLOT_REGISTRY.filter(
+    const ready = listTechMapSlotRegistryEntriesRequiredFrom(readiness).filter(
       (entry) =>
         isRequiredSlot(entry) &&
         (readinessOrder.get(entry.stage_required_from) ?? Number.MAX_SAFE_INTEGER) <=
@@ -273,12 +275,15 @@ export function assessTechMapGovernedDraftContext(
   const reviewMissingEntries = missingRequiredEntries.filter(
     (entry) => !entry.impact.blocks_branch_execution,
   );
+  const publicationCriticalSlotKeys = new Set(
+    listTechMapPublicationCriticalSlotEntries().map((entry) => entry.slot_key),
+  );
   const publicationCriticalReviewEntries = reviewMissingEntries.filter(
-    (entry) => entry.impact.publication_critical,
+    (entry) => publicationCriticalSlotKeys.has(entry.slot_key),
   );
 
   const clarifyEntries = nextReadinessTarget
-    ? TECH_MAP_SLOT_REGISTRY.filter(
+    ? listTechMapSlotRegistryEntriesRequiredFrom(nextReadinessTarget).filter(
         (entry) =>
           isRequiredSlot(entry) &&
           entry.stage_required_from === nextReadinessTarget &&

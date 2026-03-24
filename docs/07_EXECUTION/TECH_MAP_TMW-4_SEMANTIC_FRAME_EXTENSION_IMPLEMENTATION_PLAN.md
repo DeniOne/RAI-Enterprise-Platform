@@ -5,12 +5,12 @@ type: Phase Plan
 status: draft
 version: 0.1.0
 owners: [@techlead]
-last_updated: 2026-03-22
+last_updated: 2026-03-24
 claim_id: CLAIM-EXE-TECH-MAP-TMW-4-SEMANTIC-FRAME-EXTENSION-20260322
 claim_status: asserted
 verified_by: manual
-last_verified: 2026-03-22
-evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;docs/07_EXECUTION/TECH_MAP_MASTER_IMPLEMENTATION_CHECKLIST.md;docs/07_EXECUTION/SEMANTIC_INGRESS_AND_GOVERNED_HANDOFF_PHASE_PLAN.md;apps/api/src/modules/rai-chat/semantic-ingress.service.ts;apps/api/src/modules/rai-chat/semantic-router/semantic-router.service.ts;apps/api/src/shared/rai-chat/semantic-ingress.types.ts
+last_verified: 2026-03-24
+evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;docs/07_EXECUTION/TECH_MAP_MASTER_IMPLEMENTATION_CHECKLIST.md;docs/07_EXECUTION/SEMANTIC_INGRESS_AND_GOVERNED_HANDOFF_PHASE_PLAN.md;apps/api/src/modules/rai-chat/semantic-ingress.service.ts;apps/api/src/modules/rai-chat/semantic-ingress.service.spec.ts;apps/api/src/modules/rai-chat/semantic-router/semantic-router.service.ts;apps/api/src/shared/rai-chat/semantic-ingress.types.ts
 ---
 # TECH MAP TMW-4 Semantic Frame Extension Implementation Plan
 
@@ -18,7 +18,7 @@ evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;docs/07_EXECUTI
 id: CLAIM-EXE-TECH-MAP-TMW-4-SEMANTIC-FRAME-EXTENSION-20260322
 status: asserted
 verified_by: manual
-last_verified: 2026-03-22
+last_verified: 2026-03-24
 
 ## 0. Цель пакета
 
@@ -26,7 +26,7 @@ last_verified: 2026-03-22
 
 Целевой результат:
 
-- ingress начинает различать `create_new / rebuild / compare / revise / resume_clarify`;
+- ingress начинает различать `create_new / rebuild_existing / compare_variants / review_draft / approve_publish / resume_clarify / explain_block`;
 - orchestrator получает `policy posture`, `workflow stage` и `required actions`;
 - semantic frame становится первым typed объектом, а не побочным текстовым сигналом;
 - свободный UX остаётся свободным, но execution становится управляемым.
@@ -43,7 +43,7 @@ last_verified: 2026-03-22
 
 - нет отдельного tech-map ingress frame contract
 - нет нормализованной workflow-stage модели для Техкарты
-- нет typed distinction между `new_draft`, `rebuild`, `compare`, `revise` и `resume_clarify`
+- нет typed distinction между `create_new`, `rebuild_existing`, `compare_variants`, `review_draft`, `approve_publish`, `resume_clarify` и `explain_block`
 
 ## 2. Целевой результат пакета
 
@@ -77,9 +77,9 @@ last_verified: 2026-03-22
 
 Checklist:
 
-- [ ] ввести tech-map specialization frame
-- [ ] зафиксировать `intent / stage / policy posture / required actions`
-- [ ] развести `new_draft / rebuild / compare / revise / resume_clarify`
+- [x] ввести tech-map specialization frame
+- [x] зафиксировать `intent / stage / policy posture / required actions`
+- [x] развести `create_new / rebuild_existing / compare_variants / review_draft / approve_publish / resume_clarify / explain_block`
 
 Эффект:
 
@@ -89,9 +89,9 @@ Checklist:
 
 Checklist:
 
-- [ ] подключить frame build в semantic ingress
-- [ ] отдать frame как typed output
-- [ ] сохранить free-form UX
+- [x] подключить frame build в semantic ingress
+- [x] отдать frame как typed output
+- [x] сохранить free-form UX
 
 Эффект:
 
@@ -101,9 +101,9 @@ Checklist:
 
 Checklist:
 
-- [ ] научить ingress frame понимать `resume_clarify`
-- [ ] научить frame понимать `compare_variants`
-- [ ] обеспечить branch-aware next actions
+- [x] научить ingress frame понимать `resume_clarify`
+- [x] научить frame понимать `compare_variants`
+- [x] обеспечить branch-aware next actions
 
 Эффект:
 
@@ -113,9 +113,9 @@ Checklist:
 
 Checklist:
 
-- [ ] подключить frame к supervisor handoff
-- [ ] подключить frame к workflow selection
-- [ ] подключить frame к explainability/audit
+- [x] подключить frame к supervisor handoff
+- [x] подключить frame к workflow selection
+- [x] подключить frame к explainability/audit
 
 Эффект:
 
@@ -137,3 +137,7 @@ Checklist:
 - at least one runtime consumer использует frame;
 - docs и memory-bank синхронизированы;
 - api и docs проверки зелёные.
+
+Статус пакета:
+
+- `TMW-4` закрыт как runtime slice с compare/review/publication edge-cases и boundary-aware variant-count extraction.

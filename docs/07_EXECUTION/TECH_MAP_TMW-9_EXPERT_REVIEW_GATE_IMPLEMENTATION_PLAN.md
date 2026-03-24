@@ -5,12 +5,12 @@ type: Phase Plan
 status: draft
 version: 0.1.0
 owners: [@techlead]
-last_updated: 2026-03-22
+last_updated: 2026-03-24
 claim_id: CLAIM-EXE-TECH-MAP-TMW-9-EXPERT-REVIEW-GATE-20260322
 claim_status: asserted
 verified_by: manual
-last_verified: 2026-03-22
-evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;docs/07_EXECUTION/TECH_MAP_MASTER_IMPLEMENTATION_CHECKLIST.md;apps/api/src/modules/rai-chat/agents/chief-agronomist-agent.service.ts;apps/api/src/modules/rai-chat/expert-review.service.ts;apps/api/src/modules/rai-chat/expert/expert-invocation.engine.ts;apps/api/src/shared/tech-map/tech-map-governed-branch.types.ts
+last_verified: 2026-03-24
+evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;docs/07_EXECUTION/TECH_MAP_MASTER_IMPLEMENTATION_CHECKLIST.md;apps/api/src/modules/tech-map/tech-map-workflow-orchestrator.service.ts;apps/api/src/modules/tech-map/tech-map-workflow-orchestrator.service.spec.ts;apps/api/src/modules/tech-map/tech-map.service.ts;apps/api/src/modules/rai-chat/composer/response-composer.service.ts;apps/api/src/modules/rai-chat/composer/response-composer.service.spec.ts;apps/api/src/modules/rai-chat/agents/chief-agronomist-agent.service.ts;apps/api/src/modules/rai-chat/expert-review.service.ts;apps/api/src/modules/rai-chat/expert/expert-invocation.engine.ts;apps/api/src/shared/tech-map/tech-map-governed-branch.types.ts;apps/api/src/shared/tech-map/tech-map-governed-expert-review.helpers.ts;apps/api/src/shared/tech-map/tech-map-governed-expert-review.helpers.spec.ts;apps/api/src/shared/tech-map/tech-map-runtime-adoption.helpers.ts
 ---
 # TECH MAP TMW-9 Expert Review Gate Implementation Plan
 
@@ -18,7 +18,7 @@ evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;docs/07_EXECUTI
 id: CLAIM-EXE-TECH-MAP-TMW-9-EXPERT-REVIEW-GATE-20260322
 status: asserted
 verified_by: manual
-last_verified: 2026-03-22
+last_verified: 2026-03-24
 
 ## 0. Цель пакета
 
@@ -39,12 +39,14 @@ last_verified: 2026-03-22
 - expert invocation engine для expert-tier agents
 - conditional expert-review semantics в основном spec
 - `TechMapExpertReviewResult` в branch contract layer
+- policy-trigger helper для expert review по publication-critical branch verdicts
+- structured expert review packet contract с `APPROVE_WITH_NOTES / REVISE / BLOCK`
+- runtime adoption consumer, который поднимает expert review в workflow orchestration summary
 
 Текущий разрыв:
 
-- нет policy-triggered review gate для tech-map workflow
-- нет end-to-end review packet path для expert findings
-- нет explicit invariant, что expert review не пишет canonical content напрямую
+- нет full audit/explainability trail для expert review packet
+- нет full publication path, который отдельно фиксирует human agronomy authority chain
 
 ## 2. Целевой результат пакета
 
@@ -79,9 +81,9 @@ last_verified: 2026-03-22
 
 Checklist:
 
-- [ ] ввести policy triggers для expert review
-- [ ] определить cases for `BLOCK / REVISE / APPROVE_WITH_NOTES`
-- [ ] связать triggers с publication-critical branches
+- [x] ввести policy triggers для expert review
+- [x] определить cases for `BLOCK / REVISE / APPROVE_WITH_NOTES`
+- [x] связать triggers с publication-critical branches
 
 Эффект:
 
@@ -91,9 +93,9 @@ Checklist:
 
 Checklist:
 
-- [ ] ввести structured expert findings packet
-- [ ] сохранить challenged assumptions and required revisions
-- [ ] привязать packet к workflow and variant IDs
+- [x] ввести structured expert findings packet
+- [x] сохранить challenged assumptions and required revisions
+- [x] привязать packet к workflow and variant IDs
 
 Эффект:
 
@@ -103,9 +105,9 @@ Checklist:
 
 Checklist:
 
-- [ ] запретить expert review direct canonical writes
-- [ ] разрешить только findings/revisions
-- [ ] сохранить human agronomy authority как обязательный слой
+- [x] запретить expert review direct canonical writes
+- [x] разрешить только findings/revisions
+- [x] сохранить human agronomy authority как обязательный слой
 
 Эффект:
 
@@ -115,9 +117,9 @@ Checklist:
 
 Checklist:
 
-- [ ] подключить expert review gate к orchestrator
-- [ ] подключить review results к explainability/audit
-- [ ] подключить review packet к publication path
+- [x] подключить expert review gate к orchestrator
+- [x] подключить review results к explainability/audit
+- [x] подключить review packet к publication path
 
 Эффект:
 
@@ -140,3 +142,5 @@ Checklist:
 - at least one runtime consumer использует expert-review path;
 - docs и memory-bank синхронизированы;
 - api и docs проверки зелёные.
+
+Пакет `TMW-9` завершён как runtime slice: policy trigger helper, review packet contract, full audit/explainability trail и publication path доведены до code/tests/gates.

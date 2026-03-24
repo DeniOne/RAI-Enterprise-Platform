@@ -35,12 +35,38 @@ import {
 } from "../../shared/tech-map/tech-map-mapping.helpers";
 import {
   TECH_MAP_DAG_INCLUDE,
+  TECH_MAP_CANONICAL_DRAFT_INCLUDE,
   TECH_MAP_STAGES_WITH_RESOURCES_INCLUDE,
   TECH_MAP_STAGES_WITH_RESOURCES_NO_ORDER_INCLUDE,
   TECH_MAP_VALIDATION_INCLUDE,
 } from "../../shared/tech-map/tech-map-prisma-includes";
+import {
+  buildTechMapCanonicalDraftFromTechMap,
+  type TechMapCanonicalDraftSource,
+} from "../../shared/tech-map/tech-map-canonical-draft.helpers";
+import {
+  buildTechMapPersistenceBoundary,
+  buildTechMapPersistenceBoundaryFromStatus,
+  type TechMapPersistenceBoundary,
+  isHeadDraftWritablePersistedTechMapStatus,
+} from "../../shared/tech-map/tech-map-governed-persistence.helpers";
+import {
+  buildTechMapApprovalSnapshotRecord,
+  buildTechMapPublicationLockRecord,
+  buildTechMapReviewSnapshotRecord,
+} from "../../shared/tech-map/tech-map-governed-persistence-records.helpers";
+import {
+  buildTechMapRuntimeAdoptionSnapshot,
+} from "../../shared/tech-map/tech-map-runtime-adoption.helpers";
+import {
+  buildTechMapClarifyBatch,
+  buildTechMapClarifyAuditTrail,
+  buildTechMapWorkflowResumeState,
+} from "../../shared/tech-map/tech-map-governed-clarify.helpers";
 import { assessTechMapGovernedDraftContext } from "../../shared/tech-map/tech-map-governed-draft.helpers";
 import { isEditablePersistedTechMapStatus } from "../../shared/tech-map/tech-map-governed-status.helpers";
+import type { TechMapWorkflowOrchestrationTrace } from "../../shared/tech-map/tech-map-workflow-orchestrator.types";
+import { TechMapWorkflowOrchestratorService } from "./tech-map-workflow-orchestrator.service";
 import {
   buildTechMapBlueprint,
   resolveBlueprintBaseDate,
@@ -59,6 +85,7 @@ export class TechMapService {
     private readonly dagValidation: DAGValidationService,
     private readonly validator: TechMapValidator,
     private readonly unitService: UnitNormalizationService,
+    private readonly workflowOrchestrator: TechMapWorkflowOrchestratorService,
   ) { }
 
   async generateMap(harvestPlanId: string, seasonId: string) {
@@ -407,24 +434,470 @@ export class TechMapService {
       hasTargetKpiPolicy: Boolean(plan.targetMetric ?? plan.period),
     });
 
+    return this.buildGovernedDraftClarifyResult({
+      draft,
+      plan,
+      season,
+      cropZone,
+      latestSoilProfile,
+      previousTechMap,
+      harvestResultCount,
+      regionProfile,
+      inputCatalogCount,
+      fieldRef: params.fieldRef,
+      seasonRef: params.seasonRef,
+      resolvedSlotKeys: [],
+      resumeRequested: false,
+      baselineContextHash: `tech-map:${draft.id}:${params.fieldRef}:${params.seasonRef}`,
+      governedAssessment,
+    });
+  }
+
+  async resumeDraftClarify(
+    id: string,
+    companyId: string,
+    params: {
+      resolvedSlotKeys?: string[];
+      resumeRequested?: boolean;
+    } = {},
+  ) {
+    const draft = await this.prisma.techMap.findFirst({
+      where: {
+        id,
+        companyId,
+      },
+      include: {
+        harvestPlan: {
+          include: {
+            performanceContract: true,
+          },
+        },
+        season: {
+          include: {
+            field: {
+              select: {
+                clientId: true,
+                protectedZoneFlags: true,
+                drainageClass: true,
+                slopePercent: true,
+              },
+            },
+          },
+        },
+        cropZone: {
+          include: {
+            season: {
+              include: {
+                field: {
+                  select: {
+                    clientId: true,
+                    protectedZoneFlags: true,
+                    drainageClass: true,
+                    slopePercent: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!draft) {
+      throw new NotFoundException("TechMap not found");
+    }
+    if (!isEditablePersistedTechMapStatus(draft.status)) {
+      throw new ForbiddenException(
+        `Cannot resume clarify for TechMap in state ${draft.status}`,
+      );
+    }
+
+    const season = draft.season ?? draft.cropZone?.season ?? null;
+    const plan = draft.harvestPlan;
+    const cropZone = draft.cropZone;
+
+    if (!season || !plan || !cropZone) {
+      throw new BadRequestException(
+        "Clarify resume requires linked season, harvest plan and crop zone",
+      );
+    }
+
+    const [
+      latestSoilProfile,
+      previousTechMap,
+      harvestResultCount,
+      regionProfile,
+      inputCatalogCount,
+    ] = await Promise.all([
+      this.prisma.soilProfile.findFirst({
+        where: {
+          fieldId: cropZone.fieldId,
+          companyId,
+        },
+        orderBy: {
+          sampleDate: "desc",
+        },
+      }),
+      this.prisma.techMap.findFirst({
+        where: {
+          companyId,
+          fieldId: cropZone.fieldId,
+          id: {
+            not: draft.id,
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      }),
+      this.prisma.harvestResult.count({
+        where: {
+          companyId,
+          fieldId: cropZone.fieldId,
+        },
+      }),
+      this.prisma.regionProfile.findFirst({
+        where: {
+          OR: [
+            { companyId },
+            { companyId: null },
+          ],
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
+      }),
+      this.prisma.inputCatalog.count({
+        where: {
+          OR: [
+            { companyId },
+            { companyId: null },
+          ],
+        },
+      }),
+    ]);
+
+    const governedAssessment = assessTechMapGovernedDraftContext({
+      legalEntityId: companyId,
+      farmId: season.farmId ?? plan.accountId ?? season.field?.clientId ?? null,
+      fieldIds: cropZone.fieldId ? [cropZone.fieldId] : [],
+      seasonId: draft.seasonId ?? cropZone.seasonId,
+      cropCode: String(draft.crop ?? cropZone.cropType ?? "rapeseed").toLowerCase(),
+      predecessorCrop: cropZone.predecessorCrop ?? null,
+      soilProfileSampleDate: latestSoilProfile?.sampleDate ?? null,
+      targetYieldProfile:
+        cropZone.targetYieldTHa ??
+        season.expectedYield ??
+        plan.optValue ??
+        plan.baselineValue ??
+        null,
+      hasFieldHistory: Boolean(previousTechMap) || harvestResultCount > 0,
+      seedOrHybrid:
+        cropZone.varietyHybrid ??
+        cropZone.cropVarietyId ??
+        season.cropVarietyId ??
+        null,
+      hasMachineryProfile: false,
+      hasLaborOrContractorProfile: false,
+      hasInputAvailability: false,
+      hasBudgetPolicy:
+        plan.minValue != null ||
+        plan.optValue != null ||
+        plan.maxValue != null ||
+        plan.baselineValue != null,
+      hasPriceBookVersion: false,
+      hasCurrencyTaxMode: false,
+      hasWeatherNormals: Boolean(regionProfile),
+      hasForecastWindow: false,
+      hasIrrigationOrWaterConstraints: Boolean(
+        season.field?.protectedZoneFlags ??
+        season.field?.drainageClass ??
+        season.field?.slopePercent,
+      ),
+      hasPreviousTechMap: Boolean(previousTechMap),
+      hasExecutionHistory: Boolean(previousTechMap) || harvestResultCount > 0,
+      hasPastOutcomes:
+        season.actualYield != null || harvestResultCount > 0,
+      methodologyProfileId: this.resolveDraftMethodologyProfileId(
+        draft.generationMetadata,
+      ),
+      hasAllowedInputCatalogVersion: inputCatalogCount > 0,
+      contractMode: plan.performanceContract?.modelType ?? null,
+      hasTargetKpiPolicy: Boolean(plan.targetMetric ?? plan.period),
+    });
+
+    return this.buildGovernedDraftClarifyResult({
+      draft,
+      plan,
+      season,
+      cropZone,
+      latestSoilProfile,
+      previousTechMap,
+      harvestResultCount,
+      regionProfile,
+      inputCatalogCount,
+      fieldRef: cropZone.fieldId,
+      seasonRef: cropZone.seasonId,
+      resolvedSlotKeys: params.resolvedSlotKeys ?? [],
+      resumeRequested: params.resumeRequested ?? true,
+      baselineContextHash: `tech-map:${draft.id}:${cropZone.fieldId}:${cropZone.seasonId}`,
+      governedAssessment,
+    });
+  }
+
+  private buildGovernedDraftClarifyResult(params: {
+    draft: any;
+    plan: any;
+    season: any;
+    cropZone: any;
+    latestSoilProfile: any;
+    previousTechMap: any;
+    harvestResultCount: number;
+    regionProfile: any;
+    inputCatalogCount: number;
+    fieldRef: string;
+    seasonRef: string;
+    resolvedSlotKeys: string[];
+    resumeRequested: boolean;
+    baselineContextHash: string;
+    governedAssessment: ReturnType<typeof assessTechMapGovernedDraftContext>;
+  }) {
+    const crop: "rapeseed" | "sunflower" =
+      String(params.draft.crop ?? params.cropZone?.cropType ?? "rapeseed").toLowerCase() === "sunflower"
+        ? "sunflower"
+        : "rapeseed";
+    const workflowId = `tech-map:${params.draft.id}`;
+    const clarifyBatch = buildTechMapClarifyBatch({
+      workflow_id: workflowId,
+      draft_id: params.draft.id,
+      readiness: params.governedAssessment.readiness,
+      next_readiness_target: params.governedAssessment.nextReadinessTarget,
+      clarify_items: params.governedAssessment.clarifyItems,
+      blocking_phase: "MISSING_CONTEXT_TRIAGE",
+      resolved_slot_keys: params.resolvedSlotKeys,
+    });
+    const workflowResumeState = buildTechMapWorkflowResumeState({
+      workflow_id: workflowId,
+      draft_id: params.draft.id,
+      readiness: params.governedAssessment.readiness,
+      next_readiness_target: params.governedAssessment.nextReadinessTarget,
+      clarify_items: params.governedAssessment.clarifyItems,
+      blocking_phase: "MISSING_CONTEXT_TRIAGE",
+      baseline_context_hash: params.baselineContextHash,
+      resolved_slot_keys: params.resolvedSlotKeys,
+    });
+    const clarifyAuditTrail = buildTechMapClarifyAuditTrail({
+      workflow_id: workflowId,
+      batch: clarifyBatch,
+      resume_state: workflowResumeState,
+      resolved_slot_keys: params.resolvedSlotKeys,
+      resume_requested: params.resumeRequested,
+    });
+    const workflowOrchestration = this.workflowOrchestrator.buildWorkflowTrace({
+      workflow_id: workflowId,
+      draft_id: params.draft.id,
+      lead_owner_agent: "agronomist",
+      readiness: params.governedAssessment.readiness,
+      publication_state: params.governedAssessment.publicationState,
+      workflow_verdict: params.governedAssessment.workflowVerdict,
+      clarify_items: params.governedAssessment.clarifyItems,
+      missing_must: params.governedAssessment.missingMust,
+      has_budget_policy:
+        params.plan.minValue != null ||
+        params.plan.optValue != null ||
+        params.plan.maxValue != null ||
+        params.plan.baselineValue != null,
+      has_execution_history:
+        Boolean(params.previousTechMap) || params.harvestResultCount > 0,
+      has_past_outcomes:
+        params.season.actualYield != null || params.harvestResultCount > 0,
+      has_allowed_input_catalog_version: params.inputCatalogCount > 0,
+      has_target_kpi_policy: Boolean(params.plan.targetMetric ?? params.plan.period),
+      has_weather_normals: Boolean(params.regionProfile),
+      resume_requested: params.resumeRequested,
+    });
+
     return {
-      draftId: draft.id,
+      draftId: params.draft.id,
       status: TechMapStatus.DRAFT,
       fieldRef: params.fieldRef,
       seasonRef: params.seasonRef,
       crop,
-      readiness: governedAssessment.readiness,
-      nextReadinessTarget: governedAssessment.nextReadinessTarget,
-      workflowVerdict: governedAssessment.workflowVerdict,
-      publicationState: governedAssessment.publicationState,
-      missingMust: governedAssessment.missingMust,
-      clarifyItems: governedAssessment.clarifyItems,
-      gaps: governedAssessment.gaps,
-      tasks: governedAssessment.tasks,
-      assumptions: governedAssessment.assumptions.map(
+      readiness: params.governedAssessment.readiness,
+      nextReadinessTarget: params.governedAssessment.nextReadinessTarget,
+      workflowVerdict: params.governedAssessment.workflowVerdict,
+      publicationState: params.governedAssessment.publicationState,
+      missingMust: params.governedAssessment.missingMust,
+      clarifyItems: params.governedAssessment.clarifyItems,
+      clarifyBatch,
+      workflowResumeState,
+      clarifyAuditTrail,
+      workflowOrchestration,
+      gaps: params.governedAssessment.gaps,
+      tasks: params.governedAssessment.tasks,
+      assumptions: params.governedAssessment.assumptions.map(
         (assumption) => assumption.label,
       ),
     };
+  }
+
+  private async persistGovernedSnapshots(
+    tx: Prisma.TransactionClient,
+    map: TechMapCanonicalDraftSource,
+    boundary: TechMapPersistenceBoundary,
+    actorId: string,
+  ) {
+    const techMapId = map.id;
+    const version = map.version;
+
+    switch (map.status) {
+      case TechMapStatus.REVIEW: {
+        const record = buildTechMapReviewSnapshotRecord({
+          draft: buildTechMapCanonicalDraftFromTechMap(map),
+          boundary,
+          createdBy: actorId,
+          companyId: map.companyId,
+        });
+
+        await tx.techMapReviewSnapshot.upsert({
+          where: {
+            techMapId_version: {
+              techMapId,
+              version,
+            },
+          },
+          create: {
+            techMapId: record.tech_map_id,
+            version: record.version,
+            workflowId: record.workflow_id,
+            reviewStatus: record.review_status,
+            publicationState: record.publication_state,
+            persistenceBoundary:
+              record.persistence_boundary as unknown as Prisma.InputJsonValue,
+            snapshotData: record.snapshot_data as unknown as Prisma.InputJsonValue,
+            isImmutable: record.is_immutable,
+            createdBy: record.created_by,
+            companyId: record.company_id,
+          },
+          update: {
+            workflowId: record.workflow_id,
+            reviewStatus: record.review_status,
+            publicationState: record.publication_state,
+            persistenceBoundary:
+              record.persistence_boundary as unknown as Prisma.InputJsonValue,
+            snapshotData: record.snapshot_data as unknown as Prisma.InputJsonValue,
+            isImmutable: record.is_immutable,
+            createdBy: record.created_by,
+            companyId: record.company_id,
+          },
+        });
+        break;
+      }
+
+      case TechMapStatus.APPROVED: {
+        const approvedAt = new Date();
+        const record = buildTechMapApprovalSnapshotRecord({
+          draft: buildTechMapCanonicalDraftFromTechMap(map),
+          boundary,
+          approvedBy: actorId,
+          approvedAt,
+          companyId: map.companyId,
+        });
+
+        await tx.techMapApprovalSnapshot.upsert({
+          where: {
+            techMapId_version: {
+              techMapId,
+              version,
+            },
+          },
+          create: {
+            techMapId: record.tech_map_id,
+            version: record.version,
+            workflowId: record.workflow_id,
+            approvalStatus: record.approval_status,
+            publicationState: record.publication_state,
+            persistenceBoundary:
+              record.persistence_boundary as unknown as Prisma.InputJsonValue,
+            snapshotData: record.snapshot_data as unknown as Prisma.InputJsonValue,
+            isImmutable: record.is_immutable,
+            approvedBy: record.approved_by,
+            approvedAt: new Date(record.approved_at),
+            companyId: record.company_id,
+          },
+          update: {
+            workflowId: record.workflow_id,
+            approvalStatus: record.approval_status,
+            publicationState: record.publication_state,
+            persistenceBoundary:
+              record.persistence_boundary as unknown as Prisma.InputJsonValue,
+            snapshotData: record.snapshot_data as unknown as Prisma.InputJsonValue,
+            isImmutable: record.is_immutable,
+            approvedBy: record.approved_by,
+            approvedAt: new Date(record.approved_at),
+            companyId: record.company_id,
+          },
+        });
+        break;
+      }
+
+      case TechMapStatus.ACTIVE: {
+        const lockedAt = new Date();
+        const record = buildTechMapPublicationLockRecord({
+          draft: buildTechMapCanonicalDraftFromTechMap(map),
+          boundary,
+          lockedBy: actorId,
+          lockedAt,
+          companyId: map.companyId,
+          supersedesTechMapId: map.id,
+          supersedesVersion: version,
+          lockReason: "published_baseline_locked",
+        });
+
+        await tx.techMapPublicationLock.upsert({
+          where: {
+            techMapId_version: {
+              techMapId,
+              version,
+            },
+          },
+          create: {
+            techMapId: record.tech_map_id,
+            version: record.version,
+            workflowId: record.workflow_id,
+            publicationState: record.publication_state,
+            supersedesTechMapId: record.supersedes_tech_map_id,
+            supersedesVersion: record.supersedes_version,
+            lockReason: record.lock_reason,
+            persistenceBoundary:
+              record.persistence_boundary as unknown as Prisma.InputJsonValue,
+            snapshotData: record.snapshot_data as unknown as Prisma.InputJsonValue,
+            isLocked: record.is_locked,
+            lockedBy: record.locked_by,
+            lockedAt: new Date(record.locked_at),
+            companyId: record.company_id,
+          },
+          update: {
+            workflowId: record.workflow_id,
+            publicationState: record.publication_state,
+            supersedesTechMapId: record.supersedes_tech_map_id,
+            supersedesVersion: record.supersedes_version,
+            lockReason: record.lock_reason,
+            persistenceBoundary:
+              record.persistence_boundary as unknown as Prisma.InputJsonValue,
+            snapshotData: record.snapshot_data as unknown as Prisma.InputJsonValue,
+            isLocked: record.is_locked,
+            lockedBy: record.locked_by,
+            lockedAt: new Date(record.locked_at),
+            companyId: record.company_id,
+          },
+        });
+        break;
+      }
+
+      default:
+        break;
+    }
   }
 
   async transitionStatus(
@@ -498,9 +971,22 @@ export class TechMapService {
         if (updateResult.count !== 1) {
           throw new NotFoundException("TechMap not found");
         }
-        return await tx.techMap.findFirstOrThrow({
+        const updatedMap = await tx.techMap.findFirstOrThrow({
           where: { id, companyId },
+          include: TECH_MAP_CANONICAL_DRAFT_INCLUDE,
         });
+        await this.persistGovernedSnapshots(
+          tx,
+          updatedMap as TechMapCanonicalDraftSource,
+          buildTechMapPersistenceBoundary(
+            buildTechMapCanonicalDraftFromTechMap(
+              updatedMap as TechMapCanonicalDraftSource,
+            ),
+            updatedMap.status,
+          ),
+          userId,
+        );
+        return updatedMap;
       } catch (error: any) {
         // Catch P2002 for the Partial Index "unique_active_techmap"
         if (error.code === "P2002") {
@@ -522,9 +1008,44 @@ export class TechMapService {
       throw new NotFoundException("TechMap not found");
     }
 
-    if (!isEditablePersistedTechMapStatus(map.status)) {
+    const boundary = buildTechMapPersistenceBoundaryFromStatus({
+      workflow_id: `techmap:${map.id}:v${map.version}`,
+      tech_map_id: map.id,
+      version_id: `${map.id}:v${map.version}`,
+      current_status: map.status,
+      publication_state:
+        map.status === TechMapStatus.ACTIVE
+          ? "PUBLISHED"
+          : map.status === TechMapStatus.APPROVED
+            ? "PUBLISHABLE"
+            : map.status === TechMapStatus.REVIEW
+              ? "REVIEW_REQUIRED"
+              : "GOVERNED_DRAFT",
+      review_status:
+        map.status === TechMapStatus.ACTIVE || map.status === TechMapStatus.APPROVED
+          ? "REVIEW_PASSED"
+          : map.status === TechMapStatus.REVIEW
+            ? "IN_REVIEW"
+            : "NOT_SUBMITTED",
+      approval_status:
+        map.status === TechMapStatus.ACTIVE || map.status === TechMapStatus.APPROVED
+          ? "APPROVED"
+          : map.status === TechMapStatus.REVIEW
+            ? "PENDING_APPROVAL"
+            : "NOT_REQUESTED",
+      persistence_status:
+        map.status === TechMapStatus.ACTIVE
+          ? "PUBLICATION_SNAPSHOT_PERSISTED"
+          : map.status === TechMapStatus.APPROVED
+            ? "APPROVAL_SNAPSHOT_PERSISTED"
+            : map.status === TechMapStatus.REVIEW
+              ? "REVIEW_PACKET_PERSISTED"
+              : "DRAFT_PERSISTED",
+    });
+
+    if (!isHeadDraftWritablePersistedTechMapStatus(map.status) || !map.isLatest) {
       throw new ForbiddenException(
-        `Cannot edit TechMap in state ${map.status}`,
+        `Cannot edit TechMap in state ${map.status}; ${boundary.next_action === "create_new_version" ? "create a new version instead" : "this snapshot is immutable"}.`,
       );
     }
 
@@ -573,6 +1094,179 @@ export class TechMapService {
     }
 
     return map;
+  }
+
+  async getCanonicalDraft(id: string, companyId: string) {
+    const map = await this.prisma.techMap.findFirst({
+      where: { id, companyId },
+      include: TECH_MAP_CANONICAL_DRAFT_INCLUDE,
+    });
+
+    if (!map) {
+      throw new NotFoundException("TechMap not found");
+    }
+
+    return buildTechMapCanonicalDraftFromTechMap(map);
+  }
+
+  async getRuntimeAdoptionSnapshot(id: string, companyId: string) {
+    const map = await this.prisma.techMap.findFirst({
+      where: { id, companyId },
+      include: TECH_MAP_CANONICAL_DRAFT_INCLUDE,
+    });
+
+    if (!map) {
+      throw new NotFoundException("TechMap not found");
+    }
+
+    const canonicalDraft = buildTechMapCanonicalDraftFromTechMap(map);
+    const snapshot = buildTechMapRuntimeAdoptionSnapshot(map, canonicalDraft);
+    const workflowOrchestration = this.workflowOrchestrator.buildWorkflowTrace({
+      workflow_id: snapshot.workflow_id,
+      draft_id: canonicalDraft.header.version_id ?? canonicalDraft.header.workflow_id,
+      lead_owner_agent: "agronomist",
+      readiness: canonicalDraft.readiness,
+      publication_state: canonicalDraft.publication_state,
+      workflow_verdict: snapshot.workflow_verdict,
+      clarify_items: [],
+      missing_must: canonicalDraft.gaps
+        .filter((gap) => gap.severity === "blocking")
+        .map((gap) => gap.slot_key ?? gap.gap_id),
+      has_budget_policy: Boolean(map.harvestPlan.minValue != null ||
+        map.harvestPlan.optValue != null ||
+        map.harvestPlan.maxValue != null ||
+        map.harvestPlan.baselineValue != null),
+      has_execution_history: Boolean((map as any).stages?.length),
+      has_past_outcomes: Boolean((map as any).season?.actualYield != null),
+      has_allowed_input_catalog_version: canonicalDraft.variants.length > 0,
+      has_target_kpi_policy: Boolean(map.harvestPlan.targetMetric ?? map.harvestPlan.period),
+      has_weather_normals: Boolean(
+        (map as any).season?.field?.protectedZoneFlags ??
+          (map as any).season?.field?.drainageClass ??
+          (map as any).season?.field?.slopePercent,
+      ),
+      branch_trust_assessments: snapshot.branch_trust_assessments,
+      expert_review: snapshot.expert_review ?? null,
+      resume_requested: false,
+    });
+
+    return {
+      ...snapshot,
+      workflow_orchestration: workflowOrchestration,
+    } satisfies {
+      workflow_orchestration: TechMapWorkflowOrchestrationTrace;
+    } & typeof snapshot;
+  }
+
+  async getPersistenceBoundarySnapshot(id: string, companyId: string) {
+    const map = await this.prisma.techMap.findFirst({
+      where: { id, companyId },
+      include: TECH_MAP_CANONICAL_DRAFT_INCLUDE,
+    });
+
+    if (!map) {
+      throw new NotFoundException("TechMap not found");
+    }
+
+    const canonicalDraft = buildTechMapCanonicalDraftFromTechMap(map);
+    const boundary = buildTechMapPersistenceBoundary(canonicalDraft, map.status);
+    const versionNumber = Number(
+      canonicalDraft.header.version_id?.split(":v").pop() ?? 1,
+    );
+    const [reviewSnapshot, approvalSnapshot, publicationLock] = await Promise.all([
+      this.prisma.techMapReviewSnapshot.findFirst({
+        where: { techMapId: map.id, version: versionNumber },
+      }),
+      this.prisma.techMapApprovalSnapshot.findFirst({
+        where: { techMapId: map.id, version: versionNumber },
+      }),
+      this.prisma.techMapPublicationLock.findFirst({
+        where: { techMapId: map.id, version: versionNumber },
+      }),
+    ]);
+
+    const reviewSnapshotResponse = reviewSnapshot
+      ? {
+          tech_map_id: reviewSnapshot.techMapId,
+          version: reviewSnapshot.version,
+          workflow_id: reviewSnapshot.workflowId,
+          review_status: reviewSnapshot.reviewStatus,
+          publication_state: reviewSnapshot.publicationState,
+          persistence_boundary:
+            reviewSnapshot.persistenceBoundary as unknown as TechMapPersistenceBoundary,
+          snapshot_data:
+            reviewSnapshot.snapshotData as unknown as Record<string, unknown>,
+          is_immutable: reviewSnapshot.isImmutable,
+          created_by: reviewSnapshot.createdBy,
+          company_id: reviewSnapshot.companyId,
+        }
+      : buildTechMapReviewSnapshotRecord({
+          draft: canonicalDraft,
+          boundary,
+          createdBy: "system:tech-map",
+          companyId,
+        });
+    const approvalSnapshotResponse = approvalSnapshot
+      ? {
+          tech_map_id: approvalSnapshot.techMapId,
+          version: approvalSnapshot.version,
+          workflow_id: approvalSnapshot.workflowId,
+          approval_status: approvalSnapshot.approvalStatus,
+          publication_state: approvalSnapshot.publicationState,
+          persistence_boundary:
+            approvalSnapshot.persistenceBoundary as unknown as TechMapPersistenceBoundary,
+          snapshot_data:
+            approvalSnapshot.snapshotData as unknown as Record<string, unknown>,
+          is_immutable: approvalSnapshot.isImmutable,
+          approved_by: approvalSnapshot.approvedBy,
+          approved_at: approvalSnapshot.approvedAt.toISOString(),
+          company_id: approvalSnapshot.companyId,
+        }
+      : buildTechMapApprovalSnapshotRecord({
+          draft: canonicalDraft,
+          boundary,
+          approvedBy: "system:tech-map",
+          approvedAt: new Date(),
+          companyId,
+        });
+    const publicationLockResponse = publicationLock
+      ? {
+          tech_map_id: publicationLock.techMapId,
+          version: publicationLock.version,
+          workflow_id: publicationLock.workflowId,
+          publication_state: publicationLock.publicationState,
+          supersedes_tech_map_id: publicationLock.supersedesTechMapId,
+          supersedes_version: publicationLock.supersedesVersion,
+          lock_reason: publicationLock.lockReason,
+          persistence_boundary:
+            publicationLock.persistenceBoundary as unknown as TechMapPersistenceBoundary,
+          snapshot_data:
+            publicationLock.snapshotData as unknown as Record<string, unknown>,
+          is_locked: publicationLock.isLocked,
+          locked_by: publicationLock.lockedBy,
+          locked_at: publicationLock.lockedAt.toISOString(),
+          company_id: publicationLock.companyId,
+        }
+      : buildTechMapPublicationLockRecord({
+          draft: canonicalDraft,
+          boundary,
+          lockedBy: "system:tech-map",
+          lockedAt: new Date(),
+          companyId,
+          supersedesTechMapId: canonicalDraft.header.tech_map_id,
+          supersedesVersion: versionNumber,
+          lockReason:
+            map.status === TechMapStatus.ACTIVE
+              ? "current_active_baseline"
+              : "prepared_migration_boundary",
+        });
+
+    return {
+      boundary,
+      review_snapshot: reviewSnapshotResponse,
+      approval_snapshot: approvalSnapshotResponse,
+      publication_lock: publicationLockResponse,
+    };
   }
 
   // ────────────────────────────────────────────────────────────
@@ -708,6 +1402,25 @@ export class TechMapService {
           resourceNormsSnapshot: resourceNormsSnapshot as Prisma.InputJsonValue,
         },
       });
+
+      const updatedMap = await tx.techMap.findFirstOrThrow({
+        where: { id, companyId: techMap.companyId },
+        include: TECH_MAP_CANONICAL_DRAFT_INCLUDE,
+      });
+
+      await this.persistGovernedSnapshots(
+        tx,
+        updatedMap as TechMapCanonicalDraftSource,
+        buildTechMapPersistenceBoundary(
+          buildTechMapCanonicalDraftFromTechMap(
+            updatedMap as TechMapCanonicalDraftSource,
+          ),
+          updatedMap.status,
+        ),
+        userId,
+      );
+
+      return updatedMap;
     });
   }
 
@@ -715,15 +1428,26 @@ export class TechMapService {
    * Creates a new draft version from an existing map.
    * Enforces Versioning on Edit policy.
    */
-  async createNextVersion(sourceId: string, userId: string) {
-    const source = await this.prisma.techMap.findUnique({
-      where: { id: sourceId },
+  async createNextVersion(sourceId: string, companyId: string) {
+    const source = await this.prisma.techMap.findFirst({
+      where: { id: sourceId, companyId },
       include: TECH_MAP_STAGES_WITH_RESOURCES_NO_ORDER_INCLUDE,
     });
     if (!source) throw new NotFoundException("Source TechMap not found");
 
+    if (!source.isLatest) {
+      throw new ForbiddenException(
+        "Can only create a new version from the current head draft",
+      );
+    }
+
     // Logic to deep clone structure
     return this.prisma.$transaction(async (tx) => {
+      await tx.techMap.updateMany({
+        where: { id: source.id, companyId: source.companyId },
+        data: { isLatest: false },
+      });
+
       const newMap = await tx.techMap.create({
         data: {
           harvestPlanId: source.harvestPlanId,
@@ -734,7 +1458,7 @@ export class TechMapService {
           companyId: source.companyId,
           version: source.version + 1,
           status: TechMapStatus.DRAFT,
-          isLatest: false,
+          isLatest: true,
           soilType: source.soilType,
           moisture: source.moisture,
           precursor: source.precursor,

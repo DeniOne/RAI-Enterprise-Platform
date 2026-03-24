@@ -5,12 +5,12 @@ type: Phase Plan
 status: draft
 version: 0.1.0
 owners: [@techlead]
-last_updated: 2026-03-22
+last_updated: 2026-03-24
 claim_id: CLAIM-EXE-TECH-MAP-TMW-1-SLOT-REGISTRY-20260322
 claim_status: asserted
 verified_by: manual
-last_verified: 2026-03-22
-evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;apps/api/src/shared/tech-map/tech-map-slot-registry.ts;apps/api/src/shared/tech-map/tech-map-governed-clarify.types.ts;apps/api/src/shared/tech-map/tech-map-governed-state.types.ts;apps/api/src/shared/tech-map/tech-map-governed-artifact.types.ts
+last_verified: 2026-03-24
+evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;apps/api/src/shared/tech-map/tech-map-slot-registry.ts;apps/api/src/shared/tech-map/tech-map-slot-registry.spec.ts;apps/api/src/shared/tech-map/tech-map-governed-draft.helpers.ts;apps/api/src/shared/tech-map/tech-map-governed-draft.helpers.spec.ts;apps/api/src/shared/tech-map/tech-map-governed-clarify.types.ts;apps/api/src/shared/tech-map/tech-map-governed-state.types.ts;apps/api/src/shared/tech-map/tech-map-governed-artifact.types.ts
 ---
 # TECH MAP TMW-1 Slot Registry Implementation Plan
 
@@ -18,7 +18,7 @@ evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;apps/api/src/sh
 id: CLAIM-EXE-TECH-MAP-TMW-1-SLOT-REGISTRY-20260322
 status: asserted
 verified_by: manual
-last_verified: 2026-03-22
+last_verified: 2026-03-24
 
 ## 0. Цель пакета
 
@@ -89,9 +89,9 @@ last_verified: 2026-03-22
 
 Checklist:
 
-- [ ] ввести `TechMapSlotRegistryEntry`
-- [ ] собрать initial registry по текущей slot-matrix
-- [ ] зафиксировать groups/source types/policies как typed unions
+- [x] ввести `TechMapSlotRegistryEntry`
+- [x] собрать initial registry по текущей slot-matrix
+- [x] зафиксировать groups/source types/policies как typed unions
 
 Эффект:
 
@@ -101,9 +101,9 @@ Checklist:
 
 Checklist:
 
-- [ ] добавить helpers для readiness-based slot filtering
-- [ ] добавить helpers для publication-critical slot extraction
-- [ ] не плодить дублирующие slot lists в соседних сервисах
+- [x] добавить helpers для readiness-based slot filtering
+- [x] добавить helpers для publication-critical slot extraction
+- [x] не плодить дублирующие slot lists в соседних сервисах
 
 Эффект:
 
@@ -113,9 +113,9 @@ Checklist:
 
 Checklist:
 
-- [ ] подключить registry к readiness scoring
-- [ ] подключить registry к `clarify` packet assembly
-- [ ] подготовить trust/composition consumers
+- [x] подключить registry к readiness scoring
+- [x] подключить registry к `clarify` packet assembly
+- [x] подготовить trust/composition consumers
 
 Эффект:
 

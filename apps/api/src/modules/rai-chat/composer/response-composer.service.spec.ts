@@ -75,6 +75,161 @@ describe("ResponseComposerService", () => {
     );
   });
 
+  it("показывает clarify audit trail в summary техкарты", async () => {
+    const response = await service.buildResponse({
+      request: {
+        message: "собери черновик техкарты",
+        threadId: "th-techmaps-audit",
+        workspaceContext: { route: "/consulting/techmaps" },
+      },
+      executionResult: {
+        executedTools: [
+          {
+            name: RaiToolName.GenerateTechMapDraft,
+            result: {
+              draftId: "draft-1",
+              readiness: "S1_SCOPED",
+              workflowVerdict: "PARTIAL",
+              clarifyBatch: {
+                mode: "MULTI_STEP",
+                status: "OPEN",
+                resume_token: "resume:tech-map:draft-1:clarify:draft-1:soil_profile",
+              },
+              workflowResumeState: {
+                resume_from_phase: "MISSING_CONTEXT_TRIAGE",
+                external_recheck_required: false,
+              },
+              clarifyAuditTrail: [
+                { event_type: "clarify_batch_opened" },
+                { event_type: "workflow_resume_requested" },
+                { event_type: "workflow_resume_ready" },
+              ],
+            },
+          },
+        ],
+      } as any,
+      recallResult: {
+        recall: { items: [] },
+        profile: {},
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-techmaps-audit",
+      threadId: "th-techmaps-audit",
+      companyId: "company-1",
+    });
+
+    expect(response.text).toContain(
+      "Audit 3 event(s), last workflow_resume_ready.",
+    );
+    expect(response.text).toContain("Batch MULTI_STEP/OPEN");
+  });
+
+  it("показывает workflow composition gate в summary техкарты", async () => {
+    const response = await service.buildResponse({
+      request: {
+        message: "собери черновик техкарты",
+        threadId: "th-techmaps-composition",
+        workspaceContext: { route: "/consulting/techmaps" },
+      },
+      executionResult: {
+        executedTools: [
+          {
+            name: RaiToolName.GenerateTechMapDraft,
+            result: {
+              draftId: "draft-2",
+              readiness: "S4_REVIEW_READY",
+              workflowVerdict: "VERIFIED",
+              workflowOrchestration: {
+                summary: "Workflow spine TRUST -> COMPOSITION.",
+                composition_gate: {
+                  can_compose: true,
+                  reason: "trust_gate_passed",
+                },
+              },
+              trustSpecialization: {
+                composition_gate: {
+                  can_compose: true,
+                  reason: "trust_gate_passed",
+                  disclosure: ["trust_gate_passed"],
+                },
+                blocked_disclosure: [],
+              },
+              variantComparisonReport: {
+                comparison_available: false,
+              },
+            },
+          },
+        ],
+      } as any,
+      recallResult: {
+        recall: { items: [] },
+        profile: {},
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-techmaps-composition",
+      threadId: "th-techmaps-composition",
+      companyId: "company-1",
+    });
+
+    expect(response.text).toContain("Workflow spine TRUST -> COMPOSITION.");
+    expect(response.text).toContain("Композиция готова: trust_gate_passed.");
+    expect(response.text).toContain("Trust specialization: composition-allowed.");
+    expect(response.text).toContain("Variant comparison single-variant.");
+  });
+
+  it("показывает expert review publication chain в summary техкарты", async () => {
+    const response = await service.buildResponse({
+      request: {
+        message: "собери черновик техкарты",
+        threadId: "th-techmaps-expert",
+        workspaceContext: { route: "/consulting/techmaps" },
+      },
+      executionResult: {
+        executedTools: [
+          {
+            name: RaiToolName.GenerateTechMapDraft,
+            result: {
+              draftId: "draft-3",
+              readiness: "S4_REVIEW_READY",
+              workflowVerdict: "PARTIAL",
+              expertReview: {
+                verdict: "REVISE",
+                trigger: "trust_trigger",
+                publication_packet_ref: "techmap:techmap-1:publication-packet:techmap-1:variant:primary",
+                human_authority_chain: [
+                  {
+                    role: "chief_agronomist",
+                    required: true,
+                    status: "needs_revision",
+                    reason: "needs revision",
+                  },
+                  {
+                    role: "human_agronomist",
+                    required: true,
+                    status: "pending",
+                    reason: "Human agronomy review remains mandatory before publication.",
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      } as any,
+      recallResult: {
+        recall: { items: [] },
+        profile: {},
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-techmaps-expert",
+      threadId: "th-techmaps-expert",
+      companyId: "company-1",
+    });
+
+    expect(response.text).toContain("Expert review REVISE (trust_trigger).");
+    expect(response.text).toContain("Publication packet techmap:techmap-1:publication-packet:techmap-1:variant:primary.");
+    expect(response.text).toContain("Human agronomy pending.");
+  });
+
   it("не показывает ложный успех CRM, если действие заблокировано RiskPolicy", async () => {
     const response = await service.buildResponse({
       request: {

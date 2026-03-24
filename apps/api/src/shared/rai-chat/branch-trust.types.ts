@@ -55,6 +55,9 @@ export interface BranchResultContract {
   branch_id: string;
   source_agent: string;
   domain: string;
+  variant_id?: string;
+  branch_type?: string;
+  publication_critical?: boolean;
   summary?: string;
   scope: BranchScopeContract;
   facts?: Record<string, unknown>;

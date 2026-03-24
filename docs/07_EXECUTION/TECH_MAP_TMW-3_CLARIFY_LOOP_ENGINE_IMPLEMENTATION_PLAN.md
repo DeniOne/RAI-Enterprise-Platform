@@ -5,12 +5,12 @@ type: Phase Plan
 status: draft
 version: 0.1.0
 owners: [@techlead]
-last_updated: 2026-03-22
+last_updated: 2026-03-24
 claim_id: CLAIM-EXE-TECH-MAP-TMW-3-CLARIFY-LOOP-ENGINE-20260322
 claim_status: asserted
 verified_by: manual
-last_verified: 2026-03-22
-evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;docs/07_EXECUTION/TECH_MAP_MASTER_IMPLEMENTATION_CHECKLIST.md;apps/api/src/shared/tech-map/tech-map-governed-clarify.types.ts;apps/api/src/shared/tech-map/tech-map-slot-registry.ts;apps/api/src/modules/rai-chat/semantic-ingress.service.ts;apps/api/src/modules/rai-chat/supervisor-agent.service.ts
+last_verified: 2026-03-24
+evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;docs/07_EXECUTION/TECH_MAP_MASTER_IMPLEMENTATION_CHECKLIST.md;apps/api/src/shared/tech-map/tech-map-governed-clarify.types.ts;apps/api/src/shared/tech-map/tech-map-governed-clarify.helpers.ts;apps/api/src/shared/tech-map/tech-map-governed-clarify.helpers.spec.ts;apps/api/src/shared/tech-map/tech-map-slot-registry.ts;apps/api/src/modules/tech-map/tech-map.service.ts;apps/api/src/modules/tech-map/tech-map.service.spec.ts;apps/api/src/modules/tech-map/tech-map.controller.ts;apps/api/src/modules/rai-chat/composer/response-composer.service.ts;apps/api/src/modules/rai-chat/composer/response-composer.service.spec.ts
 ---
 # TECH MAP TMW-3 Clarify Loop Engine Implementation Plan
 
@@ -18,7 +18,7 @@ evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;docs/07_EXECUTI
 id: CLAIM-EXE-TECH-MAP-TMW-3-CLARIFY-LOOP-ENGINE-20260322
 status: asserted
 verified_by: manual
-last_verified: 2026-03-22
+last_verified: 2026-03-24
 
 ## 0. Цель пакета
 
@@ -46,6 +46,14 @@ last_verified: 2026-03-22
 - нет one-shot / multi-step policy execution
 - clarify до сих пор не является отдельным runtime subprocess в execution layer
 
+Текущий runtime-срез закрыт:
+
+- `createDraftStub(...)` теперь emits clarify batch и workflow resume state
+- `ResponseComposer` показывает batch/resume lifecycle в user-facing summary
+- `TechMapController` теперь отдаёт explicit `POST /tech-map/:id/clarify/resume`
+- `TechMapService.resumeDraftClarify(...)` возвращает `clarifyAuditTrail`
+- `SupervisorAgent` теперь прокидывает clarify lifecycle в intake и forensics
+
 ## 2. Целевой результат пакета
 
 После завершения `TMW-3` платформа должна уметь:
@@ -61,10 +69,12 @@ last_verified: 2026-03-22
 Файлы:
 
 - [tech-map-governed-clarify.types.ts](/root/RAI_EP/apps/api/src/shared/tech-map/tech-map-governed-clarify.types.ts)
+- [tech-map-governed-clarify.helpers.ts](/root/RAI_EP/apps/api/src/shared/tech-map/tech-map-governed-clarify.helpers.ts)
 - [tech-map-slot-registry.ts](/root/RAI_EP/apps/api/src/shared/tech-map/tech-map-slot-registry.ts)
 - [tech-map-governed-draft.helpers.ts](/root/RAI_EP/apps/api/src/shared/tech-map/tech-map-governed-draft.helpers.ts)
 - [semantic-ingress.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/semantic-ingress.service.ts)
 - [supervisor-agent.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/supervisor-agent.service.ts)
+- [response-composer.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/composer/response-composer.service.ts)
 
 Будущие runtime consumers:
 
@@ -79,10 +89,10 @@ last_verified: 2026-03-22
 
 Checklist:
 
-- [ ] ввести persisted clarify batch
-- [ ] ввести `resume_token`
-- [ ] ввести `batch_status`
-- [ ] ввести `TTL / expires_at`
+- [x] ввести persisted clarify batch
+- [x] ввести `resume_token`
+- [x] ввести `batch_status`
+- [x] ввести `TTL / expires_at`
 
 Эффект:
 
@@ -92,9 +102,9 @@ Checklist:
 
 Checklist:
 
-- [ ] зафиксировать `ONE_SHOT / MULTI_STEP`
-- [ ] ввести rule для `machine_resolvable / user_resolvable / human_review_required`
-- [ ] привязать clarify severity к slot registry
+- [x] зафиксировать `ONE_SHOT / MULTI_STEP`
+- [x] ввести rule для `machine_resolvable / user_resolvable / human_review_required`
+- [x] привязать clarify severity к slot registry
 
 Эффект:
 
@@ -104,9 +114,9 @@ Checklist:
 
 Checklist:
 
-- [ ] подключить clarify к resume path
-- [ ] проверить, что resumption requires fresh basis
-- [ ] добавить policy на recheck при устаревшем контексте
+- [x] подключить clarify к resume path
+- [x] проверить, что resumption requires fresh basis
+- [x] добавить policy на recheck при устаревшем контексте
 
 Эффект:
 
@@ -116,9 +126,9 @@ Checklist:
 
 Checklist:
 
-- [ ] подключить clarify batches к supervisor intake
-- [ ] подключить clarify disclosure к explainability
-- [ ] подключить clarify audit trail
+- [x] подключить clarify batches к supervisor intake
+- [x] подключить clarify disclosure к explainability
+- [x] подключить clarify audit trail
 
 Эффект:
 

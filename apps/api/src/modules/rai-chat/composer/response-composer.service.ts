@@ -3102,11 +3102,80 @@ export class ResponseComposerService {
             agentName?: string;
           };
           if (r?.agentName === "AgronomAgent" && r.explain) return r.explain;
+          const missingMust = Array.isArray(r?.missingMust)
+            ? r.missingMust
+            : [];
+          const draftId =
+            typeof r?.draftId === "string"
+              ? r.draftId
+              : typeof (r as { id?: unknown })?.id === "string"
+                ? String((r as { id?: unknown }).id)
+                : "techmap-draft";
+          const readiness =
+            typeof r?.readiness === "string" ? r.readiness : "unknown";
+          const workflowVerdict =
+            typeof r?.workflowVerdict === "string"
+              ? r.workflowVerdict
+              : "unknown";
+          const clarifyBatch =
+            r?.clarifyBatch && typeof r.clarifyBatch === "object"
+              ? r.clarifyBatch
+              : null;
+          const resumeState =
+            r?.workflowResumeState && typeof r.workflowResumeState === "object"
+              ? r.workflowResumeState
+              : null;
           const clarifySuffix =
-            r.missingMust.length > 0
-              ? ` Нужен governed clarify по ${r.missingMust.length} обязательным слотам.`
+            missingMust.length > 0
+              ? ` Нужен governed clarify по ${missingMust.length} обязательным слотам.`
               : "";
-          return `Черновик техкарты создан: ${r.draftId}. Готовность ${r.readiness}, verdict ${r.workflowVerdict}.${clarifySuffix}`;
+          const clarifyLifecycle = clarifyBatch
+            ? ` Batch ${clarifyBatch.mode}/${clarifyBatch.status}, resume ${clarifyBatch.resume_token}.`
+            : "";
+          const resumeSuffix = resumeState
+            ? ` Resume phase ${resumeState.resume_from_phase}, recheck ${resumeState.external_recheck_required ? "required" : "not required"}.`
+            : "";
+          const clarifyAuditTrail = Array.isArray(r?.clarifyAuditTrail)
+            ? r.clarifyAuditTrail
+            : [];
+          const auditSuffix =
+            clarifyAuditTrail.length > 0
+              ? ` Audit ${clarifyAuditTrail.length} event(s), last ${clarifyAuditTrail[clarifyAuditTrail.length - 1]?.event_type}.`
+              : "";
+          const workflowOrchestration =
+            r?.workflowOrchestration && typeof r.workflowOrchestration === "object"
+              ? r.workflowOrchestration
+              : null;
+          const orchestrationSuffix = workflowOrchestration
+            ? ` ${workflowOrchestration.summary} Композиция ${workflowOrchestration.composition_gate.can_compose ? "готова" : "заблокирована"}: ${workflowOrchestration.composition_gate.reason}.`
+            : "";
+          const trustSpecialization =
+            r?.trustSpecialization && typeof r.trustSpecialization === "object"
+              ? r.trustSpecialization
+              : null;
+          const trustSuffix = trustSpecialization
+            ? ` Trust specialization: ${
+                trustSpecialization.composition_gate.can_compose
+                  ? "composition-allowed"
+                  : "composition-blocked"
+              }. Disclosed ${trustSpecialization.blocked_disclosure.length} blocked signal(s).`
+            : "";
+          const variantComparisonReport =
+            r?.variantComparisonReport &&
+            typeof r.variantComparisonReport === "object"
+              ? r.variantComparisonReport
+              : null;
+          const comparisonSuffix = variantComparisonReport
+            ? ` Variant comparison ${variantComparisonReport.comparison_available ? "available" : "single-variant"}.`
+            : "";
+          const expertReview =
+            r?.expertReview && typeof r.expertReview === "object"
+              ? r.expertReview
+              : null;
+          const expertReviewSuffix = expertReview
+            ? ` Expert review ${expertReview.verdict} (${expertReview.trigger}). Publication packet ${expertReview.publication_packet_ref}. Human agronomy ${expertReview.human_authority_chain.find((step) => step.role === "human_agronomist")?.status ?? "pending"}.`
+            : "";
+          return `Черновик техкарты создан: ${draftId}. Готовность ${readiness}, verdict ${workflowVerdict}.${clarifySuffix}${clarifyLifecycle}${resumeSuffix}${auditSuffix}${orchestrationSuffix}${trustSuffix}${expertReviewSuffix}${comparisonSuffix}`;
         }
         if (tool.name === RaiToolName.RegisterCounterparty) {
           const r = tool.result as RegisterCounterpartyResult;

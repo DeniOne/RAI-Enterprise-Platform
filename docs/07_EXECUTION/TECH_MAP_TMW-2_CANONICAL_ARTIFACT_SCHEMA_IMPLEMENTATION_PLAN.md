@@ -5,12 +5,12 @@ type: Phase Plan
 status: draft
 version: 0.1.0
 owners: [@techlead]
-last_updated: 2026-03-22
+last_updated: 2026-03-24
 claim_id: CLAIM-EXE-TECH-MAP-TMW-2-CANONICAL-ARTIFACT-SCHEMA-20260322
 claim_status: asserted
 verified_by: manual
-last_verified: 2026-03-22
-evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;apps/api/src/modules/tech-map/tech-map.service.ts;apps/api/src/modules/tech-map/tech-map.controller.ts;apps/api/src/modules/tech-map/fsm/tech-map.fsm.ts;packages/prisma-client/schema.prisma;apps/api/src/shared/tech-map/tech-map-governed-artifact.types.ts;apps/api/src/shared/tech-map/tech-map-governed-state.types.ts;apps/api/src/shared/tech-map/tech-map-governed-conflict.types.ts;apps/api/src/shared/tech-map/tech-map-governed-clarify.types.ts
+last_verified: 2026-03-24
+evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;apps/api/src/modules/tech-map/tech-map.service.ts;apps/api/src/modules/tech-map/tech-map.service.spec.ts;apps/api/src/modules/tech-map/tech-map.controller.ts;apps/api/src/modules/tech-map/fsm/tech-map.fsm.ts;packages/prisma-client/schema.prisma;apps/api/src/shared/tech-map/tech-map-governed-artifact.types.ts;apps/api/src/shared/tech-map/tech-map-governed-state.types.ts;apps/api/src/shared/tech-map/tech-map-governed-conflict.types.ts;apps/api/src/shared/tech-map/tech-map-governed-clarify.types.ts;apps/api/src/shared/tech-map/tech-map-canonical-draft.helpers.ts;apps/api/src/shared/tech-map/tech-map-canonical-draft.helpers.spec.ts
 ---
 # TECH MAP TMW-2 Canonical Artifact Schema Implementation Plan
 
@@ -18,7 +18,7 @@ evidence_refs: docs/03_ENGINEERING/TECH_MAP_GOVERNED_WORKFLOW.md;apps/api/src/mo
 id: CLAIM-EXE-TECH-MAP-TMW-2-CANONICAL-ARTIFACT-SCHEMA-20260322
 status: asserted
 verified_by: manual
-last_verified: 2026-03-22
+last_verified: 2026-03-24
 
 ## 0. Цель пакета
 
@@ -204,9 +204,9 @@ last_verified: 2026-03-22
 
 Checklist:
 
-- [ ] добавить `artifact/state/conflict/clarify` shared contracts
-- [ ] собрать barrel-export в `apps/api/src/shared/tech-map/`
-- [ ] покрыть status helper unit-spec
+- [x] добавить `artifact/state/conflict/clarify` shared contracts
+- [x] собрать barrel-export в `apps/api/src/shared/tech-map/`
+- [x] покрыть status helper unit-spec
 
 Ожидаемый эффект:
 
@@ -216,9 +216,10 @@ Checklist:
 
 Checklist:
 
-- [ ] ввести mapper `Prisma TechMap -> TechMapCanonicalDraft`
-- [ ] собрать invariant checks для variant/header/readiness clusters
-- [ ] не ломать текущие controller responses
+- [x] ввести mapper `Prisma TechMap -> TechMapCanonicalDraft`
+- [x] собрать invariant checks для variant/header/readiness clusters
+- [x] не ломать текущие controller responses
+- [x] подключить runtime consumer `TechMapService.getCanonicalDraft(...)`
 
 Ожидаемый эффект:
 
@@ -228,9 +229,9 @@ Checklist:
 
 Checklist:
 
-- [ ] подготовить service-layer к отдаче governed draft read-model
-- [ ] ввести первые internal consumers для explainability/review
-- [ ] закрыть targeted `tsc` и `jest`
+- [x] подготовить service-layer к отдаче governed draft read-model
+- [x] ввести первые internal consumers для explainability/review
+- [x] закрыть targeted `tsc` и `jest`
 
 Ожидаемый эффект:
 
@@ -245,6 +246,8 @@ Checklist:
   - canonical mapper invariants
 - service:
   - mapping текущего `Prisma` shape в canonical draft
+- API:
+  - governed draft read-model route
 - compile:
   - `pnpm --filter api exec tsc --noEmit --pretty false`
 
