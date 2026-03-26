@@ -3,9 +3,9 @@ id: DOC-INS-AGENTS-INSTRUCTION-ORCHESTRATOR-ROUTING-AN-1V4S
 layer: Instructions
 type: Instruction
 status: approved
-version: 1.1.0
+version: 1.2.0
 owners: [@techlead]
-last_updated: 2026-03-10
+last_updated: 2026-03-25
 ---
 # ИНСТРУКЦИЯ — ОРКЕСТРАТОР: ROUTING И ВЫБОР АГЕНТА
 
@@ -20,6 +20,10 @@ last_updated: 2026-03-10
 - какие документы и точки кода считаются source of truth для маршрутизации.
 
 Документ нужен как центральный стандарт маршрутизации для `SupervisorAgent`, `IntentRouterService`, `AgentRuntimeService` и связанных product-layer решений.
+
+Дополнительная роль документа:
+
+- синхронизировать routing-канон с `front-office ingress`, `back-office rai-chat`, `lead owner-agent` и `Branch Trust Gate`.
 
 ---
 
@@ -49,6 +53,8 @@ last_updated: 2026-03-10
 - [supervisor-agent.service.ts](../../apps/api/src/modules/rai-chat/supervisor-agent.service.ts)
 - [tool-call.planner.ts](../../apps/api/src/modules/rai-chat/runtime/tool-call.planner.ts)
 - [agent-interaction-contracts.ts](../../apps/api/src/modules/rai-chat/agent-contracts/agent-interaction-contracts.ts)
+- [AGENT_MODULE_ORG_STRUCTURE.md](../../07_EXECUTION/AGENT_MODULE_ORG_STRUCTURE.md)
+- [AGENT_MODULE_RACI_AND_REPORTING_LINES.md](../../07_EXECUTION/AGENT_MODULE_RACI_AND_REPORTING_LINES.md)
 
 ---
 
@@ -67,6 +73,16 @@ last_updated: 2026-03-10
 - запуск governed handoff через центральный spine;
 - запрет невалидных cross-domain переходов;
 - выбор между agent path, fallback и manual-human-required.
+
+Оркестратор работает в двух разных ingress-контурах:
+
+- `front-office communication ingress` приходит через `front_office_agent`;
+- `back-office business ingress` приходит через `rai-chat -> semantic ingress`.
+
+Жёсткое правило:
+
+- эти два ingress-контура не должны сливаться в один “общий коммуникатор”;
+- `SupervisorAgent` обязан держать единый orchestration spine поверх обоих контуров.
 
 ### 4.2 Чем оркестратор не является
 
@@ -103,7 +119,20 @@ last_updated: 2026-03-10
 ### 6.1 Канонический путь
 
 ```text
-Пользователь / UI
+Front-office communication
+  -> front_office_agent
+  -> SupervisorAgent
+  -> IntentRouterService
+  -> определение primary owner-agent
+  -> проверка authority и required context
+  -> AgentRuntimeService
+  -> AgentExecutionAdapterService
+  -> tool / domain path
+  -> typed result / clarification / governed handoff
+
+Back-office business message
+  -> rai-chat
+  -> semantic ingress
   -> SupervisorAgent
   -> IntentRouterService
   -> определение primary owner-agent
@@ -123,6 +152,9 @@ last_updated: 2026-03-10
 5. При нехватке контекста запускать clarification, а не routing в соседний домен.
 6. Secondary read/advisory owner подключать только после фиксации primary owner.
 7. Любой handoff проводить только по схеме `source agent -> orchestrator -> target agent`.
+8. `lead owner-agent` выбирать по финальному business effect, а не по первому слову или route страницы.
+9. `front_office_agent` не может быть primary owner для `rai-chat` business scenarios.
+10. `knowledge`, `monitoring`, expert-layer и trust-layer не могут становиться primary owner только потому, что участвуют в branch path.
 
 ### 6.3 Что считается корректным результатом выбора
 
@@ -148,7 +180,14 @@ last_updated: 2026-03-10
 | Входящие диалоги, thread classification, communicator escalation | `front_office_agent` | message ingress, dialog thread, escalation routing; подтверждённые intent-ы: `log_dialog_message`, `classify_dialog_thread`, `create_front_office_escalation` | downstream business owner без признака перехода домена |
 | Договоры, обязательства, fulfillment, invoice, payment, allocation, AR | `contracts_agent` | contract lifecycle и commerce execution | `crm_agent`, `legal_advisor`, `economist` |
 
-### 7.1 Master-таблица `trigger -> owner -> handoff`
+### 7.1 Routing по ingress-контурам
+
+| Ingress | Кто принимает первым | Кто accountable за orchestration | Кто не является owner по умолчанию |
+|---|---|---|---|
+| `front-office communication ingress` | `front_office_agent` | `SupervisorAgent` | `crm_agent`, `agronomist`, `economist`, `contracts_agent` до явного domain handoff |
+| `back-office business ingress` через `rai-chat` | `semantic ingress` | `SupervisorAgent` | `front_office_agent` |
+
+### 7.2 Master-таблица `trigger -> owner -> handoff`
 
 Эта таблица не заменяет детальные конфликтные секции ниже. Это быстрый operational cheat sheet для оркестратора: сначала выбирается строка по доминирующему действию пользователя, затем при необходимости открывается соответствующий детальный блок.
 
@@ -164,7 +203,7 @@ last_updated: 2026-03-10
 | Показать сигнал, alert, incident summary, anomaly snapshot, monitoring risk signal | `monitoring` | domain owner для remediation; `knowledge` как evidence при необходимости | источник сигнала, alert/incident id, тип события, нужен ли именно signal review или уже remediation | Открыть clarification path у `monitoring`; remediation-routing делать только после фиксации доменного owner | `8.6` |
 | Дать агрономическую рекомендацию по полю, сезону, техкарте, отклонению, агро-сценарию | `agronomist` | `knowledge` как read/evidence; `monitoring` как signal-input при наличии тревог | `field_id`, сезон, культура, техкарта, отклонение, что именно нужно: рекомендация, проверка, разбор | Открыть clarification path у `agronomist`, не переводить запрос в `economist` или `monitoring` по вторичным словам | `7` |
 
-### 7.2 Production gating для template/future roles
+### 7.3 Production gating для template/future roles
 
 Наличие profile, template manifest или `executionAdapterRole` ещё не даёт оркестратору права маршрутизировать production-запрос в такую роль как в `primary owner-agent`.
 
@@ -201,6 +240,11 @@ last_updated: 2026-03-10
 - классификация thread;
 - фиксация escalation;
 - базовая маршрутизация в owner-domain.
+
+Дополнительная жёсткая граница:
+
+- этот ingress-контур относится только к `front-office` коммуникационному потоку;
+- back-office сообщения из `rai-chat` не должны делать `front_office_agent` owner “по дороге”.
 
 Как только запрос становится предметным бизнес-сценарием, owner должен переходить в доменный агент:
 
@@ -242,6 +286,7 @@ last_updated: 2026-03-10
 - в сообщении есть слова "клиент", "нужно в работу", "передай", "срочно";
 - запрос начался как переписка, но уже содержит предметный бизнес-intent;
 - фронт-офис уже выделил `client_request` или `task_process`.
+- сообщение пришло из `rai-chat`.
 
 Жёсткое правило:
 
@@ -965,4 +1010,3 @@ owner должен уходить из `monitoring` в `agronomist` или `econ
 - [INSTRUCTION_AGENT_PROFILE_CONTROLLER.md](./AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_CONTROLLER.md)
 - [INSTRUCTION_AGENT_PROFILE_MARKETER.md](./AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_MARKETER.md)
 - [INSTRUCTION_AGENT_PROFILE_PERSONAL_ASSISTANT.md](./AGENT_PROFILES/INSTRUCTION_AGENT_PROFILE_PERSONAL_ASSISTANT.md)
-

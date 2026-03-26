@@ -20,6 +20,60 @@
   - Масштабирование теперь привязано к текущему состоянию внедрения (интерфейсы скрывают уже работающую под капотом мощь).
   - Версия документа поднята до `1.1.0`.
 
+## 2026-03-25
+
+1. **Agent module org structure** [DONE]:
+  - Добавлен новый execution-doc `docs/07_EXECUTION/AGENT_MODULE_ORG_STRUCTURE.md`.
+  - Документ фиксирует оргструктуру агентского модуля как систему уровней ответственности, а не как простой список агентов.
+  - В документе зафиксированы:
+    - `Ingress Layer`
+    - `Orchestration Layer`
+    - `Owner Agents Layer`
+    - `Expert / Escalation Layer`
+    - `Trust / Governance Layer`
+    - `Execution Layer`
+  - Дополнительно зафиксированы:
+    - owner map по уровням
+    - правила эскалации
+    - запреты на смешение ролей
+    - правило применения оргструктуры к новым агентам и новым сценариям
+    - добавлены две визуальные `Mermaid`-схемы:
+      - вертикальная схема уровней
+      - схема отношений между ingress, orchestration, owner agents, expert-layer, trust/governance и execution
+    - добавлена простая русскоязычная ASCII-схема для быстрого чтения без терминологической нагрузки
+    - уточнено, что `front_office_agent` относится только к front-office коммуникационному ingress, а бизнес-семантический вход `rai-chat` остаётся отдельным back-office маршрутом через semantic ingress и orchestration
+    - добавлена простая таблица маршрутов, которая явно разводит коммуникационный вход и доменные бизнес-запросы
+    - уточнено, что `front_office_agent` не является общим коммуникатором для `rai-chat`; back-office business path идёт через `rai-chat -> semantic ingress -> SupervisorAgent -> owner-agent`
+  - Новый claim `CLAIM-EXE-AGENT-MODULE-ORG-STRUCTURE-20260325` зарегистрирован в `docs/DOCS_MATRIX.md`.
+  - Эффект изменения: у команды появилась каноническая схема агентского модуля, по которой можно выравнивать runtime, новые agent profiles и дальнейшую архитектуру multi-agent взаимодействия.
+
+2. **Agent module RACI and reporting lines** [DONE]:
+  - Добавлен новый execution-doc `docs/07_EXECUTION/AGENT_MODULE_RACI_AND_REPORTING_LINES.md`.
+  - Документ переводит оргструктуру агентского модуля в рабочую матрицу ответственности.
+  - В документе зафиксированы:
+    - роли `R / A / C / I / E / T`
+    - reporting lines для `front_office_agent`, `semantic ingress`, `SupervisorAgent` и owner-agents
+    - RACI-матрицы для коммуникационного ingress, primary owner domains, supporting branches, multi-source и composite scenarios
+    - правило выбора `lead owner-agent`
+    - отдельные границы для `front_office_agent`, `SupervisorAgent`, `TruthfulnessEngine` и `Branch Trust Gate`
+    - минимальная матрица, обязательная для нового routing case
+  - Новый claim `CLAIM-EXE-AGENT-MODULE-RACI-AND-REPORTING-LINES-20260325` зарегистрирован в `docs/DOCS_MATRIX.md`.
+  - Эффект изменения: оргструктура перестала быть только схемой уровней и стала пригодной для прямого применения в routing, agent profiles, governance и implementation backlog.
+  - Сопутствующее исправление docs-root policy:
+    - схема `docs/Логика движения запросов.drawio` перенесена в `docs/07_EXECUTION/LOGIC_OF_REQUEST_FLOW.drawio`
+    - эффект: корень `docs/` снова соответствует policy, и общий docs-линт больше не падает на root junk
+
+3. **Instruction-layer sync with agent org structure** [DONE]:
+  - Обновлён `docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md`.
+  - Обновлён `docs/11_INSTRUCTIONS/AGENTS/INSTRUCTION_FRONT_OFFICE_AGENT_ENABLEMENT.md`.
+  - В instruction-layer зафиксированы:
+    - жёсткое разделение `front-office communication ingress` и `back-office rai-chat business ingress`
+    - правило, что `front_office_agent` не является общим коммуникатором платформы и не может быть owner для `rai-chat` business scenarios
+    - уточнённый orchestration path через `semantic ingress -> SupervisorAgent -> owner-agent`
+    - дополнительный routing/RACI-контекст для `lead owner-agent`, supporting branches и trust-layer
+    - тестовые и production-ready критерии против захвата `rai-chat` маршрутов `front_office_agent`-ом
+  - Эффект изменения: instruction-layer синхронизирован с execution-документами по границам `front_office_agent`, `SupervisorAgent`, `lead owner-agent` и `rai-chat` business path.
+
 ## 2026-03-22
 
 1. **TECH_MAP_GOVERNED_WORKFLOW инженерная спецификация** [DONE]:

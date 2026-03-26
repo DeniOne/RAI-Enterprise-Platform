@@ -3,15 +3,20 @@ id: DOC-INS-AGENTS-INSTRUCTION-FRONT-OFFICE-AGENT-ENAB-1NZ4
 layer: Instructions
 type: Instruction
 status: approved
-version: 1.1.0
+version: 1.2.0
 owners: [@techlead]
-last_updated: 2026-03-10
+last_updated: 2026-03-25
 ---
 # ИНСТРУКЦИЯ — ВКЛЮЧЕНИЕ FRONT_OFFICE_AGENT
 
 ## 1. Назначение
 
 Документ описывает, как правильно довести `front_office_agent` от стратегического канона до production-ready owner-agent платформы.
+
+Жёсткая граница документа:
+
+- `front_office_agent` включается как owner только для `front-office communication ingress`;
+- этот документ не делает `front_office_agent` общим коммуникатором для `rai-chat` и back-office business scenarios.
 
 ## 2. Когда применять
 
@@ -26,6 +31,8 @@ last_updated: 2026-03-10
 - [INSTRUCTION_AGENT_CREATION_FULL_LIFECYCLE.md](./INSTRUCTION_AGENT_CREATION_FULL_LIFECYCLE.md)
 - [INSTRUCTION_AGENT_PLATFORM_INTERACTION_ARCHITECTURE.md](./INSTRUCTION_AGENT_PLATFORM_INTERACTION_ARCHITECTURE.md)
 - [INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md](./INSTRUCTION_ORCHESTRATOR_ROUTING_AND_AGENT_SELECTION.md)
+- [AGENT_MODULE_ORG_STRUCTURE.md](../../07_EXECUTION/AGENT_MODULE_ORG_STRUCTURE.md)
+- [AGENT_MODULE_RACI_AND_REPORTING_LINES.md](../../07_EXECUTION/AGENT_MODULE_RACI_AND_REPORTING_LINES.md)
 
 Trigger-level routing, handoff и границы ingress против downstream owner-domain нужно сверять с:
 
@@ -45,14 +52,24 @@ Trigger-level routing, handoff и границы ingress против downstream
 - governed handoff path в owner-domains;
 - front-office UI surface.
 
+Нужно не реализовывать в рамках `front_office_agent`:
+
+- ownership для `rai-chat` business ingress;
+- primary routing для CRM, агро, финансов и договоров без front-office handoff;
+- роль общего message gateway для всей платформы.
+
 ## 5. Точки интеграции
 
 - `telegram` channel intake
 - `task` module
 - `advisory` module
 - `client-registry`
-- `rai-chat` runtime
 - `front-office` web page
+
+Уточнение по `rai-chat`:
+
+- `rai-chat` является back-office business ingress и идёт в `semantic ingress -> SupervisorAgent`;
+- `front_office_agent` может участвовать в общем orchestration governance только как соседний ingress-контур, но не как первый receiver `rai-chat`.
 
 ## 6. Пошаговый алгоритм
 
@@ -80,6 +97,7 @@ Trigger-level routing, handoff и границы ingress против downstream
    - markers
    - escalation queue
 10. Подключить eval и smoke.
+11. Проверить, что `rai-chat` business scenarios не попадают в `front_office_agent` как primary owner.
 
 ## 7. Требования к тестам
 
@@ -87,6 +105,7 @@ Trigger-level routing, handoff и границы ingress против downstream
 - tests на `free_chat` против `task_process`;
 - tests на handoff в `crm_agent`, `agronomist`, `economist`;
 - tests на отсутствие чужого domain write;
+- tests на то, что `rai-chat` не маршрутизируется в `front_office_agent` как business owner;
 - Telegram-first smoke.
 
 ## 8. Критерии production-ready
@@ -96,7 +115,8 @@ Trigger-level routing, handoff и границы ingress против downstream
 - conversation log персистентен;
 - handoff governed и traceable;
 - free chat не превращается в задачу без основания;
-- Telegram flow работает end-to-end.
+- Telegram flow работает end-to-end;
+- `rai-chat` business ingress не захватывается `front_office_agent`.
 
 ## 9. Что должно получиться на выходе
 
@@ -107,12 +127,18 @@ Trigger-level routing, handoff и границы ingress против downstream
 - создаёт structured handoff;
 - не подменяет чужие домены.
 
+Отдельный результат:
+
+- `front_office_agent` остаётся front-office ingress owner;
+- back-office business path остаётся в `rai-chat -> semantic ingress -> SupervisorAgent -> owner-agent`.
+
 ## 10. Критические ошибки и запреты
 
 - Нельзя делать `front_office_agent` вторым `crm_agent`.
 - Нельзя смешивать его с `personal_assistant`.
 - Нельзя давать ему чужую operational write authority.
 - Нельзя запускать агента без persistent dialogue log.
+- Нельзя делать его общим receiver для `rai-chat`.
 
 ## 11. Проверка готовности
 
@@ -136,4 +162,3 @@ Trigger-level routing, handoff и границы ingress против downstream
 - [advisory.service.ts](../../apps/api/src/modules/advisory/advisory.service.ts)
 - [client-registry.service.ts](../../apps/api/src/modules/client-registry/client-registry.service.ts)
 - [page.tsx](../../apps/web/app/(app)/front-office/page.tsx)
-
