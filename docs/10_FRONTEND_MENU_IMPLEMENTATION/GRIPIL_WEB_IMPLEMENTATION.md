@@ -1,7 +1,7 @@
-![alt text](image.png)---
+---
 id: GRIPIL-FRONTEND-SPEC-001
-layer: 10_FRONTEND_MENU_IMPLEMENTATION
-type: implementation-package
+layer: Frontend
+type: Screen Spec
 status: active
 version: 1.0.0
 owners: [TECHLEAD, CODER]
@@ -15,6 +15,7 @@ evidence_refs:
   - apps/gripil-web
 ---
 
+![alt text](image.png)
 # ТЗ на дизайн и внедрение фронтенда: ГРИПИЛ
 
 ## CLAIM

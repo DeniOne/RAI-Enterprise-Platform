@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { ArrowRight, Play, Target } from "lucide-react";
 import Image from "next/image";
+import { Magnetic } from "@/components/Magnetic";
 
 export default function HeroSection() {
   const containerRef = useRef<HTMLElement>(null);
@@ -17,22 +18,6 @@ export default function HeroSection() {
   const yImage = useTransform(smoothProgress, [0, 1], ["0%", "15%"]);
   const yText = useTransform(smoothProgress, [0, 1], ["0%", "40%"]);
   const opacityText = useTransform(smoothProgress, [0, 0.5], [1, 0]);
-
-  const btnRef = useRef<HTMLButtonElement>(null);
-  const [pos, setPos] = useState({ x: 0, y: 0 });
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
-    const rect = btnRef.current?.getBoundingClientRect();
-    if (rect) {
-      const x = e.clientX - rect.left - rect.width / 2;
-      const y = e.clientY - rect.top - rect.height / 2;
-      setPos({ x: x * 0.15, y: y * 0.15 });
-    }
-  };
-
-  const handlePointerLeave = () => {
-    setPos({ x: 0, y: 0 });
-  };
 
   return (
     <section 
@@ -50,7 +35,7 @@ export default function HeroSection() {
           fill 
           priority
           quality={100}
-          className="object-cover object-center filter brightness-[0.95] contrast-[1.15] saturate-[1.1]"
+          className="object-cover object-center"
         />
         {/* Темный градиент слева для читаемости текста (без перекрытия всего кадра) */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#112118]/80 via-[#112118]/40 to-transparent z-10" />
@@ -100,32 +85,31 @@ export default function HeroSection() {
             transition={{ duration: 1, delay: 0.6, ease: [0.16, 1, 0.3, 1] as any }}
             className="flex flex-col sm:flex-row items-center gap-6"
           >
-            <motion.button
-              ref={btnRef}
-              onPointerMove={handlePointerMove}
-              onPointerLeave={handlePointerLeave}
-              whileHover={{ scale: 1.02 }}
-              animate={{ x: pos.x, y: pos.y }}
-              onClick={() => document.getElementById('calc-section')?.scrollIntoView({ behavior: 'smooth' })}
-              transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.1 }}
-              className="relative flex items-center justify-center gap-3 px-8 lg:px-10 py-4 lg:py-5 bg-[#CDFF00] text-[#112118] font-medium rounded-sm overflow-hidden w-full sm:w-auto hover:bg-[#b0d900] transition-colors shadow-lg shadow-[#CDFF00]/20"
-            >
-              <span className="relative z-10 flex items-center gap-2 text-sm lg:text-base uppercase tracking-widest">
-                Рассчитать выгоду
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </span>
-            </motion.button>
+            <Magnetic>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                onClick={() => document.getElementById('calc-section')?.scrollIntoView({ behavior: 'smooth' })}
+                className="relative flex items-center justify-center gap-3 px-8 lg:px-10 py-4 lg:py-5 bg-[#CDFF00] text-[#112118] font-medium rounded-sm overflow-hidden w-full sm:w-auto hover:bg-[#b0d900] transition-colors shadow-lg shadow-[#CDFF00]/20"
+              >
+                <span className="relative z-10 flex items-center gap-2 text-sm lg:text-base uppercase tracking-widest">
+                  Рассчитать выгоду
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </span>
+              </motion.button>
+            </Magnetic>
             
             {/* Усиленный Ghost CTA */}
-            <button 
-              onClick={() => document.getElementById('problem-section')?.scrollIntoView({ behavior: 'smooth' })}
-              className="flex items-center justify-center gap-3 px-6 py-4 lg:py-5 text-white font-medium rounded-sm hover:bg-white/10 transition-colors w-full sm:w-auto group bg-black/20 backdrop-blur-sm border border-white/10"
-            >
-              <span className="flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-white text-black group-hover:scale-110 transition-transform">
-                <Play className="w-3 h-3 lg:w-4 lg:h-4 ml-1" />
-              </span>
-              <span className="text-sm lg:text-base uppercase tracking-widest whitespace-nowrap">Смотреть технологию</span>
-            </button>
+            <Magnetic>
+              <button 
+                onClick={() => document.getElementById('problem-section')?.scrollIntoView({ behavior: 'smooth' })}
+                className="flex items-center justify-center gap-3 px-6 py-4 lg:py-5 text-white font-medium rounded-sm hover:bg-white/10 transition-colors w-full sm:w-auto group bg-black/20 backdrop-blur-sm border border-white/10"
+              >
+                <span className="flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-white text-black group-hover:scale-110 transition-transform">
+                  <Play className="w-3 h-3 lg:w-4 lg:h-4 ml-1" />
+                </span>
+                <span className="text-sm lg:text-base uppercase tracking-widest whitespace-nowrap">Смотреть технологию</span>
+              </button>
+            </Magnetic>
           </motion.div>
         </div>
 

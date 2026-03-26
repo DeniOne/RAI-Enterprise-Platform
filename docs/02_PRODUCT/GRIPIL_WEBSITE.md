@@ -1,7 +1,7 @@
 ---
 id: GRIPIL-WEB-SPEC-001
-layer: 02_PRODUCT
-type: spec
+layer: Product
+type: UI Spec
 status: active
 version: 1.0.0
 owners: [TECHLEAD, CODER]

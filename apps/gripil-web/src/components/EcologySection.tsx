@@ -116,7 +116,7 @@ export default function EcologySection() {
           muted 
           playsInline 
           poster="/images/ecology.png"
-          className="absolute inset-0 w-full h-full object-cover object-center filter contrast-110 brightness-[0.85] opacity-90"
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-90"
         >
           <source src="/videos/bee.mp4" type="video/mp4" />
         </video>
