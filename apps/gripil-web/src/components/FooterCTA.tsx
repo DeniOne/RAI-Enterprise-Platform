@@ -26,39 +26,35 @@ export default function FooterCTA() {
           <div className="w-full h-[1px] bg-[#EFECE6]/10 mb-12" />
 
           {/* Form / Quick Action */}
-          <motion.div 
+          {/* Form / Quick Action */}
+          <motion.form 
+            onSubmit={(e: React.FormEvent) => { 
+                e.preventDefault(); 
+                alert('Спасибо! Ваш расчет отправлен на обработку. Мы свяжемся с вами в течение 15 минут.');
+            }}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] as any }}
-            className="flex flex-col sm:flex-row items-stretch sm:items-end gap-6"
+            className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 md:gap-4"
           >
-            <div className="w-full sm:w-80">
+            <div className="w-full sm:w-80 md:w-96">
               <label className="block text-[13px] font-mono tracking-[0.12em] uppercase text-[#EFECE6]/60 mb-3">Технологическая карта (Бесплатно)</label>
-              <div className="bg-[#1A261E]/50 p-6 md:p-8 rounded-sm backdrop-blur-sm border border-[#EFECE6]/5 relative group">
-              
-                <form 
-                  onSubmit={(e) => { 
-                    e.preventDefault(); 
-                    alert('Спасибо! Ваш расчет отправлен на обработку. Мы свяжемся с вами в течение 15 минут.');
-                  }}
-                  className="flex flex-col sm:flex-row gap-3 relative z-10"
-                >
-                  <input 
-                    type="tel" 
-                    placeholder="+7 (___) ___-__-__" 
-                    required
-                    className="w-full px-4 py-3 bg-[#112118] border border-white/30 rounded focus:outline-none focus:border-[#CDFF00] text-lg font-light text-[#EFECE6] placeholder:text-[#EFECE6]/40 transition-colors"
-                  />
-              
-                  <button className="flex items-center justify-center gap-2 px-8 py-3 h-[52px] bg-[#CDFF00] text-[#112118] font-medium uppercase tracking-widest text-sm rounded-sm hover:bg-[#DFFF33] transition-colors w-full sm:w-auto mt-2 sm:mt-0">
-                    Отправить
-                    <ArrowUpRight className="w-4 h-4" />
-                  </button>
-                </form>
+              <div className="relative group">
+                <input 
+                  type="tel" 
+                  placeholder="+7 (___) ___-__-__" 
+                  required
+                  className="w-full px-5 py-3 h-[52px] bg-[#112118] border border-white/30 rounded-sm focus:outline-none focus:border-[#CDFF00] text-lg font-light text-[#EFECE6] placeholder:text-[#EFECE6]/40 transition-colors"
+                />
               </div>
             </div>
-          </motion.div>
+
+            <button type="submit" className="flex-shrink-0 flex items-center justify-center gap-2 px-8 h-[52px] bg-[#CDFF00] text-[#112118] font-medium uppercase tracking-widest text-sm rounded-sm hover:bg-[#DFFF33] transition-colors w-full sm:w-auto mt-2 sm:mt-0">
+              Отправить
+              <ArrowUpRight className="w-4 h-4" />
+            </button>
+          </motion.form>
         </div>
 
         {/* Right Contact/Proof Zone */}
