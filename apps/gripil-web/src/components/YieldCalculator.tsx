@@ -36,7 +36,7 @@ export default function YieldCalculator() {
         <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-[#112118] to-transparent" />
       </div>
 
-      <div className="max-w-[1440px] mx-auto px-6 lg:px-16 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+      <div className="max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-16 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start lg:items-center">
         
         {/* Editorial Text Block */}
         <div className="lg:col-span-6 w-full relative z-20 pr-0 lg:pr-12">
@@ -53,7 +53,7 @@ export default function YieldCalculator() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any, delay: 0.1 }}
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-[4.5rem] xl:text-[5rem] font-display font-medium tracking-tight leading-[1.05] mb-8 text-[#EFECE6]"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-[4rem] xl:text-[4.5rem] font-display font-medium tracking-tight leading-[1.05] mb-6 lg:mb-8 text-[#EFECE6]"
           >
             Урожай — ваш,<br/>
             до тех пор пока не <span className="italic font-light text-[#EFECE6]/70">упал</span>.
@@ -64,7 +64,7 @@ export default function YieldCalculator() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any, delay: 0.2 }}
-            className="text-xl text-[#EFECE6]/60 font-light leading-relaxed max-w-lg mb-12"
+            className="text-base sm:text-lg text-[#EFECE6]/60 font-light leading-relaxed max-w-lg mb-8 lg:mb-12"
           >
             Возьмите цифры под контроль. Дашборд прогнозирует чистую экономию с учетом затрат на обработку мембраной ГРИПИЛ.
           </motion.p>
@@ -76,17 +76,17 @@ export default function YieldCalculator() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any, delay: 0.3 }}
-          className="lg:col-span-6 w-full bg-[#112118]/40 backdrop-blur-2xl border border-[#EFECE6]/10 p-8 md:p-12 shadow-2xl relative overflow-hidden group"
+          className="lg:col-span-6 w-full bg-[#112118]/40 backdrop-blur-2xl border border-[#EFECE6]/10 p-6 sm:p-8 md:p-10 shadow-2xl relative overflow-hidden group"
         >
           {/* Neon Top Line */}
           <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#CDFF00]/50 to-transparent opacity-50" />
 
           {/* Sliders Area */}
-          <div className="space-y-12 mb-16 relative z-10">
+          <div className="space-y-7 sm:space-y-10 mb-10 sm:mb-14 relative z-10">
             <div>
-              <div className="flex justify-between items-end mb-6 pb-2">
-                <label className="text-sm md:text-base 2xl:text-lg font-mono tracking-[0.1em] uppercase text-[#EFECE6]/70">Площадь посева (Га)</label>
-                <span className="text-3xl md:text-4xl 2xl:text-5xl font-display text-[#EFECE6] leading-none">{area.toLocaleString('ru-RU')}</span>
+              <div className="flex justify-between items-end mb-4 pb-2">
+                <label className="text-xs sm:text-sm md:text-base font-mono tracking-[0.1em] uppercase text-[#EFECE6]/70">Площадь посева (Га)</label>
+                <span className="text-2xl sm:text-3xl md:text-4xl font-display text-[#EFECE6] leading-none">{area.toLocaleString('ru-RU')}</span>
               </div>
               <input 
                 type="range" min="100" max="10000" step="100" value={area} onChange={(e) => setArea(Number(e.target.value))}
@@ -94,9 +94,9 @@ export default function YieldCalculator() {
               />
             </div>
             <div>
-              <div className="flex justify-between items-end mb-6 pb-2">
-                <label className="text-sm md:text-base 2xl:text-lg font-mono tracking-[0.1em] uppercase text-[#EFECE6]/70">Урожайность (Ц/Га)</label>
-                <span className="text-3xl md:text-4xl 2xl:text-5xl font-display text-[#EFECE6] leading-none">{yieldPerHa}</span>
+              <div className="flex justify-between items-end mb-4 pb-2">
+                <label className="text-xs sm:text-sm md:text-base font-mono tracking-[0.1em] uppercase text-[#EFECE6]/70">Урожайность (Ц/Га)</label>
+                <span className="text-2xl sm:text-3xl md:text-4xl font-display text-[#EFECE6] leading-none">{yieldPerHa}</span>
               </div>
               <input 
                 type="range" min="10" max="60" step="1" value={yieldPerHa} onChange={(e) => setYieldPerHa(Number(e.target.value))}
@@ -104,9 +104,9 @@ export default function YieldCalculator() {
               />
             </div>
             <div>
-              <div className="flex justify-between items-end mb-6 pb-2">
-                <label className="text-sm md:text-base 2xl:text-lg font-mono tracking-[0.1em] uppercase text-[#EFECE6]/70">Цена рапса (Руб/Тн)</label>
-                <span className="text-3xl md:text-4xl 2xl:text-5xl font-display text-[#EFECE6] leading-none">{price.toLocaleString('ru-RU')}</span>
+              <div className="flex justify-between items-end mb-4 pb-2">
+                <label className="text-xs sm:text-sm md:text-base font-mono tracking-[0.1em] uppercase text-[#EFECE6]/70">Цена рапса (Руб/Тн)</label>
+                <span className="text-2xl sm:text-3xl md:text-4xl font-display text-[#EFECE6] leading-none">{price.toLocaleString('ru-RU')}</span>
               </div>
               <input 
                 type="range" min="20000" max="80000" step="1000" value={price} onChange={(e) => setPrice(Number(e.target.value))}
@@ -119,7 +119,7 @@ export default function YieldCalculator() {
           <div className="relative z-10 bg-[#112118]/60 border border-[#CDFF00]/20 p-8 2xl:p-10 rounded-sm">
             <p className="text-[#EFECE6]/60 text-sm 2xl:text-base font-mono tracking-widest uppercase mb-6">Сохраненная выручка (Чистая)</p>
             <div>
-              <span className="text-6xl md:text-7xl 2xl:text-8xl font-display font-medium text-[#CDFF00] tabular-nums tracking-tight">
+              <span className="text-4xl sm:text-5xl md:text-6xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-display font-medium text-[#CDFF00] tabular-nums tracking-tight">
                  <CountUp to={netProfit} duration={1} suffix=" ₽" />
               </span>
             </div>
