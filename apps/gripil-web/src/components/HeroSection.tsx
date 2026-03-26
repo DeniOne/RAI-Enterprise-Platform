@@ -50,11 +50,12 @@ export default function HeroSection() {
           fill 
           priority
           quality={100}
-          className="object-cover object-center filter brightness-[0.80] contrast-[1.1]"
+          className="object-cover object-center filter brightness-[0.95] contrast-[1.15] saturate-[1.1]"
         />
-        {/* Более плотный градиент для читаемости курсива */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#112118]/90 via-[#112118]/60 to-transparent z-10" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#EFECE6] via-transparent to-transparent z-10" />
+        {/* Темный градиент слева для читаемости текста (без перекрытия всего кадра) */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#112118]/80 via-[#112118]/40 to-transparent z-10" />
+        {/* Легкая виньетка по самому низу (без белого тумана) */}
+        <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#112118]/30 to-transparent z-10" />
       </motion.div>
 
       {/* Main Content Container */}
