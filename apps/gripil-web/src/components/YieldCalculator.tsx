@@ -109,11 +109,9 @@ export default function YieldCalculator() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any, delay: 0.1 }}
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-[4rem] xl:text-[4.5rem] font-display font-medium tracking-tight leading-[1.05] mb-5 lg:mb-8 text-[#EFECE6]"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-display font-medium tracking-tight leading-[1.05] mb-4 lg:mb-6 text-[#EFECE6]"
           >
-            Урожай — ваш,<br />
-            до тех пор пока не{" "}
-            <span className="italic font-light text-[#EFECE6]/65">упал</span>.
+            Урожай — ваш, до тех пор пока не <span className="italic font-light text-[#EFECE6]/65">упал</span>.
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -131,7 +129,7 @@ export default function YieldCalculator() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 1, delay: 0.4 }}
-            className="hidden lg:flex items-center gap-4 mt-10 pt-10 border-t border-[#EFECE6]/10"
+            className="flex items-center gap-3 mt-6 pt-5 sm:mt-8 sm:pt-6 border-t border-[#EFECE6]/10"
           >
             <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
             <span className="text-xs font-mono tracking-widest uppercase text-[#EFECE6]/40">
@@ -153,7 +151,7 @@ export default function YieldCalculator() {
             <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#CDFF00]/50 to-transparent" />
 
             {/* Sliders block */}
-            <div className="px-5 sm:px-7 md:px-8 pt-6 sm:pt-7 pb-6 sm:pb-8 space-y-5 sm:space-y-7 border-b border-[#EFECE6]/5">
+            <div className="px-5 sm:px-6 md:px-8 pt-5 sm:pt-6 pb-5 sm:pb-6 space-y-4 sm:space-y-6 border-b border-[#EFECE6]/5">
               <SliderRow
                 label="Площадь посева (га)"
                 value={area}
@@ -178,17 +176,17 @@ export default function YieldCalculator() {
             </div>
 
             {/* Result block */}
-            <div className="px-5 sm:px-7 md:px-8 pt-5 sm:pt-6 pb-6 sm:pb-8">
+            <div className="px-5 sm:px-6 md:px-8 pt-4 sm:pt-5 pb-5 sm:pb-6">
               <p className="text-[10px] sm:text-xs font-mono tracking-[0.16em] uppercase text-[#EFECE6]/35 mb-2 sm:mb-3">
                 Чистая выгода от ГРИПИЛ
               </p>
 
               {/* Main number – не вылезает */}
-              <div className="flex items-baseline gap-1.5 mb-5 sm:mb-6 overflow-hidden">
-                <span className="text-4xl sm:text-5xl md:text-6xl font-display font-medium text-[#CDFF00] tabular-nums tracking-tight leading-none">
+              <div className="flex items-baseline gap-1.5 mb-4 sm:mb-5 overflow-hidden">
+                <span className="text-3xl sm:text-4xl md:text-5xl xl:text-6xl font-display font-medium text-[#CDFF00] tabular-nums tracking-tight leading-none">
                   {formatMln(netProfit)}
                 </span>
-                <span className="text-xl sm:text-2xl font-display text-[#CDFF00]/55 font-light">₽</span>
+                <span className="text-lg sm:text-xl md:text-2xl font-display text-[#CDFF00]/55 font-light">₽</span>
               </div>
 
               {/* Three sub-metrics */}
