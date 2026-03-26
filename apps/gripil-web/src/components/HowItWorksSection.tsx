@@ -28,7 +28,7 @@ export default function HowItWorksSection() {
   ];
 
   return (
-    <section className="py-32 md:py-48 bg-[#EFECE6] text-[#112118] relative overflow-hidden font-sans border-t border-[#112118]/5">
+    <section className="py-20 md:py-32 lg:py-48 bg-[#EFECE6] text-[#112118] relative overflow-hidden font-sans border-t border-[#112118]/5">
       <div className="max-w-[1440px] mx-auto px-6 lg:px-16 relative z-10 flex flex-col xl:flex-row gap-16 items-start">
         
         {/* Editorial Text */}
@@ -47,7 +47,7 @@ export default function HowItWorksSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any, delay: 0.1 }}
-              className="text-5xl md:text-7xl font-display font-medium tracking-tight leading-[1.05] mb-8 text-[#112118]"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-display font-medium tracking-tight leading-[1.05] mb-8 text-[#112118]"
             >
               Мембрана,<br />которая <span className="italic font-normal text-[#112118]/90">дышит</span>
             </motion.h2>

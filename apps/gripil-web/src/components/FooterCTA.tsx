@@ -6,7 +6,7 @@ import { ArrowUpRight } from "lucide-react";
 export default function FooterCTA() {
   return (
     <footer className="relative bg-[#0A140E] text-[#EFECE6] overflow-hidden border-t border-[#EFECE6]/10 font-sans">
-      <div className="max-w-[1440px] mx-auto px-6 lg:px-16 pt-32 pb-16 relative z-10 flex flex-col md:flex-row justify-between items-end gap-16">
+      <div className="max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-16 pt-16 pb-12 md:pt-24 md:pb-16 lg:pt-32 relative z-10 flex flex-col md:flex-row justify-between items-end gap-12 md:gap-16">
         
         {/* Editorial Text Block */}
         <div className="flex-1 text-left w-full md:w-auto">
@@ -15,7 +15,7 @@ export default function FooterCTA() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any }}
-            className="text-5xl md:text-6xl lg:text-7xl font-display font-medium tracking-tight leading-[0.9] text-[#EFECE6] mb-12"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-display font-medium tracking-tight leading-[0.9] text-[#EFECE6] mb-8 md:mb-12"
           >
             Хватит<br/>оставлять<br/>
             <span className="italic font-light text-[#EFECE6]/[0.65]">миллионы</span><br/>

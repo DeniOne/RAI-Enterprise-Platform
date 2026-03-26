@@ -29,9 +29,9 @@ export default function ProblemSection() {
   return (
     <section 
       ref={containerRef}
-      className="relative py-32 md:py-48 bg-[#EFECE6] text-[#112118] px-6 lg:px-16 overflow-hidden"
+      className="relative py-20 md:py-32 lg:py-48 bg-[#EFECE6] text-[#112118] px-5 sm:px-8 lg:px-16 overflow-hidden"
     >
-      <div className="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-8">
+      <div className="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-16 lg:gap-8">
         
         {/* Левая колонка - Заголовок и стейтмент */}
         <div className="lg:col-span-5 flex flex-col justify-start pt-8">
@@ -47,7 +47,7 @@ export default function ProblemSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any }}
-            className="text-5xl md:text-6xl font-display font-medium tracking-tight leading-[1.05]"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-medium tracking-tight leading-[1.05]"
           >
             Потери начинаются<br/>
             до комбайна

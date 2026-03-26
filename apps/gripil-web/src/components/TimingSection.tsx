@@ -19,7 +19,7 @@ export default function TimingSection() {
   ];
 
   return (
-    <section className="pt-32 pb-48 md:pt-48 md:pb-64 bg-[#EFECE6] text-[#112118] relative font-sans border-t border-[#112118]/5 overflow-hidden">
+    <section className="py-20 md:py-32 lg:pt-48 lg:pb-64 bg-[#EFECE6] text-[#112118] relative font-sans border-t border-[#112118]/5 overflow-hidden">
       <div className="max-w-[1440px] mx-auto px-6 lg:px-16 relative z-10 flex flex-col md:flex-row gap-16 xl:gap-24 items-start">
         
         {/* Editorial Header */}
@@ -31,7 +31,7 @@ export default function TimingSection() {
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any }}
             className="h-[1px] bg-[#112118]/30 mb-8"
           />
-          <motion.h2 className="text-5xl md:text-7xl font-display font-medium tracking-tight leading-[1.05] mb-8 text-[#112118]">
+          <motion.h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-display font-medium tracking-tight leading-[1.05] mb-8 text-[#112118]">
             Успейте за <br/><span className="italic font-normal text-[#112118]/90">3 недели</span><br/> до уборки
           </motion.h2>
           <motion.p className="text-xl text-[#112118]/80 font-normal leading-relaxed max-w-sm">

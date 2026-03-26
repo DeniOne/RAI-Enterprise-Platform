@@ -37,7 +37,7 @@ export default function HeroSection() {
   return (
     <section 
       ref={containerRef} 
-      className="relative w-full min-h-screen flex items-center overflow-hidden bg-[#EFECE6] font-sans"
+      className="relative w-full min-h-screen flex items-center overflow-hidden bg-[#EFECE6] font-sans py-20 md:py-0"
     >
       {/* Background */}
       <motion.div 
@@ -60,10 +60,10 @@ export default function HeroSection() {
       {/* Main Content Container */}
       <motion.div 
         style={{ y: yText, opacity: opacityText, willChange: 'transform, opacity' }}
-        className="relative z-20 w-full max-w-[1600px] mx-auto px-6 lg:px-16 flex flex-col md:flex-row items-center justify-between gap-12"
+        className="relative z-20 w-full max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-16 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12"
       >
         {/* Left Column: Typography */}
-        <div className="w-full md:w-7/12 text-left">
+        <div className="w-full md:w-8/12 lg:w-7/12 text-left">
           
           <motion.div
             initial={{ opacity: 0, width: 0 }}
@@ -76,10 +76,10 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any, delay: 0.2 }}
-            className="text-6xl md:text-7xl lg:text-[6rem] 2xl:text-[7.5rem] font-display font-medium tracking-tight leading-[0.95] text-[#EFECE6] mb-10 [text-shadow:0_4px_32px_rgba(0,0,0,0.5)]"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[6rem] 2xl:text-[7.5rem] font-display font-medium tracking-tight leading-[0.95] text-[#EFECE6] mb-6 md:mb-10 [text-shadow:0_4px_32px_rgba(0,0,0,0.5)]"
           >
             Сохраните то,<br />
-            <span className="italic font-light text-[#EFECE6]/90 text-5xl md:text-6xl lg:text-[5rem] 2xl:text-[6.5rem]">
+            <span className="italic font-light text-[#EFECE6]/90 text-3xl sm:text-4xl md:text-5xl lg:text-[4.5rem] xl:text-[5rem] 2xl:text-[6.5rem]">
               что вырастили
             </span>
           </motion.h1>
@@ -88,7 +88,7 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] as any }}
-            className="text-lg md:text-xl 2xl:text-2xl text-[#EFECE6]/80 max-w-lg 2xl:max-w-2xl font-sans font-light leading-relaxed mb-14 [text-shadow:0_2px_16px_rgba(0,0,0,0.5)]"
+            className="text-base sm:text-lg md:text-xl 2xl:text-2xl text-[#EFECE6]/80 max-w-lg 2xl:max-w-2xl font-sans font-light leading-relaxed mb-8 md:mb-14 [text-shadow:0_2px_16px_rgba(0,0,0,0.5)]"
           >
             Био-комплекс ГРИПИЛ формирует <strong className="font-normal text-white">дышащую мембрану</strong>, останавливая растрескивание стручков и спасая ваши инвестиции в гектар.
           </motion.p>

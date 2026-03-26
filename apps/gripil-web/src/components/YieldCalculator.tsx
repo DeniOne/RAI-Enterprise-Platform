@@ -21,7 +21,7 @@ export default function YieldCalculator() {
   const roi = ((netProfit / totalCost) * 100).toFixed(0);
 
   return (
-    <section className="relative py-32 md:py-48 bg-[#112118] text-[#EFECE6] overflow-hidden font-sans">
+    <section className="relative py-20 md:py-32 lg:py-48 bg-[#112118] text-[#EFECE6] overflow-hidden font-sans">
       {/* Cinematic Background */}
       <div className="absolute inset-0 z-0">
         <Image 
@@ -53,7 +53,7 @@ export default function YieldCalculator() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any, delay: 0.1 }}
-            className="text-5xl lg:text-[5rem] font-display font-medium tracking-tight leading-[1.05] mb-8 text-[#EFECE6]"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-[4.5rem] xl:text-[5rem] font-display font-medium tracking-tight leading-[1.05] mb-8 text-[#EFECE6]"
           >
             Урожай — ваш,<br/>
             до тех пор пока не <span className="italic font-light text-[#EFECE6]/70">упал</span>.
