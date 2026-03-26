@@ -1,5 +1,14 @@
 # Progress Report - Prisma, Agro Domain & RAI Chat Integration
 
+## 2026-03-26
+
+1. **Стабилизация Gripil Web (Emergency Revert)** [DONE]:
+  - Выполнен полный откат кодовой базы лендинга `apps/gripil-web` до стабильного коммита `f608995` ("bee") после неудачной попытки внедрения fluid-типографики.
+  - Исправлены критические ошибки типизации Framer Motion (`as any` для ease-функций), блокировавшие production-сборку в Next.js 16/Turbopack.
+  - Проведен успешный production-билд (`npm run build`) и проверка работоспособности.
+  - Код запушен в удаленный репозиторий.
+  - Сайт развернут и доступен через Cloudflare Tunnel на порту 3012.
+
 ## 2026-03-24
 
 1. **Обновление корневого `README.md`** [DONE]:
