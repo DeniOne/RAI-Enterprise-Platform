@@ -28,7 +28,7 @@ export default function TimingSection() {
             initial={{ opacity: 0, width: 0 }}
             whileInView={{ opacity: 1, width: "3rem" }}
             viewport={{ once: true }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any }}
             className="h-[1px] bg-[#112118]/30 mb-8"
           />
           <motion.h2 className="text-5xl md:text-7xl font-display font-medium tracking-tight leading-[1.05] mb-8 text-[#112118]">
@@ -49,7 +49,7 @@ export default function TimingSection() {
                 initial={{ opacity: 0, x: 30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 1, delay: idx * 0.2, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 1, delay: idx * 0.2, ease: [0.16, 1, 0.3, 1] as any }}
                 className="relative"
               >
                 {/* Dot marker */}

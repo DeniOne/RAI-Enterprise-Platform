@@ -61,7 +61,7 @@ export default function EcologySection() {
           initial={{ opacity: 0, x: -40 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] as any }}
           className="max-w-xl w-full"
         >
           <div className="mb-6 flex items-center gap-4">

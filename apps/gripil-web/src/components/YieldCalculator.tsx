@@ -44,7 +44,7 @@ export default function YieldCalculator() {
             initial={{ opacity: 0, width: 0 }}
             whileInView={{ opacity: 1, width: "3rem" }}
             viewport={{ once: true }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any }}
             className="h-[1px] bg-[#CDFF00] mb-8"
           />
 
@@ -52,7 +52,7 @@ export default function YieldCalculator() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any, delay: 0.1 }}
             className="text-5xl lg:text-[5rem] font-display font-medium tracking-tight leading-[1.05] mb-8 text-[#EFECE6]"
           >
             Урожай — ваш,<br/>
@@ -63,7 +63,7 @@ export default function YieldCalculator() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any, delay: 0.2 }}
             className="text-xl text-[#EFECE6]/60 font-light leading-relaxed max-w-lg mb-12"
           >
             Возьмите цифры под контроль. Дашборд прогнозирует чистую экономию с учетом затрат на обработку мембраной ГРИПИЛ.
@@ -75,7 +75,7 @@ export default function YieldCalculator() {
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any, delay: 0.3 }}
           className="lg:col-span-6 w-full bg-[#112118]/40 backdrop-blur-2xl border border-[#EFECE6]/10 p-8 md:p-12 shadow-2xl relative overflow-hidden group"
         >
           {/* Neon Top Line */}

@@ -14,7 +14,7 @@ export default function FooterCTA() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any }}
             className="text-5xl md:text-6xl lg:text-7xl font-display font-medium tracking-tight leading-[0.9] text-[#EFECE6] mb-12"
           >
             Хватит<br/>оставлять<br/>
@@ -30,7 +30,7 @@ export default function FooterCTA() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] as any }}
             className="flex flex-col sm:flex-row items-stretch sm:items-end gap-6"
           >
             <div className="w-full sm:w-80">
@@ -56,7 +56,7 @@ export default function FooterCTA() {
           initial={{ opacity: 0, x: 20 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] as any }}
           className="hidden md:flex flex-col items-end text-right pb-4"
         >
           <div className="text-[10px] font-mono uppercase tracking-[0.12em] text-[#EFECE6]/40 mb-4">На связи напрямую</div>

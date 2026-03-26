@@ -38,7 +38,7 @@ export default function HowItWorksSection() {
               initial={{ opacity: 0, width: 0 }}
               whileInView={{ opacity: 1, width: "3rem" }}
               viewport={{ once: true }}
-              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any }}
               className="h-[1px] bg-[#112118]/30 mb-8"
             />
 
@@ -46,7 +46,7 @@ export default function HowItWorksSection() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any, delay: 0.1 }}
               className="text-5xl md:text-7xl font-display font-medium tracking-tight leading-[1.05] mb-8 text-[#112118]"
             >
               Мембрана,<br />которая <span className="italic font-normal text-[#112118]/90">дышит</span>
@@ -56,7 +56,7 @@ export default function HowItWorksSection() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any, delay: 0.2 }}
               className="text-xl text-[#112118]/80 font-normal leading-relaxed max-w-md mb-12"
             >
               Забудьте о токсичном клее. ГРИПИЛ — это умная полупроницаемая нано-структура на базе натуральных хвойных смол.
@@ -88,7 +88,7 @@ export default function HowItWorksSection() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-100px" }}
-              transition={{ delay: idx * 0.1, duration: 1, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ delay: idx * 0.1, duration: 1, ease: [0.16, 1, 0.3, 1] as any }}
               className="group"
             >
               <div className="w-16 h-16 rounded-full border border-[#112118]/10 flex items-center justify-center mb-8 relative overflow-hidden group-hover:border-[#112118]/30 transition-colors">
