@@ -68,7 +68,7 @@ export default function ComparisonMatrixSection() {
         </div>
 
         {/* Моб. табы */}
-        <div className="flex md:hidden w-full gap-2 mb-8 bg-[#112118]/5 p-1.5 rounded-sm">
+        <div className="flex lg:hidden w-full gap-2 mb-8 bg-[#112118]/5 p-1.5 rounded-sm">
           {["клеи", "десикация", "грипил"].map((tab) => (
              <button 
                key={tab} 
@@ -83,7 +83,7 @@ export default function ComparisonMatrixSection() {
         </div>
 
         {/* Десктоп Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 md:gap-4 lg:gap-8 w-full items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-6 xl:gap-8 w-full items-stretch">
           {Object.entries(comparisonData).map(([key, data]) => {
             const isGripil = key === "грипил";
             return (
@@ -92,12 +92,12 @@ export default function ComparisonMatrixSection() {
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className={`p-6 md:p-7 lg:p-10 transition-all duration-500 flex flex-col min-h-[400px] lg:min-h-[480px] ${
-                  activeTab === key ? "flex md:flex" : "hidden md:flex"
+                className={`relative p-6 md:p-7 lg:p-10 transition-all duration-500 flex flex-col min-h-[400px] lg:min-h-[480px] ${
+                  activeTab === key ? "flex lg:flex" : "hidden lg:flex"
                 } ${
                   isGripil 
-                    ? "bg-[#112118] text-[#EFECE6] rounded-sm shadow-[0_4px_32px_rgba(17,33,24,0.15)] md:-translate-y-4 md:shadow-2xl z-10" 
-                    : "bg-transparent border border-[#e0ddd8] shadow-[0_2px_12px_rgba(0,0,0,0.06)] text-[#112118] opacity-80 md:hover:opacity-100 rounded-sm"
+                    ? "bg-[#112118] text-[#EFECE6] rounded-sm shadow-[0_4px_32px_rgba(17,33,24,0.15)] lg:-translate-y-4 lg:shadow-2xl z-10" 
+                    : "bg-transparent border border-[#e0ddd8] shadow-[0_2px_12px_rgba(0,0,0,0.06)] text-[#112118] opacity-80 lg:hover:opacity-100 rounded-sm"
                 }`}
               >
                 {data.popular && (
