@@ -77,7 +77,7 @@ export default function YieldCalculator() {
   const savedPerHa = Math.max(0, netProfit / area);
 
   return (
-    <section className="relative py-10 md:py-14 lg:py-20 bg-[#112118] text-[#EFECE6] overflow-hidden font-sans">
+    <section id="calc-section" className="relative py-10 md:py-14 lg:py-20 bg-[#112118] text-[#EFECE6] overflow-hidden font-sans">
       {/* Cinematic Background */}
       <div className="absolute inset-0 z-0">
         <Image

@@ -125,7 +125,10 @@ export default function ComparisonMatrixSection() {
 
                 {/* CTA in Gripil */}
                 {isGripil && (
-                  <button className="mt-6 w-full py-2.5 bg-[#EFECE6] text-[#112118] font-mono font-bold uppercase tracking-widest text-[10px] rounded-sm hover:bg-white transition-colors">
+                  <button 
+                    onClick={() => document.getElementById('cta-section')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="mt-6 w-full py-2.5 bg-[#EFECE6] text-[#112118] font-mono font-bold uppercase tracking-widest text-[10px] rounded-sm hover:bg-white transition-colors"
+                  >
                     Рассчитать партию
                   </button>
                 )}

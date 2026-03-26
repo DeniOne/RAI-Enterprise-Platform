@@ -105,6 +105,7 @@ export default function HeroSection() {
               onPointerLeave={handlePointerLeave}
               whileHover={{ scale: 1.02 }}
               animate={{ x: pos.x, y: pos.y }}
+              onClick={() => document.getElementById('calc-section')?.scrollIntoView({ behavior: 'smooth' })}
               transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.1 }}
               className="relative flex items-center justify-center gap-3 px-8 lg:px-10 py-4 lg:py-5 bg-[#CDFF00] text-[#112118] font-medium rounded-sm overflow-hidden w-full sm:w-auto hover:bg-[#b0d900] transition-colors shadow-lg shadow-[#CDFF00]/20"
             >
@@ -115,7 +116,10 @@ export default function HeroSection() {
             </motion.button>
             
             {/* Усиленный Ghost CTA */}
-            <button className="flex items-center justify-center gap-3 px-6 py-4 lg:py-5 text-white font-medium rounded-sm hover:bg-white/10 transition-colors w-full sm:w-auto group bg-black/20 backdrop-blur-sm border border-white/10">
+            <button 
+              onClick={() => document.getElementById('problem-section')?.scrollIntoView({ behavior: 'smooth' })}
+              className="flex items-center justify-center gap-3 px-6 py-4 lg:py-5 text-white font-medium rounded-sm hover:bg-white/10 transition-colors w-full sm:w-auto group bg-black/20 backdrop-blur-sm border border-white/10"
+            >
               <span className="flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-white text-black group-hover:scale-110 transition-transform">
                 <Play className="w-3 h-3 lg:w-4 lg:h-4 ml-1" />
               </span>

@@ -5,7 +5,7 @@ import { ArrowUpRight } from "lucide-react";
 
 export default function FooterCTA() {
   return (
-    <footer className="relative bg-[#0A140E] text-[#EFECE6] overflow-hidden border-t border-[#EFECE6]/10 font-sans">
+    <footer id="cta-section" className="relative bg-[#0A140E] text-[#EFECE6] overflow-hidden border-t border-[#EFECE6]/10 font-sans">
       <div className="max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-16 pt-10 pb-8 md:pt-14 md:pb-10 lg:pt-20 relative z-10 flex flex-col md:flex-row justify-between items-end gap-10 md:gap-16">
         
         {/* Editorial Text Block */}
@@ -35,19 +35,29 @@ export default function FooterCTA() {
           >
             <div className="w-full sm:w-80">
               <label className="block text-[13px] font-mono tracking-[0.12em] uppercase text-[#EFECE6]/60 mb-3">Технологическая карта (Бесплатно)</label>
-              <div className="relative group">
-                <input 
-                  type="text" 
-                  placeholder="Оставьте номер телефона..." 
-                  className="w-full px-4 py-3 bg-[#112118] border border-white/30 rounded focus:outline-none focus:border-[#CDFF00] text-lg font-light text-[#EFECE6] placeholder:text-[#EFECE6]/40 transition-colors"
-                />
+              <div className="bg-[#1A261E]/50 p-6 md:p-8 rounded-sm backdrop-blur-sm border border-[#EFECE6]/5 relative group">
+              
+                <form 
+                  onSubmit={(e) => { 
+                    e.preventDefault(); 
+                    alert('Спасибо! Ваш расчет отправлен на обработку. Мы свяжемся с вами в течение 15 минут.');
+                  }}
+                  className="flex flex-col sm:flex-row gap-3 relative z-10"
+                >
+                  <input 
+                    type="tel" 
+                    placeholder="+7 (___) ___-__-__" 
+                    required
+                    className="w-full px-4 py-3 bg-[#112118] border border-white/30 rounded focus:outline-none focus:border-[#CDFF00] text-lg font-light text-[#EFECE6] placeholder:text-[#EFECE6]/40 transition-colors"
+                  />
+              
+                  <button className="flex items-center justify-center gap-2 px-8 py-3 h-[52px] bg-[#CDFF00] text-[#112118] font-medium uppercase tracking-widest text-sm rounded-sm hover:bg-[#DFFF33] transition-colors w-full sm:w-auto mt-2 sm:mt-0">
+                    Отправить
+                    <ArrowUpRight className="w-4 h-4" />
+                  </button>
+                </form>
               </div>
             </div>
-            
-            <button className="flex items-center justify-center gap-2 px-8 py-3 h-[52px] bg-[#CDFF00] text-[#112118] font-medium uppercase tracking-widest text-sm rounded-sm hover:bg-[#DFFF33] transition-colors w-full sm:w-auto mt-2 sm:mt-0">
-              Отправить
-              <ArrowUpRight className="w-4 h-4" />
-            </button>
           </motion.div>
         </div>
 

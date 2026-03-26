@@ -28,6 +28,7 @@ export default function ProblemSection() {
 
   return (
     <section 
+      id="problem-section"
       ref={containerRef}
       className="relative py-10 md:py-14 lg:py-20 bg-[#EFECE6] text-[#112118] px-5 sm:px-8 lg:px-16 overflow-hidden"
     >
