@@ -1,7 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from "react";
-import { motion, useMotionValue, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import { Check, X } from "lucide-react";
 
 type ComparisonItem = {
@@ -43,34 +42,6 @@ const comparisonData: Record<string, ComparisonItem> = {
 };
 
 export default function ComparisonMatrixSection() {
-  const ref = useRef<HTMLDivElement>(null);
-  
-  // Создаем свои MotionValues для координат курсора, так как usePointerPosition депрекейтнут
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      x.set(e.clientX);
-      y.set(e.clientY);
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [x, y]);
-
-  // Отслеживаем координаты относительно окна для эффекта свечения
-  // Но нам нужны координаты внутри контейнера
-  const mouseX = useTransform(x, (currentX) => {
-    if (!ref.current) return 0;
-    const rect = ref.current.getBoundingClientRect();
-    return currentX - rect.left;
-  });
-  const mouseY = useTransform(y, (currentY) => {
-    if (!ref.current) return 0;
-    const rect = ref.current.getBoundingClientRect();
-    return currentY - rect.top;
-  });
-
   return (
     <section className="py-10 md:py-14 lg:py-20 bg-[#EFECE6] text-[#112118] px-4 sm:px-8 lg:px-12 border-t border-[#112118]/5 relative overflow-visible font-sans">
       <div className="max-w-[1440px] mx-auto flex flex-col items-center">
@@ -102,37 +73,16 @@ export default function ComparisonMatrixSection() {
             return (
               <motion.div
                 key={key}
-                ref={isGripil ? ref : undefined}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.7, delay: colIdx * 0.1 }}
-                className={`relative pt-8 pb-5 px-4 sm:px-4 md:px-5 lg:px-6 flex flex-col rounded-sm overflow-hidden ${
+                className={`relative pt-8 pb-5 px-4 sm:px-4 md:px-5 lg:px-6 flex flex-col rounded-sm ${
                   isGripil
                     ? "bg-[#112118] text-[#EFECE6] shadow-2xl"
                     : "border border-[#112118]/12 text-[#112118]"
                 }`}
               >
-                {/* Активное свечение за курсором для Gripil */}
-                {isGripil && (
-                  <motion.div
-                    className="pointer-events-none absolute -inset-px opacity-0 transition duration-300 group-hover:opacity-100 mix-blend-screen"
-                    style={{
-                      background: useTransform(
-                        [mouseX, mouseY],
-                        ([cx, cy]) =>
-                          `radial-gradient(400px circle at ${cx}px ${cy}px, rgba(205,255,0,0.1), transparent 40%)`
-                      ),
-                    }}
-                  />
-                )}
-
-                {/* Базовый градиент Gripil */}
-                {isGripil && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#CDFF00]/5 to-transparent pointer-events-none" />
-                )}
-
-                <div className="relative z-10 w-full flex flex-col h-full">
                 {/* ИННОВАЦИЯ badge */}
                 {data.popular && (
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#CDFF00] text-[#112118] px-3 py-[3px] text-[9px] font-mono font-bold uppercase tracking-widest shadow">
@@ -182,7 +132,6 @@ export default function ComparisonMatrixSection() {
                     Рассчитать партию
                   </button>
                 )}
-                </div>
               </motion.div>
             );
           })}

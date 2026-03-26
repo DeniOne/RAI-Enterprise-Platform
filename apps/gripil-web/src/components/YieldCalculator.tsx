@@ -1,32 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, useMotionValue, animate } from "framer-motion";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import Image from "next/image";
 
 // Умное форматирование: компактное для вывода — не вылезает за контейнер
 function formatMln(n: number): string {
   if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(1) + " МЛН";
   if (Math.abs(n) >= 1_000) return (n / 1_000).toFixed(0) + " ТЫС";
-  return Math.round(n).toLocaleString("ru-RU");
-}
-
-function AnimatedNumber({ value, formatFn }: { value: number, formatFn?: (v: number) => string }) {
-  const [displayValue, setDisplayValue] = useState(formatFn ? formatFn(value) : String(Math.round(value)));
-  const mv = useMotionValue(value);
-
-  useEffect(() => {
-    const controls = animate(mv, value, {
-      duration: 0.8,
-      ease: [0.16, 1, 0.3, 1],
-      onUpdate: (latest) => {
-        setDisplayValue(formatFn ? formatFn(latest) : String(Math.round(latest)));
-      }
-    });
-    return () => controls.stop();
-  }, [value, mv, formatFn]);
-
-  return <>{displayValue}</>;
+  return n.toLocaleString("ru-RU");
 }
 
 // Кастомный слайдер — никакого браузерного дефолта
@@ -104,7 +86,7 @@ export default function YieldCalculator() {
           fill
           priority
           quality={80}
-          className="object-cover object-bottom"
+          className="object-cover object-bottom filter brightness-[0.25] contrast-125 saturate-50"
         />
         <div className="absolute inset-0 bg-[#112118]/75 mix-blend-multiply" />
         <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-[#112118] to-transparent" />
@@ -202,7 +184,7 @@ export default function YieldCalculator() {
               {/* Main number – не вылезает */}
               <div className="flex items-baseline gap-1.5 mb-4 sm:mb-5 overflow-hidden">
                 <span className="text-3xl sm:text-4xl md:text-5xl xl:text-6xl font-display font-medium text-[#CDFF00] tabular-nums tracking-tight leading-none">
-                  <AnimatedNumber value={netProfit} formatFn={formatMln} />
+                  {formatMln(netProfit)}
                 </span>
                 <span className="text-lg sm:text-xl md:text-2xl font-display text-[#CDFF00]/55 font-light">₽</span>
               </div>
@@ -212,19 +194,16 @@ export default function YieldCalculator() {
                 {/* ROI */}
                 <div className="px-3 sm:px-4 py-3 sm:py-4 border-r border-[#EFECE6]/6">
                   <p className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-[#EFECE6]/35 mb-1.5">ROI</p>
-                  <p className="text-base sm:text-xl md:text-2xl font-display text-[#EFECE6] tabular-nums">
-                    <AnimatedNumber value={Number(roi)} formatFn={(v) => `+${Math.round(v)}%`} />
-                  </p>
+                  <p className="text-base sm:text-xl md:text-2xl font-display text-[#EFECE6] tabular-nums">+{roi}%</p>
                   <p className="text-[9px] text-[#EFECE6]/25 font-mono mt-1 uppercase tracking-widest hidden sm:block">от вложений</p>
                 </div>
                 {/* Per hectare */}
                 <div className="px-3 sm:px-4 py-3 sm:py-4 border-r border-[#EFECE6]/6">
                   <p className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-[#EFECE6]/35 mb-1.5">₽ / га</p>
                   <p className="text-base sm:text-xl md:text-2xl font-display text-[#EFECE6] tabular-nums">
-                    <AnimatedNumber 
-                      value={savedPerHa} 
-                      formatFn={(v) => (v >= 1000 ? (v / 1000).toFixed(1) + "К" : Math.round(v).toLocaleString("ru-RU"))}
-                    />
+                    {savedPerHa >= 1000
+                      ? (savedPerHa / 1000).toFixed(1) + "К"
+                      : Math.round(savedPerHa).toLocaleString("ru-RU")}
                   </p>
                   <p className="text-[9px] text-[#EFECE6]/25 font-mono mt-1 uppercase tracking-widest hidden sm:block">с гектара</p>
                 </div>
@@ -232,7 +211,7 @@ export default function YieldCalculator() {
                 <div className="px-3 sm:px-4 py-3 sm:py-4">
                   <p className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-[#EFECE6]/35 mb-1.5">Затраты</p>
                   <p className="text-base sm:text-xl md:text-2xl font-display text-[#EFECE6]/65 tabular-nums">
-                    <AnimatedNumber value={totalCost} formatFn={(v) => (v / 1_000_000).toFixed(2) + "М"} />
+                    {(totalCost / 1_000_000).toFixed(2)}М
                   </p>
                   <p className="text-[9px] text-[#EFECE6]/25 font-mono mt-1 uppercase tracking-widest hidden sm:block">рублей</p>
                 </div>
