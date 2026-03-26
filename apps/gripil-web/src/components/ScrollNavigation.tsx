@@ -25,18 +25,25 @@ export default function ScrollNavigation() {
     if (sections.length === 0) return;
 
     const scrollY = window.scrollY;
-    // Окно просмотра: используем 1/3 экрана как триггер для перехода "активной" секции
-    const viewportOffset = window.innerHeight / 3;
+    const viewportHeight = window.innerHeight;
+    const viewportOffset = viewportHeight / 3;
 
-    // Находим секцию, которая в данный момент "владеет" этой зоной экрана
+    // Находим секцию, которая в данный момент "владеет" зоной (верх окна + 33%)
     let newIndex = 0;
     for (let i = 0; i < sections.length; i++) {
       const el = sections[i];
-      if (scrollY >= el.offsetTop - viewportOffset) {
+      // getBoundingClientRect().top + window.scrollY дает точный абсолютный Y элемента
+      const absoluteTop = el.getBoundingClientRect().top + window.scrollY;
+      
+      if (scrollY >= absoluteTop - viewportOffset) {
         newIndex = i;
-      } else {
-        break; // Так как секции идут по порядку сверху вниз, можно прервать
       }
+    }
+
+    // Фикс для короткого футера: если докрутили до самого низа документа — форсируем последнюю секцию
+    const isAtBottom = Math.ceil(scrollY + viewportHeight) >= document.documentElement.scrollHeight;
+    if (isAtBottom) {
+      newIndex = sections.length - 1;
     }
 
     if (newIndex !== activeIndex) {
