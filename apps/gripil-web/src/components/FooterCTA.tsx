@@ -5,8 +5,8 @@ import { ArrowUpRight } from "lucide-react";
 
 export default function FooterCTA() {
   return (
-    <footer className="relative bg-[#0A140E] text-[#EFECE6] overflow-hidden border-t border-[#EFECE6]/10 font-sans">
-      <div className="max-w-[1440px] mx-auto px-6 lg:px-16 pt-32 pb-16 relative z-10 flex flex-col md:flex-row justify-between items-end gap-16">
+    <footer id="cta-section" className="relative bg-[#0A140E] text-[#EFECE6] overflow-hidden border-t border-[#EFECE6]/10 font-sans">
+      <div className="max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-16 pt-10 pb-8 md:pt-14 md:pb-10 lg:pt-20 relative z-10 flex flex-col md:flex-row justify-between items-end gap-10 md:gap-16">
         
         {/* Editorial Text Block */}
         <div className="flex-1 text-left w-full md:w-auto">
@@ -15,7 +15,7 @@ export default function FooterCTA() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any }}
-            className="text-5xl md:text-6xl lg:text-7xl font-display font-medium tracking-tight leading-[0.9] text-[#EFECE6] mb-12"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-display font-medium tracking-tight leading-[0.9] text-[#EFECE6] mb-8 md:mb-12"
           >
             Хватит<br/>оставлять<br/>
             <span className="italic font-light text-[#EFECE6]/[0.65]">миллионы</span><br/>
@@ -26,29 +26,35 @@ export default function FooterCTA() {
           <div className="w-full h-[1px] bg-[#EFECE6]/10 mb-12" />
 
           {/* Form / Quick Action */}
-          <motion.div 
+          {/* Form / Quick Action */}
+          <motion.form 
+            onSubmit={(e: React.FormEvent) => { 
+                e.preventDefault(); 
+                alert('Спасибо! Ваш расчет отправлен на обработку. Мы свяжемся с вами в течение 15 минут.');
+            }}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] as any }}
-            className="flex flex-col sm:flex-row items-stretch sm:items-end gap-6"
+            className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 md:gap-4"
           >
-            <div className="w-full sm:w-80">
+            <div className="w-full sm:w-80 md:w-96">
               <label className="block text-[13px] font-mono tracking-[0.12em] uppercase text-[#EFECE6]/60 mb-3">Технологическая карта (Бесплатно)</label>
               <div className="relative group">
                 <input 
-                  type="text" 
-                  placeholder="Оставьте номер телефона..." 
-                  className="w-full px-4 py-3 bg-[#112118] border border-white/30 rounded focus:outline-none focus:border-[#CDFF00] text-lg font-light text-[#EFECE6] placeholder:text-[#EFECE6]/40 transition-colors"
+                  type="tel" 
+                  placeholder="+7 (___) ___-__-__" 
+                  required
+                  className="w-full px-5 py-3 h-[52px] bg-[#112118] border border-white/30 rounded-sm focus:outline-none focus:border-[#CDFF00] text-lg font-light text-[#EFECE6] placeholder:text-[#EFECE6]/40 transition-colors"
                 />
               </div>
             </div>
-            
-            <button className="flex items-center justify-center gap-2 px-8 py-3 h-[52px] bg-[#CDFF00] text-[#112118] font-medium uppercase tracking-widest text-sm rounded-sm hover:bg-[#DFFF33] transition-colors w-full sm:w-auto mt-2 sm:mt-0">
+
+            <button type="submit" className="flex-shrink-0 flex items-center justify-center gap-2 px-8 h-[52px] bg-[#CDFF00] text-[#112118] font-medium uppercase tracking-widest text-sm rounded-sm hover:bg-[#DFFF33] transition-colors w-full sm:w-auto mt-2 sm:mt-0">
               Отправить
               <ArrowUpRight className="w-4 h-4" />
             </button>
-          </motion.div>
+          </motion.form>
         </div>
 
         {/* Right Contact/Proof Zone */}

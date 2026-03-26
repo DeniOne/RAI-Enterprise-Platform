@@ -9,6 +9,7 @@ import EcologySection from "@/components/EcologySection";
 import FAQAccordion from "@/components/FAQAccordion";
 import FooterCTA from "@/components/FooterCTA";
 import { SectionReveal } from "@/components/ui/SectionReveal";
+import ScrollNavigation from "@/components/ScrollNavigation";
 
 export default function Home() {
   return (
@@ -23,6 +24,7 @@ export default function Home() {
       <SectionReveal><EcologySection /></SectionReveal>
       <SectionReveal><FAQAccordion /></SectionReveal>
       <SectionReveal><FooterCTA /></SectionReveal>
+      <ScrollNavigation />
     </main>
   );
 }

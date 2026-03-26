@@ -37,7 +37,7 @@ export default function HeroSection() {
   return (
     <section 
       ref={containerRef} 
-      className="relative w-full min-h-screen flex items-center overflow-hidden bg-[#EFECE6] font-sans"
+      className="relative w-full min-h-screen flex items-center overflow-hidden bg-[#EFECE6] font-sans py-20 md:py-0"
     >
       {/* Background */}
       <motion.div 
@@ -50,20 +50,21 @@ export default function HeroSection() {
           fill 
           priority
           quality={100}
-          className="object-cover object-center filter brightness-[0.80] contrast-[1.1]"
+          className="object-cover object-center filter brightness-[0.95] contrast-[1.15] saturate-[1.1]"
         />
-        {/* Более плотный градиент для читаемости курсива */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#112118]/90 via-[#112118]/60 to-transparent z-10" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#EFECE6] via-transparent to-transparent z-10" />
+        {/* Темный градиент слева для читаемости текста (без перекрытия всего кадра) */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#112118]/80 via-[#112118]/40 to-transparent z-10" />
+        {/* Легкая виньетка по самому низу (без белого тумана) */}
+        <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#112118]/30 to-transparent z-10" />
       </motion.div>
 
       {/* Main Content Container */}
       <motion.div 
         style={{ y: yText, opacity: opacityText, willChange: 'transform, opacity' }}
-        className="relative z-20 w-full max-w-[1600px] mx-auto px-6 lg:px-16 flex flex-col md:flex-row items-center justify-between gap-12"
+        className="relative z-20 w-full max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-16 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12"
       >
         {/* Left Column: Typography */}
-        <div className="w-full md:w-7/12 text-left">
+        <div className="w-full md:w-8/12 lg:w-7/12 text-left">
           
           <motion.div
             initial={{ opacity: 0, width: 0 }}
@@ -76,10 +77,10 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any, delay: 0.2 }}
-            className="text-6xl md:text-7xl lg:text-[6rem] 2xl:text-[7.5rem] font-display font-medium tracking-tight leading-[0.95] text-[#EFECE6] mb-10 [text-shadow:0_4px_32px_rgba(0,0,0,0.5)]"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[6rem] 2xl:text-[7.5rem] font-display font-medium tracking-tight leading-[0.95] text-[#EFECE6] mb-6 md:mb-10 [text-shadow:0_4px_32px_rgba(0,0,0,0.5)]"
           >
             Сохраните то,<br />
-            <span className="italic font-light text-[#EFECE6]/90 text-5xl md:text-6xl lg:text-[5rem] 2xl:text-[6.5rem]">
+            <span className="italic font-light text-[#EFECE6]/90 text-3xl sm:text-4xl md:text-5xl lg:text-[4.5rem] xl:text-[5rem] 2xl:text-[6.5rem]">
               что вырастили
             </span>
           </motion.h1>
@@ -88,7 +89,7 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] as any }}
-            className="text-lg md:text-xl 2xl:text-2xl text-[#EFECE6]/80 max-w-lg 2xl:max-w-2xl font-sans font-light leading-relaxed mb-14 [text-shadow:0_2px_16px_rgba(0,0,0,0.5)]"
+            className="text-base sm:text-lg md:text-xl 2xl:text-2xl text-[#EFECE6]/80 max-w-lg 2xl:max-w-2xl font-sans font-light leading-relaxed mb-8 md:mb-14 [text-shadow:0_2px_16px_rgba(0,0,0,0.5)]"
           >
             Био-комплекс ГРИПИЛ формирует <strong className="font-normal text-white">дышащую мембрану</strong>, останавливая растрескивание стручков и спасая ваши инвестиции в гектар.
           </motion.p>
@@ -105,6 +106,7 @@ export default function HeroSection() {
               onPointerLeave={handlePointerLeave}
               whileHover={{ scale: 1.02 }}
               animate={{ x: pos.x, y: pos.y }}
+              onClick={() => document.getElementById('calc-section')?.scrollIntoView({ behavior: 'smooth' })}
               transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.1 }}
               className="relative flex items-center justify-center gap-3 px-8 lg:px-10 py-4 lg:py-5 bg-[#CDFF00] text-[#112118] font-medium rounded-sm overflow-hidden w-full sm:w-auto hover:bg-[#b0d900] transition-colors shadow-lg shadow-[#CDFF00]/20"
             >
@@ -115,7 +117,10 @@ export default function HeroSection() {
             </motion.button>
             
             {/* Усиленный Ghost CTA */}
-            <button className="flex items-center justify-center gap-3 px-6 py-4 lg:py-5 text-white font-medium rounded-sm hover:bg-white/10 transition-colors w-full sm:w-auto group bg-black/20 backdrop-blur-sm border border-white/10">
+            <button 
+              onClick={() => document.getElementById('problem-section')?.scrollIntoView({ behavior: 'smooth' })}
+              className="flex items-center justify-center gap-3 px-6 py-4 lg:py-5 text-white font-medium rounded-sm hover:bg-white/10 transition-colors w-full sm:w-auto group bg-black/20 backdrop-blur-sm border border-white/10"
+            >
               <span className="flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-white text-black group-hover:scale-110 transition-transform">
                 <Play className="w-3 h-3 lg:w-4 lg:h-4 ml-1" />
               </span>

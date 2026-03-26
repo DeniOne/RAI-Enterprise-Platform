@@ -53,10 +53,10 @@ function Particles() {
 
 export default function EcologySection() {
   return (
-    <section className="relative flex flex-col lg:flex-row min-h-screen bg-[#112118] overflow-hidden border-t border-[#CDFF00]/10">
+    <section className="relative flex flex-col lg:flex-row bg-[#112118] overflow-hidden border-t border-[#CDFF00]/10">
       
       {/* Левая колонка - Типографика и Контент (50%) */}
-      <div className="w-full lg:w-[45%] xl:w-[40%] flex items-center justify-center p-8 lg:p-20 relative z-20">
+      <div className="w-full lg:w-[45%] xl:w-[40%] flex items-center justify-center p-6 sm:p-8 lg:p-12 xl:p-16 relative z-20">
         <motion.div 
           initial={{ opacity: 0, x: -40 }}
           whileInView={{ opacity: 1, x: 0 }}
@@ -71,12 +71,12 @@ export default function EcologySection() {
              </span>
           </div>
 
-          <h2 className="text-5xl md:text-6xl lg:text-7xl font-display font-medium tracking-tight leading-[1.05] mb-8 text-[#EFECE6] [text-shadow:0_2px_12px_rgba(0,0,0,0.5)]">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-display font-medium tracking-tight leading-[1.05] mb-5 text-[#EFECE6] [text-shadow:0_2px_12px_rgba(0,0,0,0.5)]">
             Безопасно для <br />
             <span className="text-[#CDFF00] italic font-light">пчел и экологии</span>
           </h2>
           
-          <p className="text-lg md:text-xl text-[#EFECE6]/70 font-light leading-relaxed mb-12">
+          <p className="text-sm sm:text-base md:text-lg text-[#EFECE6]/70 font-light leading-relaxed mb-6 lg:mb-8">
             В отличие от синтетических клеев и жестких химических десикантов, ГРИПИЛ создан на основе натуральных хвойных экстрактов. 
           </p>
 
@@ -98,7 +98,7 @@ export default function EcologySection() {
       </div>
 
       {/* Правая колонка - Живое Видео / Фото (50%) */}
-      <div className="w-full lg:w-[55%] xl:w-[60%] relative min-h-[50vh] lg:min-h-screen z-10 overflow-hidden bg-black">
+      <div className="w-full lg:w-[55%] xl:w-[60%] relative min-h-[45vh] lg:min-h-[600px] z-10 overflow-hidden bg-black">
         {/* Градиенты слияния для бесшовного перехода */}
         <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#112118] to-transparent z-10 hidden lg:block" />
         <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[#112118] to-transparent z-10 lg:hidden" />
