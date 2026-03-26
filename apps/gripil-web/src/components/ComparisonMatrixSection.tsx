@@ -46,10 +46,10 @@ export default function ComparisonMatrixSection() {
   };
 
   return (
-    <section className="py-32 md:py-48 bg-[#EFECE6] text-[#112118] px-6 lg:px-16 border-t border-[#112118]/5 relative overflow-hidden font-sans">
+    <section className="py-20 md:py-32 lg:py-48 bg-[#EFECE6] text-[#112118] px-5 sm:px-8 lg:px-16 border-t border-[#112118]/5 relative overflow-hidden font-sans">
       <div className="max-w-[1440px] mx-auto flex flex-col items-center">
         
-        <div className="mb-16 md:mb-24 text-center max-w-4xl">
+        <div className="mb-10 md:mb-16 lg:mb-24 text-center max-w-4xl">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -62,7 +62,7 @@ export default function ComparisonMatrixSection() {
              </span>
              <div className="w-12 h-[1px] bg-[#112118]/40" />
           </motion.div>
-          <h2 className="text-5xl md:text-7xl font-display font-medium tracking-tight mb-6">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-display font-medium tracking-tight mb-6">
             Почему синтетические клеи и десиканты <br/><span className="italic text-[#112118]/40 line-through">проигрывают?</span>
           </h2>
         </div>
@@ -83,7 +83,7 @@ export default function ComparisonMatrixSection() {
         </div>
 
         {/* Десктоп Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 md:gap-8 lg:gap-12 w-full lg:px-12 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-3 md:gap-4 lg:gap-8 w-full items-stretch">
           {Object.entries(comparisonData).map(([key, data]) => {
             const isGripil = key === "грипил";
             return (
@@ -92,7 +92,7 @@ export default function ComparisonMatrixSection() {
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className={`p-8 md:p-10 transition-all duration-500 flex flex-col min-h-[480px] ${
+                className={`p-6 md:p-7 lg:p-10 transition-all duration-500 flex flex-col min-h-[400px] lg:min-h-[480px] ${
                   activeTab === key ? "flex md:flex" : "hidden md:flex"
                 } ${
                   isGripil 

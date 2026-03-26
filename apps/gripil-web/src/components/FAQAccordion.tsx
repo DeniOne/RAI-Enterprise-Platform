@@ -27,9 +27,9 @@ export default function FAQAccordion() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="py-32 bg-[#EFECE6] text-[#112118] px-6 lg:px-12 border-t border-[#112118]/5 font-sans">
+    <section className="py-16 sm:py-20 md:py-32 bg-[#EFECE6] text-[#112118] px-5 sm:px-8 lg:px-12 border-t border-[#112118]/5 font-sans">
       <div className="max-w-[880px] mx-auto">
-        <div className="text-center mb-16 md:mb-24">
+        <div className="mb-10 md:mb-16 lg:mb-24">
           <motion.div
              initial={{ opacity: 0, y: -20 }}
              whileInView={{ opacity: 1, y: 0 }}
@@ -42,7 +42,7 @@ export default function FAQAccordion() {
              </span>
              <div className="w-12 h-[1px] bg-[#112118]/40" />
           </motion.div>
-          <h2 className="text-5xl md:text-6xl lg:text-7xl font-display font-medium tracking-tight mb-6">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-display font-medium tracking-tight mb-6">
             Отвечаем на <span className="text-[#555] italic">главное</span>
           </h2>
         </div>

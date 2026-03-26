@@ -53,10 +53,10 @@ function Particles() {
 
 export default function EcologySection() {
   return (
-    <section className="relative flex flex-col lg:flex-row min-h-screen bg-[#112118] overflow-hidden border-t border-[#CDFF00]/10">
+    <section className="relative flex flex-col lg:flex-row min-h-[80vh] lg:min-h-screen bg-[#112118] overflow-hidden border-t border-[#CDFF00]/10">
       
       {/* Левая колонка - Типографика и Контент (50%) */}
-      <div className="w-full lg:w-[45%] xl:w-[40%] flex items-center justify-center p-8 lg:p-20 relative z-20">
+      <div className="w-full lg:w-[45%] xl:w-[40%] flex items-center justify-center p-6 sm:p-10 lg:p-20 relative z-20">
         <motion.div 
           initial={{ opacity: 0, x: -40 }}
           whileInView={{ opacity: 1, x: 0 }}
@@ -71,12 +71,12 @@ export default function EcologySection() {
              </span>
           </div>
 
-          <h2 className="text-5xl md:text-6xl lg:text-7xl font-display font-medium tracking-tight leading-[1.05] mb-8 text-[#EFECE6] [text-shadow:0_2px_12px_rgba(0,0,0,0.5)]">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-display font-medium tracking-tight leading-[1.05] mb-6 lg:mb-8 text-[#EFECE6] [text-shadow:0_2px_12px_rgba(0,0,0,0.5)]">
             Безопасно для <br />
             <span className="text-[#CDFF00] italic font-light">пчел и экологии</span>
           </h2>
           
-          <p className="text-lg md:text-xl text-[#EFECE6]/70 font-light leading-relaxed mb-12">
+          <p className="text-base sm:text-lg md:text-xl text-[#EFECE6]/70 font-light leading-relaxed mb-8 lg:mb-12">
             В отличие от синтетических клеев и жестких химических десикантов, ГРИПИЛ создан на основе натуральных хвойных экстрактов. 
           </p>
 
