@@ -29,7 +29,7 @@ export default function ProblemSection() {
   return (
     <section 
       ref={containerRef}
-      className="relative py-20 md:py-32 lg:py-48 bg-[#EFECE6] text-[#112118] px-5 sm:px-8 lg:px-16 overflow-hidden"
+      className="relative py-10 md:py-14 lg:py-20 bg-[#EFECE6] text-[#112118] px-5 sm:px-8 lg:px-16 overflow-hidden"
     >
       <div className="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-16 lg:gap-8">
         

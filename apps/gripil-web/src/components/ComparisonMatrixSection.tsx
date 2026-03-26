@@ -43,7 +43,7 @@ const comparisonData: Record<string, ComparisonItem> = {
 
 export default function ComparisonMatrixSection() {
   return (
-    <section className="py-16 sm:py-20 md:py-24 lg:py-32 bg-[#EFECE6] text-[#112118] px-4 sm:px-8 lg:px-12 border-t border-[#112118]/5 relative overflow-visible font-sans">
+    <section className="py-10 md:py-14 lg:py-20 bg-[#EFECE6] text-[#112118] px-4 sm:px-8 lg:px-12 border-t border-[#112118]/5 relative overflow-visible font-sans">
       <div className="max-w-[1440px] mx-auto flex flex-col items-center">
 
         {/* Header */}

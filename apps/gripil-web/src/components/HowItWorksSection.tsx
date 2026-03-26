@@ -28,7 +28,7 @@ export default function HowItWorksSection() {
   ];
 
   return (
-    <section className="py-20 md:py-32 lg:py-48 bg-[#EFECE6] text-[#112118] relative overflow-hidden font-sans border-t border-[#112118]/5">
+    <section className="py-10 md:py-14 lg:py-20 bg-[#EFECE6] text-[#112118] relative overflow-hidden font-sans border-t border-[#112118]/5">
       <div className="max-w-[1440px] mx-auto px-6 lg:px-16 relative z-10 flex flex-col xl:flex-row gap-16 items-start">
         
         {/* Editorial Text */}

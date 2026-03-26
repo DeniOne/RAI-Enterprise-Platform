@@ -19,7 +19,7 @@ export default function TimingSection() {
   ];
 
   return (
-    <section className="py-20 md:py-32 lg:pt-48 lg:pb-64 bg-[#EFECE6] text-[#112118] relative font-sans border-t border-[#112118]/5 overflow-hidden">
+    <section className="py-10 md:py-14 lg:py-20 bg-[#EFECE6] text-[#112118] relative font-sans border-t border-[#112118]/5 overflow-hidden">
       <div className="max-w-[1440px] mx-auto px-6 lg:px-16 relative z-10 flex flex-col md:flex-row gap-16 xl:gap-24 items-start">
         
         {/* Editorial Header */}

@@ -6,7 +6,7 @@ import { ArrowUpRight } from "lucide-react";
 export default function FooterCTA() {
   return (
     <footer className="relative bg-[#0A140E] text-[#EFECE6] overflow-hidden border-t border-[#EFECE6]/10 font-sans">
-      <div className="max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-16 pt-16 pb-12 md:pt-24 md:pb-16 lg:pt-32 relative z-10 flex flex-col md:flex-row justify-between items-end gap-12 md:gap-16">
+      <div className="max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-16 pt-10 pb-8 md:pt-14 md:pb-10 lg:pt-20 relative z-10 flex flex-col md:flex-row justify-between items-end gap-10 md:gap-16">
         
         {/* Editorial Text Block */}
         <div className="flex-1 text-left w-full md:w-auto">

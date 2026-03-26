@@ -27,7 +27,7 @@ export default function FAQAccordion() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="py-16 sm:py-20 md:py-32 bg-[#EFECE6] text-[#112118] px-5 sm:px-8 lg:px-12 border-t border-[#112118]/5 font-sans">
+    <section className="py-10 sm:py-12 md:py-14 bg-[#EFECE6] text-[#112118] px-5 sm:px-8 lg:px-12 border-t border-[#112118]/5 font-sans">
       <div className="max-w-[880px] mx-auto">
         <div className="mb-10 md:mb-16 lg:mb-24">
           <motion.div
