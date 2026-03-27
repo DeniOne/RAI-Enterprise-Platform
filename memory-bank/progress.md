@@ -1,5 +1,15 @@
 # Progress Report - Prisma, Agro Domain & RAI Chat Integration
 
+## 2026-03-27
+
+1. **Запуск дев-сервера Gripil Web** [DONE]:
+  - Поднят `next dev` для `apps/gripil-web` на порту `3005`.
+  - Верифицирован статус `200 OK` через `curl`.
+
+2. **Production-билд Gripil Web** [DONE]:
+  - Запущена и успешно завершена сборка `pnpm build` для `apps/gripil-web`.
+  - Артефакты сборки готовы к развертыванию.
+
 ## 2026-03-26
 
 1. **Стабилизация Gripil Web (Emergency Revert)** [DONE]:
