@@ -1,3 +1,6 @@
+const path = require('path');
+const ROOT = __dirname;
+
 const common = {
   autorestart: true,
   restart_delay: 3000,
@@ -13,8 +16,8 @@ module.exports = {
     {
       ...common,
       name: 'rai-api',
-      script: 'dist/apps/api/src/main.js',
-      cwd: './apps/api',
+      script: path.join(ROOT, 'apps/api/dist/apps/api/src/main.js'),
+      cwd: path.join(ROOT, 'apps/api'),
       interpreter: 'node',
       env: {
         NODE_ENV: 'development',
@@ -25,9 +28,9 @@ module.exports = {
     {
       ...common,
       name: 'rai-web',
-      script: 'node_modules/next/dist/bin/next',
+      script: path.join(ROOT, 'apps/web/node_modules/next/dist/bin/next'),
       args: 'dev -p 3000 -H 127.0.0.1',
-      cwd: './apps/web',
+      cwd: path.join(ROOT, 'apps/web'),
       interpreter: 'node',
       env: {
         NODE_ENV: 'development',
@@ -36,9 +39,21 @@ module.exports = {
     },
     {
       ...common,
+      name: 'rai-gripil-web',
+      script: path.join(ROOT, 'apps/gripil-web/.next/standalone/apps/gripil-web/server.js'),
+      cwd: path.join(ROOT, 'apps/gripil-web/.next/standalone/apps/gripil-web'),
+      interpreter: 'node',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3100,
+        HOSTNAME: '127.0.0.1',
+      },
+    },
+    {
+      ...common,
       name: 'rai-tg-bot',
-      script: 'dist/src/main.js',
-      cwd: './apps/telegram-bot',
+      script: path.join(ROOT, 'apps/telegram-bot/dist/src/main.js'),
+      cwd: path.join(ROOT, 'apps/telegram-bot'),
       interpreter: 'node',
       env: {
         NODE_ENV: 'production',
