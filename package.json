@@ -15,6 +15,7 @@
     "gate:secrets": "node scripts/scan-secrets.cjs",
     "security:licenses": "node scripts/generate-license-inventory.cjs",
     "security:sbom": "node scripts/generate-sbom.cjs",
+    "legal:evidence:template": "node scripts/legal-evidence-template.cjs",
     "legal:evidence:intake": "node scripts/legal-evidence-intake.cjs",
     "legal:evidence:transition": "node scripts/legal-evidence-transition.cjs",
     "legal:evidence:status": "node scripts/legal-evidence-status.cjs",

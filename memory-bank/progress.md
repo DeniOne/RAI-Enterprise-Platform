@@ -118,6 +118,20 @@
     - полный lifecycle `requested -> received -> reviewed -> accepted` теперь закрывается кодом;
     - gate ловит уже не только status drift, но и неполные evidence-карточки.
 
+8. **Legal evidence template generation** [DONE]:
+  - Добавлен `scripts/legal-evidence-template.cjs`.
+  - В `package.json` добавлена команда:
+    - `pnpm legal:evidence:template -- --reference=ELP-...`
+  - Генератор собирает шаблон по `reference_id` и пишет его в restricted `templates/<reference_id>/`.
+  - Для `ELP-20260328-01`, `03`, `04`, `06` включены специализированные секции:
+    - operator memo
+    - hosting/residency matrix
+    - processor/DPA register
+    - lawful basis matrix
+  - Практический эффект:
+    - legal owners не начинают evidence-документы с пустого листа;
+    - приоритетные артефакты можно собирать быстрее и без формального drift по структуре.
+
 1. **Ledger schema recovery и economy stress-suite stabilization** [DONE]:
   - `packages/prisma-client/fix_schema.ts` расширен до полного recovery-прохода по hardened ledger-контуру, а не только до ремонта `create_ledger_entry_v1`.
   - Скрипт теперь восстанавливает `dblink`, `account_balances`, `check_tenant_state_hardened_v6`, `update_account_balance_v1`, `no_negative_cash`, trigger wiring и сам `create_ledger_entry_v1`.

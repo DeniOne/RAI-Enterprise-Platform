@@ -3,14 +3,14 @@ id: DOC-OPS-WORKFLOWS-EXTERNAL-LEGAL-EVIDENCE-ACCEPTANCE-RUNBOOK-20260328
 layer: Operations
 type: Runbook
 status: approved
-version: 1.3.0
+version: 1.4.0
 owners: [@techlead]
 last_updated: 2026-03-28
 claim_id: CLAIM-OPS-WORKFLOWS-EXTERNAL-LEGAL-EVIDENCE-ACCEPTANCE-RUNBOOK-20260328
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-28
-evidence_refs: package.json;scripts/legal-evidence-status.cjs;scripts/legal-evidence-intake.cjs;scripts/legal-evidence-transition.cjs;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md;.github/CODEOWNERS
+evidence_refs: package.json;scripts/legal-evidence-template.cjs;scripts/legal-evidence-status.cjs;scripts/legal-evidence-intake.cjs;scripts/legal-evidence-transition.cjs;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md;.github/CODEOWNERS
 ---
 # EXTERNAL LEGAL EVIDENCE ACCEPTANCE RUNBOOK
 
@@ -43,15 +43,17 @@ last_verified: 2026-03-28
 
 ## Порядок приёмки
 1. Найти `reference_id` в `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md`.
-2. Запустить `pnpm legal:evidence:intake -- --reference=... --source=/abs/path/file`.
-3. Intake-команда положит внешний документ в restricted store с тем же `reference_id`, обновит restricted metadata и repo-side register.
-4. Провести owner review:
+2. При необходимости сгенерировать шаблон: `pnpm legal:evidence:template -- --reference=...`.
+3. Заполнить шаблон или приложить готовый внешний документ.
+4. Запустить `pnpm legal:evidence:intake -- --reference=... --source=/abs/path/file`.
+5. Intake-команда положит внешний документ в restricted store с тем же `reference_id`, обновит restricted metadata и repo-side register.
+6. Провести owner review:
    - content owner проверяет полноту и актуальность;
    - governance owner проверяет, какие docs и audit-выводы должны обновиться;
    - при споре использовать `rejected` локально вне репозитория и не поднимать статус в repo-side register.
-5. После ручной проверки запустить `pnpm legal:evidence:transition -- --reference=... --status=reviewed`.
-6. Обновить связанные документы и затем запустить `pnpm legal:evidence:transition -- --reference=... --status=accepted`.
-7. Запустить `pnpm gate:legal:evidence`, чтобы поймать drift между repo-side register и restricted metadata.
+7. После ручной проверки запустить `pnpm legal:evidence:transition -- --reference=... --status=reviewed`.
+8. Обновить связанные документы и затем запустить `pnpm legal:evidence:transition -- --reference=... --status=accepted`.
+9. Запустить `pnpm gate:legal:evidence`, чтобы поймать drift между repo-side register и restricted metadata.
 
 ## Acceptance checks
 

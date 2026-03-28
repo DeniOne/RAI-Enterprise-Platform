@@ -462,3 +462,8 @@
 - В `package.json` зарегистрирована команда `pnpm legal:evidence:transition`.
 - `scripts/legal-evidence-status.cjs` усилен обязательными status-specific полями и проверкой существования `artifact_path` для non-requested карточек.
 - Практический эффект: полный lifecycle legal evidence теперь замкнут кодом от intake до acceptance, а gate ловит неполные карточки до изменения audit-выводов.
+[2026-03-28 15:02Z] Legal evidence template generator added
+- Добавлен `scripts/legal-evidence-template.cjs`.
+- В `package.json` зарегистрирована команда `pnpm legal:evidence:template`.
+- Генератор выпускает шаблоны в restricted `templates/<reference_id>/`.
+- Для приоритетных `ELP-20260328-01`, `03`, `04`, `06` добавлены специализированные секции, чтобы owners быстрее собирали operator/residency/DPA/lawful-basis evidence.

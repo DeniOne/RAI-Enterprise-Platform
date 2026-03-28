@@ -65,6 +65,10 @@
   - добавлен `scripts/legal-evidence-transition.cjs`
   - доступна команда `pnpm legal:evidence:transition -- --reference=... --status=reviewed|accepted|expired`
   - status gate теперь требует обязательные поля `received_at/reviewed_at/accepted_at` и проверяет существование `artifact_path` для non-requested карточек
+- [x] Legal closeout получил template generation:
+  - добавлен `scripts/legal-evidence-template.cjs`
+  - доступна команда `pnpm legal:evidence:template -- --reference=...`
+  - шаблоны можно выпускать под конкретный `ELP-...` перед intake
 - [x] Audit-пакет `docs/_audit` синхронизирован с новым baseline:
   - due diligence/evidence matrix/delta/privacy map/AI scenarios/RF review обновлены до post-remediation состояния
   - `Legal / Compliance` честно оставлен `NO-GO`, потому что внешний operator/legal evidence всё ещё не подтверждён кодом

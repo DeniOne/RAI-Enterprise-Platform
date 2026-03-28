@@ -3,7 +3,7 @@ id: DOC-ARV-AUDIT-ENTERPRISE-EVIDENCE-MATRIX-20260328
 layer: Archive
 type: Research
 status: approved
-version: 1.10.0
+version: 1.11.0
 owners: [@techlead]
 last_updated: 2026-03-28
 ---
@@ -28,6 +28,7 @@ last_updated: 2026-03-28
 | code | `scripts/legal-evidence-status.cjs` | сверяет legal metadata register, restricted metadata files и status/index drift | legal evidence tracking |
 | code | `scripts/legal-evidence-intake.cjs` | принимает внешний legal artifact в restricted store и синхронизирует `received`-статус | legal evidence intake |
 | code | `scripts/legal-evidence-transition.cjs` | переводит legal evidence lifecycle в `reviewed` / `accepted` / `expired` с sync register/index | legal evidence lifecycle |
+| code | `scripts/legal-evidence-template.cjs` | генерирует шаблоны внешних legal evidence documents по `reference_id` | legal evidence templates |
 | docs | `docs/05_OPERATIONS/COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md` | активный privacy/operator register создан | legal/privacy packet |
 | docs | `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md` | внешний evidence checklist формализован с owner-scope и acceptance criteria | legal closeout packet |
 | docs | `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md` | repo-side metadata register seeded: `11` external artifacts в статусе `requested` | legal tracking baseline |
