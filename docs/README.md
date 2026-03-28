@@ -3,14 +3,14 @@ id: DOC-META-README-RVKI
 layer: Meta
 type: Navigation
 status: approved
-version: 3.8.0
+version: 3.9.0
 owners: [@techlead]
 last_updated: 2026-03-28
 claim_id: CLAIM-CORE-README
 claim_status: asserted
 verified_by: code
 last_verified: 2026-03-28
-evidence_refs: docs/INDEX.md;scripts/lint-docs.cjs;docs/_audit/AUDIT_EXECUTIVE_BRIEF_2026-03-28.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md
+evidence_refs: docs/INDEX.md;scripts/lint-docs.cjs;docs/00_CORE/RAI_EP_DOCUMENT_SYSTEM_MAP.md;docs/00_STRATEGY/RAI_EP_SYSTEM_BLUEPRINT_AND_GENERAL_PLAN.md;docs/01_ARCHITECTURE/RAI_EP_TARGET_ARCHITECTURE_MAP.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md
 ---
 # RAI_EP Documentation
 
@@ -26,6 +26,9 @@ last_verified: 2026-03-28
 - Claim registry: `docs/DOCS_MATRIX.md`
 - Governance contract: `docs/CONTRIBUTING_DOCS.md`
 - Freshness policy: `docs/05_OPERATIONS/DOC_FRESHNESS_SLA.md`
+- Canonical document map: `docs/00_CORE/RAI_EP_DOCUMENT_SYSTEM_MAP.md`
+- Canonical strategy set: `docs/00_STRATEGY/RAI_EP_SYSTEM_BLUEPRINT_AND_GENERAL_PLAN.md`, `docs/00_STRATEGY/RAI_EP_TARGET_OPERATING_MODEL.md`, `docs/00_STRATEGY/RAI_EP_EXECUTION_ROADMAP.md`
+- Canonical architecture/domain/AI/ops set: `docs/01_ARCHITECTURE/RAI_EP_TARGET_ARCHITECTURE_MAP.md`, `docs/02_DOMAINS/RAI_EP_TECHMAP_OPERATING_CORE.md`, `docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md`, `docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md`
 - Active instructions layer: `docs/11_INSTRUCTIONS/`
 - Audit executive brief: `docs/_audit/AUDIT_EXECUTIVE_BRIEF_2026-03-28.md`
 - Latest due diligence package: `docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md`

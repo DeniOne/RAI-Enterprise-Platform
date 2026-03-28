@@ -516,3 +516,9 @@
 - Создан `docs/_audit/AUDIT_EXECUTIVE_BRIEF_2026-03-28.md`.
 - Обновлены `docs/README.md` и `docs/INDEX.md`, чтобы brief поднимался как первый вход в enterprise audit.
 - Практический эффект: итоговый audit-пакет стал проще читать как deliverable для decision-makers без немедленного погружения во все supporting artifacts.
+[2026-03-28 15:20Z] `NEW_reglament_docs` поднят из архива в активный canon
+- Пакет `docs/06_ARCHIVE/NEW_reglament_docs/` сверен с текущим due diligence и source-of-truth policy.
+- Смысловых противоречий runtime baseline не найдено; документы признаны подходящими как claim-managed canonical set.
+- Созданы и зарегистрированы в `DOCS_MATRIX` новые канонические документы в `00_CORE`, `00_STRATEGY`, `01_ARCHITECTURE`, `02_DOMAINS`, `04_AI_SYSTEM`, `05_OPERATIONS`.
+- `README` и `INDEX` дополнены canonical cross-layer entry set.
+- Archive-копии исходного import-пакета удалены, чтобы исключить competing sources of truth.
