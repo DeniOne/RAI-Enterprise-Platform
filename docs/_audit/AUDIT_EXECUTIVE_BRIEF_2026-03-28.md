@@ -4,7 +4,7 @@ layer: Archive
 type: Research
 status: approved
 version: 1.0.0
-owners: [@techlead]
+owners: ["@techlead"]
 last_updated: 2026-03-28
 ---
 # AUDIT EXECUTIVE BRIEF 2026-03-28
