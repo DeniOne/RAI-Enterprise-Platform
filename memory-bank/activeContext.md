@@ -34,12 +34,17 @@
   - `pnpm security:sbom` -> `CycloneDX 1.6` SBOM generated
 - [x] В active operations layer собран новый compliance/deployment packet:
   - `COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER`
+  - `EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET`
   - `HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX`
   - `OSS_LICENSE_AND_IP_REGISTER`
   - `SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY`
   - `KEY_MATERIAL_AND_SECRET_HYGIENE_INCIDENT_2026-03-28`
   - `PRIVACY_SUBJECT_RIGHTS_AND_RETENTION_RUNBOOK`
   - `RELEASE_BACKUP_RESTORE_AND_DR_RUNBOOK`
+- [x] Остаточный `Legal / Compliance = NO-GO` переведён в explicit closeout path:
+  - создан `EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET`
+  - для каждого внешнего legal-блокера теперь есть owner-scope, acceptance criteria и artifact expectations
+  - audit больше не ограничивается общей фразой "собрать legal packet", а указывает точный список required evidence
 - [x] Audit-пакет `docs/_audit` синхронизирован с новым baseline:
   - due diligence/evidence matrix/delta/privacy map/AI scenarios/RF review обновлены до post-remediation состояния
   - `Legal / Compliance` честно оставлен `NO-GO`, потому что внешний operator/legal evidence всё ещё не подтверждён кодом

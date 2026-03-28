@@ -392,3 +392,16 @@
 - В `docs/01_ARCHITECTURE/DATABASE/MODEL_SCOPE_MANIFEST.md` добавлены tenant-scope entries для `TechMapReviewSnapshot`, `TechMapApprovalSnapshot`, `TechMapPublicationLock` как child records `TechMap` aggregate.
 - Подтверждены `pnpm gate:db:scope`, `pnpm lint:docs` и `pnpm lint:docs:matrix:strict`; DB scope manifest и docs governance снова зелёные.
 - Audit-пакет синхронизирован до версии `1.3.0`, чтобы deployment/schema sections больше не ссылались на уже закрытый `gate:db:scope` blocker.
+[2026-03-28 13:35Z] External legal evidence closeout packet formalized
+- В `docs/05_OPERATIONS` добавлен `EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md`.
+- Остаточный legal/compliance blocker переведён из общего тезиса в явный пакет внешних доказательств с owner-scope, urgency, acceptance criteria и artifact sourcing.
+- Синхронизированы:
+  - `COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER`
+  - `RF_COMPLIANCE_REVIEW_2026-03-28`
+  - `ENTERPRISE_DUE_DILIGENCE_2026-03-28`
+  - `ENTERPRISE_EVIDENCE_MATRIX_2026-03-28`
+  - `DELTA_VS_BASELINE_2026-03-28`
+  - `docs/README.md`
+  - `docs/INDEX.md`
+  - `docs/DOCS_MATRIX.md`
+- Практический эффект: legal verdict пока не поднят, но теперь у команды есть конкретный packet для сбора внешних подтверждений по оператору, РКН, локализации, процессорам, transfer decisions, lawful basis и IP.

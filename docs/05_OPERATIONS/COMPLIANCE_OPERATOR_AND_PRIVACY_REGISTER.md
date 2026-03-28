@@ -3,7 +3,7 @@ id: DOC-OPS-COMPLIANCE-OPERATOR-PRIVACY-REGISTER-20260328
 layer: Operations
 type: Report
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: [@techlead]
 last_updated: 2026-03-28
 claim_id: CLAIM-OPS-COMPLIANCE-OPERATOR-PRIVACY-REGISTER-20260328
@@ -67,6 +67,7 @@ last_verified: 2026-03-28
 | Notification status в РКН | `не подтверждено` | в репозитории нет evidence по факту уведомления |
 | Localization decision log | `не подтверждено` | нужен хостинг/residency evidence вне кода |
 | Transborder decision register | `создан как технический каркас` | см. deployment/transborder matrix, но внешние страны и основания не подтверждены |
+| External legal evidence request packet | `создан` | см. `EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md`; фиксирует owner, acceptance criteria и required external artifacts |
 | Subject rights runbook | `создан` | см. `PRIVACY_SUBJECT_RIGHTS_AND_RETENTION_RUNBOOK.md` |
 | Retention / deletion schedule | `частично` | retention поля и WORM контур есть, но полный legal schedule отсутствует |
 | Privacy notice / consent wording | `не подтверждено` | текста публичных/внутренних notices вне repo не обнаружены |
@@ -78,7 +79,7 @@ last_verified: 2026-03-28
 4. Нет полного privacy notice / lawful basis / retention schedule пакета.
 
 ## Прямой следующий operational шаг
-Собрать внешний legal packet поверх этого регистра: реквизиты оператора, notification status, hosting geography, processor contracts и lawful-basis matrix.
+Собрать restricted external evidence bundle по `EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md`: реквизиты оператора, notification status, hosting geography, processor contracts, lawful-basis matrix и chain-of-title.
 
 Эффект:
 - legal/compliance аудит перестанет опираться на догадки;

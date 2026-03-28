@@ -25,6 +25,25 @@
     - security и deployment baseline усилены
     - `Legal / Compliance` остался `NO-GO` из-за отсутствия внешнего operator/legal evidence
 
+2. **External legal evidence closeout packet** [DONE]:
+  - Создан `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md`.
+  - Остаточный legal/compliance gap переведён в явный owner-driven packet:
+    - operator identity and role memo
+    - РКН notification / exemption evidence
+    - hosting/residency attestation
+    - processor/subprocessor + DPA pack
+    - transborder decision log
+    - lawful basis / privacy notice pack
+    - subject-rights operating evidence
+    - retention/deletion approval
+    - chain-of-title pack
+    - OSS unknown-license triage
+    - crypto applicability memo
+  - Обновлены `COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER`, `RF_COMPLIANCE_REVIEW`, `ENTERPRISE_DUE_DILIGENCE`, `ENTERPRISE_EVIDENCE_MATRIX`, `DELTA_VS_BASELINE`, `docs/README.md`, `docs/INDEX.md`, `docs/DOCS_MATRIX.md`.
+  - Практический эффект:
+    - `Legal / Compliance = NO-GO` остаётся честным, но теперь имеет точный closeout path;
+    - enterprise due diligence можно обновлять по фактам внешних артефактов, а не по расплывчатому backlog.
+
 1. **Ledger schema recovery и economy stress-suite stabilization** [DONE]:
   - `packages/prisma-client/fix_schema.ts` расширен до полного recovery-прохода по hardened ledger-контуру, а не только до ремонта `create_ledger_entry_v1`.
   - Скрипт теперь восстанавливает `dblink`, `account_balances`, `check_tenant_state_hardened_v6`, `update_account_balance_v1`, `no_negative_cash`, trigger wiring и сам `create_ledger_entry_v1`.

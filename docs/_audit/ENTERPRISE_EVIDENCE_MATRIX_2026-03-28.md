@@ -3,7 +3,7 @@ id: DOC-ARV-AUDIT-ENTERPRISE-EVIDENCE-MATRIX-20260328
 layer: Archive
 type: Research
 status: approved
-version: 1.4.0
+version: 1.5.0
 owners: [@techlead]
 last_updated: 2026-03-28
 ---
@@ -26,6 +26,7 @@ last_updated: 2026-03-28
 | code | `scripts/generate-license-inventory.cjs` | строит inventory по `pnpm ls --json` | OSS/IP evidence |
 | code | `scripts/generate-sbom.cjs` | генерирует `CycloneDX` SBOM для монорепо | SBOM evidence |
 | docs | `docs/05_OPERATIONS/COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md` | активный privacy/operator register создан | legal/privacy packet |
+| docs | `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md` | внешний evidence checklist формализован с owner-scope и acceptance criteria | legal closeout packet |
 | docs | `docs/05_OPERATIONS/HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX.md` | provider inventory + deployment matrix созданы | deployment/legal packet |
 | docs | `docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md` | активный OSS/IP register создан | legal/IP packet |
 | docs | `docs/05_OPERATIONS/SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY.md` | active security/access policy создана | security governance |
