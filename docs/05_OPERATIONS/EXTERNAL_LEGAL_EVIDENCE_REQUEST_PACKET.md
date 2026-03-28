@@ -3,7 +3,7 @@ id: DOC-OPS-EXTERNAL-LEGAL-EVIDENCE-REQUEST-PACKET-20260328
 layer: Operations
 type: Report
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: [@techlead]
 last_updated: 2026-03-28
 claim_id: CLAIM-OPS-EXTERNAL-LEGAL-EVIDENCE-REQUEST-PACKET-20260328
@@ -29,6 +29,8 @@ last_verified: 2026-03-28
 - где этот evidence обычно берётся;
 - по каким критериям он считается достаточным;
 - какие audit- и operational-решения он разблокирует.
+
+Текущий repo-side tracking для этих позиций ведётся в `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md`.
 
 ## Правило хранения доказательств
 Юридические, договорные и чувствительные артефакты не нужно складывать в открытый Git-репозиторий.
@@ -81,9 +83,9 @@ last_verified: 2026-03-28
 3. После этого добрать 7 и 11 как operational completion layer, чтобы legal/process/security контуры были не только оформлены, но и замкнуты по исполнению.
 
 ## Прямой следующий operational шаг
-Создать restricted evidence folder outside repo и завести по каждой позиции metadata-карточку со статусом `requested`.
+Заполнить named owners в `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md` и прикрепить реальные внешние документы к уже созданным `reference_id` в restricted store.
 
 Эффект:
 - legal backlog перестаёт быть списком общих пожеланий;
-- каждому красному блоку появляется owner, acceptance criteria и путь до закрытия;
+- каждому красному блоку уже есть `reference_id`, acceptance criteria и путь до закрытия;
 - `RF_COMPLIANCE_REVIEW` и enterprise due diligence можно обновлять по фактам, а не по предположениям.

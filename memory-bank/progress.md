@@ -44,6 +44,21 @@
     - `Legal / Compliance = NO-GO` остаётся честным, но теперь имеет точный closeout path;
     - enterprise due diligence можно обновлять по фактам внешних артефактов, а не по расплывчатому backlog.
 
+3. **External legal metadata tracking and restricted store bootstrap** [DONE]:
+  - Создан `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md`.
+  - В регистре seeded `11` external evidence items со статусом `requested`, `reference_id`, review dates и linked docs.
+  - Вне Git создан локальный restricted scaffold:
+    - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/metadata`
+  - В restricted scaffold заведены `INDEX.md` и 11 metadata-карточек `ELP-20260328-01 .. ELP-20260328-11`.
+  - Audit-слой синхронизирован:
+    - `RF_COMPLIANCE_REVIEW`
+    - `ENTERPRISE_DUE_DILIGENCE`
+    - `ENTERPRISE_EVIDENCE_MATRIX`
+    - `DELTA_VS_BASELINE`
+  - Практический эффект:
+    - legal closeout теперь имеет рабочую очередь приёмки, а не только policy-level список;
+    - можно двигать статусы `requested -> received -> reviewed -> accepted` без хранения самих sensitive docs в Git.
+
 1. **Ledger schema recovery и economy stress-suite stabilization** [DONE]:
   - `packages/prisma-client/fix_schema.ts` расширен до полного recovery-прохода по hardened ledger-контуру, а не только до ремонта `create_ledger_entry_v1`.
   - Скрипт теперь восстанавливает `dblink`, `account_balances`, `check_tenant_state_hardened_v6`, `update_account_balance_v1`, `no_negative_cash`, trigger wiring и сам `create_ledger_entry_v1`.

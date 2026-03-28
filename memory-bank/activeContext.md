@@ -45,6 +45,10 @@
   - создан `EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET`
   - для каждого внешнего legal-блокера теперь есть owner-scope, acceptance criteria и artifact expectations
   - audit больше не ограничивается общей фразой "собрать legal packet", а указывает точный список required evidence
+- [x] Closeout path доведён до операционного tracking:
+  - создан `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER`
+  - seeded `11` metadata entries со статусом `requested`
+  - локальный restricted store scaffold создан вне Git в `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/metadata`
 - [x] Audit-пакет `docs/_audit` синхронизирован с новым baseline:
   - due diligence/evidence matrix/delta/privacy map/AI scenarios/RF review обновлены до post-remediation состояния
   - `Legal / Compliance` честно оставлен `NO-GO`, потому что внешний operator/legal evidence всё ещё не подтверждён кодом

@@ -405,3 +405,20 @@
   - `docs/INDEX.md`
   - `docs/DOCS_MATRIX.md`
 - Практический эффект: legal verdict пока не поднят, но теперь у команды есть конкретный packet для сбора внешних подтверждений по оператору, РКН, локализации, процессорам, transfer decisions, lawful basis и IP.
+[2026-03-28 13:18Z] External legal metadata register and restricted store scaffold created
+- В `docs/05_OPERATIONS` добавлен `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md`.
+- В репозитории теперь seeded `11` external legal evidence items со статусом `requested`, `reference_id`, `review_due` и linked docs.
+- Вне Git создан local restricted scaffold:
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/metadata`
+  - добавлены `INDEX.md` и 11 metadata-карточек `ELP-20260328-01 .. ELP-20260328-11`
+- Синхронизированы:
+  - `EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET`
+  - `COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER`
+  - `RF_COMPLIANCE_REVIEW_2026-03-28`
+  - `ENTERPRISE_DUE_DILIGENCE_2026-03-28`
+  - `ENTERPRISE_EVIDENCE_MATRIX_2026-03-28`
+  - `DELTA_VS_BASELINE_2026-03-28`
+  - `docs/README.md`
+  - `docs/INDEX.md`
+  - `docs/DOCS_MATRIX.md`
+- Практический эффект: legal/compliance closeout получил change-controlled queue для внешних артефактов без помещения самих документов в Git.
