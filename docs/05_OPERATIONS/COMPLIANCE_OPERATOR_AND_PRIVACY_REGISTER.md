@@ -3,7 +3,7 @@ id: DOC-OPS-COMPLIANCE-OPERATOR-PRIVACY-REGISTER-20260328
 layer: Operations
 type: Report
 status: approved
-version: 1.2.0
+version: 1.3.0
 owners: [@techlead]
 last_updated: 2026-03-28
 claim_id: CLAIM-OPS-COMPLIANCE-OPERATOR-PRIVACY-REGISTER-20260328
@@ -69,6 +69,7 @@ last_verified: 2026-03-28
 | Transborder decision register | `создан как технический каркас` | см. deployment/transborder matrix, но внешние страны и основания не подтверждены |
 | External legal evidence request packet | `создан` | см. `EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md`; фиксирует owner, acceptance criteria и required external artifacts |
 | External legal evidence metadata register | `создан` | см. `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md`; фиксирует `reference_id`, statuses и review queue по 11 внешним артефактам |
+| External legal evidence acceptance runbook | `создан` | см. `WORKFLOWS/EXTERNAL_LEGAL_EVIDENCE_ACCEPTANCE_RUNBOOK.md`; фиксирует named owners и порядок `requested -> accepted` |
 | Subject rights runbook | `создан` | см. `PRIVACY_SUBJECT_RIGHTS_AND_RETENTION_RUNBOOK.md` |
 | Retention / deletion schedule | `частично` | retention поля и WORM контур есть, но полный legal schedule отсутствует |
 | Privacy notice / consent wording | `не подтверждено` | текста публичных/внутренних notices вне repo не обнаружены |
@@ -80,7 +81,7 @@ last_verified: 2026-03-28
 4. Нет полного privacy notice / lawful basis / retention schedule пакета.
 
 ## Прямой следующий operational шаг
-Собрать реальные внешние документы по already seeded `reference_id` из `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md`: реквизиты оператора, notification status, hosting geography, processor contracts, lawful-basis matrix и chain-of-title.
+Собрать реальные внешние документы по already seeded `reference_id` из `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md` и прогнать их через `WORKFLOWS/EXTERNAL_LEGAL_EVIDENCE_ACCEPTANCE_RUNBOOK.md`: реквизиты оператора, notification status, hosting geography, processor contracts, lawful-basis matrix и chain-of-title.
 
 Эффект:
 - legal/compliance аудит перестанет опираться на догадки;

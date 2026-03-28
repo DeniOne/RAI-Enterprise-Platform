@@ -3,7 +3,7 @@ id: DOC-ARV-AUDIT-RF-COMPLIANCE-REVIEW-20260328
 layer: Archive
 type: Research
 status: approved
-version: 1.3.0
+version: 1.4.0
 owners: [@techlead]
 last_updated: 2026-03-28
 ---
@@ -26,7 +26,7 @@ last_updated: 2026-03-28
 
 `NO-GO` для внешнего запуска с обработкой ПДн граждан РФ.
 
-Причина: теперь в проекте уже есть активный legal/privacy packet, отдельный external evidence request packet и seeded metadata register, но ключевые внешние доказательства всё ещё отсутствуют:
+Причина: теперь в проекте уже есть активный legal/privacy packet, отдельный external evidence request packet, seeded metadata register и acceptance runbook, но ключевые внешние доказательства всё ещё отсутствуют:
 - не подтверждён оператор и его реквизиты;
 - не подтверждён notification status в РКН;
 - не подтверждена actual localization / hosting geography;
@@ -37,6 +37,7 @@ last_updated: 2026-03-28
 - Создан active privacy/operator register.
 - Создан active external legal evidence request packet с owner-scope и acceptance criteria.
 - Создан active external legal evidence metadata register со статусами `requested` по 11 позициям.
+- Создан active acceptance runbook с named owners и verdict-upgrade criteria.
 - Создан active hosting/transborder/deployment matrix.
 - Создан active OSS/IP register.
 - Создан subject-rights / retention runbook.
@@ -47,7 +48,7 @@ last_updated: 2026-03-28
 
 | Норма / источник | Применимость | Что требует | Что уже есть | Gap | Риск | Что сделать |
 |---|---|---|---|---|---|---|
-| 152-ФЗ `О персональных данных` | `применимо` | operator roles, lawful basis, цели, состав данных, меры защиты | active privacy register, external evidence request packet, metadata register, data-flow map, subject-rights runbook, code-backed PII controls | юридическое лицо оператора и final lawful basis pack не подтверждены | юридический + организационный + технический | прикрепить реальные артефакты к `reference_id` из `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md` |
+| 152-ФЗ `О персональных данных` | `применимо` | operator roles, lawful basis, цели, состав данных, меры защиты | active privacy register, external evidence request packet, metadata register, acceptance runbook, data-flow map, subject-rights runbook, code-backed PII controls | юридическое лицо оператора и final lawful basis pack не подтверждены | юридический + организационный + технический | прикрепить реальные артефакты к `reference_id` из `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md` и прогнать через acceptance runbook |
 | Notification в РКН | `вероятно применимо` | уведомление об обработке ПДн при наступлении обязанностей оператора | technical register создан, но самого evidence по notification нет | status `не подтверждено` | юридический + организационный | провести отдельную юр.валидацию и зафиксировать статус notification |
 | Локализация ПДн граждан РФ | `вероятно применимо` | первичное хранение/актуализация баз ПДн граждан РФ на территории РФ | self-host/localized path описан в deployment matrix | actual hosting geography и contracts не подтверждены | юридический + технический | зафиксировать hosting matrix и residency evidence вне repo |
 | Трансграничная передача ПДн | `требует отдельной валидации` | оценить передачи вне РФ, страны/получателей, правовые основания | provider inventory теперь есть (`OpenRouter`, `Telegram`, `DaData`), criteria зафиксированы в external evidence packet | transfer decision log и legal basis отсутствуют | юридический + организационный | завести transborder register и owner decision по каждому external provider по packet criteria |
@@ -66,7 +67,7 @@ last_updated: 2026-03-28
 - Технический риск: средне-высокий; кодовые privacy/security controls усилились, но без внешней юр./ops валидации этого недостаточно.
 
 ## 6. Прямой следующий legal/compliance шаг
-Собрать внешний пакет подтверждений по `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md` и seeded `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md`:
+Собрать внешний пакет подтверждений по `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md`, seeded `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md` и `docs/05_OPERATIONS/WORKFLOWS/EXTERNAL_LEGAL_EVIDENCE_ACCEPTANCE_RUNBOOK.md`:
 - кто оператор;
 - статус уведомления в РКН;
 - где реально хранятся и обрабатываются данные;

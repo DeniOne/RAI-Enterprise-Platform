@@ -3,7 +3,7 @@ id: DOC-OPS-EXTERNAL-LEGAL-EVIDENCE-REQUEST-PACKET-20260328
 layer: Operations
 type: Report
 status: approved
-version: 1.1.0
+version: 1.2.0
 owners: [@techlead]
 last_updated: 2026-03-28
 claim_id: CLAIM-OPS-EXTERNAL-LEGAL-EVIDENCE-REQUEST-PACKET-20260328
@@ -31,6 +31,7 @@ last_verified: 2026-03-28
 - какие audit- и operational-решения он разблокирует.
 
 Текущий repo-side tracking для этих позиций ведётся в `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md`.
+Порядок приёмки и verdict-upgrade задаёт `WORKFLOWS/EXTERNAL_LEGAL_EVIDENCE_ACCEPTANCE_RUNBOOK.md`.
 
 ## Правило хранения доказательств
 Юридические, договорные и чувствительные артефакты не нужно складывать в открытый Git-репозиторий.

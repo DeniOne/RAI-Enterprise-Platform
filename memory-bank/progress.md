@@ -59,6 +59,23 @@
     - legal closeout теперь имеет рабочую очередь приёмки, а не только policy-level список;
     - можно двигать статусы `requested -> received -> reviewed -> accepted` без хранения самих sensitive docs в Git.
 
+4. **External legal acceptance workflow and owner routing** [DONE]:
+  - Создан `docs/05_OPERATIONS/WORKFLOWS/EXTERNAL_LEGAL_EVIDENCE_ACCEPTANCE_RUNBOOK.md`.
+  - В `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER` добавлен alias owner map и named owners по всем `ELP-20260328-01 .. 11`.
+  - Для legal/privacy closeout docs усилен review guard в `.github/CODEOWNERS`:
+    - `@chief_legal_officer`
+    - `@dpo`
+    - `@board_of_directors`
+    - совместно с `@techlead` и `@backend-lead`
+  - Audit-пакет синхронизирован:
+    - `RF_COMPLIANCE_REVIEW`
+    - `ENTERPRISE_DUE_DILIGENCE`
+    - `ENTERPRISE_EVIDENCE_MATRIX`
+    - `DELTA_VS_BASELINE`
+  - Практический эффект:
+    - локально закрыт весь исполнимый кусок legal closeout;
+    - дальше blocker только один: фактическое появление внешних документов для перевода карточек из `requested` в `received`.
+
 1. **Ledger schema recovery и economy stress-suite stabilization** [DONE]:
   - `packages/prisma-client/fix_schema.ts` расширен до полного recovery-прохода по hardened ledger-контуру, а не только до ремонта `create_ledger_entry_v1`.
   - Скрипт теперь восстанавливает `dblink`, `account_balances`, `check_tenant_state_hardened_v6`, `update_account_balance_v1`, `no_negative_cash`, trigger wiring и сам `create_ledger_entry_v1`.

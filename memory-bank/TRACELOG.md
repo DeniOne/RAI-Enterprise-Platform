@@ -422,3 +422,15 @@
   - `docs/INDEX.md`
   - `docs/DOCS_MATRIX.md`
 - Практический эффект: legal/compliance closeout получил change-controlled queue для внешних артефактов без помещения самих документов в Git.
+[2026-03-28 13:52Z] External legal owner routing and acceptance workflow finalized
+- Создан `docs/05_OPERATIONS/WORKFLOWS/EXTERNAL_LEGAL_EVIDENCE_ACCEPTANCE_RUNBOOK.md`.
+- `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER` усилен alias owner map и named owners по всем `ELP-20260328-01 .. 11`.
+- `.github/CODEOWNERS` обновлён: legal/privacy closeout docs теперь требуют explicit review от legal/privacy aliases вместе с tech/runtime owners.
+- Синхронизированы:
+  - `EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET`
+  - `COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER`
+  - `RF_COMPLIANCE_REVIEW_2026-03-28`
+  - `ENTERPRISE_DUE_DILIGENCE_2026-03-28`
+  - `ENTERPRISE_EVIDENCE_MATRIX_2026-03-28`
+  - `DELTA_VS_BASELINE_2026-03-28`
+- Практический эффект: внутри локального контура plan доведён до предела исполнимости; оставшийся blocker больше не процедурный, а внешний evidence-dependent.

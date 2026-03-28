@@ -49,6 +49,10 @@
   - создан `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER`
   - seeded `11` metadata entries со статусом `requested`
   - локальный restricted store scaffold создан вне Git в `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/metadata`
+- [x] Последний локально достижимый слой legal closeout тоже закрыт:
+  - создан `WORKFLOWS/EXTERNAL_LEGAL_EVIDENCE_ACCEPTANCE_RUNBOOK`
+  - owner-routing переведён в named aliases `@chief_legal_officer`, `@dpo`, `@product_lead`, `@backend-lead`, `@data-architecture`, `@board_of_directors`
+  - `.github/CODEOWNERS` усилен explicit review guard для legal/privacy closeout docs
 - [x] Audit-пакет `docs/_audit` синхронизирован с новым baseline:
   - due diligence/evidence matrix/delta/privacy map/AI scenarios/RF review обновлены до post-remediation состояния
   - `Legal / Compliance` честно оставлен `NO-GO`, потому что внешний operator/legal evidence всё ещё не подтверждён кодом

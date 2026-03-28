@@ -3,7 +3,7 @@ id: DOC-ARV-AUDIT-ENTERPRISE-DUE-DILIGENCE-20260328
 layer: Archive
 type: Research
 status: approved
-version: 1.6.0
+version: 1.7.0
 owners: [@techlead]
 last_updated: 2026-03-28
 ---
@@ -16,7 +16,7 @@ last_updated: 2026-03-28
 - Commit baseline: `55d846221ec8374f94c7de9257caabf0427915e1`
 - Excluded paths: `apps/gripil-web`, `apps/gripil-web-awwwards`
 - Source of truth order: `code/tests/gates > generated manifests > docs`
-- Текущая синхронизация версии `1.6.0` отражает post-baseline remediation на ту же дату и опирается на локально воспроизведённые команды, scripts и workflows.
+- Текущая синхронизация версии `1.7.0` отражает post-baseline remediation на ту же дату и опирается на локально воспроизведённые команды, scripts и workflows.
 - Canonical docs set:
   - `docs/00_CORE`
   - `docs/01_ARCHITECTURE`
@@ -32,7 +32,7 @@ last_updated: 2026-03-28
 | Ось | Вердикт | Решающий критерий | Ключевые блокеры | Что поднимает статус |
 |---|---|---|---|---|
 | Security | `CONDITIONAL GO` | runtime baseline зелёный, `secret scan`, `security audit`, `SAST/SCA/SBOM` workflows добавлены | `37 high / 2 critical` dependency findings; history/rotation debt; локальные workspace secrets; remote attestation/CodeQL results ещё не зафиксированы как closed loop | закрыть критичные advisories, подтвердить rotation/revocation, получить первый CI-backed AppSec cycle |
-| Legal / Compliance | `NO-GO` | active legal/privacy packet теперь есть, внешний evidence checklist и metadata register формализованы, но сами operator/legal доказательства не подтверждены | нет подтверждённого notification status в РКН; нет actual residency evidence; нет processor contracts; нет chain-of-title pack | заполнить реальные артефакты по `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md` и подтвердить localization/transborder decisions |
+| Legal / Compliance | `NO-GO` | active legal/privacy packet теперь есть, внешний evidence checklist, metadata register и acceptance runbook формализованы, но сами operator/legal доказательства не подтверждены | нет подтверждённого notification status в РКН; нет actual residency evidence; нет processor contracts; нет chain-of-title pack | заполнить реальные артефакты по `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md` и прогнать их через acceptance runbook |
 | Deployment / Operations | `CONDITIONAL GO` | build/test/gates зелёные, release/backup/DR runbooks и deployment matrix формализованы | нет последнего подтверждённого backup/restore execution report; install/upgrade packet неполный; branch protection evidence остаётся внешним | провести backup/restore drill, оформить installability packet и зафиксировать GitHub protection state |
 | Product Readiness | `CONDITIONAL GO` | разработку и controlled pilot продолжать можно без restructuring | внешний legal/compliance контур не готов; security debt по зависимостям и secret hygiene не закрыт до конца | ограничить pilot self-host/localized контуром и закрыть legal/AppSec backlog |
 
@@ -103,7 +103,7 @@ Overall: 6.5/10
 5. Schema-integrity baseline усилен отдельным безопасным `prisma validate` wrapper.
 6. Добавлен reproducible security baseline: audit, secret scan, license inventory, SBOM.
 7. Добавлены `CodeQL`, PR dependency review и provenance-ready security workflow.
-8. Операционный слой получил активный compliance/deployment/privacy packet в `docs/05_OPERATIONS`, включая explicit external evidence request packet и metadata register.
+8. Операционный слой получил активный compliance/deployment/privacy packet в `docs/05_OPERATIONS`, включая explicit external evidence request packet, metadata register и acceptance runbook.
 9. `CODEOWNERS` расширен на workflows, scripts и критичные runtime paths.
 10. Текущий Git больше не содержит tracked key material и tracked `.env` с секретами.
 
@@ -129,7 +129,7 @@ Overall: 6.5/10
 | `IaC / container scanning` | `absent` | High | `platform/infra` | infra misconfig и image risk | выбрать scanner для `Dockerfile/helm/gateway` | ввести policy-as-code | сделать release blocking |
 | `DAST / pentest readiness` | `absent` | High | `security/AppSec`, `ops/SRE` | runtime/API abuse | определить minimal surface | провести hardening | провести внешний pentest |
 | `Threat modeling` | `absent` | High | `product/governance`, `security/AppSec`, `backend` | blind spots в design | собрать model по `api/web/telegram/AI` | связать controls с backlog | обновлять перед major launch |
-| `Privacy impact assessment + legal artifact inventory` | `active registers created; external evidence checklist and metadata register created; external legal evidence missing` | Critical | `legal/compliance`, `product/governance` | 152-ФЗ / RKN / retention / subject rights | заполнить actual artifacts по `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER` | оформить localization/notification/transfer decisions | ввести регулярный compliance review |
+| `Privacy impact assessment + legal artifact inventory` | `active registers created; external evidence checklist, metadata register and acceptance runbook created; external legal evidence missing` | Critical | `legal/compliance`, `product/governance` | 152-ФЗ / RKN / retention / subject rights | заполнить actual artifacts по `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER` | оформить localization/notification/transfer decisions | ввести регулярный compliance review |
 | `Access review + branch protection evidence` | `CODEOWNERS expanded; GitHub settings unconfirmed` | High | `ops/SRE`, `product/governance` | insider / sabotage / weak ownership | снять settings baseline в GitHub UI | ввести quarterly review | связать с audit packet |
 | `Backup / restore / DR drills` | `runbooks and scripts exist; latest execution evidence absent` | High | `ops/SRE`, `platform/infra` | unrecoverable deployment failure | провести rehearsal и зафиксировать report | стандартизовать RTO/RPO acceptance | сделать регулярные drills |
 | `Contract testing + migration rollback tests` | `partial` | High | `backend`, `data` | runtime/schema drift | выбрать critical contracts | добавить rollback test pack | сделать blocking gate |
@@ -141,7 +141,7 @@ Overall: 6.5/10
 
 - Закрыть `critical/high` dependency backlog по top advisories из `security-audit-summary.json`.
 - Подтвердить rotation/revocation по `ca.key` и удалённым tracked `.env`.
-- Заполнить actual artifacts по `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER`: operator, notification, residency, processor, lawful basis, chain-of-title.
+- Заполнить actual artifacts по `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER` и провести их через `EXTERNAL_LEGAL_EVIDENCE_ACCEPTANCE_RUNBOOK`: operator, notification, residency, processor, lawful basis, chain-of-title.
 - Провести первый backup/restore rehearsal и приложить execution evidence.
 
 ### 60 дней
@@ -168,6 +168,7 @@ Overall: 6.5/10
   - `docs/05_OPERATIONS/COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md`
   - `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md`
   - `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md`
+  - `docs/05_OPERATIONS/WORKFLOWS/EXTERNAL_LEGAL_EVIDENCE_ACCEPTANCE_RUNBOOK.md`
   - `docs/05_OPERATIONS/HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX.md`
   - `docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md`
   - `docs/05_OPERATIONS/SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY.md`

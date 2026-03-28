@@ -18,4 +18,11 @@
 /apps/telegram-bot/src/** @techlead @backend-lead
 /apps/web/app/** @techlead
 /apps/web/lib/** @techlead
+/docs/05_OPERATIONS/COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md @techlead @backend-lead @chief_legal_officer @dpo
+/docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md @techlead @backend-lead @chief_legal_officer @dpo
+/docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md @techlead @backend-lead @chief_legal_officer @dpo
+/docs/05_OPERATIONS/HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX.md @techlead @backend-lead @chief_legal_officer @dpo
+/docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md @techlead @backend-lead @chief_legal_officer @board_of_directors
+/docs/05_OPERATIONS/WORKFLOWS/EXTERNAL_LEGAL_EVIDENCE_ACCEPTANCE_RUNBOOK.md @techlead @backend-lead @chief_legal_officer @dpo
+/docs/05_OPERATIONS/WORKFLOWS/PRIVACY_SUBJECT_RIGHTS_AND_RETENTION_RUNBOOK.md @techlead @backend-lead @chief_legal_officer @dpo
 /docs/05_OPERATIONS/** @techlead @backend-lead
