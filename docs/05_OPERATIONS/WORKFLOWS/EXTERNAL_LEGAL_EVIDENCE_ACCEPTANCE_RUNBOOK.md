@@ -3,14 +3,14 @@ id: DOC-OPS-WORKFLOWS-EXTERNAL-LEGAL-EVIDENCE-ACCEPTANCE-RUNBOOK-20260328
 layer: Operations
 type: Runbook
 status: approved
-version: 1.8.0
+version: 1.9.0
 owners: [@techlead]
 last_updated: 2026-03-28
 claim_id: CLAIM-OPS-WORKFLOWS-EXTERNAL-LEGAL-EVIDENCE-ACCEPTANCE-RUNBOOK-20260328
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-28
-evidence_refs: package.json;scripts/legal-evidence-template.cjs;scripts/legal-evidence-prefill.cjs;scripts/legal-evidence-status.cjs;scripts/legal-evidence-intake.cjs;scripts/legal-evidence-transition.cjs;scripts/legal-evidence-verdict.cjs;scripts/legal-evidence-handoff.cjs;scripts/legal-evidence-owner-packets.cjs;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md;.github/CODEOWNERS
+evidence_refs: package.json;scripts/legal-evidence-template.cjs;scripts/legal-evidence-prefill.cjs;scripts/legal-evidence-status.cjs;scripts/legal-evidence-intake.cjs;scripts/legal-evidence-transition.cjs;scripts/legal-evidence-verdict.cjs;scripts/legal-evidence-handoff.cjs;scripts/legal-evidence-owner-packets.cjs;scripts/legal-evidence-priority-board.cjs;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md;.github/CODEOWNERS
 ---
 # EXTERNAL LEGAL EVIDENCE ACCEPTANCE RUNBOOK
 
@@ -58,6 +58,7 @@ last_verified: 2026-03-28
 11. Запустить `pnpm legal:evidence:verdict`, чтобы пересчитать текущий legal verdict и список blockers до следующего статуса.
 12. Запустить `pnpm legal:evidence:handoff`, чтобы разложить blockers по named owners, draft-путям и intake-командам.
 13. Запустить `pnpm legal:evidence:owner-packets`, чтобы выпустить owner-specific packets в restricted store и передать каждому owner уже собранную очередь с командами.
+14. Запустить `pnpm legal:evidence:priority-board`, чтобы увидеть machine-sorted intake order для перехода `NO-GO -> CONDITIONAL GO`.
 
 Важно:
 - `prefill` создаёт только repo-derived working draft;
@@ -88,6 +89,7 @@ last_verified: 2026-03-28
 Машинный отчёт по этим переходам публикуется в `var/compliance/external-legal-evidence-verdict.md`.
 Owner-oriented handoff queue публикуется в `var/compliance/external-legal-evidence-handoff.md`.
 Owner-specific packets публикуются во внешнем restricted store: `owner-packets/INDEX.md` и `owner-packets/<owner>/HANDOFF.md`.
+Priority board публикуется в `var/compliance/external-legal-evidence-priority-board.md`.
 
 ## Review guard
 - Все правки в legal closeout docs проходят review через `CODEOWNERS`.

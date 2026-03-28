@@ -190,6 +190,18 @@
     - owner handoff больше не требует ручной сборки файлов или команд;
     - каждый named owner получает готовый packet по своим blockers, что ускоряет intake реальных внешних документов.
 
+13. **Machine priority board for legal closeout** [DONE]:
+  - Добавлен `scripts/legal-evidence-priority-board.cjs`.
+  - В `package.json` добавлены команды:
+    - `pnpm legal:evidence:priority-board`
+    - `pnpm gate:legal:evidence:priority-board`
+  - Generator использует machine-readable verdict и handoff reports и выпускает:
+    - `var/compliance/external-legal-evidence-priority-board.json`
+    - `var/compliance/external-legal-evidence-priority-board.md`
+  - Практический эффект:
+    - legal intake больше не стартует с ручного выбора порядка;
+    - команда получает единый machine-sorted порядок закрытия blockers до `CONDITIONAL GO`.
+
 1. **Ledger schema recovery и economy stress-suite stabilization** [DONE]:
   - `packages/prisma-client/fix_schema.ts` расширен до полного recovery-прохода по hardened ledger-контуру, а не только до ремонта `create_ledger_entry_v1`.
   - Скрипт теперь восстанавливает `dblink`, `account_balances`, `check_tenant_state_hardened_v6`, `update_account_balance_v1`, `no_negative_cash`, trigger wiring и сам `create_ledger_entry_v1`.

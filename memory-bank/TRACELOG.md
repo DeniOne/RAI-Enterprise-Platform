@@ -505,3 +505,10 @@
   - `owner-packets/INDEX.md`
   - `owner-packets/<owner>/HANDOFF.md`
 - Практический эффект: named owners получают уже готовые packet-файлы со своими `ELP-*`, draft-путями и командами intake/review/accept без ручной сборки.
+[2026-03-28 14:45Z] Machine priority board добавлен поверх legal verdict и owner handoff
+- Добавлен `scripts/legal-evidence-priority-board.cjs`.
+- В `package.json` добавлены команды:
+  - `pnpm legal:evidence:priority-board`
+  - `pnpm gate:legal:evidence:priority-board`
+- Новый board использует `external-legal-evidence-verdict.json` и `external-legal-evidence-handoff.json`, после чего публикует единый intake order в `var/compliance/external-legal-evidence-priority-board.{json,md}`.
+- Практический эффект: команда видит не только очереди owners, но и точный machine-sorted порядок закрытия blockers до перехода `NO-GO -> CONDITIONAL GO`.

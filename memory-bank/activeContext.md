@@ -88,6 +88,11 @@
   - доступны `pnpm legal:evidence:owner-packets` и `pnpm gate:legal:evidence:owner-packets`
   - restricted store теперь получает `owner-packets/INDEX.md` и `owner-packets/<owner>/HANDOFF.md`
   - handoff можно передавать owners уже как готовые packet-файлы с intake/review/accept командами
+- [x] Legal closeout получил machine priority board:
+  - добавлен `scripts/legal-evidence-priority-board.cjs`
+  - доступны `pnpm legal:evidence:priority-board` и `pnpm gate:legal:evidence:priority-board`
+  - board публикуется в `var/compliance/external-legal-evidence-priority-board.{json,md}`
+  - blockers до `CONDITIONAL GO` теперь ранжируются в единый intake order `01/03/04/06 -> 02/05/08/09`
 - [x] Audit-пакет `docs/_audit` синхронизирован с новым baseline:
   - due diligence/evidence matrix/delta/privacy map/AI scenarios/RF review обновлены до post-remediation состояния
   - `Legal / Compliance` честно оставлен `NO-GO`, потому что внешний operator/legal evidence всё ещё не подтверждён кодом
