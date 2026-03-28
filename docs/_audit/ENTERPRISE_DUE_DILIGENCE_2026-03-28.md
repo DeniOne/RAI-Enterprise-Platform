@@ -3,7 +3,7 @@ id: DOC-ARV-AUDIT-ENTERPRISE-DUE-DILIGENCE-20260328
 layer: Archive
 type: Research
 status: approved
-version: 1.7.0
+version: 1.8.0
 owners: [@techlead]
 last_updated: 2026-03-28
 ---
@@ -80,6 +80,7 @@ Overall: 6.5/10
 | `pnpm gate:secrets` | PASS | `tracked_findings=0`, `tracked_critical=0`; локальные workspace warnings есть, но в Git больше не tracked |
 | `pnpm security:licenses` | PASS | построен OSS inventory: `189 packages`, `33 unknown licenses` |
 | `pnpm security:sbom` | PASS | генерируется `CycloneDX 1.6` SBOM в `var/security/bom.cdx.json` |
+| `pnpm gate:legal:evidence` | PASS | legal register, restricted metadata store и index согласованы; `11 requested`, `0 overdue`, `0 issues` |
 | `pnpm gate:routing:primary-slices` | PASS, `4/4` suites, `86/86` tests | routing corpus и case-memory baseline зелёные |
 | `pnpm --filter api test -- --runInBand` | PASS, `252/252` suites, `1313 passed`, `1 skipped` | backend regression baseline восстановлен |
 | `pnpm --filter web test` | PASS, `42/42` suites, `482/482` tests | frontend regression baseline восстановлен |
@@ -103,7 +104,7 @@ Overall: 6.5/10
 5. Schema-integrity baseline усилен отдельным безопасным `prisma validate` wrapper.
 6. Добавлен reproducible security baseline: audit, secret scan, license inventory, SBOM.
 7. Добавлены `CodeQL`, PR dependency review и provenance-ready security workflow.
-8. Операционный слой получил активный compliance/deployment/privacy packet в `docs/05_OPERATIONS`, включая explicit external evidence request packet, metadata register и acceptance runbook.
+8. Операционный слой получил активный compliance/deployment/privacy packet в `docs/05_OPERATIONS`, включая explicit external evidence request packet, metadata register, acceptance runbook и reproducible legal metadata gate.
 9. `CODEOWNERS` расширен на workflows, scripts и критичные runtime paths.
 10. Текущий Git больше не содержит tracked key material и tracked `.env` с секретами.
 

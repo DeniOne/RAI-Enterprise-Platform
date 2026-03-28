@@ -76,6 +76,22 @@
     - локально закрыт весь исполнимый кусок legal closeout;
     - дальше blocker только один: фактическое появление внешних документов для перевода карточек из `requested` в `received`.
 
+5. **Reproducible legal evidence status gate** [DONE]:
+  - Добавлен `scripts/legal-evidence-status.cjs`.
+  - В `package.json` добавлены:
+    - `pnpm legal:evidence:status`
+    - `pnpm gate:legal:evidence`
+  - Скрипт сверяет:
+    - `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md`
+    - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/metadata/*.md`
+    - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/metadata/INDEX.md`
+  - Скрипт пишет отчёты:
+    - `var/compliance/external-legal-evidence-status.json`
+    - `var/compliance/external-legal-evidence-status.md`
+  - Практический эффект:
+    - legal evidence lifecycle теперь проверяется кодом, а не только глазами;
+    - после появления внешних документов команда сможет быстро ловить status drift и overdue items.
+
 1. **Ledger schema recovery и economy stress-suite stabilization** [DONE]:
   - `packages/prisma-client/fix_schema.ts` расширен до полного recovery-прохода по hardened ledger-контуру, а не только до ремонта `create_ledger_entry_v1`.
   - Скрипт теперь восстанавливает `dblink`, `account_balances`, `check_tenant_state_hardened_v6`, `update_account_balance_v1`, `no_negative_cash`, trigger wiring и сам `create_ledger_entry_v1`.

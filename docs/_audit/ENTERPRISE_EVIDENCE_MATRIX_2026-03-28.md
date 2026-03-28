@@ -3,7 +3,7 @@ id: DOC-ARV-AUDIT-ENTERPRISE-EVIDENCE-MATRIX-20260328
 layer: Archive
 type: Research
 status: approved
-version: 1.7.0
+version: 1.8.0
 owners: [@techlead]
 last_updated: 2026-03-28
 ---
@@ -25,6 +25,7 @@ last_updated: 2026-03-28
 | code | `scripts/prisma-validate-safe.cjs` | schema validate стал воспроизводимым с placeholder `DATABASE_URL` | schema-integrity evidence |
 | code | `scripts/generate-license-inventory.cjs` | строит inventory по `pnpm ls --json` | OSS/IP evidence |
 | code | `scripts/generate-sbom.cjs` | генерирует `CycloneDX` SBOM для монорепо | SBOM evidence |
+| code | `scripts/legal-evidence-status.cjs` | сверяет legal metadata register, restricted metadata files и status/index drift | legal evidence tracking |
 | docs | `docs/05_OPERATIONS/COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md` | активный privacy/operator register создан | legal/privacy packet |
 | docs | `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md` | внешний evidence checklist формализован с owner-scope и acceptance criteria | legal closeout packet |
 | docs | `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md` | repo-side metadata register seeded: `11` external artifacts в статусе `requested` | legal tracking baseline |
@@ -54,6 +55,7 @@ last_updated: 2026-03-28
 | `pnpm gate:secrets` | PASS | `tracked_findings=0`, `tracked_critical=0`, `workspace_local_findings=8` |
 | `pnpm security:licenses` | PASS | `189 packages`, `33 unknown licenses` |
 | `pnpm security:sbom` | PASS | `CycloneDX 1.6` SBOM generated в `var/security/bom.cdx.json` |
+| `pnpm gate:legal:evidence` | PASS | legal metadata register и restricted store согласованы; `11 requested`, `0 overdue`, `0 issues` |
 | `git rm --cached mg-core/backend/.env mg-core/backend/src/mg-chat/.env` | DONE | tracked secret env removed from index; remain workspace-only |
 
 ## 3. Generated Local Artifacts
@@ -66,6 +68,8 @@ last_updated: 2026-03-28
 | `var/security/license-inventory.md` | generated | human-readable license summary |
 | `var/security/bom.cdx.json` | generated | `CycloneDX 1.6` SBOM |
 | `var/schema/prisma-validate-safe.json` | generated | schema validate report |
+| `var/compliance/external-legal-evidence-status.json` | generated | machine-readable legal evidence status |
+| `var/compliance/external-legal-evidence-status.md` | generated | human-readable legal evidence status |
 
 ## 4. Внешние Официальные Baselines
 

@@ -434,3 +434,17 @@
   - `ENTERPRISE_EVIDENCE_MATRIX_2026-03-28`
   - `DELTA_VS_BASELINE_2026-03-28`
 - Практический эффект: внутри локального контура plan доведён до предела исполнимости; оставшийся blocker больше не процедурный, а внешний evidence-dependent.
+[2026-03-28 14:18Z] Reproducible legal evidence status gate added
+- Добавлен `scripts/legal-evidence-status.cjs`.
+- В `package.json` зарегистрированы `pnpm legal:evidence:status` и `pnpm gate:legal:evidence`.
+- Gate сверяет:
+  - repo-side metadata register
+  - restricted metadata files
+  - restricted `INDEX.md`
+- Gate пишет отчёты в `var/compliance/` и даёт machine-readable baseline по status drift и overdue items.
+- Audit/docs sync:
+  - `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER`
+  - `EXTERNAL_LEGAL_EVIDENCE_ACCEPTANCE_RUNBOOK`
+  - `ENTERPRISE_EVIDENCE_MATRIX`
+  - `ENTERPRISE_DUE_DILIGENCE`
+  - `DELTA_VS_BASELINE`

@@ -53,6 +53,10 @@
   - создан `WORKFLOWS/EXTERNAL_LEGAL_EVIDENCE_ACCEPTANCE_RUNBOOK`
   - owner-routing переведён в named aliases `@chief_legal_officer`, `@dpo`, `@product_lead`, `@backend-lead`, `@data-architecture`, `@board_of_directors`
   - `.github/CODEOWNERS` усилен explicit review guard для legal/privacy closeout docs
+- [x] Legal closeout получил воспроизводимый машинный gate:
+  - добавлен `scripts/legal-evidence-status.cjs`
+  - доступны `pnpm legal:evidence:status` и `pnpm gate:legal:evidence`
+  - gate сверяет repo-side register, restricted metadata store и `INDEX.md`, пишет отчёт в `var/compliance`
 - [x] Audit-пакет `docs/_audit` синхронизирован с новым baseline:
   - due diligence/evidence matrix/delta/privacy map/AI scenarios/RF review обновлены до post-remediation состояния
   - `Legal / Compliance` честно оставлен `NO-GO`, потому что внешний operator/legal evidence всё ещё не подтверждён кодом
