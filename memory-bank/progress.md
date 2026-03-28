@@ -148,6 +148,19 @@
     - `Legal / Compliance` больше не пересчитывается вручную по таблицам;
     - команда мгновенно видит текущий verdict и точный список blockers до `CONDITIONAL GO` и `GO`.
 
+10. **Repo-derived legal prefill drafts** [DONE]:
+  - Добавлен `scripts/legal-evidence-prefill.cjs`.
+  - В `package.json` добавлена команда:
+    - `pnpm legal:evidence:prefill -- --reference=ELP-...`
+    - `pnpm legal:evidence:prefill -- --priority=critical`
+  - Команда создаёт рабочие draft-файлы в restricted store из уже подтверждённых repo-facts.
+  - Принципиальное ограничение зафиксировано в workflow:
+    - prefill не является внешним evidence;
+    - prefill не переводит карточки в `received`.
+  - Практический эффект:
+    - владельцы получают не пустой шаблон, а почти готовый черновик с текущими repo-фактами и перечнем внешних пробелов;
+    - критичные legal blockers можно закрывать быстрее без фальшивого изменения статусов.
+
 1. **Ledger schema recovery и economy stress-suite stabilization** [DONE]:
   - `packages/prisma-client/fix_schema.ts` расширен до полного recovery-прохода по hardened ledger-контуру, а не только до ремонта `create_ledger_entry_v1`.
   - Скрипт теперь восстанавливает `dblink`, `account_balances`, `check_tenant_state_hardened_v6`, `update_account_balance_v1`, `no_negative_cash`, trigger wiring и сам `create_ledger_entry_v1`.

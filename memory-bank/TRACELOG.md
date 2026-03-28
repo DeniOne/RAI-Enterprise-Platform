@@ -480,3 +480,9 @@
 - В `package.json` зарегистрирована команда `pnpm legal:evidence:template`.
 - Генератор выпускает шаблоны в restricted `templates/<reference_id>/`.
 - Для приоритетных `ELP-20260328-01`, `03`, `04`, `06` добавлены специализированные секции, чтобы owners быстрее собирали operator/residency/DPA/lawful-basis evidence.
+[2026-03-28 14:00Z] Repo-derived legal prefill drafts добавлены в closeout contour
+- Добавлен `scripts/legal-evidence-prefill.cjs`.
+- В `package.json` добавлена команда `pnpm legal:evidence:prefill`.
+- `prefill` собирает repo-derived working drafts по `ELP-*` в restricted store и заполняет их уже известными repo-facts.
+- Жёсткое ограничение зафиксировано в runbook: `prefill` не является внешним evidence и не меняет status карточек.
+- Практический эффект: owners стартуют не с пустого шаблона, а с prefilled draft-пакета по критичным legal blockers.

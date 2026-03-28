@@ -3,7 +3,7 @@ id: DOC-OPS-EXTERNAL-LEGAL-EVIDENCE-REQUEST-PACKET-20260328
 layer: Operations
 type: Report
 status: approved
-version: 1.3.0
+version: 1.4.0
 owners: [@techlead]
 last_updated: 2026-03-28
 claim_id: CLAIM-OPS-EXTERNAL-LEGAL-EVIDENCE-REQUEST-PACKET-20260328
@@ -49,6 +49,8 @@ last_verified: 2026-03-28
 | `CONDITIONAL GO -> GO` | все позиции 1-11 complete и привязаны к фактической deployment topology |
 
 Машинная сводка по этим правилам выпускается через `pnpm legal:evidence:verdict` и пишет отчёты в `var/compliance/external-legal-evidence-verdict.{json,md}`.
+
+До появления внешнего signed-источника можно ускорить owner handoff через `pnpm legal:evidence:prefill -- --reference=...` или `pnpm legal:evidence:prefill -- --priority=critical`. Эта команда собирает repo-derived working draft, но не меняет status evidence.
 
 ## Required External Evidence Register
 

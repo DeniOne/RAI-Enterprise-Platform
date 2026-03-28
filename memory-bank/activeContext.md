@@ -74,6 +74,10 @@
   - доступны `pnpm legal:evidence:verdict` и `pnpm gate:legal:evidence:verdict`
   - отчёт по verdict теперь публикуется в `var/compliance/external-legal-evidence-verdict.{json,md}`
   - переходы `NO-GO -> CONDITIONAL GO -> GO` считаются кодом по `EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET` и acceptance runbook
+- [x] Legal closeout получил repo-derived prefill drafts:
+  - добавлен `scripts/legal-evidence-prefill.cjs`
+  - доступна команда `pnpm legal:evidence:prefill -- --reference=...` и batch-проход `--priority=critical`
+  - prefill собирает рабочие черновики из уже подтверждённых repo-facts, но не меняет evidence status
 - [x] Audit-пакет `docs/_audit` синхронизирован с новым baseline:
   - due diligence/evidence matrix/delta/privacy map/AI scenarios/RF review обновлены до post-remediation состояния
   - `Legal / Compliance` честно оставлен `NO-GO`, потому что внешний operator/legal evidence всё ещё не подтверждён кодом
