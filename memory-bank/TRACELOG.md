@@ -457,3 +457,8 @@
   - обновляет restricted metadata card и `INDEX.md`
   - обновляет repo-side `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md` в статус `received`
 - Практический эффект: после появления реального внешнего документа legal closeout двигается одной командой, а не ручной правкой нескольких источников.
+[2026-03-28 14:45Z] Legal evidence lifecycle transition automation added
+- Добавлен `scripts/legal-evidence-transition.cjs`.
+- В `package.json` зарегистрирована команда `pnpm legal:evidence:transition`.
+- `scripts/legal-evidence-status.cjs` усилен обязательными status-specific полями и проверкой существования `artifact_path` для non-requested карточек.
+- Практический эффект: полный lifecycle legal evidence теперь замкнут кодом от intake до acceptance, а gate ловит неполные карточки до изменения audit-выводов.

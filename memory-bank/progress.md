@@ -105,6 +105,19 @@
     - появление реального внешнего документа больше не требует ручной правки нескольких файлов;
     - legal closeout можно двигать серийно и без ручного status drift.
 
+7. **Legal evidence lifecycle transition automation** [DONE]:
+  - Добавлен `scripts/legal-evidence-transition.cjs`.
+  - В `package.json` добавлена команда:
+    - `pnpm legal:evidence:transition -- --reference=ELP-... --status=reviewed|accepted|expired`
+  - `scripts/legal-evidence-status.cjs` усилен:
+    - для `received` требует `received_at` и `artifact_path`
+    - для `reviewed` требует `received_at`, `artifact_path`, `reviewed_at`
+    - для `accepted` требует `received_at`, `artifact_path`, `reviewed_at`, `accepted_at`
+    - проверяет существование `artifact_path` у non-requested карточек
+  - Практический эффект:
+    - полный lifecycle `requested -> received -> reviewed -> accepted` теперь закрывается кодом;
+    - gate ловит уже не только status drift, но и неполные evidence-карточки.
+
 1. **Ledger schema recovery и economy stress-suite stabilization** [DONE]:
   - `packages/prisma-client/fix_schema.ts` расширен до полного recovery-прохода по hardened ledger-контуру, а не только до ремонта `create_ledger_entry_v1`.
   - Скрипт теперь восстанавливает `dblink`, `account_balances`, `check_tenant_state_hardened_v6`, `update_account_balance_v1`, `no_negative_cash`, trigger wiring и сам `create_ledger_entry_v1`.

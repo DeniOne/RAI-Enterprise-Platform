@@ -7,12 +7,14 @@ const ROOT = path.resolve(__dirname, "..");
 const OUTPUT_DIR = path.join(ROOT, "var", "compliance");
 const REPORT_JSON = path.join(OUTPUT_DIR, "external-legal-evidence-status.json");
 const REPORT_MD = path.join(OUTPUT_DIR, "external-legal-evidence-status.md");
-const REGISTER_FILE = path.join(
-  ROOT,
-  "docs",
-  "05_OPERATIONS",
-  "EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md",
-);
+const REGISTER_FILE = process.env.LEGAL_EVIDENCE_REGISTER_FILE
+  ? path.resolve(process.env.LEGAL_EVIDENCE_REGISTER_FILE)
+  : path.join(
+      ROOT,
+      "docs",
+      "05_OPERATIONS",
+      "EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md",
+    );
 const METADATA_DIR = process.env.LEGAL_EVIDENCE_METADATA_DIR
   ? path.resolve(process.env.LEGAL_EVIDENCE_METADATA_DIR)
   : path.resolve(
@@ -37,6 +39,12 @@ const REQUIRED_KEYS = [
   "acceptance_summary",
   "notes",
 ];
+const STATUS_REQUIRED_KEYS = {
+  received: ["received_at", "artifact_path"],
+  reviewed: ["received_at", "artifact_path", "reviewed_at"],
+  accepted: ["received_at", "artifact_path", "reviewed_at", "accepted_at"],
+  expired: ["expired_at"],
+};
 
 function rel(filePath) {
   return path.relative(ROOT, filePath).replace(/\\/g, "/");
@@ -170,6 +178,7 @@ function main() {
     const registerRow = registerMap.get(referenceId);
     const indexRow = indexMap.get(referenceId);
     const missingKeys = REQUIRED_KEYS.filter((key) => !item.fields[key]);
+    const statusRequiredKeys = STATUS_REQUIRED_KEYS[status] || [];
     if (!referenceId) {
       issues.push({ severity: "error", type: "missing_reference_id", file: item.file });
       continue;
@@ -190,6 +199,16 @@ function main() {
         referenceId,
         file: item.file,
         fields: missingKeys,
+      });
+    }
+    const missingStatusKeys = statusRequiredKeys.filter((key) => !item.fields[key]);
+    if (missingStatusKeys.length > 0) {
+      issues.push({
+        severity: "error",
+        type: "missing_status_fields",
+        referenceId,
+        file: item.file,
+        fields: missingStatusKeys,
       });
     }
     if (!isValidDate(reviewDue)) {
@@ -237,6 +256,16 @@ function main() {
         metadataStatus: status,
       });
     }
+    if (item.fields.artifact_path && status !== "requested") {
+      if (!fs.existsSync(item.fields.artifact_path)) {
+        issues.push({
+          severity: "error",
+          type: "missing_artifact_file",
+          referenceId,
+          file: item.fields.artifact_path,
+        });
+      }
+    }
 
     if (counts[status] !== undefined) {
       counts[status] += 1;
@@ -254,6 +283,7 @@ function main() {
       overdue,
       namedOwners: item.fields.named_owners || "",
       linkedDocs: item.fields.linked_docs || "",
+      artifactPath: item.fields.artifact_path || "",
       file: item.file,
       title: item.title,
     });
@@ -300,12 +330,12 @@ function main() {
     "",
     "## Items",
     "",
-    "| Reference ID | Status | Review due | Overdue | Named owners | File |",
-    "|---|---|---|---|---|---|",
+    "| Reference ID | Status | Review due | Overdue | Named owners | Artifact path | File |",
+    "|---|---|---|---|---|---|---|",
   ];
   for (const item of items) {
     mdLines.push(
-      `| ${item.referenceId} | ${item.status} | ${item.reviewDue || "-"} | ${item.overdue ? "yes" : "no"} | ${item.namedOwners || "-"} | ${item.file} |`,
+      `| ${item.referenceId} | ${item.status} | ${item.reviewDue || "-"} | ${item.overdue ? "yes" : "no"} | ${item.namedOwners || "-"} | ${item.artifactPath || "-"} | ${item.file} |`,
     );
   }
   mdLines.push("", "## Issues", "");

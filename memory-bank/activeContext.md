@@ -61,6 +61,10 @@
   - добавлен `scripts/legal-evidence-intake.cjs`
   - доступна команда `pnpm legal:evidence:intake -- --reference=... --source=/abs/path/file`
   - intake кладёт файл в restricted `artifacts/`, обновляет restricted metadata, `INDEX.md` и repo-side `received` status
+- [x] Legal closeout получил lifecycle transition automation:
+  - добавлен `scripts/legal-evidence-transition.cjs`
+  - доступна команда `pnpm legal:evidence:transition -- --reference=... --status=reviewed|accepted|expired`
+  - status gate теперь требует обязательные поля `received_at/reviewed_at/accepted_at` и проверяет существование `artifact_path` для non-requested карточек
 - [x] Audit-пакет `docs/_audit` синхронизирован с новым baseline:
   - due diligence/evidence matrix/delta/privacy map/AI scenarios/RF review обновлены до post-remediation состояния
   - `Legal / Compliance` честно оставлен `NO-GO`, потому что внешний operator/legal evidence всё ещё не подтверждён кодом
