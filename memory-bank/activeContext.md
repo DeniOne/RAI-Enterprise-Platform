@@ -1,5 +1,49 @@
 # Активный контекст RAI_EP
 
+## Текущая задача (2026-03-28, enterprise closeout)
+- [x] Закрыт оставшийся 5-блочный хвост enterprise-аудита по security/supply-chain, schema-integrity, deployment/ops, privacy/legal packet и history/rotation debt.
+- [x] В корне репозитория добавлен воспроизводимый security baseline:
+  - `scripts/security-audit-ci.cjs`
+  - `scripts/scan-secrets.cjs`
+  - `scripts/prisma-validate-safe.cjs`
+  - `scripts/generate-license-inventory.cjs`
+  - `scripts/generate-sbom.cjs`
+- [x] В `package.json` добавлены новые команды:
+  - `pnpm security:audit:ci`
+  - `pnpm gate:secrets`
+  - `pnpm gate:db:schema-validate`
+  - `pnpm security:licenses`
+  - `pnpm security:sbom`
+- [x] Усилен CI/security governance:
+  - `.github/workflows/security-audit.yml` переведён в полноценный security baseline workflow
+  - добавлены `.github/workflows/codeql-analysis.yml` и `.github/workflows/dependency-review.yml`
+  - `CODEOWNERS` расширен на workflows, scripts, shared runtime paths и `docs/05_OPERATIONS`
+- [x] Secret hygiene baseline теперь разделяет `tracked` и `workspace-only` risk:
+  - `pnpm gate:secrets` подтверждает `tracked_findings=0`
+  - локальные `.env` продолжают существовать как workspace-only risk и не должны попадать в Git
+- [x] Из индекса убраны tracked secret env-файлы:
+  - `mg-core/backend/.env`
+  - `mg-core/backend/src/mg-chat/.env`
+  - для `mg-chat` добавлен `mg-core/backend/src/mg-chat/.env.example`
+- [x] Schema-integrity path стабилизирован:
+  - `pnpm gate:db:schema-validate` проходит с placeholder `DATABASE_URL`
+  - в отчёте остался только follow-up по deprecated `package.json#prisma`
+- [x] Security/supply-chain evidence теперь воспроизводим кодом:
+  - `pnpm security:audit:ci` -> `1819 deps`, `37 high`, `2 critical`
+  - `pnpm security:licenses` -> `189 packages`, `33 unknown licenses`
+  - `pnpm security:sbom` -> `CycloneDX 1.6` SBOM generated
+- [x] В active operations layer собран новый compliance/deployment packet:
+  - `COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER`
+  - `HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX`
+  - `OSS_LICENSE_AND_IP_REGISTER`
+  - `SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY`
+  - `KEY_MATERIAL_AND_SECRET_HYGIENE_INCIDENT_2026-03-28`
+  - `PRIVACY_SUBJECT_RIGHTS_AND_RETENTION_RUNBOOK`
+  - `RELEASE_BACKUP_RESTORE_AND_DR_RUNBOOK`
+- [x] Audit-пакет `docs/_audit` синхронизирован с новым baseline:
+  - due diligence/evidence matrix/delta/privacy map/AI scenarios/RF review обновлены до post-remediation состояния
+  - `Legal / Compliance` честно оставлен `NO-GO`, потому что внешний operator/legal evidence всё ещё не подтверждён кодом
+
 ## Текущая задача (2026-03-28)
 - [x] Закрыт backend remediation slice, который оставался после enterprise-аудита и полного `api` baseline.
 - [x] `packages/prisma-client/fix_schema.ts` расширен из точечного repair-скрипта в полный локальный recovery для hardened ledger-контура:

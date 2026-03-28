@@ -11,6 +11,10 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
+    "security:audit:ci": "node scripts/security-audit-ci.cjs",
+    "gate:secrets": "node scripts/scan-secrets.cjs",
+    "security:licenses": "node scripts/generate-license-inventory.cjs",
+    "security:sbom": "node scripts/generate-sbom.cjs",
     "gate:invariants": "node scripts/invariant-gate.cjs",
     "gate:invariants:warn": "node scripts/invariant-gate.cjs --mode=warn",
     "gate:invariants:enforce": "node scripts/invariant-gate.cjs --mode=enforce",
@@ -85,7 +89,8 @@
     "db:kpi:growth:baseline": "node scripts/db/init-model-growth-baseline.cjs",
     "db:kpi:growth": "node scripts/db/measure-model-growth-kpi.cjs",
     "gate:db:growth-kpi": "node scripts/db/measure-model-growth-kpi.cjs",
-    "gate:db:growth-kpi:enforce": "node scripts/db/measure-model-growth-kpi.cjs --enforce"
+    "gate:db:growth-kpi:enforce": "node scripts/db/measure-model-growth-kpi.cjs --enforce",
+    "gate:db:schema-validate": "node scripts/prisma-validate-safe.cjs"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

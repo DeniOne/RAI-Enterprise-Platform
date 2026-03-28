@@ -1,4 +1,4 @@
-name: Security Audit
+name: Security Baseline
 
 on:
   push:
@@ -7,10 +7,18 @@ on:
     branches: [ "main" ]
   schedule:
     - cron: '0 0 * * 1' # Weekly run
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  attestations: write
+  id-token: write
 
 jobs:
   audit:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
     
@@ -26,6 +34,35 @@ jobs:
     - name: Install dependencies
       run: pnpm install --no-frozen-lockfile
 
-    - name: Run Security Audit (High+)
-      run: pnpm audit --audit-level=high
-      continue-on-error: true # Non-blocking for now, switch to false later
+    - name: Run reproducible npm audit
+      run: pnpm security:audit:ci
+
+    - name: Run secret scan
+      run: pnpm gate:secrets
+
+    - name: Run safe Prisma schema validate
+      run: pnpm gate:db:schema-validate
+
+    - name: Generate OSS license inventory
+      run: pnpm security:licenses
+
+    - name: Generate CycloneDX SBOM
+      run: pnpm security:sbom
+
+    - name: Upload security baseline artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-baseline-artifacts
+        path: |
+          var/security/**
+          var/schema/**
+        if-no-files-found: warn
+
+    - name: Attest security artifacts provenance
+      if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+      uses: actions/attest-build-provenance@v2
+      with:
+        subject-path: |
+          var/security/**
+          var/schema/**

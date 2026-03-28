@@ -3,7 +3,7 @@ id: DOC-ARV-AUDIT-DELTA-VS-BASELINE-20260328
 layer: Archive
 type: Research
 status: approved
-version: 1.3.0
+version: 1.4.0
 owners: [@techlead]
 last_updated: 2026-03-28
 ---
@@ -11,41 +11,42 @@ last_updated: 2026-03-28
 
 ## 1. Ограничение Сравнения
 
-`docs/_audit/FINAL_AUDIT_2026-03-20.md` был прежде всего documentation/governance baseline. Текущий due diligence охватывает код, gates, build/test, security, privacy и legal/compliance. Поэтому часть красных сигналов ниже — это не обязательно деградация относительно 2026-03-20, а newly surfaced runtime evidence.
+`docs/_audit/FINAL_AUDIT_2026-03-20.md` был прежде всего documentation/governance baseline. Текущий due diligence охватывает код, gates, build/test, security, privacy, legal/compliance и deployment evidence. Поэтому часть пунктов ниже — это не деградация относительно 2026-03-20, а newly surfaced runtime evidence.
 
 ## 2. Улучшилось
 
 | Baseline факт | Текущий факт | Evidence | Интерпретация |
 |---|---|---|---|
-| 2026-03-20 аудит фиксировал docs governance transition и слабую trustworthiness документации | В репозитории уже есть `DOCS_MATRIX`, unified docs lint, layered docs model, active instructions layer | `README.md`, `docs/README.md`, `docs/CONTRIBUTING_DOCS.md`, `package.json` | governance foundation стала зрелее |
-| На docs baseline не было единого code-backed AI governance picture | Сейчас подтверждены `PII_LEAK`, incident ops, autonomy/policy incidents, explainability paths, truthfulness metrics | `interagency/INDEX.md`, `apps/api/src/modules/rai-chat/*` | AI-runtime стал существенно более наблюдаемым |
-| Ранее WORM/audit contour был на уровне intent | Сейчас в memory-bank зафиксирован fail-closed WORM bootstrap и retention verification intent | `memory-bank/activeContext.md` | audit-notarization direction стала сильнее |
-| В текущем аудите устранены два известных docs blockers | fixed `Runbook` type и YAML frontmatter у `_audit` prompt | repo changes dated `2026-03-28` | docs governance шум уменьшен |
-| 2026-03-20 baseline не доказывал единый quality baseline по основному контуру | Сейчас `apps/api`, `apps/web`, `apps/telegram-bot` и routing проходят актуальные build/test/gates | command evidence 2026-03-28 | репозиторий вышел из режима fragmented red baseline |
-| Guard coverage и raw SQL governance раньше были явной красной зоной | `controllers_without_guards=0`, `raw_sql_review_required=0`, `raw_sql_unsafe=0`, `violations=0` | `pnpm gate:invariants`, `node scripts/raw-sql-governance.cjs --enforce` | security hygiene заметно улучшилась и текущий invariant baseline стал зелёным |
-| Repo hygiene не показывала явного исправления key incident | `infra/gateway/certs/ca.key` удалён из рабочего дерева и больше не tracked в текущем индексе | `test ! -f infra/gateway/certs/ca.key`, `git rm --cached --force infra/gateway/certs/ca.key` | текущий SCM-риск снижен, остаётся history review и rotation debt |
-| Scope-manifest ранее отставал от schema growth | `TechMapReviewSnapshot`, `TechMapApprovalSnapshot`, `TechMapPublicationLock` добавлены в `MODEL_SCOPE_MANIFEST` и `gate:db:scope` снова зелёный | `docs/01_ARCHITECTURE/DATABASE/MODEL_SCOPE_MANIFEST.md`, `pnpm gate:db:scope` | DB governance drift закрыт без изменения taxonomy |
+| 2026-03-20 baseline не доказывал единый quality baseline по основному контуру | `apps/api`, `apps/web`, `apps/telegram-bot` и routing проходят актуальные build/test/gates | command evidence 2026-03-28 | репозиторий вышел из fragmented red state |
+| Guard coverage и raw SQL governance были красной зоной | `controllers_without_guards=0`, `raw_sql_review_required=0`, `raw_sql_unsafe=0`, `violations=0` | `pnpm gate:invariants`, `node scripts/raw-sql-governance.cjs --enforce` | runtime hygiene заметно усилена |
+| Security audit path был невоспроизводимым | есть `pnpm security:audit:ci` с JSON summary и artifact output | `scripts/security-audit-ci.cjs`, `var/security/security-audit-summary.json` | AppSec baseline стал decision-usable |
+| Secret hygiene не имела локального scanner baseline | есть `pnpm gate:secrets`; tracked secrets сняты до `0` | `scripts/scan-secrets.cjs`, `var/security/secret-scan-report.json` | repo-state очищен от tracked secret debt |
+| Schema validate зависел от runtime env | `pnpm gate:db:schema-validate` проходит через safe wrapper | `scripts/prisma-validate-safe.cjs`, `var/schema/prisma-validate-safe.json` | schema-integrity теперь воспроизводима |
+| OSS/IP контур был только красным тезисом в аудите | есть active `OSS_LICENSE_AND_IP_REGISTER` и generated inventory | `docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md`, `var/security/license-inventory.json` | IP/license backlog стал управляемым |
+| Privacy/legal контур был только архивным выводом | есть active operator/privacy register, transborder/deployment matrix и subject-rights runbook | новые docs в `docs/05_OPERATIONS` | legal backlog больше не разрозненный |
+| Access governance была ограничена DB-ядром | `CODEOWNERS` расширен на workflows, scripts и критичные runtime paths | `.github/CODEOWNERS` | ownership perimeter стал шире |
+| SBOM/provenance не были подтверждены | добавлен `pnpm security:sbom` и provenance-ready workflow step | `scripts/generate-sbom.cjs`, `.github/workflows/security-audit.yml` | supply-chain baseline стал реальным, а не плановым |
 
 ## 3. Деградировало Или Вскрылось Как Новый Красный Факт
 
 | Baseline факт | Текущий факт | Evidence | Интерпретация |
 |---|---|---|---|
-| 2026-03-20 baseline не оценивал runtime build/test health системно | Текущий аудит выявил, а затем отдельным remediation-пакетом закрыл красный runtime baseline в тот же день | command evidence 2026-03-28, `memory-bank/progress.md` | сами регрессии были реальны, но к версии `1.1.0` отчёта quality baseline уже восстановлен |
-| Безопасность ранее оценивалась фрагментарно | Исторический key-incident вокруг `ca.key` подтверждён, хотя текущий repo state уже очищен от active invariant violations | repo evidence, `pnpm gate:invariants` | риск уже не theoretical, но в текущем baseline он перешёл из active repo issue в history/rotation debt |
-| Схема БД ранее не сравнивалась с manifest discipline так детально | Текущий аудит выявил и в тот же remediation-cycle закрыл drift по `TechMap*` child models | DB gate evidence, manifest update 2026-03-28 | growth discipline стала жёстче и быстрее догоняет schema evolution |
+| 2026-03-20 baseline не оценивал dependency risk системно | `pnpm security:audit:ci` показал `37 high / 2 critical` | `var/security/security-audit-summary.json` | реальный AppSec debt стал измеримым |
+| История key material не была формализована | `ca.key` и tracked `mg-core` env теперь оформлены как отдельный incident class | `docs/05_OPERATIONS/KEY_MATERIAL_AND_SECRET_HYGIENE_INCIDENT_2026-03-28.md` | history/rotation debt стал явным управленческим обязательством |
+| Legal/compliance ранее был общим красным выводом | теперь gap детализирован до operator, notification, residency, processor, IP | current RF review + active ops docs | краснота стала точнее и полезнее для решения |
 
 ## 4. Осталось Красным
 
 | Проблема | Baseline 2026-03-20 | Статус 2026-03-28 | Evidence |
 |---|---|---|---|
-| Документацию нельзя использовать как единственный source of truth | красный | красный, но теперь лучше разделена по слоям | `FINAL_AUDIT_2026-03-20.md`, root docs, current runtime evidence |
-| Governance шум и drift между intent и code | красный | частично красный: docs слой стал чище, но supply-chain/security evidence gaps сохраняются | docs baseline + current DB/security evidence |
-| Отсутствие полного compliance/legal pack | не раскрыто полноценно | красный | current RF review |
-| Отсутствие enterprise-grade supply-chain controls | не раскрыто полноценно | красный | no `SAST/SCA/SBOM/provenance/secret scanning` evidence |
-| Полностью воспроизводимый security audit path | не раскрыто полноценно | красный | `timeout 30s pnpm audit --audit-level=high` exhausted |
+| Документацию нельзя использовать как единственный source of truth | красный | красный, но теперь лучше отделена от code/gates | old baseline + current source-of-truth policy |
+| Полный legal/compliance pack по РФ | не раскрыт полноценно | красный | `RF_COMPLIANCE_REVIEW_2026-03-28.md` |
+| Dependency vulnerability debt | не раскрыт полноценно | красный | `var/security/security-audit-summary.json` |
+| External branch protection / access settings evidence | не раскрыт полноценно | красный | локально не подтверждается |
+| Latest backup/restore execution evidence | не раскрыт полноценно | красный | runbooks есть, execution report нет |
 
 ## 5. Delta Summary
 
-- Улучшилось: docs governance foundation, AI observability/governance contours, WORM/audit direction, green build/test/routing baseline, fully green invariant baseline, guard coverage и raw SQL governance.
-- Деградировало или вскрылось: historical key-incident по `ca.key` и schema-governance drift были обнаружены evidence-first аудитом, а затем локализованы remediation-пакетом.
-- Осталось красным: compliance pack, supply-chain discipline и невоспроизводимый в timebox security audit path.
+- Улучшилось: runtime quality baseline, invariant hygiene, reproducible audit/secret/schema/license/SBOM controls, active ops/compliance packet, expanded CODEOWNERS.
+- Вскрылось и стало измеримым: dependency risk, workspace secret hygiene, точный legal/operator gap, history/rotation debt.
+- Осталось красным: внешний legal evidence, unresolved dependency vulnerabilities, external GitHub settings evidence и отсутствие свежего DR execution report.

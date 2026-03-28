@@ -9,3 +9,13 @@
 # Database architecture packet
 /docs/01_ARCHITECTURE/DATABASE/* @techlead @backend-lead @data-architecture
 /docs/01_ARCHITECTURE/DECISIONS/ADR_DB_* @techlead @backend-lead @data-architecture
+
+# Security, workflows and runtime governance
+/.github/workflows/* @techlead @backend-lead
+/scripts/* @techlead @backend-lead
+/apps/api/src/modules/rai-chat/** @techlead @backend-lead
+/apps/api/src/shared/** @techlead @backend-lead
+/apps/telegram-bot/src/** @techlead @backend-lead
+/apps/web/app/** @techlead
+/apps/web/lib/** @techlead
+/docs/05_OPERATIONS/** @techlead @backend-lead

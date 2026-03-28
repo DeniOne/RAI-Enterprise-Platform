@@ -2,6 +2,29 @@
 
 ## 2026-03-28
 
+1. **Enterprise audit closeout: security/compliance/ops packet** [DONE]:
+  - Добавлен воспроизводимый security baseline через `pnpm security:audit:ci`, `pnpm gate:secrets`, `pnpm gate:db:schema-validate`, `pnpm security:licenses`, `pnpm security:sbom`.
+  - В репозитории появились новые scripts:
+    - `security-audit-ci.cjs`
+    - `scan-secrets.cjs`
+    - `prisma-validate-safe.cjs`
+    - `generate-license-inventory.cjs`
+    - `generate-sbom.cjs`
+  - Усилен CI:
+    - `security-audit.yml` теперь гоняет security baseline и грузит артефакты
+    - добавлены `codeql-analysis.yml` и `dependency-review.yml`
+  - `CODEOWNERS` расширен на workflows, scripts и критичные runtime paths.
+  - Из Git-индекса удалены tracked env-файлы с секретами:
+    - `mg-core/backend/.env`
+    - `mg-core/backend/src/mg-chat/.env`
+  - Новый secret hygiene baseline:
+    - `tracked_findings=0`
+    - workspace-only secrets остаются локальным риском и больше не считаются repo-tracked leakage
+  - Создан active ops/compliance packet в `docs/05_OPERATIONS`.
+  - Audit-пакет синхронизирован:
+    - security и deployment baseline усилены
+    - `Legal / Compliance` остался `NO-GO` из-за отсутствия внешнего operator/legal evidence
+
 1. **Ledger schema recovery и economy stress-suite stabilization** [DONE]:
   - `packages/prisma-client/fix_schema.ts` расширен до полного recovery-прохода по hardened ledger-контуру, а не только до ремонта `create_ledger_entry_v1`.
   - Скрипт теперь восстанавливает `dblink`, `account_balances`, `check_tenant_state_hardened_v6`, `update_account_balance_v1`, `no_negative_cash`, trigger wiring и сам `create_ledger_entry_v1`.

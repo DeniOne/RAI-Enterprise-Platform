@@ -1,3 +1,35 @@
+[2026-03-28 12:55Z] Enterprise audit closeout: security/compliance/ops baseline собран
+- Добавлены воспроизводимые security/supply-chain команды:
+  - `pnpm security:audit:ci`
+  - `pnpm gate:secrets`
+  - `pnpm gate:db:schema-validate`
+  - `pnpm security:licenses`
+  - `pnpm security:sbom`
+- Новый локальный baseline подтверждён:
+  - `pnpm security:audit:ci` -> `37 high`, `2 critical`
+  - `pnpm gate:secrets` -> `tracked_findings=0`, `workspace_local_findings=8`
+  - `pnpm gate:db:schema-validate` -> `Prisma schema is valid`
+  - `pnpm security:licenses` -> `189 packages`, `33 unknown licenses`
+  - `pnpm security:sbom` -> `CycloneDX 1.6` SBOM generated
+- Усилен CI/security governance:
+  - обновлён `security-audit.yml`
+  - добавлены `codeql-analysis.yml` и `dependency-review.yml`
+  - `CODEOWNERS` расширен на workflows, scripts, shared runtime paths и `docs/05_OPERATIONS`
+- Из индекса удалены tracked secret env-файлы:
+  - `mg-core/backend/.env`
+  - `mg-core/backend/src/mg-chat/.env`
+- В `docs/05_OPERATIONS` создан active legal/ops packet:
+  - privacy/operator register
+  - hosting/transborder/deployment matrix
+  - OSS/IP register
+  - security/access policy
+  - key material incident report
+  - privacy subject-rights runbook
+  - release/backup/restore/DR runbook
+- `docs/_audit` синхронизирован до post-remediation snapshot:
+  - security и deployment evidence заметно усилены
+  - `Legal / Compliance` оставлен `NO-GO`, потому что external operator/legal evidence всё ещё отсутствует
+
 [2026-03-28 09:03Z] Backend remediation slice закрыт; `api` baseline полностью зелёный
 - `packages/prisma-client/fix_schema.ts` расширен до полного repair-пакета для hardened ledger-контура: recovery `dblink`, `account_balances`, `check_tenant_state_hardened_v6`, `update_account_balance_v1`, `no_negative_cash`, trigger wiring и `create_ledger_entry_v1`.
 - Подтверждено, что локальный Postgres находился в schema drift состоянии: миграция уже считалась применённой, но ключевые DB-объекты ledger-контура отсутствовали.

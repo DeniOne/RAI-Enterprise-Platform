@@ -3,7 +3,7 @@ id: DOC-ARV-AUDIT-PRIVACY-DATA-FLOW-MAP-20260328
 layer: Archive
 type: Research
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: [@techlead]
 last_updated: 2026-03-28
 ---
@@ -11,69 +11,74 @@ last_updated: 2026-03-28
 
 ## 1. Общий Вердикт
 
-В проекте уже есть признаки privacy-aware engineering:
+Privacy baseline больше не полностью разрозненный:
+- есть active privacy/operator register;
+- есть subject-rights / retention runbook;
+- есть deployment/transborder/provider matrix;
+- есть code-backed PII masking и `PII_LEAK` incidents.
 
-- `SensitiveDataFilterService`
-- `PII_LEAK` incidents
-- tenant-scoped explainability / incident feed
-- WORM / audit trail контуры
+Но legal readiness всё ещё неполная, потому что operator/legal evidence и actual residency/transborder decisions не подтверждены внешними артефактами.
 
-Но applied privacy baseline остаётся неполным: нет единого data inventory, retention/deletion policy pack, transborder/provider registry и operator artifact set.
-
-## 2. Вероятные Субъекты Данных
+## 2. Субъекты Данных
 
 | Субъект | Evidence |
 |---|---|
-| сотрудники / пользователи платформы | auth/user/company контуры, web/telegram runtime |
-| представители контрагентов | CRM / commerce / party assets surfaces |
+| сотрудники / внутренние пользователи | `User`, auth/runtime контуры |
+| front-office пользователи и приглашённые | `Invitation`, `CounterpartyUserBinding`, front-office auth service |
+| представители контрагентов | CRM / commerce / party/contact flows |
+| пользователи telegram контуров | telegram bot runtime и notification paths |
 | операторы и эксперты | explainability, advisory, audit trail |
-| лица из коммуникационных каналов | telegram, front-office, AI chat traces |
+| пользователи AI / trace контуров | `rai-chat`, incidents, trace summaries |
 
 ## 3. Категории Данных
 
 | Категория | Evidence | Статус |
 |---|---|---|
-| идентификационные и контактные данные | PII masking patterns: email, телефон, ИНН-подобные значения | подтверждено кодом |
+| email / phone / Telegram ID / password hash | `packages/prisma-client/schema.prisma` | подтверждено кодом |
 | tenant/company context | `companyId`, trace, incident feeds | подтверждено кодом |
 | operational / advisory traces | explainability, incidents, trace summaries | подтверждено кодом |
-| документооборот и party assets | web commerce/party flows, `party-assets-api` tests | подтверждено кодом |
-| retention / deletion metadata | projection/deletion semantics в части docs/gates | частично подтверждено |
+| party/contact / lookup identifiers | DaData and commerce flows | подтверждено кодом |
+| retention metadata | `retentionMode`, `retentionUntil`, WORM contour | частично подтверждено |
 
 ## 4. Основные Потоки
 
-| Поток | Откуда | Куда | Контроли | Gap |
+| Поток | Откуда | Куда | Контроли | Residual gap |
 |---|---|---|---|---|
-| Web forms / CRM / party flows | `apps/web` | `apps/api` + DB | auth, tenant context, tests on party flows | build/test красные; нет formal privacy inventory |
-| Telegram interactions | `apps/telegram-bot` | API/web workspace links, traces | runtime tests PASS, tenant-aware behavior | нет отдельной privacy policy for messaging data |
-| Rai Chat / agent outputs | `apps/api/src/modules/rai-chat/*` | response composer, traces, incidents | `SensitiveDataFilter`, truthfulness/evidence, incidents | routing regressions, нет full AI safety release gate |
-| Explainability / incidents | decision traces | explainability panel / incidents feed | tenant isolation, PII masking, audit trail | retention/deletion/SLA не сведены в единый privacy contract |
-| Audit / WORM artifacts | audit events | local fs / S3-compatible WORM | fail-closed WORM checks, object lock intent | production topology and retention evidence не подтверждены |
+| Web auth / CRM / front-office | `apps/web` | `apps/api` + DB | auth, tenant context, tests | public privacy notice and lawful basis not confirmed |
+| Telegram interactions | `apps/telegram-bot` | API / notifications / auth links | runtime tests PASS, tokenized auth flows | messaging legal basis and transborder decision unresolved |
+| Rai Chat / agent outputs | `apps/api/src/modules/rai-chat/*` | response composer, traces, incidents | `SensitiveDataFilterService`, truthfulness/evidence, incidents | provider/legal gate for external LLM unresolved |
+| Explainability / incidents | decision traces | explainability panel / incidents feed | tenant isolation, PII masking, audit trail | retention/SLA only partially formalized |
+| Audit / WORM artifacts | audit events | local fs / S3-compatible WORM | WORM runtime policy and runbooks | production hosting/residency evidence absent |
 
 ## 5. Внешние И Трансграничные Paths
 
-- Прямой production-grade provider matrix для внешних LLM/cloud tools из локального кода не подтверждён.
-- При этом архитектура agent/tool/runtime допускает внешние provider-like integrations, поэтому transborder review нельзя считать `неприменимым` автоматически.
-- На дату аудита верный статус: `требуется отдельная валидация`.
+| Контур | Статус |
+|---|---|
+| OpenRouter | внешний provider подтверждён кодом; legal/transborder decision обязателен |
+| Telegram | внешняя платформа подтверждена кодом; legal/transborder decision обязателен |
+| DaData | внешний provider подтверждён кодом; processor/legal review обязателен |
+| Local Postgres / Redis / MinIO | self-host path подтверждён; actual production geography не подтверждена |
 
 ## 6. Что Уже Есть
 
-1. Маскирование PII на выходе LLM/agent paths.
-2. `PII_LEAK` как отдельный incident type.
-3. Tenant-scoped feeds и explainability read paths.
-4. Audit/WORM intent и связанные implementation traces.
+1. Active `privacy/operator` register.
+2. Active `subject rights / retention` runbook.
+3. Active `hosting/transborder/deployment` matrix.
+4. Маскирование PII на output path.
+5. `PII_LEAK` как отдельный incident type.
+6. Tenant-scoped feeds и explainability read paths.
 
 ## 7. Что Не Доказано
 
-1. Formal privacy policy pack.
-2. Data retention matrix по каждому классу данных.
-3. Subject rights workflow.
-4. Notification/localization status.
-5. Provider/transborder register.
-6. Legal basis registry по процессам обработки.
+1. Operator legal entity и processor contracts.
+2. Notification status в РКН.
+3. Actual localization / hosting geography.
+4. Full lawful basis / privacy notice wording.
+5. Final transborder decision pack.
 
 ## 8. Applied Priority
 
-1. Свести `data inventory` и `processing register`.
-2. Зафиксировать `retention/deletion` policy.
-3. Отделить `confirmed local-only flows` от `potential external provider flows`.
-4. Связать privacy map с legal packet и launch checklist.
+1. Замкнуть active registers внешним legal evidence.
+2. Подтвердить residency/transborder status по каждому external provider.
+3. Зафиксировать owner и SLA для subject-rights runbook.
+4. Связать privacy map с launch checklist и deployment target matrix.

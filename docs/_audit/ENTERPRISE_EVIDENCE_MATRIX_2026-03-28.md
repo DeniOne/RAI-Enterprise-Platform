@@ -3,7 +3,7 @@ id: DOC-ARV-AUDIT-ENTERPRISE-EVIDENCE-MATRIX-20260328
 layer: Archive
 type: Research
 status: approved
-version: 1.3.0
+version: 1.4.0
 owners: [@techlead]
 last_updated: 2026-03-28
 ---
@@ -15,59 +15,63 @@ last_updated: 2026-03-28
 |---|---|---|---|
 | code | `apps/api/src/main.ts` | API реально стартует на `4000`, Swagger только вне `production` | runtime map, deployment readiness |
 | code | `apps/telegram-bot/src/main.ts` | telegram runtime слушает `4002` | runtime map |
-| code | `apps/web/package.json` | `next build`, `jest --runInBand`, `next lint` | frontend readiness |
-| code | `.github/workflows/invariant-gates.yml` | CI уже запускает `gate:invariants`, DB gates, routing gate, docs lint | ops/governance maturity |
-| code | `.github/workflows/security-audit.yml` | `pnpm audit --audit-level=high`, пока non-blocking | supply-chain baseline |
-| code | `.github/CODEOWNERS` | ownership ограничен DB/architecture contour | governance gap |
-| code | `infra/gateway/certs/ca.key` | файл удалён из рабочего дерева и снят с текущего индекса; остаётся history/rotation debt | historical key-incident, нужен review Git history, commit cleanup и rotation review |
-| docs | `README.md` | active runtime описан как `apps/api + apps/web + apps/telegram-bot + packages/* + infra/*` | scope validation |
-| docs | `docs/_audit/FINAL_AUDIT_2026-03-20.md` | baseline был documentation/governance-focused | delta baseline |
-| docs | `interagency/INDEX.md` | зафиксированы code-backed reports по incident ops, PII masking, governance counters | AI/governance evidence |
-| memory-bank | `memory-bank/activeContext.md` | WORM fail-closed и object lock bootstrap зафиксированы как логические изменения | audit/ops evidence |
+| code | `.github/workflows/invariant-gates.yml` | CI уже запускает invariant/db/routing/docs gates | engineering governance |
+| code | `.github/workflows/security-audit.yml` | security baseline теперь включает audit, secrets, schema validate, licenses, SBOM, artifact upload, provenance step | supply-chain and ops baseline |
+| code | `.github/workflows/codeql-analysis.yml` | `CodeQL` добавлен как SAST baseline | AppSec baseline |
+| code | `.github/workflows/dependency-review.yml` | PR dependency review добавлен | SCA / PR governance |
+| code | `.github/CODEOWNERS` | ownership расширен на workflows, scripts, runtime shared paths и `docs/05_OPERATIONS` | access review / governance |
+| code | `scripts/security-audit-ci.cjs` | reproducible `pnpm audit` wrapper c artifact output | SCA evidence |
+| code | `scripts/scan-secrets.cjs` | tracked/local secret hygiene разделены; tracked fail, workspace warn | secret scanning evidence |
+| code | `scripts/prisma-validate-safe.cjs` | schema validate стал воспроизводимым с placeholder `DATABASE_URL` | schema-integrity evidence |
+| code | `scripts/generate-license-inventory.cjs` | строит inventory по `pnpm ls --json` | OSS/IP evidence |
+| code | `scripts/generate-sbom.cjs` | генерирует `CycloneDX` SBOM для монорепо | SBOM evidence |
+| docs | `docs/05_OPERATIONS/COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md` | активный privacy/operator register создан | legal/privacy packet |
+| docs | `docs/05_OPERATIONS/HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX.md` | provider inventory + deployment matrix созданы | deployment/legal packet |
+| docs | `docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md` | активный OSS/IP register создан | legal/IP packet |
+| docs | `docs/05_OPERATIONS/SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY.md` | active security/access policy создана | security governance |
+| docs | `docs/05_OPERATIONS/KEY_MATERIAL_AND_SECRET_HYGIENE_INCIDENT_2026-03-28.md` | history/key material incident зафиксирован как отдельный ops artifact | incident evidence |
+| docs | `docs/05_OPERATIONS/WORKFLOWS/PRIVACY_SUBJECT_RIGHTS_AND_RETENTION_RUNBOOK.md` | subject-rights/retention workflow formalized | privacy ops evidence |
+| docs | `docs/05_OPERATIONS/WORKFLOWS/RELEASE_BACKUP_RESTORE_AND_DR_RUNBOOK.md` | release/backup/restore/DR packet formalized | deployment ops evidence |
 
 ## 2. Command Evidence
 
 | Команда | Результат | Ключевой вывод |
 |---|---|---|
-| `pnpm lint:docs:matrix:strict` | initial FAIL (`2` errors) -> final PASS | выявил defects в `_audit` prompt и `GRIPIL_WEB_DEPLOYMENT_GUIDE.md`; после фиксации matrix governance зелёный |
+| `pnpm lint:docs:matrix:strict` | PASS | новые ops/compliance docs и registry entries валидны |
 | `pnpm lint:docs` | PASS | docs-as-code baseline зелёный |
-| `pnpm lint:tenant-context` | PASS | multi-tenant lint-контур жив |
-| `pnpm lint:fsm-status-updates` | PASS | FSM-governance lint жив |
-| `pnpm gate:invariants` | PASS, `exit 0` | final state: `verify-invariants: OK`, `controllers_without_guards=0`, `raw_sql_review_required=0`, `raw_sql_unsafe=0`, `violations=0`, `all_invariant_checks_passed` |
-| `node scripts/raw-sql-governance.cjs --enforce` | PASS | `raw_sql_review_required=0`, `raw_sql_unsafe=0`; governance больше не считает test-mocks реальными bypass path |
+| `pnpm gate:invariants` | PASS | `controllers_without_guards=0`, `raw_sql_review_required=0`, `raw_sql_unsafe=0`, `violations=0` |
 | `pnpm gate:db:scope` | PASS | scope-manifest покрывает `TechMapReviewSnapshot`, `TechMapApprovalSnapshot`, `TechMapPublicationLock` |
-| `pnpm gate:db:ownership` | PASS | ownership manifest не сигналит нарушений |
-| `pnpm gate:db:forbidden-relations` | PASS | нет явных forbidden-relation drift |
-| `pnpm gate:db:phase0` | WARN | `82` weak `@@index([companyId])` pattern, `9` heavy include zones |
-| `pnpm gate:db:phase3` | PASS | composed schema согласуется с fragments |
-| `pnpm gate:db:projections` | PASS | projection register существует |
-| `pnpm gate:db:enum-register` | PASS | enum register существует |
-| `pnpm gate:db:index-evidence` | PASS | index evidence register существует |
-| `pnpm gate:db:growth-kpi` | artifact generated | growth KPI path существует, но команда пишет tracked docs artifact |
 | `pnpm gate:routing:primary-slices` | PASS (`4/4` suites, `86/86` tests) | routing corpus и case-memory baseline зелёные |
-| `pnpm --filter api build` | PASS | backend build baseline жив |
-| `pnpm --filter telegram-bot build` | PASS | telegram build baseline жив |
-| `pnpm --filter web build` | PASS | Next.js production build, TypeScript и static generation (`132/132`) завершаются успешно |
+| `pnpm --filter api test -- --runInBand` | PASS (`252/252`, `1313 passed`, `1 skipped`) | backend regression baseline восстановлен |
+| `pnpm --filter web test` | PASS (`42/42`, `482/482`) | frontend regression baseline восстановлен |
 | `pnpm --filter telegram-bot test` | PASS (`17/17`) | telegram runtime quality baseline положительный |
-| `pnpm --filter web test` | PASS (`42/42` suites, `482/482` tests) | frontend regression baseline восстановлен |
-| `pnpm --filter api test -- --runInBand` | PASS (`252/252` suites, `1313 passed`, `1 skipped`) | backend regression baseline восстановлен в сериализованном прогоне |
-| `pnpm --filter @rai/agro-orchestrator check-types` | PASS | минимум один package-level explicit typecheck зелёный |
-| `pnpm --filter @rai/prisma-client exec prisma validate --schema schema.prisma` | FAIL | schema validation завязана на runtime env `DATABASE_URL` |
-| `timeout 30s pnpm audit --audit-level=high` | timebox exhausted | security audit path требует отдельной operational stabilization |
+| `pnpm gate:db:schema-validate` | PASS | `Prisma schema is valid`; env-dependence снята placeholder wrapper-ом |
+| `pnpm security:audit:ci` | PASS (report mode) | итог: `1819 deps`, `5 low`, `26 moderate`, `37 high`, `2 critical` |
+| `pnpm gate:secrets` | PASS | `tracked_findings=0`, `tracked_critical=0`, `workspace_local_findings=8` |
+| `pnpm security:licenses` | PASS | `189 packages`, `33 unknown licenses` |
+| `pnpm security:sbom` | PASS | `CycloneDX 1.6` SBOM generated в `var/security/bom.cdx.json` |
+| `git rm --cached mg-core/backend/.env mg-core/backend/src/mg-chat/.env` | DONE | tracked secret env removed from index; remain workspace-only |
 
-## 3. Внешние Официальные Baselines
+## 3. Generated Local Artifacts
+
+| Артефакт | Статус | Значение |
+|---|---|---|
+| `var/security/security-audit-summary.json` | generated | reproducible dependency risk baseline |
+| `var/security/secret-scan-report.json` | generated | tracked vs workspace secret hygiene split |
+| `var/security/license-inventory.json` | generated | OSS license inventory |
+| `var/security/license-inventory.md` | generated | human-readable license summary |
+| `var/security/bom.cdx.json` | generated | `CycloneDX 1.6` SBOM |
+| `var/schema/prisma-validate-safe.json` | generated | schema validate report |
+
+## 4. Внешние Официальные Baselines
 
 | Источник | URL | Для чего использован |
 |---|---|---|
 | NIST SSDF | <https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-218.pdf> | secure SDLC baseline |
 | OWASP Top 10 for LLM Applications | <https://owasp.org/www-project-top-10-for-large-language-model-applications/> | AI/LLM threat baseline |
 | SLSA | <https://slsa.dev/> | supply-chain maturity baseline |
-| CycloneDX SBOM | <https://cyclonedx.org/capabilities/sbom/> | SBOM requirement baseline |
+| CycloneDX SBOM | <https://cyclonedx.org/capabilities/sbom/> | SBOM baseline |
 | CIS Controls v8 | <https://www.cisecurity.org/controls/v8> | operational security baseline |
-| Next.js deployment docs | <https://nextjs.org/docs/app/getting-started/deployment> | frontend deployment baseline |
-| NestJS authentication docs | <https://docs.nestjs.com/security/authentication> | backend auth/security baseline |
-| Prisma migrate production docs | <https://www.prisma.io/docs/orm/prisma-migrate/workflows/development-and-production> | schema/migration baseline |
-| PostgreSQL row security docs | <https://www.postgresql.org/docs/current/ddl-rowsecurity.html> | tenant isolation and DB security reference |
 | 152-ФЗ amendments 08.08.2024 | <https://publication.pravo.gov.ru/document/0001202408080031> | актуализация требований по ПДн |
 | 152-ФЗ amendments 28.02.2025 | <https://publication.pravo.gov.ru/document/0001202502280034> | актуализация требований по ПДн и связанным обязанностям |
 | Роскомнадзор portal по ПДн | <https://pd.rkn.gov.ru/> | notification/localization/operator context |
@@ -77,7 +81,7 @@ last_updated: 2026-03-28
 | Реестр российского ПО | <https://reestr.digital.gov.ru/> | Russian software registry applicability |
 | Роспатент | <https://rospatent.gov.ru/> | program/database registration applicability |
 
-## 4. Предыдущий Baseline Для Delta
+## 5. Предыдущий Baseline Для Delta
 
 | Источник | Класс baseline | Ограничение |
 |---|---|---|
