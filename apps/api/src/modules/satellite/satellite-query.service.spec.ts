@@ -7,7 +7,7 @@ describe("SatelliteQueryService", () => {
   let service: SatelliteQueryService;
   const prismaMock = {
     satelliteObservation: {
-      findUnique: jest.fn(),
+      findFirst: jest.fn(),
       findMany: jest.fn(),
     },
   };
@@ -25,12 +25,12 @@ describe("SatelliteQueryService", () => {
   });
 
   it("getObservation should query by id", async () => {
-    prismaMock.satelliteObservation.findUnique.mockResolvedValue({ id: "s1" });
+    prismaMock.satelliteObservation.findFirst.mockResolvedValue({ id: "s1" });
 
     const result = await service.getObservation("s1", "company-1");
 
-    expect(prismaMock.satelliteObservation.findUnique).toHaveBeenCalledWith({
-      where: { id: "s1" },
+    expect(prismaMock.satelliteObservation.findFirst).toHaveBeenCalledWith({
+      where: { id: "s1", companyId: "company-1" },
     });
     expect(result).toEqual({ id: "s1" });
   });

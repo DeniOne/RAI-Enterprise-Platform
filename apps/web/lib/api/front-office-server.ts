@@ -4,7 +4,8 @@ import { EXTERNAL_FRONT_OFFICE_API_BASE_PATH } from "@/lib/front-office-routes";
 const BASE_URL = "http://localhost:4000/api";
 
 async function fetchFrontOffice(path: string, options: RequestInit = {}) {
-  const token = cookies().get("auth_token")?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
   if (!token) {
     throw new Error("Unauthorized");
   }

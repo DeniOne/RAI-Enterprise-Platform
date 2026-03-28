@@ -1,12 +1,14 @@
-﻿import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 export async function POST(
-  request: Request,
-  { params }: { params: { traceId: string } },
+  request: NextRequest,
+  context: { params: Promise<{ traceId: string }> },
 ) {
   try {
-    const token = cookies().get("auth_token")?.value;
+    const { traceId } = await context.params;
+    const cookieStore = await cookies();
+    const token = cookieStore.get("auth_token")?.value;
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -22,13 +24,13 @@ export async function POST(
         : null;
 
     const response = await fetch(
-      `http://localhost:4000/api/advisory/recommendations/${params.traceId}/feedback`,
+      `http://localhost:4000/api/advisory/recommendations/${traceId}/feedback`,
       {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
-          "Idempotency-Key": `advisory-feedback:${params.traceId}:${(reason ?? "no-reason")
+          "Idempotency-Key": `advisory-feedback:${traceId}:${(reason ?? "no-reason")
             .replace(/\s+/g, "-")
             .replace(/[^a-zA-Z0-9:_-]+/g, "-")
             .slice(0, 80)}:${(outcome ?? "no-outcome")

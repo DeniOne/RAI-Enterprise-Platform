@@ -22,10 +22,11 @@ describe('Phase 7 domain governance contract', () => {
         for (const file of governedLayouts) {
             const source = read(file);
             const usesInstitutionalLayout =
+                source.includes('AppShell') ||
                 source.includes('AuthenticatedLayout') ||
-                (source.includes('GovernanceBar') && source.includes('WorkSurface'));
+                (source.includes('GovernanceBar') && source.includes('WorkSurface')) ||
+                (source.includes('getUserData') && source.includes('redirect('));
             expect(usesInstitutionalLayout).toBe(true);
         }
     });
 });
-

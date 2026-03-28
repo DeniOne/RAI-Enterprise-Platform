@@ -34,7 +34,8 @@ async function getLegalRequirements(token: string) {
 }
 
 export default async function LegalPage() {
-    const token = cookies().get('auth_token')?.value || '';
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value || '';
     const requirements = await getLegalRequirements(token);
 
     return (

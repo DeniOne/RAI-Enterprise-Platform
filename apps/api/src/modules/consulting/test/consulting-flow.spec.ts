@@ -50,8 +50,10 @@ describe("ConsultingFlow (Vertical Slice)", () => {
     prisma = {
       harvestPlan: {
         create: jest.fn(),
+        findFirst: jest.fn(),
         findUnique: jest.fn(),
-        update: jest.fn(),
+        findFirstOrThrow: jest.fn(),
+        updateMany: jest.fn(),
         findMany: jest.fn(),
       },
       techMap: { findMany: jest.fn() },
@@ -83,11 +85,12 @@ describe("ConsultingFlow (Vertical Slice)", () => {
 
   describe("FSM Transitions", () => {
     it("DRAFT → REVIEW: любой пользователь компании", async () => {
-      prisma.harvestPlan.findUnique.mockResolvedValue({
+      prisma.harvestPlan.findFirst.mockResolvedValue({
         ...mockPlan,
         status: HarvestPlanStatus.DRAFT,
       });
-      prisma.harvestPlan.update.mockResolvedValue({
+      prisma.harvestPlan.updateMany.mockResolvedValue({ count: 1 });
+      prisma.harvestPlan.findFirstOrThrow.mockResolvedValue({
         ...mockPlan,
         status: HarvestPlanStatus.REVIEW,
       });
@@ -108,11 +111,12 @@ describe("ConsultingFlow (Vertical Slice)", () => {
     });
 
     it("REVIEW → APPROVED: только CEO", async () => {
-      prisma.harvestPlan.findUnique.mockResolvedValue({
+      prisma.harvestPlan.findFirst.mockResolvedValue({
         ...mockPlan,
         status: HarvestPlanStatus.REVIEW,
       });
-      prisma.harvestPlan.update.mockResolvedValue({
+      prisma.harvestPlan.updateMany.mockResolvedValue({ count: 1 });
+      prisma.harvestPlan.findFirstOrThrow.mockResolvedValue({
         ...mockPlan,
         status: HarvestPlanStatus.APPROVED,
       });
@@ -127,7 +131,7 @@ describe("ConsultingFlow (Vertical Slice)", () => {
     });
 
     it("REVIEW → APPROVED: MANAGER получает ForbiddenException", async () => {
-      prisma.harvestPlan.findUnique.mockResolvedValue({
+      prisma.harvestPlan.findFirst.mockResolvedValue({
         ...mockPlan,
         status: HarvestPlanStatus.REVIEW,
       });
@@ -142,18 +146,29 @@ describe("ConsultingFlow (Vertical Slice)", () => {
     });
 
     it("APPROVED → ACTIVE: CEO + DomainRules проверка", async () => {
-      prisma.harvestPlan.findUnique.mockResolvedValue({
+      prisma.harvestPlan.findFirst.mockResolvedValue({
         ...mockPlan,
         status: HarvestPlanStatus.APPROVED,
       });
-      prisma.harvestPlan.update.mockResolvedValue({
+      prisma.harvestPlan.findUnique
+        .mockResolvedValueOnce({
+          ...mockPlan,
+          activeTechMapId: "tm-1",
+        })
+        .mockResolvedValueOnce({
+          ...mockPlan,
+          activeTechMapId: "tm-1",
+          activeBudgetPlanId: "budget-1",
+          activeBudgetPlan: {
+            id: "budget-1",
+            status: "LOCKED",
+          },
+        });
+      prisma.harvestPlan.updateMany.mockResolvedValue({ count: 1 });
+      prisma.harvestPlan.findFirstOrThrow.mockResolvedValue({
         ...mockPlan,
         status: HarvestPlanStatus.ACTIVE,
       });
-      // DomainRules mocks
-      prisma.techMap.findMany.mockResolvedValue([
-        { id: "tm-1", status: TechMapStatus.ACTIVE },
-      ]);
       prisma.deviationReview.count.mockResolvedValue(0);
 
       const result = await consultingService.transitionPlanStatus(
@@ -167,7 +182,7 @@ describe("ConsultingFlow (Vertical Slice)", () => {
     });
 
     it("Недопустимый переход DRAFT → ACTIVE: BadRequestException", async () => {
-      prisma.harvestPlan.findUnique.mockResolvedValue({
+      prisma.harvestPlan.findFirst.mockResolvedValue({
         ...mockPlan,
         status: HarvestPlanStatus.DRAFT,
       });
@@ -186,11 +201,12 @@ describe("ConsultingFlow (Vertical Slice)", () => {
 
   describe("Audit Trail (DecisionRecord)", () => {
     it("каждый FSM-переход создаёт запись в cmr_decisions", async () => {
-      prisma.harvestPlan.findUnique.mockResolvedValue({
+      prisma.harvestPlan.findFirst.mockResolvedValue({
         ...mockPlan,
         status: HarvestPlanStatus.DRAFT,
       });
-      prisma.harvestPlan.update.mockResolvedValue({
+      prisma.harvestPlan.updateMany.mockResolvedValue({ count: 1 });
+      prisma.harvestPlan.findFirstOrThrow.mockResolvedValue({
         ...mockPlan,
         status: HarvestPlanStatus.REVIEW,
       });
@@ -217,7 +233,7 @@ describe("ConsultingFlow (Vertical Slice)", () => {
 
   describe("Company Isolation", () => {
     it("Plan из чужой компании — NotFoundException", async () => {
-      prisma.harvestPlan.findUnique.mockResolvedValue({
+      prisma.harvestPlan.findFirst.mockResolvedValue({
         ...mockPlan,
         companyId: "other-company",
       });
@@ -232,7 +248,7 @@ describe("ConsultingFlow (Vertical Slice)", () => {
     });
 
     it("Несуществующий план — NotFoundException", async () => {
-      prisma.harvestPlan.findUnique.mockResolvedValue(null);
+      prisma.harvestPlan.findFirst.mockResolvedValue(null);
 
       await expect(
         consultingService.transitionPlanStatus(
@@ -248,8 +264,9 @@ describe("ConsultingFlow (Vertical Slice)", () => {
 
   describe("Draft Editing", () => {
     it("Редактирование DRAFT плана разрешено", async () => {
-      prisma.harvestPlan.findUnique.mockResolvedValue(mockPlan);
-      prisma.harvestPlan.update.mockResolvedValue({
+      prisma.harvestPlan.findFirst.mockResolvedValue(mockPlan);
+      prisma.harvestPlan.updateMany.mockResolvedValue({ count: 1 });
+      prisma.harvestPlan.findFirstOrThrow.mockResolvedValue({
         ...mockPlan,
         targetMetric: "YIELD_QPH",
       });
@@ -263,7 +280,7 @@ describe("ConsultingFlow (Vertical Slice)", () => {
     });
 
     it("Редактирование ACTIVE плана запрещено", async () => {
-      prisma.harvestPlan.findUnique.mockResolvedValue({
+      prisma.harvestPlan.findFirst.mockResolvedValue({
         ...mockPlan,
         status: HarvestPlanStatus.ACTIVE,
       });

@@ -2,7 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { BudgetPlanService } from "./budget-plan.service";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import { DeviationService } from "../cmr/deviation.service";
-import { BudgetStatus } from "@rai/prisma-client";
+import { BudgetStatus, Prisma } from "@rai/prisma-client";
 
 // Mock DeviationService
 const mockDeviationService = {
@@ -21,8 +21,8 @@ describe("BudgetPlanService Concurrency", () => {
           provide: PrismaService,
           useValue: {
             budgetPlan: {
-              update: jest.fn(),
-              findUnique: jest.fn(),
+              updateMany: jest.fn(),
+              findFirst: jest.fn(),
             },
             $disconnect: jest.fn(),
           },
@@ -43,28 +43,38 @@ describe("BudgetPlanService Concurrency", () => {
   it("should handle concurrent updates with Optimistic Locking", async () => {
     // Let's spy on prisma.budgetPlan.update
     // Since prisma.budgetPlan were defined in useValue, they are already mocks
-    const updateSpy = prisma.budgetPlan.update;
-    const findUniqueSpy = prisma.budgetPlan.findUnique;
+    const updateSpy = prisma.budgetPlan.updateMany;
+    const findFirstSpy = prisma.budgetPlan.findFirst;
 
-    // Mock initial find
-    findUniqueSpy.mockResolvedValue({
+    findFirstSpy.mockResolvedValue({
       id: "test-budget",
       version: 1,
       status: BudgetStatus.LOCKED,
       companyId: "test-company",
-      items: [],
+      harvestPlanId: "plan-1",
+      seasonId: "season-1",
+      items: [
+        {
+          actualAmount: 0,
+          plannedAmount: 0,
+          category: "SEEDS",
+        },
+      ],
     });
 
-    // Mock update implementation to simulate conflict on first try
     let attempt = 0;
     updateSpy.mockImplementation(async () => {
       attempt++;
       if (attempt === 1) {
-        const err: any = new Error("Record to update not found.");
-        err.code = "P2025";
-        throw err; // Simulate Version Mismatch
+        throw new Prisma.PrismaClientKnownRequestError(
+          "Record to update not found.",
+          {
+            code: "P2025",
+            clientVersion: "test",
+          },
+        );
       }
-      return { id: "test-budget", version: 2 }; // Success on retry
+      return { count: 1 };
     });
 
     const context = {
@@ -78,6 +88,6 @@ describe("BudgetPlanService Concurrency", () => {
 
     // Assertions
     expect(updateSpy).toHaveBeenCalledTimes(2); // Initial try + 1 retry
-    expect(findUniqueSpy).toHaveBeenCalledTimes(2);
+    expect(findFirstSpy).toHaveBeenCalledTimes(2);
   });
 });

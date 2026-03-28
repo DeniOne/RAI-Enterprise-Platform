@@ -1,4 +1,4 @@
-import { CanonicalJsonBuilder } from '../../src/shared/crypto/canonical-json.builder';
+import { CanonicalJsonBuilder } from '../../../src/shared/crypto/canonical-json.builder';
 
 describe('CanonicalJsonBuilder', () => {
     it('should stringify identical objects with different key order to the same string', () => {

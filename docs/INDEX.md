@@ -3,14 +3,14 @@ id: DOC-META-INDEX-ESXJ
 layer: Meta
 type: Navigation
 status: approved
-version: 3.1.0
+version: 3.2.0
 owners: [@techlead]
-last_updated: 2026-03-21
+last_updated: 2026-03-28
 claim_id: CLAIM-CORE-INDEX
 claim_status: asserted
 verified_by: code
-last_verified: 2026-03-21
-evidence_refs: scripts/lint-docs.cjs;docs/_audit/DOCUMENTATION_MAP.md
+last_verified: 2026-03-28
+evidence_refs: scripts/lint-docs.cjs;docs/_audit/DOCUMENTATION_MAP.md;docs/_audit/REPO_RUNTIME_MAP_2026-03-28.md
 ---
 # INDEX (Canonical)
 
@@ -18,7 +18,7 @@ evidence_refs: scripts/lint-docs.cjs;docs/_audit/DOCUMENTATION_MAP.md
 id: CLAIM-CORE-INDEX
 status: asserted
 verified_by: code
-last_verified: 2026-03-21
+last_verified: 2026-03-28
 
 ## Core
 - `docs/README.md`
@@ -69,6 +69,13 @@ last_verified: 2026-03-21
 - `docs/_audit/DUPLICATES_AND_JUNK.md`
 - `docs/_audit/FINAL_AUDIT_2026-03-20.md`
 - `docs/_audit/DOCUMENTATION_TOPOLOGY_REDECISION_2026-03-21.md`
+- `docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md`
+- `docs/_audit/ENTERPRISE_EVIDENCE_MATRIX_2026-03-28.md`
+- `docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md`
+- `docs/_audit/REPO_RUNTIME_MAP_2026-03-28.md`
+- `docs/_audit/PRIVACY_DATA_FLOW_MAP_2026-03-28.md`
+- `docs/_audit/AI_AGENT_FAILURE_SCENARIOS_2026-03-28.md`
+- `docs/_audit/DELTA_VS_BASELINE_2026-03-28.md`
 
 ## Archive Recovery Sources
 - `docs/06_ARCHIVE/LEGACY_TREE_2026-03-20/09_ARCHIVE/`

@@ -7,7 +7,7 @@ describe("KnowledgeGraphQueryService", () => {
   let service: KnowledgeGraphQueryService;
   const prismaMock = {
     knowledgeNode: {
-      findUnique: jest.fn(),
+      findFirst: jest.fn(),
       findMany: jest.fn(),
     },
     knowledgeEdge: {
@@ -28,12 +28,12 @@ describe("KnowledgeGraphQueryService", () => {
   });
 
   it("getNode should query by id", async () => {
-    prismaMock.knowledgeNode.findUnique.mockResolvedValue({ id: "n1" });
+    prismaMock.knowledgeNode.findFirst.mockResolvedValue({ id: "n1" });
 
     const result = await service.getNode("n1", "company-1");
 
-    expect(prismaMock.knowledgeNode.findUnique).toHaveBeenCalledWith({
-      where: { id: "n1" },
+    expect(prismaMock.knowledgeNode.findFirst).toHaveBeenCalledWith({
+      where: { id: "n1", companyId: "company-1" },
     });
     expect(result).toEqual({ id: "n1" });
   });

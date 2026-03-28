@@ -2,7 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { ConsultingDomainRules } from "./consulting.domain-rules.service";
 import { PrismaService } from "../../../shared/prisma/prisma.service";
 import { BadRequestException } from "@nestjs/common";
-import { TechMapStatus, DeviationStatus } from "@rai/prisma-client";
+import { DeviationStatus } from "@rai/prisma-client";
 
 /**
  * ConsultingDomainRules — тесты FSM-гардов.
@@ -14,9 +14,8 @@ describe("ConsultingDomainRules", () => {
 
   beforeEach(async () => {
     prisma = {
-      techMap: { findMany: jest.fn() },
       deviationReview: { count: jest.fn() },
-      harvestPlan: { findFirst: jest.fn() },
+      harvestPlan: { findFirst: jest.fn(), findUnique: jest.fn() },
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -32,64 +31,85 @@ describe("ConsultingDomainRules", () => {
   // --- canActivate ---
 
   describe("canActivate", () => {
-    it("РАЗРЕШАЕТ активацию при наличии ACTIVE TechMap и отсутствии открытых Deviation", async () => {
-      prisma.techMap.findMany.mockResolvedValue([
-        { id: "tm-1", status: TechMapStatus.ACTIVE },
-      ]);
+    it("РАЗРЕШАЕТ активацию при activeTechMapId и LOCKED бюджете без открытых Deviation", async () => {
+      prisma.harvestPlan.findUnique
+        .mockResolvedValueOnce({
+          id: "plan-1",
+          activeTechMapId: "tm-1",
+        })
+        .mockResolvedValueOnce({
+          id: "plan-1",
+          activeBudgetPlanId: "budget-1",
+          activeBudgetPlan: { status: "LOCKED" },
+        });
       prisma.deviationReview.count.mockResolvedValue(0);
 
       await expect(service.canActivate("plan-1")).resolves.toBeUndefined();
     });
 
-    it("ЗАПРЕЩАЕТ активацию при TechMap в статусе REVIEW или APPROVED (Production Gate)", async () => {
-      prisma.techMap.findMany.mockResolvedValue([
-        { id: "tm-1", status: TechMapStatus.REVIEW },
-        { id: "tm-2", status: TechMapStatus.APPROVED },
-      ]);
+    it("ЗАПРЕЩАЕТ активацию без activeTechMapId (Production Gate)", async () => {
+      prisma.harvestPlan.findUnique.mockResolvedValueOnce({
+        id: "plan-1",
+        activeTechMapId: null,
+      });
+
+      const activationPromise = service.canActivate("plan-1");
+
+      await expect(activationPromise).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(activationPromise).rejects.toThrow(
+        "Production Gate",
+      );
+    });
+
+    it("ЗАПРЕЩАЕТ активацию без существующего плана", async () => {
+      prisma.harvestPlan.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.canActivate("plan-1")).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.canActivate("plan-1")).rejects.toThrow(
+        "План уборки не найден",
+      );
+    });
+
+    it("ЗАПРЕЩАЕТ активацию при незаблокированном бюджете (Financial Gate)", async () => {
+      prisma.harvestPlan.findUnique
+        .mockResolvedValueOnce({
+          id: "plan-1",
+          activeTechMapId: "tm-1",
+        })
+        .mockResolvedValueOnce({
+          id: "plan-1",
+          activeBudgetPlanId: "budget-1",
+          activeBudgetPlan: { status: "DRAFT" },
+        });
       prisma.deviationReview.count.mockResolvedValue(0);
 
-      await expect(service.canActivate("plan-1")).rejects.toThrow(
+      const activationPromise = service.canActivate("plan-1");
+
+      await expect(activationPromise).rejects.toThrow(
         BadRequestException,
       );
-      await expect(service.canActivate("plan-1")).rejects.toThrow(
-        "Production Gate",
-      );
-    });
-
-    it("ЗАПРЕЩАЕТ активацию без TechMap", async () => {
-      prisma.techMap.findMany.mockResolvedValue([]);
-
-      await expect(service.canActivate("plan-1")).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(service.canActivate("plan-1")).rejects.toThrow(
-        "Невозможно активировать план без привязанной Технологической Карты",
-      );
-    });
-
-    it("ЗАПРЕЩАЕТ активацию если все TechMaps в DRAFT", async () => {
-      prisma.techMap.findMany.mockResolvedValue([
-        { id: "tm-1", status: TechMapStatus.DRAFT },
-      ]);
-
-      await expect(service.canActivate("plan-1")).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(service.canActivate("plan-1")).rejects.toThrow(
-        "Production Gate",
+      await expect(activationPromise).rejects.toThrow(
+        "Financial Gate",
       );
     });
 
     it("ЗАПРЕЩАЕТ активацию при открытых Deviation (DETECTED)", async () => {
-      prisma.techMap.findMany.mockResolvedValue([
-        { id: "tm-1", status: TechMapStatus.ACTIVE },
-      ]);
+      prisma.harvestPlan.findUnique.mockResolvedValueOnce({
+        id: "plan-1",
+        activeTechMapId: "tm-1",
+      });
       prisma.deviationReview.count.mockResolvedValue(2);
 
-      await expect(service.canActivate("plan-1")).rejects.toThrow(
+      const activationPromise = service.canActivate("plan-1");
+
+      await expect(activationPromise).rejects.toThrow(
         BadRequestException,
       );
-      await expect(service.canActivate("plan-1")).rejects.toThrow(
+      await expect(activationPromise).rejects.toThrow(
         "незакрытых отклонений",
       );
     });

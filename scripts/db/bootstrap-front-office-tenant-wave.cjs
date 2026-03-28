@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { PrismaClient } = require("../../packages/prisma-client");
+const { PrismaClient, Prisma } = require("../../packages/prisma-client");
 
 const DEFAULT_COMPANY_ID = "default-rai-company";
 
@@ -79,8 +79,8 @@ async function main() {
 
     const before = await collectNullBacklog(prisma, company.id);
 
-    await prisma.$executeRawUnsafe(
-      `
+    await prisma.$executeRaw(
+      Prisma.sql`
         UPDATE "rai_front_office_threads" AS t
         SET "tenantId" = COALESCE(
           (
@@ -99,45 +99,41 @@ async function main() {
           )
         )
         WHERE t."tenantId" IS NULL
-          AND t."companyId" = $1
+          AND t."companyId" = ${company.id}
       `,
-      company.id,
     );
 
-    await prisma.$executeRawUnsafe(
-      `
+    await prisma.$executeRaw(
+      Prisma.sql`
         UPDATE "rai_front_office_thread_messages" AS m
         SET "tenantId" = t."tenantId"
         FROM "rai_front_office_threads" AS t
         WHERE m."threadId" = t."id"
           AND m."tenantId" IS NULL
-          AND t."companyId" = $1
+          AND t."companyId" = ${company.id}
       `,
-      company.id,
     );
 
-    await prisma.$executeRawUnsafe(
-      `
+    await prisma.$executeRaw(
+      Prisma.sql`
         UPDATE "rai_front_office_handoffs" AS h
         SET "tenantId" = t."tenantId"
         FROM "rai_front_office_threads" AS t
         WHERE h."threadId" = t."id"
           AND h."tenantId" IS NULL
-          AND t."companyId" = $1
+          AND t."companyId" = ${company.id}
       `,
-      company.id,
     );
 
-    await prisma.$executeRawUnsafe(
-      `
+    await prisma.$executeRaw(
+      Prisma.sql`
         UPDATE "rai_front_office_thread_participant_states" AS p
         SET "tenantId" = t."tenantId"
         FROM "rai_front_office_threads" AS t
         WHERE p."threadId" = t."id"
           AND p."tenantId" IS NULL
-          AND t."companyId" = $1
+          AND t."companyId" = ${company.id}
       `,
-      company.id,
     );
 
     const after = await collectNullBacklog(prisma, company.id);
@@ -164,44 +160,40 @@ async function main() {
 
 async function collectNullBacklog(prisma, companyId) {
   const [threads, messages, handoffs, participantStates] = await Promise.all([
-    prisma.$queryRawUnsafe(
-      `
+    prisma.$queryRaw(
+      Prisma.sql`
         SELECT COUNT(*)::int AS count
         FROM "rai_front_office_threads"
-        WHERE "companyId" = $1
+        WHERE "companyId" = ${companyId}
           AND "tenantId" IS NULL
       `,
-      companyId,
     ),
-    prisma.$queryRawUnsafe(
-      `
+    prisma.$queryRaw(
+      Prisma.sql`
         SELECT COUNT(*)::int AS count
         FROM "rai_front_office_thread_messages" AS m
         JOIN "rai_front_office_threads" AS t ON t."id" = m."threadId"
-        WHERE t."companyId" = $1
+        WHERE t."companyId" = ${companyId}
           AND m."tenantId" IS NULL
       `,
-      companyId,
     ),
-    prisma.$queryRawUnsafe(
-      `
+    prisma.$queryRaw(
+      Prisma.sql`
         SELECT COUNT(*)::int AS count
         FROM "rai_front_office_handoffs" AS h
         JOIN "rai_front_office_threads" AS t ON t."id" = h."threadId"
-        WHERE t."companyId" = $1
+        WHERE t."companyId" = ${companyId}
           AND h."tenantId" IS NULL
       `,
-      companyId,
     ),
-    prisma.$queryRawUnsafe(
-      `
+    prisma.$queryRaw(
+      Prisma.sql`
         SELECT COUNT(*)::int AS count
         FROM "rai_front_office_thread_participant_states" AS p
         JOIN "rai_front_office_threads" AS t ON t."id" = p."threadId"
-        WHERE t."companyId" = $1
+        WHERE t."companyId" = ${companyId}
           AND p."tenantId" IS NULL
       `,
-      companyId,
     ),
   ]);
 

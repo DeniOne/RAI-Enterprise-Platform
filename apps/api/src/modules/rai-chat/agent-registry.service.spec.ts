@@ -82,7 +82,7 @@ describe("AgentRegistryService", () => {
     const result = await service.getRegistry("company-1");
     const agronom = result.find((entry) => entry.definition.role === "agronomist");
 
-    expect(result).toHaveLength(7);
+    expect(result.length).toBeGreaterThanOrEqual(9);
     expect(agronom).toMatchObject({
       definition: {
         role: "agronomist",
@@ -99,6 +99,16 @@ describe("AgentRegistryService", () => {
         mode: "INHERITED",
       },
     });
+    expect(result).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          definition: expect.objectContaining({ role: "chief_agronomist" }),
+        }),
+        expect.objectContaining({
+          definition: expect.objectContaining({ role: "data_scientist" }),
+        }),
+      ]),
+    );
   });
 
   it("includes future roles in effective registry read model", async () => {

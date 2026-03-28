@@ -172,7 +172,8 @@ export default async function DashboardPage() {
         redirect('/login')
     }
 
-    const token = cookies().get('auth_token')?.value || ''
+    const cookieStore = await cookies()
+    const token = cookieStore.get('auth_token')?.value || ''
     const stats = await getStats(token)
     const advisoryPilotStatus = await getAdvisoryPilotStatus(token)
     const advisoryOpsMetrics = await getAdvisoryOpsMetrics(token)

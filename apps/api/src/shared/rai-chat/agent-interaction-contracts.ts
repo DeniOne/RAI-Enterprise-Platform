@@ -2320,6 +2320,9 @@ export function buildAutoToolCallFromContracts(
         },
       };
     case "create_front_office_escalation":
+      if (!request.threadId && !request.workspaceContext?.route) {
+        return null;
+      }
       return {
         name: intentContract.toolName,
         payload: {

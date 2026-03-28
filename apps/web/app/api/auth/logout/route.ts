@@ -3,8 +3,9 @@ import { cookies } from 'next/headers'
 
 export async function POST() {
     try {
+        const cookieStore = await cookies()
         // Удаление HttpOnly cookie
-        cookies().delete('auth_token')
+        cookieStore.delete('auth_token')
 
         return NextResponse.json({ success: true })
     } catch (error) {

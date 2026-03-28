@@ -2,14 +2,14 @@
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
-const { PrismaClient } = require('../../packages/prisma-client/generated-client');
+const { PrismaClient, Prisma } = require('../../packages/prisma-client/generated-client');
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const prisma = new PrismaClient();
 
 async function singleValue(sql) {
-  const rows = await prisma.$queryRawUnsafe(sql);
+  const rows = await prisma.$queryRaw(sql);
   const row = rows[0] || {};
   const key = Object.keys(row)[0];
   return Number(row[key] || 0);
@@ -18,23 +18,23 @@ async function singleValue(sql) {
 async function run() {
   const generatedAt = new Date().toISOString();
   const counts = {
-    threadsNull: await singleValue('SELECT COUNT(*) FROM "rai_front_office_threads" WHERE "tenantId" IS NULL'),
-    messagesNull: await singleValue('SELECT COUNT(*) FROM "rai_front_office_thread_messages" WHERE "tenantId" IS NULL'),
-    handoffsNull: await singleValue('SELECT COUNT(*) FROM "rai_front_office_handoffs" WHERE "tenantId" IS NULL'),
-    participantNull: await singleValue('SELECT COUNT(*) FROM "rai_front_office_thread_participant_states" WHERE "tenantId" IS NULL'),
-    messageMismatch: await singleValue(`
+    threadsNull: await singleValue(Prisma.sql`SELECT COUNT(*) FROM "rai_front_office_threads" WHERE "tenantId" IS NULL`),
+    messagesNull: await singleValue(Prisma.sql`SELECT COUNT(*) FROM "rai_front_office_thread_messages" WHERE "tenantId" IS NULL`),
+    handoffsNull: await singleValue(Prisma.sql`SELECT COUNT(*) FROM "rai_front_office_handoffs" WHERE "tenantId" IS NULL`),
+    participantNull: await singleValue(Prisma.sql`SELECT COUNT(*) FROM "rai_front_office_thread_participant_states" WHERE "tenantId" IS NULL`),
+    messageMismatch: await singleValue(Prisma.sql`
       SELECT COUNT(*)
       FROM "rai_front_office_thread_messages" m
       JOIN "rai_front_office_threads" t ON t.id = m."threadId"
       WHERE m."tenantId" IS DISTINCT FROM t."tenantId"
     `),
-    handoffMismatch: await singleValue(`
+    handoffMismatch: await singleValue(Prisma.sql`
       SELECT COUNT(*)
       FROM "rai_front_office_handoffs" h
       JOIN "rai_front_office_threads" t ON t.id = h."threadId"
       WHERE h."tenantId" IS DISTINCT FROM t."tenantId"
     `),
-    participantMismatch: await singleValue(`
+    participantMismatch: await singleValue(Prisma.sql`
       SELECT COUNT(*)
       FROM "rai_front_office_thread_participant_states" p
       JOIN "rai_front_office_threads" t ON t.id = p."threadId"

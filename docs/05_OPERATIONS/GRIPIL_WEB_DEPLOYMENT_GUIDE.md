@@ -1,7 +1,7 @@
 ---
 id: GRIPIL-WEB-DEPLOY-001
 layer: Operations
-type: runbook
+type: Runbook
 status: active
 version: 1.0.0
 owners: AGENT

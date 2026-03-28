@@ -23,7 +23,8 @@ describe("TechnologyCardService", () => {
             },
             season: {
               findFirst: jest.fn(),
-              update: jest.fn(),
+              findFirstOrThrow: jest.fn(),
+              updateMany: jest.fn(),
             },
           },
         },
@@ -68,7 +69,8 @@ describe("TechnologyCardService", () => {
       id: "tc1",
       companyId: "c1",
     });
-    (prisma.season.update as jest.Mock).mockResolvedValue({
+    (prisma.season.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+    (prisma.season.findFirstOrThrow as jest.Mock).mockResolvedValue({
       id: "s1",
       technologyCardId: "tc1",
     });

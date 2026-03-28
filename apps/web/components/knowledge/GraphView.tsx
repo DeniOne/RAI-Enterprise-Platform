@@ -13,7 +13,7 @@ interface GraphViewProps {
 }
 
 export default function GraphView({ graph, onNodeClick, highlightNodes, focusNodeId }: GraphViewProps) {
-    const fgRef = useRef<any>();
+    const fgRef = useRef<any>(null);
 
     useEffect(() => {
         if (focusNodeId && fgRef.current) {

@@ -93,6 +93,7 @@ describe("AgentRuntimeService", () => {
       status: "COMPLETED",
       explain: "Grounded answer",
       data: { hits: 1, items: [{ content: "doc", score: 0.9 }] },
+      toolCallsCount: 1,
       evidence: [
         {
           claim: "grounded",

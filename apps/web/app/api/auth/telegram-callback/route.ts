@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 
 export async function POST(request: Request) {
     try {
+        const cookieStore = await cookies()
         const { token } = await request.json()
 
         if (!token) {
@@ -14,7 +15,7 @@ export async function POST(request: Request) {
 
         // Установка HttpOnly cookie идентично обычному логину
         // Это гарантирует, что Middleware и Серверные компоненты увидят куку
-        cookies().set('auth_token', token, {
+        cookieStore.set('auth_token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',

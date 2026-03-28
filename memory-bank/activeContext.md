@@ -1,5 +1,23 @@
 # Активный контекст RAI_EP
 
+## Текущая задача (2026-03-28)
+- [x] Закрыт backend remediation slice, который оставался после enterprise-аудита и полного `api` baseline.
+- [x] `packages/prisma-client/fix_schema.ts` расширен из точечного repair-скрипта в полный локальный recovery для hardened ledger-контура:
+  - включён `CREATE EXTENSION IF NOT EXISTS dblink`
+  - чинятся `account_balances`, `check_tenant_state_hardened_v6`, `create_ledger_entry_v1`
+  - восстанавливаются `update_account_balance_v1`, `no_negative_cash` и ledger-trigger wiring
+- [x] Подтверждено, что предыдущий локальный schema drift был реальным: миграция числилась применённой, но часть ledger-функций, constraint-ов и trigger-ов фактически отсутствовала в БД.
+- [x] После recovery-скрипта `src/modules/finance-economy/economy/application/economy.concurrency.spec.ts` снова зелёный и больше не является backend blocker.
+- [x] `apps/api/src/shared/audit/audit.module.ts` теперь явно импортирует `CryptoModule` и `AnchorModule`; notarization-chain больше не держится на неявном модульном окружении.
+- [x] Закрыт residual test drift по двум последним красным suite:
+  - `src/modules/consulting/domain-rules/consulting.domain-rules.spec.ts` исправлен на single-promise reject path без повторного сжигания `mockResolvedValueOnce`
+  - `test/a_rai-live-api-smoke.spec.ts` синхронизирован с текущим runtime bootstrap: `EventEmitterModule`, `process.env`-совместимый `ConfigService`, актуальные `Prisma/Redis` mocks и no-op override для `IdempotencyInterceptor`
+- [x] Новый backend baseline подтверждён командой `pnpm --filter api test -- --runInBand`:
+  - `Test Suites: 252 passed, 252 total`
+  - `Tests: 1313 passed, 1 skipped, 1314 total`
+  - прежний остаток `7 failed / 252 total`, а затем `2 failed / 7 targeted` снят полностью
+- [x] `runInBand` baseline теперь проходит без `SIGKILL`; следующая точка синхронизации должна опираться уже на зелёный `api`, а не на старый красный audit snapshot.
+
 ## Текущая задача (2026-03-26)
 - [x] Выполнен аварийный откат (Emergency Revert) лендинга Gripil (`apps/gripil-web`) до стабильного состояния ("bee" release).
 - [x] Причина: рефакторинг fluid-типографики (Iteration 5) привел к критическому расползанию верстки и путому фону на некоторых разрешениях.
@@ -555,3 +573,23 @@
 - `semantic-router.service.spec.ts` получил route-prior regression маяки для CRM, finance и deviations slices.
 - Финальная верификация закрыла macro-sprint: docs lint, matrix lint, api/web tsc и targeted api/web jest suites прошли.
 - Следующий шаг уже не про повторное угадывание intent, а про вынос remaining routing out of execution path.
+
+## 2026-03-28 — Audit remediation baseline
+
+- `invariant-gate` теперь считает `@RequireInternalApiKey(...)` валидной guard-защитой и перестаёт маркировать внутренние boundary-контроллеры как unauthenticated.
+- `semantic-router` снова отделяет shadow semantic detection от bounded primary-slice promotion: `sliceId` для `deviations`, `finance`, `CRM`, `contracts` и `techmaps` поднимается только внутри соответствующего workspace boundary.
+- `routing-case-memory.service.spec.ts` снова использует живой `ttlExpiresAt`, чтобы тест проверял activation lifecycle, а не случайное истечение времени.
+- `infra/gateway/certs` переведён в режим externalized secrets: реальные TLS-ключи больше не должны храниться в Git, в репозитории оставлены только `.gitignore` и `README.md`.
+- `scripts/db/bootstrap-front-office-tenant-wave.cjs`, `scripts/db/explain-hot-paths.cjs`, `scripts/db/observe-index-window.cjs` и `scripts/db/validate-front-office-tenant-wave.cjs` переведены с `queryRawUnsafe/executeRawUnsafe` на `Prisma.sql` + safe raw calls.
+- `scripts/raw-sql-allowlist.json` расширен явными tooling-entry для этих db-скриптов, поэтому raw SQL governance снова различает approved diagnostic SQL и реальный bypass.
+- `node scripts/raw-sql-governance.cjs --enforce` и `pnpm gate:invariants` снова зелёные: `raw_sql_review_required=0`, `raw_sql_unsafe=0`, `violations=0`.
+- `agent-interaction-contracts` больше не строит `create_front_office_escalation` auto tool call из голого сообщения без `threadId` или `workspaceContext.route`; red-team tenant-escape prompt без контекста теперь не эскалируется в write-path.
+- Целевой backend test-stabilization batch из 15 suite теперь зелёный `--runInBand`: stale Prisma mocks, новые `RedisService`/`TenantContextService` DI-границы, future-dates для front-office invites и обновлённые AI-router/runtime expectations синхронизированы с текущим кодом.
+
+## 2026-03-28 — Audit package sync to post-remediation baseline
+
+- Audit-пакет `docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md`, `ENTERPRISE_EVIDENCE_MATRIX_2026-03-28.md` и `DELTA_VS_BASELINE_2026-03-28.md` синхронизирован до версии `1.2.0` под фактический post-remediation baseline.
+- Повторная верификация для audit-sync подтверждает: `pnpm gate:routing:primary-slices` PASS (`4/4`, `86/86`), `pnpm --filter web build` PASS, `pnpm --filter web test` PASS (`42/42`, `482/482`), `pnpm --filter api test -- --runInBand` PASS (`252/252`, `1313 passed`, `1 skipped`).
+- Актуальные `node scripts/raw-sql-governance.cjs --enforce` и `pnpm gate:invariants` снова полностью зелёные: `raw_sql_review_required=0`, `raw_sql_unsafe=0`, `violations=0`, `all_invariant_checks_passed`.
+- `infra/gateway/certs/ca.key` отсутствует в рабочем дереве и больше не tracked в текущем индексе; открытым остаётся уже не active SCM issue, а history cleanup / key-rotation evidence debt.
+- Executive verdict audit-пакета подтверждён как `Security = CONDITIONAL GO`, `Legal / Compliance = NO-GO`, `Deployment / Operations = CONDITIONAL GO`, `Product Readiness = CONDITIONAL GO`, но security-axis теперь опирается на зелёный invariant baseline.

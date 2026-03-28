@@ -53,14 +53,16 @@ async function getTechMap(id: string, token: string): Promise<TechMap | null> {
     }
 }
 
-export default async function TechMapDetailPage({ params }: { params: { id: string } }) {
-    const token = cookies().get('auth_token')?.value
+export default async function TechMapDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params
+    const cookieStore = await cookies()
+    const token = cookieStore.get('auth_token')?.value
 
     if (!token) {
         redirect('/login')
     }
 
-    const techMap = await getTechMap(params.id, token)
+    const techMap = await getTechMap(id, token)
 
     if (!techMap) {
         return (

@@ -105,11 +105,11 @@
       "allowPrimaryPromotion": true
     },
     "expected": {
-      "sliceId": null,
-      "promotedPrimary": false,
-      "executionPath": "semantic_router_shadow",
+      "sliceId": "crm.account.workspace-review",
+      "promotedPrimary": true,
+      "executionPath": "semantic_router_primary",
       "classificationIntent": "review_account_workspace",
-      "classificationMethod": "semantic_router_shadow",
+      "classificationMethod": "semantic_router_primary",
       "decisionType": "execute",
       "recommendedExecutionMode": "direct_execute",
       "eligibleTools": ["get_crm_account_workspace"],

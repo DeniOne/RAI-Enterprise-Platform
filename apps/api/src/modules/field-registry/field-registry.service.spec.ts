@@ -8,7 +8,7 @@ describe("FieldRegistryService", () => {
   let service: FieldRegistryService;
 
   const prismaMock = {
-    client: {
+    account: {
       findFirst: jest.fn(),
     },
     field: {
@@ -31,7 +31,7 @@ describe("FieldRegistryService", () => {
 
   describe("create", () => {
     it("should throw ForbiddenException if client does not belong to company", async () => {
-      prismaMock.client.findFirst.mockResolvedValue(null);
+      prismaMock.account.findFirst.mockResolvedValue(null);
 
       await expect(
         service.create(
@@ -60,7 +60,7 @@ describe("FieldRegistryService", () => {
     });
 
     it("should throw BadRequestException for invalid GeoJSON", async () => {
-      prismaMock.client.findFirst.mockResolvedValue({
+      prismaMock.account.findFirst.mockResolvedValue({
         id: "client-1",
         companyId: "company-1",
       });
@@ -81,7 +81,7 @@ describe("FieldRegistryService", () => {
     });
 
     it("should create field if all valid", async () => {
-      prismaMock.client.findFirst.mockResolvedValue({
+      prismaMock.account.findFirst.mockResolvedValue({
         id: "client-1",
         companyId: "company-1",
       });

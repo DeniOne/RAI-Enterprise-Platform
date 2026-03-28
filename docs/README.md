@@ -3,14 +3,14 @@ id: DOC-META-README-RVKI
 layer: Meta
 type: Navigation
 status: approved
-version: 3.2.0
+version: 3.3.0
 owners: [@techlead]
-last_updated: 2026-03-21
+last_updated: 2026-03-28
 claim_id: CLAIM-CORE-README
 claim_status: asserted
 verified_by: code
-last_verified: 2026-03-21
-evidence_refs: docs/INDEX.md;scripts/lint-docs.cjs
+last_verified: 2026-03-28
+evidence_refs: docs/INDEX.md;scripts/lint-docs.cjs;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md
 ---
 # RAI_EP Documentation
 
@@ -18,7 +18,7 @@ evidence_refs: docs/INDEX.md;scripts/lint-docs.cjs
 id: CLAIM-CORE-README
 status: asserted
 verified_by: code
-last_verified: 2026-03-21
+last_verified: 2026-03-28
 
 Документация переведена в docs-as-code режим.
 
@@ -27,7 +27,9 @@ last_verified: 2026-03-21
 - Governance contract: `docs/CONTRIBUTING_DOCS.md`
 - Freshness policy: `docs/05_OPERATIONS/DOC_FRESHNESS_SLA.md`
 - Active instructions layer: `docs/11_INSTRUCTIONS/`
-- Full audit package: `docs/_audit/FINAL_AUDIT_2026-03-20.md`
+- Latest due diligence package: `docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md`
+- Documentation baseline audit: `docs/_audit/FINAL_AUDIT_2026-03-20.md`
+- Supporting audit artifacts: `docs/_audit/ENTERPRISE_EVIDENCE_MATRIX_2026-03-28.md`, `docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md`, `docs/_audit/REPO_RUNTIME_MAP_2026-03-28.md`, `docs/_audit/PRIVACY_DATA_FLOW_MAP_2026-03-28.md`, `docs/_audit/AI_AGENT_FAILURE_SCENARIOS_2026-03-28.md`, `docs/_audit/DELTA_VS_BASELINE_2026-03-28.md`
 - Topology redecision: `docs/_audit/DOCUMENTATION_TOPOLOGY_REDECISION_2026-03-21.md`
 
 Слои документации теперь разделены по роли:

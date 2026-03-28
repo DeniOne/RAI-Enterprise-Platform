@@ -6,6 +6,7 @@ import { FinanceConfigService } from "../../../../shared/finance-economy/config/
 import { CostAttributionRules } from "../domain/rules/cost-attribution.rules";
 import { EconomicEventType, Prisma } from "@rai/prisma-client";
 import { randomUUID } from "crypto";
+import { TenantContextService } from "../../../../shared/tenant-context/tenant-context.service";
 
 // Hardcode for debugging - dotenv having issues
 process.env.DATABASE_URL =
@@ -59,6 +60,12 @@ describe("EconomyService Final Stress Simulation", () => {
       providers: [
         EconomyService,
         { provide: PrismaService, useClass: PrismaService },
+        {
+          provide: TenantContextService,
+          useValue: {
+            getStore: jest.fn(() => undefined),
+          },
+        },
         { provide: OutboxService, useValue: mockOutboxService },
         { provide: FinanceConfigService, useValue: mockConfigService },
       ],

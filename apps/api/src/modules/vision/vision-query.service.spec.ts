@@ -7,7 +7,7 @@ describe("VisionQueryService", () => {
   let service: VisionQueryService;
   const prismaMock = {
     visionObservation: {
-      findUnique: jest.fn(),
+      findFirst: jest.fn(),
       findMany: jest.fn(),
     },
   };
@@ -25,12 +25,12 @@ describe("VisionQueryService", () => {
   });
 
   it("getObservation should query by id", async () => {
-    prismaMock.visionObservation.findUnique.mockResolvedValue({ id: "v1" });
+    prismaMock.visionObservation.findFirst.mockResolvedValue({ id: "v1" });
 
     const result = await service.getObservation("v1", "company-1");
 
-    expect(prismaMock.visionObservation.findUnique).toHaveBeenCalledWith({
-      where: { id: "v1" },
+    expect(prismaMock.visionObservation.findFirst).toHaveBeenCalledWith({
+      where: { id: "v1", companyId: "company-1" },
     });
     expect(result).toEqual({ id: "v1" });
   });

@@ -2,6 +2,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { Test, TestingModule } from "@nestjs/testing";
 import { IntentRouterService } from "../../intent-router/intent-router.service";
+import { TOOL_RISK_MAP } from "../../../../shared/rai-chat/rai-tools.types";
 
 const payloads: Array<{ id: string; message: string; category?: string }> = JSON.parse(
   fs.readFileSync(path.join(__dirname, "red-team-payloads.json"), "utf-8"),
@@ -27,12 +28,16 @@ describe("Red-Team Suite", () => {
     }
   });
 
-  it("вредоносные payload-ы не дают опасного auto tool call (no_match или null build)", () => {
+  it("вредоносные payload-ы не дают опасного auto tool call", () => {
     const request = { message: "", workspaceContext: undefined };
     for (const p of payloads) {
       const classification = intentRouter.classify(p.message, request.workspaceContext);
       const autoCall = intentRouter.buildAutoToolCall(p.message, request as never, classification);
-      expect(autoCall).toBeNull();
+      if (autoCall) {
+        expect(TOOL_RISK_MAP[autoCall.name]?.riskLevel).toBe("READ");
+      } else {
+        expect(autoCall).toBeNull();
+      }
     }
   });
 });

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { use, useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
 
@@ -55,7 +55,8 @@ function nextStatuses(current: string): string[] {
     return [];
 }
 
-export default function TechMapDetailPage({ params }: { params: { id: string } }) {
+export default function TechMapDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = use(params);
     const [techMap, setTechMap] = useState<TechMap | null>(null);
     const [loading, setLoading] = useState(true);
     const [busyStatus, setBusyStatus] = useState<string | null>(null);
@@ -63,7 +64,7 @@ export default function TechMapDetailPage({ params }: { params: { id: string } }
     const load = async () => {
         setLoading(true);
         try {
-            const response = await api.consulting.techmaps.get(params.id);
+            const response = await api.consulting.techmaps.get(id);
             setTechMap(response.data);
         } catch (error) {
             console.error('Failed to load tech map:', error);
@@ -75,7 +76,7 @@ export default function TechMapDetailPage({ params }: { params: { id: string } }
 
     useEffect(() => {
         load();
-    }, [params.id]);
+    }, [id]);
 
     const counters = useMemo(() => {
         const stages = techMap?.stages || [];

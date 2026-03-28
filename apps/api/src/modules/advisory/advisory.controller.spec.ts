@@ -8,11 +8,20 @@ import request = require("supertest");
 import { AdvisoryController } from "./advisory.controller";
 import { AdvisoryService } from "./advisory.service";
 import { JwtAuthGuard } from "../../shared/auth/jwt-auth.guard";
+import { RolesGuard } from "../../shared/auth/roles.guard";
+import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
+import { RedisService } from "../../shared/redis/redis.service";
 
 class TestJwtAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest();
     req.user = { id: "u-test", companyId: "c-test", role: "ADMIN" };
+    return true;
+  }
+}
+
+class TestRolesGuard implements CanActivate {
+  canActivate(): boolean {
     return true;
   }
 }
@@ -46,12 +55,24 @@ describe("AdvisoryController (HTTP)", () => {
   };
 
   beforeAll(async () => {
+    const idempotencyInterceptor = {
+      intercept: jest.fn((_: unknown, next: { handle: () => unknown }) =>
+        next.handle(),
+      ),
+    };
     const moduleRef = await Test.createTestingModule({
       controllers: [AdvisoryController],
-      providers: [{ provide: AdvisoryService, useValue: advisoryServiceMock }],
+      providers: [
+        { provide: AdvisoryService, useValue: advisoryServiceMock },
+        { provide: RedisService, useValue: {} },
+      ],
     })
       .overrideGuard(JwtAuthGuard)
       .useClass(TestJwtAuthGuard)
+      .overrideGuard(RolesGuard)
+      .useClass(TestRolesGuard)
+      .overrideInterceptor(IdempotencyInterceptor)
+      .useValue(idempotencyInterceptor)
       .compile();
 
     app = moduleRef.createNestApplication();
@@ -60,7 +81,9 @@ describe("AdvisoryController (HTTP)", () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    if (app) {
+      await app.close();
+    }
   });
 
   beforeEach(() => {

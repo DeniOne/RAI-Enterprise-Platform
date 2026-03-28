@@ -1,14 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { resolveBackendUrl } from '../../_utils';
 
 export async function GET(
-    _request: Request,
-    context: { params: { token: string } },
+    _request: NextRequest,
+    context: { params: Promise<{ token: string }> },
 ) {
     try {
+        const { token } = await context.params;
         const backendUrl = resolveBackendUrl();
         const response = await fetch(
-            `${backendUrl}/auth/front-office/invitations/${encodeURIComponent(context.params.token)}`,
+            `${backendUrl}/auth/front-office/invitations/${encodeURIComponent(token)}`,
             {
                 cache: 'no-store',
             },

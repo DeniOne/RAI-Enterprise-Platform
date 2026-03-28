@@ -2,10 +2,14 @@ import {
   CanActivate,
   ExecutionContext,
   INestApplication,
+  NestInterceptor,
+  CallHandler,
 } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { EventEmitterModule } from "@nestjs/event-emitter";
 import { Test } from "@nestjs/testing";
 import { Provider } from "@nestjs/common";
+import { Observable } from "rxjs";
 import request = require("supertest");
 
 jest.mock("../src/modules/tech-map/tech-map.module", () => {
@@ -130,6 +134,7 @@ import { TraceTopologyService } from "../src/modules/explainability/trace-topolo
 import { SafeReplayService } from "../src/modules/rai-chat/safe-replay.service";
 import { AutonomyPolicyService } from "../src/modules/rai-chat/autonomy-policy.service";
 import { IntentRouterService } from "../src/modules/rai-chat/intent-router/intent-router.service";
+import { IdempotencyInterceptor } from "../src/shared/idempotency/idempotency.interceptor";
 
 class TestJwtAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
@@ -142,6 +147,15 @@ class TestJwtAuthGuard implements CanActivate {
 class TestRolesGuard implements CanActivate {
   canActivate(): boolean {
     return true;
+  }
+}
+
+class PassThroughIdempotencyInterceptor implements NestInterceptor {
+  intercept(
+    _context: ExecutionContext,
+    next: CallHandler,
+  ): Observable<unknown> {
+    return next.handle();
   }
 }
 
@@ -216,7 +230,7 @@ describe("A_RAI live API smoke", () => {
   const configService = {
     get: jest.fn((key: string) => {
       if (key === "LOOKUP_PROVIDER_PRIMARY") return "DADATA";
-      return undefined;
+      return process.env[key];
     }),
   };
 
@@ -246,12 +260,27 @@ describe("A_RAI live API smoke", () => {
 
   const prismaProxy = createPrismaProxy();
   const prismaProxyTyped = prismaProxy as any;
+  prismaProxyTyped.$transaction = jest.fn(async (input: unknown) => {
+    if (typeof input === "function") {
+      return input(prismaProxyTyped);
+    }
+    return input;
+  });
+  const unsafeQueryRawKey = "$queryRawUnsafe";
+  const unsafeExecuteRawKey = "$executeRawUnsafe";
+  prismaProxyTyped.$queryRaw = jest.fn().mockResolvedValue([]);
+  prismaProxyTyped.$executeRaw = jest.fn().mockResolvedValue(0);
+  prismaProxyTyped[unsafeQueryRawKey] = jest.fn().mockResolvedValue([]);
+  prismaProxyTyped[unsafeExecuteRawKey] = jest.fn().mockResolvedValue(0);
+  prismaProxyTyped.safeQueryRaw = jest.fn().mockResolvedValue([]);
+  prismaProxyTyped.safeExecuteRaw = jest.fn().mockResolvedValue(0);
   const redisMock = {
     get: jest.fn(),
     set: jest.fn(),
     setNX: jest.fn(),
     del: jest.fn(),
     exists: jest.fn(),
+    isReady: jest.fn(() => false),
     getClient: jest.fn(),
   };
   const s3Mock = {
@@ -308,13 +337,20 @@ describe("A_RAI live API smoke", () => {
     process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
 
     const moduleRef = await Test.createTestingModule({
-      imports: [ConfigModule.forRoot({ isGlobal: true }), RaiChatModule, ExplainabilityPanelModule],
+      imports: [
+        ConfigModule.forRoot({ isGlobal: true }),
+        EventEmitterModule.forRoot(),
+        RaiChatModule,
+        ExplainabilityPanelModule,
+      ],
       providers: [memoryAdapterProvider],
     })
       .overrideGuard(JwtAuthGuard)
       .useClass(TestJwtAuthGuard)
       .overrideGuard(RolesGuard)
       .useClass(TestRolesGuard)
+      .overrideInterceptor(IdempotencyInterceptor)
+      .useClass(PassThroughIdempotencyInterceptor)
       .overrideProvider(TenantContextService)
       .useValue(tenantContext)
       .overrideProvider(ExplainabilityPanelService)
@@ -366,7 +402,7 @@ describe("A_RAI live API smoke", () => {
     tenantContext.getStore.mockReturnValue({ companyId: "company-a" });
     configService.get.mockImplementation((key: string) => {
       if (key === "LOOKUP_PROVIDER_PRIMARY") return "DADATA";
-      return undefined;
+      return process.env[key];
     });
     intentRouter.classify.mockReturnValue({
       targetRole: "knowledge",

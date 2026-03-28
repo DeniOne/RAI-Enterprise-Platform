@@ -9,7 +9,8 @@ import Link from 'next/link';
 import clsx from 'clsx';
 
 async function getStrategicData() {
-    const token = cookies().get('auth_token')?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
     if (!token) return null;
 
     return await strategicApi.getGlobalState(token);

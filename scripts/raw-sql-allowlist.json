@@ -80,6 +80,30 @@
       "reason": "Operational backfill for legacy outbox tenant contract remediation"
     },
     {
+      "path": "scripts/db/bootstrap-front-office-tenant-wave.cjs",
+      "methods": ["queryRaw", "executeRaw"],
+      "scope": "tooling",
+      "reason": "Front-office tenant bootstrap and null-tenant backfill wave script"
+    },
+    {
+      "path": "scripts/db/explain-hot-paths.cjs",
+      "methods": ["queryRaw"],
+      "scope": "tooling",
+      "reason": "Diagnostic EXPLAIN/ANALYZE capture for bounded hot-path queries"
+    },
+    {
+      "path": "scripts/db/observe-index-window.cjs",
+      "methods": ["queryRaw"],
+      "scope": "tooling",
+      "reason": "Index observation snapshot against pg_stat views for DBA decision support"
+    },
+    {
+      "path": "scripts/db/validate-front-office-tenant-wave.cjs",
+      "methods": ["queryRaw"],
+      "scope": "tooling",
+      "reason": "Front-office tenant wave validation and consistency snapshot"
+    },
+    {
       "path": "scripts/verify-task-fsm-db.cjs",
       "methods": ["queryRaw"],
       "scope": "tooling",

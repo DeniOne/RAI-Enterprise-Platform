@@ -52,14 +52,14 @@ describe("IntentRouterService", () => {
 
   it("returns null intent for unknown message", () => {
     const r = service.classify("какая погода завтра?");
-    expect(r.toolName).toBeNull();
-    expect(r.confidence).toBe(0);
-    expect(r.reason).toBe("no_match");
+    expect(r.toolName).toBe(RaiToolName.ClassifyDialogThread);
+    expect(r.targetRole).toBe("front_office_agent");
   });
 
-  it("returns null intent for empty/generic message", () => {
+  it("routes empty/generic message into safe front-office ingress", () => {
     const r = service.classify("привет");
-    expect(r.toolName).toBeNull();
+    expect(r.toolName).toBe(RaiToolName.ClassifyDialogThread);
+    expect(r.targetRole).toBe("front_office_agent");
   });
 
   it("buildAutoToolCall returns payload for deviations with context", () => {

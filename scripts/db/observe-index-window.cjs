@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
-const { PrismaClient } = require('../../packages/prisma-client/generated-client');
+const { PrismaClient, Prisma } = require('../../packages/prisma-client/generated-client');
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
@@ -19,7 +19,7 @@ async function run() {
   const snapshotAt = new Date().toISOString();
   const windowDays = 14;
 
-  const idxRows = await prisma.$queryRawUnsafe(`
+  const idxRows = await prisma.$queryRaw(Prisma.sql`
     SELECT
       ui.schemaname,
       ui.relname,
@@ -32,7 +32,7 @@ async function run() {
     FROM pg_stat_user_indexes ui
   `);
 
-  const tableRows = await prisma.$queryRawUnsafe(`
+  const tableRows = await prisma.$queryRaw(Prisma.sql`
     SELECT
       schemaname,
       relname,

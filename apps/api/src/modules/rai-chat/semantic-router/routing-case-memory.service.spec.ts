@@ -49,7 +49,7 @@ describe("RoutingCaseMemoryService", () => {
             semanticPrimaryCount: 2,
             firstSeenAt: "2026-03-20T09:00:00.000Z",
             lastSeenAt: "2026-03-20T10:00:00.000Z",
-            ttlExpiresAt: "2026-03-27T10:00:00.000Z",
+            ttlExpiresAt: "2026-04-27T10:00:00.000Z",
             sampleTraceId: "tr-1",
             sampleQueryRedacted: "покажи все созданные техкарты",
             semanticIntent: {

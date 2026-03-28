@@ -649,7 +649,10 @@ export class SemanticRouterService {
       promotedPrimary = Boolean(
         request.allowPrimaryPromotion && sliceId === PLAN_FACT_SLICE_ID,
       );
-    } else if (this.isCrmInnLookupSlice(request.message, workspace)) {
+    } else if (
+      this.isCrmInnLookupSlice(request.message, workspace) &&
+      this.isCrmInnLookupBounded(workspace)
+    ) {
       const inn = this.resolveCrmInnFromMessage(request.message);
       const requiredContextMissing = inn ? [] : ["inn"];
       semanticIntent = {
@@ -835,7 +838,10 @@ export class SemanticRouterService {
       promotedPrimary = Boolean(
         request.allowPrimaryPromotion && sliceId === CRM_WORKSPACE_SLICE_ID,
       );
-    } else if (this.isContractsArBalanceSlice(request.message, workspace)) {
+    } else if (
+      this.isContractsArBalanceSlice(request.message, workspace) &&
+      this.isContractsSliceBounded(workspace)
+    ) {
       const invoiceId = this.resolveInvoiceId(workspace, request.message);
       const requiredContextMissing = invoiceId ? [] : ["invoiceId"];
       semanticIntent = {
@@ -925,7 +931,10 @@ export class SemanticRouterService {
         request.allowPrimaryPromotion &&
           sliceId === CONTRACTS_AR_BALANCE_SLICE_ID,
       );
-    } else if (this.isContractsSlice(request.message, workspace)) {
+    } else if (
+      this.isContractsSlice(request.message, workspace) &&
+      this.isContractsSliceBounded(workspace)
+    ) {
       const contractId = this.resolveContractId(workspace);
       const contractQuery = contractId
         ? undefined
@@ -1257,6 +1266,10 @@ export class SemanticRouterService {
     let promotedPrimary = deterministic.promotedPrimary;
 
     const topCase = retrievedCaseMemory[0];
+    const boundedSliceId = this.resolveSliceId(
+      request.message,
+      request.workspaceContext,
+    );
     const alignedWithDeterministic =
       topCase.semanticIntent.entity === deterministic.semanticIntent.entity &&
       topCase.semanticIntent.action === deterministic.semanticIntent.action &&
@@ -1309,7 +1322,7 @@ export class SemanticRouterService {
         reason: `semantic_router:case_memory_safe_override`,
       };
       requestedToolCalls = [];
-      sliceId = sliceId ?? topCase.sliceId ?? null;
+      sliceId = boundedSliceId ?? null;
       promotedPrimary = Boolean(request.allowPrimaryPromotion && sliceId);
     }
 
@@ -1741,34 +1754,61 @@ export class SemanticRouterService {
     message: string,
     workspaceContext?: WorkspaceContextDto,
   ): string | null {
-    if (this.isDeviationSlice(message, workspaceContext)) {
+    if (
+      this.isDeviationSlice(message, workspaceContext) &&
+      this.isDeviationBounded(workspaceContext)
+    ) {
       return DEVIATION_SLICE_ID;
     }
-    if (this.isCrmInnLookupSlice(message, workspaceContext)) {
+    if (
+      this.isCrmInnLookupSlice(message, workspaceContext) &&
+      this.isCrmInnLookupBounded(workspaceContext)
+    ) {
       return CRM_INN_LOOKUP_SLICE_ID;
     }
     if (this.isKnowledgeSlice(message, workspaceContext)) {
       return KNOWLEDGE_SLICE_ID;
     }
-    if (this.isScenarioSlice(message, workspaceContext)) {
+    if (
+      this.isScenarioSlice(message, workspaceContext) &&
+      this.isFinanceWorkspace(workspaceContext)
+    ) {
       return SCENARIO_SLICE_ID;
     }
-    if (this.isRiskAssessmentSlice(message, workspaceContext)) {
+    if (
+      this.isRiskAssessmentSlice(message, workspaceContext) &&
+      this.isFinanceWorkspace(workspaceContext)
+    ) {
       return RISK_ASSESSMENT_SLICE_ID;
     }
-    if (this.isCrmWorkspaceSlice(message, workspaceContext)) {
+    if (
+      this.isCrmWorkspaceSlice(message, workspaceContext) &&
+      this.isCrmWorkspacePrimaryBounded(message, workspaceContext)
+    ) {
       return CRM_WORKSPACE_SLICE_ID;
     }
-    if (this.isContractsArBalanceSlice(message, workspaceContext)) {
+    if (
+      this.isContractsArBalanceSlice(message, workspaceContext) &&
+      this.isContractsSliceBounded(workspaceContext)
+    ) {
       return CONTRACTS_AR_BALANCE_SLICE_ID;
     }
-    if (this.isContractsSlice(message, workspaceContext)) {
+    if (
+      this.isContractsSlice(message, workspaceContext) &&
+      this.isContractsSliceBounded(workspaceContext)
+    ) {
       return CONTRACTS_SLICE_ID;
     }
-    if (this.isPlanFactSlice(message, workspaceContext)) {
+    if (
+      this.isPlanFactSlice(message, workspaceContext) &&
+      this.isFinanceWorkspace(workspaceContext)
+    ) {
       return PLAN_FACT_SLICE_ID;
     }
-    if (this.isTechmapSlice(message, workspaceContext)) {
+    if (
+      this.isTechmapSlice(message, workspaceContext) &&
+      this.isTechmapSliceBounded(workspaceContext)
+    ) {
       return TECHMAP_SLICE_ID;
     }
     return null;
@@ -1806,7 +1846,19 @@ export class SemanticRouterService {
       return true;
     }
     return (workspaceContext?.activeEntityRefs ?? []).some(
-      (item) => item.kind === "techmap" || item.kind === "field",
+      (item) => item.kind === "techmap",
+    );
+  }
+
+  private isTechmapSliceBounded(
+    workspaceContext?: WorkspaceContextDto,
+  ): boolean {
+    const route = workspaceContext?.route?.toLowerCase() ?? "";
+    if (route.includes("/consulting/techmaps")) {
+      return true;
+    }
+    return (workspaceContext?.activeEntityRefs ?? []).some(
+      (item) => item.kind === "techmap",
     );
   }
 
@@ -1835,6 +1887,19 @@ export class SemanticRouterService {
       return true;
     }
     return false;
+  }
+
+  private isDeviationBounded(
+    workspaceContext?: WorkspaceContextDto,
+  ): boolean {
+    const route = workspaceContext?.route?.toLowerCase() ?? "";
+    return (
+      route.includes("/consulting/deviations") ||
+      workspaceContext?.selectedRowSummary?.kind === "deviation" ||
+      (workspaceContext?.activeEntityRefs ?? []).some(
+        (item) => item.kind === "field",
+      )
+    );
   }
 
   private isPlanFactSlice(
@@ -2097,6 +2162,29 @@ export class SemanticRouterService {
       route.includes("/consulting/crm") ||
       route.includes("/crm")
     );
+  }
+
+  private isCrmInnLookupBounded(
+    workspaceContext?: WorkspaceContextDto,
+  ): boolean {
+    return this.isCrmWorkspaceRoute(workspaceContext);
+  }
+
+  private isCrmWorkspacePrimaryBounded(
+    message: string,
+    workspaceContext?: WorkspaceContextDto,
+  ): boolean {
+    return (
+      this.isCrmWorkspaceRoute(workspaceContext) ||
+      Boolean(this.resolveCrmWorkspaceAccountId(workspaceContext)) ||
+      Boolean(extractCrmWorkspaceQuery(message))
+    );
+  }
+
+  private isContractsSliceBounded(
+    workspaceContext?: WorkspaceContextDto,
+  ): boolean {
+    return this.isContractsWorkspaceRoute(workspaceContext);
   }
 
   private hasFinanceMessageSignal(message: string): boolean {

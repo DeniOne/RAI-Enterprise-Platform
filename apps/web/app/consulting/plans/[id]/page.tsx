@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { use, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
@@ -39,7 +39,8 @@ type SeasonOption = {
     startDate?: string;
 };
 
-export default function PlanDetailsPage({ params }: { params: { id: string } }) {
+export default function PlanDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = use(params);
     const router = useRouter();
     const authority = useAuthority();
 
@@ -54,7 +55,7 @@ export default function PlanDetailsPage({ params }: { params: { id: string } }) 
         setLoading(true);
         try {
             const [planResponse, seasonsResponse] = await Promise.all([
-                api.consulting.plan(params.id),
+                api.consulting.plan(id),
                 api.seasons.list(),
             ]);
 
@@ -76,7 +77,7 @@ export default function PlanDetailsPage({ params }: { params: { id: string } }) 
 
     useEffect(() => {
         load();
-    }, [params.id]);
+    }, [id]);
 
     const title = useMemo(() => {
         if (!plan) return 'План не найден';

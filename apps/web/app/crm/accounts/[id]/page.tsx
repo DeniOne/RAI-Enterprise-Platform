@@ -4,9 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-export default function AccountDetailPage({ params }: { params: { id: string } }) {
+export default async function AccountDetailPage({ params }: { params: Promise<{ id: string }> }) {
     // Placeholder data - in real app fetch by params.id
-    const accountId = params.id;
+    const { id: accountId } = await params;
 
     return (
         <div className="space-y-6">

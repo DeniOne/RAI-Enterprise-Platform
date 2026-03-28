@@ -10,12 +10,58 @@ const prisma = new PrismaClient();
 async function main() {
     console.log('Connecting to DB...');
     try {
+        console.log('Ensuring dblink extension...');
+        await prisma.$executeRaw`CREATE EXTENSION IF NOT EXISTS dblink;`;
+
         console.log('Ensuring pgcrypto extension...');
         await prisma.$executeRaw`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`;
 
         console.log('Ensuring ledger_entries schema compliance...');
         await prisma.$executeRaw`ALTER TABLE "ledger_entries" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT NOW();`;
 
+        console.log('Ensuring account_balances schema compliance...');
+        await prisma.$executeRaw`
+          CREATE TABLE IF NOT EXISTS "account_balances" (
+            "companyId" TEXT NOT NULL,
+            "accountCode" TEXT NOT NULL,
+            "balance" DECIMAL(20, 4) NOT NULL DEFAULT 0,
+            "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT "account_balances_pkey" PRIMARY KEY ("companyId", "accountCode")
+          );
+        `;
+        await prisma.$executeRaw`
+          ALTER TABLE "account_balances"
+          ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT NOW();
+        `;
+
+        console.log('Updating check_tenant_state_hardened_v6...');
+        await prisma.$executeRaw`
+          CREATE OR REPLACE FUNCTION check_tenant_state_hardened_v6()
+          RETURNS TRIGGER AS $$
+          DECLARE
+              v_mode "TenantMode";
+          BEGIN
+              SELECT mode INTO v_mode FROM "tenant_states" WHERE "companyId" = NEW."companyId";
+
+              IF v_mode IS NULL THEN
+                  RAISE EXCEPTION 'UNKNOWN_TENANT_STATE: Company % state entry missing.', NEW."companyId"
+                  USING ERRCODE = 'P0005';
+              END IF;
+
+              IF v_mode = 'HALTED' THEN
+                  RAISE EXCEPTION 'HALTED_STATE: Company % restricted.', NEW."companyId"
+                  USING ERRCODE = 'P0003';
+              END IF;
+
+              IF v_mode = 'READ_ONLY' AND TG_OP IN ('INSERT', 'UPDATE', 'DELETE') THEN
+                  RAISE EXCEPTION 'READ_ONLY_STATE: Company % in RO mode.', NEW."companyId"
+                  USING ERRCODE = 'P0004';
+              END IF;
+
+              RETURN NEW;
+          END;
+          $$ LANGUAGE plpgsql;
+        `;
 
         console.log('Updating validate_double_entry_deferred_v6 (fixing advisory lock signature)...');
         await prisma.$executeRaw`
@@ -86,6 +132,60 @@ async function main() {
           $$ LANGUAGE plpgsql;
         `;
 
+        console.log('Re-attaching deferred double-entry trigger...');
+        await prisma.$executeRaw`
+          DROP TRIGGER IF EXISTS trg_ledger_entries_double_entry ON "ledger_entries";
+        `;
+        await prisma.$executeRaw`
+          CREATE CONSTRAINT TRIGGER trg_ledger_entries_double_entry
+          AFTER INSERT OR UPDATE OR DELETE ON "ledger_entries"
+          DEFERRABLE INITIALLY DEFERRED
+          FOR EACH ROW
+          EXECUTE FUNCTION validate_double_entry_deferred_v6();
+        `;
+
+        console.log('Updating balance layer functions and guards...');
+        await prisma.$executeRaw`
+          CREATE OR REPLACE FUNCTION update_account_balance_v1()
+          RETURNS TRIGGER AS $$
+          BEGIN
+              INSERT INTO "account_balances" ("companyId", "accountCode", "balance", "updatedAt")
+              VALUES (
+                  NEW."companyId",
+                  NEW."accountCode",
+                  CASE WHEN NEW."type" = 'DEBIT' THEN NEW."amount" ELSE -NEW."amount" END,
+                  NOW()
+              )
+              ON CONFLICT ("companyId", "accountCode")
+              DO UPDATE SET
+                  "balance" = "account_balances"."balance" + EXCLUDED."balance",
+                  "updatedAt" = NOW();
+
+              RETURN NEW;
+          END;
+          $$ LANGUAGE plpgsql SECURITY DEFINER;
+        `;
+        await prisma.$executeRaw`
+          DROP TRIGGER IF EXISTS trg_ledger_entries_balance_update ON "ledger_entries";
+        `;
+        await prisma.$executeRaw`
+          CREATE TRIGGER trg_ledger_entries_balance_update
+          AFTER INSERT ON "ledger_entries"
+          FOR EACH ROW
+          EXECUTE FUNCTION update_account_balance_v1();
+        `;
+        await prisma.$executeRaw`
+          ALTER TABLE "account_balances" DROP CONSTRAINT IF EXISTS "no_negative_cash";
+        `;
+        await prisma.$executeRaw`
+          ALTER TABLE "account_balances"
+          ADD CONSTRAINT "no_negative_cash"
+          CHECK (
+            "accountCode" NOT LIKE 'CASH%'
+            OR "balance" >= 0
+          );
+        `;
+
         console.log('Updating create_ledger_entry_v1 function...');
         await prisma.$executeRaw`
           CREATE OR REPLACE FUNCTION create_ledger_entry_v1(
@@ -106,7 +206,7 @@ async function main() {
           END;
           $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
         `;
-        console.log('Successfully updated function.');
+        console.log('Successfully repaired ledger hardening artifacts.');
     } catch (e) {
         console.error('Error updating function:', e);
     } finally {

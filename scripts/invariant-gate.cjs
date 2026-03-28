@@ -53,11 +53,13 @@ function checkControllersGuard() {
     const hasNestGuard = txt.includes("@UseGuards(");
     const hasAuthorizedDecorator =
       txt.includes("@Authorized(") || txt.includes("@AuthorizedGql(");
+    const hasInternalApiBoundary = txt.includes("@RequireInternalApiKey(");
     const hasMtlsRequirement = txt.includes("@RequireMtls()");
     const isHealthController = file.endsWith(path.join("modules", "health", "health.controller.ts"));
     if (
       !hasNestGuard &&
       !hasAuthorizedDecorator &&
+      !hasInternalApiBoundary &&
       !hasMtlsRequirement &&
       !isHealthController
     ) {

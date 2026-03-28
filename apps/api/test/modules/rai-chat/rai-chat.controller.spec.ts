@@ -4,6 +4,8 @@ import { TenantContextService } from '../../../src/shared/tenant-context/tenant-
 import { RaiChatRequestDto } from '../../../src/modules/rai-chat/dto/rai-chat.dto';
 import { BadRequestException } from '@nestjs/common';
 import { RaiChatService } from '../../../src/modules/rai-chat/rai-chat.service';
+import { IdempotencyInterceptor } from '../../../src/shared/idempotency/idempotency.interceptor';
+import { RedisService } from '../../../src/shared/redis/redis.service';
 
 describe('RaiChatController', () => {
     let controller: RaiChatController;
@@ -13,6 +15,9 @@ describe('RaiChatController', () => {
     beforeEach(async () => {
         raiChatService = {
             handleChat: jest.fn(),
+        };
+        const idempotencyInterceptor = {
+            intercept: jest.fn((_: unknown, next: { handle: () => unknown }) => next.handle()),
         };
 
         const module: TestingModule = await Test.createTestingModule({
@@ -28,8 +33,15 @@ describe('RaiChatController', () => {
                     provide: RaiChatService,
                     useValue: raiChatService,
                 },
+                {
+                    provide: RedisService,
+                    useValue: {},
+                },
             ],
-        }).compile();
+        })
+            .overrideInterceptor(IdempotencyInterceptor)
+            .useValue(idempotencyInterceptor)
+            .compile();
 
         controller = module.get<RaiChatController>(RaiChatController);
         tenantContextService = module.get<TenantContextService>(TenantContextService);

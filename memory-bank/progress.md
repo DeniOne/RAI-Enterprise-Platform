@@ -1,5 +1,34 @@
 # Progress Report - Prisma, Agro Domain & RAI Chat Integration
 
+## 2026-03-28
+
+1. **Ledger schema recovery и economy stress-suite stabilization** [DONE]:
+  - `packages/prisma-client/fix_schema.ts` расширен до полного recovery-прохода по hardened ledger-контуру, а не только до ремонта `create_ledger_entry_v1`.
+  - Скрипт теперь восстанавливает `dblink`, `account_balances`, `check_tenant_state_hardened_v6`, `update_account_balance_v1`, `no_negative_cash`, trigger wiring и сам `create_ledger_entry_v1`.
+  - Подтверждено, что локальная БД находилась в schema drift состоянии: запись о миграции присутствовала, но runtime-объекты ledger-контура были неполными.
+  - После прогона recovery-скрипта `src/modules/finance-economy/economy/application/economy.concurrency.spec.ts` проходит полностью.
+
+2. **Audit/consulting/smoke remediation batch** [DONE]:
+  - `apps/api/src/shared/audit/audit.module.ts` получил явные импорты `CryptoModule` и `AnchorModule`, чтобы `AuditNotarizationService` не зависел от случайного окружающего модуля.
+  - `src/modules/consulting/domain-rules/consulting.domain-rules.spec.ts` стабилизирован: reject-ассерты переведены на single-promise pattern, что убрало ложный `План уборки не найден`.
+  - `test/a_rai-live-api-smoke.spec.ts` приведён к текущему runtime-контракту:
+    - добавлен `EventEmitterModule.forRoot()`
+    - `ConfigService` перестал глушить `process.env`
+    - `Prisma` proxy получил `$transaction`, raw-methods и safe raw wrappers
+    - `Redis` mock дополнен `isReady`
+    - `IdempotencyInterceptor` overridden как no-op, чтобы smoke проверял HTTP/runtime контракты, а не отдельный идемпотентный perimeter
+  - Targeted прогон `test/a_rai-live-api-smoke.spec.ts` + `src/modules/consulting/domain-rules/consulting.domain-rules.spec.ts` теперь зелёный.
+
+3. **Новый полный backend baseline** [DONE]:
+  - Выполнен полный прогон `pnpm --filter api test -- --runInBand`.
+  - Итог:
+    - `Test Suites: 252 passed, 252 total`
+    - `Tests: 1313 passed, 1 skipped, 1314 total`
+  - Зафиксировано улучшение относительно предыдущего baseline:
+    - было `7 failed, 245 passed, 252 total`
+    - затем было `2 failed, 5 passed, 7 targeted`
+    - теперь backend `api` полностью зелёный в детерминированном `runInBand`-режиме.
+
 ## 2026-03-27
 
 1. **Запуск дев-сервера Gripil Web** [DONE]:
@@ -1847,3 +1876,11 @@
 - Все локальные изменения закоммичены и отправлены в ремоут.
 2026-03-12: Интеграция Nvidia Qwen LLM адаптера для Expert-tier агентов в режиме full_pro.
 2026-03-13: Закоммитил и пушнул изменения по базе данных, ёпта, всё на месте.
+2026-03-28: Начат remediation-пакет после enterprise-аудита: `invariant-gate` научен распознавать `RequireInternalApiKey`, `semantic-router` снова отделяет bounded primary-slice от shadow classification, `infra/gateway/certs` очищен от versioned private key и переведён на externalized secret policy.
+2026-03-28: Добит `raw SQL governance`: четыре db-скрипта переведены с `queryRawUnsafe/executeRawUnsafe` на `Prisma.sql` и allowlisted как approved tooling SQL; `node scripts/raw-sql-governance.cjs --enforce` и `pnpm gate:invariants` завершились с `raw_sql_review_required=0`, `raw_sql_unsafe=0`, `violations=0`.
+2026-03-28: Стабилизирован крупный backend test-contract batch: 15 targeted suite прошли `--runInBand`, `api build` зелёный, а `agent-interaction-contracts` больше не создаёт front-office escalation write-call без route/thread context для red-team tenant-escape payload.
+2026-03-28: Audit-пакет синхронизирован до версии `1.1.0` под post-remediation baseline: `routing` PASS (`4/4`, `86/86`), `web build` PASS, `web test` PASS (`42/42`, `482/482`), `api test -- --runInBand` PASS (`252/252`, `1313 passed`, `1 skipped`); verdict поднят до `Security/Deployment/Product = CONDITIONAL GO`, `Legal = NO-GO`.
+2026-03-28: Повторная audit-верификация уточнила residual-risk: `pnpm gate:invariants` сейчас WARN с `controllers_without_guards=0`, `raw_sql_review_required=0`, `raw_sql_unsafe=2`, а `infra/gateway/certs/ca.key` уже удалён из дерева, но ещё требует commit-level cleanup и key-rotation review.
+2026-03-28: Закрыт residual security slice: `apps/api/test/a_rai-live-api-smoke.spec.ts` переведён на bracket-key mocks для unsafe Prisma методов, `node scripts/raw-sql-governance.cjs --enforce` снова PASS с `raw_sql_unsafe=0`, а `pnpm gate:invariants` завершился с `violations=0`.
+2026-03-28: `git rm --cached --force infra/gateway/certs/ca.key` убрал `ca.key` из текущего индекса; открытым остался уже не tracked-file risk, а history cleanup / rotation evidence debt.
+2026-03-28: Audit-пакет обновлён до версии `1.2.0`: evidence matrix и delta теперь фиксируют fully green invariant baseline и historical, а не active, характер `ca.key` incident.

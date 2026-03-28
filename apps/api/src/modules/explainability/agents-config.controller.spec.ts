@@ -7,6 +7,8 @@ import { RolesGuard } from "../../shared/auth/roles.guard";
 import { TenantContextService } from "../../shared/tenant-context/tenant-context.service";
 import { AgentManagementService } from "./agent-management.service";
 import { AgentPromptGovernanceService } from "./agent-prompt-governance.service";
+import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.interceptor";
+import { RedisService } from "../../shared/redis/redis.service";
 
 class TestJwtAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
@@ -44,18 +46,24 @@ describe("AgentsConfigController (HTTP)", () => {
   };
 
   beforeAll(async () => {
+    const idempotencyInterceptor = {
+      intercept: jest.fn((_: unknown, next: { handle: () => unknown }) => next.handle()),
+    };
     const moduleRef = await Test.createTestingModule({
       controllers: [AgentsConfigController],
       providers: [
         { provide: TenantContextService, useValue: tenantContext },
         { provide: AgentManagementService, useValue: agentManagement },
         { provide: AgentPromptGovernanceService, useValue: promptGovernance },
+        { provide: RedisService, useValue: {} },
       ],
     })
       .overrideGuard(JwtAuthGuard)
       .useClass(TestJwtAuthGuard)
       .overrideGuard(RolesGuard)
       .useClass(TestRolesGuard)
+      .overrideInterceptor(IdempotencyInterceptor)
+      .useValue(idempotencyInterceptor)
       .compile();
 
     app = moduleRef.createNestApplication();
@@ -64,7 +72,9 @@ describe("AgentsConfigController (HTTP)", () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    if (app) {
+      await app.close();
+    }
   });
 
   beforeEach(() => {

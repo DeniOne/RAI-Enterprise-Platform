@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 
-export default function LegacyCounterpartyCardRedirect({ params }: { params: { counterpartyId: string } }) {
-  redirect(`/parties/${encodeURIComponent(params.counterpartyId)}`);
+export default async function LegacyCounterpartyCardRedirect({ params }: { params: Promise<{ counterpartyId: string }> }) {
+  const { counterpartyId } = await params;
+  redirect(`/parties/${encodeURIComponent(counterpartyId)}`);
 }

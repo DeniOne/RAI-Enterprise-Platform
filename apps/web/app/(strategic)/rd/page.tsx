@@ -4,7 +4,8 @@ import { strategicApi } from '@/lib/api/strategic';
 import RdContextView from './RdContextView';
 
 export default async function RdPage() {
-    const token = cookies().get('auth_token')?.value || '';
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value || '';
     const experiments = await strategicApi.getRdSummary(token);
 
     // Mock legal status for each experiment for UI demonstration

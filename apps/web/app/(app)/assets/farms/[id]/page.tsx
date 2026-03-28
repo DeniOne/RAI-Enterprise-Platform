@@ -1,5 +1,6 @@
 import { FarmDetailsPage } from '@/components/party-assets/farms/FarmDetailsPage';
 
-export default function FarmCardRoute({ params }: { params: { id: string } }) {
-  return <FarmDetailsPage farmId={params.id} />;
+export default async function FarmCardRoute({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <FarmDetailsPage farmId={id} />;
 }

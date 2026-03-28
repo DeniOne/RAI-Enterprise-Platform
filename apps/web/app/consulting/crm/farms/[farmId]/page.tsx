@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 
-export default function LegacyCrmFarmCardRedirect({ params }: { params: { farmId: string } }) {
-  redirect(`/assets/farms/${encodeURIComponent(params.farmId)}`);
+export default async function LegacyCrmFarmCardRedirect({ params }: { params: Promise<{ farmId: string }> }) {
+  const { farmId } = await params;
+  redirect(`/assets/farms/${encodeURIComponent(farmId)}`);
 }

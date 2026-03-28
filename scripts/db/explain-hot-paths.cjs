@@ -2,19 +2,19 @@
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
-const { PrismaClient } = require('../../packages/prisma-client/generated-client');
+const { PrismaClient, Prisma } = require('../../packages/prisma-client/generated-client');
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const prisma = new PrismaClient();
 
-async function explain(sql, params = []) {
-  const rows = await prisma.$queryRawUnsafe(`EXPLAIN (ANALYZE, BUFFERS) ${sql}`, ...params);
+async function explain(sql) {
+  const rows = await prisma.$queryRaw(Prisma.sql`EXPLAIN (ANALYZE, BUFFERS) ${sql}`);
   return rows.map((r) => r['QUERY PLAN']).join('\n');
 }
 
-async function one(sql, params = []) {
-  const rows = await prisma.$queryRawUnsafe(sql, ...params);
+async function one(sql) {
+  const rows = await prisma.$queryRaw(sql);
   return rows[0] || null;
 }
 
@@ -38,7 +38,7 @@ function section(title, sql, plan, note = '') {
 async function run() {
   const now = new Date().toISOString();
 
-  const sampleCompany = await one(`
+  const sampleCompany = await one(Prisma.sql`
     SELECT "companyId" FROM seasons
     UNION ALL
     SELECT "companyId" FROM tasks
@@ -56,20 +56,16 @@ async function run() {
   const companyId = sampleCompany.companyId;
 
   const seasonRow = await one(
-    `SELECT id, status FROM seasons WHERE "companyId" = $1 ORDER BY "createdAt" DESC LIMIT 1`,
-    [companyId],
+    Prisma.sql`SELECT id, status FROM seasons WHERE "companyId" = ${companyId} ORDER BY "createdAt" DESC LIMIT 1`,
   );
   const taskRow = await one(
-    `SELECT status FROM tasks WHERE "companyId" = $1 ORDER BY "createdAt" DESC LIMIT 1`,
-    [companyId],
+    Prisma.sql`SELECT status FROM tasks WHERE "companyId" = ${companyId} ORDER BY "createdAt" DESC LIMIT 1`,
   );
   const hpRow = await one(
-    `SELECT "seasonId", status FROM harvest_plans WHERE "companyId" = $1 ORDER BY "createdAt" DESC LIMIT 1`,
-    [companyId],
+    Prisma.sql`SELECT "seasonId", status FROM harvest_plans WHERE "companyId" = ${companyId} ORDER BY "createdAt" DESC LIMIT 1`,
   );
   const partyRow = await one(
-    `SELECT status FROM commerce_parties WHERE "companyId" = $1 ORDER BY "createdAt" DESC LIMIT 1`,
-    [companyId],
+    Prisma.sql`SELECT status FROM commerce_parties WHERE "companyId" = ${companyId} ORDER BY "createdAt" DESC LIMIT 1`,
   );
 
   const seasonStatus = seasonRow?.status || 'DRAFT';
@@ -79,51 +75,51 @@ async function run() {
 
   const blocks = [];
 
-const q1 = `SELECT id, "companyId", status, "createdAt"
+const q1 = Prisma.sql`SELECT id, "companyId", status, "createdAt"
 FROM seasons
-WHERE "companyId" = $1 AND status = $2::"SeasonStatus"
+WHERE "companyId" = ${companyId} AND status = CAST(${seasonStatus} AS "SeasonStatus")
 ORDER BY "createdAt" DESC
 LIMIT 50;`;
   blocks.push(section(
     'Season hot path: companyId + status + createdAt DESC',
-    q1,
-    await explain(q1, [companyId, seasonStatus]),
+    q1.sql,
+    await explain(q1),
     `params: companyId=${companyId}, status=${seasonStatus}`,
   ));
 
-const q2 = `SELECT id, "companyId", "seasonId", status, "createdAt"
+const q2 = Prisma.sql`SELECT id, "companyId", "seasonId", status, "createdAt"
 FROM tasks
-WHERE "companyId" = $1 AND status = $2::"TaskStatus"
+WHERE "companyId" = ${companyId} AND status = CAST(${taskStatus} AS "TaskStatus")
 ORDER BY "createdAt" DESC
 LIMIT 100;`;
   blocks.push(section(
     'Task hot path: companyId + status + createdAt DESC',
-    q2,
-    await explain(q2, [companyId, taskStatus]),
+    q2.sql,
+    await explain(q2),
     `params: companyId=${companyId}, status=${taskStatus}`,
   ));
 
-  const q3 = `SELECT id, "companyId", "seasonId", status, "createdAt"
+  const q3 = Prisma.sql`SELECT id, "companyId", "seasonId", status, "createdAt"
 FROM harvest_plans
-WHERE "companyId" = $1 AND "seasonId" = $2
+WHERE "companyId" = ${companyId} AND "seasonId" = ${seasonId}
 ORDER BY "createdAt" DESC
 LIMIT 100;`;
   blocks.push(section(
     'HarvestPlan hot path: companyId + seasonId + createdAt DESC',
-    q3,
-    await explain(q3, [companyId, seasonId]),
+    q3.sql,
+    await explain(q3),
     `params: companyId=${companyId}, seasonId=${seasonId}`,
   ));
 
-const q4 = `SELECT id, "companyId", status, "createdAt"
+const q4 = Prisma.sql`SELECT id, "companyId", status, "createdAt"
 FROM commerce_parties
-WHERE "companyId" = $1 AND status = $2::"PartyEntityStatus"
+WHERE "companyId" = ${companyId} AND status = CAST(${partyStatus} AS "PartyEntityStatus")
 ORDER BY "createdAt" DESC
 LIMIT 100;`;
   blocks.push(section(
     'Party hot path: companyId + status + createdAt DESC',
-    q4,
-    await explain(q4, [companyId, partyStatus]),
+    q4.sql,
+    await explain(q4),
     `params: companyId=${companyId}, status=${partyStatus}`,
   ));
 

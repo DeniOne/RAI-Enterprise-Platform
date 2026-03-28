@@ -9,12 +9,12 @@ describe("DraftStateManager", () => {
   });
 
   describe("handlesStatus", () => {
-    it("должен возвращать true для GENERATED_DRAFT", () => {
+    it("должен возвращать true для статусов, которыми управляет этот FSM", () => {
       expect(manager.handlesStatus(TechMapStatus.GENERATED_DRAFT)).toBe(true);
-    });
-
-    it("должен возвращать false для других статусов", () => {
-      expect(manager.handlesStatus(TechMapStatus.DRAFT)).toBe(false);
+      expect(manager.handlesStatus(TechMapStatus.DRAFT)).toBe(true);
+      expect(manager.handlesStatus(TechMapStatus.OVERRIDE_ANALYSIS)).toBe(
+        true,
+      );
       expect(manager.handlesStatus(TechMapStatus.ACTIVE)).toBe(false);
     });
   });

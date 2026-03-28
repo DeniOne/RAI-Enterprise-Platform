@@ -59,8 +59,8 @@ describe("RapeseedService", () => {
   });
 
   it("should create a Rapeseed", async () => {
-    prismaMock.Rapeseed.findFirst.mockResolvedValue(null);
-    prismaMock.Rapeseed.create.mockResolvedValue(mockRapeseed);
+    prismaMock.rapeseed.findFirst.mockResolvedValue(null);
+    prismaMock.rapeseed.create.mockResolvedValue(mockRapeseed);
 
     const result = await service.create(
       {
