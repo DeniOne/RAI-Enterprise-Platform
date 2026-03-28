@@ -92,6 +92,19 @@
     - legal evidence lifecycle теперь проверяется кодом, а не только глазами;
     - после появления внешних документов команда сможет быстро ловить status drift и overdue items.
 
+6. **Legal evidence intake automation** [DONE]:
+  - Добавлен `scripts/legal-evidence-intake.cjs`.
+  - В `package.json` добавлена команда:
+    - `pnpm legal:evidence:intake -- --reference=ELP-... --source=/abs/path/file`
+  - Скрипт выполняет один детерминированный intake-проход:
+    - копирует внешний файл в restricted `artifacts/<reference_id>/`
+    - обновляет restricted metadata card
+    - обновляет restricted `INDEX.md`
+    - обновляет repo-side `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md` со статусом `received`
+  - Практический эффект:
+    - появление реального внешнего документа больше не требует ручной правки нескольких файлов;
+    - legal closeout можно двигать серийно и без ручного status drift.
+
 1. **Ledger schema recovery и economy stress-suite stabilization** [DONE]:
   - `packages/prisma-client/fix_schema.ts` расширен до полного recovery-прохода по hardened ledger-контуру, а не только до ремонта `create_ledger_entry_v1`.
   - Скрипт теперь восстанавливает `dblink`, `account_balances`, `check_tenant_state_hardened_v6`, `update_account_balance_v1`, `no_negative_cash`, trigger wiring и сам `create_ledger_entry_v1`.

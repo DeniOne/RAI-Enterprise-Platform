@@ -448,3 +448,12 @@
   - `ENTERPRISE_EVIDENCE_MATRIX`
   - `ENTERPRISE_DUE_DILIGENCE`
   - `DELTA_VS_BASELINE`
+[2026-03-28 14:31Z] Legal evidence intake automation added
+- Добавлен `scripts/legal-evidence-intake.cjs`.
+- В `package.json` добавлена команда `pnpm legal:evidence:intake`.
+- Intake-команда:
+  - принимает `reference_id` и внешний `source` файл
+  - кладёт артефакт в restricted `artifacts/<reference_id>/`
+  - обновляет restricted metadata card и `INDEX.md`
+  - обновляет repo-side `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md` в статус `received`
+- Практический эффект: после появления реального внешнего документа legal closeout двигается одной командой, а не ручной правкой нескольких источников.

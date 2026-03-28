@@ -3,7 +3,7 @@ id: DOC-ARV-AUDIT-DELTA-VS-BASELINE-20260328
 layer: Archive
 type: Research
 status: approved
-version: 1.8.0
+version: 1.9.0
 owners: [@techlead]
 last_updated: 2026-03-28
 ---
@@ -23,7 +23,7 @@ last_updated: 2026-03-28
 | Secret hygiene не имела локального scanner baseline | есть `pnpm gate:secrets`; tracked secrets сняты до `0` | `scripts/scan-secrets.cjs`, `var/security/secret-scan-report.json` | repo-state очищен от tracked secret debt |
 | Schema validate зависел от runtime env | `pnpm gate:db:schema-validate` проходит через safe wrapper | `scripts/prisma-validate-safe.cjs`, `var/schema/prisma-validate-safe.json` | schema-integrity теперь воспроизводима |
 | OSS/IP контур был только красным тезисом в аудите | есть active `OSS_LICENSE_AND_IP_REGISTER` и generated inventory | `docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md`, `var/security/license-inventory.json` | IP/license backlog стал управляемым |
-| Privacy/legal контур был только архивным выводом | есть active operator/privacy register, transborder/deployment matrix, subject-rights runbook, external evidence request packet, metadata register, acceptance runbook и reproducible status gate | новые docs в `docs/05_OPERATIONS` + `scripts/legal-evidence-status.cjs` | legal backlog больше не разрозненный и переведён в criteria-driven closeout queue с owner-routing и machine-check |
+| Privacy/legal контур был только архивным выводом | есть active operator/privacy register, transborder/deployment matrix, subject-rights runbook, external evidence request packet, metadata register, acceptance runbook, intake command и reproducible status gate | новые docs в `docs/05_OPERATIONS` + `scripts/legal-evidence-*.cjs` | legal backlog больше не разрозненный и переведён в criteria-driven closeout queue с owner-routing и machine-check |
 | Access governance была ограничена DB-ядром | `CODEOWNERS` расширен на workflows, scripts и критичные runtime paths | `.github/CODEOWNERS` | ownership perimeter стал шире |
 | SBOM/provenance не были подтверждены | добавлен `pnpm security:sbom` и provenance-ready workflow step | `scripts/generate-sbom.cjs`, `.github/workflows/security-audit.yml` | supply-chain baseline стал реальным, а не плановым |
 

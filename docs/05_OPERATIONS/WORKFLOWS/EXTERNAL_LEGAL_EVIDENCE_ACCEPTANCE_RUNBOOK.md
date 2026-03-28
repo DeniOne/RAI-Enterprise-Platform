@@ -3,14 +3,14 @@ id: DOC-OPS-WORKFLOWS-EXTERNAL-LEGAL-EVIDENCE-ACCEPTANCE-RUNBOOK-20260328
 layer: Operations
 type: Runbook
 status: approved
-version: 1.1.0
+version: 1.2.0
 owners: [@techlead]
 last_updated: 2026-03-28
 claim_id: CLAIM-OPS-WORKFLOWS-EXTERNAL-LEGAL-EVIDENCE-ACCEPTANCE-RUNBOOK-20260328
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-28
-evidence_refs: package.json;scripts/legal-evidence-status.cjs;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md;.github/CODEOWNERS
+evidence_refs: package.json;scripts/legal-evidence-status.cjs;scripts/legal-evidence-intake.cjs;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md;.github/CODEOWNERS
 ---
 # EXTERNAL LEGAL EVIDENCE ACCEPTANCE RUNBOOK
 
@@ -43,8 +43,8 @@ last_verified: 2026-03-28
 
 ## Порядок приёмки
 1. Найти `reference_id` в `EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md`.
-2. Положить внешний документ в restricted store с тем же `reference_id`.
-3. Перевести карточку из `requested` в `received`.
+2. Запустить `pnpm legal:evidence:intake -- --reference=... --source=/abs/path/file`.
+3. Intake-команда положит внешний документ в restricted store с тем же `reference_id`, обновит restricted metadata и repo-side register.
 4. Провести owner review:
    - content owner проверяет полноту и актуальность;
    - governance owner проверяет, какие docs и audit-выводы должны обновиться;

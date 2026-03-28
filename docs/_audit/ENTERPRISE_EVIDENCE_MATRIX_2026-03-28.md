@@ -3,7 +3,7 @@ id: DOC-ARV-AUDIT-ENTERPRISE-EVIDENCE-MATRIX-20260328
 layer: Archive
 type: Research
 status: approved
-version: 1.8.0
+version: 1.9.0
 owners: [@techlead]
 last_updated: 2026-03-28
 ---
@@ -26,6 +26,7 @@ last_updated: 2026-03-28
 | code | `scripts/generate-license-inventory.cjs` | строит inventory по `pnpm ls --json` | OSS/IP evidence |
 | code | `scripts/generate-sbom.cjs` | генерирует `CycloneDX` SBOM для монорепо | SBOM evidence |
 | code | `scripts/legal-evidence-status.cjs` | сверяет legal metadata register, restricted metadata files и status/index drift | legal evidence tracking |
+| code | `scripts/legal-evidence-intake.cjs` | принимает внешний legal artifact в restricted store и синхронизирует `received`-статус | legal evidence intake |
 | docs | `docs/05_OPERATIONS/COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md` | активный privacy/operator register создан | legal/privacy packet |
 | docs | `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md` | внешний evidence checklist формализован с owner-scope и acceptance criteria | legal closeout packet |
 | docs | `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md` | repo-side metadata register seeded: `11` external artifacts в статусе `requested` | legal tracking baseline |

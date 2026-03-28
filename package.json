@@ -15,6 +15,7 @@
     "gate:secrets": "node scripts/scan-secrets.cjs",
     "security:licenses": "node scripts/generate-license-inventory.cjs",
     "security:sbom": "node scripts/generate-sbom.cjs",
+    "legal:evidence:intake": "node scripts/legal-evidence-intake.cjs",
     "legal:evidence:status": "node scripts/legal-evidence-status.cjs",
     "gate:legal:evidence": "node scripts/legal-evidence-status.cjs --mode=enforce",
     "gate:invariants": "node scripts/invariant-gate.cjs",
