@@ -99,7 +99,7 @@ export default function YieldCalculator() {
       {/* Cinematic Background */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/images/shattered.png"
+          src="/images/shattered.webp"
           alt="Потери на почве"
           fill
           priority

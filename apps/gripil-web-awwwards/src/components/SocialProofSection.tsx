@@ -72,7 +72,7 @@ export default function SocialProofSection() {
           </p>
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-[#EFECE6]/10 overflow-hidden flex items-center justify-center relative border border-[#EFECE6]/20">
-              <Image src="/images/agronomist-proof.jpg" alt="Агроном" fill className="object-cover grayscale focus:grayscale-0 hover:grayscale-0 transition-all duration-500" />
+              <Image src="/images/agronomist-proof.webp" alt="Агроном" fill className="object-cover grayscale focus:grayscale-0 hover:grayscale-0 transition-all duration-500" />
             </div>
             <div>
               <div className="font-display text-[#EFECE6] text-lg">Александр К.</div>
@@ -95,7 +95,7 @@ export default function SocialProofSection() {
           </p>
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-[#EFECE6]/10 overflow-hidden flex items-center justify-center relative border border-[#EFECE6]/20">
-              <Image src="/images/agronomist-proof.jpg" alt="Агроном" fill className="object-cover grayscale focus:grayscale-0 hover:grayscale-0 transition-all duration-500" />
+              <Image src="/images/agronomist-proof.webp" alt="Агроном" fill className="object-cover grayscale focus:grayscale-0 hover:grayscale-0 transition-all duration-500" />
             </div>
             <div>
               <div className="font-display text-[#EFECE6] text-lg">Михаил В.</div>

@@ -40,10 +40,10 @@ last_verified: 2026-03-26
 ### SPRINT 1: PERFORMANCE & TECH FOUNDATION (Очистка и подготовка)
 *Цель: сделать скролл плавным как шелк, 120hz, убрав костыли и тяжелые фильтры.*
 
-- [ ] **Task 1.1: Выпил CSS-фильтров.**
+- [x] **Task 1.1: Выпил CSS-фильтров.**
   - **Действие:** Найти в коде (`HeroSection.tsx`, `YieldCalculator.tsx`, `SplitComparisonViewer.tsx`) все классы типа `filter brightness-[0.25] contrast-125 saturate-50`. Убрать их к хуям.
   - **Реализация:** Дизайнер должен заранее накинуть нужный контраст и затемнение на исходные картинки в Figma/Photoshop, экспортировать их в формат WebP и положить в `public/images/`. Раздавать картинки как есть.
-- [ ] **Task 1.2: Миграция на глобальный GSAP + Lenis.**
+- [x] **Task 1.2: Миграция на глобальный GSAP + Lenis.**
   - **Действие:** Во всем проекте вырезать `framer-motion` `useScroll`. Поставить `@studio-freight/react-lenis` и `@gsap/react`.
   - **Реализация:** Обернуть `RootLayout` в `<ReactLenis root>`. Зарегистрировать `ScrollTrigger` глобально. `framer-motion` оставить ТОЛЬКО для микро-интеракций (ховеры кнопок, стрик-анимации букв).
 
@@ -96,7 +96,7 @@ last_verified: 2026-03-26
 - [x] **Task 5.2: E2E тестирование конверсионной воронки (Playwright).**
   - **Действие:** Написать тесты на `YieldCalculator` для проверки математики ROI и Net Profit.
   - **Реализация:** Playwright UI assertions, чтобы гарантировать отсутствие математических и визуальных регрессий конверсионного ядра.
-- [ ] **Task 5.3: WebGL Fallback & Cross-Browser.**
+- [x] **Task 5.3: WebGL Fallback & Cross-Browser.**
   - **Действие:** Сделать gracefully degrade для старых смартфонов (калькуляторов).
   - **Реализация:** При падении WebGL-контекста или жутком свопе убивать Canvas и рендерить легкую статичную заглушку.
 

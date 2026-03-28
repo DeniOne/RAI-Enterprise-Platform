@@ -1,7 +1,8 @@
 "use client";
 // @ts-nocheck
 
-import React, { Suspense, useLayoutEffect, useMemo, useRef } from "react";
+import React, { Suspense, useLayoutEffect, useMemo, useRef, useState, useEffect } from "react";
+import Image from "next/image";
 import * as THREE from "three";
 import { Canvas, useFrame } from "@react-three/fiber";
 import {
@@ -424,11 +425,54 @@ function Scene({ progress }) {
     );
 }
 
+function WebGLFallback() {
+    return (
+        <section className="relative py-24 lg:py-40 bg-[#06080b] text-white overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(90,120,150,0.08),transparent_60%)]" />
+            <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-14 relative z-10">
+                <div className="flex flex-col items-center text-center mb-16">
+                    <div className="mb-4 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-white/50 backdrop-blur">
+                        Защита стручка
+                    </div>
+                    <h2 className="max-w-3xl text-3xl font-medium leading-tight text-white md:text-5xl md:leading-[1.05] mb-6">
+                        До — стручок раскрывается и теряет семена. После — био-мембрана держит удар ветра.
+                    </h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="relative overflow-hidden rounded-sm border border-white/10 bg-white/5 p-8">
+                        <div className="text-[11px] uppercase tracking-[0.22em] text-white/40 mb-3">Без ГРИПИЛ</div>
+                        <div className="text-2xl font-medium text-red-400 mb-2">Риск осыпания</div>
+                        <p className="text-white/60 text-sm leading-relaxed">Створки раскрываются при ударе ветра. Семена падают на землю до начала уборки. Потери 12–18% урожая.</p>
+                    </div>
+                    <div className="relative overflow-hidden rounded-sm border border-[#CDFF00]/20 bg-[#CDFF00]/5 p-8">
+                        <div className="text-[11px] uppercase tracking-[0.22em] text-[#CDFF00]/60 mb-3">С ГРИПИЛ</div>
+                        <div className="text-2xl font-medium text-[#CDFF00] mb-2">Мембрана защищает</div>
+                        <p className="text-white/60 text-sm leading-relaxed">Дышащая биомембрана удерживает шов стручка. Ветер, дождь, температурный стресс — стручок остаётся целым.</p>
+                    </div>
+                </div>
+                <p className="text-center text-white/20 text-xs mt-8 font-mono uppercase tracking-widest">3D-визуализация недоступна на этом устройстве</p>
+            </div>
+        </section>
+    );
+}
+
 export default function SplitComparison() {
     const sectionRef = useRef(null);
     const progress = useRef(0);
+    const [webglOk, setWebglOk] = useState(null);
+
+    useEffect(() => {
+        try {
+            const canvas = document.createElement("canvas");
+            const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
+            setWebglOk(!!gl);
+        } catch {
+            setWebglOk(false);
+        }
+    }, []);
 
     useLayoutEffect(() => {
+        if (!webglOk) return undefined;
         const section = sectionRef.current;
         if (!section) return undefined;
 
@@ -445,7 +489,13 @@ export default function SplitComparison() {
         }, sectionRef);
 
         return () => ctx.revert();
-    }, []);
+    }, [webglOk]);
+
+    // Ещё не определили — ничего не показываем
+    if (webglOk === null) return null;
+
+    // Нет WebGL — показываем статичный fallback
+    if (!webglOk) return <WebGLFallback />;
 
     return (
         <section ref={sectionRef} className="relative h-[320vh] bg-[#06080b] text-white">
@@ -454,28 +504,20 @@ export default function SplitComparison() {
 
                 <div className="absolute left-0 right-0 top-0 z-20 mx-auto flex max-w-7xl items-start justify-between gap-6 px-6 pt-8 md:px-10 lg:px-14">
                     <div className="max-w-xl">
-                        <div className="mb-4 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-white/65 backdrop-blur">
-                            Split Comparison · R3F + GSAP
-                        </div>
-                        <h2 className="max-w-2xl text-3xl font-semibold leading-tight text-white md:text-5xl md:leading-[1.02]">
+                        <h2 className="max-w-2xl text-3xl font-medium leading-tight text-white md:text-5xl md:leading-[1.02]">
                             До — стручок раскрывается и теряет семена. После — био-мембрана держит удар ветра.
                         </h2>
-                        <p className="mt-4 max-w-xl text-sm leading-6 text-white/60 md:text-base">
-                            Компонент без внешнего GLB. Две процедурные створки, семена-инстансы, скролл-анимация через ScrollTrigger, мембрана защиты через transmission-материал.
-                        </p>
                     </div>
 
                     <div className="hidden rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur md:block">
                         <div className="grid gap-3 text-sm text-white/80">
                             <div>
-                                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Left</div>
-                                <div className="font-medium">Без ГРИПИЛ</div>
+                                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Без ГРИПИЛ</div>
                                 <div className="text-white/50">Створки раскрываются, семена осыпаются.</div>
                             </div>
                             <div className="h-px bg-white/10" />
                             <div>
-                                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Right</div>
-                                <div className="font-medium">С ГРИПИЛ</div>
+                                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">С ГРИПИЛ</div>
                                 <div className="text-white/50">Появляется мембрана, ветер не раскрывает стручок.</div>
                             </div>
                         </div>
@@ -501,8 +543,7 @@ export default function SplitComparison() {
 
                 <div className="absolute inset-x-0 bottom-7 z-20 px-6 md:px-10 lg:px-14">
                     <div className="mx-auto flex max-w-7xl items-center justify-between rounded-full border border-white/10 bg-white/5 px-5 py-3 text-xs text-white/55 backdrop-blur md:text-sm">
-                        <span>Scroll → камера приближается, левый стручок раскрывается, справа появляется защитная мембрана.</span>
-                        <span className="hidden md:inline">Заменяй preset HDRI на свой EXR для более премиального лукдева.</span>
+                        <span>Scroll ↓ — камера приближается, левый стручок раскрывается, мембрана защищает правый.</span>
                     </div>
                 </div>
             </div>

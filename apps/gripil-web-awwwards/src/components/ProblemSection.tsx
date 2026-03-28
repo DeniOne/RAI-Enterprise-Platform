@@ -1,17 +1,40 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
+
+gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 export default function ProblemSection() {
   const containerRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start end", "end start"],
-  });
+  const decorLeft = useRef<HTMLDivElement>(null);
+  const decorRight = useRef<HTMLDivElement>(null);
 
-  const y1 = useTransform(scrollYProgress, [0, 1], ["0%", "15%"]);
-  const y2 = useTransform(scrollYProgress, [0, 1], ["0%", "-10%"]);
+  useGSAP(
+    () => {
+      if (!containerRef.current || !decorLeft.current || !decorRight.current) return;
+
+      const leftSetter = gsap.quickSetter(decorLeft.current, "y", "px");
+      const rightSetter = gsap.quickSetter(decorRight.current, "y", "px");
+
+      ScrollTrigger.create({
+        trigger: containerRef.current,
+        start: "top bottom",
+        end: "bottom top",
+        scrub: true,
+        onUpdate: (self) => {
+          const h = containerRef.current?.offsetHeight || 600;
+          // "LOSSES" ползёт вниз +15%, "URGENCY" ползёт вверх -10%
+          leftSetter(self.progress * h * 0.15);
+          rightSetter(self.progress * h * -0.10);
+        },
+      });
+    },
+    { scope: containerRef }
+  );
 
   const staggerContainer = {
     hidden: { opacity: 0 },
@@ -103,20 +126,20 @@ export default function ProblemSection() {
 
       </div>
       
-      {/* Декоративный элемент параллакса */}
-      <motion.div 
-        style={{ y: y1 }}
-        className="absolute -right-32 top-10 text-[15rem] font-display font-bold text-[#112118]/[0.04] select-none pointer-events-none"
+      {/* Декоративные параллакс-слова — двигаются через GSAP ScrollTrigger */}
+      <div 
+        ref={decorRight}
+        className="absolute -right-32 top-10 text-[15rem] font-display font-bold text-[#112118]/[0.04] select-none pointer-events-none will-change-transform"
       >
         LOSSES
-      </motion.div>
+      </div>
 
-      <motion.div 
-        style={{ y: y2 }}
-        className="absolute -left-32 bottom-20 text-[10rem] font-display font-bold text-[#112118]/[0.04] select-none pointer-events-none"
+      <div 
+        ref={decorLeft}
+        className="absolute -left-32 bottom-20 text-[10rem] font-display font-bold text-[#112118]/[0.04] select-none pointer-events-none will-change-transform"
       >
         URGENCY
-      </motion.div>
+      </div>
     </section>
   );
 }

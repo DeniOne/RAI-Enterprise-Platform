@@ -1,23 +1,52 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowRight, Play, Target } from "lucide-react";
 import Image from "next/image";
 import { Magnetic } from "@/components/Magnetic";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
+
+gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 export default function HeroSection() {
   const containerRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end start"],
-  });
+  const imageRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
 
-  const smoothProgress = useSpring(scrollYProgress, { damping: 20, stiffness: 50 });
-  const scale = useTransform(smoothProgress, [0, 1], [1, 1.1]);
-  const yImage = useTransform(smoothProgress, [0, 1], ["0%", "15%"]);
-  const yText = useTransform(smoothProgress, [0, 1], ["0%", "40%"]);
-  const opacityText = useTransform(smoothProgress, [0, 0.5], [1, 0]);
+  useGSAP(
+    () => {
+      if (!containerRef.current || !imageRef.current || !textRef.current) return;
+
+      const imageSetters = {
+        scale: gsap.quickSetter(imageRef.current, "scale"),
+        y: gsap.quickSetter(imageRef.current, "y", "px"),
+      };
+      const textSetters = {
+        y: gsap.quickSetter(textRef.current, "y", "px"),
+        opacity: gsap.quickSetter(textRef.current, "opacity"),
+      };
+
+      ScrollTrigger.create({
+        trigger: containerRef.current,
+        start: "top top",
+        end: "bottom top",
+        scrub: true,
+        onUpdate: (self) => {
+          const p = self.progress;
+          // Параллакс для фонового изображения
+          imageSetters.scale(1 + p * 0.1);
+          imageSetters.y(p * (containerRef.current?.offsetHeight || 0) * 0.15);
+          // Параллакс для текста
+          textSetters.y(p * (containerRef.current?.offsetHeight || 0) * 0.4);
+          textSetters.opacity(Math.max(0, 1 - p * 2));
+        },
+      });
+    },
+    { scope: containerRef }
+  );
 
   return (
     <section 
@@ -25,28 +54,28 @@ export default function HeroSection() {
       className="relative w-full min-h-screen flex items-center overflow-hidden bg-[#EFECE6] font-sans py-20 md:py-0"
     >
       {/* Background */}
-      <motion.div 
-        style={{ scale, y: yImage, willChange: 'transform' }}
-        className="absolute inset-0 z-0 origin-center"
+      <div 
+        ref={imageRef}
+        className="absolute inset-0 z-0 origin-center will-change-transform"
       >
         <Image 
-          src="/images/hero.png" 
+          src="/images/hero.webp" 
           alt="Поле" 
           fill 
           priority
           quality={100}
           className="object-cover object-center"
         />
-        {/* Темный градиент слева для читаемости текста (без перекрытия всего кадра) */}
+        {/* Тёмный градиент слева для читаемости текста */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#112118]/80 via-[#112118]/40 to-transparent z-10" />
-        {/* Легкая виньетка по самому низу (без белого тумана) */}
+        {/* Лёгкая виньетка по низу */}
         <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#112118]/30 to-transparent z-10" />
-      </motion.div>
+      </div>
 
       {/* Main Content Container */}
-      <motion.div 
-        style={{ y: yText, opacity: opacityText, willChange: 'transform, opacity' }}
-        className="relative z-20 w-full max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-16 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12"
+      <div 
+        ref={textRef}
+        className="relative z-20 w-full max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-16 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12 will-change-transform"
       >
         {/* Left Column: Typography */}
         <div className="w-full md:w-8/12 lg:w-7/12 text-left">
@@ -98,7 +127,7 @@ export default function HeroSection() {
               </motion.button>
             </Magnetic>
             
-            {/* Усиленный Ghost CTA */}
+            {/* Ghost CTA */}
             <Magnetic>
               <button 
                 onClick={() => document.getElementById('problem-section')?.scrollIntoView({ behavior: 'smooth' })}
@@ -113,7 +142,7 @@ export default function HeroSection() {
           </motion.div>
         </div>
 
-        {/* Right Column: Data Overlays (Agro-Tech Neon) */}
+        {/* Right Column: Data Overlays */}
         <div className="w-full md:w-5/12 hidden md:flex flex-col items-end gap-12 pr-4 lg:pr-12">
           
           {/* Card 1 */}
@@ -168,7 +197,7 @@ export default function HeroSection() {
 
         </div>
 
-      </motion.div>
+      </div>
     </section>
   );
 }
