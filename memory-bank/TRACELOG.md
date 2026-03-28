@@ -489,3 +489,10 @@
 [2026-03-28 14:10Z] Legal prefill generator расширен до полного `11/11` покрытия
 - `scripts/legal-evidence-prefill.cjs` теперь покрывает не только критичные `01,02,03,04,05,06,08,09`, но и `07`, `10`, `11`.
 - Практический эффект: весь external legal packet теперь имеет repo-derived draft layer, а не только blocker-set для перехода в `CONDITIONAL GO`.
+[2026-03-28 14:20Z] Legal handoff queue добавлена поверх verdict и drafts
+- Добавлен `scripts/legal-evidence-handoff.cjs`.
+- В `package.json` добавлены команды:
+  - `pnpm legal:evidence:handoff`
+  - `pnpm gate:legal:evidence:handoff`
+- Новый handoff-report группирует blockers до следующего verdict по named owners, draft-путям и intake-командам.
+- Практический эффект: owner execution стал прямолинейным, без ручного сопоставления verdict-report, metadata register и restricted drafts.

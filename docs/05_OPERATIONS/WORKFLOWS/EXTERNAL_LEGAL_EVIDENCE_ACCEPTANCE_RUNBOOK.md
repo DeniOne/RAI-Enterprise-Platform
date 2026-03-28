@@ -3,14 +3,14 @@ id: DOC-OPS-WORKFLOWS-EXTERNAL-LEGAL-EVIDENCE-ACCEPTANCE-RUNBOOK-20260328
 layer: Operations
 type: Runbook
 status: approved
-version: 1.6.0
+version: 1.7.0
 owners: [@techlead]
 last_updated: 2026-03-28
 claim_id: CLAIM-OPS-WORKFLOWS-EXTERNAL-LEGAL-EVIDENCE-ACCEPTANCE-RUNBOOK-20260328
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-28
-evidence_refs: package.json;scripts/legal-evidence-template.cjs;scripts/legal-evidence-prefill.cjs;scripts/legal-evidence-status.cjs;scripts/legal-evidence-intake.cjs;scripts/legal-evidence-transition.cjs;scripts/legal-evidence-verdict.cjs;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md;.github/CODEOWNERS
+evidence_refs: package.json;scripts/legal-evidence-template.cjs;scripts/legal-evidence-prefill.cjs;scripts/legal-evidence-status.cjs;scripts/legal-evidence-intake.cjs;scripts/legal-evidence-transition.cjs;scripts/legal-evidence-verdict.cjs;scripts/legal-evidence-handoff.cjs;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md;.github/CODEOWNERS
 ---
 # EXTERNAL LEGAL EVIDENCE ACCEPTANCE RUNBOOK
 
@@ -56,6 +56,7 @@ last_verified: 2026-03-28
 9. Обновить связанные документы и затем запустить `pnpm legal:evidence:transition -- --reference=... --status=accepted`.
 10. Запустить `pnpm gate:legal:evidence`, чтобы поймать drift между repo-side register и restricted metadata.
 11. Запустить `pnpm legal:evidence:verdict`, чтобы пересчитать текущий legal verdict и список blockers до следующего статуса.
+12. Запустить `pnpm legal:evidence:handoff`, чтобы разложить blockers по named owners, draft-путям и intake-командам.
 
 Важно:
 - `prefill` создаёт только repo-derived working draft;
@@ -84,6 +85,7 @@ last_verified: 2026-03-28
 | `Legal / Compliance: CONDITIONAL GO -> GO` | все `ELP-20260328-01 .. 11` |
 
 Машинный отчёт по этим переходам публикуется в `var/compliance/external-legal-evidence-verdict.md`.
+Owner-oriented handoff queue публикуется в `var/compliance/external-legal-evidence-handoff.md`.
 
 ## Review guard
 - Все правки в legal closeout docs проходят review через `CODEOWNERS`.

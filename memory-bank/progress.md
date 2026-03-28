@@ -165,6 +165,19 @@
     - `ELP-20260328-10`
     - `ELP-20260328-11`
 
+11. **Owner-oriented legal handoff queue** [DONE]:
+  - Добавлен `scripts/legal-evidence-handoff.cjs`.
+  - В `package.json` добавлены команды:
+    - `pnpm legal:evidence:handoff`
+    - `pnpm gate:legal:evidence:handoff`
+  - Handoff-отчёт использует:
+    - `external-legal-evidence-status.json`
+    - `external-legal-evidence-verdict.json`
+    - restricted `drafts/INDEX.md`
+  - Практический эффект:
+    - blockers перестали быть просто списком `ELP-*`;
+    - у каждого owner теперь есть своя очередь с draft-путями и готовыми intake-командами.
+
 1. **Ledger schema recovery и economy stress-suite stabilization** [DONE]:
   - `packages/prisma-client/fix_schema.ts` расширен до полного recovery-прохода по hardened ledger-контуру, а не только до ремонта `create_ledger_entry_v1`.
   - Скрипт теперь восстанавливает `dblink`, `account_balances`, `check_tenant_state_hardened_v6`, `update_account_balance_v1`, `no_negative_cash`, trigger wiring и сам `create_ledger_entry_v1`.

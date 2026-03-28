@@ -3,7 +3,7 @@ id: DOC-ARV-AUDIT-ENTERPRISE-DUE-DILIGENCE-20260328
 layer: Archive
 type: Research
 status: approved
-version: 1.13.0
+version: 1.14.0
 owners: [@techlead]
 last_updated: 2026-03-28
 ---
@@ -105,7 +105,7 @@ Overall: 6.5/10
 5. Schema-integrity baseline усилен отдельным безопасным `prisma validate` wrapper.
 6. Добавлен reproducible security baseline: audit, secret scan, license inventory, SBOM.
 7. Добавлены `CodeQL`, PR dependency review и provenance-ready security workflow.
-8. Операционный слой получил активный compliance/deployment/privacy packet в `docs/05_OPERATIONS`, включая explicit external evidence request packet, metadata register, acceptance runbook, template generator, repo-derived prefill generator, intake command, lifecycle transition command, reproducible legal metadata gate и машинный отчёт по legal verdict.
+8. Операционный слой получил активный compliance/deployment/privacy packet в `docs/05_OPERATIONS`, включая explicit external evidence request packet, metadata register, acceptance runbook, template generator, repo-derived prefill generator, intake command, lifecycle transition command, reproducible legal metadata gate, машинный отчёт по legal verdict и owner-oriented handoff queue.
 9. `CODEOWNERS` расширен на workflows, scripts и критичные runtime paths.
 10. Текущий Git больше не содержит tracked key material и tracked `.env` с секретами.
 

@@ -79,6 +79,10 @@
   - доступна команда `pnpm legal:evidence:prefill -- --reference=...` и batch-проход `--priority=critical`
   - prefill собирает рабочие черновики из уже подтверждённых repo-facts, но не меняет evidence status
   - текущий generator покрывает все `ELP-20260328-01 .. 11`
+- [x] Legal closeout получил owner-oriented handoff queue:
+  - добавлен `scripts/legal-evidence-handoff.cjs`
+  - доступны `pnpm legal:evidence:handoff` и `pnpm gate:legal:evidence:handoff`
+  - handoff queue группирует blockers по named owners, draft-путям и intake-командам
 - [x] Audit-пакет `docs/_audit` синхронизирован с новым baseline:
   - due diligence/evidence matrix/delta/privacy map/AI scenarios/RF review обновлены до post-remediation состояния
   - `Legal / Compliance` честно оставлен `NO-GO`, потому что внешний operator/legal evidence всё ещё не подтверждён кодом

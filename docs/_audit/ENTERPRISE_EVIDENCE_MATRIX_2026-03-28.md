@@ -3,7 +3,7 @@ id: DOC-ARV-AUDIT-ENTERPRISE-EVIDENCE-MATRIX-20260328
 layer: Archive
 type: Research
 status: approved
-version: 1.13.0
+version: 1.14.0
 owners: [@techlead]
 last_updated: 2026-03-28
 ---
@@ -31,6 +31,7 @@ last_updated: 2026-03-28
 | code | `scripts/legal-evidence-template.cjs` | генерирует шаблоны внешних legal evidence documents по `reference_id` | legal evidence templates |
 | code | `scripts/legal-evidence-prefill.cjs` | генерирует repo-derived working drafts по `ELP-*` без смены evidence status | legal owner handoff acceleration |
 | code | `scripts/legal-evidence-verdict.cjs` | считает текущий `Legal / Compliance` verdict и blockers до следующего статуса на основе status report и register | legal verdict automation |
+| code | `scripts/legal-evidence-handoff.cjs` | группирует blockers по named owners, draft-путям и intake-командам | legal owner routing |
 | docs | `docs/05_OPERATIONS/COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md` | активный privacy/operator register создан | legal/privacy packet |
 | docs | `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md` | внешний evidence checklist формализован с owner-scope и acceptance criteria | legal closeout packet |
 | docs | `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md` | repo-side metadata register seeded: `11` external artifacts в статусе `requested` | legal tracking baseline |
@@ -62,6 +63,7 @@ last_updated: 2026-03-28
 | `pnpm security:sbom` | PASS | `CycloneDX 1.6` SBOM generated в `var/security/bom.cdx.json` |
 | `pnpm gate:legal:evidence` | PASS | legal metadata register и restricted store согласованы; `11 requested`, `0 overdue`, `0 issues` |
 | `pnpm legal:evidence:verdict` | PASS | legal verdict считается кодом; текущий результат `NO-GO`, blockers до `CONDITIONAL GO` перечислены в generated report |
+| `pnpm legal:evidence:handoff` | PASS | owner-oriented handoff queue собирается автоматически; blockers разложены по named owners и draft-файлам |
 | `git rm --cached mg-core/backend/.env mg-core/backend/src/mg-chat/.env` | DONE | tracked secret env removed from index; remain workspace-only |
 
 ## 3. Generated Local Artifacts
@@ -78,6 +80,8 @@ last_updated: 2026-03-28
 | `var/compliance/external-legal-evidence-status.md` | generated | human-readable legal evidence status |
 | `var/compliance/external-legal-evidence-verdict.json` | generated | machine-readable legal verdict and blockers |
 | `var/compliance/external-legal-evidence-verdict.md` | generated | human-readable legal verdict and blockers |
+| `var/compliance/external-legal-evidence-handoff.json` | generated | machine-readable owner handoff queue |
+| `var/compliance/external-legal-evidence-handoff.md` | generated | human-readable owner handoff queue |
 
 ## 4. Внешние Официальные Baselines
 
