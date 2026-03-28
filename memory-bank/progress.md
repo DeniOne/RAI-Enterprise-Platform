@@ -160,6 +160,10 @@
   - Практический эффект:
     - владельцы получают не пустой шаблон, а почти готовый черновик с текущими repo-фактами и перечнем внешних пробелов;
     - критичные legal blockers можно закрывать быстрее без фальшивого изменения статусов.
+  - Дополнительно generator расширен до полного покрытия:
+    - `ELP-20260328-07`
+    - `ELP-20260328-10`
+    - `ELP-20260328-11`
 
 1. **Ledger schema recovery и economy stress-suite stabilization** [DONE]:
   - `packages/prisma-client/fix_schema.ts` расширен до полного recovery-прохода по hardened ledger-контуру, а не только до ремонта `create_ledger_entry_v1`.

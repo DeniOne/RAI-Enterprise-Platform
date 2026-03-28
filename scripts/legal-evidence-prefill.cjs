@@ -223,6 +223,39 @@ const PREFILLS = {
 
 - \`COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md\` фиксирует \`basis pack\` как \`частично\`.
 - \`PRIVACY_DATA_FLOW_MAP_2026-03-28.md\` перечисляет основные flows и residual gaps.
+    `,
+  },
+  "ELP-20260328-07": {
+    title: "Subject Rights Operating Evidence",
+    linkedDocs: [
+      "docs/05_OPERATIONS/WORKFLOWS/PRIVACY_SUBJECT_RIGHTS_AND_RETENTION_RUNBOOK.md",
+      "docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md",
+    ],
+    knownFacts: [
+      "В репозитории уже есть отдельный subject-rights / retention runbook с intake checklist, SLA baseline и stop criteria.",
+      "Runbook фиксирует `TTA` до 1 рабочего дня, первичный legal triage до 3 рабочих дней и исполнение до 30 календарных дней при отсутствии stop-factor.",
+      "Внешний ingress channel, named owner evidence и sample handling artifacts локально не подтверждены.",
+    ],
+    requiredExternal: [
+      "Фактический ingress channel для запросов субъектов.",
+      "Named owner и escalation path.",
+      "SLA evidence и operational acknowledgement.",
+      "Хотя бы один образец обработки запроса или журнал обработки.",
+    ],
+    sections: `
+## Repo-derived subject-rights baseline
+
+| Поле | Что уже есть локально | Что нужно добавить извне |
+|---|---|---|
+| Intake checklist | описан в runbook | подтвердить фактический канал intake |
+| SLA | \`TTA 1 рабочий день\`, \`legal triage 3 рабочих дня\`, \`execution 30 календарных дней\` | подтвердить owner acceptance и operational use |
+| Stop criteria | operator unknown, identity mismatch, mandatory retention, WORM hold, unresolved transborder | подтвердить, кто принимает такие решения |
+| Result logging | request id, owner, affected systems, итог и правовое основание | приложить sample handling artifacts |
+
+## Repo-derived supporting facts
+
+- \`PRIVACY_SUBJECT_RIGHTS_AND_RETENTION_RUNBOOK.md\` уже задаёт intake checklist, SLA и stop criteria.
+- \`COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md\` фиксирует subject rights runbook как \`создан\`, но external SLA / owner evidence как неподтверждённые.
 `,
   },
   "ELP-20260328-08": {
@@ -257,7 +290,7 @@ const PREFILLS = {
 
 - \`COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md\` фиксирует \`Retention / deletion schedule\` как \`частично\`.
 - \`PRIVACY_SUBJECT_RIGHTS_AND_RETENTION_RUNBOOK.md\` уже задаёт operational contour, но не заменяет approved legal schedule.
-`,
+    `,
   },
   "ELP-20260328-09": {
     title: "First Party Chain Of Title Pack",
@@ -291,6 +324,73 @@ const PREFILLS = {
 - \`pnpm security:licenses\` построил inventory: \`189 packages\`, \`33 unknown licenses\`.
 - \`OSS_LICENSE_AND_IP_REGISTER.md\` прямо фиксирует отсутствие chain-of-title и root license strategy.
 - Репозиторий помечен как \`private\`, но это не заменяет legal chain-of-title.
+    `,
+  },
+  "ELP-20260328-10": {
+    title: "Oss Unknown License Triage And Notice Pack",
+    linkedDocs: [
+      "docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md",
+      "docs/_audit/ENTERPRISE_EVIDENCE_MATRIX_2026-03-28.md",
+    ],
+    knownFacts: [
+      "Локально воспроизводимый inventory path уже есть: `pnpm security:licenses`.",
+      "Последний baseline показывает `189 packages` и `33 unknown licenses`.",
+      "Notice / attribution packet и compatibility review в репозитории не подтверждены.",
+    ],
+    requiredExternal: [
+      "Manual legal triage по всем `UNKNOWN` лицензиям.",
+      "Notice obligations register.",
+      "Решение по запрещённым или условно совместимым лицензиям.",
+      "Owner sign-off о достаточности пакета для дистрибуции и продаж.",
+    ],
+    sections: `
+## Repo-derived OSS triage seed
+
+| Вопрос | Текущее локальное состояние | Что нужно сделать извне |
+|---|---|---|
+| Машинно-воспроизводимый inventory | есть | использовать как baseline для legal review |
+| \`UNKNOWN\` licenses | \`33\` | разобрать вручную |
+| Notice / attribution packet | не найден | собрать и утвердить |
+| Compatibility review | не завершён | выпустить legal memo |
+| Root license strategy | отсутствует | увязать с chain-of-title decision |
+
+## Repo-derived supporting facts
+
+- \`var/security/license-inventory.md\` фиксирует \`Total packages: 189\` и \`Unknown licenses: 33\`.
+- \`OSS_LICENSE_AND_IP_REGISTER.md\` прямо говорит, что compatibility review и notice packet отсутствуют.
+`,
+  },
+  "ELP-20260328-11": {
+    title: "Crypto Applicability Memo",
+    linkedDocs: [
+      "docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md",
+      "docs/05_OPERATIONS/SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY.md",
+    ],
+    knownFacts: [
+      "В `RF_COMPLIANCE_REVIEW_2026-03-28.md` crypto applicability помечена как `требует отдельной валидации`.",
+      "Код использует JWT, HMAC signatures, crypto services, hashing и Telegram signature verification.",
+      "Applicability и licensing contour по ФСТЭК / ФСБ локально не подтверждены.",
+    ],
+    requiredExternal: [
+      "Профильный legal/security memo по применимости регулируемой криптографии.",
+      "Периметр систем и сценариев, где используется crypto.",
+      "Вывод: нужна ли отдельная regulatory / licensing action.",
+      "Owner sign-off и follow-up actions.",
+    ],
+    sections: `
+## Repo-derived crypto contour
+
+| Контур | Repo evidence | Что нужно определить внешне |
+|---|---|---|
+| JWT secrets и auth | \`apps/api/src/shared/auth/**\` | подпадает ли под отдельные требования |
+| Audit HMAC / signatures | \`apps/api/src/shared/audit/audit.service.ts\`, \`audit-notarization.service.ts\` | perimeter и regulatory relevance |
+| Telegram signature verification | \`apps/api/src/shared/auth/telegram-auth.service.ts\` | legal treatment внешней подписи |
+| Hashing / canonical crypto helpers | \`apps/api/src/shared/crypto/canonical-json.builder.ts\` и related helpers | нужна ли дополнительная классификация |
+
+## Repo-derived supporting facts
+
+- \`SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY.md\` фиксирует security baseline, но не закрывает crypto applicability.
+- \`RF_COMPLIANCE_REVIEW_2026-03-28.md\` прямо требует отдельный профильный review.
 `,
   },
 };

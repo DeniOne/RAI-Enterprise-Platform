@@ -29,7 +29,7 @@ last_updated: 2026-03-28
 | code | `scripts/legal-evidence-intake.cjs` | принимает внешний legal artifact в restricted store и синхронизирует `received`-статус | legal evidence intake |
 | code | `scripts/legal-evidence-transition.cjs` | переводит legal evidence lifecycle в `reviewed` / `accepted` / `expired` с sync register/index | legal evidence lifecycle |
 | code | `scripts/legal-evidence-template.cjs` | генерирует шаблоны внешних legal evidence documents по `reference_id` | legal evidence templates |
-| code | `scripts/legal-evidence-prefill.cjs` | генерирует repo-derived working drafts по критичным `ELP-*` без смены evidence status | legal owner handoff acceleration |
+| code | `scripts/legal-evidence-prefill.cjs` | генерирует repo-derived working drafts по `ELP-*` без смены evidence status | legal owner handoff acceleration |
 | code | `scripts/legal-evidence-verdict.cjs` | считает текущий `Legal / Compliance` verdict и blockers до следующего статуса на основе status report и register | legal verdict automation |
 | docs | `docs/05_OPERATIONS/COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md` | активный privacy/operator register создан | legal/privacy packet |
 | docs | `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md` | внешний evidence checklist формализован с owner-scope и acceptance criteria | legal closeout packet |

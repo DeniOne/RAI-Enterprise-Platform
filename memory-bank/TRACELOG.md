@@ -486,3 +486,6 @@
 - `prefill` собирает repo-derived working drafts по `ELP-*` в restricted store и заполняет их уже известными repo-facts.
 - Жёсткое ограничение зафиксировано в runbook: `prefill` не является внешним evidence и не меняет status карточек.
 - Практический эффект: owners стартуют не с пустого шаблона, а с prefilled draft-пакета по критичным legal blockers.
+[2026-03-28 14:10Z] Legal prefill generator расширен до полного `11/11` покрытия
+- `scripts/legal-evidence-prefill.cjs` теперь покрывает не только критичные `01,02,03,04,05,06,08,09`, но и `07`, `10`, `11`.
+- Практический эффект: весь external legal packet теперь имеет repo-derived draft layer, а не только blocker-set для перехода в `CONDITIONAL GO`.
