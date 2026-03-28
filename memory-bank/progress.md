@@ -132,6 +132,22 @@
     - legal owners не начинают evidence-документы с пустого листа;
     - приоритетные артефакты можно собирать быстрее и без формального drift по структуре.
 
+9. **Machine-readable legal verdict automation** [DONE]:
+  - Добавлен `scripts/legal-evidence-verdict.cjs`.
+  - В `package.json` добавлены команды:
+    - `pnpm legal:evidence:verdict`
+    - `pnpm gate:legal:evidence:verdict`
+  - Verdict-скрипт опирается на:
+    - `var/compliance/external-legal-evidence-status.json`
+    - `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md`
+    - decision rules из request packet и acceptance runbook
+  - Скрипт пишет отчёты:
+    - `var/compliance/external-legal-evidence-verdict.json`
+    - `var/compliance/external-legal-evidence-verdict.md`
+  - Практический эффект:
+    - `Legal / Compliance` больше не пересчитывается вручную по таблицам;
+    - команда мгновенно видит текущий verdict и точный список blockers до `CONDITIONAL GO` и `GO`.
+
 1. **Ledger schema recovery и economy stress-suite stabilization** [DONE]:
   - `packages/prisma-client/fix_schema.ts` расширен до полного recovery-прохода по hardened ledger-контуру, а не только до ремонта `create_ledger_entry_v1`.
   - Скрипт теперь восстанавливает `dblink`, `account_balances`, `check_tenant_state_hardened_v6`, `update_account_balance_v1`, `no_negative_cash`, trigger wiring и сам `create_ledger_entry_v1`.

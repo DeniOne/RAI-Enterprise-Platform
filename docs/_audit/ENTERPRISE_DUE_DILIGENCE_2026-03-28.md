@@ -3,7 +3,7 @@ id: DOC-ARV-AUDIT-ENTERPRISE-DUE-DILIGENCE-20260328
 layer: Archive
 type: Research
 status: approved
-version: 1.11.0
+version: 1.12.0
 owners: [@techlead]
 last_updated: 2026-03-28
 ---
@@ -32,7 +32,7 @@ last_updated: 2026-03-28
 | Ось | Вердикт | Решающий критерий | Ключевые блокеры | Что поднимает статус |
 |---|---|---|---|---|
 | Security | `CONDITIONAL GO` | runtime baseline зелёный, `secret scan`, `security audit`, `SAST/SCA/SBOM` workflows добавлены | `37 high / 2 critical` dependency findings; history/rotation debt; локальные workspace secrets; remote attestation/CodeQL results ещё не зафиксированы как closed loop | закрыть критичные advisories, подтвердить rotation/revocation, получить первый CI-backed AppSec cycle |
-| Legal / Compliance | `NO-GO` | active legal/privacy packet теперь есть, внешний evidence checklist, metadata register и acceptance runbook формализованы, но сами operator/legal доказательства не подтверждены | нет подтверждённого notification status в РКН; нет actual residency evidence; нет processor contracts; нет chain-of-title pack | заполнить реальные артефакты по `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md` и прогнать их через acceptance runbook |
+| Legal / Compliance | `NO-GO` | active legal/privacy packet теперь есть, внешний evidence checklist, metadata register, acceptance runbook и машинный отчёт по verdict формализованы, но сами operator/legal доказательства не подтверждены | нет подтверждённого notification status в РКН; нет actual residency evidence; нет processor contracts; нет chain-of-title pack | заполнить реальные артефакты по `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md`, провести их через acceptance runbook и пересчитать verdict через `pnpm legal:evidence:verdict` |
 | Deployment / Operations | `CONDITIONAL GO` | build/test/gates зелёные, release/backup/DR runbooks и deployment matrix формализованы | нет последнего подтверждённого backup/restore execution report; install/upgrade packet неполный; branch protection evidence остаётся внешним | провести backup/restore drill, оформить installability packet и зафиксировать GitHub protection state |
 | Product Readiness | `CONDITIONAL GO` | разработку и controlled pilot продолжать можно без restructuring | внешний legal/compliance контур не готов; security debt по зависимостям и secret hygiene не закрыт до конца | ограничить pilot self-host/localized контуром и закрыть legal/AppSec backlog |
 
@@ -81,6 +81,7 @@ Overall: 6.5/10
 | `pnpm security:licenses` | PASS | построен OSS inventory: `189 packages`, `33 unknown licenses` |
 | `pnpm security:sbom` | PASS | генерируется `CycloneDX 1.6` SBOM в `var/security/bom.cdx.json` |
 | `pnpm gate:legal:evidence` | PASS | legal register, restricted metadata store и index согласованы; `11 requested`, `0 overdue`, `0 issues` |
+| `pnpm legal:evidence:verdict` | PASS | legal verdict считается детерминированно; текущий статус: `NO-GO`, blockers до `CONDITIONAL GO` рассчитываются автоматически |
 | `pnpm gate:routing:primary-slices` | PASS, `4/4` suites, `86/86` tests | routing corpus и case-memory baseline зелёные |
 | `pnpm --filter api test -- --runInBand` | PASS, `252/252` suites, `1313 passed`, `1 skipped` | backend regression baseline восстановлен |
 | `pnpm --filter web test` | PASS, `42/42` suites, `482/482` tests | frontend regression baseline восстановлен |
@@ -104,7 +105,7 @@ Overall: 6.5/10
 5. Schema-integrity baseline усилен отдельным безопасным `prisma validate` wrapper.
 6. Добавлен reproducible security baseline: audit, secret scan, license inventory, SBOM.
 7. Добавлены `CodeQL`, PR dependency review и provenance-ready security workflow.
-8. Операционный слой получил активный compliance/deployment/privacy packet в `docs/05_OPERATIONS`, включая explicit external evidence request packet, metadata register, acceptance runbook, template generator, intake command, lifecycle transition command и reproducible legal metadata gate.
+8. Операционный слой получил активный compliance/deployment/privacy packet в `docs/05_OPERATIONS`, включая explicit external evidence request packet, metadata register, acceptance runbook, template generator, intake command, lifecycle transition command, reproducible legal metadata gate и машинный отчёт по legal verdict.
 9. `CODEOWNERS` расширен на workflows, scripts и критичные runtime paths.
 10. Текущий Git больше не содержит tracked key material и tracked `.env` с секретами.
 

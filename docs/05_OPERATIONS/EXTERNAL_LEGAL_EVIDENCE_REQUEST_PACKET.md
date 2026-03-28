@@ -3,7 +3,7 @@ id: DOC-OPS-EXTERNAL-LEGAL-EVIDENCE-REQUEST-PACKET-20260328
 layer: Operations
 type: Report
 status: approved
-version: 1.2.0
+version: 1.3.0
 owners: [@techlead]
 last_updated: 2026-03-28
 claim_id: CLAIM-OPS-EXTERNAL-LEGAL-EVIDENCE-REQUEST-PACKET-20260328
@@ -47,6 +47,8 @@ last_verified: 2026-03-28
 |---|---|
 | `NO-GO -> CONDITIONAL GO` | 1, 2, 3, 4, 5, 6, 8, 9 complete; 7 и 10 как минимум назначены и имеют owner/SLA |
 | `CONDITIONAL GO -> GO` | все позиции 1-11 complete и привязаны к фактической deployment topology |
+
+Машинная сводка по этим правилам выпускается через `pnpm legal:evidence:verdict` и пишет отчёты в `var/compliance/external-legal-evidence-verdict.{json,md}`.
 
 ## Required External Evidence Register
 

@@ -3,14 +3,14 @@ id: DOC-OPS-WORKFLOWS-EXTERNAL-LEGAL-EVIDENCE-ACCEPTANCE-RUNBOOK-20260328
 layer: Operations
 type: Runbook
 status: approved
-version: 1.4.0
+version: 1.5.0
 owners: [@techlead]
 last_updated: 2026-03-28
 claim_id: CLAIM-OPS-WORKFLOWS-EXTERNAL-LEGAL-EVIDENCE-ACCEPTANCE-RUNBOOK-20260328
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-28
-evidence_refs: package.json;scripts/legal-evidence-template.cjs;scripts/legal-evidence-status.cjs;scripts/legal-evidence-intake.cjs;scripts/legal-evidence-transition.cjs;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md;.github/CODEOWNERS
+evidence_refs: package.json;scripts/legal-evidence-template.cjs;scripts/legal-evidence-status.cjs;scripts/legal-evidence-intake.cjs;scripts/legal-evidence-transition.cjs;scripts/legal-evidence-verdict.cjs;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md;.github/CODEOWNERS
 ---
 # EXTERNAL LEGAL EVIDENCE ACCEPTANCE RUNBOOK
 
@@ -54,6 +54,7 @@ last_verified: 2026-03-28
 7. После ручной проверки запустить `pnpm legal:evidence:transition -- --reference=... --status=reviewed`.
 8. Обновить связанные документы и затем запустить `pnpm legal:evidence:transition -- --reference=... --status=accepted`.
 9. Запустить `pnpm gate:legal:evidence`, чтобы поймать drift между repo-side register и restricted metadata.
+10. Запустить `pnpm legal:evidence:verdict`, чтобы пересчитать текущий legal verdict и список blockers до следующего статуса.
 
 ## Acceptance checks
 
@@ -76,6 +77,8 @@ last_verified: 2026-03-28
 |---|---|
 | `Legal / Compliance: NO-GO -> CONDITIONAL GO` | `ELP-20260328-01`, `02`, `03`, `04`, `05`, `06`, `08`, `09` |
 | `Legal / Compliance: CONDITIONAL GO -> GO` | все `ELP-20260328-01 .. 11` |
+
+Машинный отчёт по этим переходам публикуется в `var/compliance/external-legal-evidence-verdict.md`.
 
 ## Review guard
 - Все правки в legal closeout docs проходят review через `CODEOWNERS`.

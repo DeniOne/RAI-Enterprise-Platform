@@ -1,3 +1,16 @@
+[2026-03-28 13:44Z] Legal verdict automation добавлена в enterprise closeout
+- Добавлен `scripts/legal-evidence-verdict.cjs`.
+- В `package.json` добавлены команды:
+  - `pnpm legal:evidence:verdict`
+  - `pnpm gate:legal:evidence:verdict`
+- Новый отчёт по verdict читает `external-legal-evidence-status.json` и repo-side metadata register, затем публикует:
+  - `var/compliance/external-legal-evidence-verdict.json`
+  - `var/compliance/external-legal-evidence-verdict.md`
+- Зафиксированы машинные правила переходов:
+  - `NO-GO -> CONDITIONAL GO` по accepted `ELP-20260328-01,02,03,04,05,06,08,09` и assigned-with-SLA `07,10`
+  - `CONDITIONAL GO -> GO` по accepted `ELP-20260328-01 .. 11`
+- Практический эффект: legal closeout теперь даёт не только lifecycle tracking, но и детерминированный verdict/blocker report для enterprise decision layer.
+
 [2026-03-28 12:55Z] Enterprise audit closeout: security/compliance/ops baseline собран
 - Добавлены воспроизводимые security/supply-chain команды:
   - `pnpm security:audit:ci`

@@ -69,6 +69,11 @@
   - добавлен `scripts/legal-evidence-template.cjs`
   - доступна команда `pnpm legal:evidence:template -- --reference=...`
   - шаблоны можно выпускать под конкретный `ELP-...` перед intake
+- [x] Legal closeout получил машинную автоматизацию verdict:
+  - добавлен `scripts/legal-evidence-verdict.cjs`
+  - доступны `pnpm legal:evidence:verdict` и `pnpm gate:legal:evidence:verdict`
+  - отчёт по verdict теперь публикуется в `var/compliance/external-legal-evidence-verdict.{json,md}`
+  - переходы `NO-GO -> CONDITIONAL GO -> GO` считаются кодом по `EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET` и acceptance runbook
 - [x] Audit-пакет `docs/_audit` синхронизирован с новым baseline:
   - due diligence/evidence matrix/delta/privacy map/AI scenarios/RF review обновлены до post-remediation состояния
   - `Legal / Compliance` честно оставлен `NO-GO`, потому что внешний operator/legal evidence всё ещё не подтверждён кодом

@@ -3,14 +3,14 @@ id: DOC-OPS-EXTERNAL-LEGAL-EVIDENCE-METADATA-REGISTER-20260328
 layer: Operations
 type: Report
 status: approved
-version: 1.5.0
+version: 1.6.0
 owners: [@techlead]
 last_updated: 2026-03-28
 claim_id: CLAIM-OPS-EXTERNAL-LEGAL-EVIDENCE-METADATA-REGISTER-20260328
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-28
-evidence_refs: package.json;scripts/legal-evidence-template.cjs;scripts/legal-evidence-status.cjs;scripts/legal-evidence-intake.cjs;scripts/legal-evidence-transition.cjs;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md;docs/05_OPERATIONS/WORKFLOWS/EXTERNAL_LEGAL_EVIDENCE_ACCEPTANCE_RUNBOOK.md;docs/05_OPERATIONS/COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md
+evidence_refs: package.json;scripts/legal-evidence-template.cjs;scripts/legal-evidence-status.cjs;scripts/legal-evidence-intake.cjs;scripts/legal-evidence-transition.cjs;scripts/legal-evidence-verdict.cjs;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md;docs/05_OPERATIONS/WORKFLOWS/EXTERNAL_LEGAL_EVIDENCE_ACCEPTANCE_RUNBOOK.md;docs/05_OPERATIONS/COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md
 ---
 # EXTERNAL LEGAL EVIDENCE METADATA REGISTER
 
@@ -34,9 +34,11 @@ last_verified: 2026-03-28
 - статус меняется только после ручной сверки с реальным внешним артефактом.
 - шаблон документа можно сгенерировать через `pnpm legal:evidence:template -- --reference=...`;
 - машинная сверка register/index/metadata выполняется через `pnpm gate:legal:evidence`;
+- машинный расчёт текущего legal verdict и blockers выполняется через `pnpm legal:evidence:verdict`;
 - первичная приёмка внешнего файла в `received` выполняется через `pnpm legal:evidence:intake -- --reference=... --source=/abs/path/file`;
 - дальнейшие переходы в `reviewed` и `accepted` выполняются через `pnpm legal:evidence:transition`;
 - человекочитаемая сводка пишется в `var/compliance/external-legal-evidence-status.md`.
+- человекочитаемый отчёт по verdict пишется в `var/compliance/external-legal-evidence-verdict.md`.
 
 ## Alias owner map
 
