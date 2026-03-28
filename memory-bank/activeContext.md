@@ -83,6 +83,11 @@
   - добавлен `scripts/legal-evidence-handoff.cjs`
   - доступны `pnpm legal:evidence:handoff` и `pnpm gate:legal:evidence:handoff`
   - handoff queue группирует blockers по named owners, draft-путям и intake-командам
+- [x] Legal closeout получил owner-specific packet bundle:
+  - добавлен `scripts/legal-evidence-owner-packets.cjs`
+  - доступны `pnpm legal:evidence:owner-packets` и `pnpm gate:legal:evidence:owner-packets`
+  - restricted store теперь получает `owner-packets/INDEX.md` и `owner-packets/<owner>/HANDOFF.md`
+  - handoff можно передавать owners уже как готовые packet-файлы с intake/review/accept командами
 - [x] Audit-пакет `docs/_audit` синхронизирован с новым baseline:
   - due diligence/evidence matrix/delta/privacy map/AI scenarios/RF review обновлены до post-remediation состояния
   - `Legal / Compliance` честно оставлен `NO-GO`, потому что внешний operator/legal evidence всё ещё не подтверждён кодом

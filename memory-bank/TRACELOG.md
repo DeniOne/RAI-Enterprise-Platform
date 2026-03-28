@@ -496,3 +496,12 @@
   - `pnpm gate:legal:evidence:handoff`
 - Новый handoff-report группирует blockers до следующего verdict по named owners, draft-путям и intake-командам.
 - Практический эффект: owner execution стал прямолинейным, без ручного сопоставления verdict-report, metadata register и restricted drafts.
+[2026-03-28 14:35Z] Owner-specific legal packets добавлены поверх handoff queue
+- Добавлен `scripts/legal-evidence-owner-packets.cjs`.
+- В `package.json` добавлены команды:
+  - `pnpm legal:evidence:owner-packets`
+  - `pnpm gate:legal:evidence:owner-packets`
+- Новый generator использует `external-legal-evidence-handoff.json` и выпускает restricted packet bundle:
+  - `owner-packets/INDEX.md`
+  - `owner-packets/<owner>/HANDOFF.md`
+- Практический эффект: named owners получают уже готовые packet-файлы со своими `ELP-*`, draft-путями и командами intake/review/accept без ручной сборки.

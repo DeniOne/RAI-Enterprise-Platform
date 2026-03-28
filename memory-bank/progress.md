@@ -178,6 +178,18 @@
     - blockers перестали быть просто списком `ELP-*`;
     - у каждого owner теперь есть своя очередь с draft-путями и готовыми intake-командами.
 
+12. **Owner-specific legal packets** [DONE]:
+  - Добавлен `scripts/legal-evidence-owner-packets.cjs`.
+  - В `package.json` добавлены команды:
+    - `pnpm legal:evidence:owner-packets`
+    - `pnpm gate:legal:evidence:owner-packets`
+  - Генератор использует machine-readable handoff report и выпускает restricted bundle:
+    - `owner-packets/INDEX.md`
+    - `owner-packets/<owner>/HANDOFF.md`
+  - Практический эффект:
+    - owner handoff больше не требует ручной сборки файлов или команд;
+    - каждый named owner получает готовый packet по своим blockers, что ускоряет intake реальных внешних документов.
+
 1. **Ledger schema recovery и economy stress-suite stabilization** [DONE]:
   - `packages/prisma-client/fix_schema.ts` расширен до полного recovery-прохода по hardened ledger-контуру, а не только до ремонта `create_ledger_entry_v1`.
   - Скрипт теперь восстанавливает `dblink`, `account_balances`, `check_tenant_state_hardened_v6`, `update_account_balance_v1`, `no_negative_cash`, trigger wiring и сам `create_ledger_entry_v1`.
