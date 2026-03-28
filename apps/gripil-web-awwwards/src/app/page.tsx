@@ -1,6 +1,6 @@
 import HeroSection from "@/components/HeroSection";
+import SplitComparisonViewer from "@/components/SplitComparisonViewer";
 import ProblemSection from "@/components/ProblemSection";
-import SplitComparison from "@/components/SplitComparison";
 import HowItWorksSection from "@/components/HowItWorksSection";
 import TimingSection from "@/components/TimingSection";
 import YieldCalculator from "@/components/YieldCalculator";
@@ -18,7 +18,7 @@ export default function Home() {
     <main className="min-h-screen bg-[#FAFAF9] font-sans antialiased text-[#18181A] selection:bg-[#2D6A4F] selection:text-white">
       <HeroSection />
       <SectionReveal><ProblemSection /></SectionReveal>
-      <SplitComparison />
+      <SplitComparisonViewer />
       <SectionReveal><HowItWorksSection /></SectionReveal>
       <SectionReveal><TimingSection /></SectionReveal>
       <SectionReveal><YieldCalculator /></SectionReveal>

@@ -4,7 +4,7 @@ layer: Archive
 type: Research
 status: approved
 version: 1.16.0
-owners: [@techlead]
+owners: 
 last_updated: 2026-03-28
 ---
 # ENTERPRISE DUE DILIGENCE 2026-03-28
