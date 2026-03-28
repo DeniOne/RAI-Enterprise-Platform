@@ -3,14 +3,14 @@ id: DOC-META-README-RVKI
 layer: Meta
 type: Navigation
 status: approved
-version: 3.7.0
+version: 3.8.0
 owners: [@techlead]
 last_updated: 2026-03-28
 claim_id: CLAIM-CORE-README
 claim_status: asserted
 verified_by: code
 last_verified: 2026-03-28
-evidence_refs: docs/INDEX.md;scripts/lint-docs.cjs;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md
+evidence_refs: docs/INDEX.md;scripts/lint-docs.cjs;docs/_audit/AUDIT_EXECUTIVE_BRIEF_2026-03-28.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md
 ---
 # RAI_EP Documentation
 
@@ -27,6 +27,7 @@ last_verified: 2026-03-28
 - Governance contract: `docs/CONTRIBUTING_DOCS.md`
 - Freshness policy: `docs/05_OPERATIONS/DOC_FRESHNESS_SLA.md`
 - Active instructions layer: `docs/11_INSTRUCTIONS/`
+- Audit executive brief: `docs/_audit/AUDIT_EXECUTIVE_BRIEF_2026-03-28.md`
 - Latest due diligence package: `docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md`
 - Active compliance/ops packet: `docs/05_OPERATIONS/COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md`, `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md`, `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md`, `docs/05_OPERATIONS/HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX.md`, `docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md`, `docs/05_OPERATIONS/SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY.md`, `docs/05_OPERATIONS/KEY_MATERIAL_AND_SECRET_HYGIENE_INCIDENT_2026-03-28.md`, `docs/05_OPERATIONS/WORKFLOWS/EXTERNAL_LEGAL_EVIDENCE_ACCEPTANCE_RUNBOOK.md`, `docs/05_OPERATIONS/WORKFLOWS/PRIVACY_SUBJECT_RIGHTS_AND_RETENTION_RUNBOOK.md`, `docs/05_OPERATIONS/WORKFLOWS/RELEASE_BACKUP_RESTORE_AND_DR_RUNBOOK.md`
 - Documentation baseline audit: `docs/_audit/FINAL_AUDIT_2026-03-20.md`

@@ -96,6 +96,10 @@
 - [x] Audit-пакет `docs/_audit` синхронизирован с новым baseline:
   - due diligence/evidence matrix/delta/privacy map/AI scenarios/RF review обновлены до post-remediation состояния
   - `Legal / Compliance` честно оставлен `NO-GO`, потому что внешний operator/legal evidence всё ещё не подтверждён кодом
+- [x] Для audit-пакета добавлен короткий executive entrypoint:
+  - создан `docs/_audit/AUDIT_EXECUTIVE_BRIEF_2026-03-28.md`
+  - `docs/README.md` и `docs/INDEX.md` теперь поднимают brief как самый быстрый вход в enterprise-аудит
+  - итоговый audit-пакет можно читать как brief -> due diligence -> RF review -> evidence matrix -> delta
 
 ## Текущая задача (2026-03-28)
 - [x] Закрыт backend remediation slice, который оставался после enterprise-аудита и полного `api` baseline.

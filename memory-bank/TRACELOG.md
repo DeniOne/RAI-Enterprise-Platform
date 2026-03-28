@@ -512,3 +512,7 @@
   - `pnpm gate:legal:evidence:priority-board`
 - Новый board использует `external-legal-evidence-verdict.json` и `external-legal-evidence-handoff.json`, после чего публикует единый intake order в `var/compliance/external-legal-evidence-priority-board.{json,md}`.
 - Практический эффект: команда видит не только очереди owners, но и точный machine-sorted порядок закрытия blockers до перехода `NO-GO -> CONDITIONAL GO`.
+[2026-03-28 14:55Z] Audit executive brief добавлен как короткий вход в финальный пакет
+- Создан `docs/_audit/AUDIT_EXECUTIVE_BRIEF_2026-03-28.md`.
+- Обновлены `docs/README.md` и `docs/INDEX.md`, чтобы brief поднимался как первый вход в enterprise audit.
+- Практический эффект: итоговый audit-пакет стал проще читать как deliverable для decision-makers без немедленного погружения во все supporting artifacts.

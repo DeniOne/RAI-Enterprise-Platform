@@ -202,6 +202,13 @@
     - legal intake больше не стартует с ручного выбора порядка;
     - команда получает единый machine-sorted порядок закрытия blockers до `CONDITIONAL GO`.
 
+14. **Audit executive brief and reading path** [DONE]:
+  - Создан `docs/_audit/AUDIT_EXECUTIVE_BRIEF_2026-03-28.md`.
+  - Обновлены `docs/README.md` и `docs/INDEX.md`, чтобы brief стал самым быстрым входом в enterprise-audit пакет.
+  - Практический эффект:
+    - итоговый аудит стало проще читать как законченный deliverable;
+    - пользователь может быстро увидеть verdict, blockers и recommended reading order без прохода по всему пакету сразу.
+
 1. **Ledger schema recovery и economy stress-suite stabilization** [DONE]:
   - `packages/prisma-client/fix_schema.ts` расширен до полного recovery-прохода по hardened ledger-контуру, а не только до ремонта `create_ledger_entry_v1`.
   - Скрипт теперь восстанавливает `dblink`, `account_balances`, `check_tenant_state_hardened_v6`, `update_account_balance_v1`, `no_negative_cash`, trigger wiring и сам `create_ledger_entry_v1`.
