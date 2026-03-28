@@ -19,7 +19,6 @@ export const metadata: Metadata = {
 };
 
 import { SmoothScroll } from "@/components/SmoothScroll";
-import { CustomCursor } from "@/components/CustomCursor";
 import { Preloader } from "@/components/Preloader";
 
 export default function RootLayout({
@@ -29,9 +28,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru" suppressHydrationWarning>
-      <body className={`${manrope.variable} ${outfit.variable} font-sans antialiased bg-[#EFECE6] text-[#112118] sm:cursor-none`} suppressHydrationWarning>
+      <body className={`${manrope.variable} ${outfit.variable} font-sans antialiased bg-[#EFECE6] text-[#112118]`} suppressHydrationWarning>
         <Preloader />
-        <CustomCursor />
         <SmoothScroll>{children}</SmoothScroll>
       </body>
     </html>
