@@ -3,14 +3,14 @@ id: DOC-META-INDEX-ESXJ
 layer: Meta
 type: Navigation
 status: approved
-version: 3.7.0
+version: 3.8.0
 owners: [@techlead]
 last_updated: 2026-03-28
 claim_id: CLAIM-CORE-INDEX
 claim_status: asserted
 verified_by: code
 last_verified: 2026-03-28
-evidence_refs: scripts/lint-docs.cjs;docs/_audit/DOCUMENTATION_MAP.md;docs/_audit/AUDIT_EXECUTIVE_BRIEF_2026-03-28.md;docs/_audit/REPO_RUNTIME_MAP_2026-03-28.md
+evidence_refs: scripts/lint-docs.cjs;docs/00_CORE/RAI_EP_DOCUMENT_SYSTEM_MAP.md;docs/00_STRATEGY/RAI_EP_SYSTEM_BLUEPRINT_AND_GENERAL_PLAN.md;docs/01_ARCHITECTURE/RAI_EP_TARGET_ARCHITECTURE_MAP.md;docs/_audit/REPO_RUNTIME_MAP_2026-03-28.md
 ---
 # INDEX (Canonical)
 
@@ -30,6 +30,16 @@ last_verified: 2026-03-28
 - `docs/01_ARCHITECTURE/`
 - `docs/04_AI_SYSTEM/`
 - `docs/05_OPERATIONS/`
+
+### Canonical Cross-Layer Entry Set
+- `docs/00_CORE/RAI_EP_DOCUMENT_SYSTEM_MAP.md`
+- `docs/00_STRATEGY/RAI_EP_SYSTEM_BLUEPRINT_AND_GENERAL_PLAN.md`
+- `docs/00_STRATEGY/RAI_EP_TARGET_OPERATING_MODEL.md`
+- `docs/00_STRATEGY/RAI_EP_EXECUTION_ROADMAP.md`
+- `docs/01_ARCHITECTURE/RAI_EP_TARGET_ARCHITECTURE_MAP.md`
+- `docs/02_DOMAINS/RAI_EP_TECHMAP_OPERATING_CORE.md`
+- `docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md`
+- `docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md`
 
 ## Active Design And Planning Layers
 - `docs/00_STRATEGY/`

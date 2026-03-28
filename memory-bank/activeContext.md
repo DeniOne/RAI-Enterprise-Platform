@@ -100,6 +100,14 @@
   - создан `docs/_audit/AUDIT_EXECUTIVE_BRIEF_2026-03-28.md`
   - `docs/README.md` и `docs/INDEX.md` теперь поднимают brief как самый быстрый вход в enterprise-аудит
   - итоговый audit-пакет можно читать как brief -> due diligence -> RF review -> evidence matrix -> delta
+- [x] Пакет `docs/06_ARCHIVE/NEW_reglament_docs/` изучен и поднят в активный canon без выявленных смысловых противоречий текущему baseline:
+  - `RAI_EP_DOCUMENT_SYSTEM_MAP` -> `docs/00_CORE/`
+  - `RAI_EP_SYSTEM_BLUEPRINT_AND_GENERAL_PLAN`, `RAI_EP_TARGET_OPERATING_MODEL`, `RAI_EP_EXECUTION_ROADMAP` -> `docs/00_STRATEGY/`
+  - `RAI_EP_TARGET_ARCHITECTURE_MAP` -> `docs/01_ARCHITECTURE/`
+  - `RAI_EP_TECHMAP_OPERATING_CORE` -> `docs/02_DOMAINS/`
+  - `RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY` -> `docs/04_AI_SYSTEM/`
+  - `RAI_EP_ENTERPRISE_RELEASE_CRITERIA` -> `docs/05_OPERATIONS/`
+  - raw archive-копии удалены, чтобы не оставлять competing sources of truth
 
 ## Текущая задача (2026-03-28)
 - [x] Закрыт backend remediation slice, который оставался после enterprise-аудита и полного `api` baseline.

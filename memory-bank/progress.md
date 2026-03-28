@@ -209,6 +209,19 @@
     - итоговый аудит стало проще читать как законченный deliverable;
     - пользователь может быстро увидеть verdict, blockers и recommended reading order без прохода по всему пакету сразу.
 
+15. **Подъём `NEW_reglament_docs` в активный canon** [DONE]:
+  - Пакет `docs/06_ARCHIVE/NEW_reglament_docs/` сопоставлен с текущим due diligence, runtime map и source-of-truth policy.
+  - Выявлено, что документы не противоречат текущему замыслу и лучше работают как claim-managed canon, а не как archive-only drop.
+  - Созданы новые канонические документы в:
+    - `docs/00_CORE/`
+    - `docs/00_STRATEGY/`
+    - `docs/01_ARCHITECTURE/`
+    - `docs/02_DOMAINS/`
+    - `docs/04_AI_SYSTEM/`
+    - `docs/05_OPERATIONS/`
+  - `DOCS_MATRIX`, `README` и `INDEX` обновлены.
+  - Archive-копии из `NEW_reglament_docs` удалены, чтобы не оставлять параллельные competing sources of truth.
+
 1. **Ledger schema recovery и economy stress-suite stabilization** [DONE]:
   - `packages/prisma-client/fix_schema.ts` расширен до полного recovery-прохода по hardened ledger-контуру, а не только до ремонта `create_ledger_entry_v1`.
   - Скрипт теперь восстанавливает `dblink`, `account_balances`, `check_tenant_state_hardened_v6`, `update_account_balance_v1`, `no_negative_cash`, trigger wiring и сам `create_ledger_entry_v1`.
