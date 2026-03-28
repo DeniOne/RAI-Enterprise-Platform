@@ -593,3 +593,9 @@
 - Актуальные `node scripts/raw-sql-governance.cjs --enforce` и `pnpm gate:invariants` снова полностью зелёные: `raw_sql_review_required=0`, `raw_sql_unsafe=0`, `violations=0`, `all_invariant_checks_passed`.
 - `infra/gateway/certs/ca.key` отсутствует в рабочем дереве и больше не tracked в текущем индексе; открытым остаётся уже не active SCM issue, а history cleanup / key-rotation evidence debt.
 - Executive verdict audit-пакета подтверждён как `Security = CONDITIONAL GO`, `Legal / Compliance = NO-GO`, `Deployment / Operations = CONDITIONAL GO`, `Product Readiness = CONDITIONAL GO`, но security-axis теперь опирается на зелёный invariant baseline.
+
+## 2026-03-28 — DB scope manifest drift closed
+
+- `docs/01_ARCHITECTURE/DATABASE/MODEL_SCOPE_MANIFEST.md` дополнен tenant-entries для `TechMapReviewSnapshot`, `TechMapApprovalSnapshot`, `TechMapPublicationLock` без изменения существующей taxonomy.
+- `pnpm gate:db:scope` снова PASS; drift между schema growth и manifest inventory по `TechMap*` child models закрыт.
+- Audit-пакет синхронизирован до версии `1.3.0`: deployment/schema sections больше не держат `gate:db:scope` как активный blocker, а remaining debt смещён в legal/compliance, supply-chain и env-dependent `prisma validate`.

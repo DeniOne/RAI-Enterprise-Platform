@@ -3,7 +3,7 @@ id: DOC-ARV-AUDIT-ENTERPRISE-DUE-DILIGENCE-20260328
 layer: Archive
 type: Research
 status: approved
-version: 1.2.0
+version: 1.3.0
 owners: [@techlead]
 last_updated: 2026-03-28
 ---
@@ -32,7 +32,7 @@ last_updated: 2026-03-28
 |---|---|---|---|---|
 | Security | `CONDITIONAL GO` | Критичные runtime regressions и invariant violations закрыты, но security baseline ещё неполный | `ca.key` больше не tracked в текущем repo state, но нужен review Git history и rotation/revocation; нет подтверждённых `SAST/SCA/SBOM/secret scanning` | зафиксировать history cleanup и rotation по key incident, включить supply-chain controls и повторить verification |
 | Legal / Compliance | `NO-GO` | Нет подтверждённого operator artifact pack для ПДн и РФ compliance | нет доказанного уведомления РКН; нет подтверждённой локализации/трансграничного реестра; нет privacy impact inventory; нет OSS license inventory | собрать legal/compliance packet, формализовать data map, локализацию, notification и license audit |
-| Deployment / Operations | `CONDITIONAL GO` | Основной quality baseline по `api/web/telegram` и routing стал зелёным | `pnpm audit` не дал воспроизводимого результата в timebox; нет полного DR/backup/rollback evidence; `gate:db:scope` остаётся с warn findings | формализовать DR/backup/rollout evidence, стабилизировать security audit path, закрыть DB manifest gaps и повторить release baseline |
+| Deployment / Operations | `CONDITIONAL GO` | Основной quality baseline по `api/web/telegram`, routing и DB scope стал зелёным | `pnpm audit` не дал воспроизводимого результата в timebox; нет полного DR/backup/rollback evidence | формализовать DR/backup/rollout evidence, стабилизировать security audit path и повторить release baseline |
 | Product Readiness | `CONDITIONAL GO` | Платформа пригодна для продолжения разработки и контролируемого pilot, но не для внешнего launch | quality baseline уже зелёный, но legal/compliance pack отсутствует, supply-chain/security controls неполные | продолжать разработку без полного restructuring, использовать только controlled pilot после legal gating и закрытия residual security gaps |
 
 ## 3. Что Это За Система По Факту
@@ -58,13 +58,13 @@ Code Integrity: 6.5/10
 Backend: 7.0/10
 Frontend: 6.0/10
 Telegram Runtime: 6.5/10
-Data / Schema Integrity: 5.5/10
+Data / Schema Integrity: 6.0/10
 AI / Agent Governance: 6.5/10
 Security: 5.5/10
 Legal / Compliance: 2.5/10
-Deployment / Operations: 5.5/10
+Deployment / Operations: 6.0/10
 
-Overall: 5.9/10
+Overall: 6.0/10
 ```
 
 ## 6. Ключевой Evidence Snapshot
@@ -78,7 +78,7 @@ Overall: 5.9/10
 | `pnpm lint:fsm-status-updates` | PASS, `fsm_status_update_suspects=0` | FSM update governance lint жив |
 | `pnpm gate:db:ownership` | PASS (warn mode) | ownership manifest существует и не сигналит нарушений |
 | `pnpm gate:db:forbidden-relations` | PASS (warn mode) | грубых forbidden relation violations не найдено |
-| `pnpm gate:db:scope` | FAIL (warn findings) | в scope-manifest отсутствуют `TechMapReviewSnapshot`, `TechMapApprovalSnapshot`, `TechMapPublicationLock` |
+| `pnpm gate:db:scope` | PASS | scope-manifest синхронизирован с `TechMapReviewSnapshot`, `TechMapApprovalSnapshot`, `TechMapPublicationLock` |
 | `pnpm gate:db:phase0` | WARN | `82` слабых single-field index pattern и `9` heavy include zones |
 | `pnpm gate:db:phase3` | PASS | fragments/composed schema синтаксически согласуются |
 | `pnpm gate:routing:primary-slices` | PASS, `4/4` suites, `86/86` tests | routing corpus и case-memory baseline восстановлены |
@@ -96,7 +96,7 @@ Overall: 5.9/10
 
 | Модель | Текущее состояние | Evidence | Блокеры | Итог |
 |---|---|---|---|---|
-| `SaaS` | `partial` | multi-tenant контур, tenant lint, RLS-подобные паттерны, green `web/api/telegram` baseline, routing gate PASS | privacy/legal pack отсутствует, supply-chain gaps, `gate:db:scope` не закрыт | годится только для controlled pilot, не для внешнего launch |
+| `SaaS` | `partial` | multi-tenant контур, tenant lint, RLS-подобные паттерны, green `web/api/telegram` baseline, routing gate PASS, DB scope manifest синхронизирован | privacy/legal pack отсутствует, supply-chain gaps | годится только для controlled pilot, не для внешнего launch |
 | `Managed deployment` | `partial` | `docker-compose`, `infra/postgres/Dockerfile`, monitoring rules, зелёные build/test/routing checks | нет полного release/backup/DR evidence, `pnpm audit` нестабилен, нет operator packet | ограниченно готово, но не доказано для enterprise ops |
 | `On-prem / self-hosted` | `partial` | `infra/helm`, gateway configs, local infra artifacts, рабочий quality baseline по основному контуру | нет доказанной installability/upgrade path, нужен history cleanup и rotation evidence после `ca.key`, нет operator runbook pack | технически близко, но доказательств для безопасного внедрения недостаточно |
 | `Hybrid` | `not evidenced` | в стратегии и AI-архитектуре слово `hybrid` есть, но это про agent autonomy, не про deployment maturity | нет отдельной hybrid deployment topology/evidence | не доказано |
@@ -117,14 +117,14 @@ Overall: 5.9/10
 ## 9. Топ Рисков
 
 1. Исторический key-incident вокруг `infra/gateway/certs/ca.key` требует review Git history и rotation/revocation, хотя файл уже не tracked в текущем state.
-2. `gate:db:scope` показывает missing manifest entries для `TechMap*` моделей.
-3. Нет доказанного legal/compliance пакета для ПДн РФ.
-4. Нет подтверждённого OSS license inventory и supply-chain evidence (`SBOM`, provenance, attestations).
-5. Нет подтверждённого `SAST/SCA/secret scanning` baseline.
-6. Локальный `pnpm audit` не даёт стабильного воспроизводимого результата в приемлемом окне.
-7. Нет полного backup/restore/DR drill evidence.
-8. CODEOWNERS и branch protection evidence ограничены частью критичного контура.
-9. `pnpm --filter @rai/prisma-client exec prisma validate --schema schema.prisma` остаётся env-зависимым и не формирует устойчивый schema-integrity baseline.
+2. Нет доказанного legal/compliance пакета для ПДн РФ.
+3. Нет подтверждённого OSS license inventory и supply-chain evidence (`SBOM`, provenance, attestations).
+4. Нет подтверждённого `SAST/SCA/secret scanning` baseline.
+5. Локальный `pnpm audit` не даёт стабильного воспроизводимого результата в приемлемом окне.
+6. Нет полного backup/restore/DR drill evidence.
+7. CODEOWNERS и branch protection evidence ограничены частью критичного контура.
+8. `pnpm --filter @rai/prisma-client exec prisma validate --schema schema.prisma` остаётся env-зависимым и не формирует устойчивый schema-integrity baseline.
+9. Нет подтверждённого installability/upgrade packet для on-prem / managed rollout.
 10. Controlled pilot возможен только после закрытия legal/security gating, что пока не подтверждено evidence.
 
 ## 10. Missing Controls Register
@@ -149,9 +149,9 @@ Overall: 5.9/10
 ### 30 дней
 
 - Зафиксировать cleanup `ca.key` на уровне commit, провести review истории и rotation/revocation связанного key material, затем включить `secret scanning`.
-- Закрыть `gate:db:scope` manifest gaps.
 - Сформировать operator/legal baseline: data inventory, privacy map, notification/localization decision log.
 - Нормализовать AppSec baseline: `SAST`, `SCA`, `SBOM`, audit reproducibility.
+- Стабилизировать `prisma validate` / schema-integrity path вне env-dependent режима.
 
 ### 60 дней
 

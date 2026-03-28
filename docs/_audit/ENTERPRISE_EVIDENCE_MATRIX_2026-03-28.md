@@ -3,7 +3,7 @@ id: DOC-ARV-AUDIT-ENTERPRISE-EVIDENCE-MATRIX-20260328
 layer: Archive
 type: Research
 status: approved
-version: 1.2.0
+version: 1.3.0
 owners: [@techlead]
 last_updated: 2026-03-28
 ---
@@ -35,7 +35,7 @@ last_updated: 2026-03-28
 | `pnpm lint:fsm-status-updates` | PASS | FSM-governance lint жив |
 | `pnpm gate:invariants` | PASS, `exit 0` | final state: `verify-invariants: OK`, `controllers_without_guards=0`, `raw_sql_review_required=0`, `raw_sql_unsafe=0`, `violations=0`, `all_invariant_checks_passed` |
 | `node scripts/raw-sql-governance.cjs --enforce` | PASS | `raw_sql_review_required=0`, `raw_sql_unsafe=0`; governance больше не считает test-mocks реальными bypass path |
-| `pnpm gate:db:scope` | FAIL (warn findings) | missing scope-manifest entries for `TechMap*Snapshot/Lock` |
+| `pnpm gate:db:scope` | PASS | scope-manifest покрывает `TechMapReviewSnapshot`, `TechMapApprovalSnapshot`, `TechMapPublicationLock` |
 | `pnpm gate:db:ownership` | PASS | ownership manifest не сигналит нарушений |
 | `pnpm gate:db:forbidden-relations` | PASS | нет явных forbidden-relation drift |
 | `pnpm gate:db:phase0` | WARN | `82` weak `@@index([companyId])` pattern, `9` heavy include zones |

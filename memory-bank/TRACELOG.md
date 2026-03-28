@@ -355,3 +355,8 @@
 - Подтверждён `pnpm --filter api exec jest --runInBand test/a_rai-live-api-smoke.spec.ts`; smoke-suite PASS (`23/23`).
 - Выполнен `git rm --cached --force infra/gateway/certs/ca.key`; файл больше не tracked в текущем индексе, а residual-risk сместился в review Git history и key rotation / revocation evidence.
 - Audit-пакет синхронизирован до версии `1.2.0`; security narrative обновлён с active invariant violation на historical key-incident + supply-chain gaps.
+
+[2026-03-28 11:08Z] DB Scope Manifest Realigned
+- В `docs/01_ARCHITECTURE/DATABASE/MODEL_SCOPE_MANIFEST.md` добавлены tenant-scope entries для `TechMapReviewSnapshot`, `TechMapApprovalSnapshot`, `TechMapPublicationLock` как child records `TechMap` aggregate.
+- Подтверждены `pnpm gate:db:scope`, `pnpm lint:docs` и `pnpm lint:docs:matrix:strict`; DB scope manifest и docs governance снова зелёные.
+- Audit-пакет синхронизирован до версии `1.3.0`, чтобы deployment/schema sections больше не ссылались на уже закрытый `gate:db:scope` blocker.

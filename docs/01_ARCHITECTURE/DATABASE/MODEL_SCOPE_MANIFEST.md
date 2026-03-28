@@ -211,6 +211,9 @@ version: 0.1.0
 | `Task` | `agri_execution` | `tenant` | `id` | `required now` | `deferred` | `no` | `no` | `phase_3_plus` | `core execution` |
 | `TaskResourceActual` | `agri_execution` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
 | `TechMap` | `agri_planning` | `tenant` | `id` | `required now` | `deferred` | `no` | `no` | `phase_3_plus` | `высокосвязанный aggregate` |
+| `TechMapApprovalSnapshot` | `agri_planning` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` | `immutable approval snapshot child of TechMap aggregate` |
+| `TechMapPublicationLock` | `agri_planning` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` | `publication lock child of TechMap aggregate` |
+| `TechMapReviewSnapshot` | `agri_planning` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` | `immutable review snapshot child of TechMap aggregate` |
 | `TechnologyCard` | `agri_planning` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
 | `TechnologyCardOperation` | `agri_planning` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |
 | `TechnologyCardResource` | `agri_planning` | `tenant` | `id` | `required` | `deferred` | `no` | `no` | `phase_3_plus` |  |

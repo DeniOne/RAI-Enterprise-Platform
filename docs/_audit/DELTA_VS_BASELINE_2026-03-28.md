@@ -3,7 +3,7 @@ id: DOC-ARV-AUDIT-DELTA-VS-BASELINE-20260328
 layer: Archive
 type: Research
 status: approved
-version: 1.2.0
+version: 1.3.0
 owners: [@techlead]
 last_updated: 2026-03-28
 ---
@@ -24,6 +24,7 @@ last_updated: 2026-03-28
 | 2026-03-20 baseline не доказывал единый quality baseline по основному контуру | Сейчас `apps/api`, `apps/web`, `apps/telegram-bot` и routing проходят актуальные build/test/gates | command evidence 2026-03-28 | репозиторий вышел из режима fragmented red baseline |
 | Guard coverage и raw SQL governance раньше были явной красной зоной | `controllers_without_guards=0`, `raw_sql_review_required=0`, `raw_sql_unsafe=0`, `violations=0` | `pnpm gate:invariants`, `node scripts/raw-sql-governance.cjs --enforce` | security hygiene заметно улучшилась и текущий invariant baseline стал зелёным |
 | Repo hygiene не показывала явного исправления key incident | `infra/gateway/certs/ca.key` удалён из рабочего дерева и больше не tracked в текущем индексе | `test ! -f infra/gateway/certs/ca.key`, `git rm --cached --force infra/gateway/certs/ca.key` | текущий SCM-риск снижен, остаётся history review и rotation debt |
+| Scope-manifest ранее отставал от schema growth | `TechMapReviewSnapshot`, `TechMapApprovalSnapshot`, `TechMapPublicationLock` добавлены в `MODEL_SCOPE_MANIFEST` и `gate:db:scope` снова зелёный | `docs/01_ARCHITECTURE/DATABASE/MODEL_SCOPE_MANIFEST.md`, `pnpm gate:db:scope` | DB governance drift закрыт без изменения taxonomy |
 
 ## 3. Деградировало Или Вскрылось Как Новый Красный Факт
 
@@ -31,14 +32,14 @@ last_updated: 2026-03-28
 |---|---|---|---|
 | 2026-03-20 baseline не оценивал runtime build/test health системно | Текущий аудит выявил, а затем отдельным remediation-пакетом закрыл красный runtime baseline в тот же день | command evidence 2026-03-28, `memory-bank/progress.md` | сами регрессии были реальны, но к версии `1.1.0` отчёта quality baseline уже восстановлен |
 | Безопасность ранее оценивалась фрагментарно | Исторический key-incident вокруг `ca.key` подтверждён, хотя текущий repo state уже очищен от active invariant violations | repo evidence, `pnpm gate:invariants` | риск уже не theoretical, но в текущем baseline он перешёл из active repo issue в history/rotation debt |
-| Схема БД ранее не сравнивалась с manifest discipline так детально | `gate:db:scope` показывает missing manifest entries для новых `TechMap*` моделей | DB gate evidence | growth discipline есть, но manifest hygiene не догнала изменения |
+| Схема БД ранее не сравнивалась с manifest discipline так детально | Текущий аудит выявил и в тот же remediation-cycle закрыл drift по `TechMap*` child models | DB gate evidence, manifest update 2026-03-28 | growth discipline стала жёстче и быстрее догоняет schema evolution |
 
 ## 4. Осталось Красным
 
 | Проблема | Baseline 2026-03-20 | Статус 2026-03-28 | Evidence |
 |---|---|---|---|
 | Документацию нельзя использовать как единственный source of truth | красный | красный, но теперь лучше разделена по слоям | `FINAL_AUDIT_2026-03-20.md`, root docs, current runtime evidence |
-| Governance шум и drift между intent и code | красный | частично красный: docs слой стал чище, но `gate:db:scope` и supply-chain/security evidence gaps сохраняются | docs baseline + current DB/security evidence |
+| Governance шум и drift между intent и code | красный | частично красный: docs слой стал чище, но supply-chain/security evidence gaps сохраняются | docs baseline + current DB/security evidence |
 | Отсутствие полного compliance/legal pack | не раскрыто полноценно | красный | current RF review |
 | Отсутствие enterprise-grade supply-chain controls | не раскрыто полноценно | красный | no `SAST/SCA/SBOM/provenance/secret scanning` evidence |
 | Полностью воспроизводимый security audit path | не раскрыто полноценно | красный | `timeout 30s pnpm audit --audit-level=high` exhausted |
@@ -46,5 +47,5 @@ last_updated: 2026-03-28
 ## 5. Delta Summary
 
 - Улучшилось: docs governance foundation, AI observability/governance contours, WORM/audit direction, green build/test/routing baseline, fully green invariant baseline, guard coverage и raw SQL governance.
-- Деградировало или вскрылось: historical key-incident по `ca.key` и DB scope manifest drift были обнаружены и локализованы evidence-first аудитом.
-- Осталось красным: compliance pack, supply-chain discipline, `gate:db:scope` и невоспроизводимый в timebox security audit path.
+- Деградировало или вскрылось: historical key-incident по `ca.key` и schema-governance drift были обнаружены evidence-first аудитом, а затем локализованы remediation-пакетом.
+- Осталось красным: compliance pack, supply-chain discipline и невоспроизводимый в timebox security audit path.

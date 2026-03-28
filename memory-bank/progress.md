@@ -1884,3 +1884,5 @@
 2026-03-28: Закрыт residual security slice: `apps/api/test/a_rai-live-api-smoke.spec.ts` переведён на bracket-key mocks для unsafe Prisma методов, `node scripts/raw-sql-governance.cjs --enforce` снова PASS с `raw_sql_unsafe=0`, а `pnpm gate:invariants` завершился с `violations=0`.
 2026-03-28: `git rm --cached --force infra/gateway/certs/ca.key` убрал `ca.key` из текущего индекса; открытым остался уже не tracked-file risk, а history cleanup / rotation evidence debt.
 2026-03-28: Audit-пакет обновлён до версии `1.2.0`: evidence matrix и delta теперь фиксируют fully green invariant baseline и historical, а не active, характер `ca.key` incident.
+2026-03-28: Закрыт DB governance drift: `MODEL_SCOPE_MANIFEST.md` дополнен `TechMapReviewSnapshot`, `TechMapApprovalSnapshot`, `TechMapPublicationLock`, после чего `pnpm gate:db:scope` снова PASS.
+2026-03-28: Audit-пакет обновлён до версии `1.3.0`: deployment/schema sections больше не считают `gate:db:scope` активным blocker, а фокус remediation смещён в legal/compliance, supply-chain и schema validate stabilization.
