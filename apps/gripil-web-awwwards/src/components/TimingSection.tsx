@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { EMPHATIC_EASE } from "@/lib/motion";
 
 export default function TimingSection() {
   const steps = [
@@ -28,7 +29,7 @@ export default function TimingSection() {
             initial={{ opacity: 0, width: 0 }}
             whileInView={{ opacity: 1, width: "3rem" }}
             viewport={{ once: true }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any }}
+            transition={{ duration: 1, ease: EMPHATIC_EASE }}
             className="h-[1px] bg-[#112118]/30 mb-8"
           />
           <motion.h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-display font-medium tracking-tight leading-[1.05] mb-8 text-[#112118]">
@@ -49,7 +50,7 @@ export default function TimingSection() {
                 initial={{ opacity: 0, x: 30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 1, delay: idx * 0.2, ease: [0.16, 1, 0.3, 1] as any }}
+                transition={{ duration: 1, delay: idx * 0.2, ease: EMPHATIC_EASE }}
                 className="relative"
               >
                 {/* Dot marker */}

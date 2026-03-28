@@ -31,9 +31,10 @@ export default function FAQAccordion() {
       <div className="max-w-[880px] mx-auto">
         <div className="mb-10 md:mb-16 lg:mb-24">
           <motion.div
-             initial={{ opacity: 0, y: -20 }}
+             initial={false}
              whileInView={{ opacity: 1, y: 0 }}
-             viewport={{ once: true }}
+             viewport={{ once: true, amount: 0.35 }}
+             transition={{ duration: 0.6, ease: "easeInOut" }}
              className="flex items-center justify-center gap-4 mb-6"
           >
              <div className="w-12 h-[1px] bg-[#112118]/40" />
@@ -53,10 +54,10 @@ export default function FAQAccordion() {
             return (
               <motion.div 
                 key={idx}
-                initial={{ opacity: 0, y: 20 }}
+                initial={false}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.45, delay: idx * 0.06, ease: "easeOut" }}
                 onClick={() => setOpenIndex(isOpen ? null : idx)}
                 className={`cursor-pointer rounded-sm border transition-all duration-300 overflow-hidden ${
                   isOpen 
@@ -77,10 +78,10 @@ export default function FAQAccordion() {
                   </div>
                 </div>
                 
-                <AnimatePresence>
+                <AnimatePresence initial={false}>
                   {isOpen && (
                     <motion.div
-                      initial={{ height: 0, opacity: 0 }}
+                      initial={false}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}

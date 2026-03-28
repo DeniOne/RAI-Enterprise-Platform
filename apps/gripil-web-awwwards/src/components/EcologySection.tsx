@@ -1,23 +1,36 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { EMPHATIC_EASE } from "@/lib/motion";
 
-// Генерация случайных частиц пыльцы
-function Particles() {
-  const [elements, setElements] = useState<{ id: number; r: number; x: number; d: number; yStart: number }[]>([]);
+type Particle = { id: number; r: number; x: number; d: number; yStart: number };
 
-  useEffect(() => {
-    setElements(
-      [...Array(30)].map((_, i) => ({
-        id: i,
-        r: Math.random() * 4 + 1, // Размер от 1 до 5px
-        x: Math.random() * 100, // Позиция X
-        yStart: Math.random() * 100 + 10, // Начальная Y позиция
-        d: Math.random() * 15 + 10, // Длительность полета
-      }))
-    );
-  }, []);
+function createSeededRandom(seed: number) {
+  let value = seed;
+
+  return () => {
+    value = (value * 1664525 + 1013904223) % 4294967296;
+    return value / 4294967296;
+  };
+}
+
+function createParticles(count: number): Particle[] {
+  const random = createSeededRandom(20260328);
+
+  return Array.from({ length: count }, (_, i) => ({
+    id: i,
+    r: random() * 3 + 1,
+    x: random() * 100,
+    yStart: random() * 100 + 10,
+    d: random() * 10 + 12,
+  }));
+}
+
+function Particles({ reducedMotion }: { reducedMotion: boolean }) {
+  const [elements] = useState<Particle[]>(() => createParticles(reducedMotion ? 0 : 18));
+
+  if (reducedMotion) return null;
 
   return (
     <div className="absolute inset-0 z-10 overflow-hidden pointer-events-none">
@@ -52,6 +65,37 @@ function Particles() {
 }
 
 export default function EcologySection() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const prefersReducedMotion = useReducedMotion() ?? false;
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (prefersReducedMotion) {
+      video.pause();
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          void video.play().catch(() => undefined);
+        } else {
+          video.pause();
+        }
+      },
+      { threshold: 0.35 }
+    );
+
+    observer.observe(video);
+
+    return () => {
+      observer.disconnect();
+      video.pause();
+    };
+  }, [prefersReducedMotion]);
+
   return (
     <section className="relative flex flex-col lg:flex-row bg-[#112118] overflow-hidden border-t border-[#CDFF00]/10">
       
@@ -61,7 +105,7 @@ export default function EcologySection() {
           initial={{ opacity: 0, x: -40 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] as any }}
+          transition={{ duration: 1.2, ease: EMPHATIC_EASE }}
           className="max-w-xl w-full"
         >
           <div className="mb-6 flex items-center gap-4">
@@ -107,14 +151,16 @@ export default function EcologySection() {
         <div className="absolute inset-0 bg-[#CDFF00]/5 mix-blend-overlay z-10 pointer-events-none" />
 
         {/* Кинематографичная Пыльца поверх видео */}
-        <Particles />
+        <Particles reducedMotion={prefersReducedMotion} />
 
         {/* Видео-фон. Если видео нет, браузер покажет poster (фотографию). Чтобы вставить видео, просто кинь bee.mp4 в public/videos/ */}
         <video 
-          autoPlay 
+          ref={videoRef}
+          autoPlay={!prefersReducedMotion}
           loop 
           muted 
           playsInline 
+          preload="none"
           poster="/images/ecology.webp"
           className="absolute inset-0 w-full h-full object-cover object-center opacity-90"
         >

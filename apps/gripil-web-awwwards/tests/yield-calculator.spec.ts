@@ -11,7 +11,7 @@ test.describe('Yield Calculator Math Invariants', () => {
     await calcSection.scrollIntoViewIfNeeded();
 
     // Убедимся, что рендер калькулятора успешен
-    await expect(page.getByText('Площадь посева (га)')).toBeVisible();
+    await expect(calcSection.getByText('ROI Console')).toBeVisible();
 
     // Проверяем железобетонную математику дефолтных значений:
     // Площадь: 1000, Урожайность: 25, Цена: 45000

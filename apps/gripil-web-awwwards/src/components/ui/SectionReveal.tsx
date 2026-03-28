@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { EMPHATIC_EASE } from "@/lib/motion";
 
 export function SectionReveal({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
@@ -8,8 +9,8 @@ export function SectionReveal({ children, className = "" }: { children: React.Re
       initial={{ opacity: 0, y: 80 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
-      transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any }}
-      className={className}
+      transition={{ duration: 1, ease: EMPHATIC_EASE }}
+      className={`relative ${className}`.trim()}
     >
       {children}
     </motion.div>

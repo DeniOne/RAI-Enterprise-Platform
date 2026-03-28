@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Shield, Sparkles, Droplets, Wind } from "lucide-react";
+import { EMPHATIC_EASE } from "@/lib/motion";
 
 export default function HowItWorksSection() {
   const steps = [
@@ -38,7 +39,7 @@ export default function HowItWorksSection() {
               initial={{ opacity: 0, width: 0 }}
               whileInView={{ opacity: 1, width: "3rem" }}
               viewport={{ once: true }}
-              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any }}
+              transition={{ duration: 1, ease: EMPHATIC_EASE }}
               className="h-[1px] bg-[#112118]/30 mb-8"
             />
 
@@ -46,7 +47,7 @@ export default function HowItWorksSection() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any, delay: 0.1 }}
+              transition={{ duration: 1, ease: EMPHATIC_EASE, delay: 0.1 }}
               className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-display font-medium tracking-tight leading-[1.05] mb-8 text-[#112118]"
             >
               Мембрана,<br />которая <span className="italic font-normal text-[#112118]/90">дышит</span>
@@ -56,7 +57,7 @@ export default function HowItWorksSection() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any, delay: 0.2 }}
+              transition={{ duration: 1, ease: EMPHATIC_EASE, delay: 0.2 }}
               className="text-xl text-[#112118]/80 font-normal leading-relaxed max-w-md mb-12"
             >
               Забудьте о токсичном клее. ГРИПИЛ — это умная полупроницаемая нано-структура на базе натуральных хвойных смол.
@@ -71,7 +72,7 @@ export default function HowItWorksSection() {
             className="mt-16 xl:mt-32 p-6 md:p-8 border border-[#d8d4cc] rounded-sm bg-[#EFECE6]/50 shadow-[0_2px_16px_rgba(0,0,0,0.06)] max-w-md"
           >
             <p className="text-[#112118]/90 font-serif italic font-light text-lg leading-relaxed mb-6">
-              "В отличие от десикантов, мембрана не убивает растение, а позволяет семенам в верхних ярусах дозреть, достигнув максимальной масличности."
+              &ldquo;В отличие от десикантов, мембрана не убивает растение, а позволяет семенам в верхних ярусах дозреть, достигнув максимальной масличности.&rdquo;
             </p>
             <div className="flex items-center gap-4">
               <div className="w-4 h-[2px] bg-[#2a7a4a]" />
@@ -88,7 +89,7 @@ export default function HowItWorksSection() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-100px" }}
-              transition={{ delay: idx * 0.1, duration: 1, ease: [0.16, 1, 0.3, 1] as any }}
+              transition={{ delay: idx * 0.1, duration: 1, ease: EMPHATIC_EASE }}
               className="group"
             >
               <div className="w-16 h-16 rounded-full border border-[#112118]/10 flex items-center justify-center mb-8 relative overflow-hidden group-hover:border-[#112118]/30 transition-colors">

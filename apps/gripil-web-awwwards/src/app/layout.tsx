@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import { Manrope, Outfit } from "next/font/google";
+import { Preloader } from "@/components/Preloader";
+import { SmoothScroll } from "@/components/SmoothScroll";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -18,9 +19,6 @@ export const metadata: Metadata = {
   description: "Био-комплекс для защиты рапса от осыпания перед уборкой.",
 };
 
-import { SmoothScroll } from "@/components/SmoothScroll";
-import { Preloader } from "@/components/Preloader";
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,6 +28,7 @@ export default function RootLayout({
     <html lang="ru" suppressHydrationWarning>
       <body className={`${manrope.variable} ${outfit.variable} font-sans antialiased bg-[#EFECE6] text-[#112118]`} suppressHydrationWarning>
         <Preloader />
+        <div id="page-transition-curtain" className="fixed inset-0 z-[99999] bg-[#06080b] pointer-events-none" style={{ transform: "translateY(100%)" }} />
         <SmoothScroll>{children}</SmoothScroll>
       </body>
     </html>

@@ -1,7 +1,6 @@
 "use client";
 
-import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 
 export function RevealText({ text, className = "" }: { text: string; className?: string }) {
   const words = text.split(" ");

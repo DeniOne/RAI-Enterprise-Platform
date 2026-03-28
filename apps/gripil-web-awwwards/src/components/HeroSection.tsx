@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Play, Target } from "lucide-react";
 import Image from "next/image";
 import { Magnetic } from "@/components/Magnetic";
+import { EMPHATIC_EASE } from "@/lib/motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -63,7 +64,8 @@ export default function HeroSection() {
           alt="Поле" 
           fill 
           priority
-          quality={100}
+          quality={88}
+          sizes="100vw"
           className="object-cover object-center"
         />
         {/* Тёмный градиент слева для читаемости текста */}
@@ -83,14 +85,14 @@ export default function HeroSection() {
           <motion.div
             initial={{ opacity: 0, width: 0 }}
             animate={{ opacity: 1, width: "3rem" }}
-            transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] as any }}
+            transition={{ duration: 1, delay: 0.1, ease: EMPHATIC_EASE }}
             className="h-[1px] bg-[#CDFF00] mb-8"
           />
 
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any, delay: 0.2 }}
+            transition={{ duration: 1, ease: EMPHATIC_EASE, delay: 0.2 }}
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[6rem] 2xl:text-[7.5rem] font-display font-medium tracking-tight leading-[0.95] text-[#EFECE6] mb-6 md:mb-10 [text-shadow:0_4px_32px_rgba(0,0,0,0.5)]"
           >
             Сохраните то,<br />
@@ -102,7 +104,7 @@ export default function HeroSection() {
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] as any }}
+            transition={{ duration: 1, delay: 0.4, ease: EMPHATIC_EASE }}
             className="text-base sm:text-lg md:text-xl 2xl:text-2xl text-[#EFECE6]/80 max-w-lg 2xl:max-w-2xl font-sans font-light leading-relaxed mb-8 md:mb-14 [text-shadow:0_2px_16px_rgba(0,0,0,0.5)]"
           >
             Био-комплекс ГРИПИЛ формирует <strong className="font-normal text-white">дышащую мембрану</strong>, останавливая растрескивание стручков и спасая ваши инвестиции в гектар.
@@ -111,7 +113,7 @@ export default function HeroSection() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.6, ease: [0.16, 1, 0.3, 1] as any }}
+            transition={{ duration: 1, delay: 0.6, ease: EMPHATIC_EASE }}
             className="flex flex-col sm:flex-row items-center gap-6"
           >
             <Magnetic>
@@ -149,7 +151,7 @@ export default function HeroSection() {
           <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 1.5, delay: 1, ease: [0.16, 1, 0.3, 1] as any }}
+            transition={{ duration: 1.5, delay: 1, ease: EMPHATIC_EASE }}
             className="w-72 2xl:w-80 relative"
           >
             <div className="absolute -left-12 top-1/2 w-12 h-[1px] bg-gradient-to-r from-transparent to-[#CDFF00]/50" />
@@ -171,7 +173,7 @@ export default function HeroSection() {
           <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 1.5, delay: 1.2, ease: [0.16, 1, 0.3, 1] as any }}
+            transition={{ duration: 1.5, delay: 1.2, ease: EMPHATIC_EASE }}
             className="w-80 2xl:w-96 relative"
           >
             <div className="absolute -left-24 top-1/2 w-24 h-[1px] bg-gradient-to-r from-transparent to-[#EFECE6]/40" />

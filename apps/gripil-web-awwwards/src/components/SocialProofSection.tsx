@@ -1,10 +1,11 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Star, Quote } from "lucide-react";
 import Image from "next/image";
 
 export default function SocialProofSection() {
+  const prefersReducedMotion = useReducedMotion() ?? false;
   // Array to fake an infinite marquee of generic placeholders for B2B logos
   const placeholderLogos = [
     "AGRO HOLDING", "RUS TERRA", "ECO CROP", "BIO FARM", "STEPPE ALLIANCE", "AGRI-PRO",
@@ -41,8 +42,8 @@ export default function SocialProofSection() {
       <div className="relative w-full flex overflow-x-hidden border-y border-[#EFECE6]/5 bg-[#0C1810] py-6 mb-20 z-10">
         <motion.div
           className="flex whitespace-nowrap gap-16 lg:gap-24 px-8 items-center"
-          animate={{ x: ["0%", "-50%"] }}
-          transition={{ ease: "linear", duration: 25, repeat: Infinity }}
+          animate={prefersReducedMotion ? undefined : { x: ["0%", "-50%"] }}
+          transition={prefersReducedMotion ? undefined : { ease: "linear", duration: 25, repeat: Infinity }}
         >
           {placeholderLogos.map((text, i) => (
             <div key={i} className="flex items-center justify-center shrink-0 opacity-40 hover:opacity-100 transition-opacity grayscale hover:grayscale-0">
@@ -68,11 +69,11 @@ export default function SocialProofSection() {
         >
           <Quote className="absolute top-8 right-8 w-12 h-12 text-[#CDFF00]/10 group-hover:text-[#CDFF00]/20 transition-colors" />
           <p className="text-[#EFECE6]/90 text-lg sm:text-xl font-light leading-relaxed mb-8">
-            "Раньше при шквалах мы теряли до 20% озимого рапса на нижних полях. После обработки ГРИПИЛ створки держат так, что потери снизились до статистической погрешности. Работаем авиацией, раствор ложится идеально."
+            &ldquo;Раньше при шквалах мы теряли до 20% озимого рапса на нижних полях. После обработки ГРИПИЛ створки держат так, что потери снизились до статистической погрешности. Работаем авиацией, раствор ложится идеально.&rdquo;
           </p>
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-[#EFECE6]/10 overflow-hidden flex items-center justify-center relative border border-[#EFECE6]/20">
-              <Image src="/images/agronomist-proof.webp" alt="Агроном" fill className="object-cover grayscale focus:grayscale-0 hover:grayscale-0 transition-all duration-500" />
+              <Image src="/images/agronomist-proof.webp" alt="Агроном" fill sizes="48px" className="object-cover grayscale focus:grayscale-0 hover:grayscale-0 transition-all duration-500" />
             </div>
             <div>
               <div className="font-display text-[#EFECE6] text-lg">Александр К.</div>
@@ -91,11 +92,11 @@ export default function SocialProofSection() {
         >
           <Quote className="absolute top-8 right-8 w-12 h-12 text-[#CDFF00]/10 group-hover:text-[#CDFF00]/20 transition-colors" />
           <p className="text-[#EFECE6]/90 text-lg sm:text-xl font-light leading-relaxed mb-8">
-            "Никакого парникового эффекта внутри стручка: рапс дозревает естественно. В этом году убрали с влажностью 8%, сэкономили миллионы на сушке. Биоразлагаемость — огромный плюс для экологии хозяйства."
+            &ldquo;Никакого парникового эффекта внутри стручка: рапс дозревает естественно. В этом году убрали с влажностью 8%, сэкономили миллионы на сушке. Биоразлагаемость — огромный плюс для экологии хозяйства.&rdquo;
           </p>
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-[#EFECE6]/10 overflow-hidden flex items-center justify-center relative border border-[#EFECE6]/20">
-              <Image src="/images/agronomist-proof.webp" alt="Агроном" fill className="object-cover grayscale focus:grayscale-0 hover:grayscale-0 transition-all duration-500" />
+              <Image src="/images/agronomist-proof.webp" alt="Агроном" fill sizes="48px" className="object-cover grayscale focus:grayscale-0 hover:grayscale-0 transition-all duration-500" />
             </div>
             <div>
               <div className="font-display text-[#EFECE6] text-lg">Михаил В.</div>

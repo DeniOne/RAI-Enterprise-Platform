@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
+import { EMPHATIC_EASE } from "@/lib/motion";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -46,7 +47,7 @@ export default function ProblemSection() {
 
   const item = {
     hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as any } },
+    show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: EMPHATIC_EASE } },
   };
 
   return (
@@ -63,14 +64,14 @@ export default function ProblemSection() {
             initial={{ opacity: 0, width: 0 }}
             whileInView={{ opacity: 1, width: "3rem" }}
             viewport={{ once: true }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any }}
+            transition={{ duration: 1, ease: EMPHATIC_EASE }}
             className="h-[1px] bg-[#112118]/30 mb-8"
           />
           <motion.h2 
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as any }}
+            transition={{ duration: 1, ease: EMPHATIC_EASE }}
             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-medium tracking-tight leading-[1.05]"
           >
             Потери начинаются<br/>
