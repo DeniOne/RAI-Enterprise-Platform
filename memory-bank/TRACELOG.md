@@ -1,3 +1,32 @@
+[2026-03-30 14:48Z] Создан execution-пакет `ONE_BIG_PHASE`
+- Создана новая папка `docs/07_EXECUTION/ONE_BIG_PHASE/` как рабочий контур исполнения текущей большой фазы.
+- Внутри добавлены:
+  - `INDEX.md`
+  - `01_PHASE_A_STOP_BLOCKERS_AND_GATES.md`
+  - `02_PHASE_B_GOVERNED_CORE_AND_TECHMAP.md`
+  - `03_PHASE_C_MINIMAL_WEB_AND_ACCESS.md`
+  - `04_PHASE_D_SELF_HOST_PILOT_AND_HARDENING.md`
+- Новый пакет фиксирует практическое разложение:
+  - synthesis report -> owner checklist -> детальные подфазы исполнения
+- Обновлены `docs/README.md`, `docs/INDEX.md`, `docs/DOCS_MATRIX.md`.
+- Практический эффект: у проекта появился постоянный execution-контур, по которому можно идти сверху вниз и реально выполнять большую фазу без потери логики.
+
+[2026-03-30 15:02Z] Уточнена роль существующих `front-office / CRM`-агентов в execution-каноне
+- Исправлены двусмысленные формулировки в `RAI_EP_PRIORITY_SYNTHESIS_MASTER_REPORT.md`, `RAI_EP_MVP_EXECUTION_CHECKLIST.md` и `ONE_BIG_PHASE/01_PHASE_A_STOP_BLOCKERS_AND_GATES.md`.
+- Зафиксировано различие:
+  - существующие `front-office / CRM`-контуры уже входят в важный текущий agent-perimeter;
+  - под ограничением находится не их наличие, а широкое масштабирование и новые роли сверх текущего состава до закрытия stop-blockers.
+- Практический эффект: execution-план больше не конфликтует с фактом, что `front-office` и `CRM` уже являются важными и нужными контуром ближайшего продукта.
+
+[2026-03-30 14:32Z] Добавлен простой owner-уровневый MVP execution checklist
+- Создан `docs/07_EXECUTION/RAI_EP_MVP_EXECUTION_CHECKLIST.md`.
+- Документ не заменяет `RAI_EP_PRIORITY_SYNTHESIS_MASTER_REPORT.md`, а работает как второй входной execution-слой:
+  - synthesis = жёсткий управленческий порядок и decision model
+  - checklist = простой пошаговый порядок действий без профессионального жаргона
+- Новый claim `CLAIM-EXE-RAI-EP-MVP-EXECUTION-CHECKLIST-20260330` зарегистрирован в `docs/DOCS_MATRIX.md`.
+- Обновлены `docs/README.md` и `docs/INDEX.md`, чтобы чеклист стал частью канонической навигации.
+- Практический эффект: owner получил официальный "что делать дальше" документ в execution-слое, а не временный ответ в чате.
+
 [2026-03-28 13:44Z] Legal verdict automation добавлена в enterprise closeout
 - Добавлен `scripts/legal-evidence-verdict.cjs`.
 - В `package.json` добавлены команды:
@@ -593,3 +622,35 @@
   - `npm run build`
   - `next start` on `127.0.0.1:3014`
   - viewport matrix: `360x800`, `390x844`, `768x1024`, `1366x768`, `1600x900`, `1920x1080` -> all logical screens fit.
+[2026-03-30 10:30Z] Priority synthesis master report добавлен в execution canon
+- Создан `docs/07_EXECUTION/RAI_EP_PRIORITY_SYNTHESIS_MASTER_REPORT.md`.
+- Документ сознательно размещён в `07_EXECUTION`, а не в `docs/_audit`, потому что его роль — не новый аудит, а управленческий порядок действий на следующую фазу.
+- Внутрь документа встроены обязательные управляющие механики:
+  - восьмиосевая `Decision rubric`
+  - `Exit condition rule`
+  - `Release tier model` `Tier 0 / Tier 1 / Tier 2 / Tier 3`
+  - `Parallelism rule`
+  - `Non-destructive guardrails`
+- Главный вывод synthesis зафиксирован явно:
+  - ближайший продукт = governed agent core + minimal web surface + TechMap/execution/evidence loop
+  - главный стоп-фактор = legal/AppSec/AI-policy/self-host closeout, а не отсутствие новых модулей
+  - главный риск = принять широкий frontend/menu breadth за реальную MVP-готовность
+- Навигация и claim-registry синхронизированы:
+  - `docs/DOCS_MATRIX.md`
+  - `docs/README.md`
+  - `docs/INDEX.md`
+- Одновременно снят navigation drift по отсутствующему `docs/_audit/AUDIT_EXECUTIVE_BRIEF_2026-03-28.md`; новым активным entrypoint для управленческого чтения стал synthesis master report.
+[2026-03-30 11:04Z] External bilingual developer handoff packet added
+- Создана папка `var/handoff/external-dev-bilingual-packet/`.
+- Внутрь добавлены парные `RU/EN` briefing-файлы:
+  - `README_*`
+  - `01_PRODUCT_AND_BUSINESS_CONTEXT_*`
+  - `02_ARCHITECTURE_AND_RUNTIME_*`
+  - `03_READINESS_AND_EXECUTION_STATUS_*`
+  - `04_STAGE_BASED_ROADMAP_AND_AI_DELIVERY_MODEL_*`
+- Пакет намеренно вынесен вне `docs/`, чтобы сохранить различие между внутренним каноном и внешним артефактом передачи.
+- В каждом briefing-файле разведены:
+  - подтверждённая текущая реальность
+  - target model
+  - открытые gaps
+- Отдельно зафиксирован `AI-first delivery model`: ИИ пишет основной bounded implementation work, человек держит архитектуру, acceptance, security/legal/policy и final review.

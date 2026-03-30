@@ -3,14 +3,14 @@ id: DOC-META-INDEX-ESXJ
 layer: Meta
 type: Navigation
 status: approved
-version: 3.8.0
+version: 4.1.0
 owners: [@techlead]
-last_updated: 2026-03-28
+last_updated: 2026-03-30
 claim_id: CLAIM-CORE-INDEX
 claim_status: asserted
 verified_by: code
-last_verified: 2026-03-28
-evidence_refs: scripts/lint-docs.cjs;docs/00_CORE/RAI_EP_DOCUMENT_SYSTEM_MAP.md;docs/00_STRATEGY/RAI_EP_SYSTEM_BLUEPRINT_AND_GENERAL_PLAN.md;docs/01_ARCHITECTURE/RAI_EP_TARGET_ARCHITECTURE_MAP.md;docs/_audit/REPO_RUNTIME_MAP_2026-03-28.md
+last_verified: 2026-03-30
+evidence_refs: scripts/lint-docs.cjs;docs/00_CORE/RAI_EP_DOCUMENT_SYSTEM_MAP.md;docs/00_STRATEGY/RAI_EP_SYSTEM_BLUEPRINT_AND_GENERAL_PLAN.md;docs/01_ARCHITECTURE/RAI_EP_TARGET_ARCHITECTURE_MAP.md;docs/_audit/REPO_RUNTIME_MAP_2026-03-28.md;docs/07_EXECUTION/RAI_EP_PRIORITY_SYNTHESIS_MASTER_REPORT.md;docs/07_EXECUTION/RAI_EP_MVP_EXECUTION_CHECKLIST.md;docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md
 ---
 # INDEX (Canonical)
 
@@ -18,7 +18,7 @@ evidence_refs: scripts/lint-docs.cjs;docs/00_CORE/RAI_EP_DOCUMENT_SYSTEM_MAP.md;
 id: CLAIM-CORE-INDEX
 status: asserted
 verified_by: code
-last_verified: 2026-03-28
+last_verified: 2026-03-30
 
 ## Core
 - `docs/README.md`
@@ -40,6 +40,9 @@ last_verified: 2026-03-28
 - `docs/02_DOMAINS/RAI_EP_TECHMAP_OPERATING_CORE.md`
 - `docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md`
 - `docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md`
+- `docs/07_EXECUTION/RAI_EP_PRIORITY_SYNTHESIS_MASTER_REPORT.md`
+- `docs/07_EXECUTION/RAI_EP_MVP_EXECUTION_CHECKLIST.md`
+- `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
 
 ## Active Design And Planning Layers
 - `docs/00_STRATEGY/`
@@ -61,6 +64,9 @@ last_verified: 2026-03-28
 - Доменные модели: `docs/02_DOMAINS/`
 - Product / UX: `docs/02_PRODUCT/`, `docs/10_FRONTEND_MENU_IMPLEMENTATION/`
 - Delivery / rollout / execution: `docs/07_EXECUTION/`
+- Приоритеты ближайшего MVP и управленческий порядок действий: `docs/07_EXECUTION/RAI_EP_PRIORITY_SYNTHESIS_MASTER_REPORT.md`
+- Простой чеклист "что делать дальше по порядку": `docs/07_EXECUTION/RAI_EP_MVP_EXECUTION_CHECKLIST.md`
+- Подфазы текущей большой фазы и детальные чеклисты исполнения: `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
 - Testing / verification: `docs/08_TESTING/`
 - Operations / runbooks: `docs/05_OPERATIONS/`
 - Privacy / compliance / deployment readiness: `docs/05_OPERATIONS/COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md`, `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md`, `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md`, `docs/05_OPERATIONS/HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX.md`, `docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md`, `docs/05_OPERATIONS/SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY.md`, `docs/05_OPERATIONS/WORKFLOWS/EXTERNAL_LEGAL_EVIDENCE_ACCEPTANCE_RUNBOOK.md`
@@ -80,7 +86,6 @@ last_verified: 2026-03-28
 - `docs/_audit/DUPLICATES_AND_JUNK.md`
 - `docs/_audit/FINAL_AUDIT_2026-03-20.md`
 - `docs/_audit/DOCUMENTATION_TOPOLOGY_REDECISION_2026-03-21.md`
-- `docs/_audit/AUDIT_EXECUTIVE_BRIEF_2026-03-28.md`
 - `docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md`
 - `docs/_audit/ENTERPRISE_EVIDENCE_MATRIX_2026-03-28.md`
 - `docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md`

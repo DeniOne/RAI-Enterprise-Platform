@@ -1,5 +1,38 @@
 # Активный контекст RAI_EP
 
+## Текущая задача (2026-03-30, priority synthesis)
+- [x] Создан новый активный execution-документ `docs/07_EXECUTION/RAI_EP_PRIORITY_SYNTHESIS_MASTER_REPORT.md` как главный synthesis между strategy, audit-пакетом, evidence matrix, RF review и фактическим runtime-контуром.
+- [x] Зафиксировано, что документ живёт в `docs/07_EXECUTION`, а не в `docs/_audit`, потому что это управляющий порядок действий, а не новый dated audit snapshot.
+- [x] В synthesis-документ встроены обязательные управленческие механики:
+  - `Decision rubric` по 8 осям с единой шкалой `H/M/L`
+  - `Exit condition rule` для `Class A/B` и top-priority действий
+  - `Release tier model` `Tier 0 -> Tier 3`
+  - `Parallelism rule`
+  - `Non-destructive guardrails`
+- [x] В документе жёстко разведены:
+  - ближайшее ядро MVP = governed agent core + minimal web surface + TechMap/execution/evidence loop
+  - secondary breadth = menu completion, CRM/front-office рост, новые агенты, SaaS/hybrid ambitions, extra integrations
+- [x] Навигация docs обновлена:
+  - `docs/README.md`
+  - `docs/INDEX.md`
+  - `docs/DOCS_MATRIX.md`
+- [x] Одновременно снят navigation drift по отсутствующему `docs/_audit/AUDIT_EXECUTIVE_BRIEF_2026-03-28.md`; вместо него в активный entry-set поднят новый synthesis master report.
+- [x] Добавлен второй execution-entrypoint `docs/07_EXECUTION/RAI_EP_MVP_EXECUTION_CHECKLIST.md` как простой owner-уровневый чеклист без профессионального жаргона.
+- [x] Зафиксировано новое разграничение ролей между двумя execution-документами:
+  - `RAI_EP_PRIORITY_SYNTHESIS_MASTER_REPORT.md` = жёсткий управленческий synthesis и decision-order
+  - `RAI_EP_MVP_EXECUTION_CHECKLIST.md` = простой порядок действий "что делать дальше" для owner и внешнего чтения
+- [x] Новый чеклист включён в docs navigation и claim registry, чтобы простой вход в execution-контур не жил только в чате.
+- [x] Создан новый execution-контур `docs/07_EXECUTION/ONE_BIG_PHASE/` как рабочая папка текущей большой фазы.
+- [x] Внутри `ONE_BIG_PHASE` созданы:
+  - `INDEX.md`
+  - `01_PHASE_A_STOP_BLOCKERS_AND_GATES.md`
+  - `02_PHASE_B_GOVERNED_CORE_AND_TECHMAP.md`
+  - `03_PHASE_C_MINIMAL_WEB_AND_ACCESS.md`
+  - `04_PHASE_D_SELF_HOST_PILOT_AND_HARDENING.md`
+- [x] Зафиксировано новое правило исполнения: synthesis -> простой owner-checklist -> детальные подфазы `ONE_BIG_PHASE`.
+- [x] `ONE_BIG_PHASE` включена в навигацию docs и claim registry как активный execution-пакет текущего хода.
+- [x] Формулировки execution-доков уточнены: существующие `front-office / CRM`-агенты признаны частью важного текущего agent-perimeter; под ограничением находится не их наличие, а преждевременное расширение в ширину и новые роли сверх текущего состава.
+
 ## Текущая задача (2026-03-28, enterprise closeout)
 - [x] Закрыт оставшийся 5-блочный хвост enterprise-аудита по security/supply-chain, schema-integrity, deployment/ops, privacy/legal packet и history/rotation debt.
 - [x] В корне репозитория добавлен воспроизводимый security baseline:
@@ -708,3 +741,22 @@
 - `docs/01_ARCHITECTURE/DATABASE/MODEL_SCOPE_MANIFEST.md` дополнен tenant-entries для `TechMapReviewSnapshot`, `TechMapApprovalSnapshot`, `TechMapPublicationLock` без изменения существующей taxonomy.
 - `pnpm gate:db:scope` снова PASS; drift между schema growth и manifest inventory по `TechMap*` child models закрыт.
 - Audit-пакет синхронизирован до версии `1.3.0`: deployment/schema sections больше не держат `gate:db:scope` как активный blocker, а remaining debt смещён в legal/compliance, supply-chain и env-dependent `prisma validate`.
+
+## 2026-03-30 — External bilingual developer handoff packet
+
+- В `var/handoff/external-dev-bilingual-packet/` создан отдельный внешний handoff-пакет для зарубежного разработчика.
+- Пакет сознательно вынесен вне `docs/`, чтобы не смешивать внутренний claim-managed canon и внешний briefing artifact.
+- В пакет входят парные `RU/EN` версии четырёх смысловых блоков:
+  - product/business context
+  - architecture/runtime
+  - readiness/execution status
+  - stage-based roadmap + `AI-first delivery model`
+- Пакет жёстко разводит:
+  - подтверждённую текущую runtime-реальность
+  - target model
+  - открытые gaps
+- Внутри пакета отдельно зафиксировано, что:
+  - ближайший честный deployment path это `self-host / localized`
+  - главный стоп-фактор внешнего production это `Legal / Compliance`, а не отсутствие инженерного ядра
+  - проект предполагает `AI-first` delivery, где ИИ делает основной bounded implementation work, а человек держит архитектуру, policy, acceptance и final review
+- Этот пакет не поднимается выше `code/tests/gates > generated manifests > docs`; он служит внешним контекстом передачи, а не новым source of truth.

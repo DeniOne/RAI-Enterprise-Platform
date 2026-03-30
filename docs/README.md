@@ -3,14 +3,14 @@ id: DOC-META-README-RVKI
 layer: Meta
 type: Navigation
 status: approved
-version: 3.9.0
+version: 4.2.0
 owners: [@techlead]
-last_updated: 2026-03-28
+last_updated: 2026-03-30
 claim_id: CLAIM-CORE-README
 claim_status: asserted
 verified_by: code
-last_verified: 2026-03-28
-evidence_refs: docs/INDEX.md;scripts/lint-docs.cjs;docs/00_CORE/RAI_EP_DOCUMENT_SYSTEM_MAP.md;docs/00_STRATEGY/RAI_EP_SYSTEM_BLUEPRINT_AND_GENERAL_PLAN.md;docs/01_ARCHITECTURE/RAI_EP_TARGET_ARCHITECTURE_MAP.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md
+last_verified: 2026-03-30
+evidence_refs: docs/INDEX.md;scripts/lint-docs.cjs;docs/00_CORE/RAI_EP_DOCUMENT_SYSTEM_MAP.md;docs/00_STRATEGY/RAI_EP_SYSTEM_BLUEPRINT_AND_GENERAL_PLAN.md;docs/01_ARCHITECTURE/RAI_EP_TARGET_ARCHITECTURE_MAP.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md;docs/07_EXECUTION/RAI_EP_PRIORITY_SYNTHESIS_MASTER_REPORT.md;docs/07_EXECUTION/RAI_EP_MVP_EXECUTION_CHECKLIST.md;docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md
 ---
 # RAI_EP Documentation
 
@@ -18,7 +18,7 @@ evidence_refs: docs/INDEX.md;scripts/lint-docs.cjs;docs/00_CORE/RAI_EP_DOCUMENT_
 id: CLAIM-CORE-README
 status: asserted
 verified_by: code
-last_verified: 2026-03-28
+last_verified: 2026-03-30
 
 Документация переведена в docs-as-code режим.
 
@@ -29,8 +29,10 @@ last_verified: 2026-03-28
 - Canonical document map: `docs/00_CORE/RAI_EP_DOCUMENT_SYSTEM_MAP.md`
 - Canonical strategy set: `docs/00_STRATEGY/RAI_EP_SYSTEM_BLUEPRINT_AND_GENERAL_PLAN.md`, `docs/00_STRATEGY/RAI_EP_TARGET_OPERATING_MODEL.md`, `docs/00_STRATEGY/RAI_EP_EXECUTION_ROADMAP.md`
 - Canonical architecture/domain/AI/ops set: `docs/01_ARCHITECTURE/RAI_EP_TARGET_ARCHITECTURE_MAP.md`, `docs/02_DOMAINS/RAI_EP_TECHMAP_OPERATING_CORE.md`, `docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md`, `docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md`
+- Активный мастер-документ приоритетов: `docs/07_EXECUTION/RAI_EP_PRIORITY_SYNTHESIS_MASTER_REPORT.md`
+- Простой owner-чеклист следующего хода: `docs/07_EXECUTION/RAI_EP_MVP_EXECUTION_CHECKLIST.md`
+- Активный execution-пакет текущей большой фазы: `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
 - Active instructions layer: `docs/11_INSTRUCTIONS/`
-- Audit executive brief: `docs/_audit/AUDIT_EXECUTIVE_BRIEF_2026-03-28.md`
 - Latest due diligence package: `docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md`
 - Active compliance/ops packet: `docs/05_OPERATIONS/COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md`, `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md`, `docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md`, `docs/05_OPERATIONS/HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX.md`, `docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md`, `docs/05_OPERATIONS/SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY.md`, `docs/05_OPERATIONS/KEY_MATERIAL_AND_SECRET_HYGIENE_INCIDENT_2026-03-28.md`, `docs/05_OPERATIONS/WORKFLOWS/EXTERNAL_LEGAL_EVIDENCE_ACCEPTANCE_RUNBOOK.md`, `docs/05_OPERATIONS/WORKFLOWS/PRIVACY_SUBJECT_RIGHTS_AND_RETENTION_RUNBOOK.md`, `docs/05_OPERATIONS/WORKFLOWS/RELEASE_BACKUP_RESTORE_AND_DR_RUNBOOK.md`
 - Documentation baseline audit: `docs/_audit/FINAL_AUDIT_2026-03-20.md`
