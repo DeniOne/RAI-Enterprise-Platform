@@ -1,0 +1,21 @@
+﻿{
+    "port":  53225,
+    "home_status":  200,
+    "privacy_status":  200,
+    "company_status":  200,
+    "contact_status":  200,
+    "robots_status":  200,
+    "sitemap_status":  200,
+    "test_status":  404,
+    "lead_valid_status":  503,
+    "lead_valid_body":  "{\"ok\":false,\"error\":\"Приём заявок временно недоступен. Попробуйте ещё раз позже или используйте страницу контактов.\"}",
+    "lead_invalid_status":  400,
+    "lead_invalid_body":  "{\"ok\":false,\"error\":\"Укажите корректный номер телефона.\"}",
+    "canonical_present":  false,
+    "og_title_present":  true,
+    "privacy_link_present":  true,
+    "company_link_present":  true,
+    "contact_link_present":  true,
+    "robots_disallow_all":  true,
+    "sitemap_has_legal_routes":  true
+}

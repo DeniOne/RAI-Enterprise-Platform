@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useLenis } from "lenis/react";
 import { EMPHATIC_EASE } from "@/lib/motion";
@@ -34,6 +34,7 @@ function resolveActiveIndex(sections: HTMLElement[]) {
 }
 
 export default function ScrollNavigation() {
+  const prefersReducedMotion = useReducedMotion() ?? false;
   const lenis = useLenis();
   const sectionsRef = useRef<HTMLElement[]>([]);
   const frameRef = useRef<number | null>(null);
@@ -41,6 +42,7 @@ export default function ScrollNavigation() {
   const isAnimating = useRef(false);
   const [sectionCount, setSectionCount] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isCompactHeight, setIsCompactHeight] = useState(false);
 
   const syncSections = useCallback(() => {
     const sections = collectSections();
@@ -65,6 +67,21 @@ export default function ScrollNavigation() {
   }, [syncSections]);
 
   useEffect(() => {
+    const syncViewport = () => {
+      setIsCompactHeight(window.innerHeight < 900);
+    };
+
+    syncViewport();
+    window.addEventListener("resize", syncViewport);
+
+    return () => {
+      window.removeEventListener("resize", syncViewport);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (prefersReducedMotion || isCompactHeight) return undefined;
+
     requestSync();
 
     window.addEventListener("scroll", requestSync, { passive: true });
@@ -82,7 +99,7 @@ export default function ScrollNavigation() {
       window.removeEventListener("scroll", requestSync);
       window.removeEventListener("resize", requestSync);
     };
-  }, [requestSync]);
+  }, [isCompactHeight, prefersReducedMotion, requestSync]);
 
   const transitionTo = useCallback(
     (index: number) => {
@@ -91,7 +108,6 @@ export default function ScrollNavigation() {
       if (index < 0 || index >= sections.length || isAnimating.current) return;
 
       const targetSection = sections[index];
-
       if (!targetSection) return;
 
       isAnimating.current = true;
@@ -125,7 +141,7 @@ export default function ScrollNavigation() {
   const isAtTop = activeIndex === 0;
   const isAtBottom = activeIndex === Math.max(0, sectionCount - 1);
 
-  if (sectionCount < 2) return null;
+  if (sectionCount < 2 || prefersReducedMotion || isCompactHeight) return null;
 
   return (
     <AnimatePresence>
@@ -133,16 +149,17 @@ export default function ScrollNavigation() {
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, delay: 1, ease: EMPHATIC_EASE }}
-        className="pointer-events-none fixed right-4 top-1/2 z-50 hidden -translate-y-1/2 md:flex sm:right-6 lg:right-10"
+        className="pointer-events-none fixed right-4 top-1/2 z-50 hidden -translate-y-1/2 xl:flex sm:right-6 lg:right-10"
       >
         <div className="pointer-events-auto flex flex-col items-center gap-3">
           <button
             onClick={() => transitionTo(activeIndex - 1)}
             disabled={isAtTop}
+            aria-label="Перейти к предыдущему экрану"
             className={`group flex h-10 w-10 flex-col items-center justify-center rounded-full border backdrop-blur-md transition-all duration-300 lg:h-12 lg:w-12 ${
               isAtTop
                 ? "cursor-not-allowed border-[#112118]/10 bg-black/20 opacity-30"
-                : "cursor-pointer border-[#EFECE6]/20 bg-[#112118]/60 opacity-100 hover:border-[#CDFF00]/50 hover:bg-[#112118]/80 hover:shadow-[0_0_15px_rgba(205,255,0,0.2)]"
+                : "cursor-pointer border-[#EFECE6]/20 bg-[#112118]/60 opacity-100 hover:border-[#CDFF00]/50 hover:bg-[#112118]/80 hover:shadow-[0_0_15px_rgba(205,255,0,0.2)] focus-visible:border-[#CDFF00]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CDFF00]/35"
             }`}
           >
             <ChevronUp
@@ -168,10 +185,11 @@ export default function ScrollNavigation() {
           <button
             onClick={() => transitionTo(activeIndex + 1)}
             disabled={isAtBottom}
+            aria-label="Перейти к следующему экрану"
             className={`group flex h-10 w-10 flex-col items-center justify-center rounded-full border backdrop-blur-md transition-all duration-300 lg:h-12 lg:w-12 ${
               isAtBottom
                 ? "cursor-not-allowed border-[#112118]/10 bg-black/20 opacity-30"
-                : "cursor-pointer border-[#EFECE6]/20 bg-[#112118]/60 opacity-100 hover:border-[#CDFF00]/50 hover:bg-[#112118]/80 hover:shadow-[0_0_15px_rgba(205,255,0,0.2)]"
+                : "cursor-pointer border-[#EFECE6]/20 bg-[#112118]/60 opacity-100 hover:border-[#CDFF00]/50 hover:bg-[#112118]/80 hover:shadow-[0_0_15px_rgba(205,255,0,0.2)] focus-visible:border-[#CDFF00]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CDFF00]/35"
             }`}
           >
             <ChevronDown

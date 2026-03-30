@@ -522,3 +522,74 @@
 - Созданы и зарегистрированы в `DOCS_MATRIX` новые канонические документы в `00_CORE`, `00_STRATEGY`, `01_ARCHITECTURE`, `02_DOMAINS`, `04_AI_SYSTEM`, `05_OPERATIONS`.
 - `README` и `INDEX` дополнены canonical cross-layer entry set.
 - Archive-копии исходного import-пакета удалены, чтобы исключить competing sources of truth.
+[2026-03-29 05:35Z] `apps/gripil-web-awwwards` calculator switched from showcase-only to live interactive ROI input
+- `src/components/YieldCalculator.tsx` больше не держит метрики в фиксированном showcase-сценарии: `area`, `yieldPerHa` и `price` переведены на локальный `useState`, а шкалы теперь реально меняют расчёт сезона.
+- В `MetricRail` включён рабочий `range` и добавлен точный ручной ввод числа, чтобы пользователь мог и быстро двигать шкалу, и без фрустрации выставлять нужное значение вручную.
+- `tests/yield-calculator.spec.ts` обновлён под реальное пользовательское взаимодействие: проверяется клавиатурное изменение `range` и точный ввод цены с пересчётом `netProfit`, `ROI` и `₽/га`.
+- Практический эффект: калькулятор снова выполняет продуктовую роль интерактивного ROI-блока, а не декоративной витрины со статичными цифрами.
+- Верификация для этого кейса прошла через production runtime (`next build` + `next start` на `3010`), потому что локальный `next dev` / `Turbopack` на текущем железе нестабилен и даёт шум в HMR-слое.
+[2026-03-29 09:40Z] `apps/gripil-web-awwwards` hardened to honest predeploy surface with env-gated release profile
+- `src/app/api/lead/route.ts` переведён в fail-closed режим: без `GRIPIL_LEAD_WEBHOOK_URL` и при отказе downstream endpoint возвращает `503` с честной ошибкой, а не `ok:true/local-log`.
+- Удалены production-visible артефакты незавершённости: из кода убраны `src/components/Preloader.tsx` и `src/app/test/page.tsx`, а layout больше не маскирует гидрацию через глобальный `suppressHydrationWarning`.
+- В `src/components/FooterCTA.tsx`, `src/components/FAQAccordion.tsx` и `src/components/ScrollNavigation.tsx` закрыт release-baseline по форме и доступности: consent стал явным opt-in, у формы есть честные `loading/success/error` состояния и защита от повторной отправки, FAQ переведён на `button`, icon-only controls получили `aria-label`.
+- Добавлен `site-profile` контракт через `src/lib/site-profile.ts` и public legal/SEO surface: `src/app/privacy/page.tsx`, `src/app/company/page.tsx`, `src/app/contact/page.tsx`, `src/app/robots.ts`, `src/app/sitemap.ts`; при неполном `GRIPIL_*` профиль уходит в `noindex`, а canonical сознательно не публикуется до заполнения реального production профиля.
+- Motion/render hardening выполнен в `HeroSection`, `ProblemSection`, `SmoothScroll`, `SectionReveal`, `SplitComparisonViewer`: ключевой контент больше не сидит на `ssr: false`, reduced motion покрыт системнее, а user-facing локализация добита до русского без `Scan Result` и `ROI`.
+- Верификация: `npm run lint`, `npm run build`, `npx playwright test` зелёные; production-like `next start` на динамическом порту подтвердил `200` для `/`, `/privacy`, `/company`, `/contact`, `/robots.txt`, `/sitemap.xml`, `404` для `/test`, `503` для valid `POST /api/lead` без webhook и `400` для невалидного телефона.
+- Практический эффект: кодовая база больше не врёт пользователю о доставке заявки и не светит служебные surface, но релиз по-прежнему заблокирован до заполнения `GRIPIL_LEAD_WEBHOOK_URL` и полного `GRIPIL_*` site-profile.
+[2026-03-29 11:05Z] `apps/gripil-web-awwwards` switched from fixed desktop scenes to viewport-aware low-height adaptation
+- Добавлен `src/lib/useViewportProfile.ts` как единый клиентский источник фактического viewport-профиля окна браузера: ширина, высота, `isDenseDesktop` и `isLowHeightDesktop`.
+- `src/components/YieldCalculator.tsx` больше не держит жёсткий fullscreen-сценарий на низких desktop-окнах: при `min-width >= 1280` и ограниченной высоте секция выходит из режима `100svh`, правая панель теряет принудительный screen-stage layout и начинает жить в обычном документном потоке.
+- `src/components/TimingSection.tsx` получил отдельный low-height desktop режим: уменьшены вертикальные отступы, заголовок, интервалы таймлайна и размеры подписей без привязки к конкретному устройству или браузеру.
+- Верификация: `npm run lint` и `npm run build` зелёные после перевода двух проблемных секций на viewport-aware адаптацию.
+- Практический эффект: лендинг теперь адаптируется к реальному окну браузера, а не к одному фиксированному desktop-кадру; на низких экранах секции перестают расползаться как постеры и калькулятор перестаёт зависеть от fullscreen-композиции.
+[2026-03-29 11:35Z] `apps/gripil-web-awwwards` low-height desktop auto-adaptation tightened for calculator UX
+- В `src/lib/useViewportProfile.ts` расширен авто-триггер низких desktop-окон: `isLowHeightDesktop` теперь срабатывает раньше (`width >= 1200 && height <= 940`), `isDenseDesktop` также поднят до `height <= 980` для более широкого покрытия браузеров и ноутбуков.
+- В `src/components/YieldCalculator.tsx` добавлен динамический `panelScale` от фактической высоты viewport и включён короткий low-height контентный режим (скрытие части второстепенного текста/бейджей, укороченная CTA-подпись, более плотные размеры), чтобы правая панель перестала вылезать по высоте в первом экране.
+- В layout калькулятора для low-height desktop увеличена относительная ширина правой панели (`0.72fr / 1.28fr`), что уменьшает переносы строк и дополнительно снижает итоговую высоту ключевого блока.
+- Верификация: `npm run lint` и `npm run build` прошли после ужесточения адаптивного режима; production-like runtime подтверждён `HTTP 200` на `http://127.0.0.1:3014/`.
+- Практический эффект: калькулятор автоматически ужимается на низких desktop-viewport без ручной подгонки под конкретный компьютер, и первый экран перестаёт ломаться из-за избыточной высоты правой панели.
+[2026-03-29 12:10Z] `apps/gripil-web-awwwards` fixed horizontal overflow regression in low-height calculator mode
+- В `src/components/YieldCalculator.tsx` удалена ширинная компенсация (`width: 100/panelScale`) из low-height scale-стиля панели, которая выталкивала правый край за viewport и ломала fit по X.
+- Для low-height desktop откорректирована сетка калькулятора с более безопасным соотношением колонок (`0.78fr / 1.22fr`) вместо агрессивного расширения правой части.
+- Верификация: после правки снова зелёные `npm run lint` и `npm run build`; runtime на `http://127.0.0.1:3014/` отвечает `HTTP 200`.
+- Практический эффект: адаптивный режим сохраняется, но панель калькулятора перестаёт разъезжаться по ширине и обрезаться справа.
+[2026-03-29 13:20Z] `apps/gripil-web-awwwards` landed viewport-contract section rendering across landing screens
+- В `src/lib/useViewportProfile.ts` закреплён расширенный runtime-контракт устройств: `isPhone`, `isTablet`, `isMobileOrTablet`, `isLaptop`, `isWideDesktop`, `supportsFullscreenStage`, `supportsPinnedScene`.
+- Секции `HeroSection`, `ProblemSection`, `SplitComparison`, `HowItWorksSection`, `ComparisonMatrixSection`, `ApplicationTechSection`, `SocialProofSection`, `FooterCTA` и mobile/tablet ветка `YieldCalculator` переведены с фиксированных постерных сцен на контрактный режим: desktop/laptop удерживает один экран на секцию, а mobile/tablet дробит длинные блоки на несколько последовательных fullscreen-кадров без скрытия контента.
+- Все новые fullscreen-экраны переведены с неработающего `min-h-[100svh]` на явный `100dvh`, потому что прежний класс в runtime давал `min-height: 0px` и ломал расчёт фактической высоты секций.
+- В `SplitComparison` убран pinned GSAP-режим как источник viewport-trap: mobile/tablet получили три последовательных кадра, а desktop/laptop — статичную двухсценную композицию, которая вмещается в экран без вертикального захвата пользователя.
+- `YieldCalculator` получил отдельную mobile/tablet структуру из двух последовательных кадров: первый держит ввод сценария, второй — экономику и CTA; low-height desktop дополнительно ужат через более агрессивный `panelScale` и сокращённые внешние отступы.
+- Верификация: `npm run lint`, `npm run build`; production-like `next start` на `http://127.0.0.1:3014/`; headless viewport-проверка через `@playwright/test` подтвердила вмещение экранов на `360x800`, `390x844`, `768x1024`, `1366x768`, `1600x900`, `1920x1080`.
+- Практический эффект: лендинг перестал зависеть от одной desktop-сцены, перестал терять часть секций на mobile/tablet и получил предсказуемое fullscreen-поведение по реальному browser viewport, а не по одному случайному устройству.
+[2026-03-29 15:12Z] GRIPIL landing: user-facing copy russified end-to-end
+- Visible English strings and obvious anglicisms were removed from the landing, calculator, split storytelling section, footer form and legal pages.
+- Key replacements:
+  - `Scan Result` -> `Защитное окно`
+  - `ROI` user labels -> `окупаемость` / `потенциал окупаемости`
+  - `webhook` in footer helper copy -> `боевой канал`
+  - `лендинг` in legal/public pages -> `сайт`
+  - `env` / `noindex` in legal warnings -> `переменные окружения` / `закрыт для поисковой индексации`
+- Runtime effect: visitor-facing copy is now consistently Russian, while internal technical identifiers (`roi`, route names, env keys) remain untouched because they are implementation-only.
+- Verification:
+  - `npm run lint`
+  - `npm run build`
+
+[2026-03-29 14:32Z] GRIPIL awards visual baseline restored after over-aggressive viewport refactor
+- Award-facing visual sections were restored to the original Git baseline: `HeroSection`, `ProblemSection`, `SplitComparison`, `SplitComparisonViewer`, `HowItWorksSection`, `TimingSection`, `YieldCalculator`, `ComparisonMatrixSection`, `ApplicationTechSection`, `EcologySection`, `SocialProofSection`, `SectionReveal`.
+- Cause of rollback: the previous viewport-fit pass overreached from adaptive hardening into visual redesign, replacing the original exhibition-grade storytelling with generic split screens and simplified cards.
+- Runtime contract is corrected: visual adaptation must preserve the original art direction, interaction pattern and showcase storytelling, and only change responsive layout mechanics.
+- `src/components/YieldCalculator.tsx` received a narrow technical fix for current lint rules: reduced-motion stage selection is now derived without synchronous `setState` inside `useEffect`.
+- Verification after restore:
+  - `npm run lint`
+  - `npm run build`
+  - `next start -- --port 3014`
+
+[2026-03-29 13:58Z] GRIPIL landing: `SplitComparison` animation restored without pinned-scroll regression
+- `apps/gripil-web-awwwards/src/components/SplitComparison.jsx` rebuilt as an animated `framer-motion` scene instead of a static fallback.
+- Removed debug/meta copy about `pinned-scroll`; the section again speaks in product language and behaves like a commercial storytelling block rather than a technical stub.
+- Runtime contract changed: animation is now driven by non-pinned entrance, sweep-light and ambient motion layers, while section height still fits the validated viewport matrix.
+- Production-like verification re-run after the change:
+  - `npm run lint`
+  - `npm run build`
+  - `next start` on `127.0.0.1:3014`
+  - viewport matrix: `360x800`, `390x844`, `768x1024`, `1366x768`, `1600x900`, `1920x1080` -> all logical screens fit.

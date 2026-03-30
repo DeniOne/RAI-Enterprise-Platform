@@ -3,110 +3,90 @@ id: GRIPIL-EXEC-002
 layer: Execution
 type: WBS
 status: active
-version: 1.0.0
+version: 1.1.0
 owners: [AI_CODER, DESIGNER]
-last_updated: 2026-03-26
+last_updated: 2026-03-29
 claim_id: CLAIM-GRIPIL-EXEC-002
 claim_status: asserted
 verified_by: manual
-last_verified: 2026-03-26
+last_verified: 2026-03-29
 evidence_refs:
-  - apps/gripil-web
+  - apps/gripil-web-awwwards/src/app/layout.tsx
+  - apps/gripil-web-awwwards/src/app/api/lead/route.ts
+  - apps/gripil-web-awwwards/src/lib/site-profile.ts
+  - apps/gripil-web-awwwards/src/components/FooterCTA.tsx
+  - apps/gripil-web-awwwards/src/components/SocialProofSection.tsx
+  - apps/gripil-web-awwwards/src/components/SplitComparisonViewer.tsx
+  - apps/gripil-web-awwwards/playwright.config.ts
 ---
 
-# AWWWARDS & B2B JTBD EXECUTION PLAN: GRIPIL SOTD
+# GRIPIL WEB AWWWARDS EXECUTION PLAN
 
 ## CLAIM
 id: CLAIM-GRIPIL-EXEC-002
 status: asserted
 verified_by: manual
-last_verified: 2026-03-26
+last_verified: 2026-03-29
 
-Этот блядский документ — исчерпывающий пошаговый план действий (WBS) для вывода дизайна GRIPIL на уровень Awwwards SOTD (Site of the Day), сохраняя при этом железобетонную B2B конверсию. Бери и делай по шагам.
+## Назначение
+Документ фиксирует актуальный execution-пакет для `apps/gripil-web-awwwards` после release hardening 2026-03-29.
 
----
+Его задача теперь не в том, чтобы разгонять эффектность любой ценой, а в том, чтобы удерживать Awwwards-level подачу без возврата к нечестному UX, служебным маршрутам и production-небезопасным сценариям.
 
-## 🛠 REQUIRED EXTERNAL RESOURCES & SKILLS 
-Юзер, вот что тебе нужно достать "с улицы" или сгенерировать до начала жесткого кодинга:
-1. **3D Generalist / WebGL Developer**: Нужна готовая оптимизированная 3D-модель (формат `.glb` / `.gltf`) стручка рапса. Модель должна быть разбита на створки (чтобы анимировать раскрытие) и семена внутри. Вес модели строго до 3 MB (запеченный свет, draco-компрессия).
-2. **Photoshoot / Midjourney Prompter**: Нужно 2-3 грязные, реалистичные фотографии агрономов на фоне рапсового поля. Никакого стокового пластика. Снимать с низким контрастом для наложения noise.
-3. **Assets**: SVG-логотипы 4-5 крупных агрохолдингов-лидеров рынка (Мираторг, Русагро, Степь и т.д.) для блока Social Proof.
-4. **Copywriter**: Текст для нового блока "Инструкция по применению" (нормы расхода баковых смесей, специфика применения авиацией, дронами и штанговыми опрыскивателями).
+## Текущий статус
+- Кодовые `P0` из аудита закрыты.
+- Runtime-контракт формы стал честным: без боевого webhook заявка не уходит в success state.
+- Blocking preloader удалён.
+- `/test` удалён из production surface.
+- Public legal/contact baseline добавлен.
+- Motion и SSR path упрощены для более устойчивого mobile/runtime поведения.
 
----
+## Жёсткие инварианты
+- Нельзя возвращать blocking preloader или любой экран, который держит `body overflow: hidden` и скрывает hero.
+- Нельзя возвращать fake-success submit flow, `local-log` или любой success-path без подтверждённой доставки лида.
+- Нельзя возвращать публичные debug/demo/test route'ы в build.
+- Нельзя публиковать неподтверждённые proof claims и анонимные отзывы как production trust-layer.
+- Нельзя включать consent по умолчанию.
+- Нельзя публиковать canonical production metadata, пока не заполнен реальный `site-profile` через `GRIPIL_*`.
 
-## 🚀 ПЛАНИРОВАНИЕ СПРИНТОВ (WBS)
+## Release Gate
+Релиз считается допустимым только после одновременного выполнения всех условий:
 
-### SPRINT 1: PERFORMANCE & TECH FOUNDATION (Очистка и подготовка)
-*Цель: сделать скролл плавным как шелк, 120hz, убрав костыли и тяжелые фильтры.*
+1. Заполнен `GRIPIL_LEAD_WEBHOOK_URL`.
+2. Заполнены `GRIPIL_SITE_URL`, `GRIPIL_COMPANY_SHORT_NAME`, `GRIPIL_COMPANY_LEGAL_NAME`, `GRIPIL_CONTACT_PHONE`, `GRIPIL_CONTACT_EMAIL`, `GRIPIL_COMPANY_ADDRESS`.
+3. `npm run lint`, `npm run build` и `npx playwright test` зелёные.
+4. Production-like `next start` подтверждает:
+   - `200` для `/`, `/privacy`, `/company`, `/contact`, `/robots.txt`, `/sitemap.xml`
+   - `404` для `/test`
+   - `503` для valid `POST /api/lead` без webhook и `200` только после реальной интеграции
+5. Canonical и indexable metadata появляются только после полного production profile.
 
-- [x] **Task 1.1: Выпил CSS-фильтров.**
-  - **Действие:** Найти в коде (`HeroSection.tsx`, `YieldCalculator.tsx`, `SplitComparisonViewer.tsx`) все классы типа `filter brightness-[0.25] contrast-125 saturate-50`. Убрать их к хуям.
-  - **Реализация:** Дизайнер должен заранее накинуть нужный контраст и затемнение на исходные картинки в Figma/Photoshop, экспортировать их в формат WebP и положить в `public/images/`. Раздавать картинки как есть.
-- [x] **Task 1.2: Миграция на глобальный GSAP + Lenis.**
-  - **Действие:** Во всем проекте вырезать `framer-motion` `useScroll`. Поставить `@studio-freight/react-lenis` и `@gsap/react`.
-  - **Реализация:** Обернуть `RootLayout` в `<ReactLenis root>`. Зарегистрировать `ScrollTrigger` глобально. `framer-motion` оставить ТОЛЬКО для микро-интеракций (ховеры кнопок, стрик-анимации букв).
+## Ближайшие действия
 
-### SPRINT 2: THE SIGNATURE MOMENT (WebGL + 3D)
-*Цель: превратить скучный `SplitComparisonViewer` в Awwwards-доминатора.*
+### 1. Закрыть env-gate релиза
+- Подставить реальный `GRIPIL_LEAD_WEBHOOK_URL`. Эффект: форма начнёт доставлять лиды в production, а не честно отклонять отправку.
+- Заполнить весь `GRIPIL_*` профиль. Эффект: появятся production canonical/metadata, legal-страницы перестанут показывать временные значения, сайт станет пригоден для индексации и платного трафика.
 
-- [ ] **Task 2.1: Поднятие Canvas-сцены.**
-  - **Действие:** Заменить статичную шторку на `<Canvas>` из `@react-three/fiber` в компоненте SplitComparison.
-  - **Реализация:** Поставить `@react-three/drei`. Настроить `Environment` (добавить HDRI-карту для красивых бликов на стручке). Освещение должно быть кинематографичным (rim light).
-- [ ] **Task 2.2: Scroll-Control Camera & Animation.**
-  - **Действие:** Привязать камеру и таймлайн 3D-модели к GSAP ScrollTrigger.
-  - **Анимация До (Без ГРИПИЛ):** При скролле створки стручка лопаются, используется система частиц (Particles), черные семена падают вниз экрана под действием виртуального ветра.
-  - **Анимация После (С ГРИПИЛ):** Происходит Shader-переход (обволакивание сетки полупрозрачной био-мембраной). Ветер бьет по стручку (Shake-эффект камеры), но он не раскрывается.
-  - **Текст:** Синхронизировать появление текстовых блоков поверх Canvas (HTML overlay через Drei `Html` или поверх слоев `z-index`).
+### 2. Добить release QA на production-домене
+- Повторить `next start` и smoke-проверки уже с боевыми env. Эффект: команда подтвердит не только кодовую готовность, но и реальную deploy-конфигурацию.
+- Проверить форму на боевом webhook и зафиксировать факт доставки. Эффект: исчезает последний остаточный blocker по конверсии.
 
-### SPRINT 3: B2B CONVERSION INJECTIONS (Бабки и Доверие)
-*Цель: добавить "мяса" для агрономов и закрыть их сомнения.*
+### 3. Вынести polish за релизный контур
+- Дошлифовать secondary contrast и floating navigation. Эффект: визуальная чистота вырастет без риска вернуть blocking UX.
+- Подготовить верифицируемые кейсы для trust layer. Эффект: social proof станет сильнее без репутационного риска.
+- Провалидировать доменные диапазоны и тексты агрономических обещаний. Эффект: контент станет устойчивее к профессиональной проверке рынка.
 
-- [x] **Task 3.1: Анимация калькулятора (Slot-Machine Effect).**
-  - **Действие:** В `YieldCalculator.tsx` сделать так, чтобы `netProfit` и `roi` не менялись резко при сдвиге ползунка, а интригующе "накручивались".
-  - **Реализация:** Подключить библиотеку `react-countup` или написать кастомный хук на базе `framer-motion` `animate` (анимировать `MotionValue` от старого числа к новому с жесткой кривой `easeOut`).
-- [x] **Task 3.2: Блок "Технология внесения" (ApplicationTechSection.tsx).**
-  - **Действие:** Сверстать новый блок между Калькулятором и Экологией.
-  - **Реализация:** Строгий минималистичный грид на 3 колонки (Авиация / Самоходные / Прицепные). Добавить микро-FAQ про совместимость с десикантами и фунгицидами. Использовать SVG иконки дронов/тракторов.
-- [x] **Task 3.3: Социальное доказательство (SocialProofSection.tsx).**
-  - **Действие:** Создать блок клиентов/отзывов перед финальным подвалом.
-  - **Реализация:** Бесконечная бегущая строка (Marquee) с SVG-логотипами на темно-малахитовом фоне + 2 карточки-цитаты с реальными лицами главных агрономов (Glassmorphism + Noise effect).
-- [x] **Task 3.4: Hover effects в `ComparisonMatrixSection`.**
-  - **Действие:** Добавить сложный бордер (gradient pattern) для центральной колонки "ГРИПИЛ". 
-  - **Реализация:** Сделать glow-эффект, где источник света "ездит" по краям карточки вслед за курсором (через Framer Motion `usePointerPosition`).
+## Что уже нельзя планировать как улучшение
+- Возврат high-end preloader.
+- Возврат анонимных social proof claims.
+- Возврат `ssr: false` для ключевого storytelling-контента.
+- Возврат англоязычных user-facing labels в русской витрине.
 
-### SPRINT 4: AWWWARDS POLISH (Мелкий жир)
-*Цель: ебанутое внимание к микродеталям.*
+## Финальный ориентир
+Целевое состояние этого лендинга теперь формулируется так:
 
-- [x] **Task 4.1: Custom Cursor.**
-  - **Действие:** Разработать кастомный курсор, который понимает контекст страницы.
-  - **Реализация:** Маленькая желтая точка (`#CDFF00`), которая при наведении на кликабельный блок (Калькулятор, CTA, 3D Canvas) расширяется и показывает текст "DRAG" или "CLICK" с `mix-blend-mode: difference`.
-- [x] **Task 4.2: High-End Preloader.**
-  - **Действие:** Создать экран загрузки, чтобы скрыть парсинг тяжелых 3D-моделей.
-  - **Реализация:** Черный экран, появляется огромный логотип GRIPIL из маски снизу-вверх, бегут циферки 0-100% загрузки 3D-ассетов (`useProgress` из `drei`). После 100% логотип плавно разъезжается и масштабируется в первый экран Hero.
-- [x] **Task 4.3: Magnetic Buttons Everywhere.**
-  - **Действие:** Вынести логику перетаскивания кнопки из `HeroSection` в отдельный HOC/Component `MagneticButton` и обернуть им вообще ВСЕ кнопки на сайте. Ощущение физической отдачи дает дикий кайф жюри и пользователю.
-
-### SPRINT 5: TESTING, QA & AWWWARDS BASELINE (Проверка на прочность)
-*Цель: Доказать, что вся эта красота работает, не лагает и математически верна.*
-
-- [x] **Task 5.1: Performance & FPS Audit.**
-  - **Действие:** Замерить FPS на всех скролл-анимациях (особенно R3F Canvas) с троттлингом процессора.
-  - **Реализация:** Chrome DevTools Performance tab + Lighthouse. Baseline: стабильные 60 FPS на устройствах уровня iPhone 12 и выше.
-- [x] **Task 5.2: E2E тестирование конверсионной воронки (Playwright).**
-  - **Действие:** Написать тесты на `YieldCalculator` для проверки математики ROI и Net Profit.
-  - **Реализация:** Playwright UI assertions, чтобы гарантировать отсутствие математических и визуальных регрессий конверсионного ядра.
-- [x] **Task 5.3: WebGL Fallback & Cross-Browser.**
-  - **Действие:** Сделать gracefully degrade для старых смартфонов (калькуляторов).
-  - **Реализация:** При падении WebGL-контекста или жутком свопе убивать Canvas и рендерить легкую статичную заглушку.
-
----
-
-## 📌 КАК ДЕЛАТЬ (Технический гайдлайн)
-
-1. **Strict Dependency Package:** `pnpm i gsap @gsap/react @studio-freight/react-lenis three @react-three/fiber @react-three/drei react-countup`
-2. **GSAP + React Rules:** Во всех новых компонентах использовать хук `useGSAP()` из `@gsap/react` со scope `containerRef`, чтобы не ебаться с утечками памяти при unmount (cleanup happens automatically).
-3. **Tailwind Refactoring:** Никогда не использовать `transition-all duration-100` для скролл-ползунков, как это сделано сейчас. Это вызывает дропы FPS на мобилках. Рендерить ползунки через GPU-ускоренный `transform: translateX/scaleX`.
-4. **Three.js Performance:** В `<Canvas>` обязательно передать `dpr={[1, 2]}` (pixel ratio для Retina, чтобы не вскипятить IPhone). Если WebGL сцена залагает, Awwwards не дадут, поэтому 60 FPS — это fucking baseline.
-
-Бери этот план, отдавай ИИ-модели (или кодеру) кусками по одному спринту и требуй идеального соответствия. Нихуя не упускай.
+- визуально сильный Awwwards-level surface;
+- честная и проверяемая конверсия;
+- production-safe routing;
+- базовый legal/SEO/a11y слой;
+- release через env-gate, а не через ручные договорённости.

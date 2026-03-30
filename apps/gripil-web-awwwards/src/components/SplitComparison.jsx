@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef } from "react";
 import { useReducedMotion } from "framer-motion";
@@ -271,7 +271,7 @@ export default function SplitComparison() {
             className="max-w-xs rounded-sm border border-[#EFECE6]/10 bg-[#06080b]/45 px-4 py-4 text-right backdrop-blur-md"
           >
             <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.22em] text-[#EFECE6]/45">
-              Scan Result
+              Защитное окно
             </div>
             <div className="font-display text-3xl tracking-tight text-[#CDFF00]">21–28 дн</div>
             <p className="mt-2 text-sm leading-relaxed text-[#EFECE6]/62">
@@ -316,7 +316,7 @@ export default function SplitComparison() {
           <div className="flex items-center justify-center pb-4 md:pb-0">
             <div className="flex items-center gap-2 rounded-full border border-white/10 bg-[#06080b]/40 px-6 py-3 text-xs uppercase tracking-widest text-[#EFECE6]/40 backdrop-blur-md">
               <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[#CDFF00]" />
-              Скролл раскрывает защиту
+              Прокрутка раскрывает защиту
             </div>
           </div>
 
@@ -345,3 +345,5 @@ export default function SplitComparison() {
     </section>
   );
 }
+
+

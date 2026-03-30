@@ -48,7 +48,7 @@ const CALCULATOR_STAGES = [
   },
   {
     id: "roi",
-    pill: "Финальный ROI",
+    pill: "Финальная окупаемость",
     title: ["В сухом остатке остаётся", "не риск, а капитал."],
     accentLineIndex: 1,
     description:
@@ -330,7 +330,8 @@ export default function YieldCalculator() {
   const prefersReducedMotion = useReducedMotion() ?? false;
   const [stageIndex, setStageIndex] = useState(0);
   const sceneMotion = useMotionValue(0);
-  const activeStage = CALCULATOR_STAGES[stageIndex];
+  const activeStageIndex = prefersReducedMotion ? SHOWCASE_STAGE_INDEX : stageIndex;
+  const activeStage = CALCULATOR_STAGES[activeStageIndex];
   const { area, yieldPerHa, price } = AUTO_SCENARIOS[SHOWCASE_SCENARIO_INDEX];
 
   const scenario = calculateScenario(area, yieldPerHa, price);
@@ -344,8 +345,6 @@ export default function YieldCalculator() {
 
   useEffect(() => {
     if (prefersReducedMotion) {
-      setStageIndex(SHOWCASE_STAGE_INDEX);
-      sceneMotion.set(SHOWCASE_STAGE_INDEX);
       return undefined;
     }
 
@@ -358,8 +357,8 @@ export default function YieldCalculator() {
   }, [prefersReducedMotion, sceneMotion]);
 
   useEffect(() => {
-    sceneMotion.set(stageIndex);
-  }, [sceneMotion, stageIndex]);
+    sceneMotion.set(activeStageIndex);
+  }, [activeStageIndex, sceneMotion]);
 
   const panelY = useTransform(smoothStage, [0, 1, 2], [4, 1, 0]);
   const isRiskStage = activeStage.id === "risk";
@@ -403,9 +402,9 @@ export default function YieldCalculator() {
                 <motion.div
                   key={stage.id}
                   animate={{
-                    opacity: stageIndex === index ? 1 : 0.42,
-                    borderColor: stageIndex === index ? "rgba(198,217,138,0.18)" : "rgba(239,236,230,0.1)",
-                    backgroundColor: stageIndex === index ? "rgba(182,213,74,0.08)" : "rgba(239,236,230,0.05)",
+                    opacity: activeStageIndex === index ? 1 : 0.42,
+                    borderColor: activeStageIndex === index ? "rgba(198,217,138,0.18)" : "rgba(239,236,230,0.1)",
+                    backgroundColor: activeStageIndex === index ? "rgba(182,213,74,0.08)" : "rgba(239,236,230,0.05)",
                   }}
                   transition={{ duration: 0.55, ease: "easeInOut" }}
                   className="rounded-full border px-4 py-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[#EFECE6]/60"
@@ -453,9 +452,9 @@ export default function YieldCalculator() {
 
               <div className="flex items-center justify-between border-b border-[#EFECE6]/6 px-5 py-3.5 sm:px-6">
                 <div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#C6D98A]/68">Панель ROI</div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#C6D98A]/68">Панель окупаемости</div>
                   <div className="mt-1 text-[13px] leading-5 text-[#EFECE6]/55">
-                    Один показательный кейс. Левая сцена показывает путь от риска к капиталу, правая фиксирует экономику сезона.
+                    Один показательный сценарий. Левая сцена показывает путь от риска к капиталу, правая фиксирует экономику сезона.
                   </div>
                 </div>
                 <div className="rounded-full border border-[#EFECE6]/10 bg-[#EFECE6]/5 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[#EFECE6]/48">
@@ -559,7 +558,7 @@ export default function YieldCalculator() {
 
                     <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                       <InlineMetric
-                        label="ROI"
+                        label="Окупаемость"
                         value={<AnimatedNumber value={scenario.roi} formatFn={(value) => `+${Math.round(value)}%`} />}
                         tone="success"
                         active={isRoiStage}
@@ -591,7 +590,7 @@ export default function YieldCalculator() {
                         Выгода уже посчитана
                       </div>
                       <div className="mt-2 font-display text-[1.55rem] leading-[0.92] tracking-[-0.04em] text-[#F4FFD6] sm:text-[1.9rem]">
-                        Получить техкарту и ROI-снимок по кейсу
+                        Получить техкарту и снимок окупаемости по сценарию
                       </div>
                       <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.22em] text-[#C6D98A]/74 sm:text-[11px]">
                         {ctaCaseLabel}
@@ -610,4 +609,9 @@ export default function YieldCalculator() {
     </section>
   );
 }
+
+
+
+
+
 

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Manrope, Outfit } from "next/font/google";
-import { Preloader } from "@/components/Preloader";
 import { SmoothScroll } from "@/components/SmoothScroll";
+import { getSiteProfile } from "@/lib/site-profile";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -10,13 +10,35 @@ const manrope = Manrope({
 });
 
 const outfit = Outfit({
-  subsets: ["latin"], // Outfit has limited cyrillic, but we can use it for numbers or fallbacks, or just use Manrope for everything. Let's use Manrope for both but configure weights.
+  subsets: ["latin"],
   variable: "--font-outfit",
 });
 
+const siteProfile = getSiteProfile();
+
 export const metadata: Metadata = {
-  title: "ГРИПИЛ — Сохраните урожай рапса",
-  description: "Био-комплекс для защиты рапса от осыпания перед уборкой.",
+  metadataBase: siteProfile.siteUrl,
+  title: "ГРИПИЛ — сохраните урожай рапса",
+  description: "Лендинг ГРИПИЛ о защите рапса от осыпания перед уборкой с честной формой заявки и технологическим сценарием.",
+  applicationName: "ГРИПИЛ",
+  alternates: siteProfile.allowIndexing ? { canonical: "/" } : undefined,
+  openGraph: {
+    type: "website",
+    locale: "ru_RU",
+    url: siteProfile.siteUrl,
+    siteName: "ГРИПИЛ",
+    title: "ГРИПИЛ — сохраните урожай рапса",
+    description: "Био-комплекс ГРИПИЛ помогает удержать урожай до уборки и даёт честный сценарий внедрения.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ГРИПИЛ — сохраните урожай рапса",
+    description: "Технология защиты рапса от осыпания перед уборкой.",
+  },
+  robots: {
+    index: siteProfile.allowIndexing,
+    follow: siteProfile.allowIndexing,
+  },
 };
 
 export default function RootLayout({
@@ -25,10 +47,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" suppressHydrationWarning>
-      <body className={`${manrope.variable} ${outfit.variable} font-sans antialiased bg-[#EFECE6] text-[#112118]`} suppressHydrationWarning>
-        <Preloader />
-        <div id="page-transition-curtain" className="fixed inset-0 z-[99999] bg-[#06080b] pointer-events-none" style={{ transform: "translateY(100%)" }} />
+    <html lang="ru">
+      <body className={`${manrope.variable} ${outfit.variable} bg-[#EFECE6] font-sans antialiased text-[#112118]`}>
+        <div
+          id="page-transition-curtain"
+          className="pointer-events-none fixed inset-0 z-[99999] bg-[#06080b]"
+          style={{ transform: "translateY(100%)" }}
+        />
         <SmoothScroll>{children}</SmoothScroll>
       </body>
     </html>
