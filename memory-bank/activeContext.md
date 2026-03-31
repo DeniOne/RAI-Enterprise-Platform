@@ -164,6 +164,16 @@
 - [x] `PHASE_A_EXECUTION_BOARD.md` и `PHASE_A_EVIDENCE_MATRIX.md` синхронизированы с новым состоянием:
   - `A-2.4.1` переведён в `in_progress`
   - по оси `AI / tool permissions` зафиксировано, что execution-артефакт уже создан, но полный release-closeout `A3` ещё не завершён
+- [x] Для `A3.2` опубликован runtime-derived `PHASE_A3_HITL_MATRIX.md`.
+- [x] Матрица собрана по текущему `PendingAction` / approval runtime-контракту:
+  - `RiskPolicyEngineService`
+  - `PendingActionService`
+  - `PendingActionsController`
+  - `RaiToolsRegistry`
+  - `AutonomyPolicyService`
+- [x] `PHASE_A_EXECUTION_BOARD.md` и `PHASE_A_EVIDENCE_MATRIX.md` синхронизированы с новым состоянием:
+  - `A-2.4.2` переведён в `in_progress`
+  - по оси `AI / HITL` зафиксировано, что execution-артефакт уже создан, но полный release-closeout `A3` ещё не завершён
 - [x] Для трека `A4` добавлен отдельный рабочий пакет `PHASE_A4_INSTALLABILITY_AND_RECOVERY_PLAN.md`.
 - [x] `A4` теперь переведён из общей ops-темы в execution-пакет по:
   - install/upgrade packet

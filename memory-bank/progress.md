@@ -204,6 +204,25 @@
     - `A3.1` больше не висит как пустой policy-пункт;
     - `HITL matrix`, `advisory-only` perimeter и `eval-suite` теперь можно строить поверх опубликованного runtime-derived baseline, а не с нуля.
 
+14. **A3 HITL matrix published** [DONE]:
+  - Добавлен `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_HITL_MATRIX.md`.
+  - Новый execution-артефакт собран по текущему runtime-контракту:
+    - `RiskPolicyEngineService`
+    - `PendingActionService`
+    - `PendingActionsController`
+    - `RaiToolsRegistry`
+    - `AutonomyPolicyService`
+  - Матрица фиксирует:
+    - где `READ` path идёт без человека
+    - где создаётся `PendingAction`
+    - где нужен `approveFirst`
+    - где нужен privileged `approveFinal`
+    - где `QUARANTINE` полностью режет execute-path
+  - `ONE_BIG_PHASE/INDEX.md`, `PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md`, `PHASE_A3_FIRST_WAVE_GOVERNANCE_CHECKLIST.md`, `PHASE_A_EXECUTION_BOARD.md`, `PHASE_A_EVIDENCE_MATRIX.md` и `docs/DOCS_MATRIX.md` синхронизированы.
+  - Практический эффект:
+    - `A3.2` больше не висит как общая фраза “нужен human-in-the-loop”;
+    - следующий шаг по `advisory-only` perimeter и `eval-suite` теперь строится поверх уже опубликованной approval ladder, а не по догадкам.
+
 ## 2026-03-30
 
 1. **Owner-friendly MVP execution checklist** [DONE]:

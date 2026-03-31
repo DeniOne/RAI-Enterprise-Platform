@@ -936,3 +936,21 @@
 - `PHASE_A_EVIDENCE_MATRIX.md` синхронизирована:
   - по оси `AI / tool permissions` зафиксировано, что execution-артефакт уже создан, но `A3` ещё не закрыта до конца без `HITL / advisory-only / eval-suite`
 - Практический эффект: `A3` впервые получила не только policy-намерение, а опубликованный runtime-derived baseline, от которого можно уже детерминированно строить `HITL matrix` и formal `eval-suite`.
+[2026-03-31 11:05Z] Для `A3.2` опубликован runtime-derived HITL matrix
+- Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_HITL_MATRIX.md`.
+- Документ собран по текущему runtime-контракту:
+  - `RiskPolicyEngineService`
+  - `PendingActionService`
+  - `PendingActionsController`
+  - `RaiToolsRegistry`
+  - `AutonomyPolicyService`
+- Зафиксирована текущая лестница участия человека:
+  - `H0` no gate для `READ`
+  - `H2/H3` для governed write через `PendingAction`
+  - `H4` для critical/two-person approval
+  - `H5` для `QUARANTINE` и advisory-only зон
+- `PHASE_A_EXECUTION_BOARD.md` синхронизирован:
+  - `A-2.4.2` переведён из `open` в `in_progress`
+- `PHASE_A_EVIDENCE_MATRIX.md` синхронизирована:
+  - по оси `AI / HITL` зафиксировано, что execution-артефакт уже создан, но `A3` ещё не закрыта до конца без `advisory-only / eval-suite`
+- Практический эффект: `A3` получила опубликованный runtime-derived human approval baseline, и теперь `advisory-only perimeter` и `formal eval-suite` можно строить поверх реального approval-chain, а не по общей policy-риторике.

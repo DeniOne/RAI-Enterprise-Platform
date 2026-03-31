@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A-EVIDENCE-MATRIX-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.6.0
+version: 1.7.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-EVIDENCE-MATRIX-20260331
@@ -54,7 +54,7 @@ last_verified: 2026-03-31
 | `A2` | `Security / unsafe paths` | не допускать новых unsafe обходов | зелёные invariants/gates | `pnpm gate:invariants`, due diligence | внешнее evidence не требуется | `внутренне подтверждено` |
 | `A2` | `Security / access governance outside repo` | доказать branch protection, owner-review, deploy keys и environment access | restricted access review artifact + `security:evidence` status/gate | [SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY.md](/root/RAI_EP/docs/05_OPERATIONS/SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY.md), `.github/CODEOWNERS`, security workflows, `pnpm security:evidence:status` | внешний restricted evidence packet по GitHub UI/perimeter | `repo-side perimeter подтверждён частично, GitHub UI evidence отсутствует` |
 | `A3` | `AI / tool permissions` | определить, что агенту можно запускать | approved tool matrix + runtime enforcement | [PHASE_A3_TOOL_PERMISSION_MATRIX.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_TOOL_PERMISSION_MATRIX.md), [RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md](/root/RAI_EP/docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md), [agent-registry.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agent-registry.service.ts), [agent-runtime-config.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agent-runtime-config.service.ts), [rai-tools.registry.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/tools/rai-tools.registry.ts) | внешнее evidence не требуется | `execution-артефакт создан, но release-closeout A3 ещё не завершён` |
-| `A3` | `AI / HITL` | определить, где обязательно участие человека | approved HITL matrix + runtime path | AI policy, AI failure scenarios | внешнее evidence не требуется | `не подтверждено исполнением` |
+| `A3` | `AI / HITL` | определить, где обязательно участие человека | approved HITL matrix + runtime path | [PHASE_A3_HITL_MATRIX.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_HITL_MATRIX.md), [pending-action.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/security/pending-action.service.ts), [pending-actions.controller.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/pending-actions.controller.ts), [rai-tools.registry.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/tools/rai-tools.registry.ts), [RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md](/root/RAI_EP/docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md) | внешнее evidence не требуется | `execution-артефакт создан, но release-closeout A3 ещё не завершён` |
 | `A3` | `AI / safety evals` | ввести формальный eval suite для risky-сценариев | eval suite + результаты прогонов | AI failure scenarios, synthesis | внешнее evidence не требуется | `не подтверждено исполнением` |
 | `A4` | `Installability / self-host` | доказать путь установки и обновления | install/upgrade packet + dry-run evidence | release criteria, due diligence, deployment matrix | внешнее evidence не требуется | `частично описано` |
 | `A4` | `Recovery / backup-restore` | доказать, что систему можно восстановить | выполненный drill + execution report | [WORKFLOWS/RELEASE_BACKUP_RESTORE_AND_DR_RUNBOOK.md](/root/RAI_EP/docs/05_OPERATIONS/WORKFLOWS/RELEASE_BACKUP_RESTORE_AND_DR_RUNBOOK.md) | внешнее evidence не требуется | `runbook есть, исполнения нет` |

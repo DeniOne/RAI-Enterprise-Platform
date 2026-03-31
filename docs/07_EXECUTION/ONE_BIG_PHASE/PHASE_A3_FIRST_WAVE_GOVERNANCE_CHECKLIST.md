@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A3-FIRST-WAVE-GOVERNANCE-CHECKLIST-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.1.0
+version: 1.2.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A3-FIRST-WAVE-GOVERNANCE-CHECKLIST-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_TOOL_PERMISSION_MATRIX.md;docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md;docs/_audit/AI_AGENT_FAILURE_SCENARIOS_2026-03-28.md;docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_TOOL_PERMISSION_MATRIX.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_HITL_MATRIX.md;docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md;docs/_audit/AI_AGENT_FAILURE_SCENARIOS_2026-03-28.md;docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md
 ---
 # PHASE A3 FIRST WAVE GOVERNANCE CHECKLIST
 
@@ -58,6 +58,11 @@ last_verified: 2026-03-31
   - где нужен `confirmation`
   - где нужен `final sign-off`
 
+Текущий статус:
+
+- baseline-артефакт уже создан в [PHASE_A3_HITL_MATRIX.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_HITL_MATRIX.md);
+- первая волна для `A3.2` теперь продолжается от опубликованного runtime-derived `PendingAction` / approval baseline.
+
 ### Шаг 3. Зафиксировать `advisory-only perimeter`
 
 Нужно:
@@ -96,7 +101,7 @@ last_verified: 2026-03-31
 Первая волна считается завершённой только когда:
 
 - есть опубликованный `tool-permission matrix`;
-- есть черновой `HITL matrix`;
+- есть опубликованный `HITL matrix`;
 - есть отдельный `advisory-only` перечень;
 - есть skeleton `eval-suite`;
 - в board `A-2.4.1..A-2.4.4` хотя бы переходят из чистого `open` в рабочий execution-state.
