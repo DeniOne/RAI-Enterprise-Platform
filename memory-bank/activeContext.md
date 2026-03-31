@@ -1,6 +1,27 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A0` закрыт внутренний execution-layer ежедневного triage:
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A0_DAILY_TRIAGE_CHECKLIST.md`
+  - этот документ переводит `A0` из общего governance-правила в один ежедневный исполняемый ритуал
+  - `PHASE_A0_TRIAGE_EXECUTION_RULES.md` теперь явно ссылается на этот checklist как на практический execution-артефакт
+- [x] После этого `A0` сместилась так:
+  - `A-2.1.1`, `A-2.1.2`, `A-2.1.3` в `PHASE_A_EXECUTION_BOARD.md` переведены в `done`
+  - triage `Phase A` теперь закреплён не только policy-формулировками, но и отдельным исполняемым daily loop
+  - внутренняя защита от распыления больше не висит как полуплановый контур
+- [x] Для `A4.4` собран repo-side handoff kit первого `Tier 1 self-host / localized` pilot:
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_TIER1_PILOT_HANDOFF_CHECKLIST.md`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_TIER1_PILOT_HANDOFF_REPORT_TEMPLATE.md`
+  - `PHASE_A4_SUPPORT_BOUNDARY_PACKET.md` теперь явно связывает support boundary с этими двумя handoff-артефактами
+- [x] После этого `A4` сместилась так:
+  - `A-2.5.4` остаётся `guard_active`, но уже не как абстрактный support-boundary хвост
+  - repo-side handoff perimeter для первого пилота собран полностью
+  - единственный честный незакрытый шаг по `A4.4` теперь уже не в документах, а в заполнении первого реального `handoff report` на живой pilot-среде
+- [x] Внутренний остаток `Phase A` после этого ещё сильнее сузился к внешним evidence:
+  - `A1` — внешние legal artifacts `ELP-*`
+  - `A2` — внешние restricted security artifacts `A2-S-01/02/03`
+  - `A4` — первый фактический pilot handoff report
+  - `A5` — внешний `ELP-20260328-09`
 - [x] Для `A5.4` закрыт внутренний `Tier 1` handoff gap между first-party licensing strategy и OSS/notice perimeter:
   - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_PROCUREMENT_DISTRIBUTION_DECISION.md`
   - этот документ связывает:

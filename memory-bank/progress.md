@@ -2,6 +2,37 @@
 
 ## 2026-03-31
 
+1. **A0 daily triage execution layer published** [DONE]:
+  - Создан:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A0_DAILY_TRIAGE_CHECKLIST.md`
+  - Документ переводит `A0` из общего governance-правила в один ежедневный исполняемый ритуал.
+  - Обновлён:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A0_TRIAGE_EXECUTION_RULES.md`
+  - Синхронизированы:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
+    - `docs/DOCS_MATRIX.md`
+  - Практический эффект:
+    - `A-2.1.1`, `A-2.1.2`, `A-2.1.3` теперь можно считать `done` для внутреннего `Phase A` execution-layer;
+    - triage `Phase A` больше не держится только на правилах и чате;
+    - breadth-задачи формально отрезаны от верхней очереди через отдельный daily loop.
+
+1. **A4 Tier 1 pilot handoff kit assembled** [DONE]:
+  - Созданы:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_TIER1_PILOT_HANDOFF_CHECKLIST.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_TIER1_PILOT_HANDOFF_REPORT_TEMPLATE.md`
+  - Обновлён:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SUPPORT_BOUNDARY_PACKET.md`
+  - Синхронизированы:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EVIDENCE_MATRIX.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
+    - `docs/DOCS_MATRIX.md`
+  - Практический эффект:
+    - `A4.4` больше не висит как абстрактный support-boundary хвост;
+    - для первого `Tier 1 self-host / localized` handoff теперь есть полный repo-side kit;
+    - реальный незакрытый шаг смещён из docs-layer в первый фактический заполненный handoff report на живой pilot-среде.
+
 1. **A5 Tier 1 procurement/distribution decision published** [DONE]:
   - Создан:
     - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_PROCUREMENT_DISTRIBUTION_DECISION.md`

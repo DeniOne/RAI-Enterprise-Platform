@@ -1,3 +1,20 @@
+[2026-03-31 13:18Z] Для `A0` и `A4` закрыт repo-side execution tail
+- Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A0_DAILY_TRIAGE_CHECKLIST.md`.
+- Обновлён `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A0_TRIAGE_EXECUTION_RULES.md`.
+- В `PHASE_A_EXECUTION_BOARD.md` строки `A-2.1.1`, `A-2.1.2`, `A-2.1.3` переведены в `done`.
+- Созданы:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_TIER1_PILOT_HANDOFF_CHECKLIST.md`
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_TIER1_PILOT_HANDOFF_REPORT_TEMPLATE.md`
+- Обновлены:
+  - `PHASE_A4_SUPPORT_BOUNDARY_PACKET.md`
+  - `PHASE_A_EVIDENCE_MATRIX.md`
+  - `ONE_BIG_PHASE/INDEX.md`
+  - `docs/DOCS_MATRIX.md`
+- Практический эффект:
+  - `A0` перестал быть только policy-layer и стал ежедневным исполняемым triage-контуром;
+  - `A4.4` получил полный repo-side handoff kit для первого `Tier 1` pilot;
+  - после этого внутренний хвост `Phase A` ещё сильнее сузился к внешним legal/security/IP evidence и первому реальному pilot handoff report.
+
 [2026-03-31 12:53Z] Для `A5.4` опубликовано `Tier 1 procurement/distribution` решение
 - Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_PROCUREMENT_DISTRIBUTION_DECISION.md`.
 - Новый execution-doc связал в один handoff-perimeter:
