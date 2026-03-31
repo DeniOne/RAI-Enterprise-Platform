@@ -1,6 +1,24 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A4.3` подтверждён blank-worktree bootstrap без локальных env-файлов:
+  - из `docker-compose.yml` удалены фиксированные `container_name`
+  - в `.env.example` добавлены:
+    - `BACKEND_URL`
+    - `NEXT_PUBLIC_API_URL`
+  - в отдельной копии рабочего дерева без root `.env` и без `apps/web/.env.local` успешно пройдены:
+    - `pnpm install --frozen-lockfile`
+    - `pnpm db:migrate`
+    - `pnpm --filter api build`
+    - `pnpm --filter web build`
+  - generated evidence:
+    - `var/ops/phase-a4-blank-worktree-bootstrap-2026-03-31.json`
+- [x] Для этого опубликован новый canonical report:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BLANK_WORKTREE_BOOTSTRAP_REPORT_2026-03-31.md`
+- [x] После этого `A4` сместилась так:
+  - `A-2.5.3` в `PHASE_A_EXECUTION_BOARD.md` переведена в `done`
+  - installability больше не зависит от root `.env` и `apps/web/.env.local` как скрытого знания
+  - основной живой хвост `A4` теперь уже не install/bootstrap, а `A-2.5.4` — operational handoff по support boundary
 - [x] Для `A3.4` собран и опубликован unified release evaluator:
   - добавлен root script `scripts/phase-a3-release-evals.cjs`
   - в `package.json` добавлены команды:

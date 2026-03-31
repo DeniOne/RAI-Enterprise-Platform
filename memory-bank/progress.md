@@ -2,6 +2,34 @@
 
 ## 2026-03-31
 
+1. **A4 blank-worktree bootstrap confirmed as repo-side installability evidence** [DONE]:
+  - Из `docker-compose.yml` удалены фиксированные `container_name`.
+  - В `.env.example` добавлены:
+    - `BACKEND_URL`
+    - `NEXT_PUBLIC_API_URL`
+  - В отдельной копии рабочего дерева без root `.env` и без `apps/web/.env.local` успешно пройдены:
+    - `pnpm install --frozen-lockfile`
+    - `pnpm db:migrate`
+    - `pnpm --filter api build`
+    - `pnpm --filter web build`
+  - Создан generated evidence:
+    - `var/ops/phase-a4-blank-worktree-bootstrap-2026-03-31.json`
+  - Опубликован новый canonical report:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BLANK_WORKTREE_BOOTSTRAP_REPORT_2026-03-31.md`
+  - Синхронизированы:
+    - `README.md`
+    - `PHASE_A4_SELF_HOST_INSTALL_UPGRADE_PACKET.md`
+    - `PHASE_A4_INSTALLABILITY_AND_RECOVERY_PLAN.md`
+    - `PHASE_A4_FIRST_WAVE_INSTALLABILITY_CHECKLIST.md`
+    - `PHASE_A_EXECUTION_BOARD.md`
+    - `PHASE_A_EVIDENCE_MATRIX.md`
+    - `ONE_BIG_PHASE/INDEX.md`
+    - `docs/DOCS_MATRIX.md`
+  - Практический эффект:
+    - `A-2.5.3` теперь можно считать `done` для repo-side `Phase A`;
+    - install path перестал зависеть от локального env residue;
+    - живой хвост `A4` сузился до operational support boundary и реального pilot handoff.
+
 1. **A3 unified release gate assembled and published** [DONE]:
   - Добавлен новый root runner:
     - `scripts/phase-a3-release-evals.cjs`

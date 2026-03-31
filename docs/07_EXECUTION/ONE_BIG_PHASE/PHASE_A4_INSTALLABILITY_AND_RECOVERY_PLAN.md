@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A4-INSTALLABILITY-RECOVERY-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.3.0
+version: 1.4.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A4-INSTALLABILITY-RECOVERY-PLAN-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SELF_HOST_INSTALL_UPGRADE_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALL_DRY_RUN_REPORT_TEMPLATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALL_DRY_RUN_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_TEMPLATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SUPPORT_BOUNDARY_PACKET.md;docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md;docs/05_OPERATIONS/HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX.md;docs/05_OPERATIONS/WORKFLOWS/RELEASE_BACKUP_RESTORE_AND_DR_RUNBOOK.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SELF_HOST_INSTALL_UPGRADE_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALL_DRY_RUN_REPORT_TEMPLATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALL_DRY_RUN_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BLANK_WORKTREE_BOOTSTRAP_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_TEMPLATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SUPPORT_BOUNDARY_PACKET.md;docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md;docs/05_OPERATIONS/HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX.md;docs/05_OPERATIONS/WORKFLOWS/RELEASE_BACKUP_RESTORE_AND_DR_RUNBOOK.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md
 ---
 # PHASE A4 INSTALLABILITY AND RECOVERY PLAN
 
@@ -34,6 +34,7 @@ last_verified: 2026-03-31
 - опубликован [PHASE_A4_SELF_HOST_INSTALL_UPGRADE_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SELF_HOST_INSTALL_UPGRADE_PACKET.md) как repo-derived install baseline;
 - опубликованы шаблоны [PHASE_A4_INSTALL_DRY_RUN_REPORT_TEMPLATE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALL_DRY_RUN_REPORT_TEMPLATE.md) и [PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_TEMPLATE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_TEMPLATE.md);
 - выполнен и опубликован [PHASE_A4_INSTALL_DRY_RUN_REPORT_2026-03-31.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALL_DRY_RUN_REPORT_2026-03-31.md);
+- выполнен и опубликован [PHASE_A4_BLANK_WORKTREE_BOOTSTRAP_REPORT_2026-03-31.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BLANK_WORKTREE_BOOTSTRAP_REPORT_2026-03-31.md);
 - выполнен и опубликован [PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_2026-03-31.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_2026-03-31.md);
 - опубликован [PHASE_A4_SUPPORT_BOUNDARY_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SUPPORT_BOUNDARY_PACKET.md) как минимальный operational boundary для `Tier 1`;
 - release criteria прямо требуют:
@@ -44,9 +45,9 @@ last_verified: 2026-03-31
 
 Одновременно остаются реальные незакрытые вопросы:
 
-- fresh-host install report всё ещё отсутствует;
 - support boundary уже оформлен как execution-артефакт, но ещё не подтверждён реальным pilot handoff;
-- install/recovery уже подтверждены локальным execution evidence, но не blank-host rehearsal.
+- blank-worktree bootstrap уже подтверждён, но отдельный fresh-host provisioning на новой машине пока не проводился как самостоятельный operational rehearsal;
+- `Tier 1` ещё нельзя считать pilot-ready только по installability, пока не пройден operational handoff.
 
 ## 2. Что именно нужно закрыть
 
@@ -84,24 +85,24 @@ last_verified: 2026-03-31
 - [PHASE_A4_INSTALL_DRY_RUN_REPORT_TEMPLATE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALL_DRY_RUN_REPORT_TEMPLATE.md)
 - [PHASE_A4_INSTALL_DRY_RUN_REPORT_2026-03-31.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALL_DRY_RUN_REPORT_2026-03-31.md)
 
-### `A4.3` Backup / restore execution evidence
+### `A4.3` Repeatable bootstrap without hidden knowledge
 
 Сделать:
 
-- выполнить rehearsal по `backup / restore`;
-- зафиксировать, что backup реально существует до schema-affecting релиза;
-- проверить rollback/containment path по runbook;
-- сохранить не только runbook, но и execution evidence.
+- выполнить rehearsal в чистой копии рабочего дерева без root `.env` и без `apps/web/.env.local`;
+- убрать скрытые зависимости на app-local env residue;
+- подтвердить, что bootstrap path повторяется только от documented env contract;
+- сохранить не только install packet, но и отдельный execution report.
 
 Сильное доказательство:
 
-- execution report по drill;
-- не просто наличие скриптов, а подтверждение, что ими реально можно восстановиться.
+- blank-worktree bootstrap report;
+- не просто наличие install packet, а подтверждение, что bootstrap path реально повторяется без локального residue.
 
 Текущий execution-артефакт:
 
-- [PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_TEMPLATE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_TEMPLATE.md)
-- [PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_2026-03-31.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_2026-03-31.md)
+- [PHASE_A4_INSTALL_DRY_RUN_REPORT_2026-03-31.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALL_DRY_RUN_REPORT_2026-03-31.md)
+- [PHASE_A4_BLANK_WORKTREE_BOOTSTRAP_REPORT_2026-03-31.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BLANK_WORKTREE_BOOTSTRAP_REPORT_2026-03-31.md)
 
 ### `A4.4` Support / operational boundary
 
@@ -146,7 +147,7 @@ Board должен меняться так:
 
 - `open` -> `in_progress`, когда появился отдельный installability/recovery артефакт или начат rehearsal;
 - `guard_active` остаётся guard-статусом только для запрета pilot без installability evidence;
-- `done` допустим только после появления dry-run и recovery execution evidence.
+- `done` допустим только после появления dry-run, blank-worktree bootstrap и recovery execution evidence.
 
 ## 5. Проверки `A4`
 
@@ -171,6 +172,7 @@ Board должен меняться так:
 - строки `A-2.5.1`, `A-2.5.2`, `A-2.5.3` уходят из `open`;
 - существует install/upgrade packet;
 - существует dry-run install evidence;
+- существует blank-worktree bootstrap evidence без root/app-local env residue;
 - существует актуальный `backup / restore` execution report;
 - `A-2.5.4` перестаёт быть активным release-stop условием для `Tier 1`;
 - `self-host / localized` pilot можно честно назвать installable и recoverable.

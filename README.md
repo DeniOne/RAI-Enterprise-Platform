@@ -115,6 +115,22 @@ pnpm dev
 - генерирует Prisma client через `postinstall`
 - запускает workspace `dev`-скрипты через `turbo`
 
+Базовый web/API env contract уже живёт в `.env.example`:
+
+- `BACKEND_URL`
+- `NEXT_PUBLIC_API_URL`
+
+Для `Tier 1` bootstrap отдельный `apps/web/.env.local` не нужен. Для stateless rehearsal можно поднимать app bootstrap и без root `.env`, если загрузить `.env.example` прямо в shell:
+
+```bash
+set -a
+source .env.example
+set +a
+pnpm db:migrate
+pnpm --filter api build
+pnpm --filter web build
+```
+
 ## Команды
 
 ### Основные
