@@ -1,6 +1,28 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A5.3` собран repo-derived `chain-of-title` source map:
+  - добавлен root generator `scripts/phase-a5-chain-of-title-register.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a5:chain-of-title`
+    - `pnpm gate:phase:a5:chain-of-title`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_SOURCE_REGISTER.md`
+- [x] Generated evidence уже реально выпускается в:
+  - `var/compliance/phase-a5-chain-of-title-source-register.json`
+  - `var/compliance/phase-a5-chain-of-title-source-register.md`
+- [x] Фактически подтверждено:
+  - `total_assets = 18`
+  - `application_workspaces = 5`
+  - `library_workspaces = 8`
+  - `database_assets = 4`
+  - `pnpm gate:phase:a5:chain-of-title` проходит
+- [x] `A5` после этого сместилась так:
+  - `A-2.6.2` всё ещё остаётся `waiting_external`
+  - но теперь `ELP-20260328-09` готовится по явной карте first-party workspace и database perimeter, а не по памяти
+  - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`, `PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md`, `PHASE_A1_ELP_09_CHAIN_OF_TITLE_CHECKLIST.md`, `PHASE_A_EXECUTION_BOARD.md` и `PHASE_A_EVIDENCE_MATRIX.md` синхронизированы с этим source map
+- [x] Restricted draft/template по `ELP-20260328-09` тоже усилены:
+  - draft обновлён до baseline `159 packages / 31 unknown / UNLICENSED=2`
+  - template теперь явно ссылается на `var/compliance/phase-a5-chain-of-title-source-register.md`
 - [x] Для `A4.4` собран полный machine-readable lifecycle первого pilot handoff:
   - добавлены root scripts:
     - `scripts/phase-a4-pilot-handoff-status.cjs`

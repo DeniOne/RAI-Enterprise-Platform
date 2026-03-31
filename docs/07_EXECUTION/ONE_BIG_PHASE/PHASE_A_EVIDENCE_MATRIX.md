@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A-EVIDENCE-MATRIX-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.17.0
+version: 1.18.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-EVIDENCE-MATRIX-20260331
@@ -48,7 +48,7 @@ last_verified: 2026-03-31
 | `A1` | `Legal / transborder` | зафиксировать, что и на каком основании уходит за пределы РФ | accepted `ELP-20260328-05` | RF review, hosting/transborder matrix | formal transborder decision log | `частично описано` |
 | `A1` | `Legal / lawful basis` | закрыть основания обработки и privacy notices | accepted `ELP-20260328-06` | compliance register, privacy runbook | approved lawful basis matrix и actual notices | `частично описано` |
 | `A1` | `Legal / retention` | закрыть сроки хранения и удаление | accepted `ELP-20260328-08` | [WORKFLOWS/PRIVACY_SUBJECT_RIGHTS_AND_RETENTION_RUNBOOK.md](/root/RAI_EP/docs/05_OPERATIONS/WORKFLOWS/PRIVACY_SUBJECT_RIGHTS_AND_RETENTION_RUNBOOK.md) | approved external/internal policy evidence | `частично описано` |
-| `A5` | `IP / chain-of-title` | доказать права на код, БД и know-how | accepted `ELP-20260328-09` | [OSS_LICENSE_AND_IP_REGISTER.md](/root/RAI_EP/docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md), RF review | signed IP artifacts и chain-of-title pack | `не подтверждено внешне` |
+| `A5` | `IP / chain-of-title` | доказать права на код, БД и know-how | accepted `ELP-20260328-09` + repo-derived source register по first-party активам | [OSS_LICENSE_AND_IP_REGISTER.md](/root/RAI_EP/docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md), [PHASE_A5_CHAIN_OF_TITLE_SOURCE_REGISTER.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_SOURCE_REGISTER.md), `pnpm phase:a5:chain-of-title`, RF review | signed IP artifacts и chain-of-title pack | `repo-side source map собран, внешне не подтверждено` |
 | `A2` | `Security / dependency risk` | опустить критичные и высокие зависимости до управляемого уровня | зелёный remediation-report по critical/high debt + успешные build после dependency refresh | `pnpm security:audit:ci` -> `critical=0`, `high=5`; runtime-impact advisories больше не воспроизводятся; остаток high ограничен `@typescript-eslint/typescript-estree -> minimatch@9.0.3` и `@angular-devkit/core -> picomatch@4.0.1/4.0.2`; [PHASE_A2_TIER1_TOOLCHAIN_DECISION.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_TIER1_TOOLCHAIN_DECISION.md); `pnpm --filter api build`; `pnpm --filter web build` | внешнее evidence не требуется, нужен технический результат и формальное release-решение по toolchain-tail | `для Tier 1 признано допустимым, follow-up для Tier 2+ остаётся` |
 | `A2` | `Security / secret hygiene` | удержать `tracked` leakage на нуле и закрыть historical debt | зелёный secret gate + `security:evidence` status/gate + incident closeout evidence | `pnpm gate:secrets` -> `tracked_findings=0`, `workspace_local_findings=8`; `pnpm security:evidence:status`; [KEY_MATERIAL_AND_SECRET_HYGIENE_INCIDENT_2026-03-28.md](/root/RAI_EP/docs/05_OPERATIONS/KEY_MATERIAL_AND_SECRET_HYGIENE_INCIDENT_2026-03-28.md) | external rotation / revocation artifact по `A2-S-01/02` | `tracked закрыто, historical debt структурирован и ждёт внешнего evidence` |
 | `A2` | `Security / unsafe paths` | не допускать новых unsafe обходов | зелёные invariants/gates | `pnpm gate:invariants`, due diligence | внешнее evidence не требуется | `внутренне подтверждено` |

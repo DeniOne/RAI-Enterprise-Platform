@@ -2,6 +2,36 @@
 
 ## 2026-03-31
 
+1. **A5 chain-of-title source register assembled** [DONE]:
+  - Добавлен root generator:
+    - `scripts/phase-a5-chain-of-title-register.cjs`
+  - В `package.json` добавлены команды:
+    - `pnpm phase:a5:chain-of-title`
+    - `pnpm gate:phase:a5:chain-of-title`
+  - Создан новый canonical doc:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_SOURCE_REGISTER.md`
+  - Generated evidence выпускается в:
+    - `var/compliance/phase-a5-chain-of-title-source-register.json`
+    - `var/compliance/phase-a5-chain-of-title-source-register.md`
+  - Фактический baseline:
+    - `total_assets = 18`
+    - `application_workspaces = 5`
+    - `library_workspaces = 8`
+    - `database_assets = 4`
+    - `pnpm gate:phase:a5:chain-of-title` -> `PASS`
+  - Синхронизированы:
+    - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`
+    - `PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md`
+    - `PHASE_A1_ELP_09_CHAIN_OF_TITLE_CHECKLIST.md`
+    - `PHASE_A_EXECUTION_BOARD.md`
+    - `PHASE_A_EVIDENCE_MATRIX.md`
+    - `ONE_BIG_PHASE/INDEX.md`
+    - `docs/DOCS_MATRIX.md`
+  - Практический эффект:
+    - `ELP-20260328-09` теперь готовится по явной карте first-party workspace и database perimeter;
+    - `A5.3` больше не висит только на общей формуле “нужен chain-of-title pack”;
+    - repo-side подготовка `ELP-09` усилилась без подмены внешних signed-артефактов.
+
 1. **A4 pilot handoff lifecycle assembled** [DONE]:
   - Добавлены scripts:
     - `scripts/phase-a4-pilot-handoff-status.cjs`
