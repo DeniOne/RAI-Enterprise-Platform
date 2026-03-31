@@ -117,6 +117,15 @@
   - `A-2.3.3` = historical secret/key debt
   - `A-2.3.5` = внешний access-governance perimeter
 - [x] `PHASE_A_EVIDENCE_MATRIX.md` усилена отдельной строкой `Security / access governance outside repo`, чтобы не путать наличие `CODEOWNERS` в Git с реальным подтверждением GitHub protection/perimeter.
+- [x] Остаточные блоки `A2` разложены ещё глубже до micro-checklists:
+  - `PHASE_A2_S1_CA_KEY_REVOCATION_CHECKLIST.md`
+  - `PHASE_A2_S2_TELEGRAM_TOKEN_ROTATION_CHECKLIST.md`
+  - `PHASE_A2_S3_GITHUB_ACCESS_REVIEW_CHECKLIST.md`
+- [x] В restricted perimeter создан локальный scaffolding `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/`:
+  - `metadata/INDEX.md`
+  - metadata cards `A2-S-01/02/03`
+  - templates для `ca.key` revocation, Telegram token rotation и GitHub access review
+- [x] Теперь по `A2` есть не только high-level checklist, но и прямые файлы для подготовки restricted evidence по каждому реальному хвосту security-track.
 - [x] Для трека `A3` добавлен отдельный рабочий пакет `PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md`.
 - [x] `A3` теперь переведён из общей policy-темы в execution-пакет по четырём обязательным артефактам:
   - `tool-permission matrix`

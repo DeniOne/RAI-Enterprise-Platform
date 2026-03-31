@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A2-EXTERNAL-ACCESS-GOVERNANCE-CHECKLIST-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A2-EXTERNAL-ACCESS-GOVERNANCE-CHECKLIST-20260331
@@ -21,6 +21,10 @@ verified_by: manual
 last_verified: 2026-03-31
 
 Этот документ нужен, чтобы закрыть тот кусок `A2`, который не читается из локального Git: branch protection, required reviewers, admin bypass, deploy keys, environment secrets и фактический review-perimeter в GitHub UI.
+
+Связанный micro-checklist:
+
+- [PHASE_A2_S3_GITHUB_ACCESS_REVIEW_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_S3_GITHUB_ACCESS_REVIEW_CHECKLIST.md)
 
 ## 1. Почему это отдельный шаг
 

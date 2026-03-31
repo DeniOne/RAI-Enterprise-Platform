@@ -850,3 +850,19 @@
   - добавлена новая строка `A-2.3.5` для внешнего access-governance perimeter со статусом `waiting_external`
 - `PHASE_A_EVIDENCE_MATRIX.md` получила отдельную строку `Security / access governance outside repo`, чтобы отделить локальный `CODEOWNERS`/workflow baseline от реального GitHub UI evidence.
 - Практический эффект: после закрытия dependency-risk `A2` больше не остаётся абстрактным security-хвостом; теперь два оставшихся блока сформулированы как прямые исполнимые шаги, по которым можно реально собирать evidence и двигать `Phase A`.
+
+[2026-03-31 10:31Z] `A2` доведена до micro-step и restricted-template уровня
+- Созданы:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_S1_CA_KEY_REVOCATION_CHECKLIST.md`
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_S2_TELEGRAM_TOKEN_ROTATION_CHECKLIST.md`
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_S3_GITHUB_ACCESS_REVIEW_CHECKLIST.md`
+- Усилены:
+  - `PHASE_A2_HISTORICAL_SECRET_AND_KEY_DEBT_CHECKLIST.md`
+  - `PHASE_A2_EXTERNAL_ACCESS_GOVERNANCE_CHECKLIST.md`
+  - `PHASE_A_EXECUTION_BOARD.md`
+  - `ONE_BIG_PHASE/INDEX.md`
+- В restricted perimeter создан локальный security scaffolding:
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/metadata/INDEX.md`
+  - metadata cards `A2-S-01`, `A2-S-02`, `A2-S-03`
+  - template files для каждого артефакта
+- Практический эффект: остаточные хвосты `A2` больше не требуют придумывать формат evidence с нуля; теперь по каждому security-blocker есть и канонический execution-чеклист в репозитории, и готовый restricted template вне Git.
