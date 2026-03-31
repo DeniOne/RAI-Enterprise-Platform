@@ -105,6 +105,11 @@
     - `@typescript-eslint/typescript-estree -> minimatch@9.0.3`
     - `@angular-devkit/core -> picomatch@4.0.1/4.0.2` через `@nestjs/cli`
   - `pnpm gate:secrets`, `pnpm gate:invariants`, `pnpm --filter api build` и `pnpm --filter web build` остаются зелёными
+- [x] Для `A2` зафиксировано отдельное release-решение `PHASE_A2_TIER1_TOOLCHAIN_DECISION.md`:
+  - residual `high=5` признан допустимым для `Tier 1 self-host / localized MVP pilot` как `non-runtime toolchain debt`
+  - это решение не распространяется на `Tier 2` и `Tier 3`
+  - строка `A-2.3.1` в `PHASE_A_EXECUTION_BOARD.md` переведена в `done`
+  - внутри `A2` основным остаточным фокусом стали historical key/rotation debt и внешний access-governance evidence
 - [x] Для трека `A3` добавлен отдельный рабочий пакет `PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md`.
 - [x] `A3` теперь переведён из общей policy-темы в execution-пакет по четырём обязательным артефактам:
   - `tool-permission matrix`

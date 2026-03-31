@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A2-SECURITY-CLOSEOUT-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.3.0
+version: 1.4.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A2-SECURITY-CLOSEOUT-PLAN-20260331
@@ -22,7 +22,7 @@ last_verified: 2026-03-31
 
 Этот документ переводит `A2` из общей строки “закрыть security” в прямой execution-пакет по dependency-risk, secret hygiene и invariants.
 
-Для первого рабочего прохода использовать также [PHASE_A2_FIRST_WAVE_SECURITY_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_FIRST_WAVE_SECURITY_CHECKLIST.md).
+Для первого рабочего прохода использовать также [PHASE_A2_FIRST_WAVE_SECURITY_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_FIRST_WAVE_SECURITY_CHECKLIST.md). Для release-решения по residual `high=5` использовать [PHASE_A2_TIER1_TOOLCHAIN_DECISION.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_TIER1_TOOLCHAIN_DECISION.md).
 
 ## 1. Текущее состояние `A2`
 
@@ -38,6 +38,7 @@ last_verified: 2026-03-31
   - `high: 37 -> 30 -> 5`
   - advisories по `fast-xml-parser`, `handlebars`, `axios <= 1.13.4`, `effect`, `flatted`, `rollup`, `undici`, `multer`, `serialize-javascript`, `glob` и release-impact `path-to-regexp`-цепочкам больше не воспроизводятся;
   - после refresh проходят `pnpm --filter api build` и `pnpm --filter web build`.
+  - residual toolchain-tail формально признан допустимым для `Tier 1` отдельным release-решением.
 
 Одновременно остаются реальные незакрытые вопросы:
 
@@ -107,9 +108,9 @@ last_verified: 2026-03-31
 
 1. Сначала удерживать зелёными `gate:secrets` и `gate:invariants`.
 2. Затем разбирать dependency-risk.
-3. Затем формально решить судьбу toolchain-tail `high=5`: принять его как допустимый для `Tier 1` или сделать ещё один refresh.
-4. Затем закрывать historical key/rotation debt.
-5. Затем добирать внешний access-governance evidence.
+3. Затем закрывать historical key/rotation debt.
+4. Затем добирать внешний access-governance evidence.
+5. Перед движением выше `Tier 1` отдельно возвращаться к CLI/devkit refresh.
 
 Нельзя:
 
@@ -128,9 +129,9 @@ last_verified: 2026-03-31
 Board должен меняться так:
 
 - `open` -> `in_progress`, когда появился реальный remediation-проход, а не только обсуждение;
-- `in_progress` сохраняется, пока `critical=0` уже достигнут, но residual toolchain tail ещё не получил явного release-решения;
+- `done` допустим для dependency-risk после отдельного release-решения по residual toolchain tail;
 - `guard_active` остаётся guard-статусом, пока есть policy/gate, но ещё нет полного closeout;
-- `done` допустим только после снижения release-impact risk и явного закрытия/acceptance остаточного toolchain debt, а не после единичного зелёного запуска.
+- `done` для всего трека `A2` недопустим, пока historical secret/key debt и access-governance evidence остаются незакрытыми.
 
 ## 5. Проверки `A2`
 
@@ -151,7 +152,7 @@ Board должен меняться так:
 
 Трек `A2` считается закрытым только когда одновременно выполняются условия:
 
-- dependency-risk опущен до уровня, который не блокирует `Tier 1`, а остаточный toolchain-tail либо устранён, либо явно принят как non-runtime debt;
+- dependency-risk опущен до уровня, который не блокирует `Tier 1`, а остаточный toolchain-tail явно принят как non-runtime debt для `Tier 1` и вынесен в follow-up для более высоких tiers;
 - tracked secret leakage не возвращается;
 - invariants остаются зелёными без новых unsafe путей;
 - historical secret/key debt закрыт или переведён в явно доказанный остаточный follow-up;

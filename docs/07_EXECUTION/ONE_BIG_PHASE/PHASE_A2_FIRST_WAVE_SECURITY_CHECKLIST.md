@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A2-FIRST-WAVE-SECURITY-CHECKLIST-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.2.0
+version: 1.3.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A2-FIRST-WAVE-SECURITY-CHECKLIST-20260331
@@ -90,6 +90,8 @@ last_verified: 2026-03-31
   - либо этот хвост допустим для `Tier 1` как не-runtime debt,
   - либо нужен ещё один toolchain refresh.
 
+Это решение уже зафиксировано в [PHASE_A2_TIER1_TOOLCHAIN_DECISION.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_TIER1_TOOLCHAIN_DECISION.md).
+
 ### Шаг 4. Удерживать invariants и secrets
 
 Нужно:
@@ -144,4 +146,4 @@ pnpm security:licenses
 - `critical=0` подтверждено reproducible audit-отчётом;
 - release-impact `high` сняты, а остаток `high=5` явно классифицирован как toolchain-only;
 - baseline по secrets и invariants остаётся зелёным;
-- в [PHASE_A_EXECUTION_BOARD.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md) `A-2.3.1` отражает состояние `runtime-impact remediation complete; residual toolchain tail remains`.
+- в [PHASE_A_EXECUTION_BOARD.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md) `A-2.3.1` переводится в `done` для `Tier 1`, а residual toolchain-tail уходит в follow-up для более высоких tiers.

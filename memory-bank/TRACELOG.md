@@ -826,3 +826,16 @@
   - `apps/api -> @typescript-eslint/typescript-estree@6.21.0 -> minimatch@9.0.3`
   - `apps/api` и `apps/telegram-bot` -> `@nestjs/cli -> @angular-devkit/core@17.3.11/19.2.19 -> picomatch@4.0.1/4.0.2`
 - Практический эффект: runtime-impact advisories по текущему `Tier 1` периметру сняты; `A2` теперь упирается не в production/runtime зависимости, а в явное решение по residual toolchain debt и внешний access-governance follow-up.
+
+[2026-03-31 10:04Z] Для `A2` зафиксировано отдельное Tier-1 решение по residual toolchain-tail
+- Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_TIER1_TOOLCHAIN_DECISION.md`.
+- В документе зафиксировано, что остаточный `high=5`:
+  - не подтверждён как runtime-perimeter `Tier 1`
+  - ограничен dev-toolchain путями `@typescript-eslint/typescript-estree -> minimatch@9.0.3` и `@angular-devkit/core -> picomatch@4.0.1/4.0.2`
+  - считается допустимым для `Tier 1 self-host / localized MVP pilot` как `non-runtime toolchain debt`
+  - не считается допустимым без отдельного пересмотра для `Tier 2` и `Tier 3`
+- `PHASE_A_EXECUTION_BOARD.md` синхронизирован:
+  - `A-2.3.1` переведён в `done`
+  - следующий focus внутри `A2` смещён на historical key/rotation debt и внешний access-governance evidence
+- `PHASE_A2_FIRST_WAVE_SECURITY_CHECKLIST.md`, `PHASE_A2_SECURITY_CLOSEOUT_PLAN.md`, `PHASE_A_EVIDENCE_MATRIX.md` и `ONE_BIG_PHASE/INDEX.md` синхронизированы под новое решение.
+- Практический эффект: `A2` перестал висеть между “почти закрыто” и “непонятно можно ли выпускать”; для `Tier 1` dependency-risk теперь имеет формальное управленческое решение, а security-track можно дальше вести по реальным остаточным блокерам.
