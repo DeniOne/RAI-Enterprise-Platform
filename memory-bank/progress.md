@@ -169,6 +169,18 @@
     - `Phase A` больше не держится только на больших планах и двух micro-docs;
     - теперь каждый трек `A0–A5` имеет конкретный стартовый execution-layer, который можно реально брать в работу сверху вниз.
 
+12. **A1 fully decomposed across both legal waves** [DONE]:
+  - Добавлены:
+    - `PHASE_A1_SECOND_WAVE_EXECUTION_CHECKLIST.md`
+    - `PHASE_A1_ELP_02_RKN_CHECKLIST.md`
+    - `PHASE_A1_ELP_05_TRANSBORDER_CHECKLIST.md`
+    - `PHASE_A1_ELP_08_RETENTION_CHECKLIST.md`
+    - `PHASE_A1_ELP_09_CHAIN_OF_TITLE_CHECKLIST.md`
+  - `PHASE_A1_LEGAL_CLOSEOUT_PLAN.md`, `ONE_BIG_PHASE/INDEX.md`, `01_PHASE_A_STOP_BLOCKERS_AND_GATES.md` и `docs/DOCS_MATRIX.md` синхронизированы.
+  - Практический эффект:
+    - вся приоритетная legal-восьмёрка теперь разложена в каноне до конкретных owner-checklists;
+    - legal-track `A1` внутри репозитория доведён до максимальной исполнимости без подделки внешних evidence.
+
 ## 2026-03-30
 
 1. **Owner-friendly MVP execution checklist** [DONE]:

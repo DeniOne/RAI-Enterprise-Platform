@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A1-LEGAL-CLOSEOUT-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.1.0
+version: 1.2.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A1-LEGAL-CLOSEOUT-PLAN-20260331
@@ -23,6 +23,8 @@ last_verified: 2026-03-31
 Этот документ переводит `A1` из общей формулировки “закрыть legal” в прямую рабочую очередь по `ELP-*` артефактам, владельцам и командам.
 
 Для самой первой рабочей волны `ELP-01 / 03 / 04 / 06` использовать также [PHASE_A1_FIRST_WAVE_EXECUTION_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_EXECUTION_CHECKLIST.md).
+
+Для второй волны `ELP-02 / 05 / 08 / 09` использовать также [PHASE_A1_SECOND_WAVE_EXECUTION_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_SECOND_WAVE_EXECUTION_CHECKLIST.md).
 
 ## 1. Текущее состояние `A1`
 

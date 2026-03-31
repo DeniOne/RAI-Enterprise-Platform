@@ -75,6 +75,14 @@
   - anti-drift triage rules для `A0`
   - micro-checklists по первой critical legal wave
   - first-wave execution checklists для security, AI governance, installability и IP/OSS
+- [x] `A1` добита и по второй волне.
+- [x] Добавлены:
+  - `PHASE_A1_SECOND_WAVE_EXECUTION_CHECKLIST.md`
+  - `PHASE_A1_ELP_02_RKN_CHECKLIST.md`
+  - `PHASE_A1_ELP_05_TRANSBORDER_CHECKLIST.md`
+  - `PHASE_A1_ELP_08_RETENTION_CHECKLIST.md`
+  - `PHASE_A1_ELP_09_CHAIN_OF_TITLE_CHECKLIST.md`
+- [x] Это означает, что вся приоритетная legal-восьмёрка теперь разложена в каноне до конкретных owner-checklists, а не только до общих execution-планов.
 - [x] Для трека `A2` добавлен отдельный рабочий пакет `PHASE_A2_SECURITY_CLOSEOUT_PLAN.md`.
 - [x] `A2` теперь привязан к фактическому baseline:
   - `pnpm security:audit:ci`

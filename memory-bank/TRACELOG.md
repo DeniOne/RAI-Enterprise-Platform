@@ -68,6 +68,15 @@
   - `security:licenses` -> `unknown_licenses=33`
 - Практический эффект: все треки `A0–A5` теперь имеют не только общий closeout-plan, но и первый исполнимый рабочий слой, по которому можно реально двигать фазу без распыления и без постоянных возвратов к верхнеуровневым документам.
 
+[2026-03-31 02:58Z] `A1` разложена до конца по всей приоритетной legal-восьмёрке
+- Созданы:
+  - `PHASE_A1_SECOND_WAVE_EXECUTION_CHECKLIST.md`
+  - `PHASE_A1_ELP_02_RKN_CHECKLIST.md`
+  - `PHASE_A1_ELP_05_TRANSBORDER_CHECKLIST.md`
+  - `PHASE_A1_ELP_08_RETENTION_CHECKLIST.md`
+  - `PHASE_A1_ELP_09_CHAIN_OF_TITLE_CHECKLIST.md`
+- Практический эффект: legal-track `A1` больше не имеет незадекомпозированных priority-items внутри репозитория; от этого момента остаточный blocker уже не в структуре docs, а в отсутствии реальных внешних документов и owner sign-off.
+
 [2026-03-31 01:31Z] Для `A4` добавлен отдельный installability/recovery closeout packet
 - Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALLABILITY_AND_RECOVERY_PLAN.md`.
 - Документ привязан к текущим фактам:
