@@ -1726,3 +1726,22 @@
   - после owner status `replied` следующий шаг уже заранее определён как конкретный intake-route;
   - legal, security и pilot handoff внешние ответы больше не требуют ручного поиска команды;
   - внешний хвост `Phase A` теперь связан не только с `outreach lifecycle`, но и с конкретным downstream evidence lifecycle.
+[2026-03-31 19:44Z] Для внешнего owner-reply контура добавлен capture-perimeter
+- Добавлен root script:
+  - `scripts/phase-a-external-reply-capture-packet.cjs`
+- В `package.json` добавлены команды:
+  - `pnpm phase:a:external-reply-capture`
+  - `pnpm gate:phase:a:external-reply-capture`
+- Создан новый canonical doc:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_REPLY_CAPTURE_PACKET.md`
+- Generated evidence теперь выпускается в:
+  - `var/execution/phase-a-external-reply-capture-packet.json`
+  - `var/execution/phase-a-external-reply-capture-packet.md`
+- Restricted capture perimeter теперь выпускается в:
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/execution/2026-03-31/request-packets/PHASE-A-EXTERNAL-REPLY-CAPTURE/INDEX.md`
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/execution/2026-03-31/request-packets/PHASE-A-EXTERNAL-REPLY-CAPTURE/<queue>/CAPTURE.md`
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/execution/2026-03-31/request-packets/PHASE-A-EXTERNAL-REPLY-CAPTURE/<queue>/incoming/<referenceId>/DROP_HERE.md`
+- Практический эффект:
+  - после статуса `replied` появляется не только маршрут `intake`, но и единое место хранения raw owner reply;
+  - исходные письма и вложения перестают теряться между внешними каналами и ручными заметками;
+  - `Phase A` получает полный внешний путь `prepared -> sent -> replied -> capture -> intake -> reviewed -> accepted`.

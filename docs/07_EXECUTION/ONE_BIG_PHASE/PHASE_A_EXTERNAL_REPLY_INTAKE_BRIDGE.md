@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A-EXTERNAL-REPLY-INTAKE-BRIDGE-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-EXTERNAL-REPLY-INTAKE-BRIDGE-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: scripts/phase-a-external-reply-intake-bridge.cjs;package.json;var/execution/phase-a-external-reply-intake-bridge.json;var/execution/phase-a-external-reply-intake-bridge.md;var/execution/phase-a-external-outreach-ledger.json;var/execution/phase-a-external-owner-queues.json;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OUTREACH_LEDGER.md
+evidence_refs: scripts/phase-a-external-reply-intake-bridge.cjs;scripts/phase-a-external-reply-capture-packet.cjs;package.json;var/execution/phase-a-external-reply-intake-bridge.json;var/execution/phase-a-external-reply-intake-bridge.md;var/execution/phase-a-external-reply-capture-packet.json;var/execution/phase-a-external-outreach-ledger.json;var/execution/phase-a-external-owner-queues.json;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OUTREACH_LEDGER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_REPLY_CAPTURE_PACKET.md
 ---
 # PHASE A EXTERNAL REPLY INTAKE BRIDGE
 
@@ -36,6 +36,7 @@ last_verified: 2026-03-31
 
 - `pnpm phase:a:external-outreach-ledger`
 - `pnpm phase:a:external-outreach:transition -- --queue=@chief_legal_officer --status=replied --contact=mail@example.com --at=2026-04-02`
+- `pnpm phase:a:external-reply-capture`
 - `pnpm phase:a:closeout`
 
 ## 2. Что выпускается
@@ -49,6 +50,10 @@ Restricted bridge perimeter:
 
 - `/root/RAI_EP_RESTRICTED_EVIDENCE/execution/2026-03-31/request-packets/PHASE-A-EXTERNAL-REPLY-INTAKE-BRIDGE/INDEX.md`
 - `/root/RAI_EP_RESTRICTED_EVIDENCE/execution/2026-03-31/request-packets/PHASE-A-EXTERNAL-REPLY-INTAKE-BRIDGE/<queue>/INTAKE.md`
+
+Связанный capture-слой:
+
+- [PHASE_A_EXTERNAL_REPLY_CAPTURE_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_REPLY_CAPTURE_PACKET.md)
 
 ## 3. Что считается сильным результатом
 
@@ -67,6 +72,7 @@ Restricted bridge perimeter:
 ## 5. Что не делает этот bridge
 
 - не переводит `outreach_status` сам;
+- не хранит raw owner reply и вложения;
 - не подменяет owner reply;
 - не означает, что blocker уже двинулся, пока не выполнен фактический `intake`.
 
@@ -75,5 +81,6 @@ Restricted bridge perimeter:
 Следующее реальное изменение после этого слоя:
 
 - owner queue должна перейти в `replied`;
+- затем raw owner reply нужно положить в capture-perimeter через [PHASE_A_EXTERNAL_REPLY_CAPTURE_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_REPLY_CAPTURE_PACKET.md);
 - затем по её `INTAKE.md` должен выполниться соответствующий `intake`;
 - после этого уже трековые lifecycle-команды должны сдвинуть evidence из `received` в `reviewed` и `accepted`.

@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A-EXTERNAL-OUTREACH-LEDGER-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.2.0
+version: 1.3.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-EXTERNAL-OUTREACH-LEDGER-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: scripts/phase-a-external-outreach-ledger.cjs;scripts/phase-a-external-outreach-transition.cjs;scripts/phase-a-external-reply-intake-bridge.cjs;package.json;var/execution/phase-a-external-outreach-ledger.json;var/execution/phase-a-external-outreach-ledger.md;var/execution/phase-a-external-reply-intake-bridge.json;var/execution/phase-a-external-owner-outreach.json;var/execution/phase-a-external-owner-queues.json;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_OUTREACH_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_REPLY_INTAKE_BRIDGE.md
+evidence_refs: scripts/phase-a-external-outreach-ledger.cjs;scripts/phase-a-external-outreach-transition.cjs;scripts/phase-a-external-reply-intake-bridge.cjs;scripts/phase-a-external-reply-capture-packet.cjs;package.json;var/execution/phase-a-external-outreach-ledger.json;var/execution/phase-a-external-outreach-ledger.md;var/execution/phase-a-external-reply-intake-bridge.json;var/execution/phase-a-external-reply-capture-packet.json;var/execution/phase-a-external-owner-outreach.json;var/execution/phase-a-external-owner-queues.json;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_OUTREACH_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_REPLY_INTAKE_BRIDGE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_REPLY_CAPTURE_PACKET.md
 ---
 # PHASE A EXTERNAL OUTREACH LEDGER
 
@@ -36,6 +36,7 @@ last_verified: 2026-03-31
 
 - `pnpm phase:a:external-owner-outreach`
 - `pnpm phase:a:external-outreach:transition -- --queue=@chief_legal_officer --status=sent --contact=mail@example.com --at=2026-03-31`
+- `pnpm phase:a:external-reply-capture`
 - `pnpm phase:a:external-reply-bridge`
 - `pnpm phase:a:closeout`
 
@@ -53,6 +54,7 @@ Restricted tracker perimeter:
 
 Следующий bridge-слой:
 
+- [PHASE_A_EXTERNAL_REPLY_CAPTURE_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_REPLY_CAPTURE_PACKET.md)
 - [PHASE_A_EXTERNAL_REPLY_INTAKE_BRIDGE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_REPLY_INTAKE_BRIDGE.md)
 
 ## 3. Что считается сильным результатом
@@ -99,5 +101,6 @@ Restricted tracker perimeter:
 
 - owner queues должны начать переходить из `prepared` в `sent`;
 - затем часть очередей должна перейти в `acknowledged` и `replied`;
+- после `replied` сначала использовать [PHASE_A_EXTERNAL_REPLY_CAPTURE_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_REPLY_CAPTURE_PACKET.md), чтобы raw owner reply лег в каноническую drop-zone;
 - после `replied` использовать [PHASE_A_EXTERNAL_REPLY_INTAKE_BRIDGE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_REPLY_INTAKE_BRIDGE.md), чтобы запустить уже правильный `intake -> reviewed -> accepted`;
 - после этого `Phase A closeout` будет меняться не по подготовке, а по фактическому внешнему движению.
