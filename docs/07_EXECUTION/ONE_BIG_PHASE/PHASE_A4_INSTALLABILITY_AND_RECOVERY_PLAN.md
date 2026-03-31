@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A4-INSTALLABILITY-RECOVERY-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.4.0
+version: 1.5.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A4-INSTALLABILITY-RECOVERY-PLAN-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SELF_HOST_INSTALL_UPGRADE_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALL_DRY_RUN_REPORT_TEMPLATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALL_DRY_RUN_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BLANK_WORKTREE_BOOTSTRAP_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_TEMPLATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SUPPORT_BOUNDARY_PACKET.md;docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md;docs/05_OPERATIONS/HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX.md;docs/05_OPERATIONS/WORKFLOWS/RELEASE_BACKUP_RESTORE_AND_DR_RUNBOOK.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SELF_HOST_INSTALL_UPGRADE_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALL_DRY_RUN_REPORT_TEMPLATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALL_DRY_RUN_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BLANK_WORKTREE_BOOTSTRAP_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_TEMPLATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SUPPORT_BOUNDARY_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_PILOT_HANDOFF_EVIDENCE_CLOSEOUT_CHECKLIST.md;docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md;docs/05_OPERATIONS/HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX.md;docs/05_OPERATIONS/WORKFLOWS/RELEASE_BACKUP_RESTORE_AND_DR_RUNBOOK.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md
 ---
 # PHASE A4 INSTALLABILITY AND RECOVERY PLAN
 
@@ -46,6 +46,7 @@ last_verified: 2026-03-31
 Одновременно остаются реальные незакрытые вопросы:
 
 - support boundary уже оформлен как execution-артефакт, но ещё не подтверждён реальным pilot handoff;
+- repo-side lifecycle для pilot handoff теперь можно вести через status/intake/transition, но первый реальный accepted handoff artifact ещё отсутствует;
 - blank-worktree bootstrap уже подтверждён, но отдельный fresh-host provisioning на новой машине пока не проводился как самостоятельный operational rehearsal;
 - `Tier 1` ещё нельзя считать pilot-ready только по installability, пока не пройден operational handoff.
 
@@ -119,6 +120,7 @@ last_verified: 2026-03-31
 Текущий execution-артефакт:
 
 - [PHASE_A4_SUPPORT_BOUNDARY_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SUPPORT_BOUNDARY_PACKET.md)
+- [PHASE_A4_PILOT_HANDOFF_EVIDENCE_CLOSEOUT_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_PILOT_HANDOFF_EVIDENCE_CLOSEOUT_CHECKLIST.md)
 
 ## 3. Режим исполнения `A4`
 
@@ -128,6 +130,13 @@ last_verified: 2026-03-31
 2. Затем провести dry-run установки.
 3. Затем провести `backup / restore` drill.
 4. Затем закрыть support / operational boundary.
+
+Для handoff evidence использовать:
+
+- `pnpm phase:a4:handoff:status`
+- `pnpm gate:phase:a4:handoff`
+- `pnpm phase:a4:handoff:intake -- --reference=A4-H-01 --source=/abs/path/file`
+- `pnpm phase:a4:handoff:transition -- --reference=A4-H-01 --status=reviewed|accepted|expired`
 
 Нельзя:
 

@@ -2,6 +2,39 @@
 
 ## 2026-03-31
 
+1. **A4 pilot handoff lifecycle assembled** [DONE]:
+  - Добавлены scripts:
+    - `scripts/phase-a4-pilot-handoff-status.cjs`
+    - `scripts/phase-a4-pilot-handoff-intake.cjs`
+    - `scripts/phase-a4-pilot-handoff-transition.cjs`
+  - В `package.json` добавлены команды:
+    - `pnpm phase:a4:handoff:status`
+    - `pnpm phase:a4:handoff:intake`
+    - `pnpm phase:a4:handoff:transition`
+    - `pnpm gate:phase:a4:handoff`
+  - Создан новый canonical doc:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_PILOT_HANDOFF_EVIDENCE_CLOSEOUT_CHECKLIST.md`
+  - В restricted evidence store подняты:
+    - `pilot-handoffs/2026-03-31/metadata/INDEX.md`
+    - `A4-H-01-first-tier1-pilot-handoff.md`
+    - template и repo-derived draft для `A4-H-01`
+  - Синхронизированы:
+    - `PHASE_A4_INSTALLABILITY_AND_RECOVERY_PLAN.md`
+    - `PHASE_A4_TIER1_PILOT_HANDOFF_CHECKLIST.md`
+    - `PHASE_A4_SUPPORT_BOUNDARY_PACKET.md`
+    - `PHASE_A_EXECUTION_BOARD.md`
+    - `PHASE_A_EVIDENCE_MATRIX.md`
+    - `ONE_BIG_PHASE/INDEX.md`
+    - `docs/DOCS_MATRIX.md`
+  - Фактическая проверка:
+    - `pnpm phase:a4:handoff:status` -> `requested=1`, `issues=0`
+    - `pnpm gate:phase:a4:handoff` -> `PASS`
+    - на временной копии restricted root успешно пройдён путь `requested -> received -> reviewed -> accepted`
+  - Практический эффект:
+    - `A4.4` больше не держится только на checklist/template;
+    - первый pilot handoff теперь можно вести через такой же evidence lifecycle, как legal и security;
+    - внутренний хвост `Phase A` ещё сильнее сузился к реальным внешним accepted-артефактам.
+
 1. **A0 daily triage execution layer published** [DONE]:
   - Создан:
     - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A0_DAILY_TRIAGE_CHECKLIST.md`

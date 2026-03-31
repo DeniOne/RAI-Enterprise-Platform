@@ -1,6 +1,39 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A4.4` собран полный machine-readable lifecycle первого pilot handoff:
+  - добавлены root scripts:
+    - `scripts/phase-a4-pilot-handoff-status.cjs`
+    - `scripts/phase-a4-pilot-handoff-intake.cjs`
+    - `scripts/phase-a4-pilot-handoff-transition.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a4:handoff:status`
+    - `pnpm phase:a4:handoff:intake`
+    - `pnpm phase:a4:handoff:transition`
+    - `pnpm gate:phase:a4:handoff`
+- [x] Для `A4.4` создан новый repo-side closeout-слой:
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_PILOT_HANDOFF_EVIDENCE_CLOSEOUT_CHECKLIST.md`
+  - синхронизированы:
+    - `PHASE_A4_INSTALLABILITY_AND_RECOVERY_PLAN.md`
+    - `PHASE_A4_TIER1_PILOT_HANDOFF_CHECKLIST.md`
+    - `PHASE_A4_SUPPORT_BOUNDARY_PACKET.md`
+    - `PHASE_A_EXECUTION_BOARD.md`
+    - `PHASE_A_EVIDENCE_MATRIX.md`
+    - `ONE_BIG_PHASE/INDEX.md`
+    - `docs/DOCS_MATRIX.md`
+- [x] В restricted evidence store поднят новый perimeter:
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/pilot-handoffs/2026-03-31/metadata/INDEX.md`
+  - `A4-H-01-first-tier1-pilot-handoff.md`
+  - template и repo-derived draft для `A4-H-01`
+- [x] Реально подтверждено:
+  - `pnpm phase:a4:handoff:status` -> `requested=1`, `issues=0`
+  - `pnpm gate:phase:a4:handoff` -> `PASS`
+  - на временной копии restricted root успешно пройдён полный цикл:
+    - `requested -> received -> reviewed -> accepted`
+- [x] После этого `A4` сместилась так:
+  - `A-2.5.4` всё ещё остаётся `guard_active`
+  - но теперь это уже не просто template-based хвост, а полноценный external/operational evidence lifecycle
+  - честно незакрытым для `A4.4` остаётся только первый реальный accepted handoff report на живой pilot-среде
 - [x] Для `A0` закрыт внутренний execution-layer ежедневного triage:
   - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A0_DAILY_TRIAGE_CHECKLIST.md`
   - этот документ переводит `A0` из общего governance-правила в один ежедневный исполняемый ритуал
