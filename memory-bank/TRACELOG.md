@@ -896,3 +896,15 @@
 - `A2-S-03` metadata card обновлена полем `draft_path`, а repo-side checklist теперь явно ссылается на draft как на стартовую основу для внешнего restricted artifact.
 - Статус `A2-S-03` оставлен `requested`, потому что repository не подтверждает branch protection, required checks enforcement, admin bypass, deploy keys и GitHub environments.
 - Практический эффект: у owner'а больше не пустой template, а почти готовый restricted draft, в котором осталось только внешне подтвердить GitHub UI perimeter и итоговый review verdict.
+
+[2026-03-31 11:24Z] Для `A2` добавлен machine-readable security-evidence gate
+- Создан `scripts/security-evidence-status.cjs`.
+- В `package.json` добавлены команды:
+  - `pnpm security:evidence:status`
+  - `pnpm gate:security:evidence`
+- Новый script читает restricted metadata в `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/metadata`, проверяет статусы `A2-S-01/02/03`, наличие `draft_path`/`artifact_path`, `review_due` и пишет отчёты в:
+  - `var/security/security-evidence-status.json`
+  - `var/security/security-evidence-status.md`
+- Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_SECURITY_EVIDENCE_CLOSEOUT_CHECKLIST.md` как единый closeout-порядок для `A2-S-01/02/03`.
+- `PHASE_A2_SECURITY_CLOSEOUT_PLAN.md`, `PHASE_A2_HISTORICAL_SECRET_AND_KEY_DEBT_CHECKLIST.md`, `PHASE_A2_EXTERNAL_ACCESS_GOVERNANCE_CHECKLIST.md`, `PHASE_A_EXECUTION_BOARD.md` и `PHASE_A_EVIDENCE_MATRIX.md` синхронизированы с новым gate.
+- Практический эффект: residual `A2` security evidence теперь отслеживается не только вручную по markdown и restricted-папкам, а ещё и одной воспроизводимой командой, что резко снижает drift между drafts, metadata и execution-board.

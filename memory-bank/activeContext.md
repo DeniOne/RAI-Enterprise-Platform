@@ -138,6 +138,12 @@
   - создан `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/drafts/A2-S-03/A2-S-03__repo-derived-draft.md`
   - draft фиксирует подтверждённые repo-факты по `CODEOWNERS`, критичным security/invariant workflows и policy-требованию quarterly GitHub UI review outside repo
   - metadata card `A2-S-03` теперь ссылается на `draft_path`, но статус остаётся `requested`, потому что branch protection, required checks, admin bypass, deploy keys и environments не доказываются одним только Git-репозиторием
+- [x] Для residual security evidence добавлен machine-readable gate:
+  - создан `scripts/security-evidence-status.cjs`
+  - доступны `pnpm security:evidence:status` и `pnpm gate:security:evidence`
+  - gate проверяет restricted metadata по `A2-S-01/02/03`, наличие draft/artifact paths и пишет отчёт в `var/security/security-evidence-status.{json,md}`
+- [x] Для `A2` добавлен единый closeout-checklist `PHASE_A2_SECURITY_EVIDENCE_CLOSEOUT_CHECKLIST.md`.
+- [x] `PHASE_A2_SECURITY_CLOSEOUT_PLAN`, `PHASE_A2_HISTORICAL_SECRET_AND_KEY_DEBT_CHECKLIST`, `PHASE_A2_EXTERNAL_ACCESS_GOVERNANCE_CHECKLIST`, `PHASE_A_EXECUTION_BOARD` и `PHASE_A_EVIDENCE_MATRIX` синхронизированы с новым `security:evidence` контуром.
 - [x] Для трека `A3` добавлен отдельный рабочий пакет `PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md`.
 - [x] `A3` теперь переведён из общей policy-темы в execution-пакет по четырём обязательным артефактам:
   - `tool-permission matrix`

@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A2-SECURITY-CLOSEOUT-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.5.0
+version: 1.6.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A2-SECURITY-CLOSEOUT-PLAN-20260331
@@ -26,6 +26,7 @@ last_verified: 2026-03-31
 
 - [PHASE_A2_HISTORICAL_SECRET_AND_KEY_DEBT_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_HISTORICAL_SECRET_AND_KEY_DEBT_CHECKLIST.md)
 - [PHASE_A2_EXTERNAL_ACCESS_GOVERNANCE_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_EXTERNAL_ACCESS_GOVERNANCE_CHECKLIST.md)
+- [PHASE_A2_SECURITY_EVIDENCE_CLOSEOUT_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_SECURITY_EVIDENCE_CLOSEOUT_CHECKLIST.md)
 
 ## 1. Текущее состояние `A2`
 
@@ -122,6 +123,11 @@ last_verified: 2026-03-31
 3. Затем закрывать historical key/rotation debt.
 4. Затем добирать внешний access-governance evidence.
 5. Перед движением выше `Tier 1` отдельно возвращаться к CLI/devkit refresh.
+
+Для контроля residual evidence использовать:
+
+- `pnpm security:evidence:status`
+- `pnpm gate:security:evidence`
 
 Нельзя:
 

@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A2-EXTERNAL-ACCESS-GOVERNANCE-CHECKLIST-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.1.0
+version: 1.2.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A2-EXTERNAL-ACCESS-GOVERNANCE-CHECKLIST-20260331
@@ -25,6 +25,11 @@ last_verified: 2026-03-31
 Связанный micro-checklist:
 
 - [PHASE_A2_S3_GITHUB_ACCESS_REVIEW_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_S3_GITHUB_ACCESS_REVIEW_CHECKLIST.md)
+
+Статус evidence-layer проверять через:
+
+- `pnpm security:evidence:status`
+- `pnpm gate:security:evidence`
 
 ## 1. Почему это отдельный шаг
 
