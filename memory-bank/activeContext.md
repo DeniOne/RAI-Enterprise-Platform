@@ -1,6 +1,28 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A4` собран первый фактический execution baseline, а не только repo-side scaffold.
+- [x] Реально подтверждено:
+  - `pnpm docker:up` проходит после перевода root script на `docker compose`
+  - `pnpm db:migrate` проходит после добавления `scripts/prisma-migrate-safe.cjs`
+  - `pnpm --filter api build` и `pnpm --filter web build` проходят на этом install path
+  - выполнен `backup / restore` rehearsal с восстановлением dump в временную БД и последующей cleanup-проверкой
+- [x] Для `A4` созданы новые canonical execution reports:
+  - `PHASE_A4_INSTALL_DRY_RUN_REPORT_2026-03-31.md`
+  - `PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_2026-03-31.md`
+- [x] Для `A3` собран первый runtime-drill evidence layer:
+  - `advisory-oncall-drill`
+  - `advisory-stage-progression`
+  - `advisory-dr-rollback-rehearsal`
+  - machine-readable outputs сохранены в `var/ops`
+  - опубликован `PHASE_A3_RUNTIME_DRILL_REPORT_2026-03-31.md`
+- [x] Найден и исправлен repo-side drift в ops scripts:
+  - mutating advisory endpoints уже требуют `Idempotency-Key`
+  - `advisory-oncall-drill.mjs`
+  - `advisory-stage-progression.mjs`
+  - `advisory-dr-rollback-rehearsal.mjs`
+    теперь автоматически добавляют этот заголовок
+- [x] `PHASE_A_EXECUTION_BOARD.md` и `PHASE_A_EVIDENCE_MATRIX.md` должны трактовать `A4.1` и `A4.2` как фактически усиленные evidence, а `A3.4` как подкреплённый runtime-drill, но ещё не закрытый unified evaluator gate.
 - [x] Создан новый активный execution-документ `docs/07_EXECUTION/RAI_EP_PRIORITY_SYNTHESIS_MASTER_REPORT.md` как главный synthesis между strategy, audit-пакетом, evidence matrix, RF review и фактическим runtime-контуром.
 - [x] Зафиксировано, что документ живёт в `docs/07_EXECUTION`, а не в `docs/_audit`, потому что это управляющий порядок действий, а не новый dated audit snapshot.
 - [x] В synthesis-документ встроены обязательные управленческие механики:

@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A3-RELEASE-EVAL-SUITE-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A3-RELEASE-EVAL-SUITE-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/_audit/AI_AGENT_FAILURE_SCENARIOS_2026-03-28.md;docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_TOOL_PERMISSION_MATRIX.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_HITL_MATRIX.md;apps/api/src/modules/rai-chat/supervisor-agent.service.spec.ts;apps/api/src/modules/rai-chat/runtime/runtime-spine.integration.spec.ts
+evidence_refs: docs/_audit/AI_AGENT_FAILURE_SCENARIOS_2026-03-28.md;docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_TOOL_PERMISSION_MATRIX.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_HITL_MATRIX.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RUNTIME_DRILL_REPORT_2026-03-31.md;apps/api/scripts/ops/advisory-oncall-drill.mjs;apps/api/scripts/ops/advisory-stage-progression.mjs;apps/api/scripts/ops/advisory-dr-rollback-rehearsal.mjs;apps/api/src/modules/rai-chat/supervisor-agent.service.spec.ts;apps/api/src/modules/rai-chat/runtime/runtime-spine.integration.spec.ts
 ---
 # PHASE A3 RELEASE EVAL SUITE
 
@@ -71,6 +71,7 @@ Eval suite нужен, чтобы перед `Tier 1` проверять не т
 - [AI_AGENT_FAILURE_SCENARIOS_2026-03-28.md](/root/RAI_EP/docs/_audit/AI_AGENT_FAILURE_SCENARIOS_2026-03-28.md)
 - [PHASE_A3_TOOL_PERMISSION_MATRIX.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_TOOL_PERMISSION_MATRIX.md)
 - [PHASE_A3_HITL_MATRIX.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_HITL_MATRIX.md)
+- [PHASE_A3_RUNTIME_DRILL_REPORT_2026-03-31.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RUNTIME_DRILL_REPORT_2026-03-31.md)
 
 Это ещё не finished suite, но уже достаточная база, чтобы перестать рассуждать об eval “в принципе”.
 
@@ -92,3 +93,15 @@ Eval suite нужен, чтобы перед `Tier 1` проверять не т
 - release automation, которая падала бы на unsafe eval regression.
 
 Поэтому `A3.4` после публикации этого документа переходит в `in_progress`, а не в `done`.
+
+## 8. Что уже подтверждено runtime-drill слоем
+
+После первой публикации suite были выполнены реальные advisory runtime-drill:
+
+- `oncall drill`
+- `stage progression`
+- `DR rollback rehearsal`
+
+Их summary зафиксирован в [PHASE_A3_RUNTIME_DRILL_REPORT_2026-03-31.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RUNTIME_DRILL_REPORT_2026-03-31.md).
+
+Это усиливает `A3.4`, но не заменяет полноценный evaluator runner: suite всё ещё требует единого запускаемого gate, а не только отдельных ops scripts.

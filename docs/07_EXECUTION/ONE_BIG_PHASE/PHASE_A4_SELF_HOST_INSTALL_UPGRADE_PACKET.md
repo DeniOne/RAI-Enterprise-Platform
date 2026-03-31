@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A4-SELF-HOST-INSTALL-UPGRADE-PACKET-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A4-SELF-HOST-INSTALL-UPGRADE-PACKET-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: README.md;docker-compose.yml;.env.example;docs/05_OPERATIONS/HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX.md;docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md;apps/api/src/app.module.ts
+evidence_refs: README.md;package.json;docker-compose.yml;.env.example;scripts/prisma-migrate-safe.cjs;docs/05_OPERATIONS/HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX.md;docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md;apps/api/src/app.module.ts
 ---
 # PHASE A4 SELF-HOST INSTALL UPGRADE PACKET
 
@@ -26,7 +26,7 @@ last_verified: 2026-03-31
 
 - `Node.js >= 20`
 - `pnpm@9`
-- `Docker + Docker Compose`
+- `Docker` c поддержкой `docker compose`
 - локальный доступ к портам:
   - `5432` PostgreSQL
   - `6379` Redis
@@ -45,7 +45,7 @@ last_verified: 2026-03-31
 ## 3. Минимальный bootstrap path
 
 1. Скопировать `.env.example` в локальный `.env`.
-2. Поднять infra через `docker-compose up -d`.
+2. Поднять infra через `pnpm docker:up` или напрямую через `docker compose up -d`.
 3. Выполнить `pnpm install`.
 4. Выполнить `pnpm db:migrate`.
 5. Проверить сборку:
@@ -87,9 +87,10 @@ last_verified: 2026-03-31
 
 ## 5. Что уже подтверждено
 
-- local `self-host` path через Docker реально описан в [README.md](/root/RAI_EP/README.md) и [docker-compose.yml](/root/RAI_EP/docker-compose.yml)
+- local `self-host` path через Docker реально описан в [README.md](/root/RAI_EP/README.md), [package.json](/root/RAI_EP/package.json) и [docker-compose.yml](/root/RAI_EP/docker-compose.yml)
 - env contract API явно описан в [app.module.ts](/root/RAI_EP/apps/api/src/app.module.ts)
 - self-host / localized path признан целевым в [HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX.md](/root/RAI_EP/docs/05_OPERATIONS/HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX.md)
+- `pnpm db:migrate` теперь опирается на [scripts/prisma-migrate-safe.cjs](/root/RAI_EP/scripts/prisma-migrate-safe.cjs), который загружает `.env` и вызывает `prisma migrate deploy` через `packages/prisma-client`
 
 ## 6. Что ещё не подтверждено
 

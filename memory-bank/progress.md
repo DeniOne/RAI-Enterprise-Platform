@@ -2,6 +2,51 @@
 
 ## 2026-03-31
 
+1. **A4 execution evidence and installability remediation** [DONE]:
+  - Для `A4` выполнен реальный dry-run install path:
+    - `pnpm install --frozen-lockfile`
+    - `pnpm --filter api build`
+    - `pnpm --filter web build`
+  - В процессе dry-run найден и устранён repo-side operational drift:
+    - root `docker:up/down` больше не используют `docker-compose`, а переведены на `docker compose`
+    - root `pnpm db:migrate` больше не зависит от неявного turbo/env поведения и теперь идёт через `scripts/prisma-migrate-safe.cjs`
+  - Реально подтверждено:
+    - `pnpm docker:up` -> PASS
+    - `pnpm db:migrate` -> PASS
+    - `pnpm --filter api build` -> PASS
+    - `pnpm --filter web build` -> PASS
+  - Созданы и наполнены machine-readable артефакты:
+    - `var/ops/phase-a4-install-dry-run-2026-03-31.json`
+    - `var/schema/prisma-migrate-safe.json`
+    - `var/ops/phase-a4-backup-restore-execution-2026-03-31.json`
+  - Созданы canonical reports:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALL_DRY_RUN_REPORT_2026-03-31.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_2026-03-31.md`
+  - Практический эффект:
+    - `A4` перестал опираться только на templates и packet;
+    - install path теперь подтверждён фактическим прохождением на локальной self-host среде;
+    - recovery path подтверждён реальным restore rehearsal, а не наличием runbook.
+
+2. **A3 runtime drill evidence and ops-script remediation** [DONE]:
+  - Найден и устранён repo-side drift в advisory ops scripts:
+    - `advisory-oncall-drill.mjs`
+    - `advisory-stage-progression.mjs`
+    - `advisory-dr-rollback-rehearsal.mjs`
+    теперь автоматически добавляют `Idempotency-Key` для mutating advisory endpoints.
+  - После исправления реально пройдены:
+    - `advisory-oncall-drill` -> PASS
+    - `advisory-stage-progression` -> PASS
+    - `advisory-dr-rollback-rehearsal` -> PASS
+  - Результаты сохранены в:
+    - `var/ops/phase-a4-advisory-oncall-drill-2026-03-31.json`
+    - `var/ops/phase-a3-stage-progression-2026-03-31.json`
+    - `var/ops/phase-a4-advisory-dr-rehearsal-2026-03-31.json`
+  - Создан canonical report:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RUNTIME_DRILL_REPORT_2026-03-31.md`
+  - Практический эффект:
+    - `A3.4` теперь опирается не только на skeleton eval-suite, но и на первый фактический runtime-drill baseline;
+    - advisory runtime и rollback/perimeter paths подтверждены живым исполнением, хотя unified evaluator gate ещё не собран.
+
 1. **Phase A execution board and evidence matrix** [DONE]:
   - В `docs/07_EXECUTION/ONE_BIG_PHASE/` добавлены:
     - `PHASE_A_EXECUTION_BOARD.md`

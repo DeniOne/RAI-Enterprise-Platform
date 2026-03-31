@@ -972,3 +972,39 @@
 - Практический эффект:
   - внутрирепозиторная подготовка `Phase A` доведена до почти максимальной исполнимости;
   - дальнейшее закрытие фазы теперь упирается в реальные external evidence и actual execution reports, а не в отсутствие execution-доков.
+[2026-03-31 11:40Z] Для `A4` собран реальный execution baseline и устранён installability drift
+- Root scripts переведены с `docker-compose` на `docker compose`:
+  - `package.json#docker:up`
+  - `package.json#docker:down`
+- Добавлен `scripts/prisma-migrate-safe.cjs`.
+- Root `pnpm db:migrate` теперь идёт через safe wrapper, который загружает `.env`, вызывает `prisma migrate deploy` в `packages/prisma-client` и пишет report в `var/schema/prisma-migrate-safe.json`.
+- Реально подтверждено:
+  - `pnpm docker:up` -> PASS
+  - `pnpm db:migrate` -> PASS
+  - `pnpm --filter api build` -> PASS
+  - `pnpm --filter web build` -> PASS
+  - `backup / restore` rehearsal -> PASS
+- Созданы machine-readable execution artifacts:
+  - `var/ops/phase-a4-install-dry-run-2026-03-31.json`
+  - `var/ops/phase-a4-backup-restore-execution-2026-03-31.json`
+- Созданы canonical reports:
+  - `PHASE_A4_INSTALL_DRY_RUN_REPORT_2026-03-31.md`
+  - `PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_2026-03-31.md`
+- Практический эффект:
+  - `A4.1` и `A4.2` больше не опираются только на templates;
+  - install/recovery path теперь подтверждён фактическим исполнением, а оставшийся хвост `A4` сузился до fresh-host rehearsal и support boundary.
+
+[2026-03-31 11:41Z] Для `A3` собран первый runtime-drill evidence layer и исправлен advisory script drift
+- Найден repo-side drift: advisory ops scripts не передавали `Idempotency-Key` для mutating advisory endpoints, из-за чего rehearsal path падал на `400`.
+- Исправлены:
+  - `apps/api/scripts/ops/advisory-oncall-drill.mjs`
+  - `apps/api/scripts/ops/advisory-stage-progression.mjs`
+  - `apps/api/scripts/ops/advisory-dr-rollback-rehearsal.mjs`
+- После исправления реально пройдены:
+  - `advisory-oncall-drill` -> PASS
+  - `advisory-stage-progression` -> PASS
+  - `advisory-dr-rollback-rehearsal` -> PASS
+- Результаты сохранены в `var/ops` и подняты в канон через `PHASE_A3_RUNTIME_DRILL_REPORT_2026-03-31.md`.
+- Практический эффект:
+  - `A3.4` теперь имеет не только skeleton eval-suite, но и фактический runtime-drill baseline;
+  - advisory runtime, gate evaluation, kill-switch и rollback подтверждены живым исполнением, хотя unified evaluator gate ещё не собран.

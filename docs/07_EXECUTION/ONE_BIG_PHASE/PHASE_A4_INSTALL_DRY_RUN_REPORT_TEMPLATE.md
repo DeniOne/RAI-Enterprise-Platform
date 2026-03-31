@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A4-INSTALL-DRY-RUN-REPORT-TEMPLATE-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A4-INSTALL-DRY-RUN-REPORT-TEMPLATE-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SELF_HOST_INSTALL_UPGRADE_PACKET.md;docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md;docs/05_OPERATIONS/HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX.md
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SELF_HOST_INSTALL_UPGRADE_PACKET.md;README.md;package.json;scripts/prisma-migrate-safe.cjs;docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md;docs/05_OPERATIONS/HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX.md
 ---
 # PHASE A4 INSTALL DRY-RUN REPORT TEMPLATE
 
@@ -42,7 +42,7 @@ last_verified: 2026-03-31
 | Шаг | Команда / действие | Результат | Проблема / заметка |
 |---|---|---|---|
 | 1 | `cp .env.example .env` |  |  |
-| 2 | `docker-compose up -d` |  |  |
+| 2 | `pnpm docker:up` |  |  |
 | 3 | `pnpm install` |  |  |
 | 4 | `pnpm db:migrate` |  |  |
 | 5 | `pnpm --filter api build` |  |  |

@@ -26,13 +26,17 @@ async function login() {
 }
 
 async function call(token, method, path, body) {
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+  if (method !== "GET" && method !== "HEAD") {
+    headers["Idempotency-Key"] = `${TRACE_PREFIX}:${method}:${path}:${Date.now()}`;
+  }
   const started = Date.now();
   const response = await fetch(`${BASE_URL}${path}`, {
     method,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
   const elapsedMs = Date.now() - started;
