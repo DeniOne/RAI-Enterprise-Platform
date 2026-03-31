@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A2-S2-TELEGRAM-TOKEN-ROTATION-CHECKLIST-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.1.0
+version: 1.2.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A2-S2-TELEGRAM-TOKEN-ROTATION-CHECKLIST-20260331
@@ -90,12 +90,25 @@ last_verified: 2026-03-31
 
 Нужно получить owner-sign-off, что старый token больше не используется.
 
+Команда intake:
+
+```bash
+pnpm security:evidence:intake -- --reference=A2-S-02 --source=/abs/path/file
+```
+
 ### Шаг 4. Обновить incident closeout
 
 После получения артефакта обновить:
 
 - [KEY_MATERIAL_AND_SECRET_HYGIENE_INCIDENT_2026-03-28.md](/root/RAI_EP/docs/05_OPERATIONS/KEY_MATERIAL_AND_SECRET_HYGIENE_INCIDENT_2026-03-28.md)
 - [PHASE_A_EXECUTION_BOARD.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md)
+
+После owner-review:
+
+```bash
+pnpm security:evidence:transition -- --reference=A2-S-02 --status=reviewed
+pnpm security:evidence:transition -- --reference=A2-S-02 --status=accepted
+```
 
 ## 5. Exit condition
 

@@ -13,6 +13,8 @@
     "lint": "turbo lint",
     "security:audit:ci": "node scripts/security-audit-ci.cjs",
     "security:evidence:status": "node scripts/security-evidence-status.cjs",
+    "security:evidence:intake": "node scripts/security-evidence-intake.cjs",
+    "security:evidence:transition": "node scripts/security-evidence-transition.cjs",
     "gate:secrets": "node scripts/scan-secrets.cjs",
     "gate:security:evidence": "node scripts/security-evidence-status.cjs --mode=enforce",
     "security:licenses": "node scripts/generate-license-inventory.cjs",

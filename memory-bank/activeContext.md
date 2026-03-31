@@ -142,6 +142,10 @@
   - создан `scripts/security-evidence-status.cjs`
   - доступны `pnpm security:evidence:status` и `pnpm gate:security:evidence`
   - gate проверяет restricted metadata по `A2-S-01/02/03`, наличие draft/artifact paths и пишет отчёт в `var/security/security-evidence-status.{json,md}`
+- [x] Для residual security evidence добавлен lifecycle automation:
+  - созданы `scripts/security-evidence-intake.cjs` и `scripts/security-evidence-transition.cjs`
+  - доступны `pnpm security:evidence:intake` и `pnpm security:evidence:transition`
+  - на временной копии restricted metadata подтверждён рабочий цикл `requested -> received -> reviewed -> accepted`
 - [x] Для `A2` добавлен единый closeout-checklist `PHASE_A2_SECURITY_EVIDENCE_CLOSEOUT_CHECKLIST.md`.
 - [x] `PHASE_A2_SECURITY_CLOSEOUT_PLAN`, `PHASE_A2_HISTORICAL_SECRET_AND_KEY_DEBT_CHECKLIST`, `PHASE_A2_EXTERNAL_ACCESS_GOVERNANCE_CHECKLIST`, `PHASE_A_EXECUTION_BOARD` и `PHASE_A_EVIDENCE_MATRIX` синхронизированы с новым `security:evidence` контуром.
 - [x] Для трека `A3` добавлен отдельный рабочий пакет `PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md`.

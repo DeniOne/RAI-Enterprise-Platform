@@ -908,3 +908,17 @@
 - Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_SECURITY_EVIDENCE_CLOSEOUT_CHECKLIST.md` как единый closeout-порядок для `A2-S-01/02/03`.
 - `PHASE_A2_SECURITY_CLOSEOUT_PLAN.md`, `PHASE_A2_HISTORICAL_SECRET_AND_KEY_DEBT_CHECKLIST.md`, `PHASE_A2_EXTERNAL_ACCESS_GOVERNANCE_CHECKLIST.md`, `PHASE_A_EXECUTION_BOARD.md` и `PHASE_A_EVIDENCE_MATRIX.md` синхронизированы с новым gate.
 - Практический эффект: residual `A2` security evidence теперь отслеживается не только вручную по markdown и restricted-папкам, а ещё и одной воспроизводимой командой, что резко снижает drift между drafts, metadata и execution-board.
+
+[2026-03-31 11:39Z] Для `A2` добавлен intake/transition lifecycle по security evidence
+- Созданы:
+  - `scripts/security-evidence-intake.cjs`
+  - `scripts/security-evidence-transition.cjs`
+- В `package.json` добавлены команды:
+  - `pnpm security:evidence:intake`
+  - `pnpm security:evidence:transition`
+- `PHASE_A2_SECURITY_EVIDENCE_CLOSEOUT_CHECKLIST.md`, `PHASE_A2_SECURITY_CLOSEOUT_PLAN.md`, `PHASE_A2_S1_CA_KEY_REVOCATION_CHECKLIST.md`, `PHASE_A2_S2_TELEGRAM_TOKEN_ROTATION_CHECKLIST.md` и `PHASE_A2_S3_GITHUB_ACCESS_REVIEW_CHECKLIST.md` усилены точными CLI-командами для `received -> reviewed -> accepted`.
+- На временной копии restricted perimeter подтверждён рабочий цикл:
+  - `requested -> received`
+  - `received -> reviewed`
+  - `reviewed -> accepted`
+- Практический эффект: `A2` теперь имеет не только status/gate и drafts, но и полный воспроизводимый lifecycle для реального intake security evidence без ручной правки metadata.

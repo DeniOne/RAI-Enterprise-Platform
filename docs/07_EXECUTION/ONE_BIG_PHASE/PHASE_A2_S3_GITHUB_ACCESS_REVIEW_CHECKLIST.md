@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A2-S3-GITHUB-ACCESS-REVIEW-CHECKLIST-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.1.0
+version: 1.2.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A2-S3-GITHUB-ACCESS-REVIEW-CHECKLIST-20260331
@@ -92,12 +92,25 @@ last_verified: 2026-03-31
 
 Нужно собрать один итоговый artifact со status и gap list.
 
+Команда intake:
+
+```bash
+pnpm security:evidence:intake -- --reference=A2-S-03 --source=/abs/path/file
+```
+
 ### Шаг 4. Обновить execution-layer
 
 После получения артефакта обновить:
 
 - [PHASE_A_EXECUTION_BOARD.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md)
 - [PHASE_A_EVIDENCE_MATRIX.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EVIDENCE_MATRIX.md)
+
+После owner-review:
+
+```bash
+pnpm security:evidence:transition -- --reference=A2-S-03 --status=reviewed
+pnpm security:evidence:transition -- --reference=A2-S-03 --status=accepted
+```
 
 ## 5. Exit condition
 

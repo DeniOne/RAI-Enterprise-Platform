@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A2-SECURITY-CLOSEOUT-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.6.0
+version: 1.7.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A2-SECURITY-CLOSEOUT-PLAN-20260331
@@ -128,6 +128,8 @@ last_verified: 2026-03-31
 
 - `pnpm security:evidence:status`
 - `pnpm gate:security:evidence`
+- `pnpm security:evidence:intake -- --reference=A2-S-01 --source=/abs/path/file`
+- `pnpm security:evidence:transition -- --reference=A2-S-01 --status=reviewed|accepted|expired`
 
 Нельзя:
 

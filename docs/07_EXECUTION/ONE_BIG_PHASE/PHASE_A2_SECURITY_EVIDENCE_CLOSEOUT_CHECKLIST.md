@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A2-SECURITY-EVIDENCE-CLOSEOUT-CHECKLIST-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A2-SECURITY-EVIDENCE-CLOSEOUT-CHECKLIST-20260331
@@ -40,6 +40,8 @@ Machine-readable status:
 
 - `pnpm security:evidence:status`
 - `pnpm gate:security:evidence`
+- `pnpm security:evidence:intake -- --reference=A2-S-01 --source=/abs/path/file`
+- `pnpm security:evidence:transition -- --reference=A2-S-01 --status=reviewed|accepted|expired`
 
 ## 2. Что делать в правильном порядке
 
@@ -82,6 +84,12 @@ pnpm security:evidence:status
 - заменить `artifact_path: pending` на реальный путь;
 - перевести metadata-status хотя бы в `received`.
 
+Команда:
+
+```bash
+pnpm security:evidence:intake -- --reference=A2-S-01 --source=/abs/path/file
+```
+
 ### Шаг 4. Перепроверить статус
 
 После каждого обновления metadata снова запускать:
@@ -95,6 +103,13 @@ pnpm gate:security:evidence
 
 - не оставлять drift между metadata, draft и artifact path;
 - не переводить `A2` на словах.
+
+После owner-review переводить карточку дальше:
+
+```bash
+pnpm security:evidence:transition -- --reference=A2-S-01 --status=reviewed
+pnpm security:evidence:transition -- --reference=A2-S-01 --status=accepted
+```
 
 ### Шаг 5. Синхронизировать execution-layer
 
