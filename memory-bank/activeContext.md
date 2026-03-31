@@ -1,6 +1,27 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A5.1` опубликовано formal `Tier 1` решение по последнему `UNKNOWN` perimeter:
+  - создан `PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md`
+  - `25` `@esbuild/*` companions зафиксированы как `ALLOW_TIER1_CONDITIONAL`
+  - `5` `turbo-*` companions зафиксированы как `ALLOW_TIER1_CONDITIONAL`
+  - `1` `fsevents` зафиксирован как `OUT_OF_SCOPE_TIER1_LINUX`
+- [x] Зафиксировано жёсткое ограничение этого решения:
+  - оно действует только для `Tier 1 self-host / localized MVP pilot`
+  - оно не является universal legal verdict для cross-platform distribution или broader procurement perimeter
+- [x] После этого `A5` сместился так:
+  - `A-2.6.1` теперь может считаться `done` для `Tier 1`
+  - основной открытый хвост `A5` теперь уже не в `UNKNOWN` triage, а в:
+    - `ELP-20260328-09`
+    - wider distribution legal sign-off
+    - full chain-of-title closeout
+- [x] Синхронизированы:
+  - `PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md`
+  - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`
+  - `PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md`
+  - `OSS_LICENSE_AND_IP_REGISTER.md`
+  - `PHASE_A_EXECUTION_BOARD.md`
+  - `PHASE_A_EVIDENCE_MATRIX.md`
 - [x] Для `A5.2` собран первый реально assembled `NOTICE` bundle:
   - добавлен root command `pnpm security:notices`
   - добавлен [generate-notice-bundle.cjs](/root/RAI_EP/scripts/generate-notice-bundle.cjs)

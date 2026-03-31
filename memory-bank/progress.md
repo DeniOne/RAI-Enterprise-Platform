@@ -2,6 +2,28 @@
 
 ## 2026-03-31
 
+1. **A5 Tier 1 toolchain license decision recorded** [DONE]:
+  - Создан:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md`
+  - В документе зафиксировано formal manual решение для оставшегося `UNKNOWN` perimeter:
+    - `@esbuild/*` companions = `ALLOW_TIER1_CONDITIONAL`
+    - `turbo-*` companions = `ALLOW_TIER1_CONDITIONAL`
+    - `fsevents` = `OUT_OF_SCOPE_TIER1_LINUX`
+  - Решение жёстко ограничено только периметром:
+    - `Tier 1 self-host / localized MVP pilot`
+    - Linux runtime perimeter
+    - procurement / due-diligence handoff без public cross-platform distribution
+  - Синхронизированы:
+    - `PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md`
+    - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`
+    - `PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md`
+    - `OSS_LICENSE_AND_IP_REGISTER.md`
+    - `PHASE_A_EXECUTION_BOARD.md`
+    - `PHASE_A_EVIDENCE_MATRIX.md`
+  - Практический эффект:
+    - `A5.1` больше не висит как незакрытый triage внутри `Tier 1`;
+    - остаточный `A5` сместился к `ELP-20260328-09`, chain-of-title и wider distribution legal sign-off, а не к raw `UNKNOWN` inventory.
+
 1. **A5 assembled notice bundle published as generated evidence** [DONE]:
   - Добавлен новый root command:
     - `pnpm security:notices`

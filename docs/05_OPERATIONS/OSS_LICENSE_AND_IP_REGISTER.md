@@ -3,14 +3,14 @@ id: DOC-OPS-OSS-LICENSE-IP-REGISTER-20260328
 layer: Operations
 type: Report
 status: approved
-version: 1.2.0
+version: 1.3.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-OPS-OSS-LICENSE-IP-REGISTER-20260328
 claim_status: asserted
 verified_by: code
 last_verified: 2026-03-28
-evidence_refs: package.json;pnpm-lock.yaml;scripts/generate-license-inventory.cjs;scripts/generate-notice-bundle.cjs;var/security/license-inventory.json;var/security/notice-bundle.json;var/security/notice-bundle.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md
+evidence_refs: package.json;pnpm-lock.yaml;scripts/generate-license-inventory.cjs;scripts/generate-notice-bundle.cjs;var/security/license-inventory.json;var/security/notice-bundle.json;var/security/notice-bundle.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md
 ---
 # OSS LICENSE AND IP REGISTER
 
@@ -30,6 +30,11 @@ last_verified: 2026-03-28
 - Корневого `LICENSE`/`COPYING` файла в репозитории не найдено.
 - Репозиторий и root package помечены как `private`, но это не заменяет legal chain-of-title.
 - Root package и `packages/eslint-plugin-tenant-security` теперь явно помечены как `UNLICENSED`; это снимает first-party ambiguity внутри inventory, но не заменяет `ELP-20260328-09`.
+- Published `Tier 1` decision уже разрешает трактовать remaining `UNKNOWN` perimeter так:
+  - `esbuild` companions -> `ALLOW_TIER1_CONDITIONAL`
+  - `turbo` companions -> `ALLOW_TIER1_CONDITIONAL`
+  - `fsevents` -> `OUT_OF_SCOPE_TIER1_LINUX`
+  - это решение ограничено Linux `self-host / localized MVP pilot` и не является universal legal verdict для внешней cross-platform дистрибуции.
 
 ## Register
 
@@ -43,12 +48,12 @@ last_verified: 2026-03-28
 | Есть ли packet для реестра российского ПО | `нет` | prerequisites не собраны |
 
 ## Красные зоны
-1. `31` пакета всё ещё идут как `UNKNOWN`, но это уже не first-party ambiguity, а узкий optional/toolchain хвост.
+1. `31` пакета всё ещё идут как `UNKNOWN` в inventory, но для `Tier 1 Linux self-host` они уже не являются неразобранным периметром: manual decision опубликован отдельно; красной зоной остаётся wider distribution verdict.
 2. Нет final legal sign-off по compatibility review и assembled notice bundle для внешней дистрибуции beyond `Tier 1 Linux self-host`.
 3. Нет chain-of-title пакета по ПО и БД.
 
 ## Прямой следующий operational шаг
-Зафиксировать final legal classification для `esbuild/turbo` toolchain companions, удержать `fsevents` вне Linux `Tier 1` perimeter, затем привязать assembled notice bundle к procurement/distribution decision и закрыть chain-of-title pack.
+Привязать опубликованное `Tier 1` toolchain-license decision и assembled notice bundle к procurement/distribution decision, затем закрыть `ELP-20260328-09` и chain-of-title pack.
 
 Эффект:
 - legal/compliance verdict перестанет провисать на OSS/IP контуре;

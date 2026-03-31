@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A5-IP-OSS-CLOSEOUT-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.4.0
+version: 1.5.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A5-IP-OSS-CLOSEOUT-PLAN-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md;docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/_audit/ENTERPRISE_EVIDENCE_MATRIX_2026-03-28.md;var/security/notice-bundle.json;var/security/notice-bundle.md;scripts/generate-notice-bundle.cjs
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md;docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/_audit/ENTERPRISE_EVIDENCE_MATRIX_2026-03-28.md;var/security/notice-bundle.json;var/security/notice-bundle.md;scripts/generate-notice-bundle.cjs
 ---
 # PHASE A5 IP AND OSS CLOSEOUT PLAN
 
@@ -35,6 +35,7 @@ last_verified: 2026-03-31
   - `UNLICENSED = 2`
 - существует активный [OSS_LICENSE_AND_IP_REGISTER.md](/root/RAI_EP/docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md);
 - опубликован [PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md) как working triage register по `31 UNKNOWN`;
+- опубликован [PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md) как formal `Tier 1` решение по `esbuild / turbo / fsevents`;
 - опубликован [PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md) как working notice perimeter;
 - опубликован [PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md) как evidence, что first assembled `NOTICE` bundle уже реально собран;
 - опубликован [PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md) как conservative first-party licensing baseline;
@@ -44,8 +45,8 @@ last_verified: 2026-03-31
 
 Одновременно остаются реальные незакрытые вопросы:
 
-- remaining `31 unknown licenses` не прошли final legal triage;
-- notice/obligations packet пока рабочий, а не финально принятый legal bundle;
+- final distribution/per-procurement legal sign-off beyond `Tier 1` ещё не собран;
+- notice/obligations packet пока закрыт для `Tier 1`, но не является universal legal bundle;
 - не подтверждена непрерывная цепочка прав на first-party code и database rights;
 - внешний pilot нельзя считать безопасным при спорных правах на ПО и БД.
 
@@ -65,10 +66,12 @@ last_verified: 2026-03-31
 - актуализированный [OSS_LICENSE_AND_IP_REGISTER.md](/root/RAI_EP/docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md) с ручным legal triage;
 - закрытый `UNKNOWN` perimeter или явный replacement-plan для проблемных пакетов;
 - явное отделение first-party `UNLICENSED` perimeter от third-party toolchain хвоста.
+- отдельный `Tier 1` decision по `esbuild / turbo / fsevents`.
 
 Текущий execution-артефакт:
 
 - [PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md)
+- [PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md)
 
 ### `A5.2` Notice / obligations packet
 
@@ -126,6 +129,8 @@ last_verified: 2026-03-31
 3. Затем принять `ELP-20260328-09`.
 4. Затем зафиксировать first-party licensing strategy.
 
+На текущем baseline первые два шага уже выполнены для `Tier 1 Linux self-host`.
+
 Нельзя:
 
 - считать `private`-флаг заменой цепочке прав;
@@ -144,6 +149,7 @@ last_verified: 2026-03-31
 Board должен меняться так:
 
 - `open` -> `in_progress`, когда начат реальный triage по `UNKNOWN` пакетам или собран obligations packet;
+- `in_progress` -> `done`, когда `Tier 1` triage formalized отдельным decision-doc и assembled bundle уже выпущен;
 - `waiting_external` -> `in_progress`, когда по `ELP-20260328-09` появился реальный intake;
 - `guard_active` остаётся запретом на внешний pilot до полного closeout;
 - `done` допустим только после внешне подтверждённого `chain-of-title` и закрытого OSS-risk perimeter.
