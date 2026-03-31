@@ -32,6 +32,41 @@
 - [x] Зафиксировано новое правило исполнения: synthesis -> простой owner-checklist -> детальные подфазы `ONE_BIG_PHASE`.
 - [x] `ONE_BIG_PHASE` включена в навигацию docs и claim registry как активный execution-пакет текущего хода.
 - [x] Формулировки execution-доков уточнены: существующие `front-office / CRM`-агенты признаны частью важного текущего agent-perimeter; под ограничением находится не их наличие, а преждевременное расширение в ширину и новые роли сверх текущего состава.
+- [x] Для `Phase A` добавлены два операционных рабочих документа:
+  - `PHASE_A_EXECUTION_BOARD.md` как живой board по blocker / owner / status / evidence / next action
+  - `PHASE_A_EVIDENCE_MATRIX.md` как матрица различения между заметкой, runbook, внутренним gate и реальным доказательством закрытия риска
+- [x] `Phase A` теперь имеет три уровня управления:
+  - общий план подфазы
+  - execution board
+  - evidence matrix
+- [x] Добавлен `PHASE_A_IMPLEMENTATION_PLAN.md` как decision-complete схема исполнения `A0–A5`.
+- [x] `PHASE_A_EXECUTION_BOARD.md` перестроен по трекам `A0–A5`, а `PHASE_A_EVIDENCE_MATRIX.md` теперь тоже размечает доказательства по трекам, а не только по осям риска.
+- [x] Для трека `A1` добавлен отдельный рабочий пакет `PHASE_A1_LEGAL_CLOSEOUT_PLAN.md`.
+- [x] `A1` теперь связан с реальными артефактами `var/compliance/external-legal-evidence-verdict.md`, `external-legal-evidence-priority-board.md`, `external-legal-evidence-handoff.md` и restricted owner-packets.
+- [x] Для трека `A2` добавлен отдельный рабочий пакет `PHASE_A2_SECURITY_CLOSEOUT_PLAN.md`.
+- [x] `A2` теперь привязан к фактическому baseline:
+  - `pnpm security:audit:ci`
+  - `pnpm gate:secrets`
+  - `pnpm gate:invariants`
+  - `SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY`
+- [x] Для трека `A3` добавлен отдельный рабочий пакет `PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md`.
+- [x] `A3` теперь переведён из общей policy-темы в execution-пакет по четырём обязательным артефактам:
+  - `tool-permission matrix`
+  - `HITL matrix`
+  - `advisory-only` perimeter
+  - formal `eval-suite`
+- [x] Для трека `A4` добавлен отдельный рабочий пакет `PHASE_A4_INSTALLABILITY_AND_RECOVERY_PLAN.md`.
+- [x] `A4` теперь переведён из общей ops-темы в execution-пакет по:
+  - install/upgrade packet
+  - dry-run установки
+  - backup/restore execution evidence
+  - support boundary
+- [x] Для трека `A5` добавлен отдельный рабочий пакет `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`.
+- [x] `A5` теперь переведён из общей legal/IP-темы в execution-пакет по:
+  - triage `unknown licenses`
+  - notice/obligations packet
+  - accepted `ELP-20260328-09`
+  - first-party licensing strategy
 
 ## Текущая задача (2026-03-28, enterprise closeout)
 - [x] Закрыт оставшийся 5-блочный хвост enterprise-аудита по security/supply-chain, schema-integrity, deployment/ops, privacy/legal packet и history/rotation debt.

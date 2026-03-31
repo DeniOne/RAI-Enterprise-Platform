@@ -3,9 +3,9 @@ id: DOC-EXE-ONE-BIG-PHASE-A-STOP-BLOCKERS-20260330
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
-last_updated: 2026-03-30
+last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-STOP-BLOCKERS-20260330
 claim_status: asserted
 verified_by: manual
@@ -21,6 +21,17 @@ verified_by: manual
 last_verified: 2026-03-30
 
 Это первая и самая важная подфаза. Её смысл — убрать всё, что делает ближайший MVP опасным, юридически спорным или нечестно готовым.
+
+Рабочие документы этой подфазы:
+
+- [PHASE_A_IMPLEMENTATION_PLAN.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md)
+- [PHASE_A1_LEGAL_CLOSEOUT_PLAN.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_LEGAL_CLOSEOUT_PLAN.md)
+- [PHASE_A2_SECURITY_CLOSEOUT_PLAN.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_SECURITY_CLOSEOUT_PLAN.md)
+- [PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md)
+- [PHASE_A4_INSTALLABILITY_AND_RECOVERY_PLAN.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALLABILITY_AND_RECOVERY_PLAN.md)
+- [PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md)
+- [PHASE_A_EXECUTION_BOARD.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md)
+- [PHASE_A_EVIDENCE_MATRIX.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EVIDENCE_MATRIX.md)
 
 ## 1. Цель подфазы
 
