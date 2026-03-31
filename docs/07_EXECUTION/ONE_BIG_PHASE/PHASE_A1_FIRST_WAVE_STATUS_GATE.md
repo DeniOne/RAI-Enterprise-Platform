@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A1-FIRST-WAVE-STATUS-GATE-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A1-FIRST-WAVE-STATUS-GATE-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: scripts/phase-a1-first-wave-status.cjs;package.json;var/compliance/phase-a1-first-wave-request-packet.json;var/compliance/external-legal-evidence-verdict.json;var/compliance/phase-a1-first-wave-status.json;var/compliance/phase-a1-first-wave-status.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_REQUEST_PACKET.md
+evidence_refs: scripts/phase-a1-first-wave-status.cjs;scripts/phase-a1-status.cjs;package.json;var/compliance/phase-a1-first-wave-request-packet.json;var/compliance/external-legal-evidence-verdict.json;var/compliance/phase-a1-first-wave-status.json;var/compliance/phase-a1-first-wave-status.md;var/compliance/phase-a1-status.json;var/compliance/phase-a1-status.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_REQUEST_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_STATUS_GATE.md
 ---
 # PHASE A1 FIRST WAVE STATUS GATE
 
@@ -21,6 +21,8 @@ verified_by: manual
 last_verified: 2026-03-31
 
 Этот документ добавляет для первой legal-волны machine-readable `status/gate`. Его задача простая: показывать одной командой, началось ли реальное движение по `ELP-01 / 03 / 04 / 06`, и как это связано с текущим legal verdict.
+
+Для общего состояния всего legal-трека `A1` использовать также [PHASE_A1_STATUS_GATE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_STATUS_GATE.md).
 
 ## 1. Команды
 

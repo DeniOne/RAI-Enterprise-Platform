@@ -1,6 +1,24 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A1` собран unified `status/gate` поверх first-wave packet и first-wave status.
+  - добавлен root generator:
+    - `scripts/phase-a1-status.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a1:status`
+    - `pnpm gate:phase:a1:status`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_STATUS_GATE.md`
+- [x] Этот слой теперь даёт один machine-readable ответ по всему legal-треку:
+  - общие counts `requested / received / reviewed / accepted`
+  - `first_wave_state`
+  - `second_wave_state`
+  - `priority_eight_state`
+  - `current_state`
+  - `tier1_state`
+- [x] После этого `A1` сместилась так:
+  - legal execution уже читается одной командой, а не пятью разными файлами;
+  - первая и вторая волна больше не смешиваются в один неявный backlog;
+  - remaining blocker ещё сильнее сводится к фактическому внешнему intake.
 - [x] Для `A1` собран machine-readable `first-wave status/gate` поверх packet-а `ELP-01 / 03 / 04 / 06`.
   - добавлен root generator:
     - `scripts/phase-a1-first-wave-status.cjs`

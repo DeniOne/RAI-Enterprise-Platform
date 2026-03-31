@@ -1501,3 +1501,23 @@
 - Практический эффект:
   - `A5` перестал смешивать внутренние пакеты и внешний OSS-tail в одну красную массу;
   - следующий шаг теперь точнее: formal legal classification и notice bundle только по `esbuild/turbo/fsevents`, а не по first-party пакетам.
+[2026-03-31 17:55Z] Для `A1` собран unified status/gate поверх first-wave слоя
+- Добавлен root generator `scripts/phase-a1-status.cjs`.
+- В `package.json` добавлены команды:
+  - `pnpm phase:a1:status`
+  - `pnpm gate:phase:a1:status`
+- Создан новый canonical doc:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_STATUS_GATE.md`
+- Generated evidence теперь выпускается в:
+  - `var/compliance/phase-a1-status.json`
+  - `var/compliance/phase-a1-status.md`
+- Этот слой склеивает:
+  - `external-legal-evidence-status`
+  - `external-legal-evidence-verdict`
+  - `phase-a1-first-wave-request-packet`
+  - `phase-a1-first-wave-status`
+  - вторую волну `ELP-02 / 05 / 08 / 09`
+- Практический эффект:
+  - весь `A1` теперь виден одной командой как `repo_side_incomplete | external_blocked | external_in_progress | closed`;
+  - стало машинно видно состояние первой волны, второй волны, priority-eight и non-priority tail;
+  - remaining legal blocker ещё сильнее сведён к фактическому external intake, а не к repo-side навигации.

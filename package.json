@@ -20,6 +20,8 @@
     "gate:phase:a1:first-wave:packet": "node scripts/legal-evidence-status.cjs --mode=enforce && node scripts/phase-a1-first-wave-request-packet.cjs --mode=enforce",
     "phase:a1:first-wave:status": "node scripts/legal-evidence-status.cjs && node scripts/legal-evidence-verdict.cjs && node scripts/phase-a1-first-wave-request-packet.cjs && node scripts/phase-a1-first-wave-status.cjs",
     "gate:phase:a1:first-wave:status": "node scripts/legal-evidence-status.cjs --mode=enforce && node scripts/legal-evidence-verdict.cjs --mode=enforce && node scripts/phase-a1-first-wave-request-packet.cjs --mode=enforce && node scripts/phase-a1-first-wave-status.cjs --mode=enforce",
+    "phase:a1:status": "node scripts/legal-evidence-status.cjs && node scripts/legal-evidence-verdict.cjs && node scripts/phase-a1-first-wave-request-packet.cjs && node scripts/phase-a1-first-wave-status.cjs && node scripts/phase-a1-status.cjs",
+    "gate:phase:a1:status": "node scripts/legal-evidence-status.cjs --mode=enforce && node scripts/legal-evidence-verdict.cjs --mode=enforce && node scripts/phase-a1-first-wave-request-packet.cjs --mode=enforce && node scripts/phase-a1-first-wave-status.cjs --mode=enforce && node scripts/phase-a1-status.cjs --mode=enforce",
     "phase:a5:chain-of-title": "node scripts/phase-a5-chain-of-title-register.cjs",
     "phase:a5:chain-of-title:collection": "node scripts/phase-a5-chain-of-title-register.cjs && node scripts/phase-a5-chain-of-title-collection.cjs",
     "phase:a5:chain-of-title:handoff": "node scripts/phase-a5-chain-of-title-register.cjs && node scripts/phase-a5-chain-of-title-collection.cjs && node scripts/phase-a5-chain-of-title-handoff.cjs",

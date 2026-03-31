@@ -2,6 +2,28 @@
 
 ## 2026-03-31
 
+1. **A1 unified status gate assembled** [DONE]:
+  - Добавлен root generator:
+    - `scripts/phase-a1-status.cjs`
+  - В `package.json` добавлены команды:
+    - `pnpm phase:a1:status`
+    - `pnpm gate:phase:a1:status`
+  - Создан новый canonical doc:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_STATUS_GATE.md`
+  - Generated evidence выпускается в:
+    - `var/compliance/phase-a1-status.json`
+    - `var/compliance/phase-a1-status.md`
+  - Этот слой связывает:
+    - `external-legal-evidence-status`
+    - `external-legal-evidence-verdict`
+    - `phase-a1-first-wave-request-packet`
+    - `phase-a1-first-wave-status`
+    - вторую волну `ELP-02 / 05 / 08 / 09`
+  - Практический эффект:
+    - весь `A1` теперь виден одной командой как единый legal-track;
+    - первая и вторая волна больше не смешиваются в один неявный backlog;
+    - repo-side closeout `A1` стал управляемым так же, как `A2`, `A4` и `A5`.
+
 1. **A1 first-wave status gate assembled** [DONE]:
   - Добавлен root generator:
     - `scripts/phase-a1-first-wave-status.cjs`
