@@ -41,6 +41,7 @@ last_verified: 2026-03-31
 
 - metadata: `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/metadata/A2-S-01-ca-key-revocation.md`
 - template: `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/templates/A2-S-01/A2-S-01__ca-key-revocation-template.md`
+- draft: `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/drafts/A2-S-01/A2-S-01__repo-derived-draft.md`
 
 ## 3. Что считается достаточным артефактом
 
@@ -68,6 +69,12 @@ last_verified: 2026-03-31
 Открыть:
 
 - `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/templates/A2-S-01/A2-S-01__ca-key-revocation-template.md`
+- `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/drafts/A2-S-01/A2-S-01__repo-derived-draft.md`
+
+Задача этого шага:
+
+- использовать уже подтверждённые repo-факты как основу;
+- не выдавать draft за внешний accepted artifact.
 
 ### Шаг 2. Заполнить фактами
 

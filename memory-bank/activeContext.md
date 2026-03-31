@@ -126,6 +126,10 @@
   - metadata cards `A2-S-01/02/03`
   - templates для `ca.key` revocation, Telegram token rotation и GitHub access review
 - [x] Теперь по `A2` есть не только high-level checklist, но и прямые файлы для подготовки restricted evidence по каждому реальному хвосту security-track.
+- [x] Для `A2-S-01` подготовлен первый `repo-derived draft`:
+  - создан `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/drafts/A2-S-01/A2-S-01__repo-derived-draft.md`
+  - draft фиксирует подтверждённые repo-факты по `infra/gateway/certs/ca.key`, дате удаления из Git и текущему `tracked_findings=0`
+  - metadata card `A2-S-01` теперь ссылается на `draft_path`, но статус остаётся `requested`, потому что внешнего revocation evidence ещё нет
 - [x] Для трека `A3` добавлен отдельный рабочий пакет `PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md`.
 - [x] `A3` теперь переведён из общей policy-темы в execution-пакет по четырём обязательным артефактам:
   - `tool-permission matrix`

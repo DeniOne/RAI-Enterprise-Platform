@@ -866,3 +866,13 @@
   - metadata cards `A2-S-01`, `A2-S-02`, `A2-S-03`
   - template files для каждого артефакта
 - Практический эффект: остаточные хвосты `A2` больше не требуют придумывать формат evidence с нуля; теперь по каждому security-blocker есть и канонический execution-чеклист в репозитории, и готовый restricted template вне Git.
+
+[2026-03-31 10:42Z] Для `A2-S-01` подготовлен первый repo-derived restricted draft
+- Создан `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/drafts/A2-S-01/A2-S-01__repo-derived-draft.md`.
+- Draft заполняет только подтверждённые repo-факты:
+  - исторический путь `infra/gateway/certs/ca.key`
+  - удаление из Git на коммите `233cf5e61eb246f03d4a115cdff43706d92a812b`
+  - текущий perimeter `infra/gateway/certs/` без private key material
+  - `pnpm gate:secrets -> tracked_findings=0`
+- `A2-S-01` metadata card обновлена полем `draft_path`, но статус оставлен `requested`.
+- Практический эффект: у owner'а больше не пустой template, а почти готовый restricted draft, в котором осталось только внешне подтвердить revocation/reissue и owner sign-off.
