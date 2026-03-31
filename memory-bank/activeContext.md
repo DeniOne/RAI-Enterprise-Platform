@@ -134,6 +134,10 @@
   - создан `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/drafts/A2-S-02/A2-S-02__repo-derived-draft.md`
   - draft фиксирует подтверждённые repo-факты по историческим Telegram token в `mg-core/backend/.env` и `mg-core/backend/src/mg-chat/.env`, коммиту удаления `de2ac2c1b8c3117f9d2b076c0a142c68636f7a09` и текущему `tracked_findings=0`
   - metadata card `A2-S-02` теперь ссылается на `draft_path`, но статус остаётся `requested`, потому что внешнего rotation/invalidation evidence ещё нет
+- [x] Для `A2-S-03` подготовлен третий `repo-derived draft`:
+  - создан `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/drafts/A2-S-03/A2-S-03__repo-derived-draft.md`
+  - draft фиксирует подтверждённые repo-факты по `CODEOWNERS`, критичным security/invariant workflows и policy-требованию quarterly GitHub UI review outside repo
+  - metadata card `A2-S-03` теперь ссылается на `draft_path`, но статус остаётся `requested`, потому что branch protection, required checks, admin bypass, deploy keys и environments не доказываются одним только Git-репозиторием
 - [x] Для трека `A3` добавлен отдельный рабочий пакет `PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md`.
 - [x] `A3` теперь переведён из общей policy-темы в execution-пакет по четырём обязательным артефактам:
   - `tool-permission matrix`

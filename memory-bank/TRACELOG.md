@@ -886,3 +886,13 @@
 - `A2-S-02` metadata card обновлена полем `draft_path`, а repo-side checklist теперь явно ссылается на draft как на стартовую основу для внешнего restricted artifact.
 - Статус `A2-S-02` оставлен `requested`, потому что repository не подтверждает сам факт rotation/invalidation и текущее место хранения действующего secret.
 - Практический эффект: у owner'а больше не пустой template, а почти готовый restricted draft, в котором осталось только внешне подтвердить rotation/invalidation, дату действия и current storage location.
+
+[2026-03-31 11:08Z] Для `A2-S-03` подготовлен третий repo-derived restricted draft
+- Создан `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/drafts/A2-S-03/A2-S-03__repo-derived-draft.md`.
+- Draft заполняет только подтверждённые repo-факты:
+  - `.github/CODEOWNERS` покрывает workflows, `scripts`, `rai-chat`, shared backend perimeter, `apps/web/app/**`, `apps/web/lib/**` и `docs/05_OPERATIONS/**`
+  - в репозитории присутствуют `.github/workflows/security-audit.yml`, `codeql-analysis.yml`, `dependency-review.yml`, `invariant-gates.yml`
+  - `SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY.md` уже требует quarterly GitHub UI review outside repo
+- `A2-S-03` metadata card обновлена полем `draft_path`, а repo-side checklist теперь явно ссылается на draft как на стартовую основу для внешнего restricted artifact.
+- Статус `A2-S-03` оставлен `requested`, потому что repository не подтверждает branch protection, required checks enforcement, admin bypass, deploy keys и GitHub environments.
+- Практический эффект: у owner'а больше не пустой template, а почти готовый restricted draft, в котором осталось только внешне подтвердить GitHub UI perimeter и итоговый review verdict.

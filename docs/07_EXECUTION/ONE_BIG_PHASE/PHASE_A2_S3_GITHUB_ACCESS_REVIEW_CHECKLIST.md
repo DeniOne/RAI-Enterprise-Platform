@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A2-S3-GITHUB-ACCESS-REVIEW-CHECKLIST-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A2-S3-GITHUB-ACCESS-REVIEW-CHECKLIST-20260331
@@ -43,6 +43,7 @@ last_verified: 2026-03-31
 
 - metadata: `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/metadata/A2-S-03-github-access-review.md`
 - template: `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/templates/A2-S-03/A2-S-03__github-access-review-template.md`
+- draft: `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/drafts/A2-S-03/A2-S-03__repo-derived-draft.md`
 
 ## 3. Что считается достаточным артефактом
 
@@ -70,6 +71,12 @@ last_verified: 2026-03-31
 Открыть:
 
 - `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/templates/A2-S-03/A2-S-03__github-access-review-template.md`
+- `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/drafts/A2-S-03/A2-S-03__repo-derived-draft.md`
+
+Задача этого шага:
+
+- использовать уже подтверждённые repo-факты как основу;
+- не выдавать draft за внешний accepted artifact.
 
 ### Шаг 2. Снять GitHub UI snapshot
 
