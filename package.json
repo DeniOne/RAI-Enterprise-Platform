@@ -1,5 +1,6 @@
 {
   "name": "rai-enterprise-platform",
+  "license": "UNLICENSED",
   "private": true,
   "packageManager": "pnpm@9.0.0",
   "type": "module",
@@ -12,7 +13,11 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "security:audit:ci": "node scripts/security-audit-ci.cjs",
+    "security:evidence:status": "node scripts/security-evidence-status.cjs",
+    "security:evidence:intake": "node scripts/security-evidence-intake.cjs",
+    "security:evidence:transition": "node scripts/security-evidence-transition.cjs",
     "gate:secrets": "node scripts/scan-secrets.cjs",
+    "gate:security:evidence": "node scripts/security-evidence-status.cjs --mode=enforce",
     "security:licenses": "node scripts/generate-license-inventory.cjs",
     "security:sbom": "node scripts/generate-sbom.cjs",
     "legal:evidence:template": "node scripts/legal-evidence-template.cjs",
@@ -73,12 +78,12 @@
     "prisma:build-client": "pnpm -C packages/prisma-client build",
     "db:client": "pnpm prisma:generate && pnpm prisma:build-client",
     "postinstall": "pnpm db:client",
-    "db:migrate": "turbo db:migrate",
-    "db:migrate:prod": "turbo db:migrate",
+    "db:migrate": "node scripts/prisma-migrate-safe.cjs",
+    "db:migrate:prod": "node scripts/prisma-migrate-safe.cjs",
     "db:seed": "turbo db:seed",
     "storage:minio:setup": "tsx scripts/setup-minio.ts",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
     "pm2:up": "bash ./scripts/pm2-up.sh",
     "pm2:restart": "pm2 startOrRestart ecosystem.config.cjs --update-env",
     "pm2:status": "pm2 list",
@@ -115,6 +120,30 @@
   },
   "dependencies": {
     "dotenv": "17.2.3",
-    "minio": "^8.0.6"
+    "minio": "^8.0.7"
+  },
+  "pnpm": {
+    "overrides": {
+      "axios": "^1.14.0",
+      "handlebars": "^4.7.9",
+      "effect": "^3.21.0",
+      "flatted": "^3.4.2",
+      "rollup": "^4.60.1",
+      "undici": "^7.24.6",
+      "@nestjs/platform-express@10.4.22>multer": "^2.1.1",
+      "@nestjs/platform-express@11.1.13>multer": "^2.1.1",
+      "express@4.22.1>path-to-regexp": "0.1.13",
+      "router@2.2.0>path-to-regexp": "^8.4.1",
+      "@nestjs/swagger@11.2.5>path-to-regexp": "^8.4.1",
+      "@nestjs/core@11.1.13>path-to-regexp": "^8.4.1",
+      "@nestjs/platform-express@11.1.13>path-to-regexp": "^8.4.1",
+      "serialize-javascript": "^7.0.3",
+      "glob@10.4.5": "^10.5.0",
+      "minimatch@3.1.2": "^3.1.4",
+      "minimatch@9.0.5": "^9.0.7",
+      "minimatch@10.1.2": "^10.2.3",
+      "picomatch@2.3.1": "^2.3.2",
+      "picomatch@4.0.3": "^4.0.4"
+    }
   }
 }

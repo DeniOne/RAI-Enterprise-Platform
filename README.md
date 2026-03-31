@@ -1,6 +1,6 @@
 # RAI_EP
 
-> Состояние репозитория: `2026-03-24`
+> Состояние репозитория: `2026-03-31`
 >
 > Source of truth: `code/tests/gates > generated manifests > docs`
 
@@ -102,7 +102,7 @@ API стартует на порту `4000` в [`apps/api/src/main.ts`](apps/api
 
 ```bash
 cp .env.example .env
-docker-compose up -d
+pnpm docker:up
 pnpm install
 pnpm db:migrate
 pnpm dev
@@ -124,15 +124,15 @@ pnpm dev
 | `pnpm dev` | Запускает workspace dev scripts через Turborepo |
 | `pnpm build` | Сборка всех активных workspace targets |
 | `pnpm test` | Общий прогон тестов через Turbo |
-| `pnpm docker:up` | Поднимает локальную инфраструктуру |
-| `pnpm docker:down` | Останавливает локальную инфраструктуру |
+| `pnpm docker:up` | Поднимает локальную инфраструктуру через `docker compose up -d` |
+| `pnpm docker:down` | Останавливает локальную инфраструктуру через `docker compose down` |
 
 ### База данных и схема
 
 | Команда | Что делает |
 | --- | --- |
 | `pnpm db:client` | Перегенерация Prisma client |
-| `pnpm db:migrate` | Прогон миграций по workspace |
+| `pnpm db:migrate` | Безопасный прогон Prisma migrations через `packages/prisma-client` с загрузкой `.env` |
 | `pnpm db:seed` | Заполнение БД начальными данными |
 
 ### Гейты и линтеры

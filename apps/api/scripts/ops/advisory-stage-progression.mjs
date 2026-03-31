@@ -18,12 +18,16 @@ async function login() {
 }
 
 async function call(token, method, path, body) {
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+  if (method !== "GET" && method !== "HEAD") {
+    headers["Idempotency-Key"] = `${TRACE_PREFIX}:${method}:${path}:${Date.now()}`;
+  }
   const response = await fetch(`${BASE_URL}${path}`, {
     method,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
   const text = await response.text();

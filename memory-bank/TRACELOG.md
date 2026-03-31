@@ -11,6 +11,134 @@
 - Обновлены `docs/README.md`, `docs/INDEX.md`, `docs/DOCS_MATRIX.md`.
 - Практический эффект: у проекта появился постоянный execution-контур, по которому можно идти сверху вниз и реально выполнять большую фазу без потери логики.
 
+[2026-03-31 01:43Z] Для `A5` добавлен отдельный IP/OSS closeout packet
+- Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`.
+- Документ привязан к текущим фактам:
+  - `pnpm security:licenses` уже строит воспроизводимый inventory
+  - `OSS_LICENSE_AND_IP_REGISTER` фиксирует `33 unknown licenses`
+  - `RF_COMPLIANCE_REVIEW` подтверждает, что `chain-of-title` и OSS triage остаются красным блокером
+- Практический эффект: трек `A5` теперь исполняется как конкретный пакет по `unknown licenses`, notice obligations, `ELP-20260328-09` и first-party licensing strategy, а не как общий IP-хвост в конце `Phase A`.
+
+[2026-03-31 01:58Z] Для первой legal-волны `A1` добавлен owner-friendly execution checklist
+- Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_EXECUTION_CHECKLIST.md`.
+- Документ зафиксировал первую критическую четвёрку:
+  - `ELP-20260328-01`
+  - `ELP-20260328-03`
+  - `ELP-20260328-04`
+  - `ELP-20260328-06`
+- Для каждой карточки явно описано:
+  - какой внешний файл нужен
+  - кто даёт данные
+  - что обязательно вписать
+  - какую команду `intake` запускать
+  - что изменится в board и legal verdict
+- Практический эффект: `A1` теперь можно двигать как прямой чеклист исполнения, а не как навигацию по register/handoff/priority-board.
+
+[2026-03-31 02:09Z] Для `ELP-20260328-01` добавлен отдельный operator-memo micro-checklist
+- Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_ELP_01_OPERATOR_MEMO_CHECKLIST.md`.
+- Документ зафиксировал:
+  - допустимую форму `operator identity and role memo`
+  - минимально обязательные поля
+  - точный цикл `intake -> reviewed -> accepted`
+  - что именно должно измениться в `A1` и legal verdict после acceptance
+- Практический эффект: первый реальный шаг `A1` теперь исполнительно разложен до одного конкретного документа, без необходимости собирать acceptance criteria по нескольким legal-файлам.
+
+[2026-03-31 02:19Z] Для `ELP-20260328-03` добавлен отдельный hosting/residency micro-checklist
+- Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_ELP_03_HOSTING_RESIDENCY_CHECKLIST.md`.
+- Документ зафиксировал:
+  - допустимую форму `Hosting / residency attestation`
+  - минимально обязательные поля по `prod / pilot / staging`
+  - точный цикл `intake -> reviewed -> accepted`
+  - что именно должно измениться в `A1` и legal verdict после acceptance
+- Практический эффект: второй реальный шаг `A1` теперь исполнительно разложен до одного конкретного документа, без необходимости собирать residency criteria из request packet, runbook и deployment matrix вручную.
+
+[2026-03-31 02:42Z] `Phase A` разложена до первого рабочего слоя по всем трекам
+- Созданы:
+  - `PHASE_A0_TRIAGE_EXECUTION_RULES.md`
+  - `PHASE_A1_ELP_04_PROCESSOR_DPA_CHECKLIST.md`
+  - `PHASE_A1_ELP_06_LAWFUL_BASIS_CHECKLIST.md`
+  - `PHASE_A2_FIRST_WAVE_SECURITY_CHECKLIST.md`
+  - `PHASE_A3_FIRST_WAVE_GOVERNANCE_CHECKLIST.md`
+  - `PHASE_A4_FIRST_WAVE_INSTALLABILITY_CHECKLIST.md`
+  - `PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md`
+- Зафиксирован живой baseline для `A2`:
+  - `security:audit:ci` -> `critical=2`, `high=37`
+  - `gate:secrets` -> `tracked_findings=0`, `workspace_local_findings=8`
+  - `gate:invariants` -> `violations=0`
+  - `security:licenses` -> `unknown_licenses=33`
+- Практический эффект: все треки `A0–A5` теперь имеют не только общий closeout-plan, но и первый исполнимый рабочий слой, по которому можно реально двигать фазу без распыления и без постоянных возвратов к верхнеуровневым документам.
+
+[2026-03-31 02:58Z] `A1` разложена до конца по всей приоритетной legal-восьмёрке
+- Созданы:
+  - `PHASE_A1_SECOND_WAVE_EXECUTION_CHECKLIST.md`
+  - `PHASE_A1_ELP_02_RKN_CHECKLIST.md`
+  - `PHASE_A1_ELP_05_TRANSBORDER_CHECKLIST.md`
+  - `PHASE_A1_ELP_08_RETENTION_CHECKLIST.md`
+  - `PHASE_A1_ELP_09_CHAIN_OF_TITLE_CHECKLIST.md`
+- Практический эффект: legal-track `A1` больше не имеет незадекомпозированных priority-items внутри репозитория; от этого момента остаточный blocker уже не в структуре docs, а в отсутствии реальных внешних документов и owner sign-off.
+
+[2026-03-31 01:31Z] Для `A4` добавлен отдельный installability/recovery closeout packet
+- Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALLABILITY_AND_RECOVERY_PLAN.md`.
+- Документ привязан к текущим фактам:
+  - `self-host / localized first` остаётся приоритетным маршрутом
+  - release criteria требуют install/upgrade packet и fresh backup/restore evidence
+  - due diligence фиксирует отсутствие полного installability packet и последнего backup/restore execution report
+- Практический эффект: трек `A4` теперь исполняется как конкретный пакет по installability, dry-run, recovery evidence и support boundary, а не как общая ops-тема.
+
+[2026-03-31 01:19Z] Для `A3` добавлен отдельный AI governance closeout packet
+- Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md`.
+- Документ привязан к текущим фактам:
+  - advisory-first AI policy уже зафиксирована
+  - audit по AI/agent contour остаётся условным из-за отсутствия unified safety release gate
+  - release criteria требуют `tool matrix`, `HITL matrix`, formal `eval-suite`
+- Практический эффект: трек `A3` теперь исполняется как конкретный пакет по `tool / HITL / advisory-only / eval`, а не как общая policy-тема без рабочего выхода.
+
+[2026-03-31 01:08Z] Для `A2` добавлен отдельный security closeout packet
+- Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_SECURITY_CLOSEOUT_PLAN.md`.
+- Документ привязан к текущему фактическому baseline:
+  - `pnpm gate:invariants` проходит
+  - `controllers_without_guards = 0`
+  - `raw_sql_unsafe = 0`
+  - security-policy контур активен
+- Одновременно зафиксировано, что dependency-risk, historical secret debt и external access evidence ещё не закрыты до конца.
+- Практический эффект: трек `A2` теперь исполняется не как абстрактное “улучшить security”, а как конкретный пакет по dependency-risk, secrets, invariants и access-governance.
+
+[2026-03-31 00:54Z] Для `A1` добавлен отдельный legal closeout packet
+- Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_LEGAL_CLOSEOUT_PLAN.md`.
+- Документ привязан к фактическому состоянию legal tooling:
+  - `requested = 11`
+  - `accepted = 0`
+  - `current_verdict = NO-GO`
+  - `blockers_to_next_target = 8`
+- Внутрь execution-пакета подняты:
+  - точный приоритетный порядок `ELP-01 -> 03 -> 04 -> 06 -> 02 -> 05 -> 08 -> 09`
+  - draft paths из restricted store
+  - команды `intake / reviewed / accepted`
+  - правило синхронизации board после каждого шага
+- Практический эффект: legal track `A1` теперь исполняется как конкретная очередь действий внутри `ONE_BIG_PHASE`, а не как общий пункт “закрыть legal”.
+
+[2026-03-31 00:38Z] `Phase A` переведена в decision-complete implementation packet
+- Добавлен `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md`.
+- Новый документ формализует исполнение `Phase A` по трекам:
+  - `A0` triage
+  - `A1` legal
+  - `A2` security
+  - `A3` AI governance
+  - `A4` installability/recovery
+  - `A5` IP/OSS
+- `PHASE_A_EXECUTION_BOARD.md` обновлён: появился `Track` и board теперь отражает реальный execution order.
+- `PHASE_A_EVIDENCE_MATRIX.md` обновлена: доказательства теперь размечены по трекам, а не только по осям риска.
+- Практический эффект: `Phase A` теперь можно вести как цельный операционный пакет с единым планом, board и evidence model, без дополнительных решений от исполнителя.
+
+[2026-03-31 00:12Z] Для `Phase A` добавлены execution board и evidence matrix
+- В `docs/07_EXECUTION/ONE_BIG_PHASE/` созданы:
+  - `PHASE_A_EXECUTION_BOARD.md`
+  - `PHASE_A_EVIDENCE_MATRIX.md`
+- `PHASE_A_EXECUTION_BOARD` разложил пункты `Phase A` в строки `blocker / owner / status / evidence / next action`.
+- `PHASE_A_EVIDENCE_MATRIX` зафиксировал, какие именно доказательства считаются достаточными для закрытия legal, security, AI governance, installability и IP рисков.
+- `ONE_BIG_PHASE/INDEX.md`, `01_PHASE_A_STOP_BLOCKERS_AND_GATES.md` и `docs/DOCS_MATRIX.md` синхронизированы.
+- Практический эффект: у `Phase A` появился не только план, но и операционный механизм различения между движением задач и реальным evidence-closeout.
+
 [2026-03-30 15:02Z] Уточнена роль существующих `front-office / CRM`-агентов в execution-каноне
 - Исправлены двусмысленные формулировки в `RAI_EP_PRIORITY_SYNTHESIS_MASTER_REPORT.md`, `RAI_EP_MVP_EXECUTION_CHECKLIST.md` и `ONE_BIG_PHASE/01_PHASE_A_STOP_BLOCKERS_AND_GATES.md`.
 - Зафиксировано различие:
@@ -654,3 +782,248 @@
   - target model
   - открытые gaps
 - Отдельно зафиксирован `AI-first delivery model`: ИИ пишет основной bounded implementation work, человек держит архитектуру, acceptance, security/legal/policy и final review.
+
+[2026-03-31 03:26Z] Выполнена первая фактическая remediation-волна `A2`
+- В `package.json` поднят `minio` до `8.0.7`.
+- В корневую `package.json` добавлены `pnpm.overrides` для:
+  - `axios ^1.14.0`
+  - `handlebars ^4.7.9`
+- В `apps/api/package.json` и `apps/web/package.json` прямой `axios` поднят до `^1.14.0`.
+- После `pnpm install` подтверждён новый dependency baseline:
+  - `minio -> fast-xml-parser 5.5.9`
+  - `ts-jest -> handlebars 4.7.9`
+  - `api/web/@nestjs/axios -> axios 1.14.0`
+- Повторная верификация дала:
+  - `pnpm security:audit:ci` -> `critical=0`, `high=30`
+  - `pnpm gate:secrets` -> `tracked_findings=0`, `workspace_local_findings=8`
+  - `pnpm gate:invariants` -> `violations=0`
+  - `pnpm --filter api build` -> PASS
+  - `pnpm --filter web build` -> PASS
+- Практический эффект: `A2` впервые сдвинулась по реальному remediation, а не только по planning docs; первая волна закрыла все `critical` advisories и перевела execution-board в честный статус `in_progress` с новым baseline `critical=0 / high=30`.
+
+[2026-03-31 09:22Z] Вторая remediation-волна `A2` сузила security debt до узкого toolchain-tail
+- В `package.json` и `pnpm-lock.yaml` добавлены targeted `pnpm.overrides` для:
+  - `effect ^3.21.0`
+  - `flatted ^3.4.2`
+  - `rollup ^4.60.1`
+  - `undici ^7.24.6`
+  - `@nestjs/platform-express@10.4.22>multer ^2.1.1`
+  - `@nestjs/platform-express@11.1.13>multer ^2.1.1`
+  - `serialize-javascript ^7.0.3`
+  - `glob@10.4.5 ^10.5.0`
+  - `minimatch@3.1.2 ^3.1.4`
+  - `minimatch@9.0.5 ^9.0.7`
+  - `minimatch@10.1.2 ^10.2.3`
+  - `picomatch@2.3.1 ^2.3.2`
+  - `picomatch@4.0.3 ^4.0.4`
+- Повторная верификация дала:
+  - `pnpm security:audit:ci` -> `critical=0`, `high=5`
+  - `pnpm gate:secrets` -> `tracked_findings=0`, `workspace_local_findings=8`
+  - `pnpm gate:invariants` -> `violations=0`
+  - `pnpm --filter api build` -> PASS
+  - `pnpm --filter web build` -> PASS
+- Остаточные `high=5` теперь ограничены dev-toolchain:
+  - `apps/api -> @typescript-eslint/typescript-estree@6.21.0 -> minimatch@9.0.3`
+  - `apps/api` и `apps/telegram-bot` -> `@nestjs/cli -> @angular-devkit/core@17.3.11/19.2.19 -> picomatch@4.0.1/4.0.2`
+- Практический эффект: runtime-impact advisories по текущему `Tier 1` периметру сняты; `A2` теперь упирается не в production/runtime зависимости, а в явное решение по residual toolchain debt и внешний access-governance follow-up.
+
+[2026-03-31 10:04Z] Для `A2` зафиксировано отдельное Tier-1 решение по residual toolchain-tail
+- Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_TIER1_TOOLCHAIN_DECISION.md`.
+- В документе зафиксировано, что остаточный `high=5`:
+  - не подтверждён как runtime-perimeter `Tier 1`
+  - ограничен dev-toolchain путями `@typescript-eslint/typescript-estree -> minimatch@9.0.3` и `@angular-devkit/core -> picomatch@4.0.1/4.0.2`
+  - считается допустимым для `Tier 1 self-host / localized MVP pilot` как `non-runtime toolchain debt`
+  - не считается допустимым без отдельного пересмотра для `Tier 2` и `Tier 3`
+- `PHASE_A_EXECUTION_BOARD.md` синхронизирован:
+  - `A-2.3.1` переведён в `done`
+  - следующий focus внутри `A2` смещён на historical key/rotation debt и внешний access-governance evidence
+- `PHASE_A2_FIRST_WAVE_SECURITY_CHECKLIST.md`, `PHASE_A2_SECURITY_CLOSEOUT_PLAN.md`, `PHASE_A_EVIDENCE_MATRIX.md` и `ONE_BIG_PHASE/INDEX.md` синхронизированы под новое решение.
+- Практический эффект: `A2` перестал висеть между “почти закрыто” и “непонятно можно ли выпускать”; для `Tier 1` dependency-risk теперь имеет формальное управленческое решение, а security-track можно дальше вести по реальным остаточным блокерам.
+
+[2026-03-31 10:18Z] Остаточные хвосты `A2` разложены в два отдельных execution-checklist
+- Созданы:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_HISTORICAL_SECRET_AND_KEY_DEBT_CHECKLIST.md`
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_EXTERNAL_ACCESS_GOVERNANCE_CHECKLIST.md`
+- `PHASE_A2_SECURITY_CLOSEOUT_PLAN.md` теперь ссылается на оба документа как на практические рабочие пакеты для residual security-blockers.
+- `PHASE_A_EXECUTION_BOARD.md` усилен:
+  - `A-2.3.3` теперь явно ведёт в checklist по historical secret/key debt
+  - добавлена новая строка `A-2.3.5` для внешнего access-governance perimeter со статусом `waiting_external`
+- `PHASE_A_EVIDENCE_MATRIX.md` получила отдельную строку `Security / access governance outside repo`, чтобы отделить локальный `CODEOWNERS`/workflow baseline от реального GitHub UI evidence.
+- Практический эффект: после закрытия dependency-risk `A2` больше не остаётся абстрактным security-хвостом; теперь два оставшихся блока сформулированы как прямые исполнимые шаги, по которым можно реально собирать evidence и двигать `Phase A`.
+
+[2026-03-31 10:31Z] `A2` доведена до micro-step и restricted-template уровня
+- Созданы:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_S1_CA_KEY_REVOCATION_CHECKLIST.md`
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_S2_TELEGRAM_TOKEN_ROTATION_CHECKLIST.md`
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_S3_GITHUB_ACCESS_REVIEW_CHECKLIST.md`
+- Усилены:
+  - `PHASE_A2_HISTORICAL_SECRET_AND_KEY_DEBT_CHECKLIST.md`
+  - `PHASE_A2_EXTERNAL_ACCESS_GOVERNANCE_CHECKLIST.md`
+  - `PHASE_A_EXECUTION_BOARD.md`
+  - `ONE_BIG_PHASE/INDEX.md`
+- В restricted perimeter создан локальный security scaffolding:
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/metadata/INDEX.md`
+  - metadata cards `A2-S-01`, `A2-S-02`, `A2-S-03`
+  - template files для каждого артефакта
+- Практический эффект: остаточные хвосты `A2` больше не требуют придумывать формат evidence с нуля; теперь по каждому security-blocker есть и канонический execution-чеклист в репозитории, и готовый restricted template вне Git.
+
+[2026-03-31 10:42Z] Для `A2-S-01` подготовлен первый repo-derived restricted draft
+- Создан `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/drafts/A2-S-01/A2-S-01__repo-derived-draft.md`.
+- Draft заполняет только подтверждённые repo-факты:
+  - исторический путь `infra/gateway/certs/ca.key`
+  - удаление из Git на коммите `233cf5e61eb246f03d4a115cdff43706d92a812b`
+  - текущий perimeter `infra/gateway/certs/` без private key material
+  - `pnpm gate:secrets -> tracked_findings=0`
+- `A2-S-01` metadata card обновлена полем `draft_path`, но статус оставлен `requested`.
+- Практический эффект: у owner'а больше не пустой template, а почти готовый restricted draft, в котором осталось только внешне подтвердить revocation/reissue и owner sign-off.
+
+[2026-03-31 10:57Z] Для `A2-S-02` подготовлен второй repo-derived restricted draft
+- Создан `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/drafts/A2-S-02/A2-S-02__repo-derived-draft.md`.
+- Draft заполняет только подтверждённые repo-факты:
+  - исторические Telegram token value(s) в tracked `mg-core/backend/.env` и `mg-core/backend/src/mg-chat/.env`
+  - удаление этих файлов из Git на коммите `de2ac2c1b8c3117f9d2b076c0a142c68636f7a09`
+  - текущий `pnpm gate:secrets -> tracked_findings=0, tracked_critical=0`
+- `A2-S-02` metadata card обновлена полем `draft_path`, а repo-side checklist теперь явно ссылается на draft как на стартовую основу для внешнего restricted artifact.
+- Статус `A2-S-02` оставлен `requested`, потому что repository не подтверждает сам факт rotation/invalidation и текущее место хранения действующего secret.
+- Практический эффект: у owner'а больше не пустой template, а почти готовый restricted draft, в котором осталось только внешне подтвердить rotation/invalidation, дату действия и current storage location.
+
+[2026-03-31 11:08Z] Для `A2-S-03` подготовлен третий repo-derived restricted draft
+- Создан `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/drafts/A2-S-03/A2-S-03__repo-derived-draft.md`.
+- Draft заполняет только подтверждённые repo-факты:
+  - `.github/CODEOWNERS` покрывает workflows, `scripts`, `rai-chat`, shared backend perimeter, `apps/web/app/**`, `apps/web/lib/**` и `docs/05_OPERATIONS/**`
+  - в репозитории присутствуют `.github/workflows/security-audit.yml`, `codeql-analysis.yml`, `dependency-review.yml`, `invariant-gates.yml`
+  - `SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY.md` уже требует quarterly GitHub UI review outside repo
+- `A2-S-03` metadata card обновлена полем `draft_path`, а repo-side checklist теперь явно ссылается на draft как на стартовую основу для внешнего restricted artifact.
+- Статус `A2-S-03` оставлен `requested`, потому что repository не подтверждает branch protection, required checks enforcement, admin bypass, deploy keys и GitHub environments.
+- Практический эффект: у owner'а больше не пустой template, а почти готовый restricted draft, в котором осталось только внешне подтвердить GitHub UI perimeter и итоговый review verdict.
+
+[2026-03-31 11:24Z] Для `A2` добавлен machine-readable security-evidence gate
+- Создан `scripts/security-evidence-status.cjs`.
+- В `package.json` добавлены команды:
+  - `pnpm security:evidence:status`
+  - `pnpm gate:security:evidence`
+- Новый script читает restricted metadata в `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/metadata`, проверяет статусы `A2-S-01/02/03`, наличие `draft_path`/`artifact_path`, `review_due` и пишет отчёты в:
+  - `var/security/security-evidence-status.json`
+  - `var/security/security-evidence-status.md`
+- Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_SECURITY_EVIDENCE_CLOSEOUT_CHECKLIST.md` как единый closeout-порядок для `A2-S-01/02/03`.
+- `PHASE_A2_SECURITY_CLOSEOUT_PLAN.md`, `PHASE_A2_HISTORICAL_SECRET_AND_KEY_DEBT_CHECKLIST.md`, `PHASE_A2_EXTERNAL_ACCESS_GOVERNANCE_CHECKLIST.md`, `PHASE_A_EXECUTION_BOARD.md` и `PHASE_A_EVIDENCE_MATRIX.md` синхронизированы с новым gate.
+- Практический эффект: residual `A2` security evidence теперь отслеживается не только вручную по markdown и restricted-папкам, а ещё и одной воспроизводимой командой, что резко снижает drift между drafts, metadata и execution-board.
+
+[2026-03-31 11:39Z] Для `A2` добавлен intake/transition lifecycle по security evidence
+- Созданы:
+  - `scripts/security-evidence-intake.cjs`
+  - `scripts/security-evidence-transition.cjs`
+- В `package.json` добавлены команды:
+  - `pnpm security:evidence:intake`
+  - `pnpm security:evidence:transition`
+- `PHASE_A2_SECURITY_EVIDENCE_CLOSEOUT_CHECKLIST.md`, `PHASE_A2_SECURITY_CLOSEOUT_PLAN.md`, `PHASE_A2_S1_CA_KEY_REVOCATION_CHECKLIST.md`, `PHASE_A2_S2_TELEGRAM_TOKEN_ROTATION_CHECKLIST.md` и `PHASE_A2_S3_GITHUB_ACCESS_REVIEW_CHECKLIST.md` усилены точными CLI-командами для `received -> reviewed -> accepted`.
+- На временной копии restricted perimeter подтверждён рабочий цикл:
+  - `requested -> received`
+  - `received -> reviewed`
+  - `reviewed -> accepted`
+- Практический эффект: `A2` теперь имеет не только status/gate и drafts, но и полный воспроизводимый lifecycle для реального intake security evidence без ручной правки metadata.
+[2026-03-31 10:49Z] Для `A3.1` опубликован runtime-derived tool permission matrix
+- Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_TOOL_PERMISSION_MATRIX.md`.
+- Документ собран по текущему runtime-коду:
+  - `DEFAULT_TOOL_BINDINGS`
+  - `TOOL_RISK_MAP`
+  - `resolveToolAccess`
+  - `RiskPolicyEngineService`
+  - `RaiToolsRegistry`
+- Зафиксирован default governed tool-perimeter для `Tier 1` по ролям `agronomist`, `economist`, `knowledge`, `monitoring`, `crm_agent`, `front_office_agent`, `contracts_agent`, `chief_agronomist`, `data_scientist`.
+- `PHASE_A_EXECUTION_BOARD.md` синхронизирован:
+  - `A-2.4.1` переведён из `open` в `in_progress`
+- `PHASE_A_EVIDENCE_MATRIX.md` синхронизирована:
+  - по оси `AI / tool permissions` зафиксировано, что execution-артефакт уже создан, но `A3` ещё не закрыта до конца без `HITL / advisory-only / eval-suite`
+- Практический эффект: `A3` впервые получила не только policy-намерение, а опубликованный runtime-derived baseline, от которого можно уже детерминированно строить `HITL matrix` и formal `eval-suite`.
+[2026-03-31 11:05Z] Для `A3.2` опубликован runtime-derived HITL matrix
+- Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_HITL_MATRIX.md`.
+- Документ собран по текущему runtime-контракту:
+  - `RiskPolicyEngineService`
+  - `PendingActionService`
+  - `PendingActionsController`
+  - `RaiToolsRegistry`
+  - `AutonomyPolicyService`
+- Зафиксирована текущая лестница участия человека:
+  - `H0` no gate для `READ`
+  - `H2/H3` для governed write через `PendingAction`
+  - `H4` для critical/two-person approval
+  - `H5` для `QUARANTINE` и advisory-only зон
+- `PHASE_A_EXECUTION_BOARD.md` синхронизирован:
+  - `A-2.4.2` переведён из `open` в `in_progress`
+- `PHASE_A_EVIDENCE_MATRIX.md` синхронизирована:
+  - по оси `AI / HITL` зафиксировано, что execution-артефакт уже создан, но `A3` ещё не закрыта до конца без `advisory-only / eval-suite`
+- Практический эффект: `A3` получила опубликованный runtime-derived human approval baseline, и теперь `advisory-only perimeter` и `formal eval-suite` можно строить поверх реального approval-chain, а не по общей policy-риторике.
+[2026-03-31 11:18Z] Repo-side scaffold `A3/A4/A5` доведён до execution-ready depth
+- Созданы:
+  - `PHASE_A3_ADVISORY_ONLY_REGISTER.md`
+  - `PHASE_A3_RELEASE_EVAL_SUITE.md`
+  - `PHASE_A4_SELF_HOST_INSTALL_UPGRADE_PACKET.md`
+  - `PHASE_A4_INSTALL_DRY_RUN_REPORT_TEMPLATE.md`
+  - `PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_TEMPLATE.md`
+  - `PHASE_A4_SUPPORT_BOUNDARY_PACKET.md`
+  - `PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md`
+  - `PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md`
+  - `PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md`
+- `PHASE_A_EXECUTION_BOARD.md` синхронизирован:
+  - `A-2.4.3`, `A-2.4.4`, `A-2.5.1`, `A-2.5.2`, `A-2.5.3`, `A-2.6.1`, `A-2.6.4` больше не висят как пустой `open`
+- `PHASE_A_EVIDENCE_MATRIX.md` синхронизирована:
+  - появились отдельные строки для `AI / advisory-only perimeter`, `Operational support boundary`, `OSS / notice obligations`, `IP / first-party licensing strategy`
+- Практический эффект:
+  - внутрирепозиторная подготовка `Phase A` доведена до почти максимальной исполнимости;
+  - дальнейшее закрытие фазы теперь упирается в реальные external evidence и actual execution reports, а не в отсутствие execution-доков.
+[2026-03-31 11:40Z] Для `A4` собран реальный execution baseline и устранён installability drift
+- Root scripts переведены с `docker-compose` на `docker compose`:
+  - `package.json#docker:up`
+  - `package.json#docker:down`
+- Добавлен `scripts/prisma-migrate-safe.cjs`.
+- Root `pnpm db:migrate` теперь идёт через safe wrapper, который загружает `.env`, вызывает `prisma migrate deploy` в `packages/prisma-client` и пишет report в `var/schema/prisma-migrate-safe.json`.
+- Реально подтверждено:
+  - `pnpm docker:up` -> PASS
+  - `pnpm db:migrate` -> PASS
+  - `pnpm --filter api build` -> PASS
+  - `pnpm --filter web build` -> PASS
+  - `backup / restore` rehearsal -> PASS
+- Созданы machine-readable execution artifacts:
+  - `var/ops/phase-a4-install-dry-run-2026-03-31.json`
+  - `var/ops/phase-a4-backup-restore-execution-2026-03-31.json`
+- Созданы canonical reports:
+  - `PHASE_A4_INSTALL_DRY_RUN_REPORT_2026-03-31.md`
+  - `PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_2026-03-31.md`
+- Практический эффект:
+  - `A4.1` и `A4.2` больше не опираются только на templates;
+  - install/recovery path теперь подтверждён фактическим исполнением, а оставшийся хвост `A4` сузился до fresh-host rehearsal и support boundary.
+
+[2026-03-31 11:41Z] Для `A3` собран первый runtime-drill evidence layer и исправлен advisory script drift
+- Найден repo-side drift: advisory ops scripts не передавали `Idempotency-Key` для mutating advisory endpoints, из-за чего rehearsal path падал на `400`.
+- Исправлены:
+  - `apps/api/scripts/ops/advisory-oncall-drill.mjs`
+  - `apps/api/scripts/ops/advisory-stage-progression.mjs`
+  - `apps/api/scripts/ops/advisory-dr-rollback-rehearsal.mjs`
+- После исправления реально пройдены:
+  - `advisory-oncall-drill` -> PASS
+  - `advisory-stage-progression` -> PASS
+  - `advisory-dr-rollback-rehearsal` -> PASS
+- Результаты сохранены в `var/ops` и подняты в канон через `PHASE_A3_RUNTIME_DRILL_REPORT_2026-03-31.md`.
+- Практический эффект:
+  - `A3.4` теперь имеет не только skeleton eval-suite, но и фактический runtime-drill baseline;
+  - advisory runtime, gate evaluation, kill-switch и rollback подтверждены живым исполнением, хотя unified evaluator gate ещё не собран.
+[2026-03-31 11:55Z] Для `A5` устранена first-party ambiguity внутри OSS inventory
+- В `package.json` добавлен `license: UNLICENSED`.
+- В `packages/eslint-plugin-tenant-security/package.json` добавлены:
+  - `license: UNLICENSED`
+  - `private: true`
+- `pnpm security:licenses` пересчитан:
+  - `total packages = 159`
+  - `unknown licenses = 33 -> 31`
+  - `UNLICENSED = 2`
+- `PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md` обновлён:
+  - remaining `UNKNOWN` теперь разбит только на:
+    - `25` `esbuild` platform companions
+    - `5` `turbo` platform companions
+    - `1` `fsevents`
+  - first-party perimeter вынесен в отдельный уже закрытый repo-side baseline
+- `OSS_LICENSE_AND_IP_REGISTER.md`, `PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md`, `PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md`, `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`, `PHASE_A_EXECUTION_BOARD.md` и `PHASE_A_EVIDENCE_MATRIX.md` синхронизированы.
+- Практический эффект:
+  - `A5` перестал смешивать внутренние пакеты и внешний OSS-tail в одну красную массу;
+  - следующий шаг теперь точнее: formal legal classification и notice bundle только по `esbuild/turbo/fsevents`, а не по first-party пакетам.
