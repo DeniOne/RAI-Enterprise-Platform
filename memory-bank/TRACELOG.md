@@ -876,3 +876,13 @@
   - `pnpm gate:secrets -> tracked_findings=0`
 - `A2-S-01` metadata card обновлена полем `draft_path`, но статус оставлен `requested`.
 - Практический эффект: у owner'а больше не пустой template, а почти готовый restricted draft, в котором осталось только внешне подтвердить revocation/reissue и owner sign-off.
+
+[2026-03-31 10:57Z] Для `A2-S-02` подготовлен второй repo-derived restricted draft
+- Создан `/root/RAI_EP_RESTRICTED_EVIDENCE/security/2026-03-31/drafts/A2-S-02/A2-S-02__repo-derived-draft.md`.
+- Draft заполняет только подтверждённые repo-факты:
+  - исторические Telegram token value(s) в tracked `mg-core/backend/.env` и `mg-core/backend/src/mg-chat/.env`
+  - удаление этих файлов из Git на коммите `de2ac2c1b8c3117f9d2b076c0a142c68636f7a09`
+  - текущий `pnpm gate:secrets -> tracked_findings=0, tracked_critical=0`
+- `A2-S-02` metadata card обновлена полем `draft_path`, а repo-side checklist теперь явно ссылается на draft как на стартовую основу для внешнего restricted artifact.
+- Статус `A2-S-02` оставлен `requested`, потому что repository не подтверждает сам факт rotation/invalidation и текущее место хранения действующего secret.
+- Практический эффект: у owner'а больше не пустой template, а почти готовый restricted draft, в котором осталось только внешне подтвердить rotation/invalidation, дату действия и current storage location.
