@@ -2,6 +2,24 @@
 
 ## 2026-03-31
 
+1. **A1 priority-eight request packet assembled** [DONE]:
+  - Добавлен root generator:
+    - `scripts/phase-a1-priority-eight-request-packet.cjs`
+  - В `package.json` добавлены команды:
+    - `pnpm phase:a1:priority-eight:packet`
+    - `pnpm gate:phase:a1:priority-eight:packet`
+  - Создан новый canonical doc:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_PRIORITY_EIGHT_REQUEST_PACKET.md`
+  - Generated evidence выпускается в:
+    - `var/compliance/phase-a1-priority-eight-request-packet.json`
+    - `var/compliance/phase-a1-priority-eight-request-packet.md`
+  - Restricted delivery packet выпускается в:
+    - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/request-packets/PHASE-A1-PRIORITY-EIGHT/REQUEST_PACKET.md`
+  - Практический эффект:
+    - весь legal blocker-set до `CONDITIONAL GO` теперь открывается одним owner-facing файлом;
+    - первая и вторая wave остаются разделёнными по порядку, но управляются из одной точки входа;
+    - repo-side closeout `A1` доведён почти до потолка перед живым external intake.
+
 1. **A1 second-wave request packet assembled** [DONE]:
   - Добавлен root generator:
     - `scripts/phase-a1-second-wave-request-packet.cjs`

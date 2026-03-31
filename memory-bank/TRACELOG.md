@@ -1537,3 +1537,19 @@
   - после первой волны `A1` не упрётся в новый слой ручной сборки;
   - `ELP-02 / 05 / 08 / 09` уже собраны в owner-ready очередь;
   - legal closeout теперь подготовлен по обеим priority-wave, а не только по стартовой четвёрке.
+[2026-03-31 18:10Z] Для `A1` собран unified priority-eight request packet
+- Добавлен root generator `scripts/phase-a1-priority-eight-request-packet.cjs`.
+- В `package.json` добавлены команды:
+  - `pnpm phase:a1:priority-eight:packet`
+  - `pnpm gate:phase:a1:priority-eight:packet`
+- Создан новый canonical doc:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_PRIORITY_EIGHT_REQUEST_PACKET.md`
+- Generated evidence теперь выпускается в:
+  - `var/compliance/phase-a1-priority-eight-request-packet.json`
+  - `var/compliance/phase-a1-priority-eight-request-packet.md`
+- Restricted delivery packet теперь выпускается в:
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/request-packets/PHASE-A1-PRIORITY-EIGHT/REQUEST_PACKET.md`
+- Практический эффект:
+  - весь legal blocker-set до `CONDITIONAL GO` теперь открывается одним owner-facing файлом;
+  - первая и вторая wave остаются разделёнными логически, но управляются из одной точки входа;
+  - remaining `A1` blocker ещё сильнее сводится к фактическому external intake, а не к repo-side packet drift.

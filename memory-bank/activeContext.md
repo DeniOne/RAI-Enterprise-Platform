@@ -1,6 +1,17 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A1` собран unified priority-eight packet поверх первой и второй wave.
+  - добавлен root generator:
+    - `scripts/phase-a1-priority-eight-request-packet.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a1:priority-eight:packet`
+    - `pnpm gate:phase:a1:priority-eight:packet`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_PRIORITY_EIGHT_REQUEST_PACKET.md`
+- [x] После этого `A1` сместилась так:
+  - весь critical legal path до `CONDITIONAL GO` уже открывается одной точкой входа;
+  - первая и вторая wave остаются разделёнными по порядку, но не распадаются на несколько несвязанных packet-слоёв;
+  - remaining blocker ещё сильнее сводится к живому intake внешних документов.
 - [x] Для `A1` собран owner-facing packet второй волны `ELP-02 / 05 / 08 / 09`.
   - добавлен root generator:
     - `scripts/phase-a1-second-wave-request-packet.cjs`
