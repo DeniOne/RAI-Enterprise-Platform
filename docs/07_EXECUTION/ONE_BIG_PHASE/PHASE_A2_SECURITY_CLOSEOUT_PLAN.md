@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A2-SECURITY-CLOSEOUT-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.4.0
+version: 1.5.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A2-SECURITY-CLOSEOUT-PLAN-20260331
@@ -22,7 +22,10 @@ last_verified: 2026-03-31
 
 Этот документ переводит `A2` из общей строки “закрыть security” в прямой execution-пакет по dependency-risk, secret hygiene и invariants.
 
-Для первого рабочего прохода использовать также [PHASE_A2_FIRST_WAVE_SECURITY_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_FIRST_WAVE_SECURITY_CHECKLIST.md). Для release-решения по residual `high=5` использовать [PHASE_A2_TIER1_TOOLCHAIN_DECISION.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_TIER1_TOOLCHAIN_DECISION.md).
+Для первого рабочего прохода использовать также [PHASE_A2_FIRST_WAVE_SECURITY_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_FIRST_WAVE_SECURITY_CHECKLIST.md). Для release-решения по residual `high=5` использовать [PHASE_A2_TIER1_TOOLCHAIN_DECISION.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_TIER1_TOOLCHAIN_DECISION.md). Для остаточных blocker-хвостов использовать:
+
+- [PHASE_A2_HISTORICAL_SECRET_AND_KEY_DEBT_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_HISTORICAL_SECRET_AND_KEY_DEBT_CHECKLIST.md)
+- [PHASE_A2_EXTERNAL_ACCESS_GOVERNANCE_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_EXTERNAL_ACCESS_GOVERNANCE_CHECKLIST.md)
 
 ## 1. Текущее состояние `A2`
 
@@ -76,6 +79,10 @@ last_verified: 2026-03-31
 - `pnpm gate:secrets` остаётся зелёным;
 - historical secret debt закрыт отдельным evidence, а не просто удалением файла из дерева.
 
+Практический рабочий документ:
+
+- [PHASE_A2_HISTORICAL_SECRET_AND_KEY_DEBT_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_HISTORICAL_SECRET_AND_KEY_DEBT_CHECKLIST.md)
+
 ### `A2.3` Unsafe paths и governance discipline
 
 Сделать:
@@ -101,6 +108,10 @@ last_verified: 2026-03-31
 Сильное доказательство:
 
 - внешний access-governance artifact, подтверждающий review/protection perimeter.
+
+Практический рабочий документ:
+
+- [PHASE_A2_EXTERNAL_ACCESS_GOVERNANCE_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_EXTERNAL_ACCESS_GOVERNANCE_CHECKLIST.md)
 
 ## 3. Режим исполнения `A2`
 

@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A-EVIDENCE-MATRIX-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.3.0
+version: 1.4.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-EVIDENCE-MATRIX-20260331
@@ -52,6 +52,7 @@ last_verified: 2026-03-31
 | `A2` | `Security / dependency risk` | опустить критичные и высокие зависимости до управляемого уровня | зелёный remediation-report по critical/high debt + успешные build после dependency refresh | `pnpm security:audit:ci` -> `critical=0`, `high=5`; runtime-impact advisories больше не воспроизводятся; остаток high ограничен `@typescript-eslint/typescript-estree -> minimatch@9.0.3` и `@angular-devkit/core -> picomatch@4.0.1/4.0.2`; [PHASE_A2_TIER1_TOOLCHAIN_DECISION.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_TIER1_TOOLCHAIN_DECISION.md); `pnpm --filter api build`; `pnpm --filter web build` | внешнее evidence не требуется, нужен технический результат и формальное release-решение по toolchain-tail | `для Tier 1 признано допустимым, follow-up для Tier 2+ остаётся` |
 | `A2` | `Security / secret hygiene` | удержать `tracked` leakage на нуле и закрыть historical debt | зелёный secret gate + incident closeout evidence | `pnpm gate:secrets` -> `tracked_findings=0`, `workspace_local_findings=8`; [KEY_MATERIAL_AND_SECRET_HYGIENE_INCIDENT_2026-03-28.md](/root/RAI_EP/docs/05_OPERATIONS/KEY_MATERIAL_AND_SECRET_HYGIENE_INCIDENT_2026-03-28.md) | возможно external rotation/proof для historical incident | `tracked закрыто, workspace debt остаётся` |
 | `A2` | `Security / unsafe paths` | не допускать новых unsafe обходов | зелёные invariants/gates | `pnpm gate:invariants`, due diligence | внешнее evidence не требуется | `внутренне подтверждено` |
+| `A2` | `Security / access governance outside repo` | доказать branch protection, owner-review, deploy keys и environment access | restricted access review artifact | [SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY.md](/root/RAI_EP/docs/05_OPERATIONS/SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY.md), `.github/CODEOWNERS`, security workflows | внешний restricted evidence packet по GitHub UI/perimeter | `не подтверждено внешне` |
 | `A3` | `AI / tool permissions` | определить, что агенту можно запускать | approved tool matrix + runtime enforcement | [RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md](/root/RAI_EP/docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md) | внешнее evidence не требуется | `не подтверждено исполнением` |
 | `A3` | `AI / HITL` | определить, где обязательно участие человека | approved HITL matrix + runtime path | AI policy, AI failure scenarios | внешнее evidence не требуется | `не подтверждено исполнением` |
 | `A3` | `AI / safety evals` | ввести формальный eval suite для risky-сценариев | eval suite + результаты прогонов | AI failure scenarios, synthesis | внешнее evidence не требуется | `не подтверждено исполнением` |

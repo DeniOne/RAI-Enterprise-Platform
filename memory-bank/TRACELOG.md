@@ -839,3 +839,14 @@
   - следующий focus внутри `A2` смещён на historical key/rotation debt и внешний access-governance evidence
 - `PHASE_A2_FIRST_WAVE_SECURITY_CHECKLIST.md`, `PHASE_A2_SECURITY_CLOSEOUT_PLAN.md`, `PHASE_A_EVIDENCE_MATRIX.md` и `ONE_BIG_PHASE/INDEX.md` синхронизированы под новое решение.
 - Практический эффект: `A2` перестал висеть между “почти закрыто” и “непонятно можно ли выпускать”; для `Tier 1` dependency-risk теперь имеет формальное управленческое решение, а security-track можно дальше вести по реальным остаточным блокерам.
+
+[2026-03-31 10:18Z] Остаточные хвосты `A2` разложены в два отдельных execution-checklist
+- Созданы:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_HISTORICAL_SECRET_AND_KEY_DEBT_CHECKLIST.md`
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A2_EXTERNAL_ACCESS_GOVERNANCE_CHECKLIST.md`
+- `PHASE_A2_SECURITY_CLOSEOUT_PLAN.md` теперь ссылается на оба документа как на практические рабочие пакеты для residual security-blockers.
+- `PHASE_A_EXECUTION_BOARD.md` усилен:
+  - `A-2.3.3` теперь явно ведёт в checklist по historical secret/key debt
+  - добавлена новая строка `A-2.3.5` для внешнего access-governance perimeter со статусом `waiting_external`
+- `PHASE_A_EVIDENCE_MATRIX.md` получила отдельную строку `Security / access governance outside repo`, чтобы отделить локальный `CODEOWNERS`/workflow baseline от реального GitHub UI evidence.
+- Практический эффект: после закрытия dependency-risk `A2` больше не остаётся абстрактным security-хвостом; теперь два оставшихся блока сформулированы как прямые исполнимые шаги, по которым можно реально собирать evidence и двигать `Phase A`.

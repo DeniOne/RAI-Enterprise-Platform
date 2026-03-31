@@ -110,6 +110,13 @@
   - это решение не распространяется на `Tier 2` и `Tier 3`
   - строка `A-2.3.1` в `PHASE_A_EXECUTION_BOARD.md` переведена в `done`
   - внутри `A2` основным остаточным фокусом стали historical key/rotation debt и внешний access-governance evidence
+- [x] Остаточные хвосты `A2` разложены в два отдельных рабочих документа:
+  - `PHASE_A2_HISTORICAL_SECRET_AND_KEY_DEBT_CHECKLIST.md`
+  - `PHASE_A2_EXTERNAL_ACCESS_GOVERNANCE_CHECKLIST.md`
+- [x] `PHASE_A_EXECUTION_BOARD.md` теперь явно показывает, что после закрытия dependency-risk у `A2` остались два практических блока:
+  - `A-2.3.3` = historical secret/key debt
+  - `A-2.3.5` = внешний access-governance perimeter
+- [x] `PHASE_A_EVIDENCE_MATRIX.md` усилена отдельной строкой `Security / access governance outside repo`, чтобы не путать наличие `CODEOWNERS` в Git с реальным подтверждением GitHub protection/perimeter.
 - [x] Для трека `A3` добавлен отдельный рабочий пакет `PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md`.
 - [x] `A3` теперь переведён из общей policy-темы в execution-пакет по четырём обязательным артефактам:
   - `tool-permission matrix`
