@@ -52,6 +52,22 @@
   - что именно должно измениться в `A1` и legal verdict после acceptance
 - Практический эффект: второй реальный шаг `A1` теперь исполнительно разложен до одного конкретного документа, без необходимости собирать residency criteria из request packet, runbook и deployment matrix вручную.
 
+[2026-03-31 02:42Z] `Phase A` разложена до первого рабочего слоя по всем трекам
+- Созданы:
+  - `PHASE_A0_TRIAGE_EXECUTION_RULES.md`
+  - `PHASE_A1_ELP_04_PROCESSOR_DPA_CHECKLIST.md`
+  - `PHASE_A1_ELP_06_LAWFUL_BASIS_CHECKLIST.md`
+  - `PHASE_A2_FIRST_WAVE_SECURITY_CHECKLIST.md`
+  - `PHASE_A3_FIRST_WAVE_GOVERNANCE_CHECKLIST.md`
+  - `PHASE_A4_FIRST_WAVE_INSTALLABILITY_CHECKLIST.md`
+  - `PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md`
+- Зафиксирован живой baseline для `A2`:
+  - `security:audit:ci` -> `critical=2`, `high=37`
+  - `gate:secrets` -> `tracked_findings=0`, `workspace_local_findings=8`
+  - `gate:invariants` -> `violations=0`
+  - `security:licenses` -> `unknown_licenses=33`
+- Практический эффект: все треки `A0–A5` теперь имеют не только общий closeout-plan, но и первый исполнимый рабочий слой, по которому можно реально двигать фазу без распыления и без постоянных возвратов к верхнеуровневым документам.
+
 [2026-03-31 01:31Z] Для `A4` добавлен отдельный installability/recovery closeout packet
 - Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALLABILITY_AND_RECOVERY_PLAN.md`.
 - Документ привязан к текущим фактам:

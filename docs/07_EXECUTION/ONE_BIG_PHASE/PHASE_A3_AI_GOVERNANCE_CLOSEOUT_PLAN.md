@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A3-AI-GOVERNANCE-CLOSEOUT-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A3-AI-GOVERNANCE-CLOSEOUT-PLAN-20260331
@@ -26,6 +26,8 @@ last_verified: 2026-03-31
 - `HITL matrix`
 - `advisory-only` перечень
 - formal `eval-suite`
+
+Для первого рабочего прохода использовать также [PHASE_A3_FIRST_WAVE_GOVERNANCE_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_FIRST_WAVE_GOVERNANCE_CHECKLIST.md).
 
 ## 1. Текущее состояние `A3`
 

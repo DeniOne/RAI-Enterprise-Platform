@@ -150,6 +150,25 @@
     - второй шаг первой legal-волны теперь тоже исполним как один конкретный документ;
     - исчезает двусмысленность, что именно считается достаточным residency evidence.
 
+11. **Полное разложение Phase A до первого рабочего слоя** [DONE]:
+  - Добавлены:
+    - `PHASE_A0_TRIAGE_EXECUTION_RULES.md`
+    - `PHASE_A1_ELP_04_PROCESSOR_DPA_CHECKLIST.md`
+    - `PHASE_A1_ELP_06_LAWFUL_BASIS_CHECKLIST.md`
+    - `PHASE_A2_FIRST_WAVE_SECURITY_CHECKLIST.md`
+    - `PHASE_A3_FIRST_WAVE_GOVERNANCE_CHECKLIST.md`
+    - `PHASE_A4_FIRST_WAVE_INSTALLABILITY_CHECKLIST.md`
+    - `PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md`
+  - Для `A2` в execution-layer зафиксирован живой baseline:
+    - `pnpm security:audit:ci` -> `critical=2`, `high=37`
+    - `pnpm gate:secrets` -> `tracked_findings=0`, `workspace_local_findings=8`
+    - `pnpm gate:invariants` -> `violations=0`
+    - `pnpm security:licenses` -> `unknown_licenses=33`
+  - `ONE_BIG_PHASE/INDEX.md`, `01_PHASE_A_STOP_BLOCKERS_AND_GATES.md`, `PHASE_A1_FIRST_WAVE_EXECUTION_CHECKLIST.md`, `PHASE_A2_SECURITY_CLOSEOUT_PLAN.md`, `PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md`, `PHASE_A4_INSTALLABILITY_AND_RECOVERY_PLAN.md`, `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md` и `docs/DOCS_MATRIX.md` синхронизированы.
+  - Практический эффект:
+    - `Phase A` больше не держится только на больших планах и двух micro-docs;
+    - теперь каждый трек `A0–A5` имеет конкретный стартовый execution-layer, который можно реально брать в работу сверху вниз.
+
 ## 2026-03-30
 
 1. **Owner-friendly MVP execution checklist** [DONE]:

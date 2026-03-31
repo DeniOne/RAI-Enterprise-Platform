@@ -62,6 +62,19 @@
   - обязательные поля по `prod / pilot / staging`
   - точный порядок `intake -> reviewed -> accepted`
   - что именно должно измениться в `A1` и legal verdict
+- [x] `Phase A` дальше разложена без остановки по всем оставшимся трекам первого рабочего слоя.
+- [x] Добавлены:
+  - `PHASE_A0_TRIAGE_EXECUTION_RULES.md`
+  - `PHASE_A1_ELP_04_PROCESSOR_DPA_CHECKLIST.md`
+  - `PHASE_A1_ELP_06_LAWFUL_BASIS_CHECKLIST.md`
+  - `PHASE_A2_FIRST_WAVE_SECURITY_CHECKLIST.md`
+  - `PHASE_A3_FIRST_WAVE_GOVERNANCE_CHECKLIST.md`
+  - `PHASE_A4_FIRST_WAVE_INSTALLABILITY_CHECKLIST.md`
+  - `PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md`
+- [x] Это дало полное разложение `Phase A` до уровня:
+  - anti-drift triage rules для `A0`
+  - micro-checklists по первой critical legal wave
+  - first-wave execution checklists для security, AI governance, installability и IP/OSS
 - [x] Для трека `A2` добавлен отдельный рабочий пакет `PHASE_A2_SECURITY_CLOSEOUT_PLAN.md`.
 - [x] `A2` теперь привязан к фактическому baseline:
   - `pnpm security:audit:ci`

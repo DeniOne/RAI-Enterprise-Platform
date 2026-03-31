@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A4-INSTALLABILITY-RECOVERY-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A4-INSTALLABILITY-RECOVERY-PLAN-20260331
@@ -21,6 +21,8 @@ verified_by: manual
 last_verified: 2026-03-31
 
 Этот документ переводит `A4` из общей строки “installability / self-host / backup-restore” в прямой execution-пакет по установке, обновлению, dry-run и recovery evidence.
+
+Для первого рабочего прохода использовать также [PHASE_A4_FIRST_WAVE_INSTALLABILITY_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_FIRST_WAVE_INSTALLABILITY_CHECKLIST.md).
 
 ## 1. Текущее состояние `A4`
 

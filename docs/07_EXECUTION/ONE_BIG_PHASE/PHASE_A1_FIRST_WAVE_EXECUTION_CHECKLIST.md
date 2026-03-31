@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A1-FIRST-WAVE-CHECKLIST-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.2.0
+version: 1.3.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A1-FIRST-WAVE-CHECKLIST-20260331
@@ -34,6 +34,10 @@ last_verified: 2026-03-31
 Для самого первого шага использовать также [PHASE_A1_ELP_01_OPERATOR_MEMO_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_ELP_01_OPERATOR_MEMO_CHECKLIST.md).
 
 Для второго шага использовать также [PHASE_A1_ELP_03_HOSTING_RESIDENCY_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_ELP_03_HOSTING_RESIDENCY_CHECKLIST.md).
+
+Для третьего шага использовать также [PHASE_A1_ELP_04_PROCESSOR_DPA_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_ELP_04_PROCESSOR_DPA_CHECKLIST.md).
+
+Для четвёртого шага использовать также [PHASE_A1_ELP_06_LAWFUL_BASIS_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_ELP_06_LAWFUL_BASIS_CHECKLIST.md).
 
 ## 1. Что делать прямо сейчас
 
