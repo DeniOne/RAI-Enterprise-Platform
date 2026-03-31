@@ -1,3 +1,33 @@
+[2026-03-31 13:44Z] Для `A1` собран unified first-wave request packet
+- Добавлен root generator `scripts/phase-a1-first-wave-request-packet.cjs`.
+- В `package.json` добавлены команды:
+  - `pnpm phase:a1:first-wave:packet`
+  - `pnpm gate:phase:a1:first-wave:packet`
+- Создан новый canonical doc:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_REQUEST_PACKET.md`
+- Generated evidence теперь выпускается в:
+  - `var/compliance/phase-a1-first-wave-request-packet.json`
+  - `var/compliance/phase-a1-first-wave-request-packet.md`
+- В restricted evidence store теперь выпускается:
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/request-packets/PHASE-A1-FIRST-WAVE/REQUEST_PACKET.md`
+- Packet собирает в одну точку:
+  - текущие статусы `ELP-01 / 03 / 04 / 06`
+  - named owners
+  - draft paths
+  - micro-checklists
+  - готовые `intake / reviewed / accepted` команды
+- Синхронизированы:
+  - `PHASE_A1_FIRST_WAVE_EXECUTION_CHECKLIST.md`
+  - `PHASE_A1_LEGAL_CLOSEOUT_PLAN.md`
+  - `PHASE_A_EXECUTION_BOARD.md`
+  - `PHASE_A_EVIDENCE_MATRIX.md`
+  - `ONE_BIG_PHASE/INDEX.md`
+  - `docs/DOCS_MATRIX.md`
+- Практический эффект:
+  - первая legal-четвёрка стала owner-ready одним файлом;
+  - `A1` всё ещё остаётся `waiting_external`, но теперь уже без repo-side организационного трения;
+  - remaining blocker ещё сильнее сводится к реальному external intake.
+
 [2026-03-31 13:37Z] Для `A5` собран unified machine-readable status gate
 - Добавлен root generator `scripts/phase-a5-status.cjs`.
 - В `package.json` добавлены команды:

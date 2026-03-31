@@ -2,6 +2,31 @@
 
 ## 2026-03-31
 
+1. **A1 first-wave request packet assembled** [DONE]:
+  - Добавлен root generator:
+    - `scripts/phase-a1-first-wave-request-packet.cjs`
+  - В `package.json` добавлены команды:
+    - `pnpm phase:a1:first-wave:packet`
+    - `pnpm gate:phase:a1:first-wave:packet`
+  - Создан новый canonical doc:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_REQUEST_PACKET.md`
+  - Generated evidence выпускается в:
+    - `var/compliance/phase-a1-first-wave-request-packet.json`
+    - `var/compliance/phase-a1-first-wave-request-packet.md`
+  - В restricted evidence store выпускается:
+    - `request-packets/PHASE-A1-FIRST-WAVE/REQUEST_PACKET.md`
+  - Синхронизированы:
+    - `PHASE_A1_FIRST_WAVE_EXECUTION_CHECKLIST.md`
+    - `PHASE_A1_LEGAL_CLOSEOUT_PLAN.md`
+    - `PHASE_A_EXECUTION_BOARD.md`
+    - `PHASE_A_EVIDENCE_MATRIX.md`
+    - `ONE_BIG_PHASE/INDEX.md`
+    - `docs/DOCS_MATRIX.md`
+  - Практический эффект:
+    - первая legal-волна теперь открывается одним owner-facing packet, а не рассыпана по status, draft, four checklists и priority-board;
+    - `A1` честно остаётся внешне заблокированной, но её первый execution-slice стал существенно проще запускать;
+    - remaining blocker ещё сильнее смещён от repo-side подготовки к реальному intake внешних документов.
+
 1. **A5 unified status gate assembled** [DONE]:
   - Добавлен root generator:
     - `scripts/phase-a5-status.cjs`

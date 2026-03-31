@@ -1,6 +1,25 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A1` собран unified owner-facing packet именно по первой legal-волне `ELP-01 / 03 / 04 / 06`.
+  - добавлен root generator:
+    - `scripts/phase-a1-first-wave-request-packet.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a1:first-wave:packet`
+    - `pnpm gate:phase:a1:first-wave:packet`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_REQUEST_PACKET.md`
+- [x] Этот packet теперь собирает в одну точку:
+  - текущие legal statuses первой волны
+  - named owners
+  - draft paths
+  - micro-checklists
+  - готовые `intake / reviewed / accepted` команды
+  - restricted request packet:
+    - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/request-packets/PHASE-A1-FIRST-WAVE/REQUEST_PACKET.md`
+- [x] После этого `A1` сместилась так:
+  - первая legal-четвёрка стала owner-ready не только как checklist set, но и как единый request packet
+  - `A-2.2.1` всё ещё честно остаётся `waiting_external`
+  - remaining blocker теперь ещё меньше похож на “нужно придумать процесс” и ещё больше похож на “нужно реально собрать и принять внешние файлы”
 - [x] Для `A5` собран unified machine-readable `status/gate` поверх уже готовых repo-side packet-слоёв.
   - добавлен root generator:
     - `scripts/phase-a5-status.cjs`
