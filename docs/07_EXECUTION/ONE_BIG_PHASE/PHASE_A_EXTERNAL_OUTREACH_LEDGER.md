@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A-EXTERNAL-OUTREACH-LEDGER-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-EXTERNAL-OUTREACH-LEDGER-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: scripts/phase-a-external-outreach-ledger.cjs;package.json;var/execution/phase-a-external-outreach-ledger.json;var/execution/phase-a-external-outreach-ledger.md;var/execution/phase-a-external-owner-outreach.json;var/execution/phase-a-external-owner-queues.json;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_OUTREACH_PACKET.md
+evidence_refs: scripts/phase-a-external-outreach-ledger.cjs;scripts/phase-a-external-outreach-transition.cjs;package.json;var/execution/phase-a-external-outreach-ledger.json;var/execution/phase-a-external-outreach-ledger.md;var/execution/phase-a-external-owner-outreach.json;var/execution/phase-a-external-owner-queues.json;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_OUTREACH_PACKET.md
 ---
 # PHASE A EXTERNAL OUTREACH LEDGER
 
@@ -35,6 +35,7 @@ last_verified: 2026-03-31
 Связанные команды:
 
 - `pnpm phase:a:external-owner-outreach`
+- `pnpm phase:a:external-outreach:transition -- --queue=@chief_legal_officer --status=sent --contact=mail@example.com --at=2026-03-31`
 - `pnpm phase:a:closeout`
 
 ## 2. Что выпускается
@@ -71,7 +72,23 @@ Restricted tracker perimeter:
 - не заменяет legal/security/pilot intake команды;
 - не означает, что `Phase A` сдвинулась, пока не появился реальный внешний ответ.
 
-## 6. Что должно измениться дальше
+## 6. Как переводить статусы безопасно
+
+Новый статус выставлять не ручной правкой tracker-файла, а через CLI:
+
+- `pnpm phase:a:external-outreach:transition -- --queue=@chief_legal_officer --status=sent --contact=mail@example.com --at=2026-03-31`
+- `pnpm phase:a:external-outreach:transition -- --queue=@chief_legal_officer --status=acknowledged --contact=mail@example.com --at=2026-04-01`
+- `pnpm phase:a:external-outreach:transition -- --queue=@chief_legal_officer --status=replied --contact=mail@example.com --at=2026-04-02 --note=получен пакет документов`
+- `pnpm phase:a:external-outreach:transition -- --queue=@chief_legal_officer --status=closed --at=2026-04-03 --note=очередь больше не держит blocker`
+
+Допустимая последовательность:
+
+- `prepared -> sent`
+- `sent -> acknowledged | replied | closed`
+- `acknowledged -> replied | closed`
+- `replied -> closed`
+
+## 7. Что должно измениться дальше
 
 Следующее реальное изменение после этого слоя:
 

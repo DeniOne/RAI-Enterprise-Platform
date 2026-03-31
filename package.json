@@ -22,6 +22,7 @@
     "gate:phase:a:external-owner-outreach": "pnpm gate:phase:a:external-owner-queues && node scripts/phase-a-external-owner-outreach.cjs --mode=enforce",
     "phase:a:external-outreach-ledger": "pnpm phase:a:external-owner-outreach && node scripts/phase-a-external-outreach-ledger.cjs",
     "gate:phase:a:external-outreach-ledger": "pnpm gate:phase:a:external-owner-outreach && node scripts/phase-a-external-outreach-ledger.cjs --mode=enforce",
+    "phase:a:external-outreach:transition": "node scripts/phase-a-external-outreach-transition.cjs",
     "phase:a:closeout": "pnpm phase:a:external-outreach-ledger && node scripts/phase-a-closeout-status.cjs",
     "gate:phase:a:closeout": "pnpm gate:phase:a:external-outreach-ledger && node scripts/phase-a-closeout-status.cjs --mode=enforce",
     "phase:a4:handoff:status": "node scripts/phase-a4-pilot-handoff-status.cjs",

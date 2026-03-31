@@ -1696,3 +1696,15 @@
   - `A3` перестаёт флейкать на login rate-limit;
   - `phase-a3-release-evals`, `phase:a:external-outreach-ledger` и `phase:a:closeout` снова могут давать согласованный снимок;
   - новый outreach-ledger больше не создаёт ложный красный хвост в `Phase A` из-за нестабильности соседнего drill-run.
+[2026-03-31 19:24Z] Для `Phase A external outreach ledger` добавлен transition-layer
+- Добавлен root generator-free lifecycle script:
+  - `scripts/phase-a-external-outreach-transition.cjs`
+- В `package.json` добавлена команда:
+  - `pnpm phase:a:external-outreach:transition`
+- `PHASE_A_EXTERNAL_OUTREACH_LEDGER.md` усилен:
+  - теперь содержит не только status layer, но и явные команды перевода очередей
+  - допустимые переходы зафиксированы как `prepared -> sent -> acknowledged -> replied -> closed`
+- Практический эффект:
+  - внешний хвост `A1/A2/A4/A5` теперь можно вести без ручной правки `TRACKER.md`;
+  - статусы `sent / acknowledged / replied / closed` получают валидацию и не могут перескакивать хаотично;
+  - после реальной отправки owner-facing сообщений `Phase A` можно будет двигать уже по управляемому CLI-lifecycle, а не по текстовым заметкам.
