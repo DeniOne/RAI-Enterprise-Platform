@@ -27,6 +27,8 @@
     "gate:phase:a:external-reply-bridge": "pnpm gate:phase:a:external-outreach-ledger && node scripts/phase-a-external-reply-intake-bridge.cjs --mode=enforce",
     "phase:a:external-reply-capture": "pnpm phase:a:external-reply-bridge && node scripts/phase-a-external-reply-capture-packet.cjs",
     "gate:phase:a:external-reply-capture": "pnpm gate:phase:a:external-reply-bridge && node scripts/phase-a-external-reply-capture-packet.cjs --mode=enforce",
+    "phase:a:external-reconciliation": "pnpm phase:a:external-reply-capture && node scripts/phase-a-external-evidence-reconciliation.cjs",
+    "gate:phase:a:external-reconciliation": "pnpm gate:phase:a:external-reply-capture && node scripts/phase-a-external-evidence-reconciliation.cjs --mode=enforce",
     "phase:a:closeout": "pnpm phase:a:external-outreach-ledger && node scripts/phase-a-closeout-status.cjs",
     "gate:phase:a:closeout": "pnpm gate:phase:a:external-outreach-ledger && node scripts/phase-a-closeout-status.cjs --mode=enforce",
     "phase:a4:handoff:status": "node scripts/phase-a4-pilot-handoff-status.cjs",

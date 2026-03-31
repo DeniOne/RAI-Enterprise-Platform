@@ -1745,3 +1745,21 @@
   - после статуса `replied` появляется не только маршрут `intake`, но и единое место хранения raw owner reply;
   - исходные письма и вложения перестают теряться между внешними каналами и ручными заметками;
   - `Phase A` получает полный внешний путь `prepared -> sent -> replied -> capture -> intake -> reviewed -> accepted`.
+[2026-03-31 19:56Z] Для внешнего evidence closeout добавлен reconciliation-слой
+- Добавлен root script:
+  - `scripts/phase-a-external-evidence-reconciliation.cjs`
+- В `package.json` добавлены команды:
+  - `pnpm phase:a:external-reconciliation`
+  - `pnpm gate:phase:a:external-reconciliation`
+- Создан новый canonical doc:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_EVIDENCE_RECONCILIATION.md`
+- Generated evidence теперь выпускается в:
+  - `var/execution/phase-a-external-evidence-reconciliation.json`
+  - `var/execution/phase-a-external-evidence-reconciliation.md`
+- Restricted reconciliation perimeter теперь выпускается в:
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/execution/2026-03-31/request-packets/PHASE-A-EXTERNAL-EVIDENCE-RECONCILIATION/INDEX.md`
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/execution/2026-03-31/request-packets/PHASE-A-EXTERNAL-EVIDENCE-RECONCILIATION/<queue>/RECONCILE.md`
+- Практический эффект:
+  - внешний хвост `Phase A` теперь можно читать не только как outreach и capture, но и как фактическую evidence-сверку;
+  - сразу видно, где стоп: `waiting_reply`, `waiting_capture`, `waiting_intake`, `waiting_review`, `waiting_acceptance` или `accepted`;
+  - owner queue можно закрывать уже не по ощущению, а по фактическому совпадению raw reply, intake и track-level evidence status.

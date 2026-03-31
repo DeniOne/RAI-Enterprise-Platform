@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A-EXTERNAL-REPLY-CAPTURE-PACKET-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-EXTERNAL-REPLY-CAPTURE-PACKET-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: scripts/phase-a-external-reply-capture-packet.cjs;package.json;var/execution/phase-a-external-reply-capture-packet.json;var/execution/phase-a-external-reply-capture-packet.md;var/execution/phase-a-external-outreach-ledger.json;var/execution/phase-a-external-owner-queues.json;var/execution/phase-a-external-reply-intake-bridge.json;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_REPLY_INTAKE_BRIDGE.md
+evidence_refs: scripts/phase-a-external-reply-capture-packet.cjs;scripts/phase-a-external-evidence-reconciliation.cjs;package.json;var/execution/phase-a-external-reply-capture-packet.json;var/execution/phase-a-external-reply-capture-packet.md;var/execution/phase-a-external-evidence-reconciliation.json;var/execution/phase-a-external-outreach-ledger.json;var/execution/phase-a-external-owner-queues.json;var/execution/phase-a-external-reply-intake-bridge.json;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_REPLY_INTAKE_BRIDGE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_EVIDENCE_RECONCILIATION.md
 ---
 # PHASE A EXTERNAL REPLY CAPTURE PACKET
 
@@ -36,6 +36,7 @@ last_verified: 2026-03-31
 
 - `pnpm phase:a:external-outreach:transition -- --queue=@chief_legal_officer --status=replied --contact=mail@example.com --at=2026-04-02 --note=получен пакет`
 - `pnpm phase:a:external-reply-bridge`
+- `pnpm phase:a:external-reconciliation`
 - `pnpm phase:a:closeout`
 
 ## 2. Что выпускается
@@ -54,6 +55,10 @@ Restricted capture perimeter:
 Связанный bridge-слой:
 
 - [PHASE_A_EXTERNAL_REPLY_INTAKE_BRIDGE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_REPLY_INTAKE_BRIDGE.md)
+
+Следующий reconciliation-слой:
+
+- [PHASE_A_EXTERNAL_EVIDENCE_RECONCILIATION.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_EVIDENCE_RECONCILIATION.md)
 
 ## 3. Что считается сильным результатом
 
@@ -84,4 +89,5 @@ Restricted capture perimeter:
 - owner queue должна перейти в `replied`;
 - raw ответ и вложения нужно положить в соответствующую `incoming/<referenceId>/` drop-zone;
 - затем по [PHASE_A_EXTERNAL_REPLY_INTAKE_BRIDGE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_REPLY_INTAKE_BRIDGE.md) запускается правильный `intake`;
+- после `intake` использовать [PHASE_A_EXTERNAL_EVIDENCE_RECONCILIATION.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_EVIDENCE_RECONCILIATION.md), чтобы увидеть, дошёл ли `referenceId` до `reviewed/accepted` и можно ли закрывать owner queue;
 - после этого evidence уже движется дальше по `reviewed` и `accepted`.
