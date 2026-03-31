@@ -2,6 +2,43 @@
 
 ## 2026-03-31
 
+1. **A5 chain-of-title owner packets assembled** [DONE]:
+  - Добавлен root generator:
+    - `scripts/phase-a5-chain-of-title-owner-packets.cjs`
+  - В `package.json` добавлены команды:
+    - `pnpm phase:a5:chain-of-title:owner-packets`
+    - `pnpm gate:phase:a5:chain-of-title:owner-packets`
+  - Создан новый canonical doc:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_OWNER_PACKETS.md`
+  - В restricted evidence store реально выпущены:
+    - `chain-of-title-owner-packets/INDEX.md`
+    - `chain-of-title-owner-packets/board_legal_product-governance/HANDOFF.md`
+    - `chain-of-title-owner-packets/legal_data_governance_architecture/HANDOFF.md`
+    - `chain-of-title-owner-packets/legal_engineering_management/HANDOFF.md`
+  - Фактический baseline:
+    - `total_assets = 18`
+    - `owner_queues = 3`
+    - `board / legal / product-governance = 1`
+    - `legal / data governance / architecture = 3`
+    - `legal / engineering management = 14`
+    - `pnpm gate:phase:a5:chain-of-title:owner-packets` -> `PASS`
+  - Restricted `ELP-20260328-09` draft/template усилены ссылками на:
+    - `collection packet`
+    - `handoff packet`
+    - `owner packets`
+  - Синхронизированы:
+    - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`
+    - `PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md`
+    - `PHASE_A1_ELP_09_CHAIN_OF_TITLE_CHECKLIST.md`
+    - `PHASE_A_EXECUTION_BOARD.md`
+    - `PHASE_A_EVIDENCE_MATRIX.md`
+    - `ONE_BIG_PHASE/INDEX.md`
+    - `docs/DOCS_MATRIX.md`
+  - Практический эффект:
+    - `ELP-20260328-09` теперь owner-ready уже не только в общем handoff report, а в отдельных restricted handoff-файлах по очередям владельцев;
+    - `A5.3` практически полностью выжат по внутреннему repo-side периметру;
+    - remaining blocker окончательно смещён к реальному external signed intake.
+
 1. **A5 chain-of-title handoff packet assembled** [DONE]:
   - Добавлен root generator:
     - `scripts/phase-a5-chain-of-title-handoff.cjs`

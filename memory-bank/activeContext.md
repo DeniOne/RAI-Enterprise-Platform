@@ -1,6 +1,32 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A5.3` собран четвёртый repo-side слой поверх handoff packet: `chain-of-title owner packets`.
+  - добавлен root generator:
+    - `scripts/phase-a5-chain-of-title-owner-packets.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a5:chain-of-title:owner-packets`
+    - `pnpm gate:phase:a5:chain-of-title:owner-packets`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_OWNER_PACKETS.md`
+- [x] В restricted evidence store уже реально выпущены:
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/chain-of-title-owner-packets/INDEX.md`
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/chain-of-title-owner-packets/board_legal_product-governance/HANDOFF.md`
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/chain-of-title-owner-packets/legal_data_governance_architecture/HANDOFF.md`
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/chain-of-title-owner-packets/legal_engineering_management/HANDOFF.md`
+- [x] Фактически подтверждено:
+  - `total_assets = 18`
+  - `owner_queues = 3`
+  - `board / legal / product-governance = 1`
+  - `legal / data governance / architecture = 3`
+  - `legal / engineering management = 14`
+  - `pnpm gate:phase:a5:chain-of-title:owner-packets` проходит
+- [x] `A5` после этого сместилась так:
+  - `A-2.6.2` всё ещё остаётся `waiting_external`
+  - но `ELP-20260328-09` теперь готовится уже не только по source/collection/handoff, а по отдельным owner packets в restricted perimeter
+  - repo-side handoff layer для chain-of-title практически выжат до потолка
+- [x] Restricted `ELP-20260328-09` draft/template тоже усилены:
+  - draft теперь ссылается на `collection`, `handoff` и owner packets
+  - template теперь требует указать, какой `owner packet` использовался для сборки внешнего файла
 - [x] Для `A5.3` собран третий repo-side слой поверх source map и collection packet: `chain-of-title handoff packet`.
   - добавлен root generator:
     - `scripts/phase-a5-chain-of-title-handoff.cjs`
