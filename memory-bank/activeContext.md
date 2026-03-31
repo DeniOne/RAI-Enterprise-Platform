@@ -1,6 +1,21 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для внешнего хвоста `Phase A` собран unified owner queue packet поверх consolidated blockers packet.
+  - добавлен root generator:
+    - `scripts/phase-a-external-owner-queues.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a:external-owner-queues`
+    - `pnpm gate:phase:a:external-owner-queues`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_QUEUE_PACKET.md`
+- [x] Этот слой теперь даёт:
+  - generated owner queues в `var/execution/phase-a-external-owner-queues.*`
+  - restricted `INDEX.md` и `HANDOFF.md` по всем external owner queues фазы
+  - единый dispatch не только по трекам `A1/A2/A4/A5`, но и по named owners, shared scopes и governance scopes
+- [x] После этого `Phase A` сместилась так:
+  - unified внешний хвост теперь читается owner-by-owner поверх общего blockers packet;
+  - legal/security/pilot/IP очереди можно отдавать адресно без ручной склейки;
+  - remaining blocker ещё сильнее сводится к фактическому движению статусов внешних артефактов.
 - [x] Для всей `Phase A` собран unified external blockers packet поверх `A1/A2/A4/A5`.
   - добавлен root generator:
     - `scripts/phase-a-external-blockers-packet.cjs`

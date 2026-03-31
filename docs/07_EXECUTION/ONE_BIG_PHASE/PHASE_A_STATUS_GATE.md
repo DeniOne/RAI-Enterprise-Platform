@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A-STATUS-GATE-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.1.0
+version: 1.2.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-STATUS-GATE-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: scripts/phase-a-status.cjs;scripts/phase-a-external-blockers-packet.cjs;package.json;var/execution/phase-a-status.json;var/execution/phase-a-status.md;var/execution/phase-a-external-blockers-packet.json;var/execution/phase-a-external-blockers-packet.md;var/compliance/phase-a1-status.json;var/security/security-evidence-status.json;var/ops/phase-a3-release-eval-summary-2026-03-31.json;var/ops/phase-a4-pilot-handoff-status.json;var/compliance/phase-a5-status.json;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md
+evidence_refs: scripts/phase-a-status.cjs;scripts/phase-a-external-blockers-packet.cjs;scripts/phase-a-external-owner-queues.cjs;package.json;var/execution/phase-a-status.json;var/execution/phase-a-status.md;var/execution/phase-a-external-blockers-packet.json;var/execution/phase-a-external-blockers-packet.md;var/execution/phase-a-external-owner-queues.json;var/execution/phase-a-external-owner-queues.md;var/compliance/phase-a1-status.json;var/security/security-evidence-status.json;var/ops/phase-a3-release-eval-summary-2026-03-31.json;var/ops/phase-a4-pilot-handoff-status.json;var/compliance/phase-a5-status.json;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_QUEUE_PACKET.md
 ---
 # PHASE A STATUS GATE
 
@@ -23,6 +23,8 @@ last_verified: 2026-03-31
 Этот документ переводит всю `Phase A` в один machine-readable status/gate. Он не заменяет `PHASE_A_EXECUTION_BOARD`, а даёт один агрегированный ответ: какие треки уже repo-side закрыты, какие ещё внешне заблокированы и каков реальный общий статус всей фазы.
 
 Для одного consolidated handoff по всем оставшимся внешним хвостам использовать также [PHASE_A_EXTERNAL_BLOCKERS_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_BLOCKERS_PACKET.md).
+
+Для owner-by-owner dispatch по этому же внешнему хвосту использовать также [PHASE_A_EXTERNAL_OWNER_QUEUE_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_QUEUE_PACKET.md).
 
 ## 1. Что именно проверяется
 

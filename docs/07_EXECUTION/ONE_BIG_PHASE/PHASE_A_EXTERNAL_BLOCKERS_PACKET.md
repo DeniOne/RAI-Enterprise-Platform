@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A-EXTERNAL-BLOCKERS-PACKET-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-EXTERNAL-BLOCKERS-PACKET-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: scripts/phase-a-external-blockers-packet.cjs;package.json;var/execution/phase-a-external-blockers-packet.json;var/execution/phase-a-external-blockers-packet.md;var/execution/phase-a-status.json;var/compliance/phase-a1-owner-queues.json;var/security/security-evidence-status.json;var/ops/phase-a4-pilot-handoff-status.json;var/compliance/phase-a5-status.json;var/compliance/phase-a5-chain-of-title-handoff.json;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_STATUS_GATE.md
+evidence_refs: scripts/phase-a-external-blockers-packet.cjs;scripts/phase-a-external-owner-queues.cjs;package.json;var/execution/phase-a-external-blockers-packet.json;var/execution/phase-a-external-blockers-packet.md;var/execution/phase-a-external-owner-queues.json;var/execution/phase-a-external-owner-queues.md;var/execution/phase-a-status.json;var/compliance/phase-a1-owner-queues.json;var/security/security-evidence-status.json;var/ops/phase-a4-pilot-handoff-status.json;var/compliance/phase-a5-status.json;var/compliance/phase-a5-chain-of-title-handoff.json;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_STATUS_GATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_QUEUE_PACKET.md
 ---
 # PHASE A EXTERNAL BLOCKERS PACKET
 
@@ -21,6 +21,8 @@ verified_by: manual
 last_verified: 2026-03-31
 
 Этот документ собирает весь оставшийся внешний blocker-set `Phase A` в один owner-facing packet. Он не заменяет трековые status-gates, а переводит `A1`, `A2`, `A4` и `A5` в один practical handoff для реального внешнего intake.
+
+Для раскладки этого packet по точным очередям исполнителей использовать также [PHASE_A_EXTERNAL_OWNER_QUEUE_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_QUEUE_PACKET.md).
 
 ## 1. Команды
 
@@ -67,6 +69,7 @@ Restricted delivery packet:
 - видно не только `blocked_by = A1, A2, A4, A5`, но и конкретные owner очереди;
 - legal, security, pilot handoff и chain-of-title больше не разорваны по разным operational пакетам;
 - owner-ам можно передавать один consolidated handoff вместо ручной навигации между четырьмя треками.
+- поверх этого packet уже можно выпускать и отдельные owner queue handoff без ручной склейки ролей.
 
 ## 5. Что должно измениться дальше
 

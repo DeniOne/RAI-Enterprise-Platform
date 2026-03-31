@@ -2,6 +2,25 @@
 
 ## 2026-03-31
 
+1. **Phase A external owner queues assembled** [DONE]:
+  - Добавлен root generator:
+    - `scripts/phase-a-external-owner-queues.cjs`
+  - В `package.json` добавлены команды:
+    - `pnpm phase:a:external-owner-queues`
+    - `pnpm gate:phase:a:external-owner-queues`
+  - Создан новый canonical doc:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_QUEUE_PACKET.md`
+  - Generated evidence выпускается в:
+    - `var/execution/phase-a-external-owner-queues.json`
+    - `var/execution/phase-a-external-owner-queues.md`
+  - Restricted owner queue packets выпускаются в:
+    - `/root/RAI_EP_RESTRICTED_EVIDENCE/execution/2026-03-31/request-packets/PHASE-A-EXTERNAL-OWNER-QUEUES/INDEX.md`
+    - `/root/RAI_EP_RESTRICTED_EVIDENCE/execution/2026-03-31/request-packets/PHASE-A-EXTERNAL-OWNER-QUEUES/<queue>/HANDOFF.md`
+  - Практический эффект:
+    - весь внешний остаток `Phase A` теперь читается не только как треки, но и как точные очереди исполнителей;
+    - shared scopes и governance scopes больше не смешиваются вручную с owner packet других треков;
+    - следующий фактический intake можно запускать уже по адресным очередям, а не по общей blockers-сводке.
+
 1. **Phase A external blockers packet assembled** [DONE]:
   - Добавлен root generator:
     - `scripts/phase-a-external-blockers-packet.cjs`
