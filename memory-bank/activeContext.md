@@ -56,6 +56,12 @@
   - обязательные поля memo
   - точный порядок `intake -> reviewed -> accepted`
   - что именно должно измениться в `A1` и legal verdict
+- [x] Для второго фактического шага `A1` добавлен отдельный микрочеклист `PHASE_A1_ELP_03_HOSTING_RESIDENCY_CHECKLIST.md`.
+- [x] `ELP-20260328-03` теперь имеет отдельный owner-friendly execution-layer:
+  - допустимая форма `hosting / residency attestation`
+  - обязательные поля по `prod / pilot / staging`
+  - точный порядок `intake -> reviewed -> accepted`
+  - что именно должно измениться в `A1` и legal verdict
 - [x] Для трека `A2` добавлен отдельный рабочий пакет `PHASE_A2_SECURITY_CLOSEOUT_PLAN.md`.
 - [x] `A2` теперь привязан к фактическому baseline:
   - `pnpm security:audit:ci`

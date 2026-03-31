@@ -137,6 +137,19 @@
     - запуск `A1` теперь можно начинать буквально с одного документа;
     - исчезает двусмысленность, что именно считается достаточным `operator memo`.
 
+10. **ELP-03 hosting/residency micro-checklist** [DONE]:
+  - Добавлен `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_ELP_03_HOSTING_RESIDENCY_CHECKLIST.md`.
+  - Новый документ перевёл второй критический legal-step в один конкретный owner-чеклист:
+    - какая форма файла допустима
+    - какие поля обязательны по средам `prod / pilot / staging`
+    - какая команда выполняет `intake`
+    - что проверять до `reviewed`
+    - что должно измениться после `accepted`
+  - `PHASE_A1_FIRST_WAVE_EXECUTION_CHECKLIST.md`, `ONE_BIG_PHASE/INDEX.md`, `01_PHASE_A_STOP_BLOCKERS_AND_GATES.md` и `docs/DOCS_MATRIX.md` синхронизированы.
+  - Практический эффект:
+    - второй шаг первой legal-волны теперь тоже исполним как один конкретный документ;
+    - исчезает двусмысленность, что именно считается достаточным residency evidence.
+
 ## 2026-03-30
 
 1. **Owner-friendly MVP execution checklist** [DONE]:
