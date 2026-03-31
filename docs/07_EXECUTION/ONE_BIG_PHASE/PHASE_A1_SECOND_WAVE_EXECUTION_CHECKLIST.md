@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A1-SECOND-WAVE-CHECKLIST-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.1.0
+version: 1.2.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A1-SECOND-WAVE-CHECKLIST-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_LEGAL_CLOSEOUT_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_STATUS_GATE.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;var/compliance/external-legal-evidence-priority-board.md;var/compliance/external-legal-evidence-handoff.md;var/compliance/phase-a1-status.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_LEGAL_CLOSEOUT_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_STATUS_GATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_SECOND_WAVE_REQUEST_PACKET.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;var/compliance/external-legal-evidence-priority-board.md;var/compliance/external-legal-evidence-handoff.md;var/compliance/phase-a1-second-wave-request-packet.md;var/compliance/phase-a1-status.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md
 ---
 # PHASE A1 SECOND WAVE EXECUTION CHECKLIST
 
@@ -30,6 +30,8 @@ last_verified: 2026-03-31
 Эта четвёрка идёт строго после первой волны `01 / 03 / 04 / 06`.
 
 Общее состояние всего legal-трека смотреть в [PHASE_A1_STATUS_GATE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_STATUS_GATE.md).
+
+Owner-facing packet второй волны смотреть в [PHASE_A1_SECOND_WAVE_REQUEST_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_SECOND_WAVE_REQUEST_PACKET.md).
 
 ## 1. Что делать прямо сейчас
 

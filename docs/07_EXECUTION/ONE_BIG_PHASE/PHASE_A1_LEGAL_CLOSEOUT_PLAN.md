@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A1-LEGAL-CLOSEOUT-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.5.0
+version: 1.6.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A1-LEGAL-CLOSEOUT-PLAN-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_STATUS_GATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_REQUEST_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_STATUS_GATE.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;var/compliance/external-legal-evidence-verdict.md;var/compliance/external-legal-evidence-priority-board.md;var/compliance/external-legal-evidence-handoff.md;var/compliance/phase-a1-first-wave-request-packet.md;var/compliance/phase-a1-first-wave-status.md;var/compliance/phase-a1-status.md
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_STATUS_GATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_REQUEST_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_STATUS_GATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_SECOND_WAVE_REQUEST_PACKET.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;var/compliance/external-legal-evidence-verdict.md;var/compliance/external-legal-evidence-priority-board.md;var/compliance/external-legal-evidence-handoff.md;var/compliance/phase-a1-first-wave-request-packet.md;var/compliance/phase-a1-first-wave-status.md;var/compliance/phase-a1-second-wave-request-packet.md;var/compliance/phase-a1-status.md
 ---
 # PHASE A1 LEGAL CLOSEOUT PLAN
 
@@ -31,6 +31,8 @@ last_verified: 2026-03-31
 Для machine-readable статуса этой же четвёрки использовать также [PHASE_A1_FIRST_WAVE_STATUS_GATE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_STATUS_GATE.md).
 
 Для второй волны `ELP-02 / 05 / 08 / 09` использовать также [PHASE_A1_SECOND_WAVE_EXECUTION_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_SECOND_WAVE_EXECUTION_CHECKLIST.md).
+
+Для owner-facing packet второй волны использовать также [PHASE_A1_SECOND_WAVE_REQUEST_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_SECOND_WAVE_REQUEST_PACKET.md).
 
 ## 1. Текущее состояние `A1`
 

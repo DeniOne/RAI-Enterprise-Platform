@@ -1,6 +1,17 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A1` собран owner-facing packet второй волны `ELP-02 / 05 / 08 / 09`.
+  - добавлен root generator:
+    - `scripts/phase-a1-second-wave-request-packet.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a1:second-wave:packet`
+    - `pnpm gate:phase:a1:second-wave:packet`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_SECOND_WAVE_REQUEST_PACKET.md`
+- [x] После этого `A1` сместилась так:
+  - вторая волна уже не висит как только checklist;
+  - после первой волны будет готов сразу owner-facing packet без новой ручной сборки;
+  - legal closeout по priority-eight теперь repo-side подготовлен волна-за-волной.
 - [x] Для `A1` собран unified `status/gate` поверх first-wave packet и first-wave status.
   - добавлен root generator:
     - `scripts/phase-a1-status.cjs`
