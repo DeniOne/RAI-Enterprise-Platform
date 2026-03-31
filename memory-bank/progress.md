@@ -2,6 +2,38 @@
 
 ## 2026-03-31
 
+1. **A5 chain-of-title collection packet assembled** [DONE]:
+  - Добавлен root generator:
+    - `scripts/phase-a5-chain-of-title-collection.cjs`
+  - В `package.json` добавлены команды:
+    - `pnpm phase:a5:chain-of-title:collection`
+    - `pnpm gate:phase:a5:chain-of-title:collection`
+  - Создан новый canonical doc:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_COLLECTION_PACKET.md`
+  - Generated evidence выпускается в:
+    - `var/compliance/phase-a5-chain-of-title-collection.json`
+    - `var/compliance/phase-a5-chain-of-title-collection.md`
+  - Фактический baseline:
+    - `total_assets = 18`
+    - `evidence_classes = 4`
+    - `board_ownership_and_licensing = 1`
+    - `employment_or_contractor_ip_assignment = 13`
+    - `database_rights_and_schema_authorship = 3`
+    - `derived_artifact_linkage = 1`
+    - `pnpm gate:phase:a5:chain-of-title:collection` -> `PASS`
+  - Синхронизированы:
+    - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`
+    - `PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md`
+    - `PHASE_A1_ELP_09_CHAIN_OF_TITLE_CHECKLIST.md`
+    - `PHASE_A_EXECUTION_BOARD.md`
+    - `PHASE_A_EVIDENCE_MATRIX.md`
+    - `ONE_BIG_PHASE/INDEX.md`
+    - `docs/DOCS_MATRIX.md`
+  - Практический эффект:
+    - `ELP-20260328-09` теперь готовится не только по карте активов, а по явной матрице классов внешних доказательств;
+    - `A5.3` перестал быть расплывчатым legal-хвостом и превратился в конкретный collection packet;
+    - remaining blocker по `A5` окончательно смещён из repo-side подготовки к реальному external signed intake.
+
 1. **A5 chain-of-title source register assembled** [DONE]:
   - Добавлен root generator:
     - `scripts/phase-a5-chain-of-title-register.cjs`

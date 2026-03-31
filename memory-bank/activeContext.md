@@ -1,6 +1,31 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A5.3` собран второй repo-side слой поверх source map: `chain-of-title collection packet`.
+  - добавлен root generator:
+    - `scripts/phase-a5-chain-of-title-collection.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a5:chain-of-title:collection`
+    - `pnpm gate:phase:a5:chain-of-title:collection`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_COLLECTION_PACKET.md`
+- [x] Generated evidence уже реально выпускается в:
+  - `var/compliance/phase-a5-chain-of-title-collection.json`
+  - `var/compliance/phase-a5-chain-of-title-collection.md`
+- [x] Фактически подтверждено:
+  - `total_assets = 18`
+  - `evidence_classes = 4`
+  - `board_ownership_and_licensing = 1`
+  - `employment_or_contractor_ip_assignment = 13`
+  - `database_rights_and_schema_authorship = 3`
+  - `derived_artifact_linkage = 1`
+  - `pnpm gate:phase:a5:chain-of-title:collection` проходит
+- [x] `A5` после этого сместилась так:
+  - `A-2.6.2` всё ещё остаётся `waiting_external`
+  - но `ELP-20260328-09` теперь готовится не только по карте активов, а по явной матрице классов внешних доказательств
+  - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`, `PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md`, `PHASE_A1_ELP_09_CHAIN_OF_TITLE_CHECKLIST.md`, `PHASE_A_EXECUTION_BOARD.md` и `PHASE_A_EVIDENCE_MATRIX.md` синхронизированы с этим collection packet
+- [x] Практический остаток `A5.3` после этого уже очень узкий:
+  - нужно собирать только реальные внешние документы по `employment / contractor / DB rights / board ownership`
+  - repo-side подготовка больше не является ограничением для `ELP-20260328-09`
 - [x] Для `A5.3` собран repo-derived `chain-of-title` source map:
   - добавлен root generator `scripts/phase-a5-chain-of-title-register.cjs`
   - в `package.json` добавлены команды:

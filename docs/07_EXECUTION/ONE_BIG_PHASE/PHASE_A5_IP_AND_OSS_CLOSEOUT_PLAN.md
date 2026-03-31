@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A5-IP-OSS-CLOSEOUT-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.7.0
+version: 1.8.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A5-IP-OSS-CLOSEOUT-PLAN-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_PROCUREMENT_DISTRIBUTION_DECISION.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_SOURCE_REGISTER.md;docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/_audit/ENTERPRISE_EVIDENCE_MATRIX_2026-03-28.md;var/security/notice-bundle.json;var/security/notice-bundle.md;var/compliance/phase-a5-chain-of-title-source-register.json;var/compliance/phase-a5-chain-of-title-source-register.md;scripts/generate-notice-bundle.cjs;scripts/phase-a5-chain-of-title-register.cjs
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_PROCUREMENT_DISTRIBUTION_DECISION.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_SOURCE_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_COLLECTION_PACKET.md;docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/_audit/ENTERPRISE_EVIDENCE_MATRIX_2026-03-28.md;var/security/notice-bundle.json;var/security/notice-bundle.md;var/compliance/phase-a5-chain-of-title-source-register.json;var/compliance/phase-a5-chain-of-title-source-register.md;var/compliance/phase-a5-chain-of-title-collection.json;var/compliance/phase-a5-chain-of-title-collection.md;scripts/generate-notice-bundle.cjs;scripts/phase-a5-chain-of-title-register.cjs;scripts/phase-a5-chain-of-title-collection.cjs
 ---
 # PHASE A5 IP AND OSS CLOSEOUT PLAN
 
@@ -49,6 +49,7 @@ last_verified: 2026-03-31
 - final distribution/per-procurement legal sign-off beyond `Tier 1` ещё не собран;
 - notice/obligations packet пока закрыт для `Tier 1`, но не является universal legal bundle;
 - repo-derived `chain-of-title` source map теперь можно выпускать машинно, но это ещё не заменяет внешний `ELP-20260328-09`;
+- repo-derived collection packet теперь можно выпускать машинно, но это тоже ещё не заменяет внешний `ELP-20260328-09`;
 - не подтверждена непрерывная цепочка прав на first-party code и database rights;
 - внешний pilot нельзя считать безопасным при спорных правах на ПО и БД.
 
@@ -106,10 +107,12 @@ last_verified: 2026-03-31
 - accepted `ELP-20260328-09`;
 - обновлённый [OSS_LICENSE_AND_IP_REGISTER.md](/root/RAI_EP/docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md) со статусом, который уже не опирается на предположения.
 - repo-derived source register, который перечисляет активы, подлежащие покрытию внешним пакетом.
+- repo-derived collection packet, который раскладывает активы по evidence-классам для фактического сбора документов.
 
 Текущий execution-артефакт:
 
 - [PHASE_A5_CHAIN_OF_TITLE_SOURCE_REGISTER.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_SOURCE_REGISTER.md)
+- [PHASE_A5_CHAIN_OF_TITLE_COLLECTION_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_COLLECTION_PACKET.md)
 
 ### `A5.4` First-party licensing strategy
 
