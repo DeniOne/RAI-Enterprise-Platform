@@ -1,3 +1,31 @@
+[2026-03-31 18:24Z] Стабилизирован `A3` advisory DR rollback drill
+- В `apps/api/scripts/ops/advisory-dr-rollback-rehearsal.mjs` и `apps/api/scripts/ops/advisory-stage-progression.mjs` добавлен retry/backoff на `429` при `login`.
+- Практический эффект:
+  - повторные подряд прогоны `phase:a3:evals` больше не должны падать на transient auth rate-limit;
+  - `phase:a:status` и `gate:phase:a:status` можно выполнять последовательно без ложного красного статуса;
+  - `A3` снова оценивается по реальному drill/eval результату, а не по нестабильности входа.
+
+[2026-03-31 18:18Z] Для всей `Phase A` собран unified status/gate
+- Добавлен root generator `scripts/phase-a-status.cjs`.
+- В `package.json` добавлены команды:
+  - `pnpm phase:a:status`
+  - `pnpm gate:phase:a:status`
+- Создан новый canonical doc:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_STATUS_GATE.md`
+- Generated evidence теперь выпускается в:
+  - `var/execution/phase-a-status.json`
+  - `var/execution/phase-a-status.md`
+- Этот слой связывает:
+  - `phase-a1-status`
+  - `security-evidence-status`
+  - `phase-a3-release-eval-summary-2026-03-31`
+  - `phase-a4-pilot-handoff-status`
+  - `phase-a5-status`
+- Практический эффект:
+  - весь `A0–A5` виден одной командой;
+  - repo-side completion и внешний blocker-set разделены машинно;
+  - становится сразу понятно, что основной остаток фазы сидит в `A1`, `A2`, `A4`, `A5`, а не в отсутствии внутренней структуры.
+
 [2026-03-31 17:40Z] Для `A1` собран machine-readable first-wave status gate
 - Добавлен root generator `scripts/phase-a1-first-wave-status.cjs`.
 - В `package.json` добавлены команды:

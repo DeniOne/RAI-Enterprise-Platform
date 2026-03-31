@@ -2,6 +2,35 @@
 
 ## 2026-03-31
 
+1. **A3 DR rollback drill stabilized for repeated gates** [DONE]:
+  - В `apps/api/scripts/ops/advisory-dr-rollback-rehearsal.mjs` и `apps/api/scripts/ops/advisory-stage-progression.mjs` добавлен retry/backoff на `429` при `login`
+  - Практический эффект:
+    - `phase:a3:evals` перестаёт случайно падать на transient auth rate-limit;
+    - `phase:a:status` и `gate:phase:a:status` становятся воспроизводимыми при последовательных прогонах;
+    - `A3` снова оценивается по реальному governance/runtime поведению, а не по флейку drill-а.
+
+1. **Phase A unified status gate assembled** [DONE]:
+  - Добавлен root generator:
+    - `scripts/phase-a-status.cjs`
+  - В `package.json` добавлены команды:
+    - `pnpm phase:a:status`
+    - `pnpm gate:phase:a:status`
+  - Создан новый canonical doc:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_STATUS_GATE.md`
+  - Generated evidence выпускается в:
+    - `var/execution/phase-a-status.json`
+    - `var/execution/phase-a-status.md`
+  - Этот слой связывает:
+    - `phase-a1-status`
+    - `security-evidence-status`
+    - `phase-a3-release-eval-summary`
+    - `phase-a4-pilot-handoff-status`
+    - `phase-a5-status`
+  - Практический эффект:
+    - вся `Phase A` теперь читается одной машинной командой;
+    - сразу видно, какие треки уже repo-side complete, а какие всё ещё внешне заблокированы;
+    - главный остаток фазы перестал быть размазан по отдельным packet-слоям.
+
 1. **A1 priority-eight request packet assembled** [DONE]:
   - Добавлен root generator:
     - `scripts/phase-a1-priority-eight-request-packet.cjs`

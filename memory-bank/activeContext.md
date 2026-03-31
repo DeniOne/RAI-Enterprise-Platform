@@ -1,6 +1,28 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] `A3` release-eval contour стабилизирован для повторных прогонов подряд.
+  - в `apps/api/scripts/ops/advisory-dr-rollback-rehearsal.mjs` и `apps/api/scripts/ops/advisory-stage-progression.mjs` добавлен retry/backoff на `429` при `login`
+  - эффект: `phase:a3:evals`, `phase:a:status` и `gate:phase:a:status` больше не должны случайно краснеть из-за transient auth rate-limit вместо реальной governance-регрессии
+- [x] Для всей `Phase A` собран unified machine-readable `status/gate`.
+  - добавлен root generator:
+    - `scripts/phase-a-status.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a:status`
+    - `pnpm gate:phase:a:status`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_STATUS_GATE.md`
+- [x] Этот слой теперь собирает в один verdict:
+  - `A0` triage readiness
+  - `A1` legal status
+  - `A2` security evidence status
+  - `A3` release eval state
+  - `A4` pilot handoff status
+  - `A5` IP/chain-of-title status
+  - `overall_state`, `blocked_by`, `in_progress_tracks`, `repo_complete_tracks`
+- [x] После этого `Phase A` сместилась так:
+  - вся фаза читается одной командой, а не по отдельным трекам;
+  - repo-side readiness и внешние блокеры разделены машинно;
+  - стало сразу видно, что основной остаток — это внешний intake по `A1`, `A2`, `A4`, `A5`.
 - [x] Для `A1` собран unified priority-eight packet поверх первой и второй wave.
   - добавлен root generator:
     - `scripts/phase-a1-priority-eight-request-packet.cjs`

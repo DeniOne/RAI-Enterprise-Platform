@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A-EXECUTION-BOARD-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.30.0
+version: 1.31.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-EXECUTION-BOARD-20260331
@@ -21,6 +21,8 @@ verified_by: manual
 last_verified: 2026-03-31
 
 Этот файл — живой execution-board для `Phase A`. Он нужен, чтобы смотреть не на общий план, а на фактическое движение стоп-блокеров.
+
+Для одного агрегированного machine-readable статуса всей фазы использовать также [PHASE_A_STATUS_GATE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_STATUS_GATE.md).
 
 ## 1. Правила статусов
 
