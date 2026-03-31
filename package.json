@@ -18,6 +18,8 @@
     "gate:phase:a:external-blockers": "pnpm gate:phase:a1:owner-queues && pnpm gate:phase:a:status && node scripts/phase-a-external-blockers-packet.cjs --mode=enforce",
     "phase:a:external-owner-queues": "pnpm phase:a:external-blockers && node scripts/phase-a-external-owner-queues.cjs",
     "gate:phase:a:external-owner-queues": "pnpm gate:phase:a:external-blockers && node scripts/phase-a-external-owner-queues.cjs --mode=enforce",
+    "phase:a:external-owner-outreach": "pnpm phase:a:external-owner-queues && node scripts/phase-a-external-owner-outreach.cjs",
+    "gate:phase:a:external-owner-outreach": "pnpm gate:phase:a:external-owner-queues && node scripts/phase-a-external-owner-outreach.cjs --mode=enforce",
     "phase:a:closeout": "pnpm phase:a:external-owner-queues && node scripts/phase-a-closeout-status.cjs",
     "gate:phase:a:closeout": "pnpm gate:phase:a:external-owner-queues && node scripts/phase-a-closeout-status.cjs --mode=enforce",
     "phase:a4:handoff:status": "node scripts/phase-a4-pilot-handoff-status.cjs",

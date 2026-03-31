@@ -1,6 +1,21 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для внешнего хвоста `Phase A` собран ready-to-send owner outreach packet.
+  - добавлен root generator:
+    - `scripts/phase-a-external-owner-outreach.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a:external-owner-outreach`
+    - `pnpm gate:phase:a:external-owner-outreach`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_OUTREACH_PACKET.md`
+- [x] Этот слой теперь даёт:
+  - generated outreach summary в `var/execution/phase-a-external-owner-outreach.*`
+  - restricted `MESSAGE.md` по каждой owner queue
+  - последний bridge между repo-side preparation и реальным внешним запросом
+- [x] После этого `Phase A` сместилась так:
+  - следующий шаг теперь выражается уже не как “собрать ещё один packet”, а как “отправить готовый outreach”;
+  - repo-side closeout дополнен реальным operational bridge в внешний мир;
+  - remaining blocker ещё сильнее сводится к факту получения ответов и intake внешних файлов.
 - [x] Для `Phase A` собран финальный repo-side closeout gate.
   - добавлен root generator:
     - `scripts/phase-a-closeout-status.cjs`

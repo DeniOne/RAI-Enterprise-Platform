@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A-EXTERNAL-OWNER-QUEUE-PACKET-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-EXTERNAL-OWNER-QUEUE-PACKET-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: scripts/phase-a-external-owner-queues.cjs;package.json;var/execution/phase-a-external-owner-queues.json;var/execution/phase-a-external-owner-queues.md;var/execution/phase-a-external-blockers-packet.json;var/compliance/phase-a5-status.json;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_BLOCKERS_PACKET.md
+evidence_refs: scripts/phase-a-external-owner-queues.cjs;scripts/phase-a-external-owner-outreach.cjs;package.json;var/execution/phase-a-external-owner-queues.json;var/execution/phase-a-external-owner-queues.md;var/execution/phase-a-external-owner-outreach.json;var/execution/phase-a-external-owner-outreach.md;var/execution/phase-a-external-blockers-packet.json;var/compliance/phase-a5-status.json;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_BLOCKERS_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_OUTREACH_PACKET.md
 ---
 # PHASE A EXTERNAL OWNER QUEUE PACKET
 
@@ -21,6 +21,8 @@ verified_by: manual
 last_verified: 2026-03-31
 
 Этот документ собирает owner queues по всему внешнему хвосту `Phase A`. Он не заменяет [PHASE_A_EXTERNAL_BLOCKERS_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_BLOCKERS_PACKET.md), а раскладывает его по точным очередям исполнения: named owners, shared scopes и governance scopes.
+
+Для ready-to-send сообщений по этим очередям использовать также [PHASE_A_EXTERNAL_OWNER_OUTREACH_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_OUTREACH_PACKET.md).
 
 ## 1. Команды
 

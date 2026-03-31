@@ -1,3 +1,21 @@
+[2026-03-31 19:18Z] Для `Phase A` собран ready-to-send external owner outreach packet
+- Добавлен root generator `scripts/phase-a-external-owner-outreach.cjs`.
+- В `package.json` добавлены команды:
+  - `pnpm phase:a:external-owner-outreach`
+  - `pnpm gate:phase:a:external-owner-outreach`
+- Создан новый canonical doc:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_OUTREACH_PACKET.md`
+- Generated evidence теперь выпускается в:
+  - `var/execution/phase-a-external-owner-outreach.json`
+  - `var/execution/phase-a-external-owner-outreach.md`
+- Restricted outreach packets теперь выпускаются в:
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/execution/2026-03-31/request-packets/PHASE-A-EXTERNAL-OWNER-OUTREACH/INDEX.md`
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/execution/2026-03-31/request-packets/PHASE-A-EXTERNAL-OWNER-OUTREACH/<queue>/MESSAGE.md`
+- Практический эффект:
+  - `Phase A` доведена до ready-to-send operational bridge;
+  - следующий шаг теперь выражается как отправка owner-facing outreach, а не как ещё одна внутренняя схема;
+  - оставшийся blocker окончательно смещён в реальные внешние ответы и intake.
+
 [2026-03-31 19:08Z] Для `Phase A` собран финальный repo-side closeout gate
 - Добавлен root generator `scripts/phase-a-closeout-status.cjs`.
 - В `package.json` добавлены команды:

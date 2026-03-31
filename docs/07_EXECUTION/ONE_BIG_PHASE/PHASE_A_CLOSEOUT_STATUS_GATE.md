@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A-CLOSEOUT-STATUS-GATE-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-CLOSEOUT-STATUS-GATE-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: scripts/phase-a-closeout-status.cjs;package.json;var/execution/phase-a-closeout-status.json;var/execution/phase-a-closeout-status.md;var/execution/phase-a-status.json;var/execution/phase-a-external-blockers-packet.json;var/execution/phase-a-external-owner-queues.json
+evidence_refs: scripts/phase-a-closeout-status.cjs;scripts/phase-a-external-owner-outreach.cjs;package.json;var/execution/phase-a-closeout-status.json;var/execution/phase-a-closeout-status.md;var/execution/phase-a-status.json;var/execution/phase-a-external-blockers-packet.json;var/execution/phase-a-external-owner-queues.json;var/execution/phase-a-external-owner-outreach.json;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_OUTREACH_PACKET.md
 ---
 # PHASE A CLOSEOUT STATUS GATE
 
@@ -66,3 +66,5 @@ Generated evidence:
 
 - либо `remaining_owner_queues` и `remaining_references_count` начинают уменьшаться после intake внешних evidence;
 - либо `closeout_state` поднимается до `phase_a_closed`, когда внешний хвост реально принят.
+
+Для непосредственного запуска owner-facing outreach поверх этого closeout verdict использовать также [PHASE_A_EXTERNAL_OWNER_OUTREACH_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_OUTREACH_PACKET.md).
