@@ -1,6 +1,21 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для всей `Phase A` собран unified external blockers packet поверх `A1/A2/A4/A5`.
+  - добавлен root generator:
+    - `scripts/phase-a-external-blockers-packet.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a:external-blockers`
+    - `pnpm gate:phase:a:external-blockers`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_BLOCKERS_PACKET.md`
+- [x] Этот слой теперь даёт:
+  - generated consolidated packet в `var/execution/phase-a-external-blockers-packet.*`
+  - один restricted `REQUEST_PACKET.md` по всему внешнему blocker-set фазы
+  - единый handoff поверх `A1 owner queues`, `A2 security evidence`, `A4 pilot handoff`, `A5 chain-of-title`
+- [x] После этого `Phase A` сместилась так:
+  - внешний остаток фазы читается одним файлом;
+  - owner-ам не нужно вручную собирать legal/security/pilot/IP хвосты из разных operational пакетов;
+  - remaining blocker ещё сильнее сводится к реальному intake внешних файлов, а не к навигации между артефактами.
 - [x] Для `A1` собран owner-by-owner queue packet поверх priority-eight.
   - добавлен root generator:
     - `scripts/phase-a1-owner-queues.cjs`

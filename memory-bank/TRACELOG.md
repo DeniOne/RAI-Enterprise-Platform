@@ -1,3 +1,20 @@
+[2026-03-31 18:48Z] Для `Phase A` собран unified external blockers packet
+- Добавлен root generator `scripts/phase-a-external-blockers-packet.cjs`.
+- В `package.json` добавлены команды:
+  - `pnpm phase:a:external-blockers`
+  - `pnpm gate:phase:a:external-blockers`
+- Создан новый canonical doc:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_BLOCKERS_PACKET.md`
+- Generated evidence теперь выпускается в:
+  - `var/execution/phase-a-external-blockers-packet.json`
+  - `var/execution/phase-a-external-blockers-packet.md`
+- Restricted delivery packet теперь выпускается в:
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/execution/2026-03-31/request-packets/PHASE-A-EXTERNAL-BLOCKERS/REQUEST_PACKET.md`
+- Практический эффект:
+  - весь внешний blocker-set `A1/A2/A4/A5` открыт одной точкой входа;
+  - owner-ам не нужно вручную склеивать legal/security/pilot/IP хвосты;
+  - remaining blocker ещё сильнее сведён к реальному intake внешних артефактов.
+
 [2026-03-31 18:36Z] Для `A1` собран owner-by-owner queue packet поверх priority-eight
 - Добавлен root generator `scripts/phase-a1-owner-queues.cjs`.
 - В `package.json` добавлены команды:

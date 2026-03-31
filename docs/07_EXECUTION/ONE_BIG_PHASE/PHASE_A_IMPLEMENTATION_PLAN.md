@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A-IMPLEMENTATION-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.1.0
+version: 1.2.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-IMPLEMENTATION-PLAN-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/01_PHASE_A_STOP_BLOCKERS_AND_GATES.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_STATUS_GATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EVIDENCE_MATRIX.md;docs/07_EXECUTION/RAI_EP_PRIORITY_SYNTHESIS_MASTER_REPORT.md;docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md;var/execution/phase-a-status.json;var/execution/phase-a-status.md
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/01_PHASE_A_STOP_BLOCKERS_AND_GATES.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_STATUS_GATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_BLOCKERS_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EVIDENCE_MATRIX.md;docs/07_EXECUTION/RAI_EP_PRIORITY_SYNTHESIS_MASTER_REPORT.md;docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md;var/execution/phase-a-status.json;var/execution/phase-a-status.md;var/execution/phase-a-external-blockers-packet.json;var/execution/phase-a-external-blockers-packet.md
 ---
 # PHASE A IMPLEMENTATION PLAN
 
@@ -23,6 +23,8 @@ last_verified: 2026-03-31
 Этот документ переводит `Phase A` из общего плана в конкретную схему исполнения. Он определяет треки `A0–A5`, их порядок, выходные условия и правила обновления board/evidence.
 
 Для общего machine-readable состояния всей фазы использовать также [PHASE_A_STATUS_GATE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_STATUS_GATE.md).
+
+Для единого owner-facing handoff по оставшимся внешним блокерам использовать также [PHASE_A_EXTERNAL_BLOCKERS_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_BLOCKERS_PACKET.md).
 
 ## 1. Смысл `Phase A`
 
@@ -176,9 +178,11 @@ last_verified: 2026-03-31
 Главные рабочие артефакты `Phase A`:
 
 - [PHASE_A_STATUS_GATE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_STATUS_GATE.md)
+- [PHASE_A_EXTERNAL_BLOCKERS_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_BLOCKERS_PACKET.md)
 - [PHASE_A_EXECUTION_BOARD.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md)
 - [PHASE_A_EVIDENCE_MATRIX.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EVIDENCE_MATRIX.md)
 - `var/execution/phase-a-status.*`
+- `var/execution/phase-a-external-blockers-packet.*`
 - `var/compliance/external-legal-evidence-verdict.*`
 - security gates и security reports
 - install/restore execution evidence
