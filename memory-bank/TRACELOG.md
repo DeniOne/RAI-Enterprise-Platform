@@ -1708,3 +1708,21 @@
   - внешний хвост `A1/A2/A4/A5` теперь можно вести без ручной правки `TRACKER.md`;
   - статусы `sent / acknowledged / replied / closed` получают валидацию и не могут перескакивать хаотично;
   - после реальной отправки owner-facing сообщений `Phase A` можно будет двигать уже по управляемому CLI-lifecycle, а не по текстовым заметкам.
+[2026-03-31 19:31Z] Для внешнего owner-reply контура собран intake bridge
+- Добавлен root script:
+  - `scripts/phase-a-external-reply-intake-bridge.cjs`
+- В `package.json` добавлены команды:
+  - `pnpm phase:a:external-reply-bridge`
+  - `pnpm gate:phase:a:external-reply-bridge`
+- Создан новый canonical doc:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_REPLY_INTAKE_BRIDGE.md`
+- Generated evidence теперь выпускается в:
+  - `var/execution/phase-a-external-reply-intake-bridge.json`
+  - `var/execution/phase-a-external-reply-intake-bridge.md`
+- Restricted bridge perimeter теперь выпускается в:
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/execution/2026-03-31/request-packets/PHASE-A-EXTERNAL-REPLY-INTAKE-BRIDGE/INDEX.md`
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/execution/2026-03-31/request-packets/PHASE-A-EXTERNAL-REPLY-INTAKE-BRIDGE/<queue>/INTAKE.md`
+- Практический эффект:
+  - после owner status `replied` следующий шаг уже заранее определён как конкретный intake-route;
+  - legal, security и pilot handoff внешние ответы больше не требуют ручного поиска команды;
+  - внешний хвост `Phase A` теперь связан не только с `outreach lifecycle`, но и с конкретным downstream evidence lifecycle.

@@ -1499,3 +1499,4 @@
 - `Phase A closeout` теперь опирается не только на `owner queues`, но и на фактический outreach-tracking слой.
 - `apps/api/scripts/ops/advisory-oncall-drill.mjs` доведён до того же retry/backoff-perimeter, что и другие advisory drill scripts, чтобы `A3` не флейкал на login rate-limit и не ронял `Phase A closeout` ложным `repo_side_incomplete`.
 - Для `outreach ledger` добавлен transition CLI `phase-a-external-outreach-transition.cjs`, чтобы перевод `prepared -> sent -> acknowledged -> replied -> closed` происходил через валидированный lifecycle, а не через ручную правку tracker-файлов.
+- Для внешнего хвоста `Phase A` добавлен ещё один bridge-слой `phase-a-external-reply-intake-bridge`: он заранее связывает owner queue status `replied` с конкретными `intake -> reviewed -> accepted` командами по `legal`, `security` и `pilot handoff` routes.
