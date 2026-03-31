@@ -12,6 +12,8 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
+    "phase:a3:evals": "node scripts/phase-a3-release-evals.cjs",
+    "gate:phase:a3:evals": "node scripts/phase-a3-release-evals.cjs --mode=enforce",
     "security:audit:ci": "node scripts/security-audit-ci.cjs",
     "security:evidence:status": "node scripts/security-evidence-status.cjs",
     "security:evidence:intake": "node scripts/security-evidence-intake.cjs",

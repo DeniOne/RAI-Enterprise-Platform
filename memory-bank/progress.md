@@ -2,6 +2,50 @@
 
 ## 2026-03-31
 
+1. **A3 unified release gate assembled and published** [DONE]:
+  - Добавлен новый root runner:
+    - `scripts/phase-a3-release-evals.cjs`
+  - В `package.json` добавлены команды:
+    - `pnpm phase:a3:evals`
+    - `pnpm gate:phase:a3:evals`
+  - Новый runner объединяет в один machine-readable `PASS/FAIL` contour:
+    - `src/modules/rai-chat/rai-chat.service.spec.ts`
+    - `src/modules/rai-chat/supervisor-agent.service.spec.ts`
+    - `src/modules/rai-chat/runtime/runtime-spine.integration.spec.ts`
+    - `apps/api/scripts/ops/advisory-oncall-drill.mjs`
+    - `apps/api/scripts/ops/advisory-stage-progression.mjs`
+    - `apps/api/scripts/ops/advisory-dr-rollback-rehearsal.mjs`
+  - Generated outputs публикуются в:
+    - `var/ops/phase-a3-release-eval-manifest-2026-03-31.json`
+    - `var/ops/phase-a3-release-eval-summary-2026-03-31.json`
+    - `var/ops/phase-a3-release-eval-summary-2026-03-31.md`
+    - `var/ops/phase-a3-release-evals-2026-03-31/*`
+  - Фактический результат:
+    - `gate_status = PASS`
+    - `commands_passed = 6 / 6`
+    - `clusters_passed = 8 / 8`
+    - `tests_passed = 40 / 40`
+  - Опубликован canonical report:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RELEASE_EVAL_REPORT_2026-03-31.md`
+  - Практический эффект:
+    - `A3.4` перестала быть skeleton/planning-заготовкой и стала реальным executable release gate;
+    - `A-2.4.1 .. A-2.4.4` в `PHASE_A_EXECUTION_BOARD.md` теперь могут считаться `done` для repo-side `Tier 1`.
+
+2. **A4 installability drift narrowed further** [DONE]:
+  - Из `docker-compose.yml` удалено obsolete поле `version`.
+  - `pnpm docker:up` больше не пишет compose warning.
+  - Дополнительно прогнан bootstrap-pass от shell env, загруженного из `.env.example`:
+    - `pnpm db:migrate`
+    - `pnpm --filter api build`
+    - `pnpm --filter web build`
+  - Создан generated evidence:
+    - `var/ops/phase-a4-env-example-bootstrap-2026-03-31.json`
+  - Обновлён:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALL_DRY_RUN_REPORT_2026-03-31.md`
+  - Практический эффект:
+    - root `.env` больше не выглядит обязательным скрытым знанием для install path;
+    - residual `A4` сузился до blank-host rehearsal без root/app-local env residue и реального pilot handoff.
+
 1. **A5 Tier 1 toolchain license decision recorded** [DONE]:
   - Создан:
     - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md`

@@ -1,3 +1,54 @@
+[2026-03-31 12:31Z] Для `A3.4` собран и опубликован unified release gate
+- Добавлен root runner `scripts/phase-a3-release-evals.cjs`.
+- В `package.json` добавлены команды:
+  - `pnpm phase:a3:evals`
+  - `pnpm gate:phase:a3:evals`
+- Unified runner собирает в один machine-readable contour:
+  - `rai_chat_service_spec`
+  - `supervisor_agent_spec`
+  - `runtime_spine_spec`
+  - `advisory_oncall_drill`
+  - `advisory_stage_progression_drill`
+  - `advisory_dr_rollback_drill`
+- Generated outputs публикуются в:
+  - `var/ops/phase-a3-release-eval-manifest-2026-03-31.json`
+  - `var/ops/phase-a3-release-eval-summary-2026-03-31.json`
+  - `var/ops/phase-a3-release-eval-summary-2026-03-31.md`
+  - `var/ops/phase-a3-release-evals-2026-03-31/*`
+- Фактический результат:
+  - `gate_status = PASS`
+  - `commands_passed = 6/6`
+  - `clusters_passed = 8/8`
+  - `tests_passed = 40/40`
+- Опубликован новый canonical report:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RELEASE_EVAL_REPORT_2026-03-31.md`
+- Синхронизированы:
+  - `PHASE_A3_RELEASE_EVAL_SUITE.md`
+  - `PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md`
+  - `PHASE_A3_FIRST_WAVE_GOVERNANCE_CHECKLIST.md`
+  - `PHASE_A_EXECUTION_BOARD.md`
+  - `PHASE_A_EVIDENCE_MATRIX.md`
+  - `ONE_BIG_PHASE/INDEX.md`
+  - `docs/DOCS_MATRIX.md`
+- Практический эффект:
+  - `A-2.4.1..A-2.4.4` переведены в `done` для repo-side `Tier 1`;
+  - `A3` больше не опирается только на matrix/policy/drill как на разрозненные артефакты, а имеет единый release gate;
+  - `A-2.4.5` остаётся `guard_active` как отдельный запрет на autonomy expansion.
+
+[2026-03-31 12:34Z] Для `A4` дополнительно сузили installability hidden knowledge
+- Из `docker-compose.yml` удалено obsolete поле `version`.
+- `pnpm docker:up` больше не пишет compose warning.
+- Выполнен дополнительный bootstrap-pass от shell env, загруженного из `.env.example`:
+  - `pnpm db:migrate`
+  - `pnpm --filter api build`
+  - `pnpm --filter web build`
+- Создан generated evidence:
+  - `var/ops/phase-a4-env-example-bootstrap-2026-03-31.json`
+- Обновлён `PHASE_A4_INSTALL_DRY_RUN_REPORT_2026-03-31.md`.
+- Практический эффект:
+  - root `.env` больше не выглядит обязательным скрытым знанием;
+  - residual `A4` теперь сфокусирован на blank-host rehearsal без `apps/web/.env.local` и на реальном pilot handoff, а не на уже устранённом compose warning.
+
 [2026-03-31 12:14Z] Для `A5.1` зафиксировано formal `Tier 1` решение по `UNKNOWN` toolchain perimeter
 - Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md`.
 - В нём явно зафиксировано:

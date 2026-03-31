@@ -1,6 +1,44 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A3.4` собран и опубликован unified release evaluator:
+  - добавлен root script `scripts/phase-a3-release-evals.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a3:evals`
+    - `pnpm gate:phase:a3:evals`
+  - runner собирает в один machine-readable gate:
+    - `rai_chat_service.spec`
+    - `supervisor_agent.service.spec`
+    - `runtime_spine.integration.spec`
+    - `advisory-oncall-drill`
+    - `advisory-stage-progression`
+    - `advisory-dr-rollback-rehearsal`
+- [x] Unified `A3` gate уже реально пройден:
+  - `commands_passed = 6 / 6`
+  - `clusters_passed = 8 / 8`
+  - `tests_passed = 40 / 40`
+  - `gate_status = PASS`
+- [x] Для этого опубликован новый canonical report:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RELEASE_EVAL_REPORT_2026-03-31.md`
+- [x] После этого repo-side статус `A3` сместился так:
+  - `A-2.4.1`, `A-2.4.2`, `A-2.4.3`, `A-2.4.4` в `PHASE_A_EXECUTION_BOARD.md` переведены в `done`
+  - `A-2.4.5` остаётся `guard_active` как отдельный запрет на autonomy expansion
+  - `PHASE_A_EVIDENCE_MATRIX.md` теперь трактует tool/HITL/advisory/evals как `repo-side подтверждено для Tier 1`
+- [x] Важно зафиксировано ограничение `A3`:
+  - current unified gate достаточен для `Tier 1 self-host / localized MVP pilot`
+  - он не равен полному `Tier 2/Tier 3` adversarial red-team perimeter
+  - broader prompt-injection corpus, tenant-specific overrides и deeper UX confirmation regressions остаются post-Tier-1 follow-up
+- [x] Для `A4` дополнительно сужен installability drift:
+  - из `docker-compose.yml` удалено obsolete поле `version`
+  - `pnpm docker:up` больше не пишет obsolete compose warning
+  - отдельный bootstrap-pass от shell env, загруженного из `.env.example`, прошёл:
+    - `pnpm db:migrate`
+    - `pnpm --filter api build`
+    - `pnpm --filter web build`
+- [x] При этом `A4` ещё не закрыта полностью:
+  - root `.env` больше не является обязательным bootstrap-зависимым слоем
+  - но `apps/web/.env.local` всё ещё оставался в среде во время web build
+  - поэтому residual gap теперь уже не в compose warning, а в blank-host/no-app-local-env rehearsal
 - [x] Для `A5.1` опубликовано formal `Tier 1` решение по последнему `UNKNOWN` perimeter:
   - создан `PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md`
   - `25` `@esbuild/*` companions зафиксированы как `ALLOW_TIER1_CONDITIONAL`

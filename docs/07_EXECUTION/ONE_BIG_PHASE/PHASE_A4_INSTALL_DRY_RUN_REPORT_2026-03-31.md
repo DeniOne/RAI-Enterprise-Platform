@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A4-INSTALL-DRY-RUN-REPORT-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A4-INSTALL-DRY-RUN-REPORT-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: var/ops/phase-a4-install-dry-run-2026-03-31.json;var/schema/prisma-migrate-safe.json;README.md;package.json;scripts/prisma-migrate-safe.cjs;docker-compose.yml;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SELF_HOST_INSTALL_UPGRADE_PACKET.md
+evidence_refs: var/ops/phase-a4-install-dry-run-2026-03-31.json;var/ops/phase-a4-env-example-bootstrap-2026-03-31.json;var/schema/prisma-migrate-safe.json;README.md;package.json;scripts/prisma-migrate-safe.cjs;docker-compose.yml;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SELF_HOST_INSTALL_UPGRADE_PACKET.md
 ---
 # PHASE A4 INSTALL DRY-RUN REPORT 2026-03-31
 
@@ -30,6 +30,7 @@ last_verified: 2026-03-31
 - Target mode: `self-host / localized`
 - Supporting artifacts:
   - [phase-a4-install-dry-run-2026-03-31.json](/root/RAI_EP/var/ops/phase-a4-install-dry-run-2026-03-31.json)
+  - [phase-a4-env-example-bootstrap-2026-03-31.json](/root/RAI_EP/var/ops/phase-a4-env-example-bootstrap-2026-03-31.json)
   - [prisma-migrate-safe.json](/root/RAI_EP/var/schema/prisma-migrate-safe.json)
 
 ## 2. Preconditions
@@ -42,6 +43,7 @@ last_verified: 2026-03-31
   - `rai-pgadmin`
 - `http://localhost:4000/api/docs` отвечал `200`.
 - `Node.js = v22.10.0`, `pnpm = 9.0.0`.
+- позже в той же сессии отдельный bootstrap-pass был прогнан через shell env, загруженный из `.env.example`, без опоры на root `.env`.
 
 ## 3. Executed steps
 
@@ -53,6 +55,7 @@ last_verified: 2026-03-31
 | 4 | `pnpm db:migrate` | `PASS` | root entrypoint ремедиирован через [prisma-migrate-safe.cjs](/root/RAI_EP/scripts/prisma-migrate-safe.cjs) с загрузкой `.env` |
 | 5 | `pnpm --filter api build` | `PASS` | Nest build зелёный |
 | 6 | `pnpm --filter web build` | `PASS` | Next build зелёный; warning про deprecated `middleware -> proxy` остаётся |
+| 7 | `set -a; source .env.example; set +a; pnpm db:migrate && pnpm --filter api build && pnpm --filter web build` | `PASS` | root `.env` больше не является обязательным bootstrap-зависимым слоем; при этом `apps/web/.env.local` всё ещё существовал в локальной среде |
 
 ## 4. Hidden knowledge found
 
@@ -66,6 +69,12 @@ last_verified: 2026-03-31
 - Dry-run проходил не на blank host:
   - `.env` уже существовал
   - контейнеры уже были подняты
+- Дополнительный bootstrap-pass сузил hidden knowledge:
+  - root `.env` больше не является обязательным условием для `db:migrate + api build + web build`
+  - obsolete warning про `version` в `docker-compose.yml` устранён удалением устаревшего поля
+- Но hidden knowledge не обнулён полностью:
+  - `apps/web/.env.local` существовал во время web build
+  - blank-host / no-app-local-env rehearsal всё ещё отдельно не доказан
 - DB credentials и target DB были выведены из live container environment:
   - `rai_admin`
   - `rai_platform`
@@ -79,11 +88,11 @@ last_verified: 2026-03-31
   - `api` и `web` собираются после install/migrate path
 - Что ещё не подтверждено:
   - установка на чистом хосте с нуля
-  - secrets bootstrap вне уже существующего `.env`
+  - full bootstrap без `apps/web/.env.local`
+  - secrets bootstrap вне уже существующего `.env` и app-local env residue
   - полное отсутствие hidden knowledge при fresh install
 - Blocking gaps:
-  - warning про obsolete `version` в `docker-compose.yml`
-  - нет fresh-host rehearsal
+  - нет blank-host rehearsal без root/app-local env residue
   - support boundary и pilot handoff всё ещё закрываются отдельно
 
 ## 6. Decision impact
