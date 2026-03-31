@@ -1,6 +1,25 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A5.3` собран пятый repo-side слой поверх owner packets: единый `chain-of-title request packet`.
+  - добавлен root generator:
+    - `scripts/phase-a5-chain-of-title-request-packet.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a5:chain-of-title:request-packet`
+    - `pnpm gate:phase:a5:chain-of-title:request-packet`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_REQUEST_PACKET.md`
+- [x] Generated evidence уже реально выпускается в:
+  - `var/compliance/phase-a5-chain-of-title-request-packet.json`
+  - `var/compliance/phase-a5-chain-of-title-request-packet.md`
+- [x] Фактически подтверждено:
+  - `total_assets = 18`
+  - `owner_queues = 3`
+  - request packet уже ссылается на restricted owner packets и даёт единый owner-facing запрос для `ELP-20260328-09`
+  - `pnpm gate:phase:a5:chain-of-title:request-packet` проходит
+- [x] `A5` после этого сместилась так:
+  - `A-2.6.2` всё ещё остаётся `waiting_external`
+  - но repo-side подготовка `ELP-20260328-09` практически доведена до потолка: source map -> collection -> handoff -> owner packets -> request packet
+  - реальный остаток теперь уже не в генерации артефактов, а в сборе signed external evidence
 - [x] Для `A5.3` собран четвёртый repo-side слой поверх handoff packet: `chain-of-title owner packets`.
   - добавлен root generator:
     - `scripts/phase-a5-chain-of-title-owner-packets.cjs`
