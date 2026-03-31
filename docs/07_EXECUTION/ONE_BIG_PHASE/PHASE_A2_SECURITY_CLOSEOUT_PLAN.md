@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A2-SECURITY-CLOSEOUT-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.2.0
+version: 1.3.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A2-SECURITY-CLOSEOUT-PLAN-20260331
@@ -33,15 +33,15 @@ last_verified: 2026-03-31
 - `raw_sql_unsafe = 0`;
 - `pnpm gate:secrets` и `pnpm security:audit:ci` существуют как обязательный baseline;
 - policy-контур security в проекте есть и активен.
-- первая remediation-волна dependency-risk уже проведена:
+- dependency-risk прошёл уже две фактические remediation-волны:
   - `critical: 2 -> 0`
-  - `high: 37 -> 30`
-  - advisories по `fast-xml-parser`, `handlebars` и `axios <= 1.13.4` больше не воспроизводятся;
+  - `high: 37 -> 30 -> 5`
+  - advisories по `fast-xml-parser`, `handlebars`, `axios <= 1.13.4`, `effect`, `flatted`, `rollup`, `undici`, `multer`, `serialize-javascript`, `glob` и release-impact `path-to-regexp`-цепочкам больше не воспроизводятся;
   - после refresh проходят `pnpm --filter api build` и `pnpm --filter web build`.
 
 Одновременно остаются реальные незакрытые вопросы:
 
-- dependency-risk ещё не опущен до очевидно безопасного release-порога;
+- dependency-risk почти целиком выведен из runtime-perimeter, но остаток `high=5` ещё требует явного решения как toolchain debt;
 - historical secret/key debt остаётся отдельным follow-up;
 - branch protection и часть access governance всё ещё зависят от внешнего evidence, а не от локального Git.
 
@@ -59,7 +59,7 @@ last_verified: 2026-03-31
 
 Сильное доказательство:
 
-- новый reproducible report, где release-impact debt заметно ниже и не блокирует `Tier 1`.
+- новый reproducible report, где `critical=0`, `high=5`, а остаточный `high` ограничен dev-toolchain и не маскирует runtime risk.
 
 ### `A2.2` Secret hygiene
 
@@ -107,8 +107,9 @@ last_verified: 2026-03-31
 
 1. Сначала удерживать зелёными `gate:secrets` и `gate:invariants`.
 2. Затем разбирать dependency-risk.
-3. Затем закрывать historical key/rotation debt.
-4. Затем добирать внешний access-governance evidence.
+3. Затем формально решить судьбу toolchain-tail `high=5`: принять его как допустимый для `Tier 1` или сделать ещё один refresh.
+4. Затем закрывать historical key/rotation debt.
+5. Затем добирать внешний access-governance evidence.
 
 Нельзя:
 
@@ -127,9 +128,9 @@ last_verified: 2026-03-31
 Board должен меняться так:
 
 - `open` -> `in_progress`, когда появился реальный remediation-проход, а не только обсуждение;
-- `in_progress` сохраняется, пока `critical=0` уже достигнут, но release-impact часть `high` ещё не дотриажена;
+- `in_progress` сохраняется, пока `critical=0` уже достигнут, но residual toolchain tail ещё не получил явного release-решения;
 - `guard_active` остаётся guard-статусом, пока есть policy/gate, но ещё нет полного closeout;
-- `done` допустим только после снижения release-impact risk, а не после единичного зелёного запуска.
+- `done` допустим только после снижения release-impact risk и явного закрытия/acceptance остаточного toolchain debt, а не после единичного зелёного запуска.
 
 ## 5. Проверки `A2`
 
@@ -142,7 +143,7 @@ Board должен меняться так:
 Смотреть нужно не просто на `PASS`, а на содержимое:
 
 - удерживается ли `critical=0`;
-- сколько осталось release-impact `high`;
+- сколько осталось `high` и относятся ли они уже только к toolchain;
 - остаётся ли `tracked_findings=0`;
 - не появились ли новые invariant-нарушения.
 
@@ -150,7 +151,7 @@ Board должен меняться так:
 
 Трек `A2` считается закрытым только когда одновременно выполняются условия:
 
-- dependency-risk опущен до уровня, который не блокирует `Tier 1`;
+- dependency-risk опущен до уровня, который не блокирует `Tier 1`, а остаточный toolchain-tail либо устранён, либо явно принят как non-runtime debt;
 - tracked secret leakage не возвращается;
 - invariants остаются зелёными без новых unsafe путей;
 - historical secret/key debt закрыт или переведён в явно доказанный остаточный follow-up;

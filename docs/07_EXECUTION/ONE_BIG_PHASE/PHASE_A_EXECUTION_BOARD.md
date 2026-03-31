@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A-EXECUTION-BOARD-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.1.0
+version: 1.2.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-EXECUTION-BOARD-20260331
@@ -51,7 +51,7 @@ last_verified: 2026-03-31
 | `A1` | `A-2.2.3` | Довести ключевые legal-артефакты до `accepted` | `chief_legal_officer / dpo / board` | `waiting_external` | [EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md](/root/RAI_EP/docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md) | пройти review и acceptance по `ELP-01`, `03`, `04`, `06`, потом `02`, `05`, `08`, `09` |
 | `A1` | `A-2.2.4` | Пересчитывать legal-verdict после каждого принятого артефакта | `legal / compliance + techlead` | `in_progress` | `pnpm legal:evidence:verdict`, [COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md](/root/RAI_EP/docs/05_OPERATIONS/COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md) | прогонять verdict после каждого `accepted` и синхронизировать статус `A1` |
 | `A1` | `A-2.2.5` | Не подменять внешние доказательства внутренними заметками | `legal / compliance` | `guard_active` | [PHASE_A_EVIDENCE_MATRIX.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EVIDENCE_MATRIX.md) | для каждого legal-claim проверять, есть ли внешний accepted artifact, а не только `docs` |
-| `A2` | `A-2.3.1` | Разобрать критичные и высокие зависимости security baseline | `security / AppSec + backend / platform` | `in_progress` | `pnpm security:audit:ci` -> `critical: 2 -> 0`, `high: 37 -> 30`; `pnpm --filter api build`; `pnpm --filter web build` | оттриажить remaining `high=30`, начиная с release-impact цепочек и external access-governance follow-up |
+| `A2` | `A-2.3.1` | Разобрать критичные и высокие зависимости security baseline | `security / AppSec + backend / platform` | `in_progress` | `pnpm security:audit:ci` -> `critical: 2 -> 0`, `high: 37 -> 30 -> 5`; remaining `high` ограничены `@typescript-eslint/typescript-estree -> minimatch@9.0.3` и `@angular-devkit/core -> picomatch@4.0.1/4.0.2`; `pnpm --filter api build`; `pnpm --filter web build` | формально решить residual `high=5` как toolchain-only tail для `Tier 1` или сделать ещё один CLI/toolchain refresh, затем закрывать external access-governance follow-up |
 | `A2` | `A-2.3.2` | Не выпускать `Tier 1`, пока security-risk не снижен | `techlead / AppSec` | `guard_active` | [RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md](/root/RAI_EP/docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md) | держать release-stop rule активным на каждом execution-review |
 | `A2` | `A-2.3.3` | Проверить, что tracked secret leakage не вернулся | `security / platform` | `guard_active` | `pnpm gate:secrets`, [KEY_MATERIAL_AND_SECRET_HYGIENE_INCIDENT_2026-03-28.md](/root/RAI_EP/docs/05_OPERATIONS/KEY_MATERIAL_AND_SECRET_HYGIENE_INCIDENT_2026-03-28.md) | держать `tracked_findings=0` и отдельно закрывать historical/workspace debt |
 | `A2` | `A-2.3.4` | Не допускать появления новых unsafe путей | `backend / platform` | `guard_active` | `pnpm gate:invariants`, [ENTERPRISE_DUE_DILIGENCE_2026-03-28.md](/root/RAI_EP/docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md) | держать invariants зелёными и не пропускать обходы ради скорости |

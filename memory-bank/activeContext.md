@@ -97,6 +97,14 @@
   - `pnpm security:audit:ci` изменился `critical: 2 -> 0`, `high: 37 -> 30`
   - advisories по `fast-xml-parser`, `handlebars` и `axios <= 1.13.4` больше не воспроизводятся
   - `pnpm --filter api build` и `pnpm --filter web build` проходят на новом dependency baseline
+- [x] Выполнена вторая remediation-волна `A2` по dependency-risk:
+  - в `package.json` и `pnpm-lock.yaml` добавлены targeted overrides для `effect`, `flatted`, `rollup`, `undici`, `multer`, `serialize-javascript`, `glob`, `minimatch` и `picomatch`
+  - `pnpm security:audit:ci` изменился `high: 30 -> 5`, при этом `critical=0` удержан
+  - runtime-impact advisories по `effect`, `flatted`, `rollup`, `undici`, `multer`, `serialize-javascript`, `glob` и release-impact `path-to-regexp`-цепочкам больше не воспроизводятся
+  - остаток `high=5` теперь сосредоточен в dev-toolchain:
+    - `@typescript-eslint/typescript-estree -> minimatch@9.0.3`
+    - `@angular-devkit/core -> picomatch@4.0.1/4.0.2` через `@nestjs/cli`
+  - `pnpm gate:secrets`, `pnpm gate:invariants`, `pnpm --filter api build` и `pnpm --filter web build` остаются зелёными
 - [x] Для трека `A3` добавлен отдельный рабочий пакет `PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md`.
 - [x] `A3` теперь переведён из общей policy-темы в execution-пакет по четырём обязательным артефактам:
   - `tool-permission matrix`

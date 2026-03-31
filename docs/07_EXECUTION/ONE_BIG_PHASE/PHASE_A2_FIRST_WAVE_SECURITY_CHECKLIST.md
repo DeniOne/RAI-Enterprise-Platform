@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A2-FIRST-WAVE-SECURITY-CHECKLIST-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.1.0
+version: 1.2.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A2-FIRST-WAVE-SECURITY-CHECKLIST-20260331
@@ -24,15 +24,23 @@ last_verified: 2026-03-31
 
 ## 1. Текущий baseline
 
-После первой remediation-волны на `2026-03-31` подтверждено:
+После текущего remediation-baseline на `2026-03-31` подтверждено:
 
-- `pnpm security:audit:ci` -> `critical=0`, `high=30`
+- `pnpm security:audit:ci` -> `critical=0`, `high=5`
 - `pnpm gate:secrets` -> `tracked_findings=0`, `workspace_local_findings=8`
 - `pnpm gate:invariants` -> `violations=0`, `raw_sql_unsafe=0`, `controllers_without_guards=0`
-- dependency refresh уже применён:
+- dependency refresh и targeted overrides уже применены:
   - `minio 8.0.7`
   - `axios 1.14.0`
-  - `handlebars 4.7.9` через `pnpm.overrides`
+  - `handlebars 4.7.9`
+  - `effect 3.21.0`
+  - `flatted 3.4.2`
+  - `rollup 4.60.1`
+  - `undici 7.24.6`
+  - `multer 2.1.1` через `@nestjs/platform-express`
+  - `serialize-javascript 7.0.3`
+  - `glob 10.5.0`
+  - targeted `minimatch` / `picomatch` overrides
 - после dependency refresh проходят:
   - `pnpm --filter api build`
   - `pnpm --filter web build`
@@ -41,8 +49,8 @@ last_verified: 2026-03-31
 
 - security baseline уже существует;
 - tracked secret leakage сейчас не блокирует выпуск;
-- первая волна dependency-remediation уже сняла все `critical`;
-- главный открытый хвост в `A2` — release-impact часть оставшихся `high=30`, historical debt outside repo и внешний access evidence.
+- runtime-impact dependency-remediation уже сняла все `critical` и основную release-impact часть `high`;
+- главный открытый хвост в `A2` — toolchain-only остаток `high=5`, historical debt outside repo и внешний access evidence.
 
 ## 2. Что делать первой волной
 
@@ -59,23 +67,28 @@ last_verified: 2026-03-31
 - не спорить о baseline на словах;
 - опираться на конкретный reproducible snapshot.
 
-### Шаг 2. Зафиксировать закрытие бывших `critical=2`
+### Шаг 2. Зафиксировать закрытие бывших `critical=2` и runtime-impact `high`
 
 Нужно:
 
 - зафиксировать, что advisories по `fast-xml-parser` и `handlebars` больше не воспроизводятся;
 - зафиксировать, что advisory по `axios <= 1.13.4` тоже больше не воспроизводится;
+- зафиксировать, что advisories по `effect`, `flatted`, `rollup`, `undici`, `multer`, `serialize-javascript`, `glob` и release-impact цепочкам `path-to-regexp` тоже больше не воспроизводятся;
 - не откатывать overrides и package bumps без повторного audit-подтверждения.
 
-Это завершённый первый remediation-проход `A2`.
+Это уже не только первый remediation-проход `A2`, а текущий runtime-safe baseline.
 
-### Шаг 3. Разобрать release-impact часть из `high=30`
+### Шаг 3. Формально разобрать toolchain-tail из `high=5`
 
 Нужно:
 
-- не закрывать все `high` подряд;
-- сначала выделить те, что реально влияют на `Tier 1`;
-- отделить отложимые `high` от блокирующих.
+- не делать вид, что `high=5` эквивалентны прошлому release-impact риску;
+- явно зафиксировать, что остаток сосредоточен в dev-toolchain:
+  - `@typescript-eslint/typescript-estree -> minimatch@9.0.3`
+  - `@angular-devkit/core -> picomatch@4.0.1/4.0.2` через `@nestjs/cli`
+- принять управленческое решение:
+  - либо этот хвост допустим для `Tier 1` как не-runtime debt,
+  - либо нужен ещё один toolchain refresh.
 
 ### Шаг 4. Удерживать invariants и secrets
 
@@ -105,7 +118,7 @@ pnpm gate:invariants
 Реальный прогресс:
 
 - `critical=0` удерживается;
-- `high=30` уменьшается по release-impact части;
+- `high=5` удерживается как узкий toolchain-tail;
 - `tracked_findings=0` сохраняется;
 - `violations=0` сохраняется.
 
@@ -113,7 +126,7 @@ pnpm gate:invariants
 
 - новый policy-файл без remediation;
 - одноразовый ручной просмотр без пересчёта baseline;
-- discussion про security без изменения цифр или evidence.
+- discussion про security без изменения цифр, evidence или явного решения по residual toolchain debt.
 
 ## 4. Команды первой волны
 
@@ -129,6 +142,6 @@ pnpm security:licenses
 Первая волна считается завершённой только когда:
 
 - `critical=0` подтверждено reproducible audit-отчётом;
-- release-impact `high` выделены отдельно из остатка `high=30`;
+- release-impact `high` сняты, а остаток `high=5` явно классифицирован как toolchain-only;
 - baseline по secrets и invariants остаётся зелёным;
-- в [PHASE_A_EXECUTION_BOARD.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md) `A-2.3.1` меняется из чистого `open` в `in_progress`.
+- в [PHASE_A_EXECUTION_BOARD.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md) `A-2.3.1` отражает состояние `runtime-impact remediation complete; residual toolchain tail remains`.

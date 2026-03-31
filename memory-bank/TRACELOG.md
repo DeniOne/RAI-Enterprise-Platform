@@ -800,3 +800,29 @@
   - `pnpm --filter api build` -> PASS
   - `pnpm --filter web build` -> PASS
 - Практический эффект: `A2` впервые сдвинулась по реальному remediation, а не только по planning docs; первая волна закрыла все `critical` advisories и перевела execution-board в честный статус `in_progress` с новым baseline `critical=0 / high=30`.
+
+[2026-03-31 09:22Z] Вторая remediation-волна `A2` сузила security debt до узкого toolchain-tail
+- В `package.json` и `pnpm-lock.yaml` добавлены targeted `pnpm.overrides` для:
+  - `effect ^3.21.0`
+  - `flatted ^3.4.2`
+  - `rollup ^4.60.1`
+  - `undici ^7.24.6`
+  - `@nestjs/platform-express@10.4.22>multer ^2.1.1`
+  - `@nestjs/platform-express@11.1.13>multer ^2.1.1`
+  - `serialize-javascript ^7.0.3`
+  - `glob@10.4.5 ^10.5.0`
+  - `minimatch@3.1.2 ^3.1.4`
+  - `minimatch@9.0.5 ^9.0.7`
+  - `minimatch@10.1.2 ^10.2.3`
+  - `picomatch@2.3.1 ^2.3.2`
+  - `picomatch@4.0.3 ^4.0.4`
+- Повторная верификация дала:
+  - `pnpm security:audit:ci` -> `critical=0`, `high=5`
+  - `pnpm gate:secrets` -> `tracked_findings=0`, `workspace_local_findings=8`
+  - `pnpm gate:invariants` -> `violations=0`
+  - `pnpm --filter api build` -> PASS
+  - `pnpm --filter web build` -> PASS
+- Остаточные `high=5` теперь ограничены dev-toolchain:
+  - `apps/api -> @typescript-eslint/typescript-estree@6.21.0 -> minimatch@9.0.3`
+  - `apps/api` и `apps/telegram-bot` -> `@nestjs/cli -> @angular-devkit/core@17.3.11/19.2.19 -> picomatch@4.0.1/4.0.2`
+- Практический эффект: runtime-impact advisories по текущему `Tier 1` периметру сняты; `A2` теперь упирается не в production/runtime зависимости, а в явное решение по residual toolchain debt и внешний access-governance follow-up.
