@@ -1,3 +1,33 @@
+[2026-03-31 13:13Z] Для `A5.3` собран `chain-of-title handoff packet` поверх collection packet
+- Добавлен root generator `scripts/phase-a5-chain-of-title-handoff.cjs`.
+- В `package.json` добавлены команды:
+  - `pnpm phase:a5:chain-of-title:handoff`
+  - `pnpm gate:phase:a5:chain-of-title:handoff`
+- Создан новый canonical doc:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_HANDOFF_PACKET.md`
+- Generated evidence выпускается в:
+  - `var/compliance/phase-a5-chain-of-title-handoff.json`
+  - `var/compliance/phase-a5-chain-of-title-handoff.md`
+- Фактически подтверждено:
+  - `total_assets = 18`
+  - `owner_queues = 3`
+  - `board / legal / product-governance = 1`
+  - `legal / data governance / architecture = 3`
+  - `legal / engineering management = 14`
+  - `pnpm gate:phase:a5:chain-of-title:handoff` -> `PASS`
+- Синхронизированы:
+  - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`
+  - `PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md`
+  - `PHASE_A1_ELP_09_CHAIN_OF_TITLE_CHECKLIST.md`
+  - `PHASE_A_EXECUTION_BOARD.md`
+  - `PHASE_A_EVIDENCE_MATRIX.md`
+  - `ONE_BIG_PHASE/INDEX.md`
+  - `docs/DOCS_MATRIX.md`
+- Практический эффект:
+  - `ELP-20260328-09` теперь разворачивается в owner-ready очереди, а не только в collection matrix;
+  - repo-side подготовка `A5.3` практически дошла до потолка;
+  - remaining blocker окончательно смещён к реальному внешнему intake `employment / contractor / DB rights / board ownership` evidence.
+
 [2026-03-31 13:08Z] Для `A5.3` собран `chain-of-title collection packet` поверх source register
 - Добавлен root generator `scripts/phase-a5-chain-of-title-collection.cjs`.
 - В `package.json` добавлены команды:

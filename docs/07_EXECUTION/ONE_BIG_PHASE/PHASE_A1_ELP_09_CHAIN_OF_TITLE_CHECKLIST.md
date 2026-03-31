@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A1-ELP09-CHAIN-OF-TITLE-CHECKLIST-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.2.0
+version: 1.3.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A1-ELP09-CHAIN-OF-TITLE-CHECKLIST-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_SECOND_WAVE_EXECUTION_CHECKLIST.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_SOURCE_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_COLLECTION_PACKET.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md;docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;var/compliance/phase-a5-chain-of-title-source-register.json;var/compliance/phase-a5-chain-of-title-collection.json
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_SECOND_WAVE_EXECUTION_CHECKLIST.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_SOURCE_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_COLLECTION_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_HANDOFF_PACKET.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_REQUEST_PACKET.md;docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;var/compliance/phase-a5-chain-of-title-source-register.json;var/compliance/phase-a5-chain-of-title-collection.json;var/compliance/phase-a5-chain-of-title-handoff.json
 ---
 # PHASE A1 ELP-09 CHAIN OF TITLE CHECKLIST
 
@@ -48,10 +48,12 @@ last_verified: 2026-03-31
 1. Открыть draft и template.
 2. Выпустить repo-derived source register через `pnpm phase:a5:chain-of-title`.
 3. Выпустить collection packet через `pnpm phase:a5:chain-of-title:collection`.
-4. Собрать список employment/contractor/IP transfer документов.
-5. Проверить, нет ли пробелов по first-party code и database rights.
-6. Сохранить внешний файл.
-7. Выполнить:
+4. Выпустить handoff packet через `pnpm phase:a5:chain-of-title:handoff`.
+5. Открыть `var/compliance/phase-a5-chain-of-title-handoff.md`.
+6. Собрать список employment/contractor/IP transfer документов по owner queues.
+7. Проверить, нет ли пробелов по first-party code и database rights.
+8. Сохранить внешний файл.
+9. Выполнить:
 
 ```bash
 pnpm legal:evidence:intake -- --reference=ELP-20260328-09 --source=/abs/path/file

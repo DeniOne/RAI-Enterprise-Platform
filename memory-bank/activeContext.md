@@ -1,6 +1,30 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A5.3` собран третий repo-side слой поверх source map и collection packet: `chain-of-title handoff packet`.
+  - добавлен root generator:
+    - `scripts/phase-a5-chain-of-title-handoff.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a5:chain-of-title:handoff`
+    - `pnpm gate:phase:a5:chain-of-title:handoff`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_HANDOFF_PACKET.md`
+- [x] Generated evidence уже реально выпускается в:
+  - `var/compliance/phase-a5-chain-of-title-handoff.json`
+  - `var/compliance/phase-a5-chain-of-title-handoff.md`
+- [x] Фактически подтверждено:
+  - `total_assets = 18`
+  - `owner_queues = 3`
+  - `board / legal / product-governance = 1`
+  - `legal / data governance / architecture = 3`
+  - `legal / engineering management = 14`
+  - `pnpm gate:phase:a5:chain-of-title:handoff` проходит
+- [x] `A5` после этого сместилась так:
+  - `A-2.6.2` всё ещё остаётся `waiting_external`
+  - но `ELP-20260328-09` теперь готовится уже не только по карте активов и evidence-классам, а по конкретным owner queues
+  - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`, `PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md`, `PHASE_A1_ELP_09_CHAIN_OF_TITLE_CHECKLIST.md`, `PHASE_A_EXECUTION_BOARD.md` и `PHASE_A_EVIDENCE_MATRIX.md` синхронизированы с этим handoff packet
+- [x] Практический остаток `A5.3` после этого ещё уже:
+  - repo-side handoff layer собран полностью
+  - остаётся только реальный внешний сбор и acceptance `employment / contractor / DB-rights / board ownership` документов по `ELP-20260328-09`
 - [x] Для `A5.3` собран второй repo-side слой поверх source map: `chain-of-title collection packet`.
   - добавлен root generator:
     - `scripts/phase-a5-chain-of-title-collection.cjs`
