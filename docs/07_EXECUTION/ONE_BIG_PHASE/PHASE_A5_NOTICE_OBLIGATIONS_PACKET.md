@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A5-NOTICE-OBLIGATIONS-PACKET-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A5-NOTICE-OBLIGATIONS-PACKET-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: var/security/license-inventory.json;docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md
+evidence_refs: var/security/license-inventory.json;docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md
 ---
 # PHASE A5 NOTICE OBLIGATIONS PACKET
 
@@ -30,6 +30,11 @@ last_verified: 2026-03-31
 - не смешивать first-party код и third-party notices;
 - не выпускать self-host packet без ясного места для license texts и attributions.
 
+На текущем шаге важно новое уточнение:
+
+- first-party packages уже выведены из `UNKNOWN` через `UNLICENSED`;
+- remaining `UNKNOWN` для `Tier 1` — это в основном optional/toolchain platform companions.
+
 ## 2. Working obligations map
 
 | License family | Working obligation для `Tier 1` | Current status |
@@ -39,8 +44,9 @@ last_verified: 2026-03-31
 | `ISC` | включить license text/attribution | `нужно оформить` |
 | `BSD-2-Clause / BSD-3-Clause` | включить license text/attribution и сохранить copyright notice | `нужно оформить` |
 | `BlueOak / mixed family` | вручную подтвердить точный obligation set | `нужно оформить` |
-| `UNKNOWN` | не считать закрытым до triage | `blocked by A5.1` |
-| `first-party packages` | governed by first-party licensing strategy, not by third-party notice pack | `blocked by A5.4` |
+| `UNKNOWN esbuild/turbo companions` | для `Tier 1 Linux self-host` считать `conditional toolchain mirror`, держать out of final public distribution bundle до formal legal sign-off | `частично оттриажено` |
+| `UNKNOWN fsevents` | не включать в Linux `Tier 1` bundle; вернуться только если появляется macOS distribution/install path | `частично оттриажено` |
+| `first-party packages` | governed by first-party licensing strategy, not by third-party notice pack | `repo-side baseline подтверждён` |
 
 ## 3. Где notice packet должен жить
 
@@ -50,10 +56,16 @@ last_verified: 2026-03-31
 - procurement or due-diligence handoff;
 - при необходимости отдельному legal bundle вне runtime-кода.
 
+Рабочее правило для текущего `Tier 1 Linux`:
+
+- `esbuild`/`turbo` parent-family notices надо подготовить как минимум в procurement/due-diligence bundle;
+- `fsevents` не считать частью текущего Linux runtime-distribution perimeter;
+- `UNLICENSED` first-party packages не должны попадать в third-party notice bundle.
+
 ## 4. Что ещё не закрыто
 
 - actual assembled NOTICE bundle не собран;
-- `UNKNOWN` perimeter ещё не прошёл triage;
-- first-party licensing strategy ещё не завершена.
+- `UNKNOWN` perimeter уже сужен до optional/toolchain хвоста, но final legal sign-off ещё отсутствует;
+- first-party licensing strategy уже имеет repo-side baseline, но внешняя chain-of-title верификация ещё не завершена.
 
 Поэтому `A5.2` после публикации этого packet можно вести в `in_progress`, но не считать закрытой.

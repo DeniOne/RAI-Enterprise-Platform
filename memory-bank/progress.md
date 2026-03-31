@@ -2,7 +2,24 @@
 
 ## 2026-03-31
 
-1. **A4 execution evidence and installability remediation** [DONE]:
+1. **A5 first-party unknowns removed from license inventory** [DONE]:
+  - В [package.json](/root/RAI_EP/package.json) добавлен `license: UNLICENSED`.
+  - В [packages/eslint-plugin-tenant-security/package.json](/root/RAI_EP/packages/eslint-plugin-tenant-security/package.json) добавлены:
+    - `license: UNLICENSED`
+    - `private: true`
+  - После этого локальный inventory изменился:
+    - `total packages = 159`
+    - `unknown licenses = 33 -> 31`
+    - `UNLICENSED = 2`
+  - Это убрало из `UNKNOWN` два first-party случая:
+    - `rai-enterprise-platform`
+    - `eslint-plugin-tenant-security`
+  - `PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md`, `OSS_LICENSE_AND_IP_REGISTER.md`, `PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md`, `PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md`, `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`, `PHASE_A_EXECUTION_BOARD.md` и `PHASE_A_EVIDENCE_MATRIX.md` синхронизированы с новым состоянием.
+  - Практический эффект:
+    - `A5` больше не путает наш собственный first-party perimeter с third-party `UNKNOWN`;
+    - remaining OSS-risk сузился до optional/toolchain хвоста `esbuild / turbo / fsevents`, что делает следующий triage гораздо точнее.
+
+2. **A4 execution evidence and installability remediation** [DONE]:
   - Для `A4` выполнен реальный dry-run install path:
     - `pnpm install --frozen-lockfile`
     - `pnpm --filter api build`
@@ -27,7 +44,7 @@
     - install path теперь подтверждён фактическим прохождением на локальной self-host среде;
     - recovery path подтверждён реальным restore rehearsal, а не наличием runbook.
 
-2. **A3 runtime drill evidence and ops-script remediation** [DONE]:
+3. **A3 runtime drill evidence and ops-script remediation** [DONE]:
   - Найден и устранён repo-side drift в advisory ops scripts:
     - `advisory-oncall-drill.mjs`
     - `advisory-stage-progression.mjs`

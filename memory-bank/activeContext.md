@@ -1,6 +1,27 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A5` выполнено первое repo-side сужение `UNKNOWN` perimeter:
+  - [package.json](/root/RAI_EP/package.json) теперь явно помечен как `UNLICENSED`
+  - [package.json](/root/RAI_EP/packages/eslint-plugin-tenant-security/package.json) теперь явно помечен как `UNLICENSED` и `private: true`
+- [x] После этого `pnpm security:licenses` изменился:
+  - `totalPackages = 159`
+  - `unknownLicenseCount = 33 -> 31`
+  - `UNLICENSED = 2`
+- [x] `A5` больше не смешивает first-party ambiguity с third-party unknowns:
+  - first-party perimeter уже переведён в conservative internal-private baseline
+  - remaining `UNKNOWN` сузился до `esbuild` platform companions, `turbo` platform companions и `fsevents`
+- [x] Синхронизированы:
+  - `PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md`
+  - `OSS_LICENSE_AND_IP_REGISTER.md`
+  - `PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md`
+  - `PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md`
+  - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`
+  - `PHASE_A_EXECUTION_BOARD.md`
+  - `PHASE_A_EVIDENCE_MATRIX.md`
+- [x] Новый practical reading такой:
+  - для `Tier 1 Linux self-host` remaining `UNKNOWN` уже не выглядят как red runtime OSS-risk
+  - но final legal classification и notice bundle всё ещё не закрыты, поэтому `A5` остаётся `in_progress`, а не `done`
 - [x] Для `A4` собран первый фактический execution baseline, а не только repo-side scaffold.
 - [x] Реально подтверждено:
   - `pnpm docker:up` проходит после перевода root script на `docker compose`

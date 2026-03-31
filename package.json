@@ -1,5 +1,6 @@
 {
   "name": "rai-enterprise-platform",
+  "license": "UNLICENSED",
   "private": true,
   "packageManager": "pnpm@9.0.0",
   "type": "module",

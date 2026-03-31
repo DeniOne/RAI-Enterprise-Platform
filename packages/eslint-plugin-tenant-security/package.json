@@ -1,5 +1,7 @@
 {
     "name": "eslint-plugin-tenant-security",
+    "license": "UNLICENSED",
+    "private": true,
     "version": "1.0.0",
     "main": "src/index.js",
     "engines": {

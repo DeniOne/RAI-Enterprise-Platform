@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A5-IP-OSS-CLOSEOUT-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.2.0
+version: 1.3.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A5-IP-OSS-CLOSEOUT-PLAN-20260331
@@ -30,18 +30,20 @@ last_verified: 2026-03-31
 
 - машинно-воспроизводимый `OSS` inventory уже есть через `pnpm security:licenses`;
 - зафиксирован локальный baseline:
-  - `189 packages`
-  - `33 unknown licenses`
+  - `159 packages`
+  - `31 unknown licenses`
+  - `UNLICENSED = 2`
 - существует активный [OSS_LICENSE_AND_IP_REGISTER.md](/root/RAI_EP/docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md);
-- опубликован [PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md) как working triage register по `33 UNKNOWN`;
+- опубликован [PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md) как working triage register по `31 UNKNOWN`;
 - опубликован [PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md) как working notice perimeter;
 - опубликован [PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md) как conservative first-party licensing baseline;
+- root package и `eslint-plugin-tenant-security` уже выведены из `UNKNOWN` через `UNLICENSED`;
 - внешний legal lifecycle уже умеет вести `ELP-20260328-09` и `ELP-20260328-10`;
 - RF review прямо фиксирует, что `chain-of-title` и `OSS unknown-license triage` остаются незакрытым стоп-фактором.
 
 Одновременно остаются реальные незакрытые вопросы:
 
-- `33 unknown licenses` не прошли final legal triage;
+- remaining `31 unknown licenses` не прошли final legal triage;
 - notice/obligations packet пока рабочий, а не финально принятый legal bundle;
 - не подтверждена непрерывная цепочка прав на first-party code и database rights;
 - внешний pilot нельзя считать безопасным при спорных правах на ПО и БД.
@@ -60,7 +62,8 @@ last_verified: 2026-03-31
 Сильное доказательство:
 
 - актуализированный [OSS_LICENSE_AND_IP_REGISTER.md](/root/RAI_EP/docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md) с ручным legal triage;
-- закрытый `UNKNOWN` perimeter или явный replacement-plan для проблемных пакетов.
+- закрытый `UNKNOWN` perimeter или явный replacement-plan для проблемных пакетов;
+- явное отделение first-party `UNLICENSED` perimeter от third-party toolchain хвоста.
 
 Текущий execution-артефакт:
 

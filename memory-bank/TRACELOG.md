@@ -1008,3 +1008,22 @@
 - Практический эффект:
   - `A3.4` теперь имеет не только skeleton eval-suite, но и фактический runtime-drill baseline;
   - advisory runtime, gate evaluation, kill-switch и rollback подтверждены живым исполнением, хотя unified evaluator gate ещё не собран.
+[2026-03-31 11:55Z] Для `A5` устранена first-party ambiguity внутри OSS inventory
+- В `package.json` добавлен `license: UNLICENSED`.
+- В `packages/eslint-plugin-tenant-security/package.json` добавлены:
+  - `license: UNLICENSED`
+  - `private: true`
+- `pnpm security:licenses` пересчитан:
+  - `total packages = 159`
+  - `unknown licenses = 33 -> 31`
+  - `UNLICENSED = 2`
+- `PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md` обновлён:
+  - remaining `UNKNOWN` теперь разбит только на:
+    - `25` `esbuild` platform companions
+    - `5` `turbo` platform companions
+    - `1` `fsevents`
+  - first-party perimeter вынесен в отдельный уже закрытый repo-side baseline
+- `OSS_LICENSE_AND_IP_REGISTER.md`, `PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md`, `PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md`, `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`, `PHASE_A_EXECUTION_BOARD.md` и `PHASE_A_EVIDENCE_MATRIX.md` синхронизированы.
+- Практический эффект:
+  - `A5` перестал смешивать внутренние пакеты и внешний OSS-tail в одну красную массу;
+  - следующий шаг теперь точнее: formal legal classification и notice bundle только по `esbuild/turbo/fsevents`, а не по first-party пакетам.

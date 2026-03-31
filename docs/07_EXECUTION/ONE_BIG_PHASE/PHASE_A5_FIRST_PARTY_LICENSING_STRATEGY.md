@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A5-FIRST-PARTY-LICENSING-STRATEGY-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A5-FIRST-PARTY-LICENSING-STRATEGY-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: package.json;docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md
+evidence_refs: package.json;packages/eslint-plugin-tenant-security/package.json;docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md
 ---
 # PHASE A5 FIRST-PARTY LICENSING STRATEGY
 
@@ -27,6 +27,8 @@ last_verified: 2026-03-31
 Сейчас подтверждено только следующее:
 
 - root package помечен как `private`
+- root package явно помечен как `UNLICENSED`
+- `packages/eslint-plugin-tenant-security` явно помечен как `UNLICENSED`
 - root `LICENSE` в репозитории отсутствует
 - `ELP-20260328-09` ещё не принят
 
@@ -35,6 +37,15 @@ last_verified: 2026-03-31
 - current state не даёт автоматической публичной лицензии;
 - current state не даёт доказанного chain-of-title;
 - current state подходит только как внутренний/private baseline, но не как завершённая licensing strategy.
+
+## 1.1. Что уже усилено repo-side
+
+В этом шаге уже убрана двусмысленность по first-party package markers:
+
+- [package.json](/root/RAI_EP/package.json) -> `license: UNLICENSED`
+- [package.json](/root/RAI_EP/packages/eslint-plugin-tenant-security/package.json) -> `license: UNLICENSED`, `private: true`
+
+Это не заменяет `ELP-20260328-09`, но уже снимает ложный `UNKNOWN` для first-party perimeter внутри inventory.
 
 ## 2. Working strategy для `Phase A`
 
