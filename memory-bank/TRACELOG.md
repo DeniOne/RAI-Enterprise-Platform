@@ -922,3 +922,17 @@
   - `received -> reviewed`
   - `reviewed -> accepted`
 - Практический эффект: `A2` теперь имеет не только status/gate и drafts, но и полный воспроизводимый lifecycle для реального intake security evidence без ручной правки metadata.
+[2026-03-31 10:49Z] Для `A3.1` опубликован runtime-derived tool permission matrix
+- Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_TOOL_PERMISSION_MATRIX.md`.
+- Документ собран по текущему runtime-коду:
+  - `DEFAULT_TOOL_BINDINGS`
+  - `TOOL_RISK_MAP`
+  - `resolveToolAccess`
+  - `RiskPolicyEngineService`
+  - `RaiToolsRegistry`
+- Зафиксирован default governed tool-perimeter для `Tier 1` по ролям `agronomist`, `economist`, `knowledge`, `monitoring`, `crm_agent`, `front_office_agent`, `contracts_agent`, `chief_agronomist`, `data_scientist`.
+- `PHASE_A_EXECUTION_BOARD.md` синхронизирован:
+  - `A-2.4.1` переведён из `open` в `in_progress`
+- `PHASE_A_EVIDENCE_MATRIX.md` синхронизирована:
+  - по оси `AI / tool permissions` зафиксировано, что execution-артефакт уже создан, но `A3` ещё не закрыта до конца без `HITL / advisory-only / eval-suite`
+- Практический эффект: `A3` впервые получила не только policy-намерение, а опубликованный runtime-derived baseline, от которого можно уже детерминированно строить `HITL matrix` и formal `eval-suite`.

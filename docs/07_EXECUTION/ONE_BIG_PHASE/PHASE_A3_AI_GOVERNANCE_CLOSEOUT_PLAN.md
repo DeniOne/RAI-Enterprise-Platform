@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A3-AI-GOVERNANCE-CLOSEOUT-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.1.0
+version: 1.2.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A3-AI-GOVERNANCE-CLOSEOUT-PLAN-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md;docs/_audit/AI_AGENT_FAILURE_SCENARIOS_2026-03-28.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_TOOL_PERMISSION_MATRIX.md;docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md;docs/_audit/AI_AGENT_FAILURE_SCENARIOS_2026-03-28.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md
 ---
 # PHASE A3 AI GOVERNANCE CLOSEOUT PLAN
 
@@ -35,12 +35,13 @@ last_verified: 2026-03-31
 
 - policy-контур AI уже существует;
 - advisory-first модель для `RAI_EP` уже зафиксирована;
+- опубликован runtime-derived [PHASE_A3_TOOL_PERMISSION_MATRIX.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_TOOL_PERMISSION_MATRIX.md) как default governed tool-perimeter для `Tier 1`;
 - release criteria прямо требуют `tool matrix`, `HITL matrix`, formal safety evals и incident discipline;
 - audit фиксирует, что AI/agent baseline уже operationally значим, но release-state остаётся условным именно из-за неполной формализации safety controls.
 
 Одновременно остаются реальные незакрытые вопросы:
 
-- нет system-wide `tool-permission matrix`;
+- `tool-permission matrix` уже появился, но ещё не замкнут в полный release-closeout вместе с `HITL`, `advisory-only` и `eval-suite`;
 - нет universal `HITL matrix` для high-impact flows;
 - нет закреплённого `advisory-only` перечня как execution-артефакта;
 - нет formal release-gated `eval-suite` поверх risky runtime-сценариев.
@@ -51,9 +52,13 @@ last_verified: 2026-03-31
 
 Сделать:
 
-- зафиксировать по route class и agent class, какие инструменты разрешены;
+- удерживать published matrix как canonical baseline по route class и agent class;
 - явно отделить `read/advisory` инструменты от bounded operational tools;
 - не допускать tool expansion без policy-обоснования.
+
+Текущий execution-артефакт:
+
+- [PHASE_A3_TOOL_PERMISSION_MATRIX.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_TOOL_PERMISSION_MATRIX.md)
 
 Сильное доказательство:
 

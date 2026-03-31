@@ -181,6 +181,29 @@
     - вся приоритетная legal-восьмёрка теперь разложена в каноне до конкретных owner-checklists;
     - legal-track `A1` внутри репозитория доведён до максимальной исполнимости без подделки внешних evidence.
 
+13. **A3 tool permission matrix published** [DONE]:
+  - Добавлен `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_TOOL_PERMISSION_MATRIX.md`.
+  - Новый execution-артефакт собран по текущему runtime-коду, а не по общим policy-формулировкам:
+    - `DEFAULT_TOOL_BINDINGS`
+    - `TOOL_RISK_MAP`
+    - `resolveToolAccess`
+    - `RiskPolicyEngineService`
+    - `RaiToolsRegistry`
+  - Матрица фиксирует default governed tool-perimeter для `Tier 1` по ролям:
+    - `agronomist`
+    - `economist`
+    - `knowledge`
+    - `monitoring`
+    - `crm_agent`
+    - `front_office_agent`
+    - `contracts_agent`
+    - `chief_agronomist`
+    - `data_scientist`
+  - `ONE_BIG_PHASE/INDEX.md`, `PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md`, `PHASE_A3_FIRST_WAVE_GOVERNANCE_CHECKLIST.md`, `PHASE_A_EXECUTION_BOARD.md`, `PHASE_A_EVIDENCE_MATRIX.md` и `docs/DOCS_MATRIX.md` синхронизированы.
+  - Практический эффект:
+    - `A3.1` больше не висит как пустой policy-пункт;
+    - `HITL matrix`, `advisory-only` perimeter и `eval-suite` теперь можно строить поверх опубликованного runtime-derived baseline, а не с нуля.
+
 ## 2026-03-30
 
 1. **Owner-friendly MVP execution checklist** [DONE]:

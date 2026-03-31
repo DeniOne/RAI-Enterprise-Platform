@@ -154,6 +154,16 @@
   - `HITL matrix`
   - `advisory-only` perimeter
   - formal `eval-suite`
+- [x] Для `A3.1` опубликован runtime-derived `PHASE_A3_TOOL_PERMISSION_MATRIX.md`.
+- [x] Матрица собрана не из общих policy-намерений, а из текущего runtime-кода:
+  - `DEFAULT_TOOL_BINDINGS`
+  - `TOOL_RISK_MAP`
+  - `resolveToolAccess`
+  - `RiskPolicyEngineService`
+  - `RaiToolsRegistry`
+- [x] `PHASE_A_EXECUTION_BOARD.md` и `PHASE_A_EVIDENCE_MATRIX.md` синхронизированы с новым состоянием:
+  - `A-2.4.1` переведён в `in_progress`
+  - по оси `AI / tool permissions` зафиксировано, что execution-артефакт уже создан, но полный release-closeout `A3` ещё не завершён
 - [x] Для трека `A4` добавлен отдельный рабочий пакет `PHASE_A4_INSTALLABILITY_AND_RECOVERY_PLAN.md`.
 - [x] `A4` теперь переведён из общей ops-темы в execution-пакет по:
   - install/upgrade packet

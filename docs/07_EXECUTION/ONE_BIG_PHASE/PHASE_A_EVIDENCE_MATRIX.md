@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A-EVIDENCE-MATRIX-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.5.0
+version: 1.6.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-EVIDENCE-MATRIX-20260331
@@ -53,7 +53,7 @@ last_verified: 2026-03-31
 | `A2` | `Security / secret hygiene` | удержать `tracked` leakage на нуле и закрыть historical debt | зелёный secret gate + `security:evidence` status/gate + incident closeout evidence | `pnpm gate:secrets` -> `tracked_findings=0`, `workspace_local_findings=8`; `pnpm security:evidence:status`; [KEY_MATERIAL_AND_SECRET_HYGIENE_INCIDENT_2026-03-28.md](/root/RAI_EP/docs/05_OPERATIONS/KEY_MATERIAL_AND_SECRET_HYGIENE_INCIDENT_2026-03-28.md) | external rotation / revocation artifact по `A2-S-01/02` | `tracked закрыто, historical debt структурирован и ждёт внешнего evidence` |
 | `A2` | `Security / unsafe paths` | не допускать новых unsafe обходов | зелёные invariants/gates | `pnpm gate:invariants`, due diligence | внешнее evidence не требуется | `внутренне подтверждено` |
 | `A2` | `Security / access governance outside repo` | доказать branch protection, owner-review, deploy keys и environment access | restricted access review artifact + `security:evidence` status/gate | [SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY.md](/root/RAI_EP/docs/05_OPERATIONS/SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY.md), `.github/CODEOWNERS`, security workflows, `pnpm security:evidence:status` | внешний restricted evidence packet по GitHub UI/perimeter | `repo-side perimeter подтверждён частично, GitHub UI evidence отсутствует` |
-| `A3` | `AI / tool permissions` | определить, что агенту можно запускать | approved tool matrix + runtime enforcement | [RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md](/root/RAI_EP/docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md) | внешнее evidence не требуется | `не подтверждено исполнением` |
+| `A3` | `AI / tool permissions` | определить, что агенту можно запускать | approved tool matrix + runtime enforcement | [PHASE_A3_TOOL_PERMISSION_MATRIX.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_TOOL_PERMISSION_MATRIX.md), [RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md](/root/RAI_EP/docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md), [agent-registry.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agent-registry.service.ts), [agent-runtime-config.service.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/agent-runtime-config.service.ts), [rai-tools.registry.ts](/root/RAI_EP/apps/api/src/modules/rai-chat/tools/rai-tools.registry.ts) | внешнее evidence не требуется | `execution-артефакт создан, но release-closeout A3 ещё не завершён` |
 | `A3` | `AI / HITL` | определить, где обязательно участие человека | approved HITL matrix + runtime path | AI policy, AI failure scenarios | внешнее evidence не требуется | `не подтверждено исполнением` |
 | `A3` | `AI / safety evals` | ввести формальный eval suite для risky-сценариев | eval suite + результаты прогонов | AI failure scenarios, synthesis | внешнее evidence не требуется | `не подтверждено исполнением` |
 | `A4` | `Installability / self-host` | доказать путь установки и обновления | install/upgrade packet + dry-run evidence | release criteria, due diligence, deployment matrix | внешнее evidence не требуется | `частично описано` |
