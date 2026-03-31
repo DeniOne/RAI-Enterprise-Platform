@@ -124,6 +124,19 @@
     - `A1` перестал упираться только в общий priority-board;
     - теперь первую критическую волну можно вести как прямой чеклист для owner-а без переключения между несколькими legal-файлами.
 
+9. **ELP-01 operator memo micro-checklist** [DONE]:
+  - Добавлен `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_ELP_01_OPERATOR_MEMO_CHECKLIST.md`.
+  - Новый документ перевёл первый фактический legal-step в один конкретный owner-чеклист:
+    - какая форма файла допустима
+    - какие поля обязательны
+    - какая команда выполняет `intake`
+    - что проверять до `reviewed`
+    - что должно измениться после `accepted`
+  - `PHASE_A1_FIRST_WAVE_EXECUTION_CHECKLIST.md`, `ONE_BIG_PHASE/INDEX.md`, `01_PHASE_A_STOP_BLOCKERS_AND_GATES.md` и `docs/DOCS_MATRIX.md` синхронизированы.
+  - Практический эффект:
+    - запуск `A1` теперь можно начинать буквально с одного документа;
+    - исчезает двусмысленность, что именно считается достаточным `operator memo`.
+
 ## 2026-03-30
 
 1. **Owner-friendly MVP execution checklist** [DONE]:

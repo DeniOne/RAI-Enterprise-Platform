@@ -34,6 +34,15 @@
   - что изменится в board и legal verdict
 - Практический эффект: `A1` теперь можно двигать как прямой чеклист исполнения, а не как навигацию по register/handoff/priority-board.
 
+[2026-03-31 02:09Z] Для `ELP-20260328-01` добавлен отдельный operator-memo micro-checklist
+- Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_ELP_01_OPERATOR_MEMO_CHECKLIST.md`.
+- Документ зафиксировал:
+  - допустимую форму `operator identity and role memo`
+  - минимально обязательные поля
+  - точный цикл `intake -> reviewed -> accepted`
+  - что именно должно измениться в `A1` и legal verdict после acceptance
+- Практический эффект: первый реальный шаг `A1` теперь исполнительно разложен до одного конкретного документа, без необходимости собирать acceptance criteria по нескольким legal-файлам.
+
 [2026-03-31 01:31Z] Для `A4` добавлен отдельный installability/recovery closeout packet
 - Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALLABILITY_AND_RECOVERY_PLAN.md`.
 - Документ привязан к текущим фактам:

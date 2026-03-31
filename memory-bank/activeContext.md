@@ -50,6 +50,12 @@
   - что обязательно вписать
   - когда запускать `intake`
   - какая board-строка и какой legal effect меняются
+- [x] Для первого фактического шага `A1` добавлен отдельный микрочеклист `PHASE_A1_ELP_01_OPERATOR_MEMO_CHECKLIST.md`.
+- [x] `ELP-20260328-01` теперь имеет отдельный owner-friendly execution-layer:
+  - допустимая форма файла
+  - обязательные поля memo
+  - точный порядок `intake -> reviewed -> accepted`
+  - что именно должно измениться в `A1` и legal verdict
 - [x] Для трека `A2` добавлен отдельный рабочий пакет `PHASE_A2_SECURITY_CLOSEOUT_PLAN.md`.
 - [x] `A2` теперь привязан к фактическому baseline:
   - `pnpm security:audit:ci`

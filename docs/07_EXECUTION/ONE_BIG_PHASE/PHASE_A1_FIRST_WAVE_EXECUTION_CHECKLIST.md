@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A1-FIRST-WAVE-CHECKLIST-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A1-FIRST-WAVE-CHECKLIST-20260331
@@ -30,6 +30,8 @@ last_verified: 2026-03-31
 4. `ELP-20260328-06`
 
 Именно эта четвёрка сильнее всего двигает `Legal / Compliance` из чистого `NO-GO`.
+
+Для самого первого шага использовать также [PHASE_A1_ELP_01_OPERATOR_MEMO_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_ELP_01_OPERATOR_MEMO_CHECKLIST.md).
 
 ## 1. Что делать прямо сейчас
 
