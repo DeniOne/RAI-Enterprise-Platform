@@ -1,6 +1,36 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A5` собран unified machine-readable `status/gate` поверх уже готовых repo-side packet-слоёв.
+  - добавлен root generator:
+    - `scripts/phase-a5-status.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a5:status`
+    - `pnpm gate:phase:a5:status`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_STATUS_GATE.md`
+- [x] `phase:a5:status` теперь сводит в один report:
+  - `license-inventory`
+  - `notice-bundle`
+  - `chain-of-title source register`
+  - `collection packet`
+  - `handoff`
+  - `request packet`
+  - restricted metadata `ELP-20260328-09`
+  - restricted delivery packet
+- [x] После этого `A5` стала читаться так:
+  - `A5.1` = `done_for_tier1`
+  - `A5.2` = `assembled_for_tier1`
+  - `A5.3 repo-side` = `complete`
+  - `A5.3 external` = всё ещё `requested`
+  - `A5.4` = `done_for_tier1`
+  - общий статус = `external_blocked`
+  - `Tier 1` статус = `conditional_ready_pending_elp09`
+- [x] Синхронизированы:
+  - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`
+  - `PHASE_A_EXECUTION_BOARD.md`
+  - `PHASE_A_EVIDENCE_MATRIX.md`
+  - `ONE_BIG_PHASE/INDEX.md`
+  - `docs/DOCS_MATRIX.md`
 - [x] Для `A5.3` собран шестой repo-side слой поверх request packet: итоговый restricted `chain-of-title delivery packet`.
   - добавлен root generator:
     - `scripts/phase-a5-chain-of-title-delivery-packet.cjs`

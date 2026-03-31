@@ -1,3 +1,41 @@
+[2026-03-31 13:37Z] Для `A5` собран unified machine-readable status gate
+- Добавлен root generator `scripts/phase-a5-status.cjs`.
+- В `package.json` добавлены команды:
+  - `pnpm phase:a5:status`
+  - `pnpm gate:phase:a5:status`
+- Создан новый canonical doc:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_STATUS_GATE.md`
+- Generated evidence теперь выпускается в:
+  - `var/compliance/phase-a5-status.json`
+  - `var/compliance/phase-a5-status.md`
+- Этот gate сводит в один report:
+  - `license-inventory`
+  - `notice-bundle`
+  - `chain-of-title source register`
+  - `collection packet`
+  - `handoff`
+  - `request packet`
+  - restricted metadata `ELP-20260328-09`
+  - restricted delivery packet
+- Логическое решение зафиксировано так:
+  - `A5.1 = done_for_tier1`
+  - `A5.2 = assembled_for_tier1`
+  - `A5.3 repo-side = complete`
+  - `A5.3 external = requested`
+  - `A5.4 = done_for_tier1`
+  - `current_state = external_blocked`
+  - `tier1_state = conditional_ready_pending_elp09`
+- Синхронизированы:
+  - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`
+  - `PHASE_A_EXECUTION_BOARD.md`
+  - `PHASE_A_EVIDENCE_MATRIX.md`
+  - `ONE_BIG_PHASE/INDEX.md`
+  - `docs/DOCS_MATRIX.md`
+- Практический эффект:
+  - `A5` теперь можно проверять одной машинной командой;
+  - repo-side closeout перестал быть распределённым по шести packet-слоям без общего verdict;
+  - remaining blocker явно сведён к внешнему intake `ELP-20260328-09`.
+
 [2026-03-31 13:30Z] Для `A5.3` собран итоговый `chain-of-title delivery packet`
 - Добавлен root generator `scripts/phase-a5-chain-of-title-delivery-packet.cjs`.
 - В `package.json` добавлены команды:
