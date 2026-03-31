@@ -1,3 +1,18 @@
+[2026-03-31 19:08Z] Для `Phase A` собран финальный repo-side closeout gate
+- Добавлен root generator `scripts/phase-a-closeout-status.cjs`.
+- В `package.json` добавлены команды:
+  - `pnpm phase:a:closeout`
+  - `pnpm gate:phase:a:closeout`
+- Создан новый canonical doc:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_CLOSEOUT_STATUS_GATE.md`
+- Generated evidence теперь выпускается в:
+  - `var/execution/phase-a-closeout-status.json`
+  - `var/execution/phase-a-closeout-status.md`
+- Практический эффект:
+  - появился machine-readable verdict, выжата ли `Phase A` внутри репозитория до упора;
+  - финальный остаток фазы можно оценивать уже не только по blockers и owner queues, но и по closeout state;
+  - если дальше останутся только внешние evidence, это будет видно как осознанный предел, а не как недопонимание статуса.
+
 [2026-03-31 18:58Z] Для `Phase A` собран unified owner queue packet по всему внешнему blocker-set
 - Добавлен root generator `scripts/phase-a-external-owner-queues.cjs`.
 - В `package.json` добавлены команды:

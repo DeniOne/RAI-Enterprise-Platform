@@ -1,6 +1,21 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `Phase A` собран финальный repo-side closeout gate.
+  - добавлен root generator:
+    - `scripts/phase-a-closeout-status.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a:closeout`
+    - `pnpm gate:phase:a:closeout`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_CLOSEOUT_STATUS_GATE.md`
+- [x] Этот слой теперь даёт:
+  - generated closeout verdict в `var/execution/phase-a-closeout-status.*`
+  - machine-readable answer, исчерпана ли repo-side работа по фазе
+  - отделение состояния `repo_side_work_remaining` от `repo_side_exhausted_external_only`
+- [x] После этого `Phase A` сместилась так:
+  - можно честно зафиксировать, дошли ли мы внутри репозитория до реального упора;
+  - финальный остаток фазы теперь выражен не только через blockers и owner queues, но и через closeout verdict;
+  - следующий ход определяется уже не по ощущению, а по факту: либо ещё есть внутренний хвост, либо осталось только внешнее evidence.
 - [x] Для внешнего хвоста `Phase A` собран unified owner queue packet поверх consolidated blockers packet.
   - добавлен root generator:
     - `scripts/phase-a-external-owner-queues.cjs`
