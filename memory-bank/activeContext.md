@@ -1,6 +1,22 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A1` собран machine-readable `first-wave status/gate` поверх packet-а `ELP-01 / 03 / 04 / 06`.
+  - добавлен root generator:
+    - `scripts/phase-a1-first-wave-status.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a1:first-wave:status`
+    - `pnpm gate:phase:a1:first-wave:status`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_STATUS_GATE.md`
+- [x] Этот слой теперь связывает в один verdict:
+  - first-wave packet
+  - общий legal verdict
+  - counts `requested / received / reviewed / accepted`
+  - wave state `not_started / in_progress / completed`
+- [x] После этого `A1` сместилась так:
+  - первая legal-четвёрка стала не только owner-ready, но и machine-readable
+  - честное стартовое состояние теперь видно одной командой как `not_started`
+  - remaining blocker ещё сильнее сводится к реальному external intake, а не к отсутствию статуса
 - [x] Для `A1` собран unified owner-facing packet именно по первой legal-волне `ELP-01 / 03 / 04 / 06`.
   - добавлен root generator:
     - `scripts/phase-a1-first-wave-request-packet.cjs`

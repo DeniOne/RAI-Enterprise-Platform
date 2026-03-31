@@ -1,3 +1,31 @@
+[2026-03-31 17:40Z] Для `A1` собран machine-readable first-wave status gate
+- Добавлен root generator `scripts/phase-a1-first-wave-status.cjs`.
+- В `package.json` добавлены команды:
+  - `pnpm phase:a1:first-wave:status`
+  - `pnpm gate:phase:a1:first-wave:status`
+- Создан новый canonical doc:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_STATUS_GATE.md`
+- Generated evidence теперь выпускается в:
+  - `var/compliance/phase-a1-first-wave-status.json`
+  - `var/compliance/phase-a1-first-wave-status.md`
+- Этот слой связывает:
+  - `phase-a1-first-wave-request-packet`
+  - `external-legal-evidence-verdict`
+  - counts `requested / received / reviewed / accepted`
+  - wave-state `not_started / in_progress / completed`
+- Синхронизированы:
+  - `PHASE_A1_FIRST_WAVE_REQUEST_PACKET.md`
+  - `PHASE_A1_FIRST_WAVE_EXECUTION_CHECKLIST.md`
+  - `PHASE_A1_LEGAL_CLOSEOUT_PLAN.md`
+  - `PHASE_A_EXECUTION_BOARD.md`
+  - `PHASE_A_EVIDENCE_MATRIX.md`
+  - `ONE_BIG_PHASE/INDEX.md`
+  - `docs/DOCS_MATRIX.md`
+- Практический эффект:
+  - первая legal-четвёрка стала не только owner-ready, но и machine-readable как отдельный execution-slice;
+  - стало видно, начался ли реальный intake или волна всё ещё стоит в `requested`;
+  - remaining blocker по `A1` ещё сильнее сведён к фактическому external evidence intake.
+
 [2026-03-31 13:44Z] Для `A1` собран unified first-wave request packet
 - Добавлен root generator `scripts/phase-a1-first-wave-request-packet.cjs`.
 - В `package.json` добавлены команды:

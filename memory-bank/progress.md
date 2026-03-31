@@ -2,6 +2,34 @@
 
 ## 2026-03-31
 
+1. **A1 first-wave status gate assembled** [DONE]:
+  - Добавлен root generator:
+    - `scripts/phase-a1-first-wave-status.cjs`
+  - В `package.json` добавлены команды:
+    - `pnpm phase:a1:first-wave:status`
+    - `pnpm gate:phase:a1:first-wave:status`
+  - Создан новый canonical doc:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_STATUS_GATE.md`
+  - Generated evidence выпускается в:
+    - `var/compliance/phase-a1-first-wave-status.json`
+    - `var/compliance/phase-a1-first-wave-status.md`
+  - Этот слой связывает:
+    - `phase-a1-first-wave-request-packet`
+    - `external-legal-evidence-verdict`
+    - wave-state `not_started / in_progress / completed`
+  - Синхронизированы:
+    - `PHASE_A1_FIRST_WAVE_REQUEST_PACKET.md`
+    - `PHASE_A1_FIRST_WAVE_EXECUTION_CHECKLIST.md`
+    - `PHASE_A1_LEGAL_CLOSEOUT_PLAN.md`
+    - `PHASE_A_EXECUTION_BOARD.md`
+    - `PHASE_A_EVIDENCE_MATRIX.md`
+    - `ONE_BIG_PHASE/INDEX.md`
+    - `docs/DOCS_MATRIX.md`
+  - Практический эффект:
+    - первая legal-четвёрка теперь видна одной командой не только как packet, но и как состояние исполнения;
+    - стало машинно видно, начался ли реальный intake или волна всё ещё стоит в `requested`;
+    - `A1` ещё сильнее сместилась от repo-side подготовки к фактическому внешнему evidence intake.
+
 1. **A1 first-wave request packet assembled** [DONE]:
   - Добавлен root generator:
     - `scripts/phase-a1-first-wave-request-packet.cjs`
