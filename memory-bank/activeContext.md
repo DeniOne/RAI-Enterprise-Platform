@@ -43,6 +43,13 @@
 - [x] `PHASE_A_EXECUTION_BOARD.md` перестроен по трекам `A0–A5`, а `PHASE_A_EVIDENCE_MATRIX.md` теперь тоже размечает доказательства по трекам, а не только по осям риска.
 - [x] Для трека `A1` добавлен отдельный рабочий пакет `PHASE_A1_LEGAL_CLOSEOUT_PLAN.md`.
 - [x] `A1` теперь связан с реальными артефактами `var/compliance/external-legal-evidence-verdict.md`, `external-legal-evidence-priority-board.md`, `external-legal-evidence-handoff.md` и restricted owner-packets.
+- [x] Для первой волны `A1` добавлен отдельный рабочий документ `PHASE_A1_FIRST_WAVE_EXECUTION_CHECKLIST.md`.
+- [x] Внутри него `ELP-01`, `03`, `04`, `06` переведены из общей очереди в пошаговый owner-checklist:
+  - какой внешний файл нужен
+  - кто даёт данные
+  - что обязательно вписать
+  - когда запускать `intake`
+  - какая board-строка и какой legal effect меняются
 - [x] Для трека `A2` добавлен отдельный рабочий пакет `PHASE_A2_SECURITY_CLOSEOUT_PLAN.md`.
 - [x] `A2` теперь привязан к фактическому baseline:
   - `pnpm security:audit:ci`

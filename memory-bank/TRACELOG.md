@@ -19,6 +19,21 @@
   - `RF_COMPLIANCE_REVIEW` подтверждает, что `chain-of-title` и OSS triage остаются красным блокером
 - Практический эффект: трек `A5` теперь исполняется как конкретный пакет по `unknown licenses`, notice obligations, `ELP-20260328-09` и first-party licensing strategy, а не как общий IP-хвост в конце `Phase A`.
 
+[2026-03-31 01:58Z] Для первой legal-волны `A1` добавлен owner-friendly execution checklist
+- Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_EXECUTION_CHECKLIST.md`.
+- Документ зафиксировал первую критическую четвёрку:
+  - `ELP-20260328-01`
+  - `ELP-20260328-03`
+  - `ELP-20260328-04`
+  - `ELP-20260328-06`
+- Для каждой карточки явно описано:
+  - какой внешний файл нужен
+  - кто даёт данные
+  - что обязательно вписать
+  - какую команду `intake` запускать
+  - что изменится в board и legal verdict
+- Практический эффект: `A1` теперь можно двигать как прямой чеклист исполнения, а не как навигацию по register/handoff/priority-board.
+
 [2026-03-31 01:31Z] Для `A4` добавлен отдельный installability/recovery closeout packet
 - Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALLABILITY_AND_RECOVERY_PLAN.md`.
 - Документ привязан к текущим фактам:

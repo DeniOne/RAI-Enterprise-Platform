@@ -111,6 +111,19 @@
     - `A5` перестал быть хвостовой общей темой и стал конкретным execution-треком;
     - теперь `Phase A` уже имеет отдельные рабочие пакеты для legal, security, AI governance, installability/recovery и IP/OSS.
 
+8. **A1 first-wave execution checklist** [DONE]:
+  - Добавлен `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_EXECUTION_CHECKLIST.md`.
+  - Новый документ перевёл первую legal-волну `ELP-01 / 03 / 04 / 06` в owner-уровневый практический чеклист:
+    - какой именно внешний файл нужен
+    - кто должен дать данные
+    - что обязательно вписать
+    - какую команду `intake` запускать
+    - какая строка board и какой legal-effect должны измениться
+  - `PHASE_A1_LEGAL_CLOSEOUT_PLAN.md`, `ONE_BIG_PHASE/INDEX.md`, `01_PHASE_A_STOP_BLOCKERS_AND_GATES.md` и `docs/DOCS_MATRIX.md` синхронизированы.
+  - Практический эффект:
+    - `A1` перестал упираться только в общий priority-board;
+    - теперь первую критическую волну можно вести как прямой чеклист для owner-а без переключения между несколькими legal-файлами.
+
 ## 2026-03-30
 
 1. **Owner-friendly MVP execution checklist** [DONE]:
