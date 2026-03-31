@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A2-SECURITY-CLOSEOUT-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.1.0
+version: 1.2.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A2-SECURITY-CLOSEOUT-PLAN-20260331
@@ -33,6 +33,11 @@ last_verified: 2026-03-31
 - `raw_sql_unsafe = 0`;
 - `pnpm gate:secrets` и `pnpm security:audit:ci` существуют как обязательный baseline;
 - policy-контур security в проекте есть и активен.
+- первая remediation-волна dependency-risk уже проведена:
+  - `critical: 2 -> 0`
+  - `high: 37 -> 30`
+  - advisories по `fast-xml-parser`, `handlebars` и `axios <= 1.13.4` больше не воспроизводятся;
+  - после refresh проходят `pnpm --filter api build` и `pnpm --filter web build`.
 
 Одновременно остаются реальные незакрытые вопросы:
 
@@ -47,8 +52,9 @@ last_verified: 2026-03-31
 Сделать:
 
 - запускать `pnpm security:audit:ci` как baseline-снимок;
-- выделить `critical` и верхний слой `high`-зависимостей;
-- сначала закрывать `critical`, потом то из `high`, что реально блокирует `Tier 1`;
+- удержать `critical=0`;
+- выделить верхний слой оставшихся `high`-зависимостей;
+- закрывать сначала то из `high`, что реально блокирует `Tier 1`;
 - вести remediation не по количеству пакетов, а по release-impact.
 
 Сильное доказательство:
@@ -121,6 +127,7 @@ last_verified: 2026-03-31
 Board должен меняться так:
 
 - `open` -> `in_progress`, когда появился реальный remediation-проход, а не только обсуждение;
+- `in_progress` сохраняется, пока `critical=0` уже достигнут, но release-impact часть `high` ещё не дотриажена;
 - `guard_active` остаётся guard-статусом, пока есть policy/gate, но ещё нет полного closeout;
 - `done` допустим только после снижения release-impact risk, а не после единичного зелёного запуска.
 
@@ -134,7 +141,8 @@ Board должен меняться так:
 
 Смотреть нужно не просто на `PASS`, а на содержимое:
 
-- сколько осталось `critical` и release-impact `high`;
+- удерживается ли `critical=0`;
+- сколько осталось release-impact `high`;
 - остаётся ли `tracked_findings=0`;
 - не появились ли новые invariant-нарушения.
 

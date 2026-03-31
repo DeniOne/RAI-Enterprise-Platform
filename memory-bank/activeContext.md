@@ -89,6 +89,14 @@
   - `pnpm gate:secrets`
   - `pnpm gate:invariants`
   - `SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY`
+- [x] Выполнена первая фактическая remediation-волна `A2` по dependency-risk:
+  - `package.json` обновлён до `minio 8.0.7`
+  - добавлены `pnpm.overrides` для `axios 1.14.0` и `handlebars 4.7.9`
+  - `apps/api/package.json` и `apps/web/package.json` переведены на `axios ^1.14.0`
+  - `pnpm install` обновил lockfile и резолвы
+  - `pnpm security:audit:ci` изменился `critical: 2 -> 0`, `high: 37 -> 30`
+  - advisories по `fast-xml-parser`, `handlebars` и `axios <= 1.13.4` больше не воспроизводятся
+  - `pnpm --filter api build` и `pnpm --filter web build` проходят на новом dependency baseline
 - [x] Для трека `A3` добавлен отдельный рабочий пакет `PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md`.
 - [x] `A3` теперь переведён из общей policy-темы в execution-пакет по четырём обязательным артефактам:
   - `tool-permission matrix`

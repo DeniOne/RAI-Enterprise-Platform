@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A2-FIRST-WAVE-SECURITY-CHECKLIST-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A2-FIRST-WAVE-SECURITY-CHECKLIST-20260331
@@ -24,17 +24,25 @@ last_verified: 2026-03-31
 
 ## 1. Текущий baseline
 
-На `2026-03-31` подтверждено:
+После первой remediation-волны на `2026-03-31` подтверждено:
 
-- `pnpm security:audit:ci` -> `critical=2`, `high=37`
+- `pnpm security:audit:ci` -> `critical=0`, `high=30`
 - `pnpm gate:secrets` -> `tracked_findings=0`, `workspace_local_findings=8`
 - `pnpm gate:invariants` -> `violations=0`, `raw_sql_unsafe=0`, `controllers_without_guards=0`
+- dependency refresh уже применён:
+  - `minio 8.0.7`
+  - `axios 1.14.0`
+  - `handlebars 4.7.9` через `pnpm.overrides`
+- после dependency refresh проходят:
+  - `pnpm --filter api build`
+  - `pnpm --filter web build`
 
 Это означает:
 
 - security baseline уже существует;
 - tracked secret leakage сейчас не блокирует выпуск;
-- главный открытый хвост в `A2` — dependency-risk и historical debt outside repo.
+- первая волна dependency-remediation уже сняла все `critical`;
+- главный открытый хвост в `A2` — release-impact часть оставшихся `high=30`, historical debt outside repo и внешний access evidence.
 
 ## 2. Что делать первой волной
 
@@ -51,17 +59,17 @@ last_verified: 2026-03-31
 - не спорить о baseline на словах;
 - опираться на конкретный reproducible snapshot.
 
-### Шаг 2. Разобрать `critical=2`
+### Шаг 2. Зафиксировать закрытие бывших `critical=2`
 
 Нужно:
 
-- выделить оба `critical` finding;
-- понять, какие dependency paths их тянут;
-- определить, можно ли обновить пакет, заменить пакет или заизолировать path.
+- зафиксировать, что advisories по `fast-xml-parser` и `handlebars` больше не воспроизводятся;
+- зафиксировать, что advisory по `axios <= 1.13.4` тоже больше не воспроизводится;
+- не откатывать overrides и package bumps без повторного audit-подтверждения.
 
-Это самый верхний приоритет `A2`.
+Это завершённый первый remediation-проход `A2`.
 
-### Шаг 3. Разобрать release-impact часть из `high=37`
+### Шаг 3. Разобрать release-impact часть из `high=30`
 
 Нужно:
 
@@ -96,8 +104,8 @@ pnpm gate:invariants
 
 Реальный прогресс:
 
-- `critical=2` начинает уменьшаться;
-- `high=37` уменьшается по release-impact части;
+- `critical=0` удерживается;
+- `high=30` уменьшается по release-impact части;
 - `tracked_findings=0` сохраняется;
 - `violations=0` сохраняется.
 
@@ -120,7 +128,7 @@ pnpm security:licenses
 
 Первая волна считается завершённой только когда:
 
-- `critical` больше не остаются без triage;
-- release-impact `high` выделены отдельно;
+- `critical=0` подтверждено reproducible audit-отчётом;
+- release-impact `high` выделены отдельно из остатка `high=30`;
 - baseline по secrets и invariants остаётся зелёным;
-- в [PHASE_A_EXECUTION_BOARD.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md) `A-2.3.1` меняется из чистого `open` в реальный remediation-state.
+- в [PHASE_A_EXECUTION_BOARD.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md) `A-2.3.1` меняется из чистого `open` в `in_progress`.

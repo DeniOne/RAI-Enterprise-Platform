@@ -782,3 +782,21 @@
   - target model
   - открытые gaps
 - Отдельно зафиксирован `AI-first delivery model`: ИИ пишет основной bounded implementation work, человек держит архитектуру, acceptance, security/legal/policy и final review.
+
+[2026-03-31 03:26Z] Выполнена первая фактическая remediation-волна `A2`
+- В `package.json` поднят `minio` до `8.0.7`.
+- В корневую `package.json` добавлены `pnpm.overrides` для:
+  - `axios ^1.14.0`
+  - `handlebars ^4.7.9`
+- В `apps/api/package.json` и `apps/web/package.json` прямой `axios` поднят до `^1.14.0`.
+- После `pnpm install` подтверждён новый dependency baseline:
+  - `minio -> fast-xml-parser 5.5.9`
+  - `ts-jest -> handlebars 4.7.9`
+  - `api/web/@nestjs/axios -> axios 1.14.0`
+- Повторная верификация дала:
+  - `pnpm security:audit:ci` -> `critical=0`, `high=30`
+  - `pnpm gate:secrets` -> `tracked_findings=0`, `workspace_local_findings=8`
+  - `pnpm gate:invariants` -> `violations=0`
+  - `pnpm --filter api build` -> PASS
+  - `pnpm --filter web build` -> PASS
+- Практический эффект: `A2` впервые сдвинулась по реальному remediation, а не только по planning docs; первая волна закрыла все `critical` advisories и перевела execution-board в честный статус `in_progress` с новым baseline `critical=0 / high=30`.

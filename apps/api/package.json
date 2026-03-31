@@ -48,7 +48,7 @@
     "@rai/vector-store": "workspace:*",
     "@types/ioredis": "^4.28.10",
     "apollo-server-express": "^3.13.0",
-    "axios": "^1.7.0",
+    "axios": "^1.14.0",
     "axios-retry": "^4.5.0",
     "bullmq": "^5.41.6",
     "class-transformer": "^0.5.1",
