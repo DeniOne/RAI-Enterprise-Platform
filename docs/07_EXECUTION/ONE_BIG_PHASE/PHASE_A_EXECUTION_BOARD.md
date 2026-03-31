@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A-EXECUTION-BOARD-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.32.0
+version: 1.33.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-EXECUTION-BOARD-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/01_PHASE_A_STOP_BLOCKERS_AND_GATES.md;docs/07_EXECUTION/RAI_EP_PRIORITY_SYNTHESIS_MASTER_REPORT.md;docs/_audit/ENTERPRISE_EVIDENCE_MATRIX_2026-03-28.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/05_OPERATIONS/COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md;docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/01_PHASE_A_STOP_BLOCKERS_AND_GATES.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_CHECKPOINT_AND_PARKING_DECISION.md;docs/07_EXECUTION/RAI_EP_PRIORITY_SYNTHESIS_MASTER_REPORT.md;docs/_audit/ENTERPRISE_EVIDENCE_MATRIX_2026-03-28.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/05_OPERATIONS/COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER.md;docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md
 ---
 # PHASE A EXECUTION BOARD
 
@@ -23,6 +23,12 @@ last_verified: 2026-03-31
 Этот файл — живой execution-board для `Phase A`. Он нужен, чтобы смотреть не на общий план, а на фактическое движение стоп-блокеров.
 
 Для одного агрегированного machine-readable статуса всей фазы использовать также [PHASE_A_STATUS_GATE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_STATUS_GATE.md).
+
+Текущий режим использования этого board:
+
+- board сохраняется как зафиксированная точка возврата;
+- внешний хвост `Phase A` временно припаркован;
+- до возврата к окончанию `Phase A` этот board не нужно дальше усложнять новыми packet-слоями.
 
 ## 1. Правила статусов
 

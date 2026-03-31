@@ -1763,3 +1763,11 @@
   - внешний хвост `Phase A` теперь можно читать не только как outreach и capture, но и как фактическую evidence-сверку;
   - сразу видно, где стоп: `waiting_reply`, `waiting_capture`, `waiting_intake`, `waiting_review`, `waiting_acceptance` или `accepted`;
   - owner queue можно закрывать уже не по ощущению, а по фактическому совпадению raw reply, intake и track-level evidence status.
+[2026-03-31 20:08Z] Внешний closeout `Phase A` припаркован как checkpoint
+- Создан новый canonical doc:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_CHECKPOINT_AND_PARKING_DECISION.md`
+- `PHASE_A_IMPLEMENTATION_PLAN.md`, `PHASE_A_EXECUTION_BOARD.md`, `PHASE_A_STATUS_GATE.md`, `PHASE_A_CLOSEOUT_STATUS_GATE.md` и `ONE_BIG_PHASE/INDEX.md` теперь явно ссылаются на этот checkpoint как на текущую точку возврата.
+- Практический эффект:
+  - уже собранная работа по `Phase A` не теряется и не остаётся только в чате;
+  - дальнейшее расширение внешнего closeout-слоя больше не считается текущим приоритетом;
+  - фокус команды переносится с формального окончания `Phase A` на восстановление реально работающей программы.

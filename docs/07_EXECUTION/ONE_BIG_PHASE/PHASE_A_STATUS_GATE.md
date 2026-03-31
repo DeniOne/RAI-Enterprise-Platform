@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A-STATUS-GATE-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.5.0
+version: 1.6.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-STATUS-GATE-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: scripts/phase-a-status.cjs;scripts/phase-a-external-blockers-packet.cjs;scripts/phase-a-external-owner-queues.cjs;scripts/phase-a-closeout-status.cjs;scripts/phase-a-external-owner-outreach.cjs;scripts/phase-a-external-outreach-ledger.cjs;package.json;var/execution/phase-a-status.json;var/execution/phase-a-status.md;var/execution/phase-a-external-blockers-packet.json;var/execution/phase-a-external-blockers-packet.md;var/execution/phase-a-external-owner-queues.json;var/execution/phase-a-external-owner-queues.md;var/execution/phase-a-closeout-status.json;var/execution/phase-a-closeout-status.md;var/execution/phase-a-external-owner-outreach.json;var/execution/phase-a-external-owner-outreach.md;var/execution/phase-a-external-outreach-ledger.json;var/execution/phase-a-external-outreach-ledger.md;var/compliance/phase-a1-status.json;var/security/security-evidence-status.json;var/ops/phase-a3-release-eval-summary-2026-03-31.json;var/ops/phase-a4-pilot-handoff-status.json;var/compliance/phase-a5-status.json;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_QUEUE_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_CLOSEOUT_STATUS_GATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_OUTREACH_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OUTREACH_LEDGER.md
+evidence_refs: scripts/phase-a-status.cjs;scripts/phase-a-external-blockers-packet.cjs;scripts/phase-a-external-owner-queues.cjs;scripts/phase-a-closeout-status.cjs;scripts/phase-a-external-owner-outreach.cjs;scripts/phase-a-external-outreach-ledger.cjs;package.json;var/execution/phase-a-status.json;var/execution/phase-a-status.md;var/execution/phase-a-external-blockers-packet.json;var/execution/phase-a-external-blockers-packet.md;var/execution/phase-a-external-owner-queues.json;var/execution/phase-a-external-owner-queues.md;var/execution/phase-a-closeout-status.json;var/execution/phase-a-closeout-status.md;var/execution/phase-a-external-owner-outreach.json;var/execution/phase-a-external-owner-outreach.md;var/execution/phase-a-external-outreach-ledger.json;var/execution/phase-a-external-outreach-ledger.md;var/compliance/phase-a1-status.json;var/security/security-evidence-status.json;var/ops/phase-a3-release-eval-summary-2026-03-31.json;var/ops/phase-a4-pilot-handoff-status.json;var/compliance/phase-a5-status.json;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_QUEUE_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_CLOSEOUT_STATUS_GATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_CHECKPOINT_AND_PARKING_DECISION.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_OUTREACH_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OUTREACH_LEDGER.md
 ---
 # PHASE A STATUS GATE
 
@@ -29,6 +29,8 @@ last_verified: 2026-03-31
 Для финального ответа “внутри репозитория ещё осталось что-то кроме внешних evidence или уже нет” использовать также [PHASE_A_CLOSEOUT_STATUS_GATE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_CLOSEOUT_STATUS_GATE.md).
 
 Для operational tracking уже подготовленных и реально отправленных внешних сообщений использовать также [PHASE_A_EXTERNAL_OUTREACH_LEDGER.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OUTREACH_LEDGER.md).
+
+Для управленческого решения “сейчас не добиваем внешний хвост, а сохраняем точку возврата и возвращаемся позже” использовать также [PHASE_A_CHECKPOINT_AND_PARKING_DECISION.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_CHECKPOINT_AND_PARKING_DECISION.md).
 
 ## 1. Что именно проверяется
 
