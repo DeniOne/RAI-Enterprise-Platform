@@ -1667,3 +1667,32 @@
   - весь legal blocker-set до `CONDITIONAL GO` теперь открывается одним owner-facing файлом;
   - первая и вторая wave остаются разделёнными логически, но управляются из одной точки входа;
   - remaining `A1` blocker ещё сильнее сводится к фактическому external intake, а не к repo-side packet drift.
+[2026-03-31 19:05Z] Для внешнего хвоста `Phase A` собран outreach-ledger слой
+- Добавлен root generator `scripts/phase-a-external-outreach-ledger.cjs`.
+- В `package.json` добавлены команды:
+  - `pnpm phase:a:external-outreach-ledger`
+  - `pnpm gate:phase:a:external-outreach-ledger`
+- Создан новый canonical doc:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OUTREACH_LEDGER.md`
+- Generated evidence теперь выпускается в:
+  - `var/execution/phase-a-external-outreach-ledger.json`
+  - `var/execution/phase-a-external-outreach-ledger.md`
+- Restricted tracker perimeter теперь выпускается в:
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/execution/2026-03-31/request-packets/PHASE-A-EXTERNAL-OUTREACH-LEDGER/INDEX.md`
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/execution/2026-03-31/request-packets/PHASE-A-EXTERNAL-OUTREACH-LEDGER/<queue>/TRACKER.md`
+- `phase-a-closeout-status.cjs` усилен: closeout теперь видит не только `remaining owner queues`, но и outreach-статусы по ним.
+- Практический эффект:
+  - внешний хвост `A1/A2/A4/A5` теперь можно вести как живую operational очередь;
+  - становится видно, где сообщения ещё только подготовлены, а где уже реально отправлены или получили ответ;
+  - repo-side `Phase A` получает финальный bridge между packet preparation и реальным внешним closeout.
+[2026-03-31 19:18Z] Закрыт residual `A3` login flake в полном `Phase A closeout`
+- На полном `phase:a:closeout` выявился непостоянный провал `phase-a3-release-evals`: `advisory-oncall-drill.mjs` иногда падал на login-path и временно переводил `Phase A` в ложный `repo_side_incomplete`.
+- `apps/api/scripts/ops/advisory-oncall-drill.mjs` синхронизирован с `advisory-stage-progression.mjs` и `advisory-dr-rollback-rehearsal.mjs`:
+  - добавлены `MAX_LOGIN_ATTEMPTS`
+  - добавлен `DEFAULT_LOGIN_RETRY_MS`
+  - добавлены `sleep()` и `resolveRetryMs()`
+  - login теперь повторяется после `429`
+- Практический эффект:
+  - `A3` перестаёт флейкать на login rate-limit;
+  - `phase-a3-release-evals`, `phase:a:external-outreach-ledger` и `phase:a:closeout` снова могут давать согласованный снимок;
+  - новый outreach-ledger больше не создаёт ложный красный хвост в `Phase A` из-за нестабильности соседнего drill-run.

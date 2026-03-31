@@ -1486,6 +1486,15 @@
   - открытые gaps
 - Внутри пакета отдельно зафиксировано, что:
   - ближайший честный deployment path это `self-host / localized`
-  - главный стоп-фактор внешнего production это `Legal / Compliance`, а не отсутствие инженерного ядра
-  - проект предполагает `AI-first` delivery, где ИИ делает основной bounded implementation work, а человек держит архитектуру, policy, acceptance и final review
+- главный стоп-фактор внешнего production это `Legal / Compliance`, а не отсутствие инженерного ядра
+- проект предполагает `AI-first` delivery, где ИИ делает основной bounded implementation work, а человек держит архитектуру, policy, acceptance и final review
 - Этот пакет не поднимается выше `code/tests/gates > generated manifests > docs`; он служит внешним контекстом передачи, а не новым source of truth.
+
+## 2026-03-31 — Phase A external outreach ledger
+
+- Для внешнего хвоста `Phase A` добавлен новый machine-readable слой `phase-a-external-outreach-ledger`.
+- Он сидит поверх `external owner outreach` и переводит готовые owner-facing сообщения в operational tracking-очередь со статусами `prepared -> sent -> acknowledged -> replied -> closed`.
+- В `var/execution/phase-a-external-outreach-ledger.{json,md}` теперь публикуется агрегированный снимок по всем внешним owner queues.
+- Во внешнем restricted perimeter поднят отдельный tracking-контур `PHASE-A-EXTERNAL-OUTREACH-LEDGER/<queue>/TRACKER.md`, чтобы движение по `A1/A2/A4/A5` можно было вести уже не только как packet preparation, а как реальный outreach lifecycle.
+- `Phase A closeout` теперь опирается не только на `owner queues`, но и на фактический outreach-tracking слой.
+- `apps/api/scripts/ops/advisory-oncall-drill.mjs` доведён до того же retry/backoff-perimeter, что и другие advisory drill scripts, чтобы `A3` не флейкал на login rate-limit и не ронял `Phase A closeout` ложным `repo_side_incomplete`.

@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A-CLOSEOUT-STATUS-GATE-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.1.0
+version: 1.2.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-CLOSEOUT-STATUS-GATE-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: scripts/phase-a-closeout-status.cjs;scripts/phase-a-external-owner-outreach.cjs;package.json;var/execution/phase-a-closeout-status.json;var/execution/phase-a-closeout-status.md;var/execution/phase-a-status.json;var/execution/phase-a-external-blockers-packet.json;var/execution/phase-a-external-owner-queues.json;var/execution/phase-a-external-owner-outreach.json;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_OUTREACH_PACKET.md
+evidence_refs: scripts/phase-a-closeout-status.cjs;scripts/phase-a-external-owner-outreach.cjs;scripts/phase-a-external-outreach-ledger.cjs;package.json;var/execution/phase-a-closeout-status.json;var/execution/phase-a-closeout-status.md;var/execution/phase-a-status.json;var/execution/phase-a-external-blockers-packet.json;var/execution/phase-a-external-owner-queues.json;var/execution/phase-a-external-owner-outreach.json;var/execution/phase-a-external-outreach-ledger.json;var/execution/phase-a-external-outreach-ledger.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_OUTREACH_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OUTREACH_LEDGER.md
 ---
 # PHASE A CLOSEOUT STATUS GATE
 
@@ -37,6 +37,7 @@ last_verified: 2026-03-31
 - `pnpm phase:a:status`
 - `pnpm phase:a:external-blockers`
 - `pnpm phase:a:external-owner-queues`
+- `pnpm phase:a:external-outreach-ledger`
 
 ## 2. Что выпускается
 
@@ -52,6 +53,7 @@ Generated evidence:
 - видно, выжата ли `Phase A` до упора внутри репозитория;
 - видно, какие треки ещё реально держат фазу;
 - видно, сколько owner queues и references осталось до реального закрытия;
+- видно, где внешний хвост уже реально отправлен, а где всё ещё только подготовлен;
 - появляется честный ответ, закончилась ли repo-side подготовка или нет.
 
 ## 4. Что означает `closeout_state`
@@ -68,3 +70,5 @@ Generated evidence:
 - либо `closeout_state` поднимается до `phase_a_closed`, когда внешний хвост реально принят.
 
 Для непосредственного запуска owner-facing outreach поверх этого closeout verdict использовать также [PHASE_A_EXTERNAL_OWNER_OUTREACH_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_OUTREACH_PACKET.md).
+
+Для operational tracking уже отправленных или ещё не отправленных owner-facing сообщений использовать также [PHASE_A_EXTERNAL_OUTREACH_LEDGER.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OUTREACH_LEDGER.md).

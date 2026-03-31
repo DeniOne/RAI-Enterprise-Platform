@@ -8,6 +8,7 @@ const OUTPUT_DIR = path.join(ROOT, "var", "execution");
 const PHASE_A_STATUS_JSON = path.join(OUTPUT_DIR, "phase-a-status.json");
 const EXTERNAL_BLOCKERS_JSON = path.join(OUTPUT_DIR, "phase-a-external-blockers-packet.json");
 const EXTERNAL_OWNER_QUEUES_JSON = path.join(OUTPUT_DIR, "phase-a-external-owner-queues.json");
+const EXTERNAL_OUTREACH_LEDGER_JSON = path.join(OUTPUT_DIR, "phase-a-external-outreach-ledger.json");
 const REPORT_JSON = path.join(OUTPUT_DIR, "phase-a-closeout-status.json");
 const REPORT_MD = path.join(OUTPUT_DIR, "phase-a-closeout-status.md");
 
@@ -47,7 +48,7 @@ function main() {
   const mode = modeArg ? modeArg.split("=")[1] : "warn";
   const issues = [];
 
-  for (const filePath of [PHASE_A_STATUS_JSON, EXTERNAL_BLOCKERS_JSON, EXTERNAL_OWNER_QUEUES_JSON]) {
+  for (const filePath of [PHASE_A_STATUS_JSON, EXTERNAL_BLOCKERS_JSON, EXTERNAL_OWNER_QUEUES_JSON, EXTERNAL_OUTREACH_LEDGER_JSON]) {
     if (!fs.existsSync(filePath)) {
       issues.push(`missing required file ${filePath}`);
     }
@@ -73,6 +74,7 @@ function main() {
   const phaseA = readJson(PHASE_A_STATUS_JSON);
   const blockers = readJson(EXTERNAL_BLOCKERS_JSON);
   const ownerQueues = readJson(EXTERNAL_OWNER_QUEUES_JSON);
+  const outreachLedger = readJson(EXTERNAL_OUTREACH_LEDGER_JSON);
 
   const trackStates = (phaseA.tracks || []).map((track) => ({ id: track.id, state: track.state }));
   const repoSideIncompleteTracks = trackStates.filter((track) => track.state === "repo_side_incomplete").map((track) => track.id);
@@ -108,6 +110,7 @@ function main() {
       phaseAStatus: rel(PHASE_A_STATUS_JSON),
       externalBlockers: rel(EXTERNAL_BLOCKERS_JSON),
       externalOwnerQueues: rel(EXTERNAL_OWNER_QUEUES_JSON),
+      externalOutreachLedger: rel(EXTERNAL_OUTREACH_LEDGER_JSON),
     },
     summary: {
       overallState: phaseA.summary?.overallState || "unknown",
@@ -121,6 +124,8 @@ function main() {
       remainingOwnerQueues: ownerQueues.totalOwnerQueues || 0,
       remainingReferencesCount: remainingReferences.length,
       remainingReferences,
+      outreachState: outreachLedger.outreachState || "unknown",
+      outreachStatusCounts: outreachLedger.statusCounts || {},
     },
     blockers: blockers.tracks || [],
     ownerQueues: (ownerQueues.ownerQueues || []).map((queue) => ({
@@ -129,6 +134,8 @@ function main() {
       itemCount: queue.itemCount,
       trackSet: queue.trackSet,
       counts: queue.counts,
+      outreachStatus:
+        (outreachLedger.queues || []).find((ledgerQueue) => ledgerQueue.ownerQueue === queue.ownerQueue)?.outreachStatus || "prepared",
     })),
     issues,
   };
@@ -151,6 +158,10 @@ function main() {
     `- remaining_owner_queues: \`${report.summary.remainingOwnerQueues}\``,
     `- remaining_references_count: \`${report.summary.remainingReferencesCount}\``,
     `- remaining_references: \`${report.summary.remainingReferences.join(", ") || "none"}\``,
+    `- outreach_state: \`${report.summary.outreachState}\``,
+    `- outreach_status_counts: \`${Object.entries(report.summary.outreachStatusCounts)
+      .map(([status, count]) => `${status}=${count}`)
+      .join(", ") || "none"}\``,
     "",
     "## External Holding Tracks",
     "",
@@ -163,11 +174,11 @@ function main() {
     "",
     "## Owner Queue Snapshot",
     "",
-    "| Owner queue | Queue kind | Tracks | Items | Requested | Received | Reviewed | Accepted |",
-    "|---|---|---|---:|---:|---:|---:|---:|",
+    "| Owner queue | Queue kind | Outreach | Tracks | Items | Requested | Received | Reviewed | Accepted |",
+    "|---|---|---|---|---:|---:|---:|---:|---:|",
     ...(report.ownerQueues || []).map(
       (queue) =>
-        `| ${queue.ownerQueue} | \`${queue.queueKind}\` | ${(queue.trackSet || []).join(", ")} | ${queue.itemCount} | ${queue.counts?.requested || 0} | ${queue.counts?.received || 0} | ${queue.counts?.reviewed || 0} | ${queue.counts?.accepted || 0} |`,
+        `| ${queue.ownerQueue} | \`${queue.queueKind}\` | \`${queue.outreachStatus}\` | ${(queue.trackSet || []).join(", ")} | ${queue.itemCount} | ${queue.counts?.requested || 0} | ${queue.counts?.received || 0} | ${queue.counts?.reviewed || 0} | ${queue.counts?.accepted || 0} |`,
     ),
     "",
     "## Decision",
