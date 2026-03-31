@@ -19,6 +19,7 @@
     "gate:secrets": "node scripts/scan-secrets.cjs",
     "gate:security:evidence": "node scripts/security-evidence-status.cjs --mode=enforce",
     "security:licenses": "node scripts/generate-license-inventory.cjs",
+    "security:notices": "node scripts/generate-license-inventory.cjs && node scripts/generate-notice-bundle.cjs",
     "security:sbom": "node scripts/generate-sbom.cjs",
     "legal:evidence:template": "node scripts/legal-evidence-template.cjs",
     "legal:evidence:prefill": "node scripts/legal-evidence-prefill.cjs",

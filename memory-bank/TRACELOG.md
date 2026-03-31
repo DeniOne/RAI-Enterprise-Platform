@@ -1,3 +1,29 @@
+[2026-03-31 12:02Z] Для `A5.2` выпущен first assembled `NOTICE` bundle
+- Добавлен generator `scripts/generate-notice-bundle.cjs`.
+- В root `package.json` добавлена команда:
+  - `pnpm security:notices`
+- Generator использует `var/security/license-inventory.json` и выпускает:
+  - `var/security/notice-bundle.json`
+  - `var/security/notice-bundle.md`
+- Bundle включает representative license texts для known families:
+  - `MIT`
+  - `Apache-2.0`
+  - `ISC`
+  - `BSD-2-Clause`
+  - `BSD-3-Clause`
+  - `BlueOak-1.0.0`
+- Одновременно в generated output явно зафиксированы:
+  - `esbuild` companions = `25` как conditional `Tier 1 Linux self-host`
+  - `turbo` companions = `5` как conditional `Tier 1 Linux self-host`
+  - `fsevents` = `1` как `linux Tier 1 out-of-scope`
+  - first-party `UNLICENSED` perimeter как исключённый из third-party notice bundle
+- Опубликован новый canonical report:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md`
+- Практический эффект:
+  - `A5.2` перестал быть только policy-описанием и получил реальный generated evidence layer;
+  - `PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md`, `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`, `OSS_LICENSE_AND_IP_REGISTER.md`, `PHASE_A_EXECUTION_BOARD.md` и `PHASE_A_EVIDENCE_MATRIX.md` теперь ссылаются уже на assembled bundle, а не только на working packet;
+  - следующий реальный шаг `A5` сузился до final legal classification `esbuild/turbo/fsevents` и привязки assembled bundle к procurement/distribution decision.
+
 [2026-03-30 14:48Z] Создан execution-пакет `ONE_BIG_PHASE`
 - Создана новая папка `docs/07_EXECUTION/ONE_BIG_PHASE/` как рабочий контур исполнения текущей большой фазы.
 - Внутри добавлены:

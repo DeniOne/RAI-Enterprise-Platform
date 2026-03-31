@@ -1,6 +1,29 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A5.2` собран первый реально assembled `NOTICE` bundle:
+  - добавлен root command `pnpm security:notices`
+  - добавлен [generate-notice-bundle.cjs](/root/RAI_EP/scripts/generate-notice-bundle.cjs)
+  - generated evidence теперь выпускается в:
+    - `var/security/notice-bundle.json`
+    - `var/security/notice-bundle.md`
+- [x] Новый bundle уже не является просто policy-описанием:
+  - включает representative license texts для `MIT`, `Apache-2.0`, `ISC`, `BSD-2-Clause`, `BSD-3-Clause`, `BlueOak-1.0.0`
+  - отдельно фиксирует `esbuild` companions (`25`) и `turbo` companions (`5`) как conditional `Tier 1 Linux self-host` perimeter
+  - удерживает `fsevents` (`1`) как `linux Tier 1 out-of-scope`
+  - исключает first-party `UNLICENSED` perimeter из third-party notice bundle
+- [x] Для `A5.2` опубликован новый canonical report:
+  - `PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md`
+- [x] Важно зафиксировано, что `var/security/*` остаётся generated local evidence, а не Git-tracked artifact:
+  - воспроизводимость нового `A5` evidence идёт через `pnpm security:notices`, а не через хранение bundle в репозитории
+- [x] После этого `A5` усилился так:
+  - `PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md`, `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`, `OSS_LICENSE_AND_IP_REGISTER.md`, `PHASE_A_EXECUTION_BOARD.md` и `PHASE_A_EVIDENCE_MATRIX.md` больше не ссылаются только на working packet
+  - `A5.2` теперь опирается на assembled generated bundle + execution report
+- [x] При этом `A5` всё ещё не `done`, потому что остаются:
+  - final legal classification для remaining `UNKNOWN`
+  - procurement/distribution decision для `esbuild/turbo` companions
+  - accepted `ELP-20260328-09`
+  - full chain-of-title closeout
 - [x] Для `A5` выполнено первое repo-side сужение `UNKNOWN` perimeter:
   - [package.json](/root/RAI_EP/package.json) теперь явно помечен как `UNLICENSED`
   - [package.json](/root/RAI_EP/packages/eslint-plugin-tenant-security/package.json) теперь явно помечен как `UNLICENSED` и `private: true`

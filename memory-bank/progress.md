@@ -2,6 +2,39 @@
 
 ## 2026-03-31
 
+1. **A5 assembled notice bundle published as generated evidence** [DONE]:
+  - Добавлен новый root command:
+    - `pnpm security:notices`
+  - Добавлен generator:
+    - [scripts/generate-notice-bundle.cjs](/root/RAI_EP/scripts/generate-notice-bundle.cjs)
+  - Новый generator использует `var/security/license-inventory.json` и выпускает:
+    - `var/security/notice-bundle.json`
+    - `var/security/notice-bundle.md`
+  - Bundle уже включает representative license texts для:
+    - `MIT`
+    - `Apache-2.0`
+    - `ISC`
+    - `BSD-2-Clause`
+    - `BSD-3-Clause`
+    - `BlueOak-1.0.0`
+  - Одновременно в generated output отдельно зафиксированы:
+    - `esbuild` companions = `25`
+    - `turbo` companions = `5`
+    - `fsevents` = `1` как `linux Tier 1 out-of-scope`
+    - first-party `UNLICENSED` perimeter как исключённый из third-party notice bundle
+  - Опубликован новый canonical report:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md`
+  - Синхронизированы:
+    - `PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md`
+    - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`
+    - `OSS_LICENSE_AND_IP_REGISTER.md`
+    - `PHASE_A_EXECUTION_BOARD.md`
+    - `PHASE_A_EVIDENCE_MATRIX.md`
+  - Практический эффект:
+    - `A5.2` больше не висит на одном только working packet;
+    - у procurement/self-host handoff теперь есть воспроизводимый generated `NOTICE` baseline;
+    - следующий шаг `A5` теперь уже не “собрать bundle”, а дать final legal classification и привязать assembled bundle к procurement/distribution decision.
+
 1. **A5 first-party unknowns removed from license inventory** [DONE]:
   - В [package.json](/root/RAI_EP/package.json) добавлен `license: UNLICENSED`.
   - В [packages/eslint-plugin-tenant-security/package.json](/root/RAI_EP/packages/eslint-plugin-tenant-security/package.json) добавлены:

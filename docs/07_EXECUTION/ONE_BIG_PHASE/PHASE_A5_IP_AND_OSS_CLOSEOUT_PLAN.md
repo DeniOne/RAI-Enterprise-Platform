@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A5-IP-OSS-CLOSEOUT-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.3.0
+version: 1.4.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A5-IP-OSS-CLOSEOUT-PLAN-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md;docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/_audit/ENTERPRISE_EVIDENCE_MATRIX_2026-03-28.md
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md;docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/_audit/ENTERPRISE_EVIDENCE_MATRIX_2026-03-28.md;var/security/notice-bundle.json;var/security/notice-bundle.md;scripts/generate-notice-bundle.cjs
 ---
 # PHASE A5 IP AND OSS CLOSEOUT PLAN
 
@@ -36,6 +36,7 @@ last_verified: 2026-03-31
 - существует активный [OSS_LICENSE_AND_IP_REGISTER.md](/root/RAI_EP/docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md);
 - опубликован [PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md) как working triage register по `31 UNKNOWN`;
 - опубликован [PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md) как working notice perimeter;
+- опубликован [PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md) как evidence, что first assembled `NOTICE` bundle уже реально собран;
 - опубликован [PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md) как conservative first-party licensing baseline;
 - root package и `eslint-plugin-tenant-security` уже выведены из `UNKNOWN` через `UNLICENSED`;
 - внешний legal lifecycle уже умеет вести `ELP-20260328-09` и `ELP-20260328-10`;
@@ -80,10 +81,12 @@ last_verified: 2026-03-31
 Сильное доказательство:
 
 - оформленный notice/obligations packet, привязанный к финальному inventory и policy по дистрибуции.
+- assembled bundle в `var/security/notice-bundle.{json,md}`.
 
 Текущий execution-артефакт:
 
 - [PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md)
+- [PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md)
 
 ### `A5.3` Chain-of-title
 
