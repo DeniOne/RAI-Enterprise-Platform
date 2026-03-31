@@ -1,6 +1,21 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A1` собран owner-by-owner queue packet поверх priority-eight.
+  - добавлен root generator:
+    - `scripts/phase-a1-owner-queues.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a1:owner-queues`
+    - `pnpm gate:phase:a1:owner-queues`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_OWNER_QUEUE_PACKET.md`
+- [x] Этот слой теперь даёт:
+  - generated owner queues в `var/compliance/phase-a1-owner-queues.*`
+  - restricted `HANDOFF.md` по каждому owner handle
+  - owner-facing запуск legal intake не из одной большой priority-eight таблицы, а по очередям владельцев
+- [x] После этого `A1` сместилась так:
+  - priority-eight уже не только unified packet, но и owner-ready queue system;
+  - внешний legal intake стало проще запускать по людям и ролям;
+  - remaining blocker ещё сильнее сводится к реальному получению внешних файлов, а не к их раскладке по owner scope.
 - [x] `A3` release-eval contour стабилизирован для повторных прогонов подряд.
   - в `apps/api/scripts/ops/advisory-dr-rollback-rehearsal.mjs` и `apps/api/scripts/ops/advisory-stage-progression.mjs` добавлен retry/backoff на `429` при `login`
   - эффект: `phase:a3:evals`, `phase:a:status` и `gate:phase:a:status` больше не должны случайно краснеть из-за transient auth rate-limit вместо реальной governance-регрессии

@@ -1,3 +1,21 @@
+[2026-03-31 18:36Z] Для `A1` собран owner-by-owner queue packet поверх priority-eight
+- Добавлен root generator `scripts/phase-a1-owner-queues.cjs`.
+- В `package.json` добавлены команды:
+  - `pnpm phase:a1:owner-queues`
+  - `pnpm gate:phase:a1:owner-queues`
+- Создан новый canonical doc:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_OWNER_QUEUE_PACKET.md`
+- Generated evidence теперь выпускается в:
+  - `var/compliance/phase-a1-owner-queues.json`
+  - `var/compliance/phase-a1-owner-queues.md`
+- Restricted owner packets теперь выпускаются в:
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/request-packets/PHASE-A1-OWNER-QUEUES/INDEX.md`
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/request-packets/PHASE-A1-OWNER-QUEUES/<owner>/HANDOFF.md`
+- Практический эффект:
+  - priority-eight теперь разложена по owner queues;
+  - внешний legal intake можно запускать по owner scope, а не по одной большой общей таблице;
+  - remaining blocker ещё сильнее сведён к реальному внешнему evidence intake.
+
 [2026-03-31 18:24Z] Стабилизирован `A3` advisory DR rollback drill
 - В `apps/api/scripts/ops/advisory-dr-rollback-rehearsal.mjs` и `apps/api/scripts/ops/advisory-stage-progression.mjs` добавлен retry/backoff на `429` при `login`.
 - Практический эффект:
