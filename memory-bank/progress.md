@@ -2,6 +2,34 @@
 
 ## 2026-03-31
 
+1. **A5 chain-of-title delivery packet assembled** [DONE]:
+  - Добавлен root generator:
+    - `scripts/phase-a5-chain-of-title-delivery-packet.cjs`
+  - В `package.json` добавлены команды:
+    - `pnpm phase:a5:chain-of-title:delivery-packet`
+    - `pnpm gate:phase:a5:chain-of-title:delivery-packet`
+  - Создан новый canonical doc:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_DELIVERY_PACKET.md`
+  - В restricted evidence store реально выпущен:
+    - `request-packets/ELP-20260328-09/REQUEST_PACKET.md`
+  - Фактический baseline:
+    - `total_assets = 18`
+    - `owner_queues = 3`
+    - delivery packet содержит owner packet index и intake commands для `ELP-20260328-09`
+    - `pnpm gate:phase:a5:chain-of-title:delivery-packet` -> `PASS`
+  - Синхронизированы:
+    - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`
+    - `PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md`
+    - `PHASE_A1_ELP_09_CHAIN_OF_TITLE_CHECKLIST.md`
+    - `PHASE_A_EXECUTION_BOARD.md`
+    - `PHASE_A_EVIDENCE_MATRIX.md`
+    - `ONE_BIG_PHASE/INDEX.md`
+    - `docs/DOCS_MATRIX.md`
+  - Практический эффект:
+    - `A5.3` теперь delivery-ready в restricted perimeter, а не только request-ready в `var/compliance`;
+    - repo-side подготовка `ELP-20260328-09` практически выжата до потолка;
+    - remaining blocker окончательно смещён к реальному external signed intake.
+
 1. **A5 chain-of-title request packet assembled** [DONE]:
   - Добавлен root generator:
     - `scripts/phase-a5-chain-of-title-request-packet.cjs`

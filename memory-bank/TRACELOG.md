@@ -1,3 +1,30 @@
+[2026-03-31 13:30Z] Для `A5.3` собран итоговый `chain-of-title delivery packet`
+- Добавлен root generator `scripts/phase-a5-chain-of-title-delivery-packet.cjs`.
+- В `package.json` добавлены команды:
+  - `pnpm phase:a5:chain-of-title:delivery-packet`
+  - `pnpm gate:phase:a5:chain-of-title:delivery-packet`
+- Создан новый canonical doc:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_DELIVERY_PACKET.md`
+- В restricted evidence store реально выпущен:
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/request-packets/ELP-20260328-09/REQUEST_PACKET.md`
+- Фактически подтверждено:
+  - `total_assets = 18`
+  - `owner_queues = 3`
+  - delivery packet уже ссылается на owner packet index и содержит intake commands для `ELP-20260328-09`
+  - `pnpm gate:phase:a5:chain-of-title:delivery-packet` -> `PASS`
+- Синхронизированы:
+  - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`
+  - `PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md`
+  - `PHASE_A1_ELP_09_CHAIN_OF_TITLE_CHECKLIST.md`
+  - `PHASE_A_EXECUTION_BOARD.md`
+  - `PHASE_A_EVIDENCE_MATRIX.md`
+  - `ONE_BIG_PHASE/INDEX.md`
+  - `docs/DOCS_MATRIX.md`
+- Практический эффект:
+  - `A5.3` теперь имеет финальный restricted handoff-файл перед external intake;
+  - repo-side подготовка `ELP-20260328-09` практически выжата до потолка;
+  - remaining blocker окончательно смещён к реальному signed evidence.
+
 [2026-03-31 13:26Z] Для `A5.3` собран единый `chain-of-title request packet`
 - Добавлен root generator `scripts/phase-a5-chain-of-title-request-packet.cjs`.
 - В `package.json` добавлены команды:

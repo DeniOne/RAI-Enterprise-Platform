@@ -1,6 +1,24 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A5.3` собран шестой repo-side слой поверх request packet: итоговый restricted `chain-of-title delivery packet`.
+  - добавлен root generator:
+    - `scripts/phase-a5-chain-of-title-delivery-packet.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a5:chain-of-title:delivery-packet`
+    - `pnpm gate:phase:a5:chain-of-title:delivery-packet`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_DELIVERY_PACKET.md`
+- [x] В restricted evidence store уже реально выпущен:
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/request-packets/ELP-20260328-09/REQUEST_PACKET.md`
+- [x] Фактически подтверждено:
+  - `total_assets = 18`
+  - `owner_queues = 3`
+  - delivery packet уже ссылается на owner packet index и содержит intake commands для `ELP-20260328-09`
+  - `pnpm gate:phase:a5:chain-of-title:delivery-packet` проходит
+- [x] `A5` после этого сместилась так:
+  - `A-2.6.2` всё ещё остаётся `waiting_external`
+  - но repo-side подготовка `ELP-20260328-09` практически выжата до последнего handoff-формата
+  - реальный остаток теперь уже только во внешнем signed evidence и его intake
 - [x] Для `A5.3` собран пятый repo-side слой поверх owner packets: единый `chain-of-title request packet`.
   - добавлен root generator:
     - `scripts/phase-a5-chain-of-title-request-packet.cjs`
