@@ -1,3 +1,25 @@
+[2026-03-31 12:53Z] Для `A5.4` опубликовано `Tier 1 procurement/distribution` решение
+- Создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_PROCUREMENT_DISTRIBUTION_DECISION.md`.
+- Новый execution-doc связал в один handoff-perimeter:
+  - `PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md`
+  - `PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md`
+  - `PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md`
+  - `PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md`
+  - `OSS_LICENSE_AND_IP_REGISTER.md`
+- Синхронизированы:
+  - `PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md`
+  - `PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md`
+  - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`
+  - `OSS_LICENSE_AND_IP_REGISTER.md`
+  - `PHASE_A_EVIDENCE_MATRIX.md`
+  - `PHASE_A_EXECUTION_BOARD.md`
+  - `ONE_BIG_PHASE/INDEX.md`
+  - `docs/DOCS_MATRIX.md`
+- Практический эффект:
+  - `A-2.6.4` переведена в `done`;
+  - `Tier 1` handoff теперь трактуется как controlled private/self-host perimeter без implied public distribution;
+  - главный живой `A5` blocker смещён к `ELP-20260328-09`, а не к repo-side licensing ambiguity.
+
 [2026-03-31 12:42Z] Для `A4.3` подтверждён blank-worktree bootstrap без локальных env-файлов
 - Из `docker-compose.yml` удалены фиксированные `container_name`.
 - В `.env.example` добавлены:

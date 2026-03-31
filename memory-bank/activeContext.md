@@ -1,6 +1,19 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для `A5.4` закрыт внутренний `Tier 1` handoff gap между first-party licensing strategy и OSS/notice perimeter:
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_PROCUREMENT_DISTRIBUTION_DECISION.md`
+  - этот документ связывает:
+    - `PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md`
+    - `PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md`
+    - `PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md`
+    - `PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md`
+    - `OSS_LICENSE_AND_IP_REGISTER.md`
+- [x] После этого `A5` сместилась так:
+  - `A-2.6.4` в `PHASE_A_EXECUTION_BOARD.md` переведена в `done`
+  - conservative first-party regime больше не висит как abstract policy note
+  - `Tier 1` handoff теперь трактуется как controlled private/self-host perimeter без implied public distribution
+  - главный живой blocker `A5` теперь уже не repo-side licensing ambiguity, а внешний `ELP-20260328-09`
 - [x] Для `A4.3` подтверждён blank-worktree bootstrap без локальных env-файлов:
   - из `docker-compose.yml` удалены фиксированные `container_name`
   - в `.env.example` добавлены:

@@ -3,14 +3,14 @@ id: DOC-OPS-OSS-LICENSE-IP-REGISTER-20260328
 layer: Operations
 type: Report
 status: approved
-version: 1.3.0
+version: 1.4.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-OPS-OSS-LICENSE-IP-REGISTER-20260328
 claim_status: asserted
 verified_by: code
 last_verified: 2026-03-28
-evidence_refs: package.json;pnpm-lock.yaml;scripts/generate-license-inventory.cjs;scripts/generate-notice-bundle.cjs;var/security/license-inventory.json;var/security/notice-bundle.json;var/security/notice-bundle.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md
+evidence_refs: package.json;pnpm-lock.yaml;scripts/generate-license-inventory.cjs;scripts/generate-notice-bundle.cjs;var/security/license-inventory.json;var/security/notice-bundle.json;var/security/notice-bundle.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_PROCUREMENT_DISTRIBUTION_DECISION.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md
 ---
 # OSS LICENSE AND IP REGISTER
 
@@ -43,7 +43,7 @@ last_verified: 2026-03-28
 | Есть ли машинно-воспроизводимый OSS inventory | `да` | `scripts/generate-license-inventory.cjs`, `var/security/license-inventory.json` |
 | Есть ли полный compatibility review | `нет` | inventory считает лицензии, но не делает legal interpretation |
 | Есть ли notice / attribution packet | `assembled working bundle` | [PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md), [PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md), [notice-bundle.md](/root/RAI_EP/var/security/notice-bundle.md) |
-| Есть ли root license strategy для first-party кода | `partial` | root package и `eslint-plugin-tenant-security` уже `UNLICENSED`, strategy описана в [PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md) |
+| Есть ли root license strategy для first-party кода | `tier1 baseline recorded` | root package и `eslint-plugin-tenant-security` уже `UNLICENSED`, strategy описана в [PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md), handoff perimeter зафиксирован в [PHASE_A5_TIER1_PROCUREMENT_DISTRIBUTION_DECISION.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_PROCUREMENT_DISTRIBUTION_DECISION.md) |
 | Есть ли chain-of-title по first-party IP | `не подтверждено` | договорной/legal evidence вне репозитория не найден |
 | Есть ли packet для реестра российского ПО | `нет` | prerequisites не собраны |
 
@@ -53,7 +53,7 @@ last_verified: 2026-03-28
 3. Нет chain-of-title пакета по ПО и БД.
 
 ## Прямой следующий operational шаг
-Привязать опубликованное `Tier 1` toolchain-license decision и assembled notice bundle к procurement/distribution decision, затем закрыть `ELP-20260328-09` и chain-of-title pack.
+Закрыть `ELP-20260328-09` и chain-of-title pack поверх уже опубликованного `Tier 1 procurement/distribution decision`.
 
 Эффект:
 - legal/compliance verdict перестанет провисать на OSS/IP контуре;

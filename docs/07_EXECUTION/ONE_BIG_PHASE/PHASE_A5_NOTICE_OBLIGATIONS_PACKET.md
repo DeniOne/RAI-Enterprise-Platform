@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A5-NOTICE-OBLIGATIONS-PACKET-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.2.0
+version: 1.3.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A5-NOTICE-OBLIGATIONS-PACKET-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: scripts/generate-notice-bundle.cjs;var/security/license-inventory.json;var/security/notice-bundle.json;var/security/notice-bundle.md;docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md
+evidence_refs: scripts/generate-notice-bundle.cjs;var/security/license-inventory.json;var/security/notice-bundle.json;var/security/notice-bundle.md;docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_PROCUREMENT_DISTRIBUTION_DECISION.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md
 ---
 # PHASE A5 NOTICE OBLIGATIONS PACKET
 
@@ -90,4 +90,12 @@ Execution-evidence этого шага зафиксирован в:
 - `UNKNOWN` perimeter уже сужен до optional/toolchain хвоста, но final legal sign-off ещё отсутствует;
 - first-party licensing strategy уже имеет repo-side baseline, но внешняя chain-of-title верификация ещё не завершена.
 
-Поэтому `A5.2` после публикации этого packet можно вести в `in_progress`, но не считать закрытой.
+Для `Tier 1 self-host / localized` этот packet теперь уже связан с handoff-решением:
+
+- [PHASE_A5_TIER1_PROCUREMENT_DISTRIBUTION_DECISION.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_PROCUREMENT_DISTRIBUTION_DECISION.md)
+
+Поэтому `A5.2` внутри `Tier 1` больше не висит как “собранный bundle без режима применения”. Рабочий остаток теперь уже не в packet-е, а в:
+
+- final legal sign-off beyond `Tier 1`
+- `ELP-20260328-09`
+- wider distribution/per-procurement perimeter

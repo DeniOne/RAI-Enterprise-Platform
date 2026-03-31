@@ -2,6 +2,29 @@
 
 ## 2026-03-31
 
+1. **A5 Tier 1 procurement/distribution decision published** [DONE]:
+  - Создан:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_PROCUREMENT_DISTRIBUTION_DECISION.md`
+  - Новый execution-doc связал в одно `Tier 1` решение:
+    - `PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md`
+    - `PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md`
+    - `PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md`
+    - `PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md`
+    - `OSS_LICENSE_AND_IP_REGISTER.md`
+  - Синхронизированы:
+    - `PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md`
+    - `PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md`
+    - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`
+    - `OSS_LICENSE_AND_IP_REGISTER.md`
+    - `PHASE_A_EVIDENCE_MATRIX.md`
+    - `PHASE_A_EXECUTION_BOARD.md`
+    - `ONE_BIG_PHASE/INDEX.md`
+    - `docs/DOCS_MATRIX.md`
+  - Практический эффект:
+    - `A-2.6.4` теперь можно считать `done` для внутреннего `Tier 1` perimeter;
+    - `A5` больше не висит между OSS triage и first-party licensing strategy;
+    - главный оставшийся blocker `A5` сузился до `ELP-20260328-09` и full chain-of-title.
+
 1. **A4 blank-worktree bootstrap confirmed as repo-side installability evidence** [DONE]:
   - Из `docker-compose.yml` удалены фиксированные `container_name`.
   - В `.env.example` добавлены:

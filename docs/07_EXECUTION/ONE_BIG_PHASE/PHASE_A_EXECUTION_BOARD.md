@@ -3,7 +3,7 @@ id: DOC-EXE-ONE-BIG-PHASE-A-EXECUTION-BOARD-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.15.0
+version: 1.16.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-EXECUTION-BOARD-20260331
@@ -68,7 +68,7 @@ last_verified: 2026-03-31
 | `A5` | `A-2.6.1` | Разобрать `unknown licenses` и собрать working obligations perimeter | `legal / compliance + backend / platform` | `done` | [PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md), [PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md), [PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md), [PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md), [OSS_LICENSE_AND_IP_REGISTER.md](/root/RAI_EP/docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md), `pnpm security:licenses` -> `unknown: 33 -> 31`, `UNLICENSED=2`, `pnpm security:notices` -> `PASS` | удерживать это решение как `Tier 1 Linux self-host` baseline и пересматривать только при выходе в cross-platform distribution/per-procurement verdict |
 | `A5` | `A-2.6.2` | Закрыть цепочку прав на код, БД и know-how | `legal / board` | `waiting_external` | [RF_COMPLIANCE_REVIEW_2026-03-28.md](/root/RAI_EP/docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md), `ELP-20260328-09` | принять внешние IP-артефакты и связать их с register |
 | `A5` | `A-2.6.3` | Не двигаться к внешнему pilot при спорных правах | `board / legal / techlead` | `guard_active` | [PHASE_A_EVIDENCE_MATRIX.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EVIDENCE_MATRIX.md) | держать этот запрет активным до закрытия `ELP-09` и triage лицензий |
-| `A5` | `A-2.6.4` | Зафиксировать conservative first-party licensing strategy до `ELP-09` | `board / legal / techlead` | `in_progress` | [PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md), [OSS_LICENSE_AND_IP_REGISTER.md](/root/RAI_EP/docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md) | удерживать `all rights reserved / internal-private` baseline и связать его с external procurement/distribution decision после acceptance `ELP-09` |
+| `A5` | `A-2.6.4` | Зафиксировать conservative first-party licensing strategy до `ELP-09` | `board / legal / techlead` | `done` | [PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md), [PHASE_A5_TIER1_PROCUREMENT_DISTRIBUTION_DECISION.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_PROCUREMENT_DISTRIBUTION_DECISION.md), [OSS_LICENSE_AND_IP_REGISTER.md](/root/RAI_EP/docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md) | удерживать `all rights reserved / internal-private` baseline для `Tier 1`, а всё, что касается redistribution и chain-of-title, вести только через `ELP-20260328-09` |
 
 ## 4. Что смотреть первым
 
