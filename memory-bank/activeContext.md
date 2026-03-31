@@ -174,6 +174,35 @@
 - [x] `PHASE_A_EXECUTION_BOARD.md` и `PHASE_A_EVIDENCE_MATRIX.md` синхронизированы с новым состоянием:
   - `A-2.4.2` переведён в `in_progress`
   - по оси `AI / HITL` зафиксировано, что execution-артефакт уже создан, но полный release-closeout `A3` ещё не завершён
+- [x] Repo-side scaffold для `A3/A4/A5` доведён до execution-ready depth.
+- [x] Для `A3` опубликованы:
+  - `PHASE_A3_ADVISORY_ONLY_REGISTER.md`
+  - `PHASE_A3_RELEASE_EVAL_SUITE.md`
+- [x] Для `A4` опубликованы:
+  - `PHASE_A4_SELF_HOST_INSTALL_UPGRADE_PACKET.md`
+  - `PHASE_A4_INSTALL_DRY_RUN_REPORT_TEMPLATE.md`
+  - `PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_TEMPLATE.md`
+  - `PHASE_A4_SUPPORT_BOUNDARY_PACKET.md`
+- [x] Для `A5` опубликованы:
+  - `PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md`
+  - `PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md`
+  - `PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md`
+- [x] `PHASE_A_EXECUTION_BOARD.md` теперь отражает, что `A-2.4.3`, `A-2.4.4`, `A-2.5.1`, `A-2.5.2`, `A-2.5.3`, `A-2.6.1`, `A-2.6.4` больше не висят как пустой `open`, а перешли в рабочий execution-state.
+- [x] `PHASE_A_EVIDENCE_MATRIX.md` теперь отдельно различает:
+  - `AI / advisory-only perimeter`
+  - `AI / safety evals`
+  - `Installability / self-host`
+  - `Recovery / backup-restore`
+  - `Operational support boundary`
+  - `OSS / unknown license triage`
+  - `OSS / notice obligations`
+  - `IP / first-party licensing strategy`
+- [x] После этой синхронизации остаточный незакрытый хвост `Phase A` уже в основном не структурный, а фактический:
+  - внешний legal evidence по `A1`
+  - внешний security evidence по `A2`
+  - actual evaluator/results по `A3`
+  - actual dry-run и recovery drill по `A4`
+  - accepted `ELP-20260328-09` и final legal classification по `A5`
 - [x] Для трека `A4` добавлен отдельный рабочий пакет `PHASE_A4_INSTALLABILITY_AND_RECOVERY_PLAN.md`.
 - [x] `A4` теперь переведён из общей ops-темы в execution-пакет по:
   - install/upgrade packet

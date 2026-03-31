@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A4-INSTALLABILITY-RECOVERY-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.1.0
+version: 1.2.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A4-INSTALLABILITY-RECOVERY-PLAN-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md;docs/05_OPERATIONS/HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX.md;docs/05_OPERATIONS/WORKFLOWS/RELEASE_BACKUP_RESTORE_AND_DR_RUNBOOK.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SELF_HOST_INSTALL_UPGRADE_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALL_DRY_RUN_REPORT_TEMPLATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_TEMPLATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SUPPORT_BOUNDARY_PACKET.md;docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md;docs/05_OPERATIONS/HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX.md;docs/05_OPERATIONS/WORKFLOWS/RELEASE_BACKUP_RESTORE_AND_DR_RUNBOOK.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md
 ---
 # PHASE A4 INSTALLABILITY AND RECOVERY PLAN
 
@@ -31,6 +31,9 @@ last_verified: 2026-03-31
 - `self-host / localized` путь остаётся приоритетным маршрутом для ближайшего MVP;
 - deployment matrix уже зафиксировала, что `on-prem / self-hosted` — наиболее реалистичный pilot path;
 - `backup / restore / DR` runbook существует;
+- опубликован [PHASE_A4_SELF_HOST_INSTALL_UPGRADE_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SELF_HOST_INSTALL_UPGRADE_PACKET.md) как repo-derived install baseline;
+- опубликованы шаблоны [PHASE_A4_INSTALL_DRY_RUN_REPORT_TEMPLATE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALL_DRY_RUN_REPORT_TEMPLATE.md) и [PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_TEMPLATE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_TEMPLATE.md);
+- опубликован [PHASE_A4_SUPPORT_BOUNDARY_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SUPPORT_BOUNDARY_PACKET.md) как минимальный operational boundary для `Tier 1`;
 - release criteria прямо требуют:
   - install/upgrade packet
   - deployment topology
@@ -39,10 +42,9 @@ last_verified: 2026-03-31
 
 Одновременно остаются реальные незакрытые вопросы:
 
-- нет formal installer/bootstrap pack;
-- нет подтверждённого install/upgrade packet;
+- нет actual dry-run install report;
 - нет свежего `backup / restore` execution evidence;
-- `support boundary` и часть `managed/on-prem` operational пакета ещё неполны.
+- install packet и support boundary уже оформлены как execution-артефакты, но ещё не подтверждены реальным исполнением.
 
 ## 2. Что именно нужно закрыть
 
@@ -59,6 +61,10 @@ last_verified: 2026-03-31
 
 - отдельный install/upgrade packet, по которому можно пройти установку без устных пояснений.
 
+Текущий execution-артефакт:
+
+- [PHASE_A4_SELF_HOST_INSTALL_UPGRADE_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SELF_HOST_INSTALL_UPGRADE_PACKET.md)
+
 ### `A4.2` Dry-run установки
 
 Сделать:
@@ -70,6 +76,10 @@ last_verified: 2026-03-31
 Сильное доказательство:
 
 - dry-run report с найденными пробелами и подтверждённым working path.
+
+Текущий execution-артефакт:
+
+- [PHASE_A4_INSTALL_DRY_RUN_REPORT_TEMPLATE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_INSTALL_DRY_RUN_REPORT_TEMPLATE.md)
 
 ### `A4.3` Backup / restore execution evidence
 
@@ -85,6 +95,10 @@ last_verified: 2026-03-31
 - execution report по drill;
 - не просто наличие скриптов, а подтверждение, что ими реально можно восстановиться.
 
+Текущий execution-артефакт:
+
+- [PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_TEMPLATE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_TEMPLATE.md)
+
 ### `A4.4` Support / operational boundary
 
 Сделать:
@@ -96,6 +110,10 @@ last_verified: 2026-03-31
 Сильное доказательство:
 
 - operational handoff/support packet, достаточный для controlled pilot.
+
+Текущий execution-артефакт:
+
+- [PHASE_A4_SUPPORT_BOUNDARY_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_SUPPORT_BOUNDARY_PACKET.md)
 
 ## 3. Режим исполнения `A4`
 

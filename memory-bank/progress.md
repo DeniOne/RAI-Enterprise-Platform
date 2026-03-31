@@ -220,8 +220,28 @@
     - где `QUARANTINE` полностью режет execute-path
   - `ONE_BIG_PHASE/INDEX.md`, `PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md`, `PHASE_A3_FIRST_WAVE_GOVERNANCE_CHECKLIST.md`, `PHASE_A_EXECUTION_BOARD.md`, `PHASE_A_EVIDENCE_MATRIX.md` и `docs/DOCS_MATRIX.md` синхронизированы.
   - Практический эффект:
-    - `A3.2` больше не висит как общая фраза “нужен human-in-the-loop”;
-    - следующий шаг по `advisory-only` perimeter и `eval-suite` теперь строится поверх уже опубликованной approval ladder, а не по догадкам.
+  - `A3.2` больше не висит как общая фраза “нужен human-in-the-loop”;
+  - следующий шаг по `advisory-only` perimeter и `eval-suite` теперь строится поверх уже опубликованной approval ladder, а не по догадкам.
+
+15. **Repo-side scaffold for `A3/A4/A5` completed to execution-ready depth** [DONE]:
+  - Добавлены:
+    - `PHASE_A3_ADVISORY_ONLY_REGISTER.md`
+    - `PHASE_A3_RELEASE_EVAL_SUITE.md`
+    - `PHASE_A4_SELF_HOST_INSTALL_UPGRADE_PACKET.md`
+    - `PHASE_A4_INSTALL_DRY_RUN_REPORT_TEMPLATE.md`
+    - `PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_TEMPLATE.md`
+    - `PHASE_A4_SUPPORT_BOUNDARY_PACKET.md`
+    - `PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md`
+    - `PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md`
+    - `PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md`
+  - `ONE_BIG_PHASE/INDEX.md`, `PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md`, `PHASE_A3_FIRST_WAVE_GOVERNANCE_CHECKLIST.md`, `PHASE_A4_INSTALLABILITY_AND_RECOVERY_PLAN.md`, `PHASE_A4_FIRST_WAVE_INSTALLABILITY_CHECKLIST.md`, `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`, `PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md`, `PHASE_A_EXECUTION_BOARD.md`, `PHASE_A_EVIDENCE_MATRIX.md` и `docs/DOCS_MATRIX.md` синхронизированы.
+  - `PHASE_A_EXECUTION_BOARD.md` теперь отражает реальное продвижение:
+    - `A-2.4.3`, `A-2.4.4`, `A-2.5.1`, `A-2.5.2`, `A-2.5.3`, `A-2.6.1`, `A-2.6.4` переведены в рабочие execution-state;
+    - `A4` и `A5` перестали висеть как почти пустые хвосты относительно `A1/A2`.
+  - `PHASE_A_EVIDENCE_MATRIX.md` теперь отдельно различает advisory-only perimeter, evals, installability, recovery, support boundary, unknown-license triage, notice obligations и first-party licensing strategy.
+  - Практический эффект:
+    - repo-side подготовка `Phase A` доведена почти до предела исполнимости;
+    - дальнейший прогресс уже упирается в реальные external evidence и actual execution reports, а не в отсутствие структуры docs.
 
 ## 2026-03-30
 

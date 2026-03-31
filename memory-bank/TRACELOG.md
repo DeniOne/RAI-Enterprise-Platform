@@ -954,3 +954,21 @@
 - `PHASE_A_EVIDENCE_MATRIX.md` синхронизирована:
   - по оси `AI / HITL` зафиксировано, что execution-артефакт уже создан, но `A3` ещё не закрыта до конца без `advisory-only / eval-suite`
 - Практический эффект: `A3` получила опубликованный runtime-derived human approval baseline, и теперь `advisory-only perimeter` и `formal eval-suite` можно строить поверх реального approval-chain, а не по общей policy-риторике.
+[2026-03-31 11:18Z] Repo-side scaffold `A3/A4/A5` доведён до execution-ready depth
+- Созданы:
+  - `PHASE_A3_ADVISORY_ONLY_REGISTER.md`
+  - `PHASE_A3_RELEASE_EVAL_SUITE.md`
+  - `PHASE_A4_SELF_HOST_INSTALL_UPGRADE_PACKET.md`
+  - `PHASE_A4_INSTALL_DRY_RUN_REPORT_TEMPLATE.md`
+  - `PHASE_A4_BACKUP_RESTORE_EXECUTION_REPORT_TEMPLATE.md`
+  - `PHASE_A4_SUPPORT_BOUNDARY_PACKET.md`
+  - `PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md`
+  - `PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md`
+  - `PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md`
+- `PHASE_A_EXECUTION_BOARD.md` синхронизирован:
+  - `A-2.4.3`, `A-2.4.4`, `A-2.5.1`, `A-2.5.2`, `A-2.5.3`, `A-2.6.1`, `A-2.6.4` больше не висят как пустой `open`
+- `PHASE_A_EVIDENCE_MATRIX.md` синхронизирована:
+  - появились отдельные строки для `AI / advisory-only perimeter`, `Operational support boundary`, `OSS / notice obligations`, `IP / first-party licensing strategy`
+- Практический эффект:
+  - внутрирепозиторная подготовка `Phase A` доведена до почти максимальной исполнимости;
+  - дальнейшее закрытие фазы теперь упирается в реальные external evidence и actual execution reports, а не в отсутствие execution-доков.

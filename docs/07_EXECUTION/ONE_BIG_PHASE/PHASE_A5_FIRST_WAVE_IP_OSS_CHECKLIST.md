@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A5-FIRST-WAVE-IP-OSS-CHECKLIST-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A5-FIRST-WAVE-IP-OSS-CHECKLIST-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md;docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;var/security/license-inventory.json;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md;docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;var/security/license-inventory.json;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md
 ---
 # PHASE A5 FIRST WAVE IP OSS CHECKLIST
 
@@ -47,12 +47,22 @@ last_verified: 2026-03-31
   - спорные
   - требующие замены
 
+Текущий статус:
+
+- working register уже создан в [PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md);
+- первая волна для `A5.1` теперь продолжается от фактического triage baseline, а не от одного только числа `33`.
+
 ### Шаг 2. Собрать notice/obligations packet
 
 Нужно:
 
 - понять, какие notice obligations реально возникают;
 - отделить обязательное для дистрибуции от необязательного.
+
+Текущий статус:
+
+- working packet уже создан в [PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md);
+- этот артефакт ещё не является final legal bundle, но уже снимает пустой стартовый слот `A5.2`.
 
 ### Шаг 3. Подготовить `ELP-20260328-09`
 
@@ -68,6 +78,11 @@ last_verified: 2026-03-31
 
 - определить, как юридически трактуется first-party код;
 - не считать `private repo` достаточной licensing strategy.
+
+Текущий статус:
+
+- conservative baseline уже создан в [PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md);
+- первая волна для `A5.4` теперь продолжается от явной strategy, а не от неформального предположения “repo private = всё нормально”.
 
 ## 3. Что считать реальным прогрессом
 

@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A3-AI-GOVERNANCE-CLOSEOUT-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.3.0
+version: 1.4.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A3-AI-GOVERNANCE-CLOSEOUT-PLAN-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_TOOL_PERMISSION_MATRIX.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_HITL_MATRIX.md;docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md;docs/_audit/AI_AGENT_FAILURE_SCENARIOS_2026-03-28.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_TOOL_PERMISSION_MATRIX.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_HITL_MATRIX.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_ADVISORY_ONLY_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RELEASE_EVAL_SUITE.md;docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md;docs/_audit/AI_AGENT_FAILURE_SCENARIOS_2026-03-28.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md
 ---
 # PHASE A3 AI GOVERNANCE CLOSEOUT PLAN
 
@@ -44,8 +44,9 @@ last_verified: 2026-03-31
 
 - `tool-permission matrix` уже появился, но ещё не замкнут в полный release-closeout вместе с `HITL`, `advisory-only` и `eval-suite`;
 - `HITL matrix` уже появилась как runtime-derived baseline, но ещё не замкнута в полный release-closeout вместе с `advisory-only` и `eval-suite`;
-- нет закреплённого `advisory-only` перечня как execution-артефакта;
-- нет formal release-gated `eval-suite` поверх risky runtime-сценариев.
+- опубликован [PHASE_A3_ADVISORY_ONLY_REGISTER.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_ADVISORY_ONLY_REGISTER.md) как execution-артефакт для `A3.3`;
+- опубликован [PHASE_A3_RELEASE_EVAL_SUITE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RELEASE_EVAL_SUITE.md) как skeleton release-gated eval perimeter для `A3.4`;
+- при этом actual evaluator script, fixture corpus и machine-readable pass/fail results ещё не собраны.
 
 ## 2. Что именно нужно закрыть
 
@@ -96,6 +97,10 @@ last_verified: 2026-03-31
 - отдельный перечень advisory-only действий;
 - нет двусмысленности, где AI может исполнить, а где только рекомендовать.
 
+Текущий execution-артефакт:
+
+- [PHASE_A3_ADVISORY_ONLY_REGISTER.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_ADVISORY_ONLY_REGISTER.md)
+
 ### `A3.4` Formal AI safety eval suite
 
 Сделать:
@@ -114,6 +119,10 @@ last_verified: 2026-03-31
 
 - формальный `eval-suite` и результаты прогонов;
 - release readiness AI нельзя больше трактовать “на глаз”.
+
+Текущий execution-артефакт:
+
+- [PHASE_A3_RELEASE_EVAL_SUITE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RELEASE_EVAL_SUITE.md)
 
 ## 3. Режим исполнения `A3`
 

@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A3-FIRST-WAVE-GOVERNANCE-CHECKLIST-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.2.0
+version: 1.3.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A3-FIRST-WAVE-GOVERNANCE-CHECKLIST-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_TOOL_PERMISSION_MATRIX.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_HITL_MATRIX.md;docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md;docs/_audit/AI_AGENT_FAILURE_SCENARIOS_2026-03-28.md;docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_AI_GOVERNANCE_CLOSEOUT_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_TOOL_PERMISSION_MATRIX.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_HITL_MATRIX.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_ADVISORY_ONLY_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RELEASE_EVAL_SUITE.md;docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md;docs/_audit/AI_AGENT_FAILURE_SCENARIOS_2026-03-28.md;docs/05_OPERATIONS/RAI_EP_ENTERPRISE_RELEASE_CRITERIA.md
 ---
 # PHASE A3 FIRST WAVE GOVERNANCE CHECKLIST
 
@@ -70,6 +70,11 @@ last_verified: 2026-03-31
 - отдельно описать действия, которые агент может только советовать;
 - не допускать, чтобы advisory-path тихо становился execute-path.
 
+Текущий статус:
+
+- baseline-артефакт уже создан в [PHASE_A3_ADVISORY_ONLY_REGISTER.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_ADVISORY_ONLY_REGISTER.md);
+- первая волна для `A3.3` теперь продолжается от опубликованного advisory-only register, а не с пустого policy-слота.
+
 ### Шаг 4. Собрать minimal `eval-suite`
 
 Нужно:
@@ -81,6 +86,11 @@ last_verified: 2026-03-31
   - `evidence bypass`
   - `wrong-evidence / no-evidence answer`
   - `human-in-the-loop gap`
+
+Текущий статус:
+
+- baseline-артефакт уже создан в [PHASE_A3_RELEASE_EVAL_SUITE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RELEASE_EVAL_SUITE.md);
+- первая волна для `A3.4` теперь продолжается от опубликованного skeleton eval-perimeter, но actual evaluator script и machine-readable results ещё отсутствуют.
 
 ## 3. Что считать реальным прогрессом
 
