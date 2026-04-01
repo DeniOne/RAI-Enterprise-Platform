@@ -30,6 +30,10 @@ describe("FrontOfficeService", () => {
     confirmDraft: jest.fn(),
     getQueues: jest.fn(),
     getThread: jest.fn(),
+    listMessagesForViewer: jest.fn(),
+    listThreadsForViewer: jest.fn(),
+    replyToThread: jest.fn(),
+    markThreadRead: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -114,5 +118,37 @@ describe("FrontOfficeService", () => {
     expect(result.tasks).toHaveLength(1);
     expect(result.deviations).toHaveLength(1);
     expect(result.recentSignals).toHaveLength(1);
+  });
+
+  it("creates viewer-scoped intake as web_chat inbound", async () => {
+    draftServiceMock.intakeMessage.mockResolvedValue({ draftId: "draft-portal-1" });
+
+    await expect(
+      service.intakeMessageForViewer(
+        "c1",
+        {
+          id: "viewer-1",
+          role: "FRONT_OFFICE_USER",
+          accountId: "account-1",
+        },
+        {
+          messageText: "Новый вопрос",
+          threadExternalId: "web-thread-1",
+        },
+      ),
+    ).resolves.toEqual({ draftId: "draft-portal-1" });
+
+    expect(draftServiceMock.intakeMessage).toHaveBeenCalledWith(
+      "c1",
+      expect.stringContaining("fo-portal-intake:"),
+      { id: "viewer-1", role: "FRONT_OFFICE_USER" },
+      expect.objectContaining({
+        channel: "web_chat",
+        direction: "inbound",
+        messageText: "Новый вопрос",
+        threadExternalId: "web-thread-1",
+        senderExternalId: "viewer-1",
+      }),
+    );
   });
 });

@@ -1,101 +1,58 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useAuthority, UserRole } from '@/core/governance/AuthorityContext';
-import { useAuthSimulationStore } from '@/core/governance/Providers';
-import { Shield, Activity, Fingerprint, ChevronDown } from 'lucide-react';
+import React from 'react';
+import { useAuthority } from '@/core/governance/AuthorityContext';
+import { useAuthPrincipalStore } from '@/core/governance/Providers';
+import { Shield, Activity, Fingerprint } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+
+import { useSessionIntegrity } from '@/shared/hooks/useSessionIntegrity';
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
-import { useSessionIntegrity } from '@/shared/hooks/useSessionIntegrity';
-
 export const GovernanceBar: React.FC = () => {
-    const { currentRole, setRole } = useAuthSimulationStore();
+    const { currentRole, principalReady } = useAuthPrincipalStore();
     const { canOverride, canApprove } = useAuthority();
     const { traceId, integrityStatus } = useSessionIntegrity();
-    const [isRoleMenuOpen, setIsRoleMenuOpen] = useState(false);
-    const roleOptions: UserRole[] = ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'FIELD_WORKER', 'CLIENT_ADMIN', 'USER'];
 
     return (
-        <header className="h-16 border-b border-black/5 bg-white/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-50">
-            {/* Left: Branding & Integrity */}
+        <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-black/5 bg-white/80 px-8 backdrop-blur-md">
             <div className="flex items-center space-x-6">
                 <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                        <Shield className="text-white w-5 h-5" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-black">
+                        <Shield className="h-5 w-5 text-white" />
                     </div>
-                    <span className="font-medium tracking-tight text-lg">RAI <span className="text-gray-400 font-normal">Control Plane</span></span>
+                    <span className="text-lg font-medium tracking-tight">
+                        RAI <span className="font-normal text-gray-400">Control Plane</span>
+                    </span>
                 </div>
 
                 <div className="h-4 w-px bg-gray-200" />
 
-                <div className="flex items-center space-x-4 text-xs font-mono text-gray-500">
+                <div className="flex items-center space-x-4 font-mono text-xs text-gray-500">
                     <div className="flex items-center space-x-1.5">
-                        <Fingerprint className="w-3.5 h-3.5 text-blue-500" />
+                        <Fingerprint className="h-3.5 w-3.5 text-blue-500" />
                         <span>TRACE: <span className="text-black">{traceId}</span></span>
                     </div>
                     <div className="flex items-center space-x-1.5">
-                        <Activity className={cn("w-3.5 h-3.5", integrityStatus === 'VERIFIED' ? "text-green-500" : "text-yellow-500")} />
+                        <Activity className={cn('h-3.5 w-3.5', integrityStatus === 'VERIFIED' ? 'text-green-500' : 'text-yellow-500')} />
                         <span>LEDGER: <span className="text-black uppercase">{integrityStatus}</span></span>
                     </div>
                 </div>
             </div>
 
-            {/* Right: Role Simulator & Capabilities Indicators */}
             <div className="flex items-center space-x-4">
-                {/* Capabilities Badge (Visual Proof of AuthorityContext consumption) */}
-                <div className="flex items-center space-x-2 px-3 py-1 bg-gray-50 rounded-full border border-black/5">
-                    <div className={cn("w-2 h-2 rounded-full", canOverride ? "bg-red-500 animate-pulse" : "bg-gray-300")} title="Override Power" />
-                    <div className={cn("w-2 h-2 rounded-full", canApprove ? "bg-green-500" : "bg-gray-300")} title="Approval Power" />
-                    <span className="text-[10px] uppercase font-bold text-gray-400 tracking-widest ml-1">Rights active</span>
+                <div className="flex items-center space-x-2 rounded-full border border-black/5 bg-gray-50 px-3 py-1">
+                    <div className={cn('h-2 w-2 rounded-full', canOverride ? 'animate-pulse bg-red-500' : 'bg-gray-300')} title="Override Power" />
+                    <div className={cn('h-2 w-2 rounded-full', canApprove ? 'bg-green-500' : 'bg-gray-300')} title="Approval Power" />
+                    <span className="ml-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">Rights active</span>
                 </div>
 
-                {/* Role Simulator Dropdown */}
-                <div
-                    className="relative"
-                    onMouseEnter={() => setIsRoleMenuOpen(true)}
-                    onMouseLeave={() => setIsRoleMenuOpen(false)}
-                >
-                    <button className="flex items-center space-x-2 px-4 py-2 bg-black text-white rounded-xl text-sm font-medium hover:bg-black/90 transition-all shadow-lg shadow-black/10">
-                        <span>Simulate: {currentRole}</span>
-                        <ChevronDown className={cn("w-4 h-4 opacity-50 transition-transform duration-200", isRoleMenuOpen && "rotate-180")} />
-                    </button>
-
-                    <div
-                        className={cn(
-                            "absolute right-0 top-full pt-2 w-48 z-[60]",
-                            isRoleMenuOpen ? "pointer-events-auto" : "pointer-events-none",
-                        )}
-                    >
-                        <div
-                            className={cn(
-                                "rounded-2xl border border-black/5 bg-white p-2 shadow-xl transition-all duration-200",
-                                isRoleMenuOpen
-                                    ? "translate-y-0 opacity-100"
-                                    : "-translate-y-1 opacity-0",
-                            )}
-                        >
-                        {roleOptions.map((role) => (
-                            <button
-                                key={role}
-                                onClick={() => {
-                                    setRole(role);
-                                    setIsRoleMenuOpen(false);
-                                }}
-                                className={cn(
-                                    "w-full text-left px-3 py-2 rounded-xl text-xs transition-colors",
-                                    currentRole === role ? "bg-gray-100 font-medium" : "hover:bg-gray-50 text-gray-500"
-                                )}
-                            >
-                                {role}
-                            </button>
-                        ))}
-                        </div>
-                    </div>
+                <div className="rounded-xl border border-black/10 bg-black px-4 py-2 text-sm font-medium text-white shadow-lg shadow-black/10">
+                    Роль: {principalReady ? currentRole : '...'}
                 </div>
             </div>
         </header>

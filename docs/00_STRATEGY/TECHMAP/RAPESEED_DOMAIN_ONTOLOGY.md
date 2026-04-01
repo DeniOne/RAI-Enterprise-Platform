@@ -1,3 +1,10 @@
+---
+id: DOC-STR-TECHMAP-RAPESEED-DOMAIN-ONTOLOGY-20260401
+layer: Strategy
+type: Vision
+status: approved
+version: 1.0.0
+---
 # ДОМЕННАЯ ОНТОЛОГИЯ РАПСА
 ## Канонический словарь домена и семантический контракт для подсистеми техкарт рапса
 

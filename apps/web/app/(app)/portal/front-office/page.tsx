@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui";
+import { ExternalFrontOfficeIntakeClient } from "@/components/front-office/ExternalFrontOfficeIntakeClient";
 import { externalFrontOfficeServerApi } from "@/lib/api/front-office-server";
 import { getExternalFrontOfficeThreadPath } from "@/lib/front-office-routes";
 
@@ -8,6 +9,10 @@ export default async function ExternalFrontOfficePage() {
 
   return (
     <div className="space-y-6">
+      <Card>
+        <ExternalFrontOfficeIntakeClient />
+      </Card>
+
       <Card>
         <div className="mb-4 flex items-center justify-between">
           <div>

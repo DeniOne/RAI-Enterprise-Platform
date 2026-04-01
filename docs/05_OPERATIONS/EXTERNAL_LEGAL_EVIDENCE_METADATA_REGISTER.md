@@ -65,25 +65,25 @@ last_verified: 2026-03-28
 | Показатель | Значение |
 |---|---|
 | Total evidence items | `11` |
-| `requested` | `11` |
+| `requested` | `3` |
 | `received` | `0` |
 | `reviewed` | `0` |
-| `accepted` | `0` |
+| `accepted` | `8` |
 | `expired` | `0` |
 
 ## Register
 
 | Reference ID | Артефакт | Status | Owner-scope | Named owners | Requested at | Review due | Linked docs | Next action |
 |---|---|---|---|---|---|---|---|---|
-| `ELP-20260328-01` | Operator identity and role memo | `requested` | `legal/compliance`, `product/governance` | `@chief_legal_officer`, `@board_of_directors`, `@techlead` | `2026-03-28` | `2026-04-04` | `COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER`, `RF_COMPLIANCE_REVIEW` | приложить signed memo и перевести карточку в `received` |
-| `ELP-20260328-02` | РКН notification evidence / exemption memo | `requested` | `legal/compliance` | `@chief_legal_officer` | `2026-03-28` | `2026-04-04` | `COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER`, `RF_COMPLIANCE_REVIEW` | приложить notification number/date или exemption memo |
-| `ELP-20260328-03` | Hosting / residency attestation | `requested` | `platform/infra`, `legal/compliance`, `ops/SRE` | `@backend-lead`, `@techlead`, `@chief_legal_officer` | `2026-03-28` | `2026-04-04` | `HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX`, `PRIVACY_DATA_FLOW_MAP` | собрать provider/account/region evidence по средам |
-| `ELP-20260328-04` | Processor / subprocessor register + DPA pack | `requested` | `legal/compliance`, `platform/infra` | `@chief_legal_officer`, `@backend-lead` | `2026-03-28` | `2026-04-04` | `HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX`, `RF_COMPLIANCE_REVIEW` | приложить contracts/DPA по external providers |
-| `ELP-20260328-05` | Transborder decision log | `requested` | `legal/compliance`, `product/governance`, `platform/infra` | `@chief_legal_officer`, `@techlead`, `@backend-lead` | `2026-03-28` | `2026-04-04` | `HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX`, `AI_AGENT_FAILURE_SCENARIOS`, `PRIVACY_DATA_FLOW_MAP` | заполнить decisions по `OpenRouter`, `Telegram`, `DaData` и иным processors |
-| `ELP-20260328-06` | Lawful basis matrix + privacy notice pack | `requested` | `legal/compliance`, `product/governance` | `@chief_legal_officer`, `@product_lead`, `@techlead` | `2026-03-28` | `2026-04-04` | `COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER`, `PRIVACY_DATA_FLOW_MAP` | свести lawful basis и notices по продуктовым flows |
+| `ELP-20260328-01` | Operator identity and role memo | `accepted` | `legal/compliance`, `product/governance` | `@chief_legal_officer`, `@board_of_directors`, `@techlead` | `2026-03-28` | `2026-04-04` | `COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER`, `RF_COMPLIANCE_REVIEW` | evidence принято; синхронизировать verdict и следить за revalidation |
+| `ELP-20260328-02` | РКН notification evidence / exemption memo | `accepted` | `legal/compliance` | `@chief_legal_officer` | `2026-03-28` | `2026-04-04` | `COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER`, `RF_COMPLIANCE_REVIEW` | evidence принято; синхронизировать verdict и следить за revalidation |
+| `ELP-20260328-03` | Hosting / residency attestation | `accepted` | `platform/infra`, `legal/compliance`, `ops/SRE` | `@backend-lead`, `@techlead`, `@chief_legal_officer` | `2026-03-28` | `2026-04-04` | `HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX`, `PRIVACY_DATA_FLOW_MAP` | evidence принято; синхронизировать verdict и следить за revalidation |
+| `ELP-20260328-04` | Processor / subprocessor register + DPA pack | `accepted` | `legal/compliance`, `platform/infra` | `@chief_legal_officer`, `@backend-lead` | `2026-03-28` | `2026-04-04` | `HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX`, `RF_COMPLIANCE_REVIEW` | evidence принято; синхронизировать verdict и следить за revalidation |
+| `ELP-20260328-05` | Transborder decision log | `accepted` | `legal/compliance`, `product/governance`, `platform/infra` | `@chief_legal_officer`, `@techlead`, `@backend-lead` | `2026-03-28` | `2026-04-04` | `HOSTING_TRANSBORDER_AND_DEPLOYMENT_MATRIX`, `AI_AGENT_FAILURE_SCENARIOS`, `PRIVACY_DATA_FLOW_MAP` | evidence принято; синхронизировать verdict и следить за revalidation |
+| `ELP-20260328-06` | Lawful basis matrix + privacy notice pack | `accepted` | `legal/compliance`, `product/governance` | `@chief_legal_officer`, `@product_lead`, `@techlead` | `2026-03-28` | `2026-04-04` | `COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER`, `PRIVACY_DATA_FLOW_MAP` | evidence принято; синхронизировать verdict и следить за revalidation |
 | `ELP-20260328-07` | Subject rights operating evidence | `requested` | `legal/compliance`, `ops/SRE`, `product/governance` | `@dpo`, `@backend-lead`, `@product_lead` | `2026-03-28` | `2026-04-11` | `PRIVACY_SUBJECT_RIGHTS_AND_RETENTION_RUNBOOK`, `RF_COMPLIANCE_REVIEW` | приложить ingress/SLA/escalation evidence |
-| `ELP-20260328-08` | Retention / deletion / archive schedule approval | `requested` | `legal/compliance`, `data`, `ops/SRE` | `@chief_legal_officer`, `@data-architecture`, `@backend-lead` | `2026-03-28` | `2026-04-04` | `COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER`, `PRIVACY_SUBJECT_RIGHTS_AND_RETENTION_RUNBOOK` | подписать retention matrix и legal hold rules |
-| `ELP-20260328-09` | First-party chain-of-title pack | `requested` | `legal/compliance`, `product/governance` | `@chief_legal_officer`, `@board_of_directors` | `2026-03-28` | `2026-04-04` | `OSS_LICENSE_AND_IP_REGISTER`, `RF_COMPLIANCE_REVIEW` | приложить employment/contractor/IP transfer evidence |
+| `ELP-20260328-08` | Retention / deletion / archive schedule approval | `accepted` | `legal/compliance`, `data`, `ops/SRE` | `@chief_legal_officer`, `@data-architecture`, `@backend-lead` | `2026-03-28` | `2026-04-04` | `COMPLIANCE_OPERATOR_AND_PRIVACY_REGISTER`, `PRIVACY_SUBJECT_RIGHTS_AND_RETENTION_RUNBOOK` | evidence принято; синхронизировать verdict и следить за revalidation |
+| `ELP-20260328-09` | First-party chain-of-title pack | `accepted` | `legal/compliance`, `product/governance` | `@chief_legal_officer`, `@board_of_directors` | `2026-03-28` | `2026-04-04` | `OSS_LICENSE_AND_IP_REGISTER`, `RF_COMPLIANCE_REVIEW` | evidence принято; синхронизировать verdict и следить за revalidation |
 | `ELP-20260328-10` | OSS unknown-license triage + notice pack | `requested` | `legal/compliance`, `security/AppSec` | `@chief_legal_officer`, `@backend-lead`, `@techlead` | `2026-03-28` | `2026-04-11` | `OSS_LICENSE_AND_IP_REGISTER`, `ENTERPRISE_EVIDENCE_MATRIX` | закрыть `UNKNOWN` packages и notice obligations |
 | `ELP-20260328-11` | Crypto applicability memo | `requested` | `legal/compliance`, `security/AppSec`, `platform/infra` | `@chief_legal_officer`, `@backend-lead`, `@techlead` | `2026-03-28` | `2026-04-11` | `RF_COMPLIANCE_REVIEW`, `SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY` | выпустить профильное memo по ФСТЭК/ФСБ applicability |
 

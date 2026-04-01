@@ -1,29 +1,80 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+const DEFAULT_LOGIN_PATH = '/login';
+const EXTERNAL_LOGIN_PATH = '/portal/front-office/login';
+const EXTERNAL_FRONT_OFFICE_BASE_PATH = '/portal/front-office';
+
+const PUBLIC_PATH_PREFIXES = [
+    '/login',
+    '/front-office/login',
+    '/front-office/activate',
+    '/portal/front-office/login',
+    '/portal/front-office/activate',
+];
+
+function isPublicPath(pathname: string): boolean {
+    return PUBLIC_PATH_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+    const parts = token.split('.');
+    if (parts.length < 2 || !parts[1]) {
+        return null;
+    }
+
+    try {
+        const payloadBase64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const padded = payloadBase64.padEnd(Math.ceil(payloadBase64.length / 4) * 4, '=');
+        const binary = atob(padded);
+        const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+        const text = new TextDecoder().decode(bytes);
+        return JSON.parse(text) as Record<string, unknown>;
+    } catch {
+        return null;
+    }
+}
+
+function redirectTo(path: string, request: NextRequest): NextResponse {
+    return NextResponse.redirect(new URL(path, request.url));
+}
 
 export function middleware(request: NextRequest) {
-    const token = request.cookies.get('auth_token')
-    const path = request.nextUrl.pathname
+    const pathname = request.nextUrl.pathname;
+    const token = request.cookies.get('auth_token')?.value;
+    const isPublic = isPublicPath(pathname);
 
-    console.log(`[AUTH-DEBUG] Middleware | Path: ${path} | Token: ${token ? '✅ FOUND' : '❌ MISSING'}`)
-    if (token) {
-        console.log(`[AUTH-DEBUG] Middleware | Token details: name=${token.name}, size=${token.value.length}`);
-    }
-
-    // Защита приватных роутов
-    if (path.startsWith('/dashboard') || path.startsWith('/strategic')) {
-        if (!token) {
-            console.log('[Middleware] No token, redirecting to /login')
-            return NextResponse.redirect(new URL('/login', request.url))
+    if (!token) {
+        if (isPublic) {
+            return NextResponse.next();
         }
+        if (pathname.startsWith(EXTERNAL_FRONT_OFFICE_BASE_PATH)) {
+            return redirectTo(EXTERNAL_LOGIN_PATH, request);
+        }
+        return redirectTo(DEFAULT_LOGIN_PATH, request);
     }
 
-    // НЕ редиректим с /login на /dashboard — пусть пользователь сам логинится
-    // Убрал эту логику, потому что она создаёт loop
+    const payload = decodeJwtPayload(token);
+    const role =
+        typeof payload?.role === 'string'
+            ? payload.role.trim().toUpperCase()
+            : null;
+    const isExternalFrontOffice = role === 'FRONT_OFFICE_USER';
 
-    return NextResponse.next()
+    if (isExternalFrontOffice && !pathname.startsWith(EXTERNAL_FRONT_OFFICE_BASE_PATH)) {
+        return redirectTo(EXTERNAL_FRONT_OFFICE_BASE_PATH, request);
+    }
+
+    if (isPublic) {
+        if (isExternalFrontOffice) {
+            return redirectTo(EXTERNAL_FRONT_OFFICE_BASE_PATH, request);
+        }
+        return redirectTo('/front-office', request);
+    }
+
+    return NextResponse.next();
 }
 
 export const config = {
-    matcher: ['/dashboard/:path*', '/strategic/:path*', '/login', '/debug'],
-}
+    matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+};

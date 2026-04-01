@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const cp = require('child_process');
+const { run: runDocLintMatrix } = require('./doc-lint-matrix.cjs');
 
 const ROOT = process.cwd();
 const DOCS = path.join(ROOT, 'docs');
@@ -90,7 +90,11 @@ function main() {
   const errors = [];
 
   try {
-    cp.execSync('node scripts/doc-lint-matrix.cjs --fail-on-mismatch --strict-version', { stdio: 'pipe' });
+    runDocLintMatrix({
+      failOnMismatch: true,
+      strictVersion: true,
+      silent: true
+    });
   } catch (_e) {
     errors.push('doc-lint-matrix:strict failed');
   }

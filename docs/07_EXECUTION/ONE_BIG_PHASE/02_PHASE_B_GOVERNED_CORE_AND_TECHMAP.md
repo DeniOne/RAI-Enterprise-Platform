@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-B-GOVERNED-CORE-20260330
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.3.0
 owners: ["@techlead"]
-last_updated: 2026-03-30
+last_updated: 2026-04-01
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-B-GOVERNED-CORE-20260330
 claim_status: asserted
 verified_by: manual
-last_verified: 2026-03-30
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md;docs/07_EXECUTION/RAI_EP_PRIORITY_SYNTHESIS_MASTER_REPORT.md;docs/02_DOMAINS/RAI_EP_TECHMAP_OPERATING_CORE.md;docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md;apps/api/src/modules/rai-chat
+last_verified: 2026-04-01
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_B_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_B_EXECUTION_BOARD.md;docs/07_EXECUTION/RAI_EP_PRIORITY_SYNTHESIS_MASTER_REPORT.md;docs/02_DOMAINS/RAI_EP_TECHMAP_OPERATING_CORE.md;docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md;apps/api/src/modules/rai-chat
 ---
 # Phase B — Governed Core And TechMap
 
@@ -18,7 +18,7 @@ evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md;docs/07_EXECUTION/RAI_EP
 id: CLAIM-EXE-ONE-BIG-PHASE-B-GOVERNED-CORE-20260330
 status: asserted
 verified_by: manual
-last_verified: 2026-03-30
+last_verified: 2026-04-01
 
 Это подфаза сборки настоящего ядра продукта. Здесь проект перестаёт быть “чатом с идеями” и превращается в управляемую систему исполнения.
 
@@ -32,36 +32,46 @@ last_verified: 2026-03-30
 - жизненный цикл Техкарты;
 - `execution / deviation / result` loop.
 
+## 1.1. Текущий статус фазы (2026-04-01)
+
+Срез выполнения подфазы:
+
+- `done`: базовый governed runtime spine create/resume, slot-driven orchestration, trust-specialization gate, structured explainability/evidence backend-пакет, базовый `execution/deviation` контур.
+- `in_progress`: lifecycle bridge `draft/review/approval/execution/revision`, enrichment `result_state` на history/outcomes, прямое чтение explainability-panel из workflow-структур.
+- `guard_active`: не расширять фазу в `Phase C` (`web`) и `Phase D` (`self-host/pilot`) до закрытия оставшихся core-loop хвостов.
+
+Источником статусов исполнения является [PHASE_B_EXECUTION_BOARD.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_B_EXECUTION_BOARD.md).
+
 ## 2. Чеклист
 
 ### 2.1. Закрепить Техкарту как центр системы
 
-- [ ] Считать Техкарту не одним из модулей, а главным управленческим объектом исполнения.
-- [ ] Убедиться, что логика работы вокруг Техкарты не размазывается по вторичным экранам и доменам.
-- [ ] Довести основной путь `контекст -> Техкарта -> execution`.
+- [x] Считать Техкарту не одним из модулей, а главным управленческим объектом исполнения.
+- [x] Убедиться, что логика работы вокруг Техкарты не размазывается по вторичным экранам и доменам.
+- [x] Довести основной путь `контекст -> Техкарта -> execution`.
 
 ### 2.2. Замкнуть `execution / deviation / result`
 
-- [ ] Довести поток исполнения до состояния, где система не просто предлагает, а ведёт к результату.
-- [ ] Явно обрабатывать отклонения, а не прятать их в неструктурированные диалоги.
+- [x] Довести поток исполнения до состояния, где система не просто предлагает, а ведёт к результату.
+- [x] Явно обрабатывать отклонения, а не прятать их в неструктурированные диалоги.
 - [ ] Сделать результат и объяснение результата частью сценария, а не побочным выводом.
 
 ### 2.3. Усилить governed orchestration
 
-- [ ] Проверить, что agent runtime остаётся управляемым, а не хаотичным.
-- [ ] Не добавлять новые агентные роли до стабилизации текущего ядра.
+- [x] Проверить, что agent runtime остаётся управляемым, а не хаотичным.
+- [x] Не добавлять новые агентные роли до стабилизации текущего ядра.
 - [ ] Убедиться, что маршрутизация служит ядру, а не плодит новые ветки ради “умности”.
 
 ### 2.4. Закрыть explainability и evidence
 
-- [ ] Для ключевых действий сохранить объяснение, почему система пришла к этому выводу.
-- [ ] Не допускать ответов без понятной опоры и управляемой trace-логики.
+- [x] Для ключевых действий сохранить объяснение, почему система пришла к этому выводу.
+- [x] Не допускать ответов без понятной опоры и управляемой trace-логики.
 - [ ] Убедиться, что explainability видна не только в коде, но и в пользовательском сценарии.
 
 ### 2.5. Не пустить вторичные домены в центр тяжести
 
-- [ ] Не позволять `CRM / finance / control tower / GR / front-office` вытеснять ядро из приоритета.
-- [ ] Любой доменный контур проверять вопросом: он усиливает Техкарту и agent core или создаёт ширину?
+- [x] Не позволять `CRM / finance / control tower / GR / front-office` вытеснять ядро из приоритета.
+- [x] Любой доменный контур проверять вопросом: он усиливает Техкарту и agent core или создаёт ширину?
 
 ## 3. Что должно измениться по итогам подфазы
 
@@ -82,3 +92,8 @@ last_verified: 2026-03-30
 - строить `control tower` как будто это уже главный продукт;
 - раздувать междоменную ширину;
 - добирать “ещё одного агента” как костыль вместо замыкания текущего core-loop.
+
+## 6. Рабочие документы подфазы
+
+- [PHASE_B_IMPLEMENTATION_PLAN.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_B_IMPLEMENTATION_PLAN.md)
+- [PHASE_B_EXECUTION_BOARD.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_B_EXECUTION_BOARD.md)

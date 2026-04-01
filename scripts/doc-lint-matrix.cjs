@@ -3,8 +3,6 @@ const path = require('path');
 
 const DOCS_ROOT = path.resolve(__dirname, '../docs');
 const MATRIX_PATH = path.resolve(__dirname, '../docs/01_ARCHITECTURE/TOPOLOGY/LAYER_TYPE_MATRIX.md');
-const FAIL_ON_MISMATCH = process.argv.includes('--fail-on-mismatch');
-const STRICT_VERSION = process.argv.includes('--strict-version');
 
 const ROOT_META_FILES = new Set(['README.md', 'INDEX.md']);
 const FOLDER_TO_LAYER = {
@@ -140,14 +138,16 @@ function detectCycles(graph) {
     return cycles;
 }
 
-function run() {
+function run(options = {}) {
+    const failOnMismatch = options.failOnMismatch ?? process.argv.includes('--fail-on-mismatch');
+    const strictVersion = options.strictVersion ?? process.argv.includes('--strict-version');
+    const silent = options.silent ?? false;
+
     if (!fs.existsSync(DOCS_ROOT)) {
-        console.error(`Docs root not found: ${DOCS_ROOT}`);
-        process.exit(2);
+        throw new Error(`Docs root not found: ${DOCS_ROOT}`);
     }
     if (!fs.existsSync(MATRIX_PATH)) {
-        console.error(`Matrix file not found: ${MATRIX_PATH}`);
-        process.exit(2);
+        throw new Error(`Matrix file not found: ${MATRIX_PATH}`);
     }
 
     const matrix = parseMatrix();
@@ -209,7 +209,7 @@ function run() {
             errors.push(`[STATUS] ${rel}: missing status`);
         }
 
-        if (STRICT_VERSION) {
+        if (strictVersion) {
             if (!version) {
                 errors.push(`[VERSION] ${rel}: missing version (strict mode)`);
             } else if (!SEMVER_RE.test(version)) {
@@ -245,23 +245,39 @@ function run() {
         warnings.push(`[CYCLE] ${printable}`);
     }
 
-    console.log('Doc Lint Matrix Report');
-    console.log(`- Files scanned: ${files.length}`);
-    console.log(`- Errors: ${errors.length}`);
-    console.log(`- Warnings: ${warnings.length}`);
+    if (!silent) {
+        console.log('Doc Lint Matrix Report');
+        console.log(`- Files scanned: ${files.length}`);
+        console.log(`- Errors: ${errors.length}`);
+        console.log(`- Warnings: ${warnings.length}`);
 
-    if (errors.length) {
-        console.log('\nErrors:');
-        for (const e of errors) console.log(`- ${e}`);
-    }
-    if (warnings.length) {
-        console.log('\nWarnings:');
-        for (const w of warnings) console.log(`- ${w}`);
+        if (errors.length) {
+            console.log('\nErrors:');
+            for (const e of errors) console.log(`- ${e}`);
+        }
+        if (warnings.length) {
+            console.log('\nWarnings:');
+            for (const w of warnings) console.log(`- ${w}`);
+        }
     }
 
-    if (FAIL_ON_MISMATCH && errors.length > 0) {
-        process.exit(1);
+    if (failOnMismatch && errors.length > 0) {
+        const error = new Error('doc-lint-matrix mismatch');
+        error.exitCode = 1;
+        error.report = { filesScanned: files.length, errors, warnings };
+        throw error;
+    }
+
+    return { filesScanned: files.length, errors, warnings };
+}
+
+if (require.main === module) {
+    try {
+        run();
+    } catch (error) {
+        console.error(error.message);
+        process.exit(error.exitCode || 2);
     }
 }
 
-run();
+module.exports = { run };

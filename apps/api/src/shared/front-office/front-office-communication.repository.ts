@@ -328,11 +328,62 @@ export class FrontOfficeCommunicationRepository {
   async listMessages(
     companyId: string,
     threadId: string,
+    options?: {
+      afterId?: string;
+      limit?: number;
+    },
   ): Promise<FrontOfficeMessageRecord[]> {
+    const normalizedLimit = Math.min(Math.max(options?.limit ?? 300, 1), 300);
+    const afterId = options?.afterId?.trim();
+
+    if (afterId) {
+      const anchor = await this.prisma.frontOfficeThreadMessage.findFirst({
+        where: {
+          id: afterId,
+          companyId,
+          threadId,
+        },
+        select: {
+          id: true,
+          createdAt: true,
+        },
+      });
+
+      if (!anchor) {
+        return [];
+      }
+
+      const incrementalMessages = await this.prisma.frontOfficeThreadMessage.findMany(
+        {
+          where: {
+            companyId,
+            threadId,
+            OR: [
+              {
+                createdAt: {
+                  gt: anchor.createdAt,
+                },
+              },
+              {
+                createdAt: anchor.createdAt,
+                id: {
+                  gt: anchor.id,
+                },
+              },
+            ],
+          },
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+          take: normalizedLimit,
+        },
+      );
+
+      return incrementalMessages.map((message) => this.mapMessage(message));
+    }
+
     const messages = await this.prisma.frontOfficeThreadMessage.findMany({
       where: { companyId, threadId },
-      orderBy: [{ createdAt: "asc" }],
-      take: 300,
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      take: normalizedLimit,
     });
     return messages.map((message) => this.mapMessage(message));
   }
@@ -564,6 +615,8 @@ export class FrontOfficeCommunicationRepository {
   }
 
   private mapMessage(row: any): FrontOfficeMessageRecord {
+    const metadata = this.normalizeMessageMetadata(row.metadataJson, row.evidenceJson);
+
     return {
       id: row.id,
       companyId: row.companyId,
@@ -579,13 +632,76 @@ export class FrontOfficeCommunicationRepository {
       chatId: row.chatId ?? null,
       route: row.route ?? null,
       evidence: Array.isArray(row.evidenceJson) ? row.evidenceJson : [],
-      kind: row.metadataJson?.kind ?? "system_event",
-      authorType: row.metadataJson?.authorType ?? "system",
-      deliveryStatus: row.metadataJson?.deliveryStatus ?? "SKIPPED",
-      metadata: row.metadataJson ?? {},
+      kind: metadata.kind ?? "system_event",
+      authorType: metadata.authorType ?? "system",
+      deliveryStatus: metadata.deliveryStatus ?? "SKIPPED",
+      metadata,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };
+  }
+
+  private normalizeMessageMetadata(
+    metadataJson: unknown,
+    evidenceJson: unknown,
+  ): Record<string, any> {
+    const metadata =
+      metadataJson && typeof metadataJson === "object" && !Array.isArray(metadataJson)
+        ? { ...(metadataJson as Record<string, any>) }
+        : {};
+    const evidenceCount = Array.isArray(evidenceJson) ? evidenceJson.length : 0;
+    const explainabilitySummary = this.pickExplainabilitySummary(metadata);
+
+    if (metadata.explainabilitySummary == null && explainabilitySummary) {
+      metadata.explainabilitySummary = explainabilitySummary;
+    }
+    if (typeof metadata.evidenceCount !== "number") {
+      metadata.evidenceCount = evidenceCount;
+    }
+
+    return metadata;
+  }
+
+  private pickExplainabilitySummary(metadata: Record<string, any>): string | null {
+    const extractFromObject = (value: Record<string, any>) => {
+      const candidates = [
+        value.summary,
+        value.shortSummary,
+        value.explainabilitySummary,
+        value.text,
+        value.title,
+      ];
+
+      for (const candidate of candidates) {
+        if (typeof candidate === "string" && candidate.trim().length > 0) {
+          return candidate.trim().slice(0, 500);
+        }
+      }
+
+      return null;
+    };
+
+    const sources = [
+      metadata.explainabilitySummary,
+      metadata.workflow_explainability,
+      metadata.workflowExplainability,
+      metadata.execution_loop_summary,
+      metadata.executionLoopSummary,
+    ];
+
+    for (const source of sources) {
+      if (typeof source === "string" && source.trim().length > 0) {
+        return source.trim().slice(0, 500);
+      }
+      if (source && typeof source === "object" && !Array.isArray(source)) {
+        const extracted = extractFromObject(source as Record<string, any>);
+        if (extracted) {
+          return extracted;
+        }
+      }
+    }
+
+    return null;
   }
 
   private mapHandoff(row: any): FrontOfficeHandoffRecord {

@@ -6,7 +6,7 @@ const path = require("path");
 const ROOT = path.resolve(__dirname, "..");
 const OUTPUT_DIR = path.join(ROOT, "var", "execution");
 const PHASE_A_STATUS_JSON = path.join(OUTPUT_DIR, "phase-a-status.json");
-const A1_OWNER_QUEUES_JSON = path.join(ROOT, "var", "compliance", "phase-a1-owner-queues.json");
+const A1_HANDOFF_JSON = path.join(ROOT, "var", "compliance", "external-legal-evidence-handoff.json");
 const A2_STATUS_JSON = path.join(ROOT, "var", "security", "security-evidence-status.json");
 const A4_STATUS_JSON = path.join(ROOT, "var", "ops", "phase-a4-pilot-handoff-status.json");
 const A5_STATUS_JSON = path.join(ROOT, "var", "compliance", "phase-a5-status.json");
@@ -50,6 +50,19 @@ function renderIssuesMarkdown(issues) {
   return issues.map((issue) => `- ${issue}`).join("\n");
 }
 
+function normalizeOwner(owner) {
+  return String(owner || "").replace(/`/g, "").trim();
+}
+
+function buildCounts(items) {
+  return {
+    requested: items.filter((item) => item.status === "requested").length,
+    received: items.filter((item) => item.status === "received").length,
+    reviewed: items.filter((item) => item.status === "reviewed").length,
+    accepted: items.filter((item) => item.status === "accepted").length,
+  };
+}
+
 function main() {
   const modeArg = process.argv.find((arg) => arg.startsWith("--mode="));
   const mode = modeArg ? modeArg.split("=")[1] : "warn";
@@ -58,7 +71,7 @@ function main() {
 
   const requiredFiles = [
     PHASE_A_STATUS_JSON,
-    A1_OWNER_QUEUES_JSON,
+    A1_HANDOFF_JSON,
     A2_STATUS_JSON,
     A4_STATUS_JSON,
     A5_STATUS_JSON,
@@ -89,7 +102,7 @@ function main() {
   }
 
   const phaseA = readJson(PHASE_A_STATUS_JSON);
-  const a1 = readJson(A1_OWNER_QUEUES_JSON);
+  const a1 = readJson(A1_HANDOFF_JSON);
   const a2 = readJson(A2_STATUS_JSON);
   const a4 = readJson(A4_STATUS_JSON);
   const a5 = readJson(A5_STATUS_JSON);
@@ -100,53 +113,90 @@ function main() {
   const a4Track = phaseA.tracks.find((track) => track.id === "A4");
   const a5Track = phaseA.tracks.find((track) => track.id === "A5");
 
+  const a1OwnerQueues = (a1.ownerQueues || []).map((queue) => {
+    const items = (queue.tasks || []).map((task, index) => ({
+      priority: index + 1,
+      referenceId: task.referenceId,
+      title: task.artifact,
+      wave: "remaining_tail",
+      status: task.currentStatus,
+      namedOwners: normalizeOwner(queue.owner),
+      reviewDue: task.reviewDue || "unknown",
+      draftPath: task.draftPath || "pending",
+      requiredFields: task.reason || "remaining external legal evidence",
+      intakeCommand: task.intakeCommand,
+      reviewCommand: task.reviewCommand,
+      acceptCommand: task.acceptCommand,
+      nextAction: task.nextAction,
+    }));
+
+    return {
+      owner: normalizeOwner(queue.owner),
+      itemCount: items.length,
+      counts: buildCounts(items),
+      items,
+    };
+  });
+
+  const a2ResidualRows = (a2.rows || []).filter((row) => row.status !== "accepted");
+  const a4ResidualRows = (a4.rows || []).filter((row) => row.status !== "accepted");
+  const a5Active = a5Track?.state === "external_blocked" || a5Track?.state === "external_in_progress";
+  const a5ResidualOwnerQueues = a5Active ? (a5Handoff.ownerQueues || []) : [];
+  const tracks = [
+    {
+      id: "A1",
+      state: a1Track?.state || "unknown",
+      itemCount: a1.blockerCount || 0,
+      ownerQueues: a1OwnerQueues.length,
+      currentLegalVerdict: a1.currentVerdict || "unknown",
+      nextAction:
+        (a1OwnerQueues[0]?.items || []).length > 0
+          ? `добирать remaining legal tail до \`${a1.nextTargetVerdict || "GO"}\`, начиная с \`${a1OwnerQueues[0].items[0].referenceId}\``
+          : "удерживать legal contour без drift",
+    },
+    {
+      id: "A2",
+      state: a2Track?.state || "unknown",
+      itemCount: a2ResidualRows.length,
+      ownerQueues: a2ResidualRows.length,
+      nextAction: a2Track?.nextAction || "",
+    },
+    {
+      id: "A4",
+      state: a4Track?.state || "unknown",
+      itemCount: a4ResidualRows.length,
+      ownerQueues: a4ResidualRows.length,
+      nextAction: a4Track?.nextAction || "",
+    },
+  ];
+
+  if (a5Active) {
+    tracks.push({
+      id: "A5",
+      state: a5Track?.state || "unknown",
+      itemCount: 1,
+      ownerQueues: a5ResidualOwnerQueues.length,
+      tier1State: a5.summary?.tier1State || "unknown",
+      nextAction: a5Track?.nextAction || "",
+    });
+  }
+
   const report = {
     generatedAt: new Date().toISOString(),
     mode,
     sourcePhaseAStatus: rel(PHASE_A_STATUS_JSON),
-    sourceA1OwnerQueues: rel(A1_OWNER_QUEUES_JSON),
+    sourceA1ResidualHandoff: rel(A1_HANDOFF_JSON),
     sourceA2Status: rel(A2_STATUS_JSON),
     sourceA4Status: rel(A4_STATUS_JSON),
     sourceA5Status: rel(A5_STATUS_JSON),
     overallState: phaseA.summary?.overallState || "unknown",
     blockedBy: phaseA.summary?.blockedBy || [],
-    tracks: [
-      {
-        id: "A1",
-        state: a1Track?.state || "unknown",
-        itemCount: a1.totalItems || 0,
-        ownerQueues: a1.ownerQueuesCount || 0,
-        currentLegalVerdict: a1.currentLegalVerdict || "unknown",
-        nextAction: a1Track?.nextAction || "",
-      },
-      {
-        id: "A2",
-        state: a2Track?.state || "unknown",
-        itemCount: a2.counts?.total || 0,
-        ownerQueues: a2.rows?.length || 0,
-        nextAction: a2Track?.nextAction || "",
-      },
-      {
-        id: "A4",
-        state: a4Track?.state || "unknown",
-        itemCount: a4.counts?.total || 0,
-        ownerQueues: a4.rows?.length || 0,
-        nextAction: a4Track?.nextAction || "",
-      },
-      {
-        id: "A5",
-        state: a5Track?.state || "unknown",
-        itemCount: 1,
-        ownerQueues: a5.summary?.ownerQueues || 0,
-        tier1State: a5.summary?.tier1State || "unknown",
-        nextAction: a5Track?.nextAction || "",
-      },
-    ],
+    tracks,
     details: {
-      a1OwnerQueues: a1.ownerQueues || [],
-      a2Rows: a2.rows || [],
-      a4Rows: a4.rows || [],
-      a5OwnerQueues: a5Handoff.ownerQueues || [],
+      a1OwnerQueues,
+      a2Rows: a2ResidualRows,
+      a4Rows: a4ResidualRows,
+      a5OwnerQueues: a5ResidualOwnerQueues,
     },
     issues,
   };
@@ -171,7 +221,7 @@ function main() {
     "",
     "| Owner | Items | Requested | Received | Reviewed | Accepted |",
     "|---|---:|---:|---:|---:|---:|",
-    ...(a1.ownerQueues || []).map(
+    ...(a1OwnerQueues || []).map(
       (queue) =>
         `| ${queue.owner} | ${queue.itemCount} | ${queue.counts.requested} | ${queue.counts.received} | ${queue.counts.reviewed} | ${queue.counts.accepted} |`,
     ),
@@ -180,7 +230,7 @@ function main() {
     "",
     "| Reference | Status | Owner | Review due | Draft path |",
     "|---|---|---|---|---|",
-    ...(a2.rows || []).map(
+    ...(a2ResidualRows || []).map(
       (row) =>
         `| \`${row.referenceId}\` | \`${row.status}\` | ${row.owner} | \`${row.reviewDue}\` | \`${row.draftPath}\` |`,
     ),
@@ -189,20 +239,24 @@ function main() {
     "",
     "| Reference | Status | Owner | Review due | Draft path |",
     "|---|---|---|---|---|",
-    ...(a4.rows || []).map(
+    ...(a4ResidualRows || []).map(
       (row) =>
         `| \`${row.referenceId}\` | \`${row.status}\` | ${row.owner} | \`${row.reviewDue}\` | \`${row.draftPath}\` |`,
     ),
     "",
-    "## A5 Chain Of Title Owner Queues",
-    "",
-    "| Owner scope | Assets | Evidence classes |",
-    "|---|---:|---|",
-    ...(a5Handoff.ownerQueues || []).map(
-      (queue) =>
-        `| ${queue.ownerScope} | ${queue.assetCount} | ${queue.evidenceClasses.join(", ")} |`,
-    ),
-    "",
+    ...(a5ResidualOwnerQueues.length > 0
+      ? [
+          "## A5 Chain Of Title Owner Queues",
+          "",
+          "| Owner scope | Assets | Evidence classes |",
+          "|---|---:|---|",
+          ...a5ResidualOwnerQueues.map(
+            (queue) =>
+              `| ${queue.ownerScope} | ${queue.assetCount} | ${queue.evidenceClasses.join(", ")} |`,
+          ),
+          "",
+        ]
+      : []),
     "## Issues",
     "",
     renderIssuesMarkdown(report.issues),
@@ -218,35 +272,39 @@ function main() {
     "",
     "## Execution Order",
     "",
-    "1. `A1` — начать с `ELP-20260328-01`, затем `03`, `04`, `06`.",
-    "2. `A2` — собрать `A2-S-01`, затем `A2-S-02`, затем `A2-S-03`.",
+    "1. `A1` — добивать remaining legal tail до `GO`.",
+    "2. `A2` — собрать residual security evidence, которое ещё не `accepted`.",
     "3. `A4` — провести intake по `A4-H-01`.",
-    "4. `A5` — собирать signed evidence по `ELP-20260328-09` через chain-of-title owner queues.",
+    ...(a5ResidualOwnerQueues.length > 0 ? ["4. `A5` — собирать signed evidence по `ELP-20260328-09` через chain-of-title owner queues."] : []),
     "",
     "## A1 Owner Queues",
     "",
-    ...((a1.ownerQueues || []).map(
+    ...((a1OwnerQueues || []).map(
       (queue) => `- ${queue.owner}: ${queue.itemCount} item(s)`,
     )),
     "",
     "## A2 Security Evidence",
     "",
-    ...((a2.rows || []).map(
+    ...((a2ResidualRows || []).map(
       (row) => `- ${row.referenceId} | ${row.owner} | draft=${row.draftPath}`,
     )),
     "",
     "## A4 Pilot Handoff",
     "",
-    ...((a4.rows || []).map(
+    ...((a4ResidualRows || []).map(
       (row) => `- ${row.referenceId} | ${row.owner} | draft=${row.draftPath}`,
     )),
     "",
-    "## A5 Chain Of Title",
-    "",
-    ...((a5Handoff.ownerQueues || []).map(
-      (queue) => `- ${queue.ownerScope}: ${queue.assetCount} asset(s)`,
-    )),
-    "",
+    ...(a5ResidualOwnerQueues.length > 0
+      ? [
+          "## A5 Chain Of Title",
+          "",
+          ...a5ResidualOwnerQueues.map(
+            (queue) => `- ${queue.ownerScope}: ${queue.assetCount} asset(s)`,
+          ),
+          "",
+        ]
+      : []),
   ].join("\n");
 
   ensureDir(OUTPUT_DIR, dryRun);

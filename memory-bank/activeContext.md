@@ -1,5 +1,469 @@
 # Активный контекст RAI_EP
 
+## Текущая задача (2026-04-01, TechMap research sync)
+- [x] Выполнен `git pull`, получены свежие стратегические наработки по Техкартам.
+- [x] В `docs/00_STRATEGY/TECHMAP/` добавлены:
+  - Исследование №5 (Каноническая техкарта и параметрическое ядро).
+  - Промт для исследования.
+- [x] Логическая синхронизация зафиксирована в `memory-bank/TRACELOG.md`.
+
+## Текущая задача (2026-04-01, post-big-phase internal residual workpack)
+- [x] Открыт отдельный execution-workpack для внутреннего residual `AppSec / hygiene` после закрытия `ONE_BIG_PHASE`.
+- [x] Зафиксировано, что этот пакет:
+  - не является новой фазой;
+  - не переоткрывает `A-E`;
+  - не подменяет parked внешние хвосты `Phase A`.
+- [x] В отдельный scope вынесены три трека:
+  - `dependency high-tail` из `var/security/security-audit-summary.json`;
+  - `workspace-local secret hygiene` из `var/security/secret-scan-report.json`;
+  - `reviewed CI evidence loop` для `CodeQL / dependency review / provenance`.
+- [x] Создан и зарегистрирован новый канонический entrypoint:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/POST_BIG_PHASE_INTERNAL_RESIDUAL_APPSEC_HYGIENE_WORKPACK_2026-04-01.md`
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
+  - `docs/DOCS_MATRIX.md`.
+- [x] Для трека `R2` добавлен repo-safe inventory automation:
+  - `scripts/workspace-secret-hygiene-inventory.cjs`
+  - `pnpm security:workspace-hygiene:inventory`
+  - `pnpm gate:security:workspace-hygiene`
+  - generated artifacts `var/security/workspace-secret-hygiene-inventory.json|md`.
+- [x] Для `R2` добавлен remediation packet поверх inventory:
+  - `scripts/workspace-secret-hygiene-remediation-packet.cjs`
+  - `pnpm security:workspace-hygiene:packet`
+  - generated artifacts `var/security/workspace-secret-hygiene-remediation-packet.json|md`.
+- [x] `R2` gate выровнен с базовым secret-scan intent:
+  - warning-only local `.env` больше не считаются blocker при `tracked_critical=0` и `workspace_local_critical=0`;
+  - blocker-смысл сохранён только для tracked leakage и local `critical` content findings.
+- [x] `R1` закрыт через targeted dependency override-remediation:
+  - в `package.json` и `pnpm-lock.yaml` добавлены selectors для `minimatch@9.0.3` и `picomatch@4.0.1/4.0.2`;
+  - `pnpm security:audit:ci` теперь фиксирует `high=0`, `critical=0`;
+  - high-tail больше не держит внутренний residual workpack.
+- [x] Для `R3` добавлен machine-readable reviewed evidence contour:
+  - `scripts/security-reviewed-evidence-status.cjs`
+  - `pnpm security:reviewed-evidence:status`
+  - `pnpm gate:security:reviewed-evidence`
+  - repo-side contract `var/security/security-reviewed-evidence-input.json`
+  - generated status `var/security/security-reviewed-evidence-status.json|md`.
+- [x] Первый `R3` status выпущен как честный `in_progress`:
+  - `CodeQL` и `Security Baseline` verified на текущем `main` head через GitHub Actions run refs;
+  - `provenance` baseline подтверждён через attestation step в `security-audit` workflow;
+  - остаточный blocker сведён к отсутствию `dependencyReview` PR-backed ref и пустым `reviewerRefs`.
+- [x] Для `R3` добавлен restricted handoff packet:
+  - `scripts/security-reviewed-evidence-packet.cjs`
+  - `pnpm security:reviewed-evidence:packet`
+  - `var/security/security-reviewed-evidence-packet.json|md`
+  - `../RAI_EP_RESTRICTED_EVIDENCE/security/2026-04-01/reviewed-ci-loop/{REQUEST_PACKET.md,REVIEW_DRAFT.md,INDEX.md}`.
+- [x] Первый handoff packet собран как `prepared`:
+  - requested reviewers выведены из security-critical owner contour (`@techlead`, `@backend-lead`);
+  - packet держит verified `CodeQL/Security Baseline` refs и явный список недостающих полей для первого `dependencyReview` цикла.
+- [x] Для `R3` добавлен intake-скрипт заполнения reviewer/PR metadata:
+  - `scripts/security-reviewed-evidence-intake.cjs`
+  - `pnpm security:reviewed-evidence:intake`
+  - intake умеет дописывать `reviewScope.reviewerRefs`, `dependencyReview.prNumber/runId/reviewerRefs`, `provenance.reviewerRefs`, а URL выводит автоматически из `repository.owner/name`.
+- [x] Для `R3` добавлен PR lookup resolver:
+  - `scripts/security-reviewed-evidence-pr-lookup.cjs`
+  - `pnpm security:reviewed-evidence:pr-lookup -- --pr-number=...`
+  - resolver вытягивает из GitHub API PR metadata, reviews и `Dependency Review` run, а затем строит готовую `intake` команду для заполнения input-контракта.
+- [x] Для всего residual workpack добавлен единый агрегированный status/gate:
+  - `scripts/post-big-phase-internal-residual-status.cjs`
+  - `pnpm security:post-big-phase:status`
+  - `pnpm gate:security:post-big-phase`
+  - generated verdict `var/security/post-big-phase-internal-residual-status.json|md`.
+- [x] Агрегированный residual status подтверждает:
+  - `R1=done`
+  - `R2=done`
+  - `R3=in_progress`
+  - весь пакет держится только на `reviewed_ci_evidence_loop_incomplete`.
+- [x] Для `R3` добавлен единый reconcile-оркестратор:
+  - `scripts/security-reviewed-evidence-reconcile.cjs`
+  - `pnpm security:reviewed-evidence:reconcile -- --pr-number=...`
+  - `pnpm gate:security:reviewed-evidence:reconcile -- --pr-number=...`
+  - generated report `var/security/security-reviewed-evidence-reconcile.json|md`.
+- [x] Reconcile-контур замыкает путь:
+  - `pr-lookup -> intake -> status -> optional gate`;
+  - после появления первого реального PR `R3` можно доводить одной командой и одним machine-readable отчётом, а не ручной последовательностью из нескольких CLI-шагов.
+- [x] Для всего residual-пакета добавлен верхнеуровневый reconcile:
+  - `scripts/post-big-phase-internal-residual-reconcile.cjs`
+  - `pnpm security:post-big-phase:prepare`
+  - `pnpm security:post-big-phase:reconcile -- --pr-number=...`
+  - `pnpm gate:security:post-big-phase:reconcile -- --pr-number=...`
+  - generated report `var/security/post-big-phase-internal-residual-reconcile.json|md`.
+- [x] Packet-level reconcile замыкает путь:
+  - `R3 reconcile -> post-big-phase status/gate`;
+  - после появления первого реального PR можно одной верхнеуровневой командой сразу пересчитать и `R3`, и общий packet-level verdict.
+- [x] Добавлен подготовительный режим packet-level reconcile:
+  - `pnpm security:post-big-phase:prepare`
+  - он выпускает честный report `waiting_for_pr`, когда внешнего reviewer-backed PR cycle ещё нет;
+  - это даёт текущий machine-readable handoff без требования несуществующего `--pr-number`.
+- [x] `prepare`-режим теперь подтягивает `R3` handoff packet:
+  - верхний report включает `requestedReviewers`, `missingItems`, `packetPath`, `draftPath`;
+  - текущий внешний blocker и готовый restricted handoff теперь читаются из одного packet-level артефакта.
+- [x] `security-reviewed-evidence-packet` теперь устойчив к read-only restricted root:
+  - при `EROFS/EACCES` generator переиспользует уже существующие restricted artifacts;
+  - верхний report помечает это через `handoffReuseMode=readonly_existing_artifacts`, а не превращает sandbox-ограничение в ложный blocker.
+- [x] Верхний reconcile-report теперь содержит `actionBundle`:
+  - `prepareCommand`
+  - `reconcileCommandTemplate`
+  - `gateCommandTemplate`
+  - `prNumberPlaceholder`
+  - handoff refs
+- [x] Packet-level handoff теперь не требует ручной сборки команд:
+  - следующий operational шаг читается прямо из одного JSON/MD отчёта.
+- [x] `actionBundle` расширен до operator-ready набора:
+  - добавлены `reviewedReconcileCommandTemplate`, `reviewedGateCommandTemplate`;
+  - добавлен `operatorChecklist` с последовательностью действий после появления реального `PR`.
+- [x] Добавлена отдельная compact run card для оператора:
+  - `scripts/post-big-phase-internal-residual-run-card.cjs`
+  - `pnpm security:post-big-phase:run-card`
+  - generated artifacts `var/security/post-big-phase-internal-residual-run-card.json|md`.
+- [x] `security:post-big-phase:prepare` теперь является полным handoff-entrypoint:
+  - один вызов выпускает reconcile-report, compact run card и PR template;
+  - `run-card` и `pr-template` сохранены как совместимые alias, а не как отдельные обязательные шаги.
+- [x] Добавлен локальный PR-template generator:
+  - `scripts/post-big-phase-internal-residual-pr-template.cjs`
+  - `pnpm security:post-big-phase:pr-template`
+  - generated artifacts `var/security/post-big-phase-internal-residual-pr-template.json|md`.
+- [x] Добавлен верхний handoff index:
+  - `scripts/post-big-phase-internal-residual-handoff-index.cjs`
+  - `pnpm security:post-big-phase:index`
+  - generated artifacts `var/security/post-big-phase-internal-residual-handoff-index.json|md`.
+- [x] Добавлен shell command template:
+  - `scripts/post-big-phase-internal-residual-command-template.cjs`
+  - generated artifact `var/security/post-big-phase-internal-residual-commands.template.sh`.
+- [x] Добавлен итоговый bundle-каталог для полного residual handoff:
+  - `scripts/post-big-phase-internal-residual-bundle.cjs`
+  - `pnpm security:post-big-phase:bundle`
+  - `pnpm security:post-big-phase:prepare` теперь автоматически выпускает `var/security/post-big-phase-internal-residual-bundle/{MANIFEST.json,README.md}` и копию всех operator-facing артефактов в один каталог.
+- [x] Для широкого execution `PR` добавлен machine-readable prep-пакет:
+  - `scripts/one-big-phase-wide-pr-prep.cjs`
+  - `pnpm execution:one-big-phase:wide-pr-prep`
+  - generated artifacts `var/execution/one-big-phase-wide-pr-prep.json|md`.
+- [x] Wide PR prep разложил текущий changeset на 7 секций:
+  - `Phase B`
+  - `Phase C`
+  - `Phase D`
+  - `Phase E`
+  - `post-big-phase residual AppSec`
+  - `closeout/navigation/governance sync`
+  - `TECHMAP frontmatter repair`
+  - и отдельно исключил local-only шум `.codex`, `memory-bank/analytics/`.
+- [x] Для широкого execution `PR` добавлен operator-ready run card:
+  - `scripts/one-big-phase-wide-pr-command-template.cjs`
+  - `pnpm execution:one-big-phase:wide-pr-run-card`
+  - generated artifacts `var/execution/one-big-phase-wide-pr-run-card.json|md`
+  - `var/execution/one-big-phase-wide-pr-commands.template.sh`.
+- [x] Общий doc-lint drift в `docs/00_STRATEGY/TECHMAP` снят:
+  - в 8 legacy-active `TECHMAP` markdown-файлов добавлен минимальный валидный frontmatter;
+  - `pnpm lint:docs` и `pnpm lint:docs:matrix:strict` снова green на общем репозитории.
+- [x] Исправлен wrapper `scripts/lint-docs.cjs`:
+  - внутренний вызов `doc-lint-matrix` переведён на `execFileSync(process.execPath, ...)`;
+  - `pnpm lint:docs` снова отражает реальные doc-ошибки, а не ложный сбой shell-обёртки.
+- [x] Навигационный индекс `ONE_BIG_PHASE` синхронизирован с residual-контуром:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md` теперь явно указывает на `pnpm security:post-big-phase:status`;
+  - `gate:security:post-big-phase` и `var/security/post-big-phase-internal-residual-status.json` закреплены как machine-readable entrypoint для внутреннего cleanup после закрытия `A-E`.
+
+## Текущая задача (2026-04-01, phase-a closeout residual sync)
+- [x] Пересобран residual closeout-контур `Phase A` через `pnpm phase:a:closeout`.
+- [x] Синхронизированы generated manifests:
+  - `var/execution/phase-a-closeout-status.json`
+  - `var/execution/phase-a-external-blockers-packet.json`
+  - `var/execution/phase-a-external-owner-queues.json`.
+- [x] Убрано искусственное раздувание хвоста:
+  - `A1` теперь держит только `ELP-20260328-07`, `ELP-20260328-10`, `ELP-20260328-11`;
+  - `A5` больше не попадает в closeout как внешний blocker;
+  - итоговый closeout фиксирует ровно `6` residual references и `8` owner queues.
+- [x] `PHASE_B_EXECUTION_BOARD.md` синхронизирован под package-level closure:
+  - оставшиеся `in_progress` строки зафиксированы как residual core-quality backlog;
+  - эти строки не переоткрывают уже закрытый объём `A-E`.
+- [x] Reconciliation-пакет обновлён:
+  - `ONE_BIG_PHASE_AUDIT_RECONCILIATION_2026-04-01.md` больше не описывает `phase-a-closeout` как stale snapshot;
+  - closeout трактуется как машинное подтверждение того же parked external tail.
+
+## Текущая задача (2026-04-01, audit reconciliation against ONE_BIG_PHASE closeout)
+- [x] Выполнена сверка последнего audit baseline `2026-03-28` с текущим состоянием `ONE_BIG_PHASE`.
+- [x] Создан execution-артефакт:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/ONE_BIG_PHASE_AUDIT_RECONCILIATION_2026-04-01.md`.
+- [x] Зафиксирована жёсткая классификация остатка:
+  - `closed_in_scope` для закрытых audit-гепов через `Phase D/E`;
+  - `parked_external_tail` для оставшихся `A1/A2/A4` reference;
+  - `still_internal_residual` для residual AppSec/hygiene;
+  - `intentionally_guarded` для запрета преждевременного `SaaS/hybrid`.
+- [x] Подтверждено, что формула “остались только внешние хвосты” неточна:
+  - parked external хвост действительно остался в `A1/A2/A4`;
+  - но внутри репозитория ещё есть `dependency` high-tail, `workspace-local secrets` и неподтверждённый reviewed CI cycle для `CodeQL/provenance`.
+- [x] Синхронизированы навигация и registry:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
+  - `docs/DOCS_MATRIX.md`.
+
+## Текущая задача (2026-04-01, phase-e full closure and big-phase closeout)
+- [x] Закрыты блокеры `E1-E4` через фактический evidence lifecycle:
+  - `A2-S-03` переведён в `accepted` и синхронизирован в `var/security/security-evidence-status.json`;
+  - legal mandatory set (`ELP-01/02/03/04/05/06/08/09`) доведён до `accepted`;
+  - `external-legal-evidence-verdict` поднят до `CONDITIONAL GO`;
+  - создан managed pilot handoff `E-H-01` и доведён до `accepted`.
+- [x] Заполнены обязательные входы `Phase E`:
+  - `var/ops/phase-e-governance-input.json`
+  - `var/ops/phase-e-ops-input.json`
+  - evidence-файлы `var/ops/phase-e-evidence-sources/*`.
+- [x] Подтверждено итоговое состояние:
+  - `pnpm gate:phase:e:status` — green;
+  - `var/ops/phase-e-status.json` = `status=done`, `verdict=phase_e_ready_tier2`;
+  - треки `E1-E4` закрыты в `done`, `E5` удерживается как `guard_active`.
+- [x] Синхронизированы execution-документы и индекс:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_E_EXECUTION_BOARD.md`
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_E_IMPLEMENTATION_PLAN.md`
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/05_PHASE_E_TIER2_MANAGED_DEPLOYMENT_AND_GOVERNANCE.md`
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`.
+
+## Текущая задача (2026-04-01, phase-e gate contour implementation)
+- [x] Реализован исполняемый пакет `Phase E` через `phase:e:*` и `gate:phase:e:*` в `package.json`.
+- [x] Добавлены и подключены скрипты `Phase E`:
+  - `scripts/phase-e-governance-status.cjs`
+  - `scripts/phase-e-ops-drill.cjs`
+  - `scripts/phase-e-ops-status.cjs`
+  - `scripts/phase-e-legal-status.cjs`
+  - `scripts/phase-e-pilot-status.cjs`
+  - `scripts/phase-e-pilot-intake.cjs`
+  - `scripts/phase-e-pilot-transition.cjs`
+  - `scripts/phase-e-status.cjs`.
+- [x] Зафиксирован machine-readable контракт артефактов:
+  - отчёты публикуются в `var/ops/phase-e-*.json|md`;
+  - минимум полей: `generatedAt/track/status/issues/evidenceRefs/nextAction/verdict`.
+- [x] Реализован managed pilot lifecycle `E-H-XX`:
+  - статусы `requested/received/reviewed/accepted/expired`;
+  - обязательные metadata-поля: `status`, `owner`, `review_due`, `artifact_path`, `draft_path`, `cohort_id`, `success_metric_ref`.
+- [x] Реализован anti-breadth guard:
+  - `phase-e-status` вычисляет `scope_violations`;
+  - `gate:phase:e:status` блокирует `SaaS/hybrid` и `feature-breadth` до `pilot_ready_tier2`.
+- [x] Синхронизированы execution-документы `Phase E`:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_E_IMPLEMENTATION_PLAN.md`
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_E_EXECUTION_BOARD.md`.
+
+## Текущая задача (2026-04-01, phase-e execution package after phase-d closure)
+- [x] Зафиксирован переход execution-entrypoint на `Phase E` после закрытия `Phase D` (`phase_d_ready`).
+- [x] Создан canonical пакет `Phase E`:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/05_PHASE_E_TIER2_MANAGED_DEPLOYMENT_AND_GOVERNANCE.md`
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_E_IMPLEMENTATION_PLAN.md`
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_E_EXECUTION_BOARD.md`.
+- [x] Обновлён `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`:
+  - порядок фаз расширен до `Phase E`;
+  - текущая точка входа переключена на `Phase E`;
+  - `Phase D` зафиксирована как закрытый `Tier 1` baseline.
+- [x] Синхронизирован канон `Phase D`:
+  - в `04_PHASE_D_SELF_HOST_PILOT_AND_HARDENING.md` чеклист зафиксирован как закрытый;
+  - добавлена ссылка на следующий активный пакет `Phase E`.
+- [x] Зарегистрированы `Phase E` claims в `docs/DOCS_MATRIX.md`.
+
+## Текущая задача (2026-04-01, phase-d self-host pilot and hardening implementation)
+- [x] Реализован единый оркестратор `Phase D` через новые скрипты и gate-контур:
+  - добавлены `scripts/phase-d-*.cjs` для треков `D1-D5` (`install`, `restore`, `ops`, `pilot`, `phase-status`);
+  - в `package.json` добавлены публичные CLI команды:
+    - `phase:d:*`
+    - `gate:phase:d:*`.
+- [x] Зафиксирован машинно-читаемый контракт артефактов `Phase D`:
+  - отчёты публикуются в `var/ops/phase-d-*.json|md`;
+  - каждый отчёт содержит минимум:
+    - `generatedAt`
+    - `track`
+    - `status`
+    - `issues`
+    - `evidenceRefs`
+    - `nextAction`
+    - `verdict`.
+- [x] Реализован `D4` pilot lifecycle-контур:
+  - reference-формат `D-H-XX`;
+  - статусы `requested/received/reviewed/accepted/expired`;
+  - утилиты intake/transition:
+    - `phase:d:pilot:intake`
+    - `phase:d:pilot:transition`
+    - `phase:d:pilot:status`.
+- [x] Реализован `D5` anti-breadth guard:
+  - `scripts/phase-d-status.cjs` вычисляет `scope_violations`;
+  - `gate:phase:d:status` падает при нарушениях scope или незакрытых core-треках.
+- [x] Синхронизированы execution-документы `Phase D` с фактической реализацией:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_D_IMPLEMENTATION_PLAN.md`
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_D_EXECUTION_BOARD.md`.
+- [x] Текущее состояние по status-gate:
+  - `phase_d_ready`;
+  - `gate:phase:d:status` проходит в enforce-режиме;
+  - треки `D1-D4` закрыты в `done`, `D5` удерживается как `guard_active`.
+
+## Текущая задача (2026-04-01, phase-d execution entrypoint activation)
+- [x] Подтверждено закрытие `Phase C` по execution-board (`нет open/in_progress`, только `done/guard_active`).
+- [x] Активный execution-вход переведён на `Phase D`:
+  - обновлён `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md` (текущий вход и активная подфаза);
+  - обновлён `docs/07_EXECUTION/ONE_BIG_PHASE/04_PHASE_D_SELF_HOST_PILOT_AND_HARDENING.md` (привязка к implementation/board-пакету).
+- [x] Для `Phase D` создан рабочий пакет исполнения:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_D_IMPLEMENTATION_PLAN.md`;
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_D_EXECUTION_BOARD.md`.
+- [x] Обновлён `docs/DOCS_MATRIX.md`:
+  - зарегистрированы `CLAIM-EXE-ONE-BIG-PHASE-D-IMPLEMENTATION-PLAN-20260401` и `CLAIM-EXE-ONE-BIG-PHASE-D-EXECUTION-BOARD-20260401`;
+  - синхронизирована дата верификации канонического `Phase D` документа.
+
+## Текущая задача (2026-04-01, phase-c minimal web and access implementation)
+- [x] Реализован пакет `Phase C` в двухконтурной модели (`portal/front-office` + governed `AiChat`) с фиксацией пути `login -> session -> thread -> message -> response`.
+- [x] Закрыты `C1/C2/C5` изменения в доступе, ролях и внешнем портале:
+  - роль и capability теперь берутся из authenticated principal (`/users/me`), а не runtime simulation;
+  - `FRONT_OFFICE_USER` ограничен только `portal/front-office`, внутренний shell (`LeftRaiChatDock`) отключён;
+  - добавлены `POST /portal/front-office/intake/message` и cursor polling (`afterId/limit`) для `GET /portal/front-office/threads/:threadKey/messages`;
+  - reply-контракт расширен `deliveryStatus/channel/messageId/createdAt`;
+  - в `web_chat` reply-пути снят Telegram-only барьер;
+  - отказы доступа пишутся в audit как security-события (`FRONT_OFFICE_SECURITY_ACCESS_DENIED`, `SECURITY_ROLE_ACCESS_DENIED`).
+- [x] Закрыты `C3/C4` изменения для внутреннего контура и explainability:
+  - закреплён канонический путь `POST /api/rai/chat`, `POST /api/ai-chat` оставлен как legacy proxy;
+  - внешний контур закрыт от внутренних chat-endpoints;
+  - добавлена визуализация explainability/evidence в внешнем потоке сообщений через `metadata.explainabilitySummary` и `metadata.evidenceCount`;
+  - удержан внутренний `AiChat` показ `work windows`, `trust summary`, `evidence`.
+- [x] Создан обязательный execution-пакет `Phase C`:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_C_IMPLEMENTATION_PLAN.md`;
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_C_EXECUTION_BOARD.md`;
+  - обновлены `docs/07_EXECUTION/ONE_BIG_PHASE/03_PHASE_C_MINIMAL_WEB_AND_ACCESS.md`, `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`, `docs/DOCS_MATRIX.md` (регистрация claim для `Phase C` implementation/board).
+- [x] Тестовая фиксация `Phase C`:
+  - API: `front-office-external.controller.spec.ts`, `front-office.service.spec.ts`, `front-office.e2e.spec.ts`;
+  - Web: `external-front-office-thread-client.spec.tsx`, `route-guard-front-office.spec.ts`, `front-office-smoke.spec.ts`, `ai-chat-store.spec.ts`, `ai-chat-sessions-strip.spec.tsx`, `ai-chat-widgets-rail.spec.tsx`;
+  - в `ai-chat-store.spec.ts` добавлен отдельный regression на rehydrate/reload для сохранения `threadId`, `pendingClarification`, `workWindows`.
+
+## Текущая задача (2026-04-01, phase-c new chat memo)
+- [x] Собрана памятка для запуска нового чата по `Phase C`:
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_C_NEW_CHAT_MEMO.md`;
+  - в memo зафиксированы:
+    - контекст перехода к `Phase C`;
+    - границы `C` против `A/B/D`;
+    - правило работы с carry-over хвостами `Phase B`;
+    - правильный первый шаг нового чата;
+    - технические правила исполнения.
+- [x] Обновлён `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`:
+  - добавлен `Phase C` рабочий пакет в индекс;
+  - текущая точка входа переключена на `Phase C` документы;
+  - добавлено правило checkpoint/memo-исключения для управленческого переноса фокуса.
+- [x] Обновлён `docs/DOCS_MATRIX.md`:
+  - зарегистрирован `CLAIM-EXE-ONE-BIG-PHASE-C-NEW-CHAT-MEMO-20260401`.
+
+## Текущая задача (2026-04-01, phase-b docs sync after runtime implementation)
+- [x] Синхронизированы канонические execution-docs после runtime-реализации `Phase B`:
+  - обновлён `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_B_IMPLEMENTATION_PLAN.md`:
+    - добавлен статусный срез `done / in_progress / guard_active`;
+    - обновлены `version/last_updated/last_verified`.
+  - обновлён `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_B_EXECUTION_BOARD.md`:
+    - добавлен срез реализации на `2026-04-01`;
+    - зафиксированы runtime-closure и remaining хвосты;
+    - обновлена версия документа.
+  - обновлён `docs/07_EXECUTION/ONE_BIG_PHASE/02_PHASE_B_GOVERNED_CORE_AND_TECHMAP.md`:
+    - добавлен статус фазы на `2026-04-01`;
+    - обновлены даты верификации и версия.
+  - обновлён `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`:
+    - зафиксирована активная точка входа после parked-решения `Phase A`;
+    - текущий старт перенесён на `Phase B` пакет (`02_PHASE_B`, implementation plan, execution board);
+    - правило исполнения скорректировано под parked-режим `Phase A`.
+  - обновлён `docs/DOCS_MATRIX.md`:
+    - выровнены даты claim-верификации для `INDEX` и `Phase B` пакета;
+    - обновлена версия матрицы.
+- [x] Выполнены обязательные проверки docs:
+  - `pnpm lint:docs` — зелёный;
+  - `pnpm lint:docs:matrix:strict` — зелёный.
+- [x] Синхронизирован статус чеклистов `Phase B` с execution-board:
+  - в `PHASE_B_IMPLEMENTATION_PLAN.md` чекбоксы отмечены по фактическому состоянию `done/in_progress`;
+  - в `02_PHASE_B_GOVERNED_CORE_AND_TECHMAP.md` отмечены закрытые пункты и оставлены открытые хвосты (`result`, `routing`, пользовательский explainability-сценарий).
+
+## Текущая задача (2026-04-01, phase-b implementation completion)
+- [x] Доведён следующий слой реализации `Phase B` как единого governed runtime-контура:
+  - `TechMapWorkflowOrchestratorService` переведён в slot-driven режим ветвления:
+    - блокировка веток теперь учитывает `required slot families`, а не только общий флаг clarify;
+    - trust specialization учитывается как gate для веток и composition decision;
+    - policy decisions и summary синхронизированы с trust gate (`allow/block/defer`) и blocked disclosure.
+- [x] `TechMapService` расширен до полного workflow-пакета в create/resume:
+  - в `workflowSnapshot/workflow_snapshot` добавлен `workflow_mode` (`create|resume|rebuild`);
+  - `workflowOrchestration` теперь пересобирается с branch trust + trust specialization из runtime adoption, когда они доступны;
+  - добавлен `workflowExplainability/workflow_explainability`:
+    - readiness/verdict/publication state
+    - explainability window (`clarification|analysis|result`)
+    - blocked/partial/composable reasons
+    - source slots (`missing_must`, `clarify_items`, `gaps`)
+    - trust gate summary
+    - deviation summary
+    - next actions;
+  - `executionLoopSummary` обогащён target context:
+    - `target_yield_t_ha`
+    - `actual_yield_t_ha`
+    - `baseline_yield_t_ha`
+    - `yield_delta_t_ha`
+- [x] `getRuntimeAdoptionSnapshot` теперь возвращает те же governed сущности ядра:
+  - `workflow_orchestration`
+  - `workflow_snapshot`
+  - `execution_loop_summary`
+  - `workflow_explainability`
+  Это убирает разрыв между create/resume runtime и explainability-read path.
+- [x] `ResponseComposerService` синхронизирован с новым explainability-контрактом:
+  - в summary добавлен explainability suffix (`window`, counts blocked/partial reasons);
+  - это удерживает правило: текст чата является производным от структурированного backend-результата.
+- [x] `SupervisorAgent` и forensics intake теперь прокидывают тех же governed runtime-сущности в structured metadata:
+  - `workflow_snapshot`
+  - `execution_loop_summary`
+  - `workflow_explainability`
+  - trust/orchestration payload остаются в том же semantic кадре.
+- [x] Проверка реализации:
+  - `pnpm --filter api test -- src/modules/tech-map/tech-map-workflow-orchestrator.service.spec.ts src/modules/tech-map/tech-map.service.spec.ts src/modules/rai-chat/composer/response-composer.service.spec.ts`
+  - `pnpm --filter api test -- --runInBand src/modules/rai-chat/supervisor-agent.service.spec.ts`
+  - `pnpm --filter api test -- src/modules/rai-chat/runtime/runtime-spine.integration.spec.ts`
+  - все прогоны зелёные.
+
+## Текущая задача (2026-04-01, phase-b runtime implementation)
+- [x] В `apps/api` выполнена практическая реализация ядра `Phase B` для create/resume контура Техкарты:
+  - `TechMapService` теперь собирает структурированный governed workflow snapshot прямо в ответе `createDraftStub/resumeDraftClarify`.
+  - в ответ добавлены оба контракта snapshot:
+    - `workflowSnapshot` (camelCase)
+    - `workflow_snapshot` (snake_case)
+  - snapshot включает:
+    - `workflow_id`, `draft_id`
+    - `readiness`, `workflow_verdict`, `publication_state`
+    - `missing_must`, `clarify_batch`, `workflow_resume_state`
+    - `workflow_orchestration`, `trust_specialization`
+    - `next_actions`
+- [x] Устранён разрыв между clarify-ответом и runtime adoption:
+  - в governed-ответ теперь подтягиваются:
+    - `trustSpecialization`
+    - `variantComparisonReport`
+    - `expertReview`
+  - источником остаётся canonical/runtime adoption сборка через `TECH_MAP_CANONICAL_DRAFT_INCLUDE` и `buildTechMapRuntimeAdoptionSnapshot`.
+- [x] Добавлен backend-объект execution loop:
+  - в `GenerateTechMapDraft` результат добавлены:
+    - `executionLoopSummary`
+    - `execution_loop_summary`
+  - summary фиксирует:
+    - `scope`
+    - `tech_map_ref`
+    - `execution_state`
+    - `deviation_state`
+    - `result_state`
+    - `blocking_gaps`
+    - `evidence_refs`
+  - это замыкает контур `tech map -> execution/deviation/result` на уровне machine-readable backend ответа.
+- [x] `ResponseComposerService` обновлён под новый runtime-контракт:
+  - добавлен fallback-чтение из `workflow_snapshot`, если отсутствуют camelCase-поля;
+  - в summary теперь отображается статус execution loop.
+- [x] Тестовая фиксация:
+  - расширен `tech-map.service.spec.ts` проверками snapshot и execution loop;
+  - добавлен fallback-сценарий в `response-composer.service.spec.ts`;
+  - пройдены целевые тесты `tech-map`, `response-composer`, `agro-tools`, `agronom-agent`.
+
+## Текущая задача (2026-03-31, phase-b execution packet)
+- [x] `Phase A` зафиксирована как припаркованный checkpoint, а следующий активный execution-фокус перенесён на `Phase B`.
+- [x] Для `Phase B` собран первый рабочий execution-пакет уровня управления:
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_B_IMPLEMENTATION_PLAN.md`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_B_EXECUTION_BOARD.md`
+  - обновлены `docs/07_EXECUTION/ONE_BIG_PHASE/02_PHASE_B_GOVERNED_CORE_AND_TECHMAP.md`
+  - обновлён `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
+  - обновлён `docs/DOCS_MATRIX.md`
+- [x] Этот пакет теперь фиксирует:
+  - подфазы `B0–B4`
+  - порядок исполнения внутри `Phase B`
+  - явную границу между `Phase B`, `Phase C` и `Phase D`
+  - критерий завершения `Phase B`
+  - стартовый board со строками `open / in_progress / guard_active / done`
+- [x] Практический эффект:
+  - `Phase B` больше не читается как общий лозунг про governed core, а как конкретный execution-контур;
+  - следующая работа может идти по board-строкам без возврата к новому общему audit;
+  - удержан guardrail против расползания `Phase B` в `minimal web` и `self-host pilot`.
+
 ## Текущая задача (2026-03-30, priority synthesis)
 - [x] Для внешнего хвоста `Phase A` собран ready-to-send owner outreach packet.
   - добавлен root generator:

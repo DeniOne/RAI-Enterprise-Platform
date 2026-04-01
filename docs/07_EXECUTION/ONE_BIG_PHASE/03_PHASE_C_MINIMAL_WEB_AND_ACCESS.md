@@ -3,13 +3,13 @@ id: DOC-EXE-ONE-BIG-PHASE-C-MINIMAL-WEB-20260330
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
-last_updated: 2026-03-30
+last_updated: 2026-04-01
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-C-MINIMAL-WEB-20260330
 claim_status: asserted
 verified_by: manual
-last_verified: 2026-03-30
+last_verified: 2026-04-01
 evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md;docs/07_EXECUTION/RAI_EP_PRIORITY_SYNTHESIS_MASTER_REPORT.md;docs/07_EXECUTION/WEB_CHAT_FEASIBILITY_AND_IMPLEMENTATION_PLAN_2026-03-15.md;apps/web/app;apps/web/components/ai-chat;apps/web/app/api/ai-chat/route.ts
 ---
 # Phase C — Minimal Web And Access
@@ -18,9 +18,13 @@ evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md;docs/07_EXECUTION/RAI_EP
 id: CLAIM-EXE-ONE-BIG-PHASE-C-MINIMAL-WEB-20260330
 status: asserted
 verified_by: manual
-last_verified: 2026-03-30
+last_verified: 2026-04-01
 
 Это подфаза, где `web` перестаёт быть широкой витриной и становится простым рабочим входом в ядро продукта.
+
+Для конкретного implementation-пакета использовать также [PHASE_C_IMPLEMENTATION_PLAN.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_C_IMPLEMENTATION_PLAN.md).
+
+Для статусов строк и exit-критериев использовать также [PHASE_C_EXECUTION_BOARD.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_C_EXECUTION_BOARD.md).
 
 ## 1. Цель подфазы
 

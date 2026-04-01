@@ -37,6 +37,7 @@ export interface SeasonSummary {
 export interface FrontOfficeThreadMessageDto {
   id: string;
   threadId: string;
+  channel?: "telegram" | "web_chat" | "internal";
   direction: "inbound" | "outbound";
   messageText: string;
   createdAt: string;
@@ -51,7 +52,12 @@ export interface FrontOfficeThreadMessageDto {
   deliveryStatus?: "RECEIVED" | "SENT" | "SKIPPED" | "FAILED";
   sourceMessageId?: string | null;
   chatId?: string | null;
-  metadata?: Record<string, unknown> | null;
+  metadata?:
+    | ({
+        explainabilitySummary?: string | null;
+        evidenceCount?: number;
+      } & Record<string, unknown>)
+    | null;
   evidence?: unknown[] | null;
 }
 
@@ -213,9 +219,22 @@ export const frontOfficeApi = {
       `/front-office/threads/${encodeURIComponent(threadKey)}`,
       token,
     ),
-  getThreadMessages: (threadKey: string, token?: string) =>
+  getThreadMessages: (
+    threadKey: string,
+    token?: string,
+    options?: { afterId?: string; limit?: number },
+  ) =>
     fetchWithAuth(
-      `/front-office/threads/${encodeURIComponent(threadKey)}/messages`,
+      `/front-office/threads/${encodeURIComponent(threadKey)}/messages${
+        options?.afterId || options?.limit
+          ? `?${new URLSearchParams({
+              ...(options.afterId ? { afterId: options.afterId } : {}),
+              ...(typeof options.limit === "number"
+                ? { limit: String(options.limit) }
+                : {}),
+            }).toString()}`
+          : ""
+      }`,
       token,
     ),
   getDraft: (id: string, token?: string) =>
@@ -400,6 +419,46 @@ export const frontOfficeApi = {
 };
 
 export const externalFrontOfficeApi = {
+  getThreadMessages: (
+    threadKey: string,
+    token?: string,
+    options?: { afterId?: string; limit?: number },
+  ) =>
+    fetchWithAuth(
+      `${EXTERNAL_FRONT_OFFICE_API_BASE_PATH}/threads/${encodeURIComponent(threadKey)}/messages${
+        options?.afterId || options?.limit
+          ? `?${new URLSearchParams({
+              ...(options.afterId ? { afterId: options.afterId } : {}),
+              ...(typeof options.limit === "number"
+                ? { limit: String(options.limit) }
+                : {}),
+            }).toString()}`
+          : ""
+      }`,
+      token,
+    ),
+  intakeMessage: (
+    payload: {
+      messageText: string;
+      threadExternalId?: string;
+      dialogExternalId?: string;
+      sourceMessageId?: string;
+      route?: string;
+    },
+    token?: string,
+  ) =>
+    fetchWithAuth(`${EXTERNAL_FRONT_OFFICE_API_BASE_PATH}/intake/message`, token, {
+      method: "POST",
+      headers: {
+        "Idempotency-Key": buildIdempotencyKey("fo-external-intake", [
+          payload.threadExternalId ?? null,
+          payload.dialogExternalId ?? null,
+          payload.sourceMessageId ?? null,
+          payload.messageText,
+        ]),
+      },
+      body: JSON.stringify(payload),
+    }),
   replyToThread: (threadKey: string, messageText: string, token?: string) =>
     fetchWithAuth(
       `${EXTERNAL_FRONT_OFFICE_API_BASE_PATH}/threads/${encodeURIComponent(threadKey)}/reply`,

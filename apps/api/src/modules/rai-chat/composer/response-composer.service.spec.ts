@@ -177,6 +177,171 @@ describe("ResponseComposerService", () => {
     expect(response.text).toContain("Variant comparison single-variant.");
   });
 
+  it("читает workflow_snapshot и execution_loop_summary как fallback контракт", async () => {
+    const response = await service.buildResponse({
+      request: {
+        message: "собери черновик техкарты",
+        threadId: "th-techmaps-snapshot-fallback",
+        workspaceContext: { route: "/consulting/techmaps" },
+      },
+      executionResult: {
+        executedTools: [
+          {
+            name: RaiToolName.GenerateTechMapDraft,
+            result: {
+              workflow_snapshot: {
+                workflow_id: "tech-map:draft-snake",
+                draft_id: "draft-snake",
+                readiness: "S2_CONTEXTUALIZED",
+                workflow_verdict: "PARTIAL",
+                publication_state: "WORKING_DRAFT",
+                missing_must: ["soil_profile"],
+                clarify_batch: {
+                  mode: "MULTI_STEP",
+                  status: "OPEN",
+                  resume_token:
+                    "resume:tech-map:draft-snake:clarify:draft-snake:soil_profile",
+                },
+                workflow_resume_state: {
+                  resume_from_phase: "MISSING_CONTEXT_TRIAGE",
+                  external_recheck_required: true,
+                },
+                workflow_orchestration: {
+                  summary: "Workflow spine INTAKE -> TRIAGE.",
+                  composition_gate: {
+                    can_compose: false,
+                    reason: "trust_gate_pending",
+                  },
+                },
+                trust_specialization: {
+                  composition_gate: {
+                    can_compose: false,
+                    reason: "trust_gate_pending",
+                    disclosure: ["trust_gate_pending"],
+                  },
+                  blocked_disclosure: ["soil_profile_missing"],
+                },
+                next_actions: ["Закрыть soil_profile"],
+              },
+              execution_loop_summary: {
+                scope: {
+                  company_id: "company-1",
+                  field_id: "field-1",
+                  season_id: "season-1",
+                  crop_code: "rapeseed",
+                  workflow_id: "tech-map:draft-snake",
+                },
+                tech_map_ref: {
+                  draft_id: "draft-snake",
+                  workflow_id: "tech-map:draft-snake",
+                },
+                execution_state: {
+                  status: "PARTIAL_HISTORY",
+                  has_execution_history: true,
+                  has_past_outcomes: false,
+                  has_materialized_operations: true,
+                },
+                deviation_state: {
+                  status: "SCOPED",
+                  scope_consistent: true,
+                  blocking_gaps: [],
+                },
+                result_state: {
+                  status: "PARTIAL",
+                  relation_to_targets: "BASELINE_ONLY",
+                  summary: "Result stage частичный",
+                },
+                blocking_gaps: [],
+                evidence_refs: ["audit:1"],
+              },
+            },
+          },
+        ],
+      } as any,
+      recallResult: {
+        recall: { items: [] },
+        profile: {},
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-techmaps-snapshot-fallback",
+      threadId: "th-techmaps-snapshot-fallback",
+      companyId: "company-1",
+    });
+
+    expect(response.text).toContain("Черновик техкарты создан: draft-snake.");
+    expect(response.text).toContain("Готовность S2_CONTEXTUALIZED, verdict PARTIAL.");
+    expect(response.text).toContain("Batch MULTI_STEP/OPEN");
+    expect(response.text).toContain(
+      "Resume phase MISSING_CONTEXT_TRIAGE, recheck required.",
+    );
+    expect(response.text).toContain("Workflow spine INTAKE -> TRIAGE.");
+    expect(response.text).toContain(
+      "Композиция заблокирована: trust_gate_pending.",
+    );
+    expect(response.text).toContain(
+      "Trust specialization: composition-blocked.",
+    );
+    expect(response.text).toContain(
+      "Execution loop PARTIAL_HISTORY/SCOPED/PARTIAL.",
+    );
+  });
+
+  it("показывает explainability window и причины из workflow_explainability", async () => {
+    const response = await service.buildResponse({
+      request: {
+        message: "собери черновик техкарты",
+        threadId: "th-techmaps-explainability",
+        workspaceContext: { route: "/consulting/techmaps" },
+      },
+      executionResult: {
+        executedTools: [
+          {
+            name: RaiToolName.GenerateTechMapDraft,
+            result: {
+              draftId: "draft-explain-1",
+              readiness: "S2_MINIMUM_COMPUTABLE",
+              workflowVerdict: "PARTIAL",
+              workflow_explainability: {
+                readiness: "S2_MINIMUM_COMPUTABLE",
+                workflow_verdict: "PARTIAL",
+                publication_state: "WORKING_DRAFT",
+                explainability_window: "analysis",
+                why: {
+                  blocked_reasons: ["missing_must:soil_profile"],
+                  partial_reasons: ["workflow_verdict_partial", "result_stage_partial"],
+                  composable_reasons: [],
+                },
+                source_slots: {
+                  missing_must: ["soil_profile"],
+                  clarify_items: ["soil_profile"],
+                  gaps: ["soil_profile"],
+                },
+                trust_gate: null,
+                deviation_summary: {
+                  status: "BLOCKED_BY_CONTEXT",
+                  scope_consistent: true,
+                  blocking_gaps: ["soil_profile"],
+                },
+                next_actions: ["Закрыть soil_profile"],
+              },
+            },
+          },
+        ],
+      } as any,
+      recallResult: {
+        recall: { items: [] },
+        profile: {},
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-techmaps-explainability",
+      threadId: "th-techmaps-explainability",
+      companyId: "company-1",
+    });
+
+    expect(response.text).toContain("Explainability window analysis.");
+    expect(response.text).toContain("Blocked reasons 1, partial reasons 2.");
+  });
+
   it("показывает expert review publication chain в summary техкарты", async () => {
     const response = await service.buildResponse({
       request: {

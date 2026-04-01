@@ -218,6 +218,8 @@ function main() {
   const a3 = readJson(A3_EVAL_SUMMARY_JSON);
   const a4 = readJson(A4_HANDOFF_STATUS_JSON);
   const a5 = readJson(A5_STATUS_JSON);
+  const a1Tail = a1.blockersToNextTarget || [];
+  const a1TailRefs = a1Tail.map((item) => item.referenceId);
 
   const a0State = fileExists(A0_RULES_DOC) && fileExists(A0_DAILY_DOC) ? "done" : "repo_side_incomplete";
 
@@ -277,7 +279,10 @@ function main() {
       label: "legal / privacy / operator / residency",
       state: a1State,
       evidence: `[phase-a1-status.md](/root/RAI_EP/var/compliance/phase-a1-status.md)`,
-      nextAction: "начать реальный intake по `ELP-20260328-01`, затем вести первую волну сверху вниз",
+      nextAction:
+        a1Tail.length > 0
+          ? `добивать remaining legal tail \`${a1TailRefs.join(", ")}\` до \`GO\`, начиная с \`${a1Tail[0].referenceId}\``
+          : "удерживать legal verdict и accepted evidence без drift",
     },
     {
       id: "A2",

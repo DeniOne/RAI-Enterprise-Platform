@@ -128,6 +128,25 @@ describe("TechMapService", () => {
       "COMPOSITION",
     ]);
     expect(result.workflowOrchestration?.summary).toContain("Workflow spine");
+    expect(result.workflowSnapshot?.workflow_id).toBe("tech-map:tm-1");
+    expect(result.workflow_snapshot?.draft_id).toBe("tm-1");
+    expect(result.workflowSnapshot?.workflow_mode).toBe("resume");
+    expect(result.workflowSnapshot?.missing_must).toEqual(result.missingMust);
+    expect(result.workflowExplainability?.explainability_window).toBe(
+      "clarification",
+    );
+    expect(result.workflow_explainability?.source_slots.missing_must).toEqual(
+      result.missingMust,
+    );
+    expect(result.executionLoopSummary?.scope.workflow_id).toBe("tech-map:tm-1");
+    expect(result.execution_loop_summary?.tech_map_ref.draft_id).toBe("tm-1");
+    expect(result.executionLoopSummary?.execution_state.status).toBe("NO_HISTORY");
+    expect(result.executionLoopSummary?.deviation_state.status).toBe(
+      "BLOCKED_BY_CONTEXT",
+    );
+    expect(
+      result.executionLoopSummary?.result_state.target_context.target_yield_t_ha,
+    ).toBe(7);
     expect(prismaMock.techMap.findFirst).toHaveBeenCalled();
   });
 

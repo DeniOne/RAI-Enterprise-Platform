@@ -1708,18 +1708,26 @@ export class SupervisorAgent {
       return params.executionResult;
     }
 
-    const clarifyLifecycle = this.extractTechMapClarifyLifecycle(
+    const workflowRuntimePayload = this.extractTechMapWorkflowRuntimePayload(
       params.executionResult.agentExecution.structuredOutput,
     );
     const structuredOutputs = [
       ...(params.executionResult.agentExecution.structuredOutputs ?? []),
     ];
-    if (clarifyLifecycle) {
+    if (workflowRuntimePayload) {
       structuredOutputs.push({
         ...params.executionResult.agentExecution.structuredOutput,
-        techMapClarifyBatch: clarifyLifecycle.clarifyBatch,
-        techMapWorkflowResumeState: clarifyLifecycle.workflowResumeState,
-        techMapClarifyAuditTrail: clarifyLifecycle.clarifyAuditTrail,
+        techMapClarifyBatch: workflowRuntimePayload.clarifyBatch,
+        techMapWorkflowResumeState: workflowRuntimePayload.workflowResumeState,
+        techMapClarifyAuditTrail: workflowRuntimePayload.clarifyAuditTrail,
+        techMapWorkflowSnapshot: workflowRuntimePayload.workflowSnapshot,
+        techMapExecutionLoopSummary: workflowRuntimePayload.executionLoopSummary,
+        techMapWorkflowExplainability:
+          workflowRuntimePayload.workflowExplainability,
+        techMapWorkflowOrchestration:
+          workflowRuntimePayload.workflowOrchestration,
+        techMapTrustSpecialization:
+          workflowRuntimePayload.trustSpecialization,
       });
     }
 
@@ -1728,11 +1736,20 @@ export class SupervisorAgent {
       structuredOutput: {
         ...params.executionResult.agentExecution.structuredOutput,
         techMapSemanticFrame: techMapFrame,
-        ...(clarifyLifecycle
+        ...(workflowRuntimePayload
           ? {
-              techMapClarifyBatch: clarifyLifecycle.clarifyBatch,
-              techMapWorkflowResumeState: clarifyLifecycle.workflowResumeState,
-              techMapClarifyAuditTrail: clarifyLifecycle.clarifyAuditTrail,
+              techMapClarifyBatch: workflowRuntimePayload.clarifyBatch,
+              techMapWorkflowResumeState: workflowRuntimePayload.workflowResumeState,
+              techMapClarifyAuditTrail: workflowRuntimePayload.clarifyAuditTrail,
+              techMapWorkflowSnapshot: workflowRuntimePayload.workflowSnapshot,
+              techMapExecutionLoopSummary:
+                workflowRuntimePayload.executionLoopSummary,
+              techMapWorkflowExplainability:
+                workflowRuntimePayload.workflowExplainability,
+              techMapWorkflowOrchestration:
+                workflowRuntimePayload.workflowOrchestration,
+              techMapTrustSpecialization:
+                workflowRuntimePayload.trustSpecialization,
             }
           : {}),
       },
@@ -1743,12 +1760,17 @@ export class SupervisorAgent {
     return params.executionResult;
   }
 
-  private extractTechMapClarifyLifecycle(
+  private extractTechMapWorkflowRuntimePayload(
     structuredOutput: Record<string, unknown>,
   ): {
     clarifyBatch: Record<string, unknown> | null;
     workflowResumeState: Record<string, unknown> | null;
     clarifyAuditTrail: Record<string, unknown>[] | null;
+    workflowSnapshot: Record<string, unknown> | null;
+    executionLoopSummary: Record<string, unknown> | null;
+    workflowExplainability: Record<string, unknown> | null;
+    workflowOrchestration: Record<string, unknown> | null;
+    trustSpecialization: Record<string, unknown> | null;
   } | null {
     const data =
       structuredOutput && typeof structuredOutput.data === "object"
@@ -1761,8 +1783,47 @@ export class SupervisorAgent {
     const clarifyAuditTrail = this.extractObjectArray(
       data?.clarifyAuditTrail ?? structuredOutput.clarifyAuditTrail,
     );
+    const workflowSnapshot = this.extractObject(
+      data?.workflowSnapshot ??
+        data?.workflow_snapshot ??
+        structuredOutput.workflowSnapshot ??
+        structuredOutput.workflow_snapshot,
+    );
+    const executionLoopSummary = this.extractObject(
+      data?.executionLoopSummary ??
+        data?.execution_loop_summary ??
+        structuredOutput.executionLoopSummary ??
+        structuredOutput.execution_loop_summary,
+    );
+    const workflowExplainability = this.extractObject(
+      data?.workflowExplainability ??
+        data?.workflow_explainability ??
+        structuredOutput.workflowExplainability ??
+        structuredOutput.workflow_explainability,
+    );
+    const workflowOrchestration = this.extractObject(
+      data?.workflowOrchestration ??
+        data?.workflow_orchestration ??
+        structuredOutput.workflowOrchestration ??
+        structuredOutput.workflow_orchestration,
+    );
+    const trustSpecialization = this.extractObject(
+      data?.trustSpecialization ??
+        data?.trust_specialization ??
+        structuredOutput.trustSpecialization ??
+        structuredOutput.trust_specialization,
+    );
 
-    if (!clarifyBatch && !workflowResumeState && !clarifyAuditTrail) {
+    if (
+      !clarifyBatch &&
+      !workflowResumeState &&
+      !clarifyAuditTrail &&
+      !workflowSnapshot &&
+      !executionLoopSummary &&
+      !workflowExplainability &&
+      !workflowOrchestration &&
+      !trustSpecialization
+    ) {
       return null;
     }
 
@@ -1770,6 +1831,11 @@ export class SupervisorAgent {
       clarifyBatch,
       workflowResumeState,
       clarifyAuditTrail,
+      workflowSnapshot,
+      executionLoopSummary,
+      workflowExplainability,
+      workflowOrchestration,
+      trustSpecialization,
     };
   }
 

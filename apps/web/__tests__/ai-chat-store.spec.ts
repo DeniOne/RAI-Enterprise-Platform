@@ -564,6 +564,159 @@ describe('AiChatStore UX modes', () => {
         ]);
     });
 
+    it('rehydrates thread, pending clarification and work windows after reload', async () => {
+        const persistedWindow = {
+            windowId: 'win-restore',
+            originMessageId: 'msg-origin',
+            agentRole: 'agronomist',
+            type: 'context_acquisition',
+            category: 'clarification',
+            priority: 85,
+            mode: 'panel' as const,
+            title: 'Добор контекста',
+            status: 'needs_user_input' as const,
+            payload: {
+                intentId: 'tech_map_draft',
+                summary: 'Нужно выбрать поле и сезон',
+                missingKeys: ['fieldRef', 'seasonRef'],
+            },
+            actions: [],
+            isPinned: false,
+        };
+
+        const persistedSnapshot = JSON.stringify({
+            state: {
+                activeSessionId: 'chat-restore',
+                sessions: [
+                    {
+                        sessionId: 'chat-restore',
+                        title: 'Составь техкарту',
+                        updatedAt: '2026-04-01T10:00:00.000Z',
+                        threadId: 'thread-restore',
+                        messages: [
+                            {
+                                id: 'msg-origin',
+                                role: 'user',
+                                content: 'Составь техкарту',
+                                timestamp: '2026-04-01T10:00:00.000Z',
+                            },
+                        ],
+                        signals: [],
+                        workWindows: [persistedWindow],
+                        activeWindowId: 'win-restore',
+                        collapsedWindowIds: [],
+                        pendingClarification: {
+                            active: true,
+                            windowId: 'win-restore',
+                            intentId: 'tech_map_draft',
+                            agentRole: 'agronomist',
+                            summary: 'Нужно выбрать поле и сезон',
+                            autoResume: true,
+                            items: [
+                                { key: 'fieldRef', label: 'Поле', required: true, reason: 'field', sourcePriority: ['workspace'] },
+                                { key: 'seasonRef', label: 'Сезон', required: true, reason: 'season', sourcePriority: ['workspace'] },
+                            ],
+                            missingKeys: ['fieldRef', 'seasonRef'],
+                            collectedContext: {},
+                        },
+                    },
+                ],
+                messages: [
+                    {
+                        id: 'msg-origin',
+                        role: 'user',
+                        content: 'Составь техкарту',
+                        timestamp: '2026-04-01T10:00:00.000Z',
+                    },
+                ],
+                threadId: 'thread-restore',
+                panelMode: 'dock',
+                widgetsOpen: true,
+                chatWidth: 420,
+                readSignalIds: [],
+                signals: [],
+                deriveSignalsFromWindows: true,
+                legacyWidgetMigrationEnabled: true,
+                workWindows: [persistedWindow],
+                activeWindowId: 'win-restore',
+                collapsedWindowIds: [],
+                pendingClarification: {
+                    active: true,
+                    windowId: 'win-restore',
+                    intentId: 'tech_map_draft',
+                    agentRole: 'agronomist',
+                    summary: 'Нужно выбрать поле и сезон',
+                    autoResume: true,
+                    items: [
+                        { key: 'fieldRef', label: 'Поле', required: true, reason: 'field', sourcePriority: ['workspace'] },
+                        { key: 'seasonRef', label: 'Сезон', required: true, reason: 'season', sourcePriority: ['workspace'] },
+                    ],
+                    missingKeys: ['fieldRef', 'seasonRef'],
+                    collectedContext: {},
+                },
+            },
+            version: 0,
+        });
+
+        useAiChatStore.setState({
+            activeSessionId: 'chat-default',
+            sessions: [
+                {
+                    sessionId: 'chat-default',
+                    title: 'Новый чат',
+                    updatedAt: '2026-04-01T09:00:00.000Z',
+                    threadId: null,
+                    messages: [],
+                    signals: [],
+                    workWindows: [],
+                    activeWindowId: null,
+                    collapsedWindowIds: [],
+                    pendingClarification: null,
+                },
+            ],
+            threadId: null,
+            messages: [],
+            signals: [],
+            workWindows: [],
+            activeWindowId: null,
+            collapsedWindowIds: [],
+            pendingClarification: null,
+        });
+
+        localStorage.setItem('rai-ai-chat-storage', persistedSnapshot);
+
+        await act(async () => {
+            await useAiChatStore.persist.rehydrate();
+        });
+
+        expect(useAiChatStore.getState().threadId).toBe('thread-restore');
+        expect(useAiChatStore.getState().pendingClarification).toEqual(
+            expect.objectContaining({
+                active: true,
+                windowId: 'win-restore',
+                missingKeys: ['fieldRef', 'seasonRef'],
+            }),
+        );
+        expect(useAiChatStore.getState().workWindows).toEqual([
+            expect.objectContaining({
+                windowId: 'win-restore',
+                type: 'context_acquisition',
+            }),
+        ]);
+
+        act(() => {
+            useAiChatStore.getState().dispatch('ROUTE_CHANGE');
+        });
+
+        expect(useAiChatStore.getState().threadId).toBe('thread-restore');
+        expect(useAiChatStore.getState().pendingClarification).toEqual(
+            expect.objectContaining({
+                active: true,
+                windowId: 'win-restore',
+            }),
+        );
+    });
+
     it('stores pending clarification and work window from assistant response', async () => {
         fetchMock.mockResolvedValue({
             ok: true,

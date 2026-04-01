@@ -625,6 +625,87 @@ export interface EmitAlertsResult {
   }>;
 }
 
+export interface TechMapWorkflowSnapshot {
+  workflow_id: string;
+  draft_id: string;
+  workflow_mode: "create" | "resume" | "rebuild";
+  readiness: TechMapContextReadiness;
+  workflow_verdict: TechMapWorkflowVerdict;
+  publication_state: TechMapPublicationState;
+  missing_must: string[];
+  clarify_batch?: TechMapClarifyBatch | null;
+  workflow_resume_state?: TechMapWorkflowResumeState | null;
+  workflow_orchestration?: TechMapWorkflowOrchestrationTrace | null;
+  trust_specialization?: TechMapGovernedTrustSpecialization | null;
+  next_actions: string[];
+}
+
+export interface TechMapWorkflowExplainabilityPayload {
+  readiness: TechMapContextReadiness;
+  workflow_verdict: TechMapWorkflowVerdict;
+  publication_state: TechMapPublicationState;
+  explainability_window: "clarification" | "analysis" | "result";
+  why: {
+    blocked_reasons: string[];
+    partial_reasons: string[];
+    composable_reasons: string[];
+  };
+  source_slots: {
+    missing_must: string[];
+    clarify_items: string[];
+    gaps: string[];
+  };
+  trust_gate: {
+    can_compose: boolean;
+    reason: string;
+    blocked_disclosure: string[];
+  } | null;
+  deviation_summary: {
+    status: "BLOCKED_BY_CONTEXT" | "NOT_AVAILABLE" | "SCOPED";
+    scope_consistent: boolean;
+    blocking_gaps: string[];
+  };
+  next_actions: string[];
+}
+
+export interface TechMapExecutionLoopSummary {
+  scope: {
+    company_id: string | null;
+    field_id: string | null;
+    season_id: string | null;
+    crop_code: "rapeseed" | "sunflower";
+    workflow_id: string;
+  };
+  tech_map_ref: {
+    draft_id: string;
+    workflow_id: string;
+  };
+  execution_state: {
+    status: "NO_HISTORY" | "PARTIAL_HISTORY" | "HISTORY_READY";
+    has_execution_history: boolean;
+    has_past_outcomes: boolean;
+    has_materialized_operations: boolean;
+  };
+  deviation_state: {
+    status: "BLOCKED_BY_CONTEXT" | "NOT_AVAILABLE" | "SCOPED";
+    scope_consistent: boolean;
+    blocking_gaps: string[];
+  };
+  result_state: {
+    status: "PARTIAL" | "READY";
+    relation_to_targets: "NOT_AVAILABLE" | "BASELINE_ONLY" | "TARGET_AND_DEVIATION";
+    summary: string;
+    target_context: {
+      target_yield_t_ha: number | null;
+      actual_yield_t_ha: number | null;
+      baseline_yield_t_ha: number | null;
+      yield_delta_t_ha: number | null;
+    };
+  };
+  blocking_gaps: string[];
+  evidence_refs: string[];
+}
+
 export interface GenerateTechMapDraftResult {
   draftId: string;
   status: "DRAFT";
@@ -644,6 +725,12 @@ export interface GenerateTechMapDraftResult {
   expertReview?: TechMapExpertReviewResult | null;
   trustSpecialization?: TechMapGovernedTrustSpecialization | null;
   variantComparisonReport?: TechMapVariantComparisonReport | null;
+  workflowSnapshot?: TechMapWorkflowSnapshot | null;
+  workflow_snapshot?: TechMapWorkflowSnapshot | null;
+  workflowExplainability?: TechMapWorkflowExplainabilityPayload | null;
+  workflow_explainability?: TechMapWorkflowExplainabilityPayload | null;
+  executionLoopSummary?: TechMapExecutionLoopSummary | null;
+  execution_loop_summary?: TechMapExecutionLoopSummary | null;
   gaps: TechMapGap[];
   tasks: string[];
   assumptions: string[];

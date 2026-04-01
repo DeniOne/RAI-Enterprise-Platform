@@ -1,6 +1,796 @@
 # Progress Report - Prisma, Agro Domain & RAI Chat Integration
 
+## 2026-04-01
+
+1. **Для `R3` добавлен machine-readable reviewed evidence contour** [DONE]:
+  - Добавлен новый script:
+    - `scripts/security-reviewed-evidence-status.cjs`
+  - Добавлены команды:
+    - `pnpm security:reviewed-evidence:status`
+    - `pnpm gate:security:reviewed-evidence`
+  - Введён repo-side input-контракт:
+    - `var/security/security-reviewed-evidence-input.json`
+  - Новый automation выпускает:
+    - `var/security/security-reviewed-evidence-status.json`
+    - `var/security/security-reviewed-evidence-status.md`
+  - Первый status зафиксировал честную картину:
+    - `CodeQL` и `Security Baseline` verified на текущем `main` head;
+    - `provenance` workflow baseline подтверждён через attestation step;
+    - `dependencyReview` и reviewer refs пока не замкнуты, поэтому `status=in_progress`, `verdict=reviewed_ci_evidence_loop_incomplete`.
+  - Практический эффект:
+    - `R3` больше не живёт как устный residual;
+    - у команды появился проверяемый repo-side контракт reviewed evidence loop;
+    - enforce-gate теперь падает по реальному пробелу (`dependencyReview`/reviewer refs), а не по размытым narrative-утверждениям.
+
+1. **Для `R3` добавлен restricted handoff packet для первого reviewer-backed цикла** [DONE]:
+  - Добавлен новый script:
+    - `scripts/security-reviewed-evidence-packet.cjs`
+  - Добавлена команда:
+    - `pnpm security:reviewed-evidence:packet`
+  - Новый packet выпускает:
+    - `var/security/security-reviewed-evidence-packet.json`
+    - `var/security/security-reviewed-evidence-packet.md`
+  - И одновременно собирает restricted evidence пакет:
+    - `../RAI_EP_RESTRICTED_EVIDENCE/security/2026-04-01/reviewed-ci-loop/REQUEST_PACKET.md`
+    - `../RAI_EP_RESTRICTED_EVIDENCE/security/2026-04-01/reviewed-ci-loop/REVIEW_DRAFT.md`
+    - `../RAI_EP_RESTRICTED_EVIDENCE/security/2026-04-01/reviewed-ci-loop/INDEX.md`
+  - Практический эффект:
+    - `R3` теперь имеет не только status-контур, но и готовый handoff-набор для reviewer/PR цикла;
+    - verified `CodeQL` и `Security Baseline` refs уже упакованы в request packet;
+    - первый `dependencyReview` цикл можно закрывать через конкретный restricted draft, а не через ручную импровизацию.
+
+1. **Для `R3` добавлен intake-automation для reviewer/PR metadata** [DONE]:
+  - Добавлен новый script:
+    - `scripts/security-reviewed-evidence-intake.cjs`
+  - Добавлена команда:
+    - `pnpm security:reviewed-evidence:intake`
+  - Интейк умеет обновлять:
+    - `reviewScope.reviewerRefs`
+    - `dependencyReview.prNumber`
+    - `dependencyReview.runId`
+    - `dependencyReview.reviewerRefs`
+    - `provenance.reviewerRefs`
+    - `mergeCommitSha`
+  - `prUrl/runUrl` выводятся автоматически из `repository.owner/name`.
+  - Практический эффект:
+    - после первого реального `PR-backed` цикла команде не нужно вручную править JSON-контракт;
+    - заполнение blocker-полей `R3` стало воспроизводимым CLI-процессом;
+    - путь `intake -> status -> gate` теперь полностью формализован.
+
+1. **Для `R3` добавлен PR lookup resolver под первый реальный dependency-review цикл** [DONE]:
+  - Добавлен новый script:
+    - `scripts/security-reviewed-evidence-pr-lookup.cjs`
+  - Добавлена команда:
+    - `pnpm security:reviewed-evidence:pr-lookup -- --pr-number=...`
+  - Resolver обращается к GitHub API и собирает:
+    - PR metadata (`state`, `merge_commit_sha`, `head/base refs`);
+    - GitHub reviews;
+    - соответствующий `Dependency Review` workflow run по `head_sha`.
+  - Дополнительно resolver строит готовую `intake` команду для заполнения `security-reviewed-evidence-input.json`.
+  - Практический эффект:
+    - после появления первого реального `PR` не нужно вручную искать `runId` и reviewer следы в UI;
+    - переход `PR -> run lookup -> intake -> status -> gate` становится управляемым и коротким;
+    - последний operational gap `R3` теперь упирается только в отсутствие самого PR-цикла, а не в отсутствие tooling.
+
+1. **Для всего residual workpack добавлен единый aggregated status/gate** [DONE]:
+  - Добавлен новый script:
+    - `scripts/post-big-phase-internal-residual-status.cjs`
+  - Добавлены команды:
+    - `pnpm security:post-big-phase:status`
+    - `pnpm gate:security:post-big-phase`
+  - Новый агрегатор собирает:
+    - `R1` из `var/security/security-audit-summary.json`
+    - `R2` из `var/security/workspace-secret-hygiene-inventory.json`
+    - `R3` из `var/security/security-reviewed-evidence-status.json`
+  - Выпущены:
+    - `var/security/post-big-phase-internal-residual-status.json`
+    - `var/security/post-big-phase-internal-residual-status.md`
+  - Практический эффект:
+    - состояние всего workpack теперь читается одной командой;
+    - машина и команда видят одинаковую картину: `R1=done`, `R2=done`, `R3=in_progress`;
+    - остаток больше не размазан по отдельным manifests и теперь сводится к одному реальному blocker-вердикту.
+
+1. **`ONE_BIG_PHASE/INDEX.md` синхронизирован с machine-readable residual entrypoint** [DONE]:
+  - Обновлён:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
+  - В индекс явно добавлены:
+    - `pnpm security:post-big-phase:status`
+    - `pnpm gate:security:post-big-phase`
+    - `var/security/post-big-phase-internal-residual-status.json`
+  - В секции текущего входа закреплено, что:
+    - `ONE_BIG_PHASE` закрыта по объёму `A-E`;
+    - внутренний cleanup ведётся отдельным residual workpack;
+    - текущая машинная картина residual-пакета равна `R1=done`, `R2=done`, `R3=in_progress`.
+  - Практический эффект:
+    - навигационный канон больше не заставляет искать residual-состояние по разрозненным документам;
+    - текущий operational entrypoint после закрытия `A-E` виден сразу из `INDEX.md`;
+  - команда и generated manifests теперь ссылаются на один и тот же residual status/gate контур.
+
+1. **Для residual handoff добавлен итоговый bundle-каталог** [DONE]:
+  - Добавлен новый script:
+    - `scripts/post-big-phase-internal-residual-bundle.cjs`
+  - Обновлена команда:
+    - `pnpm security:post-big-phase:prepare`
+  - Добавлен alias:
+    - `pnpm security:post-big-phase:bundle`
+  - `prepare` теперь дополнительно выпускает:
+    - `var/security/post-big-phase-internal-residual-bundle/MANIFEST.json`
+    - `var/security/post-big-phase-internal-residual-bundle/README.md`
+    - копии всех operator-facing артефактов внутри этого каталога.
+  - Практический эффект:
+    - весь residual handoff теперь можно передавать как один bundle, а не как список разрозненных файлов;
+    - bundle `README` задаёт человеческую верхнюю точку входа, а `MANIFEST.json` держит machine-readable состав вложений;
+    - `prepare` стал действительно полным entrypoint для сборки всего handoff-набора.
+
+1. **Для широкого execution-пути добавлен machine-readable PR prep** [DONE]:
+  - Добавлен новый script:
+    - `scripts/one-big-phase-wide-pr-prep.cjs`
+  - Добавлена команда:
+    - `pnpm execution:one-big-phase:wide-pr-prep`
+  - Выпущены артефакты:
+    - `var/execution/one-big-phase-wide-pr-prep.json`
+    - `var/execution/one-big-phase-wide-pr-prep.md`
+  - Генератор автоматически:
+    - читает текущее `git status --porcelain -z`;
+    - раскладывает changeset на секции `Phase B`, `Phase C`, `Phase D`, `Phase E`, residual `AppSec`, closeout/governance sync и `TECHMAP` repair;
+    - отдельно помечает local-only шум (`.codex`, `memory-bank/analytics/`) как исключение из широкого PR.
+  - Практический эффект:
+    - широкий `PR` теперь можно stage-ить по одному machine-readable пакету, а не по памяти;
+    - у команды есть готовые `branch_name`, `title`, `PR Body Outline` и список включаемых файлов;
+    - большой changeset стал `prepared` без unclassified-серой зоны.
+
+1. **Для широкого execution-пути добавлен operator-ready run card** [DONE]:
+  - Добавлен новый script:
+    - `scripts/one-big-phase-wide-pr-command-template.cjs`
+  - Добавлена команда:
+    - `pnpm execution:one-big-phase:wide-pr-run-card`
+  - Выпущены артефакты:
+    - `var/execution/one-big-phase-wide-pr-run-card.json`
+    - `var/execution/one-big-phase-wide-pr-run-card.md`
+    - `var/execution/one-big-phase-wide-pr-commands.template.sh`
+  - Практический эффект:
+    - из широкого prep-пакета теперь можно сразу переходить в branch/stage workflow;
+    - shell-template собирает один reproducible `git add` по всем классифицированным секциям и отдельно удерживает `.codex` и `memory-bank/analytics/` вне PR;
+    - команда получила короткую операторскую карточку для большого execution `PR`, а не только аналитический отчёт о составе changeset.
+
+1. **Для `R3` добавлен единый reconcile-оркестратор поверх lookup/intake/status/gate** [DONE]:
+  - Добавлен новый script:
+    - `scripts/security-reviewed-evidence-reconcile.cjs`
+  - Добавлены команды:
+    - `pnpm security:reviewed-evidence:reconcile -- --pr-number=...`
+    - `pnpm gate:security:reviewed-evidence:reconcile -- --pr-number=...`
+  - Новый automation:
+    - запускает `pr-lookup`;
+    - автоматически собирает reviewer refs и `Dependency Review` run;
+    - применяет `intake` при наличии полного PR-backed набора;
+    - затем пересобирает `status` и при необходимости пробует enforce-gate;
+    - выпускает `var/security/security-reviewed-evidence-reconcile.json|md`.
+  - Обновлены:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/POST_BIG_PHASE_INTERNAL_RESIDUAL_APPSEC_HYGIENE_WORKPACK_2026-04-01.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
+  - Практический эффект:
+    - `R3` больше не требует ручной склейки нескольких CLI-команд после появления первого PR;
+    - последний живой residual сводится к одному внешнему reviewer/PR событию, а не к нашему внутреннему orchestration debt;
+    - команда получает один reproducible machine-readable путь `PR -> reconcile -> gate`.
+
+1. **Исправлен wrapper `lint:docs`, чтобы он не падал ложноположительно на зелёном `doc-lint-matrix`** [DONE]:
+  - Обновлён:
+    - `scripts/lint-docs.cjs`
+  - Внутренний вызов matrix-линтера переведён с `execSync(...)` на `execFileSync(process.execPath, ...)`.
+  - Практический эффект:
+    - завершение `pnpm lint:docs` снова зависит от реальных ошибок документации, а не от сбоя shell-wrapper;
+    - проверка doc-канона после execution-изменений снова воспроизводима и честно зелёная при отсутствии ошибок.
+
+1. **Для всего residual-пакета добавлен верхнеуровневый reconcile-оркестратор** [DONE]:
+  - Добавлен новый script:
+    - `scripts/post-big-phase-internal-residual-reconcile.cjs`
+  - Добавлены команды:
+    - `pnpm security:post-big-phase:prepare`
+    - `pnpm security:post-big-phase:reconcile -- --pr-number=...`
+    - `pnpm gate:security:post-big-phase:reconcile -- --pr-number=...`
+  - Новый automation:
+    - запускает `security-reviewed-evidence-reconcile`;
+    - затем сразу пересчитывает `post-big-phase-internal-residual-status`;
+    - выпускает единый close-loop отчёт `var/security/post-big-phase-internal-residual-reconcile.json|md`.
+  - Обновлены:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/POST_BIG_PHASE_INTERNAL_RESIDUAL_APPSEC_HYGIENE_WORKPACK_2026-04-01.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
+  - Практический эффект:
+    - после появления первого реального PR пакет `R1/R2/R3` можно проверять одной верхнеуровневой командой;
+    - packet-level verdict больше не требует ручного перехода от `R3` к общему residual status;
+    - последний operational gap теперь сводится только к отсутствию внешнего reviewer-backed PR cycle.
+
+1. **Для packet-level reconcile добавлен `prepare`-режим без обязательного `PR`** [DONE]:
+  - Обновлён:
+    - `scripts/post-big-phase-internal-residual-reconcile.cjs`
+  - Добавлена команда:
+    - `pnpm security:post-big-phase:prepare`
+  - `prepare`-режим:
+    - не требует `--pr-number`;
+    - выпускает `var/security/post-big-phase-internal-residual-reconcile.json|md`;
+    - честно фиксирует `waiting_for_pr` как внешний blocker.
+  - Обновлены:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/POST_BIG_PHASE_INTERNAL_RESIDUAL_APPSEC_HYGIENE_WORKPACK_2026-04-01.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
+  - Практический эффект:
+    - packet-level handoff существует уже сейчас, даже до первого реального PR;
+    - команде больше не нужно помнить, почему reconcile пока нельзя полноценно запустить;
+    - внешний blocker переведён в machine-readable подготовительный статус, а не остаётся устной оговоркой.
+
+1. **`security:post-big-phase:prepare` обогащён текущим `R3` handoff packet** [DONE]:
+  - Обновлены:
+    - `scripts/security-reviewed-evidence-packet.cjs`
+    - `scripts/post-big-phase-internal-residual-reconcile.cjs`
+  - `prepare`-режим теперь:
+    - пересобирает `security-reviewed-evidence-packet`;
+    - включает в верхний reconcile-report `requestedReviewers`, `missingItems`, `packetPath`, `draftPath`;
+    - держит blocker и handoff в одном machine-readable артефакте.
+  - Обновлён:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/POST_BIG_PHASE_INTERNAL_RESIDUAL_APPSEC_HYGIENE_WORKPACK_2026-04-01.md`
+  - Практический эффект:
+    - верхний `waiting_for_pr` статус теперь сразу показывает, кому адресован handoff и чего именно не хватает;
+    - команде не нужно открывать отдельный `R3` packet, чтобы понять следующий operational шаг;
+    - packet-level report стал полноценной точкой передачи внешнего blocker-а.
+
+1. **`R3` handoff packet переведён в sandbox-safe readonly reuse mode** [DONE]:
+  - Обновлён:
+    - `scripts/security-reviewed-evidence-packet.cjs`
+  - Если restricted root недоступен на запись, generator:
+    - не падает на `EROFS/EACCES`, когда артефакты уже существуют;
+    - переиспользует existing restricted files;
+    - фиксирует это в report как `handoffReuseMode=readonly_existing_artifacts`.
+  - Обновлены:
+    - `scripts/post-big-phase-internal-residual-reconcile.cjs`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/POST_BIG_PHASE_INTERNAL_RESIDUAL_APPSEC_HYGIENE_WORKPACK_2026-04-01.md`
+  - Практический эффект:
+    - packet-level `prepare` больше не ломается из-за read-only среды;
+    - внешний blocker снова читается как отсутствие PR-backed cycle, а не как инфраструктурный сбой записи в restricted root;
+    - handoff остаётся воспроизводимым и честным даже в sandbox-режиме.
+
+1. **В packet-level reconcile добавлен `actionBundle` с готовыми командами** [DONE]:
+  - Обновлён:
+    - `scripts/post-big-phase-internal-residual-reconcile.cjs`
+  - Верхний report теперь включает:
+    - `prepareCommand`
+    - `reconcileCommandTemplate`
+    - `gateCommandTemplate`
+    - `prNumberPlaceholder`
+    - ссылки на handoff packet/draft
+  - Обновлён:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/POST_BIG_PHASE_INTERNAL_RESIDUAL_APPSEC_HYGIENE_WORKPACK_2026-04-01.md`
+  - Практический эффект:
+    - handoff стал не только описательным, но и сразу исполнимым;
+    - в момент появления PR не нужно вручную собирать команды из текста и разных артефактов;
+    - один packet-level JSON/MD теперь служит полноценным operational run card.
+
+1. **`actionBundle` расширен до operator-ready чеклиста** [DONE]:
+  - Обновлён:
+    - `scripts/post-big-phase-internal-residual-reconcile.cjs`
+  - Добавлены поля:
+    - `reviewedReconcileCommandTemplate`
+    - `reviewedGateCommandTemplate`
+    - `operatorChecklist`
+  - Обновлён:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/POST_BIG_PHASE_INTERNAL_RESIDUAL_APPSEC_HYGIENE_WORKPACK_2026-04-01.md`
+  - Практический эффект:
+    - верхний handoff теперь даёт не только шаблоны команд, но и короткую последовательность действий;
+    - оператору не нужно самому восстанавливать порядок шага `PR -> reconcile -> gate -> residual verdict`;
+    - packet-level report приблизился к формату готовой runbook-card.
+
+1. **Для residual-пакета добавлена отдельная compact run card** [DONE]:
+  - Добавлен новый script:
+    - `scripts/post-big-phase-internal-residual-run-card.cjs`
+  - Добавлена команда:
+    - `pnpm security:post-big-phase:run-card`
+  - Новый automation:
+    - пересобирает `prepare`;
+    - читает верхний reconcile-report;
+    - выпускает компактные `var/security/post-big-phase-internal-residual-run-card.json|md`.
+  - Обновлены:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/POST_BIG_PHASE_INTERNAL_RESIDUAL_APPSEC_HYGIENE_WORKPACK_2026-04-01.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
+  - Практический эффект:
+    - оператору больше не нужно открывать большой reconcile-отчёт ради следующего шага;
+    - команды, checklist, reviewers и handoff paths собраны в одном коротком артефакте;
+    - packet-level handoff стал ближе к готовой операционной карточке исполнения.
+
+1. **`security:post-big-phase:prepare` превращён в полный handoff-entrypoint** [DONE]:
+  - Обновлён:
+    - `package.json`
+  - Теперь `prepare`:
+    - выпускает reconcile-report;
+    - сразу же генерирует compact run card;
+    - сразу же выпускает PR template;
+    - больше не требует отдельных вызовов для operator-карточки и PR-handoff шаблона.
+  - `security:post-big-phase:run-card` и `security:post-big-phase:pr-template` сохранены как совместимые alias.
+  - Обновлён:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/POST_BIG_PHASE_INTERNAL_RESIDUAL_APPSEC_HYGIENE_WORKPACK_2026-04-01.md`
+  - Практический эффект:
+    - один entrypoint даёт весь handoff-пакет целиком;
+    - оператору не нужно помнить, какой из трёх prepare/run-card/pr-template запускать первым;
+    - workflow стал короче и устойчивее к путанице.
+
+1. **Для первого security-relevant цикла добавлен локальный PR-template generator** [DONE]:
+  - Добавлен новый script:
+    - `scripts/post-big-phase-internal-residual-pr-template.cjs`
+  - Добавлена команда:
+    - `pnpm security:post-big-phase:pr-template`
+  - Новый generator выпускает:
+    - `var/security/post-big-phase-internal-residual-pr-template.json`
+    - `var/security/post-big-phase-internal-residual-pr-template.md`
+  - В template включены:
+    - `title_template`
+    - `branch_hint`
+    - `requested_reviewers`
+    - `missing_items`
+    - готовый `PR Body Template`
+    - copy-paste команды reconcile/gate
+  - Обновлены:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/POST_BIG_PHASE_INTERNAL_RESIDUAL_APPSEC_HYGIENE_WORKPACK_2026-04-01.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
+  - Практический эффект:
+    - внешний blocker теперь сопровождается не только run card, но и готовым PR-handoff текстом;
+    - при создании первого PR не нужно руками собирать title/body/reviewer set из разных артефактов;
+    - packet-level handoff стал ближе к полностью готовому execution packet для внешнего шага.
+
+1. **Для полного handoff-пакета добавлен верхний index-артефакт** [DONE]:
+  - Добавлен новый script:
+    - `scripts/post-big-phase-internal-residual-handoff-index.cjs`
+  - Добавлена команда:
+    - `pnpm security:post-big-phase:index`
+  - `prepare` теперь также выпускает:
+    - `var/security/post-big-phase-internal-residual-handoff-index.json`
+    - `var/security/post-big-phase-internal-residual-handoff-index.md`
+  - В index собраны:
+    - entrypoints
+    - artifact paths
+    - tracks summary
+    - reviewers
+    - handoff packet refs
+  - Обновлены:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/POST_BIG_PHASE_INTERNAL_RESIDUAL_APPSEC_HYGIENE_WORKPACK_2026-04-01.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
+  - Практический эффект:
+    - у полного handoff-пакета появилась одна верхняя точка входа;
+    - оператору не нужно решать, какой из артефактов считать главным;
+    - пакет окончательно оформлен как связный набор материалов, а не как россыпь отдельных файлов.
+
+1. **Для reviewer-backed цикла добавлен shell command template** [DONE]:
+  - Добавлен новый script:
+    - `scripts/post-big-phase-internal-residual-command-template.cjs`
+  - `prepare` теперь также выпускает:
+    - `var/security/post-big-phase-internal-residual-commands.template.sh`
+  - В template уже зашиты:
+    - `reviewedReconcile`
+    - `reviewedGate`
+    - `reconcile`
+    - `gate`
+    - placeholder `PR_NUMBER`
+    - refs на handoff packet/draft
+  - Обновлён:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/POST_BIG_PHASE_INTERNAL_RESIDUAL_APPSEC_HYGIENE_WORKPACK_2026-04-01.md`
+  - Практический эффект:
+    - оператор получает не только JSON/MD материалы, но и готовую shell-заготовку для исполнения;
+    - после появления PR остаётся подставить номер и выполнить команды по порядку;
+    - внешний цикл становится ещё ближе к one-shot execution.
+
+1. **Снят общий doc-lint drift в `docs/00_STRATEGY/TECHMAP`** [DONE]:
+  - В 8 `TECHMAP`-документов добавлен минимальный валидный frontmatter:
+    - `RAPESEED_CANONICAL_RULE_REGISTRY.md`
+    - `RAPESEED_DOMAIN_ONTOLOGY.md`
+    - `Исследование №1...`
+    - `Исследование №2...`
+    - `Исследование №3...`
+    - `Исследование №4...`
+    - `Исследование №5...`
+    - `Промт для исследования.md`
+  - Выбраны валидные поля:
+    - `layer: Strategy`
+    - `type: Vision`
+    - `status: approved`
+    - `version: 1.0.0`
+  - Проверки:
+    - `pnpm lint:docs` — green
+    - `pnpm lint:docs:matrix:strict` — green
+  - Практический эффект:
+    - общий docs-контур снова зелёный и больше не перекрывает наши execution-артефакты посторонним historical drift;
+    - residual AppSec workpack теперь живёт в чистом репозитории без шумового blocker-а из `TECHMAP`;
+    - дальнейшая работа снова опирается на честный green doc baseline.
+
+1. **Открыт post-big-phase workpack для внутреннего residual `AppSec / hygiene`** [DONE]:
+  - Создан новый claim-managed execution-документ:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/POST_BIG_PHASE_INTERNAL_RESIDUAL_APPSEC_HYGIENE_WORKPACK_2026-04-01.md`
+  - В отдельный follow-on контур вынесены три трека:
+    - `dependency high-tail` (`5 high / 0 critical`);
+    - `workspace-local` secret hygiene с текущими `critical` content findings;
+    - отсутствие machine-readable reviewed evidence loop для `CodeQL / dependency review / provenance`.
+  - Обновлены:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
+    - `docs/DOCS_MATRIX.md`
+    - `memory-bank/activeContext.md`
+  - Практический эффект:
+    - внутренний residual больше не смешивается с parked внешними хвостами `Phase A`;
+    - follow-on cleanup получил отдельный execution-entrypoint без выдумывания новой фазы;
+    - закрытие `ONE_BIG_PHASE` по `A-E` сохраняется как канонический verdict.
+
+1. **Для `R2` добавлен repo-safe inventory локальных secret-bearing файлов** [DONE]:
+  - Добавлен новый script:
+    - `scripts/workspace-secret-hygiene-inventory.cjs`
+  - Добавлены команды:
+    - `pnpm security:workspace-hygiene:inventory`
+    - `pnpm gate:security:workspace-hygiene`
+  - Новый automation читает только `var/security/secret-scan-report.json` и выпускает:
+    - `var/security/workspace-secret-hygiene-inventory.json`
+    - `var/security/workspace-secret-hygiene-inventory.md`
+  - Практический эффект:
+    - `R2` теперь опирается не только на raw secret-scan report, но и на отдельный machine-readable remediation inventory;
+    - локальные `.env` не нужно трогать “вслепую”, сначала появляется безопасная карта файлов, severity и рекомендуемых действий;
+    - появилось отдельное enforce-условие для будущего закрытия `workspace-local` hygiene.
+
+1. **Для `R2` добавлен remediation packet на основе inventory и `.env.example`** [DONE]:
+  - Добавлен новый script:
+    - `scripts/workspace-secret-hygiene-remediation-packet.cjs`
+  - Добавлена команда:
+    - `pnpm security:workspace-hygiene:packet`
+  - Новый packet строится без чтения живых секретов и выпускает:
+    - `var/security/workspace-secret-hygiene-remediation-packet.json`
+    - `var/security/workspace-secret-hygiene-remediation-packet.md`
+  - Практический эффект:
+    - по каждому problematic local env теперь есть owner hint, template-path, per-file action plan и verification steps;
+    - cleanup можно вести как управляемый remediation-процесс, а не как ручную разовую санацию;
+    - `apps/web/.env.local` отдельно зафиксирован как warning-only template/local-override rule, а не как critical blocker.
+
+1. **`R2` gate выровнен с non-fatal semantic для warning-only local env** [DONE]:
+  - После санации живых значений inventory больше не держит `warning-only` local `.env` как blocker.
+  - `workspace-secret-hygiene-inventory.cjs` теперь:
+    - оставляет `blocked` только для tracked regressions;
+    - оставляет `in_progress` только для local `critical` content findings;
+    - переводит warning-only local residue в `status=done`, `verdict=workspace_local_warning_only`.
+  - Практический эффект:
+    - `gate:security:workspace-hygiene` теперь соответствует базовому `scan-secrets` intent;
+    - закрытие `R2` зависит от реальных секретов, а не от самого факта существования untracked `.env` файлов;
+    - warning-only local overrides сохраняются как дисциплина, но больше не подменяют настоящий blocker.
+
+1. **`R1` dependency high-tail обнулён targeted override-remediation** [DONE]:
+  - В `package.json` добавлены точечные overrides для реально уязвимых версий из lockfile:
+    - `minimatch@9.0.3 -> ^9.0.9`
+    - `picomatch@4.0.1 -> ^4.0.4`
+    - `picomatch@4.0.2 -> ^4.0.4`
+  - Пересобран `pnpm-lock.yaml` через `pnpm install --lockfile-only`.
+  - `pnpm security:audit:ci` теперь подтверждает:
+    - `high=0`
+    - `critical=0`
+  - Практический эффект:
+    - внутренний residual больше не содержит `high/critical` dependency blocker;
+    - `R1` закрыт по текущему scope;
+    - в workpack остаются только warning-only local env residue (`R2`) и governance/evidence loop (`R3`) как активный follow-on контур.
+
+1. **Residual closeout `Phase A` синхронизирован с реальным parked external tail** [DONE]:
+  - Пересобран `phase:a:closeout`, после чего обновлены:
+    - `var/execution/phase-a-closeout-status.json`
+    - `var/execution/phase-a-external-blockers-packet.json`
+    - `var/execution/phase-a-external-owner-queues.json`
+  - Устранено завышение остатка:
+    - `A1` теперь держит только `ELP-20260328-07`, `ELP-20260328-10`, `ELP-20260328-11`;
+    - `A2` держит только `A2-S-01`, `A2-S-02`;
+    - `A4` держит только `A4-H-01`;
+    - `A5` больше не попадает в closeout как внешний blocker.
+  - Closeout теперь фиксирует точный residual:
+    - `remainingReferencesCount=6`
+    - `remainingOwnerQueues=8`
+    - `closeoutState=repo_side_exhausted_external_only`
+  - Синхронизированы документы:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/ONE_BIG_PHASE_AUDIT_RECONCILIATION_2026-04-01.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_B_EXECUTION_BOARD.md`
+    - `memory-bank/activeContext.md`
+  - Практический эффект:
+    - старый document drift убран;
+    - команда видит честный внешний остаток без уже закрытых `A5` и accepted legal items;
+    - residual board-хвост `Phase B` больше не читается как повторное открытие пакета `A-E`.
+
+1. **Последний audit baseline сверен с итогом `ONE_BIG_PHASE` и разложен на закрытый объём, parked external tail и внутренний residual** [DONE]:
+  - Создан новый claim-managed execution-документ:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/ONE_BIG_PHASE_AUDIT_RECONCILIATION_2026-04-01.md`
+  - Зафиксировано, что audit-остаток делится на четыре класса:
+    - `closed_in_scope`
+    - `parked_external_tail`
+    - `still_internal_residual`
+    - `intentionally_guarded`
+  - Подтверждено, что через `Phase D/E` уже закрыты:
+    - installability / restore / ops evidence;
+    - branch protection / access governance evidence;
+    - managed deployment governance contour;
+    - основная legal/evidence масса `ELP-01/02/03/04/05/06/08/09`.
+  - Подтверждён parked-хвост `Phase A`:
+    - `ELP-20260328-07`, `ELP-20260328-10`, `ELP-20260328-11`
+    - `A2-S-01`, `A2-S-02`
+    - `A4-H-01`
+  - Отдельно зафиксирован внутренний residual, который нельзя путать с parked external tail:
+    - `5 high / 0 critical` в `var/security/security-audit-summary.json`
+    - `workspace-local` findings в `var/security/secret-scan-report.json`
+    - отсутствие отдельного reviewed evidence-cycle для `CodeQL / provenance / dependency review`
+  - Обновлены:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
+    - `docs/DOCS_MATRIX.md`
+    - `memory-bank/activeContext.md`
+  - Практический эффект:
+    - сравнение с audit больше не живёт как устная интерпретация;
+    - команда видит, что именно реально закрыто, что припарковано вовне и что ещё остаётся внутри репозитория.
+
+1. **Phase E fully closed and ONE_BIG_PHASE execution volume finished (`phase_e_ready_tier2`)** [DONE]:
+  - Закрыты все core-треки `E1-E4`:
+    - `E1`: `A2-S-03` доведён до `accepted`, заполнен `phase-e-governance-input.json`, verdict `governance_ready_tier2`;
+    - `E2`: заполнен `phase-e-ops-input.json` (SLO/alert/support refs + owner-chain), verdict `ops_ready_tier2`;
+    - `E3`: legal mandatory set (`ELP-01/02/03/04/05/06/08/09`) доведён до `accepted`, verdict поднят до `CONDITIONAL GO`, итог `legal_ready_tier2`;
+    - `E4`: создан managed pilot handoff `E-H-01`, lifecycle доведён до `accepted`, итог `pilot_ready_tier2`.
+  - Подтверждён итог фазы:
+    - `pnpm gate:phase:e:status` проходит в enforce-режиме;
+    - `var/ops/phase-e-status.json` фиксирует `status=done`, `verdict=phase_e_ready_tier2`;
+    - `scope_violations=0`, `E5` сохраняется в `guard_active`.
+  - Синхронизированы execution-документы и индекс:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_E_EXECUTION_BOARD.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_E_IMPLEMENTATION_PLAN.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/05_PHASE_E_TIER2_MANAGED_DEPLOYMENT_AND_GOVERNANCE.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
+    - `memory-bank/activeContext.md`.
+  - Практический эффект:
+    - `Tier 2 managed deployment` подтверждён enforceable evidence-контуром;
+    - пакет `ONE_BIG_PHASE` закрыт по текущему объёму `A-E`;
+    - дальнейший execution требует открытия нового фазового пакета отдельным управленческим решением.
+
+1. **Phase E enforceable gate contour implemented (`phase:e:*`, `gate:phase:e:*`)** [DONE]:
+  - Добавлены новые скрипты `Phase E`:
+    - `scripts/phase-e-governance-status.cjs`
+    - `scripts/phase-e-ops-drill.cjs`
+    - `scripts/phase-e-ops-status.cjs`
+    - `scripts/phase-e-legal-status.cjs`
+    - `scripts/phase-e-pilot-status.cjs`
+    - `scripts/phase-e-pilot-intake.cjs`
+    - `scripts/phase-e-pilot-transition.cjs`
+    - `scripts/phase-e-status.cjs`
+  - В `package.json` добавлены публичные команды:
+    - `phase:e:*`
+    - `gate:phase:e:*`
+  - Зафиксирован контракт Phase E артефактов:
+    - `var/ops/phase-e-*.json|md`
+    - обязательные поля `generatedAt/track/status/issues/evidenceRefs/nextAction/verdict`.
+  - Реализован managed pilot lifecycle `E-H-XX`:
+    - статусы `requested/received/reviewed/accepted/expired`;
+    - обязательные metadata-поля `status/owner/review_due/artifact_path/draft_path/cohort_id/success_metric_ref`.
+  - Реализован anti-breadth guard на уровне `phase-e-status`:
+    - вычисляются `scope_violations`;
+    - `gate:phase:e:status` блокирует преждевременный `SaaS/hybrid` и feature-breadth до pilot acceptance.
+  - Синхронизированы документы:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_E_IMPLEMENTATION_PLAN.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_E_EXECUTION_BOARD.md`
+  - Практический эффект:
+    - `Phase E` переведена из narrative-пакета в исполняемый gate-контур;
+    - `Tier 2 managed` readiness теперь подтверждается machine-readable отчётами, а не только runbook-описанием.
+
+1. **Phase E execution package created after Phase D closure** [DONE]:
+  - Созданы новые claim-managed документы `Phase E`:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/05_PHASE_E_TIER2_MANAGED_DEPLOYMENT_AND_GOVERNANCE.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_E_IMPLEMENTATION_PLAN.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_E_EXECUTION_BOARD.md`
+  - Обновлены:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md` (активный вход и порядок фаз);
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/04_PHASE_D_SELF_HOST_PILOT_AND_HARDENING.md` (фиксация закрытия `Phase D`);
+    - `docs/DOCS_MATRIX.md` (регистрация claim для `Phase E` пакета).
+  - Практический эффект:
+    - после `phase_d_ready` команда получила следующий formal execution-entrypoint;
+    - `Tier 2 managed deployment + governance evidence` вынесены в отдельный управляемый work-package;
+    - устранён риск “перехода в следующую фазу на словах” без board/claim-дисциплины.
+
+1. **Phase D self-host hardening orchestrator implemented with enforceable gates** [DONE]:
+  - Добавлены новые скрипты `Phase D`:
+    - `scripts/phase-d-install-dry-run.cjs`
+    - `scripts/phase-d-upgrade-rehearsal.cjs`
+    - `scripts/phase-d-install-status.cjs`
+    - `scripts/phase-d-restore-drill.cjs`
+    - `scripts/phase-d-dr-status.cjs`
+    - `scripts/phase-d-ops-drill.cjs`
+    - `scripts/phase-d-ops-status.cjs`
+    - `scripts/phase-d-pilot-status.cjs`
+    - `scripts/phase-d-pilot-intake.cjs`
+    - `scripts/phase-d-pilot-transition.cjs`
+    - `scripts/phase-d-status.cjs`
+  - В `package.json` добавлены CLI-команды:
+    - `phase:d:*`
+    - `gate:phase:d:*`
+  - Зафиксирован единый формат артефактов:
+    - `var/ops/phase-d-*.json|md`
+    - обязательные поля `generatedAt/track/status/issues/evidenceRefs/nextAction/verdict`.
+  - Введён контролируемый lifecycle `D-H-XX`:
+    - статусы `requested/received/reviewed/accepted/expired`;
+    - переходы через `phase:d:pilot:intake` и `phase:d:pilot:transition`.
+  - Реализован anti-breadth guard:
+    - `phase-d-status` вычисляет `scope_violations`;
+    - `gate:phase:d:status` блокирует фазу при scope-нарушениях и незакрытых core-треках.
+  - Синхронизированы docs:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_D_IMPLEMENTATION_PLAN.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_D_EXECUTION_BOARD.md`
+  - Практический эффект:
+    - `Phase D` перешла из narrative-плана в исполняемый gate-контур с machine-readable evidence;
+    - фаза доведена до `phase_d_ready`: `D1-D4` закрыты, `D5` удерживается guardrail-режимом;
+    - `pnpm gate:phase:d:status` проходит в enforce-режиме.
+
+1. **Phase D execution entrypoint activated after Phase C closure** [DONE]:
+  - Подтверждён status `Phase C` по board:
+    - рабочие строки закрыты (`done`);
+    - guardrails оставлены как `guard_active`.
+  - Созданы новые claim-managed документы `Phase D`:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_D_IMPLEMENTATION_PLAN.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_D_EXECUTION_BOARD.md`
+  - Обновлены:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/04_PHASE_D_SELF_HOST_PILOT_AND_HARDENING.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
+    - `docs/DOCS_MATRIX.md`
+  - Зарегистрированы новые claims:
+    - `CLAIM-EXE-ONE-BIG-PHASE-D-IMPLEMENTATION-PLAN-20260401`
+    - `CLAIM-EXE-ONE-BIG-PHASE-D-EXECUTION-BOARD-20260401`
+  - Практический эффект:
+    - активный execution-фокус проекта переведён с `Phase C` на `Phase D`;
+    - запуск следующей итерации идёт через board-коды `D-2.x.y` и hardening-first приоритизацию;
+    - installability/backup-restore/pilot контуры получили формальный пакет исполнения.
+
+1. **Phase C minimal web/access implementation completed with governed dual-contour routing** [DONE]:
+  - Реализованы `C1/C2/C5` блоки:
+    - доступ и роли переведены на authenticated principal (`/users/me`) без runtime simulation;
+    - `FRONT_OFFICE_USER` ограничен внешним контуром `portal/front-office`;
+    - добавлены `POST /portal/front-office/intake/message` и cursor polling (`afterId/limit`) в messages API;
+    - reply-контракт расширен `deliveryStatus/channel/messageId/createdAt`;
+    - в `web_chat` снят Telegram-only барьер reply-path;
+    - access-denied ветки пишутся в audit как security-события.
+  - Реализованы `C3/C4` блоки:
+    - канон внутреннего чата закреплён на `POST /api/rai/chat`;
+    - `POST /api/ai-chat` оставлен как legacy proxy;
+    - внешний контур ограничен от внутренних chat-endpoints;
+    - в front-office UI добавлен explainability/evidence слой (`metadata.explainabilitySummary`, `metadata.evidenceCount`);
+    - во внутреннем контуре сохранён показ `work windows`, `trust summary`, `evidence`.
+  - Созданы phase-артефакты:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_C_IMPLEMENTATION_PLAN.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_C_EXECUTION_BOARD.md`
+  - Обновлены канонические индексы:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/03_PHASE_C_MINIMAL_WEB_AND_ACCESS.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
+    - `docs/DOCS_MATRIX.md` (зарегистрированы `CLAIM-EXE-ONE-BIG-PHASE-C-IMPLEMENTATION-PLAN-20260401` и `CLAIM-EXE-ONE-BIG-PHASE-C-EXECUTION-BOARD-20260401`).
+  - Выполнены тесты:
+    - API: `front-office-external.controller.spec.ts`, `front-office.service.spec.ts`, `front-office.e2e.spec.ts`
+    - Web: `external-front-office-thread-client.spec.tsx`, `route-guard-front-office.spec.ts`, `front-office-smoke.spec.ts`, `ai-chat-store.spec.ts`, `ai-chat-sessions-strip.spec.tsx`, `ai-chat-widgets-rail.spec.tsx`
+    - добавлен отдельный reload-regression в `ai-chat-store.spec.ts` (rehydrate сохраняет `threadId/pendingClarification/workWindows`)
+  - Практический эффект:
+    - `Phase C` получил рабочий минимальный `web` baseline с предсказуемым доступом и session-guard контуром;
+    - внешний и внутренний chat-пути разделены и govern-изолированы;
+    - explainability/evidence стали видимыми в UI и привязаны к runtime-контракту.
+
+1. **Phase C new-chat memo assembled and wired into execution canon** [DONE]:
+  - Создан новый claim-managed документ:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_C_NEW_CHAT_MEMO.md`
+  - В memo зафиксированы:
+    - входной контекст для нового чата;
+    - границы `Phase C` и запреты на расползание в `Phase D`;
+    - правило работы с carry-over хвостами `Phase B`;
+    - первый шаг и обязательные технические правила.
+  - Обновлён `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`:
+    - добавлены рабочие документы `Phase C`;
+    - текущая точка входа переключена на `Phase C`;
+    - добавлено checkpoint/memo-исключение для управленческого переноса фокуса.
+  - Обновлён `docs/DOCS_MATRIX.md`:
+    - зарегистрирован `CLAIM-EXE-ONE-BIG-PHASE-C-NEW-CHAT-MEMO-20260401`.
+  - Практический эффект:
+    - новый чат можно запускать сразу в `Phase C` без повторного объяснения полного контекста;
+    - фокус и границы зафиксированы как канон, а не как устная договорённость.
+
+1. **Phase B canonical docs synced with implemented runtime state** [DONE]:
+  - Обновлены:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_B_IMPLEMENTATION_PLAN.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_B_EXECUTION_BOARD.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/02_PHASE_B_GOVERNED_CORE_AND_TECHMAP.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
+    - `docs/DOCS_MATRIX.md`
+  - Зафиксировано:
+    - `Phase A` остаётся parked-checkpoint и не является текущим execution-entrypoint;
+    - текущий вход и ежедневный execution-фокус перенесены на `Phase B` пакет;
+    - статусы `done / in_progress / guard_active` по `Phase B` отражены в canonical docs.
+  - Выполнены проверки:
+    - `pnpm lint:docs`
+    - `pnpm lint:docs:matrix:strict`
+  - Практический эффект:
+    - docs не расходятся с фактически реализованным runtime-контуром `Phase B`;
+    - команда работает из одного согласованного execution-пакета без возврата к расширению `Phase A`.
+  - Дополнительно:
+    - чеклисты в `PHASE_B_IMPLEMENTATION_PLAN.md` и `02_PHASE_B_GOVERNED_CORE_AND_TECHMAP.md` размечены по фактическому статусу (`x` для закрытого, пусто для `in_progress`).
+
+1. **Phase B orchestration/trust/explainability closure implemented** [DONE]:
+  - Обновлён `apps/api/src/modules/tech-map/tech-map-workflow-orchestrator.service.ts`:
+    - branch scheduling стал slot-driven по `required slot families` (а не только глобальный clarify flag);
+    - trust specialization встроен в trust/composition gates и policy decisions;
+    - summary и phase trace теперь отражают blocked branches и trust gate reason.
+  - Обновлён `apps/api/src/shared/tech-map/tech-map-workflow-orchestrator.types.ts`:
+    - в input добавлен `trust_specialization`.
+  - Обновлён `apps/api/src/modules/tech-map/tech-map.service.ts`:
+    - `workflowSnapshot/workflow_snapshot` теперь включает `workflow_mode`;
+    - orchestration при наличии runtime adoption пересобирается с branch trust + trust specialization;
+    - добавлен structured explainability контракт:
+      - `workflowExplainability/workflow_explainability`;
+    - `executionLoopSummary` расширен target context метриками:
+      - `target_yield_t_ha`, `actual_yield_t_ha`, `baseline_yield_t_ha`, `yield_delta_t_ha`;
+    - `getRuntimeAdoptionSnapshot` возвращает:
+      - `workflow_snapshot`
+      - `execution_loop_summary`
+      - `workflow_explainability`
+      - вместе с `workflow_orchestration`.
+  - Обновлён `apps/api/src/modules/rai-chat/composer/response-composer.service.ts`:
+    - summary для `GenerateTechMapDraft` теперь использует explainability suffix из structured payload.
+  - Обновлён `apps/api/src/modules/rai-chat/supervisor-agent.service.ts`:
+    - в forensics-structured output прокидываются workflow runtime сущности:
+      - `workflow_snapshot`
+      - `execution_loop_summary`
+      - `workflow_explainability`.
+  - Расширены тесты:
+    - `apps/api/src/modules/tech-map/tech-map-workflow-orchestrator.service.spec.ts`
+    - `apps/api/src/modules/tech-map/tech-map.service.spec.ts`
+    - `apps/api/src/modules/rai-chat/composer/response-composer.service.spec.ts`
+    - `apps/api/src/modules/rai-chat/supervisor-agent.service.spec.ts`
+  - Выполнена проверка:
+    - `pnpm --filter api test -- src/modules/tech-map/tech-map-workflow-orchestrator.service.spec.ts src/modules/tech-map/tech-map.service.spec.ts src/modules/rai-chat/composer/response-composer.service.spec.ts`
+    - `pnpm --filter api test -- --runInBand src/modules/rai-chat/supervisor-agent.service.spec.ts`
+    - `pnpm --filter api test -- src/modules/rai-chat/runtime/runtime-spine.integration.spec.ts`
+  - Практический эффект:
+    - `Phase B` ближе к полноте по плану: orchestrator, trust specialization, execution loop и explainability теперь работают как единый backend truth-контур;
+    - будущая `Phase C` может визуализировать уже готовые governed runtime-сущности без параллельной переинтерпретации.
+
+1. **Phase B runtime spine implemented for TechMap create/resume** [DONE]:
+  - Обновлён `apps/api/src/modules/tech-map/tech-map.service.ts`:
+    - `buildGovernedDraftClarifyResult` переведён в unified governed runtime-путь с runtime adoption привязкой.
+    - В ответ `GenerateTechMapDraft` добавлены:
+      - `trustSpecialization`
+      - `variantComparisonReport`
+      - `expertReview`
+      - `workflowSnapshot` и `workflow_snapshot`
+      - `executionLoopSummary` и `execution_loop_summary`
+    - Добавлены internal helpers:
+      - сбор runtime bundle из canonical draft + adoption snapshot
+      - сбор `next_actions` как объединения tasks и composition next_action
+      - сбор execution/deviation/result summary и evidence refs
+  - Обновлён типовой контракт `apps/api/src/shared/rai-chat/rai-tools.types.ts`:
+    - добавлены интерфейсы `TechMapWorkflowSnapshot` и `TechMapExecutionLoopSummary`
+    - расширен `GenerateTechMapDraftResult` новыми полями snapshot/loop
+  - Обновлён `apps/api/src/modules/rai-chat/composer/response-composer.service.ts`:
+    - fallback на `workflow_snapshot` при отсутствии camelCase-полей
+    - добавлен текстовый суффикс по `execution_loop_summary`
+  - Расширены тесты:
+    - `apps/api/src/modules/tech-map/tech-map.service.spec.ts`
+    - `apps/api/src/modules/rai-chat/composer/response-composer.service.spec.ts`
+  - Выполнена проверка:
+    - `pnpm --filter api test -- src/modules/tech-map/tech-map.service.spec.ts src/modules/rai-chat/composer/response-composer.service.spec.ts`
+    - `pnpm --filter api test -- src/modules/rai-chat/tools/agro-tools.registry.spec.ts src/modules/rai-chat/agents/agronom-agent.service.spec.ts`
+  - Практический эффект:
+    - create/resume путь Техкарты теперь возвращает единый machine-readable governed workflow snapshot;
+    - trust/orchestration/explainability-слои синхронизированы с canonical runtime adoption, а не живут в разрыве;
+    - loop `TechMap -> execution -> deviation -> result` стал backend-контрактом, готовым для дальнейшей визуализации в `Phase C` без дублирования логики.
+
 ## 2026-03-31
+
+1. **Phase B execution packet assembled** [DONE]:
+  - Создан новый canonical doc:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_B_IMPLEMENTATION_PLAN.md`
+  - Создан новый canonical doc:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_B_EXECUTION_BOARD.md`
+  - Обновлены:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/02_PHASE_B_GOVERNED_CORE_AND_TECHMAP.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
+    - `docs/DOCS_MATRIX.md`
+    - `memory-bank/activeContext.md`
+  - Пакет фиксирует:
+    - подфазы `B0–B4`
+    - явные границы `Phase B` против `Phase C` и `Phase D`
+    - критерий завершения `Phase B`
+    - стартовый board для реального исполнения ядра
+  - Практический эффект:
+    - после припаркованной `Phase A` проект получил следующую активную execution-точку;
+    - governed core, TechMap, orchestration и explainability теперь разложены как управляемый work-package, а не как общий intent;
+    - следующая работа по ядру может идти по board-строкам без повторного большого audit и без подмены `Phase B` всем MVP.
 
 1. **Phase A external owner outreach packet assembled** [DONE]:
   - Добавлен root generator:

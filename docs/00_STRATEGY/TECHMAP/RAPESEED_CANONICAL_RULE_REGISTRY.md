@@ -1,3 +1,10 @@
+---
+id: DOC-STR-TECHMAP-RAPESEED-CANONICAL-RULE-REGISTRY-20260401
+layer: Strategy
+type: Vision
+status: approved
+version: 1.0.0
+---
 # КАНОНИЧЕСКИЙ РЕЕСТР ПРАВИЛ ПО РАПСУ
 ## Централизованный репозиторий доменных правил для системы технологических карт рапса
 

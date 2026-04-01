@@ -5,6 +5,7 @@ export type UserRole =
     | 'FIELD_WORKER' 
     | 'CLIENT_ADMIN' 
     | 'USER'
+    | 'FRONT_OFFICE_USER'
     | 'SYSTEM_ADMIN'
     | 'FOUNDER'
     | 'CEO'
@@ -45,6 +46,7 @@ export const ROLE_PERMISSIONS: Record<UserRole | string, string[]> = {
     DIRECTOR_PRODUCTION: ['PRODUCTION'],
     MANAGER: ['CMR', 'FRONT_OFFICE'],
     AGRONOMIST: ['CMR', 'FRONT_OFFICE'],
+    FRONT_OFFICE_USER: [],
     ADMIN: ['CMR', 'HR', 'OFS', 'ECONOMY', 'FINANCE', 'GR', 'PRODUCTION', 'FRONT_OFFICE'],
     USER: ['CMR', 'FRONT_OFFICE'],
 };

@@ -7,6 +7,7 @@ import type {
 } from "./tech-map-governed-state.types";
 import type { TechMapBranchType } from "./tech-map-governed-branch.types";
 import type { TechMapExpertReviewResult } from "./tech-map-governed-branch.types";
+import type { TechMapGovernedTrustSpecialization } from "./tech-map-governed-trust.helpers";
 
 export const TECH_MAP_WORKFLOW_ORCHESTRATION_PHASES = [
   "INTAKE",
@@ -132,6 +133,7 @@ export interface TechMapWorkflowOrchestrationInput {
   has_target_kpi_policy: boolean;
   has_weather_normals: boolean;
   branch_trust_assessments?: BranchTrustAssessment[];
+  trust_specialization?: TechMapGovernedTrustSpecialization | null;
   expert_review?: TechMapExpertReviewResult | null;
   resume_requested?: boolean;
 }

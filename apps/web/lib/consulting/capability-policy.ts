@@ -32,6 +32,7 @@ const ROLE_TO_CAPABILITIES: Record<UserRole, CapabilityFlags> = {
     FIELD_WORKER: { canOverride: false, canSign: false, canEscalate: false, canEdit: true, canApprove: false },
     CLIENT_ADMIN: { canOverride: false, canSign: false, canEscalate: false, canEdit: true, canApprove: false },
     USER: { canOverride: false, canSign: false, canEscalate: false, canEdit: false, canApprove: false },
+    FRONT_OFFICE_USER: { canOverride: false, canSign: false, canEscalate: false, canEdit: false, canApprove: false },
 };
 
 export function capabilitiesFromRole(role: UserRole): CapabilityFlags {

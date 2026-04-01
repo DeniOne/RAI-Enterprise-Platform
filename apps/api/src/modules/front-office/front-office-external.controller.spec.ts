@@ -7,6 +7,7 @@ describe("FrontOfficeExternalController", () => {
     listThreadsForViewer: jest.fn(),
     getThreadForViewer: jest.fn(),
     listMessagesForViewer: jest.fn(),
+    intakeMessageForViewer: jest.fn(),
     replyToThread: jest.fn(),
     markThreadRead: jest.fn(),
   };
@@ -62,6 +63,55 @@ describe("FrontOfficeExternalController", () => {
         accountId: "account-1",
       },
       "thread-1",
+    );
+  });
+
+  it("supports viewer-scoped intake and polling cursor on messages", async () => {
+    frontOfficeService.intakeMessageForViewer.mockResolvedValueOnce({
+      draftId: "draft-1",
+    });
+    frontOfficeService.listMessagesForViewer.mockResolvedValueOnce([
+      { id: "m-2" },
+    ]);
+
+    await expect(
+      controller.intakeMessage(viewer, {
+        messageText: "Новый inbound",
+        threadExternalId: "web-1",
+      }),
+    ).resolves.toEqual({ draftId: "draft-1" });
+
+    await expect(
+      controller.listMessages(viewer, "thread-1", "m-1", "40"),
+    ).resolves.toEqual([{ id: "m-2" }]);
+
+    expect(frontOfficeService.intakeMessageForViewer).toHaveBeenCalledWith(
+      "company-1",
+      {
+        id: "user-1",
+        role: UserRole.FRONT_OFFICE_USER,
+        accountId: "account-1",
+      },
+      {
+        messageText: "Новый inbound",
+        threadExternalId: "web-1",
+        dialogExternalId: undefined,
+        sourceMessageId: undefined,
+        route: undefined,
+      },
+    );
+    expect(frontOfficeService.listMessagesForViewer).toHaveBeenCalledWith(
+      "company-1",
+      {
+        id: "user-1",
+        role: UserRole.FRONT_OFFICE_USER,
+        accountId: "account-1",
+      },
+      "thread-1",
+      {
+        afterId: "m-1",
+        limit: 40,
+      },
     );
   });
 

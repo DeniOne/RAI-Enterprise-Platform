@@ -3102,28 +3102,50 @@ export class ResponseComposerService {
             agentName?: string;
           };
           if (r?.agentName === "AgronomAgent" && r.explain) return r.explain;
+          const workflowSnapshot =
+            r?.workflowSnapshot && typeof r.workflowSnapshot === "object"
+              ? r.workflowSnapshot
+              : r?.workflow_snapshot && typeof r.workflow_snapshot === "object"
+                ? r.workflow_snapshot
+                : null;
           const missingMust = Array.isArray(r?.missingMust)
             ? r.missingMust
+            : Array.isArray(workflowSnapshot?.missing_must)
+              ? workflowSnapshot.missing_must
             : [];
           const draftId =
             typeof r?.draftId === "string"
               ? r.draftId
+              : typeof workflowSnapshot?.draft_id === "string"
+                ? workflowSnapshot.draft_id
               : typeof (r as { id?: unknown })?.id === "string"
                 ? String((r as { id?: unknown }).id)
                 : "techmap-draft";
           const readiness =
-            typeof r?.readiness === "string" ? r.readiness : "unknown";
+            typeof r?.readiness === "string"
+              ? r.readiness
+              : typeof workflowSnapshot?.readiness === "string"
+                ? workflowSnapshot.readiness
+                : "unknown";
           const workflowVerdict =
             typeof r?.workflowVerdict === "string"
               ? r.workflowVerdict
+              : typeof workflowSnapshot?.workflow_verdict === "string"
+                ? workflowSnapshot.workflow_verdict
               : "unknown";
           const clarifyBatch =
             r?.clarifyBatch && typeof r.clarifyBatch === "object"
               ? r.clarifyBatch
+              : workflowSnapshot?.clarify_batch &&
+                  typeof workflowSnapshot.clarify_batch === "object"
+                ? workflowSnapshot.clarify_batch
               : null;
           const resumeState =
             r?.workflowResumeState && typeof r.workflowResumeState === "object"
               ? r.workflowResumeState
+              : workflowSnapshot?.workflow_resume_state &&
+                  typeof workflowSnapshot.workflow_resume_state === "object"
+                ? workflowSnapshot.workflow_resume_state
               : null;
           const clarifySuffix =
             missingMust.length > 0
@@ -3145,6 +3167,9 @@ export class ResponseComposerService {
           const workflowOrchestration =
             r?.workflowOrchestration && typeof r.workflowOrchestration === "object"
               ? r.workflowOrchestration
+              : workflowSnapshot?.workflow_orchestration &&
+                  typeof workflowSnapshot.workflow_orchestration === "object"
+                ? workflowSnapshot.workflow_orchestration
               : null;
           const orchestrationSuffix = workflowOrchestration
             ? ` ${workflowOrchestration.summary} Композиция ${workflowOrchestration.composition_gate.can_compose ? "готова" : "заблокирована"}: ${workflowOrchestration.composition_gate.reason}.`
@@ -3152,6 +3177,9 @@ export class ResponseComposerService {
           const trustSpecialization =
             r?.trustSpecialization && typeof r.trustSpecialization === "object"
               ? r.trustSpecialization
+              : workflowSnapshot?.trust_specialization &&
+                  typeof workflowSnapshot.trust_specialization === "object"
+                ? workflowSnapshot.trust_specialization
               : null;
           const trustSuffix = trustSpecialization
             ? ` Trust specialization: ${
@@ -3175,7 +3203,29 @@ export class ResponseComposerService {
           const expertReviewSuffix = expertReview
             ? ` Expert review ${expertReview.verdict} (${expertReview.trigger}). Publication packet ${expertReview.publication_packet_ref}. Human agronomy ${expertReview.human_authority_chain.find((step) => step.role === "human_agronomist")?.status ?? "pending"}.`
             : "";
-          return `Черновик техкарты создан: ${draftId}. Готовность ${readiness}, verdict ${workflowVerdict}.${clarifySuffix}${clarifyLifecycle}${resumeSuffix}${auditSuffix}${orchestrationSuffix}${trustSuffix}${expertReviewSuffix}${comparisonSuffix}`;
+          const executionLoopSummary =
+            r?.executionLoopSummary &&
+            typeof r.executionLoopSummary === "object"
+              ? r.executionLoopSummary
+              : r?.execution_loop_summary &&
+                  typeof r.execution_loop_summary === "object"
+                ? r.execution_loop_summary
+                : null;
+          const workflowExplainability =
+            r?.workflowExplainability &&
+            typeof r.workflowExplainability === "object"
+              ? r.workflowExplainability
+              : r?.workflow_explainability &&
+                  typeof r.workflow_explainability === "object"
+                ? r.workflow_explainability
+                : null;
+          const explainabilitySuffix = workflowExplainability
+            ? ` Explainability window ${workflowExplainability.explainability_window}. Blocked reasons ${workflowExplainability.why.blocked_reasons.length}, partial reasons ${workflowExplainability.why.partial_reasons.length}.`
+            : "";
+          const executionLoopSuffix = executionLoopSummary
+            ? ` Execution loop ${executionLoopSummary.execution_state.status}/${executionLoopSummary.deviation_state.status}/${executionLoopSummary.result_state.status}.`
+            : "";
+          return `Черновик техкарты создан: ${draftId}. Готовность ${readiness}, verdict ${workflowVerdict}.${clarifySuffix}${clarifyLifecycle}${resumeSuffix}${auditSuffix}${orchestrationSuffix}${trustSuffix}${expertReviewSuffix}${comparisonSuffix}${explainabilitySuffix}${executionLoopSuffix}`;
         }
         if (tool.name === RaiToolName.RegisterCounterparty) {
           const r = tool.result as RegisterCounterpartyResult;

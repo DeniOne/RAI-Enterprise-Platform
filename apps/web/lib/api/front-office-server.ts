@@ -73,10 +73,33 @@ export const externalFrontOfficeServerApi = {
     fetchFrontOffice(
       `${EXTERNAL_FRONT_OFFICE_API_BASE_PATH}/threads/${encodeURIComponent(threadKey)}`,
     ),
-  threadMessages: (threadKey: string) =>
+  threadMessages: (
+    threadKey: string,
+    options?: { afterId?: string; limit?: number },
+  ) =>
     fetchFrontOffice(
-      `${EXTERNAL_FRONT_OFFICE_API_BASE_PATH}/threads/${encodeURIComponent(threadKey)}/messages`,
+      `${EXTERNAL_FRONT_OFFICE_API_BASE_PATH}/threads/${encodeURIComponent(threadKey)}/messages${
+        options?.afterId || options?.limit
+          ? `?${new URLSearchParams({
+              ...(options.afterId ? { afterId: options.afterId } : {}),
+              ...(typeof options.limit === "number"
+                ? { limit: String(options.limit) }
+                : {}),
+            }).toString()}`
+          : ""
+      }`,
     ),
+  intakeMessage: (payload: {
+    messageText: string;
+    threadExternalId?: string;
+    dialogExternalId?: string;
+    sourceMessageId?: string;
+    route?: string;
+  }) =>
+    fetchFrontOffice(`${EXTERNAL_FRONT_OFFICE_API_BASE_PATH}/intake/message`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
   replyToThread: (threadKey: string, messageText: string) =>
     fetchFrontOffice(
       `${EXTERNAL_FRONT_OFFICE_API_BASE_PATH}/threads/${encodeURIComponent(threadKey)}/reply`,

@@ -45,7 +45,7 @@ function parseDraftIndex(content) {
 function splitOwners(rawOwners) {
   return rawOwners
     .split(",")
-    .map((owner) => owner.trim())
+    .map((owner) => owner.replace(/`/g, "").trim())
     .filter(Boolean);
 }
 

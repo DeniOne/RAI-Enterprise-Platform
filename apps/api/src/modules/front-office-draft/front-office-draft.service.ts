@@ -559,16 +559,36 @@ export class FrontOfficeDraftService {
     return this.handoffOrchestrator.addManualNote(companyId, handoffId, userId, note);
   }
 
-  async listMessages(companyId: string, threadKey: string) {
-    return this.threadingService.listMessages(companyId, threadKey);
+  async listMessages(
+    companyId: string,
+    threadKey: string,
+    options?: {
+      afterId?: string;
+      limit?: number;
+    },
+  ) {
+    return this.threadingService.listMessagesWithCursor(
+      companyId,
+      threadKey,
+      options,
+    );
   }
 
   async listMessagesForViewer(
     companyId: string,
     viewer: { id: string; role?: string; accountId?: string | null },
     threadKey: string,
+    options?: {
+      afterId?: string;
+      limit?: number;
+    },
   ) {
-    return this.threadingService.listMessagesForViewer(companyId, viewer, threadKey);
+    return this.threadingService.listMessagesForViewer(
+      companyId,
+      viewer,
+      threadKey,
+      options,
+    );
   }
 
   async listManagerFarms(

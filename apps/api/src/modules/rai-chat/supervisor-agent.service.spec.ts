@@ -1006,6 +1006,105 @@ describe("SupervisorAgent", () => {
                 { event_type: "workflow_resume_requested" },
                 { event_type: "workflow_resume_ready" },
               ],
+              workflow_snapshot: {
+                workflow_id: "tech-map:draft-1",
+                draft_id: "draft-1",
+                workflow_mode: "create",
+                readiness: "S1_SCOPED",
+                workflow_verdict: "PARTIAL",
+                publication_state: "WORKING_DRAFT",
+                missing_must: ["soil_profile"],
+                clarify_batch: {
+                  mode: "MULTI_STEP",
+                  status: "OPEN",
+                  resume_token:
+                    "resume:tech-map:draft-1:clarify:draft-1:soil_profile",
+                },
+                workflow_resume_state: {
+                  resume_from_phase: "MISSING_CONTEXT_TRIAGE",
+                  external_recheck_required: false,
+                },
+                workflow_orchestration: {
+                  summary: "Workflow spine TRIAGE -> paused.",
+                  composition_gate: {
+                    can_compose: false,
+                    reason: "clarify_block_open",
+                  },
+                },
+                trust_specialization: {
+                  composition_gate: {
+                    can_compose: false,
+                    reason: "trust_gate_pending",
+                    disclosure: ["trust_gate_pending"],
+                  },
+                  blocked_disclosure: ["soil_profile_missing"],
+                },
+                next_actions: ["Закрыть soil_profile"],
+              },
+              execution_loop_summary: {
+                scope: {
+                  company_id: "company-1",
+                  field_id: "field-42",
+                  season_id: "season-42",
+                  crop_code: "rapeseed",
+                  workflow_id: "tech-map:draft-1",
+                },
+                tech_map_ref: {
+                  draft_id: "draft-1",
+                  workflow_id: "tech-map:draft-1",
+                },
+                execution_state: {
+                  status: "NO_HISTORY",
+                  has_execution_history: false,
+                  has_past_outcomes: false,
+                  has_materialized_operations: true,
+                },
+                deviation_state: {
+                  status: "BLOCKED_BY_CONTEXT",
+                  scope_consistent: true,
+                  blocking_gaps: ["soil_profile"],
+                },
+                result_state: {
+                  status: "PARTIAL",
+                  relation_to_targets: "NOT_AVAILABLE",
+                  summary: "Result stage частичный",
+                  target_context: {
+                    target_yield_t_ha: 5.2,
+                    actual_yield_t_ha: null,
+                    baseline_yield_t_ha: 5.2,
+                    yield_delta_t_ha: null,
+                  },
+                },
+                blocking_gaps: ["soil_profile"],
+                evidence_refs: ["workflow:tech-map:draft-1:phase:TRIAGE:completed"],
+              },
+              workflow_explainability: {
+                readiness: "S1_SCOPED",
+                workflow_verdict: "PARTIAL",
+                publication_state: "WORKING_DRAFT",
+                explainability_window: "clarification",
+                why: {
+                  blocked_reasons: ["missing_must:soil_profile"],
+                  partial_reasons: ["workflow_verdict_partial"],
+                  composable_reasons: [],
+                },
+                source_slots: {
+                  missing_must: ["soil_profile"],
+                  clarify_items: ["soil_profile"],
+                  gaps: ["soil_profile"],
+                },
+                trust_gate: {
+                  can_compose: false,
+                  reason: "trust_gate_pending",
+                  blocked_disclosure: ["soil_profile_missing"],
+                },
+                deviation_summary: {
+                  status: "BLOCKED_BY_CONTEXT",
+                  scope_consistent: true,
+                  blocking_gaps: ["soil_profile"],
+                },
+                next_actions: ["Закрыть soil_profile"],
+              },
             },
           },
         ],
@@ -1032,6 +1131,18 @@ describe("SupervisorAgent", () => {
                 { event_type: "workflow_resume_requested" },
                 { event_type: "workflow_resume_ready" },
               ],
+              workflow_snapshot: {
+                workflow_id: "tech-map:draft-1",
+                draft_id: "draft-1",
+              },
+              execution_loop_summary: {
+                result_state: {
+                  status: "PARTIAL",
+                },
+              },
+              workflow_explainability: {
+                explainability_window: "clarification",
+              },
             },
           },
           structuredOutputs: [
@@ -1053,6 +1164,18 @@ describe("SupervisorAgent", () => {
                   { event_type: "workflow_resume_requested" },
                   { event_type: "workflow_resume_ready" },
                 ],
+                workflow_snapshot: {
+                  workflow_id: "tech-map:draft-1",
+                  draft_id: "draft-1",
+                },
+                execution_loop_summary: {
+                  result_state: {
+                    status: "PARTIAL",
+                  },
+                },
+                workflow_explainability: {
+                  explainability_window: "clarification",
+                },
               },
             },
           ],
@@ -1125,6 +1248,17 @@ describe("SupervisorAgent", () => {
                       event_type: "workflow_resume_ready",
                     }),
                   ]),
+                  workflow_snapshot: expect.objectContaining({
+                    draft_id: "draft-1",
+                  }),
+                  execution_loop_summary: expect.objectContaining({
+                    result_state: expect.objectContaining({
+                      status: "PARTIAL",
+                    }),
+                  }),
+                  workflow_explainability: expect.objectContaining({
+                    explainability_window: "clarification",
+                  }),
                 }),
               }),
             ]),

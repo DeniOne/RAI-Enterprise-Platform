@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   UseInterceptors,
 } from "@nestjs/common";
 import { User, UserRole } from "@rai/prisma-client";
@@ -39,6 +40,17 @@ export class FrontOfficeExternalController {
     };
   }
 
+  private normalizeLimit(value?: string): number | undefined {
+    if (!value) {
+      return undefined;
+    }
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isFinite(parsed)) {
+      return undefined;
+    }
+    return Math.min(Math.max(parsed, 1), 300);
+  }
+
   @Get("threads")
   @Authorized(UserRole.FRONT_OFFICE_USER)
   async listThreads(@CurrentUser() user: AuthenticatedFrontOfficeViewer) {
@@ -66,11 +78,44 @@ export class FrontOfficeExternalController {
   async listMessages(
     @CurrentUser() user: AuthenticatedFrontOfficeViewer,
     @Param("threadKey") threadKey: string,
+    @Query("afterId") afterId?: string,
+    @Query("limit") limit?: string,
   ) {
     return this.frontOfficeService.listMessagesForViewer(
       this.getCompanyId(user),
       this.getViewer(user),
       threadKey,
+      {
+        afterId,
+        limit: this.normalizeLimit(limit),
+      },
+    );
+  }
+
+  @Post("intake/message")
+  @Authorized(UserRole.FRONT_OFFICE_USER)
+  @UseInterceptors(IdempotencyInterceptor)
+  async intakeMessage(
+    @CurrentUser() user: AuthenticatedFrontOfficeViewer,
+    @Body()
+    body: {
+      messageText: string;
+      threadExternalId?: string;
+      dialogExternalId?: string;
+      sourceMessageId?: string;
+      route?: string;
+    },
+  ) {
+    return this.frontOfficeService.intakeMessageForViewer(
+      this.getCompanyId(user),
+      this.getViewer(user),
+      {
+        messageText: body.messageText,
+        threadExternalId: body.threadExternalId,
+        dialogExternalId: body.dialogExternalId,
+        sourceMessageId: body.sourceMessageId,
+        route: body.route,
+      },
     );
   }
 

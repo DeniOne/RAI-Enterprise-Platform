@@ -40,6 +40,26 @@ function createRuntime(options?: {
     threads: [] as any[],
     threadMessages: [] as any[],
     handoffs: [] as any[],
+    participantStates: [] as any[],
+    users: [
+      {
+        id: "fo-external-1",
+        companyId: "c1",
+        telegramId: null,
+        accountId: "farm-1",
+        account: {
+          id: "farm-1",
+          name: "Ферма 1",
+        },
+      },
+    ] as any[],
+    accounts: [
+      {
+        id: "farm-1",
+        companyId: "c1",
+        name: "Ферма 1",
+      },
+    ] as any[],
   };
 
   const prismaMock = {
@@ -109,10 +129,26 @@ function createRuntime(options?: {
       }),
     },
     user: {
-      findFirst: jest.fn(async () => null),
+      findFirst: jest.fn(async ({ where }: any) => {
+        return (
+          state.users.find(
+            (item) =>
+              item.companyId === where.companyId &&
+              (!where.id || item.id === where.id),
+          ) ?? null
+        );
+      }),
     },
     account: {
-      findFirst: jest.fn(async () => null),
+      findFirst: jest.fn(async ({ where }: any) => {
+        return (
+          state.accounts.find(
+            (item) =>
+              item.companyId === where.companyId &&
+              (!where.id || item.id === where.id),
+          ) ?? null
+        );
+      }),
     },
   };
 
@@ -193,7 +229,41 @@ function createRuntime(options?: {
     evaluate: jest.fn(() => decisionQueue.shift() ?? defaultDecision),
   };
   const outboundServiceMock = {
-    sendToThread: jest.fn(),
+    sendToThread: jest.fn(async (payload: any) => {
+      const createdAt = new Date().toISOString();
+      const thread = state.threads.find((item) => item.id === payload.thread.id)
+        ?? payload.thread;
+      const replyStatus = payload.thread.channel === "telegram" ? "SENT" : "SKIPPED";
+      const deliveryStatus = replyStatus === "SENT" ? "SENT" : "SKIPPED";
+
+      const message = {
+        id: `msg-${state.threadMessages.length + 1}`,
+        companyId: payload.companyId,
+        threadId: payload.thread.id,
+        direction: "outbound",
+        messageText: payload.messageText,
+        createdAt,
+        channel: payload.thread.channel,
+        deliveryStatus,
+      };
+      state.threadMessages.push(message);
+      Object.assign(thread, {
+        lastMessagePreview: payload.messageText,
+        lastMessageDirection: "outbound",
+        lastMessageAt: createdAt,
+        messageCount: (thread.messageCount ?? 0) + 1,
+      });
+
+      return {
+        thread,
+        message: {
+          id: message.id,
+          createdAt: message.createdAt,
+        },
+        delivery: null,
+        replyStatus,
+      };
+    }),
   };
   const clientResponseOrchestratorMock = {
     sendAutoReply: jest.fn().mockResolvedValue({
@@ -319,6 +389,22 @@ function createRuntime(options?: {
       if (existing) {
         Object.assign(existing, {
           channel: payload.channel ?? existing.channel,
+          farmAccountId:
+            payload.farmAccountId !== undefined
+              ? payload.farmAccountId
+              : existing.farmAccountId,
+          farmNameSnapshot:
+            payload.farmNameSnapshot !== undefined
+              ? payload.farmNameSnapshot
+              : existing.farmNameSnapshot,
+          representativeUserId:
+            payload.representativeUserId !== undefined
+              ? payload.representativeUserId
+              : existing.representativeUserId,
+          representativeTelegramId:
+            payload.representativeTelegramId !== undefined
+              ? payload.representativeTelegramId
+              : existing.representativeTelegramId,
           currentClassification:
             payload.currentClassification !== undefined
               ? payload.currentClassification
@@ -337,6 +423,14 @@ function createRuntime(options?: {
             payload.lastMessagePreview !== undefined
               ? payload.lastMessagePreview
               : existing.lastMessagePreview,
+          lastMessageDirection:
+            payload.lastMessageDirection !== undefined
+              ? payload.lastMessageDirection
+              : existing.lastMessageDirection,
+          lastMessageAt:
+            payload.lastMessageAt !== undefined
+              ? payload.lastMessageAt
+              : existing.lastMessageAt,
           messageCount:
             typeof payload.messageCountIncrement === "number"
               ? (existing.messageCount ?? 0) + payload.messageCountIncrement
@@ -349,18 +443,28 @@ function createRuntime(options?: {
         companyId: payload.companyId,
         threadKey: payload.threadKey,
         channel: payload.channel,
+        farmAccountId: payload.farmAccountId ?? null,
+        farmNameSnapshot: payload.farmNameSnapshot ?? null,
+        representativeUserId: payload.representativeUserId ?? null,
+        representativeTelegramId: payload.representativeTelegramId ?? null,
         currentClassification: payload.currentClassification ?? null,
         currentOwnerRole: payload.currentOwnerRole ?? null,
         currentHandoffStatus: payload.currentHandoffStatus ?? null,
         lastDraftId: payload.lastDraftId ?? null,
         lastMessagePreview: payload.lastMessagePreview ?? null,
+        lastMessageDirection: payload.lastMessageDirection ?? null,
+        lastMessageAt: payload.lastMessageAt ?? null,
         messageCount: payload.messageCountIncrement ?? 0,
       };
       state.threads.push(thread);
       return thread;
     }),
     createMessage: jest.fn(async (payload: any) => {
-      const message = { id: `msg-${state.threadMessages.length + 1}`, ...payload };
+      const message = {
+        id: `msg-${state.threadMessages.length + 1}`,
+        createdAt: new Date().toISOString(),
+        ...payload,
+      };
       state.threadMessages.push(message);
       return message;
     }),
@@ -374,12 +478,70 @@ function createRuntime(options?: {
         (item) => item.companyId === companyId && item.id === threadId,
       );
     }),
-    listThreads: jest.fn(async (companyId: string) =>
-      state.threads.filter((item) => item.companyId === companyId),
+    listThreads: jest.fn(async (companyId: string, options?: any) =>
+      state.threads.filter((item) => {
+        if (item.companyId !== companyId) {
+          return false;
+        }
+        if (options?.farmAccountId && item.farmAccountId !== options.farmAccountId) {
+          return false;
+        }
+        return true;
+      }),
     ),
-    listMessages: jest.fn(async (companyId: string, threadId: string) =>
-      state.threadMessages.filter(
+    listMessages: jest.fn(async (companyId: string, threadId: string, options?: any) => {
+      const base = state.threadMessages.filter(
         (item) => item.companyId === companyId && item.threadId === threadId,
+      );
+      if (!options?.afterId) {
+        return base;
+      }
+      const anchorIndex = base.findIndex((item) => item.id === options.afterId);
+      if (anchorIndex < 0) {
+        return [];
+      }
+      const sliced = base.slice(anchorIndex + 1);
+      if (typeof options.limit === "number" && options.limit > 0) {
+        return sliced.slice(0, options.limit);
+      }
+      return sliced;
+    }),
+    listMessagesForThreads: jest.fn(async (companyId: string, threadIds: string[]) =>
+      state.threadMessages.filter(
+        (item) => item.companyId === companyId && threadIds.includes(item.threadId),
+      ),
+    ),
+    upsertParticipantState: jest.fn(async (payload: any) => {
+      const existing = state.participantStates.find(
+        (item) =>
+          item.companyId === payload.companyId &&
+          item.threadId === payload.threadId &&
+          item.userId === payload.userId,
+      );
+      if (existing) {
+        Object.assign(existing, {
+          lastReadMessageId: payload.lastReadMessageId ?? null,
+          lastReadAt: payload.lastReadAt ?? null,
+        });
+        return existing;
+      }
+      const created = {
+        id: `state-${state.participantStates.length + 1}`,
+        companyId: payload.companyId,
+        threadId: payload.threadId,
+        userId: payload.userId,
+        lastReadMessageId: payload.lastReadMessageId ?? null,
+        lastReadAt: payload.lastReadAt ?? null,
+      };
+      state.participantStates.push(created);
+      return created;
+    }),
+    listParticipantStates: jest.fn(async (companyId: string, userId: string, threadIds: string[]) =>
+      state.participantStates.filter(
+        (item) =>
+          item.companyId === companyId &&
+          item.userId === userId &&
+          threadIds.includes(item.threadId),
       ),
     ),
     createHandoff: jest.fn(async (payload: any) => {
@@ -604,5 +766,65 @@ describe("FrontOffice runtime e2e flow", () => {
     expect(metricsSnapshot.handoff.createdTotal).toBe(1);
     expect(metricsSnapshot.delivery.repliesSentTotal).toBeGreaterThanOrEqual(1);
     expect(metrics.snapshot("c1").alerts).toBeDefined();
+  });
+
+  it("runs web_chat ingress -> viewer reply -> polling cursor -> read marker", async () => {
+    const { service } = createRuntime();
+    const viewer = {
+      id: "fo-external-1",
+      role: "FRONT_OFFICE_USER",
+      accountId: "farm-1",
+    };
+
+    const intake = await service.intakeMessageForViewer("c1", viewer, {
+      messageText: "Нужна консультация по документам",
+      threadExternalId: "web-dialog-1",
+    });
+    expect((intake as any).status).toBe("DRAFT_RECORDED");
+
+    const threads = await service.listThreadsForViewer("c1", viewer);
+    expect(threads.length).toBeGreaterThan(0);
+    const threadKey = threads[0].threadKey;
+
+    const initialMessages = await service.listMessagesForViewer(
+      "c1",
+      viewer,
+      threadKey,
+    );
+    expect(initialMessages.some((message: any) => message.direction === "inbound")).toBe(
+      true,
+    );
+
+    const reply = await service.replyToThread(
+      "c1",
+      viewer,
+      threadKey,
+      "Ответ оператора во внешний контур",
+    );
+    expect((reply as any).channel).toBe("web_chat");
+    expect((reply as any).deliveryStatus).toBe("SKIPPED");
+
+    const polled = await service.listMessagesForViewer(
+      "c1",
+      viewer,
+      threadKey,
+      {
+        afterId: initialMessages.at(-1)?.id,
+        limit: 20,
+      },
+    );
+    expect(polled).toHaveLength(1);
+    expect(polled[0]).toMatchObject({
+      direction: "outbound",
+      deliveryStatus: "SKIPPED",
+    });
+
+    const readState = await service.markThreadRead(
+      "c1",
+      viewer,
+      threadKey,
+      polled[0].id,
+    );
+    expect((readState as any).lastReadMessageId).toBe(polled[0].id);
   });
 });

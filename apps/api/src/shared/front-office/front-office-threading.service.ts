@@ -90,10 +90,26 @@ export class FrontOfficeThreadingService {
     companyId: string,
     viewer: { id: string; role?: string; accountId?: string | null },
     threadKey: string,
+    options?: {
+      afterId?: string;
+      limit?: number;
+    },
   ) {
     const thread = await this.communicationRepository.getThreadByKey(companyId, threadKey);
     await this.assertThreadAccess(companyId, viewer, thread);
-    return this.communicationRepository.listMessages(companyId, thread.id);
+    return this.communicationRepository.listMessages(companyId, thread.id, options);
+  }
+
+  async listMessagesWithCursor(
+    companyId: string,
+    threadKey: string,
+    options?: {
+      afterId?: string;
+      limit?: number;
+    },
+  ) {
+    const thread = await this.communicationRepository.getThreadByKey(companyId, threadKey);
+    return this.communicationRepository.listMessages(companyId, thread.id, options);
   }
 
   async listManagerFarms(
@@ -186,13 +202,6 @@ export class FrontOfficeThreadingService {
     }
     await this.assertThreadAccess(companyId, user, thread);
 
-    const chatId = this.normalizeTelegramChatId(
-      thread.threadExternalId ?? thread.representativeTelegramId,
-      thread.representativeTelegramId,
-    );
-    if (!chatId) {
-      throw new NotFoundException("Telegram chat is not available for this thread");
-    }
     const outbound = await this.outboundService.sendToThread({
       companyId,
       thread,
@@ -205,11 +214,23 @@ export class FrontOfficeThreadingService {
       actorUserId: user.id,
       actorUserRole: user.role ?? null,
     });
+    const deliveryStatus = this.mapReplyStatusToDeliveryStatus(outbound.replyStatus);
 
     return {
       thread: outbound.thread,
-      message: outbound.message,
+      message: {
+        id: outbound.message.id,
+        createdAt: outbound.message.createdAt,
+        channel: outbound.thread.channel,
+        direction: "outbound",
+        messageText,
+        deliveryStatus,
+      },
       delivery: outbound.delivery,
+      deliveryStatus,
+      channel: outbound.thread.channel,
+      messageId: outbound.message.id,
+      createdAt: outbound.message.createdAt,
     };
   }
 
@@ -627,18 +648,16 @@ export class FrontOfficeThreadingService {
     await this.assertAssignment(companyId, viewer.id, thread.farmAccountId);
   }
 
-  private normalizeTelegramChatId(
-    rawChatId?: string | null,
-    fallbackChatId?: string | null,
-  ): string | null {
-    const candidate = rawChatId ?? fallbackChatId ?? null;
-    if (!candidate) {
-      return null;
+  private mapReplyStatusToDeliveryStatus(
+    replyStatus: "NOT_SENT" | "SENT" | "SKIPPED" | "FAILED",
+  ): "RECEIVED" | "SENT" | "SKIPPED" | "FAILED" {
+    if (replyStatus === "SENT") {
+      return "SENT";
     }
-    if (candidate.startsWith("telegram:")) {
-      return candidate.slice("telegram:".length);
+    if (replyStatus === "FAILED") {
+      return "FAILED";
     }
-    return candidate;
+    return "SKIPPED";
   }
 
   private async resolveThreadBinding(

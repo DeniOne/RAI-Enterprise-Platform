@@ -15,7 +15,7 @@ describe("TechMapWorkflowOrchestratorService", () => {
         {
           slot_key: "soil_profile",
           label: "Soil profile",
-          group_key: "soil",
+          group_key: "agronomic_basis",
           priority: 1,
           severity: "REQUIRED_BLOCKING",
           resolution_target: "USER_RESOLVABLE",
@@ -106,5 +106,82 @@ describe("TechMapWorkflowOrchestratorService", () => {
       ]),
     );
     expect(trace.summary).toContain("Trust satisfied: yes");
+  });
+
+  it("блокирует только ветки с незакрытыми slot families и уважает trust specialization gate", () => {
+    const trace = service.buildWorkflowTrace({
+      workflow_id: "tech-map:tm-3",
+      draft_id: "tm-3",
+      lead_owner_agent: "agronomist",
+      readiness: "S3_DRAFT_READY",
+      publication_state: "REVIEW_REQUIRED",
+      workflow_verdict: "PARTIAL",
+      clarify_items: [
+        {
+          slot_key: "price_book_version",
+          label: "Price book version",
+          group_key: "economic_basis",
+          priority: 70,
+          severity: "REQUIRED_REVIEW",
+          resolution_target: "MACHINE_RESOLVABLE",
+          reason: "missing",
+          blocks_phases: ["composition"],
+          acceptable_sources: ["price_book"],
+          can_be_assumed: false,
+        },
+      ],
+      missing_must: ["price_book_version"],
+      has_budget_policy: true,
+      has_execution_history: true,
+      has_past_outcomes: true,
+      has_allowed_input_catalog_version: true,
+      has_target_kpi_policy: true,
+      has_weather_normals: true,
+      trust_specialization: {
+        workflow_id: "tech-map:tm-3",
+        variant_id: "variant:primary",
+        publication_state: "REVIEW_REQUIRED",
+        overall_verdict: "PARTIAL",
+        publication_critical_branches: [],
+        advisory_branches: [],
+        allowed_branch_ids: ["agronomic:primary", "risk:scenario"],
+        blocked_branch_ids: ["finance:policy"],
+        blocked_disclosure: ["finance_scope_missing"],
+        composition_gate: {
+          can_compose: false,
+          reason: "trust_gate_pending",
+          disclosure: ["trust_gate_pending"],
+        },
+        variant_comparison_report: {
+          selected_variant_id: "variant:primary",
+          selected_variant_verdict: "PARTIAL",
+          rows: [],
+          comparison_available: false,
+          disclosure: [],
+        },
+      },
+    });
+
+    const financeBranch = trace.branch_schedule.find(
+      (item) => item.branch_id === "finance:policy",
+    );
+    const riskBranch = trace.branch_schedule.find(
+      (item) => item.branch_id === "risk:scenario",
+    );
+
+    expect(financeBranch?.status).toBe("blocked");
+    expect(financeBranch?.summary).toContain("economic_basis");
+    expect(riskBranch?.status).toBe("planned");
+    expect(trace.composition_gate.can_compose).toBe(false);
+    expect(trace.composition_gate.reason).toBe("clarify_block_open");
+    expect(trace.policy_decisions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          gate: "trust",
+          decision: "block",
+          reason: "Trust specialization gate trust_gate_pending.",
+        }),
+      ]),
+    );
   });
 });

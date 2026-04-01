@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import {
   DeviationType,
   IntegrityStatus,
@@ -149,6 +153,41 @@ export class FrontOfficeService {
     );
   }
 
+  async intakeMessageForViewer(
+    companyId: string,
+    viewer: { id: string; role?: string; accountId?: string | null },
+    input: {
+      messageText: string;
+      threadExternalId?: string;
+      dialogExternalId?: string;
+      sourceMessageId?: string;
+      route?: string;
+    },
+  ) {
+    return this.runViewerScopedOperation(
+      companyId,
+      viewer,
+      "portal_front_office_intake",
+      undefined,
+      async () =>
+        this.frontOfficeDraftService.intakeMessage(
+          companyId,
+          `fo-portal-intake:${Date.now()}`,
+          { id: viewer.id, role: viewer.role },
+          {
+            channel: "web_chat",
+            direction: "inbound",
+            messageText: input.messageText,
+            threadExternalId: input.threadExternalId,
+            dialogExternalId: input.dialogExternalId ?? input.threadExternalId,
+            senderExternalId: viewer.id,
+            sourceMessageId: input.sourceMessageId,
+            route: input.route ?? "/portal/front-office",
+          },
+        ),
+    );
+  }
+
   async getDraft(companyId: string, draftId: string) {
     return this.frontOfficeDraftService.getDraft(companyId, draftId);
   }
@@ -207,26 +246,52 @@ export class FrontOfficeService {
     viewer: { id: string; role?: string; accountId?: string | null },
     threadKey: string,
   ) {
-    return this.frontOfficeDraftService.getThreadForViewer(
+    return this.runViewerScopedOperation(
       companyId,
       viewer,
+      "portal_front_office_thread_read",
       threadKey,
+      () =>
+        this.frontOfficeDraftService.getThreadForViewer(
+          companyId,
+          viewer,
+          threadKey,
+        ),
     );
   }
 
-  async listMessages(companyId: string, threadKey: string) {
-    return this.frontOfficeDraftService.listMessages(companyId, threadKey);
+  async listMessages(
+    companyId: string,
+    threadKey: string,
+    options?: {
+      afterId?: string;
+      limit?: number;
+    },
+  ) {
+    return this.frontOfficeDraftService.listMessages(companyId, threadKey, options);
   }
 
   async listMessagesForViewer(
     companyId: string,
     viewer: { id: string; role?: string; accountId?: string | null },
     threadKey: string,
+    options?: {
+      afterId?: string;
+      limit?: number;
+    },
   ) {
-    return this.frontOfficeDraftService.listMessagesForViewer(
+    return this.runViewerScopedOperation(
       companyId,
       viewer,
+      "portal_front_office_thread_messages",
       threadKey,
+      () =>
+        this.frontOfficeDraftService.listMessagesForViewer(
+          companyId,
+          viewer,
+          threadKey,
+          options,
+        ),
     );
   }
 
@@ -238,7 +303,13 @@ export class FrontOfficeService {
     companyId: string,
     viewer: { id: string; role?: string; accountId?: string | null },
   ) {
-    return this.frontOfficeDraftService.listThreadsForViewer(companyId, viewer);
+    return this.runViewerScopedOperation(
+      companyId,
+      viewer,
+      "portal_front_office_threads",
+      undefined,
+      () => this.frontOfficeDraftService.listThreadsForViewer(companyId, viewer),
+    );
   }
 
   async getTelegramWorkspaceBootstrap(companyId: string, userId: string) {
@@ -304,11 +375,18 @@ export class FrontOfficeService {
     threadKey: string,
     messageText: string,
   ) {
-    return this.frontOfficeDraftService.replyToThread(
+    return this.runViewerScopedOperation(
       companyId,
       user,
+      "portal_front_office_reply",
       threadKey,
-      messageText,
+      () =>
+        this.frontOfficeDraftService.replyToThread(
+          companyId,
+          user,
+          threadKey,
+          messageText,
+        ),
     );
   }
 
@@ -318,11 +396,18 @@ export class FrontOfficeService {
     threadKey: string,
     lastMessageId?: string,
   ) {
-    return this.frontOfficeDraftService.markThreadRead(
+    return this.runViewerScopedOperation(
       companyId,
       viewer,
+      "portal_front_office_read_marker",
       threadKey,
-      lastMessageId,
+      () =>
+        this.frontOfficeDraftService.markThreadRead(
+          companyId,
+          viewer,
+          threadKey,
+          lastMessageId,
+        ),
     );
   }
 
@@ -714,5 +799,50 @@ export class FrontOfficeService {
     if (evidenceCount >= 2) return IntegrityStatus.STRONG_EVIDENCE;
     if (evidenceCount === 1) return IntegrityStatus.WEAK_EVIDENCE;
     return IntegrityStatus.NO_EVIDENCE;
+  }
+
+  private async runViewerScopedOperation<T>(
+    companyId: string,
+    viewer: { id: string; role?: string; accountId?: string | null },
+    resource: string,
+    threadKey: string | undefined,
+    operation: () => Promise<T>,
+  ): Promise<T> {
+    try {
+      this.assertViewerBinding(viewer);
+      return await operation();
+    } catch (error) {
+      if (error instanceof ForbiddenException) {
+        await this.audit
+          .log({
+            action: "FRONT_OFFICE_SECURITY_ACCESS_DENIED",
+            companyId,
+            userId: viewer.id,
+            metadata: {
+              resource,
+              threadKey: threadKey ?? null,
+              viewerRole: viewer.role ?? null,
+              viewerAccountId: viewer.accountId ?? null,
+              reason: error.message,
+            },
+          })
+          .catch(() => null);
+      }
+      throw error;
+    }
+  }
+
+  private assertViewerBinding(viewer: {
+    role?: string;
+    accountId?: string | null;
+  }) {
+    if (
+      viewer.role === "FRONT_OFFICE_USER" &&
+      (!viewer.accountId || viewer.accountId.trim().length === 0)
+    ) {
+      throw new ForbiddenException(
+        "Front-office user is not bound to counterparty",
+      );
+    }
   }
 }
