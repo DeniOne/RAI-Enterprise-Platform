@@ -52,14 +52,14 @@ function git(args) {
   return execFileSync("git", args, { cwd: ROOT, encoding: "utf8" }).trim();
 }
 
-function fetchJson(url) {
+function fetchJson(url, accept = "application/vnd.github+json") {
   return new Promise((resolve, reject) => {
     const request = https.get(
       url,
       {
         headers: {
           "User-Agent": "RAI_EP/security-reviewed-evidence-status",
-          Accept: "application/vnd.github+json",
+          Accept: accept,
         },
       },
       (response) => {
@@ -85,6 +85,22 @@ function fetchJson(url) {
       reject(error);
     });
   });
+}
+
+async function fetchPullsForCommit(context, commitSha) {
+  if (!asNonEmptyString(commitSha)) {
+    return [];
+  }
+
+  try {
+    const payload = await fetchJson(
+      `https://api.github.com/repos/${context.repository.owner}/${context.repository.name}/commits/${commitSha}/pulls`,
+      "application/vnd.github.groot-preview+json",
+    );
+    return Array.isArray(payload) ? payload : [];
+  } catch {
+    return [];
+  }
 }
 
 function addIssue(issues, issue) {
@@ -579,6 +595,28 @@ async function main() {
   const securityBaseline = input ? await verifyRunControl("securityBaseline", controls.securityBaseline || {}, context, issues) : null;
   const dependencyReview = input ? await verifyDependencyReview(controls.dependencyReview || {}, context, issues) : null;
   const provenance = input ? verifyProvenance(controls.provenance || {}, context, issues, securityBaseline) : null;
+  const reviewScopeMatchesCurrent =
+    currentHeadSha !== "unknown" &&
+    currentBranch !== "unknown" &&
+    asNonEmptyString(reviewScope.headSha) === currentHeadSha &&
+    asNonEmptyString(reviewScope.headBranch) === currentBranch;
+  const commitPulls = reviewScopeMatchesCurrent ? await fetchPullsForCommit(context, currentHeadSha) : [];
+  const directPushWithoutPrTrace = Boolean(
+    reviewScopeMatchesCurrent &&
+    currentBranch === context.reviewScope.headBranch &&
+    dependencyReview &&
+    dependencyReview.status === "missing_pr_evidence" &&
+    commitPulls.length === 0,
+  );
+
+  if (directPushWithoutPrTrace) {
+    addIssue(issues, {
+      type: "direct_push_without_pr_trace",
+      control: "dependencyReview",
+      value: currentHeadSha,
+    });
+    dependencyReview.notes = "Текущий head уже находится в branch review scope, но GitHub не возвращает ни одного PR для этого commit SHA.";
+  }
 
   const controlRows = [codeql, securityBaseline, dependencyReview, provenance]
     .filter(Boolean)
@@ -623,7 +661,9 @@ async function main() {
     : !input
       ? "создать security-reviewed-evidence input-контракт и повторить status"
       : !dependencyReviewVerified
-        ? "собрать первый PR-backed dependency review cycle, привязать prNumber/runId к текущему head и добавить reviewer refs"
+        ? directPushWithoutPrTrace
+          ? "текущий head попал в main без PR trace; нужен новый минимальный follow-up PR-backed cycle, чтобы получить dependency review и reviewer refs"
+          : "собрать первый PR-backed dependency review cycle, привязать prNumber/runId к текущему head и добавить reviewer refs"
         : !reviewerLoopBound
           ? "добавить reviewer-backed refs в reviewScope и provenance/dependency-review metadata"
           : "обновить run refs или устранить mismatch/issues и повторить status";
@@ -674,6 +714,8 @@ async function main() {
       provenanceInfrastructureVerified,
       dependencyReviewVerified,
       reviewerLoopBound,
+      directPushWithoutPrTrace,
+      commitPullsForHead: commitPulls.length,
       inputHeadMatchesCurrent: currentHeadSha !== "unknown" && asNonEmptyString(reviewScope.headSha) === currentHeadSha,
       inputBranchMatchesCurrent: currentBranch !== "unknown" && asNonEmptyString(reviewScope.headBranch) === currentBranch,
     },
