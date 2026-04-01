@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A1-FIRST-WAVE-CHECKLIST-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.3.0
+version: 1.5.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A1-FIRST-WAVE-CHECKLIST-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_LEGAL_CLOSEOUT_PLAN.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;var/compliance/external-legal-evidence-priority-board.md;var/compliance/external-legal-evidence-handoff.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_LEGAL_CLOSEOUT_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_REQUEST_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_STATUS_GATE.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;var/compliance/external-legal-evidence-priority-board.md;var/compliance/external-legal-evidence-handoff.md;var/compliance/phase-a1-first-wave-request-packet.md;var/compliance/phase-a1-first-wave-status.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md
 ---
 # PHASE A1 FIRST WAVE EXECUTION CHECKLIST
 
@@ -31,6 +31,10 @@ last_verified: 2026-03-31
 
 Именно эта четвёрка сильнее всего двигает `Legal / Compliance` из чистого `NO-GO`.
 
+Для единой owner-facing сборки этой волны использовать также [PHASE_A1_FIRST_WAVE_REQUEST_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_REQUEST_PACKET.md).
+
+Для machine-readable статуса этой же волны использовать также [PHASE_A1_FIRST_WAVE_STATUS_GATE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_STATUS_GATE.md).
+
 Для самого первого шага использовать также [PHASE_A1_ELP_01_OPERATOR_MEMO_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_ELP_01_OPERATOR_MEMO_CHECKLIST.md).
 
 Для второго шага использовать также [PHASE_A1_ELP_03_HOSTING_RESIDENCY_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_ELP_03_HOSTING_RESIDENCY_CHECKLIST.md).
@@ -40,6 +44,16 @@ last_verified: 2026-03-31
 Для четвёртого шага использовать также [PHASE_A1_ELP_06_LAWFUL_BASIS_CHECKLIST.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_ELP_06_LAWFUL_BASIS_CHECKLIST.md).
 
 ## 1. Что делать прямо сейчас
+
+Сначала выпустить единый packet:
+
+- `pnpm phase:a1:first-wave:packet`
+
+После этого работать уже по generated packet:
+
+- `var/compliance/phase-a1-first-wave-request-packet.md`
+- `var/compliance/phase-a1-first-wave-status.md`
+- `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/request-packets/PHASE-A1-FIRST-WAVE/REQUEST_PACKET.md`
 
 Для каждой карточки идти только так:
 

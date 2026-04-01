@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A5-IP-OSS-CLOSEOUT-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.5.0
+version: 1.13.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A5-IP-OSS-CLOSEOUT-PLAN-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md;docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/_audit/ENTERPRISE_EVIDENCE_MATRIX_2026-03-28.md;var/security/notice-bundle.json;var/security/notice-bundle.md;scripts/generate-notice-bundle.cjs
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_STATUS_GATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_UNKNOWN_LICENSE_TRIAGE_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_PROCUREMENT_DISTRIBUTION_DECISION.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_SOURCE_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_COLLECTION_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_HANDOFF_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_OWNER_PACKETS.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_REQUEST_PACKET.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_DELIVERY_PACKET.md;docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md;docs/05_OPERATIONS/EXTERNAL_LEGAL_EVIDENCE_METADATA_REGISTER.md;docs/_audit/RF_COMPLIANCE_REVIEW_2026-03-28.md;docs/_audit/ENTERPRISE_EVIDENCE_MATRIX_2026-03-28.md;var/security/notice-bundle.json;var/security/notice-bundle.md;var/compliance/phase-a5-chain-of-title-source-register.json;var/compliance/phase-a5-chain-of-title-source-register.md;var/compliance/phase-a5-chain-of-title-collection.json;var/compliance/phase-a5-chain-of-title-collection.md;var/compliance/phase-a5-chain-of-title-handoff.json;var/compliance/phase-a5-chain-of-title-handoff.md;var/compliance/phase-a5-chain-of-title-request-packet.json;var/compliance/phase-a5-chain-of-title-request-packet.md;var/compliance/phase-a5-status.json;var/compliance/phase-a5-status.md;scripts/generate-notice-bundle.cjs;scripts/phase-a5-chain-of-title-register.cjs;scripts/phase-a5-chain-of-title-collection.cjs;scripts/phase-a5-chain-of-title-handoff.cjs;scripts/phase-a5-chain-of-title-owner-packets.cjs;scripts/phase-a5-chain-of-title-request-packet.cjs;scripts/phase-a5-chain-of-title-delivery-packet.cjs;scripts/phase-a5-status.cjs
 ---
 # PHASE A5 IP AND OSS CLOSEOUT PLAN
 
@@ -39,6 +39,7 @@ last_verified: 2026-03-31
 - опубликован [PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md) как working notice perimeter;
 - опубликован [PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md) как evidence, что first assembled `NOTICE` bundle уже реально собран;
 - опубликован [PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md) как conservative first-party licensing baseline;
+- опубликован [PHASE_A5_TIER1_PROCUREMENT_DISTRIBUTION_DECISION.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_PROCUREMENT_DISTRIBUTION_DECISION.md) как связка между notice bundle, first-party licensing strategy и controlled `Tier 1` handoff;
 - root package и `eslint-plugin-tenant-security` уже выведены из `UNKNOWN` через `UNLICENSED`;
 - внешний legal lifecycle уже умеет вести `ELP-20260328-09` и `ELP-20260328-10`;
 - RF review прямо фиксирует, что `chain-of-title` и `OSS unknown-license triage` остаются незакрытым стоп-фактором.
@@ -47,6 +48,13 @@ last_verified: 2026-03-31
 
 - final distribution/per-procurement legal sign-off beyond `Tier 1` ещё не собран;
 - notice/obligations packet пока закрыт для `Tier 1`, но не является universal legal bundle;
+- repo-derived `chain-of-title` source map теперь можно выпускать машинно, но это ещё не заменяет внешний `ELP-20260328-09`;
+- repo-derived collection packet теперь можно выпускать машинно, но это тоже ещё не заменяет внешний `ELP-20260328-09`;
+- repo-derived owner handoff packet теперь можно выпускать машинно, но и он не заменяет внешний `ELP-20260328-09`;
+- restricted owner packets теперь можно выпускать машинно, но и они не заменяют внешний `ELP-20260328-09`;
+- request packet теперь можно выпускать машинно, но и он не заменяет внешний `ELP-20260328-09`;
+- restricted delivery packet теперь можно выпускать машинно, но и он не заменяет внешний `ELP-20260328-09`;
+- unified `A5` status/gate теперь можно выпускать машинно, но и он не заменяет внешний `ELP-20260328-09`;
 - не подтверждена непрерывная цепочка прав на first-party code и database rights;
 - внешний pilot нельзя считать безопасным при спорных правах на ПО и БД.
 
@@ -103,6 +111,22 @@ last_verified: 2026-03-31
 
 - accepted `ELP-20260328-09`;
 - обновлённый [OSS_LICENSE_AND_IP_REGISTER.md](/root/RAI_EP/docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md) со статусом, который уже не опирается на предположения.
+- repo-derived source register, который перечисляет активы, подлежащие покрытию внешним пакетом.
+- repo-derived collection packet, который раскладывает активы по evidence-классам для фактического сбора документов.
+- repo-derived handoff packet, который раскладывает evidence-классы по owner queues для фактического owner-intake.
+- restricted owner packets, которые дают каждому owner scope свой отдельный handoff-файл.
+- request packet, который собирает owner packets в единый owner-facing пакет для реального запроса документов.
+- delivery packet, который кладёт этот request-packet в итоговый restricted handoff-файл для owners.
+
+Текущий execution-артефакт:
+
+- [PHASE_A5_CHAIN_OF_TITLE_SOURCE_REGISTER.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_SOURCE_REGISTER.md)
+- [PHASE_A5_CHAIN_OF_TITLE_COLLECTION_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_COLLECTION_PACKET.md)
+- [PHASE_A5_CHAIN_OF_TITLE_HANDOFF_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_HANDOFF_PACKET.md)
+- [PHASE_A5_CHAIN_OF_TITLE_OWNER_PACKETS.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_OWNER_PACKETS.md)
+- [PHASE_A5_CHAIN_OF_TITLE_REQUEST_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_REQUEST_PACKET.md)
+- [PHASE_A5_CHAIN_OF_TITLE_DELIVERY_PACKET.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_DELIVERY_PACKET.md)
+- [PHASE_A5_STATUS_GATE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_STATUS_GATE.md)
 
 ### `A5.4` First-party licensing strategy
 
@@ -129,7 +153,7 @@ last_verified: 2026-03-31
 3. Затем принять `ELP-20260328-09`.
 4. Затем зафиксировать first-party licensing strategy.
 
-На текущем baseline первые два шага уже выполнены для `Tier 1 Linux self-host`.
+На текущем baseline первые два шага уже выполнены для `Tier 1 Linux self-host`, а четвертый шаг закрыт до уровня conservative internal/private handoff decision.
 
 Нельзя:
 
@@ -144,6 +168,7 @@ last_verified: 2026-03-31
 - [PHASE_A_EXECUTION_BOARD.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md)
 - при необходимости [PHASE_A_EVIDENCE_MATRIX.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EVIDENCE_MATRIX.md)
 - [OSS_LICENSE_AND_IP_REGISTER.md](/root/RAI_EP/docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md)
+- `pnpm phase:a5:status`
 - [PHASE_A_IMPLEMENTATION_PLAN.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md), если меняется форма исполнения трека
 
 Board должен меняться так:
@@ -159,6 +184,8 @@ Board должен меняться так:
 Обязательные проверяемые артефакты:
 
 - `pnpm security:licenses`
+- `pnpm phase:a5:status`
+- `pnpm gate:phase:a5:status`
 - `var/security/license-inventory.json`
 - [OSS_LICENSE_AND_IP_REGISTER.md](/root/RAI_EP/docs/05_OPERATIONS/OSS_LICENSE_AND_IP_REGISTER.md)
 - `ELP-20260328-09` status

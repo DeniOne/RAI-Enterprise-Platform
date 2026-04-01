@@ -1,6 +1,465 @@
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-03-30, priority synthesis)
+- [x] Для внешнего хвоста `Phase A` собран ready-to-send owner outreach packet.
+  - добавлен root generator:
+    - `scripts/phase-a-external-owner-outreach.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a:external-owner-outreach`
+    - `pnpm gate:phase:a:external-owner-outreach`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_OUTREACH_PACKET.md`
+- [x] Этот слой теперь даёт:
+  - generated outreach summary в `var/execution/phase-a-external-owner-outreach.*`
+  - restricted `MESSAGE.md` по каждой owner queue
+  - последний bridge между repo-side preparation и реальным внешним запросом
+- [x] После этого `Phase A` сместилась так:
+  - следующий шаг теперь выражается уже не как “собрать ещё один packet”, а как “отправить готовый outreach”;
+  - repo-side closeout дополнен реальным operational bridge в внешний мир;
+  - remaining blocker ещё сильнее сводится к факту получения ответов и intake внешних файлов.
+- [x] Для `Phase A` собран финальный repo-side closeout gate.
+  - добавлен root generator:
+    - `scripts/phase-a-closeout-status.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a:closeout`
+    - `pnpm gate:phase:a:closeout`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_CLOSEOUT_STATUS_GATE.md`
+- [x] Этот слой теперь даёт:
+  - generated closeout verdict в `var/execution/phase-a-closeout-status.*`
+  - machine-readable answer, исчерпана ли repo-side работа по фазе
+  - отделение состояния `repo_side_work_remaining` от `repo_side_exhausted_external_only`
+- [x] После этого `Phase A` сместилась так:
+  - можно честно зафиксировать, дошли ли мы внутри репозитория до реального упора;
+  - финальный остаток фазы теперь выражен не только через blockers и owner queues, но и через closeout verdict;
+  - следующий ход определяется уже не по ощущению, а по факту: либо ещё есть внутренний хвост, либо осталось только внешнее evidence.
+- [x] Для внешнего хвоста `Phase A` собран unified owner queue packet поверх consolidated blockers packet.
+  - добавлен root generator:
+    - `scripts/phase-a-external-owner-queues.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a:external-owner-queues`
+    - `pnpm gate:phase:a:external-owner-queues`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_OWNER_QUEUE_PACKET.md`
+- [x] Этот слой теперь даёт:
+  - generated owner queues в `var/execution/phase-a-external-owner-queues.*`
+  - restricted `INDEX.md` и `HANDOFF.md` по всем external owner queues фазы
+  - единый dispatch не только по трекам `A1/A2/A4/A5`, но и по named owners, shared scopes и governance scopes
+- [x] После этого `Phase A` сместилась так:
+  - unified внешний хвост теперь читается owner-by-owner поверх общего blockers packet;
+  - legal/security/pilot/IP очереди можно отдавать адресно без ручной склейки;
+  - remaining blocker ещё сильнее сводится к фактическому движению статусов внешних артефактов.
+- [x] Для всей `Phase A` собран unified external blockers packet поверх `A1/A2/A4/A5`.
+  - добавлен root generator:
+    - `scripts/phase-a-external-blockers-packet.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a:external-blockers`
+    - `pnpm gate:phase:a:external-blockers`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXTERNAL_BLOCKERS_PACKET.md`
+- [x] Этот слой теперь даёт:
+  - generated consolidated packet в `var/execution/phase-a-external-blockers-packet.*`
+  - один restricted `REQUEST_PACKET.md` по всему внешнему blocker-set фазы
+  - единый handoff поверх `A1 owner queues`, `A2 security evidence`, `A4 pilot handoff`, `A5 chain-of-title`
+- [x] После этого `Phase A` сместилась так:
+  - внешний остаток фазы читается одним файлом;
+  - owner-ам не нужно вручную собирать legal/security/pilot/IP хвосты из разных operational пакетов;
+  - remaining blocker ещё сильнее сводится к реальному intake внешних файлов, а не к навигации между артефактами.
+- [x] Для `A1` собран owner-by-owner queue packet поверх priority-eight.
+  - добавлен root generator:
+    - `scripts/phase-a1-owner-queues.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a1:owner-queues`
+    - `pnpm gate:phase:a1:owner-queues`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_OWNER_QUEUE_PACKET.md`
+- [x] Этот слой теперь даёт:
+  - generated owner queues в `var/compliance/phase-a1-owner-queues.*`
+  - restricted `HANDOFF.md` по каждому owner handle
+  - owner-facing запуск legal intake не из одной большой priority-eight таблицы, а по очередям владельцев
+- [x] После этого `A1` сместилась так:
+  - priority-eight уже не только unified packet, но и owner-ready queue system;
+  - внешний legal intake стало проще запускать по людям и ролям;
+  - remaining blocker ещё сильнее сводится к реальному получению внешних файлов, а не к их раскладке по owner scope.
+- [x] `A3` release-eval contour стабилизирован для повторных прогонов подряд.
+  - в `apps/api/scripts/ops/advisory-dr-rollback-rehearsal.mjs` и `apps/api/scripts/ops/advisory-stage-progression.mjs` добавлен retry/backoff на `429` при `login`
+  - эффект: `phase:a3:evals`, `phase:a:status` и `gate:phase:a:status` больше не должны случайно краснеть из-за transient auth rate-limit вместо реальной governance-регрессии
+- [x] Для всей `Phase A` собран unified machine-readable `status/gate`.
+  - добавлен root generator:
+    - `scripts/phase-a-status.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a:status`
+    - `pnpm gate:phase:a:status`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_STATUS_GATE.md`
+- [x] Этот слой теперь собирает в один verdict:
+  - `A0` triage readiness
+  - `A1` legal status
+  - `A2` security evidence status
+  - `A3` release eval state
+  - `A4` pilot handoff status
+  - `A5` IP/chain-of-title status
+  - `overall_state`, `blocked_by`, `in_progress_tracks`, `repo_complete_tracks`
+- [x] После этого `Phase A` сместилась так:
+  - вся фаза читается одной командой, а не по отдельным трекам;
+  - repo-side readiness и внешние блокеры разделены машинно;
+  - стало сразу видно, что основной остаток — это внешний intake по `A1`, `A2`, `A4`, `A5`.
+- [x] Для `A1` собран unified priority-eight packet поверх первой и второй wave.
+  - добавлен root generator:
+    - `scripts/phase-a1-priority-eight-request-packet.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a1:priority-eight:packet`
+    - `pnpm gate:phase:a1:priority-eight:packet`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_PRIORITY_EIGHT_REQUEST_PACKET.md`
+- [x] После этого `A1` сместилась так:
+  - весь critical legal path до `CONDITIONAL GO` уже открывается одной точкой входа;
+  - первая и вторая wave остаются разделёнными по порядку, но не распадаются на несколько несвязанных packet-слоёв;
+  - remaining blocker ещё сильнее сводится к живому intake внешних документов.
+- [x] Для `A1` собран owner-facing packet второй волны `ELP-02 / 05 / 08 / 09`.
+  - добавлен root generator:
+    - `scripts/phase-a1-second-wave-request-packet.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a1:second-wave:packet`
+    - `pnpm gate:phase:a1:second-wave:packet`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_SECOND_WAVE_REQUEST_PACKET.md`
+- [x] После этого `A1` сместилась так:
+  - вторая волна уже не висит как только checklist;
+  - после первой волны будет готов сразу owner-facing packet без новой ручной сборки;
+  - legal closeout по priority-eight теперь repo-side подготовлен волна-за-волной.
+- [x] Для `A1` собран unified `status/gate` поверх first-wave packet и first-wave status.
+  - добавлен root generator:
+    - `scripts/phase-a1-status.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a1:status`
+    - `pnpm gate:phase:a1:status`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_STATUS_GATE.md`
+- [x] Этот слой теперь даёт один machine-readable ответ по всему legal-треку:
+  - общие counts `requested / received / reviewed / accepted`
+  - `first_wave_state`
+  - `second_wave_state`
+  - `priority_eight_state`
+  - `current_state`
+  - `tier1_state`
+- [x] После этого `A1` сместилась так:
+  - legal execution уже читается одной командой, а не пятью разными файлами;
+  - первая и вторая волна больше не смешиваются в один неявный backlog;
+  - remaining blocker ещё сильнее сводится к фактическому внешнему intake.
+- [x] Для `A1` собран machine-readable `first-wave status/gate` поверх packet-а `ELP-01 / 03 / 04 / 06`.
+  - добавлен root generator:
+    - `scripts/phase-a1-first-wave-status.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a1:first-wave:status`
+    - `pnpm gate:phase:a1:first-wave:status`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_STATUS_GATE.md`
+- [x] Этот слой теперь связывает в один verdict:
+  - first-wave packet
+  - общий legal verdict
+  - counts `requested / received / reviewed / accepted`
+  - wave state `not_started / in_progress / completed`
+- [x] После этого `A1` сместилась так:
+  - первая legal-четвёрка стала не только owner-ready, но и machine-readable
+  - честное стартовое состояние теперь видно одной командой как `not_started`
+  - remaining blocker ещё сильнее сводится к реальному external intake, а не к отсутствию статуса
+- [x] Для `A1` собран unified owner-facing packet именно по первой legal-волне `ELP-01 / 03 / 04 / 06`.
+  - добавлен root generator:
+    - `scripts/phase-a1-first-wave-request-packet.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a1:first-wave:packet`
+    - `pnpm gate:phase:a1:first-wave:packet`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A1_FIRST_WAVE_REQUEST_PACKET.md`
+- [x] Этот packet теперь собирает в одну точку:
+  - текущие legal statuses первой волны
+  - named owners
+  - draft paths
+  - micro-checklists
+  - готовые `intake / reviewed / accepted` команды
+  - restricted request packet:
+    - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/request-packets/PHASE-A1-FIRST-WAVE/REQUEST_PACKET.md`
+- [x] После этого `A1` сместилась так:
+  - первая legal-четвёрка стала owner-ready не только как checklist set, но и как единый request packet
+  - `A-2.2.1` всё ещё честно остаётся `waiting_external`
+  - remaining blocker теперь ещё меньше похож на “нужно придумать процесс” и ещё больше похож на “нужно реально собрать и принять внешние файлы”
+- [x] Для `A5` собран unified machine-readable `status/gate` поверх уже готовых repo-side packet-слоёв.
+  - добавлен root generator:
+    - `scripts/phase-a5-status.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a5:status`
+    - `pnpm gate:phase:a5:status`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_STATUS_GATE.md`
+- [x] `phase:a5:status` теперь сводит в один report:
+  - `license-inventory`
+  - `notice-bundle`
+  - `chain-of-title source register`
+  - `collection packet`
+  - `handoff`
+  - `request packet`
+  - restricted metadata `ELP-20260328-09`
+  - restricted delivery packet
+- [x] После этого `A5` стала читаться так:
+  - `A5.1` = `done_for_tier1`
+  - `A5.2` = `assembled_for_tier1`
+  - `A5.3 repo-side` = `complete`
+  - `A5.3 external` = всё ещё `requested`
+  - `A5.4` = `done_for_tier1`
+  - общий статус = `external_blocked`
+  - `Tier 1` статус = `conditional_ready_pending_elp09`
+- [x] Синхронизированы:
+  - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`
+  - `PHASE_A_EXECUTION_BOARD.md`
+  - `PHASE_A_EVIDENCE_MATRIX.md`
+  - `ONE_BIG_PHASE/INDEX.md`
+  - `docs/DOCS_MATRIX.md`
+- [x] Для `A5.3` собран шестой repo-side слой поверх request packet: итоговый restricted `chain-of-title delivery packet`.
+  - добавлен root generator:
+    - `scripts/phase-a5-chain-of-title-delivery-packet.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a5:chain-of-title:delivery-packet`
+    - `pnpm gate:phase:a5:chain-of-title:delivery-packet`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_DELIVERY_PACKET.md`
+- [x] В restricted evidence store уже реально выпущен:
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/request-packets/ELP-20260328-09/REQUEST_PACKET.md`
+- [x] Фактически подтверждено:
+  - `total_assets = 18`
+  - `owner_queues = 3`
+  - delivery packet уже ссылается на owner packet index и содержит intake commands для `ELP-20260328-09`
+  - `pnpm gate:phase:a5:chain-of-title:delivery-packet` проходит
+- [x] `A5` после этого сместилась так:
+  - `A-2.6.2` всё ещё остаётся `waiting_external`
+  - но repo-side подготовка `ELP-20260328-09` практически выжата до последнего handoff-формата
+  - реальный остаток теперь уже только во внешнем signed evidence и его intake
+- [x] Для `A5.3` собран пятый repo-side слой поверх owner packets: единый `chain-of-title request packet`.
+  - добавлен root generator:
+    - `scripts/phase-a5-chain-of-title-request-packet.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a5:chain-of-title:request-packet`
+    - `pnpm gate:phase:a5:chain-of-title:request-packet`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_REQUEST_PACKET.md`
+- [x] Generated evidence уже реально выпускается в:
+  - `var/compliance/phase-a5-chain-of-title-request-packet.json`
+  - `var/compliance/phase-a5-chain-of-title-request-packet.md`
+- [x] Фактически подтверждено:
+  - `total_assets = 18`
+  - `owner_queues = 3`
+  - request packet уже ссылается на restricted owner packets и даёт единый owner-facing запрос для `ELP-20260328-09`
+  - `pnpm gate:phase:a5:chain-of-title:request-packet` проходит
+- [x] `A5` после этого сместилась так:
+  - `A-2.6.2` всё ещё остаётся `waiting_external`
+  - но repo-side подготовка `ELP-20260328-09` практически доведена до потолка: source map -> collection -> handoff -> owner packets -> request packet
+  - реальный остаток теперь уже не в генерации артефактов, а в сборе signed external evidence
+- [x] Для `A5.3` собран четвёртый repo-side слой поверх handoff packet: `chain-of-title owner packets`.
+  - добавлен root generator:
+    - `scripts/phase-a5-chain-of-title-owner-packets.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a5:chain-of-title:owner-packets`
+    - `pnpm gate:phase:a5:chain-of-title:owner-packets`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_OWNER_PACKETS.md`
+- [x] В restricted evidence store уже реально выпущены:
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/chain-of-title-owner-packets/INDEX.md`
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/chain-of-title-owner-packets/board_legal_product-governance/HANDOFF.md`
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/chain-of-title-owner-packets/legal_data_governance_architecture/HANDOFF.md`
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/legal-compliance/2026-03-28/chain-of-title-owner-packets/legal_engineering_management/HANDOFF.md`
+- [x] Фактически подтверждено:
+  - `total_assets = 18`
+  - `owner_queues = 3`
+  - `board / legal / product-governance = 1`
+  - `legal / data governance / architecture = 3`
+  - `legal / engineering management = 14`
+  - `pnpm gate:phase:a5:chain-of-title:owner-packets` проходит
+- [x] `A5` после этого сместилась так:
+  - `A-2.6.2` всё ещё остаётся `waiting_external`
+  - но `ELP-20260328-09` теперь готовится уже не только по source/collection/handoff, а по отдельным owner packets в restricted perimeter
+  - repo-side handoff layer для chain-of-title практически выжат до потолка
+- [x] Restricted `ELP-20260328-09` draft/template тоже усилены:
+  - draft теперь ссылается на `collection`, `handoff` и owner packets
+  - template теперь требует указать, какой `owner packet` использовался для сборки внешнего файла
+- [x] Для `A5.3` собран третий repo-side слой поверх source map и collection packet: `chain-of-title handoff packet`.
+  - добавлен root generator:
+    - `scripts/phase-a5-chain-of-title-handoff.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a5:chain-of-title:handoff`
+    - `pnpm gate:phase:a5:chain-of-title:handoff`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_HANDOFF_PACKET.md`
+- [x] Generated evidence уже реально выпускается в:
+  - `var/compliance/phase-a5-chain-of-title-handoff.json`
+  - `var/compliance/phase-a5-chain-of-title-handoff.md`
+- [x] Фактически подтверждено:
+  - `total_assets = 18`
+  - `owner_queues = 3`
+  - `board / legal / product-governance = 1`
+  - `legal / data governance / architecture = 3`
+  - `legal / engineering management = 14`
+  - `pnpm gate:phase:a5:chain-of-title:handoff` проходит
+- [x] `A5` после этого сместилась так:
+  - `A-2.6.2` всё ещё остаётся `waiting_external`
+  - но `ELP-20260328-09` теперь готовится уже не только по карте активов и evidence-классам, а по конкретным owner queues
+  - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`, `PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md`, `PHASE_A1_ELP_09_CHAIN_OF_TITLE_CHECKLIST.md`, `PHASE_A_EXECUTION_BOARD.md` и `PHASE_A_EVIDENCE_MATRIX.md` синхронизированы с этим handoff packet
+- [x] Практический остаток `A5.3` после этого ещё уже:
+  - repo-side handoff layer собран полностью
+  - остаётся только реальный внешний сбор и acceptance `employment / contractor / DB-rights / board ownership` документов по `ELP-20260328-09`
+- [x] Для `A5.3` собран второй repo-side слой поверх source map: `chain-of-title collection packet`.
+  - добавлен root generator:
+    - `scripts/phase-a5-chain-of-title-collection.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a5:chain-of-title:collection`
+    - `pnpm gate:phase:a5:chain-of-title:collection`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_COLLECTION_PACKET.md`
+- [x] Generated evidence уже реально выпускается в:
+  - `var/compliance/phase-a5-chain-of-title-collection.json`
+  - `var/compliance/phase-a5-chain-of-title-collection.md`
+- [x] Фактически подтверждено:
+  - `total_assets = 18`
+  - `evidence_classes = 4`
+  - `board_ownership_and_licensing = 1`
+  - `employment_or_contractor_ip_assignment = 13`
+  - `database_rights_and_schema_authorship = 3`
+  - `derived_artifact_linkage = 1`
+  - `pnpm gate:phase:a5:chain-of-title:collection` проходит
+- [x] `A5` после этого сместилась так:
+  - `A-2.6.2` всё ещё остаётся `waiting_external`
+  - но `ELP-20260328-09` теперь готовится не только по карте активов, а по явной матрице классов внешних доказательств
+  - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`, `PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md`, `PHASE_A1_ELP_09_CHAIN_OF_TITLE_CHECKLIST.md`, `PHASE_A_EXECUTION_BOARD.md` и `PHASE_A_EVIDENCE_MATRIX.md` синхронизированы с этим collection packet
+- [x] Практический остаток `A5.3` после этого уже очень узкий:
+  - нужно собирать только реальные внешние документы по `employment / contractor / DB rights / board ownership`
+  - repo-side подготовка больше не является ограничением для `ELP-20260328-09`
+- [x] Для `A5.3` собран repo-derived `chain-of-title` source map:
+  - добавлен root generator `scripts/phase-a5-chain-of-title-register.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a5:chain-of-title`
+    - `pnpm gate:phase:a5:chain-of-title`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_CHAIN_OF_TITLE_SOURCE_REGISTER.md`
+- [x] Generated evidence уже реально выпускается в:
+  - `var/compliance/phase-a5-chain-of-title-source-register.json`
+  - `var/compliance/phase-a5-chain-of-title-source-register.md`
+- [x] Фактически подтверждено:
+  - `total_assets = 18`
+  - `application_workspaces = 5`
+  - `library_workspaces = 8`
+  - `database_assets = 4`
+  - `pnpm gate:phase:a5:chain-of-title` проходит
+- [x] `A5` после этого сместилась так:
+  - `A-2.6.2` всё ещё остаётся `waiting_external`
+  - но теперь `ELP-20260328-09` готовится по явной карте first-party workspace и database perimeter, а не по памяти
+  - `PHASE_A5_IP_AND_OSS_CLOSEOUT_PLAN.md`, `PHASE_A5_FIRST_WAVE_IP_OSS_CHECKLIST.md`, `PHASE_A1_ELP_09_CHAIN_OF_TITLE_CHECKLIST.md`, `PHASE_A_EXECUTION_BOARD.md` и `PHASE_A_EVIDENCE_MATRIX.md` синхронизированы с этим source map
+- [x] Restricted draft/template по `ELP-20260328-09` тоже усилены:
+  - draft обновлён до baseline `159 packages / 31 unknown / UNLICENSED=2`
+  - template теперь явно ссылается на `var/compliance/phase-a5-chain-of-title-source-register.md`
+- [x] Для `A4.4` собран полный machine-readable lifecycle первого pilot handoff:
+  - добавлены root scripts:
+    - `scripts/phase-a4-pilot-handoff-status.cjs`
+    - `scripts/phase-a4-pilot-handoff-intake.cjs`
+    - `scripts/phase-a4-pilot-handoff-transition.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a4:handoff:status`
+    - `pnpm phase:a4:handoff:intake`
+    - `pnpm phase:a4:handoff:transition`
+    - `pnpm gate:phase:a4:handoff`
+- [x] Для `A4.4` создан новый repo-side closeout-слой:
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_PILOT_HANDOFF_EVIDENCE_CLOSEOUT_CHECKLIST.md`
+  - синхронизированы:
+    - `PHASE_A4_INSTALLABILITY_AND_RECOVERY_PLAN.md`
+    - `PHASE_A4_TIER1_PILOT_HANDOFF_CHECKLIST.md`
+    - `PHASE_A4_SUPPORT_BOUNDARY_PACKET.md`
+    - `PHASE_A_EXECUTION_BOARD.md`
+    - `PHASE_A_EVIDENCE_MATRIX.md`
+    - `ONE_BIG_PHASE/INDEX.md`
+    - `docs/DOCS_MATRIX.md`
+- [x] В restricted evidence store поднят новый perimeter:
+  - `/root/RAI_EP_RESTRICTED_EVIDENCE/pilot-handoffs/2026-03-31/metadata/INDEX.md`
+  - `A4-H-01-first-tier1-pilot-handoff.md`
+  - template и repo-derived draft для `A4-H-01`
+- [x] Реально подтверждено:
+  - `pnpm phase:a4:handoff:status` -> `requested=1`, `issues=0`
+  - `pnpm gate:phase:a4:handoff` -> `PASS`
+  - на временной копии restricted root успешно пройдён полный цикл:
+    - `requested -> received -> reviewed -> accepted`
+- [x] После этого `A4` сместилась так:
+  - `A-2.5.4` всё ещё остаётся `guard_active`
+  - но теперь это уже не просто template-based хвост, а полноценный external/operational evidence lifecycle
+  - честно незакрытым для `A4.4` остаётся только первый реальный accepted handoff report на живой pilot-среде
+- [x] Для `A0` закрыт внутренний execution-layer ежедневного triage:
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A0_DAILY_TRIAGE_CHECKLIST.md`
+  - этот документ переводит `A0` из общего governance-правила в один ежедневный исполняемый ритуал
+  - `PHASE_A0_TRIAGE_EXECUTION_RULES.md` теперь явно ссылается на этот checklist как на практический execution-артефакт
+- [x] После этого `A0` сместилась так:
+  - `A-2.1.1`, `A-2.1.2`, `A-2.1.3` в `PHASE_A_EXECUTION_BOARD.md` переведены в `done`
+  - triage `Phase A` теперь закреплён не только policy-формулировками, но и отдельным исполняемым daily loop
+  - внутренняя защита от распыления больше не висит как полуплановый контур
+- [x] Для `A4.4` собран repo-side handoff kit первого `Tier 1 self-host / localized` pilot:
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_TIER1_PILOT_HANDOFF_CHECKLIST.md`
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_TIER1_PILOT_HANDOFF_REPORT_TEMPLATE.md`
+  - `PHASE_A4_SUPPORT_BOUNDARY_PACKET.md` теперь явно связывает support boundary с этими двумя handoff-артефактами
+- [x] После этого `A4` сместилась так:
+  - `A-2.5.4` остаётся `guard_active`, но уже не как абстрактный support-boundary хвост
+  - repo-side handoff perimeter для первого пилота собран полностью
+  - единственный честный незакрытый шаг по `A4.4` теперь уже не в документах, а в заполнении первого реального `handoff report` на живой pilot-среде
+- [x] Внутренний остаток `Phase A` после этого ещё сильнее сузился к внешним evidence:
+  - `A1` — внешние legal artifacts `ELP-*`
+  - `A2` — внешние restricted security artifacts `A2-S-01/02/03`
+  - `A4` — первый фактический pilot handoff report
+  - `A5` — внешний `ELP-20260328-09`
+- [x] Для `A5.4` закрыт внутренний `Tier 1` handoff gap между first-party licensing strategy и OSS/notice perimeter:
+  - создан `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A5_TIER1_PROCUREMENT_DISTRIBUTION_DECISION.md`
+  - этот документ связывает:
+    - `PHASE_A5_FIRST_PARTY_LICENSING_STRATEGY.md`
+    - `PHASE_A5_NOTICE_OBLIGATIONS_PACKET.md`
+    - `PHASE_A5_NOTICE_BUNDLE_REPORT_2026-03-31.md`
+    - `PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md`
+    - `OSS_LICENSE_AND_IP_REGISTER.md`
+- [x] После этого `A5` сместилась так:
+  - `A-2.6.4` в `PHASE_A_EXECUTION_BOARD.md` переведена в `done`
+  - conservative first-party regime больше не висит как abstract policy note
+  - `Tier 1` handoff теперь трактуется как controlled private/self-host perimeter без implied public distribution
+  - главный живой blocker `A5` теперь уже не repo-side licensing ambiguity, а внешний `ELP-20260328-09`
+- [x] Для `A4.3` подтверждён blank-worktree bootstrap без локальных env-файлов:
+  - из `docker-compose.yml` удалены фиксированные `container_name`
+  - в `.env.example` добавлены:
+    - `BACKEND_URL`
+    - `NEXT_PUBLIC_API_URL`
+  - в отдельной копии рабочего дерева без root `.env` и без `apps/web/.env.local` успешно пройдены:
+    - `pnpm install --frozen-lockfile`
+    - `pnpm db:migrate`
+    - `pnpm --filter api build`
+    - `pnpm --filter web build`
+  - generated evidence:
+    - `var/ops/phase-a4-blank-worktree-bootstrap-2026-03-31.json`
+- [x] Для этого опубликован новый canonical report:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A4_BLANK_WORKTREE_BOOTSTRAP_REPORT_2026-03-31.md`
+- [x] После этого `A4` сместилась так:
+  - `A-2.5.3` в `PHASE_A_EXECUTION_BOARD.md` переведена в `done`
+  - installability больше не зависит от root `.env` и `apps/web/.env.local` как скрытого знания
+  - основной живой хвост `A4` теперь уже не install/bootstrap, а `A-2.5.4` — operational handoff по support boundary
+- [x] Для `A3.4` собран и опубликован unified release evaluator:
+  - добавлен root script `scripts/phase-a3-release-evals.cjs`
+  - в `package.json` добавлены команды:
+    - `pnpm phase:a3:evals`
+    - `pnpm gate:phase:a3:evals`
+  - runner собирает в один machine-readable gate:
+    - `rai_chat_service.spec`
+    - `supervisor_agent.service.spec`
+    - `runtime_spine.integration.spec`
+    - `advisory-oncall-drill`
+    - `advisory-stage-progression`
+    - `advisory-dr-rollback-rehearsal`
+- [x] Unified `A3` gate уже реально пройден:
+  - `commands_passed = 6 / 6`
+  - `clusters_passed = 8 / 8`
+  - `tests_passed = 40 / 40`
+  - `gate_status = PASS`
+- [x] Для этого опубликован новый canonical report:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RELEASE_EVAL_REPORT_2026-03-31.md`
+- [x] После этого repo-side статус `A3` сместился так:
+  - `A-2.4.1`, `A-2.4.2`, `A-2.4.3`, `A-2.4.4` в `PHASE_A_EXECUTION_BOARD.md` переведены в `done`
+  - `A-2.4.5` остаётся `guard_active` как отдельный запрет на autonomy expansion
+  - `PHASE_A_EVIDENCE_MATRIX.md` теперь трактует tool/HITL/advisory/evals как `repo-side подтверждено для Tier 1`
+- [x] Важно зафиксировано ограничение `A3`:
+  - current unified gate достаточен для `Tier 1 self-host / localized MVP pilot`
+  - он не равен полному `Tier 2/Tier 3` adversarial red-team perimeter
+  - broader prompt-injection corpus, tenant-specific overrides и deeper UX confirmation regressions остаются post-Tier-1 follow-up
+- [x] Для `A4` дополнительно сужен installability drift:
+  - из `docker-compose.yml` удалено obsolete поле `version`
+  - `pnpm docker:up` больше не пишет obsolete compose warning
+  - отдельный bootstrap-pass от shell env, загруженного из `.env.example`, прошёл:
+    - `pnpm db:migrate`
+    - `pnpm --filter api build`
+    - `pnpm --filter web build`
+- [x] При этом `A4` ещё не закрыта полностью:
+  - root `.env` больше не является обязательным bootstrap-зависимым слоем
+  - но `apps/web/.env.local` всё ещё оставался в среде во время web build
+  - поэтому residual gap теперь уже не в compose warning, а в blank-host/no-app-local-env rehearsal
 - [x] Для `A5.1` опубликовано formal `Tier 1` решение по последнему `UNKNOWN` perimeter:
   - создан `PHASE_A5_TIER1_TOOLCHAIN_LICENSE_DECISION.md`
   - `25` `@esbuild/*` companions зафиксированы как `ALLOW_TIER1_CONDITIONAL`
@@ -1027,6 +1486,20 @@
   - открытые gaps
 - Внутри пакета отдельно зафиксировано, что:
   - ближайший честный deployment path это `self-host / localized`
-  - главный стоп-фактор внешнего production это `Legal / Compliance`, а не отсутствие инженерного ядра
-  - проект предполагает `AI-first` delivery, где ИИ делает основной bounded implementation work, а человек держит архитектуру, policy, acceptance и final review
+- главный стоп-фактор внешнего production это `Legal / Compliance`, а не отсутствие инженерного ядра
+- проект предполагает `AI-first` delivery, где ИИ делает основной bounded implementation work, а человек держит архитектуру, policy, acceptance и final review
 - Этот пакет не поднимается выше `code/tests/gates > generated manifests > docs`; он служит внешним контекстом передачи, а не новым source of truth.
+
+## 2026-03-31 — Phase A external outreach ledger
+
+- Для внешнего хвоста `Phase A` добавлен новый machine-readable слой `phase-a-external-outreach-ledger`.
+- Он сидит поверх `external owner outreach` и переводит готовые owner-facing сообщения в operational tracking-очередь со статусами `prepared -> sent -> acknowledged -> replied -> closed`.
+- В `var/execution/phase-a-external-outreach-ledger.{json,md}` теперь публикуется агрегированный снимок по всем внешним owner queues.
+- Во внешнем restricted perimeter поднят отдельный tracking-контур `PHASE-A-EXTERNAL-OUTREACH-LEDGER/<queue>/TRACKER.md`, чтобы движение по `A1/A2/A4/A5` можно было вести уже не только как packet preparation, а как реальный outreach lifecycle.
+- `Phase A closeout` теперь опирается не только на `owner queues`, но и на фактический outreach-tracking слой.
+- `apps/api/scripts/ops/advisory-oncall-drill.mjs` доведён до того же retry/backoff-perimeter, что и другие advisory drill scripts, чтобы `A3` не флейкал на login rate-limit и не ронял `Phase A closeout` ложным `repo_side_incomplete`.
+- Для `outreach ledger` добавлен transition CLI `phase-a-external-outreach-transition.cjs`, чтобы перевод `prepared -> sent -> acknowledged -> replied -> closed` происходил через валидированный lifecycle, а не через ручную правку tracker-файлов.
+- Для внешнего хвоста `Phase A` добавлен ещё один bridge-слой `phase-a-external-reply-intake-bridge`: он заранее связывает owner queue status `replied` с конкретными `intake -> reviewed -> accepted` командами по `legal`, `security` и `pilot handoff` routes.
+- Для внешнего хвоста `Phase A` добавлен `reply capture packet`: теперь между `replied` и `intake` есть канонический restricted-perimeter, куда raw owner reply и вложения раскладываются по `referenceId`, после чего используются уже конкретные файловые пути из drop-zones, а не почта и память.
+- Для внешнего хвоста `Phase A` добавлен reconciliation-слой: теперь owner queue можно сверять не только по `prepared/sent/replied`, но и по фактическому состоянию `requested/received/reviewed/accepted`, а также по наличию raw reply files в drop-zones.
+- Принято отдельное управленческое решение: внешний closeout `Phase A` временно паркуется до момента, когда программа снова будет реально рабочей; текущие checklist, board и gate-слои сохраняются как точка возврата, но дальнейшее усложнение `Phase A` до этого момента считается вторичным.

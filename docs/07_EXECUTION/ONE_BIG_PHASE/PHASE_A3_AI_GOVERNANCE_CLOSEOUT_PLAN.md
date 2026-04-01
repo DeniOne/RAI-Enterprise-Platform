@@ -3,14 +3,14 @@ id: DOC-EXE-ONE-BIG-PHASE-A3-AI-GOVERNANCE-CLOSEOUT-PLAN-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.4.0
+version: 1.5.0
 owners: ["@techlead"]
 last_updated: 2026-03-31
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A3-AI-GOVERNANCE-CLOSEOUT-PLAN-20260331
 claim_status: asserted
 verified_by: manual
 last_verified: 2026-03-31
-evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_TOOL_PERMISSION_MATRIX.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_HITL_MATRIX.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_ADVISORY_ONLY_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RELEASE_EVAL_SUITE.md;docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md;docs/_audit/AI_AGENT_FAILURE_SCENARIOS_2026-03-28.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md
+evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_TOOL_PERMISSION_MATRIX.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_HITL_MATRIX.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_ADVISORY_ONLY_REGISTER.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RELEASE_EVAL_SUITE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RELEASE_EVAL_REPORT_2026-03-31.md;scripts/phase-a3-release-evals.cjs;docs/04_AI_SYSTEM/RAI_EP_AI_GOVERNANCE_AND_AUTONOMY_POLICY.md;docs/_audit/AI_AGENT_FAILURE_SCENARIOS_2026-03-28.md;docs/_audit/ENTERPRISE_DUE_DILIGENCE_2026-03-28.md
 ---
 # PHASE A3 AI GOVERNANCE CLOSEOUT PLAN
 
@@ -42,11 +42,12 @@ last_verified: 2026-03-31
 
 Одновременно остаются реальные незакрытые вопросы:
 
-- `tool-permission matrix` уже появился, но ещё не замкнут в полный release-closeout вместе с `HITL`, `advisory-only` и `eval-suite`;
-- `HITL matrix` уже появилась как runtime-derived baseline, но ещё не замкнута в полный release-closeout вместе с `advisory-only` и `eval-suite`;
+- `tool-permission matrix` уже опубликован и теперь закрыт unified release gate для `Tier 1`;
+- `HITL matrix` уже опубликована и теперь закрыта unified release gate для `Tier 1`;
 - опубликован [PHASE_A3_ADVISORY_ONLY_REGISTER.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_ADVISORY_ONLY_REGISTER.md) как execution-артефакт для `A3.3`;
-- опубликован [PHASE_A3_RELEASE_EVAL_SUITE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RELEASE_EVAL_SUITE.md) как skeleton release-gated eval perimeter для `A3.4`;
-- при этом actual evaluator script, fixture corpus и machine-readable pass/fail results ещё не собраны.
+- опубликован [PHASE_A3_RELEASE_EVAL_SUITE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RELEASE_EVAL_SUITE.md) как canonical suite perimeter для `A3.4`;
+- опубликован [PHASE_A3_RELEASE_EVAL_REPORT_2026-03-31.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RELEASE_EVAL_REPORT_2026-03-31.md) как unified machine-readable release gate report;
+- actual evaluator script и manifest/results уже собраны через `pnpm phase:a3:evals`.
 
 ## 2. Что именно нужно закрыть
 
@@ -123,6 +124,8 @@ last_verified: 2026-03-31
 Текущий execution-артефакт:
 
 - [PHASE_A3_RELEASE_EVAL_SUITE.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RELEASE_EVAL_SUITE.md)
+- [PHASE_A3_RELEASE_EVAL_REPORT_2026-03-31.md](/root/RAI_EP/docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A3_RELEASE_EVAL_REPORT_2026-03-31.md)
+- [phase-a3-release-evals.cjs](/root/RAI_EP/scripts/phase-a3-release-evals.cjs)
 
 ## 3. Режим исполнения `A3`
 
@@ -173,7 +176,7 @@ Board должен меняться так:
 
 Трек `A3` считается закрытым только когда одновременно выполняются условия:
 
-- строки `A-2.4.1..A-2.4.4` уходят из `open`;
+- строки `A-2.4.1..A-2.4.4` уходят из `open` и получают evidence-backed `done` для repo-side `Tier 1`;
 - существует отдельный `tool-permission matrix`;
 - существует отдельный `HITL matrix`;
 - существует отдельный `advisory-only` perimeter;

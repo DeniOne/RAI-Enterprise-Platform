@@ -1,11 +1,8 @@
-version: '3.8'
-
 services:
   postgres:
     build:
       context: ./infra/postgres
       dockerfile: Dockerfile
-    container_name: rai-postgres
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-rai_admin}
@@ -20,7 +17,6 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: rai-redis
     restart: always
     command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
     ports:
@@ -32,7 +28,6 @@ services:
 
   minio:
     image: minio/minio
-    container_name: rai-minio
     restart: always
     command: server /data --console-address ":9001"
     environment:
@@ -48,7 +43,6 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4
-    container_name: rai-pgadmin
     restart: always
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@rai.com}
