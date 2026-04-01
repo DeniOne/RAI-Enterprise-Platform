@@ -1,0 +1,291 @@
+# =============================================================================
+# RAPESEED TECHCARD SCHEMA v1.0.0
+# Машинночитаемая схема домена для генерации техкарт рапса
+# Источник: синтез модулей M1-M5
+# Сгенерировано: 2026-04-01
+# =============================================================================
+
+metadata:
+  schema_name: rapeseed_techcard
+  version: "1.0.0"
+  domain: "Brassica napus L. (Рапс озимый и яровой)"
+  description: "Параметрическая схема для канонической генерации, адаптации, контроля выполнения и мониторинга техкарт рапса"
+  source_modules:
+    - "M1: Рапс как культура и карта условий"
+    - "M2: Идеальная технология озимого рапса"
+    - "M3: Идеальная технология ярового рапса"
+    - "M4: Международные практики и цифровой контроль"
+    - "M5: Каноническая техкарта и параметрическое ядро"
+  generated_from: "architectural_synthesis_of_5_modules"
+  assumptions:
+    - "Агрономический контекст РФ — основная цель"
+    - "Шкала BBCH — канонический феностандарт"
+    - "Две независимые ветви: озимый и яровой рапс"
+    - "Все пороги из научного консенсуса, если не указано иное"
+
+# =============================================================================
+# КАНОНИЧЕСКИЕ ВЕТКИ (CANONICAL BRANCHES)
+# =============================================================================
+canonical_branches:
+  winter_rapeseed:
+    branch_id: winter
+    description: "Озимый рапс — двухсезонная система (осень + весна)"
+    stage_sequence:
+      - field_preparation
+      - sowing
+      - autumn_care
+      - winter_dormancy
+      - spring_renewal
+      - stem_elongation_budding
+      - flowering
+      - pod_filling_ripening
+      - harvest
+    mandatory_blocks:
+      - field_admission_check
+      - seed_treatment
+      - post_sowing_rolling
+      - autumn_growth_regulator
+      - autumn_rosette_assessment
+      - overwintering_assessment
+      - spring_N_S_application
+      - boron_foliar
+      - harvest_with_rapeseed_header
+    critical_risks:
+      - overwintering_mortality # Гибель при перезимовке
+      - autumn_overgrowth       # Перерастание осенью
+      - autumn_underdevelopment # Недоразвитие осенью
+      - sclerotinia_at_flowering# Склеротиниоз в фазу цветения
+      - harvest_shattering      # Осыпание семян при уборке
+    critical_success_factors:
+      - "Розетка 6-8 листьев, корневая шейка ≥8мм, точка роста ≤2см к периоду покоя"
+      - "Выживаемость >70% после зимы"
+      - "Своевременное внесение азота и серы весной при возобновлении вегетации"
+      - "Внесение бора по листу на BBCH 50-52"
+      - "Уборка в пределах 7 дней от достижения спелости"
+
+  spring_rapeseed:
+    branch_id: spring
+    description: "Яровой рапс — система сжатого времени (80-120 дней)"
+    stage_sequence:
+      - autumn_field_preparation
+      - spring_presowing
+      - sowing
+      - early_growth
+      - stem_elongation_budding
+      - flowering
+      - pod_filling_ripening
+      - harvest
+    mandatory_blocks:
+      - field_admission_check
+      - autumn_primary_tillage
+      - seed_treatment
+      - post_sowing_rolling
+      - flea_beetle_monitoring
+      - boron_foliar
+      - harvest_with_rapeseed_header
+    critical_risks:
+      - late_sowing_yield_penalty        # Потеря урожая при позднем севе
+      - spring_ploughing_moisture_loss   # Потеря влаги при весенней вспашке
+      - heat_drought_at_flowering        # Жара и засуха во время цветения
+      - flea_beetle_seedling_destruction # Повреждение всходов крестоцветной блошкой
+      - harvest_shattering               # Осыпание при задержке уборки
+    critical_success_factors:
+      - "Сев в ранние сроки при температуре почвы от +5°C"
+      - "Отказ от весенней вспашки — только осенняя подготовка"
+      - "Мгновенная реакция на появление вредителей (блошки)"
+      - "Внесение бора по листу на BBCH 50-52"
+      - "Уборка при влажности семян 9-12%"
+
+# =============================================================================
+# REQUIRED INPUTS (ОБЯЗАТЕЛЬНЫЕ ПАРАМЕТРЫ ПРИ ГЕНЕРАЦИИ)
+# =============================================================================
+required_inputs:
+  mandatory_before_generation:
+    - key: crop_form
+      label: "Форма рапса (озимый/яровой)"
+      type: enum
+      enum_ref: CropForm
+      required_before_generation: true
+
+    - key: agroclimatic_zone
+      label: "Агроклиматическая зона поля"
+      type: reference
+      required_before_generation: true
+
+    - key: SAT_avg
+      label: "Среднемноголетняя САТ (>5/10°C)"
+      type: number
+      unit: "°C"
+      required_before_generation: true
+
+    - key: soil_texture
+      label: "Гранулометрический состав почвы"
+      type: enum
+      enum_ref: SoilTexture
+      required_before_generation: true
+
+    - key: pH
+      label: "Кислотность почвы (pH)"
+      type: number
+      required_before_generation: true
+
+    - key: P_available
+      label: "Содержание подвижного фосфора (P)"
+      type: number
+      unit: "mg/kg"
+      required_before_generation: true
+
+    - key: K_available
+      label: "Содержание подвижного калия (K)"
+      type: number
+      unit: "mg/kg"
+      required_before_generation: true
+
+    - key: S_available
+      label: "Содержание доступной серы (S)"
+      type: number
+      unit: "mg/kg"
+      required_before_generation: true
+
+    - key: B_available
+      label: "Содержание доступного бора (B)"
+      type: number
+      unit: "mg/kg"
+      required_before_generation: true
+
+    - key: predecessor
+      label: "Предшественник"
+      type: enum
+      required_before_generation: true
+
+    - key: rotation_years_since_rapeseed
+      label: "Лет в севообороте без рапса"
+      type: integer
+      required_before_generation: true
+
+    - key: clubroot_history
+      label: "История заболевания килой на поле"
+      type: boolean
+      required_before_generation: true
+
+    - key: compaction
+      label: "Наличие плужной подошвы (уплотнения)"
+      type: boolean
+      required_before_generation: true
+
+  mandatory_during_season:
+    - key: bbch_stage
+      label: "Текущая фаза развития BBCH"
+      type: integer
+      source: "scouting/model"
+
+    - key: plant_density
+      label: "Плотность стояния растений"
+      type: number
+      unit: "plants/m²"
+      source: "scouting/drone"
+
+# =============================================================================
+# ENUMS (СПРАВОЧНИКИ)
+# =============================================================================
+enums:
+  CropForm: [winter, spring]
+  RuleType: [HARD_BLOCKER, HARD_REQUIREMENT, STRONG_RECOMMENDATION, CONDITIONAL_ADAPTATION, SEASONAL_OVERRIDE_TRIGGER, MONITORING_SIGNAL, HUMAN_REVIEW_REQUIRED]
+  SoilTexture: [clay, heavy_loam, medium_loam, light_loam, sandy_loam, sand, peat]
+  DeviationSeverity: [informational, warning, critical, blocker]
+  ActionType: [block, alert, recommend, trigger_scouting, adjust_schedule, modify_dose, resow_review, escalate, auto_execute, log_only]
+
+# =============================================================================
+# THRESHOLDS (ПОРОГИ ПАРАМЕТРОВ)
+# =============================================================================
+thresholds:
+  - id: T-SOIL-01
+    parameter: pH
+    crop_scope: both
+    stage_scope: pre_sowing
+    comparator: lt
+    value: 5.5
+    action_on_breach: block_sowing
+
+  - id: T-PLT-01
+    parameter: leaf_count_autumn
+    crop_scope: winter
+    stage_scope: autumn_care
+    comparator: between
+    value: [6, 8]
+    action_on_breach: "below_5=высокий риск; above_10=риск перерастания"
+
+  - id: T-PLT-04
+    parameter: overwintering_survival
+    crop_scope: winter
+    stage_scope: spring_renewal
+    comparator: lt
+    value: 40
+    unit: "%"
+    action_on_breach: recommend_resow
+
+# =============================================================================
+# RULES (КАНОНИЧЕСКИЕ ПРАВИЛА)
+# =============================================================================
+rules:
+  - id: R-ADM-001
+    name: "pH blocker (Блокировка при pH < 5.5)"
+    type: HARD_BLOCKER
+    condition: "pH < 5.5"
+    action: block_sowing
+    override_allowed: false
+
+  - id: R-ADM-003
+    name: "Rotation (Севооборот минимум 4 года)"
+    type: HARD_BLOCKER
+    condition: "rotation_years < 4"
+    action: block_sowing
+    override_allowed: false
+
+  - id: R-NUT-001
+    name: "Sulfur mandatory (Обязательное внесение серы)"
+    type: HARD_REQUIREMENT
+    condition: "S_planned < 15"
+    action: block_mandate_sulfur
+    override_allowed: false
+
+  - id: R-IPM-003
+    name: "No insecticide during flowering (Запрет инсектицидов во время цветения)"
+    type: HARD_BLOCKER
+    condition: "bbch IN [60-69] AND insecticide_planned"
+    action: block_application
+    override_allowed: false
+
+# =============================================================================
+# МОНИТОРИНГОВЫЕ СИГНАЛЫ (MONITORING SIGNALS)
+# =============================================================================
+monitoring_signals:
+  - id: MS-02
+    signal_type: frost_alert
+    source: meteo_api
+    threshold_logic: "forecast_temp < -3°C AND bbch IN [09-12]"
+    severity: critical
+    resulting_action: alert_frost_risk # Риск повреждения всходов заморозками
+
+  - id: MS-03
+    signal_type: heat_alert
+    threshold_logic: "forecast_temp > 30°C AND bbch IN [60-69]"
+    severity: critical
+    resulting_action: alert_yield_loss_expected # Ожидаемая потеря урожая из-за жары
+
+# =============================================================================
+# ЛОГИКА ОТКЛОНЕНИЙ (DEVIATION LOGIC)
+# =============================================================================
+deviation_logic:
+  informational:
+    description: "Незначительное отклонение, только логирование"
+    response: log_only
+  warning:
+    description: "Требуется внимание агронома"
+    response: alert_agronomist_recommend_action
+  critical:
+    description: "Угроза потери урожая, требуется вмешательство"
+    response: urgent_alert_plus_recommendation
+  blocker:
+    description: "Процесс заблокирован до разрешения отклонения"
+    response: block_operation_escalate
