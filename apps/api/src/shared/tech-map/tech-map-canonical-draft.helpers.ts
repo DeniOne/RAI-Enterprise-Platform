@@ -72,6 +72,14 @@ function normalizeMethodologyProfileId(
   version: number,
 ): string {
   if (isRecord(generationMetadata)) {
+    const generationStrategy =
+      typeof generationMetadata.generationStrategy === "string"
+        ? generationMetadata.generationStrategy
+        : null;
+    const schemaVersion =
+      typeof generationMetadata.schemaVersion === "string"
+        ? generationMetadata.schemaVersion
+        : null;
     const source =
       typeof generationMetadata.source === "string"
         ? generationMetadata.source
@@ -87,6 +95,10 @@ function normalizeMethodologyProfileId(
 
     if (explicitMethodologyProfileId) {
       return explicitMethodologyProfileId;
+    }
+
+    if (generationStrategy && schemaVersion) {
+      return `${generationStrategy}:${schemaVersion}`;
     }
 
     if (source && blueprintVersion) {
@@ -128,6 +140,18 @@ function normalizeBaselineContextHash(
     String(map.version),
     methodologyProfileId,
   ].join("|");
+}
+
+function resolveGenerationTraceId(
+  generationMetadata: Prisma.JsonValue | null | undefined,
+): string | null {
+  if (!isRecord(generationMetadata)) {
+    return null;
+  }
+
+  return typeof generationMetadata.generationTraceId === "string"
+    ? generationMetadata.generationTraceId
+    : null;
 }
 
 function resolveSourceWorkflowMode(
@@ -802,11 +826,14 @@ export function buildTechMapCanonicalDraftFromTechMap(
       field_ids: resolveFieldIds(map),
       season_id: map.seasonId ?? map.cropZone.seasonId,
       crop_code: map.crop,
+      crop_form: map.cropForm ?? undefined,
+      canonical_branch: map.canonicalBranch ?? undefined,
       methodology_profile_id: methodologyProfileId,
       baseline_context_hash: normalizeBaselineContextHash(
         map,
         methodologyProfileId,
       ),
+      generation_trace_id: resolveGenerationTraceId(map.generationMetadata) ?? undefined,
       source_workflow_mode: resolveSourceWorkflowMode(map),
     },
     readiness: assessment.readiness as TechMapContextReadiness,

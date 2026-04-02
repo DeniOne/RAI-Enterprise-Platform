@@ -44,11 +44,23 @@
             "@rai/agro-orchestrator/*": [
                 "../../packages/agro-orchestrator/src/*"
             ],
+            "@rai/regenerative-engine": [
+                "../../packages/regenerative-engine/src"
+            ],
+            "@rai/regenerative-engine/*": [
+                "../../packages/regenerative-engine/src/*"
+            ],
             "@rai/vector-store": [
                 "../../packages/vector-store/src"
             ],
             "@rai/vector-store/*": [
                 "../../packages/vector-store/src/*"
+            ],
+            "@prisma/client": [
+                "../../packages/prisma-client/generated-client"
+            ],
+            "@prisma/client/*": [
+                "../../packages/prisma-client/generated-client/*"
             ]
         },
         "incremental": true,

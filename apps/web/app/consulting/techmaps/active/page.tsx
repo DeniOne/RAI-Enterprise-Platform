@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
 import clsx from 'clsx';
@@ -16,7 +17,21 @@ type TechMapItem = {
     status?: string;
     version?: number;
     crop?: string;
+    cropForm?: string | null;
+    canonicalBranch?: string | null;
     updatedAt?: string;
+    generationMetadata?: {
+        generationStrategy?: string;
+        rolloutMode?: string;
+        fallbackUsed?: boolean;
+        shadowParitySummary?: {
+            hasBlockingDiffs?: boolean;
+            diffCount?: number;
+            severityCounts?: {
+                P0?: number;
+            };
+        } | null;
+    } | null;
 };
 
 type RowItem = {
@@ -37,6 +52,7 @@ function MapTable({ rows, isFocused }: { rows: RowItem[]; isFocused: (row: RowIt
                         <th className='py-2 pr-4'>Код</th>
                         <th className='py-2 pr-4'>Версия</th>
                         <th className='py-2 pr-4'>Культура</th>
+                        <th className='py-2 pr-4'>Generation</th>
                         <th className='py-2 pr-4'>Статус</th>
                         <th className='py-2'>Обновлено</th>
                         <th className='py-2 text-right'>Эксперт</th>
@@ -50,6 +66,11 @@ function MapTable({ rows, isFocused }: { rows: RowItem[]; isFocused: (row: RowIt
                                 <td className='py-2 pr-4 font-medium text-gray-900'>{row.code}</td>
                                 <td className='py-2 pr-4'>{row.item.version ?? '-'}</td>
                                 <td className='py-2 pr-4'>{row.item.crop || '-'}</td>
+                                <td className='py-2 pr-4'>
+                                    <div className='flex flex-wrap gap-1.5'>
+                                        {renderGenerationBadges(row.item)}
+                                    </div>
+                                </td>
                                 <td className='py-2 pr-4'>{row.item.status || 'UNKNOWN'}</td>
                                 <td className='py-2'>{row.item.updatedAt ? new Date(row.item.updatedAt).toLocaleDateString('ru-RU') : '-'}</td>
                                 <td className='py-2 text-right'>
@@ -150,7 +171,12 @@ function PageInner() {
 
     return (
         <div className='space-y-6'>
-            <h1 className='text-xl font-medium text-gray-900'>Техкарты — Активные</h1>
+            <div className='flex items-center justify-between gap-3'>
+                <h1 className='text-xl font-medium text-gray-900'>Техкарты — Активные</h1>
+                <Link href='/consulting/techmaps' className='text-sm text-blue-600 hover:underline'>
+                    Открыть rollout реестр
+                </Link>
+            </div>
             <Card>
                 <p className='text-sm text-gray-700'>Техкарты, допущенные к исполнению.</p>
             </Card>
@@ -168,4 +194,56 @@ function PageInner() {
             <Card>{loading ? <p className='text-sm text-gray-500'>Загрузка...</p> : <MapTable rows={activeRows} isFocused={isFocused} />}</Card>
         </div>
     );
+}
+
+function renderGenerationBadges(item: TechMapItem) {
+    const badges = [];
+
+    if (item.generationMetadata?.generationStrategy) {
+        badges.push(
+            <span key="strategy" className='px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 text-[10px] font-medium border border-sky-100'>
+                {item.generationMetadata.generationStrategy}
+            </span>,
+        );
+    }
+
+    if (item.generationMetadata?.rolloutMode) {
+        badges.push(
+            <span key="mode" className='px-2 py-0.5 rounded-full bg-white text-gray-700 text-[10px] font-medium border border-black/10'>
+                режим {item.generationMetadata.rolloutMode}
+            </span>,
+        );
+    }
+
+    if (item.generationMetadata?.fallbackUsed) {
+        badges.push(
+            <span key="fallback" className='px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-medium border border-amber-100'>
+                fallback
+            </span>,
+        );
+    }
+
+    if (item.generationMetadata?.shadowParitySummary?.hasBlockingDiffs) {
+        badges.push(
+            <span key="parity-p0" className='px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-medium border border-rose-100'>
+                P0 {item.generationMetadata.shadowParitySummary.severityCounts?.P0 || 0}
+            </span>,
+        );
+    } else if (typeof item.generationMetadata?.shadowParitySummary?.diffCount === 'number') {
+        badges.push(
+            <span key="parity" className='px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-100'>
+                parity {item.generationMetadata.shadowParitySummary.diffCount}
+            </span>,
+        );
+    }
+
+    if (item.cropForm || item.canonicalBranch) {
+        badges.push(
+            <span key="branch" className='px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-100'>
+                {item.cropForm || '-'} / {item.canonicalBranch || '-'}
+            </span>,
+        );
+    }
+
+    return badges;
 }

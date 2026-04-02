@@ -5,6 +5,7 @@ import {
   Param,
   Get,
   Patch,
+  Query,
   UseGuards,
   UseInterceptors,
 } from "@nestjs/common";
@@ -17,15 +18,56 @@ import {
   PLANNING_READ_ROLES,
   PLANNING_WRITE_ROLES,
 } from "../../shared/auth/rbac.constants";
+import { ControlPointService } from "./control-point.service";
+import {
+  ControlPointOutcomeDtoSchema,
+  type ControlPointOutcomeDto,
+} from "./dto/control-point-outcome.dto";
 
 @Controller("tech-map")
 export class TechMapController {
-  constructor(private readonly techMapService: TechMapService) {}
+  constructor(
+    private readonly techMapService: TechMapService,
+    private readonly controlPointService: ControlPointService,
+  ) {}
 
   @Get()
   @Authorized(...PLANNING_READ_ROLES)
   async findAll(@CurrentUser() user: any) {
     return this.techMapService.findAll(user.companyId);
+  }
+
+  @Get("generation-rollout/summary")
+  @Authorized(...PLANNING_READ_ROLES)
+  async getGenerationRolloutSummary(
+    @CurrentUser() user: any,
+    @Query("companyId") companyId?: string,
+  ) {
+    return this.techMapService.getGenerationRolloutSummary(
+      companyId ?? user.companyId,
+    );
+  }
+
+  @Get("generation-rollout/readiness")
+  @Authorized(...PLANNING_READ_ROLES)
+  async getGenerationRolloutReadiness(
+    @CurrentUser() user: any,
+    @Query("companyId") companyId?: string,
+  ) {
+    return this.techMapService.getGenerationRolloutReadiness(
+      companyId ?? user.companyId,
+    );
+  }
+
+  @Get("generation-rollout/cutover-packet")
+  @Authorized(...PLANNING_READ_ROLES)
+  async getGenerationRolloutCutoverPacket(
+    @CurrentUser() user: any,
+    @Query("companyId") companyId?: string,
+  ) {
+    return this.techMapService.getGenerationRolloutCutoverPacket(
+      companyId ?? user.companyId,
+    );
   }
 
   @Post("generate")
@@ -107,6 +149,34 @@ export class TechMapController {
     @CurrentUser() user: any,
   ) {
     return this.techMapService.getCanonicalDraft(id, user.companyId);
+  }
+
+  @Get(":id/explainability")
+  @Authorized(...PLANNING_READ_ROLES)
+  async getExplainability(
+    @Param("id") id: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.techMapService.getExplainability(id, user.companyId);
+  }
+
+  @Post(":id/control-points/:controlPointId/outcome")
+  @Authorized(...PLANNING_WRITE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
+  async recordControlPointOutcome(
+    @Param("id") id: string,
+    @Param("controlPointId") controlPointId: string,
+    @Body() body: ControlPointOutcomeDto,
+    @CurrentUser() user: any,
+  ) {
+    const payload = ControlPointOutcomeDtoSchema.parse(body);
+    return this.controlPointService.recordOutcome(
+      id,
+      controlPointId,
+      payload,
+      user.companyId,
+      user.id,
+    );
   }
 
   @Get(":id/persistence-boundary")

@@ -20,12 +20,20 @@ import { TechMapValidator } from "./tech-map.validator";
 import { UnitNormalizationService } from "./unit-normalization.service";
 import { TechMapWorkflowOrchestratorService } from "./tech-map-workflow-orchestrator.service";
 import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
+import { CmrModule } from "../cmr/cmr.module";
+import { FieldAdmissionService } from "./generation/field-admission.service";
+import { BranchSelectionService } from "./generation/branch-selection.service";
+import { SchemaDrivenTechMapGenerator } from "./generation/schema-driven-tech-map-generator.service";
+import { ShadowParityService } from "./generation/shadow-parity.service";
+import { TechMapGenerationOrchestratorService } from "./generation/tech-map-generation-orchestrator.service";
+import { ControlPointService } from "./control-point.service";
 
 @Module({
-  imports: [PrismaModule, IntegrityModule, IdempotencyModule],
+  imports: [PrismaModule, IntegrityModule, IdempotencyModule, CmrModule],
   controllers: [TechMapController],
   providers: [
     TechMapService,
+    ControlPointService,
     TechMapStateMachine,
     DAGValidationService,
     TechMapValidationEngine,
@@ -42,9 +50,15 @@ import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
     UnitNormalizationService,
     TechMapValidator,
     TechMapWorkflowOrchestratorService,
+    FieldAdmissionService,
+    BranchSelectionService,
+    SchemaDrivenTechMapGenerator,
+    ShadowParityService,
+    TechMapGenerationOrchestratorService,
   ],
   exports: [
     TechMapService,
+    ControlPointService,
     EvidenceService,
     ChangeOrderService,
     TriggerEvaluationService,
@@ -54,6 +68,7 @@ import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
     UnitNormalizationService,
     TechMapValidator,
     TechMapWorkflowOrchestratorService,
+    TechMapGenerationOrchestratorService,
   ],
 })
 export class TechMapModule { }

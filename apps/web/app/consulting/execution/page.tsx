@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ExecutionCard } from './components/ExecutionCard';
 import { CompletionModal } from './components/CompletionModal';
+import { ControlPointOutcomeModal } from './components/ControlPointOutcomeModal';
 import { useGovernanceAction } from '@/shared/hooks/useGovernanceAction';
 import { GovernanceBar } from '@/shared/components/GovernanceBar';
 import { TriggeredEffectsPanel } from '@/components/governance/TriggeredEffectsPanel';
@@ -28,6 +29,7 @@ export default function ExecutionHub() {
     const queryClient = useQueryClient();
     const [selectedOperation, setSelectedOperation] = useState<any>(null);
     const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
+    const [isControlPointModalOpen, setIsControlPointModalOpen] = useState(false);
     const { currentRole } = useAuthSimulationStore();
 
     // Временная заглушка ролевой логики для Хаба. 
@@ -63,6 +65,21 @@ export default function ExecutionHub() {
         }
     });
 
+    const controlPointOutcomeMutation = useMutation({
+        mutationFn: (data: any) =>
+            api.consulting.execution.recordControlPointOutcome(
+                data.techMapId,
+                data.controlPointId,
+                data.payload,
+            ),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['consulting', 'active-operations'] });
+            setIsControlPointModalOpen(false);
+            setSelectedOperation(null);
+            gov.execute();
+        }
+    });
+
     const handleStart = (id: string) => {
         // Phase 4: Start FSM before action
         gov.initiate('R1');
@@ -79,6 +96,12 @@ export default function ExecutionHub() {
 
     const handleConfirmCompletion = (data: any) => {
         completeMutation.mutate(data);
+    };
+
+    const handleControlPointRequest = (operation: any) => {
+        setSelectedOperation(operation);
+        gov.initiate(operation.riskLevel || 'R2');
+        setIsControlPointModalOpen(true);
     };
 
     if (isLoading) {
@@ -185,6 +208,7 @@ export default function ExecutionHub() {
                                         operation={op}
                                         onStart={handleStart}
                                         onComplete={handleCompleteRequest}
+                                        onRecordControlPoint={handleControlPointRequest}
                                     />
                                 ))}
                             </div>
@@ -217,13 +241,22 @@ export default function ExecutionHub() {
             </div>
 
             {selectedOperation && (
-                <CompletionModal
-                    isOpen={isCompleteModalOpen}
-                    operation={selectedOperation}
-                    onClose={() => setIsCompleteModalOpen(false)}
-                    onConfirm={handleConfirmCompletion}
-                    isSubmitting={completeMutation.isPending}
-                />
+                <>
+                    <CompletionModal
+                        isOpen={isCompleteModalOpen}
+                        operation={selectedOperation}
+                        onClose={() => setIsCompleteModalOpen(false)}
+                        onConfirm={handleConfirmCompletion}
+                        isSubmitting={completeMutation.isPending}
+                    />
+                    <ControlPointOutcomeModal
+                        isOpen={isControlPointModalOpen}
+                        operation={selectedOperation}
+                        onClose={() => setIsControlPointModalOpen(false)}
+                        onConfirm={(data) => controlPointOutcomeMutation.mutate(data)}
+                        isSubmitting={controlPointOutcomeMutation.isPending}
+                    />
+                </>
             )}
 
             {/* Verification State Banner (Institutional Grade) */}

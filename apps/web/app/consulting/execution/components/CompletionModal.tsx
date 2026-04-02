@@ -1,10 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { X, Save, Box } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from '@/components/ui/input';
 import { cn } from "@/lib/utils";
+import { OperationEvidencePanel } from './OperationEvidencePanel';
+import { EvidenceGuardBanner } from './EvidenceGuardBanner';
+import { api } from '@/lib/api';
 
 interface CompletionModalProps {
     operation: any;
@@ -26,17 +30,43 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
     onConfirm,
     isSubmitting
 }) => {
+    const operationId = operation?.id;
+    const evidencePanelId = `completion-evidence-panel-${operationId}`;
     const [notes, setNotes] = useState('');
+    const [targetEvidenceType, setTargetEvidenceType] = useState<string | null>(null);
     const [actualResources, setActualResources] = useState<any[]>(
         operation?.resources?.map((r: any) => ({
             resourceId: r.id,
             name: r.name,
-            amount: r.plannedAmount,
+            amount: r.plannedAmount ?? r.amount ?? 0,
             unit: r.unit
         })) || []
     );
 
+    useEffect(() => {
+        setNotes('');
+        setTargetEvidenceType(null);
+        setActualResources(
+            operation?.resources?.map((r: any) => ({
+                resourceId: r.id,
+                name: r.name,
+                amount: r.plannedAmount ?? r.amount ?? 0,
+                unit: r.unit
+            })) || [],
+        );
+    }, [operation?.id, isOpen]);
+
+    const { data: evidenceStatus, isLoading: isEvidenceStatusLoading } = useQuery({
+        queryKey: ['consulting', 'execution-evidence-status', operationId],
+        queryFn: () => api.consulting.execution.evidenceStatus(operationId).then((res) => res.data),
+        enabled: Boolean(operationId) && isOpen,
+        initialData: operation?.evidenceSummary,
+    });
+
     if (!isOpen || !operation) return null;
+
+    const missingEvidenceTypes = evidenceStatus?.missingEvidenceTypes || [];
+    const isEvidenceBlocking = Boolean(evidenceStatus) && !evidenceStatus.isComplete;
 
     const handleAmountChange = (index: number, value: string) => {
         const updated = [...actualResources];
@@ -52,6 +82,16 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                 resourceId: r.resourceId,
                 amount: r.amount
             }))
+        });
+    };
+
+    const handleSelectMissingEvidenceType = (evidenceType: string) => {
+        setTargetEvidenceType(evidenceType);
+        requestAnimationFrame(() => {
+            document.getElementById(evidencePanelId)?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            });
         });
     };
 
@@ -110,6 +150,29 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                             onChange={(e) => setNotes(e.target.value)}
                         />
                     </div>
+
+                    <div>
+                        <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-3">
+                            Evidence
+                        </label>
+                        <OperationEvidencePanel
+                            operation={operation}
+                            preferredEvidenceType={targetEvidenceType}
+                            panelId={evidencePanelId}
+                        />
+                    </div>
+
+                    <EvidenceGuardBanner
+                        title="Guard перед `DONE`"
+                        loading={isEvidenceStatusLoading}
+                        isBlocking={isEvidenceBlocking}
+                        readyText="Evidence достаточен для завершения операции."
+                        blockedText="Завершение операции заблокировано до прикрепления обязательных evidence."
+                        missingEvidenceTypes={missingEvidenceTypes}
+                        requiredCount={evidenceStatus?.requiredEvidenceTypes?.length}
+                        presentCount={evidenceStatus?.presentEvidenceTypes?.length}
+                        onSelectMissingEvidenceType={handleSelectMissingEvidenceType}
+                    />
                 </div>
 
                 {/* Footer */}
@@ -120,7 +183,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                     <Button
                         className="flex-1 bg-slate-900 hover:bg-black text-white gap-2 h-10 text-xs font-medium rounded-xl shadow-none"
                         onClick={handleConfirm}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isEvidenceStatusLoading || isEvidenceBlocking}
                     >
                         <Save className="w-4 h-4" /> Зафиксировать факт
                     </Button>

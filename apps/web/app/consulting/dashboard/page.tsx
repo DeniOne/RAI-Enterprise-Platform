@@ -3,13 +3,118 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui';
+import { api } from '@/lib/api';
+
+type GenerationRolloutSummary = {
+    totalRapeseedMaps: number;
+    strategies: {
+        legacyBlueprint: number;
+        blueprintFallback: number;
+        canonicalSchema: number;
+        unknown: number;
+    };
+    rolloutModes: {
+        legacy: number;
+        shadow: number;
+        canonical: number;
+        unknown: number;
+    };
+    fallback: {
+        usedCount: number;
+        reasons: Record<string, number>;
+    };
+    metadataCoverage: {
+        versionPinnedCount: number;
+        generationTraceCount: number;
+        explainabilityTraceCount: number;
+        fieldAdmissionCount: number;
+        featureFlagSnapshotCount: number;
+    };
+    parity: {
+        mapsWithReport: number;
+        mapsWithBlockingDiffs: number;
+        mapsWithoutDiffs: number;
+        diffCounts: {
+            P0: number;
+            P1: number;
+            P2: number;
+        };
+    };
+    rolloutIncidents?: Array<{
+        id: string;
+        subtype?: string | null;
+        severity: string;
+        status: string;
+        traceId?: string | null;
+        techMapId?: string | null;
+        runbookSuggestedAction?: string | null;
+        createdAt?: string;
+    }>;
+};
+
+type GenerationRolloutReadiness = {
+    verdict: 'BLOCKED' | 'WARN' | 'PASS';
+    canEnableCanonicalDefault: boolean;
+    suggestedMode: 'shadow' | 'canonical';
+    blockers: string[];
+    warnings: string[];
+    releaseGates: {
+        parityBlockingClear: boolean;
+        fallbackContained: boolean;
+        versionPinningComplete: boolean;
+        explainabilityCoverageComplete: boolean;
+        admissionCoverageComplete: boolean;
+        canonicalMapsPresent: boolean;
+        noOpenParityIncidents: boolean;
+    };
+};
+
+type GenerationRolloutCutoverPacket = {
+    companyId: string;
+    verdict: 'BLOCKED' | 'WARN' | 'PASS';
+    canExecuteCutover: boolean;
+    currentFeatureFlags: {
+        mode: string;
+        companyFilter: string;
+    };
+    recommendedFeatureFlags: {
+        mode: string;
+        companyFilter: string;
+    };
+    releaseCommand: string;
+    rollbackCommand: string;
+    checklist: string[];
+    rollbackChecklist: string[];
+};
 
 export default function ConsultingDashboard() {
     const [tick, setTick] = useState(0);
+    const [rolloutSummary, setRolloutSummary] = useState<GenerationRolloutSummary | null>(null);
+    const [rolloutReadiness, setRolloutReadiness] = useState<GenerationRolloutReadiness | null>(null);
+    const [cutoverPacket, setCutoverPacket] = useState<GenerationRolloutCutoverPacket | null>(null);
 
     useEffect(() => {
         const timer = setInterval(() => setTick((prev) => prev + 1), 5000);
         return () => clearInterval(timer);
+    }, []);
+
+    useEffect(() => {
+        const load = async () => {
+            try {
+                const [summaryResponse, readinessResponse, cutoverPacketResponse] = await Promise.all([
+                    api.consulting.techmaps.generationRolloutSummary(),
+                    api.consulting.techmaps.generationRolloutReadiness(),
+                    api.consulting.techmaps.generationRolloutCutoverPacket(),
+                ]);
+                setRolloutSummary(summaryResponse.data ?? null);
+                setRolloutReadiness(readinessResponse.data ?? null);
+                setCutoverPacket(cutoverPacketResponse.data ?? null);
+            } catch (error) {
+                console.error('Failed to load rollout summary:', error);
+            }
+        };
+
+        load();
     }, []);
 
     const metrics = useMemo(() => {
@@ -46,6 +151,7 @@ export default function ConsultingDashboard() {
         { label: `Влажность почвы: ${41 + (tick % 3)}%` },
         { label: `Ветер: ${7 + (tick % 4)} м/с` },
     ];
+    const rolloutAlerts = buildRolloutAlerts(rolloutSummary);
 
     return (
         <div className="space-y-5">
@@ -110,12 +216,140 @@ export default function ConsultingDashboard() {
                 <Card className="xl:col-span-3">
                     <h2 className="text-base font-medium text-gray-900 mb-3">Алерты и события</h2>
                     <div className="space-y-2">
+                        {rolloutAlerts.map((item) => (
+                            <AlertRow key={`${item.tone}-${item.text}`} tone={item.tone} text={item.text} href={item.href} />
+                        ))}
                         <AlertRow tone="critical" text="Поле #A-17: риск потери урожайности > 12%" href="/consulting/deviations/detected?entity=DEV-001" />
                         <AlertRow tone="warning" text="Техкарта #TM-044: сдвиг сроков внесения" href="/consulting/techmaps/active?entity=TM-001" />
                         <AlertRow tone="warning" text="Склад СЗР: остаток ниже порога по 2 позициям" href="/consulting/crm/history?entity=ACTIVE" />
                         <AlertRow tone="info" text="Решение #D-118 применено, статус: в мониторинге" href="/consulting/deviations/decisions?entity=DEC-101" />
                     </div>
                 </Card>
+
+                {rolloutSummary && (
+                    <Card className="xl:col-span-12">
+                        <div className="flex items-start justify-between gap-4 flex-wrap">
+                            <div>
+                                <p className="text-xs uppercase tracking-[0.12em] text-gray-500">Состояние cutover</p>
+                                <p className="text-base font-medium text-gray-900 mt-1">
+                                    canonical {rolloutSummary.strategies.canonicalSchema} • fallback {rolloutSummary.fallback.usedCount} • blocking parity {rolloutSummary.parity.mapsWithBlockingDiffs}
+                                </p>
+                                <p className="text-sm text-gray-600 mt-1">
+                                    version pinning {rolloutSummary.metadataCoverage.versionPinnedCount}/{rolloutSummary.totalRapeseedMaps} • explainability trace {rolloutSummary.metadataCoverage.explainabilityTraceCount}/{rolloutSummary.totalRapeseedMaps}
+                                </p>
+                                {rolloutReadiness && (
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-medium border ${
+                                            rolloutReadiness.verdict === 'PASS'
+                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                                : rolloutReadiness.verdict === 'WARN'
+                                                    ? 'bg-amber-50 text-amber-700 border-amber-100'
+                                                    : 'bg-rose-50 text-rose-700 border-rose-100'
+                                        }`}>
+                                            готовность {translateReadinessVerdict(rolloutReadiness.verdict)}
+                                        </span>
+                                        <span className='px-2.5 py-1 rounded-full bg-white text-gray-700 text-[10px] font-medium border border-black/10'>
+                                            рекомендуемый режим {rolloutReadiness.suggestedMode}
+                                        </span>
+                                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-medium border ${
+                                            rolloutReadiness.canEnableCanonicalDefault
+                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                                : 'bg-amber-50 text-amber-700 border-amber-100'
+                                        }`}>
+                                            {rolloutReadiness.canEnableCanonicalDefault ? 'canonical default можно включать' : 'canonical default ещё нельзя включать'}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <Link href="/consulting/techmaps" className="px-3 py-2 rounded-xl border border-black/10 text-xs font-medium hover:bg-gray-50">
+                                    Открыть rollout реестр
+                                </Link>
+                                <Link href="/consulting/techmaps/active" className="px-3 py-2 rounded-xl border border-black/10 text-xs font-medium hover:bg-gray-50">
+                                    Активные техкарты
+                                </Link>
+                            </div>
+                        </div>
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+                            <CutoverMetric
+                                title="Режим rollout"
+                                value={`shadow ${rolloutSummary.rolloutModes.shadow} • canonical ${rolloutSummary.rolloutModes.canonical}`}
+                                tone={rolloutSummary.rolloutModes.shadow > 0 ? 'warn' : 'ok'}
+                            />
+                            <CutoverMetric
+                                title="Серьёзность parity"
+                                value={`P0 ${rolloutSummary.parity.diffCounts.P0} • P1 ${rolloutSummary.parity.diffCounts.P1} • P2 ${rolloutSummary.parity.diffCounts.P2}`}
+                                tone={rolloutSummary.parity.diffCounts.P0 > 0 ? 'critical' : rolloutSummary.parity.diffCounts.P1 > 0 ? 'warn' : 'ok'}
+                            />
+                            <CutoverMetric
+                                title="Причины fallback"
+                                value={Object.entries(rolloutSummary.fallback.reasons).length === 0
+                                    ? 'не использовались'
+                                    : Object.entries(rolloutSummary.fallback.reasons).map(([reason, count]) => `${reason}: ${count}`).join(' • ')}
+                                tone={rolloutSummary.fallback.usedCount > 0 ? 'warn' : 'ok'}
+                            />
+                            <CutoverMetric
+                                title="Покрытие"
+                                value={`admission ${rolloutSummary.metadataCoverage.fieldAdmissionCount} • trace ${rolloutSummary.metadataCoverage.generationTraceCount}`}
+                                tone={rolloutSummary.metadataCoverage.versionPinnedCount < rolloutSummary.totalRapeseedMaps ? 'warn' : 'ok'}
+                            />
+                        </div>
+                        {rolloutReadiness && (
+                            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="rounded-xl border border-black/5 bg-gray-50 p-3">
+                                    <p className="text-[11px] uppercase tracking-wider text-gray-500">Блокеры</p>
+                                    <div className="mt-2 space-y-1">
+                                        {rolloutReadiness.blockers.length === 0 ? (
+                                            <p className="text-sm text-emerald-700">Блокеров нет.</p>
+                                        ) : (
+                                            rolloutReadiness.blockers.map((item) => (
+                                                <p key={item} className="text-sm text-rose-700">{item}</p>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="rounded-xl border border-black/5 bg-gray-50 p-3">
+                                    <p className="text-[11px] uppercase tracking-wider text-gray-500">Предупреждения</p>
+                                    <div className="mt-2 space-y-1">
+                                        {rolloutReadiness.warnings.length === 0 ? (
+                                            <p className="text-sm text-emerald-700">Предупреждений нет.</p>
+                                        ) : (
+                                            rolloutReadiness.warnings.map((item) => (
+                                                <p key={item} className="text-sm text-amber-700">{item}</p>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        {(rolloutSummary.rolloutIncidents || []).length > 0 && (
+                            <div className="mt-4 space-y-2">
+                                <p className="text-xs text-gray-500">Persisted rollout-инциденты</p>
+                                {(rolloutSummary.rolloutIncidents || []).slice(0, 3).map((incident) => (
+                                    <div key={incident.id} className="rounded-xl border border-black/5 bg-gray-50 p-3">
+                                        <p className="text-xs text-gray-500">
+                                            {incident.subtype || '-'} • {incident.severity} • {incident.status}
+                                        </p>
+                                        <p className="text-sm text-gray-700 mt-1">
+                                            {incident.techMapId ? `techMap ${incident.techMapId}` : 'company rollout-инцидент'}
+                                            {incident.runbookSuggestedAction ? ` • runbook ${incident.runbookSuggestedAction}` : ''}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {cutoverPacket && (
+                            <div className="mt-4 rounded-xl border border-black/5 bg-gray-50 p-3">
+                                <p className="text-[11px] uppercase tracking-wider text-gray-500">Cutover packet</p>
+                                <p className="text-sm text-gray-700 mt-2">
+                                    Компания {cutoverPacket.companyId} • verdict {translateReadinessVerdict(cutoverPacket.verdict)}
+                                </p>
+                                <code className="block mt-2 text-xs text-gray-800 break-all">{cutoverPacket.releaseCommand}</code>
+                                <code className="block mt-2 text-xs text-gray-500 break-all">{cutoverPacket.rollbackCommand}</code>
+                            </div>
+                        )}
+                    </Card>
+                )}
 
                 <Card className="xl:col-span-12 py-3">
                     <div className="overflow-hidden whitespace-nowrap rounded-xl bg-gray-50 border border-black/5 px-3 py-2">
@@ -193,4 +427,80 @@ function StatusCard({ title, value, tone, href }: { title: string; value: string
             </Card>
         </Link>
     );
+}
+
+function CutoverMetric({
+    title,
+    value,
+    tone,
+}: {
+    title: string;
+    value: string;
+    tone: 'ok' | 'warn' | 'critical';
+}) {
+    const classes =
+        tone === 'ok'
+            ? 'border-emerald-200 bg-emerald-50'
+            : tone === 'warn'
+              ? 'border-amber-200 bg-amber-50'
+              : 'border-rose-200 bg-rose-50';
+
+    return (
+        <div className={`rounded-xl border p-3 ${classes}`}>
+            <p className="text-[11px] uppercase tracking-wider text-gray-500">{title}</p>
+            <p className="text-sm text-gray-800 mt-1">{value}</p>
+        </div>
+    );
+}
+
+function buildRolloutAlerts(summary: GenerationRolloutSummary | null) {
+    if (!summary) {
+        return [];
+    }
+
+    const alerts: Array<{
+        tone: 'critical' | 'warning' | 'info';
+        text: string;
+        href: string;
+    }> = [];
+
+    if (summary.parity.mapsWithBlockingDiffs > 0) {
+        alerts.push({
+            tone: 'critical',
+            text: `Cutover: ${summary.parity.mapsWithBlockingDiffs} карт с блокирующими parity-разрывами`,
+            href: '/consulting/techmaps',
+        });
+    }
+
+    if (summary.fallback.usedCount > 0) {
+        alerts.push({
+            tone: 'warning',
+            text: `Cutover: fallback использован ${summary.fallback.usedCount} раз`,
+            href: '/consulting/techmaps',
+        });
+    }
+
+    if (summary.metadataCoverage.versionPinnedCount < summary.totalRapeseedMaps) {
+        alerts.push({
+            tone: 'warning',
+            text: `Cutover: неполный version pinning ${summary.metadataCoverage.versionPinnedCount}/${summary.totalRapeseedMaps}`,
+            href: '/consulting/techmaps',
+        });
+    }
+
+    if (alerts.length === 0) {
+        alerts.push({
+            tone: 'info',
+            text: 'Cutover: canonical rollout без критичных сигналов',
+            href: '/consulting/techmaps',
+        });
+    }
+
+    return alerts;
+}
+
+function translateReadinessVerdict(verdict: 'BLOCKED' | 'WARN' | 'PASS') {
+    if (verdict === 'PASS') return 'пройдено';
+    if (verdict === 'WARN') return 'внимание';
+    return 'блокировано';
 }

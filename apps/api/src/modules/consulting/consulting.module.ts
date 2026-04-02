@@ -27,9 +27,18 @@ import { OutboxModule } from "../../shared/outbox/outbox.module";
 import { TechMapModule } from "../tech-map/tech-map.module";
 import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
 import { ConsultingAccessGuard } from "./consulting-access.guard";
+import { FieldObservationModule } from "../field-observation/field-observation.module";
 
 @Module({
-  imports: [PrismaModule, CmrModule, EconomyModule, OutboxModule, IdempotencyModule, forwardRef(() => TechMapModule)],
+  imports: [
+    PrismaModule,
+    CmrModule,
+    EconomyModule,
+    OutboxModule,
+    IdempotencyModule,
+    FieldObservationModule,
+    forwardRef(() => TechMapModule),
+  ],
   controllers: [ConsultingController],
   providers: [
     ConsultingService,

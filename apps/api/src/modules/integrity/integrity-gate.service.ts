@@ -19,6 +19,7 @@ import {
   AssetStatus,
   DataSourceType,
   VerificationStatus,
+  StockItemType,
 } from "@rai/prisma-client";
 import {
   ScienceCalculator,
@@ -504,11 +505,17 @@ export class IntegrityGateService {
 
     for (const [resKey, plannedAmount] of Object.entries(resourceDemands)) {
       const [resType, resName] = resKey.split(":");
+      const stockItemType = this.mapResourceTypeToStockItemType(resType);
+
+      // SERVICE и другие нефизические ресурсы не должны валить stock sufficiency gate.
+      if (!stockItemType) {
+        continue;
+      }
 
       const stockItems = await this.prisma.stockItem.findMany({
         where: {
           companyId: map.companyId,
-          type: resType as any,
+          type: stockItemType,
           name: { contains: resName, mode: "insensitive" },
           status: "ACTIVE",
         },
@@ -569,6 +576,28 @@ export class IntegrityGateService {
       success: !hasErrors,
       issues,
     };
+  }
+
+  private mapResourceTypeToStockItemType(
+    resourceType: string | null | undefined,
+  ): StockItemType | null {
+    const normalized = typeof resourceType === "string"
+      ? resourceType.trim().toUpperCase()
+      : "";
+
+    switch (normalized) {
+      case "FERTILIZER":
+        return StockItemType.FERTILIZER;
+      case "SEED":
+        return StockItemType.SEED;
+      case "FUEL":
+        return StockItemType.FUEL;
+      case "PESTICIDE":
+      case "CHEMICAL":
+        return StockItemType.CHEMICAL;
+      default:
+        return null;
+    }
   }
 
   /**

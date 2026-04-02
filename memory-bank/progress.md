@@ -22,6 +22,31 @@
     - у команды появился проверяемый repo-side контракт reviewed evidence loop;
     - enforce-gate теперь падает по реальному пробелу (`dependencyReview`/reviewer refs), а не по размытым narrative-утверждениям.
 
+1. **Rapeseed migration closeout verification доведён до green baseline** [DONE]:
+  - Исправлены compile/test infrastructure blockers:
+    - `apps/api/tsconfig.json` получил alias для `@rai/regenerative-engine` и `@prisma/client`;
+    - `apps/api/jest.config.js` ограничен трансформацией `*.ts` и получил mapper-правила для `@prisma/client` и `@rai/regenerative-engine`;
+    - `packages/regenerative-engine/src/index.ts` переведён на extensionless re-export path.
+  - Подтверждены зелёные проверки:
+    - `pnpm lint:docs`
+    - `pnpm lint:docs:matrix:strict`
+    - `pnpm --filter api build`
+    - `pnpm --filter web build`
+  - Подтверждены targeted tests:
+    - `apps/web/__tests__/operation-evidence-panel.spec.tsx`
+    - `apps/api/src/modules/tech-map/generation/branch-selection.service.spec.ts`
+    - `apps/api/src/modules/tech-map/generation/field-admission.service.spec.ts`
+    - `apps/api/src/modules/tech-map/generation/shadow-parity.service.spec.ts`
+    - `apps/api/src/modules/tech-map/generation/tech-map-generation-orchestrator.service.spec.ts`
+    - `apps/api/src/modules/tech-map/control-point.service.spec.ts`
+    - `apps/api/src/modules/tech-map/tech-map.concurrency.spec.ts`
+    - `apps/api/src/modules/tech-map/tech-map.service.spec.ts`
+    - `apps/api/src/modules/consulting/execution.service.spec.ts`
+  - Практический эффект:
+    - большой `Rapeseed canonical migration` changeset больше не держится на compile-path drift;
+    - прежний `exit 137` хвост снят последовательным прогоном тяжёлых backend-спек с `NODE_OPTIONS=--max-old-space-size=12288`;
+    - verification-контур ветки доведён до рабочего green baseline без изменения бизнес-логики изменения.
+
 1. **Для `R3` добавлен restricted handoff packet для первого reviewer-backed цикла** [DONE]:
   - Добавлен новый script:
     - `scripts/security-reviewed-evidence-packet.cjs`
@@ -3923,3 +3948,33 @@
 2026-03-31: Для внешнего owner-reply контура добавлен `pnpm phase:a:external-reply-capture`: новый `scripts/phase-a-external-reply-capture-packet.cjs` выпускает generated report и restricted drop-zones `/PHASE-A-EXTERNAL-REPLY-CAPTURE/<queue>/incoming/<referenceId>/`, чтобы raw owner reply и вложения сначала попадали в один канонический restricted-perimeter, а уже потом шли в `intake -> reviewed -> accepted`.
 2026-03-31: Для внешнего evidence closeout добавлен `pnpm phase:a:external-reconciliation`: новый `scripts/phase-a-external-evidence-reconciliation.cjs` сверяет owner queues, outreach ledger, reply capture и трековые status-файлы `A1/A2/A4`, чтобы по каждой внешней очереди было видно, где именно стоп — нет ответа, нет raw reply, нет intake, нет review, нет accept — и можно ли уже честно закрывать queue.
 2026-03-31: Зафиксировано управленческое решение о парковке внешнего хвоста `Phase A`: текущий `repo_side_exhausted_external_only` снимок сохранён как checkpoint, дальнейшее добивание `A1/A2/A4/A5` временно откладывается до восстановления реально работающей программы, а все уже собранные checklist/board/gate-слои остаются точкой возврата без дальнейшего усложнения.
+# 2026-04-01 — AGENTS autonomous plan execution rule
+
+- В `AGENTS.md` добавлен раздел `Autonomous Plan Execution`.
+- Зафиксировано правило: при наличии `PLAN.md` агент обязан считать его source of truth для задачи.
+- Уточнена политика исполнения:
+  - идти от первой незавершённой milestone до полного завершения;
+  - не спрашивать про `next steps`, пока план исполним;
+  - после каждого значимого изменения выполнять релевантную верификацию;
+  - при падении проверки продолжать отладку до рабочего состояния milestone.
+- Уточнено условие остановки:
+  - остановка разрешена только при жёстком blocker, который нельзя снять из репозитория и доступных инструментов;
+  - в этом случае обязателен blocker report из 4 пунктов: выполненная работа, точный blocker, попытки исправления, минимальный input от пользователя.
+# 2026-04-02 — Rapeseed migration closeout verification
+
+- Выполнена end-to-end проверка большого `Rapeseed canonical migration` changeset против `origin/main`.
+- Исправлены compile/test infrastructure blockers:
+  - в `apps/api/tsconfig.json` добавлены alias для `@rai/regenerative-engine` и `@prisma/client`;
+  - в `apps/api/jest.config.js` `ts-jest` ограничен трансформацией `*.ts`, а также добавлены mapper-правила для `@prisma/client` и `@rai/regenerative-engine`;
+  - в `packages/regenerative-engine/src/index.ts` убраны `.js`-суффиксы из source re-export path.
+- Подтверждены зелёные проверки:
+  - `pnpm lint:docs`
+  - `pnpm lint:docs:matrix:strict`
+  - `pnpm --filter api build`
+  - `pnpm --filter web build`
+  - targeted tests для `branch-selection`, `field-admission`, `shadow-parity`, `tech-map-generation-orchestrator`, `tech-map.concurrency`, `operation-evidence-panel`
+- Зафиксирован остаточный verification-blocker:
+  - `control-point.service.spec.ts`
+  - `tech-map.service.spec.ts`
+  - `consulting/execution.service.spec.ts`
+  стабильно завершаются `exit 137`, что указывает на memory-heavy test contour среды, а не на уже подтверждённый compile failure.

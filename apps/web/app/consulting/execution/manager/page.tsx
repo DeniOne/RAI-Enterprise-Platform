@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ExecutionCard } from '../components/ExecutionCard';
 import { CompletionModal } from '../components/CompletionModal';
+import { ControlPointOutcomeModal } from '../components/ControlPointOutcomeModal';
 import { useGovernanceAction } from '@/shared/hooks/useGovernanceAction';
 import { GovernanceBar } from '@/shared/components/GovernanceBar';
 import { TriggeredEffectsPanel } from '@/components/governance/TriggeredEffectsPanel';
@@ -36,6 +37,7 @@ function ManagerContourInner() {
     const router = useRouter();
     const [selectedOperation, setSelectedOperation] = useState<any>(null);
     const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
+    const [isControlPointModalOpen, setIsControlPointModalOpen] = useState(false);
     const { currentRole } = useAuthSimulationStore();
     const setActiveEntityRefs = useWorkspaceContextStore((s) => s.setActiveEntityRefs);
     const setSelectedRowSummary = useWorkspaceContextStore((s) => s.setSelectedRowSummary);
@@ -123,6 +125,23 @@ function ManagerContourInner() {
         setIsCompleteModalOpen(true);
     };
 
+    const handleControlPointRequest = (operation: any) => {
+        setSelectedOperation(operation);
+        setActiveEntityRefs([buildWorkspaceRef('operation', operation.id)]);
+        setSelectedRowSummary(
+            buildWorkspaceSummary({
+                kind: 'operation',
+                id: operation.id,
+                title: operation.name ?? 'Операция',
+                subtitle: operation.mapStage?.name ?? 'Execution Manager',
+                status: operation.executionRecord?.status ?? 'IN_PROGRESS',
+            }),
+        );
+        setLastUserAction(`control-point:${operation.id}`);
+        gov.initiate(operation.riskLevel || 'R2');
+        setIsControlPointModalOpen(true);
+    };
+
     if (isLoading) {
         return (
             <div className="flex h-[80vh] items-center justify-center">
@@ -183,6 +202,7 @@ function ManagerContourInner() {
                                     operation={op}
                                     onStart={handleStart}
                                     onComplete={handleCompleteRequest}
+                                    onRecordControlPoint={handleControlPointRequest}
                                 />
                             ))}
                         </div>
@@ -217,20 +237,40 @@ function ManagerContourInner() {
             </div>
 
             {selectedOperation && (
-                <CompletionModal
-                    isOpen={isCompleteModalOpen}
-                    operation={selectedOperation}
-                    onClose={() => setIsCompleteModalOpen(false)}
-                    onConfirm={(data) => {
-                        api.consulting.execution.complete(data).then(() => {
-                            queryClient.invalidateQueries({ queryKey: ['consulting', 'active-operations'] });
-                            setIsCompleteModalOpen(false);
-                            setSelectedOperation(null);
-                            gov.execute();
-                        });
-                    }}
-                    isSubmitting={false}
-                />
+                <>
+                    <CompletionModal
+                        isOpen={isCompleteModalOpen}
+                        operation={selectedOperation}
+                        onClose={() => setIsCompleteModalOpen(false)}
+                        onConfirm={(data) => {
+                            api.consulting.execution.complete(data).then(() => {
+                                queryClient.invalidateQueries({ queryKey: ['consulting', 'active-operations'] });
+                                setIsCompleteModalOpen(false);
+                                setSelectedOperation(null);
+                                gov.execute();
+                            });
+                        }}
+                        isSubmitting={false}
+                    />
+                    <ControlPointOutcomeModal
+                        isOpen={isControlPointModalOpen}
+                        operation={selectedOperation}
+                        onClose={() => setIsControlPointModalOpen(false)}
+                        onConfirm={(data) => {
+                            api.consulting.execution.recordControlPointOutcome(
+                                data.techMapId,
+                                data.controlPointId,
+                                data.payload,
+                            ).then(() => {
+                                queryClient.invalidateQueries({ queryKey: ['consulting', 'active-operations'] });
+                                setIsControlPointModalOpen(false);
+                                setSelectedOperation(null);
+                                gov.execute();
+                            });
+                        }}
+                        isSubmitting={false}
+                    />
+                </>
             )}
 
             {/* Governance Sticky Bar (Manager Variant) */}

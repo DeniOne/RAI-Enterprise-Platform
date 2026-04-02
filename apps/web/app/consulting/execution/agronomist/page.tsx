@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ExecutionCard } from '../components/ExecutionCard';
 import { CompletionModal } from '../components/CompletionModal';
+import { ControlPointOutcomeModal } from '../components/ControlPointOutcomeModal';
 import { useGovernanceAction } from '@/shared/hooks/useGovernanceAction';
 import { GovernanceBar } from '@/shared/components/GovernanceBar';
 import { TriggeredEffectsPanel } from '@/components/governance/TriggeredEffectsPanel';
@@ -27,6 +28,7 @@ export default function AgronomistContour() {
     const router = useRouter();
     const [selectedOperation, setSelectedOperation] = useState<any>(null);
     const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
+    const [isControlPointModalOpen, setIsControlPointModalOpen] = useState(false);
     const { currentRole } = useAuthSimulationStore();
 
     const gov = useGovernanceAction('AGRO_EXECUTION');
@@ -54,6 +56,21 @@ export default function AgronomistContour() {
         }
     });
 
+    const controlPointOutcomeMutation = useMutation({
+        mutationFn: (data: any) =>
+            api.consulting.execution.recordControlPointOutcome(
+                data.techMapId,
+                data.controlPointId,
+                data.payload,
+            ),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['consulting', 'active-operations'] });
+            setIsControlPointModalOpen(false);
+            setSelectedOperation(null);
+            gov.execute();
+        }
+    });
+
     const handleStart = (id: string) => {
         gov.initiate('R1');
         startMutation.mutate(id);
@@ -63,6 +80,12 @@ export default function AgronomistContour() {
         setSelectedOperation(operation);
         gov.initiate(operation.riskLevel || 'R2');
         setIsCompleteModalOpen(true);
+    };
+
+    const handleControlPointRequest = (operation: any) => {
+        setSelectedOperation(operation);
+        gov.initiate(operation.riskLevel || 'R3');
+        setIsControlPointModalOpen(true);
     };
 
     if (isLoading) {
@@ -132,6 +155,7 @@ export default function AgronomistContour() {
                                     operation={op}
                                     onStart={handleStart}
                                     onComplete={handleCompleteRequest}
+                                    onRecordControlPoint={handleControlPointRequest}
                                 />
                             ))}
                         </div>
@@ -167,13 +191,22 @@ export default function AgronomistContour() {
 
             {/* Modals & Overlays */}
             {selectedOperation && (
-                <CompletionModal
-                    isOpen={isCompleteModalOpen}
-                    operation={selectedOperation}
-                    onClose={() => setIsCompleteModalOpen(false)}
-                    onConfirm={(data) => completeMutation.mutate(data)}
-                    isSubmitting={completeMutation.isPending}
-                />
+                <>
+                    <CompletionModal
+                        isOpen={isCompleteModalOpen}
+                        operation={selectedOperation}
+                        onClose={() => setIsCompleteModalOpen(false)}
+                        onConfirm={(data) => completeMutation.mutate(data)}
+                        isSubmitting={completeMutation.isPending}
+                    />
+                    <ControlPointOutcomeModal
+                        isOpen={isControlPointModalOpen}
+                        operation={selectedOperation}
+                        onClose={() => setIsControlPointModalOpen(false)}
+                        onConfirm={(data) => controlPointOutcomeMutation.mutate(data)}
+                        isSubmitting={controlPointOutcomeMutation.isPending}
+                    />
+                </>
             )}
 
             {/* Governance Sticky Bar */}
