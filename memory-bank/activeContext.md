@@ -1,5 +1,45 @@
 # Активный контекст RAI_EP
 
+## Текущая задача (2026-04-02, rapeseed migration closeout verification)
+- [x] Выполнена проверка актуального `Rapeseed canonical migration` changeset относительно `origin/main`.
+- [x] Подтверждено, что ветка держит большой delivery-пакет по:
+  - canonical generation path;
+  - control point runtime;
+  - consulting execution evidence;
+  - cutover CLI/runbook;
+  - frontend read/write surface для execution и techmaps.
+- [x] Исправлен compile-blocker `api build`:
+  - в `apps/api/tsconfig.json` добавлены alias для `@rai/regenerative-engine` и `@prisma/client`;
+  - это вернуло `pnpm --filter api build` в зелёный статус.
+- [x] Исправлен source/jest-blocker пакета `@rai/regenerative-engine`:
+  - `packages/regenerative-engine/src/index.ts` переведён на extensionless re-export path;
+  - `apps/api/jest.config.js` ограничен трансформацией только `*.ts` и получил явные mapper-правила для `@prisma/client` и `@rai/regenerative-engine`.
+- [x] Финальная verification-картина после фиксов:
+  - `pnpm lint:docs` — green;
+  - `pnpm lint:docs:matrix:strict` — green;
+  - `pnpm --filter api build` — green;
+  - `pnpm --filter web build` — green;
+  - зелёные targeted tests:
+    - `apps/web/__tests__/operation-evidence-panel.spec.tsx`
+    - `apps/api/src/modules/tech-map/generation/branch-selection.service.spec.ts`
+    - `apps/api/src/modules/tech-map/generation/field-admission.service.spec.ts`
+    - `apps/api/src/modules/tech-map/generation/shadow-parity.service.spec.ts`
+    - `apps/api/src/modules/tech-map/generation/tech-map-generation-orchestrator.service.spec.ts`
+    - `apps/api/src/modules/tech-map/control-point.service.spec.ts`
+    - `apps/api/src/modules/tech-map/tech-map.concurrency.spec.ts`
+    - `apps/api/src/modules/tech-map/tech-map.service.spec.ts`
+    - `apps/api/src/modules/consulting/execution.service.spec.ts`
+- [x] Прежний `exit 137` verification-tail снят последовательным прогоном тяжёлых backend-спек с `NODE_OPTIONS=--max-old-space-size=12288`.
+
+## Текущая задача (2026-04-01, agent execution rule sync)
+- [x] В `AGENTS.md` добавлено жёсткое правило `Autonomous Plan Execution`.
+- [x] Зафиксировано, что при наличии `PLAN.md` агент обязан считать его source of truth для задачи и исполнять от первой незавершённой milestone до полного завершения.
+- [x] Закреплено, что остановка допустима только при жёстком blocker с обязательным blocker report формата:
+  - выполненная работа;
+  - точный blocker;
+  - предпринятые попытки исправления;
+  - минимальный input от пользователя.
+
 ## Текущая задача (2026-04-01, TechMap research sync)
 - [x] Выполнен `git pull`, получены свежие стратегические наработки по Техкартам.
 - [x] В `docs/00_STRATEGY/TECHMAP/` добавлены:

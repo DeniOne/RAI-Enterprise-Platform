@@ -19,13 +19,15 @@ module.exports = {
     rootDir: '.',
     testRegex: '.*\\.spec\\.ts$',
     transform: {
-        '^.+\\.(t|j)s$': tsJest,
+        '^.+\\.ts$': tsJest,
     },
-    collectCoverageFrom: ['**/*.(t|j)s'],
+    collectCoverageFrom: ['**/*.ts'],
     coverageDirectory: './coverage',
     testEnvironment: 'node',
     moduleNameMapper: {
         '^@rai/prisma-client$': path.resolve(__dirname, '../../packages/prisma-client'),
+        '^@prisma/client$': path.resolve(__dirname, '../../packages/prisma-client/generated-client'),
+        '^@rai/regenerative-engine$': path.resolve(__dirname, '../../packages/regenerative-engine/src'),
     },
     // Резолвинг модулей для pnpm
     moduleDirectories: [
