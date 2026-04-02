@@ -4,11 +4,14 @@ import React from 'react';
 import { Play, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { OperationActivityTimeline } from './OperationActivityTimeline';
+import { EvidenceGuardBanner } from './EvidenceGuardBanner';
 
 interface ExecutionCardProps {
     operation: any;
     onStart: (id: string) => void;
     onComplete: (operation: any) => void;
+    onRecordControlPoint?: (operation: any) => void;
 }
 
 /**
@@ -16,9 +19,17 @@ interface ExecutionCardProps {
  * @description Карточка операции исполнения, переработанная согласно UI Design Canon Phase 4.
  * Канон: Light Theme (#FAFAFA), Geist Medium (500), rounded-2xl.
  */
-export const ExecutionCard: React.FC<ExecutionCardProps> = ({ operation, onStart, onComplete }) => {
+export const ExecutionCard: React.FC<ExecutionCardProps> = ({ operation, onStart, onComplete, onRecordControlPoint }) => {
     const status = operation.executionRecord?.status || 'PLANNED';
     const riskLevel = operation.riskLevel || 'R1'; // Phase 4 Injection
+    const controlPoints = operation.mapStage?.controlPoints || [];
+    const governanceSummary = operation.governanceSummary || {};
+    const evidenceSummary = operation.evidenceSummary || null;
+    const openGates = (governanceSummary.decisionGates || []).filter((gate: any) => gate.status === 'OPEN');
+    const pendingChangeOrders = (governanceSummary.changeOrders || []).filter((changeOrder: any) => changeOrder.status === 'PENDING_APPROVAL');
+    const latestControlPointOutcome = controlPoints
+        .flatMap((point: any) => point.outcomeExplanations || [])
+        .sort((left: any, right: any) => new Date(right.createdAt || 0).getTime() - new Date(left.createdAt || 0).getTime())[0];
 
     const getStatusStyles = () => {
         switch (status) {
@@ -82,6 +93,70 @@ export const ExecutionCard: React.FC<ExecutionCardProps> = ({ operation, onStart
                 ))}
             </div>
 
+            {controlPoints.length > 0 && (
+                <div className="mb-5 rounded-xl border border-amber-100 bg-amber-50/70 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                        <p className="text-[11px] font-medium uppercase tracking-wider text-amber-700">
+                            Control points: {controlPoints.length}
+                        </p>
+                        {latestControlPointOutcome && (
+                            <span className="text-[10px] text-slate-600">
+                                {latestControlPointOutcome.severity}: {latestControlPointOutcome.summary}
+                            </span>
+                        )}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                        {controlPoints.map((point: any) => (
+                            <span key={point.id} className="rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-slate-700 border border-amber-100">
+                                {point.name}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {(openGates.length > 0 || pendingChangeOrders.length > 0) && (
+                <div className="mb-5 rounded-xl border border-indigo-100 bg-indigo-50/70 p-3">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-indigo-700">
+                        Governance summary
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                        {openGates.length > 0 && (
+                            <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-indigo-700 border border-indigo-100">
+                                open gates: {openGates.length}
+                            </span>
+                        )}
+                        {pendingChangeOrders.map((changeOrder: any) => (
+                            <span key={changeOrder.id} className="rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-indigo-700 border border-indigo-100">
+                                {changeOrder.id}: {changeOrder.approvalSummary?.approved || 0}/{changeOrder.approvalSummary?.total || 0} approved
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {evidenceSummary && (
+                <div className="mb-5">
+                    <EvidenceGuardBanner
+                        title="Evidence summary"
+                        isBlocking={!evidenceSummary.isComplete}
+                        readyText="Evidence готов для governed closure по операции."
+                        blockedText="Есть missing evidence, которые могут заблокировать `DONE` или governed outcome."
+                        missingEvidenceTypes={evidenceSummary.missingEvidenceTypes}
+                        requiredCount={evidenceSummary.requiredEvidenceTypes?.length}
+                        presentCount={evidenceSummary.presentEvidenceTypes?.length}
+                        compact
+                    />
+                </div>
+            )}
+
+            <div className="mb-5">
+                <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                    Execution timeline
+                </p>
+                <OperationActivityTimeline operation={operation} limit={3} />
+            </div>
+
             <div className="flex gap-2">
                 {status === 'PLANNED' && (
                     <Button
@@ -94,13 +169,24 @@ export const ExecutionCard: React.FC<ExecutionCardProps> = ({ operation, onStart
                 )}
 
                 {status === 'IN_PROGRESS' && (
-                    <Button
-                        variant="default"
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white gap-2 h-9 text-xs font-medium rounded-xl shadow-none"
-                        onClick={() => onComplete(operation)}
-                    >
-                        <CheckCircle className="w-3.5 h-3.5" /> Завершить
-                    </Button>
+                    <>
+                        {controlPoints.length > 0 && onRecordControlPoint && (
+                            <Button
+                                variant="outline"
+                                className="flex-1 gap-2 h-9 text-xs font-medium rounded-xl shadow-none"
+                                onClick={() => onRecordControlPoint(operation)}
+                            >
+                                <AlertCircle className="w-3.5 h-3.5" /> Control Point
+                            </Button>
+                        )}
+                        <Button
+                            variant="default"
+                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white gap-2 h-9 text-xs font-medium rounded-xl shadow-none"
+                            onClick={() => onComplete(operation)}
+                        >
+                            <CheckCircle className="w-3.5 h-3.5" /> Завершить
+                        </Button>
+                    </>
                 )}
 
                 {status === 'DONE' && (

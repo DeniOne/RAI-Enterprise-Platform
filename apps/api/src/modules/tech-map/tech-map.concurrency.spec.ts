@@ -10,6 +10,7 @@ import { DAGValidationService } from "./validation/dag-validation.service";
 import { TechMapValidator } from "./tech-map.validator";
 import { UnitNormalizationService } from "./unit-normalization.service";
 import { TechMapWorkflowOrchestratorService } from "./tech-map-workflow-orchestrator.service";
+import { TechMapGenerationOrchestratorService } from "./generation/tech-map-generation-orchestrator.service";
 
 // Полноценный mock объект для PrismaService — используется и напрямую и внутри $transaction
 const makePrismaMock = () => ({
@@ -215,6 +216,12 @@ describe("TechMapService Concurrency (Track 1)", () => {
               ],
               summary: "Workflow spine",
             })),
+          },
+        },
+        {
+          provide: TechMapGenerationOrchestratorService,
+          useValue: {
+            orchestrate: jest.fn(),
           },
         },
       ],

@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { FieldObservationService } from "./field-observation.service";
 import { FieldObservationController } from "./field-observation.controller";
 import { PrismaModule } from "../../shared/prisma/prisma.module";
@@ -7,7 +7,12 @@ import { IntegrityModule } from "../integrity/integrity.module";
 import { IdempotencyModule } from "../../shared/idempotency/idempotency.module";
 
 @Module({
-  imports: [PrismaModule, AuditModule, IntegrityModule, IdempotencyModule],
+  imports: [
+    PrismaModule,
+    AuditModule,
+    forwardRef(() => IntegrityModule),
+    IdempotencyModule,
+  ],
   providers: [FieldObservationService],
   controllers: [FieldObservationController],
   exports: [FieldObservationService],

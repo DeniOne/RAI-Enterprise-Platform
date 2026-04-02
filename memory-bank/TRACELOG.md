@@ -1,3 +1,244 @@
+[2026-04-01 19:36Z] Evidence remediation получил автоподстановку последнего источника по типу
+- В `OperationEvidencePanel` добавлены:
+  - типовые placeholders по `evidenceType`
+  - local-only storage последнего использованного `fileUrl` по каждому `evidenceType`
+  - автоподстановка последнего источника при выборе типа evidence, если такой источник уже использовался раньше
+- После клика по missing evidence badge из `EvidenceGuardBanner` remediation flow теперь делает три действия подряд:
+  - прокручивает к evidence panel
+  - выбирает нужный `evidenceType`
+  - подставляет последний известный источник для этого типа, если он существует
+- Практический эффект:
+  - после диагностики missing evidence пользователь делает меньше ручных шагов;
+  - повторяющиеся типы evidence заполняются быстрее в полевых сценариях;
+  - execution remediation flow становится ближе к полуавтоматическому исправлению blocker-состояния, а не только к навигации к форме.
+
+[2026-04-01 19:26Z] Evidence blocker в execution-модалках стал direct-remediation flow
+- `EvidenceGuardBanner` теперь умеет не только показывать `missingEvidenceTypes`, но и отправлять пользователя к исправлению через callback `onSelectMissingEvidenceType`.
+- `OperationEvidencePanel` получил:
+  - `preferredEvidenceType`
+  - `panelId`
+  и автоматически подготавливает нужный evidence type в селекте прикрепления.
+- В `CompletionModal` и `ControlPointOutcomeModal` клик по missing evidence badge теперь:
+  - прокручивает к `OperationEvidencePanel`
+  - автоматически выбирает нужный evidence type
+- Практический эффект:
+  - blocker больше не требует ручного поиска типа evidence в выпадающем списке;
+  - путь `увидел missing -> сразу начал исправлять` стал одним непрерывным действием;
+  - execution UX ещё сильнее приблизился к single-screen remediation вместо диагностики без действия.
+
+[2026-04-01 19:17Z] Evidence policy в execution UX централизована через `EvidenceGuardBanner`
+- Во frontend добавлен общий компонент:
+  - `apps/web/app/consulting/execution/components/EvidenceGuardBanner.tsx`
+- Компонент переиспользован в:
+  - `CompletionModal`
+  - `ControlPointOutcomeModal`
+  - `ExecutionCard`
+- Теперь единый banner отвечает за:
+  - status `OK/Pending`
+  - loading-state проверки completeness
+  - показ `missingEvidenceTypes`
+  - counters `required/present`
+  - единый visual tone для blocker/non-blocker evidence states
+- Практический эффект:
+  - evidence-policy больше не размазана по нескольким локальным JSX-блокам;
+  - тексты, цвета и badges синхронизированы между карточкой операции и модалками;
+  - следующее изменение evidence-правил можно проводить через один shared UI-contract без дрейфа execution экранов.
+
+[2026-04-01 19:08Z] Execution modal UX получил pre-submit evidence guard для `DONE` и governed outcomes
+- В `CompletionModal` добавлен action-level guard перед `DONE`:
+  - модалка читает `execution-evidence-status`
+  - заранее показывает `missingEvidenceTypes`
+  - блокирует submit, если обязательный evidence ещё неполон
+- В `ControlPointOutcomeModal` добавлен severity-aware guard, синхронизированный с backend policy:
+  - guard включается для `CRITICAL`
+  - guard включается для `BLOCKER`
+  - guard включается для `decisiveAction`
+  - guard включается для `ChangeOrder`
+  - guard включается для `completeOperation`
+- Практический эффект:
+  - оператор видит точный blocker до отправки формы, а не после server-side reject;
+  - UI больше не скрывает причину, по которой governed outcome или `DONE` пока нельзя зафиксировать;
+  - single-screen execution flow стал предсказуемее и быстрее в критичных сценариях, где раньше отказ приходил только после submit.
+
+[2026-04-01 18:58Z] Execution timeline получил evidence completeness рядом с governance progress
+- В `apps/api/src/modules/consulting/execution.service.ts` active operation read-model теперь возвращает `evidenceSummary`:
+  - `isComplete`
+  - `requiredEvidenceTypes`
+  - `presentEvidenceTypes`
+  - `missingEvidenceTypes`
+- `evidenceSummary` собирается из `operation.evidenceRequired` и уже прикреплённого `Evidence`, без отдельного client-side восстановления логики.
+- В `OperationActivityTimeline` добавлен отдельный `evidence_status` item, который показывает:
+  - `OK` или `Pending`
+  - missing evidence types
+  - required/present counters
+- `ExecutionCard` получил inline `Evidence summary` блок рядом с governance summary.
+- Практический эффект:
+  - оператор сразу видит, можно ли закрывать governed сценарий или доказательная база ещё неполная;
+  - `ChangeOrder` / `DecisionGate` progress теперь читается вместе с evidence readiness, а не отдельно;
+  - execution UI ещё ближе к single-screen control plane для полевого исполнения и governance closure.
+
+[2026-04-01 18:47Z] Execution timeline получил inline-governance summary по gate и approval progress
+- В `apps/api/src/modules/consulting/execution.service.ts` active operation read-model теперь возвращает `governanceSummary` c:
+  - `decisionGates`
+  - `recommendations`
+  - `changeOrders` c агрегированным `approvalSummary`
+  - `deviationReviews`, выведенными из runtime payload `ControlPointOutcomeExplanation`
+- `OperationActivityTimeline` больше не показывает governance refs как голые ID:
+  - `DecisionGate` отображается со статусом
+  - `Recommendation` отображается с severity/title context
+  - `ChangeOrder` отображается со статусом и approval progress
+  - `DeviationReview` отображается со статусом и severity
+- `ExecutionCard` получил отдельный inline `Governance summary` блок для открытых gate и pending `ChangeOrder`.
+- Практический эффект:
+  - оператор сразу понимает, где execution outcome уже ушёл в governance и на какой стадии approval находится;
+  - критичные `PENDING_APPROVAL` сценарии перестали быть скрытыми за drilldown;
+  - execution UX стал ближе к оперативному control plane, где статус управленческого хвоста виден прямо на карточке работы.
+
+[2026-04-01 18:33Z] Execution timeline привязан к runtime governance artifacts через anchor drilldown техкарты
+- В `apps/api/src/modules/tech-map/tech-map.service.ts` explainability read-model техкарты расширен runtime artifacts:
+  - `changeOrders` по текущей `TechMap`
+  - `deviationReviews`, собранные по `deviationReviewId` из payload `ControlPointOutcomeExplanation`
+- В `apps/web/app/consulting/techmaps/[id]/page.tsx` добавлены anchor-секции:
+  - `recommendation-<id>`
+  - `decision-gate-<id>`
+  - `change-order-<id>`
+  - `deviation-review-<id>`
+  и runtime cards для `ChangeOrder` / `DeviationReview`.
+- `ControlPoint` блоки на техкарте теперь показывают живые runtime refs, если outcome уже породил governance-артефакты.
+- В `OperationActivityTimeline` timeline items по `ControlPointOutcome` строят живые переходы на конкретные governance artifacts техкарты, а не только показывают summary.
+- Практический эффект:
+  - execution-оператор может пройти путь `outcome -> gate/change-order/deviation` без ручного поиска по системе;
+  - техкарта стала реальным runtime drilldown surface для governed execution, а не только generation/explainability экраном;
+  - audit trail теперь не только читается линейно, но и поддерживает переход в конкретный governance объект по trace-ссылке.
+
+[2026-04-01 18:18Z] Execution UI получил unified timeline для `FieldObservation`, `Evidence` и `ControlPointOutcome`
+- В `apps/api/src/modules/consulting/execution.service.ts` active execution read-model теперь обогащается `recentObservations`, подобранными по подтверждённому execution context `fieldId + seasonId` из `TechMap`.
+- В `ConsultingController` добавлен additive read endpoint:
+  - `GET /consulting/execution/:operationId/observations`
+- Во frontend добавлен `OperationActivityTimeline`, который собирает единую ленту из:
+  - `recentObservations`
+  - `Evidence`
+  - `ControlPointOutcome`
+- Timeline встроен в:
+  - `ExecutionCard`
+  - `ControlPointOutcomeModal`
+- Практический эффект:
+  - оператор видит единый audit trail по операции, а не разрозненные списки артефактов;
+  - стало проще понимать, какое полевое наблюдение предшествовало evidence, deviation или control-point failure;
+  - execution UX заметно ближе к полному governed investigation flow без переключения между несколькими сущностями вручную.
+
+[2026-04-01 18:05Z] Execution flow получил execution-scoped `FieldObservation` path для control-point outcomes
+- В `apps/api/src/modules/consulting/dto/execution-observation.dto.ts` введён отдельный execution DTO/schema для создания observation из рабочего контура исполнения без прямого доступа к общему `field-observation` API-контракту.
+- В `apps/api/src/modules/consulting/execution.service.ts` добавлен метод `createOperationObservation`, который:
+  - валидирует active execution scope операции;
+  - забирает `fieldId` и `seasonId` из `operation.mapStage.techMap`;
+  - создаёт `FieldObservation` через `FieldObservationService` от имени текущего execution user/context.
+- В `ConsultingModule` подключён `FieldObservationModule`, а в `ConsultingController` добавлен additive endpoint:
+  - `POST /consulting/execution/observation`
+- Во frontend `api.consulting.execution` получил `createObservation`, а `ControlPointOutcomeModal` теперь умеет:
+  - создать `FieldObservation` прямо перед фиксацией outcome;
+  - валидировать observation payload на UI;
+  - прокинуть `observationId` в governed `ControlPoint` runtime path.
+- Практический эффект:
+  - execution UI больше не рвётся между отдельным полевым модулем и фиксацией control point;
+  - появился единый trace `observation -> control point outcome -> decision gate/change order/deviation`;
+  - полевой контекст для observation больше не вводится вручную и берётся из уже подтверждённого execution scope операции.
+
+[2026-04-01 17:34Z] Execution flow получил attach/read/status контур для Evidence
+- В `apps/api/src/modules/consulting/execution.service.ts` добавлены execution-scoped методы:
+  - `attachOperationEvidence`
+  - `getOperationEvidence`
+  - `getOperationEvidenceStatus`
+- В `ConsultingController` добавлены additive endpoints:
+  - `POST /consulting/execution/evidence`
+  - `GET /consulting/execution/:operationId/evidence`
+  - `GET /consulting/execution/:operationId/evidence-status`
+- Active execution read-model теперь возвращает `operation.evidence`, а execution UI больше не воспринимает evidence как скрытую backend-зависимость.
+- Во frontend добавлена переиспользуемая `OperationEvidencePanel`, встроенная в:
+  - `CompletionModal`
+  - `ControlPointOutcomeModal`
+- Практический эффект:
+  - оператор может прикреплять и читать evidence прямо из execution-модалок;
+  - перед `DONE` и severity-sensitive `control point` outcomes пользователь видит фактический evidence coverage и missing evidence types;
+  - execution UX приблизился к полному governed single-screen flow без ручного обхода по разным модулям.
+[2026-04-01 17:19Z] Execution UX связан с governed control-point runtime path
+- В `apps/api/src/modules/consulting/execution.service.ts` active operations теперь отдают stage-level `controlPoints` вместе с последними `outcomeExplanations`, чтобы execution UI получал runtime control context из backend read-model, а не восстанавливал его самостоятельно.
+- В `apps/web/app/consulting/execution/components/ControlPointOutcomeModal.tsx` добавлен отдельный execution-side modal для фиксации `ControlPoint` outcome c:
+  - выбором control point
+  - outcome/severity
+  - `completeOperation`
+  - `decisiveAction`
+  - optional `ChangeOrder`
+- `ExecutionCard` и execution-страницы (`/consulting/execution`, `/consulting/execution/agronomist`, `/consulting/execution/manager`) теперь умеют запускать governed control-point flow прямо из карточки операции.
+- В `apps/web/lib/api.ts` execution-клиент получил `recordControlPointOutcome`, который использует уже существующий tech-map governed endpoint, не создавая второй параллельный backend path.
+- Практический эффект:
+  - оператор может из execution UI зафиксировать прохождение/провал control point без ручного перехода в карточку техкарты;
+  - execution UI начал показывать последние outcomes по control points рядом с операцией;
+  - governed loop `execution -> control point -> recommendation/decision gate/deviation/change order` стал доступен из рабочего интерфейса исполнения.
+[2026-04-01 17:04Z] Замкнут runtime-governance loop для control points в TechMap
+- В `apps/api/src/modules/tech-map/control-point.service.ts` добавлен governed runtime path для `ControlPoint`:
+  - запись `ControlPointOutcomeExplanation`
+  - runtime `RuleEvaluationTrace`
+  - severity-aware evidence validation
+  - создание `Recommendation` и `DecisionGate`
+  - автосвязка с `DeviationReview`
+  - опциональный запуск `ChangeOrder -> Approval`
+  - опциональное закрытие `MapOperation` как `DONE` только после подтверждённого evidence
+- В `TechMapController` добавлен additive endpoint:
+  - `POST /tech-map/:id/control-points/:controlPointId/outcome`
+- `TechMapModule` импортирует `CmrModule`, чтобы runtime-governance техкарты использовал существующий deviation/governance контур, а не создавал параллельный.
+- В `apps/web/app/consulting/techmaps/[id]/page.tsx` добавлено surfacing последних `ControlPointOutcomeExplanation` прямо в stage/control-point блоках.
+- Практический эффект:
+  - control points перестали быть только generation-time сущностями и вошли в реальный governed execution loop;
+  - blocker/critical outcomes теперь могут автоматически открывать gate, deviation и approval-driven change path;
+  - evidence policy для runtime outcomes и `DONE`-закрытия операций начала исполняться в коде, а не только в плане.
+[2026-04-01 16:36Z] Усилен execution-slice canonical rapeseed generation по semantic parity и explainability read-path
+- `ShadowParityService` переведён с базового structural compare на более строгий semantic parity contract:
+  - проверяются `cropForm` и `canonicalBranch`
+  - stage order и `aplStageId` coverage
+  - BBCH-привязанные операции
+  - resource/material coverage для критичных операций
+  - completeness `explainabilitySummary`, rules, thresholds, control points и monitoring signals
+- `TechMapGenerationOrchestratorService` теперь пишет корректный `featureFlagSnapshot.mode` даже в `shadow`-режиме, что усиливает reproducibility и rollback-audit.
+- Добавлены тесты на:
+  - explainability read-path `TechMapService.getExplainability()`
+  - semantic parity diff-классификацию в `ShadowParityService`
+  - корректную фиксацию `shadow` feature-flag metadata в orchestrator.
+- Практический эффект:
+  - shadow rollout теперь проверяет не только форму графа, но и агрономический смысл генерации;
+  - explainability read-path закреплён тестом как часть рабочего API-контракта;
+  - metadata точнее отражает реальный rollout-mode при расследовании drift и fallback.
+[2026-04-01 16:12Z] Реализован foundation-slice v1.1 для canonical rapeseed TechMap generation
+- В `packages/prisma-client/schema.prisma` и migration wave `20260401143000_rapeseed_generation_v11_foundation` введены:
+  - `CropForm` как единственный canonical branch key для `RAPESEED_WINTER/RAPESEED_SPRING`;
+  - поля `TechMap.cropForm`, `TechMap.canonicalBranch`, `MapStage.stageGoal`, `MapStage.bbchScope`;
+  - explainability/runtime сущности `FieldAdmissionResult`, `GenerationExplanationTrace`, `ControlPoint`, `MonitoringSignal`, `Recommendation`, `DecisionGate`, `RuleEvaluationTrace`, `ControlPointOutcomeExplanation`, `RuleRegistryEntry`, `ThresholdRegistry`.
+- В backend добавлен новый generation layer:
+  - `FieldAdmissionService`
+  - `BranchSelectionService`
+  - `SchemaDrivenTechMapGenerator`
+  - `ShadowParityService`
+  - `TechMapGenerationOrchestratorService`
+- `TechMapService.generateMap()` переведён с прямого вызова `buildTechMapBlueprint()` на orchestrator-path с:
+  - version-pinned `generationMetadata`
+  - `legacy/shadow/canonical` strategy selection
+  - persistence explainability artifacts
+  - admission blocking по `HARD_BLOCKER`
+  - canonical shadow parity report
+- Добавлен explainability read-path `GET /tech-map/:id/explainability` и UI surfacing в `apps/web/app/consulting/techmaps/[id]/page.tsx` для:
+  - branch selection
+  - admission verdict
+  - mandatory blocks
+  - recommendation / decision gate summary
+- Практический эффект:
+  - blueprint перестал быть единственной скрытой точкой генерационной логики;
+  - новые rapeseed maps получают reproducible metadata pinning и explainability trace;
+  - product flow начал показывать причину branch/admission/generation решений, а не только backend-след.
+[2026-04-01 13:28Z] Зафиксирован phased migration plan генерации TechMap рапса к Canonical Rapeseed Core
+- Создан канонический документ `docs/01_ARCHITECTURE/RAPESEED_TECHMAP_GENERATION_MIGRATION_PLAN.md`.
+- В документе зафиксированы: текущий production path `generateMap -> ensureCropZone -> buildTechMapBlueprint -> $transaction`, целевой schema-driven path, судьба `tech-map-blueprint.ts`, новые компоненты и фазный rollout.
+- Зарегистрирован `CLAIM-ARCH-RAPESEED-GEN-MIGRATION-001` в `docs/DOCS_MATRIX.md`.
+- Практический эффект: команда получила repo-ready план небьющей миграции, который переводит источник генерационной истины в `schema + rule registry + ontology`, сохраняя рабочий runtime/governance backbone.
 [2026-04-01 12:53Z] Разработан архитектурный план интеграции TechMap Engine ↔ Canonical Rapeseed Core
 - Создан канонический документ `docs/01_ARCHITECTURE/RAPESEED_ENGINE_INTEGRATION_MAP.md`.
 - Разрыв между hardcoded-генерацией и канонической параметрической моделью проанализирован (выявлено 15 gaps).
@@ -1781,3 +2022,1190 @@
   - уже собранная работа по `Phase A` не теряется и не остаётся только в чате;
   - дальнейшее расширение внешнего closeout-слоя больше не считается текущим приоритетом;
   - фокус команды переносится с формального окончания `Phase A` на восстановление реально работающей программы.
+[2026-04-01 17:43Z] В execution evidence remediation добавлен template-source fallback
+- `OperationEvidencePanel` теперь подставляет не только последний использованный `fileUrl`, но и типовой source-route по `evidenceType`:
+  - `PHOTO -> camera://capture/latest-photo`
+  - `VIDEO -> camera://capture/latest-video`
+  - `GEO_TRACK -> geo://track/current-route`
+  - `LAB_REPORT -> lab://report/latest-pdf`
+  - `INVOICE -> files://finance/latest-invoice`
+  - `CONTRACT -> files://legal/current-contract`
+  - `WEATHER_API_SNAPSHOT -> weather-api://snapshot/current-window`
+  - `SATELLITE_IMAGE -> satellite://imagery/latest-scene`
+- Практический эффект:
+  - после выбора missing evidence type оператор больше не попадает в пустое поле `fileUrl`;
+  - remediation flow быстрее переводит пользователя к подходящему источнику даже без ранее сохранённого URL;
+  - execution closeout становится более предсказуемым в полевых и blocker-сценариях.
+[2026-04-01 17:45Z] Для execution evidence добавлены type-specific source actions
+- `OperationEvidencePanel` теперь показывает action-entrypoint по текущему `evidenceType`, а не только шаблонный source-route.
+- Для supported типов появились прямые действия:
+  - `PHOTO -> Открыть камеру`
+  - `VIDEO -> Открыть видео`
+  - `GEO_TRACK -> Открыть geo-track`
+  - `LAB_REPORT -> Открыть lab report`
+  - `INVOICE -> Открыть invoice`
+  - `CONTRACT -> Открыть contract`
+  - `WEATHER_API_SNAPSHOT -> Сделать weather snapshot`
+  - `SATELLITE_IMAGE -> Открыть satellite source`
+- Практический эффект:
+  - шаблонный URL больше не остаётся пассивной подсказкой и превращается в прямой action-entrypoint;
+  - оператор может сразу запустить нужный source flow и параллельно получает уже подставленный `fileUrl`;
+  - attach evidence в blocker- и field-scenarios требует меньше ручных шагов и быстрее доводит пользователя до готового артефакта.
+[2026-04-01 17:47Z] Для source actions добавлен явный feedback-контур
+- `OperationEvidencePanel` теперь показывает статус запуска внешнего source action:
+  - `info` при попытке открыть обработчик
+  - `success`, если запуск подтверждён через `blur/visibilitychange`
+  - `warning`, если автозапуск не подтвердился и нужно продолжить вручную по уже подставленному маршруту
+- Практический эффект:
+  - пользователь получает понятную обратную связь по custom-scheme переходам;
+  - уменьшается путаница в браузере, когда внешний обработчик отсутствует или не перехватывает маршрут;
+  - execution evidence remediation становится надёжнее в полевых сценариях и при blocker closeout.
+[2026-04-01 17:48Z] Для warning-сценария source action добавлен clipboard fallback
+- `OperationEvidencePanel` теперь показывает отдельный `Скопировать route`, если автозапуск внешнего обработчика не подтвердился.
+- Copy helper использует текущий `fileUrl` или template source-route и даёт явный статус:
+  - успешное копирование в clipboard;
+  - предупреждение, если `Clipboard API` недоступен и нужно копировать вручную.
+- Практический эффект:
+  - пользователь может быстро передать custom-scheme маршрут во внешний инструмент или на мобильное устройство;
+  - fallback-сценарий перестаёт зависеть от ручного выделения строки;
+  - execution evidence remediation становится устойчивее в браузерных окружениях без прямой поддержки custom scheme.
+[2026-04-01 17:53Z] Для fallback-route добавлен QR transfer path
+- В `apps/web` добавлена локальная QR-зависимость `qrcode` и типы `@types/qrcode`, чтобы генерация QR работала без внешнего HTTP-сервиса.
+- `OperationEvidencePanel` теперь в warning-сценарии строит локальный SVG QR по текущему `fileUrl` или template source-route и показывает его рядом с clipboard fallback.
+- Практический эффект:
+  - custom-scheme маршрут можно быстро перенести на мобильное устройство через QR;
+  - evidence capture в полевых условиях меньше зависит от clipboard между устройствами;
+  - fallback-flow стал надёжнее для desktop-сценариев, где браузер не умеет открывать нужный внешний обработчик.
+[2026-04-01 17:55Z] Для QR fallback добавлен handoff checklist
+- `OperationEvidencePanel` теперь показывает рядом с QR короткий пошаговый сценарий:
+  - открыть QR на мобильном устройстве;
+  - завершить capture во внешнем инструменте;
+  - вернуться в форму и прикрепить итоговый URL как evidence.
+- Практический эффект:
+  - multi-device fallback перестаёт быть неявным и становится понятным рабочим маршрутом;
+  - оператору легче завершить evidence capture без переключения контекста и догадок;
+  - blocker-сценарии в поле закрываются быстрее за счёт явного handoff между desktop и mobile.
+[2026-04-01 17:57Z] Для mobile handoff добавлен финальный step `capture completed`
+- `OperationEvidencePanel` теперь даёт оператору отдельное действие `Отметить capture completed` в warning-сценарии fallback.
+- После подтверждения панель показывает финальный блок возврата:
+  - проверить или вставить итоговый `source URL`;
+  - затем сразу завершить attach через `Прикрепить evidence по URL`.
+- Практический эффект:
+  - mobile handoff получает явную точку возврата в desktop-форму;
+  - после capture снижается неопределённость, какой шаг делать следующим;
+  - execution evidence flow быстрее доводится до финального attach даже в multi-device blocker-сценариях.
+[2026-04-01 18:00Z] После `capture completed` добавлен автоперевод фокуса в `source URL`
+- `OperationEvidencePanel` теперь после подтверждения `capture completed` автоматически переводит фокус в поле `source URL` и выделяет текущее значение.
+- Практический эффект:
+  - оператор сразу попадает в финальный шаг attach без дополнительного клика;
+  - multi-device fallback становится плавнее при возврате из mobile capture;
+  - уменьшается риск, что пользователь отметит завершение capture, но не заметит следующий обязательный шаг.
+[2026-04-01 18:01Z] После `capture completed` добавлена мягкая валидация `source URL`
+- `OperationEvidencePanel` теперь различает:
+  - промежуточные служебные route с custom scheme вроде `camera://`, `weather-api://`, `satellite://`, `geo://`, `lab://`, `files://`;
+  - итоговые artifact URL вида `http://` или `https://`.
+- После `capture completed` панель:
+  - предупреждает, если в поле всё ещё стоит промежуточный route;
+  - подтверждает, когда URL уже похож на итоговый artifact и attach можно завершать.
+- Практический эффект:
+  - снижается риск прикрепить служебный маршрут вместо реального evidence-артефакта;
+  - оператор получает понятную финальную проверку перед attach;
+  - multi-device execution flow становится безопаснее без жёсткой блокировки сценария.
+[2026-04-01 18:03Z] Для intermediate route добавлено явное repair-действие
+- `OperationEvidencePanel` теперь в warning-сценарии показывает кнопку `Заменить route на artifact URL`.
+- Это действие:
+  - очищает промежуточный служебный route из поля `source URL`;
+  - переводит фокус обратно в поле ввода;
+  - подсказывает оператору вставить итоговый artifact URL из внешнего инструмента.
+- Практический эффект:
+  - исправление ошибки после mobile handoff занимает один шаг;
+  - снижается риск вручную доправлять или случайно оставить служебный route в attach-flow;
+  - remediation для multi-device сценариев становится быстрее и понятнее.
+[2026-04-01 18:05Z] Для execution attach добавлена отдельная история последних artifact URL
+- `OperationEvidencePanel` теперь хранит в отдельном localStorage-слое последние успешные `artifact URL` по `evidenceType`.
+- В историю попадают только итоговые `http(s)`-артефакты, а не служебные source-route.
+- Панель показывает reusable-блок `Последние artifact URL` с быстрым действием `Подставить`.
+- Практический эффект:
+  - повторные attach-сценарии ускоряются за счёт reuse уже успешных артефактов;
+  - artifact history больше не смешивается с временными route и custom-scheme маршрутами;
+  - оператору проще быстро вернуться к корректному финальному URL без риска снова подставить служебный route.
+[2026-04-01 18:07Z] Для artifact history добавлено явное управление очисткой
+- `OperationEvidencePanel` теперь показывает действие `Очистить историю` для блока `Последние artifact URL` текущего `evidenceType`.
+- Очистка удаляет только reusable artifact history для выбранного типа и не затрагивает source-route или другие `evidenceType`.
+- Практический эффект:
+  - оператор может быстро убрать устаревшие artifact URL из reuse-слоя;
+  - снижается риск случайной подстановки старого артефакта в длинных полевых циклах;
+  - управление history становится явной частью execution UX, а не скрытым localStorage-состоянием.
+[2026-04-01 18:08Z] Для очистки artifact history добавлено подтверждение с preview
+- `OperationEvidencePanel` теперь не очищает reusable artifact history сразу по первому клику.
+- Перед подтверждением панель показывает:
+  - текущий `evidenceType`;
+  - список artifact URL, которые будут удалены;
+  - отдельные действия `Подтвердить очистку` и `Отмена`.
+- Практический эффект:
+  - снижается риск случайно удалить полезные reusable artifact URL;
+  - оператор видит точный объём удаления до подтверждения;
+  - управление history становится безопаснее в длинных execution- и field-cycle сценариях.
+[2026-04-01 18:10Z] Для artifact history добавлено точечное удаление одного URL
+- `OperationEvidencePanel` теперь даёт удалить отдельный artifact URL прямо в карточке history рядом с действием `Подставить`.
+- Точечное удаление затрагивает только выбранный reusable artifact и не требует полной очистки всего списка.
+- Практический эффект:
+  - оператор может быстро убрать один устаревший артефакт без потери остальных полезных URL;
+  - управление reuse-слоем становится точнее и удобнее в длинных сезонах;
+  - history остаётся актуальной без грубых действий уровня полной очистки.
+[2026-04-01 18:12Z] Для точечного удаления artifact URL добавлено короткое undo-окно
+- После удаления одной записи `OperationEvidencePanel` теперь показывает временный undo-banner с удалённым URL и действием `Восстановить`.
+- Undo доступен несколько секунд и не требует отдельного confirm-диалога на каждую карточку history.
+- Практический эффект:
+  - случайное удаление полезного artifact URL можно быстро отменить;
+  - точечное управление history становится безопаснее без перегрузки интерфейса;
+  - reuse-слой остаётся удобным даже при частой ручной чистке истории.
+[2026-04-01 18:16Z] History/undo слой `OperationEvidencePanel` доведён до проверяемого финала
+- Undo-banner для точечного удаления теперь показывает явный countdown `N сек` до истечения окна восстановления.
+- Восстановление удалённого artifact URL теперь возвращает запись с исходным `savedAt`, а не создаёт новую историю с новым timestamp.
+- Добавлен frontend-spec:
+  - `apps/web/__tests__/operation-evidence-panel.spec.tsx`
+  - тест покрывает удаление artifact URL, countdown undo и восстановление записи в localStorage.
+- Практический эффект:
+  - оператор видит, сколько ещё доступно окно отмены;
+  - история artifact URL остаётся консистентной после restore;
+  - execution reuse-flow теперь закреплён не только UI-логикой, но и автоматической проверкой.
+[2026-04-01 18:21Z] Execution evidence поднят до backend runtime semantics `artifact vs route`
+- `ExecutionService.attachOperationEvidence` теперь добавляет в `metadata` backend-audit классификацию источника:
+  - `urlKind = artifact | intermediate_route | unknown`
+  - `sourceScheme`
+  - `isArtifactUrl`
+  - `isIntermediateRoute`
+  - `attachedViaExecutionFlow`
+- `ExecutionService.getOperationEvidence` и `getActiveOperations` теперь возвращают evidence с `sourceAudit`, а `evidenceSummary` включает source-level сводку:
+  - `artifactEvidenceCount`
+  - `intermediateRouteEvidenceCount`
+  - `unresolvedRouteEvidenceTypes`
+- `OperationEvidencePanel` теперь отправляет UI metadata о route-flow и показывает backend classification для уже прикреплённого evidence.
+- Добавлены проверки:
+  - `apps/api/src/modules/consulting/execution.service.spec.ts`
+  - `apps/web/__tests__/operation-evidence-panel.spec.tsx`
+- Практический эффект:
+  - различение промежуточного route и итогового artifact URL теперь существует не только в UI-подсказках, но и в backend/read-model;
+  - execution runtime получает аудируемую семантику источника evidence;
+  - оператор и backend читают один и тот же truth о том, прикреплён ли уже реальный артефакт или ещё только route.
+[2026-04-01 18:27Z] Migration wave `execution evidence semantics -> governed audit trail` завершена
+- `TechMapService.getExplainability` теперь обогащает runtime control-point outcomes evidence refs по `operationId/observationId` и возвращает:
+  - `attachedEvidence` на уровне outcome;
+  - `evidenceAudit` на уровне outcome;
+  - `runtimeArtifacts.evidenceAudit` на уровне всей техкарты.
+- Страница техкарты:
+  - `apps/web/app/consulting/techmaps/[id]/page.tsx`
+  теперь показывает `artifact vs route` прямо в governed explainability/read-path рядом с control points и runtime artifacts.
+- Добавлены и обновлены проверки:
+  - `apps/api/src/modules/tech-map/tech-map.service.spec.ts`
+  - `apps/api/src/modules/consulting/execution.service.spec.ts`
+  - `apps/web/__tests__/operation-evidence-panel.spec.tsx`
+- Практический эффект:
+  - один и тот же runtime truth о quality/типе evidence виден и в execution-модалках, и в governed audit trail техкарты;
+  - migration wave больше не ограничена локальным UX execution и закрыта сквозным read-model до explainability уровня;
+  - текущий контур можно считать завершённым и готовым к переходу на следующий wave-level блок.
+[2026-04-01 18:44Z] Закрыт rollout/observability слой для canonical generation migration
+- `TechMapGenerationOrchestratorService` теперь пишет в `generationMetadata` persisted rollout-семантику:
+  - `rolloutMode`
+  - `fallbackUsed`
+  - `fallbackReason`
+  - `shadowParityReport`
+  - `shadowParitySummary`
+- `TechMapService.getExplainability` теперь возвращает `generationObservability` как first-class read-model, включая:
+  - version pinning
+  - rollout mode
+  - fallback state
+  - parity summary/report
+  - explainability trace completeness
+- Добавлен агрегированный company-scoped rollout endpoint:
+  - `GET /tech-map/generation-rollout/summary`
+  который считает split по strategy/mode, fallback reasons, version-pinning coverage и parity severity totals.
+- Product surfacing обновлён:
+  - `apps/web/app/consulting/techmaps/[id]/page.tsx` показывает rollout/fallback/parity на техкарте;
+  - `apps/web/app/consulting/techmaps/page.tsx` показывает rollout observability summary по реестру техкарт.
+- Добавлены и обновлены проверки:
+  - `apps/api/src/modules/tech-map/tech-map.service.spec.ts`
+  - `apps/api/src/modules/tech-map/generation/tech-map-generation-orchestrator.service.spec.ts`
+- Практический эффект:
+  - shadow parity и fallback больше не являются скрытым внутренним расчётом orchestrator и становятся персистентной runtime truth;
+  - команда получает наблюдаемый cutover-контур по canonical migration без ручной сверки JSON в БД;
+  - текущая migration wave теперь закрыта не только на generation/execution, но и на rollout governance visibility.
+[2026-04-01 18:53Z] Rollout observability поднят на operational surfaces dashboard + registry
+- `apps/web/app/consulting/dashboard/page.tsx` теперь загружает `GET /tech-map/generation-rollout/summary` и показывает:
+  - `cutover`-health блок;
+  - live alerts по `fallback`, `blocking parity`, `version pinning coverage`;
+  - сводку по rollout mode, parity severity, fallback reasons и coverage.
+- `apps/web/app/consulting/techmaps/page.tsx` теперь показывает per-map badges по:
+  - `generationStrategy`
+  - `rolloutMode`
+  - `cropForm/canonicalBranch`
+  - `fallbackUsed`
+  - `shadowParitySummary`
+- `apps/web/app/consulting/techmaps/active/page.tsx` теперь выводит generation badges и даёт прямой переход в rollout-реестр с operational surface активных карт.
+- Проверка:
+  - `pnpm --filter web exec tsc --noEmit`
+  - `pnpm --filter api exec tsc --noEmit`
+- Практический эффект:
+  - cutover больше не скрыт внутри детальной техкарты и виден на ежедневных рабочих экранах;
+  - команда быстрее замечает карты с `fallback` и `P0 parity` до начала исполнения;
+  - наблюдаемость migration rollout становится частью operational UX, а не только explainability/read-model слоя.
+[2026-04-01 19:07Z] Canonical rollout замкнут в persisted incident/runbook governance loop
+- `TechMapService.generateMap` теперь после materialization синхронизирует persisted rollout-incidents:
+  - `TECHMAP_CANONICAL_PARITY_BLOCKED` на уровне конкретной техкарты;
+  - `TECHMAP_ROLLOUT_BLOCKING_PARITY` на уровне company rollout;
+  - `TECHMAP_ROLLOUT_FALLBACK_PERSISTING` на уровне company rollout при повторяющемся fallback.
+- Инциденты пишутся в `SystemIncident` как `UNKNOWN + subtype`, чтобы использовать существующий incident/runbook contour без нового параллельного стора.
+- `TechMapService.getGenerationRolloutSummary` теперь возвращает `rolloutIncidents`, а `getExplainability` отдаёт связанные rollout-incidents по `techMapId/traceId`.
+- `apps/web/app/consulting/techmaps/[id]/page.tsx` теперь показывает rollout-incidents и позволяет запустить `REQUIRE_HUMAN_REVIEW` runbook прямо с техкарты.
+- `apps/web/app/consulting/dashboard/page.tsx` и `apps/web/app/consulting/techmaps/page.tsx` теперь показывают не только summary-числа, но и persisted rollout-incidents.
+- Проверка:
+  - `pnpm --filter api exec tsc --noEmit`
+  - `pnpm --filter web exec tsc --noEmit`
+  - `pnpm --filter api test -- --runInBand src/modules/tech-map/tech-map.service.spec.ts src/modules/tech-map/generation/tech-map-generation-orchestrator.service.spec.ts`
+- Практический эффект:
+  - migration rollout больше не ограничен визуальными алертами и получает реальный governance-object с жизненным циклом;
+  - оператор может эскалировать parity/fallback проблему в один клик с consulting surface;
+  - cutover readiness теперь поддерживается как operational incident/runbook loop, а не только как explainability telemetry.
+[2026-04-01 19:19Z] Введён формальный cutover readiness gate для canonical default
+- `GET /tech-map/generation-rollout/readiness` теперь отдаёт machine-readable verdict:
+  - `BLOCKED`
+  - `WARN`
+  - `PASS`
+  вместе с:
+  - `canEnableCanonicalDefault`
+  - `suggestedMode`
+  - `blockers`
+  - `warnings`
+  - `releaseGates`
+  - полным rollout summary
+- Readiness gate строится поверх persisted rollout truth:
+  - parity blockers
+  - open rollout incidents
+  - fallback containment
+  - version pinning coverage
+  - explainability coverage
+  - admission coverage
+  - наличие canonical-generated maps
+- `apps/web/app/consulting/dashboard/page.tsx` и `apps/web/app/consulting/techmaps/page.tsx` теперь показывают release-hardening verdict, blockers и warnings для decision-ready cutover.
+- Добавлена проверка в `apps/api/src/modules/tech-map/tech-map.service.spec.ts` на `BLOCKED` verdict при parity blockers.
+- Проверка:
+  - `pnpm --filter api exec tsc --noEmit`
+  - `pnpm --filter web exec tsc --noEmit`
+  - `pnpm --filter api test -- --runInBand src/modules/tech-map/tech-map.service.spec.ts src/modules/tech-map/generation/tech-map-generation-orchestrator.service.spec.ts`
+- Практический эффект:
+  - migration contour теперь имеет не только telemetry и incident/runbook, но и явный release gate для tenant/company cutover;
+  - решение о включении `canonical default` можно принимать по формальному verdict, а не по ручной интерпретации dashboard;
+  - мастер-план на кодовом уровне доведён до release-hardening стадии.
+[2026-04-01 19:29Z] Добавлен operational cutover packet для включения canonical default
+- `GET /tech-map/generation-rollout/cutover-packet` теперь возвращает:
+  - текущие feature flags
+  - рекомендуемые feature flags
+  - `releaseCommand`
+  - `rollbackCommand`
+  - rollout checklist
+  - rollback checklist
+  - readiness verdict
+- `apps/web/app/consulting/techmaps/page.tsx` показывает полный `cutover packet` прямо в rollout registry.
+- `apps/web/app/consulting/dashboard/page.tsx` показывает короткий `cutover packet` на executive/operational surface.
+- Добавлен тест в `apps/api/src/modules/tech-map/tech-map.service.spec.ts` на корректную сборку `releaseCommand` и `rollbackCommand`.
+- Проверка:
+  - `pnpm --filter api exec tsc --noEmit`
+  - `pnpm --filter web exec tsc --noEmit`
+  - `pnpm --filter api test -- --runInBand src/modules/tech-map/tech-map.service.spec.ts src/modules/tech-map/generation/tech-map-generation-orchestrator.service.spec.ts`
+- Практический эффект:
+  - команда получила не только verdict готовности, но и готовый operational packet для реального включения canonical mode по company;
+  - ручной разрыв между readiness-анализом и actual cutover/rollback закрыт;
+  - мастер-план миграции завершён не только как implementation, но и как executable operational handoff.
+[2026-04-01 19:43Z] Зарегистрирован канонический runbook для tenant-level cutover rapeseed canonical generation
+- Добавлен документ `docs/05_OPERATIONS/RAPESEED_CANONICAL_CUTOVER_RUNBOOK.md` как обязательный operational источник для переключения `legacy_blueprint -> canonical_schema`.
+- Runbook фиксирует:
+  - допустимые endpoint-источники истины
+  - preconditions и release gates
+  - порядок включения
+  - smoke verification
+  - rollback policy
+  - минимальный evidence packet для cutover
+- Документ зарегистрирован в `docs/DOCS_MATRIX.md` через `CLAIM-OPS-RAPESEED-CANONICAL-CUTOVER-RUNBOOK-20260401`.
+- Проверка:
+  - `pnpm lint:docs`
+  - `pnpm lint:docs:matrix:strict`
+- Практический эффект:
+  - migration wave закрыта не только кодом и UI, но и формальным operational runbook;
+  - tenant/company cutover теперь можно выполнять воспроизводимо, с явными gate и rollback-порядком;
+  - handoff между engineering и operations перестал зависеть от переписки или ручной интерпретации dashboard.
+[2026-04-01 20:01Z] Добавлен исполняемый CLI для rapeseed canonical cutover
+- Добавлен `scripts/techmap-rapeseed-cutover.cjs` и package entrypoint `pnpm techmap:rapeseed:cutover`.
+- CLI поддерживает `prepare`, `apply`, `verify`, `rollback` для tenant/company cutover и работает через текущие API endpoint:
+  - `/tech-map/generation-rollout/summary`
+  - `/tech-map/generation-rollout/readiness`
+  - `/tech-map/generation-rollout/cutover-packet`
+- При `apply` и `rollback` CLI:
+  - обновляет `TECHMAP_RAPESEED_CANONICAL_MODE`
+  - обновляет `TECHMAP_RAPESEED_CANONICAL_COMPANIES`
+  - создаёт backup `.env.rapeseed-cutover.bak`
+  - сохраняет operational packet в `var/ops/`
+- Runbook `docs/05_OPERATIONS/RAPESEED_CANONICAL_CUTOVER_RUNBOOK.md` обновлён ссылкой на CLI как обязательный исполняемый вход.
+- Проверка:
+  - `node scripts/techmap-rapeseed-cutover.cjs --help`
+  - `pnpm lint:docs`
+- Практический эффект:
+  - tenant-level cutover больше не зависит от ручного редактирования `.env` и копирования команд из UI;
+  - release/rollback flow стал воспроизводимым и оставляет файловый operational evidence packet;
+  - runbook теперь замкнут не только как документ, но и как исполняемый инструмент.
+[2026-04-01 20:07Z] Cutover CLI доведён до первого живого tenant canary
+- Исправлен модульный цикл в `apps/api/src/modules/field-observation/field-observation.module.ts` через `forwardRef(() => IntegrityModule)`, чтобы свежий `rai-api` стартовал после rollout-изменений.
+- Применена локальная БД-миграция `20260401143000_rapeseed_generation_v11_foundation` через `pnpm db:migrate`; устранён schema drift по `cropForm`, `generation_explanation_traces` и связанным canonical runtime-артефактам.
+- Для `default-rai-company` выполнен controlled canary generation:
+  - временно включён `TECHMAP_RAPESEED_CANONICAL_MODE=canonical`
+  - временно включён `TECHMAP_RAPESEED_CANONICAL_COMPANIES=default-rai-company`
+  - создана новая rapeseed карта `cmngh7t8p000jji5v4607abdw` через `POST /api/tech-map/generate`
+  - после генерации `.env` возвращён в обычный rollout state
+- Canary generation подтвердил живой canonical path:
+  - `generationStrategy = canonical_schema`
+  - `cropForm = RAPESEED_WINTER`
+  - version pinning заполнен
+  - `GenerationExplanationTrace` и `FieldAdmissionResult` materialized
+  - shadow parity report записан
+- Повторный `prepare` через `pnpm techmap:rapeseed:cutover --action=prepare --company-id=default-rai-company` теперь даёт уже другой blocker-profile:
+  - blocker `canonicalSchema` снят
+  - readiness остаётся `BLOCKED` из-за `mapsWithBlockingDiffs = 1`
+  - открыты rollout incidents `TECHMAP_CANONICAL_PARITY_BLOCKED` и `TECHMAP_ROLLOUT_BLOCKING_PARITY`
+- Проверка:
+  - `pnpm --filter api build`
+  - `pnpm --filter api exec tsc --noEmit`
+  - `pm2 restart rai-api --update-env`
+  - `pnpm db:migrate`
+  - `pnpm techmap:rapeseed:cutover --action=prepare --company-id=default-rai-company`
+- Практический эффект:
+  - migration wave перешла из стадии “готов контур” в стадию “есть живой canonical canary и предметные parity blockers”;
+  - следующий шаг теперь опирается на реальный blocker packet из `var/ops/`, а не на предположения;
+  - cutover readiness эволюционировал от отсутствия canonical evidence к управляемому parity-review этапу.
+[2026-04-01 20:21Z] Cutover readiness переведён из ложного parity-blocker в PASS
+- В `apps/api/src/modules/tech-map/generation/shadow-parity.service.ts` введена policy-коррекция: canonical superiority над `blueprint_fallback` больше не считается `P0` для legacy coverage gap-кодов `stage:*`, `stage_sequence:*`, `critical_op:*`; такие отличия понижаются до `P1`, если authoritative path уже `canonical_schema`.
+- В `apps/api/src/modules/tech-map/tech-map.service.ts` добавлена effective parity-нормализация поверх сохранённого metadata:
+  - `shadowParitySummary` пересчитывается по `shadowParityReport`
+  - stale historical summaries больше не держат rollout в блоке после policy-fix
+  - `blockingTechMapIds` материализуется в rollout summary как first-class список blocking maps
+- Coverage-политика rollout теперь считает readiness только по `rolloutManagedMaps`; historical legacy rapeseed карты без migration metadata учитываются отдельно как `legacyHistoricalMaps` и больше не занижают version pinning / explainability / admission coverage.
+- `getGenerationRolloutSummary()` теперь отфильтровывает stale parity incidents, если карта больше не входит в effective blocking set; company-level parity incident тоже скрывается, когда blocking maps уже нет.
+- Тестами закреплены:
+  - non-blocking canonical superiority в `shadow-parity.service.spec.ts`
+  - effective parity + historical coverage denominator в `tech-map.service.spec.ts`
+- Проверка:
+  - `pnpm --filter api exec tsc --noEmit`
+  - `pnpm --filter api test -- --runInBand src/modules/tech-map/generation/shadow-parity.service.spec.ts src/modules/tech-map/tech-map.service.spec.ts`
+  - `pnpm --filter api build`
+  - `pm2 restart rai-api --update-env`
+  - `pnpm techmap:rapeseed:cutover --action=prepare --company-id=default-rai-company`
+- Operational outcome:
+  - свежий packet `var/ops/techmap-rapeseed-cutover-default-rai-company-prepare.md` теперь даёт `status=ready_for_cutover` и `verdict=PASS`
+  - все release gates зелёные
+  - cutover для `default-rai-company` больше не блокируется ложным parity drift между canonical path и бедным legacy blueprint
+[2026-04-02 06:50Z] Tenant `default-rai-company` переведён на canonical rapeseed generation end-to-end
+- Через `pnpm techmap:rapeseed:cutover --action=apply --company-id=default-rai-company` в `.env` зафиксированы:
+  - `TECHMAP_RAPESEED_CANONICAL_MODE=canonical`
+  - `TECHMAP_RAPESEED_CANONICAL_COMPANIES=default-rai-company`
+- Создан backup `.env.rapeseed-cutover.bak`, а apply/verify packets сохранены в:
+  - `var/ops/techmap-rapeseed-cutover-default-rai-company-apply.json`
+  - `var/ops/techmap-rapeseed-cutover-default-rai-company-apply.md`
+  - `var/ops/techmap-rapeseed-cutover-default-rai-company-verify.json`
+  - `var/ops/techmap-rapeseed-cutover-default-rai-company-verify.md`
+- После `pm2 restart rai-api --update-env` выполнен живой smoke generation через `POST /api/tech-map/generate` для:
+  - `harvestPlanId = demo-harvest-plan-2026-kuban-1`
+  - `seasonId = demo-season-2026-kuban-1`
+  - `Idempotency-Key = rapeseed-cutover-smoke-20260402T064857Z`
+- Smoke generation создал новую карту `cmnh47sej000jjirea1k29mon` со следующими operational признаками:
+  - `generationStrategy = canonical_schema`
+  - `cropForm = RAPESEED_WINTER`
+  - `canonicalBranch = winter_rapeseed`
+  - `rolloutMode = canonical`
+  - `fallbackUsed = false`
+  - version pinning заполнен
+  - `FieldAdmissionResult = PASS_WITH_REQUIREMENTS`
+  - `ControlPoint` materialized (`2`)
+- Post-cutover verification подтверждено:
+  - `pnpm techmap:rapeseed:cutover --action=verify --company-id=default-rai-company`
+  - status `verified_pass`
+  - verdict `PASS`
+- Актуальный rollout summary после живого smoke:
+  - `canonicalSchema = 2`
+  - `rolloutManagedMaps = 2`
+  - `legacyHistoricalMaps = 2`
+  - `mapsWithBlockingDiffs = 0`
+  - `fallback.usedCount = 0`
+  - `rolloutIncidents = []`
+- Практический эффект:
+  - cutover завершён не только как readiness packet, но и как реально применённый tenant-level rollout;
+  - canonical generation стала live default для `default-rai-company`;
+  - governance/readiness контур после боевой генерации остаётся зелёным и не требует rollback.
+[2026-04-02 07:12Z] Исправлен tenant scoping для rollout CLI и собрана истинная tenant matrix
+- В `scripts/techmap-rapeseed-cutover.cjs` исправлен дефект orchestration: `--company-id` теперь реально передаётся в rollout read-endpoints через `?companyId=...`, а не использовался только как метка в имени отчёта.
+- В `apps/api/src/modules/tech-map/tech-map.controller.ts` rollout endpoints:
+  - `/tech-map/generation-rollout/summary`
+  - `/tech-map/generation-rollout/readiness`
+  - `/tech-map/generation-rollout/cutover-packet`
+  теперь принимают additive `Query("companyId")` и позволяют явно запросить scope нужной компании вместо неявного `CurrentUser.companyId`.
+- После пересборки и рестарта `rai-api` подтверждена реальная scoping-разница:
+  - `default-rai-company` даёт `totalRapeseedMaps = 4`, `rolloutManagedMaps = 2`, `canonicalSchema = 2`
+  - `STRESS_A_55cb907f-0772-4f00-9c8d-5b2890b56222` даёт `totalRapeseedMaps = 0`, `rolloutManagedMaps = 0`, `canonicalSchema = 0`
+- Ложноположительная общая матрица заменена истинной tenant matrix:
+  - `var/ops/techmap-rapeseed-cutover-matrix-2026-04-02.json`
+  - `var/ops/techmap-rapeseed-cutover-matrix-2026-04-02.md`
+- Истинный operational итог матрицы:
+  - `totalCompanies = 36`
+  - `PASS = 1` (`default-rai-company`)
+  - `BLOCKED = 35`
+  - типовой blocker у остальных компаний: нет ни одной rapeseed карты и нет ни одной `canonical_schema` карты
+- Проверка:
+  - `pnpm --filter api exec tsc --noEmit`
+  - `pnpm --filter api build`
+  - `pm2 restart rai-api --update-env`
+  - `node scripts/techmap-rapeseed-cutover.cjs --action=prepare --company-id=default-rai-company`
+  - `node scripts/techmap-rapeseed-cutover.cjs --action=prepare --company-id=STRESS_A_55cb907f-0772-4f00-9c8d-5b2890b56222`
+  - `curl /api/tech-map/generation-rollout/summary?companyId=...`
+- Практический эффект:
+  - operational rollout больше не вводит команду в заблуждение ложным `PASS` для чужих tenant;
+  - end-to-end cutover подтверждён только там, где действительно есть canonical evidence;
+  - дальнейшее масштабирование теперь является не задачей исправления ядра, а задачей tenant onboarding с первичной rapeseed generation.
+[2026-04-02 07:18Z] Введён канонический matrix-вход для serial cutover и отделён боевой scope от stress tenant-ов
+- Добавлен отдельный operational скрипт `scripts/techmap-rapeseed-cutover-matrix.cjs` и package-команда `pnpm techmap:rapeseed:cutover:matrix`.
+- Скрипт классифицирует tenant-ы по policy:
+  - `demo_root` -> `default-rai-company`
+  - `stress_test` -> `STRESS_*`
+  - `operational_tenant` -> остальные tenant-ы без stress-маркеров
+- По умолчанию matrix строится в `scope=operational` и исключает `stress_test` tenant-ы из боевого rollout scope; `scope=all` оставлен как диагностический режим.
+- Обновлён runbook `docs/05_OPERATIONS/RAPESEED_CANONICAL_CUTOVER_RUNBOOK.md`:
+  - добавлена matrix-команда как обязательный serial-rollout вход
+  - формализована `Tenant Scope Policy`
+  - закреплено правило, что `STRESS_*` нельзя трактовать как клиентский cutover scope
+- Сформированы новые артефакты:
+  - `var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+  - `var/ops/techmap-rapeseed-cutover-matrix-operational.md`
+  - `var/ops/techmap-rapeseed-cutover-matrix-all.json`
+  - `var/ops/techmap-rapeseed-cutover-matrix-all.md`
+- Operational matrix подтверждает:
+  - `scope=operational` -> `included=1`, `excluded=35`, `PASS=1`, `BLOCKED=0`
+  - `scope=all` -> `included=36`, `PASS=1`, `BLOCKED=35`
+- Проверка:
+  - `node scripts/techmap-rapeseed-cutover-matrix.cjs`
+  - `node scripts/techmap-rapeseed-cutover-matrix.cjs --scope=all`
+  - `pnpm lint:docs`
+  - `pnpm lint:docs:matrix:strict`
+- Практический эффект:
+  - серийный rollout теперь начинается с чистого operational списка tenant-ов, а не с шумной БД;
+  - команда получает воспроизводимый боевой matrix-вход без ручной фильтрации `STRESS_*`;
+  - следующий `end-to-end` шаг уже относится не к инфраструктуре cutover, а к onboarding следующего реального tenant-а.
+[2026-04-02 07:33Z] Завершён второй живой canonical cutover для `pilot-rapeseed-kuban-company`
+- Добавлен и non-destructive onboard-нут новый operational tenant `pilot-rapeseed-kuban-company` как реальный serial rollout scope поверх уже завершённого `default-rai-company`.
+- Для нового tenant-а выполнен controlled canary:
+  - временно расширен live filter `TECHMAP_RAPESEED_CANONICAL_COMPANIES=default-rai-company,pilot-rapeseed-kuban-company`
+  - выполнен smoke generation `TechMap` `cmnh5npub000jjixzbgb44mbn`
+  - smoke materialized как:
+    - `generationStrategy = canonical_schema`
+    - `cropForm = RAPESEED_WINTER`
+    - `canonicalBranch = winter_rapeseed`
+    - `rolloutMode = canonical`
+    - `fallbackUsed = false`
+    - version pinning заполнен
+    - `GenerationExplanationTrace` присутствует
+    - `FieldAdmissionResult` присутствует
+- После первичной materialization tenant переведён через полный operational цикл:
+  - `node scripts/techmap-rapeseed-cutover.cjs --action=prepare --company-id=pilot-rapeseed-kuban-company`
+  - `node scripts/techmap-rapeseed-cutover.cjs --action=apply --company-id=pilot-rapeseed-kuban-company`
+  - `node scripts/techmap-rapeseed-cutover.cjs --action=verify --company-id=pilot-rapeseed-kuban-company`
+- Итог verify для `pilot-rapeseed-kuban-company`:
+  - `status = verified_pass`
+  - `verdict = PASS`
+  - `totalRapeseedMaps = 1`
+  - `rolloutManagedMaps = 1`
+  - `canonicalSchema = 1`
+  - `mapsWithBlockingDiffs = 0`
+  - `fallback.usedCount = 0`
+  - `rolloutIncidents = []`
+- Обновлена canonical tenant matrix:
+  - `scope=operational` -> `totalCompanies = 37`, `included = 2`, `excluded = 35`, `PASS = 2`, `BLOCKED = 0`
+  - `scope=all` -> `totalCompanies = 37`, `included = 37`, `PASS = 2`, `BLOCKED = 35`
+  - live operational scope теперь состоит из:
+    - `default-rai-company`
+    - `pilot-rapeseed-kuban-company`
+- Зафиксированные артефакты:
+  - `var/ops/techmap-rapeseed-cutover-pilot-rapeseed-kuban-company-prepare.json`
+  - `var/ops/techmap-rapeseed-cutover-pilot-rapeseed-kuban-company-apply.json`
+  - `var/ops/techmap-rapeseed-cutover-pilot-rapeseed-kuban-company-verify.json`
+  - `var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+  - `var/ops/techmap-rapeseed-cutover-matrix-all.json`
+  - `docs/01_ARCHITECTURE/RAPESEED_TECHMAP_GENERATION_MIGRATION_PLAN.md` обновлён до `v1.1.0` и отражает уже реализованный operational status migration wave
+- Проверка:
+  - `node scripts/techmap-rapeseed-cutover.cjs --action=prepare --company-id=pilot-rapeseed-kuban-company`
+  - `node scripts/techmap-rapeseed-cutover.cjs --action=apply --company-id=pilot-rapeseed-kuban-company`
+  - `node scripts/techmap-rapeseed-cutover.cjs --action=verify --company-id=pilot-rapeseed-kuban-company`
+  - `node scripts/techmap-rapeseed-cutover-matrix.cjs`
+  - `node scripts/techmap-rapeseed-cutover-matrix.cjs --scope=all`
+  - `pnpm lint:docs`
+  - `pnpm lint:docs:matrix:strict`
+- Практический эффект:
+  - canonical migration подтверждена не на одном demo tenant-е, а уже на serial operational scope из двух tenant-ов;
+  - rollout перешёл из режима единичного canary в режим воспроизводимого tenant-by-tenant cutover;
+  - текущий live runtime state соответствует серийному rollout:
+    - `TECHMAP_RAPESEED_CANONICAL_MODE = canonical`
+    - `TECHMAP_RAPESEED_CANONICAL_COMPANIES = default-rai-company,pilot-rapeseed-kuban-company`
+[2026-04-02 07:43Z] Завершён третий живой canonical cutover для `pilot-rapeseed-don-company` и устранён blocker serial onboarding
+- В `scripts/techmap-rapeseed-pilot-onboard.cjs` устранён реальный blocker серийного onboarding:
+  - жёстко зашитый `inn = 2301000001` заменён на детерминированный уникальный `INN`, вычисляемый из `companyId`
+  - script теперь поддерживает повторяемый bootstrap новых operational tenant-ов без ручной правки seed-данных и без конфликта по уникальному индексу `Account.inn`
+- Через обновлённый bootstrap создан третий operational tenant:
+  - `pilot-rapeseed-don-company`
+  - `companyName = Pilot Rapeseed Don`
+  - создан полный минимальный scope: `Company`, `Holding`, `Account`, `Field`, `Season`, `HarvestPlan`, `CropZone`, `SoilProfile`, `RegionProfile`
+- Live canonical filter расширен до:
+  - `TECHMAP_RAPESEED_CANONICAL_COMPANIES = default-rai-company,pilot-rapeseed-kuban-company,pilot-rapeseed-don-company`
+  - после `pm2 restart rai-api --update-env` health-check остался `ok`
+- Выполнен живой smoke generation для нового tenant-а:
+  - `POST /api/tech-map/generate`
+  - `Idempotency-Key = pilot-rapeseed-don-smoke-20260402T074500Z`
+  - создан `TechMap = cmnh60vzh000jji2gontisz7b`
+  - smoke materialized как:
+    - `generationStrategy = canonical_schema`
+    - `cropForm = RAPESEED_WINTER`
+    - `canonicalBranch = winter_rapeseed`
+    - `rolloutMode = canonical`
+    - `fallbackUsed = false`
+    - version pinning заполнен
+    - `GenerationExplanationTrace` присутствует
+    - `FieldAdmissionResult` присутствует
+    - `shadowParitySummary.P0 = 0`
+- После smoke tenant переведён через полный operational цикл:
+  - `node scripts/techmap-rapeseed-cutover.cjs --action=prepare --company-id=pilot-rapeseed-don-company`
+  - `node scripts/techmap-rapeseed-cutover.cjs --action=apply --company-id=pilot-rapeseed-don-company`
+  - `node scripts/techmap-rapeseed-cutover.cjs --action=verify --company-id=pilot-rapeseed-don-company`
+- Итог verify для `pilot-rapeseed-don-company`:
+  - `status = verified_pass`
+  - `verdict = PASS`
+  - `totalRapeseedMaps = 1`
+  - `rolloutManagedMaps = 1`
+  - `canonicalSchema = 1`
+  - `mapsWithBlockingDiffs = 0`
+  - `fallback.usedCount = 0`
+  - `rolloutIncidents = []`
+- Обновлена canonical tenant matrix:
+  - `scope=operational` -> `totalCompanies = 38`, `included = 3`, `excluded = 35`, `PASS = 3`, `BLOCKED = 0`
+  - `scope=all` -> `totalCompanies = 38`, `included = 38`, `PASS = 3`, `BLOCKED = 35`
+  - live operational scope теперь состоит из:
+    - `default-rai-company`
+    - `pilot-rapeseed-kuban-company`
+    - `pilot-rapeseed-don-company`
+- Синхронизирован архитектурный статус:
+  - `docs/01_ARCHITECTURE/RAPESEED_TECHMAP_GENERATION_MIGRATION_PLAN.md` поднят до `v1.1.1`
+  - статус реализации в документе теперь отражает serial rollout `PASS = 3`
+- Зафиксированные артефакты:
+  - `var/ops/techmap-rapeseed-cutover-pilot-rapeseed-don-company-prepare.json`
+  - `var/ops/techmap-rapeseed-cutover-pilot-rapeseed-don-company-apply.json`
+  - `var/ops/techmap-rapeseed-cutover-pilot-rapeseed-don-company-verify.json`
+  - `var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+  - `var/ops/techmap-rapeseed-cutover-matrix-all.json`
+- Проверка:
+  - `pnpm --filter api exec tsc --noEmit`
+  - `pm2 restart rai-api --update-env`
+  - `curl http://localhost:4000/api/health`
+  - `node scripts/techmap-rapeseed-pilot-onboard.cjs --company-id=pilot-rapeseed-don-company --company-name='Pilot Rapeseed Don' --region-name='Донской pilot region'`
+  - `curl -X POST http://localhost:4000/api/tech-map/generate ...`
+  - `node scripts/techmap-rapeseed-cutover.cjs --action=prepare --company-id=pilot-rapeseed-don-company`
+  - `node scripts/techmap-rapeseed-cutover.cjs --action=apply --company-id=pilot-rapeseed-don-company`
+  - `node scripts/techmap-rapeseed-cutover.cjs --action=verify --company-id=pilot-rapeseed-don-company`
+  - `node scripts/techmap-rapeseed-cutover-matrix.cjs`
+  - `node scripts/techmap-rapeseed-cutover-matrix.cjs --scope=all`
+  - `pnpm lint:docs`
+  - `pnpm lint:docs:matrix:strict`
+- Практический эффект:
+  - migration rollout подтверждён уже на трёх последовательных operational tenant-ах без ручного переписывания seed-пути;
+  - cutover стал реально серийным процессом, а не набором специальных кейсов;
+  - следующий operational масштаб уже упирается не в архитектурный rollout-контур, а только в необходимость onboarding новых non-stress tenant-ов с rapeseed context.
+[2026-04-02 07:58Z] Введён batch wave-контур и выполнена первая пакетная волна cutover на двух новых tenant-ах
+- Добавлен новый operational script `scripts/techmap-rapeseed-cutover-wave.cjs` и package-команда `pnpm techmap:rapeseed:cutover:wave`.
+- Wave-скрипт оформляет serial rollout как пакетную операцию:
+  - принимает список `--tenant='companyId|Company Name|Region Name'`
+  - non-destructive onboard-ит tenant-ов через `techmap-rapeseed-pilot-onboard.cjs`
+  - аддитивно расширяет `TECHMAP_RAPESEED_CANONICAL_COMPANIES`
+  - перезапускает `rai-api` с новым `env`
+  - выполняет smoke generation и полный цикл `prepare -> apply -> verify` по каждому tenant-у
+  - пересобирает `operational` и `all` matrix
+  - сохраняет единый wave packet в `var/ops/`
+- В wave-скрипте сразу усилен operational resilience:
+  - добавлены retry для health-check и API-запросов после `pm2 restart`
+  - исправлен health path на реальный `/api/health`
+- Выполнена первая пакетная волна:
+  - `wave_id = operational-wave-2026-04-02-b`
+  - tenant 1: `pilot-rapeseed-volga-company`
+  - tenant 2: `pilot-rapeseed-stavropol-company`
+- Оба tenant-а прошли полный живой цикл:
+  - onboard
+  - canonical smoke generation
+  - `prepare = PASS`
+  - `apply = cutover_applied`
+  - `verify = PASS`
+- Созданные smoke TechMap:
+  - `pilot-rapeseed-volga-company` -> `cmnh6m7nx000jjirovx95f9kq`
+  - `pilot-rapeseed-stavropol-company` -> `cmnh6m8gw003gjirordzghjz8`
+  - оба materialized как `generationStrategy = canonical_schema`
+- Текущее live runtime state после wave:
+  - `TECHMAP_RAPESEED_CANONICAL_MODE = canonical`
+  - `TECHMAP_RAPESEED_CANONICAL_COMPANIES = default-rai-company,pilot-rapeseed-don-company,pilot-rapeseed-kuban-company,pilot-rapeseed-stavropol-company,pilot-rapeseed-volga-company`
+- Обновлена canonical tenant matrix:
+  - `scope=operational` -> `totalCompanies = 40`, `included = 5`, `excluded = 35`, `PASS = 5`, `BLOCKED = 0`
+  - `scope=all` -> `totalCompanies = 40`, `included = 40`, `PASS = 5`, `BLOCKED = 35`
+  - live operational scope теперь состоит из:
+    - `default-rai-company`
+    - `pilot-rapeseed-kuban-company`
+    - `pilot-rapeseed-don-company`
+    - `pilot-rapeseed-volga-company`
+    - `pilot-rapeseed-stavropol-company`
+- Синхронизирован документальный слой:
+  - `docs/05_OPERATIONS/RAPESEED_CANONICAL_CUTOVER_RUNBOOK.md` обновлён до `v1.1.0` с batch wave-командой
+  - `docs/01_ARCHITECTURE/RAPESEED_TECHMAP_GENERATION_MIGRATION_PLAN.md` обновлён до `v1.1.2` и отражает `PASS = 5` в operational scope
+- Зафиксированные артефакты:
+  - `var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-b.json`
+  - `var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-b.md`
+  - `var/ops/techmap-rapeseed-cutover-pilot-rapeseed-volga-company-prepare.json`
+  - `var/ops/techmap-rapeseed-cutover-pilot-rapeseed-volga-company-verify.json`
+  - `var/ops/techmap-rapeseed-cutover-pilot-rapeseed-stavropol-company-prepare.json`
+  - `var/ops/techmap-rapeseed-cutover-pilot-rapeseed-stavropol-company-verify.json`
+  - `var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+- Проверка:
+  - `pnpm --filter api exec tsc --noEmit`
+  - `node scripts/techmap-rapeseed-cutover-wave.cjs --wave-id=operational-wave-2026-04-02-b ...`
+  - `pnpm lint:docs`
+  - `pnpm lint:docs:matrix:strict`
+- Практический эффект:
+  - canonical migration вышла из режима ручного tenant-by-tenant orchestration и стала batch-operational process;
+  - подтверждён масштабируемый rollout на пяти non-stress tenant-ах без изменения архитектурного ядра;
+  - следующий масштаб уже сводится к поставке списка новых tenant-спецификаций для wave, а не к дополнительной разработке cutover-механики.
+[2026-04-02 08:34Z] Закрыта следующая operational wave: `Rostov + Belgorod`, устранён drift `.env -> runtime`, operational scope вырос до `7 PASS`
+- В `scripts/techmap-rapeseed-cutover.cjs` добавлен флаг `--restart-runtime`:
+  - после `apply` и `rollback` script теперь умеет не только переписать `.env`, но и сразу выполнить `pm2 restart rai-api --update-env` с явной передачей
+    - `TECHMAP_RAPESEED_CANONICAL_MODE`
+    - `TECHMAP_RAPESEED_CANONICAL_COMPANIES`
+    в runtime `process.env`
+- В `scripts/techmap-rapeseed-cutover-wave.cjs` устранён runtime drift:
+  - `pm2 restart` теперь тоже получает rapeseed flags как env-overrides, а не рассчитывает только на `.env`
+  - добавлен guard `ensureCanonicalFilterVisible(...)`, который читает `currentFeatureFlags` из API и подтверждает, что целевые tenant-ы реально видны runtime до smoke generation
+  - health-check и retry вокруг post-restart path стали обязательной частью batch-wave
+- В `apps/api/src/modules/tech-map/tech-map.service.ts` исправлена логика rollout summary:
+  - `isLatest=false` карты считаются `legacyHistoricalMaps`
+  - historical карты больше не должны участвовать в rollout-managed parity/fallback/coverage как blocking current scope
+  - это сняло ложный blocker с `pilot-rapeseed-rostov-company`, где legacy smoke остался только как historical trace после успешной canonical regeneration
+- В ходе второй wave были успешно закрыты:
+  - `pilot-rapeseed-rostov-company`
+    - canonical smoke уже materialized как `cmnh6uwey000jjiq2mpcimres`
+    - после исправленной summary логики tenant доведён через `prepare -> apply --restart-runtime -> verify`
+    - итог `verified_pass`
+  - `pilot-rapeseed-belgorod-company`
+    - создан canonical smoke `TechMap = cmnh726x9000jjibiity1tzlf`
+    - `generationStrategy = canonical_schema`
+    - `rolloutMode = canonical`
+    - `fallbackUsed = false`
+    - затем tenant доведён через `prepare -> apply --restart-runtime -> verify`
+    - итог `verified_pass`
+- Актуальное live runtime state после wave:
+  - `TECHMAP_RAPESEED_CANONICAL_MODE = canonical`
+  - `TECHMAP_RAPESEED_CANONICAL_COMPANIES = default-rai-company,pilot-rapeseed-don-company,pilot-rapeseed-kuban-company,pilot-rapeseed-stavropol-company,pilot-rapeseed-volga-company,pilot-rapeseed-rostov-company,pilot-rapeseed-belgorod-company`
+- Обновлена canonical tenant matrix:
+  - `scope=operational` -> `totalCompanies = 42`, `included = 7`, `excluded = 35`, `PASS = 7`, `BLOCKED = 0`
+  - `scope=all` -> `totalCompanies = 42`, `included = 42`, `PASS = 7`, `BLOCKED = 35`
+  - live operational scope теперь состоит из:
+    - `default-rai-company`
+    - `pilot-rapeseed-kuban-company`
+    - `pilot-rapeseed-don-company`
+    - `pilot-rapeseed-volga-company`
+    - `pilot-rapeseed-stavropol-company`
+    - `pilot-rapeseed-rostov-company`
+    - `pilot-rapeseed-belgorod-company`
+- Синхронизирован документальный слой:
+  - `docs/05_OPERATIONS/RAPESEED_CANONICAL_CUTOVER_RUNBOOK.md` обновлён до `v1.1.1`
+  - `docs/01_ARCHITECTURE/RAPESEED_TECHMAP_GENERATION_MIGRATION_PLAN.md` обновлён до `v1.1.3`
+- Зафиксированные артефакты:
+  - `var/ops/techmap-rapeseed-cutover-pilot-rapeseed-rostov-company-prepare.json`
+  - `var/ops/techmap-rapeseed-cutover-pilot-rapeseed-rostov-company-apply.json`
+  - `var/ops/techmap-rapeseed-cutover-pilot-rapeseed-rostov-company-verify.json`
+  - `var/ops/techmap-rapeseed-cutover-pilot-rapeseed-belgorod-company-prepare.json`
+  - `var/ops/techmap-rapeseed-cutover-pilot-rapeseed-belgorod-company-apply.json`
+  - `var/ops/techmap-rapeseed-cutover-pilot-rapeseed-belgorod-company-verify.json`
+  - `var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+  - `var/ops/techmap-rapeseed-cutover-matrix-all.json`
+- Проверка:
+  - `pnpm --filter api build`
+  - `TECHMAP_RAPESEED_CANONICAL_MODE=... TECHMAP_RAPESEED_CANONICAL_COMPANIES=... pm2 restart rai-api --update-env`
+  - `curl http://localhost:4000/api/health`
+  - `curl http://localhost:4000/api/tech-map/generation-rollout/readiness?companyId=pilot-rapeseed-rostov-company`
+  - `curl -X POST http://localhost:4000/api/tech-map/generate ...pilot-rapeseed-belgorod-company...`
+  - `node scripts/techmap-rapeseed-cutover.cjs --action=prepare|apply|verify --company-id=pilot-rapeseed-belgorod-company`
+  - `node scripts/techmap-rapeseed-cutover.cjs --action=prepare|apply|verify --company-id=pilot-rapeseed-rostov-company`
+  - `node scripts/techmap-rapeseed-cutover-matrix.cjs`
+  - `node scripts/techmap-rapeseed-cutover-matrix.cjs --scope=all`
+- Практический эффект:
+  - end-to-end migration rollout теперь устойчив не только к batch onboarding, но и к `.env -> runtime` drift после restart;
+  - operational process доказан уже на семи non-stress tenant-ах;
+  - следующий рост operational scope больше не требует исправления rollout-механики, а сводится к подаче новых tenant-спецификаций и запуску следующей wave.
+[2026-04-02 08:16Z] Выполнена следующая batch wave: `Kursk + Orenburg`, operational scope вырос до `9 PASS`
+- Через `scripts/techmap-rapeseed-cutover-wave.cjs` запущена новая волна:
+  - `wave_id = operational-wave-2026-04-02-d`
+  - tenant 1: `pilot-rapeseed-kursk-company`
+  - tenant 2: `pilot-rapeseed-orenburg-company`
+- Оба tenant-а прошли полный batch-контур:
+  - onboard
+  - runtime restart с явной передачей canonical flags
+  - canonical smoke generation
+  - `prepare = PASS`
+  - `verify = PASS`
+- Созданные smoke TechMap:
+  - `pilot-rapeseed-kursk-company` -> `cmnh78z2s000jji2w9ua551u3`
+  - `pilot-rapeseed-orenburg-company` -> `cmnh790cx003gji2w39mb9inv`
+  - оба materialized как `generationStrategy = canonical_schema`
+- Актуальное live runtime state после wave:
+  - `TECHMAP_RAPESEED_CANONICAL_MODE = canonical`
+  - `TECHMAP_RAPESEED_CANONICAL_COMPANIES = default-rai-company,pilot-rapeseed-belgorod-company,pilot-rapeseed-don-company,pilot-rapeseed-kuban-company,pilot-rapeseed-kursk-company,pilot-rapeseed-orenburg-company,pilot-rapeseed-rostov-company,pilot-rapeseed-stavropol-company,pilot-rapeseed-volga-company`
+- Обновлена canonical tenant matrix:
+  - `scope=operational` -> `totalCompanies = 44`, `included = 9`, `excluded = 35`, `PASS = 9`, `BLOCKED = 0`
+  - `scope=all` -> `totalCompanies = 44`, `included = 44`, `PASS = 9`, `BLOCKED = 35`
+  - live operational scope теперь состоит из:
+    - `default-rai-company`
+    - `pilot-rapeseed-kuban-company`
+    - `pilot-rapeseed-don-company`
+    - `pilot-rapeseed-volga-company`
+    - `pilot-rapeseed-stavropol-company`
+    - `pilot-rapeseed-rostov-company`
+    - `pilot-rapeseed-belgorod-company`
+    - `pilot-rapeseed-kursk-company`
+    - `pilot-rapeseed-orenburg-company`
+- Синхронизирован документальный слой:
+  - `docs/05_OPERATIONS/RAPESEED_CANONICAL_CUTOVER_RUNBOOK.md` обновлён до `v1.1.2`
+  - `docs/01_ARCHITECTURE/RAPESEED_TECHMAP_GENERATION_MIGRATION_PLAN.md` обновлён до `v1.1.4`
+- Зафиксированные артефакты:
+  - `var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-d.json`
+  - `var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-d.md`
+  - `var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+  - `var/ops/techmap-rapeseed-cutover-matrix-all.json`
+- Проверка:
+  - `node scripts/techmap-rapeseed-cutover-wave.cjs --wave-id=operational-wave-2026-04-02-d ...`
+  - `cat var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+  - `pnpm lint:docs`
+  - `pnpm lint:docs:matrix:strict`
+- Практический эффект:
+  - rollout доказан уже на девяти non-stress tenant-ах без дополнительных изменений архитектурного ядра;
+  - batch wave стала повторяемым operational механизмом расширения scope;
+  - дальнейшее масштабирование уже упирается только в поставку новых tenant-спецификаций и операционную готовность команды, а не в зрелость migration-контуров.
+[2026-04-02 08:17Z] Выполнена следующая batch wave: `Samara + Voronezh`, operational scope вырос до `11 PASS`
+- Через `scripts/techmap-rapeseed-cutover-wave.cjs` запущена новая волна:
+  - `wave_id = operational-wave-2026-04-02-e`
+  - tenant 1: `pilot-rapeseed-samara-company`
+  - tenant 2: `pilot-rapeseed-voronezh-company`
+- Оба tenant-а прошли полный batch-контур:
+  - onboard
+  - runtime restart с явной передачей canonical flags
+  - canonical smoke generation
+  - `prepare = PASS`
+  - `verify = PASS`
+- Созданные smoke TechMap:
+  - `pilot-rapeseed-samara-company` -> `cmnh7blgr000jjif04kf31k9n`
+  - `pilot-rapeseed-voronezh-company` -> `cmnh7bmaq003gjif056gz2t9d`
+  - оба materialized как `generationStrategy = canonical_schema`
+- Актуальное live runtime state после wave:
+  - `TECHMAP_RAPESEED_CANONICAL_MODE = canonical`
+  - `TECHMAP_RAPESEED_CANONICAL_COMPANIES = default-rai-company,pilot-rapeseed-belgorod-company,pilot-rapeseed-don-company,pilot-rapeseed-kuban-company,pilot-rapeseed-kursk-company,pilot-rapeseed-orenburg-company,pilot-rapeseed-rostov-company,pilot-rapeseed-samara-company,pilot-rapeseed-stavropol-company,pilot-rapeseed-volga-company,pilot-rapeseed-voronezh-company`
+- Обновлена canonical tenant matrix:
+  - `scope=operational` -> `totalCompanies = 46`, `included = 11`, `excluded = 35`, `PASS = 11`, `BLOCKED = 0`
+  - `scope=all` -> `totalCompanies = 46`, `included = 46`, `PASS = 11`, `BLOCKED = 35`
+  - live operational scope теперь состоит из:
+    - `default-rai-company`
+    - `pilot-rapeseed-kuban-company`
+    - `pilot-rapeseed-don-company`
+    - `pilot-rapeseed-volga-company`
+    - `pilot-rapeseed-stavropol-company`
+    - `pilot-rapeseed-rostov-company`
+    - `pilot-rapeseed-belgorod-company`
+    - `pilot-rapeseed-kursk-company`
+    - `pilot-rapeseed-orenburg-company`
+    - `pilot-rapeseed-samara-company`
+    - `pilot-rapeseed-voronezh-company`
+- Синхронизирован документальный слой:
+  - `docs/05_OPERATIONS/RAPESEED_CANONICAL_CUTOVER_RUNBOOK.md` обновлён до `v1.1.3`
+  - `docs/01_ARCHITECTURE/RAPESEED_TECHMAP_GENERATION_MIGRATION_PLAN.md` обновлён до `v1.1.5`
+- Зафиксированные артефакты:
+  - `var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-e.json`
+  - `var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-e.md`
+  - `var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+  - `var/ops/techmap-rapeseed-cutover-matrix-all.json`
+- Проверка:
+  - `node scripts/techmap-rapeseed-cutover-wave.cjs --wave-id=operational-wave-2026-04-02-e ...`
+  - `cat var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-e.json`
+  - `cat var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+  - `pnpm lint:docs`
+  - `pnpm lint:docs:matrix:strict`
+- Практический эффект:
+  - live operational scope расширен до одиннадцати non-stress tenant-ов без изменения cutover-архитектуры;
+  - batch-wave подтверждена как серийный механизм безопасного расширения canonical rollout;
+  - канонические docs и `memory-bank` снова совпадают с живым rollout state и больше не отстают от operational артефактов.
+[2026-04-02 08:21Z] Выполнена следующая batch wave: `Saratov + Tambov`, operational scope вырос до `13 PASS`
+- Через `scripts/techmap-rapeseed-cutover-wave.cjs` запущена новая волна:
+  - `wave_id = operational-wave-2026-04-02-f`
+  - tenant 1: `pilot-rapeseed-saratov-company`
+  - tenant 2: `pilot-rapeseed-tambov-company`
+- Оба tenant-а прошли полный batch-контур:
+  - onboard
+  - runtime restart с явной передачей canonical flags
+  - canonical smoke generation
+  - `prepare = PASS`
+  - `verify = PASS`
+- Созданные smoke TechMap:
+  - `pilot-rapeseed-saratov-company` -> `cmnh7gidk000jjiweffruuna3`
+  - `pilot-rapeseed-tambov-company` -> `cmnh7gj8b003gjiwepd0ckxdz`
+  - оба materialized как `generationStrategy = canonical_schema`
+- Актуальное live runtime state после wave:
+  - `TECHMAP_RAPESEED_CANONICAL_MODE = canonical`
+  - `TECHMAP_RAPESEED_CANONICAL_COMPANIES = default-rai-company,pilot-rapeseed-belgorod-company,pilot-rapeseed-don-company,pilot-rapeseed-kuban-company,pilot-rapeseed-kursk-company,pilot-rapeseed-orenburg-company,pilot-rapeseed-rostov-company,pilot-rapeseed-samara-company,pilot-rapeseed-saratov-company,pilot-rapeseed-stavropol-company,pilot-rapeseed-tambov-company,pilot-rapeseed-volga-company,pilot-rapeseed-voronezh-company`
+- Обновлена canonical tenant matrix:
+  - `scope=operational` -> `totalCompanies = 48`, `included = 13`, `excluded = 35`, `PASS = 13`, `BLOCKED = 0`
+  - `scope=all` -> `totalCompanies = 48`, `included = 48`, `PASS = 13`, `BLOCKED = 35`
+  - live operational scope теперь состоит из:
+    - `default-rai-company`
+    - `pilot-rapeseed-kuban-company`
+    - `pilot-rapeseed-don-company`
+    - `pilot-rapeseed-volga-company`
+    - `pilot-rapeseed-stavropol-company`
+    - `pilot-rapeseed-rostov-company`
+    - `pilot-rapeseed-belgorod-company`
+    - `pilot-rapeseed-kursk-company`
+    - `pilot-rapeseed-orenburg-company`
+    - `pilot-rapeseed-samara-company`
+    - `pilot-rapeseed-voronezh-company`
+    - `pilot-rapeseed-saratov-company`
+    - `pilot-rapeseed-tambov-company`
+- Синхронизирован документальный слой:
+  - `docs/05_OPERATIONS/RAPESEED_CANONICAL_CUTOVER_RUNBOOK.md` обновлён до `v1.1.4`
+  - `docs/01_ARCHITECTURE/RAPESEED_TECHMAP_GENERATION_MIGRATION_PLAN.md` обновлён до `v1.1.6`
+- Зафиксированные артефакты:
+  - `var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-f.json`
+  - `var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-f.md`
+  - `var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+  - `var/ops/techmap-rapeseed-cutover-matrix-all.json`
+- Проверка:
+  - `pnpm techmap:rapeseed:cutover:wave --wave-id=operational-wave-2026-04-02-f ...`
+  - `cat var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-f.json`
+  - `cat var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+  - `pnpm lint:docs`
+  - `pnpm lint:docs:matrix:strict`
+- Практический эффект:
+  - operational scope расширен до тринадцати non-stress tenant-ов без единого `BLOCKED` в боевом срезе;
+  - batch-wave остаётся воспроизводимым механизмом масштабирования canonical rollout без дополнительных кодовых изменений;
+  - архитектурный план, runbook и `memory-bank` снова синхронизированы с фактическим live runtime state.
+[2026-04-02 08:22Z] Выполнена следующая batch wave: `Lipetsk + Penza`, operational scope вырос до `15 PASS`
+- Через `scripts/techmap-rapeseed-cutover-wave.cjs` запущена новая волна:
+  - `wave_id = operational-wave-2026-04-02-g`
+  - tenant 1: `pilot-rapeseed-lipetsk-company`
+  - tenant 2: `pilot-rapeseed-penza-company`
+- Оба tenant-а прошли полный batch-контур:
+  - onboard
+  - runtime restart с явной передачей canonical flags
+  - canonical smoke generation
+  - `prepare = PASS`
+  - `verify = PASS`
+- Созданные smoke TechMap:
+  - `pilot-rapeseed-lipetsk-company` -> `cmnh7io45000jji7d3idxwq20`
+  - `pilot-rapeseed-penza-company` -> `cmnh7iow1003gji7dwza6ti3v`
+  - оба materialized как `generationStrategy = canonical_schema`
+- Актуальное live runtime state после wave:
+  - `TECHMAP_RAPESEED_CANONICAL_MODE = canonical`
+  - `TECHMAP_RAPESEED_CANONICAL_COMPANIES = default-rai-company,pilot-rapeseed-belgorod-company,pilot-rapeseed-don-company,pilot-rapeseed-kuban-company,pilot-rapeseed-kursk-company,pilot-rapeseed-lipetsk-company,pilot-rapeseed-orenburg-company,pilot-rapeseed-penza-company,pilot-rapeseed-rostov-company,pilot-rapeseed-samara-company,pilot-rapeseed-saratov-company,pilot-rapeseed-stavropol-company,pilot-rapeseed-tambov-company,pilot-rapeseed-volga-company,pilot-rapeseed-voronezh-company`
+- Обновлена canonical tenant matrix:
+  - `scope=operational` -> `totalCompanies = 50`, `included = 15`, `excluded = 35`, `PASS = 15`, `BLOCKED = 0`
+  - `scope=all` -> `totalCompanies = 50`, `included = 50`, `PASS = 15`, `BLOCKED = 35`
+  - live operational scope теперь состоит из:
+    - `default-rai-company`
+    - `pilot-rapeseed-kuban-company`
+    - `pilot-rapeseed-don-company`
+    - `pilot-rapeseed-volga-company`
+    - `pilot-rapeseed-stavropol-company`
+    - `pilot-rapeseed-rostov-company`
+    - `pilot-rapeseed-belgorod-company`
+    - `pilot-rapeseed-kursk-company`
+    - `pilot-rapeseed-orenburg-company`
+    - `pilot-rapeseed-samara-company`
+    - `pilot-rapeseed-voronezh-company`
+    - `pilot-rapeseed-saratov-company`
+    - `pilot-rapeseed-tambov-company`
+    - `pilot-rapeseed-lipetsk-company`
+    - `pilot-rapeseed-penza-company`
+- Синхронизирован документальный слой:
+  - `docs/05_OPERATIONS/RAPESEED_CANONICAL_CUTOVER_RUNBOOK.md` обновлён до `v1.1.5`
+  - `docs/01_ARCHITECTURE/RAPESEED_TECHMAP_GENERATION_MIGRATION_PLAN.md` обновлён до `v1.1.7`
+- Зафиксированные артефакты:
+  - `var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-g.json`
+  - `var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-g.md`
+  - `var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+  - `var/ops/techmap-rapeseed-cutover-matrix-all.json`
+- Проверка:
+  - `pnpm techmap:rapeseed:cutover:wave --wave-id=operational-wave-2026-04-02-g ...`
+  - `cat var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-g.json`
+  - `cat var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+  - `pnpm lint:docs`
+  - `pnpm lint:docs:matrix:strict`
+- Практический эффект:
+  - operational rollout доказан уже на пятнадцати non-stress tenant-ах и остаётся без единого blocking outcome в боевом срезе;
+  - serial wave показала, что canonical cutover масштабируется дальше без новых архитектурных или runtime-починок;
+  - дальнейшее расширение scope теперь ограничено уже не зрелостью migration-контуров, а только операционным решением, каких pilot tenant-ов включать следующими.
+[2026-04-02 08:25Z] Выполнена следующая batch wave: `Bryansk + Ulyanovsk`, operational scope вырос до `17 PASS`
+- Через `scripts/techmap-rapeseed-cutover-wave.cjs` запущена новая волна:
+  - `wave_id = operational-wave-2026-04-02-h`
+  - tenant 1: `pilot-rapeseed-bryansk-company`
+  - tenant 2: `pilot-rapeseed-ulyanovsk-company`
+- Оба tenant-а прошли полный batch-контур:
+  - onboard
+  - runtime restart с явной передачей canonical flags
+  - canonical smoke generation
+  - `prepare = PASS`
+  - `verify = PASS`
+- Созданные smoke TechMap:
+  - `pilot-rapeseed-bryansk-company` -> `cmnh7mfzp000jjiqrbvxz3swt`
+  - `pilot-rapeseed-ulyanovsk-company` -> `cmnh7mgrm003gjiqr15t1m2xd`
+  - оба materialized как `generationStrategy = canonical_schema`
+- Актуальное live runtime state после wave:
+  - `TECHMAP_RAPESEED_CANONICAL_MODE = canonical`
+  - `TECHMAP_RAPESEED_CANONICAL_COMPANIES = default-rai-company,pilot-rapeseed-belgorod-company,pilot-rapeseed-bryansk-company,pilot-rapeseed-don-company,pilot-rapeseed-kuban-company,pilot-rapeseed-kursk-company,pilot-rapeseed-lipetsk-company,pilot-rapeseed-orenburg-company,pilot-rapeseed-penza-company,pilot-rapeseed-rostov-company,pilot-rapeseed-samara-company,pilot-rapeseed-saratov-company,pilot-rapeseed-stavropol-company,pilot-rapeseed-tambov-company,pilot-rapeseed-ulyanovsk-company,pilot-rapeseed-volga-company,pilot-rapeseed-voronezh-company`
+- Обновлена canonical tenant matrix:
+  - `scope=operational` -> `totalCompanies = 52`, `included = 17`, `excluded = 35`, `PASS = 17`, `BLOCKED = 0`
+  - `scope=all` -> `totalCompanies = 52`, `included = 52`, `PASS = 17`, `BLOCKED = 35`
+  - live operational scope теперь состоит из:
+    - `default-rai-company`
+    - `pilot-rapeseed-bryansk-company`
+    - `pilot-rapeseed-kuban-company`
+    - `pilot-rapeseed-don-company`
+    - `pilot-rapeseed-volga-company`
+    - `pilot-rapeseed-stavropol-company`
+    - `pilot-rapeseed-rostov-company`
+    - `pilot-rapeseed-belgorod-company`
+    - `pilot-rapeseed-kursk-company`
+    - `pilot-rapeseed-orenburg-company`
+    - `pilot-rapeseed-samara-company`
+    - `pilot-rapeseed-voronezh-company`
+    - `pilot-rapeseed-saratov-company`
+    - `pilot-rapeseed-tambov-company`
+    - `pilot-rapeseed-lipetsk-company`
+    - `pilot-rapeseed-penza-company`
+    - `pilot-rapeseed-ulyanovsk-company`
+- Синхронизирован документальный слой:
+  - `docs/05_OPERATIONS/RAPESEED_CANONICAL_CUTOVER_RUNBOOK.md` обновлён до `v1.1.6`
+  - `docs/01_ARCHITECTURE/RAPESEED_TECHMAP_GENERATION_MIGRATION_PLAN.md` обновлён до `v1.1.8`
+- Зафиксированные артефакты:
+  - `var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-h.json`
+  - `var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-h.md`
+  - `var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+  - `var/ops/techmap-rapeseed-cutover-matrix-all.json`
+- Проверка:
+  - `pnpm techmap:rapeseed:cutover:wave --wave-id=operational-wave-2026-04-02-h ...`
+  - `cat var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-h.json`
+  - `cat var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+  - `pnpm lint:docs`
+  - `pnpm lint:docs:matrix:strict`
+- Практический эффект:
+  - operational rollout подтверждён уже на семнадцати non-stress tenant-ах без единого blocker в боевом срезе;
+  - batch-wave остаётся полностью воспроизводимым operational механизмом расширения canonical scope;
+  - дальнейший рост pilot coverage по-прежнему не требует новых правок архитектуры миграции и упирается только в выбор следующих tenant-спецификаций.
+[2026-04-02 08:29Z] Выполнена следующая batch wave: `Tula + Ryazan`, operational scope вырос до `19 PASS`
+- Через `scripts/techmap-rapeseed-cutover-wave.cjs` запущена новая волна:
+  - `wave_id = operational-wave-2026-04-02-i`
+  - tenant 1: `pilot-rapeseed-tula-company`
+  - tenant 2: `pilot-rapeseed-ryazan-company`
+- Оба tenant-а прошли полный batch-контур:
+  - onboard
+  - runtime restart с явной передачей canonical flags
+  - canonical smoke generation
+  - `prepare = PASS`
+  - `verify = PASS`
+- Созданные smoke TechMap:
+  - `pilot-rapeseed-tula-company` -> `cmnh7reuf000jji88tbacbzwn`
+  - `pilot-rapeseed-ryazan-company` -> `cmnh7rfop003gji886p0w4yfs`
+  - оба materialized как `generationStrategy = canonical_schema`
+- Актуальное live runtime state после wave:
+  - `TECHMAP_RAPESEED_CANONICAL_MODE = canonical`
+  - `TECHMAP_RAPESEED_CANONICAL_COMPANIES = default-rai-company,pilot-rapeseed-belgorod-company,pilot-rapeseed-bryansk-company,pilot-rapeseed-don-company,pilot-rapeseed-kuban-company,pilot-rapeseed-kursk-company,pilot-rapeseed-lipetsk-company,pilot-rapeseed-orenburg-company,pilot-rapeseed-penza-company,pilot-rapeseed-rostov-company,pilot-rapeseed-ryazan-company,pilot-rapeseed-samara-company,pilot-rapeseed-saratov-company,pilot-rapeseed-stavropol-company,pilot-rapeseed-tambov-company,pilot-rapeseed-tula-company,pilot-rapeseed-ulyanovsk-company,pilot-rapeseed-volga-company,pilot-rapeseed-voronezh-company`
+- Обновлена canonical tenant matrix:
+  - `scope=operational` -> `totalCompanies = 54`, `included = 19`, `excluded = 35`, `PASS = 19`, `BLOCKED = 0`
+  - `scope=all` -> `totalCompanies = 54`, `included = 54`, `PASS = 19`, `BLOCKED = 35`
+  - live operational scope теперь состоит из:
+    - `default-rai-company`
+    - `pilot-rapeseed-bryansk-company`
+    - `pilot-rapeseed-kuban-company`
+    - `pilot-rapeseed-don-company`
+    - `pilot-rapeseed-volga-company`
+    - `pilot-rapeseed-stavropol-company`
+    - `pilot-rapeseed-rostov-company`
+    - `pilot-rapeseed-belgorod-company`
+    - `pilot-rapeseed-kursk-company`
+    - `pilot-rapeseed-orenburg-company`
+    - `pilot-rapeseed-samara-company`
+    - `pilot-rapeseed-voronezh-company`
+    - `pilot-rapeseed-saratov-company`
+    - `pilot-rapeseed-tambov-company`
+    - `pilot-rapeseed-lipetsk-company`
+    - `pilot-rapeseed-penza-company`
+    - `pilot-rapeseed-ulyanovsk-company`
+    - `pilot-rapeseed-tula-company`
+    - `pilot-rapeseed-ryazan-company`
+- Синхронизирован документальный слой:
+  - `docs/05_OPERATIONS/RAPESEED_CANONICAL_CUTOVER_RUNBOOK.md` обновлён до `v1.1.7`
+  - `docs/01_ARCHITECTURE/RAPESEED_TECHMAP_GENERATION_MIGRATION_PLAN.md` обновлён до `v1.1.9`
+- Зафиксированные артефакты:
+  - `var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-i.json`
+  - `var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-i.md`
+  - `var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+  - `var/ops/techmap-rapeseed-cutover-matrix-all.json`
+- Проверка:
+  - `pnpm techmap:rapeseed:cutover:wave --wave-id=operational-wave-2026-04-02-i ...`
+  - `cat var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-i.json`
+  - `cat var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+  - `pnpm lint:docs`
+  - `pnpm lint:docs:matrix:strict`
+- Практический эффект:
+  - operational rollout подтверждён уже на девятнадцати non-stress tenant-ах без единого blocker в боевом срезе;
+  - canonical cutover продолжает масштабироваться серийными wave без дополнительных runtime- или архитектурных фиксов;
+  - управление дальнейшим rollout теперь полностью сводится к выбору следующих pilot tenant-ов и исполнению того же воспроизводимого operational runbook.
+[2026-04-02 08:33Z] Выполнена следующая batch wave: `Kaluga + Vladimir`, operational scope вырос до `21 PASS`
+- Через `scripts/techmap-rapeseed-cutover-wave.cjs` запущена новая волна:
+  - `wave_id = operational-wave-2026-04-02-j`
+  - tenant 1: `pilot-rapeseed-kaluga-company`
+  - tenant 2: `pilot-rapeseed-vladimir-company`
+- Оба tenant-а прошли полный batch-контур:
+  - onboard
+  - runtime restart с явной передачей canonical flags
+  - canonical smoke generation
+  - `prepare = PASS`
+  - `verify = PASS`
+- Созданные smoke TechMap:
+  - `pilot-rapeseed-kaluga-company` -> `cmnh7wf8s000jjitocxb6uj02`
+  - `pilot-rapeseed-vladimir-company` -> `cmnh7wg6v003gjitoa46ry23o`
+  - оба materialized как `generationStrategy = canonical_schema`
+- Актуальное live runtime state после wave:
+  - `TECHMAP_RAPESEED_CANONICAL_MODE = canonical`
+  - `TECHMAP_RAPESEED_CANONICAL_COMPANIES = default-rai-company,pilot-rapeseed-belgorod-company,pilot-rapeseed-bryansk-company,pilot-rapeseed-don-company,pilot-rapeseed-kaluga-company,pilot-rapeseed-kuban-company,pilot-rapeseed-kursk-company,pilot-rapeseed-lipetsk-company,pilot-rapeseed-orenburg-company,pilot-rapeseed-penza-company,pilot-rapeseed-rostov-company,pilot-rapeseed-ryazan-company,pilot-rapeseed-samara-company,pilot-rapeseed-saratov-company,pilot-rapeseed-stavropol-company,pilot-rapeseed-tambov-company,pilot-rapeseed-tula-company,pilot-rapeseed-ulyanovsk-company,pilot-rapeseed-vladimir-company,pilot-rapeseed-volga-company,pilot-rapeseed-voronezh-company`
+- Обновлена canonical tenant matrix:
+  - `scope=operational` -> `totalCompanies = 56`, `included = 21`, `excluded = 35`, `PASS = 21`, `BLOCKED = 0`
+  - `scope=all` -> `totalCompanies = 56`, `included = 56`, `PASS = 21`, `BLOCKED = 35`
+  - live operational scope теперь состоит из:
+    - `default-rai-company`
+    - `pilot-rapeseed-belgorod-company`
+    - `pilot-rapeseed-bryansk-company`
+    - `pilot-rapeseed-don-company`
+    - `pilot-rapeseed-kaluga-company`
+    - `pilot-rapeseed-kuban-company`
+    - `pilot-rapeseed-kursk-company`
+    - `pilot-rapeseed-lipetsk-company`
+    - `pilot-rapeseed-orenburg-company`
+    - `pilot-rapeseed-penza-company`
+    - `pilot-rapeseed-rostov-company`
+    - `pilot-rapeseed-ryazan-company`
+    - `pilot-rapeseed-samara-company`
+    - `pilot-rapeseed-saratov-company`
+    - `pilot-rapeseed-stavropol-company`
+    - `pilot-rapeseed-tambov-company`
+    - `pilot-rapeseed-tula-company`
+    - `pilot-rapeseed-ulyanovsk-company`
+    - `pilot-rapeseed-vladimir-company`
+    - `pilot-rapeseed-volga-company`
+    - `pilot-rapeseed-voronezh-company`
+- Синхронизирован документальный слой:
+  - `docs/05_OPERATIONS/RAPESEED_CANONICAL_CUTOVER_RUNBOOK.md` обновлён до `v1.1.8`
+  - `docs/01_ARCHITECTURE/RAPESEED_TECHMAP_GENERATION_MIGRATION_PLAN.md` обновлён до `v1.1.10`
+- Зафиксированные артефакты:
+  - `var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-j.json`
+  - `var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-j.md`
+  - `var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+  - `var/ops/techmap-rapeseed-cutover-matrix-all.json`
+- Проверка:
+  - `pnpm techmap:rapeseed:cutover:wave --wave-id=operational-wave-2026-04-02-j ...`
+  - `cat var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-j.json`
+  - `cat var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+  - `pnpm lint:docs`
+  - `pnpm lint:docs:matrix:strict`
+- Практический эффект:
+  - operational rollout подтверждён уже на двадцати одном non-stress tenant-е без единого blocker в боевом срезе;
+  - canonical cutover продолжает масштабироваться серийными wave без новых runtime- или архитектурных исправлений;
+  - дальнейшее расширение operational coverage остаётся чисто вопросом выбора следующих pilot tenant-ов и исполнения того же стабильного runbook-процесса.
+[2026-04-02 08:35Z] Выполнена следующая batch wave: `Kostroma + Yaroslavl`, operational scope вырос до `23 PASS`
+- Через `scripts/techmap-rapeseed-cutover-wave.cjs` запущена новая волна:
+  - `wave_id = operational-wave-2026-04-02-k`
+  - tenant 1: `pilot-rapeseed-kostroma-company`
+  - tenant 2: `pilot-rapeseed-yaroslavl-company`
+- Оба tenant-а прошли полный batch-контур:
+  - onboard
+  - runtime restart с явной передачей canonical flags
+  - canonical smoke generation
+  - `prepare = PASS`
+  - `verify = PASS`
+- Созданные smoke TechMap:
+  - `pilot-rapeseed-kostroma-company` -> `cmnh7zm8t000jji6ux3s9dlz4`
+  - `pilot-rapeseed-yaroslavl-company` -> `cmnh7zn4c003gji6uok3ijk4s`
+  - оба materialized как `generationStrategy = canonical_schema`
+- Актуальное live runtime state после wave:
+  - `TECHMAP_RAPESEED_CANONICAL_MODE = canonical`
+  - `TECHMAP_RAPESEED_CANONICAL_COMPANIES = default-rai-company,pilot-rapeseed-belgorod-company,pilot-rapeseed-bryansk-company,pilot-rapeseed-don-company,pilot-rapeseed-kaluga-company,pilot-rapeseed-kostroma-company,pilot-rapeseed-kuban-company,pilot-rapeseed-kursk-company,pilot-rapeseed-lipetsk-company,pilot-rapeseed-orenburg-company,pilot-rapeseed-penza-company,pilot-rapeseed-rostov-company,pilot-rapeseed-ryazan-company,pilot-rapeseed-samara-company,pilot-rapeseed-saratov-company,pilot-rapeseed-stavropol-company,pilot-rapeseed-tambov-company,pilot-rapeseed-tula-company,pilot-rapeseed-ulyanovsk-company,pilot-rapeseed-vladimir-company,pilot-rapeseed-volga-company,pilot-rapeseed-voronezh-company,pilot-rapeseed-yaroslavl-company`
+- Обновлена canonical tenant matrix:
+  - `scope=operational` -> `totalCompanies = 58`, `included = 23`, `excluded = 35`, `PASS = 23`, `BLOCKED = 0`
+  - `scope=all` -> `totalCompanies = 58`, `included = 58`, `PASS = 23`, `BLOCKED = 35`
+  - live operational scope теперь состоит из:
+    - `default-rai-company`
+    - `pilot-rapeseed-belgorod-company`
+    - `pilot-rapeseed-bryansk-company`
+    - `pilot-rapeseed-don-company`
+    - `pilot-rapeseed-kaluga-company`
+    - `pilot-rapeseed-kostroma-company`
+    - `pilot-rapeseed-kuban-company`
+    - `pilot-rapeseed-kursk-company`
+    - `pilot-rapeseed-lipetsk-company`
+    - `pilot-rapeseed-orenburg-company`
+    - `pilot-rapeseed-penza-company`
+    - `pilot-rapeseed-rostov-company`
+    - `pilot-rapeseed-ryazan-company`
+    - `pilot-rapeseed-samara-company`
+    - `pilot-rapeseed-saratov-company`
+    - `pilot-rapeseed-stavropol-company`
+    - `pilot-rapeseed-tambov-company`
+    - `pilot-rapeseed-tula-company`
+    - `pilot-rapeseed-ulyanovsk-company`
+    - `pilot-rapeseed-vladimir-company`
+    - `pilot-rapeseed-volga-company`
+    - `pilot-rapeseed-voronezh-company`
+    - `pilot-rapeseed-yaroslavl-company`
+- Синхронизирован документальный слой:
+  - `docs/05_OPERATIONS/RAPESEED_CANONICAL_CUTOVER_RUNBOOK.md` обновлён до `v1.1.9`
+  - `docs/01_ARCHITECTURE/RAPESEED_TECHMAP_GENERATION_MIGRATION_PLAN.md` обновлён до `v1.1.11`
+- Зафиксированные артефакты:
+  - `var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-k.json`
+  - `var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-k.md`
+  - `var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+  - `var/ops/techmap-rapeseed-cutover-matrix-all.json`
+- Проверка:
+  - `pnpm techmap:rapeseed:cutover:wave --wave-id=operational-wave-2026-04-02-k ...`
+  - `cat var/ops/techmap-rapeseed-cutover-wave-operational-wave-2026-04-02-k.json`
+  - `cat var/ops/techmap-rapeseed-cutover-matrix-operational.json`
+  - `pnpm lint:docs`
+  - `pnpm lint:docs:matrix:strict`
+- Практический эффект:
+  - operational rollout подтверждён уже на двадцати трёх non-stress tenant-ах без единого blocker в боевом срезе;
+  - canonical cutover продолжает масштабироваться серийными wave без дополнительных runtime- или архитектурных исправлений;
+  - дальнейшее расширение operational coverage остаётся вопросом выбора следующих pilot tenant-ов и исполнения уже стабилизированного runbook-процесса.
+[2026-04-02 08:40Z] Техническая часть migration implementation формально закрыта, rollout переведён в live validation track
+- В `docs/01_ARCHITECTURE/RAPESEED_TECHMAP_GENERATION_MIGRATION_PLAN.md` зафиксирован статус:
+  - `technical implementation complete`
+  - `live validation continues`
+- В `docs/05_OPERATIONS/RAPESEED_CANONICAL_CUTOVER_RUNBOOK.md` зафиксирован тот же handoff-статус для operational слоя.
+- Смысл решения:
+  - engineering sprint больше не зависит от дальнейшего наращивания pilot tenant-ов;
+  - canonical generation, fallback, parity, explainability, governance loop и cutover tooling признаны завершёнными как технический контур;
+  - последующие tenant cutover трактуются как живая валидация и operational expansion, а не как незавершённая разработка.
+- Проверка:
+  - `pnpm lint:docs`
+  - `pnpm lint:docs:matrix:strict`
+- Практический эффект:
+  - команде больше не нужно бесконечно расширять pilot-wave ради формального завершения engineering work;
+  - граница `implementation done / live validation continues` явно зафиксирована в canonical docs и `memory-bank`;
+  - дальнейшие полевые проверки можно вести отдельно, не размывая статус завершённости технической части миграции.

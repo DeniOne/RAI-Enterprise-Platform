@@ -8,12 +8,15 @@ import { TechMapValidator } from "./tech-map.validator";
 import { UnitNormalizationService } from "./unit-normalization.service";
 import { TechMapService } from "./tech-map.service";
 import { TechMapWorkflowOrchestratorService } from "./tech-map-workflow-orchestrator.service";
+import { TechMapGenerationOrchestratorService } from "./generation/tech-map-generation-orchestrator.service";
+import { SystemIncidentStatus, SystemIncidentType } from "@rai/prisma-client";
 
 describe("TechMapService", () => {
   let service: TechMapService;
   const prismaMock: any = {
     techMap: {
       findFirst: jest.fn(),
+      findMany: jest.fn(),
       update: jest.fn(),
     },
     soilProfile: {
@@ -24,6 +27,17 @@ describe("TechMapService", () => {
     },
     regionProfile: {
       findFirst: jest.fn(),
+    },
+    deviationReview: {
+      findMany: jest.fn(),
+    },
+    evidence: {
+      findMany: jest.fn(),
+    },
+    systemIncident: {
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
     },
     inputCatalog: {
       count: jest.fn(),
@@ -44,6 +58,7 @@ describe("TechMapService", () => {
         { provide: TechMapValidator, useValue: {} },
         { provide: UnitNormalizationService, useValue: {} },
         TechMapWorkflowOrchestratorService,
+        { provide: TechMapGenerationOrchestratorService, useValue: { orchestrate: jest.fn() } },
       ],
     }).compile();
 
@@ -310,5 +325,638 @@ describe("TechMapService", () => {
       service.updateDraft("tm-3", { title: "blocked" }, "company-1"),
     ).rejects.toThrow("create a new version instead");
     expect(prismaMock.techMap.update).not.toHaveBeenCalled();
+  });
+
+  it("getExplainability возвращает explainability read-model без изменения write-контракта", async () => {
+    prismaMock.techMap.findFirst.mockResolvedValueOnce({
+      id: "tm-5",
+      companyId: "company-1",
+      crop: "rapeseed",
+      cropForm: "RAPESEED_WINTER",
+      canonicalBranch: "winter_rapeseed",
+      generationMetadata: {
+        generationStrategy: "legacy_blueprint",
+        schemaVersion: "1.0.0",
+        ruleRegistryVersion: "1.1.0",
+        ontologyVersion: "1.1.0",
+        generationTraceId: "gen-trace-1",
+        rolloutMode: "shadow",
+        fallbackUsed: true,
+        fallbackReason: "shadow_authoritative_legacy",
+        featureFlagSnapshot: {
+          mode: "shadow",
+          companyId: "company-1",
+        },
+        shadowParitySummary: {
+          traceId: "shadow:gen-trace-1",
+          hasBlockingDiffs: true,
+          diffCount: 2,
+          severityCounts: {
+            P0: 1,
+            P1: 1,
+            P2: 0,
+          },
+        },
+        shadowParityReport: {
+          diffs: [
+            {
+              severity: "P0",
+              code: "crop_form_mismatch",
+              message: "Legacy path и canonical path расходятся по cropForm.",
+            },
+          ],
+        },
+      },
+      fieldAdmissionResult: {
+        verdict: "PASS_WITH_REQUIREMENTS",
+        blockers: [],
+        requirements: [{ ruleId: "R-ADM-002" }],
+      },
+      generationExplanationTrace: {
+        traceId: "gen-trace-1",
+        summary: {
+          mandatoryBlocks: ["seed_treatment"],
+        },
+      },
+      recommendations: [
+        {
+          id: "rec-1",
+          title: "Требование допуска",
+          isActive: true,
+        },
+      ],
+      decisionGates: [
+        {
+          id: "gate-1",
+          title: "Нужен ChangeOrder",
+          recommendations: [],
+        },
+      ],
+      changeOrders: [
+        {
+          id: "co-1",
+          changeType: "CHANGE_INPUT",
+          status: "PENDING_APPROVAL",
+          approvals: [{ id: "approval-1", decision: null }],
+        },
+      ],
+      monitoringSignals: [
+        {
+          id: "signal-1",
+          signalType: "GDD_WINDOW",
+        },
+      ],
+      ruleEvaluationTraces: [
+        {
+          id: "trace-1",
+          ruleId: "R-ADM-002",
+        },
+      ],
+      controlPoints: [
+        {
+          id: "cp-1",
+          name: "Контроль розетки",
+          mapStage: { id: "stage-1", name: "Осенний уход" },
+          outcomeExplanations: [
+            {
+              id: "outcome-1",
+              payload: {
+                deviationReviewId: "dev-1",
+                operationId: "op-77",
+              },
+            },
+          ],
+        },
+      ],
+    });
+    prismaMock.evidence.findMany.mockResolvedValueOnce([
+      {
+        id: "ev-1",
+        evidenceType: "PHOTO",
+        fileUrl: "camera://capture/latest-photo",
+        createdAt: new Date("2026-04-01T10:00:00.000Z"),
+        capturedAt: new Date("2026-04-01T10:00:00.000Z"),
+        operationId: "op-77",
+        observationId: null,
+        metadata: {
+          executionSourceAudit: {
+            urlKind: "intermediate_route",
+            sourceScheme: "camera",
+          },
+        },
+      },
+    ]);
+    prismaMock.deviationReview.findMany.mockResolvedValueOnce([
+      {
+        id: "dev-1",
+        deviationSummary: "Полевое отклонение по control point",
+        severity: "CRITICAL",
+        status: "DETECTED",
+      },
+    ]);
+    prismaMock.systemIncident.findMany.mockResolvedValueOnce([
+      {
+        id: "inc-techmap-1",
+        companyId: "company-1",
+        traceId: "gen-trace-1",
+        incidentType: SystemIncidentType.UNKNOWN,
+        status: SystemIncidentStatus.OPEN,
+        severity: "HIGH",
+        details: {
+          subtype: "TECHMAP_CANONICAL_PARITY_BLOCKED",
+          techMapId: "tm-5",
+          runbookSuggestedAction: "REQUIRE_HUMAN_REVIEW",
+          detailSummary: "Карта содержит blocking parity gaps и требует human review до cutover.",
+        },
+        createdAt: new Date("2026-04-01T12:00:00.000Z"),
+      },
+    ]);
+
+    const result = await service.getExplainability("tm-5", "company-1");
+
+    expect(result.techMapId).toBe("tm-5");
+    expect(result.cropForm).toBe("RAPESEED_WINTER");
+    expect(result.canonicalBranch).toBe("winter_rapeseed");
+    expect(result.generationExplanationTrace?.traceId).toBe("gen-trace-1");
+    expect(result.generationObservability).toEqual(
+      expect.objectContaining({
+        rolloutMode: "shadow",
+        fallbackUsed: true,
+        fallbackReason: "shadow_authoritative_legacy",
+        explainabilityTracePresent: true,
+        versionPinning: expect.objectContaining({
+          schemaVersion: "1.0.0",
+          ruleRegistryVersion: "1.1.0",
+          ontologyVersion: "1.1.0",
+          generationTraceId: "gen-trace-1",
+        }),
+        shadowParitySummary: expect.objectContaining({
+          hasBlockingDiffs: true,
+          diffCount: 1,
+        }),
+      }),
+    );
+    expect(result.fieldAdmissionResult?.verdict).toBe("PASS_WITH_REQUIREMENTS");
+    expect(result.recommendations).toHaveLength(1);
+    expect(result.decisionGates).toHaveLength(1);
+    expect(result.runtimeArtifacts.changeOrders).toHaveLength(1);
+    expect(result.runtimeArtifacts.deviationReviews).toHaveLength(1);
+    expect(result.runtimeArtifacts.evidenceAudit).toEqual({
+      artifactEvidenceCount: 0,
+      intermediateRouteEvidenceCount: 1,
+      unresolvedRouteEvidenceTypes: ["PHOTO"],
+    });
+    expect(result.monitoringSignals).toHaveLength(1);
+    expect(result.controlPoints).toHaveLength(1);
+    expect(result.controlPoints[0].outcomeExplanations[0].evidenceAudit).toEqual({
+      artifactEvidenceCount: 0,
+      intermediateRouteEvidenceCount: 1,
+      unresolvedRouteEvidenceTypes: ["PHOTO"],
+    });
+    expect(result.controlPoints[0].outcomeExplanations[0].attachedEvidence[0].sourceAudit).toEqual({
+      urlKind: "intermediate_route",
+      sourceScheme: "camera",
+      isIntermediateRoute: true,
+      isArtifactUrl: false,
+    });
+    expect(result.rolloutIncidents).toEqual([
+      expect.objectContaining({
+        id: "inc-techmap-1",
+        subtype: "TECHMAP_CANONICAL_PARITY_BLOCKED",
+        severity: "HIGH",
+        status: "OPEN",
+        techMapId: "tm-5",
+        runbookSuggestedAction: "REQUIRE_HUMAN_REVIEW",
+      }),
+    ]);
+    expect(prismaMock.techMap.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "tm-5", companyId: "company-1" },
+      }),
+    );
+  });
+
+  it("getGenerationRolloutSummary агрегирует fallback, parity и version pinning coverage", async () => {
+    prismaMock.techMap.findMany.mockResolvedValueOnce([
+      {
+        id: "tm-10",
+        status: "DRAFT",
+        generationMetadata: {
+          generationStrategy: "legacy_blueprint",
+          schemaVersion: "1.0.0",
+          ruleRegistryVersion: "1.1.0",
+          ontologyVersion: "1.1.0",
+          generationTraceId: "trace-10",
+          rolloutMode: "shadow",
+          fallbackUsed: true,
+          fallbackReason: "shadow_authoritative_legacy",
+          featureFlagSnapshot: {
+            mode: "shadow",
+          },
+          shadowParitySummary: {
+            hasBlockingDiffs: true,
+            diffCount: 2,
+            severityCounts: {
+              P0: 1,
+              P1: 1,
+              P2: 0,
+            },
+          },
+        },
+        generationExplanationTrace: {
+          id: "genexp-10",
+          traceId: "trace-10",
+          completenessScore: 0.8,
+        },
+        fieldAdmissionResult: {
+          id: "adm-10",
+          verdict: "PASS_WITH_REQUIREMENTS",
+        },
+      },
+      {
+        id: "tm-11",
+        status: "DRAFT",
+        generationMetadata: {
+          generationStrategy: "canonical_schema",
+          schemaVersion: "1.0.0",
+          ruleRegistryVersion: "1.1.0",
+          ontologyVersion: "1.1.0",
+          generationTraceId: "trace-11",
+          rolloutMode: "canonical",
+          fallbackUsed: false,
+          fallbackReason: null,
+          featureFlagSnapshot: {
+            mode: "canonical",
+          },
+          shadowParitySummary: {
+            hasBlockingDiffs: false,
+            diffCount: 0,
+            severityCounts: {
+              P0: 0,
+              P1: 0,
+              P2: 0,
+            },
+          },
+        },
+        generationExplanationTrace: {
+          id: "genexp-11",
+          traceId: "trace-11",
+          completenessScore: 1,
+        },
+        fieldAdmissionResult: {
+          id: "adm-11",
+          verdict: "PASS",
+        },
+      },
+    ]);
+    prismaMock.systemIncident.findMany.mockResolvedValueOnce([
+      {
+        id: "inc-rollout-1",
+        companyId: "company-1",
+        traceId: null,
+        incidentType: SystemIncidentType.UNKNOWN,
+        status: SystemIncidentStatus.OPEN,
+        severity: "HIGH",
+        details: {
+          subtype: "TECHMAP_ROLLOUT_BLOCKING_PARITY",
+          runbookSuggestedAction: "REQUIRE_HUMAN_REVIEW",
+        },
+        createdAt: new Date("2026-04-01T12:10:00.000Z"),
+      },
+    ]);
+
+    const result = await service.getGenerationRolloutSummary("company-1");
+
+    expect(result.totalRapeseedMaps).toBe(2);
+    expect(result.rolloutManagedMaps).toBe(2);
+    expect(result.legacyHistoricalMaps).toBe(0);
+    expect(result.strategies).toEqual({
+      legacyBlueprint: 1,
+      blueprintFallback: 0,
+      canonicalSchema: 1,
+      unknown: 0,
+    });
+    expect(result.rolloutModes).toEqual({
+      legacy: 0,
+      shadow: 1,
+      canonical: 1,
+      unknown: 0,
+    });
+    expect(result.fallback).toEqual({
+      usedCount: 1,
+      reasons: {
+        shadow_authoritative_legacy: 1,
+      },
+    });
+    expect(result.metadataCoverage).toEqual({
+      versionPinnedCount: 2,
+      generationTraceCount: 2,
+      explainabilityTraceCount: 2,
+      fieldAdmissionCount: 2,
+      featureFlagSnapshotCount: 2,
+    });
+    expect(result.parity).toEqual({
+      mapsWithReport: 2,
+      mapsWithBlockingDiffs: 1,
+      mapsWithoutDiffs: 1,
+      blockingTechMapIds: ["tm-10"],
+      diffCounts: {
+        P0: 1,
+        P1: 1,
+        P2: 0,
+      },
+    });
+    expect(result.rolloutIncidents).toEqual([
+      expect.objectContaining({
+        id: "inc-rollout-1",
+        subtype: "TECHMAP_ROLLOUT_BLOCKING_PARITY",
+        severity: "HIGH",
+        status: "OPEN",
+        runbookSuggestedAction: "REQUIRE_HUMAN_REVIEW",
+      }),
+    ]);
+  });
+
+  it("getGenerationRolloutReadiness возвращает BLOCKED verdict при parity blockers", async () => {
+    prismaMock.techMap.findMany.mockResolvedValueOnce([
+      {
+        id: "tm-20",
+        status: "DRAFT",
+        generationMetadata: {
+          generationStrategy: "canonical_schema",
+          schemaVersion: "1.0.0",
+          ruleRegistryVersion: "1.1.0",
+          ontologyVersion: "1.1.0",
+          generationTraceId: "trace-20",
+          rolloutMode: "shadow",
+          fallbackUsed: true,
+          fallbackReason: "shadow_authoritative_legacy",
+          featureFlagSnapshot: {
+            mode: "shadow",
+          },
+          shadowParitySummary: {
+            hasBlockingDiffs: true,
+            diffCount: 1,
+            severityCounts: {
+              P0: 1,
+              P1: 0,
+              P2: 0,
+            },
+          },
+        },
+        generationExplanationTrace: {
+          id: "genexp-20",
+          traceId: "trace-20",
+          completenessScore: 0.8,
+        },
+        fieldAdmissionResult: {
+          id: "adm-20",
+          verdict: "PASS",
+        },
+      },
+    ]);
+    prismaMock.systemIncident.findMany.mockResolvedValueOnce([
+      {
+        id: "inc-rollout-20",
+        companyId: "company-1",
+        traceId: "trace-20",
+        incidentType: SystemIncidentType.UNKNOWN,
+        status: SystemIncidentStatus.OPEN,
+        severity: "HIGH",
+        details: {
+          subtype: "TECHMAP_CANONICAL_PARITY_BLOCKED",
+          techMapId: "tm-20",
+          runbookSuggestedAction: "REQUIRE_HUMAN_REVIEW",
+        },
+        createdAt: new Date("2026-04-01T12:20:00.000Z"),
+      },
+    ]);
+
+    const result = await service.getGenerationRolloutReadiness("company-1");
+
+    expect(result.verdict).toBe("BLOCKED");
+    expect(result.canEnableCanonicalDefault).toBe(false);
+    expect(result.suggestedMode).toBe("shadow");
+    expect(result.releaseGates.parityBlockingClear).toBe(false);
+    expect(result.releaseGates.noOpenParityIncidents).toBe(false);
+    expect(result.blockers).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("blocking parity gaps"),
+      ]),
+    );
+  });
+
+  it("getGenerationRolloutReadiness не блокирует canonical superiority и не считает historical legacy в coverage", async () => {
+    prismaMock.techMap.findMany.mockResolvedValueOnce([
+      {
+        id: "tm-canary",
+        status: "DRAFT",
+        generationMetadata: {
+          generationStrategy: "canonical_schema",
+          schemaVersion: "1.0.0",
+          ruleRegistryVersion: "1.1.0",
+          ontologyVersion: "1.1.0",
+          generationTraceId: "trace-canary",
+          rolloutMode: "canonical",
+          fallbackUsed: false,
+          fallbackReason: null,
+          featureFlagSnapshot: {
+            mode: "canonical",
+          },
+          shadowParitySummary: {
+            hasBlockingDiffs: true,
+            diffCount: 2,
+            severityCounts: {
+              P0: 2,
+              P1: 0,
+              P2: 0,
+            },
+          },
+          shadowParityReport: {
+            authoritativeStrategy: "canonical_schema",
+            referenceStrategy: "blueprint_fallback",
+            diffs: [
+              {
+                code: "stage:soil_preparation",
+                severity: "P0",
+              },
+              {
+                code: "critical_op:winter_rapeseed_sowing",
+                severity: "P0",
+              },
+            ],
+          },
+        },
+        generationExplanationTrace: {
+          id: "genexp-canary",
+          traceId: "trace-canary",
+          completenessScore: 1,
+        },
+        fieldAdmissionResult: {
+          id: "adm-canary",
+          verdict: "PASS",
+        },
+      },
+      {
+        id: "tm-legacy-1",
+        status: "ACTIVE",
+        generationMetadata: null,
+        generationExplanationTrace: null,
+        fieldAdmissionResult: null,
+      },
+      {
+        id: "tm-legacy-2",
+        status: "ARCHIVED",
+        generationMetadata: null,
+        generationExplanationTrace: null,
+        fieldAdmissionResult: null,
+      },
+    ]);
+    prismaMock.systemIncident.findMany.mockResolvedValueOnce([
+      {
+        id: "inc-techmap-stale",
+        companyId: "company-1",
+        traceId: "trace-canary",
+        incidentType: SystemIncidentType.UNKNOWN,
+        status: SystemIncidentStatus.OPEN,
+        severity: "HIGH",
+        details: {
+          subtype: "TECHMAP_CANONICAL_PARITY_BLOCKED",
+          techMapId: "tm-canary",
+          runbookSuggestedAction: "REQUIRE_HUMAN_REVIEW",
+        },
+        createdAt: new Date("2026-04-01T12:25:00.000Z"),
+      },
+      {
+        id: "inc-company-stale",
+        companyId: "company-1",
+        traceId: null,
+        incidentType: SystemIncidentType.UNKNOWN,
+        status: SystemIncidentStatus.OPEN,
+        severity: "HIGH",
+        details: {
+          subtype: "TECHMAP_ROLLOUT_BLOCKING_PARITY",
+          runbookSuggestedAction: "REQUIRE_HUMAN_REVIEW",
+        },
+        createdAt: new Date("2026-04-01T12:26:00.000Z"),
+      },
+    ]);
+
+    const result = await service.getGenerationRolloutReadiness("company-1");
+
+    expect(result.verdict).toBe("PASS");
+    expect(result.canEnableCanonicalDefault).toBe(true);
+    expect(result.summary.rolloutManagedMaps).toBe(1);
+    expect(result.summary.legacyHistoricalMaps).toBe(2);
+    expect(result.summary.parity.mapsWithBlockingDiffs).toBe(0);
+    expect(result.summary.parity.blockingTechMapIds).toEqual([]);
+    expect(result.summary.rolloutIncidents).toEqual([]);
+    expect(result.releaseGates.versionPinningComplete).toBe(true);
+    expect(result.releaseGates.explainabilityCoverageComplete).toBe(true);
+    expect(result.releaseGates.admissionCoverageComplete).toBe(true);
+    expect(result.releaseGates.noOpenParityIncidents).toBe(true);
+    expect(result.warnings).toEqual([]);
+    expect(result.blockers).toEqual([]);
+  });
+
+  it("getGenerationRolloutCutoverPacket возвращает release и rollback команды", async () => {
+    process.env.TECHMAP_RAPESEED_CANONICAL_MODE = "shadow";
+    process.env.TECHMAP_RAPESEED_CANONICAL_COMPANIES = "company-0";
+
+    prismaMock.techMap.findMany.mockResolvedValueOnce([
+      {
+        id: "tm-30",
+        status: "DRAFT",
+        generationMetadata: {
+          generationStrategy: "canonical_schema",
+          schemaVersion: "1.0.0",
+          ruleRegistryVersion: "1.1.0",
+          ontologyVersion: "1.1.0",
+          generationTraceId: "trace-30",
+          rolloutMode: "canonical",
+          fallbackUsed: false,
+          fallbackReason: null,
+          featureFlagSnapshot: {
+            mode: "canonical",
+          },
+          shadowParitySummary: {
+            hasBlockingDiffs: false,
+            diffCount: 0,
+            severityCounts: {
+              P0: 0,
+              P1: 0,
+              P2: 0,
+            },
+          },
+        },
+        generationExplanationTrace: {
+          id: "genexp-30",
+          traceId: "trace-30",
+          completenessScore: 1,
+        },
+        fieldAdmissionResult: {
+          id: "adm-30",
+          verdict: "PASS",
+        },
+      },
+    ]);
+    prismaMock.systemIncident.findMany.mockResolvedValueOnce([]);
+    prismaMock.techMap.findMany.mockResolvedValueOnce([
+      {
+        id: "tm-30",
+        status: "DRAFT",
+        generationMetadata: {
+          generationStrategy: "canonical_schema",
+          schemaVersion: "1.0.0",
+          ruleRegistryVersion: "1.1.0",
+          ontologyVersion: "1.1.0",
+          generationTraceId: "trace-30",
+          rolloutMode: "canonical",
+          fallbackUsed: false,
+          fallbackReason: null,
+          featureFlagSnapshot: {
+            mode: "canonical",
+          },
+          shadowParitySummary: {
+            hasBlockingDiffs: false,
+            diffCount: 0,
+            severityCounts: {
+              P0: 0,
+              P1: 0,
+              P2: 0,
+            },
+          },
+        },
+        generationExplanationTrace: {
+          id: "genexp-30",
+          traceId: "trace-30",
+          completenessScore: 1,
+        },
+        fieldAdmissionResult: {
+          id: "adm-30",
+          verdict: "PASS",
+        },
+      },
+    ]);
+    prismaMock.systemIncident.findMany.mockResolvedValueOnce([]);
+
+    const result = await service.getGenerationRolloutCutoverPacket("company-1");
+
+    expect(result.canExecuteCutover).toBe(true);
+    expect(result.recommendedFeatureFlags).toEqual({
+      mode: "canonical",
+      companyFilter: "company-0,company-1",
+    });
+    expect(result.releaseCommand).toContain(
+      "TECHMAP_RAPESEED_CANONICAL_MODE=canonical",
+    );
+    expect(result.releaseCommand).toContain(
+      "TECHMAP_RAPESEED_CANONICAL_COMPANIES=company-0,company-1",
+    );
+    expect(result.rollbackCommand).toContain(
+      "TECHMAP_RAPESEED_CANONICAL_MODE=shadow",
+    );
+    expect(result.checklist.length).toBeGreaterThan(0);
+    expect(result.rollbackChecklist.length).toBeGreaterThan(0);
   });
 });

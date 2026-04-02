@@ -126,6 +126,32 @@ export const api = {
         techmaps: {
             list: () => apiClient.get('/tech-map'),
             get: (id: string) => apiClient.get(`/tech-map/${encodeURIComponent(id)}`),
+            generationRolloutSummary: () =>
+                apiClient.get('/tech-map/generation-rollout/summary'),
+            generationRolloutReadiness: () =>
+                apiClient.get('/tech-map/generation-rollout/readiness'),
+            generationRolloutCutoverPacket: () =>
+                apiClient.get('/tech-map/generation-rollout/cutover-packet'),
+            explainability: (id: string) =>
+                apiClient.get(`/tech-map/${encodeURIComponent(id)}/explainability`),
+            recordControlPointOutcome: (
+                id: string,
+                controlPointId: string,
+                data: unknown,
+            ) =>
+                apiClient.post(
+                    `/tech-map/${encodeURIComponent(id)}/control-points/${encodeURIComponent(controlPointId)}/outcome`,
+                    data,
+                    {
+                        headers: {
+                            'Idempotency-Key': buildIdempotencyKey('techmap-control-point-outcome', [
+                                id,
+                                controlPointId,
+                                serializeIdempotencyPayload(data),
+                            ]),
+                        },
+                    },
+                ),
             generate: (data: { harvestPlanId: string; seasonId: string }) =>
                 apiClient.post('/tech-map/generate', data, {
                     headers: {
@@ -163,6 +189,46 @@ export const api = {
                         ]),
                     },
                 }),
+            recordControlPointOutcome: (
+                techMapId: string,
+                controlPointId: string,
+                data: unknown,
+            ) =>
+                apiClient.post(
+                    `/tech-map/${encodeURIComponent(techMapId)}/control-points/${encodeURIComponent(controlPointId)}/outcome`,
+                    data,
+                    {
+                        headers: {
+                            'Idempotency-Key': buildIdempotencyKey('consulting-execution-control-point-outcome', [
+                                techMapId,
+                                controlPointId,
+                                serializeIdempotencyPayload(data),
+                            ]),
+                        },
+                    },
+                ),
+            attachEvidence: (data: unknown) =>
+                apiClient.post('/consulting/execution/evidence', data, {
+                    headers: {
+                        'Idempotency-Key': buildIdempotencyKey('consulting-execution-evidence', [
+                            serializeIdempotencyPayload(data),
+                        ]),
+                    },
+                }),
+            createObservation: (data: unknown) =>
+                apiClient.post('/consulting/execution/observation', data, {
+                    headers: {
+                        'Idempotency-Key': buildIdempotencyKey('consulting-execution-observation', [
+                            serializeIdempotencyPayload(data),
+                        ]),
+                    },
+                }),
+            evidence: (operationId: string) =>
+                apiClient.get(`/consulting/execution/${encodeURIComponent(operationId)}/evidence`),
+            evidenceStatus: (operationId: string) =>
+                apiClient.get(`/consulting/execution/${encodeURIComponent(operationId)}/evidence-status`),
+            observations: (operationId: string) =>
+                apiClient.get(`/consulting/execution/${encodeURIComponent(operationId)}/observations`),
         },
         yield: {
             save: (data: unknown) =>

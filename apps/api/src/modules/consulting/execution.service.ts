@@ -5,16 +5,29 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
-import { ExecutionStatus, TechMapStatus } from "@rai/prisma-client";
+import { EvidenceType, ExecutionStatus, TechMapStatus } from "@rai/prisma-client";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { CompleteOperationDto } from "../../shared/consulting/dto/complete-operation.dto";
 import { ConsultingOperationCompletedEvent } from "./events/consulting-operation-completed.event";
 import { OutboxService } from "../../shared/outbox/outbox.service";
+import { EvidenceService } from "../tech-map/evidence/evidence.service";
+import { EvidenceCreateDto } from "../tech-map/dto/evidence.dto";
+import { FieldObservationService } from "../field-observation/field-observation.service";
+import { ExecutionObservationCreateDto } from "./dto/execution-observation.dto";
 
 export interface ExecutionContext {
   userId: string;
   companyId: string;
 }
+
+const INTERMEDIATE_EVIDENCE_ROUTE_SCHEMES = [
+  "camera://",
+  "weather-api://",
+  "satellite://",
+  "geo://",
+  "lab://",
+  "files://",
+] as const;
 
 @Injectable()
 export class ExecutionService {
@@ -24,6 +37,8 @@ export class ExecutionService {
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
     private readonly outbox: OutboxService,
+    private readonly evidenceService: EvidenceService,
+    private readonly fieldObservationService: FieldObservationService,
   ) {}
 
   /**
@@ -224,7 +239,7 @@ export class ExecutionService {
    * Получает список всех активных операций для операционного дашборда.
    */
   async getActiveOperations(context: ExecutionContext) {
-    return this.prisma.mapOperation.findMany({
+    const operations = await this.prisma.mapOperation.findMany({
       where: {
         mapStage: {
           techMap: {
@@ -237,13 +252,56 @@ export class ExecutionService {
       },
       include: {
         resources: true,
+        evidence: {
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
         executionRecord: true,
         mapStage: {
           include: {
+            controlPoints: {
+              include: {
+                outcomeExplanations: {
+                  orderBy: {
+                    createdAt: "desc",
+                  },
+                  take: 1,
+                },
+              },
+            },
             techMap: {
               include: {
                 harvestPlan: {
                   include: { account: true },
+                },
+                decisionGates: {
+                  include: {
+                    recommendations: {
+                      where: {
+                        isActive: true,
+                      },
+                    },
+                  },
+                  orderBy: {
+                    createdAt: "desc",
+                  },
+                },
+                recommendations: {
+                  where: {
+                    isActive: true,
+                  },
+                  orderBy: {
+                    createdAt: "desc",
+                  },
+                },
+                changeOrders: {
+                  include: {
+                    approvals: true,
+                  },
+                  orderBy: {
+                    createdAt: "desc",
+                  },
                 },
               },
             },
@@ -252,5 +310,490 @@ export class ExecutionService {
       },
       orderBy: { plannedStartTime: "asc" },
     });
+
+    const operationsWithObservations = await this.attachRecentObservations(
+      operations,
+      context.companyId,
+    );
+
+    const operationsWithGovernance = await this.attachGovernanceSummary(
+      operationsWithObservations,
+      context.companyId,
+    );
+
+    return this.attachEvidenceSummary(operationsWithGovernance);
+  }
+
+  async attachOperationEvidence(
+    dto: Omit<EvidenceCreateDto, "companyId">,
+    context: ExecutionContext,
+  ) {
+    await this.assertOperationInExecutionScope(dto.operationId ?? null, context);
+
+    const metadata = this.buildExecutionEvidenceMetadata(dto);
+
+    return this.evidenceService.attachEvidence(
+      {
+        ...dto,
+        metadata,
+        companyId: context.companyId,
+      },
+      context.companyId,
+    );
+  }
+
+  async getOperationEvidence(operationId: string, context: ExecutionContext) {
+    await this.assertOperationInExecutionScope(operationId, context);
+    const evidence = await this.evidenceService.getByOperation(
+      operationId,
+      context.companyId,
+    );
+    return evidence.map((item) => this.attachEvidenceSourceAudit(item));
+  }
+
+  async getOperationEvidenceStatus(operationId: string, context: ExecutionContext) {
+    await this.assertOperationInExecutionScope(operationId, context);
+    return this.evidenceService.validateOperationCompletion(
+      operationId,
+      context.companyId,
+    );
+  }
+
+  async getOperationObservations(
+    operationId: string,
+    context: ExecutionContext,
+  ) {
+    const operation = await this.assertOperationInExecutionScope(
+      operationId,
+      context,
+    );
+
+    return this.findRecentObservationsForTechMapContext(
+      operation.mapStage?.techMap?.fieldId ?? null,
+      operation.mapStage?.techMap?.seasonId ?? null,
+      context.companyId,
+    );
+  }
+
+  async createOperationObservation(
+    dto: ExecutionObservationCreateDto,
+    context: ExecutionContext,
+  ) {
+    const operation = await this.assertOperationInExecutionScope(
+      dto.operationId,
+      context,
+    );
+    const techMap = operation.mapStage?.techMap;
+
+    if (!techMap?.fieldId) {
+      throw new BadRequestException(
+        "У операции нет fieldId в active execution context",
+      );
+    }
+
+    if (!techMap?.seasonId) {
+      throw new BadRequestException(
+        "У операции нет seasonId в active execution context",
+      );
+    }
+
+    return this.fieldObservationService.createObservation({
+      type: dto.type,
+      intent: dto.intent,
+      integrityStatus: dto.integrityStatus,
+      content: dto.content,
+      photoUrl: dto.photoUrl,
+      voiceUrl: dto.voiceUrl,
+      coordinates: dto.coordinates,
+      telemetryJson: dto.telemetryJson,
+      companyId: context.companyId,
+      authorId: context.userId,
+      fieldId: techMap.fieldId,
+      seasonId: techMap.seasonId,
+    });
+  }
+
+  private async attachRecentObservations<T extends Array<any>>(
+    operations: T,
+    companyId: string,
+  ): Promise<T> {
+    const uniqueContextKeys = Array.from(
+      new Set(
+        operations
+          .map((operation) => {
+            const techMap = operation?.mapStage?.techMap;
+            if (!techMap?.fieldId || !techMap?.seasonId) {
+              return null;
+            }
+
+            return `${techMap.fieldId}:${techMap.seasonId}`;
+          })
+          .filter(Boolean) as string[],
+      ),
+    );
+
+    const observationGroups = new Map<string, any[]>();
+
+    await Promise.all(
+      uniqueContextKeys.map(async (key) => {
+        const [fieldId, seasonId] = key.split(":");
+        const observations = await this.findRecentObservationsForTechMapContext(
+          fieldId,
+          seasonId,
+          companyId,
+        );
+        observationGroups.set(key, observations);
+      }),
+    );
+
+    return operations.map((operation) => {
+      const techMap = operation?.mapStage?.techMap;
+      const contextKey =
+        techMap?.fieldId && techMap?.seasonId
+          ? `${techMap.fieldId}:${techMap.seasonId}`
+          : null;
+
+      return {
+        ...operation,
+        recentObservations: contextKey
+          ? observationGroups.get(contextKey) ?? []
+          : [],
+      };
+    }) as T;
+  }
+
+  private async attachGovernanceSummary<T extends Array<any>>(
+    operations: T,
+    companyId: string,
+  ): Promise<T> {
+    const deviationReviewIds = Array.from(
+      new Set(
+        operations
+          .flatMap((operation) => operation?.mapStage?.controlPoints || [])
+          .flatMap((point: any) => point?.outcomeExplanations || [])
+          .map((outcome: any) =>
+            this.extractStringFromPayload(outcome?.payload, "deviationReviewId"),
+          )
+          .filter(Boolean),
+      ),
+    ) as string[];
+
+    const deviationReviews = deviationReviewIds.length
+      ? await this.prisma.deviationReview.findMany({
+          where: {
+            id: {
+              in: deviationReviewIds,
+            },
+            companyId,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          select: {
+            id: true,
+            deviationSummary: true,
+            severity: true,
+            status: true,
+            createdAt: true,
+          },
+        })
+      : [];
+
+    const deviationReviewById = new Map(
+      deviationReviews.map((review: any) => [review.id, review]),
+    );
+
+    return operations.map((operation) => {
+      const techMap = operation?.mapStage?.techMap;
+      const referencedDeviationIds = Array.from(
+        new Set(
+          (operation?.mapStage?.controlPoints || [])
+            .flatMap((point: any) => point?.outcomeExplanations || [])
+            .map((outcome: any) =>
+              this.extractStringFromPayload(outcome?.payload, "deviationReviewId"),
+            )
+            .filter(Boolean),
+        ),
+      ) as string[];
+
+      return {
+        ...operation,
+        governanceSummary: {
+          decisionGates: techMap?.decisionGates || [],
+          recommendations: techMap?.recommendations || [],
+          changeOrders: (techMap?.changeOrders || []).map((changeOrder: any) => ({
+            ...changeOrder,
+            approvalSummary: this.buildApprovalSummary(changeOrder.approvals || []),
+          })),
+          deviationReviews: referencedDeviationIds
+            .map((id) => deviationReviewById.get(id))
+            .filter(Boolean),
+        },
+      };
+    }) as T;
+  }
+
+  private attachEvidenceSummary<T extends Array<any>>(operations: T): T {
+    return operations.map((operation) => {
+      const requiredEvidenceTypes = this.extractEvidenceTypes(
+        operation?.evidenceRequired,
+      );
+      const evidenceWithAudit = (operation?.evidence || []).map((item: any) =>
+        this.attachEvidenceSourceAudit(item),
+      );
+      const presentEvidenceTypes = Array.from(
+        new Set(
+          evidenceWithAudit
+            .map((item: any) => item?.evidenceType)
+            .filter(Boolean),
+        ),
+      );
+      const missingEvidenceTypes = requiredEvidenceTypes.filter(
+        (item) => !presentEvidenceTypes.includes(item),
+      );
+      const artifactEvidenceCount = evidenceWithAudit.filter(
+        (item: any) => item?.sourceAudit?.urlKind === "artifact",
+      ).length;
+      const intermediateRouteEvidenceCount = evidenceWithAudit.filter(
+        (item: any) => item?.sourceAudit?.urlKind === "intermediate_route",
+      ).length;
+
+      return {
+        ...operation,
+        evidence: evidenceWithAudit,
+        evidenceSummary: {
+          isComplete: missingEvidenceTypes.length === 0,
+          requiredEvidenceTypes,
+          presentEvidenceTypes,
+          missingEvidenceTypes,
+          sourceAudit: {
+            artifactEvidenceCount,
+            intermediateRouteEvidenceCount,
+            unresolvedRouteEvidenceTypes: evidenceWithAudit
+              .filter(
+                (item: any) =>
+                  item?.sourceAudit?.urlKind === "intermediate_route",
+              )
+              .map((item: any) => item?.evidenceType)
+              .filter(Boolean),
+          },
+        },
+      };
+    }) as T;
+  }
+
+  private buildExecutionEvidenceMetadata(
+    dto: Omit<EvidenceCreateDto, "companyId">,
+  ) {
+    const existingMetadata = this.normalizeMetadataRecord(dto.metadata);
+    const classification = this.classifyEvidenceUrl(dto.fileUrl);
+
+    return {
+      ...existingMetadata,
+      executionSourceAudit: {
+        urlKind: classification.urlKind,
+        sourceScheme: classification.sourceScheme,
+        isIntermediateRoute: classification.urlKind === "intermediate_route",
+        isArtifactUrl: classification.urlKind === "artifact",
+        attachedViaExecutionFlow: true,
+        attachedAt: new Date().toISOString(),
+      },
+    };
+  }
+
+  private attachEvidenceSourceAudit<T extends { fileUrl?: string | null; metadata?: unknown }>(
+    evidence: T,
+  ): T & {
+    sourceAudit: {
+      urlKind: "artifact" | "intermediate_route" | "unknown";
+      sourceScheme: string | null;
+      isIntermediateRoute: boolean;
+      isArtifactUrl: boolean;
+    };
+  } {
+    const metadata = this.normalizeMetadataRecord(evidence.metadata);
+    const metadataAudit = this.normalizeMetadataRecord(
+      metadata.executionSourceAudit,
+    );
+    const fallbackClassification = this.classifyEvidenceUrl(evidence.fileUrl);
+    const urlKind =
+      metadataAudit.urlKind === "artifact" ||
+      metadataAudit.urlKind === "intermediate_route" ||
+      metadataAudit.urlKind === "unknown"
+        ? metadataAudit.urlKind
+        : fallbackClassification.urlKind;
+    const sourceScheme =
+      typeof metadataAudit.sourceScheme === "string"
+        ? metadataAudit.sourceScheme
+        : fallbackClassification.sourceScheme;
+
+    return {
+      ...evidence,
+      sourceAudit: {
+        urlKind,
+        sourceScheme,
+        isIntermediateRoute: urlKind === "intermediate_route",
+        isArtifactUrl: urlKind === "artifact",
+      },
+    };
+  }
+
+  private classifyEvidenceUrl(fileUrl: string | null | undefined) {
+    const normalized = typeof fileUrl === "string" ? fileUrl.trim() : "";
+    if (!normalized) {
+      return {
+        urlKind: "unknown" as const,
+        sourceScheme: null,
+      };
+    }
+
+    const intermediateScheme = INTERMEDIATE_EVIDENCE_ROUTE_SCHEMES.find(
+      (scheme) => normalized.startsWith(scheme),
+    );
+    if (intermediateScheme) {
+      return {
+        urlKind: "intermediate_route" as const,
+        sourceScheme: intermediateScheme.replace("://", ""),
+      };
+    }
+
+    if (/^https?:\/\//.test(normalized)) {
+      return {
+        urlKind: "artifact" as const,
+        sourceScheme: normalized.startsWith("https://") ? "https" : "http",
+      };
+    }
+
+    const schemeMatch = normalized.match(/^([a-z0-9+.-]+):\/\//i);
+    return {
+      urlKind: "unknown" as const,
+      sourceScheme: schemeMatch?.[1] ?? null,
+    };
+  }
+
+  private normalizeMetadataRecord(
+    value: unknown,
+  ): Record<string, unknown> {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      return {};
+    }
+
+    return value as Record<string, unknown>;
+  }
+
+  private findRecentObservationsForTechMapContext(
+    fieldId: string | null,
+    seasonId: string | null,
+    companyId: string,
+  ) {
+    if (!fieldId || !seasonId) {
+      return Promise.resolve([]);
+    }
+
+    return this.prisma.fieldObservation.findMany({
+      where: {
+        companyId,
+        fieldId,
+        seasonId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 5,
+      select: {
+        id: true,
+        type: true,
+        intent: true,
+        integrityStatus: true,
+        content: true,
+        photoUrl: true,
+        voiceUrl: true,
+        createdAt: true,
+        authorId: true,
+      },
+    });
+  }
+
+  private extractStringFromPayload(
+    payload: unknown,
+    key: string,
+  ): string | null {
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      return null;
+    }
+
+    const candidate = (payload as Record<string, unknown>)[key];
+    return typeof candidate === "string" && candidate.length > 0
+      ? candidate
+      : null;
+  }
+
+  private buildApprovalSummary(approvals: Array<{ decision?: string | null }>) {
+    const total = approvals.length;
+    const approved = approvals.filter(
+      (approval) => approval.decision === "APPROVED",
+    ).length;
+    const rejected = approvals.filter(
+      (approval) => approval.decision === "REJECTED",
+    ).length;
+    const pending = total - approved - rejected;
+
+    return {
+      total,
+      approved,
+      rejected,
+      pending,
+    };
+  }
+
+  private extractEvidenceTypes(value: unknown): EvidenceType[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value.filter((item): item is EvidenceType =>
+      Object.values(EvidenceType).includes(item as EvidenceType),
+    );
+  }
+
+  private async assertOperationInExecutionScope(
+    operationId: string | null,
+    context: ExecutionContext,
+  ) {
+    if (!operationId) {
+      throw new BadRequestException("operationId обязателен для execution evidence flow");
+    }
+
+    const operation = await this.prisma.mapOperation.findFirst({
+      where: {
+        id: operationId,
+        mapStage: {
+          techMap: {
+            companyId: context.companyId,
+            status: TechMapStatus.ACTIVE,
+          },
+        },
+      },
+      select: {
+        id: true,
+        mapStage: {
+          select: {
+            techMap: {
+              select: {
+                id: true,
+                fieldId: true,
+                seasonId: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!operation) {
+      throw new NotFoundException("Операция не найдена в active execution scope");
+    }
+
+    return operation;
   }
 }

@@ -759,6 +759,16 @@ model Company {
   regionProfiles        RegionProfile[]
   inputCatalog          InputCatalog[]
   cropZones             CropZone[]
+  ruleRegistryEntries   RuleRegistryEntry[]
+  thresholdRegistries   ThresholdRegistry[]
+  fieldAdmissionResults FieldAdmissionResult[]
+  generationExplanationTraces GenerationExplanationTrace[]
+  controlPoints         ControlPoint[]
+  monitoringSignals     MonitoringSignal[]
+  recommendations       Recommendation[]
+  decisionGates         DecisionGate[]
+  ruleEvaluationTraces  RuleEvaluationTrace[]
+  controlPointOutcomeExplanations ControlPointOutcomeExplanation[]
   adaptiveRules         AdaptiveRule[]
   hybridPhenologyModels HybridPhenologyModel[]
   evidence              Evidence[]
@@ -1246,6 +1256,11 @@ enum CropType {
   OTHER
 }
 
+enum CropForm {
+  RAPESEED_WINTER
+  RAPESEED_SPRING
+}
+
 enum SeasonStatus {
   PLANNING
   ACTIVE
@@ -1689,8 +1704,10 @@ model TechMap {
 
   harvestPlanActive HarvestPlan? @relation("ActiveTechMap")
 
-  crop       String // Denormalization for uniqueness index
-  cropZoneId String
+  crop            String // Denormalization for uniqueness index
+  cropZoneId      String
+  cropForm        CropForm?
+  canonicalBranch String?
 
   stages   MapStage[]
   cropZone CropZone   @relation("CropZoneTechMaps", fields: [cropZoneId], references: [id])
@@ -1727,10 +1744,18 @@ model TechMap {
   companyId String
   company   Company @relation(fields: [companyId], references: [id])
 
-  budgetPlanSnapshots BudgetPlan[]   @relation("BudgetPlanTechMapSnapshot")
-  changeOrders        ChangeOrder[]
-  adaptiveRules       AdaptiveRule[]
-  budgetLines         BudgetLine[]
+  budgetPlanSnapshots             BudgetPlan[]   @relation("BudgetPlanTechMapSnapshot")
+  changeOrders                    ChangeOrder[]
+  adaptiveRules                   AdaptiveRule[]
+  budgetLines                     BudgetLine[]
+  controlPoints                   ControlPoint[]
+  monitoringSignals               MonitoringSignal[]
+  recommendations                 Recommendation[]
+  decisionGates                   DecisionGate[]
+  ruleEvaluationTraces            RuleEvaluationTrace[]
+  controlPointOutcomeExplanations ControlPointOutcomeExplanation[]
+  generationExplanationTrace      GenerationExplanationTrace?
+  fieldAdmissionResult            FieldAdmissionResult?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1746,11 +1771,14 @@ model MapStage {
   id       String @id @default(cuid())
   name     String
   sequence Int
+  stageGoal String?
+  bbchScope Json?
 
   techMapId String
   techMap   TechMap @relation(fields: [techMapId], references: [id])
 
-  operations MapOperation[]
+  operations    MapOperation[]
+  controlPoints ControlPoint[]
 
   // Integration with APL
   aplStageId String? // '04_SOWING' etc.
@@ -1842,6 +1870,7 @@ model SoilProfile {
   bMgKg             Float?
   nMineralMgKg      Float?
   bulkDensityGCm3   Float?
+  compactionDetected Boolean?
   granulometricType SoilGranulometricType?
   otherElements     Json?
   provenance        Json?
@@ -1860,6 +1889,9 @@ model RegionProfile {
   id                       String      @id @default(cuid())
   name                     String
   climateType              ClimateType
+  agroclimaticZone         String?
+  satAvg                   Float?
+  winterType               String?
   gddBaseTempC             Float?
   avgGddSeason             Float?
   precipitationMm          Float?
@@ -1933,6 +1965,7 @@ model CropZone {
   seasonId        String
   season          Season       @relation(fields: [seasonId], references: [id])
   cropType        CropType
+  cropForm        CropForm?
   cropVarietyId   String?
   cropVariety     CropVariety? @relation(fields: [cropVarietyId], references: [id])
   varietyHybrid   String?
@@ -1943,7 +1976,8 @@ model CropZone {
   constraints     Json?
   provenance      Json?
   confidence      Float?
-  techMaps        TechMap[]    @relation("CropZoneTechMaps")
+  techMaps              TechMap[]             @relation("CropZoneTechMaps")
+  fieldAdmissionResults FieldAdmissionResult[]
   companyId       String
   company         Company      @relation(fields: [companyId], references: [id])
   createdAt       DateTime     @default(now())
@@ -1955,6 +1989,222 @@ model CropZone {
   @@index([cropVarietyId])
   @@index([cropType])
   @@map("crop_zones")
+}
+
+model RuleRegistryEntry {
+  id              String   @id @default(cuid())
+  ruleId          String   @unique
+  layer           String
+  type            String
+  confidence      String?
+  description     String?
+  overrideAllowed Boolean  @default(false)
+  sourceVersion   String?
+  companyId       String?
+  company         Company? @relation(fields: [companyId], references: [id])
+  traces          RuleEvaluationTrace[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([companyId, layer])
+  @@index([type])
+  @@map("rule_registry_entries")
+}
+
+model ThresholdRegistry {
+  id             String   @id @default(cuid())
+  thresholdId    String   @unique
+  parameter      String
+  comparator     String
+  value          Json
+  cropScope      String?
+  stageScope     String?
+  actionOnBreach String?
+  sourceVersion  String?
+  companyId      String?
+  company        Company? @relation(fields: [companyId], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([companyId, parameter])
+  @@map("threshold_registry")
+}
+
+model FieldAdmissionResult {
+  id              String    @id @default(cuid())
+  techMapId       String?   @unique
+  techMap         TechMap?  @relation(fields: [techMapId], references: [id])
+  cropZoneId      String
+  cropZone        CropZone  @relation(fields: [cropZoneId], references: [id])
+  cropForm        CropForm?
+  verdict         String
+  isBlocking      Boolean   @default(false)
+  blockers        Json?
+  requirements    Json?
+  recommendations Json?
+  rolloutPolicy   Json?
+  traceId         String    @unique
+  companyId       String
+  company         Company   @relation(fields: [companyId], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([companyId, cropZoneId])
+  @@index([companyId, createdAt])
+  @@map("field_admission_results")
+}
+
+model GenerationExplanationTrace {
+  id                  String    @id @default(cuid())
+  techMapId           String    @unique
+  techMap             TechMap   @relation(fields: [techMapId], references: [id])
+  traceId             String    @unique
+  cropForm            CropForm?
+  canonicalBranch     String?
+  generationStrategy  String
+  schemaVersion       String
+  ruleRegistryVersion String
+  ontologyVersion     String
+  generatorVersion    String?
+  featureFlagSnapshot Json?
+  completenessScore   Float?
+  summary             Json
+  companyId           String
+  company             Company   @relation(fields: [companyId], references: [id])
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([companyId, createdAt])
+  @@map("generation_explanation_traces")
+}
+
+model DecisionGate {
+  id              String           @id @default(cuid())
+  techMapId       String
+  techMap         TechMap          @relation(fields: [techMapId], references: [id])
+  gateType        String
+  severity        String
+  status          String           @default("OPEN")
+  title           String
+  rationale       Json?
+  resolutionNotes Json?
+  recommendations Recommendation[]
+  companyId       String
+  company         Company          @relation(fields: [companyId], references: [id])
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([techMapId, status])
+  @@index([companyId, status])
+  @@map("decision_gates")
+}
+
+model Recommendation {
+  id             String        @id @default(cuid())
+  techMapId      String
+  techMap        TechMap       @relation(fields: [techMapId], references: [id])
+  decisionGateId String?
+  decisionGate   DecisionGate? @relation(fields: [decisionGateId], references: [id])
+  severity       String
+  code           String?
+  title          String
+  message        String
+  rationale      Json?
+  isActive       Boolean       @default(true)
+  companyId      String
+  company        Company       @relation(fields: [companyId], references: [id])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([techMapId, isActive])
+  @@index([companyId, isActive])
+  @@map("tech_map_recommendations")
+}
+
+model MonitoringSignal {
+  id              String   @id @default(cuid())
+  techMapId       String
+  techMap         TechMap  @relation(fields: [techMapId], references: [id])
+  signalType      String
+  source          String?
+  thresholdLogic  String?
+  severity        String
+  resultingAction String?
+  isActive        Boolean  @default(true)
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([techMapId, isActive])
+  @@index([companyId, signalType])
+  @@map("monitoring_signals")
+}
+
+model ControlPoint {
+  id                   String                           @id @default(cuid())
+  techMapId            String
+  techMap              TechMap                          @relation(fields: [techMapId], references: [id])
+  mapStageId           String
+  mapStage             MapStage                         @relation(fields: [mapStageId], references: [id])
+  name                 String
+  bbchScope            Json?
+  requiredObservations Json?
+  acceptanceRanges     Json?
+  severityOnFailure    String?
+  companyId            String
+  company              Company                          @relation(fields: [companyId], references: [id])
+  ruleEvaluationTraces RuleEvaluationTrace[]
+  outcomeExplanations  ControlPointOutcomeExplanation[]
+  createdAt            DateTime                         @default(now())
+  updatedAt            DateTime                         @updatedAt
+
+  @@index([techMapId, mapStageId])
+  @@index([companyId, createdAt])
+  @@map("tech_map_control_points")
+}
+
+model RuleEvaluationTrace {
+  id                  String             @id @default(cuid())
+  techMapId           String?
+  techMap             TechMap?           @relation(fields: [techMapId], references: [id])
+  controlPointId      String?
+  controlPoint        ControlPoint?      @relation(fields: [controlPointId], references: [id])
+  ruleRegistryEntryId String?
+  ruleRegistryEntry   RuleRegistryEntry? @relation(fields: [ruleRegistryEntryId], references: [id])
+  traceType           String
+  status              String
+  severity            String
+  payload             Json
+  companyId           String
+  company             Company            @relation(fields: [companyId], references: [id])
+  createdAt           DateTime           @default(now())
+
+  @@index([techMapId, createdAt])
+  @@index([controlPointId, createdAt])
+  @@index([companyId, traceType])
+  @@map("rule_evaluation_traces")
+}
+
+model ControlPointOutcomeExplanation {
+  id             String       @id @default(cuid())
+  controlPointId String
+  controlPoint   ControlPoint @relation(fields: [controlPointId], references: [id])
+  techMapId      String?
+  techMap        TechMap?     @relation(fields: [techMapId], references: [id])
+  outcome        String
+  severity       String
+  summary        String
+  payload        Json?
+  companyId      String
+  company        Company      @relation(fields: [companyId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([controlPointId, createdAt])
+  @@index([techMapId, createdAt])
+  @@index([companyId, severity])
+  @@map("control_point_outcome_explanations")
 }
 
 model HybridPhenologyModel {

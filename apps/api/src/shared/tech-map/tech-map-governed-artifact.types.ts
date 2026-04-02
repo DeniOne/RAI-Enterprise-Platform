@@ -32,8 +32,11 @@ export interface TechMapArtifactHeader {
   field_ids: string[];
   season_id: string;
   crop_code: string;
+  crop_form?: string;
+  canonical_branch?: string;
   methodology_profile_id: string;
   baseline_context_hash: string;
+  generation_trace_id?: string;
   source_workflow_mode: "new_draft" | "rebuild" | "comparison";
 }
 

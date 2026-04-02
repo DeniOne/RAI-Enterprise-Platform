@@ -1,7 +1,16 @@
 export const TECH_MAP_STAGES_WITH_RESOURCES_INCLUDE = {
+  generationExplanationTrace: true,
+  fieldAdmissionResult: true,
+  decisionGates: true,
+  recommendations: {
+    where: {
+      isActive: true,
+    },
+  },
   stages: {
     orderBy: { sequence: "asc" },
     include: {
+      controlPoints: true,
       operations: {
         include: {
           resources: true,
@@ -14,6 +23,16 @@ export const TECH_MAP_STAGES_WITH_RESOURCES_INCLUDE = {
 export const TECH_MAP_CANONICAL_DRAFT_INCLUDE = {
   field: true,
   season: true,
+  generationExplanationTrace: true,
+  fieldAdmissionResult: true,
+  decisionGates: true,
+  recommendations: {
+    where: {
+      isActive: true,
+    },
+  },
+  monitoringSignals: true,
+  ruleEvaluationTraces: true,
   harvestPlan: {
     include: {
       performanceContract: true,
@@ -29,6 +48,7 @@ export const TECH_MAP_CANONICAL_DRAFT_INCLUDE = {
   stages: {
     orderBy: { sequence: "asc" },
     include: {
+      controlPoints: true,
       operations: {
         include: {
           resources: true,

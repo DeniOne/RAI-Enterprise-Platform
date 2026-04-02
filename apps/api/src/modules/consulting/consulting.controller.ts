@@ -16,6 +16,8 @@ import { UpdateDraftPlanDto } from "../../shared/consulting/dto/update-draft-pla
 import { TransitionPlanStatusDto } from "../../shared/consulting/dto/transition-plan-status.dto";
 import { TransitionBudgetStatusDto } from "./dto/transition-budget-status.dto";
 import { CompleteOperationDto } from "../../shared/consulting/dto/complete-operation.dto";
+import { EvidenceCreateDtoSchema } from "../tech-map/dto/evidence.dto";
+import { ExecutionObservationCreateDtoSchema } from "./dto/execution-observation.dto";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
 import { YieldService } from "./yield.service";
 import { KpiService } from "./kpi.service";
@@ -296,6 +298,70 @@ export class ConsultingController {
   ) {
     return this.executionService.completeOperation(
       dto,
+      this.toExecutionContext(user),
+    );
+  }
+
+  @Post("execution/evidence")
+  @Authorized(...EXECUTION_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
+  async attachExecutionEvidence(
+    @Body() body: any,
+    @CurrentUser() user: any,
+  ) {
+    const payload = EvidenceCreateDtoSchema.omit({ companyId: true }).parse(body);
+    return this.executionService.attachOperationEvidence(
+      payload,
+      this.toExecutionContext(user),
+    );
+  }
+
+  @Post("execution/observation")
+  @Authorized(...EXECUTION_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
+  async createExecutionObservation(
+    @Body() body: any,
+    @CurrentUser() user: any,
+  ) {
+    const payload = ExecutionObservationCreateDtoSchema.parse(body);
+    return this.executionService.createOperationObservation(
+      payload,
+      this.toExecutionContext(user),
+    );
+  }
+
+  @Get("execution/:operationId/evidence")
+  @Authorized(...EXECUTION_ROLES)
+  async getExecutionEvidence(
+    @Param("operationId") operationId: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.executionService.getOperationEvidence(
+      operationId,
+      this.toExecutionContext(user),
+    );
+  }
+
+  @Get("execution/:operationId/evidence-status")
+  @Authorized(...EXECUTION_ROLES)
+  async getExecutionEvidenceStatus(
+    @Param("operationId") operationId: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.executionService.getOperationEvidenceStatus(
+      operationId,
+      this.toExecutionContext(user),
+    );
+  }
+
+  @Get("execution/:operationId/observations")
+  @Authorized(...EXECUTION_ROLES)
+  async getExecutionObservations(
+    @Param("operationId") operationId: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.executionService.getOperationObservations(
+      operationId,
       this.toExecutionContext(user),
     );
   }
