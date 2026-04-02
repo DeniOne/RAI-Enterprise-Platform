@@ -186,8 +186,8 @@ last_verified: 2026-04-01
 
 - `R1=done`
 - `R2=done`
-- `R3=in_progress`
-- общий verdict: `post_big_phase_internal_residual_open`
+- `R3=done`
+- общий verdict: `post_big_phase_internal_residual_closed`
 
 ## 3. Что считается прогрессом
 

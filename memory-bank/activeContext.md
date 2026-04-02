@@ -1,5 +1,24 @@
 # Активный контекст RAI_EP
 
+## Текущая задача (2026-04-02, residual closeout sync after merged PR #2)
+- [x] `R3` reviewed evidence loop синхронизирован с merged `PR #2`:
+  - в `var/security/security-reviewed-evidence-input.json` зафиксированы `prNumber=2`, `dependencyReview runId=23897244591`, reviewer refs и merge head `d9e7f027...`;
+  - для current `main` head подтянуты актуальные push-runs:
+    - `CodeQL` `23897325488`
+    - `Security Baseline` `23897325485`.
+- [x] Generated manifests пересчитаны на чистом `main`:
+  - `var/security/security-reviewed-evidence-status.json` теперь держит `status=done`, `verdict=reviewed_ci_evidence_loop_ready`;
+  - `var/security/post-big-phase-internal-residual-status.json` теперь держит `status=done`, `verdict=post_big_phase_internal_residual_closed`;
+  - `var/security/post-big-phase-internal-residual-reconcile.json` теперь держит `status=done`, `verdict=post_big_phase_internal_residual_reconcile_complete`.
+- [x] Handoff/bundle слой выровнен с закрытым residual baseline:
+  - обновлены генераторы `post-big-phase-internal-residual-reconcile.cjs` и `post-big-phase-internal-residual-pr-template.cjs`;
+  - перевыпущены `run-card`, `handoff-index`, `pr-template` и bundle-каталог;
+  - из `var/security/post-big-phase-internal-residual-*` и bundle-артефактов убран ложный `waiting_for_pr` narrative.
+- [x] Narrative sync выполнен:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/POST_BIG_PHASE_INTERNAL_RESIDUAL_APPSEC_HYGIENE_WORKPACK_2026-04-01.md`
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`.
+- [x] Рабочее дерево очищено от локального шума без потери локальных backup/analytics артефактов через `.git/info/exclude`.
+
 ## Текущая задача (2026-04-02, rapeseed migration closeout verification)
 - [x] Выполнена проверка актуального `Rapeseed canonical migration` changeset относительно `origin/main`.
 - [x] Подтверждено, что ветка держит большой delivery-пакет по:

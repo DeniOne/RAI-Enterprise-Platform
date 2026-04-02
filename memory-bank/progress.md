@@ -1,5 +1,41 @@
 # Progress Report - Prisma, Agro Domain & RAI Chat Integration
 
+## 2026-04-02
+
+1. **Post-big-phase residual пакет полностью закрыт после merged `PR #2`** [DONE]:
+  - repo-side reviewed evidence contract обновлён под current `main` head `d9e7f027...`;
+  - в `var/security/security-reviewed-evidence-input.json` зафиксированы:
+    - `prNumber=2`
+    - `dependencyReview runId=23897244591`
+    - push-based `CodeQL` run `23897325488`
+    - push-based `Security Baseline` run `23897325485`
+    - reviewer refs и provenance refs.
+  - Пересчитаны generated manifests:
+    - `var/security/security-reviewed-evidence-status.json` -> `status=done`, `verdict=reviewed_ci_evidence_loop_ready`
+    - `var/security/post-big-phase-internal-residual-status.json` -> `status=done`, `verdict=post_big_phase_internal_residual_closed`
+    - `var/security/post-big-phase-internal-residual-reconcile.json` -> `status=done`, `verdict=post_big_phase_internal_residual_reconcile_complete`
+  - Narrative sync выполнен в:
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/POST_BIG_PHASE_INTERNAL_RESIDUAL_APPSEC_HYGIENE_WORKPACK_2026-04-01.md`
+    - `docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md`
+  - Практический эффект:
+    - `R1/R2/R3` больше не держат открытый внутренний residual;
+    - post-big-phase `AppSec / hygiene` пакет закрыт не только по GitHub-событиям, но и по machine-readable manifests;
+    - execution canon и generated truth снова совпадают.
+
+1. **Handoff/bundle слой residual-пакета выровнен с closed-state** [DONE]:
+  - patched generators:
+    - `scripts/post-big-phase-internal-residual-reconcile.cjs`
+    - `scripts/post-big-phase-internal-residual-pr-template.cjs`
+  - перевыпущены:
+    - `var/security/post-big-phase-internal-residual-run-card.json|md`
+    - `var/security/post-big-phase-internal-residual-pr-template.json|md`
+    - `var/security/post-big-phase-internal-residual-handoff-index.json|md`
+    - `var/security/post-big-phase-internal-residual-bundle/*`
+  - Практический эффект:
+    - handoff-артефакты больше не утверждают ложный `waiting_for_pr`;
+    - bundle и compact operator layers теперь согласованы с verdict `post_big_phase_internal_residual_reconcile_complete`;
+    - следующий security-critical cycle начнётся от честного closed baseline, а не от исторического pre-closeout snapshot.
+
 ## 2026-04-01
 
 1. **Для `R3` добавлен machine-readable reviewed evidence contour** [DONE]:

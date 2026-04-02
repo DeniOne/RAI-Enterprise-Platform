@@ -3,13 +3,13 @@ id: DOC-EXE-POST-BIG-PHASE-INTERNAL-RESIDUAL-APPSEC-HYGIENE-WORKPACK-20260401
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.19.0
+version: 1.20.0
 owners: ["@techlead"]
-last_updated: 2026-04-01
+last_updated: 2026-04-02
 claim_id: CLAIM-EXE-POST-BIG-PHASE-INTERNAL-RESIDUAL-APPSEC-HYGIENE-WORKPACK-20260401
 claim_status: asserted
 verified_by: manual
-last_verified: 2026-04-01
+last_verified: 2026-04-02
 evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/INDEX.md;docs/07_EXECUTION/ONE_BIG_PHASE/ONE_BIG_PHASE_AUDIT_RECONCILIATION_2026-04-01.md;var/security/security-audit-summary.json;var/security/secret-scan-report.json;var/security/workspace-secret-hygiene-inventory.json;var/security/workspace-secret-hygiene-remediation-packet.json;var/security/security-reviewed-evidence-input.json;var/security/security-reviewed-evidence-status.json;var/security/security-reviewed-evidence-packet.json;var/security/security-reviewed-evidence-reconcile.json;var/security/post-big-phase-internal-residual-status.json;var/security/post-big-phase-internal-residual-reconcile.json;var/security/post-big-phase-internal-residual-bundle/MANIFEST.json;docs/05_OPERATIONS/SECURITY_BASELINE_AND_ACCESS_REVIEW_POLICY.md;scripts/workspace-secret-hygiene-inventory.cjs;scripts/workspace-secret-hygiene-remediation-packet.cjs;scripts/post-big-phase-internal-residual-status.cjs;scripts/post-big-phase-internal-residual-reconcile.cjs;scripts/post-big-phase-internal-residual-bundle.cjs;scripts/security-reviewed-evidence-intake.cjs;scripts/security-reviewed-evidence-pr-lookup.cjs;scripts/security-reviewed-evidence-reconcile.cjs;scripts/security-reviewed-evidence-status.cjs;scripts/security-reviewed-evidence-packet.cjs;.github/workflows/codeql-analysis.yml;.github/workflows/security-audit.yml;.github/workflows/dependency-review.yml
 ---
 # POST BIG PHASE INTERNAL RESIDUAL APPSEC HYGIENE WORKPACK 2026-04-01
@@ -20,18 +20,18 @@ status: asserted
 verified_by: manual
 last_verified: 2026-04-01
 
-Этот документ открывает короткий follow-on workpack после закрытия `ONE_BIG_PHASE`.
+Этот документ открывает и удерживает короткий follow-on workpack после закрытия `ONE_BIG_PHASE`.
 
 Текущий machine-readable verdict пакета:
 
-- [post-big-phase-internal-residual-status.json](/root/RAI_EP/var/security/post-big-phase-internal-residual-status.json) фиксирует `status=in_progress`, `R1=done`, `R2=done`, `R3=in_progress`.
-- [post-big-phase-internal-residual-reconcile.json](/root/RAI_EP/var/security/post-big-phase-internal-residual-reconcile.json) служит верхнеуровневым close-loop отчётом после появления первого реального `PR`.
+- [post-big-phase-internal-residual-status.json](/root/RAI_EP/var/security/post-big-phase-internal-residual-status.json) фиксирует `status=done`, `R1=done`, `R2=done`, `R3=done`.
+- [post-big-phase-internal-residual-reconcile.json](/root/RAI_EP/var/security/post-big-phase-internal-residual-reconcile.json) фиксирует `status=done`, `verdict=post_big_phase_internal_residual_reconcile_complete`.
 - [post-big-phase-internal-residual-run-card.json](/root/RAI_EP/var/security/post-big-phase-internal-residual-run-card.json) и [post-big-phase-internal-residual-run-card.md](/root/RAI_EP/var/security/post-big-phase-internal-residual-run-card.md) служат компактной операторской карточкой поверх reconcile-отчёта.
 - [post-big-phase-internal-residual-pr-template.json](/root/RAI_EP/var/security/post-big-phase-internal-residual-pr-template.json) и [post-big-phase-internal-residual-pr-template.md](/root/RAI_EP/var/security/post-big-phase-internal-residual-pr-template.md) служат готовым шаблоном для первого security-relevant `PR`.
 - [post-big-phase-internal-residual-handoff-index.json](/root/RAI_EP/var/security/post-big-phase-internal-residual-handoff-index.json) и [post-big-phase-internal-residual-handoff-index.md](/root/RAI_EP/var/security/post-big-phase-internal-residual-handoff-index.md) служат верхним оглавлением всего handoff-пакета.
 - [post-big-phase-internal-residual-commands.template.sh](/root/RAI_EP/var/security/post-big-phase-internal-residual-commands.template.sh) служит готовым shell-template для первого reviewer-backed `PR` цикла.
 - [post-big-phase-internal-residual-bundle/MANIFEST.json](/root/RAI_EP/var/security/post-big-phase-internal-residual-bundle/MANIFEST.json) и [post-big-phase-internal-residual-bundle/README.md](/root/RAI_EP/var/security/post-big-phase-internal-residual-bundle/README.md) служат handoff-bundle для передачи всего пакета одним каталогом.
-- `pnpm security:post-big-phase:prepare` теперь является полным handoff-entrypoint: он выпускает packet-level reconcile-report в режиме `waiting_for_pr`, подтягивает текущий `R3` handoff packet, генерирует compact operator `run card`, локальный `PR template`, верхний `handoff index`, shell-template с командами и финальный bundle-каталог.
+- `pnpm security:post-big-phase:prepare` остаётся полным handoff-entrypoint для следующих security-critical циклов: он умеет выпускать packet-level reconcile-report, compact operator `run card`, локальный `PR template`, верхний `handoff index`, shell-template с командами и bundle-каталог, но текущий baseline уже закрыт.
 - `pnpm security:post-big-phase:run-card` и `pnpm security:post-big-phase:pr-template` сохранены как совместимые alias на тот же handoff-entrypoint.
 - `pnpm security:post-big-phase:index` сохранён как alias для быстрого выпуска полного handoff-набора с верхним индексом.
 - `pnpm security:post-big-phase:bundle` сохранён как alias для быстрого перевыпуска полного handoff-набора с итоговым bundle-каталогом.
@@ -61,7 +61,7 @@ last_verified: 2026-04-01
    - repo-side input-контракт живёт в [security-reviewed-evidence-input.json](/root/RAI_EP/var/security/security-reviewed-evidence-input.json);
    - machine-readable status выпускается в [security-reviewed-evidence-status.json](/root/RAI_EP/var/security/security-reviewed-evidence-status.json) и [security-reviewed-evidence-status.md](/root/RAI_EP/var/security/security-reviewed-evidence-status.md);
    - handoff packet выпускается в [security-reviewed-evidence-packet.json](/root/RAI_EP/var/security/security-reviewed-evidence-packet.json) и [security-reviewed-evidence-packet.md](/root/RAI_EP/var/security/security-reviewed-evidence-packet.md);
-   - текущее состояние: `status=in_progress`, `verdict=reviewed_ci_evidence_loop_incomplete`; `CodeQL` и `Security Baseline` уже verified на текущем `main` head, но `dependencyReview` и reviewer refs ещё не замкнуты.
+   - текущее состояние: `status=done`, `verdict=reviewed_ci_evidence_loop_ready`; `CodeQL`, `Security Baseline`, `dependencyReview` и reviewer/provenance refs привязаны к merged `PR #2` и current `main` head.
 
 ## 2. Что этот пакет не держит
 
@@ -188,24 +188,20 @@ Warning-only пояснение:
   - [security-reviewed-evidence-status.json](/root/RAI_EP/var/security/security-reviewed-evidence-status.json)
   - [security-reviewed-evidence-packet.json](/root/RAI_EP/var/security/security-reviewed-evidence-packet.json)
   - [security-reviewed-evidence-reconcile.json](/root/RAI_EP/var/security/security-reviewed-evidence-reconcile.json)
-- текущий generated status честно фиксирует `in_progress`, потому что:
-  - `CodeQL` и `Security Baseline` verified на текущем `main` head;
-  - `provenance` workflow baseline подтверждён через attestation step;
-  - `dependencyReview` пока не имеет PR-backed `runId/prNumber`;
-  - global reviewer refs пока не привязаны к input-контракту.
-- restricted handoff packet уже подготовлен в `../RAI_EP_RESTRICTED_EVIDENCE/security/2026-04-01/reviewed-ci-loop` и держит request packet + review draft для первого reviewer-backed цикла.
+- текущий generated status фиксирует `done`, потому что:
+  - `CodeQL` и `Security Baseline` verified на current `main` head;
+  - `dependencyReview` привязан к merged `PR #2` и successful pull_request run;
+  - reviewer refs и provenance refs внесены в repo-side input-контракт;
+  - packet-level residual verdict пересчитан в `post_big_phase_internal_residual_closed`.
+- restricted handoff packet сохраняется как reusable artefact для следующих security-critical циклов, но больше не является blocker текущего residual workpack.
 
 Обязательные действия:
 
-1. зафиксировать repo-side контракт reviewed evidence loop:
-   - какие workflow runs считаются валидным evidence;
-   - какие reviewer/approval refs обязательны;
-   - где живёт machine-readable status этого контура;
-2. собрать первый проверяемый `PR-backed` цикл `dependency-review run -> merge -> reviewer refs -> status`;
-3. получить `Dependency Review` run и review-trace через `pnpm security:reviewed-evidence:pr-lookup -- --pr-number=...`;
-4. занести `prNumber/runId/reviewerRefs` через `pnpm security:reviewed-evidence:intake -- --pr-number=... --dependency-run-id=... --reviewer-refs=...`;
-5. привязать reviewer-backed provenance/evidence refs к текущему head вместо пустого repo-side input;
-6. довести `pnpm gate:security:reviewed-evidence` до green без ручных narrative-исключений.
+1. удерживать repo-side контракт reviewed evidence loop в актуальном состоянии при каждом следующем security-critical merge;
+2. обновлять `prNumber/runId/reviewerRefs` через `pnpm security:reviewed-evidence:pr-lookup` и `pnpm security:reviewed-evidence:intake`;
+3. подтверждать fresh `CodeQL / Security Baseline / dependencyReview` refs через `pnpm security:reviewed-evidence:status`;
+4. пересчитывать пакетный verdict через `pnpm security:post-big-phase:reconcile -- --pr-number=...`;
+5. не допускать возврата generated manifests в `in_progress` без реального runtime или governance regression.
 
 Ускоренный путь после появления первого реального `PR`:
 

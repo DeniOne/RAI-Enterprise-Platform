@@ -50,6 +50,7 @@ function buildActionBundle(report, handoffPacket) {
   const gateCommand = `pnpm gate:security:post-big-phase:reconcile -- --pr-number=${prPlaceholder}`;
   const reviewedReconcileCommand = `pnpm security:reviewed-evidence:reconcile -- --pr-number=${prPlaceholder}`;
   const reviewedGateCommand = `pnpm gate:security:reviewed-evidence:reconcile -- --pr-number=${prPlaceholder}`;
+  const isDone = report.status === "done";
 
   return {
     prepareCommand: "pnpm security:post-big-phase:prepare",
@@ -60,14 +61,20 @@ function buildActionBundle(report, handoffPacket) {
     prNumberPlaceholder: prPlaceholder,
     handoffPacketPath: handoffPacket ? handoffPacket.packetPath : null,
     handoffDraftPath: handoffPacket ? handoffPacket.draftPath : null,
-    requestedReviewers: handoffPacket ? handoffPacket.requestedReviewers : [],
-    missingItems: handoffPacket ? handoffPacket.missingItems : [],
-    operatorChecklist: [
-      "Открыть первый security-relevant PR.",
-      `Подставить номер PR в ${reconcileCommand}.`,
-      `Прогнать ${gateCommand}.`,
-      "Проверить, что verdict residual-пакета перешёл в done.",
-    ],
+    requestedReviewers: isDone ? [] : handoffPacket ? handoffPacket.requestedReviewers : [],
+    missingItems: isDone ? [] : handoffPacket ? handoffPacket.missingItems : [],
+    operatorChecklist: isDone
+      ? [
+          "Удерживать current reviewed-evidence baseline без регрессий.",
+          "При каждом следующем security-critical merge обновлять PR/run refs через intake.",
+          `Повторно прогонять ${gateCommand} после новых security-critical merge.`,
+        ]
+      : [
+          "Открыть первый security-relevant PR.",
+          `Подставить номер PR в ${reconcileCommand}.`,
+          `Прогнать ${gateCommand}.`,
+          "Проверить, что verdict residual-пакета перешёл в done.",
+        ],
     nextAction: report.nextAction,
   };
 }
