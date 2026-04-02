@@ -51,9 +51,10 @@ export class DevModeService {
     }
 
     /** Возвращает объект dev-пользователя совместимый с JwtStrategy.validate() */
-    async getDevUser(): Promise<{ userId: string; email: string; companyId: string; tenantId: string; role: UserRole }> {
+    async getDevUser(): Promise<{ id: string; userId: string; email: string; companyId: string; tenantId: string; role: UserRole }> {
         const companyId = await this.getDevCompanyId();
         return {
+            id: 'dev-user-00000000',
             userId: 'dev-user-00000000',
             email: 'dev@local.rai',
             companyId,

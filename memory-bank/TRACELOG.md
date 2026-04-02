@@ -3209,3 +3209,69 @@
   - команде больше не нужно бесконечно расширять pilot-wave ради формального завершения engineering work;
   - граница `implementation done / live validation continues` явно зафиксирована в canonical docs и `memory-bank`;
   - дальнейшие полевые проверки можно вести отдельно, не размывая статус завершённости технической части миграции.
+[2026-04-02 08:50Z] Первый live smoke cycle подтверждён, найден tenant-scope нюанс dev-auth режима
+- Выполнен живой smoke для `pilot-rapeseed-yaroslavl-company`:
+  - `GET /api/health` -> `status = ok`
+  - `pnpm techmap:rapeseed:cutover --action=prepare --company-id=pilot-rapeseed-yaroslavl-company` -> `PASS`
+  - `pnpm techmap:rapeseed:cutover --action=verify --company-id=pilot-rapeseed-yaroslavl-company` -> `PASS`
+  - `POST /api/tech-map/generate` с `Idempotency-Key` создал новую карту `cmnh8h6xe006dji6uqez7c5yl`
+- Живой canonical write-path подтвердил:
+  - `generationStrategy = canonical_schema`
+  - `cropForm = RAPESEED_WINTER`
+  - `canonicalBranch = winter_rapeseed`
+  - `fallbackUsed = false`
+  - `shadowParitySummary.P0 = 0`
+- Через прямую проверку persistence в БД подтверждено, что у новой карты записаны:
+  - `GenerationExplanationTrace`
+  - `FieldAdmissionResult = PASS`
+  - `Recommendation`
+  - `stageCount = 9`
+  - `controlPointCount = 2`
+  - `operationCount = 12`
+  - `resourceCount = 15`
+- Выявленный operational нюанс:
+  - `GET /api/tech-map/:id/explainability` в dev-режиме может вернуть ложный `404` для `pilot-*` карты;
+  - причина не в generation failure, а в том, что при `AUTH_DISABLED=true` `JwtAuthGuard` подставляет dev-user первой компании БД, а read-path `getExplainability(id, user.companyId)` соблюдает tenant isolation;
+  - write-path `generateMap()` при этом использует `HarvestPlan/Season` tenant context и успешно создаёт карту в нужной `pilot-*` компании.
+- Практический эффект:
+  - live validation должна учитывать, что tenant-scoped read endpoints в dev-auth режиме нельзя трактовать безусловно как источник истины для `pilot-*` tenant-ов;
+  - для полевых smoke-проверок в dev-режиме корректнее использовать:
+    - `prepare/verify/summary/readiness`
+    - direct persistence inspection
+    - или полноценный tenant-auth context вместо dev-user первой компании.
+
+[2026-04-02 09:20Z] Live runtime smoke для `pilot-rapeseed-yaroslavl-company` доведён до полного governed контура
+
+- Для честного tenant-scoped live smoke `rai-api` временно переводился в JWT-режим через `AUTH_DISABLED=false`, после чего был возвращён в исходный dev-auth режим.
+- Исправлен auth-контракт `CurrentUser`:
+  - `JwtStrategy.validate()` теперь возвращает и `id`, и `userId`;
+  - `DevModeService.getDevUser()` теперь тоже возвращает и `id`, и `userId`;
+  - это устранило live bug, при котором `PATCH /api/tech-map/:id/transition` падал на `createdBy` из-за чтения `user.id` в части контроллеров при JWT-пользователе с полем только `userId`.
+- Исправлен activation-integrity path:
+  - `IntegrityGateService.validateTechMapAdmission()` больше проверяет остатки только для stock-backed resource types;
+  - `SERVICE` и другие нефизические ресурсы исключаются из stock sufficiency check;
+  - mapping зафиксирован как:
+    - `FERTILIZER -> StockItemType.FERTILIZER`
+    - `SEED -> StockItemType.SEED`
+    - `FUEL -> StockItemType.FUEL`
+    - `PESTICIDE|CHEMICAL -> StockItemType.CHEMICAL`
+  - это устранило live blocker `REVIEW -> ACTIVE`, при котором активация падала на попытке искать `SERVICE` в `StockItemType`.
+- По живому HTTP smoke подтверждено:
+  - `GET /api/tech-map/cmnh8h6xe006dji6uqez7c5yl/explainability` под tenant JWT возвращает полную explainability-модель без `404`;
+  - `POST /api/tech-map/cmnh8h6xe006dji6uqez7c5yl/control-points/cmnh8h7010082ji6u7rafmy4p/outcome` создал:
+    - `ControlPointOutcomeExplanation`
+    - `RuleEvaluationTrace` типа `runtime_control_point`
+    - `DecisionGate`
+    - `Recommendation`
+    - `DeviationReview`
+  - `PATCH /api/tech-map/cmnh8h6xe006dji6uqez7c5yl/transition` успешно довёл карту до `ACTIVE`;
+  - `POST /api/consulting/execution/evidence` для операции `cmnh8h6ys0076ji6uvuoqaddd` успешно прикрепил execution evidence;
+  - `GET /api/consulting/execution/:operationId/evidence` и `.../evidence-status` читают evidence в active execution scope без tenant leakage.
+- По persistence подтверждено:
+  - `TechMap.status = ACTIVE`
+  - `approvedAt` и activation snapshots записаны
+  - execution evidence `cmnh9ge42000ljioqxsotee8s` сохранён с `executionSourceAudit.urlKind = artifact`
+- По explainability read-path подтверждено:
+  - `runtimeArtifacts.evidenceAudit.artifactEvidenceCount = 1`
+  - `ControlPointOutcomeExplanation.attachedEvidence[]` содержит реальный execution evidence
+  - `DecisionGate`, `Recommendation` и `DeviationReview` видны в tenant-scoped explainability после live runtime smoke
