@@ -54,18 +54,18 @@ export const WorkSurface: React.FC<{ children: React.ReactNode }> = ({ children 
                     <div className="w-full max-w-3xl rounded-xl border border-red-500 bg-black p-6 text-white shadow-2xl">
                         <h2 className="font-mono text-sm uppercase tracking-widest text-red-300">Integrity Freeze Activated</h2>
                         <p className="mt-3 text-sm text-red-100">
-                            Ledger mismatch detected. UI is frozen until forensic replay verification completes.
+                            Обнаружено расхождение журнала. Интерфейс заблокирован до завершения проверки forensic replay.
                         </p>
                         <div className="mt-4 space-y-1 font-mono text-xs text-red-200">
                             <div>TRACE_ID: {traceId}</div>
-                            <div>EXPECTED_HASH: {mismatch?.expectedHash ?? 'N/A'}</div>
-                            <div>ACTUAL_HASH: {mismatch?.actualHash ?? 'N/A'}</div>
+                            <div>EXPECTED_HASH: {mismatch?.expectedHash ?? '—'}</div>
+                            <div>ACTUAL_HASH: {mismatch?.actualHash ?? '—'}</div>
                         </div>
                         <a
                             href={`/forensics/replay?traceId=${encodeURIComponent(traceId)}`}
                             className="mt-5 inline-flex rounded border border-red-400 px-3 py-2 font-mono text-xs text-red-100 hover:bg-red-900/50"
                         >
-                            Open Trace Replay
+                            Открыть проверку трассировки
                         </a>
                     </div>
                 </div>

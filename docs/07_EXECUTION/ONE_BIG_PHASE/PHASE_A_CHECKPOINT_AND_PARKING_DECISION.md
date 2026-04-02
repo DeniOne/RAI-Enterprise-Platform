@@ -3,13 +3,13 @@ id: DOC-EXE-ONE-BIG-PHASE-A-CHECKPOINT-PARKING-DECISION-20260331
 layer: Execution
 type: Phase Plan
 status: approved
-version: 1.0.0
+version: 1.1.0
 owners: ["@techlead"]
-last_updated: 2026-03-31
+last_updated: 2026-04-02
 claim_id: CLAIM-EXE-ONE-BIG-PHASE-A-CHECKPOINT-PARKING-DECISION-20260331
 claim_status: asserted
 verified_by: manual
-last_verified: 2026-03-31
+last_verified: 2026-04-02
 evidence_refs: docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_EXECUTION_BOARD.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_STATUS_GATE.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_CLOSEOUT_STATUS_GATE.md;var/execution/phase-a-status.json;var/execution/phase-a-closeout-status.json
 ---
 # PHASE A CHECKPOINT AND PARKING DECISION
@@ -28,7 +28,7 @@ last_verified: 2026-03-31
 
 - не продолжать сейчас дальнейшее раскладывание и добивание внешнего хвоста `Phase A`;
 - сохранить всё, что уже собрано в checklist, board, gate и packet-слоях;
-- вернуться к реальному закрытию `A1 / A2 / A4 / A5` только после того, как программа снова будет работать как продукт, а не только как execution-пакет.
+- вернуться к реальному закрытию `A1 / A2 / A4` только после того, как программа снова будет работать как продукт, а не только как execution-пакет.
 
 Это не отказ от `Phase A`.
 
@@ -65,10 +65,26 @@ last_verified: 2026-03-31
 
 Текущий machine-readable снимок:
 
-- `overall_state = external_blocked`
+- `overall_state = external_in_progress`
 - `closeout_state = repo_side_exhausted_external_only`
-- `remaining_owner_queues = 13`
-- `remaining_references_count = 12`
+- `remaining_owner_queues = 8`
+- `remaining_references_count = 6`
+
+Остаточный parked external tail сейчас состоит только из:
+
+- `ELP-20260328-07`
+- `ELP-20260328-10`
+- `ELP-20260328-11`
+- `A2-S-01`
+- `A2-S-02`
+- `A4-H-01`
+
+Треки по текущему machine-readable снимку:
+
+- `A1 = external_in_progress`
+- `A2 = external_in_progress`
+- `A4 = external_blocked`
+- `A5 = closed`
 
 Это означает:
 
@@ -82,7 +98,6 @@ last_verified: 2026-03-31
 - реальный внешний intake по `ELP-*`;
 - реальный внешний intake по `A2-S-*`;
 - реальный `pilot handoff` intake по `A4-H-01`;
-- полный `chain-of-title` closeout по `ELP-20260328-09`;
 - дальнейшее размельчение owner queue / outreach / capture / reconciliation-слоёв.
 
 Прямое правило:

@@ -1,5 +1,6 @@
 import React from 'react';
 import { DomainUiContext } from '@/lib/consulting/navigation-policy';
+import { formatAdvisoryRiskLabel } from '@/lib/ui-language';
 import clsx from 'clsx';
 
 interface SystemStatusBarProps {
@@ -16,10 +17,10 @@ export function SystemStatusBar({ context, children }: SystemStatusBarProps) {
         advisoryRiskLevel: 'low',
     };
     const indicators = [
-        { label: 'Production', status: safeContext.activeTechMap ? 'OK' : 'WAIT', active: safeContext.activeTechMap },
-        { label: 'Budget', status: safeContext.lockedBudget ? 'LOCKED' : 'OPEN', active: safeContext.lockedBudget },
-        { label: 'Deviations', status: safeContext.criticalDeviations > 0 ? `CRITICAL: ${safeContext.criticalDeviations}` : '0', active: safeContext.criticalDeviations === 0, warning: safeContext.criticalDeviations > 0 },
-        { label: 'Advisory', status: safeContext.advisoryRiskLevel.toUpperCase(), active: safeContext.advisoryRiskLevel === 'low', warning: safeContext.advisoryRiskLevel !== 'low' }
+        { label: 'Производство', status: safeContext.activeTechMap ? 'Готово' : 'Ожидание', active: safeContext.activeTechMap },
+        { label: 'Бюджет', status: safeContext.lockedBudget ? 'Зафиксирован' : 'Открыт', active: safeContext.lockedBudget },
+        { label: 'Отклонения', status: safeContext.criticalDeviations > 0 ? `Критично: ${safeContext.criticalDeviations}` : '0', active: safeContext.criticalDeviations === 0, warning: safeContext.criticalDeviations > 0 },
+        { label: 'Консультативный риск', status: formatAdvisoryRiskLabel(safeContext.advisoryRiskLevel), active: safeContext.advisoryRiskLevel === 'low', warning: safeContext.advisoryRiskLevel !== 'low' }
     ];
 
     return (

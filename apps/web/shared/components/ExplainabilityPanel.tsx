@@ -83,7 +83,7 @@ export const ExplainabilityPanel: React.FC<ExplainabilityPanelProps> = ({ data, 
                     <div>
                         <h4 className="text-sm font-semibold text-gray-900 leading-tight">AI Обоснование</h4>
                         <div className="flex items-center space-x-2 mt-0.5">
-                            <span className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">Confidence: {confidencePercent}%</span>
+                            <span className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">Уверенность: {confidencePercent}%</span>
                             <div className="w-12 h-1 bg-gray-100 rounded-full overflow-hidden">
                                 <div
                                     className={clsx(
@@ -172,7 +172,7 @@ export const ExplainabilityPanel: React.FC<ExplainabilityPanelProps> = ({ data, 
                             >
                                 <div className="flex items-center space-x-2">
                                     <Database size={14} className="text-gray-600" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600">Forensic Audit Layer</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600">Слой forensic-аудита</span>
                                 </div>
                                 <ChevronRight size={14} className={clsx("text-gray-400 transition-transform", showForensic && "rotate-90")} />
                             </button>
@@ -199,7 +199,7 @@ export const ExplainabilityPanel: React.FC<ExplainabilityPanelProps> = ({ data, 
                                             rel="noopener noreferrer"
                                             className="flex items-center space-x-1 text-blue-400 hover:text-blue-300 transition-colors border-b border-blue-400/30 pb-0.5"
                                         >
-                                            <span>Verify in Ledger</span>
+                                            <span>Открыть запись в журнале</span>
                                             <ExternalLink size={10} />
                                         </a>
                                     </div>
@@ -211,7 +211,7 @@ export const ExplainabilityPanel: React.FC<ExplainabilityPanelProps> = ({ data, 
                     {data.limitationsDisclosed && (
                         <div className="flex items-center justify-center space-x-1 py-1 opacity-40">
                             <ShieldCheck size={10} />
-                            <span className="text-[9px] font-medium uppercase">Institutional Integrity Guaranteed</span>
+                            <span className="text-[9px] font-medium uppercase">Институциональная целостность подтверждена</span>
                         </div>
                     )}
                 </div>

@@ -1,3 +1,8 @@
+
+## Текущая задача (2026-04-02, phase A parked checkpoint sync)
+- [x] `PHASE_A_CHECKPOINT_AND_PARKING_DECISION.md` синхронизирован с current machine-readable closeout snapshot.
+- [x] В документе обновлены `overall_state`, `remaining_owner_queues`, `remaining_references_count` и состав parked external tail.
+- [x] Зафиксировано, что текущий parked хвост `Phase A` теперь держится только на `A1 / A2 / A4`, а `A5` уже `closed`.
 # Активный контекст RAI_EP
 
 ## Текущая задача (2026-04-02, residual closeout sync after merged PR #2)

@@ -38,7 +38,7 @@ export function FinancialMetrics({ finance }: { finance: FinanceMetrics | null }
             </Card>
 
             <Card>
-                <h3 className="mb-3 text-[10px] font-medium uppercase tracking-[0.2em] text-gray-400">Burn Rate</h3>
+                <h3 className="mb-3 text-[10px] font-medium uppercase tracking-[0.2em] text-gray-400">Скорость расходования</h3>
                 <div className="flex items-end gap-2">
                     <p className="text-2xl font-medium">{(finance.budgetBurnRate * 100).toFixed(1)}%</p>
                     <div className="mb-2 h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">

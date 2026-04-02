@@ -9,6 +9,7 @@ import { useEditMode } from '@/components/party-assets/common/DataField';
 import { SidePanelForm } from '@/components/party-assets/common/SidePanelForm';
 import { cn } from '@/lib/utils';
 import { partyAssetsApi } from '@/lib/party-assets-api';
+import { formatStatusLabel } from '@/lib/ui-language';
 import { getBankLookupReferenceMismatches } from '@/shared/lib/party-bank-validation';
 
 export function PartyBankAccountsTab() {
@@ -99,7 +100,7 @@ export function PartyBankAccountsTab() {
                                                             ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
                                                             : 'border-amber-200 bg-amber-50 text-amber-700',
                                                     )}>
-                                                        {field.status === 'ACTIVE' ? 'Банк активен' : field.status}
+                                                        {field.status === 'ACTIVE' ? 'Банк активен' : formatStatusLabel(field.status)}
                                                     </span>
                                                 ) : null}
                                             </div>

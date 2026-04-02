@@ -90,7 +90,7 @@ const StepItem: React.FC<StepItemProps> = ({
 
 /**
  * @component GovernanceTestButton
- * @description Панель управления Deterministic Impact Engine (Phase 4).
+ * @description Панель управления детерминированным контуром воздействия (Phase 4).
  * Соответствует UI Design Canon (Geist, Light Theme, No Bold).
  */
 export const GovernanceTestButton: React.FC = () => {
@@ -134,8 +134,8 @@ export const GovernanceTestButton: React.FC = () => {
                         <Fingerprint size={20} />
                     </div>
                     <div>
-                        <h2 className="text-xl font-medium tracking-tight text-black">Institutional Kernel</h2>
-                        <p className="text-[10px] text-black/40 uppercase tracking-widest">Phase 4 • Deterministic Impact</p>
+                        <h2 className="text-xl font-medium tracking-tight text-black">Институциональное ядро</h2>
+                        <p className="text-[10px] text-black/40 uppercase tracking-widest">Фаза 4 • Детерминированное воздействие</p>
                     </div>
                 </div>
                 <div className={cn(
@@ -146,19 +146,19 @@ export const GovernanceTestButton: React.FC = () => {
                                 state === 'executed' ? "bg-emerald-50 border-emerald-500 text-emerald-600" :
                                     "bg-black/5 border-black/10 text-black"
                 )}>
-                    {state === 'executed' ? 'Session Finalized' : `FSM: ${String(state).toUpperCase()}`}
+                    {state === 'executed' ? 'Сессия завершена' : `FSM: ${String(state).toUpperCase()}`}
                 </div>
             </div>
 
             <div className="space-y-4">
                 <StepItem
                     title="Шаг 1. Инициация"
-                    desc="Фиксация намерения и генерация TraceID"
+                    desc="Фиксация намерения и генерация идентификатора трассировки"
                     active={state === 'idle' || state === 'initiated'}
                     completed={state !== 'idle' && state !== 'initiated'}
                     icon={<Play size={18} />}
                 >
-                    <button onClick={() => initiate('R3')} className={getBtnStyle(state === 'idle')}>Start R3</button>
+                    <button onClick={() => initiate('R3')} className={getBtnStyle(state === 'idle')}>Запустить R3</button>
                 </StepItem>
 
                 <StepItem
@@ -179,7 +179,7 @@ export const GovernanceTestButton: React.FC = () => {
                     icon={<ShieldAlert size={18} />}
                 >
                     {state === 'conflict_detected' ? (
-                        <button onClick={() => resolveConflict(context.conflicts[0]?.conflictId)} className={getBtnStyle(true)}>Резолвить</button>
+                        <button onClick={() => resolveConflict(context.conflicts[0]?.conflictId)} className={getBtnStyle(true)}>Разрешить</button>
                     ) : (
                         <button onClick={escalate} className={getBtnStyle(canEscalate)}>Эскалация</button>
                     )}
@@ -207,7 +207,7 @@ export const GovernanceTestButton: React.FC = () => {
 
                 <StepItem
                     title="Шаг 5. Завершение"
-                    desc="Запись в Ledger и закрытие сессии"
+                    desc="Запись в журнал и закрытие сессии"
                     active={state === 'approved'}
                     completed={state === 'executed'}
                     icon={<CheckCircle2 size={18} />}
@@ -219,20 +219,20 @@ export const GovernanceTestButton: React.FC = () => {
             {isPending && (
                 <div className="mt-8 p-6 rounded-[32px] bg-black/[0.02] border border-black/5">
                     <div className="flex justify-between items-center mb-4">
-                        <p className="text-[10px] font-medium uppercase tracking-[0.2em] opacity-40">System Audit Trace</p>
+                        <p className="text-[10px] font-medium uppercase tracking-[0.2em] opacity-40">Трассировка системного аудита</p>
                         <Lock size={12} className="opacity-20" />
                     </div>
                     <div className="grid grid-cols-2 gap-4 text-[11px]">
                         <div>
-                            <p className="text-black/30 mb-1 uppercase text-[9px]">Trace ID</p>
-                            <p className="font-mono text-black/60 truncate">{context.traceId || 'N/A'}</p>
+                            <p className="text-black/30 mb-1 uppercase text-[9px]">Идентификатор трассировки</p>
+                            <p className="font-mono text-black/60 truncate">{context.traceId || '—'}</p>
                         </div>
                         <div>
-                            <p className="text-black/30 mb-1 uppercase text-[9px]">Risk Profile</p>
+                            <p className="text-black/30 mb-1 uppercase text-[9px]">Профиль риска</p>
                             <p className="text-black/60">{context.riskLevel}</p>
                         </div>
                         <div className="col-span-2">
-                            <p className="text-black/30 mb-1 uppercase text-[9px]">Institutional Effects (Verified)</p>
+                            <p className="text-black/30 mb-1 uppercase text-[9px]">Подтверждённые институциональные эффекты</p>
                             <div className="space-y-3 mt-1">
                                 {context.effects.map(e => (
                                     <div key={e.effectId} className="group">

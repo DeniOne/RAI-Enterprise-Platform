@@ -1,3 +1,13 @@
+
+1. **Checkpoint `Phase A` синхронизирован с current parked external tail** [DONE]:
+  - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_CHECKPOINT_AND_PARKING_DECISION.md` обновлён под current machine-readable snapshot;
+  - `overall_state` выровнен в `external_in_progress`;
+  - residual tail сокращён до `6` references / `8` owner queues;
+  - из parked набора убран уже закрытый `A5` / `ELP-20260328-09`.
+  - Практический эффект:
+    - точка возврата к `Phase A` снова честно отражает текущий внешний хвост;
+    - parked narrative больше не раздувает хвост уже закрытым `A5`;
+    - следующий внешний closeout будет стартовать от актуального snapshot, а не от устаревшего мартовского состояния.
 # Progress Report - Prisma, Agro Domain & RAI Chat Integration
 
 ## 2026-04-02

@@ -25,7 +25,7 @@ export const TriggeredEffectsPanel: React.FC<TriggeredEffectsPanelProps> = ({ ef
                     <Zap className="w-4 h-4" />
                 </div>
                 <div>
-                    <h3 className="text-sm font-medium text-slate-900">Deterministic Impact</h3>
+                    <h3 className="text-sm font-medium text-slate-900">Детерминированное воздействие</h3>
                     <p className="text-[10px] text-slate-500 font-normal uppercase tracking-widest">Детерминированные последствия</p>
                 </div>
             </div>
@@ -58,7 +58,7 @@ export const TriggeredEffectsPanel: React.FC<TriggeredEffectsPanelProps> = ({ ef
                             </div>
                             <div className="flex items-center gap-2 text-[10px] text-slate-500">
                                 <Shield className="w-3 h-3" />
-                                <span>{effect.requiresEscalation ? 'Требуется эскалация' : 'Авто-аппрув'}</span>
+                                <span>{effect.requiresEscalation ? 'Требуется эскалация' : 'Автосогласование'}</span>
                             </div>
                         </div>
 
@@ -66,7 +66,7 @@ export const TriggeredEffectsPanel: React.FC<TriggeredEffectsPanelProps> = ({ ef
                             <div className="mt-2 flex items-center gap-2 py-1.5 px-2 bg-emerald-50/50 border border-emerald-100 rounded-lg">
                                 <Link className="w-3 h-3 text-emerald-600" />
                                 <span className="text-[9px] font-mono text-emerald-700 truncate">
-                                    LEDGER_HASH: {effect.immutableHash}
+                                    ХЕШ_ЖУРНАЛА: {effect.immutableHash}
                                 </span>
                             </div>
                         )}
@@ -77,7 +77,7 @@ export const TriggeredEffectsPanel: React.FC<TriggeredEffectsPanelProps> = ({ ef
             <div className="mt-6 flex items-center gap-2 py-2 px-3 bg-blue-50/50 rounded-lg border border-blue-100/30">
                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
                 <p className="text-[9px] text-blue-600 font-medium tracking-tight">
-                    Invariant-4.3: Все эффекты вычислены и хешированы (RFC8785)
+                    Инвариант 4.3: все эффекты вычислены и захешированы по RFC8785
                 </p>
             </div>
         </div>

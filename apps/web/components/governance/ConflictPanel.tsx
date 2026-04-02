@@ -27,7 +27,7 @@ export const ConflictPanel: React.FC<ConflictPanelProps> = ({ conflicts, onResol
                     <ShieldAlert className="w-4 h-4" />
                 </div>
                 <div>
-                    <h3 className="text-sm font-medium text-rose-900">Institutional Conflict</h3>
+                    <h3 className="text-sm font-medium text-rose-900">Институциональный конфликт</h3>
                     <p className="text-[10px] text-rose-600/70 font-normal uppercase tracking-widest">Разрешение противоречий</p>
                 </div>
             </div>
@@ -60,11 +60,11 @@ export const ConflictPanel: React.FC<ConflictPanelProps> = ({ conflicts, onResol
                             </p>
 
                             <div className="flex flex-col gap-2 p-3 bg-slate-50 rounded-lg border border-slate-100">
-                                <p className="text-[10px] font-medium text-slate-500 uppercase tracking-tight mb-1">Escalation Path:</p>
+                                <p className="text-[10px] font-medium text-slate-500 uppercase tracking-tight mb-1">Маршрут эскалации:</p>
                                 {conflict.escalationPath.map((step) => (
                                     <div key={step.nodeId} className="flex items-center gap-2 text-[10px] text-slate-600 font-normal">
                                         <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
-                                        <span>Step {step.order}: {step.authorityRequired} ({step.nodeId})</span>
+                                        <span>Шаг {step.order}: {step.authorityRequired} ({step.nodeId})</span>
                                     </div>
                                 ))}
                             </div>

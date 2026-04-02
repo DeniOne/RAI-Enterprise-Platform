@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
+import { formatStatusLabel } from '@/lib/ui-language';
 
 type AccountItem = {
     id: string;
@@ -76,7 +77,7 @@ export function TechMapPreparationWizard() {
     const [busyAction, setBusyAction] = useState<string | null>(null);
 
     const [accountForm, setAccountForm] = useState({
-        name: `TechMap Farm ${new Date().toISOString().slice(0, 10)}`,
+        name: `Хозяйство техкарты ${new Date().toISOString().slice(0, 10)}`,
         inn: '',
         type: 'CLIENT',
     });
@@ -657,7 +658,7 @@ export function TechMapPreparationWizard() {
                                     <option value=''>Выберите план</option>
                                     {plans.map((plan) => (
                                         <option key={plan.id} value={plan.id}>
-                                            {`${plan.targetMetric || 'План'} • ${plan.status || 'UNKNOWN'} • ${plan.id.slice(0, 8)}`}
+                                            {`${plan.targetMetric || 'План'} • ${formatStatusLabel(plan.status)} • ${plan.id.slice(0, 8)}`}
                                         </option>
                                     ))}
                                 </select>
@@ -688,35 +689,35 @@ export function TechMapPreparationWizard() {
                                     disabled={busyAction !== null || !selectedPlan}
                                     className='rounded-xl border border-black/10 px-4 py-2 text-xs font-medium hover:bg-gray-50 disabled:opacity-50'
                                 >
-                                    План {'->'} REVIEW
+                                    План {'->'} На проверку
                                 </button>
                                 <button
                                     onClick={() => handlePlanTransition('APPROVED')}
                                     disabled={busyAction !== null || !selectedPlan}
                                     className='rounded-xl border border-black/10 px-4 py-2 text-xs font-medium hover:bg-gray-50 disabled:opacity-50'
                                 >
-                                    План {'->'} APPROVED
+                                    План {'->'} Утверждено
                                 </button>
                                 <button
                                     onClick={() => handleTechMapTransition('REVIEW')}
                                     disabled={busyAction !== null || !selectedTechMap}
                                     className='rounded-xl border border-black/10 px-4 py-2 text-xs font-medium hover:bg-gray-50 disabled:opacity-50'
                                 >
-                                    Техкарта {'->'} REVIEW
+                                    Техкарта {'->'} На проверку
                                 </button>
                                 <button
                                     onClick={() => handleTechMapTransition('APPROVED')}
                                     disabled={busyAction !== null || !selectedTechMap}
                                     className='rounded-xl border border-black/10 px-4 py-2 text-xs font-medium hover:bg-gray-50 disabled:opacity-50'
                                 >
-                                    Техкарта {'->'} APPROVED
+                                    Техкарта {'->'} Утверждено
                                 </button>
                                 <button
                                     onClick={() => handleTechMapTransition('ACTIVE')}
                                     disabled={busyAction !== null || !selectedTechMap}
                                     className='rounded-xl bg-emerald-600 px-4 py-2 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50'
                                 >
-                                    Техкарта {'->'} ACTIVE
+                                    Техкарта {'->'} Активно
                                 </button>
                             </div>
                         </div>
@@ -756,8 +757,8 @@ export function TechMapPreparationWizard() {
                                 <p>Хозяйство: {selectedAccount ? `${selectedAccount.name || selectedAccount.id}` : 'не выбрано'}</p>
                                 <p>Поле: {selectedField ? `${selectedField.name || selectedField.cadastreNumber || selectedField.id}` : 'не выбрано'}</p>
                                 <p>Сезон: {selectedSeason ? `${selectedSeason.id} • ${selectedSeason.year ?? '-'}` : 'не создан'}</p>
-                                <p>План: {selectedPlan ? `${selectedPlan.id} • ${selectedPlan.status}` : 'не создан'}</p>
-                                <p>Техкарта: {selectedTechMap ? `${selectedTechMap.id} • ${selectedTechMap.status}` : 'не создана'}</p>
+                                <p>План: {selectedPlan ? `${selectedPlan.id} • ${formatStatusLabel(selectedPlan.status)}` : 'не создан'}</p>
+                                <p>Техкарта: {selectedTechMap ? `${selectedTechMap.id} • ${formatStatusLabel(selectedTechMap.status)}` : 'не создана'}</p>
                             </div>
                             {selectedPlan ? (
                                 <Link href={`/consulting/plans/${selectedPlan.id}`} className='text-sm text-blue-600 hover:underline'>
@@ -771,7 +772,7 @@ export function TechMapPreparationWizard() {
                             ) : null}
                             {selectedTechMap?.status === 'ACTIVE' ? (
                                 <Link href='/consulting/execution' className='block text-sm text-emerald-700 hover:underline'>
-                                    Перейти в execution
+                                    Перейти в контур исполнения
                                 </Link>
                             ) : null}
                         </div>
@@ -783,7 +784,7 @@ export function TechMapPreparationWizard() {
                             <div className='space-y-2 text-sm text-gray-700'>
                                 <p>1. После создания сезона у поля появляется реальный сезонный контекст, который затем выбирается в плане.</p>
                                 <p>2. После генерации техкарты открывается detail-view с содержимым карты, а не пустая заглушка.</p>
-                                <p>3. После статусов `План {'->'} APPROVED` и `Техкарта {'->'} ACTIVE` операции становятся видны в `/consulting/execution`.</p>
+                                <p>3. После переходов «План → Утверждено» и «Техкарта → Активно» операции становятся видны в `/consulting/execution`.</p>
                             </div>
                         </div>
                     </Card>

@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import clsx from 'clsx';
 import { KpiCard } from './KpiCard';
 import { AuthorityContextType } from '@/core/governance/AuthorityContext';
+import { formatStatusLabel } from '@/lib/ui-language';
 
 interface Plan {
     id: string;
@@ -72,7 +73,7 @@ function PlanItem({ plan, authority, context, onTransition, activePhase }: {
                                         plan.status === 'APPROVED' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
                                             'bg-zinc-100 text-zinc-500'
                         )}>
-                            {plan.status}
+                            {formatStatusLabel(plan.status)}
                         </span>
                     </div>
                     <p className="text-xs text-gray-400 font-medium tracking-wide">ID: {plan.id}</p>
@@ -95,7 +96,7 @@ function PlanItem({ plan, authority, context, onTransition, activePhase }: {
                             title={bt.reason}
                             className="px-6 py-2.5 bg-gray-50 text-gray-300 rounded-xl text-xs font-semibold border border-black/5 cursor-not-allowed grayscale"
                         >
-                            {bt.transition}
+                            {formatStatusLabel(bt.transition)}
                         </div>
                     ))}
 

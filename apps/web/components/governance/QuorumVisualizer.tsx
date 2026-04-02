@@ -58,7 +58,7 @@ export const QuorumVisualizer: React.FC<QuorumVisualizerProps> = ({
                         )}>
                             {(currentRatio * 100).toFixed(0)}%
                         </span>
-                        <span className="text-sm font-bold text-slate-400 block -mt-1">/ {(threshold * 100).toFixed(0)}% required</span>
+                        <span className="text-sm font-bold text-slate-400 block -mt-1">/ {(threshold * 100).toFixed(0)}% требуется</span>
                     </div>
                 </div>
 
@@ -104,7 +104,7 @@ export const QuorumVisualizer: React.FC<QuorumVisualizerProps> = ({
             <div className="p-6 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-slate-400">
                     <Fingerprint size={14} />
-                    <span className="text-[9px] font-bold uppercase tracking-widest italic">Протокол решения: ACTIVE</span>
+                    <span className="text-[9px] font-bold uppercase tracking-widest italic">Протокол решения: активно</span>
                 </div>
                 <div className="flex items-center gap-3">
                     {!isMet && onConfirmDecision && (

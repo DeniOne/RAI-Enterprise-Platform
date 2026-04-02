@@ -9,6 +9,14 @@ import { OperationEvidencePanel } from './OperationEvidencePanel';
 import { OperationActivityTimeline } from './OperationActivityTimeline';
 import { EvidenceGuardBanner } from './EvidenceGuardBanner';
 import { api } from '@/lib/api';
+import {
+    formatChangeOrderTypeLabel,
+    formatEvidenceIntegrityLabel,
+    formatObservationIntentLabel,
+    formatObservationTypeLabel,
+    formatOutcomeLabel,
+    formatSeverityLabel,
+} from '@/lib/ui-language';
 
 interface ControlPointOutcomeModalProps {
     operation: any;
@@ -19,49 +27,49 @@ interface ControlPointOutcomeModalProps {
 }
 
 const OUTCOME_OPTIONS = [
-    { value: 'PASS', label: 'PASS' },
-    { value: 'WARNING', label: 'WARNING' },
-    { value: 'FAIL', label: 'FAIL' },
-    { value: 'BLOCKED', label: 'BLOCKED' },
+    { value: 'PASS', label: formatOutcomeLabel('PASS') },
+    { value: 'WARNING', label: formatOutcomeLabel('WARNING') },
+    { value: 'FAIL', label: formatOutcomeLabel('FAIL') },
+    { value: 'BLOCKED', label: formatOutcomeLabel('BLOCKED') },
 ];
 
 const SEVERITY_OPTIONS = [
-    { value: 'INFO', label: 'INFO' },
-    { value: 'WARNING', label: 'WARNING' },
-    { value: 'CRITICAL', label: 'CRITICAL' },
-    { value: 'BLOCKER', label: 'BLOCKER' },
+    { value: 'INFO', label: formatSeverityLabel('INFO') },
+    { value: 'WARNING', label: formatSeverityLabel('WARNING') },
+    { value: 'CRITICAL', label: formatSeverityLabel('CRITICAL') },
+    { value: 'BLOCKER', label: formatSeverityLabel('BLOCKER') },
 ];
 
 const CHANGE_ORDER_OPTIONS = [
-    { value: 'SHIFT_DATE', label: 'SHIFT_DATE' },
-    { value: 'CHANGE_INPUT', label: 'CHANGE_INPUT' },
-    { value: 'CHANGE_RATE', label: 'CHANGE_RATE' },
-    { value: 'CANCEL_OP', label: 'CANCEL_OP' },
-    { value: 'ADD_OP', label: 'ADD_OP' },
+    { value: 'SHIFT_DATE', label: formatChangeOrderTypeLabel('SHIFT_DATE') },
+    { value: 'CHANGE_INPUT', label: formatChangeOrderTypeLabel('CHANGE_INPUT') },
+    { value: 'CHANGE_RATE', label: formatChangeOrderTypeLabel('CHANGE_RATE') },
+    { value: 'CANCEL_OP', label: formatChangeOrderTypeLabel('CANCEL_OP') },
+    { value: 'ADD_OP', label: formatChangeOrderTypeLabel('ADD_OP') },
 ];
 
 const OBSERVATION_TYPE_OPTIONS = [
-    { value: 'PHOTO', label: 'PHOTO' },
-    { value: 'MEASUREMENT', label: 'MEASUREMENT' },
-    { value: 'VOICE_NOTE', label: 'VOICE_NOTE' },
-    { value: 'GEO_WALK', label: 'GEO_WALK' },
-    { value: 'SOS_SIGNAL', label: 'SOS_SIGNAL' },
-    { value: 'CALL_LOG', label: 'CALL_LOG' },
+    { value: 'PHOTO', label: formatObservationTypeLabel('PHOTO') },
+    { value: 'MEASUREMENT', label: formatObservationTypeLabel('MEASUREMENT') },
+    { value: 'VOICE_NOTE', label: formatObservationTypeLabel('VOICE_NOTE') },
+    { value: 'GEO_WALK', label: formatObservationTypeLabel('GEO_WALK') },
+    { value: 'SOS_SIGNAL', label: formatObservationTypeLabel('SOS_SIGNAL') },
+    { value: 'CALL_LOG', label: formatObservationTypeLabel('CALL_LOG') },
 ];
 
 const OBSERVATION_INTENT_OPTIONS = [
-    { value: 'MONITORING', label: 'MONITORING' },
-    { value: 'INCIDENT', label: 'INCIDENT' },
-    { value: 'CONSULTATION', label: 'CONSULTATION' },
-    { value: 'CONFIRMATION', label: 'CONFIRMATION' },
-    { value: 'DELAY', label: 'DELAY' },
-    { value: 'CALL', label: 'CALL' },
+    { value: 'MONITORING', label: formatObservationIntentLabel('MONITORING') },
+    { value: 'INCIDENT', label: formatObservationIntentLabel('INCIDENT') },
+    { value: 'CONSULTATION', label: formatObservationIntentLabel('CONSULTATION') },
+    { value: 'CONFIRMATION', label: formatObservationIntentLabel('CONFIRMATION') },
+    { value: 'DELAY', label: formatObservationIntentLabel('DELAY') },
+    { value: 'CALL', label: formatObservationIntentLabel('CALL') },
 ];
 
 const INTEGRITY_STATUS_OPTIONS = [
-    { value: 'WEAK_EVIDENCE', label: 'WEAK_EVIDENCE' },
-    { value: 'STRONG_EVIDENCE', label: 'STRONG_EVIDENCE' },
-    { value: 'NO_EVIDENCE', label: 'NO_EVIDENCE' },
+    { value: 'WEAK_EVIDENCE', label: formatEvidenceIntegrityLabel('WEAK_EVIDENCE') },
+    { value: 'STRONG_EVIDENCE', label: formatEvidenceIntegrityLabel('STRONG_EVIDENCE') },
+    { value: 'NO_EVIDENCE', label: formatEvidenceIntegrityLabel('NO_EVIDENCE') },
 ];
 
 export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> = ({
@@ -168,7 +176,7 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
 
             if (isEvidenceBlocking) {
                 setSubmissionError(
-                    `Outcome заблокирован до прикрепления evidence: ${missingEvidenceTypes.join(', ')}`,
+                    `Результат заблокирован до прикрепления подтверждений: ${missingEvidenceTypes.join(', ')}`,
                 );
                 setIsPreparingObservation(false);
                 return;
@@ -178,7 +186,7 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
 
             if (createObservation) {
                 if (!hasObservationPayload) {
-                    setSubmissionError('Для field observation добавьте заметку, photo URL или voice URL.');
+                    setSubmissionError('Для полевого наблюдения добавьте заметку, ссылку на фото или ссылку на голосовую запись.');
                     setIsPreparingObservation(false);
                     return;
                 }
@@ -207,11 +215,11 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
                 operationId: operation.id,
                 completeOperation,
                 decisiveAction,
-                recommendationTitle: `Outcome по ${selectedControlPoint?.name || 'control point'}`,
+                recommendationTitle: `Результат по ${selectedControlPoint?.name || 'контрольной точке'}`,
                 recommendationMessage: summary,
                 decisionGateTitle:
                     severity === 'CRITICAL' || severity === 'BLOCKER' || decisiveAction || openChangeOrder
-                        ? `Governed review: ${selectedControlPoint?.name || 'control point'}`
+                        ? `Управляемая проверка: ${selectedControlPoint?.name || 'контрольная точка'}`
                         : undefined,
                 changeOrder: openChangeOrder
                     ? {
@@ -230,7 +238,7 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
             const message =
                 error?.response?.data?.message ||
                 error?.message ||
-                'Не удалось создать field observation для execution outcome.';
+                'Не удалось создать полевое наблюдение для результата исполнения.';
             setSubmissionError(Array.isArray(message) ? message.join('; ') : String(message));
         } finally {
             setIsPreparingObservation(false);
@@ -242,7 +250,7 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
             <div className="w-full max-w-2xl bg-[#FAFAFA] border border-black/10 rounded-2xl shadow-2xl overflow-hidden">
                 <div className="flex justify-between items-center p-6 border-b border-black/5 bg-white">
                     <div>
-                        <h2 className="text-lg font-medium text-slate-900">Фиксация control point outcome</h2>
+                        <h2 className="text-lg font-medium text-slate-900">Фиксация результата по контрольной точке</h2>
                         <p className="text-xs text-slate-500 mt-0.5">{operation.name}</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400">
@@ -254,7 +262,7 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-2">
-                                Control point
+                                Контрольная точка
                             </label>
                             <select
                                 className="w-full h-11 px-4 bg-white border border-black/5 rounded-xl text-sm text-slate-900 outline-none"
@@ -269,13 +277,13 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
                             </select>
                             {selectedControlPoint?.outcomeExplanations?.[0] && (
                                 <p className="mt-2 text-xs text-slate-500">
-                                    Последний outcome: {selectedControlPoint.outcomeExplanations[0].severity} / {selectedControlPoint.outcomeExplanations[0].summary}
+                                    Последний результат: {formatSeverityLabel(selectedControlPoint.outcomeExplanations[0].severity)} / {selectedControlPoint.outcomeExplanations[0].summary}
                                 </p>
                             )}
                         </div>
                         <div>
                             <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-2">
-                                Outcome
+                                Результат
                             </label>
                             <select
                                 className="w-full h-11 px-4 bg-white border border-black/5 rounded-xl text-sm text-slate-900 outline-none"
@@ -294,7 +302,7 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-2">
-                                Severity
+                                Серьёзность
                             </label>
                             <select
                                 className="w-full h-11 px-4 bg-white border border-black/5 rounded-xl text-sm text-slate-900 outline-none"
@@ -310,22 +318,22 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
                         </div>
                         <div className="p-4 bg-white rounded-xl border border-black/5">
                             <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-2">
-                                Политика evidence
+                                Политика подтверждений
                             </p>
                             <div className="flex items-start gap-2 text-xs text-slate-600">
                                 <ShieldAlert className="w-4 h-4 mt-0.5 text-amber-600" />
-                                <p>`CRITICAL`/`BLOCKER`, decisive action, `ChangeOrder` и `DONE`-закрытие используют evidence guard по операции.</p>
+                                <p>Критичные исходы, решающее действие, изменение и закрытие операции используют обязательную проверку подтверждений по операции.</p>
                             </div>
                         </div>
                     </div>
 
                     {evidenceGuardRequired && (
                         <EvidenceGuardBanner
-                            title="Guard перед governed outcome"
+                            title="Проверка перед управляемым результатом"
                             loading={isEvidenceStatusLoading}
                             isBlocking={isEvidenceBlocking}
-                            readyText="Evidence достаточен для выбранного governed outcome."
-                        blockedText="Outcome не будет отправлен, пока не прикреплены обязательные evidence."
+                            readyText="Подтверждений достаточно для выбранного результата."
+                        blockedText="Результат не будет отправлен, пока не прикреплены обязательные подтверждения."
                         missingEvidenceTypes={missingEvidenceTypes}
                         requiredCount={evidenceStatus?.requiredEvidenceTypes?.length}
                         presentCount={evidenceStatus?.presentEvidenceTypes?.length}
@@ -335,11 +343,11 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
 
                     <div>
                         <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-2">
-                            Summary
+                            Сводка
                         </label>
                         <textarea
                             className="w-full h-28 p-4 bg-white border border-black/5 rounded-xl text-sm text-slate-900 outline-none resize-none"
-                            placeholder="Что произошло на control point и почему это важно для исполнения?"
+                            placeholder="Что произошло на контрольной точке и почему это важно для исполнения?"
                             value={summary}
                             onChange={(e) => setSummary(e.target.value)}
                         />
@@ -354,10 +362,10 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
                         />
                         <div>
                             <p className="text-sm font-medium text-sky-950 flex items-center gap-2">
-                                <ClipboardPlus className="w-4 h-4" /> Создать `FieldObservation`
+                                <ClipboardPlus className="w-4 h-4" /> Создать полевое наблюдение
                             </p>
                             <p className="text-xs text-sky-700 mt-1">
-                                Observation будет создан в execution-scope и привязан к governed outcome через `observationId`.
+                                Наблюдение будет создано в контуре исполнения и привязано к результату через `observationId`.
                             </p>
                         </div>
                     </label>
@@ -367,7 +375,7 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-2">
-                                        Observation type
+                                        Тип наблюдения
                                     </label>
                                     <select
                                         className="w-full h-11 px-4 bg-white border border-black/5 rounded-xl text-sm text-slate-900 outline-none"
@@ -383,7 +391,7 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
                                 </div>
                                 <div>
                                     <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-2">
-                                        Intent
+                                        Назначение
                                     </label>
                                     <select
                                         className="w-full h-11 px-4 bg-white border border-black/5 rounded-xl text-sm text-slate-900 outline-none"
@@ -399,7 +407,7 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
                                 </div>
                                 <div>
                                     <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-2">
-                                        Integrity
+                                        Качество подтверждения
                                     </label>
                                     <select
                                         className="w-full h-11 px-4 bg-white border border-black/5 rounded-xl text-sm text-slate-900 outline-none"
@@ -417,11 +425,11 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
 
                             <div>
                                 <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-2">
-                                    Observation note
+                                    Заметка по наблюдению
                                 </label>
                                 <textarea
                                     className="w-full h-24 p-4 bg-white border border-black/5 rounded-xl text-sm text-slate-900 outline-none resize-none"
-                                    placeholder="Что именно наблюдалось в поле и почему observation нужен для control point?"
+                                    placeholder="Что именно наблюдалось в поле и почему это наблюдение важно для контрольной точки?"
                                     value={observationContent}
                                     onChange={(e) => setObservationContent(e.target.value)}
                                 />
@@ -443,7 +451,7 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
                             </div>
 
                             <p className="text-xs text-slate-500">
-                                Observation требует как минимум заметку, photo URL или voice URL. Поле и сезон будут взяты из execution context операции.
+                                Наблюдение требует хотя бы заметку, ссылку на фото или ссылку на голосовую запись. Поле и сезон будут взяты из контекста исполнения операции.
                             </p>
                         </div>
                     )}
@@ -457,8 +465,8 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
                                 className="mt-1"
                             />
                             <div>
-                                <p className="text-sm font-medium text-slate-900">Закрыть операцию как `DONE`</p>
-                                <p className="text-xs text-slate-500 mt-1">Использует evidence guard и обновляет execution record.</p>
+                                <p className="text-sm font-medium text-slate-900">Закрыть операцию как завершённую</p>
+                                <p className="text-xs text-slate-500 mt-1">Использует проверку подтверждений и обновляет запись исполнения.</p>
                             </div>
                         </label>
                         <label className="flex items-start gap-3 p-4 bg-white rounded-xl border border-black/5">
@@ -469,8 +477,8 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
                                 className="mt-1"
                             />
                             <div>
-                                <p className="text-sm font-medium text-slate-900">Decisive agronomic action</p>
-                                <p className="text-xs text-slate-500 mt-1">Откроет governed review path через `DecisionGate`.</p>
+                                <p className="text-sm font-medium text-slate-900">Решающее агрономическое действие</p>
+                                <p className="text-xs text-slate-500 mt-1">Откроет управляемый маршрут проверки через `DecisionGate`.</p>
                             </div>
                         </label>
                     </div>
@@ -484,9 +492,9 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
                         />
                         <div>
                             <p className="text-sm font-medium text-amber-900 flex items-center gap-2">
-                                <GitBranchPlus className="w-4 h-4" /> Создать `ChangeOrder`
+                                <GitBranchPlus className="w-4 h-4" /> Создать изменение
                             </p>
-                            <p className="text-xs text-amber-700 mt-1">Запустит approval-маршрут после фиксации outcome.</p>
+                            <p className="text-xs text-amber-700 mt-1">Запустит маршрут согласования после фиксации результата.</p>
                         </div>
                     </label>
 
@@ -494,7 +502,7 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-2">
-                                    Change Type
+                                    Тип изменения
                                 </label>
                                 <select
                                     className="w-full h-11 px-4 bg-white border border-black/5 rounded-xl text-sm text-slate-900 outline-none"
@@ -510,7 +518,7 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
                             </div>
                             <div>
                                 <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-2">
-                                    Delta Cost Rub
+                                    Изменение стоимости, RUB
                                 </label>
                                 <Input
                                     type="number"
@@ -525,7 +533,7 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
 
                     <div>
                         <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-3">
-                            Evidence
+                            Подтверждения
                         </label>
                         <OperationEvidencePanel
                             operation={operation}
@@ -536,7 +544,7 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
 
                     <div>
                         <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-3">
-                            Execution timeline
+                            Лента исполнения
                         </label>
                         <OperationActivityTimeline operation={operation} limit={6} />
                     </div>
@@ -564,7 +572,7 @@ export const ControlPointOutcomeModal: React.FC<ControlPointOutcomeModalProps> =
                         ) : (
                             <CheckCircle2 className="w-4 h-4" />
                         )}
-                        Зафиксировать outcome
+                        Зафиксировать результат
                     </Button>
                 </div>
             </div>

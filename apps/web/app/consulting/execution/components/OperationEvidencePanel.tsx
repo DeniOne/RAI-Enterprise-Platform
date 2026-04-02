@@ -7,6 +7,7 @@ import * as QRCode from 'qrcode';
 import { api } from '@/lib/api';
 import { Button } from "@/components/ui/button";
 import { Input } from '@/components/ui/input';
+import { formatEvidenceTypeLabel } from '@/lib/ui-language';
 
 interface OperationEvidencePanelProps {
     operation: any;
@@ -76,27 +77,27 @@ const EVIDENCE_SOURCE_ACTIONS: Record<string, { label: string; description: stri
         description: 'Запустить capture-flow для видеозаписи.',
     },
     GEO_TRACK: {
-        label: 'Открыть geo-track',
+        label: 'Открыть геомаршрут',
         description: 'Запустить маршрут трека для текущей операции.',
     },
     LAB_REPORT: {
-        label: 'Открыть lab report',
+        label: 'Открыть лабораторный отчёт',
         description: 'Перейти к последнему лабораторному отчёту.',
     },
     INVOICE: {
-        label: 'Открыть invoice',
+        label: 'Открыть счёт',
         description: 'Перейти к последнему финансовому документу.',
     },
     CONTRACT: {
-        label: 'Открыть contract',
+        label: 'Открыть договор',
         description: 'Перейти к текущему контрактному документу.',
     },
     WEATHER_API_SNAPSHOT: {
-        label: 'Сделать weather snapshot',
+        label: 'Сделать погодный снимок',
         description: 'Открыть источник погодного снимка для текущего окна.',
     },
     SATELLITE_IMAGE: {
-        label: 'Открыть satellite source',
+        label: 'Открыть спутниковый источник',
         description: 'Перейти к последней спутниковой сцене.',
     },
 };
@@ -324,7 +325,7 @@ export function OperationEvidencePanel({
             }
             setFileUrl('');
             setMetaNote('');
-            setSourceHint(`Сохранён последний источник для ${evidenceType}.`);
+            setSourceHint(`Сохранён последний источник для типа «${formatEvidenceTypeLabel(evidenceType)}».`);
             queryClient.invalidateQueries({ queryKey: ['consulting', 'execution-evidence', operationId] });
             queryClient.invalidateQueries({ queryKey: ['consulting', 'execution-evidence-status', operationId] });
             queryClient.invalidateQueries({ queryKey: ['consulting', 'active-operations'] });
@@ -343,8 +344,8 @@ export function OperationEvidencePanel({
             setFileUrl(savedSource);
             setSourceHint(
                 mode === 'auto'
-                    ? `Подставлен последний источник для ${nextEvidenceType}.`
-                    : `Для ${nextEvidenceType} подставлен последний использованный источник.`,
+                    ? `Подставлен последний источник для типа «${formatEvidenceTypeLabel(nextEvidenceType)}».`
+                    : `Для типа «${formatEvidenceTypeLabel(nextEvidenceType)}» подставлен последний использованный источник.`,
             );
             return;
         }
@@ -354,8 +355,8 @@ export function OperationEvidencePanel({
             setFileUrl(templateSource);
             setSourceHint(
                 mode === 'auto'
-                    ? `Подставлен шаблон источника для ${nextEvidenceType}.`
-                    : `Для ${nextEvidenceType} подготовлен шаблон источника.`,
+                    ? `Подставлен шаблон источника для типа «${formatEvidenceTypeLabel(nextEvidenceType)}».`
+                    : `Для типа «${formatEvidenceTypeLabel(nextEvidenceType)}» подготовлен шаблон источника.`,
             );
             return;
         }
@@ -475,7 +476,7 @@ export function OperationEvidencePanel({
 
     const applyArtifactHistoryEntry = (entry: ArtifactHistoryEntry) => {
         setFileUrl(entry.url);
-        setSourceHint(`Подставлен ранее сохранённый artifact URL для ${evidenceType}.`);
+        setSourceHint(`Подставлен ранее сохранённый URL подтверждения для типа «${formatEvidenceTypeLabel(evidenceType)}».`);
         setSourceLaunchStatus(null);
         setCopyRouteStatus(null);
         setCaptureCompleted(false);
@@ -496,7 +497,7 @@ export function OperationEvidencePanel({
 
         clearArtifactHistoryForType(evidenceType);
         setArtifactHistoryRevision((current) => current + 1);
-        setSourceHint(`История artifact URL для ${evidenceType} очищена.`);
+        setSourceHint(`История URL подтверждений для типа «${formatEvidenceTypeLabel(evidenceType)}» очищена.`);
         setIsClearHistoryConfirmOpen(false);
         setRemovedArtifactUndo(null);
         setUndoSecondsLeft(0);
@@ -509,7 +510,7 @@ export function OperationEvidencePanel({
 
         removeArtifactHistoryEntry(evidenceType, entry.url);
         setArtifactHistoryRevision((current) => current + 1);
-        setSourceHint(`Artifact URL удалён из истории для ${evidenceType}.`);
+        setSourceHint(`URL подтверждения удалён из истории для типа «${formatEvidenceTypeLabel(evidenceType)}».`);
         setRemovedArtifactUndo({
             evidenceType,
             entry,
@@ -538,7 +539,7 @@ export function OperationEvidencePanel({
 
         upsertArtifactHistoryEntry(removedArtifactUndo.evidenceType, removedArtifactUndo.entry);
         setArtifactHistoryRevision((current) => current + 1);
-        setSourceHint(`Artifact URL восстановлен в истории для ${removedArtifactUndo.evidenceType}.`);
+        setSourceHint(`URL подтверждения восстановлен в истории для типа «${formatEvidenceTypeLabel(removedArtifactUndo.evidenceType)}».`);
         setRemovedArtifactUndo(null);
         setUndoSecondsLeft(0);
     };
@@ -632,22 +633,22 @@ export function OperationEvidencePanel({
                 <div className="flex items-center justify-between gap-3">
                     <div>
                         <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
-                            Evidence status
+                            Состояние подтверждений
                         </p>
                         <p className="mt-1 text-sm text-slate-900">
-                            {isStatusLoading ? 'Проверка...' : evidenceStatus?.isComplete ? 'Достаточно evidence для required flow' : 'Нужны дополнительные evidence'}
+                            {isStatusLoading ? 'Проверка...' : evidenceStatus?.isComplete ? 'Подтверждений достаточно для обязательного сценария' : 'Нужны дополнительные подтверждения'}
                         </p>
                     </div>
                     <div className="flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1.5 text-xs text-slate-600 border border-black/5">
                         {evidenceStatus?.isComplete ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <ShieldAlert className="w-4 h-4 text-amber-600" />}
-                        {evidenceStatus?.isComplete ? 'OK' : 'Pending'}
+                        {evidenceStatus?.isComplete ? 'Готово' : 'Ожидание'}
                     </div>
                 </div>
                 {missingEvidence.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-2">
                         {missingEvidence.map((item: string) => (
                             <span key={item} className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-medium text-amber-700 border border-amber-100">
-                                missing: {item}
+                                не хватает: {formatEvidenceTypeLabel(item)}
                             </span>
                         ))}
                     </div>
@@ -656,7 +657,7 @@ export function OperationEvidencePanel({
                     <div className="mt-3 flex flex-wrap gap-2">
                         {evidenceStatus.presentEvidenceTypes.map((item: string) => (
                             <span key={item} className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-medium text-emerald-700 border border-emerald-100">
-                                present: {item}
+                                есть: {formatEvidenceTypeLabel(item)}
                             </span>
                         ))}
                     </div>
@@ -665,11 +666,11 @@ export function OperationEvidencePanel({
 
             <div className="rounded-xl border border-black/5 bg-white p-4 space-y-3">
                 <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
-                    Прикрепить evidence
+                    Прикрепить подтверждение
                 </p>
                 {preferredEvidenceType && (
                     <div className="rounded-xl border border-sky-100 bg-sky-50 px-3 py-2 text-xs text-sky-700">
-                        Подготовлен тип evidence: <span className="font-medium">{preferredEvidenceType}</span>
+                        Подготовлен тип подтверждения: <span className="font-medium">{formatEvidenceTypeLabel(preferredEvidenceType)}</span>
                     </div>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -680,7 +681,7 @@ export function OperationEvidencePanel({
                     >
                         {EVIDENCE_TYPES.map((item) => (
                             <option key={item} value={item}>
-                                {item}
+                                {formatEvidenceTypeLabel(item)}
                             </option>
                         ))}
                     </select>
@@ -692,14 +693,14 @@ export function OperationEvidencePanel({
                             setSourceHint(null);
                         }}
                         className="h-11 bg-white border-black/5"
-                        placeholder={EVIDENCE_PLACEHOLDERS[evidenceType] || 'https://.../evidence-file'}
+                        placeholder={EVIDENCE_PLACEHOLDERS[evidenceType] || 'https://.../proof-file'}
                     />
                 </div>
                 {captureCompleted && normalizedFileUrl.length > 0 && looksLikeIntermediateRoute && (
                     <div className="rounded-xl border border-amber-100 bg-amber-50 px-3 py-3">
                         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                             <p className="text-xs text-amber-700">
-                                Похоже, сейчас в поле указан промежуточный `route` вроде `camera://` или `weather-api://`. Для attach нужен уже итоговый artifact URL, который вернул внешний инструмент.
+                                Похоже, сейчас в поле указан промежуточный маршрут вроде `camera://` или `weather-api://`. Для прикрепления нужен итоговый URL подтверждения, который вернул внешний инструмент.
                             </p>
                             <Button
                                 type="button"
@@ -708,14 +709,14 @@ export function OperationEvidencePanel({
                                 onClick={replaceRouteWithArtifactUrl}
                             >
                                 <Link2 className="w-4 h-4" />
-                                Заменить route на artifact URL
+                                Заменить маршрут на URL подтверждения
                             </Button>
                         </div>
                     </div>
                 )}
                 {captureCompleted && normalizedFileUrl.length > 0 && looksLikeArtifactUrl && (
                     <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
-                        `source URL` похож на итоговый artifact URL. Можно завершать attach evidence.
+                        `source URL` похож на итоговый URL подтверждения. Можно завершать прикрепление подтверждения.
                     </div>
                 )}
                 {removedArtifactUndo && removedArtifactUndo.evidenceType === evidenceType && (
@@ -723,7 +724,7 @@ export function OperationEvidencePanel({
                         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                             <div className="min-w-0">
                                 <p className="text-xs font-medium text-sky-800">
-                                    Artifact URL удалён из истории
+                                    URL подтверждения удалён из истории
                                 </p>
                                 <p className="mt-1 break-all font-mono text-[10px] text-sky-700/90">
                                     {removedArtifactUndo.entry.url}
@@ -747,7 +748,7 @@ export function OperationEvidencePanel({
                     <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-3 py-3">
                         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                             <p className="text-[11px] font-medium uppercase tracking-wider text-emerald-800">
-                                Последние artifact URL
+                                Последние URL подтверждений
                             </p>
                             <Button
                                 type="button"
@@ -761,10 +762,12 @@ export function OperationEvidencePanel({
                         {isClearHistoryConfirmOpen && (
                             <div className="mt-3 rounded-xl border border-amber-100 bg-amber-50 px-3 py-3">
                                 <p className="text-xs font-medium text-amber-800">
-                                    Подтвердите очистку artifact history для {evidenceType}
+                                    Подтвердите очистку истории URL подтверждений для типа
+                                    {' '}
+                                    <span className="font-semibold">«{formatEvidenceTypeLabel(evidenceType)}»</span>
                                 </p>
                                 <p className="mt-1 text-[11px] text-amber-700">
-                                    Будут удалены следующие сохранённые artifact URL:
+                                    Будут удалены следующие сохранённые URL подтверждений:
                                 </p>
                                 <div className="mt-3 space-y-2">
                                     {recentArtifactUrls.map((entry) => (
@@ -885,7 +888,7 @@ export function OperationEvidencePanel({
                         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                             <div>
                                 <p className="text-xs font-medium text-amber-800">
-                                    Fallback-маршрут для ручного продолжения
+                                    Резервный маршрут для ручного продолжения
                                 </p>
                                 <p className="mt-1 text-[11px] text-amber-700">
                                     Скопируйте текущий route и передайте его во внешний инструмент, если браузер не открыл custom scheme.
@@ -915,7 +918,7 @@ export function OperationEvidencePanel({
                                             QR для быстрого переноса на мобильное устройство
                                         </p>
                                         <p className="mt-1 text-[11px] text-amber-700">
-                                            Откройте QR на телефоне и продолжите evidence flow во внешнем инструменте, если desktop-браузер не перехватывает custom scheme.
+                                            Откройте QR на телефоне и продолжите сбор подтверждения во внешнем инструменте, если браузер на компьютере не перехватывает специальную схему.
                                         </p>
                                         <p className="mt-2 break-all font-mono text-[10px] text-amber-700/90">
                                             {normalizedFileUrl || currentTemplateSource}
@@ -924,12 +927,12 @@ export function OperationEvidencePanel({
                                 </div>
                                 <div className="mt-3 rounded-xl border border-amber-100 bg-amber-50/60 px-3 py-3">
                                     <p className="text-[11px] font-medium uppercase tracking-wider text-amber-800">
-                                        Handoff checklist
+                                        Контрольный список передачи
                                     </p>
                                     <div className="mt-2 space-y-2 text-xs text-amber-700">
                                         <p>1. Откройте QR на мобильном устройстве или полевом терминале.</p>
                                         <p>2. Завершите capture во внешнем инструменте по открытому маршруту.</p>
-                                        <p>3. Вернитесь в эту форму и прикрепите полученный URL как evidence.</p>
+                                        <p>3. Вернитесь в эту форму и прикрепите полученный URL как подтверждение.</p>
                                     </div>
                                 </div>
                             </div>
@@ -949,11 +952,11 @@ export function OperationEvidencePanel({
                             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                                 <div>
                                     <p className="text-xs font-medium text-amber-800">
-                                        Capture completed
+                                        Сбор завершён
                                     </p>
-                                    <p className="mt-1 text-[11px] text-amber-700">
-                                        Отметьте завершение mobile capture, чтобы панель перевела вас к финальному шагу прикрепления итогового URL.
-                                    </p>
+                                        <p className="mt-1 text-[11px] text-amber-700">
+                                            Отметьте завершение полевого сбора, чтобы панель перевела вас к финальному шагу прикрепления итогового URL.
+                                        </p>
                                 </div>
                                 <Button
                                     type="button"
@@ -966,7 +969,7 @@ export function OperationEvidencePanel({
                                     onClick={() => setCaptureCompleted((current) => !current)}
                                 >
                                     <CheckCircle2 className="w-4 h-4" />
-                                    {captureCompleted ? 'Capture подтверждён' : 'Отметить capture completed'}
+                                    {captureCompleted ? 'Сбор подтверждён' : 'Отметить завершение сбора'}
                                 </Button>
                             </div>
                             {captureCompleted && (
@@ -975,7 +978,7 @@ export function OperationEvidencePanel({
                                         Финальный шаг
                                     </p>
                                     <p className="mt-1">
-                                        Вставьте или проверьте итоговый `source URL` в поле выше, затем нажмите `Прикрепить evidence по URL`.
+                                        Вставьте или проверьте итоговый `source URL` в поле выше, затем нажмите `Прикрепить подтверждение по URL`.
                                     </p>
                                     <p className="mt-2 break-all font-mono text-[10px] text-emerald-700/90">
                                         Текущий route: {normalizedFileUrl || currentTemplateSource}
@@ -994,7 +997,7 @@ export function OperationEvidencePanel({
                     value={metaNote}
                     onChange={(e) => setMetaNote(e.target.value)}
                     className="h-11 bg-white border-black/5"
-                    placeholder="Краткая заметка к evidence"
+                    placeholder="Краткая заметка к подтверждению"
                 />
                 <Button
                     type="button"
@@ -1004,7 +1007,7 @@ export function OperationEvidencePanel({
                     onClick={() => attachMutation.mutate()}
                 >
                     {attachMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
-                    Прикрепить evidence по URL
+                    Прикрепить подтверждение по URL
                 </Button>
             </div>
 
@@ -1013,13 +1016,13 @@ export function OperationEvidencePanel({
                     Уже прикреплено
                 </p>
                 {isEvidenceLoading ? (
-                    <p className="text-xs text-slate-500">Загрузка evidence...</p>
+                    <p className="text-xs text-slate-500">Загрузка подтверждений...</p>
                 ) : Array.isArray(evidence) && evidence.length > 0 ? (
                     <div className="space-y-2">
                         {evidence.map((item: any) => (
                             <div key={item.id} className="rounded-xl border border-black/5 bg-slate-50 px-3 py-2">
                                 <div className="flex items-center justify-between gap-3">
-                                    <p className="text-xs font-medium text-slate-900">{item.evidenceType}</p>
+                                    <p className="text-xs font-medium text-slate-900">{formatEvidenceTypeLabel(item.evidenceType)}</p>
                                     <p className="text-[10px] text-slate-500">
                                         {item.capturedAt ? new Date(item.capturedAt).toLocaleString('ru-RU') : '-'}
                                     </p>
@@ -1037,11 +1040,11 @@ export function OperationEvidencePanel({
                                                 ? 'artifact'
                                                 : item.sourceAudit.urlKind === 'intermediate_route'
                                                     ? 'route'
-                                                    : 'unknown'}
+                                                    : 'неизвестно'}
                                         </span>
                                         {item.sourceAudit.sourceScheme && (
                                             <span className="rounded-full border border-black/5 bg-white px-2.5 py-1 text-[10px] font-medium text-slate-600">
-                                                scheme: {item.sourceAudit.sourceScheme}
+                                                схема: {item.sourceAudit.sourceScheme}
                                             </span>
                                         )}
                                     </div>
@@ -1058,7 +1061,7 @@ export function OperationEvidencePanel({
                         ))}
                     </div>
                 ) : (
-                    <p className="text-xs text-slate-500">По этой операции evidence пока не прикреплено.</p>
+                    <p className="text-xs text-slate-500">По этой операции подтверждения пока не прикреплены.</p>
                 )}
             </div>
         </div>

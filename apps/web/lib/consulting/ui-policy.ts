@@ -94,16 +94,16 @@ export function getHarvestPlanPermissions(
     switch (status) {
         case 'DRAFT':
             result.canEdit = true;
-            result.allowedTransitions = [{ target: 'REVIEW', label: 'Submit for review' }];
+            result.allowedTransitions = [{ target: 'REVIEW', label: 'Отправить на проверку' }];
             break;
 
         case 'REVIEW':
             result.canApprove = canAuthorize;
             if (canAuthorize) {
-                result.allowedTransitions = [{ target: 'APPROVED', label: 'Approve' }];
+                result.allowedTransitions = [{ target: 'APPROVED', label: 'Утвердить' }];
             } else {
-                result.deniedReasons.push('Institutional approval authority is required to approve plans.');
-                result.blockedTransitions.push({ transition: 'APPROVED', reason: 'Missing approval authority capability' });
+                result.deniedReasons.push('Для утверждения плана нужны полномочия на институциональное согласование.');
+                result.blockedTransitions.push({ transition: 'APPROVED', reason: 'Не хватает полномочий на утверждение' });
             }
             break;
 
@@ -113,8 +113,8 @@ export function getHarvestPlanPermissions(
                     result.allowedTransitions = [{ target: 'ACTIVE', label: 'Activate' }];
                 } else {
                     const reasons: string[] = [];
-                    if (!context.lockedBudget) reasons.push('Locked budget is required');
-                    if (!context.activeTechMap) reasons.push('Active tech map is required');
+                    if (!context.lockedBudget) reasons.push('Нужен зафиксированный бюджет');
+                    if (!context.activeTechMap) reasons.push('Нужна активная техкарта');
 
                     result.blockedTransitions.push({
                         transition: 'ACTIVE',
@@ -122,13 +122,13 @@ export function getHarvestPlanPermissions(
                     });
                 }
             } else {
-                result.blockedTransitions.push({ transition: 'ACTIVE', reason: 'Missing approval authority capability' });
+                result.blockedTransitions.push({ transition: 'ACTIVE', reason: 'Не хватает полномочий на утверждение' });
             }
             break;
 
         case 'ACTIVE':
             result.isImmutable = true;
-            result.deniedReasons.push('Plan is active. Changes must go through deviation workflow.');
+            result.deniedReasons.push('План уже активен. Изменения нужно проводить через контур отклонений.');
             break;
     }
 
@@ -153,17 +153,17 @@ export function getTechMapPermissions(
     switch (status) {
         case 'PROJECT':
             result.canEdit = true;
-            result.allowedTransitions = [{ target: 'CHECKING', label: 'Submit for review' }];
+            result.allowedTransitions = [{ target: 'CHECKING', label: 'Отправить на проверку' }];
             break;
         case 'CHECKING':
-            result.allowedTransitions = [{ target: 'ACTIVE', label: 'Activate' }];
+            result.allowedTransitions = [{ target: 'ACTIVE', label: 'Активировать' }];
             break;
         case 'ACTIVE':
-            result.allowedTransitions = [{ target: 'FROZEN', label: 'Freeze' }];
+            result.allowedTransitions = [{ target: 'FROZEN', label: 'Заморозить' }];
             break;
         case 'FROZEN':
             result.isImmutable = true;
-            result.deniedReasons.push('Tech map is frozen.');
+            result.deniedReasons.push('Техкарта заморожена.');
             break;
     }
 
@@ -191,22 +191,22 @@ export function getBudgetPlanPermissions(
     switch (status) {
         case 'DRAFT':
             result.canEdit = true;
-            result.allowedTransitions = [{ target: 'APPROVED', label: 'Approve' }];
+            result.allowedTransitions = [{ target: 'APPROVED', label: 'Утвердить' }];
             break;
         case 'APPROVED':
             if (canLockBudget) {
-                result.allowedTransitions = [{ target: 'LOCKED', label: 'Lock budget' }];
+                result.allowedTransitions = [{ target: 'LOCKED', label: 'Зафиксировать бюджет' }];
             } else {
-                result.blockedTransitions.push({ transition: 'LOCKED', reason: 'Missing signing authority capability' });
+                result.blockedTransitions.push({ transition: 'LOCKED', reason: 'Не хватает полномочий на подписание' });
             }
             break;
         case 'LOCKED':
             result.isImmutable = true;
-            result.allowedTransitions = [{ target: 'EXECUTING', label: 'Start execution' }];
+            result.allowedTransitions = [{ target: 'EXECUTING', label: 'Запустить исполнение' }];
             break;
         case 'EXECUTING':
             result.isImmutable = true;
-            result.allowedTransitions = [{ target: 'CLOSED', label: 'Close' }];
+            result.allowedTransitions = [{ target: 'CLOSED', label: 'Закрыть' }];
             break;
     }
 

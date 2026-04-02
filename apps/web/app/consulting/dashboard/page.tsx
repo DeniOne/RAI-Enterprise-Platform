@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
+import { formatRolloutModeLabel, formatRunbookActionLabel, formatSeverityLabel, formatStatusLabel } from '@/lib/ui-language';
 
 type GenerationRolloutSummary = {
     totalRapeseedMaps: number;
@@ -110,7 +111,7 @@ export default function ConsultingDashboard() {
                 setRolloutReadiness(readinessResponse.data ?? null);
                 setCutoverPacket(cutoverPacketResponse.data ?? null);
             } catch (error) {
-                console.error('Failed to load rollout summary:', error);
+                console.error('Не удалось загрузить сводку по развёртыванию:', error);
             }
         };
 
@@ -141,8 +142,8 @@ export default function ConsultingDashboard() {
 
     const trendPoints = trend.map((v, i) => `${(i / (trend.length - 1)) * 100},${100 - v}`).join(' ');
     const tickerItems = [
-        { label: 'LIVE', href: '/consulting/dashboard' },
-        { label: 'test-company-1', href: '/consulting/crm/farms' },
+        { label: 'В эфире', href: '/consulting/dashboard' },
+        { label: 'Тестовая компания 1', href: '/consulting/crm/farms' },
         { label: `Планы: ${metrics.plans}`, href: '/consulting/plans/active' },
         { label: `Техкарты: ${metrics.techmaps}`, href: '/consulting/techmaps/active' },
         { label: `Отклонения: ${metrics.deviations}`, href: '/consulting/deviations/detected', critical: true },
@@ -157,7 +158,7 @@ export default function ConsultingDashboard() {
         <div className="space-y-5">
             <div>
                 <h1 className="text-xl font-medium text-gray-900">Обзор — Управление Урожаем</h1>
-                <p className="mt-1 text-sm font-normal text-gray-500">Оперативная сводка по компании test-company-1 в реальном времени.</p>
+                <p className="mt-1 text-sm font-normal text-gray-500">Оперативная сводка по компании «Тестовая компания 1» в реальном времени.</p>
             </div>
 
             <Card className="py-3">
@@ -196,8 +197,8 @@ export default function ConsultingDashboard() {
 
                     <div className="rounded-2xl border border-black/10 p-4">
                         <div className="flex items-center justify-between mb-2">
-                            <p className="text-xs uppercase tracking-[0.12em] text-gray-500">План vs факт (24 часа)</p>
-                            <p className="text-xs text-emerald-600">Trend: stable growth</p>
+                            <p className="text-xs uppercase tracking-[0.12em] text-gray-500">План и факт за 24 часа</p>
+                            <p className="text-xs text-emerald-600">Тренд: стабильный рост</p>
                         </div>
                         <svg viewBox="0 0 100 100" className="w-full h-52">
                             <polyline fill="none" stroke="rgb(14 165 233)" strokeWidth="1.8" points={trendPoints} />
@@ -230,12 +231,12 @@ export default function ConsultingDashboard() {
                     <Card className="xl:col-span-12">
                         <div className="flex items-start justify-between gap-4 flex-wrap">
                             <div>
-                                <p className="text-xs uppercase tracking-[0.12em] text-gray-500">Состояние cutover</p>
+                                <p className="text-xs uppercase tracking-[0.12em] text-gray-500">Состояние перевода на новый режим</p>
                                 <p className="text-base font-medium text-gray-900 mt-1">
-                                    canonical {rolloutSummary.strategies.canonicalSchema} • fallback {rolloutSummary.fallback.usedCount} • blocking parity {rolloutSummary.parity.mapsWithBlockingDiffs}
+                                    канонический режим {rolloutSummary.strategies.canonicalSchema} • резервный сценарий {rolloutSummary.fallback.usedCount} • блокирующие расхождения {rolloutSummary.parity.mapsWithBlockingDiffs}
                                 </p>
                                 <p className="text-sm text-gray-600 mt-1">
-                                    version pinning {rolloutSummary.metadataCoverage.versionPinnedCount}/{rolloutSummary.totalRapeseedMaps} • explainability trace {rolloutSummary.metadataCoverage.explainabilityTraceCount}/{rolloutSummary.totalRapeseedMaps}
+                                    зафиксированные версии {rolloutSummary.metadataCoverage.versionPinnedCount}/{rolloutSummary.totalRapeseedMaps} • трассировка обоснования {rolloutSummary.metadataCoverage.explainabilityTraceCount}/{rolloutSummary.totalRapeseedMaps}
                                 </p>
                                 {rolloutReadiness && (
                                     <div className="mt-3 flex flex-wrap gap-2">
@@ -249,21 +250,21 @@ export default function ConsultingDashboard() {
                                             готовность {translateReadinessVerdict(rolloutReadiness.verdict)}
                                         </span>
                                         <span className='px-2.5 py-1 rounded-full bg-white text-gray-700 text-[10px] font-medium border border-black/10'>
-                                            рекомендуемый режим {rolloutReadiness.suggestedMode}
+                                            рекомендуемый режим {formatRolloutModeLabel(rolloutReadiness.suggestedMode)}
                                         </span>
                                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-medium border ${
                                             rolloutReadiness.canEnableCanonicalDefault
                                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
                                                 : 'bg-amber-50 text-amber-700 border-amber-100'
                                         }`}>
-                                            {rolloutReadiness.canEnableCanonicalDefault ? 'canonical default можно включать' : 'canonical default ещё нельзя включать'}
+                                            {rolloutReadiness.canEnableCanonicalDefault ? 'канонический режим по умолчанию можно включать' : 'канонический режим по умолчанию пока нельзя включать'}
                                         </span>
                                     </div>
                                 )}
                             </div>
                             <div className="flex flex-wrap gap-2">
                                 <Link href="/consulting/techmaps" className="px-3 py-2 rounded-xl border border-black/10 text-xs font-medium hover:bg-gray-50">
-                                    Открыть rollout реестр
+                                    Открыть реестр развёртывания
                                 </Link>
                                 <Link href="/consulting/techmaps/active" className="px-3 py-2 rounded-xl border border-black/10 text-xs font-medium hover:bg-gray-50">
                                     Активные техкарты
@@ -272,17 +273,17 @@ export default function ConsultingDashboard() {
                         </div>
                         <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
                             <CutoverMetric
-                                title="Режим rollout"
-                                value={`shadow ${rolloutSummary.rolloutModes.shadow} • canonical ${rolloutSummary.rolloutModes.canonical}`}
+                                title="Режим развёртывания"
+                                value={`теневой ${rolloutSummary.rolloutModes.shadow} • канонический ${rolloutSummary.rolloutModes.canonical}`}
                                 tone={rolloutSummary.rolloutModes.shadow > 0 ? 'warn' : 'ok'}
                             />
                             <CutoverMetric
-                                title="Серьёзность parity"
+                                title="Серьёзность расхождений"
                                 value={`P0 ${rolloutSummary.parity.diffCounts.P0} • P1 ${rolloutSummary.parity.diffCounts.P1} • P2 ${rolloutSummary.parity.diffCounts.P2}`}
                                 tone={rolloutSummary.parity.diffCounts.P0 > 0 ? 'critical' : rolloutSummary.parity.diffCounts.P1 > 0 ? 'warn' : 'ok'}
                             />
                             <CutoverMetric
-                                title="Причины fallback"
+                                title="Причины резервного сценария"
                                 value={Object.entries(rolloutSummary.fallback.reasons).length === 0
                                     ? 'не использовались'
                                     : Object.entries(rolloutSummary.fallback.reasons).map(([reason, count]) => `${reason}: ${count}`).join(' • ')}
@@ -290,7 +291,7 @@ export default function ConsultingDashboard() {
                             />
                             <CutoverMetric
                                 title="Покрытие"
-                                value={`admission ${rolloutSummary.metadataCoverage.fieldAdmissionCount} • trace ${rolloutSummary.metadataCoverage.generationTraceCount}`}
+                                value={`допуск ${rolloutSummary.metadataCoverage.fieldAdmissionCount} • трассировка ${rolloutSummary.metadataCoverage.generationTraceCount}`}
                                 tone={rolloutSummary.metadataCoverage.versionPinnedCount < rolloutSummary.totalRapeseedMaps ? 'warn' : 'ok'}
                             />
                         </div>
@@ -324,15 +325,15 @@ export default function ConsultingDashboard() {
                         )}
                         {(rolloutSummary.rolloutIncidents || []).length > 0 && (
                             <div className="mt-4 space-y-2">
-                                <p className="text-xs text-gray-500">Persisted rollout-инциденты</p>
+                                <p className="text-xs text-gray-500">Сохранённые инциденты развёртывания</p>
                                 {(rolloutSummary.rolloutIncidents || []).slice(0, 3).map((incident) => (
                                     <div key={incident.id} className="rounded-xl border border-black/5 bg-gray-50 p-3">
                                         <p className="text-xs text-gray-500">
-                                            {incident.subtype || '-'} • {incident.severity} • {incident.status}
+                                            {incident.subtype || '-'} • {formatSeverityLabel(incident.severity)} • {formatStatusLabel(incident.status)}
                                         </p>
                                         <p className="text-sm text-gray-700 mt-1">
-                                            {incident.techMapId ? `techMap ${incident.techMapId}` : 'company rollout-инцидент'}
-                                            {incident.runbookSuggestedAction ? ` • runbook ${incident.runbookSuggestedAction}` : ''}
+                                            {incident.techMapId ? `Техкарта ${incident.techMapId}` : 'Инцидент развёртывания по компании'}
+                                            {incident.runbookSuggestedAction ? ` • действие ${formatRunbookActionLabel(incident.runbookSuggestedAction)}` : ''}
                                         </p>
                                     </div>
                                 ))}
@@ -340,9 +341,9 @@ export default function ConsultingDashboard() {
                         )}
                         {cutoverPacket && (
                             <div className="mt-4 rounded-xl border border-black/5 bg-gray-50 p-3">
-                                <p className="text-[11px] uppercase tracking-wider text-gray-500">Cutover packet</p>
+                                <p className="text-[11px] uppercase tracking-wider text-gray-500">Пакет перевода</p>
                                 <p className="text-sm text-gray-700 mt-2">
-                                    Компания {cutoverPacket.companyId} • verdict {translateReadinessVerdict(cutoverPacket.verdict)}
+                                    Компания {cutoverPacket.companyId} • вердикт {translateReadinessVerdict(cutoverPacket.verdict)}
                                 </p>
                                 <code className="block mt-2 text-xs text-gray-800 break-all">{cutoverPacket.releaseCommand}</code>
                                 <code className="block mt-2 text-xs text-gray-500 break-all">{cutoverPacket.rollbackCommand}</code>
@@ -354,12 +355,12 @@ export default function ConsultingDashboard() {
                 <Card className="xl:col-span-12 py-3">
                     <div className="overflow-hidden whitespace-nowrap rounded-xl bg-gray-50 border border-black/5 px-3 py-2">
                         <div className="inline-block min-w-full animate-[ticker_30s_linear_infinite_reverse] text-xs text-gray-500">
-                            <span className="px-3">SOIL {39 + (tick % 5)}%</span>
+                            <span className="px-3">ПОЧВА {39 + (tick % 5)}%</span>
                             <span className="px-3">NDVI {0.58 + (tick % 4) * 0.01}</span>
-                            <span className="px-3">TASKS DONE {75 + (tick % 7)}%</span>
-                            <span className="px-3">AVG COST {14200 + tick * 8} RUB/ha</span>
-                            <span className="px-3">YIELD FCST {42 + (tick % 3)} c/ha</span>
-                            <span className="px-3">SOIL {39 + (tick % 5)}%</span>
+                            <span className="px-3">ЗАДАЧ ВЫПОЛНЕНО {75 + (tick % 7)}%</span>
+                            <span className="px-3">СРЕДНЯЯ СТОИМОСТЬ {14200 + tick * 8} RUB/га</span>
+                            <span className="px-3">ПРОГНОЗ УРОЖАЙНОСТИ {42 + (tick % 3)} ц/га</span>
+                            <span className="px-3">ПОЧВА {39 + (tick % 5)}%</span>
                             <span className="px-3">NDVI {0.58 + (tick % 4) * 0.01}</span>
                         </div>
                     </div>
@@ -467,7 +468,7 @@ function buildRolloutAlerts(summary: GenerationRolloutSummary | null) {
     if (summary.parity.mapsWithBlockingDiffs > 0) {
         alerts.push({
             tone: 'critical',
-            text: `Cutover: ${summary.parity.mapsWithBlockingDiffs} карт с блокирующими parity-разрывами`,
+            text: `Перевод: ${summary.parity.mapsWithBlockingDiffs} карт с блокирующими расхождениями`,
             href: '/consulting/techmaps',
         });
     }
@@ -475,7 +476,7 @@ function buildRolloutAlerts(summary: GenerationRolloutSummary | null) {
     if (summary.fallback.usedCount > 0) {
         alerts.push({
             tone: 'warning',
-            text: `Cutover: fallback использован ${summary.fallback.usedCount} раз`,
+            text: `Перевод: резервный сценарий использован ${summary.fallback.usedCount} раз`,
             href: '/consulting/techmaps',
         });
     }
@@ -483,7 +484,7 @@ function buildRolloutAlerts(summary: GenerationRolloutSummary | null) {
     if (summary.metadataCoverage.versionPinnedCount < summary.totalRapeseedMaps) {
         alerts.push({
             tone: 'warning',
-            text: `Cutover: неполный version pinning ${summary.metadataCoverage.versionPinnedCount}/${summary.totalRapeseedMaps}`,
+            text: `Перевод: неполная фиксация версий ${summary.metadataCoverage.versionPinnedCount}/${summary.totalRapeseedMaps}`,
             href: '/consulting/techmaps',
         });
     }
@@ -491,7 +492,7 @@ function buildRolloutAlerts(summary: GenerationRolloutSummary | null) {
     if (alerts.length === 0) {
         alerts.push({
             tone: 'info',
-            text: 'Cutover: canonical rollout без критичных сигналов',
+            text: 'Перевод: канонический режим без критичных сигналов',
             href: '/consulting/techmaps',
         });
     }

@@ -6,9 +6,9 @@ export default function Home() {
     return (
         <div className="space-y-8">
             <div className="max-w-2xl">
-                <h1 className="mb-1 text-xl font-medium tracking-tight text-gray-900">Institutional Core</h1>
+                <h1 className="mb-1 text-xl font-medium tracking-tight text-gray-900">Институциональное ядро</h1>
                 <p className="text-sm font-normal text-gray-500 leading-relaxed">
-                    Добро пожаловать в центр управления RAI Enterprise. Текущая сессия защищена протоколами Level F.
+                    Добро пожаловать в центр управления RAI Enterprise. Текущая сессия защищена протоколами уровня F.
                     Все критические действия требуют двухфазного подтверждения.
                 </p>
             </div>
@@ -31,7 +31,7 @@ export default function Home() {
                     </div>
                     <div>
                         <p className="text-[14px] font-medium text-[#030213] tracking-tight">Безопасность</p>
-                        <p className="text-[13px] text-[#717182] mt-0.5">Инциденты, изоляция и Sentinel</p>
+                        <p className="text-[13px] text-[#717182] mt-0.5">Инциденты, изоляция и сигнальный контур</p>
                     </div>
                 </Link>
             </div>

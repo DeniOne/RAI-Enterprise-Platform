@@ -4,6 +4,14 @@ import Link from 'next/link';
 import { use, useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
+import {
+    formatChangeOrderTypeLabel,
+    formatGenerationStrategyLabel,
+    formatRolloutModeLabel,
+    formatRunbookActionLabel,
+    formatSeverityLabel,
+    formatStatusLabel,
+} from '@/lib/ui-language';
 
 type MapResource = {
     id: string;
@@ -228,28 +236,28 @@ function renderRuntimeLinks(payload?: {
             ? {
                 id: payload.decisionGateId,
                 href: `#decision-gate-${payload.decisionGateId}`,
-                label: `DecisionGate ${payload.decisionGateId}`,
+                label: `Шлюз решения ${payload.decisionGateId}`,
             }
             : null,
         payload.recommendationId
             ? {
                 id: payload.recommendationId,
                 href: `#recommendation-${payload.recommendationId}`,
-                label: `Recommendation ${payload.recommendationId}`,
+                label: `Рекомендация ${payload.recommendationId}`,
             }
             : null,
         payload.changeOrderId
             ? {
                 id: payload.changeOrderId,
                 href: `#change-order-${payload.changeOrderId}`,
-                label: `ChangeOrder ${payload.changeOrderId}`,
+                label: `Изменение ${payload.changeOrderId}`,
             }
             : null,
         payload.deviationReviewId
             ? {
                 id: payload.deviationReviewId,
                 href: `#deviation-review-${payload.deviationReviewId}`,
-                label: `DeviationReview ${payload.deviationReviewId}`,
+                label: `Разбор отклонения ${payload.deviationReviewId}`,
             }
             : null,
     ].filter(Boolean) as Array<{ id: string; href: string; label: string }>;
@@ -444,8 +452,8 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                         </Card>
                         <Card>
                             <p className='text-xs text-gray-500 mb-1'>Генерация</p>
-                            <p className='font-semibold'>{techMap.generationMetadata?.generationStrategy || techMap.generationMetadata?.source || '-'}</p>
-                            <p className='text-xs text-gray-500 mt-1'>schema {techMap.generationMetadata?.schemaVersion || '-'}</p>
+                            <p className='font-semibold'>{formatGenerationStrategyLabel(techMap.generationMetadata?.generationStrategy || techMap.generationMetadata?.source)}</p>
+                            <p className='text-xs text-gray-500 mt-1'>схема {techMap.generationMetadata?.schemaVersion || '-'}</p>
                         </Card>
                     </div>
 
@@ -454,7 +462,7 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                             <div>
                                 <p className='text-xs text-gray-500 mb-1'>Ветка</p>
                                 <p className='font-semibold'>{techMap.canonicalBranch || explainability?.canonicalBranch || '-'}</p>
-                                <p className='text-xs text-gray-500 mt-2'>Trace ID: {techMap.generationMetadata?.generationTraceId || explainability?.generationExplanationTrace?.traceId || '-'}</p>
+                                <p className='text-xs text-gray-500 mt-2'>Идентификатор трассировки: {techMap.generationMetadata?.generationTraceId || explainability?.generationExplanationTrace?.traceId || '-'}</p>
                                 <div className='mt-3 space-y-1'>
                                     {(explainability?.generationExplanationTrace?.summary?.branchSelectionReasons || []).map((reason) => (
                                         <p key={reason} className='text-sm text-gray-600'>{reason}</p>
@@ -462,8 +470,8 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                 </div>
                             </div>
                             <div>
-                                <p className='text-xs text-gray-500 mb-1'>Admission</p>
-                                <p className='font-semibold'>{explainability?.fieldAdmissionResult?.verdict || explainability?.generationExplanationTrace?.summary?.admissionVerdict || '-'}</p>
+                                <p className='text-xs text-gray-500 mb-1'>Допуск</p>
+                                <p className='font-semibold'>{formatStatusLabel(explainability?.fieldAdmissionResult?.verdict || explainability?.generationExplanationTrace?.summary?.admissionVerdict)}</p>
                                 <div className='mt-3 space-y-1'>
                                     {(explainability?.fieldAdmissionResult?.blockers || []).map((item, index) => (
                                         <p key={`blocker-${index}`} className='text-sm text-rose-700'>{item.message}</p>
@@ -479,32 +487,32 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                     <Card>
                         <div className='flex items-start justify-between gap-4 flex-wrap'>
                             <div>
-                                <p className='text-xs text-gray-500 mb-1'>Rollout incidents</p>
+                                <p className='text-xs text-gray-500 mb-1'>Инциденты развёртывания</p>
                                 <p className='text-sm text-gray-600'>
-                                    Persisted governance-сигналы по parity и fallback для этой техкарты.
+                                    Сохранённые управленческие сигналы по расхождениям и резервному сценарию для этой техкарты.
                                 </p>
                             </div>
                             <Link href='/consulting/techmaps' className='text-sm text-blue-600 hover:underline'>
-                                Вернуться в rollout реестр
+                                Вернуться в реестр развёртывания
                             </Link>
                         </div>
                         <div className='mt-4 space-y-3'>
                             {(explainability?.rolloutIncidents || []).length === 0 ? (
-                                <p className='text-sm text-gray-500'>Rollout incidents для этой техкарты не зафиксированы.</p>
+                                <p className='text-sm text-gray-500'>Инциденты развёртывания для этой техкарты не зафиксированы.</p>
                             ) : (
                                 (explainability?.rolloutIncidents || []).map((incident) => (
                                     <div key={incident.id} className='rounded-2xl border border-black/10 p-4'>
                                         <div className='flex items-start justify-between gap-3 flex-wrap'>
                                             <div>
                                                 <p className='text-xs text-gray-500'>
-                                                    {incident.subtype || '-'} • {incident.severity} • {incident.status}
+                                                    {incident.subtype || '-'} • {formatSeverityLabel(incident.severity)} • {formatStatusLabel(incident.status)}
                                                 </p>
                                                 <p className='text-sm font-medium text-gray-900 mt-1'>
-                                                    {incident.detailSummary || 'Rollout incident'}
+                                                    {incident.detailSummary || 'Инцидент развёртывания'}
                                                 </p>
                                                 <p className='text-xs text-gray-500 mt-1'>
                                                     {incident.createdAt ? new Date(incident.createdAt).toLocaleString('ru-RU') : '-'}
-                                                    {incident.traceId ? ` • trace ${incident.traceId}` : ''}
+                                                    {incident.traceId ? ` • трассировка ${incident.traceId}` : ''}
                                                 </p>
                                             </div>
                                             <div className='flex items-center gap-2 flex-wrap'>
@@ -517,8 +525,8 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                                         {busyRunbookIncidentId === incident.id
                                                             ? 'Запуск...'
                                                             : incident.runbookSuggestedAction === 'REQUIRE_HUMAN_REVIEW'
-                                                                ? 'Запустить review человеком'
-                                                                : 'Запустить rollback'}
+                                                                ? 'Передать на ручную проверку'
+                                                                : 'Запустить откат'}
                                                     </button>
                                                 )}
                                             </div>
@@ -532,9 +540,9 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                     <Card>
                         <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                             <div>
-                                <p className='text-xs text-gray-500 mb-1'>Rollout / fallback</p>
+                                <p className='text-xs text-gray-500 mb-1'>Развёртывание и резервный сценарий</p>
                                 <p className='font-semibold'>
-                                    {explainability?.generationObservability?.rolloutMode || techMap.generationMetadata?.rolloutMode || '-'}
+                                    {formatRolloutModeLabel(explainability?.generationObservability?.rolloutMode || techMap.generationMetadata?.rolloutMode)}
                                 </p>
                                 <div className='mt-2 flex flex-wrap gap-2'>
                                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-medium border ${
@@ -542,7 +550,7 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                             ? 'bg-amber-50 text-amber-700 border-amber-100'
                                             : 'bg-emerald-50 text-emerald-700 border-emerald-100'
                                     }`}>
-                                        {explainability?.generationObservability?.fallbackUsed ? 'использован fallback' : 'canonical path активен'}
+                                        {explainability?.generationObservability?.fallbackUsed ? 'использован резервный сценарий' : 'канонический путь активен'}
                                     </span>
                                     {explainability?.generationObservability?.fallbackReason && (
                                         <span className='px-2.5 py-1 rounded-full bg-white text-amber-700 text-[10px] font-medium border border-amber-100'>
@@ -551,19 +559,19 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                     )}
                                     {explainability?.generationObservability?.featureFlagSnapshot?.mode && (
                                         <span className='px-2.5 py-1 rounded-full bg-sky-50 text-sky-700 text-[10px] font-medium border border-sky-100'>
-                                            режим flag: {explainability.generationObservability.featureFlagSnapshot.mode}
+                                            режим флага: {formatRolloutModeLabel(explainability.generationObservability.featureFlagSnapshot.mode)}
                                         </span>
                                     )}
                                 </div>
                                 <div className='mt-3 space-y-1 text-sm text-gray-600'>
-                                    <p>schema: {explainability?.generationObservability?.versionPinning?.schemaVersion || techMap.generationMetadata?.schemaVersion || '-'}</p>
-                                    <p>rules: {explainability?.generationObservability?.versionPinning?.ruleRegistryVersion || techMap.generationMetadata?.ruleRegistryVersion || '-'}</p>
-                                    <p>ontology: {explainability?.generationObservability?.versionPinning?.ontologyVersion || techMap.generationMetadata?.ontologyVersion || '-'}</p>
-                                    <p>generator: {explainability?.generationObservability?.versionPinning?.generatorVersion || '-'}</p>
+                                    <p>схема: {explainability?.generationObservability?.versionPinning?.schemaVersion || techMap.generationMetadata?.schemaVersion || '-'}</p>
+                                    <p>правила: {explainability?.generationObservability?.versionPinning?.ruleRegistryVersion || techMap.generationMetadata?.ruleRegistryVersion || '-'}</p>
+                                    <p>онтология: {explainability?.generationObservability?.versionPinning?.ontologyVersion || techMap.generationMetadata?.ontologyVersion || '-'}</p>
+                                    <p>генератор: {explainability?.generationObservability?.versionPinning?.generatorVersion || '-'}</p>
                                 </div>
                             </div>
                             <div>
-                                <p className='text-xs text-gray-500 mb-1'>Shadow parity</p>
+                                <p className='text-xs text-gray-500 mb-1'>Теневое сравнение</p>
                                 <p className='font-semibold'>
                                     {explainability?.generationObservability?.shadowParitySummary?.diffCount ?? 0} расхождений
                                 </p>
@@ -573,7 +581,7 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                             ? 'bg-rose-50 text-rose-700 border-rose-100'
                                             : 'bg-emerald-50 text-emerald-700 border-emerald-100'
                                     }`}>
-                                        {explainability?.generationObservability?.shadowParitySummary?.hasBlockingDiffs ? 'есть blocking parity gaps' : 'blocking parity gaps нет'}
+                                        {explainability?.generationObservability?.shadowParitySummary?.hasBlockingDiffs ? 'есть блокирующие расхождения' : 'блокирующих расхождений нет'}
                                     </span>
                                     <span className='px-2.5 py-1 rounded-full bg-white text-gray-700 text-[10px] font-medium border border-black/10'>
                                         P0 {explainability?.generationObservability?.shadowParitySummary?.severityCounts?.P0 || 0}
@@ -586,7 +594,7 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                     </span>
                                 </div>
                                 <p className='text-xs text-gray-500 mt-3'>
-                                    trace explainability: {explainability?.generationObservability?.explainabilityTracePresent ? 'есть' : 'нет'} • completeness {typeof explainability?.generationObservability?.completenessScore === 'number'
+                                    трассировка обоснования: {explainability?.generationObservability?.explainabilityTracePresent ? 'есть' : 'нет'} • полнота {typeof explainability?.generationObservability?.completenessScore === 'number'
                                         ? explainability.generationObservability.completenessScore.toFixed(2)
                                         : '-'}
                                 </p>
@@ -605,7 +613,7 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                     <Card>
                         <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                             <div>
-                                <p className='text-xs text-gray-500 mb-2'>Mandatory blocks</p>
+                                <p className='text-xs text-gray-500 mb-2'>Обязательные блоки</p>
                                 <div className='flex flex-wrap gap-2'>
                                     {(explainability?.generationExplanationTrace?.summary?.mandatoryBlocks || []).map((block) => (
                                         <span key={block} className='px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-medium'>
@@ -619,14 +627,14 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                 <div className='space-y-2'>
                                     {(explainability?.recommendations || []).slice(0, 4).map((recommendation) => (
                                         <div key={recommendation.id} id={`recommendation-${recommendation.id}`} className='rounded-xl border border-gray-100 p-3 scroll-mt-24'>
-                                            <p className='text-xs text-gray-500'>{recommendation.severity}</p>
+                                            <p className='text-xs text-gray-500'>{formatSeverityLabel(recommendation.severity)}</p>
                                             <p className='text-sm font-medium text-gray-900'>{recommendation.title}</p>
                                             <p className='text-sm text-gray-600'>{recommendation.message}</p>
                                         </div>
                                     ))}
                                     {(explainability?.decisionGates || []).slice(0, 2).map((gate) => (
                                         <div key={gate.id} id={`decision-gate-${gate.id}`} className='rounded-xl border border-amber-200 bg-amber-50 p-3 scroll-mt-24'>
-                                            <p className='text-xs text-amber-700'>{gate.severity} / {gate.status}</p>
+                                            <p className='text-xs text-amber-700'>{formatSeverityLabel(gate.severity)} / {formatStatusLabel(gate.status)}</p>
                                             <p className='text-sm font-medium text-amber-900'>{gate.title}</p>
                                         </div>
                                     ))}
@@ -638,10 +646,10 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                     <Card>
                         <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                             <div>
-                                <p className='text-xs text-gray-500 mb-2'>ChangeOrder</p>
+                                <p className='text-xs text-gray-500 mb-2'>Изменения</p>
                                 <div className='space-y-2'>
                                     {(explainability?.runtimeArtifacts?.changeOrders || []).length === 0 ? (
-                                        <p className='text-sm text-gray-500'>ChangeOrder пока не создавались.</p>
+                                        <p className='text-sm text-gray-500'>Изменения пока не создавались.</p>
                                     ) : (
                                         (explainability?.runtimeArtifacts?.changeOrders || []).map((changeOrder) => (
                                             <div
@@ -649,11 +657,11 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                                 id={`change-order-${changeOrder.id}`}
                                                 className='rounded-xl border border-indigo-100 bg-indigo-50/60 p-3 scroll-mt-24'
                                             >
-                                                <p className='text-xs text-indigo-700'>{changeOrder.changeType} / {changeOrder.status}</p>
+                                                <p className='text-xs text-indigo-700'>{formatChangeOrderTypeLabel(changeOrder.changeType)} / {formatStatusLabel(changeOrder.status)}</p>
                                                 <p className='text-sm font-medium text-indigo-950'>{changeOrder.id}</p>
                                                 <p className='text-xs text-indigo-800 mt-1'>
-                                                    approvals: {changeOrder.approvals?.length || 0}
-                                                    {typeof changeOrder.deltaCostRub === 'number' ? ` • delta ${changeOrder.deltaCostRub} RUB` : ''}
+                                                    согласований: {changeOrder.approvals?.length || 0}
+                                                    {typeof changeOrder.deltaCostRub === 'number' ? ` • изменение ${changeOrder.deltaCostRub} RUB` : ''}
                                                 </p>
                                             </div>
                                         ))
@@ -661,10 +669,10 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                 </div>
                             </div>
                             <div>
-                                <p className='text-xs text-gray-500 mb-2'>DeviationReview</p>
+                                <p className='text-xs text-gray-500 mb-2'>Разбор отклонений</p>
                                 <div className='space-y-2'>
                                     {(explainability?.runtimeArtifacts?.deviationReviews || []).length === 0 ? (
-                                        <p className='text-sm text-gray-500'>Runtime deviation review пока не зафиксированы.</p>
+                                        <p className='text-sm text-gray-500'>Разборы runtime-отклонений пока не зафиксированы.</p>
                                     ) : (
                                         (explainability?.runtimeArtifacts?.deviationReviews || []).map((review) => (
                                             <div
@@ -672,7 +680,7 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                                 id={`deviation-review-${review.id}`}
                                                 className='rounded-xl border border-rose-100 bg-rose-50/60 p-3 scroll-mt-24'
                                             >
-                                                <p className='text-xs text-rose-700'>{review.severity || '-'} / {review.status || '-'}</p>
+                                                <p className='text-xs text-rose-700'>{formatSeverityLabel(review.severity)} / {formatStatusLabel(review.status)}</p>
                                                 <p className='text-sm font-medium text-rose-950'>{review.id}</p>
                                                 <p className='text-sm text-rose-900 mt-1'>{review.deviationSummary}</p>
                                             </div>
@@ -688,7 +696,7 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                         <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-4'>
                             <div>
                                 <p className='text-xs text-gray-500 mb-1'>Статусные действия</p>
-                                <p className='text-sm text-gray-600'>Переведите карту в `ACTIVE`, чтобы операции появились в execution-хабе.</p>
+                                <p className='text-sm text-gray-600'>Переведите карту в состояние «Активно», чтобы операции появились в контуре исполнения.</p>
                             </div>
                             <div className='flex flex-wrap gap-2'>
                                 {nextStatuses(techMap.status).map((status) => (
@@ -698,7 +706,7 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                         disabled={busyStatus !== null}
                                         className='px-4 py-2 bg-black text-white rounded-xl text-xs font-medium hover:bg-zinc-800 disabled:opacity-50'
                                     >
-                                        {busyStatus === status ? 'Обновление...' : `-> ${status}`}
+                                        {busyStatus === status ? 'Обновление...' : `→ ${formatStatusLabel(status)}`}
                                     </button>
                                 ))}
                                 {techMap.status === 'ACTIVE' && (
@@ -706,7 +714,7 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                         href='/consulting/execution'
                                         className='px-4 py-2 border border-emerald-200 bg-emerald-50 text-emerald-700 rounded-xl text-xs font-semibold'
                                     >
-                                        Открыть execution
+                                        Открыть контур исполнения
                                     </Link>
                                 )}
                             </div>

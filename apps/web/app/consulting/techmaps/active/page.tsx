@@ -8,6 +8,7 @@ import clsx from 'clsx';
 import { includesFocus, useEntityFocus } from '@/shared/hooks/useEntityFocus';
 import { useWorkspaceContextStore } from '@/lib/stores/workspace-context-store';
 import { ChiefAgronomistReviewDrawer } from '@/components/experts/ChiefAgronomistReviewDrawer';
+import { formatRolloutModeLabel, formatStatusLabel } from '@/lib/ui-language';
 
 type TechMapItem = {
     id: string;
@@ -52,7 +53,7 @@ function MapTable({ rows, isFocused }: { rows: RowItem[]; isFocused: (row: RowIt
                         <th className='py-2 pr-4'>Код</th>
                         <th className='py-2 pr-4'>Версия</th>
                         <th className='py-2 pr-4'>Культура</th>
-                        <th className='py-2 pr-4'>Generation</th>
+                        <th className='py-2 pr-4'>Генерация</th>
                         <th className='py-2 pr-4'>Статус</th>
                         <th className='py-2'>Обновлено</th>
                         <th className='py-2 text-right'>Эксперт</th>
@@ -71,12 +72,12 @@ function MapTable({ rows, isFocused }: { rows: RowItem[]; isFocused: (row: RowIt
                                         {renderGenerationBadges(row.item)}
                                     </div>
                                 </td>
-                                <td className='py-2 pr-4'>{row.item.status || 'UNKNOWN'}</td>
+                                <td className='py-2 pr-4'>{formatStatusLabel(row.item.status)}</td>
                                 <td className='py-2'>{row.item.updatedAt ? new Date(row.item.updatedAt).toLocaleDateString('ru-RU') : '-'}</td>
                                 <td className='py-2 text-right'>
                                     <ChiefAgronomistReviewDrawer
                                         title={`Техкарта ${row.code}`}
-                                        subtitle={row.item.crop ? `${row.item.crop} • ${row.item.status || 'UNKNOWN'}` : row.item.status || 'UNKNOWN'}
+                                        subtitle={row.item.crop ? `${row.item.crop} • ${formatStatusLabel(row.item.status)}` : formatStatusLabel(row.item.status)}
                                         triggerLabel='Экспертное заключение'
                                         triggerClassName='px-3 py-1.5'
                                         request={{
@@ -174,7 +175,7 @@ function PageInner() {
             <div className='flex items-center justify-between gap-3'>
                 <h1 className='text-xl font-medium text-gray-900'>Техкарты — Активные</h1>
                 <Link href='/consulting/techmaps' className='text-sm text-blue-600 hover:underline'>
-                    Открыть rollout реестр
+                    Открыть реестр развёртывания
                 </Link>
             </div>
             <Card>
@@ -210,7 +211,7 @@ function renderGenerationBadges(item: TechMapItem) {
     if (item.generationMetadata?.rolloutMode) {
         badges.push(
             <span key="mode" className='px-2 py-0.5 rounded-full bg-white text-gray-700 text-[10px] font-medium border border-black/10'>
-                режим {item.generationMetadata.rolloutMode}
+                режим {formatRolloutModeLabel(item.generationMetadata.rolloutMode)}
             </span>,
         );
     }
@@ -218,7 +219,7 @@ function renderGenerationBadges(item: TechMapItem) {
     if (item.generationMetadata?.fallbackUsed) {
         badges.push(
             <span key="fallback" className='px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-medium border border-amber-100'>
-                fallback
+                резервный сценарий
             </span>,
         );
     }
@@ -232,7 +233,7 @@ function renderGenerationBadges(item: TechMapItem) {
     } else if (typeof item.generationMetadata?.shadowParitySummary?.diffCount === 'number') {
         badges.push(
             <span key="parity" className='px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-100'>
-                parity {item.generationMetadata.shadowParitySummary.diffCount}
+                расхождений {item.generationMetadata.shadowParitySummary.diffCount}
             </span>,
         );
     }

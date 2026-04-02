@@ -1,3 +1,11 @@
+[2026-04-02 12:53Z] Синхронизация и пуш финального пакета Phase A/B/Rapeseed migration
+- Выполнен `git push` для синхронизации всех локальных изменений, включая:
+  - Фиксы билда `api` и `@rai/regenerative-engine`.
+  - Синхронизацию `PHASE_A_CHECKPOINT_AND_PARKING_DECISION.md`.
+  - Residual closeout sync после `PR #2`.
+  - Новые агрономические брифы в `docs/02_DOMAINS/AGRO_DOMAIN/`.
+- Практический эффект: репозиторий приведён в консистентное состояние на `origin`, блокеры билда устранены, документация синхронизирована с машинными манифестами.
+
 [2026-04-01 19:36Z] Evidence remediation получил автоподстановку последнего источника по типу
 - В `OperationEvidencePanel` добавлены:
   - типовые placeholders по `evidenceType`
@@ -3275,3 +3283,17 @@
   - `runtimeArtifacts.evidenceAudit.artifactEvidenceCount = 1`
   - `ControlPointOutcomeExplanation.attachedEvidence[]` содержит реальный execution evidence
   - `DecisionGate`, `Recommendation` и `DeviationReview` видны в tenant-scoped explainability после live runtime smoke
+
+[2026-04-02 10:15Z] Добавлены канонические входные документы для сбора данных хозяйства под техкарту
+
+- В доменный слой добавлены два новых документа:
+  - `docs/02_DOMAINS/AGRO_DOMAIN/TECHMAP_FARM_INTAKE_BRIEF.md`
+  - `docs/02_DOMAINS/AGRO_DOMAIN/TECHMAP_SOURCE_DATA_REGISTER.md`
+- Смысл документов:
+  - первый документ задаёт практический заполняемый бриф для хозяйства перед разработкой техкарты;
+  - второй документ фиксирует полный перечень данных, на которых строится техкарта, с разделением по слоям, критичности и назначению.
+- В документах зафиксированы ключевые инварианты текущего techmap-контура:
+  - обязательное разделение `RegionProfile` и `SoilProfile`;
+  - критический набор `P0` для рапсовой генерации;
+  - связь входных данных не только с generation, но и с adaptation, runtime, explainability и governance.
+- Оба документа зарегистрированы в `docs/DOCS_MATRIX.md` как claim-managed доменные источники.

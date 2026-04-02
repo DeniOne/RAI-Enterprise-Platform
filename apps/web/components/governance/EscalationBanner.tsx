@@ -54,14 +54,14 @@ export const EscalationBanner: React.FC<EscalationBannerProps> = ({
                             isR4 ? "bg-red-200 text-red-800 border-red-300" : "bg-amber-200 text-amber-800 border-amber-300",
                             isMet && "bg-emerald-200 text-emerald-800 border-emerald-300"
                         )}>
-                            Level {level} Escalation
+                            Эскалация уровня {level}
                         </span>
                         <span className="text-[10px] text-slate-400 font-mono tracking-tighter">TRC://{traceId.substring(0, 12)}...</span>
                     </div>
                     <h4 className="text-sm font-bold text-slate-900 mt-1 flex items-center">
                         {isMet
                             ? "Решение подтверждено Техсоветом"
-                            : isR4 ? "КРИТИЧЕСКАЯ БЛОКИРОВКА (Hard Lock)" : "ТРЕБУЕТСЯ ТЕХСОВЕТ"
+                            : isR4 ? "КРИТИЧЕСКАЯ БЛОКИРОВКА" : "ТРЕБУЕТСЯ ТЕХСОВЕТ"
                         }
                     </h4>
                     <p className="text-xs text-slate-600 mt-0.5 max-w-lg leading-relaxed">{description}</p>
@@ -70,7 +70,7 @@ export const EscalationBanner: React.FC<EscalationBannerProps> = ({
 
             <div className="flex items-center space-x-4 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-3 md:pt-0">
                 <div className="text-left md:text-right px-4 border-r border-slate-200">
-                    <span className="text-[10px] text-slate-400 block uppercase font-semibold">Status</span>
+                    <span className="text-[10px] text-slate-400 block uppercase font-semibold">Статус</span>
                     <span className={clsx(
                         "text-xs font-bold font-mono",
                         status === 'COLLECTING' ? "text-amber-600" :

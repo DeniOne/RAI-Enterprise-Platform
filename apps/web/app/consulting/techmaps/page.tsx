@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
+import { formatRolloutModeLabel, formatRunbookActionLabel, formatSeverityLabel, formatStatusLabel } from '@/lib/ui-language';
 
 type TechMap = {
     id: string;
@@ -134,7 +135,7 @@ export default function TechMapsPage() {
             setRolloutReadiness(readinessResponse.data ?? null);
             setCutoverPacket(cutoverPacketResponse.data ?? null);
         } catch (error) {
-            console.error('Failed to load techmaps:', error);
+            console.error('Не удалось загрузить техкарты:', error);
         } finally {
             setLoading(false);
         }
@@ -180,7 +181,7 @@ export default function TechMapsPage() {
             <div className='grid grid-cols-2 md:grid-cols-5 gap-3'>
                 {['GENERATED_DRAFT', 'DRAFT', 'REVIEW', 'APPROVED', 'ACTIVE'].map((status) => (
                     <Card key={status}>
-                        <p className='text-xs text-gray-500 mb-1'>{status}</p>
+                        <p className='text-xs text-gray-500 mb-1'>{formatStatusLabel(status)}</p>
                         <p className='text-2xl font-semibold'>{counters[status] || 0}</p>
                     </Card>
                 ))}
@@ -190,9 +191,9 @@ export default function TechMapsPage() {
                 <Card>
                     <div className='flex items-start justify-between gap-4 flex-wrap'>
                         <div>
-                            <p className='text-xs text-gray-500 mb-1'>Наблюдаемость rollout</p>
+                            <p className='text-xs text-gray-500 mb-1'>Наблюдаемость развёртывания</p>
                             <p className='text-sm text-gray-700'>
-                                карт рапса: {rolloutSummary.totalRapeseedMaps} • canonical {rolloutSummary.strategies.canonicalSchema} • legacy {rolloutSummary.strategies.legacyBlueprint}
+                                карт рапса: {rolloutSummary.totalRapeseedMaps} • канонических {rolloutSummary.strategies.canonicalSchema} • наследованных {rolloutSummary.strategies.legacyBlueprint}
                             </p>
                             {rolloutReadiness && (
                                 <div className='mt-2 flex flex-wrap gap-2'>
@@ -206,58 +207,58 @@ export default function TechMapsPage() {
                                         готовность {translateReadinessVerdict(rolloutReadiness.verdict)}
                                     </span>
                                     <span className='px-2.5 py-1 rounded-full bg-white text-gray-700 text-[10px] font-medium border border-black/10'>
-                                        рекомендуемый режим {rolloutReadiness.suggestedMode}
+                                        рекомендуемый режим {formatRolloutModeLabel(rolloutReadiness.suggestedMode)}
                                     </span>
                                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-medium border ${
                                         rolloutReadiness.canEnableCanonicalDefault
                                             ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
                                             : 'bg-amber-50 text-amber-700 border-amber-100'
                                     }`}>
-                                        {rolloutReadiness.canEnableCanonicalDefault ? 'готово к canonical default' : 'не готово к canonical default'}
+                                        {rolloutReadiness.canEnableCanonicalDefault ? 'готово к каноническому режиму по умолчанию' : 'не готово к каноническому режиму по умолчанию'}
                                     </span>
                                 </div>
                             )}
                         </div>
                         <div className='flex flex-wrap gap-2'>
                             <span className='px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-100'>
-                                pinned {rolloutSummary.metadataCoverage.versionPinnedCount}
+                                версий зафиксировано {rolloutSummary.metadataCoverage.versionPinnedCount}
                             </span>
                             <span className='px-2.5 py-1 rounded-full bg-sky-50 text-sky-700 text-[10px] font-medium border border-sky-100'>
-                                shadow {rolloutSummary.rolloutModes.shadow}
+                                теневой режим {rolloutSummary.rolloutModes.shadow}
                             </span>
                             <span className='px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[10px] font-medium border border-amber-100'>
-                                fallback {rolloutSummary.fallback.usedCount}
+                                резервный сценарий {rolloutSummary.fallback.usedCount}
                             </span>
                             <span className={`px-2.5 py-1 rounded-full text-[10px] font-medium border ${
                                 rolloutSummary.parity.mapsWithBlockingDiffs > 0
                                     ? 'bg-rose-50 text-rose-700 border-rose-100'
                                     : 'bg-emerald-50 text-emerald-700 border-emerald-100'
                             }`}>
-                                blocking parity {rolloutSummary.parity.mapsWithBlockingDiffs}
+                                блокирующие расхождения {rolloutSummary.parity.mapsWithBlockingDiffs}
                             </span>
                         </div>
                     </div>
                     <div className='mt-4 grid grid-cols-1 md:grid-cols-4 gap-3'>
                             <div className='rounded-xl border border-black/5 bg-gray-50 p-3'>
-                                <p className='text-[11px] uppercase tracking-wider text-gray-500'>Распределение strategy</p>
+                                <p className='text-[11px] uppercase tracking-wider text-gray-500'>Распределение стратегий</p>
                                 <p className='text-sm text-gray-700 mt-1'>
-                                    canonical {rolloutSummary.strategies.canonicalSchema} • legacy {rolloutSummary.strategies.legacyBlueprint} • fallback {rolloutSummary.strategies.blueprintFallback}
+                                    каноническая {rolloutSummary.strategies.canonicalSchema} • наследованная {rolloutSummary.strategies.legacyBlueprint} • резервная {rolloutSummary.strategies.blueprintFallback}
                                 </p>
                             </div>
                             <div className='rounded-xl border border-black/5 bg-gray-50 p-3'>
-                                <p className='text-[11px] uppercase tracking-wider text-gray-500'>Parity</p>
+                                <p className='text-[11px] uppercase tracking-wider text-gray-500'>Расхождения</p>
                             <p className='text-sm text-gray-700 mt-1'>
                                 P0 {rolloutSummary.parity.diffCounts.P0} • P1 {rolloutSummary.parity.diffCounts.P1} • P2 {rolloutSummary.parity.diffCounts.P2}
                             </p>
                             </div>
                             <div className='rounded-xl border border-black/5 bg-gray-50 p-3'>
-                                <p className='text-[11px] uppercase tracking-wider text-gray-500'>Покрытие trace</p>
+                                <p className='text-[11px] uppercase tracking-wider text-gray-500'>Покрытие трассировкой</p>
                                 <p className='text-sm text-gray-700 mt-1'>
-                                    generation {rolloutSummary.metadataCoverage.generationTraceCount} • explainability {rolloutSummary.metadataCoverage.explainabilityTraceCount}
+                                    генерация {rolloutSummary.metadataCoverage.generationTraceCount} • обоснование {rolloutSummary.metadataCoverage.explainabilityTraceCount}
                                 </p>
                             </div>
                             <div className='rounded-xl border border-black/5 bg-gray-50 p-3'>
-                                <p className='text-[11px] uppercase tracking-wider text-gray-500'>Причины fallback</p>
+                                <p className='text-[11px] uppercase tracking-wider text-gray-500'>Причины резервного сценария</p>
                             <p className='text-sm text-gray-700 mt-1'>
                                 {Object.entries(rolloutSummary.fallback.reasons).length === 0
                                     ? 'не использовались'
@@ -269,15 +270,15 @@ export default function TechMapsPage() {
                     </div>
                     {(rolloutSummary.rolloutIncidents || []).length > 0 && (
                         <div className='mt-4 space-y-2'>
-                            <p className='text-xs text-gray-500'>Persisted rollout-инциденты</p>
+                            <p className='text-xs text-gray-500'>Сохранённые инциденты развёртывания</p>
                             {(rolloutSummary.rolloutIncidents || []).slice(0, 4).map((incident) => (
                                 <div key={incident.id} className='rounded-xl border border-black/5 bg-gray-50 p-3'>
                                     <p className='text-xs text-gray-500'>
-                                        {incident.subtype || '-'} • {incident.severity} • {incident.status}
+                                        {incident.subtype || '-'} • {formatSeverityLabel(incident.severity)} • {formatStatusLabel(incident.status)}
                                     </p>
                                     <p className='text-sm text-gray-700 mt-1'>
-                                        {incident.techMapId ? `techMap ${incident.techMapId}` : 'company rollout-инцидент'}
-                                        {incident.runbookSuggestedAction ? ` • runbook ${incident.runbookSuggestedAction}` : ''}
+                                        {incident.techMapId ? `Техкарта ${incident.techMapId}` : 'Инцидент развёртывания по компании'}
+                                        {incident.runbookSuggestedAction ? ` • действие ${formatRunbookActionLabel(incident.runbookSuggestedAction)}` : ''}
                                     </p>
                                 </div>
                             ))}
@@ -315,27 +316,27 @@ export default function TechMapsPage() {
                         <div className='mt-4 rounded-2xl border border-black/10 p-4'>
                             <div className='flex items-start justify-between gap-4 flex-wrap'>
                                 <div>
-                                    <p className='text-xs text-gray-500 mb-1'>Cutover packet</p>
+                                    <p className='text-xs text-gray-500 mb-1'>Пакет перевода</p>
                                     <p className='text-sm text-gray-700'>
-                                        Компания {cutoverPacket.companyId} • verdict {translateReadinessVerdict(cutoverPacket.verdict)} • {cutoverPacket.canExecuteCutover ? 'готово к исполнению' : 'пока только подготовка'}
+                                        Компания {cutoverPacket.companyId} • вердикт {translateReadinessVerdict(cutoverPacket.verdict)} • {cutoverPacket.canExecuteCutover ? 'готово к выполнению' : 'пока только подготовка'}
                                     </p>
                                 </div>
                             </div>
                             <div className='mt-4 grid grid-cols-1 md:grid-cols-2 gap-4'>
                                 <div className='rounded-xl border border-black/5 bg-gray-50 p-3'>
-                                    <p className='text-[11px] uppercase tracking-wider text-gray-500'>Текущие flags</p>
-                                    <p className='text-sm text-gray-700 mt-1'>mode {cutoverPacket.currentFeatureFlags.mode}</p>
-                                    <p className='text-sm text-gray-700 mt-1'>company filter {cutoverPacket.currentFeatureFlags.companyFilter || '-'}</p>
+                                    <p className='text-[11px] uppercase tracking-wider text-gray-500'>Текущие флаги</p>
+                                    <p className='text-sm text-gray-700 mt-1'>режим {formatRolloutModeLabel(cutoverPacket.currentFeatureFlags.mode)}</p>
+                                    <p className='text-sm text-gray-700 mt-1'>фильтр компании {cutoverPacket.currentFeatureFlags.companyFilter || '-'}</p>
                                 </div>
                                 <div className='rounded-xl border border-black/5 bg-gray-50 p-3'>
-                                    <p className='text-[11px] uppercase tracking-wider text-gray-500'>Рекомендуемые flags</p>
-                                    <p className='text-sm text-gray-700 mt-1'>mode {cutoverPacket.recommendedFeatureFlags.mode}</p>
-                                    <p className='text-sm text-gray-700 mt-1'>company filter {cutoverPacket.recommendedFeatureFlags.companyFilter || '-'}</p>
+                                    <p className='text-[11px] uppercase tracking-wider text-gray-500'>Рекомендуемые флаги</p>
+                                    <p className='text-sm text-gray-700 mt-1'>режим {formatRolloutModeLabel(cutoverPacket.recommendedFeatureFlags.mode)}</p>
+                                    <p className='text-sm text-gray-700 mt-1'>фильтр компании {cutoverPacket.recommendedFeatureFlags.companyFilter || '-'}</p>
                                 </div>
                             </div>
                             <div className='mt-4 grid grid-cols-1 md:grid-cols-2 gap-4'>
                                 <div className='rounded-xl border border-black/5 bg-gray-50 p-3'>
-                                    <p className='text-[11px] uppercase tracking-wider text-gray-500'>Release command</p>
+                                    <p className='text-[11px] uppercase tracking-wider text-gray-500'>Команда выпуска</p>
                                     <code className='block mt-2 text-xs text-gray-800 break-all'>{cutoverPacket.releaseCommand}</code>
                                     <div className='mt-3 space-y-1'>
                                         {cutoverPacket.checklist.map((item) => (
@@ -344,7 +345,7 @@ export default function TechMapsPage() {
                                     </div>
                                 </div>
                                 <div className='rounded-xl border border-black/5 bg-gray-50 p-3'>
-                                    <p className='text-[11px] uppercase tracking-wider text-gray-500'>Rollback command</p>
+                                    <p className='text-[11px] uppercase tracking-wider text-gray-500'>Команда отката</p>
                                     <code className='block mt-2 text-xs text-gray-800 break-all'>{cutoverPacket.rollbackCommand}</code>
                                     <div className='mt-3 space-y-1'>
                                         {cutoverPacket.rollbackChecklist.map((item) => (
@@ -373,7 +374,7 @@ export default function TechMapsPage() {
                                             {map.crop || 'Культура не указана'} • v{map.version ?? '-'}
                                         </p>
                                         <p className='text-xs text-gray-500'>
-                                            {map.id} • {map.status} • {map.updatedAt ? new Date(map.updatedAt).toLocaleDateString('ru-RU') : '-'}
+                                            {map.id} • {formatStatusLabel(map.status)} • {map.updatedAt ? new Date(map.updatedAt).toLocaleDateString('ru-RU') : '-'}
                                         </p>
                                         <div className='mt-2 flex flex-wrap gap-2'>
                                             {renderGenerationBadges(map)}
@@ -393,7 +394,7 @@ export default function TechMapsPage() {
                                                 disabled={busyId === map.id}
                                                 className='px-4 py-2 bg-black text-white rounded-xl text-xs font-medium hover:bg-zinc-800 disabled:opacity-50'
                                             >
-                                                {busyId === map.id ? '...' : `-> ${status}`}
+                                                {busyId === map.id ? '...' : `→ ${formatStatusLabel(status)}`}
                                             </button>
                                         ))}
                                     </div>
@@ -425,7 +426,7 @@ function renderGenerationBadges(map: TechMap) {
     if (rolloutMode) {
         badges.push(
             <span key="rollout" className='px-2.5 py-1 rounded-full bg-white text-gray-700 text-[10px] font-medium border border-black/10'>
-                режим {rolloutMode}
+                режим {formatRolloutModeLabel(rolloutMode)}
             </span>,
         );
     }
@@ -441,7 +442,7 @@ function renderGenerationBadges(map: TechMap) {
     if (fallbackUsed) {
         badges.push(
             <span key="fallback" className='px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[10px] font-medium border border-amber-100'>
-                fallback
+                резервный сценарий
             </span>,
         );
     }
@@ -455,7 +456,7 @@ function renderGenerationBadges(map: TechMap) {
     } else if (parity && typeof parity.diffCount === 'number') {
         badges.push(
             <span key="parity-ok" className='px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-100'>
-                parity {parity.diffCount}
+                расхождений {parity.diffCount}
             </span>,
         );
     }

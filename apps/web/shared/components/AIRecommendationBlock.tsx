@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { AuthorityContextType } from '@/core/governance/AuthorityContext';
+import { formatStatusLabel } from '@/lib/ui-language';
 import { hasForensicAuthority, hasSurfaceContractViolation, shouldDisableLedgerVerify } from './ai-recommendation.policy';
 
 export interface ExplainabilityFactorDto {
@@ -72,9 +73,9 @@ export const AIRecommendationBlock: React.FC<AIRecommendationBlockProps> = ({
             ['INPUT_CANONICAL_HASH', explainability.forensic.inputCanonicalHash],
             ['EXPLAINABILITY_CANONICAL_HASH', explainability.forensic.explainabilityCanonicalHash],
             ['LEDGER_TRACE_ID', explainability.forensic.ledgerTraceId],
-            ['LEDGER_TX_ID', explainability.forensic.ledgerTxId ?? 'N/A'],
-            ['MERKLE_ROOT', explainability.forensic.merkleRoot ?? 'N/A'],
-            ['ENVIRONMENT', explainability.forensic.environment ?? 'N/A'],
+            ['LEDGER_TX_ID', explainability.forensic.ledgerTxId ?? '—'],
+            ['MERKLE_ROOT', explainability.forensic.merkleRoot ?? '—'],
+            ['ENVIRONMENT', explainability.forensic.environment ? formatStatusLabel(explainability.forensic.environment) : '—'],
         ];
     }, [explainability?.forensic]);
 
@@ -90,8 +91,8 @@ export const AIRecommendationBlock: React.FC<AIRecommendationBlockProps> = ({
         console.error('[AUDIT] EXPLAINABILITY_MISSING_POLICY_VIOLATION', { traceId: effectiveTraceId ?? 'N/A' });
         return (
             <div className={clsx('mt-2 rounded-xl border border-red-300 bg-red-50 p-3 text-left', className)}>
-                <p className="text-xs font-semibold text-red-700">Explainability payload missing - violates institutional policy.</p>
-                <p className="mt-1 text-[11px] text-red-700/80">TraceID: {effectiveTraceId ?? 'N/A'}</p>
+                <p className="text-xs font-semibold text-red-700">Данные обоснования не пришли. Это нарушает институциональную политику.</p>
+                <p className="mt-1 text-[11px] text-red-700/80">Идентификатор трассировки: {effectiveTraceId ?? '—'}</p>
             </div>
         );
     }
@@ -101,32 +102,32 @@ export const AIRecommendationBlock: React.FC<AIRecommendationBlockProps> = ({
             <div className="flex items-center justify-between gap-2">
                 <div>
                     <p className="text-xs font-semibold text-gray-900">{explainability.verdict}</p>
-                    <p className="text-[11px] text-gray-600">Confidence: {formatConfidence(explainability.confidence)}</p>
+                    <p className="text-[11px] text-gray-600">Уверенность: {formatConfidence(explainability.confidence)}</p>
                 </div>
                 <span className={clsx('rounded-full border px-2 py-0.5 text-[10px] font-medium', traceStatus === 'PENDING' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700')}>
-                    {traceStatus === 'PENDING' ? 'Trace pending' : 'Trace bound'}
+                    {traceStatus === 'PENDING' ? 'Трассировка ожидается' : 'Трассировка привязана'}
                 </span>
             </div>
 
             <p className="mt-2 text-[11px] text-gray-600">
-                AI recommendation is advisory. Final authority resides in Governance.
+                Рекомендация AI носит консультативный характер. Финальное решение принимает контур управления.
             </p>
 
             <div className="mt-3 flex items-center gap-2">
                 <button className="rounded-lg border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700" onClick={() => setAnalyticalOpen(true)}>
-                    Why?
+                    Почему так
                 </button>
                 <button
                     className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-[11px] font-medium text-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
                     onClick={() => setForensicOpen(true)}
                     disabled={verifyDisabled}
-                    title={verifyDisabled ? 'Awaiting ledger receipt' : undefined}
+                    title={verifyDisabled ? 'Ждём запись в журнале' : undefined}
                 >
-                    Forensic / Verify in Ledger
+                    Проверка в журнале
                 </button>
                 {effectiveTraceId && !verifyDisabled && (
                     <a className="text-[11px] text-blue-700 underline" href={`/consulting/ledger/${effectiveTraceId}`}>
-                        Verify in Ledger
+                        Открыть запись в журнале
                     </a>
                 )}
             </div>
@@ -137,14 +138,14 @@ export const AIRecommendationBlock: React.FC<AIRecommendationBlockProps> = ({
                         <div key={`${factor.name}-${index}`} className="rounded-lg border border-white/40 bg-white/50 p-2">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-medium text-gray-800">{factor.name}</span>
-                                <span className="text-[11px] text-gray-600">w={factor.weight.toFixed(2)} impact={factor.impact.toFixed(2)}</span>
+                                <span className="text-[11px] text-gray-600">вес {factor.weight.toFixed(2)} • влияние {factor.impact.toFixed(2)}</span>
                             </div>
                             {factor.description && <p className="mt-1 text-[11px] text-gray-600">{factor.description}</p>}
                         </div>
                     ))}
                     {explainability.counterfactuals?.map((cf, index) => (
                         <div key={`${cf.scenarioName}-${index}`} className="rounded-lg border border-blue-100 bg-blue-50/40 p-2 text-[11px] text-blue-900">
-                            {cf.scenarioName}: {cf.expectedOutcome} (delta {cf.probabilityShift.toFixed(2)})
+                            {cf.scenarioName}: {cf.expectedOutcome} (сдвиг {cf.probabilityShift.toFixed(2)})
                         </div>
                     ))}
                 </div>
@@ -153,10 +154,10 @@ export const AIRecommendationBlock: React.FC<AIRecommendationBlockProps> = ({
             {forensicOpen && (
                 <div className="mt-3 rounded-lg border border-gray-300 bg-white p-3 font-mono text-[11px] text-gray-900">
                     {!hasForensicAccess && (
-                        <p className="text-xs text-gray-700">Forensic layer requires institutional authority (signature/override).</p>
+                        <p className="text-xs text-gray-700">Детализированный forensic-слой доступен только при наличии права подписи или override.</p>
                     )}
                     {hasForensicAccess && !explainability.forensic && (
-                        <p className="text-xs text-gray-700">Forensic metadata unavailable.</p>
+                        <p className="text-xs text-gray-700">Forensic-метаданные недоступны.</p>
                     )}
                     {hasForensicAccess && explainability.forensic && (
                         <div className="space-y-2">
@@ -165,7 +166,7 @@ export const AIRecommendationBlock: React.FC<AIRecommendationBlockProps> = ({
                                     <span>{label}</span>
                                     <span className="truncate">{value}</span>
                                     <button className="rounded border border-gray-400 px-1 text-[10px]" onClick={() => copyValue(value)}>
-                                        Copy
+                                        Копировать
                                     </button>
                                 </div>
                             ))}
