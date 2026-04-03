@@ -129,7 +129,7 @@ export default function AgronomistContour() {
                         onClick={() => gov.detectConflict()}
                         className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-600 border border-rose-100 rounded-xl text-xs font-medium hover:bg-rose-100 transition-all font-mono"
                     >
-                        <AlertTriangle className="w-3.5 h-3.5" /> DETECT_CONFLICT
+                        <AlertTriangle className="w-3.5 h-3.5" /> Проверить конфликт
                     </button>
                 </div>
             </div>
@@ -221,7 +221,7 @@ export default function AgronomistContour() {
                         </div>
                         <div className="flex-1">
                             <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">
-                                TRACE: {gov.context.traceId?.slice(0, 8) || '...'}
+                                Трасса: {gov.context.traceId?.slice(0, 8) || '...'}
                             </p>
                             <p className="text-sm font-medium text-slate-900">
                                 {gov.isPending ? "Обработка..." : "Подтвердите выполнение"}
@@ -232,7 +232,7 @@ export default function AgronomistContour() {
                                 onClick={gov.execute}
                                 className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-black transition-all"
                             >
-                                КОММИТ
+                                Подтвердить
                             </button>
                         )}
                     </div>

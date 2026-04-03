@@ -24,11 +24,13 @@ import {
   Square,
 } from "lucide-react";
 import clsx from "clsx";
+import { formatUiEntityName } from "@/lib/ui-language";
 import { useAuthority } from "@/core/governance/AuthorityContext";
 import { AiChatSessionsStrip } from "./AiChatSessionsStrip";
 
 interface AiChatPanelProps {
   variant?: "overlay" | "shell";
+  shellHeight?: string;
 }
 
 interface SpeechRecognitionAlternativeLike {
@@ -160,10 +162,11 @@ function getTrustSummaryClass(verdict: ChatTrustSummary["verdict"]) {
   }
 }
 
-export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
+export function AiChatPanel({ variant = "overlay", shellHeight }: AiChatPanelProps) {
   const router = useRouter();
   const memoryHintsEnabled = webFeatureFlags.memoryHints;
   const chiefAgronomistPanelEnabled = webFeatureFlags.chiefAgronomistPanel;
+  const isShell = variant === "shell";
   const { messages, isLoading, sendMessage, dispatch, fsmState, panelMode } =
     useAiChatStore();
   const context = useWorkspaceContextStore((s) => s.context);
@@ -481,9 +484,10 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
   };
 
   const shellWidthClass: Record<PanelMode, string> = {
-    dock: "w-full h-[calc(100vh-224px)]",
-    focus: "w-full h-[calc(100vh-224px)]",
+    dock: "w-full",
+    focus: "w-full",
   };
+  const shellHeightValue = shellHeight ?? "calc(100dvh - 176px)";
 
   return (
     <div
@@ -496,14 +500,20 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
           ? "rounded-3xl shadow-sm"
           : "rounded-2xl shadow-2xl",
       )}
+      style={variant === "shell" ? { height: shellHeightValue } : undefined}
     >
       <div className="flex min-w-0 min-h-0 flex-1 flex-col">
         {/* Верхняя панель */}
-        <div className="shrink-0 border-b border-black/5 bg-[#FCFBF8] px-4 py-3">
+        <div
+          className={clsx(
+            "shrink-0 border-b border-black/5 bg-[#FCFBF8] px-4",
+            isShell ? "py-1.5" : "py-3",
+          )}
+        >
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
               <h3 className="truncate text-base font-medium text-gray-950">
-                A-RAI
+                {formatUiEntityName("A-RAI")}
               </h3>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-emerald-700">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />В
@@ -541,7 +551,7 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
               </p>
               <p className="max-w-sm text-xs leading-5 text-gray-500">
                 {context?.route
-                  ? `Я вижу контекст страницы: ${context.route}. Сформулируйте задачу или задайте вопрос.`
+                  ? "Контекст страницы определён. Сформулируйте задачу или задайте вопрос."
                   : "В данный момент не выбран специфический контекст."}
               </p>
             </div>
@@ -550,7 +560,7 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
           {/* Область сообщений */}
           {messages.length > 0 && (
             <div className="flex h-full min-h-0 flex-col">
-              <div className="flex-1 space-y-3 overflow-y-auto px-3 py-3">
+              <div className="flex-1 space-y-2 overflow-y-auto px-2 py-3">
                 {messages.map((m) => (
                   <div
                     key={m.id}
@@ -559,7 +569,7 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
                     {/* Сообщение */}
                     <div
                       className={`
-                 max-w-[82%] px-3.5 py-2.5 text-[13px] leading-5
+                 max-w-[86%] px-3.5 ${isShell ? "py-2 text-[13px] leading-5" : "py-2.5 text-[13px] leading-5"}
                  ${
                    m.role === "user"
                      ? "bg-gray-900 text-white rounded-2xl rounded-br-sm"
@@ -584,7 +594,8 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
                       {m.role === "assistant" && m.trustSummary && (
                         <div
                           className={clsx(
-                            "mt-2 rounded-xl border p-3 text-xs",
+                            isShell ? "mt-1.5" : "mt-2",
+                            "rounded-xl border p-3 text-xs",
                             getTrustSummaryClass(m.trustSummary.verdict),
                           )}
                         >
@@ -618,7 +629,12 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
                         m.role === "assistant" &&
                         (m.memorySummary?.primaryHint ||
                           buildFallbackMemoryHint(m.memoryUsed)) && (
-                          <div className="mt-2 rounded-xl border border-black/10 bg-white/70 p-3 text-xs text-gray-700">
+                          <div
+                            className={clsx(
+                              isShell ? "mt-1.5" : "mt-2",
+                              "rounded-xl border border-black/10 bg-white/70 p-3 text-xs text-gray-700",
+                            )}
+                          >
                             <div className="flex items-center justify-between gap-3">
                               <div className="min-w-0">
                                 <div className="text-[10px] uppercase tracking-[0.16em] text-gray-400">
@@ -667,7 +683,7 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
 
                       {m.role === "assistant" &&
                         getVisibleSuggestedActions(m.suggestedActions).length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-2">
+                          <div className={clsx(isShell ? "mt-1.5" : "mt-2", "flex flex-wrap gap-2")}>
                             {getVisibleSuggestedActions(m.suggestedActions)
                               .slice(0, 3)
                               .map((action, index) => (
@@ -685,7 +701,12 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
                     </div>
 
                     {/* Время */}
-                    <span className="mx-1 mt-1 text-[10px] text-gray-400">
+                    <span
+                      className={clsx(
+                        "mx-1 text-gray-400",
+                        isShell ? "mt-0.5 text-[9px]" : "mt-1 text-[10px]",
+                      )}
+                    >
                       {new Date(m.timestamp).toLocaleTimeString([], {
                         hour: "2-digit",
                         minute: "2-digit",
@@ -709,15 +730,23 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
         </div>
 
         {/* Поле ввода */}
-        <div className="p-4 bg-white border-t border-black/5 shrink-0">
+        <div
+          className={clsx(
+            "bg-white border-t border-black/5 shrink-0",
+            isShell ? "p-2.5" : "p-4",
+          )}
+        >
           <form onSubmit={handleSubmit} className="relative flex items-center">
             <input
               ref={inputRef}
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="Опишите задачу (Ctrl/Cmd+K)"
-              className="w-full rounded-xl border border-black/10 bg-gray-50 py-3 pl-4 pr-20 text-sm font-normal text-gray-900 transition-all placeholder:text-gray-400 focus:border-black/20 focus:bg-white focus:outline-none focus:ring-2 focus:ring-black/20"
+              placeholder="Опишите задачу"
+              className={clsx(
+                "w-full rounded-xl border border-black/10 bg-gray-50 pl-4 pr-20 text-sm font-normal text-gray-900 transition-all placeholder:text-gray-400 focus:border-black/20 focus:bg-white focus:outline-none focus:ring-2 focus:ring-black/20",
+                isShell ? "py-2" : "py-3",
+              )}
               disabled={isLoading}
             />
             <button
@@ -762,7 +791,7 @@ export function AiChatPanel({ variant = "overlay" }: AiChatPanelProps) {
           </form>
           <div className="mt-2 flex items-center justify-between gap-3">
             <div className="min-w-0 text-[10px] text-gray-400">
-              <span>Ctrl/Cmd+K: ввод</span>
+              <span>Поле ввода активно</span>
               {voiceSupported ? (
                 <span
                   className={clsx(

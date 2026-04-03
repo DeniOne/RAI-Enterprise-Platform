@@ -145,6 +145,7 @@
     "lint:tenant-context:enforce": "node scripts/lint-tenant-context.cjs --enforce",
     "lint:fsm-status-updates": "node scripts/lint-fsm-status-updates.cjs",
     "lint:fsm-status-updates:enforce": "node scripts/lint-fsm-status-updates.cjs --enforce",
+    "lint:ui-language": "node scripts/ui-language-audit.cjs --enforce",
     "verify:fsm-db:task": "node scripts/verify-task-fsm-db.cjs",
     "report:invariants:weekly": "node scripts/invariant-weekly-review.cjs",
     "lint:docs:matrix": "node scripts/doc-lint-matrix.cjs --fail-on-mismatch",

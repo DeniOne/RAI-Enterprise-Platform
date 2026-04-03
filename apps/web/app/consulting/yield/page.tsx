@@ -36,7 +36,7 @@ export default function YieldEntryPage() {
                 );
                 setPlans(activePlans);
             } catch (error) {
-                console.error('Failed to fetch plans:', error);
+                console.error('Не удалось загрузить планы уборки:', error);
             } finally {
                 setIsLoading(false);
             }
@@ -77,7 +77,7 @@ export default function YieldEntryPage() {
                 kind: 'yield',
                 id: selectedPlan.id,
                 title: `План уборки ${selectedPlan.id}`,
-                subtitle: techMap?.crop || selectedPlan.account?.name || 'Yield entry',
+                subtitle: techMap?.crop || selectedPlan.account?.name || 'Ввод данных по урожаю',
                 status: selectedPlan.status,
             });
             setLastUserAction(`select-plan:${selectedPlan.id}`);
@@ -112,7 +112,7 @@ export default function YieldEntryPage() {
             };
 
             await api.consulting.yield.save(payload);
-            setMessage({ type: 'success', text: 'Данные об урожае успешно сохранены и заархивированы в Audit Trail.' });
+            setMessage({ type: 'success', text: 'Данные об урожае успешно сохранены и записаны в журнал аудита.' });
         } catch (error: any) {
             setMessage({ type: 'error', text: error.response?.data?.message || 'Ошибка при сохранении данных' });
         } finally {
@@ -125,7 +125,7 @@ export default function YieldEntryPage() {
             <div className="p-8 max-w-4xl mx-auto font-geist">
                 <div className="mb-10">
                     <h1 className="text-xl font-medium text-gray-900 mb-1 tracking-tight">Ввод данных об урожае</h1>
-                    <p className="text-sm font-normal text-gray-500">Зафиксируйте результаты производства. Финансовый снимок будет сделан автоматически для расчета ROI.</p>
+                    <p className="text-sm font-normal text-gray-500">Зафиксируйте результаты производства. Финансовый снимок будет сделан автоматически для расчёта окупаемости.</p>
                 </div>
 
                 {message && (

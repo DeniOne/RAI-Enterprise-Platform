@@ -31,7 +31,7 @@ export const MODULES: Record<string, ModuleConfig> = {
     FINANCE: { id: 'FINANCE', label: 'Финансы', path: '/finance' },
     GR: { id: 'GR', label: 'GR', path: '/gr' },
     PRODUCTION: { id: 'PRODUCTION', label: 'Производство', path: '/production' },
-    FRONT_OFFICE: { id: 'FRONT_OFFICE', label: 'Front-office', path: '/front-office' },
+    FRONT_OFFICE: { id: 'FRONT_OFFICE', label: 'Внешний кабинет', path: '/front-office' },
 };
 
 export const ROLE_PERMISSIONS: Record<UserRole | string, string[]> = {

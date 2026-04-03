@@ -1,5 +1,6 @@
 import { PartyDto } from '@/shared/types/party-assets';
 import { partyTypeLabel } from '@/shared/lib/party-assets-labels';
+import { formatStatusLabel } from '@/lib/ui-language';
 
 export function PartyProfileTab({ party }: { party: PartyDto }) {
   const shortName = party.shortName || party.registrationData?.shortName || '—';
@@ -11,7 +12,7 @@ export function PartyProfileTab({ party }: { party: PartyDto }) {
       <Field label="Юридическое наименование" value={party.legalName} />
       <Field label="Тип" value={partyTypeLabel(party.type)} />
       <Field label="Юрисдикция" value={party.jurisdictionId} />
-      <Field label="Статус" value={party.status} />
+      <Field label="Статус" value={formatStatusLabel(party.status)} />
       <Field label="Организационно-правовая форма" value={legalForm} />
       <Field label="Краткое наименование" value={shortName} />
       <Field label="Комментарий" value={comment} />

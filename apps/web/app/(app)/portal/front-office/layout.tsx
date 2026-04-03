@@ -26,7 +26,7 @@ export default async function ExternalFrontOfficeLayout({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-gray-400">
-              Counterparty Portal
+              Портал контрагента
             </p>
             <h1 className="mt-2 text-2xl font-medium text-gray-900">
               Портал контрагента

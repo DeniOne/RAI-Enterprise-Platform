@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
+import { formatCropLabel, formatStatusLabel } from '@/lib/ui-language';
 
 type TechMapItem = {
     id: string;
@@ -21,9 +22,9 @@ function TechMapList({ items }: { items: TechMapItem[] }) {
         <ul className='space-y-2 text-sm'>
             {items.map((item) => (
                 <li key={item.id} className='border-b last:border-b-0 py-2'>
-                    <div className='text-gray-900'>Версия {item.version ?? '-'} • {item.crop || 'Культура не указана'}</div>
+                    <div className='text-gray-900'>Версия {item.version ?? '-'} • {formatCropLabel(item.crop)}</div>
                     <div className='text-xs text-gray-500'>
-                        {item.status || 'UNKNOWN'} • {item.updatedAt ? new Date(item.updatedAt).toLocaleDateString('ru-RU') : '-'}
+                        {formatStatusLabel(item.status)} • {item.updatedAt ? new Date(item.updatedAt).toLocaleDateString('ru-RU') : '-'}
                     </div>
                 </li>
             ))}

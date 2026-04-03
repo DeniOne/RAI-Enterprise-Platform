@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
+import { formatSoilTypeLabel, formatUiEntityName } from '@/lib/ui-language';
 
 type AccountItem = {
   id: string;
@@ -34,7 +35,7 @@ export function FieldCreateWizard() {
   const [accountSearch, setAccountSearch] = useState('');
   const [selectedAccountId, setSelectedAccountId] = useState('');
   const [name, setName] = useState('');
-  const [cadastreNumber, setCadastreNumber] = useState(`FIELD-${Date.now()}`);
+  const [cadastreNumber, setCadastreNumber] = useState(`${Date.now()}`);
   const [area, setArea] = useState('120');
   const [soilType, setSoilType] = useState('CHERNOZEM');
   const [saving, setSaving] = useState(false);
@@ -104,7 +105,7 @@ export function FieldCreateWizard() {
 
   const submit = async () => {
     if (!companyId || !selectedAccountId.trim()) {
-      setError('Для создания поля требуется выбранное хозяйство из реестра Accounts.');
+      setError('Для создания поля требуется выбранное хозяйство из реестра хозяйств.');
       return;
     }
 
@@ -149,7 +150,7 @@ export function FieldCreateWizard() {
       {step === 1 ? (
         <div className="space-y-4">
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
-            Поле сейчас создаётся в `Field Registry` и требует выбор хозяйства из account-контура. Это реальный текущий backend-путь, от которого уже зависят `Season` и генерация `TechMap`.
+            Поле сейчас создаётся в реестре полей и требует выбор хозяйства из контура хозяйств. Это реальный текущий серверный путь, от которого уже зависят сезон и генерация техкарты.
           </div>
           <div>
             <label className="mb-2 block text-sm font-normal text-gray-700">Поиск хозяйства</label>
@@ -164,7 +165,7 @@ export function FieldCreateWizard() {
             {loadingAccounts ? (
               <p className="text-sm font-normal text-gray-500">Загрузка хозяйств...</p>
             ) : filteredAccounts.length === 0 ? (
-              <p className="text-sm font-normal text-gray-500">В account-контуре пока нет хозяйств. Следующий шаг для продукта: свести Party/Farm и Account в единый контур.</p>
+              <p className="text-sm font-normal text-gray-500">В контуре хозяйств пока нет записей. Следующий шаг для продукта: свести контуры контрагентов, хозяйств и учётных записей в единый поток.</p>
             ) : (
               filteredAccounts.map((account) => {
                 const isSelected = account.id === selectedAccountId;
@@ -177,9 +178,9 @@ export function FieldCreateWizard() {
                       isSelected ? 'border-black/30 bg-gray-50' : 'border-black/10 hover:bg-gray-50'
                     }`}
                   >
-                    <div className="text-sm font-medium text-gray-900">{account.name || account.id}</div>
+                    <div className="text-sm font-medium text-gray-900">{formatUiEntityName(account.name || account.id)}</div>
                     <div className="mt-1 text-xs text-gray-500">ИНН {account.inn || '—'}</div>
-                    <div className="mt-1 text-xs text-gray-400">{account.id}</div>
+                    <div className="mt-1 text-xs text-gray-400">Внутренний идентификатор скрыт</div>
                   </button>
                 );
               })
@@ -226,7 +227,7 @@ export function FieldCreateWizard() {
             >
               {SOIL_TYPES.map((item) => (
                 <option key={item} value={item}>
-                  {item}
+                  {formatSoilTypeLabel(item)}
                 </option>
               ))}
             </select>
@@ -238,7 +239,7 @@ export function FieldCreateWizard() {
         <div className="space-y-3 rounded-2xl border border-black/10 bg-gray-50 p-4 text-sm text-gray-700">
           <div>
             <span className="text-gray-500">Хозяйство: </span>
-            <span className="font-medium">{selectedAccount?.name || '—'}</span>
+            <span className="font-medium">{formatUiEntityName(selectedAccount?.name)}</span>
           </div>
           <div>
             <span className="text-gray-500">Поле: </span>

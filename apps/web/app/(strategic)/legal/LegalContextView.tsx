@@ -18,6 +18,11 @@ interface LegalRequirement {
 
 export default function LegalContextView({ requirements }: { requirements: LegalRequirement[] }) {
     const [selectedReq, setSelectedReq] = useState<LegalRequirement | null>(null);
+    const targetLabels: Record<string, string> = {
+        EMPLOYEE_PROFILE: 'Профиль сотрудника',
+        OPERATIONAL_TASK: 'Операционная задача',
+        RND_PROTOCOL: 'Протокол R&D',
+    };
 
     return (
         <div className="space-y-12 animate-in fade-in duration-500">
@@ -29,7 +34,7 @@ export default function LegalContextView({ requirements }: { requirements: Legal
                     </Link>
                     <div className="flex items-center gap-4">
                         <ShieldCheck size={40} className="text-[#FF005C]" />
-                        <h1 className="text-5xl font-light tracking-tight">Юридический Контур</h1>
+                        <h1 className="text-5xl font-light tracking-tight">Юридический контур</h1>
                     </div>
                 </div>
                 <div className="text-right">
@@ -62,7 +67,7 @@ export default function LegalContextView({ requirements }: { requirements: Legal
                             </div>
                             <div className="col-span-3 flex justify-center">
                                 <span className="text-[10px] uppercase tracking-tighter px-2 py-0.5 rounded bg-white/5 opacity-60">
-                                    {req.target}
+                                    {targetLabels[req.target] ?? req.target}
                                 </span>
                             </div>
                             <div className="col-span-2 flex justify-center">
@@ -92,7 +97,7 @@ export default function LegalContextView({ requirements }: { requirements: Legal
                                 <Scale size={20} className="text-white/40 mt-1" />
                                 <div>
                                     <div className="text-[10px] uppercase tracking-widest opacity-40">Юридическая норма</div>
-                                    <div className="text-sm font-medium mt-1">EU Regulation 2024/RND-Security</div>
+                                    <div className="text-sm font-medium mt-1">Регламент ЕС 2024 по исследовательской безопасности</div>
                                     <p className="text-xs opacity-60 leading-relaxed mt-2">
                                         Статья 14, Параграф 3: Обязательная верификация протоколов экспериментов с активным воздействием на почву.
                                     </p>
@@ -140,7 +145,7 @@ export default function LegalContextView({ requirements }: { requirements: Legal
                                         <AlertCircle size={16} className="text-[#FFD600]" />
                                         <div className="text-xs">Обновление сертификата на семена</div>
                                     </div>
-                                    <StateBadge state="ATTENTION" label="Overdue" className="text-[8px]" />
+                                    <StateBadge state="ATTENTION" label="Просрочено" className="text-[8px]" />
                                 </div>
                             </div>
                         </div>

@@ -10,7 +10,7 @@ export async function POST(
     const cookieStore = await cookies();
     const token = cookieStore.get("auth_token")?.value;
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Требуется авторизация" }, { status: 401 });
     }
 
     const body = await request.json().catch(() => ({}));
@@ -39,6 +39,6 @@ export async function POST(
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("advisory reject proxy failed", error);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    return NextResponse.json({ error: "Внутренняя ошибка сервиса" }, { status: 500 });
   }
 }

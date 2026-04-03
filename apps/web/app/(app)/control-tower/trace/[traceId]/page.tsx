@@ -10,6 +10,7 @@ import {
   type TraceForensicsResponseDto,
   type TraceForensicsSemanticIngressFrameDto,
 } from '@/lib/api';
+import { formatIngressSourceLabel, formatTrustLatencyProfileLabel } from '@/lib/ui-language';
 import { Play, Clock, FileSearch, ShieldCheck, Box } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -138,7 +139,7 @@ export default function TraceForensicsPage() {
   if (!traceId) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center font-sans tracking-tight">
-        <p className="text-[#717182] font-medium text-[13px]">TRACE_ID отсутствует.</p>
+        <p className="text-[#717182] font-medium text-[13px]">Идентификатор трассы отсутствует.</p>
       </div>
     );
   }
@@ -269,9 +270,9 @@ export default function TraceForensicsPage() {
                 <div className="flex flex-col gap-6">
                   <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
                     <div>
-                      <h2 className="text-[14px] font-medium text-[#030213]">Semantic Ingress Frame</h2>
+                      <h2 className="text-[14px] font-medium text-[#030213]">Входной семантический кадр</h2>
                       <p className="mt-1 text-[12px] text-[#717182]">
-                        Канонический ingress-объект до orchestration: режим запроса, owner-операция и обязательные пробелы контекста.
+                        Канонический входной объект до оркестрации: режим запроса, ведущая операция и обязательные пробелы контекста.
                       </p>
                     </div>
                     {forensics.semanticIngressFrame.proofSliceId && (
@@ -297,7 +298,7 @@ export default function TraceForensicsPage() {
                     />
                     <TrustMetaCard
                       label="Источник решения"
-                      value={formatIngressSource(forensics.semanticIngressFrame.requestedOperation.source)}
+                      value={formatIngressSourceLabel(forensics.semanticIngressFrame.requestedOperation.source)}
                     />
                   </div>
 
@@ -314,7 +315,7 @@ export default function TraceForensicsPage() {
                               key={`${candidate.source}:${candidate.domain}:${candidate.ownerRole ?? 'none'}`}
                               className="rounded-full border border-black/10 bg-white px-2.5 py-1 text-[11px] text-[#4a4a5a]"
                             >
-                              {candidate.domain} • {candidate.ownerRole ?? 'no-owner'} • {Math.round(candidate.score * 100)}%
+                              {candidate.domain} • {candidate.ownerRole ?? 'без владельца'} • {Math.round(candidate.score * 100)}%
                             </span>
                           ))
                         ) : (
@@ -333,12 +334,12 @@ export default function TraceForensicsPage() {
                     <div>
                       <h2 className="text-[14px] font-medium text-[#030213]">Контур доверия веток</h2>
                       <p className="mt-1 text-[12px] text-[#717182]">
-                        Вердикты по веткам, задержка trust-gate и бюджетный вердикт для финальной композиции ответа.
+                        Вердикты по веткам, задержка шлюза доверия и бюджетный вердикт для финальной композиции ответа.
                       </p>
                     </div>
                     {forensics?.summary?.trustLatencyProfile && (
                       <span className="inline-flex items-center rounded-full border border-black/10 bg-slate-50 px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-[#717182]">
-                        {formatTrustLatencyProfile(forensics.summary.trustLatencyProfile)}
+                        {formatTrustLatencyProfileLabel(forensics.summary.trustLatencyProfile)}
                       </span>
                     )}
                   </div>
@@ -375,7 +376,7 @@ export default function TraceForensicsPage() {
 
                       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                         <TrustMetaCard
-                          label="Задержка trust-gate"
+                          label="Задержка шлюза доверия"
                           value={formatLatency(forensics.summary.trustGateLatencyMs)}
                           tone={resolveBudgetTone(forensics.summary.trustLatencyWithinBudget)}
                         />
@@ -936,22 +937,6 @@ function resolveIngressRiskTone(
   return 'neutral';
 }
 
-function formatIngressSource(source: string): string {
-  if (source === 'legacy_contracts') {
-    return 'legacy contracts';
-  }
-  if (source === 'semantic_router_primary') {
-    return 'semantic router primary';
-  }
-  if (source === 'semantic_router_shadow') {
-    return 'semantic router shadow';
-  }
-  if (source === 'explicit_tool_call') {
-    return 'explicit tool call';
-  }
-  return 'clarification resume';
-}
-
 function formatIngressOperationAuthority(authority: string): string {
   if (authority === 'direct_user_command') {
     return 'прямая пользовательская команда';
@@ -973,19 +958,6 @@ function formatConfidenceBand(band: string): string {
     return 'средняя';
   }
   return 'низкая';
-}
-
-function formatTrustLatencyProfile(profile: string | null | undefined): string {
-  if (profile === 'HAPPY_PATH') {
-    return 'обычный путь';
-  }
-  if (profile === 'MULTI_SOURCE_READ') {
-    return 'чтение из нескольких источников';
-  }
-  if (profile === 'CROSS_CHECK_TRIGGERED') {
-    return 'селективная перепроверка';
-  }
-  return 'trust-профиль';
 }
 
 function formatBudgetVerdict(withinBudget: boolean | null | undefined): string {

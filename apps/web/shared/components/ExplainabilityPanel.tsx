@@ -172,7 +172,7 @@ export const ExplainabilityPanel: React.FC<ExplainabilityPanelProps> = ({ data, 
                             >
                                 <div className="flex items-center space-x-2">
                                     <Database size={14} className="text-gray-600" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600">Слой forensic-аудита</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600">Слой аудита разбора</span>
                                 </div>
                                 <ChevronRight size={14} className={clsx("text-gray-400 transition-transform", showForensic && "rotate-90")} />
                             </button>

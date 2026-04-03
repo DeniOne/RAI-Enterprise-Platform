@@ -24,12 +24,12 @@ export function AiChatSessionsStrip() {
     );
 
     return (
-        <div className="border-b border-black/5 bg-[#FCFBF8] px-4 py-2">
+        <div className="border-b border-black/5 bg-[#FCFBF8] px-4 py-1">
             <div className="flex items-center justify-between gap-3">
                 <button
                     type="button"
                     onClick={() => setHistoryOpen((current) => !current)}
-                    className="inline-flex items-center gap-2 rounded-lg px-1.5 py-1 text-[10px] uppercase tracking-[0.18em] text-neutral-400 transition-colors hover:bg-black/[0.03] hover:text-neutral-700"
+                    className="inline-flex items-center gap-2 rounded-lg px-1.5 py-0.5 text-[10px] uppercase tracking-[0.18em] text-neutral-400 transition-colors hover:bg-black/[0.03] hover:text-neutral-700"
                     aria-label={historyOpen ? 'Скрыть историю чатов' : 'Показать историю чатов'}
                 >
                     <History className="h-3.5 w-3.5" />

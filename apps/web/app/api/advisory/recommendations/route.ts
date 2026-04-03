@@ -6,7 +6,7 @@ export async function GET() {
     const cookieStore = await cookies();
     const token = cookieStore.get("auth_token")?.value;
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Требуется авторизация" }, { status: 401 });
     }
 
     const response = await fetch("http://localhost:4000/api/advisory/recommendations/my?limit=10", {
@@ -20,6 +20,6 @@ export async function GET() {
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("advisory recommendations proxy failed", error);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    return NextResponse.json({ error: "Внутренняя ошибка сервиса" }, { status: 500 });
   }
 }

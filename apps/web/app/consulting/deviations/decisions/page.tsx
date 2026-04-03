@@ -8,6 +8,7 @@ import { includesFocus, useEntityFocus } from '@/shared/hooks/useEntityFocus';
 import { ChiefAgronomistReviewDrawer } from '@/components/experts/ChiefAgronomistReviewDrawer';
 import clsx from 'clsx';
 import { useAuthority } from '@/core/governance/AuthorityContext';
+import { formatDecisionAuthorLabel, formatStatusLabel } from '@/lib/ui-language';
 
 type DecisionItem = {
     id: string;
@@ -49,8 +50,8 @@ const MOCK_EXPLAINABILITY: Record<string, AIExplainabilityDto> = {
 };
 
 const MOCK_DECISIONS: DecisionItem[] = [
-    { id: 'DEC-101', deviationId: 'DEV-001', title: 'Увеличение нормы ГСМ', author: 'AI_AGENT', date: '2026-05-12', outcome: 'APPROVED', impact: 'Economy: -1.2%' },
-    { id: 'DEC-102', deviationId: 'DEV-004', title: 'Продажа остатков СЗР', author: 'MANAGER', date: '2026-05-10', outcome: 'REJECTED', impact: 'None' },
+    { id: 'DEC-101', deviationId: 'DEV-001', title: 'Увеличение нормы ГСМ', author: 'AI_AGENT', date: '2026-05-12', outcome: 'APPROVED', impact: 'Экономика: -1.2%' },
+    { id: 'DEC-102', deviationId: 'DEV-004', title: 'Продажа остатков СЗР', author: 'MANAGER', date: '2026-05-10', outcome: 'REJECTED', impact: 'Нет эффекта' },
 ];
 
 export default function DecisionsPage() {
@@ -117,13 +118,13 @@ function DecisionsPageInner() {
                                     <tr key={dec.id} data-focus={focused ? 'true' : 'false'} className={clsx('group hover:bg-gray-50/50 transition-colors', focused && 'bg-sky-50 ring-1 ring-sky-200')}>
                                         <td className='px-6 py-4 align-top'>
                                             <div className='flex flex-col'>
-                                                <span className='text-xs font-medium text-gray-900'>{dec.id}</span>
+                                                <span className='text-xs font-medium text-gray-900'>Внутренняя запись</span>
                                                 <span className='text-[10px] text-gray-400'>{dec.date}</span>
                                             </div>
                                         </td>
                                         <td className='px-6 py-4 align-top'>
                                             <span className='text-sm text-gray-700 font-normal'>{dec.title}</span>
-                                            <div className='text-[10px] text-gray-400 uppercase mt-1 mb-3'>Автор: {dec.author}</div>
+                                            <div className='text-[10px] text-gray-400 uppercase mt-1 mb-3'>Автор: {formatDecisionAuthorLabel(dec.author)}</div>
                                             {dec.author === 'AI_AGENT' && (
                                                 <div className='space-y-3'>
                                                     <AIRecommendationBlock
@@ -134,7 +135,7 @@ function DecisionsPageInner() {
                                                         className='text-left'
                                                     />
                                                     <ChiefAgronomistReviewDrawer
-                                                        title={`Отклонение ${dec.deviationId}`}
+                                                        title='Отклонение'
                                                         subtitle={dec.title}
                                                         triggerLabel='Эскалировать к Мега-Агроному'
                                                         triggerClassName='px-3 py-1.5'
@@ -152,11 +153,11 @@ function DecisionsPageInner() {
                                             )}
                                         </td>
                                         <td className='px-6 py-4 align-top'>
-                                            <span className='text-xs text-blue-600 font-medium underline underline-offset-2 cursor-pointer'>{dec.deviationId}</span>
+                                            <span className='text-xs text-blue-600 font-medium underline underline-offset-2 cursor-pointer'>Связь с отклонением подтверждена</span>
                                         </td>
                                         <td className='px-6 py-4 align-top'>
                                             <div className={clsx('px-3 py-1 rounded-full text-[10px] font-medium w-fit border', dec.outcome === 'APPROVED' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100')}>
-                                                {dec.outcome}
+                                                {formatStatusLabel(dec.outcome)}
                                             </div>
                                         </td>
                                         <td className='px-6 py-4 align-top'><span className='text-xs font-medium text-gray-900'>{dec.impact}</span></td>

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
-import { formatRolloutModeLabel, formatRunbookActionLabel, formatSeverityLabel, formatStatusLabel } from '@/lib/ui-language';
+import { formatRolloutModeLabel, formatRunbookActionLabel, formatSeverityLabel, formatStatusLabel, formatTechExplainabilityMessage } from '@/lib/ui-language';
 
 type GenerationRolloutSummary = {
     totalRapeseedMaps: number;
@@ -221,7 +221,7 @@ export default function ConsultingDashboard() {
                             <AlertRow key={`${item.tone}-${item.text}`} tone={item.tone} text={item.text} href={item.href} />
                         ))}
                         <AlertRow tone="critical" text="Поле #A-17: риск потери урожайности > 12%" href="/consulting/deviations/detected?entity=DEV-001" />
-                        <AlertRow tone="warning" text="Техкарта #TM-044: сдвиг сроков внесения" href="/consulting/techmaps/active?entity=TM-001" />
+                        <AlertRow tone="warning" text="Технологическая карта №044: сдвиг сроков внесения" href="/consulting/techmaps/active?entity=TM-001" />
                         <AlertRow tone="warning" text="Склад СЗР: остаток ниже порога по 2 позициям" href="/consulting/crm/history?entity=ACTIVE" />
                         <AlertRow tone="info" text="Решение #D-118 применено, статус: в мониторинге" href="/consulting/deviations/decisions?entity=DEC-101" />
                     </div>
@@ -279,14 +279,14 @@ export default function ConsultingDashboard() {
                             />
                             <CutoverMetric
                                 title="Серьёзность расхождений"
-                                value={`P0 ${rolloutSummary.parity.diffCounts.P0} • P1 ${rolloutSummary.parity.diffCounts.P1} • P2 ${rolloutSummary.parity.diffCounts.P2}`}
+                                value={`критических ${rolloutSummary.parity.diffCounts.P0} • значимых ${rolloutSummary.parity.diffCounts.P1} • наблюдаемых ${rolloutSummary.parity.diffCounts.P2}`}
                                 tone={rolloutSummary.parity.diffCounts.P0 > 0 ? 'critical' : rolloutSummary.parity.diffCounts.P1 > 0 ? 'warn' : 'ok'}
                             />
                             <CutoverMetric
                                 title="Причины резервного сценария"
                                 value={Object.entries(rolloutSummary.fallback.reasons).length === 0
                                     ? 'не использовались'
-                                    : Object.entries(rolloutSummary.fallback.reasons).map(([reason, count]) => `${reason}: ${count}`).join(' • ')}
+                                    : Object.entries(rolloutSummary.fallback.reasons).map(([reason, count]) => `${formatTechExplainabilityMessage(reason)}: ${count}`).join(' • ')}
                                 tone={rolloutSummary.fallback.usedCount > 0 ? 'warn' : 'ok'}
                             />
                             <CutoverMetric
@@ -304,7 +304,7 @@ export default function ConsultingDashboard() {
                                             <p className="text-sm text-emerald-700">Блокеров нет.</p>
                                         ) : (
                                             rolloutReadiness.blockers.map((item) => (
-                                                <p key={item} className="text-sm text-rose-700">{item}</p>
+                                                <p key={item} className="text-sm text-rose-700">{formatTechExplainabilityMessage(item)}</p>
                                             ))
                                         )}
                                     </div>
@@ -316,7 +316,7 @@ export default function ConsultingDashboard() {
                                             <p className="text-sm text-emerald-700">Предупреждений нет.</p>
                                         ) : (
                                             rolloutReadiness.warnings.map((item) => (
-                                                <p key={item} className="text-sm text-amber-700">{item}</p>
+                                                <p key={item} className="text-sm text-amber-700">{formatTechExplainabilityMessage(item)}</p>
                                             ))
                                         )}
                                     </div>
@@ -329,10 +329,10 @@ export default function ConsultingDashboard() {
                                 {(rolloutSummary.rolloutIncidents || []).slice(0, 3).map((incident) => (
                                     <div key={incident.id} className="rounded-xl border border-black/5 bg-gray-50 p-3">
                                         <p className="text-xs text-gray-500">
-                                            {incident.subtype || '-'} • {formatSeverityLabel(incident.severity)} • {formatStatusLabel(incident.status)}
+                                            {incident.subtype ? formatTechExplainabilityMessage(incident.subtype) : '-'} • {formatSeverityLabel(incident.severity)} • {formatStatusLabel(incident.status)}
                                         </p>
                                         <p className="text-sm text-gray-700 mt-1">
-                                            {incident.techMapId ? `Техкарта ${incident.techMapId}` : 'Инцидент развёртывания по компании'}
+                                            {incident.techMapId ? 'Инцидент, связанный с техкартой' : 'Инцидент развёртывания по компании'}
                                             {incident.runbookSuggestedAction ? ` • действие ${formatRunbookActionLabel(incident.runbookSuggestedAction)}` : ''}
                                         </p>
                                     </div>
@@ -343,10 +343,10 @@ export default function ConsultingDashboard() {
                             <div className="mt-4 rounded-xl border border-black/5 bg-gray-50 p-3">
                                 <p className="text-[11px] uppercase tracking-wider text-gray-500">Пакет перевода</p>
                                 <p className="text-sm text-gray-700 mt-2">
-                                    Компания {cutoverPacket.companyId} • вердикт {translateReadinessVerdict(cutoverPacket.verdict)}
+                                    Пакет развёртывания подготовлен • вердикт {translateReadinessVerdict(cutoverPacket.verdict)}
                                 </p>
-                                <code className="block mt-2 text-xs text-gray-800 break-all">{cutoverPacket.releaseCommand}</code>
-                                <code className="block mt-2 text-xs text-gray-500 break-all">{cutoverPacket.rollbackCommand}</code>
+                                <p className="mt-2 text-xs text-gray-800">Команда развёртывания подготовлена и скрыта в пользовательском контуре.</p>
+                                <p className="mt-2 text-xs text-gray-500">Сценарий возврата подготовлен и скрыт в пользовательском контуре.</p>
                             </div>
                         )}
                     </Card>
@@ -356,12 +356,12 @@ export default function ConsultingDashboard() {
                     <div className="overflow-hidden whitespace-nowrap rounded-xl bg-gray-50 border border-black/5 px-3 py-2">
                         <div className="inline-block min-w-full animate-[ticker_30s_linear_infinite_reverse] text-xs text-gray-500">
                             <span className="px-3">ПОЧВА {39 + (tick % 5)}%</span>
-                            <span className="px-3">NDVI {0.58 + (tick % 4) * 0.01}</span>
+                            <span className="px-3">ИНДЕКС ВЕГЕТАЦИИ {0.58 + (tick % 4) * 0.01}</span>
                             <span className="px-3">ЗАДАЧ ВЫПОЛНЕНО {75 + (tick % 7)}%</span>
-                            <span className="px-3">СРЕДНЯЯ СТОИМОСТЬ {14200 + tick * 8} RUB/га</span>
+                            <span className="px-3">СРЕДНЯЯ СТОИМОСТЬ {14200 + tick * 8} руб./га</span>
                             <span className="px-3">ПРОГНОЗ УРОЖАЙНОСТИ {42 + (tick % 3)} ц/га</span>
                             <span className="px-3">ПОЧВА {39 + (tick % 5)}%</span>
-                            <span className="px-3">NDVI {0.58 + (tick % 4) * 0.01}</span>
+                            <span className="px-3">ИНДЕКС ВЕГЕТАЦИИ {0.58 + (tick % 4) * 0.01}</span>
                         </div>
                     </div>
                 </Card>

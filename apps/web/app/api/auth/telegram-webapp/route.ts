@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
     if (!initData || typeof initData !== "string") {
       return NextResponse.json(
-        { error: "Telegram initData не предоставлен" },
+        { error: "Не переданы входные данные Telegram" },
         { status: 400 },
       );
     }
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
           error:
             payload?.message ||
             payload?.error ||
-            "Telegram WebApp login failed",
+            "Не удалось выполнить вход через Telegram WebApp",
         },
         { status: response.status || 401 },
       );
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[TelegramWebAppAuth] Error:", error);
     return NextResponse.json(
-      { error: "Внутренняя ошибка Telegram WebApp auth" },
+      { error: "Внутренняя ошибка авторизации Telegram WebApp" },
       { status: 500 },
     );
   }

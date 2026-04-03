@@ -108,7 +108,7 @@ export default async function GlobalStatePage() {
                     <div className="absolute top-0 right-0 p-10">
                         <div className="text-right text-[#00854A]">
                             <div className="text-3xl font-light">БЕЗОПАСЕН</div>
-                            <div className="text-[10px] uppercase tracking-widest opacity-40 font-medium">Режим Ops</div>
+                            <div className="text-[10px] uppercase tracking-widest opacity-40 font-medium">Операционный режим</div>
                         </div>
                     </div>
                     <div className="space-y-6 pt-12">
@@ -151,7 +151,7 @@ export default async function GlobalStatePage() {
                     </div>
 
                     <div className="lg:col-span-2 p-10 rounded-[2.5rem] bg-white border border-black/5 flex flex-col justify-center items-center text-center space-y-6 shadow-sm">
-                        <div className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-medium">Статус Риска</div>
+                        <div className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-medium">Статус риска</div>
                         <div className={clsx(
                             "text-5xl font-light tracking-tighter",
                             data.risk?.verdict === 'BLOCKED' ? 'text-[#D4004F]' : 'text-gray-900'

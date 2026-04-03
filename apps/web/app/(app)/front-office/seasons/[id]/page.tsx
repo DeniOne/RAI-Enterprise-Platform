@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui";
 import { frontOfficeServerApi } from "@/lib/api/front-office-server";
+import { formatStatusLabel, formatTechStageCodeLabel } from "@/lib/ui-language";
 
 export default async function FrontOfficeSeasonDetailPage({
   params,
@@ -21,9 +22,9 @@ export default async function FrontOfficeSeasonDetailPage({
         <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-gray-400">Сезон</p>
         <h2 className="mt-3 text-2xl font-medium text-gray-900">Сезон {season.year}</h2>
         <div className="mt-6 space-y-3 text-sm text-gray-600">
-          <p>Статус: {season.status}</p>
+          <p>Статус: {formatStatusLabel(season.status)}</p>
           <p>Поле: {season.fieldId ?? "Не указано"}</p>
-          <p>Start date: {season.startDate ? new Date(season.startDate).toLocaleDateString("ru-RU") : "n/a"}</p>
+          <p>Дата запуска: {season.startDate ? new Date(season.startDate).toLocaleDateString("ru-RU") : "не задана"}</p>
         </div>
       </Card>
       <Card>
@@ -34,9 +35,9 @@ export default async function FrontOfficeSeasonDetailPage({
           ) : (
             history.map((entry: any, index: number) => (
               <div key={entry.id ?? index} className="rounded-2xl border border-black/5 p-4">
-                <p className="text-sm font-medium text-gray-900">{entry.stageId ?? entry.toStageId ?? "Stage"}</p>
+                <p className="text-sm font-medium text-gray-900">{formatTechStageCodeLabel(entry.stageId ?? entry.toStageId) || "Этап сезона"}</p>
                 <p className="mt-1 text-xs text-gray-500">
-                  {entry.createdAt ? new Date(entry.createdAt).toLocaleString("ru-RU") : "n/a"}
+                  {entry.createdAt ? new Date(entry.createdAt).toLocaleString("ru-RU") : "время не указано"}
                 </p>
               </div>
             ))

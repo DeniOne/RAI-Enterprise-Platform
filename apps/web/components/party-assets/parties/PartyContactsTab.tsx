@@ -17,7 +17,7 @@ export function PartyContactsTab({ party }: { party: PartyDto }) {
             <Field label="Должность" value={contact.position || '—'} />
             <Field label="Основание полномочий" value={contact.basisOfAuthority || '—'} />
             <Field label="Телефон" value={contact.phones || '—'} />
-            <Field label="Email" value={contact.email || '—'} />
+            <Field label="Электронная почта" value={contact.email || '—'} />
           </div>
         </div>
       ))}

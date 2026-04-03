@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
+import { formatContractRoleLabel, formatContractTypeLabel, formatUiEntityName } from '@/lib/ui-language';
 
 type Jurisdiction = { id: string; code: string; name: string };
 type Party = { id: string; legalName: string; jurisdiction: Jurisdiction };
@@ -163,7 +164,7 @@ export default function CreateContractPage() {
                                     required
                                 >
                                     <option value="">Выберите тип</option>
-                                    {CONTRACT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                    {CONTRACT_TYPES.map(t => <option key={t} value={t}>{formatContractTypeLabel(t)}</option>)}
                                 </select>
                             </div>
                         </div>
@@ -227,7 +228,7 @@ export default function CreateContractPage() {
                                             required
                                         >
                                             <option value="">Контрагент...</option>
-                                            {parties.map(p => <option key={p.id} value={p.id}>{p.legalName}</option>)}
+                                            {parties.map(p => <option key={p.id} value={p.id}>{formatUiEntityName(p.legalName)}</option>)}
                                         </select>
                                         <select
                                             value={role.role}
@@ -236,7 +237,7 @@ export default function CreateContractPage() {
                                             required
                                         >
                                             <option value="">Роль...</option>
-                                            {ROLE_TYPES.map(r => <option key={r} value={r}>{r}</option>)}
+                                            {ROLE_TYPES.map(r => <option key={r} value={r}>{formatContractRoleLabel(r)}</option>)}
                                         </select>
                                         <label className="flex items-center gap-1 text-xs font-normal text-gray-600">
                                             <input
@@ -245,7 +246,7 @@ export default function CreateContractPage() {
                                                 onChange={(e) => updateRole(idx, 'isPrimary', e.target.checked)}
                                                 className="rounded"
                                             />
-                                            Primary
+                                            Основная
                                         </label>
                                         {roles.length > 1 ? (
                                             <button

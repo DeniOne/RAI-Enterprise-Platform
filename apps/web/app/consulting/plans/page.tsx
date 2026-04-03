@@ -8,6 +8,7 @@ import { PlansList } from '@/components/consulting/PlansList';
 import { DomainUiContext } from '@/lib/consulting/navigation-policy';
 import { useAuthority } from '@/core/governance/AuthorityContext';
 import { api } from '@/lib/api';
+import { formatTargetMetricLabel, formatUiEntityName } from '@/lib/ui-language';
 
 export default function PlansPage() {
     return (
@@ -38,6 +39,10 @@ function PlansPageInner() {
         period: '',
     });
     const authority = useAuthority();
+    const targetMetricOptions = useMemo(
+        () => [{ value: 'YIELD_QPH', label: formatTargetMetricLabel('YIELD_QPH') }],
+        [],
+    );
 
     const fetchPlans = async () => {
         setIsLoading(true);
@@ -126,11 +131,11 @@ function PlansPageInner() {
     const accountOptions = useMemo(() => {
         const optionsFromApi = accounts
             .filter((a) => typeof a.id === 'string' && a.id.length > 0)
-            .map((a) => ({ id: a.id, name: a.name || a.id }));
+            .map((a) => ({ id: a.id, name: formatUiEntityName(a.name || a.id) }));
 
         const known = knownAccountIds
             .filter((id) => !optionsFromApi.some((a) => a.id === id))
-            .map((id) => ({ id, name: id }));
+            .map((id) => ({ id, name: formatUiEntityName(id) }));
 
         return [...optionsFromApi, ...known];
     }, [accounts, knownAccountIds]);
@@ -147,7 +152,7 @@ function PlansPageInner() {
 
     const handleCreatePlan = async () => {
         if (!createForm.accountId.trim()) {
-            alert('Укажите accountId хозяйства');
+            alert('Укажите хозяйство для плана.');
             return;
         }
 
@@ -223,20 +228,25 @@ function PlansPageInner() {
                             </option>
                             {seasons.map((season) => (
                                 <option key={season.id} value={season.id}>
-                                    {`Сезон ${season.year ?? '-'} • ${season.fieldId ?? 'без поля'}`}
+                                    {`Сезон ${season.year ?? '-'} • ${formatUiEntityName(season.fieldId ?? 'без поля')}`}
+                                </option>
+                            ))}
+                        </select>
+                        <select
+                            value={createForm.targetMetric}
+                            onChange={(e) => setCreateForm((prev) => ({ ...prev, targetMetric: e.target.value }))}
+                            className="px-3 py-2 border border-black/10 rounded-xl text-sm w-48 bg-white"
+                        >
+                            {targetMetricOptions.map((metric) => (
+                                <option key={metric.value} value={metric.value}>
+                                    {metric.label}
                                 </option>
                             ))}
                         </select>
                         <input
-                            value={createForm.targetMetric}
-                            onChange={(e) => setCreateForm((prev) => ({ ...prev, targetMetric: e.target.value }))}
-                            placeholder="Метрика"
-                            className="px-3 py-2 border border-black/10 rounded-xl text-sm w-36"
-                        />
-                        <input
                             value={createForm.period}
                             onChange={(e) => setCreateForm((prev) => ({ ...prev, period: e.target.value }))}
-                            placeholder="Период (напр. SEASON_2026)"
+                            placeholder="Период, например сезон 2026"
                             className="px-3 py-2 border border-black/10 rounded-xl text-sm w-52"
                         />
                         <button
@@ -270,19 +280,19 @@ function PlansPageInner() {
                 <div className="p-6 bg-stone-50/50 rounded-2xl border border-black/5">
                     <h4 className="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-3 font-semibold">Активные ограничения</h4>
                     <p className="text-xs text-gray-500 leading-relaxed font-normal">
-                        Активация плана (ACTIVE) возможна только при заблокированном бюджете (LOCKED) и утвержденной техкарте.
+                        Активация плана возможна только при заблокированном бюджете и утверждённой техкарте.
                     </p>
                 </div>
                 <div className="p-6 bg-stone-50/50 rounded-2xl border border-black/5">
                     <h4 className="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-3 font-semibold">Ролевая модель</h4>
                     <p className="text-xs text-gray-500 leading-relaxed font-normal">
-                        Ваша роль — <strong>authority</strong>. Утверждение планов в фазу Исполнения доступно только CEO/FOUNDER.
+                        Ваша роль в контуре подтверждения ограничена. Утверждение планов в фазу исполнения доступно только руководителю.
                     </p>
                 </div>
                 <div className="p-6 bg-stone-50/50 rounded-2xl border border-black/5">
                     <h4 className="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-3 font-semibold">Связи домена</h4>
                     <p className="text-xs text-gray-500 leading-relaxed font-normal">
-                        Любое активное отклонение должно быть разрешено (Decision) до закрытия сезона.
+                        Любое активное отклонение должно быть урегулировано до закрытия сезона.
                     </p>
                 </div>
             </div>

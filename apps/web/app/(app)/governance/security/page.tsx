@@ -5,8 +5,22 @@ import Link from 'next/link';
 import { api, type IncidentFeedItem, type GovernanceCountersDto } from '@/lib/api';
 import { ShieldAlert, Fingerprint, Lock, ShieldCheck, Eye, CheckCircle2, Search, FileText } from 'lucide-react';
 import { clsx } from 'clsx';
+import { formatComplianceStatusLabel, formatIncidentTypeLabel, formatSeverityLabel, formatStatusLabel } from '@/lib/ui-language';
 
 const SEVERITY_ORDER = ['HIGH', 'MEDIUM', 'LOW'];
+
+function formatUiErrorMessage(message: string) {
+  if (!message) {
+    return 'Не удалось загрузить данные безопасности.';
+  }
+
+  const normalized = message.toLowerCase();
+  if (normalized.includes('forbidden') || normalized.includes('unauthorized')) {
+    return 'Доступ к журналу безопасности ограничен.';
+  }
+
+  return 'Не удалось загрузить данные безопасности.';
+}
 
 export default function GovernanceSecurityPage() {
   const [counters, setCounters] = useState<GovernanceCountersDto | null>(null);
@@ -54,7 +68,7 @@ export default function GovernanceSecurityPage() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center font-sans">
         <div className="flex flex-col items-center gap-4">
           <div className="w-8 h-8 border-[3px] border-black/10 border-t-red-600 rounded-full animate-spin" />
-          <p className="text-[#717182] font-medium text-[13px]">Сбор данных Sentinel...</p>
+          <p className="text-[#717182] font-medium text-[13px]">Сбор данных контура безопасности...</p>
         </div>
       </div>
     );
@@ -71,7 +85,7 @@ export default function GovernanceSecurityPage() {
             <h1 className="text-xl font-medium text-[#030213]">Отклонение доступа R4</h1>
             <p className="mt-2 text-[#717182] text-[13px] leading-relaxed">
               <span className="font-mono text-red-600 block mb-1">ERR_FORBIDDEN:</span>
-              Вы не обладаете клиренсом Audit/Executive для просмотра логов изоляции. Код ошибки инстанциирован в Ledger: <br /> {error}.
+              Недостаточно прав для просмотра журнала изоляции. <br /> {formatUiErrorMessage(error)}
             </p>
             <button
               onClick={() => window.history.back()}
@@ -97,11 +111,11 @@ export default function GovernanceSecurityPage() {
               </div>
               <span className="text-[11px] font-medium uppercase tracking-widest text-[#717182]">Контур безопасности</span>
             </div>
-            <h1 className="text-3xl font-medium text-[#030213] tracking-tight">Безопасность и Доверие</h1>
+            <h1 className="text-3xl font-medium text-[#030213] tracking-tight">Безопасность и доверие</h1>
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <span className="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-[#4a4a5a]">Риски</span>
               <span className="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-[#4a4a5a]">Инциденты</span>
-              <span className="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-[#4a4a5a]">Контроль AI</span>
+              <span className="px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-medium text-[#4a4a5a]">Контроль ИИ</span>
             </div>
           </div>
           <div className="flex">
@@ -117,39 +131,39 @@ export default function GovernanceSecurityPage() {
         {/* Governance Counters */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <CounterBox
-            label="Изоляция тенантов"
+            label="Изоляция контуров"
             value={counters?.crossTenantBreach ?? 0}
-            desc="События кросс-тенанта"
+            desc="События нарушения изоляции"
             icon={<Fingerprint size={20} />}
           />
           <CounterBox
-            label="Sentinel: PII Guard"
+            label="Защита персональных данных"
             value={counters?.piiLeak ?? 0}
-            desc="Заблокировано данных (R3)"
+            desc="Заблокированные утечки"
             icon={<Lock size={20} />}
           />
           <CounterBox
-            label="Quality Drift"
+            label="Дрейф качества"
             value={counters?.qualityBsDrift ?? 0}
-            desc="BS%-инциденты качества"
+            desc="Инциденты качества по BS%"
             icon={<ShieldCheck size={20} />}
           />
           <CounterBox
-            label="Autonomy Policy"
+            label="Политика автономии"
             value={counters?.autonomyPolicyIncidents ?? 0}
-            desc="Autonomy/policy incidents"
+            desc="Инциденты политики автономии"
             icon={<ShieldAlert size={20} />}
           />
           <CounterBox
-            label="Open Incidents"
+            label="Открытые инциденты"
             value={counters?.openIncidents ?? 0}
-            desc="Открытый lifecycle"
+            desc="Инциденты в работе"
             icon={<Eye size={20} />}
           />
           <CounterBox
-            label="Runbooks"
+            label="Регламенты"
             value={counters?.runbookExecutedIncidents ?? 0}
-            desc="Runbook-executed incidents"
+            desc="Инциденты, обработанные по регламенту"
             icon={<CheckCircle2 size={20} />}
           />
           {counters?.byType && Object.entries(counters.byType).map(([type, n]) => (
@@ -169,7 +183,7 @@ export default function GovernanceSecurityPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <h2 className="text-xl font-medium text-[#030213] tracking-tight flex items-center gap-2">
                 <FileText size={20} className="text-[#717182]" />
-                Регистр Инцидентов
+                Регистр инцидентов
               </h2>
               <div className="flex gap-1 bg-slate-100 p-1 rounded-lg border border-black/5">
                 {['ALL', ...SEVERITY_ORDER].map(s => (
@@ -181,7 +195,7 @@ export default function GovernanceSecurityPage() {
                       severityFilter === s ? "bg-white text-[#030213] shadow-sm border border-black/5" : "text-[#717182] hover:text-[#030213]"
                     )}
                   >
-                    {s === 'ALL' ? 'Все' : s}
+                    {s === 'ALL' ? 'Все' : formatSeverityLabel(s)}
                   </button>
                 ))}
               </div>
@@ -191,16 +205,16 @@ export default function GovernanceSecurityPage() {
               <div className="py-20 bg-white border border-black/10 rounded-2xl flex flex-col items-center justify-center">
                 <CheckCircle2 size={32} className="text-emerald-500 mb-4" />
                 <p className="text-[#030213] font-medium text-[15px]">Нулевой уровень угроз</p>
-                <p className="text-[#717182] text-[13px] mt-1">Очередь инцидентов Sentinel пуста.</p>
+                <p className="text-[#717182] text-[13px] mt-1">Очередь инцидентов пуста.</p>
               </div>
             ) : (
               <div className="bg-white border border-black/10 rounded-2xl overflow-hidden shadow-sm shadow-black/[0.02]">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50 border-b border-black/10">
-                      <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182] w-1/4">Escalation ID / Triage</th>
-                      <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182] w-2/4">Context (Muted Details)</th>
-                      <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182] w-1/4">Action / Resolution</th>
+                      <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182] w-1/4">Эскалация / разбор</th>
+                      <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182] w-2/4">Контекст</th>
+                      <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[#717182] w-1/4">Действие / резолюция</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-black/5">
@@ -217,7 +231,9 @@ export default function GovernanceSecurityPage() {
                           <td className="px-6 py-5">
                             <div className="flex flex-col gap-2">
                               <RiskBadge level={level} />
-                              <span className="text-[12px] font-mono text-[#030213] uppercase font-medium">{inc.incidentType}</span>
+                              <span className="text-[12px] font-mono text-[#030213] uppercase font-medium">
+                                {formatIncidentTypeLabel(inc.incidentType)}
+                              </span>
                               <span className="text-[11px] text-[#717182] font-mono">{new Date(inc.createdAt).toLocaleString('ru')}</span>
                             </div>
                           </td>
@@ -227,28 +243,28 @@ export default function GovernanceSecurityPage() {
                             <div className="space-y-3">
                               {inc.resolvedAt ? (
                                 <p className="text-[13px] text-[#030213] leading-relaxed">
-                                  <span className="text-emerald-600 font-medium mr-1">\u2713 Resolved:</span>
+                                  <span className="mr-1 font-medium text-emerald-600">\u2713 Разрешено:</span>
                                   {inc.resolveComment}
                                 </p>
                               ) : (
                                 <p className="text-[13px] text-[#717182] leading-relaxed italic">
                                   {isQualityDrift
-                                    ? 'Quality drift detected. Нужен разбор trace, BS%-контекста и причин деградации.'
-                                    : 'Требуется решение Техсовета. Инцидент эскалирован в Security Ops.'}
+                                    ? 'Обнаружен дрейф качества. Нужен разбор трассы, BS%-контекста и причин деградации.'
+                                    : 'Требуется решение техсовета. Инцидент эскалирован в контур безопасности.'}
                                 </p>
                               )}
                               {isQualityDrift && details && (
                                 <div className="text-[12px] text-[#717182] leading-relaxed space-y-1">
-                                  <div>Recent BS%: {typeof details.recentAvgBsPct === 'number' ? `${details.recentAvgBsPct}%` : 'n/a'}</div>
-                                  <div>Baseline BS%: {typeof details.baselineAvgBsPct === 'number' ? `${details.baselineAvgBsPct}%` : 'n/a'}</div>
-                                  <div>Delta: {typeof details.deltaPct === 'number' ? `+${details.deltaPct} п.п.` : 'n/a'}</div>
+                                  <div>Текущий BS%: {typeof details.recentAvgBsPct === 'number' ? `${details.recentAvgBsPct}%` : 'нет'}</div>
+                                  <div>Базовый BS%: {typeof details.baselineAvgBsPct === 'number' ? `${details.baselineAvgBsPct}%` : 'нет'}</div>
+                                  <div>Отклонение: {typeof details.deltaPct === 'number' ? `+${details.deltaPct} п.п.` : 'нет'}</div>
                                 </div>
                               )}
                               {inc.traceId && (
                                 <div>
                                   <Link href={`/control-tower/trace/${inc.traceId}`} className="inline-flex items-center gap-1.5 text-[11px] font-mono text-blue-600 hover:underline">
                                     <Search size={12} />
-                                    Forensic Trace: {inc.traceId.slice(0, 12)}...
+                                    Трасса разбора: {inc.traceId.slice(0, 12)}...
                                   </Link>
                                 </div>
                               )}
@@ -260,7 +276,7 @@ export default function GovernanceSecurityPage() {
                             {inc.resolvedAt ? (
                               <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-widest text-emerald-600">
                                 <Lock size={12} />
-                                В Ledger
+                                В журнале
                               </div>
                             ) : (
                               <div className="flex flex-col gap-2">
@@ -295,18 +311,18 @@ export default function GovernanceSecurityPage() {
 
           {/* Right Sidebar - B-Pattern Info */}
           <div className="space-y-6">
-            <h2 className="text-xl font-medium text-[#030213] tracking-tight">Reg Compliance</h2>
+            <h2 className="text-xl font-medium text-[#030213] tracking-tight">Контроль соответствия</h2>
 
             <div className="bg-white border border-black/10 rounded-2xl p-6 space-y-6">
-              <ComplianceRow id="RL-01" title="Tenant Isolation" status={counters?.crossTenantBreach === 0 ? 'Verified' : 'Breach'} />
-              <ComplianceRow id="RL-04" title="PII Masking (Sentinel)" status={counters?.piiLeak === 0 ? 'Verified' : 'Breach'} />
-              <ComplianceRow id="QL-01" title="Quality Drift Alerts" status={counters?.qualityBsDrift === 0 ? 'Verified' : 'Breach'} />
-              <ComplianceRow id="RL-07" title="A-Filter Validation" status="Active" isInfo />
+              <ComplianceRow id="RL-01" title="Изоляция контуров" status={counters?.crossTenantBreach === 0 ? 'Verified' : 'Breach'} />
+              <ComplianceRow id="RL-04" title="Маскирование ПДн" status={counters?.piiLeak === 0 ? 'Verified' : 'Breach'} />
+              <ComplianceRow id="QL-01" title="Сигналы дрейфа качества" status={counters?.qualityBsDrift === 0 ? 'Verified' : 'Breach'} />
+              <ComplianceRow id="RL-07" title="Проверка A-фильтра" status="Active" isInfo />
             </div>
 
             <div className="p-4 bg-slate-100 border border-black/5 rounded-xl">
               <p className="text-[11px] text-[#717182] leading-relaxed">
-                <span className="font-medium text-[#030213]">АУДИТ ТРЕЙЛ:</span> Резолюции инцидентов R3 и R4 записываются в неизменяемый лог и недоступны для удаления (Immutable Lock).
+                <span className="font-medium text-[#030213]">ЖУРНАЛ АУДИТА:</span> Резолюции инцидентов R3 и R4 записываются в неизменяемый журнал и недоступны для удаления.
               </p>
             </div>
           </div>
@@ -347,7 +363,7 @@ function ComplianceRow({ id, title, status, isInfo }: { id: string; title: strin
         <span className={clsx(
           "font-mono text-[11px]",
           isInfo ? "text-blue-600" : (status === 'Verified' ? "text-emerald-600" : "text-red-600 font-medium")
-        )}>{status}</span>
+        )}>{formatComplianceStatusLabel(status)}</span>
       </div>
       <div className="h-px bg-black/5 w-full mt-2" />
     </div>
@@ -370,7 +386,7 @@ function RiskBadge({ level }: { level: 'R2' | 'R3' | 'R4' | 'Success' }) {
           level === 'R3' ? 'bg-amber-500' :
             level === 'R2' ? 'bg-amber-400' : 'bg-emerald-500'
       )} />
-      Risk {level}
+      Риск {level}
     </span>
   );
 }

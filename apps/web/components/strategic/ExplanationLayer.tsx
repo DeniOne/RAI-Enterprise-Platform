@@ -22,7 +22,7 @@ export function ExplanationLayer({ reasons, className }: ExplanationLayerProps) 
         <div className={clsx("space-y-4 p-6 rounded-2xl bg-white border border-black/5 shadow-sm", className)}>
             <div className="text-[10px] uppercase tracking-widest text-gray-400 flex items-center gap-2 font-medium">
                 <Info size={12} />
-                Слой объяснений (Why Layer)
+                Слой объяснений
             </div>
 
             <div className="space-y-4">

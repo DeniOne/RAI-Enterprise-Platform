@@ -6,6 +6,7 @@ import { getEntityTransitions } from '@/lib/consulting/ui-policy';
 import { DomainUiContext } from '@/lib/consulting/navigation-policy';
 import clsx from 'clsx';
 import { useAuthority } from '@/core/governance/AuthorityContext';
+import { formatStatusLabel } from '@/lib/ui-language';
 
 const MOCK_BUDGETS = [
     { id: 'BU-2026-001', name: 'Бюджет: Пшеница Озимая', status: 'LOCKED' as const, total: 12000000, spent: 4500000 },
@@ -65,10 +66,10 @@ export default function BudgetsPage() {
                                                 "px-2.5 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-tight",
                                                 budget.status === 'LOCKED' ? 'bg-blue-50 text-blue-700 border border-blue-100' : 'bg-gray-100 text-gray-500'
                                             )}>
-                                                {budget.status}
+                                                {formatStatusLabel(budget.status)}
                                             </span>
                                         </div>
-                                        <p className="text-xs text-gray-400 font-normal">ID: {budget.id}</p>
+                                        <p className="text-xs text-gray-400 font-normal">Внутренний номер скрыт</p>
                                     </div>
 
                                     <div className="flex space-x-2">
@@ -131,12 +132,12 @@ export default function BudgetsPage() {
                     <div>
                         <h4 className="text-sm font-medium text-amber-900">Блокировка лимитов</h4>
                         <p className="text-xs text-amber-700/70 mt-0.5">
-                            Статус <strong>LOCKED</strong> запрещает любые изменения в техкарте без финансовой корректировки.
+                            Статус <strong>{formatStatusLabel('LOCKED')}</strong> запрещает любые изменения в техкарте без финансовой корректировки.
                         </p>
                     </div>
                 </div>
                 <button className="px-4 py-2 text-xs font-medium text-amber-700 hover:text-amber-900 transition-colors">
-                    Подробнее в Advisory →
+                    Подробнее в рекомендациях →
                 </button>
             </div>
         </div>

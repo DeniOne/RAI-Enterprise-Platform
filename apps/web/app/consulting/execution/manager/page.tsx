@@ -92,7 +92,7 @@ function ManagerContourInner() {
                 kind: 'operation',
                 id: focusedOperation.id,
                 title: focusedOperation.name ?? 'Операция',
-                subtitle: focusedOperation.mapStage?.name ?? 'Execution Manager',
+                subtitle: focusedOperation.mapStage?.name ?? 'Контур исполнения',
                 status: focusedOperation.executionRecord?.status ?? 'PLANNED',
             }),
         );
@@ -116,7 +116,7 @@ function ManagerContourInner() {
                 kind: 'operation',
                 id: operation.id,
                 title: operation.name ?? 'Операция',
-                subtitle: operation.mapStage?.name ?? 'Execution Manager',
+                subtitle: operation.mapStage?.name ?? 'Контур исполнения',
                 status: operation.executionRecord?.status ?? 'IN_PROGRESS',
             }),
         );
@@ -133,7 +133,7 @@ function ManagerContourInner() {
                 kind: 'operation',
                 id: operation.id,
                 title: operation.name ?? 'Операция',
-                subtitle: operation.mapStage?.name ?? 'Execution Manager',
+                subtitle: operation.mapStage?.name ?? 'Контур исполнения',
                 status: operation.executionRecord?.status ?? 'IN_PROGRESS',
             }),
         );
@@ -183,7 +183,7 @@ function ManagerContourInner() {
                         onClick={() => gov.detectConflict()}
                         className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-600 border border-rose-100 rounded-xl text-xs font-medium hover:bg-rose-100 transition-all font-mono"
                     >
-                        <AlertTriangle className="w-3.5 h-3.5" /> DETECT_CONFLICT
+                        <AlertTriangle className="w-3.5 h-3.5" /> Проверить конфликт
                     </button>
                 </div>
             </div>
@@ -225,11 +225,11 @@ function ManagerContourInner() {
                         <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-4">Операционная Целостность</p>
                         <div className="flex items-center gap-3 p-3 bg-indigo-50/50 rounded-xl mb-4">
                             <ShieldCheck className="w-4 h-4 text-indigo-600" />
-                            <p className="text-xs text-indigo-950 font-medium">Все действия логируются в Ledger</p>
+                            <p className="text-xs text-indigo-950 font-medium">Все действия логируются в журнале</p>
                         </div>
                         <div className="space-y-2 text-[10px] text-slate-500 font-mono">
                             <div className="p-3 bg-slate-50 rounded-xl">
-                                [SYSTEM] Last entry verified: TX-{Date.now().toString().slice(-6)}
+                                Последняя запись журнала подтверждена. Внутренний идентификатор скрыт.
                             </div>
                         </div>
                     </div>
@@ -282,10 +282,10 @@ function ManagerContourInner() {
                         </div>
                         <div className="flex-1">
                             <p className="text-[10px] font-mono text-indigo-300 uppercase tracking-widest">
-                                GOV_SESSION: {gov.context.traceId?.slice(0, 8) || 'INITIALIZING'}
+                                Сессия контура: {gov.context.traceId?.slice(0, 8) || 'запуск'}
                             </p>
                             <p className="text-sm font-medium">
-                                {gov.isPending ? "Обработка Ledger..." : "Предложение утверждено"}
+                                {gov.isPending ? "Обработка в журнале..." : "Предложение утверждено"}
                             </p>
                         </div>
                         {gov.canExecute && (
@@ -293,7 +293,7 @@ function ManagerContourInner() {
                                 onClick={gov.execute}
                                 className="px-5 py-2.5 bg-white text-slate-900 rounded-xl text-xs font-semibold hover:bg-slate-100 transition-all font-geist"
                             >
-                                КОММИТ
+                                Подтвердить
                             </button>
                         )}
                     </div>

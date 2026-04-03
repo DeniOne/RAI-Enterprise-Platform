@@ -26,7 +26,7 @@ export const WorkSurface: React.FC<{ children: React.ReactNode }> = ({ children 
     const isFrozenByIntegrity = integrityStatus === 'MISMATCH';
 
     return (
-        <main className="relative min-h-0 flex-1 overflow-y-auto bg-[#FDFDFD] p-8">
+        <main className="relative min-h-0 flex-1 overflow-y-auto bg-[#FDFDFD] px-8 py-6">
             <div className="w-full space-y-6">
                 {/* TechCouncil escalation banner (Phase 3) */}
                 {activeEscalation && (
@@ -52,14 +52,14 @@ export const WorkSurface: React.FC<{ children: React.ReactNode }> = ({ children 
             {isFrozenByIntegrity && (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center bg-red-950/80 p-6" data-testid="integrity-freeze-overlay">
                     <div className="w-full max-w-3xl rounded-xl border border-red-500 bg-black p-6 text-white shadow-2xl">
-                        <h2 className="font-mono text-sm uppercase tracking-widest text-red-300">Integrity Freeze Activated</h2>
+                        <h2 className="font-mono text-sm uppercase tracking-widest text-red-300">Активирована блокировка целостности</h2>
                         <p className="mt-3 text-sm text-red-100">
-                            Обнаружено расхождение журнала. Интерфейс заблокирован до завершения проверки forensic replay.
+                            Обнаружено расхождение журнала. Интерфейс заблокирован до завершения проверки воспроизведения трассы.
                         </p>
                         <div className="mt-4 space-y-1 font-mono text-xs text-red-200">
-                            <div>TRACE_ID: {traceId}</div>
-                            <div>EXPECTED_HASH: {mismatch?.expectedHash ?? '—'}</div>
-                            <div>ACTUAL_HASH: {mismatch?.actualHash ?? '—'}</div>
+                            <div>Трасса: скрыта в пользовательском контуре</div>
+                            <div>Ожидаемый отпечаток: доступен</div>
+                            <div>Текущий отпечаток: доступен</div>
                         </div>
                         <a
                             href={`/forensics/replay?traceId=${encodeURIComponent(traceId)}`}

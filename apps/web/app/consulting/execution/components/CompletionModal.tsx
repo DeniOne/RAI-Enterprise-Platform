@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { OperationEvidencePanel } from './OperationEvidencePanel';
 import { EvidenceGuardBanner } from './EvidenceGuardBanner';
 import { api } from '@/lib/api';
+import { formatResourceUnitLabel } from '@/lib/ui-language';
 
 interface CompletionModalProps {
     operation: any;
@@ -123,7 +124,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium text-slate-900 truncate">{res.name}</p>
-                                        <p className="text-[10px] text-slate-400 font-normal">План: {operation.resources[idx]?.plannedAmount} {res.unit}</p>
+                                        <p className="text-[10px] text-slate-400 font-normal">План: {operation.resources[idx]?.plannedAmount} {formatResourceUnitLabel(res.unit)}</p>
                                     </div>
                                     <div className="w-24 flex items-center gap-2">
                                         <Input
@@ -132,7 +133,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                                             value={res.amount}
                                             onChange={(e) => handleAmountChange(idx, e.target.value)}
                                         />
-                                        <span className="text-[10px] text-slate-400 font-medium uppercase">{res.unit}</span>
+                                        <span className="text-[10px] text-slate-400 font-medium uppercase">{formatResourceUnitLabel(res.unit)}</span>
                                     </div>
                                 </div>
                             ))}
@@ -153,7 +154,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
 
                     <div>
                         <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-3">
-                            Evidence
+                            Подтверждения
                         </label>
                         <OperationEvidencePanel
                             operation={operation}
@@ -163,11 +164,11 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                     </div>
 
                     <EvidenceGuardBanner
-                        title="Guard перед `DONE`"
+                        title="Контроль перед завершением"
                         loading={isEvidenceStatusLoading}
                         isBlocking={isEvidenceBlocking}
-                        readyText="Evidence достаточен для завершения операции."
-                        blockedText="Завершение операции заблокировано до прикрепления обязательных evidence."
+                        readyText="Подтверждений достаточно для завершения операции."
+                        blockedText="Завершение операции заблокировано до прикрепления обязательных подтверждений."
                         missingEvidenceTypes={missingEvidenceTypes}
                         requiredCount={evidenceStatus?.requiredEvidenceTypes?.length}
                         presentCount={evidenceStatus?.presentEvidenceTypes?.length}

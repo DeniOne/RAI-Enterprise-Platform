@@ -88,10 +88,10 @@ export default function FooterCTA() {
       {/* Bottom Legal Panel */}
       <div className="relative z-10 w-full bg-[#112118] border-t border-[#EFECE6]/5 mt-16 font-mono text-[10px] uppercase tracking-widest text-[#EFECE6]/40">
         <div className="max-w-[1440px] mx-auto px-6 lg:px-16 py-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p>© 2026 GRIPIL. All rights reserved.</p>
+          <p>© 2026 GRIPIL. Все права защищены.</p>
           <div className="flex items-center gap-8">
             <a href="#" className="hover:text-[#CDFF00] transition-colors">Политика конфиденциальности</a>
-            <a href="#" className="hover:text-[#CDFF00] transition-colors">Terms of Service</a>
+            <a href="#" className="hover:text-[#CDFF00] transition-colors">Условия использования</a>
           </div>
         </div>
       </div>

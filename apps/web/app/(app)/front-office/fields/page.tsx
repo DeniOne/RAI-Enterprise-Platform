@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Card } from "@/components/ui";
 import { frontOfficeServerApi } from "@/lib/api/front-office-server";
+import { formatStatusLabel } from "@/lib/ui-language";
 
 export default async function FrontOfficeFieldsPage() {
   const fields = await frontOfficeServerApi.fields().catch(() => []);
@@ -26,7 +27,7 @@ export default async function FrontOfficeFieldsPage() {
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-sm font-medium text-gray-900">{field.name}</p>
-                  <p className="mt-1 text-xs text-gray-500">{field.area} га • {field.status}</p>
+                  <p className="mt-1 text-xs text-gray-500">{field.area} га • {formatStatusLabel(field.status)}</p>
                 </div>
                 <span className="text-xs text-gray-400">Открыть</span>
               </div>

@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
-import { formatStatusLabel } from '@/lib/ui-language';
+import { formatSoilTypeLabel, formatStatusLabel, formatTargetMetricLabel, formatUiEntityName, formatYesNoLabel } from '@/lib/ui-language';
 
 type AccountItem = {
     id: string;
@@ -84,7 +84,7 @@ export function TechMapPreparationWizard() {
     const [fieldForm, setFieldForm] = useState({
         accountId: preselectedAccountId,
         name: 'Поле для техкарты',
-        cadastreNumber: `TM-${Date.now()}`,
+        cadastreNumber: `${Date.now()}`,
         area: '120',
         soilType: 'CHERNOZEM',
     });
@@ -98,7 +98,7 @@ export function TechMapPreparationWizard() {
         accountId: preselectedAccountId,
         seasonId: preselectedSeasonId,
         targetMetric: 'YIELD_QPH',
-        period: `SEASON_${new Date().getUTCFullYear()}`,
+        period: `Сезон ${new Date().getUTCFullYear()}`,
     });
     const [generateForm, setGenerateForm] = useState({
         planId: preselectedPlanId,
@@ -259,7 +259,7 @@ export function TechMapPreparationWizard() {
 
     const handleCreateAccount = async () => {
         if (!companyId) {
-            alert('companyId текущего пользователя не определён');
+            alert('Рабочий контур пользователя не определён.');
             return;
         }
 
@@ -281,7 +281,7 @@ export function TechMapPreparationWizard() {
 
     const handleCreateField = async () => {
         if (!companyId || !fieldForm.accountId.trim()) {
-            alert('Для поля требуется companyId и accountId');
+            alert('Для создания поля нужно определить рабочий контур и выбрать хозяйство.');
             return;
         }
 
@@ -397,7 +397,7 @@ export function TechMapPreparationWizard() {
                         Реальный рабочий маршрут: хозяйство / поле / сезон / план / генерация и активация техкарты.
                     </p>
                     <p className='mt-2 text-xs text-amber-700'>
-                        Временный backstage-маршрут для проверки UX-сшивки. После переноса входа в агента и штатные экраны этот мастер нужно убрать.
+                        Временный служебный маршрут для проверки пользовательского потока. После переноса входа в штатный контур этот мастер будет скрыт.
                     </p>
                 </div>
                 <div className='flex items-center gap-3'>
@@ -405,7 +405,7 @@ export function TechMapPreparationWizard() {
                         Реестр техкарт
                     </Link>
                     <Link href='/consulting/execution' className='text-sm text-blue-600 hover:underline'>
-                        Execution
+                        Контур исполнения
                     </Link>
                 </div>
             </div>
@@ -436,7 +436,7 @@ export function TechMapPreparationWizard() {
                         </div>
                     ) : null}
                     <div className='rounded-2xl border border-black/10 bg-gray-50 px-4 py-4 text-sm text-gray-700'>
-                        Важная текущая реальность backend: поле и сезон живут в `Field/Season`-контуре, а хозяйство для плана берётся из `Account`.
+                        Сейчас поле и сезон ведутся в отдельном реестре полей и сезонов, а хозяйство для плана подхватывается из реестра хозяйств.
                         Эффект: мастер честно показывает архитектурный стык и позволяет проверить сквозной поток без симуляции.
                     </div>
                 </div>
@@ -448,7 +448,7 @@ export function TechMapPreparationWizard() {
                         <div className='space-y-4'>
                             <div>
                                 <p className='mb-1 text-xs text-gray-500'>Шаг 1. Хозяйство</p>
-                                <p className='text-sm text-gray-600'>Создаёт `Account`, который используется полем и планом в текущем backend-контуре.</p>
+                                <p className='text-sm text-gray-600'>Создаёт сущность хозяйства, которая используется полем и планом в текущем серверном контуре.</p>
                             </div>
                             <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
                                 <input
@@ -478,7 +478,7 @@ export function TechMapPreparationWizard() {
                         <div className='space-y-4'>
                             <div>
                                 <p className='mb-1 text-xs text-gray-500'>Шаг 2. Поле</p>
-                                <p className='text-sm text-gray-600'>Создаёт `Field`, который становится опорой для сезона и будущей техкарты.</p>
+                                <p className='text-sm text-gray-600'>Создаёт поле, которое становится опорой для сезона и будущей техкарты.</p>
                             </div>
                             <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
                                 <select
@@ -493,7 +493,7 @@ export function TechMapPreparationWizard() {
                                     <option value=''>Выберите хозяйство</option>
                                     {accounts.map((account) => (
                                         <option key={account.id} value={account.id}>
-                                            {account.name || account.id}
+                                            {formatUiEntityName(account.name || account.id)}
                                         </option>
                                     ))}
                                 </select>
@@ -522,7 +522,7 @@ export function TechMapPreparationWizard() {
                                 >
                                     {SOIL_TYPES.map((soilType) => (
                                         <option key={soilType} value={soilType}>
-                                            {soilType}
+                                            {formatSoilTypeLabel(soilType)}
                                         </option>
                                     ))}
                                 </select>
@@ -541,7 +541,7 @@ export function TechMapPreparationWizard() {
                         <div className='space-y-4'>
                             <div>
                                 <p className='mb-1 text-xs text-gray-500'>Шаг 3. Сезон</p>
-                                <p className='text-sm text-gray-600'>Создаёт `Season`, который даёт техкарте поле, год и окно исполнения.</p>
+                                <p className='text-sm text-gray-600'>Создаёт сезон, который даёт техкарте поле, год и окно исполнения.</p>
                             </div>
                             <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
                                 <select
@@ -552,7 +552,7 @@ export function TechMapPreparationWizard() {
                                     <option value=''>Выберите поле</option>
                                     {filteredFields.map((field) => (
                                         <option key={field.id} value={field.id}>
-                                            {field.name || field.cadastreNumber || field.id}
+                                            {formatUiEntityName(field.name || field.cadastreNumber || field.id)}
                                         </option>
                                     ))}
                                 </select>
@@ -589,7 +589,7 @@ export function TechMapPreparationWizard() {
                         <div className='space-y-4'>
                             <div>
                                 <p className='mb-1 text-xs text-gray-500'>Шаг 4. План урожая</p>
-                                <p className='text-sm text-gray-600'>Создаёт `Harvest Plan`, который становится владельцем техкарты и execution-контекста.</p>
+                                <p className='text-sm text-gray-600'>Создаёт план урожая, который становится владельцем техкарты и контекста исполнения.</p>
                             </div>
                             <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
                                 <select
@@ -600,7 +600,7 @@ export function TechMapPreparationWizard() {
                                     <option value=''>Выберите хозяйство</option>
                                     {accounts.map((account) => (
                                         <option key={account.id} value={account.id}>
-                                            {account.name || account.id}
+                                            {formatUiEntityName(account.name || account.id)}
                                         </option>
                                     ))}
                                 </select>
@@ -616,16 +616,17 @@ export function TechMapPreparationWizard() {
                                     <option value=''>Выберите сезон</option>
                                     {seasons.map((season) => (
                                         <option key={season.id} value={season.id}>
-                                            {`Сезон ${season.year ?? '-'} • ${season.fieldId ?? 'без поля'}`}
+                                            {`Сезон ${season.year ?? '-'} • ${formatUiEntityName(season.fieldId ?? 'без поля')}`}
                                         </option>
                                     ))}
                                 </select>
-                                <input
+                                <select
                                     value={planForm.targetMetric}
                                     onChange={(event) => setPlanForm((prev) => ({ ...prev, targetMetric: event.target.value }))}
-                                    className='rounded-xl border border-black/10 px-3 py-2 text-sm'
-                                    placeholder='Метрика'
-                                />
+                                    className='rounded-xl border border-black/10 bg-white px-3 py-2 text-sm'
+                                >
+                                    <option value='YIELD_QPH'>{formatTargetMetricLabel('YIELD_QPH')}</option>
+                                </select>
                                 <input
                                     value={planForm.period}
                                     onChange={(event) => setPlanForm((prev) => ({ ...prev, period: event.target.value }))}
@@ -647,7 +648,7 @@ export function TechMapPreparationWizard() {
                         <div className='space-y-4'>
                             <div>
                                 <p className='mb-1 text-xs text-gray-500'>Шаг 5. Генерация и запуск техкарты</p>
-                                <p className='text-sm text-gray-600'>Генератор собирает непустую техкарту, а статусные переходы выводят её в execution.</p>
+                                <p className='text-sm text-gray-600'>Генератор собирает непустую техкарту, а статусные переходы выводят её в контур исполнения.</p>
                             </div>
                             <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
                                 <select
@@ -658,7 +659,7 @@ export function TechMapPreparationWizard() {
                                     <option value=''>Выберите план</option>
                                     {plans.map((plan) => (
                                         <option key={plan.id} value={plan.id}>
-                                            {`${plan.targetMetric || 'План'} • ${formatStatusLabel(plan.status)} • ${plan.id.slice(0, 8)}`}
+                                            {`${formatTargetMetricLabel(plan.targetMetric)} • ${formatStatusLabel(plan.status)}`}
                                         </option>
                                     ))}
                                 </select>
@@ -670,7 +671,7 @@ export function TechMapPreparationWizard() {
                                     <option value=''>Выберите сезон</option>
                                     {seasons.map((season) => (
                                         <option key={season.id} value={season.id}>
-                                            {`Сезон ${season.year ?? '-'} • ${season.fieldId ?? 'без поля'}`}
+                                            {`Сезон ${season.year ?? '-'} • ${formatUiEntityName(season.fieldId ?? 'без поля')}`}
                                         </option>
                                     ))}
                                 </select>
@@ -746,7 +747,7 @@ export function TechMapPreparationWizard() {
                                     <p className='text-2xl font-semibold'>{techMaps.length}</p>
                                 </div>
                             </div>
-                            <p className='text-xs text-gray-500'>companyId: {companyId || '-'}</p>
+                            <p className='text-xs text-gray-500'>Рабочий контур определён: {formatYesNoLabel(Boolean(companyId), 'Да', 'Нет')}</p>
                         </div>
                     </Card>
 
@@ -754,11 +755,11 @@ export function TechMapPreparationWizard() {
                         <div className='space-y-3'>
                             <p className='text-xs text-gray-500'>Текущий рабочий контекст</p>
                             <div className='space-y-2 text-sm text-gray-700'>
-                                <p>Хозяйство: {selectedAccount ? `${selectedAccount.name || selectedAccount.id}` : 'не выбрано'}</p>
-                                <p>Поле: {selectedField ? `${selectedField.name || selectedField.cadastreNumber || selectedField.id}` : 'не выбрано'}</p>
-                                <p>Сезон: {selectedSeason ? `${selectedSeason.id} • ${selectedSeason.year ?? '-'}` : 'не создан'}</p>
-                                <p>План: {selectedPlan ? `${selectedPlan.id} • ${formatStatusLabel(selectedPlan.status)}` : 'не создан'}</p>
-                                <p>Техкарта: {selectedTechMap ? `${selectedTechMap.id} • ${formatStatusLabel(selectedTechMap.status)}` : 'не создана'}</p>
+                                <p>Хозяйство: {selectedAccount ? formatUiEntityName(selectedAccount.name || selectedAccount.id) : 'не выбрано'}</p>
+                                <p>Поле: {selectedField ? formatUiEntityName(selectedField.name || selectedField.cadastreNumber || selectedField.id) : 'не выбрано'}</p>
+                                <p>Сезон: {selectedSeason ? `${selectedSeason.year ?? '-'}` : 'не создан'}</p>
+                                <p>План: {selectedPlan ? `${formatStatusLabel(selectedPlan.status)}` : 'не создан'}</p>
+                                <p>Техкарта: {selectedTechMap ? `${formatStatusLabel(selectedTechMap.status)}` : 'не создана'}</p>
                             </div>
                             {selectedPlan ? (
                                 <Link href={`/consulting/plans/${selectedPlan.id}`} className='text-sm text-blue-600 hover:underline'>
@@ -783,8 +784,8 @@ export function TechMapPreparationWizard() {
                             <p className='text-xs text-gray-500'>Что проверять в реальном сценарии</p>
                             <div className='space-y-2 text-sm text-gray-700'>
                                 <p>1. После создания сезона у поля появляется реальный сезонный контекст, который затем выбирается в плане.</p>
-                                <p>2. После генерации техкарты открывается detail-view с содержимым карты, а не пустая заглушка.</p>
-                                <p>3. После переходов «План → Утверждено» и «Техкарта → Активно» операции становятся видны в `/consulting/execution`.</p>
+                                <p>2. После генерации техкарты открывается детальный просмотр с содержимым карты, а не пустая заглушка.</p>
+                                <p>3. После переходов «План → Утверждено» и «Техкарта → Активно» операции становятся видны в контуре исполнения.</p>
                             </div>
                         </div>
                     </Card>

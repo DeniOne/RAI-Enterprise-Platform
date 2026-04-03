@@ -188,7 +188,7 @@ export default function ContractDetailPage() {
                             <tr className="border-b border-black/10 text-left">
                                 <th className="px-3 py-2 font-medium text-gray-900">Контрагент</th>
                                 <th className="px-3 py-2 font-medium text-gray-900">Роль</th>
-                                <th className="px-3 py-2 font-medium text-gray-900">Primary</th>
+                                <th className="px-3 py-2 font-medium text-gray-900">Основная роль</th>
                             </tr>
                         </thead>
                         <tbody>

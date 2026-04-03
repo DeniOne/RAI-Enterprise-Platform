@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
+import { formatStatusLabel, formatUiEntityName } from '@/lib/ui-language';
 
 type PlanItem = {
     id: string;
@@ -31,9 +32,9 @@ function PlansTable({ title, plans }: { title: string; plans: PlanItem[] }) {
                         <tbody>
                             {plans.map((plan) => (
                                 <tr key={plan.id} className='border-b last:border-b-0'>
-                                    <td className='py-2 pr-4 font-mono text-xs'>{plan.id.slice(0, 10)}</td>
-                                    <td className='py-2 pr-4'>{plan.account?.name || 'Без хозяйства'}</td>
-                                    <td className='py-2 pr-4'>{plan.status || 'UNKNOWN'}</td>
+                                    <td className='py-2 pr-4 text-xs text-gray-500'>Скрыт</td>
+                                    <td className='py-2 pr-4'>{formatUiEntityName(plan.account?.name || 'Без хозяйства')}</td>
+                                    <td className='py-2 pr-4'>{formatStatusLabel(plan.status)}</td>
                                     <td className='py-2'>
                                         {plan.createdAt ? new Date(plan.createdAt).toLocaleDateString('ru-RU') : '-'}
                                     </td>
@@ -79,7 +80,7 @@ export default function Page() {
                     Черновые планы до отправки на проверку и согласование.
                 </p>
             </Card>
-            {loading ? <Card><p className='text-sm text-gray-500'>Загрузка...</p></Card> : <PlansTable title='Статус DRAFT' plans={draftPlans} />}
+            {loading ? <Card><p className='text-sm text-gray-500'>Загрузка...</p></Card> : <PlansTable title='Статус: черновик' plans={draftPlans} />}
         </div>
     );
 }

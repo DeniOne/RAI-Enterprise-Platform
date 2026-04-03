@@ -405,7 +405,7 @@ function Scene({ progress }) {
         <>
             <CameraRig progress={progress} />
             <Lighting />
-            <Suspense fallback={<Html center style={{ color: "white" }}>Loading scene…</Html>}>
+            <Suspense fallback={<Html center style={{ color: "white" }}>Загрузка сцены…</Html>}>
                 <Environment preset="warehouse" />
             </Suspense>
 
@@ -455,7 +455,7 @@ export default function SplitComparison() {
                 <div className="absolute left-0 right-0 top-0 z-20 mx-auto flex max-w-7xl items-start justify-between gap-6 px-6 pt-8 md:px-10 lg:px-14">
                     <div className="max-w-xl">
                         <div className="mb-4 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-white/65 backdrop-blur">
-                            Split Comparison · R3F + GSAP
+                            Сравнение сценариев · R3F + GSAP
                         </div>
                         <h2 className="max-w-2xl text-3xl font-semibold leading-tight text-white md:text-5xl md:leading-[1.02]">
                             До — стручок раскрывается и теряет семена. После — био-мембрана держит удар ветра.
@@ -468,13 +468,13 @@ export default function SplitComparison() {
                     <div className="hidden rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur md:block">
                         <div className="grid gap-3 text-sm text-white/80">
                             <div>
-                                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Left</div>
+                                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Слева</div>
                                 <div className="font-medium">Без ГРИПИЛ</div>
                                 <div className="text-white/50">Створки раскрываются, семена осыпаются.</div>
                             </div>
                             <div className="h-px bg-white/10" />
                             <div>
-                                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Right</div>
+                                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Справа</div>
                                 <div className="font-medium">С ГРИПИЛ</div>
                                 <div className="text-white/50">Появляется мембрана, ветер не раскрывает стручок.</div>
                             </div>
@@ -501,8 +501,8 @@ export default function SplitComparison() {
 
                 <div className="absolute inset-x-0 bottom-7 z-20 px-6 md:px-10 lg:px-14">
                     <div className="mx-auto flex max-w-7xl items-center justify-between rounded-full border border-white/10 bg-white/5 px-5 py-3 text-xs text-white/55 backdrop-blur md:text-sm">
-                        <span>Scroll → камера приближается, левый стручок раскрывается, справа появляется защитная мембрана.</span>
-                        <span className="hidden md:inline">Заменяй preset HDRI на свой EXR для более премиального лукдева.</span>
+                        <span>При прокрутке камера приближается, левый стручок раскрывается, справа появляется защитная мембрана.</span>
+                        <span className="hidden md:inline">Заменяйте служебную сцену освещения на свой EXR для более премиального лукдева.</span>
                     </div>
                 </div>
             </div>

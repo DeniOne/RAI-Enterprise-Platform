@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
+import { formatUiEntityName } from '@/lib/ui-language';
 
 type PlanItem = {
     id: string;
@@ -108,7 +109,7 @@ export default function Page() {
                                     const delta = planned === null || actual === null ? null : actual - planned;
                                     return (
                                         <tr key={plan.id} className='border-b last:border-b-0'>
-                                            <td className='py-2 pr-4'>{plan.account?.name || 'Без хозяйства'}</td>
+                                            <td className='py-2 pr-4'>{formatUiEntityName(plan.account?.name || 'Без хозяйства')}</td>
                                             <td className='py-2 pr-4'>{planned ?? '-'}</td>
                                             <td className='py-2 pr-4'>{actual ?? '-'}</td>
                                             <td className='py-2'>{delta === null ? '-' : delta.toFixed(2)}</td>

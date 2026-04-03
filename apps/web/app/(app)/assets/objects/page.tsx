@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { PageHeader } from '@/components/party-assets/common/PageHeader';
 import { partyAssetsApi } from '@/lib/party-assets-api';
+import { formatUiEntityName } from '@/lib/ui-language';
 import { AssetDto } from '@/shared/types/party-assets';
 
 export default function ObjectsRoute() {
@@ -18,7 +19,7 @@ export default function ObjectsRoute() {
       <ul className="flex flex-wrap gap-3">
         {objects.map((objectItem) => (
           <li key={objectItem.id} className="inline-flex w-fit items-center rounded-2xl border border-black/10 bg-white px-4 py-2.5 text-sm">
-            {objectItem.name}
+            {formatUiEntityName(objectItem.name)}
           </li>
         ))}
       </ul>

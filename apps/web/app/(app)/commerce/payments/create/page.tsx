@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
+import { formatPaymentMethodLabel, formatUiEntityName } from '@/lib/ui-language';
 
 type Party = { id: string; legalName: string };
 
@@ -92,7 +93,7 @@ export default function CreatePaymentPage() {
                                 <select value={payerPartyId} onChange={(e) => setPayerPartyId(e.target.value)}
                                     className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal text-gray-800" required>
                                     <option value="">Выберите контрагента</option>
-                                    {parties.map(p => <option key={p.id} value={p.id}>{p.legalName}</option>)}
+                                    {parties.map(p => <option key={p.id} value={p.id}>{formatUiEntityName(p.legalName)}</option>)}
                                 </select>
                             </div>
                             <div>
@@ -100,7 +101,7 @@ export default function CreatePaymentPage() {
                                 <select value={payeePartyId} onChange={(e) => setPayeePartyId(e.target.value)}
                                     className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal text-gray-800" required>
                                     <option value="">Выберите контрагента</option>
-                                    {parties.map(p => <option key={p.id} value={p.id}>{p.legalName}</option>)}
+                                    {parties.map(p => <option key={p.id} value={p.id}>{formatUiEntityName(p.legalName)}</option>)}
                                 </select>
                             </div>
                         </div>
@@ -123,7 +124,7 @@ export default function CreatePaymentPage() {
                                 <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}
                                     className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal text-gray-800" required>
                                     <option value="">Выберите</option>
-                                    {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
+                                    {PAYMENT_METHODS.map(m => <option key={m} value={m}>{formatPaymentMethodLabel(m)}</option>)}
                                 </select>
                             </div>
                         </div>

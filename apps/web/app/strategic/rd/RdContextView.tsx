@@ -29,7 +29,7 @@ export default function RdContextPage({ experiments }: { experiments: Experiment
                     </Link>
                     <div className="flex items-center gap-4">
                         <Beaker size={40} className="text-[#00A3A3]" />
-                        <h1 className="text-5xl font-light tracking-tight text-gray-900">R&D Контур</h1>
+                        <h1 className="text-5xl font-light tracking-tight text-gray-900">Научный контур</h1>
                     </div>
                 </div>
                 <div className="text-right">
@@ -144,7 +144,7 @@ export default function RdContextPage({ experiments }: { experiments: Experiment
                                         <Unlock size={24} className="text-gray-200" />
                                     )}
                                     <div>
-                                        <div className="text-[15px] font-medium text-gray-900">Блокировка измерений (Lock)</div>
+                                        <div className="text-[15px] font-medium text-gray-900">Блокировка измерений</div>
                                         <div className="text-xs text-gray-500">Автоматическая защита от несанкционированных правок</div>
                                     </div>
                                 </div>

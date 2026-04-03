@@ -8,7 +8,14 @@ import clsx from 'clsx';
 import { includesFocus, useEntityFocus } from '@/shared/hooks/useEntityFocus';
 import { useWorkspaceContextStore } from '@/lib/stores/workspace-context-store';
 import { ChiefAgronomistReviewDrawer } from '@/components/experts/ChiefAgronomistReviewDrawer';
-import { formatRolloutModeLabel, formatStatusLabel } from '@/lib/ui-language';
+import {
+  formatCanonicalBranchLabel,
+  formatCropFormLabel,
+  formatCropLabel,
+  formatGenerationStrategyLabel,
+  formatRolloutModeLabel,
+  formatStatusLabel,
+} from '@/lib/ui-language';
 
 type TechMapItem = {
     id: string;
@@ -66,7 +73,7 @@ function MapTable({ rows, isFocused }: { rows: RowItem[]; isFocused: (row: RowIt
                             <tr key={row.item.id} data-focus={focused ? 'true' : 'false'} className={clsx('border-b last:border-b-0', focused && 'bg-sky-50 ring-1 ring-sky-200')}>
                                 <td className='py-2 pr-4 font-medium text-gray-900'>{row.code}</td>
                                 <td className='py-2 pr-4'>{row.item.version ?? '-'}</td>
-                                <td className='py-2 pr-4'>{row.item.crop || '-'}</td>
+                                <td className='py-2 pr-4'>{formatCropLabel(row.item.crop)}</td>
                                 <td className='py-2 pr-4'>
                                     <div className='flex flex-wrap gap-1.5'>
                                         {renderGenerationBadges(row.item)}
@@ -76,8 +83,8 @@ function MapTable({ rows, isFocused }: { rows: RowItem[]; isFocused: (row: RowIt
                                 <td className='py-2'>{row.item.updatedAt ? new Date(row.item.updatedAt).toLocaleDateString('ru-RU') : '-'}</td>
                                 <td className='py-2 text-right'>
                                     <ChiefAgronomistReviewDrawer
-                                        title={`Техкарта ${row.code}`}
-                                        subtitle={row.item.crop ? `${row.item.crop} • ${formatStatusLabel(row.item.status)}` : formatStatusLabel(row.item.status)}
+                                        title={row.code}
+                                        subtitle={row.item.crop ? `${formatCropLabel(row.item.crop)} • ${formatStatusLabel(row.item.status)}` : formatStatusLabel(row.item.status)}
                                         triggerLabel='Экспертное заключение'
                                         triggerClassName='px-3 py-1.5'
                                         request={{
@@ -133,7 +140,7 @@ function PageInner() {
     const activeRows = useMemo<RowItem[]>(() => {
         const activeMaps = maps.filter((m) => String(m.status) === 'ACTIVE');
         return activeMaps.map((item, index) => ({
-            code: `TM-${String(index + 1).padStart(3, '0')}`,
+            code: `Техкарта ${String(index + 1).padStart(3, '0')}`,
             item,
         }));
     }, [maps]);
@@ -164,7 +171,7 @@ function PageInner() {
                 kind: 'techmap',
                 id: focusedRow.item.id,
                 title: focusedRow.code,
-                subtitle: focusedRow.item.crop ?? '-',
+                subtitle: formatCropLabel(focusedRow.item.crop),
                 status: focusedRow.item.status,
             });
         }
@@ -202,8 +209,8 @@ function renderGenerationBadges(item: TechMapItem) {
 
     if (item.generationMetadata?.generationStrategy) {
         badges.push(
-            <span key="strategy" className='px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 text-[10px] font-medium border border-sky-100'>
-                {item.generationMetadata.generationStrategy}
+                <span key="strategy" className='px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 text-[10px] font-medium border border-sky-100'>
+                {formatGenerationStrategyLabel(item.generationMetadata.generationStrategy)}
             </span>,
         );
     }
@@ -226,8 +233,8 @@ function renderGenerationBadges(item: TechMapItem) {
 
     if (item.generationMetadata?.shadowParitySummary?.hasBlockingDiffs) {
         badges.push(
-            <span key="parity-p0" className='px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-medium border border-rose-100'>
-                P0 {item.generationMetadata.shadowParitySummary.severityCounts?.P0 || 0}
+                <span key="parity-p0" className='px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-medium border border-rose-100'>
+                критических расхождений {item.generationMetadata.shadowParitySummary.severityCounts?.P0 || 0}
             </span>,
         );
     } else if (typeof item.generationMetadata?.shadowParitySummary?.diffCount === 'number') {
@@ -240,8 +247,8 @@ function renderGenerationBadges(item: TechMapItem) {
 
     if (item.cropForm || item.canonicalBranch) {
         badges.push(
-            <span key="branch" className='px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-100'>
-                {item.cropForm || '-'} / {item.canonicalBranch || '-'}
+                <span key="branch" className='px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-100'>
+                {item.cropForm ? formatCropFormLabel(item.cropForm) : formatCanonicalBranchLabel(item.canonicalBranch)}
             </span>,
         );
     }

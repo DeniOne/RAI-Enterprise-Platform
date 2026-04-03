@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { Card } from '@/components/ui'
 import Link from 'next/link'
+import { formatResourceUnitLabel, formatStatusLabel } from '@/lib/ui-language'
 
 interface MapResource {
     id: string
@@ -85,7 +86,7 @@ export default async function TechMapDetailPage({ params }: { params: Promise<{ 
                     <div>
                         <h1 className="text-xl font-medium mb-1">Технологическая карта</h1>
                         <p className="text-sm font-normal text-gray-500">
-                            Версия {techMap.version} • Статус: {techMap.status}
+                            Версия {techMap.version} • Статус: {formatStatusLabel(techMap.status)}
                         </p>
                     </div>
                     <Link
@@ -130,7 +131,7 @@ export default async function TechMapDetailPage({ params }: { params: Promise<{ 
                                                                 className="px-3 py-1 bg-gray-50 border border-black/5 rounded-lg text-sm"
                                                             >
                                                                 <span className="text-gray-600">{res.name}:</span>
-                                                                <span className="ml-1 font-medium">{res.amount} {res.unit}</span>
+                                                                <span className="ml-1 font-medium">{res.amount} {formatResourceUnitLabel(res.unit)}</span>
                                                             </div>
                                                         ))}
                                                     </div>

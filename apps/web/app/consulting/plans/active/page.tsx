@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
+import { formatStatusLabel, formatUiEntityName } from '@/lib/ui-language';
 
 type PlanItem = {
     id: string;
@@ -53,10 +54,10 @@ export default function Page() {
                         {activePlans.map((plan) => (
                             <li key={plan.id} className='border-b last:border-b-0 py-2'>
                                 <div className='text-gray-900'>
-                                    {plan.account?.name || 'Без хозяйства'}
+                                    {formatUiEntityName(plan.account?.name || 'Без хозяйства')}
                                 </div>
                                 <div className='text-xs text-gray-500'>
-                                    {plan.status || 'UNKNOWN'} • {plan.updatedAt ? new Date(plan.updatedAt).toLocaleDateString('ru-RU') : '-'}
+                                    {formatStatusLabel(plan.status)} • {plan.updatedAt ? new Date(plan.updatedAt).toLocaleDateString('ru-RU') : '-'}
                                 </div>
                             </li>
                         ))}

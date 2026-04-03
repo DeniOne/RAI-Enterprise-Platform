@@ -5,12 +5,24 @@ import { use, useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
 import {
+    formatCanonicalBranchLabel,
     formatChangeOrderTypeLabel,
+    formatCropFormLabel,
+    formatCropLabel,
+    formatEvidenceTypeLabel,
+    formatEvidenceSourceKindLabel,
     formatGenerationStrategyLabel,
+    formatParityDiffCodeLabel,
+    formatPriorityLabel,
+    formatResourceUnitLabel,
     formatRolloutModeLabel,
     formatRunbookActionLabel,
     formatSeverityLabel,
+    formatSourceSchemeLabel,
     formatStatusLabel,
+    formatTechExplainabilityMessage,
+    formatTechMapBlockLabel,
+    formatTechStageCodeLabel,
 } from '@/lib/ui-language';
 
 type MapResource = {
@@ -289,14 +301,14 @@ function renderEvidenceAuditSummary(summary?: {
     return (
         <div className='mt-2 flex flex-wrap gap-2'>
             <span className='px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-100'>
-                artifacts: {summary.artifactEvidenceCount || 0}
+                подтверждений: {summary.artifactEvidenceCount || 0}
             </span>
             <span className='px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[10px] font-medium border border-amber-100'>
-                routes: {summary.intermediateRouteEvidenceCount || 0}
+                промежуточных маршрутов: {summary.intermediateRouteEvidenceCount || 0}
             </span>
             {(summary.unresolvedRouteEvidenceTypes || []).map((item) => (
                 <span key={item} className='px-2.5 py-1 rounded-full bg-white text-amber-700 text-[10px] font-medium border border-amber-100'>
-                    unresolved: {item}
+                    требует разбора: {formatTechExplainabilityMessage(item)}
                 </span>
             ))}
         </div>
@@ -380,7 +392,7 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
             await load();
         } catch (error: any) {
             console.error('Failed to execute incident runbook:', error);
-            alert(error?.response?.data?.message || 'Ошибка запуска runbook');
+            alert(error?.response?.data?.message || 'Ошибка запуска регламентного действия');
         } finally {
             setBusyRunbookIncidentId(null);
         }
@@ -418,12 +430,16 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                     <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
                         <Card>
                             <p className='text-xs text-gray-500 mb-1'>Культура</p>
-                            <p className='font-semibold'>{(techMap.crop || 'unknown').toUpperCase()}</p>
-                            <p className='text-xs text-gray-500 mt-1'>{techMap.cropForm || explainability?.cropForm || '-'}</p>
+                            <p className='font-semibold'>{formatCropLabel(techMap.crop)}</p>
+                            <p className='text-xs text-gray-500 mt-1'>
+                                {techMap.cropForm || explainability?.cropForm
+                                    ? formatCropFormLabel(techMap.cropForm || explainability?.cropForm)
+                                    : formatCanonicalBranchLabel(techMap.canonicalBranch || explainability?.canonicalBranch)}
+                            </p>
                         </Card>
                         <Card>
                             <p className='text-xs text-gray-500 mb-1'>Статус</p>
-                            <p className='font-semibold'>{techMap.status}</p>
+                            <p className='font-semibold'>{formatStatusLabel(techMap.status)}</p>
                         </Card>
                         <Card>
                             <p className='text-xs text-gray-500 mb-1'>Версия</p>
@@ -461,11 +477,13 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                         <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                             <div>
                                 <p className='text-xs text-gray-500 mb-1'>Ветка</p>
-                                <p className='font-semibold'>{techMap.canonicalBranch || explainability?.canonicalBranch || '-'}</p>
-                                <p className='text-xs text-gray-500 mt-2'>Идентификатор трассировки: {techMap.generationMetadata?.generationTraceId || explainability?.generationExplanationTrace?.traceId || '-'}</p>
+                                <p className='font-semibold'>{formatCanonicalBranchLabel(techMap.canonicalBranch || explainability?.canonicalBranch)}</p>
+                                <p className='text-xs text-gray-500 mt-2'>
+                                    Трасса генерации: {(techMap.generationMetadata?.generationTraceId || explainability?.generationExplanationTrace?.traceId) ? 'доступна' : 'не зафиксирована'}
+                                </p>
                                 <div className='mt-3 space-y-1'>
                                     {(explainability?.generationExplanationTrace?.summary?.branchSelectionReasons || []).map((reason) => (
-                                        <p key={reason} className='text-sm text-gray-600'>{reason}</p>
+                                        <p key={reason} className='text-sm text-gray-600'>{formatTechExplainabilityMessage(reason)}</p>
                                     ))}
                                 </div>
                             </div>
@@ -474,10 +492,10 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                 <p className='font-semibold'>{formatStatusLabel(explainability?.fieldAdmissionResult?.verdict || explainability?.generationExplanationTrace?.summary?.admissionVerdict)}</p>
                                 <div className='mt-3 space-y-1'>
                                     {(explainability?.fieldAdmissionResult?.blockers || []).map((item, index) => (
-                                        <p key={`blocker-${index}`} className='text-sm text-rose-700'>{item.message}</p>
+                                        <p key={`blocker-${index}`} className='text-sm text-rose-700'>{formatTechExplainabilityMessage(item.message)}</p>
                                     ))}
                                     {(explainability?.fieldAdmissionResult?.requirements || []).map((item, index) => (
-                                        <p key={`requirement-${index}`} className='text-sm text-amber-700'>{item.message}</p>
+                                        <p key={`requirement-${index}`} className='text-sm text-amber-700'>{formatTechExplainabilityMessage(item.message)}</p>
                                     ))}
                                 </div>
                             </div>
@@ -505,14 +523,14 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                         <div className='flex items-start justify-between gap-3 flex-wrap'>
                                             <div>
                                                 <p className='text-xs text-gray-500'>
-                                                    {incident.subtype || '-'} • {formatSeverityLabel(incident.severity)} • {formatStatusLabel(incident.status)}
+                                                    {incident.subtype ? formatTechExplainabilityMessage(incident.subtype) : 'Инцидент развёртывания'} • {formatSeverityLabel(incident.severity)} • {formatStatusLabel(incident.status)}
                                                 </p>
                                                 <p className='text-sm font-medium text-gray-900 mt-1'>
-                                                    {incident.detailSummary || 'Инцидент развёртывания'}
+                                                    {incident.detailSummary ? formatTechExplainabilityMessage(incident.detailSummary) : 'Инцидент развёртывания'}
                                                 </p>
                                                 <p className='text-xs text-gray-500 mt-1'>
                                                     {incident.createdAt ? new Date(incident.createdAt).toLocaleString('ru-RU') : '-'}
-                                                    {incident.traceId ? ` • трассировка ${incident.traceId}` : ''}
+                                                    {incident.traceId ? ' • трасса зафиксирована' : ''}
                                                 </p>
                                             </div>
                                             <div className='flex items-center gap-2 flex-wrap'>
@@ -554,7 +572,7 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                     </span>
                                     {explainability?.generationObservability?.fallbackReason && (
                                         <span className='px-2.5 py-1 rounded-full bg-white text-amber-700 text-[10px] font-medium border border-amber-100'>
-                                            {explainability.generationObservability.fallbackReason}
+                                            {formatTechExplainabilityMessage(explainability.generationObservability.fallbackReason)}
                                         </span>
                                     )}
                                     {explainability?.generationObservability?.featureFlagSnapshot?.mode && (
@@ -584,13 +602,13 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                         {explainability?.generationObservability?.shadowParitySummary?.hasBlockingDiffs ? 'есть блокирующие расхождения' : 'блокирующих расхождений нет'}
                                     </span>
                                     <span className='px-2.5 py-1 rounded-full bg-white text-gray-700 text-[10px] font-medium border border-black/10'>
-                                        P0 {explainability?.generationObservability?.shadowParitySummary?.severityCounts?.P0 || 0}
+                                        {formatPriorityLabel('P0')}: {explainability?.generationObservability?.shadowParitySummary?.severityCounts?.P0 || 0}
                                     </span>
                                     <span className='px-2.5 py-1 rounded-full bg-white text-gray-700 text-[10px] font-medium border border-black/10'>
-                                        P1 {explainability?.generationObservability?.shadowParitySummary?.severityCounts?.P1 || 0}
+                                        {formatPriorityLabel('P1')}: {explainability?.generationObservability?.shadowParitySummary?.severityCounts?.P1 || 0}
                                     </span>
                                     <span className='px-2.5 py-1 rounded-full bg-white text-gray-700 text-[10px] font-medium border border-black/10'>
-                                        P2 {explainability?.generationObservability?.shadowParitySummary?.severityCounts?.P2 || 0}
+                                        {formatPriorityLabel('P2')}: {explainability?.generationObservability?.shadowParitySummary?.severityCounts?.P2 || 0}
                                     </span>
                                 </div>
                                 <p className='text-xs text-gray-500 mt-3'>
@@ -601,8 +619,10 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                 <div className='mt-3 space-y-2'>
                                     {(explainability?.generationObservability?.shadowParityReport?.diffs || []).slice(0, 5).map((diff, index) => (
                                         <div key={`${diff.code || 'diff'}-${index}`} className='rounded-xl border border-black/5 bg-gray-50 p-3'>
-                                            <p className='text-xs text-gray-500'>{diff.severity || '-'} / {diff.code || '-'}</p>
-                                            <p className='text-sm text-gray-700 mt-1'>{diff.message || '-'}</p>
+                                            <p className='text-xs text-gray-500'>
+                                                {formatPriorityLabel(diff.severity)} / {formatParityDiffCodeLabel(diff.code)}
+                                            </p>
+                                            <p className='text-sm text-gray-700 mt-1'>{formatTechExplainabilityMessage(diff.message)}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -617,13 +637,13 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                 <div className='flex flex-wrap gap-2'>
                                     {(explainability?.generationExplanationTrace?.summary?.mandatoryBlocks || []).map((block) => (
                                         <span key={block} className='px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-medium'>
-                                            {block}
+                                            {formatTechMapBlockLabel(block)}
                                         </span>
                                     ))}
                                 </div>
                             </div>
                             <div>
-                                <p className='text-xs text-gray-500 mb-2'>Рекомендации и gate</p>
+                                <p className='text-xs text-gray-500 mb-2'>Рекомендации и шлюзы решения</p>
                                 <div className='space-y-2'>
                                     {(explainability?.recommendations || []).slice(0, 4).map((recommendation) => (
                                         <div key={recommendation.id} id={`recommendation-${recommendation.id}`} className='rounded-xl border border-gray-100 p-3 scroll-mt-24'>
@@ -661,7 +681,7 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                                 <p className='text-sm font-medium text-indigo-950'>{changeOrder.id}</p>
                                                 <p className='text-xs text-indigo-800 mt-1'>
                                                     согласований: {changeOrder.approvals?.length || 0}
-                                                    {typeof changeOrder.deltaCostRub === 'number' ? ` • изменение ${changeOrder.deltaCostRub} RUB` : ''}
+                                                    {typeof changeOrder.deltaCostRub === 'number' ? ` • изменение ${changeOrder.deltaCostRub} ₽` : ''}
                                                 </p>
                                             </div>
                                         ))
@@ -672,7 +692,7 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                 <p className='text-xs text-gray-500 mb-2'>Разбор отклонений</p>
                                 <div className='space-y-2'>
                                     {(explainability?.runtimeArtifacts?.deviationReviews || []).length === 0 ? (
-                                        <p className='text-sm text-gray-500'>Разборы runtime-отклонений пока не зафиксированы.</p>
+                                        <p className='text-sm text-gray-500'>Разборы отклонений времени исполнения пока не зафиксированы.</p>
                                     ) : (
                                         (explainability?.runtimeArtifacts?.deviationReviews || []).map((review) => (
                                             <div
@@ -729,7 +749,9 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                 <div className='space-y-4'>
                                     <div>
                                         <h2 className='text-lg font-medium text-gray-900'>{stage.sequence}. {stage.name}</h2>
-                                        <p className='text-xs text-gray-500 mt-1'>{stage.aplStageId || 'APL stage не задан'}</p>
+                                        <p className='text-xs text-gray-500 mt-1'>
+                                            {stage.aplStageId ? formatTechStageCodeLabel(stage.aplStageId) : 'Этап техкарты уточняется'}
+                                        </p>
                                         {stage.stageGoal && (
                                             <p className='text-sm text-gray-600 mt-2'>{stage.stageGoal}</p>
                                         )}
@@ -738,12 +760,12 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                                 {stage.controlPoints?.map((point) => (
                                                     <div key={point.id} className='rounded-xl border border-amber-100 bg-amber-50 px-3 py-2'>
                                                         <p className='text-xs font-medium text-amber-700'>
-                                                            CP: {point.name} {point.severityOnFailure ? `(${point.severityOnFailure})` : ''}
+                                                            Контрольная точка: {point.name} {point.severityOnFailure ? `(${formatSeverityLabel(point.severityOnFailure)})` : ''}
                                                         </p>
                                                         {controlPointOutcomeById.get(point.id) && (
                                                             <div>
                                                                 <p className='mt-1 text-xs text-gray-600'>
-                                                                    {controlPointOutcomeById.get(point.id)?.severity}: {controlPointOutcomeById.get(point.id)?.summary}
+                                                                    {formatSeverityLabel(controlPointOutcomeById.get(point.id)?.severity)}: {formatTechExplainabilityMessage(controlPointOutcomeById.get(point.id)?.summary)}
                                                                 </p>
                                                                 {renderEvidenceAuditSummary(controlPointOutcomeById.get(point.id)?.evidenceAudit)}
                                                                 {((controlPointOutcomeById.get(point.id)?.attachedEvidence || []).length > 0) && (
@@ -751,7 +773,7 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                                                         {(controlPointOutcomeById.get(point.id)?.attachedEvidence || []).map((evidence) => (
                                                                             <div key={evidence.id} className='rounded-lg border border-black/5 bg-white px-2.5 py-2'>
                                                                                 <div className='flex flex-wrap items-center gap-2'>
-                                                                                    <span className='text-[10px] font-medium text-gray-800'>{evidence.evidenceType}</span>
+                                                                                    <span className='text-[10px] font-medium text-gray-800'>{formatEvidenceTypeLabel(evidence.evidenceType)}</span>
                                                                                     {evidence.sourceAudit?.urlKind && (
                                                                                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${
                                                                                             evidence.sourceAudit.urlKind === 'artifact'
@@ -760,12 +782,12 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                                                                                     ? 'bg-amber-50 text-amber-700 border-amber-100'
                                                                                                     : 'bg-slate-100 text-slate-700 border-slate-200'
                                                                                         }`}>
-                                                                                            {evidence.sourceAudit.urlKind}
+                                                                                            {formatEvidenceSourceKindLabel(evidence.sourceAudit.urlKind)}
                                                                                         </span>
                                                                                     )}
                                                                                     {evidence.sourceAudit?.sourceScheme && (
                                                                                         <span className='px-2 py-0.5 rounded-full text-[10px] font-medium border border-black/5 bg-slate-50 text-slate-600'>
-                                                                                            {evidence.sourceAudit.sourceScheme}
+                                                                                            {formatSourceSchemeLabel(evidence.sourceAudit.sourceScheme)}
                                                                                         </span>
                                                                                     )}
                                                                                 </div>
@@ -773,9 +795,9 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                                                                     href={evidence.fileUrl}
                                                                                     target='_blank'
                                                                                     rel='noreferrer'
-                                                                                    className='mt-1 block break-all text-[11px] text-blue-600 hover:underline'
+                                                                                    className='mt-1 block text-[11px] text-blue-600 hover:underline'
                                                                                 >
-                                                                                    {evidence.fileUrl}
+                                                                                    Открыть файл подтверждения
                                                                                 </a>
                                                                             </div>
                                                                         ))}
@@ -820,7 +842,7 @@ export default function TechMapDetailPage({ params }: { params: Promise<{ id: st
                                                                 >
                                                                     <span className='text-gray-600'>{resource.name}:</span>
                                                                     <span className='ml-1 font-medium'>
-                                                                        {resource.amount} {resource.unit}
+                                                                        {resource.amount} {formatResourceUnitLabel(resource.unit)}
                                                                     </span>
                                                                 </div>
                                                             ))}

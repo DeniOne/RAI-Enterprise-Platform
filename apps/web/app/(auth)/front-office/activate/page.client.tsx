@@ -163,7 +163,7 @@ export function FrontOfficeActivateClient({ token }: { token: string }) {
                     <div className="space-y-4">
                         <div>
                             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-gray-400">
-                                Front-office
+                                Внешний кабинет
                             </p>
                             <h1 className="mt-2 text-2xl font-medium text-gray-900">
                                 Доступ контрагента в систему

@@ -4,6 +4,7 @@ import { Card } from "@/components/ui";
 import { ExternalFrontOfficeThreadClient } from "@/components/front-office/ExternalFrontOfficeThreadClient";
 import { externalFrontOfficeServerApi } from "@/lib/api/front-office-server";
 import { EXTERNAL_FRONT_OFFICE_BASE_PATH } from "@/lib/front-office-routes";
+import { formatStatusLabel } from "@/lib/ui-language";
 
 export default async function ExternalFrontOfficeThreadPage({
   params,
@@ -28,15 +29,13 @@ export default async function ExternalFrontOfficeThreadPage({
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-gray-400">
-            Thread
+            Диалог
           </p>
           <h1 className="mt-2 text-2xl font-medium text-gray-900">
             {thread.threadKey}
           </h1>
           <p className="mt-2 text-sm text-gray-500">
-            {thread.channel} • {thread.currentHandoffStatus ??
-              thread.currentClassification ??
-              "ОТКРЫТ"}
+            {thread.channel} • {formatStatusLabel(thread.currentHandoffStatus ?? thread.currentClassification ?? "OPEN")}
           </p>
         </div>
         <Link

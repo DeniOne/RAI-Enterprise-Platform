@@ -9,7 +9,7 @@ export default function AnalysisPlaceholder() {
                 Анализ отклонений
             </h1>
             <p className="text-sm text-gray-500 mb-8">
-                Модуль глубокого анализа причин инцидентов (Root Cause Analysis)
+                Модуль глубокого разбора причин инцидентов
             </p>
 
             <div className="bg-white border border-black/5 rounded-3xl p-20 flex flex-col items-center justify-center text-center shadow-sm">

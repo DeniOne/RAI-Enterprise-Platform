@@ -4,7 +4,7 @@ import { FieldCreateWizard } from '@/components/party-assets/fields/FieldCreateW
 export default function FieldCreateRoute() {
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-      <PageHeader title="Новое поле" description="Создание поля в Field Registry с автоматическим переходом в мастер подготовки Техкарты" />
+      <PageHeader title="Новое поле" description="Создание поля в реестре полей с автоматическим переходом в мастер подготовки техкарты" />
       <FieldCreateWizard />
     </div>
   );

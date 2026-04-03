@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { PageHeader } from '@/components/party-assets/common/PageHeader';
 import { partyAssetsApi } from '@/lib/party-assets-api';
+import { formatUiEntityName } from '@/lib/ui-language';
 import { FarmListItemVm } from '@/shared/types/party-assets';
 
 export function FarmsPage() {
@@ -66,17 +67,17 @@ export function FarmsPage() {
                 <tr key={farm.id} className="border-b border-black/5 last:border-b-0">
                   <td className="whitespace-nowrap px-4 py-3">
                     <Link href={`/assets/farms/${encodeURIComponent(farm.id)}`} className="hover:underline">
-                      {farm.name}
+                      {formatUiEntityName(farm.name)}
                     </Link>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3">
-                    <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium">{farm.operatorParty?.name || '—'}</span>
+                    <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium">{formatUiEntityName(farm.operatorParty?.name)}</span>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3">
-                    <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium">{farm.ownerParty?.name || '—'}</span>
+                    <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium">{formatUiEntityName(farm.ownerParty?.name)}</span>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3">
-                    <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium">{farm.holdingDerivedName || '—'}</span>
+                    <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium">{formatUiEntityName(farm.holdingDerivedName)}</span>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3">{farm.hasLease ? 'Да' : 'Нет'}</td>
                 </tr>

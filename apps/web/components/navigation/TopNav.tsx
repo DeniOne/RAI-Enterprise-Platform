@@ -67,6 +67,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
 
 interface TopNavProps {
     role: string;
+    contentOffset?: number;
 }
 
 const SHORT_LABEL_MAP: Record<string, string> = {
@@ -100,12 +101,13 @@ function isItemActive(item: NavItem, pathname: string): boolean {
     return item.subItems?.some((subItem) => isItemActive(subItem, pathname)) ?? false;
 }
 
-export function TopNav({ role }: TopNavProps) {
+export function TopNav({ role, contentOffset }: TopNavProps) {
     const pathname = usePathname();
     const [navItems, setNavItems] = useState<NavItem[]>([]);
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const [hoveredSubmenuId, setHoveredSubmenuId] = useState<string | null>(null);
     const headerRef = useRef<HTMLElement | null>(null);
+    const resolvedOffset = typeof contentOffset === 'number' ? contentOffset : null;
 
     useEffect(() => {
         setNavItems(getVisibleNavigation(role as UserRole));
@@ -229,13 +231,14 @@ export function TopNav({ role }: TopNavProps) {
     return (
         <header
             ref={headerRef}
-            className="sticky top-16 z-40 flex h-16 w-full items-center gap-4 border-b border-black/10 bg-white/95 px-4 backdrop-blur-md sm:px-5 lg:px-6"
+            className="sticky top-16 z-40 flex h-16 w-full items-center gap-4 border-b border-black/10 bg-white/95 pl-4 pr-4 backdrop-blur-md transition-[padding-left] duration-200 sm:pl-5 sm:pr-5 lg:pl-6 lg:pr-6"
+            style={resolvedOffset ? { paddingLeft: `${resolvedOffset}px` } : undefined}
         >
             <div className="shrink-0">
                 <Link href="/consulting/dashboard">
                     <Image
                         src="/branding/rai-agroplatforma-transparent.png"
-                        alt="RAI Agroplatform"
+                        alt="Платформа RAI Агро"
                         width={180}
                         height={40}
                         className="h-8 w-auto object-contain lg:h-10"

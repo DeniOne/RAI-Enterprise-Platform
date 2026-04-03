@@ -4,6 +4,15 @@ import { Card } from '@/components/ui';
 import { frontOfficeServerApi } from '@/lib/api/front-office-server';
 import { getUserData, isExternalFrontOfficeUser } from '@/lib/api/auth-server';
 import { getExternalFrontOfficeThreadPath } from '@/lib/front-office-routes';
+import {
+    formatFrontOfficeChannelLabel,
+    formatFrontOfficeClarificationLabel,
+    formatFrontOfficeDirectionLabel,
+    formatFrontOfficeIntentLabel,
+    formatFrontOfficeOwnerLabel,
+    formatFrontOfficeText,
+    formatStatusLabel,
+} from '@/lib/ui-language';
 
 export default async function FrontOfficeThreadPage({
     params,
@@ -30,14 +39,24 @@ export default async function FrontOfficeThreadPage({
     const drafts = data.drafts ?? [];
     const handoffs = data.handoffs ?? [];
 
+    const formatClarificationList = (items: unknown) => {
+        if (!Array.isArray(items) || items.length === 0) {
+            return 'Требуется уточнение';
+        }
+
+        return items
+            .map((item) => formatFrontOfficeClarificationLabel(String(item)))
+            .join(', ');
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between gap-4">
                 <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-gray-400">Thread</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-gray-400">Диалог</p>
                     <h1 className="mt-2 text-2xl font-medium text-gray-900">{thread.threadKey}</h1>
                     <p className="mt-2 text-sm text-gray-500">
-                        {thread.channel} • ответственный {thread.currentOwnerRole ?? 'не назначен'} • {thread.currentHandoffStatus ?? thread.currentClassification ?? 'ОТКРЫТ'}
+                        {formatFrontOfficeChannelLabel(thread.channel)} • ответственный {formatFrontOfficeOwnerLabel(thread.currentOwnerRole)} • {formatStatusLabel(thread.currentHandoffStatus ?? thread.currentClassification ?? 'OPEN')}
                     </p>
                 </div>
                 <Link href="/front-office" className="text-sm text-gray-500 hover:text-gray-900">Назад к списку</Link>
@@ -53,10 +72,10 @@ export default async function FrontOfficeThreadPage({
                             {messages.map((message: any) => (
                                 <div key={message.id} className="rounded-2xl border border-black/5 p-4">
                                     <div className="flex items-center justify-between gap-3">
-                                        <p className="text-xs uppercase tracking-[0.16em] text-gray-400">{message.direction}</p>
-                                        <p className="text-xs text-gray-500">{message.channel}</p>
+                                        <p className="text-xs uppercase tracking-[0.16em] text-gray-400">{formatFrontOfficeDirectionLabel(message.direction)}</p>
+                                        <p className="text-xs text-gray-500">{formatFrontOfficeChannelLabel(message.channel)}</p>
                                     </div>
-                                    <p className="mt-2 text-sm text-gray-800">{message.messageText}</p>
+                                    <p className="mt-2 text-sm text-gray-800">{formatFrontOfficeText(message.messageText)}</p>
                                 </div>
                             ))}
                         </div>
@@ -74,22 +93,22 @@ export default async function FrontOfficeThreadPage({
                                     <div key={draft.id} className="rounded-2xl border border-black/5 p-4">
                                         <div className="flex items-center justify-between gap-3">
                                             <p className="text-sm font-medium text-gray-900">
-                                                {draft.payload?.suggestedIntent ?? draft.eventType}
+                                                {formatFrontOfficeIntentLabel(draft.payload?.suggestedIntent ?? draft.eventType)}
                                             </p>
-                                            <p className="text-xs text-gray-500">{draft.status}</p>
+                                            <p className="text-xs text-gray-500">{formatStatusLabel(draft.status)}</p>
                                         </div>
-                                        <p className="mt-2 text-sm text-gray-700">{draft.payload?.messageText ?? 'Без текста'}</p>
+                                        <p className="mt-2 text-sm text-gray-700">{formatFrontOfficeText(draft.payload?.messageText)}</p>
                                         <p className="mt-2 text-xs text-gray-500">
-                                            Anchor: field {draft.anchor?.fieldId ?? '-'} • season {draft.anchor?.seasonId ?? '-'} • task {draft.anchor?.taskId ?? '-'}
+                                            Привязка: поле {draft.anchor?.fieldId ? 'выбрано' : 'не выбрано'} • сезон {draft.anchor?.seasonId ? 'выбран' : 'не выбран'} • задача {draft.anchor?.taskId ? 'выбрана' : 'не выбрана'}
                                         </p>
                                         {Array.isArray(draft.mustClarifications) && draft.mustClarifications.length > 0 ? (
                                             <p className="mt-2 text-xs text-amber-700">
-                                                MUST: {draft.mustClarifications.join(', ')}
+                                                Обязательно уточнить: {formatClarificationList(draft.mustClarifications)}
                                             </p>
                                         ) : null}
                                         {draft.payload?.commitResult ? (
                                             <p className="mt-2 text-xs text-emerald-700">
-                                                Commit: {draft.payload.commitResult.kind ?? 'result'} #{draft.payload.commitResult.id ?? '-'}
+                                                Результат фиксации: {formatFrontOfficeIntentLabel(draft.payload.commitResult.kind ?? 'context_update')}
                                             </p>
                                         ) : null}
                                     </div>
@@ -106,9 +125,9 @@ export default async function FrontOfficeThreadPage({
                             <div className="space-y-3">
                                 {handoffs.map((handoff: any) => (
                                     <div key={handoff.id} className="rounded-2xl border border-amber-100 bg-amber-50/50 p-4">
-                                        <p className="text-sm font-medium text-gray-900">{handoff.targetOwnerRole ?? 'manual'}</p>
-                                        <p className="mt-1 text-xs text-gray-500">{handoff.status}</p>
-                                        <p className="mt-2 text-sm text-gray-700">{handoff.summary}</p>
+                                        <p className="text-sm font-medium text-gray-900">{formatFrontOfficeOwnerLabel(handoff.targetOwnerRole)}</p>
+                                        <p className="mt-1 text-xs text-gray-500">{formatStatusLabel(handoff.status)}</p>
+                                        <p className="mt-2 text-sm text-gray-700">{formatFrontOfficeText(handoff.summary)}</p>
                                     </div>
                                 ))}
                             </div>

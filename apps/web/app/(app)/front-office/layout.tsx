@@ -33,12 +33,12 @@ export default async function FrontOfficeLayout({
             <div className="rounded-[28px] border border-black/10 bg-white px-6 py-5 shadow-sm">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                        <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-gray-400">Front-Office</p>
+                        <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-gray-400">Внешний контур</p>
                         <h1 className="mt-2 text-2xl font-medium text-gray-900">
                             Контур хозяйства
                         </h1>
                         <p className="mt-1 text-sm text-gray-500">
-                            Telegram-first исполнение, evidence и навигация по полям, сезонам, техкартам и задачам.
+                            Основной рабочий контур через Телеграм: подтверждения, исполнение и навигация по полям, сезонам, техкартам и задачам.
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2">

@@ -29,7 +29,7 @@ export default function RdContextPage({ experiments }: { experiments: Experiment
                     </Link>
                     <div className="flex items-center gap-4">
                         <Beaker size={40} className="text-[#00F0FF]" />
-                        <h1 className="text-5xl font-light tracking-tight">R&D Контур</h1>
+                        <h1 className="text-5xl font-light tracking-tight">Научный контур</h1>
                     </div>
                 </div>
                 <div className="text-right">
@@ -42,9 +42,9 @@ export default function RdContextPage({ experiments }: { experiments: Experiment
             <section className="space-y-4">
                 <div className="grid grid-cols-12 px-6 py-2 text-[10px] uppercase tracking-widest opacity-40 font-medium">
                     <div className="col-span-4">Эксперимент</div>
-                    <div className="col-span-2 text-center">FSM State</div>
+                    <div className="col-span-2 text-center">Состояние FSM</div>
                     <div className="col-span-2 text-center">Протокол</div>
-                    <div className="col-span-2 text-center">Юр. Флаг</div>
+                    <div className="col-span-2 text-center">Юридический флаг</div>
                     <div className="col-span-2 text-right">Инфо</div>
                 </div>
 
@@ -65,7 +65,11 @@ export default function RdContextPage({ experiments }: { experiments: Experiment
                                 <StateBadge state={exp.state as any} className="text-[9px] min-w-[80px] justify-center" />
                             </div>
                             <div className="col-span-2 flex justify-center">
-                                <StateBadge state={exp.protocolStatus === 'APPROVED' ? 'APPROVED' : 'DRAFT'} label={exp.protocolStatus} className="text-[9px]" />
+                                <StateBadge
+                                    state={exp.protocolStatus === 'APPROVED' ? 'APPROVED' : 'DRAFT'}
+                                    label={exp.protocolStatus === 'APPROVED' ? 'УТВЕРЖДЕНО' : 'ЧЕРНОВИК'}
+                                    className="text-[9px]"
+                                />
                             </div>
                             <div className="col-span-2 flex justify-center">
                                 <StateBadge state={exp.legalStatus as any} className="text-[9px]" />
@@ -90,7 +94,7 @@ export default function RdContextPage({ experiments }: { experiments: Experiment
                         {/* Context Summary */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-2">
-                                <div className="text-[9px] uppercase tracking-widest opacity-40">Текущий стейт</div>
+                                <div className="text-[9px] uppercase tracking-widest opacity-40">Текущее состояние</div>
                                 <div className="flex items-center gap-2">
                                     <StateBadge state={selectedExp.state as any} />
                                 </div>
@@ -113,7 +117,7 @@ export default function RdContextPage({ experiments }: { experiments: Experiment
                                         title: `Статус протокола: ${selectedExp.protocolStatus}`,
                                         description: selectedExp.protocolStatus === 'APPROVED'
                                             ? 'Протокол прошел научную верификацию и утвержден главным архитектором.'
-                                            : 'Протокол находится на стадии редактирования или ожидает аппрува.',
+                                            : 'Протокол находится на стадии редактирования или ожидает утверждения.',
                                         ref: 'B5-PROT-VAL'
                                     },
                                     {
@@ -140,12 +144,12 @@ export default function RdContextPage({ experiments }: { experiments: Experiment
                                         <Unlock size={24} className="opacity-20" />
                                     )}
                                     <div>
-                                        <div className="text-sm font-medium">Measurement Lock</div>
+                                        <div className="text-sm font-medium">Блокировка измерений</div>
                                         <div className="text-xs opacity-40">Автоматическая блокировка изменений</div>
                                     </div>
                                 </div>
                                 <div className="text-xs font-mono opacity-60">
-                                    {selectedExp.state === 'ANALYSIS' || selectedExp.state === 'CLOSED' ? 'LOCKED' : 'OPEN'}
+                                    {selectedExp.state === 'ANALYSIS' || selectedExp.state === 'CLOSED' ? 'ЗАБЛОКИРОВАНО' : 'ОТКРЫТО'}
                                 </div>
                             </div>
                         </div>

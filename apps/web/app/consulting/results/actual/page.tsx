@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
+import { formatCropLabel, formatStatusLabel, formatUiEntityName } from '@/lib/ui-language';
 
 type PlanItem = {
     id: string;
@@ -66,7 +67,7 @@ export default function Page() {
 
     const selectedPlanName = useMemo(() => {
         const plan = plans.find((p) => p.id === selectedPlanId);
-        return plan?.account?.name || 'Без хозяйства';
+        return formatUiEntityName(plan?.account?.name || 'Без хозяйства');
     }, [plans, selectedPlanId]);
 
     return (
@@ -92,7 +93,7 @@ export default function Page() {
                             >
                                 {plans.map((plan) => (
                                     <option key={plan.id} value={plan.id}>
-                                        {plan.account?.name || 'Без хозяйства'} • {plan.status || 'UNKNOWN'}
+                                        {formatUiEntityName(plan.account?.name || 'Без хозяйства')} • {formatStatusLabel(plan.status)}
                                     </option>
                                 ))}
                             </select>
@@ -110,7 +111,7 @@ export default function Page() {
                                 </Card>
                                 <Card>
                                     <p className='text-xs text-gray-500'>Культура</p>
-                                    <p className='font-semibold'>{result.crop || '-'}</p>
+                                    <p className='font-semibold'>{formatCropLabel(result.crop)}</p>
                                 </Card>
                                 <Card>
                                     <p className='text-xs text-gray-500'>Факт. урожайность</p>

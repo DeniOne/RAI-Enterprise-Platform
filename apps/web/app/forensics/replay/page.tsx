@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useSessionIntegrity } from '@/shared/hooks/useSessionIntegrity';
+import { formatStatusLabel } from '@/lib/ui-language';
 
 const safeParseJson = (raw: string): Record<string, unknown> | null => {
     try {
@@ -25,11 +26,11 @@ export default function ReplayPage() {
     const onVerify = async () => {
         setLocalError(null);
         if (!recordedHash.trim()) {
-            setLocalError('Recorded hash is required.');
+            setLocalError('Укажите записанный хэш.');
             return;
         }
         if (!parsedPayload) {
-            setLocalError('Payload must be a valid JSON object.');
+            setLocalError('Поле данных должно содержать корректный JSON-объект.');
             return;
         }
 
@@ -44,32 +45,32 @@ export default function ReplayPage() {
     return (
         <div className="mx-auto max-w-5xl space-y-6 p-8">
             <div>
-                <h1 className="text-xl font-medium text-gray-900">Forensic Trace Replay</h1>
+                <h1 className="text-xl font-medium text-gray-900">Проверка воспроизведения трассы</h1>
                 <p className="mt-1 text-sm font-normal text-gray-500">
-                    Deterministic replay verification against recorded ledger hash.
+                    Детерминированная проверка воспроизведения по записанному хэшу журнала.
                 </p>
             </div>
 
             <div className="rounded-xl border border-gray-300 bg-white p-4 font-mono text-xs text-gray-800">
-                <div>TRACE_ID: {traceId}</div>
-                <div>INTEGRITY_STATUS: {integrityStatus}</div>
-                <div>MISMATCH_EXPECTED: {mismatch?.expectedHash ?? 'N/A'}</div>
-                <div>MISMATCH_ACTUAL: {mismatch?.actualHash ?? 'N/A'}</div>
+                <div>Идентификатор трассы: {traceId}</div>
+                <div>Статус целостности: {formatStatusLabel(integrityStatus)}</div>
+                <div>Ожидаемый хэш: {mismatch?.expectedHash ?? '—'}</div>
+                <div>Фактический хэш: {mismatch?.actualHash ?? '—'}</div>
             </div>
 
             <div className="space-y-4 rounded-xl border border-gray-300 bg-white p-4">
                 <label className="block text-xs font-medium text-gray-700">
-                    Recorded Hash
+                    Записанный хэш
                     <input
                         value={recordedHash}
                         onChange={(e) => setRecordedHash(e.target.value)}
                         className="mt-1 w-full rounded border border-gray-300 px-3 py-2 font-mono text-xs"
-                        placeholder="64-char SHA-256 hash"
+                        placeholder="Хэш контроля целостности SHA-256, 64 символа"
                     />
                 </label>
 
                 <label className="block text-xs font-medium text-gray-700">
-                    Replay Payload (JSON object)
+                    Данные для воспроизведения (JSON-объект)
                     <textarea
                         value={payloadRaw}
                         onChange={(e) => setPayloadRaw(e.target.value)}
@@ -85,7 +86,7 @@ export default function ReplayPage() {
                     disabled={busy}
                     className="rounded border border-gray-800 bg-gray-900 px-4 py-2 text-xs font-medium text-white disabled:opacity-60"
                 >
-                    {busy ? 'Verifying...' : 'Verify Replay'}
+                    {busy ? 'Проверяем...' : 'Проверить воспроизведение'}
                 </button>
             </div>
         </div>

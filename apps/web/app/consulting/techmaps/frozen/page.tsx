@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
+import { formatCropLabel, formatStatusLabel } from '@/lib/ui-language';
 
 type TechMapItem = {
     id: string;
@@ -53,7 +54,7 @@ export default function Page() {
                     <ul className='space-y-2 text-sm'>
                         {frozenMaps.map((item) => (
                             <li key={item.id} className='border-b last:border-b-0 py-2'>
-                                Версия {item.version ?? '-'} • {item.crop || '-'} • {item.status}
+                                Версия {item.version ?? '-'} • {formatCropLabel(item.crop)} • {formatStatusLabel(item.status)}
                             </li>
                         ))}
                     </ul>

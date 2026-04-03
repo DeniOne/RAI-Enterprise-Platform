@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 import clsx from 'clsx';
 import { KpiCard } from './KpiCard';
 import { AuthorityContextType } from '@/core/governance/AuthorityContext';
-import { formatStatusLabel } from '@/lib/ui-language';
+import { formatStatusLabel, formatTargetMetricLabel } from '@/lib/ui-language';
 
 interface Plan {
     id: string;
@@ -63,7 +63,7 @@ function PlanItem({ plan, authority, context, onTransition, activePhase }: {
                 <div>
                     <div className="flex items-center space-x-4 mb-2">
                         <h3 className="font-semibold text-gray-900 text-lg tracking-tight">
-                            {plan.targetMetric || 'План без названия'}
+                            {formatTargetMetricLabel(plan.targetMetric)}
                         </h3>
                         <span className={clsx(
                             "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
@@ -76,7 +76,7 @@ function PlanItem({ plan, authority, context, onTransition, activePhase }: {
                             {formatStatusLabel(plan.status)}
                         </span>
                     </div>
-                    <p className="text-xs text-gray-400 font-medium tracking-wide">ID: {plan.id}</p>
+                    <p className="text-xs text-gray-400 font-medium tracking-wide">Внутренний номер плана скрыт</p>
                 </div>
 
                 <div className="flex items-center space-x-3">

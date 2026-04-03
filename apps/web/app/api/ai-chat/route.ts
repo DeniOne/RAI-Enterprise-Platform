@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
         });
     } catch {
         return NextResponse.json(
-            { error: 'Legacy proxy /api/ai-chat failed' },
+            { error: 'Не удалось выполнить проксирование запроса чата' },
             { status: 500 },
         );
     }

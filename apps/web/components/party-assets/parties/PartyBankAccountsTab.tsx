@@ -1,4 +1,5 @@
 import { PartyDto } from '@/shared/types/party-assets';
+import { formatStatusLabel } from '@/lib/ui-language';
 
 export function PartyBankAccountsTab({ party }: { party: PartyDto }) {
   const banks = party.registrationData?.banks ?? [];
@@ -13,11 +14,11 @@ export function PartyBankAccountsTab({ party }: { party: PartyDto }) {
         <div key={`${bank.bankName}-${index}`} className="rounded-2xl border border-black/10 p-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Field label="Банк" value={bank.bankName || '—'} />
-            <Field label="Расчётный счёт / IBAN" value={bank.accountNumber || '—'} />
-            <Field label="БИК / SWIFT" value={bank.bic || '—'} />
+            <Field label="Расчётный счёт / международный номер счёта" value={bank.accountNumber || '—'} />
+            <Field label="БИК / международный код банка" value={bank.bic || '—'} />
             <Field label="Корреспондентский счёт" value={bank.corrAccount || '—'} />
             <Field label="ИНН / КПП банка" value={[bank.inn ? `ИНН ${bank.inn}` : '', bank.kpp ? `КПП ${bank.kpp}` : ''].filter(Boolean).join(' • ') || '—'} />
-            <Field label="Статус банка" value={bank.status || '—'} />
+            <Field label="Статус банка" value={bank.status ? formatStatusLabel(bank.status) : '—'} />
             <Field label="Адрес банка" value={bank.address || '—'} />
             <Field label="Валюта" value={bank.currency || '—'} />
             <Field label="Основной" value={bank.isPrimary ? 'Да' : 'Нет'} />

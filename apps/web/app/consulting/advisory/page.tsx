@@ -30,7 +30,7 @@ export default function AdvisoryPage() {
             {/* Header Area */}
             <div className="mb-8">
                 <h1 className="text-2xl font-medium text-gray-900 tracking-tight mb-2">
-                    Advisory Engine
+                    Консультативный контур
                 </h1>
                 <p className="text-sm text-gray-500 font-normal">
                     Интегральная оценка рисков и экспертные рекомендации по управлению урожаем
@@ -46,7 +46,7 @@ export default function AdvisoryPage() {
                 {/* Left: Company Level Advisory */}
                 <div className="lg:col-span-1 space-y-6">
                     <div className="bg-white border border-black/5 rounded-3xl p-8 shadow-sm">
-                        <h2 className="text-sm font-medium text-gray-400 uppercase tracking-widest mb-6">Company Risk Score</h2>
+                        <h2 className="text-sm font-medium text-gray-400 uppercase tracking-widest mb-6">Сводный риск компании</h2>
                         <div className="flex flex-col items-center justify-center py-6">
                             <div className="relative w-40 h-40 flex items-center justify-center">
                                 <svg className="w-full h-full transform -rotate-90">
@@ -75,7 +75,7 @@ export default function AdvisoryPage() {
                     </div>
 
                     <div className="bg-black text-white rounded-3xl p-8 shadow-xl">
-                        <h3 className="text-xs font-medium uppercase tracking-[0.2em] opacity-40 mb-4">Urgent Signal</h3>
+                        <h3 className="text-xs font-medium uppercase tracking-[0.2em] opacity-40 mb-4">Срочный сигнал</h3>
                         <p className="text-lg font-medium leading-snug">
                             {advisory.riskyPlansCount} план требует немедленного вмешательства в технологическую карту.
                         </p>
@@ -89,7 +89,7 @@ export default function AdvisoryPage() {
                 <div className="lg:col-span-2 space-y-6">
                     <div className="bg-white border border-black/5 rounded-3xl p-8 shadow-sm">
                         <div className="flex justify-between items-center mb-8">
-                            <h2 className="text-lg font-medium text-gray-900">Риски Планов</h2>
+                            <h2 className="text-lg font-medium text-gray-900">Риски планов</h2>
                             <button className="text-xs text-blue-600 font-medium hover:underline underline-offset-4">История изменений</button>
                         </div>
 
@@ -99,7 +99,7 @@ export default function AdvisoryPage() {
                                     <div className="flex-1">
                                         <div className="flex items-center space-x-3 mb-2">
                                             <h4 className="text-sm font-medium text-gray-900">{plan.name}</h4>
-                                            <span className="text-[10px] text-gray-400">ID: {plan.id}</span>
+                                            <span className="text-[10px] text-gray-400">Внутренний номер скрыт</span>
                                         </div>
                                         <div className="flex flex-wrap gap-2">
                                             {plan.majorIssues.length > 0 ? (
@@ -124,7 +124,7 @@ export default function AdvisoryPage() {
                                             )}>
                                                 {plan.riskScore}
                                             </div>
-                                            <div className="text-[10px] text-gray-400 uppercase tracking-tighter">Risk Score</div>
+                                            <div className="text-[10px] text-gray-400 uppercase tracking-tighter">Индекс риска</div>
                                         </div>
                                         <button className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-black/5 transition-all">
                                             <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -140,7 +140,7 @@ export default function AdvisoryPage() {
                     <div className="p-8 bg-stone-50 border border-black/5 rounded-3xl">
                         <h4 className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-4">Методология расчёта</h4>
                         <p className="text-xs text-gray-500 leading-relaxed font-normal">
-                            Risk Score агрегирует 4 замера: агротехнологическую дисциплину, финансовое соответствие бюджету, внешние угрозы (погода, вредители) и юридическую чистоту (compliance). Индекс более 70 считается "критическим" и требует сценарного моделирования в блоке Стратегии.
+                            Индекс риска агрегирует 4 замера: агротехнологическую дисциплину, финансовое соответствие бюджету, внешние угрозы (погода, вредители) и юридическую чистоту. Индекс выше 70 считается критическим и требует сценарного моделирования в блоке стратегии.
                         </p>
                     </div>
                 </div>

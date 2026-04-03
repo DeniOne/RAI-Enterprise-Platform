@@ -23,8 +23,8 @@ export function AiChatFab() {
                 focus:outline-none focus:ring-2 focus:ring-black/20
                 group
             `}
-            aria-label="Открыть AI Ассистента (Ctrl+K)"
-            title="AI Ассистент (Ctrl+K)"
+            aria-label="Открыть ассистента"
+            title="Ассистент"
         >
             <Sprout className="w-6 h-6 text-gray-900 group-hover:text-black transition-colors duration-200" />
 

@@ -5,6 +5,7 @@ import { SystemStatusBar } from '@/components/consulting/SystemStatusBar';
 import { DomainUiContext } from '@/lib/consulting/navigation-policy';
 import { includesFocus, useEntityFocus } from '@/shared/hooks/useEntityFocus';
 import clsx from 'clsx';
+import { formatDeviationTypeLabel, formatSeverityLabel, formatStatusLabel } from '@/lib/ui-language';
 
 type Deviation = {
     id: string;
@@ -101,17 +102,17 @@ function DeviationsPageInner() {
                                             <tr key={dev.id} data-focus={focused ? 'true' : 'false'} className={clsx('group hover:bg-gray-50/50 transition-colors', focused && 'bg-sky-50 ring-1 ring-sky-200')}>
                                                 <td className="px-6 py-4">
                                                     <div className="flex flex-col">
-                                                        <span className="text-xs font-medium text-gray-900">{dev.type}</span>
-                                                        <span className="text-[10px] text-gray-400">{dev.id}</span>
+                                                        <span className="text-xs font-medium text-gray-900">{formatDeviationTypeLabel(dev.type)}</span>
+                                                        <span className="text-[10px] text-gray-400">Внутренний номер скрыт</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4"><span className="text-sm text-gray-700 font-normal">{dev.title}</span></td>
                                                 <td className="px-6 py-4">
                                                     <div className={clsx('px-3 py-1 rounded-full text-[10px] font-medium w-fit border', dev.severity === 'CRITICAL' ? 'bg-red-50 text-red-600 border-red-100' : dev.severity === 'WARNING' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-blue-50 text-blue-600 border-blue-100')}>
-                                                        {dev.severity}
+                                                        {formatSeverityLabel(dev.severity)}
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4"><span className="text-xs text-gray-500">{dev.status}</span></td>
+                                                <td className="px-6 py-4"><span className="text-xs text-gray-500">{formatStatusLabel(dev.status)}</span></td>
                                                 <td className="px-6 py-4 text-right"><button className="text-xs font-medium text-black hover:underline underline-offset-4">Разбор →</button></td>
                                             </tr>
                                         );

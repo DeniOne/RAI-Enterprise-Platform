@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
+import { formatUiEntityName } from '@/lib/ui-language';
 
 type PlanItem = {
     id: string;
@@ -40,7 +41,7 @@ export default function Page() {
 
                 setRows(data);
             } catch (error) {
-                console.error('Failed to load performance data:', error);
+                console.error('Не удалось загрузить данные расчёта оплаты по результату:', error);
                 setRows([]);
             } finally {
                 setLoading(false);
@@ -70,10 +71,10 @@ export default function Page() {
 
     return (
         <div className='space-y-6'>
-            <h1 className='text-xl font-medium text-gray-900'>Performance-оплата</h1>
+            <h1 className='text-xl font-medium text-gray-900'>Оплата по результату</h1>
             <Card>
                 <p className='text-sm text-gray-700'>
-                    Оценка вознаграждения на базе доступного план/факт результата (предварительный расчет).
+                    Оценка вознаграждения на базе доступного результата план/факт. Расчёт предварительный.
                 </p>
             </Card>
 
@@ -103,7 +104,7 @@ export default function Page() {
                             if (!result) {
                                 return (
                                     <li key={plan.id} className='border-b last:border-b-0 py-2'>
-                                        {plan.account?.name || 'Без хозяйства'} • нет результата
+                                        {formatUiEntityName(plan.account?.name || 'Без хозяйства')} • нет результата
                                     </li>
                                 );
                             }
@@ -113,7 +114,7 @@ export default function Page() {
 
                             return (
                                 <li key={plan.id} className='border-b last:border-b-0 py-2 flex justify-between'>
-                                    <span>{plan.account?.name || 'Без хозяйства'}</span>
+                                    <span>{formatUiEntityName(plan.account?.name || 'Без хозяйства')}</span>
                                     <span className='font-semibold'>{base.toFixed(2)}</span>
                                 </li>
                             );

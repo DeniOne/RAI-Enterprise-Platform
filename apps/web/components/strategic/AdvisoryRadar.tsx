@@ -3,7 +3,7 @@
 import React from 'react';
 import { AdvisoryLevel, AdvisoryTrend } from '@/lib/api/strategic';
 import { TrendingUp, TrendingDown, Minus, Info } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { formatAdvisoryLevelLabel } from '@/lib/ui-language';
 
 interface AdvisoryRadarProps {
     score: number;
@@ -38,6 +38,12 @@ export const AdvisoryRadar: React.FC<AdvisoryRadarProps> = ({
     };
 
     const color = getColor(level);
+    const sourceLabels: Record<string, string> = {
+        EFFICIENCY: 'Эффективность',
+        HEALTH: 'Состояние',
+        RISK: 'Риск',
+        STABILITY: 'Стабильность',
+    };
 
     return (
         <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-8 flex flex-col lg:flex-row gap-12 items-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
@@ -72,7 +78,7 @@ export const AdvisoryRadar: React.FC<AdvisoryRadarProps> = ({
                     <span className="text-5xl font-light tracking-tighter" style={{ color }}>
                         {score}
                     </span>
-                    <span className="text-[10px] uppercase tracking-widest opacity-40">Index</span>
+                    <span className="text-[10px] uppercase tracking-widest opacity-40">Индекс</span>
                 </div>
             </div>
 
@@ -88,25 +94,29 @@ export const AdvisoryRadar: React.FC<AdvisoryRadarProps> = ({
                     <div className="flex items-center justify-center lg:justify-start gap-4">
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-                            <span className="text-[10px] uppercase tracking-[0.2em] font-medium">{level} LEVEL</span>
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-medium">
+                                Риск: {formatAdvisoryLevelLabel(level)}
+                            </span>
                         </div>
                         <div className="w-[1px] h-3 bg-white/10" />
-                        <span className="text-[10px] uppercase tracking-[0.2em] opacity-40 font-medium">Confidence: {Math.round(confidence * 100)}%</span>
+                        <span className="text-[10px] uppercase tracking-[0.2em] opacity-40 font-medium">
+                            Уверенность: {Math.round(confidence * 100)}%
+                        </span>
                     </div>
                 </div>
 
                 <div className="space-y-4">
                     <div className="flex items-center justify-center lg:justify-start gap-2 opacity-40">
                         <Info size={12} />
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-medium">Explainability Sources</span>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-medium">Источники обоснования</span>
                     </div>
                     <div className="flex flex-wrap justify-center lg:justify-start gap-2">
                         {sources.length > 0 ? sources.map(source => (
                             <span key={source} className="px-3 py-1.5 rounded-full bg-white/[0.05] border border-white/10 text-[9px] uppercase tracking-widest font-semibold">
-                                {source.replace(/_/g, ' ')}
+                                {sourceLabels[source] ?? source.replace(/_/g, ' ')}
                             </span>
                         )) : (
-                            <span className="text-sm opacity-20 italic font-light">No critical anomalies detected</span>
+                            <span className="text-sm opacity-20 italic font-light">Критические аномалии не обнаружены</span>
                         )}
                     </div>
                 </div>

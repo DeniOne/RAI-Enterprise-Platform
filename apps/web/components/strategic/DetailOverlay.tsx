@@ -70,8 +70,8 @@ export function DetailOverlay({ isOpen, onClose, title, subtitle, children }: De
 
                     {/* Footer */}
                     <div className="p-10 border-t border-black/5 text-[10px] uppercase tracking-widest text-gray-300 font-medium flex justify-between">
-                        <span>Проекция Истины // RAI Enterprise</span>
-                        <span>Версия Beta v2.4</span>
+                        <span>Проекция истины // платформа RAI</span>
+                        <span>Версия бета v2.4</span>
                     </div>
                 </div>
             </div>

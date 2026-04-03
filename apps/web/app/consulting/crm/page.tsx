@@ -6,6 +6,7 @@ import axios from 'axios';
 import clsx from 'clsx';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
+import { formatStatusLabel, formatUiEntityName } from '@/lib/ui-language';
 import { includesFocus, useEntityFocus } from '@/shared/hooks/useEntityFocus';
 
 type FieldItem = {
@@ -24,10 +25,10 @@ type PlanItem = {
 };
 
 const sections = [
-    { href: '/assets/farms', label: 'Реестр хозяйств', desc: 'Asset:FARM как единый источник истины.' },
-    { href: '/parties', label: 'Контрагенты', desc: 'Party-реестр без смешения с хозяйствами.' },
-    { href: '/assets/fields', label: 'Поля', desc: 'Реестр активов FIELD.' },
-    { href: '/assets/objects', label: 'Объекты', desc: 'Реестр активов OBJECT.' },
+    { href: '/parties', label: 'Контрагенты', desc: 'Реестр контрагентов без смешения с хозяйствами.' },
+    { href: '/assets/farms', label: 'Реестр хозяйств', desc: 'Реестр хозяйств как единый источник истины.' },
+    { href: '/assets/fields', label: 'Поля', desc: 'Реестр полевых активов.' },
+    { href: '/assets/objects', label: 'Объекты', desc: 'Реестр производственных объектов.' },
 ];
 
 export default function Page() {
@@ -61,7 +62,7 @@ function PageInner() {
             if (axios.isAxiosError(error) && [401, 403].includes(Number(error.response?.status))) {
                 setForbidden(true);
             } else {
-                setErrorMessage('Не удалось загрузить данные CRM. Повторите запрос.');
+                setErrorMessage('Не удалось загрузить данные по контрагентам. Повторите запрос.');
             }
         } finally {
             setLoading(false);
@@ -122,7 +123,7 @@ function PageInner() {
 
     return (
         <div className='space-y-6'>
-            <h1 className='text-xl font-medium text-gray-900'>CRM — Хозяйства и контрагенты</h1>
+            <h1 className='text-xl font-medium text-gray-900'>Хозяйства и контрагенты</h1>
             <Card>
                 <p className='text-sm text-gray-700'>
                     Единая точка входа в реестр хозяйств, контрагентов, полей и истории сезонов.
@@ -141,7 +142,7 @@ function PageInner() {
 
             {forbidden ? (
                 <Card className='border-amber-200 bg-amber-50'>
-                    <p className='text-sm text-amber-700'>Недостаточно прав для просмотра CRM-данных.</p>
+                    <p className='text-sm text-amber-700'>Недостаточно прав для просмотра данных по контрагентам.</p>
                 </Card>
             ) : errorMessage ? (
                 <Card className='border-rose-200 bg-rose-50'>
@@ -200,13 +201,13 @@ function PageInner() {
                                             <tr key={counterparty.id} className='border-b last:border-b-0'>
                                                 <td className='py-2 pr-4 text-gray-900'>
                                                     <Link href={`/parties?entity=${encodeURIComponent(counterparty.name)}`} className='hover:underline'>
-                                                        {counterparty.name}
+                                                        {formatUiEntityName(counterparty.name)}
                                                     </Link>
                                                 </td>
                                                 <td className='py-2 pr-4'>
                                                     {counterparty.date.getTime() > 0 ? counterparty.date.toLocaleDateString('ru-RU') : '-'}
                                                 </td>
-                                                <td className='py-2'>{counterparty.status}</td>
+                                                <td className='py-2'>{formatStatusLabel(counterparty.status)}</td>
                                             </tr>
                                         ))}
                                     </tbody>

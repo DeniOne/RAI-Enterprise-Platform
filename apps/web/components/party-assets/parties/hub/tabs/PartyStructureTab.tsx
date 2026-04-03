@@ -377,7 +377,7 @@ export function PartyStructureTab() {
                     <div className="space-y-2 max-w-sm">
                         <h3 className="text-base font-semibold text-gray-900">Визуальный движок структуры</h3>
                         <p className="text-xs text-gray-400 font-normal leading-relaxed">
-                            Интерактивный граф иерархий и связей будет доступен после активации модуля <span className="text-blue-500 font-medium">Graph Engine v2</span>.
+                            Интерактивный граф иерархий и связей будет доступен после активации модуля <span className="text-blue-500 font-medium">графа связей v2</span>.
                         </p>
                     </div>
                     {!isEdit && (

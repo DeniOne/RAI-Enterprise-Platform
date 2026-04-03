@@ -11,6 +11,7 @@ import { PartyIdentificationFormValue, PartyIdentificationStep } from './PartyId
 import { formatLookupBadgeDate, isRuInnValid } from '@/shared/lib/party-lookup';
 import { getPartyRequisiteFields } from '@/shared/lib/party-requisites-schema';
 import { BankAccountSchema } from '@/shared/lib/party-schemas';
+import { formatStatusLabel } from '@/lib/ui-language';
 import {
   IdentificationFieldKey,
   PartyIdentificationSchema,
@@ -865,7 +866,7 @@ export function PartyCreateWizard() {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-gray-900">Банковские счета</p>
-                <p className="text-sm font-normal text-gray-500">Расчётные счета, БИК/SWIFT, корреспондентские счета.</p>
+                <p className="text-sm font-normal text-gray-500">Расчётные счета, БИК, международные банковские коды и корреспондентские счета.</p>
               </div>
               <button
                 type="button"
@@ -919,7 +920,7 @@ export function PartyCreateWizard() {
                     {bankFieldErrors[index]?.bankName ? <p className="mt-1 text-xs text-red-600">{bankFieldErrors[index]?.bankName}</p> : null}
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-normal text-gray-700">Расчётный счёт / IBAN</label>
+                    <label className="mb-2 block text-sm font-normal text-gray-700">Расчётный счёт / международный номер счёта</label>
                     <input
                       value={bank.accountNumber}
                       onChange={(event) =>
@@ -931,7 +932,7 @@ export function PartyCreateWizard() {
                     {bankFieldErrors[index]?.accountNumber ? <p className="mt-1 text-xs text-red-600">{bankFieldErrors[index]?.accountNumber}</p> : null}
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-normal text-gray-700">БИК / SWIFT</label>
+                    <label className="mb-2 block text-sm font-normal text-gray-700">БИК / международный код банка</label>
                     <input
                       value={bank.bic ?? ''}
                       onChange={(event) => {
@@ -1014,7 +1015,7 @@ export function PartyCreateWizard() {
                   <div className="mt-4 rounded-2xl border border-black/10 bg-gray-50 p-4 text-sm text-gray-700">
                     <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Данные банка из справочника</div>
                     <div className="mt-3 grid grid-cols-1 gap-2">
-                      {bank.status ? <div><span className="text-gray-500">Статус: </span><span className="font-medium">{bank.status === 'ACTIVE' ? 'ACTIVE / Банк действует' : bank.status}</span></div> : null}
+                      {bank.status ? <div><span className="text-gray-500">Статус: </span><span className="font-medium">{bank.status === 'ACTIVE' ? 'Банк действует' : formatStatusLabel(bank.status)}</span></div> : null}
                       {(bank.inn || bank.kpp) ? <div><span className="text-gray-500">Реквизиты банка: </span><span className="font-medium">{[bank.inn ? `ИНН ${bank.inn}` : '', bank.kpp ? `КПП ${bank.kpp}` : ''].filter(Boolean).join(' • ')}</span></div> : null}
                       {bank.address ? <div><span className="text-gray-500">Адрес: </span><span className="font-medium">{bank.address}</span></div> : null}
                     </div>
@@ -1145,14 +1146,14 @@ export function PartyCreateWizard() {
                     />
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-normal text-gray-700">Email</label>
+                    <label className="mb-2 block text-sm font-normal text-gray-700">Электронная почта</label>
                     <input
                       value={contact.email ?? ''}
                       onChange={(event) =>
                         setContacts((prev) => prev.map((item, itemIndex) => (itemIndex === index ? { ...item, email: event.target.value } : item)))
                       }
                       className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal outline-none focus:border-black/20 focus:ring-2 focus:ring-black/20"
-                      placeholder="mail@company.ru"
+                      placeholder="Введите адрес электронной почты"
                     />
                   </div>
                 </div>

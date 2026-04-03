@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
+import { formatSupplyTypeLabel, formatVatPayerStatusLabel } from '@/lib/ui-language';
 
 const SUPPLY_TYPES = ['GOODS', 'SERVICE', 'LEASE'] as const;
 const VAT_STATUSES = ['PAYER', 'NON_PAYER'] as const;
@@ -98,7 +99,7 @@ export default function CreateInvoicePage() {
                                 <select value={supplyType} onChange={(e) => setSupplyType(e.target.value)}
                                     className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal text-gray-800" required>
                                     <option value="">Выберите</option>
-                                    {SUPPLY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                    {SUPPLY_TYPES.map(t => <option key={t} value={t}>{formatSupplyTypeLabel(t)}</option>)}
                                 </select>
                             </div>
                             <div>
@@ -106,7 +107,7 @@ export default function CreateInvoicePage() {
                                 <select value={vatPayerStatus} onChange={(e) => setVatPayerStatus(e.target.value)}
                                     className="w-full rounded-lg border border-black/10 px-4 py-2 text-sm font-normal text-gray-800" required>
                                     <option value="">Выберите</option>
-                                    {VAT_STATUSES.map(v => <option key={v} value={v}>{v}</option>)}
+                                    {VAT_STATUSES.map(v => <option key={v} value={v}>{formatVatPayerStatusLabel(v)}</option>)}
                                 </select>
                             </div>
                         </div>

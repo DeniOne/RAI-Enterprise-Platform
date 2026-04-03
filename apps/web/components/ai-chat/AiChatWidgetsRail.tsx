@@ -3,6 +3,7 @@
 import React from 'react';
 import { AlertTriangle, ChevronLeft, ChevronRight, ListTodo, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { DeviationListWidget, RaiChatWidget, RaiChatWidgetType, TaskBacklogWidget } from '@/lib/ai-chat-widgets';
+import { formatAdvisoryRiskLabel, formatAiWidgetStatusLabel } from '@/lib/ui-language';
 
 interface AiChatWidgetsRailProps {
     widgets: RaiChatWidget[];
@@ -14,7 +15,7 @@ function UnknownWidgetCard({ type }: { type: string }) {
     return (
         <div className="rounded-2xl border border-black/10 bg-gray-50 p-4">
             <p className="text-sm font-medium text-gray-900">Неизвестный виджет</p>
-            <p className="mt-1 text-xs text-gray-500">Тип `{type}` пока не поддерживается renderer.</p>
+            <p className="mt-1 text-xs text-gray-500">Тип `{type}` пока не поддерживается этим блоком отображения.</p>
         </div>
     );
 }
@@ -56,7 +57,7 @@ export function AiChatWidgetsRail({ widgets, isOpen, onToggle }: AiChatWidgetsRa
                 <div className="flex h-full flex-col items-center justify-center gap-3">
                     <ChevronLeft className="h-4 w-4 text-gray-400" />
                     <span className="rotate-180 text-[10px] font-medium tracking-[0.2em] text-gray-400 [writing-mode:vertical-rl]">
-                        WIDGETS
+                        ВИДЖЕТЫ
                     </span>
                     {widgets.length > 0 && (
                         <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-gray-700">
@@ -91,7 +92,7 @@ export function AiChatWidgetsRail({ widgets, isOpen, onToggle }: AiChatWidgetsRa
                                             <div key={item.id} className="rounded-xl bg-gray-50 px-3 py-2">
                                                 <p className="text-xs font-medium text-gray-900">{item.title}</p>
                                                 <p className="mt-1 text-[11px] text-gray-500">
-                                                    {item.fieldLabel} • severity: {item.severity} • status: {item.status}
+                                                    {item.fieldLabel} • критичность: {formatAdvisoryRiskLabel(item.severity)} • статус: {formatAiWidgetStatusLabel(item.status)}
                                                 </p>
                                             </div>
                                         ))}
@@ -115,7 +116,7 @@ export function AiChatWidgetsRail({ widgets, isOpen, onToggle }: AiChatWidgetsRa
                                             <div key={item.id} className="rounded-xl bg-gray-50 px-3 py-2">
                                                 <p className="text-xs font-medium text-gray-900">{item.title}</p>
                                                 <p className="mt-1 text-[11px] text-gray-500">
-                                                    {item.ownerLabel} • {item.dueLabel} • {item.status}
+                                                    {item.ownerLabel} • {item.dueLabel} • {formatAiWidgetStatusLabel(item.status)}
                                                 </p>
                                             </div>
                                         ))}

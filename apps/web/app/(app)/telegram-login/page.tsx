@@ -23,7 +23,7 @@ export default function TelegramLoginPage() {
             });
 
             if (!response.ok) {
-                throw new Error("User not found");
+                throw new Error("Пользователь не найден");
             }
 
             const data = await response.json();
@@ -46,8 +46,6 @@ export default function TelegramLoginPage() {
                 if (data.status === "approved") {
                     setStatus("approved");
 
-                    // RULE: Don't set cookies manually on client (avoids redirect loops)
-                    // Instead, call our server-side callback to set secure HttpOnly cookie
                     try {
                         const callbackResponse = await fetch("/api/auth/telegram-callback", {
                             method: "POST",
@@ -56,14 +54,13 @@ export default function TelegramLoginPage() {
                         });
 
                         if (!callbackResponse.ok) {
-                            throw new Error("Failed to set session via server callback");
+                            throw new Error("Не удалось создать сессию через серверный ответ");
                         }
 
-                        // Success - clear polling and move to dashboard
                         clearInterval(interval);
                         router.push("/dashboard");
                     } catch (callbackErr) {
-                        console.error("Callback error:", callbackErr);
+                        console.error("Ошибка серверного ответа при создании сессии:", callbackErr);
                         setError("Ошибка при создании сессии. Попробуйте еще раз.");
                         setStatus("idle");
                         setSessionId(null);
@@ -75,9 +72,9 @@ export default function TelegramLoginPage() {
                     clearInterval(interval);
                 }
             } catch (err) {
-                console.error("Polling error:", err);
+                console.error("Ошибка опроса статуса входа:", err);
             }
-        }, 2000); // Poll every 2 seconds
+        }, 2000);
 
         return () => clearInterval(interval);
     }, [sessionId, status, router]);
@@ -90,15 +87,15 @@ export default function TelegramLoginPage() {
                 {status === "idle" && (
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <Input
-                            label="Telegram ID"
+                            label="Идентификатор Telegram"
                             type="text"
                             value={telegramId}
                             onChange={(e) => setTelegramId(e.target.value)}
-                            placeholder="Введите ваш Telegram ID"
+                            placeholder="Введите ваш идентификатор Telegram"
                             error={error}
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                            Напишите <code>/start</code> боту <strong>@RAI_EP_Bot</strong>, чтобы узнать свой ID
+                            Напишите <code>/start</code> корпоративному боту Telegram, чтобы узнать свой идентификатор
                         </p>
 
                         <Button

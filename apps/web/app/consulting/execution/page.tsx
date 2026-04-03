@@ -120,11 +120,11 @@ export default function ExecutionHub() {
                 <div className="space-y-1">
                     <h1 className="text-xl font-medium tracking-tight text-slate-900 group flex items-center">
                         <Activity className="mr-3 text-emerald-500 w-8 h-8" />
-                        Execution Hub
+                        Центр исполнения
                     </h1>
                     <p className="text-sm font-normal text-slate-500 flex items-center">
                         <span className="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse" />
-                        Active Harvest Cycle: 2026-ALPHA
+                        Активный цикл уборки сезона 2026
                     </p>
                 </div>
 
@@ -230,7 +230,7 @@ export default function ExecutionHub() {
 
                     {gov.state === 'idle' && (
                         <div className="p-6 bg-white border border-black/5 rounded-2xl">
-                            <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-4">Статус Governance</p>
+                            <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-4">Статус контура управления</p>
                             <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
                                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
                                 <p className="text-xs text-slate-600 font-normal">Система готова к анализу действий</p>
@@ -271,10 +271,10 @@ export default function ExecutionHub() {
                         </div>
                         <div className="flex-1">
                             <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
-                                Trace ID: {gov.context.traceId || 'Wait...'}
+                                Идентификатор трассы: {gov.context.traceId || 'Ожидание...'}
                             </p>
                             <p className="text-sm font-medium text-slate-900">
-                                {gov.isPending ? "Идет институциональный анализ..." : "Готов к фиксации в Ledger"}
+                                {gov.isPending ? "Идёт институциональный анализ..." : "Готово к фиксации в журнале"}
                             </p>
                         </div>
                         {gov.canExecute && (
@@ -282,7 +282,7 @@ export default function ExecutionHub() {
                                 onClick={gov.execute}
                                 className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-medium hover:bg-black transition-all shadow-lg shadow-black/10"
                             >
-                                Коммит
+                                Подтвердить
                             </button>
                         )}
                     </div>

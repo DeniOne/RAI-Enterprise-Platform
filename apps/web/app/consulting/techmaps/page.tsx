@@ -4,7 +4,17 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
-import { formatRolloutModeLabel, formatRunbookActionLabel, formatSeverityLabel, formatStatusLabel } from '@/lib/ui-language';
+import {
+    formatCanonicalBranchLabel,
+    formatCropFormLabel,
+    formatCropLabel,
+    formatGenerationStrategyLabel,
+    formatRolloutModeLabel,
+    formatRunbookActionLabel,
+    formatSeverityLabel,
+    formatStatusLabel,
+    formatTechExplainabilityMessage,
+} from '@/lib/ui-language';
 
 type TechMap = {
     id: string;
@@ -248,7 +258,7 @@ export default function TechMapsPage() {
                             <div className='rounded-xl border border-black/5 bg-gray-50 p-3'>
                                 <p className='text-[11px] uppercase tracking-wider text-gray-500'>Расхождения</p>
                             <p className='text-sm text-gray-700 mt-1'>
-                                P0 {rolloutSummary.parity.diffCounts.P0} • P1 {rolloutSummary.parity.diffCounts.P1} • P2 {rolloutSummary.parity.diffCounts.P2}
+                                критических {rolloutSummary.parity.diffCounts.P0} • значимых {rolloutSummary.parity.diffCounts.P1} • наблюдаемых {rolloutSummary.parity.diffCounts.P2}
                             </p>
                             </div>
                             <div className='rounded-xl border border-black/5 bg-gray-50 p-3'>
@@ -263,7 +273,7 @@ export default function TechMapsPage() {
                                 {Object.entries(rolloutSummary.fallback.reasons).length === 0
                                     ? 'не использовались'
                                     : Object.entries(rolloutSummary.fallback.reasons)
-                                        .map(([reason, count]) => `${reason}: ${count}`)
+                                        .map(([reason, count]) => `${formatTechExplainabilityMessage(reason)}: ${count}`)
                                         .join(' • ')}
                             </p>
                         </div>
@@ -274,7 +284,7 @@ export default function TechMapsPage() {
                             {(rolloutSummary.rolloutIncidents || []).slice(0, 4).map((incident) => (
                                 <div key={incident.id} className='rounded-xl border border-black/5 bg-gray-50 p-3'>
                                     <p className='text-xs text-gray-500'>
-                                        {incident.subtype || '-'} • {formatSeverityLabel(incident.severity)} • {formatStatusLabel(incident.status)}
+                                        {incident.subtype ? formatTechExplainabilityMessage(incident.subtype) : 'Инцидент развёртывания'} • {formatSeverityLabel(incident.severity)} • {formatStatusLabel(incident.status)}
                                     </p>
                                     <p className='text-sm text-gray-700 mt-1'>
                                         {incident.techMapId ? `Техкарта ${incident.techMapId}` : 'Инцидент развёртывания по компании'}
@@ -293,7 +303,7 @@ export default function TechMapsPage() {
                                         <p className='text-sm text-emerald-700'>Блокеров нет.</p>
                                     ) : (
                                         rolloutReadiness.blockers.map((item) => (
-                                            <p key={item} className='text-sm text-rose-700'>{item}</p>
+                                            <p key={item} className='text-sm text-rose-700'>{formatTechExplainabilityMessage(item)}</p>
                                         ))
                                     )}
                                 </div>
@@ -305,7 +315,7 @@ export default function TechMapsPage() {
                                         <p className='text-sm text-emerald-700'>Предупреждений нет.</p>
                                     ) : (
                                         rolloutReadiness.warnings.map((item) => (
-                                            <p key={item} className='text-sm text-amber-700'>{item}</p>
+                                            <p key={item} className='text-sm text-amber-700'>{formatTechExplainabilityMessage(item)}</p>
                                         ))
                                     )}
                                 </div>
@@ -318,7 +328,7 @@ export default function TechMapsPage() {
                                 <div>
                                     <p className='text-xs text-gray-500 mb-1'>Пакет перевода</p>
                                     <p className='text-sm text-gray-700'>
-                                        Компания {cutoverPacket.companyId} • вердикт {translateReadinessVerdict(cutoverPacket.verdict)} • {cutoverPacket.canExecuteCutover ? 'готово к выполнению' : 'пока только подготовка'}
+                                        Рабочий контур готовности • вердикт {translateReadinessVerdict(cutoverPacket.verdict)} • {cutoverPacket.canExecuteCutover ? 'готово к выполнению' : 'пока только подготовка'}
                                     </p>
                                 </div>
                             </div>
@@ -326,30 +336,30 @@ export default function TechMapsPage() {
                                 <div className='rounded-xl border border-black/5 bg-gray-50 p-3'>
                                     <p className='text-[11px] uppercase tracking-wider text-gray-500'>Текущие флаги</p>
                                     <p className='text-sm text-gray-700 mt-1'>режим {formatRolloutModeLabel(cutoverPacket.currentFeatureFlags.mode)}</p>
-                                    <p className='text-sm text-gray-700 mt-1'>фильтр компании {cutoverPacket.currentFeatureFlags.companyFilter || '-'}</p>
+                                    <p className='text-sm text-gray-700 mt-1'>фильтр компании {cutoverPacket.currentFeatureFlags.companyFilter ? 'настроен' : 'не задан'}</p>
                                 </div>
                                 <div className='rounded-xl border border-black/5 bg-gray-50 p-3'>
                                     <p className='text-[11px] uppercase tracking-wider text-gray-500'>Рекомендуемые флаги</p>
                                     <p className='text-sm text-gray-700 mt-1'>режим {formatRolloutModeLabel(cutoverPacket.recommendedFeatureFlags.mode)}</p>
-                                    <p className='text-sm text-gray-700 mt-1'>фильтр компании {cutoverPacket.recommendedFeatureFlags.companyFilter || '-'}</p>
+                                    <p className='text-sm text-gray-700 mt-1'>фильтр компании {cutoverPacket.recommendedFeatureFlags.companyFilter ? 'настроен' : 'не требуется'}</p>
                                 </div>
                             </div>
                             <div className='mt-4 grid grid-cols-1 md:grid-cols-2 gap-4'>
                                 <div className='rounded-xl border border-black/5 bg-gray-50 p-3'>
-                                    <p className='text-[11px] uppercase tracking-wider text-gray-500'>Команда выпуска</p>
-                                    <code className='block mt-2 text-xs text-gray-800 break-all'>{cutoverPacket.releaseCommand}</code>
+                                    <p className='text-[11px] uppercase tracking-wider text-gray-500'>Сценарий выпуска</p>
+                                    <p className='block mt-2 text-xs text-gray-800'>Выпуск выполняется через регламентный сценарий инфраструктуры.</p>
                                     <div className='mt-3 space-y-1'>
                                         {cutoverPacket.checklist.map((item) => (
-                                            <p key={item} className='text-sm text-gray-700'>{item}</p>
+                                            <p key={item} className='text-sm text-gray-700'>{formatTechExplainabilityMessage(item)}</p>
                                         ))}
                                     </div>
                                 </div>
                                 <div className='rounded-xl border border-black/5 bg-gray-50 p-3'>
-                                    <p className='text-[11px] uppercase tracking-wider text-gray-500'>Команда отката</p>
-                                    <code className='block mt-2 text-xs text-gray-800 break-all'>{cutoverPacket.rollbackCommand}</code>
+                                    <p className='text-[11px] uppercase tracking-wider text-gray-500'>Сценарий отката</p>
+                                    <p className='block mt-2 text-xs text-gray-800'>Откат выполняется через регламентный сценарий возврата к безопасному режиму.</p>
                                     <div className='mt-3 space-y-1'>
                                         {cutoverPacket.rollbackChecklist.map((item) => (
-                                            <p key={item} className='text-sm text-gray-700'>{item}</p>
+                                            <p key={item} className='text-sm text-gray-700'>{formatTechExplainabilityMessage(item)}</p>
                                         ))}
                                     </div>
                                 </div>
@@ -371,10 +381,10 @@ export default function TechMapsPage() {
                                 <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-3'>
                                     <div>
                                         <p className='font-semibold text-gray-900'>
-                                            {map.crop || 'Культура не указана'} • v{map.version ?? '-'}
+                                            {formatCropLabel(map.crop)} • v{map.version ?? '-'}
                                         </p>
                                         <p className='text-xs text-gray-500'>
-                                            {map.id} • {formatStatusLabel(map.status)} • {map.updatedAt ? new Date(map.updatedAt).toLocaleDateString('ru-RU') : '-'}
+                                            {formatStatusLabel(map.status)} • {map.updatedAt ? new Date(map.updatedAt).toLocaleDateString('ru-RU') : '-'}
                                         </p>
                                         <div className='mt-2 flex flex-wrap gap-2'>
                                             {renderGenerationBadges(map)}
@@ -418,7 +428,7 @@ function renderGenerationBadges(map: TechMap) {
     if (strategy) {
         badges.push(
             <span key="strategy" className='px-2.5 py-1 rounded-full bg-sky-50 text-sky-700 text-[10px] font-medium border border-sky-100'>
-                {strategy}
+                {formatGenerationStrategyLabel(strategy)}
             </span>,
         );
     }
@@ -434,7 +444,7 @@ function renderGenerationBadges(map: TechMap) {
     if (map.cropForm || map.canonicalBranch) {
         badges.push(
             <span key="branch" className='px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-100'>
-                {map.cropForm || '-'} / {map.canonicalBranch || '-'}
+                {map.cropForm ? formatCropFormLabel(map.cropForm) : formatCanonicalBranchLabel(map.canonicalBranch)}
             </span>,
         );
     }
@@ -450,7 +460,7 @@ function renderGenerationBadges(map: TechMap) {
     if (parity?.hasBlockingDiffs) {
         badges.push(
             <span key="parity-blocking" className='px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 text-[10px] font-medium border border-rose-100'>
-                P0 {parity.severityCounts?.P0 || 0}
+                критических расхождений {parity.severityCounts?.P0 || 0}
             </span>,
         );
     } else if (parity && typeof parity.diffCount === 'number') {

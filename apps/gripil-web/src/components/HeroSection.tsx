@@ -167,7 +167,7 @@ export default function HeroSection() {
             <div className="backdrop-blur-md bg-[#112118]/50 border border-[#EFECE6]/20 p-6 2xl:p-8 rounded-sm shadow-2xl hover:border-[#CDFF00]/40 transition-colors">
               <div className="flex items-center gap-3 mb-4">
                 <Target className="w-5 h-5 text-[#CDFF00]" />
-                <span className="text-xs 2xl:text-sm text-[#EFECE6]/80 uppercase tracking-widest font-mono font-medium">ROI потенциал</span>
+                <span className="text-xs 2xl:text-sm text-[#EFECE6]/80 uppercase tracking-widest font-mono font-medium">Потенциал окупаемости</span>
               </div>
               <div className="text-4xl 2xl:text-5xl text-white font-display mb-1">+3,5 ц/га</div>
               <div className="text-sm 2xl:text-base font-light text-[#EFECE6]/60 tracking-wide uppercase">сохранено</div>

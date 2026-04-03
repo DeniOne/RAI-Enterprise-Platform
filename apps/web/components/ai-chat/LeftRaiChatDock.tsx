@@ -12,6 +12,8 @@ export function LeftRaiChatDock() {
         setChatWidth,
     } = useAiChatStore();
     const [isResizing, setIsResizing] = useState(false);
+    const dockInset = 4;
+    const dockHeight = `calc(100dvh - ${dockInset * 2}px)`;
 
     useEffect(() => {
         if (fsmState === 'closed') {
@@ -49,22 +51,31 @@ export function LeftRaiChatDock() {
     }, [isResizing, setChatWidth]);
 
     return (
-        <aside className="sticky top-8 shrink-0 self-start" style={{ width: `${chatWidth}px` }} aria-label="RAI Chat Dock">
-            <div className="relative flex flex-col">
-                <button
-                    type="button"
-                    onPointerDown={(event) => {
-                        event.preventDefault();
-                        setIsResizing(true);
-                    }}
-                    className="absolute -right-3 top-0 z-20 h-full w-6 cursor-ew-resize"
-                    aria-label="Изменить ширину чата"
-                    title="Потяните, чтобы изменить ширину"
-                >
-                    <span className="absolute right-2 top-1/2 h-24 w-[3px] -translate-y-1/2 rounded-full bg-black/10 transition-colors hover:bg-black/25" />
-                </button>
+        <aside className="relative shrink-0" style={{ width: `${chatWidth}px` }} aria-label="Панель чата">
+            <div
+                className="fixed left-0 z-[60] flex flex-col"
+                style={{
+                    top: `${dockInset}px`,
+                    width: `${chatWidth}px`,
+                    height: dockHeight,
+                }}
+            >
+                <div className="relative flex h-full flex-col">
+                    <button
+                        type="button"
+                        onPointerDown={(event) => {
+                            event.preventDefault();
+                            setIsResizing(true);
+                        }}
+                        className="absolute -right-3 top-0 z-20 h-full w-6 cursor-ew-resize"
+                        aria-label="Изменить ширину чата"
+                        title="Потяните, чтобы изменить ширину"
+                    >
+                        <span className="absolute right-2 top-1/2 h-24 w-[3px] -translate-y-1/2 rounded-full bg-black/10 transition-colors hover:bg-black/25" />
+                    </button>
 
-                <AiChatPanel variant="shell" />
+                    <AiChatPanel variant="shell" shellHeight={dockHeight} />
+                </div>
             </div>
         </aside>
     );

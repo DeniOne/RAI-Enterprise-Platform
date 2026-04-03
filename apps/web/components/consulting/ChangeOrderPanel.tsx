@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import clsx from 'clsx';
 import type { ChangeOrderSummary } from './TechMapWorkbench';
+import { formatChangeOrderTypeLabel, formatStatusLabel } from '@/lib/ui-language';
 
 type ChangeOrderType = 'SHIFT_DATE' | 'CHANGE_INPUT' | 'CHANGE_RATE' | 'CANCEL_OP' | 'ADD_OP';
 
@@ -49,7 +50,7 @@ export function ChangeOrderPanel({ techMapId, changeOrders, isFrozen }: ChangeOr
             });
 
             if (!response.ok) {
-                throw new Error('Change order failed');
+                throw new Error('Не удалось создать запрос на изменение');
             }
 
             setReason('');
@@ -87,7 +88,7 @@ export function ChangeOrderPanel({ techMapId, changeOrders, isFrozen }: ChangeOr
                                         co.status === 'REJECTED' && "bg-red-100 text-red-700",
                                     )}
                                 >
-                                    {co.status}
+                                    {formatStatusLabel(co.status)}
                                 </span>
                             </div>
                         ))}
@@ -97,7 +98,7 @@ export function ChangeOrderPanel({ techMapId, changeOrders, isFrozen }: ChangeOr
 
             {isFrozen && (
                 <div className="text-[11px] text-gray-500">
-                    Техкарта в режиме FROZEN. Создание новых запросов на изменение недоступно.
+                    Техкарта заморожена. Создание новых запросов на изменение недоступно.
                 </div>
             )}
 
@@ -112,11 +113,11 @@ export function ChangeOrderPanel({ techMapId, changeOrders, isFrozen }: ChangeOr
                             onChange={(e) => setChangeType(e.target.value as ChangeOrderType)}
                             className="border border-black/10 rounded-xl px-3 py-1.5 text-xs bg-white text-gray-800"
                         >
-                            <option value="SHIFT_DATE">Сдвиг даты операции</option>
-                            <option value="CHANGE_INPUT">Изменение препарата</option>
-                            <option value="CHANGE_RATE">Изменение нормы внесения</option>
-                            <option value="CANCEL_OP">Отмена операции</option>
-                            <option value="ADD_OP">Добавление операции</option>
+                            <option value="SHIFT_DATE">{formatChangeOrderTypeLabel('SHIFT_DATE')}</option>
+                            <option value="CHANGE_INPUT">{formatChangeOrderTypeLabel('CHANGE_INPUT')}</option>
+                            <option value="CHANGE_RATE">{formatChangeOrderTypeLabel('CHANGE_RATE')}</option>
+                            <option value="CANCEL_OP">{formatChangeOrderTypeLabel('CANCEL_OP')}</option>
+                            <option value="ADD_OP">{formatChangeOrderTypeLabel('ADD_OP')}</option>
                         </select>
                     </div>
 
@@ -155,4 +156,3 @@ export function ChangeOrderPanel({ techMapId, changeOrders, isFrozen }: ChangeOr
         </div>
     );
 }
-

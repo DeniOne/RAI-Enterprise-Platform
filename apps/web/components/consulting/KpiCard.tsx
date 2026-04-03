@@ -73,12 +73,12 @@ export function KpiCard({ data, isLoading }: KpiCardProps) {
             </div>
 
             <div className="p-3 bg-blue-50/50 rounded-xl flex flex-col justify-center items-center text-center border border-blue-100/30">
-                <span className="text-[10px] text-blue-400 font-medium uppercase tracking-wider mb-1">SRI (Soil Health)</span>
+                <span className="text-[10px] text-blue-400 font-medium uppercase tracking-wider mb-1">SRI (состояние почвы)</span>
                 <span className="text-xl font-medium text-blue-600">
                     {data.sri.toFixed(2)}
                 </span>
                 <div className={clsx("text-[10px] font-medium", data.sriDelta >= 0 ? "text-green-500" : "text-red-500")}>
-                    {data.sriDelta >= 0 ? '↑' : '↓'} {(data.sriDelta * 100).toFixed(1)}% Velocity
+                    {data.sriDelta >= 0 ? '↑' : '↓'} {(data.sriDelta * 100).toFixed(1)}% скорость изменения
                 </div>
             </div>
         </div>

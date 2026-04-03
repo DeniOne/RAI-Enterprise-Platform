@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Card } from '@/components/ui'
 import { RecommendationPanel, AdvisoryRecommendation } from '@/components/advisory/RecommendationPanel'
 import { getUserData } from '@/lib/api/auth-server';
+import { formatUiEntityName } from '@/lib/ui-language';
 import { GovernanceTestButton } from '@/shared/components/GovernanceTestButton';
 import { FinancialMetrics } from '@/components/dashboard/FinancialMetrics';
 
@@ -187,10 +188,10 @@ export default async function DashboardPage() {
             {/* Приветствие */}
             <div>
                 <h1 className="text-xl font-medium mb-1">
-                    Привет, {user.name || user.email}!
+                    Привет, {formatUiEntityName(user.name || null) !== '—' ? formatUiEntityName(user.name || null) : 'пользователь'}!
                 </h1>
                 <p className="text-sm font-normal text-gray-500">
-                    Добро пожаловать в RAI Enterprise Platform
+                    Добро пожаловать в платформу РАИ
                 </p>
             </div>
 
@@ -220,9 +221,9 @@ export default async function DashboardPage() {
                     <RecommendationPanel initialRecommendations={advisoryRecommendations} />
                 ) : (
                     <Card className="rounded-2xl">
-                        <h2 className="text-xl font-medium mb-3">Рекомендации Advisory</h2>
+                        <h2 className="text-xl font-medium mb-3">Рекомендации рекомендательного контура</h2>
                         <p className="text-sm text-gray-600">
-                            Advisory-пилот пока не включен для вашего аккаунта.
+                            Пилот рекомендательного контура пока не включён для вашего аккаунта.
                         </p>
                     </Card>
                 )}
@@ -244,7 +245,7 @@ export default async function DashboardPage() {
                                             <p className="text-xs text-gray-500">Версия: {map.version}</p>
                                         </div>
                                         <span className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded-full">
-                                            Active
+                                            Активна
                                         </span>
                                     </div>
                                 </Link>
@@ -274,22 +275,22 @@ export default async function DashboardPage() {
 
             {advisoryOpsMetrics && (
                 <Card className="rounded-2xl">
-                    <h2 className="text-xl font-medium mb-4">Advisory Ops (24h)</h2>
+                    <h2 className="text-xl font-medium mb-4">Метрики рекомендательного контура за 24 часа</h2>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="border border-black/10 rounded-xl p-3">
-                            <p className="text-xs text-gray-500 mb-1">Shadow Evaluated</p>
+                            <p className="text-xs text-gray-500 mb-1">Оценено в теневом режиме</p>
                             <p className="text-2xl font-medium">{advisoryOpsMetrics.shadowEvaluated}</p>
                         </div>
                         <div className="border border-black/10 rounded-xl p-3">
-                            <p className="text-xs text-gray-500 mb-1">Accept Rate</p>
+                            <p className="text-xs text-gray-500 mb-1">Доля принятия</p>
                             <p className="text-2xl font-medium">{(advisoryOpsMetrics.acceptRate * 100).toFixed(1)}%</p>
                         </div>
                         <div className="border border-black/10 rounded-xl p-3">
-                            <p className="text-xs text-gray-500 mb-1">Reject Rate</p>
+                            <p className="text-xs text-gray-500 mb-1">Доля отклонения</p>
                             <p className="text-2xl font-medium">{(advisoryOpsMetrics.rejectRate * 100).toFixed(1)}%</p>
                         </div>
                         <div className="border border-black/10 rounded-xl p-3">
-                            <p className="text-xs text-gray-500 mb-1">Decision Lag</p>
+                            <p className="text-xs text-gray-500 mb-1">Задержка решения</p>
                             <p className="text-2xl font-medium">{advisoryOpsMetrics.decisionLagAvgMinutes.toFixed(1)}m</p>
                         </div>
                     </div>
@@ -298,24 +299,24 @@ export default async function DashboardPage() {
 
             {advisoryRolloutStatus && (
                 <Card className="rounded-2xl">
-                    <h2 className="text-xl font-medium mb-4">Advisory Rollout</h2>
+                    <h2 className="text-xl font-medium mb-4">Развёртывание рекомендательного контура</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="border border-black/10 rounded-xl p-3">
-                            <p className="text-xs text-gray-500 mb-1">Stage</p>
+                            <p className="text-xs text-gray-500 mb-1">Этап</p>
                             <p className="text-2xl font-medium">{advisoryRolloutStatus.stage}</p>
                         </div>
                         <div className="border border-black/10 rounded-xl p-3">
-                            <p className="text-xs text-gray-500 mb-1">Exposure</p>
+                            <p className="text-xs text-gray-500 mb-1">Охват</p>
                             <p className="text-2xl font-medium">{advisoryRolloutStatus.percentage}%</p>
                         </div>
                         <div className="border border-black/10 rounded-xl p-3">
-                            <p className="text-xs text-gray-500 mb-1">Auto-stop</p>
-                            <p className="text-2xl font-medium">{advisoryRolloutStatus.autoStopEnabled ? 'ON' : 'OFF'}</p>
+                            <p className="text-xs text-gray-500 mb-1">Автостоп</p>
+                            <p className="text-2xl font-medium">{advisoryRolloutStatus.autoStopEnabled ? 'Включён' : 'Выключен'}</p>
                         </div>
                     </div>
                     {advisoryRolloutStatus.stage === 'S0' && (
                         <p className="text-sm text-amber-700 mt-3">
-                            Rollout stage S0: advisory delivery is intentionally blocked until canary promotion.
+                            Этап S0: выдача рекомендаций намеренно заблокирована до перехода на канареечный этап.
                         </p>
                     )}
                 </Card>
@@ -333,7 +334,7 @@ export default async function DashboardPage() {
 
             {/* INSTITUTIONAL CONTROL TEST (PHASE 3) */}
             <div className="pt-12 border-t border-black/5">
-                <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">Institutional Sandbox</h2>
+                <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">Институциональная песочница</h2>
                 <GovernanceTestButton />
             </div>
         </div>

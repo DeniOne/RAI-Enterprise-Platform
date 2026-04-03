@@ -11,7 +11,7 @@ export default function FinancePage() {
                     <p className="text-4xl font-medium">0 ₽</p>
                 </Card>
                 <Card>
-                    <h3 className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium mb-3">Cash Flow</h3>
+                    <h3 className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium mb-3">Денежный поток</h3>
                     <p className="text-4xl font-medium">0 ₽</p>
                 </Card>
                 <Card>
@@ -20,11 +20,11 @@ export default function FinancePage() {
                 </Card>
             </div>
 
-            <Card className="min-h-[300px] flex items-center justify-center border-dashed">
-                <p className="text-sm text-gray-400 uppercase tracking-widest font-medium">
-                    Content Placeholder // Phase Beta
-                </p>
-            </Card>
+                <Card className="min-h-[300px] flex items-center justify-center border-dashed">
+                    <p className="text-sm text-gray-400 uppercase tracking-widest font-medium">
+                    Раздел находится в подготовке
+                    </p>
+                </Card>
         </div>
     );
 }

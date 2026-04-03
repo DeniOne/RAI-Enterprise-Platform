@@ -3,7 +3,7 @@ import { Card } from '@/components/ui';
 export default function GRPage() {
     return (
         <div className="space-y-6">
-            <h1 className="text-xl font-medium text-gray-900 mb-6">Government Relations (GR)</h1>
+            <h1 className="text-xl font-medium text-gray-900 mb-6">Взаимодействие с государством (GR)</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card>
@@ -20,11 +20,11 @@ export default function GRPage() {
                 </Card>
             </div>
 
-            <Card className="min-h-[300px] flex items-center justify-center border-dashed">
-                <p className="text-sm text-gray-400 uppercase tracking-widest font-medium">
-                    Content Placeholder // Phase Beta
-                </p>
-            </Card>
+                <Card className="min-h-[300px] flex items-center justify-center border-dashed">
+                    <p className="text-sm text-gray-400 uppercase tracking-widest font-medium">
+                    Раздел находится в подготовке
+                    </p>
+                </Card>
         </div>
     );
 }

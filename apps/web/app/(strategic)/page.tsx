@@ -6,6 +6,7 @@ import { ExplanationLayer } from '@/components/strategic/ExplanationLayer';
 import { AdvisoryRadar } from '@/components/strategic/AdvisoryRadar';
 import { Scale, Beaker, Zap, ArrowRight, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
+import { formatStatusLabel } from '@/lib/ui-language';
 
 async function getStrategicData(token: string) {
     return await strategicApi.getGlobalState(token);
@@ -42,7 +43,7 @@ export default async function GlobalStatePage() {
                     <h1 className="text-7xl font-light tracking-tighter">
                         {data.overall === 'OK' ? 'Система стабильна' : 'Требуется внимание'}
                     </h1>
-                    <StateBadge state={data.overall} label={data.overall === 'OK' ? 'Active' : 'Warning'} className="px-6 py-2 text-xs" />
+                    <StateBadge state={data.overall} label={formatStatusLabel(data.overall === 'OK' ? 'ACTIVE' : 'WARNING')} className="px-6 py-2 text-xs" />
                 </div>
             </section>
 
@@ -82,7 +83,7 @@ export default async function GlobalStatePage() {
                             </div>
                         </div>
                         <div>
-                            <h3 className="text-lg font-medium">Научный (R&D) контур</h3>
+                            <h3 className="text-lg font-medium">Научный контур</h3>
                             <p className="text-sm opacity-60 leading-relaxed mt-2">
                                 Мониторинг экспериментов, валидность протоколов и целостность научных данных.
                             </p>
@@ -99,12 +100,12 @@ export default async function GlobalStatePage() {
                         <div className="flex justify-between items-start">
                             <Zap size={32} className="opacity-20 group-hover:opacity-100 group-hover:text-[#FFD600] transition-all" />
                             <div className="text-right">
-                                <div className="text-2xl font-light">SAFE</div>
+                                <div className="text-2xl font-light">БЕЗОПАСНО</div>
                                 <div className="text-[10px] uppercase tracking-widest opacity-40">Режим</div>
                             </div>
                         </div>
                         <div>
-                            <h3 className="text-lg font-medium">Операционный (Ops) контур</h3>
+                            <h3 className="text-lg font-medium">Операционный контур</h3>
                             <p className="text-sm opacity-60 leading-relaxed mt-2">
                                 Агрегированное состояние полевых работ, техкарт и ресурсов предприятия.
                             </p>
@@ -122,7 +123,7 @@ export default async function GlobalStatePage() {
                 <div className="flex items-center gap-4 mb-2">
                     <div className="w-1 h-6 bg-white/20" />
                     <h2 className="text-[10px] uppercase tracking-[0.4em] opacity-40 font-medium">
-                        Advisory Engine (Read-Model)
+                        Рекомендательный контур
                     </h2>
                 </div>
                 <AdvisoryRadar
@@ -157,14 +158,14 @@ export default async function GlobalStatePage() {
                             {
                                 type: 'RISK',
                                 title: 'Повышенная бюджетная нагрузка',
-                                description: 'Burn Rate превысил нормативный порог в контуре B3 на 12%.',
+                                description: 'Темп расходов превысил нормативный порог в контуре B3 на 12%.',
                                 ref: 'B3-FIN-01'
                             }
                         ]}
                     />
 
                     <div className="p-8 rounded-xl bg-gradient-to-br from-white/[0.03] to-transparent border border-white/5 flex flex-col justify-center items-center text-center space-y-4">
-                        <div className="text-[10px] uppercase tracking-[0.2em] opacity-40">Risk Awareness</div>
+                        <div className="text-[10px] uppercase tracking-[0.2em] opacity-40">Уровень риска</div>
                         <div className="text-4xl font-light">НИЗКИЙ</div>
                         <div className="text-[9px] uppercase tracking-widest opacity-20">Сводный риск по всем контурам</div>
                     </div>

@@ -8,7 +8,7 @@ import { z } from 'zod'
 import { Button, Input, Card } from '@/components/ui'
 
 const loginSchema = z.object({
-    email: z.string().email('Некорректный email'),
+    email: z.string().email('Некорректный адрес электронной почты'),
     password: z.string().min(6, 'Пароль должен содержать минимум 6 символов'),
 })
 
@@ -62,9 +62,9 @@ export function LoginForm() {
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <Input
-                    label="Email"
+                    label="Электронная почта"
                     type="email"
-                    placeholder="example@domain.com"
+                    placeholder="Введите адрес электронной почты"
                     error={errors.email?.message}
                     {...register('email')}
                 />

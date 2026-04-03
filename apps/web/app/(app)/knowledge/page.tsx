@@ -6,7 +6,7 @@ async function getGraph() {
         cache: 'no-store'
     });
     if (!res.ok) {
-        throw new Error('Failed to fetch graph');
+        throw new Error('Не удалось загрузить граф знаний');
     }
     return res.json();
 }
@@ -21,7 +21,7 @@ export default async function KnowledgePage() {
                 <div>
                     <h1 className="text-2xl font-medium text-gray-900 mb-2">Данные графа недоступны</h1>
                     <p className="max-w-md">
-                        Please ensure the API is running and the graph snapshot has been generated using <code className="bg-gray-100 px-1 rounded text-gray-800">scripts/generate_graph.py</code>.
+                        Проверьте, что API запущен, а снимок графа был сгенерирован служебным скриптом подготовки графа.
                     </p>
                 </div>
             </div>

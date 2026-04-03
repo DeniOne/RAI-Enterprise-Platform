@@ -451,7 +451,7 @@ function ContactDrawer({
                             <Input
                                 value={data.email}
                                 onChange={(event) => setData({ ...data, email: event.target.value })}
-                                placeholder="example@..."
+                                placeholder="Введите адрес почты"
                                 className="h-11 rounded-xl border-black/10 focus:ring-black/5"
                             />
                         </div>

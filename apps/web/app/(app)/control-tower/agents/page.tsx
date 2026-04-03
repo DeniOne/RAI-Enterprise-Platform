@@ -11,15 +11,16 @@ import {
   type FutureAgentTemplateItem,
 } from '@/lib/api';
 import { Settings2, UserCog, Bot } from 'lucide-react';
+import { formatAgentRoleLabel, formatToolLabel } from '@/lib/ui-language';
 
 const LLM_MODELS = [
-  { label: 'Gemini 3.1 Flash Lite', value: 'google/gemini-3.1-flash-lite-preview' },
-  { label: 'GPT-5 Mini', value: 'openai/gpt-5-mini' },
-  { label: 'Claude Haiku 4.5', value: 'anthropic/claude-haiku-4.5' },
-  { label: 'Claude Sonnet 4.6', value: 'anthropic/claude-sonnet-4.6' },
-  { label: 'GPT-5.2', value: 'openai/gpt-5.2' },
-  { label: 'Gemini 2.5 Pro', value: 'google/gemini-2.5-pro-preview-06-05' },
-  { label: 'GPT-5.3 Codex', value: 'openai/gpt-5.3-codex' },
+  { label: 'Компактная модель ИИ', value: 'google/gemini-3.1-flash-lite-preview' },
+  { label: 'Быстрая модель ИИ', value: 'openai/gpt-5-mini' },
+  { label: 'Лёгкая универсальная модель', value: 'anthropic/claude-haiku-4.5' },
+  { label: 'Сбалансированная универсальная модель', value: 'anthropic/claude-sonnet-4.6' },
+  { label: 'Усиленная модель ИИ', value: 'openai/gpt-5.2' },
+  { label: 'Аналитическая модель ИИ', value: 'google/gemini-2.5-pro-preview-06-05' },
+  { label: 'Кодовая модель ИИ', value: 'openai/gpt-5.3-codex' },
 ];
 const CAPABILITY_OPTIONS = [
   'AgroToolsRegistry',
@@ -79,18 +80,43 @@ const RESPONSIBILITY_INTENT_OPTIONS = [
 type CanonicalAdapterRole = 'agronomist' | 'economist' | 'knowledge' | 'monitoring' | 'crm_agent' | 'front_office_agent' | 'contracts_agent' | 'chief_agronomist' | 'data_scientist';
 
 function roleOptionLabel(role: string) {
-  const labels: Record<string, string> = {
-    agronomist: 'Агроном (agronomist)',
-    economist: 'Экономист (economist)',
-    knowledge: 'Знание (knowledge)',
-    monitoring: 'Мониторинг (monitoring)',
-    crm_agent: 'CRM-агент (crm_agent)',
-    front_office_agent: 'Фронт-офис агент (front_office_agent)',
-    contracts_agent: 'Контрактный агент (contracts_agent)',
-    chief_agronomist: 'Мега-Агроном (chief_agronomist)',
-    data_scientist: 'Дата-сайентист (data_scientist)',
+  return formatAgentRoleLabel(role);
+}
+
+function formatModelLabel(value: string) {
+  return LLM_MODELS.find((item) => item.value === value)?.label ?? 'Модель ИИ';
+}
+
+function formatCapabilityLabel(value: string) {
+  const map: Record<string, string> = {
+    AgroToolsRegistry: 'Агроинструменты',
+    FinanceToolsRegistry: 'Финансовые инструменты',
+    RiskToolsRegistry: 'Инструменты рисков',
+    KnowledgeToolsRegistry: 'Инструменты знаний',
+    CrmToolsRegistry: 'Инструменты CRM',
+    FrontOfficeToolsRegistry: 'Инструменты фронт-офиса',
+    LegalToolsRegistry: 'Юридические инструменты',
+    StrategyToolsRegistry: 'Стратегические инструменты',
+    ProductivityToolsRegistry: 'Инструменты продуктивности',
+    MarketingToolsRegistry: 'Маркетинговые инструменты',
   };
-  return labels[role] ?? role;
+
+  return map[value] ?? 'Набор инструментов';
+}
+
+function formatBusinessRoleLabel(value: string) {
+  return value
+    .replaceAll('MarketerAgent:', 'Маркетинговый агент:')
+    .replaceAll('DRAFT', 'черновиков')
+    .replaceAll('summary', 'сводка')
+    .replaceAll('evidence', 'подтверждения')
+    .replaceAll('plan/fact', 'план/факт')
+    .replaceAll('read-only', 'режиме только чтения')
+    .replaceAll('risk', 'рисковом')
+    .replaceAll('ingress:', 'входящий контур:')
+    .replaceAll('next_steps', 'следующие шаги')
+    .replaceAll('owner-', 'домены владельцев')
+    .replaceAll('Expert-tier', 'экспертный уровень');
 }
 
 function kindLabel(kind: (typeof KIND_OPTIONS)[number]) {
@@ -421,16 +447,16 @@ export default function AgentsPage() {
                   <td className="px-6 py-5">
                     <div className="space-y-2">
                       <span className="text-[14px] font-medium text-[#030213] block">{displayAgentName(agent.role, agent.agentName)}</span>
-                      <span className="text-[11px] font-mono text-[#717182] block">{agent.role}</span>
-                      <span className="text-[12px] text-[#717182] block">{agent.businessRole}</span>
+                      <span className="text-[11px] text-[#717182] block">{roleOptionLabel(agent.role)}</span>
+                      <span className="text-[12px] text-[#717182] block">{formatBusinessRoleLabel(agent.businessRole)}</span>
                     </div>
                   </td>
                   <td className="px-6 py-5">
                     <div className="space-y-2 text-[12px]">
-                      <div className="font-mono text-[#030213]">{agent.runtime.llmModel}</div>
+                      <div className="text-[#030213]">{formatModelLabel(agent.runtime.llmModel)}</div>
                       <div className="text-[#717182]">Лимит токенов: <span className="font-mono text-[#030213]">{agent.runtime.maxTokens}</span></div>
                       {agent.kernel?.runtimeProfile.executionAdapterRole && (
-                        <Badge tone="blue" label={`Адаптер: ${agent.kernel.runtimeProfile.executionAdapterRole}`} />
+                        <Badge tone="blue" label={`Адаптер: ${roleOptionLabel(agent.kernel.runtimeProfile.executionAdapterRole)}`} />
                       )}
                       <Badge
                         tone={agent.runtime.isActive ? 'green' : 'slate'}
@@ -466,7 +492,7 @@ export default function AgentsPage() {
                         <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-2">Возможности</p>
                         <div className="flex flex-wrap gap-2">
                           {agent.runtime.capabilities.map((capability) => (
-                            <Tag key={capability} label={capability} />
+                            <Tag key={capability} label={formatCapabilityLabel(capability)} />
                           ))}
                         </div>
                       </div>
@@ -474,7 +500,7 @@ export default function AgentsPage() {
                         <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-2">Инструменты</p>
                         <div className="flex flex-wrap gap-2">
                           {agent.runtime.tools.map((tool) => (
-                            <Tag key={tool} label={tool} mono />
+                            <Tag key={tool} label={formatToolLabel(tool)} />
                           ))}
                         </div>
                       </div>
@@ -832,7 +858,7 @@ function AgentEditor({
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
-                placeholder="например, contracts_agent или front_office_agent"
+                placeholder="например, `contracts_agent` или `front_office_agent`"
                 list="known-agent-roles"
               />
               <datalist id="known-agent-roles">
@@ -974,7 +1000,7 @@ function AgentEditor({
                     value={bindingRole}
                     onChange={(e) => setBindingRole(e.target.value)}
                     className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
-                    placeholder="обычно совпадает с role"
+                    placeholder="обычно совпадает с именем роли"
                   />
                 </div>
                 <div>
@@ -998,7 +1024,7 @@ function AgentEditor({
                   value={bindingTitle}
                   onChange={(e) => setBindingTitle(e.target.value)}
                   className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] focus:border-black/30 outline-none"
-                  placeholder="например, CRM-агент"
+                  placeholder="например, агент CRM"
                 />
               </div>
 
@@ -1030,7 +1056,7 @@ function AgentEditor({
                   value={extraUiActionsInput}
                   onChange={(e) => setExtraUiActionsInput(e.target.value)}
                   className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] font-mono focus:border-black/30 outline-none"
-                  placeholder="open_account, refresh_context"
+                  placeholder="например, `open_account`, `refresh_context`"
                 />
               </div>
               <datalist id="responsibility-intents">
@@ -1076,7 +1102,7 @@ function AgentEditor({
               value={tools.join(', ')}
               onChange={(e) => setTools(e.target.value.split(',').map((x) => x.trim()).filter(Boolean))}
               className="w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#030213] font-mono focus:border-black/30 outline-none"
-              placeholder="generate_tech_map_draft, compute_deviations"
+              placeholder="например, `generate_tech_map_draft`, `compute_deviations`"
             />
           </div>
 
@@ -1210,9 +1236,9 @@ function PolicyDisclosure({ title, payload }: { title: string; payload?: Record<
       <summary className="cursor-pointer list-none text-[11px] font-medium uppercase tracking-widest text-[#717182]">
         {title}
       </summary>
-      <pre className="mt-3 overflow-x-auto rounded-lg bg-white p-3 text-[11px] leading-relaxed text-[#030213]">
-        {JSON.stringify(payload, null, 2)}
-      </pre>
+      <div className="mt-3 rounded-lg bg-white p-3 text-[11px] leading-relaxed text-[#030213]">
+        Служебные параметры скрыты в пользовательском контуре. Детали доступны в инженерном режиме.
+      </div>
     </details>
   );
 }

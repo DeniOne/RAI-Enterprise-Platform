@@ -40,24 +40,24 @@ export default function DebugPage() {
 
     return (
         <div className="p-8">
-            <h1 className="mb-1 text-xl font-medium text-gray-900">Debug Page</h1>
+            <h1 className="mb-1 text-xl font-medium text-gray-900">Отладочная страница</h1>
 
             <div className="space-y-4">
                 <div>
-                    <h2 className="font-medium">Cookies:</h2>
-                    <pre className="bg-gray-100 p-2 rounded">{cookies || 'No cookies'}</pre>
+                    <h2 className="font-medium">Данные браузерного сеанса:</h2>
+                    <pre className="rounded bg-gray-100 p-2">{cookies || 'Нет сохранённых данных сеанса'}</pre>
                 </div>
 
                 <div>
-                    <h2 className="font-medium">Token Valid:</h2>
-                    <p>{tokenValid === null ? 'Checking...' : tokenValid ? '✅ Valid' : '❌ Invalid'}</p>
+                    <h2 className="font-medium">Состояние токена:</h2>
+                    <p>{tokenValid === null ? 'Проверка...' : tokenValid ? '✅ Действителен' : '❌ Недействителен'}</p>
                 </div>
 
                 <button
                     onClick={clearCookies}
                     className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
                 >
-                    Clear Cookies & Reload
+                    Очистить cookie и перезагрузить
                 </button>
             </div>
         </div>

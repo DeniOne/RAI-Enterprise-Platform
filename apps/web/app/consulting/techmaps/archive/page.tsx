@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui';
 import { api } from '@/lib/api';
+import { formatCropLabel } from '@/lib/ui-language';
 
 type TechMapItem = {
     id: string;
@@ -48,7 +49,7 @@ export default function Page() {
                     <ul className='space-y-2 text-sm'>
                         {archivedMaps.map((item) => (
                             <li key={item.id} className='border-b last:border-b-0 py-2'>
-                                Версия {item.version ?? '-'} • {item.crop || '-'} • {item.updatedAt ? new Date(item.updatedAt).toLocaleDateString('ru-RU') : '-'}
+                                Версия {item.version ?? '-'} • {formatCropLabel(item.crop)} • {item.updatedAt ? new Date(item.updatedAt).toLocaleDateString('ru-RU') : '-'}
                             </li>
                         ))}
                     </ul>

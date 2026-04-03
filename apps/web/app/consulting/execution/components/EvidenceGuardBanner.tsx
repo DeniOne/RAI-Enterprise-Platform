@@ -50,7 +50,7 @@ export function EvidenceGuardBanner({
                     </p>
                     <p className={`mt-1 ${compact ? 'text-xs' : 'text-sm'} ${bodyClass}`}>
                         {loading
-                            ? 'Проверяем completeness evidence...'
+                            ? 'Проверяем полноту подтверждений...'
                             : isBlocking
                                 ? blockedText
                                 : readyText}
@@ -58,17 +58,17 @@ export function EvidenceGuardBanner({
                     <div className="mt-2 flex flex-wrap gap-2">
                         {!loading && (
                             <span className={`rounded-full bg-white px-2.5 py-1 text-[10px] font-medium border ${titleClass} ${isBlocking ? 'border-rose-100' : 'border-emerald-100'}`}>
-                                {isBlocking ? 'Pending' : 'OK'}
+                                {isBlocking ? 'Ожидание' : 'Готово'}
                             </span>
                         )}
                         {typeof requiredCount === 'number' && (
                             <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-slate-700 border border-black/5">
-                                required: {requiredCount}
+                                требуется: {requiredCount}
                             </span>
                         )}
                         {typeof presentCount === 'number' && (
                             <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-slate-700 border border-black/5">
-                                present: {presentCount}
+                                подтверждено: {presentCount}
                             </span>
                         )}
                         {missingEvidenceTypes.map((item) => (
@@ -79,14 +79,14 @@ export function EvidenceGuardBanner({
                                     onClick={() => onSelectMissingEvidenceType(item)}
                                     className="rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-rose-700 border border-rose-100 hover:bg-rose-100/70"
                                 >
-                                    {`missing: ${item} -> выбрать`}
+                                    {`нет подтверждения: ${item} -> выбрать`}
                                 </button>
                             ) : (
                                 <span
                                     key={item}
                                     className="rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-rose-700 border border-rose-100"
                                 >
-                                    missing: {item}
+                                    нет подтверждения: {item}
                                 </span>
                             )
                         ))}

@@ -39,8 +39,8 @@ const CONSULTING_NAVIGATION = [
                 domain: 'crop',
                 roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'],
                 subItems: [
-                    { id: 'farms', label: 'Реестр хозяйств', path: '/consulting/crm/farms', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
                     { id: 'counterparties', label: 'Контрагенты', path: '/consulting/crm/counterparties', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                    { id: 'farms', label: 'Реестр хозяйств', path: '/consulting/crm/farms', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
                     { id: 'fields', label: 'Поля / Объекты', path: '/consulting/crm/fields', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
                     { id: 'seasons', label: 'История сезонов', path: '/consulting/crm/history', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
                 ]

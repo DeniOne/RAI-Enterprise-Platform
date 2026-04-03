@@ -127,7 +127,7 @@ function CommerceFulfillmentPageInner() {
                                     <th className="px-3 py-2 font-medium text-gray-900">Домен</th>
                                     <th className="px-3 py-2 font-medium text-gray-900">Тип события</th>
                                     <th className="px-3 py-2 font-medium text-gray-900">Договор</th>
-                                    <th className="px-3 py-2 font-medium text-gray-900">Obligation ID</th>
+                                    <th className="px-3 py-2 font-medium text-gray-900">Идентификатор обязательства</th>
                                 </tr>
                             </thead>
                             <tbody>

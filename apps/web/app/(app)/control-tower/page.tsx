@@ -16,6 +16,7 @@ import {
   type TruthfulnessDashboardDto,
 } from '@/lib/api';
 import { webFeatureFlags } from '@/lib/feature-flags';
+import { formatAgentRoleLabel, formatGovernanceKeyLabel, formatLatencyLabel, formatRuntimeLayerLabel, formatToolLabel } from '@/lib/ui-language';
 import { Monitor, ShieldCheck, Zap, Activity, DollarSign, TerminalSquare, AlertCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -702,8 +703,8 @@ export default function ControlTowerPage() {
             <div className="space-y-1">
               {performance ? (
                 <>
-                  <DataRow label="Задержка R95" value={`${performance.p95LatencyMs.toFixed(0)} ms`} status={latencyOk ? 'success' : 'error'} />
-                  <DataRow label="Средний отклик" value={`${performance.avgLatencyMs.toFixed(0)} ms`} />
+                  <DataRow label="Задержка R95" value={formatLatencyLabel(performance.p95LatencyMs)} status={latencyOk ? 'success' : 'error'} />
+                  <DataRow label="Средний отклик" value={formatLatencyLabel(performance.avgLatencyMs)} />
                   <DataRow label="Успешность (SLO)" value={`${performance.successRatePct.toFixed(1)}%`} status={successRateOk ? 'success' : 'error'} />
                   <DataRow
                     label="Давление очередей"
@@ -727,8 +728,8 @@ export default function ControlTowerPage() {
                       <div className="space-y-0.5">
                         {performance.byAgent.slice(0, 4).map(a => (
                           <div key={a.agentRole} className="flex items-center justify-between py-1.5">
-                            <span className="text-[13px] font-medium text-[#030213]">{a.agentRole}</span>
-                            <span className="text-[13px] font-mono text-[#717182]">{a.avgLatencyMs.toFixed(0)} ms</span>
+                            <span className="text-[13px] font-medium text-[#030213]">{formatAgentRoleLabel(a.agentRole)}</span>
+                            <span className="text-[13px] font-mono text-[#717182]">{formatLatencyLabel(a.avgLatencyMs)}</span>
                           </div>
                         ))}
                       </div>
@@ -759,7 +760,7 @@ export default function ControlTowerPage() {
                   <>
                     <DataRow
                       label="Статус памяти"
-                      value={memoryHealth.status}
+                      value={formatGovernanceKeyLabel(memoryHealth.status)}
                       status={memoryHealth.degraded ? 'warning' : 'success'}
                     />
                     <DataRow
@@ -793,7 +794,7 @@ export default function ControlTowerPage() {
                     />
                     <DataRow
                       label="Статус очистки"
-                      value={memoryHealth.pruningStatus}
+                      value={formatGovernanceKeyLabel(memoryHealth.pruningStatus)}
                       status={memoryHealth.pruningStatus === 'nominal' ? 'success' : 'warning'}
                     />
                     <div className="mt-6 pt-5 border-t border-black/5">
@@ -801,8 +802,8 @@ export default function ControlTowerPage() {
                       <div className="space-y-2">
                         {Object.entries(memoryHealth.layers ?? {}).map(([name, value]) => (
                           <div key={name} className="flex items-start justify-between gap-4 text-[12px]">
-                            <span className="font-medium text-[#030213]">{name}</span>
-                            <span className="text-right font-mono text-[#717182]">{typeof value === 'string' ? value : JSON.stringify(value)}</span>
+                            <span className="font-medium text-[#030213]">{formatRuntimeLayerLabel(name)}</span>
+                            <span className="text-right font-mono text-[#717182]">{typeof value === 'string' ? formatGovernanceKeyLabel(value) : 'Служебные показатели доступны'}</span>
                           </div>
                         ))}
                       </div>
@@ -895,7 +896,7 @@ export default function ControlTowerPage() {
                     {autonomy && (
                       <DataRow
                         label="Фактор автономности"
-                        value={`${autonomy.driver}${autonomy.activeQualityAlert ? ' • сигнал качества' : ''}`}
+                        value={autonomy.activeQualityAlert ? 'Сигнал качества требует внимания' : 'Автономный режим в норме'}
                         status={autonomy.activeQualityAlert ? 'warning' : 'success'}
                       />
                     )}
@@ -940,12 +941,12 @@ export default function ControlTowerPage() {
 
                     <div className="mt-4 space-y-0.5">
                       <DataRow
-                        label="Трейсы с trust-метриками"
+                        label="Трейсы с метриками доверия"
                         value={`${dashboard.branchTrust.knownTraceCount}`}
                         status={dashboard.branchTrust.knownTraceCount > 0 ? 'success' : 'warning'}
                       />
                       <DataRow
-                        label="Ожидание trust-метрик"
+                        label="Ожидание метрик доверия"
                         value={`${dashboard.branchTrust.pendingTraceCount}`}
                         status={dashboard.branchTrust.pendingTraceCount > 0 ? 'warning' : 'success'}
                       />
@@ -960,11 +961,11 @@ export default function ControlTowerPage() {
                         status={dashboard.branchTrust.overBudgetTraceCount > 0 ? 'error' : 'success'}
                       />
                       <DataRow
-                        label="Средняя задержка trust-gate"
+                        label="Средняя задержка шлюза доверия"
                         value={formatMsOrPending(dashboard.branchTrust.avgLatencyMs)}
                       />
                       <DataRow
-                        label="P95 trust-gate"
+                        label="P95 шлюза доверия"
                         value={formatMsOrPending(dashboard.branchTrust.p95LatencyMs)}
                       />
                     </div>
@@ -991,7 +992,7 @@ export default function ControlTowerPage() {
                     <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Хотспоты моделей</p>
                     {cost.tenantCost.byModel.slice(0, 3).map(m => (
                       <div key={m.modelId} className="flex items-center justify-between py-1.5">
-                        <span className="text-[12px] font-medium text-[#030213] truncate mr-4">{m.modelId.split('/').pop()}</span>
+                        <span className="text-[12px] font-medium text-[#030213] truncate mr-4">Модель ИИ</span>
                         <span className="text-[12px] font-mono text-[#717182]">${m.costUsd.toFixed(2)}</span>
                       </div>
                     ))}
@@ -1006,7 +1007,7 @@ export default function ControlTowerPage() {
                             href={`/control-tower/trace/${task.traceId}`}
                             className="text-[12px] font-mono text-blue-600 hover:underline"
                           >
-                            {task.traceId.slice(0, 16)}...
+                            Открыть трассу
                           </Link>
                           <span className="text-[12px] font-mono font-medium text-[#030213]">${task.costUsd.toFixed(3)}</span>
                         </div>
@@ -1057,12 +1058,12 @@ export default function ControlTowerPage() {
                     {pendingActions.map((item) => (
                       <tr key={item.id} className="border-t border-black/[0.04] align-top">
                         <td className="px-6 py-4">
-                          <div className="text-[13px] font-medium text-[#030213]">{item.toolName}</div>
-                          <div className="text-[11px] text-[#717182] font-mono">{item.id}</div>
+                          <div className="text-[13px] font-medium text-[#030213]">{formatToolLabel(item.toolName)}</div>
+                          <div className="text-[11px] text-[#717182]">Внутренний идентификатор скрыт</div>
                         </td>
                         <td className="px-6 py-4">
                           <Link href={`/control-tower/trace/${item.traceId}`} className="text-[12px] font-mono text-blue-600 hover:underline">
-                            {item.traceId.slice(0, 18)}...
+                            Открыть трассу
                           </Link>
                         </td>
                         <td className="px-6 py-4">
@@ -1079,16 +1080,16 @@ export default function ControlTowerPage() {
                                   ? 'bg-red-50 text-red-700 border-red-200'
                                   : 'bg-blue-50 text-blue-700 border-blue-200',
                           )}>
-                            {formatGovernanceKey(item.status)}
+                            {formatGovernanceKeyLabel(item.status)}
                           </span>
                         </td>
                         <td className="px-6 py-4">
                           <div className="max-w-[260px] text-[11px] leading-relaxed text-[#717182] font-mono break-all">
-                            {item.payloadPreview}
+                            {formatControlTowerText(item.payloadPreview)}
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-[12px] text-[#030213]">{new Date(item.expiresAt).toLocaleString()}</div>
+                          <div className="text-[12px] text-[#030213]">{new Date(item.expiresAt).toLocaleString('ru-RU')}</div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-wrap gap-2">
@@ -1171,7 +1172,7 @@ export default function ControlTowerPage() {
                     lifecycleSummary.activeCanaries.slice(0, 5).map((item) => (
                       <div key={item.changeRequestId} className="flex items-center justify-between py-2 border-b border-black/[0.03] last:border-0">
                         <div>
-                          <p className="text-[13px] font-medium text-[#030213]">{item.role}</p>
+                          <p className="text-[13px] font-medium text-[#030213]">{formatAgentRoleLabel(item.role)}</p>
                           <p className="text-[11px] text-[#717182]">{item.targetVersion}</p>
                         </div>
                         <span className="text-[11px] font-mono text-amber-600">активен</span>
@@ -1187,7 +1188,7 @@ export default function ControlTowerPage() {
                       <div className="space-y-2">
                         {lifecycleSummary.degradedCanaries.slice(0, 4).map((item) => (
                           <div key={item.changeRequestId} className="rounded-xl border border-red-200 bg-red-50 px-3 py-3">
-                            <p className="text-[12px] font-medium text-[#030213]">{item.role}</p>
+                            <p className="text-[12px] font-medium text-[#030213]">{formatAgentRoleLabel(item.role)}</p>
                             <p className="mt-1 text-[11px] text-[#717182]">{item.targetVersion}</p>
                           </div>
                         ))}
@@ -1210,7 +1211,7 @@ export default function ControlTowerPage() {
                     <div className="space-y-2">
                       {lifecycleSummary.rolledBackRoles.slice(0, 4).map((item) => (
                         <div key={`${item.role}:${item.targetVersion}`} className="rounded-xl border border-black/5 bg-slate-50 px-3 py-3">
-                          <p className="text-[12px] font-medium text-[#030213]">{item.role}</p>
+                          <p className="text-[12px] font-medium text-[#030213]">{formatAgentRoleLabel(item.role)}</p>
                           <p className="mt-1 text-[11px] text-[#717182]">
                             {item.targetVersion} • {item.rolledBackAt ? new Date(item.rolledBackAt).toLocaleString('ru') : 'время ожидается'}
                           </p>
@@ -1237,7 +1238,7 @@ export default function ControlTowerPage() {
                       {retirementArchive.slice(0, 4).map((item) => (
                         <div key={`${item.role}:${item.createdAt}:retired`} className="rounded-xl border border-red-200 bg-red-50 px-3 py-3">
                           <div className="flex items-center justify-between gap-3">
-                            <p className="text-[12px] font-medium text-[#030213]">{item.role}</p>
+                            <p className="text-[12px] font-medium text-[#030213]">{formatAgentRoleLabel(item.role)}</p>
                             <span className={clsx(
                               'inline-flex px-2 py-1 rounded text-[10px] font-medium uppercase tracking-widest border',
                               item.isActive
@@ -1247,7 +1248,7 @@ export default function ControlTowerPage() {
                               {item.isActive ? 'выведен' : 'снят'}
                             </span>
                           </div>
-                          <p className="mt-1 text-[11px] text-[#717182] leading-relaxed">{item.reason}</p>
+                          <p className="mt-1 text-[11px] text-[#717182] leading-relaxed">{formatControlTowerText(item.reason)}</p>
                           <p className="mt-2 text-[11px] text-[#717182] font-mono">
                             {new Date(item.createdAt).toLocaleString('ru-RU')}
                           </p>
@@ -1280,7 +1281,7 @@ export default function ControlTowerPage() {
                     <div key={`${item.role}:${item.createdAt}:${item.state}`} className="px-6 py-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[13px] font-medium text-[#030213]">{item.role}</span>
+                          <span className="text-[13px] font-medium text-[#030213]">{formatAgentRoleLabel(item.role)}</span>
                           <span className={clsx(
                             'inline-flex px-2.5 py-1 rounded text-[10px] font-medium uppercase tracking-widest border',
                             item.state === 'RETIRED'
@@ -1299,7 +1300,7 @@ export default function ControlTowerPage() {
                           </span>
                         </div>
                         <div className="mt-1 text-[12px] text-[#717182] leading-relaxed">
-                          {item.reason}
+                          {formatControlTowerText(item.reason)}
                         </div>
                       </div>
                       <div className="text-[11px] text-[#717182] font-mono lg:text-right">
@@ -1350,10 +1351,10 @@ export default function ControlTowerPage() {
                       {lifecycleAgents.map((agent) => (
                         <tr key={agent.role} className="hover:bg-slate-50/50 transition-colors">
                           <td className="px-6 py-4">
-                            <div className="text-[13px] font-medium text-[#030213]">{agent.role}</div>
-                            <div className="text-[11px] text-[#717182]">{agent.agentName}</div>
+                            <div className="text-[13px] font-medium text-[#030213]">{formatAgentRoleLabel(agent.role)}</div>
+                            <div className="text-[11px] text-[#717182]">{formatAgentRoleLabel(agent.agentName)}</div>
                           </td>
-                          <td className="px-6 py-4 text-[13px] text-[#030213]">{agent.ownerDomain}</td>
+                          <td className="px-6 py-4 text-[13px] text-[#030213]">{formatAgentRoleLabel(agent.ownerDomain)}</td>
                           <td className="px-6 py-4">
                             <span className={clsx(
                               'inline-flex px-2.5 py-1 rounded text-[10px] font-medium uppercase tracking-widest border',
@@ -1390,16 +1391,16 @@ export default function ControlTowerPage() {
                                       ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                       : 'bg-slate-100 text-slate-700 border-slate-200',
                               )}>
-                                {formatGovernanceKey(agent.versionDelta)}
+                                {formatGovernanceKeyLabel(agent.versionDelta)}
                               </span>
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="text-[11px] text-[#717182]">{agent.changeRequestStatus ? formatGovernanceKey(agent.changeRequestStatus) : 'без изменений'}</div>
+                            <div className="text-[11px] text-[#717182]">{agent.changeRequestStatus ? formatGovernanceKeyLabel(agent.changeRequestStatus) : 'без изменений'}</div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="text-[13px] font-mono text-[#030213]">{agent.canaryStatus ? formatGovernanceKey(agent.canaryStatus) : 'ожидание'}</div>
-                            <div className="text-[11px] text-[#717182]">{agent.rollbackStatus ? formatGovernanceKey(agent.rollbackStatus) : 'ожидание'}</div>
+                            <div className="text-[13px] font-mono text-[#030213]">{agent.canaryStatus ? formatGovernanceKeyLabel(agent.canaryStatus) : 'ожидание'}</div>
+                            <div className="text-[11px] text-[#717182]">{agent.rollbackStatus ? formatGovernanceKeyLabel(agent.rollbackStatus) : 'ожидание'}</div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-[13px] font-mono text-[#030213]">{agent.runtimeActive ? 'активно' : 'неактивно'}</div>
@@ -1410,7 +1411,7 @@ export default function ControlTowerPage() {
                               <div className="flex flex-wrap gap-2">
                                 {agent.notes.slice(0, 2).map((note) => (
                                   <span key={note} className="inline-flex px-2 py-1 rounded bg-slate-100 text-[10px] font-medium uppercase tracking-widest text-[#717182]">
-                                    {formatGovernanceKey(note)}
+                                    {formatGovernanceKeyLabel(note)}
                                   </span>
                                 ))}
                               </div>
@@ -1431,7 +1432,7 @@ export default function ControlTowerPage() {
                               <div className="mt-3 space-y-1">
                                 {agent.lineage.slice(0, 2).map((item) => (
                                   <div key={item.changeRequestId} className="text-[10px] text-[#717182] font-mono">
-                                    {item.targetVersion} • {formatGovernanceKey(item.status)}
+                                    {item.targetVersion} • {formatGovernanceKeyLabel(item.status)}
                                   </div>
                                 ))}
                               </div>
@@ -1669,7 +1670,7 @@ export default function ControlTowerPage() {
                   {runtimeGovernanceSummary.topFallbackReasons.length > 0 ? (
                     runtimeGovernanceSummary.topFallbackReasons.slice(0, 5).map((item) => (
                       <div key={item.fallbackReason} className="flex items-center justify-between py-2 border-b border-black/[0.03] last:border-0">
-                        <span className="text-[13px] text-[#030213] font-medium">{formatGovernanceKey(item.fallbackReason)}</span>
+                        <span className="text-[13px] text-[#030213] font-medium">{formatGovernanceKeyLabel(item.fallbackReason)}</span>
                         <span className="text-[13px] font-mono text-[#717182]">{item.count}</span>
                       </div>
                     ))
@@ -1684,9 +1685,9 @@ export default function ControlTowerPage() {
                         {runtimeGovernanceSummary.recentIncidents.slice(0, 3).map((incident) => (
                           <div key={incident.id} className="flex items-center justify-between gap-4">
                             <div className="min-w-0">
-                              <p className="text-[12px] font-medium text-[#030213] truncate">{incident.incidentType}</p>
+                              <p className="text-[12px] font-medium text-[#030213] truncate">{formatGovernanceKeyLabel(incident.incidentType)}</p>
                               <p className="text-[11px] text-[#717182] truncate">
-                                {incident.traceId ?? 'без трассы'} • {new Date(incident.createdAt).toLocaleString('ru')}
+                                Трасса скрыта • {new Date(incident.createdAt).toLocaleString('ru')}
                               </p>
                             </div>
                             <RiskBadge level={severityToRiskLevel(incident.severity)} />
@@ -1708,7 +1709,7 @@ export default function ControlTowerPage() {
                     runtimeGovernanceSummary.hottestAgents.map((agent) => (
                       <div key={agent.agentRole} className="flex items-center justify-between py-2 border-b border-black/[0.03] last:border-0">
                         <div>
-                          <p className="text-[13px] font-medium text-[#030213]">{agent.agentRole}</p>
+                          <p className="text-[13px] font-medium text-[#030213]">{formatAgentRoleLabel(agent.agentRole)}</p>
                           <p className="text-[11px] text-[#717182]">
                             резерв {formatPctOrPending(agent.fallbackRatePct)} • BS {formatPctOrPending(agent.avgBsScorePct)}
                           </p>
@@ -1730,7 +1731,7 @@ export default function ControlTowerPage() {
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-1">Расхождения роутинга</p>
-                    <h3 className="text-lg font-medium text-[#030213] tracking-tight">Текущие расхождения legacy и semantic routing</h3>
+                    <h3 className="text-lg font-medium text-[#030213] tracking-tight">Текущие расхождения наследованной и семантической маршрутизации</h3>
                   </div>
                   <div className="text-[12px] text-[#717182]">
                     {routingDivergence ? `${routingDivergence.totalEvents} событий / ${routingDivergence.windowHours} ч` : 'нет данных'}
@@ -1758,7 +1759,7 @@ export default function ControlTowerPage() {
                   status={!routingDivergence || routingDivergence.mismatchedEvents === 0 ? 'success' : 'warning'}
                 />
                 <DataStat
-                  label="Primary-путь"
+                  label="Основной путь"
                   value={routingDivergence ? `${routingDivergence.semanticPrimaryCount}` : '—'}
                   status={routingDivergence && routingDivergence.semanticPrimaryCount > 0 ? 'success' : 'neutral'}
                 />
@@ -1797,12 +1798,12 @@ export default function ControlTowerPage() {
                         <p className="mt-1 text-[11px] text-[#717182]">
                           {agent.topMismatchKinds.length
                             ? agent.topMismatchKinds.map((item) => `${item.kind} (${item.count})`).join(', ')
-                            : 'match'}
+                            : 'совпадение'}
                         </p>
                         {agent.sampleTraceId && (
                           <div className="mt-2 text-[11px] text-[#717182]">
                             <Link href={`/control-tower/trace/${agent.sampleTraceId}`} className="text-blue-600 hover:underline">
-                              {agent.sampleTraceId}
+                              Открыть пример трассы
                             </Link>
                             {agent.sampleQuery ? ` • ${agent.sampleQuery}` : ''}
                           </div>
@@ -1822,6 +1823,7 @@ export default function ControlTowerPage() {
                             <p className="text-[13px] font-medium text-[#030213] truncate">{cluster.label}</p>
                             <p className="text-[11px] text-[#717182] truncate">
                               {cluster.mismatchKinds.length ? cluster.mismatchKinds.join(', ') : 'match'}
+                              
                             </p>
                           </div>
                           <span className="text-[13px] font-mono text-[#030213]">{cluster.count}</span>
@@ -1829,7 +1831,7 @@ export default function ControlTowerPage() {
                         {cluster.sampleTraceId && (
                           <div className="mt-2 text-[11px] text-[#717182]">
                             <Link href={`/control-tower/trace/${cluster.sampleTraceId}`} className="text-blue-600 hover:underline">
-                              {cluster.sampleTraceId}
+                              Открыть пример трассы
                             </Link>
                             {cluster.sampleQuery ? ` • ${cluster.sampleQuery}` : ''}
                           </div>
@@ -1840,7 +1842,7 @@ export default function ControlTowerPage() {
                 </div>
 
                 <div>
-                  <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Последние конфликтные trace</p>
+                  <p className="text-[10px] font-medium uppercase tracking-widest text-[#717182] mb-3">Последние конфликтные трассы</p>
                   <div className="space-y-3">
                     {routingDivergence?.recentMismatches.length ? routingDivergence.recentMismatches.slice(0, 5).map((item) => (
                       <div key={`${item.traceId}:${item.createdAt}`} className="rounded-xl border border-black/5 bg-white px-4 py-3">
@@ -1850,14 +1852,14 @@ export default function ControlTowerPage() {
                               {item.traceId}
                             </Link>
                             <p className="text-[11px] text-[#717182]">
-                              {new Date(item.createdAt).toLocaleString('ru')} • {item.targetRole} • {item.summary}
+                              {new Date(item.createdAt).toLocaleString('ru')} • {formatAgentRoleLabel(item.targetRole)} • {formatControlTowerText(item.summary)}
                             </p>
                           </div>
                           <span className={clsx(
                             'rounded-full px-2 py-1 text-[10px] font-medium uppercase tracking-wide',
                             item.promotedPrimary ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700',
                           )}>
-                            {item.promotedPrimary ? 'primary' : 'shadow'}
+                            {item.promotedPrimary ? 'основной' : 'теневой'}
                           </span>
                         </div>
                         {item.sampleQuery && (
@@ -1900,7 +1902,7 @@ export default function ControlTowerPage() {
                       {cluster.sampleTraceId && (
                         <div className="mt-2 text-[11px] text-[#717182]">
                           <Link href={`/control-tower/trace/${cluster.sampleTraceId}`} className="text-blue-600 hover:underline">
-                            {cluster.sampleTraceId}
+                            Открыть пример трассы
                           </Link>
                           {cluster.sampleQuery ? ` • ${cluster.sampleQuery}` : ''}
                         </div>
@@ -1917,7 +1919,7 @@ export default function ControlTowerPage() {
                     <div key={candidate.key} className="rounded-xl border border-black/5 bg-white px-4 py-3">
                       <div className="flex items-center justify-between gap-4">
                         <div className="min-w-0">
-                          <p className="text-[13px] font-medium text-[#030213] truncate">{candidate.targetRole}</p>
+                          <p className="text-[13px] font-medium text-[#030213] truncate">{formatAgentRoleLabel(candidate.targetRole)}</p>
                           <p className="text-[11px] text-[#717182] truncate">
                             {candidate.decisionType} • {candidate.mismatchKinds.join(', ')}
                           </p>
@@ -1964,7 +1966,7 @@ export default function ControlTowerPage() {
                       {candidate.sampleTraceId && (
                         <div className="mt-2 text-[11px] text-[#717182]">
                           <Link href={`/control-tower/trace/${candidate.sampleTraceId}`} className="text-blue-600 hover:underline">
-                            {candidate.sampleTraceId}
+                            Открыть пример трассы
                           </Link>
                           {candidate.sampleQuery ? ` • ${candidate.sampleQuery}` : ''}
                         </div>
@@ -2025,7 +2027,7 @@ export default function ControlTowerPage() {
                       {runtimeGovernanceAgents.map((agent) => (
                         <tr key={agent.agentRole} className="hover:bg-slate-50/50 transition-colors">
                           <td className="px-6 py-4">
-                            <div className="text-[13px] font-medium text-[#030213]">{agent.agentRole}</div>
+                            <div className="text-[13px] font-medium text-[#030213]">{formatAgentRoleLabel(agent.agentRole)}</div>
                             <div className="text-[11px] text-[#717182]">{agent.executionCount} запусков • {agent.incidentCount} инцидентов</div>
                           </td>
                           <td className="px-6 py-4 text-[13px] font-mono text-[#030213]">{formatPctOrPending(agent.successRatePct)}</td>
@@ -2033,7 +2035,7 @@ export default function ControlTowerPage() {
                           <td className="px-6 py-4 text-[13px] font-mono text-[#030213]">{formatPctOrPending(agent.budgetDeniedRatePct)}</td>
                           <td className="px-6 py-4 text-[13px] font-mono text-[#030213]">{formatPctOrPending(agent.toolFailureRatePct)}</td>
                           <td className="px-6 py-4 text-[13px] font-mono text-[#030213]">
-                            {agent.p95LatencyMs === null ? 'ожидание' : `${agent.p95LatencyMs.toFixed(0)} ms`}
+                            {formatLatencyLabel(agent.p95LatencyMs)}
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-[13px] font-mono text-[#030213]">{formatPctOrPending(agent.avgBsScorePct)}</div>
@@ -2044,7 +2046,7 @@ export default function ControlTowerPage() {
                               'inline-flex px-2.5 py-1 rounded text-[10px] font-medium uppercase tracking-widest border',
                               recommendationBadgeClass(agent.lastRecommendation),
                             )}>
-                              {formatGovernanceKey(agent.lastRecommendation ?? 'NONE')}
+                              {formatGovernanceKeyLabel(agent.lastRecommendation ?? 'NONE')}
                             </span>
                           </td>
                         </tr>
@@ -2072,8 +2074,8 @@ export default function ControlTowerPage() {
                       runtimeGovernanceDrilldowns.fallbackHistory.slice(0, 8).map((item) => (
                         <div key={`${item.agentRole}:${item.fallbackReason}`} className="flex items-center justify-between py-2 border-b border-black/[0.03] last:border-0">
                           <div>
-                            <p className="text-[13px] font-medium text-[#030213]">{item.agentRole}</p>
-                            <p className="text-[11px] text-[#717182]">{formatGovernanceKey(item.fallbackReason)}</p>
+                            <p className="text-[13px] font-medium text-[#030213]">{formatAgentRoleLabel(item.agentRole)}</p>
+                            <p className="text-[11px] text-[#717182]">{formatGovernanceKeyLabel(item.fallbackReason)}</p>
                           </div>
                           <div className="text-right">
                             <p className="text-[13px] font-mono text-[#030213]">{item.count}</p>
@@ -2097,8 +2099,8 @@ export default function ControlTowerPage() {
                       runtimeGovernanceDrilldowns.budgetHotspots.slice(0, 8).map((item) => (
                         <div key={`${item.agentRole ?? 'unknown'}:${item.toolName}`} className="flex items-center justify-between py-2 border-b border-black/[0.03] last:border-0">
                           <div>
-                            <p className="text-[13px] font-medium text-[#030213]">{item.toolName}</p>
-                            <p className="text-[11px] text-[#717182]">{item.agentRole ?? 'неизвестно'}</p>
+                            <p className="text-[13px] font-medium text-[#030213]">{formatToolLabel(item.toolName)}</p>
+                            <p className="text-[11px] text-[#717182]">{formatAgentRoleLabel(item.agentRole ?? 'неизвестно')}</p>
                           </div>
                           <div className="text-right">
                             <p className="text-[13px] font-mono text-[#030213]">отказ {item.deniedCount} / деградация {item.degradedCount}</p>
@@ -2122,9 +2124,9 @@ export default function ControlTowerPage() {
                       runtimeGovernanceDrilldowns.qualityDriftHistory.slice(0, 8).map((item, index) => (
                         <div key={`${item.traceId ?? 'trace'}:${index}`} className="flex items-center justify-between py-2 border-b border-black/[0.03] last:border-0">
                           <div className="min-w-0">
-                            <p className="text-[13px] font-medium text-[#030213] truncate">{item.agentRole ?? 'неизвестно'}</p>
+                            <p className="text-[13px] font-medium text-[#030213] truncate">{formatAgentRoleLabel(item.agentRole ?? 'неизвестно')}</p>
                             <p className="text-[11px] text-[#717182] truncate">
-                              {item.traceId ?? 'без трассы'} • рек. {formatGovernanceKey(item.recommendationType ?? 'NONE')}
+                              Трасса скрыта • рек. {formatGovernanceKeyLabel(item.recommendationType ?? 'NONE')}
                             </p>
                           </div>
                           <div className="text-right">
@@ -2166,13 +2168,13 @@ export default function ControlTowerPage() {
                           {runtimeGovernanceDrilldowns.correlation.slice(0, 4).map((item, index) => (
                             <div key={`${item.traceId ?? 'trace'}:${index}`} className="rounded-xl border border-black/5 bg-slate-50 px-3 py-3">
                               <p className="text-[12px] font-medium text-[#030213]">
-                                {item.agentRole ?? 'неизвестно'} • {formatGovernanceKey(item.fallbackReason ?? 'NONE')}
+                                {formatAgentRoleLabel(item.agentRole ?? 'неизвестно')} • {formatGovernanceKeyLabel(item.fallbackReason ?? 'NONE')}
                               </p>
                               <p className="mt-1 text-[11px] text-[#717182]">
-                                рек. {formatGovernanceKey(item.recommendationType ?? 'NONE')} • инцидент {item.incidentType ?? 'нет'}
+                                рек. {formatGovernanceKeyLabel(item.recommendationType ?? 'NONE')} • инцидент {item.incidentType ?? 'нет'}
                               </p>
                               <p className="mt-1 text-[11px] text-[#717182]">
-                                {item.traceId ?? 'без трассы'} • {new Date(item.createdAt).toLocaleString('ru')}
+                                Трасса скрыта • {new Date(item.createdAt).toLocaleString('ru')}
                               </p>
                             </div>
                           ))}
@@ -2213,7 +2215,7 @@ export default function ControlTowerPage() {
                       <tr key={trace.traceId} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-6 py-4">
                           <Link href={`/control-tower/trace/${trace.traceId}`} className="text-[13px] font-mono text-blue-600 hover:underline block">
-                            {trace.traceId}
+                            Открыть трассу
                           </Link>
                           <span className="text-[11px] text-[#717182] mt-1 block">
                             {new Date(trace.createdAt).toLocaleString('ru')}
@@ -2263,13 +2265,13 @@ export default function ControlTowerPage() {
                     <tr key={`${item.traceId}:${item.phase}`} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-6 py-4">
                         <Link href={`/control-tower/trace/${item.traceId}`} className="text-[13px] font-mono text-blue-600 hover:underline block">
-                          {item.traceId}
+                          Открыть трассу
                         </Link>
                       </td>
-                      <td className="px-6 py-4 text-[13px] font-medium text-[#030213]">{item.phase}</td>
-                      <td className="px-6 py-4 text-[13px] font-mono text-[#030213]">{item.durationMs.toFixed(0)} ms</td>
+                      <td className="px-6 py-4 text-[13px] font-medium text-[#030213]">{formatToolLabel(item.phase)}</td>
+                      <td className="px-6 py-4 text-[13px] font-mono text-[#030213]">{formatLatencyLabel(item.durationMs)}</td>
                       <td className="px-6 py-4 text-[13px] font-mono text-[#717182]">
-                        {item.totalDurationMs === null ? 'ожидание' : `${item.totalDurationMs.toFixed(0)} ms`}
+                        {formatLatencyLabel(item.totalDurationMs)}
                       </td>
                     </tr>
                   ))}
@@ -2549,7 +2551,32 @@ function formatPctOrPending(value: number | null) {
 }
 
 function formatMsOrPending(value: number | null) {
-  return value === null ? 'ожидание' : `${value.toFixed(0)} ms`;
+  return formatLatencyLabel(value);
+}
+
+function formatControlTowerText(value?: string | null) {
+  if (!value) {
+    return 'Служебные детали скрыты';
+  }
+
+  const normalized = value.toLowerCase();
+
+  if (
+    value.includes('{') ||
+    value.includes('}') ||
+    value.includes('"') ||
+    value.includes('TRC-') ||
+    value.includes('TX-') ||
+    value.includes('tr_') ||
+    normalized.includes('partytype') ||
+    normalized.includes('jurisdiction') ||
+    normalized.includes('legal_entity') ||
+    normalized.includes('inn')
+  ) {
+    return 'Служебные детали скрыты';
+  }
+
+  return value;
 }
 
 function trustBudgetStatus(
@@ -2612,36 +2639,6 @@ function queuePressureStatus(
   return 'success';
 }
 
-function formatGovernanceKey(value: string) {
-  const dictionary: Record<string, string> = {
-    NONE: 'нет',
-    PENDING: 'ожидание',
-    APPROVED_FIRST: 'подтверждено 1/2',
-    APPROVED_FINAL: 'подтверждено финально',
-    REJECTED: 'отклонено',
-    EXPIRED: 'истекло',
-    AHEAD_OF_STABLE: 'выше стабильной версии',
-    ROLLED_BACK_TO_STABLE: 'откат к стабильной версии',
-    MATCHES_STABLE: 'совпадает со стабильной версией',
-    READY_FOR_CANARY: 'готово к канарейке',
-    CANARY_ACTIVE: 'канарейка активна',
-    APPROVED_FOR_PRODUCTION: 'подтверждено для продакшена',
-    PROMOTED: 'продвинуто в продакшен',
-    ROLLBACK_RECOMMENDED: 'рекомендован откат',
-    QUARANTINE_RECOMMENDED: 'рекомендован карантин',
-    REVIEW_REQUIRED: 'требуется проверка',
-    CONCURRENCY_TUNING_RECOMMENDED: 'рекомендована настройка параллельности',
-    BUDGET_TUNING_RECOMMENDED: 'рекомендована настройка бюджета',
-    ACTIVE: 'активно',
-    INACTIVE: 'неактивно',
-  };
-
-  const normalized = value.toUpperCase();
-  if (dictionary[normalized]) {
-    return dictionary[normalized];
-  }
-  return normalized.toLowerCase().replaceAll('_', ' ');
-}
 
 function formatLifecycleState(state: AgentLifecycleItemDto['lifecycleState']) {
   switch (state) {

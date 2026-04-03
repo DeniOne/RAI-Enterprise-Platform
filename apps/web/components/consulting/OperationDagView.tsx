@@ -3,6 +3,7 @@
 import React from 'react';
 import clsx from 'clsx';
 import type { Operation } from './TechMapWorkbench';
+import { formatStatusLabel } from '@/lib/ui-language';
 
 interface OperationDagViewProps {
     operations: Operation[];
@@ -64,7 +65,7 @@ export function OperationDagView({ operations, isFrozen }: OperationDagViewProps
                                 op.status === 'PENDING' && "border-amber-400 text-amber-500",
                                 op.status === 'DELAYED' && "border-red-500 text-red-600"
                             )}>
-                                {op.status}
+                                {formatStatusLabel(op.status)}
                             </span>
                         </div>
 
@@ -103,4 +104,3 @@ export function OperationDagView({ operations, isFrozen }: OperationDagViewProps
         </div>
     );
 }
-

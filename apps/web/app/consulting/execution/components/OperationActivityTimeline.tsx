@@ -5,6 +5,7 @@ import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Camera, CheckCircle2, ClipboardList, Link2, Loader2, Radar, ShieldAlert } from 'lucide-react';
 import { api } from '@/lib/api';
+import { formatChangeOrderTypeLabel, formatEvidenceTypeLabel, formatObservationTypeLabel, formatOutcomeLabel, formatSeverityLabel, formatStatusLabel } from '@/lib/ui-language';
 
 interface OperationActivityTimelineProps {
     operation: any;
@@ -14,13 +15,13 @@ interface OperationActivityTimelineProps {
 function buildRefLabel(kind: string, item: any) {
     switch (kind) {
         case 'decisionGate':
-            return `Gate ${item.id} • ${item.status}`;
+            return `Шлюз ${item.id} • ${formatStatusLabel(item.status)}`;
         case 'recommendation':
-            return `Recommendation ${item.id} • ${item.severity}`;
+            return `Рекомендация ${item.id} • ${formatSeverityLabel(item.severity)}`;
         case 'changeOrder':
-            return `ChangeOrder ${item.id} • ${item.status}`;
+            return `Изменение ${item.id} • ${formatStatusLabel(item.status)}`;
         case 'deviationReview':
-            return `Deviation ${item.id} • ${item.status}`;
+            return `Отклонение ${item.id} • ${formatStatusLabel(item.status)}`;
         default:
             return item.id;
     }
@@ -30,14 +31,14 @@ function buildRefBadge(kind: string, item: any) {
     switch (kind) {
         case 'changeOrder':
             return item.approvalSummary
-                ? `${item.approvalSummary.approved}/${item.approvalSummary.total} approved`
+                ? `согласовано ${item.approvalSummary.approved}/${item.approvalSummary.total}`
                 : null;
         case 'decisionGate':
-            return item.severity || null;
+            return item.severity ? formatSeverityLabel(item.severity) : null;
         case 'recommendation':
             return item.title || null;
         case 'deviationReview':
-            return item.severity || null;
+            return item.severity ? formatSeverityLabel(item.severity) : null;
         default:
             return null;
     }
@@ -82,19 +83,19 @@ export function OperationActivityTimeline({
             ? [{
                 id: `evidence-status:${operationId}`,
                 kind: 'evidence_status',
-                title: evidenceSummary.isComplete ? 'Evidence completeness: OK' : 'Evidence completeness: Pending',
+                title: evidenceSummary.isComplete ? 'Полнота подтверждений: подтверждено' : 'Полнота подтверждений: ожидание',
                 subtitle: evidenceSummary.isComplete
-                    ? `Все обязательные evidence прикреплены: ${(evidenceSummary.presentEvidenceTypes || []).join(', ') || 'none'}`
-                    : `Не хватает evidence: ${(evidenceSummary.missingEvidenceTypes || []).join(', ') || 'не определено'}`,
+                    ? `Все обязательные подтверждения прикреплены: ${(evidenceSummary.presentEvidenceTypes || []).map((item: string) => formatEvidenceTypeLabel(item)).join(', ') || 'нет'}`
+                    : `Не хватает подтверждений: ${(evidenceSummary.missingEvidenceTypes || []).map((item: string) => formatEvidenceTypeLabel(item)).join(', ') || 'не определено'}`,
                 timestamp: (operation?.evidence || [])[0]?.capturedAt || (operation?.evidence || [])[0]?.createdAt || operation?.plannedStartTime,
-                meta: evidenceSummary.isComplete ? 'OK' : 'Pending',
+                meta: evidenceSummary.isComplete ? 'Подтверждено' : 'Ожидание',
                 badges: [
                     evidenceSummary.requiredEvidenceTypes?.length
-                        ? `required ${evidenceSummary.requiredEvidenceTypes.length}`
-                        : 'required 0',
+                        ? `обязательных ${evidenceSummary.requiredEvidenceTypes.length}`
+                        : 'обязательных 0',
                     evidenceSummary.presentEvidenceTypes?.length
-                        ? `present ${evidenceSummary.presentEvidenceTypes.length}`
-                        : 'present 0',
+                        ? `прикреплено ${evidenceSummary.presentEvidenceTypes.length}`
+                        : 'прикреплено 0',
                 ],
             }]
             : [];
@@ -102,10 +103,10 @@ export function OperationActivityTimeline({
         const evidenceItems = (operation?.evidence || []).map((item: any) => ({
             id: `evidence:${item.id}`,
             kind: 'evidence',
-            title: `Evidence ${item.evidenceType}`,
+            title: `Подтверждение: ${formatEvidenceTypeLabel(item.evidenceType)}`,
             subtitle: item.fileUrl,
             timestamp: item.capturedAt || item.createdAt,
-            meta: item.evidenceType,
+            meta: formatEvidenceTypeLabel(item.evidenceType),
         }));
 
         const outcomeItems = (operation?.mapStage?.controlPoints || [])
@@ -113,10 +114,10 @@ export function OperationActivityTimeline({
                 (point.outcomeExplanations || []).map((outcome: any) => ({
                     id: `outcome:${outcome.id}`,
                     kind: 'outcome',
-                    title: `${point.name}: ${outcome.outcome}`,
-                    subtitle: clipText(outcome.summary, 'Control point outcome'),
+                    title: `${point.name}: ${formatOutcomeLabel(outcome.outcome)}`,
+                    subtitle: clipText(outcome.summary, 'Результат контрольной точки'),
                     timestamp: outcome.createdAt,
-                    meta: outcome.severity,
+                    meta: formatSeverityLabel(outcome.severity),
                     refs: techMapId
                         ? [
                             outcome.payload?.decisionGateId && gateById.get(outcome.payload.decisionGateId)
@@ -159,10 +160,10 @@ export function OperationActivityTimeline({
         const observationItems = (observations || []).map((item: any) => ({
             id: `observation:${item.id}`,
             kind: 'observation',
-            title: `Observation ${item.type}`,
+            title: `Наблюдение: ${formatObservationTypeLabel(item.type)}`,
             subtitle: clipText(item.content, item.photoUrl || item.voiceUrl || 'Полевой артефакт без текста'),
             timestamp: item.createdAt,
-            meta: item.integrityStatus,
+            meta: formatStatusLabel(item.integrityStatus),
         }));
 
         return [...evidenceStatusItems, ...observationItems, ...evidenceItems, ...outcomeItems]
@@ -201,7 +202,7 @@ export function OperationActivityTimeline({
         return (
             <div className="rounded-xl border border-black/5 bg-white p-4 text-xs text-slate-500 flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Загрузка execution timeline...
+                Загрузка ленты исполнения...
             </div>
         );
     }
@@ -209,7 +210,7 @@ export function OperationActivityTimeline({
     if (timeline.length === 0) {
         return (
             <div className="rounded-xl border border-black/5 bg-white p-4 text-xs text-slate-500">
-                Execution timeline пока пуст: ещё нет observations, evidence или control-point outcomes.
+                Лента исполнения пока пуста: ещё нет наблюдений, подтверждений или результатов контрольных точек.
             </div>
         );
     }
@@ -235,7 +236,7 @@ export function OperationActivityTimeline({
                             </span>
                             {item.kind === 'observation' && (
                                 <span className="rounded-full bg-sky-50 px-2.5 py-1 text-[10px] font-medium text-sky-700 border border-sky-100">
-                                    field-observation
+                                    полевое наблюдение
                                 </span>
                             )}
                             {item.kind === 'evidence_status' && (
@@ -243,7 +244,7 @@ export function OperationActivityTimeline({
                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
                                     : 'bg-amber-50 text-amber-700 border-amber-100'
                                     }`}>
-                                    evidence-gate
+                                    контроль подтверждений
                                 </span>
                             )}
                             {Array.isArray((item as any).badges) && (item as any).badges.map((badge: string) => (

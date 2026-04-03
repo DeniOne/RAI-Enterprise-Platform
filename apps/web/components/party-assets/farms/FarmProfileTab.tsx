@@ -1,11 +1,12 @@
 import { FarmDto } from '@/shared/types/party-assets';
+import { formatStatusLabel } from '@/lib/ui-language';
 
 export function FarmProfileTab({ farm }: { farm: FarmDto }) {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <Field label="Наименование" value={farm.name} />
       <Field label="Регион" value={farm.regionCode || '—'} />
-      <Field label="Статус" value={farm.status} />
+      <Field label="Статус" value={formatStatusLabel(farm.status)} />
       <Field label="Холдинг (вычисляемое)" value={farm.holdingDerivedName || '—'} />
     </div>
   );

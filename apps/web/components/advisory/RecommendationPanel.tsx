@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui";
+import { formatStatusLabel } from "@/lib/ui-language";
 
 export interface AdvisoryRecommendation {
   traceId: string;
@@ -26,6 +27,18 @@ interface RecommendationPanelProps {
   initialRecommendations: AdvisoryRecommendation[];
 }
 
+const RECOMMENDATION_LABELS: Record<AdvisoryRecommendation["recommendation"], string> = {
+  ALLOW: "Подтвердить",
+  REVIEW: "Передать на проверку",
+  BLOCK: "Заблокировать",
+};
+
+const SIGNAL_TYPE_LABELS: Record<AdvisoryRecommendation["signalType"], string> = {
+  OPERATION: "Операционный сигнал",
+  SATELLITE: "Спутниковый сигнал",
+  VISION: "Визуальный сигнал",
+};
+
 export function RecommendationPanel({ initialRecommendations }: RecommendationPanelProps) {
   const [items, setItems] = useState<AdvisoryRecommendation[]>(initialRecommendations);
   const [busyTraceId, setBusyTraceId] = useState<string | null>(null);
@@ -41,11 +54,11 @@ export function RecommendationPanel({ initialRecommendations }: RecommendationPa
         method: "POST",
       });
       if (!response.ok) {
-        throw new Error("accept failed");
+        throw new Error("Не удалось подтвердить рекомендацию");
       }
       setItems((prev) => prev.filter((item) => item.traceId !== traceId));
     } catch (error) {
-      console.error("Failed to accept advisory", error);
+      console.error("Не удалось подтвердить рекомендацию рекомендательного контура", error);
       alert("Не удалось подтвердить рекомендацию.");
     } finally {
       setBusyTraceId(null);
@@ -64,7 +77,7 @@ export function RecommendationPanel({ initialRecommendations }: RecommendationPa
         body: JSON.stringify(reason ? { reason } : {}),
       });
       if (!rejectResponse.ok) {
-        throw new Error("reject failed");
+        throw new Error("Не удалось отклонить рекомендацию");
       }
 
       if (reason) {
@@ -74,13 +87,13 @@ export function RecommendationPanel({ initialRecommendations }: RecommendationPa
           body: JSON.stringify({ reason, outcome: outcome || undefined }),
         });
         if (!feedbackResponse.ok) {
-          throw new Error("feedback failed");
+          throw new Error("Не удалось сохранить обратную связь");
         }
       }
 
       setItems((prev) => prev.filter((item) => item.traceId !== traceId));
     } catch (error) {
-      console.error("Failed to reject advisory", error);
+      console.error("Не удалось отклонить рекомендацию рекомендательного контура", error);
       alert("Не удалось отклонить рекомендацию.");
     } finally {
       setBusyTraceId(null);
@@ -89,7 +102,7 @@ export function RecommendationPanel({ initialRecommendations }: RecommendationPa
 
   return (
     <Card className="rounded-2xl">
-      <h2 className="text-xl font-medium mb-4">Рекомендации Advisory</h2>
+      <h2 className="text-xl font-medium mb-4">Рекомендации рекомендательного контура</h2>
 
       {isEmpty ? (
         <p className="text-sm text-gray-500">Нет активных рекомендаций.</p>
@@ -101,7 +114,9 @@ export function RecommendationPanel({ initialRecommendations }: RecommendationPa
               <div key={item.traceId} className="border border-black/10 rounded-2xl p-4 space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-medium">{item.recommendation} · {item.signalType}</p>
+                    <p className="text-sm font-medium">
+                      {RECOMMENDATION_LABELS[item.recommendation]} · {SIGNAL_TYPE_LABELS[item.signalType]}
+                    </p>
                     <p className="text-xs text-gray-500">traceId: {item.traceId}</p>
                   </div>
                   <p className="text-sm">{(item.confidence * 100).toFixed(1)}%</p>
@@ -120,6 +135,8 @@ export function RecommendationPanel({ initialRecommendations }: RecommendationPa
                   ))}
                 </div>
 
+                <p className="text-xs text-gray-500">Статус: {formatStatusLabel(item.status)}</p>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <input
                     className="px-3 py-2 rounded-xl border border-black/10 text-sm"
@@ -133,7 +150,7 @@ export function RecommendationPanel({ initialRecommendations }: RecommendationPa
                   />
                   <input
                     className="px-3 py-2 rounded-xl border border-black/10 text-sm"
-                    placeholder="Post-fact outcome (опционально)"
+                    placeholder="Результат по факту (необязательно)"
                     value={outcomeByTraceId[item.traceId] || ""}
                     onChange={(event) => {
                       const value = event.target.value;

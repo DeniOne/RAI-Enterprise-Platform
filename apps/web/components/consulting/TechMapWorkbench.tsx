@@ -8,6 +8,7 @@ import { AuthorityContextType } from '@/core/governance/AuthorityContext';
 import { OperationDagView } from './OperationDagView';
 import { EvidencePanel } from './EvidencePanel';
 import { ChangeOrderPanel } from './ChangeOrderPanel';
+import { formatStatusLabel } from '@/lib/ui-language';
 
 export interface OperationDependency {
     operationId: string;
@@ -94,7 +95,7 @@ export function TechMapWorkbench({ techMap, authority, context }: TechMapWorkben
                                 isFrozen ? 'bg-blue-500 animate-pulse' : 'bg-green-500'
                             )} />
                             <span className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">
-                                Status: {techMap.status}
+                                Статус: {formatStatusLabel(techMap.status)}
                             </span>
                         </div>
 
@@ -109,7 +110,7 @@ export function TechMapWorkbench({ techMap, authority, context }: TechMapWorkben
 
                         {techMap.trustScore !== undefined && (
                             <div className="flex items-center space-x-1 px-2 py-0.5 bg-gray-100 rounded-lg">
-                                <span className="text-[10px] text-gray-500 uppercase">Trust:</span>
+                                <span className="text-[10px] text-gray-500 uppercase">Доверие:</span>
                                 <span className="text-[10px] text-emerald-600">
                                     {(techMap.trustScore * 100).toFixed(0)}%
                                 </span>
@@ -141,7 +142,7 @@ export function TechMapWorkbench({ techMap, authority, context }: TechMapWorkben
                         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                         </svg>
-                        <span>Emergency Mode: SRI Degrading</span>
+                        <span>Аварийный режим: деградация SRI</span>
                     </div>
                 )}
 
@@ -163,7 +164,7 @@ export function TechMapWorkbench({ techMap, authority, context }: TechMapWorkben
 
                     {isFrozen && (
                         <div className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-medium uppercase border border-blue-100">
-                            Immutable Snapshot
+                            Неизменяемый снимок
                         </div>
                     )}
                 </div>
@@ -222,7 +223,7 @@ export function TechMapWorkbench({ techMap, authority, context }: TechMapWorkben
                                 )}
                             </div>
                         </div>
-                        <span className="text-[10px] font-medium text-gray-300 uppercase tracking-tighter">Phase 1</span>
+                        <span className="text-[10px] font-medium text-gray-300 uppercase tracking-tighter">Фаза 1</span>
                     </div>
                 ))}
 

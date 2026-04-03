@@ -29,8 +29,10 @@ describe('WorkSurface integrity freeze', () => {
         );
 
         expect(screen.getByTestId('integrity-freeze-overlay')).toBeInTheDocument();
-        expect(screen.getByText(/Ledger mismatch detected/i)).toBeInTheDocument();
-        const replayLink = screen.getByRole('link', { name: /Open Trace Replay/i });
+        expect(
+            screen.getByText(/Активирована блокировка целостности/i),
+        ).toBeInTheDocument();
+        const replayLink = screen.getByRole('link', { name: /Открыть проверку трассировки/i });
         expect(replayLink).toHaveAttribute('href', '/forensics/replay?traceId=TX-TEST-1');
     });
 });

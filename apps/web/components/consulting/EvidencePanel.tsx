@@ -3,6 +3,7 @@
 import React, { useRef, useState } from 'react';
 import clsx from 'clsx';
 import type { Operation } from './TechMapWorkbench';
+import { formatEvidenceTypeLabel } from '@/lib/ui-language';
 
 interface EvidencePanelProps {
     operations: Operation[];
@@ -51,7 +52,7 @@ export function EvidencePanel({ operations, isFrozen }: EvidencePanelProps) {
             });
 
             if (!response.ok) {
-                throw new Error('Upload failed');
+                throw new Error('Не удалось загрузить подтверждение');
             }
         } catch {
             setError('Не удалось загрузить доказательство. Повторите попытку позже.');
@@ -125,9 +126,9 @@ export function EvidencePanel({ operations, isFrozen }: EvidencePanelProps) {
                             <div className="pl-1 space-y-1">
                                 {op.evidences.map((ev) => (
                                     <div key={ev.id} className="flex items-center gap-2 text-[11px] text-gray-600">
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
-                                            {ev.evidenceType}
-                                        </span>
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
+                                            {formatEvidenceTypeLabel(ev.evidenceType)}
+                                            </span>
                                         <span>
                                             {new Date(ev.capturedAt).toLocaleDateString()}
                                         </span>
@@ -151,4 +152,3 @@ export function EvidencePanel({ operations, isFrozen }: EvidencePanelProps) {
         </div>
     );
 }
-

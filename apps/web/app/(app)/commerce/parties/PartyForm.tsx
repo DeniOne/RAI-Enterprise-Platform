@@ -335,7 +335,7 @@ export function PartyForm({
                                     <input {...register(`registrationData.contacts.${index}.phones`)} className="w-full border border-black/10 rounded-lg px-4 py-2 text-sm" placeholder="Телефоны" />
                                 </div>
                                 <div>
-                                    <input {...register(`registrationData.contacts.${index}.email`)} className="w-full border border-black/10 rounded-lg px-4 py-2 text-sm" placeholder="Email" />
+                                    <input {...register(`registrationData.contacts.${index}.email`)} className="w-full border border-black/10 rounded-lg px-4 py-2 text-sm" placeholder="Электронная почта" />
                                     {errors.registrationData?.contacts?.[index]?.email && <span className="text-red-500 text-xs">{errors.registrationData.contacts[index]?.email?.message}</span>}
                                 </div>
                             </div>

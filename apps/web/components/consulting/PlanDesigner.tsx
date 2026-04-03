@@ -4,6 +4,7 @@ import React from 'react';
 import { HarvestPlanStatus, getHarvestPlanPermissions } from '@/lib/consulting/ui-policy';
 import { ActionGuard } from './ActionGuard';
 import { AuthorityContextType } from '@/core/governance/AuthorityContext';
+import { formatStatusLabel } from '@/lib/ui-language';
 
 interface PlanData {
     id: string;
@@ -38,7 +39,7 @@ export function PlanDesigner({ plan, authority, onUpdate, onAction }: PlanDesign
                     <div className="flex items-center space-x-3">
                         <h2 className="text-xl font-bold text-gray-900">Дизайнер Плана</h2>
                         <span className="px-3 py-1 bg-black text-white text-[10px] font-bold uppercase rounded-full">
-                            {plan.status}
+                            {formatStatusLabel(plan.status)}
                         </span>
                     </div>
                     <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest font-medium">

@@ -7,6 +7,7 @@ import { GovernanceBar } from '@/shared/components/GovernanceBar';
 import { WorkSurface } from '@/shared/components/WorkSurface';
 import { LeftRaiChatDock } from '@/components/ai-chat/LeftRaiChatDock';
 import { RaiOutputOverlay } from '@/components/ai-chat/RaiOutputOverlay';
+import { useAiChatStore } from '@/lib/stores/ai-chat-store';
 
 interface AppShellProps {
     children: React.ReactNode;
@@ -18,6 +19,9 @@ export function AppShell({ children, role, isExternalFrontOffice }: AppShellProp
     const { currentRole } = useAuthPrincipalStore();
     const effectiveRole = role ?? currentRole;
     const externalContour = isExternalFrontOffice || effectiveRole === 'FRONT_OFFICE_USER';
+    const { chatWidth, fsmState } = useAiChatStore();
+    const chatDockVisible = fsmState !== 'closed';
+    const contentOffset = chatDockVisible ? chatWidth + 32 + 24 : 32;
 
     if (externalContour) {
         return (
@@ -34,8 +38,8 @@ export function AppShell({ children, role, isExternalFrontOffice }: AppShellProp
     return (
         <div className="h-screen overflow-hidden bg-[#FAFAFA] text-[#171717]">
             <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-                <GovernanceBar />
-                <TopNav role={effectiveRole} />
+                <GovernanceBar contentOffset={contentOffset} />
+                <TopNav role={effectiveRole} contentOffset={contentOffset} />
                 <WorkSurface>
                     <div className="flex items-start gap-6">
                         <LeftRaiChatDock />

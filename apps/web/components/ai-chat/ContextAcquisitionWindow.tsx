@@ -60,7 +60,7 @@ export function ContextAcquisitionWindow({
             <div className="border-b border-black/10 bg-[#FCFBF8] px-6 py-5">
                 <div className="flex items-start justify-between gap-4">
                     <div>
-                        <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-400">RAI вывод</div>
+                        <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-400">Вывод системы</div>
                         <h2 className="text-lg font-medium text-gray-950">{window.title}</h2>
                         <p className="text-sm text-gray-500">{window.payload.summary}</p>
                         {sourceMessage ? (

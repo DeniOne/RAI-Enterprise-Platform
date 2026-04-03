@@ -101,7 +101,7 @@ export const AIRecommendationBlock: React.FC<AIRecommendationBlockProps> = ({
         <div className={clsx('mt-2 rounded-2xl border border-white/20 bg-white/40 p-3 text-left backdrop-blur-sm', className)}>
             <div className="flex items-center justify-between gap-2">
                 <div>
-                    <p className="text-xs font-semibold text-gray-900">{explainability.verdict}</p>
+                    <p className="text-xs font-semibold text-gray-900">{formatStatusLabel(explainability.verdict)}</p>
                     <p className="text-[11px] text-gray-600">Уверенность: {formatConfidence(explainability.confidence)}</p>
                 </div>
                 <span className={clsx('rounded-full border px-2 py-0.5 text-[10px] font-medium', traceStatus === 'PENDING' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700')}>
@@ -110,7 +110,7 @@ export const AIRecommendationBlock: React.FC<AIRecommendationBlockProps> = ({
             </div>
 
             <p className="mt-2 text-[11px] text-gray-600">
-                Рекомендация AI носит консультативный характер. Финальное решение принимает контур управления.
+                Рекомендация ИИ носит консультативный характер. Финальное решение принимает контур управления.
             </p>
 
             <div className="mt-3 flex items-center gap-2">
@@ -154,10 +154,10 @@ export const AIRecommendationBlock: React.FC<AIRecommendationBlockProps> = ({
             {forensicOpen && (
                 <div className="mt-3 rounded-lg border border-gray-300 bg-white p-3 font-mono text-[11px] text-gray-900">
                     {!hasForensicAccess && (
-                        <p className="text-xs text-gray-700">Детализированный forensic-слой доступен только при наличии права подписи или override.</p>
+                        <p className="text-xs text-gray-700">Детализированный слой разбора доступен только при наличии права подписи или ручного переопределения.</p>
                     )}
                     {hasForensicAccess && !explainability.forensic && (
-                        <p className="text-xs text-gray-700">Forensic-метаданные недоступны.</p>
+                        <p className="text-xs text-gray-700">Метаданные разбора недоступны.</p>
                     )}
                     {hasForensicAccess && explainability.forensic && (
                         <div className="space-y-2">

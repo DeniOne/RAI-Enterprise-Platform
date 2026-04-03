@@ -70,11 +70,11 @@ const EVIDENCE_TEMPLATE_SOURCES: Record<string, string> = {
 const EVIDENCE_SOURCE_ACTIONS: Record<string, { label: string; description: string }> = {
     PHOTO: {
         label: 'Открыть камеру',
-        description: 'Запустить capture-flow для полевого фото.',
+        description: 'Запустить сценарий захвата для полевого фото.',
     },
     VIDEO: {
         label: 'Открыть видео',
-        description: 'Запустить capture-flow для видеозаписи.',
+        description: 'Запустить сценарий захвата для видеозаписи.',
     },
     GEO_TRACK: {
         label: 'Открыть геомаршрут',
@@ -422,7 +422,7 @@ export function OperationEvidencePanel({
             timeoutId = window.setTimeout(() => {
                 markSettled({
                     tone: 'warning',
-                    message: 'Автозапуск не подтверждён. Продолжайте вручную по подставленному маршруту в поле source URL.',
+                    message: 'Автозапуск не подтверждён. Продолжайте вручную по подставленному маршруту в поле итогового адреса.',
                 });
             }, 1400);
 
@@ -443,7 +443,7 @@ export function OperationEvidencePanel({
         if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
             setCopyRouteStatus({
                 tone: 'warning',
-                message: 'Clipboard API недоступен. Скопируйте маршрут вручную из поля source URL.',
+                message: 'Буфер обмена недоступен. Скопируйте маршрут вручную из поля итогового адреса.',
             });
             return;
         }
@@ -457,7 +457,7 @@ export function OperationEvidencePanel({
         } catch {
             setCopyRouteStatus({
                 tone: 'warning',
-                message: 'Не удалось скопировать автоматически. Скопируйте маршрут вручную из поля source URL.',
+                message: 'Не удалось скопировать автоматически. Скопируйте маршрут вручную из поля итогового адреса.',
             });
         }
     };
@@ -931,7 +931,7 @@ export function OperationEvidencePanel({
                                     </p>
                                     <div className="mt-2 space-y-2 text-xs text-amber-700">
                                         <p>1. Откройте QR на мобильном устройстве или полевом терминале.</p>
-                                        <p>2. Завершите capture во внешнем инструменте по открытому маршруту.</p>
+                                        <p>2. Завершите сбор подтверждения во внешнем инструменте по открытому маршруту.</p>
                                         <p>3. Вернитесь в эту форму и прикрепите полученный URL как подтверждение.</p>
                                     </div>
                                 </div>

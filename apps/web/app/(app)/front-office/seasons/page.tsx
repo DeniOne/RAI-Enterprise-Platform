@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Card } from "@/components/ui";
 import { frontOfficeServerApi } from "@/lib/api/front-office-server";
+import { formatStatusLabel } from "@/lib/ui-language";
 
 export default async function FrontOfficeSeasonsPage() {
   const seasons = await frontOfficeServerApi.seasons().catch(() => []);
@@ -8,7 +9,7 @@ export default async function FrontOfficeSeasonsPage() {
   return (
     <Card>
       <h2 className="text-lg font-medium text-gray-900">Сезоны</h2>
-      <p className="mt-1 text-sm text-gray-500">Текущие и исторические сезоны с привязкой к полю и orchestrator history.</p>
+      <p className="mt-1 text-sm text-gray-500">Текущие и исторические сезоны с привязкой к полю и истории оркестрации.</p>
       <div className="mt-6 space-y-3">
         {seasons.length === 0 ? (
           <p className="text-sm text-gray-500">Сезоны не найдены.</p>
@@ -22,7 +23,7 @@ export default async function FrontOfficeSeasonsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-900">Сезон {season.year}</p>
-                  <p className="mt-1 text-xs text-gray-500">{season.status}</p>
+                  <p className="mt-1 text-xs text-gray-500">{formatStatusLabel(season.status)}</p>
                 </div>
                 <span className="text-xs text-gray-400">Открыть</span>
               </div>

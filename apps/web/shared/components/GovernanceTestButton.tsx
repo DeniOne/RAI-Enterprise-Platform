@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { formatStatusLabel } from '@/lib/ui-language';
 
 /**
  * @function cn
@@ -146,7 +147,7 @@ export const GovernanceTestButton: React.FC = () => {
                                 state === 'executed' ? "bg-emerald-50 border-emerald-500 text-emerald-600" :
                                     "bg-black/5 border-black/10 text-black"
                 )}>
-                    {state === 'executed' ? 'Сессия завершена' : `FSM: ${String(state).toUpperCase()}`}
+                    {state === 'executed' ? 'Сессия завершена' : `Состояние: ${formatStatusLabel(String(state))}`}
                 </div>
             </div>
 

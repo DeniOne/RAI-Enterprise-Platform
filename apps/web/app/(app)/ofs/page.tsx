@@ -22,7 +22,7 @@ export default function OFSPage() {
 
             <Card className="min-h-[300px] flex items-center justify-center border-dashed">
                 <p className="text-sm text-gray-400 uppercase tracking-widest font-medium">
-                    Content Placeholder // Phase Beta
+                    Раздел находится в подготовке
                 </p>
             </Card>
         </div>

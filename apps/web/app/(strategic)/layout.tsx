@@ -24,21 +24,21 @@ export default function StrategicLayout({
                     <div className="max-w-screen-2xl mx-auto flex justify-between items-end">
                         <div>
                             <Link href="/strategic" className="text-sm tracking-[0.2em] font-medium uppercase opacity-80 hover:opacity-100 transition-opacity">
-                                RAI_EP // Strategic Projection
+                                RAI_EP // Стратегическая проекция
                             </Link>
                             <div className="text-[10px] uppercase tracking-widest opacity-40 mt-1">
-                                Phase Beta / Normative: Front Canon
+                                Бета-фаза / нормативный фронт
                             </div>
                         </div>
 
                         <div className="flex flex-col items-end gap-1">
                             <div className="text-[10px] uppercase tracking-widest opacity-40">
-                                Data as of: <span className="text-white/60">{timestamp}</span>
+                                Данные на: <span className="text-white/60">{timestamp}</span>
                             </div>
                             <div className="flex gap-4">
                                 <form action="/api/auth/logout" method="POST" className="pointer-events-auto">
                                     <button type="submit" className="text-[10px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity">
-                                        Logout
+                                        Выход
                                     </button>
                                 </form>
                             </div>
@@ -57,8 +57,8 @@ export default function StrategicLayout({
                 {/* Footer info */}
                 <footer className="fixed bottom-0 left-0 right-0 p-6 pointer-events-none">
                     <div className="max-w-screen-2xl mx-auto flex justify-between items-center text-[10px] uppercase tracking-widest opacity-20">
-                        <div>System Integrity: Verified</div>
-                        <div>Authurized Access Only</div>
+                        <div>Целостность системы: подтверждена</div>
+                        <div>Только для авторизованного доступа</div>
                     </div>
                 </footer>
             </div>

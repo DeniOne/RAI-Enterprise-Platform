@@ -319,7 +319,7 @@ export default function KnowledgeFabricContent({ graph }: KnowledgePageProps) {
 
                         <div className="pt-8 border-t border-black/5">
                             <div className="flex justify-between items-center mb-6">
-                                <label className="text-[10px] uppercase tracking-[0.2em] text-[#717182] font-medium">Semantic Relations</label>
+                                <label className="text-[10px] uppercase tracking-[0.2em] text-[#717182] font-medium">Семантические связи</label>
                                 <div className="h-px flex-1 mx-4 bg-black/5" />
                                 <Share2 className="h-3.5 w-3.5 text-indigo-600" />
                             </div>
@@ -341,7 +341,7 @@ export default function KnowledgeFabricContent({ graph }: KnowledgePageProps) {
                                 {graph.links.filter(l => l.source !== selectedNode.id && l.target !== selectedNode.id).length > 0 &&
                                     graph.links.filter(l => l.source === selectedNode.id || l.target === selectedNode.id).length === 0 && (
                                         <div className="text-center py-4 bg-[#F3F3F5] rounded-xl border border-black/5">
-                                            <span className="text-xs text-[#717182] italic">No active relations found</span>
+                                            <span className="text-xs italic text-[#717182]">Активные связи не найдены</span>
                                         </div>
                                     )}
                             </div>

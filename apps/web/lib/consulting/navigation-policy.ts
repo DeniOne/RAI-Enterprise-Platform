@@ -64,8 +64,8 @@ export const CONSULTING_NAVIGATION: NavItem[] = [
                 domain: 'crop',
                 roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'],
                 subItems: [
-                    { id: 'farms', label: 'Реестр хозяйств', path: '/assets/farms', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
                     { id: 'counterparties', label: 'Контрагенты', path: '/parties', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
+                    { id: 'farms', label: 'Реестр хозяйств', path: '/assets/farms', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
                     { id: 'fields', label: 'Поля', path: '/assets/fields', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
                     { id: 'objects', label: 'Объекты', path: '/assets/objects', domain: 'crop', roles: ['ADMIN', 'CEO', 'MANAGER', 'AGRONOMIST', 'SYSTEM_ADMIN', 'FOUNDER'] },
                 ]

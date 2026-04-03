@@ -8,8 +8,8 @@ import { BankAccountSchema, PartyFullProfileValues } from '@/shared/lib/party-sc
 import { useEditMode } from '@/components/party-assets/common/DataField';
 import { SidePanelForm } from '@/components/party-assets/common/SidePanelForm';
 import { cn } from '@/lib/utils';
-import { partyAssetsApi } from '@/lib/party-assets-api';
 import { formatStatusLabel } from '@/lib/ui-language';
+import { partyAssetsApi } from '@/lib/party-assets-api';
 import { getBankLookupReferenceMismatches } from '@/shared/lib/party-bank-validation';
 
 export function PartyBankAccountsTab() {
@@ -78,7 +78,7 @@ export function PartyBankAccountsTab() {
                         <thead>
                             <tr className="border-b border-black/5 bg-gray-50/50">
                                 <th className="px-6 py-3 font-semibold text-gray-500 uppercase tracking-wider text-[10px] w-[25%] transition-colors">Банк</th>
-                                <th className="px-6 py-3 font-semibold text-gray-500 uppercase tracking-wider text-[10px] w-[30%] transition-colors">IBAN / Номер счета</th>
+                                <th className="px-6 py-3 font-semibold text-gray-500 uppercase tracking-wider text-[10px] w-[30%] transition-colors">Номер счёта</th>
                                 <th className="px-6 py-3 font-semibold text-gray-500 uppercase tracking-wider text-[10px] w-[15%] transition-colors">БИК</th>
                                 <th className="px-6 py-3 font-semibold text-gray-500 uppercase tracking-wider text-[10px] w-[10%] transition-colors">Валюта</th>
                                 <th className="px-6 py-3 font-semibold text-gray-500 uppercase tracking-wider text-[10px] w-[10%] transition-colors text-center">Статус</th>
@@ -587,7 +587,7 @@ function BankAccountDrawer({ open, onClose, onSave, initialData }: {
                                 {data.status ? (
                                     <div>
                                         <span className="text-gray-500">Статус: </span>
-                                        <span className="font-medium">{data.status === 'ACTIVE' ? 'ACTIVE / Банк действует' : data.status}</span>
+                                        <span className="font-medium">{data.status === 'ACTIVE' ? 'Банк действует' : formatStatusLabel(data.status)}</span>
                                     </div>
                                 ) : null}
                                 {(data.inn || data.kpp) ? (

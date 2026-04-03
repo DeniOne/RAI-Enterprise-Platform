@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { OperationActivityTimeline } from './OperationActivityTimeline';
 import { EvidenceGuardBanner } from './EvidenceGuardBanner';
+import { formatEvidenceTypeLabel, formatResourceUnitLabel, formatSeverityLabel } from '@/lib/ui-language';
 
 interface ExecutionCardProps {
     operation: any;
@@ -88,7 +89,7 @@ export const ExecutionCard: React.FC<ExecutionCardProps> = ({ operation, onStart
                 {operation.resources?.map((res: any) => (
                     <div key={res.id} className="flex justify-between text-[11px] py-1 border-b border-black/[0.03] last:border-0 text-slate-600">
                         <span className="font-normal">{res.name}</span>
-                        <span className="font-medium text-slate-900">{res.amount || res.plannedAmount} {res.unit}</span>
+                        <span className="font-medium text-slate-900">{res.amount || res.plannedAmount} {formatResourceUnitLabel(res.unit)}</span>
                     </div>
                 ))}
             </div>
@@ -97,11 +98,11 @@ export const ExecutionCard: React.FC<ExecutionCardProps> = ({ operation, onStart
                 <div className="mb-5 rounded-xl border border-amber-100 bg-amber-50/70 p-3">
                     <div className="flex items-center justify-between gap-3">
                         <p className="text-[11px] font-medium uppercase tracking-wider text-amber-700">
-                            Control points: {controlPoints.length}
+                            Контрольные точки: {controlPoints.length}
                         </p>
                         {latestControlPointOutcome && (
                             <span className="text-[10px] text-slate-600">
-                                {latestControlPointOutcome.severity}: {latestControlPointOutcome.summary}
+                                {formatSeverityLabel(latestControlPointOutcome.severity)}: {latestControlPointOutcome.summary}
                             </span>
                         )}
                     </div>
@@ -118,17 +119,17 @@ export const ExecutionCard: React.FC<ExecutionCardProps> = ({ operation, onStart
             {(openGates.length > 0 || pendingChangeOrders.length > 0) && (
                 <div className="mb-5 rounded-xl border border-indigo-100 bg-indigo-50/70 p-3">
                     <p className="text-[11px] font-medium uppercase tracking-wider text-indigo-700">
-                        Governance summary
+                        Сводка согласований
                     </p>
                     <div className="mt-2 flex flex-wrap gap-2">
                         {openGates.length > 0 && (
                             <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-indigo-700 border border-indigo-100">
-                                open gates: {openGates.length}
+                                открытых шлюзов: {openGates.length}
                             </span>
                         )}
                         {pendingChangeOrders.map((changeOrder: any) => (
                             <span key={changeOrder.id} className="rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-indigo-700 border border-indigo-100">
-                                {changeOrder.id}: {changeOrder.approvalSummary?.approved || 0}/{changeOrder.approvalSummary?.total || 0} approved
+                                {changeOrder.id}: согласовано {changeOrder.approvalSummary?.approved || 0}/{changeOrder.approvalSummary?.total || 0}
                             </span>
                         ))}
                     </div>
@@ -138,11 +139,11 @@ export const ExecutionCard: React.FC<ExecutionCardProps> = ({ operation, onStart
             {evidenceSummary && (
                 <div className="mb-5">
                     <EvidenceGuardBanner
-                        title="Evidence summary"
+                        title="Сводка подтверждений"
                         isBlocking={!evidenceSummary.isComplete}
-                        readyText="Evidence готов для governed closure по операции."
-                        blockedText="Есть missing evidence, которые могут заблокировать `DONE` или governed outcome."
-                        missingEvidenceTypes={evidenceSummary.missingEvidenceTypes}
+                        readyText="Подтверждения достаточны для корректного завершения операции."
+                        blockedText="Не хватает обязательных подтверждений, поэтому завершение операции пока заблокировано."
+                        missingEvidenceTypes={evidenceSummary.missingEvidenceTypes?.map((item: string) => formatEvidenceTypeLabel(item))}
                         requiredCount={evidenceSummary.requiredEvidenceTypes?.length}
                         presentCount={evidenceSummary.presentEvidenceTypes?.length}
                         compact
@@ -152,7 +153,7 @@ export const ExecutionCard: React.FC<ExecutionCardProps> = ({ operation, onStart
 
             <div className="mb-5">
                 <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-slate-500">
-                    Execution timeline
+                    Лента исполнения
                 </p>
                 <OperationActivityTimeline operation={operation} limit={3} />
             </div>
@@ -176,7 +177,7 @@ export const ExecutionCard: React.FC<ExecutionCardProps> = ({ operation, onStart
                                 className="flex-1 gap-2 h-9 text-xs font-medium rounded-xl shadow-none"
                                 onClick={() => onRecordControlPoint(operation)}
                             >
-                                <AlertCircle className="w-3.5 h-3.5" /> Control Point
+                                <AlertCircle className="w-3.5 h-3.5" /> Контрольная точка
                             </Button>
                         )}
                         <Button

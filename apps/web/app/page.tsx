@@ -8,7 +8,7 @@ export default function Home() {
             <div className="max-w-2xl">
                 <h1 className="mb-1 text-xl font-medium tracking-tight text-gray-900">Институциональное ядро</h1>
                 <p className="text-sm font-normal text-gray-500 leading-relaxed">
-                    Добро пожаловать в центр управления RAI Enterprise. Текущая сессия защищена протоколами уровня F.
+                    Добро пожаловать в центр управления РАИ. Текущая сессия защищена протоколами уровня F.
                     Все критические действия требуют двухфазного подтверждения.
                 </p>
             </div>
@@ -21,7 +21,7 @@ export default function Home() {
                     </div>
                     <div>
                         <p className="text-[14px] font-medium text-[#030213] tracking-tight">Главный пульт</p>
-                        <p className="text-[13px] text-[#717182] mt-0.5">Трейсинг, SLO и аудит роя агентов</p>
+                        <p className="text-[13px] text-[#717182] mt-0.5">Трассировка, контроль доступности и аудит роя агентов</p>
                     </div>
                 </Link>
 

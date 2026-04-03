@@ -9,6 +9,7 @@ import { PartyListItemVm } from '@/shared/types/party-assets';
 import { calculatePartyCompleteness } from '@/shared/lib/party-completeness';
 import { PartyQuickCreateDrawer } from './PartyQuickCreateDrawer';
 import { Search, Filter, LayoutGrid, List, AlertCircle } from 'lucide-react';
+import { formatStatusLabel, formatUiEntityName } from '@/lib/ui-language';
 import { cn } from '@/lib/utils';
 
 export function PartiesPage() {
@@ -125,9 +126,9 @@ export function PartiesPage() {
                           className="text-gray-900 font-medium hover:text-black transition-colors block max-w-md truncate"
                           title={party.legalName}
                         >
-                          {party.shortName || party.legalName}
+                          {formatUiEntityName(party.shortName || party.legalName)}
                         </Link>
-                        <span className="text-[10px] text-gray-400 font-mono tracking-tight uppercase">ID: {party.id.slice(0, 8)}</span>
+                        <span className="text-[10px] text-gray-400 tracking-tight uppercase">Внутренний идентификатор скрыт</span>
                       </td>
                       <td className="px-6 py-5">
                         <span className="inline-flex items-center px-2 py-1 rounded-lg bg-gray-100/50 text-gray-600 text-[11px] font-medium border border-black/5">
@@ -136,7 +137,7 @@ export function PartiesPage() {
                       </td>
                       <td className="px-6 py-5">
                         <span className="text-gray-500 font-normal">
-                          {party.holdingDerivedName || <span className="text-gray-300">—</span>}
+                          {party.holdingDerivedName ? formatUiEntityName(party.holdingDerivedName) : <span className="text-gray-300">—</span>}
                         </span>
                       </td>
                       <td className="px-6 py-5">
@@ -163,7 +164,7 @@ export function PartiesPage() {
                       <td className="px-6 py-5 text-right">
                         <span className="inline-flex items-center gap-1 text-green-600 text-[11px] font-medium px-2 py-1 rounded-full bg-green-50 border border-green-100">
                           <div className="h-1 w-1 rounded-full bg-green-500" />
-                          Active
+                          {formatStatusLabel('ACTIVE')}
                         </span>
                       </td>
                     </tr>

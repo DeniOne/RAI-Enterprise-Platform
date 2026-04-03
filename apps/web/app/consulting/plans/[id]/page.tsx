@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { getEntityTransitions, HarvestPlanStatus } from '@/lib/consulting/ui-policy';
 import { useAuthority } from '@/core/governance/AuthorityContext';
 import { DomainUiContext } from '@/lib/consulting/navigation-policy';
+import { formatCropLabel, formatStatusLabel, formatTargetMetricLabel, formatUiEntityName } from '@/lib/ui-language';
 
 type LinkedTechMap = {
     id: string;
@@ -81,8 +82,16 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
 
     const title = useMemo(() => {
         if (!plan) return 'План не найден';
-        return plan.targetMetric || `План ${plan.id.slice(0, 8)}`;
+        return formatTargetMetricLabel(plan.targetMetric);
     }, [plan]);
+
+    const selectedSeasonLabel = useMemo(() => {
+        const season = seasons.find((item) => item.id === plan?.seasonId);
+        if (!season) {
+            return plan?.seasonId ? 'Связь с сезоном подтверждена' : 'Не привязан';
+        }
+        return `Сезон ${season.year ?? '-'}${season.fieldId ? ` • ${formatUiEntityName(season.fieldId)}` : ''}`;
+    }, [plan?.seasonId, seasons]);
 
     const domainContext = useMemo<DomainUiContext>(() => {
         const hasActiveTechMap = Boolean(
@@ -178,20 +187,20 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                     <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                         <Card>
                             <p className='text-xs text-gray-500 mb-1'>ID плана</p>
-                            <p className='font-mono text-sm'>{plan.id}</p>
+                            <p className='text-sm text-gray-600'>Внутренний номер плана скрыт</p>
                         </Card>
                         <Card>
                             <p className='text-xs text-gray-500 mb-1'>Статус</p>
-                            <p className='font-semibold'>{plan.status || 'UNKNOWN'}</p>
+                            <p className='font-semibold'>{formatStatusLabel(plan.status)}</p>
                         </Card>
                         <Card>
                             <p className='text-xs text-gray-500 mb-1'>Хозяйство</p>
-                            <p className='font-semibold'>{plan.account?.name || 'Без названия'}</p>
-                            <p className='text-xs text-gray-500 mt-1'>accountId: {plan.accountId || '-'}</p>
+                            <p className='font-semibold'>{formatUiEntityName(plan.account?.name || 'Без названия')}</p>
+                            <p className='text-xs text-gray-500 mt-1'>{plan.accountId ? 'Связь с хозяйством подтверждена' : 'Связь с хозяйством не установлена'}</p>
                         </Card>
                         <Card>
                             <p className='text-xs text-gray-500 mb-1'>Сезон</p>
-                            <p className='font-semibold'>{plan.seasonId || 'Не привязан'}</p>
+                            <p className='font-semibold'>{selectedSeasonLabel}</p>
                         </Card>
                         <Card>
                             <p className='text-xs text-gray-500 mb-1'>Период</p>
@@ -239,7 +248,7 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                                     <option value=''>Выберите сезон</option>
                                     {seasons.map((season) => (
                                         <option key={season.id} value={season.id}>
-                                            {`Сезон ${season.year ?? '-'} • ${season.fieldId ?? 'без поля'}`}
+                                            {`Сезон ${season.year ?? '-'} • ${formatUiEntityName(season.fieldId ?? 'без поля')}`}
                                         </option>
                                     ))}
                                 </select>
@@ -273,16 +282,16 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                                     <div key={techMap.id} className='border border-black/10 rounded-2xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3'>
                                         <div>
                                             <p className='font-semibold text-gray-900'>
-                                                {(techMap.crop || 'Культура не указана').toUpperCase()} • v{techMap.version ?? '-'}
+                                                {formatCropLabel(techMap.crop)} • v{techMap.version ?? '-'}
                                             </p>
                                             <p className='text-xs text-gray-500'>
-                                                {techMap.id} • {techMap.status} • {techMap.updatedAt ? new Date(techMap.updatedAt).toLocaleString('ru-RU') : '-'}
+                                                {formatStatusLabel(techMap.status)} • {techMap.updatedAt ? new Date(techMap.updatedAt).toLocaleString('ru-RU') : '-'}
                                             </p>
                                         </div>
                                         <div className='flex items-center gap-3'>
                                             {techMap.id === plan.activeTechMapId && (
                                                 <span className='px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold'>
-                                                    activeTechMap
+                                                    Активная техкарта
                                                 </span>
                                             )}
                                             <Link
