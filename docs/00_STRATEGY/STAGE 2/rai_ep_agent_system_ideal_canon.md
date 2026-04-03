@@ -1,4 +1,26 @@
+---
+id: DOC-STR-STAGE-2-RAI-EP-AGENT-SYSTEM-IDEAL-CANON-20260403
+layer: Strategy
+type: Vision
+status: draft
+version: 0.1.0
+owners: [@techlead]
+last_updated: 2026-04-03
+claim_id: CLAIM-STR-STAGE2-AGENT-SYSTEM-IDEAL-CANON-20260403
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-04-03
+evidence_refs: docs/00_STRATEGY/STAGE 2/INDEX.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md;docs/00_STRATEGY/STAGE 2/rai_ep_agent_system_target_implementation_blueprint.md;docs/07_EXECUTION/AGENT_SYSTEM_ASIS_TOBE_2026-04-03.md
+---
 # RAI_EP — Канонический документ целевой агентной системы
+
+## CLAIM
+id: CLAIM-STR-STAGE2-AGENT-SYSTEM-IDEAL-CANON-20260403
+status: asserted
+verified_by: manual
+last_verified: 2026-04-03
+
+Этот документ является ideal reference-каноном целевой агентной системы `RAI_EP`. Он фиксирует north-star архитектуру и инженерную модель target-state, но не утверждает, что все описанные свойства уже подтверждены текущим runtime.
 
 ## Статус документа
 
@@ -857,7 +879,240 @@ UI не должен быть пассивной “витриной чата”
 
 ---
 
-# 24. Каноническое итоговое утверждение
+# 24. Production Completeness Layer
+
+## 24.1 Назначение
+
+Целевая агентная система не считается зрелой только потому, что у неё есть оркестратор, агенты и JSON-контракты.  
+Для перехода от идеальной архитектурной схемы к реально управляемой production-платформе система обязана иметь отдельный эксплуатационный слой полноты.
+
+Этот слой существует для того, чтобы система была:
+- измеримой;
+- наблюдаемой;
+- воспроизводимой;
+- устойчивой к сбоям;
+- экономически управляемой;
+- пригодной для безопасной эволюции.
+
+## 24.2 Три плоскости целевой системы
+
+Каноническая целевая система RAI_EP должна пониматься не как двухслойная модель “оркестратор + агенты”, а как трёхплоскостная система:
+
+### A. Control Plane
+Слой понимания, декомпозиции, планирования, policy, capability gating, confirmation routing и orchestration decisions.
+
+### B. Execution Plane
+Слой доменных агентов, сервисных агентов, инструментов, вычислителей, backend-операций, интеграций и governed write execution.
+
+### C. State and Evidence Plane
+Слой памяти, execution-state, audit trail, evidence objects, артефактов, evaluation traces, replay, recovery и системной наблюдаемости.
+
+Именно наличие всех трёх плоскостей делает систему production-grade.
+
+## 24.3 Eval-Driven Development Layer
+
+### Принцип
+
+Агентная система не должна улучшаться “на ощущениях”.  
+Любое изменение оркестратора, planner logic, routing, policy или agent behavior должно проверяться через системные eval-наборы.
+
+### Что обязано существовать
+
+Система должна иметь:
+- набор канонических сценариев запросов;
+- task-specific evals по routing quality;
+- evals по decomposition quality;
+- evals по tool selection;
+- evals по correctness of mutation decisions;
+- evals по truthfulness and disclosure;
+- регрессионные evals на критические пользовательские сценарии.
+
+### Что должно оцениваться
+
+Минимально должны измеряться:
+- правильность определения intent;
+- качество разбиения на ветки;
+- доля туннеллирования;
+- корректность выбора owner-agent;
+- корректность стратегии `parallel / sequential / blocking`;
+- доля ошибочных write attempts;
+- доля blocked-by-policy случаев;
+- truthfulness compliance;
+- user-visible completion quality.
+
+### Правило внедрения
+
+Ни одно существенное изменение orchestration logic не должно приниматься в main path без eval evidence.
+
+## 24.4 Observability and Telemetry Layer
+
+### Принцип
+
+Система должна быть полностью наблюдаемой от пользовательского запроса до финального результата и всех промежуточных веток.
+
+### Что обязано логироваться
+
+Для каждого запроса должны быть доступны:
+- `requestId`;
+- `conversationId`;
+- `executionPlanId`;
+- все `intentId`;
+- owner-agent и branch-agent assignments;
+- tool invocations;
+- policy decisions;
+- confirmation gates;
+- mutation attempts;
+- applied mutations;
+- trust verdicts;
+- final response packet.
+
+### Минимальные telemetry domains
+
+Нужно собирать:
+- routing telemetry;
+- planner telemetry;
+- tool telemetry;
+- mutation telemetry;
+- confirmation telemetry;
+- truthfulness telemetry;
+- latency telemetry;
+- failure telemetry.
+
+### Цель
+
+Любой значимый ответ системы должен быть трассируем от итогового пользовательского сообщения назад до конкретных веток, решений, действий и ограничений.
+
+## 24.5 Persistent State and Resume Layer
+
+### Принцип
+
+Система должна уметь переживать остановки, подтверждения, повторы, откаты и незавершённые ветки без потери управляемости.
+
+### Что обязано храниться
+
+Минимально должны храниться:
+- execution graph;
+- состояние каждой ветки;
+- pending confirmations;
+- mutation packets;
+- audit references;
+- rollback references;
+- validated context snapshots;
+- branch verdict history.
+
+### Что система должна уметь
+
+Система обязана уметь:
+- приостанавливать ветку;
+- возобновлять ветку после подтверждения;
+- повторно исполнять безопасную ветку;
+- отменять неподтверждённую mutation branch;
+- восстанавливать execution surface после сбоя;
+- поддерживать deterministic replay критических цепочек.
+
+### Правило устойчивости
+
+Ни один критичный multi-step execution path не должен зависеть только от эфемерной памяти текущего runtime-процесса.
+
+## 24.6 Tool Governance Layer
+
+### Принцип
+
+Качество агентной системы определяется не только качеством LLM, но и дисциплиной инструментов.
+
+### Что обязано существовать
+
+Для каждого инструмента должны быть определены:
+- каноническое имя;
+- контракт входа;
+- контракт выхода;
+- допустимые caller agents;
+- ограничения по риску;
+- требования к контексту;
+- правила идемпотентности;
+- правила retry/timeout;
+- тесты на корректность.
+
+### Запрещённые состояния
+
+Нельзя допускать:
+- дублирующиеся инструменты с размытыми границами;
+- инструменты без чётких JSON-контрактов;
+- write tools без policy classification;
+- инструменты, которые одновременно меняют несколько сущностей без явного disclosure.
+
+### Цель
+
+Tool layer должен быть предсказуемым, тестируемым и совместимым с bounded execution логикой агентов.
+
+## 24.7 Cost, Latency and Model Governance Layer
+
+### Принцип
+
+Экономика исполнения и задержка ответа являются частью архитектуры, а не вторичным вопросом после разработки.
+
+### Что должно контролироваться
+
+Система должна измерять и ограничивать:
+- latency на уровне запроса;
+- latency на уровне branch execution;
+- latency tool calls;
+- стоимость orchestration model;
+- стоимость domain-agent synthesis;
+- стоимость повторных веток;
+- стоимость длинных multi-agent сценариев.
+
+### Каноническая стратегия
+
+Правильный порядок такой:
+1. сначала достигается качество исполнения;
+2. затем фиксируется baseline через evals;
+3. затем оптимизируются стоимость и задержка без разрушения качества.
+
+### Правило моделей
+
+Использование отдельной сильной модели для оркестратора допустимо, но должно рассматриваться как управляемая архитектурная гипотеза с измеряемым эффектом по:
+- anti-tunneling quality;
+- decomposition quality;
+- latency;
+- cost;
+- stability.
+
+## 24.8 Artifact and Evidence Management Layer
+
+### Принцип
+
+Не весь межсистемный контент должен переноситься внутри JSON как крупный payload.  
+Каноничная модель должна различать:
+- control-plane JSON envelopes;
+- отдельные evidence artifacts;
+- отдельные mutation artifacts;
+- explainability bundles;
+- audit objects.
+
+### Правило
+
+JSON-контракты должны переносить управление, ссылки, статусы и ключевые поля.  
+Крупные данные, отчёты, diff-пакеты, доказательные материалы и объёмные результаты должны храниться как отдельные артефакты с референсами.
+
+### Цель
+
+Это повышает устойчивость межагентного обмена, снижает хрупкость payload-ов и упрощает аудит.
+
+## 24.9 Production Completeness Criteria
+
+Целевая агентная система не должна считаться зрелой, пока одновременно не выполняются следующие условия:
+
+1. orchestration behavior проверяется eval-наборами;
+2. весь execution path полностью трассируется;
+3. multi-step execution переживает подтверждения и сбои;
+4. tool layer стандартизирован и тестируем;
+5. экономика и задержка исполнения измеряются и управляются;
+6. state, evidence и artifacts хранятся отдельно от чистого conversational prose.
+
+Именно этот слой отличает красивую идеальную схему от реально управляемой enterprise-grade платформы.
+
+# 25. Каноническое итоговое утверждение
 
 Идеальная агентная система RAI_EP — это **LLM-governed, policy-bounded, JSON-contract-based orchestration platform**, в которой:
 - пользователь взаимодействует свободно;
@@ -869,4 +1124,3 @@ UI не должен быть пассивной “витриной чата”
 - результат всегда сопровождается truthfulness, explainability и ясной фиксацией того, что реально выполнено.
 
 Именно эта картина должна считаться целевым каноном, от которого далее ведётся проектирование, декомпозиция и внедрение.
-

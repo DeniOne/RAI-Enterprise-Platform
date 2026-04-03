@@ -3,13 +3,13 @@ id: DOC-META-DOCS-MATRIX-20260320
 layer: Meta
 type: Navigation
 status: approved
-version: 2.32.0
+version: 2.33.0
 owners: ["@techlead"]
-last_updated: 2026-04-01
+last_updated: 2026-04-03
 claim_id: CLAIM-CORE-DOCS-MATRIX
 claim_status: asserted
 verified_by: code
-last_verified: 2026-04-01
+last_verified: 2026-04-03
 evidence_refs: scripts/lint-docs.cjs;scripts/docs-reset-audit.cjs
 ---
 # DOCS MATRIX
@@ -18,7 +18,7 @@ evidence_refs: scripts/lint-docs.cjs;scripts/docs-reset-audit.cjs
 id: CLAIM-CORE-DOCS-MATRIX
 status: asserted
 verified_by: code
-last_verified: 2026-04-01
+last_verified: 2026-04-03
 
 | Claim | Документ | Статус | Проверка | Последняя верификация |
 |---|---|---|---|---|
@@ -164,8 +164,10 @@ last_verified: 2026-04-01
 | CLAIM-EXE-ONE-BIG-PHASE-E-IMPLEMENTATION-PLAN-20260401 | docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_E_IMPLEMENTATION_PLAN.md | asserted | manual | 2026-04-01 |
 | CLAIM-EXE-ONE-BIG-PHASE-E-EXECUTION-BOARD-20260401 | docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_E_EXECUTION_BOARD.md | asserted | manual | 2026-04-01 |
 | CLAIM-ARCHIVE-LAYER-README | docs/06_ARCHIVE/README.md | asserted | manual | 2026-03-21 |
-| CLAIM-STR-STAGE2-INDEX | docs/00_STRATEGY/STAGE 2/INDEX.md | asserted | manual | 2026-03-21 |
+| CLAIM-STR-STAGE2-INDEX | docs/00_STRATEGY/STAGE 2/INDEX.md | asserted | manual | 2026-04-03 |
 | CLAIM-STR-STAGE2-MASTER-PLAN | docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md | asserted | manual | 2026-03-21 |
+| CLAIM-STR-STAGE2-TARGET-IMPLEMENTATION-BLUEPRINT-20260403 | docs/00_STRATEGY/STAGE 2/rai_ep_agent_system_target_implementation_blueprint.md | asserted | manual | 2026-04-03 |
+| CLAIM-STR-STAGE2-AGENT-SYSTEM-IDEAL-CANON-20260403 | docs/00_STRATEGY/STAGE 2/rai_ep_agent_system_ideal_canon.md | asserted | manual | 2026-04-03 |
 | CLAIM-STR-STAGE2-MASTER-PLAN-ADDENDUM | docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md | asserted | manual | 2026-03-21 |
 | CLAIM-STR-STAGE2-DOMAIN-OWNERSHIP-MAP | docs/00_STRATEGY/STAGE 2/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md | asserted | manual | 2026-03-21 |
 | CLAIM-STR-STAGE2-RUNTIME-GOVERNANCE | docs/00_STRATEGY/STAGE 2/RAI_AGENT_RUNTIME_GOVERNANCE.md | asserted | manual | 2026-03-21 |

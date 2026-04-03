@@ -1,712 +1,274 @@
-# RAI_EP — Target Implementation Blueprint целевой агентной системы
-
-## Статус документа
-
-**Роль документа:** execution blueprint / implementation reference  
-**Назначение:** перевести каноническую идеальную картину агентной системы RAI_EP в последовательную программу инженерного внедрения.  
-**Статус истины:** документ фиксирует **целевой порядок внедрения**, **обязательные runtime-компоненты**, **волны реализации**, **definition of done** и **критерии перехода**, а не утверждает, что все элементы уже существуют в runtime.
-
 ---
-
-# 1. Назначение blueprint
-
-Этот документ нужен для того, чтобы команда внедряла агентную систему не как набор разрозненных задач, а как управляемую программу перехода:
-
-- от текущего orchestration spine;
-- к LLM-governed, policy-bounded, JSON-contract-based мультиагентной платформе;
-- с контролируемым переходом по волнам;
-- без разрушения текущего рабочего контура.
-
-Документ отвечает на вопросы:
-- что строить сначала;
-- что не строить раньше времени;
-- какие модули обязательны;
-- какие контракты должны появиться;
-- по каким признакам считать систему действительно продвинувшейся к целевому состоянию.
-
+id: DOC-STR-STAGE-2-RAI-EP-TARGET-IMPLEMENTATION-BLUEPRINT-20260403
+layer: Strategy
+type: Roadmap
+status: draft
+version: 1.0.0
+owners: [@techlead]
+last_updated: 2026-04-03
+claim_id: CLAIM-STR-STAGE2-TARGET-IMPLEMENTATION-BLUEPRINT-20260403
+claim_status: asserted
+verified_by: manual
+last_verified: 2026-04-03
+evidence_refs: docs/00_STRATEGY/STAGE 2/INDEX.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_RUNTIME_GOVERNANCE.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_EVOLUTION_AND_LIFECYCLE.md;docs/00_STRATEGY/STAGE 2/RAI_SWARM_CONTROL_TOWER_ARCHITECTURE.md;docs/00_STRATEGY/STAGE 2/rai_ep_agent_system_ideal_canon.md;docs/07_EXECUTION/AGENT_SYSTEM_ASIS_TOBE_2026-04-03.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_B_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_C_NEW_CHAT_MEMO.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_D_IMPLEMENTATION_PLAN.md;apps/api/src/modules/rai-chat
 ---
+# RAI_EP — Target Implementation Blueprint
 
-# 2. Каноническая цель внедрения
+## CLAIM
+id: CLAIM-STR-STAGE2-TARGET-IMPLEMENTATION-BLUEPRINT-20260403
+status: asserted
+verified_by: manual
+last_verified: 2026-04-03
 
-Целевой результат внедрения состоит в следующем:
+Этот документ является активным bridge-документом `Stage 2`: он переводит текущий подтверждённый runtime, действующий `master-plan` и идеальный канон агентной системы в один согласованный маршрут `current state -> gaps -> target state`. Документ не подменяет `RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md` как главный active canon и не утверждает, что целевая картина уже реализована в коде.
 
-1. Пользователь пишет свободный запрос в естественном языке.
-2. Оркестратор понимает смысл и строит `sub-intent graph`.
-3. Оркестратор превращает graph в `ExecutionPlan`.
-4. Ветки исполняются в режимах `parallel / sequential / blocking / mixed`.
-5. Доменные агенты работают как bounded executors.
-6. Все межсистемные обмены идут через JSON-контракты.
-7. Все write-действия идут только через governed write-path.
-8. Все критичные действия проходят через policy, risk classification и confirmation logic.
-9. Пользователь получает единый развёрнутый ответ от оркестратора.
-10. UI получает execution-state, mutation feedback и управляемые подтверждения.
-11. Вся система остаётся наблюдаемой, проверяемой и воспроизводимой.
+## 0. Роль документа
 
----
+Этот blueprint нужен не для перезапуска `Stage 2` “с нуля”, а для устранения разрыва между:
 
-# 3. Принципы внедрения
+- текущим подтверждённым agent runtime в `apps/api/src/modules/rai-chat`;
+- активной стратегией `Stage 2`;
+- идеальной картиной из `rai_ep_agent_system_ideal_canon.md`.
 
-## 3.1 Не ломать существующий spine без необходимости
+Правило чтения:
 
-Текущий orchestration spine не должен быть переписан с нуля.  
-Правильная стратегия — поэтапное наращивание управляемости, а не разрушительная замена работающих элементов.
+1. Главный active canon `Stage 2` остаётся `RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md`.
+2. Факт текущего состояния фиксируется через код, тесты и [AGENT_SYSTEM_ASIS_TOBE_2026-04-03.md](/root/RAI_EP/docs/07_EXECUTION/AGENT_SYSTEM_ASIS_TOBE_2026-04-03.md).
+3. Этот blueprint задаёт путь закрытия разрывов до target-state.
+4. `rai_ep_agent_system_ideal_canon.md` используется как north-star reference, а не как утверждение о текущем runtime.
 
-## 3.2 Сначала контракты, потом интеллект
+## 1. Подтверждённая точка старта
 
-Сначала должны появиться:
-- канонические JSON-схемы;
-- planner contracts;
-- policy gates;
-- telemetry contracts;
-- state persistence.
+Стартовая база уже не нулевая.
 
-Только после этого можно усиливать orchestration intelligence и менять модельный слой.
+| Контур | Подтверждённое состояние | Что это означает для плана |
+|---|---|---|
+| Agent platform и governance | Платформенный каркас `Stage 2` в основном собран: registry, budget/runtime governance, incidents, eval/evidence, audit/trace, control-plane. | Blueprint не должен повторять программу build-out “с нуля”. |
+| Канонический orchestration spine | `SupervisorAgent -> SemanticRouter/SemanticIngress -> AgentRuntime -> ResponseComposer -> Truthfulness` уже работает как основной backend-контур. | Внедрение идёт через доращивание текущего spine, а не через его замену. |
+| Owner-агенты и доменный runtime | `agronomist`, `economist`, `knowledge`, `monitoring`, `crm_agent`, `front_office_agent`, `contracts_agent` уже являются реальными runtime-участниками. | Следующий шаг не в расширении зоопарка ролей, а в углублении orchestration semantics. |
+| Governed write-path | Risk policy, pending actions, confirmation path и audit trail уже существуют. | Нужно не изобретать новый safety contour, а унифицировать его под branch/runtime-модель target-state. |
+| Work windows и clarification UX | Первый reusable execution-surface slice уже живой в backend и UI. | `Phase C` должна потреблять готовое execution-state ядра, а не подменять собой ядро. |
+| TechMap-centered core-loop | Активная стратегия `One Big Phase` закрепляет Техкарту как центр ядра и выводит `execution / deviation / result` loop в `Phase B`. | Decomposition/planner slice должен строиться вокруг TechMap-loop, а не вокруг абстрактного chat-demo. |
+| Lifecycle, control tower и pilot-hardening | Для lifecycle, canary/rollback, control tower и `Phase D` уже есть активные каноны и implementation-планы. | Production governance и ops-путь нельзя считать “потом разберёмся”; они уже часть активной стратегии. |
 
-## 3.3 Сначала управляемость, потом расширение зоопарка агентов
+## 2. Что этот blueprint обязан исправить
 
-Нельзя начинать с множества новых agent personas.  
-Сначала должна появиться система управления ветками, контекстом, политиками, audit и mutations.
+Предыдущая версия blueprint была полезна как общая архитектурная программа, но имела стратегический drift. Эта версия вводит жёсткие ограничения:
 
-## 3.4 Сначала production safety, потом автономность
+1. Нельзя начинать с `Wave 0` как будто platform/governance ещё не построены.
+2. Нельзя ставить user-facing `UI execution surface` раньше explainability/evidence/state core.
+3. Нельзя делать вид, что TechMap-loop вторичен относительно общего chat-orchestration.
+4. Нельзя выносить ownership map, runtime governance, lifecycle и control tower за рамки target-state.
+5. Нельзя трактовать этот документ как второй “главный canon” рядом с `master-plan`.
 
-High-risk autonomy не должна внедряться раньше, чем:
-- заработает governed write-path;
-- появится confirmation routing;
-- заработает replay/recovery;
-- появятся evals и observability.
+Итоговое правило:
 
-## 3.5 Каждая волна должна давать реальный runtime-эффект
+- `master-plan` отвечает за главный активный замысел;
+- этот blueprint отвечает за путь закрытия разрыва до идеального канона;
+- `code/tests/gates` остаются источником runtime truth.
 
-Каждая реализационная волна должна завершаться наблюдаемым системным улучшением, а не только новым документом или контрактом.
+## 3. Карта разрывов `AS-IS -> IDEAL`
 
----
+| Целевой компонент | Что уже есть | Главный разрыв | Чем закрывается |
+|---|---|---|---|
+| `SubIntentGraph` как first-class объект | `SemanticIngressFrame`, `CompositeWorkflowPlan`, intent contracts, limited composites | Нет общего graph-object для mixed-intent runtime | `Track 1` |
+| Planner-driven orchestration | `SupervisorAgent` и special-case composites | Нет общего `ExecutionPlan + BranchScheduler` для `parallel / sequential / blocking` | `Track 2` |
+| Строгие branch contracts | Сильная типизация runtime уже есть, но `AgentExecutionResult` всё ещё несёт `text` | Межагентный слой ещё не полностью `JSON-only` | `Track 0` и `Track 2` |
+| Governed branch state и replay | Есть pending actions, audit, trustfulness, partial execution state | Нет единого branch-state plane, который одинаково держит graph, verdicts, confirmations и replay | `Track 3` |
+| Trust/verdict canon | Есть `VERIFIED / PARTIAL / UNVERIFIED / CONFLICTED / REJECTED` и branch trust artifacts | Таксономия и runtime mapping ещё не сведены в единый target contract | `Track 0` и `Track 3` |
+| Execution surface | `workWindows`, clarification loop и richer outputs уже существуют | UI пока частично отражает специальные сценарии, а не общий planner-state | `Track 4` |
+| Production-managed multi-agent runtime | Есть governance, lifecycle, control tower, `Phase D` hardening path | Эти контуры ещё не увязаны с будущим multi-intent runtime как единый rollout path | `Track 5` |
+| Model strategy | Есть registry/config-driven LLM wiring и hybrid режимы | Модельная специализация ещё опережает planner/runtime maturity только локально | `Track 6` |
 
-# 4. Каноническая структура программы внедрения
+## 4. Реализационные треки
 
-Программа внедрения разбивается на 8 волн:
+### Track 0 — Contract Convergence Over Current Runtime
 
-- **Wave 0 — Canonical Contracts and Baseline**
-- **Wave 1 — Semantic Decomposition Foundation**
-- **Wave 2 — Planner-Driven Orchestration Runtime**
-- **Wave 3 — Governed Write Path and Confirmation System**
-- **Wave 4 — UI Execution Surface and Work Windows Upgrade**
-- **Wave 5 — Trust, Explainability, State and Evidence Plane**
-- **Wave 6 — Eval, Observability and Production Governance**
-- **Wave 7 — Model Specialization and Performance Optimization**
+Цель:
+- ввести канонический `target-state` язык без слома текущего runtime.
 
----
+Что входит:
+- унификация типов `SubIntentGraph`, `ExecutionPlan`, `ExecutionBranchResult`, `ExecutionSurfaceState`, `MutationPacket`, `ConfirmationRequest`, `PolicyDecision`;
+- bridge-layer между новыми контрактами и существующими `SemanticIngressFrame`, `CompositeWorkflowPlan`, branch trust types, pending actions;
+- единая taxonomy mapping-таблица для `branch status`, `trust verdict`, `mutation risk`, `confirmation state`;
+- стратегия миграции от частично текстовых agent results к структурированным branch payload.
 
-# 5. Wave 0 — Canonical Contracts and Baseline
+Definition of Done:
+- shared-контракты живут в коде и используются без ломки текущего `SupervisorAgent` пути;
+- новые типы не спорят с активными `Phase B` и `Stage 2` канонами;
+- появляется явный compatibility-layer, а не скрытая вторая схема данных.
 
-## 5.1 Цель волны
+Стратегическая привязка:
+- это foundation-пакет для `Phase B`, но не рестарт платформы с нуля.
 
-Создать единый контрактный язык целевой системы, на который дальше будет опираться весь orchestration runtime.
+### Track 1 — TechMap-Centered Sub-Intent Graph
 
-## 5.2 Что должно быть создано
+Цель:
+- сделать `SubIntentGraph` первым реальным объектом исполнения для ядрового TechMap-loop.
 
-### A. Канонические типы и схемы
+Что входит:
+- graph builder поверх `SemanticIngressService`;
+- декомпозиция запросов классов `informational`, `analytical`, `read + action`, `cross-domain`, `confirmation-gated`;
+- first-wave поддержка сценария `context -> TechMap -> execution -> deviation -> result`;
+- сохранение graph в state-plane и выдача inspectable trace для разработчика и explainability-core.
 
-Обязательные сущности:
-- `IntentNode`
-- `SubIntentGraph`
-- `ExecutionPlan`
-- `ExecutionStage`
-- `ExecutionBranchResult`
-- `TaskEnvelope`
-- `MutationPacket`
-- `ExecutionSurfaceState`
-- `FinalResponsePacket`
-- `BranchVerdict`
-- `ConfirmationRequest`
-- `PolicyDecision`
+Definition of Done:
+- mixed-intent запросы перестают туннелироваться в одну owner-ветку;
+- graph строится минимум для канонических TechMap-centered сценариев;
+- graph можно увидеть, восстановить и использовать дальше в planner-runtime.
 
-### B. Единые enum / taxonomy contracts
+Стратегическая привязка:
+- это прямое продолжение `Phase B1/B2`, а не отдельный абстрактный AI-эксперимент.
 
-Минимально:
-- `intentType`
-- `interactionMode`
-- `mutationRisk`
-- `branchStatus`
-- `executionMode`
-- `policyOutcome`
-- `confirmationState`
-- `trustVerdict`
-- `toolClass`
+### Track 2 — Planner-Driven Runtime On Top Of Supervisor
 
-### C. Validation layer
+Цель:
+- дорастить `SupervisorAgent` до planner-driven оркестрации без разрыва текущего spine.
 
-Все контракты должны иметь:
-- runtime validation;
-- versioning;
-- backward compatibility strategy для переходного периода.
+Что входит:
+- `ExecutionPlan` поверх `SubIntentGraph`;
+- `BranchScheduler` с режимами `sequential`, `parallel`, `blocking_on_confirmation`, `mixed`;
+- запуск read-only mixed flows сначала на ограниченном core-срезе;
+- перенос composite special-cases в общий planner-path;
+- постепенный переход от role-owned prose к structured branch payload с финальной композицией только на уровне orchestrator.
 
-## 5.3 Что должно быть зафиксировано как baseline
+Definition of Done:
+- хотя бы часть mixed-intent core-flow реально исполняется по плану, а не через hardcoded sequence;
+- blocking-ветки корректно ждут confirmation и возобновляются;
+- orchestration decisions трассируются как first-class runtime artifacts;
+- новый planner-path доказан таргетированными eval/spec, прежде чем менять default runtime mode.
 
-- текущие working agents;
-- текущие working composites;
-- текущие write paths;
-- текущие policy boundaries;
-- текущие gaps по sub-intent orchestration;
-- текущая latency и current behavior baseline.
+Стратегическая привязка:
+- это ядро незакрытого разрыва между текущим `tool-first/hybrid` состоянием и идеальным каноном.
 
-## 5.4 Definition of Done
+### Track 3 — Governed Trust, State And Mutation Closure
 
-Wave 0 считается завершённой, когда:
-- все канонические контракты описаны в коде;
-- все критические enum/typing слои унифицированы;
-- новые контракты проходят runtime validation;
-- текущие компоненты могут ссылаться на новые типы без ломки runtime.
+Цель:
+- замкнуть branch-level state, policy, trust и replay в один честный execution contour.
 
-## 5.5 Ожидаемый эффект
+Что входит:
+- branch-state store для graph, statuses, confirmation state, mutation state и trust artifacts;
+- единый `MutationPacket` поверх уже существующего governed write-path;
+- mapping current trust taxonomy к target-state contract без потери детализации;
+- recovery/replay/resume для confirmation-gated и multi-step сценариев;
+- explainability как structured artifact, а не только как prose.
 
-У команды появляется единый язык агентной системы.  
-Новые модули перестают развиваться как разрозненные эвристики.
+Definition of Done:
+- любая ветка имеет восстанавливаемый статус, verdict и след policy-решений;
+- write-actions не обходят governed path и не теряют rollback/evidence metadata;
+- explainability/evidence встроены в core-flow до начала UI-polish.
 
----
+Стратегическая привязка:
+- это закрывает `Phase B4` и удерживает правило: explainability-core раньше user-facing оболочки.
 
-# 6. Wave 1 — Semantic Decomposition Foundation
+### Track 4 — Execution Surface Consumption In Phase C
 
-## 6.1 Цель волны
+Цель:
+- сделать `Phase C` слоем потребления уже собранного execution-state, а не местом, где придумывается логика оркестрации.
 
-Научить ingress и orchestration layer выделять из свободного запроса не одну плоскую команду, а осмысленный `sub-intent graph`.
+Что входит:
+- проекция planner-state в `workWindows`, pending confirmations, mutation feedback и branch disclosures;
+- стабилизация пути `thread -> message -> response` для governed web-chat;
+- пользовательская визуализация branch state, evidence и continuation points;
+- сохранение жёсткой границы: UI не определяет runtime truth, а читает её.
 
-## 6.2 Что внедряется
+Definition of Done:
+- `Phase C` отражает реальный execution-state ядра;
+- пользователь видит не только финальный prose, но и управляемый progress веток;
+- ни один critical runtime invariant не живёт только в frontend.
 
-### A. Meaning extraction layer
+Стратегическая привязка:
+- этот трек полностью соответствует границе `Phase C`, заданной в `PHASE_B_IMPLEMENTATION_PLAN.md` и `PHASE_C_NEW_CHAT_MEMO.md`.
 
-Оркестратор должен уметь выделять:
-- главный пользовательский goal;
-- действия;
-- сущности;
-- домены;
-- конфликтующие требования;
-- недостающий контекст;
-- признак mixed-intent запроса.
+### Track 5 — Runtime Governance, Lifecycle And Production Hardening
 
-### B. Graph builder
+Цель:
+- связать будущий multi-intent runtime с уже активными контурами ownership, lifecycle, control tower и pilot-hardening.
 
-Появляется компонент, строящий `SubIntentGraph` с:
-- owner-agent assignment;
-- dependencies;
-- mutation risk;
-- confirmation flags;
-- expected outputs.
+Что входит:
+- увязка planner-runtime с `RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md`;
+- budgets, concurrency, escalation и reliability policies на уровне branch execution;
+- canary/promote/rollback path для planner/runtime изменений;
+- operator-plane telemetry и control-tower visibility по новым branch artifacts;
+- привязка `Phase D` и последующих rollout-контуров к real multi-agent behavior, а не только к инфраструктуре.
 
-### C. Поддерживаемые классы сценариев первой итерации
+Definition of Done:
+- новый runtime меняется только через governed rollout path;
+- control tower и lifecycle board видят planner/runtime-состояние как first-class operational signals;
+- self-host/pilot контур готов валидировать не только shell, но и честную multi-intent оркестрацию.
 
-Минимально система должна научиться корректно разбирать:
-- информационный запрос;
-- аналитический запрос;
-- mixed read + action запрос;
-- multi-step action запрос;
-- cross-domain запрос;
-- запрос с явным удалением/подтверждением.
+Стратегическая привязка:
+- этот трек удерживает связность `Stage 2`, `One Big Phase`, lifecycle и operator-plane, чтобы target-state не оторвался от production reality.
 
-## 6.3 Что пока не делается
+### Track 6 — Model Specialization Only After Runtime Proof
 
-На этой волне не строится:
-- универсальный fully autonomous planner;
-- свободный peer-to-peer agent mesh;
-- сложная автономная проактивность.
+Цель:
+- оптимизировать модельный слой только после того, как planner, state, governance и evals уже работают как система.
 
-## 6.4 Definition of Done
+Что входит:
+- orchestrator model strategy;
+- cost-aware routing;
+- domain specialization там, где уже есть доказанный runtime benefit;
+- latency/cost optimization без ломки correctness.
 
-Wave 1 считается завершённой, когда:
-- `SubIntentGraph` строится минимум для канонического набора сценариев;
-- mixed-intent запросы перестают искусственно туннелироваться в одну ветку;
-- graph сохраняется в state-plane;
-- оператор/разработчик может увидеть, как именно запрос был декомпозирован.
+Definition of Done:
+- model changes сравниваются по eval, trustfulness stability, latency и cost;
+- выбор модели перестаёт компенсировать архитектурные дыры planner/state plane.
 
-## 6.5 Ожидаемый эффект
+Стратегическая привязка:
+- этот трек всегда идёт последним и не подменяет собой `Track 1–5`.
 
-Система начинает понимать сложный пользовательский запрос как несколько управляемых веток, а не как одну плоскую команду.
+## 5. Прямая привязка к активным execution-фазам
 
----
+| Активная фаза | Что из blueprint относится к фазе | Что не должно в неё просачиваться |
+|---|---|---|
+| `Phase B` | `Track 0`, `Track 1`, `Track 2`, `Track 3` | `web`-breadth, installability, pilot hardening |
+| `Phase C` | `Track 4` | изобретение core-логики на стороне UI |
+| `Phase D` | ops/pilot часть `Track 5` | расширение продуктовой ширины вместо hardening |
+| `Phase E` | managed deployment/governance continuation для `Track 5` | ранняя модельная гонка без operational proof |
 
-# 7. Wave 2 — Planner-Driven Orchestration Runtime
+Правило:
 
-## 7.1 Цель волны
+- если задача нужна, чтобы замкнуть `TechMap -> execution -> deviation -> result` loop и planner/state core, это `Phase B`;
+- если задача нужна, чтобы показать это состояние в `web`, это `Phase C`;
+- если задача нужна для installability, recovery, support и pilot, это `Phase D`.
 
-Превратить оркестратор из стадийного диспетчера в полноценный execution planner.
+## 6. Немедленный первый delivery-пакет
 
-## 7.2 Что внедряется
+Первая практическая пачка не должна быть абстрактной. Она должна включать:
 
-### A. Execution planner
+1. shared target-state contracts в `apps/api/src/shared/rai-chat`;
+2. graph builder внутри `SemanticIngressService` с first-wave TechMap-centered покрытием;
+3. `ExecutionPlan` и planner-path внутри `SupervisorAgent`;
+4. branch state/trust/mutation mapping в `SupervisorAgent`, `ResponseComposer` и persistence/runtime слоях.
 
-Planner получает `SubIntentGraph` и строит `ExecutionPlan`.
+Ожидаемый эффект:
 
-### B. Execution strategies
+- текущий runtime остаётся рабочим;
+- появляется первый честный `SubIntentGraph -> ExecutionPlan -> branch state` slice;
+- специальные composite-сценарии получают путь миграции в общий target runtime.
 
-Поддерживаются стратегии:
-- `SEQUENTIAL`
-- `PARALLEL`
-- `BLOCKING_ON_CONFIRMATION`
-- `MIXED`
+## 7. Критерии сближения с идеальным каноном
 
-### C. Branch scheduler
+Система может считаться реально движущейся к идеалу только если одновременно выполняются условия:
 
-Появляется runtime-компонент, который:
-- запускает независимые ветки параллельно;
-- ждёт зависимые ветки;
-- останавливает ветки до подтверждения;
-- управляет переходами статусов.
+1. свободный mixed-intent запрос декомпозируется в несколько веток как first-class runtime object;
+2. ветки исполняются в режимах `sequential / parallel / blocking / mixed` без hardcoded stitched flow;
+3. межагентный слой опирается на структурированные контракты, а финальный prose собирается оркестратором;
+4. governed write-path остаётся единственным путём мутаций и подтверждений;
+5. branch state переживает confirmation wait, retry и restart;
+6. explainability/evidence являются structured core-layer, а не декоративным текстом;
+7. `Phase C` показывает execution-state, а не имитирует его;
+8. runtime rollout, canary, rollback и pilot path встроены в lifecycle/control tower контур.
 
-### D. Orchestrator branch control
+## 8. Финальное управленческое правило
 
-Оркестратор удерживает:
-- branch state;
-- owner-agent selection;
-- escalation rules;
-- retry boundaries;
-- failure routing.
+Правильный путь к идеальной агентной системе RAI_EP выглядит так:
 
-## 7.3 Definition of Done
+- не расширять хаотично число ролей;
+- не переписывать работающий spine ради абстрактной “чистоты”;
+- не путать `UI surface` с ядром оркестрации;
+- не выносить governance, lifecycle и pilot в необязательный хвост;
+- доращивать текущий runtime до `SubIntentGraph -> ExecutionPlan -> governed branch state -> execution surface` по шагам, согласованным с `master-plan` и `Phase B/C/D`.
 
-Wave 2 считается завершённой, когда:
-- execution plan строится из graph автоматически;
-- хотя бы часть read-only mixed-запросов реально исполняется параллельно;
-- blocking-ветки корректно останавливаются и ждут подтверждения;
-- sequential dependencies корректно отрабатываются;
-- orchestration decisions фиксируются в telemetry.
-
-## 7.4 Ожидаемый эффект
-
-Мультиагентность становится реальным runtime-поведением, а не только архитектурной декларацией.
-
----
-
-# 8. Wave 3 — Governed Write Path and Confirmation System
-
-## 8.1 Цель волны
-
-Сделать любые изменения данных управляемыми, объяснимыми и безопасными.
-
-## 8.2 Что внедряется
-
-### A. Mutation pipeline
-
-Любой агент может только предложить `MutationPacket`.  
-Прямое изменение данных агентом запрещается.
-
-### B. Risk classification
-
-Каждая мутация должна быть классифицирована как:
-- `LOW_AUTOCOMMIT`
-- `LOW_WITH_NOTICE`
-- `CONFIRM_REQUIRED`
-- `DESTRUCTIVE_CONFIRM_REQUIRED`
-
-### C. Policy gate
-
-Для каждой мутации определяется:
-- допустимость;
-- scope;
-- требование подтверждения;
-- применимость rollback;
-- audit requirements.
-
-### D. Confirmation system
-
-Появляется единый механизм:
-- формирования `ConfirmationRequest`;
-- ожидания ответа пользователя;
-- продолжения ветки после подтверждения;
-- отмены неподтверждённой операции.
-
-### E. Write execution adapter
-
-Backend-компонент применяет только одобренные мутации и возвращает execution result.
-
-## 8.3 Что обязательно покрывается
-
-- заполнение полей в UI;
-- изменение карточек;
-- обновление значений;
-- удаление/очистка;
-- любые high-impact business mutations.
-
-## 8.4 Definition of Done
-
-Wave 3 считается завершённой, когда:
-- ни одна write-ветка не проходит в обход governed path;
-- удаление всегда требует подтверждения;
-- audit trail есть для каждой мутации;
-- rollback metadata создаётся для обратимых операций;
-- UI получает прозрачный mutation feedback.
-
-## 8.5 Ожидаемый эффект
-
-Агентная система становится способной не только анализировать, но и безопасно действовать в продукте.
-
----
-
-# 9. Wave 4 — UI Execution Surface and Work Windows Upgrade
-
-## 9.1 Цель волны
-
-Сделать UI не витриной чата, а управляемой рабочей поверхностью agent runtime.
-
-## 9.2 Что внедряется
-
-### A. Execution Surface State
-
-UI получает структурированное состояние исполнения:
-- активные ветки;
-- завершённые ветки;
-- заблокированные ветки;
-- pending confirmations;
-- применённые мутации;
-- disclosures.
-
-### B. Work window upgrade
-
-Work windows становятся не просто explainability-объектами, а полноценной execution surface моделью.
-
-### C. UI confirmation UX
-
-Появляются управляемые подтверждения для:
-- удаления;
-- high-risk mutation;
-- ambiguous write operations;
-- potentially destructive flows.
-
-### D. Branch status visualization
-
-Пользователь видит:
-- что система поняла;
-- какие ветки выполняются;
-- какие ветки заблокированы;
-- какие действия уже применены.
-
-## 9.3 Definition of Done
-
-Wave 4 считается завершённой, когда:
-- UI способен визуализировать execution state;
-- пользователь видит mutation result и pending confirmation внятно и не через произвольный prose;
-- work windows отражают реальные branch states;
-- чат и UI больше не живут раздельно.
-
-## 9.4 Ожидаемый эффект
-
-Управление системой смещается из хаотичного текста в контролируемую интерфейсную рабочую поверхность.
-
----
-
-# 10. Wave 5 — Trust, Explainability, State and Evidence Plane
-
-## 10.1 Цель волны
-
-Сделать систему проверяемой, честной и устойчивой к прерыванию выполнения.
-
-## 10.2 Что внедряется
-
-### A. Branch verdict pipeline
-
-Каждая ветка получает один из verdict:
-- `VERIFIED`
-- `PARTIAL`
-- `BLOCKED`
-- `FAILED`
-
-### B. Explainability packet
-
-Для каждого запроса система собирает:
-- interpreted intent summary;
-- branch list;
-- branch outcomes;
-- applied actions;
-- pending actions;
-- uncertainty disclosure;
-- evidence references;
-- policy disclosures.
-
-### C. Persistent execution state
-
-Сохраняются:
-- execution graph;
-- branch statuses;
-- confirmation state;
-- mutation objects;
-- evidence objects;
-- trust artifacts;
-- rollback references.
-
-### D. Resume / replay support
-
-Система должна уметь:
-- продолжить ветку после подтверждения;
-- пережить рестарт runtime;
-- переоткрыть execution surface;
-- воспроизвести критичный execution path для аудита.
-
-## 10.3 Definition of Done
-
-Wave 5 считается завершённой, когда:
-- каждый ответ можно разложить назад на ветки и verdicts;
-- незавершённые ветки сохраняются между событиями;
-- explainability перестаёт быть текстовым украшением и становится structured artifact;
-- branch recovery работает для подтверждаемых и многошаговых сценариев.
-
-## 10.4 Ожидаемый эффект
-
-Система становится воспроизводимой, честной и пригодной для институционального использования.
-
----
-
-# 11. Wave 6 — Eval, Observability and Production Governance
-
-## 11.1 Цель волны
-
-Сделать развитие агентной системы измеримым и production-управляемым.
-
-## 11.2 Что внедряется
-
-### A. Eval suite
-
-Создаются канонические eval-наборы для:
-- intent classification;
-- decomposition quality;
-- anti-tunneling behavior;
-- planner correctness;
-- tool selection;
-- mutation governance;
-- truthfulness compliance;
-- response completeness.
-
-### B. Full telemetry
-
-Появляются сквозные telemetry traces по:
-- request;
-- graph;
-- plan;
-- agent branch;
-- tool call;
-- mutation;
-- trust verdict;
-- final response.
-
-### C. Production dashboards
-
-Должны быть доступны:
-- latency metrics;
-- branch failure rates;
-- confirmation rates;
-- mutation outcomes;
-- policy blocks;
-- tunneling indicators;
-- retry rates;
-- error clusters.
-
-### D. Regression gate
-
-Критические изменения orchestration logic не допускаются без:
-- eval evidence;
-- regression check;
-- telemetry review.
-
-## 11.3 Definition of Done
-
-Wave 6 считается завершённой, когда:
-- система имеет минимально достаточный eval suite;
-- критические runtime-решения трассируются end-to-end;
-- архитектурные изменения перестают вноситься вслепую;
-- команда может доказуемо сравнивать версии оркестрации.
-
-## 11.4 Ожидаемый эффект
-
-Агентная система становится управляемой как продукт, а не как набор магических эффектов.
-
----
-
-# 12. Wave 7 — Model Specialization and Performance Optimization
-
-## 12.1 Цель волны
-
-Оптимизировать модельный слой и производительность только после того, как основная архитектура уже управляется и измеряется.
-
-## 12.2 Что внедряется
-
-### A. Orchestrator model strategy
-
-Рассматривается:
-- выделенная сильная LLM для оркестратора;
-- специализированная routing/decomposition модель;
-- fallback strategy для model failure;
-- cost-aware routing.
-
-### B. Domain model specialization
-
-При необходимости отдельные domain agents могут использовать разные модели под разные классы задач.
-
-### C. Cost/latency optimization
-
-Оптимизируются:
-- orchestration latency;
-- branch parallelization efficiency;
-- token cost;
-- heavy-context scenarios;
-- response streaming and pacing.
-
-### D. Model governance
-
-Любая замена модели оценивается не по ощущению, а по:
-- routing quality;
-- decomposition quality;
-- anti-tunneling quality;
-- truthfulness stability;
-- latency;
-- cost.
-
-## 12.3 Definition of Done
-
-Wave 7 считается завершённой, когда:
-- оркестратор работает на осознанно выбранной модельной стратегии;
-- стоимость и задержка измеряются и управляются;
-- оптимизация не ломает correctness и governance.
-
-## 12.4 Ожидаемый эффект
-
-Система становится не только правильной по архитектуре, но и эффективной по эксплуатационным параметрам.
-
----
-
-# 13. Обязательные runtime-модули целевой системы
-
-К моменту зрелого target-state в системе должны существовать следующие обязательные модули:
-
-## 13.1 Control Plane
-- Orchestrator Core
-- Meaning Extraction Module
-- Semantic Decomposition Module
-- Sub-Intent Graph Builder
-- Execution Planner
-- Branch Scheduler
-- Capability Gate
-- Policy Gate
-- Confirmation Router
-
-## 13.2 Execution Plane
-- Domain Agents
-- Service Agents
-- Agent Runtime
-- Tool Registry
-- Tool Execution Adapters
-- Governed Write Adapter
-- Backend Mutation Executor
-
-## 13.3 State and Evidence Plane
-- Execution State Store
-- Confirmation State Store
-- Mutation Store
-- Evidence Store
-- Trust Artifact Store
-- Audit Trail Store
-- Replay / Recovery Module
-- Explainability Artifact Builder
-- Telemetry and Trace Store
-- Eval Dataset and Result Store
-
-## 13.4 User-facing Layer
-- Response Composer
-- Execution Surface State Builder
-- Work Window Projection Layer
-- Confirmation UX Layer
-- Mutation Feedback Layer
-
----
-
-# 14. Что не должно делаться раньше времени
-
-До завершения Wave 3–5 не следует:
-- строить много новых агентных персон;
-- давать агентам широкую автономию;
-- внедрять сложный peer-to-peer inter-agent runtime;
-- делать ставку на тонкую настройку модели вместо системных контрактов;
-- пытаться “скрыть” системную сложность красивым prose;
-- обходить policy ради скорости внедрения.
-
----
-
-# 15. Критические риски внедрения
-
-## 15.1 Pseudo-multi-agent trap
-
-Внешне система выглядит как мультиагентная, но фактически остаётся stitched sequence без реального graph/planner runtime.
-
-## 15.2 Prompt-first trap
-
-Команда пытается решить архитектурные проблемы всё более длинными системными инструкциями вместо модулей, контрактов и gates.
-
-## 15.3 Hidden writes trap
-
-Mutation logic начинает просачиваться в обход governed write-path.
-
-## 15.4 Observability gap
-
-Система становится сложнее, но её поведение невозможно прозрачно объяснить или воспроизвести.
-
-## 15.5 Model worship trap
-
-Команда начинает воспринимать сильную LLM как замену planner, state, policy и tool governance.
-
----
-
-# 16. Канонические критерии готовности целевой системы
-
-Система может считаться близкой к целевому состоянию только если одновременно выполняются следующие условия:
-
-1. Смешанный свободный запрос корректно декомпозируется на несколько веток.
-2. Ветки могут исполняться параллельно, последовательно или с блокировкой на подтверждении.
-3. Оркестратор удерживает общий смысл и не теряет контроль над ветками.
-4. Агенты взаимодействуют только через структурированные контракты.
-5. Write-path полностью governed и не имеет скрытых bypass.
-6. UI показывает execution state, а не только prose.
-7. Каждый результат сопровождается truthfulness/verdict/disclosure.
-8. Execution state устойчив к confirmation waits и сбоям.
-9. Поведение системы измеряется eval-наборами и telemetry.
-10. Стоимость и latency управляются без разрушения качества.
-
----
-
-# 17. Первая практическая реализационная пачка
-
-Если переходить к внедрению немедленно, первая пачка должна включать именно следующие блоки:
-
-## Package A — Contracts
-- ввести канонические типы и JSON-схемы;
-- унифицировать enum-слои;
-- ввести runtime validation.
-
-## Package B — Decomposition
-- встроить graph builder в semantic ingress path;
-- научить систему распознавать mixed-intent сценарии;
-- начать сохранять graph как объект исполнения.
-
-## Package C — Planner
-- внедрить planner и branch scheduler;
-- поддержать `parallel / sequential / blocking`;
-- сделать telemetry на orchestration decisions.
-
-## Package D — Governed Mutations
-- внедрить mutation packet;
-- risk classification;
-- confirmation routing;
-- audit/rollback metadata.
-
-Эта первая пачка даёт максимальный эффект на единицу инженерного усилия.
-
----
-
-# 18. Финальное управленческое утверждение
-
-Правильное внедрение агентной системы RAI_EP — это не создание большого количества “умных агентов”, а поэтапная сборка управляемой orchestration-платформы, где:
-- смысл удерживается оркестратором;
-- исполнение декомпозировано на ветки;
-- агенты действуют в bounded-режиме;
-- записи в данные проходят только через governed write-path;
-- UI отражает реальное состояние исполнения;
-- trust, evidence, state, audit и evals встроены в runtime;
-- развитие системы идёт по волнам, а не через хаотичное наращивание сложности.
-
-Именно этот blueprint должен использоваться как документ перехода от идеального канона к реальной инженерной сборке системы.
-
+Именно в этой роли данный blueprint и должен использоваться: как документ закрытия разрыва между текущим кодом и идеальным каноном, а не как параллельный манифест или как программа повторного старта `Stage 2`.

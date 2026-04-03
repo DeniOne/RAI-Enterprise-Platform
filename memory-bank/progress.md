@@ -1,3 +1,16 @@
+## 2026-04-03
+
+1. **Blueprint target-state выровнен с активной стратегией Stage 2** [DONE]:
+  - `docs/00_STRATEGY/STAGE 2/rai_ep_agent_system_target_implementation_blueprint.md` переписан как active bridge между текущим runtime, `master-plan`, `Phase B/C/D` и идеальным каноном;
+  - в документ добавлены frontmatter, `claim_id`, карта разрывов `AS-IS -> IDEAL`, aligned tracks и явная привязка к активным execution-фазам;
+  - `docs/00_STRATEGY/STAGE 2/INDEX.md` обновлён: blueprint зарегистрирован как `ACTIVE BRIDGE`, а `rai_ep_agent_system_ideal_canon.md` как `IDEAL REFERENCE`;
+  - `docs/00_STRATEGY/STAGE 2/rai_ep_agent_system_ideal_canon.md` нормализован до валидного frontmatter/claim meta-contract;
+  - `docs/DOCS_MATRIX.md` дополнен claim-строками для blueprint и ideal canon.
+  - Практический эффект:
+    - у Stage 2 появился не абстрактный blueprint “с нуля”, а рабочий документ перехода от текущего кода к идеальному target-state;
+    - навигация Stage 2 теперь явно различает главный active canon, bridge-документ и north-star reference;
+    - дальнейшие разрывы по planner/runtime/state/UI можно закрывать без конфликта с текущей execution-стратегией.
+
 
 1. **Checkpoint `Phase A` синхронизирован с current parked external tail** [DONE]:
   - `docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_A_CHECKPOINT_AND_PARKING_DECISION.md` обновлён под current machine-readable snapshot;

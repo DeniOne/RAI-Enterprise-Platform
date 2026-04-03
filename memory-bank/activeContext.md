@@ -1,3 +1,13 @@
+## Текущая задача (2026-04-03, Stage 2 blueprint alignment)
+- [x] `docs/00_STRATEGY/STAGE 2/rai_ep_agent_system_target_implementation_blueprint.md` полностью переписан из абстрактной программы “с нуля” в bridge-документ `current state -> gaps -> target state`.
+- [x] В документ добавлены frontmatter и `claim_id`, а сам blueprint привязан к `master-plan`, `AS-IS / TO-BE` baseline и `Phase B/C/D`.
+- [x] `docs/00_STRATEGY/STAGE 2/INDEX.md` обновлён:
+  - blueprint закреплён как `ACTIVE BRIDGE`;
+  - `rai_ep_agent_system_ideal_canon.md` закреплён как `IDEAL REFERENCE`;
+  - порядок чтения Stage 2 выровнен под новый bridge-маршрут.
+- [x] `docs/DOCS_MATRIX.md` дополнен новым claim для blueprint.
+- [x] `docs/00_STRATEGY/STAGE 2/rai_ep_agent_system_ideal_canon.md` приведён к валидному frontmatter/claim meta-contract, чтобы весь Stage 2 bridge-пакет проходил строгие docs checks без скрытого drift.
+
 
 ## Текущая задача (2026-04-02, phase A parked checkpoint sync)
 - [x] `PHASE_A_CHECKPOINT_AND_PARKING_DECISION.md` синхронизирован с current machine-readable closeout snapshot.

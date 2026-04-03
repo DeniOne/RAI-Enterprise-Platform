@@ -3,14 +3,14 @@ id: DOC-STR-STAGE-2-INDEX-1HGQ
 layer: Strategy
 type: Navigation
 status: draft
-version: 0.1.0
+version: 0.2.0
 owners: [@techlead]
-last_updated: 2026-03-21
+last_updated: 2026-04-03
 claim_id: CLAIM-STR-STAGE2-INDEX
 claim_status: asserted
 verified_by: manual
-last_verified: 2026-03-21
-evidence_refs: docs/00_STRATEGY/README.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md;docs/11_INSTRUCTIONS/INDEX.md
+last_verified: 2026-04-03
+evidence_refs: docs/00_STRATEGY/README.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md;docs/00_STRATEGY/STAGE 2/rai_ep_agent_system_target_implementation_blueprint.md;docs/00_STRATEGY/STAGE 2/rai_ep_agent_system_ideal_canon.md;docs/11_INSTRUCTIONS/INDEX.md
 ---
 # STAGE 2 — Canon Index
 
@@ -18,7 +18,7 @@ evidence_refs: docs/00_STRATEGY/README.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLA
 id: CLAIM-STR-STAGE2-INDEX
 status: asserted
 verified_by: manual
-last_verified: 2026-03-21
+last_verified: 2026-04-03
 
 Этот документ является действующим индексом слоя `Stage 2` и определяет обязательный порядок чтения активного канона по агентной платформе. Он управляет навигацией по живым стратегическим документам, но не подменяет проверку runtime по `code/tests/gates`.
 
@@ -31,6 +31,17 @@ last_verified: 2026-03-21
 
 **[RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md](./RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md)**  
 → Главный active canon Stage 2. С него нужно начинать. Он заменяет старую россыпь архитектурных и чеклистовых файлов как основной source of truth.
+
+---
+
+## Active Bridge And Target Reference
+
+Эти документы не подменяют `master-plan`, но теперь образуют обязательный мост между текущим runtime, активной стратегией и идеальным направлением.
+
+| Документ | Статус | Роль |
+|----------|--------|------|
+| [rai_ep_agent_system_target_implementation_blueprint.md](./rai_ep_agent_system_target_implementation_blueprint.md) | `ACTIVE BRIDGE` | Bridge-документ `current state -> gaps -> target state`; переводит `master-plan`, кодовый baseline и `Phase B/C/D` в согласованный маршрут до target-state |
+| [rai_ep_agent_system_ideal_canon.md](./rai_ep_agent_system_ideal_canon.md) | `IDEAL REFERENCE` | North-star канон целевой агентной системы; использовать как reference для target-state, а не как подтверждённую runtime truth |
 
 ---
 
@@ -106,8 +117,10 @@ last_verified: 2026-03-21
 
 ```text
 1. Прочитай RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md      ← главный активный canon
-2. Прочитай RAI_FARM_OPERATING_SYSTEM_ARCHITECTURE.md     ← бизнесовый и системный контекст
-3. Сверься с TRUTH_SYNC_STAGE_2_CLAIMS.md                 ← truth baseline
-4. Сверься с A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md ← readiness gate
-5. Дальше открывай только точечные reference/archive документы
+2. Прочитай rai_ep_agent_system_target_implementation_blueprint.md ← bridge к target-state
+3. Используй rai_ep_agent_system_ideal_canon.md             ← идеальный reference, не runtime truth
+4. Прочитай RAI_FARM_OPERATING_SYSTEM_ARCHITECTURE.md       ← бизнесовый и системный контекст
+5. Сверься с TRUTH_SYNC_STAGE_2_CLAIMS.md                   ← truth baseline
+6. Сверься с A_RAI_MULTIAGENT_PRODUCTION_READINESS_CHECKLIST.md ← readiness gate
+7. Дальше открывай только точечные reference/archive документы
 ```
